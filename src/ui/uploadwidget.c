@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "color.h"
 #include "command.h"
 #include "gmrequest.h"
+#include "sitespec.h"
 #include "app.h"
 
 #include <the_Foundation/file.h>
@@ -36,6 +37,7 @@ iDefineObjectConstruction(UploadWidget)
 
 struct Impl_UploadWidget {
     iWidget          widget;
+    iString          originalUrl;
     iString          url;
     iDocumentWidget *viewer;
     iGmRequest *     request;
@@ -65,6 +67,7 @@ void init_UploadWidget(iUploadWidget *d) {
     init_Widget(w);
     setId_Widget(w, "upload");
     useSheetStyle_Widget(w);
+    init_String(&d->originalUrl);
     init_String(&d->url);
     d->viewer = NULL;
     d->request = NULL;
@@ -126,15 +129,17 @@ void init_UploadWidget(iUploadWidget *d) {
     /* Buttons. */ {
         addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
         iWidget *buttons =
-            makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}", SDLK_ESCAPE, 0, "upload.cancel" },
+            makeDialogButtons_Widget((iMenuItem[]){ { "${upload.port}", 0, 0, "upload.setport" },
+                                                    { "---", 0, 0, NULL },
+                                                    { "${cancel}", SDLK_ESCAPE, 0, "upload.cancel" },
                                                     { uiTextAction_ColorEscape "${dlg.upload.send}",
                                                       SDLK_RETURN,
                                                       KMOD_PRIMARY,
                                                       "upload.accept" } },
-                                     2);
-        setId_Widget(addChildPosFlags_Widget(buttons,
+                                     4);
+        setId_Widget(insertChildAfterFlags_Widget(buttons,
                                              iClob(d->counter = new_LabelWidget("", NULL)),
-                                             front_WidgetAddPos, frameless_WidgetFlag),
+                                             0, frameless_WidgetFlag),
                      "upload.counter");
         addChild_Widget(w, iClob(buttons));
     }
@@ -146,18 +151,42 @@ void init_UploadWidget(iUploadWidget *d) {
     setBackupFileName_InputWidget(d->input, "uploadbackup.txt");
 }
 
-void deinit_UploadWidget(iUploadWidget *d) {
+void deinit_UploadWidget(iUploadWidget *d) {    
     deinit_String(&d->filePath);
     deinit_String(&d->url);
+    deinit_String(&d->originalUrl);
     iRelease(d->request);
 }
 
-void setUrl_UploadWidget(iUploadWidget *d, const iString *url) {
+static uint16_t titanPortForUrl_(const iString *url) {
+    uint16_t port = 0;
+    const iString *root = collectNewRange_String(urlRoot_String(url));
     iUrl parts;
     init_Url(&parts, url);
+    /* If the port is not specified, use the site-specific configuration. */
+    if (isEmpty_Range(&parts.port) || equalCase_Rangecc(parts.scheme, "gemini")) {
+        port = value_SiteSpec(root, titanPort_SiteSpecKey);
+    }
+    else {
+        port = atoi(cstr_Rangecc(parts.port));
+    }
+    return port ? port : GEMINI_DEFAULT_PORT;
+}
+
+static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint16_t overridePort) {
+    set_String(&d->originalUrl, url);
+    iUrl parts;
+    const iString *root = collectNewRange_String(urlRoot_String(url));
+    init_Url(&parts, url);
     setCStr_String(&d->url, "titan");
-    appendRange_String(&d->url, (iRangecc){ parts.scheme.end, constEnd_String(url) });
+    appendRange_String(&d->url, (iRangecc){ parts.scheme.end, parts.host.end });
+    appendFormat_String(&d->url, ":%u", overridePort ? overridePort : titanPortForUrl_(url));
+    appendRange_String(&d->url, (iRangecc){ parts.path.start, constEnd_String(url) });
     setText_LabelWidget(d->info, &d->url);
+}
+
+void setUrl_UploadWidget(iUploadWidget *d, const iString *url) {
+    setUrlPort_UploadWidget_(d, url, 0);
 }
 
 void setResponseViewer_UploadWidget(iUploadWidget *d, iDocumentWidget *doc) {
@@ -182,13 +211,29 @@ static void requestFinished_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
 
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
+    const char *cmd = command_UserEvent(ev);
     if (isCommand_Widget(w, ev, "upload.cancel")) {
         /* TODO: If text has been entered, ask for confirmation. */
         setupSheetTransition_Mobile(w, iFalse);
         destroy_Widget(w);
         return iTrue;
     }
-    const char *cmd = command_UserEvent(ev);
+    if (isCommand_Widget(w, ev, "upload.setport")) {
+        if (hasLabel_Command(cmd, "value")) {
+            setValue_SiteSpec(collectNewRange_String(urlRoot_String(&d->originalUrl)),
+                              titanPort_SiteSpecKey, arg_Command(cmd));
+            setUrlPort_UploadWidget_(d, &d->originalUrl, arg_Command(cmd));
+        }
+        else {
+            makeValueInput_Widget(w,
+                                  collectNewFormat_String("%u", titanPortForUrl_(&d->originalUrl)),
+                                  uiHeading_ColorEscape "${heading.uploadport}",
+                                  "${dlg.uploadport.msg}",
+                                  "${dlg.uploadport.set}",
+                                  format_CStr("upload.setport ptr:%p", d));
+        }
+        return iTrue;
+    }
     if (isCommand_Widget(w, ev, "upload.accept")) {
         iWidget * tabs     = findChild_Widget(w, "upload.tabs");
         const int tabIndex = tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs));

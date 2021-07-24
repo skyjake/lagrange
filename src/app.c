@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "history.h"
 #include "ipc.h"
 #include "periodic.h"
+#include "sitespec.h"
 #include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
@@ -752,6 +753,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     init_Prefs(&d->prefs);
+    init_SiteSpec(dataDir_App_());
     setCStr_String(&d->prefs.downloadDir, downloadDir_App_());
     set_Atomic(&d->pendingRefresh, iFalse);
     d->isRunning = iFalse;
@@ -832,6 +834,7 @@ static void deinit_App(iApp *d) {
     deinit_Feeds();
     save_Keys(dataDir_App_());
     deinit_Keys();
+    deinit_SiteSpec();
     savePrefs_App_(d);
     deinit_Prefs(&d->prefs);
     save_Bookmarks(d->bookmarks, dataDir_App_());

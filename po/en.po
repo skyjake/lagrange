@@ -897,6 +897,18 @@ msgstr "see server's instructions"
 msgid "dlg.upload.send"
 msgstr "Upload"
 
+msgid "upload.port"
+msgstr "Port…"
+
+msgid "heading.uploadport"
+msgstr "TITAN UPLOAD PORT"
+
+msgid "dlg.uploadport.msg"
+msgstr "Set the Titan server port to use for this URL.\nThe port is saved in the site-specific configuration."
+
+msgid "dlg.uploadport.set"
+msgstr "Set Port"
+
 msgid "heading.translate"
 msgstr "TRANSLATE PAGE"
 

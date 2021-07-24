@@ -150,6 +150,8 @@ set (SOURCES
     src/periodic.h
     src/prefs.c
     src/prefs.h
+    src/sitespec.c
+    src/sitespec.h
     src/stb_image.h
     src/stb_image_resize.h
     src/stb_truetype.h
@@ -193,7 +195,7 @@ set (SOURCES
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
-    src/ui/sidebarwidget.h
+    src/ui/sidebarwidget.h    
     src/ui/text.c
     src/ui/text.h
     src/ui/touch.c
