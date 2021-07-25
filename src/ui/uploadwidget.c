@@ -76,7 +76,10 @@ void init_UploadWidget(iUploadWidget *d) {
     addChildFlags_Widget(w,
                          iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.upload}", NULL)),
                          frameless_WidgetFlag);
-    d->info = addChildFlags_Widget(w, iClob(new_LabelWidget("", NULL)), frameless_WidgetFlag);
+    d->info = addChildFlags_Widget(w, iClob(new_LabelWidget("", NULL)),
+                                   frameless_WidgetFlag | resizeToParentWidth_WidgetFlag |
+                                   fixedHeight_WidgetFlag);
+    setWrap_LabelWidget(d->info, iTrue);
     /* Tabs for input data. */
     iWidget *tabs = makeTabs_Widget(w);
     /* Make the tabs support vertical expansion based on content. */ {
@@ -176,7 +179,6 @@ static uint16_t titanPortForUrl_(const iString *url) {
 static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint16_t overridePort) {
     set_String(&d->originalUrl, url);
     iUrl parts;
-    const iString *root = collectNewRange_String(urlRoot_String(url));
     init_Url(&parts, url);
     setCStr_String(&d->url, "titan");
     appendRange_String(&d->url, (iRangecc){ parts.scheme.end, parts.host.end });

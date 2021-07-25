@@ -651,8 +651,9 @@ static iBool popUndo_InputWidget_(iInputWidget *d) {
         splitToLines_(&undo->text, &d->lines);
         d->cursor = undo->cursor;
         deinit_InputUndo_(undo);
-        popBack_Array(&d->undoStack);
+        popBack_Array(&d->undoStack);        
         iZap(d->mark);
+        updateAllLinesAndResizeHeight_InputWidget_(d);
         return iTrue;
     }
     return iFalse;

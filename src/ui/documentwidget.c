@@ -2819,6 +2819,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return wasHandled;
     }
     else if (equal_Command(cmd, "document.upload") && d == document_App()) {
+        if (findChild_Widget(root_Widget(w), "upload")) {
+            return iTrue; /* already open */
+        }
         if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") ||
             equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
             iUploadWidget *upload = new_UploadWidget();
