@@ -492,7 +492,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         0.0f, 0.25f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.25f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.25f
+        0.0f, 0.25f, 1.0f, 0.5f, 1.5f, 0.5f, 0.5f, 0.25f
     };
     static const char *arrow           = rightArrowhead_Icon;
     static const char *envelope        = "\U0001f4e7";
@@ -623,7 +623,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 banner.textParams.color = tmBannerTitle_ColorId;
                 pushBack_Array(&d->layout, &banner);
                 pos.y += height_Rect(banner.visBounds) +
-                         lineHeight_Text(paragraph_FontId) * prefs->lineSpacing;
+                         1.5f * lineHeight_Text(paragraph_FontId) * prefs->lineSpacing;
             }
         }
         /* Empty lines don't produce text runs. */
@@ -959,7 +959,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     /* Footer. */
     if (siteBanner_GmDocument(d)) {
         iGmRun footer = { .flags = decoration_GmRunFlag | footer_GmRunFlag };
-        footer.visBounds = (iRect){ pos, init_I2(d->size.x, lineHeight_Text(banner_FontId) * 1) };
+        footer.visBounds = (iRect){ pos, init_I2(d->size.x, lineHeight_Text(banner_FontId) * 2) };
         pushBack_Array(&d->layout, &footer);
         pos.y += footer.visBounds.size.y;
     }
@@ -979,8 +979,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
     }
-    printf("[GmDocument] layout size: %zu runs (%zu bytes)\n",
-           size_Array(&d->layout), size_Array(&d->layout) * sizeof(iGmRun));        
+//    printf("[GmDocument] layout size: %zu runs (%zu bytes)\n",
+//           size_Array(&d->layout), size_Array(&d->layout) * sizeof(iGmRun));        
 }
 
 void init_GmDocument(iGmDocument *d) {
@@ -1679,12 +1679,12 @@ static void normalize_GmDocument(iGmDocument *d) {
         }
         appendCStr_String(normalized, "\n");
     }
-    printf("hasTabs: %d\n", hasTabs);
-    printf("wasNormalized: %d\n", wasNormalized);
-    fflush(stdout);
+//    printf("hasTabs: %d\n", hasTabs);
+//    printf("wasNormalized: %d\n", wasNormalized);
+//    fflush(stdout);
     set_String(&d->source, collect_String(normalized));
     //normalize_String(&d->source); /* NFC */
-    printf("orig:%zu norm:%zu\n", size_String(&d->unormSource), size_String(&d->source));
+//    printf("orig:%zu norm:%zu\n", size_String(&d->unormSource), size_String(&d->source));
     /* normalized source has an extra newline at the end */
 //    iAssert(wasNormalized || equal_String(&d->unormSource, &d->source));
 }
@@ -1700,11 +1700,11 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
 
 void setSource_GmDocument(iGmDocument *d, const iString *source, int width,
                           enum iGmDocumentUpdate updateType) {
-    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
-           size_String(source), width, updateType == final_GmDocumentUpdate);
+//    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
+//           size_String(source), width, updateType == final_GmDocumentUpdate);
     if (size_String(source) == size_String(&d->unormSource)) {
         iAssert(equal_String(source, &d->unormSource));
-        printf("[GmDocument] source is unchanged!\n");
+//        printf("[GmDocument] source is unchanged!\n");
         return; /* Nothing to do. */
     }
     set_String(&d->unormSource, source);
