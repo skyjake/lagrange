@@ -107,17 +107,8 @@ void init_CertImportWidget(iCertImportWidget *d) {
     init_Widget(w);
     setId_Widget(w, "certimport");
     d->cert = NULL;
-    /* This should behave similar to sheets. */  {
-        setPadding1_Widget(w, 3 * gap_UI);
-        setFrameColor_Widget(w, uiSeparator_ColorId);
-        setBackgroundColor_Widget(w, uiBackground_ColorId);
-        setFlags_Widget(w,
-                        mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
-                            arrangeSize_WidgetFlag | centerHorizontal_WidgetFlag |
-                            parentCannotResize_WidgetFlag |
-                            overflowScrollable_WidgetFlag,
-                        iTrue);
-    }
+    /* This should behave similar to sheets. */ 
+    useSheetStyle_Widget(w);
     addChildFlags_Widget(
         w,
         iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.certimport}", NULL)),
@@ -168,7 +159,6 @@ void init_CertImportWidget(iCertImportWidget *d) {
                          "certimport.accept" } },
         2);
     addChild_Widget(w, iClob(buttons));
-//    arrange_Widget(w);
     if (deviceType_App() != desktop_AppDeviceType) {
         /* Try auto-pasting. */
         postCommand_App("certimport.paste");
@@ -263,8 +253,7 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
 }
 
 static void draw_CertImportWidget_(const iCertImportWidget *d) {
-    const iWidget *w = constAs_Widget(d);
-    draw_Widget(w);
+    draw_Widget(constAs_Widget(d));
 }
 
 iBeginDefineSubclass(CertImportWidget, Widget)

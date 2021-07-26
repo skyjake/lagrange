@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-24 13:18+0000\n"
+"PO-Revision-Date: 2021-07-19 19:06+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -428,7 +428,7 @@ msgid "dlg.newident.until"
 msgstr "Valide usque:"
 
 msgid "hint.newident.date"
-msgstr "AAAA-MM-DD HH:MM:SS"
+msgstr "AAAA o AAAA-MM-DD"
 
 msgid "hint.newident.optional"
 msgstr "optional"
@@ -483,7 +483,7 @@ msgstr "PREFERENTIAS"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "Interfacie"
+msgstr "IdU"
 
 # tab button
 msgid "heading.prefs.network"
@@ -505,7 +505,7 @@ msgid "heading.prefs.paragraph"
 msgstr "PARAGRAPHO"
 
 msgid "heading.prefs.pagecontent"
-msgstr "CONTENTO DEL PAGINE"
+msgstr "COLORES DE PAGINA"
 
 # tab button
 msgid "heading.prefs.style"
@@ -807,7 +807,7 @@ msgid "heading.prefs.colors"
 msgstr "Colores"
 
 msgid "heading.prefs.fonts"
-msgstr "TYPOS DE CHARACTER"
+msgstr "Typos de character"
 
 # tab button
 msgid "heading.prefs.general"
@@ -1555,3 +1555,27 @@ msgstr "Polonese"
 
 msgid "gempub.cover.viewlocal"
 msgstr "On pote vider iste libro Gempub post que lo es salvate localmente."
+
+msgid "heading.prefs.uitheme"
+msgstr "COLORES DE IDU"
+
+msgid "menu.openfile"
+msgstr "Aperir un file…"
+
+msgid "prefs.animate"
+msgstr "Animationes:"
+
+msgid "close"
+msgstr "Clauder"
+
+msgid "ident.export"
+msgstr "Exportar"
+
+msgid "link.file.delete"
+msgstr "Deler le file"
+
+msgid "heading.file.delete"
+msgstr "DELER LE FILE"
+
+msgid "dlg.file.delete"
+msgstr "Deler"

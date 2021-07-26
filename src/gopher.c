@@ -38,10 +38,37 @@ iLocalDef iBool isDiagram_(char ch) {
     return strchr("^*_-=~/|\\<>()[]{}", ch) != NULL;
 }
 
+iLocalDef iBool isBoxDrawing_Char(iChar c) {
+    return (c >= 0x2500 && c <= 0x257f);
+}
+
 static iBool isPreformatted_(iRangecc text) {
-    int numDiag  = 0;
-    int numSpace = 0;
+    int  numDiag   = 0;
+    int  numSpace  = 0;
+    int  numRepeat = 0;
+    char chPrev    = 0;
     for (const char *ch = text.start; ch != text.end; ch++) {
+        if (*ch < 0) {
+            iChar uc;
+            int len = decodeBytes_MultibyteChar(ch, text.end, &uc);
+            if (len > 0) {
+                if (isBoxDrawing_Char(uc)) {
+                    if (++numDiag == 3)
+                        return iTrue;
+                }
+                ch += len - 1;
+                continue;
+            }
+        }
+        if (*ch != '.' && *ch == chPrev) {
+            if (numRepeat++ == 6) {
+                return iTrue;
+            }
+        }
+        else {
+            numRepeat = 0;
+        }
+        chPrev = *ch;
         if (isDiagram_(*ch)) {
             if (++numDiag == 3)
                 return iTrue;
@@ -131,15 +158,22 @@ static iBool convertSource_Gopher_(iGopher *d) {
                     if (startsWith_Rangecc(path, "URL:")) {
                         format_String(buf,
                                       "=> %s %s\n",
-                                      cstr_Rangecc((iRangecc){ path.start + 4, path.end }),
+                                      cstr_String(withSpacesEncoded_String(collectNewRange_String
+                                                                           ((iRangecc){ path.start + 4, path.end }))),
                                       cstr_Rangecc(text));
                     }
                     appendData_Block(d->output, constBegin_String(buf), size_String(buf));
                     iEndCollect();
                     break;
                 }
-                default:
-                    break; /* Ignore unknown types. */
+                default: /* all unknown types */
+                    setPre_Gopher_(d, iFalse);
+                    appendData_Block(d->output, text.start, size_Range(&text));
+                    appendCStr_Block(d->output, "\n");
+                    setPre_Gopher_(d, iTrue);
+                    appendData_Block(d->output, path.start, port.end - path.start);
+                    appendCStr_Block(d->output, "\n");
+                    break;
             }
             delete_String(buf);
         }

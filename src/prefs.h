@@ -54,9 +54,11 @@ struct Impl_Prefs {
     iBool            hideToolbarOnScroll;
     int              pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
     /* Behavior */
+    int              returnKey;
     iString          downloadDir;
     iBool            hoverLink;
     iBool            smoothScrolling;
+    int              smoothScrollSpeed[max_ScrollType];
     iBool            loadImageInsteadOfScrolling;
     iBool            collapsePreOnLoad;
     iString          searchUrl;
@@ -66,6 +68,7 @@ struct Impl_Prefs {
     iString          caPath;
     iBool            decodeUserVisibleURLs;
     int              maxCacheSize; /* MB */
+    int              maxMemorySize; /* MB */
     iString          geminiProxy;
     iString          gopherProxy;
     iString          httpProxy;
@@ -78,6 +81,7 @@ struct Impl_Prefs {
     iBool            boldLinkDark;
     iBool            boldLinkLight;
     int              lineWidth;
+    float            lineSpacing;
     iBool            bigFirstParagraph;
     iBool            quoteIcon;
     iBool            centerShortDocs;
@@ -89,3 +93,8 @@ struct Impl_Prefs {
 };
 
 iDeclareTypeConstruction(Prefs)
+    
+iLocalDef float scrollSpeedFactor_Prefs(const iPrefs *d, enum iScrollType type) {
+    iAssert(type >= 0 && type < max_ScrollType);
+    return 10.0f / iMax(1, d->smoothScrollSpeed[type]);
+}

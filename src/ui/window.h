@@ -126,7 +126,7 @@ iInt2       size_Window             (const iWindow *);
 iInt2       maxTextureSize_Window   (const iWindow *);
 float       uiScale_Window          (const iWindow *);
 iInt2       coord_Window            (const iWindow *, int x, int y);
-iInt2       mouseCoord_Window       (const iWindow *);
+iInt2       mouseCoord_Window       (const iWindow *, int whichDevice);
 iAnyObject *hitChild_Window         (const iWindow *, iInt2 coord);
 uint32_t    frameTime_Window        (const iWindow *);
 SDL_Renderer *renderer_Window       (const iWindow *);
@@ -135,7 +135,6 @@ iBool       isFullscreen_Window     (const iWindow *);
 int         numRoots_Window         (const iWindow *);
 iRoot *     findRoot_Window         (const iWindow *, const iWidget *widget);
 iRoot *     otherRoot_Window        (const iWindow *, iRoot *root);
-
 iWindow *   get_Window              (void);
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)

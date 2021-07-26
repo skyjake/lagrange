@@ -283,7 +283,7 @@ static void setHoverItem_ListWidget_(iListWidget *d, size_t index) {
 }
 
 void updateMouseHover_ListWidget(iListWidget *d) {
-    const iInt2 mouse = mouseCoord_Window(get_Window());
+    const iInt2 mouse = mouseCoord_Window(get_Window(), 0);
     setHoverItem_ListWidget_(d, itemIndex_ListWidget(d, mouse));
 }
 
@@ -347,14 +347,15 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         else {
             /* Traditional mouse wheel. */
             amount *= 3 * d->itemHeight;
-            moveSpan_SmoothScroll(&d->scrollY, amount, 200);            
+            moveSpan_SmoothScroll(
+                &d->scrollY, amount, 200 * scrollSpeedFactor_Prefs(prefs_App(), mouse_ScrollType));
         }
         return iTrue;
     }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             d->noHoverWhileScrolling = iFalse;
-            updateHover_ListWidget_(d, mouseCoord_Window(get_Window()));
+            updateHover_ListWidget_(d, mouseCoord_Window(get_Window(), ev->button.which));
             redrawHoverItem_ListWidget_(d);
             return iTrue;
         case aborted_ClickResult:

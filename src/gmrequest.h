@@ -31,11 +31,11 @@ iDeclareType(GmCerts)
 iDeclareType(GmResponse)
 
 enum iGmCertFlag {
-    available_GmCertFlag       = iBit(1), /* certificate provided by server */
-    trusted_GmCertFlag         = iBit(2), /* TOFU status */
-    timeVerified_GmCertFlag    = iBit(3), /* has not expired */
-    domainVerified_GmCertFlag  = iBit(4), /* cert matches server domain */
-    haveFingerprint_GmCertFlag = iBit(5),
+    available_GmCertFlag         = iBit(1), /* certificate provided by server */
+    trusted_GmCertFlag           = iBit(2), /* TOFU status */
+    timeVerified_GmCertFlag      = iBit(3), /* has not expired */
+    domainVerified_GmCertFlag    = iBit(4), /* cert matches server domain */
+    haveFingerprint_GmCertFlag   = iBit(5),
     authorityVerified_GmCertFlag = iBit(6),
 };
 
@@ -64,9 +64,14 @@ iDeclareNotifyFunc(GmRequest, Updated)
 iDeclareNotifyFunc(GmRequest, Finished)
 iDeclareAudienceGetter(GmRequest, updated)
 iDeclareAudienceGetter(GmRequest, finished)
+    
+typedef void (*iGmRequestProgressFunc)(iGmRequest *, size_t current, size_t total);
 
 void                enableFilters_GmRequest     (iGmRequest *, iBool enable);
 void                setUrl_GmRequest            (iGmRequest *, const iString *url);
+void                setTitanData_GmRequest      (iGmRequest *, const iString *mime,
+                                                 const iBlock *payload, const iString *token);
+void                setSendProgressFunc_GmRequest(iGmRequest *, iGmRequestProgressFunc func);
 void                submit_GmRequest            (iGmRequest *);
 void                cancel_GmRequest            (iGmRequest *);
 

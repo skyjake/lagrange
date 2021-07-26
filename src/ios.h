@@ -28,6 +28,7 @@ iDeclareType(Window)
 
 enum iHapticEffect {
     tap_HapticEffect,
+    gentleTap_HapticEffect,
 };
 
 void    setupApplication_iOS    (void);
@@ -35,6 +36,7 @@ void    setupWindow_iOS         (iWindow *window);
 iBool   processEvent_iOS        (const SDL_Event *);
 void    playHapticEffect_iOS    (enum iHapticEffect effect);
 void    exportDownloadedFile_iOS(const iString *path);
+void    pickFileForOpening_iOS  (void);
 
 iBool   isPhone_iOS             (void);
 void    safeAreaInsets_iOS      (float *left, float *top, float *right, float *bottom);
@@ -55,3 +57,6 @@ double  currentTime_AVFAudioPlayer  (const iAVFAudioPlayer *);
 double  duration_AVFAudioPlayer     (const iAVFAudioPlayer *);
 iBool   isStarted_AVFAudioPlayer    (const iAVFAudioPlayer *);
 iBool   isPaused_AVFAudioPlayer     (const iAVFAudioPlayer *);
+
+void    clearNowPlayingInfo_iOS     (void);
+void    updateNowPlayingInfo_iOS    (void);

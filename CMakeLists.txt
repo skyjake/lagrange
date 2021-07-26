@@ -18,27 +18,31 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.5.2
+    VERSION 1.6.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.4)  # pinned for TestFlight
-    set (IOS_BUNDLE_VERSION 8) # just increment this
+    set (IOS_BUNDLE_VERSION 21.6.15)
 endif ()
 
 # Build configuration.
-option (ENABLE_IPC              "Use IPC to communicate between running instances" ON)
-option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
-option (ENABLE_X11_SWRENDER     "Use software rendering under X11" OFF)
-option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
-option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
-option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
-option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
-option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ON)
-option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
+option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
+option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional text" ON)
+option (ENABLE_FRIBIDI_BUILD    "Build the GNU FriBidi library (if OFF, try pkg-config)" OFF)
+option (ENABLE_HARFBUZZ         "Use the HarfBuzz library to shape text" ON)
+option (ENABLE_HARFBUZZ_MINIMAL "Build the HarfBuzz library with minimal dependencies (if OFF, try pkg-config)" OFF)
+option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ON)
+option (ENABLE_IPC              "Use IPC to communicate between running instances" ON)
+option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
+option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
+option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
+option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
+option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
+option (ENABLE_X11_SWRENDER     "Use software rendering under X11" OFF)
 
 include (BuildType.cmake)
 include (res/Embed.cmake)
@@ -126,6 +130,8 @@ set (SOURCES
     src/gmdocument.h
     src/gmrequest.c
     src/gmrequest.h
+    src/gmtypesetter.c
+    src/gmtypesetter.h
     src/gmutil.c
     src/gmutil.h
     src/gopher.c
@@ -144,6 +150,8 @@ set (SOURCES
     src/periodic.h
     src/prefs.c
     src/prefs.h
+    src/sitespec.c
+    src/sitespec.h
     src/stb_image.h
     src/stb_image_resize.h
     src/stb_truetype.h
@@ -187,13 +195,15 @@ set (SOURCES
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
-    src/ui/sidebarwidget.h
+    src/ui/sidebarwidget.h    
     src/ui/text.c
     src/ui/text.h
     src/ui/touch.c
     src/ui/touch.h
     src/ui/translation.c
     src/ui/translation.h
+    src/ui/uploadwidget.c
+    src/ui/uploadwidget.h
     src/ui/util.c
     src/ui/util.h
     src/ui/visbuf.c
@@ -306,6 +316,18 @@ if (ENABLE_CUSTOM_FRAME AND MSYS)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
+if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND)
+    if (TARGET harfbuzz-lib)
+        target_link_libraries (app PUBLIC harfbuzz-lib)
+    else ()
+        target_link_libraries (app PUBLIC ${HARFBUZZ_LIBRARIES})
+    endif ()
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_HARFBUZZ=1)
+endif ()
+if (ENABLE_FRIBIDI AND FRIBIDI_FOUND)
+    target_link_libraries (app PUBLIC fribidi-lib)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_FRIBIDI=1)
+endif ()
 if (APPLE)
     if (IOS)
         target_link_libraries (app PUBLIC "-framework UIKit")

@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmcerts.h"
 #include "gmutil.h"
 #include "defs.h"
+#include "app.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -35,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 #include <ctype.h>
 
-static const char *filename_GmCerts_          = "trusted.txt";
+static const char *filename_GmCerts_          = "trusted.2.txt";
 static const char *identsDir_GmCerts_         = "idents";
 static const char *oldIdentsFilename_GmCerts_ = "idents.binary";
 static const char *identsFilename_GmCerts_    = "idents.lgr";
@@ -337,7 +338,7 @@ static void load_GmCerts_(iGmCerts *d) {
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (matchRange_RegExp(pattern, line, &m)) {
-                const iRangecc domain = capturedRange_RegExpMatch(&m, 1);
+                const iRangecc key    = capturedRange_RegExpMatch(&m, 1);
                 const iRangecc until  = capturedRange_RegExpMatch(&m, 2);
                 const iRangecc fp     = capturedRange_RegExpMatch(&m, 3);
                 time_t sec;
@@ -345,7 +346,7 @@ static void load_GmCerts_(iGmCerts *d) {
                 iDate untilDate;
                 initSinceEpoch_Date(&untilDate, sec);
                 insert_StringHash(d->trusted,
-                                  collect_String(newRange_String(domain)),
+                                  collect_String(newRange_String(key)),
                                   new_TrustEntry(collect_Block(hexDecode_Rangecc(fp)),
                                                  &untilDate));
             }
@@ -376,15 +377,35 @@ static void load_GmCerts_(iGmCerts *d) {
     }
 }
 
+iBool verify_GmCerts_(iTlsRequest *request, const iTlsCertificate *cert, int depth) {
+    iGmCerts *d = certs_App();
+    if (depth != 0) {
+        /* We only check the primary certificate. */
+        return iTrue;
+    }
+    const iAddress *address = address_TlsRequest(request);
+    iRangecc        domain  = range_String(hostName_Address(address));
+    uint16_t        port    = port_Address(address);
+#if 0
+    printf("[verify_GmCerts_] peer: %s\n", cstrCollect_String(toString_Address(address)));
+    printf("              hostname: %s\n", cstr_String(hostName_Address(address)));
+    printf("                  port: %u\n", port_Address(address));
+    printf("          cert subject: %s\n", cstrCollect_String(subject_TlsCertificate(cert)));
+#endif
+    return checkTrust_GmCerts(d, domain, port, cert);
+}
+
 void init_GmCerts(iGmCerts *d, const char *saveDir) {
     d->mtx = new_Mutex();
     initCStr_String(&d->saveDir, saveDir);
     d->trusted = new_StringHash();
     init_PtrArray(&d->idents);
     load_GmCerts_(d);
+    setVerifyFunc_TlsRequest(verify_GmCerts_);
 }
 
 void deinit_GmCerts(iGmCerts *d) {
+    setVerifyFunc_TlsRequest(NULL);
     iGuardMutex(d->mtx, {
         saveIdentities_GmCerts(d);
         iForEach(PtrArray, i, &d->idents) {
@@ -426,80 +447,98 @@ iBool verifyDomain_GmCerts(const iTlsCertificate *cert, iRangecc domain) {
     return iFalse;
 }
 
-iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *cert) {
+static void makeTrustKey_(iRangecc domain, uint16_t port, iString *key_out) {
+    punyEncodeDomain_Rangecc(domain, key_out);
+    appendFormat_String(key_out, ";%u", port ? port : GEMINI_DEFAULT_PORT);    
+}
+
+iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTlsCertificate *cert) {
     if (!cert) {
         return iFalse;
     }
-    if (isExpired_TlsCertificate(cert)) {
-        return iFalse;
-    }
     /* We trust CA verification implicitly. */
-    const iBool isAuth = verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus;
-    if (!isAuth && !verifyDomain_GmCerts(cert, domain)) {
+    const iBool isCATrusted = (verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus);
+    if (!verifyDomain_GmCerts(cert, domain)) {
         return iFalse;
     }
     /* TODO: Could call setTrusted_GmCerts() instead of duplicating the trust-setting. */
     /* Good certificate. If not already trusted, add it now. */
-    iString *key = newRange_String(domain);
     iDate until;
     validUntil_TlsCertificate(cert, &until);
-    iBlock *fingerprint = fingerprint_TlsCertificate(cert);
+    iBlock *fingerprint = publicKeyFingerprint_TlsCertificate(cert);
+    iString key;
+    init_String(&key);
+    makeTrustKey_(domain, port, &key);
     lock_Mutex(d->mtx);
-    iTrustEntry *trust = value_StringHash(d->trusted, key);
+    iBool ok = !isExpired_TlsCertificate(cert);
+    iTrustEntry *trust = value_StringHash(d->trusted, &key);
     if (trust) {
         /* We already have it, check if it matches the one we trust for this domain (if it's
            still valid. */
-        if (!isAuth && elapsedSeconds_Time(&trust->validUntil) < 0) {
+        if (elapsedSeconds_Time(&trust->validUntil) < 0) {
             /* Trusted cert is still valid. */
             const iBool isTrusted = cmp_Block(fingerprint, &trust->fingerprint) == 0;
-            unlock_Mutex(d->mtx);
-            delete_Block(fingerprint);
-            delete_String(key);
-            return isTrusted;
+            /* Even if we don't trust it, we will go ahead and update the trusted certificate
+               if a CA vouched for it. */
+            if (isTrusted || !isCATrusted) {
+                unlock_Mutex(d->mtx);
+                delete_Block(fingerprint);
+                deinit_String(&key);
+                return isTrusted;
+            }
         }
         /* Update the trusted cert. */
-        init_Time(&trust->validUntil, &until);
-        set_Block(&trust->fingerprint, fingerprint);
+        if (ok) {
+            init_Time(&trust->validUntil, &until);
+            set_Block(&trust->fingerprint, fingerprint);
+        }
     }
     else {
-        insert_StringHash(d->trusted, key, iClob(new_TrustEntry(fingerprint, &until)));
+        if (ok) {
+            insert_StringHash(d->trusted, &key, iClob(new_TrustEntry(fingerprint, &until)));
+        }
     }
-    save_GmCerts_(d);
+    if (ok) {
+        save_GmCerts_(d);
+    }
     unlock_Mutex(d->mtx);
     delete_Block(fingerprint);
-    delete_String(key);
-    return iTrue;
+    deinit_String(&key);
+    return ok;
 }
 
-void setTrusted_GmCerts(iGmCerts *d, iRangecc domain, const iBlock *fingerprint,
+void setTrusted_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iBlock *fingerprint,
                         const iDate *validUntil) {
-    iString *key = collectNew_String();
-    punyEncodeDomain_Rangecc(domain, key);
+    iString key;
+    init_String(&key);
+    makeTrustKey_(domain, port, &key);
     lock_Mutex(d->mtx);
-    iTrustEntry *trust = value_StringHash(d->trusted, key);
+    iTrustEntry *trust = value_StringHash(d->trusted, &key);
     if (trust) {
         init_Time(&trust->validUntil, validUntil);
         set_Block(&trust->fingerprint, fingerprint);
     }
     else {
-        insert_StringHash(d->trusted, key, iClob(trust = new_TrustEntry(fingerprint, validUntil)));
+        insert_StringHash(d->trusted, &key, iClob(trust = new_TrustEntry(fingerprint, validUntil)));
     }
     save_GmCerts_(d);
     unlock_Mutex(d->mtx);
+    deinit_String(&key);
 }
 
-iTime domainValidUntil_GmCerts(const iGmCerts *d, iRangecc domain) {
+iTime domainValidUntil_GmCerts(const iGmCerts *d, iRangecc domain, uint16_t port) {
     iTime expiry;
     iZap(expiry);
-    lock_Mutex(d->mtx);
     iString key;
-    initRange_String(&key, domain);
+    init_String(&key);
+    makeTrustKey_(domain, port, &key);
+    lock_Mutex(d->mtx);
     const iTrustEntry *trust = constValue_StringHash(d->trusted, &key);
     if (trust) {
         expiry = trust->validUntil;
     }
-    deinit_String(&key);
     unlock_Mutex(d->mtx);
+    deinit_String(&key);
     return expiry;
 }
 
@@ -555,8 +594,15 @@ static iGmIdentity *add_GmCerts_(iGmCerts *d, iTlsCertificate *cert, int flags) 
 iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const iString *commonName,
                                  const iString *email, const iString *userId, const iString *domain,
                                  const iString *org, const iString *country) {
+    /* Note: RFC 5280 defines a self-signed CA certificate as also being self-issued, so
+       to honor this definition we set the issuer and the subject to be fully equivalent. */
     const iTlsCertificateName names[] = {
         { issuerCommonName_TlsCertificateNameType,    commonName },
+        { issuerEmailAddress_TlsCertificateNameType,  !isEmpty_String(email)   ? email   : NULL },
+        { issuerUserId_TlsCertificateNameType,        !isEmpty_String(userId)  ? userId  : NULL },
+        { issuerDomain_TlsCertificateNameType,        !isEmpty_String(domain)  ? domain  : NULL },
+        { issuerOrganization_TlsCertificateNameType,  !isEmpty_String(org)     ? org     : NULL },
+        { issuerCountry_TlsCertificateNameType,       !isEmpty_String(country) ? country : NULL },
         { subjectCommonName_TlsCertificateNameType,   commonName },
         { subjectEmailAddress_TlsCertificateNameType, !isEmpty_String(email)   ? email   : NULL },
         { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId)  ? userId  : NULL },

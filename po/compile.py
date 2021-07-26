@@ -25,7 +25,8 @@ ESCAPES = {
     '"': '"',
     'n': '\n',
     'r': '\r',
-    't': '\t'
+    't': '\t',
+    'v': '\v',
 }
 
 if '--new' in sys.argv:
@@ -85,6 +86,8 @@ def parse_po(src):
                 msg_str = unquote(line)
                 if msg_id:
                     messages.append((msg_id, msg_str, msg_index))
+    if is_multi and msg_id:
+        messages.append((msg_id, msg_str, msg_index))
     # Apply plural indices to ids.
     pluralized = []
     for msg_id, msg_str, msg_index in messages:

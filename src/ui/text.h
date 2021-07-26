@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/vec2.h>
 
 #include <SDL_render.h>
 
@@ -44,12 +45,20 @@ enum iFontSize {
     max_FontSize,
 };
 
+iLocalDef enum iFontSize larger_FontSize(enum iFontSize size) {
+    if (size == uiLarge_FontSize || size == contentHuge_FontSize || size == contentMono_FontSize) {
+        return size; /* biggest available */
+    }
+    return size + 1;
+}
+
 enum iFontId {
     /* UI fonts: normal weight (1x, 1.125x, 1.33x, 1.67x) */
     default_FontId = 0,
     defaultMedium_FontId,
     defaultBig_FontId,
     defaultLarge_FontId,
+    defaultSmall_FontId,
     /* UI fonts: bold weight */
     defaultBold_FontId,
     defaultMediumBold_FontId,
@@ -116,12 +125,16 @@ iLocalDef iBool isJapanese_FontId(enum iFontId id) {
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)
 
 enum iTextFont {
-    nunito_TextFont,
+    undefined_TextFont = -1,
+    nunito_TextFont = 0,
     firaSans_TextFont,
     literata_TextFont,
     tinos_TextFont,
     sourceSans3_TextFont,
     iosevka_TextFont,
+    /* families: */
+    arabic_TextFont,
+    emojiAndSymbols_TextFont,
 };
 
 extern int gap_Text; /* affected by content font size */
@@ -137,13 +150,26 @@ void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `d
 void    resetFonts_Text         (void);
 
 int     lineHeight_Text         (int fontId);
-iInt2   measure_Text            (int fontId, const char *text);
-iInt2   measureRange_Text       (int fontId, iRangecc text);
 iRect   visualBounds_Text       (int fontId, iRangecc text);
-iInt2   advance_Text            (int fontId, const char *text);
-iInt2   advanceN_Text           (int fontId, const char *text, size_t n); /* `n` in characters */
-iInt2   advanceRange_Text       (int fontId, iRangecc text);
-iInt2   advanceWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
+
+iDeclareType(TextMetrics)
+
+struct Impl_TextMetrics {
+    iRect bounds;  /* logical bounds: multiples of line height, horiz. advance */
+    iInt2 advance; /* cursor offset */
+};
+
+iLocalDef int maxWidth_TextMetrics(const iTextMetrics d) {
+    return iMax(width_Rect(d.bounds), d.advance.x);
+}
+
+iTextMetrics    measureRange_Text       (int fontId, iRangecc text);
+iTextMetrics    measureWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
+iTextMetrics    measureN_Text           (int fontId, const char *text, size_t n); /* `n` in characters */
+
+iLocalDef iTextMetrics measure_Text(int fontId, const char *text) {
+    return measureRange_Text(fontId, range_CStr(text));
+}
 
 iInt2   tryAdvance_Text         (int fontId, iRangecc text, int width, const char **endPos);
 iInt2   tryAdvanceNoWrap_Text   (int fontId, iRangecc text, int width, const char **endPos);
@@ -162,11 +188,43 @@ void    draw_Text               (int fontId, iInt2 pos, int color, const char *t
 void    drawAlign_Text          (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
 void    drawCentered_Text       (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
 void    drawCenteredRange_Text  (int fontId, iRect rect, iBool alignVisual, int color, iRangecc text);
+void    drawCenteredOutline_Text(int fontId, iRect rect, iBool alignVisual, int outlineColor,
+                                 int fillColor, const char *text, ...);
 void    drawString_Text         (int fontId, iInt2 pos, int color, const iString *text);
 void    drawRange_Text          (int fontId, iInt2 pos, int color, iRangecc text);
 void    drawRangeN_Text         (int fontId, iInt2 pos, int color, iRangecc text, size_t maxLen);
+void    drawOutline_Text        (int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text);
 void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, int color, iRangecc text); /* bound does not wrap */
 int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
+
+iDeclareType(WrapText)
+
+enum iWrapTextMode {
+    anyCharacter_WrapTextMode,
+    word_WrapTextMode,
+};
+
+struct Impl_WrapText {
+    /* arguments */
+    iRangecc    text;
+    int         maxWidth;
+    enum iWrapTextMode mode;
+    iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance, iBool isBaseRTL);
+    void *      context;
+    iChar       overrideChar; /* use this for all characters instead of the real ones */
+    int         baseDir; /* set to +1 for LTR, -1 for RTL */
+    iInt2       hitPoint; /* sets hitChar_out */
+    const char *hitChar; /* sets hitAdvance_out */
+    /* output */
+    const char *hitChar_out;
+    iInt2       hitAdvance_out;
+    float       hitGlyphNormX_out; /* normalized X inside the glyph */
+    /* internal */
+    iRangecc    wrapRange_;
+};
+
+iTextMetrics    measure_WrapText    (iWrapText *, int fontId);
+iTextMetrics    draw_WrapText       (iWrapText *, int fontId, iInt2 pos, int color);
 
 SDL_Texture *   glyphCache_Text     (void);
 
@@ -178,14 +236,13 @@ iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iT
 /*-----------------------------------------------------------------------------------------------*/
 
 iDeclareType(TextBuf)
-iDeclareTypeConstructionArgs(TextBuf, int font, int color, const char *text)
+iDeclareTypeConstructionArgs(TextBuf, iWrapText *wrap, int fontId, int color)
     
 struct Impl_TextBuf {
     SDL_Texture *texture;
     iInt2        size;
 };
 
-iTextBuf *  newBound_TextBuf(int font, int color, int boundWidth, const char *text); /* does not word wrap */
-iTextBuf *  newWrap_TextBuf (int font, int color, int wrapWidth, const char *text);
+iTextBuf *  newRange_TextBuf (int font, int color, iRangecc text);
 
 void        draw_TextBuf    (const iTextBuf *, iInt2 pos, int color);

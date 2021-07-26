@@ -58,6 +58,8 @@ iLocalDef iBool isPerPixel_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
     return (ev->direction & perPixel_MouseWheelFlag) != 0;
 }
 
+iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
+
 #if defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI
 #   define KMOD_SECONDARY   KMOD_CTRL
@@ -226,7 +228,8 @@ void        openMenu_Widget     (iWidget *, iInt2 windowCoord);
 void        openMenuFlags_Widget(iWidget *, iInt2 windowCoord, iBool postCommands);
 void        closeMenu_Widget    (iWidget *);
 
-iLabelWidget *  findMenuItem_Widget (iWidget *menu, const char *command);
+iLabelWidget *  findMenuItem_Widget         (iWidget *menu, const char *command);
+void            setMenuItemDisabled_Widget  (iWidget *menu, const char *command, iBool disable);
 
 int         checkContextMenu_Widget (iWidget *, const SDL_Event *ev); /* see macro below */
 
@@ -242,6 +245,9 @@ iLabelWidget *  makeMenuButton_LabelWidget  (const char *label, const iMenuItem 
 
 iWidget *       makeTabs_Widget         (iWidget *parent);
 void            appendTabPage_Widget    (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
+void            appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int shortcut, int kmods);
+iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
+                                              iWidget **values);
 void            prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 iWidget *       removeTabPage_Widget    (iWidget *tabs, size_t index); /* returns the page */
 void            resizeToLargestPage_Widget  (iWidget *tabs);
@@ -258,7 +264,9 @@ size_t          tabCount_Widget         (const iWidget *tabs);
 /*-----------------------------------------------------------------------------------------------*/
 
 iWidget *   makeSheet_Widget            (const char *id);
+void        useSheetStyle_Widget        (iWidget *);
 iWidget *   makeDialogButtons_Widget    (const iMenuItem *actions, size_t numActions);
+iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
 
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,

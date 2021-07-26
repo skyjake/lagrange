@@ -177,6 +177,12 @@ msgstr "Open Location…"
 msgid "menu.downloads"
 msgstr "Show Downloads"
 
+msgid "menu.pageinfo"
+msgstr "Show Page Information"
+
+msgid "menu.unexpire"
+msgstr "Ignore Expiry and Continue Loading"
+
 msgid "menu.find"
 msgstr "Find on Page"
 
@@ -387,10 +393,13 @@ msgid "toolbar.outline"
 msgstr "Page Outline"
 
 msgid "hint.findtext"
-msgstr "Find text on page"
+msgstr "find text on page"
 
 msgid "status.query"
 msgstr "Search Query"
+
+msgid "status.query.tight"
+msgstr "Query"
 
 msgid "status.feeds"
 msgstr "Updating Feeds"
@@ -464,6 +473,9 @@ msgstr "Open in New Tab"
 
 msgid "menu.opentab.background"
 msgstr "Open in Background Tab"
+
+msgid "menu.openfile"
+msgstr "Open File…"
 
 msgid "menu.edit"
 msgstr "Edit…"
@@ -739,6 +751,18 @@ msgstr "Bookmark Link…"
 msgid "link.download"
 msgstr "Download Linked File"
 
+msgid "link.file.delete"
+msgstr "Delete File"
+
+msgid "heading.file.delete"
+msgstr "DELETE FILE"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Are you sure you want to delete this file?"
+
+msgid "dlg.file.delete"
+msgstr "Delete"
+
 msgid "heading.openlink"
 msgstr "OPEN LINK"
 
@@ -836,6 +860,54 @@ msgstr "IDENTITIES"
 # Interpret as "Other results..."
 msgid "heading.lookup.other"
 msgstr "OTHER"
+
+msgid "menu.page.upload"
+msgstr "Upload Page with Titan"
+
+msgid "heading.upload"
+msgstr "UPLOAD WITH TITAN"
+
+msgid "heading.upload.text"
+msgstr "Text"
+
+msgid "hint.upload.text"
+msgstr "enter text to upload"
+
+msgid "heading.upload.file"
+msgstr "File"
+
+msgid "upload.file.name"
+msgstr "File name:"
+
+msgid "upload.file.drophere"
+msgstr "(drag-and-drop a file on the window)"
+
+msgid "upload.file.size"
+msgstr "File size:"
+
+msgid "upload.mime"
+msgstr "MIME type:"
+
+msgid "upload.token"
+msgstr "Upload token:"
+
+msgid "hint.upload.token"
+msgstr "see server's instructions"
+
+msgid "dlg.upload.send"
+msgstr "Upload"
+
+msgid "upload.port"
+msgstr "Port…"
+
+msgid "heading.uploadport"
+msgstr "TITAN UPLOAD PORT"
+
+msgid "dlg.uploadport.msg"
+msgstr "Set the Titan server port to use for this URL.\nThe port is saved in the site-specific configuration."
+
+msgid "dlg.uploadport.set"
+msgstr "Set Port"
 
 msgid "heading.translate"
 msgstr "TRANSLATE PAGE"
@@ -1040,7 +1112,7 @@ msgid "heading.prefs.colors"
 msgstr "Colors"
 
 msgid "heading.prefs.fonts"
-msgstr "FONTS"
+msgstr "Fonts"
 
 # tab button
 msgid "heading.prefs.general"
@@ -1048,7 +1120,7 @@ msgstr "General"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "Interface"
+msgstr "UI"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -1061,8 +1133,11 @@ msgstr "Network"
 msgid "heading.prefs.paragraph"
 msgstr "PARAGRAPH"
 
+msgid "heading.prefs.uitheme"
+msgstr "UI COLORS"
+
 msgid "heading.prefs.pagecontent"
-msgstr "PAGE CONTENT"
+msgstr "PAGE COLORS"
 
 msgid "heading.prefs.proxies"
 msgstr "PROXIES"
@@ -1118,6 +1193,12 @@ msgstr "Right Tab"
 msgid "prefs.smoothscroll"
 msgstr "Smooth scrolling:"
 
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Keyboard speed:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Mouse speed:"
+
 msgid "prefs.imageloadscroll"
 msgstr "Load image on scroll:"
 
@@ -1159,6 +1240,15 @@ msgstr "UI scale factor:"
 
 msgid "prefs.customframe"
 msgstr "Custom window frame:"
+
+msgid "prefs.returnkey"
+msgstr "Return key behavior:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Line break"
+
+msgid "prefs.returnkey.accept"
+msgstr "Accept"
 
 msgid "prefs.animate"
 msgstr "Animations:"
@@ -1228,6 +1318,9 @@ msgstr "On Light"
 msgid "prefs.userfont"
 msgstr "Symbol font:"
 
+msgid "hint.prefs.userfont"
+msgstr "path of a TrueType font"
+
 msgid "prefs.linewidth"
 msgstr "Line width:"
 
@@ -1236,6 +1329,9 @@ msgstr "Normal"
 
 msgid "prefs.linewidth.fill"
 msgstr "Fill"
+
+msgid "prefs.linespacing"
+msgstr "Line spacing:"
 
 msgid "prefs.quoteicon"
 msgstr "Quote indicator:"
@@ -1257,6 +1353,9 @@ msgstr "Decode URLs:"
 
 msgid "prefs.cachesize"
 msgstr "Cache size:"
+
+msgid "prefs.memorysize"
+msgstr "Memory size:"
 
 msgid "prefs.ca.file"
 msgstr "CA file:"
@@ -1399,6 +1498,9 @@ msgstr "Split view menu:"
 msgid "keys.hoverurl"
 msgstr "Toggle show URL on hover"
 
+msgid "keys.upload"
+msgstr "Upload page with Titan"
+
 msgid "error.badstatus"
 msgstr "Unknown Status Code"
 
@@ -1458,6 +1560,18 @@ msgstr "Network/TLS Failure"
 
 msgid "error.tls.msg"
 msgstr "Failed to communicate with the server. Here is the error message:"
+
+msgid "error.certexpired"
+msgstr "Expired Certificate"
+
+msgid "error.certexpired.msg"
+msgstr "Connection to the server was cancelled because its TLS certificate has expired."
+
+msgid "error.certverify"
+msgstr "Untrusted Server"
+
+msgid "error.certverify.msg"
+msgstr "Connection to the server was cancelled because its TLS certificate does not match the one we trust. Please check if the server has announced a certificate change. If not, it is possible that a malicious third party is masquerading as the server you tried to reach.\n\nThe certificate can be marked as trusted in Page Information."
 
 msgid "error.temporary"
 msgstr "Temporary Failure"

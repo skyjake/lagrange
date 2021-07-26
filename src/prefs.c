@@ -39,13 +39,17 @@ void init_Prefs(iPrefs *d) {
     d->sideIcon          = iTrue;
     d->hideToolbarOnScroll = iTrue;
     d->pinSplit          = 1;
+    d->returnKey         = default_ReturnKeyBehavior;
     d->hoverLink         = iFalse;
     d->smoothScrolling   = iTrue;
+    d->smoothScrollSpeed[keyboard_ScrollType] = 10;
+    d->smoothScrollSpeed[mouse_ScrollType]    = 10;
     d->loadImageInsteadOfScrolling = iFalse;
     d->collapsePreOnLoad = iFalse;
     d->openArchiveIndexPages = iTrue;
     d->decodeUserVisibleURLs = iTrue;
     d->maxCacheSize      = 10;
+    d->maxMemorySize     = 200;
     d->font              = nunito_TextFont;
     d->headingFont       = nunito_TextFont;
     d->monospaceGemini   = iFalse;
@@ -53,6 +57,7 @@ void init_Prefs(iPrefs *d) {
     d->boldLinkDark      = iTrue;
     d->boldLinkLight     = iTrue;
     d->lineWidth         = 38;
+    d->lineSpacing       = 1.0f;
     d->bigFirstParagraph = iTrue;
     d->quoteIcon         = iTrue;
     d->centerShortDocs   = iTrue;

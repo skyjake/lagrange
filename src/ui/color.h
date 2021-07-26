@@ -187,26 +187,26 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define asciiBase_ColorEscape       33
 #define asciiExtended_ColorEscape   (128 - asciiBase_ColorEscape)
 
-#define restore_ColorEscape         "\r\x24" /* ASCII Cancel */
-#define black_ColorEscape           "\r!"
-#define gray25_ColorEscape          "\r\""
-#define gray50_ColorEscape          "\r#"
-#define gray75_ColorEscape          "\r$"
-#define white_ColorEscape           "\r%"
-#define brown_ColorEscape           "\r&"
-#define orange_ColorEscape          "\r'"
-#define teal_ColorEscape            "\r("
-#define cyan_ColorEscape            "\r)"
-#define yellow_ColorEscape          "\r*"
-#define red_ColorEscape             "\r+"
-#define magenta_ColorEscape         "\r,"
-#define blue_ColorEscape            "\r-"
-#define green_ColorEscape           "\r."
-#define uiText_ColorEscape          "\r4"
-#define uiTextAction_ColorEscape    "\r<"
-#define uiTextCaution_ColorEscape   "\r="
-#define uiTextStrong_ColorEscape    "\r:"
-#define uiHeading_ColorEscape       "\rR"
+#define restore_ColorEscape         "\v\x24" /* ASCII Cancel */
+#define black_ColorEscape           "\v!"
+#define gray25_ColorEscape          "\v\""
+#define gray50_ColorEscape          "\v#"
+#define gray75_ColorEscape          "\v$"
+#define white_ColorEscape           "\v%"
+#define brown_ColorEscape           "\v&"
+#define orange_ColorEscape          "\v'"
+#define teal_ColorEscape            "\v("
+#define cyan_ColorEscape            "\v)"
+#define yellow_ColorEscape          "\v*"
+#define red_ColorEscape             "\v+"
+#define magenta_ColorEscape         "\v,"
+#define blue_ColorEscape            "\v-"
+#define green_ColorEscape           "\v."
+#define uiText_ColorEscape          "\v4"
+#define uiTextAction_ColorEscape    "\v<"
+#define uiTextCaution_ColorEscape   "\v="
+#define uiTextStrong_ColorEscape    "\v:"
+#define uiHeading_ColorEscape       "\vR"
 
 iDeclareType(Color)
 iDeclareType(HSLColor)
@@ -244,7 +244,9 @@ iLocalDef void setHsl_Color(int color, iHSLColor hsl) {
     set_Color(color, rgb_HSLColor(hsl));
 }
 
+iBool           loadPalette_Color       (const char *path);
 void            setThemePalette_Color   (enum iColorTheme theme);
 
 iColor          ansiForeground_Color    (iRangecc escapeSequence, int fallback);
 const char *    escape_Color            (int color);
+

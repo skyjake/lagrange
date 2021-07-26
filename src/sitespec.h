@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -22,35 +22,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "widget.h"
+#include <the_Foundation/string.h>
 
-enum iSidebarMode {
-    bookmarks_SidebarMode,
-    feeds_SidebarMode,
-    history_SidebarMode,
-    identities_SidebarMode,
-    documentOutline_SidebarMode,
-    max_SidebarMode
+iDeclareType(SiteSpec)
+    
+enum iSiteSpecKey {
+    titanPort_SiteSpecKey,
 };
+    
+void    init_SiteSpec       (const char *saveDir);
+void    deinit_SiteSpec     (void);
 
-const char *    icon_SidebarMode    (enum iSidebarMode mode);
-
-enum iSidebarSide {
-    left_SidebarSide,
-    right_SidebarSide,
-};
-
-enum iFeedsMode {
-    all_FeedsMode,
-    unread_FeedsMode
-};
-
-iDeclareWidgetClass(SidebarWidget)
-iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
-
-iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebarMode mode);
-void                setButtonFont_SidebarWidget (iSidebarWidget *, int font);
-
-enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
-float               width_SidebarWidget         (const iSidebarWidget *);
-void                setWidth_SidebarWidget      (iSidebarWidget *, float widthAsGaps);
+void    setValue_SiteSpec   (const iString *site, enum iSiteSpecKey key, int value); /* changes saved immediately */
+int     value_SiteSpec      (const iString *site, enum iSiteSpecKey key);

@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "defs.h"
 #include "gmutil.h"
 #include "media.h"
 
@@ -64,27 +65,35 @@ iBool isDark_GmDocumentTheme(enum iGmDocumentTheme);
 
 typedef uint16_t iGmLinkId;
 
-enum iGmLinkFlag {
-    gemini_GmLinkFlag             = iBit(1),
-    gopher_GmLinkFlag             = iBit(2),
-    finger_GmLinkFlag             = iBit(3),
-    http_GmLinkFlag               = iBit(4),
-    file_GmLinkFlag               = iBit(5),
-    data_GmLinkFlag               = iBit(6),
-    about_GmLinkFlag              = iBit(7),
-    mailto_GmLinkFlag             = iBit(8),
-    supportedProtocol_GmLinkFlag  = 0xff,
-    remote_GmLinkFlag             = iBit(9),
-    humanReadable_GmLinkFlag      = iBit(10), /* link has a human-readable description */
-    imageFileExtension_GmLinkFlag = iBit(11),
-    audioFileExtension_GmLinkFlag = iBit(12),
-    content_GmLinkFlag            = iBit(13), /* content visible below */
-    visited_GmLinkFlag            = iBit(14), /* in the history */
-    permanent_GmLinkFlag          = iBit(15), /* content cannot be dismissed; media link */
-    query_GmLinkFlag              = iBit(16), /* Gopher query link */
-    iconFromLabel_GmLinkFlag      = iBit(17), /* use an Emoji/special character from label */
-    isOpen_GmLinkFlag             = iBit(18), /* currently open in a tab */
+enum iGmLinkScheme {
+    gemini_GmLinkScheme = 1,
+    titan_GmLinkScheme,
+    gopher_GmLinkScheme,
+    finger_GmLinkScheme,
+    http_GmLinkScheme,
+    file_GmLinkScheme,
+    data_GmLinkScheme,
+    about_GmLinkScheme,
+    mailto_GmLinkScheme,
 };
+
+enum iGmLinkFlag {
+    supportedScheme_GmLinkFlag    = 0x3f, /* mask of bits 1...6 */
+    remote_GmLinkFlag             = iBit(7),
+    humanReadable_GmLinkFlag      = iBit(8), /* link has a human-readable description */
+    imageFileExtension_GmLinkFlag = iBit(9),
+    audioFileExtension_GmLinkFlag = iBit(10),
+    content_GmLinkFlag            = iBit(11), /* content visible below */
+    visited_GmLinkFlag            = iBit(12), /* in the history */
+    permanent_GmLinkFlag          = iBit(13), /* content cannot be dismissed; media link */
+    query_GmLinkFlag              = iBit(14), /* Gopher query link */
+    iconFromLabel_GmLinkFlag      = iBit(15), /* use an Emoji/special character from label */
+    isOpen_GmLinkFlag             = iBit(16), /* currently open in a tab */
+};
+
+iLocalDef enum iGmLinkScheme scheme_GmLinkFlag(int flags) {
+    return flags & supportedScheme_GmLinkFlag;
+}
 
 struct Impl_GmHeading {
     iRangecc text;
@@ -125,12 +134,15 @@ enum iGmRunMediaType {
 
 struct Impl_GmRun {
     iRangecc  text;
-    uint8_t   font;
-    uint8_t   color;
-    uint8_t   flags;
-    uint8_t   mediaType;
     iRect     bounds;    /* used for hit testing, may extend to edges */
     iRect     visBounds; /* actual visual bounds */
+    struct {
+        uint16_t   color : 8;
+        uint16_t   font  : 7;
+        uint16_t   isRTL : 1;
+    } textParams;
+    uint8_t   flags;
+    uint8_t   mediaType;
     uint16_t  preId;     /* preformatted block ID (sequential) */
     iGmLinkId linkId;    /* zero for non-links */
     uint16_t  mediaId;   /* zero if not an image */
@@ -148,34 +160,39 @@ iRangecc    findLoc_GmRun   (const iGmRun *, iInt2 pos);
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
 
-enum iGmDocumentFormat {
-    undefined_GmDocumentFormat = -1,
-    gemini_GmDocumentFormat    = 0,
-    plainText_GmDocumentFormat,
-};
-
 enum iGmDocumentBanner {
     none_GmDocumentBanner,
     siteDomain_GmDocumentBanner,
     certificateWarning_GmDocumentBanner,
 };
 
+enum iGmDocumentUpdate {
+    partial_GmDocumentUpdate, /* appending more content */
+    final_GmDocumentUpdate,   /* process all lines, including the last one if not terminated */
+};
+
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
-void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
+void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat format);
 void    setBanner_GmDocument    (iGmDocument *, enum iGmDocumentBanner type);
 void    setWidth_GmDocument     (iGmDocument *, int width);
 void    redoLayout_GmDocument   (iGmDocument *);
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
-void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
+void    setSource_GmDocument    (iGmDocument *, const iString *source, int width,
+                                 enum iGmDocumentUpdate updateType);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 
-void    reset_GmDocument        (iGmDocument *); /* free images */
+void    updateVisitedLinks_GmDocument   (iGmDocument *); /* check all links for visited status */
+void    invalidatePalette_GmDocument    (iGmDocument *);
+void    makePaletteGlobal_GmDocument    (const iGmDocument *); /* copies document colors to the global palette */
+
+//void    reset_GmDocument        (iGmDocument *); /* free images */
 
 typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 
 iMedia *        media_GmDocument            (iGmDocument *);
 const iMedia *  constMedia_GmDocument       (const iGmDocument *);
+const iString * url_GmDocument              (const iGmDocument *);
 
 void            render_GmDocument           (const iGmDocument *, iRangei visRangeY,
                                              iGmDocumentRenderFunc render, void *); /* includes partial overlaps */
@@ -190,6 +207,7 @@ enum iGmDocumentBanner bannerType_GmDocument(const iGmDocument *);
 const iString * bannerText_GmDocument       (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);
+size_t          memorySize_GmDocument       (const iGmDocument *); /* bytes */
 
 iRangecc        findText_GmDocument                 (const iGmDocument *, const iString *text, const char *start);
 iRangecc        findTextBefore_GmDocument           (const iGmDocument *, const iString *text, const char *before);

@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -24,33 +24,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "widget.h"
 
-enum iSidebarMode {
-    bookmarks_SidebarMode,
-    feeds_SidebarMode,
-    history_SidebarMode,
-    identities_SidebarMode,
-    documentOutline_SidebarMode,
-    max_SidebarMode
-};
-
-const char *    icon_SidebarMode    (enum iSidebarMode mode);
-
-enum iSidebarSide {
-    left_SidebarSide,
-    right_SidebarSide,
-};
-
-enum iFeedsMode {
-    all_FeedsMode,
-    unread_FeedsMode
-};
-
-iDeclareWidgetClass(SidebarWidget)
-iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
-
-iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebarMode mode);
-void                setButtonFont_SidebarWidget (iSidebarWidget *, int font);
-
-enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
-float               width_SidebarWidget         (const iSidebarWidget *);
-void                setWidth_SidebarWidget      (iSidebarWidget *, float widthAsGaps);
+iDeclareWidgetClass(UploadWidget)
+iDeclareObjectConstruction(UploadWidget)
+    
+iDeclareType(DocumentWidget)
+    
+void    setUrl_UploadWidget             (iUploadWidget *, const iString *url);
+void    setResponseViewer_UploadWidget  (iUploadWidget *, iDocumentWidget *doc);

@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "history.h"
 #include "ipc.h"
 #include "periodic.h"
+#include "sitespec.h"
 #include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
@@ -41,6 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/labelwidget.h"
 #include "ui/root.h"
 #include "ui/sidebarwidget.h"
+#include "ui/uploadwidget.h"
 #include "ui/text.h"
 #include "ui/util.h"
 #include "ui/window.h"
@@ -58,6 +60,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
+
+//#define LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION 1
 
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
@@ -208,10 +212,15 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
+    appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
+    appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[mouse_ScrollType], mouse_ScrollType);
     appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
+    appendFormat_String(str, "memorysize.set arg:%d\n", d->prefs.maxMemorySize);
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
+    appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
+    appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
     /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
     appendFormat_String(str, "prefs.animate.changed arg:%d\n", d->prefs.uiAnimations);
     appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
@@ -744,6 +753,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     init_Prefs(&d->prefs);
+    init_SiteSpec(dataDir_App_());
     setCStr_String(&d->prefs.downloadDir, downloadDir_App_());
     set_Atomic(&d->pendingRefresh, iFalse);
     d->isRunning = iFalse;
@@ -760,6 +770,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     setupApplication_iOS();
 #endif
     init_Keys();
+    loadPalette_Color(dataDir_App_());
     setThemePalette_Color(d->prefs.theme); /* default UI colors */
     loadPrefs_App_(d);
     load_Keys(dataDir_App_());
@@ -823,6 +834,7 @@ static void deinit_App(iApp *d) {
     deinit_Feeds();
     save_Keys(dataDir_App_());
     deinit_Keys();
+    deinit_SiteSpec();
     savePrefs_App_(d);
     deinit_Prefs(&d->prefs);
     save_Bookmarks(d->bookmarks, dataDir_App_());
@@ -918,13 +930,25 @@ const iString *debugInfo_App(void) {
     extern char **environ; /* The environment variables. */
     iApp *d = &app_;
     iString *msg = collectNew_String();
+    iObjectList *docs = iClob(listDocuments_App(NULL));
     format_String(msg, "# Debug information\n");
+    appendFormat_String(msg, "## Memory usage\n"); {
+        iMemInfo total = { 0, 0 };
+        iForEach(ObjectList, i, docs) {
+            iDocumentWidget *doc = i.object;
+            iMemInfo usage = memoryUsage_History(history_DocumentWidget(doc));
+            total.cacheSize += usage.cacheSize;
+            total.memorySize += usage.memorySize;
+        }
+        appendFormat_String(msg, "Total cache: %.3f MB\n", total.cacheSize / 1.0e6f);
+        appendFormat_String(msg, "Total memory: %.3f MB\n", total.memorySize / 1.0e6f);
+    }
     appendFormat_String(msg, "## Documents\n");
-    iForEach(ObjectList, k, iClob(listDocuments_App(NULL))) {
+    iForEach(ObjectList, k, docs) {
         iDocumentWidget *doc = k.object;
         appendFormat_String(msg, "### Tab %d.%zu: %s\n",
-                            constAs_Widget(doc)->root == get_Window()->roots[0] ? 0 : 1,
-                            childIndex_Widget(constAs_Widget(doc)->parent, k.object),
+                            constAs_Widget(doc)->root == get_Window()->roots[0] ? 1 : 2,
+                            childIndex_Widget(constAs_Widget(doc)->parent, k.object) + 1,
                             cstr_String(bookmarkTitle_DocumentWidget(doc)));
         append_String(msg, collect_String(debugInfo_History(history_DocumentWidget(doc))));
     }
@@ -977,6 +1001,33 @@ void trimCache_App(void) {
         }
     }
     iRelease(docs);
+}
+
+void trimMemory_App(void) {
+    iApp *d = &app_;
+    size_t memorySize = 0;
+    const size_t limit = d->prefs.maxMemorySize * 1000000;
+    iObjectList *docs = listDocuments_App(NULL);
+    iForEach(ObjectList, i, docs) {
+        memorySize += memorySize_History(history_DocumentWidget(i.object));
+    }
+    init_ObjectListIterator(&i, docs);
+    iBool wasPruned = iFalse;
+    while (memorySize > limit) {
+        iDocumentWidget *doc = i.object;
+        const size_t pruned = pruneLeastImportantMemory_History(history_DocumentWidget(doc));
+        if (pruned) {
+            memorySize -= pruned;
+            wasPruned = iTrue;
+        }
+        next_ObjectListIterator(&i);
+        if (!i.value) {
+            if (!wasPruned) break;
+            wasPruned = iFalse;
+            init_ObjectListIterator(&i, docs);
+        }
+    }
+    iRelease(docs);    
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
@@ -1049,6 +1100,13 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 postRefresh_App();
                 break;
             case SDL_APP_WILLENTERBACKGROUND:
+#if defined (iPlatformAppleMobile)
+                updateNowPlayingInfo_iOS();
+#endif
+                setFreezeDraw_Window(d->window, iTrue);
+                savePrefs_App_(d);
+                saveState_App_(d);
+                break;
             case SDL_APP_TERMINATING:
                 setFreezeDraw_Window(d->window, iTrue);
                 savePrefs_App_(d);
@@ -1149,6 +1207,45 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     ev.wheel.x = -ev.wheel.x;
 #endif
                 }
+#if defined (LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION)
+                /* Convert mouse events to finger events to test the touch handling. */ {
+                    static float xPrev = 0.0f;
+                    static float yPrev = 0.0f;
+                    if (ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP) {
+                        const float xf = (d->window->pixelRatio * ev.button.x) / (float) d->window->size.x;
+                        const float yf = (d->window->pixelRatio * ev.button.y) / (float) d->window->size.y;
+                        ev.type = (ev.type == SDL_MOUSEBUTTONDOWN ? SDL_FINGERDOWN : SDL_FINGERUP);
+                        ev.tfinger.x = xf;
+                        ev.tfinger.y = yf;
+                        ev.tfinger.dx = xf - xPrev;
+                        ev.tfinger.dy = yf - yPrev;
+                        xPrev = xf;
+                        yPrev = yf;
+                        ev.tfinger.fingerId = 0x1234;
+                        ev.tfinger.pressure = 1.0f;
+                        ev.tfinger.timestamp = SDL_GetTicks();
+                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;
+                    }
+                    else if (ev.type == SDL_MOUSEMOTION) {
+                        if (~ev.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+                            continue; /* only when pressing a button */    
+                        }
+                        const float xf = (d->window->pixelRatio * ev.motion.x) / (float) d->window->size.x;
+                        const float yf = (d->window->pixelRatio * ev.motion.y) / (float) d->window->size.y;
+                        ev.type = SDL_FINGERMOTION;
+                        ev.tfinger.x = xf;
+                        ev.tfinger.y = yf;
+                        ev.tfinger.dx = xf - xPrev;
+                        ev.tfinger.dy = yf - yPrev;
+                        xPrev = xf;
+                        yPrev = yf;
+                        ev.tfinger.fingerId = 0x1234;
+                        ev.tfinger.pressure = 1.0f;
+                        ev.tfinger.timestamp = SDL_GetTicks();
+                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;                        
+                    }
+                }
+#endif
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (!wasUsed) {
                     /* There may be a key bindings for this. */
@@ -1514,6 +1611,15 @@ static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
     }
 }
 
+static void updateScrollSpeedButtons_(iWidget *d, enum iScrollType type, const int value) {
+    const char *typeStr = (type == mouse_ScrollType ? "mouse" : "keyboard");
+    for (int i = 0; i <= 40; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.scrollspeed.%s.%d", typeStr, i)),
+                        selected_WidgetFlag,
+                        i == value);
+    }
+}
+
 static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selectedCommand) {
     iWidget *menu = findChild_Widget(as_Widget(dropButton), "menu");
     iForEach(ObjectList, i, children_Widget(menu)) {
@@ -1565,7 +1671,9 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommandf_App("searchurl address:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.searchurl")));
         postCommandf_App("cachesize.set arg:%d",
-                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));        
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
+        postCommandf_App("memorysize.set arg:%d",
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.memorysize"))));
         postCommandf_App("ca.file path:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.ca.file")));
         postCommandf_App("ca.path path:%s",
@@ -1596,8 +1704,17 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         setFlags_Widget(findChild_Widget(d, "prefs.quoteicon.1"), selected_WidgetFlag, arg == 1);
         return iFalse;
     }
+    else if (equal_Command(cmd, "returnkey.set")) {
+        updateDropdownSelection_(findChild_Widget(d, "prefs.returnkey"),
+                                 format_CStr("returnkey.set arg:%d", arg_Command(cmd)));
+        return iFalse;
+    }
     else if (equal_Command(cmd, "pinsplit.set")) {
         updatePrefsPinSplitButtons_(d, arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "scrollspeed")) {
+        updateScrollSpeedButtons_(d, argLabel_Command(cmd, "type"), arg_Command(cmd));
         return iFalse;
     }
     else if (equal_Command(cmd, "doctheme.dark.set")) {
@@ -1615,6 +1732,12 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     else if (equal_Command(cmd, "headingfont.set")) {
         updateFontButton_(findChild_Widget(d, "prefs.headingfont"), arg_Command(cmd));
         return iFalse;
+    }
+    else if (startsWith_CStr(cmd, "input.ended id:prefs.linespacing")) {    
+        /* Apply line spacing changes immediately. */
+        const iInputWidget *lineSpacing = findWidget_App("prefs.linespacing");
+        postCommandf_App("linespacing.set arg:%f", toFloat_String(text_InputWidget(lineSpacing)));
+        return iTrue;
     }
     else if (equal_Command(cmd, "prefs.ostheme.changed")) {
         postCommandf_App("ostheme arg:%d", arg_Command(cmd));
@@ -1967,6 +2090,13 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.smoothScrolling = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "scrollspeed")) {
+        const int type = argLabel_Command(cmd, "type");
+        if (type == keyboard_ScrollType || type == mouse_ScrollType) {
+            d->prefs.smoothScrollSpeed[type] = iClamp(arg_Command(cmd), 1, 40);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "decodeurls")) {
         d->prefs.decodeUserVisibleURLs = arg_Command(cmd);
         return iTrue;
@@ -1978,8 +2108,12 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "hidetoolbarscroll")) {
         d->prefs.hideToolbarOnScroll = arg_Command(cmd);
         if (!d->prefs.hideToolbarOnScroll) {
-            showToolbars_Root(get_Root(), iTrue);
+            showToolbar_Root(get_Root(), iTrue);
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "returnkey.set")) {
+        d->prefs.returnKey = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
@@ -2025,6 +2159,11 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "linewidth.set")) {
         d->prefs.lineWidth = iMax(20, arg_Command(cmd));
         postCommand_App("document.layout.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "linespacing.set")) {
+        d->prefs.lineSpacing = iMax(0.5f, argf_Command(cmd));
+        postCommand_App("document.layout.changed redo:1");
         return iTrue;
     }
     else if (equal_Command(cmd, "quoteicon.set")) {
@@ -2127,6 +2266,13 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "memorysize.set")) {
+        d->prefs.maxMemorySize = arg_Command(cmd);
+        if (d->prefs.maxMemorySize <= 0) {
+            d->prefs.maxMemorySize = 0;
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "searchurl")) {
         iString *url = &d->prefs.searchUrl;
         setCStr_String(url, suffixPtr_Command(cmd, "address"));
@@ -2188,9 +2334,19 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "open")) {
         iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
-        const iBool noProxy = argLabel_Command(cmd, "noproxy");
+        const iBool noProxy     = argLabel_Command(cmd, "noproxy") != 0;
+        const iBool fromSidebar = argLabel_Command(cmd, "fromsidebar") != 0;
         iUrl parts;
         init_Url(&parts, url);
+        if (equalCase_Rangecc(parts.scheme, "titan")) {
+            iUploadWidget *upload = new_UploadWidget();
+            setUrl_UploadWidget(upload, url);
+            setResponseViewer_UploadWidget(upload, document_App());
+            addChild_Widget(get_Root()->widget, iClob(upload));
+            finalizeSheet_Mobile(as_Widget(upload));
+            postRefresh_App();
+            return iTrue;
+        }
         if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
             ((noProxy || isEmpty_String(&d->prefs.httpProxy)) &&
              (equalCase_Rangecc(parts.scheme, "http") ||
@@ -2239,7 +2395,9 @@ iBool handleCommand_App(const char *cmd) {
         else {
             urlEncodePath_String(url);
         }
-        setUrlFromCache_DocumentWidget(doc, url, isHistory);
+        setUrlFlags_DocumentWidget(doc, url,
+           (isHistory   ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
+           (fromSidebar ? openedFromSidebar_DocumentWidgetSetUrlFlag : 0));
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */
         const iRangecc gotoHeading = range_Command(cmd, "gotoheading");
@@ -2253,6 +2411,36 @@ iBool handleCommand_App(const char *cmd) {
                                  collect_String(newRange_String(gotoUrlHeading)))));
         }
         setCurrent_Root(oldRoot);
+    }
+    else if (equal_Command(cmd, "file.open")) {
+        const char *path = suffixPtr_Command(cmd, "path");
+        if (path) {
+            postCommandf_App("open temp:%d url:%s",
+                             argLabel_Command(cmd, "temp"),
+                             makeFileUrl_CStr(path));
+            return iTrue;
+        }
+#if defined (iPlatformAppleMobile)
+        pickFileForOpening_iOS();
+#endif
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "file.delete")) {
+        const char *path = suffixPtr_Command(cmd, "path");
+        if (argLabel_Command(cmd, "confirm")) {
+            makeQuestion_Widget(
+                uiHeading_ColorEscape "${heading.file.delete}",
+                format_CStr("${dlg.file.delete.confirm}\n%s", path),
+                (iMenuItem[]){
+                    { "${cancel}", 0, 0, NULL },
+                    { uiTextCaution_ColorEscape "${dlg.file.delete}", 0, 0,
+                      format_CStr("!file.delete path:%s", path) } },
+                2);
+        }
+        else {
+            remove(path);
+        }
+        return iTrue;
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
         /* TODO: How should cancelled requests be treated in the history? */
@@ -2358,7 +2546,11 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
         setText_InputWidget(findChild_Widget(dlg, "prefs.userfont"), &d->prefs.symbolFontPath);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
+        updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
+        updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
         updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
+        updateDropdownSelection_(findChild_Widget(dlg, "prefs.returnkey"),
+                                 format_CStr("returnkey.set arg:%d", d->prefs.returnKey));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));
@@ -2385,6 +2577,8 @@ iBool handleCommand_App(const char *cmd) {
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,
             iTrue);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.linespacing"),
+                            collectNewFormat_String("%.2f", d->prefs.lineSpacing));
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.quoteicon.%d", d->prefs.quoteIcon)),
             selected_WidgetFlag,
@@ -2405,6 +2599,8 @@ iBool handleCommand_App(const char *cmd) {
             iTrue);
         setText_InputWidget(findChild_Widget(dlg, "prefs.cachesize"),
                             collectNewFormat_String("%d", d->prefs.maxCacheSize));
+        setText_InputWidget(findChild_Widget(dlg, "prefs.memorysize"),
+                            collectNewFormat_String("%d", d->prefs.maxMemorySize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.searchUrl);
         setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.caFile);
@@ -2491,11 +2687,16 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "feeds.update.started")) {
-        showCollapsed_Widget(findWidget_App("feeds.progress"), iTrue);
+        iAnyObject *prog = findWidget_Root("feeds.progress");
+        const iWidget *navBar = findWidget_Root("navbar");
+        updateTextAndResizeWidthCStr_LabelWidget(
+            prog, flags_Widget(navBar) & tight_WidgetFlag || deviceType_App() == phone_AppDeviceType ?
+                                                 "\u2605" : "\u2605 ${status.feeds}");
+        showCollapsed_Widget(prog, iTrue);
         return iFalse;
     }
     else if (equal_Command(cmd, "feeds.update.finished")) {
-        showCollapsed_Widget(findWidget_App("feeds.progress"), iFalse);
+        showCollapsed_Widget(findWidget_Root("feeds.progress"), iFalse);
         refreshFinished_Feeds();
         postRefresh_App();
         return iFalse;
@@ -2677,7 +2878,7 @@ iStringSet *listOpenURLs_App(void) {
     iStringSet *set = new_StringSet();
     iObjectList *docs = listDocuments_App(NULL);
     iConstForEach(ObjectList, i, docs) {
-        insert_StringSet(set, withSpacesEncoded_String(url_DocumentWidget(i.object)));
+        insert_StringSet(set, canonicalUrl_String(url_DocumentWidget(i.object)));
     }
     iRelease(docs);
     return set;

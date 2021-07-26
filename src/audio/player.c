@@ -455,6 +455,8 @@ struct Impl_Player {
     iAVFAudioPlayer * avfPlayer; /* iOS */
 };
 
+static iPlayer *activePlayer_;
+
 iDefineTypeConstruction(Player)
 
 static size_t sampleSize_Player_(const iPlayer *d) {
@@ -655,8 +657,14 @@ void deinit_Player(iPlayer *d) {
 #if defined (iPlatformAppleMobile)
     if (d->avfPlayer) {
         delete_AVFAudioPlayer(d->avfPlayer);
+        if (activePlayer_ == d) {
+            clearNowPlayingInfo_iOS();
+        }
     }
 #endif
+    if (activePlayer_ == d) {
+        activePlayer_ = NULL;
+    }
 }
 
 iBool isStarted_Player(const iPlayer *d) {
@@ -724,6 +732,13 @@ void updateSourceData_Player(iPlayer *d, const iString *mimeType, const iBlock *
     unlock_Mutex(&input->mtx);
 }
 
+size_t sourceDataSize_Player(const iPlayer *d) {
+    lock_Mutex(&d->data->mtx);
+    const size_t size = size_Block(&d->data->data);
+    unlock_Mutex(&d->data->mtx);
+    return size;
+}
+
 iBool start_Player(iPlayer *d) {
     if (isStarted_Player(d)) {
         return iFalse;
@@ -732,6 +747,7 @@ iBool start_Player(iPlayer *d) {
     if (d->avfPlayer) {
         play_AVFAudioPlayer(d->avfPlayer);
         setNotIdle_Player(d);
+        activePlayer_ = d;
         return iTrue;
     }
 #endif
@@ -749,6 +765,7 @@ iBool start_Player(iPlayer *d) {
     d->decoder->gain = d->volume;
     SDL_PauseAudioDevice(d->device, SDL_FALSE);
     setNotIdle_Player(d);
+    activePlayer_ = d;
     return iTrue;
 }
 
@@ -881,4 +898,8 @@ iString *metadataLabel_Player(const iPlayer *d) {
                             d->spec.freq);
     }
     return meta;
+}
+
+iPlayer *active_Player(void) {
+    return activePlayer_;
 }

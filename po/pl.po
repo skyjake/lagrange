@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-21 08:18+0000\n"
+"PO-Revision-Date: 2021-07-19 19:06+0000\n"
 "Last-Translator: Waterrail <maksymiliankrol03@gmail.com>\n"
 "Language-Team: Polish <http://weblate.skyjake.fi/projects/lagrange/ui/pl/>\n"
 "Language: pl\n"
@@ -752,7 +752,7 @@ msgid "dlg.newident.until"
 msgstr "Data ważności:"
 
 msgid "hint.newident.date"
-msgstr "RRRR-MM-DD GG:MM:SS"
+msgstr "RRRR lub RRRR-MM-DD"
 
 msgid "dlg.newident.commonname"
 msgstr "Nazwa zwyczajowa:"
@@ -833,7 +833,7 @@ msgid "heading.prefs.certs"
 msgstr "CERTYFIKATY"
 
 msgid "heading.prefs.fonts"
-msgstr "CZCIONKI"
+msgstr "Czcionki"
 
 # tab button
 msgid "heading.prefs.interface"
@@ -851,7 +851,7 @@ msgid "heading.prefs.paragraph"
 msgstr "PARAGRAF"
 
 msgid "heading.prefs.pagecontent"
-msgstr "ZAWARTOŚĆ STRON"
+msgstr "KOLORY STRONY"
 
 msgid "heading.prefs.proxies"
 msgstr "PROXY"
@@ -1630,3 +1630,93 @@ msgstr ""
 
 msgid "lang.pl"
 msgstr "polski"
+
+msgid "menu.pageinfo"
+msgstr "Pokaż informacje strony"
+
+msgid "status.query.tight"
+msgstr "Zapytanie"
+
+msgid "menu.openfile"
+msgstr "Otwórz plik…"
+
+msgid "link.file.delete"
+msgstr "Usuń plik"
+
+msgid "heading.file.delete"
+msgstr "USUWANIE PLIKU"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Czy na pewno chcesz usunąć ten plik?"
+
+msgid "dlg.file.delete"
+msgstr "Usuń"
+
+msgid "dlg.newident.scope"
+msgstr "Użyj na:"
+
+msgid "dlg.newident.more"
+msgstr "Więcej…"
+
+msgid "heading.prefs.uitheme"
+msgstr "KOLORY INTERFEJSU"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Prędkość klawiatury:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Prędkość myszy:"
+
+msgid "hint.prefs.userfont"
+msgstr "ścieżka czcionki TrueType"
+
+msgid "prefs.linespacing"
+msgstr "Interlinia:"
+
+msgid "prefs.memorysize"
+msgstr "Rozmiar pamięci:"
+
+msgid "error.certverify"
+msgstr "Serwer niezaufany"
+
+msgid "error.certverify.msg"
+msgstr ""
+"Połączenie z serwerem zostało przerwane, ponieważ otrzymany certyfikat TLS "
+"nie jest zgodny z tym, któremu ufamy. Sprawdź, czy serwer ogłosił zmianę "
+"certyfikatu. Jeśli nie, możliwe jest, że złośliwa strona trzecia fałszywie "
+"podszywa się pod serwer, do którego próbujesz uzyskać dostęp.\n"
+"\n"
+"Certyfikat może zostać oznaczony jako zaufany w Informacjach o stronie."
+
+msgid "dlg.newident.scope.domain"
+msgstr "obecnej domenie"
+
+msgid "dlg.newident.scope.page"
+msgstr "obecnej stronie"
+
+msgid "dlg.newident.scope.none"
+msgstr "nie używaj"
+
+msgid "prefs.animate"
+msgstr "Animacje:"
+
+msgid "prefs.userfont"
+msgstr "Czcionka symboli:"
+
+msgid "keys.split.item"
+msgstr "Menu widoku dzielonego:"
+
+msgid "close"
+msgstr "Zamknij"
+
+msgid "ident.export"
+msgstr "Eksport"
+
+msgid "error.server.msg"
+msgstr "Serwer zwrócił następujący komunikat:"
+
+msgid "dlg.input.linebreak"
+msgstr "Podział wiersza"
+
+msgid "menu.save.downloads.open"
+msgstr "Zapisz w folderze pobranych i otwórz plik"

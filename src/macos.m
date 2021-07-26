@@ -480,7 +480,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
     [menu setAutoenablesItems:NO];
     for (size_t i = 0; i < count; ++i) {
         const char *label = translateCStr_Lang(items[i].label);
-        if (label[0] == '\r') {
+        if (label[0] == '\v') {
             /* Skip the formatting escape. */
             label += 2;
         }
@@ -543,6 +543,9 @@ void handleCommand_MacOS(const char *cmd) {
             }
             mainIndex++;
         }
+    }
+    else if (equal_Command(cmd, "emojipicker")) {
+        [NSApp orderFrontCharacterPalette:nil];
     }
 }
 

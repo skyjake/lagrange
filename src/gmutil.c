@@ -74,6 +74,35 @@ void init_Url(iUrl *d, const iString *text) {
     }
 }
 
+uint16_t port_Url(const iUrl *d) {
+    uint16_t port = 0;
+    if (!isEmpty_Range(&d->port)) {
+        iString portStr;
+        initRange_String(&portStr, d->port);
+        port = toInt_String(&portStr);
+        deinit_String(&portStr);
+    }
+    if (port != 0) {
+        return port;
+    }
+    if (isEmpty_Range(&d->scheme) || equalCase_Rangecc(d->scheme, "gemini")) {
+        port = GEMINI_DEFAULT_PORT;
+    }
+    else if (equalCase_Rangecc(d->scheme, "gopher")) {
+        port = 70;
+    }
+    else if (equalCase_Rangecc(d->scheme, "finger")) {
+        port = 79;
+    }
+    else if (equalCase_Rangecc(d->scheme, "http")) {
+        port = 80;
+    }
+    else if (equalCase_Rangecc(d->scheme, "https")) {
+        port = 443;
+    }
+    return port;
+}
+
 static iRangecc dirPath_(iRangecc path) {
     const size_t pos = lastIndexOfCStr_Rangecc(path, "/");
     if (pos == iInvalidPos) return path;
@@ -98,7 +127,8 @@ static iRangecc prevPathSeg_(const char *end, const char *start) {
 void stripDefaultUrlPort_String(iString *d) {
     iUrl parts;
     init_Url(&parts, d);
-    if (equalCase_Rangecc(parts.scheme, "gemini") && equal_Rangecc(parts.port, "1965")) {
+    if (equalCase_Rangecc(parts.scheme, "gemini") &&
+        equal_Rangecc(parts.port, GEMINI_DEFAULT_PORT_CSTR)) {
         /* Always preceded by a colon. */
         remove_Block(&d->chars, parts.port.start - 1 - constBegin_String(d),
                      size_Range(&parts.port) + 1);
@@ -167,6 +197,12 @@ iRangecc urlHost_String(const iString *d) {
     iUrl url;
     init_Url(&url, d);
     return url.host;
+}
+
+uint16_t urlPort_String(const iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    return port_Url(&url);
 }
 
 iRangecc urlUser_String(const iString *d) {
@@ -320,8 +356,9 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         }
         delete_String(decHost);
         /* Default Gemini port is removed as redundant; normalization. */
-        if (!isEmpty_Range(&selHost->port) && (!equalCase_Rangecc(scheme, "gemini")
-                                               || !equal_Rangecc(selHost->port, "1965"))) {
+        if (!isEmpty_Range(&selHost->port) &&
+            (!equalCase_Rangecc(scheme, "gemini") ||
+             !equal_Rangecc(selHost->port, GEMINI_DEFAULT_PORT_CSTR))) {
             appendCStr_String(absolute, ":");
             appendRange_String(absolute, selHost->port);
         }
@@ -524,22 +561,52 @@ const char *mediaType_Path(const iString *path) {
     return "application/octet-stream";
 }
 
-void urlEncodeSpaces_String(iString *d) {
+static void replaceAllChars_String_(iString *d, char c, const char *replacement) {
+    const char cstr[2] = { c, 0 };
+    const size_t repLen = strlen(replacement);
+    size_t pos = 0;
     for (;;) {
-        const size_t pos = indexOfCStr_String(d, " ");
+        pos = indexOfCStrFrom_String(d, cstr, pos);
         if (pos == iInvalidPos) break;
         remove_Block(&d->chars, pos, 1);
-        insertData_Block(&d->chars, pos, "%20", 3);
-    }
+        insertData_Block(&d->chars, pos, replacement, repLen);
+        pos += repLen;
+    }    
+}
+
+void urlEncodeSpaces_String(iString *d) {
+    replaceAllChars_String_(d, ' ', "%20");  /* spaces */
+    replaceAllChars_String_(d, '\n', "%0A"); /* newlines */
 }
 
 const iString *withSpacesEncoded_String(const iString *d) {
     if (isDataUrl_String(d)) {
         return d;
     }
-    iString *enc = copy_String(d);
-    urlEncodeSpaces_String(enc);
-    return collect_String(enc);
+    /* Only make a copy if we need to modify the URL. */
+    if (indexOfCStr_String(d, " ") != iInvalidPos) {
+        iString *enc = copy_String(d);
+        urlEncodeSpaces_String(enc);
+        return collect_String(enc);
+    }
+    return d;
+}
+
+const iString *canonicalUrl_String(const iString *d) {
+    /* The "canonical" form, used for internal storage and comparisons, is:
+       - all non-reserved characters decoded (i.e., it's an IRI)
+       - expect for spaces, which are always `%20`
+       This means a canonical URL can be used on a gemtext link line without modifications. */
+    iString *canon = maybeUrlDecodeExclude_String(d, "/?:;#&= ");
+    /* `canon` may now be NULL if nothing was decoded. */
+    if (indexOfCStr_String(canon ? canon : d, " ") != iInvalidPos ||
+        indexOfCStr_String(canon ? canon : d, "\n") != iInvalidPos) {
+        if (!canon) {
+            canon = copy_String(d);
+        }
+        urlEncodeSpaces_String(canon);
+    }
+    return canon ? collect_String(canon) : d;
 }
 
 iRangecc mediaTypeWithoutParameters_Rangecc(iRangecc mime) {
@@ -556,7 +623,7 @@ const iString *feedEntryOpenCommand_String(const iString *url, int newTab) {
             iString *head = newRange_String(
                 (iRangecc){ constBegin_String(url) + fragPos + 1, constEnd_String(url) });
             format_String(cmd,
-                          "open newtab:%d gotourlheading:%s url:%s",
+                          "open fromsidebar:1 newtab:%d gotourlheading:%s url:%s",
                           newTab,
                           cstr_String(head),
                           cstr_Rangecc((iRangecc){ constBegin_String(url),
@@ -564,7 +631,7 @@ const iString *feedEntryOpenCommand_String(const iString *url, int newTab) {
             delete_String(head);
         }
         else {
-            format_String(cmd, "open newtab:%d url:%s", newTab, cstr_String(url));
+            format_String(cmd, "open fromsidebar:1 newtab:%d url:%s", newTab, cstr_String(url));
         }
         return cmd;
     }
@@ -615,6 +682,14 @@ static const struct {
       { 0x1f5a7, /* networked computers */
         "${error.tls}",
         "${error.tls.msg}" } },
+    { tlsServerCertificateExpired_GmStatusCode,
+      { 0x1f4C6, /* calendar */
+        "${error.certexpired}",
+        "${error.certexpired.msg}" } },
+    { tlsServerCertificateNotVerified_GmStatusCode,
+      { 0x1f645, /* no good */
+        "${error.certverify}",
+        "${error.certverify.msg}" } },
     { temporaryFailure_GmStatusCode,
       { 0x1f50c, /* electric plug */
         "${error.temporary}",

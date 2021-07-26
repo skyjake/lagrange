@@ -120,7 +120,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         }
         iForEach(ObjectList, i, children_Widget(detailStack)) {
             iWidget *panel = i.object;
-            setFlags_Widget(panel, edgeDraggable_WidgetFlag, !isSideBySide);
+            setFlags_Widget(panel, leftEdgeDraggable_WidgetFlag, !isSideBySide);
             if (isSideBySide) {
                 setVisualOffset_Widget(panel, 0, 0, 0);
             }
@@ -150,8 +150,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
         return iTrue;
     }
-    if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd) &&
-        argLabel_Command(cmd, "button") == SDL_BUTTON_X1) {
+    if (equal_Command(cmd, "swipe.back")) {
         postCommand_App("panel.close");
         return iTrue;
     }
@@ -201,6 +200,8 @@ static iBool isTwoColumnPage_(iWidget *d) {
 
 static iBool isOmittedPref_(const iString *id) {
     static const char *omittedPrefs[] = {
+        "prefs.userfont",
+        "prefs.animate",
         "prefs.smoothscroll",
         "prefs.imageloadscroll",
         "prefs.pinsplit",
@@ -413,7 +414,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         setFlags_Widget(sheet,
                         frameless_WidgetFlag |
                         //resizeWidthOfChildren_WidgetFlag |
-                        edgeDraggable_WidgetFlag |
+                        leftEdgeDraggable_WidgetFlag |
                         commandOnClick_WidgetFlag,
                         iTrue);
         iPtrArray *   contents         = collect_PtrArray(new_PtrArray()); /* two-column pages */
@@ -446,7 +447,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         }
         addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
         /* Slide top panel with detail panels. */ {
-            setFlags_Widget(topPanel, refChildrenOffset_WidgetFlag, iTrue);
+        setFlags_Widget(topPanel, refChildrenOffset_WidgetFlag, iTrue);
             topPanel->offsetRef = detailStack;
         }
         if (prefsTabs) {
@@ -472,7 +473,8 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                     0x02699, /* gear */
                     0x1f4f1, /* mobile phone */
                     0x1f3a8, /* palette */
-                    0x1f523,
+                    0x1f5da, /* aA */
+                    0x1f660, /* pointing bud */
                     0x1f5a7, /* computer network */
                 };
                 setIcon_LabelWidget(panelButton, icons[i]);
@@ -620,6 +622,12 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         destroyPending_Root(sheet->root);
         /* Additional elements for preferences. */
         if (isPrefs) {
+            addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
+            /* Management. */ {
+                iLabelWidget *idManButton = addChildFlags_Widget(topPanel,
+                                                                 iClob(makePanelButton_(person_Icon " ${sidebar.identities}", "panel.open")),
+                                                                 chevron_WidgetFlag | borderTop_WidgetFlag);
+            }
             addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
             iLabelWidget *aboutButton = addChildFlags_Widget(topPanel,
                                  iClob(makePanelButton_(planet_Icon " ${menu.about}", "panel.open")),

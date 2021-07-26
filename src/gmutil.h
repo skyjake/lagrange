@@ -43,6 +43,8 @@ enum iGmStatusCode {
     unknownStatusCode_GmStatusCode,
     invalidLocalResource_GmStatusCode,
     tlsFailure_GmStatusCode,
+    tlsServerCertificateExpired_GmStatusCode,
+    tlsServerCertificateNotVerified_GmStatusCode,
 
     none_GmStatusCode                      = 0,
     /* general status code categories */
@@ -93,6 +95,9 @@ const iGmError *    get_GmError         (enum iGmStatusCode code);
 
 iRegExp *       newGemtextLink_RegExp   (void);
 
+#define GEMINI_DEFAULT_PORT         ((uint16_t) 1965)
+#define GEMINI_DEFAULT_PORT_CSTR    "1965"
+
 struct Impl_Url {
     iRangecc scheme;
     iRangecc host;
@@ -103,9 +108,11 @@ struct Impl_Url {
 };
 
 void            init_Url                (iUrl *, const iString *text);
+uint16_t        port_Url                (const iUrl *);
 
 iRangecc        urlScheme_String        (const iString *);
 iRangecc        urlHost_String          (const iString *);
+uint16_t        urlPort_String          (const iString *);
 iRangecc        urlUser_String          (const iString *);
 iRangecc        urlRoot_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
@@ -123,6 +130,7 @@ const char *    makeFileUrl_CStr        (const char *localFilePath);
 iString *       localFilePathFromUrl_String(const iString *);
 void            urlEncodeSpaces_String  (iString *);
 const iString * withSpacesEncoded_String(const iString *);
+const iString * canonicalUrl_String     (const iString *);
 
 const char *    mediaType_Path                      (const iString *path);
 iRangecc        mediaTypeWithoutParameters_Rangecc  (iRangecc mime);

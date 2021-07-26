@@ -246,10 +246,10 @@ size_t navSize_Gempub(const iGempub *d) {
 
 size_t navIndex_Gempub(const iGempub *d, const iString *url) {
     parseNavigationLinks_Gempub_(d);
-    const iString *normUrl = withSpacesEncoded_String(url);
+    const iString *canonUrl = withSpacesEncoded_String(url);
     iConstForEach(Array, i, d->navLinks) {
         const iGempubNavLink *nav = i.value;
-        if (equalCase_String(&nav->url, normUrl)) {
+        if (equalCase_String(&nav->url, canonUrl)) {
             return index_ArrayConstIterator(&i);
         }
     }

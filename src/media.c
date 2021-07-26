@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "ui/window.h"
+#include "ui/paint.h" /* size_SDLTexture */
 #include "audio/player.h"
 #include "app.h"
 #include "stb_image.h"
@@ -261,6 +262,31 @@ void clear_Media(iMedia *d) {
     clear_PtrArray(&d->downloads);
 }
 
+size_t memorySize_Media(const iMedia *d) {
+    size_t memSize = 0;
+    iConstForEach(PtrArray, i, &d->images) {
+        const iGmImage *img = i.ptr;
+        if (img->texture) {
+            const iInt2 texSize = size_SDLTexture(img->texture);
+            memSize += 4 * texSize.x * texSize.y; /* RGBA */
+        }
+        else {
+            memSize += size_Block(&img->partialData);
+        }
+    }
+    iConstForEach(PtrArray, a, &d->audio) {
+        const iGmAudio *audio = a.ptr;
+        if (audio->player) {
+            memSize += sourceDataSize_Player(audio->player);
+        }
+    }
+    iConstForEach(PtrArray, n, &d->downloads) {
+        const iGmDownload *down = n.ptr;
+        memSize += down->numBytes;
+    }
+    return memSize; 
+}
+
 iBool setDownloadUrl_Media(iMedia *d, iGmLinkId linkId, const iString *url) {
     iGmDownload *dl       = NULL;
     iMediaId     existing = findLinkDownload_Media(d, linkId);
@@ -462,6 +488,15 @@ iPlayer *audioPlayer_Media(const iMedia *d, iMediaId audioId) {
         return audio->player;
     }
     return NULL;
+}
+
+void pauseAllPlayers_Media(const iMedia *d, iBool setPaused) {
+    for (size_t i = 0; i < size_PtrArray(&d->audio); ++i) {
+        const iGmAudio *audio = constAt_PtrArray(&d->audio, i);
+        if (audio->player) {
+            setPaused_Player(audio->player, setPaused);
+        }
+    }
 }
 
 iBool downloadInfo_Media(const iMedia *d, iMediaId downloadId, iGmMediaInfo *info_out) {

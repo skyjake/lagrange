@@ -69,10 +69,6 @@ iDefineTypeConstructionArgs(Window, (iRect rect), rect)
 
 /* TODO: Define menus per platform. */
 
-#if defined (iPlatformAppleDesktop)
-#  define iHaveNativeMenus
-#endif
-
 #if defined (iHaveNativeMenus)
 /* Using native menus. */
 static const iMenuItem fileMenuItems_[] = {
@@ -202,7 +198,7 @@ static void windowSizeChanged_Window_(iWindow *d) {
 }
 
 static void setupUserInterface_Window(iWindow *d) {
-#if defined (iPlatformAppleDesktop)
+#if defined (iHaveNativeMenus)
     insertMacMenus_();
 #endif
     /* One root is created by default. */
@@ -913,7 +909,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 }
             }
             if (isCommand_UserEvent(&event, "lang.changed")) {
-#if defined (iPlatformAppleDesktop)
+#if defined (iHaveNativeMenus)
                 /* Retranslate the menus. */
                 removeMacMenus_();
                 insertMacMenus_();
@@ -961,9 +957,13 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (isCommand_SDLEvent(ev) && ev->user.data2 && ev->user.data2 != root) {
                 continue; /* Not meant for this root. */
             }
-            else if ((ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP || ev->type == SDL_TEXTINPUT)
+            if ((ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP || ev->type == SDL_TEXTINPUT)
                      && d->keyRoot != root) {
                 continue; /* Key events go only to the root with keyboard focus. */
+            }
+            if (ev->type == SDL_MOUSEWHEEL && !contains_Rect(rect_Root(root),
+                                                             coord_MouseWheelEvent(&ev->wheel))) {
+                continue; /* Only process the event in the relevant split. */
             }
             setCurrent_Root(root);
             const iBool wasUsed = dispatchEvent_Widget(root->widget, ev);
@@ -1158,20 +1158,19 @@ iInt2 coord_Window(const iWindow *d, int x, int y) {
     return mulf_I2(init_I2(x, y), d->pixelRatio);
 }
 
-iInt2 mouseCoord_Window(const iWindow *d) {
-#if defined (iPlatformMobile)
-    /* At least on iOS the coordinates returned by SDL_GetMouseState() do no match up with
-       our touch coordinates on the Y axis (?). Maybe a pixel ratio thing? */
-    iUnused(d);
-    return latestPosition_Touch();
-#else
+iInt2 mouseCoord_Window(const iWindow *d, int whichDevice) {
+    if (whichDevice == SDL_TOUCH_MOUSEID) {
+        /* At least on iOS the coordinates returned by SDL_GetMouseState() do no match up with
+           our touch coordinates on the Y axis (?). Maybe a pixel ratio thing? */
+        iUnused(d);
+        return latestPosition_Touch();
+    }
     if (!d->isMouseInside) {
         return init_I2(-1000000, -1000000);
     }
     int x, y;
     SDL_GetMouseState(&x, &y);
     return coord_Window(d, x, y);
-#endif
 }
 
 float uiScale_Window(const iWindow *d) {

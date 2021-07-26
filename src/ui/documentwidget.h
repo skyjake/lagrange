@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stream.h>
 
 iDeclareType(GmDocument)
+iDeclareType(GmRequest)
 iDeclareType(History)
 
 iDeclareWidgetClass(DocumentWidget)
@@ -45,11 +46,19 @@ const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
 
+enum iDocumentWidgetSetUrlFlags {
+    useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),
+    openedFromSidebar_DocumentWidgetSetUrlFlag = iBit(2),
+};
+
 void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);
-void    setUrlFromCache_DocumentWidget  (iDocumentWidget *, const iString *url, iBool isFromCache);
+void    setUrlFlags_DocumentWidget      (iDocumentWidget *, const iString *url, int setUrlFlags);
 void    setUrlAndSource_DocumentWidget  (iDocumentWidget *, const iString *url, const iString *mime, const iBlock *source);
 void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); /* set after content received */
 void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);
 void    setSource_DocumentWidget        (iDocumentWidget *, const iString *sourceText);
+void    setOpenedFromSidebar_DocumentWidget(iDocumentWidget *, iBool fromSidebar);
+
+void    takeRequest_DocumentWidget      (iDocumentWidget *, iGmRequest *finishedRequest); /* ownership given */
 
 void    updateSize_DocumentWidget       (iDocumentWidget *);

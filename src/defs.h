@@ -24,18 +24,65 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lang.h"
 
+enum iSourceFormat {
+    undefined_SourceFormat = -1,
+    gemini_SourceFormat    = 0,
+    plainText_SourceFormat,
+};
+
 enum iFileVersion {
     initial_FileVersion                 = 0,
     addedResponseTimestamps_FileVersion = 1,
     multipleRoots_FileVersion           = 2,
     serializedSidebarState_FileVersion  = 3,
+    addedRecentUrlFlags_FileVersion     = 4,
     /* meta */
     idents_FileVersion = 1, /* version used by GmCerts/idents.lgr */
-    latest_FileVersion = 3,
+    latest_FileVersion = 4,
 };
+
+enum iScrollType {
+    keyboard_ScrollType,
+    mouse_ScrollType,
+    max_ScrollType
+};
+
+enum iReturnKeyFlag {
+    return_ReturnKeyFlag        = 0,
+    shiftReturn_ReturnKeyFlag   = 1,
+    controlReturn_ReturnKeyFlag = 2,
+    guiReturn_ReturnKeyFlag     = 3,
+    mask_ReturnKeyFlag          = 0xf,
+    accept_ReturnKeyFlag        = 4, /* shift */
+};
+
+/* Return key behavior is not handled via normal bindings because only certain combinations
+   are valid. */
+enum iReturnKeyBehavior {
+    default_ReturnKeyBehavior =
+        shiftReturn_ReturnKeyFlag | (return_ReturnKeyFlag << accept_ReturnKeyFlag),
+    acceptWithShift_ReturnKeyBehavior =
+        return_ReturnKeyFlag | (shiftReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
+    acceptWithPrimaryMod_ReturnKeyBehavior =
+#if defined (iPlatformApple)
+        return_ReturnKeyFlag | (guiReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
+#else
+        return_ReturnKeyFlag | (controlReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
+#endif
+};
+
+int     keyMod_ReturnKeyFlag    (int flag);
+
+iLocalDef int lineBreakKeyMod_ReturnKeyBehavior(int behavior) {
+    return keyMod_ReturnKeyFlag(behavior & mask_ReturnKeyFlag);
+}
+iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
+    return keyMod_ReturnKeyFlag((behavior >> accept_ReturnKeyFlag) & mask_ReturnKeyFlag);
+}
 
 /* Icons */
 
+#define menu_Icon           "\U0001d362"
 #define rightArrowhead_Icon "\u27a4"
 #define leftArrowhead_Icon  "\u27a4"
 #define warning_Icon        "\u26a0"
@@ -58,6 +105,7 @@ enum iFileVersion {
 #define whiteStar_Icon      "\u2606"
 #define person_Icon         "\U0001f464"
 #define download_Icon       "\u2ba7"
+#define upload_Icon         "\u2ba5"
 #define export_Icon         "\U0001f4e4"
 #define hourglass_Icon      "\u231b"
 #define timer_Icon          "\u23f2"
@@ -104,6 +152,9 @@ enum iFileVersion {
 #   define shiftReturn_Icon shift_Icon " " return_Icon
 #endif
 
+#if defined (iPlatformAppleDesktop)
+#   define iHaveNativeMenus
+#endif
 
 /* UI labels that depend on the platform */
 

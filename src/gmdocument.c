@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmdocument.h"
+#include "gmtypesetter.h"
 #include "gmutil.h"
 #include "lang.h"
 #include "ui/color.h"
@@ -32,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "defs.h"
 
+#include <the_Foundation/intset.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringset.h>
@@ -48,7 +50,7 @@ iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
 iDeclareType(GmLink)
 
 struct Impl_GmLink {
-    iString url;
+    iString url; /* resolved */
     iRangecc urlRange; /* URL in the source */
     iRangecc labelRange; /* label in the source */
     iRangecc labelIcon; /* special icon defined in the label text */
@@ -74,9 +76,10 @@ iDefineTypeConstruction(GmLink)
 
 struct Impl_GmDocument {
     iObject object;
-    enum iGmDocumentFormat format;
-    iString   source;
-    iString   url; /* for resolving relative links */
+    enum iSourceFormat format;
+    iString   unormSource; /* unnormalized source */
+    iString   source;      /* normalized source */
+    iString   url;         /* for resolving relative links */
     iString   localHost;
     iInt2     size;
     iArray    layout; /* contents of source, laid out in document space */
@@ -90,12 +93,14 @@ struct Impl_GmDocument {
     iChar     siteIcon;
     iMedia *  media;
     iStringSet *openURLs; /* currently open URLs for highlighting links */
+    iBool     isPaletteValid;
+    iColor    palette[tmMax_ColorId]; /* copy of the color palette */
 };
 
 iDefineObjectConstruction(GmDocument)
 
 static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc line) {
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         return text_GmLineType;
     }
     return lineType_Rangecc(line);
@@ -143,7 +148,7 @@ static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
         if (isEmpty_Range(&run->text)) {
             continue;
         }
-        return bottom_Rect(run->bounds);
+        return top_Rect(run->bounds) + height_Rect(run->bounds) * prefs_App()->lineSpacing;
     }
     return 0;
 }
@@ -162,7 +167,22 @@ static iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const ch
         }
         contents->end = line.end;
     }
-    return measureRange_Text(font, *contents);
+    return measureRange_Text(font, *contents).bounds.size;
+}
+
+static void setScheme_GmLink_(iGmLink *d, enum iGmLinkScheme scheme) {
+    d->flags &= ~supportedScheme_GmLinkFlag;
+    d->flags |= scheme;
+}
+
+static iBool isAllowedLinkIcon_Char_(iChar icon) {
+    if (isFitzpatrickType_Char(icon)) {
+        return iFalse;
+    }
+    return isPictograph_Char(icon) || isEmoji_Char(icon) ||
+           /* TODO: Add range(s) of 0x2nnn symbols. */
+           icon == 0x2139 /* info */ || icon == 0x2191 /* up arrow */ ||
+           icon == 0x2022 /* bullet */ || icon == 0x2a2f /* close X */ || icon == 0x2b50;
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
@@ -177,39 +197,42 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         iGmLink *link = new_GmLink();
         link->urlRange = capturedRange_RegExpMatch(&m, 1);
         setRange_String(&link->url, link->urlRange);
-        set_String(&link->url, absoluteUrl_String(&d->url, &link->url));
+        set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
         /* Check the URL. */ {
             iUrl parts;
             init_Url(&parts, &link->url);
             if (!equalCase_Rangecc(parts.host, cstr_String(&d->localHost))) {
                 link->flags |= remote_GmLinkFlag;
             }
-            if (startsWithCase_Rangecc(parts.scheme, "gemini")) {
-                link->flags |= gemini_GmLinkFlag;
+            if (equalCase_Rangecc(parts.scheme, "gemini")) {
+                setScheme_GmLink_(link, gemini_GmLinkScheme);
+            }
+            else if (equalCase_Rangecc(parts.scheme, "titan")) {
+                setScheme_GmLink_(link, titan_GmLinkScheme);
             }
             else if (startsWithCase_Rangecc(parts.scheme, "http")) {
-                link->flags |= http_GmLinkFlag;
+                setScheme_GmLink_(link, http_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "gopher")) {
-                link->flags |= gopher_GmLinkFlag;
+                setScheme_GmLink_(link, gopher_GmLinkScheme);
                 if (startsWith_Rangecc(parts.path, "/7")) {
                     link->flags |= query_GmLinkFlag;
                 }
             }
             else if (equalCase_Rangecc(parts.scheme, "finger")) {
-                link->flags |= finger_GmLinkFlag;
+                setScheme_GmLink_(link, finger_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "file")) {
-                link->flags |= file_GmLinkFlag;
+                setScheme_GmLink_(link, file_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "data")) {
-                link->flags |= data_GmLinkFlag;
+                setScheme_GmLink_(link, data_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "about")) {
-                link->flags |= about_GmLinkFlag;
+                setScheme_GmLink_(link, about_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "mailto")) {
-                link->flags |= mailto_GmLinkFlag;
+                setScheme_GmLink_(link, mailto_GmLinkScheme);
             }
             /* Check the file name extension, if present. */
             if (!isEmpty_Range(&parts.path)) {
@@ -247,20 +270,16 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             line = desc; /* Just show the description. */
             link->flags |= humanReadable_GmLinkFlag;
             /* Check for a custom icon. */
-            if ((link->flags & gemini_GmLinkFlag && ~link->flags & remote_GmLinkFlag) ||
-                link->flags & file_GmLinkFlag) {
+            enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
+            if ((scheme == gemini_GmLinkScheme && ~link->flags & remote_GmLinkFlag) ||
+                scheme == file_GmLinkScheme ||
+                scheme == mailto_GmLinkScheme) {
                 iChar icon = 0;
                 int len = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
                     if (desc.start + len < desc.end &&
-                        (isPictograph_Char(icon) || isEmoji_Char(icon) ||
-                         /* TODO: Add range(s) of 0x2nnn symbols. */
-                         icon == 0x2139 /* info */ ||
-                         icon == 0x2191 /* up arrow */ ||
-                         icon == 0x2022 /* bullet */ ||
-                         icon == 0x2a2f /* close X */ ||
-                         icon == 0x2b50) &&
-                        !isFitzpatrickType_Char(icon)) {
+                        ((scheme != mailto_GmLinkScheme && isAllowedLinkIcon_Char_(icon)) ||
+                         (scheme == mailto_GmLinkScheme && icon == 0x1f4e7 /* envelope */))) {
                         link->flags |= iconFromLabel_GmLinkFlag;
                         link->labelIcon = (iRangecc){ desc.start, desc.start + len };
                         line.start += len;
@@ -283,6 +302,12 @@ static void clearLinks_GmDocument_(iGmDocument *d) {
         delete_GmLink(i.ptr);
     }
     clear_PtrArray(&d->links);
+}
+
+static iBool isGopher_GmDocument_(const iGmDocument *d) {
+    const iRangecc scheme = urlScheme_String(&d->url);
+    return (equalCase_Rangecc(scheme, "gopher") ||
+            equalCase_Rangecc(scheme, "finger"));
 }
 
 static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
@@ -308,7 +333,7 @@ static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo
 
 static iBool isNormalized_GmDocument_(const iGmDocument *d) {
     const iPrefs *prefs = prefs_App();
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         return iTrue; /* tabs are always normalized in plain text */
     }
     if (startsWithCase_String(&d->url, "gemini:") && prefs->monospaceGemini) {
@@ -326,12 +351,12 @@ static enum iGmDocumentTheme currentTheme_(void) {
 }
 
 static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
-    const iRect visBounds = visualBounds_Text(run->font, run->text);
+    const iRect visBounds = visualBounds_Text(run->textParams.font, run->text);
     const int   visWidth  = width_Rect(visBounds);
     int         xAdjust   = 0;
     if (!isCentered) {
         /* Keep the icon aligned to the left edge. */
-        const int alignWidth = width_Rect(run->visBounds) * 3 / 4;
+        const int alignWidth = width_Rect(run->visBounds) * 4 / 5;
         xAdjust -= left_Rect(visBounds);
         if (visWidth > alignWidth) {
             /* ...unless it's a wide icon, in which case move it to the left. */
@@ -357,9 +382,81 @@ static void updateOpenURLs_GmDocument_(iGmDocument *d) {
     d->openURLs = listOpenURLs_App();
 }
 
+iDeclareType(RunTypesetter)
+    
+struct Impl_RunTypesetter {
+    iArray layout;
+    iGmRun run;
+    iInt2  pos;
+    float  lineHeightReduction;
+    int    indent;
+    int    layoutWidth;
+    int    rightMargin;
+    iBool  isWordWrapped;
+    iBool  isPreformat;
+    const int *fonts;
+};
+    
+static void init_RunTypesetter_(iRunTypesetter *d) {
+    iZap(*d);
+    init_Array(&d->layout, sizeof(iGmRun));
+}
+
+static void deinit_RunTypesetter_(iRunTypesetter *d) {
+    deinit_Array(&d->layout);
+}
+
+static void clear_RunTypesetter_(iRunTypesetter *d) {
+    clear_Array(&d->layout);
+}
+
+static void commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
+    pushBackN_Array(&doc->layout, constData_Array(&d->layout), size_Array(&d->layout));
+    clear_RunTypesetter_(d);
+}
+
+static const int maxLedeLines_ = 10;
+
+static const int colors[max_GmLineType] = {
+    tmParagraph_ColorId,
+    tmParagraph_ColorId,
+    tmPreformatted_ColorId,
+    tmQuote_ColorId,
+    tmHeading1_ColorId,
+    tmHeading2_ColorId,
+    tmHeading3_ColorId,
+    tmLinkText_ColorId,
+};
+
+static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, int origin,
+                                           int advance, iBool isBaseRTL) {
+    iAssert(wrapRange.start <= wrapRange.end);
+    trimEnd_Rangecc(&wrapRange);
+//    printf("typeset: {%s}\n", cstr_Rangecc(wrapRange));
+    iRunTypesetter *d = wrap->context;
+    const int fontId = d->run.textParams.font;
+    d->run.text = wrapRange;
+    if (~d->run.flags & startOfLine_GmRunFlag && d->lineHeightReduction > 0.0f) {
+        d->pos.y -= d->lineHeightReduction * lineHeight_Text(fontId);
+    }
+    d->run.bounds.pos = addX_I2(d->pos, origin + d->indent);
+    const iInt2 dims = init_I2(advance, lineHeight_Text(fontId));
+    iChangeFlags(d->run.flags, wide_GmRunFlag, (d->isPreformat && dims.x > d->layoutWidth));
+    d->run.bounds.size.x    = iMax(wrap->maxWidth, dims.x) - origin; /* Extends to the right edge for selection. */
+    d->run.bounds.size.y    = dims.y;
+    d->run.visBounds        = d->run.bounds;
+    d->run.visBounds.size.x = dims.x;
+    d->run.textParams.isRTL = isBaseRTL;    
+    pushBack_Array(&d->layout, &d->run);
+    d->run.flags &= ~startOfLine_GmRunFlag;
+    d->pos.y += lineHeight_Text(fontId) * prefs_App()->lineSpacing;
+    return iTrue; /* continue to next wrapped line */
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     const iPrefs *prefs             = prefs_App();
     const iBool   isMono            = isForcedMonospace_GmDocument_(d);
+    const iBool   isGopher          = isGopher_GmDocument_(d);
     const iBool   isNarrow          = d->size.x < 90 * gap_Text;
     const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text;
     const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text;
@@ -379,16 +476,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             ? bold_FontId
             : paragraph_FontId,
     };
-    static const int colors[max_GmLineType] = {
-        tmParagraph_ColorId,
-        tmParagraph_ColorId,
-        tmPreformatted_ColorId,
-        tmQuote_ColorId,
-        tmHeading1_ColorId,
-        tmHeading2_ColorId,
-        tmHeading3_ColorId,
-        tmLinkText_ColorId,
-    };
     float indents[max_GmLineType] = {
         5, 10, 5, isNarrow ? 5 : 10, 0, 0, 0, 5
     };
@@ -398,20 +485,24 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         indents[bullet_GmLineType] -= 5;
         indents[preformatted_GmLineType] -= 5;
     }
+    if (isGopher) {
+        indents[preformatted_GmLineType] = indents[text_GmLineType];
+    }
     static const float topMargin[max_GmLineType] = {
-        0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
+        0.0f, 0.25f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.25f
+        0.0f, 0.25f, 1.0f, 0.5f, 1.5f, 0.5f, 0.5f, 0.25f
     };
     static const char *arrow           = rightArrowhead_Icon;
     static const char *envelope        = "\U0001f4e7";
     static const char *bullet          = "\u2022";
     static const char *folder          = "\U0001f4c1";
-    static const char *globe           = "\U0001f310";
+    static const char *globe           = globe_Icon;
     static const char *quote           = "\u201c";
     static const char *magnifyingGlass = "\U0001f50d";
     static const char *pointingFinger  = "\U0001f449";
+    static const char *uploadArrow     = upload_Icon;
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);
@@ -437,16 +528,18 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = text_GmLineType;
     iBool            followsBlank  = iFalse;
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
     }
     while (nextSplit_Rangecc(content, "\n", &contentLine)) {
-        iRangecc line = contentLine; /* `line` will be trimmed later; would confuse nextSplit */
-        iGmRun run = { .color = white_ColorId };
+        iRangecc line = contentLine; /* `line` will be trimmed; modifying would confuse `nextSplit_Rangecc` */
+        if (*line.end == '\r') {
+            line.end--; /* trim CR always */
+        }
+        iGmRun run = { .textParams = { .color = white_ColorId } };
         enum iGmLineType type;
         float indent = 0.0f;
-        int rightMargin = 0;
         /* Detect the type of the line. */
         if (!isPreformat) {
             type = lineType_GmDocument_(d, line);
@@ -466,7 +559,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 if (meta.pixelRect.size.x >
                     d->size.x - (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text) {
                     preFont = preformattedSmall_FontId;
-                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents);
+                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents).bounds.size;
                 }
                 trimLine_Rangecc(&line, type, isNormalized);
                 meta.altText = line; /* without the ``` */
@@ -475,7 +568,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     meta.flags = constValue_Array(oldPreMeta, preIndex, iGmPreMeta).flags &
                                  folded_GmPreMetaFlag;
                 }
-                else if (prefs->collapsePreOnLoad) {
+                else if (prefs->collapsePreOnLoad && !isGopher) {
                     meta.flags |= folded_GmPreMetaFlag;
                 }
                 pushBack_Array(&d->preMeta, &meta);
@@ -489,7 +582,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 }
             }
             trimLine_Rangecc(&line, type, isNormalized);
-            run.font = fonts[type];
+            run.textParams.font = fonts[type];
             /* Remember headings for the document outline. */
             if (type == heading1_GmLineType || type == heading2_GmLineType || type == heading3_GmLineType) {
                 pushBack_Array(
@@ -503,14 +596,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (contentLine.start == content.start) {
                 prevType = type;
             }
-            if (d->format == gemini_GmDocumentFormat &&
+            if (d->format == gemini_SourceFormat &&
                 startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
                 addSiteBanner = iFalse; /* overrides the banner */
                 continue;
             }
             run.preId = preId;
-            run.font = (d->format == plainText_GmDocumentFormat ? regularMonospace_FontId : preFont);
+            run.textParams.font = (d->format == plainText_SourceFormat ? regularMonospace_FontId : preFont);
             indent = indents[type];
         }
         if (addSiteBanner) {
@@ -525,11 +618,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     banner.visBounds.size.y += iMaxi(6000 * lineHeight_Text(uiLabel_FontId) /
                                                          d->size.x, lineHeight_Text(uiLabel_FontId) * 5);
                 }
-                banner.font      = banner_FontId;
-                banner.text      = bannerText;
-                banner.color     = tmBannerTitle_ColorId;
+                banner.text             = bannerText;
+                banner.textParams.font  = banner_FontId;
+                banner.textParams.color = tmBannerTitle_ColorId;
                 pushBack_Array(&d->layout, &banner);
-                pos.y += height_Rect(banner.visBounds) + lineHeight_Text(paragraph_FontId);
+                pos.y += height_Rect(banner.visBounds) +
+                         1.5f * lineHeight_Text(paragraph_FontId) * prefs->lineSpacing;
             }
         }
         /* Empty lines don't produce text runs. */
@@ -537,13 +631,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (type == quote_GmLineType && !prefs->quoteIcon) {
                 /* For quote indicators we still need to produce a run. */
                 run.visBounds.pos  = addX_I2(pos, indents[type] * gap_Text);
-                run.visBounds.size = init_I2(gap_Text, lineHeight_Text(run.font));
+                run.visBounds.size = init_I2(gap_Text, lineHeight_Text(run.textParams.font));
                 run.bounds         = zero_Rect(); /* just visual */
                 run.flags          = quoteBorder_GmRunFlag | decoration_GmRunFlag;
                 run.text           = iNullRange;
                 pushBack_Array(&d->layout, &run);
             }
-            pos.y += lineHeight_Text(run.font);
+            pos.y += lineHeight_Text(run.textParams.font) * prefs->lineSpacing;
             prevType = type;
             if (type != quote_GmLineType) {
                 addQuoteIcon = prefs->quoteIcon;
@@ -553,6 +647,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Begin indenting after the first preformatted block. */
         if (type != preformatted_GmLineType || prevType != preformatted_GmLineType) {
+            enableIndents = iTrue;
+        }
+        /* Gopher: Always indent preformatted blocks. */
+        if (isGopher && type == preformatted_GmLineType) {
             enableIndents = iTrue;
         }
         if (!enableIndents) {
@@ -565,11 +663,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (type == link_GmLineType && prevNonBlankType == link_GmLineType && followsBlank) {
                 required = 1.25f * lineHeight_Text(paragraph_FontId);
             }
-            else if (type == link_GmLineType && prevType == link_GmLineType) {
-                /* Balance space between the link icons and the labels, both vertically
-                   between icons and between the icon and the label. */
-                required *= 0.75f;
-            }
             if (type == quote_GmLineType && prevType == quote_GmLineType) {
                 /* No margin between consecutive quote lines. */
                 required = 0;
@@ -577,24 +670,26 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (isEmpty_Array(&d->layout)) {
                 required = 0; /* top of document */
             }
+            required *= prefs->lineSpacing;
             int delta = pos.y - lastVisibleRunBottom_GmDocument_(d);
             if (delta < required) {
-                pos.y += required - delta;
+                pos.y += (required - delta);
             }
         }
         /* Folded blocks are represented by a single run with the alt text. */
-        if (isPreformat && d->format != plainText_GmDocumentFormat) {
+        if (isPreformat && d->format != plainText_SourceFormat) {
             const iGmPreMeta *meta = constAt_Array(&d->preMeta, preId - 1);
             if (meta->flags & folded_GmPreMetaFlag) {
                 const iBool isBlank = isEmpty_Range(&meta->altText);
-                iGmRun altText = { .font  = paragraph_FontId,
-                                   .flags = (isBlank ? decoration_GmRunFlag : 0) | altText_GmRunFlag };
+                iGmRun      altText = {
+                    .textParams = { .font = paragraph_FontId, .color = tmQuote_ColorId },
+                    .flags      = (isBlank ? decoration_GmRunFlag : 0) | altText_GmRunFlag
+                };
                 const iInt2 margin = preRunMargin_GmDocument(d, 0);
-                altText.color      = tmQuote_ColorId;
                 altText.text       = isBlank ? range_Lang(range_CStr("doc.pre.nocaption"))
                                              : meta->altText;
-                iInt2 size = advanceWrapRange_Text(altText.font, d->size.x - 2 * margin.x,
-                                                   altText.text);
+                iInt2 size = measureWrapRange_Text(altText.textParams.font, d->size.x - 2 * margin.x,
+                                                   altText.text).bounds.size;
                 altText.bounds = altText.visBounds = init_Rect(pos.x, pos.y, d->size.x,
                                                                size.y + 2 * margin.y);
                 altText.preId = preId;
@@ -612,19 +707,19 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             setRange_String(&d->title, line);
         }
         /* List bullet. */
-        run.color = colors[type];
+        run.textParams.color = colors[type];
         if (type == bullet_GmLineType) {
             /* TODO: Literata bullet is broken? */
             iGmRun bulRun = run;
             if (prefs->font == literata_TextFont) {
                 /* Something wrong this the glyph in Literata, looks cropped. */
-                bulRun.font = defaultContentRegular_FontId;
+                bulRun.textParams.font = defaultContentRegular_FontId;
             }
-            bulRun.color = tmQuote_ColorId;
+            bulRun.textParams.color = tmQuote_ColorId;
             bulRun.visBounds.pos = addX_I2(pos, (indents[text_GmLineType] - 0.55f) * gap_Text);
             bulRun.visBounds.size =
                 init_I2((indents[bullet_GmLineType] - indents[text_GmLineType]) * gap_Text,
-                        lineHeight_Text(bulRun.font));
+                        lineHeight_Text(bulRun.textParams.font));
             //            bulRun.visBounds.pos.x -= 4 * gap_Text - width_Rect(bulRun.visBounds) / 2;
             bulRun.bounds = zero_Rect(); /* just visual */
             bulRun.text   = range_CStr(bullet);
@@ -636,11 +731,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == quote_GmLineType && addQuoteIcon) {
             addQuoteIcon    = iFalse;
             iGmRun quoteRun = run;
-            quoteRun.font   = heading1_FontId;
+            quoteRun.textParams.font   = heading1_FontId;
             quoteRun.text   = range_CStr(quote);
-            quoteRun.color  = tmQuoteIcon_ColorId;
-            iRect vis       = visualBounds_Text(quoteRun.font, quoteRun.text);
-            quoteRun.visBounds.size = advance_Text(quoteRun.font, quote);
+            quoteRun.textParams.color  = tmQuoteIcon_ColorId;
+            iRect vis       = visualBounds_Text(quoteRun.textParams.font, quoteRun.text);
+            quoteRun.visBounds.size = measure_Text(quoteRun.textParams.font, quote).bounds.size;
             quoteRun.visBounds.pos =
                 add_I2(pos,
                        init_I2((indents[quote_GmLineType] - 5) * gap_Text,
@@ -656,13 +751,15 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == link_GmLineType) {
             iGmRun icon = run;
             icon.visBounds.pos  = pos;
-            icon.visBounds.size = init_I2(indent * gap_Text, lineHeight_Text(run.font));
+            icon.visBounds.size = init_I2(indent * gap_Text, lineHeight_Text(run.textParams.font));
             icon.bounds         = zero_Rect(); /* just visual */
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
+            const enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
             icon.text           = range_CStr(link->flags & query_GmLinkFlag    ? magnifyingGlass
-                                             : link->flags & file_GmLinkFlag   ? folder
-                                             : link->flags & finger_GmLinkFlag ? pointingFinger
-                                             : link->flags & mailto_GmLinkFlag ? envelope
+                                             : scheme == file_GmLinkScheme     ? folder
+                                             : scheme == titan_GmLinkScheme    ? uploadArrow
+                                             : scheme == finger_GmLinkScheme   ? pointingFinger
+                                             : scheme == mailto_GmLinkScheme   ? envelope
                                              : link->flags & remote_GmLinkFlag ? globe
                                                                                : arrow);
             /* Custom link icon is shown on local Gemini links only. */
@@ -671,45 +768,31 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             /* TODO: List bullets needs the same centering logic. */
             /* Special exception for the tiny bullet operator. */
-            icon.font = equal_Rangecc(link->labelIcon, "\u2219") ? regularMonospace_FontId
+            icon.textParams.font = equal_Rangecc(link->labelIcon, "\u2219") ? regularMonospace_FontId
                                                                  : regular_FontId;
             alignDecoration_GmRun_(&icon, iFalse);
-            icon.color = linkColor_GmDocument(d, run.linkId, icon_GmLinkPart);
+            icon.textParams.color = linkColor_GmDocument(d, run.linkId, icon_GmLinkPart);
             icon.flags |= decoration_GmRunFlag;
             pushBack_Array(&d->layout, &icon);
         }
-        run.color = colors[type];
-        if (d->format == plainText_GmDocumentFormat) {
-            run.color = colors[text_GmLineType];
+        run.textParams.color = colors[type];
+        if (d->format == plainText_SourceFormat) {
+            run.textParams.color = colors[text_GmLineType];
         }
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
-        int bigCount = 0;
+//        int bigCount = 0;
+        iBool isLedeParagraph = iFalse;
         if (type == text_GmLineType && isFirstText) {
-            if (!isMono) run.font = firstParagraph_FontId;
-            run.color = tmFirstParagraph_ColorId;
-            bigCount = 15; /* max lines -- what if the whole document is one paragraph? */
+            if (!isMono) run.textParams.font = firstParagraph_FontId;
+            run.textParams.color = tmFirstParagraph_ColorId;
+//            bigCount = 15; /* max lines -- what if the whole document is one paragraph? */
+            isLedeParagraph = iTrue;
             isFirstText = iFalse;
         }
         else if (type != heading1_GmLineType) {
             isFirstText = iFalse;
         }
-        iRangecc runLine = line;
-        /* Create one or more text runs for this line. */
-        run.flags |= startOfLine_GmRunFlag;
-        if (!prefs->quoteIcon && type == quote_GmLineType) {
-            run.flags |= quoteBorder_GmRunFlag;
-        }
-        /* The right margin is used for balancing lines horizontally. */
-        if (isVeryNarrow) {
-            rightMargin = 0;
-        }
-        else {
-            rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
-                           type == quote_GmLineType ? 4 : 0);
-        }
-        const iBool isWordWrapped =
-            (d->format == plainText_GmDocumentFormat ? prefs->plainTextWrap : !isPreformat);
-        if (isPreformat && d->format != plainText_GmDocumentFormat) {
+        if (isPreformat && d->format != plainText_SourceFormat) {
             /* Remember the top left coordinates of the block (first line of block). */
             iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
             if (~meta->flags & topLeft_GmPreMetaFlag) {
@@ -717,51 +800,85 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 meta->flags |= topLeft_GmPreMetaFlag;
             }
         }
-        float lineHeightReduction = 0.0f;
-        if (!isMono) {
-            /* Upper-level headings are typeset a bit tighter. */
-            if (type == heading1_GmLineType) {
-                lineHeightReduction = 0.10f;
-            }
-            else if (type == heading2_GmLineType) {
-                lineHeightReduction = 0.06f;
-            }
-            /* Visited links are never bold. */
-            if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
-                run.font = paragraph_FontId;
-            }
-        }
-        iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
-        while (!isEmpty_Range(&runLine)) {
-            if (~run.flags & startOfLine_GmRunFlag && lineHeightReduction > 0.0f) {
-                pos.y -= lineHeightReduction * lineHeight_Text(run.font);
-            }
-            run.bounds.pos = addX_I2(pos, indent * gap_Text);
-            const int wrapAvail = d->size.x - run.bounds.pos.x - rightMargin * gap_Text;
-            const int avail = isWordWrapped ? wrapAvail : 0;
-            const char *contPos;
-            const iInt2 dims = tryAdvance_Text(run.font, runLine, avail, &contPos);
-            iChangeFlags(run.flags, wide_GmRunFlag, (isPreformat && dims.x > d->size.x));
-            run.bounds.size.x = iMax(wrapAvail, dims.x); /* Extends to the right edge for selection. */
-            run.bounds.size.y = dims.y;
-            run.visBounds     = run.bounds;
-            run.visBounds.size.x = dims.x;
-            if (contPos > runLine.start) {
-                run.text = (iRangecc){ runLine.start, contPos };
+        iAssert(!isEmpty_Range(&line)); /* must have something at this point */
+        /* Typeset the paragraph. */ {
+            iRunTypesetter rts;
+            init_RunTypesetter_(&rts);
+            rts.run           = run;
+            rts.pos           = pos;
+            rts.fonts         = fonts;
+            rts.isWordWrapped = (d->format == plainText_SourceFormat ? prefs->plainTextWrap
+                                                                     : !isPreformat);
+            rts.isPreformat   = isPreformat;
+            rts.layoutWidth   = d->size.x;
+            rts.indent        = indent * gap_Text;
+            /* The right margin is used for balancing lines horizontally. */
+            if (isVeryNarrow) {
+                rts.rightMargin = 0;
             }
             else {
-                run.text = runLine;
-                contPos = runLine.end;
+                rts.rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
+                                           type == quote_GmLineType
+                                       ? 4 : 0) * gap_Text;
             }
-            pushBack_Array(&d->layout, &run);
-            run.flags &= ~startOfLine_GmRunFlag;
-            runLine.start = contPos;
-            trimStart_Rangecc(&runLine);
-            pos.y += lineHeight_Text(run.font);
-            if (--bigCount == 0) {
-                run.font = fonts[text_GmLineType];
-                run.color = colors[text_GmLineType];
+            if (!isMono) {
+                /* Upper-level headings are typeset a bit tighter. */
+                if (type == heading1_GmLineType) {
+                    rts.lineHeightReduction = 0.10f;
+                }
+                else if (type == heading2_GmLineType) {
+                    rts.lineHeightReduction = 0.06f;
+                }
+                /* Visited links are never bold. */
+                if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
+                    rts.run.textParams.font = paragraph_FontId;
+                }
             }
+            if (!prefs->quoteIcon && type == quote_GmLineType) {
+                rts.run.flags |= quoteBorder_GmRunFlag;
+            }
+            for (;;) { /* need to retry if the font needs changing */
+                rts.run.flags |= startOfLine_GmRunFlag;
+                iWrapText wrapText = { .text     = line,
+                                       .maxWidth = rts.isWordWrapped
+                                                       ? d->size.x - run.bounds.pos.x -
+                                                             rts.indent - rts.rightMargin
+                                                       : 0 /* unlimited */,
+                                       .mode     = word_WrapTextMode,
+                                       .wrapFunc = typesetOneLine_RunTypesetter_,
+                                       .context  = &rts };
+                measure_WrapText(&wrapText, rts.run.textParams.font);
+                if (!isLedeParagraph || size_Array(&rts.layout) <= maxLedeLines_) {
+                    if (wrapText.baseDir < 0) {
+                        /* Right-aligned paragraphs need margins and decorations to be flipped. */
+                        iForEach(Array, pr, &rts.layout) {
+                            iGmRun *prun = pr.value;
+                            const int offset = rts.rightMargin - rts.indent;
+                            prun->bounds.pos.x    += offset;
+                            prun->visBounds.pos.x += offset;                            
+                        }
+                        if (type == bullet_GmLineType || type == link_GmLineType ||
+                            (type == quote_GmLineType && prefs->quoteIcon)) {
+                            iGmRun *decor = back_Array(&d->layout);
+                            iAssert(decor->flags & decoration_GmRunFlag);
+                            decor->visBounds.pos.x = d->size.x - width_Rect(decor->visBounds) -
+                                                     decor->visBounds.pos.x +
+                                                     gap_Text * (type == bullet_GmLineType  ? 1.5f
+                                                                 : type == quote_GmLineType ? 0.0f
+                                                                                            : 1.0f);
+                        }
+                    }
+                    commit_RunTypesetter_(&rts, d);
+                    break;
+                }
+                clear_RunTypesetter_(&rts);
+                rts.pos                  = pos;
+                rts.run.textParams.font  = rts.fonts[text_GmLineType];
+                rts.run.textParams.color = colors[text_GmLineType];
+                isLedeParagraph = iFalse;
+            }
+            pos = rts.pos;
+            deinit_RunTypesetter_(&rts);
         }
         /* Flag the end of line, too. */
         ((iGmRun *) back_Array(&d->layout))->flags |= endOfLine_GmRunFlag;
@@ -791,11 +908,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     run.visBounds.pos.x  = run.bounds.size.x / 2 - width_Rect(run.visBounds) / 2;
                     run.bounds.size.y    = run.visBounds.size.y;
                 }
-                run.text      = iNullRange;
-                run.font      = 0;
-                run.color     = 0;
-                run.mediaType = image_GmRunMediaType;
-                run.mediaId   = imageId;
+                run.text             = iNullRange;
+                run.textParams.font  = 0;
+                run.textParams.color = 0;
+                run.mediaType        = image_GmRunMediaType;
+                run.mediaId          = imageId;
                 pushBack_Array(&d->layout, &run);
                 pos.y += run.bounds.size.y + margin;
             }
@@ -810,7 +927,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.bounds.size.y = lineHeight_Text(uiContent_FontId) + 3 * gap_UI;
                 run.visBounds     = run.bounds;
                 run.text          = iNullRange;
-                run.color         = 0;
+                run.textParams.color = 0;
                 run.mediaType     = audio_GmRunMediaType;
                 run.mediaId       = audioId;
                 pushBack_Array(&d->layout, &run);
@@ -827,7 +944,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.bounds.size.y = 2 * lineHeight_Text(uiContent_FontId) + 4 * gap_UI;
                 run.visBounds     = run.bounds;
                 run.text          = iNullRange;
-                run.color         = 0;
+                run.textParams.color = 0;
                 run.mediaType     = download_GmRunMediaType;
                 run.mediaId       = downloadId;
                 pushBack_Array(&d->layout, &run);
@@ -842,7 +959,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     /* Footer. */
     if (siteBanner_GmDocument(d)) {
         iGmRun footer = { .flags = decoration_GmRunFlag | footer_GmRunFlag };
-        footer.visBounds = (iRect){ pos, init_I2(d->size.x, lineHeight_Text(banner_FontId) * 1) };
+        footer.visBounds = (iRect){ pos, init_I2(d->size.x, lineHeight_Text(banner_FontId) * 2) };
         pushBack_Array(&d->layout, &footer);
         pos.y += footer.visBounds.size.y;
     }
@@ -862,10 +979,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
     }
+//    printf("[GmDocument] layout size: %zu runs (%zu bytes)\n",
+//           size_Array(&d->layout), size_Array(&d->layout) * sizeof(iGmRun));        
 }
 
 void init_GmDocument(iGmDocument *d) {
-    d->format = gemini_GmDocumentFormat;
+    d->format = gemini_SourceFormat;
+    init_String(&d->unormSource);
     init_String(&d->source);
     init_String(&d->url);
     init_String(&d->localHost);
@@ -881,6 +1001,8 @@ void init_GmDocument(iGmDocument *d) {
     d->siteIcon = 0;
     d->media = new_Media();
     d->openURLs = NULL;
+    d->isPaletteValid = iFalse;
+    iZap(d->palette);
 }
 
 void deinit_GmDocument(iGmDocument *d) {
@@ -896,6 +1018,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_String(&d->localHost);
     deinit_String(&d->url);
     deinit_String(&d->source);
+    deinit_String(&d->unormSource);
 }
 
 iMedia *media_GmDocument(iGmDocument *d) {
@@ -906,6 +1029,11 @@ const iMedia *constMedia_GmDocument(const iGmDocument *d) {
     return d->media;
 }
 
+const iString *url_GmDocument(const iGmDocument *d) {
+    return &d->url;
+}
+
+#if 0
 void reset_GmDocument(iGmDocument *d) {
     clear_Media(d->media);
     clearLinks_GmDocument_(d);
@@ -914,8 +1042,11 @@ void reset_GmDocument(iGmDocument *d) {
     clear_Array(&d->preMeta);
     clear_String(&d->url);
     clear_String(&d->localHost);
+    clear_String(&d->source);
+    clear_String(&d->unormSource);
     d->themeSeed = 0;
 }
+#endif
 
 static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     set_Color(tmQuoteIcon_ColorId,
@@ -1388,9 +1519,23 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     }
     printf("---\n");
 #endif
+    /* Color functions operate on the global palette for convenience, but we may need to switch
+       palettes on the fly if more than one GmDocument is being displayed simultaneously. */
+    memcpy(d->palette, get_Root()->tmPalette, sizeof(d->palette));
+    d->isPaletteValid = iTrue;
 }
 
-void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
+void makePaletteGlobal_GmDocument(const iGmDocument *d) {
+    if (d->isPaletteValid) {
+        memcpy(get_Root()->tmPalette, d->palette, sizeof(d->palette));
+    }
+}
+
+void invalidatePalette_GmDocument(iGmDocument *d) {
+    d->isPaletteValid = iFalse;
+}
+
+void setFormat_GmDocument(iGmDocument *d, enum iSourceFormat format) {
     d->format = format;
 }
 
@@ -1407,19 +1552,41 @@ void redoLayout_GmDocument(iGmDocument *d) {
     doLayout_GmDocument_(d);
 }
 
+static void markLinkRunsVisited_GmDocument_(iGmDocument *d, const iIntSet *linkIds) {
+    iForEach(Array, r, &d->layout) {
+        iGmRun *run = r.value;
+        if (run->linkId && !run->mediaId && contains_IntSet(linkIds, run->linkId)) {
+            if (run->textParams.font == bold_FontId) {
+                run->textParams.font = paragraph_FontId;
+            }
+            else if (run->flags & decoration_GmRunFlag) {
+                run->textParams.color = linkColor_GmDocument(d, run->linkId, icon_GmLinkPart);
+            }
+        }
+    }
+}
+
 iBool updateOpenURLs_GmDocument(iGmDocument *d) {
     iBool wasChanged = iFalse;
     updateOpenURLs_GmDocument_(d);
+    iIntSet linkIds;
+    init_IntSet(&linkIds);
     iForEach(PtrArray, i, &d->links) {
         iGmLink *link = i.ptr;
         if (!equal_String(&link->url, &d->url)) {
             const iBool isOpen = contains_StringSet(d->openURLs, &link->url);
             if (isOpen ^ ((link->flags & isOpen_GmLinkFlag) != 0)) {
                 iChangeFlags(link->flags, isOpen_GmLinkFlag, isOpen);
+                if (isOpen) {
+                    link->flags |= visited_GmLinkFlag;
+                    insert_IntSet(&linkIds, index_PtrArrayIterator(&i) + 1);
+                }
                 wasChanged = iTrue;
             }
         }
     }
+    markLinkRunsVisited_GmDocument_(d, &linkIds);
+    deinit_IntSet(&linkIds);
     return wasChanged;
 }
 
@@ -1430,12 +1597,21 @@ iLocalDef iBool isNormalizableSpace_(char ch) {
 static void normalize_GmDocument(iGmDocument *d) {
     iString *normalized = new_String();
     iRangecc src = range_String(&d->source);
+    /* Check for a BOM. In UTF-8, the BOM can just be skipped if present. */ {
+        iChar ch = 0;
+        decodeBytes_MultibyteChar(src.start, src.end, &ch);
+        if (ch == 0xfeff) /* zero-width non-breaking space */ {
+            src.start += 3;
+        }
+    }
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
     const int preTabWidth = 4; /* TODO: user-configurable parameter */
+    iBool wasNormalized = iFalse;
+    iBool hasTabs = iFalse;
     while (nextSplit_Rangecc(src, "\n", &line)) {
         if (isPreformat) {
             /* Replace any tab characters with spaces for visualization. */
@@ -1446,13 +1622,19 @@ static void normalize_GmDocument(iGmDocument *d) {
                     while (numSpaces-- > 0) {
                         appendCStrN_String(normalized, " ", 1);
                     }
+                    hasTabs = iTrue;
+                    wasNormalized = iTrue;
                 }
-                else if (*ch != '\r') {
+                else if (*ch != '\v') {
                     appendCStrN_String(normalized, ch, 1);
+                }
+                else {
+                    hasTabs = iTrue;
+                    wasNormalized = iTrue;
                 }
             }
             appendCStr_String(normalized, "\n");
-            if (d->format == gemini_GmDocumentFormat &&
+            if (d->format == gemini_SourceFormat &&
                 lineType_GmDocument_(d, line) == preformatted_GmLineType) {
                 isPreformat = iFalse;
             }
@@ -1468,7 +1650,10 @@ static void normalize_GmDocument(iGmDocument *d) {
         int spaceCount = 0;
         for (const char *ch = line.start; ch != line.end; ch++) {
             char c = *ch;
-            if (c == '\r') continue;
+            if (c == '\v') {
+                wasNormalized = iTrue;
+                continue;
+            }
             if (isNormalizableSpace_(c)) {
                 if (isPrevSpace) {
                     if (++spaceCount == 8) {
@@ -1477,9 +1662,13 @@ static void normalize_GmDocument(iGmDocument *d) {
                         popBack_Block(&normalized->chars);
                         pushBack_Block(&normalized->chars, '\t');
                     }
+                    wasNormalized = iTrue;
                     continue; /* skip repeated spaces */
                 }
-                c = ' ';
+                if (c != ' ') {
+                    c = ' ';
+                    wasNormalized = iTrue;
+                }
                 isPrevSpace = iTrue;
             }
             else {
@@ -1490,11 +1679,18 @@ static void normalize_GmDocument(iGmDocument *d) {
         }
         appendCStr_String(normalized, "\n");
     }
+//    printf("hasTabs: %d\n", hasTabs);
+//    printf("wasNormalized: %d\n", wasNormalized);
+//    fflush(stdout);
     set_String(&d->source, collect_String(normalized));
-    normalize_String(&d->source); /* NFC */
+    //normalize_String(&d->source); /* NFC */
+//    printf("orig:%zu norm:%zu\n", size_String(&d->unormSource), size_String(&d->source));
+    /* normalized source has an extra newline at the end */
+//    iAssert(wasNormalized || equal_String(&d->unormSource, &d->source));
 }
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
+    url = canonicalUrl_String(url);
     set_String(&d->url, url);
     iUrl parts;
     init_Url(&parts, url);
@@ -1502,8 +1698,18 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     updateIconBasedOnUrl_GmDocument_(d);
 }
 
-void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
-    set_String(&d->source, source);
+void setSource_GmDocument(iGmDocument *d, const iString *source, int width,
+                          enum iGmDocumentUpdate updateType) {
+//    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
+//           size_String(source), width, updateType == final_GmDocumentUpdate);
+    if (size_String(source) == size_String(&d->unormSource)) {
+        iAssert(equal_String(source, &d->unormSource));
+//        printf("[GmDocument] source is unchanged!\n");
+        return; /* Nothing to do. */
+    }
+    set_String(&d->unormSource, source);
+    /* Normalize. */
+    set_String(&d->source, &d->unormSource);
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
     }
@@ -1515,6 +1721,23 @@ void foldPre_GmDocument(iGmDocument *d, uint16_t preId) {
         iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
         meta->flags ^= folded_GmPreMetaFlag;
     }
+}
+
+void updateVisitedLinks_GmDocument(iGmDocument *d) {
+    iIntSet linkIds;
+    init_IntSet(&linkIds);
+    iForEach(PtrArray, i, &d->links) {
+        iGmLink *link = i.ptr;
+        if (~link->flags & visited_GmLinkFlag) {
+            iTime visitTime = urlVisitTime_Visited(visited_App(), &link->url);
+            if (isValid_Time(&visitTime)) {
+                link->flags |= visited_GmLinkFlag;
+                insert_IntSet(&linkIds, index_PtrArrayIterator(&i) + 1);
+            }
+        }
+    }
+    markLinkRunsVisited_GmDocument_(d, &linkIds);
+    deinit_IntSet(&linkIds);
 }
 
 const iGmPreMeta *preMeta_GmDocument(const iGmDocument *d, uint16_t preId) {
@@ -1603,6 +1826,14 @@ const iArray *headings_GmDocument(const iGmDocument *d) {
 
 const iString *source_GmDocument(const iGmDocument *d) {
     return &d->source;
+}
+
+size_t memorySize_GmDocument(const iGmDocument *d) {
+    return size_String(&d->unormSource) +
+           size_String(&d->source) +
+           size_Array(&d->layout) * sizeof(iGmRun) +
+           size_Array(&d->links)  * sizeof(iGmLink) +
+           memorySize_Media(d->media);
 }
 
 iRangecc findText_GmDocument(const iGmDocument *d, const iString *text, const char *start) {
@@ -1737,51 +1968,60 @@ iMediaId linkAudio_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     return findLinkAudio_Media(d->media, linkId);
 }
 
+iLocalDef iBool isWWW_GmLinkScheme(enum iGmLinkScheme d) {
+    return d == http_GmLinkScheme || d == mailto_GmLinkScheme;
+}
+
+iLocalDef iBool isOldSchool_GmLinkScheme(enum iGmLinkScheme d) {
+    return d == gopher_GmLinkScheme || d == finger_GmLinkScheme;
+}
+
 enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum iGmLinkPart part) {
     const iGmLink *link = link_GmDocument_(d, linkId);
-    const int www_GmLinkFlag            = http_GmLinkFlag | mailto_GmLinkFlag;
-    const int gopherOrFinger_GmLinkFlag = gopher_GmLinkFlag | finger_GmLinkFlag;
+//    const int www_GmLinkFlag            = http_GmLinkFlag | mailto_GmLinkFlag;
+//    const int gopherOrFinger_GmLinkFlag = gopher_GmLinkFlag | finger_GmLinkFlag;
+    const enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
     if (link) {
-        const iBool isUnsupported = (link->flags & supportedProtocol_GmLinkFlag) == 0;
+        const iBool isUnsupported = (link->flags & supportedScheme_GmLinkFlag) == 0;
         if (part == icon_GmLinkPart) {
             if (isUnsupported) {
                 return tmBadLink_ColorId;
             }
-            if (link->flags & iconFromLabel_GmLinkFlag) {
+            if (scheme != mailto_GmLinkScheme && link->flags & iconFromLabel_GmLinkFlag) {
                 return link->flags & visited_GmLinkFlag ? tmLinkCustomIconVisited_ColorId
                                                         : tmLinkIcon_ColorId;
             }
             if (link->flags & visited_GmLinkFlag) {
-                return link->flags & www_GmLinkFlag ? tmHypertextLinkIconVisited_ColorId
-                       : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkIconVisited_ColorId
-                                                                 : tmLinkIconVisited_ColorId;
+                return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkIconVisited_ColorId
+                       : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkIconVisited_ColorId
+                                                          : tmLinkIconVisited_ColorId;
             }
-            return link->flags & www_GmLinkFlag              ? tmHypertextLinkIcon_ColorId
-                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkIcon_ColorId
-                                                             : tmLinkIcon_ColorId;
+            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkIcon_ColorId
+                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkIcon_ColorId
+                                                      : tmLinkIcon_ColorId;
         }
         if (part == text_GmLinkPart) {
-            return link->flags & www_GmLinkFlag              ? tmHypertextLinkText_ColorId
-                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkText_ColorId
-                                                             : tmLinkText_ColorId;
+            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkText_ColorId
+                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkText_ColorId
+                                                      : tmLinkText_ColorId;
         }
         if (part == textHover_GmLinkPart) {
-            return link->flags & www_GmLinkFlag              ? tmHypertextLinkTextHover_ColorId
-                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkTextHover_ColorId
-                                                             : tmLinkTextHover_ColorId;
+            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkTextHover_ColorId
+                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkTextHover_ColorId
+                                                      : tmLinkTextHover_ColorId;
         }
         if (part == domain_GmLinkPart) {
             if (isUnsupported) {
                 return tmBadLink_ColorId;
             }
-            return link->flags & www_GmLinkFlag              ? tmHypertextLinkDomain_ColorId
-                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkDomain_ColorId
-                                                             : tmLinkDomain_ColorId;
+            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkDomain_ColorId
+                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkDomain_ColorId
+                                                      : tmLinkDomain_ColorId;
         }
         if (part == visited_GmLinkPart) {
-            return link->flags & www_GmLinkFlag              ? tmHypertextLinkLastVisitDate_ColorId
-                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkLastVisitDate_ColorId
-                                                             : tmLinkLastVisitDate_ColorId;
+            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkLastVisitDate_ColorId
+                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkLastVisitDate_ColorId
+                                                      : tmLinkLastVisitDate_ColorId;
         }
     }
     return tmLinkText_ColorId;
@@ -1816,7 +2056,7 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
         return (iRangecc){ d->text.start, d->text.start };
     }
     iRangecc loc;
-    tryAdvanceNoWrap_Text(d->font, d->text, x, &loc.start);
+    tryAdvanceNoWrap_Text(d->textParams.font, d->text, x, &loc.start);
     loc.end = loc.start;
     iChar ch;
     if (d->text.end != loc.start) {

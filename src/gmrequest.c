@@ -118,6 +118,31 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(TitanData)
+iDeclareTypeConstruction(TitanData)
+    
+struct Impl_TitanData {
+    iBlock  data;
+    iString mime;
+    iString token;
+};
+
+iDefineTypeConstruction(TitanData)
+
+void init_TitanData(iTitanData *d) {
+    init_Block(&d->data, 0);
+    init_String(&d->mime);
+    init_String(&d->token);
+}
+
+void deinit_TitanData(iTitanData *d) {
+    deinit_String(&d->token);
+    deinit_String(&d->mime);
+    deinit_Block(&d->data);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 static iAtomicInt idGen_;
 
 enum iGmRequestState {
@@ -135,6 +160,7 @@ struct Impl_GmRequest {
     iGmCerts *           certs; /* not owned */
     enum iGmRequestState state;
     iString              url;
+    iTitanData *         titan;
     iTlsRequest *        req;
     iGopher              gopher;
     iGmResponse *        resp;
@@ -144,12 +170,17 @@ struct Impl_GmRequest {
     iAtomicInt           allowUpdate;
     iAudience *          updated;
     iAudience *          finished;
+    iGmRequestProgressFunc sendProgress;
 };
 
 iDefineObjectConstructionArgs(GmRequest, (iGmCerts *certs), certs)
 iDefineAudienceGetter(GmRequest, updated)
 iDefineAudienceGetter(GmRequest, finished)
-
+    
+static uint16_t port_GmRequest_(iGmRequest *d) {
+    return urlPort_String(&d->url);
+}
+    
 static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     const iTlsCertificate *cert = d->req ? serverCertificate_TlsRequest(d->req) : NULL;
     iGmResponse *resp = d->resp;
@@ -157,7 +188,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     if (cert) {
         const iRangecc domain = range_String(hostName_Address(address_TlsRequest(d->req)));
         resp->certFlags |= available_GmCertFlag;
-        set_Block(&resp->certFingerprint, collect_Block(fingerprint_TlsCertificate(cert)));
+        set_Block(&resp->certFingerprint, collect_Block(publicKeyFingerprint_TlsCertificate(cert)));
         resp->certFlags |= haveFingerprint_GmCertFlag;
         if (!isExpired_TlsCertificate(cert)) {
             resp->certFlags |= timeVerified_GmCertFlag;
@@ -165,7 +196,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         if (verifyDomain_GmCerts(cert, domain)) {
             resp->certFlags |= domainVerified_GmCertFlag;
         }
-        if (checkTrust_GmCerts(d->certs, domain, cert)) {
+        if (checkTrust_GmCerts(d->certs, domain, port_GmRequest_(d), cert)) {
             resp->certFlags |= trusted_GmCertFlag;
         }
         if (verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus) {
@@ -285,8 +316,20 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     d->state = (status_TlsRequest(req) == error_TlsRequestStatus ? failure_GmRequestState
                                                                  : finished_GmRequestState);
     if (d->state == failure_GmRequestState) {
-        d->resp->statusCode = tlsFailure_GmStatusCode;
-        set_String(&d->resp->meta, errorMessage_TlsRequest(req));
+        if (!isVerified_TlsRequest(req)) {
+            if (isExpired_TlsCertificate(serverCertificate_TlsRequest(req))) {
+                d->resp->statusCode = tlsServerCertificateExpired_GmStatusCode;
+                setCStr_String(&d->resp->meta, "Server certificate has expired");
+            }
+            else {
+                d->resp->statusCode = tlsServerCertificateNotVerified_GmStatusCode;
+                setCStr_String(&d->resp->meta, "Server certificate could not be verified");
+            }
+        }
+        else {
+            d->resp->statusCode = tlsFailure_GmStatusCode;
+            set_String(&d->resp->meta, errorMessage_TlsRequest(req));
+        }
     }
     checkServerCertificate_GmRequest_(d);
     unlock_Mutex(d->mtx);
@@ -482,24 +525,27 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
 /*----------------------------------------------------------------------------------------------*/
 
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
-    d->mtx  = new_Mutex();
-    d->id   = add_Atomic(&idGen_, 1) + 1;
-    d->resp = new_GmResponse();
+    d->mtx   = new_Mutex();
+    d->id    = add_Atomic(&idGen_, 1) + 1;
+    d->resp  = new_GmResponse();
     d->isFilterEnabled = iTrue;
     d->isRespLocked    = iFalse;
     d->isRespFiltered  = iFalse;
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
-    d->certs      = certs;
-    d->req        = NULL;
-    d->updated    = NULL;
-    d->finished   = NULL;
-    d->state      = initialized_GmRequestState;
+    d->titan    = NULL;
+    d->certs    = certs;
+    d->req      = NULL;
+    d->updated  = NULL;
+    d->finished = NULL;
+    d->sendProgress = NULL;
+    d->state    = initialized_GmRequestState;
 }
 
 void deinit_GmRequest(iGmRequest *d) {
     if (d->req) {
+        iDisconnectObject(TlsRequest, d->req, sent, d);
         iDisconnectObject(TlsRequest, d->req, readyRead, d);
         iDisconnectObject(TlsRequest, d->req, finished, d);
     }
@@ -513,6 +559,7 @@ void deinit_GmRequest(iGmRequest *d) {
         unlock_Mutex(d->mtx);
     }
     iReleasePtr(&d->req);
+    delete_TitanData(d->titan);
     deinit_Gopher(&d->gopher);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
@@ -526,7 +573,7 @@ void enableFilters_GmRequest(iGmRequest *d, iBool enable) {
 }
 
 void setUrl_GmRequest(iGmRequest *d, const iString *url) {
-    set_String(&d->url, urlFragmentStripped_String(url));
+    set_String(&d->url, canonicalUrl_String(urlFragmentStripped_String(url)));
     /* Encode hostname to Punycode here because we want to submit the Punycode domain name
        in the request. (TODO: Pending possible Gemini spec change.) */
     punyEncodeUrlHost_String(&d->url);
@@ -535,6 +582,31 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
        the web. */
     urlEncodePath_String(&d->url);
     urlEncodeSpaces_String(&d->url);
+}
+
+static iBool isTitan_GmRequest_(const iGmRequest *d) {
+    return equalCase_Rangecc(urlScheme_String(&d->url), "titan");
+}
+
+void setTitanData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *payload,
+                            const iString *token) {
+    if (!d->titan) {
+        d->titan = new_TitanData();   
+    }
+    set_Block(&d->titan->data, payload);
+    set_String(&d->titan->mime, mime);
+    set_String(&d->titan->token, token);
+}
+
+void setSendProgressFunc_GmRequest(iGmRequest *d, iGmRequestProgressFunc func) {
+    d->sendProgress = func;
+}
+
+static void bytesSent_GmRequest_(iGmRequest *d, iTlsRequest *req, size_t sent, size_t toSend) {
+    iUnused(req);
+    if (d->sendProgress) {
+        d->sendProgress(d, sent, toSend);
+    }
 }
 
 static iBool isDirectory_(const iString *path) {
@@ -571,7 +643,7 @@ void submit_GmRequest(iGmRequest *d) {
     iGmResponse *resp = d->resp;
     clear_GmResponse(resp);
 #if !defined (NDEBUG)
-    printf("[GmRequest] URL: %s\n", cstr_String(&d->url));
+    printf("[GmRequest] URL: %s\n", cstr_String(&d->url)); fflush(stdout);
 #endif
     iUrl url;
     init_Url(&url, &d->url);
@@ -821,7 +893,8 @@ void submit_GmRequest(iGmRequest *d) {
         beginGopherConnection_GmRequest_(d, host, port ? port : 79);
         return;
     }
-    else if (!equalCase_Rangecc(url.scheme, "gemini")) {
+    else if (!equalCase_Rangecc(url.scheme, "gemini") &&
+             !equalCase_Rangecc(url.scheme, "titan")) {
         resp->statusCode = unsupportedProtocol_GmStatusCode;
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
@@ -834,13 +907,43 @@ void submit_GmRequest(iGmRequest *d) {
         setCertificate_TlsRequest(d->req, identity->cert);
     }
     iConnect(TlsRequest, d->req, readyRead, d, readIncoming_GmRequest_);
+    iConnect(TlsRequest, d->req, sent, d, bytesSent_GmRequest_);
     iConnect(TlsRequest, d->req, finished, d, requestFinished_GmRequest_);
     if (port == 0) {
-        port = 1965; /* default Gemini port */
+        port = GEMINI_DEFAULT_PORT; /* default Gemini port */
     }
     setHost_TlsRequest(d->req, host, port);
-    setContent_TlsRequest(d->req,
-                          utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
+    /* Titan requests can have an arbitrary payload. */
+    if (isTitan_GmRequest_(d)) {
+        iBlock content;
+        init_Block(&content, 0);
+        if (d->titan) {
+            printf_Block(&content,
+                         "%s;mime=%s;size=%zu",
+                         cstr_String(&d->url),
+                         cstr_String(&d->titan->mime),
+                         size_Block(&d->titan->data));
+            if (!isEmpty_String(&d->titan->token)) {
+                appendCStr_Block(&content, ";token=");
+                append_Block(&content,
+                             utf8_String(collect_String(urlEncode_String(&d->titan->token))));
+            }
+            appendCStr_Block(&content, "\r\n");
+            append_Block(&content, &d->titan->data);
+        }
+        else {
+            /* Empty data. */
+            printf_Block(
+                &content, "%s;mime=application/octet-stream;size=0\r\n", cstr_String(&d->url));
+        }
+        setContent_TlsRequest(d->req, &content);
+        deinit_Block(&content);
+    }
+    else {
+        /* Gemini request. */
+        setContent_TlsRequest(d->req,
+                              utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
+    }
     submit_TlsRequest(d->req);
 }
 
