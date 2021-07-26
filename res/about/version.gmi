@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.6.1
+* Fixed copying text in the text editor (the wrong region was copied).
+
 ## 1.6
 ⚠️ A new TOFU trust store will be created. The old one is kept around but ignored.
 ⚠️ App state serialization format has been updated. Downgrading to a previous release will cause app state to be reset (e.g., tabs closed, navigation history cleared).
