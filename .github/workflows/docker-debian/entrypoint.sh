@@ -3,7 +3,7 @@ export LC_ALL=en_US.UTF-8
 
 apt-get update -qq -y
 apt-get install -y -qq --no-install-recommends cmake libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libmpg123-dev debhelper dh-make devscripts fakeroot git build-essential locales python3 python3-pip ninja-build
-pip3 install git-archive-all meson
+pip3 install git-archive-all setuptools meson
 sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen && locale-gen
 
 git submodule sync
