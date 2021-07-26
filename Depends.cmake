@@ -29,8 +29,8 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                                         -Dcairo=disabled -Dicu=disabled -Dfreetype=disabled
                                         -Ddocs=disabled
                                         --prefix ${_dst}
-                BUILD_COMMAND       ${NINJA_EXECUTABLE}
-                INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
+                BUILD_COMMAND       ${NINJA_EXECUTABLE} install
+                INSTALL_COMMAND     ""
             )
             list (APPEND _dependsToBuild harfbuzz-ext)
             add_library (harfbuzz-lib INTERFACE)
@@ -95,8 +95,8 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
                                         -Dc_flags=-Wno-macro-redefined
                                         -Dlibdir=lib
                                         --prefix ${_dst}
-                BUILD_COMMAND       ${NINJA_EXECUTABLE}
-                INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
+                BUILD_COMMAND       ${NINJA_EXECUTABLE} install
+                INSTALL_COMMAND     ""
                 BUILD_BYPRODUCTS    ${_dst}/lib/libfribidi.a
             )
             list (APPEND _dependsToBuild fribidi-ext)
