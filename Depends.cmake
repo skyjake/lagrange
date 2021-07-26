@@ -97,6 +97,7 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE}
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
+                BUILD_BYPRODUCTS    ${_dst}/lib/libfribidi.a
             )
         else ()
             message (FATAL_ERROR
