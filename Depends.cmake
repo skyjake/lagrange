@@ -8,6 +8,8 @@ find_program (MESON_EXECUTABLE meson DOC "Meson build system")
 find_program (NINJA_EXECUTABLE ninja DOC "Ninja build tool")
 include (ExternalProject)
 
+set (_dependsToBuild)
+
 if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
     # Find HarfBuzz with pkg-config.
     if (NOT ENABLE_HARFBUZZ_MINIMAL AND PKG_CONFIG_FOUND)
@@ -29,10 +31,9 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE}
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
-                STEP_TARGETS        install
             )
+            list (APPEND _dependsToBuild harfbuzz-ext)
             add_library (harfbuzz-lib INTERFACE)
-            add_dependencies (harfbuzz-lib harfbuzz-ext-install harfbuzz-ext)
             target_include_directories (harfbuzz-lib INTERFACE ${_dst}/include/harfbuzz)
             if (MSYS)
                 # Link dynamically.
@@ -96,20 +97,21 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE}
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
-                STEP_TARGETS        install
                 BUILD_BYPRODUCTS    ${_dst}/lib/libfribidi.a
             )
+            list (APPEND _dependsToBuild fribidi-ext)
         else ()
             message (FATAL_ERROR
                 "GNU FriBidi must be built with Meson. Please install Meson and Ninja and try again, or provide FriBidi via pkg-config.")
         endif ()
         add_library (fribidi-lib INTERFACE)
-        add_dependencies (fribidi-lib fribidi-ext-install fribidi-ext)
         target_include_directories (fribidi-lib INTERFACE ${_dst}/include)
         target_link_libraries (fribidi-lib INTERFACE ${_dst}/lib/libfribidi.a)
         set (FRIBIDI_FOUND YES)
     endif ()
 endif ()
+
+add_custom_target (ext-deps DEPENDS ${_dependsToBuild})
 
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
     set (INSTALL_THE_FOUNDATION YES)
