@@ -45,6 +45,20 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.6" date="2021-07-26">
+            <description>
+                <p>Version 1.6 adds support for bidirectional text and complex scripts,
+                    right-to-left paragraph layout, uploads using the Titan protocol,
+                    and has an improved mechanism for tracking trust in server
+                    certificates. Page contents can be fully cached in memory for more
+                    efficient backward navigation. There are also UI improvements like
+                    a reorganized Preferences and a setting for smooth scrolling
+                    speed.</p>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.6.0</url>
+        </release>
         <release version="1.5.2" date="2021-06-15">
             <description>
                 <p>Bug fixes and tweaks:</p>
