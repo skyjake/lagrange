@@ -32,6 +32,7 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE}
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
+                BUILD_BYPRODUCTS    ${_dst}/libharfbuzz.a
             )
             add_library (harfbuzz-lib INTERFACE)
             add_dependencies (harfbuzz-lib harfbuzz-ext)
