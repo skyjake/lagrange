@@ -32,9 +32,10 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE}
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
+                STEP_TARGETS        install
             )
             add_library (harfbuzz-lib INTERFACE)
-            add_dependencies (harfbuzz-lib harfbuzz-ext)
+            add_dependencies (harfbuzz-lib harfbuzz-install harfbuzz-ext)
             target_include_directories (harfbuzz-lib INTERFACE ${_dst}/include/harfbuzz)
             if (MSYS)
                 # Link dynamically.
@@ -98,6 +99,7 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE}
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
+                STEP_TARGETS        install
                 BUILD_BYPRODUCTS    ${_dst}/lib/libfribidi.a
             )
         else ()
@@ -105,7 +107,7 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
                 "GNU FriBidi must be built with Meson. Please install Meson and Ninja and try again, or provide FriBidi via pkg-config.")
         endif ()
         add_library (fribidi-lib INTERFACE)
-        add_dependencies (fribidi-lib fribidi-ext)
+        add_dependencies (fribidi-lib fribidi-install fribidi-ext)
         target_include_directories (fribidi-lib INTERFACE ${_dst}/include)
         target_link_libraries (fribidi-lib INTERFACE ${_dst}/lib/libfribidi.a)
         set (FRIBIDI_FOUND YES)
