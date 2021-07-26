@@ -99,11 +99,9 @@ void deinit_Glyph(iGlyph *d) {
     iUnused(d);
 }
 
-#if 0
 static uint32_t index_Glyph_(const iGlyph *d) {
     return d->node.key;
 }
-#endif
 
 iLocalDef iBool isRasterized_Glyph_(const iGlyph *d, int hoff) {
     return (d->flags & (rasterized0_GlyphFlag << hoff)) != 0;
