@@ -23,7 +23,7 @@ jobs:
           git submodule sync
           sudo apt-get update -qq -y
           sudo apt-get install -y -qq --no-install-recommends cmake libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libmpg123-dev debhelper dh-make devscripts fakeroot build-essential python3 python3-pip ninja-build
-          sudo pip3 install git-archive-all meson
+          sudo pip3 install git-archive-all setuptools meson
       - name: import-signing-key
         run: |
           mkdir -p ~/.gnupg/
