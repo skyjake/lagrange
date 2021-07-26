@@ -32,7 +32,6 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE}
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
-                BUILD_BYPRODUCTS    ${_dst}/libharfbuzz.a
             )
             add_library (harfbuzz-lib INTERFACE)
             add_dependencies (harfbuzz-lib harfbuzz-ext)
@@ -42,10 +41,11 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                 target_link_libraries (harfbuzz-lib INTERFACE -L${_dst}/lib harfbuzz)
                 install (PROGRAMS ${_dst}/bin/msys-harfbuzz-0.dll DESTINATION .)
             else ()
-                target_link_libraries (harfbuzz-lib INTERFACE ${_dst}/libharfbuzz.a)
                 if (APPLE)
+                    target_link_libraries (harfbuzz-lib INTERFACE ${_dst}/lib/libharfbuzz.0.dylib)
                     target_link_libraries (harfbuzz-lib INTERFACE c++)
                 else ()
+                    target_link_libraries (harfbuzz-lib INTERFACE ${_dst}/libharfbuzz.a)
                     target_link_libraries (harfbuzz-lib INTERFACE stdc++)
                 endif ()
             endif ()
