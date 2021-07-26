@@ -139,12 +139,14 @@ static void mergeLinesRange_(const iArray *inputLines, iRanges range, iString *m
         if (line->range.start >= range.start && line->range.end <= range.end) {
             append_String(merged, &line->text); /* complete */
         }
-        else if (line->range.start < range.start) {
+        else if (range.start <= line->range.start) {
             appendRange_String(merged, (iRangecc){ text, text + range.end - line->range.start });
         }
         else {
-            appendRange_String(merged, (iRangecc){ text + range.start - line->range.start,
-                                                   text + size_Range(&line->range) });
+            const size_t from = range.start - line->range.start;
+            appendRange_String(merged, (iRangecc){ text + from,
+                                                   text + iMin(from + size_Range(&range),
+                                                               size_Range(&line->range)) });
         }
     }
 }
