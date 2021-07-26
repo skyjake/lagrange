@@ -275,6 +275,7 @@ endif ()
 
 # Target.
 add_executable (app ${SOURCES} ${RESOURCES})
+add_dependencies (app ext-deps)
 set_target_properties (app PROPERTIES OUTPUT_NAME lagrange)
 target_include_directories (app PUBLIC
     src
