@@ -112,10 +112,10 @@ void init_UploadWidget(iUploadWidget *d) {
 //        iWidget *pad = addChild_Widget(headings, iClob(makePadding_Widget(0)));
 //        iWidget *hint = addChild_Widget(values, iClob(new_LabelWidget("${upload.file.drophint}", NULL)));
 //        pad->sizeRef = hint;
-        addChild_Widget(headings, iClob(new_LabelWidget("${upload.file.name}", NULL)));
-        d->filePathLabel = addChild_Widget(values, iClob(new_LabelWidget(uiTextAction_ColorEscape "${upload.file.drophere}", NULL)));
-        addChild_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)));        
-        d->fileSizeLabel = addChild_Widget(values, iClob(new_LabelWidget("\u2014", NULL)));
+        addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.name}", NULL)), frameless_WidgetFlag);
+        d->filePathLabel = addChildFlags_Widget(values, iClob(new_LabelWidget(uiTextAction_ColorEscape "${upload.file.drophere}", NULL)), frameless_WidgetFlag);
+        addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)), frameless_WidgetFlag);
+        d->fileSizeLabel = addChildFlags_Widget(values, iClob(new_LabelWidget("\u2014", NULL)), frameless_WidgetFlag);
         d->mime = new_InputWidget(0);
         setFixedSize_Widget(as_Widget(d->mime), init_I2(70 * gap_UI, -1));
         addTwoColumnDialogInputField_Widget(headings, values, "${upload.mime}", "upload.mime", iClob(d->mime));
