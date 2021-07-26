@@ -76,9 +76,6 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
     # Find FriBidi with pkg-config.
     if (NOT ENABLE_FRIBIDI_BUILD AND PKG_CONFIG_FOUND)
         pkg_check_modules (FRIBIDI IMPORTED_TARGET fribidi)
-        if (FRIBIDI_FOUND)
-            add_library (fribidi-lib ALIAS PkgConfig::FRIBIDI)
-        endif ()
     endif ()
     if (ENABLE_FRIBIDI_BUILD OR NOT FRIBIDI_FOUND)
         # Build FriBidi with Meson.
