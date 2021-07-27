@@ -551,6 +551,13 @@ const iGmIdentity *constIdentity_GmCerts(const iGmCerts *d, unsigned int id) {
 }
 
 const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url) {
+    /* Titan URLs use the Gemini identities. */
+    if (startsWithCase_String(url, "titan://")) {
+        iString *mod = copy_String(url);
+        remove_Block(&mod->chars, 0, 5);
+        prependCStr_String(mod, "gemini");
+        url = collect_String(mod);
+    }
     lock_Mutex(d->mtx);
     const iGmIdentity *found = NULL;
     iConstForEach(PtrArray, i, &d->idents) {
