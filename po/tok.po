@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-07-27 03:03+0000\n"
+"PO-Revision-Date: 2021-07-28 13:07+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -57,7 +57,7 @@ msgid_plural "feeds.list.entrycount.n"
 msgstr[0] "lipu %zu"
 
 msgid "feeds.list.refreshtime.now"
-msgstr "tenpo pini lili la mi sin e lipu lukin."
+msgstr "tenpo pini lili la lipu lukin li sin."
 
 msgid "about.tagline"
 msgstr "ilo Kemini pi pona lukin"
@@ -77,7 +77,7 @@ msgstr[0] "tenpo suno %d pini"
 
 #, c-format
 msgid "feeds.list.refreshtime"
-msgstr "tenpo %s pini la mi sin e lipu lukin."
+msgstr "tenpo %s pini la lipu lukin li sin."
 
 msgid "cancel"
 msgstr "o pini"
@@ -223,7 +223,7 @@ msgid "menu.aboutpages"
 msgstr "lipu About"
 
 msgid "menu.about"
-msgstr "sona pi ilo ni"
+msgstr "sona pi ilo Lakelan"
 
 msgid "panel.back"
 msgstr "o tawa monsi"
@@ -283,7 +283,7 @@ msgid "status.query"
 msgstr "o lukin e nimi"
 
 msgid "status.feeds"
-msgstr "mi sin e lipu lukin"
+msgstr "lipu lukin li kama sin"
 
 msgid "hint.findtext"
 msgstr "o lukin e nimi lon lipu ni"
@@ -380,7 +380,7 @@ msgid "feeds.unsubscribe"
 msgstr "o pini lukin e lipu…"
 
 msgid "feeds.markallread"
-msgstr "mi wile ala lukin e lipu ale"
+msgstr "o lukin ala e lipu ale"
 
 msgid "menu.dup"
 msgstr "o pali e ijo sama…"
@@ -467,10 +467,10 @@ msgid "pageinfo.cert.status"
 msgstr "sona pi sitelen len:"
 
 msgid "pageinfo.cert.ca.verified"
-msgstr "ona li sitelen lon ilo CA"
+msgstr "tan ilo CA"
 
 msgid "pageinfo.cert.ca.unverified"
-msgstr "ona li sitelen ala lon ilo CA"
+msgstr "tan jan"
 
 msgid "pageinfo.cert.notexpired"
 msgstr "tenpo kama la ona li wile tawa weka"
@@ -479,7 +479,7 @@ msgid "pageinfo.cert.expired"
 msgstr "tenpo pini la ona li tawa weka"
 
 msgid "pageinfo.cert.trusted"
-msgstr "pona"
+msgstr "pona lukin"
 
 #, c-format
 msgid "dlg.input.prompt"
@@ -489,7 +489,7 @@ msgid "dlg.input.send"
 msgstr "o pana"
 
 msgid "pageinfo.cert.untrusted"
-msgstr "ike"
+msgstr "ike lukin"
 
 msgid "pageinfo.domain.match"
 msgstr "nimi li sama"
@@ -545,7 +545,7 @@ msgid "dlg.import.notnew"
 msgstr "nimi tawa ale pi lipu ni li awen kin."
 
 msgid "link.noproxy"
-msgstr "o open kepeken ala e lupa"
+msgstr "o open kepeken ala lupa"
 
 msgid "heading.autoreload"
 msgstr "O SIN E LIPU"
@@ -561,13 +561,13 @@ msgid_plural "num.hours.n"
 msgstr[0] "tenpo suno anpa %d"
 
 msgid "link.download"
-msgstr "o awen e jo pi nimi tawa"
+msgstr "o awen e ijo pi nimi tawa"
 
 msgid "dlg.openlink"
 msgstr "o open e nimi tawa"
 
 msgid "heading.certwarn"
-msgstr "SITELEN LEN LI IKE"
+msgstr "SITELEN LEN LI IKE LUKIN"
 
 #, c-format
 msgid "dlg.certwarn.expired"
@@ -785,7 +785,7 @@ msgid "heading.prefs.paragraph"
 msgstr "WAN SITELEN"
 
 msgid "prefs.searchurl"
-msgstr "nimi tawa tan lukin e nimi:"
+msgstr "nimi tawa lukin e nimi:"
 
 msgid "prefs.hoverlink"
 msgstr "tawa la o lukin e nimi tawa:"
@@ -895,7 +895,7 @@ msgid "prefs.mono.gopher"
 msgstr "lupa Gopher"
 
 msgid "prefs.linewidth"
-msgstr "suli tawa linja:"
+msgstr "suli linja:"
 
 msgid "prefs.linewidth.fill"
 msgstr "suli mute"
@@ -940,16 +940,16 @@ msgid "keys.bottom"
 msgstr "o tawa anpa"
 
 msgid "keys.scroll.halfpage.down"
-msgstr "o tawa anpa lili lili"
+msgstr "o tawa lipu wan lili anpa"
 
 msgid "keys.scroll.up"
-msgstr "o tawa sewi lili lili lili"
+msgstr "o tawa sewi lili lili"
 
 msgid "keys.scroll.down"
-msgstr "o tawa anpa lili lili lili"
+msgstr "o tawa anpa lili lili"
 
 msgid "keys.scroll.page.up"
-msgstr "o tawa sewi lili"
+msgstr "o tawa lipu wan sewi"
 
 msgid "keys.back"
 msgstr "o tawa monsi"
@@ -1006,13 +1006,13 @@ msgid "error.openfile.msg"
 msgstr "ken la ijo ni li lon ala. sina o ante e nasin."
 
 msgid "error.badresource"
-msgstr "lipu About li nasa"
+msgstr "lipu About li nasa lukin"
 
 msgid "error.badresource.msg"
 msgstr "lipu About ni li lon ala."
 
 msgid "error.unsupported.media"
-msgstr "kulupu ijo li nasa"
+msgstr "kulupu ijo li nasa lukin"
 
 msgid "error.unsupported.media.msg"
 msgstr "mi sona ala e kulupu ijo MIME ni."
@@ -1021,7 +1021,7 @@ msgid "error.unsupported.protocol.msg"
 msgstr "mi sona ala e kon ni."
 
 msgid "error.badheader"
-msgstr "toki lili li nasa"
+msgstr "toki lili li nasa lukin"
 
 msgid "error.badredirect"
 msgstr "tawa ante li nasa"
@@ -1088,7 +1088,7 @@ msgid "error.badrequest.msg"
 msgstr "ilo pana li sona ala e toki ni."
 
 msgid "error.cert.auth"
-msgstr "sitelen len li pona ala"
+msgstr "ilo pana li sona ala e sitelen len"
 
 msgid "error.cert.invalid"
 msgstr "sitelen len li pakala"
@@ -1309,7 +1309,8 @@ msgstr[0] ""
 "%d la sitelen len pona li wile tawa weka."
 
 msgid "dlg.certwarn.different"
-msgstr "sitelen len ni li pakala ala. taso ona li sama ala sitelen len pona."
+msgstr ""
+"sitelen len ni li pakala ala. taso ona li sama ala sitelen len pi pona lukin."
 
 msgid "dlg.certwarn.domain"
 msgstr "nimi pi sitelen len li ante. ken la jan lawa mun ni li pakala."
@@ -1378,10 +1379,10 @@ msgid "prefs.accent.orange"
 msgstr "loje yelo"
 
 msgid "keys.scroll.halfpage.up"
-msgstr "o tawa sewi lili lili"
+msgstr "o tawa lipu wan lili sewi"
 
 msgid "keys.scroll.page.down"
-msgstr "o tawa anpa lili"
+msgstr "o tawa lipu wan anpa"
 
 msgid "keys.link.homerow"
 msgstr "o open e nimi tawa kepeken e linja tomo pi supa nimi"
@@ -1399,7 +1400,7 @@ msgid "error.badstatus"
 msgstr "pakala nasa"
 
 msgid "error.unsupported.protocol"
-msgstr "kon li nasa"
+msgstr "kon li nasa lukin"
 
 msgid "error.badstatus.msg"
 msgstr ""
@@ -1576,7 +1577,7 @@ msgid "lang.pl"
 msgstr "toki Posuka"
 
 msgid "prefs.userfont"
-msgstr "sitelen TTF:"
+msgstr "sitelen ante:"
 
 msgid "dlg.newident.scope.page"
 msgstr "lipu ni"
@@ -1644,7 +1645,7 @@ msgstr ""
 "mun ni la nanpa kon li wile awen."
 
 msgid "heading.prefs.uitheme"
-msgstr "KULE ILO"
+msgstr "KULE PI ILO LAKELAN"
 
 msgid "link.file.delete"
 msgstr "o weka e ijo"
@@ -1689,7 +1690,7 @@ msgid "upload.token"
 msgstr "len pana:"
 
 msgid "hint.upload.token"
-msgstr "o lukin e nasin lon ilo pana"
+msgstr "o lukin e nasin tan ilo pana"
 
 msgid "dlg.upload.send"
 msgstr "o pana"
@@ -1707,7 +1708,7 @@ msgid "prefs.returnkey.accept"
 msgstr "o pana"
 
 msgid "prefs.linespacing"
-msgstr "linja kon:"
+msgstr "kon linja:"
 
 msgid "prefs.memorysize"
 msgstr "poki wawa pi ilo sona:"
@@ -1719,4 +1720,10 @@ msgid "error.certexpired.msg"
 msgstr "tenpo pini la sitelen len li tawa weka. tan ni la kon li weka."
 
 msgid "error.certverify"
-msgstr "ilo pana li ike"
+msgstr "ilo pana li ike lukin"
+
+msgid "menu.unexpire"
+msgstr "o awen lukin e lipu pakala"
+
+msgid "prefs.returnkey"
+msgstr "pali pi nimi Enter:"
