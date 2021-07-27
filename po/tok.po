@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-06-01 07:18+0000\n"
+"PO-Revision-Date: 2021-07-27 03:03+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -693,9 +693,8 @@ msgstr "toki Sopisi Kilili"
 msgid "dlg.newident.until"
 msgstr "tenpo ni la ona li wile tawa weka:"
 
-#, fuzzy
 msgid "hint.newident.date"
-msgstr "YYYY-MM-DD HH:MM:SS"
+msgstr "YYYY anu YYYY-MM-DD"
 
 msgid "hint.newident.optional"
 msgstr "namako"
@@ -768,7 +767,7 @@ msgid "heading.prefs.colors"
 msgstr "kule"
 
 msgid "heading.prefs.fonts"
-msgstr "NASIN LUKIN TAWA SITELEN"
+msgstr "Nasin lukin tawa sitelen"
 
 # tab button
 msgid "heading.prefs.interface"
@@ -804,7 +803,7 @@ msgid "prefs.hidetoolbarscroll"
 msgstr "tawa la mi len e ijo sewi:"
 
 msgid "heading.prefs.pagecontent"
-msgstr "SITELEN INSA LIPU"
+msgstr "KULE LIPU"
 
 msgid "heading.prefs.proxies"
 msgstr "LUPA"
@@ -1013,10 +1012,10 @@ msgid "error.badresource.msg"
 msgstr "lipu About ni li lon ala."
 
 msgid "error.unsupported.media"
-msgstr "ijo kulupu li nasa"
+msgstr "kulupu ijo li nasa"
 
 msgid "error.unsupported.media.msg"
-msgstr "mi sona ala e ijo kulupu ni."
+msgstr "mi sona ala e kulupu ijo MIME ni."
 
 msgid "error.unsupported.protocol.msg"
 msgstr "mi sona ala e kon ni."
@@ -1400,7 +1399,7 @@ msgid "error.badstatus"
 msgstr "pakala nasa"
 
 msgid "error.unsupported.protocol"
-msgstr "kon nasa"
+msgstr "kon li nasa"
 
 msgid "error.badstatus.msg"
 msgstr ""
@@ -1614,3 +1613,110 @@ msgstr "namako…"
 
 msgid "dlg.newident.scope"
 msgstr "o kepeken e ona lon:"
+
+msgid "keys.upload"
+msgstr "o pana e lipu kepeken kon Tetan"
+
+msgid "menu.pageinfo"
+msgstr "o lukin e sona lipu"
+
+msgid "menu.openfile"
+msgstr "o open e ijo…"
+
+msgid "status.query.tight"
+msgstr "nimi lukin"
+
+msgid "hint.prefs.userfont"
+msgstr "nasin tawa ijo sitelen TrueType"
+
+msgid "upload.port"
+msgstr "nanpa kon…"
+
+msgid "heading.uploadport"
+msgstr "NANPA PI KON TETAN"
+
+msgid "dlg.uploadport.set"
+msgstr "o ante"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"o ante e nanpa pi ilo pana Tetan tawa nimi tawa ni.\n"
+"mun ni la nanpa kon li wile awen."
+
+msgid "heading.prefs.uitheme"
+msgstr "KULE ILO"
+
+msgid "link.file.delete"
+msgstr "o weka e ijo"
+
+msgid "heading.file.delete"
+msgstr "O WEKA E IJO"
+
+msgid "dlg.file.delete.confirm"
+msgstr "sina wile ala wile weka e ijo ni?"
+
+msgid "dlg.file.delete"
+msgstr "o weka"
+
+msgid "heading.upload"
+msgstr "O PANA KEPEKEN KON TETAN"
+
+msgid "menu.page.upload"
+msgstr "o pana e lipu kepeken kon Tetan"
+
+msgid "heading.upload.text"
+msgstr "lipu"
+
+msgid "hint.upload.text"
+msgstr "o pana e lipu"
+
+msgid "heading.upload.file"
+msgstr "ijo"
+
+msgid "upload.file.name"
+msgstr "nimi ijo:"
+
+msgid "upload.file.drophere"
+msgstr "(o tawa e ijo tawa poki ni)"
+
+msgid "upload.file.size"
+msgstr "suli ijo:"
+
+msgid "upload.mime"
+msgstr "kulupu ijo MIME:"
+
+msgid "upload.token"
+msgstr "len pana:"
+
+msgid "hint.upload.token"
+msgstr "o lukin e nasin lon ilo pana"
+
+msgid "dlg.upload.send"
+msgstr "o pana"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "tenpo pi supa nimi:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "tenpo pi ilo tawa:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "linja sin"
+
+msgid "prefs.returnkey.accept"
+msgstr "o pana"
+
+msgid "prefs.linespacing"
+msgstr "linja kon:"
+
+msgid "prefs.memorysize"
+msgstr "poki wawa pi ilo sona:"
+
+msgid "error.certexpired"
+msgstr "sitelen len li tawa weka"
+
+msgid "error.certexpired.msg"
+msgstr "tenpo pini la sitelen len li tawa weka. tan ni la kon li weka."
+
+msgid "error.certverify"
+msgstr "ilo pana li ike"
