@@ -2883,6 +2883,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.reload") && document_Command(cmd) == d) {
         d->initNormScrollY = normScrollPos_DocumentWidget_(d);
+        if (equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
+            /* Reopen so the Upload dialog gets shown. */
+            postCommandf_App("open url:%s", cstr_String(d->mod.url));
+            return iTrue;            
+        }
         fetch_DocumentWidget_(d);
         return iTrue;
     }
