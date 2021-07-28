@@ -7,7 +7,10 @@
 # Release notes
 
 ## 1.6.1
-* Fixed copying text in the text editor (the wrong region was copied).
+* Fixed cursor positioning in fixed-length input fields.
+* Fixed copying text in input fields (the wrong region was copied).
+* Fixed URL input field contents not being selected after opening a new tab.
+* Fixed Upload dialog not showing when reloading a Titan URL.
 
 ## 1.6
 ⚠️ A new TOFU trust store will be created. The old one is kept around but ignored.
