@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.6.2
+* Home/End keys in an input field move to start/end of the wrapped line segment.
+
 ## 1.6.1
 * Fixed potential crash when inserting a line break in an input field.
 * Fixed cursor positioning in fixed-length input fields.
