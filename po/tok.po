@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-07-28 13:07+0000\n"
+"PO-Revision-Date: 2021-07-31 12:07+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -767,7 +767,7 @@ msgid "heading.prefs.colors"
 msgstr "kule"
 
 msgid "heading.prefs.fonts"
-msgstr "Nasin lukin tawa sitelen"
+msgstr "sitelen"
 
 # tab button
 msgid "heading.prefs.interface"
@@ -819,7 +819,7 @@ msgstr "SULI MUTE"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "sitelen"
+msgstr "lipu"
 
 msgid "prefs.theme"
 msgstr "nasin lukin:"
@@ -1717,7 +1717,7 @@ msgid "error.certexpired"
 msgstr "sitelen len li tawa weka"
 
 msgid "error.certexpired.msg"
-msgstr "tenpo pini la sitelen len li tawa weka. tan ni la kon li weka."
+msgstr "tenpo pini la sitelen len li tawa weka. tan ni la toki li pini."
 
 msgid "error.certverify"
 msgstr "ilo pana li ike lukin"
