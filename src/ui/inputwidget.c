@@ -1681,7 +1681,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     setCursor_InputWidget(d, key == SDLK_HOME ? zero_I2() : curMax);
                 }
                 else {
-                    setCursor_InputWidget(d, key == SDLK_HOME ? lineFirst : lineLast);
+                    moveCursorByLine_InputWidget_(d, 0, key == SDLK_HOME ? -1 : +1);
                 }
                 refresh_Widget(w);
                 return iTrue;
