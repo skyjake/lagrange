@@ -969,11 +969,11 @@ static void textOfLinesWasChanged_InputWidget_(iInputWidget *d, iRangei lineRang
 static void insertRange_InputWidget_(iInputWidget *d, iRangecc range) {
     iRangecc nextRange = { range.end, range.end };
     const int firstModified = d->cursor.y;
-    for (;; range = nextRange) {
+    for (; !isEmpty_Range(&range); range = nextRange) {
         /* If there's a newline, we'll need to break and begin a new line. */
         const char *newline = iStrStrN(range.start, "\n", size_Range(&range));
         if (newline) {
-            nextRange = (iRangecc){ newline + 1, range.end };
+            nextRange = (iRangecc){ iMin(newline + 1, range.end), range.end };
             range.end = newline;
         }
         iInputLine *line = cursorLine_InputWidget_(d);
