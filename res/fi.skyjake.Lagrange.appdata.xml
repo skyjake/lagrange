@@ -56,6 +56,7 @@
                     speed.</p>
                 <p>Version 1.6.1 fixes the following issues:</p>
                 <ul>
+                    <li>Potential crash when inserting a line break.</li>
                     <li>Cursor positioning in fixed-length input fields.</li>
                     <li>Copying text in input fields (the wrong region was copied).</li>
                     <li>URL input field contents not being selected after opening a new tab.</li>

@@ -25,7 +25,8 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                 CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE}
                                         ${CMAKE_SOURCE_DIR}/lib/harfbuzz
                                         -Dbuildtype=release
-                                        -Ddefault_library=both -Dlibdir=lib
+                                        -Ddefault_library=both
+                                        -Dlibdir=lib
                                         -Dtests=disabled -Dglib=disabled -Dgobject=disabled
                                         -Dcairo=disabled -Dicu=disabled -Dfreetype=disabled
                                         -Ddocs=disabled
