@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static const int    refreshInterval_InputWidget_ = 256;
 static const size_t maxUndo_InputWidget_         = 64;
+static const int    unlimitedWidth_InputWidget_  = 1000000; /* TODO: WrapText disables some functionality if maxWidth==0 */
 
 static void enableEditorKeysInMenus_(iBool enable) {
 #if defined (iPlatformAppleDesktop)
@@ -139,12 +140,14 @@ static void mergeLinesRange_(const iArray *inputLines, iRanges range, iString *m
         if (line->range.start >= range.start && line->range.end <= range.end) {
             append_String(merged, &line->text); /* complete */
         }
-        else if (line->range.start < range.start) {
+        else if (range.start <= line->range.start) {
             appendRange_String(merged, (iRangecc){ text, text + range.end - line->range.start });
         }
         else {
-            appendRange_String(merged, (iRangecc){ text + range.start - line->range.start,
-                                                   text + size_Range(&line->range) });
+            const size_t from = range.start - line->range.start;
+            appendRange_String(merged, (iRangecc){ text + from,
+                                                   text + iMin(from + size_Range(&range),
+                                                               size_Range(&line->range)) });
         }
     }
 }
@@ -418,9 +421,10 @@ static const char *sensitive_     = "\u25cf";
 static iWrapText wrap_InputWidget_(const iInputWidget *d, int y) {
     return (iWrapText){
         .text     = range_String(&line_InputWidget_(d, y)->text),
-        .maxWidth = d->maxLen == 0 ? width_Rect(contentBounds_InputWidget_(d)) : 0,
-        .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
-                                                        : word_WrapTextMode),
+        .maxWidth = d->maxLen == 0 ? width_Rect(contentBounds_InputWidget_(d))
+                                   : unlimitedWidth_InputWidget_,
+        .mode =
+            (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode : word_WrapTextMode),
         .overrideChar = (d->inFlags & isSensitive_InputWidgetFlag ? sensitiveChar_ : 0),
     };
 }
@@ -827,13 +831,13 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
         updateLine_InputWidget_(d, i.value); /* count number of visible lines */
     }
     updateLineRangesStartingFrom_InputWidget_(d, 0);
-    //if (isFocused_Widget(d)) {
-        d->cursor = cursorMax_InputWidget_(d);
-//    }
+    d->cursor = cursorMax_InputWidget_(d);
+    if (!isFocused_Widget(d)) {
+        iZap(d->mark);
+    }
 //    else {
 //        d->cursor.y = iMin(d->cursor.y, (int) size_Array(&d->lines) - 1);
 //        d->cursor.x = iMin(d->cursor.x, size_String(&cursorLine_InputWidget_(d)->text));
-        iZap(d->mark);
 //    }
     if (!isFocused_Widget(d)) {
         d->inFlags |= needUpdateBuffer_InputWidgetFlag;
@@ -1255,7 +1259,7 @@ static iInt2 coordCursor_InputWidget_(const iInputWidget *d, iInt2 coord) {
         return cursorMax_InputWidget_(d);
     }
     iWrapText wrapText = {
-        .maxWidth = d->maxLen == 0 ? width_Rect(bounds) : 0,
+        .maxWidth = d->maxLen == 0 ? width_Rect(bounds) : unlimitedWidth_InputWidget_,
         .mode = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode : word_WrapTextMode),
         .hitPoint = relCoord,
         .overrideChar = (d->inFlags & isSensitive_InputWidgetFlag ? sensitiveChar_ : 0),
@@ -1837,7 +1841,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
                              : isFocused /*&& !isEmpty_Array(&d->lines)*/ ? uiInputTextFocused_ColorId
                                                                       : uiInputText_ColorId;
     iWrapText wrapText = {
-        .maxWidth     = d->maxLen == 0 ? width_Rect(contentBounds) : 0,
+        .maxWidth     = d->maxLen == 0 ? width_Rect(contentBounds) : unlimitedWidth_InputWidget_,
         .mode         = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
                                                             : word_WrapTextMode),
         .overrideChar = (d->inFlags & isSensitive_InputWidgetFlag ? sensitiveChar_ : 0),

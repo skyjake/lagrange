@@ -565,6 +565,13 @@ const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url)
     }
 done:
     unlock_Mutex(d->mtx);
+    /* Fallback: Titan URLs use the Gemini identities, if not otherwise specified. */
+    if (!found && startsWithCase_String(url, "titan://")) {
+        iString *mod = copy_String(url);
+        remove_Block(&mod->chars, 0, 5);
+        prependCStr_String(mod, "gemini");
+        found = identityForUrl_GmCerts(d, collect_String(mod));
+    }
     return found;
 }
 
