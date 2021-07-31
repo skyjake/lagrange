@@ -816,7 +816,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
         case SDL_RENDER_TARGETS_RESET:
         case SDL_RENDER_DEVICE_RESET: {
-            invalidate_Window(d);
+            invalidate_Window_(d, iTrue /* force full reset */);
             break;
         }
         default: {
