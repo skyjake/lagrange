@@ -9,6 +9,7 @@
 ## 1.6.2
 * Home/End keys in an input field move to start/end of the wrapped line segment.
 * Fixed buffered graphics (UI, fonts) getting lost under rare circumstances.
+* macOS: Fixed UI not updating when system dark mode is toggled while the window is hidden.
 
 ## 1.6.1
 * Fixed potential crash when inserting a line break in an input field.
