@@ -985,9 +985,12 @@ iBool isFinished_GmRequest(const iGmRequest *d) {
 }
 
 enum iGmStatusCode status_GmRequest(const iGmRequest *d) {
-    enum iGmStatusCode code;
-    iGuardMutex(d->mtx, code = d->resp->statusCode);
-    return code;
+    if (d) {
+        enum iGmStatusCode code;
+        iGuardMutex(d->mtx, code = d->resp->statusCode);
+        return code;
+    }
+    return none_GmStatusCode;
 }
 
 const iString *meta_GmRequest(const iGmRequest *d) {

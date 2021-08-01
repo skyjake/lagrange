@@ -1174,10 +1174,6 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                     1);
                 break;
             }
-            case slowDown_GmStatusCode:
-                appendFormat_String(src, "\n\nWait %s seconds before your next request.",
-                                    cstr_String(meta));
-                break;
             default:
                 if (!isEmpty_String(meta)) {
                     appendFormat_String(src, "\n\n${error.server.msg}\n> %s", cstr_String(meta));
@@ -1482,8 +1478,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     const iGmLinkId imgLinkId = 1; /* there's only the one link */
                     /* TODO: Do the image loading in `postProcessRequestContent_DocumentWidget_()` */
                     if ((isAudio && isInitialUpdate) || (!isAudio && isRequestFinished)) {
-                        const char *linkTitle =
-                            startsWith_String(mimeStr, "image/") ? "Image" : "Audio";
+                        const char *linkTitle = cstr_Lang(
+                            startsWith_String(mimeStr, "image/") ? "media.untitled.image"
+                                                                 : "media.untitled.audio");
                         iUrl parts;
                         init_Url(&parts, d->mod.url);
                         if (!isEmpty_Range(&parts.path)) {
