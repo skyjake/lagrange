@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-07-25 18:06+0000\n"
+"PO-Revision-Date: 2021-08-03 05:24+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1772,3 +1772,23 @@ msgstr "Code de carga:"
 
 msgid "hint.upload.token"
 msgstr "vi instructiones del servitor"
+
+msgid "media.untitled.image"
+msgstr "Image"
+
+msgid "media.untitled.audio"
+msgstr "Audio"
+
+msgid "bookmark.export.title.folder"
+msgstr "Marca-págines"
+
+msgid "bookmark.export.title.time"
+msgstr "Creat marca-págines"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Hay %d marca-págine."
+msgstr[1] "Hay %d marca-págines."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Chascun ligament representa un marca-págine."
