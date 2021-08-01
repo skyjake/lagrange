@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "documentwidget.h"
+#include "root.h"
 #include "color.h"
 #include "command.h"
 #include "gmrequest.h"
@@ -60,6 +61,20 @@ static void updateProgress_UploadWidget_(iGmRequest *request, size_t current, si
                        id_GmRequest(request),
                        current,
                        total);
+}
+
+static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
+    iWidget *w = as_Widget(d);    
+    /* Calculate how many lines fits vertically in the view. */
+    const iInt2 inputPos     = topLeft_Rect(bounds_Widget(as_Widget(d->input)));
+    const int   footerHeight = height_Widget(d->token) +
+                             height_Widget(findChild_Widget(w, "dialogbuttons")) +
+                             6 * gap_UI;
+    const int   avail        = bottom_Rect(safeRect_Root(w->root)) - footerHeight;
+    setLineLimits_InputWidget(d->input,
+                              minLines_InputWidget(d->input),
+                              iMaxi(minLines_InputWidget(d->input),
+                                    (avail - inputPos.y) / lineHeight_Text(monospace_FontId)));    
 }
 
 void init_UploadWidget(iUploadWidget *d) {
@@ -152,6 +167,7 @@ void init_UploadWidget(iUploadWidget *d) {
     setFlags_Widget(as_Widget(d->token), expand_WidgetFlag, iTrue);
     setFocus_Widget(as_Widget(d->input));
     setBackupFileName_InputWidget(d->input, "uploadbackup.txt");
+    updateInputMaxHeight_UploadWidget_(d);
 }
 
 void deinit_UploadWidget(iUploadWidget *d) {    
@@ -214,6 +230,9 @@ static void requestFinished_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     const char *cmd = command_UserEvent(ev);
+    if (isResize_UserEvent(ev)) {
+        updateInputMaxHeight_UploadWidget_(d);
+    }
     if (isCommand_Widget(w, ev, "upload.cancel")) {
         setupSheetTransition_Mobile(w, iFalse);
         destroy_Widget(w);

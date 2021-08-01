@@ -709,10 +709,19 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
 }
 
 void setLineLimits_InputWidget(iInputWidget *d, int minLines, int maxLines) {
-    d->minWrapLines = minLines;
-    d->maxWrapLines = maxLines;
-    updateVisible_InputWidget_(d);
-    updateMetrics_InputWidget_(d);
+    if (d->minWrapLines != minLines || d->maxWrapLines != maxLines) {
+        d->minWrapLines = minLines;
+        d->maxWrapLines = maxLines;
+        updateVisible_InputWidget_(d);
+        updateMetrics_InputWidget_(d);
+    }
+}
+
+int minLines_InputWidget(const iInputWidget *d) {
+    return d->minWrapLines;
+}
+int maxLines_InputWidget(const iInputWidget *d) {
+    return d->maxWrapLines;
 }
 
 void setValidator_InputWidget(iInputWidget *d, iInputWidgetValidatorFunc validator, void *context) {

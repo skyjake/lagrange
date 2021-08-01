@@ -63,6 +63,8 @@ void    setUrlContent_InputWidget       (iInputWidget *, iBool isUrl);
 void    setNotifyEdits_InputWidget      (iInputWidget *, iBool notifyEdits);
 void    setEatEscape_InputWidget        (iInputWidget *, iBool eatEscape);
 
+int     minLines_InputWidget            (const iInputWidget *);
+int     maxLines_InputWidget            (const iInputWidget *);
 iInputWidgetContentPadding  contentPadding_InputWidget  (const iInputWidget *);
 const iString *             text_InputWidget            (const iInputWidget *);
 
