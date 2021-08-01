@@ -8,6 +8,7 @@
 
 ## 1.6.2
 * Home/End keys in an input field move to start/end of the wrapped line segment.
+* Upload dialog expands to full window height when the entered text is long.
 * Fixed buffered graphics (UI, fonts) getting lost under rare circumstances.
 * macOS: Fixed UI not updating when system dark mode is toggled while the window is hidden.
 
