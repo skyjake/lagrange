@@ -68,8 +68,8 @@ static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
     /* Calculate how many lines fits vertically in the view. */
     const iInt2 inputPos     = topLeft_Rect(bounds_Widget(as_Widget(d->input)));
     const int   footerHeight = height_Widget(d->token) +
-                             height_Widget(findChild_Widget(w, "dialogbuttons")) +
-                             6 * gap_UI;
+                               height_Widget(findChild_Widget(w, "dialogbuttons")) +
+                               6 * gap_UI;
     const int   avail        = bottom_Rect(safeRect_Root(w->root)) - footerHeight;
     setLineLimits_InputWidget(d->input,
                               minLines_InputWidget(d->input),
