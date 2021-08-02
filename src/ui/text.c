@@ -1824,7 +1824,6 @@ static iBool cbAdvanceOneLine_(iWrapText *d, iRangecc range, int origin, int adv
 }
 
 iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
-    /* FIXME: Get rid of this. Caller could use WrapText directly? */
     iWrapText wrap = { .mode     = word_WrapTextMode,
                        .text     = text,
                        .maxWidth = width,
@@ -1835,8 +1834,7 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
 }
 
 iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
-    /* TODO: "NoWrap" means words aren't wrapped; the line is broken at nearest character. */
-    /* FIXME: Get rid of this. Caller could use WrapText directly? */
+    /* "NoWrap" means words aren't wrapped; the line is broken at nearest character. */
     iWrapText wrap = { .mode     = anyCharacter_WrapTextMode,
                        .text     = text,
                        .maxWidth = width,
@@ -2019,6 +2017,27 @@ iTextMetrics measure_WrapText(iWrapText *d, int fontId) {
 
 iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
     iTextMetrics tm;
+#if !defined (LAGRANGE_ENABLE_HARFBUZZ)
+    /* In simple mode, each line must be wrapped first so we can break at the right points
+       and do wrap notifications before drawing. */
+    iRangecc text = d->text;
+    iZap(tm);
+    d->wrapRange_ = (iRangecc){ d->text.start, d->text.start };
+    const iInt2 orig = pos;
+    while (!isEmpty_Range(&text)) {
+        const char *endPos;
+        const int width = d->mode == word_WrapTextMode
+                              ? tryAdvance_Text(fontId, text, d->maxWidth, &endPos).x
+                              : tryAdvanceNoWrap_Text(fontId, text, d->maxWidth, &endPos).x;
+        notify_WrapText_(d, endPos, 0, width, iFalse);
+        drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endPos });
+        text.start = endPos;
+        pos.y += lineHeight_Text(fontId);
+        tm.bounds.size.x = iMax(tm.bounds.size.x, width);
+        tm.bounds.size.y = pos.y - orig.y;
+    }
+    tm.advance = sub_I2(pos, orig);
+#else
     tm.bounds = run_Font_(font_Text_(fontId),
               &(iRunArgs){ .mode  = draw_RunMode | runFlagsFromId_(fontId) |
                                     (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
@@ -2029,6 +2048,7 @@ iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
                            .color = color & mask_ColorId,
                            .cursorAdvance_out = &tm.advance,
     });
+#endif
     return tm;
 }
 

@@ -60,8 +60,8 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
     /* This function shapes text using a simplified, incomplete algorithm. It works for English 
        and other non-complex LTR scripts. Composed glyphs are not supported (must rely on text
        being in a pre-composed form). This algorithm is used if HarfBuzz is not available. */
-    iRect       bounds      = zero_Rect();
     const iInt2 orig        = args->pos;
+    iRect       bounds      = { orig, init_I2(0, d->height) };
     float       xpos        = orig.x;
     float       xposMax     = xpos;
     float       monoAdvance = 0;
@@ -76,13 +76,17 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
     //iAssert(xposLimit == 0 || isMeasuring_(mode));
     iAssert(args->text.end >= args->text.start);
     if (wrap) {
-        wrap->wrapRange_ = args->text;
+        wrap->wrapRange_        = args->text;
+        wrap->hitAdvance_out    = zero_I2();
+        wrap->hitChar_out       = NULL;
+        wrap->hitGlyphNormX_out = 0.0f;
     }
 //    if (args->continueFrom_out) {
 //        *args->continueFrom_out = args->text.end;
 //    }
-    iChar prevCh = 0;
-    const iBool isMonospaced = d->isMonospaced && !(mode & alwaysVariableWidthFlag_RunMode);
+    const iBool checkHitPoint = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
+    const iBool checkHitChar  = wrap && wrap->hitChar;
+    const iBool isMonospaced  = d->isMonospaced && !(mode & alwaysVariableWidthFlag_RunMode);
     if (isMonospaced) {
         monoAdvance = glyph_Font_(d, 'M')->advance;
     }
@@ -91,10 +95,21 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
         SDL_SetRenderDrawColor(text_.render, initial.r, initial.g, initial.b, 0);
     }
     /* Text rendering is not very straightforward! Let's dive in... */
+    iChar       prevCh = 0;
     const char *chPos;
     for (chPos = args->text.start; chPos != args->text.end; ) {
         iAssert(chPos < args->text.end);
         const char *currentPos = chPos;
+        const iBool isHitPointOnThisLine = (checkHitPoint && wrap->hitPoint.y >= ypos &&
+                                            wrap->hitPoint.y < ypos + d->height);
+        if (checkHitChar && currentPos == wrap->hitChar) {
+            wrap->hitAdvance_out = sub_I2(init_I2(xpos, ypos), orig);
+        }
+        /* Check if the hit point is on the left side of the line. */
+        if (isHitPointOnThisLine && !wrap->hitChar_out && wrap->hitPoint.x < orig.x) {
+            wrap->hitChar_out = currentPos;
+            wrap->hitGlyphNormX_out = 0.0f;
+        }
         if (*chPos == 0x1b) { /* ANSI escape. */
             chPos++;
             iRegExpMatch m;
@@ -213,6 +228,13 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             glyph = glyph_Font_(d, ch); /* cache may have been reset */
         }
         int x2 = x1 + glyph->rect[hoff].size.x;
+        if (isHitPointOnThisLine) {
+            if (wrap->hitPoint.x >= x1) { /* may also be off to the right */
+                wrap->hitChar_out = currentPos;
+                wrap->hitGlyphNormX_out =
+                    wrap->hitPoint.x < x2 ? (wrap->hitPoint.x - x1) / glyph->advance : 1.0f;
+            }
+        }
         /* Out of the allotted space on the line? */
         if (xposLimit > 0 && x2 > xposLimit) {
             iAssert(wrap);
@@ -340,6 +362,9 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
         }
     }
     notify_WrapText_(wrap, chPos, 0, xpos - orig.x, iFalse);
+    if (checkHitChar && wrap->hitChar == args->text.end) {
+        wrap->hitAdvance_out = sub_I2(init_I2(xpos, ypos), orig);
+    }
     if (args->cursorAdvance_out) {
         *args->cursorAdvance_out = sub_I2(init_I2(xpos, ypos), orig);
     }
