@@ -1939,13 +1939,19 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 }
                 else {
                     /* Only accept redirects that use gemini scheme. */
-                    const iString *dstUrl = absoluteUrl_String(d->mod.url, &resp->meta);
+                    const iString *dstUrl    = absoluteUrl_String(d->mod.url, &resp->meta);
+                    const iRangecc srcScheme = urlScheme_String(d->mod.url);
+                    const iRangecc dstScheme = urlScheme_String(dstUrl);
                     if (d->redirectCount >= 5) {
                         showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
                     }
-                    else if (equalCase_Rangecc(urlScheme_String(dstUrl),
-                                               cstr_Rangecc(urlScheme_String(d->mod.url)))) {
-                        /* Redirects with the same scheme are automatic. */
+                    /* Redirects with the same scheme are automatic, and switching automatically
+                       between "gemini" and "titan" is allowed. */
+                    else if (equalRangeCase_Rangecc(dstScheme, srcScheme) ||
+                             (equalCase_Rangecc(srcScheme, "titan") &&
+                              equalCase_Rangecc(dstScheme, "gemini")) ||
+                             (equalCase_Rangecc(srcScheme, "gemini") &&
+                              equalCase_Rangecc(dstScheme, "titan"))) {
                         visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
                         postCommandf_Root(as_Widget(d)->root,
                             "open doc:%p redirect:%d url:%s", d, d->redirectCount + 1, cstr_String(dstUrl));
