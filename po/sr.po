@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-07-25 18:06+0000\n"
+"PO-Revision-Date: 2021-08-03 05:24+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1806,3 +1806,59 @@ msgstr ""
 
 msgid "keys.upload"
 msgstr "Слање странице преко Титана"
+
+msgid "media.untitled.image"
+msgstr "Слика"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Овај Atom XML документ је аутоматски преведен у Џемини фид да би се на њега "
+"омогућила претплата."
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Имате %d обележивач."
+msgstr[1] "Имате %d обележивача."
+msgstr[2] "Имате %d обележивача."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"У овој листи сваки наслов представља ознаку обележивача. Приказани су само "
+"означени обележивачи. Обележивачи са више ознака су поновљени под сваком "
+"ознаком."
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Набрајања и цитати су резервисани за додатне информације о претходном "
+"обележивачу. Текстуални редови и преформатирани текст се сматрају "
+"коментарима и биће игнорисани."
+
+msgid "media.untitled.audio"
+msgstr "Аудио"
+
+msgid "bookmark.export.title.folder"
+msgstr "Обележивачи"
+
+msgid "bookmark.export.title.tag"
+msgstr "Ознаке обележивача"
+
+msgid "bookmark.export.title.time"
+msgstr "Креирани обележивачи"
+
+msgid "bookmark.export.saving"
+msgstr ""
+"Сачувајте ову страницу да бисте их извезли, или их ископирајте на клипборд."
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Ова страница је форматирана према додатку спецификације „Subscribing to "
+"Gemini pages“."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Свака веза представља обележивач."
+
+msgid "bookmark.export.format.folders"
+msgstr "Структура фасцикли је дефинисана преко наслова нивоа 2 и 3."
+
+msgid "bookmark.export.format.tags"
+msgstr "Ознаке су задате насловима нивоа 2."
