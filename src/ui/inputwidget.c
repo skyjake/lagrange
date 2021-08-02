@@ -1194,6 +1194,7 @@ static iBool deleteMarked_InputWidget_(iInputWidget *d) {
     if (!isEmpty_Range(&m)) {
         deleteIndexRange_InputWidget_(d, m);
         setCursor_InputWidget(d, indexToCursor_InputWidget_(d, m.start));
+        iZap(d->mark); /* setCursor thinks we're marking when Shift is down */
         return iTrue;
     }
     return iFalse;
