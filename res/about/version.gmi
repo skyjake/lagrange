@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.6.2
+* Added `--tab-url` to print currently active tab's URL.
 * Upload dialog expands to full window height when the entered text is long.
 * Home/End keys in an input field move to start/end of the wrapped line segment.
 * Fixed incorrect behavior in input fields when typing or deleting text while holding down the Shift key.
