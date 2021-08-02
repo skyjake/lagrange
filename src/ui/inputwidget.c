@@ -776,6 +776,7 @@ static iRangei visibleLineRange_InputWidget_(const iInputWidget *d) {
         }
         else break;
     }
+    iAssert(isEmpty_Range(&vis) || (vis.start >= 0 && vis.end >= vis.start));
     return vis;
 }
 

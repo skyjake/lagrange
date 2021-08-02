@@ -73,7 +73,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
     const int   xposLimit   = (wrap && wrap->maxWidth ? orig.x + wrap->maxWidth : 0);
     const enum iRunMode mode        = args->mode;
     const char *        lastWordEnd = args->text.start;
-    iAssert(xposLimit == 0 || isMeasuring_(mode));
+    //iAssert(xposLimit == 0 || isMeasuring_(mode));
     iAssert(args->text.end >= args->text.start);
     if (wrap) {
         wrap->wrapRange_ = args->text;
