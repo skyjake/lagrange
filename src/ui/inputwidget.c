@@ -535,6 +535,7 @@ static void updateLine_InputWidget_(iInputWidget *d, iInputLine *line) {
     }
     const iTextMetrics tm = measure_WrapText(&wrapText, d->font);
     line->wrapLines.end = line->wrapLines.start + height_Rect(tm.bounds) / lineHeight_Text(d->font);
+    iAssert(!isEmpty_Range(&line->wrapLines));
 }
 
 static void updateLineRangesStartingFrom_InputWidget_(iInputWidget *d, int y) {
@@ -1298,8 +1299,8 @@ static iInt2 coordCursor_InputWidget_(const iInputWidget *d, iInt2 coord) {
 
 static iBool copy_InputWidget_(iInputWidget *d, iBool doCut) {
     if (!isEmpty_Range(&d->mark)) {
-        const iRanges m = mark_InputWidget_(d);
-        iString *str = collectNew_String();
+        const iRanges m   = mark_InputWidget_(d);
+        iString *     str = collectNew_String();
         mergeLinesRange_(&d->lines, m, str);
         SDL_SetClipboardText(
             cstr_String(d->inFlags & isUrl_InputWidgetFlag ? canonicalUrl_String(str) : str));
@@ -1868,7 +1869,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         drawRange_Text(d->font, drawPos, uiAnnotation_ColorId, range_String(&d->hint));
     }
     else {
-        /* TODO: Make a function out of this. */
+        iAssert(~d->inFlags & isSensitive_InputWidgetFlag || size_Range(&visLines) == 1);
         drawPos.y += visLineOffsetY;
         iMarkPainter marker = {
             .paint = &p,
@@ -1876,14 +1877,13 @@ static void draw_InputWidget_(const iInputWidget *d) {
             .contentBounds = contentBounds,
             .mark = mark_InputWidget_(d)
         };
-        iAssert(~d->inFlags & isSensitive_InputWidgetFlag || size_Range(&visLines) == 1);
+        wrapText.context = &marker;
+        wrapText.wrapFunc = isFocused ? draw_MarkPainter_ : NULL; /* mark is drawn under each line of text */
         for (size_t vis = visLines.start; vis < visLines.end; vis++) {
             const iInputLine *line = constAt_Array(&d->lines, vis);
-            wrapText.text     = range_String(&line->text);
-            wrapText.wrapFunc = isFocused ? draw_MarkPainter_ : NULL; /* mark is drawn under each line of text */
-            wrapText.context  = &marker;
-            marker.line       = line;
-            marker.pos        = drawPos;
+            wrapText.text = range_String(&line->text);
+            marker.line   = line;
+            marker.pos    = drawPos;
             addv_I2(&drawPos, draw_WrapText(&wrapText, d->font, drawPos, fg).advance); /* lines end with \n */
         }
         wrapText.wrapFunc = NULL;
