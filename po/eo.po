@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-15 06:18+0000\n"
+"PO-Revision-Date: 2021-07-31 12:07+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -169,7 +169,7 @@ msgid "panel.back"
 msgstr "Malantaŭen"
 
 msgid "hint.findtext"
-msgstr "Serĉi tekston sur la paĝo"
+msgstr "serĉi tekston sur la paĝo"
 
 msgid "sidebar.entry.bookmark"
 msgstr "Aldoni legosignon…"
@@ -414,7 +414,7 @@ msgid "heading.prefs"
 msgstr "AGORDOJ"
 
 msgid "heading.prefs.fonts"
-msgstr "TIPAROJ"
+msgstr "Tiparoj"
 
 # tab button
 msgid "heading.prefs.network"
@@ -698,3 +698,9 @@ msgstr "Versio"
 
 msgid "lang.pl"
 msgstr "Pola"
+
+msgid "close"
+msgstr "Fermi"
+
+msgid "menu.openfile"
+msgstr "Malfermi dosieron…"

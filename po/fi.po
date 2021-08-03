@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-07-24 05:45+0000\n"
+"PO-Revision-Date: 2021-08-03 05:24+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1766,3 +1766,17 @@ msgstr ""
 
 msgid "dlg.uploadport.set"
 msgstr "Aseta portti"
+
+msgid "media.untitled.image"
+msgstr "Kuva"
+
+msgid "media.untitled.audio"
+msgstr "Ääni"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Tämä Atom-XML-dokumentti on automaattisesti käännetty Gemini-syötteeksi, "
+"jotta siihen voi tehdä tilauksen."
+
+msgid "bookmark.export.title.folder"
+msgstr "Kirjanmerkit"
