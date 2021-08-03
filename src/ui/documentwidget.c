@@ -1174,10 +1174,6 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                     1);
                 break;
             }
-            case slowDown_GmStatusCode:
-                appendFormat_String(src, "\n\nWait %s seconds before your next request.",
-                                    cstr_String(meta));
-                break;
             default:
                 if (!isEmpty_String(meta)) {
                     appendFormat_String(src, "\n\n${error.server.msg}\n> %s", cstr_String(meta));
@@ -1482,8 +1478,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     const iGmLinkId imgLinkId = 1; /* there's only the one link */
                     /* TODO: Do the image loading in `postProcessRequestContent_DocumentWidget_()` */
                     if ((isAudio && isInitialUpdate) || (!isAudio && isRequestFinished)) {
-                        const char *linkTitle =
-                            startsWith_String(mimeStr, "image/") ? "Image" : "Audio";
+                        const char *linkTitle = cstr_Lang(
+                            startsWith_String(mimeStr, "image/") ? "media.untitled.image"
+                                                                 : "media.untitled.audio");
                         iUrl parts;
                         init_Url(&parts, d->mod.url);
                         if (!isEmpty_Range(&parts.path)) {
@@ -1942,13 +1939,19 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 }
                 else {
                     /* Only accept redirects that use gemini scheme. */
-                    const iString *dstUrl = absoluteUrl_String(d->mod.url, &resp->meta);
+                    const iString *dstUrl    = absoluteUrl_String(d->mod.url, &resp->meta);
+                    const iRangecc srcScheme = urlScheme_String(d->mod.url);
+                    const iRangecc dstScheme = urlScheme_String(dstUrl);
                     if (d->redirectCount >= 5) {
                         showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
                     }
-                    else if (equalCase_Rangecc(urlScheme_String(dstUrl),
-                                               cstr_Rangecc(urlScheme_String(d->mod.url)))) {
-                        /* Redirects with the same scheme are automatic. */
+                    /* Redirects with the same scheme are automatic, and switching automatically
+                       between "gemini" and "titan" is allowed. */
+                    else if (equalRangeCase_Rangecc(dstScheme, srcScheme) ||
+                             (equalCase_Rangecc(srcScheme, "titan") &&
+                              equalCase_Rangecc(dstScheme, "gemini")) ||
+                             (equalCase_Rangecc(srcScheme, "gemini") &&
+                              equalCase_Rangecc(dstScheme, "titan"))) {
                         visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
                         postCommandf_Root(as_Widget(d)->root,
                             "open doc:%p redirect:%d url:%s", d, d->redirectCount + 1, cstr_String(dstUrl));

@@ -581,6 +581,9 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
         else if (equal_CommandLineConstIterator(&i, "close-tab")) {
             appendCStr_String(cmds, "tabs.close\n");
         }
+        else if (equal_CommandLineConstIterator(&i, "tab-url")) {
+            appendFormat_String(cmds, "ipc.active.url pid:%d\n", pid);
+        }
         else if (equal_CommandLineConstIterator(&i, listTabUrls_CommandLineOption)) {
             appendFormat_String(cmds, "ipc.list.urls pid:%d\n", pid);
         }
@@ -658,6 +661,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, listTabUrls_CommandLineOption, 0);
         defineValues_CommandLine(&d->args, openUrlOrSearch_CommandLineOption, 1);
         defineValuesN_CommandLine(&d->args, "new-tab", 0, 1);
+        defineValues_CommandLine(&d->args, "tab-url", 0);
         defineValues_CommandLine(&d->args, "sw", 0);
         defineValues_CommandLine(&d->args, "version;V", 0);
     }
@@ -2771,6 +2775,12 @@ iBool handleCommand_App(const char *cmd) {
             write_Ipc(pid, urls, response_IpcWrite);
         }
         return iTrue;
+    }
+    else if (equal_Command(cmd, "ipc.active.url")) {
+        write_Ipc(argLabel_Command(cmd, "pid"),
+                  collectNewFormat_String("%s\n", cstr_String(url_DocumentWidget(document_App()))),
+                  response_IpcWrite);
+        return iTrue;        
     }
     else if (equal_Command(cmd, "ipc.signal")) {
         if (argLabel_Command(cmd, "raise")) {

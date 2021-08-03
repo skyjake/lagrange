@@ -414,7 +414,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->isExposed = iFalse;
     d->isMinimized = iFalse;
     d->isInvalidated = iFalse; /* set when posting event, to avoid repeated events */
-    d->isMouseInside = iTrue;
+    d->isMouseInside = iTrue;    
     d->ignoreClick = iFalse;
     d->focusGainedAt = 0;
     d->keyboardHeight = 0;
@@ -740,6 +740,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
+        case SDL_WINDOWEVENT_SHOWN:
             updateSize_Window_(d, iTrue);
             invalidate_Window_(d, iTrue);
             d->isMinimized = iFalse;
@@ -816,7 +817,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
         case SDL_RENDER_TARGETS_RESET:
         case SDL_RENDER_DEVICE_RESET: {
-            invalidate_Window(d);
+            invalidate_Window_(d, iTrue /* force full reset */);
             break;
         }
         default: {

@@ -325,22 +325,18 @@ const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkLis
     iString *str = collectNew_String();
     lock_Mutex(d->mtx);
     format_String(str,
-                  "# %s\n\n",
-                  listType == listByFolder_BookmarkListType ? "Bookmarks"
-                  : listType == listByTag_BookmarkListType  ? "Bookmark tags"
-                                                            : "Created bookmarks");
+                  "# ${bookmark.export.title.%s}\n\n",
+                  listType == listByFolder_BookmarkListType ? "folder"
+                  : listType == listByTag_BookmarkListType  ? "tag"
+                                                            : "time");
     if (listType == listByFolder_BookmarkListType) {
         appendFormat_String(str,
-                            "You have %d bookmark%s.\n\n"
-                            "Save this page to export them, or you can copy them to "
-                            "the clipboard.\n\n",
-                            size_Hash(&d->bookmarks),
-                            size_Hash(&d->bookmarks) != 1 ? "s" : "");
+                            "%s\n\n"
+                            "${bookmark.export.saving}\n\n",
+                            formatCStrs_Lang("bookmark.export.count.n", size_Hash(&d->bookmarks)));
     }
     else if (listType == listByTag_BookmarkListType) {
-        appendFormat_String(str, "In this list each heading represents a bookmark tag. "
-                                 "Only tagged bookmarks are listed. "
-                                 "Bookmarks with multiple tags are repeated under each tag.\n\n");
+        appendFormat_String(str, "${bookmark.export.taginfo}\n\n");
     }
     iStringSet *tags = new_StringSet();
     const iPtrArray *bmList = list_Bookmarks(d,
@@ -393,22 +389,20 @@ const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkLis
     iRelease(tags);
     unlock_Mutex(d->mtx);
     if (listType == listByCreationTime_BookmarkListType) {
-        appendCStr_String(str, "\nThis page is formatted according to the "
-                               "\"Subscribing to Gemini pages\" companion specification.\n");
+        appendCStr_String(str, "\n${bookmark.export.format.sub}\n");
     }
     else {
         appendFormat_String(str,
-                            "\nEach link represents a bookmark. "
+                            "\n${bookmark.export.format.linklines} "
                             "%s"
-                            "Bullet lines and quotes are reserved for additional information about "
-                            "the preceding bookmark. Text lines and preformatted text are considered "
-                            "comments and should be ignored.\n",
+                            "${bookmark.export.format.otherlines}\n",
                             listType == listByFolder_BookmarkListType
-                                ? "Folder structure is defined by level 2/3 headings. "
+                                ? "${bookmark.export.format.folders} "
                             : listType == listByTag_BookmarkListType
-                                ? "Tags are defined by level 2 headings. "
+                                ? "${bookmark.export.format.tags} "
                                 : "");
     }
+    translate_Lang(str);
     return str;
 }
 

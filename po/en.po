@@ -12,6 +12,12 @@ msgstr "%s is a compressed archive."
 msgid "doc.archive.view"
 msgstr "View archive contents"
 
+msgid "media.untitled.image"
+msgstr "Image"
+
+msgid "media.untitled.audio"
+msgstr "Audio"
+
 # Inline download status message.
 msgid "media.download.warnclose"
 msgstr "Download will be cancelled if this tab is closed."
@@ -468,6 +474,9 @@ msgstr "Mark All as Read"
 msgid "feeds.refresh"
 msgstr "Refresh Feeds"
 
+msgid "feeds.atom.translated"
+msgstr "This Atom XML document has been automatically translated to a Gemini feed to allow subscribing to it."
+
 msgid "menu.opentab"
 msgstr "Open in New Tab"
 
@@ -836,6 +845,41 @@ msgstr "View Image"
 
 msgid "bookmark.title.blank"
 msgstr "Blank Page"
+
+msgid "bookmark.export.title.folder"
+msgstr "Bookmarks"
+
+msgid "bookmark.export.title.tag"
+msgstr "Bookmark tags"
+
+msgid "bookmark.export.title.time"
+msgstr "Created bookmarks"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "You have %d bookmark."
+msgstr[1] "You have %d bookmarks."
+
+msgid "bookmark.export.saving"
+msgstr "Save this page to export them, or you can copy them to the clipboard."
+
+msgid "bookmark.export.taginfo"
+msgstr "In this list each heading represents a bookmark tag. Only tagged bookmarks are listed. Bookmarks with multiple tags are repeated under each tag."
+
+msgid "bookmark.export.format.sub"
+msgstr "This page is formatted according to the \"Subscribing to Gemini pages\" companion specification."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Each link represents a bookmark."
+
+msgid "bookmark.export.format.otherlines"
+msgstr "Bullet lines and quotes are reserved for additional information about the preceding bookmark. Text lines and preformatted text are considered comments and should be ignored."
+
+msgid "bookmark.export.format.folders"
+msgstr "Folder structure is defined by level 2/3 headings."
+
+msgid "bookmark.export.format.tags"
+msgstr "Tags are defined by level 2 headings."
 
 # Interpret as "Results from bookmarks..."
 msgid "heading.lookup.bookmarks"
