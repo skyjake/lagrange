@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.6.3
+* Select all text in an input field using Shift+Ctrl+A.
+
 ## 1.6.2
 * Added `--tab-url` to print currently active tab's URL.
 * Upload dialog expands to full window height when the entered text is long.
