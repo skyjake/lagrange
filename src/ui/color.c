@@ -85,6 +85,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
     const int accentLo    = (prefs->accent == cyan_ColorAccent ? teal_ColorId : brown_ColorId);
     const int altAccentHi = (prefs->accent == cyan_ColorAccent ? orange_ColorId : cyan_ColorId);
     const int altAccentLo = (prefs->accent == cyan_ColorAccent ? brown_ColorId : teal_ColorId);
+    const iColor altAccentMid = mix_Color(get_Color(altAccentHi), get_Color(altAccentLo), 0.5f);
     switch (theme) {
         case pureBlack_ColorTheme: {
             copy_(uiBackground_ColorId, black_ColorId);
@@ -123,7 +124,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputTextFocused_ColorId, white_ColorId);
             copy_(uiInputFrame_ColorId, gray25_ColorId);
             copy_(uiInputFrameHover_ColorId, accentHi);
-            copy_(uiInputFrameFocused_ColorId, altAccentHi);
+            set_Color(uiInputFrameFocused_ColorId, altAccentMid);
             copy_(uiInputCursor_ColorId, altAccentHi);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, accentHi);
@@ -171,10 +172,12 @@ void setThemePalette_Color(enum iColorTheme theme) {
                       mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.7f));
             copy_(uiInputBackgroundFocused_ColorId, black_ColorId);
             copy_(uiInputText_ColorId, gray75_ColorId);
-            copy_(uiInputTextFocused_ColorId, white_ColorId);
+            //copy_(uiInputTextFocused_ColorId, white_ColorId);
+            set_Color(uiInputTextFocused_ColorId, mix_Color(get_Color(white_ColorId),
+                                                            get_Color(altAccentHi), 0.15f));
             copy_(uiInputFrame_ColorId, uiInputBackground_ColorId);
             copy_(uiInputFrameHover_ColorId, accentHi);
-            copy_(uiInputFrameFocused_ColorId, altAccentHi);
+            set_Color(uiInputFrameFocused_ColorId, altAccentMid);
             copy_(uiInputCursor_ColorId, altAccentHi);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, accentHi);

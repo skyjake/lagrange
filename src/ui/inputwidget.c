@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "macos.h"
 #endif
 
-static const int    refreshInterval_InputWidget_ = 256;
+static const int    refreshInterval_InputWidget_ = 512;
 static const size_t maxUndo_InputWidget_         = 64;
 static const int    unlimitedWidth_InputWidget_  = 1000000; /* TODO: WrapText disables some functionality if maxWidth==0 */
 
@@ -216,6 +216,7 @@ struct Impl_InputWidget {
     iArray          undoStack;
     int             font;
     iClick          click;
+    int             wheelAccum;
     int             cursorVis;
     uint32_t        timer;
     iTextBuf *      buffered; /* pre-rendered static text */
@@ -600,6 +601,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     splitToLines_(&iStringLiteral(""), &d->lines);
     setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue); /* resizes its own height */
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
+    d->wheelAccum = 0;
     d->timer = 0;
     d->cursorVis = 0;
     d->buffered = NULL;
@@ -1467,6 +1469,31 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                              ? SDL_SYSTEM_CURSOR_IBEAM
                              : SDL_SYSTEM_CURSOR_ARROW);
     }
+    if (ev->type == SDL_MOUSEWHEEL && contains_Widget(w, coord_MouseWheelEvent(&ev->wheel))) {
+        const int lineHeight = lineHeight_Text(d->font);
+        if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
+            d->wheelAccum -= ev->wheel.y;
+        }
+        else {
+            d->wheelAccum -= ev->wheel.y * 3 * lineHeight;
+        }
+        int lineDelta = d->wheelAccum / lineHeight;
+        if (lineDelta < 0) {
+            lineDelta = iMax(lineDelta, -d->visWrapLines.start);
+            if (!lineDelta) d->wheelAccum = 0;
+        }
+        else if (lineDelta > 0) {
+            lineDelta = iMin(lineDelta,
+                             lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
+            if (!lineDelta) d->wheelAccum = 0;            
+        }
+        d->wheelAccum         -= lineDelta * lineHeight;
+        d->visWrapLines.start += lineDelta;
+        d->visWrapLines.end   += lineDelta;
+        d->inFlags |= needUpdateBuffer_InputWidgetFlag;
+        refresh_Widget(d);
+        return iTrue;
+    }
     switch (processEvent_Click(&d->click, ev)) {
         case none_ClickResult:
             break;
@@ -1497,6 +1524,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     selectAll_InputWidget(d);
                 }
             }
+            refresh_Widget(d);
             return iTrue;
         }
         case aborted_ClickResult:
@@ -1889,12 +1917,11 @@ static void draw_InputWidget_(const iInputWidget *d) {
         wrapText.wrapFunc = NULL;
         wrapText.context  = NULL;
     }
-    unsetClip_Paint(&p);
     /* Draw the insertion point. */
-    if (isFocused && d->cursorVis) {
-        iInt2 curSize;
-        iRangecc cursorChar = iNullRange;
-        int visWrapsAbove = 0;
+    if (isFocused && d->cursorVis && contains_Range(&visLines, d->cursor.y)) {
+        iInt2    curSize;
+        iRangecc cursorChar    = iNullRange;
+        int      visWrapsAbove = 0;
         for (int i = d->cursor.y - 1; i >= visLines.start; i--) {
             const iInputLine *line = constAt_Array(&d->lines, i);
             visWrapsAbove += numWrapLines_InputLine_(line);
@@ -1938,6 +1965,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
                            cursorChar);
         }
     }
+    unsetClip_Paint(&p);
     drawChildren_Widget(w);
 }
 
