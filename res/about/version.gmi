@@ -16,7 +16,7 @@
 * Fixed incorrect behavior in input fields when typing or deleting text while holding down the Shift key.
 * Fixed crash in Upload dialog if server responds with a redirect.
 * Fixed buffered graphics (UI, fonts) getting lost under rare circumstances.
-* Fixed drawing of wrapped text when the app is compiled with HarfBuzz.
+* Fixed drawing of wrapped text when the app is compiled without HarfBuzz.
 * macOS: Fixed UI not updating when system dark mode is toggled while the window is hidden.
 
 ## 1.6.1

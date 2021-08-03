@@ -70,8 +70,6 @@
                         redirect.</li>
                     <li>Fixed buffered graphics (UI, fonts) getting lost under rare
                         circumstances.</li>
-                    <li>Fixed drawing of wrapped text when the app is compiled with
-                        HarfBuzz.</li>
                     <li>macOS: Fixed UI not updating when system dark mode is toggled
                         while the window is hidden.</li>
                 </ul>
