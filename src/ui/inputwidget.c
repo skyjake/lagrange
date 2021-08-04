@@ -188,8 +188,7 @@ enum iInputWidgetFlag {
     markWords_InputWidgetFlag        = iBit(8),
     needUpdateBuffer_InputWidgetFlag = iBit(9),
     enterKeyEnabled_InputWidgetFlag  = iBit(10),
-    enterKeyInsertsLineFeed_InputWidgetFlag
-                                     = iBit(11),
+    lineBreaksEnabled_InputWidgetFlag= iBit(11),
     needBackup_InputWidgetFlag       = iBit(12),
 };
 
@@ -588,10 +587,11 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->cursor       = zero_I2();
     d->prevCursor   = zero_I2();
     d->lastUpdateWidth = 0;
-    d->inFlags         = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag;
-    if (deviceType_App() != desktop_AppDeviceType) {
-        d->inFlags |= enterKeyInsertsLineFeed_InputWidgetFlag;
-    }
+    d->inFlags         = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag |
+                         lineBreaksEnabled_InputWidgetFlag;
+    //    if (deviceType_App() != desktop_AppDeviceType) {
+    //        d->inFlags |= enterKeyInsertsLineFeed_InputWidgetFlag;
+    //    }
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
     d->visWrapLines.start = 0;
@@ -732,8 +732,8 @@ void setValidator_InputWidget(iInputWidget *d, iInputWidgetValidatorFunc validat
     d->validatorContext = context;
 }
 
-void setEnterInsertsLF_InputWidget(iInputWidget *d, iBool enterInsertsLF) {
-    iChangeFlags(d->inFlags, enterKeyInsertsLineFeed_InputWidgetFlag, enterInsertsLF);
+void setLineBreaksEnabled_InputWidget(iInputWidget *d, iBool lineBreaksEnabled) {
+    iChangeFlags(d->inFlags, lineBreaksEnabled_InputWidgetFlag, lineBreaksEnabled);
 }
 
 void setEnterKeyEnabled_InputWidget(iInputWidget *d, iBool enterKeyEnabled) {
@@ -1614,10 +1614,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
-                if (~d->inFlags & isSensitive_InputWidgetFlag && d->maxLen == 0) {
-                    if (mods == lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey) ||
-                        (~d->inFlags & isUrl_InputWidgetFlag &&
-                         d->inFlags & enterKeyInsertsLineFeed_InputWidgetFlag)) {
+                if (~d->inFlags & isSensitive_InputWidgetFlag &&
+                    ~d->inFlags & isUrl_InputWidgetFlag &&
+                    d->inFlags & lineBreaksEnabled_InputWidgetFlag && d->maxLen == 0) {
+                    if (mods == lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey)) {
                         pushUndo_InputWidget_(d);
                         deleteMarked_InputWidget_(d);
                         insertChar_InputWidget_(d, '\n');
@@ -1626,7 +1626,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     }
                 }
                 if (d->inFlags & enterKeyEnabled_InputWidgetFlag &&
-                    mods == acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey)) {
+                    (mods == acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey) ||
+                     (~d->inFlags & lineBreaksEnabled_InputWidgetFlag))) {
                     d->inFlags |= enterPressed_InputWidgetFlag;
                     setFocus_Widget(NULL);
                     return iTrue;

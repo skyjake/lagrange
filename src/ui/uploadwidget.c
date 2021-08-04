@@ -117,7 +117,6 @@ void init_UploadWidget(iUploadWidget *d) {
         setFont_InputWidget(d->input, monospace_FontId);
         setLineLimits_InputWidget(d->input, 7, 20);
         setHint_InputWidget(d->input, "${hint.upload.text}");
-        setEnterInsertsLF_InputWidget(d->input, iTrue);
         setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI, -1));
         addChild_Widget(page, iClob(d->input));
         appendFramelessTabPage_Widget(tabs, iClob(page), "${heading.upload.text}", '1', 0);
