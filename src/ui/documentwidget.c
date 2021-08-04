@@ -493,7 +493,7 @@ static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iPrefs * prefs    = prefs_App();
     const int      minWidth = 50 * gap_UI; /* lines must fit a word at least */
     const float    adjust   = iClamp((float) bounds.size.x / gap_UI / 11 - 12,
-                                     -2.0f, 10.0f); /* adapt to width */
+                                     -1.0f, 10.0f); /* adapt to width */
     //printf("%f\n", adjust); fflush(stdout);
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
                  fontSize_UI * prefs->lineWidth * prefs->zoomPercent / 100);
