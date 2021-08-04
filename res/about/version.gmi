@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.6.3
+* Fixed the line break key modifier inadvertently affecting URL input fields, where line breaks are not allowed.
 * Select all text in an input field using Shift+Ctrl+A.
 
 ## 1.6.2
