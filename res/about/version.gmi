@@ -7,8 +7,10 @@
 # Release notes
 
 ## 1.6.3
+* Select all text in an input field using Shift+Ctrl+A (macOS: ⌘A).
+* Input fields do not lose focus when the window becomes inactive, making it easier to resume input afterwards.
 * Fixed the line break key modifier inadvertently affecting URL input fields, where line breaks are not allowed.
-* Select all text in an input field using Shift+Ctrl+A.
+* Fixed the line break key modifier affecting the upload dialog's text field.
 
 ## 1.6.2
 * Added `--tab-url` to print currently active tab's URL.
