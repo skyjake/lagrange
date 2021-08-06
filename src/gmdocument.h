@@ -174,11 +174,11 @@ enum iGmDocumentUpdate {
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat format);
 void    setBanner_GmDocument    (iGmDocument *, enum iGmDocumentBanner type);
-void    setWidth_GmDocument     (iGmDocument *, int width);
+void    setWidth_GmDocument     (iGmDocument *, int width, int outsideMargin);
 void    redoLayout_GmDocument   (iGmDocument *);
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
-void    setSource_GmDocument    (iGmDocument *, const iString *source, int width,
+void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int outsideMargin,
                                  enum iGmDocumentUpdate updateType);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 

@@ -1054,9 +1054,12 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
+    const int docWidth      = documentWidth_DocumentWidget_(d);
+    const int outsideMargin = (width_Widget(d) - docWidth) / 2;
     setSource_GmDocument(d->doc,
                          source,
-                         documentWidth_DocumentWidget_(d),
+                         docWidth,
+                         outsideMargin,
                          isFinished_GmRequest(d->request) ? final_GmDocumentUpdate
                                                           : partial_GmDocumentUpdate);
     documentWasChanged_DocumentWidget_(d);
@@ -2249,7 +2252,7 @@ static iBool updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocumen
         /* TODO: First *fully* visible run? */
         voffset = visibleRange_DocumentWidget_(d).start - top_Rect(run->visBounds);
     }
-    setWidth_GmDocument(d->doc, newWidth);
+    setWidth_GmDocument(d->doc, newWidth, (width_Widget(d) - newWidth) / 2);
     documentRunsInvalidated_DocumentWidget_(d);
     if (runLoc && !keepCenter) {
         run = findRunAtLoc_GmDocument(d->doc, runLoc);

@@ -82,6 +82,7 @@ struct Impl_GmDocument {
     iString   url;         /* for resolving relative links */
     iString   localHost;
     iInt2     size;
+    int       outsideMargin;
     iArray    layout; /* contents of source, laid out in document space */
     iPtrArray links;
     enum iGmDocumentBanner bannerType;
@@ -896,6 +897,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 pos.y += margin;
                 run.bounds.pos = pos;
                 run.bounds.size.x = d->size.x;
+                /* Extend the image to full width, including outside margin, if the viewport
+                   is narrow enough. */
+                if (d->outsideMargin < 5 * gap_UI) {
+                    run.bounds.size.x += d->outsideMargin * 2;
+                    run.bounds.pos.x  -= d->outsideMargin;
+                }                
                 const float aspect = (float) imgSize.y / (float) imgSize.x;
                 run.bounds.size.y = d->size.x * aspect;
                 run.visBounds = run.bounds;
@@ -990,6 +997,7 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->url);
     init_String(&d->localHost);
     d->bannerType = siteDomain_GmDocumentBanner;
+    d->outsideMargin = 0;
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
@@ -1543,8 +1551,9 @@ void setBanner_GmDocument(iGmDocument *d, enum iGmDocumentBanner type) {
     d->bannerType = type;
 }
 
-void setWidth_GmDocument(iGmDocument *d, int width) {
+void setWidth_GmDocument(iGmDocument *d, int width, int outsideMargin) {
     d->size.x = width;
+    d->outsideMargin = outsideMargin; /* distance to edge of the viewport */
     doLayout_GmDocument_(d); /* TODO: just flag need-layout and do it later */
 }
 
@@ -1698,7 +1707,7 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     updateIconBasedOnUrl_GmDocument_(d);
 }
 
-void setSource_GmDocument(iGmDocument *d, const iString *source, int width,
+void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int outsideMargin,
                           enum iGmDocumentUpdate updateType) {
 //    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
 //           size_String(source), width, updateType == final_GmDocumentUpdate);
@@ -1713,7 +1722,7 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width,
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
     }
-    setWidth_GmDocument(d, width); /* re-do layout */
+    setWidth_GmDocument(d, width, outsideMargin); /* re-do layout */
 }
 
 void foldPre_GmDocument(iGmDocument *d, uint16_t preId) {
