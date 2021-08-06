@@ -9,6 +9,8 @@
 ## 1.6.3
 * Select all text in an input field using Shift+Ctrl+A (macOS: ⌘A).
 * Input fields do not lose focus when the window becomes inactive, making it easier to resume input afterwards.
+* Fixed highlighting the domain name in URL input fields.
+* Fixed hiding the Gemini URL scheme in input fields when the window is narrow.
 * Fixed the line break key modifier inadvertently affecting URL input fields, where line breaks are not allowed.
 * Fixed the line break key modifier affecting the upload dialog's text field.
 
