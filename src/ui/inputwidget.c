@@ -691,7 +691,6 @@ void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
     d->mode = mode;
 }
 
-#if 0
 static void restoreDefaultScheme_(iString *url) {
     iUrl parts;
     init_Url(&parts, url);
@@ -706,17 +705,14 @@ static const iString *omitDefaultScheme_(iString *url) {
     }
     return url;
 }
-#endif
 
 const iString *text_InputWidget(const iInputWidget *d) {
     if (d) {
         iString *text = collect_String(text_InputWidget_(d));
-#if 0
         if (d->inFlags & isUrl_InputWidgetFlag) {
             /* Add the "gemini" scheme back if one is omitted. */
             restoreDefaultScheme_(text);
         }
-#endif
         return text;
     }
     return collectNew_String();
@@ -820,6 +816,22 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
         for (int i = visRange.start; i < visRange.end; i++) {
             append_String(visText, &line_InputWidget_(d, i)->text);
         }
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            /* Highlight the host name. */
+            iUrl parts;
+            init_Url(&parts, visText);
+            if (!isEmpty_Range(&parts.host)) {
+                const char *cstr = cstr_String(visText);
+                insertData_Block(&visText->chars,
+                                 parts.host.end - cstr,
+                                 restore_ColorEscape,
+                                 strlen(restore_ColorEscape));
+                insertData_Block(&visText->chars,
+                                 parts.host.start - cstr,
+                                 uiTextStrong_ColorEscape,
+                                 strlen(uiTextStrong_ColorEscape));
+            }
+        }
         iWrapText wt = wrap_InputWidget_(d, 0);
         wt.text = range_String(visText);
         const int fg = uiInputText_ColorId;
@@ -853,12 +865,10 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
             punyEncodeUrlHost_String(enc);
             text = enc;
         }
-#if 0
         /* Omit the default (Gemini) scheme if there isn't much space. */
         if (isNarrow_Root(as_Widget(d)->root)) {
             text = omitDefaultScheme_(collect_String(copy_String(text)));
         }
-#endif
     }
     clearUndo_InputWidget_(d);
     iString *nfcText = collect_String(copy_String(text));
@@ -873,10 +883,6 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     if (!isFocused_Widget(d)) {
         iZap(d->mark);
     }
-//    else {
-//        d->cursor.y = iMin(d->cursor.y, (int) size_Array(&d->lines) - 1);
-//        d->cursor.x = iMin(d->cursor.x, size_String(&cursorLine_InputWidget_(d)->text));
-//    }
     if (!isFocused_Widget(d)) {
         d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     }
@@ -1414,12 +1420,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     /* Resize according to width immediately. */
     if (d->lastUpdateWidth != w->rect.size.x) {
         d->inFlags |= needUpdateBuffer_InputWidgetFlag;
-#if 0
         if (d->inFlags & isUrl_InputWidgetFlag) {
             /* Restore/omit the default scheme if necessary. */
             setText_InputWidget(d, text_InputWidget(d));
         }
-#endif
         updateAllLinesAndResizeHeight_InputWidget_(d);
         d->lastUpdateWidth = w->rect.size.x;
     }
