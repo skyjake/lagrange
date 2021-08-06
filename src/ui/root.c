@@ -358,9 +358,9 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
-#if !defined (iPlatformMobile) /* apps don't share input focus on mobile */
-        setFocus_Widget(NULL);
-#endif
+//#if !defined (iPlatformMobile) /* apps don't share input focus on mobile */
+//        setFocus_Widget(NULL);
+//#endif
         setTextColor_LabelWidget(findWidget_App("winbar.app"), uiAnnotation_ColorId);
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiAnnotation_ColorId);
         return iFalse;

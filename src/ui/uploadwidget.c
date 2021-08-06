@@ -116,6 +116,7 @@ void init_UploadWidget(iUploadWidget *d) {
         setId_Widget(as_Widget(d->input), "upload.text");
         setFont_InputWidget(d->input, monospace_FontId);
         setLineLimits_InputWidget(d->input, 7, 20);
+        setUseReturnKeyBehavior_InputWidget(d->input, iFalse); /* traditional text editor */        
         setHint_InputWidget(d->input, "${hint.upload.text}");
         setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI, -1));
         addChild_Widget(page, iClob(d->input));

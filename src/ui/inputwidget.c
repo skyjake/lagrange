@@ -190,6 +190,7 @@ enum iInputWidgetFlag {
     enterKeyEnabled_InputWidgetFlag  = iBit(10),
     lineBreaksEnabled_InputWidgetFlag= iBit(11),
     needBackup_InputWidgetFlag       = iBit(12),
+    useReturnKeyBehavior_InputWidgetFlag = iBit(13),
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -566,6 +567,28 @@ static void updateAllLinesAndResizeHeight_InputWidget_(iInputWidget *d) {
     }
 }
 
+static uint32_t cursorTimer_(uint32_t interval, void *w) {
+    iInputWidget *d = w;
+    if (d->cursorVis > 1) {
+        d->cursorVis--;
+    }
+    else {
+        d->cursorVis ^= 1;
+    }
+    refresh_Widget(w);
+    return interval;
+}
+
+static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, iBool doStart) {
+    if (doStart && !d->timer) {
+        d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);        
+    }
+    else if (!doStart && d->timer) {
+        SDL_RemoveTimer(d->timer);
+        d->timer = 0;
+    }
+}
+
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
@@ -588,7 +611,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->prevCursor   = zero_I2();
     d->lastUpdateWidth = 0;
     d->inFlags         = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag |
-                         lineBreaksEnabled_InputWidgetFlag;
+                         lineBreaksEnabled_InputWidgetFlag | useReturnKeyBehavior_InputWidgetFlag;
     //    if (deviceType_App() != desktop_AppDeviceType) {
     //        d->inFlags |= enterKeyInsertsLineFeed_InputWidgetFlag;
     //    }
@@ -627,9 +650,7 @@ void deinit_InputWidget(iInputWidget *d) {
     delete_TextBuf(d->buffered);
     clearUndo_InputWidget_(d);
     deinit_Array(&d->undoStack);
-    if (d->timer) {
-        SDL_RemoveTimer(d->timer);
-    }
+    startOrStopCursorTimer_InputWidget_(d, iFalse);    
     deinit_String(&d->srcHint);
     deinit_String(&d->hint);
     deinit_String(&d->oldText);
@@ -738,6 +759,10 @@ void setLineBreaksEnabled_InputWidget(iInputWidget *d, iBool lineBreaksEnabled) 
 
 void setEnterKeyEnabled_InputWidget(iInputWidget *d, iBool enterKeyEnabled) {
     iChangeFlags(d->inFlags, enterKeyEnabled_InputWidgetFlag, enterKeyEnabled);
+}
+
+void setUseReturnKeyBehavior_InputWidget(iInputWidget *d, iBool useReturnKeyBehavior) {
+    iChangeFlags(d->inFlags, useReturnKeyBehavior_InputWidgetFlag, useReturnKeyBehavior);
 }
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
@@ -866,18 +891,6 @@ void setTextCStr_InputWidget(iInputWidget *d, const char *cstr) {
     delete_String(str);
 }
 
-static uint32_t cursorTimer_(uint32_t interval, void *w) {
-    iInputWidget *d = w;
-    if (d->cursorVis > 1) {
-        d->cursorVis--;
-    }
-    else {
-        d->cursorVis ^= 1;
-    }
-    refresh_Widget(w);
-    return interval;
-}
-
 static size_t cursorToIndex_InputWidget_(const iInputWidget *d, iInt2 pos) {
     if (pos.y < 0) {
         return 0;
@@ -930,7 +943,7 @@ void begin_InputWidget(iInputWidget *d) {
     setFlags_Widget(w, selected_WidgetFlag, iTrue);
     showCursor_InputWidget_(d);
     refresh_Widget(w);
-    d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);
+    startOrStopCursorTimer_InputWidget_(d, iTrue);
     d->inFlags &= ~enterPressed_InputWidgetFlag;
     if (d->inFlags & selectAllOnFocus_InputWidgetFlag) {
         d->mark = (iRanges){ 0, lastLine_InputWidget_(d)->range.end };
@@ -955,8 +968,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         splitToLines_(&d->oldText, &d->lines);
     }
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
-    SDL_RemoveTimer(d->timer);
-    d->timer = 0;
+    startOrStopCursorTimer_InputWidget_(d, iFalse);
     SDL_StopTextInput();
     setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
     const char *id = cstr_String(id_Widget(as_Widget(d)));
@@ -1383,6 +1395,20 @@ static iBool isArrowUpDownConsumed_InputWidget_(const iInputWidget *d) {
     return d->maxWrapLines > 1;
 }
 
+static iBool checkLineBreakMods_InputWidget_(const iInputWidget *d, int mods) {
+    if (d->inFlags & useReturnKeyBehavior_InputWidgetFlag) {
+        return mods == lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey);
+    }
+    return mods == 0;
+}
+
+static iBool checkAcceptMods_InputWidget_(const iInputWidget *d, int mods) {
+    if (d->inFlags & useReturnKeyBehavior_InputWidgetFlag) {
+        return mods == acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey);
+    }
+    return mods == 0;
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Resize according to width immediately. */
@@ -1399,6 +1425,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
     if (isCommand_Widget(w, ev, "focus.gained")) {
         begin_InputWidget(d);
+        return iFalse;
+    }
+    else if (isEditing_InputWidget_(d) && (isCommand_UserEvent(ev, "window.focus.lost") ||
+                                           isCommand_UserEvent(ev, "window.focus.gained"))) {
+        startOrStopCursorTimer_InputWidget_(d, isCommand_UserEvent(ev, "window.focus.gained"));
+        d->cursorVis = 1;
+        refresh_Widget(d);
         return iFalse;
     }
     else if (isCommand_UserEvent(ev, "keyroot.changed")) {
@@ -1617,7 +1650,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 if (~d->inFlags & isSensitive_InputWidgetFlag &&
                     ~d->inFlags & isUrl_InputWidgetFlag &&
                     d->inFlags & lineBreaksEnabled_InputWidgetFlag && d->maxLen == 0) {
-                    if (mods == lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey)) {
+                    if (checkLineBreakMods_InputWidget_(d, mods)) {
                         pushUndo_InputWidget_(d);
                         deleteMarked_InputWidget_(d);
                         insertChar_InputWidget_(d, '\n');
@@ -1626,7 +1659,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     }
                 }
                 if (d->inFlags & enterKeyEnabled_InputWidgetFlag &&
-                    (mods == acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey) ||
+                    (checkAcceptMods_InputWidget_(d, mods) ||
                      (~d->inFlags & lineBreaksEnabled_InputWidgetFlag))) {
                     d->inFlags |= enterPressed_InputWidgetFlag;
                     setFocus_Widget(NULL);
