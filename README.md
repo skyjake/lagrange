@@ -49,16 +49,16 @@ The required tools are a C11 compiler (e.g., Clang or GCC), CMake and `pkg-confi
 
 ### Unicode text rendering
 
-Lagrange relies on the [HarfBuzz](https://harfbuzz.github.io) and [GNU FriBidi](https://github.com/fribidi/fribidi/) libraries for handling complex scripts and bidirectional text. This repository includes these two libraries as submodules. By default, HarfBuzz and GNU FriBidi will be compiled as part of the app, without any additional dependencies. This allows the app to be built on systems where these libraries are not readily available.
+Lagrange relies on the [HarfBuzz](https://harfbuzz.github.io) and [GNU FriBidi](https://github.com/fribidi/fribidi/) libraries for handling complex scripts and bidirectional text. This repository includes these two libraries as submodules. By default, if HarfBuzz and GNU FriBidi are not available on the system, they will be compiled as part of the app without any additional dependencies.
 
 Note that compiling these libraries has the following requirements:
 
 * HarfBuzz requires a C++ compiler. 
 * GNU FriBidi cannot be compiled with CMake; you need to have [Meson](https://mesonbuild.com) and [Ninja](https://ninja-build.org).
 
-If these requirements cannot be met, or you would prefer the use the system-provided HarfBuzz and GNU FriBidi, the build options can be changed. See the table below for `ENABLE_HARFBUZZ_MINIMAL` and `ENABLE_FRIBIDI_BUILD` (set both to **NO**). Note that a system-provided HarfBuzz likely has dependencies to other libraries, such as FreeType and GLib.
+If these requirements cannot be met, or you would prefer the use the system-provided HarfBuzz and GNU FriBidi, please refer to the list of build options below: `ENABLE_HARFBUZZ_MINIMAL` and `ENABLE_FRIBIDI_BUILD` should both be set to **NO**. Note that a system-provided HarfBuzz likely has dependencies to other libraries, such as FreeType and GLib.
 
-You also may disable HarfBuzz and/or GNU FriBidi entirely. The old text renderer that supports only non-complex left-to-right scripts is then used.
+You also may disable HarfBuzz and/or GNU FriBidi entirely. The old text renderer that only supports non-complex left-to-right scripts is then used.
 
 ### Installing to a custom directory
 

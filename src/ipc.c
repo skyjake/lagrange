@@ -172,6 +172,7 @@ static void handleSignal_IpcResponse_(int sig) {
 }
 
 iBool write_Ipc(iProcessId pid, const iString *input, enum iIpcWrite type) {
+    if (!pid) return iFalse;
     iBool ok = iFalse;
     iFile *f = newCStr_File(inputFilePath_(&ipc_, pid));
     if (open_File(f, text_FileMode | append_FileMode)) {
@@ -281,6 +282,7 @@ void listen_Ipc(void) {
 }
 
 iBool write_Ipc(iProcessId pid, const iString *input, enum iIpcWrite type) {
+    if (!pid) return iFalse;
     iUnused(type);
     HANDLE slot = CreateFile(slotName_(pid),
                              GENERIC_WRITE,

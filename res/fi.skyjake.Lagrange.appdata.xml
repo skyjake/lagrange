@@ -45,6 +45,39 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.6.2" date="2021-08-03">
+            <description>
+                <p>Version 1.6 adds support for bidirectional text and complex scripts,
+                    right-to-left paragraph layout, uploads using the Titan protocol,
+                    and has an improved mechanism for tracking trust in server
+                    certificates. Page contents can be fully cached in memory for more
+                    efficient backward navigation. There are also UI improvements like
+                    a reorganized Preferences and a setting for smooth scrolling
+                    speed.</p>
+                <p>Changes and fixes in v1.6.2:</p>
+                <ul>
+                    <li>Added --tab-url to print currently active tab's URL.</li>
+                    <li>Upload dialog expands to full window height when the entered
+                        text is long.</li>
+                    <li>Home/End keys in an input field move to start/end of the
+                        wrapped line segment.</li>
+                    <li>Scroll with mouse wheel in input fields.</li>
+                    <li>Slower cursor blink rate in input fields.</li>
+                    <li>Adjusted dark mode colors for focused input fields.</li>
+                    <li>Fixed incorrect behavior in input fields when typing or
+                        deleting text while holding down the Shift key.</li>
+                    <li>Fixed crash in Upload dialog if server responds with a
+                        redirect.</li>
+                    <li>Fixed buffered graphics (UI, fonts) getting lost under rare
+                        circumstances.</li>
+                    <li>macOS: Fixed UI not updating when system dark mode is toggled
+                        while the window is hidden.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.6.2</url>
+        </release>        
         <release version="1.6.1" date="2021-07-30">
             <description>
                 <p>Version 1.6 adds support for bidirectional text and complex scripts,
@@ -59,7 +92,8 @@
                     <li>Potential crash when inserting a line break.</li>
                     <li>Cursor positioning in fixed-length input fields.</li>
                     <li>Copying text in input fields (the wrong region was copied).</li>
-                    <li>URL input field contents not being selected after opening a new tab.</li>
+                    <li>URL input field contents not being selected after opening
+                        a new tab.</li>
                     <li>Upload dialog not showing when reloading a Titan URL.</li>                    
                 </ul>
                 <p>The full release notes can be viewed inside the app by opening

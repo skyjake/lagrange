@@ -50,8 +50,9 @@ void    setFont_InputWidget             (iInputWidget *, int fontId);
 void    setContentPadding_InputWidget   (iInputWidget *, int left, int right); /* only affects the text entry */
 void    setLineLimits_InputWidget       (iInputWidget *, int minLines, int maxLines);
 void    setValidator_InputWidget        (iInputWidget *, iInputWidgetValidatorFunc validator, void *context);
-void    setEnterInsertsLF_InputWidget   (iInputWidget *, iBool enterInsertsLF);
+void    setLineBreaksEnabled_InputWidget(iInputWidget *, iBool lineBreaksEnabled);
 void    setEnterKeyEnabled_InputWidget  (iInputWidget *, iBool enterKeyEnabled);
+void    setUseReturnKeyBehavior_InputWidget(iInputWidget *, iBool useReturnKeyBehavior);
 void    setBackupFileName_InputWidget   (iInputWidget *, const char *fileName);
 void    begin_InputWidget               (iInputWidget *);
 void    end_InputWidget                 (iInputWidget *, iBool accept);

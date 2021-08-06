@@ -358,9 +358,9 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
-#if !defined (iPlatformMobile) /* apps don't share input focus on mobile */
-        setFocus_Widget(NULL);
-#endif
+//#if !defined (iPlatformMobile) /* apps don't share input focus on mobile */
+//        setFocus_Widget(NULL);
+//#endif
         setTextColor_LabelWidget(findWidget_App("winbar.app"), uiAnnotation_ColorId);
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiAnnotation_ColorId);
         return iFalse;
@@ -1077,6 +1077,7 @@ void createUserInterface_Root(iRoot *d) {
             setSelectAllOnFocus_InputWidget(url, iTrue);
             setId_Widget(as_Widget(url), "url");
             setLineLimits_InputWidget(url, 1, 1); /* just one line while not focused */
+            setLineBreaksEnabled_InputWidget(url, iFalse);
             setUrlContent_InputWidget(url, iTrue);
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
@@ -1272,7 +1273,7 @@ void createUserInterface_Root(iRoot *d) {
         setHint_InputWidget(input, "${hint.findtext}");
         setSelectAllOnFocus_InputWidget(input, iTrue);
         setEatEscape_InputWidget(input, iFalse); /* unfocus and close with one keypress */
-        setEnterInsertsLF_InputWidget(input, iFalse);
+        setLineBreaksEnabled_InputWidget(input, iFalse);
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
                      "find.input");
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9f  ", 'g', KMOD_PRIMARY, "find.next")));
