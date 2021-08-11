@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-07-25 18:06+0000\n"
+"PO-Revision-Date: 2021-08-10 12:07+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -1760,3 +1760,57 @@ msgstr ""
 "выполнялось подключение.\n"
 "\n"
 "Сертификат можно пометить как доверенный в окне «Сведения о странице»."
+
+msgid "media.untitled.image"
+msgstr "Изображение"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Этот XML-документ Atom был преобразован в ленту Gemini, чтобы на нее можно "
+"было подписаться."
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Всего %d закладка."
+msgstr[1] "Всего %d закладки."
+msgstr[2] "Всего %d закладок."
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Эта страница отформатирована в соответствии со вспомогательной спецификацией "
+"«Subscribing to Gemini pages»."
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Маркеры списка и цитаты содержат дополнительные сведения о предыдущей "
+"закладке. Строки текста и форматированный текст считаются примечаниями и "
+"игнорируются."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"Каждый заголовок в этом списке представляет тэг закладки. Включены только "
+"закладки с тэгами. Закладки с несколькими тэгами появляются несколько раз."
+
+msgid "media.untitled.audio"
+msgstr "Аудио"
+
+msgid "bookmark.export.title.folder"
+msgstr "Закладки"
+
+msgid "bookmark.export.title.time"
+msgstr "Созданные закладки"
+
+msgid "bookmark.export.saving"
+msgstr "Сохраните страницу для экспорта, или скопируйте их в Буфер обмена."
+
+msgid "bookmark.export.title.tag"
+msgstr "Тэги закладок"
+
+msgid "bookmark.export.format.linklines"
+msgstr "Каждая ссылка представляет собой закладку."
+
+msgid "bookmark.export.format.folders"
+msgstr "Структура папок выражается заголовками 2/3 уровня."
+
+msgid "bookmark.export.format.tags"
+msgstr "Тэги представлены заголовками 2-го уровня."
