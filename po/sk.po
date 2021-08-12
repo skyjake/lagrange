@@ -1,2 +1,285 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-08-12 08:52+0000\n"
+"Last-Translator: Marek Ľach <mareklachbc@tutanota.com>\n"
+"Language-Team: Slovak <http://weblate.skyjake.fi/projects/lagrange/ui/sk/>\n"
+"Language: sk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Získava sa"
+
+msgid "doc.archive.view"
+msgstr "Zobraziť obsah archívu"
+
+msgid "media.untitled.image"
+msgstr "Obrázok"
+
+msgid "media.untitled.audio"
+msgstr "Zvuk"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Sťahovanie dokončené."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Názov"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Žáner"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Dátum"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Položky kanála"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "celkovo %z položka"
+msgstr[1] "celkovo %z položiek"
+msgstr[2] "celkovo %z položky"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Posledné obnovenie prebehlo iba pred chvíľou."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Posledné obnovenie prebehlo pred %s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "pred %d minútou"
+msgstr[1] "pred %d minútami"
+msgstr[2] "pred %d minútami"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "pred %d dňom"
+msgstr[1] "pred %d dňami"
+msgstr[2] "pred %d dňami"
+
+msgid "about.tagline"
+msgstr "Pekný Gemini klient"
+
+msgid "about.version"
+msgstr "Verzia"
+
+msgid "cancel"
+msgstr "Zrušiť"
+
+msgid "close"
+msgstr "Zatvoriť"
+
+msgid "dlg.message.ok"
+msgstr "Pokračovať"
+
+msgid "toggle.no"
+msgstr "NIE"
+
+msgid "menu.title.file"
+msgstr "Súbor"
+
+msgid "menu.title.edit"
+msgstr "Upraviť"
+
+msgid "menu.title.view"
+msgstr "Zobrazenie"
+
+msgid "menu.title.bookmarks"
+msgstr "Záložky"
+
+msgid "menu.title.identity"
+msgstr "Totožnosť"
+
+msgid "menu.title.help"
+msgstr "Pomoc"
+
+msgid "menu.newtab"
+msgstr "Nová karta"
+
+msgid "menu.closetab"
+msgstr "Zatvoriť kartu"
+
+msgid "menu.closetab.right"
+msgstr "Zatvoriť karty smerom doprava"
+
+msgid "menu.split.merge"
+msgstr "Spojiť karty"
+
+msgid "menu.split.swap"
+msgstr "Prehodiť strany"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontálne"
+
+msgid "menu.openlocation"
+msgstr "Otvoriť lokalitu…"
+
+msgid "menu.downloads"
+msgstr "Ukázať stiahnuté súbory"
+
+msgid "menu.pageinfo"
+msgstr "Ukázať informácie o stránke"
+
+msgid "macos.menu.find"
+msgstr "Nájsť"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Uložiť medzi stiahnuté súbory"
+
+msgid "menu.save.downloads.open"
+msgstr "Uložiť medzi stiahnuté, a otvoriť súbor"
+
+msgid "menu.zoom.in"
+msgstr "Priblížiť"
+
+msgid "menu.zoom.out"
+msgstr "Oddialiť"
+
+msgid "menu.view.split"
+msgstr "Rozdelené zobrazenie..."
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Ukázať všetky"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Ukázať záložky podľa značenia"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Zobraziť záložky podľa dátumu vytvorenia"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Zobraziť podľa dátumu vytvorenia"
+
+msgid "menu.feeds.entrylist"
+msgstr "Ukázať položky kanála"
+
+msgid "menu.preferences"
+msgstr "Voľby…"
+
+msgid "menu.help"
+msgstr "Pomoc"
+
+msgid "menu.copy"
+msgstr "Kopírovať"
+
+msgid "menu.paste"
+msgstr "Vložiť"
+
+msgid "menu.select.clear"
+msgstr "Zrušiť výber"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Ukázať záložky"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Ukázať kanály"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Ukázať históriu"
+
+msgid "menu.back"
+msgstr "Ísť späť"
+
+msgid "menu.forward"
+msgstr "Ísť vpred"
+
+msgid "menu.root"
+msgstr "Ísť na základný"
+
+msgid "menu.parent"
+msgstr "Ísť na nadradený"
+
+msgid "menu.reload"
+msgstr "Načítať stránku znova"
+
+msgid "menu.page.subscribe"
+msgstr "Odoberať stránku…"
+
+msgid "menu.about"
+msgstr "O"
+
+msgid "panel.back"
+msgstr "Späť"
+
+msgid "doc.pre.nocaption"
+msgstr "Predformátovaný text bez popisu"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Sťahovanie bude zrušené v prípade, že je táto záložka zatvorená."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Tvorca"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Odoberáte %z kanál, ktorý obsahuje %%.\n"
+msgstr[1] "Odoberáte %z kanálov, ktoré obsahujú %%.\n"
+msgstr[2] "Odoberáte %z kanály, ktoré obsahujú %%.\n"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "pred %d hodinou"
+msgstr[1] "pred %d hodinami"
+msgstr[2] "pred %d hodinami"
+
+msgid "about.powered"
+msgstr "Poháňané SDL 2, OpenSSL, a ☕️"
+
+msgid "toggle.yes"
+msgstr "ÁNO"
+
+msgid "menu.closetab.other"
+msgstr "Zatvoriť ostatné karty"
+
+msgid "menu.closetab.left"
+msgstr "Zatvoriť karty smerom doľava"
+
+msgid "menu.split.vertical"
+msgstr "Vertikálne"
+
+msgid "menu.find"
+msgstr "Nájsť na stránke"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Uložiť do Súborov"
+
+msgid "menu.bookmarks.list"
+msgstr "Ukázať všetky záložky"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Ukázať podľa značenia"
+
+msgid "menu.cut"
+msgstr "Vystrihnúť"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Kopírovať adresu stránky"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Ukázať totožnosti"
