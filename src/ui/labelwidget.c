@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "touch.h"
 
+#include <SDL_version.h>
+
 struct Impl_LabelWidget {
     iWidget widget;
     iString srcLabel;
@@ -295,8 +297,16 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
         if (isButton) {
             iInt2 points[] = {
-                bottomLeft_Rect(frameRect), topLeft_Rect(frameRect), topRight_Rect(frameRect),
-                bottomRight_Rect(frameRect), bottomLeft_Rect(frameRect)
+                bottomLeft_Rect(frameRect),
+                topLeft_Rect(frameRect),
+                topRight_Rect(frameRect),
+#if SDL_VERSION_ATLEAST(2, 0, 16) && defined (iPlatformApple)
+                /* A very curious regression in SDL 2.0.16 on macOS. */
+                addX_I2(bottomRight_Rect(frameRect), -1),
+#else
+                bottomRight_Rect(frameRect),
+#endif
+                bottomLeft_Rect(frameRect)
             };
             drawLines_Paint(&p, points + 2, 3, frame2);
             drawLines_Paint(
