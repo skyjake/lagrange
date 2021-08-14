@@ -493,7 +493,7 @@ static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iPrefs * prefs    = prefs_App();
     const int      minWidth = 50 * gap_UI; /* lines must fit a word at least */
     const float    adjust   = iClamp((float) bounds.size.x / gap_UI / 11 - 12,
-                                     -2.0f, 10.0f); /* adapt to width */
+                                     -1.0f, 10.0f); /* adapt to width */
     //printf("%f\n", adjust); fflush(stdout);
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
                  fontSize_UI * prefs->lineWidth * prefs->zoomPercent / 100);
@@ -4796,64 +4796,67 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     };
     init_Paint(&ctx.paint);
     render_DocumentWidget_(d, &ctx, iFalse /* just the mandatory parts */);
-    setClip_Paint(&ctx.paint, clipBounds);
-    int yTop = docBounds.pos.y - pos_SmoothScroll(&d->scrollY);
-    draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop), ySpan_Rect(bounds));
-    /* Text markers. */
+    int         yTop             = docBounds.pos.y - pos_SmoothScroll(&d->scrollY);
+    const iBool isDocEmpty       = size_GmDocument(d->doc).y == 0;
     const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
-    if (!isEmpty_Range(&d->foundMark) || !isEmpty_Range(&d->selectMark)) {
-        SDL_Renderer *render = renderer_Window(get_Window());
-        ctx.firstMarkRect = zero_Rect();
-        ctx.lastMarkRect = zero_Rect();
-        SDL_SetRenderDrawBlendMode(render,
-                                   isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
-                                                                       : SDL_BLENDMODE_BLEND);
-        ctx.viewPos = topLeft_Rect(docBounds);
-        /* Marker starting outside the visible range? */
-        if (d->visibleRuns.start) {
-            if (!isEmpty_Range(&d->selectMark) &&
-                d->selectMark.start < d->visibleRuns.start->text.start &&
-                d->selectMark.end > d->visibleRuns.start->text.start) {
-                ctx.inSelectMark = iTrue;
+    if (!isDocEmpty) {
+        setClip_Paint(&ctx.paint, clipBounds);
+        draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop), ySpan_Rect(bounds));
+        /* Text markers. */
+        if (!isEmpty_Range(&d->foundMark) || !isEmpty_Range(&d->selectMark)) {
+            SDL_Renderer *render = renderer_Window(get_Window());
+            ctx.firstMarkRect = zero_Rect();
+            ctx.lastMarkRect = zero_Rect();
+            SDL_SetRenderDrawBlendMode(render,
+                                       isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
+                                                                           : SDL_BLENDMODE_BLEND);
+            ctx.viewPos = topLeft_Rect(docBounds);
+            /* Marker starting outside the visible range? */
+            if (d->visibleRuns.start) {
+                if (!isEmpty_Range(&d->selectMark) &&
+                    d->selectMark.start < d->visibleRuns.start->text.start &&
+                    d->selectMark.end > d->visibleRuns.start->text.start) {
+                    ctx.inSelectMark = iTrue;
+                }
+                if (isEmpty_Range(&d->foundMark) &&
+                    d->foundMark.start < d->visibleRuns.start->text.start &&
+                    d->foundMark.end > d->visibleRuns.start->text.start) {
+                    ctx.inFoundMark = iTrue;
+                }
             }
-            if (isEmpty_Range(&d->foundMark) &&
-                d->foundMark.start < d->visibleRuns.start->text.start &&
-                d->foundMark.end > d->visibleRuns.start->text.start) {
-                ctx.inFoundMark = iTrue;
+            render_GmDocument(d->doc, vis, drawMark_DrawContext_, &ctx);
+            SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
+            /* Selection range pins. */
+            if (isTouchSelecting) {
+                drawPin_(&ctx.paint, ctx.firstMarkRect, 0);
+                drawPin_(&ctx.paint, ctx.lastMarkRect, 1);
             }
         }
-        render_GmDocument(d->doc, vis, drawMark_DrawContext_, &ctx);
-        SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
-        /* Selection range pins. */
-        if (isTouchSelecting) {
-            drawPin_(&ctx.paint, ctx.firstMarkRect, 0);
-            drawPin_(&ctx.paint, ctx.lastMarkRect, 1);
+        drawMedia_DocumentWidget_(d, &ctx.paint);
+        /* Fill the top and bottom, in case the document is short. */   
+        if (yTop > top_Rect(bounds)) {
+            fillRect_Paint(&ctx.paint,
+                           (iRect){ bounds.pos, init_I2(bounds.size.x, yTop - top_Rect(bounds)) },
+                           hasSiteBanner_GmDocument(d->doc) ? tmBannerBackground_ColorId
+                                                            : tmBackground_ColorId);
         }
-    }
-    drawMedia_DocumentWidget_(d, &ctx.paint);
-    /* Fill the top and bottom, in case the document is short. */
-    if (yTop > top_Rect(bounds)) {
-        fillRect_Paint(&ctx.paint,
-                       (iRect){ bounds.pos, init_I2(bounds.size.x, yTop - top_Rect(bounds)) },
-                       hasSiteBanner_GmDocument(d->doc) ? tmBannerBackground_ColorId
-                                                        : tmBackground_ColorId);
-    }
-    const int yBottom = yTop + size_GmDocument(d->doc).y + 1;
-    if (yBottom < bottom_Rect(bounds)) {
-        fillRect_Paint(&ctx.paint,
-                       init_Rect(bounds.pos.x, yBottom, bounds.size.x, bottom_Rect(bounds) - yBottom),
-                       tmBackground_ColorId);
-    }
-    unsetClip_Paint(&ctx.paint);
-    drawSideElements_DocumentWidget_(d);
-    if (prefs_App()->hoverLink && d->hoverLink) {
-        const int      font     = uiLabel_FontId;
-        const iRangecc linkUrl  = range_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId));
-        const iInt2    size     = measureRange_Text(font, linkUrl).bounds.size;
-        const iRect    linkRect = { addY_I2(bottomLeft_Rect(bounds), -size.y),
-                                    addX_I2(size, 2 * gap_UI) };
-        fillRect_Paint(&ctx.paint, linkRect, tmBackground_ColorId);
-        drawRange_Text(font, addX_I2(topLeft_Rect(linkRect), gap_UI), tmParagraph_ColorId, linkUrl);
+        const int yBottom = yTop + size_GmDocument(d->doc).y + 1;
+        if (yBottom < bottom_Rect(bounds)) {
+            fillRect_Paint(&ctx.paint,
+                           init_Rect(bounds.pos.x, yBottom, bounds.size.x, bottom_Rect(bounds) - yBottom),
+                           tmBackground_ColorId);
+        }
+        unsetClip_Paint(&ctx.paint);
+        drawSideElements_DocumentWidget_(d);
+        if (prefs_App()->hoverLink && d->hoverLink) {
+            const int      font     = uiLabel_FontId;
+            const iRangecc linkUrl  = range_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId));
+            const iInt2    size     = measureRange_Text(font, linkUrl).bounds.size;
+            const iRect    linkRect = { addY_I2(bottomLeft_Rect(bounds), -size.y),
+                                        addX_I2(size, 2 * gap_UI) };
+            fillRect_Paint(&ctx.paint, linkRect, tmBackground_ColorId);
+            drawRange_Text(font, addX_I2(topLeft_Rect(linkRect), gap_UI), tmParagraph_ColorId, linkUrl);
+        }
     }
     if (colorTheme_App() == pureWhite_ColorTheme) {
         drawHLine_Paint(&ctx.paint, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);

@@ -188,9 +188,9 @@ enum iInputWidgetFlag {
     markWords_InputWidgetFlag        = iBit(8),
     needUpdateBuffer_InputWidgetFlag = iBit(9),
     enterKeyEnabled_InputWidgetFlag  = iBit(10),
-    enterKeyInsertsLineFeed_InputWidgetFlag
-                                     = iBit(11),
+    lineBreaksEnabled_InputWidgetFlag= iBit(11),
     needBackup_InputWidgetFlag       = iBit(12),
+    useReturnKeyBehavior_InputWidgetFlag = iBit(13),
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -567,6 +567,28 @@ static void updateAllLinesAndResizeHeight_InputWidget_(iInputWidget *d) {
     }
 }
 
+static uint32_t cursorTimer_(uint32_t interval, void *w) {
+    iInputWidget *d = w;
+    if (d->cursorVis > 1) {
+        d->cursorVis--;
+    }
+    else {
+        d->cursorVis ^= 1;
+    }
+    refresh_Widget(w);
+    return interval;
+}
+
+static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, iBool doStart) {
+    if (doStart && !d->timer) {
+        d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);        
+    }
+    else if (!doStart && d->timer) {
+        SDL_RemoveTimer(d->timer);
+        d->timer = 0;
+    }
+}
+
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
@@ -588,10 +610,11 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->cursor       = zero_I2();
     d->prevCursor   = zero_I2();
     d->lastUpdateWidth = 0;
-    d->inFlags         = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag;
-    if (deviceType_App() != desktop_AppDeviceType) {
-        d->inFlags |= enterKeyInsertsLineFeed_InputWidgetFlag;
-    }
+    d->inFlags         = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag |
+                         lineBreaksEnabled_InputWidgetFlag | useReturnKeyBehavior_InputWidgetFlag;
+    //    if (deviceType_App() != desktop_AppDeviceType) {
+    //        d->inFlags |= enterKeyInsertsLineFeed_InputWidgetFlag;
+    //    }
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
     d->visWrapLines.start = 0;
@@ -627,9 +650,7 @@ void deinit_InputWidget(iInputWidget *d) {
     delete_TextBuf(d->buffered);
     clearUndo_InputWidget_(d);
     deinit_Array(&d->undoStack);
-    if (d->timer) {
-        SDL_RemoveTimer(d->timer);
-    }
+    startOrStopCursorTimer_InputWidget_(d, iFalse);    
     deinit_String(&d->srcHint);
     deinit_String(&d->hint);
     deinit_String(&d->oldText);
@@ -670,7 +691,6 @@ void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
     d->mode = mode;
 }
 
-#if 0
 static void restoreDefaultScheme_(iString *url) {
     iUrl parts;
     init_Url(&parts, url);
@@ -685,17 +705,14 @@ static const iString *omitDefaultScheme_(iString *url) {
     }
     return url;
 }
-#endif
 
 const iString *text_InputWidget(const iInputWidget *d) {
     if (d) {
         iString *text = collect_String(text_InputWidget_(d));
-#if 0
         if (d->inFlags & isUrl_InputWidgetFlag) {
             /* Add the "gemini" scheme back if one is omitted. */
             restoreDefaultScheme_(text);
         }
-#endif
         return text;
     }
     return collectNew_String();
@@ -732,12 +749,16 @@ void setValidator_InputWidget(iInputWidget *d, iInputWidgetValidatorFunc validat
     d->validatorContext = context;
 }
 
-void setEnterInsertsLF_InputWidget(iInputWidget *d, iBool enterInsertsLF) {
-    iChangeFlags(d->inFlags, enterKeyInsertsLineFeed_InputWidgetFlag, enterInsertsLF);
+void setLineBreaksEnabled_InputWidget(iInputWidget *d, iBool lineBreaksEnabled) {
+    iChangeFlags(d->inFlags, lineBreaksEnabled_InputWidgetFlag, lineBreaksEnabled);
 }
 
 void setEnterKeyEnabled_InputWidget(iInputWidget *d, iBool enterKeyEnabled) {
     iChangeFlags(d->inFlags, enterKeyEnabled_InputWidgetFlag, enterKeyEnabled);
+}
+
+void setUseReturnKeyBehavior_InputWidget(iInputWidget *d, iBool useReturnKeyBehavior) {
+    iChangeFlags(d->inFlags, useReturnKeyBehavior_InputWidgetFlag, useReturnKeyBehavior);
 }
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
@@ -795,6 +816,22 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
         for (int i = visRange.start; i < visRange.end; i++) {
             append_String(visText, &line_InputWidget_(d, i)->text);
         }
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            /* Highlight the host name. */
+            iUrl parts;
+            init_Url(&parts, visText);
+            if (!isEmpty_Range(&parts.host)) {
+                const char *cstr = cstr_String(visText);
+                insertData_Block(&visText->chars,
+                                 parts.host.end - cstr,
+                                 restore_ColorEscape,
+                                 strlen(restore_ColorEscape));
+                insertData_Block(&visText->chars,
+                                 parts.host.start - cstr,
+                                 uiTextStrong_ColorEscape,
+                                 strlen(uiTextStrong_ColorEscape));
+            }
+        }
         iWrapText wt = wrap_InputWidget_(d, 0);
         wt.text = range_String(visText);
         const int fg = uiInputText_ColorId;
@@ -828,12 +865,10 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
             punyEncodeUrlHost_String(enc);
             text = enc;
         }
-#if 0
         /* Omit the default (Gemini) scheme if there isn't much space. */
         if (isNarrow_Root(as_Widget(d)->root)) {
             text = omitDefaultScheme_(collect_String(copy_String(text)));
         }
-#endif
     }
     clearUndo_InputWidget_(d);
     iString *nfcText = collect_String(copy_String(text));
@@ -848,10 +883,6 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     if (!isFocused_Widget(d)) {
         iZap(d->mark);
     }
-//    else {
-//        d->cursor.y = iMin(d->cursor.y, (int) size_Array(&d->lines) - 1);
-//        d->cursor.x = iMin(d->cursor.x, size_String(&cursorLine_InputWidget_(d)->text));
-//    }
     if (!isFocused_Widget(d)) {
         d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     }
@@ -864,18 +895,6 @@ void setTextCStr_InputWidget(iInputWidget *d, const char *cstr) {
     iString *str = newCStr_String(cstr);
     setText_InputWidget(d, str);
     delete_String(str);
-}
-
-static uint32_t cursorTimer_(uint32_t interval, void *w) {
-    iInputWidget *d = w;
-    if (d->cursorVis > 1) {
-        d->cursorVis--;
-    }
-    else {
-        d->cursorVis ^= 1;
-    }
-    refresh_Widget(w);
-    return interval;
 }
 
 static size_t cursorToIndex_InputWidget_(const iInputWidget *d, iInt2 pos) {
@@ -930,7 +949,7 @@ void begin_InputWidget(iInputWidget *d) {
     setFlags_Widget(w, selected_WidgetFlag, iTrue);
     showCursor_InputWidget_(d);
     refresh_Widget(w);
-    d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);
+    startOrStopCursorTimer_InputWidget_(d, iTrue);
     d->inFlags &= ~enterPressed_InputWidgetFlag;
     if (d->inFlags & selectAllOnFocus_InputWidgetFlag) {
         d->mark = (iRanges){ 0, lastLine_InputWidget_(d)->range.end };
@@ -955,8 +974,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         splitToLines_(&d->oldText, &d->lines);
     }
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
-    SDL_RemoveTimer(d->timer);
-    d->timer = 0;
+    startOrStopCursorTimer_InputWidget_(d, iFalse);
     SDL_StopTextInput();
     setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
     const char *id = cstr_String(id_Widget(as_Widget(d)));
@@ -1383,22 +1401,41 @@ static iBool isArrowUpDownConsumed_InputWidget_(const iInputWidget *d) {
     return d->maxWrapLines > 1;
 }
 
+static iBool checkLineBreakMods_InputWidget_(const iInputWidget *d, int mods) {
+    if (d->inFlags & useReturnKeyBehavior_InputWidgetFlag) {
+        return mods == lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey);
+    }
+    return mods == 0;
+}
+
+static iBool checkAcceptMods_InputWidget_(const iInputWidget *d, int mods) {
+    if (d->inFlags & useReturnKeyBehavior_InputWidgetFlag) {
+        return mods == acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey);
+    }
+    return mods == 0;
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Resize according to width immediately. */
     if (d->lastUpdateWidth != w->rect.size.x) {
         d->inFlags |= needUpdateBuffer_InputWidgetFlag;
-#if 0
         if (d->inFlags & isUrl_InputWidgetFlag) {
             /* Restore/omit the default scheme if necessary. */
             setText_InputWidget(d, text_InputWidget(d));
         }
-#endif
         updateAllLinesAndResizeHeight_InputWidget_(d);
         d->lastUpdateWidth = w->rect.size.x;
     }
     if (isCommand_Widget(w, ev, "focus.gained")) {
         begin_InputWidget(d);
+        return iFalse;
+    }
+    else if (isEditing_InputWidget_(d) && (isCommand_UserEvent(ev, "window.focus.lost") ||
+                                           isCommand_UserEvent(ev, "window.focus.gained"))) {
+        startOrStopCursorTimer_InputWidget_(d, isCommand_UserEvent(ev, "window.focus.gained"));
+        d->cursorVis = 1;
+        refresh_Widget(d);
         return iFalse;
     }
     else if (isCommand_UserEvent(ev, "keyroot.changed")) {
@@ -1614,10 +1651,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
-                if (~d->inFlags & isSensitive_InputWidgetFlag && d->maxLen == 0) {
-                    if (mods == lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey) ||
-                        (~d->inFlags & isUrl_InputWidgetFlag &&
-                         d->inFlags & enterKeyInsertsLineFeed_InputWidgetFlag)) {
+                if (~d->inFlags & isSensitive_InputWidgetFlag &&
+                    ~d->inFlags & isUrl_InputWidgetFlag &&
+                    d->inFlags & lineBreaksEnabled_InputWidgetFlag && d->maxLen == 0) {
+                    if (checkLineBreakMods_InputWidget_(d, mods)) {
                         pushUndo_InputWidget_(d);
                         deleteMarked_InputWidget_(d);
                         insertChar_InputWidget_(d, '\n');
@@ -1626,7 +1663,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     }
                 }
                 if (d->inFlags & enterKeyEnabled_InputWidgetFlag &&
-                    mods == acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey)) {
+                    (checkAcceptMods_InputWidget_(d, mods) ||
+                     (~d->inFlags & lineBreaksEnabled_InputWidgetFlag))) {
                     d->inFlags |= enterPressed_InputWidgetFlag;
                     setFocus_Widget(NULL);
                     return iTrue;
@@ -1728,6 +1766,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_a:
 #if defined (iPlatformApple)
                 if (mods == KMOD_PRIMARY) {
+#else
+                if (mods == (KMOD_PRIMARY | KMOD_SHIFT)) {
+#endif
                     selectAll_InputWidget(d);
                     d->mark.start = 0;
                     d->mark.end   = cursorToIndex_InputWidget_(d, curMax);
@@ -1736,7 +1777,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     refresh_Widget(w);
                     return iTrue;
                 }
-#endif
                 /* fall through for Emacs-style Home/End */
             case SDLK_e:
                 if (mods == KMOD_CTRL || mods == (KMOD_CTRL | KMOD_SHIFT)) {
