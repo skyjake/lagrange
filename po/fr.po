@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-21 08:18+0000\n"
+"PO-Revision-Date: 2021-08-05 14:07+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -583,7 +583,7 @@ msgid "feeds.refresh"
 msgstr "Actualiser les flux"
 
 msgid "hint.findtext"
-msgstr "Chercher dans le texte de la page"
+msgstr "chercher dans le texte de la page"
 
 msgid "mb.per.sec"
 msgstr "Mo/s"
@@ -730,7 +730,7 @@ msgid "heading.prefs.colors"
 msgstr "Couleurs"
 
 msgid "heading.prefs.fonts"
-msgstr "POLICES"
+msgstr "Polices"
 
 msgid "prefs.doctheme.name.white"
 msgstr "Blanc"
@@ -1437,7 +1437,7 @@ msgid "prefs.mono"
 msgstr "Chasse fixe :"
 
 msgid "hint.newident.date"
-msgstr "AAAA-MM-JJ HH:MM:SS"
+msgstr "AAAA ou AAAA-MM-JJ"
 
 msgid "link.hint.audio"
 msgstr "Lire l’audio"
@@ -1604,3 +1604,228 @@ msgstr "Échanger les côtés"
 
 msgid "keys.split.menu"
 msgstr "Définir le mode de vues séparées"
+
+msgid "bookmark.export.title.folder"
+msgstr "Signets"
+
+msgid "bookmark.export.title.tag"
+msgstr "Étiquettes de signet"
+
+msgid "bookmark.export.saving"
+msgstr ""
+"Enregistrez cette page pour les exporter, ou copiez-les dans le presse-"
+"papiers."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"Dans cette liste, chaque titre représente une étiquette de signet. Seuls les "
+"signets étiquetés sont listés. Ceux avec plusieurs étiquettes sont dupliqués "
+"sous chacune d'elles."
+
+msgid "hint.upload.text"
+msgstr "entrer le texte à téléverser"
+
+msgid "upload.mime"
+msgstr "Type MIME :"
+
+msgid "error.certverify.msg"
+msgstr ""
+"La connexion au serveur a été interrompue car le certificat TLS reçu ne "
+"correspond pas à celui auquel nous faisons confiance. Veuillez vérifier si "
+"le serveur a signalé un changement de certificat. Si ce n’est pas le cas, il "
+"est possible qu’un tiers se fasse passer pour le serveur que vous essayez "
+"d’atteindre.\n"
+"\n"
+"Le certificat peut être marqué comme étant de confiance dans les "
+"Informations de la Page."
+
+msgid "dlg.input.linebreak"
+msgstr "Saut de ligne"
+
+msgid "link.file.delete"
+msgstr "Supprimer le fichier"
+
+msgid "heading.file.delete"
+msgstr "SUPPRESSION DE FICHIER"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Voulez-vous vraiment supprimer ce fichier ?"
+
+msgid "dlg.file.delete"
+msgstr "Supprimer"
+
+msgid "prefs.animate"
+msgstr "Animations :"
+
+msgid "upload.port"
+msgstr "Port…"
+
+msgid "heading.uploadport"
+msgstr "PORT DE TÉLÉVERSEMENT TITAN"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Définit le port du serveur Titan à utiliser pour cette URL.\n"
+"Le port est enregistré dans la configuration spécifique au site."
+
+msgid "dlg.uploadport.set"
+msgstr "Définir le port"
+
+msgid "heading.prefs.uitheme"
+msgstr "INTERFACE"
+
+msgid "prefs.userfont"
+msgstr "Police des symboles :"
+
+msgid "keys.split.item"
+msgstr "Menu Diviser la vue :"
+
+msgid "error.certexpired"
+msgstr "Certificat expiré"
+
+msgid "error.certexpired.msg"
+msgstr "La connexion au serveur a été annulée car son certificat TLS a expiré."
+
+msgid "prefs.pinsplit.left"
+msgstr "Côté gauche"
+
+msgid "prefs.pinsplit.right"
+msgstr "Coté droit"
+
+msgid "hint.prefs.userfont"
+msgstr "chemin d’une police TrueType"
+
+msgid "prefs.linespacing"
+msgstr "Interligne :"
+
+msgid "prefs.memorysize"
+msgstr "Taille mémoire :"
+
+msgid "close"
+msgstr "Fermer"
+
+msgid "ident.export"
+msgstr "Exporter"
+
+msgid "error.server.msg"
+msgstr "Le serveur a répondu avec le message :"
+
+msgid "dlg.newident.scope"
+msgstr "Utiliser pour :"
+
+msgid "dlg.newident.more"
+msgstr "Plus…"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Domaine actuel"
+
+msgid "dlg.newident.scope.page"
+msgstr "Page actuelle"
+
+msgid "dlg.newident.scope.none"
+msgstr "Non utilisée"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Vitesse du clavier :"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Vitesse de la souris :"
+
+msgid "prefs.returnkey"
+msgstr "Touche Entrée :"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Saut de ligne"
+
+msgid "prefs.returnkey.accept"
+msgstr "Accepter"
+
+msgid "menu.save.downloads.open"
+msgstr "Enregistrer dans les téléchargements et ouvrir le fichier"
+
+msgid "menu.pageinfo"
+msgstr "Afficher les informations de la page"
+
+msgid "status.query.tight"
+msgstr "Recherche"
+
+msgid "media.untitled.image"
+msgstr "Image"
+
+msgid "media.untitled.audio"
+msgstr "Audio"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Ce document XML Atom a été automatiquement converti en flux Gemini pour qu’"
+"il soit possible de s’y abonner."
+
+msgid "menu.openfile"
+msgstr "Ouvrir un fichier…"
+
+msgid "bookmark.export.title.time"
+msgstr "Signets créés"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Vous avez %d signet."
+msgstr[1] "Vous avez %d signets."
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Cette page est formatée selon la spécification complémentaire « Subscribing "
+"to Gemini pages »."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Chaque lien représente un signet."
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Les lignes avec puce et les citations sont réservées pour des informations "
+"supplémentaires sur le signet qui les précède. Les lignes de texte et le "
+"texte préformaté sont traités comme des commentaires et doivent être ignorés."
+
+msgid "bookmark.export.format.folders"
+msgstr "La structure du dossier est définie par les titres de niveaux 2 et 3."
+
+msgid "bookmark.export.format.tags"
+msgstr "Les étiquettes sont définies par les titres de niveau 2."
+
+msgid "menu.page.upload"
+msgstr "Téléverser la page avec Titan"
+
+msgid "heading.upload"
+msgstr "TÉLÉVERSEMENT AVEC TITAN"
+
+msgid "heading.upload.text"
+msgstr "Texte"
+
+msgid "heading.upload.file"
+msgstr "Fichier"
+
+msgid "upload.file.name"
+msgstr "Nom du fichier :"
+
+msgid "upload.file.drophere"
+msgstr "(glisser-et-déposer un fichier sur la fenêtre)"
+
+msgid "upload.file.size"
+msgstr "Taille du fichier :"
+
+msgid "upload.token"
+msgstr "Jeton de téléversement :"
+
+msgid "hint.upload.token"
+msgstr "voir les instructions du serveur"
+
+msgid "dlg.upload.send"
+msgstr "Téléverser"
+
+msgid "keys.upload"
+msgstr "Téléverser la page avec Titan"
+
+msgid "keys.split.next"
+msgstr "Basculer entre les côtés"
+
+msgid "error.certverify"
+msgstr "Certificat inconnu"

@@ -58,18 +58,14 @@ void alloc_VisBuf(iVisBuf *d, const iInt2 size, int granularity) {
             if (tex->texture) {
                 SDL_DestroyTexture(tex->texture);
             }
+            SDL_Renderer *rend = renderer_Window(get_Window());
             tex->texture =
-                SDL_CreateTexture(renderer_Window(get_Window()),
+                SDL_CreateTexture(rend,
                                   SDL_PIXELFORMAT_RGBA8888,
                                   SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                   texSize.x,
                                   texSize.y);
             SDL_SetTextureBlendMode(tex->texture, SDL_BLENDMODE_NONE);
-//            tex->origin = i * texSize.y;
-//            iZap(tex->validRange);
-//          if (d->invalidUserData) {
-//                d->invalidUserData(i, d->buffers[i].user);
-//            }
         }
         invalidate_VisBuf(d);
     }

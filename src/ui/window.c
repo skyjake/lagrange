@@ -65,6 +65,8 @@ static float initialUiScale_ = 1.0f;
 static float initialUiScale_ = 1.1f;
 #endif
 
+static iBool isOpenGLRenderer_;
+
 iDefineTypeConstructionArgs(Window, (iRect rect), rect)
 
 /* TODO: Define menus per platform. */
@@ -446,6 +448,7 @@ void init_Window(iWindow *d, iRect rect) {
     /* Some info. */ {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->render, &info);
+        isOpenGLRenderer_ = !iCmpStr(info.name, "opengl");
         printf("[window] renderer: %s%s\n", info.name,
                info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
 #if !defined (NDEBUG)
@@ -1185,6 +1188,10 @@ uint32_t frameTime_Window(const iWindow *d) {
 iWindow *get_Window(void) {
     /* TODO: This should be thread-specific. */
     return theWindow_;
+}
+
+iBool isOpenGLRenderer_Window(void) {
+    return isOpenGLRenderer_;
 }
 
 void setKeyboardHeight_Window(iWindow *d, int height) {

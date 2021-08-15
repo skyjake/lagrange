@@ -45,6 +45,40 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.6.3" date="2021-08-15">
+            <description>
+                <p>Version 1.6 adds support for bidirectional text and complex scripts,
+                    right-to-left paragraph layout, uploads using the Titan protocol,
+                    and has an improved mechanism for tracking trust in server
+                    certificates. Page contents can be fully cached in memory for more
+                    efficient backward navigation. There are also UI improvements like
+                    a reorganized Preferences and a setting for smooth scrolling
+                    speed.</p>
+                <p>Changes and fixes in v1.6.3:</p>
+                <ul>
+                    <li>Select all text in an input field using Shift+Ctrl+A.</li>
+                    <li>Input fields do not lose focus when the window becomes
+                        inactive, making it easier to resume input afterwards.</li>
+                    <li>Fixed delay after switching to split view mode.</li>
+                    <li>Fixed what gets drawn in an empty tab, before a document is
+                        available for rendering (e.g., after switching to split view
+                        mode).</li>
+                    <li>Fixed highlighting the domain name in URL input fields.</li>
+                    <li>Fixed hiding the Gemini URL scheme in input fields when the
+                        window is narrow.</li>
+                    <li>Fixed the line break key modifier inadvertently affecting URL
+                        input fields, where line breaks are not allowed.</li>
+                    <li>Fixed the line break key modifier affecting the upload dialog's
+                        text field.</li>
+                    <li>Fixed a potential hang when closing a socket before the
+                        connection is fully opened.</li>
+                    <li>Updated translations.</li>                    
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.6.3</url>
+        </release>        
         <release version="1.6.2" date="2021-08-03">
             <description>
                 <p>Version 1.6 adds support for bidirectional text and complex scripts,
