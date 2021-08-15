@@ -60,6 +60,7 @@ static NSString *currentSystemAppearance_(void) {
 }
 
 iBool shouldDefaultToMetalRenderer_MacOS(void) {
+    /* TODO: Test if SDL 2.0.16 works better (no stutters with Metal?). */
     return iFalse; /*
     const iInt2 ver = macVer_();
     return ver.x > 10 || ver.y > 13;*/

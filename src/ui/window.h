@@ -137,6 +137,8 @@ iRoot *     findRoot_Window         (const iWindow *, const iWidget *widget);
 iRoot *     otherRoot_Window        (const iWindow *, iRoot *root);
 iWindow *   get_Window              (void);
 
+iBool       isOpenGLRenderer_Window (void);
+
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos);
 #endif
