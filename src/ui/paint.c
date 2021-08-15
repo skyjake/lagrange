@@ -89,17 +89,19 @@ void drawRect_Paint(const iPaint *d, iRect rect, int color) {
     /* Keep the right/bottom edge visible in the window. */
     if (br.x == d->dst->size.x) br.x--;
     if (br.y == d->dst->size.y) br.y--;
-    const SDL_Point edges[] = {
+    SDL_Point edges[] = {
         { left_Rect(rect),  top_Rect(rect) },
         { br.x,             top_Rect(rect) },
         { br.x,             br.y },
-#if SDL_VERSION_ATLEAST(2, 0, 16) && defined (iPlatformApple)
-        { left_Rect(rect),  br.y - 1 }, /* regression in SDL 2.0.16? */
-#else
         { left_Rect(rect),  br.y },
-#endif
         { left_Rect(rect),  top_Rect(rect) }
     };
+#if SDL_VERSION_ATLEAST(2, 0, 16)
+    if (isOpenGLRenderer_Window()) {
+        /* A very curious regression in SDL 2.0.16. */
+        edges[3].y--;
+    }
+#endif
     setColor_Paint_(d, color);
     SDL_RenderDrawLines(renderer_Paint_(d), edges, iElemCount(edges));
 }

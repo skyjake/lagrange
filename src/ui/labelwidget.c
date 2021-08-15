@@ -300,14 +300,15 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                 bottomLeft_Rect(frameRect),
                 topLeft_Rect(frameRect),
                 topRight_Rect(frameRect),
-#if SDL_VERSION_ATLEAST(2, 0, 16) && defined (iPlatformApple)
-                /* A very curious regression in SDL 2.0.16 on macOS. */
-                addX_I2(bottomRight_Rect(frameRect), -1),
-#else
                 bottomRight_Rect(frameRect),
-#endif
                 bottomLeft_Rect(frameRect)
             };
+#if SDL_VERSION_ATLEAST(2, 0, 16)
+            if (isOpenGLRenderer_Window()) {
+                /* A very curious regression in SDL 2.0.16. */
+                points[3].x--;    
+            }
+#endif
             drawLines_Paint(&p, points + 2, 3, frame2);
             drawLines_Paint(
                 &p, points, !isHover && flags & d->flags.noTopFrame ? 2 : 3, frame);
