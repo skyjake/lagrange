@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-07-27 03:03+0000\n"
+"PO-Revision-Date: 2021-08-16 20:49+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1774,3 +1774,57 @@ msgstr "Abrir Archivo…"
 
 msgid "heading.prefs.uitheme"
 msgstr "COLORES DE IU"
+
+msgid "media.untitled.image"
+msgstr "Imagen"
+
+msgid "media.untitled.audio"
+msgstr "Audio"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Este documento XML Atom ha sido traducido al formato de Gemini para permitir "
+"suscribirse a el."
+
+msgid "bookmark.export.title.folder"
+msgstr "Marcadores"
+
+msgid "bookmark.export.title.tag"
+msgstr "Etiquetas de marcadores"
+
+msgid "bookmark.export.title.time"
+msgstr "Marcadores creados"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Tienes %d marcador."
+msgstr[1] "Tienes %d marcadores."
+
+msgid "bookmark.export.saving"
+msgstr "Guarde esta página para exportarlos, o puede copiarlos al portapapeles."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"En esta lista cada cabecera representa una etiqueta de marcador. Solo se "
+"muestran los marcadores etiquetados. Los marcadores con múltiples etiquetas "
+"se repiten bajo cada etiqueta."
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Esta página esta formateada según la especificación adicional de \"Como "
+"suscribirse a páginas de Gemini\"."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Cada enlace representa un marcador."
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Las lineas con viñetas y comillas están reservadas para la información "
+"adicional sobre el marcador precedente. Las lineas de texto y los textos pre-"
+"formateados son considerados comentarios y son ignorados."
+
+msgid "bookmark.export.format.folders"
+msgstr "La estructura de carpetas está definida por cabeceras de nivel 2/3."
+
+msgid "bookmark.export.format.tags"
+msgstr "Las etiquetas están definidas por cabeceras de nivel 2."
