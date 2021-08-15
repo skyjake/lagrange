@@ -91,9 +91,13 @@ void drawRect_Paint(const iPaint *d, iRect rect, int color) {
     if (br.y == d->dst->size.y) br.y--;
     const SDL_Point edges[] = {
         { left_Rect(rect),  top_Rect(rect) },
-        { br.x, top_Rect(rect) },
-        { br.x, br.y },
+        { br.x,             top_Rect(rect) },
+        { br.x,             br.y },
+#if SDL_VERSION_ATLEAST(2, 0, 16) && defined (iPlatformApple)
+        { left_Rect(rect),  br.y - 1 }, /* regression in SDL 2.0.16? */
+#else
         { left_Rect(rect),  br.y },
+#endif
         { left_Rect(rect),  top_Rect(rect) }
     };
     setColor_Paint_(d, color);
