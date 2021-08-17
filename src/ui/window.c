@@ -219,9 +219,9 @@ static void updateSize_Window_(iWindow *d, iBool notifyAlways) {
     size->y -= d->keyboardHeight;
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
         windowSizeChanged_Window_(d);
-        const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
-        const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
         if (!isEqual_I2(*size, d->place.lastNotifiedSize)) {
+            const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
+            const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
             postCommandf_App("window.resized width:%d height:%d horiz:%d vert:%d",
                              size->x,
                              size->y,
@@ -235,10 +235,6 @@ static void updateSize_Window_(iWindow *d, iBool notifyAlways) {
 }
 
 void drawWhileResizing_Window(iWindow *d, int w, int h) {
-    /* This is called while a window resize is in progress, so we can be pretty confident
-       the size has actually changed. */
-    d->size = coord_Window(d, w, h);
-    windowSizeChanged_Window_(d);
     draw_Window(d);        
 }
 
