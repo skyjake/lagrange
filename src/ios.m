@@ -264,7 +264,6 @@ void setupApplication_iOS(void) {
                selector:@selector(keyboardOffScreen:)
                    name:UIKeyboardWillHideNotification
                  object:nil];
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
     /* Media player remote controls. */
     MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
     [[commandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
@@ -487,6 +486,8 @@ void init_AVFAudioPlayer(iAVFAudioPlayer *d) {
     d->player = NULL;
     d->volume = 1.0f;
     d->state = initialized_AVFAudioPlayerState;
+    /* Playback is imminent. */
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
 }
 
 void deinit_AVFAudioPlayer(iAVFAudioPlayer *d) {
