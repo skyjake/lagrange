@@ -1351,7 +1351,7 @@ static int run_App_(iApp *d) {
     }
     d->isRunning = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
-#if defined (iPlatformDesktop)
+#if defined (LAGRANGE_ENABLE_RESIZE_DRAW)
     SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
 #endif
     while (d->isRunning) {
