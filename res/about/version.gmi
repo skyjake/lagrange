@@ -10,6 +10,7 @@
 * Fixed an issue with network requests that would make it appear the server was not responding, but the request would not time out.
 * Fixed a potential invalid memory access when clicking on sidebar items.
 * OpenBSD: Fixed a freeze after a network request is cancelled.
+* Fixed page contents not reflowing during a window resize.
 * Added build option ENABLE_RESIZE_DRAW. SDL doesn't redraw window contents on all platforms during resizing, so this can be used to force it.
 
 ## 1.6.3
