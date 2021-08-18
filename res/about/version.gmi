@@ -7,6 +7,8 @@
 # Release notes
 
 ## 1.6.4
+* Local files containing UTF-8 text can be viewed regardless of their file extension.
+* Fixed "Unknown Status Code" shown in Page Information for valid status codes.
 * Fixed an issue with network requests that would make it appear the server was not responding, but the request would not time out.
 * Fixed a potential invalid memory access when clicking on sidebar items.
 * OpenBSD: Fixed a freeze after a network request is cancelled.
