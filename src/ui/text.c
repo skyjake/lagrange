@@ -1433,6 +1433,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iBool        isFirst            = iTrue;
     const iBool  checkHitPoint      = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
     const iBool  checkHitChar       = wrap && wrap->hitChar;
+    iBool        wasCharHit         = iFalse;
     while (!isEmpty_Range(&wrapRuns)) {
         if (isFirst) {
             isFirst = iFalse;
@@ -1452,9 +1453,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
                 const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
                 if (run->flags.isLineBreak) {
-                    if (checkHitChar) {
+                    if (checkHitChar && !wasCharHit) {
                         if (wrap->hitChar == sourcePtr_AttributedText_(&attrText, run->logical.start)) {
                             wrap->hitAdvance_out = init_I2(wrapAdvance, yCursor);
+                            wasCharHit = iTrue;
                         }
                     }
                     wrapPosRange.end   = run->logical.start;
@@ -1479,9 +1481,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     if (logPos < wrapPosRange.start || logPos >= wrapPosRange.end) {
                         continue;
                     }
-                    if (checkHitChar) {
+                    if (checkHitChar && !wasCharHit) {
                         if (wrap->hitChar == sourcePtr_AttributedText_(&attrText, logPos)) {
                             wrap->hitAdvance_out = init_I2(wrapAdvance, yCursor);
+                            wasCharHit = iTrue;
                         }
                     }
                     /* Check if the hit point is on the left side of this line. */

@@ -360,35 +360,64 @@ static int endX_InputWidget_(const iInputWidget *d, int y) {
     return line->range.end - (isLastLine_InputWidget_(d, line) ? 0 : 1) - line->range.start;
 }
 
+static iBool isCursorFocusable_Char_(iChar c) {
+    return !isDefaultIgnorable_Char(c) &&
+           !isVariationSelector_Char(c) &&
+           !isFitzpatrickType_Char(c);
+}
+
+static iChar at_InputWidget_(const iInputWidget *d, iInt2 pos) {
+    if (pos.y >= 0 && pos.y < size_Array(&d->lines) &&
+        pos.x >= 0 && pos.x <= endX_InputWidget_(d, pos.y)) {
+        iChar ch = 0;
+        decodeBytes_MultibyteChar(charPos_InputWidget_(d, pos),
+                                  constEnd_String(lineString_InputWidget_(d, pos.y)),
+                                  &ch);
+        return ch;
+    }
+    return ' ';
+}
+
 static iInt2 movedCursor_InputWidget_(const iInputWidget *d, iInt2 pos, int xDir, int yDir) {
-    iChar ch;
-    if (xDir < 0) {
-        if (pos.x == 0) {
-            if (pos.y > 0) {
-                pos.x = endX_InputWidget_(d, --pos.y);
+    iChar ch = 0;
+    int   n  = 0;
+    /* TODO: The cursor should never land on any combining codepoints either. */
+    for (;;) {
+        if (xDir < 0) {
+            if (pos.x == 0) {
+                if (pos.y > 0) {
+                    pos.x = endX_InputWidget_(d, --pos.y);
+                }
             }
-        }
-        else {
-            iAssert(pos.x > 0);
-            int n = decodePrecedingBytes_MultibyteChar(charPos_InputWidget_(d, pos),
+            else {
+                iAssert(pos.x > 0);
+                n = decodePrecedingBytes_MultibyteChar(charPos_InputWidget_(d, pos),
                                                        cstr_String(lineString_InputWidget_(d, pos.y)),
                                                        &ch);
-            pos.x -= n;
-        }
-    }
-    else if (xDir > 0) {
-        if (pos.x == endX_InputWidget_(d, pos.y)) {
-            if (pos.y < size_Array(&d->lines) - 1) {
-                pos.y++;
-                pos.x = 0;
+                pos.x -= n;
+                if (!isCursorFocusable_Char_(at_InputWidget_(d, pos))) {
+                    continue;
+                }
             }
         }
-        else {
-            int n = decodeBytes_MultibyteChar(charPos_InputWidget_(d, pos),
+        else if (xDir > 0) {
+            if (pos.x == endX_InputWidget_(d, pos.y)) {
+                if (pos.y < size_Array(&d->lines) - 1) {
+                    pos.y++;
+                    pos.x = 0;
+                }
+            }
+            else {
+                n = decodeBytes_MultibyteChar(charPos_InputWidget_(d, pos),
                                               constEnd_String(lineString_InputWidget_(d, pos.y)),
                                               &ch);
-            pos.x += n;
+                pos.x += n;
+                if (!isCursorFocusable_Char_(at_InputWidget_(d, pos))) {
+                    continue;
+                }
+            }
         }
+        break;
     }
     return pos;
 }
@@ -1026,7 +1055,9 @@ static void insertRange_InputWidget_(iInputWidget *d, iRangecc range) {
             cstr_String(&line->text) + d->cursor.x, constEnd_String(&line->text)
         });
         truncate_String(&line->text, d->cursor.x);
-        appendCStr_String(&line->text, "\n");
+        if (!endsWith_String(&line->text, "\n")) {
+            appendCStr_String(&line->text, "\n");
+        }
         insert_Array(&d->lines, ++d->cursor.y, &split);
         d->cursor.x = 0;
     }
@@ -1059,6 +1090,8 @@ void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
     iAssert(!isEmpty_Array(&d->lines));
     pos.x = iClamp(pos.x, 0, endX_InputWidget_(d, pos.y));
     d->cursor = pos;
+    iChar ch = at_InputWidget_(d, pos);
+    printf("cursor x:%d ch:%08x (%lc)\n", pos.x, ch, (int)ch);
     /* Update selection. */
     if (isMarking_()) {
         if (isEmpty_Range(&d->mark)) {
@@ -1219,18 +1252,6 @@ static iBool deleteMarked_InputWidget_(iInputWidget *d) {
         return iTrue;
     }
     return iFalse;
-}
-
-static iChar at_InputWidget_(const iInputWidget *d, iInt2 pos) {
-    if (pos.y >= 0 && pos.y < size_Array(&d->lines) &&
-        pos.x >= 0 && pos.x <= endX_InputWidget_(d, pos.y)) {
-        iChar ch = 0;
-        decodeBytes_MultibyteChar(charPos_InputWidget_(d, pos),
-                                  constEnd_String(lineString_InputWidget_(d, pos.y)),
-                                  &ch);
-        return ch;
-    }
-    return ' ';
 }
 
 static iBool isWordChar_InputWidget_(const iInputWidget *d, iInt2 pos) {
