@@ -57,11 +57,13 @@ static enum iFontId labelBoldFont_(void) {
 
 static void updatePanelSheetMetrics_(iWidget *sheet) {
     iWidget *navi       = findChild_Widget(sheet, "panel.navi");
-    iWidget *naviPad    = child_Widget(navi, 0);
+//    iWidget *naviPad    = child_Widget(navi, 0);
     int      naviHeight = lineHeight_Text(labelFont_()) + 4 * gap_UI;
+#if defined (iPlatformMobile)
+    float left = 0.0f, right = 0.0f, top = 0.0f, bottom = 0.0f;
 #if defined (iPlatformAppleMobile)
-    float left, right, top, bottom;
     safeAreaInsets_iOS(&left, &top, &right, &bottom);
+#endif
     setPadding_Widget(sheet, left, 0, right, 0);
     navi->rect.pos = init_I2(left, top);
     iConstForEach(PtrArray, i, findChildren_Widget(sheet, "panel.toppad")) {

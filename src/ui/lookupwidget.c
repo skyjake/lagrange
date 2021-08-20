@@ -388,7 +388,7 @@ void init_LookupWidget(iLookupWidget *d) {
     init_Widget(w);
     setId_Widget(w, "lookup");
     setFlags_Widget(w, focusable_WidgetFlag, iTrue);
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     setFlags_Widget(w, unhittable_WidgetFlag, iTrue);
 #endif
     d->list = addChildFlags_Widget(w, iClob(new_ListWidget()),

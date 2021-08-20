@@ -68,7 +68,7 @@ static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
                              : corner == 1 ? init_I2(w->padding[2], w->padding[1])
                              : corner == 2 ? init_I2(w->padding[2], w->padding[3])
                              : init_I2(w->padding[0], w->padding[3]));
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     return add_I2(widgetPad,
                   init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
                           (flags & extraPadding_WidgetFlag ? 1.5f : 1.0f) * 3 * gap_UI / 2));

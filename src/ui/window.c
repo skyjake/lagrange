@@ -440,7 +440,11 @@ void init_Window(iWindow *d, iRect rect) {
     if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
+#if defined (iPlatformMobile)
+    const iInt2 minSize = zero_I2(); /* windows aren't independently resizable */
+#else
     const iInt2 minSize = init_I2(425, 325);
+#endif
     SDL_SetWindowMinimumSize(d->win, minSize.x, minSize.y);
     SDL_SetWindowTitle(d->win, "Lagrange");
     /* Some info. */ {
@@ -709,7 +713,6 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 }
             }
 #endif /* defined LAGRANGE_ENABLE_CUSTOM_FRAME */
-            //printf("MOVED: %d, %d\n", ev->data1, ev->data2); fflush(stdout);
             if (unsnap_Window_(d, &newPos)) {
                 return iTrue;
             }
@@ -750,7 +753,13 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         case SDL_WINDOWEVENT_MINIMIZED:
             d->isMinimized = iTrue;
             return iTrue;
-#endif /* defined (iPlatformDesktop) */
+#else /* if defined (!iPlatformDesktop) */
+        case SDL_WINDOWEVENT_RESIZED:
+            /* On mobile, this occurs when the display is rotated. */
+            invalidate_Window(d);
+            postRefresh_App();
+            return iTrue;
+#endif
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
             d->isMouseInside = iFalse;
@@ -760,19 +769,12 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             d->isMouseInside = iTrue;
             postCommand_App("window.mouse.entered");
             return iTrue;
-#if defined (iPlatformMobile)
-        case SDL_WINDOWEVENT_RESIZED:
-            /* On mobile, this occurs when the display is rotated. */
-            invalidate_Window(d);
-            postRefresh_App();
-            return iTrue;
-#endif
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             d->focusGainedAt = SDL_GetTicks();
             setCapsLockDown_Keys(iFalse);
             postCommand_App("window.focus.gained");
             d->isExposed = iTrue;
-#if defined (iPlatformMobile)
+#if !defined (iPlatformDesktop)
             /* Returned to foreground, may have lost buffered content. */
             invalidate_Window_(d, iTrue);
             postCommand_App("window.unfreeze");
@@ -780,7 +782,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iFalse;
         case SDL_WINDOWEVENT_FOCUS_LOST:
             postCommand_App("window.focus.lost");
-#if defined (iPlatformMobile)
+#if !defined (iPlatformDesktop)
             setFreezeDraw_Window(d, iTrue);
 #endif
             return iFalse;
@@ -1020,7 +1022,6 @@ void draw_Window(iWindow *d) {
     if (d->isDrawFrozen) {
         return;
     }
-//#if defined (iPlatformMobile)
     /* Check if root needs resizing. */ {
         iInt2 renderSize;
         SDL_GetRendererOutputSize(d->render, &renderSize.x, &renderSize.y);
@@ -1029,7 +1030,6 @@ void draw_Window(iWindow *d) {
             processEvents_App(postedEventsOnly_AppEventMode);
         }
     }
-//#endif
     const int   winFlags = SDL_GetWindowFlags(d->win);
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
     iPaint p;
@@ -1037,7 +1037,7 @@ void draw_Window(iWindow *d) {
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
         setCurrent_Root(d->roots[0]);
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
        iColor back = get_Color(uiBackground_ColorId);
        if (deviceType_App() == phone_AppDeviceType) {
            /* Page background extends to safe area, so fill it completely. */

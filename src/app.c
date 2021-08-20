@@ -1575,7 +1575,11 @@ iBool isLandscape_App(void) {
 }
 
 enum iAppDeviceType deviceType_App(void) {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobilePhone)
+    return phone_AppDeviceType;
+#elif defined (iPlatformMobileTablet)
+    return tablet_AppDeviceType;
+#elif defined (iPlatformAppleMobile)
     return isPhone_iOS() ? phone_AppDeviceType : tablet_AppDeviceType;
 #else
     return desktop_AppDeviceType;
@@ -2472,7 +2476,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "tabs.close")) {
         iWidget *tabs = findWidget_App("doctabs");
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
         /* Can't close the last on mobile. */
         if (tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
             postCommand_App("navigate.home");

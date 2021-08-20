@@ -83,7 +83,7 @@ static const iMenuItem navMenuItems_[] = {
 };
 #endif
 
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
 /* Tablet menu. */
 static const iMenuItem tabletNavMenuItems_[] = {
     { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
@@ -120,9 +120,9 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { "---", 0, 0, NULL },
     { gear_Icon " Settings...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
 };
-#endif /* AppleMobile */
+#endif /* Mobile */
 
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
 static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
@@ -498,9 +498,10 @@ static void checkLoadAnimation_Root_(iRoot *d) {
 
 void updatePadding_Root(iRoot *d) {
     if (d == NULL) return;
-#if defined (iPlatformAppleMobile)
     iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
-    float left, top, right, bottom;
+    float bottom = 0.0f;
+#if defined (iPlatformAppleMobile)
+    float left, top, right;
     safeAreaInsets_iOS(&left, &top, &right, &bottom);
     /* Respect the safe area insets. */ {
         setPadding_Widget(findChild_Widget(d->widget, "navdiv"), left, top, right, 0);
@@ -508,6 +509,7 @@ void updatePadding_Root(iRoot *d) {
             setPadding_Widget(toolBar, left, 0, right, bottom);
         }
     }
+#endif
     if (toolBar) {
         /* TODO: get this from toolBar height, but it's buggy for some reason */
         const int sidebarBottomPad = isPortrait_App() ? 11 * gap_UI + bottom : 0;
@@ -517,7 +519,6 @@ void updatePadding_Root(iRoot *d) {
            are not arranged correctly until it's hidden and reshown. */
     }
     /* Note that `handleNavBarCommands_` also adjusts padding and spacing. */
-#endif
 }
 
 void updateToolbarColors_Root(iRoot *d) {
@@ -829,13 +830,13 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     return iFalse;
 }
 
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
 static void dismissSidebar_(iWidget *sidebar, const char *toolButtonId) {
     if (isVisible_Widget(sidebar)) {
         postCommandf_App("%s.toggle", cstr_String(id_Widget(sidebar)));
-        if (toolButtonId) {
+//        if (toolButtonId) {
             //            setFlags_Widget(findWidget_App(toolButtonId), noBackground_WidgetFlag, iTrue);
-        }
+//        }
         setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
     }
 }
@@ -909,7 +910,7 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
     }
     return iFalse;
 }
-#endif /* defined (iPlatformAppleMobile) */
+#endif /* defined (iPlatformMobile) */
 
 static iLabelWidget *newLargeIcon_LabelWidget(const char *text, const char *cmd) {
     iLabelWidget *lab = newIcon_LabelWidget(text, 0, 0, cmd);
@@ -1198,8 +1199,8 @@ void createUserInterface_Root(iRoot *d) {
 #if defined (iPlatformMobile)
         const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
 #endif
-#if !defined (iHaveNativeMenus)
-#   if defined (iPlatformAppleMobile)
+#if !defined (iHaveNativeMenus) || defined (iPlatformMobile)
+#   if defined (iPlatformMobile)
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget(menu_Icon, isPhone ? phoneNavMenuItems_ : tabletNavMenuItems_,
                                        isPhone ? iElemCount(phoneNavMenuItems_) : iElemCount(tabletNavMenuItems_));
@@ -1280,9 +1281,9 @@ void createUserInterface_Root(iRoot *d) {
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9d  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget(close_Icon, SDLK_ESCAPE, 0, "find.close")));
     }
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     /* Bottom toolbar. */
-    if (isPhone_iOS()) {
+    if (deviceType_App() == phone_AppDeviceType) {
         iWidget *toolBar = new_Widget();
         addChild_Widget(root, iClob(toolBar));
         setId_Widget(toolBar, "toolbar");

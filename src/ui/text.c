@@ -361,7 +361,7 @@ static void initFonts_Text_(iText *d) {
         h12Font = &fontIosevkaTermExtended_Embedded;
         h3Font  = &fontIosevkaTermExtended_Embedded;
     }
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     const float uiSize = fontSize_UI * 1.1f;
 #else
     const float uiSize = fontSize_UI;

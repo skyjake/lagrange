@@ -644,7 +644,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->buttonFont = uiLabel_FontId;
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     if (deviceType_App() == phone_AppDeviceType) {
         d->itemFonts[0] = defaultBig_FontId;
         d->itemFonts[1] = defaultBigBold_FontId;
