@@ -6,6 +6,16 @@
 ```
 # Release notes
 
+## 1.6.4
+* Local files containing UTF-8 text can be viewed regardless of their file extension.
+* Fixed input field cursor positioning and insertion problems around Emoji variation selectors.
+* Fixed "Unknown Status Code" shown in Page Information for valid status codes.
+* Fixed an issue with network requests that would make it appear the server was not responding, but the request would not time out.
+* Fixed a potential invalid memory access when clicking on sidebar items.
+* OpenBSD: Fixed a freeze after a network request is cancelled.
+* Fixed page contents not reflowing during a window resize.
+* Added build option ENABLE_RESIZE_DRAW. SDL doesn't redraw window contents on all platforms during resizing, so this can be used to force it.
+
 ## 1.6.3
 * Select all text in an input field using Shift+Ctrl+A (macOS: ⌘A).
 * Input fields do not lose focus when the window becomes inactive, making it easier to resume input afterwards.

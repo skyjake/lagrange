@@ -1863,7 +1863,12 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         updateTrust_DocumentWidget_(d, resp);
         init_Anim(&d->sideOpacity, 0);
         init_Anim(&d->altTextOpacity, 0);
-        format_String(&d->sourceHeader, "%d %s", statusCode, get_GmError(statusCode)->title);
+        format_String(&d->sourceHeader,
+                      "%d %s",
+                      statusCode,
+                      isEmpty_String(&resp->meta) && !isSuccess_GmStatusCode(statusCode)
+                          ? get_GmError(statusCode)->title
+                          : cstr_String(&resp->meta));
         d->sourceStatus = statusCode;
         switch (category_GmStatusCode(statusCode)) {
             case categoryInput_GmStatusCode: {
@@ -2773,13 +2778,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
         set_Block(&d->sourceContent, body_GmRequest(d->request));
         if (!isSuccess_GmStatusCode(status_GmRequest(d->request))) {
+            /* TODO: Why is this here? Can it be removed? */
             format_String(&d->sourceHeader,
                           "%d %s",
                           status_GmRequest(d->request),
                           cstr_String(meta_GmRequest(d->request)));
-        }
-        else {
-            clear_String(&d->sourceHeader);
         }
         updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);

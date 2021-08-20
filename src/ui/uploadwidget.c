@@ -149,7 +149,7 @@ void init_UploadWidget(iUploadWidget *d) {
         iWidget *buttons =
             makeDialogButtons_Widget((iMenuItem[]){ { "${upload.port}", 0, 0, "upload.setport" },
                                                     { "---", 0, 0, NULL },
-                                                    { "${cancel}", SDLK_ESCAPE, 0, "upload.cancel" },
+                                                    { "${close}", SDLK_ESCAPE, 0, "upload.cancel" },
                                                     { uiTextAction_ColorEscape "${dlg.upload.send}",
                                                       SDLK_RETURN,
                                                       KMOD_PRIMARY,
