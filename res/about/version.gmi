@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.7
+* Added support for viewing WebP images. The libwebp library is an optional dependency and will be included in the build if found via pkg-config.
+* Added a footer action to view `application/octet-stream` content depending on recognized file extensions.
+
 ## 1.6.4
 * Local files containing UTF-8 text can be viewed regardless of their file extension.
 * Fixed input field cursor positioning and insertion problems around Emoji variation selectors.

@@ -240,7 +240,10 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 iString *path = newRange_String(parts.path);
                 if (endsWithCase_String(path, ".gif")  || endsWithCase_String(path, ".jpg") ||
                     endsWithCase_String(path, ".jpeg") || endsWithCase_String(path, ".png") ||
-                    endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||
+                    endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||                    
+#if defined (LAGRANGE_ENABLE_WEBP)
+                    endsWithCase_String(path, ".webp") ||
+#endif
                     endsWithCase_String(path, ".hdr")  || endsWithCase_String(path, ".pic")) {
                     link->flags |= imageFileExtension_GmLinkFlag;
                 }

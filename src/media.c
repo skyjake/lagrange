@@ -30,6 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "stb_image.h"
 #include "stb_image_resize.h"
 
+#if defined (LAGRANGE_ENABLE_WEBP)
+#   include <webp/decode.h>
+#endif
+
 #include <the_Foundation/file.h>
 #include <the_Foundation/ptrarray.h>
 #include <SDL_hints.h>
@@ -86,8 +90,16 @@ void deinit_GmImage(iGmImage *d) {
 void makeTexture_GmImage(iGmImage *d) {
     iBlock *data     = &d->partialData;
     d->numBytes      = size_Block(data);
-    uint8_t *imgData = stbi_load_from_memory(
-        constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
+    uint8_t *imgData = NULL;
+    if (cmp_String(&d->props.mime, "image/webp") == 0) {
+#if defined (LAGRANGE_ENABLE_WEBP)
+        imgData = WebPDecodeRGBA(constData_Block(data), size_Block(data), &d->size.x, &d->size.y);
+#endif        
+    }
+    else {
+        imgData = stbi_load_from_memory(
+            constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
+    }
     if (!imgData) {
         d->size    = zero_I2();
         d->texture = NULL;

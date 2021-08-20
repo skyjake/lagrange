@@ -88,6 +88,7 @@ Note that the `install` target also deploys an XDG .desktop file for launching t
 | `ENABLE_MPG123` | Use the mpg123 library for decoding MPEG audio files. |
 | `ENABLE_RELATIVE_EMBED` | Locate resources only in relation to the executable. Useful when any system/predefined directories are not supposed to be accessed, e.g., in the Windows portable build. |
 | `ENABLE_RESOURCE_EMBED` | Embed all resource files into the Lagrange executable instead of keeping them in a separate file that gets loaded at launch. Setting this **ON** makes it much slower to run CMake and to compile Lagrange. |
+| `ENABLE_WEBP` | Use libwebp to decode .webp images, if `pkg-config` can find the library. |
 | `ENABLE_WINDOWPOS_FIX` | Set correct window position after the window has already been shown. This may be necessary on some platforms to prevent the window from being restored to the wrong position. |
 | `ENABLE_X11_SWRENDER` | Default to software rendering when running under X11. By default Lagrange attempts to use the GPU for rendering the user interface. You can also use the `--sw` option at launch to force software rendering. |
 

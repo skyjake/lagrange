@@ -1168,13 +1168,25 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 iString *key = collectNew_String();
                 toString_Sym(SDLK_s, KMOD_PRIMARY, key);
                 appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
-                makeFooterButtons_DocumentWidget_(
-                    d,
-                    (iMenuItem[]){ { translateCStr_Lang(download_Icon " " saveToDownloads_Label),
-                                     0,
-                                     0,
-                                     "document.save" } },
-                    1);
+                const char *mtype = mediaTypeFromFileExtension_String(d->mod.url);
+                iArray items;
+                init_Array(&items, sizeof(iMenuItem));
+                if (iCmpStr(mtype, "application/octet-stream")) {
+                    pushBack_Array(
+                        &items,
+                        &(iMenuItem){ translateCStr_Lang(format_CStr("View as \"%s\"", mtype)),
+                                      SDLK_RETURN,
+                                      0,
+                                      format_CStr("document.setmediatype mime:%s", mtype) });
+                }
+                pushBack_Array(
+                    &items,
+                    &(iMenuItem){ translateCStr_Lang(download_Icon " " saveToDownloads_Label),
+                                  0,
+                                  0,
+                                  "document.save" });
+                makeFooterButtons_DocumentWidget_(d, data_Array(&items), size_Array(&items));
+                deinit_Array(&items);
                 break;
             }
             default:
@@ -3175,6 +3187,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if ((startsWith_CStr(cmd, "edgeswipe.") || startsWith_CStr(cmd, "swipe.")) &&
              document_App() == d) {
         return handleSwipe_DocumentWidget_(d, cmd);
+    }
+    else if (equal_Command(cmd, "document.setmediatype") && document_App() == d) {
+        setUrlAndSource_DocumentWidget(d, d->mod.url, string_Command(cmd, "mime"), &d->sourceContent);
+        return iTrue;
     }
     return iFalse;
 }
