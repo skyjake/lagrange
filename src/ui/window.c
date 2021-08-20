@@ -1301,6 +1301,7 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
             setCurrent_Root(NULL);
         }
         d->splitMode = splitMode;
+        postCommand_App("window.resized");
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         /* Update custom frame controls. */{
             const iBool hideCtl0 = numRoots_Window(d) != 1;
