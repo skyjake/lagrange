@@ -1091,7 +1091,6 @@ void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
     pos.x = iClamp(pos.x, 0, endX_InputWidget_(d, pos.y));
     d->cursor = pos;
     iChar ch = at_InputWidget_(d, pos);
-    printf("cursor x:%d ch:%08x (%lc)\n", pos.x, ch, (int)ch);
     /* Update selection. */
     if (isMarking_()) {
         if (isEmpty_Range(&d->mark)) {
