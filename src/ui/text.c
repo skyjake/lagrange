@@ -889,6 +889,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         resize_Array(&d->visualToLogical, length);
         d->bidiLevels = length ? malloc(length) : NULL;
         FriBidiParType baseDir = (FriBidiParType) FRIBIDI_TYPE_ON;
+        /* TODO: If this returns zero (error occurred), act like everything is LTR. */
         fribidi_log2vis(constData_Array(&d->logical),
                         length,
                         &baseDir,
