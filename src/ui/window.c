@@ -946,6 +946,10 @@ iBool setKeyRoot_Window(iWindow *d, iRoot *root) {
     return iFalse;
 }
 
+iLocalDef iBool isEscapeKeypress_(const SDL_Event *ev) {
+    return (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) && ev->key.keysym.sym == SDLK_ESCAPE;
+}
+
 iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
     if (ev->type == SDL_MOUSEMOTION) {
         /* Hover widget may change. */
@@ -961,7 +965,11 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
             }
             if ((ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP || ev->type == SDL_TEXTINPUT)
                      && d->keyRoot != root) {
-                continue; /* Key events go only to the root with keyboard focus. */
+                if (!isEscapeKeypress_(ev)) {
+                    /* Key events go only to the root with keyboard focus, with the exception
+                       of Escape that will also affect the entire window. */
+                    continue; 
+                }
             }
             if (ev->type == SDL_MOUSEWHEEL && !contains_Rect(rect_Root(root),
                                                              coord_MouseWheelEvent(&ev->wheel))) {
