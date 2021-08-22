@@ -219,25 +219,23 @@ static void updateSize_Window_(iWindow *d, iBool notifyAlways) {
     size->y -= d->keyboardHeight;
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
         windowSizeChanged_Window_(d);
-        const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
-        const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
-        postCommandf_App("window.resized width:%d height:%d horiz:%d vert:%d",
-                         size->x,
-                         size->y,
-                         isHoriz,
-                         isVert);
-        postCommand_App("widget.overflow"); /* check bounds with updated sizes */
+        if (!isEqual_I2(*size, d->place.lastNotifiedSize)) {
+            const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
+            const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
+            postCommandf_App("window.resized width:%d height:%d horiz:%d vert:%d",
+                             size->x,
+                             size->y,
+                             isHoriz,
+                             isVert);
+            postCommand_App("widget.overflow"); /* check bounds with updated sizes */
+        }
         postRefresh_App();
         d->place.lastNotifiedSize = *size;
     }
 }
 
 void drawWhileResizing_Window(iWindow *d, int w, int h) {
-    /* This is called while a window resize is in progress, so we can be pretty confident
-       the size has actually changed. */
-    d->size = coord_Window(d, w, h);
-    windowSizeChanged_Window_(d);
-    draw_Window(d);
+    draw_Window(d);        
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
@@ -489,7 +487,7 @@ void init_Window(iWindow *d, iRect rect) {
     SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);
     setupUserInterface_Window(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
-    updateSize_Window_(d, iFalse);
+    //updateSize_Window_(d, iFalse);
     /* Load the border shadow texture. */ {
         SDL_Surface *surf = loadImage_(&imageShadow_Embedded, 0);
         d->borderShadow = SDL_CreateTextureFromSurface(d->render, surf);
@@ -728,7 +726,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         }
         case SDL_WINDOWEVENT_RESIZED:
             if (d->isMinimized) {
-                updateSize_Window_(d, iTrue);
+                //updateSize_Window_(d, iTrue);
                 return iTrue;
             }
             if (unsnap_Window_(d, NULL)) {
@@ -739,7 +737,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 //printf("normal rect set (resize)\n"); fflush(stdout);
             }
             checkPixelRatioChange_Window_(d);
-            updateSize_Window_(d, iTrue /* we were already redrawing during the resize */);
+            //updateSize_Window_(d, iTrue /* we were already redrawing during the resize */);
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
@@ -1014,7 +1012,7 @@ void draw_Window(iWindow *d) {
     if (d->isDrawFrozen) {
         return;
     }
-#if defined (iPlatformMobile)
+//#if defined (iPlatformMobile)
     /* Check if root needs resizing. */ {
         iInt2 renderSize;
         SDL_GetRendererOutputSize(d->render, &renderSize.x, &renderSize.y);
@@ -1023,7 +1021,7 @@ void draw_Window(iWindow *d) {
             processEvents_App(postedEventsOnly_AppEventMode);
         }
     }
-#endif
+//#endif
     const int   winFlags = SDL_GetWindowFlags(d->win);
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
     iPaint p;

@@ -22,9 +22,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmutil.h"
 
-#include <the_Foundation/regexp.h>
+#include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/object.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
 #include <the_Foundation/regexp.h>
 
 iRegExp *newGemtextLink_RegExp(void) {
@@ -513,18 +515,6 @@ const char *mediaType_Path(const iString *path) {
     if (endsWithCase_String(path, ".gmi") || endsWithCase_String(path, ".gemini")) {
         return "text/gemini; charset=utf-8";
     }
-    /* TODO: It would be better to default to text/plain, but switch to
-       application/octet-stream if the contents fail to parse as UTF-8. */
-    else if (endsWithCase_String(path, ".txt") ||
-             endsWithCase_String(path, ".md") ||
-             endsWithCase_String(path, ".c") ||
-             endsWithCase_String(path, ".h") ||
-             endsWithCase_String(path, ".cc") ||
-             endsWithCase_String(path, ".hh") ||
-             endsWithCase_String(path, ".cpp") ||
-             endsWithCase_String(path, ".hpp")) {
-        return "text/plain";
-    }
     else if (endsWithCase_String(path, ".pem")) {
         return "application/x-pem-file";
     }
@@ -558,7 +548,30 @@ const char *mediaType_Path(const iString *path) {
     else if (endsWithCase_String(path, ".mid")) {
         return "audio/midi";
     }
-    return "application/octet-stream";
+    else if (endsWithCase_String(path, ".txt") ||
+             endsWithCase_String(path, ".md") ||
+             endsWithCase_String(path, ".c") ||
+             endsWithCase_String(path, ".h") ||
+             endsWithCase_String(path, ".cc") ||
+             endsWithCase_String(path, ".hh") ||
+             endsWithCase_String(path, ".cpp") ||
+             endsWithCase_String(path, ".hpp")) {
+        return "text/plain";
+    }
+    const char *mtype = "application/octet-stream";
+    /* If the file is reasonably small and looks like UTF-8, we'll display it as text/plain. */
+    if (fileExists_FileInfo(path) && fileSize_FileInfo(path) <= 5000000) {
+        iFile *f = new_File(path);
+        if (open_File(f, readOnly_FileMode)) {
+            iBlock *content = readAll_File(f);
+            if (isUtf8_Rangecc(range_Block(content))) {
+                mtype = "text/plain; charset=utf-8";
+            }
+            delete_Block(content);
+        }
+        iRelease(f);
+    }
+    return mtype;
 }
 
 static void replaceAllChars_String_(iString *d, char c, const char *replacement) {

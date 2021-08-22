@@ -45,6 +45,36 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.6.4" date="2021-08-22">
+            <description>
+                <p>Version 1.6 adds support for bidirectional text and complex scripts,
+                    right-to-left paragraph layout, uploads using the Titan protocol,
+                    and has an improved mechanism for tracking trust in server
+                    certificates. Page contents can be fully cached in memory for more
+                    efficient backward navigation. There are also UI improvements like
+                    a reorganized Preferences and a setting for smooth scrolling
+                    speed.</p>
+                <p>Changes and fixes in v1.6.4:</p>
+                <ul>
+                    <li>Local files containing UTF-8 text can be viewed regardless of
+                        their file extension.</li>
+                    <li>Fixed input field cursor positioning and insertion problems
+                        around Emoji variation selectors.</li>
+                    <li>Fixed "Unknown Status Code" shown in Page Information for
+                        valid status codes.</li>
+                    <li>Fixed an issue with network requests that would make it appear
+                        the server was not responding, but the request would not time
+                        out.</li>
+                    <li>Fixed a potential invalid memory access when clicking on
+                        sidebar items.</li>
+                    <li>Fixed a potential freeze after a network request is
+                        cancelled.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.6.4</url>
+        </release>
         <release version="1.6.3" date="2021-08-15">
             <description>
                 <p>Version 1.6 adds support for bidirectional text and complex scripts,

@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.6.3
+    VERSION 1.6.4
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -26,6 +26,12 @@ set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.4)  # pinned for TestFlight
     set (IOS_BUNDLE_VERSION 21.6.15)
+endif ()
+
+# Default that depend on environment.
+set (DEFAULT_RESIZE_DRAW ON)
+if (HAIKU)
+    set (DEFAULT_RESIZE_DRAW OFF)
 endif ()
 
 # Build configuration.
@@ -40,6 +46,7 @@ option (ENABLE_IPC              "Use IPC to communicate between running instance
 option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
 option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
+option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAULT_RESIZE_DRAW})
 option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 option (ENABLE_X11_SWRENDER     "Use software rendering under X11" OFF)
@@ -314,6 +321,9 @@ if (ENABLE_DOWNLOAD_EDIT)
 endif ()
 if (ENABLE_CUSTOM_FRAME AND MSYS)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)
+endif ()
+if (ENABLE_RESIZE_DRAW)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_RESIZE_DRAW=1)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
