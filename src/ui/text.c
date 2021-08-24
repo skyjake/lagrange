@@ -195,7 +195,7 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     d->vertOffset = height * (1.0f - scale) / 2;
     /* Custom tweaks. */
     if (data == &fontNotoSansSymbolsRegular_Embedded) {
-        d->vertOffset *= 1.2f; 
+        d->vertOffset *= 1.2f;
     }
     else if (data == &fontNotoSansSymbols2Regular_Embedded) {
         d->vertOffset /= 2;
@@ -1433,7 +1433,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iBool        isFirst            = iTrue;
     const iBool  checkHitPoint      = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
     const iBool  checkHitChar       = wrap && wrap->hitChar;
-    iBool        wasCharHit         = iFalse;
+    //iBool        wasCharHit         = iFalse;
     while (!isEmpty_Range(&wrapRuns)) {
         if (isFirst) {
             isFirst = iFalse;
@@ -1453,11 +1453,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
                 const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
                 if (run->flags.isLineBreak) {
-                    if (checkHitChar && !wasCharHit) {
-                        if (wrap->hitChar == sourcePtr_AttributedText_(&attrText, run->logical.start)) {
-                            wrap->hitAdvance_out = init_I2(wrapAdvance, yCursor);
-                            wasCharHit = iTrue;
-                        }
+                    if (checkHitChar && wrap->hitChar == sourcePtr_AttributedText_(&attrText, run->logical.start)) {
+                        wrap->hitAdvance_out = init_I2(wrapAdvance, yCursor);
+//                        wasCharHit = iTrue;
                     }
                     wrapPosRange.end   = run->logical.start;
                     wrapResumePos      = run->logical.end;
@@ -1481,11 +1479,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     if (logPos < wrapPosRange.start || logPos >= wrapPosRange.end) {
                         continue;
                     }
-                    if (checkHitChar && !wasCharHit) {
-                        if (wrap->hitChar == sourcePtr_AttributedText_(&attrText, logPos)) {
-                            wrap->hitAdvance_out = init_I2(wrapAdvance, yCursor);
-                            wasCharHit = iTrue;
-                        }
+                    if (checkHitChar && wrap->hitChar == sourcePtr_AttributedText_(&attrText, logPos)) {
+                        wrap->hitAdvance_out = init_I2(wrapAdvance, yCursor);
+                        //wasCharHit = iTrue;
                     }
                     /* Check if the hit point is on the left side of this line. */
                     if (isHitPointOnThisLine && !wrap->hitChar_out && wrap->hitPoint.x < orig.x) {
@@ -1872,7 +1868,7 @@ static void drawBoundedN_Text_(int fontId, iInt2 pos, int xposBound, int color, 
                                    (color & fillBackground_ColorId ? fillBackground_RunMode : 0) |
                                    runFlagsFromId_(fontId),
                            .text            = text,
-                           .maxLen          = maxLen,                           
+                           .maxLen          = maxLen,
                            .pos             = pos,
 //                           .xposLayoutBound = xposBound,
                            .color           = color & mask_ColorId,
