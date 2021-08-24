@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.6.5
+* Fixed a cursor positioning regression in input fields related to variation selectors (codepoint clusters).
+
 ## 1.6.4
 * Local files containing UTF-8 text can be viewed regardless of their file extension.
 * Fixed input field cursor positioning and insertion problems around Emoji variation selectors.
