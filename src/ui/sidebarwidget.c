@@ -1523,7 +1523,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
     }
-    if (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
+    if (ev->type == SDL_MOUSEBUTTONDOWN &&
+        contains_Widget(as_Widget(d->list), init_I2(ev->button.x, ev->button.y)) &&
+        (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu))) {
         /* Update the menu before opening. */
         if (d->mode == bookmarks_SidebarMode && !isVisible_Widget(d->menu)) {
             /* Remote bookmarks have limitations. */

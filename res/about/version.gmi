@@ -10,6 +10,11 @@
 * Added support for viewing WebP images. The libwebp library is an optional dependency and will be included in the build if found via pkg-config.
 * Added a footer action to view `application/octet-stream` content depending on recognized file extensions.
 
+## 1.6.5
+* Audio init errors are no longer fatal. SDL's error message will still be printed.
+* Fixed a cursor position regression in input fields related to handling of variation selectors (codepoint clusters). Moving the cursor to the start of a wrapped line segment put the cursor in the wrong place.
+* Fixed right-clicking on sidebar tab buttons. It was showing the wrong context menu when the list had been scrolled down.
+
 ## 1.6.4
 * Local files containing UTF-8 text can be viewed regardless of their file extension.
 * Fixed input field cursor positioning and insertion problems around Emoji variation selectors.
