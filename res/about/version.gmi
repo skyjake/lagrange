@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.6.5
+* Audio init errors are no longer fatal. SDL's error message will still be printed.
 * Fixed a cursor position regression in input fields related to handling of variation selectors (codepoint clusters). Moving the cursor to the start of a wrapped line segment put the cursor in the wrong place.
 * Fixed right-clicking on sidebar tab buttons. It was showing the wrong context menu when the list had been scrolled down.
 
