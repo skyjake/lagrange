@@ -122,6 +122,7 @@ struct Impl_App {
     uint32_t     lastTickerTime;
     uint32_t     elapsedSinceLastTicker;
     iBool        isRunning;
+    iBool        isRunningUnderWindowSystem;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
     uint32_t     lastEventTime;
@@ -626,6 +627,12 @@ static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
 }
 
 static void init_App_(iApp *d, int argc, char **argv) {
+#if defined (iPlatformLinux)
+    d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
+                                    !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
+#else
+    d->isRunningUnderWindowSystem = iTrue;
+#endif
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone is
        not a reliable source of this information, particularly when it comes to different
@@ -749,7 +756,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     mulfv_I2(&d->initialWindowRect.size, desktopDPI_Win32());
 #endif
 #if defined (iPlatformLinux)
-    /* Scale by the primary (?) monitor DPI. */ {
+    /* Scale by the primary (?) monitor DPI. */ 
+    if (isRunningUnderWindowSystem_App()) {
         float vdpi;
         SDL_GetDisplayDPI(0, NULL, NULL, &vdpi);
         const float factor = vdpi / 96.0f;
@@ -1580,6 +1588,10 @@ enum iAppDeviceType deviceType_App(void) {
 #else
     return desktop_AppDeviceType;
 #endif
+}
+
+iBool isRunningUnderWindowSystem_App(void) {
+    return app_.isRunningUnderWindowSystem;
 }
 
 iGmCerts *certs_App(void) {
