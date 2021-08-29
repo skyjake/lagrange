@@ -45,6 +45,37 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.6.5" date="2021-08-29">
+            <description>
+                <p>Version 1.6 adds support for bidirectional text and complex scripts,
+                    right-to-left paragraph layout, uploads using the Titan protocol,
+                    and has an improved mechanism for tracking trust in server
+                    certificates. Page contents can be fully cached in memory for more
+                    efficient backward navigation. There are also UI improvements like
+                    a reorganized Preferences and a setting for smooth scrolling
+                    speed.</p>
+                <p>Changes and fixes in v1.6.5:</p>
+                <ul>
+                    <li>Audio init errors are no longer fatal. SDL's error message
+                        will still be printed.</li>
+                    <li>Fixed appearance of tab buttons (should have 
+                        no top frame).</li>
+                    <li>Fixed a cursor position regression in input fields related
+                        to handling of variation selectors (codepoint clusters).
+                        Moving the cursor to the start of a wrapped line segment put
+                        the cursor in the wrong place.</li>
+                    <li>Fixed right-clicking on sidebar tab buttons. 
+                        It was showing the wrong context menu when the list had been
+                        scrolled down.</li>
+                    <li>Fixed crash when using the SDL2 KMSDRM video driver.</li>
+                    <li>Fixed minor visual artifacts in preformatted blocks and
+                        near the bottom of the page.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.6.5</url>
+        </release>
         <release version="1.6.4" date="2021-08-22">
             <description>
                 <p>Version 1.6 adds support for bidirectional text and complex scripts,

@@ -59,7 +59,7 @@ static void enableEditorKeysInMenus_(iBool enable) {
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(InputLine)
-        
+
 struct Impl_InputLine {
     iString text;
     iRanges range;      /* byte offset inside the entire content; for marking */
@@ -157,7 +157,7 @@ static void mergeLines_(const iArray *inputLines, iString *merged) {
 }
 
 iDefineTypeConstruction(InputLine)
-    
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(InputUndo)
@@ -227,7 +227,7 @@ struct Impl_InputWidget {
 };
 
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
-  
+
 static void updateMetrics_InputWidget_(iInputWidget *);
 
 static void restoreBackup_InputWidget_(iInputWidget *d) {
@@ -541,6 +541,11 @@ static int contentHeight_InputWidget_(const iInputWidget *d) {
     return size_Range(&d->visWrapLines) * lineHeight_Text(d->font);
 }
 
+static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
+    const iRect bounds = bounds_Widget(constAs_Widget(d));
+    SDL_SetTextInputRect(&(SDL_Rect){ bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y });    
+}
+
 static void updateMetrics_InputWidget_(iInputWidget *d) {
     iWidget *w = as_Widget(d);
     updateSizeForFixedLength_InputWidget_(d);
@@ -553,6 +558,7 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     invalidateBuffered_InputWidget_(d);
     if (height_Rect(w->rect) != oldHeight) {
         postCommand_Widget(d, "input.resized");
+        updateTextInputRect_InputWidget_(d);
     }
 }
 
@@ -610,7 +616,7 @@ static uint32_t cursorTimer_(uint32_t interval, void *w) {
 
 static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, iBool doStart) {
     if (doStart && !d->timer) {
-        d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);        
+        d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);
     }
     else if (!doStart && d->timer) {
         SDL_RemoveTimer(d->timer);
@@ -679,7 +685,7 @@ void deinit_InputWidget(iInputWidget *d) {
     delete_TextBuf(d->buffered);
     clearUndo_InputWidget_(d);
     deinit_Array(&d->undoStack);
-    startOrStopCursorTimer_InputWidget_(d, iFalse);    
+    startOrStopCursorTimer_InputWidget_(d, iFalse);
     deinit_String(&d->srcHint);
     deinit_String(&d->hint);
     deinit_String(&d->oldText);
@@ -708,7 +714,7 @@ static iBool popUndo_InputWidget_(iInputWidget *d) {
         splitToLines_(&undo->text, &d->lines);
         d->cursor = undo->cursor;
         deinit_InputUndo_(undo);
-        popBack_Array(&d->undoStack);        
+        popBack_Array(&d->undoStack);
         iZap(d->mark);
         updateAllLinesAndResizeHeight_InputWidget_(d);
         return iTrue;
@@ -836,7 +842,7 @@ static iRangei visibleLineRange_InputWidget_(const iInputWidget *d) {
 static void updateBuffered_InputWidget_(iInputWidget *d) {
     invalidateBuffered_InputWidget_(d);
     if (isHintVisible_InputWidget_(d)) {
-        d->buffered = newRange_TextBuf(d->font, uiAnnotation_ColorId, range_String(&d->hint));                
+        d->buffered = newRange_TextBuf(d->font, uiAnnotation_ColorId, range_String(&d->hint));
     }
     else {
         /* Draw all the potentially visible lines to a buffer. */
@@ -988,6 +994,7 @@ void begin_InputWidget(iInputWidget *d) {
         iZap(d->mark);
     }
     enableEditorKeysInMenus_(iFalse);
+    updateTextInputRect_InputWidget_(d);
     updateVisible_InputWidget_(d);
 }
 
@@ -1073,7 +1080,7 @@ static void insertRange_InputWidget_(iInputWidget *d, iRangecc range) {
     }
     textOfLinesWasChanged_InputWidget_(d, (iRangei){ firstModified, d->cursor.y + 1 });
     showCursor_InputWidget_(d);
-    refresh_Widget(as_Widget(d));    
+    refresh_Widget(as_Widget(d));
 }
 
 static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
@@ -1110,7 +1117,7 @@ void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
 static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) {
     const iInputLine *line     = cursorLine_InputWidget_(d);
     iInt2             relCoord = relativeCursorCoord_InputWidget_(d);
-    int       relLine     = relCoord.y / lineHeight_Text(d->font);
+    int               relLine  = relCoord.y / lineHeight_Text(d->font);
     if ((dir < 0 && relLine > 0) || (dir > 0 && relLine < numWrapLines_InputLine_(line) - 1)) {
         relCoord.y += dir * lineHeight_Text(d->font);
     }
@@ -1542,7 +1549,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         else if (lineDelta > 0) {
             lineDelta = iMin(lineDelta,
                              lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
-            if (!lineDelta) d->wheelAccum = 0;            
+            if (!lineDelta) d->wheelAccum = 0;
         }
         d->wheelAccum         -= lineDelta * lineHeight;
         d->visWrapLines.start += lineDelta;
@@ -1925,7 +1932,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     }
     iPaint p;
     init_Paint(&p);
-    /* `lines` is already up to date and ready for drawing. */    
+    /* `lines` is already up to date and ready for drawing. */
     fillRect_Paint(
         &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
     drawRectThickness_Paint(&p,

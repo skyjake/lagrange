@@ -311,7 +311,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
 #endif
             drawLines_Paint(&p, points + 2, 3, frame2);
             drawLines_Paint(
-                &p, points, !isHover && flags & d->flags.noTopFrame ? 2 : 3, frame);
+                &p, points, !isHover && d->flags.noTopFrame ? 2 : 3, frame);
         }
     }
     setClip_Paint(&p, rect);

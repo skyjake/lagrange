@@ -1433,7 +1433,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iBool        isFirst            = iTrue;
     const iBool  checkHitPoint      = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
     const iBool  checkHitChar       = wrap && wrap->hitChar;
-    iBool        wasCharHit         = iFalse;
     while (!isEmpty_Range(&wrapRuns)) {
         if (isFirst) {
             isFirst = iFalse;
@@ -1447,18 +1446,17 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         if (wrap && (wrap->maxWidth > 0 || checkHitPoint)) {
             const iBool isHitPointOnThisLine = (checkHitPoint && wrap->hitPoint.y >= orig.y + yCursor &&
                                                 wrap->hitPoint.y < orig.y + yCursor + d->height);
+            iBool wasCharHit = iFalse; /* on this line */
             float breakAdvance = -1.0f;
             iAssert(wrapPosRange.end == textLen);
             /* Determine ends of wrapRuns and wrapVisRange. */
             for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
                 const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
                 if (run->flags.isLineBreak) {
-                    if (checkHitChar && !wasCharHit) {
-                        if (wrap->hitChar == sourcePtr_AttributedText_(&attrText, run->logical.start)) {
+                    if (checkHitChar &&
+                        wrap->hitChar == sourcePtr_AttributedText_(&attrText, run->logical.start)) {
                             wrap->hitAdvance_out = init_I2(wrapAdvance, yCursor);
-                            wasCharHit = iTrue;
     }
-                    }
                     wrapPosRange.end   = run->logical.start;
                     wrapResumePos      = run->logical.end;
                     wrapRuns.end       = runIndex;
@@ -1481,11 +1479,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     if (logPos < wrapPosRange.start || logPos >= wrapPosRange.end) {
                 continue;
                     }
-                    if (checkHitChar && !wasCharHit) {
-                        if (wrap->hitChar == sourcePtr_AttributedText_(&attrText, logPos)) {
+                    if (checkHitChar && !wasCharHit &&
+                        wrap->hitChar == sourcePtr_AttributedText_(&attrText, logPos)) {
                             wrap->hitAdvance_out = init_I2(wrapAdvance, yCursor);
-                            wasCharHit = iTrue;
-            }
+                        wasCharHit = iTrue; /* variation selectors etc. have matching cluster */
         }
                     /* Check if the hit point is on the left side of this line. */
                     if (isHitPointOnThisLine && !wrap->hitChar_out && wrap->hitPoint.x < orig.x) {
