@@ -11,6 +11,7 @@
 * Fixed appearance of tab buttons (should have no top frame).
 * Fixed a cursor position regression in input fields related to handling of variation selectors (codepoint clusters). Moving the cursor to the start of a wrapped line segment put the cursor in the wrong place.
 * Fixed right-clicking on sidebar tab buttons. It was showing the wrong context menu when the list had been scrolled down.
+* Fixed crash when using the SDL2 KMSDRM video driver.
 * Fixed minor visual artifacts in preformatted blocks and near the bottom of the page.
 
 ## 1.6.4
