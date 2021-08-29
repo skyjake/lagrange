@@ -4213,12 +4213,12 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     /* Fill the background. */ {
         if (run->linkId && linkFlags & isOpen_GmLinkFlag && ~linkFlags & content_GmLinkFlag) {
             /* Open links get a highlighted background. */
-            int bg = tmBackgroundOpenLink_ColorId;
-            const int frame = tmFrameOpenLink_ColorId;
+            int       bg       = tmBackgroundOpenLink_ColorId;
+            const int frame    = tmFrameOpenLink_ColorId;
             iRect     wideRect = { init_I2(left_Rect(d->widgetBounds), visPos.y),
-                               init_I2(width_Rect(d->widgetBounds) +
+                                   init_I2(width_Rect(d->widgetBounds) +
                                            width_Widget(d->widget->scroll),
-                                       height_Rect(run->visBounds)) };
+                                           height_Rect(run->visBounds)) };
             /* The first line is composed of two runs that may be drawn in either order, so
                only draw half of the background. */
             if (run->flags & decoration_GmRunFlag) {
@@ -4238,8 +4238,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
 //                    &d->paint, addY_I2(bottomLeft_Rect(wideRect), -1), width_Rect(wideRect), frame);
 //            }
         }
-        else if (run->linkId) {
-            /* Normal background for runs that may change appearance. */
+        else { 
+            /* Normal background for other runs. There are cases when runs get drawn multiple times,
+               e.g., at the buffer boundary, and there are slightly overlapping characters in
+               monospace blocks. Clearing the background here ensures a cleaner visual appearance
+               since only one glyph is visible at any given point. */
             fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackground_ColorId);
         }
     }

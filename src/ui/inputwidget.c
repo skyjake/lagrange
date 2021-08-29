@@ -541,6 +541,11 @@ static int contentHeight_InputWidget_(const iInputWidget *d) {
     return size_Range(&d->visWrapLines) * lineHeight_Text(d->font);
 }
 
+static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
+    const iRect bounds = bounds_Widget(constAs_Widget(d));
+    SDL_SetTextInputRect(&(SDL_Rect){ bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y });    
+}
+
 static void updateMetrics_InputWidget_(iInputWidget *d) {
     iWidget *w = as_Widget(d);
     updateSizeForFixedLength_InputWidget_(d);
@@ -553,6 +558,7 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     invalidateBuffered_InputWidget_(d);
     if (height_Rect(w->rect) != oldHeight) {
         postCommand_Widget(d, "input.resized");
+        updateTextInputRect_InputWidget_(d);
     }
 }
 
@@ -988,6 +994,7 @@ void begin_InputWidget(iInputWidget *d) {
         iZap(d->mark);
     }
     enableEditorKeysInMenus_(iFalse);
+    updateTextInputRect_InputWidget_(d);
     updateVisible_InputWidget_(d);
 }
 
