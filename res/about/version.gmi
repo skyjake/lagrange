@@ -8,6 +8,7 @@
 
 ## 1.6.6
 * Fixed URL encoding of the % character.
+* Fixed hang when wrapping a very long word (with HarfBuzz disabled).
 
 ## 1.6.5
 * Audio init errors are no longer fatal. SDL's error message will still be printed.
