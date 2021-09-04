@@ -169,6 +169,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                 if (!notify_WrapText_(wrap, chPos, 0, iMax(xpos, xposExtend) - orig.x, iFalse)) {
                     break;
                 }
+                lastWordEnd = NULL;
                 xpos = xposExtend = orig.x;
                 ypos += d->height;
                 prevCh = ch;
@@ -240,21 +241,19 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             iAssert(wrap);
             const char *wrapPos = currentPos;
             int advance = x1 - orig.x;
-            if (lastWordEnd != args->text.start && wrap->mode == word_WrapTextMode) {
-                wrapPos = skipSpace_CStr(lastWordEnd);
+            if (lastWordEnd && wrap->mode == word_WrapTextMode) {
+                wrapPos = skipSpace_CStr(lastWordEnd); /* go back */
                 wrapPos = iMin(wrapPos, args->text.end);
                 advance = wrapAdvance;
             }
-//            if (args->continueFrom_out) {
-//                *args->continueFrom_out = wrapPos;
-//            }
             if (!notify_WrapText_(wrap, wrapPos, 0, advance, iFalse)) {
                 break;
             }
+            lastWordEnd = NULL;
             xpos = xposExtend = orig.x;
             ypos += d->height;
             prevCh = 0;
-            chPos = wrapPos; /* go back */
+            chPos = wrapPos;
             continue;
         }
         const int yLineMax = ypos + d->height;
