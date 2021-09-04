@@ -10,6 +10,10 @@
 * Added support for viewing WebP images. The libwebp library is an optional dependency and will be included in the build if found via pkg-config.
 * Added a footer action to view `application/octet-stream` content depending on recognized file extensions.
 
+## 1.6.6
+* Fixed URL encoding of the % character.
+* Fixed hang when wrapping a very long word (with HarfBuzz disabled).
+
 ## 1.6.5
 * Audio init errors are no longer fatal. SDL's error message will still be printed.
 * Fixed appearance of tab buttons (should have no top frame).
