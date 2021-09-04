@@ -25,7 +25,7 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.4)  # pinned for TestFlight
-    set (IOS_BUNDLE_VERSION 21.9.4)
+    set (IOS_BUNDLE_VERSION 21.9.5)
 endif ()
 
 # Default that depend on environment.

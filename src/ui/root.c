@@ -1163,12 +1163,20 @@ void createUserInterface_Root(iRoot *d) {
                         { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
                         { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                         { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+#if defined (iPlatformMobile)
+                        { "---", 0, 0, NULL },
+                        { "${menu.page.copyurl}", 0, 0, "document.copylink" },
+                        { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
+                        { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
+                    11);
+#else
                         { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                         { "---", 0, 0, NULL },
                         { "${menu.page.copyurl}", 0, 0, "document.copylink" },
                         { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
                         { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
                     12);
+#endif
                 setId_Widget(as_Widget(pageMenuButton), "pagemenubutton");
                 setFont_LabelWidget(pageMenuButton, uiContentBold_FontId);
                 setAlignVisually_LabelWidget(pageMenuButton, iTrue);

@@ -3676,10 +3676,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "---", 0, 0, NULL },
                             { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+#if defined (iPlatformMobile)
+                            { "---", 0, 0, NULL },
+                            { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
+                        14);
+#else
                             { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                             { "---", 0, 0, NULL },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
                         15);
+#endif
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,

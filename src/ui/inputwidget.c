@@ -542,8 +542,10 @@ static int contentHeight_InputWidget_(const iInputWidget *d) {
 }
 
 static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
+#if !defined (iPlatformAppleMobile)
     const iRect bounds = bounds_Widget(constAs_Widget(d));
-    SDL_SetTextInputRect(&(SDL_Rect){ bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y });    
+    SDL_SetTextInputRect(&(SDL_Rect){ bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y });
+#endif
 }
 
 static void updateMetrics_InputWidget_(iInputWidget *d) {
