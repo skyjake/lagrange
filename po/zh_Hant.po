@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-18 04:18+0000\n"
+"PO-Revision-Date: 2021-09-06 10:49+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hant/>\n"
@@ -56,7 +56,7 @@ msgid "dlg.newident.until"
 msgstr "有效期至："
 
 msgid "hint.newident.date"
-msgstr "YYYY-MM-DD HH:MM:SS"
+msgstr "YYYY 或 YYYY-MM-DD"
 
 msgid "hint.newident.optional"
 msgstr "選填"
@@ -807,7 +807,7 @@ msgid "heading.prefs.paragraph"
 msgstr "段落"
 
 msgid "heading.prefs.pagecontent"
-msgstr "頁面內容"
+msgstr "頁面顏色"
 
 msgid "heading.prefs.proxies"
 msgstr "代理"
@@ -1550,3 +1550,205 @@ msgstr "語言"
 
 msgid "gempub.meta.license"
 msgstr "授權協議"
+
+msgid "error.server.msg"
+msgstr "伺服器回應訊息："
+
+msgid "prefs.animate"
+msgstr "動畫："
+
+msgid "dlg.newident.scope.domain"
+msgstr "當前域名"
+
+msgid "media.untitled.image"
+msgstr "圖像"
+
+msgid "close"
+msgstr "關閉"
+
+msgid "feeds.atom.translated"
+msgstr "此 Atom XML 檔案已被轉譯為 Gemini 訂閱形式，以使其可被訂閱。"
+
+msgid "ident.export"
+msgstr "匯出"
+
+msgid "dlg.input.linebreak"
+msgstr "斷行"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "您擁有 %d 個書籤。"
+
+msgid "menu.pageinfo"
+msgstr "顯示頁面資訊"
+
+msgid "bookmark.export.taginfo"
+msgstr "本列表中，每一項標題代表一項書籤標籤，僅列出帶標籤的書籤。帶有多個標籤的書籤會在其所有標籤下重複出現。"
+
+msgid "bookmark.export.format.otherlines"
+msgstr "帶項目符號的行和引言用於展示前一項書籤的更多資訊。文字行和預格式文字是可忽略的註解。"
+
+msgid "menu.openfile"
+msgstr "開啟檔案…"
+
+msgid "dlg.newident.scope"
+msgstr "用於："
+
+msgid "error.certverify"
+msgstr "未信任的伺服器"
+
+msgid "dlg.newident.more"
+msgstr "更多…"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "鍵盤捲動速度："
+
+msgid "prefs.userfont"
+msgstr "符號字型："
+
+msgid "keys.split.item"
+msgstr "分屏選單："
+
+msgid "menu.unexpire"
+msgstr "忽略過期情形並繼續載入"
+
+msgid "menu.save.downloads.open"
+msgstr "儲存至下載並打開檔案"
+
+msgid "prefs.returnkey"
+msgstr "Return 鍵行為："
+
+msgid "keys.upload"
+msgstr "透過 Titan 上載頁面"
+
+msgid "upload.port"
+msgstr "埠號…"
+
+msgid "heading.uploadport"
+msgstr "TITAN 上載埠號"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"為此 URL 設定 Titan 伺服器埠號。\n"
+"埠號設定分站點儲存。"
+
+msgid "dlg.uploadport.set"
+msgstr "設定埠號"
+
+msgid "dlg.newident.scope.page"
+msgstr "當前頁面"
+
+msgid "dlg.newident.scope.none"
+msgstr "不使用"
+
+msgid "error.certexpired"
+msgstr "憑證過期"
+
+msgid "error.certexpired.msg"
+msgstr "因伺服器 TLS 憑證過期，到伺服器的連結已被取消。"
+
+msgid "error.certverify.msg"
+msgstr ""
+"到伺服器的連結已被取消，因其 TLS 憑證與受信任的憑證不符。請檢查伺服器是否曾宣佈憑證變更。如果沒有，那麼可能有第三方惡意偽裝成您正嘗試通訊的伺服器。"
+"\n"
+"\n"
+"可以在頁面資訊中將該憑證標記為受信任的。"
+
+msgid "media.untitled.audio"
+msgstr "聲音"
+
+msgid "status.query.tight"
+msgstr "查詢"
+
+msgid "link.file.delete"
+msgstr "刪除檔案"
+
+msgid "heading.file.delete"
+msgstr "刪除檔案"
+
+msgid "dlg.file.delete.confirm"
+msgstr "您確實要刪除此檔案嗎？"
+
+msgid "dlg.file.delete"
+msgstr "刪除"
+
+msgid "bookmark.export.title.folder"
+msgstr "書籤"
+
+msgid "bookmark.export.title.tag"
+msgstr "書籤標籤"
+
+msgid "bookmark.export.title.time"
+msgstr "書籤建立"
+
+msgid "bookmark.export.saving"
+msgstr "存儲本頁來匯出它們，或將它們拷貝至剪貼板。"
+
+msgid "bookmark.export.format.linklines"
+msgstr "每一條連結代表一個書籤。"
+
+msgid "bookmark.export.format.folders"
+msgstr "資料夾結構以二、三級標題呈現。"
+
+msgid "bookmark.export.format.tags"
+msgstr "標籤以二級標題呈現。"
+
+msgid "menu.page.upload"
+msgstr "透過 Titan 上載頁面"
+
+msgid "heading.upload"
+msgstr "透過 TITAN 上載"
+
+msgid "heading.upload.text"
+msgstr "文字"
+
+msgid "hint.upload.text"
+msgstr "輸入上載內容"
+
+msgid "heading.upload.file"
+msgstr "檔案"
+
+msgid "upload.file.name"
+msgstr "檔案名稱："
+
+msgid "upload.file.drophere"
+msgstr "（拖動一個檔案到本視窗）"
+
+msgid "upload.file.size"
+msgstr "檔案大小："
+
+msgid "upload.mime"
+msgstr "MIME 類型："
+
+msgid "upload.token"
+msgstr "上載令牌："
+
+msgid "hint.upload.token"
+msgstr "參見伺服器的指引"
+
+msgid "dlg.upload.send"
+msgstr "上載"
+
+msgid "heading.prefs.uitheme"
+msgstr "介面顏色"
+
+msgid "bookmark.export.format.sub"
+msgstr "本頁依「Subscribing to Gemini pages」配套規範編排。"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "滑鼠捲動速度："
+
+msgid "prefs.returnkey.linebreak"
+msgstr "換行"
+
+msgid "prefs.returnkey.accept"
+msgstr "提交"
+
+msgid "hint.prefs.userfont"
+msgstr "TrueType 字型位置"
+
+msgid "prefs.linespacing"
+msgstr "行距："
+
+msgid "prefs.memorysize"
+msgstr "記憶體大小："
