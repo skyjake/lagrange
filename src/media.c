@@ -98,25 +98,19 @@ static void applyImageStyle_(enum iImageStyle style, iInt2 size, uint8_t *imgDat
                                                                : tmPreformatted_ColorId);
         /* Maximize contrast. */
         const int colMax = iMax(iMax(colorize.r, colorize.g), colorize.b);
-        if (colMax >= 8) {
-            colorize.r = colorize.r * 255 / colMax;
-            colorize.g = colorize.g * 255 / colMax;
-            colorize.b = colorize.b * 255 / colMax;
-        }
-        else {
-            colorize = (iColor){ 255, 255, 255, 255};
-        }
-//        printf("colorize:%d %d %d\n", colorize.r, colorize.g, colorize.b);
-        brighten = iClamp(1.0f - (colorize.r + colorize.g + colorize.b) / 600.0f, 0.0f, 0.5f); /* compensate loss of light */
-//        printf("bright:%f\n", brighten);
+        brighten = iClamp(1.0f - (colorize.r + colorize.g + colorize.b) / (colMax * 3), 0.0f, 0.5f); /* compensate loss of light */
     }
     uint8_t *pos = imgData;
     size_t numPixels = size.x * size.y;
+    iHSLColor hslColorize = hsl_Color(colorize);                           
     while (numPixels-- > 0) {
         iHSLColor hsl = hsl_Color((iColor){ pos[0], pos[1], pos[2], 255 });
-        pos[0] = powf((colorize.r * hsl.lum) / 255.0f, 1.0f - brighten) * 255;
-        pos[1] = powf((colorize.g * hsl.lum) / 255.0f, 1.0f - brighten) * 255;
-        pos[2] = powf((colorize.b * hsl.lum) / 255.0f, 1.0f - brighten) * 255;
+        iHSLColor out = { hslColorize.hue, hslColorize.sat, hsl.lum, 1.0f };
+        out.lum = powf(out.lum, 1.0f + brighten * 2);
+        iColor outRgb = rgb_HSLColor(out);
+        pos[0] = powf(outRgb.r / 255.0f, 1.0f - brighten * 0.75f) * 255;
+        pos[1] = powf(outRgb.g / 255.0f, 1.0f - brighten * 0.75f) * 255;
+        pos[2] = powf(outRgb.b / 255.0f, 1.0f - brighten * 0.75f) * 255;
         pos += 4;
     }
 }
