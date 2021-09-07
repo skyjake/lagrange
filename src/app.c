@@ -668,6 +668,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, "help", 0);
         defineValues_CommandLine(&d->args, listTabUrls_CommandLineOption, 0);
         defineValues_CommandLine(&d->args, openUrlOrSearch_CommandLineOption, 1);
+        defineValues_CommandLine(&d->args, windowWidth_CommandLineOption, 1);
+        defineValues_CommandLine(&d->args, windowHeight_CommandLineOption, 1);
         defineValuesN_CommandLine(&d->args, "new-tab", 0, 1);
         defineValues_CommandLine(&d->args, "tab-url", 0);
         defineValues_CommandLine(&d->args, "sw", 0);
@@ -787,6 +789,16 @@ static void init_App_(iApp *d, int argc, char **argv) {
     setThemePalette_Color(d->prefs.theme); /* default UI colors */
     loadPrefs_App_(d);
     load_Keys(dataDir_App_());
+    /* See if the user wants to override the window size. */ {
+        iCommandLineArg *arg = iClob(checkArgument_CommandLine(&d->args, windowWidth_CommandLineOption));
+        if (arg) {
+            d->initialWindowRect.size.x = toInt_String(value_CommandLineArg(arg, 0));
+        }
+        arg = iClob(checkArgument_CommandLine(&d->args, windowHeight_CommandLineOption));
+        if (arg) {
+            d->initialWindowRect.size.y = toInt_String(value_CommandLineArg(arg, 0));
+        }
+    }
     d->window = new_Window(d->initialWindowRect);
     load_Visited(d->visited, dataDir_App_());
     load_Bookmarks(d->bookmarks, dataDir_App_());
