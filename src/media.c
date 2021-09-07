@@ -87,6 +87,40 @@ void deinit_GmImage(iGmImage *d) {
     deinit_GmMediaProps_(&d->props);
 }
 
+static void applyImageStyle_(enum iImageStyle style, iInt2 size, uint8_t *imgData) {
+    if (style == original_ImageStyle) {
+        return;
+    }
+    iColor colorize = (iColor){ 255, 255, 255, 255};
+    float brighten = 0.0f;
+    if (style != grayscale_ImageStyle) {
+        colorize = get_Color(style == textColorized_ImageStyle ? tmParagraph_ColorId
+                                                               : tmPreformatted_ColorId);
+        /* Maximize contrast. */
+        const int colMax = iMax(iMax(colorize.r, colorize.g), colorize.b);
+        if (colMax >= 8) {
+            colorize.r = colorize.r * 255 / colMax;
+            colorize.g = colorize.g * 255 / colMax;
+            colorize.b = colorize.b * 255 / colMax;
+        }
+        else {
+            colorize = (iColor){ 255, 255, 255, 255};
+        }
+//        printf("colorize:%d %d %d\n", colorize.r, colorize.g, colorize.b);
+//        brighten = iClamp(1.0f - (colorize.r + colorize.g + colorize.b) / 600.0f, 0.0f, 0.5f); /* compensate loss of light */
+//        printf("bright:%f\n", brighten);
+    }
+    uint8_t *pos = imgData;
+    size_t numPixels = size.x * size.y;
+    while (numPixels-- > 0) {
+        iHSLColor hsl = hsl_Color((iColor){ pos[0], pos[1], pos[2], 255 });
+        pos[0] = powf((colorize.r * hsl.lum) / 255.0f, 1.0f - brighten) * 255;
+        pos[1] = powf((colorize.g * hsl.lum) / 255.0f, 1.0f - brighten) * 255;
+        pos[2] = powf((colorize.b * hsl.lum) / 255.0f, 1.0f - brighten) * 255;
+        pos += 4;
+    }
+}
+
 void makeTexture_GmImage(iGmImage *d) {
     iBlock *data     = &d->partialData;
     d->numBytes      = size_Block(data);
@@ -105,6 +139,7 @@ void makeTexture_GmImage(iGmImage *d) {
         d->texture = NULL;
     }
     else {
+        applyImageStyle_(prefs_App()->imageStyle, d->size, imgData);        
         /* TODO: Save some memory by checking if the alpha channel is actually in use. */
         iWindow *window  = get_Window();
         iInt2    texSize = d->size;

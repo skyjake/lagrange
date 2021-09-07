@@ -41,6 +41,13 @@ enum iFileVersion {
     latest_FileVersion = 4,
 };
 
+enum iImageStyle {
+    original_ImageStyle           = 0,
+    grayscale_ImageStyle          = 1,
+    textColorized_ImageStyle      = 2,
+    preformatColorized_ImageStyle = 3,
+};
+
 enum iScrollType {
     keyboard_ScrollType,
     mouse_ScrollType,

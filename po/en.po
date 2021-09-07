@@ -1333,6 +1333,21 @@ msgstr "High Contrast"
 msgid "prefs.saturation"
 msgstr "Saturation:"
 
+msgid "prefs.imagestyle"
+msgstr "Colorize images:"
+
+msgid "prefs.imagestyle.original"
+msgstr "None"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Grayscale"
+
+msgid "prefs.imagestyle.text"
+msgstr "Text Color"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Preformatted Color"
+
 msgid "prefs.headingfont"
 msgstr "Heading font:"
 

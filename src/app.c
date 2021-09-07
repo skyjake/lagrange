@@ -242,6 +242,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
     appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
+    appendFormat_String(str, "imagestyle.set arg:%d\n", d->prefs.imageStyle);
     appendFormat_String(str, "ca.file noset:1 path:%s\n", cstr_String(&d->prefs.caFile));
     appendFormat_String(str, "ca.path path:%s\n", cstr_String(&d->prefs.caPath));
     appendFormat_String(str, "proxy.gemini address:%s\n", cstr_String(&d->prefs.geminiProxy));
@@ -1655,6 +1656,7 @@ static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selec
 }
 
 static void updateColorThemeButton_(iLabelWidget *button, int theme) {
+    /* TODO: These three functions are all the same? Cleanup? */
     if (!button) return;
     updateDropdownSelection_(button, format_CStr(".set arg:%d", theme));
 }
@@ -1662,6 +1664,11 @@ static void updateColorThemeButton_(iLabelWidget *button, int theme) {
 static void updateFontButton_(iLabelWidget *button, int font) {
     if (!button) return;
     updateDropdownSelection_(button, format_CStr(".set arg:%d", font));
+}
+
+static void updateImageStyleButton_(iLabelWidget *button, int style) {
+    if (!button) return;
+    updateDropdownSelection_(button, format_CStr(".set arg:%d", style));
 }
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
@@ -1743,6 +1750,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "doctheme.light.set")) {
         updateColorThemeButton_(findChild_Widget(d, "prefs.doctheme.light"), arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "imagestyle.set")) {
+        updateImageStyleButton_(findChild_Widget(d, "prefs.imagestyle"), arg_Command(cmd));
         return iFalse;
     }
     else if (equal_Command(cmd, "font.set")) {
@@ -2175,6 +2186,10 @@ iBool handleCommand_App(const char *cmd) {
         if (!isFrozen) {
             invalidate_Window(d->window);
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "imagestyle.set")) {
+        d->prefs.imageStyle = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "linewidth.set")) {
@@ -2611,6 +2626,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.collapsepreonload"), d->prefs.collapsePreOnLoad);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.light"), d->prefs.docThemeLight);
+        updateImageStyleButton_(findChild_Widget(dlg, "prefs.imagestyle"), d->prefs.imageStyle);
         updateFontButton_(findChild_Widget(dlg, "prefs.font"), d->prefs.font);
         updateFontButton_(findChild_Widget(dlg, "prefs.headingfont"), d->prefs.headingFont);
         setFlags_Widget(

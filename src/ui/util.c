@@ -1831,6 +1831,23 @@ iWidget *makePreferences_Widget(void) {
             addRadioButton_(sats, "prefs.saturation.0", "0 %", "saturation.set arg:0");
         }
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        /* Colorize images. */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imagestyle}")));
+            const iMenuItem imgStyles[] = {
+                { "${prefs.imagestyle.original}",  0, 0, format_CStr("imagestyle.set arg:%d", original_ImageStyle) },
+                { "${prefs.imagestyle.grayscale}", 0, 0, format_CStr("imagestyle.set arg:%d", grayscale_ImageStyle) },
+                { "${prefs.imagestyle.text}",      0, 0, format_CStr("imagestyle.set arg:%d", textColorized_ImageStyle) },
+                { "${prefs.imagestyle.preformat}", 0, 0, format_CStr("imagestyle.set arg:%d", preformatColorized_ImageStyle) },   
+            };
+            iLabelWidget *button = makeMenuButton_LabelWidget(
+                imgStyles[findWidestItemLabel_(imgStyles, iElemCount(imgStyles))].label,
+                imgStyles,
+                iElemCount(imgStyles));
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
+                                      uiBackgroundMenu_ColorId);
+            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
+                         "prefs.imagestyle");
+        }
     }
     /* Fonts. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.fonts}", '4', &headings, &values), "prefs.page.fonts");

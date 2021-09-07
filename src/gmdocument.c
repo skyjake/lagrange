@@ -464,6 +464,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool   isNarrow          = d->size.x < 90 * gap_Text;
     const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text;
     const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text;
+    const iBool   isFullWidthImages = (d->outsideMargin < 5 * gap_UI);
     const iBool   isDarkBg          = isDark_GmDocumentTheme(
         isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
     /* TODO: Collect these parameters into a GmTheme. */
@@ -817,7 +818,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             rts.layoutWidth   = d->size.x;
             rts.indent        = indent * gap_Text;
             /* The right margin is used for balancing lines horizontally. */
-            if (isVeryNarrow) {
+            if (isVeryNarrow || isFullWidthImages) {
                 rts.rightMargin = 0;
             }
             else {
@@ -900,14 +901,15 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 pos.y += margin;
                 run.bounds.pos = pos;
                 run.bounds.size.x = d->size.x;
-                /* Extend the image to full width, including outside margin, if the viewport
-                   is narrow enough. */
-                if (d->outsideMargin < 5 * gap_UI) {
-                    run.bounds.size.x += d->outsideMargin * 2;
-                    run.bounds.pos.x  -= d->outsideMargin;
-                }                
                 const float aspect = (float) imgSize.y / (float) imgSize.x;
                 run.bounds.size.y = d->size.x * aspect;
+                /* Extend the image to full width, including outside margin, if the viewport
+                   is narrow enough. */
+                if (isFullWidthImages) {
+                    run.bounds.size.x += d->outsideMargin * 2;
+                    run.bounds.size.y += d->outsideMargin * 2 * aspect;
+                    run.bounds.pos.x  -= d->outsideMargin;
+                }                
                 run.visBounds = run.bounds;
                 const iInt2 maxSize = mulf_I2(imgSize, get_Window()->pixelRatio);
                 if (width_Rect(run.visBounds) > maxSize.x) {
