@@ -59,6 +59,7 @@ enum iGmDocumentTheme {
     white_GmDocumentTheme,
     sepia_GmDocumentTheme,
     highContrast_GmDocumentTheme,
+    max_GmDocumentTheme
 };
 
 iBool isDark_GmDocumentTheme(enum iGmDocumentTheme);

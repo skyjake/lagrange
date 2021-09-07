@@ -22,11 +22,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/defs.h>
+#include <the_Foundation/rect.h>
 
 iDeclareType(Widget)
-
-void        setupMenuTransition_Mobile          (iWidget *menu, iBool isIncoming);
-void        setupSheetTransition_Mobile         (iWidget *sheet, iBool isIncoming);
+iDeclareType(MenuItem)
+    
+iWidget *   makeSplitMultiPanel_Mobile  (const iMenuItem *itemsNullTerminated);
+    
+void        setupMenuTransition_Mobile  (iWidget *menu, iBool isIncoming);
+void        setupSheetTransition_Mobile (iWidget *sheet, iBool isIncoming);
 
 void        finalizeSheet_Mobile        (iWidget *sheet);

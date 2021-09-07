@@ -30,10 +30,12 @@ iDeclareWidgetClass(LabelWidget)
 iDeclareObjectConstructionArgs(LabelWidget, const char *label, const char *command)
 
 void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
-void    setNoAutoMinHeight_LabelWidget(iLabelWidget *, iBool noAutoMinHeight);
+void    setNoAutoMinHeight_LabelWidget  (iLabelWidget *, iBool noAutoMinHeight);
 void    setNoTopFrame_LabelWidget   (iLabelWidget *, iBool noTopFrame);
 void    setWrap_LabelWidget         (iLabelWidget *, iBool wrap);
 void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);
+void    setAllCaps_LabelWidget      (iLabelWidget *, iBool allCaps);
+void    setRemoveTrailingColon_LabelWidget  (iLabelWidget *, iBool removeTrailingColon);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
 void    setTextColor_LabelWidget    (iLabelWidget *, int color);
 void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */

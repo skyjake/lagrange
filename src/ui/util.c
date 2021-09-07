@@ -707,6 +707,9 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iBool haveIcons = iFalse;
     for (size_t i = 0; i < n; ++i) {
         const iMenuItem *item = &items[i];
+        if (!item->label) {
+            break;
+        }
         if (equal_CStr(item->label, "---")) {
             addChild_Widget(menu, iClob(makeMenuSeparator_()));
         }
@@ -1506,7 +1509,7 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
         id);
 }
 
-static void addFontButtons_(iWidget *parent, const char *id) {
+static const iArray *makeFontItems_(const char *id) {
     const struct {
         const char *   name;
         enum iTextFont cfgId;
@@ -1518,7 +1521,7 @@ static void addFontButtons_(iWidget *parent, const char *id) {
                   { "Tinos", tinos_TextFont },
                   { "---", -1 },
                   { "Iosevka", iosevka_TextFont } };
-    iArray *items = new_Array(sizeof(iMenuItem));
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
     iForIndices(i, fonts) {
         pushBack_Array(items,
                        &(iMenuItem){ fonts[i].name,
@@ -1528,11 +1531,18 @@ static void addFontButtons_(iWidget *parent, const char *id) {
                                          ? format_CStr("!%s.set arg:%d", id, fonts[i].cfgId)
                                          : NULL });
     }
-    iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans 3", data_Array(items), size_Array(items));
-    setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
+    pushBack_Array(items, &(iMenuItem){ NULL }); /* terminator */
+    return items;
+}
+
+static void addFontButtons_(iWidget *parent, const char *id) {
+    const iArray *items = makeFontItems_(id);
+    iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans 3",
+                                                      constData_Array(items), size_Array(items));
+    setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
+                              uiBackgroundMenu_ColorId);
     setId_Widget(as_Widget(button), format_CStr("prefs.%s", id));
     addChildFlags_Widget(parent, iClob(button), alignLeft_WidgetFlag);
-    delete_Array(items);
 }
 
 #if 0
@@ -1615,7 +1625,7 @@ static void addPrefsInputWithHeading_(iWidget *headings, iWidget *values,
 static size_t findWidestItemLabel_(const iMenuItem *items, size_t num) {
     int widest = 0;
     size_t widestPos = iInvalidPos;
-    for (size_t i = 0; i < num; i++) {
+    for (size_t i = 0; i < num && items[i].label; i++) {
         const int width =
             measure_Text(uiLabel_FontId,
                          translateCStr_Lang(items[i].label))
@@ -1629,6 +1639,153 @@ static size_t findWidestItemLabel_(const iMenuItem *items, size_t num) {
 }
 
 iWidget *makePreferences_Widget(void) {
+    /* Common items. */
+    const iMenuItem langItems[] = { { "${lang.de} - de", 0, 0, "uilang id:de" },
+                                    { "${lang.en} - en", 0, 0, "uilang id:en" },
+                                    { "${lang.es} - es", 0, 0, "uilang id:es" },
+                                    { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
+                                    { "${lang.fr} - fr", 0, 0, "uilang id:fr" },
+                                    { "${lang.ia} - ia", 0, 0, "uilang id:ia" },
+                                    { "${lang.ie} - ie", 0, 0, "uilang id:ie" },
+                                    { "${lang.pl} - pl", 0, 0, "uilang id:pl" },
+                                    { "${lang.ru} - ru", 0, 0, "uilang id:ru" },
+                                    { "${lang.sr} - sr", 0, 0, "uilang id:sr" },
+                                    { "${lang.tok} - tok", 0, 0, "uilang id:tok" },
+                                    { "${lang.zh.hans} - zh", 0, 0, "uilang id:zh_Hans" },
+                                    { "${lang.zh.hant} - zh", 0, 0, "uilang id:zh_Hant" },
+                                    { NULL } };
+    const iMenuItem returnKeyBehaviors[] = {
+        { "${prefs.returnkey.linebreak} " uiTextAction_ColorEscape shift_Icon return_Icon
+                                                                    restore_ColorEscape
+          "    ${prefs.returnkey.accept} " uiTextAction_ColorEscape return_Icon,
+          0,
+          0,
+          format_CStr("returnkey.set arg:%d", default_ReturnKeyBehavior) },
+        { "${prefs.returnkey.linebreak} " uiTextAction_ColorEscape return_Icon restore_ColorEscape
+          "    ${prefs.returnkey.accept} " uiTextAction_ColorEscape shift_Icon return_Icon,
+          0,
+          0,
+          format_CStr("returnkey.set arg:%d", acceptWithShift_ReturnKeyBehavior) },
+        { "${prefs.returnkey.linebreak} " uiTextAction_ColorEscape return_Icon restore_ColorEscape
+          "    ${prefs.returnkey.accept} " uiTextAction_ColorEscape
+#if defined (iPlatformApple)
+          "\u2318" return_Icon,
+#else
+          "Ctrl" return_Icon,
+#endif
+          0,
+          0,
+          format_CStr("returnkey.set arg:%d", acceptWithPrimaryMod_ReturnKeyBehavior) },
+        { NULL }
+    };
+    iMenuItem docThemes[2][max_GmDocumentTheme + 1];
+    for (int i = 0; i < 2; ++i) {
+        const iBool isDark = (i == 0);
+        const char *mode = isDark ? "dark" : "light";
+        const iMenuItem items[max_GmDocumentTheme + 1] = {
+            { "${prefs.doctheme.name.colorfuldark}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulDark_GmDocumentTheme) },
+            { "${prefs.doctheme.name.colorfullight}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulLight_GmDocumentTheme) },
+            { "${prefs.doctheme.name.black}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, black_GmDocumentTheme) },
+            { "${prefs.doctheme.name.gray}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, gray_GmDocumentTheme) },
+            { "${prefs.doctheme.name.white}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, white_GmDocumentTheme) },
+            { "${prefs.doctheme.name.sepia}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, sepia_GmDocumentTheme) },
+            { "${prefs.doctheme.name.highcontrast}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, highContrast_GmDocumentTheme) },
+            { NULL }
+        };
+        memcpy(docThemes[i], items, sizeof(items));
+    }
+    const iMenuItem imgStyles[] = {
+        { "${prefs.imagestyle.original}",  0, 0, format_CStr("imagestyle.set arg:%d", original_ImageStyle) },
+        { "${prefs.imagestyle.grayscale}", 0, 0, format_CStr("imagestyle.set arg:%d", grayscale_ImageStyle) },
+        { "${prefs.imagestyle.bgfg}",      0, 0, format_CStr("imagestyle.set arg:%d", bgFg_ImageStyle) },
+        { "${prefs.imagestyle.text}",      0, 0, format_CStr("imagestyle.set arg:%d", textColorized_ImageStyle) },
+        { "${prefs.imagestyle.preformat}", 0, 0, format_CStr("imagestyle.set arg:%d", preformatColorized_ImageStyle) },
+        { NULL }
+    };
+    /* Create the Preferences UI. */
+    if (deviceType_App() != desktop_AppDeviceType) {
+        const iMenuItem pinSplit[] = {
+            { "button id:prefs.pinsplit.0 label:prefs.pinsplit.none",  0, 0, "pinsplit.set arg:0" },
+            { "button id:prefs.pinsplit.1 label:prefs.pinsplit.left",  0, 0, "pinsplit.set arg:1" },
+            { "button id:prefs.pinsplit.2 label:prefs.pinsplit.right", 0, 0, "pinsplit.set arg:2" },
+            { NULL }
+        };
+        const iMenuItem themeItems[] = {
+            { "button id:prefs.theme.0 label:prefs.theme.black", 0, 0, "theme.set arg:0" },
+            { "button id:prefs.theme.1 label:prefs.theme.dark",  0, 0, "theme.set arg:1" },
+            { "button id:prefs.theme.2 label:prefs.theme.light", 0, 0, "theme.set arg:2" },
+            { "button id:prefs.theme.3 label:prefs.theme.white", 0, 0, "theme.set arg:3" },
+            { NULL }  
+        };
+        const iMenuItem accentItems[] = {
+            { "button id:prefs.accent.0 label:prefs.accent.teal", 0, 0, "accent.set arg:0" },
+            { "button id:prefs.accent.1 label:prefs.accent.orange", 0, 0, "accent.set arg:1" },
+            { NULL }
+        };
+        const iMenuItem satItems[] = {
+            { "button id:prefs.saturation.3 text:100 %", 0, 0, "saturation.set arg:100" },
+            { "button id:prefs.saturation.2 text:66 %", 0, 0, "saturation.set arg:66" },
+            { "button id:prefs.saturation.1 text:33 %", 0, 0, "saturation.set arg:33" },
+            { "button id:prefs.saturation.0 text:0 %", 0, 0, "saturation.set arg:0" },
+            { NULL }  
+        };
+        const iMenuItem generalItems[] = {
+            { "title id:heading.prefs.general", 0, 0, NULL },
+            { "input id:prefs.searchurl url:1", 0, 0, NULL },
+            { "padding", 0, 0, NULL },
+            { "toggle id:prefs.hoverlink", 0, 0, NULL },
+            { "toggle id:prefs.archive.openindex", 0, 0, NULL },
+            { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplit },
+            { "padding", 0, 0, NULL },
+            { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
+            { NULL }
+        };
+        const iMenuItem uiItems[] = {
+            { "title id:heading.prefs.interface", 0, 0, NULL },
+            { "dropdown device:1 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
+            { "padding device:1", 0, 0, NULL },
+            { "toggle device:2 id:prefs.hidetoolbarscroll", 0, 0, NULL },
+            { "heading id:heading.prefs.sizing", 0, 0, NULL },
+            { "input id:prefs.uiscale maxlen:8", 0, 0, NULL },
+            { NULL }
+        };
+        const iMenuItem colorItems[] = {
+            { "title id:heading.prefs.colors", 0, 0, NULL },
+            { "heading id:heading.prefs.uitheme", 0, 0, NULL },
+            { "toggle id:prefs.ostheme", 0, 0, NULL },
+            { "radio id:prefs.theme", 0, 0, (const void *) themeItems },
+            { "radio id:prefs.accent", 0, 0, (const void *) accentItems },
+            { "heading id:heading.prefs.pagecontent", 0, 0, NULL },
+            { "dropdown id:prefs.doctheme.dark", 0, 0, (const void *) docThemes[0] },
+            { "dropdown id:prefs.doctheme.light", 0, 0, (const void *) docThemes[1] },
+            { "radio id:prefs.saturation", 0, 0, (const void *) satItems },
+            { "padding", 0, 0, NULL },
+            { "dropdown id:prefs.imagestyle", 0, 0, (const void *) imgStyles },
+            { NULL }  
+        };
+        const iMenuItem fontItems[] = {
+            { "title id:heading.prefs.fonts", 0, 0, NULL },
+            { "dropdown id:prefs.headingfont", 0, 0, (const void *) constData_Array(makeFontItems_("headingfont")) },
+            { "dropdown id:prefs.font", 0, 0, (const void *) constData_Array(makeFontItems_("font")) },
+            { NULL }  
+        };
+        const iMenuItem items[] = { { "panel icon:0x2699 id:heading.prefs.general",
+                                      '1', 0,
+                                      (const void *) generalItems },
+                                    { "panel icon:0x1f4f1 id:heading.prefs.interface",
+                                      '2', 0,
+                                      (const void *) uiItems },
+                                    { "panel icon:0x1f3a8 id:heading.prefs.colors",
+                                      '3', 0,
+                                      (const void *) colorItems },
+                                    { "panel icon:0x1f5da id:heading.prefs.fonts",
+                                      '4', 0,
+                                      (const void *) fontItems },
+                                    { NULL } };
+        iWidget *dlg = makeSplitMultiPanel_Mobile(items);
+        setupSheetTransition_Mobile(dlg, iTrue);
+        return dlg;
+    }
     iWidget *dlg = makeSheet_Widget("prefs");
     addChildFlags_Widget(dlg,
                          iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.prefs}", NULL)),
@@ -1666,22 +1823,7 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
-            const iMenuItem langItems[] = {
-                { "${lang.de} - de", 0, 0, "uilang id:de" },
-                { "${lang.en} - en", 0, 0, "uilang id:en" },
-                { "${lang.es} - es", 0, 0, "uilang id:es" },
-                { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
-                { "${lang.fr} - fr", 0, 0, "uilang id:fr" },
-                { "${lang.ia} - ia", 0, 0, "uilang id:ia" },
-                { "${lang.ie} - ie", 0, 0, "uilang id:ie" },
-                { "${lang.pl} - pl", 0, 0, "uilang id:pl" },
-                { "${lang.ru} - ru", 0, 0, "uilang id:ru" },
-                { "${lang.sr} - sr", 0, 0, "uilang id:sr" },
-                { "${lang.tok} - tok", 0, 0, "uilang id:tok" },
-                { "${lang.zh.hans} - zh", 0, 0, "uilang id:zh_Hans" },
-                { "${lang.zh.hant} - zh", 0, 0, "uilang id:zh_Hant" },
-            };
-            pushBackN_Array(uiLangs, langItems, iElemCount(langItems));
+            pushBackN_Array(uiLangs, langItems, iElemCount(langItems) - 1);
             /* TODO: Add an arrange flag for resizing parent to widest child. */
             size_t widestPos = findWidestItemLabel_(data_Array(uiLangs), size_Array(uiLangs));
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.uilang}")));
@@ -1702,39 +1844,12 @@ iWidget *makePreferences_Widget(void) {
 #endif
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
         /* Return key behaviors. */ {
-            const iMenuItem returnKeyBehaviors[] = {
-                { "${prefs.returnkey.linebreak} "
-                  uiTextAction_ColorEscape shift_Icon return_Icon restore_ColorEscape
-                  "    ${prefs.returnkey.accept} "
-                  uiTextAction_ColorEscape return_Icon,
-                  0,
-                  0,
-                  format_CStr("returnkey.set arg:%d", default_ReturnKeyBehavior) },
-                { "${prefs.returnkey.linebreak} "
-                  uiTextAction_ColorEscape return_Icon restore_ColorEscape
-                  "    ${prefs.returnkey.accept} "
-                  uiTextAction_ColorEscape shift_Icon return_Icon,
-                  0,
-                  0,
-                  format_CStr("returnkey.set arg:%d", acceptWithShift_ReturnKeyBehavior) },
-                { "${prefs.returnkey.linebreak} "
-                   uiTextAction_ColorEscape return_Icon restore_ColorEscape
-                   "    ${prefs.returnkey.accept} " uiTextAction_ColorEscape
-#if defined (iPlatformApple)
-                    "\u2318" return_Icon,
-#else
-                     "Ctrl" return_Icon,
-#endif
-                    0,
-                    0,
-                    format_CStr("returnkey.set arg:%d", acceptWithPrimaryMod_ReturnKeyBehavior) },
-            };
             iLabelWidget *returnKey = makeMenuButton_LabelWidget(
                 returnKeyBehaviors[findWidestItemLabel_(returnKeyBehaviors,
-                                                        iElemCount(returnKeyBehaviors))]
+                                                        iElemCount(returnKeyBehaviors) - 1)]
                     .label,
                 returnKeyBehaviors,
-                iElemCount(returnKeyBehaviors));
+                iElemCount(returnKeyBehaviors) - 1);
             setBackgroundColor_Widget(findChild_Widget(as_Widget(returnKey), "menu"),
                                       uiBackgroundMenu_ColorId);
             setId_Widget(addChildFlags_Widget(values, iClob(returnKey), alignLeft_WidgetFlag),
@@ -1804,20 +1919,13 @@ iWidget *makePreferences_Widget(void) {
         for (int i = 0; i < 2; ++i) {
             const iBool isDark = (i == 0);
             const char *mode = isDark ? "dark" : "light";
-            const iMenuItem themes[] = {
-                { "${prefs.doctheme.name.colorfuldark}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulDark_GmDocumentTheme) },
-                { "${prefs.doctheme.name.colorfullight}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulLight_GmDocumentTheme) },
-                { "${prefs.doctheme.name.black}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, black_GmDocumentTheme) },
-                { "${prefs.doctheme.name.gray}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, gray_GmDocumentTheme) },
-                { "${prefs.doctheme.name.white}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, white_GmDocumentTheme) },
-                { "${prefs.doctheme.name.sepia}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, sepia_GmDocumentTheme) },
-                { "${prefs.doctheme.name.highcontrast}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, highContrast_GmDocumentTheme) },
-            };
             addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "${prefs.doctheme.dark}" : "${prefs.doctheme.light}")));
-            iLabelWidget *button =
-                makeMenuButton_LabelWidget(themes[1].label, themes, iElemCount(themes));
-//            setFrameColor_Widget(findChild_Widget(as_Widget(button), "menu"),
-//                                 uiBackgroundSelected_ColorId);
+            iLabelWidget *button = makeMenuButton_LabelWidget(
+                docThemes[i][findWidestItemLabel_(docThemes[i], max_GmDocumentTheme)].label,
+                docThemes[i],
+                max_GmDocumentTheme);
+            //            setFrameColor_Widget(findChild_Widget(as_Widget(button), "menu"),
+            //                                 uiBackgroundSelected_ColorId);
             setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
             setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
                          format_CStr("prefs.doctheme.%s", mode));
@@ -1833,17 +1941,10 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         /* Colorize images. */ {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imagestyle}")));
-            const iMenuItem imgStyles[] = {
-                { "${prefs.imagestyle.original}",  0, 0, format_CStr("imagestyle.set arg:%d", original_ImageStyle) },
-                { "${prefs.imagestyle.grayscale}", 0, 0, format_CStr("imagestyle.set arg:%d", grayscale_ImageStyle) },
-                { "${prefs.imagestyle.bgfg}",      0, 0, format_CStr("imagestyle.set arg:%d", bgFg_ImageStyle) },
-                { "${prefs.imagestyle.text}",      0, 0, format_CStr("imagestyle.set arg:%d", textColorized_ImageStyle) },
-                { "${prefs.imagestyle.preformat}", 0, 0, format_CStr("imagestyle.set arg:%d", preformatColorized_ImageStyle) },   
-            };
             iLabelWidget *button = makeMenuButton_LabelWidget(
-                imgStyles[findWidestItemLabel_(imgStyles, iElemCount(imgStyles))].label,
+                imgStyles[findWidestItemLabel_(imgStyles, iElemCount(imgStyles) - 1)].label,
                 imgStyles,
-                iElemCount(imgStyles));
+                iElemCount(imgStyles) - 1);
             setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
                                       uiBackgroundMenu_ColorId);
             setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),

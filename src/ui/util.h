@@ -220,7 +220,10 @@ struct Impl_MenuItem {
     const char *label;
     int key;
     int kmods;
-    const char *command;
+    union {
+        const char *command;
+        const void *data;
+    };
 };
 
 iWidget *   makeMenu_Widget     (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */

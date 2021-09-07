@@ -44,11 +44,13 @@ struct Impl_LabelWidget {
     iString command;
     iClick  click;
     struct {
-        uint8_t alignVisual     : 1; /* align according to visible bounds, not font metrics */
-        uint8_t noAutoMinHeight : 1; /* minimum height is not set automatically */
-        uint8_t drawAsOutline   : 1; /* draw as outline, filled with background color */
-        uint8_t noTopFrame      : 1;
-        uint8_t wrap            : 1;
+        uint8_t alignVisual         : 1; /* align according to visible bounds, not font metrics */
+        uint8_t noAutoMinHeight     : 1; /* minimum height is not set automatically */
+        uint8_t drawAsOutline       : 1; /* draw as outline, filled with background color */
+        uint8_t noTopFrame          : 1;
+        uint8_t wrap                : 1;
+        uint8_t allCaps             : 1;
+        uint8_t removeTrailingColon : 1;
     } flags;
 };
 
@@ -442,11 +444,18 @@ void updateSize_LabelWidget(iLabelWidget *d) {
 
 static void replaceVariables_LabelWidget_(iLabelWidget *d) {
     translate_Lang(&d->label);
+    if (d->flags.allCaps) {
+        set_String(&d->label, collect_String(upper_String(&d->label)));
+    }
+    if (d->flags.removeTrailingColon && endsWith_String(&d->label, ":")) {
+        removeEnd_String(&d->label, 1);
+    }
 }
 
 void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     iWidget *w = &d->widget;
     init_Widget(w);
+    iZap(d->flags);
     d->font = uiLabel_FontId;
     d->forceFg = none_ColorId;
     d->icon = 0;
@@ -464,11 +473,6 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->kmods = 0;
     init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
     setFlags_Widget(w, hover_WidgetFlag, d->click.button != 0);
-    d->flags.alignVisual     = iFalse;
-    d->flags.noAutoMinHeight = iFalse;
-    d->flags.drawAsOutline   = iFalse;
-    d->flags.noTopFrame      = iFalse;
-    d->flags.wrap            = iFalse;
     updateSize_LabelWidget(d);
     updateKey_LabelWidget_(d); /* could be bound to another key */
 }
@@ -522,6 +526,20 @@ void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {
 void setOutline_LabelWidget(iLabelWidget *d, iBool drawAsOutline) {
     if (d) {
         d->flags.drawAsOutline = drawAsOutline;
+    }
+}
+
+void setAllCaps_LabelWidget(iLabelWidget *d, iBool allCaps) {
+    if (d) {
+        d->flags.allCaps = allCaps;
+        replaceVariables_LabelWidget_(d);
+    }
+}
+
+void setRemoveTrailingColon_LabelWidget(iLabelWidget *d, iBool removeTrailingColon) {
+    if (d) {
+        d->flags.removeTrailingColon = removeTrailingColon;
+        replaceVariables_LabelWidget_(d);
     }
 }
 

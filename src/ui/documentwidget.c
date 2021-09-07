@@ -1010,6 +1010,9 @@ static void documentRunsInvalidated_DocumentWidget_(iDocumentWidget *d) {
 }
 
 iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
+    if (deviceType_App() == phone_AppDeviceType) {
+        return iFalse;
+    }
     if (d->flags & otherRootByDefault_DocumentWidgetFlag) {
         return iTrue;
     }

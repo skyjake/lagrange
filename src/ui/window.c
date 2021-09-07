@@ -1136,6 +1136,9 @@ void setTitle_Window(iWindow *d, const iString *title) {
 }
 
 void setUiScale_Window(iWindow *d, float uiScale) {
+    if (uiScale <= 0.0f) {
+        uiScale = 1.0f;
+    }
     uiScale = iClamp(uiScale, 0.5f, 4.0f);
     if (d) {
         if (iAbs(d->uiScale - uiScale) > 0.0001f) {

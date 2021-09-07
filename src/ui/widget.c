@@ -1402,6 +1402,7 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
 }
 
 iAny *findChild_Widget(const iWidget *d, const char *id) {
+    if (!d) return NULL;
     if (cmp_String(id_Widget(d), id) == 0) {
         return iConstCast(iAny *, d);
     }
