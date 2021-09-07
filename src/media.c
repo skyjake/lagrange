@@ -107,7 +107,7 @@ static void applyImageStyle_(enum iImageStyle style, iInt2 size, uint8_t *imgDat
             colorize = (iColor){ 255, 255, 255, 255};
         }
 //        printf("colorize:%d %d %d\n", colorize.r, colorize.g, colorize.b);
-//        brighten = iClamp(1.0f - (colorize.r + colorize.g + colorize.b) / 600.0f, 0.0f, 0.5f); /* compensate loss of light */
+        brighten = iClamp(1.0f - (colorize.r + colorize.g + colorize.b) / 600.0f, 0.0f, 0.5f); /* compensate loss of light */
 //        printf("bright:%f\n", brighten);
     }
     uint8_t *pos = imgData;
