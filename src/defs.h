@@ -44,8 +44,9 @@ enum iFileVersion {
 enum iImageStyle {
     original_ImageStyle           = 0,
     grayscale_ImageStyle          = 1,
-    textColorized_ImageStyle      = 2,
-    preformatColorized_ImageStyle = 3,
+    bgFg_ImageStyle               = 2,
+    textColorized_ImageStyle      = 3,
+    preformatColorized_ImageStyle = 4,
 };
 
 enum iScrollType {

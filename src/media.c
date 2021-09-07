@@ -91,8 +91,27 @@ static void applyImageStyle_(enum iImageStyle style, iInt2 size, uint8_t *imgDat
     if (style == original_ImageStyle) {
         return;
     }
-    iColor colorize = (iColor){ 255, 255, 255, 255};
-    float brighten = 0.0f;
+    uint8_t *pos       = imgData;
+    size_t   numPixels = size.x * size.y;
+    float    brighten  = 0.0f;
+    if (style == bgFg_ImageStyle) {
+        iColor dark  = get_Color(tmBackground_ColorId);
+        iColor light = get_Color(tmParagraph_ColorId);
+        if (hsl_Color(dark).lum > hsl_Color(light).lum) {
+            iSwap(iColor, dark, light);
+        }        
+        while (numPixels-- > 0) {
+            iHSLColor hsl = hsl_Color((iColor){ pos[0], pos[1], pos[2], 255 });
+            const float s = 1.0f - hsl.lum;
+            const float t = hsl.lum;
+            pos[0] = dark.r * s + light.r * t;
+            pos[1] = dark.g * s + light.g * t;
+            pos[2] = dark.b * s + light.b * t;
+            pos += 4;
+        }        
+        return;
+    }
+    iColor colorize = (iColor){ 255, 255, 255, 255 };
     if (style != grayscale_ImageStyle) {
         colorize = get_Color(style == textColorized_ImageStyle ? tmParagraph_ColorId
                                                                : tmPreformatted_ColorId);
@@ -100,9 +119,7 @@ static void applyImageStyle_(enum iImageStyle style, iInt2 size, uint8_t *imgDat
         const int colMax = iMax(iMax(colorize.r, colorize.g), colorize.b);
         brighten = iClamp(1.0f - (colorize.r + colorize.g + colorize.b) / (colMax * 3), 0.0f, 0.5f); /* compensate loss of light */
     }
-    uint8_t *pos = imgData;
-    size_t numPixels = size.x * size.y;
-    iHSLColor hslColorize = hsl_Color(colorize);                           
+    iHSLColor hslColorize = hsl_Color(colorize);
     while (numPixels-- > 0) {
         iHSLColor hsl = hsl_Color((iColor){ pos[0], pos[1], pos[2], 255 });
         iHSLColor out = { hslColorize.hue, hslColorize.sat, hsl.lum, 1.0f };

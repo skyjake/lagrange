@@ -1342,6 +1342,10 @@ msgstr "None"
 msgid "prefs.imagestyle.grayscale"
 msgstr "Grayscale"
 
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "BG-to-FG"
+
 msgid "prefs.imagestyle.text"
 msgstr "Text Color"
 
