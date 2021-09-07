@@ -115,9 +115,9 @@ static void applyImageStyle_(enum iImageStyle style, iInt2 size, uint8_t *imgDat
     if (style != grayscale_ImageStyle) {
         colorize = get_Color(style == textColorized_ImageStyle ? tmParagraph_ColorId
                                                                : tmPreformatted_ColorId);
-        /* Maximize contrast. */
+        /* Compensate for change in mid-tones. */
         const int colMax = iMax(iMax(colorize.r, colorize.g), colorize.b);
-        brighten = iClamp(1.0f - (colorize.r + colorize.g + colorize.b) / (colMax * 3), 0.0f, 0.5f); /* compensate loss of light */
+        brighten = iClamp(1.0f - (colorize.r + colorize.g + colorize.b) / (colMax * 3), 0.0f, 0.5f);
     }
     iHSLColor hslColorize = hsl_Color(colorize);
     while (numPixels-- > 0) {
