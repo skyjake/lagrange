@@ -512,7 +512,7 @@ void makePanelItems_Mobile(iWidget *panel, const iMenuItem *itemsNullTerminated)
     }
 }
 
-iWidget *makeSplitMultiPanel_Mobile(const iMenuItem *itemsNullTerminated) {
+iWidget *makePanels_Mobile(const iMenuItem *itemsNullTerminated) {
     /* A multipanel widget has a top panel and one or more detail panels. In a horizontal layout,
        the detail panels slide in from the right and cover the top panel. In a landscape layout,
        the detail panels are always visible on the side. */

@@ -1617,9 +1617,21 @@ iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *va
     return input;
 }
 
+static void addDialogPadding_(iWidget *headings, iWidget *values) {
+    const int bigGap = lineHeight_Text(uiLabel_FontId) * 3 / 4;
+    addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
+    addChild_Widget(values,   iClob(makePadding_Widget(bigGap)));    
+}
+
 static void addPrefsInputWithHeading_(iWidget *headings, iWidget *values,
                                       const char *id, iInputWidget *input) {
     addDialogInputWithHeading_(headings, values, format_CStr("${%s}", id), id, input);
+}
+
+static void addDialogToggle_(iWidget *headings, iWidget *values,
+                             const char *heading, const char *toggleId) {
+    addChild_Widget(headings, iClob(makeHeading_Widget(heading)));
+    addChild_Widget(values, iClob(makeToggle_Widget(toggleId)));
 }
 
 static size_t findWidestItemLabel_(const iMenuItem *items, size_t num) {
@@ -1830,9 +1842,9 @@ iWidget *makePreferences_Widget(void) {
         };
         iString *aboutText = collectNew_String(); {
             setCStr_String(aboutText, "Lagrange " LAGRANGE_APP_VERSION);
-#if defined (iPlatformAppleMobile)
+            #if defined (iPlatformAppleMobile)
             appendCStr_String(aboutText, " (" LAGRANGE_IOS_VERSION ")");
-#endif
+            #endif
         }
         const iMenuItem aboutPanelItems[] = {
             { format_CStr("heading text:%s", cstr_String(aboutText)) },
@@ -1842,8 +1854,8 @@ iWidget *makePreferences_Widget(void) {
             { "button text:" info_Icon " ${menu.aboutpages}", 0, 0, "!open url:about:about" },
             { "button text:" bug_Icon " ${menu.debug}", 0, 0, "!open url:about:debug" },
             { NULL }
-        };        
-        const iMenuItem items[] = {
+        };
+        iWidget *dlg = makePanels_Mobile((iMenuItem[]){
             { "panel icon:0x2699 id:heading.prefs.general", 0, 0, (const void *) generalPanelItems },
             { "panel icon:0x1f5a7 id:heading.prefs.network", 0, 0, (const void *) networkPanelItems },
             { "panel text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
@@ -1857,8 +1869,7 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "panel text:" planet_Icon " ${menu.about}", 0, 0, (const void *) aboutPanelItems },
             { NULL }
-        };        
-        iWidget *dlg = makeSplitMultiPanel_Mobile(items);
+        });
         setupSheetTransition_Mobile(dlg, iTrue);
         return dlg;
     }
@@ -1870,7 +1881,6 @@ iWidget *makePreferences_Widget(void) {
     setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
     setId_Widget(tabs, "prefs.tabs");
     iWidget *headings, *values;
-    const int bigGap = lineHeight_Text(uiLabel_FontId) * 3 / 4;
     /* General preferences. */ {
         appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.general}", '1', &headings, &values);
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
@@ -1879,12 +1889,9 @@ iWidget *makePreferences_Widget(void) {
         iInputWidget *searchUrl;
         addPrefsInputWithHeading_(headings, values, "prefs.searchurl", iClob(searchUrl = new_InputWidget(0)));
         setUrlContent_InputWidget(searchUrl, iTrue);
-        addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
-        addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hoverlink}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.archive.openindex}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.archive.openindex")));
+        addDialogPadding_(headings, values);
+        addDialogToggle_(headings, values, "${prefs.hoverlink}", "prefs.hoverlink");
+        addDialogToggle_(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
         if (deviceType_App() != phone_AppDeviceType) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pinsplit}")));
             iWidget *pinSplit = new_Widget();
@@ -1895,8 +1902,7 @@ iWidget *makePreferences_Widget(void) {
             }
             addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
-        addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
-        addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
+        addDialogPadding_(headings, values);
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
             pushBackN_Array(uiLangs, langItems, iElemCount(langItems) - 1);
@@ -1915,8 +1921,7 @@ iWidget *makePreferences_Widget(void) {
     /* User Interface. */ {
         appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.interface}", '2', &headings, &values);
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.customframe}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.customframe")));
+        addDialogToggle_(headings, values, "${prefs.customframe}", "prefs.customframe");
 #endif
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
         /* Return key behaviors. */ {
@@ -1931,11 +1936,9 @@ iWidget *makePreferences_Widget(void) {
             setId_Widget(addChildFlags_Widget(values, iClob(returnKey), alignLeft_WidgetFlag),
                          "prefs.returnkey");
         }
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.animate}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.animate")));
+        addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
         makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.smoothscroll}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
+        addDialogToggle_(headings, values, "${prefs.smoothscroll}", "prefs.smoothscroll");
         /* Scroll speeds. */ {
             for (int type = 0; type < max_ScrollType; type++) {
                 const char *typeStr = (type == mouse_ScrollType ? "mouse" : "keyboard");
@@ -1955,25 +1958,21 @@ iWidget *makePreferences_Widget(void) {
                     values, iClob(scrollSpeed), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             }
         }
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imageloadscroll}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.imageloadscroll")));
+        addDialogToggle_(headings, values, "${prefs.imageloadscroll}", "prefs.imageloadscroll");
         if (deviceType_App() == phone_AppDeviceType) {
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hidetoolbarscroll}")));
-            addChild_Widget(values, iClob(makeToggle_Widget("prefs.hidetoolbarscroll")));
+            addDialogToggle_(headings, values, "${prefs.hidetoolbarscroll}", "prefs.hidetoolbarscroll");
         }
         makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
         addPrefsInputWithHeading_(headings, values, "prefs.uiscale", iClob(new_InputWidget(8)));
         if (deviceType_App() == desktop_AppDeviceType) {
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.retainwindow}")));
-            addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
+            addDialogToggle_(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
         }
     }
     /* Colors. */ {
         appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.colors}", '3', &headings, &values);
         makeTwoColumnHeading_("${heading.prefs.uitheme}", headings, values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ostheme}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
+        addDialogToggle_(headings, values, "${prefs.ostheme}", "prefs.ostheme");
 #endif
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.theme}")));
         iWidget *themes = new_Widget();
@@ -2034,8 +2033,7 @@ iWidget *makePreferences_Widget(void) {
             addFontButtons_(values, "headingfont");
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font}")));
             addFontButtons_(values, "font");
-            addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
-            addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
+            addDialogPadding_(headings, values);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.mono}")));
             iWidget *mono = new_Widget(); {
                 iWidget *tog;
@@ -2067,8 +2065,7 @@ iWidget *makePreferences_Widget(void) {
                 updateSize_LabelWidget((iLabelWidget *) tog);
             }
             addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-            addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
-            addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
+            addDialogPadding_(headings, values);
             /* Custom font. */ {
                 iInputWidget *customFont = new_InputWidget(0);
                 setHint_InputWidget(customFont, "${hint.prefs.userfont}");
@@ -2097,19 +2094,12 @@ iWidget *makePreferences_Widget(void) {
             addRadioButton_(quote, "prefs.quoteicon.0", "${prefs.quoteicon.line}", "quoteicon.set arg:0");
         }
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.biglede}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.plaintext.wrap}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.plaintext.wrap")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.collapsepreonload}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.collapsepreonload")));
-//        makeTwoColumnHeading_("${heading.prefs.widelayout}", headings, values);
-        addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
-        addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sideicon}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.centershort}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
+        addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
+        addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
+        addDialogToggle_(headings, values, "${prefs.collapsepreonload}", "prefs.collapsepreonload");
+        addDialogPadding_(headings, values);
+        addDialogToggle_(headings, values, "${prefs.sideicon}", "prefs.sideicon");
+        addDialogToggle_(headings, values, "${prefs.centershort}", "prefs.centershort");
     }
     /* Network. */ {
         appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.network}", '6', &headings, &values);
@@ -2181,12 +2171,9 @@ iWidget *makeBookmarkEditor_Widget(void) {
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
     makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
-    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.home}")));
-    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.home")));
-    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.remote}")));
-    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.remote")));
-    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.linksplit}")));
-    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.linksplit")));
+    addDialogToggle_(headings, values, "${bookmark.tag.home}", "bmed.tag.home");
+    addDialogToggle_(headings, values, "${bookmark.tag.remote}", "bmed.tag.remote");
+    addDialogToggle_(headings, values, "${bookmark.tag.linksplit}", "bmed.tag.linksplit");
     arrange_Widget(dlg);
     for (int i = 0; i < 3; ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;

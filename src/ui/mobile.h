@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Widget)
 iDeclareType(MenuItem)
     
-iWidget *   makeSplitMultiPanel_Mobile  (const iMenuItem *itemsNullTerminated);
+iWidget *   makePanels_Mobile           (const iMenuItem *itemsNullTerminated);
     
 void        setupMenuTransition_Mobile  (iWidget *menu, iBool isIncoming);
 void        setupSheetTransition_Mobile (iWidget *sheet, iBool isIncoming);
