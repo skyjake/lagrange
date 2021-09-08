@@ -1734,7 +1734,7 @@ iWidget *makePreferences_Widget(void) {
             { "button id:prefs.mono.gopher" },
             { NULL }  
         };
-        const iMenuItem boldLinkItems[] = {                                            
+        const iMenuItem boldLinkItems[] = {
             { "button id:prefs.boldlink.dark" },
             { "button id:prefs.boldlink.light" },
             { NULL }  
@@ -1758,7 +1758,6 @@ iWidget *makePreferences_Widget(void) {
             { "heading id:prefs.searchurl" },
             { "input id:prefs.searchurl url:1 noheading:1" },
             { "padding" },
-            { "toggle id:prefs.hoverlink" },
             { "toggle id:prefs.archive.openindex" },
             { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
             { "padding" },
@@ -1769,6 +1768,7 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.prefs.interface" },
             { "dropdown device:1 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
             { "padding device:1" },
+            { "toggle id:prefs.hoverlink" },
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
             { "heading id:heading.prefs.sizing" },
             { "input id:prefs.uiscale maxlen:8" },
@@ -1824,19 +1824,51 @@ iWidget *makePreferences_Widget(void) {
             { "input id:prefs.proxy.http noheading:1" },
             { NULL }
         };
+        const iMenuItem identityPanelItems[] = {
+            { "title id:sidebar.identities" },
+            { NULL }  
+        };
+        iString *aboutText = collectNew_String(); {
+            setCStr_String(aboutText, "Lagrange " LAGRANGE_APP_VERSION);
+#if defined (iPlatformAppleMobile)
+            appendCStr_String(aboutText, " (" LAGRANGE_IOS_VERSION ")");
+#endif
+        }
+        const iMenuItem aboutPanelItems[] = {
+            { format_CStr("heading text:%s", cstr_String(aboutText)) },
+            { "button text:" globe_Icon " By @jk@skyjake.fi", 0, 0,
+              "!open url:https://skyjake.fi/@jk" },
+            { "button text:" clock_Icon " ${menu.releasenotes}", 0, 0,
+              "!open url:about:version" },
+            { "padding" },
+            { "button text:" info_Icon " ${menu.aboutpages}", 0, 0,
+              "!open url:about:about" },
+            { "button text:" bug_Icon " ${menu.debug}", 0, 0,
+              "!open url:about:debug" },
+            { NULL }
+        };        
         const iMenuItem items[] = { { "panel icon:0x2699 id:heading.prefs.general",
                                       '1', 0, (const void *) generalPanelItems },
-                                    { "panel icon:0x1f4f1 id:heading.prefs.interface",
-                                      '2', 0, (const void *) uiPanelItems },
-                                    { "panel icon:0x1f3a8 id:heading.prefs.colors",
-                                      '3', 0, (const void *) colorPanelItems },
-                                    { "panel icon:0x1f5da id:heading.prefs.fonts",
-                                      '4', 0, (const void *) fontPanelItems },
-                                    { "panel icon:0x1f660 id:heading.prefs.style",
-                                      '5', 0, (const void *) stylePanelItems },
                                     { "panel icon:0x1f5a7 id:heading.prefs.network",
-                                      '6', 0, (const void *) networkPanelItems },
-                                    { NULL } };
+                                      '2', 0, (const void *) networkPanelItems },
+                                    { "panel text:" person_Icon " ${sidebar.identities}",
+                                      '3', 0, (const void *) identityPanelItems },
+                                    { "padding" },
+                                    { "panel icon:0x1f4f1 id:heading.prefs.interface",
+                                      '4', 0, (const void *) uiPanelItems },
+                                    { "panel icon:0x1f3a8 id:heading.prefs.colors",
+                                      '5', 0, (const void *) colorPanelItems },
+                                    { "panel icon:0x1f5da id:heading.prefs.fonts",
+                                      '6', 0, (const void *) fontPanelItems },
+                                    { "panel icon:0x1f660 id:heading.prefs.style",
+                                      '7', 0, (const void *) stylePanelItems },
+                                    { "padding" },
+                                    { "button text:" info_Icon " ${menu.help}",
+                                      0, 0, "!open url:about:help" },
+                                    { "padding" },
+                                    { "panel text:" planet_Icon " ${menu.about}",
+                                      0, 0, (const void *) aboutPanelItems },
+                                    { NULL } };        
         iWidget *dlg = makeSplitMultiPanel_Mobile(items);
         setupSheetTransition_Mobile(dlg, iTrue);
         return dlg;
@@ -2159,7 +2191,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     /* Buttons for special tags. */
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
-    makeTwoColumnHeading_("SPECIAL TAGS", headings, values);
+    makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
     addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.home}")));
     addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.home")));
     addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.remote}")));

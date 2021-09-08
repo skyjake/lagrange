@@ -280,8 +280,8 @@ static void stripTrailingColon_(iLabelWidget *label) {
 static iLabelWidget *makePanelButton_(const char *text, const char *command) {
     iLabelWidget *btn = new_LabelWidget(text, command);
     setFlags_Widget(as_Widget(btn),
-                    borderBottom_WidgetFlag | alignLeft_WidgetFlag |
-                    frameless_WidgetFlag | extraPadding_WidgetFlag,
+                    borderTop_WidgetFlag | borderBottom_WidgetFlag | alignLeft_WidgetFlag |
+                        frameless_WidgetFlag | extraPadding_WidgetFlag,
                     iTrue);
     checkIcon_LabelWidget(btn);
     setFont_LabelWidget(btn, labelFont_());
@@ -379,11 +379,13 @@ static size_t countItems_(const iMenuItem *itemsNullTerminated) {
 }
 
 void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
-    const char *  spec    = item->label;
-    const char *  id      = cstr_Rangecc(range_Command(spec, "id"));
-    const char *  label   = format_CStr("${%s}", id);
     iWidget *     widget  = NULL;
     iLabelWidget *heading = NULL;
+    const char *  spec    = item->label;
+    const char *  id      = cstr_Rangecc(range_Command(spec, "id"));
+    const char *  label   = hasLabel_Command(spec, "text")
+                                ? suffixPtr_Command(spec, "text")
+                                : format_CStr("${%s}", id);
     if (hasLabel_Command(spec, "device") && deviceType_App() != argLabel_Command(spec, "device")) {
         return;
     }
@@ -486,6 +488,9 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                                                   as_Widget(input));
         }
     }
+    else if (equal_Command(spec, "button")) {
+        widget = as_Widget(heading = makePanelButton_(label, item->command));
+    }
     else if (equal_Command(spec, "padding")) {
         widget = makePadding_Widget(lineHeight_Text(labelFont_()) * 1.5f);
     }
@@ -514,9 +519,8 @@ iWidget *makeSplitMultiPanel_Mobile(const iMenuItem *itemsNullTerminated) {
     iWidget *sheet = new_Widget();
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
     setFlags_Widget(sheet,
-                    resizeToParentWidth_WidgetFlag |
-                    resizeToParentHeight_WidgetFlag |
-                    frameless_WidgetFlag | focusRoot_WidgetFlag | commandOnClick_WidgetFlag |
+                    resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
+                        frameless_WidgetFlag | focusRoot_WidgetFlag | commandOnClick_WidgetFlag |
                         overflowScrollable_WidgetFlag | leftEdgeDraggable_WidgetFlag,
                     iTrue);
     /* The top-level split between main and detail panels. */
@@ -571,8 +575,10 @@ iWidget *makeSplitMultiPanel_Mobile(const iMenuItem *itemsNullTerminated) {
         const iMenuItem *item = &itemsNullTerminated[i];
         if (equal_Command(item->label, "panel")) {
             const char *id = cstr_Rangecc(range_Command(item->label, "id"));
-            const iString *label = collectNewFormat_String("${%s}", id);
-            iLabelWidget *button =
+            const iString *label = hasLabel_Command(item->label, "text")
+                                       ? collect_String(suffix_Command(item->label, "text"))
+                                       : collectNewFormat_String("${%s}", id);
+            iLabelWidget * button =
                 addChildFlags_Widget(topPanel,
                                      iClob(makePanelButton_(cstr_String(label), "panel.open")),
                                      chevron_WidgetFlag | borderTop_WidgetFlag);
