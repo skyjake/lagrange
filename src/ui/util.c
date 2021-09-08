@@ -1836,39 +1836,28 @@ iWidget *makePreferences_Widget(void) {
         }
         const iMenuItem aboutPanelItems[] = {
             { format_CStr("heading text:%s", cstr_String(aboutText)) },
-            { "button text:" globe_Icon " By @jk@skyjake.fi", 0, 0,
-              "!open url:https://skyjake.fi/@jk" },
-            { "button text:" clock_Icon " ${menu.releasenotes}", 0, 0,
-              "!open url:about:version" },
+            { "button text:" globe_Icon " By @jk@skyjake.fi", 0, 0, "!open url:https://skyjake.fi/@jk" },
+            { "button text:" clock_Icon " ${menu.releasenotes}", 0, 0, "!open url:about:version" },
             { "padding" },
-            { "button text:" info_Icon " ${menu.aboutpages}", 0, 0,
-              "!open url:about:about" },
-            { "button text:" bug_Icon " ${menu.debug}", 0, 0,
-              "!open url:about:debug" },
+            { "button text:" info_Icon " ${menu.aboutpages}", 0, 0, "!open url:about:about" },
+            { "button text:" bug_Icon " ${menu.debug}", 0, 0, "!open url:about:debug" },
             { NULL }
         };        
-        const iMenuItem items[] = { { "panel icon:0x2699 id:heading.prefs.general",
-                                      '1', 0, (const void *) generalPanelItems },
-                                    { "panel icon:0x1f5a7 id:heading.prefs.network",
-                                      '2', 0, (const void *) networkPanelItems },
-                                    { "panel text:" person_Icon " ${sidebar.identities}",
-                                      '3', 0, (const void *) identityPanelItems },
-                                    { "padding" },
-                                    { "panel icon:0x1f4f1 id:heading.prefs.interface",
-                                      '4', 0, (const void *) uiPanelItems },
-                                    { "panel icon:0x1f3a8 id:heading.prefs.colors",
-                                      '5', 0, (const void *) colorPanelItems },
-                                    { "panel icon:0x1f5da id:heading.prefs.fonts",
-                                      '6', 0, (const void *) fontPanelItems },
-                                    { "panel icon:0x1f660 id:heading.prefs.style",
-                                      '7', 0, (const void *) stylePanelItems },
-                                    { "padding" },
-                                    { "button text:" info_Icon " ${menu.help}",
-                                      0, 0, "!open url:about:help" },
-                                    { "padding" },
-                                    { "panel text:" planet_Icon " ${menu.about}",
-                                      0, 0, (const void *) aboutPanelItems },
-                                    { NULL } };        
+        const iMenuItem items[] = {
+            { "panel icon:0x2699 id:heading.prefs.general", 0, 0, (const void *) generalPanelItems },
+            { "panel icon:0x1f5a7 id:heading.prefs.network", 0, 0, (const void *) networkPanelItems },
+            { "panel text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
+            { "padding" },
+            { "panel icon:0x1f4f1 id:heading.prefs.interface", 0, 0, (const void *) uiPanelItems },
+            { "panel icon:0x1f3a8 id:heading.prefs.colors", 0, 0, (const void *) colorPanelItems },
+            { "panel icon:0x1f5da id:heading.prefs.fonts", 0, 0, (const void *) fontPanelItems },
+            { "panel icon:0x1f660 id:heading.prefs.style", 0, 0, (const void *) stylePanelItems },
+            { "padding" },
+            { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
+            { "padding" },
+            { "panel text:" planet_Icon " ${menu.about}", 0, 0, (const void *) aboutPanelItems },
+            { NULL }
+        };        
         iWidget *dlg = makeSplitMultiPanel_Mobile(items);
         setupSheetTransition_Mobile(dlg, iTrue);
         return dlg;
