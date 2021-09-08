@@ -1704,7 +1704,7 @@ iWidget *makePreferences_Widget(void) {
     };
     /* Create the Preferences UI. */
     if (deviceType_App() != desktop_AppDeviceType) {
-        const iMenuItem pinSplit[] = {
+        const iMenuItem pinSplitItems[] = {
             { "button id:prefs.pinsplit.0 label:prefs.pinsplit.none",  0, 0, "pinsplit.set arg:0" },
             { "button id:prefs.pinsplit.1 label:prefs.pinsplit.left",  0, 0, "pinsplit.set arg:1" },
             { "button id:prefs.pinsplit.2 label:prefs.pinsplit.right", 0, 0, "pinsplit.set arg:2" },
@@ -1729,58 +1729,113 @@ iWidget *makePreferences_Widget(void) {
             { "button id:prefs.saturation.0 text:0 %", 0, 0, "saturation.set arg:0" },
             { NULL }  
         };
-        const iMenuItem generalItems[] = {
-            { "title id:heading.prefs.general", 0, 0, NULL },
-            { "input id:prefs.searchurl url:1", 0, 0, NULL },
-            { "padding", 0, 0, NULL },
-            { "toggle id:prefs.hoverlink", 0, 0, NULL },
-            { "toggle id:prefs.archive.openindex", 0, 0, NULL },
-            { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplit },
-            { "padding", 0, 0, NULL },
+        const iMenuItem monoFontItems[] = {
+            { "button id:prefs.mono.gemini" },
+            { "button id:prefs.mono.gopher" },
+            { NULL }  
+        };
+        const iMenuItem boldLinkItems[] = {                                            
+            { "button id:prefs.boldlink.dark" },
+            { "button id:prefs.boldlink.light" },
+            { NULL }  
+        };
+        const iMenuItem lineWidthItems[] = {
+            { "button id:prefs.linewidth.30 text:\u20132", 0, 0, "linewidth.set arg:30" },
+            { "button id:prefs.linewidth.34 text:\u20131", 0, 0, "linewidth.set arg:34" },
+            { "button id:prefs.linewidth.38 label:prefs.linewidth.normal", 0, 0, "linewidth.set arg:38" },
+            { "button id:prefs.linewidth.43 text:+1", 0, 0, "linewidth.set arg:43" },
+            { "button id:prefs.linewidth.48 text:+2", 0, 0, "linewidth.set arg:48" },
+            { "button id:prefs.linewidth.1000 label:prefs.linewidth.fill", 0, 0, "linewidth.set arg:1000" },
+            { NULL }              
+        };
+        const iMenuItem quoteItems[] = {
+            { "button id:prefs.quoteicon.1 label:prefs.quoteicon.icon", 0, 0, "quoteicon.set arg:1" },
+            { "button id:prefs.quoteicon.0 label:prefs.quoteicon.line", 0, 0, "quoteicon.set arg:0" },
+            { NULL }  
+        };
+        const iMenuItem generalPanelItems[] = {
+            { "title id:heading.prefs.general" },
+            { "heading id:prefs.searchurl" },
+            { "input id:prefs.searchurl url:1 noheading:1" },
+            { "padding" },
+            { "toggle id:prefs.hoverlink" },
+            { "toggle id:prefs.archive.openindex" },
+            { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
+            { "padding" },
             { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
             { NULL }
         };
-        const iMenuItem uiItems[] = {
-            { "title id:heading.prefs.interface", 0, 0, NULL },
+        const iMenuItem uiPanelItems[] = {
+            { "title id:heading.prefs.interface" },
             { "dropdown device:1 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
-            { "padding device:1", 0, 0, NULL },
-            { "toggle device:2 id:prefs.hidetoolbarscroll", 0, 0, NULL },
-            { "heading id:heading.prefs.sizing", 0, 0, NULL },
-            { "input id:prefs.uiscale maxlen:8", 0, 0, NULL },
+            { "padding device:1" },
+            { "toggle device:2 id:prefs.hidetoolbarscroll" },
+            { "heading id:heading.prefs.sizing" },
+            { "input id:prefs.uiscale maxlen:8" },
             { NULL }
         };
-        const iMenuItem colorItems[] = {
-            { "title id:heading.prefs.colors", 0, 0, NULL },
-            { "heading id:heading.prefs.uitheme", 0, 0, NULL },
-            { "toggle id:prefs.ostheme", 0, 0, NULL },
+        const iMenuItem colorPanelItems[] = {
+            { "title id:heading.prefs.colors" },
+            { "heading id:heading.prefs.uitheme" },
+            { "toggle id:prefs.ostheme" },
             { "radio id:prefs.theme", 0, 0, (const void *) themeItems },
             { "radio id:prefs.accent", 0, 0, (const void *) accentItems },
-            { "heading id:heading.prefs.pagecontent", 0, 0, NULL },
+            { "heading id:heading.prefs.pagecontent" },
             { "dropdown id:prefs.doctheme.dark", 0, 0, (const void *) docThemes[0] },
             { "dropdown id:prefs.doctheme.light", 0, 0, (const void *) docThemes[1] },
             { "radio id:prefs.saturation", 0, 0, (const void *) satItems },
-            { "padding", 0, 0, NULL },
+            { "padding" },
             { "dropdown id:prefs.imagestyle", 0, 0, (const void *) imgStyles },
             { NULL }  
         };
-        const iMenuItem fontItems[] = {
-            { "title id:heading.prefs.fonts", 0, 0, NULL },
+        const iMenuItem fontPanelItems[] = {
+            { "title id:heading.prefs.fonts" },
             { "dropdown id:prefs.headingfont", 0, 0, (const void *) constData_Array(makeFontItems_("headingfont")) },
             { "dropdown id:prefs.font", 0, 0, (const void *) constData_Array(makeFontItems_("font")) },
+            { "buttons id:prefs.mono", 0, 0, (const void *) monoFontItems },
+            { "buttons id:prefs.boldlink", 0, 0, (const void *) boldLinkItems },
             { NULL }  
         };
+        const iMenuItem stylePanelItems[] = {
+            { "title id:heading.prefs.style" },
+            { "radio id:prefs.linewidth", 0, 0, (const void *) lineWidthItems },
+            { "padding" },
+            { "input id:prefs.linespacing maxlen:5" },
+            { "radio id:prefs.quoteicon", 0, 0, (const void *) quoteItems },
+            { "padding" },
+            { "toggle id:prefs.biglede" },
+            { "toggle id:prefs.plaintext.wrap" },
+            { "toggle id:prefs.collapsepreonload" },
+            { "toggle id:prefs.sideicon" },
+            { "toggle id:prefs.centershort" },            
+            { NULL }    
+        };
+        const iMenuItem networkPanelItems[] = {
+            { "title id:heading.prefs.network" },
+            { "toggle id:prefs.decodeurls" },
+            { "padding" },
+            { "input id:prefs.cachesize maxlen:4 selectall:1 unit:mb" },
+            { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
+            { "heading id:prefs.proxy.gemini" },
+            { "input id:prefs.proxy.gemini noheading:1" },
+            { "heading id:prefs.proxy.gemini" },
+            { "input id:prefs.proxy.gopher noheading:1" },
+            { "heading id:prefs.proxy.gemini" },
+            { "input id:prefs.proxy.http noheading:1" },
+            { NULL }
+        };
         const iMenuItem items[] = { { "panel icon:0x2699 id:heading.prefs.general",
-                                      '1', 0,
-                                      (const void *) generalItems },
+                                      '1', 0, (const void *) generalPanelItems },
                                     { "panel icon:0x1f4f1 id:heading.prefs.interface",
-                                      '2', 0,
-                                      (const void *) uiItems },
+                                      '2', 0, (const void *) uiPanelItems },
                                     { "panel icon:0x1f3a8 id:heading.prefs.colors",
-                                      '3', 0,
-                                      (const void *) colorItems },
+                                      '3', 0, (const void *) colorPanelItems },
                                     { "panel icon:0x1f5da id:heading.prefs.fonts",
-                                      '4', 0,
-                                      (const void *) fontItems },
+                                      '4', 0, (const void *) fontPanelItems },
+                                    { "panel icon:0x1f660 id:heading.prefs.style",
+                                      '5', 0, (const void *) stylePanelItems },
+                                    { "panel icon:0x1f5a7 id:heading.prefs.network",
+                                      '6', 0, (const void *) networkPanelItems },
                                     { NULL } };
         iWidget *dlg = makeSplitMultiPanel_Mobile(items);
         setupSheetTransition_Mobile(dlg, iTrue);
@@ -2118,7 +2173,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(
         dlg,
-        iClob(makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+        iClob(makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}" },
                                                 { uiTextCaution_ColorEscape "${dlg.bookmark.save}",
                                                   SDLK_RETURN,
                                                   KMOD_PRIMARY,
@@ -2246,7 +2301,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     iWidget *buttons =
         addChild_Widget(dlg,
                         iClob(makeDialogButtons_Widget(
-                            (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+                            (iMenuItem[]){ { "${cancel}" },
                                            { bookmarkId ? uiTextCaution_ColorEscape "${dlg.feed.save}"
                                                         : uiTextCaution_ColorEscape "${dlg.feed.sub}",
                                              SDLK_RETURN,
@@ -2342,7 +2397,7 @@ iWidget *makeIdentityCreation_Widget(void) {
     addChild_Widget(dlg,
                     iClob(makeDialogButtons_Widget(
                         (iMenuItem[]){ { "${dlg.newident.more}", 0, 0, "ident.showmore" },
-                                       { "---", 0, 0, NULL },
+                                       { "---" },
                                        { "${cancel}", SDLK_ESCAPE, 0, "ident.cancel" },
                                        { uiTextAction_ColorEscape "${dlg.newident.create}",
                                          SDLK_RETURN,

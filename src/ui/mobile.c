@@ -187,6 +187,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
     return iFalse;
 }
 
+#if 0
 static iBool isTwoColumnPage_(iWidget *d) {
     if (cmp_String(id_Widget(d), "dialogbuttons") == 0 ||
         cmp_String(id_Widget(d), "prefs.tabs") == 0) {
@@ -274,6 +275,7 @@ static void stripTrailingColon_(iLabelWidget *label) {
         delete_String(mod);
     }
 }
+#endif
 
 static iLabelWidget *makePanelButton_(const char *text, const char *command) {
     iLabelWidget *btn = new_LabelWidget(text, command);
@@ -299,11 +301,9 @@ static iWidget *makeValuePadding_(iWidget *value) {
     setPadding_Widget(pad, 0, 1 * gap_UI, 0, 1 * gap_UI);
     addChild_Widget(pad, iClob(value));
     setFlags_Widget(pad,
-                    borderBottom_WidgetFlag |
-                    arrangeVertical_WidgetFlag |
-                    resizeToParentWidth_WidgetFlag |
-                    resizeWidthOfChildren_WidgetFlag |
-                    arrangeHeight_WidgetFlag,
+                    borderTop_WidgetFlag | borderBottom_WidgetFlag | arrangeVertical_WidgetFlag |
+                        resizeToParentWidth_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                        arrangeHeight_WidgetFlag,
                     iTrue);
     return pad;
 }
@@ -312,7 +312,7 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
     const iBool isInput = isInstance_Object(value, &Class_InputWidget);
     iWidget *div = new_Widget();
     setFlags_Widget(div,
-                    borderBottom_WidgetFlag | arrangeHeight_WidgetFlag |
+                    borderTop_WidgetFlag | borderBottom_WidgetFlag | arrangeHeight_WidgetFlag |
                     resizeWidthOfChildren_WidgetFlag |
                     arrangeHorizontal_WidgetFlag, iTrue);
     setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId);
@@ -418,7 +418,8 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setId_Widget(as_Widget(drop), id);
         widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label), as_Widget(drop));
     }
-    else if (equal_Command(spec, "radio")) {
+    else if (equal_Command(spec, "radio") || equal_Command(spec, "buttons")) {
+        const iBool isRadio = equal_Command(spec, "radio");
         addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
         iLabelWidget *head = makeHeading_Widget(label);
         setAllCaps_LabelWidget(head, iTrue);
@@ -427,9 +428,9 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         widget = new_Widget();
         setBackgroundColor_Widget(widget, uiBackgroundSidebar_ColorId);
         setPadding_Widget(widget, 4 * gap_UI, 2 * gap_UI, 4 * gap_UI, 2 * gap_UI);
-//        setFlags_Widget(widget, arrangeWidth_WidgetFlag, iFalse);
         setFlags_Widget(widget,
-                        borderBottom_WidgetFlag |
+                        borderTop_WidgetFlag |
+                            borderBottom_WidgetFlag |
                             arrangeHorizontal_WidgetFlag |
                             arrangeHeight_WidgetFlag |
                             resizeToParentWidth_WidgetFlag |
@@ -437,24 +438,53 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                         iTrue);
         setId_Widget(widget, id);
         for (const iMenuItem *radioItem = item->data; radioItem->label; radioItem++) {
-            const char *  radId     = cstr_Rangecc(range_Command(radioItem->label, "id"));
-            const char *  radLabel  = hasLabel_Command(radioItem->label, "label")
-                                          ? format_CStr("${%s}", cstr_Rangecc(range_Command(radioItem->label, "label")))
-                                          : suffixPtr_Command(radioItem->label, "text");
-            iLabelWidget *radButton = new_LabelWidget(radLabel, radioItem->command);
-            setId_Widget(as_Widget(radButton), radId);
-            setFont_LabelWidget(radButton, defaultMedium_FontId);
-            addChildFlags_Widget(widget, iClob(radButton), radio_WidgetFlag | noBackground_WidgetFlag);
+            const char *  radId = cstr_Rangecc(range_Command(radioItem->label, "id"));
+            int64_t       flags = noBackground_WidgetFlag;
+            iLabelWidget *button;
+            if (isRadio) {
+                const char *radLabel =
+                    hasLabel_Command(radioItem->label, "label")
+                        ? format_CStr("${%s}",
+                                      cstr_Rangecc(range_Command(radioItem->label, "label")))
+                        : suffixPtr_Command(radioItem->label, "text");
+                button = new_LabelWidget(radLabel, radioItem->command);
+                flags |= radio_WidgetFlag;
+            }
+            else {
+                button = (iLabelWidget *) makeToggle_Widget(radId);
+                setTextCStr_LabelWidget(button, format_CStr("${%s}", radId));
+                setFlags_Widget(as_Widget(button), fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget(button);
+            }
+            setId_Widget(as_Widget(button), radId);
+            setFont_LabelWidget(button, defaultMedium_FontId);
+            addChildFlags_Widget(widget, iClob(button), flags);
         }
     }
     else if (equal_Command(spec, "input")) {
         iInputWidget *input = new_InputWidget(argU32Label_Command(spec, "maxlen"));
         setId_Widget(as_Widget(input), id);
-        setFont_InputWidget(input, labelFont_());
-        setContentPadding_InputWidget(input, 3 * gap_UI, 0);
         setUrlContent_InputWidget(input, argLabel_Command(spec, "url"));
-        widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label),
-                                              as_Widget(input));        
+        setSelectAllOnFocus_InputWidget(input, argLabel_Command(spec, "selectall"));        
+        setFont_InputWidget(input, labelFont_());
+        if (argLabel_Command(spec, "noheading")) {
+            widget = makeValuePadding_(as_Widget(input));
+            setFlags_Widget(widget, expand_WidgetFlag, iTrue);
+        }
+        else {
+            setContentPadding_InputWidget(input, 3 * gap_UI, 0);
+            if (hasLabel_Command(spec, "unit")) {
+                iWidget *unit = addChildFlags_Widget(
+                    as_Widget(input),
+                    iClob(new_LabelWidget(
+                        format_CStr("${%s}", cstr_Rangecc(range_Command(spec, "unit"))), NULL)),
+                    frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                        resizeToParentHeight_WidgetFlag);
+                setContentPadding_InputWidget(input, -1, width_Widget(unit) - 4 * gap_UI);
+            }
+            widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label),
+                                                  as_Widget(input));
+        }
     }
     else if (equal_Command(spec, "padding")) {
         widget = makePadding_Widget(lineHeight_Text(labelFont_()) * 1.5f);

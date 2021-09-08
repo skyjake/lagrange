@@ -1288,6 +1288,12 @@ iAny *addChildPosFlags_Widget(iWidget *d, iAnyObject *child, enum iWidgetAddPos 
         d->children = new_ObjectList();
     }
     if (addPos == back_WidgetAddPos) {
+        /* Remove a redundant border flags. */
+        if (!isEmpty_ObjectList(d->children) &&
+            as_Widget(back_ObjectList(d->children))->flags & borderBottom_WidgetFlag &&
+            widget->flags & borderTop_WidgetFlag) {
+            widget->flags &= ~borderTop_WidgetFlag;
+        }
         pushBack_ObjectList(d->children, widget); /* ref */
     }
     else {
