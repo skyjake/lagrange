@@ -1145,6 +1145,9 @@ msgstr "Tags:"
 msgid "dlg.bookmark.icon"
 msgstr "Icon:"
 
+msgid "heading.bookmark.tags"
+msgstr "SPECIAL TAGS"
+
 msgid "heading.prefs"
 msgstr "PREFERENCES"
 
