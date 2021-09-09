@@ -96,5 +96,5 @@ iDeclareTypeConstruction(Prefs)
     
 iLocalDef float scrollSpeedFactor_Prefs(const iPrefs *d, enum iScrollType type) {
     iAssert(type >= 0 && type < max_ScrollType);
-    return 10.0f / iMax(1, d->smoothScrollSpeed[type]);
+    return 10.0f / iMax(1, d->smoothScrollSpeed[type]) * (type == mouse_ScrollType ? 0.5f : 1.0f);
 }

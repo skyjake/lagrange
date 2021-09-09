@@ -42,8 +42,8 @@ void init_Prefs(iPrefs *d) {
     d->returnKey         = default_ReturnKeyBehavior;
     d->hoverLink         = iFalse;
     d->smoothScrolling   = iTrue;
-    d->smoothScrollSpeed[keyboard_ScrollType] = 10;
-    d->smoothScrollSpeed[mouse_ScrollType]    = 10;
+    d->smoothScrollSpeed[keyboard_ScrollType] = 13;
+    d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling = iFalse;
     d->collapsePreOnLoad = iFalse;
     d->openArchiveIndexPages = iTrue;
