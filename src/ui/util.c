@@ -907,6 +907,20 @@ iLabelWidget *makeMenuButton_LabelWidget(const char *label, const iMenuItem *ite
     return button;
 }
 
+void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *selectedCommand) {
+    iWidget *menu = findChild_Widget(as_Widget(dropButton), "menu");
+    iForEach(ObjectList, i, children_Widget(menu)) {
+        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+            iLabelWidget *item = i.object;
+            const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
+            setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
+            if (isSelected) {
+                updateText_LabelWidget(dropButton, sourceText_LabelWidget(item));
+            }
+        }
+    }
+}
+
 /*-----------------------------------------------------------------------------------------------*/
 
 static iBool isTabPage_Widget_(const iWidget *tabs, const iWidget *page) {
@@ -1650,6 +1664,19 @@ static size_t findWidestItemLabel_(const iMenuItem *items, size_t num) {
     return widestPos;
 }
 
+iWidget *makeDialog_Widget(const char *id,
+                           const iMenuItem *itemsNullTerminated,
+                           const iMenuItem *actions, size_t numActions) {
+    iWidget *dlg = makeSheet_Widget(id);
+    /* TODO: Construct desktop dialogs using NULL-terminated item arrays, like mobile panels. */
+    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+    addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, numActions)));
+    addChild_Widget(dlg->root->widget, iClob(dlg));
+    arrange_Widget(dlg);
+    setupSheetTransition_Mobile(dlg, iTrue);
+    return dlg;
+}
+
 iWidget *makePreferences_Widget(void) {
     /* Common items. */
     const iMenuItem langItems[] = { { "${lang.de} - de", 0, 0, "uilang id:de" },
@@ -1715,7 +1742,7 @@ iWidget *makePreferences_Widget(void) {
         { NULL }
     };
     /* Create the Preferences UI. */
-    if (deviceType_App() != desktop_AppDeviceType) {
+    if (isUsingPanelLayout_Mobile()) {
         const iMenuItem pinSplitItems[] = {
             { "button id:prefs.pinsplit.0 label:prefs.pinsplit.none",  0, 0, "pinsplit.set arg:0" },
             { "button id:prefs.pinsplit.1 label:prefs.pinsplit.left",  0, 0, "pinsplit.set arg:1" },
@@ -1767,7 +1794,7 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem generalPanelItems[] = {
             { "title id:heading.prefs.general" },
-            { "heading id:prefs.searchurl" },
+            { "heading text:${prefs.searchurl}" },
             { "input id:prefs.searchurl url:1 noheading:1" },
             { "padding" },
             { "toggle id:prefs.archive.openindex" },
@@ -1828,11 +1855,11 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "input id:prefs.cachesize maxlen:4 selectall:1 unit:mb" },
             { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
-            { "heading id:prefs.proxy.gemini" },
+            { "heading text:${prefs.proxy.gemini}" },
             { "input id:prefs.proxy.gemini noheading:1" },
-            { "heading id:prefs.proxy.gemini" },
+            { "heading text:${prefs.proxy.gopher}" },
             { "input id:prefs.proxy.gopher noheading:1" },
-            { "heading id:prefs.proxy.gemini" },
+            { "heading text:${prefs.proxy.http}" },
             { "input id:prefs.proxy.http noheading:1" },
             { NULL }
         };
@@ -1855,8 +1882,8 @@ iWidget *makePreferences_Widget(void) {
             { "button text:" bug_Icon " ${menu.debug}", 0, 0, "!open url:about:debug" },
             { NULL }
         };
-        iWidget *dlg = makePanels_Mobile((iMenuItem[]){
-            { "panel icon:0x2699 id:heading.prefs.general", 0, 0, (const void *) generalPanelItems },
+        iWidget *dlg = makePanels_Mobile("prefs", (iMenuItem[]){
+            { "panel text:" gear_Icon " ${heading.prefs.general}", 0, 0, (const void *) generalPanelItems },
             { "panel icon:0x1f5a7 id:heading.prefs.network", 0, 0, (const void *) networkPanelItems },
             { "panel text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
             { "padding" },
@@ -1869,7 +1896,7 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "panel text:" planet_Icon " ${menu.about}", 0, 0, (const void *) aboutPanelItems },
             { NULL }
-        });
+        }, NULL, 0);
         setupSheetTransition_Mobile(dlg, iTrue);
         return dlg;
     }
@@ -2153,6 +2180,29 @@ iWidget *makePreferences_Widget(void) {
 }
 
 iWidget *makeBookmarkEditor_Widget(void) {
+    const iMenuItem actions[] = {
+        { "${cancel}" },
+        { uiTextCaution_ColorEscape "${dlg.bookmark.save}", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept" }
+    };
+    if (isUsingPanelLayout_Mobile()) {
+        const iMenuItem items[] = {
+            { "title id:bmed.heading text:${heading.bookmark.edit}" },
+            { "heading id:dlg.bookmark.url" },
+            { "input id:bmed.url url:1 noheading:1" },
+            { "padding" },
+            { "input id:bmed.title text:${dlg.bookmark.title}" },
+            { "input id:bmed.tags text:${dlg.bookmark.tags}" },
+            { "input id:bmed.icon maxlen:1 text:${dlg.bookmark.icon}" },
+            { "heading text:${heading.bookmark.tags}" },
+            { "toggle id:bmed.tag.home text:${bookmark.tag.home}" },
+            { "toggle id:bmed.tag.remote text:${bookmark.tag.remote}" },
+            { "toggle id:bmed.tag.linksplit text:${bookmark.tag.linksplit}" },
+            { NULL }
+        };
+        iWidget *dlg = makePanels_Mobile("bmed", items, actions, iElemCount(actions));
+        setupSheetTransition_Mobile(dlg, iTrue);
+        return dlg;
+    }
     iWidget *dlg = makeSheet_Widget("bmed");
     setId_Widget(addChildFlags_Widget(
                      dlg,
@@ -2179,14 +2229,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    addChild_Widget(
-        dlg,
-        iClob(makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}" },
-                                                { uiTextCaution_ColorEscape "${dlg.bookmark.save}",
-                                                  SDLK_RETURN,
-                                                  KMOD_PRIMARY,
-                                                  "bmed.accept" } },
-                                 2)));
+    addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
     addChild_Widget(get_Root()->widget, iClob(dlg));
     finalizeSheet_Mobile(dlg);
     return dlg;
@@ -2242,7 +2285,6 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
     return dlg;
 }
 
-
 static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
     if (equal_Command(cmd, "cancel")) {
         setupSheetTransition_Mobile(dlg, iFalse);
@@ -2288,46 +2330,59 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
 }
 
 iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
-    iWidget *dlg = makeSheet_Widget("feedcfg");
-    setId_Widget(addChildFlags_Widget(
-                     dlg,
-                     iClob(new_LabelWidget(bookmarkId ? uiHeading_ColorEscape "${heading.feedcfg}"
-                                                      : uiHeading_ColorEscape "${heading.subscribe}",
-                                           NULL)),
-                     frameless_WidgetFlag),
-                 "feedcfg.heading");
-    iWidget *headings, *values;
-    addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
-    iInputWidget *input = new_InputWidget(0);
-    addDialogInputWithHeading_(headings, values, "${dlg.feed.title}", "feedcfg.title", iClob(input));
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.feed.entrytype}")));
-    iWidget *types = new_Widget(); {
-        addRadioButton_(types, "feedcfg.type.gemini", "${dlg.feed.type.gemini}", "feedcfg.type arg:0");
-        addRadioButton_(types, "feedcfg.type.headings", "${dlg.feed.type.headings}", "feedcfg.type arg:1");
+    const char *headingText = bookmarkId ? uiHeading_ColorEscape "${heading.feedcfg}"
+                                         : uiHeading_ColorEscape "${heading.subscribe}";
+    const iMenuItem actions[] = { { "${cancel}" },
+                                  { bookmarkId ? uiTextCaution_ColorEscape "${dlg.feed.save}"
+                                               : uiTextCaution_ColorEscape "${dlg.feed.sub}",
+                                    SDLK_RETURN,
+                                    KMOD_PRIMARY,
+                                    format_CStr("feedcfg.accept bmid:%d", bookmarkId) } };
+    iWidget *dlg;
+    if (isUsingPanelLayout_Mobile()) {
+        const iMenuItem typeItems[] = {
+            { "button id:feedcfg.type.gemini label:dlg.feed.type.gemini", 0, 0, "feedcfg.type arg:0" },
+            { "button id:feedcfg.type.headings label:dlg.feed.type.headings", 0, 0, "feedcfg.type arg:1" },
+            { NULL }
+        };
+        dlg = makePanels_Mobile("feedcfg", (iMenuItem[]){
+            { format_CStr("title id:feedcfg.heading text:%s", headingText) },
+            { "input id:feedcfg.title text:${dlg.feed.title}" },
+            { "radio id:dlg.feed.entrytype", 0, 0, (const void *) typeItems },
+            { NULL }
+        }, actions, iElemCount(actions));
     }
-    addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-    iWidget *buttons =
-        addChild_Widget(dlg,
-                        iClob(makeDialogButtons_Widget(
-                            (iMenuItem[]){ { "${cancel}" },
-                                           { bookmarkId ? uiTextCaution_ColorEscape "${dlg.feed.save}"
-                                                        : uiTextCaution_ColorEscape "${dlg.feed.sub}",
-                                             SDLK_RETURN,
-                                             KMOD_PRIMARY,
-                                             format_CStr("feedcfg.accept bmid:%d", bookmarkId) } },
-                            2)));
-    setId_Widget(child_Widget(buttons, childCount_Widget(buttons) - 1), "feedcfg.save");
-    arrange_Widget(dlg);
-    as_Widget(input)->rect.size.x = 100 * gap_UI - headings->rect.size.x;
-    addChild_Widget(get_Root()->widget, iClob(dlg));
-    finalizeSheet_Mobile(dlg);
+    else {
+        dlg = makeSheet_Widget("feedcfg");
+        setId_Widget(
+            addChildFlags_Widget(dlg, iClob(new_LabelWidget(headingText, NULL)), frameless_WidgetFlag),
+            "feedcfg.heading");
+        iWidget *headings, *values;
+        addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        iInputWidget *input = new_InputWidget(0);
+        addDialogInputWithHeading_(headings, values, "${dlg.feed.title}", "feedcfg.title", iClob(input));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.feed.entrytype}")));
+        iWidget *types = new_Widget(); {
+            addRadioButton_(types, "feedcfg.type.gemini", "${dlg.feed.type.gemini}", "feedcfg.type arg:0");
+            addRadioButton_(types, "feedcfg.type.headings", "${dlg.feed.type.headings}", "feedcfg.type arg:1");
+        }
+        addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        iWidget *buttons =
+            addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        setId_Widget(child_Widget(buttons, childCount_Widget(buttons) - 1), "feedcfg.save");
+        arrange_Widget(dlg);
+        as_Widget(input)->rect.size.x = 100 * gap_UI - headings->rect.size.x;
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+        finalizeSheet_Mobile(dlg);
+    }
     /* Initialize. */ {
         const iBookmark *bm  = bookmarkId ? get_Bookmarks(bookmarks_App(), bookmarkId) : NULL;
         setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
                             bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
         setFlags_Widget(findChild_Widget(dlg,
-                                         hasTag_Bookmark(bm, headings_BookmarkTag) ? "feedcfg.type.headings"
-                                                                         : "feedcfg.type.gemini"),
+                                         hasTag_Bookmark(bm, headings_BookmarkTag)
+                                             ? "feedcfg.type.headings"
+                                             : "feedcfg.type.gemini"),
                         selected_WidgetFlag,
                         iTrue);
         setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
@@ -2336,84 +2391,113 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
 }
 
 iWidget *makeIdentityCreation_Widget(void) {
-    iWidget *dlg = makeSheet_Widget("ident");
-    setId_Widget(addChildFlags_Widget(
-                     dlg,
-                     iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.newident}", NULL)),
-                     frameless_WidgetFlag),
-                 "ident.heading");
-    iWidget *page = new_Widget();
-    addChildFlags_Widget(
-        dlg, iClob(new_LabelWidget("${dlg.newident.rsa.selfsign}", NULL)), frameless_WidgetFlag);
-    /* TODO: Use makeTwoColumnWidget_? */
-    addChild_Widget(dlg, iClob(page));
-    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-    iWidget *headings = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    iWidget *values = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    setId_Widget(headings, "headings");
-    setId_Widget(values, "values");
-    iInputWidget *inputs[6];
-    /* Where will the new identity be active on? */ {
-        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.scope}")));
-        const iMenuItem items[] = {
-            { "${dlg.newident.scope.domain}", 0, 0, "ident.scope arg:0" },
-            { "${dlg.newident.scope.page}",   0, 0, "ident.scope arg:1" },
-            { "${dlg.newident.scope.none}",   0, 0, "ident.scope arg:2" },
-        };
-        setId_Widget(addChild_Widget(values,
-                                     iClob(makeMenuButton_LabelWidget(
-                                         items[0].label, items, iElemCount(items)))),
-                     "ident.scope");
+    const iMenuItem actions[] = { { "${dlg.newident.more}", 0, 0, "ident.showmore" },
+                                  { "---" },
+                                  { "${cancel}", SDLK_ESCAPE, 0, "ident.cancel" },
+                                  { uiTextAction_ColorEscape "${dlg.newident.create}",
+                                    SDLK_RETURN,
+                                    KMOD_PRIMARY,
+                                    "ident.accept" } };
+    iUrl url;
+    init_Url(&url, url_DocumentWidget(document_App()));
+    const iMenuItem scopeItems[] = {
+        { format_CStr("${dlg.newident.scope.domain}:\n%s", cstr_Rangecc(url.host)), 0, 0, "ident.scope arg:0" },
+        { format_CStr("${dlg.newident.scope.page}:\n%s", cstr_Rangecc(url.path)), 0, 0, "ident.scope arg:1" },
+        { "${dlg.newident.scope.none}", 0, 0, "ident.scope arg:2" },
+        { NULL }
+    };
+    iWidget *dlg;
+    if (isUsingPanelLayout_Mobile()) {
+        dlg = makePanels_Mobile("ident",
+                                (iMenuItem[]){ { "title id:ident.heading text:${heading.newident}" },
+                                               { "label text:${dlg.newident.rsa.selfsign}" },
+                                               { "dropdown id:ident.scope text:${dlg.newident.scope}", 0, 0,
+                                                 (const void *) scopeItems },
+                                               { "input id:ident.until hint:hint.newident.date maxlen:19 text:${dlg.newident.until}" },
+                                               //{ "padding" },
+                                               //{ "toggle id:ident.temp text:${dlg.newident.temp}" },
+                                               //{ "label text:${help.ident.temp}" },
+                                               { "heading id:dlg.newident.commonname" },
+                                               { "input id:ident.common noheading:1" },
+                                               { "padding collapse:1" },
+                                               { "input collapse:1 id:ident.email hint:hint.newident.optional text:${dlg.newident.email}" },
+                                               { "input collapse:1 id:ident.userid hint:hint.newident.optional text:${dlg.newident.userid}" },
+                                               { "input collapse:1 id:ident.domain hint:hint.newident.optional text:${dlg.newident.domain}" },
+                                               { "input collapse:1 id:ident.org hint:hint.newident.optional text:${dlg.newident.org}" },
+                                               { "input collapse:1 id:ident.country hint:hint.newident.optional text:${dlg.newident.country}" },
+                                               { NULL }
+                                }, actions, iElemCount(actions));
+        setupSheetTransition_Mobile(dlg, iTrue);
     }
-    addDialogInputWithHeading_(headings,
-                               values,
-                               "${dlg.newident.until}",
-                               "ident.until",
-                               iClob(newHint_InputWidget(19, "${hint.newident.date}")));
-    addDialogInputWithHeading_(headings,
-                               values,
-                               "${dlg.newident.commonname}",
-                               "ident.common",
-                               iClob(inputs[0] = new_InputWidget(0)));
-    /* Temporary? */ {
-        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.temp}")));
-        iWidget *tmpGroup = new_Widget();
-        setFlags_Widget(tmpGroup, arrangeSize_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
-        addChild_Widget(tmpGroup, iClob(makeToggle_Widget("ident.temp")));
-        setId_Widget(
-            addChildFlags_Widget(tmpGroup,
-                                 iClob(new_LabelWidget(uiTextCaution_ColorEscape warning_Icon
-                                                       "  ${dlg.newident.notsaved}",
-                                                       NULL)),
-                                 hidden_WidgetFlag | frameless_WidgetFlag),
-            "ident.temp.note");
-        addChild_Widget(values, iClob(tmpGroup));
+    else {
+        dlg = makeSheet_Widget("ident");
+        setId_Widget(addChildFlags_Widget(
+                         dlg,
+                         iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.newident}", NULL)),
+                         frameless_WidgetFlag),
+                     "ident.heading");
+        iWidget *page = new_Widget();
+        addChildFlags_Widget(
+            dlg, iClob(new_LabelWidget("${dlg.newident.rsa.selfsign}", NULL)), frameless_WidgetFlag);
+        /* TODO: Use makeTwoColumnWidget_? */
+        addChild_Widget(dlg, iClob(page));
+        setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+        iWidget *headings = addChildFlags_Widget(
+            page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+        iWidget *values = addChildFlags_Widget(
+            page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+        setId_Widget(headings, "headings");
+        setId_Widget(values, "values");
+        iInputWidget *inputs[6];
+        /* Where will the new identity be active on? */ {
+            iWidget *head = addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.scope}")));
+            iWidget *val;
+            setId_Widget(
+                addChild_Widget(values,
+                                val = iClob(makeMenuButton_LabelWidget(
+                                    scopeItems[0].label, scopeItems, iElemCount(scopeItems)))),
+                "ident.scope");
+            head->sizeRef = val;
+        }
+        addDialogInputWithHeading_(headings,
+                                   values,
+                                   "${dlg.newident.until}",
+                                   "ident.until",
+                                   iClob(newHint_InputWidget(19, "${hint.newident.date}")));
+        addDialogInputWithHeading_(headings,
+                                   values,
+                                   "${dlg.newident.commonname}",
+                                   "ident.common",
+                                   iClob(inputs[0] = new_InputWidget(0)));
+        /* Temporary? */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.temp}")));
+            iWidget *tmpGroup = new_Widget();
+            setFlags_Widget(tmpGroup, arrangeSize_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
+            addChild_Widget(tmpGroup, iClob(makeToggle_Widget("ident.temp")));
+            setId_Widget(
+                addChildFlags_Widget(tmpGroup,
+                                     iClob(new_LabelWidget(uiTextCaution_ColorEscape warning_Icon
+                                                           "  ${dlg.newident.notsaved}",
+                                                           NULL)),
+                                     hidden_WidgetFlag | frameless_WidgetFlag),
+                "ident.temp.note");
+            addChild_Widget(values, iClob(tmpGroup));
+        }
+        addChildFlags_Widget(headings, iClob(makePadding_Widget(gap_UI)), collapse_WidgetFlag | hidden_WidgetFlag);
+        addChildFlags_Widget(values, iClob(makePadding_Widget(gap_UI)), collapse_WidgetFlag | hidden_WidgetFlag);
+        addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.email}",   "ident.email",   iClob(inputs[1] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+        addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.userid}",  "ident.userid",  iClob(inputs[2] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+        addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.domain}",  "ident.domain",  iClob(inputs[3] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+        addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.org}",     "ident.org",     iClob(inputs[4] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+        addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.country}", "ident.country", iClob(inputs[5] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+        arrange_Widget(dlg);
+        for (size_t i = 0; i < iElemCount(inputs); ++i) {
+            as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
+        }
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+        finalizeSheet_Mobile(dlg);
     }
-    addChildFlags_Widget(headings, iClob(makePadding_Widget(gap_UI)), collapse_WidgetFlag | hidden_WidgetFlag);
-    addChildFlags_Widget(values, iClob(makePadding_Widget(gap_UI)), collapse_WidgetFlag | hidden_WidgetFlag);
-    addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.email}",   "ident.email",   iClob(inputs[1] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
-    addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.userid}",  "ident.userid",  iClob(inputs[2] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
-    addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.domain}",  "ident.domain",  iClob(inputs[3] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
-    addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.org}",     "ident.org",     iClob(inputs[4] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
-    addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.country}", "ident.country", iClob(inputs[5] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
-    arrange_Widget(dlg);
-    for (size_t i = 0; i < iElemCount(inputs); ++i) {
-        as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
-    }
-    addChild_Widget(dlg,
-                    iClob(makeDialogButtons_Widget(
-                        (iMenuItem[]){ { "${dlg.newident.more}", 0, 0, "ident.showmore" },
-                                       { "---" },
-                                       { "${cancel}", SDLK_ESCAPE, 0, "ident.cancel" },
-                                       { uiTextAction_ColorEscape "${dlg.newident.create}",
-                                         SDLK_RETURN,
-                                         KMOD_PRIMARY,
-                                         "ident.accept" } },
-                        4)));
-    addChild_Widget(get_Root()->widget, iClob(dlg));
-    finalizeSheet_Mobile(dlg);
     return dlg;
 }
 

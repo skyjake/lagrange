@@ -3127,7 +3127,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 makeQuestion_Widget(
                     uiHeading_ColorEscape "${heading.import.bookmarks}",
                     formatCStrs_Lang("dlg.import.found.n", count),
-                    (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+                    (iMenuItem[]){ { "${cancel}" },
                                    { format_CStr(cstrCount_Lang("dlg.import.add.n", (int) count),
                                                  uiTextAction_ColorEscape,
                                                  count),
@@ -3299,7 +3299,7 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
                 d->playerMenu = makeMenu_Widget(
                     as_Widget(d),
                     (iMenuItem[]){
-                        { cstrCollect_String(metadataLabel_Player(plr)), 0, 0, NULL },
+                        { cstrCollect_String(metadataLabel_Player(plr)) },
                     },
                     1);
                 openMenu_Widget(d->playerMenu, bottomLeft_Rect(ui.menuRect));
@@ -3604,7 +3604,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         pushBackN_Array(
                             &items,
                             (iMenuItem[]){
-                                { "---", 0, 0, NULL },
+                                { "---" },
                                 { isGemini ? "${link.noproxy}" : openExt_Icon " ${link.browser}",
                                   0,
                                   0,
@@ -3615,7 +3615,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         linkLabel_GmDocument(d->doc, d->contextLink->linkId));
                     urlEncodeSpaces_String(linkLabel);
                     pushBackN_Array(&items,
-                                    (iMenuItem[]){ { "---", 0, 0, NULL },
+                                    (iMenuItem[]){ { "---" },
                                                    { "${link.copy}", 0, 0, "document.copylink" },
                                                    { bookmark_Icon " ${link.bookmark}",
                                                      0,
@@ -3627,7 +3627,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                     3);
                     if (isNative && d->contextLink->mediaType != download_GmRunMediaType) {
                         pushBackN_Array(&items, (iMenuItem[]){
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { download_Icon " ${link.download}", 0, 0, "document.downloadlink" },
                         }, 2);
                     }
@@ -3670,22 +3670,22 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "${menu.forward}", navigateForward_KeyShortcut, "navigate.forward" },
                             { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
                             { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
                             { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
                             { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
 #if defined (iPlatformMobile)
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
                         14);
 #else
                             { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
                         15);
 #endif
@@ -3862,7 +3862,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         }
                         d->copyMenu = makeMenu_Widget(w, (iMenuItem[]){
                             { clipCopy_Icon " ${menu.copy}", 0, 0, "copy" },
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { close_Icon " ${menu.select.clear}", 0, 0, "document.select arg:0" },
                         }, 3);
                         setFlags_Widget(d->copyMenu, noFadeBackground_WidgetFlag, iTrue);
@@ -3955,7 +3955,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 uiTextAction_ColorEscape,
                                 cstr_String(url)),
                             (iMenuItem[]){
-                                { "${cancel}", 0, 0, NULL },
+                                { "${cancel}" },
                                 { uiTextCaution_ColorEscape "${dlg.openlink}",
                                   0, 0, format_CStr("!open default:1 url:%s", cstr_String(url)) } },
                             2);

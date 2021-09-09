@@ -148,7 +148,7 @@ void init_UploadWidget(iUploadWidget *d) {
         addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
         iWidget *buttons =
             makeDialogButtons_Widget((iMenuItem[]){ { "${upload.port}", 0, 0, "upload.setport" },
-                                                    { "---", 0, 0, NULL },
+                                                    { "---" },
                                                     { "${close}", SDLK_ESCAPE, 0, "upload.cancel" },
                                                     { uiTextAction_ColorEscape "${dlg.upload.send}",
                                                       SDLK_RETURN,

@@ -1653,34 +1653,20 @@ static void updateScrollSpeedButtons_(iWidget *d, enum iScrollType type, const i
     }
 }
 
-static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selectedCommand) {
-    iWidget *menu = findChild_Widget(as_Widget(dropButton), "menu");
-    iForEach(ObjectList, i, children_Widget(menu)) {
-        if (isInstance_Object(i.object, &Class_LabelWidget)) {
-            iLabelWidget *item = i.object;
-            const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
-            setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
-            if (isSelected) {
-                updateText_LabelWidget(dropButton, sourceText_LabelWidget(item));
-            }
-        }
-    }
-}
-
 static void updateColorThemeButton_(iLabelWidget *button, int theme) {
     /* TODO: These three functions are all the same? Cleanup? */
     if (!button) return;
-    updateDropdownSelection_(button, format_CStr(".set arg:%d", theme));
+    updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", theme));
 }
 
 static void updateFontButton_(iLabelWidget *button, int font) {
     if (!button) return;
-    updateDropdownSelection_(button, format_CStr(".set arg:%d", font));
+    updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", font));
 }
 
 static void updateImageStyleButton_(iLabelWidget *button, int style) {
     if (!button) return;
-    updateDropdownSelection_(button, format_CStr(".set arg:%d", style));
+    updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", style));
 }
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
@@ -1733,8 +1719,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "uilang")) {
-        updateDropdownSelection_(findChild_Widget(d, "prefs.uilang"),
-                                 cstr_String(string_Command(cmd, "id")));
+        updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.uilang"),
+                                            cstr_String(string_Command(cmd, "id")));
         return iFalse;
     }
     else if (equal_Command(cmd, "quoteicon.set")) {
@@ -1744,8 +1730,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "returnkey.set")) {
-        updateDropdownSelection_(findChild_Widget(d, "prefs.returnkey"),
-                                 format_CStr("returnkey.set arg:%d", arg_Command(cmd)));
+        updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.returnkey"),
+                                            format_CStr("returnkey.set arg:%d", arg_Command(cmd)));
         return iFalse;
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
@@ -1849,7 +1835,8 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "ident.showmore")) {
-        iForEach(ObjectList, i, children_Widget(findChild_Widget(dlg, "headings"))) {
+        iForEach(ObjectList, i,
+                 children_Widget(findChild_Widget(dlg,                                                                 isUsingPanelLayout_Mobile() ? "panel.top" : "headings"))) {
             if (flags_Widget(i.object) & collapse_WidgetFlag) {
                 setFlags_Widget(i.object, hidden_WidgetFlag, iFalse);
             }
@@ -1859,8 +1846,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 setFlags_Widget(j.object, hidden_WidgetFlag, iFalse);
             }
         }
-        setFlags_Widget(child_Widget(findChild_Widget(dlg, "dialogbuttons"), 0), disabled_WidgetFlag,
-                        iTrue);
+        setFlags_Widget(pointer_Command(cmd), disabled_WidgetFlag, iTrue);
         arrange_Widget(dlg);
         refresh_Widget(dlg);        
         return iTrue;
@@ -1870,6 +1856,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
         setText_LabelWidget(scope,
                             text_LabelWidget(child_Widget(
                                 findChild_Widget(as_Widget(scope), "menu"), arg_Command(cmd))));
+        arrange_Widget(findWidget_App("ident"));
         return iTrue;
     }
     if (equal_Command(cmd, "ident.temp.changed")) {
@@ -2596,9 +2583,10 @@ iBool handleCommand_App(const char *cmd) {
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
-        updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
-        updateDropdownSelection_(findChild_Widget(dlg, "prefs.returnkey"),
-                                 format_CStr("returnkey.set arg:%d", d->prefs.returnKey));
+        updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
+        updateDropdownSelection_LabelWidget(
+            findChild_Widget(dlg, "prefs.returnkey"),
+            format_CStr("returnkey.set arg:%d", d->prefs.returnKey));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));

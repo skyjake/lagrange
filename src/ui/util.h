@@ -242,7 +242,8 @@ int         checkContextMenu_Widget (iWidget *, const SDL_Event *ev); /* see mac
         break; \
     }
 
-iLabelWidget *  makeMenuButton_LabelWidget  (const char *label, const iMenuItem *items, size_t n);
+iLabelWidget *  makeMenuButton_LabelWidget          (const char *label, const iMenuItem *items, size_t n);
+void            updateDropdownSelection_LabelWidget (iLabelWidget *dropButton, const char *selectedCommand);
 
 /*-----------------------------------------------------------------------------------------------*/
 

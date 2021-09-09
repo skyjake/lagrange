@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "ios.h"
 #endif
 
-static iBool useMobileSheetLayout_(void) {
+iBool isUsingPanelLayout_Mobile(void) {
     return deviceType_App() != desktop_AppDeviceType;
 }
 
@@ -381,6 +381,7 @@ static size_t countItems_(const iMenuItem *itemsNullTerminated) {
 void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     iWidget *     widget  = NULL;
     iLabelWidget *heading = NULL;
+    iWidget *     value   = NULL;
     const char *  spec    = item->label;
     const char *  id      = cstr_Rangecc(range_Command(spec, "id"));
     const char *  label   = hasLabel_Command(spec, "text")
@@ -396,6 +397,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setFont_LabelWidget(title, uiLabelLargeBold_FontId);
         setTextColor_LabelWidget(title, uiHeading_ColorId);
         setAllCaps_LabelWidget(title, iTrue);
+        setId_Widget(as_Widget(title), id);
     }
     else if (equal_Command(spec, "heading")) {
         addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
@@ -403,6 +405,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setAllCaps_LabelWidget(heading, iTrue);
         setRemoveTrailingColon_LabelWidget(heading, iTrue);
         addChild_Widget(panel, iClob(heading));
+        setId_Widget(as_Widget(heading), id);
     }    
     else if (equal_Command(spec, "toggle")) {
         iLabelWidget *toggle = (iLabelWidget *) makeToggle_Widget(id);
@@ -412,7 +415,9 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     }
     else if (equal_Command(spec, "dropdown")) {
         const iMenuItem *dropItems = item->data;
-        iLabelWidget *drop = makeMenuButton_LabelWidget("", dropItems, countItems_(dropItems));
+        iLabelWidget *drop = makeMenuButton_LabelWidget(dropItems[0].label,
+                                                        dropItems, countItems_(dropItems));
+        value = as_Widget(drop);
         setFont_LabelWidget(drop, labelFont_());
         setFlags_Widget(as_Widget(drop),
                         alignRight_WidgetFlag | noBackground_WidgetFlag |
@@ -465,6 +470,9 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     }
     else if (equal_Command(spec, "input")) {
         iInputWidget *input = new_InputWidget(argU32Label_Command(spec, "maxlen"));
+        if (hasLabel_Command(spec, "hint")) {
+            setHint_InputWidget(input, cstr_Lang(cstr_Rangecc(range_Command(spec, "hint"))));
+        }
         setId_Widget(as_Widget(input), id);
         setUrlContent_InputWidget(input, argLabel_Command(spec, "url"));
         setSelectAllOnFocus_InputWidget(input, argLabel_Command(spec, "selectall"));        
@@ -491,6 +499,12 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     else if (equal_Command(spec, "button")) {
         widget = as_Widget(heading = makePanelButton_(label, item->command));
     }
+    else if (equal_Command(spec, "label")) {
+        iLabelWidget *lab = new_LabelWidget(label, NULL);
+        widget = as_Widget(lab);
+        setWrap_LabelWidget(lab, iTrue);
+        setFlags_Widget(widget, frameless_WidgetFlag, iTrue);
+    }
     else if (equal_Command(spec, "padding")) {
         widget = makePadding_Widget(lineHeight_Text(labelFont_()) * 1.5f);
     }
@@ -500,8 +514,14 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         if (icon) {
             setIcon_LabelWidget(heading, icon);
         }
+        if (value && as_Widget(heading) != value) {
+            as_Widget(heading)->sizeRef = value; /* heading height matches value widget */
+        }
     }
     if (widget) {
+        setFlags_Widget(widget,
+                        collapse_WidgetFlag | hidden_WidgetFlag,
+                        argLabel_Command(spec, "collapse") != 0);
         addChild_Widget(panel, iClob(widget));
     }
 }
@@ -512,11 +532,26 @@ void makePanelItems_Mobile(iWidget *panel, const iMenuItem *itemsNullTerminated)
     }
 }
 
-iWidget *makePanels_Mobile(const iMenuItem *itemsNullTerminated) {
+static const iMenuItem *findDialogCancelAction_(const iMenuItem *items, size_t n) {
+    if (n <= 1) {
+        return NULL;
+    }
+    for (size_t i = 0; i < n - 1; i++) {
+        if (!iCmpStr(items[i].label, "${cancel}")) {
+            return &items[i];
+        }
+    }
+    return NULL;
+}
+
+iWidget *makePanels_Mobile(const char *id,
+                           const iMenuItem *itemsNullTerminated,
+                           const iMenuItem *actions, size_t numActions) {
     /* A multipanel widget has a top panel and one or more detail panels. In a horizontal layout,
        the detail panels slide in from the right and cover the top panel. In a landscape layout,
        the detail panels are always visible on the side. */
     iWidget *sheet = new_Widget();
+    setId_Widget(sheet, id);
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
     setFlags_Widget(sheet,
                     resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
@@ -553,18 +588,21 @@ iWidget *makePanels_Mobile(const iMenuItem *itemsNullTerminated) {
         topPanel->offsetRef = detailStack;
     }
     /* Navigation bar at the top. */
+    iLabelWidget *naviBack;
     iWidget *navi = new_Widget(); {
         setId_Widget(navi, "panel.navi");
         setBackgroundColor_Widget(navi, uiBackground_ColorId);
         addChild_Widget(navi, iClob(makePadding_Widget(0)));
-        iLabelWidget *back = addChildFlags_Widget(
+        naviBack = addChildFlags_Widget(
             navi,
-            iClob(new_LabelWidget(leftAngle_Icon " ${panel.back}", "panel.close")),
+            iClob(newKeyMods_LabelWidget(leftAngle_Icon " ${panel.back}",
+                                         SDLK_ESCAPE, 0,
+                                         "panel.close")),
             noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
                 extraPadding_WidgetFlag);
-        checkIcon_LabelWidget(back);
-        setId_Widget(as_Widget(back), "panel.back");
-        setFont_LabelWidget(back, labelFont_());
+        checkIcon_LabelWidget(naviBack);
+        setId_Widget(as_Widget(naviBack), "panel.back");
+        setFont_LabelWidget(naviBack, labelFont_());
         addChildFlags_Widget(sheet, iClob(navi),
                              drawBackgroundToVerticalSafeArea_WidgetFlag |
                                  arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
@@ -591,6 +629,54 @@ iWidget *makePanels_Mobile(const iMenuItem *itemsNullTerminated) {
         }
         else {
             makePanelItem_Mobile(topPanel, item);
+        }
+    }
+    /* Actions. */
+    if (numActions) {
+        /* Some actions go in the navigation bar and some go on the top panel. */
+        const iMenuItem *cancelItem = findDialogCancelAction_(actions, numActions);
+        const iMenuItem *defaultItem = &actions[numActions - 1];
+        iAssert(defaultItem);
+        if (!cancelItem) {
+            updateTextCStr_LabelWidget(naviBack, defaultItem->label);
+            setCommand_LabelWidget(naviBack, collectNewCStr_String(defaultItem->command));
+            setFlags_Widget(as_Widget(naviBack), alignLeft_WidgetFlag, iFalse);
+            setFlags_Widget(as_Widget(naviBack), alignRight_WidgetFlag, iTrue);
+            setIcon_LabelWidget(naviBack, 0);
+            setFont_LabelWidget(naviBack, labelBoldFont_());            
+        }
+        else {
+            updateTextCStr_LabelWidget(naviBack, cancelItem->label);
+            setCommand_LabelWidget(naviBack, collectNewCStr_String(cancelItem->command
+                                                                    ? cancelItem->command
+                                                                    : "cancel"));
+            iLabelWidget *defaultButton = new_LabelWidget(defaultItem->label, defaultItem->command);
+            setFont_LabelWidget(defaultButton, labelBoldFont_());
+            setFlags_Widget(as_Widget(defaultButton),
+                            frameless_WidgetFlag | extraPadding_WidgetFlag |
+                                noBackground_WidgetFlag,
+                            iTrue);
+            addChildFlags_Widget(as_Widget(naviBack), iClob(defaultButton),
+                                 moveToParentRightEdge_WidgetFlag);
+            updateSize_LabelWidget(defaultButton);
+        }
+        /* All other actions are added as buttons. */
+        iBool needPadding = iTrue;
+        for (size_t i = 0; i < numActions; i++) {
+            const iMenuItem *act = &actions[i];
+            if (act == cancelItem || act == defaultItem) {
+                continue;
+            }
+            if (!iCmpStr(act->label, "---")) {
+                continue;
+            }
+            if (needPadding) {
+                makePanelItem_Mobile(topPanel, &(iMenuItem){ "padding" });
+                needPadding = iFalse;
+            }
+            makePanelItem_Mobile(
+                topPanel,
+                &(iMenuItem){ format_CStr("button text:%s", act->label), 0, 0, act->command });
         }
     }
     /* Finalize the layout. */
@@ -1011,7 +1097,7 @@ iWidget *makePanels_Mobile(const iMenuItem *itemsNullTerminated) {
 #endif
 
 void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
-    if (!useMobileSheetLayout_()) {
+    if (!isUsingPanelLayout_Mobile()) {
         return;    
     }
     const iBool isSlidePanel = (flags_Widget(sheet) & horizontalOffset_WidgetFlag) != 0;
@@ -1032,7 +1118,7 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
 }
 
 void setupSheetTransition_Mobile(iWidget *sheet, iBool isIncoming) {
-    if (!useMobileSheetLayout_()) {
+    if (!isUsingPanelLayout_Mobile()) {
         if (prefs_App()->uiAnimations) {
             setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iFalse);
             if (isIncoming) {

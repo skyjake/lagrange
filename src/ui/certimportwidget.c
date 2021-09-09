@@ -152,7 +152,7 @@ void init_CertImportWidget(iCertImportWidget *d) {
     /* Buttons. */
     addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
     iWidget *buttons = makeDialogButtons_Widget(
-        (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+        (iMenuItem[]){ { "${cancel}" },
                        { uiTextAction_ColorEscape "${dlg.certimport.import}",
                          SDLK_RETURN,
                          KMOD_PRIMARY,
