@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.6.6
+* Adjusted mouse wheel smooth scrolling speed for better consistency. The default scrolling speeds were increased to level 2.
 * Fixed URL encoding of the % character.
 * Fixed hang when wrapping a very long word (with HarfBuzz disabled).
 
