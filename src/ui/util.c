@@ -725,10 +725,11 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
                 iClob(newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
                 noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
                 drawKey_WidgetFlag | itemFlags);
-            setWrap_LabelWidget(label, isInfo);
+            setWrap_LabelWidget(label, isInfo);            
             haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
             if (isInfo) {
+                setFlags_Widget(as_Widget(label), fixedHeight_WidgetFlag, iTrue); /* wrap changes height */
                 setTextColor_LabelWidget(label, uiTextAction_ColorId);
             }
         }
@@ -745,7 +746,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
         iForEach(ObjectList, i, children_Widget(menu)) {
             if (isInstance_Object(i.object, &Class_LabelWidget)) {
                 iLabelWidget *label = i.object;
-                if (icon_LabelWidget(label) == 0) {
+                if (!isWrapped_LabelWidget(label) && icon_LabelWidget(label) == 0) {
                     setIcon_LabelWidget(label, ' ');
                 }
             }

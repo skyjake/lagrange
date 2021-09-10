@@ -1553,12 +1553,15 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                              lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
             if (!lineDelta) d->wheelAccum = 0;
         }
-        d->wheelAccum         -= lineDelta * lineHeight;
-        d->visWrapLines.start += lineDelta;
-        d->visWrapLines.end   += lineDelta;
-        d->inFlags |= needUpdateBuffer_InputWidgetFlag;
-        refresh_Widget(d);
-        return iTrue;
+        if (lineDelta) {
+            d->wheelAccum         -= lineDelta * lineHeight;
+            d->visWrapLines.start += lineDelta;
+            d->visWrapLines.end   += lineDelta;
+            d->inFlags |= needUpdateBuffer_InputWidgetFlag;
+            refresh_Widget(d);            
+            return iTrue;
+        }
+        return iFalse;
     }
     switch (processEvent_Click(&d->click, ev)) {
         case none_ClickResult:
@@ -1926,8 +1929,9 @@ static void draw_InputWidget_(const iInputWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     iRect          bounds    = adjusted_Rect(bounds_InputWidget_(d), padding_(), neg_I2(padding_()));
     iBool          isHint    = isHintVisible_InputWidget_(d);
-    const iBool    isFocused = isFocused_Widget(w);
-    const iBool    isHover   = isHover_Widget(w) &&
+    const iBool    isFocused = isFocused_Widget(w);    
+    const iBool    isHover   = deviceType_App() == desktop_AppDeviceType &&
+                               isHover_Widget(w) &&
                                contains_InputWidget_(d, mouseCoord_Window(get_Window(), 0));
     if (d->inFlags & needUpdateBuffer_InputWidgetFlag) {
         updateBuffered_InputWidget_(iConstCast(iInputWidget *, d));
