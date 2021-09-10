@@ -498,16 +498,18 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     }
     else if (equal_Command(spec, "button")) {
         widget = as_Widget(heading = makePanelButton_(label, item->command));
+        setFlags_Widget(widget, selected_WidgetFlag, argLabel_Command(spec, "selected") != 0);
     }
     else if (equal_Command(spec, "label")) {
         iLabelWidget *lab = new_LabelWidget(label, NULL);
         widget = as_Widget(lab);
         setWrap_LabelWidget(lab, iTrue);
-        setFlags_Widget(widget, frameless_WidgetFlag, iTrue);
+        setFlags_Widget(widget, fixedHeight_WidgetFlag | frameless_WidgetFlag, iTrue);
     }
     else if (equal_Command(spec, "padding")) {
         widget = makePadding_Widget(lineHeight_Text(labelFont_()) * 1.5f);
     }
+    /* Apply common styling to the heading. */
     if (heading) {
         setRemoveTrailingColon_LabelWidget(heading, iTrue);
         const iChar icon = toInt_String(string_Command(item->label, "icon"));
@@ -536,7 +538,7 @@ static const iMenuItem *findDialogCancelAction_(const iMenuItem *items, size_t n
     if (n <= 1) {
         return NULL;
     }
-    for (size_t i = 0; i < n - 1; i++) {
+    for (size_t i = 0; i < n; i++) {
         if (!iCmpStr(items[i].label, "${cancel}")) {
             return &items[i];
         }
@@ -547,6 +549,13 @@ static const iMenuItem *findDialogCancelAction_(const iMenuItem *items, size_t n
 iWidget *makePanels_Mobile(const char *id,
                            const iMenuItem *itemsNullTerminated,
                            const iMenuItem *actions, size_t numActions) {
+    return makePanelsParent_Mobile(get_Root()->widget, id, itemsNullTerminated, actions, numActions);
+}
+
+iWidget *makePanelsParent_Mobile(iWidget *parentWidget,
+                                 const char *id,
+                                 const iMenuItem *itemsNullTerminated,
+                                 const iMenuItem *actions, size_t numActions) {
     /* A multipanel widget has a top panel and one or more detail panels. In a horizontal layout,
        the detail panels slide in from the right and cover the top panel. In a landscape layout,
        the detail panels are always visible on the side. */
@@ -637,7 +646,7 @@ iWidget *makePanels_Mobile(const char *id,
         const iMenuItem *cancelItem = findDialogCancelAction_(actions, numActions);
         const iMenuItem *defaultItem = &actions[numActions - 1];
         iAssert(defaultItem);
-        if (!cancelItem) {
+        if (defaultItem && !cancelItem) {
             updateTextCStr_LabelWidget(naviBack, defaultItem->label);
             setCommand_LabelWidget(naviBack, collectNewCStr_String(defaultItem->command));
             setFlags_Widget(as_Widget(naviBack), alignLeft_WidgetFlag, iFalse);
@@ -645,7 +654,7 @@ iWidget *makePanels_Mobile(const char *id,
             setIcon_LabelWidget(naviBack, 0);
             setFont_LabelWidget(naviBack, labelBoldFont_());            
         }
-        else {
+        else if (defaultItem && defaultItem != cancelItem) {
             updateTextCStr_LabelWidget(naviBack, cancelItem->label);
             setCommand_LabelWidget(naviBack, collectNewCStr_String(cancelItem->command
                                                                     ? cancelItem->command
@@ -667,8 +676,12 @@ iWidget *makePanels_Mobile(const char *id,
             if (act == cancelItem || act == defaultItem) {
                 continue;
             }
-            if (!iCmpStr(act->label, "---")) {
-                continue;
+            const char *label = act->label;
+            if (*label == '*' || *label == '&') {
+                continue; /* Special value selection items for a Question dialog. */
+            }
+            if (!iCmpStr(label, "---")) {
+                continue; /* Separator. */
             }
             if (needPadding) {
                 makePanelItem_Mobile(topPanel, &(iMenuItem){ "padding" });
@@ -680,7 +693,7 @@ iWidget *makePanels_Mobile(const char *id,
         }
     }
     /* Finalize the layout. */
-    addChild_Widget(sheet->root->widget, iClob(sheet));
+    addChild_Widget(parentWidget, iClob(sheet));
     mainDetailSplitHandler_(mainDetailSplit, "window.resized"); /* make it resize the split */
     updatePanelSheetMetrics_(sheet);
     arrange_Widget(sheet);

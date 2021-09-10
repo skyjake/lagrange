@@ -31,7 +31,11 @@ iBool       isUsingPanelLayout_Mobile   (void);
 iWidget *   makePanels_Mobile           (const char *id,
                                          const iMenuItem *itemsNullTerminated,
                                          const iMenuItem *actions, size_t numActions);
-    
+iWidget *   makePanelsParent_Mobile     (iWidget *parent,
+                                         const char *id,                                         
+                                         const iMenuItem *itemsNullTerminated,
+                                         const iMenuItem *actions, size_t numActions);
+
 void        setupMenuTransition_Mobile  (iWidget *menu, iBool isIncoming);
 void        setupSheetTransition_Mobile (iWidget *sheet, iBool isIncoming);
 

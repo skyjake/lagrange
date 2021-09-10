@@ -248,7 +248,9 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "proxy.gemini address:%s\n", cstr_String(&d->prefs.geminiProxy));
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
+#if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
     appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.downloadDir));
+#endif
     appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.searchUrl));
     appendFormat_String(str, "translation.languages from:%d to:%d\n", d->prefs.langFrom, d->prefs.langTo);
     return str;
@@ -2331,10 +2333,12 @@ iBool handleCommand_App(const char *cmd) {
         setCStr_String(&d->prefs.httpProxy, suffixPtr_Command(cmd, "address"));
         return iTrue;
     }
+#if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
     else if (equal_Command(cmd, "downloads")) {
         setCStr_String(&d->prefs.downloadDir, suffixPtr_Command(cmd, "path"));
         return iTrue;
     }
+#endif
     else if (equal_Command(cmd, "downloads.open")) {
         postCommandf_App("open url:%s", cstrCollect_String(makeFileUrl_String(downloadDir_App())));
         return iTrue;

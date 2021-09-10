@@ -272,6 +272,8 @@ void        useSheetStyle_Widget        (iWidget *);
 iWidget *   makeDialogButtons_Widget    (const iMenuItem *actions, size_t numActions);
 iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
 
+iLabelWidget *dialogAcceptButton_Widget (const iWidget *);
+
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,
                                                   iInputWidget *input);

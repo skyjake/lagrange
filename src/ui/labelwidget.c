@@ -551,10 +551,12 @@ void updateText_LabelWidget(iLabelWidget *d, const iString *text) {
 }
 
 void updateTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
-    setCStr_String(&d->label, text);
-    set_String(&d->srcLabel, &d->label);
-    replaceVariables_LabelWidget_(d);
-    refresh_Widget(&d->widget);
+    if (d) {
+        setCStr_String(&d->label, text);
+        set_String(&d->srcLabel, &d->label);
+        replaceVariables_LabelWidget_(d);
+        refresh_Widget(&d->widget);
+    }
 }
 
 void updateTextAndResizeWidthCStr_LabelWidget(iLabelWidget *d, const char *text) {

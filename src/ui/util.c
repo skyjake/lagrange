@@ -1394,6 +1394,28 @@ iWidget *makeMessage_Widget(const char *title, const char *msg, const iMenuItem 
 iWidget *makeQuestion_Widget(const char *title, const char *msg,
                              const iMenuItem *items, size_t numItems) {
     processEvents_App(postedEventsOnly_AppEventMode);
+    if (isUsingPanelLayout_Mobile()) {
+        iArray *panelItems = collectNew_Array(sizeof(iMenuItem));
+        pushBackN_Array(panelItems, (iMenuItem[]){
+            { format_CStr("title text:%s", title) },
+            { format_CStr("label text:%s", msg) },
+            { NULL }
+        }, 3);
+        for (size_t i = 0; i < numItems; i++) {
+            const iMenuItem *item = &items[i];
+            const char first = item->label[0];
+            if (first == '*' || first == '&') {
+                insert_Array(panelItems, size_Array(panelItems) - 1,
+                             &(iMenuItem){ format_CStr("button selected:%d text:%s",
+                                                       first == '&' ? 1 : 0, item->label + 1),
+                                           0, 0, item->command });
+            }
+        }
+        iWidget *dlg = makePanels_Mobile("", data_Array(panelItems), items, numItems);
+        setCommandHandler_Widget(dlg, messageHandler_);
+        setupSheetTransition_Mobile(dlg, iTrue);
+        return dlg;
+    }
     iWidget *dlg = makeSheet_Widget("");
     setCommandHandler_Widget(dlg, messageHandler_);
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag);
@@ -1483,6 +1505,15 @@ iWidget *makeTwoColumns_Widget(iWidget **headings, iWidget **values) {
     *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     return page;
+}
+
+iLabelWidget *dialogAcceptButton_Widget(const iWidget *d) {
+    iWidget *buttonParent = findChild_Widget(d, "dialogbuttons");
+    if (!buttonParent) {
+        iAssert(isUsingPanelLayout_Mobile());
+        buttonParent = findChild_Widget(d, "panel.back");
+    }
+    return (iLabelWidget *) lastChild_Widget(buttonParent);
 }
 
 iWidget *appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
@@ -2408,25 +2439,25 @@ iWidget *makeIdentityCreation_Widget(void) {
     };
     iWidget *dlg;
     if (isUsingPanelLayout_Mobile()) {
-        dlg = makePanels_Mobile("ident",
-                                (iMenuItem[]){ { "title id:ident.heading text:${heading.newident}" },
-                                               { "label text:${dlg.newident.rsa.selfsign}" },
-                                               { "dropdown id:ident.scope text:${dlg.newident.scope}", 0, 0,
-                                                 (const void *) scopeItems },
-                                               { "input id:ident.until hint:hint.newident.date maxlen:19 text:${dlg.newident.until}" },
-                                               //{ "padding" },
-                                               //{ "toggle id:ident.temp text:${dlg.newident.temp}" },
-                                               //{ "label text:${help.ident.temp}" },
-                                               { "heading id:dlg.newident.commonname" },
-                                               { "input id:ident.common noheading:1" },
-                                               { "padding collapse:1" },
-                                               { "input collapse:1 id:ident.email hint:hint.newident.optional text:${dlg.newident.email}" },
-                                               { "input collapse:1 id:ident.userid hint:hint.newident.optional text:${dlg.newident.userid}" },
-                                               { "input collapse:1 id:ident.domain hint:hint.newident.optional text:${dlg.newident.domain}" },
-                                               { "input collapse:1 id:ident.org hint:hint.newident.optional text:${dlg.newident.org}" },
-                                               { "input collapse:1 id:ident.country hint:hint.newident.optional text:${dlg.newident.country}" },
-                                               { NULL }
-                                }, actions, iElemCount(actions));
+        dlg = makePanels_Mobile("ident", (iMenuItem[]){
+            { "title id:ident.heading text:${heading.newident}" },
+            { "label text:${dlg.newident.rsa.selfsign}" },
+            { "dropdown id:ident.scope text:${dlg.newident.scope}", 0, 0,
+              (const void *) scopeItems },
+            { "input id:ident.until hint:hint.newident.date maxlen:19 text:${dlg.newident.until}" },
+            //{ "padding" },
+            //{ "toggle id:ident.temp text:${dlg.newident.temp}" },
+            //{ "label text:${help.ident.temp}" },
+            { "heading id:dlg.newident.commonname" },
+            { "input id:ident.common noheading:1" },
+            { "padding collapse:1" },
+            { "input collapse:1 id:ident.email hint:hint.newident.optional text:${dlg.newident.email}" },
+            { "input collapse:1 id:ident.userid hint:hint.newident.optional text:${dlg.newident.userid}" },
+            { "input collapse:1 id:ident.domain hint:hint.newident.optional text:${dlg.newident.domain}" },
+            { "input collapse:1 id:ident.org hint:hint.newident.optional text:${dlg.newident.org}" },
+            { "input collapse:1 id:ident.country hint:hint.newident.optional text:${dlg.newident.country}" },
+            { NULL }
+        }, actions, iElemCount(actions));
         setupSheetTransition_Mobile(dlg, iTrue);
     }
     else {
@@ -2513,6 +2544,7 @@ static const iMenuItem languages[] = {
     { "${lang.pt}", 0, 0, "xlt.lang id:pt" },
     { "${lang.ru}", 0, 0, "xlt.lang id:ru" },
     { "${lang.es}", 0, 0, "xlt.lang id:es" },
+    { NULL }
 };
 
 static iBool translationHandler_(iWidget *dlg, const char *cmd) {
@@ -2529,6 +2561,7 @@ static iBool translationHandler_(iWidget *dlg, const char *cmd) {
 
 const char *languageId_String(const iString *menuItemLabel) {
     iForIndices(i, languages) {
+        if (!languages[i].label) break;
         if (!cmp_String(menuItemLabel, translateCStr_Lang(languages[i].label))) {
             return cstr_Rangecc(range_Command(languages[i].command, "id"));
         }
@@ -2538,6 +2571,7 @@ const char *languageId_String(const iString *menuItemLabel) {
 
 int languageIndex_CStr(const char *langId) {
     iForIndices(i, languages) {
+        if (!languages[i].label) break;
         if (equal_Rangecc(range_Command(languages[i].command, "id"), langId)) {
             return (int) i;
         }
@@ -2546,54 +2580,70 @@ int languageIndex_CStr(const char *langId) {
 }
 
 iWidget *makeTranslation_Widget(iWidget *parent) {
-    iWidget *dlg = makeSheet_Widget("xlt");
-    setFlags_Widget(dlg, keepOnTop_WidgetFlag, iFalse);
-    dlg->minSize.x = 70 * gap_UI;
+    const iMenuItem actions[] = {
+        { "${cancel}", SDLK_ESCAPE, 0, "translation.cancel" },
+        { uiTextAction_ColorEscape "${dlg.translate}", SDLK_RETURN, 0, "translation.submit" }                                   
+    };
+    iWidget *dlg;
+    if (isUsingPanelLayout_Mobile()) {
+        dlg = makePanelsParent_Mobile(parent, "xlt", (iMenuItem[]){
+            { "title id:heading.translate" },
+            { "dropdown id:xlt.from text:${dlg.translate.from}", 0, 0, (const void *) languages },
+            { "dropdown id:xlt.to text:${dlg.translate.to}",     0, 0, (const void *) languages },
+            { NULL }                              
+        }, actions, iElemCount(actions));
+    }
+    else {
+        dlg = makeSheet_Widget("xlt");
+        setFlags_Widget(dlg, keepOnTop_WidgetFlag, iFalse);
+        dlg->minSize.x = 70 * gap_UI;
+        addChildFlags_Widget(
+            dlg,
+            iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.translate}", NULL)),
+            frameless_WidgetFlag);
+        addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
+        iWidget *headings, *values;
+        iWidget *page;
+        addChild_Widget(dlg, iClob(page = makeTwoColumns_Widget(&headings, &values)));
+        setId_Widget(page, "xlt.langs");
+        iLabelWidget *fromLang, *toLang;
+        /* Source language. */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.translate.from}")));
+            setId_Widget(
+                addChildFlags_Widget(values,
+                                     iClob(fromLang = makeMenuButton_LabelWidget(
+                                               "${lang.pt}", languages, iElemCount(languages) - 1)),
+                                     alignLeft_WidgetFlag),
+                "xlt.from");
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(fromLang), "menu"),
+                                      uiBackgroundMenu_ColorId);
+        }
+        /* Target language. */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.translate.to}")));
+            setId_Widget(
+                addChildFlags_Widget(values,
+                                     iClob(toLang = makeMenuButton_LabelWidget(
+                                               "${lang.pt}", languages, iElemCount(languages) - 1)),
+                                     alignLeft_WidgetFlag),
+                "xlt.to");
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(toLang), "menu"),
+                                      uiBackgroundMenu_ColorId);
+        }
+        addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(parent, iClob(dlg));
+        arrange_Widget(dlg);
+    }
+    /* Update choices. */
+    updateText_LabelWidget(
+        findChild_Widget(dlg, "xlt.from"),
+        text_LabelWidget(child_Widget(findChild_Widget(findChild_Widget(dlg, "xlt.from"), "menu"),
+                                      prefs_App()->langFrom)));
+    updateText_LabelWidget(
+        findChild_Widget(dlg, "xlt.to"),
+        text_LabelWidget(child_Widget(findChild_Widget(findChild_Widget(dlg, "xlt.to"), "menu"),
+                                      prefs_App()->langTo)));
     setCommandHandler_Widget(dlg, translationHandler_);
-    addChildFlags_Widget(dlg,
-                         iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.translate}", NULL)),
-                         frameless_WidgetFlag);
-    addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
-    iWidget *headings, *values;
-    iWidget *page;
-    addChild_Widget(dlg, iClob(page = makeTwoColumns_Widget(&headings, &values)));
-    setId_Widget(page, "xlt.langs");
-    iLabelWidget *fromLang, *toLang;
-    /* Source language. */ {
-        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.translate.from}")));
-        setId_Widget(
-            addChildFlags_Widget(values,
-                                 iClob(fromLang = makeMenuButton_LabelWidget(
-                                           "${lang.pt}", languages, iElemCount(languages))),
-                                 alignLeft_WidgetFlag),
-            "xlt.from");
-        iWidget *langMenu = findChild_Widget(as_Widget(fromLang), "menu");
-        updateText_LabelWidget(fromLang,
-                               text_LabelWidget(child_Widget(langMenu, prefs_App()->langFrom)));
-        setBackgroundColor_Widget(langMenu, uiBackgroundMenu_ColorId);
-    }
-    /* Target language. */ {
-        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.translate.to}")));
-        setId_Widget(addChildFlags_Widget(values,
-                                          iClob(toLang = makeMenuButton_LabelWidget(
-                                                    "${lang.pt}", languages, iElemCount(languages))),
-                                          alignLeft_WidgetFlag),
-                     "xlt.to");
-        iWidget *langMenu = findChild_Widget(as_Widget(toLang), "menu");
-        setBackgroundColor_Widget(langMenu, uiBackgroundMenu_ColorId);
-        updateText_LabelWidget(toLang,
-                               text_LabelWidget(child_Widget(langMenu, prefs_App()->langTo)));
-    }
-    addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
-    addChild_Widget(
-        dlg,
-        iClob(makeDialogButtons_Widget(
-            (iMenuItem[]){
-                { "${cancel}", SDLK_ESCAPE, 0, "translation.cancel" },
-                { uiTextAction_ColorEscape "${dlg.translate}", SDLK_RETURN, 0, "translation.submit" } },
-            2)));
-    addChild_Widget(parent, iClob(dlg));
-    arrange_Widget(dlg);
-    finalizeSheet_Mobile(dlg);
+    setupSheetTransition_Mobile(dlg, iTrue);
     return dlg;
 }
