@@ -452,7 +452,7 @@ static void arrange_Widget_(iWidget *d) {
     else if (d->flags & centerHorizontal_WidgetFlag) {
         centerHorizontal_Widget_(d);
     }
-    if (d->flags & resizeToParentWidth_WidgetFlag) {
+    if (d->flags & resizeToParentWidth_WidgetFlag && d->parent) {
         iRect childBounds = zero_Rect();
         if (flags_Widget(d->parent) & arrangeWidth_WidgetFlag) {
             /* Can't go narrower than what the children require, though. */
@@ -462,7 +462,7 @@ static void arrange_Widget_(iWidget *d) {
         setWidth_Widget_(d, iMaxi(width_Rect(innerRect_Widget_(d->parent)),
                                   width_Rect(childBounds)));
     }
-    if (d->flags & resizeToParentHeight_WidgetFlag) {
+    if (d->flags & resizeToParentHeight_WidgetFlag && d->parent) {
         TRACE(d, "resize to parent height");
         setHeight_Widget_(d, height_Rect(innerRect_Widget_(d->parent)));
     }

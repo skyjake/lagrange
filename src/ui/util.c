@@ -1061,6 +1061,7 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
 }
 
 void resizeToLargestPage_Widget(iWidget *tabs) {
+    if (!tabs) return;
 //    puts("RESIZE TO LARGEST PAGE ...");
     iWidget *pages = findChild_Widget(tabs, "tabs.pages");
     iForEach(ObjectList, i, children_Widget(pages)) {
@@ -1216,7 +1217,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
                 postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
                 setId_Widget(dlg, ""); /* no further commands to emit */
             }
-            setupSheetTransition_Mobile(dlg, iFalse);
+            setupSheetTransition_Mobile(dlg, top_TransitionDir);
             destroy_Widget(dlg);
             return iTrue;
         }
@@ -1225,13 +1226,13 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     else if (equal_Command(cmd, "valueinput.cancel")) {
         postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
         setId_Widget(dlg, ""); /* no further commands to emit */
-        setupSheetTransition_Mobile(dlg, iFalse);
+        setupSheetTransition_Mobile(dlg, top_TransitionDir);
         destroy_Widget(dlg);
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.accept")) {
         acceptValueInput_(dlg);
-        setupSheetTransition_Mobile(dlg, iFalse);        
+        setupSheetTransition_Mobile(dlg, top_TransitionDir);        
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -1345,7 +1346,9 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
                                          acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey),
                                          "valueinput.accept" } },
                         2)));
-    finalizeSheet_Mobile(dlg);
+//    finalizeSheet_Mobile(dlg);
+    arrange_Widget(dlg);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | top_TransitionDir);
     if (parent) {
         setFocus_Widget(as_Widget(input));
     }
@@ -1915,6 +1918,7 @@ iWidget *makePreferences_Widget(void) {
             { NULL }
         };
         iWidget *dlg = makePanels_Mobile("prefs", (iMenuItem[]){
+            { "title id:heading.settings" },
             { "panel text:" gear_Icon " ${heading.prefs.general}", 0, 0, (const void *) generalPanelItems },
             { "panel icon:0x1f5a7 id:heading.prefs.network", 0, 0, (const void *) networkPanelItems },
             { "panel text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
@@ -2405,7 +2409,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         arrange_Widget(dlg);
         as_Widget(input)->rect.size.x = 100 * gap_UI - headings->rect.size.x;
         addChild_Widget(get_Root()->widget, iClob(dlg));
-        finalizeSheet_Mobile(dlg);
+//        finalizeSheet_Mobile(dlg);
     }
     /* Initialize. */ {
         const iBookmark *bm  = bookmarkId ? get_Bookmarks(bookmarks_App(), bookmarkId) : NULL;
@@ -2419,6 +2423,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
                         iTrue);
         setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
     }
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag);
     return dlg;
 }
 

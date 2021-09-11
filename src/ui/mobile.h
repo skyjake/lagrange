@@ -35,8 +35,23 @@ iWidget *   makePanelsParent_Mobile     (iWidget *parent,
                                          const char *id,                                         
                                          const iMenuItem *itemsNullTerminated,
                                          const iMenuItem *actions, size_t numActions);
+void        initPanels_Mobile           (iWidget *panels, iWidget *parentWidget,
+                                         const iMenuItem *itemsNullTerminated,
+                                         const iMenuItem *actions, size_t numActions);
 
-void        setupMenuTransition_Mobile  (iWidget *menu, iBool isIncoming);
-void        setupSheetTransition_Mobile (iWidget *sheet, iBool isIncoming);
+enum iTransitionFlags {
+    incoming_TransitionFlag = iBit(1),
+    dirMask_TransitionFlag  = iBit(2) | iBit(3),
+};
+
+enum iTransitionDir {
+    right_TransitionDir  = 0,
+    bottom_TransitionDir = 2,
+    left_TransitionDir   = 4,
+    top_TransitionDir    = 6,
+};
+
+void        setupMenuTransition_Mobile  (iWidget *menu,  iBool isIncoming);
+void        setupSheetTransition_Mobile (iWidget *sheet, int flags);
 
 void        finalizeSheet_Mobile        (iWidget *sheet);

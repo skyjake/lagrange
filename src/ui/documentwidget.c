@@ -2852,7 +2852,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             setUrl_UploadWidget(upload, d->mod.url);
             setResponseViewer_UploadWidget(upload, d);
             addChild_Widget(get_Root()->widget, iClob(upload));
-            finalizeSheet_Mobile(as_Widget(upload));
+//            finalizeSheet_Mobile(as_Widget(upload));
+            setupSheetTransition_Mobile(as_Widget(upload), iTrue);
             postRefresh_App();
         }
         return iTrue;
@@ -3679,16 +3680,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "---" },
                             { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
-#if defined (iPlatformMobile)
-                            { "---" },
-                            { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
-                        14);
-#else
                             { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                             { "---" },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
                         15);
-#endif
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,

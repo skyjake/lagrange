@@ -251,6 +251,10 @@ msgstr "Show Feed Entries"
 msgid "menu.preferences"
 msgstr "Preferences…"
 
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Settings…"
+
 msgid "menu.help"
 msgstr "Help"
 
@@ -906,7 +910,7 @@ msgid "heading.lookup.other"
 msgstr "OTHER"
 
 msgid "menu.page.upload"
-msgstr "Upload Page with Titan"
+msgstr "Upload Page with Titan…"
 
 msgid "heading.upload"
 msgstr "UPLOAD WITH TITAN"
@@ -952,6 +956,18 @@ msgstr "Set the Titan server port to use for this URL.\nThe port is saved in the
 
 msgid "dlg.uploadport.set"
 msgstr "Set Port"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Upload Plain Text"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Upload a File"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Select File…"
 
 msgid "heading.translate"
 msgstr "TRANSLATE PAGE"
@@ -1150,6 +1166,10 @@ msgstr "SPECIAL TAGS"
 
 msgid "heading.prefs"
 msgstr "PREFERENCES"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "SETTINGS"
 
 msgid "heading.prefs.certs"
 msgstr "CERTIFICATES"

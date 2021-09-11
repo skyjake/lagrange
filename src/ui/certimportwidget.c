@@ -104,61 +104,83 @@ static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *dat
 
 void init_CertImportWidget(iCertImportWidget *d) {
     iWidget *w = as_Widget(d);
+    const iMenuItem actions[] = {
+#if defined (iPlatformAppleMobile)
+        { "${dlg.certimport.pickfile}", 0, 0, "certimport.pickfile" },
+        { "---" },
+#endif
+        { "${cancel}" },
+        { uiTextAction_ColorEscape "${dlg.certimport.import}",
+          SDLK_RETURN, KMOD_PRIMARY,
+          "certimport.accept" }
+    };
     init_Widget(w);
     setId_Widget(w, "certimport");
     d->cert = NULL;
-    /* This should behave similar to sheets. */ 
-    useSheetStyle_Widget(w);
-    addChildFlags_Widget(
-        w,
-        iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.certimport}", NULL)),
-        frameless_WidgetFlag);
-    d->info = addChildFlags_Widget(w, iClob(new_LabelWidget(infoText_, NULL)), frameless_WidgetFlag);
-    addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-    d->crtLabel = new_LabelWidget("", NULL); {
-        setFont_LabelWidget(d->crtLabel, uiContent_FontId);
-        addChildFlags_Widget(w, iClob(d->crtLabel), 0);
-        setFrameColor_Widget(as_Widget(d->crtLabel), uiTextCaution_ColorId);
+    if (isUsingPanelLayout_Mobile()) {
+        initPanels_Mobile(w, NULL, (iMenuItem[]){
+            { "title id:heading.certimport" },
+            { format_CStr("label id:certimport.info text:%s", infoText_) },
+            //{ "padding" },
+            { "label id:certimport.crt nowrap:1 frame:1" },
+            { "padding arg:0.25" },
+            { "label id:certimport.key nowrap:1 frame:1" },
+            { "heading text:${dlg.certimport.notes}" },
+            { "input id:certimport.notes hint:hint.certimport.description noheading:1" },
+            { NULL }
+        }, actions, iElemCount(actions));
+        d->info     = findChild_Widget(w, "certimport.info");
+        d->crtLabel = findChild_Widget(w, "certimport.crt");
+        d->keyLabel = findChild_Widget(w, "certimport.key");
+        d->notes    = findChild_Widget(w, "certimport.notes");
+        setFixedSize_Widget(as_Widget(d->crtLabel), init_I2(-1, gap_UI * 12));
+        setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(-1, gap_UI * 12));
     }
-    d->keyLabel = new_LabelWidget("", NULL); {
-        setFont_LabelWidget(d->keyLabel, uiContent_FontId);
+    else {
+        /* This should behave similar to sheets. */ 
+        useSheetStyle_Widget(w);
+        addChildFlags_Widget(
+            w,
+            iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.certimport}", NULL)),
+            frameless_WidgetFlag);
+        d->info = addChildFlags_Widget(w, iClob(new_LabelWidget(infoText_, NULL)), frameless_WidgetFlag);
         addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-        addChildFlags_Widget(w, iClob(d->keyLabel), 0);
-        setFrameColor_Widget(as_Widget(d->keyLabel), uiTextCaution_ColorId);
+        d->crtLabel = new_LabelWidget("", NULL); {
+            setFont_LabelWidget(d->crtLabel, uiContent_FontId);
+            addChildFlags_Widget(w, iClob(d->crtLabel), 0);
+        }
+        d->keyLabel = new_LabelWidget("", NULL); {
+            setFont_LabelWidget(d->keyLabel, uiContent_FontId);
+            addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+            addChildFlags_Widget(w, iClob(d->keyLabel), 0);
+        }
+        addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+        /* TODO: Use makeTwoColumnWidget_() */
+        iWidget *page = new_Widget(); {
+            setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+            iWidget *headings = addChildFlags_Widget(
+                page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+            iWidget *values = addChildFlags_Widget(
+                page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+            addTwoColumnDialogInputField_Widget(
+                headings,
+                values,
+                "${dlg.certimport.notes}",
+                "",
+                iClob(d->notes = newHint_InputWidget(0, "${hint.certimport.description}")));
+            as_Widget(d->notes)->rect.size.x = gap_UI * 70;
+        }
+        addChild_Widget(w, iClob(page));
+        arrange_Widget(w);
+        setFixedSize_Widget(as_Widget(d->crtLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
+        setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
+        /* Buttons. */
+        addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+        iWidget *buttons = makeDialogButtons_Widget(actions, iElemCount(actions));
+        addChild_Widget(w, iClob(buttons));
     }
-    addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-    /* TODO: Use makeTwoColumnWidget_() */
-    iWidget *page = new_Widget(); {
-        setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        iWidget *headings = addChildFlags_Widget(
-            page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-        iWidget *values = addChildFlags_Widget(
-            page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-//        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.certimport.notes}")));
-//        addChild_Widget(values, iClob(d->notes = new_InputWidget(0)));
-//        setHint_InputWidget(d->notes, "${hint.certimport.description}");
-        addTwoColumnDialogInputField_Widget(
-            headings,
-            values,
-            "${dlg.certimport.notes}",
-            "",
-            iClob(d->notes = newHint_InputWidget(0, "${hint.certimport.description}")));
-        as_Widget(d->notes)->rect.size.x = gap_UI * 70;
-    }
-    addChild_Widget(w, iClob(page));
-    arrange_Widget(w);
-    setFixedSize_Widget(as_Widget(d->crtLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
-    setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
-    /* Buttons. */
-    addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-    iWidget *buttons = makeDialogButtons_Widget(
-        (iMenuItem[]){ { "${cancel}" },
-                       { uiTextAction_ColorEscape "${dlg.certimport.import}",
-                         SDLK_RETURN,
-                         KMOD_PRIMARY,
-                         "certimport.accept" } },
-        2);
-    addChild_Widget(w, iClob(buttons));
+    setFrameColor_Widget(as_Widget(d->crtLabel), uiTextCaution_ColorId);
+    setFrameColor_Widget(as_Widget(d->keyLabel), uiTextCaution_ColorId);
     if (deviceType_App() != desktop_AppDeviceType) {
         /* Try auto-pasting. */
         postCommand_App("certimport.paste");

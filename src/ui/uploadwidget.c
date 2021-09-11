@@ -81,91 +81,122 @@ void init_UploadWidget(iUploadWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "upload");
-    useSheetStyle_Widget(w);
     init_String(&d->originalUrl);
     init_String(&d->url);
     d->viewer = NULL;
     d->request = NULL;
     init_String(&d->filePath);
     d->fileSize = 0;
-    addChildFlags_Widget(w,
-                         iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.upload}", NULL)),
-                         frameless_WidgetFlag);
-    d->info = addChildFlags_Widget(w, iClob(new_LabelWidget("", NULL)),
-                                   frameless_WidgetFlag | resizeToParentWidth_WidgetFlag |
-                                   fixedHeight_WidgetFlag);
-    setWrap_LabelWidget(d->info, iTrue);
-    /* Tabs for input data. */
-    iWidget *tabs = makeTabs_Widget(w);
-    /* Make the tabs support vertical expansion based on content. */ {
-        setFlags_Widget(tabs, resizeHeightOfChildren_WidgetFlag, iFalse);
-        setFlags_Widget(tabs, arrangeHeight_WidgetFlag, iTrue);
-        iWidget *tabPages = findChild_Widget(tabs, "tabs.pages");
-        setFlags_Widget(tabPages, resizeHeightOfChildren_WidgetFlag, iFalse);
-        setFlags_Widget(tabPages, arrangeHeight_WidgetFlag, iTrue);
+    const iMenuItem actions[] = {
+        { "${upload.port}", 0, 0, "upload.setport" },
+        { "---" },
+        { "${close}", SDLK_ESCAPE, 0, "upload.cancel" },
+        { uiTextAction_ColorEscape "${dlg.upload.send}", SDLK_RETURN, KMOD_PRIMARY, "upload.accept" }
+    };
+    if (isUsingPanelLayout_Mobile()) {
+        const iMenuItem textItems[] = {
+            { "title id:heading.upload.text" },
+            { "input id:upload.text noheading:1" },
+            { NULL }        
+        };
+        const iMenuItem fileItems[] = {
+            { "title id:heading.upload.file" },
+            { "button text:" uiTextAction_ColorEscape "${dlg.upload.pickfile}", 0, 0, "upload.pickfile" },            
+            { "heading id:upload.file.name" },
+            { "label id:upload.filepathlabel" },
+            { "heading id:upload.file.size" },
+            { "label id:upload.filesizelabel" },
+            { "padding" },
+            { "input id:upload.mime" },
+            { "label id:upload.counter text:" },
+            { NULL }        
+        };
+        initPanels_Mobile(w, NULL, (iMenuItem[]){
+            { "title id:heading.upload" },
+            { "label id:upload.info" },
+//            { "padding" },
+            { "panel id:dlg.upload.text icon:0x1f5b9", 0, 0, (const void *) textItems },
+            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
+            { "padding" },
+            { "input id:upload.token hint:hint.upload.token" },
+            { NULL }
+        }, actions, iElemCount(actions));
+        d->info          = findChild_Widget(w, "upload.info");
+        d->input         = findChild_Widget(w, "upload.text");
+        d->filePathLabel = findChild_Widget(w, "upload.file.name");
+        d->fileSizeLabel = findChild_Widget(w, "upload.file.size");
+        d->mime          = findChild_Widget(w, "upload.mime");
+        d->token         = findChild_Widget(w, "upload.token");
+        d->counter       = findChild_Widget(w, "upload.counter");
     }
-    iWidget *headings, *values;
-    setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
-    setId_Widget(tabs, "upload.tabs");
-//    const int bigGap = lineHeight_Text(uiLabel_FontId) * 3 / 4;
-    /* Text input. */ {
-        //appendTwoColumnTabPage_Widget(tabs, "${heading.upload.text}", '1', &headings, &values);
-        iWidget *page = new_Widget();
-        setFlags_Widget(page, arrangeSize_WidgetFlag, iTrue);
-        d->input = new_InputWidget(0);
-        setId_Widget(as_Widget(d->input), "upload.text");
-        setFont_InputWidget(d->input, monospace_FontId);
-        setLineLimits_InputWidget(d->input, 7, 20);
-        setUseReturnKeyBehavior_InputWidget(d->input, iFalse); /* traditional text editor */        
-        setHint_InputWidget(d->input, "${hint.upload.text}");
-        setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI, -1));
-        addChild_Widget(page, iClob(d->input));
-        appendFramelessTabPage_Widget(tabs, iClob(page), "${heading.upload.text}", '1', 0);
+    else {
+        useSheetStyle_Widget(w);
+        addChildFlags_Widget(w,
+                             iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.upload}", NULL)),
+                             frameless_WidgetFlag);
+        d->info = addChildFlags_Widget(w, iClob(new_LabelWidget("", NULL)),
+                                       frameless_WidgetFlag | resizeToParentWidth_WidgetFlag |
+                                       fixedHeight_WidgetFlag);
+        setWrap_LabelWidget(d->info, iTrue);
+        /* Tabs for input data. */
+        iWidget *tabs = makeTabs_Widget(w);
+        /* Make the tabs support vertical expansion based on content. */ {
+            setFlags_Widget(tabs, resizeHeightOfChildren_WidgetFlag, iFalse);
+            setFlags_Widget(tabs, arrangeHeight_WidgetFlag, iTrue);
+            iWidget *tabPages = findChild_Widget(tabs, "tabs.pages");
+            setFlags_Widget(tabPages, resizeHeightOfChildren_WidgetFlag, iFalse);
+            setFlags_Widget(tabPages, arrangeHeight_WidgetFlag, iTrue);
+        }
+        iWidget *headings, *values;
+        setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
+        setId_Widget(tabs, "upload.tabs");
+        /* Text input. */ {
+            iWidget *page = new_Widget();
+            setFlags_Widget(page, arrangeSize_WidgetFlag, iTrue);
+            d->input = new_InputWidget(0);
+            setId_Widget(as_Widget(d->input), "upload.text");
+            setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI, -1));
+            addChild_Widget(page, iClob(d->input));
+            appendFramelessTabPage_Widget(tabs, iClob(page), "${heading.upload.text}", '1', 0);
+        }
+        /* File content. */ {
+            appendTwoColumnTabPage_Widget(tabs, "${heading.upload.file}", '2', &headings, &values);        
+            addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.name}", NULL)), frameless_WidgetFlag);
+            d->filePathLabel = addChildFlags_Widget(values, iClob(new_LabelWidget(uiTextAction_ColorEscape "${upload.file.drophere}", NULL)), frameless_WidgetFlag);
+            addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)), frameless_WidgetFlag);
+            d->fileSizeLabel = addChildFlags_Widget(values, iClob(new_LabelWidget("\u2014", NULL)), frameless_WidgetFlag);
+            d->mime = new_InputWidget(0);
+            setFixedSize_Widget(as_Widget(d->mime), init_I2(70 * gap_UI, -1));
+            addTwoColumnDialogInputField_Widget(headings, values, "${upload.mime}", "upload.mime", iClob(d->mime));
+        }
+        /* Token. */ {
+            addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+            iWidget *page = makeTwoColumns_Widget(&headings, &values);
+            d->token = addTwoColumnDialogInputField_Widget(
+                headings, values, "${upload.token}", "upload.token", iClob(new_InputWidget(0)));
+            setHint_InputWidget(d->token, "${hint.upload.token}");
+            setFixedSize_Widget(as_Widget(d->token), init_I2(50 * gap_UI, -1));
+            addChild_Widget(w, iClob(page));
+        }
+        /* Buttons. */ {
+            addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+            iWidget *buttons = makeDialogButtons_Widget(actions, iElemCount(actions));
+            setId_Widget(insertChildAfterFlags_Widget(buttons,
+                                                 iClob(d->counter = new_LabelWidget("", NULL)),
+                                                 0, frameless_WidgetFlag),
+                         "upload.counter");
+            addChild_Widget(w, iClob(buttons));
+        }
+        resizeToLargestPage_Widget(tabs);
+        arrange_Widget(w);
+        setFixedSize_Widget(as_Widget(d->token), init_I2(width_Widget(tabs) - left_Rect(parent_Widget(d->token)->rect), -1));
+        setFlags_Widget(as_Widget(d->token), expand_WidgetFlag, iTrue);
+        setFocus_Widget(as_Widget(d->input));
     }
-    /* File content. */ {
-        appendTwoColumnTabPage_Widget(tabs, "${heading.upload.file}", '2', &headings, &values);        
-//        iWidget *pad = addChild_Widget(headings, iClob(makePadding_Widget(0)));
-//        iWidget *hint = addChild_Widget(values, iClob(new_LabelWidget("${upload.file.drophint}", NULL)));
-//        pad->sizeRef = hint;
-        addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.name}", NULL)), frameless_WidgetFlag);
-        d->filePathLabel = addChildFlags_Widget(values, iClob(new_LabelWidget(uiTextAction_ColorEscape "${upload.file.drophere}", NULL)), frameless_WidgetFlag);
-        addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)), frameless_WidgetFlag);
-        d->fileSizeLabel = addChildFlags_Widget(values, iClob(new_LabelWidget("\u2014", NULL)), frameless_WidgetFlag);
-        d->mime = new_InputWidget(0);
-        setFixedSize_Widget(as_Widget(d->mime), init_I2(70 * gap_UI, -1));
-        addTwoColumnDialogInputField_Widget(headings, values, "${upload.mime}", "upload.mime", iClob(d->mime));
-    }
-    /* Token. */ {
-        addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-        iWidget *page = makeTwoColumns_Widget(&headings, &values);
-        d->token = addTwoColumnDialogInputField_Widget(
-            headings, values, "${upload.token}", "upload.token", iClob(new_InputWidget(0)));
-        setHint_InputWidget(d->token, "${hint.upload.token}");
-        setFixedSize_Widget(as_Widget(d->token), init_I2(50 * gap_UI, -1));
-        addChild_Widget(w, iClob(page));
-    }
-    /* Buttons. */ {
-        addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-        iWidget *buttons =
-            makeDialogButtons_Widget((iMenuItem[]){ { "${upload.port}", 0, 0, "upload.setport" },
-                                                    { "---" },
-                                                    { "${close}", SDLK_ESCAPE, 0, "upload.cancel" },
-                                                    { uiTextAction_ColorEscape "${dlg.upload.send}",
-                                                      SDLK_RETURN,
-                                                      KMOD_PRIMARY,
-                                                      "upload.accept" } },
-                                     4);
-        setId_Widget(insertChildAfterFlags_Widget(buttons,
-                                             iClob(d->counter = new_LabelWidget("", NULL)),
-                                             0, frameless_WidgetFlag),
-                     "upload.counter");
-        addChild_Widget(w, iClob(buttons));
-    }
-    resizeToLargestPage_Widget(tabs);
-    arrange_Widget(w);
-    setFixedSize_Widget(as_Widget(d->token), init_I2(width_Widget(tabs) - left_Rect(parent_Widget(d->token)->rect), -1));
-    setFlags_Widget(as_Widget(d->token), expand_WidgetFlag, iTrue);
-    setFocus_Widget(as_Widget(d->input));
+    setFont_InputWidget(d->input, monospace_FontId);
+    setUseReturnKeyBehavior_InputWidget(d->input, iFalse); /* traditional text editor */
+    setLineLimits_InputWidget(d->input, 7, 20);
+    setHint_InputWidget(d->input, "${hint.upload.text}");
     setBackupFileName_InputWidget(d->input, "uploadbackup.txt");
     updateInputMaxHeight_UploadWidget_(d);
 }
@@ -201,6 +232,7 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
     appendFormat_String(&d->url, ":%u", overridePort ? overridePort : titanPortForUrl_(url));
     appendRange_String(&d->url, (iRangecc){ parts.path.start, constEnd_String(url) });
     setText_LabelWidget(d->info, &d->url);
+    arrange_Widget(as_Widget(d));
 }
 
 void setUrl_UploadWidget(iUploadWidget *d, const iString *url) {
@@ -233,7 +265,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     if (isResize_UserEvent(ev)) {
         updateInputMaxHeight_UploadWidget_(d);
     }
-    if (isCommand_Widget(w, ev, "upload.cancel")) {
+    if (equal_Command(cmd, "upload.cancel")) {
         setupSheetTransition_Mobile(w, iFalse);
         destroy_Widget(w);
         return iTrue;

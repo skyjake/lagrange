@@ -90,15 +90,15 @@ static void unselectAllPanelButtons_(iWidget *topPanel) {
 
 static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
-        const iBool isPortrait = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
-        const iRect safeRoot   = safeRect_Root(mainDetailSplit->root);
-        setPos_Widget(mainDetailSplit, topLeft_Rect(safeRoot));
-        setFixedSize_Widget(mainDetailSplit, safeRoot.size);
+        const iBool  isPortrait   = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
+        const iRect  safeRoot     = safeRect_Root(mainDetailSplit->root);
         iWidget *    sheet        = parent_Widget(mainDetailSplit);
         iWidget *    navi         = findChild_Widget(sheet, "panel.navi");
         iWidget *    detailStack  = findChild_Widget(mainDetailSplit, "detailstack");
         const size_t numPanels    = childCount_Widget(detailStack);
         const iBool  isSideBySide = isSideBySideLayout_() && numPanels > 0;
+        setPos_Widget(mainDetailSplit, topLeft_Rect(safeRoot));
+        setFixedSize_Widget(mainDetailSplit, safeRoot.size);
         setFlags_Widget(mainDetailSplit, arrangeHorizontal_WidgetFlag, isSideBySide);
         setFlags_Widget(detailStack, expand_WidgetFlag, isSideBySide);
         setFlags_Widget(detailStack, hidden_WidgetFlag, numPanels == 0);
@@ -172,7 +172,16 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         }
         unselectAllPanelButtons_(topPanel);
         if (!wasClosed) {
-            postCommand_App("prefs.dismiss");
+            /* TODO: Should come up with a more general-purpose approach here. */
+            if (findWidget_App("prefs")) {
+                postCommand_App("prefs.dismiss");
+            }
+            else if (findWidget_App("upload")) {
+                postCommand_App("upload.cancel");
+            }
+            else {
+                postCommand_App("cancel");
+            }
         }
         return iTrue;
     }
@@ -503,11 +512,19 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     else if (equal_Command(spec, "label")) {
         iLabelWidget *lab = new_LabelWidget(label, NULL);
         widget = as_Widget(lab);
-        setWrap_LabelWidget(lab, iTrue);
-        setFlags_Widget(widget, fixedHeight_WidgetFlag | frameless_WidgetFlag, iTrue);
+        setId_Widget(widget, id);
+        setWrap_LabelWidget(lab, !argLabel_Command(spec, "nowrap"));
+        setFlags_Widget(widget,
+                        fixedHeight_WidgetFlag |
+                            (!argLabel_Command(spec, "frame") ? frameless_WidgetFlag : 0),
+                        iTrue);
     }
     else if (equal_Command(spec, "padding")) {
-        widget = makePadding_Widget(lineHeight_Text(labelFont_()) * 1.5f);
+        float height = 1.5f;
+        if (hasLabel_Command(spec, "arg")) {
+            height *= argfLabel_Command(spec, "arg");
+        }
+        widget = makePadding_Widget(lineHeight_Text(labelFont_()) * height);
     }
     /* Apply common styling to the heading. */
     if (heading) {
@@ -539,7 +556,7 @@ static const iMenuItem *findDialogCancelAction_(const iMenuItem *items, size_t n
         return NULL;
     }
     for (size_t i = 0; i < n; i++) {
-        if (!iCmpStr(items[i].label, "${cancel}")) {
+        if (!iCmpStr(items[i].label, "${cancel}") || !iCmpStr(items[i].label, "${close}")) {
             return &items[i];
         }
     }
@@ -556,13 +573,20 @@ iWidget *makePanelsParent_Mobile(iWidget *parentWidget,
                                  const char *id,
                                  const iMenuItem *itemsNullTerminated,
                                  const iMenuItem *actions, size_t numActions) {
+    iWidget *panels = new_Widget();
+    setId_Widget(panels, id);
+    initPanels_Mobile(panels, parentWidget, itemsNullTerminated, actions, numActions);
+    return panels;
+}
+
+void initPanels_Mobile(iWidget *panels, iWidget *parentWidget, 
+                       const iMenuItem *itemsNullTerminated,
+                       const iMenuItem *actions, size_t numActions) {
     /* A multipanel widget has a top panel and one or more detail panels. In a horizontal layout,
        the detail panels slide in from the right and cover the top panel. In a landscape layout,
        the detail panels are always visible on the side. */
-    iWidget *sheet = new_Widget();
-    setId_Widget(sheet, id);
-    setBackgroundColor_Widget(sheet, uiBackground_ColorId);
-    setFlags_Widget(sheet,
+    setBackgroundColor_Widget(panels, uiBackground_ColorId);
+    setFlags_Widget(panels,
                     resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
                         frameless_WidgetFlag | focusRoot_WidgetFlag | commandOnClick_WidgetFlag |
                         overflowScrollable_WidgetFlag | leftEdgeDraggable_WidgetFlag,
@@ -572,7 +596,7 @@ iWidget *makePanelsParent_Mobile(iWidget *parentWidget,
         setCommandHandler_Widget(mainDetailSplit, mainDetailSplitHandler_);
         setFlags_Widget(mainDetailSplit, resizeHeightOfChildren_WidgetFlag, iFalse);
         setId_Widget(mainDetailSplit, "mdsplit");
-        addChild_Widget(sheet, iClob(mainDetailSplit));
+        addChild_Widget(panels, iClob(mainDetailSplit));
     }
     /* The panel roots. */
     iWidget *topPanel = new_Widget(); {
@@ -591,7 +615,6 @@ iWidget *makePanelsParent_Mobile(iWidget *parentWidget,
         setFlags_Widget(detailStack, collapse_WidgetFlag | resizeWidthOfChildren_WidgetFlag, iTrue);
         addChild_Widget(mainDetailSplit, iClob(detailStack));
     }
-    addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
     /* Slide top panel with detail panels. */ {
         setFlags_Widget(topPanel, refChildrenOffset_WidgetFlag, iTrue);
         topPanel->offsetRef = detailStack;
@@ -612,15 +635,17 @@ iWidget *makePanelsParent_Mobile(iWidget *parentWidget,
         checkIcon_LabelWidget(naviBack);
         setId_Widget(as_Widget(naviBack), "panel.back");
         setFont_LabelWidget(naviBack, labelFont_());
-        addChildFlags_Widget(sheet, iClob(navi),
+        addChildFlags_Widget(panels, iClob(navi),
                              drawBackgroundToVerticalSafeArea_WidgetFlag |
                                  arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                                  resizeToParentWidth_WidgetFlag | arrangeVertical_WidgetFlag);        
     }
+    iBool haveDetailPanels = iFalse;
     /* Create panel contents based on provided items. */
     for (size_t i = 0; itemsNullTerminated[i].label; i++) {
         const iMenuItem *item = &itemsNullTerminated[i];
         if (equal_Command(item->label, "panel")) {
+            haveDetailPanels = iTrue;
             const char *id = cstr_Rangecc(range_Command(item->label, "id"));
             const iString *label = hasLabel_Command(item->label, "text")
                                        ? collect_String(suffix_Command(item->label, "text"))
@@ -655,10 +680,12 @@ iWidget *makePanelsParent_Mobile(iWidget *parentWidget,
             setFont_LabelWidget(naviBack, labelBoldFont_());            
         }
         else if (defaultItem && defaultItem != cancelItem) {
-            updateTextCStr_LabelWidget(naviBack, cancelItem->label);
-            setCommand_LabelWidget(naviBack, collectNewCStr_String(cancelItem->command
-                                                                    ? cancelItem->command
-                                                                    : "cancel"));
+            if (!haveDetailPanels) {
+                updateTextCStr_LabelWidget(naviBack, cancelItem->label);
+                setCommand_LabelWidget(naviBack, collectNewCStr_String(cancelItem->command
+                                                                       ? cancelItem->command
+                                                                       : "cancel"));
+            }
             iLabelWidget *defaultButton = new_LabelWidget(defaultItem->label, defaultItem->command);
             setFont_LabelWidget(defaultButton, labelBoldFont_());
             setFlags_Widget(as_Widget(defaultButton),
@@ -689,16 +716,21 @@ iWidget *makePanelsParent_Mobile(iWidget *parentWidget,
             }
             makePanelItem_Mobile(
                 topPanel,
-                &(iMenuItem){ format_CStr("button text:%s", act->label), 0, 0, act->command });
+                &(iMenuItem){ format_CStr("button text:" uiTextAction_ColorEscape "%s", act->label),
+                              0,
+                              0,
+                              act->command });
         }
     }
     /* Finalize the layout. */
-    addChild_Widget(parentWidget, iClob(sheet));
+    if (parentWidget) {
+        addChild_Widget(parentWidget, iClob(panels));
+    }
     mainDetailSplitHandler_(mainDetailSplit, "window.resized"); /* make it resize the split */
-    updatePanelSheetMetrics_(sheet);
-    arrange_Widget(sheet);
+    updatePanelSheetMetrics_(panels);
+    arrange_Widget(panels);
     postCommand_App("widget.overflow"); /* with the correct dimensions */    
-    return sheet;
+    printTree_Widget(panels);
 }
 
 #if 0
@@ -1130,7 +1162,9 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     }
 }
 
-void setupSheetTransition_Mobile(iWidget *sheet, iBool isIncoming) {
+void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
+    const iBool isIncoming = (flags & incoming_TransitionFlag) != 0;
+    const int   dir        = flags & dirMask_TransitionFlag;
     if (!isUsingPanelLayout_Mobile()) {
         if (prefs_App()->uiAnimations) {
             setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iFalse);
@@ -1144,17 +1178,51 @@ void setupSheetTransition_Mobile(iWidget *sheet, iBool isIncoming) {
         }
         return;
     }
-    if(isSideBySideLayout_()) {
+    if (isSideBySideLayout_()) {
+        /* TODO: Landscape transitions? */
         return;
     }
-    setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iTrue);
+    setFlags_Widget(sheet,
+                    horizontalOffset_WidgetFlag,
+                    dir == right_TransitionDir || dir == left_TransitionDir);
     if (isIncoming) {
-        setVisualOffset_Widget(sheet, size_Root(sheet->root).x, 0, 0);
+        switch (dir) {
+            case right_TransitionDir:
+                setVisualOffset_Widget(sheet, size_Root(sheet->root).x, 0, 0);
+                break;
+            case left_TransitionDir:
+                setVisualOffset_Widget(sheet, -size_Root(sheet->root).x, 0, 0);
+                break;
+            case top_TransitionDir:
+                setVisualOffset_Widget(
+                    sheet, -bottom_Rect(boundsWithoutVisualOffset_Widget(sheet)), 0, 0);
+                break;
+            case bottom_TransitionDir:
+                setVisualOffset_Widget(sheet, height_Widget(sheet), 0, 0);
+                break;
+        }
         setVisualOffset_Widget(sheet, 0, 200, easeOut_AnimFlag);
-    }
+    }        
     else {
-        const iBool wasDragged = iAbs(value_Anim(&sheet->visualOffset)) > 0;
-        setVisualOffset_Widget(sheet, size_Root(sheet->root).x, wasDragged ? 100 : 200,
-                               wasDragged ? 0 : easeIn_AnimFlag);
+        switch (dir) {
+            case right_TransitionDir: {
+                const iBool wasDragged = iAbs(value_Anim(&sheet->visualOffset)) > 0;
+                setVisualOffset_Widget(sheet, size_Root(sheet->root).x, wasDragged ? 100 : 200,
+                                       wasDragged ? 0 : easeIn_AnimFlag);
+                break;
+            }
+            case left_TransitionDir:
+                setVisualOffset_Widget(sheet, -size_Root(sheet->root).x, 200, easeIn_AnimFlag);
+                break;
+            case top_TransitionDir:
+                setVisualOffset_Widget(sheet,
+                                       -bottom_Rect(boundsWithoutVisualOffset_Widget(sheet)),
+                                       200,
+                                       easeIn_AnimFlag);
+                break;
+            case bottom_TransitionDir:
+                setVisualOffset_Widget(sheet, height_Widget(sheet), 200, easeIn_AnimFlag);
+                break;
+        }
     }
 }

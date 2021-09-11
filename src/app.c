@@ -2382,7 +2382,8 @@ iBool handleCommand_App(const char *cmd) {
             setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, document_App());
             addChild_Widget(get_Root()->widget, iClob(upload));
-            finalizeSheet_Mobile(as_Widget(upload));
+//            finalizeSheet_Mobile(as_Widget(upload));
+            setupSheetTransition_Mobile(as_Widget(upload), iTrue);
             postRefresh_App();
             return iTrue;
         }
@@ -2761,7 +2762,9 @@ iBool handleCommand_App(const char *cmd) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
         addChild_Widget(get_Root()->widget, iClob(imp));
-        finalizeSheet_Mobile(as_Widget(imp));
+//        finalizeSheet_Mobile(as_Widget(imp));
+        arrange_Widget(as_Widget(imp));
+        setupSheetTransition_Mobile(as_Widget(imp), iTrue);
         postRefresh_App();
         return iTrue;
     }

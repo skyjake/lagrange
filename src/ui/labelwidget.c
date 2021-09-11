@@ -244,6 +244,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             }
         }
     }
+    if (d->forceFg >= 0) {
+        *fg = d->forceFg;
+    }
     if (isPress) {
         *bg = uiBackgroundPressed_ColorId | permanent_ColorId;
         if (isButton) {
@@ -256,9 +259,6 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         else {
             *fg = isDark_ColorTheme(colorTheme_App()) ? white_ColorId : black_ColorId;
         }
-    }
-    if (d->forceFg >= 0) {
-        *fg = d->forceFg;
     }
 }
 
@@ -318,6 +318,10 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     setClip_Paint(&p, rect);
     const int iconPad = iconPadding_LabelWidget_(d);
+    const int iconColor = isCaution ? uiTextCaution_ColorId
+                          : flags & (disabled_WidgetFlag | pressed_WidgetFlag) ? fg
+                          : isHover                                            ? uiIconHover_ColorId
+                                                                               : uiIcon_ColorId;
     if (d->icon && d->icon != 0x20) { /* no need to draw an empty icon */
         iString str;
         initUnicodeN_String(&str, &d->icon, 1);
@@ -331,10 +335,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                                -gap_UI / 8)),
                 init_I2(iconPad, lineHeight_Text(d->font)) },
             iTrue,
-            isCaution                                            ? uiTextCaution_ColorId
-            : flags & (disabled_WidgetFlag | pressed_WidgetFlag) ? fg
-            : isHover                                            ? uiIconHover_ColorId
-                                                                 : uiIcon_ColorId,
+            iconColor,
             "%s",
             cstr_String(&str));
         deinit_String(&str);
@@ -387,7 +388,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         drawCentered_Text(d->font,
                           (iRect){ addX_I2(topRight_Rect(chRect), -iconPad),
                                    init_I2(chSize, height_Rect(chRect)) },
-                          iTrue, uiSeparator_ColorId, rightAngle_Icon);
+                          iTrue, iconColor /*uiSeparator_ColorId*/, rightAngle_Icon);
     }
     unsetClip_Paint(&p);
 }
