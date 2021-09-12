@@ -204,6 +204,7 @@ iAny *  findFocusable_Widget            (const iWidget *startFrom, enum iWidgetF
 iAny *  findOverflowScrollable_Widget   (iWidget *);
 size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);
+void    drawLayerEffects_Widget         (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
 void    drawChildren_Widget             (const iWidget *);
 void    drawRoot_Widget                 (const iWidget *); /* root only */

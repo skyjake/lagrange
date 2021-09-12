@@ -391,6 +391,7 @@ static void draw_ListWidget_(const iListWidget *d) {
     const int scrollY = pos_SmoothScroll(&d->scrollY);
     iPaint p;
     init_Paint(&p);
+    drawLayerEffects_Widget(w);
     drawBackground_Widget(w);
     alloc_VisBuf(d->visBuf, bounds.size, d->itemHeight);
     /* Update invalid regions/items. */ {

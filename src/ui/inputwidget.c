@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "prefs.h"
 #include "lang.h"
+#include "touch.h"
 #include "app.h"
 
 #include <the_Foundation/array.h>
@@ -1565,11 +1566,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
     switch (processEvent_Click(&d->click, ev)) {
         case none_ClickResult:
-            if (ev->type == SDL_MOUSEBUTTONUP &&
-                deviceType_App() != desktop_AppDeviceType && isFocused_Widget(d)) {
-                setFocus_Widget(NULL);
-                return iTrue;
-            }
+//            if (ev->type == SDL_MOUSEBUTTONUP &&
+//                deviceType_App() != desktop_AppDeviceType && isFocused_Widget(d)) {
+//                setFocus_Widget(NULL);
+//                return iTrue;
+//            }
             break;
         case started_ClickResult: {
             setFocus_Widget(w);

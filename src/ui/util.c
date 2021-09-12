@@ -1349,10 +1349,17 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
                         2)));
 //    finalizeSheet_Mobile(dlg);
     arrange_Widget(dlg);
-    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | top_TransitionDir);
     if (parent) {
         setFocus_Widget(as_Widget(input));
     }
+    /* Check that the top is in the safe area. */ {
+        int top = top_Rect(bounds_Widget(dlg));
+        int delta = top - top_Rect(safeRect_Root(dlg->root));
+        if (delta < 0) {
+            dlg->rect.pos.y -= delta;
+        }
+    }
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | top_TransitionDir);
     return dlg;
 }
 

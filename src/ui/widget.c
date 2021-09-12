@@ -89,7 +89,7 @@ static void release_WidgetDrawBuffer(iWidgetDrawBuffer *d) {
 static iRect boundsForDraw_Widget_(const iWidget *d) {
     iRect bounds = bounds_Widget(d);
     if (d->flags & drawBackgroundToBottom_WidgetFlag) {
-        bounds.size.y = iMaxi(bounds.size.y, size_Root(d->root).y - top_Rect(bounds));
+        bounds.size.y = iMax(bounds.size.y, size_Root(d->root).y);
     }
     return bounds;
 }
@@ -1218,7 +1218,7 @@ iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
     return ~d->flags & hidden_WidgetFlag || d->flags & visualOffset_WidgetFlag;
 }
 
-static void drawLayerEffects_Widget_(const iWidget *d) {
+void drawLayerEffects_Widget(const iWidget *d) {
     /* Layered effects are not buffered, so they are drawn here separately. */
     iAssert(isDrawn_Widget_(d));
     iBool shadowBorder   = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
@@ -1248,6 +1248,48 @@ static void drawLayerEffects_Widget_(const iWidget *d) {
         fillRect_Paint(&p, rect_Root(d->root), backgroundFadeColor_Widget());
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
+#if defined (iPlatformAppleMobile)
+    if (d->bgColor >= 0 && d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
+                                       drawBackgroundToVerticalSafeArea_WidgetFlag)) {
+        iPaint p;
+        init_Paint(&p);
+        const iRect rect     = bounds_Widget(d);
+        const iInt2 rootSize = size_Root(d->root);
+        const iInt2 center   = divi_I2(rootSize, 2);
+        int top = 0, right = 0, bottom = 0, left = 0;
+        if (d->flags & drawBackgroundToHorizontalSafeArea_WidgetFlag) {
+            const iBool isWide = width_Rect(rect) > rootSize.x * 9 / 10;
+            if (isWide || mid_Rect(rect).x < center.x) {
+                left = -left_Rect(rect);
+            }
+            if (isWide || mid_Rect(rect).x > center.x) {
+                right = rootSize.x - right_Rect(rect);
+            }
+        }
+        if (d->flags & drawBackgroundToVerticalSafeArea_WidgetFlag) {
+            if (top_Rect(rect) > center.y) {
+                bottom = rootSize.y - bottom_Rect(rect);
+            }
+            if (bottom_Rect(rect) < center.y) {
+                top = -top_Rect(rect);
+            }
+        }
+        if (top < 0) {
+            fillRect_Paint(&p, (iRect){ init_I2(left_Rect(rect), 0),
+                                        init_I2(width_Rect(rect), top_Rect(rect)) },
+                           d->bgColor);
+        }
+        if (left < 0) {
+            fillRect_Paint(&p, (iRect){ init_I2(0, top_Rect(rect)),
+                init_I2(left_Rect(rect), height_Rect(rect)) }, d->bgColor);
+        }
+        if (right > 0) {
+            fillRect_Paint(&p, (iRect){ init_I2(right_Rect(rect), top_Rect(rect)),
+                init_I2(right, height_Rect(rect)) }, d->bgColor);
+        }
+//        adjustEdges_Rect(&rect, iMin(0, top), iMax(0, right), iMax(0, bottom), iMin(0, left));
+    }
+#endif
 }
 
 void drawBackground_Widget(const iWidget *d) {
@@ -1261,12 +1303,13 @@ void drawBackground_Widget(const iWidget *d) {
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         iRect rect = bounds_Widget(d);
         if (d->flags & drawBackgroundToBottom_WidgetFlag) {
-            rect.size.y = iMax(rect.size.y, size_Root(d->root).y - top_Rect(rect));
+            rect.size.y += size_Root(d->root).y; // = iMax(rect.size.y, size_Root(d->root).y - top_Rect(rect));
         }
         iPaint p;
         init_Paint(&p);
         if (d->bgColor >= 0) {
-#if defined (iPlatformAppleMobile)
+#if 0 && defined (iPlatformAppleMobile)
+            /* TODO: This is part of the unbuffered draw (layer effects). */
             if (d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
                             drawBackgroundToVerticalSafeArea_WidgetFlag)) {
                 const iInt2 rootSize = size_Root(d->root);
@@ -1289,7 +1332,7 @@ void drawBackground_Widget(const iWidget *d) {
                         top = -top_Rect(rect);
                     }
                 }
-                adjustEdges_Rect(&rect, top, right, bottom, left);
+                adjustEdges_Rect(&rect, iMin(0, top), iMax(0, right), iMax(0, bottom), iMin(0, left));
             }
 #endif
             fillRect_Paint(&p, rect, d->bgColor);
@@ -1339,7 +1382,7 @@ static void addToPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs, iR
     if (isDrawn_Widget_(d)) {
         iRect bounds = bounds_Widget(d);
         if (d->flags & drawBackgroundToBottom_WidgetFlag) {
-            bounds.size.y = size_Root(d->root).y - top_Rect(bounds);
+            bounds.size.y += size_Root(d->root).y; // iMax(bounds.size.y, size_Root(d->root).y - top_Rect(bounds));
         }
         if (isFullyContainedByOther_Rect(bounds, *fullyMasked)) {
             return; /* can't be seen */
@@ -1411,14 +1454,21 @@ void setDrawBufferEnabled_Widget(iWidget *d, iBool enable) {
 
 static void beginBufferDraw_Widget_(const iWidget *d) {
     if (d->drawBuf) {
-//        printf("[%p] drawbuffer update %d\n", d, d->drawBuf->isValid);
+        printf("[%p] drawbuffer update %d\n", d, d->drawBuf->isValid);
+        if (d->drawBuf->isValid) {
+            iAssert(!isEqual_I2(d->drawBuf->size, boundsForDraw_Widget_(d).size));
+//            printf("  drawBuf:%dx%d boundsForDraw:%dx%d\n",
+//                   d->drawBuf->size.x, d->drawBuf->size.y,
+//                   boundsForDraw_Widget_(d).size.x,
+//                   boundsForDraw_Widget_(d).size.y);
+        }
         const iRect bounds = bounds_Widget(d);
         SDL_Renderer *render = renderer_Window(get_Window());
         d->drawBuf->oldTarget = SDL_GetRenderTarget(render);
         d->drawBuf->oldOrigin = origin_Paint;
         realloc_WidgetDrawBuffer(d->drawBuf, render, boundsForDraw_Widget_(d).size);
         SDL_SetRenderTarget(render, d->drawBuf->texture);
-        //SDL_SetRenderDrawColor(render, 255, 0, 0, 128);
+//        SDL_SetRenderDrawColor(render, 255, 0, 0, 128);
         SDL_SetRenderDrawColor(render, 0, 0, 0, 0);
         SDL_RenderClear(render);
         origin_Paint = neg_I2(bounds.pos); /* with current visual offset */
@@ -1445,7 +1495,7 @@ void draw_Widget(const iWidget *d) {
         }
         return;
     }
-    drawLayerEffects_Widget_(d);
+    drawLayerEffects_Widget(d);
     if (!d->drawBuf || !checkDrawBuffer_Widget_(d)) {
         beginBufferDraw_Widget_(d);
         drawBackground_Widget(d);
@@ -1755,7 +1805,9 @@ iWidget *focus_Widget(void) {
 }
 
 void setHover_Widget(iWidget *d) {
-    get_Window()->hover = d;
+    iWindow *win = get_Window();
+    iAssert(win);
+    win->hover = d;
 }
 
 iWidget *hover_Widget(void) {
@@ -1850,7 +1902,8 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
     deinit_String(&str);
 }
 
-void refresh_Widget(const iAnyObject *d) {    
+void refresh_Widget(const iAnyObject *d) {
+    if (!d) return;
     /* TODO: Could be widget specific, if parts of the tree are cached. */
     /* TODO: The visbuffer in DocumentWidget and ListWidget could be moved to be a general
        purpose feature of Widget. */

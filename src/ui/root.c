@@ -525,7 +525,9 @@ void updateToolbarColors_Root(iRoot *d) {
 #if defined (iPlatformMobile)
     iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
     if (toolBar) {
-        const iBool isSidebarVisible = isVisible_Widget(findChild_Widget(d->widget, "sidebar"));
+        const iBool isSidebarVisible =
+            isVisible_Widget(findChild_Widget(d->widget, "sidebar")) ||
+            isVisible_Widget(findChild_Widget(d->widget, "sidebar2"));
         const int bg = isSidebarVisible ? uiBackgroundSidebar_ColorId :
                                           tmBannerBackground_ColorId;
         setBackgroundColor_Widget(toolBar, bg);

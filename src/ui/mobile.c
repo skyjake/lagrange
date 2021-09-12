@@ -129,6 +129,12 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         }
         arrange_Widget(mainDetailSplit);
     }
+    else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
+        if (focus_Widget() && class_Widget(focus_Widget()) == &Class_InputWidget) {
+            setFocus_Widget(NULL);
+            return iTrue;
+        }
+    }
     return iFalse;
 }
 
@@ -331,7 +337,7 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
     //setFixedSize_Widget(as_Widget(heading), init_I2(-1, height_Widget(value)));
     setFont_LabelWidget(heading, labelFont_());
     setTextColor_LabelWidget(heading, uiTextStrong_ColorId);
-    if (isInput) {
+    if (isInput && ~value->flags & fixedWidth_WidgetFlag) {
         addChildFlags_Widget(div, iClob(value), expand_WidgetFlag);
     }
     else if (isInstance_Object(value, &Class_LabelWidget) &&
@@ -388,6 +394,27 @@ static size_t countItems_(const iMenuItem *itemsNullTerminated) {
     return num;
 }
 
+static iBool dropdownHeadingHandler_(iWidget *d, const char *cmd) {
+    if (isVisible_Widget(d) &&
+        equal_Command(cmd, "mouse.clicked") && contains_Widget(d, coord_Command(cmd)) &&
+        arg_Command(cmd)) {
+        postCommand_Widget(userData_Object(d),
+                           cstr_String(command_LabelWidget(userData_Object(d))));
+        return iTrue;
+    }
+    return iFalse;
+}
+
+static iBool inputHeadingHandler_(iWidget *d, const char *cmd) {
+    if (isVisible_Widget(d) &&
+        equal_Command(cmd, "mouse.clicked") && contains_Widget(d, coord_Command(cmd)) &&
+        arg_Command(cmd)) {
+        setFocus_Widget(userData_Object(d));
+        return iTrue;
+    }
+    return iFalse;
+}
+
 void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     iWidget *     widget  = NULL;
     iLabelWidget *heading = NULL;
@@ -434,6 +461,8 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                             frameless_WidgetFlag, iTrue);
         setId_Widget(as_Widget(drop), id);
         widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label), as_Widget(drop));
+        setCommandHandler_Widget(widget, dropdownHeadingHandler_);
+        setUserData_Object(widget, drop);
     }
     else if (equal_Command(spec, "radio") || equal_Command(spec, "buttons")) {
         const iBool isRadio = equal_Command(spec, "radio");
@@ -504,6 +533,8 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
             }
             widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label),
                                                   as_Widget(input));
+            setCommandHandler_Widget(widget, inputHeadingHandler_);
+            setUserData_Object(widget, input);
         }
     }
     else if (equal_Command(spec, "button")) {

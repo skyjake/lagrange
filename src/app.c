@@ -1273,6 +1273,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                 }
 #endif
+                const iWidget *oldHover = d->window->hover;
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (!wasUsed) {
                     /* There may be a key bindings for this. */
@@ -1306,6 +1307,11 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                     /* Allocated by postCommand_Apps(). */
                     free(ev.user.data1);
+                }
+                /* Update when hover has changed. */
+                if (oldHover != d->window->hover) {
+                    refresh_Widget(oldHover);
+                    refresh_Widget(d->window->hover);
                 }
                 break;
             }

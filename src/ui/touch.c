@@ -254,6 +254,8 @@ static iFloat3 gestureVector_Touch_(const iTouch *d) {
 }
 
 static void update_TouchState_(void *ptr) {
+    iWindow *win = get_Window();
+    const iWidget *oldHover = win->hover;
     iTouchState *d = ptr;
     /* Check for long presses to simulate right clicks. */
     const uint32_t nowTime = SDL_GetTicks();
@@ -293,6 +295,7 @@ static void update_TouchState_(void *ptr) {
                 /* Looks like a possible tap. */
                 dispatchNotification_Touch_(touch, widgetTapBegins_UserEventCode);
                 dispatchMotion_Touch_(touch->pos[0], 0);
+                refresh_Widget(touch->affinity);
                 touch->isTapBegun = iTrue;
             }
             if (!touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
@@ -362,6 +365,10 @@ static void update_TouchState_(void *ptr) {
     /* Keep updating if interaction is still ongoing. */
     if (!isEmpty_Array(d->touches) || !isEmpty_Array(d->moms)) {
         addTickerRoot_App(update_TouchState_, NULL, ptr);
+    }
+    if (oldHover != win->hover) {
+        refresh_Widget(oldHover);
+        refresh_Widget(win->hover);
     }
 }
 

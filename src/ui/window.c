@@ -875,7 +875,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     }
                 }
             }
-            const iWidget *oldHover = d->hover;
+//            const iWidget *oldHover = d->hover;
             iBool wasUsed = iFalse;
             /* Dispatch first to the mouse-grabbed widget. */
 //            iWidget *widget = d->root.widget;
@@ -929,9 +929,10 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     }
                 }
             }
-            if (oldHover != d->hover) {
-                postRefresh_App();
-            }
+//            if (oldHover != d->hover) {
+//                refresh_Widget(oldHover);
+//                refresh_Widget(d->hover);
+//            }
             if (event.type == SDL_MOUSEMOTION) {
                 applyCursor_Window_(d);
             }
@@ -1107,7 +1108,7 @@ void draw_Window(iWindow *d) {
         }
         setCurrent_Root(NULL);
 #if !defined (NDEBUG)
-        draw_Text(defaultBold_FontId, zero_I2(), red_ColorId, "%d", drawCount_);
+        draw_Text(defaultBold_FontId, safeRect_Root(d->roots[0]).pos, red_ColorId, "%d", drawCount_);
         drawCount_ = 0;
 #endif
     }
