@@ -663,8 +663,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     /* On a phone, the right sidebar is used exclusively for Identities. */
     const iBool isPhone = deviceType_App() == phone_AppDeviceType;
     if (!isPhone || d->side == left_SidebarSide) {
-        iWidget *buttons = new_Widget();
+        iWidget *buttons = new_Widget();        
         setId_Widget(buttons, "buttons");
+        setDrawBufferEnabled_Widget(buttons, iTrue);
         for (int i = 0; i < max_SidebarMode; i++) {
             if (deviceType_App() == phone_AppDeviceType && i == identities_SidebarMode) {
                 continue;

@@ -685,6 +685,34 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         }
         return iTrue;
     }
+    else if (deviceType_App() != desktop_AppDeviceType &&
+             (equal_Command(cmd, "focus.gained") || equal_Command(cmd, "focus.lost"))) {
+        iInputWidget *url = findChild_Widget(navBar, "url");
+        if (pointer_Command(cmd) == url) {
+            const iBool isFocused = equal_Command(cmd, "focus.gained");
+            setFlags_Widget(findChild_Widget(navBar, "navbar.clear"), hidden_WidgetFlag, !isFocused);
+            showCollapsed_Widget(findChild_Widget(navBar, "navbar.cancel"), isFocused);
+            showCollapsed_Widget(findChild_Widget(navBar, "pagemenubutton"), !isFocused);
+            showCollapsed_Widget(findChild_Widget(navBar, "reload"), !isFocused);
+        }
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "navbar.clear")) {
+        iInputWidget *url = findChild_Widget(navBar, "url");
+        selectAll_InputWidget(url);
+        /* Emulate a Backspace keypress. */
+        class_InputWidget(url)->processEvent(
+            as_Widget(url),
+            (SDL_Event *) &(SDL_KeyboardEvent){ .type      = SDL_KEYDOWN,
+                                                .timestamp = SDL_GetTicks(),
+                                                .state     = SDL_PRESSED,
+                                                .keysym    = { .sym = SDLK_BACKSPACE } });
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "navbar.cancel")) {
+        setFocus_Widget(NULL);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "input.edited")) {
         iAnyObject *   url  = findChild_Widget(navBar, "url");
         const iString *text = text_InputWidget(url);
@@ -941,7 +969,7 @@ void updateMetrics_Root(iRoot *d) {
         setFixedSize_Widget(appIcon, init_I2(appIconSize_Root(), appMin->rect.size.y));
     }
     iWidget *navBar     = findChild_Widget(d->widget, "navbar");
-    iWidget *lock       = findChild_Widget(navBar, "navbar.lock");
+//    iWidget *lock       = findChild_Widget(navBar, "navbar.lock");
     iWidget *url        = findChild_Widget(d->widget, "url");
     iWidget *rightEmbed = findChild_Widget(navBar, "url.rightembed");
     iWidget *embedPad   = findChild_Widget(navBar, "url.embedpad");
@@ -1044,6 +1072,7 @@ void createUserInterface_Root(iRoot *d) {
     /* Navigation bar. */ {
         navBar = new_Widget();
         setId_Widget(navBar, "navbar");
+        setDrawBufferEnabled_Widget(navBar, iTrue);
         setFlags_Widget(navBar,
                         hittable_WidgetFlag | /* context menu */
                             arrangeHeight_WidgetFlag |
@@ -1094,6 +1123,16 @@ void createUserInterface_Root(iRoot *d) {
                 setId_Widget(as_Widget(lock), "navbar.lock");
                 setFont_LabelWidget(lock, symbols_FontId + uiNormal_FontSize);
                 updateTextCStr_LabelWidget(lock, "\U0001f512");
+            }
+            /* Button for clearing the URL bar contents. */ {
+                iLabelWidget *clear = addChildFlags_Widget(
+                    as_Widget(url),
+                    iClob(newIcon_LabelWidget(delete_Icon, 0, 0, "navbar.clear")),
+                    hidden_WidgetFlag | embedFlags | moveToParentLeftEdge_WidgetFlag);
+                setId_Widget(as_Widget(clear), "navbar.clear");
+                setFont_LabelWidget(clear, symbols2_FontId + uiNormal_FontSize);
+                setFlags_Widget(as_Widget(clear), noBackground_WidgetFlag, iFalse);
+                setBackgroundColor_Widget(as_Widget(clear), uiBackground_ColorId);
             }
             iWidget *rightEmbed = new_Widget();
             setId_Widget(rightEmbed, "url.rightembed");
@@ -1151,6 +1190,13 @@ void createUserInterface_Root(iRoot *d) {
             setFlags_Widget(urlButtons, embedFlags | arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
             /* Mobile page menu. */
             if (deviceType_App() != desktop_AppDeviceType) {
+                iLabelWidget *navCancel = new_LabelWidget("${cancel}", "navbar.cancel");
+                addChildFlags_Widget(urlButtons, iClob(navCancel),
+                                     (embedFlags | tight_WidgetFlag | hidden_WidgetFlag |
+                                      collapse_WidgetFlag) & ~noBackground_WidgetFlag);
+                as_Widget(navCancel)->sizeRef = as_Widget(url);
+//                setFont_LabelWidget(navCancel, defaultBold_FontId);
+                setId_Widget(as_Widget(navCancel), "navbar.cancel");
                 iLabelWidget *pageMenuButton;
                 /* In a mobile layout, the reload button is replaced with the Page/Ellipsis menu. */
                 pageMenuButton = makeMenuButton_LabelWidget(pageMenuCStr_,
@@ -1172,13 +1218,14 @@ void createUserInterface_Root(iRoot *d) {
                 setId_Widget(as_Widget(pageMenuButton), "pagemenubutton");
                 setFont_LabelWidget(pageMenuButton, uiContentBold_FontId);
                 setAlignVisually_LabelWidget(pageMenuButton, iTrue);
-                addChildFlags_Widget(urlButtons, iClob(pageMenuButton), embedFlags | tight_WidgetFlag);
+                addChildFlags_Widget(urlButtons, iClob(pageMenuButton),
+                                     embedFlags | tight_WidgetFlag | collapse_WidgetFlag);
                 updateSize_LabelWidget(pageMenuButton);
             }
             /* Reload button. */ {
                 iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
                 setId_Widget(as_Widget(reload), "reload");
-                addChildFlags_Widget(urlButtons, iClob(reload), embedFlags);
+                addChildFlags_Widget(urlButtons, iClob(reload), embedFlags | collapse_WidgetFlag);
                 updateSize_LabelWidget(reload);
             }
             addChildFlags_Widget(as_Widget(url), iClob(urlButtons), moveToParentRightEdge_WidgetFlag);
@@ -1287,6 +1334,7 @@ void createUserInterface_Root(iRoot *d) {
         iWidget *toolBar = new_Widget();
         addChild_Widget(root, iClob(toolBar));
         setId_Widget(toolBar, "toolbar");
+        setDrawBufferEnabled_Widget(toolBar, iTrue);
         setCommandHandler_Widget(toolBar, handleToolBarCommands_);
         setFlags_Widget(toolBar, moveToParentBottomEdge_WidgetFlag |
                                      parentCannotResizeHeight_WidgetFlag |

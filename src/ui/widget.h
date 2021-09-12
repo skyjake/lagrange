@@ -131,6 +131,8 @@ enum iWidgetFocusDir {
     backward_WidgetFocusDir,
 };
 
+iDeclareType(WidgetDrawBuffer)
+
 struct Impl_Widget {
     iObject      object;
     iString      id;
@@ -148,6 +150,7 @@ struct Impl_Widget {
     iWidget *    parent;
     iBool      (*commandHandler)(iWidget *, const char *);
     iRoot *      root;
+    iWidgetDrawBuffer *drawBuf;
 };
 
 iDeclareObjectConstruction(Widget)
@@ -203,6 +206,12 @@ size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
 void    drawChildren_Widget             (const iWidget *);
+void    drawRoot_Widget                 (const iWidget *); /* root only */
+void    setDrawBufferEnabled_Widget     (iWidget *, iBool enable);
+
+iLocalDef iBool isDrawBufferEnabled_Widget(const iWidget *d) {
+    return d && d->drawBuf;
+}
 
 iLocalDef int width_Widget(const iAnyObject *d) {
     if (d) {

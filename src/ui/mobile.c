@@ -357,6 +357,7 @@ static iWidget *addChildPanel_(iWidget *parent, iLabelWidget *panelButton,
     setId_Widget(panel, "panel");
     setUserData_Object(panelButton, panel);
     setBackgroundColor_Widget(panel, uiBackground_ColorId);
+    setDrawBufferEnabled_Widget(panel, iTrue);
     setId_Widget(addChild_Widget(panel, iClob(makePadding_Widget(0))), "panel.toppad");
     if (titleText) {
         iLabelWidget *title =
@@ -601,6 +602,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
     /* The panel roots. */
     iWidget *topPanel = new_Widget(); {
         setId_Widget(topPanel, "panel.top");
+        setDrawBufferEnabled_Widget(topPanel, iTrue);
         setCommandHandler_Widget(topPanel, topPanelHandler_);
         setFlags_Widget(topPanel,
                         arrangeVertical_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
@@ -730,7 +732,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
     updatePanelSheetMetrics_(panels);
     arrange_Widget(panels);
     postCommand_App("widget.overflow"); /* with the correct dimensions */    
-    printTree_Widget(panels);
+//    printTree_Widget(panels);
 }
 
 #if 0

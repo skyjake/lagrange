@@ -136,7 +136,8 @@ static void draw_TranslationProgressWidget_(const iTranslationProgressWidget *d)
             get_Color(palette[palCur]), get_Color(palette[palNext]), palPos - (int) palPos);
         SDL_SetRenderDrawColor(renderer_Window(get_Window()), back.r, back.g, back.b, p.alpha);
         SDL_RenderFillRect(renderer_Window(get_Window()),
-                           &(SDL_Rect){ pos.x, pos.y, spr->size.x, spr->size.y });
+                           &(SDL_Rect){ pos.x + origin_Paint.x, pos.y + origin_Paint.y,
+                                        spr->size.x, spr->size.y });
         if (fg >= 0) {
             setOpacity_Text(opacity * 2);
             drawRange_Text(d->font, addX_I2(pos, spr->xoff), fg, range_String(&spr->text));

@@ -40,6 +40,67 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "../ios.h"
 #endif
 
+struct Impl_WidgetDrawBuffer {
+    SDL_Texture *texture;
+    iInt2        size;
+    iBool        isValid;
+    SDL_Texture *oldTarget;
+    iInt2        oldOrigin;
+};
+
+static void init_WidgetDrawBuffer(iWidgetDrawBuffer *d) {
+    d->texture   = NULL;
+    d->size      = zero_I2();
+    d->isValid   = iFalse;
+    d->oldTarget = NULL;
+}
+
+static void deinit_WidgetDrawBuffer(iWidgetDrawBuffer *d) {
+    SDL_DestroyTexture(d->texture);
+}
+
+iDefineTypeConstruction(WidgetDrawBuffer)
+    
+static void realloc_WidgetDrawBuffer(iWidgetDrawBuffer *d, SDL_Renderer *render, iInt2 size) {
+    if (!isEqual_I2(d->size, size)) {
+        d->size = size;
+        if (d->texture) {
+            SDL_DestroyTexture(d->texture);
+        }
+        d->texture = SDL_CreateTexture(render,
+                                       SDL_PIXELFORMAT_RGBA8888,
+                                       SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                       size.x,
+                                       size.y);
+        SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+        d->isValid = iFalse;
+    }
+}
+
+static void release_WidgetDrawBuffer(iWidgetDrawBuffer *d) {
+    if (d->texture) {
+        SDL_DestroyTexture(d->texture);
+        d->texture = NULL;
+    }
+    d->size = zero_I2();
+    d->isValid = iFalse;
+}
+
+static iRect boundsForDraw_Widget_(const iWidget *d) {
+    iRect bounds = bounds_Widget(d);
+    if (d->flags & drawBackgroundToBottom_WidgetFlag) {
+        bounds.size.y = iMaxi(bounds.size.y, size_Root(d->root).y - top_Rect(bounds));
+    }
+    return bounds;
+}
+
+static iBool checkDrawBuffer_Widget_(const iWidget *d) {
+    return d->drawBuf && d->drawBuf->isValid &&
+           isEqual_I2(d->drawBuf->size, boundsForDraw_Widget_(d).size);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 static void printInfo_Widget_(const iWidget *);
 
 void releaseChildren_Widget(iWidget *d) {
@@ -66,6 +127,7 @@ void init_Widget(iWidget *d) {
     d->children       = NULL;
     d->parent         = NULL;
     d->commandHandler = NULL;
+    d->drawBuf        = NULL;
     iZap(d->padding);
 }
 
@@ -82,6 +144,7 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
 
 void deinit_Widget(iWidget *d) {
     releaseChildren_Widget(d);
+    delete_WidgetDrawBuffer(d->drawBuf);
 #if 0 && !defined (NDEBUG)
     printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
            d->flags & keepOnTop_WidgetFlag ? 1 : 0);
@@ -1036,7 +1099,8 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     const iInt2 newPos = windowToInner_Widget(d->parent, bounds.pos);
     if (!isEqual_I2(newPos, d->rect.pos)) {
         d->rect.pos = newPos;
-        refresh_Widget(d);
+//        refresh_Widget(d);
+        postRefresh_App();
     }
     return height_Rect(bounds) > height_Rect(winRect);
 }
@@ -1077,6 +1141,9 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
             if (ev->user.code == command_UserEventCode) {
                 const char *cmd = command_UserEvent(ev);
+                if (d->drawBuf && equal_Command(cmd, "theme.changed")) {
+                    d->drawBuf->isValid = iFalse;
+                }
                 if (d->flags & (leftEdgeDraggable_WidgetFlag | rightEdgeDraggable_WidgetFlag) &&
                     isVisible_Widget(d) && ~d->flags & disabled_WidgetFlag &&
                     equal_Command(cmd, "edgeswipe.moved")) {
@@ -1147,14 +1214,13 @@ int backgroundFadeColor_Widget(void) {
     }
 }
 
-void drawBackground_Widget(const iWidget *d) {
-    if (d->flags & noBackground_WidgetFlag) {
-        return;
-    }
-    if (d->flags & hidden_WidgetFlag && ~d->flags & visualOffset_WidgetFlag) {
-        return;
-    }
-    /* Popup menus have a shadowed border. */
+iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
+    return ~d->flags & hidden_WidgetFlag || d->flags & visualOffset_WidgetFlag;
+}
+
+static void drawLayerEffects_Widget_(const iWidget *d) {
+    /* Layered effects are not buffered, so they are drawn here separately. */
+    iAssert(isDrawn_Widget_(d));
     iBool shadowBorder   = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
     iBool fadeBackground = (d->bgColor >= 0 || d->frameColor >= 0) && d->flags & mouseModal_WidgetFlag;
     if (deviceType_App() == phone_AppDeviceType) {
@@ -1163,13 +1229,12 @@ void drawBackground_Widget(const iWidget *d) {
             shadowBorder = iFalse;
         }
     }
+    const iBool isFaded = fadeBackground && ~d->flags & noFadeBackground_WidgetFlag;
     if (shadowBorder && ~d->flags & noShadowBorder_WidgetFlag) {
         iPaint p;
         init_Paint(&p);
         drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
     }
-    const iBool isFaded = fadeBackground &&
-                          ~d->flags & noFadeBackground_WidgetFlag;
     if (isFaded) {
         iPaint p;
         init_Paint(&p);
@@ -1183,10 +1248,20 @@ void drawBackground_Widget(const iWidget *d) {
         fillRect_Paint(&p, rect_Root(d->root), backgroundFadeColor_Widget());
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
+}
+
+void drawBackground_Widget(const iWidget *d) {
+    if (d->flags & noBackground_WidgetFlag) {
+        return;
+    }
+    if (!isDrawn_Widget_(d)) {
+        return;
+    }
+    /* Popup menus have a shadowed border. */
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         iRect rect = bounds_Widget(d);
         if (d->flags & drawBackgroundToBottom_WidgetFlag) {
-            rect.size.y = size_Root(d->root).y - top_Rect(rect);
+            rect.size.y = iMax(rect.size.y, size_Root(d->root).y - top_Rect(rect));
         }
         iPaint p;
         init_Paint(&p);
@@ -1242,8 +1317,54 @@ void drawBackground_Widget(const iWidget *d) {
     }
 }
 
-iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
-    return ~d->flags & hidden_WidgetFlag || d->flags & visualOffset_WidgetFlag;
+int drawCount_;
+
+static iBool isRoot_Widget_(const iWidget *d) {
+    return d == d->root->widget;
+}
+
+iLocalDef iBool isFullyContainedByOther_Rect(const iRect d, const iRect other) {
+    if (isEmpty_Rect(other)) {
+        /* Nothing is contained by empty. */
+        return iFalse;
+    }
+    if (isEmpty_Rect(d)) {
+        /* Empty is fully contained by anything. */
+        return iTrue;
+    }
+    return equal_Rect(intersect_Rect(d, other), d);
+}
+
+static void addToPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs, iRect *fullyMasked) {
+    if (isDrawn_Widget_(d)) {
+        iRect bounds = bounds_Widget(d);
+        if (d->flags & drawBackgroundToBottom_WidgetFlag) {
+            bounds.size.y = size_Root(d->root).y - top_Rect(bounds);
+        }
+        if (isFullyContainedByOther_Rect(bounds, *fullyMasked)) {
+            return; /* can't be seen */
+        }                
+        pushBack_PtrArray(pvs, d);
+        if (d->bgColor >= 0 && ~d->flags & noBackground_WidgetFlag &&
+            isFullyContainedByOther_Rect(*fullyMasked, bounds)) {
+            *fullyMasked = bounds;
+        }
+    }    
+}
+
+static void findPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs) {
+    iRect fullyMasked = zero_Rect();
+    if (isRoot_Widget_(d)) {
+        iReverseConstForEach(PtrArray, i, onTop_Root(d->root)) {
+            addToPotentiallyVisible_Widget_(i.ptr, pvs, &fullyMasked);
+        }
+    }
+    iReverseConstForEach(ObjectList, i, d->children) {
+        const iWidget *child = i.object;
+        if (~child->flags & keepOnTop_WidgetFlag) {
+            addToPotentiallyVisible_Widget_(child, pvs, &fullyMasked);
+        }
+    }
 }
 
 void drawChildren_Widget(const iWidget *d) {
@@ -1253,21 +1374,85 @@ void drawChildren_Widget(const iWidget *d) {
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
         if (~child->flags & keepOnTop_WidgetFlag && isDrawn_Widget_(child)) {
+            drawCount_++;
             class_Widget(child)->draw(child);
-        }
-    }
-    /* Root draws the on-top widgets on top of everything else. */
-    if (d == d->root->widget) {
-        iConstForEach(PtrArray, i, onTop_Root(d->root)) {
-            const iWidget *top = *i.value;
-            class_Widget(top)->draw(top);
         }
     }
 }
 
+void drawRoot_Widget(const iWidget *d) {
+    iAssert(d == d->root->widget);
+    /* Root draws the on-top widgets on top of everything else. */
+    iPtrArray pvs;
+    init_PtrArray(&pvs);
+    findPotentiallyVisible_Widget_(d, &pvs);
+    iReverseConstForEach(PtrArray, i, &pvs) {
+        drawCount_++;
+        class_Widget(i.ptr)->draw(i.ptr);
+    }
+    deinit_PtrArray(&pvs);
+}
+
+void setDrawBufferEnabled_Widget(iWidget *d, iBool enable) {
+    if (enable && !d->drawBuf) {
+        d->drawBuf = new_WidgetDrawBuffer();        
+    }
+    else if (!enable && d->drawBuf) {
+        delete_WidgetDrawBuffer(d->drawBuf);
+        d->drawBuf = NULL;
+    }
+}
+
+static void beginBufferDraw_Widget_(const iWidget *d) {
+    if (d->drawBuf) {
+//        printf("[%p] drawbuffer update %d\n", d, d->drawBuf->isValid);
+        const iRect bounds = bounds_Widget(d);
+        SDL_Renderer *render = renderer_Window(get_Window());
+        d->drawBuf->oldTarget = SDL_GetRenderTarget(render);
+        d->drawBuf->oldOrigin = origin_Paint;
+        realloc_WidgetDrawBuffer(d->drawBuf, render, boundsForDraw_Widget_(d).size);
+        SDL_SetRenderTarget(render, d->drawBuf->texture);
+        //SDL_SetRenderDrawColor(render, 255, 0, 0, 128);
+        SDL_SetRenderDrawColor(render, 0, 0, 0, 0);
+        SDL_RenderClear(render);
+        origin_Paint = neg_I2(bounds.pos); /* with current visual offset */
+//        printf("beginBufferDraw: origin %d,%d\n", origin_Paint.x, origin_Paint.y);
+//        fflush(stdout);
+    }    
+}
+
+static void endBufferDraw_Widget_(const iWidget *d) {
+    if (d->drawBuf) {
+        d->drawBuf->isValid = iTrue;
+        SDL_SetRenderTarget(renderer_Window(get_Window()), d->drawBuf->oldTarget);
+        origin_Paint = d->drawBuf->oldOrigin;
+//        printf("endBufferDraw: origin %d,%d\n", origin_Paint.x, origin_Paint.y);
+//        fflush(stdout);
+    }    
+}
+
 void draw_Widget(const iWidget *d) {
-    drawBackground_Widget(d);
-    drawChildren_Widget(d);
+    if (!isDrawn_Widget_(d)) {
+        if (d->drawBuf) {
+//            printf("[%p] drawBuffer released\n", d);
+            release_WidgetDrawBuffer(d->drawBuf);
+        }
+        return;
+    }
+    drawLayerEffects_Widget_(d);
+    if (!d->drawBuf || !checkDrawBuffer_Widget_(d)) {
+        beginBufferDraw_Widget_(d);
+        drawBackground_Widget(d);
+        drawChildren_Widget(d);
+        endBufferDraw_Widget_(d);
+    }
+    if (d->drawBuf) {
+        iAssert(d->drawBuf->isValid);
+        const iRect bounds = bounds_Widget(d);
+        SDL_RenderCopy(renderer_Window(get_Window()), d->drawBuf->texture, NULL,
+                       &(SDL_Rect){ bounds.pos.x, bounds.pos.y,
+                                    d->drawBuf->size.x, d->drawBuf->size.y });
+    }
 }
 
 iAny *addChild_Widget(iWidget *d, iAnyObject *child) {
@@ -1659,12 +1844,20 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
     deinit_String(&str);
 }
 
-void refresh_Widget(const iAnyObject *d) {
+void refresh_Widget(const iAnyObject *d) {    
     /* TODO: Could be widget specific, if parts of the tree are cached. */
     /* TODO: The visbuffer in DocumentWidget and ListWidget could be moved to be a general
        purpose feature of Widget. */
     iAssert(isInstance_Object(d, &Class_Widget));
-    iUnused(d);
+    /* Mark draw buffers invalid. */
+    for (const iWidget *w = d; w; w = w->parent) {
+        if (w->drawBuf) {
+//            if (w->drawBuf->isValid) {
+//                printf("[%p] drawbuffer invalidated by %p\n", w, d); fflush(stdout);
+//            }
+            w->drawBuf->isValid = iFalse;
+        }
+    }
     postRefresh_App();
 }
 

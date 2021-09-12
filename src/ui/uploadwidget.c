@@ -376,11 +376,11 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
-static void draw_UploadWidget_(const iUploadWidget *d) {
-    draw_Widget(constAs_Widget(d));
-}
+//static void draw_UploadWidget_(const iUploadWidget *d) {
+//    draw_Widget(constAs_Widget(d));
+//}
 
 iBeginDefineSubclass(UploadWidget, Widget)
     .processEvent = (iAny *) processEvent_UploadWidget_,
-    .draw         = (iAny *) draw_UploadWidget_,
+    .draw         = draw_Widget,
 iEndDefineSubclass(UploadWidget)

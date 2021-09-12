@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "metrics.h"
 #include "embedded.h"
 #include "window.h"
+#include "paint.h"
 #include "app.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -1712,6 +1713,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     }
                     SDL_Rect src;
                     memcpy(&src, &glyph->rect[hoff], sizeof(SDL_Rect));
+                    dst.x += origin_Paint.x;
+                    dst.y += origin_Paint.y;
                     if (args->mode & fillBackground_RunMode) {
                         /* Alpha blending looks much better if the RGB components don't change in
                            the partially transparent pixels. */
@@ -2182,6 +2185,8 @@ void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
     }
     if (d->texture) {
         SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
+        const iInt2 oldOrigin = origin_Paint;
+        origin_Paint = zero_I2();
         SDL_SetRenderTarget(render, d->texture);
         SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
         SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
@@ -2190,6 +2195,7 @@ void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
         draw_WrapText(wrapText, font, zero_I2(), color | fillBackground_ColorId);
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(render, oldTarget);
+        origin_Paint = oldOrigin;
         SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
     }
 }
@@ -2203,6 +2209,7 @@ iTextBuf *newRange_TextBuf(int font, int color, iRangecc text) {
 }
 
 void draw_TextBuf(const iTextBuf *d, iInt2 pos, int color) {
+    addv_I2(&pos, origin_Paint);
     const iColor clr = get_Color(color);
     SDL_SetTextureColorMod(d->texture, clr.r, clr.g, clr.b);
     SDL_RenderCopy(text_.render,

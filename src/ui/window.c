@@ -1060,12 +1060,13 @@ void draw_Window(iWindow *d) {
     d->frameTime = SDL_GetTicks();
     if (isExposed_Window(d)) {
         d->isInvalidated = iFalse;
+        extern int drawCount_;
         iForIndices(i, d->roots) {
             iRoot *root = d->roots[i];
             if (root) {
                 setCurrent_Root(root);
                 unsetClip_Paint(&p); /* update clip to current root */
-                draw_Widget(root->widget);
+                drawRoot_Widget(root->widget);
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
                 /* App icon. */
                 const iWidget *appIcon = findChild_Widget(root->widget, "winbar.icon");
@@ -1105,6 +1106,10 @@ void draw_Window(iWindow *d) {
             }
         }
         setCurrent_Root(NULL);
+#if !defined (NDEBUG)
+        draw_Text(defaultBold_FontId, zero_I2(), red_ColorId, "%d", drawCount_);
+        drawCount_ = 0;
+#endif
     }
 #if 0
     /* Text cache debugging. */ {

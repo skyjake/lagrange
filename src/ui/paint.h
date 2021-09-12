@@ -36,6 +36,8 @@ struct Impl_Paint {
     uint8_t      alpha;
 };
 
+extern iInt2 origin_Paint; /* add this to all drawn positions so buffered graphics are correctly offset */
+
 void    init_Paint          (iPaint *);
 
 void    beginTarget_Paint   (iPaint *, SDL_Texture *target);

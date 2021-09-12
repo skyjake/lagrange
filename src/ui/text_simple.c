@@ -306,6 +306,8 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                 src.y += over;
                 src.h -= over;
             }
+            dst.x += origin_Paint.x;
+            dst.y += origin_Paint.y;
             if (args->mode & fillBackground_RunMode) {
                 /* Alpha blending looks much better if the RGB components don't change in
                    the partially transparent pixels. */

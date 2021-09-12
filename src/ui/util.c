@@ -685,6 +685,7 @@ static iWidget *makeMenuSeparator_(void) {
 
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
+    setDrawBufferEnabled_Widget(menu, iTrue);
     setBackgroundColor_Widget(menu, uiBackgroundMenu_ColorId);
     if (deviceType_App() != desktop_AppDeviceType) {
         setPadding1_Widget(menu, 2 * gap_UI);

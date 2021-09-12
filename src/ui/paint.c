@@ -24,6 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_version.h>
 
+iInt2 origin_Paint;
+
 iLocalDef SDL_Renderer *renderer_Paint_(const iPaint *d) {
     iAssert(d->dst);
     return d->dst->render;
@@ -62,10 +64,11 @@ void endTarget_Paint(iPaint *d) {
 }
 
 void setClip_Paint(iPaint *d, iRect rect) {
-    rect = intersect_Rect(rect, rect_Root(get_Root()));
+    //rect = intersect_Rect(rect, rect_Root(get_Root()));
     if (isEmpty_Rect(rect)) {
         rect = init_Rect(0, 0, 1, 1);
     }
+    addv_I2(&rect.pos, origin_Paint);
     SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 }
 
@@ -85,6 +88,7 @@ void unsetClip_Paint(iPaint *d) {
 }
 
 void drawRect_Paint(const iPaint *d, iRect rect, int color) {
+    addv_I2(&rect.pos, origin_Paint);
     iInt2 br = bottomRight_Rect(rect);
     /* Keep the right/bottom edge visible in the window. */
     if (br.x == d->dst->size.x) br.x--;
@@ -115,11 +119,14 @@ void drawRectThickness_Paint(const iPaint *d, iRect rect, int thickness, int col
 }
 
 void fillRect_Paint(const iPaint *d, iRect rect, int color) {
+    addv_I2(&rect.pos, origin_Paint);
     setColor_Paint_(d, color);
+//    printf("fillRect_Paint: %d,%d %dx%d\n", rect.pos.x, rect.pos.y, rect.size.x, rect.size.y);
     SDL_RenderFillRect(renderer_Paint_(d), (SDL_Rect *) &rect);
 }
 
 void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color, int alpha) {
+    addv_I2(&inner.pos, origin_Paint);
     SDL_Renderer *render = renderer_Paint_(d);
     SDL_Texture *shadow = get_Window()->borderShadow;
     const iInt2 size = size_SDLTexture(shadow);
@@ -146,9 +153,14 @@ void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color
                    &(SDL_Rect){ outer.pos.x, inner.pos.y, thickness, inner.size.y });
 }
 
-void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t count, int color) {
+void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t n, int color) {
     setColor_Paint_(d, color);
-    SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) points, count);
+    iInt2 *offsetPoints = malloc(sizeof(iInt2) * n);
+    for (size_t i = 0; i < n; i++) {
+        offsetPoints[i] = add_I2(points[i], origin_Paint);
+    }
+    SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) offsetPoints, n);
+    free(offsetPoints);
 }
 
 iInt2 size_SDLTexture(SDL_Texture *d) {
