@@ -1367,6 +1367,12 @@ static void findPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs) {
     }
 }
 
+iLocalDef void incrementDrawCount_(const iWidget *d) {
+    if (class_Widget(d) != &Class_Widget || d->bgColor >= 0 || d->frameColor >= 0) {
+        drawCount_++;
+    }
+}
+
 void drawChildren_Widget(const iWidget *d) {
     if (!isDrawn_Widget_(d)) {
         return;
@@ -1374,7 +1380,7 @@ void drawChildren_Widget(const iWidget *d) {
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
         if (~child->flags & keepOnTop_WidgetFlag && isDrawn_Widget_(child)) {
-            drawCount_++;
+            incrementDrawCount_(child);
             class_Widget(child)->draw(child);
         }
     }
@@ -1387,7 +1393,7 @@ void drawRoot_Widget(const iWidget *d) {
     init_PtrArray(&pvs);
     findPotentiallyVisible_Widget_(d, &pvs);
     iReverseConstForEach(PtrArray, i, &pvs) {
-        drawCount_++;
+        incrementDrawCount_(i.ptr);
         class_Widget(i.ptr)->draw(i.ptr);
     }
     deinit_PtrArray(&pvs);
