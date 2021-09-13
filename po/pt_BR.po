@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-09-06 10:49+0000\n"
+"PO-Revision-Date: 2021-09-14 03:49+0000\n"
 "Last-Translator: Gabriel de Oliveira Ferreira Machado <goliv04053@tutanota."
 "com>\n"
 "Language-Team: Portuguese (Brazil) <http://weblate.skyjake.fi/projects/"
@@ -64,3 +64,6 @@ msgstr "Arte ASCII: a palavra \"Lagrange\" usando uma fonte larga"
 
 msgid "bookmark.delete"
 msgstr "Deletar favorito"
+
+msgid "dlg.translate.unavail"
+msgstr "Serviço indisponível"
