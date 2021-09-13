@@ -293,6 +293,7 @@ static void update_TouchState_(void *ptr) {
             }
             if (elapsed > 50 && !touch->isTapBegun) {
                 /* Looks like a possible tap. */
+                touchState_()->currentTouchPos = initF3_I2(touch->pos[0]);
                 dispatchNotification_Touch_(touch, widgetTapBegins_UserEventCode);
                 dispatchMotion_Touch_(touch->pos[0], 0);
                 refresh_Widget(touch->affinity);
@@ -471,13 +472,13 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     }
     iTouchState *d = touchState_();
     iWindow *window = get_Window();    
-    if (!isFinished_Anim(&window->rootOffset)) {
-        return iFalse;
-    }
+//    if (!isFinished_Anim(&window->rootOffset)) {
+//        return iFalse;
+//    }
     const iInt2 rootSize = size_Window(window);
     const SDL_TouchFingerEvent *fing = &ev->tfinger;
     const iFloat3 pos = add_F3(init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0), /* pixels */
-                               init_F3(0, -value_Anim(&window->rootOffset), 0));
+                               init_F3(0, 0 /*-value_Anim(&window->rootOffset)*/, 0));
     const uint32_t nowTime = SDL_GetTicks();
     if (ev->type == SDL_FINGERDOWN) {
         /* Register the new touch. */

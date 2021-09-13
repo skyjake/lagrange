@@ -98,7 +98,7 @@ struct Impl_Window {
     SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
     SDL_Cursor *  pendingCursor;
     int           loadAnimTimer;
-    iAnim         rootOffset;
+//    iAnim         rootOffset;
     int           keyboardHeight; /* mobile software keyboards */
 };
 

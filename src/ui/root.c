@@ -1401,23 +1401,38 @@ void createUserInterface_Root(iRoot *d) {
                 { "${menu.closetab.other}", 0, 0, "tabs.close toleft:1 toright:1" },
                 { barLeftArrow_Icon " ${menu.closetab.left}", 0, 0, "tabs.close toleft:1" },
                 { barRightArrow_Icon " ${menu.closetab.right}", 0, 0, "tabs.close toright:1" },
-                },
+            },
             6);
         iWidget *barMenu =
             makeMenu_Widget(root,
                             (iMenuItem[]){
                                 { leftHalf_Icon " ${menu.sidebar.left}", 0, 0, "sidebar.toggle" },
                                 { rightHalf_Icon " ${menu.sidebar.right}", 0, 0, "sidebar2.toggle" },
-                                },
+                            },
                             deviceType_App() == phone_AppDeviceType ? 1 : 2);
         iWidget *clipMenu = makeMenu_Widget(root,
-                                            (iMenuItem[]){
-                                                { scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
-                                                { clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
-                                                { "---" },
-                                                { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
-                                                },
-                                            4);
+#if defined (iPlatformMobile)
+            (iMenuItem[]){
+                { ">>>" scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
+                { ">>>" clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
+                { ">>>" clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
+                { "---" },
+                { ">>>" delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
+                { ">>>" select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
+                { ">>>" undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
+            }, 7);
+#else
+            (iMenuItem[]){
+                { scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
+                { clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
+                { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
+                { "---" },
+                { delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
+                { undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
+                { "---" },
+                { select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
+            }, 8);
+#endif
         iWidget *splitMenu = makeMenu_Widget(root, (iMenuItem[]){
             { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
             { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },

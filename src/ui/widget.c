@@ -880,9 +880,9 @@ iInt2 localToWindow_Widget(const iWidget *d, iInt2 localCoord) {
         applyVisualOffset_Widget_(w, &pos);
         addv_I2(&window, pos);
     }
-#if defined (iPlatformMobile)
-    window.y += value_Anim(&get_Window()->rootOffset);
-#endif
+//#if defined (iPlatformMobile)
+//    window.y += value_Anim(&get_Window()->rootOffset);
+//#endif
     return window;
 }
 
@@ -1072,23 +1072,33 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
 }
 
 iBool scrollOverflow_Widget(iWidget *d, int delta) {
-    iRect       bounds   = boundsWithoutVisualOffset_Widget(d);
-    const iInt2 rootSize = size_Root(d->root);
-    const iRect winRect  = safeRect_Root(d->root);
-    const int   yTop     = top_Rect(winRect);
-    const int   yBottom  = bottom_Rect(winRect);
+    iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
+//    const iInt2 rootSize = size_Root(d->root);
+    const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
+                                        zero_I2(),
+                                        init_I2(0, -get_Window()->keyboardHeight));
+    const int yTop    = top_Rect(winRect);
+    const int yBottom = bottom_Rect(winRect);
     if (top_Rect(bounds) >= yTop && bottom_Rect(bounds) < yBottom) {
         return iFalse; /* fits inside just fine */
     }
     //const int safeBottom = rootSize.y - yBottom;
-    bounds.pos.y += delta;
-    const iRangei range = { bottom_Rect(winRect) - height_Rect(bounds), yTop };
+    iRangei validPosRange = { bottom_Rect(winRect) - height_Rect(bounds), yTop };
+    if (validPosRange.start > validPosRange.end) {
+        validPosRange.start = validPosRange.end; /* no room to scroll */
+    }
+    if (delta) {
+        if (delta < 0 && bounds.pos.y < validPosRange.start) {
+            delta = 0;
+        }
+        if (delta > 0 && bounds.pos.y > validPosRange.end) {
+            delta = 0;
+        }
+        bounds.pos.y += delta;
 //    printf("range: %d ... %d\n", range.start, range.end);
-    if (range.start >= range.end) {
-        bounds.pos.y = range.end;
     }
     else {
-        bounds.pos.y = iClamp(bounds.pos.y, range.start, range.end);
+        bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
     }
 //    if (delta >= 0) {
 //        bounds.pos.y = iMin(bounds.pos.y, yTop);
@@ -1454,7 +1464,7 @@ void setDrawBufferEnabled_Widget(iWidget *d, iBool enable) {
 
 static void beginBufferDraw_Widget_(const iWidget *d) {
     if (d->drawBuf) {
-        printf("[%p] drawbuffer update %d\n", d, d->drawBuf->isValid);
+//        printf("[%p] drawbuffer update %d\n", d, d->drawBuf->isValid);
         if (d->drawBuf->isValid) {
             iAssert(!isEqual_I2(d->drawBuf->size, boundsForDraw_Widget_(d).size));
 //            printf("  drawBuf:%dx%d boundsForDraw:%dx%d\n",
@@ -1503,7 +1513,7 @@ void draw_Widget(const iWidget *d) {
         endBufferDraw_Widget_(d);
     }
     if (d->drawBuf) {
-        iAssert(d->drawBuf->isValid);
+        //iAssert(d->drawBuf->isValid);
         const iRect bounds = bounds_Widget(d);
         SDL_RenderCopy(renderer_Window(get_Window()), d->drawBuf->texture, NULL,
                        &(SDL_Rect){ bounds.pos.x, bounds.pos.y,

@@ -706,23 +706,36 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
         setFrameColor_Widget(menu, uiSeparator_ColorId);
     }
     iBool haveIcons = iFalse;
+    iWidget *horizGroup = NULL;
     for (size_t i = 0; i < n; ++i) {
         const iMenuItem *item = &items[i];
         if (!item->label) {
             break;
         }
-        if (equal_CStr(item->label, "---")) {
+        const char *labelText = item->label;
+        if (!startsWith_CStr(labelText, ">>>")) {
+            horizGroup = NULL;
+        }
+        if (equal_CStr(labelText, "---")) {
             addChild_Widget(menu, iClob(makeMenuSeparator_()));
         }
         else {
             iBool isInfo = iFalse;
-            const char *labelText = item->label;
+            if (startsWith_CStr(labelText, ">>>")) {
+                labelText += 3;
+                if (!horizGroup) {
+                    horizGroup = makeHDiv_Widget();
+                    setFlags_Widget(horizGroup, resizeHeightOfChildren_WidgetFlag, iFalse);
+                    setFlags_Widget(horizGroup, arrangeHeight_WidgetFlag, iTrue);
+                    addChild_Widget(menu, iClob(horizGroup));
+                }
+            }
             if (startsWith_CStr(labelText, "```")) {
                 labelText += 3;
                 isInfo = iTrue;
             }
             iLabelWidget *label = addChildFlags_Widget(
-                menu,
+                horizGroup ? horizGroup : menu,
                 iClob(newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
                 noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
                 drawKey_WidgetFlag | itemFlags);
@@ -766,6 +779,34 @@ void openMenu_Widget(iWidget *d, iInt2 windowCoord) {
     openMenuFlags_Widget(d, windowCoord, iTrue);
 }
 
+static void updateMenuItemFonts_Widget_(iWidget *d) {
+    const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
+    const iBool isSlidePanel    = (flags_Widget(d) & horizontalOffset_WidgetFlag) != 0;
+    iForEach(ObjectList, i, children_Widget(d)) {
+        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+            iLabelWidget *label = i.object;
+            const iBool isCaution = startsWith_String(text_LabelWidget(label), uiTextCaution_ColorEscape);
+            if (isWrapped_LabelWidget(label)) {
+                continue;
+            }
+            if (deviceType_App() == desktop_AppDeviceType) {
+                setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
+            }
+            else if (isPortraitPhone) {
+                if (!isSlidePanel) {
+                    setFont_LabelWidget(label, isCaution ? defaultBigBold_FontId : defaultBig_FontId);
+                }
+            }
+            else {
+                setFont_LabelWidget(label, isCaution ? uiContentBold_FontId : uiContent_FontId);
+            }
+        }
+        else if (childCount_Widget(i.object)) {
+            updateMenuItemFonts_Widget_(i.object);
+        }
+    }
+}
+
 void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
     const iRect rootRect        = rect_Root(d->root);
     const iInt2 rootSize        = rootRect.size;
@@ -788,28 +829,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
         }
         d->rect.size.x = rootSize.x;
     }
-    /* Update item fonts. */ {
-        iForEach(ObjectList, i, children_Widget(d)) {
-            if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                iLabelWidget *label = i.object;
-                const iBool isCaution = startsWith_String(text_LabelWidget(label), uiTextCaution_ColorEscape);
-                if (isWrapped_LabelWidget(label)) {
-                    continue;
-                }
-                if (deviceType_App() == desktop_AppDeviceType) {
-                    setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
-                }
-                else if (isPortraitPhone) {
-                    if (!isSlidePanel) {
-                        setFont_LabelWidget(label, isCaution ? defaultBigBold_FontId : defaultBig_FontId);
-                    }
-                }
-                else {
-                    setFont_LabelWidget(label, isCaution ? uiContentBold_FontId : uiContent_FontId);
-                }
-            }
-        }
-    }
+    updateMenuItemFonts_Widget_(d);
     arrange_Widget(d);
     if (isPortraitPhone) {
         if (isSlidePanel) {

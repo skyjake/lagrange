@@ -151,6 +151,8 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define magnifyingGlass_Icon "\U0001f50d"
 #define midEllipsis_Icon    "\u00b7\u00b7\u00b7"
 #define return_Icon         "\u23ce"
+#define undo_Icon           "\u23ea"
+#define select_Icon         "\u2b1a"
 
 #if defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"

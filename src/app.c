@@ -1069,11 +1069,11 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
         return iFalse;
     }
 #endif
-#if defined (iPlatformMobile)
-    if (!isFinished_Anim(&d->window->rootOffset)) {
-        return iFalse;
-    }
-#endif
+//#if defined (iPlatformMobile)
+//    if (!isFinished_Anim(&d->window->rootOffset)) {
+//        return iFalse;
+//    }
+//#endif
     return !value_Atomic(&d->pendingRefresh) && isEmpty_SortedArray(&d->tickers);
 }
 
@@ -1318,7 +1318,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
         }
     }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
-    if (d->isIdling && !gotEvents && isFinished_Anim(&d->window->rootOffset)) {
+    if (d->isIdling && !gotEvents /*&& isFinished_Anim(&d->window->rootOffset)*/) {
         /* This is where we spend most of our time when idle. 60 Hz still quite a lot but we
            can't wait too long after the user tries to interact again with the app. In any
            case, on macOS SDL_WaitEvent() seems to use 10x more CPU time than sleeping. */
@@ -1411,9 +1411,9 @@ void refresh_App(void) {
 #endif
     if (!exchange_Atomic(&d->pendingRefresh, iFalse)) {
         /* Refreshing wasn't pending. */
-        if (isFinished_Anim(&d->window->rootOffset)) {
+//        if (isFinished_Anim(&d->window->rootOffset)) {
             return;
-        }
+//        }
     }
 //    iTime draw;
 //    initCurrent_Time(&draw);

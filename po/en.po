@@ -273,6 +273,18 @@ msgstr "Copy"
 msgid "menu.paste"
 msgstr "Paste"
 
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Select All"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Delete"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Undo"
+
 msgid "menu.select.clear"
 msgstr "Clear Selection"
 

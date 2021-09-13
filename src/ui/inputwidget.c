@@ -179,19 +179,23 @@ static void deinit_InputUndo_(iInputUndo *d) {
 }
 
 enum iInputWidgetFlag {
-    isSensitive_InputWidgetFlag      = iBit(1),
-    isUrl_InputWidgetFlag            = iBit(2), /* affected by decoding preference */
-    enterPressed_InputWidgetFlag     = iBit(3),
-    selectAllOnFocus_InputWidgetFlag = iBit(4),
-    notifyEdits_InputWidgetFlag      = iBit(5),
-    eatEscape_InputWidgetFlag        = iBit(6),
-    isMarking_InputWidgetFlag        = iBit(7),
-    markWords_InputWidgetFlag        = iBit(8),
-    needUpdateBuffer_InputWidgetFlag = iBit(9),
-    enterKeyEnabled_InputWidgetFlag  = iBit(10),
-    lineBreaksEnabled_InputWidgetFlag= iBit(11),
-    needBackup_InputWidgetFlag       = iBit(12),
+    isSensitive_InputWidgetFlag          = iBit(1),
+    isUrl_InputWidgetFlag                = iBit(2), /* affected by decoding preference */
+    enterPressed_InputWidgetFlag         = iBit(3),
+    selectAllOnFocus_InputWidgetFlag     = iBit(4),
+    notifyEdits_InputWidgetFlag          = iBit(5),
+    eatEscape_InputWidgetFlag            = iBit(6),
+    isMarking_InputWidgetFlag            = iBit(7),
+    markWords_InputWidgetFlag            = iBit(8),
+    needUpdateBuffer_InputWidgetFlag     = iBit(9),
+    enterKeyEnabled_InputWidgetFlag      = iBit(10),
+    lineBreaksEnabled_InputWidgetFlag    = iBit(11),
+    needBackup_InputWidgetFlag           = iBit(12),
     useReturnKeyBehavior_InputWidgetFlag = iBit(13),
+    //touchBehavior_InputWidgetFlag        = iBit(14), /* different behavior depending on interaction method */
+    dragCursor_InputWidgetFlag           = iBit(14),
+    dragMarkerStart_InputWidgetFlag      = iBit(15),
+    dragMarkerEnd_InputWidgetFlag        = iBit(16),
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -217,6 +221,10 @@ struct Impl_InputWidget {
     iArray          undoStack;
     int             font;
     iClick          click;
+    uint32_t        tapStartTime;
+    uint32_t        lastTapTime;
+    iInt2           lastTapPos;
+    int             tapCount;
     int             wheelAccum;
     int             cursorVis;
     uint32_t        timer;
@@ -460,12 +468,16 @@ static iWrapText wrap_InputWidget_(const iInputWidget *d, int y) {
     };
 }
 
-static iInt2 relativeCursorCoord_InputWidget_(const iInputWidget *d) {
+static iInt2 relativeCoord_InputWidget_(const iInputWidget *d, iInt2 pos) {
     /* Relative to the start of the line on which the cursor is. */
-    iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
-    wt.hitChar = wt.text.start + d->cursor.x;
+    iWrapText wt = wrap_InputWidget_(d, pos.y);
+    wt.hitChar = wt.text.start + pos.x;
     measure_WrapText(&wt, d->font);
     return wt.hitAdvance_out;
+}
+
+static iInt2 relativeCursorCoord_InputWidget_(const iInputWidget *d) {
+    return relativeCoord_InputWidget_(d, d->cursor);
 }
 
 static void updateVisible_InputWidget_(iInputWidget *d) {
@@ -632,7 +644,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Widget(w);
     d->validator = NULL;
     d->validatorContext = NULL;
-    setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag | touchDrag_WidgetFlag, iTrue);
+    setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, iTrue);
 #if defined (iPlatformMobile)
     setFlags_Widget(w, extraPadding_WidgetFlag, iTrue);
 #endif
@@ -662,6 +674,8 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     splitToLines_(&iStringLiteral(""), &d->lines);
     setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue); /* resizes its own height */
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
+    d->lastTapTime = 0;
+    d->tapCount = 0;
     d->wheelAccum = 0;
     d->timer = 0;
     d->cursorVis = 0;
@@ -993,7 +1007,7 @@ void begin_InputWidget(iInputWidget *d) {
         d->mark = (iRanges){ 0, lastLine_InputWidget_(d)->range.end };
         d->cursor = cursorMax_InputWidget_(d);
     }
-    else {
+    else if (~d->inFlags & isMarking_InputWidgetFlag) {
         iZap(d->mark);
     }
     enableEditorKeysInMenus_(iFalse);
@@ -1013,9 +1027,10 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         splitToLines_(&d->oldText, &d->lines);
     }
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
+    d->inFlags &= ~isMarking_InputWidgetFlag;
     startOrStopCursorTimer_InputWidget_(d, iFalse);
     SDL_StopTextInput();
-    setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
+    setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag | touchDrag_WidgetFlag, iFalse);
     const char *id = cstr_String(id_Widget(as_Widget(d)));
     if (!*id) id = "_";
     refresh_Widget(w);
@@ -1445,6 +1460,398 @@ static iBool checkAcceptMods_InputWidget_(const iInputWidget *d, int mods) {
     return mods == 0;
 }
 
+enum iEventResult {
+    ignored_EventResult = 0, /* event was not processed */
+    false_EventResult   = 1, /* event was processed but other widgets can still process it, too*/
+    true_EventResult    = 2, /* event was processed and should not be passed on */
+};
+
+static void markWordAtCursor_InputWidget_(iInputWidget *d) {
+    d->mark.start = d->mark.end = cursorToIndex_InputWidget_(d, d->cursor);
+    extendRange_InputWidget_(d, &d->mark.start, -1);
+    extendRange_InputWidget_(d, &d->mark.end, +1);
+    d->initialMark = d->mark;
+}
+
+static void showClipMenu_(iInt2 coord) {
+    iWidget *clipMenu = findWidget_App("clipmenu");
+    if (isVisible_Widget(clipMenu)) {
+        closeMenu_Widget(clipMenu);
+    }
+    else {
+        openMenuFlags_Widget(clipMenu, coord, iFalse);
+    }
+}
+
+static enum iEventResult processPointerEvents_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
+    iWidget *w = as_Widget(d);
+    if (ev->type == SDL_MOUSEMOTION && (isHover_Widget(d) || flags_Widget(w) & keepOnTop_WidgetFlag)) {
+        const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);
+        const iInt2 inner = windowToInner_Widget(w, coord);
+        setCursor_Window(get_Window(),
+                         inner.x >= 2 * gap_UI + d->leftPadding &&
+                         inner.x < width_Widget(w) - d->rightPadding
+                             ? SDL_SYSTEM_CURSOR_IBEAM
+                             : SDL_SYSTEM_CURSOR_ARROW);
+    }
+    if (ev->type == SDL_MOUSEWHEEL && contains_Widget(w, coord_MouseWheelEvent(&ev->wheel))) {
+        const int lineHeight = lineHeight_Text(d->font);
+        if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
+            d->wheelAccum -= ev->wheel.y;
+        }
+        else {
+            d->wheelAccum -= ev->wheel.y * 3 * lineHeight;
+        }
+        int lineDelta = d->wheelAccum / lineHeight;
+        if (lineDelta < 0) {
+            lineDelta = iMax(lineDelta, -d->visWrapLines.start);
+            if (!lineDelta) d->wheelAccum = 0;
+        }
+        else if (lineDelta > 0) {
+            lineDelta = iMin(lineDelta,
+                             lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
+            if (!lineDelta) d->wheelAccum = 0;
+        }
+        if (lineDelta) {
+            d->wheelAccum         -= lineDelta * lineHeight;
+            d->visWrapLines.start += lineDelta;
+            d->visWrapLines.end   += lineDelta;
+            d->inFlags |= needUpdateBuffer_InputWidgetFlag;
+            refresh_Widget(d);
+            return true_EventResult;
+        }
+        return false_EventResult;
+    }
+    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&
+        contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
+        showClipMenu_(mouseCoord_Window(get_Window(), ev->button.which));
+        return iTrue;
+    }
+    switch (processEvent_Click(&d->click, ev)) {
+        case none_ClickResult:
+            break;
+        case started_ClickResult: {
+            setFocus_Widget(w);
+            const iInt2 oldCursor = d->cursor;
+            setCursor_InputWidget(d, coordCursor_InputWidget_(d, pos_Click(&d->click)));
+            if (keyMods_Sym(modState_Keys()) == KMOD_SHIFT) {
+                d->mark = d->initialMark = (iRanges){
+                    cursorToIndex_InputWidget_(d, oldCursor),
+                    cursorToIndex_InputWidget_(d, d->cursor)
+                };
+                d->inFlags |= isMarking_InputWidgetFlag;
+            }
+            else {
+                iZap(d->mark);
+                iZap(d->initialMark);
+                d->inFlags &= ~(isMarking_InputWidgetFlag | markWords_InputWidgetFlag);
+                if (d->click.count == 2) {
+                    d->inFlags |= isMarking_InputWidgetFlag | markWords_InputWidgetFlag;
+                    markWordAtCursor_InputWidget_(d);
+                    refresh_Widget(w);
+                }
+                if (d->click.count == 3) {
+                    selectAll_InputWidget(d);
+                }
+            }
+            refresh_Widget(d);
+            return true_EventResult;
+        }
+        case aborted_ClickResult:
+            d->inFlags &= ~isMarking_InputWidgetFlag;
+            return true_EventResult;
+        case drag_ClickResult:
+            d->cursor = coordCursor_InputWidget_(d, pos_Click(&d->click));
+            showCursor_InputWidget_(d);
+            if (~d->inFlags & isMarking_InputWidgetFlag) {
+                d->inFlags |= isMarking_InputWidgetFlag;
+                d->mark.start = cursorToIndex_InputWidget_(d, d->cursor);
+            }
+            d->mark.end = cursorToIndex_InputWidget_(d, d->cursor);
+            if (d->inFlags & markWords_InputWidgetFlag) {
+                const iBool isFwd = d->mark.end >= d->mark.start;
+                extendRange_InputWidget_(d, &d->mark.end, isFwd ? +1 : -1);
+                d->mark.start = isFwd ? d->initialMark.start : d->initialMark.end;
+            }
+            refresh_Widget(w);
+            return true_EventResult;
+        case finished_ClickResult:
+            d->inFlags &= ~isMarking_InputWidgetFlag;
+            return true_EventResult;
+    }
+    if (ev->type == SDL_MOUSEMOTION && flags_Widget(w) & keepOnTop_WidgetFlag) {
+        const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);
+        if (contains_Click(&d->click, coord)) {
+            return true_EventResult;
+        }
+    }
+    return ignored_EventResult;
+}
+
+static iInt2 touchCoordCursor_InputWidget_(const iInputWidget *d, iInt2 coord) {
+    /* Clamp to the bounds so the cursor doesn't wrap at the ends. */
+    iRect bounds = shrunk_Rect(contentBounds_InputWidget_(d), one_I2());
+    bounds.size.y = iMini(numWrapLines_InputWidget_(d), d->maxWrapLines) * lineHeight_Text(d->font) - 2;
+    return coordCursor_InputWidget_(d, min_I2(bottomRight_Rect(bounds),
+                                              max_I2(coord, topLeft_Rect(bounds))));
+}
+
+static iBool isInsideMark_InputWidget_(const iInputWidget *d, size_t pos) {
+    const iRanges mark = mark_InputWidget_(d);
+    return contains_Range(&mark, pos);
+}
+
+static int distanceToPos_InputWidget_(const iInputWidget *d, iInt2 uiCoord, iInt2 textPos) {
+    const iInt2 a = addY_I2(relativeCoord_InputWidget_(d, textPos), lineHeight_Text(d->font) / 2);
+    const iInt2 b = sub_I2(uiCoord, topLeft_Rect(contentBounds_InputWidget_(d)));
+    return dist_I2(a, b);
+}
+
+static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
+    iWidget *w = as_Widget(d);
+    /*
+     + first tap to focus & select all/place cursor
+     + focused tap to place cursor
+     - drag cursor to move it
+     - double-click to select a word
+     - drag to move selection handles
+     - long-press for context menu: copy, paste, delete, select all, deselect
+     - double-click and hold to select words
+     - triple-click to select all
+     - drag/wheel elsewhere to scroll (contents or overflow), no change in focus
+     */
+//    if (ev->type != SDL_MOUSEBUTTONUP && ev->type != SDL_MOUSEBUTTONDOWN &&
+//        ev->type != SDL_MOUSEWHEEL && ev->type != SDL_MOUSEMOTION &&
+//        !(ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) &&
+//        !(ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode)) {
+//        return ignored_EventResult;
+//    }
+    if (isFocused_Widget(w)) {
+        if (ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) {
+            d->lastTapTime = d->tapStartTime;
+            d->tapStartTime = SDL_GetTicks();
+            const int tapDist = dist_I2(latestPosition_Touch(), d->lastTapPos);
+            d->lastTapPos = latestPosition_Touch();
+            printf("[%p] tap start time: %u (%u) %d\n", w, d->tapStartTime, d->tapStartTime - d->lastTapTime, tapDist);
+            if (d->tapStartTime - d->lastTapTime < 400 && tapDist < gap_UI * 4) {
+                d->tapCount++;
+                printf("[%p] >> tap count: %d\n", w, d->tapCount);
+            }
+            else {
+                d->tapCount = 0;
+            }
+            if (!isEmpty_Range(&d->mark)) {
+                const int dist[2] = {
+                    distanceToPos_InputWidget_(d, latestPosition_Touch(),
+                                               indexToCursor_InputWidget_(d, d->mark.start)),
+                    distanceToPos_InputWidget_(d, latestPosition_Touch(),
+                                               indexToCursor_InputWidget_(d, d->mark.end))
+                };
+                if (dist[0] < dist[1]) {
+                    printf("[%p] begin marker start drag\n", w);
+                    d->inFlags |= dragMarkerStart_InputWidgetFlag;
+                }
+                else {
+                    printf("[%p] begin marker end drag\n", w);
+                    d->inFlags |= dragMarkerEnd_InputWidgetFlag;
+                }
+                d->inFlags |= isMarking_InputWidgetFlag;
+                setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
+            }
+            else {
+                const int dist = distanceToPos_InputWidget_(d, latestPosition_Touch(), d->cursor);
+                printf("[%p] tap dist: %d\n", w, dist);
+                if (dist < gap_UI * 10) {
+                    printf("[%p] begin cursor drag\n", w);
+                    setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
+                    d->inFlags |= dragCursor_InputWidgetFlag;
+//                d->inFlags |= touchBehavior_InputWidgetFlag;
+//                setMouseGrab_Widget(w);
+//                return iTrue;
+                }
+            }
+//            if (~d->inFlags & selectAllOnFocus_InputWidgetFlag) {
+//                d->cursor = coordCursor_InputWidget_(d, pos_Click(&d->click));
+//                showCursor_InputWidget_(d);
+//            }
+            return true_EventResult;
+        }
+    }
+#if 0
+    else if (isFocused_Widget(w)) {
+        if (ev->type == SDL_MOUSEMOTION) {
+            if (~d->inFlags & touchBehavior_InputWidgetFlag) {
+                const iInt2 curPos = relativeCursorCoord_InputWidget_(d);
+                const iInt2 relClick = sub_I2(pos_Click(&d->click),
+                                              topLeft_Rect(contentBounds_InputWidget_(d)));
+                if (dist_I2(curPos, relClick) < gap_UI * 8) {
+                    printf("tap on cursor!\n");
+                    setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
+                    d->inFlags |= touchBehavior_InputWidgetFlag;
+                    printf("[Input] begin cursor drag\n");
+                    setMouseGrab_Widget(w);
+                    return iTrue;
+                }
+            }
+            else if (ev->motion.x > 0 && ev->motion.y > 0) {
+                printf("[Input] cursor being dragged\n");
+                iRect bounds = shrunk_Rect(contentBounds_InputWidget_(d), one_I2());
+                bounds.size.y = iMini(numWrapLines_InputWidget_(d), d->maxWrapLines) * lineHeight_Text(d->font) - 2;
+                iInt2 mpos = init_I2(ev->motion.x, ev->motion.y);
+                mpos = min_I2(bottomRight_Rect(bounds), max_I2(mpos, topLeft_Rect(bounds)));
+                d->cursor = coordCursor_InputWidget_(d, mpos);
+                showCursor_InputWidget_(d);
+                refresh_Widget(w);
+                return iTrue;
+            }
+        }
+        if (d->inFlags & touchBehavior_InputWidgetFlag) {
+            if (ev->type == SDL_MOUSEBUTTONUP ||
+                (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode)) {
+                d->inFlags &= ~touchBehavior_InputWidgetFlag;
+                setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
+                setMouseGrab_Widget(NULL);
+                printf("[Input] touch ends\n");
+                return iFalse;
+            }
+        }
+    }
+#endif
+#if 1
+    if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
+        ev->button.button == SDL_BUTTON_RIGHT && contains_Widget(w, latestPosition_Touch())) {
+        if (ev->type == SDL_MOUSEBUTTONDOWN) {
+            /*if (isFocused_Widget(w)) {
+                d->inFlags |= isMarking_InputWidgetFlag;
+                d->cursor = touchCoordCursor_InputWidget_(d, latestPosition_Touch());
+                markWordAtCursor_InputWidget_(d);
+                refresh_Widget(d);
+                return true_EventResult;
+            }*/
+            setFocus_Widget(w);
+            d->inFlags |= isMarking_InputWidgetFlag;
+            d->cursor = touchCoordCursor_InputWidget_(d, latestPosition_Touch());
+            markWordAtCursor_InputWidget_(d);
+            d->cursor = indexToCursor_InputWidget_(d, d->mark.end);
+            refresh_Widget(d);
+        }
+        return true_EventResult;
+    }
+    switch (processEvent_Click(&d->click, ev)) {
+        case none_ClickResult:
+             break;
+        case started_ClickResult: {
+            printf("[%p] started\n", w);
+            /*
+            const iInt2 curPos = relativeCursorCoord_InputWidget_(d);
+            const iInt2 relClick = sub_I2(pos_Click(&d->click),
+                                          topLeft_Rect(contentBounds_InputWidget_(d)));
+            if (dist_I2(curPos, relClick) < gap_UI * 8) {
+                printf("tap on cursor!\n");
+                setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
+            }
+            else {
+                printf("tap elsewhere\n");
+            }*/
+            return true_EventResult;
+        }
+        case drag_ClickResult:
+            printf("[%p] drag %d,%d\n", w, pos_Click(&d->click).x, pos_Click(&d->click).y);
+            if (d->inFlags & dragCursor_InputWidgetFlag) {
+                iZap(d->mark);
+                d->cursor = touchCoordCursor_InputWidget_(d, pos_Click(&d->click));
+                showCursor_InputWidget_(d);
+                refresh_Widget(w);
+            }
+            else if (d->inFlags & dragMarkerStart_InputWidgetFlag) {
+                d->mark.start = cursorToIndex_InputWidget_(d, touchCoordCursor_InputWidget_(d, pos_Click(&d->click)));
+                refresh_Widget(w);
+            }
+            else if (d->inFlags & dragMarkerEnd_InputWidgetFlag) {
+                d->mark.end = cursorToIndex_InputWidget_(d, touchCoordCursor_InputWidget_(d, pos_Click(&d->click)));
+                refresh_Widget(w);
+            }
+            return true_EventResult;
+  //          printf("[%p] aborted\n", w);
+//            d->inFlags &= ~touchBehavior_InputWidgetFlag;
+//            setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
+//            return true_EventResult;
+        case finished_ClickResult:
+        case aborted_ClickResult:
+            printf("[%p] ended\n", w);
+            uint32_t tapElapsed = SDL_GetTicks() - d->tapStartTime;
+            printf("tapElapsed: %u\n", tapElapsed);
+            if (!isFocused_Widget(w)) {
+                setFocus_Widget(w);
+                d->lastTapPos = latestPosition_Touch();
+                d->tapStartTime = SDL_GetTicks();
+                d->tapCount = 0;
+                d->cursor = touchCoordCursor_InputWidget_(d, pos_Click(&d->click));
+                showCursor_InputWidget_(d);
+            }
+            else if (!isEmpty_Range(&d->mark) && !isMoved_Click(&d->click)) {
+                if (isInsideMark_InputWidget_(d, cursorToIndex_InputWidget_(d, touchCoordCursor_InputWidget_(d, latestPosition_Touch())))) {
+                    showClipMenu_(latestPosition_Touch());
+                }
+                else {
+                    iZap(d->mark);
+                    d->cursor = touchCoordCursor_InputWidget_(d, pos_Click(&d->click));
+                }
+            }
+            else if (SDL_GetTicks() - d->lastTapTime > 1000 &&
+                     d->tapCount == 0 && isEmpty_Range(&d->mark) && !isMoved_Click(&d->click) &&
+                     distanceToPos_InputWidget_(d, latestPosition_Touch(), d->cursor) < gap_UI * 5) {
+                showClipMenu_(latestPosition_Touch());
+            }
+            else {
+                if (~d->inFlags & isMarking_InputWidgetFlag) {
+                    iZap(d->mark);
+                    d->cursor = touchCoordCursor_InputWidget_(d, pos_Click(&d->click));
+                }
+            }
+            if (d->inFlags & (dragCursor_InputWidgetFlag | dragMarkerStart_InputWidgetFlag |
+                              dragMarkerEnd_InputWidgetFlag)) {
+                printf("[%p] finished cursor/marker drag\n", w);
+                d->inFlags &= ~(dragCursor_InputWidgetFlag |
+                                dragMarkerStart_InputWidgetFlag |
+                                dragMarkerEnd_InputWidgetFlag);
+                setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
+            }
+            d->inFlags &= ~isMarking_InputWidgetFlag;
+            showCursor_InputWidget_(d);
+            refresh_Widget(w);
+#if 0
+            d->inFlags &= ~touchBehavior_InputWidgetFlag;
+            if (flags_Widget(w) & touchDrag_WidgetFlag) {
+                setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
+                return true_EventResult;
+            }
+            if (!isMoved_Click(&d->click)) {
+                if (!isFocused_Widget(w)) {
+                    setFocus_Widget(w);
+                    if (~d->inFlags & selectAllOnFocus_InputWidgetFlag) {
+                        d->cursor = coordCursor_InputWidget_(d, pos_Click(&d->click));
+                        showCursor_InputWidget_(d);
+                    }
+                }
+                else {
+                    iZap(d->mark);
+                    d->cursor = coordCursor_InputWidget_(d, pos_Click(&d->click));
+                    showCursor_InputWidget_(d);
+                }
+            }
+#endif
+            return true_EventResult;
+    }
+#endif
+//    if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
+//        contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
+//        /* Eat all mouse clicks on the widget. */
+//        return true_EventResult;
+//    }
+    return ignored_EventResult;
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Resize according to width immediately. */
@@ -1495,17 +1902,17 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
         return iFalse;
     }
-    else if (isCommand_UserEvent(ev, "keyboard.changed")) {
-        if (isFocused_Widget(d) && arg_Command(command_UserEvent(ev))) {
-            iRect rect = bounds_Widget(w);
-            rect.pos.y -= value_Anim(&get_Window()->rootOffset);
-            const iInt2 visRoot = visibleSize_Root(w->root);
-            if (bottom_Rect(rect) > visRoot.y) {
-                setValue_Anim(&get_Window()->rootOffset, -(bottom_Rect(rect) - visRoot.y), 250);
-            }
-        }
-        return iFalse;
-    }
+//    else if (isCommand_UserEvent(ev, "keyboard.changed")) {
+//        if (isFocused_Widget(d) && arg_Command(command_UserEvent(ev))) {
+//            iRect rect = bounds_Widget(w);
+//            rect.pos.y -= value_Anim(&get_Window()->rootOffset);
+//            const iInt2 visRoot = visibleSize_Root(w->root);
+//            if (bottom_Rect(rect) > visRoot.y) {
+//                setValue_Anim(&get_Window()->rootOffset, -(bottom_Rect(rect) - visRoot.y), 250);
+//            }
+//        }
+//        return iFalse;
+//    }
     else if (isCommand_UserEvent(ev, "text.insert")) {
         pushUndo_InputWidget_(d);
         deleteMarked_InputWidget_(d);
@@ -1527,116 +1934,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         copy_InputWidget_(d, iFalse);
         return iTrue;
     }
-    if (ev->type == SDL_MOUSEMOTION && (isHover_Widget(d) || flags_Widget(w) & keepOnTop_WidgetFlag)) {
-        const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);
-        const iInt2 inner = windowToInner_Widget(w, coord);
-        setCursor_Window(get_Window(),
-                         inner.x >= 2 * gap_UI + d->leftPadding &&
-                         inner.x < width_Widget(w) - d->rightPadding
-                             ? SDL_SYSTEM_CURSOR_IBEAM
-                             : SDL_SYSTEM_CURSOR_ARROW);
-    }
-    if (ev->type == SDL_MOUSEWHEEL && contains_Widget(w, coord_MouseWheelEvent(&ev->wheel))) {
-        const int lineHeight = lineHeight_Text(d->font);
-        if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
-            d->wheelAccum -= ev->wheel.y;
+    /* Click behavior depends on device type. */ {
+        const int mbResult = (deviceType_App() == desktop_AppDeviceType
+                              ? processPointerEvents_InputWidget_(d, ev)
+                              : processTouchEvents_InputWidget_(d, ev));
+        if (mbResult) {
+            return mbResult >> 1;
         }
-        else {
-            d->wheelAccum -= ev->wheel.y * 3 * lineHeight;
-        }
-        int lineDelta = d->wheelAccum / lineHeight;
-        if (lineDelta < 0) {
-            lineDelta = iMax(lineDelta, -d->visWrapLines.start);
-            if (!lineDelta) d->wheelAccum = 0;
-        }
-        else if (lineDelta > 0) {
-            lineDelta = iMin(lineDelta,
-                             lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
-            if (!lineDelta) d->wheelAccum = 0;
-        }
-        if (lineDelta) {
-            d->wheelAccum         -= lineDelta * lineHeight;
-            d->visWrapLines.start += lineDelta;
-            d->visWrapLines.end   += lineDelta;
-            d->inFlags |= needUpdateBuffer_InputWidgetFlag;
-            refresh_Widget(d);            
-            return iTrue;
-        }
-        return iFalse;
-    }
-    switch (processEvent_Click(&d->click, ev)) {
-        case none_ClickResult:
-            break;
-        case started_ClickResult: {
-            setFocus_Widget(w);
-            const iInt2 oldCursor = d->cursor;
-            setCursor_InputWidget(d, coordCursor_InputWidget_(d, pos_Click(&d->click)));
-            if (keyMods_Sym(modState_Keys()) == KMOD_SHIFT) {
-                d->mark = d->initialMark = (iRanges){
-                    cursorToIndex_InputWidget_(d, oldCursor),
-                    cursorToIndex_InputWidget_(d, d->cursor)
-                };
-                d->inFlags |= isMarking_InputWidgetFlag;
-            }
-            else {
-                iZap(d->mark);
-                iZap(d->initialMark);
-                d->inFlags &= ~(isMarking_InputWidgetFlag | markWords_InputWidgetFlag);
-                if (d->click.count == 2) {
-                    d->inFlags |= isMarking_InputWidgetFlag | markWords_InputWidgetFlag;
-                    d->mark.start = d->mark.end = cursorToIndex_InputWidget_(d, d->cursor);
-                    extendRange_InputWidget_(d, &d->mark.start, -1);
-                    extendRange_InputWidget_(d, &d->mark.end, +1);
-                    d->initialMark = d->mark;
-                    refresh_Widget(w);
-                }
-                if (d->click.count == 3) {
-                    selectAll_InputWidget(d);
-                }
-            }
-            refresh_Widget(d);
-            return iTrue;
-        }
-        case aborted_ClickResult:
-            d->inFlags &= ~isMarking_InputWidgetFlag;
-            return iTrue;
-        case drag_ClickResult:
-            d->cursor = coordCursor_InputWidget_(d, pos_Click(&d->click));
-            showCursor_InputWidget_(d);
-            if (~d->inFlags & isMarking_InputWidgetFlag) {
-                d->inFlags |= isMarking_InputWidgetFlag;
-                d->mark.start = cursorToIndex_InputWidget_(d, d->cursor);
-            }
-            d->mark.end = cursorToIndex_InputWidget_(d, d->cursor);
-            if (d->inFlags & markWords_InputWidgetFlag) {
-                const iBool isFwd = d->mark.end >= d->mark.start;
-                extendRange_InputWidget_(d, &d->mark.end, isFwd ? +1 : -1);
-                d->mark.start = isFwd ? d->initialMark.start : d->initialMark.end;
-            }
-            refresh_Widget(w);
-            return iTrue;
-        case finished_ClickResult:
-            d->inFlags &= ~isMarking_InputWidgetFlag;
-            return iTrue;
-    }
-    if (ev->type == SDL_MOUSEMOTION && flags_Widget(w) & keepOnTop_WidgetFlag) {
-        const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);
-        if (contains_Click(&d->click, coord)) {
-            return iTrue;
-        }
-    }
-    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&
-        contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
-        iWidget *clipMenu = findWidget_App("clipmenu");
-        if (isVisible_Widget(clipMenu)) {
-            closeMenu_Widget(clipMenu);
-        }
-        else {
-            openMenuFlags_Widget(clipMenu,
-                                 mouseCoord_Window(get_Window(), ev->button.which),
-                                 iFalse);
-        }
-        return iTrue;
     }
     if (ev->type == SDL_KEYUP && isFocused_Widget(w)) {
         return iTrue;
@@ -1884,6 +2188,8 @@ struct Impl_MarkPainter {
     const iInputLine *  line;
     iInt2               pos;
     iRanges             mark;
+    iRect               firstMarkRect;
+    iRect               lastMarkRect;
 };
 
 static iBool draw_MarkPainter_(iWrapText *wrapText, iRangecc wrappedText, int origin, int advance,
@@ -1922,7 +2228,11 @@ static iBool draw_MarkPainter_(iWrapText *wrapText, iRangecc wrappedText, int or
     }
     rect.size.x = iMax(gap_UI / 3, rect.size.x);
     mp->pos.y += lineHeight_Text(mp->d->font);
-    fillRect_Paint(mp->paint, rect, uiMarked_ColorId);
+    fillRect_Paint(mp->paint, rect, uiMarked_ColorId | opaque_ColorId);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        if (isEmpty_Rect(mp->firstMarkRect)) mp->firstMarkRect = rect;
+        mp->lastMarkRect = rect;
+    }
     return iTrue;
 }
 
@@ -1962,6 +2272,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     };
     const iRangei visLines       = visibleLineRange_InputWidget_(d);
     const int     visLineOffsetY = visLineOffsetY_InputWidget_(d);
+    iRect         markerRects[2];
     /* If buffered, just draw the buffered copy. */
     if (d->buffered && !isFocused) {
         /* Most input widgets will use this, since only one is focused at a time. */
@@ -1977,7 +2288,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
             .paint = &p,
             .d = d,
             .contentBounds = contentBounds,
-            .mark = mark_InputWidget_(d)
+            .mark = mark_InputWidget_(d),
         };
         wrapText.context = &marker;
         wrapText.wrapFunc = isFocused ? draw_MarkPainter_ : NULL; /* mark is drawn under each line of text */
@@ -1988,11 +2299,14 @@ static void draw_InputWidget_(const iInputWidget *d) {
             marker.pos    = drawPos;
             addv_I2(&drawPos, draw_WrapText(&wrapText, d->font, drawPos, fg).advance); /* lines end with \n */
         }
+        markerRects[0] = marker.firstMarkRect;
+        markerRects[1] = marker.lastMarkRect;
         wrapText.wrapFunc = NULL;
         wrapText.context  = NULL;
     }
     /* Draw the insertion point. */
-    if (isFocused && d->cursorVis && contains_Range(&visLines, d->cursor.y)) {
+    if (isFocused && d->cursorVis && contains_Range(&visLines, d->cursor.y) &&
+        isEmpty_Range(&d->mark)) {
         iInt2    curSize;
         iRangecc cursorChar    = iNullRange;
         int      visWrapsAbove = 0;
@@ -2040,6 +2354,11 @@ static void draw_InputWidget_(const iInputWidget *d) {
         }
     }
     unsetClip_Paint(&p);
+    if (!isEmpty_Rect(markerRects[0])) {
+        for (int i = 0; i < 2; ++i) {
+            drawPin_Paint(&p, markerRects[i], i, uiTextCaution_ColorId);
+        }
+    }
     drawChildren_Widget(w);
 }
 

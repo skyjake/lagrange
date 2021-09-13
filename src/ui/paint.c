@@ -33,7 +33,8 @@ iLocalDef SDL_Renderer *renderer_Paint_(const iPaint *d) {
 
 static void setColor_Paint_(const iPaint *d, int color) {
     const iColor clr = get_Color(color & mask_ColorId);
-    SDL_SetRenderDrawColor(renderer_Paint_(d), clr.r, clr.g, clr.b, clr.a * d->alpha / 255);
+    SDL_SetRenderDrawColor(renderer_Paint_(d), clr.r, clr.g, clr.b,
+                           (color & opaque_ColorId ? 255 : clr.a) * d->alpha / 255);
 }
 
 void init_Paint(iPaint *d) {
@@ -184,6 +185,22 @@ void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t n, int color) 
     }
     SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) offsetPoints, n);
     free(offsetPoints);
+}
+
+void drawPin_Paint(iPaint *d, iRect rangeRect, int dir, int pinColor) {
+    const int height = height_Rect(rangeRect);
+    iRect pin;
+    if (dir == 0) {
+        pin = (iRect){ add_I2(topLeft_Rect(rangeRect), init_I2(-gap_UI / 4, -gap_UI)),
+                       init_I2(gap_UI / 2, height + gap_UI) };
+    }
+    else {
+        pin = (iRect){ addX_I2(topRight_Rect(rangeRect), -gap_UI / 4),
+                       init_I2(gap_UI / 2, height + gap_UI) };
+    }
+    fillRect_Paint(d, pin, pinColor);
+    fillRect_Paint(d, initCentered_Rect(dir == 0 ? topMid_Rect(pin) : bottomMid_Rect(pin),
+                                        init1_I2(gap_UI * 2)), pinColor);
 }
 
 iInt2 size_SDLTexture(SDL_Texture *d) {

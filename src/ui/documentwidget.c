@@ -4597,23 +4597,6 @@ static void drawMedia_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
     }
 }
 
-static void drawPin_(iPaint *p, iRect rangeRect, int dir) {
-    const int pinColor = tmQuote_ColorId;
-    const int height   = height_Rect(rangeRect);
-    iRect pin;
-    if (dir == 0) {
-        pin = (iRect){ add_I2(topLeft_Rect(rangeRect), init_I2(-gap_UI / 4, -gap_UI)),
-                       init_I2(gap_UI / 2, height + gap_UI) };
-    }
-    else {
-        pin = (iRect){ addX_I2(topRight_Rect(rangeRect), -gap_UI / 4),
-                       init_I2(gap_UI / 2, height + gap_UI) };
-    }
-    fillRect_Paint(p, pin, pinColor);
-    fillRect_Paint(p, initCentered_Rect(dir == 0 ? topMid_Rect(pin) : bottomMid_Rect(pin),
-                                        init1_I2(gap_UI * 2)), pinColor);
-}
-
 static void extend_GmRunRange_(iGmRunRange *runs) {
     if (runs->start) {
         runs->start--;
@@ -4857,8 +4840,8 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
             /* Selection range pins. */
             if (isTouchSelecting) {
-                drawPin_(&ctx.paint, ctx.firstMarkRect, 0);
-                drawPin_(&ctx.paint, ctx.lastMarkRect, 1);
+                drawPin_Paint(&ctx.paint, ctx.firstMarkRect, 0, tmQuote_ColorId);
+                drawPin_Paint(&ctx.paint, ctx.lastMarkRect,  1, tmQuote_ColorId);
             }
         }
         drawMedia_DocumentWidget_(d, &ctx.paint);
