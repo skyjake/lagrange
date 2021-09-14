@@ -468,16 +468,52 @@ static iWrapText wrap_InputWidget_(const iInputWidget *d, int y) {
     };
 }
 
-static iInt2 relativeCoord_InputWidget_(const iInputWidget *d, iInt2 pos) {
-    /* Relative to the start of the line on which the cursor is. */
+static iRangei visibleLineRange_InputWidget_(const iInputWidget *d) {
+    iRangei vis = { -1, -1 };
+    /* Determine which lines are in the potentially visible range. */
+    for (int i = 0; i < size_Array(&d->lines); i++) {
+        const iInputLine *line = constAt_Array(&d->lines, i);
+        if (vis.start < 0 && line->wrapLines.end > d->visWrapLines.start) {
+            vis.start = vis.end = i;
+        }
+        if (line->wrapLines.start < d->visWrapLines.end) {
+            vis.end = i + 1;
+        }
+        else break;
+    }
+    iAssert(isEmpty_Range(&vis) || (vis.start >= 0 && vis.end >= vis.start));
+    return vis;
+}
+
+static iInt2 relativeCoordOnLine_InputWidget_(const iInputWidget *d, iInt2 pos) {
+    /* Relative to the start of the line on which the position is. */
     iWrapText wt = wrap_InputWidget_(d, pos.y);
     wt.hitChar = wt.text.start + pos.x;
     measure_WrapText(&wt, d->font);
     return wt.hitAdvance_out;
 }
 
+static iInt2 cursorToWindowCoord_InputWidget_(const iInputWidget *d, iInt2 pos, iBool *isInsideBounds) {
+    /* Maps a cursor XY position to a window coordinate. */
+    const iRect bounds = contentBounds_InputWidget_(d);
+    iInt2 wc = addY_I2(topLeft_Rect(bounds), visLineOffsetY_InputWidget_(d));
+    iRangei visLines = visibleLineRange_InputWidget_(d);
+    if (!contains_Range(&visLines, pos.y)) {
+        /* This line is not visible. */
+        *isInsideBounds = iFalse;
+        return zero_I2();
+    }
+    for (int i = visLines.start; i < pos.y; i++) {
+        wc.y += lineHeight_Text(d->font) * numWrapLines_InputLine_(line_InputWidget_(d, i));
+    }
+    const iInputLine *line = line_InputWidget_(d, pos.y);
+    addv_I2(&wc, relativeCoordOnLine_InputWidget_(d, pos));
+    *isInsideBounds = contains_Rect(bounds, wc);
+    return wc;
+}
+
 static iInt2 relativeCursorCoord_InputWidget_(const iInputWidget *d) {
-    return relativeCoord_InputWidget_(d, d->cursor);
+    return relativeCoordOnLine_InputWidget_(d, d->cursor);
 }
 
 static void updateVisible_InputWidget_(iInputWidget *d) {
@@ -770,6 +806,10 @@ const iString *text_InputWidget(const iInputWidget *d) {
     return collectNew_String();
 }
 
+int font_InputWidget(const iInputWidget *d) {
+    return d->font;
+}
+
 iInputWidgetContentPadding contentPadding_InputWidget(const iInputWidget *d) {
     return (iInputWidgetContentPadding){ d->leftPadding, d->rightPadding };
 }
@@ -837,23 +877,6 @@ iLocalDef iBool isEmpty_InputWidget_(const iInputWidget *d) {
 
 static iBool isHintVisible_InputWidget_(const iInputWidget *d) {
     return !isEmpty_String(&d->hint) && isEmpty_InputWidget_(d);
-}
-
-static iRangei visibleLineRange_InputWidget_(const iInputWidget *d) {
-    iRangei vis = { -1, -1 };
-    /* Determine which lines are in the potentially visible range. */
-    for (int i = 0; i < size_Array(&d->lines); i++) {
-        const iInputLine *line = constAt_Array(&d->lines, i);
-        if (vis.start < 0 && line->wrapLines.end > d->visWrapLines.start) {
-            vis.start = vis.end = i;
-        }
-        if (line->wrapLines.start < d->visWrapLines.end) {
-            vis.end = i + 1;
-        }
-        else break;
-    }
-    iAssert(isEmpty_Range(&vis) || (vis.start >= 0 && vis.end >= vis.start));
-    return vis;
 }
 
 static void updateBuffered_InputWidget_(iInputWidget *d) {
@@ -1332,9 +1355,10 @@ static iInt2 coordCursor_InputWidget_(const iInputWidget *d, iInt2 coord) {
     if (relCoord.y < 0) {
         return zero_I2();
     }
-    if (relCoord.y >= height_Rect(bounds)) {
-        return cursorMax_InputWidget_(d);
-    }
+//    if (relCoord.y >= height_Rect(bounds)) {
+//        printf("relCoord > bounds.h\n"); fflush(stdout);
+//        return cursorMax_InputWidget_(d);
+//    }
     iWrapText wrapText = {
         .maxWidth = d->maxLen == 0 ? width_Rect(bounds) : unlimitedWidth_InputWidget_,
         .mode = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode : word_WrapTextMode),
@@ -1494,34 +1518,6 @@ static enum iEventResult processPointerEvents_InputWidget_(iInputWidget *d, cons
                              ? SDL_SYSTEM_CURSOR_IBEAM
                              : SDL_SYSTEM_CURSOR_ARROW);
     }
-    if (ev->type == SDL_MOUSEWHEEL && contains_Widget(w, coord_MouseWheelEvent(&ev->wheel))) {
-        const int lineHeight = lineHeight_Text(d->font);
-        if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
-            d->wheelAccum -= ev->wheel.y;
-        }
-        else {
-            d->wheelAccum -= ev->wheel.y * 3 * lineHeight;
-        }
-        int lineDelta = d->wheelAccum / lineHeight;
-        if (lineDelta < 0) {
-            lineDelta = iMax(lineDelta, -d->visWrapLines.start);
-            if (!lineDelta) d->wheelAccum = 0;
-        }
-        else if (lineDelta > 0) {
-            lineDelta = iMin(lineDelta,
-                             lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
-            if (!lineDelta) d->wheelAccum = 0;
-        }
-        if (lineDelta) {
-            d->wheelAccum         -= lineDelta * lineHeight;
-            d->visWrapLines.start += lineDelta;
-            d->visWrapLines.end   += lineDelta;
-            d->inFlags |= needUpdateBuffer_InputWidgetFlag;
-            refresh_Widget(d);
-            return true_EventResult;
-        }
-        return false_EventResult;
-    }
     if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&
         contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
         showClipMenu_(mouseCoord_Window(get_Window(), ev->button.which));
@@ -1602,9 +1598,12 @@ static iBool isInsideMark_InputWidget_(const iInputWidget *d, size_t pos) {
 }
 
 static int distanceToPos_InputWidget_(const iInputWidget *d, iInt2 uiCoord, iInt2 textPos) {
-    const iInt2 a = addY_I2(relativeCoord_InputWidget_(d, textPos), lineHeight_Text(d->font) / 2);
-    const iInt2 b = sub_I2(uiCoord, topLeft_Rect(contentBounds_InputWidget_(d)));
-    return dist_I2(a, b);
+    iBool isInside;
+    const iInt2 winCoord = cursorToWindowCoord_InputWidget_(d, textPos, &isInside);
+    if (!isInside) {
+        return INT_MAX;
+    }
+    return dist_I2(addY_I2(winCoord, lineHeight_Text(d->font) / 2), uiCoord);
 }
 
 static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
@@ -1933,6 +1932,37 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     else if (isFocused_Widget(d) && isCommand_UserEvent(ev, "copy")) {
         copy_InputWidget_(d, iFalse);
         return iTrue;
+    }
+    if (ev->type == SDL_MOUSEWHEEL && contains_Widget(w, coord_MouseWheelEvent(&ev->wheel))) {
+        if (numWrapLines_InputWidget_(d) <= size_Range(&d->visWrapLines)) {
+            return ignored_EventResult;
+        }
+        const int lineHeight = lineHeight_Text(d->font);
+        if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
+            d->wheelAccum -= ev->wheel.y;
+        }
+        else {
+            d->wheelAccum -= ev->wheel.y * 3 * lineHeight;
+        }
+        int lineDelta = d->wheelAccum / lineHeight;
+        if (lineDelta < 0) {
+            lineDelta = iMax(lineDelta, -d->visWrapLines.start);
+            if (!lineDelta) d->wheelAccum = 0;
+        }
+        else if (lineDelta > 0) {
+            lineDelta = iMin(lineDelta,
+                             lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
+            if (!lineDelta) d->wheelAccum = 0;
+        }
+        if (lineDelta) {
+            d->wheelAccum         -= lineDelta * lineHeight;
+            d->visWrapLines.start += lineDelta;
+            d->visWrapLines.end   += lineDelta;
+            d->inFlags |= needUpdateBuffer_InputWidgetFlag;
+            refresh_Widget(d);
+            return true_EventResult;
+        }
+        return false_EventResult;
     }
     /* Click behavior depends on device type. */ {
         const int mbResult = (deviceType_App() == desktop_AppDeviceType
