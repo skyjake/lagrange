@@ -692,6 +692,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         iInputWidget *url = findChild_Widget(navBar, "url");
         if (pointer_Command(cmd) == url) {
             const iBool isFocused = equal_Command(cmd, "focus.gained");
+            setFlags_Widget(findChild_Widget(navBar, "navbar.lock"), hidden_WidgetFlag, isFocused);
             setFlags_Widget(findChild_Widget(navBar, "navbar.clear"), hidden_WidgetFlag, !isFocused);
             showCollapsed_Widget(findChild_Widget(navBar, "navbar.cancel"), isFocused);
             showCollapsed_Widget(findChild_Widget(navBar, "pagemenubutton"), !isFocused);
@@ -1130,11 +1131,11 @@ void createUserInterface_Root(iRoot *d) {
                 iLabelWidget *clear = addChildFlags_Widget(
                     as_Widget(url),
                     iClob(newIcon_LabelWidget(delete_Icon, 0, 0, "navbar.clear")),
-                    hidden_WidgetFlag | embedFlags | moveToParentLeftEdge_WidgetFlag);
+                    hidden_WidgetFlag | embedFlags | moveToParentLeftEdge_WidgetFlag | tight_WidgetFlag);
                 setId_Widget(as_Widget(clear), "navbar.clear");
                 setFont_LabelWidget(clear, symbols2_FontId + uiNormal_FontSize);
-                setFlags_Widget(as_Widget(clear), noBackground_WidgetFlag, iFalse);
-                setBackgroundColor_Widget(as_Widget(clear), uiBackground_ColorId);
+//                setFlags_Widget(as_Widget(clear), noBackground_WidgetFlag, iFalse);
+//                setBackgroundColor_Widget(as_Widget(clear), uiBackground_ColorId);
             }
             iWidget *rightEmbed = new_Widget();
             setId_Widget(rightEmbed, "url.rightembed");
@@ -1195,9 +1196,9 @@ void createUserInterface_Root(iRoot *d) {
                 iLabelWidget *navCancel = new_LabelWidget("${cancel}", "navbar.cancel");
                 addChildFlags_Widget(urlButtons, iClob(navCancel),
                                      (embedFlags | tight_WidgetFlag | hidden_WidgetFlag |
-                                      collapse_WidgetFlag) & ~noBackground_WidgetFlag);
+                                      collapse_WidgetFlag) /*& ~noBackground_WidgetFlag*/);
                 as_Widget(navCancel)->sizeRef = as_Widget(url);
-//                setFont_LabelWidget(navCancel, defaultBold_FontId);
+                setFont_LabelWidget(navCancel, uiContentBold_FontId);
                 setId_Widget(as_Widget(navCancel), "navbar.cancel");
                 iLabelWidget *pageMenuButton;
                 /* In a mobile layout, the reload button is replaced with the Page/Ellipsis menu. */
