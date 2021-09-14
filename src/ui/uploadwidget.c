@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "gmrequest.h"
 #include "sitespec.h"
+#include "window.h"
 #include "app.h"
 
 #include <the_Foundation/file.h>
@@ -67,14 +68,16 @@ static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
     iWidget *w = as_Widget(d);    
     /* Calculate how many lines fits vertically in the view. */
     const iInt2 inputPos     = topLeft_Rect(bounds_Widget(as_Widget(d->input)));
-    const int   footerHeight = height_Widget(d->token) +
-                               height_Widget(findChild_Widget(w, "dialogbuttons")) +
-                               6 * gap_UI;
-    const int   avail        = bottom_Rect(safeRect_Root(w->root)) - footerHeight;
+    const int   footerHeight = isUsingPanelLayout_Mobile() ? 0 :
+                                (height_Widget(d->token) +
+                                 height_Widget(findChild_Widget(w, "dialogbuttons")) +
+                                 6 * gap_UI);
+    const int   avail        = bottom_Rect(safeRect_Root(w->root)) - footerHeight -
+                               get_Window()->keyboardHeight;
     setLineLimits_InputWidget(d->input,
                               minLines_InputWidget(d->input),
                               iMaxi(minLines_InputWidget(d->input),
-                                    (avail - inputPos.y) / lineHeight_Text(monospace_FontId)));    
+                                    (avail - inputPos.y) / lineHeight_Text(font_InputWidget(d->input))));
 }
 
 void init_UploadWidget(iUploadWidget *d) {
@@ -103,9 +106,9 @@ void init_UploadWidget(iUploadWidget *d) {
             { "title id:heading.upload.file" },
             { "button text:" uiTextAction_ColorEscape "${dlg.upload.pickfile}", 0, 0, "upload.pickfile" },            
             { "heading id:upload.file.name" },
-            { "label id:upload.filepathlabel" },
+            { "label id:upload.filepathlabel text:\u2014" },
             { "heading id:upload.file.size" },
-            { "label id:upload.filesizelabel" },
+            { "label id:upload.filesizelabel text:\u2014" },
             { "padding" },
             { "input id:upload.mime" },
             { "label id:upload.counter text:" },
@@ -131,6 +134,7 @@ void init_UploadWidget(iUploadWidget *d) {
     }
     else {
         useSheetStyle_Widget(w);
+        setFlags_Widget(w, overflowScrollable_WidgetFlag, iFalse);
         addChildFlags_Widget(w,
                              iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.upload}", NULL)),
                              frameless_WidgetFlag);
@@ -193,7 +197,7 @@ void init_UploadWidget(iUploadWidget *d) {
         setFlags_Widget(as_Widget(d->token), expand_WidgetFlag, iTrue);
         setFocus_Widget(as_Widget(d->input));
     }
-    setFont_InputWidget(d->input, monospace_FontId);
+    setFont_InputWidget(d->input, iosevka_FontId);
     setUseReturnKeyBehavior_InputWidget(d->input, iFalse); /* traditional text editor */
     setLineLimits_InputWidget(d->input, 7, 20);
     setHint_InputWidget(d->input, "${hint.upload.text}");
@@ -262,7 +266,7 @@ static void requestFinished_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     const char *cmd = command_UserEvent(ev);
-    if (isResize_UserEvent(ev)) {
+    if (isResize_UserEvent(ev) || equal_Command(cmd, "keyboard.changed")) {
         updateInputMaxHeight_UploadWidget_(d);
     }
     if (equal_Command(cmd, "upload.cancel")) {
