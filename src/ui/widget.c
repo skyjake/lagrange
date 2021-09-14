@@ -1095,6 +1095,12 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
             delta = 0;
         }
         bounds.pos.y += delta;
+        if (delta < 0) {
+            bounds.pos.y = iMax(bounds.pos.y, validPosRange.start);
+        }
+        else if (delta > 0) {
+            bounds.pos.y = iMin(bounds.pos.y, validPosRange.end);
+        }
 //    printf("range: %d ... %d\n", range.start, range.end);
     }
     else {
