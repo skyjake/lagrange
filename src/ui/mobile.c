@@ -88,6 +88,17 @@ static void unselectAllPanelButtons_(iWidget *topPanel) {
     }
 }
 
+static iWidget *findTitleLabel_(iWidget *panel) {
+    iForEach(ObjectList, i, children_Widget(panel)) {
+        iWidget *child = i.object;
+        if (flags_Widget(child) & collapse_WidgetFlag &&
+            isInstance_Object(child, &Class_LabelWidget)) {
+            return child;
+        }
+    }
+    return NULL;
+}
+
 static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
         const iBool  isPortrait   = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
@@ -108,7 +119,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
             iAssert(topPanel);
             topPanel->rect.size.x = (deviceType_App() == phone_AppDeviceType ?
                                      safeRoot.size.x * 2 / 5 : (safeRoot.size.x / 3));
-        }
+        }        
         if (deviceType_App() == tablet_AppDeviceType) {
             setPadding_Widget(topPanel, pad, 0, pad, pad);
             if (numPanels == 0) {
@@ -119,8 +130,15 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
                 setFixedSize_Widget(navi, init_I2(sheetWidth, -1));
             }
         }
+        iWidget *detailTitle = findChild_Widget(navi, "detailtitle"); {
+            setPos_Widget(detailTitle, init_I2(width_Widget(topPanel), 0));
+            setFixedSize_Widget(detailTitle,
+                                init_I2(width_Widget(detailStack), height_Widget(navi)));
+            setFlags_Widget(detailTitle, hidden_WidgetFlag, !isSideBySide);
+        }
         iForEach(ObjectList, i, children_Widget(detailStack)) {
             iWidget *panel = i.object;
+            setFlags_Widget(findTitleLabel_(panel), hidden_WidgetFlag, isSideBySide);
             setFlags_Widget(panel, leftEdgeDraggable_WidgetFlag, !isSideBySide);
             if (isSideBySide) {
                 setVisualOffset_Widget(panel, 0, 0, 0);
@@ -154,6 +172,12 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
                 setupSheetTransition_Mobile(panel, iTrue);
             }
         }
+        iLabelWidget *detailTitle =
+            findChild_Widget(parent_Widget(parent_Widget(topPanel)), "detailtitle");
+//        setFlags_Widget(as_Widget(detailTitle), hidden_WidgetFlag, !isSideBySideLayout_());
+        setFont_LabelWidget(detailTitle, uiLabelLargeBold_FontId);
+        setTextColor_LabelWidget(detailTitle, uiHeading_ColorId);
+        setText_LabelWidget(detailTitle, text_LabelWidget((iLabelWidget *) findTitleLabel_(panel)));
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
         return iTrue;
     }
@@ -430,7 +454,8 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     if (equal_Command(spec, "title")) {
         iLabelWidget *title = addChildFlags_Widget(panel,
                                                    iClob(new_LabelWidget(label, NULL)),
-                                                   alignLeft_WidgetFlag | frameless_WidgetFlag);
+                                                   alignLeft_WidgetFlag | frameless_WidgetFlag |
+                                                   collapse_WidgetFlag);
         setFont_LabelWidget(title, uiLabelLargeBold_FontId);
         setTextColor_LabelWidget(title, uiHeading_ColorId);
         setAllCaps_LabelWidget(title, iTrue);
@@ -621,8 +646,9 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
     setFlags_Widget(panels,
                     resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
                         frameless_WidgetFlag | focusRoot_WidgetFlag | commandOnClick_WidgetFlag |
-                        overflowScrollable_WidgetFlag | leftEdgeDraggable_WidgetFlag,
+                        /*overflowScrollable_WidgetFlag |*/ leftEdgeDraggable_WidgetFlag,
                     iTrue);
+    setFlags_Widget(panels, overflowScrollable_WidgetFlag, iFalse);
     /* The top-level split between main and detail panels. */
     iWidget *mainDetailSplit = makeHDiv_Widget(); {
         setCommandHandler_Widget(mainDetailSplit, mainDetailSplitHandler_);
@@ -657,12 +683,16 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
     iWidget *navi = new_Widget(); {
         setId_Widget(navi, "panel.navi");
         setBackgroundColor_Widget(navi, uiBackground_ColorId);
-        addChild_Widget(navi, iClob(makePadding_Widget(0)));
+        setId_Widget(addChildFlags_Widget(navi,
+                                          iClob(new_LabelWidget("", NULL)),
+                                          alignLeft_WidgetFlag | fixedPosition_WidgetFlag |
+                                              fixedSize_WidgetFlag | hidden_WidgetFlag |
+                                              frameless_WidgetFlag),
+                     "detailtitle");
         naviBack = addChildFlags_Widget(
             navi,
-            iClob(newKeyMods_LabelWidget(leftAngle_Icon " ${panel.back}",
-                                         SDLK_ESCAPE, 0,
-                                         "panel.close")),
+            iClob(newKeyMods_LabelWidget(
+                leftAngle_Icon " ${panel.back}", SDLK_ESCAPE, 0, "panel.close")),
             noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
                 extraPadding_WidgetFlag);
         checkIcon_LabelWidget(naviBack);
