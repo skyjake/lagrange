@@ -30,12 +30,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmrequest.h"
 #include "sitespec.h"
 #include "window.h"
+#include "gmcerts.h"
 #include "app.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 
 iDefineObjectConstruction(UploadWidget)
+    
+enum iUploadIdentity {
+    none_UploadIdentity,
+    defaultForUrl_UploadIdentity,
+    dropdown_UploadIdentity,
+};
 
 struct Impl_UploadWidget {
     iWidget          widget;
@@ -52,6 +59,8 @@ struct Impl_UploadWidget {
     iLabelWidget *   counter;
     iString          filePath;
     size_t           fileSize;
+    enum iUploadIdentity idMode;
+    iBlock           idFingerprint;    
     iAtomicInt       isRequestUpdated;
 };
 
@@ -80,6 +89,26 @@ static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
                                     (avail - inputPos.y) / lineHeight_Text(font_InputWidget(d->input))));
 }
 
+static const iArray *makeIdentityItems_UploadWidget_(const iUploadWidget *d) {
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    const iGmIdentity *urlId = identityForUrl_GmCerts(certs_App(), &d->url);        
+    pushBack_Array(items, &(iMenuItem){ format_CStr("${dlg.upload.id.default} (%s)",
+                                                    urlId ? cstr_String(name_GmIdentity(urlId)) : "${dlg.upload.id.none}"),
+                                        0, 0, "upload.setid arg:1" });
+    pushBack_Array(items, &(iMenuItem){ "${dlg.upload.id.none}", 0, 0, "upload.setid arg:0" });
+    pushBack_Array(items, &(iMenuItem){ "---" });
+    iConstForEach(PtrArray, i, listIdentities_GmCerts(certs_App(), NULL, NULL)) {
+        const iGmIdentity *id = i.ptr;
+        pushBack_Array(
+            items,
+            &(iMenuItem){ cstr_String(name_GmIdentity(id)), 0, 0,
+                          format_CStr("upload.setid fp:%s",
+                                      cstrCollect_String(hexEncode_Block(&id->fingerprint))) });
+    }
+    pushBack_Array(items, &(iMenuItem){ NULL });
+    return items;
+}
+
 void init_UploadWidget(iUploadWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -90,6 +119,8 @@ void init_UploadWidget(iUploadWidget *d) {
     d->request = NULL;
     init_String(&d->filePath);
     d->fileSize = 0;
+    d->idMode = defaultForUrl_UploadIdentity;
+    init_Block(&d->idFingerprint, 0);
     const iMenuItem actions[] = {
         { "${upload.port}", 0, 0, "upload.setport" },
         { "---" },
@@ -117,11 +148,11 @@ void init_UploadWidget(iUploadWidget *d) {
         initPanels_Mobile(w, NULL, (iMenuItem[]){
             { "title id:heading.upload" },
             { "label id:upload.info" },
-//            { "padding" },
             { "panel id:dlg.upload.text icon:0x1f5b9", 0, 0, (const void *) textItems },
             { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
             { "padding" },
-            { "input id:upload.token hint:hint.upload.token" },
+            { "dropdown id:upload.id icon:0x1f464", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
+            { "input id:upload.token hint:hint.upload.token icon:0x1f511" },
             { NULL }
         }, actions, iElemCount(actions));
         d->info          = findChild_Widget(w, "upload.info");
@@ -205,7 +236,8 @@ void init_UploadWidget(iUploadWidget *d) {
     updateInputMaxHeight_UploadWidget_(d);
 }
 
-void deinit_UploadWidget(iUploadWidget *d) {    
+void deinit_UploadWidget(iUploadWidget *d) {
+    deinit_Block(&d->idFingerprint);
     deinit_String(&d->filePath);
     deinit_String(&d->url);
     deinit_String(&d->originalUrl);
@@ -263,6 +295,15 @@ static void requestFinished_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
     postCommand_Widget(d, "upload.request.finished reqid:%u", id_GmRequest(req));
 }
 
+static void updateIdentityDropdown_UploadWidget_(iUploadWidget *d) {
+    updateDropdownSelection_LabelWidget(
+        findChild_Widget(as_Widget(d), "upload.id"),
+        d->idMode == none_UploadIdentity ? " arg:0"
+        : d->idMode == defaultForUrl_UploadIdentity
+            ? " arg:1"
+            : format_CStr(" fp:%s", cstrCollect_String(hexEncode_Block(&d->idFingerprint))));
+}
+
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     const char *cmd = command_UserEvent(ev);
@@ -290,9 +331,36 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         }
         return iTrue;
     }
+    if (isCommand_Widget(w, ev, "upload.setid")) {
+        if (hasLabel_Command(cmd, "fp")) {
+            set_Block(&d->idFingerprint, collect_Block(hexDecode_Rangecc(range_Command(cmd, "fp"))));
+            d->idMode = dropdown_UploadIdentity;
+        }
+        else if (arg_Command(cmd)) {
+            clear_Block(&d->idFingerprint);
+            d->idMode = defaultForUrl_UploadIdentity;
+        }
+        else {
+            clear_Block(&d->idFingerprint);
+            d->idMode = none_UploadIdentity;
+        }
+        updateIdentityDropdown_UploadWidget_(d);
+        return iTrue;
+    }
     if (isCommand_Widget(w, ev, "upload.accept")) {
-        iWidget * tabs     = findChild_Widget(w, "upload.tabs");
-        const int tabIndex = tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs));
+        iBool isText;
+        iWidget *tabs = findChild_Widget(w, "upload.tabs");
+        if (tabs) {
+            const size_t tabIndex = tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs));
+            isText = (tabIndex == 0);
+        }
+        else {
+            const size_t panelIndex = currentPanelIndex_Mobile(w);
+            if (panelIndex == iInvalidPos) {
+                return iTrue;
+            }
+            isText = (currentPanelIndex_Mobile(w) == 0);
+        }
         /* Make a GmRequest and send the data. */
         iAssert(d->request == NULL);
         iAssert(!isEmpty_String(&d->url));
@@ -300,7 +368,21 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         setSendProgressFunc_GmRequest(d->request, updateProgress_UploadWidget_);
         setUserData_Object(d->request, d);
         setUrl_GmRequest(d->request, &d->url);
-        if (tabIndex == 0) {
+        switch (d->idMode) {
+            case defaultForUrl_UploadIdentity:
+                break; /* GmRequest handles it */
+            case none_UploadIdentity:
+                setIdentity_GmRequest(d->request, NULL);
+                signOut_GmCerts(certs_App(), url_GmRequest(d->request));
+                break;
+            case dropdown_UploadIdentity: {
+                iGmIdentity *ident = findIdentity_GmCerts(certs_App(), &d->idFingerprint);
+                setIdentity_GmRequest(d->request, ident);
+                signIn_GmCerts(certs_App(), ident, url_GmRequest(d->request));
+                break;
+            }
+        }
+        if (isText) {
             /* Uploading text. */
             setTitanData_GmRequest(d->request,
                                    collectNewCStr_String("text/plain"),

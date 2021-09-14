@@ -927,6 +927,15 @@ msgstr "Upload Page with Titan…"
 msgid "heading.upload"
 msgstr "UPLOAD WITH TITAN"
 
+msgid "upload.id"
+msgstr "Identity:"
+
+msgid "dlg.upload.id.none"
+msgstr "None"
+
+msgid "dlg.upload.id.default"
+msgstr "Default"
+
 msgid "heading.upload.text"
 msgstr "Text"
 
@@ -949,7 +958,7 @@ msgid "upload.mime"
 msgstr "MIME type:"
 
 msgid "upload.token"
-msgstr "Upload token:"
+msgstr "Token:"
 
 msgid "hint.upload.token"
 msgstr "see server's instructions"

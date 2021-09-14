@@ -112,6 +112,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define star_Icon           "\u2605"
 #define whiteStar_Icon      "\u2606"
 #define person_Icon         "\U0001f464"
+#define key_Icon            "\U0001f511"
 #define download_Icon       "\u2ba7"
 #define upload_Icon         "\u2ba5"
 #define export_Icon         "\U0001f4e4"

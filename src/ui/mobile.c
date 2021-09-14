@@ -156,6 +156,18 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
     return iFalse;
 }
 
+size_t currentPanelIndex_Mobile(const iWidget *panels) {
+    size_t index = 0;
+    iConstForEach(ObjectList, i, children_Widget(findChild_Widget(panels, "detailstack"))) {
+        const iWidget *child = i.object;
+        if (isVisible_Widget(child)) {
+            return index;
+        }
+        index++;
+    }
+    return iInvalidPos;
+}
+
 static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
     const iBool isPortrait = !isSideBySideLayout_();
     if (equal_Command(cmd, "panel.open")) {

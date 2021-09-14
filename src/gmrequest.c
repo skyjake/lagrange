@@ -158,6 +158,7 @@ struct Impl_GmRequest {
     uint32_t             id;
     iMutex *             mtx;
     iGmCerts *           certs; /* not owned */
+    const iGmIdentity *  identity;
     enum iGmRequestState state;
     iString              url;
     iTitanData *         titan;
@@ -527,6 +528,7 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     d->mtx   = new_Mutex();
     d->id    = add_Atomic(&idGen_, 1) + 1;
+    d->identity = NULL;
     d->resp  = new_GmResponse();
     d->isFilterEnabled = iTrue;
     d->isRespLocked    = iFalse;
@@ -582,6 +584,11 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
        the web. */
     urlEncodePath_String(&d->url);
     urlEncodeSpaces_String(&d->url);
+    d->identity = identityForUrl_GmCerts(d->certs, &d->url);
+}
+
+void setIdentity_GmRequest(iGmRequest *d, const iGmIdentity *id) {
+    d->identity = id;
 }
 
 static iBool isTitan_GmRequest_(const iGmRequest *d) {
@@ -902,9 +909,8 @@ void submit_GmRequest(iGmRequest *d) {
     }
     d->state = receivingHeader_GmRequestState;
     d->req = new_TlsRequest();
-    const iGmIdentity *identity = identityForUrl_GmCerts(d->certs, &d->url);
-    if (identity) {
-        setCertificate_TlsRequest(d->req, identity->cert);
+    if (d->identity) {
+        setCertificate_TlsRequest(d->req, d->identity->cert);
     }
     iConnect(TlsRequest, d->req, readyRead, d, readIncoming_GmRequest_);
     iConnect(TlsRequest, d->req, sent, d, bytesSent_GmRequest_);
