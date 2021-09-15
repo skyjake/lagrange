@@ -33,8 +33,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmcerts.h"
 #include "app.h"
 
+#if defined (iPlatformAppleMobile)
+#   include "ios.h"
+#endif
+
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
+#include <the_Foundation/path.h>
 
 iDefineObjectConstruction(UploadWidget)
     
@@ -63,6 +68,16 @@ struct Impl_UploadWidget {
     iBlock           idFingerprint;    
     iAtomicInt       isRequestUpdated;
 };
+
+static void releaseFile_UploadWidget_(iUploadWidget *d) {
+#if defined (iPlatformAppleMobile)
+    if (!isEmpty_String(&d->filePath)) {
+        /* Delete the temporary file that was copied for uploading. */
+        remove(cstr_String(&d->filePath));
+    }
+#endif
+    clear_String(&d->filePath);
+}
 
 static void updateProgress_UploadWidget_(iGmRequest *request, size_t current, size_t total) {
     iUploadWidget *d = userData_Object(request);
@@ -157,8 +172,8 @@ void init_UploadWidget(iUploadWidget *d) {
         }, actions, iElemCount(actions));
         d->info          = findChild_Widget(w, "upload.info");
         d->input         = findChild_Widget(w, "upload.text");
-        d->filePathLabel = findChild_Widget(w, "upload.file.name");
-        d->fileSizeLabel = findChild_Widget(w, "upload.file.size");
+        d->filePathLabel = findChild_Widget(w, "upload.filepathlabel");
+        d->fileSizeLabel = findChild_Widget(w, "upload.filesizelabel");
         d->mime          = findChild_Widget(w, "upload.mime");
         d->token         = findChild_Widget(w, "upload.token");
         d->counter       = findChild_Widget(w, "upload.counter");
@@ -237,6 +252,7 @@ void init_UploadWidget(iUploadWidget *d) {
 }
 
 void deinit_UploadWidget(iUploadWidget *d) {
+    releaseFile_UploadWidget_(d);
     deinit_Block(&d->idFingerprint);
     deinit_String(&d->filePath);
     deinit_String(&d->url);
@@ -302,6 +318,26 @@ static void updateIdentityDropdown_UploadWidget_(iUploadWidget *d) {
         : d->idMode == defaultForUrl_UploadIdentity
             ? " arg:1"
             : format_CStr(" fp:%s", cstrCollect_String(hexEncode_Block(&d->idFingerprint))));
+}
+
+static void updateFileInfo_UploadWidget_(iUploadWidget *d) {
+    iFileInfo *info = iClob(new_FileInfo(&d->filePath));
+    if (isDirectory_FileInfo(info)) {
+        makeMessage_Widget("${heading.upload.error.file}",
+                           "${upload.error.directory}",
+                           (iMenuItem[]){ "${dlg.message.ok}", 0, 0, "message.ok" }, 1);
+        clear_String(&d->filePath);
+        d->fileSize = 0;
+        return iTrue;
+    }
+    d->fileSize = size_FileInfo(info);
+#if defined (iPlatformMobile)
+    setTextCStr_LabelWidget(d->filePathLabel, cstr_Rangecc(baseName_Path(&d->filePath)));
+#else
+    setText_LabelWidget(d->filePathLabel, &d->filePath);
+#endif
+    setTextCStr_LabelWidget(d->fileSizeLabel, formatCStrs_Lang("num.bytes.n", d->fileSize));
+    setTextCStr_InputWidget(d->mime, mediaType_Path(&d->filePath));
 }
 
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
@@ -430,6 +466,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             d->request = NULL; /* DocumentWidget has it now. */
         }
         setupSheetTransition_Mobile(w, iFalse);
+        releaseFile_UploadWidget_(d);
         destroy_Widget(w);
         return iTrue;        
     }
@@ -439,24 +476,26 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         refresh_Widget(w);
         return iTrue;
     }
+    else if (isCommand_Widget(w, ev, "upload.pickfile")) {
+#if defined (iPlatformAppleMobile)
+        if (hasLabel_Command(cmd, "path")) {
+            releaseFile_UploadWidget_(d);
+            set_String(&d->filePath, collect_String(suffix_Command(cmd, "path")));
+            updateFileInfo_UploadWidget_(d);
+        }
+        else {
+            pickFile_iOS(format_CStr("upload.pickfile ptr:%p", d));
+        }
+#endif
+        return iTrue;
+    }
     if (ev->type == SDL_DROPFILE) {
         /* Switch to File tab. */
         iWidget *tabs = findChild_Widget(w, "upload.tabs");
         showTabPage_Widget(tabs, tabPage_Widget(tabs, 1));
+        releaseFile_UploadWidget_(d);
         setCStr_String(&d->filePath, ev->drop.file);
-        iFileInfo *info = iClob(new_FileInfo(&d->filePath));
-        if (isDirectory_FileInfo(info)) {
-            makeMessage_Widget("${heading.upload.error.file}",
-                               "${upload.error.directory}",
-                               (iMenuItem[]){ "${dlg.message.ok}", 0, 0, "message.ok" }, 1);
-            clear_String(&d->filePath);
-            d->fileSize = 0;
-            return iTrue;
-        }
-        d->fileSize = size_FileInfo(info);
-        setText_LabelWidget(d->filePathLabel, &d->filePath);
-        setTextCStr_LabelWidget(d->fileSizeLabel, formatCStrs_Lang("num.bytes.n", d->fileSize));
-        setTextCStr_InputWidget(d->mime, mediaType_Path(&d->filePath));
+        updateFileInfo_UploadWidget_(d);
         return iTrue;
     }
     return processEvent_Widget(w, ev);

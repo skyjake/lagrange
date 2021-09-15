@@ -161,6 +161,7 @@ API_AVAILABLE(ios(13.0))
 
 @interface AppState : NSObject<UIDocumentPickerDelegate> {
     iString *fileBeingSaved;
+    iString *pickFileCommand;
 }
 @property (nonatomic, assign) BOOL isHapticsAvailable;
 @property (nonatomic, strong) NSObject *haptic;
@@ -173,7 +174,15 @@ static AppState *appState_;
 -(instancetype)init {
     self = [super init];
     fileBeingSaved = NULL;
+    pickFileCommand = NULL;
     return self;
+}
+
+-(void)setPickFileCommand:(const char *)command {
+    if (!pickFileCommand) {
+        pickFileCommand = new_String();
+    }
+    setCStr_String(pickFileCommand, command);
 }
 
 -(void)setFileBeingSaved:(const iString *)path {
@@ -213,13 +222,21 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
         NSURL *url = [urls firstObject];
         iString *path = localFilePathFromUrl_String(collectNewCStr_String([[url absoluteString]
                                                                            UTF8String]));
-        postCommandf_App("file.open temp:1 path:%s", cstrCollect_String(path));
+        postCommandf_App("%s temp:1 path:%s",
+                         cstr_String(pickFileCommand),
+                         cstrCollect_String(path));
+        delete_String(pickFileCommand);
+        pickFileCommand = NULL;
     }
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
     if (fileBeingSaved) {
         [self removeSavedFile];
+    }
+    if (pickFileCommand) {
+        delete_String(pickFileCommand);
+        pickFileCommand = NULL;
     }
 }
 
@@ -454,11 +471,13 @@ void exportDownloadedFile_iOS(const iString *path) {
 }
 
 void pickFileForOpening_iOS(void) {
+    pickFile_iOS("file.open");
+}
+
+void pickFile_iOS(const char *command) {
+    [appState_ setPickFileCommand:command];
     UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
-                                              initWithDocumentTypes:@[@"fi.skyjake.lagrange.gemini",
-                                                                      @"public.text",
-                                                                      @"public.image",
-                                                                      @"public.audio"]
+                                              initWithDocumentTypes:@[@"public.data"]
                                               inMode:UIDocumentPickerModeImport];
     picker.delegate = appState_;
     [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
