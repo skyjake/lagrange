@@ -1218,11 +1218,23 @@ static void updateValueInputWidth_(iWidget *dlg) {
         dlg->rect.size.x =
             iMin(rootSize.x, iMaxi(iMaxi(100 * gap_UI, title->rect.size.x), prompt->rect.size.x));
     }
+    /* Adjust the maximum number of visible lines. */
+    int footer = 6 * gap_UI + get_Window()->keyboardHeight;
+    iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
+    if (buttons) {
+        footer += height_Widget(buttons);
+    }
+    iInputWidget *input = findChild_Widget(dlg, "input");
+    setLineLimits_InputWidget(input,
+                              1,
+                              (bottom_Rect(safeRect_Root(dlg->root)) - footer -
+                               top_Rect(boundsWithoutVisualOffset_Widget(as_Widget(input)))) /
+                                  lineHeight_Text(font_InputWidget(input)));
 }
 
 iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     iWidget *ptr = as_Widget(pointer_Command(cmd));
-    if (equal_Command(cmd, "window.resized")) {
+    if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "keyboard.changed")) {
         if (isVisible_Widget(dlg)) {
             updateValueInputWidth_(dlg);
             arrange_Widget(dlg);
@@ -1357,7 +1369,6 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
         setText_InputWidget(input, initialValue);
     }
     setId_Widget(as_Widget(input), "input");
-    updateValueInputWidth_(dlg);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(dlg,
                     iClob(makeDialogButtons_Widget(
@@ -1379,6 +1390,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
             dlg->rect.pos.y -= delta;
         }
     }
+    updateValueInputWidth_(dlg);
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | top_TransitionDir);
     return dlg;
 }

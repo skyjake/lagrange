@@ -2756,6 +2756,9 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "document.changed")) {
         /* Set of open tabs has changed. */
         postCommand_App("document.openurls.changed");
+        if (deviceType_App() == phone_AppDeviceType) {
+            showToolbar_Root(d->window->roots[0], iTrue);
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "ident.new")) {

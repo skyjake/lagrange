@@ -821,6 +821,7 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
 }
 
 void setLineLimits_InputWidget(iInputWidget *d, int minLines, int maxLines) {
+    maxLines = iMax(minLines, maxLines);
     if (d->minWrapLines != minLines || d->maxWrapLines != maxLines) {
         d->minWrapLines = minLines;
         d->maxWrapLines = maxLines;
@@ -1893,6 +1894,17 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
     else if (isCommand_UserEvent(ev, "input.paste") && isEditing_InputWidget_(d)) {
         paste_InputWidget_(d);
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "input.undo") && isEditing_InputWidget_(d)) {
+        if (popUndo_InputWidget_(d)) {
+            refresh_Widget(w);
+            contentsWereChanged_InputWidget_(d);
+        }
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "input.selectall") && isEditing_InputWidget_(d)) {
+        selectAll_InputWidget(d);
         return iTrue;
     }
     else if (isCommand_UserEvent(ev, "theme.changed")) {
