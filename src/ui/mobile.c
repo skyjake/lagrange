@@ -221,8 +221,14 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             else if (findWidget_App("upload")) {
                 postCommand_App("upload.cancel");
             }
+            else if (findWidget_App("ident")) {
+                postCommand_Widget(topPanel, "ident.cancel");
+            }
+            else if (findWidget_App("xlt")) {
+                postCommand_Widget(topPanel, "translation.cancel");
+            }
             else {
-                postCommand_App("cancel");
+                postCommand_Widget(topPanel, "cancel");
             }
         }
         return iTrue;
