@@ -106,7 +106,7 @@ static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
 
 static const iArray *makeIdentityItems_UploadWidget_(const iUploadWidget *d) {
     iArray *items = collectNew_Array(sizeof(iMenuItem));
-    const iGmIdentity *urlId = identityForUrl_GmCerts(certs_App(), &d->url);        
+    const iGmIdentity *urlId = identityForUrl_GmCerts(certs_App(), &d->url);
     pushBack_Array(items, &(iMenuItem){ format_CStr("${dlg.upload.id.default} (%s)",
                                                     urlId ? cstr_String(name_GmIdentity(urlId)) : "${dlg.upload.id.none}"),
                                         0, 0, "upload.setid arg:1" });
@@ -260,6 +260,22 @@ void deinit_UploadWidget(iUploadWidget *d) {
     iRelease(d->request);
 }
 
+static void remakeIdentityItems_UploadWidget_(iUploadWidget *d) {
+    iWidget *dropMenu= findChild_Widget(findChild_Widget(as_Widget(d), "upload.id"), "menu");
+    releaseChildren_Widget(dropMenu);
+    const iArray *items = makeIdentityItems_UploadWidget_(d);
+    makeMenuItems_Widget(dropMenu, constData_Array(items), size_Array(items));
+}
+
+static void updateIdentityDropdown_UploadWidget_(iUploadWidget *d) {
+    updateDropdownSelection_LabelWidget(
+        findChild_Widget(as_Widget(d), "upload.id"),
+        d->idMode == none_UploadIdentity ? " arg:0"
+        : d->idMode == defaultForUrl_UploadIdentity
+            ? " arg:1"
+            : format_CStr(" fp:%s", cstrCollect_String(hexEncode_Block(&d->idFingerprint))));
+}
+
 static uint16_t titanPortForUrl_(const iString *url) {
     uint16_t port = 0;
     const iString *root = collectNewRange_String(urlRoot_String(url));
@@ -289,6 +305,8 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
 
 void setUrl_UploadWidget(iUploadWidget *d, const iString *url) {
     setUrlPort_UploadWidget_(d, url, 0);
+    remakeIdentityItems_UploadWidget_(d);
+    updateIdentityDropdown_UploadWidget_(d);
 }
 
 void setResponseViewer_UploadWidget(iUploadWidget *d, iDocumentWidget *doc) {
@@ -309,15 +327,6 @@ static void requestUpdated_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
 
 static void requestFinished_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
     postCommand_Widget(d, "upload.request.finished reqid:%u", id_GmRequest(req));
-}
-
-static void updateIdentityDropdown_UploadWidget_(iUploadWidget *d) {
-    updateDropdownSelection_LabelWidget(
-        findChild_Widget(as_Widget(d), "upload.id"),
-        d->idMode == none_UploadIdentity ? " arg:0"
-        : d->idMode == defaultForUrl_UploadIdentity
-            ? " arg:1"
-            : format_CStr(" fp:%s", cstrCollect_String(hexEncode_Block(&d->idFingerprint))));
 }
 
 static void updateFileInfo_UploadWidget_(iUploadWidget *d) {

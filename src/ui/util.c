@@ -683,29 +683,11 @@ static iWidget *makeMenuSeparator_(void) {
     return sep;
 }
 
-iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
-    iWidget *menu = new_Widget();
-    setDrawBufferEnabled_Widget(menu, iTrue);
-    setBackgroundColor_Widget(menu, uiBackgroundMenu_ColorId);
-    if (deviceType_App() != desktop_AppDeviceType) {
-        setPadding1_Widget(menu, 2 * gap_UI);
-    }
-    else {
-        setPadding1_Widget(menu, gap_UI / 2);
-    }
+void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
-    int64_t itemFlags = (deviceType_App() != desktop_AppDeviceType ? 0 : 0) |
-                        (isPortraitPhone ? extraPadding_WidgetFlag : 0);
-    setFlags_Widget(menu,
-                    keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
-                        arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
-                        resizeChildrenToWidestChild_WidgetFlag | overflowScrollable_WidgetFlag |
-                        (isPortraitPhone ? drawBackgroundToVerticalSafeArea_WidgetFlag : 0),
-                    iTrue);
-    if (!isPortraitPhone) {
-        setFrameColor_Widget(menu, uiSeparator_ColorId);
-    }
-    iBool haveIcons = iFalse;
+    int64_t     itemFlags       = (deviceType_App() != desktop_AppDeviceType ? 0 : 0) |
+                                  (isPortraitPhone ? extraPadding_WidgetFlag : 0);
+    iBool    haveIcons  = iFalse;
     iWidget *horizGroup = NULL;
     for (size_t i = 0; i < n; ++i) {
         const iMenuItem *item = &items[i];
@@ -739,7 +721,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
                 iClob(newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
                 noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
                 drawKey_WidgetFlag | itemFlags);
-            setWrap_LabelWidget(label, isInfo);            
+            setWrap_LabelWidget(label, isInfo);
             haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
             if (isInfo) {
@@ -765,7 +747,28 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
                 }
             }
         }
+    }}
+
+iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
+    iWidget *menu = new_Widget();
+    setDrawBufferEnabled_Widget(menu, iTrue);
+    setBackgroundColor_Widget(menu, uiBackgroundMenu_ColorId);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        setPadding1_Widget(menu, 2 * gap_UI);
     }
+    else {
+        setPadding1_Widget(menu, gap_UI / 2);
+    }
+    setFlags_Widget(menu,
+                    keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
+                        arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
+                        resizeChildrenToWidestChild_WidgetFlag | overflowScrollable_WidgetFlag |
+                        (isPortraitPhone_App() ? drawBackgroundToVerticalSafeArea_WidgetFlag : 0),
+                    iTrue);
+    if (!isPortraitPhone_App()) {
+        setFrameColor_Widget(menu, uiSeparator_ColorId);
+    }
+    makeMenuItems_Widget(menu, items, n);
     addChild_Widget(parent, menu);
     iRelease(menu); /* owned by parent now */
     setCommandHandler_Widget(menu, menuHandler_);
