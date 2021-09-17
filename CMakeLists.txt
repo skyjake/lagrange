@@ -25,7 +25,8 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.7)
-    set (IOS_BUNDLE_VERSION 22)
+    set (IOS_BUNDLE_VERSION 23)
+    set (IOS_BUILD_DATE "2021-09-17")
 endif ()
 
 # Default that depend on environment.
@@ -391,7 +392,10 @@ if (APPLE)
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
     )
     if (IOS)
-        target_compile_definitions (app PUBLIC LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}")
+        target_compile_definitions (app PUBLIC 
+            LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}"
+            LAGRANGE_IOS_BUILD_DATE="${IOS_BUILD_DATE}"
+        )
         set_target_properties (app PROPERTIES
             MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/iOSBundleInfo.plist.in"
             MACOSX_BUNDLE_BUNDLE_VERSION "${IOS_BUNDLE_VERSION}"

@@ -1948,7 +1948,7 @@ iWidget *makePreferences_Widget(void) {
         iString *aboutText = collectNew_String(); {
             setCStr_String(aboutText, "Lagrange " LAGRANGE_APP_VERSION);
             #if defined (iPlatformAppleMobile)
-            appendCStr_String(aboutText, " (" LAGRANGE_IOS_VERSION ")");
+            appendCStr_String(aboutText, " (" LAGRANGE_IOS_VERSION ") \u2014 " LAGRANGE_IOS_BUILD_DATE);
             #endif
         }
         const iMenuItem aboutPanelItems[] = {
