@@ -253,7 +253,7 @@ msgstr "Preferences…"
 
 # used for Preferences on mobile
 msgid "menu.settings"
-msgstr "Settings…"
+msgstr "Settings"
 
 msgid "menu.help"
 msgstr "Help"
@@ -838,6 +838,10 @@ msgstr "PASTED FROM CLIPBOARD"
 msgid "heading.certimport.dropped"
 msgstr "DROPPED FILE"
 
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Import Certificate/Key File"
+
 msgid "dlg.certimport.import"
 msgstr "Import"
 
@@ -988,7 +992,7 @@ msgstr "Upload a File"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
-msgstr "Select File…"
+msgstr "Select File"
 
 msgid "heading.translate"
 msgstr "TRANSLATE PAGE"
