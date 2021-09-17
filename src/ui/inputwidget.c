@@ -541,6 +541,8 @@ static void updateVisible_InputWidget_(iInputWidget *d) {
         d->visWrapLines.start = 0;
         d->visWrapLines.end = 1;
     }
+//    printf("[InputWidget %p] total:%d viswrp:%d cur:%d vis:%d..%d\n",
+//           d, totalWraps, visWraps, d->cursor.y, d->visWrapLines.start, d->visWrapLines.end);
 }
 
 static void showCursor_InputWidget_(iInputWidget *d) {

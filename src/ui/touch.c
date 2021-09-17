@@ -59,7 +59,6 @@ enum iTouchAxis {
 struct Impl_Touch {
     SDL_FingerID id;
     iWidget *affinity; /* widget on which the touch started */
-//    iWidget *edgeDragging;
     iBool hasMoved;
     iBool isTapBegun;
     iBool isLeftDown;
@@ -623,14 +622,15 @@ iBool processEvent_Touch(const SDL_Event *ev) {
 //                   touch->edge);
             if (pixels.x || pixels.y) {
                 //setFocus_Widget(NULL);
-                dispatchMotion_Touch_(touch->pos[0], 0);
+                dispatchMotion_Touch_(touch->startPos /*pos[0]*/, 0);
                 setCurrent_Root(touch->affinity->root);
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
+                    .which = SDL_TOUCH_MOUSEID,
                     .timestamp = SDL_GetTicks(),
                     .x = pixels.x,
                     .y = pixels.y,
-                    .direction = perPixel_MouseWheelFlag
+                    .direction = perPixel_MouseWheelFlag,
                 });
                 /* TODO: Keep increasing movement if the direction is the same. */
                 clearWidgetMomentum_TouchState_(d, touch->affinity);
@@ -723,7 +723,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     iMomentum mom = {
                         .affinity = touch->affinity,
                         .releaseTime = nowTime,
-                        .pos = touch->pos[0],
+                        .pos = touch->startPos, // pos[0],
                         .velocity = velocity
                     };
                     if (isEmpty_Array(d->moms)) {
