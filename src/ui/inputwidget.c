@@ -1632,10 +1632,10 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
             d->tapStartTime = SDL_GetTicks();
             const int tapDist = dist_I2(latestPosition_Touch(), d->lastTapPos);
             d->lastTapPos = latestPosition_Touch();
-            printf("[%p] tap start time: %u (%u) %d\n", w, d->tapStartTime, d->tapStartTime - d->lastTapTime, tapDist);
+//            printf("[%p] tap start time: %u (%u) %d\n", w, d->tapStartTime, d->tapStartTime - d->lastTapTime, tapDist);
             if (d->tapStartTime - d->lastTapTime < 400 && tapDist < gap_UI * 4) {
                 d->tapCount++;
-                printf("[%p] >> tap count: %d\n", w, d->tapCount);
+//                printf("[%p] >> tap count: %d\n", w, d->tapCount);
             }
             else {
                 d->tapCount = 0;
@@ -1648,11 +1648,11 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
                                                indexToCursor_InputWidget_(d, d->mark.end))
                 };
                 if (dist[0] < dist[1]) {
-                    printf("[%p] begin marker start drag\n", w);
+//                    printf("[%p] begin marker start drag\n", w);
                     d->inFlags |= dragMarkerStart_InputWidgetFlag;
                 }
                 else {
-                    printf("[%p] begin marker end drag\n", w);
+//                    printf("[%p] begin marker end drag\n", w);
                     d->inFlags |= dragMarkerEnd_InputWidgetFlag;
                 }
                 d->inFlags |= isMarking_InputWidgetFlag;
@@ -1660,9 +1660,9 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
             }
             else {
                 const int dist = distanceToPos_InputWidget_(d, latestPosition_Touch(), d->cursor);
-                printf("[%p] tap dist: %d\n", w, dist);
+//                printf("[%p] tap dist: %d\n", w, dist);
                 if (dist < gap_UI * 10) {
-                    printf("[%p] begin cursor drag\n", w);
+//                    printf("[%p] begin cursor drag\n", w);
                     setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
                     d->inFlags |= dragCursor_InputWidgetFlag;
 //                d->inFlags |= touchBehavior_InputWidgetFlag;
@@ -1685,16 +1685,16 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
                 const iInt2 relClick = sub_I2(pos_Click(&d->click),
                                               topLeft_Rect(contentBounds_InputWidget_(d)));
                 if (dist_I2(curPos, relClick) < gap_UI * 8) {
-                    printf("tap on cursor!\n");
+//                    printf("tap on cursor!\n");
                     setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
                     d->inFlags |= touchBehavior_InputWidgetFlag;
-                    printf("[Input] begin cursor drag\n");
+//                    printf("[Input] begin cursor drag\n");
                     setMouseGrab_Widget(w);
                     return iTrue;
                 }
             }
             else if (ev->motion.x > 0 && ev->motion.y > 0) {
-                printf("[Input] cursor being dragged\n");
+//                printf("[Input] cursor being dragged\n");
                 iRect bounds = shrunk_Rect(contentBounds_InputWidget_(d), one_I2());
                 bounds.size.y = iMini(numWrapLines_InputWidget_(d), d->maxWrapLines) * lineHeight_Text(d->font) - 2;
                 iInt2 mpos = init_I2(ev->motion.x, ev->motion.y);
@@ -1711,7 +1711,7 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
                 d->inFlags &= ~touchBehavior_InputWidgetFlag;
                 setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
                 setMouseGrab_Widget(NULL);
-                printf("[Input] touch ends\n");
+//                printf("[Input] touch ends\n");
                 return iFalse;
             }
         }
@@ -1741,7 +1741,7 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
         case none_ClickResult:
              break;
         case started_ClickResult: {
-            printf("[%p] started\n", w);
+//            printf("[%p] started\n", w);
             /*
             const iInt2 curPos = relativeCursorCoord_InputWidget_(d);
             const iInt2 relClick = sub_I2(pos_Click(&d->click),
@@ -1756,7 +1756,7 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
             return true_EventResult;
         }
         case drag_ClickResult:
-            printf("[%p] drag %d,%d\n", w, pos_Click(&d->click).x, pos_Click(&d->click).y);
+//            printf("[%p] drag %d,%d\n", w, pos_Click(&d->click).x, pos_Click(&d->click).y);
             if (d->inFlags & dragCursor_InputWidgetFlag) {
                 iZap(d->mark);
                 d->cursor = touchCoordCursor_InputWidget_(d, pos_Click(&d->click));
@@ -1777,10 +1777,10 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
 //            setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
 //            return true_EventResult;
         case finished_ClickResult:
-        case aborted_ClickResult:
-            printf("[%p] ended\n", w);
+        case aborted_ClickResult: {
+//            printf("[%p] ended\n", w);
             uint32_t tapElapsed = SDL_GetTicks() - d->tapStartTime;
-            printf("tapElapsed: %u\n", tapElapsed);
+//            printf("tapElapsed: %u\n", tapElapsed);
             if (!isFocused_Widget(w)) {
                 setFocus_Widget(w);
                 d->lastTapPos = latestPosition_Touch();
@@ -1811,7 +1811,7 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
             }
             if (d->inFlags & (dragCursor_InputWidgetFlag | dragMarkerStart_InputWidgetFlag |
                               dragMarkerEnd_InputWidgetFlag)) {
-                printf("[%p] finished cursor/marker drag\n", w);
+//                printf("[%p] finished cursor/marker drag\n", w);
                 d->inFlags &= ~(dragCursor_InputWidgetFlag |
                                 dragMarkerStart_InputWidgetFlag |
                                 dragMarkerEnd_InputWidgetFlag);
@@ -1842,6 +1842,7 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
             }
 #endif
             return true_EventResult;
+        }
     }
 #endif
 //    if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
