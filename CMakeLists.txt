@@ -25,7 +25,7 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.7)
-    set (IOS_BUNDLE_VERSION 21.9.17)
+    set (IOS_BUNDLE_VERSION 22)
 endif ()
 
 # Default that depend on environment.
