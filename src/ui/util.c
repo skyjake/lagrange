@@ -1948,13 +1948,15 @@ iWidget *makePreferences_Widget(void) {
         iString *aboutText = collectNew_String(); {
             setCStr_String(aboutText, "Lagrange " LAGRANGE_APP_VERSION);
             #if defined (iPlatformAppleMobile)
-            appendCStr_String(aboutText, " (" LAGRANGE_IOS_VERSION ") \u2014 " LAGRANGE_IOS_BUILD_DATE);
+            appendFormat_String(aboutText, " (" LAGRANGE_IOS_VERSION ") %s" LAGRANGE_IOS_BUILD_DATE,
+                                escape_Color(uiTextDim_ColorId));
             #endif
         }
         const iMenuItem aboutPanelItems[] = {
             { format_CStr("heading text:%s", cstr_String(aboutText)) },
-            { "button text:" globe_Icon " By @jk@skyjake.fi", 0, 0, "!open url:https://skyjake.fi/@jk" },
             { "button text:" clock_Icon " ${menu.releasenotes}", 0, 0, "!open url:about:version" },
+            { "button text:" globe_Icon " ${menu.website}", 0, 0, "!open url:https://gmi.skyjake.fi/lagrange" },
+            { "button text:" envelope_Icon " @jk@skyjake.fi", 0, 0, "!open url:https://skyjake.fi/@jk" },
             { "padding" },
             { "button text:" info_Icon " ${menu.aboutpages}", 0, 0, "!open url:about:about" },
             { "button text:" bug_Icon " ${menu.debug}", 0, 0, "!open url:about:debug" },

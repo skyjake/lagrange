@@ -500,7 +500,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         0.0f, 0.25f, 1.0f, 0.5f, 1.5f, 0.5f, 0.5f, 0.25f
     };
     static const char *arrow           = rightArrowhead_Icon;
-    static const char *envelope        = "\U0001f4e7";
+    static const char *envelope        = envelope_Icon;
     static const char *bullet          = "\u2022";
     static const char *folder          = "\U0001f4c1";
     static const char *globe           = globe_Icon;
