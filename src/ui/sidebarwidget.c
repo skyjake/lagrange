@@ -100,7 +100,7 @@ struct Impl_SidebarWidget {
     int               modeScroll[max_SidebarMode];
     iLabelWidget *    modeButtons[max_SidebarMode];
     int               maxButtonLabelWidth;
-    int               widthAsGaps;
+    float             widthAsGaps;
     int               buttonFont;
     int               itemFonts[2];
     size_t            numUnreadEntries;
@@ -143,7 +143,9 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
                                              //(deviceType_App() != desktop_AppDeviceType ?
                                              // extraPadding_WidgetFlag : 0) |
                                              flags);
-    setFont_LabelWidget(btn, d->buttonFont);
+    setFont_LabelWidget(btn, deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide
+                                 ? defaultBig_FontId
+                                 : d->buttonFont);
     checkIcon_LabelWidget(btn);
     return btn;
 }
@@ -641,7 +643,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->mode = -1;
     d->feedsMode = all_FeedsMode;
     d->numUnreadEntries = 0;
-    d->buttonFont = uiLabel_FontId;
+    d->buttonFont = uiLabel_FontId; /* wiil be changed later */
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
 #if defined (iPlatformMobile)
@@ -649,9 +651,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         d->itemFonts[0] = defaultBig_FontId;
         d->itemFonts[1] = defaultBigBold_FontId;
     }
-    d->widthAsGaps = 73;
+    d->widthAsGaps = 73.0f;
 #else
-    d->widthAsGaps = 60;
+    d->widthAsGaps = 60.0f;
 #endif
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     iWidget *vdiv = makeVDiv_Widget();
@@ -745,14 +747,18 @@ void deinit_SidebarWidget(iSidebarWidget *d) {
     deinit_String(&d->cmdPrefix);
 }
 
-void setButtonFont_SidebarWidget(iSidebarWidget *d, int font) {
-    d->buttonFont = font;
-    for (int i = 0; i < max_SidebarMode; i++) {
-        if (d->modeButtons[i]) {
-            setFont_LabelWidget(d->modeButtons[i], font);
+iBool setButtonFont_SidebarWidget(iSidebarWidget *d, int font) {
+    if (d->buttonFont != font) {
+        d->buttonFont = font;
+        for (int i = 0; i < max_SidebarMode; i++) {
+            if (d->modeButtons[i]) {
+                setFont_LabelWidget(d->modeButtons[i], font);
+            }
         }
+        updateMetrics_SidebarWidget_(d);
+        return iTrue;
     }
-    updateMetrics_SidebarWidget_(d);
+    return iFalse;
 }
 
 static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
@@ -827,8 +833,10 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
         if (d->itemFonts[0] != fonts[0]) {
             d->itemFonts[0] = fonts[0];
             d->itemFonts[1] = fonts[1];
-            updateMetrics_SidebarWidget_(d);
+//            updateMetrics_SidebarWidget_(d);
+            updateItemHeight_SidebarWidget_(d);
         }
+        setButtonFont_SidebarWidget(d, isPortrait_App() ? defaultBig_FontId : uiLabel_FontId);
     }
     const iBool isTight =
         (width_Rect(bounds_Widget(as_Widget(d->modeButtons[0]))) < d->maxButtonLabelWidth);
@@ -858,7 +866,7 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
 void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     iWidget *w = as_Widget(d);
     const iBool isFixedWidth = deviceType_App() == phone_AppDeviceType;
-    int width = widthAsGaps * gap_UI;
+    int width = widthAsGaps * gap_UI; /* in pixels */
     if (!isFixedWidth) {
         /* Even less space if the other sidebar is visible, too. */
         const int otherWidth =
@@ -866,9 +874,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
         width = iClamp(width, 30 * gap_UI, size_Root(w->root).x - 50 * gap_UI - otherWidth);
     }
     d->widthAsGaps = (float) width / (float) gap_UI;
-    if (isVisible_Widget(w)) {
-        w->rect.size.x = width;
-    }
+    w->rect.size.x = width;
     arrange_Widget(findWidget_Root("stack"));
     checkModeButtonLayout_SidebarWidget_(d);
     updateItemHeight_SidebarWidget_(d);
@@ -935,6 +941,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (wasChanged) {
             postCommandf_App("%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
         }
+        refresh_Widget(findChild_Widget(w, "buttons"));
         return iTrue;
     }
     else if (equal_Command(cmd, "toggle")) {
@@ -1556,7 +1563,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const iRect    bounds = bounds_Widget(w);
     iPaint p;
     init_Paint(&p);
-    if (deviceType_App() != phone_AppDeviceType) {
+    if (!isPortraitPhone_App()) { /* this would erase page contents during transition on the phone */
         if (flags_Widget(w) & visualOffset_WidgetFlag &&
             flags_Widget(w) & horizontalOffset_WidgetFlag && isVisible_Widget(w)) {
             fillRect_Paint(&p, boundsWithoutVisualOffset_Widget(w), tmBackground_ColorId);

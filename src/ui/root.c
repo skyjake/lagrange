@@ -400,8 +400,6 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
         iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
         removeChild_Widget(parent_Widget(sidebar), sidebar);
-        setButtonFont_SidebarWidget(sidebar, isLandscape_App() ? uiLabel_FontId : defaultBig_FontId);
-        setButtonFont_SidebarWidget(sidebar2, isLandscape_App() ? uiLabel_FontId : defaultBig_FontId);
         //        setBackgroundColor_Widget(findChild_Widget(as_Widget(sidebar), "buttons"),
         //                                  isPortrait_App() ? uiBackgroundUnfocusedSelection_ColorId
         //                                                   : uiBackgroundSidebar_ColorId);

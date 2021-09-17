@@ -49,7 +49,7 @@ iDeclareWidgetClass(SidebarWidget)
 iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
 
 iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebarMode mode);
-void                setButtonFont_SidebarWidget (iSidebarWidget *, int font);
+iBool               setButtonFont_SidebarWidget (iSidebarWidget *, int font);
 
 enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
 float               width_SidebarWidget         (const iSidebarWidget *);
