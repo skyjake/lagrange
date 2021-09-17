@@ -350,6 +350,7 @@ static void update_TouchState_(void *ptr) {
                 setCurrent_Root(mom->affinity->root);
                 dispatchEvent_Widget(mom->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                                                         .type = SDL_MOUSEWHEEL,
+                                                        .which = SDL_TOUCH_MOUSEID,
                                                         .timestamp = nowTime,
                                                         .x = pixels.x,
                                                         .y = pixels.y,
