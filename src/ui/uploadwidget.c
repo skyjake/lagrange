@@ -261,7 +261,7 @@ void deinit_UploadWidget(iUploadWidget *d) {
 }
 
 static void remakeIdentityItems_UploadWidget_(iUploadWidget *d) {
-    iWidget *dropMenu= findChild_Widget(findChild_Widget(as_Widget(d), "upload.id"), "menu");
+    iWidget *dropMenu = findChild_Widget(findChild_Widget(as_Widget(d), "upload.id"), "menu");
     releaseChildren_Widget(dropMenu);
     const iArray *items = makeIdentityItems_UploadWidget_(d);
     makeMenuItems_Widget(dropMenu, constData_Array(items), size_Array(items));
