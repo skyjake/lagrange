@@ -504,6 +504,14 @@ void setText_LabelWidget(iLabelWidget *d, const iString *text) {
     }
 }
 
+void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
+    updateTextCStr_LabelWidget(d, text);
+    updateSize_LabelWidget(d);
+    if (isWrapped_LabelWidget(d)) {
+        sizeChanged_LabelWidget_(d);
+    }
+}
+
 void setAlignVisually_LabelWidget(iLabelWidget *d, iBool alignVisual) {
     d->flags.alignVisual = alignVisual;
 }
@@ -563,13 +571,6 @@ void updateTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
 void updateTextAndResizeWidthCStr_LabelWidget(iLabelWidget *d, const char *text) {
     updateTextCStr_LabelWidget(d, text);
     d->widget.rect.size.x = defaultSize_LabelWidget(d).x;
-}
-
-void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
-    setCStr_String(&d->label, text);
-    set_String(&d->srcLabel, &d->label);
-    replaceVariables_LabelWidget_(d);
-    updateSize_LabelWidget(d);
 }
 
 void setCommand_LabelWidget(iLabelWidget *d, const iString *command) {

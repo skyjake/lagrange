@@ -328,7 +328,7 @@ static void updateFileInfo_UploadWidget_(iUploadWidget *d) {
                            (iMenuItem[]){ "${dlg.message.ok}", 0, 0, "message.ok" }, 1);
         clear_String(&d->filePath);
         d->fileSize = 0;
-        return iTrue;
+        return;
     }
     d->fileSize = size_FileInfo(info);
 #if defined (iPlatformMobile)

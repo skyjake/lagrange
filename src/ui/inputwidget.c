@@ -2314,7 +2314,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     };
     const iRangei visLines       = visibleLineRange_InputWidget_(d);
     const int     visLineOffsetY = visLineOffsetY_InputWidget_(d);
-    iRect         markerRects[2];
+    iRect         markerRects[2] = { zero_Rect(), zero_Rect() };
     /* If buffered, just draw the buffered copy. */
     if (d->buffered && !isFocused) {
         /* Most input widgets will use this, since only one is focused at a time. */

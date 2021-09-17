@@ -31,6 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "text.h"
 #include "ui/util.h"
 
+#if defined (iPlatformAppleMobile)
+#   include "ios.h"
+#endif
+
 #include <the_Foundation/file.h>
 #include <the_Foundation/tlsrequest.h>
 #include <the_Foundation/path.h>
@@ -75,7 +79,7 @@ static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *dat
     deinit_String(&pem);
     /* Update the labels. */ {
         if (d->cert && !isEmpty_TlsCertificate(d->cert)) {
-            setTextCStr_LabelWidget(
+            updateTextCStr_LabelWidget(
                 d->crtLabel,
                 format_CStr("%s%s",
                             uiTextAction_ColorEscape,
@@ -83,19 +87,19 @@ static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *dat
             setFrameColor_Widget(as_Widget(d->crtLabel), uiTextAction_ColorId);
         }
         else {
-            setTextCStr_LabelWidget(d->crtLabel, uiTextCaution_ColorEscape "${dlg.certimport.nocert}");
+            updateTextCStr_LabelWidget(d->crtLabel, uiTextCaution_ColorEscape "${dlg.certimport.nocert}");
             setFrameColor_Widget(as_Widget(d->crtLabel), uiTextCaution_ColorId);
         }
         if (d->cert && hasPrivateKey_TlsCertificate(d->cert)) {
             iString *fng = collect_String(
                 hexEncode_Block(collect_Block(privateKeyFingerprint_TlsCertificate(d->cert))));
             insertData_Block(&fng->chars, size_String(fng) / 2, "\n", 1);
-            setTextCStr_LabelWidget(
+            updateTextCStr_LabelWidget(
                 d->keyLabel, format_CStr("%s%s", uiTextAction_ColorEscape, cstr_String(fng)));
             setFrameColor_Widget(as_Widget(d->keyLabel), uiTextAction_ColorId);
         }
         else {
-            setTextCStr_LabelWidget(d->keyLabel, uiTextCaution_ColorEscape "${dlg.certimport.nokey}");
+            updateTextCStr_LabelWidget(d->keyLabel, uiTextCaution_ColorEscape "${dlg.certimport.nokey}");
             setFrameColor_Widget(as_Widget(d->keyLabel), uiTextCaution_ColorId);
         }
     }
@@ -133,6 +137,8 @@ void init_CertImportWidget(iCertImportWidget *d) {
         d->crtLabel = findChild_Widget(w, "certimport.crt");
         d->keyLabel = findChild_Widget(w, "certimport.key");
         d->notes    = findChild_Widget(w, "certimport.notes");
+        setFont_LabelWidget(d->crtLabel, uiContent_FontId);
+        setFont_LabelWidget(d->keyLabel, uiContent_FontId);
         setFixedSize_Widget(as_Widget(d->crtLabel), init_I2(-1, gap_UI * 12));
         setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(-1, gap_UI * 12));
     }
@@ -213,6 +219,25 @@ static iBool tryImportFromClipboard_CertImportWidget_(iCertImportWidget *d) {
     return tryImport_CertImportWidget_(d, collect_Block(newCStr_Block(SDL_GetClipboardText())));
 }
 
+static iBool tryImportFromFile_CertImportWidget_(iCertImportWidget *d, const iString *path) {
+    iBool success = iFalse;
+    iFile *f = new_File(path);
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        if (tryImport_CertImportWidget_(d, collect_Block(readAll_File(f)))) {
+            success = iTrue;
+            if (isComplete_CertImportWidget_(d)) {
+                setFocus_Widget(as_Widget(d->notes));
+            }
+        }
+        else {
+            makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.dropped}",
+                                     "${dlg.certimport.notfound}");
+        }
+    }
+    iRelease(f);
+    return success;
+}
+
 static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (ev->type == SDL_KEYDOWN) {
@@ -254,21 +279,22 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         }
         return iTrue;
     }
-    if (ev->type == SDL_DROPFILE) {
-        const iString *name = collectNewCStr_String(ev->drop.file);
-        iFile *f = new_File(name);
-        if (open_File(f, readOnly_FileMode | text_FileMode)) {
-            if (tryImport_CertImportWidget_(d, collect_Block(readAll_File(f)))) {
-                if (isComplete_CertImportWidget_(d)) {
-                    setFocus_Widget(as_Widget(d->notes));
-                }
-            }
-            else {
-                makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.dropped}",
-                                         "${dlg.certimport.notfound}");
-            }
+#if defined (iPlatformAppleMobile)
+    if (isCommand_UserEvent(ev, "certimport.pickfile")) {
+        const char *cmd = command_UserEvent(ev);
+        if (hasLabel_Command(cmd, "path")) {
+            const iString *path = collect_String(suffix_Command(cmd, "path"));
+            tryImportFromFile_CertImportWidget_(d, path);
+            remove(cstr_String(path)); /* it is a temporary copy */
         }
-        iRelease(f);
+        else {
+            pickFile_iOS("certimport.pickfile");
+        }
+        return iTrue;
+    }
+#endif
+    if (ev->type == SDL_DROPFILE) {
+        tryImportFromFile_CertImportWidget_(d, collectNewCStr_String(ev->drop.file));
         return iTrue;
     }
     return processEvent_Widget(w, ev);
