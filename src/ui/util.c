@@ -1490,7 +1490,7 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     addChild_Widget(dlg->root->widget, iClob(dlg));
     arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
                             be arranged correctly unless it's here. */
-    finalizeSheet_Mobile(dlg);
+    setupSheetTransition_Mobile(dlg, iTrue);
     return dlg;
 }
 
@@ -1726,7 +1726,7 @@ static void addDialogToggle_(iWidget *headings, iWidget *values,
     addChild_Widget(values, iClob(makeToggle_Widget(toggleId)));
 }
 
-static size_t findWidestItemLabel_(const iMenuItem *items, size_t num) {
+size_t findWidestLabel_MenuItem(const iMenuItem *items, size_t num) {
     int widest = 0;
     size_t widestPos = iInvalidPos;
     for (size_t i = 0; i < num && items[i].label; i++) {
@@ -1947,10 +1947,10 @@ iWidget *makePreferences_Widget(void) {
         };
         iString *aboutText = collectNew_String(); {
             setCStr_String(aboutText, "Lagrange " LAGRANGE_APP_VERSION);
-            #if defined (iPlatformAppleMobile)
+#if defined (iPlatformAppleMobile)
             appendFormat_String(aboutText, " (" LAGRANGE_IOS_VERSION ") %s" LAGRANGE_IOS_BUILD_DATE,
                                 escape_Color(uiTextDim_ColorId));
-            #endif
+#endif
         }
         const iMenuItem aboutPanelItems[] = {
             { format_CStr("heading text:%s", cstr_String(aboutText)) },
@@ -2015,7 +2015,7 @@ iWidget *makePreferences_Widget(void) {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
             pushBackN_Array(uiLangs, langItems, iElemCount(langItems) - 1);
             /* TODO: Add an arrange flag for resizing parent to widest child. */
-            size_t widestPos = findWidestItemLabel_(data_Array(uiLangs), size_Array(uiLangs));
+            size_t widestPos = findWidestLabel_MenuItem(data_Array(uiLangs), size_Array(uiLangs));
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.uilang}")));
             setId_Widget(addChildFlags_Widget(values,
                                               iClob(makeMenuButton_LabelWidget(
@@ -2034,7 +2034,7 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
         /* Return key behaviors. */ {
             iLabelWidget *returnKey = makeMenuButton_LabelWidget(
-                returnKeyBehaviors[findWidestItemLabel_(returnKeyBehaviors,
+                returnKeyBehaviors[findWidestLabel_MenuItem(returnKeyBehaviors,
                                                         iElemCount(returnKeyBehaviors) - 1)]
                     .label,
                 returnKeyBehaviors,
@@ -2104,7 +2104,7 @@ iWidget *makePreferences_Widget(void) {
             const char *mode = isDark ? "dark" : "light";
             addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "${prefs.doctheme.dark}" : "${prefs.doctheme.light}")));
             iLabelWidget *button = makeMenuButton_LabelWidget(
-                docThemes[i][findWidestItemLabel_(docThemes[i], max_GmDocumentTheme)].label,
+                docThemes[i][findWidestLabel_MenuItem(docThemes[i], max_GmDocumentTheme)].label,
                 docThemes[i],
                 max_GmDocumentTheme);
             //            setFrameColor_Widget(findChild_Widget(as_Widget(button), "menu"),
@@ -2125,7 +2125,7 @@ iWidget *makePreferences_Widget(void) {
         /* Colorize images. */ {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imagestyle}")));
             iLabelWidget *button = makeMenuButton_LabelWidget(
-                imgStyles[findWidestItemLabel_(imgStyles, iElemCount(imgStyles) - 1)].label,
+                imgStyles[findWidestLabel_MenuItem(imgStyles, iElemCount(imgStyles) - 1)].label,
                 imgStyles,
                 iElemCount(imgStyles) - 1);
             setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
@@ -2254,7 +2254,8 @@ iWidget *makePreferences_Widget(void) {
                     iClob(makeDialogButtons_Widget(
                         (iMenuItem[]){ { "${close}", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
     addChild_Widget(dlg->root->widget, iClob(dlg));
-    finalizeSheet_Mobile(dlg);
+//    finalizeSheet_Mobile(dlg);
+//    arrange_Widget(dlg);
     setupSheetTransition_Mobile(dlg, iTrue);
 //    printTree_Widget(dlg);
     return dlg;
@@ -2312,7 +2313,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
     addChild_Widget(get_Root()->widget, iClob(dlg));
-    finalizeSheet_Mobile(dlg);
+    setupSheetTransition_Mobile(dlg, iTrue);
     return dlg;
 }
 
@@ -2509,7 +2510,6 @@ iWidget *makeIdentityCreation_Widget(void) {
             { "input collapse:1 id:ident.country hint:hint.newident.optional text:${dlg.newident.country}" },
             { NULL }
         }, actions, iElemCount(actions));
-        setupSheetTransition_Mobile(dlg, iTrue);
     }
     else {
         dlg = makeSheet_Widget("ident");
@@ -2578,8 +2578,8 @@ iWidget *makeIdentityCreation_Widget(void) {
         }
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));
-        finalizeSheet_Mobile(dlg);
     }
+    setupSheetTransition_Mobile(dlg, iTrue);
     return dlg;
 }
 

@@ -232,6 +232,8 @@ void        openMenu_Widget     (iWidget *, iInt2 windowCoord);
 void        openMenuFlags_Widget(iWidget *, iInt2 windowCoord, iBool postCommands);
 void        closeMenu_Widget    (iWidget *);
 
+size_t      findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);
+
 iLabelWidget *  findMenuItem_Widget         (iWidget *menu, const char *command);
 void            setMenuItemDisabled_Widget  (iWidget *menu, const char *command, iBool disable);
 
