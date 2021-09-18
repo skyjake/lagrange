@@ -98,8 +98,7 @@ void setClip_Paint(iPaint *d, iRect rect) {
 
 void unsetClip_Paint(iPaint *d) {
     if (numRoots_Window(get_Window()) > 1) {
-        const iRect rect = rect_Root(get_Root());
-        SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
+        setClip_Paint(d, rect_Root(get_Root()));
         return;
     }
 #if SDL_VERSION_ATLEAST(2, 0, 12)
@@ -145,7 +144,7 @@ void drawRectThickness_Paint(const iPaint *d, iRect rect, int thickness, int col
 void fillRect_Paint(const iPaint *d, iRect rect, int color) {
     addv_I2(&rect.pos, origin_Paint);
     setColor_Paint_(d, color);
-//    printf("fillRect_Paint: %d,%d %dx%d\n", rect.pos.x, rect.pos.y, rect.size.x, rect.size.y);
+//    printf("fillRect_Paint: %d,%d %dx%d (%d)\n", rect.pos.x, rect.pos.y, rect.size.x, rect.size.y, color);
     SDL_RenderFillRect(renderer_Paint_(d), (SDL_Rect *) &rect);
 }
 
