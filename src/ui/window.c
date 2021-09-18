@@ -405,6 +405,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->splitMode = d->pendingSplitMode = 0;
     d->pendingSplitUrl = new_String();
     d->hover = NULL;
+    d->lastHover = NULL;
     d->mouseGrab = NULL;
     d->focus = NULL;
     iZap(d->cursors);
@@ -421,7 +422,6 @@ void init_Window(iWindow *d, iRect rect) {
     d->ignoreClick = iFalse;
     d->focusGainedAt = 0;
     d->keyboardHeight = 0;
-//    init_Anim(&d->rootOffset, 0.0f);
     uint32_t flags = 0;
 #if defined (iPlatformAppleDesktop)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
@@ -1215,10 +1215,6 @@ iBool isOpenGLRenderer_Window(void) {
 void setKeyboardHeight_Window(iWindow *d, int height) {
     if (d->keyboardHeight != height) {
         d->keyboardHeight = height;
-//        if (height == 0) {
-//            setFlags_Anim(&d->rootOffset, easeBoth_AnimFlag, iTrue);
-//            setValue_Anim(&d->rootOffset, 0, 250);
-//        }
         postCommandf_App("keyboard.changed arg:%d", height);
         postRefresh_App();
     }

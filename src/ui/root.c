@@ -271,13 +271,15 @@ void destroyPending_Root(iRoot *d) {
     setCurrent_Root(d);
     iForEach(PtrSet, i, d->pendingDestruction) {
         iWidget *widget = *i.value;
+        iAssert(widget->root == d);
         if (!isFinished_Anim(&widget->visualOffset) ||
             isBeingVisuallyOffsetByReference_Widget(widget)) {
             continue;
         }
         if (widget->flags & keepOnTop_WidgetFlag) {
-            removeOne_PtrArray(onTop_Root(widget->root), widget);
+            removeOne_PtrArray(d->onTop, widget);
         }
+        iAssert(indexOf_PtrArray(d->onTop, widget) == iInvalidPos);
         if (widget->parent) {
             removeChild_Widget(widget->parent, widget);
         }

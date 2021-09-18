@@ -86,6 +86,7 @@ struct Impl_Window {
     iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
     iRoot *       keyRoot;      /* root that has the current keyboard input focus */
     iWidget *     hover;
+    iWidget *     lastHover;    /* cleared if deleted */
     iWidget *     mouseGrab;
     iWidget *     focus;
     float         pixelRatio;   /* conversion between points and pixels, e.g., coords, window size */
@@ -98,7 +99,6 @@ struct Impl_Window {
     SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
     SDL_Cursor *  pendingCursor;
     int           loadAnimTimer;
-//    iAnim         rootOffset;
     int           keyboardHeight; /* mobile software keyboards */
 };
 

@@ -425,10 +425,10 @@ static iWidget *addChildPanel_(iWidget *parent, iLabelWidget *panelButton,
     return panel;
 }
 
-void finalizeSheet_Mobile(iWidget *sheet) {
-    arrange_Widget(sheet);
+//void finalizeSheet_Mobile(iWidget *sheet) {
+//    arrange_Widget(sheet);
 //    postRefresh_App();
-}
+//}
 
 static size_t countItems_(const iMenuItem *itemsNullTerminated) {
     size_t num = 0;

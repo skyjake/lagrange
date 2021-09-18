@@ -1916,6 +1916,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
         return iFalse;
     }
+    /* TODO: Scroll to keep widget visible when keyboard appears. */
 //    else if (isCommand_UserEvent(ev, "keyboard.changed")) {
 //        if (isFocused_Widget(d) && arg_Command(command_UserEvent(ev))) {
 //            iRect rect = bounds_Widget(w);

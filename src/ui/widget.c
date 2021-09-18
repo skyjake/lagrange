@@ -163,11 +163,15 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
     d->flags |= destroyPending_WidgetFlag;
     if (isFocused_Widget(d)) {
         setFocus_Widget(NULL);
-        return;
+        //return; /* TODO: Why?! */
     }
     remove_Periodic(periodic_App(), d);
+    iWindow *win = get_Window();
     if (isHover_Widget(d)) {
-        get_Window()->hover = NULL;
+        win->hover = NULL;
+    }
+    if (win->lastHover == d) {
+        win->lastHover = NULL;
     }
     iForEach(ObjectList, i, d->children) {
         aboutToBeDestroyed_Widget_(as_Widget(i.object));
@@ -214,6 +218,7 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
             }
             else {
                 removeOne_PtrArray(onTop, d);
+                iAssert(indexOf_PtrArray(onTop, d) == iInvalidPos);
             }
         }
         if (d->flags & arrangeWidth_WidgetFlag &&
@@ -880,9 +885,6 @@ iInt2 localToWindow_Widget(const iWidget *d, iInt2 localCoord) {
         applyVisualOffset_Widget_(w, &pos);
         addv_I2(&window, pos);
     }
-//#if defined (iPlatformMobile)
-//    window.y += value_Anim(&get_Window()->rootOffset);
-//#endif
     return window;
 }
 
@@ -962,7 +964,11 @@ static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
 }
 
 void unhover_Widget(void) {
-    get_Window()->hover = NULL;
+    iWidget **hover = &get_Window()->hover;
+    if (*hover) {
+        refresh_Widget(*hover);
+    }
+    *hover = NULL;
 }
 
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
@@ -1415,7 +1421,9 @@ static void findPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs) {
     iRect fullyMasked = zero_Rect();
     if (isRoot_Widget_(d)) {
         iReverseConstForEach(PtrArray, i, onTop_Root(d->root)) {
-            addToPotentiallyVisible_Widget_(i.ptr, pvs, &fullyMasked);
+            const iWidget *top = i.ptr;
+            iAssert(top->parent);
+            addToPotentiallyVisible_Widget_(top, pvs, &fullyMasked);
         }
     }
     iReverseConstForEach(ObjectList, i, d->children) {

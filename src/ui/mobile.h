@@ -55,5 +55,3 @@ enum iTransitionDir {
 
 void        setupMenuTransition_Mobile  (iWidget *menu,  iBool isIncoming);
 void        setupSheetTransition_Mobile (iWidget *sheet, int flags);
-
-void        finalizeSheet_Mobile        (iWidget *sheet);

@@ -472,13 +472,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     }
     iTouchState *d = touchState_();
     iWindow *window = get_Window();    
-//    if (!isFinished_Anim(&window->rootOffset)) {
-//        return iFalse;
-//    }
     const iInt2 rootSize = size_Window(window);
     const SDL_TouchFingerEvent *fing = &ev->tfinger;
-    const iFloat3 pos = add_F3(init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0), /* pixels */
-                               init_F3(0, 0 /*-value_Anim(&window->rootOffset)*/, 0));
+    const iFloat3 pos = init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0); /* pixels */
     const uint32_t nowTime = SDL_GetTicks();
     if (ev->type == SDL_FINGERDOWN) {
         /* Register the new touch. */

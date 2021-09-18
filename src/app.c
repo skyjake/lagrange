@@ -1069,11 +1069,6 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
         return iFalse;
     }
 #endif
-//#if defined (iPlatformMobile)
-//    if (!isFinished_Anim(&d->window->rootOffset)) {
-//        return iFalse;
-//    }
-//#endif
     return !value_Atomic(&d->pendingRefresh) && isEmpty_SortedArray(&d->tickers);
 }
 
@@ -1273,7 +1268,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                 }
 #endif
-                const iWidget *oldHover = d->window->hover;
+                d->window->lastHover = d->window->hover;
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (!wasUsed) {
                     /* There may be a key bindings for this. */
@@ -1309,8 +1304,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     free(ev.user.data1);
                 }
                 /* Update when hover has changed. */
-                if (oldHover != d->window->hover) {
-                    refresh_Widget(oldHover);
+                if (d->window->lastHover != d->window->hover) {
+                    refresh_Widget(d->window->lastHover);
                     refresh_Widget(d->window->hover);
                 }
                 break;
@@ -1318,7 +1313,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
         }
     }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
-    if (d->isIdling && !gotEvents /*&& isFinished_Anim(&d->window->rootOffset)*/) {
+    if (d->isIdling && !gotEvents) {
         /* This is where we spend most of our time when idle. 60 Hz still quite a lot but we
            can't wait too long after the user tries to interact again with the app. In any
            case, on macOS SDL_WaitEvent() seems to use 10x more CPU time than sleeping. */
@@ -1410,10 +1405,7 @@ void refresh_App(void) {
     }
 #endif
     if (!exchange_Atomic(&d->pendingRefresh, iFalse)) {
-        /* Refreshing wasn't pending. */
-//        if (isFinished_Anim(&d->window->rootOffset)) {
-            return;
-//        }
+        return;
     }
 //    iTime draw;
 //    initCurrent_Time(&draw);
@@ -2746,7 +2738,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "feeds.update.finished")) {
         showCollapsed_Widget(findWidget_Root("feeds.progress"), iFalse);
         refreshFinished_Feeds();
-        postRefresh_App();
+        refresh_Widget(findWidget_App("url"));
         return iFalse;
     }
     else if (equal_Command(cmd, "visited.changed")) {
