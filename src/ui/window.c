@@ -1042,11 +1042,11 @@ void draw_Window(iWindow *d) {
        when the custom frame is being used. */ {
         setCurrent_Root(d->roots[0]);
 #if defined (iPlatformMobile)
-       iColor back = get_Color(uiBackground_ColorId);
-       if (deviceType_App() == phone_AppDeviceType) {
-           /* Page background extends to safe area, so fill it completely. */
-           back = get_Color(tmBackground_ColorId);
-       }
+        iColor back = get_Color(uiBackground_ColorId);
+        if (deviceType_App() == phone_AppDeviceType) {
+            /* Page background extends to safe area, so fill it completely. */
+            back = get_Color(tmBackground_ColorId);
+        }
 #else
         const iColor back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
                                               ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP

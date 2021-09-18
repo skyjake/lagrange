@@ -278,6 +278,7 @@ void destroyPending_Root(iRoot *d) {
         }
         if (widget->flags & keepOnTop_WidgetFlag) {
             removeOne_PtrArray(d->onTop, widget);
+            widget->flags &= ~keepOnTop_WidgetFlag;
         }
         iAssert(indexOf_PtrArray(d->onTop, widget) == iInvalidPos);
         if (widget->parent) {
@@ -287,6 +288,13 @@ void destroyPending_Root(iRoot *d) {
         iRelease(widget);
         remove_PtrSetIterator(&i);
     }
+#if 0
+    printf("Root %p onTop (%zu):\n", d, size_PtrArray(d->onTop));
+    iConstForEach(PtrArray, t, d->onTop) {
+        const iWidget *p = *t.value;
+        printf(" - %p {%s}\n", p, cstr_String(id_Widget(p)));
+    }
+#endif
     setCurrent_Root(oldRoot);
 }
 

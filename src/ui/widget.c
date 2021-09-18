@@ -156,6 +156,13 @@ void deinit_Widget(iWidget *d) {
     if (d->flags & visualOffset_WidgetFlag) {
         removeTicker_App(visualOffsetAnimation_Widget_, d);
     }
+    iWindow *win = get_Window();
+    if (win->lastHover == d) {
+        win->lastHover = NULL;
+    }
+    if (win->hover == d) {
+        win->hover = NULL;
+    }
     widgetDestroyed_Touch(d);
 }
 
