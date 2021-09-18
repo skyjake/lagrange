@@ -95,7 +95,7 @@ static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
     const int   footerHeight = isUsingPanelLayout_Mobile() ? 0 :
                                 (height_Widget(d->token) +
                                  height_Widget(findChild_Widget(w, "dialogbuttons")) +
-                                 6 * gap_UI);
+                                 12 * gap_UI);
     const int   avail        = bottom_Rect(safeRect_Root(w->root)) - footerHeight -
                                get_Window()->keyboardHeight;
     setLineLimits_InputWidget(d->input,
