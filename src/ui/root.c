@@ -1515,7 +1515,7 @@ iRect rect_Root(const iRoot *d) {
 }
 
 iRect safeRect_Root(const iRoot *d) {
-    iRect rect = { zero_I2(), size_Root(d) };
+    iRect rect = rect_Root(d);
 #if defined (iPlatformAppleMobile)
     float left, top, right, bottom;
     safeAreaInsets_iOS(&left, &top, &right, &bottom);

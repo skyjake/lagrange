@@ -1086,7 +1086,6 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
 
 iBool scrollOverflow_Widget(iWidget *d, int delta) {
     iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
-//    const iInt2 rootSize = size_Root(d->root);
     const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
                                         zero_I2(),
                                         init_I2(0, -get_Window()->keyboardHeight));
