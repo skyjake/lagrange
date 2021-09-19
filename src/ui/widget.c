@@ -1088,7 +1088,7 @@ void scrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
     iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
     const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
                                         zero_I2(),
-                                        init_I2(0, -get_Window()->keyboardHeight));
+                                        init_I2(0, -get_MainWindow()->keyboardHeight));
     info->height      = bounds.size.y;
     info->avail       = height_Rect(winRect);
     if (info->avail >= info->height) {
@@ -1109,7 +1109,7 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
     const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
                                         zero_I2(),
-                                        init_I2(0, -get_Window()->keyboardHeight));
+                                        init_I2(0, -get_MainWindow()->keyboardHeight));
     const int yTop    = top_Rect(winRect);
     const int yBottom = bottom_Rect(winRect);
     if (top_Rect(bounds) >= yTop && bottom_Rect(bounds) < yBottom) {

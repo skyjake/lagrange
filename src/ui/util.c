@@ -1222,7 +1222,7 @@ static void updateValueInputWidth_(iWidget *dlg) {
             iMin(rootSize.x, iMaxi(iMaxi(100 * gap_UI, title->rect.size.x), prompt->rect.size.x));
     }
     /* Adjust the maximum number of visible lines. */
-    int footer = 6 * gap_UI + get_Window()->keyboardHeight;
+    int footer = 6 * gap_UI + get_MainWindow()->keyboardHeight;
     iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
     if (buttons) {
         footer += height_Widget(buttons);

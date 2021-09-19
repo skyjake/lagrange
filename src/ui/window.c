@@ -67,7 +67,7 @@ static float initialUiScale_ = 1.1f;
 
 static iBool isOpenGLRenderer_;
 
-iDefineTypeConstructionArgs(Window, (iRect rect), rect)
+iDefineTypeConstructionArgs(MainWindow, (iRect rect), rect)
 
 /* TODO: Define menus per platform. */
 
@@ -169,17 +169,17 @@ int numRoots_Window(const iWindow *d) {
     return num;
 }
 
-static void windowSizeChanged_Window_(iWindow *d) {
-    const int numRoots = numRoots_Window(d);
-    const iInt2 rootSize = d->size;
+static void windowSizeChanged_MainWindow_(iMainWindow *d) {
+    const int numRoots = numRoots_Window(as_Window(d));
+    const iInt2 rootSize = d->base.size;
     const int weights[2] = {
-        d->roots[0] ? (d->splitMode & twoToOne_WindowSplit ? 2 : 1) : 0,
-        d->roots[1] ? (d->splitMode & oneToTwo_WindowSplit ? 2 : 1) : 0,
+        d->base.roots[0] ? (d->splitMode & twoToOne_WindowSplit ? 2 : 1) : 0,
+        d->base.roots[1] ? (d->splitMode & oneToTwo_WindowSplit ? 2 : 1) : 0,
     };
     const int totalWeight = weights[0] + weights[1];
     int w = 0;
-    iForIndices(i, d->roots) {
-        iRoot *root = d->roots[i];
+    iForIndices(i, d->base.roots) {
+        iRoot *root = d->base.roots[i];
         if (root) {
             iRect *rect = &root->widget->rect;
             /* Horizontal split frame. */
@@ -199,26 +199,26 @@ static void windowSizeChanged_Window_(iWindow *d) {
     }
 }
 
-static void setupUserInterface_Window(iWindow *d) {
+static void setupUserInterface_MainWindow(iMainWindow *d) {
 #if defined (iHaveNativeMenus)
     insertMacMenus_();
 #endif
     /* One root is created by default. */
-    d->roots[0] = new_Root();
-    setCurrent_Root(d->roots[0]);
-    createUserInterface_Root(d->roots[0]);
+    d->base.roots[0] = new_Root();
+    setCurrent_Root(d->base.roots[0]);
+    createUserInterface_Root(d->base.roots[0]);
     setCurrent_Root(NULL);
     /* One of the roots always has keyboard input focus. */
-    d->keyRoot = d->roots[0];
+    d->base.keyRoot = d->base.roots[0];
 }
 
-static void updateSize_Window_(iWindow *d, iBool notifyAlways) {
-    iInt2 *size = &d->size;
+static void updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
+    iInt2 *size = &d->base.size;
     const iInt2 oldSize = *size;
-    SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
+    SDL_GetRendererOutputSize(d->base.render, &size->x, &size->y);
     size->y -= d->keyboardHeight;
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
-        windowSizeChanged_Window_(d);
+        windowSizeChanged_MainWindow_(d);
         if (!isEqual_I2(*size, d->place.lastNotifiedSize)) {
             const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
             const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
@@ -234,8 +234,8 @@ static void updateSize_Window_(iWindow *d, iBool notifyAlways) {
     }
 }
 
-void drawWhileResizing_Window(iWindow *d, int w, int h) {
-    draw_Window(d);        
+void drawWhileResizing_MainWindow(iMainWindow *d, int w, int h) {
+    draw_MainWindow(d);        
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
@@ -308,7 +308,7 @@ static iRoot *rootAt_Window_(const iWindow *d, iInt2 coord) {
 }
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, void *data) {
+static SDL_HitTestResult hitTest_MainWindow_(SDL_Window *win, const SDL_Point *pos, void *data) {
     iWindow *d = data;
     iAssert(d->win == win);
     if (SDL_GetWindowFlags(d->win) & (SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_FULLSCREEN_DESKTOP)) {
@@ -361,19 +361,22 @@ SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos) {
 #endif
 
 iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
-    flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
+    flags |= SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
+    if (d->type == main_WindowType) {
+        flags |= SDL_WINDOW_RESIZABLE;
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-    if (prefs_App()->customFrame) {
-        /* We are drawing a custom frame so hide the default one. */
-        flags |= SDL_WINDOW_BORDERLESS;
-    }
+        if (prefs_App()->customFrame) {
+            /* We are drawing a custom frame so hide the default one. */
+            flags |= SDL_WINDOW_BORDERLESS;
+        }
 #endif
+    }
     if (SDL_CreateWindowAndRenderer(
             width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
         return iFalse;
     }
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-    if (prefs_App()->customFrame) {
+    if (type_Window(d) == main_WindowType && prefs_App()->customFrame) {
         /* Register a handler for window hit testing (drag, resize). */
         SDL_SetWindowHitTest(d->win, hitTest_Window_, d);
         SDL_SetWindowResizable(d->win, SDL_TRUE);
@@ -397,40 +400,28 @@ static SDL_Surface *loadImage_(const iBlock *data, int resized) {
         pixels, w, h, 8 * num, w * num, SDL_PIXELFORMAT_RGBA32);
 }
 
-void init_Window(iWindow *d, iRect rect) {
-    theWindow_ = d;
-    d->win = NULL;
-    d->size = zero_I2(); /* will be updated below */
-    iZap(d->roots);
-    d->splitMode = d->pendingSplitMode = 0;
-    d->pendingSplitUrl = new_String();
-    d->hover = NULL;
-    d->lastHover = NULL;
-    d->mouseGrab = NULL;
-    d->focus = NULL;
-    iZap(d->cursors);
-    d->place.initialPos = rect.pos;
-    d->place.normalRect = rect;
-    d->place.lastNotifiedSize = zero_I2();
-    d->place.snap = 0;
+void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) {
+    d->type          = type;
+    d->win           = NULL;
+    d->size          = zero_I2(); /* will be updated below */
+    d->hover         = NULL;
+    d->lastHover     = NULL;
+    d->mouseGrab     = NULL;
+    d->focus         = NULL;
     d->pendingCursor = NULL;
-    d->isDrawFrozen = iTrue;
-    d->isExposed = iFalse;
-    d->isMinimized = iFalse;
+    d->isDrawFrozen  = iTrue;
+    d->isExposed     = iFalse;
+    d->isMinimized   = iFalse;
     d->isInvalidated = iFalse; /* set when posting event, to avoid repeated events */
-    d->isMouseInside = iTrue;    
-    d->ignoreClick = iFalse;
+    d->isMouseInside = iTrue;
+    d->ignoreClick   = iFalse;
     d->focusGainedAt = 0;
-    d->keyboardHeight = 0;
-    uint32_t flags = 0;
-#if defined (iPlatformAppleDesktop)
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
-#elif defined (iPlatformAppleMobile)
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
-#else
-    flags |= SDL_WINDOW_OPENGL;
-#endif
-    SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
+    d->presentTime   = 0.0;
+    d->frameTime     = SDL_GetTicks();
+    d->keyRoot       = NULL;
+    d->borderShadow  = NULL;
+    iZap(d->roots);
+    iZap(d->cursors);
     /* First try SDL's default renderer that should be the best option. */
     if (forceSoftwareRender_App() || !create_Window_(d, rect, flags)) {
         /* No luck, maybe software only? This should always work as long as there is a display. */
@@ -443,40 +434,74 @@ void init_Window(iWindow *d, iRect rect) {
     if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
-#if defined (iPlatformMobile)
-    const iInt2 minSize = zero_I2(); /* windows aren't independently resizable */
-#else
-    const iInt2 minSize = init_I2(425, 325);
-#endif
-    SDL_SetWindowMinimumSize(d->win, minSize.x, minSize.y);
-    SDL_SetWindowTitle(d->win, "Lagrange");
-    /* Some info. */ {
-        SDL_RendererInfo info;
-        SDL_GetRendererInfo(d->render, &info);
-        isOpenGLRenderer_ = !iCmpStr(info.name, "opengl");
-        printf("[window] renderer: %s%s\n", info.name,
-               info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
-#if !defined (NDEBUG)
-        printf("[window] max texture size: %d x %d\n",
-               info.max_texture_width,
-               info.max_texture_height);
-        for (size_t i = 0; i < info.num_texture_formats; ++i) {
-            printf("[window] supported texture format: %s\n", SDL_GetPixelFormatName(
-                       info.texture_formats[i]));
-        }
-#endif
-    }
+    SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);    
     drawBlank_Window_(d);
     d->pixelRatio   = pixelRatio_Window_(d); /* point/pixel conversion */
     d->displayScale = displayScale_Window_(d);
     d->uiScale      = initialUiScale_;
+    /* TODO: Ratios, scales, and metrics must be window-specific, not global. */
     setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
-#if defined (iPlatformMsys)
-    SDL_SetWindowMinimumSize(d->win, minSize.x * d->displayScale, minSize.y * d->displayScale);
-    useExecutableIconResource_SDLWindow(d->win);
+}
+
+void deinit_Window(iWindow *d) {
+    SDL_DestroyRenderer(d->render);
+    SDL_DestroyWindow(d->win);
+    iForIndices(i, d->cursors) {
+        if (d->cursors[i]) {
+            SDL_FreeCursor(d->cursors[i]);
+        }
+    }    
+}
+
+void init_MainWindow(iMainWindow *d, iRect rect) {
+    theWindow_ = &d->base;
+    uint32_t flags = 0;
+#if defined (iPlatformAppleDesktop)
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
+#elif defined (iPlatformAppleMobile)
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
+#else
+    flags |= SDL_WINDOW_OPENGL;
+#endif
+    SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
+    init_Window(&d->base, main_WindowType, rect, flags);
+    d->splitMode = d->pendingSplitMode = 0;
+    d->pendingSplitUrl = new_String();
+    d->place.initialPos = rect.pos;
+    d->place.normalRect = rect;
+    d->place.lastNotifiedSize = zero_I2();
+    d->place.snap = 0;
+    d->keyboardHeight = 0;
+#if defined(iPlatformMobile)
+    const iInt2 minSize = zero_I2(); /* windows aren't independently resizable */
+#else
+    const iInt2 minSize = init_I2(425, 325);
+#endif
+    SDL_SetWindowMinimumSize(d->base.win, minSize.x, minSize.y);
+    SDL_SetWindowTitle(d->base.win, "Lagrange");
+    /* Some info. */ {
+        SDL_RendererInfo info;
+        SDL_GetRendererInfo(d->base.render, &info);
+        isOpenGLRenderer_ = !iCmpStr(info.name, "opengl");
+        printf("[window] renderer: %s%s\n",
+               info.name,
+               info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
+#if !defined(NDEBUG)
+        printf("[window] max texture size: %d x %d\n",
+               info.max_texture_width,
+               info.max_texture_height);
+        for (size_t i = 0; i < info.num_texture_formats; ++i) {
+            printf("[window] supported texture format: %s\n",
+                   SDL_GetPixelFormatName(info.texture_formats[i]));
+        }
+#endif
+    }
+#if defined(iPlatformMsys)
+    SDL_SetWindowMinimumSize(d->win, minSize.x * d->base.displayScale, minSize.y * d->base.displayScale);
+    useExecutableIconResource_SDLWindow(d->base.win);
 #endif
 #if defined (iPlatformLinux)
-    SDL_SetWindowMinimumSize(d->win, minSize.x * d->pixelRatio, minSize.y * d->pixelRatio);
+    SDL_SetWindowMinimumSize(d->win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
     /* Load the window icon. */ {
         SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, 0);
         SDL_SetWindowIcon(d->win, surf);
@@ -487,18 +512,14 @@ void init_Window(iWindow *d, iRect rect) {
 #if defined (iPlatformAppleMobile)
     setupWindow_iOS(d);
 #endif
-    d->presentTime = 0.0;
-    d->frameTime = SDL_GetTicks();
-    d->loadAnimTimer = 0;
-    init_Text(d->render);
-    SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);
-    setupUserInterface_Window(d);
+    init_Text(d->base.render);
+    SDL_GetRendererOutputSize(d->base.render, &d->base.size.x, &d->base.size.y);    
+    setupUserInterface_MainWindow(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
-    //updateSize_Window_(d, iFalse);
     /* Load the border shadow texture. */ {
         SDL_Surface *surf = loadImage_(&imageShadow_Embedded, 0);
-        d->borderShadow = SDL_CreateTextureFromSurface(d->render, surf);
-        SDL_SetTextureBlendMode(d->borderShadow, SDL_BLENDMODE_BLEND);
+        d->base.borderShadow = SDL_CreateTextureFromSurface(d->base.render, surf);
+        SDL_SetTextureBlendMode(d->base.borderShadow, SDL_BLENDMODE_BLEND);
         free(surf->pixels);
         SDL_FreeSurface(surf);
     }
@@ -508,7 +529,7 @@ void init_Window(iWindow *d, iRect rect) {
     if (prefs_App()->customFrame) {
         SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, appIconSize_Root());
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-        d->appIcon = SDL_CreateTextureFromSurface(d->render, surf);
+        d->appIcon = SDL_CreateTextureFromSurface(d->base.render, surf);
         free(surf->pixels);
         SDL_FreeSurface(surf);
         /* We need to observe non-client-area events. */
@@ -517,7 +538,7 @@ void init_Window(iWindow *d, iRect rect) {
 #endif
 }
 
-void deinit_Window(iWindow *d) {
+static void deinitRoots_Window_(iWindow *d) {
     iRecycle();
     iForIndices(i, d->roots) {
         if (d->roots[i]) {
@@ -525,19 +546,17 @@ void deinit_Window(iWindow *d) {
             deinit_Root(d->roots[i]);
         }
     }
-    if (theWindow_ == d) {
+    setCurrent_Root(NULL);
+}
+
+void deinit_MainWindow(iMainWindow *d) {
+    deinitRoots_Window_(as_Window(d));
+    if (theWindow_ == as_Window(d)) {
         theWindow_ = NULL;
     }
-    setCurrent_Root(NULL);
     delete_String(d->pendingSplitUrl);
     deinit_Text();
-    SDL_DestroyRenderer(d->render);
-    SDL_DestroyWindow(d->win);
-    iForIndices(i, d->cursors) {
-        if (d->cursors[i]) {
-            SDL_FreeCursor(d->cursors[i]);
-        }
-    }
+    deinit_Window(&d->base);
 }
 
 SDL_Renderer *renderer_Window(const iWindow *d) {
@@ -550,8 +569,8 @@ iInt2 maxTextureSize_Window(const iWindow *d) {
     return init_I2(info.max_texture_width, info.max_texture_height);
 }
 
-iBool isFullscreen_Window(const iWindow *d) {
-    return snap_Window(d) == fullscreen_WindowSnap;
+iBool isFullscreen_MainWindow(const iMainWindow *d) {
+    return snap_MainWindow(d) == fullscreen_WindowSnap;
 }
 
 iRoot *findRoot_Window(const iWindow *d, const iWidget *widget) {
@@ -570,36 +589,41 @@ iRoot *otherRoot_Window(const iWindow *d, iRoot *root) {
     return root == d->roots[0] && d->roots[1] ? d->roots[1] : d->roots[0];
 }
 
-static void invalidate_Window_(iWindow *d, iBool forced) {
-    if (d && (!d->isInvalidated || forced)) {
-        d->isInvalidated = iTrue;
+static void invalidate_MainWindow_(iMainWindow *d, iBool forced) {
+    if (d && (!d->base.isInvalidated || forced)) {
+        d->base.isInvalidated = iTrue;
         resetFonts_Text();
         postCommand_App("theme.changed auto:1"); /* forces UI invalidation */
     }
 }
 
-void invalidate_Window(iWindow *d) {
-    invalidate_Window_(d, iFalse);
+void invalidate_Window(iAnyWindow *d) {
+    if (type_Window(d) == main_WindowType) {
+        invalidate_MainWindow_(as_MainWindow(d), iFalse);
+    }
+    else {
+        iAssert(type_Window(d) == main_WindowType);
+    }
 }
 
-static iBool isNormalPlacement_Window_(const iWindow *d) {
-    if (d->isDrawFrozen) return iFalse;
+static iBool isNormalPlacement_MainWindow_(const iMainWindow *d) {
+    if (d->base.isDrawFrozen) return iFalse;
 #if defined (iPlatformApple)
     /* Maximized mode is not special on macOS. */
-    if (snap_Window(d) == maximized_WindowSnap) {
+    if (snap_MainWindow(d) == maximized_WindowSnap) {
         return iTrue;
     }
 #endif
-    if (snap_Window(d)) return iFalse;
-    return !(SDL_GetWindowFlags(d->win) & SDL_WINDOW_MINIMIZED);
+    if (snap_MainWindow(d)) return iFalse;
+    return !(SDL_GetWindowFlags(d->base.win) & SDL_WINDOW_MINIMIZED);
 }
 
-static iBool unsnap_Window_(iWindow *d, const iInt2 *newPos) {
+static iBool unsnap_MainWindow_(iMainWindow *d, const iInt2 *newPos) {
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     if (!prefs_App()->customFrame) {
         return iFalse;
     }
-    const int snap = snap_Window(d);
+    const int snap = snap_MainWindow(d);
     if (snap == yMaximized_WindowSnap || snap == left_WindowSnap || snap == right_WindowSnap) {
         if (!newPos || (d->place.lastHit == SDL_HITTEST_RESIZE_LEFT ||
                         d->place.lastHit == SDL_HITTEST_RESIZE_RIGHT)) {
@@ -607,21 +631,21 @@ static iBool unsnap_Window_(iWindow *d, const iInt2 *newPos) {
         }
         if (newPos) {
             SDL_Rect usable;
-            SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
+            SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->base.win), &usable);
             /* Snap to top. */
             if (snap == yMaximized_WindowSnap &&
                 iAbs(newPos->y - usable.y) < lineHeight_Text(uiContent_FontId) * 2) {
-                setSnap_Window(d, redo_WindowSnap | yMaximized_WindowSnap);
+                setSnap_MainWindow(d, redo_WindowSnap | yMaximized_WindowSnap);
                 return iFalse;
             }
         }
     }
     if (snap && snap != fullscreen_WindowSnap) {
-        if (snap_Window(d) == yMaximized_WindowSnap && newPos) {
+        if (snap_MainWindow(d) == yMaximized_WindowSnap && newPos) {
             d->place.normalRect.pos = *newPos;
         }
         //printf("unsnap\n"); fflush(stdout);
-        setSnap_Window(d, none_WindowSnap);
+        setSnap_MainWindow(d, none_WindowSnap);
         return iTrue;
     }
 #endif
@@ -652,109 +676,110 @@ static void checkPixelRatioChange_Window_(iWindow *d) {
     }
 }
 
-static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
+static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
-#if defined (iPlatformDesktop)
+#if defined(iPlatformDesktop)
         case SDL_WINDOWEVENT_EXPOSED:
-            if (!d->isExposed) {
-                drawBlank_Window_(d); /* avoid showing system-provided contents */
-                d->isExposed = iTrue;
+            if (!d->base.isExposed) {
+                drawBlank_Window_(as_Window(d)); /* avoid showing system-provided contents */
+                d->base.isExposed = iTrue;
             }
             /* Since we are manually controlling when to redraw the window, we are responsible
-               for ensuring that window contents get redrawn after expose events. Under certain
-               circumstances (e.g., under openbox), not doing this would mean that the window
-               is missing contents until other events trigger a refresh. */
+                   for ensuring that window contents get redrawn after expose events. Under certain
+                   circumstances (e.g., under openbox), not doing this would mean that the window
+                   is missing contents until other events trigger a refresh. */
             postRefresh_App();
-#if defined (LAGRANGE_ENABLE_WINDOWPOS_FIX)
+#if defined(LAGRANGE_ENABLE_WINDOWPOS_FIX)
             if (d->place.initialPos.x >= 0) {
                 int bx, by;
                 SDL_GetWindowBordersSize(d->win, &by, &bx, NULL, NULL);
-                SDL_SetWindowPosition(d->win, d->place.initialPos.x + bx, d->place.initialPos.y + by);
+                SDL_SetWindowPosition(
+                    d->win, d->place.initialPos.x + bx, d->place.initialPos.y + by);
                 d->place.initialPos = init1_I2(-1);
             }
 #endif
             return iFalse;
         case SDL_WINDOWEVENT_MOVED: {
-            if (d->isMinimized) {
+            if (d->base.isMinimized) {
                 return iFalse;
             }
-            checkPixelRatioChange_Window_(d);
+            checkPixelRatioChange_Window_(as_Window(d));
             const iInt2 newPos = init_I2(ev->data1, ev->data2);
             if (isEqual_I2(newPos, init1_I2(-32000))) { /* magic! */
                 /* Maybe minimized? Seems like a Windows constant of some kind. */
-                d->isMinimized = iTrue;
+                d->base.isMinimized = iTrue;
                 return iFalse;
             }
-#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
+#if defined(LAGRANGE_ENABLE_CUSTOM_FRAME)
             /* Set the snap position depending on where the mouse cursor is. */
             if (prefs_App()->customFrame) {
                 SDL_Rect usable;
-                iInt2 mouse = cursor_Win32(); /* SDL is unaware of the current cursor pos */
-                SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
-                const iBool isTop = iAbs(mouse.y - usable.y) < gap_UI * 20;
+                iInt2    mouse = cursor_Win32(); /* SDL is unaware of the current cursor pos */
+                SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->base.win), &usable);
+                const iBool isTop    = iAbs(mouse.y - usable.y) < gap_UI * 20;
                 const iBool isBottom = iAbs(usable.y + usable.h - mouse.y) < gap_UI * 20;
                 if (iAbs(mouse.x - usable.x) < gap_UI) {
-                    setSnap_Window(d,
-                                   redo_WindowSnap | left_WindowSnap |
-                                       (isTop ? topBit_WindowSnap : 0) |
-                                       (isBottom ? bottomBit_WindowSnap : 0));
+                    setSnap_MainWindow(d,
+                                       redo_WindowSnap | left_WindowSnap |
+                                           (isTop ? topBit_WindowSnap : 0) |
+                                           (isBottom ? bottomBit_WindowSnap : 0));
                     return iTrue;
                 }
                 if (iAbs(mouse.x - usable.x - usable.w) < gap_UI) {
-                    setSnap_Window(d,
-                                   redo_WindowSnap | right_WindowSnap |
-                                       (isTop ? topBit_WindowSnap : 0) |
-                                       (isBottom ? bottomBit_WindowSnap : 0));
+                    setSnap_MainWindow(d,
+                                       redo_WindowSnap | right_WindowSnap |
+                                           (isTop ? topBit_WindowSnap : 0) |
+                                           (isBottom ? bottomBit_WindowSnap : 0));
                     return iTrue;
                 }
                 if (iAbs(mouse.y - usable.y) < 2) {
-                    setSnap_Window(d,
-                                   redo_WindowSnap | (d->place.lastHit == SDL_HITTEST_RESIZE_TOP
-                                                          ? yMaximized_WindowSnap
-                                                          : maximized_WindowSnap));
+                    setSnap_MainWindow(d,
+                                       redo_WindowSnap | (d->place.lastHit == SDL_HITTEST_RESIZE_TOP
+                                                              ? yMaximized_WindowSnap
+                                                              : maximized_WindowSnap));
                     return iTrue;
                 }
             }
 #endif /* defined LAGRANGE_ENABLE_CUSTOM_FRAME */
-            if (unsnap_Window_(d, &newPos)) {
+            if (unsnap_MainWindow_(d, &newPos)) {
                 return iTrue;
             }
-            if (isNormalPlacement_Window_(d)) {
+            if (isNormalPlacement_MainWindow_(d)) {
                 d->place.normalRect.pos = newPos;
-                //printf("normal rect set (move)\n"); fflush(stdout);
+                // printf("normal rect set (move)\n"); fflush(stdout);
                 iInt2 border = zero_I2();
-#if !defined (iPlatformApple)
+#if !defined(iPlatformApple)
                 SDL_GetWindowBordersSize(d->win, &border.y, &border.x, NULL, NULL);
 #endif
-                d->place.normalRect.pos = max_I2(zero_I2(), sub_I2(d->place.normalRect.pos, border));
+                d->place.normalRect.pos =
+                    max_I2(zero_I2(), sub_I2(d->place.normalRect.pos, border));
             }
             return iTrue;
         }
         case SDL_WINDOWEVENT_RESIZED:
-            if (d->isMinimized) {
-                //updateSize_Window_(d, iTrue);
+            if (d->base.isMinimized) {
+                // updateSize_Window_(d, iTrue);
                 return iTrue;
             }
-            if (unsnap_Window_(d, NULL)) {
+            if (unsnap_MainWindow_(d, NULL)) {
                 return iTrue;
             }
-            if (isNormalPlacement_Window_(d)) {
+            if (isNormalPlacement_MainWindow_(d)) {
                 d->place.normalRect.size = init_I2(ev->data1, ev->data2);
-                //printf("normal rect set (resize)\n"); fflush(stdout);
+                // printf("normal rect set (resize)\n"); fflush(stdout);
             }
-            checkPixelRatioChange_Window_(d);
-            //updateSize_Window_(d, iTrue /* we were already redrawing during the resize */);
+            checkPixelRatioChange_Window_(as_Window(d));
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
         case SDL_WINDOWEVENT_SHOWN:
-            updateSize_Window_(d, iTrue);
-            invalidate_Window_(d, iTrue);
-            d->isMinimized = iFalse;
+            updateSize_MainWindow_(d, iTrue);
+            invalidate_MainWindow_(d, iTrue);
+            d->base.isMinimized = iFalse;
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_MINIMIZED:
-            d->isMinimized = iTrue;
+            d->base.isMinimized = iTrue;
             return iTrue;
 #else /* if defined (!iPlatformDesktop) */
         case SDL_WINDOWEVENT_RESIZED:
@@ -765,19 +790,19 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
 #endif
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
-            d->isMouseInside = iFalse;
+            d->base.isMouseInside = iFalse;
             postCommand_App("window.mouse.exited");
             return iTrue;
         case SDL_WINDOWEVENT_ENTER:
-            d->isMouseInside = iTrue;
+            d->base.isMouseInside = iTrue;
             postCommand_App("window.mouse.entered");
             return iTrue;
         case SDL_WINDOWEVENT_FOCUS_GAINED:
-            d->focusGainedAt = SDL_GetTicks();
+            d->base.focusGainedAt = SDL_GetTicks();
             setCapsLockDown_Keys(iFalse);
             postCommand_App("window.focus.gained");
-            d->isExposed = iTrue;
-#if !defined (iPlatformDesktop)
+            d->base.isExposed = iTrue;
+#if !defined(iPlatformDesktop)
             /* Returned to foreground, may have lost buffered content. */
             invalidate_Window_(d, iTrue);
             postCommand_App("window.unfreeze");
@@ -785,12 +810,12 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iFalse;
         case SDL_WINDOWEVENT_FOCUS_LOST:
             postCommand_App("window.focus.lost");
-#if !defined (iPlatformDesktop)
+#if !defined(iPlatformDesktop)
             setFreezeDraw_Window(d, iTrue);
 #endif
             return iFalse;
         case SDL_WINDOWEVENT_TAKE_FOCUS:
-            SDL_SetWindowInputFocus(d->win);
+            SDL_SetWindowInputFocus(d->base.win);
             postRefresh_App();
             return iTrue;
         default:
@@ -806,7 +831,8 @@ static void applyCursor_Window_(iWindow *d) {
     }
 }
 
-iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
+iBool processEvent_MainWindow(iMainWindow *d, const SDL_Event *ev) {
+    iWindow *w = as_Window(d);
     switch (ev->type) {
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         case SDL_SYSWMEVENT: {
@@ -819,19 +845,19 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
 #endif
         case SDL_WINDOWEVENT: {
-            return handleWindowEvent_Window_(d, &ev->window);
+            return handleWindowEvent_MainWindow_(d, &ev->window);
         }
         case SDL_RENDER_TARGETS_RESET:
         case SDL_RENDER_DEVICE_RESET: {
-            invalidate_Window_(d, iTrue /* force full reset */);
+            invalidate_MainWindow_(d, iTrue /* force full reset */);
             break;
         }
         default: {
             SDL_Event event = *ev;
             if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze")) {
-                d->isDrawFrozen = iFalse;
-                if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
-                    SDL_ShowWindow(d->win);
+                d->base.isDrawFrozen = iFalse;
+                if (SDL_GetWindowFlags(w->win) & SDL_WINDOW_HIDDEN) {
+                    SDL_ShowWindow(w->win);
                 }
                 postRefresh_App();
                 postCommand_App("media.player.update"); /* in case a player needs updating */
@@ -840,35 +866,35 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (processEvent_Touch(&event)) {
                 return iTrue;
             }
-            if (event.type == SDL_KEYDOWN && SDL_GetTicks() - d->focusGainedAt < 10) {
+            if (event.type == SDL_KEYDOWN && SDL_GetTicks() - d->base.focusGainedAt < 10) {
                 /* Suspiciously close to when input focus was received. For example under openbox,
                    closing xterm with Ctrl+D will cause the keydown event to "spill" over to us.
                    As a workaround, ignore these events. */
                 return iTrue; /* won't go to bindings, either */
             }
-            if (event.type == SDL_MOUSEBUTTONDOWN && d->ignoreClick) {
-                d->ignoreClick = iFalse;
+            if (event.type == SDL_MOUSEBUTTONDOWN && d->base.ignoreClick) {
+                d->base.ignoreClick = iFalse;
                 return iTrue;
             }
             /* Map mouse pointer coordinate to our coordinate system. */
             if (event.type == SDL_MOUSEMOTION) {
-                setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW); /* default cursor */
-                const iInt2 pos = coord_Window(d, event.motion.x, event.motion.y);
+                setCursor_Window(w, SDL_SYSTEM_CURSOR_ARROW); /* default cursor */
+                const iInt2 pos = coord_Window(w, event.motion.x, event.motion.y);
                 event.motion.x = pos.x;
                 event.motion.y = pos.y;
             }
             else if (event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN) {
-                const iInt2 pos = coord_Window(d, event.button.x, event.button.y);
+                const iInt2 pos = coord_Window(w, event.button.x, event.button.y);
                 event.button.x = pos.x;
                 event.button.y = pos.y;
                 if (event.type == SDL_MOUSEBUTTONDOWN) {
                     /* Button clicks will change keyroot. */
-                    if (numRoots_Window(d) > 1) {
+                    if (numRoots_Window(w) > 1) {
                         const iInt2 click = init_I2(event.button.x, event.button.y);
-                        iForIndices(i, d->roots) {
-                            iRoot *root = d->roots[i];
-                            if (root != d->keyRoot && contains_Rect(rect_Root(root), click)) {
-                                setKeyRoot_Window(d, root);
+                        iForIndices(i, w->roots) {
+                            iRoot *root = w->roots[i];
+                            if (root != w->keyRoot && contains_Rect(rect_Root(root), click)) {
+                                setKeyRoot_Window(w, root);
                                 break;
                             }
                         }
@@ -883,13 +909,13 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN) {
                 if (mouseGrab_Widget()) {
                     iWidget *grabbed = mouseGrab_Widget();
-                    setCurrent_Root(findRoot_Window(d, grabbed));
+                    setCurrent_Root(findRoot_Window(w, grabbed));
                     wasUsed = dispatchEvent_Widget(grabbed, &event);
                 }
             }
             /* Dispatch the event to the tree of widgets. */
             if (!wasUsed) {
-                wasUsed = dispatchEvent_Window(d, &event);
+                wasUsed = dispatchEvent_Window(w, &event);
             }
             if (!wasUsed) {
                 /* As a special case, clicking the middle mouse button can be used for pasting
@@ -902,17 +928,17 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     paste.key.keysym.mod = KMOD_PRIMARY;
                     paste.key.state      = SDL_PRESSED;
                     paste.key.timestamp  = SDL_GetTicks();
-                    wasUsed = dispatchEvent_Window(d, &paste);
+                    wasUsed = dispatchEvent_Window(w, &paste);
                 }
                 if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
-                    if (postContextClick_Window(d, &event.button)) {
+                    if (postContextClick_Window(w, &event.button)) {
                         wasUsed = iTrue;
                     }
                 }
             }
             if (isMetricsChange_UserEvent(&event)) {
-                iForIndices(i, d->roots) {
-                    updateMetrics_Root(d->roots[i]);
+                iForIndices(i, w->roots) {
+                    updateMetrics_Root(w->roots[i]);
                 }
             }
             if (isCommand_UserEvent(&event, "lang.changed")) {
@@ -921,16 +947,16 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 removeMacMenus_();
                 insertMacMenus_();
 #endif
-                invalidate_Window(d);
-                iForIndices(i, d->roots) {
-                    if (d->roots[i]) {
-                        updatePreferencesLayout_Widget(findChild_Widget(d->roots[i]->widget, "prefs"));
-                        arrange_Widget(d->roots[i]->widget);
+                invalidate_Window(w);
+                iForIndices(i, w->roots) {
+                    if (w->roots[i]) {
+                        updatePreferencesLayout_Widget(findChild_Widget(w->roots[i]->widget, "prefs"));
+                        arrange_Widget(w->roots[i]->widget);
                     }
                 }
             }
             if (event.type == SDL_MOUSEMOTION) {
-                applyCursor_Window_(d);
+                applyCursor_Window_(w);
             }
             return wasUsed;
         }
@@ -1018,25 +1044,26 @@ iBool postContextClick_Window(iWindow *d, const SDL_MouseButtonEvent *ev) {
     return iFalse;
 }
 
-void draw_Window(iWindow *d) {
-    if (d->isDrawFrozen) {
+void draw_MainWindow(iMainWindow *d) {
+    iWindow *w = as_Window(d);
+    if (w->isDrawFrozen) {
         return;
     }
     /* Check if root needs resizing. */ {
         iInt2 renderSize;
-        SDL_GetRendererOutputSize(d->render, &renderSize.x, &renderSize.y);
-        if (!isEqual_I2(renderSize, d->size)) {
-            updateSize_Window_(d, iTrue);
+        SDL_GetRendererOutputSize(w->render, &renderSize.x, &renderSize.y);
+        if (!isEqual_I2(renderSize, w->size)) {
+            updateSize_MainWindow_(d, iTrue);
             processEvents_App(postedEventsOnly_AppEventMode);
         }
     }
-    const int   winFlags = SDL_GetWindowFlags(d->win);
+    const int   winFlags = SDL_GetWindowFlags(d->base.win);
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
     iPaint p;
     init_Paint(&p);
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
-        setCurrent_Root(d->roots[0]);
+        setCurrent_Root(w->roots[0]);
 #if defined (iPlatformMobile)
         iColor back = get_Color(uiBackground_ColorId);
         if (deviceType_App() == phone_AppDeviceType) {
@@ -1050,16 +1077,16 @@ void draw_Window(iWindow *d) {
                                           : uiSeparator_ColorId);
 #endif
         unsetClip_Paint(&p); /* update clip to full window */
-        SDL_SetRenderDrawColor(d->render, back.r, back.g, back.b, 255);
-        SDL_RenderClear(d->render);
+        SDL_SetRenderDrawColor(w->render, back.r, back.g, back.b, 255);
+        SDL_RenderClear(w->render);
     }
     /* Draw widgets. */
-    d->frameTime = SDL_GetTicks();
-    if (isExposed_Window(d)) {
-        d->isInvalidated = iFalse;
+    w->frameTime = SDL_GetTicks();
+    if (isExposed_Window(w)) {
+        w->isInvalidated = iFalse;
         extern int drawCount_;
-        iForIndices(i, d->roots) {
-            iRoot *root = d->roots[i];
+        iForIndices(i, w->roots) {
+            iRoot *root = w->roots[i];
             if (root) {
                 setCurrent_Root(root);
                 unsetClip_Paint(&p); /* update clip to current root */
@@ -1076,14 +1103,14 @@ void draw_Window(iWindow *d) {
                     SDL_SetTextureColorMod(d->appIcon, iconColor.r, iconColor.g, iconColor.b);
                     SDL_SetTextureAlphaMod(d->appIcon, gotFocus || !isLight ? 255 : 92);
                     SDL_RenderCopy(
-                        d->render,
+                        w->render,
                         d->appIcon,
                         NULL,
                         &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
                 }
 #endif
                 /* Root separator and keyboard focus indicator. */
-                if (numRoots_Window(d) > 1){
+                if (numRoots_Window(w) > 1){
                     const iRect bounds = bounds_Widget(root->widget);
                     if (i == 1) {
                         fillRect_Paint(&p, (iRect){
@@ -1091,7 +1118,7 @@ void draw_Window(iWindow *d) {
                             init_I2(gap_UI / 4, height_Rect(bounds))
                         }, uiSeparator_ColorId);
                     }
-                    if (root == d->keyRoot) {
+                    if (root == w->keyRoot) {
                         const iBool isDark = isDark_ColorTheme(colorTheme_App());
                         fillRect_Paint(&p, (iRect){
                             topLeft_Rect(bounds),
@@ -1104,7 +1131,7 @@ void draw_Window(iWindow *d) {
         }
         setCurrent_Root(NULL);
 #if !defined (NDEBUG)
-        draw_Text(defaultBold_FontId, safeRect_Root(d->roots[0]).pos, red_ColorId, "%d", drawCount_);
+        draw_Text(defaultBold_FontId, safeRect_Root(w->roots[0]).pos, red_ColorId, "%d", drawCount_);
         drawCount_ = 0;
 #endif
     }
@@ -1116,21 +1143,21 @@ void draw_Window(iWindow *d) {
         SDL_RenderCopy(d->render, glyphCache_Text(), NULL, &rect);
     }
 #endif
-    SDL_RenderPresent(d->render);
+    SDL_RenderPresent(w->render);
 }
 
-void resize_Window(iWindow *d, int w, int h) {
+void resize_MainWindow(iMainWindow *d, int w, int h) {
     if (w > 0 && h > 0) {
-        SDL_SetWindowSize(d->win, w, h);
-        updateSize_Window_(d, iFalse);
+        SDL_SetWindowSize(d->base.win, w, h);
+        updateSize_MainWindow_(d, iFalse);
     }
     else {
-        updateSize_Window_(d, iTrue); /* notify always */
+        updateSize_MainWindow_(d, iTrue); /* notify always */
     }
 }
 
-void setTitle_Window(iWindow *d, const iString *title) {
-    SDL_SetWindowTitle(d->win, cstr_String(title));
+void setTitle_MainWindow(iMainWindow *d, const iString *title) {
+    SDL_SetWindowTitle(d->base.win, cstr_String(title));
     iLabelWidget *bar = findChild_Widget(get_Root()->widget, "winbar.title");
     if (bar) {
         updateText_LabelWidget(bar, title);
@@ -1204,11 +1231,15 @@ iWindow *get_Window(void) {
     return theWindow_;
 }
 
+iMainWindow *get_MainWindow(void) {
+    return as_MainWindow(theWindow_);
+}
+
 iBool isOpenGLRenderer_Window(void) {
     return isOpenGLRenderer_;
 }
 
-void setKeyboardHeight_Window(iWindow *d, int height) {
+void setKeyboardHeight_MainWindow(iMainWindow *d, int height) {
     if (d->keyboardHeight != height) {
         d->keyboardHeight = height;
         postCommandf_App("keyboard.changed arg:%d", height);
@@ -1216,47 +1247,49 @@ void setKeyboardHeight_Window(iWindow *d, int height) {
     }
 }
 
-void checkPendingSplit_Window(iWindow *d) {
+void checkPendingSplit_MainWindow(iMainWindow *d) {
     if (d->splitMode != d->pendingSplitMode) {
-        setSplitMode_Window(d, d->pendingSplitMode);
+        setSplitMode_MainWindow(d, d->pendingSplitMode);
     }
 }
 
-void swapRoots_Window(iWindow *d) {
-    if (numRoots_Window(d) == 2) {
-        iSwap(iRoot *, d->roots[0], d->roots[1]);
-        updateSize_Window_(d, iTrue);
+void swapRoots_MainWindow(iMainWindow *d) {
+    iWindow *w = as_Window(d);
+    if (numRoots_Window(w) == 2) {
+        iSwap(iRoot *, w->roots[0], w->roots[1]);
+        updateSize_MainWindow_(d, iTrue);
     }
 }
 
-void setSplitMode_Window(iWindow *d, int splitFlags) {
+void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
     const int splitMode = splitFlags & mode_WindowSplit;
     if (deviceType_App() == phone_AppDeviceType) {
         /* There isn't enough room on the phone. */
         /* TODO: Maybe in landscape only? */
         return;
     }
+    iWindow *w = as_Window(d);
     iAssert(current_Root() == NULL);
     if (d->splitMode != splitMode) {
-        int oldCount = numRoots_Window(d);
-        setFreezeDraw_Window(d, iTrue);
+        int oldCount = numRoots_Window(w);
+        setFreezeDraw_Window(w, iTrue);
         if (oldCount == 2 && splitMode == 0) {
             /* Keep references to the tabs of the second root. */
-            const iDocumentWidget *curPage = document_Root(d->keyRoot);
+            const iDocumentWidget *curPage = document_Root(w->keyRoot);
             if (!curPage) {
                 /* All tabs closed on that side. */
-                curPage = document_Root(otherRoot_Window(d, d->keyRoot));
+                curPage = document_Root(otherRoot_Window(w, w->keyRoot));
             }
-            iObjectList *tabs = listDocuments_App(d->roots[1]);
+            iObjectList *tabs = listDocuments_App(w->roots[1]);
             iForEach(ObjectList, i, tabs) {
-                setRoot_Widget(i.object, d->roots[0]);
+                setRoot_Widget(i.object, w->roots[0]);
             }
             setFocus_Widget(NULL);
-            delete_Root(d->roots[1]);
-            d->roots[1] = NULL;
-            d->keyRoot = d->roots[0];
+            delete_Root(w->roots[1]);
+            w->roots[1] = NULL;
+            w->keyRoot = w->roots[0];
             /* Move the deleted root's tabs to the first root. */
-            setCurrent_Root(d->roots[0]);
+            setCurrent_Root(w->roots[0]);
             iWidget *docTabs = findWidget_Root("doctabs");
             iForEach(ObjectList, j, tabs) {
                 appendTabPage_Widget(docTabs, j.object, "", 0, 0);
@@ -1268,38 +1301,38 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
         }
         else if (splitMode && oldCount == 1) {
             /* Add a second root. */
-            iDocumentWidget *moved = document_Root(d->roots[0]);
-            iAssert(d->roots[1] == NULL);
+            iDocumentWidget *moved = document_Root(w->roots[0]);
+            iAssert(w->roots[1] == NULL);
             const iBool addToLeft = (prefs_App()->pinSplit == 2);
             size_t newRootIndex = 1;
             if (addToLeft) {
-                iSwap(iRoot *, d->roots[0], d->roots[1]);
+                iSwap(iRoot *, w->roots[0], w->roots[1]);
                 newRootIndex = 0;
             }
-            d->roots[newRootIndex] = new_Root();
-            d->keyRoot             = d->roots[newRootIndex];
-            setCurrent_Root(d->roots[newRootIndex]);
-            createUserInterface_Root(d->roots[newRootIndex]);
+            w->roots[newRootIndex] = new_Root();
+            w->keyRoot             = w->roots[newRootIndex];
+            setCurrent_Root(w->roots[newRootIndex]);
+            createUserInterface_Root(w->roots[newRootIndex]);
             if (!isEmpty_String(d->pendingSplitUrl)) {
-                postCommandf_Root(d->roots[newRootIndex], "open url:%s",
+                postCommandf_Root(w->roots[newRootIndex], "open url:%s",
                                   cstr_String(d->pendingSplitUrl));
                 clear_String(d->pendingSplitUrl);
             }
             else if (~splitFlags & noEvents_WindowSplit) {
-                iWidget *docTabs0 = findChild_Widget(d->roots[newRootIndex ^ 1]->widget, "doctabs");
-                iWidget *docTabs1 = findChild_Widget(d->roots[newRootIndex]->widget, "doctabs");
+                iWidget *docTabs0 = findChild_Widget(w->roots[newRootIndex ^ 1]->widget, "doctabs");
+                iWidget *docTabs1 = findChild_Widget(w->roots[newRootIndex]->widget, "doctabs");
                 /* If the old root has multiple tabs, move the current one to the new split. */
                 if (tabCount_Widget(docTabs0) >= 2) {
                     int movedIndex = tabPageIndex_Widget(docTabs0, moved);
                     removeTabPage_Widget(docTabs0, movedIndex);
                     showTabPage_Widget(docTabs0, tabPage_Widget(docTabs0, iMax(movedIndex - 1, 0)));
                     iRelease(removeTabPage_Widget(docTabs1, 0)); /* delete the default tab */
-                    setRoot_Widget(as_Widget(moved), d->roots[newRootIndex]);
+                    setRoot_Widget(as_Widget(moved), w->roots[newRootIndex]);
                     prependTabPage_Widget(docTabs1, iClob(moved), "", 0, 0);
                     postCommandf_App("tabs.switch page:%p", moved);
                 }
                 else {
-                    postCommand_Root(d->roots[newRootIndex], "navigate.home");
+                    postCommand_Root(w->roots[newRootIndex], "navigate.home");
                 }
             }
             setCurrent_Root(NULL);
@@ -1328,26 +1361,26 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
         }
 #endif
         if (~splitFlags & noEvents_WindowSplit) {
-            updateSize_Window_(d, iTrue);
+            updateSize_MainWindow_(d, iTrue);
             postCommand_App("window.unfreeze");
         }
     }
 }
 
-void setSnap_Window(iWindow *d, int snapMode) {
+void setSnap_MainWindow(iMainWindow *d, int snapMode) {
     if (!prefs_App()->customFrame) {
         if (snapMode == maximized_WindowSnap) {
-            SDL_MaximizeWindow(d->win);
+            SDL_MaximizeWindow(d->base.win);
         }
         else if (snapMode == fullscreen_WindowSnap) {
-            SDL_SetWindowFullscreen(d->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            SDL_SetWindowFullscreen(d->base.win, SDL_WINDOW_FULLSCREEN_DESKTOP);
         }
         else {
-            if (snap_Window(d) == fullscreen_WindowSnap) {
-                SDL_SetWindowFullscreen(d->win, 0);
+            if (snap_MainWindow(d) == fullscreen_WindowSnap) {
+                SDL_SetWindowFullscreen(d->base.win, 0);
             }
             else {
-                SDL_RestoreWindow(d->win);
+                SDL_RestoreWindow(d->base.win);
             }
         }
         return;
@@ -1359,9 +1392,9 @@ void setSnap_Window(iWindow *d, int snapMode) {
     const int snapDist = gap_UI * 4;
     iRect newRect = zero_Rect();
     SDL_Rect usable;
-    SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
+    SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->base.win), &usable);
     if (d->place.snap == fullscreen_WindowSnap) {
-        SDL_SetWindowFullscreen(d->win, 0);
+        SDL_SetWindowFullscreen(d->base.win, 0);
     }
     d->place.snap = snapMode & ~redo_WindowSnap;
     switch (snapMode & mask_WindowSnap) {
@@ -1382,8 +1415,8 @@ void setSnap_Window(iWindow *d, int snapMode) {
         case yMaximized_WindowSnap:
             newRect.pos.y = 0;
             newRect.size.y = usable.h;
-            SDL_GetWindowSize(d->win, &newRect.size.x, NULL);
-            SDL_GetWindowPosition(d->win, &newRect.pos.x, NULL);
+            SDL_GetWindowSize(d->base.win, &newRect.size.x, NULL);
+            SDL_GetWindowPosition(d->base.win, &newRect.pos.x, NULL);
             /* Snap the window to left/right edges, if close by. */
             if (iAbs(right_Rect(newRect) - (usable.x + usable.w)) < snapDist) {
                 newRect.pos.x = usable.x + usable.w - width_Rect(newRect);
@@ -1393,7 +1426,7 @@ void setSnap_Window(iWindow *d, int snapMode) {
             }
             break;
         case fullscreen_WindowSnap:
-            SDL_SetWindowFullscreen(d->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            SDL_SetWindowFullscreen(d->base.win, SDL_WINDOW_FULLSCREEN_DESKTOP);
             break;
     }
     if (snapMode & (topBit_WindowSnap | bottomBit_WindowSnap)) {
@@ -1425,9 +1458,9 @@ void setSnap_Window(iWindow *d, int snapMode) {
 #endif /* defined (LAGRANGE_ENABLE_CUSTOM_FRAME) */
 }
 
-int snap_Window(const iWindow *d) {
+int snap_MainWindow(const iMainWindow *d) {
     if (!prefs_App()->customFrame) {
-        const int flags = SDL_GetWindowFlags(d->win);
+        const int flags = SDL_GetWindowFlags(d->base.win);
         if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) {
             return fullscreen_WindowSnap;
         }

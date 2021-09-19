@@ -152,6 +152,9 @@ void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color
     addv_I2(&inner.pos, origin_Paint);
     SDL_Renderer *render = renderer_Paint_(d);
     SDL_Texture *shadow = get_Window()->borderShadow;
+    if (!shadow) {
+        return;
+    }
     const iInt2 size = size_SDLTexture(shadow);
     const iRect outer = expanded_Rect(inner, init1_I2(thickness));
     const iColor clr = get_Color(color);

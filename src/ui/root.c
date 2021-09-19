@@ -383,18 +383,18 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     else if (equal_Command(cmd, "window.setrect")) {
         const int snap = argLabel_Command(cmd, "snap");
         if (snap) {
-            iWindow *window = get_Window();
+            iMainWindow *window = get_MainWindow();
             iInt2 coord = coord_Command(cmd);
             iInt2 size = init_I2(argLabel_Command(cmd, "width"),
                                  argLabel_Command(cmd, "height"));
-            SDL_SetWindowPosition(window->win, coord.x, coord.y);
-            SDL_SetWindowSize(window->win, size.x, size.y);
+            SDL_SetWindowPosition(window->base.win, coord.x, coord.y);
+            SDL_SetWindowSize(window->base.win, size.x, size.y);
             window->place.snap = snap;
             return iTrue;
         }
     }
     else if (equal_Command(cmd, "window.restore")) {
-        setSnap_Window(get_Window(), none_WindowSnap);
+        setSnap_MainWindow(get_MainWindow(), none_WindowSnap);
         return iTrue;
     }
     else if (equal_Command(cmd, "window.minimize")) {
@@ -1525,5 +1525,5 @@ iRect safeRect_Root(const iRoot *d) {
 }
 
 iInt2 visibleSize_Root(const iRoot *d) {
-    return addY_I2(size_Root(d), -get_Window()->keyboardHeight);
+    return addY_I2(size_Root(d), -get_MainWindow()->keyboardHeight);
 }

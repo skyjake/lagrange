@@ -934,7 +934,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         iString *text = collect_String(joinCStr_StringArray(title, " \u2014 "));
         if (setWindow) {
             /* Longest version for the window title, and omit the icon. */
-            setTitle_Window(get_Window(), text);
+            setTitle_MainWindow(get_MainWindow(), text);
             setWindow = iFalse;
         }
         const iChar siteIcon = siteIcon_GmDocument(d->doc);
