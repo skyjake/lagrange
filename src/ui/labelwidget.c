@@ -126,6 +126,11 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
         updateKey_LabelWidget_(d);
         return iFalse;
     }
+    else if (isCommand_Widget(w, ev, "focus.gained") ||
+             isCommand_Widget(w, ev, "focus.lost")) {
+        refresh_Widget(d);
+        return iFalse;
+    }
     if (!isEmpty_String(&d->command)) {
 #if 0 && defined (iPlatformAppleMobile)
         /* Touch allows activating any button on release. */
@@ -161,8 +166,15 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
         switch (ev->type) {
             case SDL_KEYDOWN: {
                 const int mods = ev->key.keysym.mod;
-                if (d->key && ev->key.keysym.sym == d->key && checkModifiers_(mods, d->kmods)) {
+                const int sym  = ev->key.keysym.sym;
+                if (d->key && sym == d->key && checkModifiers_(mods, d->kmods)) {
                     trigger_LabelWidget_(d);
+                    return iTrue;
+                }
+                if (isFocused_Widget(d) && mods == 0 &&
+                    (sym == SDLK_SPACE || sym == SDLK_RETURN || sym == SDLK_KP_ENTER)) {
+                    trigger_LabelWidget_(d);
+                    refresh_Widget(d);
                     return iTrue;
                 }
                 break;
@@ -179,6 +191,7 @@ static void keyStr_LabelWidget_(const iLabelWidget *d, iString *str) {
 static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2) {
     const iWidget *w           = constAs_Widget(d);
     const int64_t  flags       = flags_Widget(w);
+    const iBool    isFocus     = (flags & focusable_WidgetFlag && isFocused_Widget(d));
     const iBool    isPress     = (flags & pressed_WidgetFlag) != 0;
     const iBool    isSel       = (flags & selected_WidgetFlag) != 0;
     const iBool    isFrameless = (flags & frameless_WidgetFlag) != 0;
@@ -211,6 +224,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 *frame1 = *bg;
             }
         }
+    }
+    if (isFocus) {
+        *frame1 = *frame2 = uiInputFrameFocused_ColorId;
     }
     int colorEscape = none_ColorId;
     if (startsWith_String(&d->label, "\v")) {
@@ -295,7 +311,11 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     if (bg >= 0) {
         fillRect_Paint(&p, rect, isCaution && isHover ? uiMarked_ColorId : bg);
     }
-    if (~flags & frameless_WidgetFlag) {
+    if (isFocused_Widget(w)) {
+        iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
+        drawRectThickness_Paint(&p, frameRect, gap_UI / 4, frame);        
+    }
+    else if (~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
         if (isButton) {
             iInt2 points[] = {
@@ -312,8 +332,10 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             }
 #endif
             drawLines_Paint(&p, points + 2, 3, frame2);
-            drawLines_Paint(
-                &p, points, !isHover && d->flags.noTopFrame ? 2 : 3, frame);
+            drawLines_Paint(&p,
+                            points,
+                            isFocused_Widget(w) ? 3 : (!isHover && d->flags.noTopFrame ? 2 : 3),
+                            frame);
         }
     }
     setClip_Paint(&p, rect);
@@ -473,7 +495,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->key   = 0;
     d->kmods = 0;
     init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
-    setFlags_Widget(w, hover_WidgetFlag, d->click.button != 0);
+    setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, d->click.button != 0);
     updateSize_LabelWidget(d);
     updateKey_LabelWidget_(d); /* could be bound to another key */
 }

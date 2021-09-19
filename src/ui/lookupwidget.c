@@ -747,12 +747,19 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                     return iTrue;
             }
         }
-        if (isVisible_Widget(w) &&
-            key == SDLK_DOWN && !mods && focus_Widget() == findWidget_App("url") &&
-            numItems_ListWidget(d->list)) {
-            setCursor_LookupWidget_(d, 1); /* item 0 is always the first heading */
-            setFocus_Widget(w);
-            return iTrue;
+        /* Focus switching between URL bar and lookup results. */
+        if (isVisible_Widget(w)) {
+            if (((key == SDLK_DOWN && !mods) || key == SDLK_TAB) &&
+                focus_Widget() == findWidget_App("url") &&
+                numItems_ListWidget(d->list)) {
+                setCursor_LookupWidget_(d, 1); /* item 0 is always the first heading */
+                setFocus_Widget(w);
+                return iTrue;
+            }
+            else if (key == SDLK_TAB && isFocused_Widget(w)) {
+                setFocus_Widget(findWidget_App("url"));
+                return iTrue;
+            }
         }
     }
     return processEvent_Widget(w, ev);
