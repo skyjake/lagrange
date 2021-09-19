@@ -929,10 +929,6 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     }
                 }
             }
-//            if (oldHover != d->hover) {
-//                refresh_Widget(oldHover);
-//                refresh_Widget(d->hover);
-//            }
             if (event.type == SDL_MOUSEMOTION) {
                 applyCursor_Window_(d);
             }
