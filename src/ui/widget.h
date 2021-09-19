@@ -286,6 +286,18 @@ void    refresh_Widget              (const iAnyObject *);
 
 iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char *checkCommand);
 
+iDeclareType(WidgetScrollInfo)
+
+struct Impl_WidgetScrollInfo {
+    int   height; /* widget's height */
+    int   avail;  /* available height */
+    float normScroll;
+    int   thumbY; /* window coords */
+    int   thumbHeight;
+};
+
+void        scrollInfo_Widget           (const iWidget *, iWidgetScrollInfo *info);
+
 int         backgroundFadeColor_Widget  (void);
 
 void        setFocus_Widget         (iWidget *);
