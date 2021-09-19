@@ -172,7 +172,7 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
                     return iTrue;
                 }
                 if (isFocused_Widget(d) && mods == 0 &&
-                    (sym == SDLK_SPACE || sym == SDLK_RETURN || sym == SDLK_KP_ENTER)) {
+                    (sym == SDLK_RETURN || sym == SDLK_KP_ENTER)) {
                     trigger_LabelWidget_(d);
                     refresh_Widget(d);
                     return iTrue;
