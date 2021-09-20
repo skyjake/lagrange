@@ -226,7 +226,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         }
     }
     if (isFocus) {
-        *frame1 = *frame2 = uiInputFrameFocused_ColorId;
+        *frame1 = *frame2 = (isSel ? uiText_ColorId : uiInputFrameFocused_ColorId);
     }
     int colorEscape = none_ColorId;
     if (startsWith_String(&d->label, "\v")) {
