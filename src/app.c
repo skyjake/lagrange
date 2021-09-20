@@ -762,7 +762,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     mulfv_I2(&d->initialWindowRect.size, desktopDPI_Win32());
 #endif
 #if defined (iPlatformLinux)
-    /* Scale by the primary (?) monitor DPI. */ 
+    /* Scale by the primary (?) monitor DPI. */
     if (isRunningUnderWindowSystem_App()) {
         float vdpi;
         SDL_GetDisplayDPI(0, NULL, NULL, &vdpi);
@@ -1061,7 +1061,7 @@ void trimMemory_App(void) {
             init_ObjectListIterator(&i, docs);
         }
     }
-    iRelease(docs);    
+    iRelease(docs);
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
@@ -1249,7 +1249,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                     else if (ev.type == SDL_MOUSEMOTION) {
                         if (~ev.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-                            continue; /* only when pressing a button */    
+                            continue; /* only when pressing a button */
                         }
                         const float xf = (d->window->pixelRatio * ev.motion.x) / (float) d->window->size.x;
                         const float yf = (d->window->pixelRatio * ev.motion.y) / (float) d->window->size.y;
@@ -1263,7 +1263,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         ev.tfinger.fingerId = 0x1234;
                         ev.tfinger.pressure = 1.0f;
                         ev.tfinger.timestamp = SDL_GetTicks();
-                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;                        
+                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;
                     }
                 }
 #endif
@@ -1307,7 +1307,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                                 if (root) {
                                     arrange_Widget(root->widget);
                                 }
-                            }                            
+                            }
                         }
                     }
                     if (!wasUsed) {
@@ -1374,11 +1374,11 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
     if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
         const SDL_WindowEvent *winev = &event->window;
 #if defined (iPlatformMsys)
-        resetFonts_Text(); {
+        resetFonts_Text(text_Window(d->window)); {
             SDL_Event u = { .type = SDL_USEREVENT };
             u.user.code = command_UserEventCode;
             u.user.data1 = strdup("theme.changed auto:1");
-            dispatchEvent_Window(d->window, &u);
+            dispatchEvent_Window(as_Window(d->window), &u);
         }
 #endif
         drawWhileResizing_MainWindow(d->window, winev->data1, winev->data2);
@@ -1420,7 +1420,7 @@ void refresh_App(void) {
 #endif
     const iPtrArray *windows = listWindows_App_(d);
     /* Destroy pending widgets. */ {
-        iConstForEach(PtrArray, j, windows) { 
+        iConstForEach(PtrArray, j, windows) {
             iWindow *win = j.ptr;
             setCurrent_Window(win);
             iForIndices(i, win->roots) {
@@ -1449,7 +1449,7 @@ void refresh_App(void) {
                     break;
                 default:
                     draw_Window(win);
-                    break;        
+                    break;
             }
         }
     }
@@ -1807,7 +1807,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         updateFontButton_(findChild_Widget(d, "prefs.headingfont"), arg_Command(cmd));
         return iFalse;
     }
-    else if (startsWith_CStr(cmd, "input.ended id:prefs.linespacing")) {    
+    else if (startsWith_CStr(cmd, "input.ended id:prefs.linespacing")) {
         /* Apply line spacing changes immediately. */
         const iInputWidget *lineSpacing = findWidget_App("prefs.linespacing");
         postCommandf_App("linespacing.set arg:%f", toFloat_String(text_InputWidget(lineSpacing)));
@@ -1895,7 +1895,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
         }
         setFlags_Widget(pointer_Command(cmd), disabled_WidgetFlag, iTrue);
         arrange_Widget(dlg);
-        refresh_Widget(dlg);        
+        refresh_Widget(dlg);
         return iTrue;
     }
     if (equal_Command(cmd, "ident.scope")) {
@@ -2027,7 +2027,7 @@ const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
 static void resetFonts_App_(iApp *d) {
     iConstForEach(PtrArray, win, listWindows_App_(d)) {
         resetFonts_Text(text_Window(win.ptr));
-    }    
+    }
 }
 
 iBool handleCommand_App(const char *cmd) {
@@ -2875,7 +2875,7 @@ iBool handleCommand_App(const char *cmd) {
         write_Ipc(argLabel_Command(cmd, "pid"),
                   collectNewFormat_String("%s\n", cstr_String(url_DocumentWidget(document_App()))),
                   response_IpcWrite);
-        return iTrue;        
+        return iTrue;
     }
     else if (equal_Command(cmd, "ipc.signal")) {
         if (argLabel_Command(cmd, "raise")) {

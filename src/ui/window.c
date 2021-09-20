@@ -240,7 +240,7 @@ static void updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
 }
 
 void drawWhileResizing_MainWindow(iMainWindow *d, int w, int h) {
-    draw_MainWindow(d);        
+    draw_MainWindow(d);
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
@@ -438,7 +438,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
-    SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);    
+    SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);
     drawBlank_Window_(d);
     d->pixelRatio   = pixelRatio_Window_(d); /* point/pixel conversion */
     d->displayScale = displayScale_Window_(d);
@@ -472,7 +472,7 @@ void deinit_Window(iWindow *d) {
         if (d->cursors[i]) {
             SDL_FreeCursor(d->cursors[i]);
         }
-    }    
+    }
 }
 
 void init_MainWindow(iMainWindow *d, iRect rect) {
@@ -522,7 +522,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #endif
     }
 #if defined(iPlatformMsys)
-    SDL_SetWindowMinimumSize(d->win, minSize.x * d->base.displayScale, minSize.y * d->base.displayScale);
+    SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.displayScale, minSize.y * d->base.displayScale);
     useExecutableIconResource_SDLWindow(d->base.win);
 #endif
 #if defined (iPlatformLinux)
@@ -538,7 +538,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     setupWindow_iOS(as_Window(d));
 #endif
     setCurrent_Text(d->base.text);
-    SDL_GetRendererOutputSize(d->base.render, &d->base.size.x, &d->base.size.y);    
+    SDL_GetRendererOutputSize(d->base.render, &d->base.size.x, &d->base.size.y);
     setupUserInterface_MainWindow(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
     /* Load the border shadow texture. */ {
@@ -800,7 +800,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
                 // printf("normal rect set (move)\n"); fflush(stdout);
                 iInt2 border = zero_I2();
 #if !defined(iPlatformApple)
-                SDL_GetWindowBordersSize(d->win, &border.y, &border.x, NULL, NULL);
+                SDL_GetWindowBordersSize(d->base.win, &border.y, &border.x, NULL, NULL);
 #endif
                 d->place.normalRect.pos =
                     max_I2(zero_I2(), sub_I2(d->place.normalRect.pos, border));
@@ -1055,7 +1055,7 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
                 if (!isEscapeKeypress_(ev)) {
                     /* Key events go only to the root with keyboard focus, with the exception
                        of Escape that will also affect the entire window. */
-                    continue; 
+                    continue;
                 }
             }
             if (ev->type == SDL_MOUSEWHEEL && !contains_Rect(rect_Root(root),
@@ -1126,7 +1126,7 @@ void draw_Window(iWindow *d) {
 #if !defined (NDEBUG)
         draw_Text(defaultBold_FontId, safeRect_Root(root).pos, red_ColorId, "%d", drawCount_);
         drawCount_ = 0;
-#endif        
+#endif
     }
 //    drawRectThickness_Paint(&p, (iRect){ zero_I2(), sub_I2(d->size, one_I2()) }, gap_UI / 4, uiSeparator_ColorId);
     setCurrent_Root(NULL);
@@ -1587,6 +1587,9 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
         new_Window(popup_WindowType,
                    (iRect){ screenPos, divf_I2(rootWidget->rect.size, get_Window()->pixelRatio) },
                    SDL_WINDOW_ALWAYS_ON_TOP |
+#if !defined (iPlatformAppleDesktop)
+                   SDL_WINDOW_BORDERLESS |
+#endif
                    SDL_WINDOW_POPUP_MENU |
                    SDL_WINDOW_SKIP_TASKBAR);
 #if defined (iPlatformAppleDesktop)
