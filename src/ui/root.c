@@ -298,16 +298,6 @@ void destroyPending_Root(iRoot *d) {
     setCurrent_Root(oldRoot);
 }
 
-void postArrange_Root(iRoot *d) {
-    if (!d->pendingArrange) {
-        d->pendingArrange = iTrue;
-        SDL_Event ev = { .type = SDL_USEREVENT };
-        ev.user.code = arrange_UserEventCode;
-        ev.user.data2 = d;
-        SDL_PushEvent(&ev);
-    }
-}
-
 iPtrArray *onTop_Root(iRoot *d) {
     if (!d->onTop) {
         d->onTop = new_PtrArray();

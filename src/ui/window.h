@@ -29,8 +29,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_render.h>
 #include <SDL_video.h>
 
+enum iWindowType {
+    main_WindowType,
+    popup_WindowType,
+};
+
 iDeclareType(MainWindow)
+iDeclareType(Text)
 iDeclareType(Window)
+    
+iDeclareTypeConstructionArgs(Window, enum iWindowType type, iRect rect, uint32_t flags)
 iDeclareTypeConstructionArgs(MainWindow, iRect rect)
     
 typedef iAny iAnyWindow;
@@ -71,15 +79,9 @@ enum iWindowSplit {
     noEvents_WindowSplit = iBit(11),
 };
 
-enum iWindowType {
-    main_WindowType,
-    popup_WindowType,
-};
-
 struct Impl_Window {
     enum iWindowType type;
     SDL_Window *  win;
-    iBool         isDrawFrozen; /* avoids premature draws while restoring window state */
     iBool         isExposed;
     iBool         isMinimized;
     iBool         isMouseInside;
@@ -102,11 +104,13 @@ struct Impl_Window {
     iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
     iRoot *       keyRoot;      /* root that has the current keyboard input focus */
     SDL_Texture * borderShadow;
+    iText *       text;
 };
 
 struct Impl_MainWindow {
     iWindow       base;
     iWindowPlacement place;
+    iBool         isDrawFrozen; /* avoids premature draws while restoring window state */
     int           splitMode;
     int           pendingSplitMode;
     iString *     pendingSplitUrl; /* URL to open in a newly opened split */
@@ -115,7 +119,10 @@ struct Impl_MainWindow {
 };
 
 iLocalDef enum iWindowType type_Window(const iAnyWindow *d) {
-    return ((const iWindow *) d)->type;
+    if (d) {
+        return ((const iWindow *) d)->type;
+    }
+    return main_WindowType;
 }
 
 uint32_t        id_Window               (const iWindow *);
@@ -131,17 +138,19 @@ int             numRoots_Window         (const iWindow *);
 iRoot *         findRoot_Window         (const iWindow *, const iWidget *widget);
 iRoot *         otherRoot_Window        (const iWindow *, iRoot *root);
 
+iBool       processEvent_Window     (iWindow *, const SDL_Event *);
 iBool       dispatchEvent_Window    (iWindow *, const SDL_Event *);
 void        invalidate_Window       (iAnyWindow *); /* discard all cached graphics */
 void        draw_Window             (iWindow *);
 void        setUiScale_Window       (iWindow *, float uiScale);
-void        setFreezeDraw_Window    (iWindow *, iBool freezeDraw);
 void        setCursor_Window        (iWindow *, int cursor);
 iBool       setKeyRoot_Window       (iWindow *, iRoot *root);
 iBool       postContextClick_Window (iWindow *, const SDL_MouseButtonEvent *);
 
 iWindow *   get_Window              (void);
 iBool       isOpenGLRenderer_Window (void);
+
+void        setCurrent_Window       (iAnyWindow *);
 
 iLocalDef iBool isExposed_Window(const iWindow *d) {
     iAssert(d);
@@ -158,6 +167,10 @@ iLocalDef const iWindow *constAs_Window(const iAnyWindow *d) {
     return (const iWindow *) d;
 }
 
+iLocalDef iText *text_Window(const iAnyWindow *d) {
+    return constAs_Window(d)->text;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 iLocalDef iWindow *asWindow_MainWindow(iMainWindow *d) {
@@ -167,6 +180,7 @@ iLocalDef iWindow *asWindow_MainWindow(iMainWindow *d) {
 
 void        setTitle_MainWindow             (iMainWindow *, const iString *title);
 void        setSnap_MainWindow              (iMainWindow *, int snapMode);
+void        setFreezeDraw_MainWindow        (iMainWindow *, iBool freezeDraw);
 void        setKeyboardHeight_MainWindow    (iMainWindow *, int height);
 void        setSplitMode_MainWindow         (iMainWindow *, int splitMode);
 void        checkPendingSplit_MainWindow    (iMainWindow *);
@@ -196,3 +210,7 @@ iLocalDef const iMainWindow *constAs_MainWindow(const iAnyWindow *d) {
     iAssert(type_Window(d) == main_WindowType);
     return (const iMainWindow *) d;
 }
+
+/*----------------------------------------------------------------------------------------------*/
+
+iWindow *   newPopup_Window    (iInt2 screenPos, iWidget *rootWidget);

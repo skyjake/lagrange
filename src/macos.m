@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/window.h"
 
 #include <SDL_timer.h>
+#include <SDL_syswm.h>
 
 #import <AppKit/AppKit.h>
 
@@ -49,6 +50,16 @@ static iInt2 macVer_(void) {
         return init_I2(ver.majorVersion, ver.minorVersion);
     }
     return init_I2(10, 10);
+}
+
+static NSWindow *nsWindow_(SDL_Window *window) {
+    SDL_SysWMinfo wm;
+    SDL_VERSION(&wm.version);
+    if (SDL_GetWindowWMInfo(window, &wm)) {
+        return wm.info.cocoa.window;
+    }
+    iAssert(false);
+    return nil;
 }
 
 static NSString *currentSystemAppearance_(void) {
@@ -370,6 +381,11 @@ void setupApplication_MacOS(void) {
     windowCloseItem.action = @selector(closeTab);
 }
 
+void hideTitleBar_MacOS(iWindow *window) {
+    NSWindow *w = nsWindow_(window->win);
+    w.styleMask = 0; /* borderless */
+}
+
 void enableMenu_MacOS(const char *menuLabel, iBool enable) {
     menuLabel = translateCStr_Lang(menuLabel);
     NSApplication *app = [NSApplication sharedApplication];
@@ -377,7 +393,6 @@ void enableMenu_MacOS(const char *menuLabel, iBool enable) {
     NSString *label = [NSString stringWithUTF8String:menuLabel];
     NSMenuItem *menuItem = [appMenu itemAtIndex:[appMenu indexOfItemWithTitle:label]];
     [menuItem setEnabled:enable];
-    [label release];
 }
 
 void enableMenuItem_MacOS(const char *menuItemCommand, iBool enable) {

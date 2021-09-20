@@ -247,14 +247,14 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     UIView *view         = [viewController_(get_Window()) view];
     CGRect keyboardFrame = [view convertRect:rawFrame fromView:nil];
 //    NSLog(@"keyboardFrame: %@", NSStringFromCGRect(keyboardFrame));
-    iWindow *window = get_Window();
-    const iInt2 rootSize = size_Root(window->roots[0]);
-    const int keyTop = keyboardFrame.origin.y * window->pixelRatio;
-    setKeyboardHeight_Window(window, rootSize.y - keyTop);
+    iMainWindow *window = get_MainWindow();
+    const iInt2 rootSize = size_Root(window->base.roots[0]);
+    const int keyTop = keyboardFrame.origin.y * window->base.pixelRatio;
+    setKeyboardHeight_MainWindow(window, rootSize.y - keyTop);
 }
 
 -(void)keyboardOffScreen:(NSNotification *)notification {
-    setKeyboardHeight_Window(get_Window(), 0);
+    setKeyboardHeight_MainWindow(get_MainWindow(), 0);
 }
 @end
 

@@ -9,6 +9,7 @@ iDeclareType(Root)
 
 struct Impl_Root {
     iWidget *  widget;
+    iWindow *  window;
     iPtrArray *onTop; /* order is important; last one is topmost */
     iPtrSet *  pendingDestruction;
     iBool      pendingArrange;
@@ -29,7 +30,6 @@ iAnyObject *findWidget_Root                     (const char *id); /* under curre
 
 iPtrArray * onTop_Root                          (iRoot *);
 void        destroyPending_Root                 (iRoot *);
-void        postArrange_Root                    (iRoot *);
 
 void        updateMetrics_Root                  (iRoot *);
 void        updatePadding_Root                  (iRoot *); /* TODO: is part of metrics? */

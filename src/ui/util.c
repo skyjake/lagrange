@@ -613,6 +613,8 @@ iBool isAction_Widget(const iWidget *d) {
 /*-----------------------------------------------------------------------------------------------*/
 
 static iBool isCommandIgnoredByMenus_(const char *cmd) {
+    if (equal_Command(cmd, "window.focus.lost") ||
+        equal_Command(cmd, "window.focus.gained")) return iTrue;
     /* TODO: Perhaps a common way of indicating which commands are notifications and should not
        be reacted to by menus? */
     return equal_Command(cmd, "media.updated") ||
@@ -810,6 +812,10 @@ static void updateMenuItemFonts_Widget_(iWidget *d) {
     }
 }
 
+iLocalDef iBool isUsingMenuPopupWindows_(void) {
+    return deviceType_App() == desktop_AppDeviceType;
+}
+
 void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
     const iRect rootRect        = rect_Root(d->root);
     const iInt2 rootSize        = rootRect.size;
@@ -822,6 +828,26 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
     processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
+    if (isUsingMenuPopupWindows_()) {
+        if (postCommands) {
+            postCommand_Widget(d, "menu.opened");
+        }
+        updateMenuItemFonts_Widget_(d);
+        iRoot *oldRoot = current_Root();
+        setFlags_Widget(d, keepOnTop_WidgetFlag, iFalse);
+        setUserData_Object(d, parent_Widget(d));
+        removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
+        iInt2 mousePos;
+        SDL_GetGlobalMouseState(&mousePos.x, &mousePos.y);
+        iWindow *win = newPopup_Window(sub_I2(mousePos, divi_I2(gap2_UI, 2)), d);
+        SDL_SetWindowTitle(win->win, "Menu");
+        addPopup_App(win); /* window takes the widget */
+        SDL_ShowWindow(win->win);
+        draw_Window(win);
+        setCurrent_Window(mainWindow_App());
+        setCurrent_Root(oldRoot);
+        return;
+    }
     raise_Widget(d);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     if (isPortraitPhone) {
@@ -836,7 +862,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
     arrange_Widget(d);
     if (isPortraitPhone) {
         if (isSlidePanel) {
-            d->rect.pos = zero_I2(); //neg_I2(bounds_Widget(parent_Widget(d)).pos);
+            d->rect.pos = zero_I2();
         }
         else {
             d->rect.pos = init_I2(0, rootSize.y);
@@ -856,7 +882,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
         float l, t, r, b;
         safeAreaInsets_iOS(&l, &t, &r, &b);
         topExcess    += t;
-        bottomExcess += iMax(b, get_Window()->keyboardHeight);
+        bottomExcess += iMax(b, get_MainWindow()->keyboardHeight);
         leftExcess   += l;
         rightExcess  += r;
     }
@@ -883,6 +909,18 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
 void closeMenu_Widget(iWidget *d) {
     if (d == NULL || flags_Widget(d) & hidden_WidgetFlag) {
         return; /* Already closed. */
+    }
+    if (isUsingMenuPopupWindows_()) {
+        iWindow *win = window_Widget(d);
+        iAssert(type_Window(win) == popup_WindowType);
+        iWidget *originalParent = userData_Object(d);
+        setUserData_Object(d, NULL);
+        win->roots[0]->widget = NULL;
+        setRoot_Widget(d, originalParent->root);
+        addChild_Widget(originalParent, d);
+        setFlags_Widget(d, keepOnTop_WidgetFlag, iTrue);
+        SDL_HideWindow(win->win);
+        collect_Garbage(win, (iDeleteFunc) delete_Window); /* get rid of it after event processing */
     }
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);

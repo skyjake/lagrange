@@ -2352,7 +2352,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     }
     /* Draw the insertion point. */
     if (isFocused && d->cursorVis && contains_Range(&visLines, d->cursor.y) &&
-        isEmpty_Range(&d->mark)) {
+        (deviceType_App() == desktop_AppDeviceType || isEmpty_Range(&d->mark))) {
         iInt2    curSize;
         iRangecc cursorChar    = iNullRange;
         int      visWrapsAbove = 0;

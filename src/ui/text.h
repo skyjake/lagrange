@@ -139,15 +139,20 @@ enum iTextFont {
 
 extern int gap_Text; /* affected by content font size */
 
-void    init_Text               (SDL_Renderer *);
-void    deinit_Text             (void);
+iDeclareType(Text)
+iDeclareTypeConstructionArgs(Text, SDL_Renderer *)
+
+void    init_Text               (iText *, SDL_Renderer *);
+void    deinit_Text             (iText *);
+
+void    setCurrent_Text         (iText *);
 
 void    loadUserFonts_Text      (void); /* based on Prefs */
 
-void    setContentFont_Text     (enum iTextFont font);
-void    setHeadingFont_Text     (enum iTextFont font);
-void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `default*` fonts */
-void    resetFonts_Text         (void);
+void    setContentFont_Text     (iText *, enum iTextFont font);
+void    setHeadingFont_Text     (iText *, enum iTextFont font);
+void    setContentFontSize_Text (iText *, float fontSizeFactor); /* affects all except `default*` fonts */
+void    resetFonts_Text         (iText *);
 
 int     lineHeight_Text         (int fontId);
 iRect   visualBounds_Text       (int fontId, iRangecc text);

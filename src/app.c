@@ -118,6 +118,7 @@ struct Impl_App {
     iVisited *   visited;
     iBookmarks * bookmarks;
     iMainWindow *window;
+    iPtrArray    popupWindows;
     iSortedArray tickers; /* per-frame callbacks, used for animations */
     uint32_t     lastTickerTime;
     uint32_t     elapsedSinceLastTicker;
@@ -801,6 +802,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
             d->initialWindowRect.size.y = toInt_String(value_CommandLineArg(arg, 0));
         }
     }
+    init_PtrArray(&d->popupWindows);
     d->window = new_MainWindow(d->initialWindowRect);
     load_Visited(d->visited, dataDir_App_());
     load_Bookmarks(d->bookmarks, dataDir_App_());
@@ -853,6 +855,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
 }
 
 static void deinit_App(iApp *d) {
+    iReverseForEach(PtrArray, i, &d->popupWindows) {
+        delete_Window(i.ptr);
+    }
+    iAssert(isEmpty_PtrArray(&d->popupWindows));
+    deinit_PtrArray(&d->popupWindows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     SDL_RemoveTimer(d->sleepTimer);
 #endif
@@ -1086,6 +1093,15 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
     return SDL_PollEvent(event);
 }
 
+static const iPtrArray *listWindows_App_(const iApp *d) {
+    iPtrArray *list = collectNew_PtrArray();
+    iReverseConstForEach(PtrArray, i, &d->popupWindows) {
+        pushBack_PtrArray(list, i.ptr);
+    }
+    pushBack_PtrArray(list, d->window);
+    return list;
+}
+
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     iRoot *oldCurrentRoot = current_Root(); /* restored afterwards */
@@ -1125,17 +1141,17 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #if defined (iPlatformAppleMobile)
                 updateNowPlayingInfo_iOS();
 #endif
-                setFreezeDraw_Window(as_Window(d), iTrue);
+                setFreezeDraw_MainWindow(d->window, iTrue);
                 savePrefs_App_(d);
                 saveState_App_(d);
                 break;
             case SDL_APP_TERMINATING:
-                setFreezeDraw_Window(as_Window(d), iTrue);
+                setFreezeDraw_MainWindow(d->window, iTrue);
                 savePrefs_App_(d);
                 saveState_App_(d);
                 break;
             case SDL_DROPFILE: {
-                iBool wasUsed = processEvent_MainWindow(d->window, &ev);
+                iBool wasUsed = processEvent_Window(as_Window(d->window), &ev);
                 if (!wasUsed) {
                     iBool newTab = iFalse;
                     if (elapsedSeconds_Time(&d->lastDropTime) < 0.1) {
@@ -1175,23 +1191,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
                 d->isIdling = iFalse;
 #endif
-                if (ev.type == SDL_USEREVENT && ev.user.code == arrange_UserEventCode) {
-                    printf("[App] rearrange\n");
-                    resize_MainWindow(d->window, -1, -1);
-                    iForIndices(i, d->window->base.roots) {
-                        if (d->window->base.roots[i]) {
-                            d->window->base.roots[i]->pendingArrange = iFalse;
-                        }
-                    }
-//                    if (ev.user.data2 == d->window->roots[0]) {
-//                        arrange_Widget(d->window->roots[0]->widget);
-//                    }
-//                    else if (d->window->roots[1]) {
-//                        arrange_Widget(d->window->roots[1]->widget);
-//                    }
-//                    postRefresh_App();
-                    continue;
-                }
                 gotEvents = iTrue;
                 /* Keyboard modifier mapping. */
                 if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
@@ -1268,10 +1267,22 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                 }
 #endif
-                d->window->base.lastHover = d->window->base.hover;
-                iBool wasUsed = processEvent_MainWindow(d->window, &ev);
+                /* Per-window processing. */
+                iBool wasUsed = iFalse;
+                const iPtrArray *windows = listWindows_App_(d);
+                iConstForEach(PtrArray, iter, windows) {
+                    iWindow *window = iter.ptr;
+                    setCurrent_Window(window);
+                    window->lastHover = window->hover;
+                    wasUsed = processEvent_Window(window, &ev);
+                    if (ev.type == SDL_MOUSEMOTION) {
+                        break;
+                    }
+                    if (wasUsed) break;
+                }
+                setCurrent_Window(d->window);
                 if (!wasUsed) {
-                    /* There may be a key bindings for this. */
+                    /* There may be a key binding for this. */
                     wasUsed = processEvent_Keys(&ev);
                 }
                 if (!wasUsed) {
@@ -1289,24 +1300,32 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
                     if (isMetricsChange_UserEvent(&ev)) {
-                        iForIndices(i, d->window->base.roots) {
-                            iRoot *root = d->window->base.roots[i];
-                            if (root) {
-                                arrange_Widget(root->widget);
-                            }
+                        iConstForEach(PtrArray, iter, windows) {
+                            iWindow *window = iter.ptr;
+                            iForIndices(i, window->roots) {
+                                iRoot *root = window->roots[i];
+                                if (root) {
+                                    arrange_Widget(root->widget);
+                                }
+                            }                            
                         }
                     }
                     if (!wasUsed) {
                         /* No widget handled the command, so we'll do it. */
+                        setCurrent_Window(d->window);
                         handleCommand_App(ev.user.data1);
                     }
                     /* Allocated by postCommand_Apps(). */
                     free(ev.user.data1);
                 }
-                /* Update when hover has changed. */
-                if (d->window->base.lastHover != d->window->base.hover) {
-                    refresh_Widget(d->window->base.lastHover);
-                    refresh_Widget(d->window->base.hover);
+                /* Refresh after hover changes. */ {
+                    iConstForEach(PtrArray, iter, windows) {
+                        iWindow *window = iter.ptr;
+                        if (window->lastHover != window->hover) {
+                            refresh_Widget(window->lastHover);
+                            refresh_Widget(window->hover);
+                        }
+                    }
                 }
                 break;
             }
@@ -1394,25 +1413,46 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
-    iForIndices(i, d->window->base.roots) {
-        iRoot *root = d->window->base.roots[i];
-        if (root) {
-            destroyPending_Root(root);
-        }
-    }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->warmupFrames == 0 && d->isIdling) {
         return;
     }
 #endif
+    const iPtrArray *windows = listWindows_App_(d);
+    /* Destroy pending widgets. */ {
+        iConstForEach(PtrArray, j, windows) { 
+            iWindow *win = j.ptr;
+            setCurrent_Window(win);
+            iForIndices(i, win->roots) {
+                iRoot *root = win->roots[i];
+                if (root) {
+                    destroyPending_Root(root);
+                }
+            }
+        }
+    }
+    /* TODO: Pending refresh is window-specific. */
     if (!exchange_Atomic(&d->pendingRefresh, iFalse)) {
         return;
     }
-//    iTime draw;
-//    initCurrent_Time(&draw);
-    draw_MainWindow(d->window);
-//    printf("draw: %lld \u03bcs\n", (long long) (elapsedSeconds_Time(&draw) * 1000000));
-//    fflush(stdout);
+    /* Draw each window. */ {
+        iConstForEach(PtrArray, j, windows) {
+            iWindow *win = j.ptr;
+            setCurrent_Window(win);
+            switch (win->type) {
+                case main_WindowType:
+    //                iTime draw;
+    //                initCurrent_Time(&draw);
+                    draw_MainWindow(as_MainWindow(win));
+    //                printf("draw: %lld \u03bcs\n", (long long) (elapsedSeconds_Time(&draw) * 1000000));
+    //                fflush(stdout);
+                    break;
+                default:
+                    draw_Window(win);
+                    break;        
+            }
+        }
+    }
     if (d->warmupFrames > 0) {
         d->warmupFrames--;
     }
@@ -1485,12 +1525,6 @@ void postRefresh_App(void) {
     }
 }
 
-void postImmediateRefresh_App(void) {
-    SDL_Event ev = { .type = SDL_USEREVENT };
-    ev.user.code = immediateRefresh_UserEventCode;
-    SDL_PushEvent(&ev);
-}
-
 void postCommand_Root(iRoot *d, const char *command) {
     iAssert(command);
     if (strlen(command) == 0) {
@@ -1546,7 +1580,7 @@ void postCommandf_App(const char *command, ...) {
 }
 
 void rootOrder_App(iRoot *roots[2]) {
-    const iWindow *win = as_Window(app_.window);
+    const iWindow *win = get_Window();
     roots[0] = win->keyRoot;
     roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
 }
@@ -1581,6 +1615,16 @@ void addTickerRoot_App(iTickerFunc ticker, iRoot *root, iAny *context) {
 void removeTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
     remove_SortedArray(&d->tickers, &(iTicker){ context, NULL, ticker });
+}
+
+void addPopup_App(iWindow *popup) {
+    iApp *d = &app_;
+    pushBack_PtrArray(&d->popupWindows, popup);
+}
+
+void removePopup_App(iWindow *popup) {
+    iApp *d = &app_;
+    removeOne_PtrArray(&d->popupWindows, popup);
 }
 
 iMimeHooks *mimeHooks_App(void) {
@@ -1836,8 +1880,10 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "ident.showmore")) {
-        iForEach(ObjectList, i,
-                 children_Widget(findChild_Widget(dlg,                                                                 isUsingPanelLayout_Mobile() ? "panel.top" : "headings"))) {
+        iForEach(ObjectList,
+                 i,
+                 children_Widget(findChild_Widget(
+                     dlg, isUsingPanelLayout_Mobile() ? "panel.top" : "headings"))) {
             if (flags_Widget(i.object) & collapse_WidgetFlag) {
                 setFlags_Widget(i.object, hidden_WidgetFlag, iFalse);
             }
@@ -1978,9 +2024,15 @@ const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
     return collectNewFormat_String("%s?%s", cstr_String(&d->prefs.searchUrl), cstr_String(escaped));
 }
 
+static void resetFonts_App_(iApp *d) {
+    iConstForEach(PtrArray, win, listWindows_App_(d)) {
+        resetFonts_Text(text_Window(win.ptr));
+    }    
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    const iBool isFrozen = !d->window || d->window->base.isDrawFrozen;
+    const iBool isFrozen = !d->window || d->window->isDrawFrozen;
     if (equal_Command(cmd, "config.error")) {
         makeSimpleMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
                                  format_CStr("Error in config file: %s\n"
@@ -2047,18 +2099,18 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "font.reset")) {
-        resetFonts_Text();
+        resetFonts_App_(d);
         return iTrue;
     }
     else if (equal_Command(cmd, "font.user")) {
         const char *path = suffixPtr_Command(cmd, "path");
         if (cmp_String(&d->prefs.symbolFontPath, path)) {
             if (!isFrozen) {
-                setFreezeDraw_Window(get_Window(), iTrue);
+                setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
             }
             setCStr_String(&d->prefs.symbolFontPath, path);
             loadUserFonts_Text();
-            resetFonts_Text();
+            resetFonts_App_(d);
             if (!isFrozen) {
                 postCommand_App("font.changed");
                 postCommand_App("window.unfreeze");
@@ -2068,10 +2120,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "font.set")) {
         if (!isFrozen) {
-            setFreezeDraw_Window(get_Window(), iTrue);
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
         d->prefs.font = arg_Command(cmd);
-        setContentFont_Text(d->prefs.font);
+        setContentFont_Text(text_Window(d->window), d->prefs.font);
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
@@ -2080,10 +2132,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "headingfont.set")) {
         if (!isFrozen) {
-            setFreezeDraw_Window(get_Window(), iTrue);
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
         d->prefs.headingFont = arg_Command(cmd);
-        setHeadingFont_Text(d->prefs.headingFont);
+        setHeadingFont_Text(text_Window(d->window), d->prefs.headingFont);
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
@@ -2092,10 +2144,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "zoom.set")) {
         if (!isFrozen) {
-            setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue); /* no intermediate draws before docs updated */
         }
         d->prefs.zoomPercent = arg_Command(cmd);
-        setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
+        setContentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
@@ -2104,14 +2156,14 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "zoom.delta")) {
         if (!isFrozen) {
-            setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue); /* no intermediate draws before docs updated */
         }
         int delta = arg_Command(cmd);
         if (d->prefs.zoomPercent < 100 || (delta < 0 && d->prefs.zoomPercent == 100)) {
             delta /= 2;
         }
         d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
-        setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
+        setContentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
@@ -2211,7 +2263,7 @@ iBool handleCommand_App(const char *cmd) {
              equal_Command(cmd, "prefs.mono.gopher.changed")) {
         const iBool isSet = (arg_Command(cmd) != 0);
         if (!isFrozen) {
-            setFreezeDraw_Window(as_Window(d->window), iTrue);
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
         if (startsWith_CStr(cmd, "prefs.mono.gemini")) {
             d->prefs.monospaceGemini = isSet;
@@ -2935,4 +2987,8 @@ iStringSet *listOpenURLs_App(void) {
     }
     iRelease(docs);
     return set;
+}
+
+iMainWindow *mainWindow_App(void) {
+    return app_.window;
 }

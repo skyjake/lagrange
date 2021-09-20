@@ -34,7 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <SDL_events.h>
 
-iDeclareType(Root) /* each widget is associated with a Root */
+iDeclareType(Root)   /* each widget is associated with a Root */
+iDeclareType(Window) /* each Root is inside a Window */
 
 #define iDeclareWidgetClass(className) \
     iDeclareType(className); \
@@ -185,6 +186,7 @@ void    releaseChildren_Widget  (iWidget *);
     - inner:  0,0 is at the top left corner of the widget */
 
 iWidget *       root_Widget             (const iWidget *);
+iWindow *       window_Widget           (const iAnyObject *);
 const iString * id_Widget               (const iWidget *);
 int64_t flags_Widget                    (const iWidget *);
 iRect   bounds_Widget                   (const iWidget *); /* outer bounds */

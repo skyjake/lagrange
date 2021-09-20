@@ -271,6 +271,10 @@ iWidget *root_Widget(const iWidget *d) {
     return d ? d->root->widget : NULL;
 }
 
+iWindow *window_Widget(const iAnyObject *d) {
+    return constAs_Widget(d)->root->window;
+}
+
 void showCollapsed_Widget(iWidget *d, iBool show) {
     const iBool isVisible = !(d->flags & hidden_WidgetFlag);
     if ((isVisible && !show) || (!isVisible && show)) {
@@ -979,11 +983,10 @@ void unhover_Widget(void) {
 }
 
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
-    //iAssert(d->root == get_Root());
     if (!d->parent) {
-        if (get_Window()->focus && get_Window()->focus->root == d->root && isKeyboardEvent_(ev)) {
+        if (window_Widget(d)->focus && window_Widget(d)->focus->root == d->root && isKeyboardEvent_(ev)) {
             /* Root dispatches keyboard events directly to the focused widget. */
-            if (dispatchEvent_Widget(get_Window()->focus, ev)) {
+            if (dispatchEvent_Widget(window_Widget(d)->focus, ev)) {
                 return iTrue;
             }
         }
@@ -1012,7 +1015,8 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
     }
     else if (ev->type == SDL_MOUSEMOTION &&
-             (!get_Window()->hover || hasParent_Widget(d, get_Window()->hover)) &&
+             ev->motion.windowID == SDL_GetWindowID(window_Widget(d)->win) &&
+             (!window_Widget(d)->hover || hasParent_Widget(d, window_Widget(d)->hover)) &&
              flags_Widget(d) & hover_WidgetFlag && ~flags_Widget(d) & hidden_WidgetFlag &&
              ~flags_Widget(d) & disabled_WidgetFlag) {
         if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
@@ -1031,11 +1035,11 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         iReverseForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
             //iAssert(child->root == d->root);
-            if (child == get_Window()->focus && isKeyboardEvent_(ev)) {
+            if (child == window_Widget(d)->focus && isKeyboardEvent_(ev)) {
                 continue; /* Already dispatched. */
             }
             if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
-                /* Already dispatched. */
+            /* Already dispatched. */
                 continue;
             }
             if (dispatchEvent_Widget(child, ev)) {
@@ -1050,7 +1054,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
 #endif
 #if 0
                 if (ev->type == SDL_MOUSEMOTION) {
-                    printf("[%p] %s:'%s' (on top) ate the motion\n",
+                    printf("[%p] %s:'%s' ate the motion\n",
                            child, class_Widget(child)->name,
                            cstr_String(id_Widget(child)));
                     fflush(stdout);
@@ -1246,7 +1250,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                                ev->button.x,
                                ev->button.y);
         }
-        setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
+        setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_ARROW);
         return iTrue;
     }
     return iFalse;
@@ -1270,6 +1274,7 @@ iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
 void drawLayerEffects_Widget(const iWidget *d) {
     /* Layered effects are not buffered, so they are drawn here separately. */
     iAssert(isDrawn_Widget_(d));
+    iAssert(window_Widget(d) == get_Window());
     iBool shadowBorder   = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
     iBool fadeBackground = (d->bgColor >= 0 || d->frameColor >= 0) && d->flags & mouseModal_WidgetFlag;
     if (deviceType_App() == phone_AppDeviceType) {
@@ -1539,6 +1544,7 @@ static void endBufferDraw_Widget_(const iWidget *d) {
 }
 
 void draw_Widget(const iWidget *d) {
+    iAssert(window_Widget(d) == get_Window());
     if (!isDrawn_Widget_(d)) {
         if (d->drawBuf) {
 //            printf("[%p] drawBuffer released\n", d);
@@ -1820,7 +1826,17 @@ iBool equalWidget_Command(const char *cmd, const iWidget *widget, const char *ch
     if (equal_Command(cmd, checkCommand)) {
         const iWidget *src = pointer_Command(cmd);
         iAssert(!src || strstr(cmd, " ptr:"));
-        return src == widget || hasParent_Widget(src, widget);
+        if (src == widget || hasParent_Widget(src, widget)) {
+            return iTrue;
+        }
+//        if (src && type_Window(window_Widget(src)) == popup_WindowType) {
+//            /* Special case: command was emitted from a popup widget. The popup root widget actually
+//               belongs to someone else. */
+//            iWidget *realParent = userData_Object(src->root->widget);
+//            iAssert(realParent);
+//            iAssert(isInstance_Object(realParent, &Class_Widget));
+//            return realParent == widget || hasParent_Widget(realParent, widget);
+//        }
     }
     return iFalse;
 }
@@ -1962,6 +1978,10 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
     }
     if (!isGlobal) {
         iAssert(isInstance_Object(d, &Class_Widget));
+        if (type_Window(window_Widget(d)) == popup_WindowType) {
+            postCommandf_Root(((const iWidget *) d)->root, "cancel popup:1 ptr:%p", d);
+            d = userData_Object(root_Widget(d));
+        }
         appendFormat_String(&str, " ptr:%p", d);
     }
     postCommandString_Root(((const iWidget *) d)->root, &str);
