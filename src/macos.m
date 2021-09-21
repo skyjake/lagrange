@@ -524,26 +524,53 @@ void removeMenu_MacOS(int atIndex) {
     [appMenu removeItemAtIndex:atIndex];
 }
 
+enum iColorId removeColorEscapes_String(iString *d) {
+    enum iColorId color = none_ColorId;
+    for (;;) {
+        const char *esc = strchr(cstr_String(d), '\v');
+        if (esc) {
+            const char *ptr = esc + 1;
+            color = 0;
+            if (*ptr == '\v') {
+                color += asciiExtended_ColorEscape;
+                ptr++;
+            }
+            color += *ptr - asciiBase_ColorEscape;
+            ptr++;
+            remove_Block(&d->chars, esc - cstr_String(d), ptr - esc);
+        }
+        else break;
+    }
+    return color;
+}
+
 static void makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem *items, size_t n) {
     for (size_t i = 0; i < n && items[i].label; ++i) {
         const char *label = translateCStr_Lang(items[i].label);
-        if (label[0] == '\v') {
-            /* Skip the formatting escape. */
-            label += 2;
-        }
         if (equal_CStr(label, "---")) {
             [menu addItem:[NSMenuItem separatorItem]];
         }
         else {
             const iBool hasCommand = (items[i].command && items[i].command[0]);
+            iBool isChecked = iFalse;
+            if (startsWith_CStr(label, "###")) {
+                isChecked = iTrue;
+                label += 3;
+            }
             iString itemTitle;
             initCStr_String(&itemTitle, label);
             removeIconPrefix_String(&itemTitle);
+            if (removeColorEscapes_String(&itemTitle) == uiTextCaution_ColorId) {
+//                prependCStr_String(&itemTitle, "\u26a0\ufe0f ");
+            }
             NSMenuItem *item = [menu addItemWithTitle:[NSString stringWithUTF8String:cstr_String(&itemTitle)]
                                                action:(hasCommand ? @selector(postMenuItemCommand:) : nil)
                                         keyEquivalent:@""];
             deinit_String(&itemTitle);
             [item setTarget:commands];
+            if (isChecked) {
+                [item setState:NSControlStateValueOn];
+            }
             int key   = items[i].key;
             int kmods = items[i].kmods;
             if (hasCommand) {

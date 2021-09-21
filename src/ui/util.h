@@ -234,10 +234,12 @@ void        closeMenu_Widget        (iWidget *);
 void        releaseNativeMenu_Widget(iWidget *);
 
 size_t      findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);
+void        setSelected_NativeMenuItem      (iMenuItem *item, iBool isSelected);
 
 iChar       removeIconPrefix_String (iString *);
 
 iLabelWidget *  findMenuItem_Widget         (iWidget *menu, const char *command);
+iMenuItem *     findNativeMenuItem_Widget   (iWidget *menu, const char *commandSuffix);
 void            setMenuItemDisabled_Widget  (iWidget *menu, const char *command, iBool disable);
 void            updateMenuItemLabel_Widget  (iWidget *menu, const char *command, const char *newLabel);
 

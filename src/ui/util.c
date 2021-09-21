@@ -872,6 +872,36 @@ static void updateMenuItemFonts_Widget_(iWidget *d) {
     }
 }
 
+iMenuItem *findNativeMenuItem_Widget(iWidget *menu, const char *commandSuffix) {
+    iAssert(flags_Widget(menu) & nativeMenu_WidgetFlag);
+    iForEach(Array, i, userData_Object(menu)) {
+        iMenuItem *item = i.value;
+        if (item->command && endsWith_Rangecc(range_CStr(item->command), commandSuffix)) {
+            return item;
+        }
+    }
+    return NULL;
+}
+
+void setSelected_NativeMenuItem(iMenuItem *item, iBool isSelected) {
+    if (!item->label) {
+        return;
+    }
+    const iBool hasPrefix = startsWith_CStr(item->label, "###");
+    if (hasPrefix && !isSelected) {
+        char *label = strdup(item->label + 3);
+        free((char *) item->label);
+        item->label = label;
+    }
+    else if (!hasPrefix && isSelected) {
+        char *label = malloc(strlen(item->label) + 4);
+        memcpy(label, "###", 3);
+        strcpy(label + 3, item->label);
+        free((char *) item->label);
+        item->label = label;
+    }
+}
+
 void updateMenuItemLabel_Widget(iWidget *menu, const char *command, const char *newLabel) {
     if (~flags_Widget(menu) & nativeMenu_WidgetFlag) {
         iLabelWidget *menuItem = findMenuItem_Widget(menu, command);
@@ -891,6 +921,14 @@ void updateMenuItemLabel_Widget(iWidget *menu, const char *command, const char *
                 break;
             }
         }
+    }
+}
+
+void unselectAllNativeMenuItems_Widget(iWidget *menu) {
+    iArray *items = userData_Object(menu);
+    iAssert(items);
+    iForEach(Array, i, items) {
+        setSelected_NativeMenuItem(i.value, iFalse);
     }
 }
 
@@ -915,7 +953,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
     const iArray *items = userData_Object(d);
     iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
     iAssert(items);
-    showPopupMenu_MacOS(d, mouseCoord_Window(get_Window(), 0),
+    showPopupMenu_MacOS(d, windowCoord, //mouseCoord_Window(get_Window(), 0),
                         constData_Array(items), size_Array(items));
 #else
     const iRect rootRect        = rect_Root(d->root);
@@ -1075,8 +1113,34 @@ iLabelWidget *makeMenuButton_LabelWidget(const char *label, const iMenuItem *ite
     return button;
 }
 
+const iString *removeMenuItemLabelPrefixes_String(const iString *d) {
+    iString *str = copy_String(d);
+    for (;;) {
+        if (startsWith_String(str, "###")) {
+            remove_Block(&str->chars, 0, 3);
+            continue;
+        }
+        if (startsWith_String(str, "```")) {
+            remove_Block(&str->chars, 0, 3);
+            continue;
+        }
+        break;
+    }
+    return collect_String(str);
+}
+
 void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *selectedCommand) {
     iWidget *menu = findChild_Widget(as_Widget(dropButton), "menu");
+    if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
+        unselectAllNativeMenuItems_Widget(menu);
+        iMenuItem *item = findNativeMenuItem_Widget(menu, selectedCommand);
+        if (item) {
+            setSelected_NativeMenuItem(item, iTrue);
+            updateText_LabelWidget(dropButton,
+                                   removeMenuItemLabelPrefixes_String(collectNewCStr_String(item->label)));
+        }
+        return;
+    }
     iForEach(ObjectList, i, children_Widget(menu)) {
         if (isInstance_Object(i.object, &Class_LabelWidget)) {
             iLabelWidget *item = i.object;
