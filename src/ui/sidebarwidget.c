@@ -1457,25 +1457,29 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 if (d->mode == bookmarks_SidebarMode && d->contextItem) {
                     const iBookmark *bm = get_Bookmarks(bookmarks_App(), d->contextItem->id);
                     if (bm) {
-                        updateMenuItemLabel_Widget(d->menu, "bookmark.tag tag:homepage",
-                                                   hasTag_Bookmark(bm, homepage_BookmarkTag)
-                                                       ? home_Icon " ${bookmark.untag.home}"
-                                                       : home_Icon " ${bookmark.tag.home}");
-                        updateMenuItemLabel_Widget(d->menu, "bookmark.tag tag:subscribed",
-                                                   hasTag_Bookmark(bm, subscribed_BookmarkTag)
-                                                        ? star_Icon " ${bookmark.untag.sub}"
-                                                        : star_Icon " ${bookmark.tag.sub}");
-                        updateMenuItemLabel_Widget(d->menu, "bookmark.tag tag:remotesource",
-                                                   hasTag_Bookmark(bm, remoteSource_BookmarkTag)
-                                                        ? downArrowBar_Icon " ${bookmark.untag.remote}"
-                                                        : downArrowBar_Icon " ${bookmark.tag.remote}");
+                        setMenuItemLabel_Widget(d->menu,
+                                                "bookmark.tag tag:homepage",
+                                                hasTag_Bookmark(bm, homepage_BookmarkTag)
+                                                    ? home_Icon " ${bookmark.untag.home}"
+                                                    : home_Icon " ${bookmark.tag.home}");
+                        setMenuItemLabel_Widget(d->menu,
+                                                "bookmark.tag tag:subscribed",
+                                                hasTag_Bookmark(bm, subscribed_BookmarkTag)
+                                                    ? star_Icon " ${bookmark.untag.sub}"
+                                                    : star_Icon " ${bookmark.tag.sub}");
+                        setMenuItemLabel_Widget(d->menu,
+                                                "bookmark.tag tag:remotesource",
+                                                hasTag_Bookmark(bm, remoteSource_BookmarkTag)
+                                                    ? downArrowBar_Icon " ${bookmark.untag.remote}"
+                                                    : downArrowBar_Icon " ${bookmark.tag.remote}");
                     }
                 }
                 else if (d->mode == feeds_SidebarMode && d->contextItem) {
                     const iBool   isRead   = d->contextItem->indent == 0;
-                    updateMenuItemLabel_Widget(d->menu, "feed.entry.toggleread",
-                                               isRead ? circle_Icon " ${feeds.entry.markunread}"
-                                                      : circleWhite_Icon " ${feeds.entry.markread}");
+                    setMenuItemLabel_Widget(d->menu,
+                                            "feed.entry.toggleread",
+                                            isRead ? circle_Icon " ${feeds.entry.markunread}"
+                                                   : circleWhite_Icon " ${feeds.entry.markread}");
                 }
                 else if (d->mode == identities_SidebarMode) {
                     const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);

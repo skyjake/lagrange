@@ -709,6 +709,7 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
         }
         else {
             iBool isInfo = iFalse;
+            iBool isDisabled = iFalse;
             if (startsWith_CStr(labelText, ">>>")) {
                 labelText += 3;
                 if (!horizGroup) {
@@ -722,6 +723,10 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 labelText += 3;
                 isInfo = iTrue;
             }
+            if (startsWith_CStr(labelText, "///")) {
+                labelText += 3;
+                isDisabled = iTrue;
+            }
             iLabelWidget *label = addChildFlags_Widget(
                 horizGroup ? horizGroup : menu,
                 iClob(newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
@@ -730,6 +735,7 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
             setWrap_LabelWidget(label, isInfo);
             haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
+            setFlags_Widget(as_Widget(label), disabled_WidgetFlag, isDisabled);
             if (isInfo) {
                 setFlags_Widget(as_Widget(label), fixedHeight_WidgetFlag, iTrue); /* wrap changes height */
                 setTextColor_LabelWidget(label, uiTextAction_ColorId);
@@ -784,10 +790,10 @@ static iArray *deepCopyMenuItems_(iWidget *menu, const iMenuItem *items, size_t 
         }
 #endif
         pushBack_Array(array, &(iMenuItem){
-            item->label ? strdup(item->label) : NULL,
+            item->label ? iDupStr(item->label) : NULL,
             item->key,
             item->kmods,
-            itemCommand ? strdup(itemCommand) : NULL /* NOTE: Only works with string commands. */
+            itemCommand ? iDupStr(itemCommand) : NULL /* NOTE: Only works with string commands. */
         });
     }
     deinit_String(&cmd);
@@ -883,44 +889,77 @@ iMenuItem *findNativeMenuItem_Widget(iWidget *menu, const char *commandSuffix) {
     return NULL;
 }
 
-void setSelected_NativeMenuItem(iMenuItem *item, iBool isSelected) {
+void setPrefix_NativeMenuItem(iMenuItem *item, const char *prefix, iBool set) {
     if (!item->label) {
         return;
     }
-    const iBool hasPrefix = startsWith_CStr(item->label, "###");
-    if (hasPrefix && !isSelected) {
-        char *label = strdup(item->label + 3);
+    const iBool hasPrefix = startsWith_CStr(item->label, prefix);
+    if (hasPrefix && !set) {
+        char *label = iDupStr(item->label + 3);
         free((char *) item->label);
         item->label = label;
     }
-    else if (!hasPrefix && isSelected) {
+    else if (!hasPrefix && set) {
         char *label = malloc(strlen(item->label) + 4);
-        memcpy(label, "###", 3);
+        memcpy(label, prefix, 3);
         strcpy(label + 3, item->label);
         free((char *) item->label);
         item->label = label;
     }
 }
 
-void updateMenuItemLabel_Widget(iWidget *menu, const char *command, const char *newLabel) {
-    if (~flags_Widget(menu) & nativeMenu_WidgetFlag) {
+void setSelected_NativeMenuItem(iMenuItem *item, iBool isSelected) {
+    if (item) {
+        setPrefix_NativeMenuItem(item, "///", iFalse);
+        setPrefix_NativeMenuItem(item, "###", isSelected);
+    }
+}
+
+void setDisabled_NativeMenuItem(iMenuItem *item, iBool isDisabled) {
+    if (item) {
+        setPrefix_NativeMenuItem(item, "###", iFalse);
+        setPrefix_NativeMenuItem(item, "///", isDisabled);
+    }
+}
+
+void setLabel_NativeMenuItem(iMenuItem *item, const char *label) {
+    free((char *) item->label);
+    item->label = iDupStr(label);
+}
+
+void setMenuItemLabel_Widget(iWidget *menu, const char *command, const char *newLabel) {
+    if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
+        iArray *items = userData_Object(menu);
+        iAssert(items);
+        iForEach(Array, i, items) {
+            iMenuItem *item = i.value;
+            if (item->command && !iCmpStr(item->command, command)) {
+                setLabel_NativeMenuItem(item, newLabel);
+                break;
+            }
+        }
+    }
+    else {
         iLabelWidget *menuItem = findMenuItem_Widget(menu, command);
         if (menuItem) {
             setTextCStr_LabelWidget(menuItem, newLabel);
             checkIcon_LabelWidget(menuItem);
         }
     }
-    else {
+}
+
+void setMenuItemLabelByIndex_Widget(iWidget *menu, size_t index, const char *newLabel) {
+    if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
         iArray *items = userData_Object(menu);
         iAssert(items);
-        iForEach(Array, i, items) {
-            iMenuItem *item = i.value;
-            if (item->command && !iCmpStr(item->command, command)) {
-                free((void *) item->label);
-                item->label = strdup(newLabel);
-                break;
-            }
-        }
+        iAssert(index < size_Array(items));
+        setLabel_NativeMenuItem(at_Array(items, index), newLabel);
+    }
+    else {
+        iLabelWidget *menuItem = child_Widget(menu, index);
+        iAssert(isInstance_Object(menuItem, &Class_LabelWidget));
+        setTextCStr_LabelWidget(menuItem, newLabel);
+        checkIcon_LabelWidget(menuItem);
     }
 }
 
@@ -953,8 +992,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
     const iArray *items = userData_Object(d);
     iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
     iAssert(items);
-    showPopupMenu_MacOS(d, windowCoord, //mouseCoord_Window(get_Window(), 0),
-                        constData_Array(items), size_Array(items));
+    showPopupMenu_MacOS(d, windowCoord, constData_Array(items), size_Array(items));
 #else
     const iRect rootRect        = rect_Root(d->root);
     const iInt2 rootSize        = rootRect.size;
@@ -1085,9 +1123,14 @@ iLabelWidget *findMenuItem_Widget(iWidget *menu, const char *command) {
 }
 
 void setMenuItemDisabled_Widget(iWidget *menu, const char *command, iBool disable) {
-    iLabelWidget *item = findMenuItem_Widget(menu, command);
-    if (item) {
-        setFlags_Widget(as_Widget(item), disabled_WidgetFlag, disable);
+    if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
+        setDisabled_NativeMenuItem(findNativeMenuItem_Widget(menu, command), disable);
+    }
+    else {
+        iLabelWidget *item = findMenuItem_Widget(menu, command);
+        if (item) {
+            setFlags_Widget(as_Widget(item), disabled_WidgetFlag, disable);
+        }
     }
 }
 
@@ -1117,6 +1160,10 @@ const iString *removeMenuItemLabelPrefixes_String(const iString *d) {
     iString *str = copy_String(d);
     for (;;) {
         if (startsWith_String(str, "###")) {
+            remove_Block(&str->chars, 0, 3);
+            continue;
+        }
+        if (startsWith_String(str, "///")) {
             remove_Block(&str->chars, 0, 3);
             continue;
         }
@@ -2823,10 +2870,17 @@ static const iMenuItem languages[] = {
 static iBool translationHandler_(iWidget *dlg, const char *cmd) {
     iUnused(dlg);
     if (equal_Command(cmd, "xlt.lang")) {
-        iLabelWidget *menuItem = pointer_Command(cmd);
-        iWidget *button = parent_Widget(parent_Widget(menuItem));
-        iAssert(isInstance_Object(button, &Class_LabelWidget));
-        updateText_LabelWidget((iLabelWidget *) button, text_LabelWidget(menuItem));
+        const iMenuItem *langItem = &languages[languageIndex_CStr(cstr_Rangecc(range_Command(cmd, "id")))];
+        iWidget *widget = pointer_Command(cmd);
+        iLabelWidget *drop;
+        if (flags_Widget(widget) & nativeMenu_WidgetFlag) {
+            drop = (iLabelWidget *) parent_Widget(widget);
+        }
+        else {
+            drop = (iLabelWidget *) parent_Widget(parent_Widget(widget));
+        }
+        iAssert(isInstance_Object(drop, &Class_LabelWidget));
+        updateDropdownSelection_LabelWidget(drop, langItem->command);
         return iTrue;
     }
     return iFalse;
@@ -2880,25 +2934,25 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
         addChild_Widget(dlg, iClob(page = makeTwoColumns_Widget(&headings, &values)));
         setId_Widget(page, "xlt.langs");
         iLabelWidget *fromLang, *toLang;
+        const size_t numLangs = iElemCount(languages) - 1;
+        const char *widestLabel = languages[findWidestLabel_MenuItem(languages, numLangs)].label;
         /* Source language. */ {
             addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.translate.from}")));
-            setId_Widget(
-                addChildFlags_Widget(values,
-                                     iClob(fromLang = makeMenuButton_LabelWidget(
-                                               "${lang.pt}", languages, iElemCount(languages) - 1)),
-                                     alignLeft_WidgetFlag),
-                "xlt.from");
+            setId_Widget(addChildFlags_Widget(values,
+                                              iClob(fromLang = makeMenuButton_LabelWidget(
+                                                        widestLabel, languages, numLangs)),
+                                              alignLeft_WidgetFlag),
+                         "xlt.from");
             setBackgroundColor_Widget(findChild_Widget(as_Widget(fromLang), "menu"),
                                       uiBackgroundMenu_ColorId);
         }
         /* Target language. */ {
             addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.translate.to}")));
-            setId_Widget(
-                addChildFlags_Widget(values,
-                                     iClob(toLang = makeMenuButton_LabelWidget(
-                                               "${lang.pt}", languages, iElemCount(languages) - 1)),
-                                     alignLeft_WidgetFlag),
-                "xlt.to");
+            setId_Widget(addChildFlags_Widget(values,
+                                              iClob(toLang = makeMenuButton_LabelWidget(
+                                                        widestLabel, languages, numLangs)),
+                                              alignLeft_WidgetFlag),
+                         "xlt.to");
             setBackgroundColor_Widget(findChild_Widget(as_Widget(toLang), "menu"),
                                       uiBackgroundMenu_ColorId);
         }
@@ -2908,14 +2962,18 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
         arrange_Widget(dlg);
     }
     /* Update choices. */
-    updateText_LabelWidget(
-        findChild_Widget(dlg, "xlt.from"),
-        text_LabelWidget(child_Widget(findChild_Widget(findChild_Widget(dlg, "xlt.from"), "menu"),
-                                      prefs_App()->langFrom)));
-    updateText_LabelWidget(
-        findChild_Widget(dlg, "xlt.to"),
-        text_LabelWidget(child_Widget(findChild_Widget(findChild_Widget(dlg, "xlt.to"), "menu"),
-                                      prefs_App()->langTo)));
+    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.from"),
+                                        languages[prefs_App()->langFrom].command);
+    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.to"),
+                                        languages[prefs_App()->langTo].command);
+//    updateText_LabelWidget(
+//        findChild_Widget(dlg, "xlt.from"),
+//        text_LabelWidget(child_Widget(findChild_Widget(findChild_Widget(dlg, "xlt.from"), "menu"),
+//                                      prefs_App()->langFrom)));
+//    updateText_LabelWidget(
+//        findChild_Widget(dlg, "xlt.to"),
+//        text_LabelWidget(child_Widget(findChild_Widget(findChild_Widget(dlg, "xlt.to"), "menu"),
+//                                      prefs_App()->langTo)));
     setCommandHandler_Widget(dlg, translationHandler_);
     setupSheetTransition_Mobile(dlg, iTrue);
     return dlg;

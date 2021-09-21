@@ -226,24 +226,25 @@ struct Impl_MenuItem {
     };
 };
 
-iWidget *   makeMenu_Widget         (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
-void        makeMenuItems_Widget    (iWidget *menu, const iMenuItem *items, size_t n);
-void        openMenu_Widget         (iWidget *, iInt2 windowCoord);
-void        openMenuFlags_Widget    (iWidget *, iInt2 windowCoord, iBool postCommands);
-void        closeMenu_Widget        (iWidget *);
-void        releaseNativeMenu_Widget(iWidget *);
+iWidget *       makeMenu_Widget                 (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
+void            makeMenuItems_Widget            (iWidget *menu, const iMenuItem *items, size_t n);
+void            openMenu_Widget                 (iWidget *, iInt2 windowCoord);
+void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, iBool postCommands);
+void            closeMenu_Widget                (iWidget *);
+void            releaseNativeMenu_Widget        (iWidget *);
 
-size_t      findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);
-void        setSelected_NativeMenuItem      (iMenuItem *item, iBool isSelected);
+size_t          findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);
+void            setSelected_NativeMenuItem      (iMenuItem *item, iBool isSelected);
 
-iChar       removeIconPrefix_String (iString *);
+iChar           removeIconPrefix_String         (iString *);
 
-iLabelWidget *  findMenuItem_Widget         (iWidget *menu, const char *command);
-iMenuItem *     findNativeMenuItem_Widget   (iWidget *menu, const char *commandSuffix);
-void            setMenuItemDisabled_Widget  (iWidget *menu, const char *command, iBool disable);
-void            updateMenuItemLabel_Widget  (iWidget *menu, const char *command, const char *newLabel);
+iLabelWidget *  findMenuItem_Widget             (iWidget *menu, const char *command);
+iMenuItem *     findNativeMenuItem_Widget       (iWidget *menu, const char *commandSuffix);
+void            setMenuItemDisabled_Widget      (iWidget *menu, const char *command, iBool disable);
+void            setMenuItemLabel_Widget         (iWidget *menu, const char *command, const char *newLabel);
+void            setMenuItemLabelByIndex_Widget  (iWidget *menu, size_t index, const char *newLabel);
 
-int         checkContextMenu_Widget (iWidget *, const SDL_Event *ev); /* see macro below */
+int             checkContextMenu_Widget         (iWidget *, const SDL_Event *ev); /* see macro below */
 
 #define processContextMenuEvent_Widget(menu, sdlEvent, stmtEaten) \
     for (const int result = checkContextMenu_Widget((menu), (sdlEvent));;) { \

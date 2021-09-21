@@ -430,20 +430,18 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     const iGmIdentity *ident =
         identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
     iWidget *button = findChild_Widget(navBar, "navbar.ident");
-    iLabelWidget *toolButton = findWidget_App("toolbar.ident");
+    iWidget *menu   = findChild_Widget(button, "menu");
     setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
-    setOutline_LabelWidget(toolButton, ident == NULL);
     /* Update menu. */
-    iLabelWidget *idItem = child_Widget(findChild_Widget(button, "menu"), 0);
-    if (!idItem) return;
     const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
-    setTextCStr_LabelWidget(
-        idItem,
-        subjectName ? format_CStr(uiTextAction_ColorEscape "%s", cstr_String(subjectName))
-                    : "${menu.identity.notactive}");
-    setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
+    const char *   idLabel     = subjectName
+                                     ? format_CStr(uiTextAction_ColorEscape "%s", cstr_String(subjectName))
+                                     : "///${menu.identity.notactive}";
+    setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
+    iLabelWidget *toolButton = findWidget_App("toolbar.ident");
     iLabelWidget *toolName = findWidget_App("toolbar.name");
     if (toolName) {
+        setOutline_LabelWidget(toolButton, ident == NULL);
         updateTextCStr_LabelWidget(toolName, subjectName ? cstr_String(subjectName) : "");
         setFont_LabelWidget(toolButton, subjectName ? defaultMedium_FontId : uiLabelLarge_FontId);
         arrange_Widget(parent_Widget(toolButton));

@@ -553,8 +553,13 @@ static void makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem
         else {
             const iBool hasCommand = (items[i].command && items[i].command[0]);
             iBool isChecked = iFalse;
+            iBool isDisabled = iFalse;
             if (startsWith_CStr(label, "###")) {
                 isChecked = iTrue;
+                label += 3;
+            }
+            else if (startsWith_CStr(label, "///")) {
+                isDisabled = iTrue;
                 label += 3;
             }
             iString itemTitle;
@@ -571,6 +576,7 @@ static void makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem
             if (isChecked) {
                 [item setState:NSControlStateValueOn];
             }
+            [item setEnabled:!isDisabled];
             int key   = items[i].key;
             int kmods = items[i].kmods;
             if (hasCommand) {
@@ -653,11 +659,22 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
     iWindow *     window       = as_Window(mainWindow_App());
     NSWindow *    nsWindow     = nsWindow_(window->win);
     /* View coordinates are flipped. */
+    iBool isCentered = iFalse;
+    if (isEqual_I2(windowCoord, zero_I2())) {
+        windowCoord = divi_I2(window->size, 2);
+        isCentered = iTrue;
+    }
     windowCoord.y = window->size.y - windowCoord.y;
     windowCoord = divf_I2(windowCoord, window->pixelRatio);
     NSPoint screenPoint = [nsWindow convertPointToScreen:(CGPoint){ windowCoord.x, windowCoord.y }];
     makeMenuItems_(menu, menuCommands, items, n);
     [menuCommands setSource:source];
+    if (isCentered) {
+        NSSize menuSize = [menu size];
+        screenPoint.x -= menuSize.width / 2;
+        screenPoint.y += menuSize.height / 2;
+    }
+    [menu setAutoenablesItems:NO];
     [menu popUpMenuPositioningItem:nil atLocation:screenPoint inView:nil];
     [menu release];
     [menuCommands release];
