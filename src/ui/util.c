@@ -975,7 +975,11 @@ void unselectAllNativeMenuItems_Widget(iWidget *menu) {
 }
 
 iLocalDef iBool isUsingMenuPopupWindows_(void) {
+#if defined (LAGRANGE_ENABLE_POPUP_MENUS)
     return deviceType_App() == desktop_AppDeviceType;
+#else
+    return iFalse;
+#endif
 }
 
 void releaseNativeMenu_Widget(iWidget *d) {
@@ -1019,7 +1023,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
         removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
         const float pixelRatio = get_Window()->pixelRatio;
         iInt2 menuPos = add_I2(get_MainWindow()->place.normalRect.pos,
-                               divf_I2(windowCoord, pixelRatio));
+                               divf_I2(sub_I2(windowCoord, divi_I2(gap2_UI, 2)), pixelRatio));
         arrange_Widget(d);
         /* Check display bounds. */ {
             const iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);

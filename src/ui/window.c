@@ -913,7 +913,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
         default: {
             SDL_Event event = *ev;
-            if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze")) {
+            if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze") && mw) {
                 mw->isDrawFrozen = iFalse;
                 if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
                     SDL_ShowWindow(d->win);
