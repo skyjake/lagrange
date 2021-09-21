@@ -436,8 +436,9 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
     const char *   idLabel     = subjectName
                                      ? format_CStr(uiTextAction_ColorEscape "%s", cstr_String(subjectName))
-                                     : "///${menu.identity.notactive}";
+                                     : "${menu.identity.notactive}";
     setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
+    setMenuItemDisabledByIndex_Widget(menu, 0, !ident);
     iLabelWidget *toolButton = findWidget_App("toolbar.ident");
     iLabelWidget *toolName = findWidget_App("toolbar.name");
     if (toolName) {

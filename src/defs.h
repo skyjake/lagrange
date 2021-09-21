@@ -165,7 +165,8 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #endif
 
 #if defined (iPlatformAppleDesktop)
-#   define iHaveNativeMenus
+#   define iHaveNativeMenus /* main menu */
+//#   define iHaveNativeContextMenus
 #endif
 
 /* UI labels that depend on the platform */

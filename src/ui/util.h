@@ -241,6 +241,7 @@ iChar           removeIconPrefix_String         (iString *);
 iLabelWidget *  findMenuItem_Widget             (iWidget *menu, const char *command);
 iMenuItem *     findNativeMenuItem_Widget       (iWidget *menu, const char *commandSuffix);
 void            setMenuItemDisabled_Widget      (iWidget *menu, const char *command, iBool disable);
+void            setMenuItemDisabledByIndex_Widget(iWidget *menu, size_t index, iBool disable);
 void            setMenuItemLabel_Widget         (iWidget *menu, const char *command, const char *newLabel);
 void            setMenuItemLabelByIndex_Widget  (iWidget *menu, size_t index, const char *newLabel);
 

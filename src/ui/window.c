@@ -1582,7 +1582,6 @@ int snap_MainWindow(const iMainWindow *d) {
 /*----------------------------------------------------------------------------------------------*/
 
 iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
-    arrange_Widget(rootWidget);
     iWindow *win =
         new_Window(popup_WindowType,
                    (iRect){ screenPos, divf_I2(rootWidget->rect.size, get_Window()->pixelRatio) },

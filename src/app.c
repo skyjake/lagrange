@@ -1275,7 +1275,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     setCurrent_Window(window);
                     window->lastHover = window->hover;
                     wasUsed = processEvent_Window(window, &ev);
-                    if (ev.type == SDL_MOUSEMOTION) {
+                    if (ev.type == SDL_MOUSEMOTION || ev.type == SDL_MOUSEBUTTONDOWN) {
                         break;
                     }
                     if (wasUsed) break;

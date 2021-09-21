@@ -811,7 +811,7 @@ static void deleteMenuItems_(iArray *items) {
 
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
-#if defined (iHaveNativeMenus)
+#if defined (iHaveNativeContextMenus)
     setFlags_Widget(menu, hidden_WidgetFlag | nativeMenu_WidgetFlag, iTrue);
     setUserData_Object(menu, deepCopyMenuItems_(menu, items, n));
     addChild_Widget(parent, menu);
@@ -949,6 +949,9 @@ void setMenuItemLabel_Widget(iWidget *menu, const char *command, const char *new
 }
 
 void setMenuItemLabelByIndex_Widget(iWidget *menu, size_t index, const char *newLabel) {
+    if (!menu) {
+        return;
+    }
     if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
         iArray *items = userData_Object(menu);
         iAssert(items);
@@ -976,7 +979,7 @@ iLocalDef iBool isUsingMenuPopupWindows_(void) {
 }
 
 void releaseNativeMenu_Widget(iWidget *d) {
-#if defined (iHaveNativeMenus)
+#if defined (iHaveNativeContextMenus)
     iArray *items = userData_Object(d);
     iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
     iAssert(items);
@@ -988,7 +991,7 @@ void releaseNativeMenu_Widget(iWidget *d) {
 }
 
 void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
-#if defined (iHaveNativeMenus)
+#if defined (iHaveNativeContextMenus)
     const iArray *items = userData_Object(d);
     iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
     iAssert(items);
@@ -1014,9 +1017,19 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
         setFlags_Widget(d, keepOnTop_WidgetFlag, iFalse);
         setUserData_Object(d, parent_Widget(d));
         removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
-        iInt2 mousePos;
-        SDL_GetGlobalMouseState(&mousePos.x, &mousePos.y);
-        iWindow *win = newPopup_Window(sub_I2(mousePos, divi_I2(gap2_UI, 2)), d);
+        const float pixelRatio = get_Window()->pixelRatio;
+        iInt2 menuPos = add_I2(get_MainWindow()->place.normalRect.pos,
+                               divf_I2(windowCoord, pixelRatio));
+        arrange_Widget(d);
+        /* Check display bounds. */ {
+            const iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);
+            SDL_Rect displayRect;
+            SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(get_Window()->win), &displayRect);
+            menuPos.x = iMin(menuPos.x, displayRect.x + displayRect.w - menuSize.x);
+            menuPos.y = iMin(menuPos.y, displayRect.y + displayRect.h - menuSize.y);
+        }
+        //        SDL_GetGlobalMouseState(&mousePos.x, &mousePos.y);
+        iWindow *win = newPopup_Window(menuPos, d);
         SDL_SetWindowTitle(win->win, "Menu");
         addPopup_App(win); /* window takes the widget */
         SDL_ShowWindow(win->win);
@@ -1132,6 +1145,18 @@ void setMenuItemDisabled_Widget(iWidget *menu, const char *command, iBool disabl
             setFlags_Widget(as_Widget(item), disabled_WidgetFlag, disable);
         }
     }
+}
+
+void setMenuItemDisabledByIndex_Widget(iWidget *menu, size_t index, iBool disable) {
+    if (!menu) {
+        return;
+    }
+    if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
+        setDisabled_NativeMenuItem(at_Array(userData_Object(menu), index), disable);
+    }
+    else {
+        setFlags_Widget(child_Widget(menu, index), disabled_WidgetFlag, disable);
+    }    
 }
 
 int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
