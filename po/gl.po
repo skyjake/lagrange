@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-09-19 08:49+0000\n"
+"PO-Revision-Date: 2021-09-23 04:49+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -265,7 +265,7 @@ msgid "menu.title.edit"
 msgstr "Editar"
 
 msgid "menu.title.view"
-msgstr "Vista"
+msgstr "Ver"
 
 msgid "menu.title.bookmarks"
 msgstr "Marcadores"
@@ -1469,3 +1469,353 @@ msgstr "Tes a certeza de que queres esquecer tódalas páxinas visitadas?"
 
 msgid "bookmarks.reload"
 msgstr "Actualizar Fontes remotas"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Desprazarse media páxina arriba"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Desprazarse media páxina abaixo"
+
+msgid "keys.subscribe"
+msgstr "Subscríbete á páxina"
+
+msgid "keys.tab.close.other"
+msgstr "Pechar outras lapelas"
+
+msgid "keys.upload"
+msgstr "Subir páxina con Titan"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"O servidor respondeu cun código de estado que non está na especificación do "
+"código Gemini. Igoal este servidor está no futuro? Ou simplemente funciona "
+"mal."
+
+msgid "error.unsupported.protocol.msg"
+msgstr "O protocolo solicitado non ten soporte nesta aplicación."
+
+msgid "error.badheader.msg"
+msgstr ""
+"A cabeceira recibida non segue a especificación do protocolo Gemini. Pode "
+"que o servidor non funcione ben, ou que intentes conectar cun servidor non-"
+"Gemini."
+
+msgid "error.badredirect.msg"
+msgstr ""
+"O servidor respondeu cunha redirección pero non proporcionou un URL válido. "
+"Pode que o servidor esté a funcionar mal."
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Pode que esté atrapado nun bucle de redireccións. Abaixo tes o seguinte URL "
+"de redirección por se queres ir manualmente."
+
+msgid "error.certexpired.msg"
+msgstr ""
+"Cancelouse a conexión ao servidor porque o certificado TLS está caducado."
+
+msgid "error.certverify.msg"
+msgstr ""
+"A conexión ao servidor cancelouse porque o seu certificado TLS non concorda "
+"co que nós establecemos a confianza nel. Comproba se o servidor anunciou un "
+"cambio de certificado. Se non, é posible que unha terceira parte maliciosa "
+"intente camuflarse como o servidor ao que intentabas conectar.\n"
+"\n"
+"O certificado pode ser marcado como de confianza na Información da Páxina."
+
+msgid "numbertype.integer"
+msgstr "enteiro"
+
+msgid "menu.parent"
+msgstr "Nivel superior"
+
+msgid "prefs.retainwindow"
+msgstr "Reter situación:"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Este arquivo contén %zu elemento e o seu tamaño comprimido é %.1f MB."
+msgstr[1] "Este arquivo contén %zu elementos e o seu tamaño comprimido é %.1f MB."
+
+msgid "dir.empty"
+msgstr "O directorio está baleiro."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "O directorio contén %zu elemento."
+msgstr[1] "O directorio contén %zu elementos."
+
+msgid "keys.top"
+msgstr "Ir arriba"
+
+msgid "keys.bottom"
+msgstr "Ir ao fondo"
+
+msgid "keys.scroll.up"
+msgstr "Desprazarse cara arriba"
+
+msgid "keys.scroll.down"
+msgstr "Desprazarse cara abaixo"
+
+msgid "keys.scroll.page.up"
+msgstr "Desprazarse unha páxina arriba"
+
+msgid "keys.scroll.page.down"
+msgstr "Desprazarse unha páxina abaixo"
+
+msgid "keys.back"
+msgstr "Ir atrás"
+
+msgid "keys.forward"
+msgstr "Ir adiante"
+
+msgid "keys.root"
+msgstr "Ir á raiz da cápsula"
+
+msgid "keys.reload"
+msgstr "Recargar páxina"
+
+msgid "keys.bookmark.add"
+msgstr "Engadir marcador"
+
+msgid "keys.findtext"
+msgstr "Atopar texto na páxina"
+
+msgid "keys.zoom.in"
+msgstr "Aumentar"
+
+msgid "keys.zoom.out"
+msgstr "Diminuír"
+
+msgid "keys.zoom.reset"
+msgstr "Restablecer tamaño"
+
+msgid "keys.fullscreen"
+msgstr "Activar modo pantalla completa"
+
+msgid "keys.tab.new"
+msgstr "Nova lapela"
+
+msgid "keys.tab.close"
+msgstr "Pechar lapela"
+
+msgid "keys.tab.prev"
+msgstr "Lapela anterior"
+
+msgid "keys.tab.next"
+msgstr "Lapela seguinte"
+
+msgid "keys.split.menu"
+msgstr "Establecer modo vista separada"
+
+msgid "keys.split.next"
+msgstr "Pór o foco na seguinte división"
+
+msgid "keys.split.item"
+msgstr "Menú da vista separada:"
+
+msgid "error.badstatus"
+msgstr "Código de Estado descoñecido"
+
+msgid "error.openfile"
+msgstr "Fallo ao Abrir Ficheiro"
+
+msgid "error.openfile.msg"
+msgstr ""
+"O ficheiro solicitado non existe ou non é accesible. Comproba a ruta ao "
+"ficheiro."
+
+msgid "error.badresource"
+msgstr "Recurso non válido"
+
+msgid "error.badresource.msg"
+msgstr "Non existe o recurso solicitado."
+
+msgid "error.unsupported.media"
+msgstr "Tipo de contido non soportado"
+
+msgid "error.unsupported.media.msg"
+msgstr "O contido recibido non pode ser visualizado nesta aplicación."
+
+msgid "error.unsupported.protocol"
+msgstr "Protocolo sen soporte"
+
+msgid "error.badheader"
+msgstr "Cabeceira non válida"
+
+msgid "error.badredirect"
+msgstr "Redireción non válida"
+
+msgid "keys.parent"
+msgstr "Ir ao directorio superior"
+
+msgid "keys.link.modkey"
+msgstr "Abrir ligazón vía tecla modificadora"
+
+msgid "keys.link.homerow"
+msgstr "Abrir ligazón vía teclas fila de inicio"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Abrir ligazón en nova lapela vía teclas fila de inicio"
+
+msgid "keys.link.homerow.hover"
+msgstr "Porse enriba da ligazón vía teclas da fila de inicio"
+
+msgid "keys.link.homerow.next"
+msgstr "Seguinte grupo de ligazóns da tecla da fila de inicio"
+
+msgid "keys.hoverurl"
+msgstr "Activar mostrar URL ao porse enriba"
+
+msgid "error.schemeredirect"
+msgstr "Redirección de Cambio-de-Esquema"
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"O servidor intentou redirixirte a un URL cun esquema diferente ao esquema do "
+"URL de orixe. Aquí tes a ligazón para abrila manualmente se o consideras "
+"axeitado."
+
+msgid "error.manyredirects"
+msgstr "Demasiadas redireccións"
+
+msgid "error.tls"
+msgstr "Fallo Rede/TLS"
+
+msgid "error.tls.msg"
+msgstr "Fallou a comunicación co servidor. Aquí está a mensaxe de erro:"
+
+msgid "error.certexpired"
+msgstr "Certificado caducado"
+
+msgid "error.certverify"
+msgstr "Servidor non confiable"
+
+msgid "error.temporary"
+msgstr "Fallo temporal"
+
+msgid "error.temporary.msg"
+msgstr "A solicitude fallou, pero podes intentalo outra vez dentro dun pouco."
+
+msgid "error.unavail"
+msgstr "Servidor non dispoñible"
+
+msgid "error.unavail.msg"
+msgstr ""
+"O servidor non está dispoñible por mantemento ou sobrecarga. Volve dentro "
+"dun pouco."
+
+msgid "error.cgi"
+msgstr "Erro CGI"
+
+msgid "error.cgi.msg"
+msgstr ""
+"Erro durante a creación de contido dinámico no servidor. Pode deberse a un "
+"problema no software do servidor."
+
+msgid "error.proxy"
+msgstr "Erro do Proxy"
+
+msgid "error.proxy.msg"
+msgstr ""
+"Fallou a solicitude ao proxy porque o servidor non puido completar "
+"correctamente a transacción co host remoto. Pode que existan problemas coa "
+"conectividade da rede."
+
+msgid "error.slowdown"
+msgstr "Frear"
+
+msgid "error.slowdown.msg"
+msgstr "O servidor está limitando as solicitudes. Agarda…"
+
+msgid "error.permanent"
+msgstr "Fallo permanente"
+
+msgid "error.permanent.msg"
+msgstr "A túa solicitude fallou e fallará tamén no futuro se a repites."
+
+msgid "error.notfound"
+msgstr "Non atopado"
+
+msgid "error.notfound.msg"
+msgstr "O recurso solicitado non se puido atopar nesta ocasión."
+
+msgid "error.gone.msg"
+msgstr "O recurso solicitado xa non está dispoñible."
+
+msgid "error.gone"
+msgstr "Desaparecido"
+
+msgid "error.proxyrefusal"
+msgstr "Rexeitada a solicitude ao proxy"
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"A solicitude realizouse a un dominio non servidor por este servidor e o "
+"servidor non acepta solicitudes proxy."
+
+msgid "error.badrequest"
+msgstr "Solicitude incorrecta"
+
+msgid "error.badrequest.msg"
+msgstr "O servidor non entende o que lle estás a pedir."
+
+msgid "error.cert.needed"
+msgstr "Require certificado"
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"O acceso ao recurso solicitado require identificación cun certificado "
+"cliente."
+
+msgid "error.cert.auth"
+msgstr "Certificado non autorizado"
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"O certificado cliente proporcionado é válido pero non ten autorización para "
+"acceder ao recurso solicitado."
+
+msgid "error.cert.invalid"
+msgstr "Certificado non válido"
+
+msgid "error.cert.invalid.msg"
+msgstr "O certificado do cliente proporcionado está caducado ou non é válido."
+
+msgid "gempub.cover.viewlocal"
+msgstr "Este libro Gempub pode verse tras ser gardado de xeito local."
+
+msgid "gempub.cover.untitled"
+msgstr "Libro sen título"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Acerca deste libro"
+
+msgid "gempub.cover.view"
+msgstr "Ver contidos Gempub"
+
+msgid "gempub.cover.image"
+msgstr "Imaxe da portada"
+
+msgid "gempub.meta.author"
+msgstr "Autora"
+
+msgid "gempub.meta.version"
+msgstr "Versión"
+
+msgid "gempub.meta.revdate"
+msgstr "Data de revisión"
+
+msgid "gempub.meta.pub"
+msgstr "Publicado"
+
+msgid "gempub.meta.pubdate"
+msgstr "Data de publicación"
+
+msgid "gempub.meta.lang"
+msgstr "Idioma"
+
+msgid "gempub.meta.license"
+msgstr "Licenza"
