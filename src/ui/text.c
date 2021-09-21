@@ -121,6 +121,8 @@ iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
 
 /*-----------------------------------------------------------------------------------------------*/
 
+static iGlyph *glyph_Font_(iFont *d, iChar ch);
+
 struct Impl_Font {
     iBlock *       data;
     enum iTextFont family;
@@ -131,6 +133,7 @@ struct Impl_Font {
     int            baseline;
     iHash          glyphs; /* key is glyph index in the font */ /* TODO: does not need to be a Hash */
     iBool          isMonospaced;
+    float          emAdvance;
     enum iFontSize sizeId;  /* used to look up different fonts of matching size */
     uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
@@ -178,20 +181,20 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     d->height = height;
     iZap(d->font);
     stbtt_InitFont(&d->font, constData_Block(data), 0);
-    int ascent, descent;
+    int ascent, descent, emAdv;
     stbtt_GetFontVMetrics(&d->font, &ascent, &descent, NULL);
+    stbtt_GetCodepointHMetrics(&d->font, 'M', &emAdv, NULL);
     d->xScale = d->yScale = stbtt_ScaleForPixelHeight(&d->font, height) * scale;
     if (d->isMonospaced) {
         /* It is important that monospaced fonts align 1:1 with the pixel grid so that
            box-drawing characters don't have partially occupied edge pixels, leading to seams
            between adjacent glyphs. */
-        int adv;
-        stbtt_GetCodepointHMetrics(&d->font, 'M', &adv, NULL);
-        const float advance = (float) adv * d->xScale;
+        const float advance = (float) emAdv * d->xScale;
         if (advance > 4) { /* not too tiny */
             d->xScale *= floorf(advance) / advance;
         }
     }
+    d->emAdvance  = emAdv * d->xScale;
     d->baseline   = ascent * d->yScale;
     d->vertOffset = height * (1.0f - scale) / 2;
     /* Custom tweaks. */
@@ -1335,6 +1338,11 @@ static void shape_GlyphBuffer_(iGlyphBuffer *d) {
     }
 }
 
+static float nextTabStop_Font_(const iFont *d, float x) {
+    const float stop = 4 * d->emAdvance;
+    return floorf(x / stop) * stop + stop;
+}
+
 static float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapPosRange) {
     float x = 0.0f;
     for (unsigned int i = 0; i < d->glyphCount; i++) {
@@ -1343,6 +1351,9 @@ static float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapPosRange) {
             continue;
         }
         x += d->font->xScale * d->glyphPos[i].x_advance;
+        if (d->logicalText[logPos] == '\t') {
+            x = nextTabStop_Font_(d->font, x);
+        }
         if (i + 1 < d->glyphCount) {
             x += horizKern_Font_(d->font,
                                  d->glyphInfo[i].codepoint,
@@ -1354,7 +1365,7 @@ static float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapPosRange) {
 
 static void evenMonospaceAdvances_GlyphBuffer_(iGlyphBuffer *d, iFont *baseFont) {
     shape_GlyphBuffer_(d);
-    const float monoAdvance = glyph_Font_(baseFont, 'M')->advance;
+    const float monoAdvance = baseFont->emAdvance;
     for (unsigned int i = 0; i < d->glyphCount; ++i) {
         const hb_glyph_info_t *info = d->glyphInfo + i;
         if (d->glyphPos[i].x_advance > 0 && d->font != baseFont) {
@@ -1498,10 +1509,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     const int     glyphFlags = hb_glyph_info_get_glyph_flags(info);
                     const float   xOffset    = run->font->xScale * buf->glyphPos[i].x_offset;
                     const float   xAdvance   = run->font->xScale * buf->glyphPos[i].x_advance;
+                    const iChar   ch         = logicalText[logPos];
                     iAssert(xAdvance >= 0);
                     if (args->wrap->mode == word_WrapTextMode) {
                         /* When word wrapping, only consider certain places breakable. */
-                        const iChar ch = logicalText[logPos];
                         if ((ch >= 128 || !ispunct(ch)) && (prevCh == '-' || prevCh == '/')) {
                             safeBreakPos = logPos;
                             breakAdvance = wrapAdvance;
@@ -1526,6 +1537,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                             wrap->hitChar_out = sourcePtr_AttributedText_(&attrText, logPos);
                             wrap->hitGlyphNormX_out = (wrap->hitPoint.x - wrapAdvance) / xAdvance;
                         }
+                    }
+                    if (ch == '\t') {
+                        wrapAdvance = nextTabStop_Font_(d, wrapAdvance) - xAdvance;
                     }
                     /* Out of room? */
                     if (wrap->maxWidth > 0 &&
@@ -1681,6 +1695,21 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 const float xAdvance = run->font->xScale * buf->glyphPos[i].x_advance;
                 const float yAdvance = run->font->yScale * buf->glyphPos[i].y_advance;
                 const iGlyph *glyph = glyphByIndex_Font_(run->font, glyphId);
+                if (logicalText[logPos] == '\t') {
+                    if (mode & draw_RunMode) {
+                        /* Tab indicator. */
+                        iColor tabColor = get_Color(uiTextAction_ColorId);
+                        SDL_SetRenderDrawColor(activeText_->render, tabColor.r, tabColor.g, tabColor.b, 255);
+                        const int pad = d->height / 6;
+                        SDL_RenderFillRect(activeText_->render, &(SDL_Rect){
+                            orig.x + xCursor,
+                            orig.y + yCursor + d->height / 2 - pad / 2,
+                            pad,
+                            pad
+                        });
+                    }
+                    xCursor = nextTabStop_Font_(d, xCursor) - xAdvance;
+                }
                 const float xf = xCursor + xOffset;
                 const int hoff = enableHalfPixelGlyphs_Text ? (xf - ((int) xf) > 0.5f ? 1 : 0) : 0;
                 /* Output position for the glyph. */
