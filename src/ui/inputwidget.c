@@ -2189,6 +2189,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
             }
             case SDLK_TAB:
+                if (mods == (KMOD_ALT | KMOD_SHIFT)) {
+                    pushUndo_InputWidget_(d);
+                    deleteMarked_InputWidget_(d);
+                    insertChar_InputWidget_(d, '\t');
+                    contentsWereChanged_InputWidget_(d);
+                    return iTrue;
+                }
                 /* Allow focus switching. */
                 return processEvent_Widget(as_Widget(d), ev);
             case SDLK_UP:
