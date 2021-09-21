@@ -126,7 +126,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputFrame_ColorId, gray25_ColorId);
             copy_(uiInputFrameHover_ColorId, accentHi);
             copy_(uiInputFrameFocused_ColorId, accentLo);
-            copy_(uiInputCursor_ColorId, accentHi);
+            copy_(uiInputCursor_ColorId, altAccentHi);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, accentHi);
             copy_(uiAnnotation_ColorId, accentLo);
@@ -179,7 +179,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputFrame_ColorId, uiInputBackground_ColorId);
             copy_(uiInputFrameHover_ColorId, accentHi);
             copy_(uiInputFrameFocused_ColorId, accentLo);
-            copy_(uiInputCursor_ColorId, accentHi);
+            copy_(uiInputCursor_ColorId, altAccentHi);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, accentHi);
             copy_(uiAnnotation_ColorId, accentLo);
@@ -229,7 +229,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
                       mix_Color(get_Color(gray50_ColorId), get_Color(gray75_ColorId), 0.5f));
             copy_(uiInputFrameHover_ColorId, accentLo);
             copy_(uiInputFrameFocused_ColorId, accentLo);
-            copy_(uiInputCursor_ColorId, accentLo);
+            copy_(uiInputCursor_ColorId, altAccentLo);
             copy_(uiInputCursorText_ColorId, white_ColorId);
             copy_(uiHeading_ColorId, accentLo);
             copy_(uiAnnotation_ColorId, gray50_ColorId);
@@ -280,7 +280,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputFrame_ColorId, gray50_ColorId);
             copy_(uiInputFrameHover_ColorId, accentLo);
             copy_(uiInputFrameFocused_ColorId, accentLo);
-            copy_(uiInputCursor_ColorId, accentLo);
+            copy_(uiInputCursor_ColorId, altAccentLo);
             copy_(uiInputCursorText_ColorId, white_ColorId);
             copy_(uiHeading_ColorId, accentLo);
             copy_(uiAnnotation_ColorId, gray50_ColorId);
