@@ -529,15 +529,9 @@ enum iColorId removeColorEscapes_String(iString *d) {
     for (;;) {
         const char *esc = strchr(cstr_String(d), '\v');
         if (esc) {
-            const char *ptr = esc + 1;
-            color = 0;
-            if (*ptr == '\v') {
-                color += asciiExtended_ColorEscape;
-                ptr++;
-            }
-            color += *ptr - asciiBase_ColorEscape;
-            ptr++;
-            remove_Block(&d->chars, esc - cstr_String(d), ptr - esc);
+            const char *endp;
+            color = parseEscape_Color(esc, &endp);
+            remove_Block(&d->chars, esc - cstr_String(d), endp - esc);
         }
         else break;
     }

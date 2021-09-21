@@ -188,7 +188,8 @@ static void keyStr_LabelWidget_(const iLabelWidget *d, iString *str) {
     toString_Sym(d->key, d->kmods, str);
 }
 
-static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2) {
+static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2,
+                                   int *icon, int *meta) {
     const iWidget *w           = constAs_Widget(d);
     const int64_t  flags       = flags_Widget(w);
     const iBool    isFocus     = (flags & focusable_WidgetFlag && isFocused_Widget(d));
@@ -197,6 +198,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     const iBool    isFrameless = (flags & frameless_WidgetFlag) != 0;
     const iBool    isButton    = d->click.button != 0;
     const iBool    isKeyRoot   = (w->root == get_Window()->keyRoot);
+    const iBool    isDarkTheme = isDark_ColorTheme(colorTheme_App());
     /* Default color state. */
     *bg     = isButton && ~flags & noBackground_WidgetFlag ? (d->widget.bgColor != none_ColorId ?
                                                               d->widget.bgColor : uiBackground_ColorId)
@@ -204,8 +206,12 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     *fg     = uiText_ColorId;
     *frame1 = isButton ? uiEmboss1_ColorId : d->widget.frameColor;
     *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
+    *icon   = uiIcon_ColorId;
+    *meta   = uiTextShortcut_ColorId;
     if (flags & disabled_WidgetFlag && isButton) {
-        *fg = uiTextDisabled_ColorId;
+        *icon = uiTextDisabled_ColorId;
+        *fg   = uiTextDisabled_ColorId;
+        *meta = uiTextDisabled_ColorId;
     }
     if (isSel) {
         *bg = uiBackgroundSelected_ColorId;
@@ -230,7 +236,10 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     }
     int colorEscape = none_ColorId;
     if (startsWith_String(&d->label, "\v")) {
-        colorEscape = cstr_String(&d->label)[1] - asciiBase_ColorEscape; /* TODO: can be two bytes long */
+        colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
+    }
+    if (colorEscape == uiTextCaution_ColorId) {
+        *icon = *meta = colorEscape;
     }
     if (isHover_LabelWidget_(d)) {
         if (isFrameless) {
@@ -239,41 +248,46 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         }
         else {
             /* Frames matching color escaped text. */
-            if (colorEscape != none_ColorId) {
-                if (isDark_ColorTheme(colorTheme_App())) {
-                    *frame1 = colorEscape;
-                    *frame2 = darker_Color(*frame1);
-                }
-                else {
-                    *bg = *frame1 = *frame2 = colorEscape;
-                    *fg = white_ColorId | permanent_ColorId;
-                }
+            if (colorEscape == uiTextCaution_ColorId) {
+                *frame1 = colorEscape;
+                *frame2 = isDarkTheme ? darker_Color(*frame1) : lighter_Color(*frame1);
             }
             else if (isSel) {
                 *frame1 = uiEmbossSelectedHover1_ColorId;
                 *frame2 = uiEmbossSelectedHover2_ColorId;
             }
             else {
-                if (isButton) *bg = uiBackgroundHover_ColorId;
                 *frame1 = uiEmbossHover1_ColorId;
                 *frame2 = uiEmbossHover2_ColorId;
             }
         }
+        if (colorEscape == uiTextCaution_ColorId) {
+            *icon = *meta = *fg = colorEscape;
+            *bg = isDarkTheme ? darker_Color(colorEscape) : lighter_Color(colorEscape);
+        }
     }
     if (d->forceFg >= 0) {
-        *fg = d->forceFg;
+        *fg = *icon = *meta = d->forceFg;
     }
     if (isPress) {
-        *bg = uiBackgroundPressed_ColorId | permanent_ColorId;
-        if (isButton) {
-            *frame1 = uiEmbossPressed1_ColorId;
-            *frame2 = colorEscape != none_ColorId ? colorEscape : uiEmbossPressed2_ColorId;
-        }
-        if (colorEscape == none_ColorId || colorEscape == uiTextAction_ColorId) {
-            *fg = uiTextPressed_ColorId | permanent_ColorId;
+        if (colorEscape == uiTextAction_ColorId || colorEscape == uiTextCaution_ColorId) {
+            *bg = colorEscape;
+            *frame1 = *bg;
+            *frame2 = *bg;
+            *fg = *icon = *meta = (isDarkTheme ? black_ColorId : white_ColorId) | permanent_ColorId;
         }
         else {
-            *fg = isDark_ColorTheme(colorTheme_App()) ? white_ColorId : black_ColorId;
+            *bg = uiBackgroundPressed_ColorId | permanent_ColorId;
+            if (isButton) {
+                *frame1 = uiEmbossPressed1_ColorId;
+                *frame2 = colorEscape != none_ColorId ? colorEscape : uiEmbossPressed2_ColorId;
+            }
+            //if (colorEscape == none_ColorId || colorEscape == uiTextAction_ColorId) {
+            *fg = *icon = *meta = uiTextPressed_ColorId | permanent_ColorId;
+    //        }
+    //        else {
+    //            *fg = (isDark_ColorTheme(colorTheme_App()) ? white_ColorId : black_ColorId) | permanent_ColorId;
+    //        }
         }
     }
 }
@@ -305,11 +319,12 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     iPaint p;
     init_Paint(&p);
-    int bg, fg, frame, frame2;
-    getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2);
-    const iBool isCaution = startsWith_String(&d->label, uiTextCaution_ColorEscape);
+    int bg, fg, frame, frame2, iconColor, metaColor;
+    getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2, &iconColor, &metaColor);
+    const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
+    const iBool isCaution = (colorEscape == uiTextCaution_ColorId);
     if (bg >= 0) {
-        fillRect_Paint(&p, rect, isCaution && isHover ? uiMarked_ColorId : bg);
+        fillRect_Paint(&p, rect, bg);
     }
     if (isFocused_Widget(w)) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
@@ -340,10 +355,10 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     setClip_Paint(&p, rect);
     const int iconPad = iconPadding_LabelWidget_(d);
-    const int iconColor = isCaution ? uiTextCaution_ColorId
-                          : flags & (disabled_WidgetFlag | pressed_WidgetFlag) ? fg
-                          : isHover                                            ? uiIconHover_ColorId
-                                                                               : uiIcon_ColorId;
+//    const int iconColor = isCaution ? uiTextCaution_ColorId
+//                          : flags & (disabled_WidgetFlag | pressed_WidgetFlag) ? fg
+//                          : isHover                                            ? uiIconHover_ColorId
+//                                                                               : uiIcon_ColorId;
     if (d->icon && d->icon != 0x20) { /* no need to draw an empty icon */
         iString str;
         initUnicodeN_String(&str, &d->icon, 1);
@@ -363,7 +378,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         deinit_String(&str);
     }
     if (d->flags.wrap) {
-        const iRect cont = contentBounds_LabelWidget_(d); //djusted_Rect(innerBounds_Widget(w), init_I2(iconPad, 0), zero_I2());
+        const iRect cont = contentBounds_LabelWidget_(d);
         drawWrapRange_Text(
             d->font, topLeft_Rect(cont), width_Rect(cont), fg, range_String(&d->label));
     }
@@ -378,9 +393,11 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                            add_I2(topRight_Rect(bounds),
                                   addX_I2(negX_I2(padding_LabelWidget_(d, 1)),
                                           deviceType_App() == tablet_AppDeviceType ? gap_UI : 0)),
-                           flags & pressed_WidgetFlag ? fg
-                           : isCaution                ? uiTextCaution_ColorId
-                                                      : uiTextShortcut_ColorId,
+                           metaColor,/*
+                           isHover || flags & pressed_WidgetFlag ? fg
+//                           : isCaution                ? uiTextCaution_ColorId
+                           : colorEscape != none_ColorId ? colorEscape
+                                                      : uiTextShortcut_ColorId,*/
                            right_Alignment,
                            cstr_String(&str));
             deinit_String(&str);
@@ -410,7 +427,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         drawCentered_Text(d->font,
                           (iRect){ addX_I2(topRight_Rect(chRect), -iconPad),
                                    init_I2(chSize, height_Rect(chRect)) },
-                          iTrue, iconColor /*uiSeparator_ColorId*/, rightAngle_Icon);
+                          iTrue, iconColor, rightAngle_Icon);
     }
     unsetClip_Paint(&p);
 }

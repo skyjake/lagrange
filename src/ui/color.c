@@ -482,6 +482,24 @@ const char *escape_Color(int color) {
     return format_CStr("\v%c", color + asciiBase_ColorEscape);
 }
 
+enum iColorId parseEscape_Color(const char *cstr, const char **endp) {
+    enum iColorId color = none_ColorId;
+    if (*cstr == '\v') {
+        cstr++;
+        color = 0;
+        if (*cstr == '\v') {
+            color += asciiExtended_ColorEscape;
+            cstr++;
+        }
+        color += *cstr - asciiBase_ColorEscape;
+        cstr++;
+    }
+    if (endp) {
+        *endp = cstr;
+    }
+    return color;
+}
+
 iHSLColor setSat_HSLColor(iHSLColor d, float sat) {
     d.sat = iClamp(sat, 0, 1);
     return d;

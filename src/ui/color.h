@@ -250,4 +250,4 @@ void            setThemePalette_Color   (enum iColorTheme theme);
 
 iColor          ansiForeground_Color    (iRangecc escapeSequence, int fallback);
 const char *    escape_Color            (int color);
-
+enum iColorId   parseEscape_Color       (const char *cstr, const char **endp);
