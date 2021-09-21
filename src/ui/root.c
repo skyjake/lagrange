@@ -312,7 +312,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         iWidget *menu = findChild_Widget(button, "menu");
         iAssert(menu);
         if (!isVisible_Widget(menu)) {
-            openMenu_Widget(menu, bottomLeft_Rect(bounds_Widget(button)));
+            openMenu_Widget(menu, topLeft_Rect(bounds_Widget(button)));
         }
         else {
             closeMenu_Widget(menu);
