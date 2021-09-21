@@ -1457,40 +1457,25 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 if (d->mode == bookmarks_SidebarMode && d->contextItem) {
                     const iBookmark *bm = get_Bookmarks(bookmarks_App(), d->contextItem->id);
                     if (bm) {
-                        iLabelWidget *menuItem = findMenuItem_Widget(d->menu,
-                                                                     "bookmark.tag tag:homepage");
-                        if (menuItem) {
-                            setTextCStr_LabelWidget(menuItem,
-                                                    hasTag_Bookmark(bm, homepage_BookmarkTag)
-                                                        ? home_Icon " ${bookmark.untag.home}"
-                                                        : home_Icon " ${bookmark.tag.home}");
-                            checkIcon_LabelWidget(menuItem);
-                        }
-                        menuItem = findMenuItem_Widget(d->menu, "bookmark.tag tag:subscribed");
-                        if (menuItem) {
-                            setTextCStr_LabelWidget(menuItem,
-                                                    hasTag_Bookmark(bm, subscribed_BookmarkTag)
+                        updateMenuItemLabel_Widget(d->menu, "bookmark.tag tag:homepage",
+                                                   hasTag_Bookmark(bm, homepage_BookmarkTag)
+                                                       ? home_Icon " ${bookmark.untag.home}"
+                                                       : home_Icon " ${bookmark.tag.home}");
+                        updateMenuItemLabel_Widget(d->menu, "bookmark.tag tag:subscribed",
+                                                   hasTag_Bookmark(bm, subscribed_BookmarkTag)
                                                         ? star_Icon " ${bookmark.untag.sub}"
                                                         : star_Icon " ${bookmark.tag.sub}");
-                            checkIcon_LabelWidget(menuItem);
-                        }
-                        menuItem = findMenuItem_Widget(d->menu, "bookmark.tag tag:remotesource");
-                        if (menuItem) {
-                            setTextCStr_LabelWidget(menuItem,
-                                                    hasTag_Bookmark(bm, remoteSource_BookmarkTag)
+                        updateMenuItemLabel_Widget(d->menu, "bookmark.tag tag:remotesource",
+                                                   hasTag_Bookmark(bm, remoteSource_BookmarkTag)
                                                         ? downArrowBar_Icon " ${bookmark.untag.remote}"
                                                         : downArrowBar_Icon " ${bookmark.tag.remote}");
-                            checkIcon_LabelWidget(menuItem);
-                        }
                     }
                 }
                 else if (d->mode == feeds_SidebarMode && d->contextItem) {
-                    iLabelWidget *menuItem = findMenuItem_Widget(d->menu, "feed.entry.toggleread");
                     const iBool   isRead   = d->contextItem->indent == 0;
-                    setTextCStr_LabelWidget(menuItem,
-                                            isRead ? circle_Icon " ${feeds.entry.markunread}"
-                                                   : circleWhite_Icon " ${feeds.entry.markread}");
-                    checkIcon_LabelWidget(menuItem);
+                    updateMenuItemLabel_Widget(d->menu, "feed.entry.toggleread",
+                                               isRead ? circle_Icon " ${feeds.entry.markunread}"
+                                                      : circleWhite_Icon " ${feeds.entry.markread}");
                 }
                 else if (d->mode == identities_SidebarMode) {
                     const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);

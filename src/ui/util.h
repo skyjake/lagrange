@@ -226,16 +226,20 @@ struct Impl_MenuItem {
     };
 };
 
-iWidget *   makeMenu_Widget     (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
-void        makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n);
-void        openMenu_Widget     (iWidget *, iInt2 windowCoord);
-void        openMenuFlags_Widget(iWidget *, iInt2 windowCoord, iBool postCommands);
-void        closeMenu_Widget    (iWidget *);
+iWidget *   makeMenu_Widget         (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
+void        makeMenuItems_Widget    (iWidget *menu, const iMenuItem *items, size_t n);
+void        openMenu_Widget         (iWidget *, iInt2 windowCoord);
+void        openMenuFlags_Widget    (iWidget *, iInt2 windowCoord, iBool postCommands);
+void        closeMenu_Widget        (iWidget *);
+void        releaseNativeMenu_Widget(iWidget *);
 
 size_t      findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);
 
+iChar       removeIconPrefix_String (iString *);
+
 iLabelWidget *  findMenuItem_Widget         (iWidget *menu, const char *command);
 void            setMenuItemDisabled_Widget  (iWidget *menu, const char *command, iBool disable);
+void            updateMenuItemLabel_Widget  (iWidget *menu, const char *command, const char *newLabel);
 
 int         checkContextMenu_Widget (iWidget *, const SDL_Event *ev); /* see macro below */
 

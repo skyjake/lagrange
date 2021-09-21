@@ -24,7 +24,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "ui/util.h"
 
+iDeclareType(MenuItem)
 iDeclareType(Window)
+iDeclareType(Widget)
 
 /* Platform-specific functionality for macOS */
 
@@ -40,3 +42,5 @@ void    enableMenu_MacOS            (const char *menuLabel, iBool enable);
 void    enableMenuItem_MacOS        (const char *menuItemCommand, iBool enable);
 void    enableMenuItemsByKey_MacOS  (int key, int kmods, iBool enable);
 void    handleCommand_MacOS         (const char *cmd);
+
+void    showPopupMenu_MacOS         (iWidget *source, iInt2 windowCoord, const iMenuItem *items, size_t n);

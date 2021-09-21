@@ -2365,8 +2365,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
             cursorChar.start = charPos_InputWidget_(d, d->cursor);
             iChar ch = 0;
             int n = decodeBytes_MultibyteChar(cursorChar.start,
-                                      constEnd_String(&constCursorLine_InputWidget_(d)->text),
-                                      &ch);
+                                              constEnd_String(&constCursorLine_InputWidget_(d)->text),
+                                              &ch);
             cursorChar.end = cursorChar.start + iMax(n, 0);
             if (ch) {
                 if (d->inFlags & isSensitive_InputWidgetFlag) {

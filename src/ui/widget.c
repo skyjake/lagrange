@@ -163,6 +163,9 @@ void deinit_Widget(iWidget *d) {
     if (win->hover == d) {
         win->hover = NULL;
     }
+    if (d->flags & nativeMenu_WidgetFlag) {
+        releaseNativeMenu_Widget(d);
+    }
     widgetDestroyed_Touch(d);
 }
 

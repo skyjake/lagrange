@@ -1,8 +1,8 @@
-Only in SDL2-2.0.14/src: .DS_Store
-diff -ru SDL2-2.0.14-original/src/events/SDL_mouse.c SDL2-2.0.14/src/events/SDL_mouse.c
---- SDL2-2.0.14-original/src/events/SDL_mouse.c	2020-12-21 19:44:36.000000000 +0200
-+++ SDL2-2.0.14/src/events/SDL_mouse.c	2021-01-06 18:31:18.000000000 +0200
-@@ -647,8 +647,8 @@
+diff --git a/src/events/SDL_mouse.c b/src/events/SDL_mouse.c
+index a776bcca8..2d5e685e3 100644
+--- a/src/events/SDL_mouse.c
++++ b/src/events/SDL_mouse.c
+@@ -647,8 +647,8 @@ SDL_SendMouseWheel(SDL_Window * window, SDL_MouseID mouseID, float x, float y, S
          event.wheel.preciseX = x;
          event.wheel.preciseY = y;
  #endif
@@ -13,11 +13,11 @@ diff -ru SDL2-2.0.14-original/src/events/SDL_mouse.c SDL2-2.0.14/src/events/SDL_
          event.wheel.direction = (Uint32)direction;
          posted = (SDL_PushEvent(&event) > 0);
      }
-Only in SDL2-2.0.14/src/video: .DS_Store
-diff -ru SDL2-2.0.14-original/src/video/cocoa/SDL_cocoamouse.m SDL2-2.0.14/src/video/cocoa/SDL_cocoamouse.m
---- SDL2-2.0.14-original/src/video/cocoa/SDL_cocoamouse.m	2020-12-21 19:44:36.000000000 +0200
-+++ SDL2-2.0.14/src/video/cocoa/SDL_cocoamouse.m	2021-01-06 18:31:18.000000000 +0200
-@@ -423,10 +423,16 @@
+diff --git a/src/video/cocoa/SDL_cocoamouse.m b/src/video/cocoa/SDL_cocoamouse.m
+index e9d832d64..4cfa3624b 100644
+--- a/src/video/cocoa/SDL_cocoamouse.m
++++ b/src/video/cocoa/SDL_cocoamouse.m
+@@ -463,10 +463,16 @@ + (NSCursor *)invisibleCursor
      }
  
      SDL_MouseID mouseID = mouse->mouseID;
@@ -36,10 +36,41 @@ diff -ru SDL2-2.0.14-original/src/video/cocoa/SDL_cocoamouse.m SDL2-2.0.14/src/v
      if ([event respondsToSelector:@selector(isDirectionInvertedFromDevice)]) {
          if ([event isDirectionInvertedFromDevice] == YES) {
              direction = SDL_MOUSEWHEEL_FLIPPED;
-Only in SDL2-2.0.14/src/video/cocoa: SDL_cocoamouse.m.orig
-diff -ru SDL2-2.0.14-original/src/video/uikit/SDL_uikitviewcontroller.h SDL2-2.0.14/src/video/uikit/SDL_uikitviewcontroller.h
---- SDL2-2.0.14-original/src/video/uikit/SDL_uikitviewcontroller.h	2020-12-21 19:44:36.000000000 +0200
-+++ SDL2-2.0.14/src/video/uikit/SDL_uikitviewcontroller.h	2021-05-17 13:11:13.000000000 +0300
+diff --git a/src/video/cocoa/SDL_cocoawindow.h b/src/video/cocoa/SDL_cocoawindow.h
+index 37bec665e..5e3a3995f 100644
+--- a/src/video/cocoa/SDL_cocoawindow.h
++++ b/src/video/cocoa/SDL_cocoawindow.h
+@@ -109,6 +109,8 @@ typedef enum
+ /* Touch event handling */
+ -(void) handleTouches:(NSTouchPhase) phase withEvent:(NSEvent*) theEvent;
+ 
++-(void) syncMouseButtonState;
++
+ @end
+ /* *INDENT-ON* */
+ 
+diff --git a/src/video/cocoa/SDL_cocoawindow.m b/src/video/cocoa/SDL_cocoawindow.m
+index 7a1446f09..86db35600 100644
+--- a/src/video/cocoa/SDL_cocoawindow.m
++++ b/src/video/cocoa/SDL_cocoawindow.m
+@@ -1073,6 +1073,13 @@ - (void)otherMouseDown:(NSEvent *)theEvent
+     [self mouseDown:theEvent];
+ }
+ 
++- (void)syncMouseButtonState {
++    SDL_Mouse *mouse = SDL_GetMouse();
++    if (mouse) {
++        mouse->buttonstate = SDL_GetGlobalMouseState(NULL, NULL);
++    }
++}
++
+ - (void)mouseUp:(NSEvent *)theEvent
+ {
+     const SDL_Mouse *mouse = SDL_GetMouse();
+diff --git a/src/video/uikit/SDL_uikitviewcontroller.h b/src/video/uikit/SDL_uikitviewcontroller.h
+index f7f4c9de6..50c72aad0 100644
+--- a/src/video/uikit/SDL_uikitviewcontroller.h
++++ b/src/video/uikit/SDL_uikitviewcontroller.h
 @@ -58,10 +58,13 @@
  #if !TARGET_OS_TV
  - (NSUInteger)supportedInterfaceOrientations;
@@ -54,10 +85,11 @@ diff -ru SDL2-2.0.14-original/src/video/uikit/SDL_uikitviewcontroller.h SDL2-2.0
  #endif
  
  #if SDL_IPHONE_KEYBOARD
-diff -ru SDL2-2.0.14-original/src/video/uikit/SDL_uikitviewcontroller.m SDL2-2.0.14/src/video/uikit/SDL_uikitviewcontroller.m
---- SDL2-2.0.14-original/src/video/uikit/SDL_uikitviewcontroller.m	2020-12-21 19:44:36.000000000 +0200
-+++ SDL2-2.0.14/src/video/uikit/SDL_uikitviewcontroller.m	2021-05-17 13:11:58.000000000 +0300
-@@ -104,6 +104,7 @@
+diff --git a/src/video/uikit/SDL_uikitviewcontroller.m b/src/video/uikit/SDL_uikitviewcontroller.m
+index c51d1aed2..cd8db9517 100644
+--- a/src/video/uikit/SDL_uikitviewcontroller.m
++++ b/src/video/uikit/SDL_uikitviewcontroller.m
+@@ -105,6 +105,7 @@ - (instancetype)initWithSDLWindow:(SDL_Window *)_window
  #endif
  
  #if !TARGET_OS_TV
@@ -65,7 +97,7 @@ diff -ru SDL2-2.0.14-original/src/video/uikit/SDL_uikitviewcontroller.m SDL2-2.0
          SDL_AddHintCallback(SDL_HINT_IOS_HIDE_HOME_INDICATOR,
                              SDL_HideHomeIndicatorHintChanged,
                              (__bridge void *) self);
-@@ -229,6 +230,17 @@
+@@ -230,6 +231,17 @@ - (BOOL)prefersHomeIndicatorAutoHidden
      return hidden;
  }
  

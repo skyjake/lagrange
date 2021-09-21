@@ -77,6 +77,14 @@ iBool shouldDefaultToMetalRenderer_MacOS(void) {
     return ver.x > 10 || ver.y > 13;*/
 }
 
+static void ignoreImmediateKeyDownEvents_(void) {
+    /* SDL ignores menu key equivalents so the keydown events will be posted regardless.
+       However, we shouldn't double-activate menu items when a shortcut key is used in our
+       widgets. Quite a kludge: take advantage of Window's focus-acquisition threshold to
+       ignore the immediately following key down events. */
+    get_Window()->focusGainedAt = SDL_GetTicks();
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 @interface CommandButton : NSCustomTouchBarItem {
@@ -146,11 +154,60 @@ iBool shouldDefaultToMetalRenderer_MacOS(void) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+@interface MenuCommands : NSObject {
+    NSMutableDictionary<NSString *, NSString *> *commands;
+    iWidget *source;
+}
+@end
+
+@implementation MenuCommands
+
+- (id)init {
+    commands = [[NSMutableDictionary<NSString *, NSString *> alloc] init];
+    source = NULL;
+    return self;
+}
+
+- (void)setCommand:(NSString *)command forMenuItem:(NSMenuItem *)menuItem {
+    [commands setObject:command forKey:[menuItem title]];
+}
+
+- (void)setSource:(iWidget *)widget {
+    source = widget;
+}
+
+- (void)clear {
+    [commands removeAllObjects];
+}
+
+- (NSString *)commandForMenuItem:(NSMenuItem *)menuItem {
+    return [commands objectForKey:[menuItem title]];
+}
+
+- (void)postMenuItemCommand:(id)sender {
+    NSString *command = [commands objectForKey:[(NSMenuItem *)sender title]];
+    if (command) {
+        const char *cstr = [command cStringUsingEncoding:NSUTF8StringEncoding];
+        if (source) {
+            postCommand_Widget(source, "%s", cstr);
+        }
+        else {
+            postCommand_Root(NULL, cstr);
+        }
+        ignoreImmediateKeyDownEvents_();
+    }
+}
+
+@end
+
+/*----------------------------------------------------------------------------------------------*/
+
 @interface MyDelegate : NSResponder<NSApplicationDelegate, NSTouchBarDelegate> {
     enum iTouchBarVariant touchBarVariant;
     NSString *currentAppearanceName;
     NSObject<NSApplicationDelegate> *sdlDelegate;
-    NSMutableDictionary<NSString *, NSString*> *menuCommands;
+    //NSMutableDictionary<NSString *, NSString*> *menuCommands;
+    MenuCommands *menuCommands;
 }
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl;
 - (NSTouchBar *)makeTouchBar;
@@ -165,7 +222,7 @@ iBool shouldDefaultToMetalRenderer_MacOS(void) {
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl {
     [super init];
     currentAppearanceName = nil;
-    menuCommands = [[NSMutableDictionary<NSString *, NSString *> alloc] init];
+    menuCommands = [[MenuCommands alloc] init];
     touchBarVariant = default_TouchBarVariant;
     sdlDelegate = sdl;
     return self;
@@ -182,6 +239,14 @@ iBool shouldDefaultToMetalRenderer_MacOS(void) {
     self.touchBar = nil;
 }
 
+- (MenuCommands *)menuCommands {
+    return menuCommands;
+}
+
+- (void)postMenuItemCommand:(id)sender {
+    [menuCommands postMenuItemCommand:sender];
+}
+
 static void appearanceChanged_MacOS_(NSString *name) {
     const iBool isDark = [name containsString:@"Dark"];
     const iBool isHighContrast = [name containsString:@"HighContrast"];
@@ -196,10 +261,6 @@ static void appearanceChanged_MacOS_(NSString *name) {
         currentAppearanceName = [name retain];
         appearanceChanged_MacOS_(currentAppearanceName);
     }
-}
-
-- (void)setCommand:(NSString *)command forMenuItem:(NSMenuItem *)menuItem {
-    [menuCommands setObject:command forKey:[menuItem title]];
 }
 
 - (BOOL)application:(NSApplication *)app openFile:(NSString *)filename {
@@ -258,29 +319,9 @@ static void appearanceChanged_MacOS_(NSString *name) {
     ignoreImmediateKeyDownEvents_();
 }
 
-static void ignoreImmediateKeyDownEvents_(void) {
-    /* SDL ignores menu key equivalents so the keydown events will be posted regardless.
-       However, we shouldn't double-activate menu items when a shortcut key is used in our
-       widgets. Quite a kludge: take advantage of Window's focus-acquisition threshold to
-       ignore the immediately following key down events. */
-    get_Window()->focusGainedAt = SDL_GetTicks();
-}
-
 - (void)closeTab {
     postCommand_App("tabs.close");
     ignoreImmediateKeyDownEvents_();
-}
-
-- (NSString *)commandForItem:(NSMenuItem *)menuItem {
-    return [menuCommands objectForKey:[menuItem title]];
-}
-
-- (void)postMenuItemCommand:(id)sender {
-    NSString *command = [menuCommands objectForKey:[(NSMenuItem *)sender title]];
-    if (command) {
-        postCommand_App([command cStringUsingEncoding:NSUTF8StringEncoding]);
-        ignoreImmediateKeyDownEvents_();
-    }
 }
 
 - (void)sidebarModePressed:(id)sender {
@@ -403,7 +444,7 @@ void enableMenuItem_MacOS(const char *menuItemCommand, iBool enable) {
         NSMenu *menu = mainMenuItem.submenu;
         if (menu) {
             for (NSMenuItem *menuItem in menu.itemArray) {
-                NSString *command = [myDel commandForItem:menuItem];
+                NSString *command = [[myDel menuCommands] commandForMenuItem:menuItem];
                 if (command) {
                     if (!iCmpStr([command cStringUsingEncoding:NSUTF8StringEncoding],
                                  menuItemCommand)) {
@@ -483,6 +524,43 @@ void removeMenu_MacOS(int atIndex) {
     [appMenu removeItemAtIndex:atIndex];
 }
 
+static void makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem *items, size_t n) {
+    for (size_t i = 0; i < n && items[i].label; ++i) {
+        const char *label = translateCStr_Lang(items[i].label);
+        if (label[0] == '\v') {
+            /* Skip the formatting escape. */
+            label += 2;
+        }
+        if (equal_CStr(label, "---")) {
+            [menu addItem:[NSMenuItem separatorItem]];
+        }
+        else {
+            const iBool hasCommand = (items[i].command && items[i].command[0]);
+            iString itemTitle;
+            initCStr_String(&itemTitle, label);
+            removeIconPrefix_String(&itemTitle);
+            NSMenuItem *item = [menu addItemWithTitle:[NSString stringWithUTF8String:cstr_String(&itemTitle)]
+                                               action:(hasCommand ? @selector(postMenuItemCommand:) : nil)
+                                        keyEquivalent:@""];
+            deinit_String(&itemTitle);
+            [item setTarget:commands];
+            int key   = items[i].key;
+            int kmods = items[i].kmods;
+            if (hasCommand) {
+                [commands setCommand:[NSString stringWithUTF8String:items[i].command]
+                         forMenuItem:item];
+                /* Bindings may have a different key. */
+                const iBinding *bind = findCommand_Keys(items[i].command);
+                if (bind && bind->id < builtIn_BindingId) {
+                    key   = bind->key;
+                    kmods = bind->mods;
+                }
+            }
+            setShortcut_NSMenuItem_(item, key, kmods);
+        }
+    }
+}
+
 void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;
@@ -494,34 +572,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
                                                 atIndex:atIndex];
     NSMenu *menu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:menuLabel]];
     [menu setAutoenablesItems:NO];
-    for (size_t i = 0; i < count; ++i) {
-        const char *label = translateCStr_Lang(items[i].label);
-        if (label[0] == '\v') {
-            /* Skip the formatting escape. */
-            label += 2;
-        }
-        if (equal_CStr(label, "---")) {
-            [menu addItem:[NSMenuItem separatorItem]];
-        }
-        else {
-            const iBool hasCommand = (items[i].command && items[i].command[0]);
-            NSMenuItem *item = [menu addItemWithTitle:[NSString stringWithUTF8String:label]
-                                               action:(hasCommand ? @selector(postMenuItemCommand:) : nil)
-                                        keyEquivalent:@""];
-            int key   = items[i].key;
-            int kmods = items[i].kmods;
-            if (hasCommand) {
-                [myDel setCommand:[NSString stringWithUTF8String:items[i].command] forMenuItem:item];
-                /* Bindings may have a different key. */
-                const iBinding *bind = findCommand_Keys(items[i].command);
-                if (bind && bind->id < builtIn_BindingId) {
-                    key   = bind->key;
-                    kmods = bind->mods;
-                }
-            }
-            setShortcut_NSMenuItem_(item, key, kmods);
-        }
-    }
+    makeMenuItems_(menu, [myDel menuCommands], items, count);
     [mainItem setSubmenu:menu];
     [menu release];
 }
@@ -542,7 +593,7 @@ void handleCommand_MacOS(const char *cmd) {
             if (menu) {
                 int itemIndex = 0;
                 for (NSMenuItem *menuItem in menu.itemArray) {
-                    NSString *command = [myDel commandForItem:menuItem];
+                    NSString *command = [[myDel menuCommands] commandForMenuItem:menuItem];
                     if (!command && mainIndex == 6 && itemIndex == 0) {
                         /* Window > Close */
                         command = @"tabs.close";
@@ -568,3 +619,29 @@ void handleCommand_MacOS(const char *cmd) {
 void log_MacOS(const char *msg) {
     NSLog(@"%s", msg);
 }
+
+void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *items, size_t n) {
+    NSMenu *      menu         = [[NSMenu alloc] init];
+    MenuCommands *menuCommands = [[MenuCommands alloc] init];
+    iWindow *     window       = as_Window(mainWindow_App());
+    NSWindow *    nsWindow     = nsWindow_(window->win);
+    /* View coordinates are flipped. */
+    windowCoord.y = window->size.y - windowCoord.y;
+    windowCoord = divf_I2(windowCoord, window->pixelRatio);
+    NSPoint screenPoint = [nsWindow convertPointToScreen:(CGPoint){ windowCoord.x, windowCoord.y }];
+    makeMenuItems_(menu, menuCommands, items, n);
+    [menuCommands setSource:source];
+    [menu popUpMenuPositioningItem:nil atLocation:screenPoint inView:nil];
+    [menu release];
+    [menuCommands release];
+    /* The right mouse button has now been released so let SDL know about it. The button up event
+       was consumed by the popup menu so it got never passed to SDL. */
+    SEL sel = NSSelectorFromString(@"syncMouseButtonState"); /* custom method */
+    if ([[nsWindow delegate] respondsToSelector:sel]) {
+        NSInvocation *call = [NSInvocation invocationWithMethodSignature:
+                              [NSMethodSignature signatureWithObjCTypes:"v@:"]];
+        [call setSelector:sel];
+        [call invokeWithTarget:[nsWindow delegate]];
+    }
+}
+

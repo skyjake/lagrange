@@ -44,6 +44,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "../ios.h"
 #endif
 
+#if defined (iPlatformAppleDesktop)
+#   include "macos.h"
+#endif
+
 #include <the_Foundation/math.h>
 #include <the_Foundation/path.h>
 #include <SDL_timer.h>
@@ -749,10 +753,65 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 }
             }
         }
-    }}
+    }
+}
+
+static iArray *deepCopyMenuItems_(iWidget *menu, const iMenuItem *items, size_t n) {
+    iArray *array = new_Array(sizeof(iMenuItem));
+    iString cmd;
+    init_String(&cmd);
+    for (size_t i = 0; i < n; i++) {
+        const iMenuItem *item = &items[i];
+        const char *itemCommand = item->command;
+#if 0
+        if (itemCommand) {
+            /* Make it appear the command is coming from the right widget. */
+            setCStr_String(&cmd, itemCommand);
+            if (!hasLabel_Command(itemCommand, "ptr")) {
+                size_t firstSpace = indexOf_String(&cmd, ' ');
+                iBlock ptr;
+                init_Block(&ptr, 0);
+                printf_Block(&ptr, " ptr:%p", menu);
+                if (firstSpace != iInvalidPos) {
+                    insertData_Block(&cmd.chars, firstSpace, data_Block(&ptr), size_Block(&ptr));
+                }
+                else {
+                    append_Block(&cmd.chars, &ptr);
+                }
+                deinit_Block(&ptr);
+            }
+            itemCommand = cstr_String(&cmd);
+        }
+#endif
+        pushBack_Array(array, &(iMenuItem){
+            item->label ? strdup(item->label) : NULL,
+            item->key,
+            item->kmods,
+            itemCommand ? strdup(itemCommand) : NULL /* NOTE: Only works with string commands. */
+        });
+    }
+    deinit_String(&cmd);
+    return array;
+}
+
+static void deleteMenuItems_(iArray *items) {
+    iForEach(Array, i, items) {
+        iMenuItem *item = i.value;
+        free((void *) item->label);
+        free((void *) item->command);
+    }
+    delete_Array(items);
+}
 
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
+#if defined (iHaveNativeMenus)
+    setFlags_Widget(menu, hidden_WidgetFlag | nativeMenu_WidgetFlag, iTrue);
+    setUserData_Object(menu, deepCopyMenuItems_(menu, items, n));
+    addChild_Widget(parent, menu);
+    iRelease(menu); /* owned by parent now */
+#else
+    /* Non-native custom popup menu. This may still be displayed inside a separate window. */
     setDrawBufferEnabled_Widget(menu, iTrue);
     setBackgroundColor_Widget(menu, uiBackgroundMenu_ColorId);
     if (deviceType_App() != desktop_AppDeviceType) {
@@ -777,6 +836,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *cancel = addAction_Widget(menu, SDLK_ESCAPE, 0, "cancel");
     setId_Widget(cancel, "menu.cancel");
     setFlags_Widget(cancel, disabled_WidgetFlag, iTrue);
+#endif
     return menu;
 }
 
@@ -812,11 +872,52 @@ static void updateMenuItemFonts_Widget_(iWidget *d) {
     }
 }
 
+void updateMenuItemLabel_Widget(iWidget *menu, const char *command, const char *newLabel) {
+    if (~flags_Widget(menu) & nativeMenu_WidgetFlag) {
+        iLabelWidget *menuItem = findMenuItem_Widget(menu, command);
+        if (menuItem) {
+            setTextCStr_LabelWidget(menuItem, newLabel);
+            checkIcon_LabelWidget(menuItem);
+        }
+    }
+    else {
+        iArray *items = userData_Object(menu);
+        iAssert(items);
+        iForEach(Array, i, items) {
+            iMenuItem *item = i.value;
+            if (item->command && !iCmpStr(item->command, command)) {
+                free((void *) item->label);
+                item->label = strdup(newLabel);
+                break;
+            }
+        }
+    }
+}
+
 iLocalDef iBool isUsingMenuPopupWindows_(void) {
     return deviceType_App() == desktop_AppDeviceType;
 }
 
+void releaseNativeMenu_Widget(iWidget *d) {
+#if defined (iHaveNativeMenus)
+    iArray *items = userData_Object(d);
+    iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
+    iAssert(items);
+    deleteMenuItems_(items);
+    setUserData_Object(d, NULL);
+#else
+    iUnused(d);
+#endif
+}
+
 void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
+#if defined (iHaveNativeMenus)
+    const iArray *items = userData_Object(d);
+    iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
+    iAssert(items);
+    showPopupMenu_MacOS(d, mouseCoord_Window(get_Window(), 0),
+                        constData_Array(items), size_Array(items));
+#else
     const iRect rootRect        = rect_Root(d->root);
     const iInt2 rootSize        = rootRect.size;
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
@@ -904,9 +1005,13 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
         postCommand_Widget(d, "menu.opened");
     }
     setupMenuTransition_Mobile(d, iTrue);
+#endif
 }
 
 void closeMenu_Widget(iWidget *d) {
+    if (flags_Widget(d) & nativeMenu_WidgetFlag) {
+        return; /* Handled natively. */
+    }
     if (d == NULL || flags_Widget(d) & hidden_WidgetFlag) {
         return; /* Already closed. */
     }
@@ -1778,6 +1883,21 @@ size_t findWidestLabel_MenuItem(const iMenuItem *items, size_t num) {
         }
     }
     return widestPos;
+}
+
+iChar removeIconPrefix_String(iString *d) {
+    if (isEmpty_String(d)) {
+        return 0;
+    }
+    iStringConstIterator iter;
+    init_StringConstIterator(&iter, d);
+    iChar icon = iter.value;
+    next_StringConstIterator(&iter);
+    if (iter.value == ' ' && icon >= 0x100) {
+        remove_Block(&d->chars, 0, iter.next - constBegin_String(d));
+        return icon;
+    }
+    return 0;
 }
 
 iWidget *makeDialog_Widget(const char *id,

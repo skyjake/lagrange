@@ -129,7 +129,7 @@ iLocalDef void postCommandString_Root(iRoot *d, const iString *command) {
     }
 }
 iLocalDef void postCommand_App(const char *command) {
-    postCommandf_App(command);
+    postCommand_Root(NULL, command);
 }
 
 iDocumentWidget *   document_Command    (const char *cmd);

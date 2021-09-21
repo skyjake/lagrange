@@ -435,6 +435,7 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     setOutline_LabelWidget(toolButton, ident == NULL);
     /* Update menu. */
     iLabelWidget *idItem = child_Widget(findChild_Widget(button, "menu"), 0);
+    if (!idItem) return;
     const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
     setTextCStr_LabelWidget(
         idItem,

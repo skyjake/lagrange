@@ -121,6 +121,7 @@ enum iWidgetFlag {
 #define destroyPending_WidgetFlag           iBit64(61)
 #define leftEdgeDraggable_WidgetFlag        iBit64(62)
 #define refChildrenOffset_WidgetFlag        iBit64(63) /* visual offset determined by the offset of referenced children */
+#define nativeMenu_WidgetFlag               iBit64(64)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,

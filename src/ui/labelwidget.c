@@ -611,19 +611,8 @@ iBool checkIcon_LabelWidget(iLabelWidget *d) {
         d->icon = 0;
         return iFalse;
     }
-    iStringConstIterator iter;
-    init_StringConstIterator(&iter, &d->label);
-    const iChar icon = iter.value;
-    next_StringConstIterator(&iter);
-    if (iter.value == ' ' && icon >= 0x100) {
-        d->icon = icon;
-        remove_Block(&d->label.chars, 0, iter.next - constBegin_String(&d->label));
-        return iTrue;
-    }
-    else {
-        d->icon = 0;
-    }
-    return iFalse;
+    d->icon = removeIconPrefix_String(&d->label);
+    return d->icon != 0;
 }
 
 iChar icon_LabelWidget(const iLabelWidget *d) {
