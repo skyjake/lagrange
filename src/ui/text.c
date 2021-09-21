@@ -1339,7 +1339,7 @@ static void shape_GlyphBuffer_(iGlyphBuffer *d) {
 }
 
 static float nextTabStop_Font_(const iFont *d, float x) {
-    const float stop = 4 * d->emAdvance;
+    const float stop = 8 * d->emAdvance;
     return floorf(x / stop) * stop + stop;
 }
 
@@ -1696,6 +1696,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 const float yAdvance = run->font->yScale * buf->glyphPos[i].y_advance;
                 const iGlyph *glyph = glyphByIndex_Font_(run->font, glyphId);
                 if (logicalText[logPos] == '\t') {
+#if 0
                     if (mode & draw_RunMode) {
                         /* Tab indicator. */
                         iColor tabColor = get_Color(uiTextAction_ColorId);
@@ -1708,6 +1709,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                             pad
                         });
                     }
+#endif
                     xCursor = nextTabStop_Font_(d, xCursor) - xAdvance;
                 }
                 const float xf = xCursor + xOffset;
