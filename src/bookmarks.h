@@ -47,7 +47,8 @@ struct Impl_Bookmark {
     iString tags;
     iChar icon;
     iTime when;
-    uint32_t sourceId; /* remote */
+    uint32_t parentId; /* remote source or folder */
+    int order;         /* sort order */
 };
 
 iLocalDef uint32_t  id_Bookmark (const iBookmark *d) { return d->node.key; }

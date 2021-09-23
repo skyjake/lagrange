@@ -31,13 +31,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringset.h>
+#include <the_Foundation/toml.h>
 
 void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
     init_String(&d->title);
     init_String(&d->tags);
     iZap(d->when);
-    d->sourceId = 0;
+    d->parentId = 0;
+    d->order = 0;
 }
 
 void deinit_Bookmark(iBookmark *d) {
@@ -83,7 +85,8 @@ static int cmpTitleAscending_Bookmark_(const iBookmark **a, const iBookmark **b)
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const char *fileName_Bookmarks_ = "bookmarks.txt";
+static const char *oldFileName_Bookmarks_ = "bookmarks.txt";
+static const char *fileName_Bookmarks_    = "bookmarks.ini"; /* since v1.7 (TOML subset) */
 
 struct Impl_Bookmarks {
     iMutex *  mtx;
@@ -123,16 +126,19 @@ void clear_Bookmarks(iBookmarks *d) {
     unlock_Mutex(d->mtx);
 }
 
+static void insertId_Bookmarks_(iBookmarks *d, iBookmark *bookmark, int id) {
+    bookmark->node.key = id;
+    insert_Hash(&d->bookmarks, &bookmark->node);
+}
+
 static void insert_Bookmarks_(iBookmarks *d, iBookmark *bookmark) {
     lock_Mutex(d->mtx);
-    bookmark->node.key = ++d->idEnum;
-    insert_Hash(&d->bookmarks, &bookmark->node);
+    insertId_Bookmarks_(d, bookmark, ++d->idEnum);
     unlock_Mutex(d->mtx);
 }
 
-void load_Bookmarks(iBookmarks *d, const char *dirPath) {
-    clear_Bookmarks(d);
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_));
+static void loadOldFormat_Bookmarks(iBookmarks *d, const char *dirPath) {
+    iFile *f = newCStr_File(concatPath_CStr(dirPath, oldFileName_Bookmarks_));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         const iRangecc src = range_Block(collect_Block(readAll_File(f)));
         iRangecc line = iNullRange;
@@ -170,6 +176,101 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
     iRelease(f);
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(BookmarkLoader)
+    
+struct Impl_BookmarkLoader {
+    iTomlParser *toml;
+    iBookmarks * bookmarks;
+    iBookmark *  bm;
+};
+
+static void handleTable_BookmarkLoader_(void *context, const iString *table, iBool isStart) {
+    iBookmarkLoader *d = context;
+    if (isStart) {
+        iAssert(!d->bm);
+        d->bm = new_Bookmark();
+        const int id = toInt_String(table);
+        d->bookmarks->idEnum = iMax(d->bookmarks->idEnum, id);
+        insertId_Bookmarks_(d->bookmarks, d->bm, id);
+    }
+    else {
+        d->bm = NULL;
+    }
+}
+
+static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, const iString *key,
+                                           const iTomlValue *tv) {
+    iBookmarkLoader *d = context;
+    iBookmark *bm = d->bm;
+    if (bm) {
+        iUnused(table); /* it's the current one */
+        if (!cmp_String(key, "url") && tv->type == string_TomlType) {
+            set_String(&bm->url, tv->value.string);
+        }
+        else if (!cmp_String(key, "title") && tv->type == string_TomlType) {
+            set_String(&bm->title, tv->value.string);
+        }
+        else if (!cmp_String(key, "tags") && tv->type == string_TomlType) {
+            set_String(&bm->tags, tv->value.string);
+        }
+        else if (!cmp_String(key, "icon") && tv->type == int64_TomlType) {
+            bm->icon = (iChar) tv->value.int64;
+        }
+        else if (!cmp_String(key, "created") && tv->type == int64_TomlType) {
+            initSeconds_Time(&bm->when, tv->value.int64);
+        }
+        else if (!cmp_String(key, "parent") && tv->type == int64_TomlType) {
+            bm->parentId = tv->value.int64;
+        }
+        else if (!cmp_String(key, "order") && tv->type == int64_TomlType) {
+            bm->order = tv->value.int64;
+        }
+    }
+}
+
+static void init_BookmarkLoader(iBookmarkLoader *d, iBookmarks *bookmarks) {
+    d->toml = new_TomlParser();
+    setHandlers_TomlParser(d->toml, handleTable_BookmarkLoader_, handleKeyValue_BookmarkLoader_, d);
+    d->bookmarks = bookmarks;
+    d->bm = NULL;
+}
+
+static void deinit_BookmarkLoader(iBookmarkLoader *d) {
+    delete_TomlParser(d->toml);
+}
+
+static void load_BookmarkLoader(iBookmarkLoader *d, iFile *file) {
+    if (!parse_TomlParser(d->toml, collect_String(readString_File(file)))) {
+        fprintf(stderr, "[Bookmarks] syntax error(s) in %s\n", cstr_String(path_File(file)));
+    }    
+}
+
+iDefineTypeConstructionArgs(BookmarkLoader, (iBookmarks *b), b)
+    
+/*----------------------------------------------------------------------------------------------*/
+    
+void load_Bookmarks(iBookmarks *d, const char *dirPath) {
+    clear_Bookmarks(d);
+    /* Load new .ini bookmarks, if present. */
+    iFile *f = iClob(newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_)));
+    if (!open_File(f, readOnly_FileMode | text_FileMode)) {
+        /* As a fallback, try loading the v1.6 bookmarks file. */
+        loadOldFormat_Bookmarks(d, dirPath);
+        /* Set ordering based on titles. */
+        iConstForEach(PtrArray, i, list_Bookmarks(d, cmpTitleAscending_Bookmark_, NULL, NULL)) {
+            iBookmark *bm = i.ptr;
+            bm->order = index_PtrArrayConstIterator(&i) + 1;
+        }
+        return;
+    }
+    iBookmarkLoader loader;
+    init_BookmarkLoader(&loader, d);
+    load_BookmarkLoader(&loader, f);
+    deinit_BookmarkLoader(&loader);
+}
+
 void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     lock_Mutex(d->mtx);
     iRegExp *remotePattern = iClob(new_RegExp("\\bremote\\b", caseSensitive_RegExpOption));
@@ -185,12 +286,26 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
                 continue;
             }
             format_String(str,
-                          "%08x %.0lf %s\n%s\n%s\n",
+                          "[%d]\n"
+                          "url = \"%s\"\n"
+                          "title = \"%s\"\n"
+                          "tags = \"%s\"\n"
+                          "icon = 0x%x\n"
+                          "created = %.0f  # %s\n",
+                          id_Bookmark(bm),
+                          cstrCollect_String(quote_String(&bm->url, iFalse)),
+                          cstrCollect_String(quote_String(&bm->title, iFalse)),
+                          cstrCollect_String(quote_String(&bm->tags, iFalse)),
                           bm->icon,
                           seconds_Time(&bm->when),
-                          cstr_String(&bm->url),
-                          cstr_String(&bm->title),
-                          cstr_String(&bm->tags));
+                          cstrCollect_String(format_Time(&bm->when, "%Y-%m-%d")));
+            if (bm->parentId) {
+                appendFormat_String(str, "parent = %d\n", bm->parentId);
+            }
+            if (bm->order) {
+                appendFormat_String(str, "order = %d\n", bm->order);
+            }
+            appendCStr_String(str, "\n");
             writeData_File(f, cstr_String(str), size_String(str));
         }
     }
@@ -223,7 +338,7 @@ iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
         if (hasTag_Bookmark(bm, remoteSource_BookmarkTag)) {
             iForEach(Hash, i, &d->bookmarks) {
                 iBookmark *j = (iBookmark *) i.value;
-                if (j->sourceId == id_Bookmark(bm)) {
+                if (j->parentId == id_Bookmark(bm)) {
                     remove_HashIterator(&i);
                     delete_Bookmark(j);
                 }
@@ -452,7 +567,7 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
                     }
                     const uint32_t bmId = add_Bookmarks(d, absUrl, titleStr, remoteTag, 0x2913);
                     iBookmark *bm = get_Bookmarks(d, bmId);
-                    bm->sourceId = *(uint32_t *) userData_Object(req);
+                    bm->parentId = *(uint32_t *) userData_Object(req);
                     delete_String(titleStr);
                 }
                 delete_String(urlStr);

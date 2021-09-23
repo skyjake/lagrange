@@ -116,24 +116,26 @@ static iBool isResizing_SidebarWidget_(const iSidebarWidget *d) {
     return (flags_Widget(d->resizer) & pressed_WidgetFlag) != 0;
 }
 
-static int cmpTitle_Bookmark_(const iBookmark **a, const iBookmark **b) {
+static int cmpTree_Bookmark_(const iBookmark **a, const iBookmark **b) {
     const iBookmark *bm1 = *a, *bm2 = *b;
-    if (bm2->sourceId == id_Bookmark(bm1)) {
+    if (bm2->parentId == id_Bookmark(bm1)) {
         return -1;
     }
-    if (bm1->sourceId == id_Bookmark(bm2)) {
+    if (bm1->parentId == id_Bookmark(bm2)) {
         return 1;
     }
-    if (bm1->sourceId == bm2->sourceId) {
-        return cmpStringCase_String(&bm1->title, &bm2->title);
+    if (bm1->parentId == bm2->parentId) {
+        //return cmpStringCase_String(&bm1->title, &bm2->title);
+        return iCmp(bm1->order, bm2->order);
     }
-    if (bm1->sourceId) {
-        bm1 = get_Bookmarks(bookmarks_App(), bm1->sourceId);
+    if (bm1->parentId) {
+        bm1 = get_Bookmarks(bookmarks_App(), bm1->parentId);
     }
-    if (bm2->sourceId) {
-        bm2 = get_Bookmarks(bookmarks_App(), bm2->sourceId);
+    if (bm2->parentId) {
+        bm2 = get_Bookmarks(bookmarks_App(), bm2->parentId);
     }
-    return cmpStringCase_String(&bm1->title, &bm2->title);
+//    return cmpStringCase_String(&bm1->title, &bm2->title);
+    return iCmp(bm1->order, bm2->order);
 }
 
 static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const char *label,
@@ -331,9 +333,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             iRegExp *subTag          = iClob(new_RegExp("\\b" subscribed_BookmarkTag "\\b", caseSensitive_RegExpOption));
             iRegExp *remoteSourceTag = iClob(new_RegExp("\\b" remoteSource_BookmarkTag "\\b", caseSensitive_RegExpOption));
             iRegExp *linkSplitTag    = iClob(new_RegExp("\\b" linkSplit_BookmarkTag "\\b", caseSensitive_RegExpOption));
-            iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTitle_Bookmark_, NULL, NULL)) {
+            iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTree_Bookmark_, NULL, NULL)) {
                 const iBookmark *bm = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
+                item->listItem.isDraggable = iTrue;
                 item->id = id_Bookmark(bm);
                 item->icon = bm->icon;
                 set_String(&item->url, &bm->url);
@@ -1573,12 +1576,14 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const iSidebarWidget *sidebar = findParentClass_Widget(constAs_Widget(list),
                                                            &Class_SidebarWidget);
     const iBool isMenuVisible = isVisible_Widget(sidebar->menu);
-    const iBool isPressing   = isMouseDown_ListWidget(list);
+    const iBool isDragging   = constDragItem_ListWidget(list) == d;
+    const iBool isPressing   = isMouseDown_ListWidget(list) && !isDragging;
     const iBool isHover      =
             (!isMenuVisible &&
             isHover_Widget(constAs_Widget(list)) &&
             constHoverItem_ListWidget(list) == d) ||
-            (isMenuVisible && sidebar->contextItem == d);
+            (isMenuVisible && sidebar->contextItem == d) ||
+            isDragging;
     const int scrollBarWidth = scrollBarWidth_ListWidget(list);
 #if defined (iPlatformApple)
     const int blankWidth     = 0;
@@ -1729,12 +1734,14 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                             metaIconWidth
                         - 2 * gap_UI - (blankWidth ? blankWidth - 1.5f * gap_UI : (gap_UI / 2)),
                     textPos.y);
-        fillRect_Paint(p,
-                       init_Rect(metaPos.x,
-                                 top_Rect(itemRect),
-                                 right_Rect(itemRect) - metaPos.x,
-                                 height_Rect(itemRect)),
-                       bg);
+        if (!isDragging) {
+            fillRect_Paint(p,
+                           init_Rect(metaPos.x,
+                                     top_Rect(itemRect),
+                                     right_Rect(itemRect) - metaPos.x,
+                                     height_Rect(itemRect)),
+                           bg);
+        }
         iInt2 mpos = metaPos;
         iStringConstIterator iter;
         init_StringConstIterator(&iter, &d->meta);
