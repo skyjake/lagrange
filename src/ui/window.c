@@ -561,6 +561,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
     }
 #endif
+    SDL_HideWindow(d->base.win);
 }
 
 void deinit_MainWindow(iMainWindow *d) {
@@ -731,14 +732,11 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
     switch (ev->event) {
 #if defined(iPlatformDesktop)
         case SDL_WINDOWEVENT_EXPOSED:
-            if (!d->base.isExposed) {
-                drawBlank_Window_(as_Window(d)); /* avoid showing system-provided contents */
-                d->base.isExposed = iTrue;
-            }
+            d->base.isExposed = iTrue;
             /* Since we are manually controlling when to redraw the window, we are responsible
-                   for ensuring that window contents get redrawn after expose events. Under certain
-                   circumstances (e.g., under openbox), not doing this would mean that the window
-                   is missing contents until other events trigger a refresh. */
+               for ensuring that window contents get redrawn after expose events. Under certain
+               circumstances (e.g., under openbox), not doing this would mean that the window
+               is missing contents until other events trigger a refresh. */
             postRefresh_App();
 #if defined(LAGRANGE_ENABLE_WINDOWPOS_FIX)
             if (d->place.initialPos.x >= 0) {
@@ -918,7 +916,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
                     SDL_ShowWindow(d->win);
                 }
-                postRefresh_App();
+                draw_MainWindow(mw); /* don't show a frame of placeholder content */
                 postCommand_App("media.player.update"); /* in case a player needs updating */
                 return iTrue;
             }
