@@ -32,8 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/intset.h>
 
 void init_ListItem(iListItem *d) {
-    d->isSeparator = iFalse;
-    d->isSelected  = iFalse;
+    d->isSeparator  = iFalse;
+    d->isSelected   = iFalse;
+    d->isDraggable  = iFalse;
+    d->isDropTarget = iFalse;
 }
 
 void deinit_ListItem(iListItem *d) {
@@ -54,6 +56,8 @@ struct Impl_ListWidget {
     int itemHeight;
     iPtrArray items;
     size_t hoverItem;
+    size_t dragItem;
+    iInt2 dragOrigin; /* offset from mouse to drag item's top-left corner */
     iClick click;
     iIntSet invalidItems;
     iVisBuf *visBuf;
@@ -95,6 +99,8 @@ void init_ListWidget(iListWidget *d) {
     d->noHoverWhileScrolling = iFalse;
     init_PtrArray(&d->items);
     d->hoverItem = iInvalidPos;
+    d->dragItem = iInvalidPos;
+    d->dragOrigin = zero_I2();
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_IntSet(&d->invalidItems);
     d->visBuf = new_VisBuf();
@@ -248,6 +254,10 @@ const iAnyObject *constItem_ListWidget(const iListWidget *d, size_t index) {
     return NULL;
 }
 
+const iAnyObject *constDragItem_ListWidget(const iListWidget *d) {
+    return constItem_ListWidget(d, d->dragItem);
+}
+
 const iAnyObject *constHoverItem_ListWidget(const iListWidget *d) {
     return constItem_ListWidget(d, d->hoverItem);
 }
@@ -311,6 +321,48 @@ static void updateHover_ListWidget_(iListWidget *d, const iInt2 mouse) {
     setHoverItem_ListWidget_(d, hover);
 }
 
+static size_t resolveDragDestination_ListWidget_(const iListWidget *d, iInt2 dstPos, iBool *isOnto) {
+    size_t           index = itemIndex_ListWidget(d, dstPos);
+    const iRect      rect  = itemRect_ListWidget(d, index);
+    const iListItem *item  = constItem_ListWidget(d, index);
+    const iRangei    span  = ySpan_Rect(rect);
+    if (!item) {
+        item = constItem_ListWidget(
+            d,
+            dstPos.y < mid_Rect(bounds_Widget(constAs_Widget(d))).y ? 0 : (numItems_ListWidget(d) - 1));
+    }
+    if (item->isDropTarget) {
+        const int pad = size_Range(&span) / 4;
+        if (dstPos.y >= span.start + pad && dstPos.y < span.end) {
+            *isOnto = iTrue;
+            return index;
+        }
+    }
+    if (dstPos.y - span.start > span.end - dstPos.y) {
+        index++;
+    }
+    index = iMin(index, numItems_ListWidget(d));
+    *isOnto = iFalse;
+    return index;
+}
+
+static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
+    if (d->dragItem == iInvalidPos) {
+        return iFalse;
+    }
+    iBool isOnto;
+    const size_t index = resolveDragDestination_ListWidget_(d, endPos, &isOnto);
+    if (isOnto) {
+        postCommand_Widget(d, "list.dragged arg:%zu onto:%zu", d->dragItem, index);
+    }
+    else if (index != d->dragItem) {
+        postCommand_Widget(d, "list.dragged arg:%zu before:%zu", d->dragItem, index);
+    }
+    invalidateItem_ListWidget(d, d->dragItem);
+    d->dragItem = iInvalidPos;
+    return iTrue;
+}
+
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
@@ -333,10 +385,15 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         d->noHoverWhileScrolling = iFalse;
     }
     if (ev->type == SDL_MOUSEMOTION) {
-        if (ev->motion.which != SDL_TOUCH_MOUSEID) {
-            d->noHoverWhileScrolling = iFalse;
+        if (ev->motion.state == 0 /* not dragging */) {
+            if (ev->motion.which != SDL_TOUCH_MOUSEID) {
+                d->noHoverWhileScrolling = iFalse;
+            }
+            updateHover_ListWidget_(d, init_I2(ev->motion.x, ev->motion.y));
         }
-        updateHover_ListWidget_(d, init_I2(ev->motion.x, ev->motion.y));
+        else if (d->dragItem != iInvalidPos) {
+            refresh_Widget(d);
+        }
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
         int amount = -ev->wheel.y;
@@ -359,12 +416,28 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             redrawHoverItem_ListWidget_(d);
             return iTrue;
         case aborted_ClickResult:
+            endDrag_ListWidget_(d, pos_Click(&d->click));
             redrawHoverItem_ListWidget_(d);
             break;
+        case drag_ClickResult:
+            if (d->dragItem == iInvalidPos && length_I2(delta_Click(&d->click)) > gap_UI) {
+                const size_t over = itemIndex_ListWidget(d, d->click.startPos);
+                if (over != iInvalidPos &&
+                    ((const iListItem *) item_ListWidget(d, over))->isDraggable) {
+                    d->dragItem = over;
+                    d->dragOrigin = sub_I2(topLeft_Rect(itemRect_ListWidget(d, over)),
+                                           pos_Click(&d->click));
+                    invalidateItem_ListWidget(d, d->dragItem);
+                }
+            }
+            return d->dragItem != iInvalidPos;
         case finished_ClickResult:
+            if (endDrag_ListWidget_(d, pos_Click(&d->click))) {
+                return iTrue;
+            }
             redrawHoverItem_ListWidget_(d);
             if (contains_Rect(innerBounds_Widget(w), pos_Click(&d->click)) &&
-                d->hoverItem != iInvalidSize) {
+                d->hoverItem != iInvalidPos) {
                 postCommand_Widget(w, "list.clicked arg:%zu item:%p",
                                    d->hoverItem, constHoverItem_ListWidget(d));
             }
@@ -434,7 +507,9 @@ static void draw_ListWidget_(const iListWidget *d) {
                                                   init_I2(d->visBuf->texSize.x, d->itemHeight) };
                     beginTarget_Paint(&p, buf->texture);
                     fillRect_Paint(&p, itemRect, bg[i]);
-                    class_ListItem(item)->draw(item, &p, itemRect, d);
+                    if (index != d->dragItem) {
+                        class_ListItem(item)->draw(item, &p, itemRect, d);
+                    }
                     fillRect_Paint(&p, moved_Rect(sbBlankRect, init_I2(0, top_Rect(itemRect))), bg[i]);
                 }
             }
@@ -448,7 +523,9 @@ static void draw_ListWidget_(const iListWidget *d) {
                     const iRect      itemRect = { init_I2(0, j * d->itemHeight - buf->origin),
                                                   init_I2(d->visBuf->texSize.x, d->itemHeight) };
                     fillRect_Paint(&p, itemRect, bg[i]);
-                    class_ListItem(item)->draw(item, &p, itemRect, d);
+                    if (j != d->dragItem) {
+                        class_ListItem(item)->draw(item, &p, itemRect, d);
+                    }
                     fillRect_Paint(&p, moved_Rect(sbBlankRect, init_I2(0, top_Rect(itemRect))), bg[i]);
                 }
             }
@@ -459,6 +536,34 @@ static void draw_ListWidget_(const iListWidget *d) {
     }
     setClip_Paint(&p, bounds_Widget(w));
     draw_VisBuf(d->visBuf, addY_I2(topLeft_Rect(bounds), -scrollY), ySpan_Rect(bounds));
+    if (d->dragItem != iInvalidPos) {
+        const iInt2 mousePos = mouseCoord_Window(get_Window(), 0);
+        iInt2 pos = add_I2(mousePos, d->dragOrigin);
+        const iListItem *item = constAt_PtrArray(&d->items, d->dragItem);
+        const iRect itemRect = { init_I2(left_Rect(bounds), pos.y), init_I2(d->visBuf->texSize.x, d->itemHeight) };
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+//        setOpacity_Text(0.25f);
+//        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+//        setOpacity_Text(1.0f);
+        iBool dstOnto;
+        const size_t dstIndex = resolveDragDestination_ListWidget_(d, mousePos, &dstOnto);
+        if (dstIndex != d->dragItem && dstIndex != d->dragItem + 1) {
+            const iRect dstRect = itemRect_ListWidget(d, dstIndex);
+//            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+            p.alpha = 0xff;
+            if (dstOnto) {
+                fillRect_Paint(&p, dstRect, uiTextAction_ColorId);
+            }
+            else {
+                fillRect_Paint(&p, (iRect){ addY_I2(dstRect.pos, -gap_UI / 4),
+                                            init_I2(width_Rect(dstRect), gap_UI / 2) },
+                               uiTextAction_ColorId);
+            }
+        }
+        p.alpha = 0x80;
+        class_ListItem(item)->draw(item, &p, itemRect, d);
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+    }
     unsetClip_Paint(&p);
     drawChildren_Widget(w);
 }
