@@ -462,6 +462,16 @@ const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,
     return list;
 }
 
+size_t count_Bookmarks(const iBookmarks *d) {
+    size_t n = 0;
+    iConstForEach(Hash, i, &d->bookmarks) {
+        if (!isFolder_Bookmark((const iBookmark *) i.value)) {
+            n++;
+        }
+    }
+    return n;
+}
+
 const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkListType listType) {
     iString *str = collectNew_String();
     lock_Mutex(d->mtx);
@@ -474,21 +484,37 @@ const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkLis
         appendFormat_String(str,
                             "%s\n\n"
                             "${bookmark.export.saving}\n\n",
-                            formatCStrs_Lang("bookmark.export.count.n", size_Hash(&d->bookmarks)));
+                            formatCStrs_Lang("bookmark.export.count.n", count_Bookmarks(d)));
     }
     else if (listType == listByTag_BookmarkListType) {
         appendFormat_String(str, "${bookmark.export.taginfo}\n\n");
     }
     iStringSet *tags = new_StringSet();
-    const iPtrArray *bmList = list_Bookmarks(d,
-                                             listType == listByCreationTime_BookmarkListType
-                                                 ? cmpTimeDescending_Bookmark_
-                                                 : cmpTitleAscending_Bookmark,
-                                             NULL,
-                                             NULL);
+    const iPtrArray *bmList =
+        list_Bookmarks(d,
+                       listType == listByCreationTime_BookmarkListType ? cmpTimeDescending_Bookmark_
+                       : listType == listByTag_BookmarkListType        ? cmpTitleAscending_Bookmark
+                                                                       : cmpTree_Bookmark,
+                       NULL, NULL);
+    if (listType == listByFolder_BookmarkListType) {
+        iConstForEach(PtrArray, i, bmList) {
+            const iBookmark *bm = i.ptr;
+            if (!isFolder_Bookmark(bm) && !bm->parentId) {
+                appendFormat_String(str, "=> %s %s\n", cstr_String(&bm->url), cstr_String(&bm->title));
+            }
+        }
+    }
     iConstForEach(PtrArray, i, bmList) {
         const iBookmark *bm = i.ptr;
-        if (listType == listByFolder_BookmarkListType) {
+        if (isFolder_Bookmark(bm)) {
+            if (listType == listByFolder_BookmarkListType) {
+                const int depth = depth_Bookmark(bm);
+                appendFormat_String(str, "\n%s %s\n",
+                                    depth == 0 ? "##" : "###", cstr_String(&bm->title));
+            }
+            continue;
+        }
+        if (listType == listByFolder_BookmarkListType && bm->parentId) {
             appendFormat_String(str, "=> %s %s\n", cstr_String(&bm->url), cstr_String(&bm->title));
         }
         else if (listType == listByCreationTime_BookmarkListType) {

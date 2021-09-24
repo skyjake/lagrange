@@ -56,6 +56,7 @@ struct Impl_Bookmark {
 iLocalDef uint32_t  id_Bookmark         (const iBookmark *d) { return d->node.key; }
 iLocalDef iBool     isFolder_Bookmark   (const iBookmark *d) { return isEmpty_String(&d->url); }
 
+int     depth_Bookmark      (const iBookmark *);
 iBool   hasTag_Bookmark     (const iBookmark *, const char *tag);
 void    addTag_Bookmark     (iBookmark *, const char *tag);
 void    removeTag_Bookmark  (iBookmark *, const char *tag);
