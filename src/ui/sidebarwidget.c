@@ -1111,6 +1111,16 @@ static void bookmarkMovedOntoFolder_SidebarWidget_(iSidebarWidget *d, size_t ind
     postCommand_App("bookmarks.changed");
 }
 
+static size_t numBookmarks_(const iPtrArray *bmList) {
+    size_t num = 0;
+    iConstForEach(PtrArray, i, bmList) {
+        if (!isFolder_Bookmark(i.ptr) && !hasTag_Bookmark(i.ptr, remote_BookmarkTag)) {
+            num++;
+        }
+    }
+    return num;
+}
+
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Handle commands. */
@@ -1313,9 +1323,37 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (isCommand_Widget(w, ev, "bookmark.delete")) {
             const iSidebarItem *item = d->contextItem;
-            if (d->mode == bookmarks_SidebarMode && item && remove_Bookmarks(bookmarks_App(), item->id)) {
-                removeEntries_Feeds(item->id);
-                postCommand_App("bookmarks.changed");
+            if (d->mode == bookmarks_SidebarMode && item) {
+                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                if (isFolder_Bookmark(bm)) {
+                    const iPtrArray *list = list_Bookmarks(bookmarks_App(), NULL,
+                                                           filterInsideFolder_Bookmark, bm);
+                    if (argLabel_Command(cmd, "confirmed") || isEmpty_PtrArray(list)) {
+                        iConstForEach(PtrArray, i, list) {
+                            removeEntries_Feeds(id_Bookmark(i.ptr));
+                        }
+                        remove_Bookmarks(bookmarks_App(), item->id);
+                        postCommand_App("bookmarks.changed");
+                    }
+                    else {
+                        const size_t numBookmarks = numBookmarks_(list);
+                        makeQuestion_Widget(uiHeading_ColorEscape "${heading.confirm.bookmarks.delete}",
+                                            formatCStrs_Lang("dlg.confirm.bookmarks.delete.n", numBookmarks),
+                                            (iMenuItem[]){
+                            { "${cancel}" },
+                            { format_CStr(uiTextCaution_ColorEscape "%s",
+                                          formatCStrs_Lang("dlg.bookmarks.delete.n", numBookmarks)),
+                                          0, 0, format_CStr("!bookmark.delete confirmed:1 ptr:%p", d) },
+                        }, 2);
+                    }
+                }
+                else {
+                    /* TODO: Move it to a Trash folder? */
+                    if (remove_Bookmarks(bookmarks_App(), item->id)) {
+                        removeEntries_Feeds(item->id);
+                        postCommand_App("bookmarks.changed");
+                    }
+                }
             }
             return iTrue;
         }

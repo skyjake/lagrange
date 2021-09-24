@@ -532,6 +532,21 @@ msgstr "Do you really want to erase the history of all visited pages?"
 msgid "dlg.history.clear"
 msgstr "Clear History"
 
+msgid "heading.confirm.bookmarks.delete"
+msgstr "DELETE BOOKMARKS"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Do you really want to delete the bookmark inside this folder?"
+msgstr[1] "Do you really want to delete all %u bookmarks inside this folder?"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Delete Bookmark"
+msgstr[1] "Delete %u Bookmarks"
+
 msgid "bookmark.tag.home"
 msgstr "Use as Homepage"
 

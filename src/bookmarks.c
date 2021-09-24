@@ -83,6 +83,10 @@ int cmpTitleAscending_Bookmark(const iBookmark **a, const iBookmark **b) {
     return cmpStringCase_String(&(*a)->title, &(*b)->title);
 }
 
+iBool filterInsideFolder_Bookmark(void *context, const iBookmark *bm) {
+    return hasParent_Bookmark(bm, id_Bookmark(context));
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 static const char *oldFileName_Bookmarks_ = "bookmarks.txt";
@@ -345,16 +349,9 @@ iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
     lock_Mutex(d->mtx);
     iBookmark *bm = (iBookmark *) remove_Hash(&d->bookmarks, id);
     if (bm) {
-        /* If this is a remote source, make sure all the remote bookmarks are
-           removed as well. */
-        if (hasTag_Bookmark(bm, remoteSource_BookmarkTag)) {
-            iForEach(Hash, i, &d->bookmarks) {
-                iBookmark *j = (iBookmark *) i.value;
-                if (j->parentId == id_Bookmark(bm)) {
-                    remove_HashIterator(&i);
-                    delete_Bookmark(j);
-                }
-            }
+        /* Remove all the contained bookmarks as well. */
+        iConstForEach(PtrArray, i, list_Bookmarks(d, NULL, filterInsideFolder_Bookmark, bm)) {
+            delete_Bookmark((iBookmark *) remove_Hash(&d->bookmarks, id_Bookmark(i.ptr)));
         }
         delete_Bookmark(bm);
     }
