@@ -2766,15 +2766,21 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmarks.addfolder")) {
+        const int parentId = argLabel_Command(cmd, "parent");
         if (suffixPtr_Command(cmd, "value")) {
-            add_Bookmarks(d->bookmarks, NULL, collect_String(suffix_Command(cmd, "value")), NULL, 0);
+            uint32_t id = add_Bookmarks(d->bookmarks, NULL,
+                                        collect_String(suffix_Command(cmd, "value")), NULL, 0);
+            if (parentId) {
+                get_Bookmarks(d->bookmarks, id)->parentId = parentId;
+            }
             postCommand_App("bookmarks.changed");
         }
         else {
-            iWidget *dlg = makeValueInput_Widget(get_Root()->widget,
-                                                 collectNewCStr_String(cstr_Lang("dlg.addfolder.defaulttitle")),
-                                                 uiHeading_ColorEscape "${heading.addfolder}", "${dlg.addfolder.prompt}",
-                                                 uiTextAction_ColorEscape "${dlg.addfolder}", "bookmarks.addfolder");
+            iWidget *dlg = makeValueInput_Widget(
+                get_Root()->widget, collectNewCStr_String(cstr_Lang("dlg.addfolder.defaulttitle")),
+                uiHeading_ColorEscape "${heading.addfolder}", "${dlg.addfolder.prompt}",
+                uiTextAction_ColorEscape "${dlg.addfolder}",
+                format_CStr("bookmarks.addfolder parent:%d", parentId));
             setSelectAllOnFocus_InputWidget(findChild_Widget(dlg, "input"), iTrue);
         }
         return iTrue;

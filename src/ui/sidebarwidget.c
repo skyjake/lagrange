@@ -446,7 +446,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                { "---", 0, 0, NULL },
                                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
                                { "---", 0, 0, NULL },
-                               { add_Icon " ${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
+                               { add_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
                                { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" },
                                { "---", 0, 0, NULL },
                                { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" } },
@@ -1316,6 +1316,17 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (d->mode == bookmarks_SidebarMode && item && remove_Bookmarks(bookmarks_App(), item->id)) {
                 removeEntries_Feeds(item->id);
                 postCommand_App("bookmarks.changed");
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "bookmark.addfolder")) {
+            const iSidebarItem *item = d->contextItem;
+            if (d->mode == bookmarks_SidebarMode) {
+                postCommandf_App("bookmarks.addfolder parent:%zu",
+                                 !item ? 0
+                                 : item->listItem.isDropTarget
+                                     ? item->id
+                                     : get_Bookmarks(bookmarks_App(), item->id)->parentId);
             }
             return iTrue;
         }
