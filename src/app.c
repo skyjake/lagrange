@@ -2033,6 +2033,7 @@ static void resetFonts_App_(iApp *d) {
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     const iBool isFrozen = !d->window || d->window->isDrawFrozen;
+    /* TODO: Maybe break this up a little bit? There's a very long list of ifs here. */
     if (equal_Command(cmd, "config.error")) {
         makeSimpleMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
                                  format_CStr("Error in config file: %s\n"
@@ -2762,6 +2763,25 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
         makeFeedSettings_Widget(findUrl_Bookmarks(d->bookmarks, url));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.addfolder")) {
+        if (suffixPtr_Command(cmd, "value")) {
+            add_Bookmarks(d->bookmarks, NULL, collect_String(suffix_Command(cmd, "value")), NULL, 0);
+            postCommand_App("bookmarks.changed");
+        }
+        else {
+            iWidget *dlg = makeValueInput_Widget(get_Root()->widget,
+                                                 collectNewCStr_String(cstr_Lang("dlg.addfolder.defaulttitle")),
+                                                 uiHeading_ColorEscape "${heading.addfolder}", "${dlg.addfolder.prompt}",
+                                                 uiTextAction_ColorEscape "${dlg.addfolder}", "bookmarks.addfolder");
+            setSelectAllOnFocus_InputWidget(findChild_Widget(dlg, "input"), iTrue);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.sort")) {
+        sort_Bookmarks(d->bookmarks, arg_Command(cmd), cmpTitleAscending_Bookmark);
+        postCommand_App("bookmarks.changed");
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmarks.reload.remote")) {

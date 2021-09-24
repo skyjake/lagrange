@@ -120,6 +120,7 @@ static const iMenuItem viewMenuItems_[] = {
 static iMenuItem bookmarksMenuItems_[] = {
     { "${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
     { "${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+    { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
     { "---", 0, 0, NULL },
     { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
     { "---", 0, 0, NULL },
@@ -127,6 +128,8 @@ static iMenuItem bookmarksMenuItems_[] = {
     { "${macos.menu.bookmarks.bytag}", 0, 0, "open url:about:bookmarks?tags" },
     { "${macos.menu.bookmarks.bytime}", 0, 0, "open url:about:bookmarks?created" },
     { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
+    { "---", 0, 0, NULL },
+    { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
     { "---", 0, 0, NULL },
     { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
     { "${menu.feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },

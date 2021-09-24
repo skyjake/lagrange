@@ -107,6 +107,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define rightArrow_Icon     "\u279e"
 #define barLeftArrow_Icon   "\u21a4"
 #define barRightArrow_Icon  "\u21a6"
+#define upDownArrow_Icon    "\u21c5"
 #define clock_Icon          "\U0001f553"
 #define pin_Icon            "\U0001f588"
 #define star_Icon           "\u2605"
@@ -155,6 +156,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define return_Icon         "\u23ce"
 #define undo_Icon           "\u23ea"
 #define select_Icon         "\u2b1a"
+#define downAngle_Icon      "\ufe40"
 
 #if defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"

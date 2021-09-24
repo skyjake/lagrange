@@ -171,6 +171,9 @@ static float scoreMatch_(const iRegExp *pattern, iRangecc text) {
 }
 
 static float bookmarkRelevance_LookupJob_(const iLookupJob *d, const iBookmark *bm) {
+    if (isFolder_Bookmark(bm)) {
+        return 0.0f;
+    }
     iUrl parts;
     init_Url(&parts, &bm->url);
     const float t = scoreMatch_(d->term, range_String(&bm->title));

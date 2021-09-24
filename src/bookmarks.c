@@ -79,7 +79,7 @@ static int cmpTimeDescending_Bookmark_(const iBookmark **a, const iBookmark **b)
     return iCmp(seconds_Time(&(*b)->when), seconds_Time(&(*a)->when));
 }
 
-static int cmpTitleAscending_Bookmark_(const iBookmark **a, const iBookmark **b) {
+int cmpTitleAscending_Bookmark(const iBookmark **a, const iBookmark **b) {
     return cmpStringCase_String(&(*a)->title, &(*b)->title);
 }
 
@@ -250,7 +250,20 @@ static void load_BookmarkLoader(iBookmarkLoader *d, iFile *file) {
 iDefineTypeConstructionArgs(BookmarkLoader, (iBookmarks *b), b)
     
 /*----------------------------------------------------------------------------------------------*/
-    
+
+static iBool isMatchingParent_Bookmark_(void *context, const iBookmark *bm) {
+    return bm->parentId == *(const uint32_t *) context;
+}
+
+void sort_Bookmarks(iBookmarks *d, uint32_t parentId, iBookmarksCompareFunc cmp) {
+    lock_Mutex(d->mtx);
+    iConstForEach(PtrArray, i, list_Bookmarks(d, cmp, isMatchingParent_Bookmark_, &parentId)) {
+        iBookmark *bm = i.ptr;
+        bm->order = index_PtrArrayConstIterator(&i) + 1;
+    }
+    unlock_Mutex(d->mtx);
+}
+
 void load_Bookmarks(iBookmarks *d, const char *dirPath) {
     clear_Bookmarks(d);
     /* Load new .ini bookmarks, if present. */
@@ -258,11 +271,8 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
     if (!open_File(f, readOnly_FileMode | text_FileMode)) {
         /* As a fallback, try loading the v1.6 bookmarks file. */
         loadOldFormat_Bookmarks(d, dirPath);
-        /* Set ordering based on titles. */
-        iConstForEach(PtrArray, i, list_Bookmarks(d, cmpTitleAscending_Bookmark_, NULL, NULL)) {
-            iBookmark *bm = i.ptr;
-            bm->order = index_PtrArrayConstIterator(&i) + 1;
-        }
+        /* Old format has an implicit alphabetic sort order. */
+        sort_Bookmarks(d, 0, cmpTitleAscending_Bookmark);
         return;
     }
     iBookmarkLoader loader;
@@ -317,7 +327,9 @@ uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, 
                        iChar icon) {
     lock_Mutex(d->mtx);
     iBookmark *bm = new_Bookmark();
-    set_String(&bm->url, canonicalUrl_String(url));
+    if (url) {
+        set_String(&bm->url, canonicalUrl_String(url));
+    }
     set_String(&bm->title, title);
     if (tags) {
         set_String(&bm->tags, tags);
@@ -471,7 +483,7 @@ const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkLis
     const iPtrArray *bmList = list_Bookmarks(d,
                                              listType == listByCreationTime_BookmarkListType
                                                  ? cmpTimeDescending_Bookmark_
-                                                 : cmpTitleAscending_Bookmark_,
+                                                 : cmpTitleAscending_Bookmark,
                                              NULL,
                                              NULL);
     iConstForEach(PtrArray, i, bmList) {

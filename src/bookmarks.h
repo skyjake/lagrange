@@ -53,7 +53,8 @@ struct Impl_Bookmark {
     int order;         /* sort order */
 };
 
-iLocalDef uint32_t  id_Bookmark (const iBookmark *d) { return d->node.key; }
+iLocalDef uint32_t  id_Bookmark         (const iBookmark *d) { return d->node.key; }
+iLocalDef iBool     isFolder_Bookmark   (const iBookmark *d) { return isEmpty_String(&d->url); }
 
 iBool   hasTag_Bookmark     (const iBookmark *, const char *tag);
 void    addTag_Bookmark     (iBookmark *, const char *tag);
@@ -73,10 +74,16 @@ iLocalDef void addOrRemoveTag_Bookmark(iBookmark *d, const char *tag, iBool add)
     }
 }
 
+int     cmpTitleAscending_Bookmark      (const iBookmark **, const iBookmark **);
+int     cmpTree_Bookmark                (const iBookmark **, const iBookmark **);
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(Bookmarks)
 iDeclareTypeConstruction(Bookmarks)
+
+typedef iBool (*iBookmarksFilterFunc)   (void *context, const iBookmark *);
+typedef int   (*iBookmarksCompareFunc)  (const iBookmark **, const iBookmark **);
 
 void        clear_Bookmarks             (iBookmarks *);
 void        load_Bookmarks              (iBookmarks *, const char *dirPath);
@@ -88,14 +95,12 @@ iBool       remove_Bookmarks            (iBookmarks *, uint32_t id);
 iBookmark * get_Bookmarks               (iBookmarks *, uint32_t id);
 void        reorder_Bookmarks           (iBookmarks *, uint32_t id, int newOrder);
 iBool       updateBookmarkIcon_Bookmarks(iBookmarks *, const iString *url, iChar icon);
+void        sort_Bookmarks              (iBookmarks *, uint32_t parentId, iBookmarksCompareFunc cmp);
 void        fetchRemote_Bookmarks       (iBookmarks *);
 void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
 
 iChar       siteIcon_Bookmarks          (const iBookmarks *, const iString *url);
 uint32_t    findUrl_Bookmarks           (const iBookmarks *, const iString *url); /* O(n) */
-
-typedef iBool (*iBookmarksFilterFunc) (void *context, const iBookmark *);
-typedef int   (*iBookmarksCompareFunc)(const iBookmark **, const iBookmark **);
 
 iBool   filterTagsRegExp_Bookmarks      (void *regExp, const iBookmark *);
 

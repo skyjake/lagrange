@@ -225,7 +225,13 @@ msgid "menu.zoom.reset"
 msgstr "Reset Zoom"
 
 msgid "menu.view.split"
-msgstr "Split View..."
+msgstr "Split View…"
+
+msgid "menu.newfolder"
+msgstr "New Folder…"
+
+msgid "menu.sort.alpha"
+msgstr "Sort Alphabetically"
 
 msgid "menu.bookmarks.list"
 msgstr "List All Bookmarks"
@@ -1189,6 +1195,18 @@ msgstr "Icon:"
 msgid "heading.bookmark.tags"
 msgstr "SPECIAL TAGS"
 
+msgid "heading.addfolder"
+msgstr "ADD FOLDER"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "New Folder"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Enter the name of the new folder:"
+
+msgid "dlg.addfolder"
+msgstr "Add Folder"
+
 msgid "heading.prefs"
 msgstr "PREFERENCES"
 
@@ -1563,6 +1581,9 @@ msgstr "Next set of home row key links"
 
 msgid "keys.bookmark.add"
 msgstr "Add bookmark"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Add bookmark folder"
 
 msgid "keys.subscribe"
 msgstr "Subscribe to page"

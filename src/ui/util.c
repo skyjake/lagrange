@@ -816,6 +816,14 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     setUserData_Object(menu, deepCopyMenuItems_(menu, items, n));
     addChild_Widget(parent, menu);
     iRelease(menu); /* owned by parent now */
+    /* Keyboard shortcuts still need to triggerable via the menu, although the items don't exist. */ {
+        for (size_t i = 0; i < n; i++) {
+            const iMenuItem *item = &items[i];
+            if (item->key) {
+                addAction_Widget(menu, item->key, item->kmods, item->command);
+            }
+        }
+    }
 #else
     /* Non-native custom popup menu. This may still be displayed inside a separate window. */
     setDrawBufferEnabled_Widget(menu, iTrue);

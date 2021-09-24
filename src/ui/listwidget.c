@@ -331,8 +331,8 @@ static size_t resolveDragDestination_ListWidget_(const iListWidget *d, iInt2 dst
     const iRect   rect = itemRect_ListWidget(d, index);
     const iRangei span = ySpan_Rect(rect);
     if (item->isDropTarget) {
-        const int pad = size_Range(&span) / 4;
-        if (dstPos.y >= span.start + pad && dstPos.y < span.end) {
+        const int pad = size_Range(&span) / 3;
+        if (dstPos.y >= span.start + pad && dstPos.y < span.end - pad) {
             *isOnto = iTrue;
             return index;
         }
@@ -352,11 +352,13 @@ static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
     stop_Anim(&d->scrollY.pos);
     iBool isOnto;
     const size_t index = resolveDragDestination_ListWidget_(d, endPos, &isOnto);
-    if (isOnto) {
-        postCommand_Widget(d, "list.dragged arg:%zu onto:%zu", d->dragItem, index);
-    }
-    else if (index != d->dragItem) {
-        postCommand_Widget(d, "list.dragged arg:%zu before:%zu", d->dragItem, index);
+    if (index != d->dragItem) {
+        if (isOnto) {
+            postCommand_Widget(d, "list.dragged arg:%zu onto:%zu", d->dragItem, index);
+        }
+        else {
+            postCommand_Widget(d, "list.dragged arg:%zu before:%zu", d->dragItem, index);
+        }
     }
     invalidateItem_ListWidget(d, d->dragItem);
     d->dragItem = iInvalidPos;
@@ -394,7 +396,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         }
         else if (d->dragItem != iInvalidPos) {
             /* Start scrolling if near the ends. */
-            const int zone = d->itemHeight;
+            const int zone = 2 * d->itemHeight;
             const iRect bounds = bounds_Widget(w);
             float scrollSpeed = 0.0f;
             if (mousePos.y > bottom_Rect(bounds) - zone) {
@@ -410,7 +412,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             }
             else {
                 setValueSpeed_Anim(&d->scrollY.pos, scrollSpeed < 0 ? 0 : scrollMax_ListWidget_(d),
-                                   iAbs(scrollSpeed * gap_UI * 100));
+                                   scrollSpeed * scrollSpeed * gap_UI * 400);
                 refreshWhileScrolling_ListWidget_(d);
             }
         }
@@ -451,7 +453,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                     ((const iListItem *) item_ListWidget(d, over))->isDraggable) {
                     d->dragItem = over;
                     d->dragOrigin = sub_I2(topLeft_Rect(itemRect_ListWidget(d, over)),
-                                           pos_Click(&d->click));
+                                           d->click.startPos);
                     invalidateItem_ListWidget(d, d->dragItem);
                 }
             }
@@ -569,20 +571,22 @@ static void draw_ListWidget_(const iListWidget *d) {
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         iBool dstOnto;
         const size_t dstIndex = resolveDragDestination_ListWidget_(d, mousePos, &dstOnto);
-        if (dstIndex != d->dragItem && dstIndex != d->dragItem + 1) {
+        if (dstIndex != d->dragItem) {
             const iRect dstRect = itemRect_ListWidget(d, dstIndex);
             p.alpha = 0xff;
             if (dstOnto) {
-                fillRect_Paint(&p, dstRect, uiTextAction_ColorId);
+                drawRectThickness_Paint(&p, dstRect, gap_UI / 2, uiTextAction_ColorId);
             }
-            else {
+            else if (dstIndex != d->dragItem + 1) {
                 fillRect_Paint(&p, (iRect){ addY_I2(dstRect.pos, -gap_UI / 4),
                                             init_I2(width_Rect(dstRect), gap_UI / 2) },
                                uiTextAction_ColorId);
             }
         }
         p.alpha = 0x80;
+        setOpacity_Text(0.5f);
         class_ListItem(item)->draw(item, &p, itemRect, d);
+        setOpacity_Text(1.0f);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     unsetClip_Paint(&p);
