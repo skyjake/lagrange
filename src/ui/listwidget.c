@@ -277,7 +277,7 @@ size_t hoverItemIndex_ListWidget(const iListWidget *d) {
     return d->hoverItem;
 }
 
-static void setHoverItem_ListWidget_(iListWidget *d, size_t index) {
+void setHoverItem_ListWidget(iListWidget *d, size_t index) {
     if (index < size_PtrArray(&d->items)) {
         const iListItem *item = at_PtrArray(&d->items, index);
         if (item->isSeparator) {
@@ -294,7 +294,7 @@ static void setHoverItem_ListWidget_(iListWidget *d, size_t index) {
 
 void updateMouseHover_ListWidget(iListWidget *d) {
     const iInt2 mouse = mouseCoord_Window(get_Window(), 0);
-    setHoverItem_ListWidget_(d, itemIndex_ListWidget(d, mouse));
+    setHoverItem_ListWidget(d, itemIndex_ListWidget(d, mouse));
 }
 
 void sort_ListWidget(iListWidget *d, int (*cmp)(const iListItem **item1, const iListItem **item2)) {
@@ -318,19 +318,18 @@ static void updateHover_ListWidget_(iListWidget *d, const iInt2 mouse) {
         contains_Widget(constAs_Widget(d), mouse)) {
         hover = itemIndex_ListWidget(d, mouse);
     }
-    setHoverItem_ListWidget_(d, hover);
+    setHoverItem_ListWidget(d, hover);
 }
 
 static size_t resolveDragDestination_ListWidget_(const iListWidget *d, iInt2 dstPos, iBool *isOnto) {
     size_t           index = itemIndex_ListWidget(d, dstPos);
-    const iRect      rect  = itemRect_ListWidget(d, index);
     const iListItem *item  = constItem_ListWidget(d, index);
-    const iRangei    span  = ySpan_Rect(rect);
     if (!item) {
-        item = constItem_ListWidget(
-            d,
-            dstPos.y < mid_Rect(bounds_Widget(constAs_Widget(d))).y ? 0 : (numItems_ListWidget(d) - 1));
+        index = (dstPos.y < mid_Rect(bounds_Widget(constAs_Widget(d))).y ? 0 : (numItems_ListWidget(d) - 1));
+        item = constItem_ListWidget(d, index);
     }
+    const iRect   rect = itemRect_ListWidget(d, index);
+    const iRangei span = ySpan_Rect(rect);
     if (item->isDropTarget) {
         const int pad = size_Range(&span) / 4;
         if (dstPos.y >= span.start + pad && dstPos.y < span.end) {
@@ -350,6 +349,7 @@ static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
     if (d->dragItem == iInvalidPos) {
         return iFalse;
     }
+    stop_Anim(&d->scrollY.pos);
     iBool isOnto;
     const size_t index = resolveDragDestination_ListWidget_(d, endPos, &isOnto);
     if (isOnto) {
@@ -385,14 +385,34 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         d->noHoverWhileScrolling = iFalse;
     }
     if (ev->type == SDL_MOUSEMOTION) {
+        const iInt2 mousePos = init_I2(ev->motion.x, ev->motion.y);
         if (ev->motion.state == 0 /* not dragging */) {
             if (ev->motion.which != SDL_TOUCH_MOUSEID) {
                 d->noHoverWhileScrolling = iFalse;
             }
-            updateHover_ListWidget_(d, init_I2(ev->motion.x, ev->motion.y));
+            updateHover_ListWidget_(d, mousePos);
         }
         else if (d->dragItem != iInvalidPos) {
-            refresh_Widget(d);
+            /* Start scrolling if near the ends. */
+            const int zone = d->itemHeight;
+            const iRect bounds = bounds_Widget(w);
+            float scrollSpeed = 0.0f;
+            if (mousePos.y > bottom_Rect(bounds) - zone) {
+                scrollSpeed = (mousePos.y - bottom_Rect(bounds) + zone) / (float) zone;
+            }
+            else if (mousePos.y < top_Rect(bounds) + zone) {
+                scrollSpeed = -(top_Rect(bounds) + zone - mousePos.y) / (float) zone;
+            }
+            scrollSpeed = iClamp(scrollSpeed, -1.0f, 1.0f);
+            if (iAbs(scrollSpeed) < 0.001f) {
+                stop_Anim(&d->scrollY.pos);
+                refresh_Widget(d);
+            }
+            else {
+                setValueSpeed_Anim(&d->scrollY.pos, scrollSpeed < 0 ? 0 : scrollMax_ListWidget_(d),
+                                   iAbs(scrollSpeed * gap_UI * 100));
+                refreshWhileScrolling_ListWidget_(d);
+            }
         }
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
@@ -416,7 +436,12 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             redrawHoverItem_ListWidget_(d);
             return iTrue;
         case aborted_ClickResult:
-            endDrag_ListWidget_(d, pos_Click(&d->click));
+//            endDrag_ListWidget_(d, pos_Click(&d->click));
+            if (d->dragItem != iInvalidPos) {
+                stop_Anim(&d->scrollY.pos);
+                invalidateItem_ListWidget(d, d->dragItem);
+                d->dragItem = iInvalidPos;
+            }
             redrawHoverItem_ListWidget_(d);
             break;
         case drag_ClickResult:
@@ -436,7 +461,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                 return iTrue;
             }
             redrawHoverItem_ListWidget_(d);
-            if (contains_Rect(innerBounds_Widget(w), pos_Click(&d->click)) &&
+            if (contains_Rect(itemRect_ListWidget(d, d->hoverItem), pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidPos) {
                 postCommand_Widget(w, "list.clicked arg:%zu item:%p",
                                    d->hoverItem, constHoverItem_ListWidget(d));
@@ -542,14 +567,10 @@ static void draw_ListWidget_(const iListWidget *d) {
         const iListItem *item = constAt_PtrArray(&d->items, d->dragItem);
         const iRect itemRect = { init_I2(left_Rect(bounds), pos.y), init_I2(d->visBuf->texSize.x, d->itemHeight) };
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-//        setOpacity_Text(0.25f);
-//        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
-//        setOpacity_Text(1.0f);
         iBool dstOnto;
         const size_t dstIndex = resolveDragDestination_ListWidget_(d, mousePos, &dstOnto);
         if (dstIndex != d->dragItem && dstIndex != d->dragItem + 1) {
             const iRect dstRect = itemRect_ListWidget(d, dstIndex);
-//            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
             p.alpha = 0xff;
             if (dstOnto) {
                 fillRect_Paint(&p, dstRect, uiTextAction_ColorId);

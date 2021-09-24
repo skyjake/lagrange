@@ -332,6 +332,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             iRegExp *homeTag         = iClob(new_RegExp("\\b" homepage_BookmarkTag "\\b", caseSensitive_RegExpOption));
             iRegExp *subTag          = iClob(new_RegExp("\\b" subscribed_BookmarkTag "\\b", caseSensitive_RegExpOption));
             iRegExp *remoteSourceTag = iClob(new_RegExp("\\b" remoteSource_BookmarkTag "\\b", caseSensitive_RegExpOption));
+            iRegExp *remoteTag       = iClob(new_RegExp("\\b" remote_BookmarkTag "\\b", caseSensitive_RegExpOption));
             iRegExp *linkSplitTag    = iClob(new_RegExp("\\b" linkSplit_BookmarkTag "\\b", caseSensitive_RegExpOption));
             iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTree_Bookmark_, NULL, NULL)) {
                 const iBookmark *bm = i.ptr;
@@ -350,6 +351,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     init_RegExpMatch(&m);
                     if (matchString_RegExp(homeTag, &bm->tags, &m)) {
                         appendChar_String(&item->meta, 0x1f3e0);
+                    }
+                    init_RegExpMatch(&m);
+                    if (matchString_RegExp(remoteTag, &bm->tags, &m)) {
+                        item->listItem.isDraggable = iFalse;
                     }
                     init_RegExpMatch(&m);
                     if (matchString_RegExp(remoteSourceTag, &bm->tags, &m)) {
@@ -555,6 +560,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
 #endif
     arrange_Widget(d->actions);
     arrange_Widget(as_Widget(d));
+    updateMouseHover_ListWidget(d->list);
 }
 
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
@@ -1000,6 +1006,19 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
     return iFalse;
 }
 
+static void bookmarkMoved_SidebarWidget_(iSidebarWidget *d, size_t index, size_t beforeIndex) {
+    const iSidebarItem *movingItem = item_ListWidget(d->list, index);
+    const iBool         isLast     = (beforeIndex == numItems_ListWidget(d->list));
+    const iSidebarItem *dstItem    = item_ListWidget(d->list,
+                                                     isLast ? numItems_ListWidget(d->list) - 1
+                                                            : beforeIndex);
+    const iBookmark *dst = get_Bookmarks(bookmarks_App(), dstItem->id);
+    reorder_Bookmarks(bookmarks_App(), movingItem->id, dst->order + (isLast ? 1 : 0));
+    updateItems_SidebarWidget_(d);
+    /* Don't confuse the user: keep the dragged item in hover state. */
+    setHoverItem_ListWidget(d->list, index < beforeIndex ? beforeIndex - 1 : beforeIndex);
+}
+
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Handle commands. */
@@ -1105,6 +1124,18 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "list.clicked")) {
             itemClicked_SidebarWidget_(
                 d, pointerLabel_Command(cmd, "item"), argU32Label_Command(cmd, "arg"));
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "list.dragged")) {
+            iAssert(d->mode == bookmarks_SidebarMode);
+            if (hasLabel_Command(cmd, "before")) {
+                bookmarkMoved_SidebarWidget_(d,
+                                             argU32Label_Command(cmd, "arg"),
+                                             argU32Label_Command(cmd, "before"));
+            }
+            else {
+                /* Dragged onto a folder. */
+            }
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "menu.closed")) {

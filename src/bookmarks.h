@@ -32,6 +32,8 @@ iDeclareType(GmRequest)
 iDeclareType(Bookmark)
 iDeclareTypeConstruction(Bookmark)
 
+/* TODO: Make the special internal tags a bitfield, separate from user's tags. */
+
 #define headings_BookmarkTag        "headings"
 #define homepage_BookmarkTag        "homepage"
 #define linkSplit_BookmarkTag       "linksplit"
@@ -78,16 +80,18 @@ iDeclareTypeConstruction(Bookmarks)
 
 void        clear_Bookmarks             (iBookmarks *);
 void        load_Bookmarks              (iBookmarks *, const char *dirPath);
+void        save_Bookmarks              (const iBookmarks *, const char *dirPath);
+
 uint32_t    add_Bookmarks               (iBookmarks *, const iString *url, const iString *title,
                                          const iString *tags, iChar icon);
 iBool       remove_Bookmarks            (iBookmarks *, uint32_t id);
 iBookmark * get_Bookmarks               (iBookmarks *, uint32_t id);
+void        reorder_Bookmarks           (iBookmarks *, uint32_t id, int newOrder);
+iBool       updateBookmarkIcon_Bookmarks(iBookmarks *, const iString *url, iChar icon);
 void        fetchRemote_Bookmarks       (iBookmarks *);
 void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
-iBool       updateBookmarkIcon_Bookmarks(iBookmarks *, const iString *url, iChar icon);
-iChar       siteIcon_Bookmarks          (const iBookmarks *, const iString *url);
 
-void        save_Bookmarks              (const iBookmarks *, const char *dirPath);
+iChar       siteIcon_Bookmarks          (const iBookmarks *, const iString *url);
 uint32_t    findUrl_Bookmarks           (const iBookmarks *, const iString *url); /* O(n) */
 
 typedef iBool (*iBookmarksFilterFunc) (void *context, const iBookmark *);

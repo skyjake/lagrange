@@ -402,6 +402,20 @@ iBookmark *get_Bookmarks(iBookmarks *d, uint32_t id) {
     return (iBookmark *) value_Hash(&d->bookmarks, id);
 }
 
+void reorder_Bookmarks(iBookmarks *d, uint32_t id, int newOrder) {
+    lock_Mutex(d->mtx);
+    iForEach(Hash, i, &d->bookmarks) {
+        iBookmark *bm = (iBookmark *) i.value;
+        if (id_Bookmark(bm) == id) {
+            bm->order = newOrder;
+        }
+        else if (bm->order >= newOrder) {
+            bm->order++;
+        }
+    }
+    unlock_Mutex(d->mtx);
+}
+
 iBool filterTagsRegExp_Bookmarks(void *regExp, const iBookmark *bm) {
     iRegExpMatch m;
     init_RegExpMatch(&m);

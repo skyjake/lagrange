@@ -337,7 +337,7 @@ void setValue_Anim(iAnim *d, float to, uint32_t span) {
 }
 
 void setValueSpeed_Anim(iAnim *d, float to, float unitsPerSecond) {
-    if (iAbs(d->to - to) > 0.0001f) {
+    if (iAbs(d->to - to) > 0.0001f || !isFinished_Anim(d)) {
         const uint32_t now   = SDL_GetTicks();
         const float    from  = valueAt_Anim_(d, now);
         const float    delta = to - from;
