@@ -157,6 +157,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define undo_Icon           "\u23ea"
 #define select_Icon         "\u2b1a"
 #define downAngle_Icon      "\ufe40"
+#define photo_Icon          "\U0001f5bb"
 
 #if defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"

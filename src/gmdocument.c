@@ -508,6 +508,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *magnifyingGlass = "\U0001f50d";
     static const char *pointingFinger  = "\U0001f449";
     static const char *uploadArrow     = upload_Icon;
+    static const char *image           = photo_Icon;
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);
@@ -766,6 +767,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : scheme == finger_GmLinkScheme   ? pointingFinger
                                              : scheme == mailto_GmLinkScheme   ? envelope
                                              : link->flags & remote_GmLinkFlag ? globe
+                                             : link->flags & imageFileExtension_GmLinkFlag ? image
                                                                                : arrow);
             /* Custom link icon is shown on local Gemini links only. */
             if (!isEmpty_Range(&link->labelIcon)) {
