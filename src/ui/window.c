@@ -717,16 +717,10 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
             d->isMouseInside = iFalse;
-            //postCommand_App("window.mouse.exited");
-//            SDL_SetWindowInputFocus(mainWindow_App()->base.win);
-            printf("mouse leaves popup\n"); fflush(stdout);
-            //SDL_RaiseWindow(mainWindow_App()->base.win);
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_ENTER:
             d->isMouseInside = iTrue;
-            //postCommand_App("window.mouse.entered");
-            printf("mouse enters popup\n"); fflush(stdout);
             return iTrue;
     }
     return iFalse;
@@ -745,9 +739,9 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
 #if defined(LAGRANGE_ENABLE_WINDOWPOS_FIX)
             if (d->place.initialPos.x >= 0) {
                 int bx, by;
-                SDL_GetWindowBordersSize(d->win, &by, &bx, NULL, NULL);
+                SDL_GetWindowBordersSize(d->base.win, &by, &bx, NULL, NULL);
                 SDL_SetWindowPosition(
-                    d->win, d->place.initialPos.x + bx, d->place.initialPos.y + by);
+                    d->base.win, d->place.initialPos.x + bx, d->place.initialPos.y + by);
                 d->place.initialPos = init1_I2(-1);
             }
 #endif
