@@ -34,6 +34,7 @@ struct Impl_FeedEntry {
     iTime discovered;
     iString url;
     iString title;
+    iBool isHeading; /* URL fragment points to a heading */
     uint32_t bookmarkId; /* note: runtime only, not a persistent ID */
 };
 
