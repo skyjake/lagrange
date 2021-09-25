@@ -108,7 +108,7 @@ struct Impl_SidebarWidget {
     iWidget *         menu;
     iSidebarItem *    contextItem;  /* list item accessed in the context menu */
     size_t            contextIndex; /* index of list item accessed in the context menu */
-    iIntSet           closedFolders; /* otherwise open */
+    iIntSet *         closedFolders; /* otherwise open */
 };
 
 iDefineObjectConstructionArgs(SidebarWidget, (enum iSidebarSide side), side)
@@ -255,7 +255,7 @@ static void updateContextMenu_SidebarWidget_(iSidebarWidget *d) {
 
 static iBool isBookmarkFolded_SidebarWidget_(const iSidebarWidget *d, const iBookmark *bm) {
     while (bm->parentId) {
-        if (contains_IntSet(&d->closedFolders, bm->parentId)) {
+        if (contains_IntSet(d->closedFolders, bm->parentId)) {
             return iTrue;
         }
         bm = get_Bookmarks(bookmarks_App(), bm->parentId);
@@ -397,7 +397,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 item->id = id_Bookmark(bm);
                 item->indent = depth_Bookmark(bm);
                 if (isFolder_Bookmark(bm)) {
-                    item->icon = contains_IntSet(&d->closedFolders, item->id) ? 0x27e9 : 0xfe40;
+                    item->icon = contains_IntSet(d->closedFolders, item->id) ? 0x27e9 : 0xfe40;
                 }
                 else {
                     item->icon = bm->icon;
@@ -655,12 +655,21 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     return iTrue;
 }
 
+void setClosedFolders_SidebarWidget(iSidebarWidget *d, const iIntSet *closedFolders) {
+    delete_IntSet(d->closedFolders);
+    d->closedFolders = copy_IntSet(closedFolders);
+}
+
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->mode : 0;
 }
 
 float width_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->widthAsGaps : 0;
+}
+
+const iIntSet *closedFolders_SidebarWidget(const iSidebarWidget *d) {
+    return d->closedFolders;
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
@@ -736,7 +745,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->resizer = NULL;
     d->list = NULL;
     d->actions = NULL;
-    init_IntSet(&d->closedFolders);
+    d->closedFolders = new_IntSet();
     /* On a phone, the right sidebar is used exclusively for Identities. */
     const iBool isPhone = deviceType_App() == phone_AppDeviceType;
     if (!isPhone || d->side == left_SidebarSide) {
@@ -820,7 +829,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
     deinit_String(&d->cmdPrefix);
-    deinit_IntSet(&d->closedFolders);
+    delete_IntSet(d->closedFolders);
 }
 
 iBool setButtonFont_SidebarWidget(iSidebarWidget *d, int font) {
@@ -869,11 +878,11 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
         }
         case bookmarks_SidebarMode:
             if (isEmpty_String(&item->url)) /* a folder */ {
-                if (contains_IntSet(&d->closedFolders, item->id)) {
-                    remove_IntSet(&d->closedFolders, item->id);
+                if (contains_IntSet(d->closedFolders, item->id)) {
+                    remove_IntSet(d->closedFolders, item->id);
                 }
                 else {
-                    insert_IntSet(&d->closedFolders, item->id);
+                    insert_IntSet(d->closedFolders, item->id);
                 }
                 updateItems_SidebarWidget_(d);
                 break;
@@ -956,8 +965,8 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     int width = widthAsGaps * gap_UI; /* in pixels */
     if (!isFixedWidth) {
         /* Even less space if the other sidebar is visible, too. */
-        const int otherWidth =
-            width_Widget(findWidget_App(d->side == left_SidebarSide ? "sidebar2" : "sidebar"));
+        const iWidget *other = findWidget_App(d->side == left_SidebarSide ? "sidebar2" : "sidebar");
+        const int otherWidth = isVisible_Widget(other) ? width_Widget(other) : 0;
         width = iClamp(width, 30 * gap_UI, size_Root(w->root).x - 50 * gap_UI - otherWidth);
     }
     d->widthAsGaps = (float) width / (float) gap_UI;
@@ -1328,6 +1337,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 if (isFolder_Bookmark(bm)) {
                     const iPtrArray *list = list_Bookmarks(bookmarks_App(), NULL,
                                                            filterInsideFolder_Bookmark, bm);
+                    /* Folder deletion requires confirmation because folders can contain
+                       any number of bookmarks and other folders. */
                     if (argLabel_Command(cmd, "confirmed") || isEmpty_PtrArray(list)) {
                         iConstForEach(PtrArray, i, list) {
                             removeEntries_Feeds(id_Bookmark(i.ptr));

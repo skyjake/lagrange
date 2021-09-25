@@ -24,6 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "widget.h"
 
+#include <the_Foundation/intset.h>
+
 enum iSidebarMode {
     bookmarks_SidebarMode,
     feeds_SidebarMode,
@@ -49,8 +51,10 @@ iDeclareWidgetClass(SidebarWidget)
 iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
 
 iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebarMode mode);
+void                setWidth_SidebarWidget      (iSidebarWidget *, float widthAsGaps);
 iBool               setButtonFont_SidebarWidget (iSidebarWidget *, int font);
+void                setClosedFolders_SidebarWidget  (iSidebarWidget *, const iIntSet *closedFolders);
 
 enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
 float               width_SidebarWidget         (const iSidebarWidget *);
-void                setWidth_SidebarWidget      (iSidebarWidget *, float widthAsGaps);
+const iIntSet *     closedFolders_SidebarWidget (const iSidebarWidget *);

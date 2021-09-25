@@ -425,12 +425,22 @@ static iBool loadState_App_(iApp *d) {
                     readf_Stream(stream_File(f)),
                     readf_Stream(stream_File(f))
                 };
+                iIntSet *closedFolders[2] = {
+                    collectNew_IntSet(),
+                    collectNew_IntSet()
+                };
+                if (version >= bookmarkFolderState_FileVersion) {
+                    deserialize_IntSet(closedFolders[0], stream_File(f));
+                    deserialize_IntSet(closedFolders[1], stream_File(f));
+                }
                 const uint8_t rootIndex = bits & 0xff;
                 const uint8_t flags     = bits >> 8;
                 iRoot *root = d->window->base.roots[rootIndex];
                 if (root) {
                     iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
                     iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
+                    setClosedFolders_SidebarWidget(sidebar, closedFolders[0]);
+                    setClosedFolders_SidebarWidget(sidebar2, closedFolders[1]);
                     postCommandf_Root(root, "sidebar.mode arg:%u", modes & 0xf);
                     postCommandf_Root(root, "sidebar2.mode arg:%u", modes >> 4);
                     if (deviceType_App() != phone_AppDeviceType) {
@@ -513,6 +523,8 @@ static void saveState_App_(const iApp *d) {
                                  (mode_SidebarWidget(sidebar2) << 4));
                     writef_Stream(stream_File(f), width_SidebarWidget(sidebar));
                     writef_Stream(stream_File(f), width_SidebarWidget(sidebar2));
+                    serialize_IntSet(closedFolders_SidebarWidget(sidebar), stream_File(f));
+                    serialize_IntSet(closedFolders_SidebarWidget(sidebar2), stream_File(f));
                 }
             }
         }

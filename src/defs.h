@@ -36,9 +36,10 @@ enum iFileVersion {
     multipleRoots_FileVersion           = 2,
     serializedSidebarState_FileVersion  = 3,
     addedRecentUrlFlags_FileVersion     = 4,
+    bookmarkFolderState_FileVersion     = 5,
     /* meta */
     idents_FileVersion = 1, /* version used by GmCerts/idents.lgr */
-    latest_FileVersion = 4,
+    latest_FileVersion = 5,
 };
 
 enum iImageStyle {

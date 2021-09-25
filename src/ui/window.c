@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "labelwidget.h"
 #include "documentwidget.h"
+#include "sidebarwidget.h"
 #include "paint.h"
 #include "root.h"
 #include "touch.h"
@@ -1421,6 +1422,15 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             w->keyRoot->window     = w;
             setCurrent_Root(w->roots[newRootIndex]);
             createUserInterface_Root(w->roots[newRootIndex]);
+            /* Bookmark folder state will match the old root's state. */ {
+                for (int sb = 0; sb < 2; sb++) {
+                    const char *sbId = (sb == 0 ? "sidebar" : "sidebar2");
+                    setClosedFolders_SidebarWidget(
+                        findChild_Widget(w->roots[newRootIndex]->widget, sbId),
+                        closedFolders_SidebarWidget(
+                            findChild_Widget(w->roots[newRootIndex ^ 1]->widget, sbId)));
+                }
+            }
             if (!isEmpty_String(d->pendingSplitUrl)) {
                 postCommandf_Root(w->roots[newRootIndex], "open url:%s",
                                   cstr_String(d->pendingSplitUrl));
