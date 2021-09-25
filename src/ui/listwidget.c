@@ -331,7 +331,7 @@ static size_t resolveDragDestination_ListWidget_(const iListWidget *d, iInt2 dst
     const iRect   rect = itemRect_ListWidget(d, index);
     const iRangei span = ySpan_Rect(rect);
     if (item->isDropTarget) {
-        const int pad = size_Range(&span) / 3;
+        const int pad = size_Range(&span) / 4;
         if (dstPos.y >= span.start + pad && dstPos.y < span.end - pad) {
             *isOnto = iTrue;
             return index;
