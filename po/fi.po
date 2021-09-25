@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-08-03 05:24+0000\n"
+"PO-Revision-Date: 2021-09-25 10:11+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1488,7 +1488,7 @@ msgid "menu.split.swap"
 msgstr "Vaihda keskenään"
 
 msgid "menu.view.split"
-msgstr "Jaa kahtia..."
+msgstr "Jaa kahtia…"
 
 msgid "link.side"
 msgstr "Avaa linkki viereen"
@@ -1698,7 +1698,7 @@ msgid "menu.unexpire"
 msgstr "Jatka lataamista vanhentumisesta huolimatta"
 
 msgid "menu.page.upload"
-msgstr "Lähetä sivu Titanilla"
+msgstr "Lähetä sivu Titanilla…"
 
 msgid "heading.upload"
 msgstr "TITAN-LÄHETYS"
@@ -1725,7 +1725,7 @@ msgid "upload.mime"
 msgstr "MIME-tyyppi:"
 
 msgid "upload.token"
-msgstr "Lähetysavain:"
+msgstr "Avainsana:"
 
 msgid "hint.upload.token"
 msgstr "katso palvelimen ohjeet"
@@ -1780,3 +1780,121 @@ msgstr ""
 
 msgid "bookmark.export.title.folder"
 msgstr "Kirjanmerkit"
+
+msgid "menu.newfolder"
+msgstr "Uusi kansio…"
+
+msgid "menu.sort.alpha"
+msgstr "Järjestä aakkosjärjestykseen"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "TUHOA KIRJANMERKIT"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Haluatko varmasti tuhota kirjanmerkin tämän kansion sisältä?"
+msgstr[1] "Haluatko varmasti tuhota %u kirjanmerkkiä tämän kansion sisältä?"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Tuo sertifikaatti/avain"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Sinulla on %d kirjanmerkki."
+msgstr[1] "Sinulla on %d kirjanmerkkiä."
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Lähetä tekstiä"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "ASETUKSET"
+
+msgid "prefs.imagestyle"
+msgstr "Kuvien väritys:"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Tausta-edusta"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Asetukset"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Valitse kaikki"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Poista"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Kumoa"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Tuhoa kirjanmerkki"
+msgstr[1] "Tuhoa %u kirjanmerkkiä"
+
+msgid "bookmark.export.title.tag"
+msgstr "Kirjanmerkkien avainsanat"
+
+msgid "bookmark.export.title.time"
+msgstr "Luodut kirjanmerkit"
+
+msgid "bookmark.export.saving"
+msgstr ""
+"Talleta tämä sivu viedäksesi ne, tai voit myös kopioida ne leikepöydälle."
+
+msgid "upload.id"
+msgstr "Identiteetti:"
+
+msgid "dlg.upload.id.none"
+msgstr "Ei identiteettiä"
+
+msgid "dlg.upload.id.default"
+msgstr "Oletus"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Lähetä tiedosto"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Valitse tiedosto"
+
+msgid "heading.bookmark.tags"
+msgstr "ERIKOISAVAINSANAT"
+
+msgid "heading.addfolder"
+msgstr "LISÄÄ KANSIO"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Uusi kansio"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Kirjoita uuden kansion nimi:"
+
+msgid "dlg.addfolder"
+msgstr "Lisää kansio"
+
+msgid "prefs.imagestyle.original"
+msgstr "Ei"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Harmaasävy"
+
+msgid "prefs.imagestyle.text"
+msgstr "Tekstin väri"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Esimuotoillun tekstin väri"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Lisää kirjanmerkkikansio"
