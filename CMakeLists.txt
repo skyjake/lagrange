@@ -104,13 +104,18 @@ set (EMBED_RESOURCES
     res/fonts/SourceSans3-Semibold.ttf
     res/lang/de.bin
     res/lang/en.bin
+    res/lang/eo.bin
     res/lang/es.bin
+    res/lang/es_MX.bin
     res/lang/fi.bin
     res/lang/fr.bin
+    res/lang/gl.bin
     res/lang/ia.bin
     res/lang/ie.bin
+    res/lang/isv.bin
     res/lang/pl.bin
     res/lang/ru.bin
+    res/lang/sk.bin
     res/lang/sr.bin
     res/lang/tok.bin
     res/lang/zh_Hans.bin

@@ -7,13 +7,18 @@ import os, sys
 BUILD_LANGS = [
     'en', # base strings
     'de',
+    'eo',
     'es',
+    'es_MX',
     'fi',
     'fr',
+    'gl',
     'ia',
     'ie',
+    'isv',
     'pl',
     'ru',
+    'sk',
     'sr',
     'tok',
     'zh_Hans',

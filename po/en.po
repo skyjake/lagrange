@@ -1063,6 +1063,9 @@ msgstr "Finnish"
 msgid "lang.fr"
 msgstr "French"
 
+msgid "lang.gl"
+msgstr "Galician"
+
 msgid "lang.hi"
 msgstr "Hindi"
 
@@ -1081,11 +1084,23 @@ msgstr "Portuguese"
 msgid "lang.ru"
 msgstr "Russian"
 
+msgid "lang.eo"
+msgstr "Esperanto"
+
 msgid "lang.es"
 msgstr "Spanish"
 
+msgid "lang.es.mx"
+msgstr "Spanish (Mexico)"
+
+msgid "lang.sk"
+msgstr "Slovak"
+
 msgid "lang.sr"
 msgstr "Serbian"
+
+msgid "lang.isv"
+msgstr "Interslavic"
 
 msgid "lang.tok"
 msgstr "Toki Pona"

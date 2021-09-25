@@ -46,6 +46,8 @@ enum iPluralType {
     notEqualToOne_PluralType,
     polish_PluralType,
     slavic_PluralType,
+    oneTwoMany_PluralType,
+    oneFewMany_PluralType,
 };
 
 struct Impl_Lang {
@@ -59,6 +61,10 @@ static size_t pluralIndex_Lang_(const iLang *d, int n) {
     switch (d->pluralType) {
         case notEqualToOne_PluralType:
             return n != 1;
+        case oneTwoMany_PluralType:
+            return n == 1 ? 0 : n == 2 ? 1 : 2;
+        case oneFewMany_PluralType:
+            return n == 1 ? 0 : (n >= 2 && n <= 4) ? 1 : 2;
         case polish_PluralType:
             return n == 1                                                          ? 0
                    : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1
@@ -82,11 +88,16 @@ static void load_Lang_(iLang *d, const char *id) {
     const iBlock *data = equal_CStr(id, "fi")      ? &blobFi_Embedded
                        : equal_CStr(id, "fr")      ? &blobFr_Embedded
                        : equal_CStr(id, "ru")      ? &blobRu_Embedded
+                       : equal_CStr(id, "eo")      ? &blobEo_Embedded
                        : equal_CStr(id, "es")      ? &blobEs_Embedded
+                       : equal_CStr(id, "es_MX")   ? &blobEs_MX_Embedded
                        : equal_CStr(id, "de")      ? &blobDe_Embedded
+                       : equal_CStr(id, "gl")      ? &blobGl_Embedded
                        : equal_CStr(id, "ia")      ? &blobIa_Embedded
                        : equal_CStr(id, "ie")      ? &blobIe_Embedded
+                       : equal_CStr(id, "isv")     ? &blobIsv_Embedded
                        : equal_CStr(id, "pl")      ? &blobPl_Embedded
+                       : equal_CStr(id, "sk")      ? &blobSk_Embedded
                        : equal_CStr(id, "sr")      ? &blobSr_Embedded
                        : equal_CStr(id, "tok")     ? &blobTok_Embedded
                        : equal_CStr(id, "zh_Hans") ? &blobZh_Hans_Embedded
@@ -94,6 +105,12 @@ static void load_Lang_(iLang *d, const char *id) {
                                                    : &blobEn_Embedded;
     if (data == &blobRu_Embedded || data == &blobSr_Embedded) {
         d->pluralType = slavic_PluralType;
+    }
+    else if (data == &blobIsv_Embedded) {
+        d->pluralType = oneTwoMany_PluralType;
+    }
+    else if (data == &blobSk_Embedded) {
+        d->pluralType = oneFewMany_PluralType;
     }
     else if (data == &blobPl_Embedded) {
         d->pluralType = polish_PluralType;
