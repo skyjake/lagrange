@@ -620,7 +620,20 @@ const iString *canonicalUrl_String(const iString *d) {
        - all non-reserved characters decoded (i.e., it's an IRI)
        - expect for spaces, which are always `%20`
        This means a canonical URL can be used on a gemtext link line without modifications. */
-    iString *canon = maybeUrlDecodeExclude_String(d, "%/?:;#&= ");
+    iString *canon = NULL;
+    iUrl parts;
+    init_Url(&parts, d);
+    /* Colons are in decoded form in the URL path. */
+    if (iStrStrN(parts.path.start, "%3A", size_Range(&parts.path)) ||
+        iStrStrN(parts.path.start, "%3a", size_Range(&parts.path))) {
+        /* This is done separately to avoid the copy if %3A is not present; it's rare. */
+        canon = copy_String(d);
+        urlDecodePath_String(canon);
+        urlDecodeExclude_String(d, "%/?:;#&= "); /* decode everything else in all parts */
+    }
+    else {
+        canon = maybeUrlDecodeExclude_String(d, "%/?:;#&= ");
+    }
     /* `canon` may now be NULL if nothing was decoded. */
     if (indexOfCStr_String(canon ? canon : d, " ") != iInvalidPos ||
         indexOfCStr_String(canon ? canon : d, "\n") != iInvalidPos) {
