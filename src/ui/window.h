@@ -29,8 +29,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_render.h>
 #include <SDL_video.h>
 
+enum iWindowType {
+    main_WindowType,
+    popup_WindowType,
+};
+
+iDeclareType(MainWindow)
+iDeclareType(Text)
 iDeclareType(Window)
-iDeclareTypeConstructionArgs(Window, iRect rect)
+    
+iDeclareTypeConstructionArgs(Window, enum iWindowType type, iRect rect, uint32_t flags)
+iDeclareTypeConstructionArgs(MainWindow, iRect rect)
+    
+typedef iAny iAnyWindow;
 
 enum iWindowSnap {
     none_WindowSnap       = 0,
@@ -69,9 +80,8 @@ enum iWindowSplit {
 };
 
 struct Impl_Window {
+    enum iWindowType type;
     SDL_Window *  win;
-    iWindowPlacement place;
-    iBool         isDrawFrozen; /* avoids premature draws while restoring window state */
     iBool         isExposed;
     iBool         isMinimized;
     iBool         isMouseInside;
@@ -80,12 +90,8 @@ struct Impl_Window {
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
     iInt2         size;
-    int           splitMode;
-    int           pendingSplitMode;
-    iString *     pendingSplitUrl; /* URL to open in a newly opened split */
-    iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
-    iRoot *       keyRoot;      /* root that has the current keyboard input focus */
     iWidget *     hover;
+    iWidget *     lastHover;    /* cleared if deleted */
     iWidget *     mouseGrab;
     iWidget *     focus;
     float         pixelRatio;   /* conversion between points and pixels, e.g., coords, window size */
@@ -93,57 +99,118 @@ struct Impl_Window {
     float         uiScale;
     uint32_t      frameTime;
     double        presentTime;
-    SDL_Texture * appIcon;
-    SDL_Texture * borderShadow;
     SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
     SDL_Cursor *  pendingCursor;
-    int           loadAnimTimer;
-    iAnim         rootOffset;
-    int           keyboardHeight; /* mobile software keyboards */
+    iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
+    iRoot *       keyRoot;      /* root that has the current keyboard input focus */
+    SDL_Texture * borderShadow;
+    iText *       text;
 };
+
+struct Impl_MainWindow {
+    iWindow       base;
+    iWindowPlacement place;
+    iBool         isDrawFrozen; /* avoids premature draws while restoring window state */
+    int           splitMode;
+    int           pendingSplitMode;
+    iString *     pendingSplitUrl; /* URL to open in a newly opened split */
+    SDL_Texture * appIcon;
+    int           keyboardHeight; /* mobile software keyboards */    
+};
+
+iLocalDef enum iWindowType type_Window(const iAnyWindow *d) {
+    if (d) {
+        return ((const iWindow *) d)->type;
+    }
+    return main_WindowType;
+}
+
+uint32_t        id_Window               (const iWindow *);
+iInt2           size_Window             (const iWindow *);
+iInt2           maxTextureSize_Window   (const iWindow *);
+float           uiScale_Window          (const iWindow *);
+iInt2           coord_Window            (const iWindow *, int x, int y);
+iInt2           mouseCoord_Window       (const iWindow *, int whichDevice);
+iAnyObject *    hitChild_Window         (const iWindow *, iInt2 coord);
+uint32_t        frameTime_Window        (const iWindow *);
+SDL_Renderer *  renderer_Window         (const iWindow *);
+int             numRoots_Window         (const iWindow *);
+iRoot *         findRoot_Window         (const iWindow *, const iWidget *widget);
+iRoot *         otherRoot_Window        (const iWindow *, iRoot *root);
 
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
 iBool       dispatchEvent_Window    (iWindow *, const SDL_Event *);
-void        invalidate_Window       (iWindow *); /* discard all cached graphics */
+void        invalidate_Window       (iAnyWindow *); /* discard all cached graphics */
 void        draw_Window             (iWindow *);
-void        drawWhileResizing_Window(iWindow *d, int w, int h); /* workaround for SDL bug */
-void        resize_Window           (iWindow *, int w, int h);
-void        setTitle_Window         (iWindow *, const iString *title);
 void        setUiScale_Window       (iWindow *, float uiScale);
-void        setFreezeDraw_Window    (iWindow *, iBool freezeDraw);
-iBool       setKeyRoot_Window       (iWindow *, iRoot *root);
 void        setCursor_Window        (iWindow *, int cursor);
-void        setSnap_Window          (iWindow *, int snapMode);
-void        setKeyboardHeight_Window(iWindow *, int height);
-void        setSplitMode_Window     (iWindow *, int splitMode);
-void        showToolbars_Window     (iWindow *, iBool show);
+iBool       setKeyRoot_Window       (iWindow *, iRoot *root);
 iBool       postContextClick_Window (iWindow *, const SDL_MouseButtonEvent *);
-void        checkPendingSplit_Window(iWindow *);
-void        swapRoots_Window        (iWindow *);
 
-uint32_t    id_Window               (const iWindow *);
-iInt2       size_Window             (const iWindow *);
-iInt2       maxTextureSize_Window   (const iWindow *);
-float       uiScale_Window          (const iWindow *);
-iInt2       coord_Window            (const iWindow *, int x, int y);
-iInt2       mouseCoord_Window       (const iWindow *, int whichDevice);
-iAnyObject *hitChild_Window         (const iWindow *, iInt2 coord);
-uint32_t    frameTime_Window        (const iWindow *);
-SDL_Renderer *renderer_Window       (const iWindow *);
-int         snap_Window             (const iWindow *);
-iBool       isFullscreen_Window     (const iWindow *);
-int         numRoots_Window         (const iWindow *);
-iRoot *     findRoot_Window         (const iWindow *, const iWidget *widget);
-iRoot *     otherRoot_Window        (const iWindow *, iRoot *root);
 iWindow *   get_Window              (void);
-
 iBool       isOpenGLRenderer_Window (void);
 
-#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos);
-#endif
+void        setCurrent_Window       (iAnyWindow *);
 
 iLocalDef iBool isExposed_Window(const iWindow *d) {
     iAssert(d);
     return d->isExposed;
 }
+
+iLocalDef iWindow *as_Window(iAnyWindow *d) {
+    iAssert(type_Window(d) == main_WindowType || type_Window(d) == popup_WindowType);
+    return (iWindow *) d;
+}
+
+iLocalDef const iWindow *constAs_Window(const iAnyWindow *d) {
+    iAssert(type_Window(d) == main_WindowType || type_Window(d) == popup_WindowType);
+    return (const iWindow *) d;
+}
+
+iLocalDef iText *text_Window(const iAnyWindow *d) {
+    return constAs_Window(d)->text;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iLocalDef iWindow *asWindow_MainWindow(iMainWindow *d) {
+    iAssert(type_Window(d) == main_WindowType);
+    return &d->base;
+}
+
+void        setTitle_MainWindow             (iMainWindow *, const iString *title);
+void        setSnap_MainWindow              (iMainWindow *, int snapMode);
+void        setFreezeDraw_MainWindow        (iMainWindow *, iBool freezeDraw);
+void        setKeyboardHeight_MainWindow    (iMainWindow *, int height);
+void        setSplitMode_MainWindow         (iMainWindow *, int splitMode);
+void        checkPendingSplit_MainWindow    (iMainWindow *);
+void        swapRoots_MainWindow            (iMainWindow *);
+void        showToolbars_MainWindow         (iMainWindow *, iBool show);
+void        resize_MainWindow               (iMainWindow *, int w, int h);
+
+iBool       processEvent_MainWindow         (iMainWindow *, const SDL_Event *);
+void        draw_MainWindow                 (iMainWindow *);
+void        drawWhileResizing_MainWindow    (iMainWindow *, int w, int h); /* workaround for SDL bug */
+
+int         snap_MainWindow                 (const iMainWindow *);
+iBool       isFullscreen_Window             (const iMainWindow *);
+
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
+SDL_HitTestResult hitTest_MainWindow(const iMainWindow *d, iInt2 pos);
+#endif
+
+iMainWindow *   get_MainWindow  (void);
+
+iLocalDef iMainWindow *as_MainWindow(iAnyWindow *d) {
+    iAssert(type_Window(d) == main_WindowType);
+    return (iMainWindow *) d;
+}
+
+iLocalDef const iMainWindow *constAs_MainWindow(const iAnyWindow *d) {
+    iAssert(type_Window(d) == main_WindowType);
+    return (const iMainWindow *) d;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iWindow *   newPopup_Window    (iInt2 screenPos, iWidget *rootWidget);

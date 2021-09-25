@@ -24,6 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_version.h>
 
+iInt2 origin_Paint;
+
 iLocalDef SDL_Renderer *renderer_Paint_(const iPaint *d) {
     iAssert(d->dst);
     return d->dst->render;
@@ -31,7 +33,8 @@ iLocalDef SDL_Renderer *renderer_Paint_(const iPaint *d) {
 
 static void setColor_Paint_(const iPaint *d, int color) {
     const iColor clr = get_Color(color & mask_ColorId);
-    SDL_SetRenderDrawColor(renderer_Paint_(d), clr.r, clr.g, clr.b, clr.a * d->alpha / 255);
+    SDL_SetRenderDrawColor(renderer_Paint_(d), clr.r, clr.g, clr.b,
+                           (color & opaque_ColorId ? 255 : clr.a) * d->alpha / 255);
 }
 
 void init_Paint(iPaint *d) {
@@ -62,17 +65,40 @@ void endTarget_Paint(iPaint *d) {
 }
 
 void setClip_Paint(iPaint *d, iRect rect) {
-    rect = intersect_Rect(rect, rect_Root(get_Root()));
+    //rect = intersect_Rect(rect, rect_Root(get_Root()));
+    addv_I2(&rect.pos, origin_Paint);
     if (isEmpty_Rect(rect)) {
         rect = init_Rect(0, 0, 1, 1);
     }
+//    iRect root = rect_Root(get_Root());
+    iRect targetRect = zero_Rect();
+    SDL_Texture *target = SDL_GetRenderTarget(renderer_Paint_(d));
+    if (target) {
+        SDL_QueryTexture(target, NULL, NULL, &targetRect.size.x, &targetRect.size.y);
+        rect = intersect_Rect(rect, targetRect);
+    }
+    else {
+        rect = intersect_Rect(rect, rect_Root(get_Root()));
+    }
+    
+    /*if (rect.pos.x < 0) {
+        adjustEdges_Rect(&rect, 0, 0, 0, -rect.pos.x);
+    }
+    if (rect.pos.y < 0) {
+        adjustEdges_Rect(&rect, -rect.pos.y, 0, 0, 0);
+    }
+    if (right_Rect(rect) > right_Rect(root)) {
+        adjustEdges_Rect(&rect, 0, right_Rect(root) - right_Rect(rect), 0, 0);
+    }
+    if (bottom_Rect(rect) > bottom_Rect(root)) {
+        adjustEdges_Rect(&rect, 0, bottom_Rect(root) - bottom_Rect(rect), 0, 0);
+    }*/
     SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 }
 
 void unsetClip_Paint(iPaint *d) {
     if (numRoots_Window(get_Window()) > 1) {
-        const iRect rect = rect_Root(get_Root());
-        SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
+        setClip_Paint(d, rect_Root(get_Root()));
         return;
     }
 #if SDL_VERSION_ATLEAST(2, 0, 12)
@@ -85,6 +111,7 @@ void unsetClip_Paint(iPaint *d) {
 }
 
 void drawRect_Paint(const iPaint *d, iRect rect, int color) {
+    addv_I2(&rect.pos, origin_Paint);
     iInt2 br = bottomRight_Rect(rect);
     /* Keep the right/bottom edge visible in the window. */
     if (br.x == d->dst->size.x) br.x--;
@@ -115,13 +142,19 @@ void drawRectThickness_Paint(const iPaint *d, iRect rect, int thickness, int col
 }
 
 void fillRect_Paint(const iPaint *d, iRect rect, int color) {
+    addv_I2(&rect.pos, origin_Paint);
     setColor_Paint_(d, color);
+//    printf("fillRect_Paint: %d,%d %dx%d (%d)\n", rect.pos.x, rect.pos.y, rect.size.x, rect.size.y, color);
     SDL_RenderFillRect(renderer_Paint_(d), (SDL_Rect *) &rect);
 }
 
 void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color, int alpha) {
+    addv_I2(&inner.pos, origin_Paint);
     SDL_Renderer *render = renderer_Paint_(d);
     SDL_Texture *shadow = get_Window()->borderShadow;
+    if (!shadow) {
+        return;
+    }
     const iInt2 size = size_SDLTexture(shadow);
     const iRect outer = expanded_Rect(inner, init1_I2(thickness));
     const iColor clr = get_Color(color);
@@ -146,9 +179,30 @@ void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color
                    &(SDL_Rect){ outer.pos.x, inner.pos.y, thickness, inner.size.y });
 }
 
-void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t count, int color) {
+void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t n, int color) {
     setColor_Paint_(d, color);
-    SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) points, count);
+    iInt2 *offsetPoints = malloc(sizeof(iInt2) * n);
+    for (size_t i = 0; i < n; i++) {
+        offsetPoints[i] = add_I2(points[i], origin_Paint);
+    }
+    SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) offsetPoints, n);
+    free(offsetPoints);
+}
+
+void drawPin_Paint(iPaint *d, iRect rangeRect, int dir, int pinColor) {
+    const int height = height_Rect(rangeRect);
+    iRect pin;
+    if (dir == 0) {
+        pin = (iRect){ add_I2(topLeft_Rect(rangeRect), init_I2(-gap_UI / 4, -gap_UI)),
+                       init_I2(gap_UI / 2, height + gap_UI) };
+    }
+    else {
+        pin = (iRect){ addX_I2(topRight_Rect(rangeRect), -gap_UI / 4),
+                       init_I2(gap_UI / 2, height + gap_UI) };
+    }
+    fillRect_Paint(d, pin, pinColor);
+    fillRect_Paint(d, initCentered_Rect(dir == 0 ? topMid_Rect(pin) : bottomMid_Rect(pin),
+                                        init1_I2(gap_UI * 2)), pinColor);
 }
 
 iInt2 size_SDLTexture(SDL_Texture *d) {

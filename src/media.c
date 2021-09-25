@@ -30,6 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "stb_image.h"
 #include "stb_image_resize.h"
 
+#if defined (LAGRANGE_ENABLE_WEBP)
+#   include <webp/decode.h>
+#endif
+
 #include <the_Foundation/file.h>
 #include <the_Foundation/ptrarray.h>
 #include <SDL_hints.h>
@@ -83,16 +87,70 @@ void deinit_GmImage(iGmImage *d) {
     deinit_GmMediaProps_(&d->props);
 }
 
+static void applyImageStyle_(enum iImageStyle style, iInt2 size, uint8_t *imgData) {
+    if (style == original_ImageStyle) {
+        return;
+    }
+    uint8_t *pos       = imgData;
+    size_t   numPixels = size.x * size.y;
+    float    brighten  = 0.0f;
+    if (style == bgFg_ImageStyle) {
+        iColor dark  = get_Color(tmBackground_ColorId);
+        iColor light = get_Color(tmParagraph_ColorId);
+        if (hsl_Color(dark).lum > hsl_Color(light).lum) {
+            iSwap(iColor, dark, light);
+        }        
+        while (numPixels-- > 0) {
+            iHSLColor hsl = hsl_Color((iColor){ pos[0], pos[1], pos[2], 255 });
+            const float s = 1.0f - hsl.lum;
+            const float t = hsl.lum;
+            pos[0] = dark.r * s + light.r * t;
+            pos[1] = dark.g * s + light.g * t;
+            pos[2] = dark.b * s + light.b * t;
+            pos += 4;
+        }        
+        return;
+    }
+    iColor colorize = (iColor){ 255, 255, 255, 255 };
+    if (style != grayscale_ImageStyle) {
+        colorize = get_Color(style == textColorized_ImageStyle ? tmParagraph_ColorId
+                                                               : tmPreformatted_ColorId);
+        /* Compensate for change in mid-tones. */
+        const int colMax = iMax(iMax(colorize.r, colorize.g), colorize.b);
+        brighten = iClamp(1.0f - (colorize.r + colorize.g + colorize.b) / (colMax * 3), 0.0f, 0.5f);
+    }
+    iHSLColor hslColorize = hsl_Color(colorize);
+    while (numPixels-- > 0) {
+        iHSLColor hsl = hsl_Color((iColor){ pos[0], pos[1], pos[2], 255 });
+        iHSLColor out = { hslColorize.hue, hslColorize.sat, hsl.lum, 1.0f };
+        out.lum = powf(out.lum, 1.0f + brighten * 2);
+        iColor outRgb = rgb_HSLColor(out);
+        pos[0] = powf(outRgb.r / 255.0f, 1.0f - brighten * 0.75f) * 255;
+        pos[1] = powf(outRgb.g / 255.0f, 1.0f - brighten * 0.75f) * 255;
+        pos[2] = powf(outRgb.b / 255.0f, 1.0f - brighten * 0.75f) * 255;
+        pos += 4;
+    }
+}
+
 void makeTexture_GmImage(iGmImage *d) {
     iBlock *data     = &d->partialData;
     d->numBytes      = size_Block(data);
-    uint8_t *imgData = stbi_load_from_memory(
-        constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
+    uint8_t *imgData = NULL;
+    if (cmp_String(&d->props.mime, "image/webp") == 0) {
+#if defined (LAGRANGE_ENABLE_WEBP)
+        imgData = WebPDecodeRGBA(constData_Block(data), size_Block(data), &d->size.x, &d->size.y);
+#endif        
+    }
+    else {
+        imgData = stbi_load_from_memory(
+            constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
+    }
     if (!imgData) {
         d->size    = zero_I2();
         d->texture = NULL;
     }
     else {
+        applyImageStyle_(prefs_App()->imageStyle, d->size, imgData);        
         /* TODO: Save some memory by checking if the alpha channel is actually in use. */
         iWindow *window  = get_Window();
         iInt2    texSize = d->size;

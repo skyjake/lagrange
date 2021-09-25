@@ -86,6 +86,7 @@ struct Impl_Prefs {
     iBool            quoteIcon;
     iBool            centerShortDocs;
     iBool            plainTextWrap;
+    enum iImageStyle imageStyle;
     /* Colors */
     enum iGmDocumentTheme docThemeDark;
     enum iGmDocumentTheme docThemeLight;

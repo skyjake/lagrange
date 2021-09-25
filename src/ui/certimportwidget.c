@@ -31,6 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "text.h"
 #include "ui/util.h"
 
+#if defined (iPlatformAppleMobile)
+#   include "ios.h"
+#endif
+
 #include <the_Foundation/file.h>
 #include <the_Foundation/tlsrequest.h>
 #include <the_Foundation/path.h>
@@ -75,7 +79,7 @@ static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *dat
     deinit_String(&pem);
     /* Update the labels. */ {
         if (d->cert && !isEmpty_TlsCertificate(d->cert)) {
-            setTextCStr_LabelWidget(
+            updateTextCStr_LabelWidget(
                 d->crtLabel,
                 format_CStr("%s%s",
                             uiTextAction_ColorEscape,
@@ -83,19 +87,19 @@ static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *dat
             setFrameColor_Widget(as_Widget(d->crtLabel), uiTextAction_ColorId);
         }
         else {
-            setTextCStr_LabelWidget(d->crtLabel, uiTextCaution_ColorEscape "${dlg.certimport.nocert}");
+            updateTextCStr_LabelWidget(d->crtLabel, uiTextCaution_ColorEscape "${dlg.certimport.nocert}");
             setFrameColor_Widget(as_Widget(d->crtLabel), uiTextCaution_ColorId);
         }
         if (d->cert && hasPrivateKey_TlsCertificate(d->cert)) {
             iString *fng = collect_String(
                 hexEncode_Block(collect_Block(privateKeyFingerprint_TlsCertificate(d->cert))));
             insertData_Block(&fng->chars, size_String(fng) / 2, "\n", 1);
-            setTextCStr_LabelWidget(
+            updateTextCStr_LabelWidget(
                 d->keyLabel, format_CStr("%s%s", uiTextAction_ColorEscape, cstr_String(fng)));
             setFrameColor_Widget(as_Widget(d->keyLabel), uiTextAction_ColorId);
         }
         else {
-            setTextCStr_LabelWidget(d->keyLabel, uiTextCaution_ColorEscape "${dlg.certimport.nokey}");
+            updateTextCStr_LabelWidget(d->keyLabel, uiTextCaution_ColorEscape "${dlg.certimport.nokey}");
             setFrameColor_Widget(as_Widget(d->keyLabel), uiTextCaution_ColorId);
         }
     }
@@ -104,61 +108,85 @@ static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *dat
 
 void init_CertImportWidget(iCertImportWidget *d) {
     iWidget *w = as_Widget(d);
+    const iMenuItem actions[] = {
+#if defined (iPlatformAppleMobile)
+        { "${dlg.certimport.pickfile}", 0, 0, "certimport.pickfile" },
+        { "---" },
+#endif
+        { "${cancel}" },
+        { uiTextAction_ColorEscape "${dlg.certimport.import}",
+          SDLK_RETURN, KMOD_PRIMARY,
+          "certimport.accept" }
+    };
     init_Widget(w);
     setId_Widget(w, "certimport");
     d->cert = NULL;
-    /* This should behave similar to sheets. */ 
-    useSheetStyle_Widget(w);
-    addChildFlags_Widget(
-        w,
-        iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.certimport}", NULL)),
-        frameless_WidgetFlag);
-    d->info = addChildFlags_Widget(w, iClob(new_LabelWidget(infoText_, NULL)), frameless_WidgetFlag);
-    addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-    d->crtLabel = new_LabelWidget("", NULL); {
+    if (isUsingPanelLayout_Mobile()) {
+        initPanels_Mobile(w, NULL, (iMenuItem[]){
+            { "title id:heading.certimport" },
+            { format_CStr("label id:certimport.info text:%s", infoText_) },
+            //{ "padding" },
+            { "label id:certimport.crt nowrap:1 frame:1" },
+            { "padding arg:0.25" },
+            { "label id:certimport.key nowrap:1 frame:1" },
+            { "heading text:${dlg.certimport.notes}" },
+            { "input id:certimport.notes hint:hint.certimport.description noheading:1" },
+            { NULL }
+        }, actions, iElemCount(actions));
+        d->info     = findChild_Widget(w, "certimport.info");
+        d->crtLabel = findChild_Widget(w, "certimport.crt");
+        d->keyLabel = findChild_Widget(w, "certimport.key");
+        d->notes    = findChild_Widget(w, "certimport.notes");
         setFont_LabelWidget(d->crtLabel, uiContent_FontId);
-        addChildFlags_Widget(w, iClob(d->crtLabel), 0);
-        setFrameColor_Widget(as_Widget(d->crtLabel), uiTextCaution_ColorId);
-    }
-    d->keyLabel = new_LabelWidget("", NULL); {
         setFont_LabelWidget(d->keyLabel, uiContent_FontId);
+        setFixedSize_Widget(as_Widget(d->crtLabel), init_I2(-1, gap_UI * 12));
+        setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(-1, gap_UI * 12));
+    }
+    else {
+        /* This should behave similar to sheets. */ 
+        useSheetStyle_Widget(w);
+        addChildFlags_Widget(
+            w,
+            iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.certimport}", NULL)),
+            frameless_WidgetFlag);
+        d->info = addChildFlags_Widget(w, iClob(new_LabelWidget(infoText_, NULL)), frameless_WidgetFlag);
         addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-        addChildFlags_Widget(w, iClob(d->keyLabel), 0);
-        setFrameColor_Widget(as_Widget(d->keyLabel), uiTextCaution_ColorId);
+        d->crtLabel = new_LabelWidget("", NULL); {
+            setFont_LabelWidget(d->crtLabel, uiContent_FontId);
+            addChildFlags_Widget(w, iClob(d->crtLabel), 0);
+        }
+        d->keyLabel = new_LabelWidget("", NULL); {
+            setFont_LabelWidget(d->keyLabel, uiContent_FontId);
+            addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+            addChildFlags_Widget(w, iClob(d->keyLabel), 0);
+        }
+        addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+        /* TODO: Use makeTwoColumnWidget_() */
+        iWidget *page = new_Widget(); {
+            setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+            iWidget *headings = addChildFlags_Widget(
+                page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+            iWidget *values = addChildFlags_Widget(
+                page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+            addTwoColumnDialogInputField_Widget(
+                headings,
+                values,
+                "${dlg.certimport.notes}",
+                "",
+                iClob(d->notes = newHint_InputWidget(0, "${hint.certimport.description}")));
+            as_Widget(d->notes)->rect.size.x = gap_UI * 70;
+        }
+        addChild_Widget(w, iClob(page));
+        arrange_Widget(w);
+        setFixedSize_Widget(as_Widget(d->crtLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
+        setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
+        /* Buttons. */
+        addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+        iWidget *buttons = makeDialogButtons_Widget(actions, iElemCount(actions));
+        addChild_Widget(w, iClob(buttons));
     }
-    addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-    /* TODO: Use makeTwoColumnWidget_() */
-    iWidget *page = new_Widget(); {
-        setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        iWidget *headings = addChildFlags_Widget(
-            page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-        iWidget *values = addChildFlags_Widget(
-            page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-//        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.certimport.notes}")));
-//        addChild_Widget(values, iClob(d->notes = new_InputWidget(0)));
-//        setHint_InputWidget(d->notes, "${hint.certimport.description}");
-        addTwoColumnDialogInputField_Widget(
-            headings,
-            values,
-            "${dlg.certimport.notes}",
-            "",
-            iClob(d->notes = newHint_InputWidget(0, "${hint.certimport.description}")));
-        as_Widget(d->notes)->rect.size.x = gap_UI * 70;
-    }
-    addChild_Widget(w, iClob(page));
-    arrange_Widget(w);
-    setFixedSize_Widget(as_Widget(d->crtLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
-    setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
-    /* Buttons. */
-    addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-    iWidget *buttons = makeDialogButtons_Widget(
-        (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
-                       { uiTextAction_ColorEscape "${dlg.certimport.import}",
-                         SDLK_RETURN,
-                         KMOD_PRIMARY,
-                         "certimport.accept" } },
-        2);
-    addChild_Widget(w, iClob(buttons));
+    setFrameColor_Widget(as_Widget(d->crtLabel), uiTextCaution_ColorId);
+    setFrameColor_Widget(as_Widget(d->keyLabel), uiTextCaution_ColorId);
     if (deviceType_App() != desktop_AppDeviceType) {
         /* Try auto-pasting. */
         postCommand_App("certimport.paste");
@@ -189,6 +217,25 @@ void setPageContent_CertImportWidget(iCertImportWidget *d, const iBlock *content
 
 static iBool tryImportFromClipboard_CertImportWidget_(iCertImportWidget *d) {
     return tryImport_CertImportWidget_(d, collect_Block(newCStr_Block(SDL_GetClipboardText())));
+}
+
+static iBool tryImportFromFile_CertImportWidget_(iCertImportWidget *d, const iString *path) {
+    iBool success = iFalse;
+    iFile *f = new_File(path);
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        if (tryImport_CertImportWidget_(d, collect_Block(readAll_File(f)))) {
+            success = iTrue;
+            if (isComplete_CertImportWidget_(d)) {
+                setFocus_Widget(as_Widget(d->notes));
+            }
+        }
+        else {
+            makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.dropped}",
+                                     "${dlg.certimport.notfound}");
+        }
+    }
+    iRelease(f);
+    return success;
 }
 
 static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Event *ev) {
@@ -232,21 +279,22 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         }
         return iTrue;
     }
-    if (ev->type == SDL_DROPFILE) {
-        const iString *name = collectNewCStr_String(ev->drop.file);
-        iFile *f = new_File(name);
-        if (open_File(f, readOnly_FileMode | text_FileMode)) {
-            if (tryImport_CertImportWidget_(d, collect_Block(readAll_File(f)))) {
-                if (isComplete_CertImportWidget_(d)) {
-                    setFocus_Widget(as_Widget(d->notes));
-                }
-            }
-            else {
-                makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.dropped}",
-                                         "${dlg.certimport.notfound}");
-            }
+#if defined (iPlatformAppleMobile)
+    if (isCommand_UserEvent(ev, "certimport.pickfile")) {
+        const char *cmd = command_UserEvent(ev);
+        if (hasLabel_Command(cmd, "path")) {
+            const iString *path = collect_String(suffix_Command(cmd, "path"));
+            tryImportFromFile_CertImportWidget_(d, path);
+            remove(cstr_String(path)); /* it is a temporary copy */
         }
-        iRelease(f);
+        else {
+            pickFile_iOS("certimport.pickfile");
+        }
+        return iTrue;
+    }
+#endif
+    if (ev->type == SDL_DROPFILE) {
+        tryImportFromFile_CertImportWidget_(d, collectNewCStr_String(ev->drop.file));
         return iTrue;
     }
     return processEvent_Widget(w, ev);

@@ -171,6 +171,9 @@ static float scoreMatch_(const iRegExp *pattern, iRangecc text) {
 }
 
 static float bookmarkRelevance_LookupJob_(const iLookupJob *d, const iBookmark *bm) {
+    if (isFolder_Bookmark(bm)) {
+        return 0.0f;
+    }
     iUrl parts;
     init_Url(&parts, &bm->url);
     const float t = scoreMatch_(d->term, range_String(&bm->title));
@@ -388,7 +391,7 @@ void init_LookupWidget(iLookupWidget *d) {
     init_Widget(w);
     setId_Widget(w, "lookup");
     setFlags_Widget(w, focusable_WidgetFlag, iTrue);
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     setFlags_Widget(w, unhittable_WidgetFlag, iTrue);
 #endif
     d->list = addChildFlags_Widget(w, iClob(new_ListWidget()),
@@ -747,12 +750,19 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                     return iTrue;
             }
         }
-        if (isVisible_Widget(w) &&
-            key == SDLK_DOWN && !mods && focus_Widget() == findWidget_App("url") &&
-            numItems_ListWidget(d->list)) {
-            setCursor_LookupWidget_(d, 1); /* item 0 is always the first heading */
-            setFocus_Widget(w);
-            return iTrue;
+        /* Focus switching between URL bar and lookup results. */
+        if (isVisible_Widget(w)) {
+            if (((key == SDLK_DOWN && !mods) || key == SDLK_TAB) &&
+                focus_Widget() == findWidget_App("url") &&
+                numItems_ListWidget(d->list)) {
+                setCursor_LookupWidget_(d, 1); /* item 0 is always the first heading */
+                setFocus_Widget(w);
+                return iTrue;
+            }
+            else if (key == SDLK_TAB && isFocused_Widget(w)) {
+                setFocus_Widget(findWidget_App("url"));
+                return iTrue;
+            }
         }
     }
     return processEvent_Widget(w, ev);

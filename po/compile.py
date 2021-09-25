@@ -101,7 +101,9 @@ def parse_po(src):
 def compile_string(msg_id, msg_str):
     return msg_id.encode('utf-8') + bytes([0]) + \
            msg_str.encode('utf-8') + bytes([0])
-                          
+    
+
+os.chdir(os.path.dirname(__file__))
     
 if MODE == 'compile':
     BASE_STRINGS = {}

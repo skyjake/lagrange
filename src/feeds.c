@@ -50,6 +50,7 @@ void init_FeedEntry(iFeedEntry *d) {
     init_String(&d->url);
     init_String(&d->title);
     d->bookmarkId = 0;
+    d->isHeading = iFalse;
 }
 
 void deinit_FeedEntry(iFeedEntry *d) {
@@ -234,6 +235,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                     }
                     trimStart_Rangecc(&line);
                     iFeedEntry *entry = new_FeedEntry();
+                    entry->isHeading = iTrue;
                     entry->posted = now;
                     if (!d->isFirstUpdate) {
                         entry->discovered = now;
@@ -275,7 +277,8 @@ static void save_Feeds_(iFeeds *d) {
         initCurrent_Time(&now);
         iConstForEach(Array, i, &d->entries.values) {
             const iFeedEntry *entry = *(const iFeedEntry **) i.value;
-            if (isValid_Time(&entry->discovered) &&
+            /* Heading entries are kept as long as they are present in the source. */
+            if (!entry->isHeading && isValid_Time(&entry->discovered) &&
                 secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
                 continue; /* Forget entries discovered long ago. */
             }
@@ -298,25 +301,78 @@ static iBool isHeadingEntry_FeedEntry_(const iFeedEntry *d) {
     return contains_String(&d->url, '#');
 }
 
-static iBool updateEntries_Feeds_(iFeeds *d, iPtrArray *incoming) {
+static iStringSet *listHeadingEntriesFrom_Feeds_(const iFeeds *d, uint32_t sourceId) {
+    iStringSet *set = new_StringSet();
+    iConstForEach(Array, i, &d->entries.values) {
+        const iFeedEntry *entry = *(const iFeedEntry **) i.value;
+        if (entry->bookmarkId == sourceId) {
+            insert_StringSet(set, &entry->url);
+        }
+    }
+    return set;
+}
+
+static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId,
+                                  iPtrArray *incoming) {
+    /* Entries are removed from `incoming` if they are added to the Feeds entries array.
+       Anything remaining in `incoming` will be deleted afterwards. */
     iBool gotNew = iFalse;
     lock_Mutex(d->mtx);
     iTime now;
     initCurrent_Time(&now);
-    iForEach(PtrArray, i, incoming) {
-        iFeedEntry *entry = i.ptr;
-        /* Disregard old entries. */
-        if (secondsSince_Time(&now, &entry->posted) >= maxAge_Visited) {
-            /* We don't remember this far back, so the unread status of the entry would
-               be incorrect. */
-            continue;
+    if (isHeadings) {
+//        printf("Updating sourceID %d...\n", sourceId);
+        iStringSet *known = listHeadingEntriesFrom_Feeds_(d, sourceId);
+//        puts("  Known URLs:");
+//        iConstForEach(StringSet, ss, known) {
+//            printf("   {%s}\n", cstr_String(ss.value));
+//        }
+        iStringSet *presentInSource = new_StringSet();
+        /* Look for unknown entries. */
+        iForEach(PtrArray, i, incoming) {
+            iFeedEntry *entry = i.ptr;
+            insert_StringSet(presentInSource, &entry->url);
+            if (!contains_StringSet(known, &entry->url)) {
+//                printf("  {%s} is new\n", cstr_String(&entry->url));
+                insert_SortedArray(&d->entries, &entry);
+                gotNew = iTrue;
+                remove_PtrArrayIterator(&i);
+            }
         }
-        size_t pos;
-        if (locate_SortedArray(&d->entries, &entry, &pos)) {
-            iFeedEntry *existing = *(iFeedEntry **) at_SortedArray(&d->entries, pos);
-            iAssert(isHeadingEntry_FeedEntry_(existing) == isHeadingEntry_FeedEntry_(entry));
-            /* Already known, but update it, maybe the time and label have changed. */
-            if (!isHeadingEntry_FeedEntry_(existing)) {
+//        puts("  URLs present in source:");
+//        iConstForEach(StringSet, ps, presentInSource) {
+//            printf("    {%s}\n", cstr_String(ps.value));
+//        }
+//        puts("  URLs to purge:");
+        /* All known entries that are no longer present in source must be deleted. */
+        iForEach(Array, e, &d->entries.values) {
+            iFeedEntry *entry = *(iFeedEntry **) e.value;
+            if (entry->bookmarkId == sourceId &&
+                !contains_StringSet(presentInSource, &entry->url)) {
+//                printf("    {%s}\n", cstr_String(&entry->url));
+                delete_FeedEntry(entry);
+                remove_ArrayIterator(&e);
+            }
+        }
+//        puts("Done.");
+        iRelease(presentInSource);
+        iRelease(known);
+    }
+    else {
+        iForEach(PtrArray, i, incoming) {
+            iFeedEntry *entry = i.ptr;
+            /* Disregard old incoming entries. */
+            if (secondsSince_Time(&now, &entry->posted) >= maxAge_Visited) {
+                /* We don't remember this far back, so the unread status of the entry would
+                   be incorrect. */
+                continue;
+            }
+            size_t pos;
+            if (locate_SortedArray(&d->entries, &entry, &pos)) {
+                iFeedEntry *existing = *(iFeedEntry **) at_SortedArray(&d->entries, pos);
+                iAssert(!isHeadingEntry_FeedEntry_(existing));
+                iAssert(!isHeadingEntry_FeedEntry_(entry));
+                /* Already known, but update it, maybe the time and label have changed. */
                 iBool changed = iFalse;
                 iDate newDate;
                 iDate oldDate;
@@ -336,12 +392,12 @@ static iBool updateEntries_Feeds_(iFeeds *d, iPtrArray *incoming) {
                     gotNew = iTrue;
                 }
             }
+            else {
+                insert_SortedArray(&d->entries, &entry);
+                gotNew = iTrue;
+            }
+            remove_PtrArrayIterator(&i);
         }
-        else {
-            insert_SortedArray(&d->entries, &entry);
-            gotNew = iTrue;
-        }
-        remove_PtrArrayIterator(&i);
     }
     unlock_Mutex(d->mtx);
     return gotNew;
@@ -369,7 +425,8 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
                 if (isFinished_GmRequest(work[i]->request)) {
                     /* TODO: Handle redirects. Need to resubmit the job with new URL. */
                     parseResult_FeedJob_(work[i]);
-                    gotNew |= updateEntries_Feeds_(d, &work[i]->results);
+                    gotNew |= updateEntries_Feeds_(
+                        d, work[i]->checkHeadings, work[i]->bookmarkId, &work[i]->results);
                     delete_FeedJob(work[i]);
                     work[i] = NULL;
                 }
@@ -407,7 +464,7 @@ static iBool startWorker_Feeds_(iFeeds *d) {
         if (!contains_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm))) {
             job->isFirstUpdate = iTrue;
 //            printf("first check of %x: %s\n", id_Bookmark(bm), cstr_String(&bm->title));
-            fflush(stdout);
+//            fflush(stdout);
             insert_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm));
         }
         pushBack_PtrArray(&d->jobs, job);
@@ -539,6 +596,11 @@ static void load_Feeds_(iFeeds *d) {
                         stripDefaultUrlPort_String(&entry->url);
                         set_String(&entry->url, canonicalUrl_String(&entry->url));
                         set_String(&entry->title, title);
+                        entry->isHeading = isHeadingEntry_FeedEntry_(entry);
+                        if (entry->isHeading) {
+                            printf("[Feeds] src:%d url:{%s}\n", entry->bookmarkId,
+                                   cstr_String(&entry->url));
+                        }
                         insert_SortedArray(&d->entries, &entry);
                     }
                     delete_String(title);
@@ -642,7 +704,8 @@ size_t numUnread_Feeds(void) {
     size_t max = 100; /* match the number of items shown in the sidebar */
     iConstForEach(PtrArray, i, listEntries_Feeds()) {
         if (!max--) break;
-        if (isUnread_FeedEntry(i.ptr)) {
+        const iFeedEntry *entry = i.ptr;
+        if (isValid_Time(&entry->discovered) && isUnread_FeedEntry(i.ptr)) {
             count++;
         }
     }

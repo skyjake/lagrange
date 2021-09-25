@@ -133,6 +133,7 @@ const iString * withSpacesEncoded_String(const iString *);
 const iString * canonicalUrl_String     (const iString *);
 
 const char *    mediaType_Path                      (const iString *path);
+const char *    mediaTypeFromFileExtension_String   (const iString *);
 iRangecc        mediaTypeWithoutParameters_Rangecc  (iRangecc mime);
 
 const iString * findContainerArchive_Path           (const iString *path);

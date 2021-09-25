@@ -39,6 +39,8 @@ struct Impl_ListItem {
     iObject object;
     iBool   isSeparator;
     iBool   isSelected;
+    iBool   isDraggable;
+    iBool   isDropTarget; /* may drag-and-drop another item on this */
 };
 
 iDeclareObjectConstruction(ListItem)
@@ -64,6 +66,7 @@ void    scrollToItem_ListWidget     (iListWidget *, size_t index);
 void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    updateVisible_ListWidget    (iListWidget *);
 void    updateMouseHover_ListWidget (iListWidget *);
+void    setHoverItem_ListWidget     (iListWidget *, size_t index);
 
 void                sort_ListWidget             (iListWidget *, int (*cmp)(const iListItem **item1, const iListItem **item2));
 
@@ -75,6 +78,7 @@ int                 visCount_ListWidget         (const iListWidget *);
 size_t              itemIndex_ListWidget        (const iListWidget *, iInt2 pos);
 iRect               itemRect_ListWidget         (const iListWidget *, size_t index);
 const iAnyObject *  constItem_ListWidget        (const iListWidget *, size_t index);
+const iAnyObject *  constDragItem_ListWidget    (const iListWidget *);
 const iAnyObject *  constHoverItem_ListWidget   (const iListWidget *);
 size_t              hoverItemIndex_ListWidget   (const iListWidget *);
 

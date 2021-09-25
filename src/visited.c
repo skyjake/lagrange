@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/sortedarray.h>
 
-const int maxAge_Visited = 2 * 3600 * 24 * 30; /* two months */
+const int maxAge_Visited = 6 * 3600 * 24 * 30; /* six months */
 
 void init_VisitedUrl(iVisitedUrl *d) {
     initCurrent_Time(&d->when);

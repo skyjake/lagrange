@@ -220,18 +220,32 @@ struct Impl_MenuItem {
     const char *label;
     int key;
     int kmods;
-    const char *command;
+    union {
+        const char *command;
+        const void *data;
+    };
 };
 
-iWidget *   makeMenu_Widget     (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
-void        openMenu_Widget     (iWidget *, iInt2 windowCoord);
-void        openMenuFlags_Widget(iWidget *, iInt2 windowCoord, iBool postCommands);
-void        closeMenu_Widget    (iWidget *);
+iWidget *       makeMenu_Widget                 (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
+void            makeMenuItems_Widget            (iWidget *menu, const iMenuItem *items, size_t n);
+void            openMenu_Widget                 (iWidget *, iInt2 windowCoord);
+void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, iBool postCommands);
+void            closeMenu_Widget                (iWidget *);
+void            releaseNativeMenu_Widget        (iWidget *);
 
-iLabelWidget *  findMenuItem_Widget         (iWidget *menu, const char *command);
-void            setMenuItemDisabled_Widget  (iWidget *menu, const char *command, iBool disable);
+size_t          findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);
+void            setSelected_NativeMenuItem      (iMenuItem *item, iBool isSelected);
 
-int         checkContextMenu_Widget (iWidget *, const SDL_Event *ev); /* see macro below */
+iChar           removeIconPrefix_String         (iString *);
+
+iLabelWidget *  findMenuItem_Widget             (iWidget *menu, const char *command);
+iMenuItem *     findNativeMenuItem_Widget       (iWidget *menu, const char *commandSuffix);
+void            setMenuItemDisabled_Widget      (iWidget *menu, const char *command, iBool disable);
+void            setMenuItemDisabledByIndex_Widget(iWidget *menu, size_t index, iBool disable);
+void            setMenuItemLabel_Widget         (iWidget *menu, const char *command, const char *newLabel);
+void            setMenuItemLabelByIndex_Widget  (iWidget *menu, size_t index, const char *newLabel);
+
+int             checkContextMenu_Widget         (iWidget *, const SDL_Event *ev); /* see macro below */
 
 #define processContextMenuEvent_Widget(menu, sdlEvent, stmtEaten) \
     for (const int result = checkContextMenu_Widget((menu), (sdlEvent));;) { \
@@ -239,7 +253,8 @@ int         checkContextMenu_Widget (iWidget *, const SDL_Event *ev); /* see mac
         break; \
     }
 
-iLabelWidget *  makeMenuButton_LabelWidget  (const char *label, const iMenuItem *items, size_t n);
+iLabelWidget *  makeMenuButton_LabelWidget          (const char *label, const iMenuItem *items, size_t n);
+void            updateDropdownSelection_LabelWidget (iLabelWidget *dropButton, const char *selectedCommand);
 
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -267,6 +282,8 @@ iWidget *   makeSheet_Widget            (const char *id);
 void        useSheetStyle_Widget        (iWidget *);
 iWidget *   makeDialogButtons_Widget    (const iMenuItem *actions, size_t numActions);
 iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
+
+iLabelWidget *dialogAcceptButton_Widget (const iWidget *);
 
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,

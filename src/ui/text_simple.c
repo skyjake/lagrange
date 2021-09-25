@@ -92,7 +92,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
     }
     if (args->mode & fillBackground_RunMode) {
         const iColor initial = get_Color(args->color);
-        SDL_SetRenderDrawColor(text_.render, initial.r, initial.g, initial.b, 0);
+        SDL_SetRenderDrawColor(activeText_->render, initial.r, initial.g, initial.b, 0);
     }
     /* Text rendering is not very straightforward! Let's dive in... */
     iChar       prevCh = 0;
@@ -114,14 +114,14 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             chPos++;
             iRegExpMatch m;
             init_RegExpMatch(&m);
-            if (match_RegExp(text_.ansiEscape, chPos, args->text.end - chPos, &m)) {
+            if (match_RegExp(activeText_->ansiEscape, chPos, args->text.end - chPos, &m)) {
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     /* Change the color. */
                     const iColor clr =
                         ansiForeground_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId);
-                    SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
+                    SDL_SetTextureColorMod(activeText_->cache, clr.r, clr.g, clr.b);
                     if (args->mode & fillBackground_RunMode) {
-                        SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
+                        SDL_SetRenderDrawColor(activeText_->render, clr.r, clr.g, clr.b, 0);
                     }
                 }
                 chPos = end_RegExpMatch(&m);
@@ -205,9 +205,9 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                 }
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     const iColor clr = get_Color(colorNum);
-                    SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
+                    SDL_SetTextureColorMod(activeText_->cache, clr.r, clr.g, clr.b);
                     if (args->mode & fillBackground_RunMode) {
-                        SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
+                        SDL_SetRenderDrawColor(activeText_->render, clr.r, clr.g, clr.b, 0);
                     }
                 }
                 prevCh = 0;
@@ -306,12 +306,14 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                 src.y += over;
                 src.h -= over;
             }
+            dst.x += origin_Paint.x;
+            dst.y += origin_Paint.y;
             if (args->mode & fillBackground_RunMode) {
                 /* Alpha blending looks much better if the RGB components don't change in
                    the partially transparent pixels. */
-                SDL_RenderFillRect(text_.render, &dst);
+                SDL_RenderFillRect(activeText_->render, &dst);
             }
-            SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
+            SDL_RenderCopy(activeText_->render, activeText_->cache, &src, &dst);
         }
         xpos += advance;
         if (!isSpace_Char(ch)) {

@@ -21,3 +21,10 @@ set (SDL2_LDFLAGS
     "-framework QuartzCore"
     "-framework UIKit"
 )
+
+set (FRIBIDI_FOUND YES)
+set (FRIBIDI_LIBRARIES ${IOS_DIR}/lib/libfribidi.a)
+
+set (HARFBUZZ_FOUND YES)
+set (HARFBUZZ_LIBRARIES ${IOS_DIR}/lib/libharfbuzz.a)
+set (HARFBUZZ_INCLUDE_DIRS ${IOS_DIR}/include/harfbuzz)

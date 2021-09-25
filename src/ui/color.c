@@ -85,6 +85,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
     const int accentLo    = (prefs->accent == cyan_ColorAccent ? teal_ColorId : brown_ColorId);
     const int altAccentHi = (prefs->accent == cyan_ColorAccent ? orange_ColorId : cyan_ColorId);
     const int altAccentLo = (prefs->accent == cyan_ColorAccent ? brown_ColorId : teal_ColorId);
+    const iColor accentMid    = mix_Color(get_Color(accentHi), get_Color(accentLo), 0.5f);
     const iColor altAccentMid = mix_Color(get_Color(altAccentHi), get_Color(altAccentLo), 0.5f);
     switch (theme) {
         case pureBlack_ColorTheme: {
@@ -124,7 +125,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputTextFocused_ColorId, white_ColorId);
             copy_(uiInputFrame_ColorId, gray25_ColorId);
             copy_(uiInputFrameHover_ColorId, accentHi);
-            set_Color(uiInputFrameFocused_ColorId, altAccentMid);
+            copy_(uiInputFrameFocused_ColorId, accentLo);
             copy_(uiInputCursor_ColorId, altAccentHi);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, accentHi);
@@ -132,8 +133,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiIcon_ColorId, accentHi);
             copy_(uiIconHover_ColorId, accentHi);
             copy_(uiSeparator_ColorId, gray25_ColorId);
-            copy_(uiMarked_ColorId, altAccentLo);
-            copy_(uiMatching_ColorId, accentLo);
+            copy_(uiMarked_ColorId, accentLo);
+            copy_(uiMatching_ColorId, altAccentLo);
             break;
         }
         default:
@@ -177,7 +178,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
                                                             get_Color(altAccentHi), 0.15f));
             copy_(uiInputFrame_ColorId, uiInputBackground_ColorId);
             copy_(uiInputFrameHover_ColorId, accentHi);
-            set_Color(uiInputFrameFocused_ColorId, altAccentMid);
+            copy_(uiInputFrameFocused_ColorId, accentLo);
             copy_(uiInputCursor_ColorId, altAccentHi);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, accentHi);
@@ -185,8 +186,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiIcon_ColorId, accentHi);
             copy_(uiIconHover_ColorId, accentHi);
             copy_(uiSeparator_ColorId, black_ColorId);
-            copy_(uiMarked_ColorId, altAccentLo);
-            copy_(uiMatching_ColorId, accentLo);
+            copy_(uiMarked_ColorId, accentLo);
+            copy_(uiMatching_ColorId, altAccentLo);
             break;
         }
         case light_ColorTheme:
@@ -227,7 +228,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             set_Color(uiInputFrame_ColorId,
                       mix_Color(get_Color(gray50_ColorId), get_Color(gray75_ColorId), 0.5f));
             copy_(uiInputFrameHover_ColorId, accentLo);
-            copy_(uiInputFrameFocused_ColorId, altAccentLo);
+            copy_(uiInputFrameFocused_ColorId, accentLo);
             copy_(uiInputCursor_ColorId, altAccentLo);
             copy_(uiInputCursorText_ColorId, white_ColorId);
             copy_(uiHeading_ColorId, accentLo);
@@ -236,8 +237,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiIconHover_ColorId, accentLo);
             set_Color(uiSeparator_ColorId,
                       mix_Color(get_Color(gray50_ColorId), get_Color(gray75_ColorId), 0.5f));
-            copy_(uiMarked_ColorId, altAccentHi);
-            copy_(uiMatching_ColorId, accentHi);
+            copy_(uiMarked_ColorId, accentHi);
+            copy_(uiMatching_ColorId, altAccentHi);
             break;
         case pureWhite_ColorTheme:
             copy_(uiBackground_ColorId, white_ColorId);
@@ -278,7 +279,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputTextFocused_ColorId, black_ColorId);
             copy_(uiInputFrame_ColorId, gray50_ColorId);
             copy_(uiInputFrameHover_ColorId, accentLo);
-            copy_(uiInputFrameFocused_ColorId, altAccentLo);
+            copy_(uiInputFrameFocused_ColorId, accentLo);
             copy_(uiInputCursor_ColorId, altAccentLo);
             copy_(uiInputCursorText_ColorId, white_ColorId);
             copy_(uiHeading_ColorId, accentLo);
@@ -287,8 +288,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiIconHover_ColorId, accentLo);
             set_Color(uiSeparator_ColorId,
                       mix_Color(get_Color(gray50_ColorId), get_Color(gray75_ColorId), 0.67f));
-            copy_(uiMarked_ColorId, altAccentHi);
-            copy_(uiMatching_ColorId, accentHi);
+            copy_(uiMarked_ColorId, accentHi);
+            copy_(uiMatching_ColorId, altAccentHi);
             break;
     }
     set_Color(uiSubheading_ColorId,
@@ -479,6 +480,24 @@ const char *escape_Color(int color) {
         return format_CStr("\v\v%c", color - asciiExtended_ColorEscape + asciiBase_ColorEscape);
     }
     return format_CStr("\v%c", color + asciiBase_ColorEscape);
+}
+
+enum iColorId parseEscape_Color(const char *cstr, const char **endp) {
+    enum iColorId color = none_ColorId;
+    if (*cstr == '\v') {
+        cstr++;
+        color = 0;
+        if (*cstr == '\v') {
+            color += asciiExtended_ColorEscape;
+            cstr++;
+        }
+        color += *cstr - asciiBase_ColorEscape;
+        cstr++;
+    }
+    if (endp) {
+        *endp = cstr;
+    }
+    return color;
 }
 
 iHSLColor setSat_HSLColor(iHSLColor d, float sat) {

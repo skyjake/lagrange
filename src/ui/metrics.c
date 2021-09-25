@@ -33,7 +33,7 @@ iInt2 gap2_UI     = { defaultGap_Metrics, defaultGap_Metrics };
 int   fontSize_UI = defaultFontSize_Metrics;
 
 void setScale_Metrics(float scale) {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     /* iPad needs a bit larger UI elements as the viewing distance is generally longer.*/
     if (deviceType_App() == tablet_AppDeviceType) {
         scale *= 1.1f;

@@ -750,7 +750,7 @@ static uint32_t mediaUpdateInterval_DocumentWidget_(const iDocumentWidget *d) {
     if (document_App() != d) {
         return 0;
     }
-    if (get_Window()->isDrawFrozen) {
+    if (as_MainWindow(window_Widget(d))->isDrawFrozen) {
         return 0;
     }
     static const uint32_t invalidInterval_ = ~0u;
@@ -934,7 +934,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         iString *text = collect_String(joinCStr_StringArray(title, " \u2014 "));
         if (setWindow) {
             /* Longest version for the window title, and omit the icon. */
-            setTitle_Window(get_Window(), text);
+            setTitle_MainWindow(get_MainWindow(), text);
             setWindow = iFalse;
         }
         const iChar siteIcon = siteIcon_GmDocument(d->doc);
@@ -1010,6 +1010,9 @@ static void documentRunsInvalidated_DocumentWidget_(iDocumentWidget *d) {
 }
 
 iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
+    if (deviceType_App() == phone_AppDeviceType) {
+        return iFalse;
+    }
     if (d->flags & otherRootByDefault_DocumentWidgetFlag) {
         return iTrue;
     }
@@ -1054,9 +1057,12 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
+    const int docWidth      = documentWidth_DocumentWidget_(d);
+    const int outsideMargin = (width_Widget(d) - docWidth) / 2;
     setSource_GmDocument(d->doc,
                          source,
-                         documentWidth_DocumentWidget_(d),
+                         docWidth,
+                         outsideMargin,
                          isFinished_GmRequest(d->request) ? final_GmDocumentUpdate
                                                           : partial_GmDocumentUpdate);
     documentWasChanged_DocumentWidget_(d);
@@ -1165,13 +1171,25 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 iString *key = collectNew_String();
                 toString_Sym(SDLK_s, KMOD_PRIMARY, key);
                 appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
-                makeFooterButtons_DocumentWidget_(
-                    d,
-                    (iMenuItem[]){ { translateCStr_Lang(download_Icon " " saveToDownloads_Label),
-                                     0,
-                                     0,
-                                     "document.save" } },
-                    1);
+                const char *mtype = mediaTypeFromFileExtension_String(d->mod.url);
+                iArray items;
+                init_Array(&items, sizeof(iMenuItem));
+                if (iCmpStr(mtype, "application/octet-stream")) {
+                    pushBack_Array(
+                        &items,
+                        &(iMenuItem){ translateCStr_Lang(format_CStr("View as \"%s\"", mtype)),
+                                      SDLK_RETURN,
+                                      0,
+                                      format_CStr("document.setmediatype mime:%s", mtype) });
+                }
+                pushBack_Array(
+                    &items,
+                    &(iMenuItem){ translateCStr_Lang(download_Icon " " saveToDownloads_Label),
+                                  0,
+                                  0,
+                                  "document.save" });
+                makeFooterButtons_DocumentWidget_(d, data_Array(&items), size_Array(&items));
+                deinit_Array(&items);
                 break;
             }
             default:
@@ -2254,7 +2272,7 @@ static iBool updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocumen
         /* TODO: First *fully* visible run? */
         voffset = visibleRange_DocumentWidget_(d).start - top_Rect(run->visBounds);
     }
-    setWidth_GmDocument(d->doc, newWidth);
+    setWidth_GmDocument(d->doc, newWidth, (width_Widget(d) - newWidth) / 2);
     documentRunsInvalidated_DocumentWidget_(d);
     if (runLoc && !keepCenter) {
         run = findRunAtLoc_GmDocument(d->doc, runLoc);
@@ -2834,7 +2852,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             setUrl_UploadWidget(upload, d->mod.url);
             setResponseViewer_UploadWidget(upload, d);
             addChild_Widget(get_Root()->widget, iClob(upload));
-            finalizeSheet_Mobile(as_Widget(upload));
+//            finalizeSheet_Mobile(as_Widget(upload));
+            setupSheetTransition_Mobile(as_Widget(upload), iTrue);
             postRefresh_App();
         }
         return iTrue;
@@ -3109,7 +3128,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 makeQuestion_Widget(
                     uiHeading_ColorEscape "${heading.import.bookmarks}",
                     formatCStrs_Lang("dlg.import.found.n", count),
-                    (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+                    (iMenuItem[]){ { "${cancel}" },
                                    { format_CStr(cstrCount_Lang("dlg.import.add.n", (int) count),
                                                  uiTextAction_ColorEscape,
                                                  count),
@@ -3172,6 +3191,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if ((startsWith_CStr(cmd, "edgeswipe.") || startsWith_CStr(cmd, "swipe.")) &&
              document_App() == d) {
         return handleSwipe_DocumentWidget_(d, cmd);
+    }
+    else if (equal_Command(cmd, "document.setmediatype") && document_App() == d) {
+        setUrlAndSource_DocumentWidget(d, d->mod.url, string_Command(cmd, "mime"), &d->sourceContent);
+        return iTrue;
     }
     return iFalse;
 }
@@ -3277,7 +3300,7 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
                 d->playerMenu = makeMenu_Widget(
                     as_Widget(d),
                     (iMenuItem[]){
-                        { cstrCollect_String(metadataLabel_Player(plr)), 0, 0, NULL },
+                        { cstrCollect_String(metadataLabel_Player(plr)) },
                     },
                     1);
                 openMenu_Widget(d->playerMenu, bottomLeft_Rect(ui.menuRect));
@@ -3582,7 +3605,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         pushBackN_Array(
                             &items,
                             (iMenuItem[]){
-                                { "---", 0, 0, NULL },
+                                { "---" },
                                 { isGemini ? "${link.noproxy}" : openExt_Icon " ${link.browser}",
                                   0,
                                   0,
@@ -3593,7 +3616,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         linkLabel_GmDocument(d->doc, d->contextLink->linkId));
                     urlEncodeSpaces_String(linkLabel);
                     pushBackN_Array(&items,
-                                    (iMenuItem[]){ { "---", 0, 0, NULL },
+                                    (iMenuItem[]){ { "---" },
                                                    { "${link.copy}", 0, 0, "document.copylink" },
                                                    { bookmark_Icon " ${link.bookmark}",
                                                      0,
@@ -3605,7 +3628,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                     3);
                     if (isNative && d->contextLink->mediaType != download_GmRunMediaType) {
                         pushBackN_Array(&items, (iMenuItem[]){
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { download_Icon " ${link.download}", 0, 0, "document.downloadlink" },
                         }, 2);
                     }
@@ -3648,17 +3671,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "${menu.forward}", navigateForward_KeyShortcut, "navigate.forward" },
                             { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
                             { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
                             { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
                             { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                             { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
                         15);
                     if (isEmpty_Range(&d->selectMark)) {
@@ -3834,7 +3857,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         }
                         d->copyMenu = makeMenu_Widget(w, (iMenuItem[]){
                             { clipCopy_Icon " ${menu.copy}", 0, 0, "copy" },
-                            { "---", 0, 0, NULL },
+                            { "---" },
                             { close_Icon " ${menu.select.clear}", 0, 0, "document.select arg:0" },
                         }, 3);
                         setFlags_Widget(d->copyMenu, noFadeBackground_WidgetFlag, iTrue);
@@ -3927,7 +3950,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 uiTextAction_ColorEscape,
                                 cstr_String(url)),
                             (iMenuItem[]){
-                                { "${cancel}", 0, 0, NULL },
+                                { "${cancel}" },
                                 { uiTextCaution_ColorEscape "${dlg.openlink}",
                                   0, 0, format_CStr("!open default:1 url:%s", cstr_String(url)) } },
                             2);
@@ -4574,23 +4597,6 @@ static void drawMedia_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
     }
 }
 
-static void drawPin_(iPaint *p, iRect rangeRect, int dir) {
-    const int pinColor = tmQuote_ColorId;
-    const int height   = height_Rect(rangeRect);
-    iRect pin;
-    if (dir == 0) {
-        pin = (iRect){ add_I2(topLeft_Rect(rangeRect), init_I2(-gap_UI / 4, -gap_UI)),
-                       init_I2(gap_UI / 2, height + gap_UI) };
-    }
-    else {
-        pin = (iRect){ addX_I2(topRight_Rect(rangeRect), -gap_UI / 4),
-                       init_I2(gap_UI / 2, height + gap_UI) };
-    }
-    fillRect_Paint(p, pin, pinColor);
-    fillRect_Paint(p, initCentered_Rect(dir == 0 ? topMid_Rect(pin) : bottomMid_Rect(pin),
-                                        init1_I2(gap_UI * 2)), pinColor);
-}
-
 static void extend_GmRunRange_(iGmRunRange *runs) {
     if (runs->start) {
         runs->start--;
@@ -4834,8 +4840,8 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
             /* Selection range pins. */
             if (isTouchSelecting) {
-                drawPin_(&ctx.paint, ctx.firstMarkRect, 0);
-                drawPin_(&ctx.paint, ctx.lastMarkRect, 1);
+                drawPin_Paint(&ctx.paint, ctx.firstMarkRect, 0, tmQuote_ColorId);
+                drawPin_Paint(&ctx.paint, ctx.lastMarkRect,  1, tmQuote_ColorId);
             }
         }
         drawMedia_DocumentWidget_(d, &ctx.paint);

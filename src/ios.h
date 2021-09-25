@@ -37,6 +37,7 @@ iBool   processEvent_iOS        (const SDL_Event *);
 void    playHapticEffect_iOS    (enum iHapticEffect effect);
 void    exportDownloadedFile_iOS(const iString *path);
 void    pickFileForOpening_iOS  (void);
+void    pickFile_iOS            (const char *command); /* ` path:%s` will be appended */
 
 iBool   isPhone_iOS             (void);
 void    safeAreaInsets_iOS      (float *left, float *top, float *right, float *bottom);

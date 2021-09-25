@@ -22,8 +22,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-/* Application core: event loop, base event processing, audio synth. */
-
 #include <the_Foundation/objectlist.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/stringset.h>
@@ -35,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Bookmarks)
 iDeclareType(DocumentWidget)
 iDeclareType(GmCerts)
+iDeclareType(MainWindow)
 iDeclareType(MimeHooks)
 iDeclareType(Periodic)
 iDeclareType(Root)
@@ -44,6 +43,8 @@ iDeclareType(Window)
 /* Command line options strings. */
 #define listTabUrls_CommandLineOption       "list-tab-urls;L"
 #define openUrlOrSearch_CommandLineOption   "url-or-search;u"
+#define windowWidth_CommandLineOption       "width;w"
+#define windowHeight_CommandLineOption      "height;h"
 
 enum iAppDeviceType {
     desktop_AppDeviceType,
@@ -59,14 +60,12 @@ enum iAppEventMode {
 enum iUserEventCode {
     command_UserEventCode = 1,
     refresh_UserEventCode,
-    arrange_UserEventCode,
     asleep_UserEventCode,
     /* The start of a potential touch tap event is notified via a custom event because
        sending SDL_MOUSEBUTTONDOWN would be premature: we don't know how long the tap will
        take, it could turn into a tap-and-hold for example. */
     widgetTapBegins_UserEventCode,
     widgetTouchEnds_UserEventCode, /* finger lifted, but momentum may continue */
-    immediateRefresh_UserEventCode, /* refresh even though more events are pending */
 };
 
 const iString *execPath_App     (void);
@@ -117,8 +116,9 @@ iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (iTickerFunc ticker, iAny *context);
 void        addTickerRoot_App   (iTickerFunc ticker, iRoot *root, iAny *context);
 void        removeTicker_App    (iTickerFunc ticker, iAny *context);
+void        addPopup_App        (iWindow *popup);
+void        removePopup_App     (iWindow *popup);
 void        postRefresh_App     (void);
-void        postImmediateRefresh_App(void);
 void        postCommand_Root    (iRoot *, const char *command);
 void        postCommandf_Root   (iRoot *, const char *command, ...);
 void        postCommandf_App    (const char *command, ...);
@@ -129,10 +129,12 @@ iLocalDef void postCommandString_Root(iRoot *d, const iString *command) {
     }
 }
 iLocalDef void postCommand_App(const char *command) {
-    postCommandf_App(command);
+    postCommand_Root(NULL, command);
 }
 
 iDocumentWidget *   document_Command    (const char *cmd);
 
 void        openInDefaultBrowser_App    (const iString *url);
 void        revealPath_App              (const iString *path);
+
+iMainWindow *mainWindow_App(void);

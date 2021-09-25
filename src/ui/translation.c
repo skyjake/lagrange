@@ -136,7 +136,8 @@ static void draw_TranslationProgressWidget_(const iTranslationProgressWidget *d)
             get_Color(palette[palCur]), get_Color(palette[palNext]), palPos - (int) palPos);
         SDL_SetRenderDrawColor(renderer_Window(get_Window()), back.r, back.g, back.b, p.alpha);
         SDL_RenderFillRect(renderer_Window(get_Window()),
-                           &(SDL_Rect){ pos.x, pos.y, spr->size.x, spr->size.y });
+                           &(SDL_Rect){ pos.x + origin_Paint.x, pos.y + origin_Paint.y,
+                                        spr->size.x, spr->size.y });
         if (fg >= 0) {
             setOpacity_Text(opacity * 2);
             drawRange_Text(d->font, addX_I2(pos, spr->xoff), fg, range_String(&spr->text));
@@ -424,19 +425,18 @@ static iBool processResult_Translation_(iTranslation *d) {
 }
 
 static iLabelWidget *acceptButton_Translation_(const iTranslation *d) {
-    iWidget *buttonParent = findChild_Widget(d->dlg, "dialogbuttons");
-//    if (!buttonParent) {
-//        buttonParent = findChild_Widget(d->dlg, "panel.back");
-//    }
-    return (iLabelWidget *) lastChild_Widget(buttonParent);
+    return dialogAcceptButton_Widget(d->dlg);
 }
 
 iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
     iWidget *w = as_Widget(d->doc);
     if (equalWidget_Command(cmd, w, "translation.submit")) {
         if (status_TlsRequest(d->request) == initialized_TlsRequestStatus) {
-            iWidget *langs = findChild_Widget(d->dlg, "xlt.langs");
-            setFlags_Widget(langs, hidden_WidgetFlag, iTrue);
+            iWidget *langs = findChild_Widget(d->dlg, "xlt.langs");            
+//            setFlags_Widget(langs, hidden_WidgetFlag, iTrue);
+            setFlags_Widget(findChild_Widget(d->dlg, "xlt.from"), hidden_WidgetFlag, iTrue);
+            setFlags_Widget(findChild_Widget(d->dlg, "xlt.to"),   hidden_WidgetFlag, iTrue);
+            if (!langs) langs = d->dlg;
             iLabelWidget *acceptButton = acceptButton_Translation_(d);
             updateTextCStr_LabelWidget(acceptButton, "00:00");
             setFlags_Widget(as_Widget(acceptButton), disabled_WidgetFlag, iTrue);

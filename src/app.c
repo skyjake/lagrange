@@ -117,7 +117,8 @@ struct Impl_App {
     iGmCerts *   certs;
     iVisited *   visited;
     iBookmarks * bookmarks;
-    iWindow *    window;
+    iMainWindow *window;
+    iPtrArray    popupWindows;
     iSortedArray tickers; /* per-frame callbacks, used for animations */
     uint32_t     lastTickerTime;
     uint32_t     elapsedSinceLastTicker;
@@ -188,7 +189,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         /* On macOS, maximization should be applied at creation time or the window will take
            a moment to animate to its maximized size. */
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-        if (snap_Window(d->window)) {
+        if (snap_MainWindow(d->window)) {
             if (~SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MINIMIZED) {
                 /* Save the actual visible window position, too, because snapped windows may
                    still be resized/moved without affecting normalRect. */
@@ -196,17 +197,17 @@ static iString *serializePrefs_App_(const iApp *d) {
                 SDL_GetWindowSize(d->window->win, &w, &h);
                 appendFormat_String(
                     str, "~window.setrect snap:%d width:%d height:%d coord:%d %d\n",
-                    snap_Window(d->window), w, h, x, y);
+                    snap_MainWindow(d->window), w, h, x, y);
             }
         }
 #elif !defined (iPlatformApple)
-        if (snap_Window(d->window) == maximized_WindowSnap) {
+        if (snap_MainWindow(d->window) == maximized_WindowSnap) {
             appendFormat_String(str, "~window.maximize\n");
         }
 #endif
     }
     appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.uiLanguage));
-    appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
+    appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
     appendFormat_String(str, "font.user path:%s\n", cstr_String(&d->prefs.symbolFontPath));
@@ -242,12 +243,15 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
     appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
+    appendFormat_String(str, "imagestyle.set arg:%d\n", d->prefs.imageStyle);
     appendFormat_String(str, "ca.file noset:1 path:%s\n", cstr_String(&d->prefs.caFile));
     appendFormat_String(str, "ca.path path:%s\n", cstr_String(&d->prefs.caPath));
     appendFormat_String(str, "proxy.gemini address:%s\n", cstr_String(&d->prefs.geminiProxy));
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
+#if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
     appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.downloadDir));
+#endif
     appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.searchUrl));
     appendFormat_String(str, "translation.languages from:%d to:%d\n", d->prefs.langFrom, d->prefs.langTo);
     return str;
@@ -411,8 +415,8 @@ static iBool loadState_App_(iApp *d) {
                 const int splitMode = read32_File(f);
                 const int keyRoot   = read32_File(f);
                 d->window->pendingSplitMode = splitMode;
-                setSplitMode_Window(d->window, splitMode | noEvents_WindowSplit);
-                d->window->keyRoot = d->window->roots[keyRoot];
+                setSplitMode_MainWindow(d->window, splitMode | noEvents_WindowSplit);
+                d->window->base.keyRoot = d->window->base.roots[keyRoot];
             }
             else if (!memcmp(magic, magicSidebar_App_, 4)) {
                 const uint16_t bits = readU16_File(f);
@@ -421,12 +425,22 @@ static iBool loadState_App_(iApp *d) {
                     readf_Stream(stream_File(f)),
                     readf_Stream(stream_File(f))
                 };
+                iIntSet *closedFolders[2] = {
+                    collectNew_IntSet(),
+                    collectNew_IntSet()
+                };
+                if (version >= bookmarkFolderState_FileVersion) {
+                    deserialize_IntSet(closedFolders[0], stream_File(f));
+                    deserialize_IntSet(closedFolders[1], stream_File(f));
+                }
                 const uint8_t rootIndex = bits & 0xff;
                 const uint8_t flags     = bits >> 8;
-                iRoot *root = d->window->roots[rootIndex];
+                iRoot *root = d->window->base.roots[rootIndex];
                 if (root) {
                     iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
                     iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
+                    setClosedFolders_SidebarWidget(sidebar, closedFolders[0]);
+                    setClosedFolders_SidebarWidget(sidebar2, closedFolders[1]);
                     postCommandf_Root(root, "sidebar.mode arg:%u", modes & 0xf);
                     postCommandf_Root(root, "sidebar2.mode arg:%u", modes >> 4);
                     if (deviceType_App() != phone_AppDeviceType) {
@@ -440,10 +454,10 @@ static iBool loadState_App_(iApp *d) {
             else if (!memcmp(magic, magicTabDocument_App_, 4)) {
                 const int8_t flags = read8_File(f);
                 int rootIndex = flags & rootIndex1_DocumentStateFlag ? 1 : 0;
-                if (rootIndex > numRoots_Window(d->window) - 1) {
+                if (rootIndex > numRoots_Window(as_Window(d->window)) - 1) {
                     rootIndex = 0;
                 }
-                setCurrent_Root(d->window->roots[rootIndex]);
+                setCurrent_Root(d->window->base.roots[rootIndex]);
                 if (isFirstTab[rootIndex]) {
                     isFirstTab[rootIndex] = iFalse;
                     /* There is one pre-created tab in each root. */
@@ -466,7 +480,7 @@ static iBool loadState_App_(iApp *d) {
         }
         if (d->window->splitMode) {
             /* Update root placement. */
-            resize_Window(d->window, -1, -1);
+            resize_MainWindow(d->window, -1, -1);
         }
         iForIndices(i, current) {
             postCommandf_Root(NULL, "tabs.switch page:%p", current[i]);
@@ -480,7 +494,7 @@ static iBool loadState_App_(iApp *d) {
 static void saveState_App_(const iApp *d) {
     iUnused(d);
     trimCache_App();
-    iWindow *win = d->window;
+    iMainWindow *win = d->window;
     /* UI state is saved in binary because it is quite complex (e.g.,
        navigation history, cached content) and depends closely on the widget
        tree. The data is largely not reorderable and should not be modified
@@ -492,11 +506,11 @@ static void saveState_App_(const iApp *d) {
         /* Begin with window state. */ {
             writeData_File(f, magicWindow_App_, 4);
             writeU32_File(f, win->splitMode);
-            writeU32_File(f, win->keyRoot == win->roots[0] ? 0 : 1);
+            writeU32_File(f, win->base.keyRoot == win->base.roots[0] ? 0 : 1);
         }
         /* State of UI elements. */ {
-            iForIndices(i, win->roots) {
-                const iRoot *root = win->roots[i];
+            iForIndices(i, win->base.roots) {
+                const iRoot *root = win->base.roots[i];
                 if (root) {
                     writeData_File(f, magicSidebar_App_, 4);
                     const iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
@@ -509,6 +523,8 @@ static void saveState_App_(const iApp *d) {
                                  (mode_SidebarWidget(sidebar2) << 4));
                     writef_Stream(stream_File(f), width_SidebarWidget(sidebar));
                     writef_Stream(stream_File(f), width_SidebarWidget(sidebar2));
+                    serialize_IntSet(closedFolders_SidebarWidget(sidebar), stream_File(f));
+                    serialize_IntSet(closedFolders_SidebarWidget(sidebar2), stream_File(f));
                 }
             }
         }
@@ -517,7 +533,7 @@ static void saveState_App_(const iApp *d) {
             const iWidget *widget = constAs_Widget(i.object);
             writeData_File(f, magicTabDocument_App_, 4);
             int8_t flags = (document_Root(widget->root) == i.object ? current_DocumentStateFlag : 0);
-            if (widget->root == win->roots[1]) {
+            if (widget->root == win->base.roots[1]) {
                 flags |= rootIndex1_DocumentStateFlag;
             }
             write8_File(f, flags);
@@ -667,6 +683,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, "help", 0);
         defineValues_CommandLine(&d->args, listTabUrls_CommandLineOption, 0);
         defineValues_CommandLine(&d->args, openUrlOrSearch_CommandLineOption, 1);
+        defineValues_CommandLine(&d->args, windowWidth_CommandLineOption, 1);
+        defineValues_CommandLine(&d->args, windowHeight_CommandLineOption, 1);
         defineValuesN_CommandLine(&d->args, "new-tab", 0, 1);
         defineValues_CommandLine(&d->args, "tab-url", 0);
         defineValues_CommandLine(&d->args, "sw", 0);
@@ -756,7 +774,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     mulfv_I2(&d->initialWindowRect.size, desktopDPI_Win32());
 #endif
 #if defined (iPlatformLinux)
-    /* Scale by the primary (?) monitor DPI. */ 
+    /* Scale by the primary (?) monitor DPI. */
     if (isRunningUnderWindowSystem_App()) {
         float vdpi;
         SDL_GetDisplayDPI(0, NULL, NULL, &vdpi);
@@ -786,7 +804,18 @@ static void init_App_(iApp *d, int argc, char **argv) {
     setThemePalette_Color(d->prefs.theme); /* default UI colors */
     loadPrefs_App_(d);
     load_Keys(dataDir_App_());
-    d->window = new_Window(d->initialWindowRect);
+    /* See if the user wants to override the window size. */ {
+        iCommandLineArg *arg = iClob(checkArgument_CommandLine(&d->args, windowWidth_CommandLineOption));
+        if (arg) {
+            d->initialWindowRect.size.x = toInt_String(value_CommandLineArg(arg, 0));
+        }
+        arg = iClob(checkArgument_CommandLine(&d->args, windowHeight_CommandLineOption));
+        if (arg) {
+            d->initialWindowRect.size.y = toInt_String(value_CommandLineArg(arg, 0));
+        }
+    }
+    init_PtrArray(&d->popupWindows);
+    d->window = new_MainWindow(d->initialWindowRect);
     load_Visited(d->visited, dataDir_App_());
     load_Bookmarks(d->bookmarks, dataDir_App_());
     load_MimeHooks(d->mimehooks, dataDir_App_());
@@ -833,11 +862,16 @@ static void init_App_(iApp *d, int argc, char **argv) {
     fetchRemote_Bookmarks(d->bookmarks);
     if (deviceType_App() != desktop_AppDeviceType) {
         /* HACK: Force a resize so widgets update their state. */
-        resize_Window(d->window, -1, -1);
+        resize_MainWindow(d->window, -1, -1);
     }
 }
 
 static void deinit_App(iApp *d) {
+    iReverseForEach(PtrArray, i, &d->popupWindows) {
+        delete_Window(i.ptr);
+    }
+    iAssert(isEmpty_PtrArray(&d->popupWindows));
+    deinit_PtrArray(&d->popupWindows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     SDL_RemoveTimer(d->sleepTimer);
 #endif
@@ -856,7 +890,7 @@ static void deinit_App(iApp *d) {
     delete_GmCerts(d->certs);
     save_MimeHooks(d->mimehooks);
     delete_MimeHooks(d->mimehooks);
-    delete_Window(d->window);
+    delete_MainWindow(d->window);
     d->window = NULL;
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
@@ -1039,7 +1073,7 @@ void trimMemory_App(void) {
             init_ObjectListIterator(&i, docs);
         }
     }
-    iRelease(docs);    
+    iRelease(docs);
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
@@ -1051,11 +1085,6 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
     }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->isIdling) {
-        return iFalse;
-    }
-#endif
-#if defined (iPlatformMobile)
-    if (!isFinished_Anim(&d->window->rootOffset)) {
         return iFalse;
     }
 #endif
@@ -1074,6 +1103,15 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
         }
     }
     return SDL_PollEvent(event);
+}
+
+static const iPtrArray *listWindows_App_(const iApp *d) {
+    iPtrArray *list = collectNew_PtrArray();
+    iReverseConstForEach(PtrArray, i, &d->popupWindows) {
+        pushBack_PtrArray(list, i.ptr);
+    }
+    pushBack_PtrArray(list, d->window);
+    return list;
 }
 
 void processEvents_App(enum iAppEventMode eventMode) {
@@ -1100,7 +1138,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 clearCache_App_();
                 break;
             case SDL_APP_WILLENTERFOREGROUND:
-                invalidate_Window(d->window);
+                invalidate_Window(as_Window(d->window));
                 break;
             case SDL_APP_DIDENTERFOREGROUND:
                 gotEvents = iTrue;
@@ -1115,17 +1153,17 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #if defined (iPlatformAppleMobile)
                 updateNowPlayingInfo_iOS();
 #endif
-                setFreezeDraw_Window(d->window, iTrue);
+                setFreezeDraw_MainWindow(d->window, iTrue);
                 savePrefs_App_(d);
                 saveState_App_(d);
                 break;
             case SDL_APP_TERMINATING:
-                setFreezeDraw_Window(d->window, iTrue);
+                setFreezeDraw_MainWindow(d->window, iTrue);
                 savePrefs_App_(d);
                 saveState_App_(d);
                 break;
             case SDL_DROPFILE: {
-                iBool wasUsed = processEvent_Window(d->window, &ev);
+                iBool wasUsed = processEvent_Window(as_Window(d->window), &ev);
                 if (!wasUsed) {
                     iBool newTab = iFalse;
                     if (elapsedSeconds_Time(&d->lastDropTime) < 0.1) {
@@ -1165,23 +1203,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
                 d->isIdling = iFalse;
 #endif
-                if (ev.type == SDL_USEREVENT && ev.user.code == arrange_UserEventCode) {
-                    printf("[App] rearrange\n");
-                    resize_Window(d->window, -1, -1);
-                    iForIndices(i, d->window->roots) {
-                        if (d->window->roots[i]) {
-                            d->window->roots[i]->pendingArrange = iFalse;
-                        }
-                    }
-//                    if (ev.user.data2 == d->window->roots[0]) {
-//                        arrange_Widget(d->window->roots[0]->widget);
-//                    }
-//                    else if (d->window->roots[1]) {
-//                        arrange_Widget(d->window->roots[1]->widget);
-//                    }
-//                    postRefresh_App();
-                    continue;
-                }
                 gotEvents = iTrue;
                 /* Keyboard modifier mapping. */
                 if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
@@ -1199,8 +1220,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     if (ev.wheel.which == 0) {
                         /* Trackpad with precise scrolling w/inertia (points). */
                         setPerPixel_MouseWheelEvent(&ev.wheel, iTrue);
-                        ev.wheel.x *= -d->window->pixelRatio;
-                        ev.wheel.y *= d->window->pixelRatio;
+                        ev.wheel.x *= -d->window->base.pixelRatio;
+                        ev.wheel.y *= d->window->base.pixelRatio;
                         /* Only scroll on one axis at a time. */
                         if (iAbs(ev.wheel.x) > iAbs(ev.wheel.y)) {
                             ev.wheel.y = 0;
@@ -1240,7 +1261,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                     else if (ev.type == SDL_MOUSEMOTION) {
                         if (~ev.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-                            continue; /* only when pressing a button */    
+                            continue; /* only when pressing a button */
                         }
                         const float xf = (d->window->pixelRatio * ev.motion.x) / (float) d->window->size.x;
                         const float yf = (d->window->pixelRatio * ev.motion.y) / (float) d->window->size.y;
@@ -1254,13 +1275,26 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         ev.tfinger.fingerId = 0x1234;
                         ev.tfinger.pressure = 1.0f;
                         ev.tfinger.timestamp = SDL_GetTicks();
-                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;                        
+                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;
                     }
                 }
 #endif
-                iBool wasUsed = processEvent_Window(d->window, &ev);
+                /* Per-window processing. */
+                iBool wasUsed = iFalse;
+                const iPtrArray *windows = listWindows_App_(d);
+                iConstForEach(PtrArray, iter, windows) {
+                    iWindow *window = iter.ptr;
+                    setCurrent_Window(window);
+                    window->lastHover = window->hover;
+                    wasUsed = processEvent_Window(window, &ev);
+                    if (ev.type == SDL_MOUSEMOTION || ev.type == SDL_MOUSEBUTTONDOWN) {
+                        break;
+                    }
+                    if (wasUsed) break;
+                }
+                setCurrent_Window(d->window);
                 if (!wasUsed) {
-                    /* There may be a key bindings for this. */
+                    /* There may be a key binding for this. */
                     wasUsed = processEvent_Keys(&ev);
                 }
                 if (!wasUsed) {
@@ -1278,26 +1312,39 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
                     if (isMetricsChange_UserEvent(&ev)) {
-                        iForIndices(i, d->window->roots) {
-                            iRoot *root = d->window->roots[i];
-                            if (root) {
-                                arrange_Widget(root->widget);
+                        iConstForEach(PtrArray, iter, windows) {
+                            iWindow *window = iter.ptr;
+                            iForIndices(i, window->roots) {
+                                iRoot *root = window->roots[i];
+                                if (root) {
+                                    arrange_Widget(root->widget);
+                                }
                             }
                         }
                     }
                     if (!wasUsed) {
                         /* No widget handled the command, so we'll do it. */
+                        setCurrent_Window(d->window);
                         handleCommand_App(ev.user.data1);
                     }
                     /* Allocated by postCommand_Apps(). */
                     free(ev.user.data1);
+                }
+                /* Refresh after hover changes. */ {
+                    iConstForEach(PtrArray, iter, windows) {
+                        iWindow *window = iter.ptr;
+                        if (window->lastHover != window->hover) {
+                            refresh_Widget(window->lastHover);
+                            refresh_Widget(window->hover);
+                        }
+                    }
                 }
                 break;
             }
         }
     }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
-    if (d->isIdling && !gotEvents && isFinished_Anim(&d->window->rootOffset)) {
+    if (d->isIdling && !gotEvents) {
         /* This is where we spend most of our time when idle. 60 Hz still quite a lot but we
            can't wait too long after the user tries to interact again with the app. In any
            case, on macOS SDL_WaitEvent() seems to use 10x more CPU time than sleeping. */
@@ -1339,22 +1386,23 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
     if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
         const SDL_WindowEvent *winev = &event->window;
 #if defined (iPlatformMsys)
-        resetFonts_Text(); {
+        resetFonts_Text(text_Window(d->window)); {
             SDL_Event u = { .type = SDL_USEREVENT };
             u.user.code = command_UserEventCode;
             u.user.data1 = strdup("theme.changed auto:1");
-            dispatchEvent_Window(d->window, &u);
+            dispatchEvent_Window(as_Window(d->window), &u);
         }
 #endif
-        drawWhileResizing_Window(d->window, winev->data1, winev->data2);
+        drawWhileResizing_MainWindow(d->window, winev->data1, winev->data2);
     }
     return 0;
 }
 
 static int run_App_(iApp *d) {
-    iForIndices(i, d->window->roots) {
-        if (d->window->roots[i]) {
-            arrange_Widget(d->window->roots[i]->widget);
+    /* Initial arrangement. */
+    iForIndices(i, d->window->base.roots) {
+        if (d->window->base.roots[i]) {
+            arrange_Widget(d->window->base.roots[i]->widget);
         }
     }
     d->isRunning = iTrue;
@@ -1368,7 +1416,7 @@ static int run_App_(iApp *d) {
         runTickers_App_(d);
         refresh_App();
         /* Change the widget tree while we are not iterating through it. */
-        checkPendingSplit_Window(d->window);
+        checkPendingSplit_MainWindow(d->window);
         recycle_Garbage();
     }
     SDL_DelEventWatch(resizeWatcher_, d);
@@ -1377,28 +1425,46 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
-    iForIndices(i, d->window->roots) {
-        iRoot *root = d->window->roots[i];
-        if (root) {
-            destroyPending_Root(root);
-        }
-    }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->warmupFrames == 0 && d->isIdling) {
         return;
     }
 #endif
-    if (!exchange_Atomic(&d->pendingRefresh, iFalse)) {
-        /* Refreshing wasn't pending. */
-        if (isFinished_Anim(&d->window->rootOffset)) {
-            return;
+    const iPtrArray *windows = listWindows_App_(d);
+    /* Destroy pending widgets. */ {
+        iConstForEach(PtrArray, j, windows) {
+            iWindow *win = j.ptr;
+            setCurrent_Window(win);
+            iForIndices(i, win->roots) {
+                iRoot *root = win->roots[i];
+                if (root) {
+                    destroyPending_Root(root);
+                }
+            }
         }
     }
-//    iTime draw;
-//    initCurrent_Time(&draw);
-    draw_Window(d->window);
-//    printf("draw: %lld \u03bcs\n", (long long) (elapsedSeconds_Time(&draw) * 1000000));
-//    fflush(stdout);
+    /* TODO: Pending refresh is window-specific. */
+    if (!exchange_Atomic(&d->pendingRefresh, iFalse)) {
+        return;
+    }
+    /* Draw each window. */ {
+        iConstForEach(PtrArray, j, windows) {
+            iWindow *win = j.ptr;
+            setCurrent_Window(win);
+            switch (win->type) {
+                case main_WindowType:
+    //                iTime draw;
+    //                initCurrent_Time(&draw);
+                    draw_MainWindow(as_MainWindow(win));
+    //                printf("draw: %lld \u03bcs\n", (long long) (elapsedSeconds_Time(&draw) * 1000000));
+    //                fflush(stdout);
+                    break;
+                default:
+                    draw_Window(win);
+                    break;
+            }
+        }
+    }
     if (d->warmupFrames > 0) {
         d->warmupFrames--;
     }
@@ -1471,12 +1537,6 @@ void postRefresh_App(void) {
     }
 }
 
-void postImmediateRefresh_App(void) {
-    SDL_Event ev = { .type = SDL_USEREVENT };
-    ev.user.code = immediateRefresh_UserEventCode;
-    SDL_PushEvent(&ev);
-}
-
 void postCommand_Root(iRoot *d, const char *command) {
     iAssert(command);
     if (strlen(command) == 0) {
@@ -1532,7 +1592,7 @@ void postCommandf_App(const char *command, ...) {
 }
 
 void rootOrder_App(iRoot *roots[2]) {
-    const iWindow *win = app_.window;
+    const iWindow *win = get_Window();
     roots[0] = win->keyRoot;
     roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
 }
@@ -1569,6 +1629,16 @@ void removeTicker_App(iTickerFunc ticker, iAny *context) {
     remove_SortedArray(&d->tickers, &(iTicker){ context, NULL, ticker });
 }
 
+void addPopup_App(iWindow *popup) {
+    iApp *d = &app_;
+    pushBack_PtrArray(&d->popupWindows, popup);
+}
+
+void removePopup_App(iWindow *popup) {
+    iApp *d = &app_;
+    removeOne_PtrArray(&d->popupWindows, popup);
+}
+
 iMimeHooks *mimeHooks_App(void) {
     return app_.mimehooks;
 }
@@ -1583,7 +1653,11 @@ iBool isLandscape_App(void) {
 }
 
 enum iAppDeviceType deviceType_App(void) {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobilePhone)
+    return phone_AppDeviceType;
+#elif defined (iPlatformMobileTablet)
+    return tablet_AppDeviceType;
+#elif defined (iPlatformAppleMobile)
     return isPhone_iOS() ? phone_AppDeviceType : tablet_AppDeviceType;
 #else
     return desktop_AppDeviceType;
@@ -1636,28 +1710,20 @@ static void updateScrollSpeedButtons_(iWidget *d, enum iScrollType type, const i
     }
 }
 
-static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selectedCommand) {
-    iWidget *menu = findChild_Widget(as_Widget(dropButton), "menu");
-    iForEach(ObjectList, i, children_Widget(menu)) {
-        if (isInstance_Object(i.object, &Class_LabelWidget)) {
-            iLabelWidget *item = i.object;
-            const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
-            setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
-            if (isSelected) {
-                updateText_LabelWidget(dropButton, sourceText_LabelWidget(item));
-            }
-        }
-    }
-}
-
 static void updateColorThemeButton_(iLabelWidget *button, int theme) {
+    /* TODO: These three functions are all the same? Cleanup? */
     if (!button) return;
-    updateDropdownSelection_(button, format_CStr(".set arg:%d", theme));
+    updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", theme));
 }
 
 static void updateFontButton_(iLabelWidget *button, int font) {
     if (!button) return;
-    updateDropdownSelection_(button, format_CStr(".set arg:%d", font));
+    updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", font));
+}
+
+static void updateImageStyleButton_(iLabelWidget *button, int style) {
+    if (!button) return;
+    updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", style));
 }
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
@@ -1710,8 +1776,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "uilang")) {
-        updateDropdownSelection_(findChild_Widget(d, "prefs.uilang"),
-                                 cstr_String(string_Command(cmd, "id")));
+        updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.uilang"),
+                                            cstr_String(string_Command(cmd, "id")));
         return iFalse;
     }
     else if (equal_Command(cmd, "quoteicon.set")) {
@@ -1721,8 +1787,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "returnkey.set")) {
-        updateDropdownSelection_(findChild_Widget(d, "prefs.returnkey"),
-                                 format_CStr("returnkey.set arg:%d", arg_Command(cmd)));
+        updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.returnkey"),
+                                            format_CStr("returnkey.set arg:%d", arg_Command(cmd)));
         return iFalse;
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
@@ -1741,6 +1807,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         updateColorThemeButton_(findChild_Widget(d, "prefs.doctheme.light"), arg_Command(cmd));
         return iFalse;
     }
+    else if (equal_Command(cmd, "imagestyle.set")) {
+        updateImageStyleButton_(findChild_Widget(d, "prefs.imagestyle"), arg_Command(cmd));
+        return iFalse;
+    }
     else if (equal_Command(cmd, "font.set")) {
         updateFontButton_(findChild_Widget(d, "prefs.font"), arg_Command(cmd));
         return iFalse;
@@ -1749,7 +1819,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         updateFontButton_(findChild_Widget(d, "prefs.headingfont"), arg_Command(cmd));
         return iFalse;
     }
-    else if (startsWith_CStr(cmd, "input.ended id:prefs.linespacing")) {    
+    else if (startsWith_CStr(cmd, "input.ended id:prefs.linespacing")) {
         /* Apply line spacing changes immediately. */
         const iInputWidget *lineSpacing = findWidget_App("prefs.linespacing");
         postCommandf_App("linespacing.set arg:%f", toFloat_String(text_InputWidget(lineSpacing)));
@@ -1822,7 +1892,10 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "ident.showmore")) {
-        iForEach(ObjectList, i, children_Widget(findChild_Widget(dlg, "headings"))) {
+        iForEach(ObjectList,
+                 i,
+                 children_Widget(findChild_Widget(
+                     dlg, isUsingPanelLayout_Mobile() ? "panel.top" : "headings"))) {
             if (flags_Widget(i.object) & collapse_WidgetFlag) {
                 setFlags_Widget(i.object, hidden_WidgetFlag, iFalse);
             }
@@ -1832,10 +1905,9 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 setFlags_Widget(j.object, hidden_WidgetFlag, iFalse);
             }
         }
-        setFlags_Widget(child_Widget(findChild_Widget(dlg, "dialogbuttons"), 0), disabled_WidgetFlag,
-                        iTrue);
+        setFlags_Widget(pointer_Command(cmd), disabled_WidgetFlag, iTrue);
         arrange_Widget(dlg);
-        refresh_Widget(dlg);        
+        refresh_Widget(dlg);
         return iTrue;
     }
     if (equal_Command(cmd, "ident.scope")) {
@@ -1843,6 +1915,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
         setText_LabelWidget(scope,
                             text_LabelWidget(child_Widget(
                                 findChild_Widget(as_Widget(scope), "menu"), arg_Command(cmd))));
+        arrange_Widget(findWidget_App("ident"));
         return iTrue;
     }
     if (equal_Command(cmd, "ident.temp.changed")) {
@@ -1963,9 +2036,16 @@ const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
     return collectNewFormat_String("%s?%s", cstr_String(&d->prefs.searchUrl), cstr_String(escaped));
 }
 
+static void resetFonts_App_(iApp *d) {
+    iConstForEach(PtrArray, win, listWindows_App_(d)) {
+        resetFonts_Text(text_Window(win.ptr));
+    }
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     const iBool isFrozen = !d->window || d->window->isDrawFrozen;
+    /* TODO: Maybe break this up a little bit? There's a very long list of ifs here. */
     if (equal_Command(cmd, "config.error")) {
         makeSimpleMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
                                  format_CStr("Error in config file: %s\n"
@@ -1997,13 +2077,13 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "ui.split")) {
         if (argLabel_Command(cmd, "swap")) {
-            swapRoots_Window(d->window);
+            swapRoots_MainWindow(d->window);
             return iTrue;
         }
         d->window->pendingSplitMode =
             (argLabel_Command(cmd, "axis") ? vertical_WindowSplit : 0) | (arg_Command(cmd) << 1);
         const char *url = suffixPtr_Command(cmd, "url");
-        setCStr_String(get_Window()->pendingSplitUrl, url ? url : "");
+        setCStr_String(d->window->pendingSplitUrl, url ? url : "");
         postRefresh_App();
         return iTrue;
     }
@@ -2017,33 +2097,33 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "window.maximize")) {
         if (!argLabel_Command(cmd, "toggle")) {
-            setSnap_Window(d->window, maximized_WindowSnap);
+            setSnap_MainWindow(d->window, maximized_WindowSnap);
         }
         else {
-            setSnap_Window(d->window, snap_Window(d->window) == maximized_WindowSnap ? 0 :
+            setSnap_MainWindow(d->window, snap_MainWindow(d->window) == maximized_WindowSnap ? 0 :
                            maximized_WindowSnap);
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "window.fullscreen")) {
-        const iBool wasFull = snap_Window(d->window) == fullscreen_WindowSnap;
-        setSnap_Window(d->window, wasFull ? 0 : fullscreen_WindowSnap);
+        const iBool wasFull = snap_MainWindow(d->window) == fullscreen_WindowSnap;
+        setSnap_MainWindow(d->window, wasFull ? 0 : fullscreen_WindowSnap);
         postCommandf_App("window.fullscreen.changed arg:%d", !wasFull);
         return iTrue;
     }
     else if (equal_Command(cmd, "font.reset")) {
-        resetFonts_Text();
+        resetFonts_App_(d);
         return iTrue;
     }
     else if (equal_Command(cmd, "font.user")) {
         const char *path = suffixPtr_Command(cmd, "path");
         if (cmp_String(&d->prefs.symbolFontPath, path)) {
             if (!isFrozen) {
-                setFreezeDraw_Window(get_Window(), iTrue);
+                setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
             }
             setCStr_String(&d->prefs.symbolFontPath, path);
             loadUserFonts_Text();
-            resetFonts_Text();
+            resetFonts_App_(d);
             if (!isFrozen) {
                 postCommand_App("font.changed");
                 postCommand_App("window.unfreeze");
@@ -2053,10 +2133,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "font.set")) {
         if (!isFrozen) {
-            setFreezeDraw_Window(get_Window(), iTrue);
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
         d->prefs.font = arg_Command(cmd);
-        setContentFont_Text(d->prefs.font);
+        setContentFont_Text(text_Window(d->window), d->prefs.font);
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
@@ -2065,10 +2145,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "headingfont.set")) {
         if (!isFrozen) {
-            setFreezeDraw_Window(get_Window(), iTrue);
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
         d->prefs.headingFont = arg_Command(cmd);
-        setHeadingFont_Text(d->prefs.headingFont);
+        setHeadingFont_Text(text_Window(d->window), d->prefs.headingFont);
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
@@ -2077,10 +2157,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "zoom.set")) {
         if (!isFrozen) {
-            setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue); /* no intermediate draws before docs updated */
         }
         d->prefs.zoomPercent = arg_Command(cmd);
-        setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
+        setContentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
@@ -2089,14 +2169,14 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "zoom.delta")) {
         if (!isFrozen) {
-            setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue); /* no intermediate draws before docs updated */
         }
         int delta = arg_Command(cmd);
         if (d->prefs.zoomPercent < 100 || (delta < 0 && d->prefs.zoomPercent == 100)) {
             delta /= 2;
         }
         d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
-        setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
+        setContentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
@@ -2173,6 +2253,10 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "imagestyle.set")) {
+        d->prefs.imageStyle = arg_Command(cmd);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "linewidth.set")) {
         d->prefs.lineWidth = iMax(20, arg_Command(cmd));
         postCommand_App("document.layout.changed");
@@ -2192,7 +2276,7 @@ iBool handleCommand_App(const char *cmd) {
              equal_Command(cmd, "prefs.mono.gopher.changed")) {
         const iBool isSet = (arg_Command(cmd) != 0);
         if (!isFrozen) {
-            setFreezeDraw_Window(d->window, iTrue);
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
         if (startsWith_CStr(cmd, "prefs.mono.gemini")) {
             d->prefs.monospaceGemini = isSet;
@@ -2313,10 +2397,12 @@ iBool handleCommand_App(const char *cmd) {
         setCStr_String(&d->prefs.httpProxy, suffixPtr_Command(cmd, "address"));
         return iTrue;
     }
+#if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
     else if (equal_Command(cmd, "downloads")) {
         setCStr_String(&d->prefs.downloadDir, suffixPtr_Command(cmd, "path"));
         return iTrue;
     }
+#endif
     else if (equal_Command(cmd, "downloads.open")) {
         postCommandf_App("open url:%s", cstrCollect_String(makeFileUrl_String(downloadDir_App())));
         return iTrue;
@@ -2360,7 +2446,8 @@ iBool handleCommand_App(const char *cmd) {
             setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, document_App());
             addChild_Widget(get_Root()->widget, iClob(upload));
-            finalizeSheet_Mobile(as_Widget(upload));
+//            finalizeSheet_Mobile(as_Widget(upload));
+            setupSheetTransition_Mobile(as_Widget(upload), iTrue);
             postRefresh_App();
             return iTrue;
         }
@@ -2384,8 +2471,8 @@ iBool handleCommand_App(const char *cmd) {
         iRoot *root = get_Root();
         iRoot *oldRoot = root;
         if (newTab & otherRoot_OpenTabFlag) {
-            root = otherRoot_Window(d->window, root);
-            setKeyRoot_Window(d->window, root);
+            root = otherRoot_Window(as_Window(d->window), root);
+            setKeyRoot_Window(as_Window(d->window), root);
             setCurrent_Root(root); /* need to change for widget creation */
         }
         iDocumentWidget *doc = document_Command(cmd);
@@ -2484,7 +2571,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "tabs.close")) {
         iWidget *tabs = findWidget_App("doctabs");
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
         /* Can't close the last on mobile. */
         if (tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
             postCommand_App("navigate.home");
@@ -2539,7 +2626,8 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "keyroot.next")) {
-        if (setKeyRoot_Window(d->window, otherRoot_Window(d->window, d->window->keyRoot))) {
+        if (setKeyRoot_Window(as_Window(d->window),
+                              otherRoot_Window(as_Window(d->window), d->window->base.keyRoot))) {
             setFocus_Widget(NULL);
         }
         return iTrue;
@@ -2565,12 +2653,13 @@ iBool handleCommand_App(const char *cmd) {
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
-        updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
-        updateDropdownSelection_(findChild_Widget(dlg, "prefs.returnkey"),
-                                 format_CStr("returnkey.set arg:%d", d->prefs.returnKey));
+        updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
+        updateDropdownSelection_LabelWidget(
+            findChild_Widget(dlg, "prefs.returnkey"),
+            format_CStr("returnkey.set arg:%d", d->prefs.returnKey));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
-                            collectNewFormat_String("%g", uiScale_Window(d->window)));
+                            collectNewFormat_String("%g", uiScale_Window(as_Window(d->window))));
         setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.font.%d", d->prefs.font)),
                         selected_WidgetFlag,
                         iTrue);
@@ -2607,6 +2696,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.collapsepreonload"), d->prefs.collapsePreOnLoad);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.light"), d->prefs.docThemeLight);
+        updateImageStyleButton_(findChild_Widget(dlg, "prefs.imagestyle"), d->prefs.imageStyle);
         updateFontButton_(findChild_Widget(dlg, "prefs.font"), d->prefs.font);
         updateFontButton_(findChild_Widget(dlg, "prefs.headingfont"), d->prefs.headingFont);
         setFlags_Widget(
@@ -2687,6 +2777,31 @@ iBool handleCommand_App(const char *cmd) {
         makeFeedSettings_Widget(findUrl_Bookmarks(d->bookmarks, url));
         return iTrue;
     }
+    else if (equal_Command(cmd, "bookmarks.addfolder")) {
+        const int parentId = argLabel_Command(cmd, "parent");
+        if (suffixPtr_Command(cmd, "value")) {
+            uint32_t id = add_Bookmarks(d->bookmarks, NULL,
+                                        collect_String(suffix_Command(cmd, "value")), NULL, 0);
+            if (parentId) {
+                get_Bookmarks(d->bookmarks, id)->parentId = parentId;
+            }
+            postCommand_App("bookmarks.changed");
+        }
+        else {
+            iWidget *dlg = makeValueInput_Widget(
+                get_Root()->widget, collectNewCStr_String(cstr_Lang("dlg.addfolder.defaulttitle")),
+                uiHeading_ColorEscape "${heading.addfolder}", "${dlg.addfolder.prompt}",
+                uiTextAction_ColorEscape "${dlg.addfolder}",
+                format_CStr("bookmarks.addfolder parent:%d", parentId));
+            setSelectAllOnFocus_InputWidget(findChild_Widget(dlg, "input"), iTrue);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.sort")) {
+        sort_Bookmarks(d->bookmarks, arg_Command(cmd), cmpTitleAscending_Bookmark);
+        postCommand_App("bookmarks.changed");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "bookmarks.reload.remote")) {
         fetchRemote_Bookmarks(bookmarks_App());
         return iTrue;
@@ -2715,7 +2830,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "feeds.update.finished")) {
         showCollapsed_Widget(findWidget_Root("feeds.progress"), iFalse);
         refreshFinished_Feeds();
-        postRefresh_App();
+        refresh_Widget(findWidget_App("url"));
         return iFalse;
     }
     else if (equal_Command(cmd, "visited.changed")) {
@@ -2725,6 +2840,9 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "document.changed")) {
         /* Set of open tabs has changed. */
         postCommand_App("document.openurls.changed");
+        if (deviceType_App() == phone_AppDeviceType) {
+            showToolbar_Root(d->window->base.roots[0], iTrue);
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "ident.new")) {
@@ -2737,7 +2855,9 @@ iBool handleCommand_App(const char *cmd) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
         addChild_Widget(get_Root()->widget, iClob(imp));
-        finalizeSheet_Mobile(as_Widget(imp));
+//        finalizeSheet_Mobile(as_Widget(imp));
+        arrange_Widget(as_Widget(imp));
+        setupSheetTransition_Mobile(as_Widget(imp), iTrue);
         postRefresh_App();
         return iTrue;
     }
@@ -2793,12 +2913,12 @@ iBool handleCommand_App(const char *cmd) {
         write_Ipc(argLabel_Command(cmd, "pid"),
                   collectNewFormat_String("%s\n", cstr_String(url_DocumentWidget(document_App()))),
                   response_IpcWrite);
-        return iTrue;        
+        return iTrue;
     }
     else if (equal_Command(cmd, "ipc.signal")) {
         if (argLabel_Command(cmd, "raise")) {
-            if (d->window && d->window->win) {
-                SDL_RaiseWindow(d->window->win);
+            if (d->window && d->window->base.win) {
+                SDL_RaiseWindow(d->window->base.win);
             }
         }
         signal_Ipc(arg_Command(cmd));
@@ -2905,4 +3025,8 @@ iStringSet *listOpenURLs_App(void) {
     }
     iRelease(docs);
     return set;
+}
+
+iMainWindow *mainWindow_App(void) {
+    return app_.window;
 }

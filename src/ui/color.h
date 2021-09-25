@@ -183,6 +183,7 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define mask_ColorId                0x7f
 #define permanent_ColorId           0x80  /* cannot be changed via escapes */
 #define fillBackground_ColorId      0x100 /* fill background with same color, but alpha 0 */
+#define opaque_ColorId              0x200
 
 #define asciiBase_ColorEscape       33
 #define asciiExtended_ColorEscape   (128 - asciiBase_ColorEscape)
@@ -249,4 +250,4 @@ void            setThemePalette_Color   (enum iColorTheme theme);
 
 iColor          ansiForeground_Color    (iRangecc escapeSequence, int fallback);
 const char *    escape_Color            (int color);
-
+enum iColorId   parseEscape_Color       (const char *cstr, const char **endp);
