@@ -530,10 +530,10 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     useExecutableIconResource_SDLWindow(d->base.win);
 #endif
 #if defined (iPlatformLinux)
-    SDL_SetWindowMinimumSize(d->win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
+    SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
     /* Load the window icon. */ {
         SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, 0);
-        SDL_SetWindowIcon(d->win, surf);
+        SDL_SetWindowIcon(d->base.win, surf);
         free(surf->pixels);
         SDL_FreeSurface(surf);
     }
