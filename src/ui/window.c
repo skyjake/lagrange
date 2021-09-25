@@ -318,12 +318,12 @@ static iRoot *rootAt_Window_(const iWindow *d, iInt2 coord) {
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 static SDL_HitTestResult hitTest_MainWindow_(SDL_Window *win, const SDL_Point *pos, void *data) {
-    iWindow *d = data;
-    iAssert(d->win == win);
-    if (SDL_GetWindowFlags(d->win) & (SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_FULLSCREEN_DESKTOP)) {
+    iMainWindow *d = data;
+    iAssert(d->base.win == win);
+    if (SDL_GetWindowFlags(win) & (SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_FULLSCREEN_DESKTOP)) {
         return SDL_HITTEST_NORMAL;
     }
-    const int snap = snap_Window(d);
+    const int snap = snap_MainWindow(d);
     int w, h;
     SDL_GetWindowSize(win, &w, &h);
     /* TODO: Check if inside the caption label widget. */
@@ -333,7 +333,7 @@ static SDL_HitTestResult hitTest_MainWindow_(SDL_Window *win, const SDL_Point *p
     const iBool isBottom = pos->y >= h - gap_UI && snap != yMaximized_WindowSnap;
     const int   captionHeight = lineHeight_Text(uiContent_FontId) + gap_UI * 2;
     const int   rightEdge     = left_Rect(bounds_Widget(findChild_Widget(
-                                    rootAt_Window_(d, init_I2(pos->x, pos->y))->widget,
+                                    rootAt_Window_(as_Window(d), init_I2(pos->x, pos->y))->widget,
                                     "winbar.min")));
     d->place.lastHit = SDL_HITTEST_NORMAL;
     if (snap != maximized_WindowSnap) {
@@ -364,8 +364,8 @@ static SDL_HitTestResult hitTest_MainWindow_(SDL_Window *win, const SDL_Point *p
     return SDL_HITTEST_NORMAL;
 }
 
-SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos) {
-    return hitTest_Window_(d->win, &(SDL_Point){ pos.x, pos.y }, iConstCast(void *, d));
+SDL_HitTestResult hitTest_MainWindow(const iMainWindow *d, iInt2 pos) {
+    return hitTest_MainWindow_(d->base.win, &(SDL_Point){ pos.x, pos.y }, iConstCast(void *, d));
 }
 #endif
 
@@ -387,7 +387,7 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     if (type_Window(d) == main_WindowType && prefs_App()->customFrame) {
         /* Register a handler for window hit testing (drag, resize). */
-        SDL_SetWindowHitTest(d->win, hitTest_Window_, d);
+        SDL_SetWindowHitTest(d->win, hitTest_MainWindow_, d);
         SDL_SetWindowResizable(d->win, SDL_TRUE);
     }
 #endif
@@ -1453,8 +1453,8 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
         postCommand_App("window.resized");
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         /* Update custom frame controls. */{
-            const iBool hideCtl0 = numRoots_Window(d) != 1;
-            iWidget *winBar = findChild_Widget(d->roots[0]->widget, "winbar");
+            const iBool hideCtl0 = numRoots_Window(as_Window(d)) != 1;
+            iWidget *winBar = findChild_Widget(d->base.roots[0]->widget, "winbar");
             if (winBar) {
                 setFlags_Widget(
                     findChild_Widget(winBar, "winbar.min"), hidden_WidgetFlag, hideCtl0);
@@ -1462,8 +1462,8 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                     findChild_Widget(winBar, "winbar.max"), hidden_WidgetFlag, hideCtl0);
                 setFlags_Widget(
                     findChild_Widget(winBar, "winbar.close"), hidden_WidgetFlag, hideCtl0);
-                if (d->roots[1]) {
-                    winBar = findChild_Widget(d->roots[1]->widget, "winbar");
+                if (d->base.roots[1]) {
+                    winBar = findChild_Widget(d->base.roots[1]->widget, "winbar");
                     setFlags_Widget(
                         findChild_Widget(winBar, "winbar.icon"), hidden_WidgetFlag, iTrue);
                     setFlags_Widget(
@@ -1548,8 +1548,8 @@ void setSnap_MainWindow(iMainWindow *d, int snapMode) {
         newRect.pos.y += newRect.size.y;
     }
     /* Update window controls. */
-    iForIndices(rootIndex, d->roots) {
-        iRoot *root = d->roots[rootIndex];
+    iForIndices(rootIndex, d->base.roots) {
+        iRoot *root = d->base.roots[rootIndex];
         if (!root) continue;
         iWidget *winBar = findChild_Widget(root->widget, "winbar");
         updateTextCStr_LabelWidget(findChild_Widget(winBar, "winbar.max"),
@@ -1558,8 +1558,8 @@ void setSnap_MainWindow(iMainWindow *d, int snapMode) {
         const iBool wasVisible = isVisible_Widget(winBar);
         setFlags_Widget(winBar, hidden_WidgetFlag, d->place.snap == fullscreen_WindowSnap);
         if (newRect.size.x) {
-            SDL_SetWindowPosition(d->win, newRect.pos.x, newRect.pos.y);
-            SDL_SetWindowSize(d->win, newRect.size.x, newRect.size.y);
+            SDL_SetWindowPosition(d->base.win, newRect.pos.x, newRect.pos.y);
+            SDL_SetWindowSize(d->base.win, newRect.size.x, newRect.size.y);
             postCommand_App("window.resized");
         }
         if (wasVisible != isVisible_Widget(winBar)) {

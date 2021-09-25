@@ -190,11 +190,11 @@ static iString *serializePrefs_App_(const iApp *d) {
            a moment to animate to its maximized size. */
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         if (snap_MainWindow(d->window)) {
-            if (~SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MINIMIZED) {
+            if (~SDL_GetWindowFlags(d->window->base.win) & SDL_WINDOW_MINIMIZED) {
                 /* Save the actual visible window position, too, because snapped windows may
                    still be resized/moved without affecting normalRect. */
-                SDL_GetWindowPosition(d->window->win, &x, &y);
-                SDL_GetWindowSize(d->window->win, &w, &h);
+                SDL_GetWindowPosition(d->window->base.win, &x, &y);
+                SDL_GetWindowSize(d->window->base.win, &w, &h);
                 appendFormat_String(
                     str, "~window.setrect snap:%d width:%d height:%d coord:%d %d\n",
                     snap_MainWindow(d->window), w, h, x, y);

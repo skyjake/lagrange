@@ -96,21 +96,22 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
         }
         case WM_KEYUP: {
             if (winDown_[0] || winDown_[1]) {
+                iMainWindow *mw = as_MainWindow(window);
                 /* Emulate the default window snapping behavior. */
-                int snap = snap_Window(window);
+                int snap = snap_MainWindow(mw);
                 if (wp == VK_LEFT) {
                     snap &= ~(topBit_WindowSnap | bottomBit_WindowSnap);
-                    setSnap_Window(window,
-                                   snap == right_WindowSnap ? 0 : left_WindowSnap);
+                    setSnap_MainWindow(mw,
+                                       snap == right_WindowSnap ? 0 : left_WindowSnap);
                 }
                 else if (wp == VK_RIGHT) {
                     snap &= ~(topBit_WindowSnap | bottomBit_WindowSnap);
-                    setSnap_Window(window,
-                                   snap == left_WindowSnap ? 0 : right_WindowSnap);
+                    setSnap_MainWindow(mw,
+                                       snap == left_WindowSnap ? 0 : right_WindowSnap);
                 }
                 else if (wp == VK_UP) {
                     if (~snap & topBit_WindowSnap) {
-                        setSnap_Window(window,
+                        setSnap_MainWindow(mw,
                                        snap & bottomBit_WindowSnap ? snap & ~bottomBit_WindowSnap
                                        : snap == left_WindowSnap || snap == right_WindowSnap
                                            ? snap | topBit_WindowSnap
@@ -125,7 +126,7 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
                         postCommand_App("window.minimize");
                     }
                     else {
-                        setSnap_Window(window,
+                        setSnap_MainWindow(mw,
                                        snap == maximized_WindowSnap ? 0
                                        : snap & topBit_WindowSnap   ? snap & ~topBit_WindowSnap
                                        : snap == left_WindowSnap || snap == right_WindowSnap
@@ -143,20 +144,21 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
             break;            
         }
         case WM_NCLBUTTONDBLCLK: {
+            iMainWindow *mw = as_MainWindow(window);
             POINT point = { GET_X_LPARAM(msg->msg.win.lParam), 
                             GET_Y_LPARAM(msg->msg.win.lParam) };
             ScreenToClient(hwnd, &point);
             iInt2 pos = init_I2(point.x, point.y);
-            switch (hitTest_Window(window, pos)) {
+            switch (hitTest_MainWindow(mw, pos)) {
                 case SDL_HITTEST_DRAGGABLE:
                     window->ignoreClick = iTrue; /* avoid hitting something inside the window */
                     postCommandf_App("window.%s",
-                                     snap_Window(window) ? "restore" : "maximize toggle:1");
+                                     snap_MainWindow(mw) ? "restore" : "maximize toggle:1");
                     break;
                 case SDL_HITTEST_RESIZE_TOP:
                 case SDL_HITTEST_RESIZE_BOTTOM: {
                     window->ignoreClick = iTrue; /* avoid hitting something inside the window */
-                    setSnap_Window(window, yMaximized_WindowSnap);
+                    setSnap_MainWindow(mw, yMaximized_WindowSnap);
                     break;
                 }
             }
@@ -170,7 +172,7 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
             printf("%d,%d\n", point.x, point.y); fflush(stdout);
             ScreenToClient(hwnd, &point);
             iInt2 pos = init_I2(point.x, point.y);
-            if (hitTest_Window(window, pos) == SDL_HITTEST_DRAGGABLE) {
+            if (hitTest_MainWindow(as_MainWindow(window), pos) == SDL_HITTEST_DRAGGABLE) {
                 printf("released draggable\n"); fflush(stdout);
             }
             break;
