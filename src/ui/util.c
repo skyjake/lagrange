@@ -1034,11 +1034,18 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     }
     iRect winRect;
     SDL_Window *sdlWin = get_Window()->win;
-    SDL_GetWindowPosition(sdlWin, &winRect.pos.x, &winRect.pos.y);
-    SDL_GetWindowSize(sdlWin, &winRect.size.x, &winRect.size.y);
+    const float pixelRatio = get_Window()->pixelRatio;
+    iInt2 winPos;
+    SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
+    winRect = rootRect;
+    winRect.pos.x /= pixelRatio;
+    winRect.pos.y /= pixelRatio;
+    winRect.size.x /= pixelRatio;
+    winRect.size.y /= pixelRatio;
+    addv_I2(&winRect.pos, winPos);
     iRect visibleWinRect = intersect_Rect(winRect, displayRect);
     /* Only use a popup window if the menu can't fit inside the main window. */
-    if (height_Widget(d) > visibleWinRect.size.y && isUsingMenuPopupWindows_()) {
+    if (height_Widget(d) * pixelRatio > visibleWinRect.size.y && isUsingMenuPopupWindows_()) {
         if (postCommands) {
             postCommand_Widget(d, "menu.opened");
         }
@@ -1050,7 +1057,6 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
         iInt2 winPos;
         SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
-        const float pixelRatio = get_Window()->pixelRatio;
         iInt2 menuPos = add_I2(winPos,
                                divf_I2(sub_I2(windowCoord, divi_I2(gap2_UI, 2)), pixelRatio));
         /* Check display bounds. */ {
