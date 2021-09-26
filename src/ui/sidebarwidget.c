@@ -447,9 +447,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
                                { "---", 0, 0, NULL },
                                { add_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
-                               { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" },
+                               { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
                                { "---", 0, 0, NULL },
-                               { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" } },
+                               { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" } },
                17);
             break;
         }

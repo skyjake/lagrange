@@ -122,7 +122,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputBackground_ColorId, black_ColorId);
             copy_(uiInputBackgroundFocused_ColorId, black_ColorId);
             copy_(uiInputText_ColorId, gray75_ColorId);
-            copy_(uiInputTextFocused_ColorId, white_ColorId);
+            set_Color(uiInputTextFocused_ColorId, mix_Color(get_Color(white_ColorId),
+                                                            get_Color(accentHi), 0.15f));
             copy_(uiInputFrame_ColorId, gray25_ColorId);
             copy_(uiInputFrameHover_ColorId, accentHi);
             copy_(uiInputFrameFocused_ColorId, accentLo);
@@ -175,7 +176,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputText_ColorId, gray75_ColorId);
             //copy_(uiInputTextFocused_ColorId, white_ColorId);
             set_Color(uiInputTextFocused_ColorId, mix_Color(get_Color(white_ColorId),
-                                                            get_Color(altAccentHi), 0.15f));
+                                                            get_Color(accentHi), 0.15f));
             copy_(uiInputFrame_ColorId, uiInputBackground_ColorId);
             copy_(uiInputFrameHover_ColorId, accentHi);
             copy_(uiInputFrameFocused_ColorId, accentLo);

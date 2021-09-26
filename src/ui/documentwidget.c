@@ -4413,7 +4413,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                         ? escape_Color(fg)
                         : escape_Color(linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
                     showImage || showAudio
-                        ? format_CStr(showImage ? " %s \U0001f5bb" : " %s \U0001f3b5",
+                        ? format_CStr(showImage ? " %s " photo_Icon : " %s \U0001f3b5",
                                       cstr_Lang(showImage ? "link.hint.image" : "link.hint.audio"))
                         : "");
             }
