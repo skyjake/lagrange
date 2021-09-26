@@ -3042,3 +3042,16 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
     setupSheetTransition_Mobile(dlg, iTrue);
     return dlg;
 }
+
+void init_PerfTimer(iPerfTimer *d) {
+    d->ticks = SDL_GetPerformanceCounter();
+}
+
+uint64_t elapsedMicroseconds_PerfTimer(const iPerfTimer *d) {
+    const uint64_t now = SDL_GetPerformanceCounter();
+    return (uint64_t) (((double) (now - d->ticks)) / (double) SDL_GetPerformanceFrequency() * 1.0e6);
+}
+
+void print_PerfTimer(const iPerfTimer *d, const char *msg) {
+    printf("[%s] %llu \u03bcs\n", msg, (unsigned long long) elapsedMicroseconds_PerfTimer(d));
+}

@@ -316,3 +316,19 @@ iWidget *   makeTranslation_Widget      (iWidget *parent);
 
 const char *    languageId_String   (const iString *menuItemLabel);
 int             languageIndex_CStr  (const char *langId);
+
+/*-----------------------------------------------------------------------------------------------*/
+
+iDeclareType(PerfTimer)
+    
+struct Impl_PerfTimer {
+    uint64_t ticks;    
+};
+
+void        init_PerfTimer                  (iPerfTimer *);
+uint64_t    elapsedMicroseconds_PerfTimer   (const iPerfTimer *);
+void        print_PerfTimer                 (const iPerfTimer *, const char *msg);
+
+#define start_PerfTimer(name) iPerfTimer _##name##_PerfTimer; init_PerfTimer(&_##name##_PerfTimer)
+#define stop_PerfTimer(name)  print_PerfTimer(&_##name##_PerfTimer, #name)
+
