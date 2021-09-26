@@ -3036,7 +3036,11 @@ iMainWindow *mainWindow_App(void) {
 
 void closePopups_App(void) {
     iApp *d = &app_;
+    const uint32_t now = SDL_GetTicks();
     iConstForEach(PtrArray, i, &d->popupWindows) {
-        postCommand_Root(((const iWindow *) i.ptr)->roots[0], "cancel");
+        const iWindow *win = i.ptr;
+        if (now - win->focusGainedAt > 200) {
+            postCommand_Root(((const iWindow *) i.ptr)->roots[0], "cancel");
+        }
     }
 }

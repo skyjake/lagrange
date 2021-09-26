@@ -563,11 +563,12 @@ static void draw_ListWidget_(const iListWidget *d) {
     }
     setClip_Paint(&p, bounds_Widget(w));
     draw_VisBuf(d->visBuf, addY_I2(topLeft_Rect(bounds), -scrollY), ySpan_Rect(bounds));
-    if (d->dragItem != iInvalidPos) {
-        const iInt2 mousePos = mouseCoord_Window(get_Window(), 0);
+    const iInt2 mousePos = mouseCoord_Window(get_Window(), 0);
+    if (d->dragItem != iInvalidPos && contains_Rect(bounds, mousePos)) {
         iInt2 pos = add_I2(mousePos, d->dragOrigin);
         const iListItem *item = constAt_PtrArray(&d->items, d->dragItem);
-        const iRect itemRect = { init_I2(left_Rect(bounds), pos.y), init_I2(d->visBuf->texSize.x, d->itemHeight) };
+        const iRect itemRect = { init_I2(left_Rect(bounds), pos.y),
+                                 init_I2(d->visBuf->texSize.x, d->itemHeight) };
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         iBool dstOnto;
         const size_t dstIndex = resolveDragDestination_ListWidget_(d, mousePos, &dstOnto);

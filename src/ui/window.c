@@ -123,6 +123,7 @@ static iMenuItem bookmarksMenuItems_[] = {
     { "${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
     { "---", 0, 0, NULL },
+    { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
     { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
     { "---", 0, 0, NULL },
     { "${macos.menu.bookmarks.list}", 0, 0, "open url:about:bookmarks" },
@@ -130,7 +131,6 @@ static iMenuItem bookmarksMenuItems_[] = {
     { "${macos.menu.bookmarks.bytime}", 0, 0, "open url:about:bookmarks?created" },
     { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
     { "---", 0, 0, NULL },
-    { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
     { "---", 0, 0, NULL },
     { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
     { "${menu.feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
@@ -369,7 +369,7 @@ SDL_HitTestResult hitTest_MainWindow(const iMainWindow *d, iInt2 pos) {
 }
 #endif
 
-iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
+void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
     flags |= SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
     if (d->type == main_WindowType) {
         flags |= SDL_WINDOW_RESIZABLE;
@@ -397,14 +397,23 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
         fprintf(stderr, "[window] failed to create window: %s\n", SDL_GetError());
         exit(-3);
     }
+    if (forceSoftwareRender_App()) {
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");        
+    }
     d->render = SDL_CreateRenderer(
         d->win,
         -1,
         (forceSoftwareRender_App() ? SDL_RENDERER_SOFTWARE : SDL_RENDERER_ACCELERATED) |
             SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
     if (!d->render) {
-        fprintf(stderr, "[window] failed to create renderer: %s\n", SDL_GetError());
-        exit(-4);
+        /* Try a basic software rendering instead. */
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
+        d->render = SDL_CreateRenderer(d->win, -1, SDL_RENDERER_SOFTWARE);
+        if (!d->render) {
+            /* This shouldn't fail.-..? */
+            fprintf(stderr, "[window] failed to create renderer: %s\n", SDL_GetError());
+            exit(-4);
+        }
     }
 #if defined(LAGRANGE_ENABLE_CUSTOM_FRAME)
     if (type_Window(d) == main_WindowType && prefs_App()->customFrame) {
@@ -413,7 +422,6 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
         SDL_SetWindowResizable(d->win, SDL_TRUE);
     }
 #endif
-    return iTrue;
 }
 
 static SDL_Surface *loadImage_(const iBlock *data, int resized) {
@@ -445,25 +453,23 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->isInvalidated = iFalse; /* set when posting event, to avoid repeated events */
     d->isMouseInside = iTrue;
     d->ignoreClick   = iFalse;
-    d->focusGainedAt = 0;
+    d->focusGainedAt = SDL_GetTicks();
     d->presentTime   = 0.0;
     d->frameTime     = SDL_GetTicks();
     d->keyRoot       = NULL;
     d->borderShadow  = NULL;
     iZap(d->roots);
     iZap(d->cursors);
-    /* First try SDL's default renderer that should be the best option. */
-    if (forceSoftwareRender_App() || !create_Window_(d, rect, flags)) {
+    create_Window_(d, rect, flags);
         /* No luck, maybe software only? This should always work as long as there is a display. */
-        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
-        flags &= ~SDL_WINDOW_OPENGL;
-        start_PerfTimer(create_Window_);
-        if (!create_Window_(d, rect, flags)) {
-            fprintf(stderr, "Error when creating window: %s\n", SDL_GetError());
-            exit(-2);
-        }
-        stop_PerfTimer(create_Window_);
-    }
+    //    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
+//        flags &= ~SDL_WINDOW_OPENGL;
+//        start_PerfTimer(create_Window_);
+//        if (!create_Window_(d, rect, flags)) {
+//            exit(-2);
+//        }
+//        stop_PerfTimer(create_Window_);
+//    }
 //    start_PerfTimer(setPos);
 //    if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
 //        SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
@@ -482,7 +488,9 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->displayScale = displayScale_Window_(d);
     d->uiScale      = initialUiScale_;
     /* TODO: Ratios, scales, and metrics must be window-specific, not global. */
-    setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
+    if (d->type == main_WindowType) {
+        setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
+    }
     d->text = new_Text(d->render);
 }
 
@@ -519,9 +527,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     uint32_t flags = 0;
 #if defined (iPlatformAppleDesktop)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
-    if (shouldDefaultToMetalRenderer_MacOS()) {
-        flags |= SDL_WINDOW_METAL;
-    }
+    flags |= shouldDefaultToMetalRenderer_MacOS() ? SDL_WINDOW_METAL : SDL_WINDOW_OPENGL;
 #elif defined (iPlatformAppleMobile)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
     flags |= SDL_WINDOW_METAL;
@@ -1632,7 +1638,10 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
     start_PerfTimer(newPopup_Window);
     iPerfTimer pt; init_PerfTimer(&pt);
     const iBool oldSw = forceSoftwareRender_App();
+    /* On macOS, SDL seems to want to not use HiDPI with software rendering. */
+#if !defined (iPlatformApple)
     setForceSoftwareRender_App(iTrue);
+#endif
     iWindow *win =
         new_Window(popup_WindowType,
                    (iRect){ screenPos, divf_I2(rootWidget->rect.size, get_Window()->pixelRatio) },

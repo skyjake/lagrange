@@ -1022,7 +1022,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
-    arrange_Widget(d);   
+    arrange_Widget(d); /* need to know the height */
 #if defined (LAGRANGE_ENABLE_POPUP_MENUS)
     /* Determine total display bounds where the popup may appear. */
     iRect displayRect = zero_Rect(); 
@@ -1065,6 +1065,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         }
         iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
         SDL_SetWindowTitle(win->win, "Menu");
+        arrange_Widget(d);
         addPopup_App(win);
         SDL_ShowWindow(win->win);
         draw_Window(win);
