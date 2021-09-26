@@ -244,6 +244,8 @@ void init_Root(iRoot *d) {
 
 void deinit_Root(iRoot *d) {
     iReleasePtr(&d->widget);
+    delete_PtrArray(d->onTop);
+    delete_PtrSet(d->pendingDestruction);
 }
 
 void setCurrent_Root(iRoot *root) {
@@ -284,7 +286,7 @@ void destroyPending_Root(iRoot *d) {
         if (widget->parent) {
             removeChild_Widget(widget->parent, widget);
         }
-        iAssert(widget->parent == NULL);        
+        iAssert(widget->parent == NULL);
         iRelease(widget);
         remove_PtrSetIterator(&i);
     }

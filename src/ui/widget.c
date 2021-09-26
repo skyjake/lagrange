@@ -105,7 +105,12 @@ static void printInfo_Widget_(const iWidget *);
 
 void releaseChildren_Widget(iWidget *d) {
     iForEach(ObjectList, i, d->children) {
-        ((iWidget *) i.object)->parent = NULL; /* the actual reference being held */
+        iWidget *child = i.object;
+        child->parent = NULL; /* the actual reference being held */
+        if (child->flags & keepOnTop_WidgetFlag) {
+            removeOne_PtrArray(onTop_Root(child->root), child);
+            child->flags &= ~keepOnTop_WidgetFlag;
+        }
     }
     iReleasePtr(&d->children);
 }
@@ -318,6 +323,13 @@ void setCommandHandler_Widget(iWidget *d, iBool (*handler)(iWidget *, const char
 }
 
 void setRoot_Widget(iWidget *d, iRoot *root) {
+    if (d->flags & keepOnTop_WidgetFlag) {
+        iAssert(indexOf_PtrArray(onTop_Root(root), d) == iInvalidPos);
+        /* Move it over the new root's onTop list. */
+        removeOne_PtrArray(onTop_Root(d->root), d);
+        iAssert(indexOf_PtrArray(onTop_Root(d->root), d) == iInvalidPos);
+        pushBack_PtrArray(onTop_Root(root), d);
+    }
     d->root = root;
     iForEach(ObjectList, i, d->children) {
         setRoot_Widget(i.object, root);
@@ -1667,7 +1679,13 @@ iAny *removeChild_Widget(iWidget *d, iAnyObject *child) {
         }
     }
     iAssert(found);
-    ((iWidget *) child)->parent = NULL;
+    iWidget *childWidget = child;
+//    if (childWidget->flags & keepOnTop_WidgetFlag) {
+//        removeOne_PtrArray(onTop_Root(childWidget->root), childWidget);
+//        iAssert(indexOf_PtrArray(onTop_Root(childWidget->root), childWidget) == iInvalidPos);
+//    }
+//    printf("%s:%d [%p] parent = NULL\n", __FILE__, __LINE__, d);
+    childWidget->parent = NULL;
     postRefresh_App();
     return child;
 }

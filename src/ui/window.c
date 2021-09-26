@@ -1597,7 +1597,7 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
                    SDL_WINDOW_POPUP_MENU |
                    SDL_WINDOW_SKIP_TASKBAR);
 #if defined (iPlatformAppleDesktop)
-    hideTitleBar_MacOS(win); /* make it a borderless window */
+    hideTitleBar_MacOS(win); /* make it a borderless window, but retain shadow */
 #endif
     iRoot *root   = new_Root();
     win->roots[0] = root;

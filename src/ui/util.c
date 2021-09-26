@@ -1028,6 +1028,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
         iRoot *oldRoot = current_Root();
         setFlags_Widget(d, keepOnTop_WidgetFlag, iFalse);
         setUserData_Object(d, parent_Widget(d));
+        iAssert(userData_Object(d));
         removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
         const float pixelRatio = get_Window()->pixelRatio;
         iInt2 menuPos = add_I2(get_MainWindow()->place.normalRect.pos,
@@ -1040,10 +1041,9 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
             menuPos.x = iMin(menuPos.x, displayRect.x + displayRect.w - menuSize.x);
             menuPos.y = iMin(menuPos.y, displayRect.y + displayRect.h - menuSize.y);
         }
-        //        SDL_GetGlobalMouseState(&mousePos.x, &mousePos.y);
-        iWindow *win = newPopup_Window(menuPos, d);
+        iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
         SDL_SetWindowTitle(win->win, "Menu");
-        addPopup_App(win); /* window takes the widget */
+        addPopup_App(win);
         SDL_ShowWindow(win->win);
         draw_Window(win);
         setCurrent_Window(mainWindow_App());
