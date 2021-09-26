@@ -43,7 +43,7 @@ struct Impl_Prefs {
     /* Window */
     iString          uiLanguage;
     iBool            useSystemTheme;
-    enum iColorTheme theme;
+    enum iColorTheme theme;    
     enum iColorAccent accent;
     iBool            customFrame; /* when LAGRANGE_ENABLE_CUSTOM_FRAME is defined */
     iBool            retainWindowSize;

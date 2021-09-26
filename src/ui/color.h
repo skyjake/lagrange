@@ -36,6 +36,7 @@ enum iColorTheme {
 enum iColorAccent {
     cyan_ColorAccent,
     orange_ColorAccent,
+    system_ColorAccent,
     max_ColorAccent
 };
 
@@ -251,3 +252,5 @@ void            setThemePalette_Color   (enum iColorTheme theme);
 iColor          ansiForeground_Color    (iRangecc escapeSequence, int fallback);
 const char *    escape_Color            (int color);
 enum iColorId   parseEscape_Color       (const char *cstr, const char **endp);
+
+iColor          systemAccent_Color      (void); /* platform-specific impl */

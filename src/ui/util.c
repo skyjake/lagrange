@@ -2416,6 +2416,10 @@ iWidget *makePreferences_Widget(void) {
         iWidget *accent = new_Widget(); {
             setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.teal}", "accent.set arg:0"))), "prefs.accent.0");
             setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.orange}", "accent.set arg:1"))), "prefs.accent.1");
+#if defined (iPlatformApple)
+            /* TODO: Needs some tweaking. */
+//            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.system}", "accent.set arg:2"))), "prefs.accent.2");
+#endif
         }
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.accent}")));
         addChildFlags_Widget(values, iClob(accent), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);

@@ -684,3 +684,11 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
     }
 }
 
+iColor systemAccent_Color(void) {
+    NSColor *accent = [[NSColor controlAccentColor] colorUsingColorSpace:
+                                                        [NSColorSpace deviceRGBColorSpace]];
+    return (iColor){ iClamp([accent redComponent]   * 255, 0, 255),
+                     iClamp([accent greenComponent] * 255, 0, 255),
+                     iClamp([accent blueComponent]  * 255, 0, 255),
+                     255 };
+}

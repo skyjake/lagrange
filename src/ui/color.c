@@ -81,6 +81,11 @@ iLocalDef void copy_(enum iColorId dst, enum iColorId src) {
 void setThemePalette_Color(enum iColorTheme theme) {
     const iPrefs *prefs = prefs_App();
     memcpy(uiPalette_, isDark_ColorTheme(theme) ? darkPalette_ : lightPalette_, sizeof(darkPalette_));
+    if (prefs->accent == system_ColorAccent) {
+        iColor systemColor = systemAccent_Color();
+        memcpy(&uiPalette_[cyan_ColorId], &systemColor, sizeof(iColor));
+        memcpy(&uiPalette_[orange_ColorId], &systemColor, sizeof(iColor));
+    }
     const int accentHi    = (prefs->accent == cyan_ColorAccent ? cyan_ColorId : orange_ColorId);
     const int accentLo    = (prefs->accent == cyan_ColorAccent ? teal_ColorId : brown_ColorId);
     const int altAccentHi = (prefs->accent == cyan_ColorAccent ? orange_ColorId : cyan_ColorId);
@@ -903,3 +908,9 @@ iBool loadPalette_Color(const char *path) {
     iRelease(f);
     return wasLoaded;
 }
+
+#if !defined (iPlatformAppleDesktop)
+iColor systemAccent_Color(void) {
+    return (iColor){ 255, 255, 255, 255 };
+}
+#endif
