@@ -673,8 +673,9 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
     [menu release];
     [menuCommands release];
     /* The right mouse button has now been released so let SDL know about it. The button up event
-       was consumed by the popup menu so it got never passed to SDL. */
-    SEL sel = NSSelectorFromString(@"syncMouseButtonState"); /* custom method */
+       was consumed by the popup menu so it got never passed to SDL. Same goes for possible
+       keyboard modifiers that were held down when the menu appeared. */
+    SEL sel = NSSelectorFromString(@"syncMouseButtonAndKeyboardModifierState"); /* custom method */
     if ([[nsWindow delegate] respondsToSelector:sel]) {
         NSInvocation *call = [NSInvocation invocationWithMethodSignature:
                               [NSMethodSignature signatureWithObjCTypes:"v@:"]];

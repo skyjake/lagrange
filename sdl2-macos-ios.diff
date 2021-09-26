@@ -37,31 +37,39 @@ index e9d832d64..4cfa3624b 100644
          if ([event isDirectionInvertedFromDevice] == YES) {
              direction = SDL_MOUSEWHEEL_FLIPPED;
 diff --git a/src/video/cocoa/SDL_cocoawindow.h b/src/video/cocoa/SDL_cocoawindow.h
-index 37bec665e..5e3a3995f 100644
+index 37bec665e..9b2f0510c 100644
 --- a/src/video/cocoa/SDL_cocoawindow.h
 +++ b/src/video/cocoa/SDL_cocoawindow.h
 @@ -109,6 +109,8 @@ typedef enum
  /* Touch event handling */
  -(void) handleTouches:(NSTouchPhase) phase withEvent:(NSEvent*) theEvent;
  
-+-(void) syncMouseButtonState;
++-(void) syncMouseButtonAndKeyboardModifierState;
 +
  @end
  /* *INDENT-ON* */
  
 diff --git a/src/video/cocoa/SDL_cocoawindow.m b/src/video/cocoa/SDL_cocoawindow.m
-index 7a1446f09..86db35600 100644
+index 7a1446f09..a6da2f9d7 100644
 --- a/src/video/cocoa/SDL_cocoawindow.m
 +++ b/src/video/cocoa/SDL_cocoawindow.m
-@@ -1073,6 +1073,13 @@ - (void)otherMouseDown:(NSEvent *)theEvent
+@@ -1073,6 +1073,21 @@ - (void)otherMouseDown:(NSEvent *)theEvent
      [self mouseDown:theEvent];
  }
  
-+- (void)syncMouseButtonState {
++- (void)syncMouseButtonAndKeyboardModifierState {
 +    SDL_Mouse *mouse = SDL_GetMouse();
 +    if (mouse) {
 +        mouse->buttonstate = SDL_GetGlobalMouseState(NULL, NULL);
 +    }
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LGUI);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RGUI);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LSHIFT);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RSHIFT);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LCTRL);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RCTRL);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LALT);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RALT);
 +}
 +
  - (void)mouseUp:(NSEvent *)theEvent
