@@ -538,7 +538,9 @@ enum iColorId removeColorEscapes_String(iString *d) {
     return color;
 }
 
-static void makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem *items, size_t n) {
+// returns the selected item, if any
+static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem *items, size_t n) {
+    NSMenuItem *selectedItem = nil;
     for (size_t i = 0; i < n && items[i].label; ++i) {
         const char *label = translateCStr_Lang(items[i].label);
         if (equal_CStr(label, "---")) {
@@ -569,6 +571,7 @@ static void makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem
             [item setTarget:commands];
             if (isChecked) {
                 [item setState:NSControlStateValueOn];
+                selectedItem = item;
             }
             [item setEnabled:!isDisabled];
             int key   = items[i].key;
@@ -586,6 +589,7 @@ static void makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem
             setShortcut_NSMenuItem_(item, key, kmods);
         }
     }
+    return selectedItem;
 }
 
 void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
@@ -661,7 +665,7 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
     windowCoord.y = window->size.y - windowCoord.y;
     windowCoord = divf_I2(windowCoord, window->pixelRatio);
     NSPoint screenPoint = [nsWindow convertPointToScreen:(CGPoint){ windowCoord.x, windowCoord.y }];
-    makeMenuItems_(menu, menuCommands, items, n);
+    NSMenuItem *selectedItem = makeMenuItems_(menu, menuCommands, items, n);
     [menuCommands setSource:source];
     if (isCentered) {
         NSSize menuSize = [menu size];
@@ -669,7 +673,7 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
         screenPoint.y += menuSize.height / 2;
     }
     [menu setAutoenablesItems:NO];
-    [menu popUpMenuPositioningItem:nil atLocation:screenPoint inView:nil];
+    [menu popUpMenuPositioningItem:selectedItem atLocation:screenPoint inView:nil];
     [menu release];
     [menuCommands release];
     /* The right mouse button has now been released so let SDL know about it. The button up event
