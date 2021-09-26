@@ -597,10 +597,10 @@ static void load_Feeds_(iFeeds *d) {
                         set_String(&entry->url, canonicalUrl_String(&entry->url));
                         set_String(&entry->title, title);
                         entry->isHeading = isHeadingEntry_FeedEntry_(entry);
-                        if (entry->isHeading) {
-                            printf("[Feeds] src:%d url:{%s}\n", entry->bookmarkId,
-                                   cstr_String(&entry->url));
-                        }
+//                        if (entry->isHeading) {
+//                            printf("[Feeds] src:%d url:{%s}\n", entry->bookmarkId,
+//                                   cstr_String(&entry->url));
+//                        }
                         insert_SortedArray(&d->entries, &entry);
                     }
                     delete_String(title);
