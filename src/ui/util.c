@@ -855,7 +855,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
 }
 
 void openMenu_Widget(iWidget *d, iInt2 windowCoord) {
-    openMenuFlags_Widget(d, windowCoord, iTrue);
+    openMenuFlags_Widget(d, windowCoord, postCommands_MenuOpenFlags);
 }
 
 static void updateMenuItemFonts_Widget_(iWidget *d) {
@@ -1002,7 +1002,8 @@ void releaseNativeMenu_Widget(iWidget *d) {
 #endif
 }
 
-void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
+void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
+    const iBool postCommands = (menuOpenFlags & postCommands_MenuOpenFlags) != 0;
 #if defined (iHaveNativeContextMenus)
     const iArray *items = userData_Object(d);
     iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
@@ -1020,6 +1021,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
     processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
+    setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     if (isUsingMenuPopupWindows_()) {
         if (postCommands) {
             postCommand_Widget(d, "menu.opened");
@@ -1030,12 +1032,21 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
         setUserData_Object(d, parent_Widget(d));
         iAssert(userData_Object(d));
         removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
+        SDL_Window *sdlWin = get_Window()->win;
+        iInt2 winPos;
+        SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
+//        const iRect winRect =
         const float pixelRatio = get_Window()->pixelRatio;
-        iInt2 menuPos = add_I2(get_MainWindow()->place.normalRect.pos,
+        iInt2 menuPos = add_I2(winPos,
                                divf_I2(sub_I2(windowCoord, divi_I2(gap2_UI, 2)), pixelRatio));
         arrange_Widget(d);
         /* Check display bounds. */ {
             const iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);
+            if (menuOpenFlags & center_MenuOpenFlags) {
+                iInt2 winSize;
+                SDL_GetWindowSize(sdlWin, &winSize.x, &winSize.y);
+                menuPos = sub_I2(add_I2(winPos, divi_I2(winSize, 2)), divi_I2(menuSize, 2));
+            }
             SDL_Rect displayRect;
             SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(get_Window()->win), &displayRect);
             menuPos.x = iMin(menuPos.x, displayRect.x + displayRect.w - menuSize.x);
@@ -1051,7 +1062,6 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
         return;
     }
     raise_Widget(d);
-    setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     if (isPortraitPhone) {
         setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, iFalse);
         setFlags_Widget(d, resizeWidthOfChildren_WidgetFlag | drawBackgroundToBottom_WidgetFlag, iTrue);
@@ -1106,7 +1116,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
         postCommand_Widget(d, "menu.opened");
     }
     setupMenuTransition_Mobile(d, iTrue);
-#endif
+#endif    
 }
 
 void closeMenu_Widget(iWidget *d) {

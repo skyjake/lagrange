@@ -226,10 +226,15 @@ struct Impl_MenuItem {
     };
 };
 
+enum iMenuOpenFlags {
+    postCommands_MenuOpenFlags = iBit(1),
+    center_MenuOpenFlags       = iBit(2),
+};
+
 iWidget *       makeMenu_Widget                 (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
 void            makeMenuItems_Widget            (iWidget *menu, const iMenuItem *items, size_t n);
 void            openMenu_Widget                 (iWidget *, iInt2 windowCoord);
-void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, iBool postCommands);
+void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, int flags);
 void            closeMenu_Widget                (iWidget *);
 void            releaseNativeMenu_Widget        (iWidget *);
 

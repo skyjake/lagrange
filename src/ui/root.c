@@ -324,8 +324,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     else if (equal_Command(cmd, "splitmenu.open")) {
         setFocus_Widget(NULL);
         iWidget *menu = findWidget_Root("splitmenu");
-        openMenu_Widget(menu, zero_I2());
-        setPos_Widget(menu, sub_I2(divi_I2(size_Root(get_Root()), 2), divi_I2(menu->rect.size, 2)));
+        openMenuFlags_Widget(menu, zero_I2(), postCommands_MenuOpenFlags | center_MenuOpenFlags);
         return iTrue;
     }
     else if (equal_Command(cmd, "contextclick")) {
