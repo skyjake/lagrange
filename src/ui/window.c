@@ -272,7 +272,7 @@ static float displayScale_Window_(const iWindow *d) {
         if (envDpi > 0) {
             return ((float) envDpi) / baseDPI_Window;
         }
-        fprintf(stderr, "[Window] WARNING: failed to parse LAGRANGE_OVERRIDE_DPI='%s', "
+        fprintf(stderr, "[window] WARNING: failed to parse LAGRANGE_OVERRIDE_DPI='%s', "
                 "ignoring it\n", LAGRANGE_OVERRIDE_DPI);
         /* To avoid showing the warning multiple times, overwrite
          LAGRANGE_OVERRIDE_DPI with the empty string. */
@@ -378,13 +378,35 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
             /* We are drawing a custom frame so hide the default one. */
             flags |= SDL_WINDOW_BORDERLESS;
         }
-#endif
+#endif       
     }
+#if 0
     if (SDL_CreateWindowAndRenderer(
             width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
         return iFalse;
     }
-#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
+#endif
+    const iBool setPos = left_Rect(rect) >= 0 || top_Rect(rect) >= 0;
+    d->win = SDL_CreateWindow("",
+                              setPos ? left_Rect(rect) : SDL_WINDOWPOS_CENTERED,
+                              setPos ? top_Rect(rect) : SDL_WINDOWPOS_CENTERED,
+                              width_Rect(rect),
+                              height_Rect(rect),
+                              flags);
+    if (!d->win) {
+        fprintf(stderr, "[window] failed to create window: %s\n", SDL_GetError());
+        exit(-3);
+    }
+    d->render = SDL_CreateRenderer(
+        d->win,
+        -1,
+        (forceSoftwareRender_App() ? SDL_RENDERER_SOFTWARE : SDL_RENDERER_ACCELERATED) |
+            SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
+    if (!d->render) {
+        fprintf(stderr, "[window] failed to create renderer: %s\n", SDL_GetError());
+        exit(-4);
+    }
+#if defined(LAGRANGE_ENABLE_CUSTOM_FRAME)
     if (type_Window(d) == main_WindowType && prefs_App()->customFrame) {
         /* Register a handler for window hit testing (drag, resize). */
         SDL_SetWindowHitTest(d->win, hitTest_MainWindow_, d);
@@ -434,15 +456,27 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     if (forceSoftwareRender_App() || !create_Window_(d, rect, flags)) {
         /* No luck, maybe software only? This should always work as long as there is a display. */
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
-        if (!create_Window_(d, rect, 0)) {
+        flags &= ~SDL_WINDOW_OPENGL;
+        start_PerfTimer(create_Window_);
+        if (!create_Window_(d, rect, flags)) {
             fprintf(stderr, "Error when creating window: %s\n", SDL_GetError());
             exit(-2);
         }
+        stop_PerfTimer(create_Window_);
     }
-    if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
-        SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
-    }
+//    start_PerfTimer(setPos);
+//    if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
+//        SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
+//    }
+//    stop_PerfTimer(setPos);
     SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);
+    /* Renderer info. */ {
+        SDL_RendererInfo info;
+        SDL_GetRendererInfo(d->render, &info);
+        printf("[window] renderer: %s%s\n",
+               info.name,
+               info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");        
+    }
     drawBlank_Window_(d);
     d->pixelRatio   = pixelRatio_Window_(d); /* point/pixel conversion */
     d->displayScale = displayScale_Window_(d);
@@ -485,10 +519,16 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     uint32_t flags = 0;
 #if defined (iPlatformAppleDesktop)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
+    if (shouldDefaultToMetalRenderer_MacOS()) {
+        flags |= SDL_WINDOW_METAL;
+    }
 #elif defined (iPlatformAppleMobile)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
+    flags |= SDL_WINDOW_METAL;
 #else
-    flags |= SDL_WINDOW_OPENGL;
+    if (!forceSoftwareRender_App()) {
+        flags |= SDL_WINDOW_OPENGL;
+    }
 #endif
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
     init_Window(&d->base, main_WindowType, rect, flags);
@@ -512,9 +552,6 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->base.render, &info);
         isOpenGLRenderer_ = !iCmpStr(info.name, "opengl");
-        printf("[window] renderer: %s%s\n",
-               info.name,
-               info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
 #if !defined(NDEBUG)
         printf("[window] max texture size: %d x %d\n",
                info.max_texture_width,
@@ -1592,6 +1629,10 @@ int snap_MainWindow(const iMainWindow *d) {
 /*----------------------------------------------------------------------------------------------*/
 
 iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
+    start_PerfTimer(newPopup_Window);
+    iPerfTimer pt; init_PerfTimer(&pt);
+    const iBool oldSw = forceSoftwareRender_App();
+    setForceSoftwareRender_App(iTrue);
     iWindow *win =
         new_Window(popup_WindowType,
                    (iRect){ screenPos, divf_I2(rootWidget->rect.size, get_Window()->pixelRatio) },
@@ -1610,5 +1651,7 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
     root->widget  = rootWidget;
     root->window  = win;
     setRoot_Widget(rootWidget, root);
+    setForceSoftwareRender_App(oldSw);
+    stop_PerfTimer(newPopup_Window);
     return win;
 }

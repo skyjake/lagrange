@@ -104,6 +104,7 @@ iDocumentWidget *   document_Root       (iRoot *);
 
 const iPrefs *      prefs_App           (void);
 iBool               forceSoftwareRender_App(void);
+void                setForceSoftwareRender_App(iBool sw);
 enum iColorTheme    colorTheme_App      (void);
 const iString *     schemeProxy_App     (iRangecc scheme);
 iBool               willUseProxy_App    (const iRangecc scheme);

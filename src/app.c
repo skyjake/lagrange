@@ -1497,6 +1497,10 @@ iBool forceSoftwareRender_App(void) {
     return iFalse;
 }
 
+void setForceSoftwareRender_App(iBool sw) {
+    app_.forceSoftwareRender = sw;    
+}
+
 enum iColorTheme colorTheme_App(void) {
     return app_.prefs.theme;
 }
