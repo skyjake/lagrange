@@ -327,6 +327,15 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     unlock_Mutex(d->mtx);
 }
 
+static int maxOrder_Bookmarks_(const iBookmarks *d) {
+    int ord = 0;
+    iConstForEach(Hash, i, &d->bookmarks) {
+        const iBookmark *bm = (const iBookmark *) i.value;
+        ord = iMax(ord, bm->order);
+    }
+    return ord;
+}
+
 uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, const iString *tags,
                        iChar icon) {
     lock_Mutex(d->mtx);
@@ -340,6 +349,7 @@ uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, 
     }
     bm->icon = icon;
     initCurrent_Time(&bm->when);
+    bm->order = maxOrder_Bookmarks_(d) + 1; /* Last in lists. */
     insert_Bookmarks_(d, bm);
     unlock_Mutex(d->mtx);
     return id_Bookmark(bm);
