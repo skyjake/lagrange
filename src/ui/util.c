@@ -1022,7 +1022,23 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
-    if (isUsingMenuPopupWindows_()) {
+    arrange_Widget(d);   
+#if defined (LAGRANGE_ENABLE_POPUP_MENUS)
+    /* Determine total display bounds where the popup may appear. */
+    iRect displayRect = zero_Rect(); 
+    for (int i = 0; i < SDL_GetNumVideoDisplays(); i++) {
+        SDL_Rect dispBounds;
+        SDL_GetDisplayBounds(i, &dispBounds);
+        displayRect = union_Rect(
+            displayRect, init_Rect(dispBounds.x, dispBounds.y, dispBounds.w, dispBounds.h));
+    }
+    iRect winRect;
+    SDL_Window *sdlWin = get_Window()->win;
+    SDL_GetWindowPosition(sdlWin, &winRect.pos.x, &winRect.pos.y);
+    SDL_GetWindowSize(sdlWin, &winRect.size.x, &winRect.size.y);
+    iRect visibleWinRect = intersect_Rect(winRect, displayRect);
+    /* Only use a popup window if the menu can't fit inside the main window. */
+    if (height_Widget(d) > visibleWinRect.size.y && isUsingMenuPopupWindows_()) {
         if (postCommands) {
             postCommand_Widget(d, "menu.opened");
         }
@@ -1032,27 +1048,17 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         setUserData_Object(d, parent_Widget(d));
         iAssert(userData_Object(d));
         removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
-        SDL_Window *sdlWin = get_Window()->win;
         iInt2 winPos;
         SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
-//        const iRect winRect =
         const float pixelRatio = get_Window()->pixelRatio;
         iInt2 menuPos = add_I2(winPos,
                                divf_I2(sub_I2(windowCoord, divi_I2(gap2_UI, 2)), pixelRatio));
-        arrange_Widget(d);
         /* Check display bounds. */ {
             const iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);
             if (menuOpenFlags & center_MenuOpenFlags) {
                 iInt2 winSize;
                 SDL_GetWindowSize(sdlWin, &winSize.x, &winSize.y);
                 menuPos = sub_I2(add_I2(winPos, divi_I2(winSize, 2)), divi_I2(menuSize, 2));
-            }
-            iRect displayRect = zero_Rect();
-            for (int i = 0; i < SDL_GetNumVideoDisplays(); i++) {
-                SDL_Rect dispBounds;
-                SDL_GetDisplayBounds(i, &dispBounds);
-                displayRect = union_Rect(
-                    displayRect, init_Rect(dispBounds.x, dispBounds.y, dispBounds.w, dispBounds.h));
             }
             menuPos.x = iMin(menuPos.x, right_Rect(displayRect) - menuSize.x);
             menuPos.y = iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y);
@@ -1066,6 +1072,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         setCurrent_Root(oldRoot);
         return;
     }
+#endif
     raise_Widget(d);
     if (isPortraitPhone) {
         setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, iFalse);
@@ -1134,9 +1141,8 @@ void closeMenu_Widget(iWidget *d) {
     if (d == NULL || flags_Widget(d) & hidden_WidgetFlag) {
         return; /* Already closed. */
     }
-    if (isUsingMenuPopupWindows_()) {
-        iWindow *win = window_Widget(d);
-        iAssert(type_Window(win) == popup_WindowType);
+    iWindow *win = window_Widget(d);
+    if (type_Window(win) == popup_WindowType) {
         iWidget *originalParent = userData_Object(d);
         setUserData_Object(d, NULL);
         win->roots[0]->widget = NULL;
