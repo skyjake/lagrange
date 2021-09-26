@@ -750,6 +750,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             if (d->base.isMinimized) {
                 return iFalse;
             }
+            closePopups_App();
             checkPixelRatioChange_Window_(as_Window(d));
             const iInt2 newPos = init_I2(ev->data1, ev->data2);
             if (isEqual_I2(newPos, init1_I2(-32000))) { /* magic! */
@@ -808,6 +809,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
                 // updateSize_Window_(d, iTrue);
                 return iTrue;
             }
+            closePopups_App();
             if (unsnap_MainWindow_(d, NULL)) {
                 return iTrue;
             }
@@ -827,6 +829,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             return iTrue;
         case SDL_WINDOWEVENT_MINIMIZED:
             d->base.isMinimized = iTrue;
+            closePopups_App();
             return iTrue;
 #else /* if defined (!iPlatformDesktop) */
         case SDL_WINDOWEVENT_RESIZED:
@@ -861,6 +864,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
 #if !defined (iPlatformDesktop)
             setFreezeDraw_MainWindow(d, iTrue);
 #endif
+            closePopups_App();
             return iFalse;
         case SDL_WINDOWEVENT_TAKE_FOCUS:
             SDL_SetWindowInputFocus(d->base.win);
@@ -1124,7 +1128,8 @@ void draw_Window(iWindow *d) {
         drawCount_ = 0;
 #endif
     }
-//    drawRectThickness_Paint(&p, (iRect){ zero_I2(), sub_I2(d->size, one_I2()) }, gap_UI / 4, uiSeparator_ColorId);
+    drawRectThickness_Paint(
+        &p, (iRect){ zero_I2(), sub_I2(d->size, one_I2()) }, gap_UI / 4, uiSeparator_ColorId);
     setCurrent_Root(NULL);
     SDL_RenderPresent(d->render);
 }

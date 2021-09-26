@@ -1281,8 +1281,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #endif
                 /* Per-window processing. */
                 iBool wasUsed = iFalse;
-                const iPtrArray *windows = listWindows_App_(d);
-                iConstForEach(PtrArray, iter, windows) {
+                iConstForEach(PtrArray, iter, listWindows_App_(d)) {
                     iWindow *window = iter.ptr;
                     setCurrent_Window(window);
                     window->lastHover = window->hover;
@@ -1312,7 +1311,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
                     if (isMetricsChange_UserEvent(&ev)) {
-                        iConstForEach(PtrArray, iter, windows) {
+                        iConstForEach(PtrArray, iter, listWindows_App_(d)) {
                             iWindow *window = iter.ptr;
                             iForIndices(i, window->roots) {
                                 iRoot *root = window->roots[i];
@@ -1331,7 +1330,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     free(ev.user.data1);
                 }
                 /* Refresh after hover changes. */ {
-                    iConstForEach(PtrArray, iter, windows) {
+                    iConstForEach(PtrArray, iter, listWindows_App_(d)) {
                         iWindow *window = iter.ptr;
                         if (window->lastHover != window->hover) {
                             refresh_Widget(window->lastHover);
@@ -3029,4 +3028,11 @@ iStringSet *listOpenURLs_App(void) {
 
 iMainWindow *mainWindow_App(void) {
     return app_.window;
+}
+
+void closePopups_App(void) {
+    iApp *d = &app_;
+    iConstForEach(PtrArray, i, &d->popupWindows) {
+        postCommand_Root(((const iWindow *) i.ptr)->roots[0], "cancel");
+    }
 }

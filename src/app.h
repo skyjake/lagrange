@@ -134,7 +134,8 @@ iLocalDef void postCommand_App(const char *command) {
 
 iDocumentWidget *   document_Command    (const char *cmd);
 
-void        openInDefaultBrowser_App    (const iString *url);
-void        revealPath_App              (const iString *path);
+void            openInDefaultBrowser_App(const iString *url);
+void            revealPath_App          (const iString *path);
 
-iMainWindow *mainWindow_App(void);
+iMainWindow *   mainWindow_App  (void);
+void            closePopups_App (void);

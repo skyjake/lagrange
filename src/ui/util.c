@@ -1047,10 +1047,15 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
                 SDL_GetWindowSize(sdlWin, &winSize.x, &winSize.y);
                 menuPos = sub_I2(add_I2(winPos, divi_I2(winSize, 2)), divi_I2(menuSize, 2));
             }
-            SDL_Rect displayRect;
-            SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(get_Window()->win), &displayRect);
-            menuPos.x = iMin(menuPos.x, displayRect.x + displayRect.w - menuSize.x);
-            menuPos.y = iMin(menuPos.y, displayRect.y + displayRect.h - menuSize.y);
+            iRect displayRect = zero_Rect();
+            for (int i = 0; i < SDL_GetNumVideoDisplays(); i++) {
+                SDL_Rect dispBounds;
+                SDL_GetDisplayBounds(i, &dispBounds);
+                displayRect = union_Rect(
+                    displayRect, init_Rect(dispBounds.x, dispBounds.y, dispBounds.w, dispBounds.h));
+            }
+            menuPos.x = iMin(menuPos.x, right_Rect(displayRect) - menuSize.x);
+            menuPos.y = iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y);
         }
         iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
         SDL_SetWindowTitle(win->win, "Menu");
@@ -1079,6 +1084,9 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         else {
             d->rect.pos = init_I2(0, rootSize.y);
         }
+    }
+    else if (menuOpenFlags & center_MenuOpenFlags) {
+        d->rect.pos = sub_I2(divi_I2(size_Root(d->root), 2), divi_I2(d->rect.size, 2));
     }
     else {
         d->rect.pos = windowToLocal_Widget(d, windowCoord);
