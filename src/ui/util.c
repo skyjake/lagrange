@@ -1023,6 +1023,14 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     arrange_Widget(d); /* need to know the height */
+    /* A vertical offset determined by a possible selected label in the menu. */ {
+        iConstForEach(ObjectList, child, children_Widget(d)) {
+            const iWidget *item = constAs_Widget(child.object);
+            if (flags_Widget(item) & selected_WidgetFlag) {
+                windowCoord.y -= item->rect.pos.y;
+            }
+        }
+    }
 #if defined (LAGRANGE_ENABLE_POPUP_MENUS)
     /* Determine total display bounds where the popup may appear. */
     iRect displayRect = zero_Rect(); 
@@ -1045,7 +1053,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     addv_I2(&winRect.pos, winPos);
     iRect visibleWinRect = intersect_Rect(winRect, displayRect);
     /* Only use a popup window if the menu can't fit inside the main window. */
-    if (height_Widget(d) * pixelRatio > visibleWinRect.size.y && isUsingMenuPopupWindows_()) {
+    if (height_Widget(d) / pixelRatio > visibleWinRect.size.y && isUsingMenuPopupWindows_()) {
         if (postCommands) {
             postCommand_Widget(d, "menu.opened");
         }

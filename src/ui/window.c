@@ -1659,6 +1659,7 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
     win->keyRoot  = root;
     root->widget  = rootWidget;
     root->window  = win;
+    rootWidget->rect.pos = zero_I2();
     setRoot_Widget(rootWidget, root);
     setForceSoftwareRender_App(oldSw);
     stop_PerfTimer(newPopup_Window);
