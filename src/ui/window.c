@@ -780,8 +780,8 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
         iInt2 border = zero_I2();
 #if !defined(iPlatformApple)
         SDL_GetWindowBordersSize(d->base.win, &border.y, &border.x, NULL, NULL);
-#endif
         iAssert(~SDL_GetWindowFlags(d->base.win) & SDL_WINDOW_MAXIMIZED);
+#endif
         d->place.normalRect.pos =
             max_I2(zero_I2(), sub_I2(d->place.normalRect.pos, border));
     }
