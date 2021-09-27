@@ -49,9 +49,8 @@ int main(int argc, char **argv) {
     registerURLHandler_MacOS();
 #endif
 #if defined (iPlatformMsys)
-    /* MSYS runtime takes care of WinMain. */
-    setDPIAware_Win32();
-    SDL_SetMainReady();
+    init_Win32(); /* DPI awareness, dark mode */
+    SDL_SetMainReady(); /* MSYS runtime takes care of WinMain. */
 #endif
     /* Initialize libraries. */
 #if defined (LAGRANGE_ENABLE_MPG123)

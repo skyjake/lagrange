@@ -1310,6 +1310,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #if defined (iPlatformAppleDesktop)
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
+#if defined (iPlatformMsys)
+                    handleCommand_Win32(command_UserEvent(&ev));
+#endif
                     if (isMetricsChange_UserEvent(&ev)) {
                         iConstForEach(PtrArray, iter, listWindows_App_(d)) {
                             iWindow *window = iter.ptr;

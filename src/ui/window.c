@@ -571,6 +571,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #if defined(iPlatformMsys)
     SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.displayScale, minSize.y * d->base.displayScale);
     useExecutableIconResource_SDLWindow(d->base.win);
+    enableDarkMode_SDLWindow(d->base.win);
 #endif
 #if defined (iPlatformLinux)
     SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);

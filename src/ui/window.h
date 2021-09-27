@@ -193,7 +193,7 @@ void        draw_MainWindow                 (iMainWindow *);
 void        drawWhileResizing_MainWindow    (iMainWindow *, int w, int h); /* workaround for SDL bug */
 
 int         snap_MainWindow                 (const iMainWindow *);
-iBool       isFullscreen_Window             (const iMainWindow *);
+iBool       isFullscreen_MainWindow         (const iMainWindow *);
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 SDL_HitTestResult hitTest_MainWindow(const iMainWindow *d, iInt2 pos);
