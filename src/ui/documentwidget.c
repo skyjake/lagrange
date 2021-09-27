@@ -237,7 +237,7 @@ enum iDocumentLinkOrdinalMode {
 
 struct Impl_DocumentWidget {
     iWidget        widget;
-    int            flags;
+    int            flags; /* internal behavior, see enum iDocumentWidgetFlag */
     
     /* User interface: */
     enum iDocumentLinkOrdinalMode ordinalMode;
