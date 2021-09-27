@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-08-16 20:49+0000\n"
+"PO-Revision-Date: 2021-09-30 05:49+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1480,7 +1480,7 @@ msgid "menu.split.vertical"
 msgstr "Vertical"
 
 msgid "menu.view.split"
-msgstr "Dividir Vista..."
+msgstr "Dividir Vista…"
 
 msgid "dlg.save.opendownload"
 msgstr "Abrir Archivo Descargado"
@@ -1710,7 +1710,7 @@ msgid "dlg.file.delete"
 msgstr "Borrar"
 
 msgid "menu.page.upload"
-msgstr "Cargar Página con Titan"
+msgstr "Cargar Página con Titan…"
 
 msgid "heading.upload"
 msgstr "CARGAR PÁGINA CON TITAN"
@@ -1737,7 +1737,7 @@ msgid "upload.mime"
 msgstr "Tipo MIME:"
 
 msgid "upload.token"
-msgstr "Token de carga:"
+msgstr "Token:"
 
 msgid "hint.upload.token"
 msgstr "ver instrucciones del servidor"
@@ -1828,3 +1828,106 @@ msgstr "La estructura de carpetas está definida por cabeceras de nivel 2/3."
 
 msgid "bookmark.export.format.tags"
 msgstr "Las etiquetas están definidas por cabeceras de nivel 2."
+
+msgid "menu.newfolder"
+msgstr "Nueva Carpeta…"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "BORRAR MARCADORES"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "¿De verdad quiere borrar el marcador en esta carpeta?"
+msgstr[1] "¿De verdad quiere borrar los %u marcadores en esta carpeta?"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Importar Archivo de Clave/Certificado"
+
+msgid "upload.id"
+msgstr "Identidad:"
+
+msgid "dlg.upload.id.none"
+msgstr "Ninguno"
+
+msgid "heading.bookmark.tags"
+msgstr "ETIQUETAS ESPECIALES"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Nombre de la nueva carpeta:"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Agregar carpeta de marcadores"
+
+msgid "menu.sort.alpha"
+msgstr "Ordenar Alfabéticamente"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Configuración"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Sel. Todo"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Borrar"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Deshacer"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Borrar Marcador"
+msgstr[1] "Borrar %u Marcadores"
+
+msgid "dlg.upload.id.default"
+msgstr "Por Defecto"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Cargar Texto Plano"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Cargar un Archivo"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Escoger Archivo"
+
+msgid "heading.addfolder"
+msgstr "AGREGAR CARPETA"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Nueva Carpeta"
+
+msgid "dlg.addfolder"
+msgstr "Agregar Carpeta"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "CONFIGURACIÓN"
+
+msgid "prefs.imagestyle"
+msgstr "Colorear imágenes:"
+
+msgid "prefs.imagestyle.original"
+msgstr "Ninguno"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Escala de Grises"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Fondo-a-Frente"
+
+msgid "prefs.imagestyle.text"
+msgstr "Color del Texto"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Color Pre-formateado"
