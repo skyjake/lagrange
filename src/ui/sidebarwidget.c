@@ -994,22 +994,24 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
             iAssert(item); /* hover item cannot have been changed */
             iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
             set_String(&bm->title, title);
-            set_String(&bm->url, url);
-            set_String(&bm->tags, tags);
-            if (isEmpty_String(icon)) {
-                removeTag_Bookmark(bm, userIcon_BookmarkTag);
-                bm->icon = 0;
-            }
-            else {
-                addTagIfMissing_Bookmark(bm, userIcon_BookmarkTag);
-                bm->icon = first_String(icon);
-            }
-            addOrRemoveTag_Bookmark(bm, homepage_BookmarkTag,
-                                    isSelected_Widget(findChild_Widget(editor, "bmed.tag.home")));
-            addOrRemoveTag_Bookmark(bm, remoteSource_BookmarkTag,
-                                    isSelected_Widget(findChild_Widget(editor, "bmed.tag.remote")));
-            addOrRemoveTag_Bookmark(bm, linkSplit_BookmarkTag,
-                                    isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit")));
+            if (!isFolder_Bookmark(bm)) {
+                set_String(&bm->url, url);
+                set_String(&bm->tags, tags);
+                if (isEmpty_String(icon)) {
+                    removeTag_Bookmark(bm, userIcon_BookmarkTag);
+                    bm->icon = 0;
+                }
+                else {
+                    addTagIfMissing_Bookmark(bm, userIcon_BookmarkTag);
+                    bm->icon = first_String(icon);
+                }
+                addOrRemoveTag_Bookmark(bm, homepage_BookmarkTag,
+                                        isSelected_Widget(findChild_Widget(editor, "bmed.tag.home")));
+                addOrRemoveTag_Bookmark(bm, remoteSource_BookmarkTag,
+                                        isSelected_Widget(findChild_Widget(editor, "bmed.tag.remote")));
+                addOrRemoveTag_Bookmark(bm, linkSplit_BookmarkTag,
+                                        isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit")));
+            }            
             postCommand_App("bookmarks.changed");
         }
         setupSheetTransition_Mobile(editor, iFalse);
@@ -1280,18 +1282,32 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &bm->title);
-                setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &bm->url);
-                setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &bm->tags);
-                if (hasTag_Bookmark(bm, userIcon_BookmarkTag)) {
-                    setText_InputWidget(findChild_Widget(dlg, "bmed.icon"),
-                                        collect_String(newUnicodeN_String(&bm->icon, 1)));
+                iInputWidget *urlInput        = findChild_Widget(dlg, "bmed.url");
+                iInputWidget *tagsInput       = findChild_Widget(dlg, "bmed.tags");
+                iInputWidget *iconInput       = findChild_Widget(dlg, "bmed.icon");
+                iWidget *     homeTag         = findChild_Widget(dlg, "bmed.tag.home");
+                iWidget *     remoteSourceTag = findChild_Widget(dlg, "bmed.tag.remote");
+                iWidget *     linkSplitTag    = findChild_Widget(dlg, "bmed.tag.linksplit");
+                if (!isFolder_Bookmark(bm)) {
+                    setText_InputWidget(urlInput, &bm->url);
+                    setText_InputWidget(tagsInput, &bm->tags);
+                    if (hasTag_Bookmark(bm, userIcon_BookmarkTag)) {
+                        setText_InputWidget(iconInput,
+                                            collect_String(newUnicodeN_String(&bm->icon, 1)));
+                    }
+                    setToggle_Widget(homeTag, hasTag_Bookmark(bm, homepage_BookmarkTag));
+                    setToggle_Widget(remoteSourceTag, hasTag_Bookmark(bm, remoteSource_BookmarkTag));
+                    setToggle_Widget(linkSplitTag, hasTag_Bookmark(bm, linkSplit_BookmarkTag));
                 }
-                setToggle_Widget(findChild_Widget(dlg, "bmed.tag.home"),
-                                 hasTag_Bookmark(bm, homepage_BookmarkTag));
-                setToggle_Widget(findChild_Widget(dlg, "bmed.tag.remote"),
-                                 hasTag_Bookmark(bm, remoteSource_BookmarkTag));
-                setToggle_Widget(findChild_Widget(dlg, "bmed.tag.linksplit"),
-                                 hasTag_Bookmark(bm, linkSplit_BookmarkTag));
+                else {
+                    setFlags_Widget(findChild_Widget(dlg, "bmed.special"),
+                                    hidden_WidgetFlag | disabled_WidgetFlag,
+                                    iTrue);
+                    iAnyObject *notNeeded[] = { urlInput, tagsInput, iconInput, NULL };
+                    iForIndices(i, notNeeded) {
+                        setFlags_Widget(notNeeded[i], disabled_WidgetFlag, iTrue);
+                    }
+                }
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
                 setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
             }

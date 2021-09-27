@@ -2655,7 +2655,9 @@ iWidget *makeBookmarkEditor_Widget(void) {
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));
     /* Buttons for special tags. */
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+    iWidget *special = addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+    setFlags_Widget(special, collapse_WidgetFlag, iTrue);
+    setId_Widget(special, "bmed.special");
     makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
     addDialogToggle_(headings, values, "${bookmark.tag.home}", "bmed.tag.home");
     addDialogToggle_(headings, values, "${bookmark.tag.remote}", "bmed.tag.remote");
