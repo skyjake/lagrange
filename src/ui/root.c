@@ -378,9 +378,10 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             iInt2 coord = coord_Command(cmd);
             iInt2 size = init_I2(argLabel_Command(cmd, "width"),
                                  argLabel_Command(cmd, "height"));
-            SDL_SetWindowPosition(window->base.win, coord.x, coord.y);
-            SDL_SetWindowSize(window->base.win, size.x, size.y);
-            //window->place.snap = snap;
+            if (snap_MainWindow(window) != maximized_WindowSnap) {
+                SDL_SetWindowPosition(window->base.win, coord.x, coord.y);
+                SDL_SetWindowSize(window->base.win, size.x, size.y);
+            }
             setSnap_MainWindow(get_MainWindow(), snap);
             return iTrue;
         }

@@ -378,7 +378,7 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
             /* We are drawing a custom frame so hide the default one. */
             flags |= SDL_WINDOW_BORDERLESS;
         }
-#endif       
+#endif
     }
 #if 0
     if (SDL_CreateWindowAndRenderer(
@@ -398,7 +398,7 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
         exit(-3);
     }
     if (forceSoftwareRender_App()) {
-        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");        
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
     }
     d->render = SDL_CreateRenderer(
         d->win,
@@ -481,7 +481,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
         SDL_GetRendererInfo(d->render, &info);
         printf("[window] renderer: %s%s\n",
                info.name,
-               info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");        
+               info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
     }
     drawBlank_Window_(d);
     d->pixelRatio   = pixelRatio_Window_(d); /* point/pixel conversion */
@@ -770,6 +770,23 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     return iFalse;
 }
 
+static void savePlace_MainWindow_(iAny *mainWindow) {
+    iMainWindow *d = mainWindow;
+    if (isNormalPlacement_MainWindow_(d)) {
+        iInt2 newPos;
+        SDL_GetWindowPosition(d->base.win, &newPos.x, &newPos.y);
+        // printf("savePlace_MainWindow_ sets normalRect %d,%d\n", newPos.x, newPos.y);
+        d->place.normalRect.pos = newPos;
+        iInt2 border = zero_I2();
+#if !defined(iPlatformApple)
+        SDL_GetWindowBordersSize(d->base.win, &border.y, &border.x, NULL, NULL);
+#endif
+        iAssert(~SDL_GetWindowFlags(d->base.win) & SDL_WINDOW_MAXIMIZED);
+        d->place.normalRect.pos =
+            max_I2(zero_I2(), sub_I2(d->place.normalRect.pos, border));
+    }
+}
+
 static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
 #if defined(iPlatformDesktop)
@@ -782,10 +799,14 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             postRefresh_App();
 #if defined(LAGRANGE_ENABLE_WINDOWPOS_FIX)
             if (d->place.initialPos.x >= 0) {
-                int bx, by;
-                SDL_GetWindowBordersSize(d->base.win, &by, &bx, NULL, NULL);
-                SDL_SetWindowPosition(
-                    d->base.win, d->place.initialPos.x + bx, d->place.initialPos.y + by);
+                /* Must not move a maximized window. */
+                if (snap_MainWindow(d) == 0) {
+                    int bx, by;
+                    SDL_GetWindowBordersSize(d->base.win, &by, &bx, NULL, NULL);
+                    // printf("EXPOSED sets position %d %d\n", d->place.initialPos.x, d->place.initialPos.y);
+                    SDL_SetWindowPosition(
+                        d->base.win, d->place.initialPos.x + bx, d->place.initialPos.y + by);
+                }
                 d->place.initialPos = init1_I2(-1);
             }
 #endif
@@ -836,16 +857,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             if (unsnap_MainWindow_(d, &newPos)) {
                 return iTrue;
             }
-            if (isNormalPlacement_MainWindow_(d)) {
-                d->place.normalRect.pos = newPos;
-                // printf("normal rect set (move)\n"); fflush(stdout);
-                iInt2 border = zero_I2();
-#if !defined(iPlatformApple)
-                SDL_GetWindowBordersSize(d->base.win, &border.y, &border.x, NULL, NULL);
-#endif
-                d->place.normalRect.pos =
-                    max_I2(zero_I2(), sub_I2(d->place.normalRect.pos, border));
-            }
+            addTicker_App(savePlace_MainWindow_, d);
             return iTrue;
         }
         case SDL_WINDOWEVENT_RESIZED:
@@ -858,8 +870,8 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
                 return iTrue;
             }
             if (isNormalPlacement_MainWindow_(d)) {
+                // printf("RESIZED sets normalRect\n");
                 d->place.normalRect.size = init_I2(ev->data1, ev->data2);
-                // printf("normal rect set (resize)\n"); fflush(stdout);
             }
             checkPixelRatioChange_Window_(as_Window(d));
             postRefresh_App();
@@ -870,6 +882,8 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             invalidate_MainWindow_(d, iTrue);
             d->base.isMinimized = iFalse;
             postRefresh_App();
+            return iTrue;
+        case SDL_WINDOWEVENT_MAXIMIZED:
             return iTrue;
         case SDL_WINDOWEVENT_MINIMIZED:
             d->base.isMinimized = iTrue;
@@ -1596,6 +1610,12 @@ void setSnap_MainWindow(iMainWindow *d, int snapMode) {
     if (snapMode & bottomBit_WindowSnap) {
         newRect.pos.y += newRect.size.y;
     }
+    if (newRect.size.x) {
+        // printf("snap:%d newrect:%d,%d %dx%d\n", snapMode, newRect.pos.x, newRect.pos.y, newRect.size.x, newRect.size.y);
+        SDL_SetWindowPosition(d->base.win, newRect.pos.x, newRect.pos.y);
+        SDL_SetWindowSize(d->base.win, newRect.size.x, newRect.size.y);
+        postCommand_App("window.resized");
+    }
     /* Update window controls. */
     iForIndices(rootIndex, d->base.roots) {
         iRoot *root = d->base.roots[rootIndex];
@@ -1606,11 +1626,6 @@ void setSnap_MainWindow(iMainWindow *d, int snapMode) {
         /* Show and hide the title bar. */
         const iBool wasVisible = isVisible_Widget(winBar);
         setFlags_Widget(winBar, hidden_WidgetFlag, d->place.snap == fullscreen_WindowSnap);
-        if (newRect.size.x) {
-            SDL_SetWindowPosition(d->base.win, newRect.pos.x, newRect.pos.y);
-            SDL_SetWindowSize(d->base.win, newRect.size.x, newRect.size.y);
-            postCommand_App("window.resized");
-        }
         if (wasVisible != isVisible_Widget(winBar)) {
             arrange_Widget(root->widget);
             postRefresh_App();

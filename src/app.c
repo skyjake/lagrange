@@ -190,7 +190,10 @@ static iString *serializePrefs_App_(const iApp *d) {
            a moment to animate to its maximized size. */
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         if (snap_MainWindow(d->window)) {
-            if (~SDL_GetWindowFlags(d->window->base.win) & SDL_WINDOW_MINIMIZED) {
+            if (snap_MainWindow(d->window) == maximized_WindowSnap) {
+                appendFormat_String(str, "~window.maximize\n");
+            }
+            else if (~SDL_GetWindowFlags(d->window->base.win) & SDL_WINDOW_MINIMIZED) {
                 /* Save the actual visible window position, too, because snapped windows may
                    still be resized/moved without affecting normalRect. */
                 SDL_GetWindowPosition(d->window->base.win, &x, &y);
@@ -1501,7 +1504,7 @@ iBool forceSoftwareRender_App(void) {
 }
 
 void setForceSoftwareRender_App(iBool sw) {
-    app_.forceSoftwareRender = sw;    
+    app_.forceSoftwareRender = sw;
 }
 
 enum iColorTheme colorTheme_App(void) {
