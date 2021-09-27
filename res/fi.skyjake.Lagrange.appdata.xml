@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.7" date="2021-09-28">
+            <description>
+                <p>Version 1.7 improves bookmark management with folders and manual
+                    sorting, and has multiple UI enhancements including unconstrained
+                    popup menus, upload identity selection, button focus switching
+                    with Tab key, and new UI languages (e.g., Esperanto). A new image
+                    colorization option has been added for enforcing a stricter visual
+                    style.</p>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.7.0</url>
+        </release>
         <release version="1.6.5" date="2021-08-29">
             <description>
                 <p>Version 1.6 adds support for bidirectional text and complex scripts,
