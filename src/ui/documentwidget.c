@@ -3667,8 +3667,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     pushBackN_Array(
                         &items,
                         (iMenuItem[]){
-                            { "${menu.back}", navigateBack_KeyShortcut, "navigate.back" },
-                            { "${menu.forward}", navigateForward_KeyShortcut, "navigate.forward" },
+                            { backArrow_Icon " ${menu.back}", navigateBack_KeyShortcut, "navigate.back" },
+                            { forwardArrow_Icon " ${menu.forward}", navigateForward_KeyShortcut, "navigate.forward" },
                             { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
                             { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
                             { "---" },
@@ -3683,7 +3683,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                             { "---" },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
-                        15);
+                        16);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,

@@ -1347,11 +1347,11 @@ void createUserInterface_Root(iRoot *d) {
                                      commandOnClick_WidgetFlag |
                                      drawBackgroundToBottom_WidgetFlag, iTrue);
         setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")),
+                                          iClob(newLargeIcon_LabelWidget(backArrow_Icon, "navigate.back")),
                                           frameless_WidgetFlag),
                      "toolbar.back");
         setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(newLargeIcon_LabelWidget("\U0001f872", "navigate.forward")),
+                                          iClob(newLargeIcon_LabelWidget(forwardArrow_Icon, "navigate.forward")),
                                           frameless_WidgetFlag),
                      "toolbar.forward");
         setId_Widget(addChildFlags_Widget(toolBar,
