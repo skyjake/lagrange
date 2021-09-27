@@ -1652,7 +1652,6 @@ int snap_MainWindow(const iMainWindow *d) {
 
 iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
     start_PerfTimer(newPopup_Window);
-    iPerfTimer pt; init_PerfTimer(&pt);
     const iBool oldSw = forceSoftwareRender_App();
     /* On macOS, SDL seems to want to not use HiDPI with software rendering. */
 #if !defined (iPlatformApple)
@@ -1678,6 +1677,8 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
     rootWidget->rect.pos = zero_I2();
     setRoot_Widget(rootWidget, root);
     setForceSoftwareRender_App(oldSw);
+#if !defined (NDEBUG)
     stop_PerfTimer(newPopup_Window);
+#endif
     return win;
 }
