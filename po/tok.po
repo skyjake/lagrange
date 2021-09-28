@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-07-31 12:07+0000\n"
+"PO-Revision-Date: 2021-09-30 05:49+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -1727,3 +1727,130 @@ msgstr "o awen lukin e lipu pakala"
 
 msgid "prefs.returnkey"
 msgstr "pali pi nimi Enter:"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "o kama jo e ijo len"
+
+msgid "bookmark.export.title.folder"
+msgstr "lipu awen"
+
+msgid "bookmark.export.title.tag"
+msgstr "nimi lili pi lipu awen"
+
+msgid "bookmark.export.title.time"
+msgstr "tenpo pi lipu awen"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "sina jo e lipu awen %d."
+
+msgid "bookmark.export.format.linklines"
+msgstr "nimi tawa ale li sama lipu awen."
+
+msgid "bookmark.export.format.sub"
+msgstr "lipu ni li kepeken e lipu lawa namako \"Subscribing to Gemini pages\"."
+
+msgid "upload.id"
+msgstr "nimi:"
+
+msgid "dlg.upload.id.none"
+msgstr "ala"
+
+msgid "dlg.upload.id.default"
+msgstr "nasa ala"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "o pana e lipu pona"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "o pana e ijo"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "open e ijo"
+
+msgid "heading.addfolder"
+msgstr "O PALI E POKI"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "poki sin"
+
+msgid "dlg.addfolder.prompt"
+msgstr "o pana e nimi tawa poki sin:"
+
+msgid "dlg.addfolder"
+msgstr "o pali e poki"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "IJO ANTE"
+
+msgid "prefs.imagestyle"
+msgstr "o kule e sitelen:"
+
+msgid "prefs.imagestyle.original"
+msgstr "ala"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "pimeja en walo"
+
+msgid "prefs.imagestyle.text"
+msgstr "kule lipu"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "monsi-tawa-sinpin"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "kule pi sitelen sama"
+
+msgid "keys.bookmark.addfolder"
+msgstr "o pali e poki tawa lipu awen"
+
+msgid "heading.bookmark.tags"
+msgstr "NIMI LILI NAMAKO"
+
+msgid "media.untitled.image"
+msgstr "sitelen"
+
+msgid "media.untitled.audio"
+msgstr "kalama musi"
+
+msgid "menu.newfolder"
+msgstr "poki sina…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "ijo ante"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "o open e ale"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "o weka"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "o ante monsi"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "LIPU AWEN LI WILE KAMA WEKA"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "sina wile ala wile weka e lipu awen ale (%u) insa poki ni?"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "o weka e lipu awen %u"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"lipu sin Kemini li pali tan lipu Atom XML tan ni: jan li ken lukin e ni."
