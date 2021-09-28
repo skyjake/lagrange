@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-09-25 08:00+0000\n"
+"PO-Revision-Date: 2021-09-30 05:49+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -145,7 +145,7 @@ msgid "prefs.boldlink"
 msgstr "Ligazóns resaltadas:"
 
 msgid "hint.prefs.userfont"
-msgstr "ruta á tipografía True Type"
+msgstr "ruta á tipografía TrueType"
 
 msgid "prefs.linewidth.normal"
 msgstr "Normal"
@@ -338,7 +338,7 @@ msgid "menu.zoom.reset"
 msgstr "Restablecer tamaño"
 
 msgid "menu.view.split"
-msgstr "Vista dividida..."
+msgstr "Vista dividida…"
 
 msgid "menu.bookmarks.list"
 msgstr "Lista de tódolos marcadores"
@@ -915,7 +915,7 @@ msgid "heading.lookup.other"
 msgstr "OUTRO"
 
 msgid "menu.page.upload"
-msgstr "Subir páxina con Titan"
+msgstr "Subir páxina con Titan…"
 
 msgid "heading.upload"
 msgstr "SUBIR CON TITAN"
@@ -942,7 +942,7 @@ msgid "upload.mime"
 msgstr "Tipo MIME:"
 
 msgid "upload.token"
-msgstr "Token para subida:"
+msgstr "Token:"
 
 msgid "hint.upload.token"
 msgstr "ver instruccións no servidor"
@@ -1147,7 +1147,7 @@ msgid "heading.prefs.colors"
 msgstr "Cores"
 
 msgid "heading.prefs.fonts"
-msgstr "Tipo de letra"
+msgstr "Letra"
 
 # tab button
 msgid "heading.prefs.general"
@@ -1819,3 +1819,106 @@ msgstr "Idioma"
 
 msgid "gempub.meta.license"
 msgstr "Licenza"
+
+msgid "menu.newfolder"
+msgstr "Novo cartafol…"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Desfacer"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "ELIMINAR MARCADORES"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Tes a certeza de querer eliminar o marcador neste cartafol?"
+msgstr[1] "Tes a certeza de querer eliminar os %u marcadores neste cartafol?"
+
+msgid "upload.id"
+msgstr "Identidade:"
+
+msgid "dlg.upload.id.none"
+msgstr "Ningunha"
+
+msgid "heading.bookmark.tags"
+msgstr "ETIQUETAS ESPECIAIS"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Novo cartafol"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "BG-a-FG"
+
+msgid "menu.sort.alpha"
+msgstr "Orde alfabética"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Axustes"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Elexir todo"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Eliminar"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Eliminar marcador"
+msgstr[1] "Eliminar %u marcadores"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Importar ficheiro de Certificado/Chave"
+
+msgid "dlg.upload.id.default"
+msgstr "Por defecto"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Subir texto plano"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Subir un ficheiro"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Elexir ficheiro"
+
+msgid "heading.addfolder"
+msgstr "ENGADIR CARTAFOL"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Escribe o nome do novo cartafol:"
+
+msgid "dlg.addfolder"
+msgstr "Engadir cartafol"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "AXUSTES"
+
+msgid "prefs.imagestyle"
+msgstr "Imaxes coloridas:"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Escala de grises"
+
+msgid "prefs.imagestyle.original"
+msgstr "Nada"
+
+msgid "prefs.imagestyle.text"
+msgstr "Cor do texto"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Cor do preformatado"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Engadir cartafol de marcadores"
