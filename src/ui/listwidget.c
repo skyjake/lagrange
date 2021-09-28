@@ -411,6 +411,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                 refresh_Widget(d);
             }
             else {
+                setFlags_Anim(&d->scrollY.pos, easeBoth_AnimFlag, iFalse);
                 setValueSpeed_Anim(&d->scrollY.pos, scrollSpeed < 0 ? 0 : scrollMax_ListWidget_(d),
                                    scrollSpeed * scrollSpeed * gap_UI * 400);
                 refreshWhileScrolling_ListWidget_(d);
