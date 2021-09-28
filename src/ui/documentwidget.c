@@ -1876,6 +1876,11 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (d->state == fetching_RequestState) {
         d->state = receivedPartialResponse_RequestState;
         updateTrust_DocumentWidget_(d, resp);
+        if (~d->certFlags & trusted_GmCertFlag &&
+            isSuccess_GmStatusCode(statusCode) &&
+            equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini")) {
+            statusCode = tlsServerCertificateNotVerified_GmStatusCode;
+        }
         init_Anim(&d->sideOpacity, 0);
         init_Anim(&d->altTextOpacity, 0);
         format_String(&d->sourceHeader,
