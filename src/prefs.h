@@ -43,7 +43,7 @@ struct Impl_Prefs {
     /* Window */
     iString          uiLanguage;
     iBool            useSystemTheme;
-    enum iColorTheme theme;
+    enum iColorTheme theme;    
     enum iColorAccent accent;
     iBool            customFrame; /* when LAGRANGE_ENABLE_CUSTOM_FRAME is defined */
     iBool            retainWindowSize;
@@ -86,6 +86,7 @@ struct Impl_Prefs {
     iBool            quoteIcon;
     iBool            centerShortDocs;
     iBool            plainTextWrap;
+    enum iImageStyle imageStyle;
     /* Colors */
     enum iGmDocumentTheme docThemeDark;
     enum iGmDocumentTheme docThemeLight;
@@ -96,5 +97,5 @@ iDeclareTypeConstruction(Prefs)
     
 iLocalDef float scrollSpeedFactor_Prefs(const iPrefs *d, enum iScrollType type) {
     iAssert(type >= 0 && type < max_ScrollType);
-    return 10.0f / iMax(1, d->smoothScrollSpeed[type]);
+    return 10.0f / iMax(1, d->smoothScrollSpeed[type]) * (type == mouse_ScrollType ? 0.5f : 1.0f);
 }

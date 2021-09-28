@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-14 09:18+0000\n"
-"Last-Translator: Shibo Lyu <github@of.sb>\n"
+"PO-Revision-Date: 2021-09-06 10:49+0000\n"
+"Last-Translator: Eric <spice2wolf@gmail.com>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
 "Language: zh_Hans\n"
@@ -782,7 +782,7 @@ msgid "dlg.feed.title"
 msgstr "标题："
 
 msgid "hint.newident.date"
-msgstr "YYYY-MM-DD HH:MM:SS"
+msgstr "YYYY 或 YYYY-MM-DD"
 
 msgid "heading.prefs"
 msgstr "偏好设置"
@@ -1022,7 +1022,7 @@ msgid "heading.prefs.paragraph"
 msgstr "段落"
 
 msgid "heading.prefs.pagecontent"
-msgstr "页面内容"
+msgstr "页面颜色"
 
 msgid "heading.prefs.proxies"
 msgstr "代理"

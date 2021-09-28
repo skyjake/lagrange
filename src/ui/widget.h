@@ -34,7 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <SDL_events.h>
 
-iDeclareType(Root) /* each widget is associated with a Root */
+iDeclareType(Root)   /* each widget is associated with a Root */
+iDeclareType(Window) /* each Root is inside a Window */
 
 #define iDeclareWidgetClass(className) \
     iDeclareType(className); \
@@ -120,6 +121,7 @@ enum iWidgetFlag {
 #define destroyPending_WidgetFlag           iBit64(61)
 #define leftEdgeDraggable_WidgetFlag        iBit64(62)
 #define refChildrenOffset_WidgetFlag        iBit64(63) /* visual offset determined by the offset of referenced children */
+#define nativeMenu_WidgetFlag               iBit64(64)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -130,6 +132,8 @@ enum iWidgetFocusDir {
     forward_WidgetFocusDir,
     backward_WidgetFocusDir,
 };
+
+iDeclareType(WidgetDrawBuffer)
 
 struct Impl_Widget {
     iObject      object;
@@ -148,6 +152,7 @@ struct Impl_Widget {
     iWidget *    parent;
     iBool      (*commandHandler)(iWidget *, const char *);
     iRoot *      root;
+    iWidgetDrawBuffer *drawBuf;
 };
 
 iDeclareObjectConstruction(Widget)
@@ -182,6 +187,7 @@ void    releaseChildren_Widget  (iWidget *);
     - inner:  0,0 is at the top left corner of the widget */
 
 iWidget *       root_Widget             (const iWidget *);
+iWindow *       window_Widget           (const iAnyObject *);
 const iString * id_Widget               (const iWidget *);
 int64_t flags_Widget                    (const iWidget *);
 iRect   bounds_Widget                   (const iWidget *); /* outer bounds */
@@ -201,8 +207,15 @@ iAny *  findFocusable_Widget            (const iWidget *startFrom, enum iWidgetF
 iAny *  findOverflowScrollable_Widget   (iWidget *);
 size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);
+void    drawLayerEffects_Widget         (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
 void    drawChildren_Widget             (const iWidget *);
+void    drawRoot_Widget                 (const iWidget *); /* root only */
+void    setDrawBufferEnabled_Widget     (iWidget *, iBool enable);
+
+iLocalDef iBool isDrawBufferEnabled_Widget(const iWidget *d) {
+    return d && d->drawBuf;
+}
 
 iLocalDef int width_Widget(const iAnyObject *d) {
     if (d) {
@@ -275,6 +288,18 @@ void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);
 void    refresh_Widget              (const iAnyObject *);
 
 iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char *checkCommand);
+
+iDeclareType(WidgetScrollInfo)
+
+struct Impl_WidgetScrollInfo {
+    int   height; /* widget's height */
+    int   avail;  /* available height */
+    float normScroll;
+    int   thumbY; /* window coords */
+    int   thumbHeight;
+};
+
+void        scrollInfo_Widget           (const iWidget *, iWidgetScrollInfo *info);
 
 int         backgroundFadeColor_Widget  (void);
 

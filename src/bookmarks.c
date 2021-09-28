@@ -31,13 +31,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringset.h>
+#include <the_Foundation/toml.h>
 
 void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
     init_String(&d->title);
     init_String(&d->tags);
     iZap(d->when);
-    d->sourceId = 0;
+    d->parentId = 0;
+    d->order = 0;
 }
 
 void deinit_Bookmark(iBookmark *d) {
@@ -77,13 +79,18 @@ static int cmpTimeDescending_Bookmark_(const iBookmark **a, const iBookmark **b)
     return iCmp(seconds_Time(&(*b)->when), seconds_Time(&(*a)->when));
 }
 
-static int cmpTitleAscending_Bookmark_(const iBookmark **a, const iBookmark **b) {
+int cmpTitleAscending_Bookmark(const iBookmark **a, const iBookmark **b) {
     return cmpStringCase_String(&(*a)->title, &(*b)->title);
+}
+
+iBool filterInsideFolder_Bookmark(void *context, const iBookmark *bm) {
+    return hasParent_Bookmark(bm, id_Bookmark(context));
 }
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const char *fileName_Bookmarks_ = "bookmarks.txt";
+static const char *oldFileName_Bookmarks_ = "bookmarks.txt";
+static const char *fileName_Bookmarks_    = "bookmarks.ini"; /* since v1.7 (TOML subset) */
 
 struct Impl_Bookmarks {
     iMutex *  mtx;
@@ -123,16 +130,19 @@ void clear_Bookmarks(iBookmarks *d) {
     unlock_Mutex(d->mtx);
 }
 
+static void insertId_Bookmarks_(iBookmarks *d, iBookmark *bookmark, int id) {
+    bookmark->node.key = id;
+    insert_Hash(&d->bookmarks, &bookmark->node);
+}
+
 static void insert_Bookmarks_(iBookmarks *d, iBookmark *bookmark) {
     lock_Mutex(d->mtx);
-    bookmark->node.key = ++d->idEnum;
-    insert_Hash(&d->bookmarks, &bookmark->node);
+    insertId_Bookmarks_(d, bookmark, ++d->idEnum);
     unlock_Mutex(d->mtx);
 }
 
-void load_Bookmarks(iBookmarks *d, const char *dirPath) {
-    clear_Bookmarks(d);
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_));
+static void loadOldFormat_Bookmarks(iBookmarks *d, const char *dirPath) {
+    iFile *f = newCStr_File(concatPath_CStr(dirPath, oldFileName_Bookmarks_));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         const iRangecc src = range_Block(collect_Block(readAll_File(f)));
         iRangecc line = iNullRange;
@@ -170,6 +180,111 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
     iRelease(f);
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(BookmarkLoader)
+    
+struct Impl_BookmarkLoader {
+    iTomlParser *toml;
+    iBookmarks * bookmarks;
+    iBookmark *  bm;
+};
+
+static void handleTable_BookmarkLoader_(void *context, const iString *table, iBool isStart) {
+    iBookmarkLoader *d = context;
+    if (isStart) {
+        iAssert(!d->bm);
+        d->bm = new_Bookmark();
+        const int id = toInt_String(table);
+        d->bookmarks->idEnum = iMax(d->bookmarks->idEnum, id);
+        insertId_Bookmarks_(d->bookmarks, d->bm, id);
+    }
+    else {
+        d->bm = NULL;
+    }
+}
+
+static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, const iString *key,
+                                           const iTomlValue *tv) {
+    iBookmarkLoader *d = context;
+    iBookmark *bm = d->bm;
+    if (bm) {
+        iUnused(table); /* it's the current one */
+        if (!cmp_String(key, "url") && tv->type == string_TomlType) {
+            set_String(&bm->url, tv->value.string);
+        }
+        else if (!cmp_String(key, "title") && tv->type == string_TomlType) {
+            set_String(&bm->title, tv->value.string);
+        }
+        else if (!cmp_String(key, "tags") && tv->type == string_TomlType) {
+            set_String(&bm->tags, tv->value.string);
+        }
+        else if (!cmp_String(key, "icon") && tv->type == int64_TomlType) {
+            bm->icon = (iChar) tv->value.int64;
+        }
+        else if (!cmp_String(key, "created") && tv->type == int64_TomlType) {
+            initSeconds_Time(&bm->when, tv->value.int64);
+        }
+        else if (!cmp_String(key, "parent") && tv->type == int64_TomlType) {
+            bm->parentId = tv->value.int64;
+        }
+        else if (!cmp_String(key, "order") && tv->type == int64_TomlType) {
+            bm->order = tv->value.int64;
+        }
+    }
+}
+
+static void init_BookmarkLoader(iBookmarkLoader *d, iBookmarks *bookmarks) {
+    d->toml = new_TomlParser();
+    setHandlers_TomlParser(d->toml, handleTable_BookmarkLoader_, handleKeyValue_BookmarkLoader_, d);
+    d->bookmarks = bookmarks;
+    d->bm = NULL;
+}
+
+static void deinit_BookmarkLoader(iBookmarkLoader *d) {
+    delete_TomlParser(d->toml);
+}
+
+static void load_BookmarkLoader(iBookmarkLoader *d, iFile *file) {
+    if (!parse_TomlParser(d->toml, collect_String(readString_File(file)))) {
+        fprintf(stderr, "[Bookmarks] syntax error(s) in %s\n", cstr_String(path_File(file)));
+    }    
+}
+
+iDefineTypeConstructionArgs(BookmarkLoader, (iBookmarks *b), b)
+    
+/*----------------------------------------------------------------------------------------------*/
+
+static iBool isMatchingParent_Bookmark_(void *context, const iBookmark *bm) {
+    return bm->parentId == *(const uint32_t *) context;
+}
+
+void sort_Bookmarks(iBookmarks *d, uint32_t parentId, iBookmarksCompareFunc cmp) {
+    lock_Mutex(d->mtx);
+    iConstForEach(PtrArray, i, list_Bookmarks(d, cmp, isMatchingParent_Bookmark_, &parentId)) {
+        iBookmark *bm = i.ptr;
+        bm->order = index_PtrArrayConstIterator(&i) + 1;
+    }
+    unlock_Mutex(d->mtx);
+}
+
+void load_Bookmarks(iBookmarks *d, const char *dirPath) {
+    clear_Bookmarks(d);
+    /* Load new .ini bookmarks, if present. */
+    iFile *f = iClob(newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_)));
+    if (!open_File(f, readOnly_FileMode | text_FileMode)) {
+        /* As a fallback, try loading the v1.6 bookmarks file. */
+        loadOldFormat_Bookmarks(d, dirPath);
+        /* Old format has an implicit alphabetic sort order. */
+        sort_Bookmarks(d, 0, cmpTitleAscending_Bookmark);
+        return;
+    }
+    iBookmarkLoader loader;
+    init_BookmarkLoader(&loader, d);
+    load_BookmarkLoader(&loader, f);
+    deinit_BookmarkLoader(&loader);
+}
+
 void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     lock_Mutex(d->mtx);
     iRegExp *remotePattern = iClob(new_RegExp("\\bremote\\b", caseSensitive_RegExpOption));
@@ -185,12 +300,26 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
                 continue;
             }
             format_String(str,
-                          "%08x %.0lf %s\n%s\n%s\n",
+                          "[%d]\n"
+                          "url = \"%s\"\n"
+                          "title = \"%s\"\n"
+                          "tags = \"%s\"\n"
+                          "icon = 0x%x\n"
+                          "created = %.0f  # %s\n",
+                          id_Bookmark(bm),
+                          cstrCollect_String(quote_String(&bm->url, iFalse)),
+                          cstrCollect_String(quote_String(&bm->title, iFalse)),
+                          cstrCollect_String(quote_String(&bm->tags, iFalse)),
                           bm->icon,
                           seconds_Time(&bm->when),
-                          cstr_String(&bm->url),
-                          cstr_String(&bm->title),
-                          cstr_String(&bm->tags));
+                          cstrCollect_String(format_Time(&bm->when, "%Y-%m-%d")));
+            if (bm->parentId) {
+                appendFormat_String(str, "parent = %d\n", bm->parentId);
+            }
+            if (bm->order) {
+                appendFormat_String(str, "order = %d\n", bm->order);
+            }
+            appendCStr_String(str, "\n");
             writeData_File(f, cstr_String(str), size_String(str));
         }
     }
@@ -198,17 +327,29 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     unlock_Mutex(d->mtx);
 }
 
+static int maxOrder_Bookmarks_(const iBookmarks *d) {
+    int ord = 0;
+    iConstForEach(Hash, i, &d->bookmarks) {
+        const iBookmark *bm = (const iBookmark *) i.value;
+        ord = iMax(ord, bm->order);
+    }
+    return ord;
+}
+
 uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, const iString *tags,
                        iChar icon) {
     lock_Mutex(d->mtx);
     iBookmark *bm = new_Bookmark();
-    set_String(&bm->url, canonicalUrl_String(url));
+    if (url) {
+        set_String(&bm->url, canonicalUrl_String(url));
+    }
     set_String(&bm->title, title);
     if (tags) {
         set_String(&bm->tags, tags);
     }
     bm->icon = icon;
     initCurrent_Time(&bm->when);
+    bm->order = maxOrder_Bookmarks_(d) + 1; /* Last in lists. */
     insert_Bookmarks_(d, bm);
     unlock_Mutex(d->mtx);
     return id_Bookmark(bm);
@@ -218,16 +359,9 @@ iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
     lock_Mutex(d->mtx);
     iBookmark *bm = (iBookmark *) remove_Hash(&d->bookmarks, id);
     if (bm) {
-        /* If this is a remote source, make sure all the remote bookmarks are
-           removed as well. */
-        if (hasTag_Bookmark(bm, remoteSource_BookmarkTag)) {
-            iForEach(Hash, i, &d->bookmarks) {
-                iBookmark *j = (iBookmark *) i.value;
-                if (j->sourceId == id_Bookmark(bm)) {
-                    remove_HashIterator(&i);
-                    delete_Bookmark(j);
-                }
-            }
+        /* Remove all the contained bookmarks as well. */
+        iConstForEach(PtrArray, i, list_Bookmarks(d, NULL, filterInsideFolder_Bookmark, bm)) {
+            delete_Bookmark((iBookmark *) remove_Hash(&d->bookmarks, id_Bookmark(i.ptr)));
         }
         delete_Bookmark(bm);
     }
@@ -287,6 +421,20 @@ iBookmark *get_Bookmarks(iBookmarks *d, uint32_t id) {
     return (iBookmark *) value_Hash(&d->bookmarks, id);
 }
 
+void reorder_Bookmarks(iBookmarks *d, uint32_t id, int newOrder) {
+    lock_Mutex(d->mtx);
+    iForEach(Hash, i, &d->bookmarks) {
+        iBookmark *bm = (iBookmark *) i.value;
+        if (id_Bookmark(bm) == id) {
+            bm->order = newOrder;
+        }
+        else if (bm->order >= newOrder) {
+            bm->order++;
+        }
+    }
+    unlock_Mutex(d->mtx);
+}
+
 iBool filterTagsRegExp_Bookmarks(void *regExp, const iBookmark *bm) {
     iRegExpMatch m;
     init_RegExpMatch(&m);
@@ -321,6 +469,16 @@ const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,
     return list;
 }
 
+size_t count_Bookmarks(const iBookmarks *d) {
+    size_t n = 0;
+    iConstForEach(Hash, i, &d->bookmarks) {
+        if (!isFolder_Bookmark((const iBookmark *) i.value)) {
+            n++;
+        }
+    }
+    return n;
+}
+
 const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkListType listType) {
     iString *str = collectNew_String();
     lock_Mutex(d->mtx);
@@ -333,21 +491,37 @@ const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkLis
         appendFormat_String(str,
                             "%s\n\n"
                             "${bookmark.export.saving}\n\n",
-                            formatCStrs_Lang("bookmark.export.count.n", size_Hash(&d->bookmarks)));
+                            formatCStrs_Lang("bookmark.export.count.n", count_Bookmarks(d)));
     }
     else if (listType == listByTag_BookmarkListType) {
         appendFormat_String(str, "${bookmark.export.taginfo}\n\n");
     }
     iStringSet *tags = new_StringSet();
-    const iPtrArray *bmList = list_Bookmarks(d,
-                                             listType == listByCreationTime_BookmarkListType
-                                                 ? cmpTimeDescending_Bookmark_
-                                                 : cmpTitleAscending_Bookmark_,
-                                             NULL,
-                                             NULL);
+    const iPtrArray *bmList =
+        list_Bookmarks(d,
+                       listType == listByCreationTime_BookmarkListType ? cmpTimeDescending_Bookmark_
+                       : listType == listByTag_BookmarkListType        ? cmpTitleAscending_Bookmark
+                                                                       : cmpTree_Bookmark,
+                       NULL, NULL);
+    if (listType == listByFolder_BookmarkListType) {
+        iConstForEach(PtrArray, i, bmList) {
+            const iBookmark *bm = i.ptr;
+            if (!isFolder_Bookmark(bm) && !bm->parentId) {
+                appendFormat_String(str, "=> %s %s\n", cstr_String(&bm->url), cstr_String(&bm->title));
+            }
+        }
+    }
     iConstForEach(PtrArray, i, bmList) {
         const iBookmark *bm = i.ptr;
-        if (listType == listByFolder_BookmarkListType) {
+        if (isFolder_Bookmark(bm)) {
+            if (listType == listByFolder_BookmarkListType) {
+                const int depth = depth_Bookmark(bm);
+                appendFormat_String(str, "\n%s %s\n",
+                                    depth == 0 ? "##" : "###", cstr_String(&bm->title));
+            }
+            continue;
+        }
+        if (listType == listByFolder_BookmarkListType && bm->parentId) {
             appendFormat_String(str, "=> %s %s\n", cstr_String(&bm->url), cstr_String(&bm->title));
         }
         else if (listType == listByCreationTime_BookmarkListType) {
@@ -452,7 +626,7 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
                     }
                     const uint32_t bmId = add_Bookmarks(d, absUrl, titleStr, remoteTag, 0x2913);
                     iBookmark *bm = get_Bookmarks(d, bmId);
-                    bm->sourceId = *(uint32_t *) userData_Object(req);
+                    bm->parentId = *(uint32_t *) userData_Object(req);
                     delete_String(titleStr);
                 }
                 delete_String(urlStr);

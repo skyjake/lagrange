@@ -161,6 +161,7 @@ API_AVAILABLE(ios(13.0))
 
 @interface AppState : NSObject<UIDocumentPickerDelegate> {
     iString *fileBeingSaved;
+    iString *pickFileCommand;
 }
 @property (nonatomic, assign) BOOL isHapticsAvailable;
 @property (nonatomic, strong) NSObject *haptic;
@@ -173,7 +174,15 @@ static AppState *appState_;
 -(instancetype)init {
     self = [super init];
     fileBeingSaved = NULL;
+    pickFileCommand = NULL;
     return self;
+}
+
+-(void)setPickFileCommand:(const char *)command {
+    if (!pickFileCommand) {
+        pickFileCommand = new_String();
+    }
+    setCStr_String(pickFileCommand, command);
 }
 
 -(void)setFileBeingSaved:(const iString *)path {
@@ -213,13 +222,21 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
         NSURL *url = [urls firstObject];
         iString *path = localFilePathFromUrl_String(collectNewCStr_String([[url absoluteString]
                                                                            UTF8String]));
-        postCommandf_App("file.open temp:1 path:%s", cstrCollect_String(path));
+        postCommandf_App("%s temp:1 path:%s",
+                         cstr_String(pickFileCommand),
+                         cstrCollect_String(path));
+        delete_String(pickFileCommand);
+        pickFileCommand = NULL;
     }
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
     if (fileBeingSaved) {
         [self removeSavedFile];
+    }
+    if (pickFileCommand) {
+        delete_String(pickFileCommand);
+        pickFileCommand = NULL;
     }
 }
 
@@ -230,14 +247,14 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     UIView *view         = [viewController_(get_Window()) view];
     CGRect keyboardFrame = [view convertRect:rawFrame fromView:nil];
 //    NSLog(@"keyboardFrame: %@", NSStringFromCGRect(keyboardFrame));
-    iWindow *window = get_Window();
-    const iInt2 rootSize = size_Root(window->roots[0]);
-    const int keyTop = keyboardFrame.origin.y * window->pixelRatio;
-    setKeyboardHeight_Window(window, rootSize.y - keyTop);
+    iMainWindow *window = get_MainWindow();
+    const iInt2 rootSize = size_Root(window->base.roots[0]);
+    const int keyTop = keyboardFrame.origin.y * window->base.pixelRatio;
+    setKeyboardHeight_MainWindow(window, rootSize.y - keyTop);
 }
 
 -(void)keyboardOffScreen:(NSNotification *)notification {
-    setKeyboardHeight_Window(get_Window(), 0);
+    setKeyboardHeight_MainWindow(get_MainWindow(), 0);
 }
 @end
 
@@ -264,7 +281,6 @@ void setupApplication_iOS(void) {
                selector:@selector(keyboardOffScreen:)
                    name:UIKeyboardWillHideNotification
                  object:nil];
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
     /* Media player remote controls. */
     MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
     [[commandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
@@ -455,11 +471,13 @@ void exportDownloadedFile_iOS(const iString *path) {
 }
 
 void pickFileForOpening_iOS(void) {
+    pickFile_iOS("file.open");
+}
+
+void pickFile_iOS(const char *command) {
+    [appState_ setPickFileCommand:command];
     UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
-                                              initWithDocumentTypes:@[@"fi.skyjake.lagrange.gemini",
-                                                                      @"public.text",
-                                                                      @"public.image",
-                                                                      @"public.audio"]
+                                              initWithDocumentTypes:@[@"public.data"]
                                               inMode:UIDocumentPickerModeImport];
     picker.delegate = appState_;
     [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
@@ -487,6 +505,8 @@ void init_AVFAudioPlayer(iAVFAudioPlayer *d) {
     d->player = NULL;
     d->volume = 1.0f;
     d->state = initialized_AVFAudioPlayerState;
+    /* Playback is imminent. */
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
 }
 
 void deinit_AVFAudioPlayer(iAVFAudioPlayer *d) {

@@ -49,9 +49,8 @@ int main(int argc, char **argv) {
     registerURLHandler_MacOS();
 #endif
 #if defined (iPlatformMsys)
-    /* MSYS runtime takes care of WinMain. */
-    setDPIAware_Win32();
-    SDL_SetMainReady();
+    init_Win32(); /* DPI awareness, dark mode */
+    SDL_SetMainReady(); /* MSYS runtime takes care of WinMain. */
 #endif
     /* Initialize libraries. */
 #if defined (LAGRANGE_ENABLE_MPG123)
@@ -68,6 +67,7 @@ int main(int argc, char **argv) {
                           "DHE-RSA-AES256-GCM-SHA384");
     SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
     SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
+    SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {
         fprintf(stderr, "[SDL] init failed: %s\n", SDL_GetError());
         return -1;

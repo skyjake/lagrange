@@ -28,9 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(Window)
 
-void  setDPIAware_Win32(void);
+void  init_Win32(void);
 float desktopDPI_Win32(void);
-void  useExecutableIconResource_SDLWindow(SDL_Window *win);
+void  useExecutableIconResource_SDLWindow(SDL_Window *);
+void  enableDarkMode_SDLWindow(SDL_Window *);
+void  handleCommand_Win32(const char *cmd);
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 iInt2 cursor_Win32(void);

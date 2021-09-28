@@ -42,8 +42,8 @@ void init_Prefs(iPrefs *d) {
     d->returnKey         = default_ReturnKeyBehavior;
     d->hoverLink         = iFalse;
     d->smoothScrolling   = iTrue;
-    d->smoothScrollSpeed[keyboard_ScrollType] = 10;
-    d->smoothScrollSpeed[mouse_ScrollType]    = 10;
+    d->smoothScrollSpeed[keyboard_ScrollType] = 13;
+    d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling = iFalse;
     d->collapsePreOnLoad = iFalse;
     d->openArchiveIndexPages = iTrue;
@@ -62,6 +62,7 @@ void init_Prefs(iPrefs *d) {
     d->quoteIcon         = iTrue;
     d->centerShortDocs   = iTrue;
     d->plainTextWrap     = iTrue;
+    d->imageStyle        = original_ImageStyle;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
     d->saturation        = 1.0f;

@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "metrics.h"
 #include "embedded.h"
 #include "window.h"
+#include "paint.h"
 #include "app.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -120,6 +121,8 @@ iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
 
 /*-----------------------------------------------------------------------------------------------*/
 
+static iGlyph *glyph_Font_(iFont *d, iChar ch);
+
 struct Impl_Font {
     iBlock *       data;
     enum iTextFont family;
@@ -130,6 +133,7 @@ struct Impl_Font {
     int            baseline;
     iHash          glyphs; /* key is glyph index in the font */ /* TODO: does not need to be a Hash */
     iBool          isMonospaced;
+    float          emAdvance;
     enum iFontSize sizeId;  /* used to look up different fonts of matching size */
     uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
@@ -177,20 +181,20 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     d->height = height;
     iZap(d->font);
     stbtt_InitFont(&d->font, constData_Block(data), 0);
-    int ascent, descent;
+    int ascent, descent, emAdv;
     stbtt_GetFontVMetrics(&d->font, &ascent, &descent, NULL);
+    stbtt_GetCodepointHMetrics(&d->font, 'M', &emAdv, NULL);
     d->xScale = d->yScale = stbtt_ScaleForPixelHeight(&d->font, height) * scale;
     if (d->isMonospaced) {
         /* It is important that monospaced fonts align 1:1 with the pixel grid so that
            box-drawing characters don't have partially occupied edge pixels, leading to seams
            between adjacent glyphs. */
-        int adv;
-        stbtt_GetCodepointHMetrics(&d->font, 'M', &adv, NULL);
-        const float advance = (float) adv * d->xScale;
+        const float advance = (float) emAdv * d->xScale;
         if (advance > 4) { /* not too tiny */
             d->xScale *= floorf(advance) / advance;
         }
     }
+    d->emAdvance  = emAdv * d->xScale;
     d->baseline   = ascent * d->yScale;
     d->vertOffset = height * (1.0f - scale) / 2;
     /* Custom tweaks. */
@@ -289,7 +293,9 @@ struct Impl_Text {
     iRegExp *      ansiEscape;
 };
 
-static iText   text_;
+iDefineTypeConstructionArgs(Text, (SDL_Renderer *render), render)
+
+static iText  *activeText_;
 static iBlock *userFont_;
 
 static void initFonts_Text_(iText *d) {
@@ -361,7 +367,7 @@ static void initFonts_Text_(iText *d) {
         h12Font = &fontIosevkaTermExtended_Embedded;
         h3Font  = &fontIosevkaTermExtended_Embedded;
     }
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformMobile)
     const float uiSize = fontSize_UI * 1.1f;
 #else
     const float uiSize = fontSize_UI;
@@ -500,8 +506,7 @@ void loadUserFonts_Text(void) {
     }
 }
 
-void init_Text(SDL_Renderer *render) {
-    iText *d = &text_;
+void init_Text(iText *d, SDL_Renderer *render) {
     loadUserFonts_Text();
     d->contentFont     = nunito_TextFont;
     d->headingFont     = nunito_TextFont;
@@ -520,8 +525,7 @@ void init_Text(SDL_Renderer *render) {
     initFonts_Text_(d);
 }
 
-void deinit_Text(void) {
-    iText *d = &text_;
+void deinit_Text(iText *d) {
     SDL_FreePalette(d->grayscale);
     deinitFonts_Text_(d);
     deinitCache_Text_(d);
@@ -529,30 +533,34 @@ void deinit_Text(void) {
     iRelease(d->ansiEscape);
 }
 
+void setCurrent_Text(iText *d) {
+    activeText_ = d;
+}
+
 void setOpacity_Text(float opacity) {
-    SDL_SetTextureAlphaMod(text_.cache, iClamp(opacity, 0.0f, 1.0f) * 255 + 0.5f);
+    SDL_SetTextureAlphaMod(activeText_->cache, iClamp(opacity, 0.0f, 1.0f) * 255 + 0.5f);
 }
 
-void setContentFont_Text(enum iTextFont font) {
-    if (text_.contentFont != font) {
-        text_.contentFont = font;
-        resetFonts_Text();
+void setContentFont_Text(iText *d, enum iTextFont font) {
+    if (d->contentFont != font) {
+        d->contentFont = font;
+        resetFonts_Text(d);
     }
 }
 
-void setHeadingFont_Text(enum iTextFont font) {
-    if (text_.headingFont != font) {
-        text_.headingFont = font;
-        resetFonts_Text();
+void setHeadingFont_Text(iText *d, enum iTextFont font) {
+    if (d->headingFont != font) {
+        d->headingFont = font;
+        resetFonts_Text(d);
     }
 }
 
-void setContentFontSize_Text(float fontSizeFactor) {
+void setContentFontSize_Text(iText *d, float fontSizeFactor) {
     fontSizeFactor *= contentScale_Text_;
     iAssert(fontSizeFactor > 0);
-    if (iAbs(text_.contentFontSize - fontSizeFactor) > 0.001f) {
-        text_.contentFontSize = fontSizeFactor;
-        resetFonts_Text();
+    if (iAbs(d->contentFontSize - fontSizeFactor) > 0.001f) {
+        d->contentFontSize = fontSizeFactor;
+        resetFonts_Text(d);
     }
 }
 
@@ -564,8 +572,7 @@ static void resetCache_Text_(iText *d) {
     initCache_Text_(d);
 }
 
-void resetFonts_Text(void) {
-    iText *d = &text_;
+void resetFonts_Text(iText *d) {
     deinitFonts_Text_(d);
     deinitCache_Text_(d);
     initCache_Text_(d);
@@ -573,7 +580,7 @@ void resetFonts_Text(void) {
 }
 
 iLocalDef iFont *font_Text_(enum iFontId id) {
-    return &text_.fonts[id & mask_FontId];
+    return &activeText_->fonts[id & mask_FontId];
 }
 
 static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, float xShift) {
@@ -583,7 +590,7 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
     SDL_SetSurfaceBlendMode(surface8, SDL_BLENDMODE_NONE);
-    SDL_SetSurfacePalette(surface8, text_.grayscale);
+    SDL_SetSurfacePalette(surface8, activeText_->grayscale);
 #if LAGRANGE_RASTER_DEPTH != 8
     /* Convert to the cache format. */
     SDL_Surface *surf = SDL_ConvertSurfaceFormat(surface8, LAGRANGE_RASTER_FORMAT, 0);
@@ -630,7 +637,7 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
         &d->font, index_Glyph_(glyph), d->xScale, d->yScale, hoff * 0.5f, 0.0f, &x0, &y0, &x1, &y1);
     glRect->size = init_I2(x1 - x0, y1 - y0);
     /* Determine placement in the glyph cache texture, advancing in rows. */
-    glRect->pos    = assignCachePos_Text_(&text_, glRect->size);
+    glRect->pos    = assignCachePos_Text_(activeText_, glRect->size);
     glyph->d[hoff] = init_I2(x0, y0);
     glyph->d[hoff].y += d->vertOffset;
     if (hoff == 0) { /* hoff==1 uses same metrics as `glyph` */
@@ -736,11 +743,11 @@ static iGlyph *glyphByIndex_Font_(iFont *d, uint32_t glyphIndex) {
     }
     else {
         /* If the cache is running out of space, clear it and we'll recache what's needed currently. */
-        if (text_.cacheBottom > text_.cacheSize.y - maxGlyphHeight_Text_(&text_)) {
+        if (activeText_->cacheBottom > activeText_->cacheSize.y - maxGlyphHeight_Text_(activeText_)) {
 #if !defined (NDEBUG)
             printf("[Text] glyph cache is full, clearing!\n"); fflush(stdout);
 #endif
-            resetCache_Text_(&text_);
+            resetCache_Text_(activeText_);
         }
         glyph       = new_Glyph(glyphIndex);
         glyph->font = d;
@@ -857,7 +864,7 @@ static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, i
 }
 
 static enum iFontId fontId_Text_(const iFont *font) {
-    return (enum iFontId) (font - text_.fonts);
+    return (enum iFontId) (font - activeText_->fonts);
 }
 
 static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iChar overrideChar) {
@@ -889,6 +896,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         resize_Array(&d->visualToLogical, length);
         d->bidiLevels = length ? malloc(length) : NULL;
         FriBidiParType baseDir = (FriBidiParType) FRIBIDI_TYPE_ON;
+        /* TODO: If this returns zero (error occurred), act like everything is LTR. */
         fribidi_log2vis(constData_Array(&d->logical),
                         length,
                         &baseDir,
@@ -947,7 +955,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             /* Do a regexp match in the source text. */
             iRegExpMatch m;
             init_RegExpMatch(&m);
-            if (match_RegExp(text_.ansiEscape, srcPos, d->source.end - srcPos, &m)) {
+            if (match_RegExp(activeText_->ansiEscape, srcPos, d->source.end - srcPos, &m)) {
                 finishRun_AttributedText_(d, &run, pos - 1);
                 run.fgColor = ansiForeground_Color(capturedRange_RegExpMatch(&m, 1),
                                                    tmParagraph_ColorId);
@@ -1080,9 +1088,9 @@ static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
     while (index < size_Array(glyphIndices)) {
         for (; index < size_Array(glyphIndices); index++) {
             const uint32_t glyphIndex = constValue_Array(glyphIndices, index, uint32_t);
-            const int lastCacheBottom = text_.cacheBottom;
+            const int lastCacheBottom = activeText_->cacheBottom;
             iGlyph *glyph = glyphByIndex_Font_(d, glyphIndex);
-            if (text_.cacheBottom < lastCacheBottom) {
+            if (activeText_->cacheBottom < lastCacheBottom) {
                 /* The cache was reset due to running out of space. We need to restart from
                    the beginning! */
                 bufX = 0;
@@ -1101,7 +1109,7 @@ static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
                                 LAGRANGE_RASTER_DEPTH,
                                 LAGRANGE_RASTER_FORMAT);
                     SDL_SetSurfaceBlendMode(buf, SDL_BLENDMODE_NONE);
-                    SDL_SetSurfacePalette(buf, text_.grayscale);
+                    SDL_SetSurfacePalette(buf, activeText_->grayscale);
                 }
                 SDL_Surface *surfaces[2] = {
                     !isRasterized_Glyph_(glyph, 0) ?
@@ -1145,19 +1153,19 @@ static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
         }
         /* Finished or the buffer is full, copy the glyphs to the cache texture. */
         if (!isEmpty_Array(rasters)) {
-            SDL_Texture *bufTex = SDL_CreateTextureFromSurface(text_.render, buf);
+            SDL_Texture *bufTex = SDL_CreateTextureFromSurface(activeText_->render, buf);
             SDL_SetTextureBlendMode(bufTex, SDL_BLENDMODE_NONE);
             if (!isTargetChanged) {
                 isTargetChanged = iTrue;
-                oldTarget = SDL_GetRenderTarget(text_.render);
-                SDL_SetRenderTarget(text_.render, text_.cache);
+                oldTarget = SDL_GetRenderTarget(activeText_->render);
+                SDL_SetRenderTarget(activeText_->render, activeText_->cache);
             }
 //            printf("copying %zu rasters from %p\n", size_Array(rasters), bufTex); fflush(stdout);
             iConstForEach(Array, i, rasters) {
                 const iRasterGlyph *rg = i.value;
 //                iAssert(isEqual_I2(rg->rect.size, rg->glyph->rect[rg->hoff].size));
                 const iRect *glRect = &rg->glyph->rect[rg->hoff];
-                SDL_RenderCopy(text_.render,
+                SDL_RenderCopy(activeText_->render,
                                bufTex,
                                (const SDL_Rect *) &rg->rect,
                                (const SDL_Rect *) glRect);
@@ -1177,7 +1185,7 @@ static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
         SDL_FreeSurface(buf);
     }
     if (isTargetChanged) {
-        SDL_SetRenderTarget(text_.render, oldTarget);
+        SDL_SetRenderTarget(activeText_->render, oldTarget);
     }
 }
 
@@ -1328,6 +1336,11 @@ static void shape_GlyphBuffer_(iGlyphBuffer *d) {
         d->glyphInfo = hb_buffer_get_glyph_infos(d->hb, &d->glyphCount);
         d->glyphPos  = hb_buffer_get_glyph_positions(d->hb, &d->glyphCount);
     }
+    }
+
+static float nextTabStop_Font_(const iFont *d, float x) {
+    const float stop = 8 * d->emAdvance;
+    return floorf(x / stop) * stop + stop;
 }
 
 static float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapPosRange) {
@@ -1338,6 +1351,9 @@ static float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapPosRange) {
             continue;
     }
         x += d->font->xScale * d->glyphPos[i].x_advance;
+        if (d->logicalText[logPos] == '\t') {
+            x = nextTabStop_Font_(d->font, x);
+        }
         if (i + 1 < d->glyphCount) {
             x += horizKern_Font_(d->font,
                                  d->glyphInfo[i].codepoint,
@@ -1349,7 +1365,7 @@ static float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapPosRange) {
 
 static void evenMonospaceAdvances_GlyphBuffer_(iGlyphBuffer *d, iFont *baseFont) {
     shape_GlyphBuffer_(d);
-    const float monoAdvance = glyph_Font_(baseFont, 'M')->advance;
+    const float monoAdvance = baseFont->emAdvance;
     for (unsigned int i = 0; i < d->glyphCount; ++i) {
         const hb_glyph_info_t *info = d->glyphInfo + i;
         if (d->glyphPos[i].x_advance > 0 && d->font != baseFont) {
@@ -1493,10 +1509,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     const int     glyphFlags = hb_glyph_info_get_glyph_flags(info);
                     const float   xOffset    = run->font->xScale * buf->glyphPos[i].x_offset;
                     const float   xAdvance   = run->font->xScale * buf->glyphPos[i].x_advance;
+                    const iChar   ch         = logicalText[logPos];
                     iAssert(xAdvance >= 0);
                     if (args->wrap->mode == word_WrapTextMode) {
                         /* When word wrapping, only consider certain places breakable. */
-                        const iChar ch = logicalText[logPos];
                         if ((ch >= 128 || !ispunct(ch)) && (prevCh == '-' || prevCh == '/')) {
                             safeBreakPos = logPos;
                             breakAdvance = wrapAdvance;
@@ -1521,6 +1537,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                             wrap->hitChar_out = sourcePtr_AttributedText_(&attrText, logPos);
                             wrap->hitGlyphNormX_out = (wrap->hitPoint.x - wrapAdvance) / xAdvance;
                         }
+                    }
+                    if (ch == '\t') {
+                        wrapAdvance = nextTabStop_Font_(d, wrapAdvance) - xAdvance;
                     }
                     /* Out of room? */
                     if (wrap->maxWidth > 0 &&
@@ -1676,6 +1695,23 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 const float xAdvance = run->font->xScale * buf->glyphPos[i].x_advance;
                 const float yAdvance = run->font->yScale * buf->glyphPos[i].y_advance;
                 const iGlyph *glyph = glyphByIndex_Font_(run->font, glyphId);
+                if (logicalText[logPos] == '\t') {
+#if 0
+                    if (mode & draw_RunMode) {
+                        /* Tab indicator. */
+                        iColor tabColor = get_Color(uiTextAction_ColorId);
+                        SDL_SetRenderDrawColor(activeText_->render, tabColor.r, tabColor.g, tabColor.b, 255);
+                        const int pad = d->height / 6;
+                        SDL_RenderFillRect(activeText_->render, &(SDL_Rect){
+                            orig.x + xCursor,
+                            orig.y + yCursor + d->height / 2 - pad / 2,
+                            pad,
+                            pad
+                        });
+                    }
+#endif
+                    xCursor = nextTabStop_Font_(d, xCursor) - xAdvance;
+                }
                 const float xf = xCursor + xOffset;
                 const int hoff = enableHalfPixelGlyphs_Text ? (xf - ((int) xf) > 0.5f ? 1 : 0) : 0;
                 /* Output position for the glyph. */
@@ -1704,20 +1740,22 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     }
                     if (~mode & permanentColorFlag_RunMode) {
                         const iColor clr = run->fgColor;
-                        SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
+                        SDL_SetTextureColorMod(activeText_->cache, clr.r, clr.g, clr.b);
                         if (args->mode & fillBackground_RunMode) {
-                            SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
+                            SDL_SetRenderDrawColor(activeText_->render, clr.r, clr.g, clr.b, 0);
         }
             }
             SDL_Rect src;
             memcpy(&src, &glyph->rect[hoff], sizeof(SDL_Rect));
+                    dst.x += origin_Paint.x;
+                    dst.y += origin_Paint.y;
             if (args->mode & fillBackground_RunMode) {
                 /* Alpha blending looks much better if the RGB components don't change in
                    the partially transparent pixels. */
                         /* TODO: Backgrounds of all glyphs should be cleared before drawing anything else. */
-                SDL_RenderFillRect(text_.render, &dst);
+                        SDL_RenderFillRect(activeText_->render, &dst);
             }
-            SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
+                    SDL_RenderCopy(activeText_->render, activeText_->cache, &src, &dst);
 #if 0
                     /* Show spaces and direction. */
                     if (logicalText[logPos] == 0x20) {
@@ -1859,7 +1897,7 @@ iTextMetrics measureN_Text(int fontId, const char *text, size_t n) {
 }
 
 static void drawBoundedN_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text, size_t maxLen) {
-    iText *      d    = &text_;
+    iText *      d    = activeText_;
     iFont *      font = font_Text_(fontId);
     const iColor clr  = get_Color(color & mask_ColorId);
     SDL_SetTextureColorMod(d->cache, clr.r, clr.g, clr.b);
@@ -2053,7 +2091,7 @@ iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
 }
 
 SDL_Texture *glyphCache_Text(void) {
-    return text_.cache;
+    return activeText_->cache;
 }
 
 static void freeBitmap_(void *ptr) {
@@ -2166,7 +2204,7 @@ iString *renderBlockChars_Text(const iBlock *fontData, int height, enum iTextBlo
 iDefineTypeConstructionArgs(TextBuf, (iWrapText *wrapText, int font, int color), wrapText, font, color)
 
 void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
-    SDL_Renderer *render = text_.render;
+    SDL_Renderer *render = activeText_->render;
     d->size = measure_WrapText(wrapText, font).bounds.size;
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     if (d->size.x * d->size.y) {
@@ -2181,14 +2219,17 @@ void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
     }
     if (d->texture) {
         SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
+        const iInt2 oldOrigin = origin_Paint;
+        origin_Paint = zero_I2();
         SDL_SetRenderTarget(render, d->texture);
         SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
         SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
         SDL_RenderClear(render);
-        SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
+        SDL_SetTextureBlendMode(activeText_->cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
         draw_WrapText(wrapText, font, zero_I2(), color | fillBackground_ColorId);
-        SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureBlendMode(activeText_->cache, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(render, oldTarget);
+        origin_Paint = oldOrigin;
         SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
     }
 }
@@ -2202,9 +2243,10 @@ iTextBuf *newRange_TextBuf(int font, int color, iRangecc text) {
 }
 
 void draw_TextBuf(const iTextBuf *d, iInt2 pos, int color) {
+    addv_I2(&pos, origin_Paint);
     const iColor clr = get_Color(color);
     SDL_SetTextureColorMod(d->texture, clr.r, clr.g, clr.b);
-    SDL_RenderCopy(text_.render,
+    SDL_RenderCopy(activeText_->render,
                    d->texture,
                    &(SDL_Rect){ 0, 0, d->size.x, d->size.y },
                    &(SDL_Rect){ pos.x, pos.y, d->size.x, d->size.y });

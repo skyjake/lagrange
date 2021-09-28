@@ -90,8 +90,22 @@ static int thumbSize_ScrollWidget_(const iScrollWidget *d) {
     return iMax(gap_UI * 6, d->thumbSize);
 }
 
+static iRect bounds_ScrollWidget_(const iScrollWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    iRect bounds = bounds_Widget(w);
+    if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
+        /* Account for the hidable toolbar. */
+        int toolbarHeight = lineHeight_Text(uiLabelLarge_FontId) + 3 * gap_UI;
+        int excess = bottom_Rect(bounds) - (bottom_Rect(safeRect_Root(w->root)) - toolbarHeight);
+        if (excess > 0) {
+            adjustEdges_Rect(&bounds, 0, 0, -excess, 0);
+        }
+    }
+    return bounds;
+}
+
 static iRect thumbRect_ScrollWidget_(const iScrollWidget *d) {
-    const iRect bounds = bounds_Widget(constAs_Widget(d));
+    const iRect bounds = bounds_ScrollWidget_(d);
     iRect rect = init_Rect(bounds.pos.x, bounds.pos.y, bounds.size.x, 0);
     const int total = size_Range(&d->range);
     if (total > 0) {
@@ -181,7 +195,7 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
             refresh_Widget(w);
             return iTrue;
         case drag_ClickResult: {
-            const iRect bounds = bounds_Widget(w);
+            const iRect bounds = bounds_ScrollWidget_(d);
             const int offset = delta_Click(&d->click).y;
             const int total = size_Range(&d->range);
             int dpos = (float) offset / (float) (height_Rect(bounds) - thumbSize_ScrollWidget_(d)) * total;
@@ -218,7 +232,7 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
 
 static void draw_ScrollWidget_(const iScrollWidget *d) {
     const iWidget *w         = constAs_Widget(d);
-    const iRect    bounds    = bounds_Widget(w);
+    const iRect    bounds    = bounds_ScrollWidget_(d);
     const iBool    isPressed = (flags_Widget(w) & pressed_WidgetFlag) != 0;
     if (bounds.size.x > 0) {
         iPaint p;

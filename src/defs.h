@@ -36,9 +36,18 @@ enum iFileVersion {
     multipleRoots_FileVersion           = 2,
     serializedSidebarState_FileVersion  = 3,
     addedRecentUrlFlags_FileVersion     = 4,
+    bookmarkFolderState_FileVersion     = 5,
     /* meta */
     idents_FileVersion = 1, /* version used by GmCerts/idents.lgr */
-    latest_FileVersion = 4,
+    latest_FileVersion = 5,
+};
+
+enum iImageStyle {
+    original_ImageStyle           = 0,
+    grayscale_ImageStyle          = 1,
+    bgFg_ImageStyle               = 2,
+    textColorized_ImageStyle      = 3,
+    preformatColorized_ImageStyle = 4,
 };
 
 enum iScrollType {
@@ -99,11 +108,13 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define rightArrow_Icon     "\u279e"
 #define barLeftArrow_Icon   "\u21a4"
 #define barRightArrow_Icon  "\u21a6"
+#define upDownArrow_Icon    "\u21c5"
 #define clock_Icon          "\U0001f553"
 #define pin_Icon            "\U0001f588"
 #define star_Icon           "\u2605"
 #define whiteStar_Icon      "\u2606"
 #define person_Icon         "\U0001f464"
+#define key_Icon            "\U0001f511"
 #define download_Icon       "\u2ba7"
 #define upload_Icon         "\u2ba5"
 #define export_Icon         "\U0001f4e4"
@@ -140,9 +151,14 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define clipboard_Icon      "\U0001f4cb"
 #define unhappy_Icon        "\U0001f641"
 #define globe_Icon          "\U0001f310"
+#define envelope_Icon       "\U0001f4e7"
 #define magnifyingGlass_Icon "\U0001f50d"
 #define midEllipsis_Icon    "\u00b7\u00b7\u00b7"
 #define return_Icon         "\u23ce"
+#define undo_Icon           "\u23ea"
+#define select_Icon         "\u2b1a"
+#define downAngle_Icon      "\ufe40"
+#define photo_Icon          "\U0001f5bc"
 
 #if defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"
@@ -153,7 +169,10 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #endif
 
 #if defined (iPlatformAppleDesktop)
-#   define iHaveNativeMenus
+#   define iHaveNativeMenus /* main menu */
+#   if defined (LAGRANGE_ENABLE_MAC_MENUS)
+#       define iHaveNativeContextMenus
+#   endif
 #endif
 
 /* UI labels that depend on the platform */

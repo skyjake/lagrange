@@ -511,54 +511,64 @@ const iString *findContainerArchive_Path(const iString *path) {
     return NULL;
 }
 
-const char *mediaType_Path(const iString *path) {
-    if (endsWithCase_String(path, ".gmi") || endsWithCase_String(path, ".gemini")) {
+const char *mediaTypeFromFileExtension_String(const iString *d) {
+    if (endsWithCase_String(d, ".gmi") || endsWithCase_String(d, ".gemini")) {
         return "text/gemini; charset=utf-8";
     }
-    else if (endsWithCase_String(path, ".pem")) {
+    else if (endsWithCase_String(d, ".pem")) {
         return "application/x-pem-file";
     }
-    else if (endsWithCase_String(path, ".zip")) {
+    else if (endsWithCase_String(d, ".zip")) {
         return "application/zip";
     }
-    else if (endsWithCase_String(path, ".gpub")) {
+    else if (endsWithCase_String(d, ".gpub")) {
         return "application/gpub+zip";
     }
-    else if (endsWithCase_String(path, ".xml")) {
+    else if (endsWithCase_String(d, ".xml")) {
         return "text/xml";
     }
-    else if (endsWithCase_String(path, ".png")) {
+    else if (endsWithCase_String(d, ".png")) {
         return "image/png";
     }
-    else if (endsWithCase_String(path, ".jpg") || endsWithCase_String(path, ".jpeg")) {
+    else if (endsWithCase_String(d, ".webp")) {
+        return "image/webp";
+    }
+    else if (endsWithCase_String(d, ".jpg") || endsWithCase_String(d, ".jpeg")) {
         return "image/jpeg";
     }
-    else if (endsWithCase_String(path, ".gif")) {
+    else if (endsWithCase_String(d, ".gif")) {
         return "image/gif";
     }
-    else if (endsWithCase_String(path, ".wav")) {
+    else if (endsWithCase_String(d, ".wav")) {
         return "audio/wave";
     }
-    else if (endsWithCase_String(path, ".ogg")) {
+    else if (endsWithCase_String(d, ".ogg")) {
         return "audio/ogg";
     }
-    else if (endsWithCase_String(path, ".mp3")) {
+    else if (endsWithCase_String(d, ".mp3")) {
         return "audio/mpeg";
     }
-    else if (endsWithCase_String(path, ".mid")) {
+    else if (endsWithCase_String(d, ".mid")) {
         return "audio/midi";
     }
-    else if (endsWithCase_String(path, ".txt") ||
-             endsWithCase_String(path, ".md") ||
-             endsWithCase_String(path, ".c") ||
-             endsWithCase_String(path, ".h") ||
-             endsWithCase_String(path, ".cc") ||
-             endsWithCase_String(path, ".hh") ||
-             endsWithCase_String(path, ".cpp") ||
-             endsWithCase_String(path, ".hpp")) {
+    else if (endsWithCase_String(d, ".txt") ||
+             endsWithCase_String(d, ".md") ||
+             endsWithCase_String(d, ".c") ||
+             endsWithCase_String(d, ".h") ||
+             endsWithCase_String(d, ".cc") ||
+             endsWithCase_String(d, ".hh") ||
+             endsWithCase_String(d, ".cpp") ||
+             endsWithCase_String(d, ".hpp")) {
         return "text/plain";
     }
-    const char *mtype = "application/octet-stream";
+    return "application/octet-stream";
+}
+
+const char *mediaType_Path(const iString *path) {
+    const char *mtype = mediaTypeFromFileExtension_String(path);
+    if (iCmpStr(mtype, "application/octet-stream")) {
+        return mtype; /* extension recognized */
+    }
     /* If the file is reasonably small and looks like UTF-8, we'll display it as text/plain. */
     if (fileExists_FileInfo(path) && fileSize_FileInfo(path) <= 5000000) {
         iFile *f = new_File(path);
@@ -610,7 +620,20 @@ const iString *canonicalUrl_String(const iString *d) {
        - all non-reserved characters decoded (i.e., it's an IRI)
        - expect for spaces, which are always `%20`
        This means a canonical URL can be used on a gemtext link line without modifications. */
-    iString *canon = maybeUrlDecodeExclude_String(d, "/?:;#&= ");
+    iString *canon = NULL;
+    iUrl parts;
+    init_Url(&parts, d);
+    /* Colons are in decoded form in the URL path. */
+    if (iStrStrN(parts.path.start, "%3A", size_Range(&parts.path)) ||
+        iStrStrN(parts.path.start, "%3a", size_Range(&parts.path))) {
+        /* This is done separately to avoid the copy if %3A is not present; it's rare. */
+        canon = copy_String(d);
+        urlDecodePath_String(canon);
+        urlDecodeExclude_String(d, "%/?:;#&= "); /* decode everything else in all parts */
+    }
+    else {
+        canon = maybeUrlDecodeExclude_String(d, "%/?:;#&= ");
+    }
     /* `canon` may now be NULL if nothing was decoded. */
     if (indexOfCStr_String(canon ? canon : d, " ") != iInvalidPos ||
         indexOfCStr_String(canon ? canon : d, "\n") != iInvalidPos) {

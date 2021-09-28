@@ -82,6 +82,7 @@ struct Impl_GmDocument {
     iString   url;         /* for resolving relative links */
     iString   localHost;
     iInt2     size;
+    int       outsideMargin;
     iArray    layout; /* contents of source, laid out in document space */
     iPtrArray links;
     enum iGmDocumentBanner bannerType;
@@ -239,7 +240,10 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 iString *path = newRange_String(parts.path);
                 if (endsWithCase_String(path, ".gif")  || endsWithCase_String(path, ".jpg") ||
                     endsWithCase_String(path, ".jpeg") || endsWithCase_String(path, ".png") ||
-                    endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||
+                    endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||                    
+#if defined (LAGRANGE_ENABLE_WEBP)
+                    endsWithCase_String(path, ".webp") ||
+#endif
                     endsWithCase_String(path, ".hdr")  || endsWithCase_String(path, ".pic")) {
                     link->flags |= imageFileExtension_GmLinkFlag;
                 }
@@ -460,6 +464,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool   isNarrow          = d->size.x < 90 * gap_Text;
     const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text;
     const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text;
+    const iBool   isFullWidthImages = (d->outsideMargin < 5 * gap_UI);
     const iBool   isDarkBg          = isDark_GmDocumentTheme(
         isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
     /* TODO: Collect these parameters into a GmTheme. */
@@ -495,7 +500,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         0.0f, 0.25f, 1.0f, 0.5f, 1.5f, 0.5f, 0.5f, 0.25f
     };
     static const char *arrow           = rightArrowhead_Icon;
-    static const char *envelope        = "\U0001f4e7";
+    static const char *envelope        = envelope_Icon;
     static const char *bullet          = "\u2022";
     static const char *folder          = "\U0001f4c1";
     static const char *globe           = globe_Icon;
@@ -503,6 +508,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *magnifyingGlass = "\U0001f50d";
     static const char *pointingFinger  = "\U0001f449";
     static const char *uploadArrow     = upload_Icon;
+    static const char *image           = photo_Icon;
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);
@@ -761,6 +767,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : scheme == finger_GmLinkScheme   ? pointingFinger
                                              : scheme == mailto_GmLinkScheme   ? envelope
                                              : link->flags & remote_GmLinkFlag ? globe
+                                             : link->flags & imageFileExtension_GmLinkFlag ? image
                                                                                : arrow);
             /* Custom link icon is shown on local Gemini links only. */
             if (!isEmpty_Range(&link->labelIcon)) {
@@ -813,7 +820,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             rts.layoutWidth   = d->size.x;
             rts.indent        = indent * gap_Text;
             /* The right margin is used for balancing lines horizontally. */
-            if (isVeryNarrow) {
+            if (isVeryNarrow || isFullWidthImages) {
                 rts.rightMargin = 0;
             }
             else {
@@ -898,6 +905,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.bounds.size.x = d->size.x;
                 const float aspect = (float) imgSize.y / (float) imgSize.x;
                 run.bounds.size.y = d->size.x * aspect;
+                /* Extend the image to full width, including outside margin, if the viewport
+                   is narrow enough. */
+                if (isFullWidthImages) {
+                    run.bounds.size.x += d->outsideMargin * 2;
+                    run.bounds.size.y += d->outsideMargin * 2 * aspect;
+                    run.bounds.pos.x  -= d->outsideMargin;
+                }                
                 run.visBounds = run.bounds;
                 const iInt2 maxSize = mulf_I2(imgSize, get_Window()->pixelRatio);
                 if (width_Rect(run.visBounds) > maxSize.x) {
@@ -990,6 +1004,7 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->url);
     init_String(&d->localHost);
     d->bannerType = siteDomain_GmDocumentBanner;
+    d->outsideMargin = 0;
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
@@ -1543,8 +1558,9 @@ void setBanner_GmDocument(iGmDocument *d, enum iGmDocumentBanner type) {
     d->bannerType = type;
 }
 
-void setWidth_GmDocument(iGmDocument *d, int width) {
+void setWidth_GmDocument(iGmDocument *d, int width, int outsideMargin) {
     d->size.x = width;
+    d->outsideMargin = outsideMargin; /* distance to edge of the viewport */
     doLayout_GmDocument_(d); /* TODO: just flag need-layout and do it later */
 }
 
@@ -1698,7 +1714,7 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     updateIconBasedOnUrl_GmDocument_(d);
 }
 
-void setSource_GmDocument(iGmDocument *d, const iString *source, int width,
+void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int outsideMargin,
                           enum iGmDocumentUpdate updateType) {
 //    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
 //           size_String(source), width, updateType == final_GmDocumentUpdate);
@@ -1713,7 +1729,7 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width,
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
     }
-    setWidth_GmDocument(d, width); /* re-do layout */
+    setWidth_GmDocument(d, width, outsideMargin); /* re-do layout */
 }
 
 void foldPre_GmDocument(iGmDocument *d, uint16_t preId) {

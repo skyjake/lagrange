@@ -6,6 +6,51 @@
 ```
 # Release notes
 
+## 1.7
+⚠️ Bookmarks file format has changed. Your existing bookmarks will be imported to the new format. The old bookmarks.txt file can be found in the config directory and is writable only by v1.6 and earlier versions.
+⚠️ Saved UI state format has changed. Downgrading will reset window state, close all tabs, and clear the navigation cache.
+
+New features:
+* Added bookmark folders. Folders can be nested inside each other, and the fold state of each folder is remembered persistently (per sidebar).
+* The Bookmarks export/list page uses subheadings (level 2 and 3) to represent folders.
+* Added menu item to sort (a folder of) bookmarks alphabetically.
+* Added identity selection in the Upload dialog.
+* Added image colorization setting. Images can be viewed in grayscale or using the page's theme colors.
+* Added UI focus cycling to all buttons with Tab and Shift+Tab. This includes dialog buttons and the navigation bar.
+* Added a footer action to view `application/octet-stream` content depending on recognized file extensions.
+* Added support for viewing WebP images. The libwebp library is an optional dependency and will be included in the build if found via pkg-config.
+* Added command line options -w, -h for setting window size at launch.
+* Added new UI languages: Esperanto, Spanish (Mexico), Galician, Interslavic, and Slovak. Note that some of these are still works in progress.
+
+Changes and enhancements:
+* Bookmarks are now ordered manually. You can drag and drop bookmarks in the list to change the order.
+* The internal bookmarks file format is now a TOML subset instead of just being three text lines per bookmark, making it more robust and human-readable.
+* Context menus and other popup menus that do not fit inside the window are split off into independent windows.
+* macOS: Use native UI controls for context/popup menus. Note that this required making a couple of small changes to SDL (see the updated patch in the repository).
+* Dropdown button menus position themselves on the currently selected item.
+* Dialogs that don't fit inside the window have a scroll bar. Note that such dialogs can only be scrolled via mouse wheel/trackpad, not by dragging the bar.
+* Adjusted mouse wheel smooth scrolling speed for better consistency. The default scrolling speeds were increased to level 2.
+* Visited URLs are remembered for six months. This affects the unread status of feed entries and the visited status of links.
+* Adjusted the UI color palette so that the alternative accent color is used more rarely. For example, input fields now use the primary accent color.
+* Adjusted button hover/press colors for better consistency, particularly when the button label uses a non-standard color.
+* Image links (as determined by file extension) automatically use a "photo" link icon if the URL is on the current site. This makes it clearer which links will likely show up as an inline image.
+* Alt+Shift+Tab inserts a tab character in input fields.
+* UI rendering optimizations. Some UI controls (e.g., navbar, menus) will buffer their contents so they can be drawn efficiently during animations.
+
+Fixes:
+* Fixed issues with subscribed feed entry tracking. Heading entries are not discarded until they are removed from the source.
+* Fixed the sidebar unread entry count showing the wrong number after subscribing to a Headings feed.
+* Fixed handling of tab characters in the Upload text editor (when using HarfBuzz).
+* Fixed hang when wrapping a very long word (with HarfBuzz disabled).
+* Fixed regressions in retaining window state, position, and size.
+* Fixed URL encoding of the % character.
+* Fixed ambiguous handling of colons in URI paths.
+* Fixed issues with cursor positioning in multi-line input fields.
+* Fixed issues with touch swipe events.
+* X11: Ask SDL not to bypass the window compositor. This should avoid issues on KDE, for example.
+* macOS: Fixed a flash of blank background color when launching the app.
+* Windows: The main window title bar (when not using a custom frame) uses dark mode colors according to the UI color theme setting. Previously it was always stuck on light mode.
+
 ## 1.6.5
 * Audio init errors are no longer fatal. SDL's error message will still be printed.
 * Fixed appearance of tab buttons (should have no top frame).

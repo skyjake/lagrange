@@ -18,14 +18,15 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.6.5
+    VERSION 1.7.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2021)
 if (IOS)
-    set (PROJECT_VERSION 1.4)  # pinned for TestFlight
-    set (IOS_BUNDLE_VERSION 21.6.15)
+    set (PROJECT_VERSION 1.7)
+    set (IOS_BUNDLE_VERSION 23)
+    set (IOS_BUILD_DATE "2021-09-17")
 endif ()
 
 # Default that depend on environment.
@@ -44,12 +45,17 @@ option (ENABLE_HARFBUZZ_MINIMAL "Build the HarfBuzz library with minimal depende
 option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ON)
 option (ENABLE_IPC              "Use IPC to communicate between running instances" ON)
 option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
+option (ENABLE_MAC_MENUS        "Use native context menus (macOS)" ON)
+option (ENABLE_MOBILE_PHONE     "Use the phone mobile UI design instead of desktop UI" OFF)
+option (ENABLE_MOBILE_TABLET    "Use the tablet mobile UI design instead of desktop UI" OFF)
 option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
+option (ENABLE_POPUP_MENUS      "Use popup windows for context menus (if OFF, menus are confined inside main window)" ON)
 option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
 option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAULT_RESIZE_DRAW})
 option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
+option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
-option (ENABLE_X11_SWRENDER     "Use software rendering under X11" OFF)
+option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 
 include (BuildType.cmake)
 include (res/Embed.cmake)
@@ -98,13 +104,18 @@ set (EMBED_RESOURCES
     res/fonts/SourceSans3-Semibold.ttf
     res/lang/de.bin
     res/lang/en.bin
+    res/lang/eo.bin
     res/lang/es.bin
+    res/lang/es_MX.bin
     res/lang/fi.bin
     res/lang/fr.bin
+    res/lang/gl.bin
     res/lang/ia.bin
     res/lang/ie.bin
+    res/lang/isv.bin
     res/lang/pl.bin
     res/lang/ru.bin
+    res/lang/sk.bin
     res/lang/sr.bin
     res/lang/tok.bin
     res/lang/zh_Hans.bin
@@ -278,11 +289,23 @@ if (MOBILE)
     add_definitions (-DiPlatformMobile=1)
 else ()
     add_definitions (-DiPlatformDesktop=1)
+    # Forced UI design.
+    if (ENABLE_MOBILE_PHONE OR ENABLE_MOBILE_TABLET)
+        add_definitions (-DiPlatformMobile=1)
+    endif ()
+    if (ENABLE_MOBILE_PHONE)
+        add_definitions (-DiPlatformMobilePhone=1)
+    endif ()
+    if (ENABLE_MOBILE_TABLET)
+        add_definitions (-DiPlatformMobileTablet=1)
+    endif ()
 endif ()
 
 # Target.
 add_executable (app ${SOURCES} ${RESOURCES})
-add_dependencies (app ext-deps)
+if (TARGET ext-deps)
+    add_dependencies (app ext-deps)
+endif ()
 set_target_properties (app PROPERTIES OUTPUT_NAME lagrange)
 target_include_directories (app PUBLIC
     src
@@ -297,33 +320,43 @@ target_compile_options (app PUBLIC
     -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
 )
 target_compile_definitions (app PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
+if (ENABLE_CUSTOM_FRAME AND MSYS)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)
+endif ()
+if (ENABLE_DOWNLOAD_EDIT)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_DOWNLOAD_EDIT=1)
+endif ()
+if (ENABLE_IDLE_SLEEP)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_IDLE_SLEEP=1)
+endif ()
 if (ENABLE_IPC)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_IPC=1)
-endif ()
-if (ENABLE_X11_SWRENDER)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
 endif ()
 if (ENABLE_KERNING)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_KERNING=1)
 endif ()
-if (ENABLE_WINDOWPOS_FIX)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)
+if (ENABLE_MAC_MENUS)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_MAC_MENUS=1)
 endif ()
 if (ENABLE_MPG123 AND MPG123_FOUND)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_MPG123=1)
     target_link_libraries (app PUBLIC PkgConfig::MPG123)
 endif ()
-if (ENABLE_IDLE_SLEEP)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_IDLE_SLEEP=1)
-endif ()
-if (ENABLE_DOWNLOAD_EDIT)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_DOWNLOAD_EDIT=1)
-endif ()
-if (ENABLE_CUSTOM_FRAME AND MSYS)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)
+if (ENABLE_POPUP_MENUS)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_POPUP_MENUS=1)
 endif ()
 if (ENABLE_RESIZE_DRAW)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_RESIZE_DRAW=1)
+endif ()
+if (ENABLE_WEBP AND WEBP_FOUND)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WEBP=1)
+    target_link_libraries (app PUBLIC PkgConfig::WEBP)
+endif ()
+if (ENABLE_WINDOWPOS_FIX)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)
+endif ()
+if (ENABLE_X11_SWRENDER)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
@@ -372,7 +405,10 @@ if (APPLE)
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
     )
     if (IOS)
-        target_compile_definitions (app PUBLIC LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}")
+        target_compile_definitions (app PUBLIC 
+            LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}"
+            LAGRANGE_IOS_BUILD_DATE="${IOS_BUILD_DATE}"
+        )
         set_target_properties (app PROPERTIES
             MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/iOSBundleInfo.plist.in"
             MACOSX_BUNDLE_BUNDLE_VERSION "${IOS_BUNDLE_VERSION}"

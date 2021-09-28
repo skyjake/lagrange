@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-07-19 19:06+0000\n"
+"PO-Revision-Date: 2021-08-15 12:49+0000\n"
 "Last-Translator: Waterrail <maksymiliankrol03@gmail.com>\n"
 "Language-Team: Polish <http://weblate.skyjake.fi/projects/lagrange/ui/pl/>\n"
 "Language: pl\n"
@@ -312,7 +312,7 @@ msgid "toolbar.outline"
 msgstr "Konspekt strony"
 
 msgid "hint.findtext"
-msgstr "Znajdź tekst na stronie"
+msgstr "znajdź tekst na stronie"
 
 msgid "status.query"
 msgstr "Zapytanie wyszukiwania"
@@ -1681,10 +1681,10 @@ msgstr "Serwer niezaufany"
 
 msgid "error.certverify.msg"
 msgstr ""
-"Połączenie z serwerem zostało przerwane, ponieważ otrzymany certyfikat TLS "
-"nie jest zgodny z tym, któremu ufamy. Sprawdź, czy serwer ogłosił zmianę "
-"certyfikatu. Jeśli nie, możliwe jest, że złośliwa strona trzecia fałszywie "
-"podszywa się pod serwer, do którego próbujesz uzyskać dostęp.\n"
+"Połączenie z serwerem zostało przerwane, ponieważ certyfikat TLS nie jest "
+"zgodny z tym, któremu ufamy. Sprawdź, czy serwer ogłosił zmianę certyfikatu. "
+"Jeśli nie, możliwe jest, że złośliwa strona trzecia fałszywie podszywa się "
+"pod serwer, do którego próbujesz uzyskać dostęp.\n"
 "\n"
 "Certyfikat może zostać oznaczony jako zaufany w Informacjach o stronie."
 
@@ -1720,3 +1720,130 @@ msgstr "Podział wiersza"
 
 msgid "menu.save.downloads.open"
 msgstr "Zapisz w folderze pobranych i otwórz plik"
+
+msgid "upload.mime"
+msgstr "Typ MIME:"
+
+msgid "hint.upload.token"
+msgstr "patrz: instrukcja serwera"
+
+msgid "dlg.upload.send"
+msgstr "Prześlij"
+
+msgid "media.untitled.image"
+msgstr "Obraz"
+
+msgid "menu.unexpire"
+msgstr "Zignoruj wygaśnięcie i wznów ładowanie"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Ten dokument Atom XML został automatycznie przekonwertowany na kanał Gemini, "
+"aby można go było zasubskrybować."
+
+msgid "bookmark.export.title.folder"
+msgstr "Zakładki"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Masz %d zakładkę."
+msgstr[1] "Masz %d zakładki."
+msgstr[2] "Masz %d zakładek."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"Na tej liście każdy nagłówek przedstawia tag zakładki. Uwzględnione są tylko "
+"otagowane zakładki. Zakładki posiadające wiele tagów pojawiają się więcej "
+"niż raz."
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Punktory i oznaczenia cytatów zawierają dodatkowe informacje o poprzedniej "
+"zakładce. Linie tekstu i tekst sformatowany są traktowane jako komentarze i "
+"są ignorowane."
+
+msgid "upload.file.size"
+msgstr "Rozmiar pliku:"
+
+msgid "upload.token"
+msgstr "Token przesyłanego elementu:"
+
+msgid "error.certexpired.msg"
+msgstr ""
+"Połączenie z serwerem zostało przerwane wskutek wygaśnięcia certyfikatu TLS."
+
+msgid "upload.port"
+msgstr "Port…"
+
+msgid "heading.uploadport"
+msgstr "PRZESYŁANIE — PORT TITAN"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Ustaw port serwera Titan dla tego adresu URL.\n"
+"Port jest zapisywany w ustawieniach strony."
+
+msgid "dlg.uploadport.set"
+msgstr "Ustaw port"
+
+msgid "prefs.returnkey"
+msgstr "Zachowanie klawisza Enter:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Podział wiersza"
+
+msgid "prefs.returnkey.accept"
+msgstr "Akceptuj"
+
+msgid "media.untitled.audio"
+msgstr "Dźwięk"
+
+msgid "bookmark.export.title.tag"
+msgstr "Tagi zakładek"
+
+msgid "bookmark.export.title.time"
+msgstr "Utworzone zakładki"
+
+msgid "bookmark.export.saving"
+msgstr "Zapisz tę stronę, aby je wyeksportować, albo skopiuj je do schowka."
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Ta strona jest sformatowana zgodnie ze specyfikacją wsparcia „Subscribing to "
+"Gemini pages”."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Każdy link przedstawia zakładkę."
+
+msgid "bookmark.export.format.folders"
+msgstr "Struktura folderów jest wyrażona przez nagłówki poziomu 2/3."
+
+msgid "bookmark.export.format.tags"
+msgstr "Tagi są definiowane przez nagłówki poziomu 2."
+
+msgid "menu.page.upload"
+msgstr "Prześlij stronę (Titan)"
+
+msgid "heading.upload"
+msgstr "TITAN — PRZEŚLIJ"
+
+msgid "heading.upload.text"
+msgstr "Tekst"
+
+msgid "hint.upload.text"
+msgstr "wprowadź tekst do przesłania"
+
+msgid "heading.upload.file"
+msgstr "Plik"
+
+msgid "upload.file.name"
+msgstr "Nazwa pliku:"
+
+msgid "upload.file.drophere"
+msgstr "(przeciągnij i upuść plik na okno)"
+
+msgid "keys.upload"
+msgstr "Prześlij stronę (Titan)"
+
+msgid "error.certexpired"
+msgstr "Wygasły certyfikat"

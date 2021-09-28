@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-06-22 14:06+0000\n"
+"PO-Revision-Date: 2021-09-20 20:49+0000\n"
 "Last-Translator: Alex Schroeder <alex@alexschroeder.ch>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
@@ -1197,14 +1197,14 @@ msgid "heading.prefs.certs"
 msgstr "ZERTIFIKATE"
 
 msgid "heading.prefs.fonts"
-msgstr "SCHRIFTARTEN"
+msgstr "Schriftarten"
 
 # tab button
 msgid "heading.prefs.keys"
 msgstr "TASTEN"
 
 msgid "heading.prefs.pagecontent"
-msgstr "SEITENINHALT"
+msgstr "PAGE COLORS"
 
 msgid "heading.prefs.proxies"
 msgstr "PROXIES"
@@ -1327,3 +1327,490 @@ msgstr "Lizenz"
 
 msgid "error.gone.msg"
 msgstr "Die angefragte Ressource ist nicht mehr vorhanden."
+
+msgid "error.badresource"
+msgstr "Ungültige Ressource"
+
+msgid "error.badheader.msg"
+msgstr ""
+"Die empfangene Kopfzeile entspricht nicht der Gemini Spezifikation. "
+"Vielleicht ist der Server kaputt, oder Sie haben einen Server kontaktiert, "
+"der Gemini nicht unterstützt."
+
+msgid "prefs.animate"
+msgstr "Animationen:"
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Der Server hat mit einer Umleitung geantwortet aber die neue Ziel URL ist "
+"ungültig. Möglicherweise ist der Server kaputt."
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Der Server hat mit einer Umleitung auf eine URL geantwortet, deren Scheme "
+"nicht der ursprünglichen URL entspricht. Entscheiden Sie selber, ob Sie dem "
+"Link folgen wollen."
+
+msgid "error.certverify.msg"
+msgstr ""
+"Die Verbindung zum Server wurde abgebrochen, weil das TLS Zertifikat nicht "
+"demjenigen entspricht, dem Vertrauen schenken. Bitte prüfen Sie, ob der "
+"Server einen Zertifikatswechsel angekündigt hat. Falls nicht, dann könnte es "
+"sich hier um eine Drittpartei handeln, welche vorgibt, der Server zu sein, "
+"den Sie kontaktieren wollten.\n"
+"\n"
+"Dem Zertifikat kann auf der Seiteninformation vertraut werden."
+
+msgid "error.unavail"
+msgstr "Server nicht erreichbar"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Sie haben %zu Feed mit %%s abonniert.\n"
+msgstr[1] "Sie haben %zu Feeds mit %%s abonniert.\n"
+
+msgid "upload.port"
+msgstr "Port…"
+
+msgid "dlg.uploadport.set"
+msgstr "Port setzen"
+
+msgid "dlg.newident.scope.none"
+msgstr "Nicht verwendet"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Indexdateien in Archiven öffnen:"
+
+msgid "prefs.userfont"
+msgstr "Symbolschriftart:"
+
+msgid "hint.prefs.userfont"
+msgstr "Pfad für eine TrueType Schriftart"
+
+msgid "prefs.linespacing"
+msgstr "Zeilenabstand:"
+
+msgid "error.tls.msg"
+msgstr "Die Kommunikation mit dem Server ist fehlgeschlagen. Die Fehlermeldung:"
+
+msgid "error.certexpired"
+msgstr "Zertifikat abgelaufen"
+
+msgid "close"
+msgstr "Schliessen"
+
+msgid "ident.export"
+msgstr "Export"
+
+msgid "error.server.msg"
+msgstr "Antwort des Servers:"
+
+msgid "error.openfile"
+msgstr "Datei konnte nicht geöffnet werden"
+
+msgid "error.badredirect"
+msgstr "Ungültige Umleitung"
+
+msgid "doc.archive.view"
+msgstr "Archivinhalt anzeigen"
+
+msgid "menu.split.vertical"
+msgstr "Vertikal"
+
+msgid "menu.view.split"
+msgstr "Ansicht aufteilen…"
+
+msgid "dlg.file.delete"
+msgstr "Löschen"
+
+msgid "error.certexpired.msg"
+msgstr ""
+"Die Verbindung mit dem Server wurde abgebrochen, weil das TLS Zertifikat "
+"abgelaufen ist."
+
+msgid "error.certverify"
+msgstr "Unbekannter Server"
+
+msgid "error.temporary"
+msgstr "Temporärer Fehler"
+
+msgid "media.untitled.image"
+msgstr "Bild"
+
+msgid "media.untitled.audio"
+msgstr "Audio"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Ungelesene"
+
+msgid "sidebar.action.ident.new"
+msgstr "Neu…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importieren…"
+
+msgid "keys.parent"
+msgstr "Zum darüber liegenden Verzeichnis"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Das Dokument im Atom XML Format wurde automatisch zu einem Gemini Feed "
+"konvertiert, damit man diesen abonnieren kann."
+
+msgid "lang.ie"
+msgstr "Interlingue"
+
+msgid "bookmark.export.title.time"
+msgstr "Lesezeichen angelegt"
+
+msgid "bookmark.export.format.sub"
+msgstr "Diese Seite ist so formatiert, dass man sie abonnieren kann."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Jeder Link ist ein Lesezeichen."
+
+msgid "bookmark.export.format.folders"
+msgstr "Die Ordnerstruktur wird mit Überschriften der Stufe 2 und 3 definiert."
+
+msgid "bookmark.export.format.tags"
+msgstr "Schlagworte werden mit Überschriften der Stufe 2 definiert."
+
+msgid "menu.page.upload"
+msgstr "Seite mit Titan hochladen"
+
+msgid "heading.upload"
+msgstr "UPLOAD WITH TITAN"
+
+msgid "hint.upload.text"
+msgstr "Texteingabe für den Upload"
+
+msgid "heading.upload.file"
+msgstr "Datei"
+
+msgid "upload.file.name"
+msgstr "Dateiname:"
+
+msgid "upload.file.size"
+msgstr "Dateigrösse:"
+
+msgid "upload.mime"
+msgstr "MIME Typ:"
+
+msgid "upload.token"
+msgstr "Kennwort:"
+
+msgid "dlg.upload.send"
+msgstr "Upload"
+
+msgid "heading.uploadport"
+msgstr "TITAN UPLOAD PORT"
+
+msgid "lang.ia"
+msgstr "Interlingua"
+
+msgid "dlg.newident.scope.page"
+msgstr "Aktuelle Seite"
+
+msgid "prefs.pinsplit"
+msgstr "Aufgeteilte Ansicht pinnen:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Keine"
+
+msgid "prefs.pinsplit.left"
+msgstr "Linker Reiter"
+
+msgid "prefs.pinsplit.right"
+msgstr "Rechter Reiter"
+
+msgid "heading.newident.missing"
+msgstr "MISSING INFO"
+
+msgid "heading.newident.date.bad"
+msgstr "INVALID DATE"
+
+msgid "heading.prefs.uitheme"
+msgstr "UI COLORS"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Tastaturgeschwindigkeit:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Mausgeschwindigkeit:"
+
+msgid "prefs.returnkey.accept"
+msgstr "Annehmen"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Eine halbe Seite hochblättern"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Eine halbe Seite runterblättern"
+
+msgid "keys.scroll.page.up"
+msgstr "Eine Seite hochblättern"
+
+msgid "keys.scroll.page.down"
+msgstr "Eine Seite runterblättern"
+
+msgid "keys.link.modkey"
+msgstr "Link mittels Modifikatortaste öffnen"
+
+msgid "keys.link.homerow"
+msgstr "Link via Taste auf der Mittelzeile öffnen"
+
+msgid "keys.link.homerow.hover"
+msgstr "Auf einem Link via Taste auf der Mittelzeile schweben"
+
+msgid "keys.findtext"
+msgstr "Seite durchsuchen"
+
+msgid "keys.zoom.in"
+msgstr "Vergrössern"
+
+msgid "keys.fullscreen"
+msgstr "Vollbildschirm an/aus"
+
+msgid "keys.tab.close.other"
+msgstr "Andere Reiter schliessen"
+
+msgid "keys.tab.prev"
+msgstr "Vorheriger Reiter"
+
+msgid "keys.upload"
+msgstr "Seite mit Titan hochladen"
+
+msgid "error.badresource.msg"
+msgstr "Die gewünschte Ressource existiert nicht."
+
+msgid "error.unsupported.media"
+msgstr "Nicht unterstützter Inhaltstyp"
+
+msgid "error.badheader"
+msgstr "Ungültige Kopfzeile"
+
+msgid "error.schemeredirect"
+msgstr "Umleitung mit neuem Scheme"
+
+msgid "error.manyredirects"
+msgstr "Zu viele Umleitungen"
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Vielleicht stecken Sie in einer Endlosschlaufe von Umleitungen. Entscheiden "
+"Sie selber, ob sie dem Link zur nächsten URL folgen wollen."
+
+msgid "error.tls"
+msgstr "Netzwerk/TLS Fehler"
+
+msgid "error.temporary.msg"
+msgstr ""
+"Die Anfrage ist fehlgeschlagen, könnte in der Zukunft aber wieder gelingen."
+
+msgid "error.unsupported.protocol"
+msgstr "Nicht unterstütztes Protokoll"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s ist ein komprimiertes Archiv."
+
+msgid "menu.split.merge"
+msgstr "Reiter zusammenlegen"
+
+msgid "menu.split.swap"
+msgstr "Seite wechseln"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontal"
+
+msgid "menu.downloads"
+msgstr "Download Verzeichnis anzeigen"
+
+msgid "menu.unexpire"
+msgstr "Ablaufdatum ignorieren und weiter laden"
+
+msgid "menu.save.downloads.open"
+msgstr "Im Downloadverzeichnis speichern und Datei öffnen"
+
+msgid "menu.select.clear"
+msgstr "Auswahl aufheben"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Alles"
+
+msgid "status.query.tight"
+msgstr "Abfrage"
+
+msgid "keys.scroll.down"
+msgstr "Runterblättern"
+
+msgid "menu.openfile"
+msgstr "Datei öffnen…"
+
+msgid "dlg.input.linebreak"
+msgstr "Zeilenumbruch"
+
+msgid "dlg.save.opendownload"
+msgstr "Runtergeladene Datei öffnen"
+
+msgid "heading.autoreload"
+msgstr "AUTO-RELOAD"
+
+msgid "link.side"
+msgstr "Link seitlich öffnen"
+
+msgid "link.side.newtab"
+msgstr "Link in einem neuen Reiter seitlich öffnen"
+
+msgid "link.file.delete"
+msgstr "Datei löschen"
+
+msgid "heading.file.delete"
+msgstr "DELETE FILE"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Wollen Sie die Datei wirklich löschen?"
+
+msgid "bookmark.export.title.folder"
+msgstr "Lesezeichen"
+
+msgid "menu.pageinfo"
+msgstr "Seiteninformation anzeigen"
+
+msgid "bookmark.export.title.tag"
+msgstr "Schlagworte für Lesenzeichen"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Sie haben %d Lesezeichen."
+msgstr[1] "Sie haben %d Lesezeichen."
+
+msgid "bookmark.export.saving"
+msgstr ""
+"Um die Seite zu exportieren, können Sie die Seite speichern oder in die "
+"Zwischenablage kopieren."
+
+msgid "bookmark.tag.linksplit"
+msgstr "Links seitlich öffnen"
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"In diese Liste steht jede Überschrift für ein Lesezeichenschlagwort. Nur "
+"verschlagwortete Lesezeichen werden aufgeführt. Lesezeichen mir mehreren "
+"Schlagworten werden jedem dieser Schlagworte aufgeführt."
+
+msgid "prefs.memorysize"
+msgstr "Speichergrösse:"
+
+msgid "archive.exit"
+msgstr "Archiv verlassen"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Dieses Archiv enthält %zu Eintrag und wurde auf %.1f MB komprimiert."
+msgstr[1] "Dieses Archiv enthält %zu Einträge und wurde auf %.1f MB komprimiert."
+
+msgid "dir.empty"
+msgstr "Dieses Verzeichnis ist leer."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Dieses Verzeichnis enthält %zu Eintrag."
+msgstr[1] "Dieses Verzeichnis enthält %zu Einträge."
+
+msgid "keys.zoom.out"
+msgstr "Verkleinern"
+
+msgid "keys.zoom.reset"
+msgstr "Vergrösserung zurücksetzen"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Listenelemente und Zitate sind für zusätzliche Informationen zum voran "
+"stehenden Lesezeichen reserviert. Textzeilen und vorformatierte Texte gelten "
+"als Kommentare und werden ignoriert."
+
+msgid "heading.upload.text"
+msgstr "Text"
+
+msgid "upload.file.drophere"
+msgstr "(Datei auf das Fenster ziehen)"
+
+msgid "hint.upload.token"
+msgstr "siehe Instruktionen des Servers"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Setzt den Port des Titanservers für diese URL.\n"
+"Der Port wird für diesen Site gespeichert."
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "dlg.newident.scope"
+msgstr "Verwenden für:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Aktuelle Domäne"
+
+msgid "dlg.newident.more"
+msgstr "Mehr…"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Der Name muss angegeben werden."
+
+msgid "dlg.newident.date.past"
+msgstr "Das Ablaufdatum muss in der Zukunft liegen."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Bitte prüfen Sie das Ablaufdatum. Beispiele:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "prefs.returnkey"
+msgstr "Verhalten der Eingabe Taste:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Zeilenumbruch"
+
+msgid "keys.scroll.up"
+msgstr "Hochblättern"
+
+msgid "keys.root"
+msgstr "Ganz hinauf in dieser Kapsel"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Link in neuem Reiter via Taste auf der Mittelzeile öffnen"
+
+msgid "keys.subscribe"
+msgstr "Seite abonnieren"
+
+msgid "keys.split.menu"
+msgstr "Ansicht aufteilen an/aus"
+
+msgid "error.badstatus"
+msgstr "Unbekannter Statuscode"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Der Server hat mit einem Statuscode geantwortet, der nicht in der "
+"Geminispezifikation steht. Vielleicht kommt der Server aus der Zukunft? Oder "
+"es funktioniert einfach nicht."
+
+msgid "error.openfile.msg"
+msgstr ""
+"Die gewünschte Datei existiert nicht oder der Zugriff ist nicht möglich. "
+"Bitte prüfen sie den Pfad."
+
+msgid "error.unsupported.media.msg"
+msgstr ""
+"Der erhaltene Inhalt kann mit dieser Applikation nicht dargestellt werden."
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Das gewünschte Protokoll wird von dieser Applikation nicht unterstützt."

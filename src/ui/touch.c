@@ -59,7 +59,6 @@ enum iTouchAxis {
 struct Impl_Touch {
     SDL_FingerID id;
     iWidget *affinity; /* widget on which the touch started */
-//    iWidget *edgeDragging;
     iBool hasMoved;
     iBool isTapBegun;
     iBool isLeftDown;
@@ -254,6 +253,8 @@ static iFloat3 gestureVector_Touch_(const iTouch *d) {
 }
 
 static void update_TouchState_(void *ptr) {
+    iWindow *win = get_Window();
+    const iWidget *oldHover = win->hover;
     iTouchState *d = ptr;
     /* Check for long presses to simulate right clicks. */
     const uint32_t nowTime = SDL_GetTicks();
@@ -291,8 +292,10 @@ static void update_TouchState_(void *ptr) {
             }
             if (elapsed > 50 && !touch->isTapBegun) {
                 /* Looks like a possible tap. */
+                touchState_()->currentTouchPos = initF3_I2(touch->pos[0]);
                 dispatchNotification_Touch_(touch, widgetTapBegins_UserEventCode);
                 dispatchMotion_Touch_(touch->pos[0], 0);
+                refresh_Widget(touch->affinity);
                 touch->isTapBegun = iTrue;
             }
             if (!touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
@@ -347,6 +350,7 @@ static void update_TouchState_(void *ptr) {
                 setCurrent_Root(mom->affinity->root);
                 dispatchEvent_Widget(mom->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                                                         .type = SDL_MOUSEWHEEL,
+                                                        .which = SDL_TOUCH_MOUSEID,
                                                         .timestamp = nowTime,
                                                         .x = pixels.x,
                                                         .y = pixels.y,
@@ -362,6 +366,10 @@ static void update_TouchState_(void *ptr) {
     /* Keep updating if interaction is still ongoing. */
     if (!isEmpty_Array(d->touches) || !isEmpty_Array(d->moms)) {
         addTickerRoot_App(update_TouchState_, NULL, ptr);
+    }
+    if (oldHover != win->hover) {
+        refresh_Widget(oldHover);
+        refresh_Widget(win->hover);
     }
 }
 
@@ -464,13 +472,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     }
     iTouchState *d = touchState_();
     iWindow *window = get_Window();    
-    if (!isFinished_Anim(&window->rootOffset)) {
-        return iFalse;
-    }
     const iInt2 rootSize = size_Window(window);
     const SDL_TouchFingerEvent *fing = &ev->tfinger;
-    const iFloat3 pos = add_F3(init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0), /* pixels */
-                               init_F3(0, -value_Anim(&window->rootOffset), 0));
+    const iFloat3 pos = init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0); /* pixels */
     const uint32_t nowTime = SDL_GetTicks();
     if (ev->type == SDL_FINGERDOWN) {
         /* Register the new touch. */
@@ -614,15 +618,16 @@ iBool processEvent_Touch(const SDL_Event *ev) {
 //                   pixels.y, y_F3(amount), y_F3(touch->accum),
 //                   touch->edge);
             if (pixels.x || pixels.y) {
-                setFocus_Widget(NULL);
-                dispatchMotion_Touch_(touch->pos[0], 0);
+                //setFocus_Widget(NULL);
+                dispatchMotion_Touch_(touch->startPos /*pos[0]*/, 0);
                 setCurrent_Root(touch->affinity->root);
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
+                    .which = SDL_TOUCH_MOUSEID,
                     .timestamp = SDL_GetTicks(),
                     .x = pixels.x,
                     .y = pixels.y,
-                    .direction = perPixel_MouseWheelFlag
+                    .direction = perPixel_MouseWheelFlag,
                 });
                 /* TODO: Keep increasing movement if the direction is the same. */
                 clearWidgetMomentum_TouchState_(d, touch->affinity);
@@ -715,7 +720,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     iMomentum mom = {
                         .affinity = touch->affinity,
                         .releaseTime = nowTime,
-                        .pos = touch->pos[0],
+                        .pos = touch->startPos, // pos[0],
                         .velocity = velocity
                     };
                     if (isEmpty_Array(d->moms)) {

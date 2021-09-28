@@ -36,6 +36,8 @@ struct Impl_Paint {
     uint8_t      alpha;
 };
 
+extern iInt2 origin_Paint; /* add this to all drawn positions so buffered graphics are correctly offset */
+
 void    init_Paint          (iPaint *);
 
 void    beginTarget_Paint   (iPaint *, SDL_Texture *target);
@@ -60,5 +62,7 @@ iLocalDef void drawHLine_Paint(const iPaint *d, iInt2 pos, int len, int color) {
 iLocalDef void drawVLine_Paint(const iPaint *d, iInt2 pos, int len, int color) {
     drawLine_Paint(d, pos, addY_I2(pos, len), color);
 }
+
+void    drawPin_Paint       (iPaint *, iRect rangeRect, int dir, int pinColor);
 
 iInt2   size_SDLTexture     (SDL_Texture *);

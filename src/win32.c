@@ -22,6 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "win32.h"
 #include "ui/window.h"
+#include "ui/command.h"
+#include "prefs.h"
 #include "app.h"
 #include <SDL_syswm.h>
 
@@ -31,8 +33,131 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <dwmapi.h>
 #include <d2d1.h>
 
-void setDPIAware_Win32(void) {
+/* Windows 10 Dark Mode Support
+
+Apparently Microsoft never documented the Win32 functions that control dark mode for
+apps and windows. Here we manually query certain entrypoints from uxtheme.dll and
+user32.dll and use them to enable dark mode for the application, and switch the title
+bar colors to dark or light depending on the Prefs UI color theme.
+
+Perhaps these Win32 APIs will be documented properly in some future version of Windows,
+but for now this is what we have to do to avoid having a white title bar in dark mode.
+
+Calling random functions from system DLLs is a great way to introduce crashes in the
+future! Be on the lookout for launch problems down the road.
+   
+Adapted from https://github.com/ysc3839/win32-darkmode. */
+
+enum WINDOWCOMPOSITIONATTRIB {
+	WCA_UNDEFINED = 0,
+	WCA_NCRENDERING_ENABLED = 1,
+	WCA_NCRENDERING_POLICY = 2,
+	WCA_TRANSITIONS_FORCEDISABLED = 3,
+	WCA_ALLOW_NCPAINT = 4,
+	WCA_CAPTION_BUTTON_BOUNDS = 5,
+	WCA_NONCLIENT_RTL_LAYOUT = 6,
+	WCA_FORCE_ICONIC_REPRESENTATION = 7,
+	WCA_EXTENDED_FRAME_BOUNDS = 8,
+	WCA_HAS_ICONIC_BITMAP = 9,
+	WCA_THEME_ATTRIBUTES = 10,
+	WCA_NCRENDERING_EXILED = 11,
+	WCA_NCADORNMENTINFO = 12,
+	WCA_EXCLUDED_FROM_LIVEPREVIEW = 13,
+	WCA_VIDEO_OVERLAY_ACTIVE = 14,
+	WCA_FORCE_ACTIVEWINDOW_APPEARANCE = 15,
+	WCA_DISALLOW_PEEK = 16,
+	WCA_CLOAK = 17,
+	WCA_CLOAKED = 18,
+	WCA_ACCENT_POLICY = 19,
+	WCA_FREEZE_REPRESENTATION = 20,
+	WCA_EVER_UNCLOAKED = 21,
+	WCA_VISUAL_OWNER = 22,
+	WCA_HOLOGRAPHIC = 23,
+	WCA_EXCLUDED_FROM_DDA = 24,
+	WCA_PASSIVEUPDATEMODE = 25,
+	WCA_USEDARKMODECOLORS = 26,
+	WCA_LAST = 27
+};
+
+struct WINDOWCOMPOSITIONATTRIBDATA {
+	enum WINDOWCOMPOSITIONATTRIB Attrib;
+	PVOID pvData;
+	SIZE_T cbData;
+};
+
+enum PreferredAppMode { Default, AllowDark, ForceDark, ForceLight };
+
+typedef void (WINAPI *RtlGetNtVersionNumbersFunc)(LPDWORD major, LPDWORD minor, LPDWORD build);
+typedef bool (WINAPI *AllowDarkModeForAppFunc)(BOOL allow);
+typedef enum PreferredAppMode (WINAPI *SetPreferredAppModeFunc)(enum PreferredAppMode appMode);
+typedef BOOL (WINAPI *SetWindowCompositionAttributeFunc)(HWND hWnd, struct WINDOWCOMPOSITIONATTRIBDATA *);
+typedef BOOL (WINAPI *AllowDarkModeForWindowFunc)(HWND hWnd, BOOL allow);
+
+static AllowDarkModeForWindowFunc        AllowDarkModeForWindow_;
+static SetWindowCompositionAttributeFunc SetWindowCompositionAttribute_;
+
+static DWORD ntBuildNumber_;
+static BOOL  isDark_;
+
+static iBool refreshTitleBarThemeColor_(HWND hwnd) {
+	BOOL dark = isDark_ColorTheme(prefs_App()->theme);
+    if (dark == isDark_) {
+        return FALSE;
+    }
+	if (ntBuildNumber_ < 18362) {
+        INT_PTR pDark = dark;
+		SetPropW(hwnd, L"UseImmersiveDarkModeColors", (HANDLE) pDark);
+    }
+	else if (SetWindowCompositionAttribute_) {
+		struct WINDOWCOMPOSITIONATTRIBDATA data = {
+            WCA_USEDARKMODECOLORS, &dark, sizeof(dark)
+        };
+		SetWindowCompositionAttribute_(hwnd, &data);
+	}
+    isDark_ = dark;
+    return TRUE;
+}
+
+static void enableDarkMode_Win32(void) {
+    RtlGetNtVersionNumbersFunc RtlGetNtVersionNumbers_ = 
+        (RtlGetNtVersionNumbersFunc)
+        GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetNtVersionNumbers");
+    if (!RtlGetNtVersionNumbers_) {
+        return;
+    }
+    DWORD major, minor;
+   	RtlGetNtVersionNumbers_(&major, &minor, &ntBuildNumber_);
+	ntBuildNumber_ &= ~0xf0000000;
+    //printf("%u.%u %u\n", major, minor, ntBuildNumber_);
+    /* Windows 11 is apparently still NT version 10. */
+	if (!(major == 10 && minor == 0 && ntBuildNumber_ >= 17763)) {
+        return;
+    }
+    HMODULE hUxtheme = LoadLibraryExW(L"uxtheme.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (hUxtheme) {
+		AllowDarkModeForWindow_ = (AllowDarkModeForWindowFunc) 
+            GetProcAddress(hUxtheme, MAKEINTRESOURCEA(133));
+        AllowDarkModeForAppFunc AllowDarkModeForApp_ = NULL;
+        SetPreferredAppModeFunc SetPreferredAppMode_ = NULL;
+        FARPROC ord135 = GetProcAddress(hUxtheme, MAKEINTRESOURCEA(135));
+        if (ord135) {
+            if (ntBuildNumber_ < 18362) {
+                AllowDarkModeForApp_ = (AllowDarkModeForAppFunc) ord135;
+                AllowDarkModeForApp_(TRUE);
+            }
+            else {
+                SetPreferredAppMode_ = (SetPreferredAppModeFunc) ord135;
+                SetPreferredAppMode_(AllowDark);
+            }
+        }
+        SetWindowCompositionAttribute_ = (SetWindowCompositionAttributeFunc)
+            GetProcAddress(GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute");
+    }
+}
+
+void init_Win32(void) {
     SetProcessDPIAware();
+    enableDarkMode_Win32();
 }
 
 float desktopDPI_Win32(void) {
@@ -51,15 +176,42 @@ float desktopDPI_Win32(void) {
     return ratio;
 }
 
+static HWND windowHandle_(SDL_Window *win) {
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    if (SDL_GetWindowWMInfo(win, &wmInfo)) {
+        return wmInfo.info.win.window;
+    }
+    return NULL;
+}
+
 void useExecutableIconResource_SDLWindow(SDL_Window *win) {
     HINSTANCE handle = GetModuleHandle(NULL);
     HICON icon = LoadIcon(handle, "IDI_ICON1");
     if (icon) {
-        SDL_SysWMinfo wmInfo;
-        SDL_VERSION(&wmInfo.version);
-        if (SDL_GetWindowWMInfo(win, &wmInfo)) {
-            HWND hwnd = wmInfo.info.win.window;
-            SetClassLongPtr(hwnd, -14 /*GCL_HICON*/, (LONG_PTR) icon);
+        HWND hwnd = windowHandle_(win);
+        SetClassLongPtr(hwnd, -14 /*GCL_HICON*/, (LONG_PTR) icon);
+    }
+}
+
+void enableDarkMode_SDLWindow(SDL_Window *win) {
+    if (AllowDarkModeForWindow_) {
+        HWND hwnd = windowHandle_(win);
+        AllowDarkModeForWindow_(hwnd, TRUE);
+        refreshTitleBarThemeColor_(hwnd);
+    }    
+}
+
+void handleCommand_Win32(const char *cmd) {
+    if (equal_Command(cmd, "theme.changed")) {        
+        iMainWindow *mw = get_MainWindow();
+        SDL_Window *win = mw->base.win;
+        if (refreshTitleBarThemeColor_(windowHandle_(win)) &&
+            !isFullscreen_MainWindow(mw) &&
+            !argLabel_Command(cmd, "auto")) {
+            /* This will ensure that the non-client area is repainted. */
+            SDL_MinimizeWindow(win);
+            SDL_RestoreWindow(win);
         }
     }
 }
@@ -96,21 +248,22 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
         }
         case WM_KEYUP: {
             if (winDown_[0] || winDown_[1]) {
+                iMainWindow *mw = as_MainWindow(window);
                 /* Emulate the default window snapping behavior. */
-                int snap = snap_Window(window);
+                int snap = snap_MainWindow(mw);
                 if (wp == VK_LEFT) {
                     snap &= ~(topBit_WindowSnap | bottomBit_WindowSnap);
-                    setSnap_Window(window,
-                                   snap == right_WindowSnap ? 0 : left_WindowSnap);
+                    setSnap_MainWindow(mw,
+                                       snap == right_WindowSnap ? 0 : left_WindowSnap);
                 }
                 else if (wp == VK_RIGHT) {
                     snap &= ~(topBit_WindowSnap | bottomBit_WindowSnap);
-                    setSnap_Window(window,
-                                   snap == left_WindowSnap ? 0 : right_WindowSnap);
+                    setSnap_MainWindow(mw,
+                                       snap == left_WindowSnap ? 0 : right_WindowSnap);
                 }
                 else if (wp == VK_UP) {
                     if (~snap & topBit_WindowSnap) {
-                        setSnap_Window(window,
+                        setSnap_MainWindow(mw,
                                        snap & bottomBit_WindowSnap ? snap & ~bottomBit_WindowSnap
                                        : snap == left_WindowSnap || snap == right_WindowSnap
                                            ? snap | topBit_WindowSnap
@@ -125,7 +278,7 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
                         postCommand_App("window.minimize");
                     }
                     else {
-                        setSnap_Window(window,
+                        setSnap_MainWindow(mw,
                                        snap == maximized_WindowSnap ? 0
                                        : snap & topBit_WindowSnap   ? snap & ~topBit_WindowSnap
                                        : snap == left_WindowSnap || snap == right_WindowSnap
@@ -143,20 +296,21 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
             break;            
         }
         case WM_NCLBUTTONDBLCLK: {
+            iMainWindow *mw = as_MainWindow(window);
             POINT point = { GET_X_LPARAM(msg->msg.win.lParam), 
                             GET_Y_LPARAM(msg->msg.win.lParam) };
             ScreenToClient(hwnd, &point);
             iInt2 pos = init_I2(point.x, point.y);
-            switch (hitTest_Window(window, pos)) {
+            switch (hitTest_MainWindow(mw, pos)) {
                 case SDL_HITTEST_DRAGGABLE:
                     window->ignoreClick = iTrue; /* avoid hitting something inside the window */
                     postCommandf_App("window.%s",
-                                     snap_Window(window) ? "restore" : "maximize toggle:1");
+                                     snap_MainWindow(mw) ? "restore" : "maximize toggle:1");
                     break;
                 case SDL_HITTEST_RESIZE_TOP:
                 case SDL_HITTEST_RESIZE_BOTTOM: {
                     window->ignoreClick = iTrue; /* avoid hitting something inside the window */
-                    setSnap_Window(window, yMaximized_WindowSnap);
+                    setSnap_MainWindow(mw, yMaximized_WindowSnap);
                     break;
                 }
             }
@@ -170,7 +324,7 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
             printf("%d,%d\n", point.x, point.y); fflush(stdout);
             ScreenToClient(hwnd, &point);
             iInt2 pos = init_I2(point.x, point.y);
-            if (hitTest_Window(window, pos) == SDL_HITTEST_DRAGGABLE) {
+            if (hitTest_MainWindow(as_MainWindow(window), pos) == SDL_HITTEST_DRAGGABLE) {
                 printf("released draggable\n"); fflush(stdout);
             }
             break;

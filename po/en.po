@@ -225,7 +225,13 @@ msgid "menu.zoom.reset"
 msgstr "Reset Zoom"
 
 msgid "menu.view.split"
-msgstr "Split View..."
+msgstr "Split View…"
+
+msgid "menu.newfolder"
+msgstr "New Folder…"
+
+msgid "menu.sort.alpha"
+msgstr "Sort Alphabetically"
 
 msgid "menu.bookmarks.list"
 msgstr "List All Bookmarks"
@@ -251,6 +257,10 @@ msgstr "Show Feed Entries"
 msgid "menu.preferences"
 msgstr "Preferences…"
 
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Settings"
+
 msgid "menu.help"
 msgstr "Help"
 
@@ -268,6 +278,18 @@ msgstr "Copy"
 
 msgid "menu.paste"
 msgstr "Paste"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Select All"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Delete"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Undo"
 
 msgid "menu.select.clear"
 msgstr "Clear Selection"
@@ -509,6 +531,21 @@ msgstr "Do you really want to erase the history of all visited pages?"
 
 msgid "dlg.history.clear"
 msgstr "Clear History"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "DELETE BOOKMARKS"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Do you really want to delete the bookmark inside this folder?"
+msgstr[1] "Do you really want to delete all %u bookmarks inside this folder?"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Delete Bookmark"
+msgstr[1] "Delete %u Bookmarks"
 
 msgid "bookmark.tag.home"
 msgstr "Use as Homepage"
@@ -822,6 +859,10 @@ msgstr "PASTED FROM CLIPBOARD"
 msgid "heading.certimport.dropped"
 msgstr "DROPPED FILE"
 
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Import Certificate/Key File"
+
 msgid "dlg.certimport.import"
 msgstr "Import"
 
@@ -906,10 +947,19 @@ msgid "heading.lookup.other"
 msgstr "OTHER"
 
 msgid "menu.page.upload"
-msgstr "Upload Page with Titan"
+msgstr "Upload Page with Titan…"
 
 msgid "heading.upload"
 msgstr "UPLOAD WITH TITAN"
+
+msgid "upload.id"
+msgstr "Identity:"
+
+msgid "dlg.upload.id.none"
+msgstr "None"
+
+msgid "dlg.upload.id.default"
+msgstr "Default"
 
 msgid "heading.upload.text"
 msgstr "Text"
@@ -933,7 +983,7 @@ msgid "upload.mime"
 msgstr "MIME type:"
 
 msgid "upload.token"
-msgstr "Upload token:"
+msgstr "Token:"
 
 msgid "hint.upload.token"
 msgstr "see server's instructions"
@@ -952,6 +1002,18 @@ msgstr "Set the Titan server port to use for this URL.\nThe port is saved in the
 
 msgid "dlg.uploadport.set"
 msgstr "Set Port"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Upload Plain Text"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Upload a File"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Select File"
 
 msgid "heading.translate"
 msgstr "TRANSLATE PAGE"
@@ -1001,6 +1063,9 @@ msgstr "Finnish"
 msgid "lang.fr"
 msgstr "French"
 
+msgid "lang.gl"
+msgstr "Galician"
+
 msgid "lang.hi"
 msgstr "Hindi"
 
@@ -1019,11 +1084,23 @@ msgstr "Portuguese"
 msgid "lang.ru"
 msgstr "Russian"
 
+msgid "lang.eo"
+msgstr "Esperanto"
+
 msgid "lang.es"
 msgstr "Spanish"
 
+msgid "lang.es.mx"
+msgstr "Spanish (Mexico)"
+
+msgid "lang.sk"
+msgstr "Slovak"
+
 msgid "lang.sr"
 msgstr "Serbian"
+
+msgid "lang.isv"
+msgstr "Interslavic"
 
 msgid "lang.tok"
 msgstr "Toki Pona"
@@ -1145,8 +1222,27 @@ msgstr "Tags:"
 msgid "dlg.bookmark.icon"
 msgstr "Icon:"
 
+msgid "heading.bookmark.tags"
+msgstr "SPECIAL TAGS"
+
+msgid "heading.addfolder"
+msgstr "ADD FOLDER"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "New Folder"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Enter the name of the new folder:"
+
+msgid "dlg.addfolder"
+msgstr "Add Folder"
+
 msgid "heading.prefs"
 msgstr "PREFERENCES"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "SETTINGS"
 
 msgid "heading.prefs.certs"
 msgstr "CERTIFICATES"
@@ -1333,6 +1429,25 @@ msgstr "High Contrast"
 msgid "prefs.saturation"
 msgstr "Saturation:"
 
+msgid "prefs.imagestyle"
+msgstr "Colorize images:"
+
+msgid "prefs.imagestyle.original"
+msgstr "None"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Grayscale"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "BG-to-FG"
+
+msgid "prefs.imagestyle.text"
+msgstr "Text Color"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Preformatted Color"
+
 msgid "prefs.headingfont"
 msgstr "Heading font:"
 
@@ -1496,6 +1611,9 @@ msgstr "Next set of home row key links"
 
 msgid "keys.bookmark.add"
 msgstr "Add bookmark"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Add bookmark folder"
 
 msgid "keys.subscribe"
 msgstr "Subscribe to page"
