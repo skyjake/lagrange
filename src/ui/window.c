@@ -380,12 +380,6 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
         }
 #endif
     }
-#if 0
-    if (SDL_CreateWindowAndRenderer(
-            width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
-        return iFalse;
-    }
-#endif
     const iBool setPos = left_Rect(rect) >= 0 || top_Rect(rect) >= 0;
     d->win = SDL_CreateWindow("",
                               setPos ? left_Rect(rect) : SDL_WINDOWPOS_CENTERED,
@@ -394,8 +388,20 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
                               height_Rect(rect),
                               flags);
     if (!d->win) {
-        fprintf(stderr, "[window] failed to create window: %s\n", SDL_GetError());
-        exit(-3);
+        if (flags & SDL_WINDOW_OPENGL) {
+            /* Try without OpenGL support, then. */
+            setForceSoftwareRender_App(iTrue);
+            d->win = SDL_CreateWindow("",
+                                      setPos ? left_Rect(rect) : SDL_WINDOWPOS_CENTERED,
+                                      setPos ? top_Rect(rect) : SDL_WINDOWPOS_CENTERED,
+                                      width_Rect(rect),
+                                      height_Rect(rect),
+                                      flags & ~SDL_WINDOW_OPENGL);
+        }
+        if (!d->win) {
+            fprintf(stderr, "[window] failed to create window: %s\n", SDL_GetError());
+            exit(-3);
+        }
     }
     if (forceSoftwareRender_App()) {
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
