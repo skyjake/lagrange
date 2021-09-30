@@ -62,8 +62,9 @@ int     itemHeight_ListWidget       (const iListWidget *);
 int     scrollPos_ListWidget        (const iListWidget *);
 
 void    setScrollPos_ListWidget     (iListWidget *, int pos);
-void    scrollToItem_ListWidget     (iListWidget *, size_t index);
+void    scrollToItem_ListWidget     (iListWidget *, size_t index, uint32_t span);
 void    scrollOffset_ListWidget     (iListWidget *, int offset);
+void    scrollOffsetSpan_ListWidget (iListWidget *, int offset, uint32_t span);
 void    updateVisible_ListWidget    (iListWidget *);
 void    updateMouseHover_ListWidget (iListWidget *);
 void    setHoverItem_ListWidget     (iListWidget *, size_t index);

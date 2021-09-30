@@ -628,6 +628,17 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     updateMouseHover_ListWidget(d->list);
 }
 
+static size_t findItem_SidebarWidget_(const iSidebarWidget *d, int id) {
+    /* Note that this is O(n), so only meant for infrequent use. */
+    for (size_t i = 0; i < numItems_ListWidget(d->list); i++) {
+        const iSidebarItem *item = constItem_ListWidget(d->list, i);
+        if (item->id == id) {
+            return i;
+        }
+    }
+    return iInvalidPos;
+}
+
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
     if (d->list) {
         const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
@@ -1188,6 +1199,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                                              d->mode == feeds_SidebarMode)) {
             if (pointerLabel_Command(cmd, "nosidebar") != d) {
                 updateItems_SidebarWidget_(d);
+                if (hasLabel_Command(cmd, "added")) {
+                    const size_t addedId    = argLabel_Command(cmd, "added");
+                    const size_t addedIndex = findItem_SidebarWidget_(d, addedId);
+                    scrollToItem_ListWidget(d->list, addedIndex, 200);
+                }
             }
         }
         else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {

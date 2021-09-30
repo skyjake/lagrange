@@ -2794,7 +2794,7 @@ iBool handleCommand_App(const char *cmd) {
             if (parentId) {
                 get_Bookmarks(d->bookmarks, id)->parentId = parentId;
             }
-            postCommand_App("bookmarks.changed");
+            postCommandf_App("bookmarks.changed added:%zu", id);
         }
         else {
             iWidget *dlg = makeValueInput_Widget(

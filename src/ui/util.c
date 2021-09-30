@@ -2694,7 +2694,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit"))) {
                 addTag_Bookmark(bm, linkSplit_BookmarkTag);
             }
-            postCommand_App("bookmarks.changed");
+            postCommandf_App("bookmarks.changed added:%zu", id);
         }
         setupSheetTransition_Mobile(editor, iFalse);
         destroy_Widget(editor);

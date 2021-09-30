@@ -206,7 +206,11 @@ void scrollOffset_ListWidget(iListWidget *d, int offset) {
     moveSpan_SmoothScroll(&d->scrollY, offset, 0);
 }
 
-void scrollToItem_ListWidget(iListWidget *d, size_t index) {
+void scrollOffsetSpan_ListWidget(iListWidget *d, int offset, uint32_t span) {
+    moveSpan_SmoothScroll(&d->scrollY, offset, span);
+}
+
+void scrollToItem_ListWidget(iListWidget *d, size_t index, uint32_t span) {
     if (index >= size_PtrArray(&d->items)) {
         return;
     }
@@ -215,10 +219,10 @@ void scrollToItem_ListWidget(iListWidget *d, size_t index) {
     int         yTop    = d->itemHeight * index - pos_SmoothScroll(&d->scrollY);
     int         yBottom = yTop + d->itemHeight;
     if (yBottom > height_Rect(rect)) {
-        scrollOffset_ListWidget(d, yBottom - height_Rect(rect));
+        scrollOffsetSpan_ListWidget(d, yBottom - height_Rect(rect), span);
     }
     else if (yTop < 0) {
-        scrollOffset_ListWidget(d, yTop);
+        scrollOffsetSpan_ListWidget(d, yTop, span);
     }
 }
 
