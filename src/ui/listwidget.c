@@ -321,7 +321,14 @@ static void updateHover_ListWidget_(iListWidget *d, const iInt2 mouse) {
     setHoverItem_ListWidget(d, hover);
 }
 
-static size_t resolveDragDestination_ListWidget_(const iListWidget *d, iInt2 dstPos, iBool *isOnto) {
+enum iDragDestination {
+    before_DragDestination,
+    on_DragDestination,
+    after_DragDestination
+};
+
+static size_t resolveDragDestination_ListWidget_(const iListWidget *d, iInt2 dstPos,
+                                                 enum iDragDestination *dstKind) {
     size_t           index = itemIndex_ListWidget(d, dstPos);
     const iListItem *item  = constItem_ListWidget(d, index);
     if (!item) {
@@ -333,15 +340,17 @@ static size_t resolveDragDestination_ListWidget_(const iListWidget *d, iInt2 dst
     if (item->isDropTarget) {
         const int pad = size_Range(&span) / 4;
         if (dstPos.y >= span.start + pad && dstPos.y < span.end - pad) {
-            *isOnto = iTrue;
+            *dstKind = on_DragDestination;
             return index;
         }
     }
+    int delta = dstPos.y - top_Rect(rect);
     if (dstPos.y - span.start > span.end - dstPos.y) {
         index++;
+        delta -= d->itemHeight;
     }
     index = iMin(index, numItems_ListWidget(d));
-    *isOnto = iFalse;
+    *dstKind = delta < 0 && index > 0 ? after_DragDestination : before_DragDestination;
     return index;
 }
 
@@ -350,14 +359,16 @@ static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
         return iFalse;
     }
     stop_Anim(&d->scrollY.pos);
-    iBool isOnto;
-    const size_t index = resolveDragDestination_ListWidget_(d, endPos, &isOnto);
+    enum iDragDestination dstKind;
+    const size_t index = resolveDragDestination_ListWidget_(d, endPos, &dstKind);
     if (index != d->dragItem) {
-        if (isOnto) {
+        if (dstKind == on_DragDestination) {
             postCommand_Widget(d, "list.dragged arg:%zu onto:%zu", d->dragItem, index);
         }
         else {
-            postCommand_Widget(d, "list.dragged arg:%zu before:%zu", d->dragItem, index);
+            postCommand_Widget(d, "list.dragged arg:%zu %s:%zu", d->dragItem, 
+                               dstKind == after_DragDestination ? "after" : "before",
+                               dstKind == after_DragDestination ? index - 1 : index);
         }
     }
     invalidateItem_ListWidget(d, d->dragItem);
@@ -571,19 +582,19 @@ static void draw_ListWidget_(const iListWidget *d) {
         const iRect itemRect = { init_I2(left_Rect(bounds), pos.y),
                                  init_I2(d->visBuf->texSize.x, d->itemHeight) };
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-        iBool dstOnto;
-        const size_t dstIndex = resolveDragDestination_ListWidget_(d, mousePos, &dstOnto);
+        enum iDragDestination dstKind;
+        const size_t dstIndex = resolveDragDestination_ListWidget_(d, mousePos, &dstKind);
         if (dstIndex != d->dragItem) {
             const iRect dstRect = itemRect_ListWidget(d, dstIndex);
             p.alpha = 0xff;
-            if (dstOnto) {
+            if (dstKind == on_DragDestination) {
                 drawRectThickness_Paint(&p, dstRect, gap_UI / 2, uiTextAction_ColorId);
             }
             else if (dstIndex != d->dragItem + 1) {
                 fillRect_Paint(&p, (iRect){ addY_I2(dstRect.pos, -gap_UI / 4),
                                             init_I2(width_Rect(dstRect), gap_UI / 2) },
                                uiTextAction_ColorId);
-            }
+            }                        
         }
         p.alpha = 0x80;
         setOpacity_Text(0.5f);

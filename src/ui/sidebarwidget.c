@@ -1095,21 +1095,24 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
     return iFalse;
 }
 
-static void bookmarkMoved_SidebarWidget_(iSidebarWidget *d, size_t index, size_t beforeIndex) {
+static void bookmarkMoved_SidebarWidget_(iSidebarWidget *d, size_t index, size_t dstIndex,
+                                         iBool isBefore) {
     const iSidebarItem *movingItem = item_ListWidget(d->list, index);
-    const iBool         isLast     = (beforeIndex == numItems_ListWidget(d->list));
+    const iBool         isLast     = (dstIndex == numItems_ListWidget(d->list));
     const iSidebarItem *dstItem    = item_ListWidget(d->list,
                                                      isLast ? numItems_ListWidget(d->list) - 1
-                                                            : beforeIndex);
+                                                            : dstIndex);
+    if (isLast && isBefore) isBefore = iFalse;
     const iBookmark *dst = get_Bookmarks(bookmarks_App(), dstItem->id);
-    if (hasParent_Bookmark(dst, movingItem->id)) {
+    if (hasParent_Bookmark(dst, movingItem->id) || hasTag_Bookmark(dst, remote_BookmarkTag)) {
+        /* Can't move a folder inside itself, and remote bookmarks cannot be reordered. */
         return;
     }
-    reorder_Bookmarks(bookmarks_App(), movingItem->id, dst->order + (isLast ? 1 : 0));
+    reorder_Bookmarks(bookmarks_App(), movingItem->id, dst->order + (isBefore ? 0 : 1));
     get_Bookmarks(bookmarks_App(), movingItem->id)->parentId = dst->parentId;
     updateItems_SidebarWidget_(d);
     /* Don't confuse the user: keep the dragged item in hover state. */
-    setHoverItem_ListWidget(d->list, index < beforeIndex ? beforeIndex - 1 : beforeIndex);
+    setHoverItem_ListWidget(d->list, dstIndex + (isBefore ? 0 : 1) + (index < dstIndex ? -1 : 0));
     postCommandf_App("bookmarks.changed nosidebar:%p", d); /* skip this sidebar since we updated already */
 }
 
@@ -1243,16 +1246,18 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (isCommand_Widget(w, ev, "list.dragged")) {
             iAssert(d->mode == bookmarks_SidebarMode);
-            if (hasLabel_Command(cmd, "before")) {
-                bookmarkMoved_SidebarWidget_(d,
-                                             argU32Label_Command(cmd, "arg"),
-                                             argU32Label_Command(cmd, "before"));
-            }
-            else {
+            if (hasLabel_Command(cmd, "onto")) {
                 /* Dragged onto a folder. */
                 bookmarkMovedOntoFolder_SidebarWidget_(d,
                                                        argU32Label_Command(cmd, "arg"),
                                                        argU32Label_Command(cmd, "onto"));
+            }
+            else {
+                const iBool isBefore = hasLabel_Command(cmd, "before");
+                bookmarkMoved_SidebarWidget_(d,
+                                             argU32Label_Command(cmd, "arg"),
+                                             argU32Label_Command(cmd, isBefore ? "before" : "after"),
+                                             isBefore);
             }
             return iTrue;
         }
