@@ -23,15 +23,11 @@ Prebuilt binaries for Windows, macOS and Linux can be found in [Releases][rel]. 
 
 On macOS you can install and upgrade via Homebrew:
 
-```
-brew install --cask lagrange
-```
+    brew install --cask lagrange
 
 On openSUSE Tumbleweed:
 
-```
-sudo zypper install lagrange
-```
+    sudo zypper install lagrange
 
 ## How to compile
 
@@ -106,18 +102,16 @@ Windows builds require [MSYS2](https://www.msys2.org). In theory, [Clang](https:
 
 You should use a version of the SDL 2 library that is compiled for native Windows (i.e., the MSVC variant) instead of the version from MSYS2 or MinGW. You can download a copy of the SDL binaries from [libsdl.org](https://libsdl.org/). To make configuration easier in your MSYS2 environment, consider writing a custom sdl2.pc file so `pkg-config` can automatically find the correct version of SDL. Below is an example of what your sdl2.pc might look like:
 
-```
-prefix=/c/SDK/SDL2-2.0.12/
-arch=x64
-libdir=${prefix}/lib/${arch}/
-incdir=${prefix}/include/
-
-Name: sdl2
-Description: Simple DirectMedia Layer
-Version: 2.0.12-msvc
-Libs: ${libdir}/SDL2.dll -mwindows
-Cflags: -I${incdir}
-```
+    prefix=/c/SDK/SDL2-2.0.12/
+    arch=x64
+    libdir=${prefix}/lib/${arch}/
+    incdir=${prefix}/include/
+    
+    Name: sdl2
+    Description: Simple DirectMedia Layer
+    Version: 2.0.12-msvc
+    Libs: ${libdir}/SDL2.dll -mwindows
+    Cflags: -I${incdir}
 
 The *-mwindows* option is particularly important as that specifies the target is a GUI application. Also note that you are linking directly against the Windows DLL — do not use any prebuilt .lib files if available, as those as specific to MSVC.
 
