@@ -996,7 +996,7 @@ void updateMetrics_Root(iRoot *d) {
             const iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
             const iWidget *viewButton = findChild_Widget(d->widget, "toolbar.view");
             const iWidget *idButton = findChild_Widget(toolBar, "toolbar.ident");
-            const int font = defaultSmall_FontId;
+            const int font = defaultTiny_FontId;
             setFont_LabelWidget(idName, font);
             setPos_Widget(as_Widget(idName),
                           windowToLocal_Widget(as_Widget(idName),
