@@ -35,6 +35,7 @@ enum iFontSize {
     uiMedium_FontSize, /* 1.125 */
     uiBig_FontSize,    /* 1.333 */
     uiLarge_FontSize,  /* 1.666 */
+    uiSmall_FontSize,  /* 0.800 */
     contentRegular_FontSize,
     contentMedium_FontSize,
     contentBig_FontSize,
