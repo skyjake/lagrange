@@ -1463,7 +1463,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         removeUrl_Visited(vis, url);
                     }
                     else {
-                        visitUrl_Visited(vis, url, transient_VisitedUrlFlag);
+                        visitUrl_Visited(vis, url, transient_VisitedUrlFlag | kept_VisitedUrlFlag);
                     }
                     postCommand_App("visited.changed");
                     return iTrue;

@@ -137,6 +137,16 @@ void stripDefaultUrlPort_String(iString *d) {
     }
 }
 
+const iString *urlQueryStripped_String(const iString *url) {
+    size_t pos = indexOfCStr_String(url, "?");
+    if (pos != iInvalidPos) {
+        iString *stripped = collect_String(copy_String(url));
+        truncate_Block(&stripped->chars, pos);
+        return stripped;
+    }
+    return url;
+}
+
 iBool isDataUrl_String(const iString *d) {
     return startsWithCase_String(d, "data:");
 }
