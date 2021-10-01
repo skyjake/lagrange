@@ -2827,19 +2827,28 @@ iBool handleCommand_App(const char *cmd) {
         refresh_Feeds();
         return iTrue;
     }
-    else if (equal_Command(cmd, "feeds.update.started")) {
-        iAnyObject *prog = findWidget_Root("feeds.progress");
-        const iWidget *navBar = findWidget_Root("navbar");
-        updateTextAndResizeWidthCStr_LabelWidget(
-            prog, flags_Widget(navBar) & tight_WidgetFlag || deviceType_App() == phone_AppDeviceType ?
-                                                 "\u2605" : "\u2605 ${status.feeds}");
-        showCollapsed_Widget(prog, iTrue);
-        return iFalse;
-    }
-    else if (equal_Command(cmd, "feeds.update.finished")) {
-        showCollapsed_Widget(findWidget_Root("feeds.progress"), iFalse);
-        refreshFinished_Feeds();
-        refresh_Widget(findWidget_App("url"));
+    else if (startsWith_CStr(cmd, "feeds.update.")) {
+        const iWidget *navBar = findChild_Widget(get_Window()->roots[0]->widget, "navbar");
+        iAnyObject *prog = findChild_Widget(navBar, "feeds.progress");
+        if (equal_Command(cmd, "feeds.update.started") ||
+            equal_Command(cmd, "feeds.update.progress")) {
+            const int num   = arg_Command(cmd);
+            const int total = argLabel_Command(cmd, "total");
+            updateTextAndResizeWidthCStr_LabelWidget(prog,
+                                                     flags_Widget(navBar) & tight_WidgetFlag ||
+                                                             deviceType_App() == phone_AppDeviceType
+                                                         ? star_Icon
+                                                         : star_Icon " ${status.feeds}");
+            showCollapsed_Widget(prog, iTrue);
+            setFixedSize_Widget(findChild_Widget(prog, "feeds.progressbar"),
+                                init_I2(width_Widget(prog) * num / total, -1));
+        }
+        else if (equal_Command(cmd, "feeds.update.finished")) {
+            showCollapsed_Widget(prog, iFalse);
+            refreshFinished_Feeds();
+            refresh_Widget(findWidget_App("url"));
+            return iFalse;
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "visited.changed")) {

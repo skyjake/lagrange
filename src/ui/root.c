@@ -1149,9 +1149,10 @@ void createUserInterface_Root(iRoot *d) {
                 iLabelWidget *queryInd = new_LabelWidget("${status.query} " return_Icon, NULL);
                 setId_Widget(as_Widget(queryInd), "input.indicator.search");
                 setTextColor_LabelWidget(queryInd, uiTextAction_ColorId);
+                setFont_LabelWidget(queryInd, defaultSmall_FontId);
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
-                setAlignVisually_LabelWidget(queryInd, iTrue);
+//                setAlignVisually_LabelWidget(queryInd, iTrue);
                 setNoAutoMinHeight_LabelWidget(queryInd, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(queryInd),
@@ -1161,9 +1162,16 @@ void createUserInterface_Root(iRoot *d) {
                 iLabelWidget *fprog = new_LabelWidget("", NULL);
                 setId_Widget(as_Widget(fprog), "feeds.progress");
                 setTextColor_LabelWidget(fprog, uiTextCaution_ColorId);
+                setFont_LabelWidget(fprog, defaultSmall_FontId);
                 setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
-                setAlignVisually_LabelWidget(fprog, iTrue);
+//                setAlignVisually_LabelWidget(fprog, iTrue);
                 setNoAutoMinHeight_LabelWidget(fprog, iTrue);
+                iWidget *progBar = new_Widget();
+                setBackgroundColor_Widget(progBar, uiTextCaution_ColorId);
+                setFixedSize_Widget(progBar, init_I2(0, gap_UI / 4));
+                setId_Widget(addChildFlags_Widget(as_Widget(fprog), iClob(progBar),
+                                                  moveToParentBottomEdge_WidgetFlag),
+                             "feeds.progressbar");
                 addChildFlags_Widget(rightEmbed,
                                      iClob(fprog),
                                      collapse_WidgetFlag | hidden_WidgetFlag | frameless_WidgetFlag);
