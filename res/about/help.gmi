@@ -93,7 +93,7 @@ Search within cached pages is limited to the (small) set of pages that Lagrange 
 
 Note that the navigation stack is saved to a file when Lagrange is shut down and restored on the next launch. This means the next time you launch Lagrange, you can still search the contents of past pages. However, navigation stacks are tab-specific, so closing a tab will delete its history as well.
 
-You can also make online search queries via the URL input field. When a search URL is configured on the "Network" tab of Preferences, text entered in the URL field is passed to the search URL as a query parameter. A search query will only occur when Enter is pressed while the [⇒ Search Query] indicator is visible.
+You can also make online search queries via the URL input field. When a search URL is configured on the "Network" tab of Preferences, text entered in the URL field is passed to the search URL as a query parameter. A search query will only occur when Enter is pressed while the [Search Query] indicator is visible.
 
 ### 1.1.2 Links
 
@@ -158,7 +158,7 @@ The feature can be found in the page context menu: right-click and select "Set A
 
 The sidebars can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L or ${SHIFT+}${CTRL+}P (for the left/right sidebar, respectively). Both sidebars have five tabs:
 
-* Bookmarks: List of bookmarks that you've created. These appear first in search results for quick and easy access.
+* Bookmarks: List of bookmarks that you've created, organized into folders. Bookmarks appear first in search results for quick and easy access.
 * Feeds: Entries found on subscribed pages.
 * History: Chronological list of visited URLs. This is not a full history of all the URLs you've accessed over time — only unique URLs are shown at the latest access time.
 * Identities: TLS client certificates.
@@ -170,13 +170,19 @@ ${CTRL+}1 through ${CTRL+}5 switch between the left sidebar tabs, or hide the si
 
 Press ${CTRL+}D to bookmark the currently open URL.
 
-Bookmarks are listed in alphabetic order in the sidebar. There is no support for folders or manual sorting.
+Newly added bookmarks appear at the bottom of the Bookmarks sidebar. You can drag and drop items in the list to change their order.
 
 In addition to a title, bookmarks can have tags. Some tags have a special meaning, but you are free to enter whatever you want in the tags field. In quick search results, tags are given extra weight so they appear higher in results.
 
-By default bookmarks are assigned random icons. You can enter a custom icon for a bookmark in the bookmark edit dialog to make it easier to recognize a particular site at a glance. The icon must be a single Unicode character. It will appear in the bookmark list, tab titles, feed entry list, quick search results, and page top banners.
+By default, bookmarks are assigned random icons. You can enter a custom icon for a bookmark in the bookmark edit dialog to make it easier to recognize a particular site at a glance. The icon must be a single Unicode character. It will appear in the bookmark list, tab titles, feed entry list, quick search results, and page top banners.
 
-### 1.4.1 Exporting and importing
+### 1.4.1 Folders
+
+Press ${SHIFT+}N to create a new bookmark folder. Newly added folders appear in the bottom of the bookmark list.
+
+You can drag and drop bookmarks in and out of folders. Folders can also be nested inside each other. Clicking on a folder heading will toggle its fold state, either hiding or showing its contents. The fold state is remembered across sessions.
+
+### 1.4.2 Exporting and importing
 
 => about:bookmarks  The special page "about:bookmarks" is used for exporting bookmarks out of Lagrange.
 It has three different modes that can be opened via menus:
@@ -189,7 +195,9 @@ The generated page can be saved to Downloads or you can copy all or parts of it 
 
 To import all links on a page as bookmarks, use the page context menu to select "Import Links as Bookmarks...". You can also right-click on individual links and select "Bookmark Link...".
 
-### 1.4.2 Remote bookmarks
+Importing links on a page will not cause any folders to be (re)created. To fully transfer your bookmarks, tags, custom icons, and folders, consider copying the entire "bookmarks.ini" file (see section 3.5).
+
+### 1.4.3 Remote bookmarks
 
 This version of Lagrange does not support automatic bookmark synchronization. By default all bookmarks are stored locally. However, a remote bookmarks feature is provided to allow accessing a set of bookmarks from everywhere. This way you can set up your own centralized bookmark pages or use any public Gemini page as a source of bookmarks.
 
@@ -199,7 +207,7 @@ All links found in the remote sources become remote bookmarks and are included i
 
 Note that remote bookmarks are read-only: they cannot be edited or tagged. This means you cannot subscribe to a remote bookmark without first making a local duplicate of it. If you want to make local copies of all the links in the remote source, open the remote source page and use the "Import Links as Bookmarks..." context menu item on it. After refreshing remote sources, the remote copies of the bookmarks will not be shown any more.
 
-### 1.4.3 Special tags
+### 1.4.4 Special tags
 
 * Set a "homepage" tag on a bookmark to make it one of the pages that will be opened when pressing the 🏠 button. If multiple bookmarks are tagged as homepages, a random one is selected.
 * A "subscribed" tag means that Lagrange will periodically fetch the bookmarked page and look for Gemini feed links. All the found links that match the required style ("YYYY-MM-DD Entry title") will appear in the Feeds sidebar tab.
@@ -457,7 +465,7 @@ If there already is a running instance you can still use the command line to int
 
 Lagrange stores user-specific persistent files in one of the following locations (depending on the operating system):
 
-```User file directories on different operating systems
+```Location of user-specific files on different operating systems (table)
    Windows : C:\Users\Name\AppData\Roaming\fi.skyjake.Lagrange
      macOS : ~/Library/Application Support/fi.skyjake.Lagrange/
 Other Unix : ~/.config/lagrange/
@@ -477,14 +485,24 @@ g : Gui (Windows/Command/Meta key)
 k : Caps Lock
 ```
 
-### bookmarks.txt
-Each bookmark is stored as three consecutive lines:
-> {icon} {creation-timestamp} {url}
-> {title}
-> {tags}
-* The icon is one UTF-32 codepoint as a hexadecimal number, prefixed with zeroes to be always eight bytes long.
-* Creation time is stored as a UNIX timestamp.
-* URL, title, and tags are UTF-8 text strings terminated at the newline.
+### bookmarks.ini
+This file stores all bookmarks and bookmark folders. The format is a subset of TOML: the only supported value types are strings and integers.
+```Example bookmark
+[51]
+url = "gemini://gemini.circumlunar.space/"
+title = "Project Gemini"
+tags = ""
+icon = 0x264a
+created = 1609936844  # 2021-01-06
+parent = 99
+order = 288
+```
+* The table name (51) is the unique identifier of the bookmark.
+* "url", "title", and "tags" are used as-is. C-style backslash escapes must be used for quotes (for example: \"), and may optionally be used for Unicode characters as well.
+* "icon" is a UTF-32 codepoint as a hexadecimal number.
+* "created" is a UNIX timestamp for when the bookmark was created. Following the timestamp, a human-readable date is also provided but it is just a comment — that part will be ignored when parsing the file.
+* "parent" is the ID of the parent folder. Folders are stored as similar bookmark entries, but their URL value is always an empty string.
+* "order" is for sorting the bookmarks list. The list is sorted by ascending order. This value is updated automatically when bookmarks are reordered in the sidebar.
 
 ### feeds.txt
 Cached state of feed subscriptions. The file may be deleted while the application is not running to force a reset of feed contents. Subscriptions themselves are tracked via bookmark tags so deleting the file does not affect which pages are subscribed.
@@ -600,11 +618,14 @@ The combined navigation history of all tabs. Each line specifies one URL:
 > {last-visited} {flags} {url}
 * The last visited time is stored as a UNIX timestamp.
 * Flags is always four bytes long:
-```
+```URL flags (table)
 0000 : No flags set
 0001 : Transient
+0002 : Kept
 ```
 The Transient flag is used to indicate redirections and for marking feed entries as read without actually visiting the URL. URLs with the Transient flag do not appear in the History sidebar tab.
+
+The Kept flag is used for preventing the URL from being discarded due to old age. Normally URLs in the navigation history become stale after several months and are removed from the file.
 
 ## 3.6 Environment variables
 
