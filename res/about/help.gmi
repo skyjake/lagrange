@@ -430,7 +430,7 @@ To reset all bindings to their defaults, quit Lagrange and delete the "bindings.
 ### URLs
 URLs on the command line are opened after Lagrange has launched. If more than one URL is given, multiple tabs will be opened. For example:
 ```
-$ lagrange gemini://gus.guru/
+$ lagrange gemini://geminispace.info/
 ```
 
 ### -E, --echo
