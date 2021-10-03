@@ -2841,7 +2841,7 @@ iBool handleCommand_App(const char *cmd) {
                                                          : star_Icon " ${status.feeds}");
             showCollapsed_Widget(prog, iTrue);
             setFixedSize_Widget(findChild_Widget(prog, "feeds.progressbar"),
-                                init_I2(width_Widget(prog) * num / total, -1));
+                                init_I2(total ? width_Widget(prog) * num / total : 0, -1));
         }
         else if (equal_Command(cmd, "feeds.update.finished")) {
             showCollapsed_Widget(prog, iFalse);
