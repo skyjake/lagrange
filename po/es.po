@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-09-30 05:49+0000\n"
+"PO-Revision-Date: 2021-10-04 12:08+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1931,3 +1931,18 @@ msgstr "Color del Texto"
 
 msgid "prefs.imagestyle.preformat"
 msgstr "Color Pre-formateado"
+
+msgid "lang.gl"
+msgstr "Gallego"
+
+msgid "lang.eo"
+msgstr "Esperanto"
+
+msgid "lang.es.mx"
+msgstr "Español (México)"
+
+msgid "lang.sk"
+msgstr "Eslovaco"
+
+msgid "lang.isv"
+msgstr "Intereslavo"
