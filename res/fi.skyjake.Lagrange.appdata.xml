@@ -45,6 +45,40 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.7.1" date="2021-10-03">
+            <description>
+                <p>Version 1.7 improves bookmark management with folders and manual
+                    sorting, and has multiple UI enhancements including unconstrained
+                    popup menus, upload identity selection, button focus switching
+                    with Tab key, and new UI languages (e.g., Esperanto). A new image
+                    colorization option has been added for enforcing a stricter visual
+                    style.</p>
+                <p>Changes and fixes in v1.7.1:</p>
+                <ul>
+                    <li>Fixed feed entries forgetting their (un)read status after
+                        several months.</li>
+                    <li>Fixed feed entries being discarded before they are removed
+                        from their source feed, causing them to reappear on the next
+                        refresh.</li>
+                    <li>Fixed failure to parse Atom feed entry timestamps that use
+                        space as the date/time separator.</li>
+                    <li>Fixed dropdown labels staying visible in the translation
+                        dialog.</li>
+                    <li>Fixed showing/hiding of the feed update indicator in split
+                        view.</li>
+                    <li>Added a small progress bar to the feed update indicator.</li>
+                    <li>When adding a bookmark/folder, the bookmarks list scrolls to
+                        show the new item.</li>
+                    <li>Improved reordering bookmarks in a folder: an item inside a
+                        folder can be moved to be the last item in the folder, or out
+                        of the folder depending on which side of the boundary marker
+                        the mouse cursor is.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.7.1</url>
+        </release>
         <release version="1.7" date="2021-09-28">
             <description>
                 <p>Version 1.7 improves bookmark management with folders and manual
