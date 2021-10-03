@@ -2074,8 +2074,11 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
     iRangecc loc;
     tryAdvanceNoWrap_Text(d->textParams.font, d->text, x, &loc.start);
     loc.end = loc.start;
+    if (!contains_Range(&d->text, loc.start)) {
+        return iNullRange; /* it's some other text */
+    }
     iChar ch;
-    if (d->text.end != loc.start) {
+    if (d->text.end && d->text.end != loc.start) {
         int chLen = decodeBytes_MultibyteChar(loc.start, d->text.end, &ch);
         if (chLen > 0) {
             /* End after the character. */

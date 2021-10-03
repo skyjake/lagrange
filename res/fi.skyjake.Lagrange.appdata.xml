@@ -66,6 +66,7 @@
                         dialog.</li>
                     <li>Fixed showing/hiding of the feed update indicator in split
                         view.</li>
+                    <li>Fixed a crash when selecting text.</li>
                     <li>Added a small progress bar to the feed update indicator.</li>
                     <li>When adding a bookmark/folder, the bookmarks list scrolls to
                         show the new item.</li>
