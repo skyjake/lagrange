@@ -194,6 +194,8 @@ static void parseResult_FeedJob_(iFeedJob *d) {
     if (isSuccess_GmStatusCode(status_GmRequest(d->request))) {
         iBeginCollect();
         iTime now;
+        iTime perEntryAdjust;
+        initSeconds_Time(&perEntryAdjust, 1.0);
         initCurrent_Time(&now);
         iRegExp *linkPattern =
             new_RegExp("^=>\\s*([^\\s]+)\\s+"
@@ -214,6 +216,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                 const iRangecc title = capturedRange_RegExpMatch(&m, 3);
                 iFeedEntry *   entry = new_FeedEntry();
                 entry->discovered = now;
+                sub_Time(&now, &perEntryAdjust);
                 entry->bookmarkId = d->bookmarkId;
                 setRange_String(&entry->url, url);
                 set_String(&entry->url, canonicalUrl_String(absoluteUrl_String(url_GmRequest(d->request), &entry->url)));
@@ -239,6 +242,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                     entry->posted = now;
                     if (!d->isFirstUpdate) {
                         entry->discovered = now;
+                        sub_Time(&now, &perEntryAdjust);
                     }
                     entry->bookmarkId = d->bookmarkId;
                     iString *title = newRange_String(line);
@@ -317,10 +321,10 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
     /* Entries are removed from `incoming` if they are added to the Feeds entries array.
        Anything remaining in `incoming` will be deleted afterwards. */
     iBool gotNew = iFalse;
-    lock_Mutex(d->mtx);
     iTime now;
     initCurrent_Time(&now);
     if (isHeadings) {
+        lock_Mutex(d->mtx);
 //        printf("Updating sourceID %d...\n", sourceId);
         iStringSet *known = listHeadingEntriesFrom_Feeds_(d, sourceId);
 //        puts("  Known URLs:");
@@ -357,16 +361,22 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
 //        puts("Done.");
         iRelease(presentInSource);
         iRelease(known);
+        unlock_Mutex(d->mtx);
     }
     else {
+        /* All visited URLs still present in the source should be kept indefinitely so their
+           read status remains correct. The Kept flag will be cleared after the URL has been
+           discarded from the entry database and enough time has passed. */ {
+//            printf("updating entries from %d:\n", sourceId);
+            iForEach(PtrArray, i, incoming) {
+                const iFeedEntry *entry = i.ptr;
+//                printf("marking as kept: {%s}\n", cstr_String(&entry->url));
+                setUrlKept_Visited(visited_App(), &entry->url, iTrue);
+            }
+        }
+        lock_Mutex(d->mtx);
         iForEach(PtrArray, i, incoming) {
             iFeedEntry *entry = i.ptr;
-            /* Disregard old incoming entries. */
-            if (secondsSince_Time(&now, &entry->posted) >= maxAge_Visited) {
-                /* We don't remember this far back, so the unread status of the entry would
-                   be incorrect. */
-                continue;
-            }
             size_t pos;
             if (locate_SortedArray(&d->entries, &entry, &pos)) {
                 iFeedEntry *existing = *(iFeedEntry **) at_SortedArray(&d->entries, pos);
@@ -384,7 +394,8 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
                     changed = iTrue;
                 }
                 set_String(&existing->title, &entry->title);
-                existing->posted = entry->posted;
+                existing->posted     = entry->posted;
+                existing->discovered = entry->discovered; /* prevent discarding */
                 delete_FeedEntry(entry);
                 if (changed) {
                     /* TODO: better to use a new flag for read feed entries? */
@@ -398,8 +409,8 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
             }
             remove_PtrArrayIterator(&i);
         }
+        unlock_Mutex(d->mtx);
     }
-    unlock_Mutex(d->mtx);
     return gotNew;
 }
 
@@ -410,6 +421,8 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
     iZap(work);
     iBool gotNew = iFalse;
     postCommand_App("feeds.update.started");
+    const int totalJobs = size_PtrArray(&d->jobs);
+    int numFinishedJobs = 0;
     while (!d->stopWorker) {
         /* Start new jobs. */
         iForIndices(i, work) {
@@ -420,6 +433,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
         sleep_Thread(0.5); /* TODO: wait on a Condition so we can exit quickly */
         if (d->stopWorker) break;
         size_t ongoing = 0;
+        iBool doNotify = iFalse;
         iForIndices(i, work) {
             if (work[i]) {
                 if (isFinished_GmRequest(work[i]->request)) {
@@ -429,17 +443,24 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
                         d, work[i]->checkHeadings, work[i]->bookmarkId, &work[i]->results);
                     delete_FeedJob(work[i]);
                     work[i] = NULL;
+                    numFinishedJobs++;
+                    doNotify = iTrue;
                 }
                 else if (isTimedOut_FeedJob_(work[i])) {
                     /* Maybe we'll get it next time! */
                     delete_FeedJob(work[i]);
                     work[i] = NULL;
+                    numFinishedJobs++;
+                    doNotify = iTrue;
                 }
                 else {
                     ongoing++;
                 }
                 /* TODO: abort job if it takes too long (> 15 seconds?) */
             }
+        }
+        if (doNotify) {
+            postCommandf_App("feeds.update.progress arg:%d total:%d", numFinishedJobs, totalJobs);
         }
         /* Stop if everything has finished. */
         if (ongoing == 0 && isEmpty_PtrArray(&d->jobs)) {
@@ -448,6 +469,24 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
     }
     initCurrent_Time(&d->lastRefreshedAt);
     save_Feeds_(d);
+    /* Check if there are visited URLs marked as Kept that can be cleared because they are no
+       longer present in the database. */ {
+        iStringSet *knownEntryUrls = new_StringSet();
+        lock_Mutex(d->mtx);
+        iConstForEach(Array, i, &d->entries.values) {
+            const iFeedEntry *entry = *(const iFeedEntry **) i.value;
+            insert_StringSet(knownEntryUrls, &entry->url);
+        }
+        unlock_Mutex(d->mtx);
+        iConstForEach(PtrArray, j, listKept_Visited(visited_App())) {
+            iVisitedUrl *visUrl = j.ptr;
+            if (!contains_StringSet(knownEntryUrls, &visUrl->url)) {
+                visUrl->flags &= ~kept_VisitedUrlFlag;
+//                printf("unkept: {%s}\n", cstr_String(&visUrl->url));
+            }
+        }
+        iRelease(knownEntryUrls);
+    }
     postCommandf_App("feeds.update.finished arg:%d unread:%zu", gotNew ? 1 : 0,
                      numUnread_Feeds());
     return 0;

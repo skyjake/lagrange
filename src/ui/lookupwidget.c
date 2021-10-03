@@ -624,7 +624,7 @@ static void setCursor_LookupWidget_(iLookupWidget *d, size_t index) {
             item->listItem.isSelected = iTrue;
             invalidateItem_ListWidget(d->list, d->cursor);
         }
-        scrollToItem_ListWidget(d->list, d->cursor);
+        scrollToItem_ListWidget(d->list, d->cursor, 0);
     }
 }
 

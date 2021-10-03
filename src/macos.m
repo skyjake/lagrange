@@ -689,10 +689,15 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
 }
 
 iColor systemAccent_Color(void) {
-    NSColor *accent = [[NSColor controlAccentColor] colorUsingColorSpace:
-                                                        [NSColorSpace deviceRGBColorSpace]];
-    return (iColor){ iClamp([accent redComponent]   * 255, 0, 255),
-                     iClamp([accent greenComponent] * 255, 0, 255),
-                     iClamp([accent blueComponent]  * 255, 0, 255),
-                     255 };
+#if 0
+    if (@available(macOS 10.14, *)) {
+	NSColor *accent = [[NSColor controlAccentColor] colorUsingColorSpace:
+							    [NSColorSpace deviceRGBColorSpace]];
+	return (iColor){ iClamp([accent redComponent]   * 255, 0, 255),
+		iClamp([accent greenComponent] * 255, 0, 255),
+		iClamp([accent blueComponent]  * 255, 0, 255),
+		255 };
+    }
+#endif
+    return (iColor){ 255, 255, 255, 255 };
 }

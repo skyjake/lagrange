@@ -123,6 +123,7 @@ void            punyEncodeDomain_Rangecc(iRangecc domain, iString *encoded_out);
 void            punyEncodeUrlHost_String(iString *absoluteUrl);
 void            stripDefaultUrlPort_String(iString *);
 const iString * urlFragmentStripped_String(const iString *);
+const iString * urlQueryStripped_String (const iString *);
 void            urlDecodePath_String    (iString *);
 void            urlEncodePath_String    (iString *);
 iString *       makeFileUrl_String      (const iString *localFilePath);

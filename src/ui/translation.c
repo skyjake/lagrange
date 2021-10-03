@@ -432,8 +432,10 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
     iWidget *w = as_Widget(d->doc);
     if (equalWidget_Command(cmd, w, "translation.submit")) {
         if (status_TlsRequest(d->request) == initialized_TlsRequestStatus) {
-            iWidget *langs = findChild_Widget(d->dlg, "xlt.langs");            
-//            setFlags_Widget(langs, hidden_WidgetFlag, iTrue);
+            iWidget *langs = findChild_Widget(d->dlg, "xlt.langs");
+            if (langs) {
+                setFlags_Widget(langs, hidden_WidgetFlag, iTrue);
+            }
             setFlags_Widget(findChild_Widget(d->dlg, "xlt.from"), hidden_WidgetFlag, iTrue);
             setFlags_Widget(findChild_Widget(d->dlg, "xlt.to"),   hidden_WidgetFlag, iTrue);
             if (!langs) langs = d->dlg;

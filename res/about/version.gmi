@@ -6,6 +6,16 @@
 ```
 # Release notes
 
+## 1.7.1
+* Fixed feed entries forgetting their (un)read status after several months.
+* Fixed feed entries being discarded before they are removed from their source feed, causing them to reappear on the next refresh.
+* Fixed failure to parse Atom feed entry timestamps that use space as the date/time separator.
+* Fixed dropdown labels staying visible in the translation dialog.
+* Fixed showing/hiding of the feed update indicator in split view.
+* Added a small progress bar to the feed update indicator.
+* When adding a bookmark/folder, the bookmarks list scrolls to show the new item.
+* Improved reordering bookmarks in a folder: an item inside a folder can be moved to be the last item in the folder, or out of the folder depending on which side of the boundary marker the mouse cursor is.
+
 ## 1.7
 ⚠️ Bookmarks file format has changed. Your existing bookmarks will be imported to the new format. The old bookmarks.txt file can be found in the config directory and is writable only by v1.6 and earlier versions.
 ⚠️ Saved UI state format has changed. Downgrading will reset window state, close all tabs, and clear the navigation cache.

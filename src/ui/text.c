@@ -381,16 +381,17 @@ static void initFonts_Text_(iText *d) {
         /* Content sizes: smallmono, mono, 1.0, 1.2, 1.333, 1.666, 2.0 */
     } fontData[max_FontId] = {
         /* UI fonts: normal weight */
-        { &fontSourceSans3Regular_Embedded, uiSize,               1.0f, uiNormal_FontSize },
-        { &fontSourceSans3Regular_Embedded, uiSize * 1.125f,      1.0f, uiMedium_FontSize },
-        { &fontSourceSans3Regular_Embedded, uiSize * 1.333f,      1.0f, uiBig_FontSize },
-        { &fontSourceSans3Regular_Embedded, uiSize * 1.666f,      1.0f, uiLarge_FontSize },
-        { &fontSourceSans3Semibold_Embedded, uiSize * 0.8f,       1.0f, uiNormal_FontSize },
+        { &fontSourceSans3Regular_Embedded,   uiSize,               1.0f, uiNormal_FontSize },
+        { &fontSourceSans3Regular_Embedded,   uiSize * 1.125f,      1.0f, uiMedium_FontSize },
+        { &fontSourceSans3Regular_Embedded,   uiSize * 1.333f,      1.0f, uiBig_FontSize },
+        { &fontSourceSans3Regular_Embedded,   uiSize * 1.666f,      1.0f, uiLarge_FontSize },
+        { &fontSourceSans3Regular_Embedded,   uiSize * 0.900f,      1.0f, uiSmall_FontSize },
+        { &fontSourceSans3Semibold_Embedded,  uiSize * 0.800f,      1.0f, uiTiny_FontSize },
         /* UI fonts: bold weight */
-        { &fontSourceSans3Bold_Embedded,    uiSize,               1.0f, uiNormal_FontSize },
-        { &fontSourceSans3Bold_Embedded,    uiSize * 1.125f,      1.0f, uiMedium_FontSize },
-        { &fontSourceSans3Bold_Embedded,    uiSize * 1.333f,      1.0f, uiBig_FontSize },
-        { &fontSourceSans3Bold_Embedded,    uiSize * 1.666f,      1.0f, uiLarge_FontSize },
+        { &fontSourceSans3Bold_Embedded,      uiSize,               1.0f, uiNormal_FontSize },
+        { &fontSourceSans3Bold_Embedded,      uiSize * 1.125f,      1.0f, uiMedium_FontSize },
+        { &fontSourceSans3Bold_Embedded,      uiSize * 1.333f,      1.0f, uiBig_FontSize },
+        { &fontSourceSans3Bold_Embedded,      uiSize * 1.666f,      1.0f, uiLarge_FontSize },
         /* content fonts */
         { regularFont,                        textSize,             scaling,      contentRegular_FontSize },
         { boldFont,                           textSize,             scaling,      contentRegular_FontSize },
@@ -411,6 +412,8 @@ static void initFonts_Text_(iText *d) {
         { (data), uiSize * 1.125f,   glyphScale, uiMedium_FontSize }, \
         { (data), uiSize * 1.333f,   glyphScale, uiBig_FontSize }, \
         { (data), uiSize * 1.666f,   glyphScale, uiLarge_FontSize }, \
+        { (data), uiSize * 0.900f,   glyphScale, uiSmall_FontSize }, \
+        { (data), uiSize * 0.800f,   glyphScale, uiTiny_FontSize }, \
         { (data), textSize,          glyphScale, contentRegular_FontSize }, \
         { (data), textSize * 1.200f, glyphScale, contentMedium_FontSize }, \
         { (data), textSize * 1.333f, glyphScale, contentBig_FontSize }, \

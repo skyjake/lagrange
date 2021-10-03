@@ -289,7 +289,7 @@ void showCollapsed_Widget(iWidget *d, iBool show) {
         setFlags_Widget(d, hidden_WidgetFlag, !show);
         /* The entire UI may be affected, if parents are resized due to the (un)collapsing. */
         arrange_Widget(root_Widget(d));
-        postRefresh_App();
+        refresh_Widget(d);
     }
 }
 
