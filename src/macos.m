@@ -664,7 +664,8 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
     }
     windowCoord.y = window->size.y - windowCoord.y;
     windowCoord = divf_I2(windowCoord, window->pixelRatio);
-    NSPoint screenPoint = [nsWindow convertPointToScreen:(CGPoint){ windowCoord.x, windowCoord.y }];
+    NSPoint screenPoint = [nsWindow convertRectToScreen:(CGRect){ { windowCoord.x, windowCoord.y }, 
+								  { 0, 0 } }].origin;
     NSMenuItem *selectedItem = makeMenuItems_(menu, menuCommands, items, n);
     [menuCommands setSource:source];
     if (isCentered) {
