@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-09-30 05:49+0000\n"
+"PO-Revision-Date: 2021-10-04 12:08+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1967,3 +1967,18 @@ msgstr "Преформатирана боја"
 
 msgid "keys.bookmark.addfolder"
 msgstr "Додавање фасцикле са обележивачима"
+
+msgid "lang.gl"
+msgstr "Галицијски"
+
+msgid "lang.eo"
+msgstr "Есперанто"
+
+msgid "lang.es.mx"
+msgstr "Шпански (Мексико)"
+
+msgid "lang.sk"
+msgstr "Словачки"
+
+msgid "lang.isv"
+msgstr "Међусловенски"
