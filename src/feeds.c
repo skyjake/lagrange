@@ -194,6 +194,8 @@ static void parseResult_FeedJob_(iFeedJob *d) {
     if (isSuccess_GmStatusCode(status_GmRequest(d->request))) {
         iBeginCollect();
         iTime now;
+        iTime perEntryAdjust;
+        initSeconds_Time(&perEntryAdjust, 1.0);
         initCurrent_Time(&now);
         iRegExp *linkPattern =
             new_RegExp("^=>\\s*([^\\s]+)\\s+"
@@ -214,6 +216,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                 const iRangecc title = capturedRange_RegExpMatch(&m, 3);
                 iFeedEntry *   entry = new_FeedEntry();
                 entry->discovered = now;
+                sub_Time(&now, &perEntryAdjust);
                 entry->bookmarkId = d->bookmarkId;
                 setRange_String(&entry->url, url);
                 set_String(&entry->url, canonicalUrl_String(absoluteUrl_String(url_GmRequest(d->request), &entry->url)));
@@ -239,6 +242,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                     entry->posted = now;
                     if (!d->isFirstUpdate) {
                         entry->discovered = now;
+                        sub_Time(&now, &perEntryAdjust);
                     }
                     entry->bookmarkId = d->bookmarkId;
                     iString *title = newRange_String(line);
