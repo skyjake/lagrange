@@ -1,2 +1,400 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-10-07 16:50+0000\n"
+"Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
+"Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Stahování"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s je zkomprimovaný archiv."
+
+msgid "doc.archive.view"
+msgstr "Zobrazit obsah archivu"
+
+msgid "media.untitled.image"
+msgstr "Obrázek"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Stahování bylo dokončeno."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Název"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Žánr"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bitový"
+
+msgid "numbertype.integer"
+msgstr "celé číslo"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Položky kanálu"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Poslední obnova proběhla před krátkou chvílí."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Poslední obnova proběhla: %s."
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "před hodinou"
+msgstr[1] "před %d hodinami"
+msgstr[2] "před %d hodinami"
+
+msgid "about.tagline"
+msgstr "Nádherný klient pro Gemini"
+
+msgid "about.version"
+msgstr "Verze"
+
+msgid "about.powered"
+msgstr "Poháněno SDL 2, OpenSSL a ☕️"
+
+msgid "cancel"
+msgstr "Zrušit"
+
+msgid "close"
+msgstr "Zavřít"
+
+msgid "dlg.message.ok"
+msgstr "Pokračovat"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "toggle.no"
+msgstr "NE"
+
+msgid "menu.title.file"
+msgstr "Soubor"
+
+msgid "menu.title.edit"
+msgstr "Úpravy"
+
+msgid "menu.title.view"
+msgstr "Zobrazit"
+
+msgid "menu.title.identity"
+msgstr "Totožnost"
+
+msgid "menu.title.help"
+msgstr "Nápověda"
+
+msgid "menu.newtab"
+msgstr "Nová karta"
+
+msgid "menu.closetab"
+msgstr "Zavřít kartu"
+
+msgid "menu.closetab.other"
+msgstr "Zavřít ostatní karty"
+
+msgid "menu.closetab.right"
+msgstr "Zavřít karty vpravo"
+
+msgid "menu.duptab"
+msgstr "Duplikovat kartu"
+
+msgid "menu.split.swap"
+msgstr "Prohodit strany"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontální"
+
+msgid "menu.openlocation"
+msgstr "Otevřít adresu…"
+
+msgid "menu.downloads"
+msgstr "Zobrazit stažené soubory"
+
+msgid "menu.pageinfo"
+msgstr "Informace o stránce"
+
+msgid "macos.menu.find"
+msgstr "Najít"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Uložit do stažených souborů"
+
+msgid "menu.sidebar"
+msgstr "Vysunout/Zasunout vedlejší panel"
+
+msgid "menu.sidebar.right"
+msgstr "Vysunout/Zasunout pravý vedlejší panel"
+
+msgid "menu.zoom.out"
+msgstr "Oddálit"
+
+msgid "menu.zoom.in"
+msgstr "Přiblížit"
+
+msgid "menu.zoom.reset"
+msgstr "Obnovit přiblížení"
+
+msgid "menu.view.split"
+msgstr "Rozdělit pohled…"
+
+msgid "menu.sort.alpha"
+msgstr "Seřadit podle abecedy"
+
+msgid "menu.bookmarks.list"
+msgstr "Ukázat všechny záložky"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Vypsat záložky podle značení"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Vypsat podle značení"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Vypsat záložky podle data tvorby"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Vypsat podle data tvorby"
+
+msgid "menu.preferences"
+msgstr "Předvolby…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Nastavení"
+
+msgid "menu.help"
+msgstr "Nápověda"
+
+msgid "menu.quit"
+msgstr "Ukončit Lagrange"
+
+msgid "menu.cut"
+msgstr "Vyjmout"
+
+msgid "menu.copy"
+msgstr "Kopírovat"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Vybrat vše"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Smazat"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Zpět"
+
+msgid "menu.select.clear"
+msgstr "Zrušit výběr"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Ukázat záložky"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Ukázat historii"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Ukázat totožnosti"
+
+msgid "menu.forward"
+msgstr "Jít vpřed"
+
+msgid "menu.parent"
+msgstr "Přejít na rodičovskou cestu"
+
+msgid "menu.root"
+msgstr "Přejít na kořenovou cestu"
+
+msgid "menu.reload"
+msgstr "Aktualizovat stránku"
+
+msgid "menu.page.bookmark"
+msgstr "Vytvořit záložku ze stránky…"
+
+msgid "menu.page.subscribe"
+msgstr "Odebírat stránku…"
+
+msgid "menu.aboutpages"
+msgstr "Stránky \"about\""
+
+msgid "panel.back"
+msgstr "Zpět"
+
+msgid "menu.debug"
+msgstr "Ladící informace"
+
+msgid "menu.page.import"
+msgstr "Importovat odkazy jako záložky…"
+
+msgid "menu.page.translate"
+msgstr "Přeložit…"
+
+msgid "menu.page.copyurl"
+msgstr "Zkopírovat URL stránky"
+
+msgid "menu.page.copysource"
+msgstr "Zkopírovat zdrojový kód stránky"
+
+msgid "menu.feeds.refresh"
+msgstr "Aktualizovat kanály"
+
+msgid "menu.identity.new"
+msgstr "Nová totožnost…"
+
+msgid "menu.identity.import"
+msgstr "Importovat…"
+
+msgid "doc.pre.nocaption"
+msgstr "Předformátovaný text bez popisku"
+
+msgid "media.untitled.audio"
+msgstr "Zvuk"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Zavřením záložky se ukončí stahování."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Umělec"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Datum"
+
+msgid "numbertype.float"
+msgstr "desetinné číslo"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Odebíráte %z kanál, který obsahuje %%.\n"
+msgstr[1] "Odebíráte %z kanálů, které obsahují %%.\n"
+msgstr[2] "Odebíráte %z kanály, které obsahují %%.\n"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "celkem %zu položka"
+msgstr[1] "celkem %zu položek"
+msgstr[2] "celkem %zu položky"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "před minutou"
+msgstr[1] "před %d minutami"
+msgstr[2] "před %d minutami"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "včera"
+msgstr[1] "před %d dny"
+msgstr[2] "před %d dny"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII umění: slovo \"Lagrange\" vykresleno velkým písmem"
+
+msgid "toggle.yes"
+msgstr "ANO"
+
+msgid "menu.title.bookmarks"
+msgstr "Záložky"
+
+msgid "menu.closetab.left"
+msgstr "Zavřít karty vlevo"
+
+msgid "menu.split.merge"
+msgstr "Sloučit karty"
+
+msgid "menu.split.vertical"
+msgstr "Vertikální"
+
+msgid "menu.unexpire"
+msgstr "Ignorovat vypršení a pokračovat v načítání"
+
+msgid "menu.find"
+msgstr "Najít na stránce"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Uložit do souborů"
+
+msgid "menu.save.downloads.open"
+msgstr "Uložit do stažených souborů a otevřít soubor"
+
+msgid "menu.sidebar.left"
+msgstr "Vysunout/Zasunout levý vedlejší panel"
+
+msgid "menu.newfolder"
+msgstr "Nová složka…"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Ukázat vše"
+
+msgid "menu.feeds.entrylist"
+msgstr "Ukázat položky kanálu"
+
+msgid "menu.releasenotes"
+msgstr "Poznámky k vydání"
+
+msgid "menu.paste"
+msgstr "Vložit"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Kopírovat adresu stránky"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Ukázat kanály"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Ukázat obrys stránky"
+
+msgid "menu.back"
+msgstr "Jít zpět"
+
+msgid "menu.autoreload"
+msgstr "Naplánovat aktualizaci stránky…"
+
+msgid "menu.about"
+msgstr "O Lagrange"
+
+msgid "menu.import.links"
+msgstr "Importovat všechny odkazy na stránce…"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Aktualizovat vzdálené záložky"
