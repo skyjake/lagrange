@@ -140,6 +140,8 @@ set (SOURCES
     src/defs.h
     src/feeds.c
     src/feeds.h
+    src/fontpack.c
+    src/fontpack.h
     src/gempub.c
     src/gempub.h
     src/gmcerts.c

@@ -25,34 +25,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/vec2.h>
-
 #include <SDL_render.h>
 
+#include "fontpack.h"
+
 /* Content sizes: regular (1x) -> medium (1.2x) -> big (1.33x) -> large (1.67x) -> huge (2x) */
-
-enum iFontSize {
-    uiNormal_FontSize, /* 1.000 */
-    uiMedium_FontSize, /* 1.125 */
-    uiBig_FontSize,    /* 1.333 */
-    uiLarge_FontSize,  /* 1.666 */
-    uiSmall_FontSize,  /* 0.900 */
-    uiTiny_FontSize,   /* 0.800 */
-    contentRegular_FontSize,
-    contentMedium_FontSize,
-    contentBig_FontSize,
-    contentLarge_FontSize,
-    contentHuge_FontSize,
-    contentMonoSmall_FontSize,
-    contentMono_FontSize,
-    max_FontSize,
-};
-
-iLocalDef enum iFontSize larger_FontSize(enum iFontSize size) {
-    if (size == uiLarge_FontSize || size == contentHuge_FontSize || size == contentMono_FontSize) {
-        return size; /* biggest available */
-    }
-    return size + 1;
-}
 
 enum iFontId {
     /* UI fonts: normal weight (1x, 1.125x, 1.33x, 1.67x) */
@@ -60,8 +37,8 @@ enum iFontId {
     defaultMedium_FontId,
     defaultBig_FontId,
     defaultLarge_FontId,
-    defaultSmall_FontId,
     defaultTiny_FontId,
+    defaultSmall_FontId,
     /* UI fonts: bold weight */
     defaultBold_FontId,
     defaultMediumBold_FontId,
