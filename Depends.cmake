@@ -30,6 +30,10 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                                         -Dtests=disabled -Dglib=disabled -Dgobject=disabled
                                         -Dcairo=disabled -Dicu=disabled -Dfreetype=disabled
                                         -Ddocs=disabled
+                                        -Dc_args=-mmacosx-version-min=10.9
+                                        -Dc_link_args=-mmacosx-version-min=10.9
+                                        -Dcpp_args=-mmacosx-version-min=10.9
+                                        -Dcpp_link_args=-mmacosx-version-min=10.9
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE} install
                 INSTALL_COMMAND     ""
@@ -93,6 +97,8 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
                                         -Dtests=false -Ddocs=false -Dbin=false
                                         -Dc_flags=-Wno-macro-redefined
                                         -Dlibdir=lib
+                                        -Dc_args=-mmacosx-version-min=10.9
+                                        -Dc_link_args=-mmacosx-version-min=10.9
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE} install
                 INSTALL_COMMAND     ""
