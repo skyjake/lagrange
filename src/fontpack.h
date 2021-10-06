@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <the_Foundation/archive.h>
+#include <the_Foundation/ptrarray.h>
 #include "stb_truetype.h"
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
@@ -38,12 +39,12 @@ The user may install new fontpacks via the GUI. The user's fontpacks are stored 
 the config directory. There may also be fontpacks available from system-wide locations. */
 
 enum iFontSize {
-    uiTiny_FontSize,   /* 0.800 */
-    uiSmall_FontSize,  /* 0.900 */
-    uiNormal_FontSize, /* 1.000 */
+    uiNormal_FontSize, /* 1.000 -- keep at index 0 for convenience */
     uiMedium_FontSize, /* 1.125 */
     uiBig_FontSize,    /* 1.333 */
     uiLarge_FontSize,  /* 1.666 */
+    uiTiny_FontSize,   /* 0.800 */
+    uiSmall_FontSize,  /* 0.900 */
     contentRegular_FontSize,
     contentMedium_FontSize,
     contentBig_FontSize,
@@ -51,6 +52,7 @@ enum iFontSize {
     contentHuge_FontSize,
     contentMonoSmall_FontSize,
     contentMono_FontSize,
+    contentSmall_FontSize,
     max_FontSize
 };
 
@@ -60,23 +62,22 @@ enum iFontStyle {
     light_FontStyle,
     semiBold_FontStyle,
     bold_FontStyle,
-    max_FontStyle
+    max_FontStyle,
+    /* all permutations: */
+    maxVariants_Fonts = max_FontStyle * max_FontSize
 };
 
-iLocalDef enum iFontSize larger_FontSize(enum iFontSize size) {
-    if (size == uiLarge_FontSize || size == contentHuge_FontSize || size == contentMono_FontSize) {
-        return size; /* largest available */
-    }
-    return size + 1;
-}
+float   scale_FontSize  (enum iFontSize size);
 
 iDeclareType(FontSpec)
 iDeclareTypeConstruction(FontSpec)
 
 enum iFontSpecFlags {
-    monospace_FontSpecFlag = iBit(1), /* can be used in preformatted content */
-    auxiliary_FontSpecFlag = iBit(2), /* only used for looking up glyphs missing from other fonts */
-    arabic_FontSpecFlag    = iBit(3),
+    override_FontSpecFlag  = iBit(1),
+    monospace_FontSpecFlag = iBit(2), /* can be used in preformatted content */
+    auxiliary_FontSpecFlag = iBit(3), /* only used for looking up glyphs missing from other fonts */
+    arabic_FontSpecFlag    = iBit(4),
+    fixNunitoKerning_FontSpecFlag = iBit(31), /* manual hardcoded kerning tweaks for Nunito */
 };
 
 iDeclareType(FontFile)
@@ -91,17 +92,33 @@ struct Impl_FontFile {
     hb_face_t *hbFace;
     hb_font_t *hbFont;
 #endif
+    /* Metrics: */
+    int ascent, descent, emAdvance;
 };
 
+float   scaleForPixelHeight_FontFile    (const iFontFile *, int pixelHeight);
+
+iLocalDef uint32_t findGlyphIndex_FontFile(const iFontFile *d, iChar ch) {
+    return stbtt_FindGlyphIndex(&d->stbInfo, ch);
+}
+
+uint8_t *   rasterizeGlyph_FontFile(const iFontFile *, float xScale, float yScale, float xShift,
+                                    uint32_t glyphIndex, int *w, int *h); /* caller must free() the returned bitmap */
+void        measureGlyph_FontFile  (const iFontFile *, uint32_t glyphIndex,
+                                    float xScale, float yScale, float xShift,
+                                    int *x0, int *y0, int *x1, int *y1);
 struct Impl_FontSpec {
     iString id;   /* unique ID */
     iString name; /* human-readable label */
     int     flags;
     int     priority;
     float   scaling;
-    const iFontFile *styles[max_FontSize];
+    float   vertOffset;
+    const iFontFile *styles[max_FontStyle];
 };
  
 void    init_Fonts      (const char *userDir);
 void    deinit_Fonts    (void);
 
+const iFontSpec *   findSpec_Fonts              (const char *fontId);
+const iPtrArray *   listSpecsByPriority_Fonts   (void);

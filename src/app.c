@@ -116,7 +116,7 @@ struct Impl_App {
     iMimeHooks * mimehooks;
     iGmCerts *   certs;
     iVisited *   visited;
-    iBookmarks * bookmarks;
+    iBookmarks * bookmarks;    
     iMainWindow *window;
     iPtrArray    popupWindows;
     iSortedArray tickers; /* per-frame callbacks, used for animations */
@@ -758,7 +758,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         listen_Ipc(); /* We'll respond to commands from other instances. */
     }
 #endif
-    printf("Lagrange: A Beautiful Gemini Client\n");
+    puts("Lagrange: A Beautiful Gemini Client");
     const iBool isFirstRun =
         !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
     d->isFinishedLaunching = iFalse;
@@ -803,6 +803,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     setupApplication_iOS();
 #endif
     init_Keys();
+    init_Fonts(dataDir_App_());
     loadPalette_Color(dataDir_App_());
     setThemePalette_Color(d->prefs.theme); /* default UI colors */
     loadPrefs_App_(d);
@@ -883,6 +884,7 @@ static void deinit_App(iApp *d) {
     deinit_Feeds();
     save_Keys(dataDir_App_());
     deinit_Keys();
+    deinit_Fonts();
     deinit_SiteSpec();
     savePrefs_App_(d);
     deinit_Prefs(&d->prefs);
@@ -2124,6 +2126,7 @@ iBool handleCommand_App(const char *cmd) {
         resetFonts_App_(d);
         return iTrue;
     }
+#if 0
     else if (equal_Command(cmd, "font.user")) {
         const char *path = suffixPtr_Command(cmd, "path");
         if (cmp_String(&d->prefs.symbolFontPath, path)) {
@@ -2140,6 +2143,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+#endif
     else if (equal_Command(cmd, "font.set")) {
         if (!isFrozen) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue);

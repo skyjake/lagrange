@@ -48,11 +48,11 @@ static iBool isSideBySideLayout_(void) {
 }
 
 static enum iFontId labelFont_(void) {
-    return deviceType_App() == phone_AppDeviceType ? defaultBig_FontId : defaultMedium_FontId;
+    return deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId : uiLabelMedium_FontId;
 }
 
 static enum iFontId labelBoldFont_(void) {
-    return deviceType_App() == phone_AppDeviceType ? defaultBigBold_FontId : defaultMediumBold_FontId;
+    return deviceType_App() == phone_AppDeviceType ? uiLabelBigBold_FontId : uiLabelMediumBold_FontId;
 }
 
 static void updatePanelSheetMetrics_(iWidget *sheet) {
@@ -546,7 +546,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 updateSize_LabelWidget(button);
             }
             setId_Widget(as_Widget(button), radId);
-            setFont_LabelWidget(button, defaultMedium_FontId);
+            setFont_LabelWidget(button, uiLabelMedium_FontId);
             addChildFlags_Widget(widget, iClob(button), flags);
         }
     }
@@ -1056,7 +1056,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
                         iForEach(ObjectList, sub, children_Widget(value)) {
                             if (isInstance_Object(sub.object, &Class_LabelWidget)) {
                                 iLabelWidget *opt = sub.object;
-                                setFont_LabelWidget(opt, defaultMedium_FontId);
+                                setFont_LabelWidget(opt, uiLabelMedium_FontId);
                                 setFlags_Widget(as_Widget(opt), noBackground_WidgetFlag, iTrue);
                             }
                         }

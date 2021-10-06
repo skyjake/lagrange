@@ -1188,7 +1188,7 @@ void draw_Window(iWindow *d) {
         extern int drawCount_;
         drawRoot_Widget(root->widget);
 #if !defined (NDEBUG)
-        draw_Text(defaultBold_FontId, safeRect_Root(root).pos, red_ColorId, "%d", drawCount_);
+        draw_Text(uiLabelBold_FontId, safeRect_Root(root).pos, red_ColorId, "%d", drawCount_);
         drawCount_ = 0;
 #endif
     }
@@ -1287,7 +1287,7 @@ void draw_MainWindow(iMainWindow *d) {
         }
         setCurrent_Root(NULL);
 #if !defined (NDEBUG)
-        draw_Text(defaultBold_FontId, safeRect_Root(w->roots[0]).pos, red_ColorId, "%d", drawCount_);
+        draw_Text(uiLabelBold_FontId, safeRect_Root(w->roots[0]).pos, red_ColorId, "%d", drawCount_);
         drawCount_ = 0;
 #endif
     }

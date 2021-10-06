@@ -123,40 +123,57 @@ iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
 
 static iGlyph *glyph_Font_(iFont *d, iChar ch);
 
-struct Impl_Font {
-    iBlock *       data;
-    enum iTextFont family;
-    stbtt_fontinfo font;
-    float          xScale, yScale;
-    int            vertOffset; /* offset due to scaling */
-    int            height;
-    int            baseline;
-    iHash          glyphs; /* key is glyph index in the font */ /* TODO: does not need to be a Hash */
-    iBool          isMonospaced;
-    float          emAdvance;
-    enum iFontSize sizeId;  /* used to look up different fonts of matching size */
+iDeclareType(GlyphTable)
+
+struct Impl_GlyphTable {
+    iHash          glyphs; /* key is glyph index in the font */
+    /* TODO: `glyphs` does not need to be a Hash.
+       We could lazily allocate an array with glyphCount elements instead. */
     uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
-#if defined (LAGRANGE_ENABLE_HARFBUZZ)
-    hb_blob_t *    hbBlob; /* raw TrueType data */
-    hb_face_t *    hbFace;
-    hb_font_t *    hbMainFont;
-    hb_font_t *    hbFont; /* may be a sub-font with customized font metrics */
-#endif
 };
+
+static void clearGlyphs_Font_(iGlyphTable *d) {
+    iForEach(Hash, i, &d->glyphs) {
+        delete_Glyph((iGlyph *) i.value);
+    }
+    clear_Hash(&d->glyphs);
+}
+
+static void init_GlyphTable(iGlyphTable *d) {
+    init_Hash(&d->glyphs);
+    memset(d->indexTable, 0xff, sizeof(d->indexTable));
+}
+
+static void deinit_GlyphTable(iGlyphTable *d) {
+    clearGlyphs_Font_(d);
+    deinit_Hash(&d->glyphs);
+}
+
+iDefineTypeConstruction(GlyphTable)
+
+struct Impl_Font {
+    const iFontSpec *fontSpec;
+    const iFontFile *fontFile;
+    int              height;
+    int              baseline;
+    int              vertOffset; /* offset due to glyph scaling */
+    float            xScale, yScale;
+    float            emAdvance;
+    iGlyphTable *    table;
+};
+
+iLocalDef iBool isMonospaced_Font(const iFont *d) {
+    return (d->fontSpec->flags & monospace_FontSpecFlag) != 0;
+}
 
 static iFont *font_Text_(enum iFontId id);
 
+static void init_Font(iFont *d, const iFontSpec *fontSpec, const iFontFile *fontFile,
+                      enum iFontSize sizeId, int height) {
+    d->fontSpec = fontSpec;
+    d->fontFile = fontFile;
+    /* TODO: Nunito kerning fixes need to be a font parameter of its own. */
 #if 0
-static hb_position_t hbGlyphHKernForNunito_(hb_font_t *font, void *fontData,
-                                            hb_codepoint_t firstGlyph, hb_codepoint_t secondGlyph,
-                                            void *userData) {
-    return 100;
-}
-#endif
-
-static void init_Font(iFont *d, const iBlock *data, int height, float scale,
-                      enum iFontSize sizeId, iBool isMonospaced) {
-    init_Hash(&d->glyphs);
     d->data = NULL;
     d->family = undefined_TextFont;
     /* Note: We only use `family` currently for applying a kerning fix to Nunito. */
@@ -177,95 +194,49 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
              data == &fontSmolEmojiRegular_Embedded) {
         d->family = emojiAndSymbols_TextFont;
     }
-    d->isMonospaced = isMonospaced;
+#endif
+//    d->isMonospaced = (fontSpec->flags & monospace_FontSpecFlag) != 0;
     d->height = height;
-    iZap(d->font);
-    stbtt_InitFont(&d->font, constData_Block(data), 0);
-    int ascent, descent, emAdv;
-    stbtt_GetFontVMetrics(&d->font, &ascent, &descent, NULL);
-    stbtt_GetCodepointHMetrics(&d->font, 'M', &emAdv, NULL);
-    d->xScale = d->yScale = stbtt_ScaleForPixelHeight(&d->font, height) * scale;
-    if (d->isMonospaced) {
+    //iZap(d->font);
+//    stbtt_InitFont(&d->font, constData_Block(data), 0);
+//    int ascent, descent, emAdv;
+//    stbtt_GetFontVMetrics(&d->font, &ascent, &descent, NULL);
+//    stbtt_GetCodepointHMetrics(&d->font, 'M', &emAdv, NULL);
+    const float scale = fontSpec->scaling;
+    d->xScale = d->yScale = scaleForPixelHeight_FontFile(fontFile, height) * scale;
+    if (isMonospaced_Font(d)) {
         /* It is important that monospaced fonts align 1:1 with the pixel grid so that
            box-drawing characters don't have partially occupied edge pixels, leading to seams
            between adjacent glyphs. */
-        const float advance = (float) emAdv * d->xScale;
+        const float advance = (float) fontFile->emAdvance * d->xScale;
         if (advance > 4) { /* not too tiny */
             d->xScale *= floorf(advance) / advance;
         }
     }
-    d->emAdvance  = emAdv * d->xScale;
-    d->baseline   = ascent * d->yScale;
-    d->vertOffset = height * (1.0f - scale) / 2;
-    /* Custom tweaks. */
-    if (data == &fontNotoSansSymbolsRegular_Embedded) {
-        d->vertOffset *= 1.2f;
-    }
-    else if (data == &fontNotoSansSymbols2Regular_Embedded) {
-        d->vertOffset /= 2;
-    }
-    else if (data == &fontNotoEmojiRegular_Embedded) {
-        //d->vertOffset -= height / 30;
-    }
-    d->sizeId = sizeId;
-    memset(d->indexTable, 0xff, sizeof(d->indexTable));
-#if defined(LAGRANGE_ENABLE_HARFBUZZ)
-    /* HarfBuzz will read the font data. */ {
-        d->hbBlob = hb_blob_create(constData_Block(data), size_Block(data),
-                                   HB_MEMORY_MODE_READONLY, NULL, NULL);
-        d->hbFace = hb_face_create(d->hbBlob, 0);
-        d->hbMainFont = hb_font_create(d->hbFace);
-#if 0
-        /* TODO: The custom kerning function doesn't get called?
-           Maybe HarfBuzz needs FreeType to do kerning? */
-        if (d->family == nunito_TextFont) {
-            /* Customize the kerning of Nunito. */
-            d->hbFont = hb_font_create_sub_font(d->hbMainFont);
-            hb_font_funcs_t *ffs = hb_font_funcs_create();
-            hb_font_funcs_set_glyph_h_kerning_func(ffs, hbGlyphHKernForNunito_, d, NULL);
-            hb_font_set_funcs(d->hbFont, ffs, NULL, NULL);
-            hb_font_funcs_destroy(ffs);
-        }
-        else
-#endif
-        {
-            d->hbFont = hb_font_reference(d->hbMainFont);
-        }
-    }
-#endif
-}
-
-static void clearGlyphs_Font_(iFont *d) {
-    iForEach(Hash, i, &d->glyphs) {
-        delete_Glyph((iGlyph *) i.value);
-    }
-    clear_Hash(&d->glyphs);
+    d->emAdvance  = fontFile->emAdvance * d->xScale;
+    d->baseline   = fontFile->ascent * d->yScale;
+    d->vertOffset = height * (1.0f - scale) / 2 * fontSpec->vertOffset;
+    d->table = NULL;
 }
 
 static void deinit_Font(iFont *d) {
-#if defined(LAGRANGE_ENABLE_HARFBUZZ)
-    /* HarfBuzz objects. */ {
-        hb_font_destroy(d->hbFont);
-        hb_font_destroy(d->hbMainFont);
-        hb_face_destroy(d->hbFace);
-        hb_blob_destroy(d->hbBlob);
-    }
-#endif
-    clearGlyphs_Font_(d);
-    deinit_Hash(&d->glyphs);
-    delete_Block(d->data);
+    delete_GlyphTable(d->table);
 }
 
 static uint32_t glyphIndex_Font_(iFont *d, iChar ch) {
     /* TODO: Add a small cache of ~5 most recently found indices. */
     const size_t entry = ch - 32;
-    if (entry < iElemCount(d->indexTable)) {
-        if (d->indexTable[entry] == ~0u) {
-            d->indexTable[entry] = stbtt_FindGlyphIndex(&d->font, ch);
-        }
-        return d->indexTable[entry];
+    if (!d->table) {
+        d->table = new_GlyphTable();
     }
-    return stbtt_FindGlyphIndex(&d->font, ch);
+    iGlyphTable *table = d->table;
+    if (entry < iElemCount(table->indexTable)) {
+        if (table->indexTable[entry] == ~0u) {
+            table->indexTable[entry] = findGlyphIndex_FontFile(d->fontFile, ch);
+        }
+        return table->indexTable[entry];
+    }
+    return findGlyphIndex_FontFile(d->fontFile, ch);
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -282,7 +253,8 @@ struct Impl_Text {
     enum iTextFont contentFont;
     enum iTextFont headingFont;
     float          contentFontSize;
-    iFont          fonts[max_FontId];
+    iArray         fonts; /* fonts currently selected for use (incl. all styles/sizes) */
+    int            overrideFontId; /* always checked for glyphs first, regardless of which font is used */
     SDL_Renderer * render;
     SDL_Texture *  cache;
     iInt2          cacheSize;
@@ -296,12 +268,49 @@ struct Impl_Text {
 iDefineTypeConstructionArgs(Text, (SDL_Renderer *render), render)
 
 static iText  *activeText_;
-static iBlock *userFont_;
+
+static void setupFontVariants_Text_(iText *d, const iFontSpec *spec, int baseId) {
+#if defined (iPlatformMobile)
+    const float uiSize = fontSize_UI * 1.1f;
+#else
+    const float uiSize = fontSize_UI;
+#endif
+    const float textSize = fontSize_UI * d->contentFontSize;
+//    const float monoSize      = textSize * 0.71f;
+//    const float smallMonoSize = monoSize * 0.8f;
+    if (spec->flags & override_FontSpecFlag && d->overrideFontId < 0) {
+        /* This is the highest priority override font. */
+        d->overrideFontId = baseId;
+    }
+    for (enum iFontStyle style = 0; style < max_FontStyle; style++) {
+        for (enum iFontSize sizeId = 0; sizeId < max_FontSize; sizeId++) {
+            init_Font(font_Text_(FONT_ID(baseId, style, sizeId)),
+                      spec,
+                      spec->styles[style],
+                      sizeId,
+                      (sizeId < contentRegular_FontSize ? uiSize : textSize) * scale_FontSize(sizeId));
+        }
+    }
+}
+
+iLocalDef iFont *font_Text_(enum iFontId id) {
+    return at_Array(&activeText_->fonts, id & mask_FontId);
+}
+
+static enum iFontId fontId_Text_(const iFont *font) {
+    return (enum iFontId) (font - (const iFont *) constData_Array(&activeText_->fonts));
+}
+
+iLocalDef enum iFontSize sizeId_Text_(const iFont *d) {
+    return fontId_Text_(d) % max_FontSize;
+}
+
+iLocalDef enum iFontStyle styleId_Text_(const iFont *d) {
+    return (fontId_Text_(d) / max_FontSize) % max_FontStyle;
+}
 
 static void initFonts_Text_(iText *d) {
-    const float   textSize      = fontSize_UI * d->contentFontSize;
-    const float   monoSize      = textSize * 0.71f;
-    const float   smallMonoSize = monoSize * 0.8f;
+#if 0
     const iBlock *regularFont   = &fontNunitoRegular_Embedded;
     const iBlock *boldFont      = &fontNunitoBold_Embedded;
     const iBlock *italicFont    = &fontNunitoLightItalic_Embedded;
@@ -367,15 +376,10 @@ static void initFonts_Text_(iText *d) {
         h12Font = &fontIosevkaTermExtended_Embedded;
         h3Font  = &fontIosevkaTermExtended_Embedded;
     }
-#if defined (iPlatformMobile)
-    const float uiSize = fontSize_UI * 1.1f;
-#else
-    const float uiSize = fontSize_UI;
-#endif
     const struct {
-        const iBlock *ttf;
-        int size;
-        float scaling;
+        const iFontFile *fontFile;
+        int size; /* pixels */
+//        float scaling;
         enum iFontSize sizeId;
         /* UI sizes: 1.0, 1.125, 1.333, 1.666 */
         /* Content sizes: smallmono, mono, 1.0, 1.2, 1.333, 1.666, 2.0 */
@@ -433,8 +437,34 @@ static void initFonts_Text_(iText *d) {
         DEFINE_FONT_SET(&fontNotoSansArabicUIRegular_Embedded, 1.0f),
 //        DEFINE_FONT_SET(&fontScheherazadeNewRegular_Embedded, 1.0f),
     };
+#endif
+    /* The `fonts` array has precomputed scaling factors and other parameters in all sizes
+       and styles for each available font. Indices to `fonts` act as font runtime IDs. */
+    /* First the mandatory fonts. */
+    d->overrideFontId = -1;
+    resize_Array(&d->fonts, auxiliary_FontId); /* room for the built-ins */
+    iAssert(auxiliary_FontId == documentHeading_FontId + maxVariants_Fonts);
+    setupFontVariants_Text_(d, findSpec_Fonts("default"), default_FontId);
+    setupFontVariants_Text_(d, findSpec_Fonts("iosevka"), monospace_FontId);
+    setupFontVariants_Text_(d, findSpec_Fonts("default"), documentBody_FontId);
+    setupFontVariants_Text_(d, findSpec_Fonts("default"), documentHeading_FontId);
+    /* Check if there are auxiliary fonts available and set those up, too. */
+    iConstForEach(PtrArray, s, listSpecsByPriority_Fonts()) {
+        const iFontSpec *spec = s.ptr;
+        if (spec->flags & auxiliary_FontSpecFlag) {
+            const int fontId = size_Array(&d->fonts);
+            resize_Array(&d->fonts, fontId + maxVariants_Fonts);
+            setupFontVariants_Text_(d, spec, fontId);
+        }
+    }
+    /* test */ {
+        const iFont *h = font_Text_(preformatted_FontId); // FONT_ID(documentBody_FontId, regular_FontStyle, contentRegular_FontSize));
+        printf("{%s} %d sz:%d st:%d\n", cstr_String(&h->fontSpec->name), h->height, sizeId_Text_(h),
+               styleId_Text_(h));
+    }
+#if 0
     iForIndices(i, fontData) {
-        iFont *font = &d->fonts[i];
+        iFont *font = font_Text_(i);
         init_Font(font,
                   fontData[i].ttf,
                   fontData[i].size,
@@ -442,13 +472,15 @@ static void initFonts_Text_(iText *d) {
                   fontData[i].sizeId,
                   fontData[i].ttf == &fontIosevkaTermExtended_Embedded);
     }
+#endif
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }
 
 static void deinitFonts_Text_(iText *d) {
-    iForIndices(i, d->fonts) {
-        deinit_Font(&d->fonts[i]);
+    iForEach(Array, i, &d->fonts) {
+        deinit_Font(i.value);
     }
+    clear_Array(&d->fonts);
 }
 
 static int maxGlyphHeight_Text_(const iText *d) {
@@ -490,6 +522,7 @@ static void deinitCache_Text_(iText *d) {
     SDL_DestroyTexture(d->cache);
 }
 
+#if 0
 void loadUserFonts_Text(void) {
     if (userFont_) {
         delete_Block(userFont_);
@@ -508,9 +541,12 @@ void loadUserFonts_Text(void) {
         iRelease(f);
     }
 }
+#endif
 
 void init_Text(iText *d, SDL_Renderer *render) {
-    loadUserFonts_Text();
+    iText *oldActive = activeText_;
+    activeText_ = d;
+    init_Array(&d->fonts, sizeof(iFont));
     d->contentFont     = nunito_TextFont;
     d->headingFont     = nunito_TextFont;
     d->contentFontSize = contentScale_Text_;
@@ -526,6 +562,7 @@ void init_Text(iText *d, SDL_Renderer *render) {
     }
     initCache_Text_(d);
     initFonts_Text_(d);
+    activeText_ = oldActive;
 }
 
 void deinit_Text(iText *d) {
@@ -534,6 +571,7 @@ void deinit_Text(iText *d) {
     deinitCache_Text_(d);
     d->render = NULL;
     iRelease(d->ansiEscape);
+    deinit_Array(&d->fonts);
 }
 
 void setCurrent_Text(iText *d) {
@@ -569,8 +607,8 @@ void setContentFontSize_Text(iText *d, float fontSizeFactor) {
 
 static void resetCache_Text_(iText *d) {
     deinitCache_Text_(d);
-    for (int i = 0; i < max_FontId; i++) {
-        clearGlyphs_Font_(&d->fonts[i]);
+    iForEach(Array, i, &d->fonts) {
+        clearGlyphs_Font_(i.value);
     }
     initCache_Text_(d);
 }
@@ -582,14 +620,10 @@ void resetFonts_Text(iText *d) {
     initFonts_Text_(d);
 }
 
-iLocalDef iFont *font_Text_(enum iFontId id) {
-    return &activeText_->fonts[id & mask_FontId];
-}
-
 static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, float xShift) {
     int w, h;
-    uint8_t *bmp = stbtt_GetGlyphBitmapSubpixel(
-        &d->font, d->xScale, d->yScale, xShift, 0.0f, glyphIndex, &w, &h, 0, 0);
+    uint8_t *bmp = rasterizeGlyph_FontFile(d->fontFile, d->xScale, d->yScale, xShift, glyphIndex,
+                                           &w, &h);
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
     SDL_SetSurfaceBlendMode(surface8, SDL_BLENDMODE_NONE);
@@ -636,8 +670,8 @@ static iInt2 assignCachePos_Text_(iText *d, iInt2 size) {
 static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
     iRect *glRect = &glyph->rect[hoff];
     int    x0, y0, x1, y1;
-    stbtt_GetGlyphBitmapBoxSubpixel(
-        &d->font, index_Glyph_(glyph), d->xScale, d->yScale, hoff * 0.5f, 0.0f, &x0, &y0, &x1, &y1);
+    measureGlyph_FontFile(d->fontFile, index_Glyph_(glyph), d->xScale, d->yScale, hoff * 0.5f,
+                          &x0, &y0, &x1, &y1);
     glRect->size = init_I2(x1 - x0, y1 - y0);
     /* Determine placement in the glyph cache texture, advancing in rows. */
     glRect->pos    = assignCachePos_Text_(activeText_, glRect->size);
@@ -645,7 +679,7 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
     glyph->d[hoff].y += d->vertOffset;
     if (hoff == 0) { /* hoff==1 uses same metrics as `glyph` */
         int adv;
-        stbtt_GetGlyphHMetrics(&d->font, index_Glyph_(glyph), &adv, NULL);
+        stbtt_GetGlyphHMetrics(&d->fontFile->stbInfo, index_Glyph_(glyph), &adv, NULL);
         glyph->advance = d->xScale * adv;
     }
 }
@@ -654,13 +688,18 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     if (isVariationSelector_Char(ch)) {
         return d;
     }
-    /* Smol Emoji overrides all other fonts. */
-    if (ch != 0x20) {
-        iFont *smol = font_Text_(smolEmoji_FontId + d->sizeId);
-        if (smol != d && (*glyphIndex = glyphIndex_Font_(smol, ch)) != 0) {
-            return smol;
+    const enum iFontStyle styleId = styleId_Text_(d);
+    const enum iFontSize  sizeId  = sizeId_Text_(d);
+    iFont *overrideFont = NULL;
+    if (ch != 0x20 && activeText_->overrideFontId >= 0) {
+        /* Override font is checked first. */
+        overrideFont = font_Text_(FONT_ID(activeText_->overrideFontId, styleId, sizeId));
+        if (overrideFont != d && (*glyphIndex = glyphIndex_Font_(overrideFont, ch)) != 0) {
+            return overrideFont;
         }
     }
+#if 0
+    /* TODO: Put arrows in Smol Emoji. */
     /* Manual exceptions. */ {
         if (ch >= 0x2190 && ch <= 0x2193 /* arrows */) {
             d = font_Text_(iosevka_FontId + d->sizeId);
@@ -668,9 +707,23 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
             return d;
         }
     }
+#endif
+    /* The font's own version of the glyph. */
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
         return d;
     }
+    /* As a fallback, check all other available fonts of this size. */
+    for (iFont *font = font_Text_(FONT_ID(0, styleId, sizeId));
+         font < (iFont *) end_Array(&activeText_->fonts);
+         font += maxVariants_Fonts) {
+        if (font == d || font == overrideFont) {
+            continue; /* already checked this one */
+        }
+        if ((*glyphIndex = glyphIndex_Font_(font, ch)) != 0) {
+            return font;
+        }
+    }
+#if 0
     const int fallbacks[] = {
         notoEmoji_FontId,
         symbols2_FontId,
@@ -732,6 +785,7 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     if (d != font) {
         *glyphIndex = glyphIndex_Font_(font, ch);
     }
+#endif // 0
     if (!*glyphIndex) {
         fprintf(stderr, "failed to find %08x (%lc)\n", ch, (int)ch); fflush(stderr);
     }
@@ -739,8 +793,9 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
 }
 
 static iGlyph *glyphByIndex_Font_(iFont *d, uint32_t glyphIndex) {
+    iAssert(d->table);
     iGlyph* glyph = NULL;
-    void *  node = value_Hash(&d->glyphs, glyphIndex);
+    void *  node = value_Hash(&d->table->glyphs, glyphIndex);
     if (node) {
         glyph = node;
     }
@@ -758,7 +813,7 @@ static iGlyph *glyphByIndex_Font_(iFont *d, uint32_t glyphIndex) {
            and updates the glyph metrics. */
         allocate_Font_(d, glyph, 0);
         allocate_Font_(d, glyph, 1);
-        insert_Hash(&d->glyphs, &glyph->node);
+        insert_Hash(&d->table->glyphs, &glyph->node);
     }
     return glyph;
 }
@@ -864,10 +919,6 @@ static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, i
         run->flags.isArabic    = iFalse;
     }
     run->logical.start = endAt;
-}
-
-static enum iFontId fontId_Text_(const iFont *font) {
-    return (enum iFontId) (font - activeText_->fonts);
 }
 
 static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iChar overrideChar) {
@@ -997,14 +1048,14 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             continue;
         }
         if (ch == 0x20) {
-            if (run.font->family == emojiAndSymbols_TextFont) {
+            if (run.font->fontSpec->flags & auxiliary_FontSpecFlag) {
                 finishRun_AttributedText_(d, &run, pos);
                 run.font = d->font; /* never use space from the symbols font, it's too wide */
             }
             continue;
         }
         iFont *currentFont = d->font;
-        if (run.font->family == arabic_TextFont && isPunct_Char(ch)) {
+        if (run.font->fontSpec->flags & arabic_FontSpecFlag && isPunct_Char(ch)) {
             currentFont = run.font; /* remain as Arabic for whitespace */
         }
         const iGlyph *glyph = glyph_Font_(currentFont, ch);
@@ -1283,7 +1334,7 @@ static iBool notify_WrapText_(iWrapText *d, const char *ending, int origin, int 
 
 float horizKern_Font_(iFont *d, uint32_t glyph1, uint32_t glyph2) {
 #if defined (LAGRANGE_ENABLE_KERNING)
-    if (!enableKerning_Text || d->family != nunito_TextFont) {
+    if (!enableKerning_Text || ~d->fontSpec->flags & fixNunitoKerning_FontSpecFlag) {
         return 0.0f;
     }
     if (glyph1 && glyph2) {
@@ -1335,7 +1386,7 @@ static void deinit_GlyphBuffer_(iGlyphBuffer *d) {
 
 static void shape_GlyphBuffer_(iGlyphBuffer *d) {
     if (!d->glyphInfo) {
-        hb_shape(d->font->hbFont, d->hb, NULL, 0);
+        hb_shape(d->font->fontFile->hbFont, d->hb, NULL, 0);
         d->glyphInfo = hb_buffer_get_glyph_infos(d->hb, &d->glyphCount);
         d->glyphPos  = hb_buffer_get_glyph_positions(d->hb, &d->glyphCount);
     }
@@ -1389,7 +1440,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     float        xCursor    = 0.0f;
     float        yCursor    = 0.0f;
     float        xCursorMax = 0.0f;
-    const iBool  isMonospaced = d->isMonospaced;
+    const iBool  isMonospaced = isMonospaced_Font(d);
     iWrapText *wrap = args->wrap;
     iAssert(args->text.end >= args->text.start);
     /* Split the text into a number of attributed runs that specify exactly which

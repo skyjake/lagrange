@@ -86,7 +86,7 @@ static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) {
     const int hours = seconds / 3600;
     const int mins  = (seconds / 60) % 60;
     const int secs  = seconds % 60;
-    const int font  = defaultBig_FontId;
+    const int font  = uiLabelBig_FontId;
     iString   num;
     init_String(&num);
     if (hours) {
@@ -123,7 +123,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
         drawPlayerButton_(
             p, d->volumeRect, volumeChar_(volume_Player(d->player)), uiContentSymbols_FontId);
     }
-    const int   hgt       = lineHeight_Text(defaultBig_FontId);
+    const int   hgt       = lineHeight_Text(uiLabelBig_FontId);
     const int   yMid      = mid_Rect(d->scrubberRect).y;
     const float playTime  = time_Player(d->player);
     const float totalTime = duration_Player(d->player);

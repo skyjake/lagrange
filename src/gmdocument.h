@@ -133,20 +133,23 @@ enum iGmRunMediaType {
     download_GmRunMediaType,
 };
 
+/* This structure is tightly packed because GmDocuments are mostly composed of
+   a large number of GmRuns. */
 struct Impl_GmRun {
     iRangecc  text;
     iRect     bounds;    /* used for hit testing, may extend to edges */
     iRect     visBounds; /* actual visual bounds */
     struct {
-        uint16_t   color : 8;
-        uint16_t   font  : 7;
-        uint16_t   isRTL : 1;
-    } textParams;
-    uint8_t   flags;
-    uint8_t   mediaType;
-    uint16_t  preId;     /* preformatted block ID (sequential) */
-    iGmLinkId linkId;    /* zero for non-links */
-    uint16_t  mediaId;   /* zero if not an image */
+        uint32_t linkId    : 16; /* GmLinkId; zero for non-links */
+        uint32_t flags     : 8; /* GmRunFlags */
+        uint32_t isRTL     : 1;
+        uint32_t color     : 7; /* see max_ColorId */
+
+        uint32_t font      : 10;
+        uint32_t mediaType : 2;
+        uint32_t mediaId   : 10; /* zero if not an image */
+        uint32_t preId     : 10; /* preformatted block ID (sequential); merge with mediaId? */
+    };
 };
 
 iDeclareType(GmRunRange)

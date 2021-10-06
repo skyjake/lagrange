@@ -928,8 +928,9 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         pushBackCStr_StringArray(title, "Lagrange");
     }
     /* Take away parts if it doesn't fit. */
-    const int avail = bounds_Widget(as_Widget(tabButton)).size.x - 3 * gap_UI;
-    iBool setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
+    const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 3 * gap_UI;
+    iBool     setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
+    const int font      = uiLabel_FontId;
     for (;;) {
         iString *text = collect_String(joinCStr_StringArray(title, " \u2014 "));
         if (setWindow) {
@@ -945,7 +946,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
             prependChar_String(text, siteIcon);
             prependCStr_String(text, escape_Color(uiIcon_ColorId));
         }
-        const int width = measureRange_Text(default_FontId, range_String(text)).advance.x;
+        const int width = measureRange_Text(font, range_String(text)).advance.x;
         if (width <= avail ||
             isEmpty_StringArray(title)) {
             updateText_LabelWidget(tabButton, text);
@@ -954,9 +955,9 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         if (size_StringArray(title) == 1) {
             /* Just truncate to fit. */
             const char *endPos;
-            tryAdvanceNoWrap_Text(default_FontId,
+            tryAdvanceNoWrap_Text(font,
                                   range_String(text),
-                                  avail - measure_Text(default_FontId, "...").advance.x,
+                                  avail - measure_Text(font, "...").advance.x,
                                   &endPos);
             updateText_LabelWidget(
                 tabButton,
@@ -1619,7 +1620,7 @@ static void parseUser_DocumentWidget_(iDocumentWidget *d) {
 static void cacheRunGlyphs_(void *data, const iGmRun *run) {
     iUnused(data);
     if (!isEmpty_Range(&run->text)) {
-        cache_Text(run->textParams.font, run->text);
+        cache_Text(run->font, run->text);
     }
 }
 
@@ -4020,14 +4021,14 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
                       contains_Range(&mark, run->text.start))) {
         int x = 0;
         if (!*isInside) {
-            x = measureRange_Text(run->textParams.font,
+            x = measureRange_Text(run->font,
                                   (iRangecc){ run->text.start, iMax(run->text.start, mark.start) })
                     .advance.x;
         }
         int w = width_Rect(run->visBounds) - x;
         if (contains_Range(&run->text, mark.end) || mark.end < run->text.start) {
             w = measureRange_Text(
-                    run->textParams.font,
+                    run->font,
                     !*isInside ? mark
                                : (iRangecc){ run->text.start, iMax(run->text.start, mark.end) })
                     .advance.x;
@@ -4083,15 +4084,15 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
     iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
     if (icon) {
         appendChar_String(&str, icon);
-        const iRect iconRect = visualBounds_Text(run->textParams.font, range_String(&str));
+        const iRect iconRect = visualBounds_Text(run->font, range_String(&str));
         drawRange_Text(
-            run->textParams.font,
-            addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->textParams.font) / 2),
+            run->font,
+            addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
             tmBannerIcon_ColorId,
             range_String(&str));
         bpos.x += right_Rect(iconRect) + 3 * gap_Text;
     }
-    drawRange_Text(run->textParams.font,
+    drawRange_Text(run->font,
                    bpos,
                    tmBannerTitle_ColorId,
                    bannerText_DocumentWidget_(d->widget));
@@ -4198,7 +4199,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         /* Media UIs are drawn afterwards as a dynamic overlay. */
         return;
     }
-    enum iColorId      fg        = run->textParams.color;
+    enum iColorId      fg        = run->color;
     const iGmDocument *doc       = d->widget->doc;
     const int          linkFlags = linkFlags_GmDocument(doc, run->linkId);
     /* Hover state of a link. */
@@ -4265,10 +4266,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         const iInt2 margin = preRunMargin_GmDocument(doc, run->preId);
         fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackgroundAltText_ColorId);
         drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmQuoteIcon_ColorId);
-        drawWrapRange_Text(run->textParams.font,
+        drawWrapRange_Text(run->font,
                            add_I2(visPos, margin),
                            run->visBounds.size.x - 2 * margin.x,
-                           run->textParams.color,
+                           run->color,
                            run->text);
     }
     else if (run->flags & siteBanner_GmRunFlag) {
@@ -4287,17 +4288,17 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     linkOrdinalChar_DocumentWidget_(d->widget, ord - d->widget->ordinalBase);
                 if (ordChar) {
                     const char *circle = "\u25ef"; /* Large Circle */
-                    const int   circleFont = defaultContentRegular_FontId;
+                    const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, contentRegular_FontSize);
                     iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
                                      init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
                     drawRange_Text(
                         circleFont, topLeft_Rect(nbArea), tmQuote_ColorId, range_CStr(circle));
                     iRect circleArea = visualBounds_Text(circleFont, range_CStr(circle));
                     addv_I2(&circleArea.pos, topLeft_Rect(nbArea));
-                    drawCentered_Text(defaultContentSmall_FontId,
+                    drawCentered_Text(FONT_ID(default_FontId, regular_FontStyle, contentSmall_FontSize),
                                       circleArea,
                                       iTrue,
-                                    tmQuote_ColorId,
+                                      tmQuote_ColorId,
                                       "%lc",
                                       (int) ordChar);
                     goto runDrawn;
@@ -4307,15 +4308,15 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         if (run->flags & quoteBorder_GmRunFlag) {
             drawVLine_Paint(&d->paint,
                             addX_I2(visPos,
-                                    !run->textParams.isRTL
+                                    !run->isRTL
                                         ? -gap_Text * 5 / 2
                                         : (width_Rect(run->visBounds) + gap_Text * 5 / 2)),
                             height_Rect(run->visBounds),
                             tmQuoteIcon_ColorId);
         }
-        drawBoundRange_Text(run->textParams.font,
+        drawBoundRange_Text(run->font,
                             visPos,
-                            (run->textParams.isRTL ? -1 : 1) * width_Rect(run->visBounds),
+                            (run->isRTL ? -1 : 1) * width_Rect(run->visBounds),
                             fg,
                             run->text);
     runDrawn:;
@@ -4431,7 +4432,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 append_String(&str, collect_String(format_Date(&date, "%b %d")));
             }
             if (!isEmpty_String(&str)) {
-                if (run->textParams.isRTL) {
+                if (run->isRTL) {
                     appendCStr_String(&str, " \u2014 ");
                 }
                 else {
@@ -4440,7 +4441,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 const iInt2 textSize = measure_Text(metaFont, cstr_String(&str)).bounds.size;
                 int tx = topRight_Rect(linkRect).x;
                 const char *msg = cstr_String(&str);
-                if (run->textParams.isRTL) {
+                if (run->isRTL) {
                     tx = topLeft_Rect(linkRect).x - textSize.x;                    
                 }
                 if (tx + textSize.x > right_Rect(d->widgetBounds)) {
@@ -4909,7 +4910,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     }
     /* Pinch zoom indicator. */
     if (d->flags & pinchZoom_DocumentWidgetFlag) {
-        const int   font   = defaultLargeBold_FontId;
+        const int   font   = uiLabelLargeBold_FontId;
         const int   height = lineHeight_Text(font) * 2;
         const iInt2 size   = init_I2(height * 2, height);
         const iRect rect   = { sub_I2(mid_Rect(bounds), divi_I2(size, 2)), size };

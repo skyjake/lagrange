@@ -447,7 +447,7 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     if (toolName) {
         setOutline_LabelWidget(toolButton, ident == NULL);
         updateTextCStr_LabelWidget(toolName, subjectName ? cstr_String(subjectName) : "");
-        setFont_LabelWidget(toolButton, subjectName ? defaultMedium_FontId : uiLabelLarge_FontId);
+        setFont_LabelWidget(toolButton, subjectName ? uiLabelMedium_FontId : uiLabelLarge_FontId);
         arrange_Widget(parent_Widget(toolButton));
     }
 }
@@ -996,7 +996,7 @@ void updateMetrics_Root(iRoot *d) {
             const iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
             const iWidget *viewButton = findChild_Widget(d->widget, "toolbar.view");
             const iWidget *idButton = findChild_Widget(toolBar, "toolbar.ident");
-            const int font = defaultTiny_FontId;
+            const int font = uiLabelTiny_FontId;
             setFont_LabelWidget(idName, font);
             setPos_Widget(as_Widget(idName),
                           windowToLocal_Widget(as_Widget(idName),
@@ -1125,7 +1125,7 @@ void createUserInterface_Root(iRoot *d) {
                     iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
                     embedFlags | moveToParentLeftEdge_WidgetFlag);
                 setId_Widget(as_Widget(lock), "navbar.lock");
-                setFont_LabelWidget(lock, symbols_FontId + uiNormal_FontSize);
+//                setFont_LabelWidget(lock, symbols_FontId + uiNormal_FontSize);
                 updateTextCStr_LabelWidget(lock, "\U0001f512");
             }
             /* Button for clearing the URL bar contents. */ {
@@ -1134,7 +1134,8 @@ void createUserInterface_Root(iRoot *d) {
                     iClob(newIcon_LabelWidget(delete_Icon, 0, 0, "navbar.clear")),
                     hidden_WidgetFlag | embedFlags | moveToParentLeftEdge_WidgetFlag | tight_WidgetFlag);
                 setId_Widget(as_Widget(clear), "navbar.clear");
-                setFont_LabelWidget(clear, symbols2_FontId + uiNormal_FontSize);
+//                setFont_LabelWidget(clear, symbols2_FontId + uiNormal_FontSize);
+                setFont_LabelWidget(clear, uiLabelSymbols_FontId);
 //                setFlags_Widget(as_Widget(clear), noBackground_WidgetFlag, iFalse);
 //                setBackgroundColor_Widget(as_Widget(clear), uiBackground_ColorId);
             }
@@ -1149,7 +1150,7 @@ void createUserInterface_Root(iRoot *d) {
                 iLabelWidget *queryInd = new_LabelWidget("${status.query} " return_Icon, NULL);
                 setId_Widget(as_Widget(queryInd), "input.indicator.search");
                 setTextColor_LabelWidget(queryInd, uiTextAction_ColorId);
-                setFont_LabelWidget(queryInd, defaultSmall_FontId);
+                setFont_LabelWidget(queryInd, uiLabelSmall_FontId);
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
 //                setAlignVisually_LabelWidget(queryInd, iTrue);
@@ -1162,7 +1163,7 @@ void createUserInterface_Root(iRoot *d) {
                 iLabelWidget *fprog = new_LabelWidget("", NULL);
                 setId_Widget(as_Widget(fprog), "feeds.progress");
                 setTextColor_LabelWidget(fprog, uiTextCaution_ColorId);
-                setFont_LabelWidget(fprog, defaultSmall_FontId);
+                setFont_LabelWidget(fprog, uiLabelSmall_FontId);
                 setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
 //                setAlignVisually_LabelWidget(fprog, iTrue);
                 setNoAutoMinHeight_LabelWidget(fprog, iTrue);

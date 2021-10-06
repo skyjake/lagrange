@@ -873,7 +873,7 @@ static void updateMenuItemFonts_Widget_(iWidget *d) {
             }
             else if (isPortraitPhone) {
                 if (!isSlidePanel) {
-                    setFont_LabelWidget(label, isCaution ? defaultBigBold_FontId : defaultBig_FontId);
+                    setFont_LabelWidget(label, isCaution ? uiLabelBigBold_FontId : uiLabelBig_FontId);
                 }
             }
             else {
@@ -1626,8 +1626,8 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
     }
     int fonts[2] = { uiLabel_FontId, uiLabelBold_FontId };
     if (deviceType_App() == phone_AppDeviceType) {
-        fonts[0] = defaultMedium_FontId;
-        fonts[1] = defaultMediumBold_FontId;
+        fonts[0] = uiLabelMedium_FontId;
+        fonts[1] = uiLabelMediumBold_FontId;
     }
     for (size_t i = 0; i < numActions; i++) {
         const char *label     = actions[i].label;
@@ -1694,7 +1694,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
                                                resizeToParentWidth_WidgetFlag);
     setContentPadding_InputWidget(input, 0.5f * gap_UI, 0.5f * gap_UI);
     if (deviceType_App() == phone_AppDeviceType) {
-        setFont_InputWidget(input, defaultBig_FontId);
+        setFont_InputWidget(input, uiLabelBig_FontId);
         setBackgroundColor_Widget(dlg, uiBackgroundSidebar_ColorId);
         setContentPadding_InputWidget(input, gap_UI, gap_UI);
     }
@@ -1811,7 +1811,7 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
                                  resizeToParentWidth_WidgetFlag |
                                  (first == '&' ? selected_WidgetFlag : 0));
             if (deviceType_App() != desktop_AppDeviceType) {
-                setFont_LabelWidget(option, defaultBig_FontId);
+                setFont_LabelWidget(option, uiLabelBig_FontId);
             }
         }
     }
