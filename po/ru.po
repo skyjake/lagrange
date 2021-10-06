@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-08-10 12:07+0000\n"
+"PO-Revision-Date: 2021-10-07 16:50+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -1483,7 +1483,7 @@ msgid "menu.split.horizontal"
 msgstr "По горизонтали"
 
 msgid "menu.view.split"
-msgstr "Разделить окно..."
+msgstr "Разделить окно…"
 
 msgid "menu.split.vertical"
 msgstr "По вертикали"
@@ -1684,7 +1684,7 @@ msgid "menu.unexpire"
 msgstr "Все равно загрузить"
 
 msgid "menu.page.upload"
-msgstr "Загрузить страницу (Titan)"
+msgstr "Загрузить страницу (Titan)…"
 
 msgid "heading.upload"
 msgstr "ЗАГРУЗКА ΤΙΤΑΝ"
@@ -1711,7 +1711,7 @@ msgid "upload.mime"
 msgstr "Тип MIME:"
 
 msgid "upload.token"
-msgstr "Токен для загрузки:"
+msgstr "Токен:"
 
 msgid "hint.upload.token"
 msgstr "см. инструкции сервера"
@@ -1814,3 +1814,113 @@ msgstr "Структура папок выражается заголовкам�
 
 msgid "bookmark.export.format.tags"
 msgstr "Тэги представлены заголовками 2-го уровня."
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Вы хотите удалить закладку из данной папки?"
+msgstr[1] "Вы хотите удалить %u закладки из данной папки?"
+msgstr[2] "Вы хотите удалить все %u закладок из данной папки?"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Добавление папки закладок"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Удалить закладку"
+msgstr[1] "Удалить %u закладки"
+msgstr[2] "Удалить %u закладок"
+
+msgid "lang.gl"
+msgstr "Галисийский"
+
+msgid "lang.eo"
+msgstr "Эсперанто"
+
+msgid "lang.es.mx"
+msgstr "Испанский (Мексика)"
+
+msgid "lang.sk"
+msgstr "Словацкий"
+
+msgid "lang.isv"
+msgstr "Междуславянский"
+
+msgid "heading.bookmark.tags"
+msgstr "ОСОБЫЕ ТЕГИ"
+
+msgid "heading.addfolder"
+msgstr "ДОБАВИТЬ ПАПКУ"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Новая папка"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Имя создаваемой папки:"
+
+msgid "dlg.addfolder"
+msgstr "Добавить папку"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "НАСТРОЙКИ"
+
+msgid "prefs.imagestyle"
+msgstr "Окрашивать изображения:"
+
+msgid "prefs.imagestyle.original"
+msgstr "Нет"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Оттенки серого"
+
+msgid "prefs.imagestyle.text"
+msgstr "Цвет текста"
+
+msgid "menu.newfolder"
+msgstr "Создать папку…"
+
+msgid "menu.sort.alpha"
+msgstr "По алфавиту"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Настройки"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Все"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Удалить"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Отмена"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "УДАЛИТЬ ЗАКЛАДКИ"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Импорт сертификата/файла ключа"
+
+msgid "dlg.upload.id.none"
+msgstr "Нет"
+
+msgid "dlg.upload.id.default"
+msgstr "По умолчанию"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Загрузить простой текст"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Загрузить файл"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Выбрать файл"
