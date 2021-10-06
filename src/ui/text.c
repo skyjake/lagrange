@@ -132,11 +132,13 @@ struct Impl_GlyphTable {
     uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
 };
 
-static void clearGlyphs_Font_(iGlyphTable *d) {
-    iForEach(Hash, i, &d->glyphs) {
-        delete_Glyph((iGlyph *) i.value);
+static void clearGlyphs_GlyphTable_(iGlyphTable *d) {
+    if (d) {
+        iForEach(Hash, i, &d->glyphs) {
+            delete_Glyph((iGlyph *) i.value);
+        }
+        clear_Hash(&d->glyphs);
     }
-    clear_Hash(&d->glyphs);
 }
 
 static void init_GlyphTable(iGlyphTable *d) {
@@ -145,7 +147,7 @@ static void init_GlyphTable(iGlyphTable *d) {
 }
 
 static void deinit_GlyphTable(iGlyphTable *d) {
-    clearGlyphs_Font_(d);
+    clearGlyphs_GlyphTable_(d);
     deinit_Hash(&d->glyphs);
 }
 
@@ -457,11 +459,6 @@ static void initFonts_Text_(iText *d) {
             setupFontVariants_Text_(d, spec, fontId);
         }
     }
-    /* test */ {
-        const iFont *h = font_Text_(preformatted_FontId); // FONT_ID(documentBody_FontId, regular_FontStyle, contentRegular_FontSize));
-        printf("{%s} %d sz:%d st:%d\n", cstr_String(&h->fontSpec->name), h->height, sizeId_Text_(h),
-               styleId_Text_(h));
-    }
 #if 0
     iForIndices(i, fontData) {
         iFont *font = font_Text_(i);
@@ -608,7 +605,7 @@ void setContentFontSize_Text(iText *d, float fontSizeFactor) {
 static void resetCache_Text_(iText *d) {
     deinitCache_Text_(d);
     iForEach(Array, i, &d->fonts) {
-        clearGlyphs_Font_(i.value);
+        clearGlyphs_GlyphTable_(((iFont *) i.value)->table);
     }
     initCache_Text_(d);
 }
@@ -720,6 +717,9 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
             continue; /* already checked this one */
         }
         if ((*glyphIndex = glyphIndex_Font_(font, ch)) != 0) {
+            printf("using %s[%f] for %lc (%x) => %d\n",
+                   cstr_String(&font->fontSpec->name), font->fontSpec->scaling,
+                   (int) ch, ch, glyphIndex_Font_(font, ch));
             return font;
         }
     }
