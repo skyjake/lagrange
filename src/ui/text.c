@@ -710,17 +710,24 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
         return d;
     }
     /* As a fallback, check all other available fonts of this size. */
-    for (iFont *font = font_Text_(FONT_ID(0, styleId, sizeId));
-         font < (iFont *) end_Array(&activeText_->fonts);
-         font += maxVariants_Fonts) {
-        if (font == d || font == overrideFont) {
-            continue; /* already checked this one */
-        }
-        if ((*glyphIndex = glyphIndex_Font_(font, ch)) != 0) {
-            printf("using %s[%f] for %lc (%x) => %d\n",
-                   cstr_String(&font->fontSpec->name), font->fontSpec->scaling,
-                   (int) ch, ch, glyphIndex_Font_(font, ch));
-            return font;
+    for (int aux = 0; aux < 2; aux++) {
+        for (iFont *font = font_Text_(FONT_ID(0, styleId, sizeId));
+             font < (iFont *) end_Array(&activeText_->fonts);
+             font += maxVariants_Fonts) {
+            const iBool isAuxiliary = (font->fontSpec->flags & auxiliary_FontSpecFlag) ? 1 : 0;
+            if (aux == isAuxiliary) {
+                /* First try auxiliary fonts, then other remaining fonts. */
+                continue;
+            }
+            if (font == d || font == overrideFont) {
+                continue; /* already checked this one */
+            }
+            if ((*glyphIndex = glyphIndex_Font_(font, ch)) != 0) {
+//                printf("using %s[%f] for %lc (%x) => %d\n",
+//                       cstr_String(&font->fontSpec->name), font->fontSpec->scaling,
+//                       (int) ch, ch, glyphIndex_Font_(font, ch));
+                return font;
+            }
         }
     }
 #if 0
