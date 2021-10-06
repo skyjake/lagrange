@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-08-03 05:24+0000\n"
+"PO-Revision-Date: 2021-10-07 16:50+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1462,7 +1462,7 @@ msgid "menu.split.merge"
 msgstr "Unir cartes"
 
 msgid "menu.view.split"
-msgstr "Fender li vise..."
+msgstr "Fender li vise…"
 
 msgid "dlg.newident.date.example"
 msgstr ""
@@ -1738,7 +1738,7 @@ msgid "menu.unexpire"
 msgstr "Ignorar li expiration e continuar cargar"
 
 msgid "menu.page.upload"
-msgstr "Cargar un págine med Titan"
+msgstr "Cargar un págine med Titan…"
 
 msgid "heading.upload"
 msgstr "CARGAR MED TITAN"
@@ -1768,7 +1768,7 @@ msgid "dlg.upload.send"
 msgstr "Cargar"
 
 msgid "upload.token"
-msgstr "Code de carga:"
+msgstr "Code:"
 
 msgid "hint.upload.token"
 msgstr "vi instructiones del servitor"
@@ -1792,3 +1792,129 @@ msgstr[1] "Hay %d marca-págines."
 
 msgid "bookmark.export.format.linklines"
 msgstr "Chascun ligament representa un marca-págine."
+
+msgid "dlg.upload.id.default"
+msgstr "Predefinit"
+
+msgid "bookmark.export.title.tag"
+msgstr "Etiquettes de marca-págines"
+
+msgid "bookmark.export.saving"
+msgstr "Garda ti-ci págine por exportar les, o copia les in li Paperiere."
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Cargar textu"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Cargar un file"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Selecter un file"
+
+msgid "bookmark.export.format.tags"
+msgstr "Etiquettes es format per rubricas de nivelle 2."
+
+msgid "lang.gl"
+msgstr "Galician"
+
+msgid "lang.eo"
+msgstr "Esperanto"
+
+msgid "lang.es.mx"
+msgstr "Hispan (Mexico)"
+
+msgid "lang.sk"
+msgstr "Slovac"
+
+msgid "lang.isv"
+msgstr "Interslavic"
+
+msgid "bookmark.export.format.folders"
+msgstr "Li structura de fólderes es providet per rubricas de nivelle 2 e 3."
+
+msgid "dlg.upload.id.none"
+msgstr "Null"
+
+msgid "heading.bookmark.tags"
+msgstr "SPECIAL ETIQUETTES"
+
+msgid "heading.addfolder"
+msgstr "ADJUNTER UN FÓLDER"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Nov fólder"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Provide li nómine del nov fólder:"
+
+msgid "dlg.addfolder"
+msgstr "Adjunter un fólder"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "PARAMETRES"
+
+msgid "prefs.imagestyle"
+msgstr "Colorisar images:"
+
+msgid "prefs.imagestyle.original"
+msgstr "Null"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Gris"
+
+msgid "prefs.imagestyle.text"
+msgstr "Color del textu"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Color del formatat textu"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Adjunter un fólder"
+
+msgid "upload.id"
+msgstr "Identitá:"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Defar"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "REMOVER MARCA-PÁGINES"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Esque vu vole remover li marca-págine in ti-ci fólder?"
+msgstr[1] "Esque vu vole remover omni %u marca-págines in ti-ci fólder?"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Remover marca-págine"
+msgstr[1] "Remover %u marca-págines"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Importar un certificate o clave"
+
+msgid "menu.newfolder"
+msgstr "Crear un fólder…"
+
+msgid "menu.sort.alpha"
+msgstr "Ordinar alfabeticalmen"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Parametres"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Sel. omni"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Remov."
