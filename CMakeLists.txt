@@ -63,7 +63,7 @@ include (res/Fontpack.cmake)
 include (Depends.cmake)
 
 # Embedded resources are written to a generated source file.
-message (STATUS "Preparing embedded resources...")
+message (STATUS "Preparing resources...")
 make_fontpack (res/default.fontpack)
 make_fontpack (res/arabic.fontpack)
 make_fontpack (res/cjk.fontpack)

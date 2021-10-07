@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/toml.h>
 
+#include "embedded.h"
+
 float scale_FontSize(enum iFontSize size) {
     static const float sizes[max_FontSize] = {
         1.000, /* UI sizes */
@@ -154,7 +156,7 @@ iDeclareType(FontPack)
 iDeclareTypeConstruction(FontPack)
     
 struct Impl_FontPack {
-    iArchive * archive; /* opened ZIP archive */
+    const iArchive *archive; /* opened ZIP archive */
     iArray     fonts;   /* array of FontSpecs */
     iString *  loadPath;
     iFontSpec *loadSpec;
@@ -207,6 +209,24 @@ void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart
     }   
 }
 
+static iBlock *readFile_FontPack_(const iFontPack *d, const iString *path) {
+    iBlock *data = NULL;
+    if (d->archive) {
+        /* Loading from a ZIP archive. */
+        data = copy_Block(data_Archive(d->archive, path));
+    }
+    else if (d->loadPath) {
+        /* Loading from a regular file. */
+        iFile *srcFile = new_File(collect_String(concat_Path(d->loadPath, path)));
+        if (open_File(srcFile, readOnly_FileMode)) {
+            data = readAll_File(srcFile);
+        }
+        iRelease(srcFile);
+        return data;
+    }
+    return data;
+}
+
 void handleIniKeyValue_FontPack_(void *context, const iString *table, const iString *key,
                                  const iTomlValue *value) {
     iFontPack *d = context;
@@ -245,24 +265,41 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
         iForIndices(i, styles) {
             if (!cmp_String(key, styles[i]) && !d->loadSpec->styles[i]) {
                 iFontFile *ff = NULL;
-                /* Loading from a regular file. */
-                iFile *srcFile = new_File(collect_String(concat_Path(d->loadPath,
-                                                                     value->value.string)));
-                if (open_File(srcFile, readOnly_FileMode)) {
+                iBlock *data = readFile_FontPack_(d, value->value.string);
+                if (data) {
                     ff = new_FontFile();
-                    iBlock *data = readAll_File(srcFile);
                     load_FontFile_(ff, data);
-                    delete_Block(data);
                     pushBack_PtrArray(&fonts_.files, ff); /* centralized ownership */
                     d->loadSpec->styles[i] = ff;
+                    delete_Block(data);
                 }
-                iRelease(srcFile);
                 break;
             }
         }
     }
 }
 
+static iBool load_FontPack_(iFontPack *d, const iString *ini) {
+    iBeginCollect();
+    iBool ok = iFalse;
+//    iFile *f = iClob(new_File(iniPath));
+    //if (open_File(f, text_FileMode | readOnly_FileMode)) {
+//        d->loadPath = collect_String(newRange_String(dirName_Path(iniPath)));
+//    iString *src = collect_String(readString_File(f));
+    iTomlParser *toml = collect_TomlParser(new_TomlParser());
+    setHandlers_TomlParser(toml, handleIniTable_FontPack_, handleIniKeyValue_FontPack_, d);
+    if (parse_TomlParser(toml, ini)) {
+        ok = iTrue;
+        //    fprintf(stderr, "[FontPack] error parsing %s\n", cstr_String(iniPath));
+    }
+    iAssert(d->loadSpec == NULL);
+//        d->loadPath = NULL;
+//    }
+    iEndCollect();
+    return ok;
+}
+
+#if 0
 iBool loadIniFile_FontPack(iFontPack *d, const iString *iniPath) {
     iBeginCollect();
     iBool ok = iFalse;
@@ -270,6 +307,7 @@ iBool loadIniFile_FontPack(iFontPack *d, const iString *iniPath) {
     if (open_File(f, text_FileMode | readOnly_FileMode)) {
         d->loadPath = collect_String(newRange_String(dirName_Path(iniPath)));
         iString *src = collect_String(readString_File(f));
+        
         iTomlParser *ini = collect_TomlParser(new_TomlParser());
         setHandlers_TomlParser(ini, handleIniTable_FontPack_, handleIniKeyValue_FontPack_, d);
         if (!parse_TomlParser(ini, src)) {
@@ -280,6 +318,22 @@ iBool loadIniFile_FontPack(iFontPack *d, const iString *iniPath) {
         ok = iTrue;
     }
     iEndCollect();
+    return ok;
+}
+#endif
+
+iBool loadArchive_FontPack(iFontPack *d, const iArchive *zip) {
+    d->archive = zip;
+    iBool ok = iFalse;
+    const iBlock *iniData = dataCStr_Archive(zip, "fontpack.ini");
+    if (iniData) {
+        iString ini;
+        initBlock_String(&ini, iniData);
+        if (load_FontPack_(d, &ini)) {
+            ok = iTrue;
+        }        
+        deinit_String(&ini);
+    }
     return ok;
 }
 
@@ -323,13 +377,15 @@ void init_Fonts(const char *userDir) {
     init_PtrArray(&d->packs);
     init_PtrArray(&d->files);
     init_PtrArray(&d->specOrder);
-    /* Load the required fonts. */
-    iFontPack *pack = new_FontPack();
-    /* TODO: put default.fontpack in resources.lgr as a binary blob (uncompressed) */
+    /* Load the required fonts. */ {
+        iFontPack *pack = new_FontPack();
+        iArchive *defaultPack = new_Archive();
+        openData_Archive(defaultPack, &fontpackDefault_Embedded);
+        loadArchive_FontPack(pack, defaultPack);
+        iRelease(defaultPack);
+        pushBack_PtrArray(&d->packs, pack);
+    }
     /* TODO: find and load .fontpack files in known locations */
-    loadIniFile_FontPack(pack, collectNewCStr_String("/Users/jaakko/src/lagrange/"
-                                                     "res/fonts/fontpack.ini"));
-    pushBack_PtrArray(&d->packs, pack);
     sortSpecs_Fonts_(d);
 }
 
