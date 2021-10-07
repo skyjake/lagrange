@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.7.1
+    VERSION 1.8.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -59,10 +59,18 @@ option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 
 include (BuildType.cmake)
 include (res/Embed.cmake)
+include (res/Fontpack.cmake)
 include (Depends.cmake)
 
 # Embedded resources are written to a generated source file.
 message (STATUS "Preparing embedded resources...")
+make_fontpack (res/default.fontpack)
+make_fontpack (res/arabic.fontpack)
+make_fontpack (res/cjk.fontpack)
+make_fontpack (res/firasans.fontpack)
+make_fontpack (res/literata.fontpack)
+make_fontpack (res/nunito.fontpack)
+make_fontpack (res/tinos.fontpack)
 # Fonts are too large to comfortably embed as a C source.
 set (EMBED_RESOURCES
     res/about/about.gmi
@@ -71,37 +79,6 @@ set (EMBED_RESOURCES
     res/about/license.gmi
     res/about/version.gmi
     res/arg-help.txt
-    res/fonts/Tinos-Regular.ttf
-    res/fonts/Tinos-Italic.ttf
-    res/fonts/Tinos-Bold.ttf
-    res/fonts/IosevkaTerm-Extended.ttf
-    res/fonts/FiraSans-Bold.ttf
-    res/fonts/FiraSans-Italic.ttf
-    res/fonts/FiraSans-Light.ttf
-    res/fonts/FiraSans-Regular.ttf
-    res/fonts/FiraSans-SemiBold.ttf
-    res/fonts/Literata-Regular-opsz=14.ttf
-    res/fonts/Literata-Bold-opsz=36.ttf
-    res/fonts/Literata-ExtraLight-opsz=18.ttf
-    res/fonts/Literata-LightItalic-opsz=10.ttf
-    res/fonts/NanumGothic-Regular.ttf
-    res/fonts/NotoEmoji-Regular.ttf
-    res/fonts/NotoSansArabicUI-Regular.ttf
-    res/fonts/NotoSansJP-Regular.ttf
-    res/fonts/NotoSansSC-Regular.ttf
-    res/fonts/NotoSansSymbols-Regular.ttf
-    res/fonts/NotoSansSymbols2-Regular.ttf
-    res/fonts/Nunito-Bold.ttf
-    res/fonts/Nunito-ExtraBold.ttf
-    res/fonts/Nunito-ExtraLight.ttf
-    res/fonts/Nunito-LightItalic.ttf
-    res/fonts/Nunito-Regular.ttf
-    res/fonts/SmolEmoji-Regular.ttf
-    res/fonts/SourceSans3-Bold.ttf
-    res/fonts/SourceSans3-ExtraLight.ttf
-    res/fonts/SourceSans3-It.ttf
-    res/fonts/SourceSans3-Regular.ttf
-    res/fonts/SourceSans3-Semibold.ttf
     res/lang/de.bin
     res/lang/en.bin
     res/lang/eo.bin
@@ -121,6 +98,7 @@ set (EMBED_RESOURCES
     res/lang/zh_Hans.bin
     res/lang/zh_Hant.bin
     res/shadow.png
+    ${CMAKE_BINARY_DIR}/default.fontpack
 )
 if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND EMBED_RESOURCES res/lagrange-64.png)
