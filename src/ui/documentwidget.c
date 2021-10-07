@@ -496,7 +496,8 @@ static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
                                      -1.0f, 10.0f); /* adapt to width */
     //printf("%f\n", adjust); fflush(stdout);
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
-                 fontSize_UI * prefs->lineWidth * prefs->zoomPercent / 100);
+                 fontSize_UI * emRatio_Text(paragraph_FontId) * /* dependent on avg. glyph width */
+                 prefs->lineWidth * prefs->zoomPercent / 100);
 }
 
 static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {

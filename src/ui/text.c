@@ -1882,6 +1882,11 @@ int lineHeight_Text(int fontId) {
     return font_Text_(fontId)->height;
 }
 
+float emRatio_Text(int fontId) {
+    const iFont *font = font_Text_(fontId);
+    return font->emAdvance / font->height;
+}
+
 iTextMetrics measureRange_Text(int fontId, iRangecc text) {
     if (isEmpty_Range(&text)) {
         return (iTextMetrics){ init_Rect(0, 0, 0, lineHeight_Text(fontId)), zero_I2() };

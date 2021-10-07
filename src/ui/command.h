@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <the_Foundation/range.h>
+#include <the_Foundation/string.h>
 #include <the_Foundation/vec2.h>
 
 iBool       equal_Command           (const char *commandWithArgs, const char *command);
@@ -44,4 +45,7 @@ iString *       suffix_Command      (const char *, const char *label); /* until 
 
 iLocalDef iBool hasLabel_Command(const char *d, const char *label) {
     return suffixPtr_Command(d, label) != NULL;
+}
+iLocalDef const char *cstr_Command(const char *d, const char *label) {
+    return cstr_Rangecc(range_Command(d, label));
 }

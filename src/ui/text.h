@@ -148,6 +148,7 @@ void    setContentFontSize_Text (iText *, float fontSizeFactor); /* affects all 
 void    resetFonts_Text         (iText *);
 
 int     lineHeight_Text         (int fontId);
+float   emRatio_Text            (int fontId); /* em advance to line height ratio */
 iRect   visualBounds_Text       (int fontId, iRangecc text);
 
 iDeclareType(TextMetrics)

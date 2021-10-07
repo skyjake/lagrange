@@ -2169,6 +2169,15 @@ iWidget *makePreferences_Widget(void) {
         { "${prefs.imagestyle.preformat}", 0, 0, format_CStr("imagestyle.set arg:%d", preformatColorized_ImageStyle) },
         { NULL }
     };
+    const iMenuItem lineWidthItems[] = {
+        { "button id:prefs.linewidth.50 text:\u20132",                 0, 0, "linewidth.set arg:50" },
+        { "button id:prefs.linewidth.58 text:\u20131",                 0, 0, "linewidth.set arg:58" },
+        { "button id:prefs.linewidth.66 label:prefs.linewidth.normal", 0, 0, "linewidth.set arg:66" },
+        { "button id:prefs.linewidth.76 text:+1",                      0, 0, "linewidth.set arg:76" },
+        { "button id:prefs.linewidth.86 text:+2",                      0, 0, "linewidth.set arg:86" },
+        { "button id:prefs.linewidth.1000 label:prefs.linewidth.fill", 0, 0, "linewidth.set arg:1000" },
+        { NULL }
+    };
     /* Create the Preferences UI. */
     if (isUsingPanelLayout_Mobile()) {
         const iMenuItem pinSplitItems[] = {
@@ -2205,15 +2214,6 @@ iWidget *makePreferences_Widget(void) {
             { "button id:prefs.boldlink.dark" },
             { "button id:prefs.boldlink.light" },
             { NULL }  
-        };
-        const iMenuItem lineWidthItems[] = {
-            { "button id:prefs.linewidth.30 text:\u20132", 0, 0, "linewidth.set arg:30" },
-            { "button id:prefs.linewidth.34 text:\u20131", 0, 0, "linewidth.set arg:34" },
-            { "button id:prefs.linewidth.38 label:prefs.linewidth.normal", 0, 0, "linewidth.set arg:38" },
-            { "button id:prefs.linewidth.43 text:+1", 0, 0, "linewidth.set arg:43" },
-            { "button id:prefs.linewidth.48 text:+2", 0, 0, "linewidth.set arg:48" },
-            { "button id:prefs.linewidth.1000 label:prefs.linewidth.fill", 0, 0, "linewidth.set arg:1000" },
-            { NULL }              
         };
         const iMenuItem quoteItems[] = {
             { "button id:prefs.quoteicon.1 label:prefs.quoteicon.icon", 0, 0, "quoteicon.set arg:1" },
@@ -2541,12 +2541,16 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.linewidth}")));
         iWidget *widths = new_Widget();
         /* Line widths. */ {
-            addRadioButton_(widths, "prefs.linewidth.30", "\u20132", "linewidth.set arg:30");
-            addRadioButton_(widths, "prefs.linewidth.34", "\u20131", "linewidth.set arg:34");
-            addRadioButton_(widths, "prefs.linewidth.38", "${prefs.linewidth.normal}", "linewidth.set arg:38");
-            addRadioButton_(widths, "prefs.linewidth.43", "+1", "linewidth.set arg:43");
-            addRadioButton_(widths, "prefs.linewidth.48", "+2", "linewidth.set arg:48");
-            addRadioButton_(widths, "prefs.linewidth.1000", "${prefs.linewidth.fill}", "linewidth.set arg:1000");
+            /* TODO: Make this a utility function to build radio buttons from items. */
+            for (size_t i = 0; lineWidthItems[i].label; i++) {
+                const iMenuItem *lw = &lineWidthItems[i];
+                addRadioButton_(widths,
+                                cstr_Command(lw->label, "id"),
+                                hasLabel_Command(lw->label, "label")
+                                    ? cstr_Lang(cstr_Command(lw->label, "label"))
+                                    : cstr_Command(lw->label, "text"),
+                                lw->command);
+            }
         }
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addPrefsInputWithHeading_(headings, values, "prefs.linespacing", iClob(new_InputWidget(5)));
