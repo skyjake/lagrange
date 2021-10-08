@@ -496,7 +496,7 @@ static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
                                      -1.0f, 10.0f); /* adapt to width */
     //printf("%f\n", adjust); fflush(stdout);
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
-                 fontSize_UI * emRatio_Text(paragraph_FontId) * /* dependent on avg. glyph width */
+                 fontSize_UI * //emRatio_Text(paragraph_FontId) * /* dependent on avg. glyph width */
                  prefs->lineWidth * prefs->zoomPercent / 100);
 }
 
@@ -3441,7 +3441,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     return iTrue;
                 }
                 break;
-#if 1
+#if !defined (NDEBUG)
             case SDLK_KP_1:
             case '`': {
                 iBlock *seed = new_Block(64);

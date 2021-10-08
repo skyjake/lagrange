@@ -468,22 +468,23 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool   isDarkBg          = isDark_GmDocumentTheme(
         isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
     /* TODO: Collect these parameters into a GmTheme. */
+    const enum iFontId headingFont = isMono ? documentMonospace_FontId : documentHeading_FontId;
+    const enum iFontId bodyFont    = isMono ? documentMonospace_FontId : documentBody_FontId;
     const int fonts[max_GmLineType] = {
-        isMono ? regularMonospace_FontId : paragraph_FontId,
-        isMono ? regularMonospace_FontId : paragraph_FontId, /* bullet */
-        preformatted_FontId,
-        isMono ? regularMonospace_FontId : quote_FontId,
-        heading1_FontId,
-        heading2_FontId,
-        heading3_FontId,
-        isMono ? regularMonospace_FontId
-        : ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight))
-            ? bold_FontId
-            : paragraph_FontId,
+        FONT_ID(bodyFont, regular_FontStyle, contentRegular_FontSize), /* text */
+        FONT_ID(bodyFont, regular_FontStyle, contentRegular_FontSize), /* bullet */
+        preformatted_FontId,                                           /* pre */
+        isMono ? monospaceParagraph_FontId : quote_FontId,             /* quote */
+        FONT_ID(headingFont, bold_FontStyle, contentHuge_FontSize),    /* h1 */
+        FONT_ID(headingFont, bold_FontStyle, contentLarge_FontSize),   /* h2 */
+        FONT_ID(headingFont, regular_FontStyle, contentBig_FontSize),  /* h3 */
+        FONT_ID(bodyFont,
+                ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight))
+                             ? semiBold_FontStyle
+                             : regular_FontStyle,
+                contentRegular_FontSize) /* link */
     };
-    float indents[max_GmLineType] = {
-        5, 10, 5, isNarrow ? 5 : 10, 0, 0, 0, 5
-    };
+    float indents[max_GmLineType] = { 5, 10, 5, isNarrow ? 5 : 10, 0, 0, 0, 5 };
     if (isExtremelyNarrow) {
         /* Further reduce the margins. */
         indents[text_GmLineType] -= 5;
@@ -562,10 +563,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 iGmPreMeta meta = { .bounds = line };
                 meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
                     d, line.start, preFont, &meta.contents, &meta.bounds.end);
-                if (meta.pixelRect.size.x >
-                    d->size.x - (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text) {
-                    preFont = preformattedSmall_FontId;
-                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents).bounds.size;
+                const float oversizeRatio =
+                    meta.pixelRect.size.x /
+                    (float) (d->size.x -
+                             (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text);
+                if (oversizeRatio > 1.0f) {
+                    preFont--; /* one notch smaller in the font size */
+                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents).bounds.size;                        
                 }
                 trimLine_Rangecc(&line, type, isNormalized);
                 meta.altText = line; /* without the ``` */
@@ -611,7 +615,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 continue;
             }
             run.preId = preId;
-            run.font = (d->format == plainText_SourceFormat ? regularMonospace_FontId : preFont);
+            run.font = (d->format == plainText_SourceFormat ? plainText_FontId : preFont);
             indent = indents[type];
         }
         if (addSiteBanner) {
@@ -719,11 +723,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == bullet_GmLineType) {
             /* TODO: Literata bullet is broken? */
             iGmRun bulRun = run;
+#if 0
             if (prefs->font == literata_TextFont) {
                 /* Something wrong this the glyph in Literata, looks cropped. */
                 bulRun.font = FONT_ID(default_FontId, regular_FontStyle,
                                                  contentRegular_FontSize);
             }
+#endif
             bulRun.color = tmQuote_ColorId;
             bulRun.visBounds.pos = addX_I2(pos, (indents[text_GmLineType] - 0.55f) * gap_Text);
             bulRun.visBounds.size =
@@ -778,7 +784,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             /* TODO: List bullets needs the same centering logic. */
             /* Special exception for the tiny bullet operator. */
-            icon.font = equal_Rangecc(link->labelIcon, "\u2219") ? regularMonospace_FontId
+            icon.font = equal_Rangecc(link->labelIcon, "\u2219") ? preformatted_FontId
                                                                  : paragraph_FontId;
             alignDecoration_GmRun_(&icon, iFalse);
             icon.color = linkColor_GmDocument(d, run.linkId, icon_GmLinkPart);
@@ -882,9 +888,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     break;
                 }
                 clear_RunTypesetter_(&rts);
-                rts.pos                  = pos;
-                rts.run.font  = rts.fonts[text_GmLineType];
-                rts.run.color = colors[text_GmLineType];
+                rts.pos         = pos;
+                rts.run.font    = rts.fonts[text_GmLineType];
+                rts.run.color   = colors[text_GmLineType];
                 isLedeParagraph = iFalse;
             }
             pos = rts.pos;
@@ -925,7 +931,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     run.visBounds.pos.x  = run.bounds.size.x / 2 - width_Rect(run.visBounds) / 2;
                     run.bounds.size.y    = run.visBounds.size.y;
                 }
-                run.text           = iNullRange;
+                run.text      = iNullRange;
                 run.font      = 0;
                 run.color     = 0;
                 run.mediaType = image_GmRunMediaType;
@@ -944,9 +950,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.bounds.size.y = lineHeight_Text(uiContent_FontId) + 3 * gap_UI;
                 run.visBounds     = run.bounds;
                 run.text          = iNullRange;
-                run.color    = 0;
-                run.mediaType = audio_GmRunMediaType;
-                run.mediaId  = audioId;
+                run.color         = 0;
+                run.mediaType     = audio_GmRunMediaType;
+                run.mediaId       = audioId;
                 pushBack_Array(&d->layout, &run);
                 pos.y += run.bounds.size.y + margin;
             }

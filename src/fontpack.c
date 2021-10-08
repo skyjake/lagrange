@@ -32,6 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "embedded.h"
 
+/* TODO: Clean up and/or reorder this file, it's a bit unorganized. */
+
 float scale_FontSize(enum iFontSize size) {
     static const float sizes[max_FontSize] = {
         1.000, /* UI sizes */
@@ -46,8 +48,7 @@ float scale_FontSize(enum iFontSize size) {
         1.666,
         2.000,
         0.568,
-        0.710,
-        0.800,
+        0.710, /* calibration: fits the Lagrange title screen with Normal line width */
     };
     if (size < 0 || size >= max_FontSize) {
         return 1.0f;
@@ -66,9 +67,30 @@ struct Impl_Fonts {
 
 static iFonts fonts_;
 
+static void unloadFiles_Fonts_(iFonts *d) {
+    /* TODO: Mark all files in font packs as not resident. */    
+    iForEach(PtrArray, i, &d->files) {
+        delete_FontFile(i.ptr);
+    }
+    clear_PtrArray(&d->files);
+}
+
+static iFontFile *findFile_Fonts_(iFonts *d, const iString *id) {
+    iForEach(PtrArray, i, &d->files) {
+        iFontFile *ff = i.ptr;
+        if (equal_String(&ff->id, id)) {
+            return ff;
+        }
+    }
+    return NULL;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 iDefineTypeConstruction(FontFile)
 
 void init_FontFile(iFontFile *d) {
+    init_String(&d->id);
     d->style = regular_FontStyle;
     init_Block(&d->sourceData, 0);
     iZap(d->stbInfo);
@@ -111,6 +133,7 @@ static void unload_FontFile_(iFontFile *d) {
 void deinit_FontFile(iFontFile *d) {
     unload_FontFile_(d);
     deinit_Block(&d->sourceData);
+    deinit_String(&d->id);
 }
 
 float scaleForPixelHeight_FontFile(const iFontFile *d, int pixelHeight) {
@@ -140,8 +163,11 @@ void init_FontSpec(iFontSpec *d) {
     init_String(&d->name);
     d->flags      = 0;
     d->priority   = 0;
-    d->scaling    = 1.0f;
-    d->vertOffset = 1.0f;
+    for (int i = 0; i < 2; ++i) {
+        d->heightScale[i]     = 1.0f;
+        d->glyphScale[i]      = 1.0f;
+        d->vertOffsetScale[i] = 1.0f;
+    }
     iZap(d->styles);
 }
 
@@ -154,12 +180,12 @@ void deinit_FontSpec(iFontSpec *d) {
 
 iDeclareType(FontPack)
 iDeclareTypeConstruction(FontPack)
-    
+
 struct Impl_FontPack {
     const iArchive *archive; /* opened ZIP archive */
-    iArray     fonts;   /* array of FontSpecs */
-    iString *  loadPath;
-    iFontSpec *loadSpec;
+    iArray          fonts;   /* array of FontSpecs */
+    iString *       loadPath;
+    iFontSpec *     loadSpec;
 };
 
 void init_FontPack(iFontPack *d) {
@@ -238,11 +264,27 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
     else if (!cmp_String(key, "priority") && value->type == int64_TomlType) {
         d->loadSpec->priority = (int) value->value.int64;        
     }
-    else if (!cmp_String(key, "scaling")) {
-        d->loadSpec->scaling = (float) number_TomlValue(value);
+    else if (!cmp_String(key, "height")) {
+        d->loadSpec->heightScale[0] = d->loadSpec->heightScale[1] = (float) number_TomlValue(value);
+    }
+    else if (!cmp_String(key, "glyphscale")) {
+        d->loadSpec->glyphScale[0] = d->loadSpec->glyphScale[1] = (float) number_TomlValue(value);
     }
     else if (!cmp_String(key, "voffset")) {
-        d->loadSpec->vertOffset = (float) number_TomlValue(value);
+        d->loadSpec->vertOffsetScale[0] = d->loadSpec->vertOffsetScale[1] =
+            (float) number_TomlValue(value);
+    }
+    else if (startsWith_String(key, "ui.") || startsWith_String(key, "doc.")) {
+        const int scope = startsWith_String(key, "ui.") ? 0 : 1;        
+        if (endsWith_String(key, ".height")) {
+            d->loadSpec->heightScale[scope] = (float) number_TomlValue(value);
+        }
+        if (endsWith_String(key, ".glyphscale")) {
+            d->loadSpec->glyphScale[scope] = (float) number_TomlValue(value);
+        }
+        else if (endsWith_String(key, ".voffset")) {
+            d->loadSpec->vertOffsetScale[scope] = (float) number_TomlValue(value);
+        }
     }
     else if (!cmp_String(key, "override") && value->type == boolean_TomlType) {
         iChangeFlags(d->loadSpec->flags, override_FontSpecFlag, value->value.boolean);
@@ -265,14 +307,20 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
         iForIndices(i, styles) {
             if (!cmp_String(key, styles[i]) && !d->loadSpec->styles[i]) {
                 iFontFile *ff = NULL;
-                iBlock *data = readFile_FontPack_(d, value->value.string);
-                if (data) {
-                    ff = new_FontFile();
-                    load_FontFile_(ff, data);
-                    pushBack_PtrArray(&fonts_.files, ff); /* centralized ownership */
-                    d->loadSpec->styles[i] = ff;
-                    delete_Block(data);
+                iString *fontFileId = concat_Path(d->loadPath, value->value.string);
+                if (!(ff = findFile_Fonts_(&fonts_, fontFileId))) {
+                    iBlock *data = readFile_FontPack_(d, value->value.string);
+                    if (data) {
+                        ff = new_FontFile();
+                        set_String(&ff->id, fontFileId);
+                        load_FontFile_(ff, data);
+                        pushBack_PtrArray(&fonts_.files, ff); /* centralized ownership */
+                        delete_Block(data);
+//                        printf("[FontPack] loaded file: %s\n", cstr_String(fontFileId));
+                    }
                 }
+                d->loadSpec->styles[i] = ff;
+                delete_String(fontFileId);
                 break;
             }
         }
@@ -290,7 +338,6 @@ static iBool load_FontPack_(iFontPack *d, const iString *ini) {
     setHandlers_TomlParser(toml, handleIniTable_FontPack_, handleIniKeyValue_FontPack_, d);
     if (parse_TomlParser(toml, ini)) {
         ok = iTrue;
-        //    fprintf(stderr, "[FontPack] error parsing %s\n", cstr_String(iniPath));
     }
     iAssert(d->loadSpec == NULL);
 //        d->loadPath = NULL;
@@ -331,21 +378,13 @@ iBool loadArchive_FontPack(iFontPack *d, const iArchive *zip) {
         initBlock_String(&ini, iniData);
         if (load_FontPack_(d, &ini)) {
             ok = iTrue;
-        }        
+        }
         deinit_String(&ini);
     }
     return ok;
 }
 
 /*----------------------------------------------------------------------------------------------*/
-
-static void unloadFiles_Fonts_(iFonts *d) {
-    /* TODO: Mark all files in font packs as not resident. */    
-    iForEach(PtrArray, i, &d->files) {
-        delete_FontFile(i.ptr);
-    }
-    clear_PtrArray(&d->files);
-}
 
 static void unloadFonts_Fonts_(iFonts *d) {
     iForEach(PtrArray, i, &d->packs) {
@@ -358,6 +397,11 @@ static void unloadFonts_Fonts_(iFonts *d) {
 static int cmpPriority_FontSpecPtr_(const void *a, const void *b) {
     const iFontSpec **p1 = (const iFontSpec **) a, **p2 = (const iFontSpec **) b;
     return -iCmp((*p1)->priority, (*p2)->priority); /* highest priority first */
+}
+
+static int cmpName_FontSpecPtr_(const void *a, const void *b) {
+    const iFontSpec **p1 = (const iFontSpec **) a, **p2 = (const iFontSpec **) b;
+    return cmpStringCase_String(&(*p1)->name, &(*p2)->name);
 }
 
 static void sortSpecs_Fonts_(iFonts *d) {
@@ -408,6 +452,18 @@ const iFontSpec *findSpec_Fonts(const char *fontId) {
         }
     }
     return NULL;
+}
+
+const iPtrArray *listSpecs_Fonts(iBool (*filterFunc)(const iFontSpec *)) {
+    iFonts *d = &fonts_;
+    iPtrArray *list = collectNew_PtrArray();
+    iConstForEach(PtrArray, i, &d->specOrder) {
+        if (filterFunc == NULL || filterFunc(i.ptr)) {
+            pushBack_PtrArray(list, i.ptr);
+        }
+    }
+    sort_Array(list, cmpName_FontSpecPtr_);
+    return list;
 }
 
 const iPtrArray *listSpecsByPriority_Fonts(void) {

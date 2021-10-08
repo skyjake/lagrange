@@ -171,7 +171,8 @@ iLocalDef iBool isMonospaced_Font(const iFont *d) {
 static iFont *font_Text_(enum iFontId id);
 
 static void init_Font(iFont *d, const iFontSpec *fontSpec, const iFontFile *fontFile,
-                      enum iFontSize sizeId, int height) {
+                      enum iFontSize sizeId, float height) {
+    const int scaleType = scaleType_FontSpec(sizeId);
     d->fontSpec = fontSpec;
     d->fontFile = fontFile;
     /* TODO: Nunito kerning fixes need to be a font parameter of its own. */
@@ -197,15 +198,9 @@ static void init_Font(iFont *d, const iFontSpec *fontSpec, const iFontFile *font
         d->family = emojiAndSymbols_TextFont;
     }
 #endif
-//    d->isMonospaced = (fontSpec->flags & monospace_FontSpecFlag) != 0;
-    d->height = height;
-    //iZap(d->font);
-//    stbtt_InitFont(&d->font, constData_Block(data), 0);
-//    int ascent, descent, emAdv;
-//    stbtt_GetFontVMetrics(&d->font, &ascent, &descent, NULL);
-//    stbtt_GetCodepointHMetrics(&d->font, 'M', &emAdv, NULL);
-    const float scale = fontSpec->scaling;
-    d->xScale = d->yScale = scaleForPixelHeight_FontFile(fontFile, height) * scale;
+    d->height = (int) (height * fontSpec->heightScale[scaleType]);
+    const float glyphScale = fontSpec->glyphScale[scaleType];
+    d->xScale = d->yScale = scaleForPixelHeight_FontFile(fontFile, d->height) * glyphScale;
     if (isMonospaced_Font(d)) {
         /* It is important that monospaced fonts align 1:1 with the pixel grid so that
            box-drawing characters don't have partially occupied edge pixels, leading to seams
@@ -217,8 +212,9 @@ static void init_Font(iFont *d, const iFontSpec *fontSpec, const iFontFile *font
     }
     d->emAdvance  = fontFile->emAdvance * d->xScale;
     d->baseline   = fontFile->ascent * d->yScale;
-    d->vertOffset = height * (1.0f - scale) / 2 * fontSpec->vertOffset;
+    d->vertOffset = d->height * (1.0f - glyphScale) / 2 * fontSpec->vertOffsetScale[scaleType];
     d->table = NULL;
+ //   printf("{%s} height:%d baseline:%d\n", cstr_String(&d->fontSpec->id), d->height, d->baseline);
 }
 
 static void deinit_Font(iFont *d) {
@@ -252,8 +248,8 @@ struct Impl_CacheRow {
 };
 
 struct Impl_Text {
-    enum iTextFont contentFont;
-    enum iTextFont headingFont;
+//    enum iTextFont contentFont;
+//    enum iTextFont headingFont;
     float          contentFontSize;
     iArray         fonts; /* fonts currently selected for use (incl. all styles/sizes) */
     int            overrideFontId; /* always checked for glyphs first, regardless of which font is used */
@@ -290,7 +286,8 @@ static void setupFontVariants_Text_(iText *d, const iFontSpec *spec, int baseId)
                       spec,
                       spec->styles[style],
                       sizeId,
-                      (sizeId < contentRegular_FontSize ? uiSize : textSize) * scale_FontSize(sizeId));
+                      (sizeId < contentRegular_FontSize ? uiSize : textSize) *
+                          scale_FontSize(sizeId));
         }
     }
 }
@@ -309,6 +306,11 @@ iLocalDef enum iFontSize sizeId_Text_(const iFont *d) {
 
 iLocalDef enum iFontStyle styleId_Text_(const iFont *d) {
     return (fontId_Text_(d) / max_FontSize) % max_FontStyle;
+}
+
+static const iFontSpec *tryFindSpec_(enum iPrefsString ps, const char *fallback) {
+    const iFontSpec *spec = findSpec_Fonts(cstr_String(&prefs_App()->strings[ps]));
+    return spec ? spec : findSpec_Fonts(fallback);
 }
 
 static void initFonts_Text_(iText *d) {
@@ -445,11 +447,11 @@ static void initFonts_Text_(iText *d) {
     /* First the mandatory fonts. */
     d->overrideFontId = -1;
     resize_Array(&d->fonts, auxiliary_FontId); /* room for the built-ins */
-    iAssert(auxiliary_FontId == documentHeading_FontId + maxVariants_Fonts);
-    setupFontVariants_Text_(d, findSpec_Fonts("default"), default_FontId);
-    setupFontVariants_Text_(d, findSpec_Fonts("iosevka"), monospace_FontId);
-    setupFontVariants_Text_(d, findSpec_Fonts("default"), documentBody_FontId);
-    setupFontVariants_Text_(d, findSpec_Fonts("default"), documentHeading_FontId);
+    setupFontVariants_Text_(d, tryFindSpec_(uiFont_PrefsString, "default"), default_FontId);
+    setupFontVariants_Text_(d, tryFindSpec_(monospaceFont_PrefsString, "iosevka"), monospace_FontId);
+    setupFontVariants_Text_(d, tryFindSpec_(headingFont_PrefsString, "default"), documentHeading_FontId);
+    setupFontVariants_Text_(d, tryFindSpec_(bodyFont_PrefsString, "default"), documentBody_FontId);
+    setupFontVariants_Text_(d, tryFindSpec_(monospaceDocumentFont_PrefsString, "iosevka-body"), documentMonospace_FontId);
     /* Check if there are auxiliary fonts available and set those up, too. */
     iConstForEach(PtrArray, s, listSpecsByPriority_Fonts()) {
         const iFontSpec *spec = s.ptr;
@@ -459,17 +461,6 @@ static void initFonts_Text_(iText *d) {
             setupFontVariants_Text_(d, spec, fontId);
         }
     }
-#if 0
-    iForIndices(i, fontData) {
-        iFont *font = font_Text_(i);
-        init_Font(font,
-                  fontData[i].ttf,
-                  fontData[i].size,
-                  fontData[i].scaling,
-                  fontData[i].sizeId,
-                  fontData[i].ttf == &fontIosevkaTermExtended_Embedded);
-    }
-#endif
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }
 
@@ -544,8 +535,8 @@ void init_Text(iText *d, SDL_Renderer *render) {
     iText *oldActive = activeText_;
     activeText_ = d;
     init_Array(&d->fonts, sizeof(iFont));
-    d->contentFont     = nunito_TextFont;
-    d->headingFont     = nunito_TextFont;
+//    d->contentFont     = nunito_TextFont;
+//    d->headingFont     = nunito_TextFont;
     d->contentFontSize = contentScale_Text_;
     d->ansiEscape      = new_RegExp("[[()]([0-9;AB]*)m", 0);
     d->render          = render;
@@ -579,21 +570,15 @@ void setOpacity_Text(float opacity) {
     SDL_SetTextureAlphaMod(activeText_->cache, iClamp(opacity, 0.0f, 1.0f) * 255 + 0.5f);
 }
 
-void setContentFont_Text(iText *d, enum iTextFont font) {
-    if (d->contentFont != font) {
-        d->contentFont = font;
-        resetFonts_Text(d);
-    }
-}
+//void setFont_Text(iText *d, int fontId, const char *fontSpecId) {
+//    setupFontVariants_Text_(d, findSpec_Fonts(fontSpecId), fontId);
+//    if (d->contentFont != font) {
+//        d->contentFont = font;
+//        resetFonts_Text(d);
+//    }
+//}
 
-void setHeadingFont_Text(iText *d, enum iTextFont font) {
-    if (d->headingFont != font) {
-        d->headingFont = font;
-        resetFonts_Text(d);
-    }
-}
-
-void setContentFontSize_Text(iText *d, float fontSizeFactor) {
+void setDocumentFontSize_Text(iText *d, float fontSizeFactor) {
     fontSizeFactor *= contentScale_Text_;
     iAssert(fontSizeFactor > 0);
     if (iAbs(d->contentFontSize - fontSizeFactor) > 0.001f) {

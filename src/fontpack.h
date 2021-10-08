@@ -50,9 +50,8 @@ enum iFontSize {
     contentBig_FontSize,
     contentLarge_FontSize,
     contentHuge_FontSize,
-    contentMonoSmall_FontSize,
-    contentMono_FontSize,
-    contentSmall_FontSize,
+    contentTiny_FontSize,
+    contentSmall_FontSize, /* e.g., preformatted block scaled smaller to fit */
     max_FontSize
 };
 
@@ -84,6 +83,7 @@ iDeclareType(FontFile)
 iDeclareTypeConstruction(FontFile)
     
 struct Impl_FontFile {
+    iString         id; /* for detecting when the same file is used in many places */
     enum iFontStyle style;
     iBlock          sourceData;
     stbtt_fontinfo  stbInfo;
@@ -112,13 +112,19 @@ struct Impl_FontSpec {
     iString name; /* human-readable label */
     int     flags;
     int     priority;
-    float   scaling;
-    float   vertOffset;
+    float   heightScale[2];     /* overall height scaling; ui, document */
+    float   glyphScale[2];      /* ui, document */
+    float   vertOffsetScale[2]; /* ui, document */
     const iFontFile *styles[max_FontStyle];
 };
+
+iLocalDef int scaleType_FontSpec(enum iFontSize sizeId) {
+    return sizeId / contentRegular_FontSize;
+}
  
 void    init_Fonts      (const char *userDir);
 void    deinit_Fonts    (void);
 
 const iFontSpec *   findSpec_Fonts              (const char *fontId);
+const iPtrArray *   listSpecs_Fonts             (iBool (*filterFunc)(const iFontSpec *));
 const iPtrArray *   listSpecsByPriority_Fonts   (void);

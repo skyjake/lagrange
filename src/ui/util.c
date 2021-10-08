@@ -1931,7 +1931,38 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
         id);
 }
 
+static iBool proportionalFonts_(const iFontSpec *spec) {
+    return (spec->flags & monospace_FontSpecFlag) == 0 && ~spec->flags & auxiliary_FontSpecFlag;
+}
+
+static iBool monospaceFonts_(const iFontSpec *spec) {
+    return (spec->flags & monospace_FontSpecFlag) != 0 && ~spec->flags & auxiliary_FontSpecFlag;
+}
+
 static const iArray *makeFontItems_(const char *id) {
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    if (!startsWith_CStr(id, "mono")) {
+        iConstForEach(PtrArray, i, listSpecs_Fonts(proportionalFonts_)) {
+            const iFontSpec *spec = i.ptr;
+            pushBack_Array(
+                items,
+                &(iMenuItem){ cstr_String(&spec->name),
+                              0,
+                              0,
+                              format_CStr("!font.set %s:%s", id, cstr_String(&spec->id)) });
+        }
+        pushBack_Array(items, &(iMenuItem){ "---" });
+    }
+    iConstForEach(PtrArray, j, listSpecs_Fonts(monospaceFonts_)) {
+        const iFontSpec *spec = j.ptr;
+        pushBack_Array(
+            items,
+            &(iMenuItem){ cstr_String(&spec->name),
+                          0,
+                          0,
+                          format_CStr("!font.set %s:%s", id, cstr_String(&spec->id)) });
+    }
+#if 0
     const struct {
         const char *   name;
         enum iTextFont cfgId;
@@ -1943,7 +1974,6 @@ static const iArray *makeFontItems_(const char *id) {
                   { "Tinos", tinos_TextFont },
                   { "---", -1 },
                   { "Iosevka", iosevka_TextFont } };
-    iArray *items = collectNew_Array(sizeof(iMenuItem));
     iForIndices(i, fonts) {
         pushBack_Array(items,
                        &(iMenuItem){ fonts[i].name,
@@ -1953,17 +1983,19 @@ static const iArray *makeFontItems_(const char *id) {
                                          ? format_CStr("!%s.set arg:%d", id, fonts[i].cfgId)
                                          : NULL });
     }
+#endif
     pushBack_Array(items, &(iMenuItem){ NULL }); /* terminator */
     return items;
 }
 
 static void addFontButtons_(iWidget *parent, const char *id) {
     const iArray *items = makeFontItems_(id);
-    iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans 3",
+    size_t widestIndex = findWidestLabel_MenuItem(constData_Array(items), size_Array(items));
+    iLabelWidget *button = makeMenuButton_LabelWidget(constValue_Array(items, widestIndex, iMenuItem).label,
                                                       constData_Array(items), size_Array(items));
     setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
                               uiBackgroundMenu_ColorId);
-    setId_Widget(as_Widget(button), format_CStr("prefs.%s", id));
+    setId_Widget(as_Widget(button), format_CStr("prefs.font.%s", id));
     addChildFlags_Widget(parent, iClob(button), alignLeft_WidgetFlag);
 }
 
@@ -2170,11 +2202,11 @@ iWidget *makePreferences_Widget(void) {
         { NULL }
     };
     const iMenuItem lineWidthItems[] = {
-        { "button id:prefs.linewidth.50 text:\u20132",                 0, 0, "linewidth.set arg:50" },
-        { "button id:prefs.linewidth.58 text:\u20131",                 0, 0, "linewidth.set arg:58" },
-        { "button id:prefs.linewidth.66 label:prefs.linewidth.normal", 0, 0, "linewidth.set arg:66" },
-        { "button id:prefs.linewidth.76 text:+1",                      0, 0, "linewidth.set arg:76" },
-        { "button id:prefs.linewidth.86 text:+2",                      0, 0, "linewidth.set arg:86" },
+        { "button id:prefs.linewidth.30 text:\u20132",                 0, 0, "linewidth.set arg:30" },
+        { "button id:prefs.linewidth.34 text:\u20131",                 0, 0, "linewidth.set arg:34" },
+        { "button id:prefs.linewidth.38 label:prefs.linewidth.normal", 0, 0, "linewidth.set arg:38" },
+        { "button id:prefs.linewidth.43 text:+1",                      0, 0, "linewidth.set arg:43" },
+        { "button id:prefs.linewidth.48 text:+2",                      0, 0, "linewidth.set arg:48" },
         { "button id:prefs.linewidth.1000 label:prefs.linewidth.fill", 0, 0, "linewidth.set arg:1000" },
         { NULL }
     };
@@ -2491,10 +2523,14 @@ iWidget *makePreferences_Widget(void) {
     /* Fonts. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.fonts}", '4', &headings, &values), "prefs.page.fonts");
         /* Fonts. */ {
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.headingfont}")));
-            addFontButtons_(values, "headingfont");
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font}")));
-            addFontButtons_(values, "font");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
+            addFontButtons_(values, "ui");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.heading}")));
+            addFontButtons_(values, "heading");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.body}")));
+            addFontButtons_(values, "body");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.mono}")));
+            addFontButtons_(values, "mono");
             addDialogPadding_(headings, values);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.mono}")));
             iWidget *mono = new_Widget(); {
@@ -2511,6 +2547,9 @@ iWidget *makePreferences_Widget(void) {
                 updateSize_LabelWidget((iLabelWidget *) tog);
             }
             addChildFlags_Widget(values, iClob(mono), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.monodoc}")));
+            addFontButtons_(values, "monodoc");
+            addDialogPadding_(headings, values);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.boldlink}")));
             iWidget *boldLink = new_Widget(); {
                 /* TODO: Add a utility function for this type of toggles? (also for above) */
@@ -2528,11 +2567,11 @@ iWidget *makePreferences_Widget(void) {
             }
             addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             addDialogPadding_(headings, values);
-            /* Custom font. */ {
-                iInputWidget *customFont = new_InputWidget(0);
-                setHint_InputWidget(customFont, "${hint.prefs.userfont}");
-                addPrefsInputWithHeading_(headings, values, "prefs.userfont", iClob(customFont));
-            }
+//            /* Custom font. */ {
+//                iInputWidget *customFont = new_InputWidget(0);
+//                setHint_InputWidget(customFont, "${hint.prefs.userfont}");
+//                addPrefsInputWithHeading_(headings, values, "prefs.userfont", iClob(customFont));
+//            }
         }        
     }
     /* Style. */ {

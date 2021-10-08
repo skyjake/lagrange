@@ -566,7 +566,8 @@ static iBool willPerformSearchQuery_(const iString *userInput) {
     if (isEmpty_String(clean)) {
         return iFalse;
     }
-    return !isEmpty_String(&prefs_App()->searchUrl) && !isLikelyUrl_String(userInput);
+    return !isEmpty_String(&prefs_App()->strings[searchUrl_PrefsString]) &&
+           !isLikelyUrl_String(userInput);
 }
 
 static void updateUrlInputContentPadding_(iWidget *navBar) {
