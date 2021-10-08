@@ -841,7 +841,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
                         (isPortraitPhone_App() ? drawBackgroundToVerticalSafeArea_WidgetFlag : 0),
                     iTrue);
     if (!isPortraitPhone_App()) {
-        setFrameColor_Widget(menu, uiSeparator_ColorId);
+        setFrameColor_Widget(menu, uiBackgroundSelected_ColorId);
     }
     makeMenuItems_Widget(menu, items, n);
     addChild_Widget(parent, menu);

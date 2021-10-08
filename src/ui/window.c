@@ -1192,8 +1192,8 @@ void draw_Window(iWindow *d) {
         drawCount_ = 0;
 #endif
     }
-    drawRectThickness_Paint(
-        &p, (iRect){ zero_I2(), sub_I2(d->size, one_I2()) }, gap_UI / 4, uiSeparator_ColorId);
+    drawRectThickness_Paint(&p, (iRect){ zero_I2(), sub_I2(d->size, one_I2()) }, gap_UI / 4,
+                            uiBackgroundSelected_ColorId);
     setCurrent_Root(NULL);
     SDL_RenderPresent(d->render);
 }
