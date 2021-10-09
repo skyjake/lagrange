@@ -21,16 +21,17 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "fontpack.h"
+#include "embedded.h"
+#include "app.h"
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/array.h>
 #include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/toml.h>
-
-#include "embedded.h"
 
 /* TODO: Clean up and/or reorder this file, it's a bit unorganized. */
 
@@ -196,10 +197,13 @@ void init_FontPack(iFontPack *d) {
 }
 
 void deinit_FontPack(iFontPack *d) {
+    delete_String(d->loadPath);
     iForEach(Array, i, &d->fonts) {
         deinit_FontSpec(i.value);
     }
     deinit_Array(&d->fonts);
+    iAssert(d->archive == NULL);
+    iAssert(d->loadSpec == NULL);
 }
 
 iDefineTypeConstruction(FontPack)
@@ -208,8 +212,11 @@ void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart
     iFontPack *d = context;
     if (isStart) {
         iAssert(!d->loadSpec);
-        d->loadSpec = new_FontSpec();
-        set_String(&d->loadSpec->id, table);
+        /* Each font ID must be unique. */
+        if (!findSpec_Fonts(cstr_String(table))) {
+            d->loadSpec = new_FontSpec();
+            set_String(&d->loadSpec->id, table);
+        }
     }
     else {
         /* Set fallback font files. */ {
@@ -265,7 +272,8 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
         d->loadSpec->priority = (int) value->value.int64;        
     }
     else if (!cmp_String(key, "height")) {
-        d->loadSpec->heightScale[0] = d->loadSpec->heightScale[1] = (float) number_TomlValue(value);
+        d->loadSpec->heightScale[0] = d->loadSpec->heightScale[1] =
+            iMin(2.0f, (float) number_TomlValue(value));
     }
     else if (!cmp_String(key, "glyphscale")) {
         d->loadSpec->glyphScale[0] = d->loadSpec->glyphScale[1] = (float) number_TomlValue(value);
@@ -277,7 +285,7 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
     else if (startsWith_String(key, "ui.") || startsWith_String(key, "doc.")) {
         const int scope = startsWith_String(key, "ui.") ? 0 : 1;        
         if (endsWith_String(key, ".height")) {
-            d->loadSpec->heightScale[scope] = (float) number_TomlValue(value);
+            d->loadSpec->heightScale[scope] = iMin(2.0f, (float) number_TomlValue(value));
         }
         if (endsWith_String(key, ".glyphscale")) {
             d->loadSpec->glyphScale[scope] = (float) number_TomlValue(value);
@@ -330,18 +338,12 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
 static iBool load_FontPack_(iFontPack *d, const iString *ini) {
     iBeginCollect();
     iBool ok = iFalse;
-//    iFile *f = iClob(new_File(iniPath));
-    //if (open_File(f, text_FileMode | readOnly_FileMode)) {
-//        d->loadPath = collect_String(newRange_String(dirName_Path(iniPath)));
-//    iString *src = collect_String(readString_File(f));
     iTomlParser *toml = collect_TomlParser(new_TomlParser());
     setHandlers_TomlParser(toml, handleIniTable_FontPack_, handleIniKeyValue_FontPack_, d);
     if (parse_TomlParser(toml, ini)) {
         ok = iTrue;
     }
     iAssert(d->loadSpec == NULL);
-//        d->loadPath = NULL;
-//    }
     iEndCollect();
     return ok;
 }
@@ -381,6 +383,7 @@ iBool loadArchive_FontPack(iFontPack *d, const iArchive *zip) {
         }
         deinit_String(&ini);
     }
+    d->archive = NULL;
     return ok;
 }
 
@@ -423,13 +426,65 @@ void init_Fonts(const char *userDir) {
     init_PtrArray(&d->specOrder);
     /* Load the required fonts. */ {
         iFontPack *pack = new_FontPack();
-        iArchive *defaultPack = new_Archive();
-        openData_Archive(defaultPack, &fontpackDefault_Embedded);
-        loadArchive_FontPack(pack, defaultPack);
-        iRelease(defaultPack);
+        iArchive *arch = new_Archive();
+        openData_Archive(arch, &fontpackDefault_Embedded);
+        loadArchive_FontPack(pack, arch); /* should never fail if we've made it this far */
+        iRelease(arch);
         pushBack_PtrArray(&d->packs, pack);
     }
-    /* TODO: find and load .fontpack files in known locations */
+    /* Find and load .fontpack files in known locations. */ {
+        const char *locations[] = {
+            ".",
+            "./fonts",
+            "../share/lagrange",
+            "../../share/lagrange",
+            concatPath_CStr(userDir, "fonts"),
+            userDir,
+        };
+        const iString *execDir = collectNewRange_String(dirName_Path(execPath_App()));
+        iForIndices(i, locations) {
+            const iString *dir = concatCStr_Path(execDir, locations[i]);
+            iForEach(DirFileInfo, entry, iClob(new_DirFileInfo(dir))) {
+                const iString *entryPath = path_FileInfo(entry.value);
+                if (endsWithCase_String(entryPath, ".fontpack")) {
+                    iArchive *arch = new_Archive();
+                    if (openFile_Archive(arch, entryPath)) {
+                        iFontPack *pack = new_FontPack();
+                        pack->loadPath = copy_String(entryPath);
+                        if (loadArchive_FontPack(pack, arch)) {
+                            pushBack_PtrArray(&d->packs, pack);
+                        }
+                        else {
+                            delete_FontPack(pack);
+                            fprintf(stderr,
+                                    "[fonts] errors detected in fontpack: %s\n",
+                                    cstr_String(entryPath));
+                        }
+                    }
+                    iRelease(arch);
+                }
+            }
+        }
+    }
+    /* A standalone .ini file in the config directory. */ {
+        const iString *userIni = collectNewCStr_String(concatPath_CStr(userDir, "fonts.ini"));
+        iFile *f = new_File(userIni);
+        if (open_File(f, text_FileMode | readOnly_FileMode)) {
+            const iString *src = collect_String(readString_File(f));
+            iFontPack *pack = new_FontPack();
+            pack->loadPath = copy_String(userIni);
+            if (load_FontPack_(pack, src)) {
+                pushBack_PtrArray(&d->packs, pack);
+            }
+            else {
+                delete_FontPack(pack);
+                fprintf(stderr,
+                        "[fonts] errors detected in fonts.ini: %s\n",
+                        cstr_String(userIni));                
+            }
+        }
+        iRelease(f);
+    }
     sortSpecs_Fonts_(d);
 }
 

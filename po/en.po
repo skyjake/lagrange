@@ -1448,14 +1448,27 @@ msgstr "Text Color"
 msgid "prefs.imagestyle.preformat"
 msgstr "Preformatted Color"
 
-msgid "prefs.headingfont"
-msgstr "Heading font:"
+msgid "prefs.font.ui"
+msgstr "UI:"
+
+msgid "prefs.font.heading"
+msgstr "Headings:"
+
+msgid "prefs.font.body"
+msgstr "Body:"
+
+msgid "prefs.font.mono"
+msgstr "Preformatted:"
 
 msgid "prefs.font"
 msgstr "Body font:"
 
 msgid "prefs.mono"
 msgstr "Monospace body:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Monospace font:"
 
 msgid "prefs.mono.gemini"
 msgstr "Gemini"

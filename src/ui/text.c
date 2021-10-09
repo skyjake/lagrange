@@ -472,7 +472,8 @@ static void deinitFonts_Text_(iText *d) {
 }
 
 static int maxGlyphHeight_Text_(const iText *d) {
-    return 2 * d->contentFontSize * fontSize_UI;
+    /* Huge size is 2 * contentFontSize. */
+    return 4 * d->contentFontSize * fontSize_UI;
 }
 
 static void initCache_Text_(iText *d) {
@@ -491,7 +492,7 @@ static void initCache_Text_(iText *d) {
     /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
        once at least one glyph is stored. */
     for (int h = d->cacheRowAllocStep;
-         h <= 2.5 * textSize + d->cacheRowAllocStep;
+         h <= 5 * textSize + d->cacheRowAllocStep;
          h += d->cacheRowAllocStep) {
         pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
     }
