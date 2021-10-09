@@ -1407,7 +1407,8 @@ void drawBackground_Widget(const iWidget *d) {
             fillRect_Paint(&p, rect, d->bgColor);
         }
         if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {
-            drawRectThickness_Paint(&p, rect, gap_UI / 4, d->frameColor);
+            drawRectThickness_Paint(&p, adjusted_Rect(rect, zero_I2(), neg_I2(one_I2())),
+                                    gap_UI / 4, d->frameColor);
         }
     }
     if (d->flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag)) {
