@@ -62,6 +62,7 @@ struct Impl_Prefs {
     int              langTo;
     /* Window */
     iBool            useSystemTheme;
+    enum iColorTheme systemPreferredColorTheme[2]; /* dark, light */
     enum iColorTheme theme;    
     enum iColorAccent accent;
     iBool            customFrame; /* when LAGRANGE_ENABLE_CUSTOM_FRAME is defined */

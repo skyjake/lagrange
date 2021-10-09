@@ -32,6 +32,7 @@ void init_Prefs(iPrefs *d) {
     d->langFrom          = 3; /* fr */
     d->langTo            = 2; /* en */
     d->useSystemTheme    = iTrue;
+    d->systemPreferredColorTheme[0] = d->systemPreferredColorTheme[1] = -1;
     d->theme             = dark_ColorTheme;
     d->accent            = cyan_ColorAccent;
     d->customFrame       = iFalse; /* needs some more work to be default */

@@ -124,6 +124,7 @@ struct Impl_App {
     uint32_t     elapsedSinceLastTicker;
     iBool        isRunning;
     iBool        isRunningUnderWindowSystem;
+    iBool        isDarkSystemTheme;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
     uint32_t     lastEventTime;
@@ -246,7 +247,10 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
-    appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
+    appendFormat_String(str, "ostheme arg:%d preferdark:%d preferlight:%d\n",
+                        d->prefs.useSystemTheme,
+                        d->prefs.systemPreferredColorTheme[0],
+                        d->prefs.systemPreferredColorTheme[1]);
     appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
     appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
@@ -657,6 +661,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #else
     d->isRunningUnderWindowSystem = iTrue;
 #endif
+    d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone is
        not a reliable source of this information, particularly when it comes to different
@@ -1847,7 +1852,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     else if (equal_Command(cmd, "theme.changed")) {
         updatePrefsThemeButtons_(d);
         if (!argLabel_Command(cmd, "auto")) {
-            setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), iFalse);
+            setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), prefs_App()->useSystemTheme);
         }
     }
     else if (equalWidget_Command(cmd, d, "input.resized")) {
@@ -2266,7 +2271,15 @@ iBool handleCommand_App(const char *cmd) {
         const int isAuto = argLabel_Command(cmd, "auto");
         d->prefs.theme = arg_Command(cmd);
         if (!isAuto) {
-            postCommand_App("ostheme arg:0");
+            if (isDark_ColorTheme(d->prefs.theme) && d->isDarkSystemTheme) {
+                d->prefs.systemPreferredColorTheme[0] = d->prefs.theme;
+            }
+            else if (!isDark_ColorTheme(d->prefs.theme) && !d->isDarkSystemTheme) {
+                d->prefs.systemPreferredColorTheme[1] = d->prefs.theme;
+            }
+            else {
+                postCommand_App("ostheme arg:0");
+            }
         }
         setThemePalette_Color(d->prefs.theme);
         postCommandf_App("theme.changed auto:%d", isAuto);
@@ -2282,6 +2295,12 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "ostheme")) {
         d->prefs.useSystemTheme = arg_Command(cmd);
+        if (hasLabel_Command(cmd, "preferdark")) {
+            d->prefs.systemPreferredColorTheme[0] = argLabel_Command(cmd, "preferdark");
+        }
+        if (hasLabel_Command(cmd, "preferlight")) {
+            d->prefs.systemPreferredColorTheme[1] = argLabel_Command(cmd, "preferlight");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "doctheme.dark.set")) {
@@ -2944,12 +2963,15 @@ iBool handleCommand_App(const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "os.theme.changed")) {
+        const int dark = argLabel_Command(cmd, "dark");
+        d->isDarkSystemTheme = dark;
         if (d->prefs.useSystemTheme) {
-            const int dark     = argLabel_Command(cmd, "dark");
-            const int contrast = argLabel_Command(cmd, "contrast");
+            const int contrast  = argLabel_Command(cmd, "contrast");
+            const int preferred = d->prefs.systemPreferredColorTheme[dark ^ 1];
             postCommandf_App("theme.set arg:%d auto:1",
-                             dark ? (contrast ? pureBlack_ColorTheme : dark_ColorTheme)
-                                  : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
+                             preferred >= 0 ? preferred
+                             : dark ? (contrast ? pureBlack_ColorTheme : dark_ColorTheme)
+                                    : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
         }
         return iFalse;
     }
