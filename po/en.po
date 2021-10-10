@@ -1195,6 +1195,9 @@ msgstr "YYYY-MM-DD Links"
 msgid "dlg.feed.type.headings"
 msgstr "New Headings"
 
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignore HTTP(S) links:"
+
 msgid "dlg.feed.save"
 msgstr "Save Settings"
 

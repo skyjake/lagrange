@@ -2782,27 +2782,27 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         }
         int id = argLabel_Command(cmd, "bmid");
         const iBool headings = isSelected_Widget(findChild_Widget(dlg, "feedcfg.type.headings"));
-        const iString *tags = collectNewFormat_String("subscribed%s", headings ? " headings" : "");
+        const iBool ignoreWeb = isSelected_Widget(findChild_Widget(dlg, "feedcfg.ignoreweb"));
         if (!id) {
             const size_t numSubs = numSubscribed_Feeds();
             const iString *url   = url_DocumentWidget(document_App());
-            add_Bookmarks(bookmarks_App(),
-                          url,
-                          feedTitle,
-                          tags,
-                          siteIcon_GmDocument(document_DocumentWidget(document_App())));
+            id = add_Bookmarks(bookmarks_App(),
+                               url,
+                               feedTitle,
+                               NULL,
+                               siteIcon_GmDocument(document_DocumentWidget(document_App())));
             if (numSubs == 0) {
                 /* Auto-refresh after first addition. */
+                /* TODO: Also when settings changed? */
                 postCommand_App("feeds.refresh");
             }
         }
-        else {
-            iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
-            if (bm) {
-                set_String(&bm->title, feedTitle);
-                set_String(&bm->tags, tags);
-            }
-        }
+        iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
+        iAssert(bm);
+        set_String(&bm->title, feedTitle);
+        addOrRemoveTag_Bookmark(bm, subscribed_BookmarkTag, iTrue);
+        addOrRemoveTag_Bookmark(bm, headings_BookmarkTag, headings);
+        addOrRemoveTag_Bookmark(bm, ignoreWeb_BookmarkTag, ignoreWeb);
         postCommand_App("bookmarks.changed");
         setupSheetTransition_Mobile(dlg, iFalse);
         destroy_Widget(dlg);
@@ -2831,6 +2831,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
             { format_CStr("title id:feedcfg.heading text:%s", headingText) },
             { "input id:feedcfg.title text:${dlg.feed.title}" },
             { "radio id:dlg.feed.entrytype", 0, 0, (const void *) typeItems },
+            { "toggle id:feedcfg.ignoreweb text:${dlg.feed.ignoreweb}" },
             { NULL }
         }, actions, iElemCount(actions));
     }
@@ -2849,6 +2850,8 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
             addRadioButton_(types, "feedcfg.type.headings", "${dlg.feed.type.headings}", "feedcfg.type arg:1");
         }
         addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.feed.ignoreweb}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("feedcfg.ignoreweb")));
         iWidget *buttons =
             addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         setId_Widget(child_Widget(buttons, childCount_Widget(buttons) - 1), "feedcfg.save");
@@ -2867,6 +2870,8 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
                                              : "feedcfg.type.gemini"),
                         selected_WidgetFlag,
                         iTrue);
+        setToggle_Widget(findChild_Widget(dlg, "feedcfg.ignoreweb"),
+                         hasTag_Bookmark(bm, ignoreWeb_BookmarkTag));
         setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
     }
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag);
