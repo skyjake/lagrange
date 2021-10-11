@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.7.2
+* Fixed regressions in text selection, for example when marking text leftwards from the start position or when starting from outside any text run. 
+* Fixed a crash when clicking on Outline sidebar items before a page has finished loading.
+* Gopher: Handle the `p` line type (PNG image).
+
 ## 1.7.1
 * Fixed feed entries forgetting their (un)read status after several months.
 * Fixed feed entries being discarded before they are removed from their source feed, causing them to reappear on the next refresh.
