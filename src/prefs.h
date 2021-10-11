@@ -81,6 +81,7 @@ struct Impl_Prefs {
     iBool            loadImageInsteadOfScrolling;
     iBool            collapsePreOnLoad;
     iBool            openArchiveIndexPages;
+    iBool            addBookmarksToBottom;
     /* Network */
     iBool            decodeUserVisibleURLs;
     int              maxCacheSize; /* MB */

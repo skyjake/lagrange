@@ -2381,6 +2381,7 @@ iWidget *makePreferences_Widget(void) {
         setUrlContent_InputWidget(searchUrl, iTrue);
         addDialogPadding_(headings, values);
         addDialogToggle_(headings, values, "${prefs.hoverlink}", "prefs.hoverlink");
+        addDialogToggle_(headings, values, "${prefs.bookmarks.addbottom}", "prefs.bookmarks.addbottom");
         addDialogToggle_(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
         if (deviceType_App() != phone_AppDeviceType) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pinsplit}")));
