@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-08-05 14:07+0000\n"
+"PO-Revision-Date: 2021-10-03 04:50+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -1792,7 +1792,7 @@ msgid "bookmark.export.format.tags"
 msgstr "Les étiquettes sont définies par les titres de niveau 2."
 
 msgid "menu.page.upload"
-msgstr "Téléverser la page avec Titan"
+msgstr "Téléverser la page avec Titan…"
 
 msgid "heading.upload"
 msgstr "TÉLÉVERSEMENT AVEC TITAN"
@@ -1813,7 +1813,7 @@ msgid "upload.file.size"
 msgstr "Taille du fichier :"
 
 msgid "upload.token"
-msgstr "Jeton de téléversement :"
+msgstr "Jeton :"
 
 msgid "hint.upload.token"
 msgstr "voir les instructions du serveur"
@@ -1829,3 +1829,106 @@ msgstr "Basculer entre les côtés"
 
 msgid "error.certverify"
 msgstr "Certificat inconnu"
+
+msgid "menu.newfolder"
+msgstr "Nouveau dossier…"
+
+msgid "menu.sort.alpha"
+msgstr "Tri alphabétique"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Voulez-vous vraiment supprimer le signet de ce dossier ?"
+msgstr[1] ""
+"Voulez-vous vraiment supprimer la totalité des %u signets de ce dossier ?"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Importer un fichier de certificat/clé"
+
+msgid "heading.bookmark.tags"
+msgstr "ÉTIQUETTES SPÉCIALES"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Entrez le nom du nouveau dossier :"
+
+msgid "menu.unexpire"
+msgstr "Ignorer l’expiration et continuer le chargement"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Paramètres"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Tout sélectionner"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Supprimer"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Annuler"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "SUPPRESSION DE SIGNETS"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Supprimer le signet"
+msgstr[1] "Supprimer les %u signets"
+
+msgid "upload.id"
+msgstr "Identité :"
+
+msgid "dlg.upload.id.none"
+msgstr "Aucun"
+
+msgid "dlg.upload.id.default"
+msgstr "Par défaut"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Téléverser du texte brut"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Téléverser un fichier"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Sélectionner un fichier"
+
+msgid "heading.addfolder"
+msgstr "AJOUT DE DOSSIER"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Nouveau dossier"
+
+msgid "dlg.addfolder"
+msgstr "Ajouter un dossier"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "PARAMÈTRES"
+
+msgid "prefs.imagestyle"
+msgstr "Colorisation d'images :"
+
+msgid "prefs.imagestyle.original"
+msgstr "Aucun"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Niveaux de gris"
+
+msgid "prefs.imagestyle.text"
+msgstr "Couleur du texte"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Couleur du préformaté"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Ajouter un dossier de signets"

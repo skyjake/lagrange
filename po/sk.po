@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-08-12 08:52+0000\n"
-"Last-Translator: Marek Ľach <mareklachbc@tutanota.com>\n"
+"PO-Revision-Date: 2021-10-07 16:50+0000\n"
+"Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Slovak <http://weblate.skyjake.fi/projects/lagrange/ui/sk/>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -106,7 +106,7 @@ msgid "menu.title.identity"
 msgstr "Totožnosť"
 
 msgid "menu.title.help"
-msgstr "Pomoc"
+msgstr "Nápoveda"
 
 msgid "menu.newtab"
 msgstr "Nová karta"
@@ -283,3 +283,7 @@ msgstr "Kopírovať adresu stránky"
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.identities"
 msgstr "Ukázať totožnosti"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"

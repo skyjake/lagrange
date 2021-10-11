@@ -45,6 +45,28 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.7.2" date="2021-10-11">
+            <description>
+                <p>Version 1.7 improves bookmark management with folders and manual
+                    sorting, and has multiple UI enhancements including unconstrained
+                    popup menus, upload identity selection, button focus switching
+                    with Tab key, and new UI languages (e.g., Esperanto). A new image
+                    colorization option has been added for enforcing a stricter visual
+                    style.</p>
+                <p>Fixes in v1.7.2:</p>
+                <ul>
+                    <li>Regressions in text selection, for example when marking 
+                        text leftwards from the start position or when starting from 
+                        outside any text run.</li>
+                    <li>Crash when clicking on Outline sidebar items before a
+                        page has finished loading.</li>
+                    <li>Gopher: Handle the "p" line type (PNG image).</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.7.2</url>
+        </release>
         <release version="1.7.1" date="2021-10-03">
             <description>
                 <p>Version 1.7 improves bookmark management with folders and manual

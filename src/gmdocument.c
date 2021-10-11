@@ -2065,14 +2065,20 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
     if (pos.y < top_Rect(d->bounds)) {
         return (iRangecc){ d->text.start, d->text.start };
     }
+    if (pos.y > bottom_Rect(d->bounds)) {
+        return (iRangecc){ d->text.end, d->text.end };
+    }
     const int x = pos.x - left_Rect(d->bounds);
     if (x <= 0) {
         return (iRangecc){ d->text.start, d->text.start };
     }
+    if (x > d->bounds.size.x) {
+        return (iRangecc){ d->text.end, d->text.end };
+    }
     iRangecc loc;
     tryAdvanceNoWrap_Text(d->font, d->text, x, &loc.start);
     loc.end = loc.start;
-    if (!contains_Range(&d->text, loc.start)) {
+    if (!contains_Range(&d->text, loc.start) && loc.start != d->text.end) {
         return iNullRange; /* it's some other text */
     }
     iChar ch;

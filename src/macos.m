@@ -570,7 +570,11 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iM
             deinit_String(&itemTitle);
             [item setTarget:commands];
             if (isChecked) {
+#if defined (__MAC_10_13)
                 [item setState:NSControlStateValueOn];
+#else
+                [item setState:NSOnState];
+#endif
                 selectedItem = item;
             }
             [item setEnabled:!isDisabled];
