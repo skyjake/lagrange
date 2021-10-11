@@ -570,7 +570,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iM
             deinit_String(&itemTitle);
             [item setTarget:commands];
             if (isChecked) {
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_13
+#if defined (__MAC_10_13)
                 [item setState:NSControlStateValueOn];
 #else
                 [item setState:NSOnState];
