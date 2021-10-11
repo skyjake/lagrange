@@ -570,7 +570,11 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iM
             deinit_String(&itemTitle);
             [item setTarget:commands];
             if (isChecked) {
+#if defined (__MAC_10_13)
                 [item setState:NSControlStateValueOn];
+#else
+                [item setState:NSOnState];
+#endif
                 selectedItem = item;
             }
             [item setEnabled:!isDisabled];
@@ -664,7 +668,8 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
     }
     windowCoord.y = window->size.y - windowCoord.y;
     windowCoord = divf_I2(windowCoord, window->pixelRatio);
-    NSPoint screenPoint = [nsWindow convertPointToScreen:(CGPoint){ windowCoord.x, windowCoord.y }];
+    NSPoint screenPoint = [nsWindow convertRectToScreen:(CGRect){ { windowCoord.x, windowCoord.y }, 
+								  { 0, 0 } }].origin;
     NSMenuItem *selectedItem = makeMenuItems_(menu, menuCommands, items, n);
     [menuCommands setSource:source];
     if (isCentered) {

@@ -876,10 +876,12 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
     switch (d->mode) {
         case documentOutline_SidebarMode: {
             const iGmDocument *doc = document_DocumentWidget(document_App());
-            const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
-            postCommandf_App("document.goto loc:%p", head->text.start);
-            dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
-            setOpenedFromSidebar_DocumentWidget(document_App(), iTrue);
+            if (item->id < size_Array(headings_GmDocument(doc))) {
+                const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
+                postCommandf_App("document.goto loc:%p", head->text.start);
+                dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
+                setOpenedFromSidebar_DocumentWidget(document_App(), iTrue);
+            }
             break;
         }
         case feeds_SidebarMode: {

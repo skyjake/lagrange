@@ -3380,7 +3380,7 @@ static void beginMarkingSelection_DocumentWidget_(iDocumentWidget *d, iInt2 pos)
     invalidateWideRunsWithNonzeroOffset_DocumentWidget_(d);
     resetWideRuns_DocumentWidget_(d); /* Selections don't support horizontal scrolling. */
     iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iTrue);
-    d->selectMark = sourceLoc_DocumentWidget_(d, pos);
+    d->initialSelectMark = d->selectMark = sourceLoc_DocumentWidget_(d, pos);
     refresh_Widget(as_Widget(d));
 }
 
@@ -3804,7 +3804,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                 }
                 else {
-                    d->selectMark.end = (d->selectMark.end > d->selectMark.start ? loc.end : loc.start);
+                    d->selectMark.end = loc.end;// (d->selectMark.end > d->selectMark.start ? loc.end : loc.start);
+                    if (loc.start < d->initialSelectMark.start) {
+                        d->selectMark.end = loc.start;
+                    }
+                    if (isEmpty_Range(&d->selectMark)) {
+                        d->selectMark = d->initialSelectMark;
+                    }
                 }
             }
             iAssert((!d->selectMark.start && !d->selectMark.end) ||
@@ -3822,13 +3828,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     d->initialSelectMark.start =
                         d->initialSelectMark.end = d->selectMark.start;
                 }
-                if (!isEmpty_Range(&d->initialSelectMark)) {
-                    if (d->selectMark.end > d->selectMark.start) {
-                        d->selectMark.start = d->initialSelectMark.start;
-                    }
-                    else if (d->selectMark.end < d->selectMark.start) {
-                        d->selectMark.start = d->initialSelectMark.end;
-                    }
+            }
+            if (d->initialSelectMark.start) {
+                if (d->selectMark.end > d->selectMark.start) {
+                    d->selectMark.start = d->initialSelectMark.start;
+                }
+                else if (d->selectMark.end < d->selectMark.start) {
+                    d->selectMark.start = d->initialSelectMark.end;
                 }
             }
 //            printf("mark %zu ... %zu\n", d->selectMark.start - cstr_String(source_GmDocument(d->doc)),
@@ -4026,12 +4032,11 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         }
         int w = width_Rect(run->visBounds) - x;
         if (contains_Range(&run->text, mark.end) || mark.end < run->text.start) {
-            w = measureRange_Text(
-                    run->textParams.font,
-                    !*isInside ? mark
-                               : (iRangecc){ run->text.start, iMax(run->text.start, mark.end) })
-                    .advance.x;
-            *isInside = iFalse;
+            iRangecc mk = !*isInside ? mark
+                              : (iRangecc){ run->text.start, iMax(run->text.start, mark.end) };
+            mk.start    = iMax(mk.start, run->text.start);
+            w           = measureRange_Text(run->textParams.font, mk).advance.x;
+            *isInside   = iFalse;
         }
         else {
             *isInside = iTrue; /* at least until the next run */

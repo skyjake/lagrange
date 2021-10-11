@@ -136,6 +136,7 @@ static iBool convertSource_Gopher_(iGopher *d) {
                 case '5':
                 case '9':
                 case 'g':
+                case 'p':
                 case 'I':
                 case 's': {
                     iBeginCollect();
@@ -242,6 +243,9 @@ void open_Gopher(iGopher *d, const iString *url) {
             break;
         case 'g':
             setCStr_String(d->meta, "image/gif");
+            break;
+        case 'p':
+            setCStr_String(d->meta, "image/png");
             break;
         case 'h':
             setCStr_String(d->meta, "text/html");
