@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/color.h"
 #include "ui/text.h"
 #include "ui/metrics.h"
+#include "ui/mediaui.h"
 #include "ui/window.h"
 #include "visited.h"
 #include "bookmarks.h"
@@ -224,7 +225,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 setScheme_GmLink_(link, finger_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "file")) {
-                setScheme_GmLink_(link, file_GmLinkScheme);
+                setScheme_GmLink_(link, file_GmLinkScheme);                
             }
             else if (equalCase_Rangecc(parts.scheme, "data")) {
                 setScheme_GmLink_(link, data_GmLinkScheme);
@@ -250,6 +251,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 else if (endsWithCase_String(path, ".mp3") || endsWithCase_String(path, ".wav") ||
                          endsWithCase_String(path, ".mid") || endsWithCase_String(path, ".ogg")) {
                     link->flags |= audioFileExtension_GmLinkFlag;
+                }
+                else if (endsWithCase_String(path, ".fontpack")) {
+                    link->flags |= fontpackFileExtension_GmLinkFlag;
                 }
                 delete_String(path);
             }
@@ -503,7 +507,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *arrow           = rightArrowhead_Icon;
     static const char *envelope        = envelope_Icon;
     static const char *bullet          = "\u2022";
-    static const char *folder          = "\U0001f4c1";
+    static const char *folder          = file_Icon;
     static const char *globe           = globe_Icon;
     static const char *quote           = "\u201c";
     static const char *magnifyingGlass = "\U0001f50d";
@@ -900,77 +904,77 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         ((iGmRun *) back_Array(&d->layout))->flags |= endOfLine_GmRunFlag;
         /* Image or audio content. */
         if (type == link_GmLineType) {
-            const iMediaId imageId = findLinkImage_Media(d->media, run.linkId);
-            const iMediaId audioId = !imageId ? findLinkAudio_Media(d->media, run.linkId) : 0;
-            const iMediaId downloadId = !imageId && !audioId ? findLinkDownload_Media(d->media, run.linkId) : 0;
-            if (imageId) {
-                iGmMediaInfo img;
-                imageInfo_Media(d->media, imageId, &img);
-                const iInt2 imgSize = imageSize_Media(d->media, imageId);
-                linkContentWasLaidOut_GmDocument_(d, &img, run.linkId);
-                const int margin = lineHeight_Text(paragraph_FontId) / 2;
+            /* TODO: Cleanup here? Move to a function of its own. */
+//            enum iMediaType mediaType = none_MediaType;
+            const iMediaId media = findMediaForLink_Media(d->media, run.linkId, none_MediaType);
+            iGmMediaInfo info;
+            info_Media(d->media, media, &info);
+            run.mediaType = media.type;
+            run.mediaId   = media.id;
+            run.text      = iNullRange;
+            run.font      = uiLabel_FontId;
+            run.color     = 0;
+            const int margin = lineHeight_Text(paragraph_FontId) / 2;
+            if (media.type) {
                 pos.y += margin;
-                run.bounds.pos = pos;
-                run.bounds.size.x = d->size.x;
-                const float aspect = (float) imgSize.y / (float) imgSize.x;
-                run.bounds.size.y = d->size.x * aspect;
-                /* Extend the image to full width, including outside margin, if the viewport
-                   is narrow enough. */
-                if (isFullWidthImages) {
-                    run.bounds.size.x += d->outsideMargin * 2;
-                    run.bounds.size.y += d->outsideMargin * 2 * aspect;
-                    run.bounds.pos.x  -= d->outsideMargin;
-                }                
-                run.visBounds = run.bounds;
-                const iInt2 maxSize = mulf_I2(imgSize, get_Window()->pixelRatio);
-                if (width_Rect(run.visBounds) > maxSize.x) {
-                    /* Don't scale the image up. */
-                    run.visBounds.size.y =
-                        run.visBounds.size.y * maxSize.x / width_Rect(run.visBounds);
-                    run.visBounds.size.x = maxSize.x;
-                    run.visBounds.pos.x  = run.bounds.size.x / 2 - width_Rect(run.visBounds) / 2;
-                    run.bounds.size.y    = run.visBounds.size.y;
+                run.bounds.size.y = 0;
+                linkContentWasLaidOut_GmDocument_(d, &info, run.linkId);
+            }
+            switch (media.type) {
+                case image_MediaType: {
+                    const iInt2 imgSize = imageSize_Media(d->media, media);
+                    run.bounds.pos = pos;
+                    run.bounds.size.x = d->size.x;
+                    const float aspect = (float) imgSize.y / (float) imgSize.x;
+                    run.bounds.size.y = d->size.x * aspect;
+                    /* Extend the image to full width, including outside margin, if the viewport
+                       is narrow enough. */
+                    if (isFullWidthImages) {
+                        run.bounds.size.x += d->outsideMargin * 2;
+                        run.bounds.size.y += d->outsideMargin * 2 * aspect;
+                        run.bounds.pos.x  -= d->outsideMargin;
+                    }
+                    run.visBounds = run.bounds;
+                    const iInt2 maxSize = mulf_I2(imgSize, get_Window()->pixelRatio);
+                    if (width_Rect(run.visBounds) > maxSize.x) {
+                        /* Don't scale the image up. */
+                        run.visBounds.size.y =
+                            run.visBounds.size.y * maxSize.x / width_Rect(run.visBounds);
+                        run.visBounds.size.x = maxSize.x;
+                        run.visBounds.pos.x  = run.bounds.size.x / 2 - width_Rect(run.visBounds) / 2;
+                        run.bounds.size.y    = run.visBounds.size.y;
+                    }
+                    pushBack_Array(&d->layout, &run);
+                    break;
                 }
-                run.text      = iNullRange;
-                run.font      = 0;
-                run.color     = 0;
-                run.mediaType = image_GmRunMediaType;
-                run.mediaId   = imageId;
-                pushBack_Array(&d->layout, &run);
-                pos.y += run.bounds.size.y + margin;
+                case audio_MediaType: {
+                    run.bounds.pos    = pos;
+                    run.bounds.size.x = d->size.x;
+                    run.bounds.size.y = lineHeight_Text(uiContent_FontId) + 3 * gap_UI;
+                    run.visBounds     = run.bounds;
+                    pushBack_Array(&d->layout, &run);
+                    break;
+                }
+                case download_MediaType: {
+                    run.bounds.pos    = pos;
+                    run.bounds.size.x = d->size.x;
+                    run.bounds.size.y = 2 * lineHeight_Text(uiContent_FontId) + 4 * gap_UI;
+                    run.visBounds     = run.bounds;
+                    pushBack_Array(&d->layout, &run);
+                    break;
+                }
+                case fontpack_MediaType: {
+                    run.bounds.pos    = pos;
+                    run.bounds.size.x = d->size.x;
+                    run.bounds.size.y = height_FontpackUI(d->media, media.id, d->size.x);
+                    run.visBounds     = run.bounds;
+                    pushBack_Array(&d->layout, &run);
+                    break;
+                }
+                default:
+                    break;
             }
-            else if (audioId) {
-                iGmMediaInfo info;
-                audioInfo_Media(d->media, audioId, &info);
-                linkContentWasLaidOut_GmDocument_(d, &info, run.linkId);
-                const int margin = lineHeight_Text(paragraph_FontId) / 2;
-                pos.y += margin;
-                run.bounds.pos    = pos;
-                run.bounds.size.x = d->size.x;
-                run.bounds.size.y = lineHeight_Text(uiContent_FontId) + 3 * gap_UI;
-                run.visBounds     = run.bounds;
-                run.text          = iNullRange;
-                run.color         = 0;
-                run.mediaType     = audio_GmRunMediaType;
-                run.mediaId       = audioId;
-                pushBack_Array(&d->layout, &run);
-                pos.y += run.bounds.size.y + margin;
-            }
-            else if (downloadId) {
-                iGmMediaInfo info;
-                downloadInfo_Media(d->media, downloadId, &info);
-                linkContentWasLaidOut_GmDocument_(d, &info, run.linkId);
-                const int margin = lineHeight_Text(paragraph_FontId) / 2;
-                pos.y += margin;
-                run.bounds.pos    = pos;
-                run.bounds.size.x = d->size.x;
-                run.bounds.size.y = 2 * lineHeight_Text(uiContent_FontId) + 4 * gap_UI;
-                run.visBounds     = run.bounds;
-                run.text          = iNullRange;
-                run.color         = 0;
-                run.mediaType     = download_GmRunMediaType;
-                run.mediaId       = downloadId;
-                pushBack_Array(&d->layout, &run);
+            if (media.type && run.bounds.size.y) {
                 pos.y += run.bounds.size.y + margin;
             }
         }
@@ -1056,21 +1060,6 @@ const iMedia *constMedia_GmDocument(const iGmDocument *d) {
 const iString *url_GmDocument(const iGmDocument *d) {
     return &d->url;
 }
-
-#if 0
-void reset_GmDocument(iGmDocument *d) {
-    clear_Media(d->media);
-    clearLinks_GmDocument_(d);
-    clear_Array(&d->layout);
-    clear_Array(&d->headings);
-    clear_Array(&d->preMeta);
-    clear_String(&d->url);
-    clear_String(&d->localHost);
-    clear_String(&d->source);
-    clear_String(&d->unormSource);
-    d->themeSeed = 0;
-}
-#endif
 
 static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     set_Color(tmQuoteIcon_ColorId,

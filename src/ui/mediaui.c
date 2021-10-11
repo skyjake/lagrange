@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "lang.h"
 
 #include <the_Foundation/path.h>
+#include <the_Foundation/stringlist.h>
 
 static const char *volumeChar_(float volume) {
     if (volume <= 0) {
@@ -61,7 +62,7 @@ void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
     }
 }
 
-static void drawPlayerButton_(iPaint *p, iRect rect, const char *label, int font) {
+static void drawInlineButton_(iPaint *p, iRect rect, const char *label, int font) {
     const iInt2 mouse     = mouseCoord_Window(get_Window(), 0);
     const iBool isHover   = contains_Rect(rect, mouse);
     const iBool isPressed = isHover && (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LEFT) != 0;
@@ -113,14 +114,14 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
     const iBool isAdjusting = (flags_Player(d->player) & adjustingVolume_PlayerFlag) != 0;
     fillRect_Paint(p, d->bounds, playerBackground_ColorId);
     drawRect_Paint(p, d->bounds, playerFrame_ColorId);
-    drawPlayerButton_(p,
+    drawInlineButton_(p,
                       d->playPauseRect,
                       isPaused_Player(d->player) ? "\U0001f782" : "\u23f8",
                       uiContent_FontId);
-    drawPlayerButton_(p, d->rewindRect, "\u23ee", uiContent_FontId);
-    drawPlayerButton_(p, d->menuRect, menu_Icon, uiContent_FontId);
+    drawInlineButton_(p, d->rewindRect, "\u23ee", uiContent_FontId);
+    drawInlineButton_(p, d->menuRect, menu_Icon, uiContent_FontId);
     if (!isAdjusting) {
-        drawPlayerButton_(
+        drawInlineButton_(
             p, d->volumeRect, volumeChar_(volume_Player(d->player)), uiContentSymbols_FontId);
     }
     const int   hgt       = lineHeight_Text(uiLabelBig_FontId);
@@ -228,24 +229,26 @@ static void drawSevenSegmentBytes_(iInt2 pos, int color, size_t numBytes) {
     deinit_String(&digits);
 }
 
-void init_DownloadUI(iDownloadUI *d, const iDocumentWidget *doc, uint16_t mediaId, iRect bounds) {
-    d->doc     = doc;
+void init_DownloadUI(iDownloadUI *d, const iMedia *media, uint16_t mediaId, iRect bounds) {
+    d->media   = media;
     d->mediaId = mediaId;
     d->bounds  = bounds;
 }
+
+/*----------------------------------------------------------------------------------------------*/
 
 iBool processEvent_DownloadUI(iDownloadUI *d, const SDL_Event *ev) {
     return iFalse;
 }
 
 void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
-    const iMedia *media = constMedia_GmDocument(document_DocumentWidget(d->doc));
     iGmMediaInfo info;
     float bytesPerSecond;
     const iString *path;
     iBool isFinished;
-    downloadInfo_Media(media, d->mediaId, &info);
-    downloadStats_Media(media, d->mediaId, &path, &bytesPerSecond, &isFinished);
+    downloadInfo_Media(d->media, d->mediaId, &info);
+    downloadStats_Media(d->media, (iMediaId){ download_MediaType, d->mediaId },
+                        &path, &bytesPerSecond, &isFinished);
     fillRect_Paint(p, d->bounds, uiBackground_ColorId);
     drawRect_Paint(p, d->bounds, uiSeparator_ColorId);
     iRect rect = d->bounds;
@@ -274,4 +277,69 @@ void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
         drawAlign_Text(uiLabel_FontId, pos, uiTextDim_ColorId, right_Alignment,
                        translateCStr_Lang("\u2014 ${mb.per.sec}"));
     }
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+void init_FontpackUI(iFontpackUI *d, const iMedia *media, uint16_t mediaId, iRect bounds) {
+    d->media   = media;
+    d->mediaId = mediaId;
+    d->bounds  = bounds;
+    d->installRect.size = add_I2(measure_Text(uiLabel_FontId, "${media.fontpack.install}").bounds.size,
+                                 muli_I2(gap2_UI, 3));
+    d->installRect.pos.x = right_Rect(d->bounds) - gap_UI - d->installRect.size.x;
+    d->installRect.pos.y = mid_Rect(d->bounds).y - d->installRect.size.y / 2;
+}
+
+iBool processEvent_FontpackUI(iFontpackUI *d, const SDL_Event *ev) {
+    switch (ev->type) {
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP: {
+            const iInt2 pos = init_I2(ev->button.x, ev->button.y);
+            if (contains_Rect(d->installRect, pos)) {
+                return iTrue;
+            }
+            break;
+        }
+        case SDL_MOUSEMOTION:
+            if (contains_Rect(d->bounds, init_I2(ev->motion.x, ev->motion.y))) {
+                return iTrue;
+            }
+            break;
+    }
+    return iFalse;
+}
+
+int height_FontpackUI(const iMedia *media, uint16_t mediaId, int width) {
+    const iStringList *names;
+    iFontpackMediaInfo info;
+    fontpackInfo_Media(media, (iMediaId){ fontpack_MediaType, mediaId }, &info);
+    return lineHeight_Text(uiContent_FontId) +
+           lineHeight_Text(uiLabel_FontId) * (1 + size_StringList(info.names));
+}
+
+void draw_FontpackUI(const iFontpackUI *d, iPaint *p) {
+    /* Draw a background box. */
+    fillRect_Paint(p, d->bounds, uiBackground_ColorId);
+    drawRect_Paint(p, d->bounds, uiSeparator_ColorId);
+    iFontpackMediaInfo info;
+    fontpackInfo_Media(d->media, (iMediaId){ fontpack_MediaType, d->mediaId }, &info);
+    iInt2 pos = topLeft_Rect(d->bounds);
+    const char *checks[] = { "\u2610", "\u2611" };
+    draw_Text(uiContentBold_FontId, pos, uiHeading_ColorId, "\"%s\" v%d",
+              cstr_String(info.packId.id), info.packId.version);
+    pos.y += lineHeight_Text(uiContentBold_FontId);
+    draw_Text(uiLabelBold_FontId, pos, uiText_ColorId, "%.1f MB, %d fonts   %s %s   %s",
+              info.sizeInBytes / 1.0e6, size_StringList(info.names),
+//              checks[info.isValid], info.isValid ? "No errors" : "Errors detected",
+              checks[info.isInstalled], info.isInstalled ? "Installed" : "Not installed",
+              info.isReadOnly ? "Read-Only" : "");
+    pos.y += lineHeight_Text(uiLabelBold_FontId);
+    iConstForEach(StringList, i, info.names) {
+        drawRange_Text(uiLabel_FontId, pos, uiText_ColorId, range_String(i.value));
+        pos.y += lineHeight_Text(uiLabel_FontId);
+    }
+    /* Buttons. */
+    drawInlineButton_(p, d->installRect,
+                      "${media.fontpack.install}", uiLabel_FontId);
 }

@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/ptrarray.h>
+#include <the_Foundation/stringlist.h>
 #include <SDL_hints.h>
 #include <SDL_render.h>
 #include <SDL_timer.h>
@@ -287,45 +288,112 @@ iDefineTypeConstruction(GmDownload)
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(GmFontpack)
+
+struct Impl_GmFontpack {
+    iGmMediaProps props;
+    iString packId;
+    iFontpackMediaInfo info;
+    /* TODO: Font preview images? */
+};
+
+void init_GmFontpack(iGmFontpack *d) {
+    init_GmMediaProps_(&d->props);
+    init_String(&d->packId);
+    iZap(d->info);
+    d->info.names = new_StringList();
+}
+
+void deinit_GmFontpack(iGmFontpack *d) {
+    iRelease(d->info.names);
+    deinit_String(&d->packId);
+    deinit_GmMediaProps_(&d->props);
+}
+
+static void loadData_GmFontpack_(iGmFontpack *d, const iBlock *data) {
+    const iString *loadPath = collect_String(localFilePathFromUrl_String(&d->props.url));
+    const iFontPack *pack = findPack_Fonts(loadPath);
+    d->info.isValid = d->info.isInstalled = pack != NULL;
+    d->info.isReadOnly = iFalse;
+    if (!pack) {
+        /* Let's load it now temporarily and see what's inside. */
+        iArchive *zip = new_Archive();
+        if (openData_Archive(zip, data)) {
+            iFontPack *fp = collect_FontPack(new_FontPack());
+            setLoadPath_FontPack(fp, loadPath);
+            setStandalone_FontPack(fp, iTrue);
+            if (loadArchive_FontPack(fp, zip)) {
+                d->info.isValid = iTrue;
+                pack = fp;
+            }
+        }
+        iRelease(zip);
+    }
+    if (pack) {
+        set_String(&d->packId, id_FontPack(pack).id);
+        d->info.packId.id = &d->packId; /* we own this String */
+        d->info.packId.version = id_FontPack(pack).version;
+        d->info.isReadOnly = isReadOnly_FontPack(pack);
+    }
+    iPtrSet *unique = new_PtrSet();
+    iConstForEach(PtrArray, i, listSpecs_FontPack(pack)) {
+        const iFontSpec *spec = i.ptr;
+        pushBack_StringList(d->info.names, &spec->name);
+        iForIndices(j, spec->styles) {
+            insert_PtrSet(unique, spec->styles[j]);
+        }
+    }
+    iConstForEach(PtrSet, j, unique) {
+        d->info.sizeInBytes += size_Block(&((const iFontFile *) *j.value)->sourceData);
+    }
+    delete_PtrSet(unique);
+}
+
+iDefineTypeConstruction(GmFontpack)
+
+/*----------------------------------------------------------------------------------------------*/
+
 struct Impl_Media {
-    iPtrArray images;
-    iPtrArray audio;
-    iPtrArray downloads;
+    iPtrArray items[max_MediaType];
+    /* TODO: Add a hash to quickly look up a link's media. */
 };
 
 iDefineTypeConstruction(Media)
 
 void init_Media(iMedia *d) {
-    init_PtrArray(&d->images);
-    init_PtrArray(&d->audio);
-    init_PtrArray(&d->downloads);
+    iForIndices(i, d->items) {
+        init_PtrArray(&d->items[i]);
+    }
 }
 
 void deinit_Media(iMedia *d) {
     clear_Media(d);
-    deinit_PtrArray(&d->downloads);
-    deinit_PtrArray(&d->audio);
-    deinit_PtrArray(&d->images);
+    iForIndices(i, d->items) {
+        deinit_PtrArray(&d->items[i]);
+    }
 }
 
 void clear_Media(iMedia *d) {
-    iForEach(PtrArray, i, &d->images) {
+    iForEach(PtrArray, i, &d->items[image_MediaType]) {
         deinit_GmImage(i.ptr);
     }
-    clear_PtrArray(&d->images);
-    iForEach(PtrArray, a, &d->audio) {
+    iForEach(PtrArray, a, &d->items[audio_MediaType]) {
         deinit_GmAudio(a.ptr);
     }
-    clear_PtrArray(&d->audio);
-    iForEach(PtrArray, n, &d->downloads) {
+    iForEach(PtrArray, n, &d->items[download_MediaType]) {
         deinit_GmDownload(n.ptr);
     }
-    clear_PtrArray(&d->downloads);
+    iForEach(PtrArray, f, &d->items[fontpack_MediaType]) {
+        deinit_GmFontpack(f.ptr);
+    }
+    iForIndices(type, d->items) {
+        clear_PtrArray(&d->items[type]);
+    }
 }
 
 size_t memorySize_Media(const iMedia *d) {
     size_t memSize = 0;
-    iConstForEach(PtrArray, i, &d->images) {
+    iConstForEach(PtrArray, i, &d->items[image_MediaType]) {
         const iGmImage *img = i.ptr;
         if (img->texture) {
             const iInt2 texSize = size_SDLTexture(img->texture);
@@ -335,34 +403,49 @@ size_t memorySize_Media(const iMedia *d) {
             memSize += size_Block(&img->partialData);
         }
     }
-    iConstForEach(PtrArray, a, &d->audio) {
+    iConstForEach(PtrArray, a, &d->items[audio_MediaType]) {
         const iGmAudio *audio = a.ptr;
         if (audio->player) {
             memSize += sourceDataSize_Player(audio->player);
         }
     }
-    iConstForEach(PtrArray, n, &d->downloads) {
+    iConstForEach(PtrArray, n, &d->items[download_MediaType]) {
         const iGmDownload *down = n.ptr;
         memSize += down->numBytes;
     }
     return memSize; 
 }
 
-iBool setDownloadUrl_Media(iMedia *d, iGmLinkId linkId, const iString *url) {
-    iGmDownload *dl       = NULL;
-    iMediaId     existing = findLinkDownload_Media(d, linkId);
-    iBool        isNew    = iFalse;
-    if (!existing) {
-        isNew = iTrue;
-        dl = new_GmDownload();
-        dl->props.linkId = linkId;
-        dl->props.isPermanent = iTrue;
-        set_String(&dl->props.url, url);
-        pushBack_PtrArray(&d->downloads, dl);
+iBool setUrl_Media(iMedia *d, iGmLinkId linkId, enum iMediaType mediaType, const iString *url) {
+    iMediaId existing = findMediaForLink_Media(d, linkId, mediaType);
+    const iBool isNew = !existing.id;
+    iGmMediaProps *props = NULL;
+    if (mediaType == download_MediaType) {
+        iGmDownload *dl = NULL;
+        if (isNew) {
+            dl = new_GmDownload();
+            pushBack_PtrArray(&d->items[download_MediaType], dl);
+        }
+        else {
+            dl = at_PtrArray(&d->items[download_MediaType], index_MediaId(existing));
+        }
+        props = &dl->props;
     }
-    else {
-        iGmDownload *dl = at_PtrArray(&d->downloads, existing - 1);
-        set_String(&dl->props.url, url);
+    else if (mediaType == fontpack_MediaType) {
+        iGmFontpack *fp = NULL;
+        if (isNew) {
+            fp = new_GmFontpack();
+            pushBack_PtrArray(&d->items[fontpack_MediaType], fp);
+        }
+        else {
+            fp = at_PtrArray(&d->items[fontpack_MediaType], index_MediaId(existing));
+        }
+        props = &fp->props;
+    }
+    if (props) {
+        props->linkId = linkId;
+        props->isPermanent = iTrue;
+        set_String(&props->url, url);
     }
     return isNew;
 }
@@ -372,16 +455,17 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
     const iBool isPartial  = (flags & partialData_MediaFlag) != 0;
     const iBool allowHide  = (flags & allowHide_MediaFlag) != 0;
     const iBool isDeleting = (!mime || !data);
-    iMediaId    existing   = findLinkImage_Media(d, linkId);
+    iMediaId    existing   = findMediaForLink_Media(d, linkId, none_MediaType);// findLinkImage_Media(d, linkId);
+    const size_t existingIndex = index_MediaId(existing);
     iBool       isNew      = iFalse;
-    if (existing) {
+    if (existing.type == image_MediaType) {
         iGmImage *img;
         if (isDeleting) {
-            take_PtrArray(&d->images, existing - 1, (void **) &img);
+            take_PtrArray(&d->items[image_MediaType], existingIndex, (void **) &img);
             delete_GmImage(img);
         }
         else {
-            img = at_PtrArray(&d->images, existing - 1);
+            img = at_PtrArray(&d->items[image_MediaType], existingIndex);
             iAssert(equal_String(&img->props.mime, mime)); /* MIME cannot change */
             set_Block(&img->partialData, data);
             if (!isPartial) {
@@ -389,14 +473,14 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             }
         }
     }
-    else if ((existing = findLinkAudio_Media(d, linkId)) != 0) {
+    else if (existing.type == audio_MediaType) {
         iGmAudio *audio;
         if (isDeleting) {
-            take_PtrArray(&d->audio, existing - 1, (void **) &audio);
+            take_PtrArray(&d->items[audio_MediaType], existingIndex, (void **) &audio);
             delete_GmAudio(audio);
         }
         else {
-            audio = at_PtrArray(&d->audio, existing - 1);
+            audio = at_PtrArray(&d->items[audio_MediaType], existingIndex);
             iAssert(equal_String(&audio->props.mime, mime)); /* MIME cannot change */
             updateSourceData_Player(audio->player, mime, data, append_PlayerUpdate);
             if (!isPartial) {
@@ -408,14 +492,14 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             }
         }
     }
-    else if ((existing = findLinkDownload_Media(d, linkId)) != 0) {
+    else if (existing.type == download_MediaType) {
         iGmDownload *dl;
         if (isDeleting) {
-            take_PtrArray(&d->downloads, existing - 1, (void **) &dl);
+            take_PtrArray(&d->items[download_MediaType], existingIndex, (void **) &dl);
             delete_GmDownload(dl);
         }
         else {
-            dl = at_PtrArray(&d->downloads, existing - 1);
+            dl = at_PtrArray(&d->items[download_MediaType], existingIndex);
             if (isEmpty_String(&dl->props.mime)) {
                 set_String(&dl->props.mime, mime);
             }
@@ -428,6 +512,21 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             }
         }
     }
+    else if (existing.type == fontpack_MediaType) {
+        iGmFontpack *fp;
+        if (isDeleting) {
+            take_PtrArray(&d->items[fontpack_MediaType], existingIndex, (void **) &fp);
+            delete_GmFontpack(fp);
+        }
+        else {
+            iAssert(!isPartial);
+            fp = at_PtrArray(&d->items[fontpack_MediaType], existingIndex);
+            if (isEmpty_String(&fp->props.mime)) {
+                set_String(&fp->props.mime, mime);
+            }
+            loadData_GmFontpack_(fp, data);
+        }
+    }
     else if (!isDeleting) {
         if (startsWith_String(mime, "image/")) {
             /* Copy the image to a texture. */
@@ -435,7 +534,7 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             img->props.linkId = linkId; /* TODO: use a hash? */
             img->props.isPermanent = !allowHide;
             set_String(&img->props.mime, mime);
-            pushBack_PtrArray(&d->images, img);
+            pushBack_PtrArray(&d->items[image_MediaType], img);
             if (!isPartial) {
                 makeTexture_GmImage(img);
             }
@@ -450,7 +549,7 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             if (!isPartial) {
                 updateSourceData_Player(audio->player, NULL, NULL, complete_PlayerUpdate);
             }
-            pushBack_PtrArray(&d->audio, audio);
+            pushBack_PtrArray(&d->items[audio_MediaType], audio);
             /* Start playing right away. */
             start_Player(audio->player);
             postCommandf_App("media.player.started player:%p", audio->player);
@@ -460,130 +559,150 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
     return isNew;
 }
 
-iMediaId findLinkImage_Media(const iMedia *d, iGmLinkId linkId) {
-    /* TODO: use a hash */
-    iConstForEach(PtrArray, i, &d->images) {
-        const iGmImage *img = i.ptr;
-        if (img->props.linkId == linkId) {
-            return index_PtrArrayConstIterator(&i) + 1;
+static iMediaId findMediaPtr_Media_(const iPtrArray *items, enum iMediaType mediaType, iGmLinkId linkId) {
+    iConstForEach(PtrArray, i, items) {
+        const iGmMediaProps *props = i.ptr;
+        if (props->linkId == linkId) {
+            return (iMediaId){
+                .type = mediaType,
+                .id = index_PtrArrayConstIterator(&i) + 1
+            };
         }
     }
-    return 0;
+    return iInvalidMediaId;
+}
+
+iMediaId findMediaForLink_Media(const iMedia *d, iGmLinkId linkId, enum iMediaType mediaType) {
+    /* TODO: Use hashes, this will get very slow if there is a large number of media items. */
+    iMediaId mid;
+    for (int i = 0; i < max_MediaType; i++) {
+        if (mediaType == i || !mediaType) {
+            mid = findMediaPtr_Media_(&d->items[i], i, linkId);
+            if (mid.type) {
+                return mid;
+            }
+        }
+    }
+    return iInvalidMediaId;
 }
 
 size_t numAudio_Media(const iMedia *d) {
-    return size_PtrArray(&d->audio);
-}
-
-iMediaId findLinkAudio_Media(const iMedia *d, iGmLinkId linkId) {
-    /* TODO: use a hash */
-    iConstForEach(PtrArray, i, &d->audio) {
-        const iGmAudio *audio = i.ptr;
-        if (audio->props.linkId == linkId) {
-            return index_PtrArrayConstIterator(&i) + 1;
-        }
-    }
-    return 0;
-}
-
-iMediaId findLinkDownload_Media(const iMedia *d, uint16_t linkId) {
-    iConstForEach(PtrArray, i, &d->downloads) {
-        const iGmDownload *dl = i.ptr;
-        if (dl->props.linkId == linkId) {
-            return index_PtrArrayConstIterator(&i) + 1;
-        }
-    }
-    return 0;
+    return size_PtrArray(&d->items[audio_MediaType]);
 }
 
 iInt2 imageSize_Media(const iMedia *d, iMediaId imageId) {
-    if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
-        const iGmImage *img = constAt_PtrArray(&d->images, imageId - 1);
+    iAssert(imageId.type == image_MediaType);
+    const size_t index = index_MediaId(imageId);
+    if (index < size_PtrArray(&d->items[image_MediaType])) {
+        const iGmImage *img = constAt_PtrArray(&d->items[image_MediaType], index);
         return img->size;
     }
     return zero_I2();
 }
 
-SDL_Texture *imageTexture_Media(const iMedia *d, uint16_t imageId) {
-    if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
-        const iGmImage *img = constAt_PtrArray(&d->images, imageId - 1);
+SDL_Texture *imageTexture_Media(const iMedia *d, iMediaId imageId) {
+    iAssert(imageId.type == image_MediaType);
+    const size_t index = index_MediaId(imageId);
+    if (index < size_PtrArray(&d->items[image_MediaType])) {
+        const iGmImage *img = constAt_PtrArray(&d->items[image_MediaType], index);
         return img->texture;
     }
     return NULL;
 }
 
-iBool imageInfo_Media(const iMedia *d, iMediaId imageId, iGmMediaInfo *info_out) {
-    if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
-        const iGmImage *img   = constAt_PtrArray(&d->images, imageId - 1);
-        info_out->numBytes    = img->numBytes;
-        info_out->type        = cstr_String(&img->props.mime);
-        info_out->isPermanent = img->props.isPermanent;
-        return iTrue;
+iBool info_Media(const iMedia *d, iMediaId mediaId, iGmMediaInfo *info_out) {
+    /* TODO: Use a hash. */
+    const size_t index = index_MediaId(mediaId);
+    switch (mediaId.type) {
+        case image_MediaType:
+            if (index < size_PtrArray(&d->items[image_MediaType])) {
+                const iGmImage *img   = constAt_PtrArray(&d->items[image_MediaType], index);
+                info_out->numBytes    = img->numBytes;
+                info_out->type        = cstr_String(&img->props.mime);
+                info_out->isPermanent = img->props.isPermanent;
+                return iTrue;
+            }
+            break;
+        case audio_MediaType:
+            if (index < size_PtrArray(&d->items[audio_MediaType])) {
+                const iGmAudio *audio = constAt_PtrArray(&d->items[audio_MediaType], index);
+                info_out->type        = cstr_String(&audio->props.mime);
+                info_out->isPermanent = audio->props.isPermanent;
+                return iTrue;
+            }
+            break;
+        case download_MediaType:
+            if (index < size_PtrArray(&d->items[download_MediaType])) {
+                const iGmDownload *dl = constAt_PtrArray(&d->items[download_MediaType], index);
+                info_out->type = cstr_String(&dl->props.mime);
+                info_out->isPermanent = dl->props.isPermanent;
+                info_out->numBytes = dl->numBytes;
+                return iTrue;
+            }
+            break;
+        case fontpack_MediaType:
+            /* TODO */
+            break;
+        default:
+            break;
     }
     iZap(*info_out);
     return iFalse;
 }
 
 iPlayer *audioData_Media(const iMedia *d, iMediaId audioId) {
-    if (audioId > 0 && audioId <= size_PtrArray(&d->audio)) {
-        const iGmAudio *audio = constAt_PtrArray(&d->audio, audioId - 1);
+    iAssert(audioId.type == audio_MediaType);
+    const size_t index = index_MediaId(audioId);
+    if (index < size_PtrArray(&d->items[audio_MediaType])) {
+        const iGmAudio *audio = constAt_PtrArray(&d->items[audio_MediaType], index);
         return audio->player;
     }
     return NULL;
 }
 
-iBool audioInfo_Media(const iMedia *d, iMediaId audioId, iGmMediaInfo *info_out) {
-    if (audioId > 0 && audioId <= size_PtrArray(&d->audio)) {
-        const iGmAudio *audio = constAt_PtrArray(&d->audio, audioId - 1);
-        info_out->type        = cstr_String(&audio->props.mime);
-        info_out->isPermanent = audio->props.isPermanent;
-        return iTrue;
-    }
-    iZap(*info_out);
-    return iFalse;
-}
-
 iPlayer *audioPlayer_Media(const iMedia *d, iMediaId audioId) {
-    if (audioId > 0 && audioId <= size_PtrArray(&d->audio)) {
-        const iGmAudio *audio = constAt_PtrArray(&d->audio, audioId - 1);
+    iAssert(audioId.type == audio_MediaType);
+    const size_t index = index_MediaId(audioId);
+    if (index < size_PtrArray(&d->items[audio_MediaType])) {
+        const iGmAudio *audio = constAt_PtrArray(&d->items[audio_MediaType], index);
         return audio->player;
     }
     return NULL;
 }
 
 void pauseAllPlayers_Media(const iMedia *d, iBool setPaused) {
-    for (size_t i = 0; i < size_PtrArray(&d->audio); ++i) {
-        const iGmAudio *audio = constAt_PtrArray(&d->audio, i);
+    for (size_t i = 0; i < size_PtrArray(&d->items[audio_MediaType]); ++i) {
+        const iGmAudio *audio = constAt_PtrArray(&d->items[audio_MediaType], i);
         if (audio->player) {
             setPaused_Player(audio->player, setPaused);
         }
     }
 }
 
-iBool downloadInfo_Media(const iMedia *d, iMediaId downloadId, iGmMediaInfo *info_out) {
-    if (downloadId > 0 && downloadId <= size_PtrArray(&d->downloads)) {
-        const iGmDownload *dl = constAt_PtrArray(&d->downloads, downloadId - 1);
-        info_out->type = cstr_String(&dl->props.mime);
-        info_out->isPermanent = dl->props.isPermanent;
-        info_out->numBytes = dl->numBytes;
-        return iTrue;
-    }
-    iZap(*info_out);
-    return iFalse;
-}
-
 void downloadStats_Media(const iMedia *d, iMediaId downloadId, const iString **path_out,
                          float *bytesPerSecond_out, iBool *isFinished_out) {
-    *path_out = NULL;
+    iAssert(downloadId.type == download_MediaType);
+    *path_out           = NULL;
     *bytesPerSecond_out = 0.0f;
-    *isFinished_out = iFalse;
-    if (downloadId > 0 && downloadId <= size_PtrArray(&d->downloads)) {
-        const iGmDownload *dl = constAt_PtrArray(&d->downloads, downloadId - 1);
+    *isFinished_out     = iFalse;
+    const size_t index  = index_MediaId(downloadId);
+    if (index < size_PtrArray(&d->items[download_MediaType])) {
+        const iGmDownload *dl = constAt_PtrArray(&d->items[download_MediaType], index);
         if (dl->path) {
             *path_out = dl->path;
         }
         *bytesPerSecond_out = dl->currentRate;
         *isFinished_out = (dl->path && !dl->file);
+    }
+}
+
+void fontpackInfo_Media(const iMedia *d, iMediaId fontpackId, iFontpackMediaInfo *info_out) {
+    iAssert(fontpackId.type == fontpack_MediaType);
+    iZap(*info_out);
+    const size_t index = index_MediaId(fontpackId);
+    if (index < size_PtrArray(&d->items[fontpack_MediaType])) {
+        const iGmFontpack *fp = constAt_PtrArray(&d->items[fontpack_MediaType], index);
+        *info_out = fp->info;
     }
 }
 

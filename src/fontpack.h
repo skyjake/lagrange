@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <hb.h>
 #endif
 
+extern const char *mimeType_FontPack;
+
 /* Fontpacks are ZIP archives that contain a configuration file and one of more font
 files. The fontpack format is used instead of plain TTF/OTF because the text renderer
 uses additional metadata about each font.
@@ -68,21 +70,13 @@ enum iFontStyle {
 
 float   scale_FontSize  (enum iFontSize size);
 
-iDeclareType(FontSpec)
-iDeclareTypeConstruction(FontSpec)
+/*----------------------------------------------------------------------------------------------*/
 
-enum iFontSpecFlags {
-    override_FontSpecFlag  = iBit(1),
-    monospace_FontSpecFlag = iBit(2), /* can be used in preformatted content */
-    auxiliary_FontSpecFlag = iBit(3), /* only used for looking up glyphs missing from other fonts */
-    arabic_FontSpecFlag    = iBit(4),
-    fixNunitoKerning_FontSpecFlag = iBit(31), /* manual hardcoded kerning tweaks for Nunito */
-};
-
-iDeclareType(FontFile)
-iDeclareTypeConstruction(FontFile)
+iDeclareClass(FontFile)
+iDeclareObjectConstruction(FontFile)
     
 struct Impl_FontFile {
+    iObject         object; /* reference-counted */
     iString         id; /* for detecting when the same file is used in many places */
     enum iFontStyle style;
     iBlock          sourceData;
@@ -107,9 +101,26 @@ uint8_t *   rasterizeGlyph_FontFile(const iFontFile *, float xScale, float yScal
 void        measureGlyph_FontFile  (const iFontFile *, uint32_t glyphIndex,
                                     float xScale, float yScale, float xShift,
                                     int *x0, int *y0, int *x1, int *y1);
+
+/*----------------------------------------------------------------------------------------------*/
+
+/* FontSpec describes a typeface, combining multiple fonts into a group.
+   The user will be choosing FontSpecs instead of individual font files. */
+iDeclareType(FontSpec)
+iDeclareTypeConstruction(FontSpec)
+
+enum iFontSpecFlags {
+    override_FontSpecFlag  = iBit(1),
+    monospace_FontSpecFlag = iBit(2), /* can be used in preformatted content */
+    auxiliary_FontSpecFlag = iBit(3), /* only used for looking up glyphs missing from other fonts */
+    arabic_FontSpecFlag    = iBit(4),
+    fixNunitoKerning_FontSpecFlag = iBit(31), /* manual hardcoded kerning tweaks for Nunito */
+};
+
 struct Impl_FontSpec {
     iString id;   /* unique ID */
     iString name; /* human-readable label */
+    iString sourcePath; /* file where the path was loaded, could be a .fontpack */
     int     flags;
     int     priority;
     float   heightScale[2];     /* overall height scaling; ui, document */
@@ -121,10 +132,38 @@ struct Impl_FontSpec {
 iLocalDef int scaleType_FontSpec(enum iFontSize sizeId) {
     return sizeId / contentRegular_FontSize;
 }
- 
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(FontPack)
+iDeclareTypeConstruction(FontPack)
+
+iDeclareType(FontPackId)
+
+struct Impl_FontPackId {
+    const iString *id;
+    int version;
+};
+
+void                setReadOnly_FontPack    (iFontPack *, iBool readOnly);
+void                setStandalone_FontPack  (iFontPack *, iBool standalone);
+void                setLoadPath_FontPack    (iFontPack *, const iString *path);
+iBool               loadArchive_FontPack    (iFontPack *, const iArchive *zip);
+
+iFontPackId         id_FontPack             (const iFontPack *);
+const iPtrArray *   listSpecs_FontPack      (const iFontPack *);
+iBool               isReadOnly_FontPack     (const iFontPack *);
+
+iDeclareType(GmDocument)
+
 void    init_Fonts      (const char *userDir);
 void    deinit_Fonts    (void);
 
+const iFontPack *   findPack_Fonts              (const iString *path);
 const iFontSpec *   findSpec_Fonts              (const char *fontId);
+const iPtrArray *   listPacks_Fonts             (void);
 const iPtrArray *   listSpecs_Fonts             (iBool (*filterFunc)(const iFontSpec *));
 const iPtrArray *   listSpecsByPriority_Fonts   (void);
+const iString *     infoPage_Fonts              (void);
+
+iBool   preloadLocalFontpackForPreview_Fonts    (iGmDocument *doc);

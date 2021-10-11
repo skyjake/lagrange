@@ -361,6 +361,9 @@ static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
     if (equalCase_Rangecc(path, "debug")) {
         return utf8_String(debugInfo_App());
     }
+    if (equalCase_Rangecc(path, "fonts")) {
+        return utf8_String(infoPage_Fonts());
+    }
     if (equalCase_Rangecc(path, "feeds")) {
         return utf8_String(entryListPage_Feeds());
     }
@@ -710,8 +713,9 @@ void submit_GmRequest(iGmRequest *d) {
             sort_Array(sortedInfo, (int (*)(const void *, const void *)) cmp_FileInfoPtr_);
             iForEach(PtrArray, s, sortedInfo) {
                 const iFileInfo *entry = s.ptr;
-                appendFormat_String(page, "=> %s %s%s\n",
+                appendFormat_String(page, "=> %s %s%s%s\n",
                                     cstrCollect_String(makeFileUrl_String(path_FileInfo(entry))),
+                                    isDirectory_FileInfo(entry) ? folder_Icon " " : "",
                                     cstr_Rangecc(baseName_Path(path_FileInfo(entry))),
                                     isDirectory_FileInfo(entry) ? iPathSeparator : "");
                 iRelease(entry);
@@ -808,9 +812,10 @@ void submit_GmRequest(iGmRequest *d) {
                             const iString *subPath = e.value;
                             iRangecc relSub = range_String(subPath);
                             relSub.start += size_String(entryPath);
-                            appendFormat_String(page, "=> %s/%s %s\n",
+                            appendFormat_String(page, "=> %s/%s %s%s\n",
                                                 cstr_String(&d->url),
                                                 cstr_String(withSpacesEncoded_String(collectNewRange_String(relSub))),
+                                                endsWith_Rangecc(relSub, "/") ? folder_Icon " " : "",
                                                 cstr_Rangecc(relSub));
                         }
                         resp->statusCode = success_GmStatusCode;

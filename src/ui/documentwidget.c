@@ -400,7 +400,18 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addAction_Widget(w, navigateRoot_KeyShortcut, "navigate.root");
 }
 
+void cancelAllRequests_DocumentWidget(iDocumentWidget *d) {
+    iForEach(ObjectList, i, d->media) {
+        iMediaRequest *mr = i.object;
+        cancel_GmRequest(mr->req);
+    }
+    if (d->request) {
+        cancel_GmRequest(d->request);
+    }
+}
+
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    cancelAllRequests_DocumentWidget(d);
     pauseAllPlayers_Media(media_GmDocument(d->doc), iTrue);
     removeTicker_App(animate_DocumentWidget_, d);
     removeTicker_App(prerender_DocumentWidget_, d);
@@ -564,7 +575,8 @@ static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
             pushBack_PtrArray(&d->visibleWideRuns, run);
         }
     }
-    if (run->mediaType == audio_GmRunMediaType || run->mediaType == download_GmRunMediaType) {
+    /* Image runs are static so they're drawn as part of the content. */
+    if (run->mediaType && run->mediaType != image_MediaType) {
         iAssert(run->mediaId);
         pushBack_PtrArray(&d->visibleMedia, run);
     }
@@ -758,14 +770,14 @@ static uint32_t mediaUpdateInterval_DocumentWidget_(const iDocumentWidget *d) {
     uint32_t interval = invalidInterval_;
     iConstForEach(PtrArray, i, &d->visibleMedia) {
         const iGmRun *run = i.ptr;
-        if (run->mediaType == audio_GmRunMediaType) {
-            iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
+        if (run->mediaType == audio_MediaType) {
+            iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(run));
             if (flags_Player(plr) & adjustingVolume_PlayerFlag ||
                 (isStarted_Player(plr) && !isPaused_Player(plr))) {
                 interval = iMin(interval, 1000 / 15);
             }
         }
-        else if (run->mediaType == download_GmRunMediaType) {
+        else if (run->mediaType == download_MediaType) {
             interval = iMin(interval, 1000);
         }
     }
@@ -784,8 +796,8 @@ static void updateMedia_DocumentWidget_(iDocumentWidget *d) {
         refresh_Widget(d);
         iConstForEach(PtrArray, i, &d->visibleMedia) {
             const iGmRun *run = i.ptr;
-            if (run->mediaType == audio_GmRunMediaType) {
-                iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
+            if (run->mediaType == audio_MediaType) {
+                iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(run));
                 if (idleTimeMs_Player(plr) > 3000 && ~flags_Player(plr) & volumeGrabbed_PlayerFlag &&
                     flags_Player(plr) & adjustingVolume_PlayerFlag) {
                     setFlags_Player(plr, adjustingVolume_PlayerFlag, iFalse);
@@ -1244,6 +1256,9 @@ static const char *zipPageHeading_(const iRangecc mime) {
     if (equalCase_Rangecc(mime, "application/gpub+zip")) {
         return book_Icon " Gempub";
     }
+    else if (equalCase_Rangecc(mime, mimeType_FontPack)) {
+        return "\U0001f520 Fontpack";
+    }
     iRangecc type = iNullRange;
     nextSplit_Rangecc(mime, "/", &type); /* skip the part before the slash */
     nextSplit_Rangecc(mime, "/", &type);
@@ -1258,164 +1273,174 @@ static const char *zipPageHeading_(const iRangecc mime) {
 
 static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool isCached) {
     iWidget *w = as_Widget(d);
-    delete_Gempub(d->sourceGempub);
-    d->sourceGempub = NULL;
-    if (!cmpCase_String(&d->sourceMime, "application/octet-stream") ||
-        !cmpCase_String(&d->sourceMime, mimeType_Gempub) ||
-        endsWithCase_String(d->mod.url, ".gpub")) {
-        iGempub *gempub = new_Gempub();
-        if (open_Gempub(gempub, &d->sourceContent)) {
-            setBaseUrl_Gempub(gempub, d->mod.url);
-            setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
-            setCStr_String(&d->sourceMime, mimeType_Gempub);
-            d->sourceGempub = gempub;
-        }
-        else {
-            delete_Gempub(gempub);
-        }
-    }
-    if (!d->sourceGempub) {
-        const iString *localPath = collect_String(localFilePathFromUrl_String(d->mod.url));
-        iBool isInside = iFalse;
-        if (localPath && !fileExists_FileInfo(localPath)) {
-            /* This URL may refer to a file inside the archive. */
-            localPath = findContainerArchive_Path(localPath);
-            isInside = iTrue;
-        }
-        if (localPath && equal_CStr(mediaType_Path(localPath), "application/gpub+zip")) {
+    /* Gempub page behavior and footer actions. */ {
+        /* TODO: move this to gempub.c */
+        delete_Gempub(d->sourceGempub);
+        d->sourceGempub = NULL;
+        if (!cmpCase_String(&d->sourceMime, "application/octet-stream") ||
+            !cmpCase_String(&d->sourceMime, mimeType_Gempub) ||
+            endsWithCase_String(d->mod.url, ".gpub")) {
             iGempub *gempub = new_Gempub();
-            if (openFile_Gempub(gempub, localPath)) {
-                setBaseUrl_Gempub(gempub, collect_String(makeFileUrl_String(localPath)));
-                if (!isInside) {
-                    setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
-                    setCStr_String(&d->sourceMime, mimeType_Gempub);
-                }
+            if (open_Gempub(gempub, &d->sourceContent)) {
+                setBaseUrl_Gempub(gempub, d->mod.url);
+                setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
+                setCStr_String(&d->sourceMime, mimeType_Gempub);
                 d->sourceGempub = gempub;
             }
             else {
                 delete_Gempub(gempub);
             }
         }
-    }
-    if (d->sourceGempub) {
-        if (equal_String(d->mod.url, coverPageUrl_Gempub(d->sourceGempub))) {
-            if (!isRemote_Gempub(d->sourceGempub)) {
-                iArray *items = collectNew_Array(sizeof(iMenuItem));
-                pushBack_Array(
-                    items,
-                    &(iMenuItem){ book_Icon " ${gempub.cover.view}",
-                                  0,
-                                  0,
-                                  format_CStr("!open url:%s",
-                                              cstr_String(indexPageUrl_Gempub(d->sourceGempub))) });
-                if (navSize_Gempub(d->sourceGempub) > 0) {
-                    pushBack_Array(
-                        items,
-                        &(iMenuItem){
-                            format_CStr(forwardArrow_Icon " %s",
-                                        cstr_String(navLinkLabel_Gempub(d->sourceGempub, 0))),
-                            SDLK_RIGHT,
-                            0,
-                            format_CStr("!open url:%s",
-                                        cstr_String(navLinkUrl_Gempub(d->sourceGempub, 0))) });
-                }
-                makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));
+        if (!d->sourceGempub) {
+            const iString *localPath = collect_String(localFilePathFromUrl_String(d->mod.url));
+            iBool isInside = iFalse;
+            if (localPath && !fileExists_FileInfo(localPath)) {
+                /* This URL may refer to a file inside the archive. */
+                localPath = findContainerArchive_Path(localPath);
+                isInside = iTrue;
             }
-            else {
-                makeFooterButtons_DocumentWidget_(
-                    d,
-                    (iMenuItem[]){ { book_Icon " ${menu.save.downloads.open}",
-                                     SDLK_s,
-                                     KMOD_PRIMARY | KMOD_SHIFT,
-                                     "document.save open:1" },
-                                   { download_Icon " " saveToDownloads_Label,
-                                     SDLK_s,
-                                     KMOD_PRIMARY,
-                                     "document.save" } },
-                    2);
-            }
-            if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
-                redoLayout_GmDocument(d->doc);
-                updateVisible_DocumentWidget_(d);
-                invalidate_DocumentWidget_(d);
-            }
-        }
-        else if (equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
-            makeFooterButtons_DocumentWidget_(
-                d,
-                (iMenuItem[]){ { format_CStr(book_Icon " %s",
-                                             cstr_String(property_Gempub(d->sourceGempub,
-                                                                         title_GempubProperty))),
-                                 SDLK_LEFT,
-                                 0,
-                                 format_CStr("!open url:%s",
-                                             cstr_String(coverPageUrl_Gempub(d->sourceGempub))) } },
-                1);
-        }
-        else {
-            /* Navigation buttons. */
-            iArray *items = collectNew_Array(sizeof(iMenuItem));
-            const size_t navIndex = navIndex_Gempub(d->sourceGempub, d->mod.url);
-            if (navIndex != iInvalidPos) {
-                if (navIndex < navSize_Gempub(d->sourceGempub) - 1) {
-                    pushBack_Array(
-                        items,
-                        &(iMenuItem){
-                            format_CStr(forwardArrow_Icon " %s",
-                                        cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex + 1))),
-                            SDLK_RIGHT,
-                            0,
-                            format_CStr("!open url:%s",
-                                        cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex + 1))) });
-                }
-                if (navIndex > 0) {
-                    pushBack_Array(
-                        items,
-                        &(iMenuItem){
-                            format_CStr(backArrow_Icon " %s",
-                                        cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex - 1))),
-                            SDLK_LEFT,
-                            0,
-                            format_CStr("!open url:%s",
-                                        cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex - 1))) });
-                }
-                else if (!equalCase_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
-                    pushBack_Array(
-                        items,
-                        &(iMenuItem){
-                            format_CStr(book_Icon " %s",
-                                        cstr_String(property_Gempub(d->sourceGempub, title_GempubProperty))),
-                            SDLK_LEFT,
-                            0,
-                            format_CStr("!open url:%s",
-                                        cstr_String(coverPageUrl_Gempub(d->sourceGempub))) });
-                }
-            }
-            if (!isEmpty_Array(items)) {
-                makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));                
-            }
-        }
-        if (!isCached && prefs_App()->pinSplit &&
-            equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
-            const iString *navStart = navStartLinkUrl_Gempub(d->sourceGempub);
-            if (navStart) {
-                iWindow *win = get_Window();
-                /* Auto-split to show index and the first navigation link. */
-                if (numRoots_Window(win) == 2) {
-                    /* This document is showing the index page. */
-                    iRoot *other = otherRoot_Window(win, w->root);
-                    postCommandf_Root(other, "open url:%s", cstr_String(navStart));
-                    if (prefs_App()->pinSplit == 1 && w->root == win->roots[1]) {
-                        /* On the wrong side. */
-                        postCommand_App("ui.split swap:1");
+            if (localPath && equal_CStr(mediaType_Path(localPath), mimeType_Gempub)) {
+                iGempub *gempub = new_Gempub();
+                if (openFile_Gempub(gempub, localPath)) {
+                    setBaseUrl_Gempub(gempub, collect_String(makeFileUrl_String(localPath)));
+                    if (!isInside) {
+                        setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
+                        setCStr_String(&d->sourceMime, mimeType_Gempub);
                     }
+                    d->sourceGempub = gempub;
                 }
                 else {
-                    postCommandf_App(
-                        "open newtab:%d url:%s", otherRoot_OpenTabFlag, cstr_String(navStart));
+                    delete_Gempub(gempub);
                 }
             }
         }
+        if (d->sourceGempub) {
+            if (equal_String(d->mod.url, coverPageUrl_Gempub(d->sourceGempub))) {
+                if (!isRemote_Gempub(d->sourceGempub)) {
+                    iArray *items = collectNew_Array(sizeof(iMenuItem));
+                    pushBack_Array(
+                        items,
+                        &(iMenuItem){ book_Icon " ${gempub.cover.view}",
+                                      0,
+                                      0,
+                                      format_CStr("!open url:%s",
+                                                  cstr_String(indexPageUrl_Gempub(d->sourceGempub))) });
+                    if (navSize_Gempub(d->sourceGempub) > 0) {
+                        pushBack_Array(
+                            items,
+                            &(iMenuItem){
+                                format_CStr(forwardArrow_Icon " %s",
+                                            cstr_String(navLinkLabel_Gempub(d->sourceGempub, 0))),
+                                SDLK_RIGHT,
+                                0,
+                                format_CStr("!open url:%s",
+                                            cstr_String(navLinkUrl_Gempub(d->sourceGempub, 0))) });
+                    }
+                    makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));
+                }
+                else {
+                    makeFooterButtons_DocumentWidget_(
+                        d,
+                        (iMenuItem[]){ { book_Icon " ${menu.save.downloads.open}",
+                                         SDLK_s,
+                                         KMOD_PRIMARY | KMOD_SHIFT,
+                                         "document.save open:1" },
+                                       { download_Icon " " saveToDownloads_Label,
+                                         SDLK_s,
+                                         KMOD_PRIMARY,
+                                         "document.save" } },
+                        2);
+                }
+                if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
+                    redoLayout_GmDocument(d->doc);
+                    updateVisible_DocumentWidget_(d);
+                    invalidate_DocumentWidget_(d);
+                }
+            }
+            else if (equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
+                makeFooterButtons_DocumentWidget_(
+                    d,
+                    (iMenuItem[]){ { format_CStr(book_Icon " %s",
+                                                 cstr_String(property_Gempub(d->sourceGempub,
+                                                                             title_GempubProperty))),
+                                     SDLK_LEFT,
+                                     0,
+                                     format_CStr("!open url:%s",
+                                                 cstr_String(coverPageUrl_Gempub(d->sourceGempub))) } },
+                    1);
+            }
+            else {
+                /* Navigation buttons. */
+                iArray *items = collectNew_Array(sizeof(iMenuItem));
+                const size_t navIndex = navIndex_Gempub(d->sourceGempub, d->mod.url);
+                if (navIndex != iInvalidPos) {
+                    if (navIndex < navSize_Gempub(d->sourceGempub) - 1) {
+                        pushBack_Array(
+                            items,
+                            &(iMenuItem){
+                                format_CStr(forwardArrow_Icon " %s",
+                                            cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex + 1))),
+                                SDLK_RIGHT,
+                                0,
+                                format_CStr("!open url:%s",
+                                            cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex + 1))) });
+                    }
+                    if (navIndex > 0) {
+                        pushBack_Array(
+                            items,
+                            &(iMenuItem){
+                                format_CStr(backArrow_Icon " %s",
+                                            cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex - 1))),
+                                SDLK_LEFT,
+                                0,
+                                format_CStr("!open url:%s",
+                                            cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex - 1))) });
+                    }
+                    else if (!equalCase_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
+                        pushBack_Array(
+                            items,
+                            &(iMenuItem){
+                                format_CStr(book_Icon " %s",
+                                            cstr_String(property_Gempub(d->sourceGempub, title_GempubProperty))),
+                                SDLK_LEFT,
+                                0,
+                                format_CStr("!open url:%s",
+                                            cstr_String(coverPageUrl_Gempub(d->sourceGempub))) });
+                    }
+                }
+                if (!isEmpty_Array(items)) {
+                    makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));
+                }
+            }
+            if (!isCached && prefs_App()->pinSplit &&
+                equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
+                const iString *navStart = navStartLinkUrl_Gempub(d->sourceGempub);
+                if (navStart) {
+                    iWindow *win = get_Window();
+                    /* Auto-split to show index and the first navigation link. */
+                    if (numRoots_Window(win) == 2) {
+                        /* This document is showing the index page. */
+                        iRoot *other = otherRoot_Window(win, w->root);
+                        postCommandf_Root(other, "open url:%s", cstr_String(navStart));
+                        if (prefs_App()->pinSplit == 1 && w->root == win->roots[1]) {
+                            /* On the wrong side. */
+                            postCommand_App("ui.split swap:1");
+                        }
+                    }
+                    else {
+                        postCommandf_App(
+                            "open newtab:%d url:%s", otherRoot_OpenTabFlag, cstr_String(navStart));
+                    }
+                }
+            }
+        }
+    }
+    /* Local fontpacks are automatically shown. */
+    if (preloadLocalFontpackForPreview_Fonts(d->doc)) {
+        documentRunsInvalidated_DocumentWidget_(d);
+        redoLayout_GmDocument(d->doc);
+        updateVisible_DocumentWidget_(d);
+        invalidate_DocumentWidget_(d);
     }
 }
 
@@ -1484,7 +1509,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     }
                     delete_String(localPath);
                     if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
-                        appendFormat_String(&str, "=> %s/ ${doc.archive.view}\n",
+                        appendFormat_String(&str, "=> %s/ " folder_Icon " ${doc.archive.view}\n",
                                             cstr_String(withSpacesEncoded_String(d->mod.url)));
                     }
                     translate_Lang(&str);
@@ -2089,7 +2114,7 @@ static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, 
 }
 
 static iBool isDownloadRequest_DocumentWidget(const iDocumentWidget *d, const iMediaRequest *req) {
-    return findLinkDownload_Media(constMedia_GmDocument(d->doc), req->linkId) != 0;
+    return findMediaForLink_Media(constMedia_GmDocument(d->doc), req->linkId, download_MediaType).type != 0;
 }
 
 static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -2174,7 +2199,7 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
 static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
     iConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
-        if (run->linkId && run->mediaType == none_GmRunMediaType &&
+        if (run->linkId && run->mediaType == none_MediaType &&
             ~run->flags & decoration_GmRunFlag) {
             const int linkFlags = linkFlags_GmDocument(d->doc, run->linkId);
             if (isMediaLink_GmDocument(d->doc, run->linkId) &&
@@ -2763,8 +2788,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.downloadlink")) {
         if (d->contextLink) {
             const iGmLinkId linkId = d->contextLink->linkId;
-            setDownloadUrl_Media(
-                media_GmDocument(d->doc), linkId, linkUrl_GmDocument(d->doc, linkId));
+            setUrl_Media(media_GmDocument(d->doc),
+                         linkId,
+                         download_MediaType,
+                         linkUrl_GmDocument(d->doc, linkId));
             requestMedia_DocumentWidget_(d, linkId, iFalse /* no filters */);
             redoLayout_GmDocument(d->doc); /* inline downloader becomes visible */
             updateVisible_DocumentWidget_(d);
@@ -2874,7 +2901,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const iMedia * media  = media_GmDocument(d->doc);
         const size_t   num    = numAudio_Media(media);
         for (size_t id = 1; id <= num; id++) {
-            iPlayer *plr = audioPlayer_Media(media, id);
+            iPlayer *plr = audioPlayer_Media(media, (iMediaId){ audio_MediaType, id });
             if (plr != startedPlr) {
                 setPaused_Player(plr, iTrue);
             }
@@ -3212,8 +3239,8 @@ static iRect runRect_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run
 }
 
 static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *run) {
-    if (run && run->mediaType == audio_GmRunMediaType) {
-        iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
+    if (run && run->mediaType == audio_MediaType) {
+        iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(run));
         setFlags_Player(plr, volumeGrabbed_PlayerFlag, iTrue);
         d->grabbedStartVolume = volume_Player(plr);
         d->grabbedPlayer      = run;
@@ -3221,7 +3248,7 @@ static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *r
     }
     else if (d->grabbedPlayer) {
         setFlags_Player(
-            audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->mediaId),
+            audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(d->grabbedPlayer)),
             volumeGrabbed_PlayerFlag,
             iFalse);
         d->grabbedPlayer = NULL;
@@ -3249,11 +3276,21 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
     const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
     iConstForEach(PtrArray, i, &d->visibleMedia) {
         const iGmRun *run  = i.ptr;
-        if (run->mediaType != audio_GmRunMediaType) {
+        if (run->mediaType == fontpack_MediaType) {
+            iFontpackUI ui;
+            init_FontpackUI(&ui, media_GmDocument(d->doc), run->mediaId,
+                            runRect_DocumentWidget_(d, run));
+            if (processEvent_FontpackUI(&ui, ev)) {
+                refresh_Widget(d);
+                return iTrue;
+            }
+        }
+        if (run->mediaType != audio_MediaType) {
             continue;
         }
+        /* TODO: move this to mediaui.c */
         const iRect rect = runRect_DocumentWidget_(d, run);
-        iPlayer *   plr  = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
+        iPlayer *   plr  = audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(run));
         if (contains_Rect(rect, mouse)) {
             iPlayerUI ui;
             init_PlayerUI(&ui, plr, rect);
@@ -3633,7 +3670,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                                  cstr_String(linkUrl)) },
                                                    },
                                     3);
-                    if (isNative && d->contextLink->mediaType != download_GmRunMediaType) {
+                    if (isNative && d->contextLink->mediaType != download_MediaType) {
                         pushBackN_Array(&items, (iMenuItem[]){
                             { "---" },
                             { download_Icon " ${link.download}", 0, 0, "document.downloadlink" },
@@ -3641,7 +3678,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                     iMediaRequest *mediaReq;
                     if ((mediaReq = findMediaRequest_DocumentWidget_(d, d->contextLink->linkId)) != NULL &&
-                        d->contextLink->mediaType != download_GmRunMediaType) {
+                        d->contextLink->mediaType != download_MediaType) {
                         if (isFinished_GmRequest(mediaReq->req)) {
                             pushBack_Array(&items,
                                            &(iMenuItem){ download_Icon " " saveToDownloads_Label,
@@ -3763,7 +3800,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         case drag_ClickResult: {
             if (d->grabbedPlayer) {
                 iPlayer *plr =
-                    audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->mediaId);
+                    audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(d->grabbedPlayer));
                 iPlayerUI ui;
                 init_PlayerUI(&ui, plr, runRect_DocumentWidget_(d, d->grabbedPlayer));
                 float off = (float) delta_Click(&d->click).x / (float) width_Rect(ui.volumeSlider);
@@ -3883,8 +3920,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 }
                 if (d->hoverLink) {
                     /* TODO: Move this to a method. */
-                    const iGmLinkId linkId = d->hoverLink->linkId;
-                    const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
+                    const iGmLinkId linkId    = d->hoverLink->linkId;
+                    const iMediaId  linkMedia = mediaId_GmRun(d->hoverLink);
+                    const int       linkFlags = linkFlags_GmDocument(d->doc, linkId);
                     iAssert(linkId);
                     /* Media links are opened inline by default. */
                     if (isMediaLink_GmDocument(d->doc, linkId)) {
@@ -3936,6 +3974,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             }
                         }
                         refresh_Widget(w);
+                    }
+                    else if (linkMedia.type == download_MediaType ||
+                             findMediaRequest_DocumentWidget_(d, linkId)) {
+                        /* TODO: What should be done when clicking on an inline download?
+                           Maybe dismiss if finished? */
+                        return iTrue;
                     }
                     else if (linkFlags & supportedScheme_GmLinkFlag) {
                         int tabMode = openTabMode_Sym(modState_Keys());
@@ -4071,7 +4115,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
 
 static void drawMark_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d = context;
-    if (run->mediaType == none_GmRunMediaType) {
+    if (run->mediaType == none_MediaType) {
         fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
         fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
     }
@@ -4178,8 +4222,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             d->runsDrawn.end = run;
         }
     }
-    if (run->mediaType == image_GmRunMediaType) {
-        SDL_Texture *tex = imageTexture_Media(media_GmDocument(d->widget->doc), run->mediaId);
+    if (run->mediaType == image_MediaType) {
+        SDL_Texture *tex = imageTexture_Media(media_GmDocument(d->widget->doc), mediaId_GmRun(run));
         const iRect dst = moved_Rect(run->visBounds, origin);
         if (tex) {
             fillRect_Paint(&d->paint, dst, tmBackground_ColorId); /* in case the image has alpha */
@@ -4334,31 +4378,31 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart);
             iString text;
             init_String(&text);
-            iMediaId imageId = linkImage_GmDocument(doc, run->linkId);
-            iMediaId audioId = !imageId ? linkAudio_GmDocument(doc, run->linkId) : 0;
-            iMediaId downloadId = !imageId && !audioId ?
-                findLinkDownload_Media(constMedia_GmDocument(doc), run->linkId) : 0;
-            iAssert(imageId || audioId || downloadId);
-            if (imageId) {
-                iAssert(!isEmpty_Rect(run->bounds));
-                iGmMediaInfo info;
-                imageInfo_Media(constMedia_GmDocument(doc), imageId, &info);
-                const iInt2 imgSize = imageSize_Media(constMedia_GmDocument(doc), imageId);
-                format_String(&text, "%s \u2014 %d x %d \u2014 %.1f%s",
-                              info.type, imgSize.x, imgSize.y, info.numBytes / 1.0e6f,
-                              cstr_Lang("mb"));
+            const iMediaId linkMedia = findMediaForLink_Media(constMedia_GmDocument(doc),
+                                                              run->linkId, none_MediaType);
+            iAssert(linkMedia.type != none_MediaType);
+            iGmMediaInfo info;
+            info_Media(constMedia_GmDocument(doc), linkMedia, &info);
+            switch (linkMedia.type) {
+                case image_MediaType: {
+                    iAssert(!isEmpty_Rect(run->bounds));
+                    const iInt2 imgSize = imageSize_Media(constMedia_GmDocument(doc), linkMedia);
+                    format_String(&text, "%s \u2014 %d x %d \u2014 %.1f%s",
+                                  info.type, imgSize.x, imgSize.y, info.numBytes / 1.0e6f,
+                                  cstr_Lang("mb"));
+                    break;
+                }
+                case audio_MediaType:
+                    format_String(&text, "%s", info.type);
+                    break;
+                case download_MediaType:
+                    format_String(&text, "%s", info.type);
+                    break;
+                default:
+                    break;
             }
-            else if (audioId) {
-                iGmMediaInfo info;
-                audioInfo_Media(constMedia_GmDocument(doc), audioId, &info);
-                format_String(&text, "%s", info.type);
-            }
-            else if (downloadId) {
-                iGmMediaInfo info;
-                downloadInfo_Media(constMedia_GmDocument(doc), downloadId, &info);
-                format_String(&text, "%s", info.type);
-            }
-            if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
+            if (linkMedia.type != download_MediaType && /* can't cancel downloads currently */
+                findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
                 appendFormat_String(
                     &text, "  %s" close_Icon, isHover ? escape_Color(tmLinkText_ColorId) : "");
             }
@@ -4589,17 +4633,24 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
 static void drawMedia_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
     iConstForEach(PtrArray, i, &d->visibleMedia) {
         const iGmRun * run = i.ptr;
-        if (run->mediaType == audio_GmRunMediaType) {
+        if (run->mediaType == audio_MediaType) {
             iPlayerUI ui;
             init_PlayerUI(&ui,
-                          audioPlayer_Media(media_GmDocument(d->doc), run->mediaId),
+                          audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(run)),
                           runRect_DocumentWidget_(d, run));
             draw_PlayerUI(&ui, p);
         }
-        else if (run->mediaType == download_GmRunMediaType) {
+        else if (run->mediaType == download_MediaType) {
             iDownloadUI ui;
-            init_DownloadUI(&ui, d, run->mediaId, runRect_DocumentWidget_(d, run));
+            init_DownloadUI(&ui, constMedia_GmDocument(d->doc), run->mediaId,
+                            runRect_DocumentWidget_(d, run));
             draw_DownloadUI(&ui, p);
+        }
+        else if (run->mediaType == fontpack_MediaType) {
+            iFontpackUI ui;
+            init_FontpackUI(&ui, constMedia_GmDocument(d->doc), run->mediaId,
+                            runRect_DocumentWidget_(d, run));
+            draw_FontpackUI(&ui, p);
         }
     }
 }

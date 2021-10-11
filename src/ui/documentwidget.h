@@ -32,6 +32,8 @@ iDeclareType(History)
 iDeclareWidgetClass(DocumentWidget)
 iDeclareObjectConstruction(DocumentWidget)
 
+void    cancelAllRequests_DocumentWidget(iDocumentWidget *);
+
 void    serializeState_DocumentWidget   (const iDocumentWidget *, iStream *outs);
 void    deserializeState_DocumentWidget (iDocumentWidget *, iStream *ins);
 

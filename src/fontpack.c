@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/toml.h>
 
-/* TODO: Clean up and/or reorder this file, it's a bit unorganized. */
+const char *mimeType_FontPack = "application/lagrange-fontpack+zip";
 
 float scale_FontSize(enum iFontSize size) {
     static const float sizes[max_FontSize] = {
@@ -57,38 +57,9 @@ float scale_FontSize(enum iFontSize size) {
     return sizes[size];
 }
 
-iDeclareType(Fonts)    
-    
-struct Impl_Fonts {
-    iString   userDir;
-    iPtrArray packs;
-    iPtrArray files;
-    iPtrArray specOrder; /* specs sorted by priority */
-};
-
-static iFonts fonts_;
-
-static void unloadFiles_Fonts_(iFonts *d) {
-    /* TODO: Mark all files in font packs as not resident. */    
-    iForEach(PtrArray, i, &d->files) {
-        delete_FontFile(i.ptr);
-    }
-    clear_PtrArray(&d->files);
-}
-
-static iFontFile *findFile_Fonts_(iFonts *d, const iString *id) {
-    iForEach(PtrArray, i, &d->files) {
-        iFontFile *ff = i.ptr;
-        if (equal_String(&ff->id, id)) {
-            return ff;
-        }
-    }
-    return NULL;
-}
-
 /*----------------------------------------------------------------------------------------------*/
 
-iDefineTypeConstruction(FontFile)
+iDefineObjectConstruction(FontFile)
 
 void init_FontFile(iFontFile *d) {
     init_String(&d->id);
@@ -114,7 +85,7 @@ static void load_FontFile_(iFontFile *d, const iBlock *data) {
                                HB_MEMORY_MODE_READONLY, NULL, NULL);
     d->hbFace = hb_face_create(d->hbBlob, 0);
     d->hbFont = hb_font_create(d->hbFace);
-#endif    
+#endif
 }
 
 static void unload_FontFile_(iFontFile *d) {
@@ -126,12 +97,13 @@ static void unload_FontFile_(iFontFile *d) {
     d->hbFont = NULL;
     d->hbFace = NULL;
     d->hbBlob = NULL;
-#endif    
+#endif
     clear_Block(&d->sourceData);
     iZap(d->stbInfo);
 }
 
 void deinit_FontFile(iFontFile *d) {
+    printf("FontFile %p {%s} is DESTROYED\n", d, cstr_String(&d->id));
     unload_FontFile_(d);
     deinit_Block(&d->sourceData);
     deinit_String(&d->id);
@@ -156,12 +128,12 @@ void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
 
 /*----------------------------------------------------------------------------------------------*/
 
-
 iDefineTypeConstruction(FontSpec)
     
 void init_FontSpec(iFontSpec *d) {
     init_String(&d->id);
     init_String(&d->name);
+    init_String(&d->sourcePath);
     d->flags      = 0;
     d->priority   = 0;
     for (int i = 0; i < 2; ++i) {
@@ -173,52 +145,119 @@ void init_FontSpec(iFontSpec *d) {
 }
 
 void deinit_FontSpec(iFontSpec *d) {
+    /* FontFile references are held by FontSpecs. */
+    iForIndices(i, d->styles) {
+        iRelease(d->styles[i]);
+    }
+    deinit_String(&d->sourcePath);
     deinit_String(&d->name);
     deinit_String(&d->id);
 }
 
 /*----------------------------------------------------------------------------------------------*/
 
-iDeclareType(FontPack)
-iDeclareTypeConstruction(FontPack)
+iDeclareType(Fonts)
+
+struct Impl_Fonts {
+    iString   userDir;
+    iPtrArray packs;
+    iObjectList *files;
+    iPtrArray specOrder; /* specs sorted by priority */
+};
+
+static iFonts fonts_;
+
+static void unloadFiles_Fonts_(iFonts *d) {
+    /* TODO: Mark all files in font packs as not resident. */    
+    clear_ObjectList(d->files);
+}
+
+static iFontFile *findFile_Fonts_(iFonts *d, const iString *id) {
+    iForEach(ObjectList, i, d->files) {
+        iFontFile *ff = i.object;
+        if (equal_String(&ff->id, id)) {
+            return ff;
+        }
+    }
+    return NULL;
+}
+
+static void releaseUnusedFiles_Fonts_(iFonts *d) {
+    iForEach(ObjectList, i, d->files) {
+        iFontFile *ff = i.object;
+        if (ff->object.refCount == 1) {
+            /* No specs use this. */
+            //printf("[Fonts] releasing unused font file: %p {%s}\n", ff, cstr_String(&ff->id));
+            remove_ObjectListIterator(&i);
+        }
+    }
+}
+
+/*----------------------------------------------------------------------------------------------*/
 
 struct Impl_FontPack {
-    const iArchive *archive; /* opened ZIP archive */
+    iString         id; /* lowercase filename without the .fontpack extension */
+    int             version;
+    iBool           isStandalone;
+    iBool           isReadOnly;
     iArray          fonts;   /* array of FontSpecs */
+    const iArchive *archive; /* opened ZIP archive */
     iString *       loadPath;
     iFontSpec *     loadSpec;
 };
 
+iDefineTypeConstruction(FontPack)
+
 void init_FontPack(iFontPack *d) {
-    d->archive = NULL;
+    init_String(&d->id);
+    d->version = 0;
+    d->isStandalone = iFalse;
+    d->isReadOnly = iFalse;
     init_Array(&d->fonts, sizeof(iFontSpec));
+    d->archive  = NULL;
     d->loadSpec = NULL;
     d->loadPath = NULL;
 }
 
 void deinit_FontPack(iFontPack *d) {
+    iAssert(d->archive == NULL);
+    iAssert(d->loadSpec == NULL);
     delete_String(d->loadPath);
     iForEach(Array, i, &d->fonts) {
         deinit_FontSpec(i.value);
     }
     deinit_Array(&d->fonts);
-    iAssert(d->archive == NULL);
-    iAssert(d->loadSpec == NULL);
+    deinit_String(&d->id);
+    releaseUnusedFiles_Fonts_(&fonts_);
 }
 
-iDefineTypeConstruction(FontPack)
+iFontPackId id_FontPack(const iFontPack *d) {
+    return (iFontPackId){ &d->id, d->version };
+}
+
+const iPtrArray *listSpecs_FontPack(const iFontPack *d) {
+    if (!d) return NULL;
+    iPtrArray *list = collectNew_PtrArray();
+    iConstForEach(Array, i, &d->fonts) {
+        pushBack_PtrArray(list, i.value);
+    }
+    return list;
+}
 
 void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart) {
     iFontPack *d = context;
     if (isStart) {
         iAssert(!d->loadSpec);
-        /* Each font ID must be unique. */
-        if (!findSpec_Fonts(cstr_String(table))) {
+        /* Each font ID must be unique in the non-standalone packs. */
+        if (d->isStandalone || !findSpec_Fonts(cstr_String(table))) {
             d->loadSpec = new_FontSpec();
             set_String(&d->loadSpec->id, table);
+            if (d->loadPath) {
+                set_String(&d->loadSpec->sourcePath, d->loadPath);
+            }
         }
     }
-    else {
+    else if (d->loadSpec) {
         /* Set fallback font files. */ {
             const iFontFile **styles = d->loadSpec->styles;
             if (!styles[regular_FontStyle]) {
@@ -229,11 +268,11 @@ void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart
                 return;
             }
             if (!styles[semiBold_FontStyle]) {
-                styles[semiBold_FontStyle] = styles[bold_FontStyle];
+                styles[semiBold_FontStyle] = ref_Object(styles[bold_FontStyle]);
             }
             for (size_t s = 0; s < max_FontStyle; s++) {
                 if (!styles[s]) {
-                    styles[s] = styles[regular_FontStyle];
+                    styles[s] = ref_Object(styles[regular_FontStyle]);
                 }
             }
         }
@@ -263,7 +302,15 @@ static iBlock *readFile_FontPack_(const iFontPack *d, const iString *path) {
 void handleIniKeyValue_FontPack_(void *context, const iString *table, const iString *key,
                                  const iTomlValue *value) {
     iFontPack *d = context;
-    if (!d->loadSpec) return;
+    if (isEmpty_String(table)) {
+        if (!cmp_String(key, "version")) {
+            d->version = number_TomlValue(value);
+        }
+        return;
+    }
+    if (!d->loadSpec) {
+        return;
+    }
     iUnused(table);
     if (!cmp_String(key, "name") && value->type == string_TomlType) {
         set_String(&d->loadSpec->name, value->value.string);        
@@ -322,12 +369,13 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
                         ff = new_FontFile();
                         set_String(&ff->id, fontFileId);
                         load_FontFile_(ff, data);
-                        pushBack_PtrArray(&fonts_.files, ff); /* centralized ownership */
+                        pushBack_ObjectList(fonts_.files, ff); /* centralized ownership */
+                        iRelease(ff);
                         delete_Block(data);
 //                        printf("[FontPack] loaded file: %s\n", cstr_String(fontFileId));
                     }
                 }
-                d->loadSpec->styles[i] = ff;
+                d->loadSpec->styles[i] = ref_Object(ff);
                 delete_String(fontFileId);
                 break;
             }
@@ -348,29 +396,6 @@ static iBool load_FontPack_(iFontPack *d, const iString *ini) {
     return ok;
 }
 
-#if 0
-iBool loadIniFile_FontPack(iFontPack *d, const iString *iniPath) {
-    iBeginCollect();
-    iBool ok = iFalse;
-    iFile *f = iClob(new_File(iniPath));
-    if (open_File(f, text_FileMode | readOnly_FileMode)) {
-        d->loadPath = collect_String(newRange_String(dirName_Path(iniPath)));
-        iString *src = collect_String(readString_File(f));
-        
-        iTomlParser *ini = collect_TomlParser(new_TomlParser());
-        setHandlers_TomlParser(ini, handleIniTable_FontPack_, handleIniKeyValue_FontPack_, d);
-        if (!parse_TomlParser(ini, src)) {
-            fprintf(stderr, "[FontPack] error parsing %s\n", cstr_String(iniPath));
-        }
-        iAssert(d->loadSpec == NULL);
-        d->loadPath = NULL;
-        ok = iTrue;
-    }
-    iEndCollect();
-    return ok;
-}
-#endif
-
 iBool loadArchive_FontPack(iFontPack *d, const iArchive *zip) {
     d->archive = zip;
     iBool ok = iFalse;
@@ -387,6 +412,28 @@ iBool loadArchive_FontPack(iFontPack *d, const iArchive *zip) {
     return ok;
 }
 
+void setLoadPath_FontPack(iFontPack *d, const iString *path) {
+    if (!d->loadPath) {
+        d->loadPath = new_String();
+    }
+    set_String(d->loadPath, path);
+    /* Pack ID is based on the file name. */
+    setRange_String(&d->id, baseName_Path(path));
+    setRange_String(&d->id, withoutExtension_Path(&d->id));
+}
+
+void setStandalone_FontPack(iFontPack *d, iBool standalone) {
+    d->isStandalone = standalone;
+}
+
+void setReadOnly_FontPack(iFontPack *d, iBool readOnly) {
+    d->isReadOnly = readOnly;
+}
+
+iBool isReadOnly_FontPack(const iFontPack *d) {
+    return d->isReadOnly;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 static void unloadFonts_Fonts_(iFonts *d) {
@@ -397,14 +444,23 @@ static void unloadFonts_Fonts_(iFonts *d) {
     clear_PtrArray(&d->packs);
 }
 
-static int cmpPriority_FontSpecPtr_(const void *a, const void *b) {
-    const iFontSpec **p1 = (const iFontSpec **) a, **p2 = (const iFontSpec **) b;
-    return -iCmp((*p1)->priority, (*p2)->priority); /* highest priority first */
-}
-
 static int cmpName_FontSpecPtr_(const void *a, const void *b) {
     const iFontSpec **p1 = (const iFontSpec **) a, **p2 = (const iFontSpec **) b;
     return cmpStringCase_String(&(*p1)->name, &(*p2)->name);
+}
+
+static int cmpPriority_FontSpecPtr_(const void *a, const void *b) {
+    const iFontSpec **p1 = (const iFontSpec **) a, **p2 = (const iFontSpec **) b;
+    const int cmp = -iCmp((*p1)->priority, (*p2)->priority); /* highest priority first */
+    if (cmp) return cmp;
+    return cmpName_FontSpecPtr_(a, b);
+}
+
+static int cmpSourceAndPriority_FontSpecPtr_(const void *a, const void *b) {
+    const iFontSpec **p1 = (const iFontSpec **) a, **p2 = (const iFontSpec **) b;
+    const int cmp = cmpStringCase_String(&(*p1)->sourcePath, &(*p2)->sourcePath);
+    if (cmp) return cmp;
+    return cmpPriority_FontSpecPtr_(a, b);
 }
 
 static void sortSpecs_Fonts_(iFonts *d) {
@@ -422,11 +478,13 @@ void init_Fonts(const char *userDir) {
     iFonts *d = &fonts_;
     initCStr_String(&d->userDir, userDir);
     init_PtrArray(&d->packs);
-    init_PtrArray(&d->files);
+    d->files = new_ObjectList();
     init_PtrArray(&d->specOrder);
     /* Load the required fonts. */ {
         iFontPack *pack = new_FontPack();
+        setCStr_String(&pack->id, "default");
         iArchive *arch = new_Archive();
+        setReadOnly_FontPack(pack, iTrue);
         openData_Archive(arch, &fontpackDefault_Embedded);
         loadArchive_FontPack(pack, arch); /* should never fail if we've made it this far */
         iRelease(arch);
@@ -436,7 +494,7 @@ void init_Fonts(const char *userDir) {
         const char *locations[] = {
             ".",
             "./fonts",
-            "../share/lagrange",
+            "../share/lagrange", /* Note: These must match CMakeLists.txt install destination */
             "../../share/lagrange",
             concatPath_CStr(userDir, "fonts"),
             userDir,
@@ -450,7 +508,13 @@ void init_Fonts(const char *userDir) {
                     iArchive *arch = new_Archive();
                     if (openFile_Archive(arch, entryPath)) {
                         iFontPack *pack = new_FontPack();
-                        pack->loadPath = copy_String(entryPath);
+                        setLoadPath_FontPack(pack, entryPath);
+                        setReadOnly_FontPack(pack, !isWritable_FileInfo(entry.value));
+#if defined (iPlatformApple)
+                        if (startsWith_String(pack->loadPath, cstr_String(execDir))) {
+                            setReadOnly_FontPack(pack, iTrue);
+                        }
+#endif
                         if (loadArchive_FontPack(pack, arch)) {
                             pushBack_PtrArray(&d->packs, pack);
                         }
@@ -491,11 +555,16 @@ void init_Fonts(const char *userDir) {
 void deinit_Fonts(void) {
     iFonts *d = &fonts_;
     unloadFonts_Fonts_(d);
-    unloadFiles_Fonts_(d);
+    //unloadFiles_Fonts_(d);
+    iAssert(isEmpty_ObjectList(d->files));
     deinit_PtrArray(&d->specOrder);
     deinit_PtrArray(&d->packs);
-    deinit_PtrArray(&d->files);
+    iRelease(d->files);
     deinit_String(&d->userDir);
+}
+
+const iPtrArray *listPacks_Fonts(void) {
+    return &fonts_.packs;
 }
 
 const iFontSpec *findSpec_Fonts(const char *fontId) {
@@ -524,3 +593,73 @@ const iPtrArray *listSpecs_Fonts(iBool (*filterFunc)(const iFontSpec *)) {
 const iPtrArray *listSpecsByPriority_Fonts(void) {
     return &fonts_.specOrder;
 }
+
+const iString *infoPage_Fonts(void) {
+    iFonts *d = &fonts_;
+    iString *str = collectNewCStr_String("# Fonts\n");
+    iPtrArray *specsByPack = collectNew_PtrArray();
+    setCopy_PtrArray(specsByPack, &d->specOrder);
+    sort_Array(specsByPack, cmpSourceAndPriority_FontSpecPtr_);
+    iString *currentSourcePath = collectNew_String();
+    iConstForEach(PtrArray, i, specsByPack) {
+        const iFontSpec *spec = i.ptr;
+        if (isEmpty_String(&spec->sourcePath)) {
+            continue; /* built-in font */
+        }
+        if (!equal_String(&spec->sourcePath, currentSourcePath)) {
+            appendFormat_String(str, "=> %s %s%s\n",
+                                cstrCollect_String(makeFileUrl_String(&spec->sourcePath)),
+                                endsWithCase_String(&spec->sourcePath, ".fontpack") ? "\U0001f520 " : "",
+                                cstr_Rangecc(baseName_Path(&spec->sourcePath)));
+            set_String(currentSourcePath, &spec->sourcePath);
+        }
+    }
+    return str;
+}
+
+const iFontPack *findPack_Fonts(const iString *path) {
+    iFonts *d = &fonts_;
+    iConstForEach(PtrArray, i, &d->packs) {
+        const iFontPack *pack = i.ptr;
+        if (pack->loadPath && equal_String(pack->loadPath, path)) {
+            return pack;
+        }
+    }
+    return NULL;
+}
+
+iBool preloadLocalFontpackForPreview_Fonts(iGmDocument *doc) {
+    iBool wasLoaded = iFalse;
+    for (size_t linkId = 1; ; linkId++) {
+        const iString *linkUrl = linkUrl_GmDocument(doc, linkId);
+        if (!linkUrl) {
+            break; /* ran out of links */
+        }
+        const int linkFlags = linkFlags_GmDocument(doc, linkId);
+        if (linkFlags & fontpackFileExtension_GmLinkFlag &&
+            scheme_GmLinkFlag(linkFlags) == file_GmLinkScheme) {
+            iMediaId linkMedia = findMediaForLink_Media(media_GmDocument(doc), linkId, fontpack_MediaType);
+            if (linkMedia.type) {
+                continue; /* got this one already */
+            }
+            iString *filePath = localFilePathFromUrl_String(linkUrl);
+            iFile *f = new_File(filePath);
+            if (open_File(f, readOnly_FileMode)) {
+                iBlock *fontPackArchiveData = readAll_File(f);
+                setUrl_Media(media_GmDocument(doc), linkId, fontpack_MediaType, linkUrl);
+                setData_Media(media_GmDocument(doc),
+                              linkId,
+                              collectNewCStr_String(mimeType_FontPack),
+                              fontPackArchiveData,
+                              0);
+                delete_Block(fontPackArchiveData);
+                wasLoaded = iTrue;
+            }
+            iRelease(f);
+        }
+    }
+    return wasLoaded;
+}
+
+iDefineClass(FontFile)
+

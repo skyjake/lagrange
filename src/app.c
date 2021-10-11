@@ -2669,6 +2669,7 @@ iBool handleCommand_App(const char *cmd) {
         const iBool isSplit = numRoots_Window(get_Window()) > 1;
         if (tabCount_Widget(tabs) > 1 || isSplit) {
             iWidget *closed = removeTabPage_Widget(tabs, index);
+            cancelAllRequests_DocumentWidget((iDocumentWidget *) closed);
             destroy_Widget(closed); /* released later */
             if (index == tabCount_Widget(tabs)) {
                 index--;

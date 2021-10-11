@@ -90,6 +90,7 @@ enum iGmLinkFlag {
     query_GmLinkFlag              = iBit(14), /* Gopher query link */
     iconFromLabel_GmLinkFlag      = iBit(15), /* use an Emoji/special character from label */
     isOpen_GmLinkFlag             = iBit(16), /* currently open in a tab */
+    fontpackFileExtension_GmLinkFlag = iBit(17),
 };
 
 iLocalDef enum iGmLinkScheme scheme_GmLinkFlag(int flags) {
@@ -126,13 +127,6 @@ enum iGmRunFlags {
     altText_GmRunFlag     = iBit(8),
 };
 
-enum iGmRunMediaType {
-    none_GmRunMediaType,
-    image_GmRunMediaType,
-    audio_GmRunMediaType,
-    download_GmRunMediaType,
-};
-
 /* This structure is tightly packed because GmDocuments are mostly composed of
    a large number of GmRuns. */
 struct Impl_GmRun {
@@ -146,11 +140,15 @@ struct Impl_GmRun {
         uint32_t color     : 7; /* see max_ColorId */
 
         uint32_t font      : 10;
-        uint32_t mediaType : 2;
-        uint32_t mediaId   : 10; /* zero if not an image */
+        uint32_t mediaType : 3;
+        uint32_t mediaId   : 9; /* zero if not an image */
         uint32_t preId     : 10; /* preformatted block ID (sequential); merge with mediaId? */
     };
 };
+
+iLocalDef iMediaId mediaId_GmRun(const iGmRun *d) {
+    return (iMediaId){ .type = d->mediaType, .id = d->mediaId };
+}
 
 iDeclareType(GmRunRange)
 
