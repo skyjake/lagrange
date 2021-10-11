@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-11 10:49+0000\n"
+"PO-Revision-Date: 2021-10-12 19:50+0000\n"
 "Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
@@ -435,3 +435,149 @@ msgid_plural "sidebar.unread.n"
 msgstr[0] "Nepřečtená"
 msgstr[1] "Nepřečtených"
 msgstr[2] "Nepřečtené"
+
+msgid "hint.findtext"
+msgstr "Najít text na stránce"
+
+msgid "status.query.tight"
+msgstr "Dotaz"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "Jeden bajt"
+msgstr[1] "%zu bajty"
+msgstr[2] "%zu bajtů"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%d. %d. %Y"
+
+msgid "feeds.today"
+msgstr "Dnes"
+
+msgid "feeds.entry.markread"
+msgstr "Označit jako přečtené"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Přidat záložku…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Přidat záložku…"
+
+msgid "feeds.edit"
+msgstr "Upravit kanál…"
+
+msgid "feeds.unsubscribe"
+msgstr "Zrušit odběr…"
+
+msgid "feeds.markallread"
+msgstr "Označit všechny jako přečtené"
+
+msgid "menu.opentab"
+msgstr "Otevřít na nové kartě"
+
+msgid "menu.opentab.background"
+msgstr "Otevřít v kartě na pozadí"
+
+msgid "menu.openfile"
+msgstr "Otevřít soubor…"
+
+msgid "menu.edit"
+msgstr "Upravit…"
+
+msgid "menu.dup"
+msgstr "Duplikovat…"
+
+msgid "menu.copyurl"
+msgstr "Kopírovat adresu URL"
+
+msgid "heading.history.clear"
+msgstr "VYMAZAT HISTORII"
+
+msgid "dlg.history.clear"
+msgstr "Vymazat historii"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "VYMAZAT ZÁLOŽKY"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Vymazat záložku"
+msgstr[1] "Vymazat %u záložek"
+msgstr[2] "Vymazat %u záložky"
+
+msgid "bookmark.tag.home"
+msgstr "Nastavit jako domovskou stránku"
+
+msgid "bookmark.tag.sub"
+msgstr "Odebírat kanál"
+
+msgid "toolbar.outline"
+msgstr "Rozložení stránky"
+
+msgid "status.query"
+msgstr "Vyhledat dotaz"
+
+msgid "status.feeds"
+msgstr "Probíhá aktualizace kanálů"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Obdrženo %d. %m. %Y,\n"
+"v %k:%M"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%d. %b."
+
+msgid "feeds.entry.newtab"
+msgstr "Otevřít položku na nové kartě"
+
+msgid "feeds.entry.markunread"
+msgstr "Označit jako nepřečtené"
+
+msgid "feeds.entry.openfeed"
+msgstr "Otevřít stránku kanálu"
+
+msgid "feeds.refresh"
+msgstr "Aktualizovat kanály"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Tento Atomový XML dokument byl automaticky přeložen do formátu Gemini kanálu "
+"aby jej bylo možné odebírat."
+
+msgid "menu.forgeturl"
+msgstr "Zapomenout adresu URL"
+
+msgid "history.clear"
+msgstr "Vymazat historii…"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Opravdu chcete vymazat historii všech navštívených stránek?"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Opravdu chcete smazat tu záložku v této složce?"
+msgstr[1] "Opravdu chcete smazat všech %u záložek v této složce?"
+msgstr[2] "Opravdu chcete smazat všechny %u záložky v této složce?"
+
+msgid "bookmark.tag.remote"
+msgstr "Použít jako zdroj záložek"
