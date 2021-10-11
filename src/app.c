@@ -238,6 +238,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "prefs.centershort.changed arg:%d\n", d->prefs.centerShortDocs);
     appendFormat_String(str, "prefs.collapsepreonload.changed arg:%d\n", d->prefs.collapsePreOnLoad);
     appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
+    appendFormat_String(str, "prefs.bookmarks.addbottom.changed arg:%d\n", d->prefs.addBookmarksToBottom);
     appendFormat_String(str, "prefs.archive.openindex.changed arg:%d\n", d->prefs.openArchiveIndexPages);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
@@ -2358,6 +2359,10 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.openArchiveIndexPages = arg_Command(cmd) != 0;
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.bookmarks.addbottom.changed")) {
+        d->prefs.addBookmarksToBottom = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.animate.changed")) {
         d->prefs.uiAnimations = arg_Command(cmd) != 0;
         return iTrue;
@@ -2654,6 +2659,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetoolbarscroll"), d->prefs.hideToolbarOnScroll);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.bookmarks.addbottom"), d->prefs.addBookmarksToBottom);
         setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);

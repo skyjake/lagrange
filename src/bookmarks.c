@@ -327,11 +327,18 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     unlock_Mutex(d->mtx);
 }
 
-static int maxOrder_Bookmarks_(const iBookmarks *d) {
-    int ord = 0;
+static iRangei orderRange_Bookmarks_(const iBookmarks *d) {
+    iRangei ord = { 0, 0 };
     iConstForEach(Hash, i, &d->bookmarks) {
         const iBookmark *bm = (const iBookmark *) i.value;
-        ord = iMax(ord, bm->order);
+        if (isEmpty_Range(&ord)) {
+            ord.start = bm->order;
+            ord.end = bm->order + 1;
+        }
+        else {
+            ord.start = iMin(ord.start, bm->order);
+            ord.end   = iMax(ord.end, bm->order + 1);
+        }
     }
     return ord;
 }
@@ -349,7 +356,13 @@ uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, 
     }
     bm->icon = icon;
     initCurrent_Time(&bm->when);
-    bm->order = maxOrder_Bookmarks_(d) + 1; /* Last in lists. */
+    const iRangei ord = orderRange_Bookmarks_(d);
+    if (prefs_App()->addBookmarksToBottom) {
+        bm->order = ord.end; /* Last in lists. */
+    }
+    else {
+        bm->order = ord.start - 1; /* First in lists. */
+    }
     insert_Bookmarks_(d, bm);
     unlock_Mutex(d->mtx);
     return id_Bookmark(bm);
