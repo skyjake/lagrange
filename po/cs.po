@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-07 16:50+0000\n"
+"PO-Revision-Date: 2021-10-11 10:49+0000\n"
 "Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
@@ -398,3 +398,40 @@ msgstr "Importovat všechny odkazy na stránce…"
 
 msgid "menu.bookmarks.refresh"
 msgstr "Aktualizovat vzdálené záložky"
+
+msgid "menu.identity.notactive"
+msgstr "Žádná aktivní totožnost"
+
+msgid "sidebar.feeds"
+msgstr "Kanály"
+
+msgid "sidebar.history"
+msgstr "Historie"
+
+msgid "sidebar.identities"
+msgstr "Totožnosti"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Všechny"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Nepřečtené"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nová…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Nahrát…"
+
+msgid "sidebar.bookmarks"
+msgstr "Záložky"
+
+msgid "sidebar.outline"
+msgstr "Rozložení"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Nepřečtená"
+msgstr[1] "Nepřečtených"
+msgstr[2] "Nepřečtené"
