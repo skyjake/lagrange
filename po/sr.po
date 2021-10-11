@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-08-03 05:24+0000\n"
+"PO-Revision-Date: 2021-10-04 12:08+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1083,7 +1083,7 @@ msgid "status.query"
 msgstr "Упит за претрагу"
 
 msgid "prefs.downloads"
-msgstr "Фолдер за преузете датотеке:"
+msgstr "Фасцикла за преузете датотеке:"
 
 msgid "prefs.collapsepreonload"
 msgstr "Скупљање преформатираног текста:"
@@ -1258,7 +1258,7 @@ msgstr "Претплата на страницу"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Можете га сачувати као датотеку у вашем фолдеру „Преузимања“: притисните %s "
+"Можете га сачувати као датотеку у вашој фасцикли „Преузимања“: притисните %s "
 "или изаберите „%s“ из менија."
 
 msgid "dlg.certwarn.domain"
@@ -1481,7 +1481,7 @@ msgid "menu.split.merge"
 msgstr "Спој картице"
 
 msgid "menu.view.split"
-msgstr "Раздвој поглед..."
+msgstr "Раздвој поглед…"
 
 msgid "dlg.save.opendownload"
 msgstr "Отвори преузету датотеку"
@@ -1765,7 +1765,7 @@ msgid "prefs.returnkey.accept"
 msgstr "Прихватање"
 
 msgid "menu.page.upload"
-msgstr "Пошаљи страницу преко Титана"
+msgstr "Пошаљи страницу преко Титана…"
 
 msgid "heading.upload"
 msgstr "СЛАЊЕ ПРЕКО ТИТАНА"
@@ -1789,7 +1789,7 @@ msgid "upload.mime"
 msgstr "MIME врста:"
 
 msgid "upload.token"
-msgstr "Токен за слање:"
+msgstr "Токен:"
 
 msgid "hint.upload.token"
 msgstr "погледајте инструкције сервера"
@@ -1862,3 +1862,123 @@ msgstr "Структура фасцикли је дефинисана преко
 
 msgid "bookmark.export.format.tags"
 msgstr "Ознаке су задате насловима нивоа 2."
+
+msgid "menu.newfolder"
+msgstr "Нова фасцикла…"
+
+msgid "menu.sort.alpha"
+msgstr "Алфабетско сортирање"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Да ли заиста желите да обришете обележивач из ове фасцикле?"
+msgstr[1] "Да ли заиста желите да обришете %u обележивача из ове фасцикле?"
+msgstr[2] "Да ли заиста желите да обришете %u обележивача из ове фасцикле?"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Увези сертификат/датотеку са кључем"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Пошаљи датотеку"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Унесите назив нове фасцикле:"
+
+msgid "prefs.imagestyle"
+msgstr "Бојење слика:"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Позадинска у основну"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Подешавања"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Изабери све"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Обриши"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Опозови"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "БРИСАЊЕ ОБЕЛЕЖИВАЧА"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Обриши обележивач"
+msgstr[1] "Обриши %u обележивача"
+msgstr[2] "Обриши %u обележивача"
+
+msgid "upload.id"
+msgstr "Идентитет:"
+
+msgid "dlg.upload.id.none"
+msgstr "Ниједан"
+
+msgid "dlg.upload.id.default"
+msgstr "Подразумевани"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Пошаљи чист текст"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Изабери датотеку"
+
+msgid "heading.bookmark.tags"
+msgstr "ПОСЕБНЕ ОЗНАКЕ"
+
+msgid "heading.addfolder"
+msgstr "ДОДАВАЊЕ ФАСЦИКЛЕ"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Нова фасцикла"
+
+msgid "dlg.addfolder"
+msgstr "Додавање фасцикле"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "ПОДЕШАВАЊА"
+
+msgid "prefs.imagestyle.original"
+msgstr "Ниједно"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Сиви тонови"
+
+msgid "prefs.imagestyle.text"
+msgstr "Боја текста"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Преформатирана боја"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Додавање фасцикле са обележивачима"
+
+msgid "lang.gl"
+msgstr "Галицијски"
+
+msgid "lang.eo"
+msgstr "Есперанто"
+
+msgid "lang.es.mx"
+msgstr "Шпански (Мексико)"
+
+msgid "lang.sk"
+msgstr "Словачки"
+
+msgid "lang.isv"
+msgstr "Међусловенски"
