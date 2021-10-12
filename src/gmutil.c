@@ -566,6 +566,12 @@ const char *mediaTypeFromFileExtension_String(const iString *d) {
     else if (endsWithCase_String(d, ".mid")) {
         return "audio/midi";
     }
+    else if (endsWithCase_String(d, ".md") ||
+             endsWithCase_String(d, ".markdown") ||
+             endsWithCase_String(d, ".mdown") ||
+             endsWithCase_String(d, ".markdn")) {
+        return "text/markdown";
+    }
     else if (endsWithCase_String(d, ".txt") ||
              endsWithCase_String(d, ".ini") ||
              endsWithCase_String(d, ".md") ||

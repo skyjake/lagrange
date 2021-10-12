@@ -1481,6 +1481,10 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                 }
+                else if (equal_Rangecc(param, "text/markdown")) {
+                    docFormat = markdown_SourceFormat;
+                    setRange_String(&d->sourceMime, param);
+                }
                 else if (startsWith_Rangecc(param, "text/") ||
                          equal_Rangecc(param, "application/json") ||
                          equal_Rangecc(param, "application/x-pem-file") ||

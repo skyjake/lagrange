@@ -28,6 +28,7 @@ enum iSourceFormat {
     undefined_SourceFormat = -1,
     gemini_SourceFormat    = 0,
     plainText_SourceFormat,
+    markdown_SourceFormat,
 };
 
 enum iFileVersion {

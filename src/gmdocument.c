@@ -1712,8 +1712,183 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     updateIconBasedOnUrl_GmDocument_(d);
 }
 
+static int replaceRegExp_String(iString *d, const iRegExp *regexp, const char *replacement,
+                                void (*matchHandler)(void *, const iRegExpMatch *),
+                                void *context) {
+    iRegExpMatch m;
+    iString      result;
+    int          numMatches = 0;
+    const char  *pos        = constBegin_String(d);
+    init_RegExpMatch(&m);
+    init_String(&result);
+    while (matchString_RegExp(regexp, d, &m)) {
+        appendRange_String(&result, (iRangecc){ pos, begin_RegExpMatch(&m) });
+        /* Replace any capture group back-references. */
+        for (const char *ch = replacement; *ch; ch++) {
+            if (*ch == '\\') {
+                ch++;
+                if (*ch == '\\') {
+                    appendCStr_String(&result, "\\");
+                }
+                else if (*ch >= '0' && *ch <= '9') {
+                    appendRange_String(&result, capturedRange_RegExpMatch(&m, *ch - '0'));
+                }
+            }
+            else {
+                appendData_Block(&result.chars, ch, 1);
+            }
+        }
+        if (matchHandler) {
+            matchHandler(context, &m);
+        }
+        pos = end_RegExpMatch(&m);
+        numMatches++;
+    }
+    appendRange_String(&result, (iRangecc){ pos, constEnd_String(d) });
+    set_String(d, &result);
+    deinit_String(&result);
+    return numMatches;
+}
+
+iDeclareType(PendingLink)
+struct Impl_PendingLink {
+    iString *url;
+    iString *title;
+};
+
+static void addPendingLink_(void *context, const iRegExpMatch *m) {
+    pushBack_Array(context, &(iPendingLink){
+        .url   = captured_RegExpMatch(m, 2),
+        .title = captured_RegExpMatch(m, 1)
+    });
+}
+
+static void addPendingNamedLink_(void *context, const iRegExpMatch *m) {
+    pushBack_Array(context, &(iPendingLink){
+        .url   = newFormat_String("[]%s", cstr_Rangecc(capturedRange_RegExpMatch(m, 2))),
+        .title = captured_RegExpMatch(m, 1)
+    });
+}
+
+static void flushPendingLinks_(iArray *links, const iString *source, iString *out) {
+    iRegExp *namePattern = new_RegExp("\n\\s*\\[(.+?)\\]\\s*:\\s*([^\n]+)", 0);
+    if (!endsWith_String(out, "\n")) {
+        appendCStr_String(out, "\n");
+    }
+    iForEach(Array, i, links) {
+        iPendingLink *pending = i.value;
+        const char *url = cstr_String(pending->url);
+        if (startsWith_CStr(url, "[]")) {
+            /* Find the matching named link. */
+            iRegExpMatch m;
+            init_RegExpMatch(&m);
+            while (matchString_RegExp(namePattern, source, &m)) {
+                if (equal_Rangecc(capturedRange_RegExpMatch(&m, 1), url + 2)) {
+                    url = cstrCollect_String(captured_RegExpMatch(&m, 2));
+                    break;
+                }
+            }
+        }
+        appendFormat_String(out, "\n=> %s %s", url, cstr_String(pending->title));
+        delete_String(pending->url);
+        delete_String(pending->title);
+    }
+    clear_Array(links);
+    iRelease(namePattern);
+}
+
+static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
+    iAssert(d->format == markdown_SourceFormat);
+    /* Get rid of indented preformats. */ {
+        iArray *pendingLinks = collectNew_Array(sizeof(iPendingLink));
+        const iRegExp *imageLinkPattern = iClob(new_RegExp("\n?!\\[(.+)\\]\\(([^)]+)\\)\n?", 0));
+        const iRegExp *linkPattern = iClob(new_RegExp("\\[(.+?)\\]\\(([^)]+)\\)", 0));
+        const iRegExp *namedLinkPattern = iClob(new_RegExp("\\[(.+?)\\]\\[(.+?)\\]", 0));
+        const iRegExp *namePattern = iClob(new_RegExp("\\s*\\[(.+?)\\]\\s*:\\s*([^\n]+)", 0));
+        iString result;
+        init_String(&result);
+        iRangecc line = iNullRange;
+        iBool isPre = iFalse;
+        iBool isLastEmpty = iFalse;
+        while (nextSplit_Rangecc(range_String(&d->source), "\n", &line)) {
+            if (!isPre) {
+                if (*line.start == '#') {
+                    flushPendingLinks_(pendingLinks, &d->source, &result);
+                }
+                if (isEmpty_Range(&line)) {
+                    isLastEmpty = iTrue;
+                    continue;
+                }
+                if (isLastEmpty) {
+                    appendCStr_String(&result, "\n\n");
+                }
+                else if (size_Range(&line) >= 2 && isnumber(line.start[0]) &&
+                         (line.start[1] == '.' ||
+                          (isnumber(line.start[1]) && line.start[2] == '.'))) {
+                    appendCStr_String(&result, "\n\n");
+                }
+                else if (*line.start == '*' || *line.start == '>' || *line.start == '#') {
+                    appendCStr_String(&result, "\n");
+                }
+                else {
+                    appendCStr_String(&result, " ");
+                }
+                isLastEmpty = iFalse;
+            }
+            if (startsWith_Rangecc(line, "    ")) {
+                line.start += 4;
+                if (!isPre) {
+                    appendCStr_String(&result, "```\n");
+                    isPre = iTrue;
+                }
+            }
+            else if (isPre) {
+                if (!endsWith_String(&result, "\n")) {
+                    appendCStr_String(&result, "\n");
+                }
+                appendCStr_String(&result, "```\n");
+                isPre = iFalse;
+            }
+            /* Check for image links. */
+            if (isPre) {
+                appendRange_String(&result, line);
+                appendCStr_String(&result, "\n");
+            }
+            else {
+                iString ln;
+                initRange_String(&ln, line);
+                replaceRegExp_String(&ln, iClob(new_RegExp("\\*\\*(.+?)\\*\\*", 0)), "\x1b[1m\\1\x1b[0m", NULL, NULL);
+                replaceRegExp_String(&ln, iClob(new_RegExp("\\b\\*(.+?)\\*\\b", 0)), "\x1b[3m\\1\x1b[0m", NULL, NULL);
+                replaceRegExp_String(&ln, iClob(new_RegExp("\\b_(.+?)_\\b", 0)), "\x1b[3m\\1\x1b[0m", NULL, NULL);
+                replaceRegExp_String(&ln, iClob(new_RegExp("```([^`]+?)```", 0)), "\n```\n\\1\n```\n", NULL, NULL);
+                replaceRegExp_String(&ln, namePattern, "", NULL, 0);
+                replaceRegExp_String(&ln, imageLinkPattern, "\n=> \\2 \\1\n", NULL, NULL);
+                replaceRegExp_String(&ln, namedLinkPattern, "\\1", addPendingNamedLink_, pendingLinks);
+                replaceRegExp_String(&ln, linkPattern, "\\1", addPendingLink_, pendingLinks);
+                replaceRegExp_String(&ln, iClob(new_RegExp("(?<!`)`([^`]*?)`(?!`)", 0)), "\x1b[4m\\1\x1b[0m", NULL, NULL);
+                append_String(&result, &ln);
+                deinit_String(&ln);
+            }
+        }
+        flushPendingLinks_(pendingLinks, &d->source, &result);
+        set_String(&d->source, &result);
+        deinit_String(&result);
+    }
+    /* Replace Markdown syntax with equivalent Gemtext, where possible. */
+//    replaceRegExp_String(&d->source, iClob(new_RegExp("```([^`]+)```", 0)), "\n\n```\v\\1\v```\n\n");
+//    replaceRegExp_String(&d->source, iClob(new_RegExp("\n\\s*([0-9]+)\\.", 0)), "\n\n\\1."); /* numbered list */
+    replaceRegExp_String(&d->source, iClob(new_RegExp("(\\s*\n){2,}", 0)), "\n\n", NULL, NULL); /* normalize paragraph breaks */
+    printf("Converted:\n%s", cstr_String(&d->source));
+//    replaceRegExp_String(&d->source, iClob(new_RegExp("\n(?![*>#]\\s)", 0)), " "); /* normal line breaks */
+//    replace_String(&d->source, "\f", "\n\n");
+//    replace_String(&d->source, "\v", "\n");
+    d->format = gemini_SourceFormat;
+}
+
 void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int outsideMargin,
                           enum iGmDocumentUpdate updateType) {
+    /* TODO: This API has been set up to allow partial/progressive updating of the content.
+       Currently the entire source is replaced every time, though. */
 //    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
 //           size_String(source), width, updateType == final_GmDocumentUpdate);
     if (size_String(source) == size_String(&d->unormSource)) {
@@ -1724,6 +1899,10 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     set_String(&d->unormSource, source);
     /* Normalize. */
     set_String(&d->source, &d->unormSource);
+    if (d->format == markdown_SourceFormat) {
+        convertMarkdownToGemtext_GmDocument_(d);
+        set_String(&d->unormSource, &d->source);
+    }
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
     }

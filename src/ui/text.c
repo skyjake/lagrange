@@ -914,6 +914,18 @@ static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, i
     run->logical.start = endAt;
 }
 
+static iFont *withStyle_Font_(const iFont *d, enum iFontStyle styleId) {
+    const int fontId = (fontId_Text_(d) / maxVariants_Fonts) * maxVariants_Fonts;
+    const int sizeId = sizeId_Text_(d);
+    return font_Text_(FONT_ID(fontId, styleId, sizeId));
+}
+
+static iFont *withFontId_Font_(const iFont *d, enum iFontId fontId) {
+    const int styleId = styleId_Text_(d);
+    const int sizeId = sizeId_Text_(d);
+    return font_Text_(FONT_ID(fontId, styleId, sizeId));
+}
+
 static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iChar overrideChar) {
     iAssert(isEmpty_Array(&d->runs));
     size_t length = 0;
@@ -976,6 +988,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
     const iChar *  logicalText = constData_Array(&d->logical);
     iBool          isRTL       = d->isBaseRTL;
     int            numNonSpace = 0;
+    iFont *        activeFont  = d->font;
     for (int pos = 0; pos < length; pos++) {
         const iChar ch = logicalText[pos];
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
@@ -1004,8 +1017,23 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             init_RegExpMatch(&m);
             if (match_RegExp(activeText_->ansiEscape, srcPos, d->source.end - srcPos, &m)) {
                 finishRun_AttributedText_(d, &run, pos - 1);
-                run.fgColor = ansiForeground_Color(capturedRange_RegExpMatch(&m, 1),
-                                                   tmParagraph_ColorId);
+                const iRangecc sequence = capturedRange_RegExpMatch(&m, 1);
+                if (equal_Rangecc(sequence, "1")) {
+                    activeFont = withStyle_Font_(activeFont, bold_FontStyle);
+                }
+                else if (equal_Rangecc(sequence, "3")) {
+                    activeFont = withStyle_Font_(activeFont, italic_FontStyle);
+                }
+                else if (equal_Rangecc(sequence, "4")) {
+                    activeFont = withFontId_Font_(activeFont, monospace_FontId);
+                }
+                else if (equal_Rangecc(sequence, "0")) {
+                    activeFont = d->font; /* restore original */
+                    run.fgColor = d->fgColor;
+                }
+                else {
+                    run.fgColor = ansiForeground_Color(sequence, tmParagraph_ColorId);
+                }
                 pos += length_Rangecc(capturedRange_RegExpMatch(&m, 0));
                 iAssert(logToSource[pos] == end_RegExpMatch(&m) - d->source.start);
                 /* The run continues after the escape sequence. */
@@ -1047,7 +1075,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             }
             continue;
         }
-        iFont *currentFont = d->font;
+        iFont *currentFont = activeFont;
         if (run.font->fontSpec->flags & arabic_FontSpecFlag && isPunct_Char(ch)) {
             currentFont = run.font; /* remain as Arabic for whitespace */
         }
@@ -1766,6 +1794,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                                  orig.y + yCursor - yOffset + glyph->font->baseline + glyph->d[hoff].y,
                                  glyph->rect[hoff].size.x,
                                  glyph->rect[hoff].size.y };
+                if (run->font->height < d->height) {
+                    dst.y += d->baseline - run->font->baseline;
+                }
                 if (mode & visualFlag_RunMode) {
                     if (isEmpty_Rect(bounds)) {
                         bounds = init_Rect(dst.x, dst.y, dst.w, dst.h);
