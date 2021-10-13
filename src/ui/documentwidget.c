@@ -569,7 +569,7 @@ static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
         }
         d->visibleRuns.end = run;
     }
-    if (run->preId) {
+    if (preId_GmRun(run)) {
         pushBack_PtrArray(&d->visiblePre, run);
         if (run->flags & wide_GmRunFlag) {
             pushBack_PtrArray(&d->visibleWideRuns, run);
@@ -635,14 +635,14 @@ static void invalidateVisibleLinks_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static int runOffset_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run) {
-    if (run->preId && run->flags & wide_GmRunFlag) {
-        if (d->animWideRunId == run->preId) {
+    if (preId_GmRun(run) && run->flags & wide_GmRunFlag) {
+        if (d->animWideRunId == preId_GmRun(run)) {
             return -value_Anim(&d->animWideRunOffset);
         }
         const size_t numOffsets = size_Array(&d->wideRunOffsets);
         const int *offsets = constData_Array(&d->wideRunOffsets);
-        if (run->preId <= numOffsets) {
-            return -offsets[run->preId - 1];
+        if (preId_GmRun(run) <= numOffsets) {
+            return -offsets[preId_GmRun(run) - 1];
         }
     }
     return 0;
@@ -731,7 +731,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         }
     }
     else if (d->hoverPre &&
-             preHasAltText_GmDocument(d->doc, d->hoverPre->preId) &&
+             preHasAltText_GmDocument(d->doc, preId_GmRun(d->hoverPre)) &&
              ~d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
         setValueSpeed_Anim(&d->altTextOpacity, 1.0f, 1.5f);
         if (!isFinished_Anim(&d->altTextOpacity)) {
@@ -1812,10 +1812,10 @@ static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, 
                 maxWidth = iMax(maxWidth, width_Rect(r->visBounds));
             }
             const int maxOffset = maxWidth - documentWidth_DocumentWidget_(d) + d->pageMargin * gap_UI;
-            if (size_Array(&d->wideRunOffsets) <= run->preId) {
-                resize_Array(&d->wideRunOffsets, run->preId + 1);
+            if (size_Array(&d->wideRunOffsets) <= preId_GmRun(run)) {
+                resize_Array(&d->wideRunOffsets, preId_GmRun(run) + 1);
             }
-            int *offset = at_Array(&d->wideRunOffsets, run->preId - 1);
+            int *offset = at_Array(&d->wideRunOffsets, preId_GmRun(run) - 1);
             const int oldOffset = *offset;
             *offset = iClamp(*offset + delta, 0, maxOffset);
             /* Make sure the whole block gets redraw. */
@@ -1828,8 +1828,8 @@ static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, 
                 d->foundMark  = iNullRange;
             }
             if (duration) {
-                if (d->animWideRunId != run->preId || isFinished_Anim(&d->animWideRunOffset)) {
-                    d->animWideRunId = run->preId;
+                if (d->animWideRunId != preId_GmRun(run) || isFinished_Anim(&d->animWideRunOffset)) {
+                    d->animWideRunId = preId_GmRun(run);
                     init_Anim(&d->animWideRunOffset, oldOffset);
                 }
                 setValueEased_Anim(&d->animWideRunOffset, *offset, duration);
@@ -3814,7 +3814,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             /* Fold/unfold a preformatted block. */
             if (~d->flags & selecting_DocumentWidgetFlag && d->hoverPre &&
-                preIsFolded_GmDocument(d->doc, d->hoverPre->preId)) {
+                preIsFolded_GmDocument(d->doc, preId_GmRun(d->hoverPre))) {
                 return iTrue;
             }
             /* Begin selecting a range of text. */
@@ -3925,7 +3925,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                 }
                 if (d->hoverPre) {
-                    togglePreFold_DocumentWidget_(d, d->hoverPre->preId);
+                    togglePreFold_DocumentWidget_(d, preId_GmRun(d->hoverPre));
                     return iTrue;
                 }
                 if (d->hoverLink) {
@@ -4124,7 +4124,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
 
 static void drawMark_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d = context;
-    if (run->mediaType == none_MediaType) {
+    if (!isMedia_GmRun(run)) {
         fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
         fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
     }
@@ -4249,7 +4249,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
         return;
     }
-    else if (run->mediaType) {
+    else if (isMedia_GmRun(run)) {
         /* Media UIs are drawn afterwards as a dynamic overlay. */
         return;
     }
@@ -4317,7 +4317,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
     }
     if (run->flags & altText_GmRunFlag) {
-        const iInt2 margin = preRunMargin_GmDocument(doc, run->preId);
+        const iInt2 margin = preRunMargin_GmDocument(doc, preId_GmRun(run));
         fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackgroundAltText_ColorId);
         drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmQuoteIcon_ColorId);
         drawWrapRange_Text(run->font,
@@ -4368,11 +4368,17 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                             height_Rect(run->visBounds),
                             tmQuoteIcon_ColorId);
         }
+        /* Base attributes. */ {
+            int f, c;
+            runBaseAttributes_GmDocument(doc, run, &f, &c);
+            setBaseAttributes_Text(f, c);
+        }
         drawBoundRange_Text(run->font,
                             visPos,
                             (run->isRTL ? -1 : 1) * width_Rect(run->visBounds),
                             fg,
                             run->text);
+        setBaseAttributes_Text(-1, -1);
     runDrawn:;
     }
     /* Presentation of links. */
@@ -4944,7 +4950,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     /* Alt text. */
     const float altTextOpacity = value_Anim(&d->altTextOpacity) * 6 - 5;
     if (d->hoverAltPre && altTextOpacity > 0) {
-        const iGmPreMeta *meta = preMeta_GmDocument(d->doc, d->hoverAltPre->preId);
+        const iGmPreMeta *meta = preMeta_GmDocument(d->doc, preId_GmRun(d->hoverAltPre));
         if (meta->flags & topLeft_GmPreMetaFlag && ~meta->flags & decoration_GmRunFlag &&
             !isEmpty_Range(&meta->altText)) {
             const int   margin   = 3 * gap_UI / 2;

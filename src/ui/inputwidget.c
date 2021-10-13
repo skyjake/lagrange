@@ -2245,31 +2245,33 @@ struct Impl_MarkPainter {
     iRect               lastMarkRect;
 };
 
-static iBool draw_MarkPainter_(iWrapText *wrapText, iRangecc wrappedText, int origin, int advance,
-                               iBool isBaseRTL) {
-    iUnused(isBaseRTL);
+static iBool draw_MarkPainter_(iWrapText *wrapText, iRangecc wrappedText, iTextAttrib attrib,
+                               int origin, int advance) {
     iMarkPainter *mp = wrapText->context;
     const iRanges mark = mp->mark;
     if (isEmpty_Range(&mark)) {
         return iTrue; /* nothing marked */
     }
+    int fontId = mp->d->font;
+    /* TODO: Apply attrib on the font */
     const char *cstr = cstr_String(&mp->line->text);
     const iRanges lineRange = {
         wrappedText.start - cstr + mp->line->range.start,
         wrappedText.end   - cstr + mp->line->range.start
     };
+    const int lineHeight = lineHeight_Text(mp->d->font);
     if (mark.end <= lineRange.start || mark.start >= lineRange.end) {
-        mp->pos.y += lineHeight_Text(mp->d->font);
+        mp->pos.y += lineHeight;
         return iTrue; /* outside of mark */
     }
-    iRect rect = { addX_I2(mp->pos, origin), init_I2(advance, lineHeight_Text(mp->d->font)) };
+    iRect rect = { addX_I2(mp->pos, origin), init_I2(advance, lineHeight) };
     if (mark.end < lineRange.end) {
         /* Calculate where the mark ends. */
         const iRangecc markedPrefix = {
             wrappedText.start,
             wrappedText.start + mark.end - lineRange.start
         };
-        rect.size.x = measureRange_Text(mp->d->font, markedPrefix).advance.x;
+        rect.size.x = measureRange_Text(fontId, markedPrefix).advance.x;
     }
     if (mark.start > lineRange.start) {
         /* Calculate where the mark starts. */
@@ -2277,10 +2279,10 @@ static iBool draw_MarkPainter_(iWrapText *wrapText, iRangecc wrappedText, int or
             wrappedText.start,
             wrappedText.start + mark.start - lineRange.start
         };
-        adjustEdges_Rect(&rect, 0, 0, 0, measureRange_Text(mp->d->font, unmarkedPrefix).advance.x);
+        adjustEdges_Rect(&rect, 0, 0, 0, measureRange_Text(fontId, unmarkedPrefix).advance.x);
     }
     rect.size.x = iMax(gap_UI / 3, rect.size.x);
-    mp->pos.y += lineHeight_Text(mp->d->font);
+    mp->pos.y += lineHeight;
     fillRect_Paint(mp->paint, rect, uiMarked_ColorId | opaque_ColorId);
     if (deviceType_App() != desktop_AppDeviceType) {
         if (isEmpty_Rect(mp->firstMarkRect)) mp->firstMarkRect = rect;

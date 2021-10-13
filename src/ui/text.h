@@ -120,6 +120,9 @@ void    resetFonts_Text         (iText *);
 int     lineHeight_Text         (int fontId);
 float   emRatio_Text            (int fontId); /* em advance to line height ratio */
 iRect   visualBounds_Text       (int fontId, iRangecc text);
+int     fontWithSize_Text       (int fontId, enum iFontSize sizeId);
+int     fontWithStyle_Text      (int fontId, enum iFontStyle styleId);
+int     fontWithFamily_Text     (int fontId, enum iFontId familyId);
 
 iDeclareType(TextMetrics)
 
@@ -149,9 +152,10 @@ enum iAlignment {
     right_Alignment,
 };
 
-void    setOpacity_Text     (float opacity);
+void    setOpacity_Text         (float opacity);
+void    setBaseAttributes_Text  (int fontId, int colorId); /* current "normal" text attributes */
 
-void    cache_Text          (int fontId, iRangecc text); /* pre-render glyphs */
+void    cache_Text              (int fontId, iRangecc text); /* pre-render glyphs */
 
 void    draw_Text               (int fontId, iInt2 pos, int color, const char *text, ...);
 void    drawAlign_Text          (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
@@ -173,12 +177,28 @@ enum iWrapTextMode {
     word_WrapTextMode,
 };
 
+iDeclareType(TextAttrib)
+    
+/* Initial attributes at the start of a text string. These may be modified by control
+   sequences inside a text run. */
+struct Impl_TextAttrib {
+    int16_t colorId;
+    struct {
+        uint16_t bold      : 1;
+        uint16_t italic    : 1;
+        uint16_t monospace : 1;
+        uint16_t isBaseRTL : 1;
+        uint16_t isRTL     : 1;
+    }; 
+};
+
 struct Impl_WrapText {
     /* arguments */
     iRangecc    text;
     int         maxWidth;
     enum iWrapTextMode mode;
-    iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance, iBool isBaseRTL);
+    iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, iTextAttrib attrib, int origin,
+                          int advance);
     void *      context;
     iChar       overrideChar; /* use this for all characters instead of the real ones */
     int         baseDir; /* set to +1 for LTR, -1 for RTL */

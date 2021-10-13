@@ -48,7 +48,7 @@ float scale_FontSize(enum iFontSize size) {
         1.333,
         1.666,
         2.000,
-        0.568,
+        0.650, //0.568,
         0.710, /* calibration: fits the Lagrange title screen with Normal line width */
     };
     if (size < 0 || size >= max_FontSize) {

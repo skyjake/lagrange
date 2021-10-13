@@ -140,15 +140,12 @@ struct Impl_GmRun {
         uint32_t color     : 7; /* see max_ColorId */
 
         uint32_t font      : 10;
-        uint32_t mediaType : 3;
-        uint32_t mediaId   : 9; /* zero if not an image */
-        uint32_t preId     : 10; /* preformatted block ID (sequential); merge with mediaId? */
+        uint32_t mediaType : 3; /* note: max_MediaType means preformatted block */
+        uint32_t lineType  : 3;
+        uint32_t mediaId   : 15; /* zero if not an image */
+        uint32_t isLede    : 1;
     };
 };
-
-iLocalDef iMediaId mediaId_GmRun(const iGmRun *d) {
-    return (iMediaId){ .type = d->mediaType, .id = d->mediaId };
-}
 
 iDeclareType(GmRunRange)
 
@@ -157,7 +154,20 @@ struct Impl_GmRunRange {
     const iGmRun *end;
 };
 
-iRangecc    findLoc_GmRun   (const iGmRun *, iInt2 pos);
+iLocalDef iBool isMedia_GmRun(const iGmRun *d) {
+    return d->mediaType > 0 && d->mediaType < max_MediaType;
+}
+iLocalDef iMediaId mediaId_GmRun(const iGmRun *d) {
+    if (d->mediaType < max_MediaType) {
+        return (iMediaId){ .type = d->mediaType, .id = d->mediaId };
+    }
+    return iInvalidMediaId;
+}
+iLocalDef uint32_t preId_GmRun(const iGmRun *d) {
+    return d->mediaType == max_MediaType ? d->mediaId : 0;
+}
+
+iRangecc    findLoc_GmRun           (const iGmRun *, iInt2 pos);
 
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
@@ -215,6 +225,9 @@ iRangecc        findText_GmDocument                 (const iGmDocument *, const 
 iRangecc        findTextBefore_GmDocument           (const iGmDocument *, const iString *text, const char *before);
 iGmRunRange     findPreformattedRange_GmDocument    (const iGmDocument *, const iGmRun *run);
 
+void            runBaseAttributes_GmDocument        (const iGmDocument *, const iGmRun *run,
+                                                     int *fontId_out, int *colorId_out);
+
 enum iGmLinkPart {
     icon_GmLinkPart,
     text_GmLinkPart,
@@ -241,3 +254,4 @@ const iGmPreMeta *preMeta_GmDocument    (const iGmDocument *, uint16_t preId);
 iInt2           preRunMargin_GmDocument (const iGmDocument *, uint16_t preId);
 iBool           preIsFolded_GmDocument  (const iGmDocument *, uint16_t preId);
 iBool           preHasAltText_GmDocument(const iGmDocument *, uint16_t preId);
+

@@ -75,6 +75,15 @@ iDefineTypeConstruction(GmLink)
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(GmTheme)
+
+struct Impl_GmTheme {
+    int colors[max_GmLineType];
+    int fonts[max_GmLineType];
+};
+
+/*----------------------------------------------------------------------------------------------*/
+
 struct Impl_GmDocument {
     iObject object;
     enum iSourceFormat format;
@@ -91,6 +100,7 @@ struct Impl_GmDocument {
     iString   title; /* the first top-level title */
     iArray    headings;
     iArray    preMeta; /* metadata about preformatted blocks */
+    iGmTheme  theme;
     uint32_t  themeSeed;
     iChar     siteIcon;
     iMedia *  media;
@@ -100,6 +110,51 @@ struct Impl_GmDocument {
 };
 
 iDefineObjectConstruction(GmDocument)
+
+static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
+    const iRangecc scheme = urlScheme_String(&d->url);
+    if (equalCase_Rangecc(scheme, "gemini")) {
+        return prefs_App()->monospaceGemini;
+    }
+    if (equalCase_Rangecc(scheme, "gopher") ||
+        equalCase_Rangecc(scheme, "finger")) {
+        return prefs_App()->monospaceGopher;
+    }
+    return iFalse;
+}
+
+static void initTheme_GmDocument_(iGmDocument *d) {
+    static const int defaultColors[max_GmLineType] = {
+        tmParagraph_ColorId,
+        tmParagraph_ColorId, /* bullet */
+        tmPreformatted_ColorId,
+        tmQuote_ColorId,
+        tmHeading1_ColorId,
+        tmHeading2_ColorId,
+        tmHeading3_ColorId,
+        tmLinkText_ColorId,
+    };
+    iGmTheme *theme = &d->theme;
+    memcpy(theme->colors, defaultColors, sizeof(theme->colors));
+    const iPrefs *prefs    = prefs_App();
+    const iBool   isMono   = isForcedMonospace_GmDocument_(d);
+    const iBool   isDarkBg = isDark_GmDocumentTheme(
+        isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
+    const enum iFontId headingFont = isMono ? documentMonospace_FontId : documentHeading_FontId;
+    const enum iFontId bodyFont    = isMono ? documentMonospace_FontId : documentBody_FontId;
+    theme->fonts[text_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, contentRegular_FontSize);
+    theme->fonts[bullet_GmLineType] = FONT_ID(bodyFont, regular_FontStyle, contentRegular_FontSize);
+    theme->fonts[preformatted_GmLineType] = preformatted_FontId;
+    theme->fonts[quote_GmLineType] = isMono ? monospaceParagraph_FontId : quote_FontId;
+    theme->fonts[heading1_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentHuge_FontSize);
+    theme->fonts[heading2_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentLarge_FontSize);
+    theme->fonts[heading3_GmLineType] = FONT_ID(headingFont, regular_FontStyle, contentBig_FontSize);
+    theme->fonts[link_GmLineType] = FONT_ID(
+        bodyFont,
+        ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight)) ? semiBold_FontStyle
+                                                                                   : regular_FontStyle,
+        contentRegular_FontSize);
+}
 
 static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc line) {
     if (d->format == plainText_SourceFormat) {
@@ -318,18 +373,6 @@ static iBool isGopher_GmDocument_(const iGmDocument *d) {
             equalCase_Rangecc(scheme, "finger"));
 }
 
-static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
-    const iRangecc scheme = urlScheme_String(&d->url);
-    if (equalCase_Rangecc(scheme, "gemini")) {
-        return prefs_App()->monospaceGemini;
-    }
-    if (equalCase_Rangecc(scheme, "gopher") ||
-        equalCase_Rangecc(scheme, "finger")) {
-        return prefs_App()->monospaceGopher;
-    }
-    return iFalse;
-}
-
 static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo *mediaInfo,
                                               uint16_t linkId) {
     iGmLink *link = at_PtrArray(&d->links, linkId - 1);
@@ -402,7 +445,8 @@ struct Impl_RunTypesetter {
     int    rightMargin;
     iBool  isWordWrapped;
     iBool  isPreformat;
-    const int *fonts;
+    int    baseFont;
+    int    baseColor;
 };
     
 static void init_RunTypesetter_(iRunTypesetter *d) {
@@ -425,39 +469,47 @@ static void commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
 
 static const int maxLedeLines_ = 10;
 
-static const int colors[max_GmLineType] = {
-    tmParagraph_ColorId,
-    tmParagraph_ColorId,
-    tmPreformatted_ColorId,
-    tmQuote_ColorId,
-    tmHeading1_ColorId,
-    tmHeading2_ColorId,
-    tmHeading3_ColorId,
-    tmLinkText_ColorId,
-};
+static int applyAttributes_RunTypesetter_(iRunTypesetter *d, iTextAttrib attrib) {
+    /* WARNING: This is duplicated in run_Font_(). Make sure they behave identically. */
+    if (attrib.bold) {
+        d->run.font = fontWithStyle_Text(d->baseFont, bold_FontStyle);
+        d->run.color = tmFirstParagraph_ColorId;
+    }
+    else if (attrib.italic) {
+        d->run.font = fontWithStyle_Text(d->baseFont, italic_FontStyle);
+    }
+    else if (attrib.monospace) {
+        d->run.font = fontWithFamily_Text(d->baseFont, monospace_FontId);
+        d->run.color = tmPreformatted_ColorId;
+    }
+    else {
+        d->run.font  = d->baseFont;
+        d->run.color = d->baseColor;
+    }
+}
 
-static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, int origin,
-                                           int advance, iBool isBaseRTL) {
+static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, iTextAttrib attrib,
+                                           int origin, int advance) {
     iAssert(wrapRange.start <= wrapRange.end);
     trimEnd_Rangecc(&wrapRange);
 //    printf("typeset: {%s}\n", cstr_Rangecc(wrapRange));
     iRunTypesetter *d = wrap->context;
-    const int fontId = d->run.font;
     d->run.text = wrapRange;
+    applyAttributes_RunTypesetter_(d, attrib);
     if (~d->run.flags & startOfLine_GmRunFlag && d->lineHeightReduction > 0.0f) {
-        d->pos.y -= d->lineHeightReduction * lineHeight_Text(fontId);
+        d->pos.y -= d->lineHeightReduction * lineHeight_Text(d->baseFont);
     }
     d->run.bounds.pos = addX_I2(d->pos, origin + d->indent);
-    const iInt2 dims = init_I2(advance, lineHeight_Text(fontId));
+    const iInt2 dims = init_I2(advance, lineHeight_Text(d->baseFont));
     iChangeFlags(d->run.flags, wide_GmRunFlag, (d->isPreformat && dims.x > d->layoutWidth));
     d->run.bounds.size.x    = iMax(wrap->maxWidth, dims.x) - origin; /* Extends to the right edge for selection. */
     d->run.bounds.size.y    = dims.y;
     d->run.visBounds        = d->run.bounds;
     d->run.visBounds.size.x = dims.x;
-    d->run.isRTL = isBaseRTL;
+    d->run.isRTL            = attrib.isBaseRTL;
     pushBack_Array(&d->layout, &d->run);
     d->run.flags &= ~startOfLine_GmRunFlag;
-    d->pos.y += lineHeight_Text(fontId) * prefs_App()->lineSpacing;
+    d->pos.y += lineHeight_Text(d->baseFont) * prefs_App()->lineSpacing;
     return iTrue; /* continue to next wrapped line */
 }
 
@@ -469,25 +521,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text;
     const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text;
     const iBool   isFullWidthImages = (d->outsideMargin < 5 * gap_UI);
-    const iBool   isDarkBg          = isDark_GmDocumentTheme(
-        isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
+//    const iBool   isDarkBg          = isDark_GmDocumentTheme(
+//        isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
+    initTheme_GmDocument_(d);
     /* TODO: Collect these parameters into a GmTheme. */
-    const enum iFontId headingFont = isMono ? documentMonospace_FontId : documentHeading_FontId;
-    const enum iFontId bodyFont    = isMono ? documentMonospace_FontId : documentBody_FontId;
-    const int fonts[max_GmLineType] = {
-        FONT_ID(bodyFont, regular_FontStyle, contentRegular_FontSize), /* text */
-        FONT_ID(bodyFont, regular_FontStyle, contentRegular_FontSize), /* bullet */
-        preformatted_FontId,                                           /* pre */
-        isMono ? monospaceParagraph_FontId : quote_FontId,             /* quote */
-        FONT_ID(headingFont, bold_FontStyle, contentHuge_FontSize),    /* h1 */
-        FONT_ID(headingFont, bold_FontStyle, contentLarge_FontSize),   /* h2 */
-        FONT_ID(headingFont, regular_FontStyle, contentBig_FontSize),  /* h3 */
-        FONT_ID(bodyFont,
-                ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight))
-                             ? semiBold_FontStyle
-                             : regular_FontStyle,
-                contentRegular_FontSize) /* link */
-    };
     float indents[max_GmLineType] = { 5, 10, 5, isNarrow ? 5 : 10, 0, 0, 0, 5 };
     if (isExtremelyNarrow) {
         /* Further reduce the margins. */
@@ -598,7 +635,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 }
             }
             trimLine_Rangecc(&line, type, isNormalized);
-            run.font = fonts[type];
+            run.font = d->theme.fonts[type];
             /* Remember headings for the document outline. */
             if (type == heading1_GmLineType || type == heading2_GmLineType || type == heading3_GmLineType) {
                 pushBack_Array(
@@ -618,7 +655,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 addSiteBanner = iFalse; /* overrides the banner */
                 continue;
             }
-            run.preId = preId;
+            run.mediaType = max_MediaType; /* preformatted block */
+            run.mediaId = preId;
             run.font = (d->format == plainText_SourceFormat ? plainText_FontId : preFont);
             indent = indents[type];
         }
@@ -650,7 +688,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.visBounds.size = init_I2(gap_Text, lineHeight_Text(run.font));
                 run.bounds         = zero_Rect(); /* just visual */
                 run.text           = iNullRange;
-                run.flags     = quoteBorder_GmRunFlag | decoration_GmRunFlag;
+                run.flags          = quoteBorder_GmRunFlag | decoration_GmRunFlag;
                 pushBack_Array(&d->layout, &run);
             }
             pos.y += lineHeight_Text(run.font) * prefs->lineSpacing;
@@ -708,7 +746,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                                    altText.text).bounds.size;
                 altText.bounds = altText.visBounds = init_Rect(pos.x, pos.y, d->size.x,
                                                                size.y + 2 * margin.y);
-                altText.preId = preId;
+                altText.mediaType = max_MediaType; /* preformatted */
+                altText.mediaId = preId;
                 pushBack_Array(&d->layout, &altText);
                 pos.y += height_Rect(altText.bounds);
                 contentLine = meta->bounds; /* Skip the whole thing. */
@@ -723,7 +762,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             setRange_String(&d->title, line);
         }
         /* List bullet. */
-        run.color = colors[type];
         if (type == bullet_GmLineType) {
             /* TODO: Literata bullet is broken? */
             iGmRun bulRun = run;
@@ -795,18 +833,17 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             icon.flags |= decoration_GmRunFlag;
             pushBack_Array(&d->layout, &icon);
         }
-        run.color = colors[type];
+        run.lineType = type;
+        run.color    = d->theme.colors[type];
         if (d->format == plainText_SourceFormat) {
-            run.color = colors[text_GmLineType];
+            run.color = d->theme.colors[text_GmLineType];
         }
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
 //        int bigCount = 0;
-        iBool isLedeParagraph = iFalse;
         if (type == text_GmLineType && isFirstText) {
             if (!isMono) run.font = firstParagraph_FontId;
-            run.color = tmFirstParagraph_ColorId;
-//            bigCount = 15; /* max lines -- what if the whole document is one paragraph? */
-            isLedeParagraph = iTrue;
+            run.color   = tmFirstParagraph_ColorId;
+            run.isLede  = iTrue;
             isFirstText = iFalse;
         }
         else if (type != heading1_GmLineType) {
@@ -826,7 +863,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             init_RunTypesetter_(&rts);
             rts.run           = run;
             rts.pos           = pos;
-            rts.fonts         = fonts;
+            //rts.fonts         = fonts;
             rts.isWordWrapped = (d->format == plainText_SourceFormat ? prefs->plainTextWrap
                                                                      : !isPreformat);
             rts.isPreformat   = isPreformat;
@@ -859,6 +896,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             for (;;) { /* need to retry if the font needs changing */
                 rts.run.flags |= startOfLine_GmRunFlag;
+                rts.baseFont  = rts.run.font;
+                rts.baseColor = rts.run.color;
                 iWrapText wrapText = { .text     = line,
                                        .maxWidth = rts.isWordWrapped
                                                        ? d->size.x - run.bounds.pos.x -
@@ -868,7 +907,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                        .wrapFunc = typesetOneLine_RunTypesetter_,
                                        .context  = &rts };
                 measure_WrapText(&wrapText, rts.run.font);
-                if (!isLedeParagraph || size_Array(&rts.layout) <= maxLedeLines_) {
+                if (!rts.run.isLede || size_Array(&rts.layout) <= maxLedeLines_) {
                     if (wrapText.baseDir < 0) {
                         /* Right-aligned paragraphs need margins and decorations to be flipped. */
                         iForEach(Array, pr, &rts.layout) {
@@ -891,11 +930,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     commit_RunTypesetter_(&rts, d);
                     break;
                 }
+                /* Try again... */
                 clear_RunTypesetter_(&rts);
                 rts.pos         = pos;
-                rts.run.font    = rts.fonts[text_GmLineType];
-                rts.run.color   = colors[text_GmLineType];
-                isLedeParagraph = iFalse;
+                rts.run.font    = rts.baseFont  = d->theme.fonts[text_GmLineType];
+                rts.run.color   = rts.baseColor = d->theme.colors[text_GmLineType];
+                rts.run.isLede  = iFalse;
             }
             pos = rts.pos;
             deinit_RunTypesetter_(&rts);
@@ -996,7 +1036,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* TODO: Store the dimensions and ranges for later access. */
         iForEach(Array, i, &d->layout) {
             iGmRun *run = i.value;
-            if (run->preId && run->flags & wide_GmRunFlag) {
+            if (preId_GmRun(run) && run->flags & wide_GmRunFlag) {
                 iGmRunRange block = findPreformattedRange_GmDocument(d, run);
                 for (const iGmRun *j = block.start; j != block.end; j++) {
                     iConstCast(iGmRun *, j)->flags |= wide_GmRunFlag;
@@ -1800,11 +1840,11 @@ static void flushPendingLinks_(iArray *links, const iString *source, iString *ou
 static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
     iAssert(d->format == markdown_SourceFormat);
     /* Get rid of indented preformats. */ {
-        iArray *pendingLinks = collectNew_Array(sizeof(iPendingLink));
+        iArray        *pendingLinks     = collectNew_Array(sizeof(iPendingLink));
         const iRegExp *imageLinkPattern = iClob(new_RegExp("\n?!\\[(.+)\\]\\(([^)]+)\\)\n?", 0));
-        const iRegExp *linkPattern = iClob(new_RegExp("\\[(.+?)\\]\\(([^)]+)\\)", 0));
+        const iRegExp *linkPattern      = iClob(new_RegExp("\\[(.+?)\\]\\(([^)]+)\\)", 0));
         const iRegExp *namedLinkPattern = iClob(new_RegExp("\\[(.+?)\\]\\[(.+?)\\]", 0));
-        const iRegExp *namePattern = iClob(new_RegExp("\\s*\\[(.+?)\\]\\s*:\\s*([^\n]+)", 0));
+        const iRegExp *namePattern      = iClob(new_RegExp("\\s*\\[(.+?)\\]\\s*:\\s*([^\n]+)", 0));
         iString result;
         init_String(&result);
         iRangecc line = iNullRange;
@@ -1865,7 +1905,7 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
                 replaceRegExp_String(&ln, imageLinkPattern, "\n=> \\2 \\1\n", NULL, NULL);
                 replaceRegExp_String(&ln, namedLinkPattern, "\\1", addPendingNamedLink_, pendingLinks);
                 replaceRegExp_String(&ln, linkPattern, "\\1", addPendingLink_, pendingLinks);
-                replaceRegExp_String(&ln, iClob(new_RegExp("(?<!`)`([^`]*?)`(?!`)", 0)), "\x1b[4m\\1\x1b[0m", NULL, NULL);
+                replaceRegExp_String(&ln, iClob(new_RegExp("(?<!`)`([^`]+?)`(?!`)", 0)), "\x1b[4m\\1\x1b[0m", NULL, NULL);
                 append_String(&result, &ln);
                 deinit_String(&ln);
             }
@@ -2054,17 +2094,17 @@ iRangecc findTextBefore_GmDocument(const iGmDocument *d, const iString *text, co
 }
 
 iGmRunRange findPreformattedRange_GmDocument(const iGmDocument *d, const iGmRun *run) {
-    iAssert(run->preId);
+    iAssert(preId_GmRun(run));
     iGmRunRange range = { run, run };
     /* Find the beginning. */
     while (range.start > (const iGmRun *) constData_Array(&d->layout)) {
         const iGmRun *prev = range.start - 1;
-        if (prev->preId != run->preId) break;
+        if (preId_GmRun(prev) != preId_GmRun(run)) break;
         range.start = prev;
     }
     /* Find the ending. */
     while (range.end < (const iGmRun *) constEnd_Array(&d->layout)) {
-        if (range.end->preId != run->preId) break;
+        if (preId_GmRun(range.end) != preId_GmRun(run)) break;
         range.end++;
     }
     return range;
@@ -2238,6 +2278,22 @@ const iString *title_GmDocument(const iGmDocument *d) {
 
 iChar siteIcon_GmDocument(const iGmDocument *d) {
     return d->siteIcon;
+}
+
+void runBaseAttributes_GmDocument(const iGmDocument *d, const iGmRun *run, int *fontId_out,
+                                  int *colorId_out) {
+    /* Font and color according to the line type. These are needed because each GmRun is
+       a segment of a paragraph, and if the font or color changes inside the run, each wrapped
+       segment needs to know both the current font/color and ALSO the base font/color, so
+       the default attributes can be restored. */
+    if (run->isLede) {
+        *fontId_out  = firstParagraph_FontId;
+        *colorId_out = tmFirstParagraph_ColorId;
+    }
+    else {
+        *fontId_out  = fontWithSize_Text(d->theme.fonts[run->lineType], run->font % max_FontSize); /* retain size */
+        *colorId_out = d->theme.colors[run->lineType];
+    }
 }
 
 iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
