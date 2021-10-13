@@ -2568,6 +2568,8 @@ iWidget *makePreferences_Widget(void) {
             addDialogPadding_(headings, values);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
             addFontButtons_(values, "ui");
+            addDialogPadding_(headings, values);
+            addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
             //            addDialogPadding_(headings, values);
 //            /* Custom font. */ {
 //                iInputWidget *customFont = new_InputWidget(0);

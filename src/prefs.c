@@ -60,6 +60,7 @@ void init_Prefs(iPrefs *d) {
     setCStr_String(&d->strings[bodyFont_PrefsString], "default");
     setCStr_String(&d->strings[monospaceFont_PrefsString], "iosevka");
     setCStr_String(&d->strings[monospaceDocumentFont_PrefsString], "iosevka-body");
+    d->fontSmoothing     = iTrue;
     d->monospaceGemini   = iFalse;
     d->monospaceGopher   = iFalse;
     d->boldLinkDark      = iTrue;

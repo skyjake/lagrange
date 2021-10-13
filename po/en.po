@@ -1493,11 +1493,8 @@ msgstr "On Dark"
 msgid "prefs.boldlink.light"
 msgstr "On Light"
 
-msgid "prefs.userfont"
-msgstr "Symbol font:"
-
-msgid "hint.prefs.userfont"
-msgstr "path of a TrueType font"
+msgid "prefs.font.smooth"
+msgstr "Smoothing:"
 
 msgid "prefs.linewidth"
 msgstr "Line width:"

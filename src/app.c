@@ -233,6 +233,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
     /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
     appendFormat_String(str, "prefs.animate.changed arg:%d\n", d->prefs.uiAnimations);
+    appendFormat_String(str, "prefs.font.smooth.changed arg:%d\n", d->prefs.fontSmoothing);
     appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
     appendFormat_String(str, "prefs.mono.gopher.changed arg:%d\n", d->prefs.monospaceGopher);
     appendFormat_String(str, "prefs.boldlink.dark.changed arg:%d\n", d->prefs.boldLinkDark);
@@ -2334,7 +2335,19 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "quoteicon.set")) {
         d->prefs.quoteIcon = arg_Command(cmd) != 0;
-        postCommand_App("document.layout.changed");
+        postCommand_App("document.layout.changed redo:1");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.font.smooth.changed")) {
+        if (!isFrozen) {
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
+        }
+        d->prefs.fontSmoothing = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            resetFonts_Text(text_Window(get_MainWindow())); /* clear the glyph cache */
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
@@ -2750,6 +2763,7 @@ iBool handleCommand_App(const char *cmd) {
         setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.light"),
                         selected_WidgetFlag,
                         d->prefs.boldLinkLight);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.font.smooth"), d->prefs.fontSmoothing);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,

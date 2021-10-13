@@ -260,6 +260,7 @@ struct Impl_Text {
     int            cacheBottom;
     iArray         cacheRows;
     SDL_Palette *  grayscale;
+    SDL_Palette *  blackAndWhite; /* unsmoothed glyph palette */
     iRegExp *      ansiEscape;
 };
 
@@ -549,12 +550,21 @@ void init_Text(iText *d, SDL_Renderer *render) {
         d->grayscale = SDL_AllocPalette(256);
         SDL_SetPaletteColors(d->grayscale, colors, 0, 256);
     }
+    /* Black-and-white palette for unsmoothed glyphs. */ {
+        SDL_Color colors[256];
+        for (int i = 0; i < 256; ++i) {
+            colors[i] = (SDL_Color){ 255, 255, 255, i < 100 ? 0 : 255 };
+        }
+        d->blackAndWhite = SDL_AllocPalette(256);
+        SDL_SetPaletteColors(d->blackAndWhite, colors, 0, 256);        
+    }
     initCache_Text_(d);
     initFonts_Text_(d);
     activeText_ = oldActive;
 }
 
 void deinit_Text(iText *d) {
+    SDL_FreePalette(d->blackAndWhite);
     SDL_FreePalette(d->grayscale);
     deinitFonts_Text_(d);
     deinitCache_Text_(d);
@@ -603,6 +613,10 @@ void resetFonts_Text(iText *d) {
     initFonts_Text_(d);
 }
 
+static SDL_Palette *glyphPalette_(void) {
+    return prefs_App()->fontSmoothing ? activeText_->grayscale : activeText_->blackAndWhite;
+}
+
 static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, float xShift) {
     int w, h;
     uint8_t *bmp = rasterizeGlyph_FontFile(d->fontFile, d->xScale, d->yScale, xShift, glyphIndex,
@@ -610,7 +624,7 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
     SDL_SetSurfaceBlendMode(surface8, SDL_BLENDMODE_NONE);
-    SDL_SetSurfacePalette(surface8, activeText_->grayscale);
+    SDL_SetSurfacePalette(surface8, glyphPalette_());
 #if LAGRANGE_RASTER_DEPTH != 8
     /* Convert to the cache format. */
     SDL_Surface *surf = SDL_ConvertSurfaceFormat(surface8, LAGRANGE_RASTER_FORMAT, 0);
@@ -889,18 +903,6 @@ static iRangecc sourceRange_AttributedText_(const iAttributedText *d, iRangei lo
     iAssert(range.start <= range.end);
     return range;
 }
-
-#if 0
-static iBool isAllSpace_AttributedText_(const iAttributedText *d, iRangei range) {
-    const iChar *logicalText = constData_Array(&d->logical);
-    for (size_t i = range.start; i < range.end; i++) {
-        if (logicalText[i] != 0x20) {
-            return iFalse;
-        }
-    }
-    return iTrue;
-}
-#endif
 
 static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, int endAt) {
     iAttributedRun finishedRun = *run;
@@ -1184,7 +1186,7 @@ static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
                                 LAGRANGE_RASTER_DEPTH,
                                 LAGRANGE_RASTER_FORMAT);
                     SDL_SetSurfaceBlendMode(buf, SDL_BLENDMODE_NONE);
-                    SDL_SetSurfacePalette(buf, activeText_->grayscale);
+                    SDL_SetSurfacePalette(buf, glyphPalette_());
                 }
                 SDL_Surface *surfaces[2] = {
                     !isRasterized_Glyph_(glyph, 0) ?

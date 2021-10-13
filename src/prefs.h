@@ -87,6 +87,7 @@ struct Impl_Prefs {
     int              maxCacheSize; /* MB */
     int              maxMemorySize; /* MB */
     /* Style */
+    iBool            fontSmoothing;
     iBool            monospaceGemini;
     iBool            monospaceGopher;
     iBool            boldLinkDark;
