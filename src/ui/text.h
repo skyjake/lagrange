@@ -111,9 +111,6 @@ void    deinit_Text             (iText *);
 
 void    setCurrent_Text         (iText *);
 
-//void    setContentFont_Text     (iText *, enum iTextFont font);
-//void    setHeadingFont_Text     (iText *, enum iTextFont font);
-//void    setFont_Text            (iText *, int fontId, const char *fontSpecId);
 void    setDocumentFontSize_Text(iText *, float fontSizeFactor); /* affects all except `default*` fonts */
 void    resetFonts_Text         (iText *);
 
