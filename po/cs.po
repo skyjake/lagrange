@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-12 19:50+0000\n"
+"PO-Revision-Date: 2021-10-15 05:50+0000\n"
 "Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
@@ -121,7 +121,7 @@ msgid "menu.split.swap"
 msgstr "Prohodit strany"
 
 msgid "menu.split.horizontal"
-msgstr "Horizontální"
+msgstr "Vodorovné"
 
 msgid "menu.openlocation"
 msgstr "Otevřít adresu…"
@@ -298,15 +298,15 @@ msgstr "Hz"
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
 msgstr[0] "Odebíráte %z kanál, který obsahuje %%.\n"
-msgstr[1] "Odebíráte %z kanálů, které obsahují %%.\n"
-msgstr[2] "Odebíráte %z kanály, které obsahují %%.\n"
+msgstr[1] "Odebíráte %z kanály, které obsahují %%.\n"
+msgstr[2] "Odebíráte %z kanálů, které obsahují %%.\n"
 
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
 msgstr[0] "celkem %zu položka"
-msgstr[1] "celkem %zu položek"
-msgstr[2] "celkem %zu položky"
+msgstr[1] "celkem %zu položky"
+msgstr[2] "celkem %zu položek"
 
 #, c-format
 msgid "minutes.ago"
@@ -339,7 +339,7 @@ msgid "menu.split.merge"
 msgstr "Sloučit karty"
 
 msgid "menu.split.vertical"
-msgstr "Vertikální"
+msgstr "Svislé"
 
 msgid "menu.unexpire"
 msgstr "Ignorovat vypršení a pokračovat v načítání"
@@ -581,3 +581,34 @@ msgstr[2] "Opravdu chcete smazat všechny %u záložky v této složce?"
 
 msgid "bookmark.tag.remote"
 msgstr "Použít jako zdroj záložek"
+
+msgid "bookmark.untag.sub"
+msgstr "Ukončit odběr kanálu"
+
+msgid "bookmark.delete"
+msgstr "Odstranit záložku"
+
+msgid "ident.notused"
+msgstr "Nepoužívá se"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Odkazy se otevírají do strany"
+
+msgid "bookmark.untag.home"
+msgstr "Odebrat domovskou stránku"
+
+msgid "bookmark.untag.remote"
+msgstr "Odebrat zdroj záložek"
+
+msgid "bookmarks.reload"
+msgstr "Obnovit vzdálené zdroje"
+
+msgid "ident.using"
+msgstr "Používá se na této stránce"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Používá se na jedné adrese URL"
+msgstr[1] "Používá se na %zu adresách URL"
+msgstr[2] "Používá se na %zu adresách URL"
