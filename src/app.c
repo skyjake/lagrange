@@ -234,6 +234,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
     appendFormat_String(str, "prefs.animate.changed arg:%d\n", d->prefs.uiAnimations);
     appendFormat_String(str, "prefs.font.smooth.changed arg:%d\n", d->prefs.fontSmoothing);
+    appendFormat_String(str, "prefs.gemtext.ansi.changed arg:%d\n", d->prefs.gemtextAnsiEscapes);
     appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
     appendFormat_String(str, "prefs.mono.gopher.changed arg:%d\n", d->prefs.monospaceGopher);
     appendFormat_String(str, "prefs.boldlink.dark.changed arg:%d\n", d->prefs.boldLinkDark);
