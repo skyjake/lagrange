@@ -576,7 +576,7 @@ static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
         }
     }
     /* Image runs are static so they're drawn as part of the content. */
-    if (run->mediaType && run->mediaType != image_MediaType) {
+    if (isMedia_GmRun(run) && run->mediaType != image_MediaType) {
         iAssert(run->mediaId);
         pushBack_PtrArray(&d->visibleMedia, run);
     }
