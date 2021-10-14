@@ -262,6 +262,7 @@ struct Impl_Text {
     SDL_Palette *  grayscale;
     SDL_Palette *  blackAndWhite; /* unsmoothed glyph palette */
     iRegExp *      ansiEscape;
+    iBool          enableAnsiEscapes;
     int            baseFontId; /* base attributes (for restoring via escapes) */
     int            baseColorId;
 };
@@ -540,7 +541,7 @@ void init_Text(iText *d, SDL_Renderer *render) {
     activeText_ = d;
     init_Array(&d->fonts, sizeof(iFont));
     d->contentFontSize = contentScale_Text_;
-    d->ansiEscape      = new_RegExp("[[()]([0-9;AB]*)m", 0);
+    d->ansiEscape      = new_RegExp("[[()]([0-9;AB]*?)m", 0);
     d->baseFontId      = -1;
     d->baseColorId     = -1;
     d->render          = render;
@@ -586,6 +587,10 @@ void setOpacity_Text(float opacity) {
 void setBaseAttributes_Text(int fontId, int colorId) {
     activeText_->baseFontId  = fontId;
     activeText_->baseColorId = colorId;
+}
+
+void setAnsiEscapesEnabled_Text(iBool enableAnsiEscapes) {
+    activeText_->enableAnsiEscapes = enableAnsiEscapes;
 }
 
 void setDocumentFontSize_Text(iText *d, float fontSizeFactor) {
@@ -1047,40 +1052,41 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             init_RegExpMatch(&m);
             if (match_RegExp(activeText_->ansiEscape, srcPos, d->source.end - srcPos, &m)) {
                 finishRun_AttributedText_(d, &run, pos - 1);
-                const iRangecc sequence = capturedRange_RegExpMatch(&m, 1);
-                /* TODO: Bold/italic attributes are assumed to be inside body text.
-                   We don't know what the current text style is supposed to be.
-                   That should be an additional attribute passed to WrapText, or a feature of
-                   WrapText that can be called both from here and in the run typesetter.
-                   The styling here is hardcoded to match `typesetOneLine_RunTypesetter_()`. */
-                if (equal_Rangecc(sequence, "1")) {
-                    run.attrib.bold = iTrue;
-                    if (d->baseColorId == tmParagraph_ColorId) {
-                        setFgColor_AttributedRun_(&run, tmFirstParagraph_ColorId);
+                if (activeText_->enableAnsiEscapes) {
+                    const iRangecc sequence = capturedRange_RegExpMatch(&m, 1);
+                    /* Note: This styling is hardcoded to match `typesetOneLine_RunTypesetter_()`. */
+                    if (equal_Rangecc(sequence, "1")) {
+                        run.attrib.bold = iTrue;
+                        if (d->baseColorId == tmParagraph_ColorId) {
+                            setFgColor_AttributedRun_(&run, tmFirstParagraph_ColorId);
+                        }
+                        attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
+                                                                   bold_FontStyle));
                     }
-                    attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont), bold_FontStyle));
-                }
-                else if (equal_Rangecc(sequence, "3")) {
-                    run.attrib.italic = iTrue;
-                    attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont), italic_FontStyle));
-                }
-                else if (equal_Rangecc(sequence, "4")) {
-                    run.attrib.monospace = iTrue;
-                    setFgColor_AttributedRun_(&run, tmPreformatted_ColorId);
-                    attribFont = font_Text_(fontWithFamily_Text(fontId_Text_(d->baseFont), monospace_FontId));
-                }
-                else if (equal_Rangecc(sequence, "0")) {
-                    run.attrib.bold = iFalse;
-                    run.attrib.italic = iFalse;
-                    run.attrib.monospace = iFalse;
-                    attribFont = d->baseFont;
-                    setFgColor_AttributedRun_(&run, d->baseColorId);
-                }
-                else {
-                    run.fgColor_ = ansiForeground_Color(sequence, tmParagraph_ColorId);
+                    else if (equal_Rangecc(sequence, "3")) {
+                        run.attrib.italic = iTrue;
+                        attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
+                                                                   italic_FontStyle));
+                    }
+                    else if (equal_Rangecc(sequence, "4")) {
+                        run.attrib.monospace = iTrue;
+                        setFgColor_AttributedRun_(&run, tmPreformatted_ColorId);
+                        attribFont = font_Text_(fontWithFamily_Text(fontId_Text_(d->baseFont),
+                                                                    monospace_FontId));
+                    }
+                    else if (equal_Rangecc(sequence, "0")) {
+                        run.attrib.bold = iFalse;
+                        run.attrib.italic = iFalse;
+                        run.attrib.monospace = iFalse;
+                        attribFont = run.font = d->baseFont;
+                        setFgColor_AttributedRun_(&run, d->baseColorId);
+                    }
+                    else {
+                        run.fgColor_ = ansiForeground_Color(sequence, tmParagraph_ColorId);
+                    }
                 }
                 pos += length_Rangecc(capturedRange_RegExpMatch(&m, 0));
-                iAssert(logToSource[pos] == end_RegExpMatch(&m) - d->source.start);
+//                iAssert(logToSource[pos] == end_RegExpMatch(&m) - d->source.start);
                 /* The run continues after the escape sequence. */
                 run.logical.start = pos--; /* loop increments `pos` */
                 continue;
@@ -1148,7 +1154,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
     iConstForEach(Array, i, &d->runs) {
         const iAttributedRun *run = i.value;
         printf("  %zu %s log:%d...%d vis:%d...%d {%s}\n", index_ArrayConstIterator(&i),
-               run->flags.isRTL ? "<-" : "->",
+               run->attrib.isRTL ? "<-" : "->",
                run->logical.start, run->logical.end - 1,
                logToVis[run->logical.start], logToVis[run->logical.end - 1],
                cstr_Rangecc(sourceRange_AttributedText_(d, run->logical)));
@@ -1594,6 +1600,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             float breakAdvance = -1.0f;
             iAssert(wrapPosRange.end == textLen);
             /* Determine ends of wrapRuns and wrapVisRange. */
+            int safeBreakPos = -1;
             for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
                 const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
                 /* Update the attributes. */
@@ -1613,7 +1620,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 iGlyphBuffer *buf = at_Array(&buffers, runIndex);
                 iAssert(run->font == buf->font);
                 shape_GlyphBuffer_(buf);
-                int safeBreakPos = -1;
                 iChar prevCh = 0;
                 lastAttrib = run->attrib;                
                 for (unsigned int ir = 0; ir < buf->glyphCount; ir++) {
@@ -1642,14 +1648,16 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     iAssert(xAdvance >= 0);
                     if (args->wrap->mode == word_WrapTextMode) {
                         /* When word wrapping, only consider certain places breakable. */
-                        if ((ch >= 128 || !ispunct(ch)) && (prevCh == '-' || prevCh == '/')) {
+                        if (!isPunct_Char(ch) && (prevCh == '-' || prevCh == '/')) {
                             safeBreakPos = logPos;
                             breakAdvance = wrapAdvance;
+//                            printf("breakAdv_A:%f\n", breakAdvance);
     //                        isSoftHyphenBreak = iFalse;
                         }
                         else if (isSpace_Char(ch)) {
                             safeBreakPos = logPos;
                             breakAdvance = wrapAdvance;
+//                            printf("breakAdv_B:%f sbb:%d\n", breakAdvance, safeBreakPos);
     //                        isSoftHyphenBreak = iFalse;
                         }
                         prevCh = ch;
@@ -1673,6 +1681,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     if (wrap->maxWidth > 0 &&
                         wrapAdvance + xOffset + glyph->d[0].x + glyph->rect[0].size.x >
                         args->wrap->maxWidth) {
+//                        printf("safeBreakPos:%d\n", safeBreakPos);
                         if (safeBreakPos >= 0) {
                             wrapPosRange.end = safeBreakPos;
                         }
@@ -1698,9 +1707,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                         wrapRuns.end       = runIndex + 1; /* still includes this run */
                         wrapResumeRunIndex = runIndex;     /* ...but continue from the same one */
                         wrapAdvance        = breakAdvance;
+//                        printf("-> wrapAdv:%f (breakAdv)\n", wrapAdvance);
                         break;
                     }
                     wrapAdvance += xAdvance;
+                    printf("lp:%d wrap:%f\n", logPos, wrapAdvance);
                     /* Additional kerning tweak. It would be better to use HarfBuzz font callbacks,
                        but they don't seem to get called? */
                     if (i + 1 < buf->glyphCount) {
@@ -1780,11 +1791,12 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         if (isRightAligned) {
             if (layoutBound > 0) {
                 origin = layoutBound - wrapAdvance;
+                printf("orig:%d (lbo:%d wrapAdv:%f)\n", origin, layoutBound, wrapAdvance);
             }
-//            else if (args->xposLayoutBound > 0) {
-//                iAssert(mode & draw_RunMode);
-////                origin = args->xposLayoutBound - orig.x - wrapAdvance * 2;
-//            }
+            printf("yes; base RTL\n");
+        }
+        else {
+            printf("not base RTL\n");
         }
         /* Make a callback for each wrapped line. */
         if (wrap && wrap->wrapFunc &&
@@ -1848,8 +1860,14 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                                  orig.y + yCursor - yOffset + glyph->font->baseline + glyph->d[hoff].y,
                                  glyph->rect[hoff].size.x,
                                  glyph->rect[hoff].size.y };
-                if (run->font->height < attrText.baseFont->height) {
-                    dst.y += attrText.baseFont->baseline - run->font->baseline;
+                /* Align baselines of different fonts. */
+                if (run->font != attrText.baseFont &&
+                    ~run->font->fontSpec->flags & auxiliary_FontSpecFlag) {
+                    const int bl1 = attrText.baseFont->baseline + attrText.baseFont->vertOffset;
+                    const int bl2 = run->font->baseline + run->font->vertOffset;
+                    dst.y += bl1 - bl2;
+//                        printf("baseline difference: run %d, base %d\n",
+//                               run->font->baseline, attrText.baseFont->baseline);
                 }
                 if (mode & visualFlag_RunMode) {
                     if (isEmpty_Rect(bounds)) {

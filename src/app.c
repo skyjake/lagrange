@@ -2351,6 +2351,10 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.gemtext.ansi.changed")) {
+        d->prefs.gemtextAnsiEscapes = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
              equal_Command(cmd, "prefs.mono.gopher.changed")) {
         const iBool isSet = (arg_Command(cmd) != 0);
@@ -2764,6 +2768,7 @@ iBool handleCommand_App(const char *cmd) {
         setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.light"),
                         selected_WidgetFlag,
                         d->prefs.boldLinkLight);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi"), d->prefs.gemtextAnsiEscapes);
         setToggle_Widget(findChild_Widget(dlg, "prefs.font.smooth"), d->prefs.fontSmoothing);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),

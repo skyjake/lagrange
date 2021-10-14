@@ -1493,6 +1493,9 @@ msgstr "On Dark"
 msgid "prefs.boldlink.light"
 msgstr "On Light"
 
+msgid "prefs.gemtext.ansi"
+msgstr "Gemtext ANSI escapes:"
+
 msgid "prefs.font.smooth"
 msgstr "Smoothing:"
 

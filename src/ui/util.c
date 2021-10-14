@@ -2531,23 +2531,6 @@ iWidget *makePreferences_Widget(void) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.mono}")));
             addFontButtons_(values, "mono");
             addDialogPadding_(headings, values);
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.boldlink}")));
-            iWidget *boldLink = new_Widget(); {
-                /* TODO: Add a utility function for this type of toggles? (also for above) */
-                iWidget *tog;
-                setTextCStr_LabelWidget(
-                    addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.dark"))),
-                    "${prefs.boldlink.dark}");
-                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget((iLabelWidget *) tog);
-                setTextCStr_LabelWidget(
-                    addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.light"))),
-                    "${prefs.boldlink.light}");
-                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget((iLabelWidget *) tog);
-            }
-            addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-            addDialogPadding_(headings, values);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.mono}")));
             iWidget *mono = new_Widget(); {
                 iWidget *tog;
@@ -2566,10 +2549,27 @@ iWidget *makePreferences_Widget(void) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.monodoc}")));
             addFontButtons_(values, "monodoc");
             addDialogPadding_(headings, values);
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
-            addFontButtons_(values, "ui");
-            addDialogPadding_(headings, values);
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.boldlink}")));
+            iWidget *boldLink = new_Widget(); {
+                /* TODO: Add a utility function for this type of toggles? (also for above) */
+                iWidget *tog;
+                setTextCStr_LabelWidget(
+                    addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.dark"))),
+                    "${prefs.boldlink.dark}");
+                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget((iLabelWidget *) tog);
+                setTextCStr_LabelWidget(
+                    addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.light"))),
+                    "${prefs.boldlink.light}");
+                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget((iLabelWidget *) tog);
+            }
+            addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addDialogToggle_(headings, values, "${prefs.gemtext.ansi}", "prefs.gemtext.ansi");
             addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
+            addDialogPadding_(headings, values);
+            addFontButtons_(values, "ui");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
             //            addDialogPadding_(headings, values);
 //            /* Custom font. */ {
 //                iInputWidget *customFont = new_InputWidget(0);

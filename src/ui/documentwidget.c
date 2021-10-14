@@ -4813,6 +4813,7 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
                         }
                     }
                 }
+                setAnsiEscapesEnabled_Text(ansiEscapesEnabled_GmDocument(d->doc));
                 iConstForEach(PtrSet, r, d->invalidRuns) {
                     const iGmRun *run = *r.value;
                     if (isOverlapping_Rangei(bufRange, ySpan_Rect(run->visBounds))) {
@@ -4820,10 +4821,12 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
                         drawRun_DrawContext_(ctx, run);
                     }
                 }
+                setAnsiEscapesEnabled_Text(iTrue);
             }
             endTarget_Paint(p);
             if (prerenderExtra && didDraw) {
-                return iTrue;
+                /* Just a run at a time. */
+                break;
             }
         }
         clear_PtrSet(d->invalidRuns);

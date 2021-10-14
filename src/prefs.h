@@ -88,6 +88,7 @@ struct Impl_Prefs {
     int              maxMemorySize; /* MB */
     /* Style */
     iBool            fontSmoothing;
+    iBool            gemtextAnsiEscapes;
     iBool            monospaceGemini;
     iBool            monospaceGopher;
     iBool            boldLinkDark;

@@ -78,6 +78,7 @@ iDefineTypeConstruction(GmLink)
 iDeclareType(GmTheme)
 
 struct Impl_GmTheme {
+    iBool ansiEscapesEnabled;
     int colors[max_GmLineType];
     int fonts[max_GmLineType];
 };
@@ -507,6 +508,7 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
     d->run.visBounds        = d->run.bounds;
     d->run.visBounds.size.x = dims.x;
     d->run.isRTL            = attrib.isBaseRTL;
+    printf("origin:%d isRTL:%d\n{%s}\n", origin, attrib.isBaseRTL, cstr_Rangecc(wrapRange));
     pushBack_Array(&d->layout, &d->run);
     d->run.flags &= ~startOfLine_GmRunFlag;
     d->pos.y += lineHeight_Text(d->baseFont) * prefs_App()->lineSpacing;
@@ -580,6 +582,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         isPreformat = iTrue;
         isFirstText = iFalse;
     }
+    setAnsiEscapesEnabled_Text(d->theme.ansiEscapesEnabled);
     while (nextSplit_Rangecc(content, "\n", &contentLine)) {
         iRangecc line = contentLine; /* `line` will be trimmed; modifying would confuse `nextSplit_Rangecc` */
         if (*line.end == '\r') {
@@ -813,12 +816,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
             const enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
             icon.text           = range_CStr(link->flags & query_GmLinkFlag    ? magnifyingGlass
-                                             : scheme == file_GmLinkScheme     ? folder
                                              : scheme == titan_GmLinkScheme    ? uploadArrow
                                              : scheme == finger_GmLinkScheme   ? pointingFinger
                                              : scheme == mailto_GmLinkScheme   ? envelope
                                              : link->flags & remote_GmLinkFlag ? globe
                                              : link->flags & imageFileExtension_GmLinkFlag ? image
+                                             : scheme == file_GmLinkScheme     ? folder
                                                                                : arrow);
             /* Custom link icon is shown on local Gemini links only. */
             if (!isEmpty_Range(&link->labelIcon)) {
@@ -1046,6 +1049,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
     }
+    setAnsiEscapesEnabled_Text(iTrue);
 //    printf("[GmDocument] layout size: %zu runs (%zu bytes)\n",
 //           size_Array(&d->layout), size_Array(&d->layout) * sizeof(iGmRun));        
 }
@@ -1843,15 +1847,24 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
         iArray        *pendingLinks     = collectNew_Array(sizeof(iPendingLink));
         const iRegExp *imageLinkPattern = iClob(new_RegExp("\n?!\\[(.+)\\]\\(([^)]+)\\)\n?", 0));
         const iRegExp *linkPattern      = iClob(new_RegExp("\\[(.+?)\\]\\(([^)]+)\\)", 0));
+        const iRegExp *standaloneLinkPattern = iClob(new_RegExp("^[\\s*_]*\\[(.+?)\\]\\(([^)]+)\\)[\\s*_]*$", 0));
         const iRegExp *namedLinkPattern = iClob(new_RegExp("\\[(.+?)\\]\\[(.+?)\\]", 0));
         const iRegExp *namePattern      = iClob(new_RegExp("\\s*\\[(.+?)\\]\\s*:\\s*([^\n]+)", 0));
         iString result;
         init_String(&result);
+        replace_String(&d->source, "&nbsp;", "\u00a0");
+        replaceRegExp_String(&d->source, iClob(new_RegExp("```", 0)), "\n```\n", NULL, NULL);
         iRangecc line = iNullRange;
         iBool isPre = iFalse;
+        iBool isBlock = iFalse;
         iBool isLastEmpty = iFalse;
         while (nextSplit_Rangecc(range_String(&d->source), "\n", &line)) {
-            if (!isPre) {
+            if (!isPre && !isBlock) {
+                if (equal_Rangecc(line, "```")) {
+                    isBlock = iTrue;
+                    appendCStr_String(&result, "\n```");
+                    continue;
+                }
                 if (*line.start == '#') {
                     flushPendingLinks_(pendingLinks, &d->source, &result);
                 }
@@ -1867,13 +1880,26 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
                           (isnumber(line.start[1]) && line.start[2] == '.'))) {
                     appendCStr_String(&result, "\n\n");
                 }
-                else if (*line.start == '*' || *line.start == '>' || *line.start == '#') {
+                else if (endsWith_String(&result, "  ") ||
+                         *line.start == '*' || *line.start == '>' || *line.start == '#' ||
+                         (*line.start == '|' && endsWith_String(&result, "|"))) {
                     appendCStr_String(&result, "\n");
                 }
                 else {
                     appendCStr_String(&result, " ");
                 }
                 isLastEmpty = iFalse;
+            }
+            else if (isBlock) {
+                if (equal_Rangecc(line, "```")) {
+                    isBlock = iFalse;
+                    appendCStr_String(&result, "\n```\n");
+                }
+                else {
+                    appendCStr_String(&result, "\n");
+                    appendRange_String(&result, line);
+                }
+                continue;
             }
             if (startsWith_Rangecc(line, "    ")) {
                 line.start += 4;
@@ -1887,9 +1913,11 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
                     appendCStr_String(&result, "\n");
                 }
                 appendCStr_String(&result, "```\n");
+                if (equal_Rangecc(line, "```")) {
+                    line.start = line.end; /* don't repeat it */
+                }
                 isPre = iFalse;
             }
-            /* Check for image links. */
             if (isPre) {
                 appendRange_String(&result, line);
                 appendCStr_String(&result, "\n");
@@ -1897,14 +1925,15 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
             else {
                 iString ln;
                 initRange_String(&ln, line);
-                replaceRegExp_String(&ln, iClob(new_RegExp("\\*\\*(.+?)\\*\\*", 0)), "\x1b[1m\\1\x1b[0m", NULL, NULL);
-                replaceRegExp_String(&ln, iClob(new_RegExp("\\b\\*(.+?)\\*\\b", 0)), "\x1b[3m\\1\x1b[0m", NULL, NULL);
-                replaceRegExp_String(&ln, iClob(new_RegExp("\\b_(.+?)_\\b", 0)), "\x1b[3m\\1\x1b[0m", NULL, NULL);
-                replaceRegExp_String(&ln, iClob(new_RegExp("```([^`]+?)```", 0)), "\n```\n\\1\n```\n", NULL, NULL);
                 replaceRegExp_String(&ln, namePattern, "", NULL, 0);
+                replaceRegExp_String(&ln, standaloneLinkPattern, "\n=> \\2 \\1", NULL, NULL);
                 replaceRegExp_String(&ln, imageLinkPattern, "\n=> \\2 \\1\n", NULL, NULL);
                 replaceRegExp_String(&ln, namedLinkPattern, "\\1", addPendingNamedLink_, pendingLinks);
                 replaceRegExp_String(&ln, linkPattern, "\\1", addPendingLink_, pendingLinks);
+                replaceRegExp_String(&ln, iClob(new_RegExp("\\*\\*(.+?)\\*\\*", 0)), "\x1b[1m\\1\x1b[0m", NULL, NULL);
+                replaceRegExp_String(&ln, iClob(new_RegExp("__(.+?)__", 0)), "\x1b[1m\\1\x1b[0m", NULL, NULL);
+                replaceRegExp_String(&ln, iClob(new_RegExp("\\*(.+?)\\*", 0)), "\x1b[3m\\1\x1b[0m", NULL, NULL);
+                replaceRegExp_String(&ln, iClob(new_RegExp("\\b_(.+?)_\\b", 0)), "\x1b[3m\\1\x1b[0m", NULL, NULL);
                 replaceRegExp_String(&ln, iClob(new_RegExp("(?<!`)`([^`]+?)`(?!`)", 0)), "\x1b[4m\\1\x1b[0m", NULL, NULL);
                 append_String(&result, &ln);
                 deinit_String(&ln);
@@ -1915,13 +1944,8 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
         deinit_String(&result);
     }
     /* Replace Markdown syntax with equivalent Gemtext, where possible. */
-//    replaceRegExp_String(&d->source, iClob(new_RegExp("```([^`]+)```", 0)), "\n\n```\v\\1\v```\n\n");
-//    replaceRegExp_String(&d->source, iClob(new_RegExp("\n\\s*([0-9]+)\\.", 0)), "\n\n\\1."); /* numbered list */
     replaceRegExp_String(&d->source, iClob(new_RegExp("(\\s*\n){2,}", 0)), "\n\n", NULL, NULL); /* normalize paragraph breaks */
     printf("Converted:\n%s", cstr_String(&d->source));
-//    replaceRegExp_String(&d->source, iClob(new_RegExp("\n(?![*>#]\\s)", 0)), " "); /* normal line breaks */
-//    replace_String(&d->source, "\f", "\n\n");
-//    replace_String(&d->source, "\v", "\n");
     d->format = gemini_SourceFormat;
 }
 
@@ -1936,12 +1960,19 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
 //        printf("[GmDocument] source is unchanged!\n");
         return; /* Nothing to do. */
     }
+    /* Normalize and convert to Gemtext if needed. */
     set_String(&d->unormSource, source);
-    /* Normalize. */
-    set_String(&d->source, &d->unormSource);
-    if (d->format == markdown_SourceFormat) {
+    set_String(&d->source, source);
+    if (d->format == gemini_SourceFormat) {
+        d->theme.ansiEscapesEnabled = prefs_App()->gemtextAnsiEscapes;
+    }
+    else if (d->format == markdown_SourceFormat) {
         convertMarkdownToGemtext_GmDocument_(d);
-        set_String(&d->unormSource, &d->source);
+        set_String(&d->unormSource, &d->source); /* use the converted source from now on */
+        d->theme.ansiEscapesEnabled = iTrue; /* escapes are used for styling */
+    }
+    else {
+        d->theme.ansiEscapesEnabled = iTrue;
     }
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
@@ -1983,6 +2014,7 @@ const iGmPreMeta *preMeta_GmDocument(const iGmDocument *d, uint16_t preId) {
 void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRenderFunc render,
                        void *context) {
     iBool isInside = iFalse;
+    setAnsiEscapesEnabled_Text(d->theme.ansiEscapesEnabled);
     /* TODO: Check lookup table for quick starting position. */
     iConstForEach(Array, i, &d->layout) {
         const iGmRun *run = i.value;
@@ -1997,6 +2029,7 @@ void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRende
             render(context, run);
         }
     }
+    setAnsiEscapesEnabled_Text(iTrue);
 }
 
 static iBool isValidRun_GmDocument_(const iGmDocument *d, const iGmRun *run) {
@@ -2011,6 +2044,7 @@ const iGmRun *renderProgressive_GmDocument(const iGmDocument *d, const iGmRun *f
                                            size_t maxCount,
                                            iRangei visRangeY, iGmDocumentRenderFunc render,
                                            void *context) {
+    setAnsiEscapesEnabled_Text(d->theme.ansiEscapesEnabled);
     const iGmRun *run = first;
     while (isValidRun_GmDocument_(d, run)) {
         if ((dir < 0 && bottom_Rect(run->visBounds) < visRangeY.start) ||
@@ -2023,6 +2057,7 @@ const iGmRun *renderProgressive_GmDocument(const iGmDocument *d, const iGmRun *f
         render(context, run);
         run += dir;
     }
+    setAnsiEscapesEnabled_Text(iTrue);
     return isValidRun_GmDocument_(d, run) ? run : NULL;
 }
 
@@ -2278,6 +2313,10 @@ const iString *title_GmDocument(const iGmDocument *d) {
 
 iChar siteIcon_GmDocument(const iGmDocument *d) {
     return d->siteIcon;
+}
+
+iBool ansiEscapesEnabled_GmDocument(const iGmDocument *d) {
+    return d->theme.ansiEscapesEnabled;
 }
 
 void runBaseAttributes_GmDocument(const iGmDocument *d, const iGmRun *run, int *fontId_out,

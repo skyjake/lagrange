@@ -225,6 +225,7 @@ iRangecc        findText_GmDocument                 (const iGmDocument *, const 
 iRangecc        findTextBefore_GmDocument           (const iGmDocument *, const iString *text, const char *before);
 iGmRunRange     findPreformattedRange_GmDocument    (const iGmDocument *, const iGmRun *run);
 
+iBool           ansiEscapesEnabled_GmDocument       (const iGmDocument *);
 void            runBaseAttributes_GmDocument        (const iGmDocument *, const iGmRun *run,
                                                      int *fontId_out, int *colorId_out);
 

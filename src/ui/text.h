@@ -151,6 +151,7 @@ enum iAlignment {
 
 void    setOpacity_Text         (float opacity);
 void    setBaseAttributes_Text  (int fontId, int colorId); /* current "normal" text attributes */
+void    setAnsiEscapesEnabled_Text(iBool enableAnsiEscapes);
 
 void    cache_Text              (int fontId, iRangecc text); /* pre-render glyphs */
 
