@@ -893,12 +893,14 @@ static void deinit_App(iApp *d) {
 #endif
     SDL_RemoveTimer(d->autoReloadTimer);
     saveState_App_(d);
+    savePrefs_App_(d);
+    delete_MainWindow(d->window);
+    d->window = NULL;
     deinit_Feeds();
     save_Keys(dataDir_App_());
     deinit_Keys();
     deinit_Fonts();
     deinit_SiteSpec();
-    savePrefs_App_(d);
     deinit_Prefs(&d->prefs);
     save_Bookmarks(d->bookmarks, dataDir_App_());
     delete_Bookmarks(d->bookmarks);
@@ -907,7 +909,6 @@ static void deinit_App(iApp *d) {
     delete_GmCerts(d->certs);
     save_MimeHooks(d->mimehooks);
     delete_MimeHooks(d->mimehooks);
-    delete_MainWindow(d->window);
     d->window = NULL;
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
