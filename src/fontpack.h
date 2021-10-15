@@ -110,10 +110,10 @@ iDeclareType(FontSpec)
 iDeclareTypeConstruction(FontSpec)
 
 enum iFontSpecFlags {
-    override_FontSpecFlag  = iBit(1),
-    monospace_FontSpecFlag = iBit(2), /* can be used in preformatted content */
-    auxiliary_FontSpecFlag = iBit(3), /* only used for looking up glyphs missing from other fonts */
-    arabic_FontSpecFlag    = iBit(4),
+    override_FontSpecFlag   = iBit(1),
+    monospace_FontSpecFlag  = iBit(2), /* can be used in preformatted content */
+    auxiliary_FontSpecFlag  = iBit(3), /* only used for looking up glyphs missing from other fonts */
+    allowSpacePunct_FontSpecFlag  = iBit(4),  /* space/punctuation glyphs from this auxiliary font can be used */
     fixNunitoKerning_FontSpecFlag = iBit(31), /* manual hardcoded kerning tweaks for Nunito */
 };
 

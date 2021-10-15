@@ -493,10 +493,15 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
                                            int origin, int advance) {
     iAssert(wrapRange.start <= wrapRange.end);
     trimEnd_Rangecc(&wrapRange);
-//    printf("typeset: {%s}\n", cstr_Rangecc(wrapRange));
     iRunTypesetter *d = wrap->context;
     d->run.text = wrapRange;
     applyAttributes_RunTypesetter_(d, attrib);
+#if 0
+    const int msr = measureRange_Text(d->run.font, wrapRange).advance.x;
+    if (iAbs(msr - advance) > 3) {
+        printf("\n[RunTypesetter] wrong wrapRange advance! actual:%d wrapped:%d\n\n", msr, advance);
+    }
+#endif
     if (~d->run.flags & startOfLine_GmRunFlag && d->lineHeightReduction > 0.0f) {
         d->pos.y -= d->lineHeightReduction * lineHeight_Text(d->baseFont);
     }
@@ -508,7 +513,7 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
     d->run.visBounds        = d->run.bounds;
     d->run.visBounds.size.x = dims.x;
     d->run.isRTL            = attrib.isBaseRTL;
-    printf("origin:%d isRTL:%d\n{%s}\n", origin, attrib.isBaseRTL, cstr_Rangecc(wrapRange));
+//    printf("origin:%d isRTL:%d\n{%s}\n", origin, attrib.isBaseRTL, cstr_Rangecc(wrapRange));
     pushBack_Array(&d->layout, &d->run);
     d->run.flags &= ~startOfLine_GmRunFlag;
     d->pos.y += lineHeight_Text(d->baseFont) * prefs_App()->lineSpacing;

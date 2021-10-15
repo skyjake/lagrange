@@ -4522,8 +4522,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
     }
-//    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
-//    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
+    if (0) {
+        drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
+        drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
+    }
 }
 
 static int drawSideRect_(iPaint *p, iRect rect) {

@@ -139,10 +139,10 @@ struct Impl_GmRun {
         uint32_t isRTL     : 1;
         uint32_t color     : 7; /* see max_ColorId */
 
-        uint32_t font      : 10;
+        uint32_t font      : 13;
         uint32_t mediaType : 3; /* note: max_MediaType means preformatted block */
+        uint32_t mediaId   : 12; /* zero if not an image */
         uint32_t lineType  : 3;
-        uint32_t mediaId   : 15; /* zero if not an image */
         uint32_t isLede    : 1;
     };
 };

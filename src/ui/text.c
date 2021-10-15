@@ -214,7 +214,6 @@ static void init_Font(iFont *d, const iFontSpec *fontSpec, const iFontFile *font
     d->baseline   = fontFile->ascent * d->yScale;
     d->vertOffset = d->height * (1.0f - glyphScale) / 2 * fontSpec->vertOffsetScale[scaleType];
     d->table = NULL;
- //   printf("{%s} height:%d baseline:%d\n", cstr_String(&d->fontSpec->id), d->height, d->baseline);
 }
 
 static void deinit_Font(iFont *d) {
@@ -934,6 +933,12 @@ static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, i
     iAssert(endAt >= 0 && endAt <= size_Array(&d->logical));
     finishedRun.logical.end = endAt;
     if (!isEmpty_Range(&finishedRun.logical)) {
+#if 0
+        /* Colorize individual runs to see boundaries. */
+        static int dbg;
+        static const int dbgClr[3] = { red_ColorId, green_ColorId, blue_ColorId };
+        finishedRun.attrib.colorId = dbgClr[dbg++ % 3];
+#endif
         pushBack_Array(&d->runs, &finishedRun);
         run->flags.isLineBreak = iFalse;
         run->flags.isArabic    = iFalse;
@@ -1120,15 +1125,18 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             continue;
         }
         if (ch == 0x20) {
-            if (run.font->fontSpec->flags & auxiliary_FontSpecFlag) {
+            if (run.font->fontSpec->flags & auxiliary_FontSpecFlag &&
+                ~run.font->fontSpec->flags & allowSpacePunct_FontSpecFlag) {
                 finishRun_AttributedText_(d, &run, pos);
-                run.font = d->font; /* never use space from the symbols font, it's too wide */
+                run.font = d->font; /* auxilitary font space not allowed, could be wrong width */
             }
             continue;
         }
         iFont *currentFont = attribFont;
-        if (run.font->fontSpec->flags & arabic_FontSpecFlag && isPunct_Char(ch)) {
-            currentFont = run.font; /* remain as Arabic for whitespace */
+        if (run.font->fontSpec->flags & auxiliary_FontSpecFlag &&
+            run.font->fontSpec->flags & allowSpacePunct_FontSpecFlag &&
+            isPunct_Char(ch)) {
+            currentFont = run.font; /* keep the current font */
         }
         const iGlyph *glyph = glyph_Font_(currentFont, ch);
         if (index_Glyph_(glyph) && glyph->font != run.font) {
@@ -1153,8 +1161,10 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
     printf("[AttributedText] %zu runs:\n", size_Array(&d->runs));
     iConstForEach(Array, i, &d->runs) {
         const iAttributedRun *run = i.value;
-        printf("  %zu %s log:%d...%d vis:%d...%d {%s}\n", index_ArrayConstIterator(&i),
+        printf("  %zu %s fnt:%d log:%d...%d vis:%d...%d {%s}\n",
+               index_ArrayConstIterator(&i),
                run->attrib.isRTL ? "<-" : "->",
+               fontId_Text_(run->font),
                run->logical.start, run->logical.end - 1,
                logToVis[run->logical.start], logToVis[run->logical.end - 1],
                cstr_Rangecc(sourceRange_AttributedText_(d, run->logical)));
@@ -1598,6 +1608,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                                                 wrap->hitPoint.y < orig.y + yCursor + d->height);
             iBool wasCharHit = iFalse; /* on this line */
             float breakAdvance = -1.0f;
+            size_t breakRunIndex = iInvalidPos;
             iAssert(wrapPosRange.end == textLen);
             /* Determine ends of wrapRuns and wrapVisRange. */
             int safeBreakPos = -1;
@@ -1621,7 +1632,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 iAssert(run->font == buf->font);
                 shape_GlyphBuffer_(buf);
                 iChar prevCh = 0;
-                lastAttrib = run->attrib;                
+                lastAttrib = run->attrib;
+//                printf("checking run %zu...\n", runIndex);
                 for (unsigned int ir = 0; ir < buf->glyphCount; ir++) {
                     const int i = (run->attrib.isRTL ? buf->glyphCount - ir - 1 : ir);
                     const hb_glyph_info_t *info    = &buf->glyphInfo[i];
@@ -1648,24 +1660,27 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     iAssert(xAdvance >= 0);
                     if (args->wrap->mode == word_WrapTextMode) {
                         /* When word wrapping, only consider certain places breakable. */
-                        if (!isPunct_Char(ch) && (prevCh == '-' || prevCh == '/')) {
+                        if ((prevCh == '-' || prevCh == '/') && !isPunct_Char(ch)) {
                             safeBreakPos = logPos;
                             breakAdvance = wrapAdvance;
-//                            printf("breakAdv_A:%f\n", breakAdvance);
+                            breakRunIndex = runIndex;
+//                            printf("sbp:%d breakAdv_A:%f\n", safeBreakPos, breakAdvance);
     //                        isSoftHyphenBreak = iFalse;
                         }
                         else if (isSpace_Char(ch)) {
                             safeBreakPos = logPos;
                             breakAdvance = wrapAdvance;
-//                            printf("breakAdv_B:%f sbb:%d\n", breakAdvance, safeBreakPos);
+                            breakRunIndex = runIndex;
+//                            printf("sbp:%d breakAdv_B:%f\n", safeBreakPos, breakAdvance);
     //                        isSoftHyphenBreak = iFalse;
                         }
                         prevCh = ch;
                     }
                     else {
-                        safeBreakPos = logPos;
-                        breakAdvance = wrapAdvance;
-                        wrapAttrib   = run->attrib;
+                        safeBreakPos  = logPos;
+                        breakAdvance  = wrapAdvance;
+                        breakRunIndex = runIndex;
+                        wrapAttrib    = run->attrib;
                     }
                     if (isHitPointOnThisLine) {
                         if (wrap->hitPoint.x >= orig.x + wrapAdvance &&
@@ -1681,7 +1696,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     if (wrap->maxWidth > 0 &&
                         wrapAdvance + xOffset + glyph->d[0].x + glyph->rect[0].size.x >
                         args->wrap->maxWidth) {
-//                        printf("safeBreakPos:%d\n", safeBreakPos);
+//                        printf("out of room at lp:%d! safeBreakPos:%d (idx:%zu) breakAdv:%f\n",
+//                               logPos, safeBreakPos,
+//                               breakRunIndex, breakAdvance);
                         if (safeBreakPos >= 0) {
                             wrapPosRange.end = safeBreakPos;
                         }
@@ -1697,6 +1714,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                             }
                             wrapPosRange.end = logPos;
                             breakAdvance     = wrapAdvance;
+                            breakRunIndex    = runIndex;
                         }
                         wrapResumePos = wrapPosRange.end;
                         if (args->wrap->mode != anyCharacter_WrapTextMode) {
@@ -1704,14 +1722,14 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                                 wrapResumePos++; /* skip space */
                             }
                         }
-                        wrapRuns.end       = runIndex + 1; /* still includes this run */
-                        wrapResumeRunIndex = runIndex;     /* ...but continue from the same one */
+                        wrapRuns.end       = breakRunIndex + 1; /* still includes this run */
+                        wrapResumeRunIndex = breakRunIndex;     /* ...but continue from the same one */
+//                        printf("-> wrapAdv:%f (breakAdv:%f)\n", wrapAdvance, breakAdvance);
                         wrapAdvance        = breakAdvance;
-//                        printf("-> wrapAdv:%f (breakAdv)\n", wrapAdvance);
+//                        printf("wrapResumePos:%d\n", wrapResumePos);
                         break;
                     }
                     wrapAdvance += xAdvance;
-                    printf("lp:%d wrap:%f\n", logPos, wrapAdvance);
                     /* Additional kerning tweak. It would be better to use HarfBuzz font callbacks,
                        but they don't seem to get called? */
                     if (i + 1 < buf->glyphCount) {
@@ -1720,6 +1738,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                                                        buf->glyphInfo[i + 1].codepoint);
                     }
                 }
+//                printf("...finished checking run %zu\n", runIndex);
             }
             if (isHitPointOnThisLine && wrap->hitPoint.x >= orig.x + wrapAdvance) {
                 /* On the right side. */
@@ -1774,16 +1793,17 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     }
                 }
             }
-        }
 #if 0
-        printf("Run order: ");
-        iConstForEach(Array, ro, &runOrder) {
-            const size_t *idx = ro.value;
-            printf("%zu {%s}\n", *idx,
-                   cstr_Rangecc(sourceRange_AttributedText_(&attrText,                                                                   ((const iAttributedRun *) at_Array(&attrText.runs, *idx))->logical)));
-        }
-        printf("\n");
+            printf("Run order: ");
+            iConstForEach(Array, ro, &runOrder) {
+                const size_t *idx = ro.value;
+                printf("%zu {%s}\n", *idx,
+                       cstr_Rangecc(sourceRange_AttributedText_(&attrText,                                                                   ((const iAttributedRun *) at_Array(&attrText.runs, *idx))->logical)));
+            }
+            printf("\n");
 #endif
+            
+        }
         iAssert(size_Array(&runOrder) == size_Range(&wrapRuns));
         /* Alignment. */
         int origin = 0;
@@ -1791,12 +1811,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         if (isRightAligned) {
             if (layoutBound > 0) {
                 origin = layoutBound - wrapAdvance;
-                printf("orig:%d (lbo:%d wrapAdv:%f)\n", origin, layoutBound, wrapAdvance);
             }
-            printf("yes; base RTL\n");
-        }
-        else {
-            printf("not base RTL\n");
         }
         /* Make a callback for each wrapped line. */
         if (wrap && wrap->wrapFunc &&
@@ -1866,8 +1881,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     const int bl1 = attrText.baseFont->baseline + attrText.baseFont->vertOffset;
                     const int bl2 = run->font->baseline + run->font->vertOffset;
                     dst.y += bl1 - bl2;
-//                        printf("baseline difference: run %d, base %d\n",
-//                               run->font->baseline, attrText.baseFont->baseline);
                 }
                 if (mode & visualFlag_RunMode) {
                     if (isEmpty_Rect(bounds)) {

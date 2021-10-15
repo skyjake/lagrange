@@ -350,8 +350,8 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
     else if (!cmp_String(key, "auxiliary") && value->type == boolean_TomlType) {
         iChangeFlags(d->loadSpec->flags, auxiliary_FontSpecFlag, value->value.boolean);
     }
-    else if (!cmp_String(key, "arabic") && value->type == boolean_TomlType) {
-        iChangeFlags(d->loadSpec->flags, arabic_FontSpecFlag, value->value.boolean);
+    else if (!cmp_String(key, "allowspace") && value->type == boolean_TomlType) {
+        iChangeFlags(d->loadSpec->flags, allowSpacePunct_FontSpecFlag, value->value.boolean);
     }
     else if (!cmp_String(key, "tweaks")) {
         iChangeFlags(d->loadSpec->flags, fixNunitoKerning_FontSpecFlag,
