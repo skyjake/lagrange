@@ -1485,6 +1485,9 @@ msgstr "Gopher"
 msgid "prefs.boldlink"
 msgstr "Bold links:"
 
+msgid "prefs.boldlink.visited"
+msgstr "Visited"
+
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
 msgstr "On Dark"

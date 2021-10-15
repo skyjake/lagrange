@@ -890,7 +890,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     rts.lineHeightReduction = 0.06f;
                 }
                 /* Visited links are never bold. */
-                if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
+                if (run.linkId && !prefs->boldLinkVisited &&
+                    linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
                     rts.run.font = paragraph_FontId;
                 }
             }

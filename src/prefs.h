@@ -91,6 +91,7 @@ struct Impl_Prefs {
     iBool            gemtextAnsiEscapes;
     iBool            monospaceGemini;
     iBool            monospaceGopher;
+    iBool            boldLinkVisited;
     iBool            boldLinkDark;
     iBool            boldLinkLight;
     int              lineWidth;

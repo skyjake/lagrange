@@ -231,22 +231,46 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
     appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
-    /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
-    appendFormat_String(str, "prefs.animate.changed arg:%d\n", d->prefs.uiAnimations);
-    appendFormat_String(str, "prefs.font.smooth.changed arg:%d\n", d->prefs.fontSmoothing);
-    appendFormat_String(str, "prefs.gemtext.ansi.changed arg:%d\n", d->prefs.gemtextAnsiEscapes);
-    appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
-    appendFormat_String(str, "prefs.mono.gopher.changed arg:%d\n", d->prefs.monospaceGopher);
-    appendFormat_String(str, "prefs.boldlink.dark.changed arg:%d\n", d->prefs.boldLinkDark);
-    appendFormat_String(str, "prefs.boldlink.light.changed arg:%d\n", d->prefs.boldLinkLight);
-    appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
-    appendFormat_String(str, "prefs.plaintext.wrap.changed arg:%d\n", d->prefs.plainTextWrap);
-    appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
-    appendFormat_String(str, "prefs.centershort.changed arg:%d\n", d->prefs.centerShortDocs);
-    appendFormat_String(str, "prefs.collapsepreonload.changed arg:%d\n", d->prefs.collapsePreOnLoad);
-    appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
-    appendFormat_String(str, "prefs.bookmarks.addbottom arg:%d\n", d->prefs.addBookmarksToBottom);
-    appendFormat_String(str, "prefs.archive.openindex.changed arg:%d\n", d->prefs.openArchiveIndexPages);
+    /* TODO: This array belongs in Prefs. It can then be used for command handling as well. */
+    const struct {
+        const char * id;
+        const iBool *value;
+    } boolPrefs[] = {
+        { "prefs.animate", &d->prefs.uiAnimations },
+        { "prefs.font.smooth", &d->prefs.fontSmoothing },
+        { "prefs.gemtext.ansi", &d->prefs.gemtextAnsiEscapes },
+        { "prefs.mono.gemini", &d->prefs.monospaceGemini },
+        { "prefs.mono.gopher", &d->prefs.monospaceGopher },
+        { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
+        { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
+        { "prefs.boldlink.light", &d->prefs.boldLinkLight },
+        { "prefs.biglede", &d->prefs.bigFirstParagraph },
+        { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
+        { "prefs.sideicon", &d->prefs.sideIcon },
+        { "prefs.centershort", &d->prefs.centerShortDocs },
+        { "prefs.collapsepreonload", &d->prefs.collapsePreOnLoad },
+        { "prefs.hoverlink", &d->prefs.hoverLink },
+        { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
+        { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
+    };
+    iForIndices(i, boolPrefs) {
+        appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
+    }
+//    appendFormat_String(str, "prefs.animate.changed arg:%d\n", d->prefs.uiAnimations);
+//    appendFormat_String(str, "prefs.font.smooth.changed arg:%d\n", d->prefs.fontSmoothing);
+//    appendFormat_String(str, "prefs.gemtext.ansi.changed arg:%d\n", d->prefs.gemtextAnsiEscapes);
+//    appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
+//    appendFormat_String(str, "prefs.mono.gopher.changed arg:%d\n", d->prefs.monospaceGopher);
+//    appendFormat_String(str, "prefs.boldlink.dark.changed arg:%d\n", d->prefs.boldLinkDark);
+//    appendFormat_String(str, "prefs.boldlink.light.changed arg:%d\n", d->prefs.boldLinkLight);
+//    appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
+//    appendFormat_String(str, "prefs.plaintext.wrap.changed arg:%d\n", d->prefs.plainTextWrap);
+//    appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
+//    appendFormat_String(str, "prefs.centershort.changed arg:%d\n", d->prefs.centerShortDocs);
+//    appendFormat_String(str, "prefs.collapsepreonload.changed arg:%d\n", d->prefs.collapsePreOnLoad);
+//    appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
+//    appendFormat_String(str, "prefs.bookmarks.addbottom arg:%d\n", d->prefs.addBookmarksToBottom);
+//    appendFormat_String(str, "prefs.archive.openindex.changed arg:%d\n", d->prefs.openArchiveIndexPages);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
@@ -2376,9 +2400,13 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.boldlink.dark.changed") ||
-             equal_Command(cmd, "prefs.boldlink.light.changed")) {
+             equal_Command(cmd, "prefs.boldlink.light.changed") ||
+             equal_Command(cmd, "prefs.boldlink.visited.changed")) {
         const iBool isSet = (arg_Command(cmd) != 0);
-        if (startsWith_CStr(cmd, "prefs.boldlink.dark")) {
+        if (startsWith_CStr(cmd, "prefs.boldlink.visited")) {
+            d->prefs.boldLinkVisited = isSet;
+        }
+        else if (startsWith_CStr(cmd, "prefs.boldlink.dark")) {
             d->prefs.boldLinkDark = isSet;
         }
         else {
@@ -2763,6 +2791,9 @@ iBool handleCommand_App(const char *cmd) {
         setFlags_Widget(findChild_Widget(dlg, "prefs.mono.gopher"),
                         selected_WidgetFlag,
                         d->prefs.monospaceGopher);
+        setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.visited"),
+                        selected_WidgetFlag,
+                        d->prefs.boldLinkVisited);
         setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.dark"),
                         selected_WidgetFlag,
                         d->prefs.boldLinkDark);

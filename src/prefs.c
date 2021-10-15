@@ -64,6 +64,7 @@ void init_Prefs(iPrefs *d) {
     d->gemtextAnsiEscapes = iFalse;
     d->monospaceGemini   = iFalse;
     d->monospaceGopher   = iFalse;
+    d->boldLinkVisited   = iTrue;
     d->boldLinkDark      = iTrue;
     d->boldLinkLight     = iTrue;
     d->lineWidth         = 38;

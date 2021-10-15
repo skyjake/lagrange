@@ -2549,22 +2549,6 @@ iWidget *makePreferences_Widget(void) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.monodoc}")));
             addFontButtons_(values, "monodoc");
             addDialogPadding_(headings, values);
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.boldlink}")));
-            iWidget *boldLink = new_Widget(); {
-                /* TODO: Add a utility function for this type of toggles? (also for above) */
-                iWidget *tog;
-                setTextCStr_LabelWidget(
-                    addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.dark"))),
-                    "${prefs.boldlink.dark}");
-                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget((iLabelWidget *) tog);
-                setTextCStr_LabelWidget(
-                    addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.light"))),
-                    "${prefs.boldlink.light}");
-                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget((iLabelWidget *) tog);
-            }
-            addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             addDialogToggle_(headings, values, "${prefs.gemtext.ansi}", "prefs.gemtext.ansi");
             addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
             addDialogPadding_(headings, values);
@@ -2604,6 +2588,27 @@ iWidget *makePreferences_Widget(void) {
         }
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.boldlink}")));
+        iWidget *boldLink = new_Widget(); {
+            /* TODO: Add a utility function for this type of toggles? (also for above) */
+            iWidget *tog;
+            setTextCStr_LabelWidget(
+                addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.visited"))),
+                "${prefs.boldlink.visited}");
+            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+            updateSize_LabelWidget((iLabelWidget *) tog);
+            setTextCStr_LabelWidget(
+                addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.dark"))),
+                "${prefs.boldlink.dark}");
+            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+            updateSize_LabelWidget((iLabelWidget *) tog);
+            setTextCStr_LabelWidget(
+                addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.light"))),
+                "${prefs.boldlink.light}");
+            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+            updateSize_LabelWidget((iLabelWidget *) tog);
+        }
+        addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
         addDialogToggle_(headings, values, "${prefs.collapsepreonload}", "prefs.collapsepreonload");
         addDialogPadding_(headings, values);
