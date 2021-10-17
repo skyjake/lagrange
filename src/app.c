@@ -231,6 +231,9 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
     appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
+    iConstForEach(StringSet, fp, d->prefs.disabledFontPacks) {
+        appendFormat_String(str, "fontpack.disable id:%s\n", cstr_String(fp.value));
+    }
     /* TODO: This array belongs in Prefs. It can then be used for command handling as well. */
     const struct {
         const char * id;
@@ -256,21 +259,6 @@ static iString *serializePrefs_App_(const iApp *d) {
     iForIndices(i, boolPrefs) {
         appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
     }
-//    appendFormat_String(str, "prefs.animate.changed arg:%d\n", d->prefs.uiAnimations);
-//    appendFormat_String(str, "prefs.font.smooth.changed arg:%d\n", d->prefs.fontSmoothing);
-//    appendFormat_String(str, "prefs.gemtext.ansi.changed arg:%d\n", d->prefs.gemtextAnsiEscapes);
-//    appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
-//    appendFormat_String(str, "prefs.mono.gopher.changed arg:%d\n", d->prefs.monospaceGopher);
-//    appendFormat_String(str, "prefs.boldlink.dark.changed arg:%d\n", d->prefs.boldLinkDark);
-//    appendFormat_String(str, "prefs.boldlink.light.changed arg:%d\n", d->prefs.boldLinkLight);
-//    appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
-//    appendFormat_String(str, "prefs.plaintext.wrap.changed arg:%d\n", d->prefs.plainTextWrap);
-//    appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
-//    appendFormat_String(str, "prefs.centershort.changed arg:%d\n", d->prefs.centerShortDocs);
-//    appendFormat_String(str, "prefs.collapsepreonload.changed arg:%d\n", d->prefs.collapsePreOnLoad);
-//    appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
-//    appendFormat_String(str, "prefs.bookmarks.addbottom arg:%d\n", d->prefs.addBookmarksToBottom);
-//    appendFormat_String(str, "prefs.archive.openindex.changed arg:%d\n", d->prefs.openArchiveIndexPages);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
@@ -380,6 +368,10 @@ static void loadPrefs_App_(iApp *d) {
                 const iInt2 pos = coord_Command(cmd);
                 d->initialWindowRect = init_Rect(
                     pos.x, pos.y, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
+            }
+            else if (equal_Command(cmd, "fontpack.disable")) {
+                insert_StringSet(d->prefs.disabledFontPacks,
+                                 collect_String(suffix_Command(cmd, "id")));
             }
 #if !defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
             else if (equal_Command(cmd, "downloads")) {
@@ -1117,6 +1109,18 @@ void trimMemory_App(void) {
         }
     }
     iRelease(docs);
+}
+
+iBool findCachedContent_App(const iString *url, iString *mime_out, iBlock *data_out) {
+    /* Cached content can be found in MediaRequests of DocumentWidgets (loaded on the currently
+       open page) and the DocumentWidget itself. `Media` doesn't store source data, only
+       presentation data. */
+    iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
+        if (findCachedContent_DocumentWidget(i.object, url, mime_out, data_out)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
@@ -2086,7 +2090,8 @@ const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
         "%s?%s", cstr_String(&d->prefs.strings[searchUrl_PrefsString]), cstr_String(escaped));
 }
 
-static void resetFonts_App_(iApp *d) {
+void resetFonts_App(void) {
+    iApp *d = &app_;
     iConstForEach(PtrArray, win, listWindows_App_(d)) {
         resetFonts_Text(text_Window(win.ptr));
     }
@@ -2163,7 +2168,11 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "font.reset")) {
-        resetFonts_App_(d);
+        resetFonts_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "font.reload")) {
+        reload_Fonts(); /* also does font cache reset, window invalidation */
         return iTrue;
     }
 #if 0
@@ -2175,7 +2184,7 @@ iBool handleCommand_App(const char *cmd) {
             }
             setCStr_String(&d->prefs.symbolFontPath, path);
             loadUserFonts_Text();
-            resetFonts_App_(d);
+            resetFonts_App(d);
             if (!isFrozen) {
                 postCommand_App("font.changed");
                 postCommand_App("window.unfreeze");
@@ -3033,6 +3042,22 @@ iBool handleCommand_App(const char *cmd) {
                                     : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
         }
         return iFalse;
+    }
+    else if (equal_Command(cmd, "media.fontpack.enable")) {
+        const iString *packId = collect_String(suffix_Command(cmd, "packid"));
+        if (arg_Command(cmd)) {
+            remove_StringSet(d->prefs.disabledFontPacks, packId);
+        }
+        else {
+            insert_StringSet(d->prefs.disabledFontPacks, packId);
+        }
+        resetFonts_App();
+        const iMedia *media = pointerLabel_Command(cmd, "media");
+        if (media) {
+            postCommandf_App("media.fontpack.updated id:%u media:%p",
+                             argU32Label_Command(cmd, "mediaid"), media);
+        }
+        return iTrue;
     }
 #if defined (LAGRANGE_ENABLE_IPC)
     else if (equal_Command(cmd, "ipc.list.urls")) {

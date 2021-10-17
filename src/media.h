@@ -74,6 +74,7 @@ iBool           setData_Media           (iMedia *, uint16_t linkId, const iStrin
 
 size_t          memorySize_Media        (const iMedia *);
 iMediaId        findMediaForLink_Media  (const iMedia *, uint16_t linkId, enum iMediaType mediaType);
+//iMediaId        findUrl_Media           (const iMedia *, const iString *url);
 
 iMediaId        id_Media        (const iMedia *, uint16_t linkId, enum iMediaType type);
 iBool           info_Media      (const iMedia *, iMediaId mediaId, iGmMediaInfo *info_out);
@@ -114,6 +115,7 @@ struct Impl_FontpackMediaInfo {
     iFontPackId packId;
     iBool isValid;
     iBool isInstalled;
+    iBool isDisabled;
     iBool isReadOnly;
     size_t sizeInBytes;
     iStringList *names;

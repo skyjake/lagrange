@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "fontpack.h"
 #include "embedded.h"
+#include "ui/window.h"
 #include "app.h"
 
 #include <the_Foundation/archive.h>
@@ -396,6 +397,24 @@ static iBool load_FontPack_(iFontPack *d, const iString *ini) {
     return ok;
 }
 
+iBool detect_FontPack(const iBlock *data) {
+    iBool ok = iFalse;
+    iArchive *zip = new_Archive();
+    if (openData_Archive(zip, data)) {
+        iString ini;
+        initBlock_String(&ini, dataCStr_Archive(zip, "fontpack.ini"));
+        if (isUtf8_Rangecc(range_String(&ini))) {
+            /* Validate the TOML syntax without actually checking any values. */
+            iTomlParser *toml = new_TomlParser();
+            ok = parse_TomlParser(toml, &ini);
+            delete_TomlParser(toml);
+        }
+        deinit_String(&ini);
+    }
+    iRelease(zip);
+    return ok;
+}
+
 iBool loadArchive_FontPack(iFontPack *d, const iArchive *zip) {
     d->archive = zip;
     iBool ok = iFalse;
@@ -467,16 +486,24 @@ static void sortSpecs_Fonts_(iFonts *d) {
     clear_PtrArray(&d->specOrder);
     iConstForEach(PtrArray, p, &d->packs) {
         const iFontPack *pack = p.ptr;
-        iConstForEach(Array, i, &pack->fonts) {
-            pushBack_PtrArray(&d->specOrder, i.value);
+        if (!contains_StringSet(prefs_App()->disabledFontPacks, &pack->id)) {
+            iConstForEach(Array, i, &pack->fonts) {
+                pushBack_PtrArray(&d->specOrder, i.value);
+            }
         }
     }
     sort_Array(&d->specOrder, cmpPriority_FontSpecPtr_);
 }
 
+static const iString *userFontsDirectory_Fonts_(const iFonts *d) {
+    return collect_String(concatCStr_Path(&d->userDir, "fonts"));
+}
+
 void init_Fonts(const char *userDir) {
     iFonts *d = &fonts_;
     initCStr_String(&d->userDir, userDir);
+    const iString *userFontsDir = userFontsDirectory_Fonts_(d);
+    makeDirs_Path(userFontsDir);
     init_PtrArray(&d->packs);
     d->files = new_ObjectList();
     init_PtrArray(&d->specOrder);
@@ -496,7 +523,7 @@ void init_Fonts(const char *userDir) {
             "./fonts",
             "../share/lagrange", /* Note: These must match CMakeLists.txt install destination */
             "../../share/lagrange",
-            concatPath_CStr(userDir, "fonts"),
+            cstr_String(userFontsDir),
             userDir,
         };
         const iString *execDir = collectNewRange_String(dirName_Path(execPath_App()));
@@ -555,7 +582,6 @@ void init_Fonts(const char *userDir) {
 void deinit_Fonts(void) {
     iFonts *d = &fonts_;
     unloadFonts_Fonts_(d);
-    //unloadFiles_Fonts_(d);
     iAssert(isEmpty_ObjectList(d->files));
     deinit_PtrArray(&d->specOrder);
     deinit_PtrArray(&d->packs);
@@ -617,7 +643,18 @@ const iString *infoPage_Fonts(void) {
     return str;
 }
 
-const iFontPack *findPack_Fonts(const iString *path) {
+const iFontPack *pack_Fonts(const char *packId) {
+    iFonts *d = &fonts_;
+    iConstForEach(PtrArray, i, &d->packs) {
+        const iFontPack *pack = i.ptr;
+        if (!cmp_String(&pack->id, packId)) {
+            return pack;
+        }
+    }
+    return NULL;
+}
+
+const iFontPack *packByPath_Fonts(const iString *path) {
     iFonts *d = &fonts_;
     iConstForEach(PtrArray, i, &d->packs) {
         const iFontPack *pack = i.ptr;
@@ -626,6 +663,28 @@ const iFontPack *findPack_Fonts(const iString *path) {
         }
     }
     return NULL;
+}
+
+void reload_Fonts(void) {
+    iFonts *d = &fonts_;
+    iString *userDir = copy_String(&d->userDir);
+    deinit_Fonts(); /* `d->userDir` is freed */
+    init_Fonts(cstr_String(userDir));
+    resetFonts_App();
+    invalidate_Window(get_MainWindow());
+    delete_String(userDir);
+}
+
+void install_Fonts(const iString *fontId, const iBlock *data) {
+    iFonts *d = &fonts_;
+    iFile *f = new_File(collect_String(concatCStr_Path(
+        userFontsDirectory_Fonts_(d), format_CStr("%s.fontpack", cstr_String(fontId)))));
+    if (open_File(f, writeOnly_FileMode)) {
+        write_File(f, data);
+    }
+    iRelease(f);
+    /* Newly installed fontpacks may have a higher priority that overrides other fonts. */
+    reload_Fonts();
 }
 
 iBool preloadLocalFontpackForPreview_Fonts(iGmDocument *doc) {

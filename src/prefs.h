@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/string.h>
+#include <the_Foundation/stringset.h>
 
 #include "gmdocument.h"
 #include "ui/color.h"
@@ -87,6 +87,7 @@ struct Impl_Prefs {
     int              maxCacheSize; /* MB */
     int              maxMemorySize; /* MB */
     /* Style */
+    iStringSet *     disabledFontPacks;
     iBool            fontSmoothing;
     iBool            gemtextAnsiEscapes;
     iBool            monospaceGemini;

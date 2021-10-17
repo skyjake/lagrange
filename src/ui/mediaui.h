@@ -22,6 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "../media.h"
+
 #include <the_Foundation/rect.h>
 #include <SDL_events.h>
 
@@ -46,8 +48,6 @@ void    draw_PlayerUI   (iPlayerUI *, iPaint *p);
 
 /*----------------------------------------------------------------------------------------------*/
 
-iDeclareType(DocumentWidget)
-iDeclareType(Media)
 iDeclareType(DownloadUI)
 
 struct Impl_DownloadUI {
@@ -67,8 +67,9 @@ iDeclareType(FontpackUI)
 struct Impl_FontpackUI {
     const iMedia *media;
     uint16_t mediaId;
+    iFontpackMediaInfo info;
     iRect bounds;
-    iRect installRect;
+    iRect buttonRect;
 };
 
 void    init_FontpackUI         (iFontpackUI *, const iMedia *media, uint16_t mediaId, iRect bounds);

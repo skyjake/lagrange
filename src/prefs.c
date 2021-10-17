@@ -60,6 +60,7 @@ void init_Prefs(iPrefs *d) {
     setCStr_String(&d->strings[bodyFont_PrefsString], "default");
     setCStr_String(&d->strings[monospaceFont_PrefsString], "iosevka");
     setCStr_String(&d->strings[monospaceDocumentFont_PrefsString], "iosevka-body");
+    d->disabledFontPacks = new_StringSet();
     d->fontSmoothing     = iTrue;
     d->gemtextAnsiEscapes = iFalse;
     d->monospaceGemini   = iFalse;
@@ -88,6 +89,7 @@ void init_Prefs(iPrefs *d) {
 }
 
 void deinit_Prefs(iPrefs *d) {
+    iRelease(d->disabledFontPacks);
     iForIndices(i, d->strings) {
         deinit_String(&d->strings[i]);
     }

@@ -2916,6 +2916,27 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateMedia_DocumentWidget_(d);
         return iFalse;
     }
+    else if (equal_Command(cmd, "media.fontpack.updated")) {
+        iMedia *media = pointerLabel_Command(cmd, "media");
+        if (media == media_GmDocument(d->doc)) {
+            /*iGmMediaInfo info;
+            if (info_Media(media,
+                           (iMediaId){ fontpack_MediaType, argU32Label_Command(cmd, "id")},
+                           &info)) {
+                
+            }*/
+            
+//            findCachedContent_App(<#const iString *url#>, <#iString *mime_out#>, <#iBlock *data_out#>)
+//            setData_Media(media,
+        }
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "media.fontpack.install")) {
+        if (pointerLabel_Command(cmd, "media") == media_GmDocument(d->doc)) {
+            /* TODO: This is ours, we may have a MediaRequest with the data in memory. */
+        }
+        return iFalse;
+    }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
         if (cancelRequest_DocumentWidget_(d, iTrue /* navigate back */)) {
             return iTrue;
@@ -5167,6 +5188,28 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
     d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     updateVisible_DocumentWidget_(d);
     invalidate_DocumentWidget_(d);
+}
+
+iBool findCachedContent_DocumentWidget(const iDocumentWidget *d, const iString *url,
+                                       iString *mime_out, iBlock *data_out) {
+    if (equal_String(d->mod.url, url) && !isRequestOngoing_DocumentWidget(d)) {
+        /* It's the currently open page. */
+        set_String(mime_out, &d->sourceMime);
+        set_Block(data_out, &d->sourceContent);
+        return iTrue;
+    }
+    /* Finished media requests are kept in memory while the page is open. */
+    iConstForEach(ObjectList, i, d->media) {
+        const iMediaRequest *mr = i.object;
+        if (mr->req &&
+            isFinished_GmRequest(mr->req) &&
+            equal_String(linkUrl_GmDocument(d->doc, mr->linkId), url)) {
+            set_String(mime_out, meta_GmRequest(mr->req));
+            set_Block(data_out, body_GmRequest(mr->req));
+            return iTrue;
+        }
+    }
+    return iFalse;
 }
 
 iBeginDefineSubclass(DocumentWidget, Widget)

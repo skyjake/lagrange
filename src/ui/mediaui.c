@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "util.h"
 #include "lang.h"
+#include "app.h"
 
 #include <the_Foundation/path.h>
 #include <the_Foundation/stringlist.h>
@@ -281,14 +282,28 @@ void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static iMenuItem action_FontpackUI_(const iFontpackUI *d) {
+    if (d->info.isInstalled) {
+        return (iMenuItem){ d->info.isDisabled ? "${media.fontpack.enable}"
+                                            : close_Icon " ${media.fontpack.disable}",
+            0, 0, format_CStr("media.fontpack.enable arg:%d", d->info.isDisabled) };
+    }
+    return (iMenuItem){ d->info.isInstalled ? close_Icon " ${media.fontpack.disable}"
+                                            : "${media.fontpack.install}",
+            0, 0,
+        d->info.isInstalled ? "media.fontpack.enable arg:0" : "media.fontpack.install" };
+}
+
 void init_FontpackUI(iFontpackUI *d, const iMedia *media, uint16_t mediaId, iRect bounds) {
     d->media   = media;
     d->mediaId = mediaId;
+    fontpackInfo_Media(d->media, (iMediaId){ fontpack_MediaType, d->mediaId }, &d->info);
     d->bounds  = bounds;
-    d->installRect.size = add_I2(measure_Text(uiLabel_FontId, "${media.fontpack.install}").bounds.size,
-                                 muli_I2(gap2_UI, 3));
-    d->installRect.pos.x = right_Rect(d->bounds) - gap_UI - d->installRect.size.x;
-    d->installRect.pos.y = mid_Rect(d->bounds).y - d->installRect.size.y / 2;
+    iMenuItem action = action_FontpackUI_(d);
+    d->buttonRect.size = add_I2(measure_Text(uiLabel_FontId, action.label).bounds.size,
+                                muli_I2(gap2_UI, 3));
+    d->buttonRect.pos.x = right_Rect(d->bounds) - gap_UI - d->buttonRect.size.x;
+    d->buttonRect.pos.y = mid_Rect(d->bounds).y - d->buttonRect.size.y / 2;
 }
 
 iBool processEvent_FontpackUI(iFontpackUI *d, const SDL_Event *ev) {
@@ -296,7 +311,12 @@ iBool processEvent_FontpackUI(iFontpackUI *d, const SDL_Event *ev) {
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP: {
             const iInt2 pos = init_I2(ev->button.x, ev->button.y);
-            if (contains_Rect(d->installRect, pos)) {
+            if (contains_Rect(d->buttonRect, pos)) {
+                if (ev->type == SDL_MOUSEBUTTONUP) {
+                    postCommandf_App("%s media:%p mediaid:%u packid:%s",
+                                     action_FontpackUI_(d).command,
+                                     d->media, d->mediaId, cstr_String(d->info.packId.id));
+                }
                 return iTrue;
             }
             break;
@@ -322,24 +342,22 @@ void draw_FontpackUI(const iFontpackUI *d, iPaint *p) {
     /* Draw a background box. */
     fillRect_Paint(p, d->bounds, uiBackground_ColorId);
     drawRect_Paint(p, d->bounds, uiSeparator_ColorId);
-    iFontpackMediaInfo info;
-    fontpackInfo_Media(d->media, (iMediaId){ fontpack_MediaType, d->mediaId }, &info);
     iInt2 pos = topLeft_Rect(d->bounds);
     const char *checks[] = { "\u2610", "\u2611" };
-    draw_Text(uiContentBold_FontId, pos, uiHeading_ColorId, "\"%s\" v%d",
-              cstr_String(info.packId.id), info.packId.version);
+    draw_Text(uiContentBold_FontId, pos,
+              d->info.isDisabled ? uiText_ColorId : uiHeading_ColorId, "\"%s\" v%d",
+              cstr_String(d->info.packId.id), d->info.packId.version);
     pos.y += lineHeight_Text(uiContentBold_FontId);
     draw_Text(uiLabelBold_FontId, pos, uiText_ColorId, "%.1f MB, %d fonts   %s %s   %s",
-              info.sizeInBytes / 1.0e6, size_StringList(info.names),
+              d->info.sizeInBytes / 1.0e6, size_StringList(d->info.names),
 //              checks[info.isValid], info.isValid ? "No errors" : "Errors detected",
-              checks[info.isInstalled], info.isInstalled ? "Installed" : "Not installed",
-              info.isReadOnly ? "Read-Only" : "");
+              checks[d->info.isInstalled], d->info.isInstalled ? "Installed" : "Not installed",
+              d->info.isReadOnly ? "Read-Only" : "");
     pos.y += lineHeight_Text(uiLabelBold_FontId);
-    iConstForEach(StringList, i, info.names) {
+    iConstForEach(StringList, i, d->info.names) {
         drawRange_Text(uiLabel_FontId, pos, uiText_ColorId, range_String(i.value));
         pos.y += lineHeight_Text(uiLabel_FontId);
     }
     /* Buttons. */
-    drawInlineButton_(p, d->installRect,
-                      "${media.fontpack.install}", uiLabel_FontId);
+    drawInlineButton_(p, d->buttonRect, action_FontpackUI_(d).label, uiLabel_FontId);
 }

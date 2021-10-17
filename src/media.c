@@ -312,15 +312,19 @@ void deinit_GmFontpack(iGmFontpack *d) {
 
 static void loadData_GmFontpack_(iGmFontpack *d, const iBlock *data) {
     const iString *loadPath = collect_String(localFilePathFromUrl_String(&d->props.url));
-    const iFontPack *pack = findPack_Fonts(loadPath);
+    const iFontPack *pack = packByPath_Fonts(loadPath);
     d->info.isValid = d->info.isInstalled = pack != NULL;
     d->info.isReadOnly = iFalse;
+    d->info.isDisabled = iFalse;
+    clear_StringList(d->info.names);
+    clear_String(&d->packId);
     if (!pack) {
         /* Let's load it now temporarily and see what's inside. */
         iArchive *zip = new_Archive();
         if (openData_Archive(zip, data)) {
             iFontPack *fp = collect_FontPack(new_FontPack());
             setLoadPath_FontPack(fp, loadPath);
+            /* TODO: No need to load all the font files here, just the metadata. */
             setStandalone_FontPack(fp, iTrue);
             if (loadArchive_FontPack(fp, zip)) {
                 d->info.isValid = iTrue;
@@ -334,6 +338,7 @@ static void loadData_GmFontpack_(iGmFontpack *d, const iBlock *data) {
         d->info.packId.id = &d->packId; /* we own this String */
         d->info.packId.version = id_FontPack(pack).version;
         d->info.isReadOnly = isReadOnly_FontPack(pack);
+        d->info.isDisabled = contains_StringSet(prefs_App()->disabledFontPacks, &d->packId);
     }
     iPtrSet *unique = new_PtrSet();
     iConstForEach(PtrArray, i, listSpecs_FontPack(pack)) {
@@ -455,7 +460,7 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
     const iBool isPartial  = (flags & partialData_MediaFlag) != 0;
     const iBool allowHide  = (flags & allowHide_MediaFlag) != 0;
     const iBool isDeleting = (!mime || !data);
-    iMediaId    existing   = findMediaForLink_Media(d, linkId, none_MediaType);// findLinkImage_Media(d, linkId);
+    iMediaId    existing   = findMediaForLink_Media(d, linkId, none_MediaType);
     const size_t existingIndex = index_MediaId(existing);
     iBool       isNew      = iFalse;
     if (existing.type == image_MediaType) {
@@ -574,17 +579,34 @@ static iMediaId findMediaPtr_Media_(const iPtrArray *items, enum iMediaType medi
 
 iMediaId findMediaForLink_Media(const iMedia *d, iGmLinkId linkId, enum iMediaType mediaType) {
     /* TODO: Use hashes, this will get very slow if there is a large number of media items. */
-    iMediaId mid;
+    iMediaId mid = iInvalidMediaId;
     for (int i = 0; i < max_MediaType; i++) {
         if (mediaType == i || !mediaType) {
             mid = findMediaPtr_Media_(&d->items[i], i, linkId);
             if (mid.type) {
-                return mid;
+                break;
             }
         }
     }
-    return iInvalidMediaId;
+    return mid;
 }
+
+#if 0
+iMediaId findUrl_Media(const iMedia *d, const iString *url) {
+    iMediaId mid = iInvalidMediaId;
+    for (int i = 0; i < max_MediaType; i++) {
+        for (int j = 0; j < size_PtrArray(&d->items[i]); j++) {
+            const iGmMediaProps *props = constAt_PtrArray(&d->items[i], j);
+            if (equal_String(&props->url, url)) {
+                mid.type = i;
+                mid.id   = j + 1;
+                break;
+            }
+        }
+    }
+    return mid;
+}
+#endif
 
 size_t numAudio_Media(const iMedia *d) {
     return size_PtrArray(&d->items[audio_MediaType]);
