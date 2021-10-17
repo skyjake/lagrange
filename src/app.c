@@ -2566,12 +2566,23 @@ iBool handleCommand_App(const char *cmd) {
         const iBool fromSidebar = argLabel_Command(cmd, "fromsidebar") != 0;
         iUrl parts;
         init_Url(&parts, url);
+        if (equal_Rangecc(parts.scheme, "about") && equal_Rangecc(parts.path, "command") &&
+            !isEmpty_Range(&parts.query)) {
+            /* NOTE: Careful here! `about:command` allows issuing UI events via links on the page.
+               There is a special set of pages where these are allowed (e.g., "about:fonts").
+               On every other page, `about:command` links will not be clickable. */
+            iString *query = collectNewRange_String((iRangecc){
+                parts.query.start + 1, parts.query.end
+            });
+            replace_String(query, "%20", " ");
+            postCommandString_Root(NULL, query);
+            return iTrue;
+        }
         if (equalCase_Rangecc(parts.scheme, "titan")) {
             iUploadWidget *upload = new_UploadWidget();
             setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, document_App());
             addChild_Widget(get_Root()->widget, iClob(upload));
-//            finalizeSheet_Mobile(as_Widget(upload));
             setupSheetTransition_Mobile(as_Widget(upload), iTrue);
             postRefresh_App();
             return iTrue;
@@ -3043,8 +3054,8 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iFalse;
     }
-    else if (equal_Command(cmd, "media.fontpack.enable")) {
-        const iString *packId = collect_String(suffix_Command(cmd, "packid"));
+    else if (equal_Command(cmd, "fontpack.enable")) {
+        const iString *packId = collect_String(suffix_Command(cmd, "id"));
         if (arg_Command(cmd)) {
             remove_StringSet(d->prefs.disabledFontPacks, packId);
         }
@@ -3052,10 +3063,35 @@ iBool handleCommand_App(const char *cmd) {
             insert_StringSet(d->prefs.disabledFontPacks, packId);
         }
         resetFonts_App();
-        const iMedia *media = pointerLabel_Command(cmd, "media");
-        if (media) {
-            postCommandf_App("media.fontpack.updated id:%u media:%p",
-                             argU32Label_Command(cmd, "mediaid"), media);
+        postCommand_App("navigate.reload");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "fontpack.delete")) {
+        const iString *packId = collect_String(suffix_Command(cmd, "id"));
+        if (isEmpty_String(packId)) {
+            return iTrue;
+        }
+        const iFontPack *pack = pack_Fonts(cstr_String(packId));
+        if (pack && loadPath_FontPack(pack)) {
+            if (argLabel_Command(cmd, "confirmed")) {
+                remove_StringSet(d->prefs.disabledFontPacks, packId);
+                remove(cstr_String(loadPath_FontPack(pack)));
+                reload_Fonts();
+                postCommand_App("navigate.reload");
+            }
+            else {
+                makeQuestion_Widget(
+                    uiTextCaution_ColorEscape "${heading.fontpack.delete}",
+                    format_Lang("${dlg.fontpack.delete.confirm}",
+                                cstr_String(packId)),
+                    (iMenuItem[]){ { "${cancel}" },
+                                   { uiTextCaution_ColorEscape " ${dlg.fontpack.delete}",
+                                     0,
+                                     0,
+                                     format_CStr("!fontpack.delete confirmed:1 id:%s",
+                                                 cstr_String(packId)) } },
+                    2);
+            }
         }
         return iTrue;
     }

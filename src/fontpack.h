@@ -148,12 +148,21 @@ struct Impl_FontPackId {
 void                setReadOnly_FontPack    (iFontPack *, iBool readOnly);
 void                setStandalone_FontPack  (iFontPack *, iBool standalone);
 void                setLoadPath_FontPack    (iFontPack *, const iString *path);
+void                setUrl_FontPack         (iFontPack *, const iString *url);
 iBool               loadArchive_FontPack    (iFontPack *, const iArchive *zip);
 iBool               detect_FontPack         (const iBlock *data);
 
 iFontPackId         id_FontPack             (const iFontPack *);
-const iPtrArray *   listSpecs_FontPack      (const iFontPack *);
+const iString *     loadPath_FontPack       (const iFontPack *); /* may return NULL */
+iBool               isDisabled_FontPack     (const iFontPack *);
 iBool               isReadOnly_FontPack     (const iFontPack *);
+const iPtrArray *   listSpecs_FontPack      (const iFontPack *);
+iString *           infoText_FontPack       (const iFontPack *);
+const iArray *      actions_FontPack        (const iFontPack *);
+
+const iString *     idFromUrl_FontPack      (const iString *url);
+
+/*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(GmDocument)
 
@@ -169,8 +178,6 @@ const iPtrArray *   listSpecsByPriority_Fonts   (void);
 const iString *     infoPage_Fonts              (void);
 void                install_Fonts               (const iString *fontId, const iBlock *data);
 void                reload_Fonts                (void);
-
-iBool   preloadLocalFontpackForPreview_Fonts    (iGmDocument *doc);
 
 iLocalDef iBool isInstalled_Fonts(const char *packId) {
     return pack_Fonts(packId) != NULL;

@@ -1257,7 +1257,7 @@ static const char *zipPageHeading_(const iRangecc mime) {
         return book_Icon " Gempub";
     }
     else if (equalCase_Rangecc(mime, mimeType_FontPack)) {
-        return "\U0001f520 Fontpack";
+        return fontpack_Icon " Fontpack";
     }
     iRangecc type = iNullRange;
     nextSplit_Rangecc(mime, "/", &type); /* skip the part before the slash */
@@ -1435,13 +1435,6 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
             }
         }
     }
-    /* Local fontpacks are automatically shown. */
-    if (preloadLocalFontpackForPreview_Fonts(d->doc)) {
-        documentRunsInvalidated_DocumentWidget_(d);
-        redoLayout_GmDocument(d->doc);
-        updateVisible_DocumentWidget_(d);
-        invalidate_DocumentWidget_(d);
-    }
 }
 
 static void updateDocument_DocumentWidget_(iDocumentWidget *d,
@@ -1503,6 +1496,25 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     appendFormat_String(&str,
                                         cstr_Lang("doc.archive"),
                                         cstr_Rangecc(baseName_Path(d->mod.url)));
+                    if (isRequestFinished) {
+                        if (equal_Rangecc(param, mimeType_FontPack)) {
+                            /* Show some information about fontpacks, and set up footer actions. */
+                            iArchive *zip = iClob(new_Archive());
+                            if (openData_Archive(zip, &d->sourceContent)) {
+                                iFontPack *fp = new_FontPack();
+                                setUrl_FontPack(fp, d->mod.url);
+                                setStandalone_FontPack(fp, iTrue);
+                                if (loadArchive_FontPack(fp, zip)) {
+                                    appendFormat_String(&str, "\n\n%s",
+                                                        cstrCollect_String(infoText_FontPack(fp)));
+                                }
+                                const iArray *actions = actions_FontPack(fp);
+                                makeFooterButtons_DocumentWidget_(d, constData_Array(actions),
+                                                                  size_Array(actions));
+                                delete_FontPack(fp);
+                            }
+                        }
+                    }
                     appendCStr_String(&str, "\n\n");
                     iString *localPath = localFilePathFromUrl_String(d->mod.url);
                     if (!localPath) {
@@ -2916,27 +2928,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateMedia_DocumentWidget_(d);
         return iFalse;
     }
-    else if (equal_Command(cmd, "media.fontpack.updated")) {
-        iMedia *media = pointerLabel_Command(cmd, "media");
-        if (media == media_GmDocument(d->doc)) {
-            /*iGmMediaInfo info;
-            if (info_Media(media,
-                           (iMediaId){ fontpack_MediaType, argU32Label_Command(cmd, "id")},
-                           &info)) {
-                
-            }*/
-            
-//            findCachedContent_App(<#const iString *url#>, <#iString *mime_out#>, <#iBlock *data_out#>)
-//            setData_Media(media,
-        }
-        return iFalse;
-    }
-    else if (equal_Command(cmd, "media.fontpack.install")) {
-        if (pointerLabel_Command(cmd, "media") == media_GmDocument(d->doc)) {
-            /* TODO: This is ours, we may have a MediaRequest with the data in memory. */
-        }
-        return iFalse;
-    }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
         if (cancelRequest_DocumentWidget_(d, iTrue /* navigate back */)) {
             return iTrue;
@@ -3253,7 +3244,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return handleSwipe_DocumentWidget_(d, cmd);
     }
     else if (equal_Command(cmd, "document.setmediatype") && document_App() == d) {
-        setUrlAndSource_DocumentWidget(d, d->mod.url, string_Command(cmd, "mime"), &d->sourceContent);
+        if (!isRequestOngoing_DocumentWidget(d)) {
+            setUrlAndSource_DocumentWidget(d, d->mod.url, string_Command(cmd, "mime"),
+                                           &d->sourceContent);
+        }
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, w, "fontpack.install")) {
+        const iString *id = idFromUrl_FontPack(d->mod.url);
+        install_Fonts(id, &d->sourceContent);
+        postCommandf_App("open gotoheading:%s url:about:fonts", cstr_String(id));
         return iTrue;
     }
     return iFalse;
@@ -3302,15 +3302,6 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
     const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
     iConstForEach(PtrArray, i, &d->visibleMedia) {
         const iGmRun *run  = i.ptr;
-        if (run->mediaType == fontpack_MediaType) {
-            iFontpackUI ui;
-            init_FontpackUI(&ui, media_GmDocument(d->doc), run->mediaId,
-                            runRect_DocumentWidget_(d, run));
-            if (processEvent_FontpackUI(&ui, ev)) {
-                refresh_Widget(d);
-                return iTrue;
-            }
-        }
         if (run->mediaType != audio_MediaType) {
             continue;
         }
@@ -4684,12 +4675,6 @@ static void drawMedia_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
             init_DownloadUI(&ui, constMedia_GmDocument(d->doc), run->mediaId,
                             runRect_DocumentWidget_(d, run));
             draw_DownloadUI(&ui, p);
-        }
-        else if (run->mediaType == fontpack_MediaType) {
-            iFontpackUI ui;
-            init_FontpackUI(&ui, constMedia_GmDocument(d->doc), run->mediaId,
-                            runRect_DocumentWidget_(d, run));
-            draw_FontpackUI(&ui, p);
         }
     }
 }

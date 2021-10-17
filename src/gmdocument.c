@@ -94,6 +94,7 @@ struct Impl_GmDocument {
     iString   localHost;
     iInt2     size;
     int       outsideMargin;
+    iBool     enableCommandLinks; /* `about:command?` only allowed on selected pages */
     iArray    layout; /* contents of source, laid out in document space */
     iPtrArray links;
     enum iGmDocumentBanner bannerType;
@@ -256,6 +257,14 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         link->urlRange = capturedRange_RegExpMatch(&m, 1);
         setRange_String(&link->url, link->urlRange);
         set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
+        if (startsWithCase_String(&link->url, "about:command")) {
+            /* This is a special internal page that allows submitting UI events. */
+            if (!d->enableCommandLinks) {
+                delete_GmLink(link);
+                *linkId = 0;
+                return line;
+            }
+        }
         /* Check the URL. */ {
             iUrl parts;
             init_Url(&parts, &link->url);
@@ -336,7 +345,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             /* Check for a custom icon. */
             enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
             if ((scheme == gemini_GmLinkScheme && ~link->flags & remote_GmLinkFlag) ||
-                scheme == file_GmLinkScheme ||
+                scheme == about_GmLinkScheme || scheme == file_GmLinkScheme ||
                 scheme == mailto_GmLinkScheme) {
                 iChar icon = 0;
                 int len = 0;
@@ -826,6 +835,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : scheme == mailto_GmLinkScheme   ? envelope
                                              : link->flags & remote_GmLinkFlag ? globe
                                              : link->flags & imageFileExtension_GmLinkFlag ? image
+                                             : link->flags & fontpackFileExtension_GmLinkFlag ? fontpack_Icon
                                              : scheme == file_GmLinkScheme     ? folder
                                                                                : arrow);
             /* Custom link icon is shown on local Gemini links only. */
@@ -1012,14 +1022,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     pushBack_Array(&d->layout, &run);
                     break;
                 }
-                case fontpack_MediaType: {
-                    run.bounds.pos    = pos;
-                    run.bounds.size.x = d->size.x;
-                    run.bounds.size.y = height_FontpackUI(d->media, media.id, d->size.x);
-                    run.visBounds     = run.bounds;
-                    pushBack_Array(&d->layout, &run);
-                    break;
-                }
                 default:
                     break;
             }
@@ -1069,6 +1071,7 @@ void init_GmDocument(iGmDocument *d) {
     d->bannerType = siteDomain_GmDocumentBanner;
     d->outsideMargin = 0;
     d->size = zero_I2();
+    d->enableCommandLinks = iFalse;
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
     init_String(&d->bannerText);
@@ -1760,6 +1763,10 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     init_Url(&parts, url);
     setRange_String(&d->localHost, parts.host);
     updateIconBasedOnUrl_GmDocument_(d);
+    if (!cmp_String(url, "about:fonts")) {
+        /* This is an interactive internal page. */
+        d->enableCommandLinks = iTrue;
+    }
 }
 
 static int replaceRegExp_String(iString *d, const iRegExp *regexp, const char *replacement,
@@ -1973,9 +1980,15 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
         d->theme.ansiEscapesEnabled = prefs_App()->gemtextAnsiEscapes;
     }
     else if (d->format == markdown_SourceFormat) {
-        convertMarkdownToGemtext_GmDocument_(d);
-        set_String(&d->unormSource, &d->source); /* use the converted source from now on */
-        d->theme.ansiEscapesEnabled = iTrue; /* escapes are used for styling */
+        /* Attempt a conversion to Gemtext when viewing local Markdown files. */
+        if (equalCase_Rangecc(urlScheme_String(&d->url), "file")) {
+            convertMarkdownToGemtext_GmDocument_(d);
+            set_String(&d->unormSource, &d->source); /* use the converted source from now on */
+            d->theme.ansiEscapesEnabled = iTrue; /* escapes are used for styling */
+        }
+        else {
+            d->format = plainText_SourceFormat; /* just show as plain text */
+        }
     }
     else {
         d->theme.ansiEscapesEnabled = iTrue;

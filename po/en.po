@@ -448,6 +448,16 @@ msgid_plural "num.bytes.n"
 msgstr[0] "%zu byte"
 msgstr[1] "%zu bytes"
 
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu file"
+msgstr[1] "%zu files"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu font"
+msgstr[1] "%zu fonts"
+
 # strftime() formatted, split on two lines
 #, c-format
 msgid "page.timestamp"
@@ -1870,3 +1880,60 @@ msgstr "Language"
 
 msgid "gempub.meta.license"
 msgstr "License"
+
+msgid "heading.fontpack.meta"
+msgstr "Fonts"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Enabled fontpacks"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Disabled fontpacks"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "View file"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Version %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Installed"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Not installed"
+
+msgid "fontpack.meta.disabled"
+msgstr ", disabled"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Enable \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Disable \"%s\""
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Install \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Upgrade \"%s\" to version %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Permanently delete \"%s\""
+
+msgid "heading.fontpack.delete"
+msgstr "DELETE FONTPACK"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Do you really want to permanently delete\nthe fontpack \"%s\"?"
+
+msgid "dlg.fontpack.delete"
+msgstr "Delete Fontpack"
+

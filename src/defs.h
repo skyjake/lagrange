@@ -126,8 +126,8 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define delete_Icon         "\u232b"
 #define copy_Icon           "\u2398" //"\u2bba"
 #define check_Icon          "\u2714"
-#define ballotChecked_Icon  "\U0001f5f9"
-#define ballotUnchecked_Icon "\U0001f5f9"
+#define ballotChecked_Icon  "\u2611"
+#define ballotUnchecked_Icon "\u2610"
 #define inbox_Icon          "\U0001f4e5"
 #define book_Icon           "\U0001f56e"
 #define bookmark_Icon       "\U0001f516"
@@ -162,6 +162,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define select_Icon         "\u2b1a"
 #define downAngle_Icon      "\ufe40"
 #define photo_Icon          "\U0001f5bc"
+#define fontpack_Icon       "\U0001f520"
 
 #if defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"

@@ -53,7 +53,6 @@ enum iMediaType { /* Note: There is a limited number of bits for these; see GmRu
     //animatedImage_MediaType, /* TODO */
     audio_MediaType,
     download_MediaType,
-    fontpack_MediaType,
     max_MediaType
 };
 
@@ -74,7 +73,6 @@ iBool           setData_Media           (iMedia *, uint16_t linkId, const iStrin
 
 size_t          memorySize_Media        (const iMedia *);
 iMediaId        findMediaForLink_Media  (const iMedia *, uint16_t linkId, enum iMediaType mediaType);
-//iMediaId        findUrl_Media           (const iMedia *, const iString *url);
 
 iMediaId        id_Media        (const iMedia *, uint16_t linkId, enum iMediaType type);
 iBool           info_Media      (const iMedia *, iMediaId mediaId, iGmMediaInfo *info_out);
@@ -108,21 +106,6 @@ void            pauseAllPlayers_Media   (const iMedia *, iBool setPaused);
 
 void            downloadStats_Media     (const iMedia *, iMediaId downloadId, const iString **path_out,
                                          float *bytesPerSecond_out, iBool *isFinished_out);
-
-iDeclareType(FontpackMediaInfo)
-
-struct Impl_FontpackMediaInfo {
-    iFontPackId packId;
-    iBool isValid;
-    iBool isInstalled;
-    iBool isDisabled;
-    iBool isReadOnly;
-    size_t sizeInBytes;
-    iStringList *names;
-};
-
-void            fontpackInfo_Media      (const iMedia *, iMediaId fontpackId,
-                                         iFontpackMediaInfo *info_out);
 
 /*----------------------------------------------------------------------------------------------*/
 

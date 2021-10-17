@@ -59,20 +59,3 @@ struct Impl_DownloadUI {
 void    init_DownloadUI         (iDownloadUI *, const iMedia *media, uint16_t mediaId, iRect bounds);
 iBool   processEvent_DownloadUI (iDownloadUI *, const SDL_Event *ev);
 void    draw_DownloadUI         (const iDownloadUI *, iPaint *p);
-
-/*----------------------------------------------------------------------------------------------*/
-
-iDeclareType(FontpackUI)
-
-struct Impl_FontpackUI {
-    const iMedia *media;
-    uint16_t mediaId;
-    iFontpackMediaInfo info;
-    iRect bounds;
-    iRect buttonRect;
-};
-
-void    init_FontpackUI         (iFontpackUI *, const iMedia *media, uint16_t mediaId, iRect bounds);
-int     height_FontpackUI       (const iMedia *media, uint16_t mediaId, int width);
-iBool   processEvent_FontpackUI (iFontpackUI *, const SDL_Event *ev);
-void    draw_FontpackUI         (const iFontpackUI *, iPaint *p);

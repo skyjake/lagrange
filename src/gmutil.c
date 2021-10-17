@@ -539,6 +539,9 @@ const char *mediaTypeFromFileExtension_String(const iString *d) {
     else if (endsWithCase_String(d, ".fontpack")) {
         return mimeType_FontPack;
     }
+    else if (endsWithCase_String(d, ".ttf")) {
+        return "font/ttf";
+    }
     else if (endsWithCase_String(d, ".xml")) {
         return "text/xml";
     }

@@ -288,76 +288,6 @@ iDefineTypeConstruction(GmDownload)
 
 /*----------------------------------------------------------------------------------------------*/
 
-iDeclareType(GmFontpack)
-
-struct Impl_GmFontpack {
-    iGmMediaProps props;
-    iString packId;
-    iFontpackMediaInfo info;
-    /* TODO: Font preview images? */
-};
-
-void init_GmFontpack(iGmFontpack *d) {
-    init_GmMediaProps_(&d->props);
-    init_String(&d->packId);
-    iZap(d->info);
-    d->info.names = new_StringList();
-}
-
-void deinit_GmFontpack(iGmFontpack *d) {
-    iRelease(d->info.names);
-    deinit_String(&d->packId);
-    deinit_GmMediaProps_(&d->props);
-}
-
-static void loadData_GmFontpack_(iGmFontpack *d, const iBlock *data) {
-    const iString *loadPath = collect_String(localFilePathFromUrl_String(&d->props.url));
-    const iFontPack *pack = packByPath_Fonts(loadPath);
-    d->info.isValid = d->info.isInstalled = pack != NULL;
-    d->info.isReadOnly = iFalse;
-    d->info.isDisabled = iFalse;
-    clear_StringList(d->info.names);
-    clear_String(&d->packId);
-    if (!pack) {
-        /* Let's load it now temporarily and see what's inside. */
-        iArchive *zip = new_Archive();
-        if (openData_Archive(zip, data)) {
-            iFontPack *fp = collect_FontPack(new_FontPack());
-            setLoadPath_FontPack(fp, loadPath);
-            /* TODO: No need to load all the font files here, just the metadata. */
-            setStandalone_FontPack(fp, iTrue);
-            if (loadArchive_FontPack(fp, zip)) {
-                d->info.isValid = iTrue;
-                pack = fp;
-            }
-        }
-        iRelease(zip);
-    }
-    if (pack) {
-        set_String(&d->packId, id_FontPack(pack).id);
-        d->info.packId.id = &d->packId; /* we own this String */
-        d->info.packId.version = id_FontPack(pack).version;
-        d->info.isReadOnly = isReadOnly_FontPack(pack);
-        d->info.isDisabled = contains_StringSet(prefs_App()->disabledFontPacks, &d->packId);
-    }
-    iPtrSet *unique = new_PtrSet();
-    iConstForEach(PtrArray, i, listSpecs_FontPack(pack)) {
-        const iFontSpec *spec = i.ptr;
-        pushBack_StringList(d->info.names, &spec->name);
-        iForIndices(j, spec->styles) {
-            insert_PtrSet(unique, spec->styles[j]);
-        }
-    }
-    iConstForEach(PtrSet, j, unique) {
-        d->info.sizeInBytes += size_Block(&((const iFontFile *) *j.value)->sourceData);
-    }
-    delete_PtrSet(unique);
-}
-
-iDefineTypeConstruction(GmFontpack)
-
-/*----------------------------------------------------------------------------------------------*/
-
 struct Impl_Media {
     iPtrArray items[max_MediaType];
     /* TODO: Add a hash to quickly look up a link's media. */
@@ -387,9 +317,6 @@ void clear_Media(iMedia *d) {
     }
     iForEach(PtrArray, n, &d->items[download_MediaType]) {
         deinit_GmDownload(n.ptr);
-    }
-    iForEach(PtrArray, f, &d->items[fontpack_MediaType]) {
-        deinit_GmFontpack(f.ptr);
     }
     iForIndices(type, d->items) {
         clear_PtrArray(&d->items[type]);
@@ -435,17 +362,6 @@ iBool setUrl_Media(iMedia *d, iGmLinkId linkId, enum iMediaType mediaType, const
             dl = at_PtrArray(&d->items[download_MediaType], index_MediaId(existing));
         }
         props = &dl->props;
-    }
-    else if (mediaType == fontpack_MediaType) {
-        iGmFontpack *fp = NULL;
-        if (isNew) {
-            fp = new_GmFontpack();
-            pushBack_PtrArray(&d->items[fontpack_MediaType], fp);
-        }
-        else {
-            fp = at_PtrArray(&d->items[fontpack_MediaType], index_MediaId(existing));
-        }
-        props = &fp->props;
     }
     if (props) {
         props->linkId = linkId;
@@ -517,21 +433,6 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             }
         }
     }
-    else if (existing.type == fontpack_MediaType) {
-        iGmFontpack *fp;
-        if (isDeleting) {
-            take_PtrArray(&d->items[fontpack_MediaType], existingIndex, (void **) &fp);
-            delete_GmFontpack(fp);
-        }
-        else {
-            iAssert(!isPartial);
-            fp = at_PtrArray(&d->items[fontpack_MediaType], existingIndex);
-            if (isEmpty_String(&fp->props.mime)) {
-                set_String(&fp->props.mime, mime);
-            }
-            loadData_GmFontpack_(fp, data);
-        }
-    }
     else if (!isDeleting) {
         if (startsWith_String(mime, "image/")) {
             /* Copy the image to a texture. */
@@ -591,23 +492,6 @@ iMediaId findMediaForLink_Media(const iMedia *d, iGmLinkId linkId, enum iMediaTy
     return mid;
 }
 
-#if 0
-iMediaId findUrl_Media(const iMedia *d, const iString *url) {
-    iMediaId mid = iInvalidMediaId;
-    for (int i = 0; i < max_MediaType; i++) {
-        for (int j = 0; j < size_PtrArray(&d->items[i]); j++) {
-            const iGmMediaProps *props = constAt_PtrArray(&d->items[i], j);
-            if (equal_String(&props->url, url)) {
-                mid.type = i;
-                mid.id   = j + 1;
-                break;
-            }
-        }
-    }
-    return mid;
-}
-#endif
-
 size_t numAudio_Media(const iMedia *d) {
     return size_PtrArray(&d->items[audio_MediaType]);
 }
@@ -662,9 +546,6 @@ iBool info_Media(const iMedia *d, iMediaId mediaId, iGmMediaInfo *info_out) {
                 return iTrue;
             }
             break;
-        case fontpack_MediaType:
-            /* TODO */
-            break;
         default:
             break;
     }
@@ -715,16 +596,6 @@ void downloadStats_Media(const iMedia *d, iMediaId downloadId, const iString **p
         }
         *bytesPerSecond_out = dl->currentRate;
         *isFinished_out = (dl->path && !dl->file);
-    }
-}
-
-void fontpackInfo_Media(const iMedia *d, iMediaId fontpackId, iFontpackMediaInfo *info_out) {
-    iAssert(fontpackId.type == fontpack_MediaType);
-    iZap(*info_out);
-    const size_t index = index_MediaId(fontpackId);
-    if (index < size_PtrArray(&d->items[fontpack_MediaType])) {
-        const iGmFontpack *fp = constAt_PtrArray(&d->items[fontpack_MediaType], index);
-        *info_out = fp->info;
     }
 }
 
