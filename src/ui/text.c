@@ -1968,6 +1968,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iForEach(Array, b, &buffers) {
         deinit_GlyphBuffer_(b.value);
     }
+    deinit_Array(&buffers);
     deinit_AttributedText(&attrText);
     return bounds;
 }
