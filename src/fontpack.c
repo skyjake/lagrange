@@ -202,7 +202,7 @@ struct Impl_FontPack {
     int             version;
     iBool           isStandalone;
     iBool           isReadOnly;
-    iArray          fonts;   /* array of FontSpecs */
+    iPtrArray       fonts;   /* array of FontSpecs */
     const iArchive *archive; /* opened ZIP archive */
     iString *       loadPath;
     iFontSpec *     loadSpec;
@@ -215,7 +215,7 @@ void init_FontPack(iFontPack *d) {
     d->version = 0;
     d->isStandalone = iFalse;
     d->isReadOnly = iFalse;
-    init_Array(&d->fonts, sizeof(iFontSpec));
+    init_PtrArray(&d->fonts);
     d->archive  = NULL;
     d->loadSpec = NULL;
     d->loadPath = NULL;
@@ -225,10 +225,10 @@ void deinit_FontPack(iFontPack *d) {
     iAssert(d->archive == NULL);
     iAssert(d->loadSpec == NULL);
     delete_String(d->loadPath);
-    iForEach(Array, i, &d->fonts) {
-        deinit_FontSpec(i.value);
+    iForEach(PtrArray, i, &d->fonts) {
+        delete_FontSpec(i.ptr);
     }
-    deinit_Array(&d->fonts);
+    deinit_PtrArray(&d->fonts);
     deinit_String(&d->id);
     releaseUnusedFiles_Fonts_(&fonts_);
 }
@@ -243,11 +243,7 @@ const iString *loadPath_FontPack(const iFontPack *d) {
 
 const iPtrArray *listSpecs_FontPack(const iFontPack *d) {
     if (!d) return NULL;
-    iPtrArray *list = collectNew_PtrArray();
-    iConstForEach(Array, i, &d->fonts) {
-        pushBack_PtrArray(list, i.value);
-    }
-    return list;
+    return &d->fonts;
 }
 
 void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart) {
@@ -282,7 +278,7 @@ void handleIniTable_FontPack_(void *context, const iString *table, iBool isStart
                 }
             }
         }
-        pushBack_Array(&d->fonts, d->loadSpec);
+        pushBack_PtrArray(&d->fonts, d->loadSpec);
         d->loadSpec = NULL;
     }   
 }
@@ -300,7 +296,6 @@ static iBlock *readFile_FontPack_(const iFontPack *d, const iString *path) {
             data = readAll_File(srcFile);
         }
         iRelease(srcFile);
-        return data;
     }
     return data;
 }
@@ -402,12 +397,14 @@ static iBool load_FontPack_(iFontPack *d, const iString *ini) {
     return ok;
 }
 
+static const char *fontpackIniEntryPath_ = "fontpack.ini";
+
 iBool detect_FontPack(const iBlock *data) {
     iBool ok = iFalse;
     iArchive *zip = new_Archive();
-    if (openData_Archive(zip, data)) {
+    if (openData_Archive(zip, data) && entryCStr_Archive(zip, fontpackIniEntryPath_)) {
         iString ini;
-        initBlock_String(&ini, dataCStr_Archive(zip, "fontpack.ini"));
+        initBlock_String(&ini, dataCStr_Archive(zip, fontpackIniEntryPath_));
         if (isUtf8_Rangecc(range_String(&ini))) {
             /* Validate the TOML syntax without actually checking any values. */
             iTomlParser *toml = new_TomlParser();
@@ -423,7 +420,7 @@ iBool detect_FontPack(const iBlock *data) {
 iBool loadArchive_FontPack(iFontPack *d, const iArchive *zip) {
     d->archive = zip;
     iBool ok = iFalse;
-    const iBlock *iniData = dataCStr_Archive(zip, "fontpack.ini");
+    const iBlock *iniData = dataCStr_Archive(zip, fontpackIniEntryPath_);
     if (iniData) {
         iString ini;
         initBlock_String(&ini, iniData);
@@ -506,8 +503,8 @@ static void sortSpecs_Fonts_(iFonts *d) {
     iConstForEach(PtrArray, p, &d->packs) {
         const iFontPack *pack = p.ptr;
         if (!isDisabled_FontPack(pack)) {
-            iConstForEach(Array, i, &pack->fonts) {
-                pushBack_PtrArray(&d->specOrder, i.value);
+            iConstForEach(PtrArray, i, &pack->fonts) {
+                pushBack_PtrArray(&d->specOrder, i.ptr);
             }
         }
     }
@@ -547,7 +544,7 @@ void init_Fonts(const char *userDir) {
         };
         const iString *execDir = collectNewRange_String(dirName_Path(execPath_App()));
         iForIndices(i, locations) {
-            const iString *dir = concatCStr_Path(execDir, locations[i]);
+            const iString *dir = collect_String(concatCStr_Path(execDir, locations[i]));
             iForEach(DirFileInfo, entry, iClob(new_DirFileInfo(dir))) {
                 const iString *entryPath = path_FileInfo(entry.value);
                 if (endsWithCase_String(entryPath, ".fontpack")) {
@@ -582,7 +579,7 @@ void init_Fonts(const char *userDir) {
         if (open_File(f, text_FileMode | readOnly_FileMode)) {
             const iString *src = collect_String(readString_File(f));
             iFontPack *pack = new_FontPack();
-            pack->loadPath = copy_String(userIni);
+            pack->loadPath = copy_String(userIni); /* no pack ID */
             if (load_FontPack_(pack, src)) {
                 pushBack_PtrArray(&d->packs, pack);
             }
@@ -710,6 +707,12 @@ const iArray *actions_FontPack(const iFontPack *d) {
         pushBack_Array(items, &(iMenuItem){
             format_Lang(add_Icon " ${fontpack.install}", fpId),
             SDLK_RETURN, 0, "fontpack.install"
+        });
+        pushBack_Array(items, &(iMenuItem){
+            download_Icon " " saveToDownloads_Label,
+            0,
+            0,
+            "document.save"
         });
     }
     return collect_Array(items);
