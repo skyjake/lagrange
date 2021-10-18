@@ -2265,6 +2265,9 @@ iLocalDef iBool isOldSchool_GmLinkScheme(enum iGmLinkScheme d) {
 
 enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum iGmLinkPart part) {
     const iGmLink *link = link_GmDocument_(d, linkId);
+    if (!link) {
+        return none_ColorId;
+    }
 //    const int www_GmLinkFlag            = http_GmLinkFlag | mailto_GmLinkFlag;
 //    const int gopherOrFinger_GmLinkFlag = gopher_GmLinkFlag | finger_GmLinkFlag;
     const enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
