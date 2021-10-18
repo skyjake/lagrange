@@ -1111,6 +1111,7 @@ void trimMemory_App(void) {
     iRelease(docs);
 }
 
+#if 0
 iBool findCachedContent_App(const iString *url, iString *mime_out, iBlock *data_out) {
     /* Cached content can be found in MediaRequests of DocumentWidgets (loaded on the currently
        open page) and the DocumentWidget itself. `Media` doesn't store source data, only
@@ -1122,6 +1123,7 @@ iBool findCachedContent_App(const iString *url, iString *mime_out, iBlock *data_
     }
     return iFalse;
 }
+#endif
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
     if (!isEmpty_Periodic(&d->periodic)) {
