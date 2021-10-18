@@ -41,7 +41,7 @@ The required tools are a C11 compiler (e.g., Clang or GCC), CMake and `pkg-confi
 4. Create a build directory.
 5. In your empty build directory, run CMake: ```cmake {path_of_lagrange_sources} -DCMAKE_BUILD_TYPE=Release```
 6. Build it: ```cmake --build .```
-7. Now you can run `lagrange`, `lagrange.exe`, or `Lagrange.app`.
+7. Now you can run *lagrange*, *lagrange.exe*, or *Lagrange.app*.
 
 ### Unicode text rendering
 
@@ -113,18 +113,17 @@ You should use a version of the SDL 2 library that is compiled for native Window
     Libs: ${libdir}/SDL2.dll -mwindows
     Cflags: -I${incdir}
 
-The *-mwindows* option is particularly important as that specifies the target is a GUI application. Also note that you are linking directly against the Windows DLL — do not use any prebuilt .lib files if available, as those as specific to MSVC.
+The `-mwindows` option is particularly important as that specifies the target is a GUI application. Also note that you are linking directly against the Windows DLL — do not use any prebuilt .lib files if available, as those as specific to MSVC.
 
 `pkg-config` will find your .pc file if it is on `PKG_CONFIG_PATH` or you place it in a system-wide pkgconfig directory.
 
-Once you have compiled a working binary under MSYS2, there is still an additional step required to allow running it directly from the Windows shell: the shared libraries from MSYS2 must be found either via `PATH` or by copying them to the same directory where `lagrange.exe` is located.
+Once you have compiled a working binary under MSYS2, there is still an additional step required to allow running it directly from the Windows shell: the shared libraries from MSYS2 must be found either via `PATH` or by copying them to the same directory where _lagrange.exe_ is located.
 
 ### Compiling on Raspberry Pi
 
 On Raspberry Pi 4/400, you can compile and run Lagrange just like on a regular desktop PC. Accelerated OpenGL graphics should work fine under X11.
 
-On Raspberry Pi 3 or earlier, you should use a version of SDL that is compiled to take advantage of the Broadcom VideoCore OpenGL ES hardware. This provides the best performance when running Lagrange in a console. OpenGL under X11 on Raspberry Pi 2/3 is quite 
-slow/experimental. When running under X11, software rendering is the best choice and the SDL from Raspbian etc. is sufficient.
+On Raspberry Pi 3 or earlier, you should use a version of SDL that is compiled to take advantage of the Broadcom VideoCore OpenGL ES hardware. This provides the best performance when running Lagrange in a console. OpenGL under X11 on Raspberry Pi 2/3 is quite slow/experimental. When running under X11, software rendering is the best choice and the SDL from Raspbian etc. is sufficient.
 
 The following build options are recommended on Raspberry Pi 2/3:
 
@@ -135,13 +134,30 @@ The following build options are recommended on Raspberry Pi 2/3:
 [rel]: https://git.skyjake.fi/gemini/lagrange/releases
 [tf]:  https://git.skyjake.fi/skyjake/the_Foundation
 
+### Compiling on iOS
+
+Compiling Lagrange on iOS is moderately difficult.
+
+As a prerequisite, you will need to have an [iOS toolchain configuration for CMake](https://github.com/leetal/ios-cmake). CMake is required for Lagrange itself and for the\_Foundation. You will also need [Autotools helpers for iOS](https://github.com/szanni/ios-autotools.git) because HarfBuzz, libiconv, libunistring, and libpcre use Automake. Meson and Ninja are used for GNU FriBidi. The _iconfigure_ script in the Autotools helpers needs to be [patched](ios/iconfigure-osminver.patch).
+
+After these utilities are available, the scripts in _ios/_ can be used as a basis for the build. Unfortunately there is no ready-made high-level script for performing all these steps, so you'll need to adapt them individually to your needs.
+
+1. Meson cross-compilation is controlled with _ios/cross-mac-arm64-ios-arm64.ini_. Modify it to be compatible with your build system and target device.
+2. _ios/deps.sh_ compiles most of the dependencies using Meson, Ninja, and _iconfigure_. Note that the simulator build has not been set up in these scripts, only the `os` build.
+3. Clone [OpenSSL for iPhone](https://github.com/x2on/OpenSSL-for-iPhone.git) and build it with iOS 9.0 as the minimum version. Deploy the static libraries in *$HOME/SDK/ios/$arch/*, or wherever you've set `IOS_DIR` to be.
+4. Create an empty build directory for the\_Foundation and run _ios/cmake-ios-tf.sh_ from there. You may need to adjust the source directory path in the script depending on where you place your build directory.
+5. Now you can `make install` to build and deploy the_Foundation to `IOS_DIR`.
+6. Finally, you can run CMake like in _ios/cmake-ios-lagrange.sh_ to generate an Xcode project that builds the app.
+
+If FriBidi and HarfBuzz are not used (disabling RTL and complex text rendering), the first step can be skipped and the corresponding build steps in _ios/deps.sh_ can be removed. In this case, Meson and Ninja are not needed at all.
+
 ## User files
 
-On Windows, user files are stored in `%HOMEPATH%/AppData/Roaming/fi.skyjake.Lagrange/`, unless one is using the portable distribution and there is a `userdata` subdirectory present in the executable directory.
+On Windows, user files are stored in *%HOMEPATH%/AppData/Roaming/fi.skyjake.Lagrange/*, unless one is using the portable distribution and there is a *userdata/* subdirectory present in the executable directory.
 
-On macOS, user files are stored in `~/Library/Application Support/fi.skyjake.Lagrange/`.
+On macOS, user files are stored in *~/Library/Application Support/fi.skyjake.Lagrange/*.
 
-On Linux/*BSD/other operating systems, user files stored in `~/.config/lagrange` unless you have customized the XDG directories, in which case the `XDG_CONFIG_HOME` environment variable is used to determine where user files saved.
+On Linux/*BSD/other operating systems, user files stored in _~/.config/lagrange/_ unless you have customized the XDG directories, in which case the `XDG_CONFIG_HOME` environment variable is used to determine where user files saved.
 
 The usage and contents of the user files are described in the Help document. You can delete one or more of the files while Lagrange is not running to reset the corresponding data to the default/empty state.
 
