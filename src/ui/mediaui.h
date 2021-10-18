@@ -31,6 +31,8 @@ iDeclareType(Paint)
 iDeclareType(Player)
 iDeclareType(PlayerUI)
 
+void    drawSevenSegmentBytes_MediaUI   (int font, iInt2 pos, int majorColor, int minorColor, size_t numBytes);
+
 struct Impl_PlayerUI {
     const iPlayer *player;
     iRect bounds;

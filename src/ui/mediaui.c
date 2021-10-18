@@ -198,7 +198,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static void drawSevenSegmentBytes_(iInt2 pos, int color, size_t numBytes) {
+void drawSevenSegmentBytes_MediaUI(int font, iInt2 pos, int majorColor, int minorColor, size_t numBytes) {
     iString digits;
     init_String(&digits);
     if (numBytes == 0) {
@@ -221,12 +221,11 @@ static void drawSevenSegmentBytes_(iInt2 pos, int color, size_t numBytes) {
             magnitude++;
         }
         if (magnitude > 6) {
-            prependCStr_String(&digits, uiTextStrong_ColorEscape);
+            prependCStr_String(&digits, escape_Color(majorColor));
         }
     }
-    const int font = uiLabel_FontId;
     const iInt2 dims = measureRange_Text(font, range_String(&digits)).bounds.size;
-    drawRange_Text(font, addX_I2(pos, -dims.x), color, range_String(&digits));
+    drawRange_Text(font, addX_I2(pos, -dims.x), minorColor, range_String(&digits));
     deinit_String(&digits);
 }
 
@@ -267,7 +266,9 @@ void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
               isFinished ? uiTextAction_ColorId : uiTextDim_ColorId,
               cstr_Lang(isFinished ? "media.download.complete" : "media.download.warnclose"));
     const int x2 = right_Rect(rect);
-    drawSevenSegmentBytes_(init_I2(x2, y1), uiTextDim_ColorId, info.numBytes);
+    drawSevenSegmentBytes_MediaUI(uiLabel_FontId, init_I2(x2, y1),
+                                  uiTextStrong_ColorId, uiTextDim_ColorId,
+                                  info.numBytes);
     const iInt2 pos = init_I2(x2, y2);
     if (bytesPerSecond > 0) {
         drawAlign_Text(uiLabel_FontId, pos, uiTextDim_ColorId, right_Alignment,

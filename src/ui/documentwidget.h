@@ -48,8 +48,8 @@ const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
 
-iBool   findCachedContent_DocumentWidget(const iDocumentWidget *, const iString *url,
-                                         iString *mime_out, iBlock *data_out);
+//iBool   findCachedContent_DocumentWidget(const iDocumentWidget *, const iString *url,
+//                                         iString *mime_out, iBlock *data_out);
 
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),

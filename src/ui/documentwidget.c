@@ -228,6 +228,7 @@ enum iDocumentWidgetFlag {
     otherRootByDefault_DocumentWidgetFlag    = iBit(12), /* links open to other root by default */
     urlChanged_DocumentWidgetFlag            = iBit(13),
     openedFromSidebar_DocumentWidgetFlag     = iBit(14),
+    drawDownloadCounter_DocumentWidgetFlag   = iBit(15),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -275,7 +276,7 @@ struct Impl_DocumentWidget {
     enum iGmStatusCode sourceStatus;
     iString        sourceHeader;
     iString        sourceMime;
-    iBlock         sourceContent; /* original content as received, for saving */
+    iBlock         sourceContent; /* original content as received, for saving; set on request finish */
     iTime          sourceTime;
     iGempub *      sourceGempub; /* NULL unless the page is Gempub content */
     iGmDocument *  doc;
@@ -1458,7 +1459,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
         clear_String(&d->sourceMime);
         d->sourceTime = response->when;
         d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
-        initBlock_String(&str, &response->body);
+        initBlock_String(&str, &response->body); /* Note: Body may be megabytes in size. */
         if (isSuccess_GmStatusCode(statusCode)) {
             /* Check the MIME type. */
             iRangecc charset = range_CStr("utf-8");
@@ -1470,6 +1471,12 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
             while (nextSplit_Rangecc(mime, ";", &seg)) {
                 iRangecc param = seg;
                 trim_Rangecc(&param);
+                /* Detect fontpacks even if the server doesn't use the right media type. */
+                if (isRequestFinished && equal_Rangecc(param, "application/octet-stream")) {
+                    if (detect_FontPack(&d->sourceContent)) {
+                        param = range_CStr(mimeType_FontPack);
+                    }
+                }
                 if (equal_Rangecc(param, "text/gemini")) {
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
@@ -1485,9 +1492,11 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     docFormat = plainText_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                 }
-                else if (equal_Rangecc(param, "application/zip") ||
+                else if (isRequestFinished &&
+                         (equal_Rangecc(param, "application/zip") ||
                          (startsWith_Rangecc(param, "application/") &&
-                          endsWithCase_Rangecc(param, "+zip"))) {
+                          endsWithCase_Rangecc(param, "+zip")))) {
+                    clear_String(&str);
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                     iString *key = collectNew_String();
@@ -1496,23 +1505,21 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     appendFormat_String(&str,
                                         cstr_Lang("doc.archive"),
                                         cstr_Rangecc(baseName_Path(d->mod.url)));
-                    if (isRequestFinished) {
-                        if (equal_Rangecc(param, mimeType_FontPack)) {
-                            /* Show some information about fontpacks, and set up footer actions. */
-                            iArchive *zip = iClob(new_Archive());
-                            if (openData_Archive(zip, &d->sourceContent)) {
-                                iFontPack *fp = new_FontPack();
-                                setUrl_FontPack(fp, d->mod.url);
-                                setStandalone_FontPack(fp, iTrue);
-                                if (loadArchive_FontPack(fp, zip)) {
-                                    appendFormat_String(&str, "\n\n%s",
-                                                        cstrCollect_String(infoText_FontPack(fp)));
-                                }
-                                const iArray *actions = actions_FontPack(fp);
-                                makeFooterButtons_DocumentWidget_(d, constData_Array(actions),
-                                                                  size_Array(actions));
-                                delete_FontPack(fp);
+                    if (equal_Rangecc(param, mimeType_FontPack)) {
+                        /* Show some information about fontpacks, and set up footer actions. */
+                        iArchive *zip = iClob(new_Archive());
+                        if (openData_Archive(zip, &d->sourceContent)) {
+                            iFontPack *fp = new_FontPack();
+                            setUrl_FontPack(fp, d->mod.url);
+                            setStandalone_FontPack(fp, iTrue);
+                            if (loadArchive_FontPack(fp, zip)) {
+                                appendFormat_String(&str, "\n\n%s",
+                                                    cstrCollect_String(infoText_FontPack(fp)));
                             }
+                            const iArray *actions = actions_FontPack(fp);
+                            makeFooterButtons_DocumentWidget_(d, constData_Array(actions),
+                                                              size_Array(actions));
+                            delete_FontPack(fp);
                         }
                     }
                     appendCStr_String(&str, "\n\n");
@@ -1534,6 +1541,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                          startsWith_Rangecc(param, "audio/")) {
                     const iBool isAudio = startsWith_Rangecc(param, "audio/");
                     /* Make a simple document with an image or audio player. */
+                    clear_String(&str);
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                     const iGmLinkId imgLinkId = 1; /* there's only the one link */
@@ -1583,7 +1591,13 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                 }
             }
             if (docFormat == undefined_SourceFormat) {
-                showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode, &response->meta);
+                if (isRequestFinished) {
+                    d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
+                    showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode, &response->meta);
+                    deinit_String(&str);
+                    return;
+                }
+                d->flags |= drawDownloadCounter_DocumentWidgetFlag;
                 deinit_String(&str);
                 return;
             }
@@ -1617,6 +1631,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     clear_ObjectList(d->media);
     d->certFlags = 0;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
+    d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
     d->state = fetching_RequestState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
@@ -1712,7 +1727,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     moveSpan_SmoothScroll(&d->scrollY, 0, 0); /* clamp position to new max */
     cacheDocumentGlyphs_DocumentWidget_(d);
     d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
-    d->flags &= ~urlChanged_DocumentWidgetFlag;
+    d->flags &= ~(urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag);
     postCommandf_Root(
         as_Widget(d)->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
 }
@@ -2831,8 +2846,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
-        set_Block(&d->sourceContent, &lockResponse_GmRequest(d->request)->body);
-        unlockResponse_GmRequest(d->request);
+//        set_Block(&d->sourceContent, &lockResponse_GmRequest(d->request)->body);
+//        unlockResponse_GmRequest(d->request);
         if (document_App() == d) {
             updateFetchProgress_DocumentWidget_(d);
         }
@@ -2855,7 +2870,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (category_GmStatusCode(status_GmRequest(d->request)) == categorySuccess_GmStatusCode) {
             init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
         }
-        d->flags &= ~urlChanged_DocumentWidgetFlag;
+        iChangeFlags(d->flags,
+                     urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag,
+                     iFalse);
         d->state = ready_RequestState;
         postProcessRequestContent_DocumentWidget_(d, iFalse);
         /* The response may be cached. */
@@ -4959,6 +4976,15 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         drawHLine_Paint(&ctx.paint, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
     }
     drawChildren_Widget(w);
+    if (d->flags & drawDownloadCounter_DocumentWidgetFlag && isRequestOngoing_DocumentWidget(d)) {
+        const int font = uiLabelLarge_FontId;
+        const iInt2 sevenSegWidth = measureRange_Text(font, range_CStr("\U0001fbf0")).advance;
+        drawSevenSegmentBytes_MediaUI(font,
+                                      add_I2(mid_Rect(docBounds),
+                                             init_I2(sevenSegWidth.x * 4.5f, -sevenSegWidth.y / 2)),
+                                      uiTextStrong_ColorId, uiTextDim_ColorId,
+                                      bodySize_GmRequest(d->request));
+    }
     /* Alt text. */
     const float altTextOpacity = value_Anim(&d->altTextOpacity) * 6 - 5;
     if (d->hoverAltPre && altTextOpacity > 0) {
@@ -5175,6 +5201,7 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
     invalidate_DocumentWidget_(d);
 }
 
+#if 0
 iBool findCachedContent_DocumentWidget(const iDocumentWidget *d, const iString *url,
                                        iString *mime_out, iBlock *data_out) {
     if (equal_String(d->mod.url, url) && !isRequestOngoing_DocumentWidget(d)) {
@@ -5196,6 +5223,7 @@ iBool findCachedContent_DocumentWidget(const iDocumentWidget *d, const iString *
     }
     return iFalse;
 }
+#endif
 
 iBeginDefineSubclass(DocumentWidget, Widget)
     .processEvent = (iAny *) processEvent_DocumentWidget_,
