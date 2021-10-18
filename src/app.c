@@ -234,6 +234,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     iConstForEach(StringSet, fp, d->prefs.disabledFontPacks) {
         appendFormat_String(str, "fontpack.disable id:%s\n", cstr_String(fp.value));
     }
+    appendFormat_String(str, "ansiescape arg:%d\n", d->prefs.gemtextAnsiEscapes);
     /* TODO: This array belongs in Prefs. It can then be used for command handling as well. */
     const struct {
         const char * id;
@@ -241,7 +242,6 @@ static iString *serializePrefs_App_(const iApp *d) {
     } boolPrefs[] = {
         { "prefs.animate", &d->prefs.uiAnimations },
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
-        { "prefs.gemtext.ansi", &d->prefs.gemtextAnsiEscapes },
         { "prefs.mono.gemini", &d->prefs.monospaceGemini },
         { "prefs.mono.gopher", &d->prefs.monospaceGopher },
         { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
@@ -2387,8 +2387,16 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.gemtext.ansi.changed")) {
-        d->prefs.gemtextAnsiEscapes = arg_Command(cmd) != 0;
+    else if (equal_Command(cmd, "ansiescape")) {
+        d->prefs.gemtextAnsiEscapes = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.gemtext.ansi.fg.changed")) {
+        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFg_AnsiFlag, arg_Command(cmd));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.gemtext.ansi.fontstyle.changed")) {
+        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFontStyle_AnsiFlag, arg_Command(cmd));
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
@@ -2822,7 +2830,10 @@ iBool handleCommand_App(const char *cmd) {
         setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.light"),
                         selected_WidgetFlag,
                         d->prefs.boldLinkLight);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi"), d->prefs.gemtextAnsiEscapes);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fg"),
+                         d->prefs.gemtextAnsiEscapes & allowFg_AnsiFlag);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fontstyle"),
+                         d->prefs.gemtextAnsiEscapes & allowFontStyle_AnsiFlag);
         setToggle_Widget(findChild_Widget(dlg, "prefs.font.smooth"), d->prefs.fontSmoothing);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),

@@ -105,7 +105,7 @@ static void unload_FontFile_(iFontFile *d) {
 }
 
 void deinit_FontFile(iFontFile *d) {
-    printf("FontFile %p {%s} is DESTROYED\n", d, cstr_String(&d->id));
+//    printf("FontFile %p {%s} is DESTROYED\n", d, cstr_String(&d->id));
     unload_FontFile_(d);
     deinit_Block(&d->sourceData);
     deinit_String(&d->id);

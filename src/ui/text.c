@@ -261,7 +261,7 @@ struct Impl_Text {
     SDL_Palette *  grayscale;
     SDL_Palette *  blackAndWhite; /* unsmoothed glyph palette */
     iRegExp *      ansiEscape;
-    iBool          enableAnsiEscapes;
+    int            ansiFlags;
     int            baseFontId; /* base attributes (for restoring via escapes) */
     int            baseColorId;
 };
@@ -588,8 +588,8 @@ void setBaseAttributes_Text(int fontId, int colorId) {
     activeText_->baseColorId = colorId;
 }
 
-void setAnsiEscapesEnabled_Text(iBool enableAnsiEscapes) {
-    activeText_->enableAnsiEscapes = enableAnsiEscapes;
+void setAnsiFlags_Text(int ansiFlags) {
+    activeText_->ansiFlags = ansiFlags;
 }
 
 void setDocumentFontSize_Text(iText *d, float fontSizeFactor) {
@@ -1057,10 +1057,11 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             init_RegExpMatch(&m);
             if (match_RegExp(activeText_->ansiEscape, srcPos, d->source.end - srcPos, &m)) {
                 finishRun_AttributedText_(d, &run, pos - 1);
-                if (activeText_->enableAnsiEscapes) {
+                const int ansi = activeText_->ansiFlags;
+                if (ansi) {
                     const iRangecc sequence = capturedRange_RegExpMatch(&m, 1);
                     /* Note: This styling is hardcoded to match `typesetOneLine_RunTypesetter_()`. */
-                    if (equal_Rangecc(sequence, "1")) {
+                    if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "1")) {
                         run.attrib.bold = iTrue;
                         if (d->baseColorId == tmParagraph_ColorId) {
                             setFgColor_AttributedRun_(&run, tmFirstParagraph_ColorId);
@@ -1068,12 +1069,12 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
                         attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
                                                                    bold_FontStyle));
                     }
-                    else if (equal_Rangecc(sequence, "3")) {
+                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "3")) {
                         run.attrib.italic = iTrue;
                         attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
                                                                    italic_FontStyle));
                     }
-                    else if (equal_Rangecc(sequence, "4")) {
+                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "4")) {
                         run.attrib.monospace = iTrue;
                         setFgColor_AttributedRun_(&run, tmPreformatted_ColorId);
                         attribFont = font_Text_(fontWithFamily_Text(fontId_Text_(d->baseFont),
@@ -1086,7 +1087,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
                         attribFont = run.font = d->baseFont;
                         setFgColor_AttributedRun_(&run, d->baseColorId);
                     }
-                    else {
+                    else if (ansi & allowFg_AnsiFlag) {
                         run.fgColor_ = ansiForeground_Color(sequence, tmParagraph_ColorId);
                     }
                 }

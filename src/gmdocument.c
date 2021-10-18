@@ -78,7 +78,7 @@ iDefineTypeConstruction(GmLink)
 iDeclareType(GmTheme)
 
 struct Impl_GmTheme {
-    iBool ansiEscapesEnabled;
+    int ansiEscapes;
     int colors[max_GmLineType];
     int fonts[max_GmLineType];
 };
@@ -596,7 +596,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         isPreformat = iTrue;
         isFirstText = iFalse;
     }
-    setAnsiEscapesEnabled_Text(d->theme.ansiEscapesEnabled);
+    setAnsiFlags_Text(d->theme.ansiEscapes);
     while (nextSplit_Rangecc(content, "\n", &contentLine)) {
         iRangecc line = contentLine; /* `line` will be trimmed; modifying would confuse `nextSplit_Rangecc` */
         if (*line.end == '\r') {
@@ -1057,7 +1057,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
     }
-    setAnsiEscapesEnabled_Text(iTrue);
+    setAnsiFlags_Text(allowAll_AnsiFlag);
 //    printf("[GmDocument] layout size: %zu runs (%zu bytes)\n",
 //           size_Array(&d->layout), size_Array(&d->layout) * sizeof(iGmRun));        
 }
@@ -1977,21 +1977,21 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     set_String(&d->unormSource, source);
     set_String(&d->source, source);
     if (d->format == gemini_SourceFormat) {
-        d->theme.ansiEscapesEnabled = prefs_App()->gemtextAnsiEscapes;
+        d->theme.ansiEscapes = prefs_App()->gemtextAnsiEscapes;
     }
     else if (d->format == markdown_SourceFormat) {
         /* Attempt a conversion to Gemtext when viewing local Markdown files. */
         if (equalCase_Rangecc(urlScheme_String(&d->url), "file")) {
             convertMarkdownToGemtext_GmDocument_(d);
             set_String(&d->unormSource, &d->source); /* use the converted source from now on */
-            d->theme.ansiEscapesEnabled = iTrue; /* escapes are used for styling */
+            d->theme.ansiEscapes = allowAll_AnsiFlag; /* escapes are used for styling */
         }
         else {
             d->format = plainText_SourceFormat; /* just show as plain text */
         }
     }
     else {
-        d->theme.ansiEscapesEnabled = iTrue;
+        d->theme.ansiEscapes = allowAll_AnsiFlag;
     }
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
@@ -2033,7 +2033,7 @@ const iGmPreMeta *preMeta_GmDocument(const iGmDocument *d, uint16_t preId) {
 void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRenderFunc render,
                        void *context) {
     iBool isInside = iFalse;
-    setAnsiEscapesEnabled_Text(d->theme.ansiEscapesEnabled);
+    setAnsiFlags_Text(d->theme.ansiEscapes);
     /* TODO: Check lookup table for quick starting position. */
     iConstForEach(Array, i, &d->layout) {
         const iGmRun *run = i.value;
@@ -2048,7 +2048,7 @@ void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRende
             render(context, run);
         }
     }
-    setAnsiEscapesEnabled_Text(iTrue);
+    setAnsiFlags_Text(allowAll_AnsiFlag);
 }
 
 static iBool isValidRun_GmDocument_(const iGmDocument *d, const iGmRun *run) {
@@ -2063,7 +2063,7 @@ const iGmRun *renderProgressive_GmDocument(const iGmDocument *d, const iGmRun *f
                                            size_t maxCount,
                                            iRangei visRangeY, iGmDocumentRenderFunc render,
                                            void *context) {
-    setAnsiEscapesEnabled_Text(d->theme.ansiEscapesEnabled);
+    setAnsiFlags_Text(d->theme.ansiEscapes);
     const iGmRun *run = first;
     while (isValidRun_GmDocument_(d, run)) {
         if ((dir < 0 && bottom_Rect(run->visBounds) < visRangeY.start) ||
@@ -2076,7 +2076,7 @@ const iGmRun *renderProgressive_GmDocument(const iGmDocument *d, const iGmRun *f
         render(context, run);
         run += dir;
     }
-    setAnsiEscapesEnabled_Text(iTrue);
+    setAnsiFlags_Text(allowAll_AnsiFlag);
     return isValidRun_GmDocument_(d, run) ? run : NULL;
 }
 
@@ -2337,8 +2337,8 @@ iChar siteIcon_GmDocument(const iGmDocument *d) {
     return d->siteIcon;
 }
 
-iBool ansiEscapesEnabled_GmDocument(const iGmDocument *d) {
-    return d->theme.ansiEscapesEnabled;
+int ansiEscapes_GmDocument(const iGmDocument *d) {
+    return d->theme.ansiEscapes;
 }
 
 void runBaseAttributes_GmDocument(const iGmDocument *d, const iGmRun *run, int *fontId_out,

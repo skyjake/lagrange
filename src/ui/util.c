@@ -2549,7 +2549,21 @@ iWidget *makePreferences_Widget(void) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.monodoc}")));
             addFontButtons_(values, "monodoc");
             addDialogPadding_(headings, values);
-            addDialogToggle_(headings, values, "${prefs.gemtext.ansi}", "prefs.gemtext.ansi");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.gemtext.ansi}")));
+            iWidget *ansi = new_Widget(); {
+                iWidget *tog;
+                setTextCStr_LabelWidget(
+                    addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.fg"))),
+                    "${prefs.gemtext.ansi.fg}");
+                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget((iLabelWidget *) tog);
+                setTextCStr_LabelWidget(
+                    addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.fontstyle"))),
+                    "${prefs.gemtext.ansi.fontstyle}");
+                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget((iLabelWidget *) tog);
+            }
+            addChildFlags_Widget(values, iClob(ansi), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
             addDialogPadding_(headings, values);
             addFontButtons_(values, "ui");

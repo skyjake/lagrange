@@ -89,7 +89,7 @@ struct Impl_Prefs {
     /* Style */
     iStringSet *     disabledFontPacks;
     iBool            fontSmoothing;
-    iBool            gemtextAnsiEscapes;
+    int              gemtextAnsiEscapes;
     iBool            monospaceGemini;
     iBool            monospaceGopher;
     iBool            boldLinkVisited;

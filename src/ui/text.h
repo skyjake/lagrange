@@ -149,9 +149,16 @@ enum iAlignment {
     right_Alignment,
 };
 
+enum iAnsiFlag {
+    allowFg_AnsiFlag        = iBit(1),
+    allowBg_AnsiFlag        = iBit(2),
+    allowFontStyle_AnsiFlag = iBit(3),
+    allowAll_AnsiFlag       = 0x7,
+};
+
 void    setOpacity_Text         (float opacity);
 void    setBaseAttributes_Text  (int fontId, int colorId); /* current "normal" text attributes */
-void    setAnsiEscapesEnabled_Text(iBool enableAnsiEscapes);
+void    setAnsiFlags_Text       (int ansiFlags);
 
 void    cache_Text              (int fontId, iRangecc text); /* pre-render glyphs */
 

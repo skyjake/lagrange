@@ -62,7 +62,7 @@ void init_Prefs(iPrefs *d) {
     setCStr_String(&d->strings[monospaceDocumentFont_PrefsString], "iosevka-body");
     d->disabledFontPacks = new_StringSet();
     d->fontSmoothing     = iTrue;
-    d->gemtextAnsiEscapes = iFalse;
+    d->gemtextAnsiEscapes = allowFg_AnsiFlag;
     d->monospaceGemini   = iFalse;
     d->monospaceGopher   = iFalse;
     d->boldLinkVisited   = iTrue;

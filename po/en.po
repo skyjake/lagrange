@@ -1507,7 +1507,13 @@ msgid "prefs.boldlink.light"
 msgstr "On Light"
 
 msgid "prefs.gemtext.ansi"
-msgstr "Gemtext ANSI escapes:"
+msgstr "ANSI escapes:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "FG Color"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Font Style"
 
 msgid "prefs.font.smooth"
 msgstr "Smoothing:"
