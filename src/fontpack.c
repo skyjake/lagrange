@@ -655,10 +655,10 @@ iString *infoText_FontPack(const iFontPack *d) {
     iConstForEach(PtrSet, j, uniqueFiles) {
         sizeInBytes += size_Block(&((const iFontFile *) *j.value)->sourceData);
     }
-    appendFormat_String(str, "%.1f ${mb} (%s)\n%s: %s\n",
+    appendFormat_String(str, "%.1f ${mb} (%s) \u2014 %s\n",
                         sizeInBytes / 1.0e6,
                         formatCStrs_Lang("num.files.n", size_PtrSet(uniqueFiles)),
-                        formatCStrs_Lang("num.fonts.n", size_StringList(names)),
+//                        formatCStrs_Lang("num.fonts.n", size_StringList(names)),
                         cstrCollect_String(joinCStr_StringList(names, ", ")),
                         d->version);
     if (isInstalled && installedVersion != d->version) {
