@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.7.3
+* Fixed a memory leak in the text renderer.
+* Added option to place new bookmarks to the top of the bookmarks list.
+* Updated UI translations.
+
 ## 1.7.2
 * Fixed regressions in text selection, for example when marking text leftwards from the start position or when starting from outside any text run. 
 * Fixed a crash when clicking on Outline sidebar items before a page has finished loading.
