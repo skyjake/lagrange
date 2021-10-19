@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-08-16 20:49+0000\n"
+"PO-Revision-Date: 2021-10-12 19:50+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -714,3 +714,14 @@ msgstr "Bildo"
 
 msgid "media.untitled.audio"
 msgstr "Sonaĵo"
+
+msgid "numbertype.float"
+msgstr "flosanto"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Donalistaj eniroj"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "La ŝarĝado finita."
