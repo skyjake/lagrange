@@ -47,6 +47,7 @@ void init_Prefs(iPrefs *d) {
     d->loadImageInsteadOfScrolling = iFalse;
     d->collapsePreOnLoad = iFalse;
     d->openArchiveIndexPages = iTrue;
+    d->addBookmarksToBottom  = iTrue;
     d->decodeUserVisibleURLs = iTrue;
     d->maxCacheSize      = 10;
     d->maxMemorySize     = 200;

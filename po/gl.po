@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-07 16:50+0000\n"
+"PO-Revision-Date: 2021-10-17 05:50+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -1246,7 +1246,7 @@ msgid "prefs.accent"
 msgstr "Cor de resalte:"
 
 msgid "prefs.accent.teal"
-msgstr "Tella"
+msgstr "Azulado"
 
 msgid "prefs.accent.orange"
 msgstr "Laranxa"

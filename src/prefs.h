@@ -63,6 +63,7 @@ struct Impl_Prefs {
     iBool            collapsePreOnLoad;
     iString          searchUrl;
     iBool            openArchiveIndexPages;
+    iBool            addBookmarksToBottom;
     /* Network */
     iString          caFile;
     iString          caPath;

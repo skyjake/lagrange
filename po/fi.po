@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-09-25 10:11+0000\n"
-"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2021-10-12 19:50+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
@@ -1898,3 +1898,18 @@ msgstr "Esimuotoillun tekstin väri"
 
 msgid "keys.bookmark.addfolder"
 msgstr "Lisää kirjanmerkkikansio"
+
+msgid "lang.sk"
+msgstr "Slovakki"
+
+msgid "lang.es.mx"
+msgstr "Espanja (Meksiko)"
+
+msgid "lang.eo"
+msgstr "Esperanto"
+
+msgid "lang.gl"
+msgstr "Galicia"
+
+msgid "lang.isv"
+msgstr "Interslaavi"
