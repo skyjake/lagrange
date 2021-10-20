@@ -537,6 +537,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #elif defined (iPlatformAppleMobile)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
     flags |= SDL_WINDOW_METAL;
+    d->base.isExposed = iTrue;
 #else
     if (!forceSoftwareRender_App()) {
         flags |= SDL_WINDOW_OPENGL;
@@ -615,7 +616,11 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
     }
 #endif
+#if defined (iPlatformDesktop)
     SDL_HideWindow(d->base.win);
+#else
+    SDL_ShowWindow(d->base.win);
+#endif
 }
 
 void deinit_MainWindow(iMainWindow *d) {

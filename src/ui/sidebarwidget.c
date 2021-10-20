@@ -743,7 +743,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
 #if defined (iPlatformMobile)
     if (deviceType_App() == phone_AppDeviceType) {
         d->itemFonts[0] = uiLabelBig_FontId;
-        d->itemFonts[1] = defaultBigBold_FontId;
+        d->itemFonts[1] = uiLabelBigBold_FontId;
     }
     d->widthAsGaps = 73.0f;
 #else

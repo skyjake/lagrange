@@ -131,7 +131,8 @@ struct Impl_FontSpec {
 };
 
 iLocalDef int scaleType_FontSpec(enum iFontSize sizeId) {
-    return sizeId / contentRegular_FontSize;
+    iAssert(sizeId >= 0 && sizeId < max_FontSize);
+    return sizeId < contentRegular_FontSize ? 0 : 1;
 }
 
 /*----------------------------------------------------------------------------------------------*/
