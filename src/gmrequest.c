@@ -362,7 +362,7 @@ static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
         return utf8_String(debugInfo_App());
     }
     if (equalCase_Rangecc(path, "fonts")) {
-        return utf8_String(infoPage_Fonts());
+        return utf8_String(infoPage_Fonts(query));
     }
     if (equalCase_Rangecc(path, "feeds")) {
         return utf8_String(entryListPage_Feeds());

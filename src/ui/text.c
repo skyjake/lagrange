@@ -458,7 +458,7 @@ static void initFonts_Text_(iText *d) {
     /* Check if there are auxiliary fonts available and set those up, too. */
     iConstForEach(PtrArray, s, listSpecsByPriority_Fonts()) {
         const iFontSpec *spec = s.ptr;
-        if (spec->flags & auxiliary_FontSpecFlag) {
+        if (spec->flags & (auxiliary_FontSpecFlag | user_FontSpecFlag)) {
             const int fontId = size_Array(&d->fonts);
             resize_Array(&d->fonts, fontId + maxVariants_Fonts);
             setupFontVariants_Text_(d, spec, fontId);

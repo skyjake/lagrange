@@ -110,22 +110,23 @@ iDeclareType(FontSpec)
 iDeclareTypeConstruction(FontSpec)
 
 enum iFontSpecFlags {
-    override_FontSpecFlag   = iBit(1),
-    monospace_FontSpecFlag  = iBit(2), /* can be used in preformatted content */
-    auxiliary_FontSpecFlag  = iBit(3), /* only used for looking up glyphs missing from other fonts */
-    allowSpacePunct_FontSpecFlag  = iBit(4),  /* space/punctuation glyphs from this auxiliary font can be used */
+    user_FontSpecFlag             = iBit(1),  /* user's standalone font, can be used for anything */
+    override_FontSpecFlag         = iBit(2),
+    monospace_FontSpecFlag        = iBit(3),  /* can be used in preformatted content */
+    auxiliary_FontSpecFlag        = iBit(4),  /* only used for looking up glyphs missing from other fonts */
+    allowSpacePunct_FontSpecFlag  = iBit(5),  /* space/punctuation glyphs from this auxiliary font can be used */
     fixNunitoKerning_FontSpecFlag = iBit(31), /* manual hardcoded kerning tweaks for Nunito */
 };
 
 struct Impl_FontSpec {
-    iString id;   /* unique ID */
-    iString name; /* human-readable label */
-    iString sourcePath; /* file where the path was loaded, could be a .fontpack */
-    int     flags;
-    int     priority;
-    float   heightScale[2];     /* overall height scaling; ui, document */
-    float   glyphScale[2];      /* ui, document */
-    float   vertOffsetScale[2]; /* ui, document */
+    iString          id;         /* unique ID */
+    iString          name;       /* human-readable label */
+    iString          sourcePath; /* file where the path was loaded, could be a .fontpack */
+    int              flags;
+    int              priority;
+    float            heightScale[2];     /* overall height scaling; ui, document */
+    float            glyphScale[2];      /* ui, document */
+    float            vertOffsetScale[2]; /* ui, document */
     const iFontFile *styles[max_FontStyle];
 };
 
@@ -158,25 +159,26 @@ iBool               isDisabled_FontPack     (const iFontPack *);
 iBool               isReadOnly_FontPack     (const iFontPack *);
 const iPtrArray *   listSpecs_FontPack      (const iFontPack *);
 iString *           infoText_FontPack       (const iFontPack *);
-const iArray *      actions_FontPack        (const iFontPack *);
+const iArray *      actions_FontPack        (const iFontPack *, iBool showInstalled);
 
 const iString *     idFromUrl_FontPack      (const iString *url);
 
 /*----------------------------------------------------------------------------------------------*/
 
-iDeclareType(GmDocument)
-
 void    init_Fonts      (const char *userDir);
 void    deinit_Fonts    (void);
 
+void                enablePack_Fonts            (const iString *packId, iBool enable);
+void                updateActive_Fonts          (void);
 const iFontPack *   pack_Fonts                  (const char *packId);
 const iFontPack *   packByPath_Fonts            (const iString *path);
 const iFontSpec *   findSpec_Fonts              (const char *fontId);
 const iPtrArray *   listPacks_Fonts             (void);
 const iPtrArray *   listSpecs_Fonts             (iBool (*filterFunc)(const iFontSpec *));
 const iPtrArray *   listSpecsByPriority_Fonts   (void);
-const iString *     infoPage_Fonts              (void);
+const iString *     infoPage_Fonts              (iRangecc query);
 void                install_Fonts               (const iString *fontId, const iBlock *data);
+void                installFontFile_Fonts       (const iString *fileName, const iBlock *data);
 void                reload_Fonts                (void);
 
 iLocalDef iBool isInstalled_Fonts(const char *packId) {

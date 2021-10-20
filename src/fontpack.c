@@ -90,6 +90,14 @@ static void load_FontFile_(iFontFile *d, const iBlock *data) {
 #endif
 }
 
+static iBool detectMonospace_FontFile_(const iFontFile *d) {
+    int em, i, period;
+    stbtt_GetCodepointHMetrics(&d->stbInfo, 'M', &em, NULL);
+    stbtt_GetCodepointHMetrics(&d->stbInfo, 'i', &i, NULL);
+    stbtt_GetCodepointHMetrics(&d->stbInfo, '.', &period, NULL);
+    return em == i && em == period;
+}
+
 static void unload_FontFile_(iFontFile *d) {
 #if defined(LAGRANGE_ENABLE_HARFBUZZ)
     /* HarfBuzz objects. */
@@ -300,6 +308,8 @@ static iBlock *readFile_FontPack_(const iFontPack *d, const iString *path) {
     return data;
 }
 
+static const char *styles_[max_FontStyle] = { "regular", "italic", "light", "semibold", "bold" };
+
 void handleIniKeyValue_FontPack_(void *context, const iString *table, const iString *key,
                                  const iTomlValue *value) {
     iFontPack *d = context;
@@ -359,9 +369,8 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
                      ((int) number_TomlValue(value)) & 1);
     }
     else if (value->type == string_TomlType) {
-        const char *styles[max_FontStyle] = { "regular", "italic", "light", "semibold", "bold" };
-        iForIndices(i, styles) {
-            if (!cmp_String(key, styles[i]) && !d->loadSpec->styles[i]) {
+        iForIndices(i, styles_) {
+            if (!cmp_String(key, styles_[i]) && !d->loadSpec->styles[i]) {
                 iFontFile *ff = NULL;
                 iString *fontFileId = concat_Path(d->loadPath, value->value.string);
                 if (!(ff = findFile_Fonts_(&fonts_, fontFileId))) {
@@ -441,6 +450,7 @@ void setLoadPath_FontPack(iFontPack *d, const iString *path) {
     /* Pack ID is based on the file name. */
     setRange_String(&d->id, baseName_Path(path));
     setRange_String(&d->id, withoutExtension_Path(&d->id));
+    replace_String(&d->id, " ", "-");
 }
 
 const iString *idFromUrl_FontPack(const iString *url) {
@@ -449,6 +459,7 @@ const iString *idFromUrl_FontPack(const iString *url) {
     init_Url(&parts, url);
     setRange_String(id, baseName_Path(collectNewRange_String(parts.path)));
     setRange_String(id, withoutExtension_Path(id));
+    replace_String(id, " ", "-");
     return collect_String(id);
 }
 
@@ -592,6 +603,49 @@ void init_Fonts(const char *userDir) {
         }
         iRelease(f);
     }
+    /* Individual TrueType files in the user fonts directory. */ {
+        iForEach(DirFileInfo, entry, iClob(new_DirFileInfo(userFontsDirectory_Fonts_(d)))) {
+            const iString *entryPath = path_FileInfo(entry.value);
+            if (endsWithCase_String(entryPath, ".ttf")) {
+                iFile *f = new_File(entryPath);
+                iFontFile *font = NULL;
+                if (open_File(f, readOnly_FileMode)) {
+                    iBlock *data = readAll_File(f);
+                    font = new_FontFile();
+                    load_FontFile_(font, data);
+                    set_String(&font->id, entryPath);
+                    pushBack_ObjectList(fonts_.files, font); /* centralized ownership */
+                    iRelease(font);
+                    delete_Block(data);
+                }
+                iRelease(f);
+                if (!font) {
+                    fprintf(stderr, "[fonts] failed to load: %s\n", cstr_String(entryPath));
+                    continue;
+                }
+                iFontPack *pack = new_FontPack();
+                setStandalone_FontPack(pack, iTrue);                
+                iFontSpec *spec = new_FontSpec();
+                spec->flags |= user_FontSpecFlag;
+                if (detectMonospace_FontFile_(font)) {
+                    spec->flags |= monospace_FontSpecFlag;
+                }
+                setRange_String(&spec->id, baseName_Path(collect_String(lower_String(&font->id))));
+                setRange_String(&spec->id, withoutExtension_Path(&spec->id));                
+                replace_String(&spec->id, " ", "-");
+                setRange_String(&spec->name, baseName_Path(&font->id));
+                setRange_String(&spec->name, withoutExtension_Path(&spec->name));
+                set_String(&spec->sourcePath, entryPath);
+                iForIndices(j, spec->styles) {
+                    spec->styles[j] = ref_Object(font);
+                }
+                pushBack_PtrArray(&pack->fonts, spec);
+                set_String(&pack->id, &spec->id);
+                pack->loadPath = copy_String(entryPath);
+                pushBack_PtrArray(&d->packs, pack);
+            }
+        }
+    }    
     sortSpecs_Fonts_(d);
 }
 
@@ -679,7 +733,7 @@ iString *infoText_FontPack(const iFontPack *d) {
     return str;
 }
 
-const iArray *actions_FontPack(const iFontPack *d) {
+const iArray *actions_FontPack(const iFontPack *d, iBool showInstalled) {
     iArray           *items     = new_Array(sizeof(iMenuItem));
     const iFontPackId fp        = id_FontPack(d);
     const char       *fpId      = cstr_String(fp.id);
@@ -687,33 +741,44 @@ const iArray *actions_FontPack(const iFontPack *d) {
     const iBool       isEnabled = !isDisabled_FontPack(d);
     if (isInstalled_Fonts(fpId)) {
         if (d->version > installed->version) {
-            pushBack_Array(items, &(iMenuItem){
-                format_Lang(add_Icon " ${fontpack.upgrade}", fpId, d->version),
-                SDLK_RETURN, 0, "fontpack.install"
-            });
+            pushBack_Array(
+                items,
+                &(iMenuItem){ format_Lang(add_Icon " ${fontpack.upgrade}", fpId, d->version),
+                              SDLK_RETURN,
+                              0,
+                              "fontpack.install" });
         }
-        pushBack_Array(items, &(iMenuItem){
-            format_Lang(isEnabled ? close_Icon " ${fontpack.disable}"
-                      : leftArrowhead_Icon " ${fontpack.enable}", fpId), 0, 0,
-            format_CStr("fontpack.enable arg:%d id:%s", !isEnabled, fpId) });
-        if (!d->isReadOnly && installed->loadPath && d->loadPath &&
+        pushBack_Array(
+            items,
+            &(iMenuItem){ format_Lang(isEnabled ? close_Icon " ${fontpack.disable}"
+                                                : leftArrowhead_Icon " ${fontpack.enable}",
+                                      fpId),
+                          0,
+                          0,
+                          format_CStr("fontpack.enable arg:%d id:%s", !isEnabled, fpId) });
+        if (!d->isReadOnly && !d->isStandalone && installed->loadPath && d->loadPath &&
             !cmpString_String(installed->loadPath, d->loadPath)) {
-            pushBack_Array(items, &(iMenuItem){
-                format_Lang(delete_Icon " ${fontpack.delete}", fpId), 0, 0,
-                format_CStr("fontpack.delete id:%s", fpId) });
+            pushBack_Array(items,
+                           &(iMenuItem){ format_Lang(delete_Icon " ${fontpack.delete}", fpId),
+                                         0,
+                                         0,
+                                         format_CStr("fontpack.delete id:%s", fpId) });
         }
     }
     else if (d->isStandalone) {
-        pushBack_Array(items, &(iMenuItem){
-            format_Lang(add_Icon " ${fontpack.install}", fpId),
-            SDLK_RETURN, 0, "fontpack.install"
-        });
-        pushBack_Array(items, &(iMenuItem){
-            download_Icon " " saveToDownloads_Label,
-            0,
-            0,
-            "document.save"
-        });
+        pushBack_Array(items,
+                       &(iMenuItem){ format_Lang(add_Icon " ${fontpack.install}", fpId),
+                                     SDLK_RETURN,
+                                     0,
+                                     "fontpack.install" });
+        pushBack_Array(
+            items, &(iMenuItem){ download_Icon " " saveToDownloads_Label, 0, 0, "document.save" });
+    }
+    if (showInstalled) {
+        pushBack_Array(
+            items,
+            &(iMenuItem){
+                fontpack_Icon " ${fontpack.open.aboutfonts}", 0, 0, "!open url:about:fonts" });
     }
     return collect_Array(items);
 }
@@ -722,8 +787,64 @@ iBool isDisabled_FontPack(const iFontPack *d) {
     return contains_StringSet(prefs_App()->disabledFontPacks, &d->id);
 }
 
-const iString *infoPage_Fonts(void) {
+const iPtrArray *disabledSpecs_Fonts_(const iFonts *d) {
+    iPtrArray *list = collectNew_PtrArray();
+    iConstForEach(PtrArray, i, &d->packs) {
+        const iFontPack *pack = i.ptr;
+        if (isDisabled_FontPack(pack)) {
+            iConstForEach(PtrArray, j, &pack->fonts) {
+                pushBack_PtrArray(list, j.ptr);
+            }
+        }
+    }
+    return list;
+}
+
+static const char *boolStr_(int value) {
+    return value ? "true" : "false";
+}
+
+static const iString *exportFontPackIni_Fonts_(const iFonts *d, const iRangecc packId) {
+    iString *str = collectNew_String();
+    const iFontPack *pack = pack_Fonts(cstr_Rangecc(packId));
+    if (!pack) {
+        appendFormat_String(str, "Fontpack \"%s\" not found.\n", cstr_Rangecc(packId));
+        return str;
+    }
+    const iFontPackId fp = id_FontPack(pack);
+    appendCStr_String(str, "To create a fontpack, add this fontpack.ini into a ZIP archive whose "
+                      "name has the .fontpack file extension.\n```Fontpack configuration\n");
+    appendFormat_String(str, "version = %d\n", fp.version);
+    iConstForEach(PtrArray, i, &pack->fonts) {
+        const iFontSpec *spec = i.ptr;
+        appendFormat_String(str, "\n[%s]\n", cstr_String(&spec->id));
+        appendFormat_String(str, "name = \"%s\"\n", cstrCollect_String(quote_String(&spec->name, iFalse)));
+        appendFormat_String(str, "priority = %d\n", spec->priority);
+        appendFormat_String(str, "override = %s\n", boolStr_(spec->flags & override_FontSpecFlag));
+        appendFormat_String(str, "monospace = %s\n", boolStr_(spec->flags & monospace_FontSpecFlag));
+        appendFormat_String(str, "auxiliary = %s\n", boolStr_(spec->flags & auxiliary_FontSpecFlag));
+        appendFormat_String(str, "allowspace = %s\n", boolStr_(spec->flags & allowSpacePunct_FontSpecFlag));
+        for (int j = 0; j < 2; ++j) {
+            const char *scope = (j == 0 ? "ui" : "doc");
+            appendFormat_String(str, "%s.height = %.3f\n", scope, spec->heightScale[j]);
+            appendFormat_String(str, "%s.glyphscale = %.3f\n", scope, spec->glyphScale[j]);
+            appendFormat_String(str, "%s.voffset = %.3f\n", scope, spec->vertOffsetScale[j]);
+        }
+        iForIndices(j, styles_) {
+            appendFormat_String(str, "%s = \"%s\"\n", styles_[j],
+                                cstrCollect_String(quote_String(&spec->sourcePath, iFalse)));
+        }
+    }
+    appendCStr_String(str, "```\n");
+    return str;
+}
+
+const iString *infoPage_Fonts(iRangecc query) {
     iFonts *d = &fonts_;
+    if (!isEmpty_Range(&query)) {
+        query.start++; /* skip the ? */
+        return exportFontPackIni_Fonts_(d, query);
+    }
     iString *str = collectNewCStr_String("# ${heading.fontpack.meta}\n"
          "=> gemini://skyjake.fi/fonts  Download more fonts\n"
          "=> about:command?!open%20newtab:1%20gotoheading:1%20url:about:help  Using fonts in Lagrange\n"
@@ -734,7 +855,7 @@ const iString *infoPage_Fonts(void) {
     iString *currentSourcePath = collectNew_String();
     for (int group = 0; group < 2; group++) {
         iBool isFirst = iTrue;
-        iConstForEach(PtrArray, i, specsByPack) {
+        iConstForEach(PtrArray, i, group == 0 ? specsByPack : disabledSpecs_Fonts_(d)) {
             const iFontSpec *spec = i.ptr;
             if (isEmpty_String(&spec->sourcePath)) {
                 continue; /* built-in font */
@@ -753,15 +874,22 @@ const iString *infoPage_Fonts(void) {
                             isFirst = iFalse;
                         }
                         const iString *packId = id_FontPack(pack).id;
-                        appendFormat_String(str, "### %s\n=> %s ${fontpack.meta.viewfile}\n",
+                        appendFormat_String(str, "### %s\n",
                                             isEmpty_String(packId) ? "fonts.ini" :
-                                            cstr_String(packId),
-                                            cstrCollect_String(makeFileUrl_String(&spec->sourcePath)));
+                                            cstr_String(packId));
                         append_String(str, collect_String(infoText_FontPack(pack)));
-                        iConstForEach(Array, a, actions_FontPack(pack)) {
+                        appendFormat_String(str, "=> %s ${fontpack.meta.viewfile}\n",
+                                            cstrCollect_String(makeFileUrl_String(&spec->sourcePath)));
+                        if (pack->isStandalone) {
+                            appendFormat_String(str, "=> about:fonts?%s ${fontpack.export}\n",
+                                                cstr_String(packId));
+                        }
+                        iConstForEach(Array, a, actions_FontPack(pack, iFalse)) {
                             const iMenuItem *item = a.value;
-                            appendFormat_String(str, "=> about:command?%s %s\n",
-                                                cstr_String(withSpacesEncoded_String(collectNewCStr_String(item->command))),
+                            appendFormat_String(str,
+                                                "=> about:command?%s %s\n",
+                                                cstr_String(withSpacesEncoded_String(
+                                                    collectNewCStr_String(item->command))),
                                                 item->label);
                         }
                     }
@@ -822,6 +950,33 @@ void install_Fonts(const iString *packId, const iBlock *data) {
     iRelease(f);
     /* Newly installed fontpacks may have a higher priority that overrides other fonts. */
     reload_Fonts();
+}
+
+void installFontFile_Fonts(const iString *fileName, const iBlock *data) {
+    iFonts *d = &fonts_;
+    iFile *f = new_File(collect_String(concat_Path(userFontsDirectory_Fonts_(d), fileName)));
+    if (open_File(f, writeOnly_FileMode)) {
+        write_File(f, data);
+    }
+    iRelease(f);
+    reload_Fonts();
+}
+
+void enablePack_Fonts(const iString *packId, iBool enable) {
+    iFonts *d = &fonts_;
+    if (enable) {
+        remove_StringSet(prefs_App()->disabledFontPacks, packId);
+    }
+    else {
+        insert_StringSet(prefs_App()->disabledFontPacks, packId);
+    }
+    updateActive_Fonts();
+    resetFonts_App();
+    invalidate_Window(get_MainWindow());
+}
+
+void updateActive_Fonts(void) {
+    sortSpecs_Fonts_(&fonts_);
 }
 
 iDefineClass(FontFile)

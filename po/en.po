@@ -1921,6 +1921,9 @@ msgstr "Enable \"%s\""
 msgid "fontpack.disable"
 msgstr "Disable \"%s\""
 
+msgid "fontpack.export"
+msgstr "View fontpack.ini template"
+
 #, c-format
 msgid "fontpack.install"
 msgstr "Install \"%s\""
@@ -1942,4 +1945,22 @@ msgstr "Do you really want to permanently delete\nthe fontpack \"%s\"?"
 
 msgid "dlg.fontpack.delete"
 msgstr "Delete Fontpack"
+
+msgid "fontpack.help"
+msgstr "Lagrange fontpacks are ZIP archives that contain a set of font files and associated configuration parameters. Once installed, the fonts can be used for document content and the UI. The active fonts are selected using Preferences > Fonts."
+
+msgid "fontpack.install.ttf"
+msgstr "Install TrueType Font"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Open User Fonts Directory"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Show Installed Fonts"
+
+msgid "truetype.help"
+msgstr "Lagrange attempts to load all individual TrueType files that are copied to the user fonts directory."
+
+msgid "truetype.help.installed"
+msgstr "This font is installed in the user fonts directory."
 

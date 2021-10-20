@@ -1130,7 +1130,8 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
             d->footerButtons,
             iClob(newKeyMods_LabelWidget(
                 items[i].label, items[i].key, items[i].kmods, items[i].command)),
-            alignLeft_WidgetFlag | drawKey_WidgetFlag);
+            alignLeft_WidgetFlag | drawKey_WidgetFlag | extraPadding_WidgetFlag);
+        setPadding1_Widget(as_Widget(button), gap_UI / 2);
         checkIcon_LabelWidget(button);
         setFont_LabelWidget(button, uiContent_FontId);
     }
@@ -1473,7 +1474,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                 trim_Rangecc(&param);
                 /* Detect fontpacks even if the server doesn't use the right media type. */
                 if (isRequestFinished && equal_Rangecc(param, "application/octet-stream")) {
-                    if (detect_FontPack(&d->sourceContent)) {
+                    if (detect_FontPack(&response->body)) {
                         param = range_CStr(mimeType_FontPack);
                     }
                 }
@@ -1492,6 +1493,42 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     docFormat = plainText_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                 }
+                else if (isRequestFinished && equal_Rangecc(param, "font/ttf")) {
+                    clear_String(&str);
+                    docFormat = gemini_SourceFormat;
+                    setRange_String(&d->sourceMime, param);
+                    format_String(&str, "# TrueType Font\n");
+                    iString *decUrl      = collect_String(urlDecode_String(d->mod.url));
+                    iRangecc name        = baseName_Path(decUrl);
+                    iBool    isInstalled = iFalse;
+                    if (startsWith_String(collect_String(localFilePathFromUrl_String(d->mod.url)),
+                                          cstr_String(dataDir_App()))) {
+                        isInstalled = iTrue;
+                    }
+                    appendCStr_String(&str, "## ");
+                    appendRange_String(&str, name);
+                    appendCStr_String(&str, "\n\n");
+                    appendCStr_String(
+                        &str, cstr_Lang(isInstalled ? "truetype.help.installed" : "truetype.help"));
+                    appendCStr_String(&str, "\n");
+                    if (!isInstalled) {
+                        makeFooterButtons_DocumentWidget_(
+                            d,
+                            (iMenuItem[]){
+                                { add_Icon " ${fontpack.install.ttf}",
+                                  SDLK_RETURN,
+                                  0,
+                                  format_CStr("!fontpack.install ttf:1 name:%s",
+                                              cstr_Rangecc(name)) },
+                                { folder_Icon " ${fontpack.open.fontsdir}",
+                                  SDLK_d,
+                                  0,
+                                  format_CStr("!open url:%s/fonts",
+                                              cstrCollect_String(makeFileUrl_String(dataDir_App())))
+                                }
+                            }, 2);
+                    }
+                }
                 else if (isRequestFinished &&
                          (equal_Rangecc(param, "application/zip") ||
                          (startsWith_Rangecc(param, "application/") &&
@@ -1499,32 +1536,39 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     clear_String(&str);
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
-                    iString *key = collectNew_String();
-                    toString_Sym(SDLK_s, KMOD_PRIMARY, key);
                     format_String(&str, "# %s\n", zipPageHeading_(param));
-                    appendFormat_String(&str,
-                                        cstr_Lang("doc.archive"),
-                                        cstr_Rangecc(baseName_Path(d->mod.url)));
                     if (equal_Rangecc(param, mimeType_FontPack)) {
                         /* Show some information about fontpacks, and set up footer actions. */
                         iArchive *zip = iClob(new_Archive());
-                        if (openData_Archive(zip, &d->sourceContent)) {
+                        if (openData_Archive(zip, &response->body)) {
                             iFontPack *fp = new_FontPack();
                             setUrl_FontPack(fp, d->mod.url);
                             setStandalone_FontPack(fp, iTrue);
                             if (loadArchive_FontPack(fp, zip)) {
-                                appendFormat_String(&str, "\n\n%s",
+                                appendFormat_String(&str, "## %s\n%s",
+                                                    cstr_String(id_FontPack(fp).id),
                                                     cstrCollect_String(infoText_FontPack(fp)));
                             }
-                            const iArray *actions = actions_FontPack(fp);
+                            appendCStr_String(&str, "\n");
+                            appendCStr_String(&str, cstr_Lang("fontpack.help"));
+                            appendCStr_String(&str, "\n");
+                            const iArray *actions = actions_FontPack(fp, iTrue);
                             makeFooterButtons_DocumentWidget_(d, constData_Array(actions),
                                                               size_Array(actions));
                             delete_FontPack(fp);
                         }
                     }
-                    appendCStr_String(&str, "\n\n");
+                    else {
+                        appendFormat_String(&str,
+                                            cstr_Lang("doc.archive"),
+                                            cstr_Rangecc(baseName_Path(d->mod.url)));
+                        appendCStr_String(&str, "\n");                        
+                    }
+                    appendCStr_String(&str, "\n");
                     iString *localPath = localFilePathFromUrl_String(d->mod.url);
                     if (!localPath) {
+                        iString *key = collectNew_String();
+                        toString_Sym(SDLK_s, KMOD_PRIMARY, key);
                         appendFormat_String(&str, "%s\n\n",
                                             format_CStr(cstr_Lang("error.unsupported.suggestsave"),
                                                         cstr_String(key),
@@ -3267,10 +3311,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
-    else if (equalWidget_Command(cmd, w, "fontpack.install")) {
-        const iString *id = idFromUrl_FontPack(d->mod.url);
-        install_Fonts(id, &d->sourceContent);
-        postCommandf_App("open gotoheading:%s url:about:fonts", cstr_String(id));
+    else if (equal_Command(cmd, "fontpack.install") && document_App() == d) {
+        if (argLabel_Command(cmd, "ttf")) {
+            iAssert(!cmp_String(&d->sourceMime, "font/ttf"));
+            installFontFile_Fonts(collect_String(suffix_Command(cmd, "name")), &d->sourceContent);
+            postCommand_App("open url:about:fonts");                
+        }
+        else {
+            const iString *id = idFromUrl_FontPack(d->mod.url);
+            install_Fonts(id, &d->sourceContent);
+            postCommandf_App("open gotoheading:%s url:about:fonts", cstr_String(id));
+        }
         return iTrue;
     }
     return iFalse;
@@ -5199,6 +5250,7 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
     d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     updateVisible_DocumentWidget_(d);
     invalidate_DocumentWidget_(d);
+    arrange_Widget(d->footerButtons);
 }
 
 #if 0

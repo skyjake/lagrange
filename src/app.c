@@ -836,6 +836,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     loadPalette_Color(dataDir_App_());
     setThemePalette_Color(d->prefs.theme); /* default UI colors */
     loadPrefs_App_(d);
+    updateActive_Fonts();
     load_Keys(dataDir_App_());
     /* See if the user wants to override the window size. */ {
         iCommandLineArg *arg = iClob(checkArgument_CommandLine(&d->args, windowWidth_CommandLineOption));
@@ -3069,13 +3070,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "fontpack.enable")) {
         const iString *packId = collect_String(suffix_Command(cmd, "id"));
-        if (arg_Command(cmd)) {
-            remove_StringSet(d->prefs.disabledFontPacks, packId);
-        }
-        else {
-            insert_StringSet(d->prefs.disabledFontPacks, packId);
-        }
-        resetFonts_App();
+        enablePack_Fonts(packId, arg_Command(cmd));
         postCommand_App("navigate.reload");
         return iTrue;
     }

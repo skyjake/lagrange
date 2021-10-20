@@ -479,7 +479,7 @@ static void commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
 
 static const int maxLedeLines_ = 10;
 
-static int applyAttributes_RunTypesetter_(iRunTypesetter *d, iTextAttrib attrib) {
+static void applyAttributes_RunTypesetter_(iRunTypesetter *d, iTextAttrib attrib) {
     /* WARNING: This is duplicated in run_Font_(). Make sure they behave identically. */
     if (attrib.bold) {
         d->run.font = fontWithStyle_Text(d->baseFont, bold_FontStyle);
@@ -495,7 +495,7 @@ static int applyAttributes_RunTypesetter_(iRunTypesetter *d, iTextAttrib attrib)
     else {
         d->run.font  = d->baseFont;
         d->run.color = d->baseColor;
-    }
+    }    
 }
 
 static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, iTextAttrib attrib,
