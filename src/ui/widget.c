@@ -1030,7 +1030,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
     }
     else if (ev->type == SDL_MOUSEMOTION &&
-             ev->motion.windowID == SDL_GetWindowID(window_Widget(d)->win) &&
+             ev->motion.windowID == id_Window(window_Widget(d)) &&
              (!window_Widget(d)->hover || hasParent_Widget(d, window_Widget(d)->hover)) &&
              flags_Widget(d) & hover_WidgetFlag && ~flags_Widget(d) & hidden_WidgetFlag &&
              ~flags_Widget(d) & disabled_WidgetFlag) {
@@ -1075,7 +1075,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                     fflush(stdout);
                 }
 #endif
-#if 0
+#if 1
                 if (ev->type == SDL_MOUSEWHEEL) {
                     printf("[%p] %s:'%s' ate the wheel\n",
                            child, class_Widget(child)->name,
