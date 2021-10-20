@@ -35,6 +35,10 @@ iRegExp *newGemtextLink_RegExp(void) {
 }
 
 void init_Url(iUrl *d, const iString *text) {
+    if (!text) {
+        iZap(*d);
+        return;
+    }
     /* Handle "file:" as a special case since it only has the path part. */
     if (startsWithCase_String(text, "file://")) {
         iZap(*d);
