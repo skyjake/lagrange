@@ -658,6 +658,8 @@ static void invalidateWideRunsWithNonzeroOffset_DocumentWidget_(iDocumentWidget 
     }
 }
 
+static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse);
+
 static void animate_DocumentWidget_(void *ticker) {
     iDocumentWidget *d = ticker;
     refresh_Widget(d);
@@ -1810,6 +1812,10 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
     }
     if (!isFinished_SmoothScroll(&d->scrollY) || !isFinished_Anim(&d->animWideRunOffset)) {
         addTicker_App(refreshWhileScrolling_DocumentWidget_, d);
+    }
+    if (isFinished_SmoothScroll(&d->scrollY)) {
+        iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
+        updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window(), 0));
     }
 }
 
@@ -4771,8 +4777,8 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
         iPaint *p = &ctx->paint;
         init_Paint(p);
         iForIndices(i, visBuf->buffers) {
-            iVisBufTexture *buf  = &visBuf->buffers[i];
-            iVisBufMeta *   meta = buf->user;
+            iVisBufTexture *buf         = &visBuf->buffers[i];
+            iVisBufMeta    *meta        = buf->user;
             const iRangei   bufRange    = intersect_Rangei(bufferRange_VisBuf(visBuf, i), full);
             const iRangei   bufVisRange = intersect_Rangei(bufRange, vis);
             ctx->widgetBounds = moved_Rect(ctxWidgetBounds, init_I2(0, -buf->origin));
@@ -4906,7 +4912,9 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
                 break;
             }
         }
-        clear_PtrSet(d->invalidRuns);
+        if (!prerenderExtra) {
+            clear_PtrSet(d->invalidRuns);
+        }
     }
     return didDraw;
 }
