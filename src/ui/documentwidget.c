@@ -1093,7 +1093,13 @@ static void replaceDocument_DocumentWidget_(iDocumentWidget *d, iGmDocument *new
 }
 
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
-    if (isEmpty_String(d->titleUser)) {
+    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
+        iBlock empty;
+        init_Block(&empty, 0);
+        setThemeSeed_GmDocument(d->doc, &empty);
+        deinit_Block(&empty);
+    }
+    else if (isEmpty_String(d->titleUser)) {
         setThemeSeed_GmDocument(d->doc,
                                 collect_Block(newRange_Block(urlHost_String(d->mod.url))));
     }
@@ -1644,6 +1650,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     return;
                 }
                 d->flags |= drawDownloadCounter_DocumentWidgetFlag;
+                clear_PtrSet(d->invalidRuns);
                 deinit_String(&str);
                 return;
             }
