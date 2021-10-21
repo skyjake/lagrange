@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 21:55+0000\n"
+"PO-Revision-Date: 2021-10-21 23:01+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1435,3 +1435,141 @@ msgstr "Чорна"
 
 msgid "prefs.theme.dark"
 msgstr "Темна"
+
+msgid "prefs.accent"
+msgstr "Акцентний колір:"
+
+msgid "prefs.accent.teal"
+msgstr "Гряносиній"
+
+msgid "prefs.accent.orange"
+msgstr "Рудий"
+
+msgid "prefs.uilang"
+msgstr "Мова:"
+
+msgid "prefs.uiscale"
+msgstr "Коефіцієнт масштабування:"
+
+msgid "prefs.returnkey"
+msgstr "Поведінка клавіші Enter:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Новий рядок"
+
+msgid "prefs.returnkey.accept"
+msgstr "Підтвердити"
+
+msgid "prefs.animate"
+msgstr "Анімації:"
+
+msgid "prefs.retainwindow"
+msgstr "Зберігати розташування:"
+
+msgid "prefs.sideicon"
+msgstr "Значок капсули:"
+
+msgid "prefs.doctheme.light"
+msgstr "Світла тема:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Барвиста Темна"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Барвиста Світла"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Сіра"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Біла"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Сепія"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Висококонтрастна"
+
+msgid "prefs.saturation"
+msgstr "Насиченість:"
+
+msgid "prefs.imagestyle.original"
+msgstr "Ні"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Відтінки сірого"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Кольором фону"
+
+msgid "prefs.imagestyle.text"
+msgstr "Кольором тексту"
+
+msgid "prefs.headingfont"
+msgstr "Шрифт заголовків:"
+
+msgid "prefs.font"
+msgstr "Шрифт вмісту:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.boldlink"
+msgstr "Жирні посилання:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "На темному"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "На світлому"
+
+msgid "prefs.userfont"
+msgstr "Довільний TrueType-шрифт:"
+
+msgid "prefs.linewidth"
+msgstr "Ширина лінії:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Звичайна"
+
+msgid "prefs.linewidth.fill"
+msgstr "Заливка"
+
+msgid "prefs.linespacing"
+msgstr "Міжрядковий інтервал:"
+
+msgid "prefs.quoteicon"
+msgstr "Індикатор цитати:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "Значок \""
+
+msgid "prefs.quoteicon.line"
+msgstr "Лінія"
+
+msgid "prefs.customframe"
+msgstr "Користувацька рамка вікна:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Темна тема:"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Чорна"
+
+msgid "prefs.imagestyle"
+msgstr "Забарвлювати зображення:"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Преформатованим кольором"
+
+msgid "prefs.mono"
+msgstr "Текст сталої ширини в:"
+
+msgid "hint.prefs.userfont"
+msgstr "повний шлях до файлу TrueType-шрифту"
