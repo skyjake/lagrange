@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 20:26+0000\n"
+"PO-Revision-Date: 2021-10-21 20:36+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1176,3 +1176,24 @@ msgstr "Токі-пона"
 
 msgid "heading.newident"
 msgstr "НОВА ІДЕНТИЧНІСТЬ"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Створення самопідписаного 2048-розрядного RSA сертифікату."
+
+msgid "dlg.newident.until"
+msgstr "Дійсний до:"
+
+msgid "hint.newident.optional"
+msgstr "необов'язково"
+
+msgid "dlg.newident.commonname"
+msgstr "Звичайне ім'я:"
+
+msgid "dlg.newident.temp"
+msgstr "Тимчасова:"
+
+msgid "dlg.newident.notsaved"
+msgstr "не зберігається на диску"
+
+msgid "hint.newident.date"
+msgstr "РРРР або РРРР-ММ-ДД"
