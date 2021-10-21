@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 20:36+0000\n"
+"PO-Revision-Date: 2021-10-21 20:38+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1197,3 +1197,6 @@ msgstr "не зберігається на диску"
 
 msgid "hint.newident.date"
 msgstr "РРРР або РРРР-ММ-ДД"
+
+msgid "dlg.newident.scope"
+msgstr "Використати на:"
