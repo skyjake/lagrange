@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 20:47+0000\n"
+"PO-Revision-Date: 2021-10-21 21:14+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1181,7 +1181,7 @@ msgid "dlg.newident.rsa.selfsign"
 msgstr "Створення самопідписаного 2048-розрядного RSA сертифікату."
 
 msgid "dlg.newident.until"
-msgstr "Дійсний до:"
+msgstr "Дійсна до:"
 
 msgid "hint.newident.optional"
 msgstr "необов'язково"
@@ -1209,3 +1209,85 @@ msgstr "Поточна сторінка"
 
 msgid "dlg.newident.scope.none"
 msgstr "Ніде"
+
+msgid "dlg.newident.email"
+msgstr "Е-пошта:"
+
+msgid "dlg.newident.userid"
+msgstr "ID користувача:"
+
+msgid "dlg.newident.domain"
+msgstr "Домен:"
+
+msgid "dlg.newident.country"
+msgstr "Країна:"
+
+msgid "dlg.newident.more"
+msgstr "Ще…"
+
+msgid "heading.newident.missing"
+msgstr "ВІДСУТНЯ ІНФОРМАЦІЯ"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Потрібно вказати звичайне ім'я."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Буль ласка, перевірте дату в полі «Дійсна до». Зразок:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "heading.feedcfg"
+msgstr "НАЛАШТУВАННЯ СТРІЧКИ"
+
+msgid "heading.subscribe"
+msgstr "ПІДПИСКА НА СТОРІНКУ"
+
+msgid "dlg.feed.title"
+msgstr "Заголовок:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Посилання РРРР-ММ-ДД"
+
+msgid "dlg.feed.save"
+msgstr "Зберегти установки"
+
+msgid "dlg.feed.sub"
+msgstr "Підписатися"
+
+msgid "heading.bookmark.add"
+msgstr "ДОДАТИ ЗАКЛАДКУ"
+
+msgid "dlg.bookmark.save"
+msgstr "Збереги закладку"
+
+msgid "dlg.bookmark.title"
+msgstr "Заголовок:"
+
+msgid "dlg.newident.org"
+msgstr "Організація:"
+
+msgid "dlg.newident.create"
+msgstr "Створити ідентичність"
+
+msgid "heading.newident.date.bad"
+msgstr "НЕДІЙСНА ДАТА"
+
+msgid "dlg.newident.date.past"
+msgstr "Термін дії має закінчуватися у майбутньому."
+
+msgid "dlg.feed.entrytype"
+msgstr "Тип допису:"
+
+msgid "dlg.feed.type.headings"
+msgstr "Нові заголовки"
+
+msgid "heading.bookmark.edit"
+msgstr "РЕДАГУВАННЯ ЗАКЛАДКИ"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Мітки:"
