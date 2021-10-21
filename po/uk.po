@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 21:41+0000\n"
+"PO-Revision-Date: 2021-10-21 21:55+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1390,3 +1390,48 @@ msgstr "Згортати преформатований текст:"
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
 msgstr "Відкривати index.gmi при перегляді архівів:"
+
+msgid "prefs.pinsplit"
+msgstr "Відкривати посилання:"
+
+msgid "prefs.pinsplit.none"
+msgstr "У цьому вікні"
+
+msgid "prefs.pinsplit.left"
+msgstr "Ліворуч"
+
+msgid "prefs.pinsplit.right"
+msgstr "Праворуч"
+
+msgid "prefs.smoothscroll"
+msgstr "Плавне прокручування:"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Швидкість клавіатури:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Швидкість миші:"
+
+msgid "prefs.theme"
+msgstr "Тема:"
+
+msgid "prefs.theme.light"
+msgstr "Світла"
+
+msgid "prefs.theme.white"
+msgstr "Біла"
+
+msgid "prefs.imageloadscroll"
+msgstr "Схоплення зображень при прокручуванні:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Приховати панель інструментів при прокручуванні:"
+
+msgid "prefs.ostheme"
+msgstr "Використовувати системну тему:"
+
+msgid "prefs.theme.black"
+msgstr "Чорна"
+
+msgid "prefs.theme.dark"
+msgstr "Темна"
