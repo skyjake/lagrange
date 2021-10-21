@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 21:14+0000\n"
+"PO-Revision-Date: 2021-10-21 21:16+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1291,3 +1291,6 @@ msgstr "URL:"
 
 msgid "dlg.bookmark.tags"
 msgstr "Мітки:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Значок:"
