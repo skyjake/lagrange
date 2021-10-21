@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 19:21+0000\n"
+"PO-Revision-Date: 2021-10-21 19:42+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -968,3 +968,65 @@ msgstr "Статус сертифіката:"
 
 msgid "pageinfo.cert.ca.unverified"
 msgstr "Не підтверджено ЦС"
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Ця сторінка відформатована згідно допоміжної специфікації \"Subscribing to "
+"Gemini pages\"."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Кожне посилання представляє закладку."
+
+msgid "bookmark.export.format.folders"
+msgstr "Структура тек визначається заголовками 2/3 рівня."
+
+msgid "bookmark.export.format.tags"
+msgstr "Мітки визначаються заголовками 2 рівня."
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "ЗАКЛАДКИ"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "ІСТОРІЯ"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "ІДЕНТИЧНОСТІ"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "ІНШІ"
+
+msgid "heading.upload"
+msgstr "ПЕРЕДАЧА ЗА ДОПОМОГОЮ TITAN"
+
+msgid "upload.id"
+msgstr "Ідентичність:"
+
+msgid "dlg.upload.id.none"
+msgstr "Жодної"
+
+msgid "dlg.upload.id.default"
+msgstr "За замовчуванням"
+
+msgid "heading.upload.text"
+msgstr "Текст"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Маркери списку та цитати містять додаткову інформацію про закладку перед "
+"ними. Текстові рядки та преформатований текст вважаються коментарями та "
+"ігноруються."
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "СТРІЧКИ"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "ВМІСТ СТОРІНКИ"
+
+msgid "menu.page.upload"
+msgstr "Передати сторінку з Titan…"
