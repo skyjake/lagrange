@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 20:17+0000\n"
+"PO-Revision-Date: 2021-10-21 20:23+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1122,3 +1122,51 @@ msgstr "Китайська (традиційна)"
 
 msgid "lang.en"
 msgstr "Англійська"
+
+msgid "lang.ie"
+msgstr "Інтерлінгве"
+
+msgid "lang.fi"
+msgstr "Фінська"
+
+msgid "lang.fr"
+msgstr "Французька"
+
+msgid "lang.it"
+msgstr "Італійська"
+
+msgid "lang.pl"
+msgstr "Польська"
+
+msgid "lang.pt"
+msgstr "Португальська"
+
+msgid "lang.ru"
+msgstr "Російська"
+
+msgid "lang.eo"
+msgstr "Есперанто"
+
+msgid "lang.es"
+msgstr "Іспанська"
+
+msgid "lang.sk"
+msgstr "Словацька"
+
+msgid "lang.sr"
+msgstr "Сербська"
+
+msgid "lang.isv"
+msgstr "Міжслов'янська"
+
+msgid "lang.gl"
+msgstr "Галісійська"
+
+msgid "lang.hi"
+msgstr "Гінді"
+
+msgid "lang.ja"
+msgstr "Японська"
+
+msgid "lang.es.mx"
+msgstr "Іспанська (Мексика)"
