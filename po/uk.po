@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 20:23+0000\n"
+"PO-Revision-Date: 2021-10-21 20:26+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1170,3 +1170,9 @@ msgstr "Японська"
 
 msgid "lang.es.mx"
 msgstr "Іспанська (Мексика)"
+
+msgid "lang.tok"
+msgstr "Токі-пона"
+
+msgid "heading.newident"
+msgstr "НОВА ІДЕНТИЧНІСТЬ"
