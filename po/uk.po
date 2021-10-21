@@ -1,2 +1,521 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-10-21 14:44+0000\n"
+"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
+"Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
+"\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Завантаження"
+
+msgid "doc.archive.view"
+msgstr "Переглянути вміст архіву"
+
+msgid "media.untitled.image"
+msgstr "Зображення"
+
+msgid "media.untitled.audio"
+msgstr "Аудіо"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Завантаження завершено."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Назва"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Виконавець"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Жанр"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Дата"
+
+msgid "numbertype.integer"
+msgstr "ціле"
+
+msgid "numbertype.float"
+msgstr "з рухомою комою"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Гц"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "загалом %zu допис"
+msgstr[1] "загалом %zu дописи"
+msgstr[2] "загалом %zu дописів"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Востаннє оновлено %s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d хвилину тому"
+msgstr[1] "%d хвилини тому"
+msgstr[2] "%d хвилин тому"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d день тому"
+msgstr[1] "%d дні тому"
+msgstr[2] "%d днів тому"
+
+msgid "about.tagline"
+msgstr "Гарний Gemini-переглядач"
+
+msgid "about.version"
+msgstr "Версія"
+
+msgid "about.powered"
+msgstr "На основі SDL 2, OpenSSL та ☕️"
+
+msgid "cancel"
+msgstr "Скасувати"
+
+msgid "close"
+msgstr "Закрити"
+
+msgid "dlg.default"
+msgstr " ОК "
+
+msgid "toggle.yes"
+msgstr "ТАК"
+
+msgid "toggle.no"
+msgstr "НІ"
+
+msgid "menu.title.edit"
+msgstr "Редагувати"
+
+msgid "menu.title.view"
+msgstr "Перегляд"
+
+msgid "menu.title.bookmarks"
+msgstr "Закладки"
+
+msgid "menu.title.identity"
+msgstr "Ідентичність"
+
+msgid "menu.title.help"
+msgstr "Довідка"
+
+msgid "menu.newtab"
+msgstr "Нова вкладка"
+
+msgid "menu.closetab.left"
+msgstr "Закрити вкладки ліворуч"
+
+msgid "menu.closetab.right"
+msgstr "Закрити вкладки праворуч"
+
+msgid "menu.duptab"
+msgstr "Дублювати вкладку"
+
+msgid "menu.split.swap"
+msgstr "Поміняти сторони місцями"
+
+msgid "menu.split.vertical"
+msgstr "Вертикально"
+
+msgid "menu.openlocation"
+msgstr "Відкрити розташування…"
+
+msgid "menu.pageinfo"
+msgstr "Інформація про сторінку"
+
+msgid "menu.find"
+msgstr "Знайти на сторінці"
+
+msgid "macos.menu.find"
+msgstr "Знайти"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Зберегти до теки Завантаження"
+
+msgid "menu.save.downloads.open"
+msgstr "Зберегти і відкрити"
+
+msgid "menu.sidebar"
+msgstr "Показати/приховати бокову панель"
+
+msgid "menu.sidebar.left"
+msgstr "Показати/приховати ліву бокову панель"
+
+msgid "menu.zoom.in"
+msgstr "Збільшити"
+
+msgid "menu.zoom.out"
+msgstr "Зменшити"
+
+msgid "menu.view.split"
+msgstr "Розділити вікно…"
+
+msgid "menu.newfolder"
+msgstr "Створити теку…"
+
+msgid "menu.sort.alpha"
+msgstr "За алфавітом"
+
+msgid "menu.bookmarks.list"
+msgstr "Показати усі закладки"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Закладки за міткою"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "За часом створення"
+
+msgid "menu.feeds.entrylist"
+msgstr "Показати записи стрічки новин"
+
+msgid "menu.preferences"
+msgstr "Налаштування…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Налаштування"
+
+msgid "menu.help"
+msgstr "Довідка"
+
+msgid "menu.quit"
+msgstr "Вийти з Lagrange"
+
+msgid "menu.cut"
+msgstr "Вирізати"
+
+msgid "menu.paste"
+msgstr "Вставити"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Виділити все"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Видалити"
+
+msgid "menu.select.clear"
+msgstr "Зняти виділення"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Показати закладки"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Показати стрічки"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Показати мапу сторінки"
+
+msgid "menu.back"
+msgstr "Назад"
+
+msgid "menu.reload"
+msgstr "Оновити сторінку"
+
+msgid "menu.page.bookmark"
+msgstr "Додати сторінку до закладок…"
+
+msgid "menu.page.subscribe"
+msgstr "Підписатися на сторінку…"
+
+msgid "menu.about"
+msgstr "Про додаток"
+
+msgid "panel.back"
+msgstr "Назад"
+
+msgid "menu.debug"
+msgstr "Дані для зневадження"
+
+msgid "menu.page.import"
+msgstr "Імпортувати посилання, як закладки…"
+
+msgid "menu.page.translate"
+msgstr "Перекласти…"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Оновити зовнішні закладки"
+
+msgid "menu.feeds.refresh"
+msgstr "Оновити стрічки новин"
+
+msgid "menu.identity.new"
+msgstr "Нова ідентичність…"
+
+msgid "menu.identity.import"
+msgstr "Імпортувати…"
+
+msgid "sidebar.bookmarks"
+msgstr "Закладки"
+
+msgid "sidebar.feeds"
+msgstr "Стрічки новин"
+
+msgid "sidebar.outline"
+msgstr "Мапа"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Всі"
+
+msgid "sidebar.action.ident.new"
+msgstr "Нова…"
+
+msgid "toolbar.outline"
+msgstr "Мапа сторінки"
+
+msgid "hint.findtext"
+msgstr "знайти текст на сторінці"
+
+msgid "status.query"
+msgstr "Пошуковий запит"
+
+msgid "status.query.tight"
+msgstr "Запит"
+
+msgid "status.feeds"
+msgstr "Оновлюю стрічки"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "МБ"
+
+msgid "mb.per.sec"
+msgstr "МБ/с"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu байт"
+msgstr[1] "%zu байти"
+msgstr[2] "%zu байтів"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%b. %d"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%b. %d, %Y"
+
+msgid "feeds.today"
+msgstr "Сьогодні"
+
+msgid "feeds.entry.markread"
+msgstr "Позначити як прочитане"
+
+msgid "feeds.entry.bookmark"
+msgstr "Додати закладку…"
+
+msgid "feeds.edit"
+msgstr "Редагувати стрічку…"
+
+msgid "feeds.unsubscribe"
+msgstr "Відписатися…"
+
+msgid "feeds.markallread"
+msgstr "Позначити все як прочитане"
+
+msgid "feeds.refresh"
+msgstr "Оновити стрічки новин"
+
+msgid "doc.pre.nocaption"
+msgstr "Преформатований текст без опису"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s є стиснутим архівом."
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Завантаження буде перервано у разі закриття цієї вкладки."
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-розрядний"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Записи стрічки новин"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Ви підписані на %zu стрічку, що містить %%s.\n"
+msgstr[1] "Ви підписані на %zu стрічки, що містять %%s.\n"
+msgstr[2] "Ви підписані на %zu стрічок, що містять %%s.\n"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Востаннє оновлено мить тому."
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d годину тому"
+msgstr[1] "%d години тому"
+msgstr[2] "%d годин тому"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII-графіка: слово «Lagrange» великим шрифтом"
+
+msgid "dlg.message.ok"
+msgstr "Продовжити"
+
+msgid "menu.title.file"
+msgstr "Файл"
+
+msgid "menu.closetab"
+msgstr "Закрити вкладку"
+
+msgid "menu.closetab.other"
+msgstr "Закрити інші вкладки"
+
+msgid "menu.split.merge"
+msgstr "Об'єднати вкладки"
+
+msgid "menu.split.horizontal"
+msgstr "Горизонтально"
+
+msgid "menu.downloads"
+msgstr "Показати усі завантаження"
+
+msgid "menu.unexpire"
+msgstr "Ігнорувати недійсність і продовжити завантаження"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Зберегти до Файлів"
+
+msgid "menu.sidebar.right"
+msgstr "Показати/приховати праву бокову панель"
+
+msgid "menu.zoom.reset"
+msgstr "Звичайний розмір"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Показати усі"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "За міткою"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Закладки за часом створення"
+
+msgid "menu.releasenotes"
+msgstr "Нотатки про випуск"
+
+msgid "menu.copy"
+msgstr "Копіювати"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Скасувати"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Копіювати посилання на сторінку"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Показати історію"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Показати ідентичності"
+
+msgid "menu.forward"
+msgstr "Вперед"
+
+msgid "menu.parent"
+msgstr "Перейти до материнського каталогу"
+
+msgid "menu.root"
+msgstr "Перейти до кореня"
+
+msgid "menu.autoreload"
+msgstr "Увімкнути автооновлення…"
+
+msgid "menu.aboutpages"
+msgstr "Інформаційні сторінки"
+
+msgid "menu.import.links"
+msgstr "Імпортувати усі посилання на сторінці…"
+
+msgid "menu.page.copyurl"
+msgstr "Копіювати URL сторінки"
+
+msgid "menu.page.copysource"
+msgstr "Копіювати початковий код сторінки"
+
+msgid "menu.identity.notactive"
+msgstr "Активна ідентичність відсутня"
+
+msgid "sidebar.history"
+msgstr "Історія"
+
+msgid "sidebar.identities"
+msgstr "Ідентичності"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Непрочитані"
+
+msgid "sidebar.action.ident.import"
+msgstr "Імпортувати…"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Непрочитаний"
+msgstr[1] "Непрочитані"
+msgstr[2] "Непрочитаних"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "кБ"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Отримано о %I:%M %p\n"
+"%b %d, %Y"
+
+msgid "feeds.entry.newtab"
+msgstr "Відкрити допис у новій вкладці"
+
+msgid "feeds.entry.markunread"
+msgstr "Позначити як непрочитане"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Додати закладку…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Відкрити сторінку стрічки"
