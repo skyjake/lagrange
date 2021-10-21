@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 19:42+0000\n"
+"PO-Revision-Date: 2021-10-21 20:13+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1009,7 +1009,7 @@ msgid "dlg.upload.id.none"
 msgstr "Жодної"
 
 msgid "dlg.upload.id.default"
-msgstr "За замовчуванням"
+msgstr "Усталена"
 
 msgid "heading.upload.text"
 msgstr "Текст"
@@ -1030,3 +1030,59 @@ msgstr "ВМІСТ СТОРІНКИ"
 
 msgid "menu.page.upload"
 msgstr "Передати сторінку з Titan…"
+
+msgid "hint.upload.text"
+msgstr "Введіть текст для передачі"
+
+msgid "upload.file.name"
+msgstr "Назва файлу:"
+
+msgid "upload.file.size"
+msgstr "Розмір:"
+
+msgid "upload.mime"
+msgstr "MIME тип:"
+
+msgid "upload.token"
+msgstr "Токен:"
+
+msgid "dlg.upload.send"
+msgstr "Передати"
+
+msgid "upload.port"
+msgstr "Порт…"
+
+msgid "heading.uploadport"
+msgstr "ПОРТ ПЕРЕДАЧІ TITAN"
+
+msgid "dlg.uploadport.set"
+msgstr "Вказати порт"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Вибрати файл"
+
+msgid "heading.translate"
+msgstr "ПЕРЕКЛАД СТОРІНКИ"
+
+msgid "heading.upload.file"
+msgstr "Файл"
+
+msgid "upload.file.drophere"
+msgstr "(перетягніть файл на це вікно)"
+
+msgid "hint.upload.token"
+msgstr "див. інструкції від сервера"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Вкажіть порт Titan-сервера для цієї адреси.\n"
+"Порт зберігається в налаштуваннях сайту."
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Передати простий текст"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Передати файл"
