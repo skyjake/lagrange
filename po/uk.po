@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 23:01+0000\n"
+"PO-Revision-Date: 2021-10-24 22:50+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1573,3 +1573,392 @@ msgstr "Текст сталої ширини в:"
 
 msgid "hint.prefs.userfont"
 msgstr "повний шлях до файлу TrueType-шрифту"
+
+msgid "prefs.ca.file"
+msgstr "Файл CA:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini-проксі:"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Архів містить %zu елемент, а його стиснутий розмір %.1f МБ."
+msgstr[1] "Архів містить %zu елементи, а його стиснутий розмір %.1f МБ."
+msgstr[2] "Архів містить %zu елементів, а його стиснутий розмір %.1f МБ."
+
+msgid "keys.scroll.down"
+msgstr "Прокрутити донизу"
+
+msgid "keys.scroll.page.up"
+msgstr "Прокрутити всю сторінку вгору"
+
+msgid "keys.reload"
+msgstr "Оновити сторінку"
+
+msgid "keys.link.homerow"
+msgstr "Відкрити посилання за допомогою клавіш домашнього ряду"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Відкрити посилання у новій вкладці за допомогою клавіш домашьного ряду"
+
+msgid "keys.findtext"
+msgstr "Знайти текст на сторінці"
+
+msgid "keys.tab.close"
+msgstr "Закрити вкладку"
+
+msgid "keys.split.menu"
+msgstr "Режим розділеного перегляду"
+
+msgid "keys.hoverurl"
+msgstr "Показувати URL при наведенні"
+
+msgid "error.unsupported.media"
+msgstr "Непідтримуваний тип вмісту"
+
+msgid "error.unsupported.protocol"
+msgstr "Непідтримуваний протокол"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Цей додаток не підтримує запитаний протокол."
+
+msgid "error.badheader.msg"
+msgstr ""
+"Отриманий заголовок не відповідає специфікації протоколу Gemini. Мабуть "
+"капсулу захопив Дарт Вейдер, або ви намагалися зв'язатися з сервером, що "
+"відрізняється від Gemini."
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Йой! Сервер відповів кодом стану, відсутнім у специфікації протоколу Gemini. "
+"Можливо, він з майбутнього? Або ж потрапив під автобус..."
+
+msgid "error.openfile.msg"
+msgstr ""
+"Запитаний файл недоступний або не існує. Будь ласка, перевірте вказаний шлях."
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Отакої! Сервер спробував перенаправити нас на URL, схема якого відрізняється "
+"від такої у початкового. Ось посилання, що за потреби дасть вам змогу "
+"відкрити адресу вручну."
+
+msgid "error.tls.msg"
+msgstr "От халепа! Не вдалося зв'язатися з сервером. Код помилки:"
+
+msgid "error.certverify.msg"
+msgstr ""
+"Не вдалося з'єднатися з сервером, бо його TLS сертифікат не збігається з "
+"довіреним. Перевірте, чи не змінив, бува, сервер свій сертифікат. Якщо ні, "
+"це може бути зловмисник, що маскується під сервер, з яким ви намагалися "
+"з'єднатися.\n"
+"\n"
+"Сертифікат можна зробити довіреним у вікні «Інформація про сторінку»."
+
+msgid "error.cgi.msg"
+msgstr ""
+"Йой! Під час генерування динамічного контенту на сервері стався збій, "
+"можливо спричинений несправністю серверного ПЗ."
+
+msgid "error.proxy.msg"
+msgstr ""
+"Проксований запит не виконано, бо сервер не зміг вдало завершити транзакцію "
+"з цільовим хостом. З мережевим з'єднанням можуть бути труднощі."
+
+msgid "error.notfound.msg"
+msgstr "На жаль, зараз не вдається знайти запитаний ресурс."
+
+msgid "error.proxyrefusal"
+msgstr "Запит відхилено проксі-сервером"
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Запит стосується ресурсу в домені, що не обслуговується проксі-сервером, а "
+"сам сервер не приймає запити від проксі."
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Наданий клієнтський сертифікат дійсний, але не надає доступу до запитаного "
+"ресурсу."
+
+msgid "gempub.cover.image"
+msgstr "Обкладинка"
+
+msgid "gempub.cover.viewlocal"
+msgstr "Щоб переглянути цю книгу у форматі Gempub, її необхідно завантажити."
+
+msgid "prefs.biglede"
+msgstr "Великий 1-й абзац:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Переносити простий текст:"
+
+msgid "prefs.decodeurls"
+msgstr "Декодувати URL:"
+
+msgid "prefs.cachesize"
+msgstr "Обсяг кешу:"
+
+msgid "prefs.memorysize"
+msgstr "Обсяг пам'яті:"
+
+msgid "prefs.ca.path"
+msgstr "Шлях до сертифікатів CA:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher-проксі:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP-проксі:"
+
+msgid "menu.binding.reset"
+msgstr "Скинути налаштування"
+
+msgid "menu.binding.clear"
+msgstr "Видалити"
+
+msgid "archive.exit"
+msgstr "Вийти з архіву"
+
+msgid "dir.empty"
+msgstr "Цей каталог порожній."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Каталог містить %zu об'єкт."
+msgstr[1] "Каталог містить %zu об'єкти."
+msgstr[2] "Каталог містить %zu об'єктів."
+
+msgid "keys.top"
+msgstr "На початок"
+
+msgid "keys.bottom"
+msgstr "В кінець"
+
+msgid "keys.scroll.up"
+msgstr "Прокрутити вгору"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "На півсторінки вгору"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "На півсторінки донизу"
+
+msgid "keys.scroll.page.down"
+msgstr "Прокрутити всю сторінку донизу"
+
+msgid "keys.back"
+msgstr "Назад"
+
+msgid "keys.forward"
+msgstr "Вперед"
+
+msgid "keys.parent"
+msgstr "До материнського каталогу"
+
+msgid "keys.root"
+msgstr "До кореня капсули"
+
+msgid "keys.link.modkey"
+msgstr "Відкрити посиланння за допомогою клавіші-модифікатора"
+
+msgid "keys.link.homerow.hover"
+msgstr "Активувати посилання клавішами домашнього ряду"
+
+msgid "keys.link.homerow.next"
+msgstr "Наступний набір посилань домашнього ряду"
+
+msgid "keys.bookmark.add"
+msgstr "Додати закладку"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Додати теку закладок"
+
+msgid "keys.subscribe"
+msgstr "Підписатися на сторінку"
+
+msgid "keys.zoom.in"
+msgstr "Збільшити"
+
+msgid "keys.zoom.out"
+msgstr "Зменшити"
+
+msgid "keys.zoom.reset"
+msgstr "Звичайний розмір"
+
+msgid "keys.fullscreen"
+msgstr "Повноекранний режим"
+
+msgid "keys.tab.new"
+msgstr "Нова вкладка"
+
+msgid "keys.tab.close.other"
+msgstr "Закрити інші вкладки"
+
+msgid "keys.tab.prev"
+msgstr "Попередня вкладка"
+
+msgid "keys.tab.next"
+msgstr "Наступна вкладка"
+
+msgid "keys.split.next"
+msgstr "Зосередитися на наступному вікні"
+
+msgid "keys.split.item"
+msgstr "Меню розділеного перегляду:"
+
+msgid "keys.upload"
+msgstr "Передати сторінку з Titan"
+
+msgid "error.badstatus"
+msgstr "Невідомий код стану"
+
+msgid "error.openfile"
+msgstr "Не вдалося відкрити файл"
+
+msgid "error.badresource"
+msgstr "Ресурс недійсний"
+
+msgid "error.unsupported.media.msg"
+msgstr "Отриманий вміст неможливо переглянути у цьому додатку."
+
+msgid "error.badresource.msg"
+msgstr "Запитаний ресурс не існує."
+
+msgid "error.badheader"
+msgstr "Неправильний заголовок"
+
+msgid "error.badredirect"
+msgstr "Невірне перенаправлення"
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Сервер відповів перенаправленням без дійсного URL призначення. Він либонь "
+"несправний."
+
+msgid "error.schemeredirect"
+msgstr "Перенаправлення зі зміною схеми"
+
+msgid "error.manyredirects"
+msgstr "Забагато перенаправлень"
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"От халепа! Здається, ви застрягли у петлі перенаправлень. Скористайтеся "
+"наведеним нижче URL наступного перенаправлення, якщо бажаєте продовжити "
+"вручну."
+
+msgid "error.tls"
+msgstr "Помилка мережі/TLS"
+
+msgid "error.certexpired"
+msgstr "Йой! Протермінований сертифікат"
+
+msgid "error.certexpired.msg"
+msgstr ""
+"Не вдається з'єднатися з сервером, бо його TLS сертифікат протерміновано."
+
+msgid "error.certverify"
+msgstr "Ненадійний сервер"
+
+msgid "error.temporary"
+msgstr "Тимчасовий збій"
+
+msgid "error.temporary.msg"
+msgstr ""
+"Запит не виконано, але його можна буде виконати в майбутньому, спробувавши "
+"знову."
+
+msgid "error.unavail"
+msgstr "Сервер недоступний"
+
+msgid "error.unavail.msg"
+msgstr ""
+"Мережева служба недоступна через перевантаження або техобслуговування. "
+"Завітайте пізніше."
+
+msgid "error.cgi"
+msgstr "Помилка CGI"
+
+msgid "error.proxy"
+msgstr "Помилка проксі-сервера"
+
+msgid "error.slowdown"
+msgstr "Пригальмуй, ковбою"
+
+msgid "error.slowdown.msg"
+msgstr ""
+"Сервер обмежує частоту запитів. Насолодися піснею степових вітрів, поки він "
+"відпочиває…"
+
+msgid "error.permanent"
+msgstr "Постійний збій"
+
+msgid "error.permanent.msg"
+msgstr ""
+"Запит зник безвісти у кіберпросторі. Така ж доля спіткатиме й усі повторні "
+"запити."
+
+msgid "error.notfound"
+msgstr "Г'юстоне, в нас проблеми"
+
+msgid "error.gone"
+msgstr "Вилучено"
+
+msgid "error.gone.msg"
+msgstr "Запитаний ресурс більше недосяжний."
+
+msgid "error.badrequest"
+msgstr "Неправильний запит"
+
+msgid "error.badrequest.msg"
+msgstr "Сервер не зрозумів ваш запит."
+
+msgid "error.cert.needed"
+msgstr "Потрібен сертифікат"
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"Доступ до запитаного ресурсу вимагає ідентифікації за допомогою клієнтського "
+"сертифікату."
+
+msgid "error.cert.auth"
+msgstr "Сертифікат не авторизовано"
+
+msgid "error.cert.invalid"
+msgstr "Недійсний сертифікат"
+
+msgid "error.cert.invalid.msg"
+msgstr "Наданий клієнтський сертифікат протермінований або недійсний."
+
+msgid "gempub.meta.version"
+msgstr "Версія"
+
+msgid "gempub.meta.lang"
+msgstr "Мова"
+
+msgid "gempub.meta.license"
+msgstr "Ліцензія"
+
+msgid "gempub.meta.pubdate"
+msgstr "Дата оприлюднення"
+
+msgid "gempub.meta.revdate"
+msgstr "Дата останнього перегляду"
+
+msgid "gempub.meta.pub"
+msgstr "Рік оприлюдення"
+
+msgid "gempub.meta.author"
+msgstr "Автор(ка)"
+
+msgid "gempub.cover.untitled"
+msgstr "Безіменна книжка"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Про цю книжку"
+
+msgid "gempub.cover.view"
+msgstr "Переглянути вміст Gempub"
