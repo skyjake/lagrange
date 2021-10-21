@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 21:17+0000\n"
+"PO-Revision-Date: 2021-10-21 21:23+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1303,3 +1303,30 @@ msgstr "ДОДАТИ ТЕКУ"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Нова тека"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Назва створюваної теки:"
+
+msgid "heading.prefs.certs"
+msgstr "СЕРТИФІКАТИ"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Кольори"
+
+msgid "heading.prefs.fonts"
+msgstr "Шрифти"
+
+msgid "dlg.addfolder"
+msgstr "Додати теку"
+
+msgid "heading.prefs"
+msgstr "НАЛАШТУВАННЯ"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "НАЛАШТУВАННЯ"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Загальні"
