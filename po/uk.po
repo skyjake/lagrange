@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 20:13+0000\n"
+"PO-Revision-Date: 2021-10-21 20:17+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1086,3 +1086,39 @@ msgstr "Передати простий текст"
 # used on mobile
 msgid "dlg.upload.file"
 msgstr "Передати файл"
+
+msgid "dlg.translate.unavail"
+msgstr "Сервіс недоступний"
+
+msgid "dlg.translate.fail"
+msgstr "Запит не виконано"
+
+msgid "dlg.translate.from"
+msgstr "З:"
+
+msgid "dlg.translate.to"
+msgstr "На:"
+
+msgid "lang.ar"
+msgstr "Арабська"
+
+msgid "lang.de"
+msgstr "Німецька"
+
+msgid "lang.ia"
+msgstr "Інтерлінгва"
+
+msgid "dlg.translate"
+msgstr "Перекласти"
+
+msgid "lang.zh"
+msgstr "Китайська"
+
+msgid "lang.zh.hans"
+msgstr "Китайська (спрощена)"
+
+msgid "lang.zh.hant"
+msgstr "Китайська (традиційна)"
+
+msgid "lang.en"
+msgstr "Англійська"
