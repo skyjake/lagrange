@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-21 21:23+0000\n"
+"PO-Revision-Date: 2021-10-21 21:37+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1330,3 +1330,59 @@ msgstr "НАЛАШТУВАННЯ"
 # tab button
 msgid "heading.prefs.general"
 msgstr "Загальні"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Інтерфейс"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Клавіші"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Мережа"
+
+msgid "heading.prefs.paragraph"
+msgstr "АБЗАЦ"
+
+msgid "heading.prefs.uitheme"
+msgstr "КОЛЬОРИ ІК"
+
+msgid "heading.prefs.pagecontent"
+msgstr "КОЛЬОРИ СТОРІНКИ"
+
+msgid "heading.prefs.proxies"
+msgstr "ПРОКСІ"
+
+msgid "heading.prefs.scrolling"
+msgstr "ПРОКРУЧУВАННЯ"
+
+msgid "heading.prefs.sizing"
+msgstr "РОЗМІРИ"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Стиль"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Інтерфейс користувача"
+
+msgid "prefs.downloads"
+msgstr "Тека завантажень:"
+
+msgid "prefs.hoverlink"
+msgstr "Показувати URL при наведенні:"
+
+msgid "heading.prefs.widelayout"
+msgstr "ШИРОКИЙ МАКЕТ"
+
+msgid "prefs.searchurl"
+msgstr "URL пошуку:"
+
+msgid "prefs.centershort"
+msgstr "Вертикальне центрування:"
+
+msgid "prefs.collapsepreonload"
+msgstr "Згортати преформатований текст:"
