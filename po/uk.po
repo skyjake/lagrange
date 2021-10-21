@@ -1294,3 +1294,9 @@ msgstr "Мітки:"
 
 msgid "dlg.bookmark.icon"
 msgstr "Значок:"
+
+msgid "heading.bookmark.tags"
+msgstr "ОСОБЛИВІ МІТКИ"
+
+msgid "heading.addfolder"
+msgstr "ДОДАТИ ТЕКУ"
