@@ -1889,6 +1889,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     }
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
+    addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
     if (switchToNew) {
         postCommandf_App("tabs.switch page:%p", doc);
@@ -2586,7 +2587,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "tabs.close")) {
         iWidget *tabs = findWidget_App("doctabs");
 #if defined (iPlatformMobile)
-        /* Can't close the last on mobile. */
+        /* Can't close the last tab on mobile. */
         if (tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
             postCommand_App("navigate.home");
             return iTrue;

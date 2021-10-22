@@ -109,7 +109,7 @@ enum iWidgetFlag {
 #define extraPadding_WidgetFlag             iBit64(49)
 #define borderBottom_WidgetFlag             iBit64(50)
 #define horizontalOffset_WidgetFlag         iBit64(51) /* default is vertical offset */
-#define chevron_WidgetFlag                  iBit64(52)
+#define visibleOnParentHover_WidgetFlag     iBit64(52)
 #define drawBackgroundToBottom_WidgetFlag   iBit64(53)
 #define dragged_WidgetFlag                  iBit64(54)
 #define hittable_WidgetFlag                 iBit64(55)

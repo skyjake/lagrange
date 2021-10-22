@@ -734,7 +734,8 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             iLabelWidget * button =
                 addChildFlags_Widget(topPanel,
                                      iClob(makePanelButton_(cstr_String(label), "panel.open")),
-                                     chevron_WidgetFlag | borderTop_WidgetFlag);
+                                     borderTop_WidgetFlag);
+            setChevron_LabelWidget(button, iTrue);
             const iChar icon = toInt_String(string_Command(item->label, "icon"));
             if (icon) {
                 setIcon_LabelWidget(button, icon);

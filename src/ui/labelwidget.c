@@ -51,6 +51,7 @@ struct Impl_LabelWidget {
         uint8_t wrap                : 1;
         uint8_t allCaps             : 1;
         uint8_t removeTrailingColon : 1;
+        uint8_t chevron             : 1;
     } flags;
 };
 
@@ -307,7 +308,7 @@ static iRect contentBounds_LabelWidget_(const iLabelWidget *d) {
 
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
-    draw_Widget(w);
+    drawBackground_Widget(w);
     const iBool   isButton = d->click.button != 0;
     const int64_t flags    = flags_Widget(w);
     const iRect   bounds   = bounds_Widget(w);
@@ -421,7 +422,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             "%s",
             cstr_String(&d->label));
     }
-    if (flags & chevron_WidgetFlag) {
+    if (d->flags.chevron) {
         const iRect chRect = rect;
         const int chSize = lineHeight_Text(d->font);
         drawCentered_Text(d->font,
@@ -430,6 +431,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                           iTrue, iconColor, rightAngle_Icon);
     }
     unsetClip_Paint(&p);
+    drawChildren_Widget(w);
 }
 
 static void sizeChanged_LabelWidget_(iLabelWidget *d) {
@@ -565,6 +567,10 @@ void setNoAutoMinHeight_LabelWidget(iLabelWidget *d, iBool noAutoMinHeight) {
 
 void setNoTopFrame_LabelWidget(iLabelWidget *d, iBool noTopFrame) {
     d->flags.noTopFrame = noTopFrame;
+}
+
+void setChevron_LabelWidget(iLabelWidget *d, iBool chevron) {
+    d->flags.chevron = chevron;
 }
 
 void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {

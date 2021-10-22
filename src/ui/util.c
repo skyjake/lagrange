@@ -1436,7 +1436,7 @@ void resizeToLargestPage_Widget(iWidget *tabs) {
 //    puts("... DONE WITH RESIZE TO LARGEST PAGE");
 }
 
-iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
+static iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
     iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
     iForEach(ObjectList, i, buttons->children) {
         iAssert(isInstance_Object(i.object, &Class_LabelWidget));
@@ -1446,6 +1446,19 @@ iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
         }
     }
     return NULL;
+}
+
+void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *command) {
+    iLabelWidget *tabButton = tabButtonForPage_Widget_(tabs, page);
+//    setPadding1_Widget(as_Widget(tabButton), gap_UI / 8);
+    iLabelWidget *close     = addChildFlags_Widget(
+        as_Widget(tabButton),
+        iClob(new_LabelWidget(close_Icon,
+                              format_CStr("%s id:%s", command, cstr_String(id_Widget(page))))),
+        moveToParentRightEdge_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag |
+            hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
+    updateSize_LabelWidget(close);
+    printTree_Widget(tabs);
 }
 
 void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
