@@ -65,7 +65,7 @@ void init_Prefs(iPrefs *d) {
     d->gemtextAnsiEscapes = allowFg_AnsiFlag;
     d->monospaceGemini   = iFalse;
     d->monospaceGopher   = iFalse;
-    d->boldLinkVisited   = iTrue;
+    d->boldLinkVisited   = iFalse;
     d->boldLinkDark      = iTrue;
     d->boldLinkLight     = iTrue;
     d->lineWidth         = 38;

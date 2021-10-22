@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.8
+New features:
+
+Changes and enhancements:
+
+Fixes:
+
 ## 1.7.3
 * Fixed a memory leak in the text renderer.
 * Added option to place new bookmarks to the top of the bookmarks list.
