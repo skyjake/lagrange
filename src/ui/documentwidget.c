@@ -4584,7 +4584,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 appendCStr_String(&str, " \u2014 ");
                 appendCStr_String(
                     &str, escape_Color(linkColor_GmDocument(doc, run->linkId, visited_GmLinkPart)));
-                append_String(&str, collect_String(format_Date(&date, "%b %d")));
+                iString *dateStr = format_Date(&date, "%b %d");
+                append_String(&str, dateStr);
+                delete_String(dateStr);
             }
             if (!isEmpty_String(&str)) {
                 if (run->isRTL) {

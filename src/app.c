@@ -1155,13 +1155,13 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
     return SDL_PollEvent(event);
 }
 
-static const iPtrArray *listWindows_App_(const iApp *d) {
-    iPtrArray *list = collectNew_PtrArray();
+static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
+    clear_PtrArray(windows);
     iReverseConstForEach(PtrArray, i, &d->popupWindows) {
-        pushBack_PtrArray(list, i.ptr);
+        pushBack_PtrArray(windows, i.ptr);
     }
-    pushBack_PtrArray(list, d->window);
-    return list;
+    pushBack_PtrArray(windows, d->window);
+    return windows;
 }
 
 void processEvents_App(enum iAppEventMode eventMode) {
@@ -1169,6 +1169,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
     iRoot *oldCurrentRoot = current_Root(); /* restored afterwards */
     SDL_Event ev;
     iBool gotEvents = iFalse;
+    iPtrArray windows;
+    init_PtrArray(&windows);
     while (nextEvent_App_(d, eventMode, &ev)) {
 #if defined (iPlatformAppleMobile)
         if (processEvent_iOS(&ev)) {
@@ -1331,7 +1333,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #endif
                 /* Per-window processing. */
                 iBool wasUsed = iFalse;
-                iConstForEach(PtrArray, iter, listWindows_App_(d)) {
+                listWindows_App_(d, &windows);
+                iConstForEach(PtrArray, iter, &windows) {
                     iWindow *window = iter.ptr;
                     setCurrent_Window(window);
                     window->lastHover = window->hover;
@@ -1364,7 +1367,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     handleCommand_Win32(command_UserEvent(&ev));
 #endif
                     if (isMetricsChange_UserEvent(&ev)) {
-                        iConstForEach(PtrArray, iter, listWindows_App_(d)) {
+                        listWindows_App_(d, &windows);
+                        iConstForEach(PtrArray, iter, &windows) {
                             iWindow *window = iter.ptr;
                             iForIndices(i, window->roots) {
                                 iRoot *root = window->roots[i];
@@ -1383,7 +1387,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     free(ev.user.data1);
                 }
                 /* Refresh after hover changes. */ {
-                    iConstForEach(PtrArray, iter, listWindows_App_(d)) {
+                    listWindows_App_(d, &windows);
+                    iConstForEach(PtrArray, iter, &windows) {
                         iWindow *window = iter.ptr;
                         if (window->lastHover != window->hover) {
                             refresh_Widget(window->lastHover);
@@ -1395,6 +1400,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
             }
         }
     }
+    deinit_PtrArray(&windows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->isIdling && !gotEvents) {
         /* This is where we spend most of our time when idle. 60 Hz still quite a lot but we
@@ -1482,9 +1488,11 @@ void refresh_App(void) {
         return;
     }
 #endif
-    const iPtrArray *windows = listWindows_App_(d);
+    iPtrArray windows;
+    init_PtrArray(&windows);
+    listWindows_App_(d, &windows);
     /* Destroy pending widgets. */ {
-        iConstForEach(PtrArray, j, windows) {
+        iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             setCurrent_Window(win);
             iForIndices(i, win->roots) {
@@ -1495,12 +1503,10 @@ void refresh_App(void) {
             }
         }
     }
-    /* TODO: Pending refresh is window-specific. */
-    if (!exchange_Atomic(&d->pendingRefresh, iFalse)) {
-        return;
-    }
-    /* Draw each window. */ {
-        iConstForEach(PtrArray, j, windows) {
+    /* TODO: `pendingRefresh` should be window-specific. */
+    if (exchange_Atomic(&d->pendingRefresh, iFalse)) {
+        /* Draw each window. */
+        iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             setCurrent_Window(win);
             switch (win->type) {
@@ -1520,6 +1526,7 @@ void refresh_App(void) {
     if (d->warmupFrames > 0) {
         d->warmupFrames--;
     }
+    deinit_PtrArray(&windows);
 }
 
 iBool isRefreshPending_App(void) {
@@ -2096,7 +2103,7 @@ const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
 
 void resetFonts_App(void) {
     iApp *d = &app_;
-    iConstForEach(PtrArray, win, listWindows_App_(d)) {
+    iConstForEach(PtrArray, win, listWindows_App_(d, collectNew_PtrArray())) {
         resetFonts_Text(text_Window(win.ptr));
     }
 }
