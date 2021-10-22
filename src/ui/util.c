@@ -1451,14 +1451,17 @@ static iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page
 void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *command) {
     iLabelWidget *tabButton = tabButtonForPage_Widget_(tabs, page);
 //    setPadding1_Widget(as_Widget(tabButton), gap_UI / 8);
+    setPadding_Widget(as_Widget(tabButton), 0, 0, 0, gap_UI / 4);
+    setFlags_Widget(as_Widget(tabButton), arrangeVertical_WidgetFlag | resizeHeightOfChildren_WidgetFlag, iTrue);
     iLabelWidget *close     = addChildFlags_Widget(
         as_Widget(tabButton),
         iClob(new_LabelWidget(close_Icon,
                               format_CStr("%s id:%s", command, cstr_String(id_Widget(page))))),
         moveToParentRightEdge_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag |
-            hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
+            noBackground_WidgetFlag | hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
+    setNoAutoMinHeight_LabelWidget(close, iTrue);
     updateSize_LabelWidget(close);
-    printTree_Widget(tabs);
+//    printTree_Widget(tabs);
 }
 
 void showTabPage_Widget(iWidget *tabs, const iWidget *page) {

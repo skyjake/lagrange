@@ -944,7 +944,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         pushBackCStr_StringArray(title, "Lagrange");
     }
     /* Take away parts if it doesn't fit. */
-    const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 3 * gap_UI;
+    const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 7 * gap_UI;
     iBool     setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
     const int font      = uiLabel_FontId;
     for (;;) {
