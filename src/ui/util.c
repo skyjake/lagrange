@@ -1708,9 +1708,12 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     setId_Widget(
         addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag),
         "valueinput.title");
-    setId_Widget(
-        addChildFlags_Widget(dlg, iClob(new_LabelWidget(prompt, NULL)), frameless_WidgetFlag),
-        "valueinput.prompt");
+    iLabelWidget *promptLabel;
+    setId_Widget(addChildFlags_Widget(
+                     dlg, iClob(promptLabel = new_LabelWidget(prompt, NULL)), frameless_WidgetFlag
+                     | resizeToParentWidth_WidgetFlag | fixedHeight_WidgetFlag),
+                 "valueinput.prompt");
+    setWrap_LabelWidget(promptLabel, iTrue);
     iInputWidget *input = addChildFlags_Widget(dlg, iClob(new_InputWidget(0)),
                                                resizeToParentWidth_WidgetFlag);
     setContentPadding_InputWidget(input, 0.5f * gap_UI, 0.5f * gap_UI);
