@@ -798,8 +798,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
     d->lastTickerTime         = SDL_GetTicks();
     d->elapsedSinceLastTicker = 0;
-    d->commandEcho            = checkArgument_CommandLine(&d->args, "echo;E") != NULL;
-    d->forceSoftwareRender    = checkArgument_CommandLine(&d->args, "sw") != NULL;
+    d->commandEcho            = iClob(checkArgument_CommandLine(&d->args, "echo;E")) != NULL;
+    d->forceSoftwareRender    = iClob(checkArgument_CommandLine(&d->args, "sw")) != NULL;
     d->initialWindowRect      = init_Rect(-1, -1, 900, 560);
 #if defined (iPlatformMsys)
     /* Must scale by UI scaling factor. */

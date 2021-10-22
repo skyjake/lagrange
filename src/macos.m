@@ -399,6 +399,7 @@ void registerURLHandler_MacOS(void) {
             andSelector:@selector(handleURLEvent:withReplyEvent:)
           forEventClass:kInternetEventClass
              andEventID:kAEGetURL];
+    [handler release];
 }
 
 void setupApplication_MacOS(void) {
