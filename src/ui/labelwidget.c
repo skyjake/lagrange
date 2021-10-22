@@ -268,7 +268,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         }
     }
     if (d->forceFg >= 0) {
-        *fg = *icon = *meta = d->forceFg;
+        *fg = /* *icon = */ *meta = d->forceFg;
     }
     if (isPress) {
         if (colorEscape == uiTextAction_ColorId || colorEscape == uiTextCaution_ColorId) {

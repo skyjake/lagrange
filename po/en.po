@@ -348,6 +348,9 @@ msgstr "About Pages"
 msgid "menu.about"
 msgstr "About"
 
+msgid "menu.fonts"
+msgstr "Manage Fonts…"
+
 msgid "panel.back"
 msgstr "Back"
 

@@ -1449,19 +1449,24 @@ static iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page
 }
 
 void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *command) {
+    if (deviceType_App() == phone_AppDeviceType) {
+        return; /* Close buttons not used on a phone due to lack of space. */
+    }
     iLabelWidget *tabButton = tabButtonForPage_Widget_(tabs, page);
-//    setPadding1_Widget(as_Widget(tabButton), gap_UI / 8);
     setPadding_Widget(as_Widget(tabButton), 0, 0, 0, gap_UI / 4);
     setFlags_Widget(as_Widget(tabButton), arrangeVertical_WidgetFlag | resizeHeightOfChildren_WidgetFlag, iTrue);
-    iLabelWidget *close     = addChildFlags_Widget(
+    iLabelWidget *close = addChildFlags_Widget(
         as_Widget(tabButton),
         iClob(new_LabelWidget(close_Icon,
                               format_CStr("%s id:%s", command, cstr_String(id_Widget(page))))),
         moveToParentRightEdge_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag |
             noBackground_WidgetFlag | hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        setFlags_Widget(as_Widget(close),
+                        hidden_WidgetFlag | visibleOnParentHover_WidgetFlag, iFalse);
+    }
     setNoAutoMinHeight_LabelWidget(close, iTrue);
     updateSize_LabelWidget(close);
-//    printTree_Widget(tabs);
 }
 
 void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
@@ -2259,6 +2264,7 @@ iWidget *makePreferences_Widget(void) {
             { NULL }  
         };
         const iMenuItem boldLinkItems[] = {
+            { "button id:prefs.boldlink.visited" },
             { "button id:prefs.boldlink.dark" },
             { "button id:prefs.boldlink.light" },
             { NULL }  
@@ -2273,6 +2279,7 @@ iWidget *makePreferences_Widget(void) {
             { "heading text:${prefs.searchurl}" },
             { "input id:prefs.searchurl url:1 noheading:1" },
             { "padding" },
+            { "toggle id:prefs.bookmarks.addbottom" },
             { "toggle id:prefs.archive.openindex" },
             { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
             { "padding" },
@@ -2305,10 +2312,17 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem fontPanelItems[] = {
             { "title id:heading.prefs.fonts" },
-            { "dropdown id:prefs.headingfont", 0, 0, (const void *) constData_Array(makeFontItems_("headingfont")) },
-            { "dropdown id:prefs.font", 0, 0, (const void *) constData_Array(makeFontItems_("font")) },
+            { "dropdown id:prefs.font.heading", 0, 0, (const void *) constData_Array(makeFontItems_("heading")) },
+            { "dropdown id:prefs.font.body", 0, 0, (const void *) constData_Array(makeFontItems_("body")) },
+            { "dropdown id:prefs.font.mono", 0, 0, (const void *) constData_Array(makeFontItems_("mono")) },
             { "buttons id:prefs.mono", 0, 0, (const void *) monoFontItems },
-            { "buttons id:prefs.boldlink", 0, 0, (const void *) boldLinkItems },
+            { "dropdown id:prefs.font.monodoc", 0, 0, (const void *) constData_Array(makeFontItems_("monodoc")) },
+            { "padding" },
+            { "toggle id:prefs.font.smooth" },
+            { "padding" },
+            { "dropdown id:prefs.font.ui", 0, 0, (const void *) constData_Array(makeFontItems_("ui")) },
+            { "padding" },
+            { "button text:" fontpack_Icon " ${menu.fonts}", 0, 0, "!open url:about:fonts" },
             { NULL }  
         };
         const iMenuItem stylePanelItems[] = {
@@ -2317,6 +2331,7 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "input id:prefs.linespacing maxlen:5" },
             { "radio id:prefs.quoteicon", 0, 0, (const void *) quoteItems },
+            { "buttons id:prefs.boldlink", 0, 0, (const void *) boldLinkItems },
             { "padding" },
             { "toggle id:prefs.biglede" },
             { "toggle id:prefs.plaintext.wrap" },
@@ -2582,8 +2597,8 @@ iWidget *makePreferences_Widget(void) {
             addChildFlags_Widget(values, iClob(ansi), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
             addDialogPadding_(headings, values);
-            addFontButtons_(values, "ui");
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
+            addFontButtons_(values, "ui");
             //            addDialogPadding_(headings, values);
 //            /* Custom font. */ {
 //                iInputWidget *customFont = new_InputWidget(0);
