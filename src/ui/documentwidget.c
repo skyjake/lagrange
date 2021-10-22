@@ -2683,6 +2683,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateSize_DocumentWidget(d);
             showOrHidePinningIndicator_DocumentWidget_(d);
             updateFetchProgress_DocumentWidget_(d);
+            updateHover_Window(window_Widget(w));
         }
         init_Anim(&d->sideOpacity, 0);
         init_Anim(&d->altTextOpacity, 0);

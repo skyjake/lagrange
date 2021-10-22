@@ -952,6 +952,10 @@ static void applyCursor_Window_(iWindow *d) {
     }
 }
 
+void updateHover_Window(iWindow *d) {
+    d->hover = hitChild_Window(d, mouseCoord_Window(d, 0));
+}
+
 iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     iMainWindow *mw = (type_Window(d) == main_WindowType ? as_MainWindow(d) : NULL);
     switch (ev->type) {
@@ -1149,6 +1153,9 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
 }
 
 iAnyObject *hitChild_Window(const iWindow *d, iInt2 coord) {
+    if (coord.x < 0 || coord.y < 0) {
+        return NULL;
+    }
     iForIndices(i, d->roots) {
         if (d->roots[i]) {
             iAnyObject *hit = hitChild_Widget(d->roots[i]->widget, coord);
