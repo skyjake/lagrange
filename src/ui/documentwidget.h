@@ -32,6 +32,8 @@ iDeclareType(History)
 iDeclareWidgetClass(DocumentWidget)
 iDeclareObjectConstruction(DocumentWidget)
 
+void    cancelAllRequests_DocumentWidget(iDocumentWidget *);
+
 void    serializeState_DocumentWidget   (const iDocumentWidget *, iStream *outs);
 void    deserializeState_DocumentWidget (iDocumentWidget *, iStream *ins);
 
@@ -45,6 +47,9 @@ const iGmDocument * document_DocumentWidget         (const iDocumentWidget *);
 const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
+
+//iBool   findCachedContent_DocumentWidget(const iDocumentWidget *, const iString *url,
+//                                         iString *mime_out, iBlock *data_out);
 
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),

@@ -247,3 +247,12 @@ const char *formatCStr_Lang(const char *formatMsgId, int count) {
 const char *formatCStrs_Lang(const char *formatMsgId, size_t count) {
     return format_CStr(cstrCount_Lang(formatMsgId, (int) count), count);
 }
+
+const char *format_Lang(const char *formatTextWithIds, ...) {
+    iBlock *msg = new_Block(0);
+    va_list args;
+    va_start(args, formatTextWithIds);
+    vprintf_Block(msg, translateCStr_Lang(formatTextWithIds), args);
+    va_end(args);
+    return cstr_Block(collect_Block(msg));
+}

@@ -385,7 +385,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     else if (flags & alignLeft_WidgetFlag) {
         draw_Text(d->font, add_I2(bounds.pos, addX_I2(padding_LabelWidget_(d, 0), iconPad)),
-                  fg, cstr_String(&d->label));
+                  fg, "%s", cstr_String(&d->label));
         if ((flags & drawKey_WidgetFlag) && d->key) {
             iString str;
             init_String(&str);
@@ -400,6 +400,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                            : colorEscape != none_ColorId ? colorEscape
                                                       : uiTextShortcut_ColorId,*/
                            right_Alignment,
+                           "%s",
                            cstr_String(&str));
             deinit_String(&str);
         }
@@ -410,6 +411,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             add_I2(topRight_Rect(bounds), negX_I2(padding_LabelWidget_(d, 1))),
             fg,
             right_Alignment,
+            "%s",
             cstr_String(&d->label));
     }
     else {

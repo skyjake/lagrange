@@ -160,7 +160,7 @@ enum iColorId {
     tmGopherLinkDomain_ColorId,
     tmGopherLinkLastVisitDate_ColorId,
 
-    max_ColorId,
+    max_ColorId, /* note: GmRun packs color into limited number of bits */
     tmMax_ColorId = max_ColorId - tmFirst_ColorId
 };
 

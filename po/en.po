@@ -448,6 +448,16 @@ msgid_plural "num.bytes.n"
 msgstr[0] "%zu byte"
 msgstr[1] "%zu bytes"
 
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu file"
+msgstr[1] "%zu files"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu font"
+msgstr[1] "%zu fonts"
+
 # strftime() formatted, split on two lines
 #, c-format
 msgid "page.timestamp"
@@ -1195,6 +1205,9 @@ msgstr "YYYY-MM-DD Links"
 msgid "dlg.feed.type.headings"
 msgstr "New Headings"
 
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignore HTTP(S) links:"
+
 msgid "dlg.feed.save"
 msgstr "Save Settings"
 
@@ -1451,14 +1464,27 @@ msgstr "Text Color"
 msgid "prefs.imagestyle.preformat"
 msgstr "Preformatted Color"
 
-msgid "prefs.headingfont"
-msgstr "Heading font:"
+msgid "prefs.font.ui"
+msgstr "UI:"
+
+msgid "prefs.font.heading"
+msgstr "Headings:"
+
+msgid "prefs.font.body"
+msgstr "Body:"
+
+msgid "prefs.font.mono"
+msgstr "Preformatted:"
 
 msgid "prefs.font"
 msgstr "Body font:"
 
 msgid "prefs.mono"
 msgstr "Monospace body:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Monospace font:"
 
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
@@ -1469,6 +1495,9 @@ msgstr "Gopher"
 msgid "prefs.boldlink"
 msgstr "Bold links:"
 
+msgid "prefs.boldlink.visited"
+msgstr "Visited"
+
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
 msgstr "On Dark"
@@ -1477,11 +1506,17 @@ msgstr "On Dark"
 msgid "prefs.boldlink.light"
 msgstr "On Light"
 
-msgid "prefs.userfont"
-msgstr "Symbol font:"
+msgid "prefs.gemtext.ansi"
+msgstr "ANSI escapes:"
 
-msgid "hint.prefs.userfont"
-msgstr "path of a TrueType font"
+msgid "prefs.gemtext.ansi.fg"
+msgstr "FG Color"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Font Style"
+
+msgid "prefs.font.smooth"
+msgstr "Smoothing:"
 
 msgid "prefs.linewidth"
 msgstr "Line width:"
@@ -1851,3 +1886,81 @@ msgstr "Language"
 
 msgid "gempub.meta.license"
 msgstr "License"
+
+msgid "heading.fontpack.meta"
+msgstr "Fonts"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Enabled fontpacks"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Disabled fontpacks"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "View file"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Version %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Installed"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Not installed"
+
+msgid "fontpack.meta.disabled"
+msgstr ", disabled"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Enable \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Disable \"%s\""
+
+msgid "fontpack.export"
+msgstr "View fontpack.ini template"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Install \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Upgrade \"%s\" to version %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Permanently delete \"%s\""
+
+msgid "heading.fontpack.delete"
+msgstr "DELETE FONTPACK"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Do you really want to permanently delete\nthe fontpack \"%s\"?"
+
+msgid "dlg.fontpack.delete"
+msgstr "Delete Fontpack"
+
+msgid "fontpack.help"
+msgstr "Lagrange fontpacks are ZIP archives that contain a set of font files and associated configuration parameters. Once installed, the fonts can be used for document content and the UI. The active fonts are selected using Preferences > Fonts."
+
+msgid "fontpack.install.ttf"
+msgstr "Install TrueType Font"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Open User Fonts Directory"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Show Installed Fonts"
+
+msgid "truetype.help"
+msgstr "Lagrange attempts to load all individual TrueType files that are copied to the user fonts directory."
+
+msgid "truetype.help.installed"
+msgstr "This font is installed in the user fonts directory."
+

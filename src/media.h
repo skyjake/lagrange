@@ -22,12 +22,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "fontpack.h"
+
 #include <the_Foundation/block.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/vec2.h>
 #include <SDL_render.h>
-
-typedef uint16_t iMediaId;
 
 iDeclareType(Player)
 iDeclareType(GmMediaInfo)
@@ -38,6 +38,7 @@ struct Impl_GmMediaInfo {
     iBool       isPermanent;
 };
 
+iDeclareType(MediaId)
 iDeclareType(Media)
 iDeclareTypeConstruction(Media)
 
@@ -46,25 +47,63 @@ enum iMediaFlags {
     partialData_MediaFlag = iBit(2),
 };
 
-void    clear_Media             (iMedia *);
-iBool   setDownloadUrl_Media    (iMedia *, uint16_t linkId, const iString *url);
-iBool   setData_Media           (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, int flags);
+enum iMediaType { /* Note: There is a limited number of bits for these; see GmRun below. */
+    none_MediaType,
+    image_MediaType,
+    //animatedImage_MediaType, /* TODO */
+    audio_MediaType,
+    download_MediaType,
+    max_MediaType
+};
 
-size_t  memorySize_Media        (const iMedia *);
+struct Impl_MediaId {
+    enum iMediaType type;
+    uint16_t id; /* see GmRun for actually used number of bits */
+};
 
-iMediaId        findLinkImage_Media (const iMedia *, uint16_t linkId);
-iBool           imageInfo_Media     (const iMedia *, iMediaId imageId, iGmMediaInfo *info_out);
-iInt2           imageSize_Media     (const iMedia *, iMediaId imageId);
-SDL_Texture *   imageTexture_Media  (const iMedia *, iMediaId imageId);
+iLocalDef size_t index_MediaId(const iMediaId mediaId) {
+    return (size_t) mediaId.id - 1;
+}
 
-size_t          numAudio_Media      (const iMedia *);
-iMediaId        findLinkAudio_Media (const iMedia *, uint16_t linkId);
-iBool           audioInfo_Media     (const iMedia *, iMediaId audioId, iGmMediaInfo *info_out);
-iPlayer *       audioPlayer_Media   (const iMedia *, iMediaId audioId);
-void            pauseAllPlayers_Media(const iMedia *, iBool setPaused);
+#define iInvalidMediaId     (iMediaId){ none_MediaType, 0 }
 
-iMediaId        findLinkDownload_Media  (const iMedia *, uint16_t linkId);
-iBool           downloadInfo_Media      (const iMedia *, iMediaId downloadId, iGmMediaInfo *info_out);
+void            clear_Media             (iMedia *);
+iBool           setUrl_Media            (iMedia *, uint16_t linkId, enum iMediaType mediaType, const iString *url);
+iBool           setData_Media           (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, int flags);
+
+size_t          memorySize_Media        (const iMedia *);
+iMediaId        findMediaForLink_Media  (const iMedia *, uint16_t linkId, enum iMediaType mediaType);
+
+iMediaId        id_Media        (const iMedia *, uint16_t linkId, enum iMediaType type);
+iBool           info_Media      (const iMedia *, iMediaId mediaId, iGmMediaInfo *info_out);
+
+iLocalDef iMediaId findLinkImage_Media(const iMedia *d, uint16_t linkId) {
+    return findMediaForLink_Media(d, linkId, image_MediaType);
+}
+iLocalDef iMediaId findLinkAudio_Media (const iMedia *d, uint16_t linkId) {
+    return findMediaForLink_Media(d, linkId, audio_MediaType);
+}
+iLocalDef iMediaId findLinkDownload_Media(const iMedia *d, uint16_t linkId) {
+    return findMediaForLink_Media(d, linkId, download_MediaType);
+}
+
+iLocalDef iBool imageInfo_Media(const iMedia *d, uint16_t mediaId, iGmMediaInfo *info_out) {
+    return info_Media(d, (iMediaId){ image_MediaType, mediaId }, info_out);
+}
+iLocalDef iBool audioInfo_Media(const iMedia *d, uint16_t mediaId, iGmMediaInfo *info_out) {
+    return info_Media(d, (iMediaId){ audio_MediaType, mediaId }, info_out);
+}
+iLocalDef iBool downloadInfo_Media(const iMedia *d, uint16_t mediaId, iGmMediaInfo *info_out) {
+    return info_Media(d, (iMediaId){ download_MediaType, mediaId }, info_out);
+}
+
+iInt2           imageSize_Media         (const iMedia *, iMediaId imageId);
+SDL_Texture *   imageTexture_Media      (const iMedia *, iMediaId imageId);
+
+size_t          numAudio_Media          (const iMedia *);
+iPlayer *       audioPlayer_Media       (const iMedia *, iMediaId audioId);
+void            pauseAllPlayers_Media   (const iMedia *, iBool setPaused);
+
 void            downloadStats_Media     (const iMedia *, iMediaId downloadId, const iString **path_out,
                                          float *bytesPerSecond_out, iBool *isFinished_out);
 
@@ -78,7 +117,7 @@ iDeclareClass(MediaRequest)
 struct Impl_MediaRequest {
     iObject          object;
     iDocumentWidget *doc;
-    unsigned int     linkId;
+    unsigned int     linkId;    
     iGmRequest *     req;
 };
 

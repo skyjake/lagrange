@@ -99,6 +99,7 @@ iStringSet *        listOpenURLs_App    (void); /* all tabs */
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 void                trimCache_App       (void);
 void                trimMemory_App      (void);
+//iBool               findCachedContent_App(const iString *url, iString *mime_out, iBlock *data_out);
 
 iDocumentWidget *   document_Root       (iRoot *);
 
@@ -137,6 +138,7 @@ iDocumentWidget *   document_Command    (const char *cmd);
 
 void            openInDefaultBrowser_App(const iString *url);
 void            revealPath_App          (const iString *path);
+void            resetFonts_App          (void);
 
 iMainWindow *   mainWindow_App  (void);
 void            closePopups_App (void);

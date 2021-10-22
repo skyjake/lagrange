@@ -537,6 +537,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #elif defined (iPlatformAppleMobile)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
     flags |= SDL_WINDOW_METAL;
+    d->base.isExposed = iTrue;
 #else
     if (!forceSoftwareRender_App()) {
         flags |= SDL_WINDOW_OPENGL;
@@ -615,7 +616,11 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
     }
 #endif
+#if defined (iPlatformDesktop)
     SDL_HideWindow(d->base.win);
+#else
+    SDL_ShowWindow(d->base.win);
+#endif
 }
 
 void deinit_MainWindow(iMainWindow *d) {
@@ -1188,12 +1193,12 @@ void draw_Window(iWindow *d) {
         extern int drawCount_;
         drawRoot_Widget(root->widget);
 #if !defined (NDEBUG)
-        draw_Text(defaultBold_FontId, safeRect_Root(root).pos, red_ColorId, "%d", drawCount_);
+        draw_Text(uiLabelBold_FontId, safeRect_Root(root).pos, red_ColorId, "%d", drawCount_);
         drawCount_ = 0;
 #endif
     }
-    drawRectThickness_Paint(
-        &p, (iRect){ zero_I2(), sub_I2(d->size, one_I2()) }, gap_UI / 4, uiSeparator_ColorId);
+    drawRectThickness_Paint(&p, (iRect){ zero_I2(), sub_I2(d->size, one_I2()) }, gap_UI / 4,
+                            uiBackgroundSelected_ColorId);
     setCurrent_Root(NULL);
     SDL_RenderPresent(d->render);
 }
@@ -1287,7 +1292,7 @@ void draw_MainWindow(iMainWindow *d) {
         }
         setCurrent_Root(NULL);
 #if !defined (NDEBUG)
-        draw_Text(defaultBold_FontId, safeRect_Root(w->roots[0]).pos, red_ColorId, "%d", drawCount_);
+        draw_Text(uiLabelBold_FontId, safeRect_Root(w->roots[0]).pos, red_ColorId, "%d", drawCount_);
         drawCount_ = 0;
 #endif
     }

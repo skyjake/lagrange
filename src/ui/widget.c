@@ -1042,7 +1042,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
     }
     else if (ev->type == SDL_MOUSEMOTION &&
-             ev->motion.windowID == SDL_GetWindowID(window_Widget(d)->win) &&
+             ev->motion.windowID == id_Window(window_Widget(d)) &&
              (!window_Widget(d)->hover || hasParent_Widget(d, window_Widget(d)->hover)) &&
              flags_Widget(d) & hover_WidgetFlag && !isHidden_Widget_(d) &&
              ~flags_Widget(d) & disabled_WidgetFlag) {
@@ -1087,7 +1087,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                     fflush(stdout);
                 }
 #endif
-#if 0
+#if 1
                 if (ev->type == SDL_MOUSEWHEEL) {
                     printf("[%p] %s:'%s' ate the wheel\n",
                            child, class_Widget(child)->name,
@@ -1415,7 +1415,8 @@ void drawBackground_Widget(const iWidget *d) {
             fillRect_Paint(&p, rect, d->bgColor);
         }
         if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {
-            drawRectThickness_Paint(&p, rect, gap_UI / 4, d->frameColor);
+            drawRectThickness_Paint(&p, adjusted_Rect(rect, zero_I2(), neg_I2(one_I2())),
+                                    gap_UI / 4, d->frameColor);
         }
     }
     if (d->flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag)) {

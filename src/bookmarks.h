@@ -35,6 +35,7 @@ iDeclareTypeConstruction(Bookmark)
 /* TODO: Make the special internal tags a bitfield, separate from user's tags. */
 
 #define headings_BookmarkTag        "headings"
+#define ignoreWeb_BookmarkTag       "ignoreweb"
 #define homepage_BookmarkTag        "homepage"
 #define linkSplit_BookmarkTag       "linksplit"
 #define remote_BookmarkTag          "remote"

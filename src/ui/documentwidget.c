@@ -228,6 +228,7 @@ enum iDocumentWidgetFlag {
     otherRootByDefault_DocumentWidgetFlag    = iBit(12), /* links open to other root by default */
     urlChanged_DocumentWidgetFlag            = iBit(13),
     openedFromSidebar_DocumentWidgetFlag     = iBit(14),
+    drawDownloadCounter_DocumentWidgetFlag   = iBit(15),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -275,7 +276,7 @@ struct Impl_DocumentWidget {
     enum iGmStatusCode sourceStatus;
     iString        sourceHeader;
     iString        sourceMime;
-    iBlock         sourceContent; /* original content as received, for saving */
+    iBlock         sourceContent; /* original content as received, for saving; set on request finish */
     iTime          sourceTime;
     iGempub *      sourceGempub; /* NULL unless the page is Gempub content */
     iGmDocument *  doc;
@@ -400,7 +401,18 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addAction_Widget(w, navigateRoot_KeyShortcut, "navigate.root");
 }
 
+void cancelAllRequests_DocumentWidget(iDocumentWidget *d) {
+    iForEach(ObjectList, i, d->media) {
+        iMediaRequest *mr = i.object;
+        cancel_GmRequest(mr->req);
+    }
+    if (d->request) {
+        cancel_GmRequest(d->request);
+    }
+}
+
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    cancelAllRequests_DocumentWidget(d);
     pauseAllPlayers_Media(media_GmDocument(d->doc), iTrue);
     removeTicker_App(animate_DocumentWidget_, d);
     removeTicker_App(prerender_DocumentWidget_, d);
@@ -496,7 +508,8 @@ static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
                                      -1.0f, 10.0f); /* adapt to width */
     //printf("%f\n", adjust); fflush(stdout);
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
-                 fontSize_UI * prefs->lineWidth * prefs->zoomPercent / 100);
+                 fontSize_UI * //emRatio_Text(paragraph_FontId) * /* dependent on avg. glyph width */
+                 prefs->lineWidth * prefs->zoomPercent / 100);
 }
 
 static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
@@ -557,13 +570,14 @@ static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
         }
         d->visibleRuns.end = run;
     }
-    if (run->preId) {
+    if (preId_GmRun(run)) {
         pushBack_PtrArray(&d->visiblePre, run);
         if (run->flags & wide_GmRunFlag) {
             pushBack_PtrArray(&d->visibleWideRuns, run);
         }
     }
-    if (run->mediaType == audio_GmRunMediaType || run->mediaType == download_GmRunMediaType) {
+    /* Image runs are static so they're drawn as part of the content. */
+    if (isMedia_GmRun(run) && run->mediaType != image_MediaType) {
         iAssert(run->mediaId);
         pushBack_PtrArray(&d->visibleMedia, run);
     }
@@ -622,14 +636,14 @@ static void invalidateVisibleLinks_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static int runOffset_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run) {
-    if (run->preId && run->flags & wide_GmRunFlag) {
-        if (d->animWideRunId == run->preId) {
+    if (preId_GmRun(run) && run->flags & wide_GmRunFlag) {
+        if (d->animWideRunId == preId_GmRun(run)) {
             return -value_Anim(&d->animWideRunOffset);
         }
         const size_t numOffsets = size_Array(&d->wideRunOffsets);
         const int *offsets = constData_Array(&d->wideRunOffsets);
-        if (run->preId <= numOffsets) {
-            return -offsets[run->preId - 1];
+        if (preId_GmRun(run) <= numOffsets) {
+            return -offsets[preId_GmRun(run) - 1];
         }
     }
     return 0;
@@ -643,6 +657,8 @@ static void invalidateWideRunsWithNonzeroOffset_DocumentWidget_(iDocumentWidget 
         }
     }
 }
+
+static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse);
 
 static void animate_DocumentWidget_(void *ticker) {
     iDocumentWidget *d = ticker;
@@ -718,7 +734,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         }
     }
     else if (d->hoverPre &&
-             preHasAltText_GmDocument(d->doc, d->hoverPre->preId) &&
+             preHasAltText_GmDocument(d->doc, preId_GmRun(d->hoverPre)) &&
              ~d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
         setValueSpeed_Anim(&d->altTextOpacity, 1.0f, 1.5f);
         if (!isFinished_Anim(&d->altTextOpacity)) {
@@ -757,14 +773,14 @@ static uint32_t mediaUpdateInterval_DocumentWidget_(const iDocumentWidget *d) {
     uint32_t interval = invalidInterval_;
     iConstForEach(PtrArray, i, &d->visibleMedia) {
         const iGmRun *run = i.ptr;
-        if (run->mediaType == audio_GmRunMediaType) {
-            iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
+        if (run->mediaType == audio_MediaType) {
+            iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(run));
             if (flags_Player(plr) & adjustingVolume_PlayerFlag ||
                 (isStarted_Player(plr) && !isPaused_Player(plr))) {
                 interval = iMin(interval, 1000 / 15);
             }
         }
-        else if (run->mediaType == download_GmRunMediaType) {
+        else if (run->mediaType == download_MediaType) {
             interval = iMin(interval, 1000);
         }
     }
@@ -783,8 +799,8 @@ static void updateMedia_DocumentWidget_(iDocumentWidget *d) {
         refresh_Widget(d);
         iConstForEach(PtrArray, i, &d->visibleMedia) {
             const iGmRun *run = i.ptr;
-            if (run->mediaType == audio_GmRunMediaType) {
-                iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
+            if (run->mediaType == audio_MediaType) {
+                iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(run));
                 if (idleTimeMs_Player(plr) > 3000 && ~flags_Player(plr) & volumeGrabbed_PlayerFlag &&
                     flags_Player(plr) & adjustingVolume_PlayerFlag) {
                     setFlags_Player(plr, adjustingVolume_PlayerFlag, iFalse);
@@ -928,8 +944,9 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         pushBackCStr_StringArray(title, "Lagrange");
     }
     /* Take away parts if it doesn't fit. */
-    const int avail = bounds_Widget(as_Widget(tabButton)).size.x - 3 * gap_UI;
-    iBool setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
+    const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 3 * gap_UI;
+    iBool     setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
+    const int font      = uiLabel_FontId;
     for (;;) {
         iString *text = collect_String(joinCStr_StringArray(title, " \u2014 "));
         if (setWindow) {
@@ -945,7 +962,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
             prependChar_String(text, siteIcon);
             prependCStr_String(text, escape_Color(uiIcon_ColorId));
         }
-        const int width = measureRange_Text(default_FontId, range_String(text)).advance.x;
+        const int width = measureRange_Text(font, range_String(text)).advance.x;
         if (width <= avail ||
             isEmpty_StringArray(title)) {
             updateText_LabelWidget(tabButton, text);
@@ -954,9 +971,9 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         if (size_StringArray(title) == 1) {
             /* Just truncate to fit. */
             const char *endPos;
-            tryAdvanceNoWrap_Text(default_FontId,
+            tryAdvanceNoWrap_Text(font,
                                   range_String(text),
-                                  avail - measure_Text(default_FontId, "...").advance.x,
+                                  avail - measure_Text(font, "...").advance.x,
                                   &endPos);
             updateText_LabelWidget(
                 tabButton,
@@ -1076,7 +1093,13 @@ static void replaceDocument_DocumentWidget_(iDocumentWidget *d, iGmDocument *new
 }
 
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
-    if (isEmpty_String(d->titleUser)) {
+    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
+        iBlock empty;
+        init_Block(&empty, 0);
+        setThemeSeed_GmDocument(d->doc, &empty);
+        deinit_Block(&empty);
+    }
+    else if (isEmpty_String(d->titleUser)) {
         setThemeSeed_GmDocument(d->doc,
                                 collect_Block(newRange_Block(urlHost_String(d->mod.url))));
     }
@@ -1115,7 +1138,8 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
             d->footerButtons,
             iClob(newKeyMods_LabelWidget(
                 items[i].label, items[i].key, items[i].kmods, items[i].command)),
-            alignLeft_WidgetFlag | drawKey_WidgetFlag);
+            alignLeft_WidgetFlag | drawKey_WidgetFlag | extraPadding_WidgetFlag);
+        setPadding1_Widget(as_Widget(button), gap_UI / 2);
         checkIcon_LabelWidget(button);
         setFont_LabelWidget(button, uiContent_FontId);
     }
@@ -1242,6 +1266,9 @@ static const char *zipPageHeading_(const iRangecc mime) {
     if (equalCase_Rangecc(mime, "application/gpub+zip")) {
         return book_Icon " Gempub";
     }
+    else if (equalCase_Rangecc(mime, mimeType_FontPack)) {
+        return fontpack_Icon " Fontpack";
+    }
     iRangecc type = iNullRange;
     nextSplit_Rangecc(mime, "/", &type); /* skip the part before the slash */
     nextSplit_Rangecc(mime, "/", &type);
@@ -1256,161 +1283,164 @@ static const char *zipPageHeading_(const iRangecc mime) {
 
 static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool isCached) {
     iWidget *w = as_Widget(d);
-    delete_Gempub(d->sourceGempub);
-    d->sourceGempub = NULL;
-    if (!cmpCase_String(&d->sourceMime, "application/octet-stream") ||
-        !cmpCase_String(&d->sourceMime, mimeType_Gempub) ||
-        endsWithCase_String(d->mod.url, ".gpub")) {
-        iGempub *gempub = new_Gempub();
-        if (open_Gempub(gempub, &d->sourceContent)) {
-            setBaseUrl_Gempub(gempub, d->mod.url);
-            setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
-            setCStr_String(&d->sourceMime, mimeType_Gempub);
-            d->sourceGempub = gempub;
-        }
-        else {
-            delete_Gempub(gempub);
-        }
-    }
-    if (!d->sourceGempub) {
-        const iString *localPath = collect_String(localFilePathFromUrl_String(d->mod.url));
-        iBool isInside = iFalse;
-        if (localPath && !fileExists_FileInfo(localPath)) {
-            /* This URL may refer to a file inside the archive. */
-            localPath = findContainerArchive_Path(localPath);
-            isInside = iTrue;
-        }
-        if (localPath && equal_CStr(mediaType_Path(localPath), "application/gpub+zip")) {
+    /* Gempub page behavior and footer actions. */ {
+        /* TODO: move this to gempub.c */
+        delete_Gempub(d->sourceGempub);
+        d->sourceGempub = NULL;
+        if (!cmpCase_String(&d->sourceMime, "application/octet-stream") ||
+            !cmpCase_String(&d->sourceMime, mimeType_Gempub) ||
+            endsWithCase_String(d->mod.url, ".gpub")) {
             iGempub *gempub = new_Gempub();
-            if (openFile_Gempub(gempub, localPath)) {
-                setBaseUrl_Gempub(gempub, collect_String(makeFileUrl_String(localPath)));
-                if (!isInside) {
-                    setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
-                    setCStr_String(&d->sourceMime, mimeType_Gempub);
-                }
+            if (open_Gempub(gempub, &d->sourceContent)) {
+                setBaseUrl_Gempub(gempub, d->mod.url);
+                setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
+                setCStr_String(&d->sourceMime, mimeType_Gempub);
                 d->sourceGempub = gempub;
             }
             else {
                 delete_Gempub(gempub);
             }
         }
-    }
-    if (d->sourceGempub) {
-        if (equal_String(d->mod.url, coverPageUrl_Gempub(d->sourceGempub))) {
-            if (!isRemote_Gempub(d->sourceGempub)) {
-                iArray *items = collectNew_Array(sizeof(iMenuItem));
-                pushBack_Array(
-                    items,
-                    &(iMenuItem){ book_Icon " ${gempub.cover.view}",
-                                  0,
-                                  0,
-                                  format_CStr("!open url:%s",
-                                              cstr_String(indexPageUrl_Gempub(d->sourceGempub))) });
-                if (navSize_Gempub(d->sourceGempub) > 0) {
-                    pushBack_Array(
-                        items,
-                        &(iMenuItem){
-                            format_CStr(forwardArrow_Icon " %s",
-                                        cstr_String(navLinkLabel_Gempub(d->sourceGempub, 0))),
-                            SDLK_RIGHT,
-                            0,
-                            format_CStr("!open url:%s",
-                                        cstr_String(navLinkUrl_Gempub(d->sourceGempub, 0))) });
-                }
-                makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));
+        if (!d->sourceGempub) {
+            const iString *localPath = collect_String(localFilePathFromUrl_String(d->mod.url));
+            iBool isInside = iFalse;
+            if (localPath && !fileExists_FileInfo(localPath)) {
+                /* This URL may refer to a file inside the archive. */
+                localPath = findContainerArchive_Path(localPath);
+                isInside = iTrue;
             }
-            else {
-                makeFooterButtons_DocumentWidget_(
-                    d,
-                    (iMenuItem[]){ { book_Icon " ${menu.save.downloads.open}",
-                                     SDLK_s,
-                                     KMOD_PRIMARY | KMOD_SHIFT,
-                                     "document.save open:1" },
-                                   { download_Icon " " saveToDownloads_Label,
-                                     SDLK_s,
-                                     KMOD_PRIMARY,
-                                     "document.save" } },
-                    2);
-            }
-            if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
-                redoLayout_GmDocument(d->doc);
-                updateVisible_DocumentWidget_(d);
-                invalidate_DocumentWidget_(d);
-            }
-        }
-        else if (equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
-            makeFooterButtons_DocumentWidget_(
-                d,
-                (iMenuItem[]){ { format_CStr(book_Icon " %s",
-                                             cstr_String(property_Gempub(d->sourceGempub,
-                                                                         title_GempubProperty))),
-                                 SDLK_LEFT,
-                                 0,
-                                 format_CStr("!open url:%s",
-                                             cstr_String(coverPageUrl_Gempub(d->sourceGempub))) } },
-                1);
-        }
-        else {
-            /* Navigation buttons. */
-            iArray *items = collectNew_Array(sizeof(iMenuItem));
-            const size_t navIndex = navIndex_Gempub(d->sourceGempub, d->mod.url);
-            if (navIndex != iInvalidPos) {
-                if (navIndex < navSize_Gempub(d->sourceGempub) - 1) {
-                    pushBack_Array(
-                        items,
-                        &(iMenuItem){
-                            format_CStr(forwardArrow_Icon " %s",
-                                        cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex + 1))),
-                            SDLK_RIGHT,
-                            0,
-                            format_CStr("!open url:%s",
-                                        cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex + 1))) });
-                }
-                if (navIndex > 0) {
-                    pushBack_Array(
-                        items,
-                        &(iMenuItem){
-                            format_CStr(backArrow_Icon " %s",
-                                        cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex - 1))),
-                            SDLK_LEFT,
-                            0,
-                            format_CStr("!open url:%s",
-                                        cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex - 1))) });
-                }
-                else if (!equalCase_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
-                    pushBack_Array(
-                        items,
-                        &(iMenuItem){
-                            format_CStr(book_Icon " %s",
-                                        cstr_String(property_Gempub(d->sourceGempub, title_GempubProperty))),
-                            SDLK_LEFT,
-                            0,
-                            format_CStr("!open url:%s",
-                                        cstr_String(coverPageUrl_Gempub(d->sourceGempub))) });
-                }
-            }
-            if (!isEmpty_Array(items)) {
-                makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));                
-            }
-        }
-        if (!isCached && prefs_App()->pinSplit &&
-            equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
-            const iString *navStart = navStartLinkUrl_Gempub(d->sourceGempub);
-            if (navStart) {
-                iWindow *win = get_Window();
-                /* Auto-split to show index and the first navigation link. */
-                if (numRoots_Window(win) == 2) {
-                    /* This document is showing the index page. */
-                    iRoot *other = otherRoot_Window(win, w->root);
-                    postCommandf_Root(other, "open url:%s", cstr_String(navStart));
-                    if (prefs_App()->pinSplit == 1 && w->root == win->roots[1]) {
-                        /* On the wrong side. */
-                        postCommand_App("ui.split swap:1");
+            if (localPath && equal_CStr(mediaType_Path(localPath), mimeType_Gempub)) {
+                iGempub *gempub = new_Gempub();
+                if (openFile_Gempub(gempub, localPath)) {
+                    setBaseUrl_Gempub(gempub, collect_String(makeFileUrl_String(localPath)));
+                    if (!isInside) {
+                        setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
+                        setCStr_String(&d->sourceMime, mimeType_Gempub);
                     }
+                    d->sourceGempub = gempub;
                 }
                 else {
-                    postCommandf_App(
-                        "open newtab:%d url:%s", otherRoot_OpenTabFlag, cstr_String(navStart));
+                    delete_Gempub(gempub);
+                }
+            }
+        }
+        if (d->sourceGempub) {
+            if (equal_String(d->mod.url, coverPageUrl_Gempub(d->sourceGempub))) {
+                if (!isRemote_Gempub(d->sourceGempub)) {
+                    iArray *items = collectNew_Array(sizeof(iMenuItem));
+                    pushBack_Array(
+                        items,
+                        &(iMenuItem){ book_Icon " ${gempub.cover.view}",
+                                      0,
+                                      0,
+                                      format_CStr("!open url:%s",
+                                                  cstr_String(indexPageUrl_Gempub(d->sourceGempub))) });
+                    if (navSize_Gempub(d->sourceGempub) > 0) {
+                        pushBack_Array(
+                            items,
+                            &(iMenuItem){
+                                format_CStr(forwardArrow_Icon " %s",
+                                            cstr_String(navLinkLabel_Gempub(d->sourceGempub, 0))),
+                                SDLK_RIGHT,
+                                0,
+                                format_CStr("!open url:%s",
+                                            cstr_String(navLinkUrl_Gempub(d->sourceGempub, 0))) });
+                    }
+                    makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));
+                }
+                else {
+                    makeFooterButtons_DocumentWidget_(
+                        d,
+                        (iMenuItem[]){ { book_Icon " ${menu.save.downloads.open}",
+                                         SDLK_s,
+                                         KMOD_PRIMARY | KMOD_SHIFT,
+                                         "document.save open:1" },
+                                       { download_Icon " " saveToDownloads_Label,
+                                         SDLK_s,
+                                         KMOD_PRIMARY,
+                                         "document.save" } },
+                        2);
+                }
+                if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
+                    redoLayout_GmDocument(d->doc);
+                    updateVisible_DocumentWidget_(d);
+                    invalidate_DocumentWidget_(d);
+                }
+            }
+            else if (equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
+                makeFooterButtons_DocumentWidget_(
+                    d,
+                    (iMenuItem[]){ { format_CStr(book_Icon " %s",
+                                                 cstr_String(property_Gempub(d->sourceGempub,
+                                                                             title_GempubProperty))),
+                                     SDLK_LEFT,
+                                     0,
+                                     format_CStr("!open url:%s",
+                                                 cstr_String(coverPageUrl_Gempub(d->sourceGempub))) } },
+                    1);
+            }
+            else {
+                /* Navigation buttons. */
+                iArray *items = collectNew_Array(sizeof(iMenuItem));
+                const size_t navIndex = navIndex_Gempub(d->sourceGempub, d->mod.url);
+                if (navIndex != iInvalidPos) {
+                    if (navIndex < navSize_Gempub(d->sourceGempub) - 1) {
+                        pushBack_Array(
+                            items,
+                            &(iMenuItem){
+                                format_CStr(forwardArrow_Icon " %s",
+                                            cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex + 1))),
+                                SDLK_RIGHT,
+                                0,
+                                format_CStr("!open url:%s",
+                                            cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex + 1))) });
+                    }
+                    if (navIndex > 0) {
+                        pushBack_Array(
+                            items,
+                            &(iMenuItem){
+                                format_CStr(backArrow_Icon " %s",
+                                            cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex - 1))),
+                                SDLK_LEFT,
+                                0,
+                                format_CStr("!open url:%s",
+                                            cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex - 1))) });
+                    }
+                    else if (!equalCase_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
+                        pushBack_Array(
+                            items,
+                            &(iMenuItem){
+                                format_CStr(book_Icon " %s",
+                                            cstr_String(property_Gempub(d->sourceGempub, title_GempubProperty))),
+                                SDLK_LEFT,
+                                0,
+                                format_CStr("!open url:%s",
+                                            cstr_String(coverPageUrl_Gempub(d->sourceGempub))) });
+                    }
+                }
+                if (!isEmpty_Array(items)) {
+                    makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));
+                }
+            }
+            if (!isCached && prefs_App()->pinSplit &&
+                equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
+                const iString *navStart = navStartLinkUrl_Gempub(d->sourceGempub);
+                if (navStart) {
+                    iWindow *win = get_Window();
+                    /* Auto-split to show index and the first navigation link. */
+                    if (numRoots_Window(win) == 2) {
+                        /* This document is showing the index page. */
+                        iRoot *other = otherRoot_Window(win, w->root);
+                        postCommandf_Root(other, "open url:%s", cstr_String(navStart));
+                        if (prefs_App()->pinSplit == 1 && w->root == win->roots[1]) {
+                            /* On the wrong side. */
+                            postCommand_App("ui.split swap:1");
+                        }
+                    }
+                    else {
+                        postCommandf_App(
+                            "open newtab:%d url:%s", otherRoot_OpenTabFlag, cstr_String(navStart));
+                    }
                 }
             }
         }
@@ -1438,7 +1468,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
         clear_String(&d->sourceMime);
         d->sourceTime = response->when;
         d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
-        initBlock_String(&str, &response->body);
+        initBlock_String(&str, &response->body); /* Note: Body may be megabytes in size. */
         if (isSuccess_GmStatusCode(statusCode)) {
             /* Check the MIME type. */
             iRangecc charset = range_CStr("utf-8");
@@ -1450,8 +1480,18 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
             while (nextSplit_Rangecc(mime, ";", &seg)) {
                 iRangecc param = seg;
                 trim_Rangecc(&param);
+                /* Detect fontpacks even if the server doesn't use the right media type. */
+                if (isRequestFinished && equal_Rangecc(param, "application/octet-stream")) {
+                    if (detect_FontPack(&response->body)) {
+                        param = range_CStr(mimeType_FontPack);
+                    }
+                }
                 if (equal_Rangecc(param, "text/gemini")) {
                     docFormat = gemini_SourceFormat;
+                    setRange_String(&d->sourceMime, param);
+                }
+                else if (equal_Rangecc(param, "text/markdown")) {
+                    docFormat = markdown_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                 }
                 else if (startsWith_Rangecc(param, "text/") ||
@@ -1461,20 +1501,82 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     docFormat = plainText_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                 }
-                else if (equal_Rangecc(param, "application/zip") ||
-                         (startsWith_Rangecc(param, "application/") &&
-                          endsWithCase_Rangecc(param, "+zip"))) {
+                else if (isRequestFinished && equal_Rangecc(param, "font/ttf")) {
+                    clear_String(&str);
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
-                    iString *key = collectNew_String();
-                    toString_Sym(SDLK_s, KMOD_PRIMARY, key);
-                    format_String(&str, "# %s\n", zipPageHeading_(param));
-                    appendFormat_String(&str,
-                                        cstr_Lang("doc.archive"),
-                                        cstr_Rangecc(baseName_Path(d->mod.url)));
+                    format_String(&str, "# TrueType Font\n");
+                    iString *decUrl      = collect_String(urlDecode_String(d->mod.url));
+                    iRangecc name        = baseName_Path(decUrl);
+                    iBool    isInstalled = iFalse;
+                    if (startsWith_String(collect_String(localFilePathFromUrl_String(d->mod.url)),
+                                          cstr_String(dataDir_App()))) {
+                        isInstalled = iTrue;
+                    }
+                    appendCStr_String(&str, "## ");
+                    appendRange_String(&str, name);
                     appendCStr_String(&str, "\n\n");
+                    appendCStr_String(
+                        &str, cstr_Lang(isInstalled ? "truetype.help.installed" : "truetype.help"));
+                    appendCStr_String(&str, "\n");
+                    if (!isInstalled) {
+                        makeFooterButtons_DocumentWidget_(
+                            d,
+                            (iMenuItem[]){
+                                { add_Icon " ${fontpack.install.ttf}",
+                                  SDLK_RETURN,
+                                  0,
+                                  format_CStr("!fontpack.install ttf:1 name:%s",
+                                              cstr_Rangecc(name)) },
+                                { folder_Icon " ${fontpack.open.fontsdir}",
+                                  SDLK_d,
+                                  0,
+                                  format_CStr("!open url:%s/fonts",
+                                              cstrCollect_String(makeFileUrl_String(dataDir_App())))
+                                }
+                            }, 2);
+                    }
+                }
+                else if (isRequestFinished &&
+                         (equal_Rangecc(param, "application/zip") ||
+                         (startsWith_Rangecc(param, "application/") &&
+                          endsWithCase_Rangecc(param, "+zip")))) {
+                    clear_String(&str);
+                    docFormat = gemini_SourceFormat;
+                    setRange_String(&d->sourceMime, param);
+                    format_String(&str, "# %s\n", zipPageHeading_(param));
+                    if (equal_Rangecc(param, mimeType_FontPack)) {
+                        /* Show some information about fontpacks, and set up footer actions. */
+                        iArchive *zip = iClob(new_Archive());
+                        if (openData_Archive(zip, &response->body)) {
+                            iFontPack *fp = new_FontPack();
+                            setUrl_FontPack(fp, d->mod.url);
+                            setStandalone_FontPack(fp, iTrue);
+                            if (loadArchive_FontPack(fp, zip)) {
+                                appendFormat_String(&str, "## %s\n%s",
+                                                    cstr_String(id_FontPack(fp).id),
+                                                    cstrCollect_String(infoText_FontPack(fp)));
+                            }
+                            appendCStr_String(&str, "\n");
+                            appendCStr_String(&str, cstr_Lang("fontpack.help"));
+                            appendCStr_String(&str, "\n");
+                            const iArray *actions = actions_FontPack(fp, iTrue);
+                            makeFooterButtons_DocumentWidget_(d, constData_Array(actions),
+                                                              size_Array(actions));
+                            delete_FontPack(fp);
+                        }
+                    }
+                    else {
+                        appendFormat_String(&str,
+                                            cstr_Lang("doc.archive"),
+                                            cstr_Rangecc(baseName_Path(d->mod.url)));
+                        appendCStr_String(&str, "\n");                        
+                    }
+                    appendCStr_String(&str, "\n");
                     iString *localPath = localFilePathFromUrl_String(d->mod.url);
                     if (!localPath) {
+                        iString *key = collectNew_String();
+                        toString_Sym(SDLK_s, KMOD_PRIMARY, key);
                         appendFormat_String(&str, "%s\n\n",
                                             format_CStr(cstr_Lang("error.unsupported.suggestsave"),
                                                         cstr_String(key),
@@ -1482,7 +1584,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     }
                     delete_String(localPath);
                     if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
-                        appendFormat_String(&str, "=> %s/ ${doc.archive.view}\n",
+                        appendFormat_String(&str, "=> %s/ " folder_Icon " ${doc.archive.view}\n",
                                             cstr_String(withSpacesEncoded_String(d->mod.url)));
                     }
                     translate_Lang(&str);
@@ -1491,6 +1593,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                          startsWith_Rangecc(param, "audio/")) {
                     const iBool isAudio = startsWith_Rangecc(param, "audio/");
                     /* Make a simple document with an image or audio player. */
+                    clear_String(&str);
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                     const iGmLinkId imgLinkId = 1; /* there's only the one link */
@@ -1540,7 +1643,14 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                 }
             }
             if (docFormat == undefined_SourceFormat) {
-                showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode, &response->meta);
+                if (isRequestFinished) {
+                    d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
+                    showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode, &response->meta);
+                    deinit_String(&str);
+                    return;
+                }
+                d->flags |= drawDownloadCounter_DocumentWidgetFlag;
+                clear_PtrSet(d->invalidRuns);
                 deinit_String(&str);
                 return;
             }
@@ -1574,6 +1684,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     clear_ObjectList(d->media);
     d->certFlags = 0;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
+    d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
     d->state = fetching_RequestState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
@@ -1619,7 +1730,7 @@ static void parseUser_DocumentWidget_(iDocumentWidget *d) {
 static void cacheRunGlyphs_(void *data, const iGmRun *run) {
     iUnused(data);
     if (!isEmpty_Range(&run->text)) {
-        cache_Text(run->textParams.font, run->text);
+        cache_Text(run->font, run->text);
     }
 }
 
@@ -1669,7 +1780,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     moveSpan_SmoothScroll(&d->scrollY, 0, 0); /* clamp position to new max */
     cacheDocumentGlyphs_DocumentWidget_(d);
     d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
-    d->flags &= ~urlChanged_DocumentWidgetFlag;
+    d->flags &= ~(urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag);
     postCommandf_Root(
         as_Widget(d)->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
 }
@@ -1708,6 +1819,10 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
     }
     if (!isFinished_SmoothScroll(&d->scrollY) || !isFinished_Anim(&d->animWideRunOffset)) {
         addTicker_App(refreshWhileScrolling_DocumentWidget_, d);
+    }
+    if (isFinished_SmoothScroll(&d->scrollY)) {
+        iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
+        updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window(), 0));
     }
 }
 
@@ -1781,10 +1896,10 @@ static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, 
                 maxWidth = iMax(maxWidth, width_Rect(r->visBounds));
             }
             const int maxOffset = maxWidth - documentWidth_DocumentWidget_(d) + d->pageMargin * gap_UI;
-            if (size_Array(&d->wideRunOffsets) <= run->preId) {
-                resize_Array(&d->wideRunOffsets, run->preId + 1);
+            if (size_Array(&d->wideRunOffsets) <= preId_GmRun(run)) {
+                resize_Array(&d->wideRunOffsets, preId_GmRun(run) + 1);
             }
-            int *offset = at_Array(&d->wideRunOffsets, run->preId - 1);
+            int *offset = at_Array(&d->wideRunOffsets, preId_GmRun(run) - 1);
             const int oldOffset = *offset;
             *offset = iClamp(*offset + delta, 0, maxOffset);
             /* Make sure the whole block gets redraw. */
@@ -1797,8 +1912,8 @@ static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, 
                 d->foundMark  = iNullRange;
             }
             if (duration) {
-                if (d->animWideRunId != run->preId || isFinished_Anim(&d->animWideRunOffset)) {
-                    d->animWideRunId = run->preId;
+                if (d->animWideRunId != preId_GmRun(run) || isFinished_Anim(&d->animWideRunOffset)) {
+                    d->animWideRunId = preId_GmRun(run);
                     init_Anim(&d->animWideRunOffset, oldOffset);
                 }
                 setValueEased_Anim(&d->animWideRunOffset, *offset, duration);
@@ -2087,7 +2202,7 @@ static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, 
 }
 
 static iBool isDownloadRequest_DocumentWidget(const iDocumentWidget *d, const iMediaRequest *req) {
-    return findLinkDownload_Media(constMedia_GmDocument(d->doc), req->linkId) != 0;
+    return findMediaForLink_Media(constMedia_GmDocument(d->doc), req->linkId, download_MediaType).type != 0;
 }
 
 static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -2142,6 +2257,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
                               body_GmRequest(req->req),
                               allowHide_MediaFlag);
                 redoLayout_GmDocument(d->doc);
+                iZap(d->visibleRuns); /* pointers invalidated */
                 updateVisible_DocumentWidget_(d);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(as_Widget(d));
@@ -2172,7 +2288,7 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
 static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
     iConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
-        if (run->linkId && run->mediaType == none_GmRunMediaType &&
+        if (run->linkId && run->mediaType == none_MediaType &&
             ~run->flags & decoration_GmRunFlag) {
             const int linkFlags = linkFlags_GmDocument(d->doc, run->linkId);
             if (isMediaLink_GmDocument(d->doc, run->linkId) &&
@@ -2761,8 +2877,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.downloadlink")) {
         if (d->contextLink) {
             const iGmLinkId linkId = d->contextLink->linkId;
-            setDownloadUrl_Media(
-                media_GmDocument(d->doc), linkId, linkUrl_GmDocument(d->doc, linkId));
+            setUrl_Media(media_GmDocument(d->doc),
+                         linkId,
+                         download_MediaType,
+                         linkUrl_GmDocument(d->doc, linkId));
             requestMedia_DocumentWidget_(d, linkId, iFalse /* no filters */);
             redoLayout_GmDocument(d->doc); /* inline downloader becomes visible */
             updateVisible_DocumentWidget_(d);
@@ -2785,8 +2903,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
-        set_Block(&d->sourceContent, &lockResponse_GmRequest(d->request)->body);
-        unlockResponse_GmRequest(d->request);
+//        set_Block(&d->sourceContent, &lockResponse_GmRequest(d->request)->body);
+//        unlockResponse_GmRequest(d->request);
         if (document_App() == d) {
             updateFetchProgress_DocumentWidget_(d);
         }
@@ -2809,7 +2927,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (category_GmStatusCode(status_GmRequest(d->request)) == categorySuccess_GmStatusCode) {
             init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
         }
-        d->flags &= ~urlChanged_DocumentWidgetFlag;
+        iChangeFlags(d->flags,
+                     urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag,
+                     iFalse);
         d->state = ready_RequestState;
         postProcessRequestContent_DocumentWidget_(d, iFalse);
         /* The response may be cached. */
@@ -2872,7 +2992,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const iMedia * media  = media_GmDocument(d->doc);
         const size_t   num    = numAudio_Media(media);
         for (size_t id = 1; id <= num; id++) {
-            iPlayer *plr = audioPlayer_Media(media, id);
+            iPlayer *plr = audioPlayer_Media(media, (iMediaId){ audio_MediaType, id });
             if (plr != startedPlr) {
                 setPaused_Player(plr, iTrue);
             }
@@ -3198,7 +3318,23 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return handleSwipe_DocumentWidget_(d, cmd);
     }
     else if (equal_Command(cmd, "document.setmediatype") && document_App() == d) {
-        setUrlAndSource_DocumentWidget(d, d->mod.url, string_Command(cmd, "mime"), &d->sourceContent);
+        if (!isRequestOngoing_DocumentWidget(d)) {
+            setUrlAndSource_DocumentWidget(d, d->mod.url, string_Command(cmd, "mime"),
+                                           &d->sourceContent);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "fontpack.install") && document_App() == d) {
+        if (argLabel_Command(cmd, "ttf")) {
+            iAssert(!cmp_String(&d->sourceMime, "font/ttf"));
+            installFontFile_Fonts(collect_String(suffix_Command(cmd, "name")), &d->sourceContent);
+            postCommand_App("open url:about:fonts");                
+        }
+        else {
+            const iString *id = idFromUrl_FontPack(d->mod.url);
+            install_Fonts(id, &d->sourceContent);
+            postCommandf_App("open gotoheading:%s url:about:fonts", cstr_String(id));
+        }
         return iTrue;
     }
     return iFalse;
@@ -3210,8 +3346,8 @@ static iRect runRect_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run
 }
 
 static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *run) {
-    if (run && run->mediaType == audio_GmRunMediaType) {
-        iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
+    if (run && run->mediaType == audio_MediaType) {
+        iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(run));
         setFlags_Player(plr, volumeGrabbed_PlayerFlag, iTrue);
         d->grabbedStartVolume = volume_Player(plr);
         d->grabbedPlayer      = run;
@@ -3219,7 +3355,7 @@ static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *r
     }
     else if (d->grabbedPlayer) {
         setFlags_Player(
-            audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->mediaId),
+            audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(d->grabbedPlayer)),
             volumeGrabbed_PlayerFlag,
             iFalse);
         d->grabbedPlayer = NULL;
@@ -3247,11 +3383,12 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
     const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
     iConstForEach(PtrArray, i, &d->visibleMedia) {
         const iGmRun *run  = i.ptr;
-        if (run->mediaType != audio_GmRunMediaType) {
+        if (run->mediaType != audio_MediaType) {
             continue;
         }
+        /* TODO: move this to mediaui.c */
         const iRect rect = runRect_DocumentWidget_(d, run);
-        iPlayer *   plr  = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
+        iPlayer *   plr  = audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(run));
         if (contains_Rect(rect, mouse)) {
             iPlayerUI ui;
             init_PlayerUI(&ui, plr, rect);
@@ -3439,7 +3576,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     return iTrue;
                 }
                 break;
-#if 1
+#if !defined (NDEBUG)
             case SDLK_KP_1:
             case '`': {
                 iBlock *seed = new_Block(64);
@@ -3631,7 +3768,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                                  cstr_String(linkUrl)) },
                                                    },
                                     3);
-                    if (isNative && d->contextLink->mediaType != download_GmRunMediaType) {
+                    if (isNative && d->contextLink->mediaType != download_MediaType) {
                         pushBackN_Array(&items, (iMenuItem[]){
                             { "---" },
                             { download_Icon " ${link.download}", 0, 0, "document.downloadlink" },
@@ -3639,7 +3776,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                     iMediaRequest *mediaReq;
                     if ((mediaReq = findMediaRequest_DocumentWidget_(d, d->contextLink->linkId)) != NULL &&
-                        d->contextLink->mediaType != download_GmRunMediaType) {
+                        d->contextLink->mediaType != download_MediaType) {
                         if (isFinished_GmRequest(mediaReq->req)) {
                             pushBack_Array(&items,
                                            &(iMenuItem){ download_Icon " " saveToDownloads_Label,
@@ -3761,7 +3898,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         case drag_ClickResult: {
             if (d->grabbedPlayer) {
                 iPlayer *plr =
-                    audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->mediaId);
+                    audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(d->grabbedPlayer));
                 iPlayerUI ui;
                 init_PlayerUI(&ui, plr, runRect_DocumentWidget_(d, d->grabbedPlayer));
                 float off = (float) delta_Click(&d->click).x / (float) width_Rect(ui.volumeSlider);
@@ -3771,7 +3908,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             /* Fold/unfold a preformatted block. */
             if (~d->flags & selecting_DocumentWidgetFlag && d->hoverPre &&
-                preIsFolded_GmDocument(d->doc, d->hoverPre->preId)) {
+                preIsFolded_GmDocument(d->doc, preId_GmRun(d->hoverPre))) {
                 return iTrue;
             }
             /* Begin selecting a range of text. */
@@ -3882,13 +4019,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                 }
                 if (d->hoverPre) {
-                    togglePreFold_DocumentWidget_(d, d->hoverPre->preId);
+                    togglePreFold_DocumentWidget_(d, preId_GmRun(d->hoverPre));
                     return iTrue;
                 }
                 if (d->hoverLink) {
                     /* TODO: Move this to a method. */
-                    const iGmLinkId linkId = d->hoverLink->linkId;
-                    const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
+                    const iGmLinkId linkId    = d->hoverLink->linkId;
+                    const iMediaId  linkMedia = mediaId_GmRun(d->hoverLink);
+                    const int       linkFlags = linkFlags_GmDocument(d->doc, linkId);
                     iAssert(linkId);
                     /* Media links are opened inline by default. */
                     if (isMediaLink_GmDocument(d->doc, linkId)) {
@@ -3940,6 +4078,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             }
                         }
                         refresh_Widget(w);
+                    }
+                    else if (linkMedia.type == download_MediaType ||
+                             findMediaRequest_DocumentWidget_(d, linkId)) {
+                        /* TODO: What should be done when clicking on an inline download?
+                           Maybe dismiss if finished? */
+                        return iTrue;
                     }
                     else if (linkFlags & supportedScheme_GmLinkFlag) {
                         int tabMode = openTabMode_Sym(modState_Keys());
@@ -4026,7 +4170,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
                       contains_Range(&mark, run->text.start))) {
         int x = 0;
         if (!*isInside) {
-            x = measureRange_Text(run->textParams.font,
+            x = measureRange_Text(run->font,
                                   (iRangecc){ run->text.start, iMax(run->text.start, mark.start) })
                     .advance.x;
         }
@@ -4035,7 +4179,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
             iRangecc mk = !*isInside ? mark
                               : (iRangecc){ run->text.start, iMax(run->text.start, mark.end) };
             mk.start    = iMax(mk.start, run->text.start);
-            w           = measureRange_Text(run->textParams.font, mk).advance.x;
+            w           = measureRange_Text(run->font, mk).advance.x;
             *isInside   = iFalse;
         }
         else {
@@ -4074,7 +4218,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
 
 static void drawMark_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d = context;
-    if (run->mediaType == none_GmRunMediaType) {
+    if (!isMedia_GmRun(run)) {
         fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
         fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
     }
@@ -4088,15 +4232,15 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
     iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
     if (icon) {
         appendChar_String(&str, icon);
-        const iRect iconRect = visualBounds_Text(run->textParams.font, range_String(&str));
+        const iRect iconRect = visualBounds_Text(run->font, range_String(&str));
         drawRange_Text(
-            run->textParams.font,
-            addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->textParams.font) / 2),
+            run->font,
+            addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
             tmBannerIcon_ColorId,
             range_String(&str));
         bpos.x += right_Rect(iconRect) + 3 * gap_Text;
     }
-    drawRange_Text(run->textParams.font,
+    drawRange_Text(run->font,
                    bpos,
                    tmBannerTitle_ColorId,
                    bannerText_DocumentWidget_(d->widget));
@@ -4181,8 +4325,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             d->runsDrawn.end = run;
         }
     }
-    if (run->mediaType == image_GmRunMediaType) {
-        SDL_Texture *tex = imageTexture_Media(media_GmDocument(d->widget->doc), run->mediaId);
+    if (run->mediaType == image_MediaType) {
+        SDL_Texture *tex = imageTexture_Media(media_GmDocument(d->widget->doc), mediaId_GmRun(run));
         const iRect dst = moved_Rect(run->visBounds, origin);
         if (tex) {
             fillRect_Paint(&d->paint, dst, tmBackground_ColorId); /* in case the image has alpha */
@@ -4199,11 +4343,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
         return;
     }
-    else if (run->mediaType) {
+    else if (isMedia_GmRun(run)) {
         /* Media UIs are drawn afterwards as a dynamic overlay. */
         return;
     }
-    enum iColorId      fg        = run->textParams.color;
+    enum iColorId      fg        = run->color;
     const iGmDocument *doc       = d->widget->doc;
     const int          linkFlags = linkFlags_GmDocument(doc, run->linkId);
     /* Hover state of a link. */
@@ -4267,13 +4411,13 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
     }
     if (run->flags & altText_GmRunFlag) {
-        const iInt2 margin = preRunMargin_GmDocument(doc, run->preId);
+        const iInt2 margin = preRunMargin_GmDocument(doc, preId_GmRun(run));
         fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackgroundAltText_ColorId);
         drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmQuoteIcon_ColorId);
-        drawWrapRange_Text(run->textParams.font,
+        drawWrapRange_Text(run->font,
                            add_I2(visPos, margin),
                            run->visBounds.size.x - 2 * margin.x,
-                           run->textParams.color,
+                           run->color,
                            run->text);
     }
     else if (run->flags & siteBanner_GmRunFlag) {
@@ -4292,17 +4436,17 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     linkOrdinalChar_DocumentWidget_(d->widget, ord - d->widget->ordinalBase);
                 if (ordChar) {
                     const char *circle = "\u25ef"; /* Large Circle */
-                    const int   circleFont = defaultContentRegular_FontId;
+                    const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, contentRegular_FontSize);
                     iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
                                      init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
                     drawRange_Text(
                         circleFont, topLeft_Rect(nbArea), tmQuote_ColorId, range_CStr(circle));
                     iRect circleArea = visualBounds_Text(circleFont, range_CStr(circle));
                     addv_I2(&circleArea.pos, topLeft_Rect(nbArea));
-                    drawCentered_Text(defaultContentSmall_FontId,
+                    drawCentered_Text(FONT_ID(default_FontId, regular_FontStyle, contentSmall_FontSize),
                                       circleArea,
                                       iTrue,
-                                    tmQuote_ColorId,
+                                      tmQuote_ColorId,
                                       "%lc",
                                       (int) ordChar);
                     goto runDrawn;
@@ -4312,17 +4456,23 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         if (run->flags & quoteBorder_GmRunFlag) {
             drawVLine_Paint(&d->paint,
                             addX_I2(visPos,
-                                    !run->textParams.isRTL
+                                    !run->isRTL
                                         ? -gap_Text * 5 / 2
                                         : (width_Rect(run->visBounds) + gap_Text * 5 / 2)),
                             height_Rect(run->visBounds),
                             tmQuoteIcon_ColorId);
         }
-        drawBoundRange_Text(run->textParams.font,
+        /* Base attributes. */ {
+            int f, c;
+            runBaseAttributes_GmDocument(doc, run, &f, &c);
+            setBaseAttributes_Text(f, c);
+        }
+        drawBoundRange_Text(run->font,
                             visPos,
-                            (run->textParams.isRTL ? -1 : 1) * width_Rect(run->visBounds),
+                            (run->isRTL ? -1 : 1) * width_Rect(run->visBounds),
                             fg,
                             run->text);
+        setBaseAttributes_Text(-1, -1);
     runDrawn:;
     }
     /* Presentation of links. */
@@ -4337,31 +4487,31 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart);
             iString text;
             init_String(&text);
-            iMediaId imageId = linkImage_GmDocument(doc, run->linkId);
-            iMediaId audioId = !imageId ? linkAudio_GmDocument(doc, run->linkId) : 0;
-            iMediaId downloadId = !imageId && !audioId ?
-                findLinkDownload_Media(constMedia_GmDocument(doc), run->linkId) : 0;
-            iAssert(imageId || audioId || downloadId);
-            if (imageId) {
-                iAssert(!isEmpty_Rect(run->bounds));
-                iGmMediaInfo info;
-                imageInfo_Media(constMedia_GmDocument(doc), imageId, &info);
-                const iInt2 imgSize = imageSize_Media(constMedia_GmDocument(doc), imageId);
-                format_String(&text, "%s \u2014 %d x %d \u2014 %.1f%s",
-                              info.type, imgSize.x, imgSize.y, info.numBytes / 1.0e6f,
-                              cstr_Lang("mb"));
+            const iMediaId linkMedia = findMediaForLink_Media(constMedia_GmDocument(doc),
+                                                              run->linkId, none_MediaType);
+            iAssert(linkMedia.type != none_MediaType);
+            iGmMediaInfo info;
+            info_Media(constMedia_GmDocument(doc), linkMedia, &info);
+            switch (linkMedia.type) {
+                case image_MediaType: {
+                    iAssert(!isEmpty_Rect(run->bounds));
+                    const iInt2 imgSize = imageSize_Media(constMedia_GmDocument(doc), linkMedia);
+                    format_String(&text, "%s \u2014 %d x %d \u2014 %.1f%s",
+                                  info.type, imgSize.x, imgSize.y, info.numBytes / 1.0e6f,
+                                  cstr_Lang("mb"));
+                    break;
+                }
+                case audio_MediaType:
+                    format_String(&text, "%s", info.type);
+                    break;
+                case download_MediaType:
+                    format_String(&text, "%s", info.type);
+                    break;
+                default:
+                    break;
             }
-            else if (audioId) {
-                iGmMediaInfo info;
-                audioInfo_Media(constMedia_GmDocument(doc), audioId, &info);
-                format_String(&text, "%s", info.type);
-            }
-            else if (downloadId) {
-                iGmMediaInfo info;
-                downloadInfo_Media(constMedia_GmDocument(doc), downloadId, &info);
-                format_String(&text, "%s", info.type);
-            }
-            if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
+            if (linkMedia.type != download_MediaType && /* can't cancel downloads currently */
+                findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
                 appendFormat_String(
                     &text, "  %s" close_Icon, isHover ? escape_Color(tmLinkText_ColorId) : "");
             }
@@ -4436,7 +4586,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 append_String(&str, collect_String(format_Date(&date, "%b %d")));
             }
             if (!isEmpty_String(&str)) {
-                if (run->textParams.isRTL) {
+                if (run->isRTL) {
                     appendCStr_String(&str, " \u2014 ");
                 }
                 else {
@@ -4445,7 +4595,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 const iInt2 textSize = measure_Text(metaFont, cstr_String(&str)).bounds.size;
                 int tx = topRight_Rect(linkRect).x;
                 const char *msg = cstr_String(&str);
-                if (run->textParams.isRTL) {
+                if (run->isRTL) {
                     tx = topLeft_Rect(linkRect).x - textSize.x;                    
                 }
                 if (tx + textSize.x > right_Rect(d->widgetBounds)) {
@@ -4465,8 +4615,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
     }
-//    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
-//    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
+    if (0) {
+        drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
+        drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
+    }
 }
 
 static int drawSideRect_(iPaint *p, iRect rect) {
@@ -4592,16 +4744,17 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
 static void drawMedia_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
     iConstForEach(PtrArray, i, &d->visibleMedia) {
         const iGmRun * run = i.ptr;
-        if (run->mediaType == audio_GmRunMediaType) {
+        if (run->mediaType == audio_MediaType) {
             iPlayerUI ui;
             init_PlayerUI(&ui,
-                          audioPlayer_Media(media_GmDocument(d->doc), run->mediaId),
+                          audioPlayer_Media(media_GmDocument(d->doc), mediaId_GmRun(run)),
                           runRect_DocumentWidget_(d, run));
             draw_PlayerUI(&ui, p);
         }
-        else if (run->mediaType == download_GmRunMediaType) {
+        else if (run->mediaType == download_MediaType) {
             iDownloadUI ui;
-            init_DownloadUI(&ui, d, run->mediaId, runRect_DocumentWidget_(d, run));
+            init_DownloadUI(&ui, constMedia_GmDocument(d->doc), run->mediaId,
+                            runRect_DocumentWidget_(d, run));
             draw_DownloadUI(&ui, p);
         }
     }
@@ -4631,8 +4784,8 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
         iPaint *p = &ctx->paint;
         init_Paint(p);
         iForIndices(i, visBuf->buffers) {
-            iVisBufTexture *buf  = &visBuf->buffers[i];
-            iVisBufMeta *   meta = buf->user;
+            iVisBufTexture *buf         = &visBuf->buffers[i];
+            iVisBufMeta    *meta        = buf->user;
             const iRangei   bufRange    = intersect_Rangei(bufferRange_VisBuf(visBuf, i), full);
             const iRangei   bufVisRange = intersect_Rangei(bufRange, vis);
             ctx->widgetBounds = moved_Rect(ctxWidgetBounds, init_I2(0, -buf->origin));
@@ -4750,6 +4903,7 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
                         }
                     }
                 }
+                setAnsiFlags_Text(ansiEscapes_GmDocument(d->doc));
                 iConstForEach(PtrSet, r, d->invalidRuns) {
                     const iGmRun *run = *r.value;
                     if (isOverlapping_Rangei(bufRange, ySpan_Rect(run->visBounds))) {
@@ -4757,13 +4911,17 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
                         drawRun_DrawContext_(ctx, run);
                     }
                 }
+                setAnsiFlags_Text(allowAll_AnsiFlag);
             }
             endTarget_Paint(p);
             if (prerenderExtra && didDraw) {
-                return iTrue;
+                /* Just a run at a time. */
+                break;
             }
         }
-        clear_PtrSet(d->invalidRuns);
+        if (!prerenderExtra) {
+            clear_PtrSet(d->invalidRuns);
+        }
     }
     return didDraw;
 }
@@ -4884,10 +5042,19 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         drawHLine_Paint(&ctx.paint, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
     }
     drawChildren_Widget(w);
+    if (d->flags & drawDownloadCounter_DocumentWidgetFlag && isRequestOngoing_DocumentWidget(d)) {
+        const int font = uiLabelLarge_FontId;
+        const iInt2 sevenSegWidth = measureRange_Text(font, range_CStr("\U0001fbf0")).advance;
+        drawSevenSegmentBytes_MediaUI(font,
+                                      add_I2(mid_Rect(docBounds),
+                                             init_I2(sevenSegWidth.x * 4.5f, -sevenSegWidth.y / 2)),
+                                      uiTextStrong_ColorId, uiTextDim_ColorId,
+                                      bodySize_GmRequest(d->request));
+    }
     /* Alt text. */
     const float altTextOpacity = value_Anim(&d->altTextOpacity) * 6 - 5;
     if (d->hoverAltPre && altTextOpacity > 0) {
-        const iGmPreMeta *meta = preMeta_GmDocument(d->doc, d->hoverAltPre->preId);
+        const iGmPreMeta *meta = preMeta_GmDocument(d->doc, preId_GmRun(d->hoverAltPre));
         if (meta->flags & topLeft_GmPreMetaFlag && ~meta->flags & decoration_GmRunFlag &&
             !isEmpty_Range(&meta->altText)) {
             const int   margin   = 3 * gap_UI / 2;
@@ -4914,7 +5081,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     }
     /* Pinch zoom indicator. */
     if (d->flags & pinchZoom_DocumentWidgetFlag) {
-        const int   font   = defaultLargeBold_FontId;
+        const int   font   = uiLabelLargeBold_FontId;
         const int   height = lineHeight_Text(font) * 2;
         const iInt2 size   = init_I2(height * 2, height);
         const iRect rect   = { sub_I2(mid_Rect(bounds), divi_I2(size, 2)), size };
@@ -5098,7 +5265,32 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
     d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     updateVisible_DocumentWidget_(d);
     invalidate_DocumentWidget_(d);
+    arrange_Widget(d->footerButtons);
 }
+
+#if 0
+iBool findCachedContent_DocumentWidget(const iDocumentWidget *d, const iString *url,
+                                       iString *mime_out, iBlock *data_out) {
+    if (equal_String(d->mod.url, url) && !isRequestOngoing_DocumentWidget(d)) {
+        /* It's the currently open page. */
+        set_String(mime_out, &d->sourceMime);
+        set_Block(data_out, &d->sourceContent);
+        return iTrue;
+    }
+    /* Finished media requests are kept in memory while the page is open. */
+    iConstForEach(ObjectList, i, d->media) {
+        const iMediaRequest *mr = i.object;
+        if (mr->req &&
+            isFinished_GmRequest(mr->req) &&
+            equal_String(linkUrl_GmDocument(d->doc, mr->linkId), url)) {
+            set_String(mime_out, meta_GmRequest(mr->req));
+            set_Block(data_out, body_GmRequest(mr->req));
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+#endif
 
 iBeginDefineSubclass(DocumentWidget, Widget)
     .processEvent = (iAny *) processEvent_DocumentWidget_,

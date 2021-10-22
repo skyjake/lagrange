@@ -337,7 +337,7 @@ iBool preloadCoverImage_Gempub(const iGempub *d, iGmDocument *doc) {
     for (size_t linkId = 1; ; linkId++) {
         const iString *linkUrl = linkUrl_GmDocument(doc, linkId);
         if (!linkUrl) break;
-        if (findLinkImage_Media(media_GmDocument(doc), linkId)) {
+        if (findLinkImage_Media(media_GmDocument(doc), linkId).type) {
             continue; /* got this already */
         }
         if (linkFlags_GmDocument(doc, linkId) & imageFileExtension_GmLinkFlag) {

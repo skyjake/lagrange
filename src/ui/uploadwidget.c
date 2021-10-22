@@ -255,7 +255,7 @@ void init_UploadWidget(iUploadWidget *d) {
         setFlags_Widget(as_Widget(d->token), expand_WidgetFlag, iTrue);
         setFocus_Widget(as_Widget(d->input));
     }
-    setFont_InputWidget(d->input, iosevka_FontId);
+    setFont_InputWidget(d->input, FONT_ID(monospace_FontId, regular_FontStyle, uiSmall_FontSize));
     setUseReturnKeyBehavior_InputWidget(d->input, iFalse); /* traditional text editor */
     setLineLimits_InputWidget(d->input, 7, 20);
     setHint_InputWidget(d->input, "${hint.upload.text}");

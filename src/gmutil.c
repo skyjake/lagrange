@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmutil.h"
+#include "fontpack.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -34,6 +35,10 @@ iRegExp *newGemtextLink_RegExp(void) {
 }
 
 void init_Url(iUrl *d, const iString *text) {
+    if (!text) {
+        iZap(*d);
+        return;
+    }
     /* Handle "file:" as a special case since it only has the path part. */
     if (startsWithCase_String(text, "file://")) {
         iZap(*d);
@@ -511,7 +516,8 @@ const iString *findContainerArchive_Path(const iString *path) {
     while (!isEmpty_String(path) && cmp_String(path, ".")) {
         iString *dir = newRange_String(dirName_Path(path));
         if (endsWithCase_String(dir, ".zip") ||
-            endsWithCase_String(dir, ".gpub")) {
+            endsWithCase_String(dir, ".gpub") ||
+            endsWithCase_String(dir, ".fontpack")) {
             iEndCollect();
             return collect_String(dir);
         }
@@ -533,6 +539,12 @@ const char *mediaTypeFromFileExtension_String(const iString *d) {
     }
     else if (endsWithCase_String(d, ".gpub")) {
         return "application/gpub+zip";
+    }
+    else if (endsWithCase_String(d, ".fontpack")) {
+        return mimeType_FontPack;
+    }
+    else if (endsWithCase_String(d, ".ttf")) {
+        return "font/ttf";
     }
     else if (endsWithCase_String(d, ".xml")) {
         return "text/xml";
@@ -561,7 +573,14 @@ const char *mediaTypeFromFileExtension_String(const iString *d) {
     else if (endsWithCase_String(d, ".mid")) {
         return "audio/midi";
     }
+    else if (endsWithCase_String(d, ".md") ||
+             endsWithCase_String(d, ".markdown") ||
+             endsWithCase_String(d, ".mdown") ||
+             endsWithCase_String(d, ".markdn")) {
+        return "text/markdown";
+    }
     else if (endsWithCase_String(d, ".txt") ||
+             endsWithCase_String(d, ".ini") ||
              endsWithCase_String(d, ".md") ||
              endsWithCase_String(d, ".c") ||
              endsWithCase_String(d, ".h") ||
