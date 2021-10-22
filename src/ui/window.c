@@ -1476,6 +1476,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             iWidget *docTabs = findWidget_Root("doctabs");
             iForEach(ObjectList, j, tabs) {
                 appendTabPage_Widget(docTabs, j.object, "", 0, 0);
+                addTabCloseButton_Widget(docTabs, j.object, "tabs.close");
             }
             /* The last child is the [+] button for adding a tab. */
             moveTabButtonToEnd_Widget(findChild_Widget(docTabs, "newtab"));
