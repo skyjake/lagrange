@@ -26,7 +26,7 @@ set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.7)
     set (IOS_BUNDLE_VERSION 23)
-    set (IOS_BUILD_DATE "2021-09-17")
+    set (IOS_BUILD_DATE "2021-10-23")
 endif ()
 
 # Default that depend on environment.

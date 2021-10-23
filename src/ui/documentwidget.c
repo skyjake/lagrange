@@ -526,7 +526,8 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
         rect.size.y -= margin;
     }
     if (d->flags & centerVertically_DocumentWidgetFlag) {
-        const iInt2 docSize = size_GmDocument(d->doc);
+        const iInt2 docSize = addY_I2(size_GmDocument(d->doc),
+                                      iMax(height_Widget(d->footerButtons), height_Widget(d->phoneToolbar)));
         if (docSize.y < rect.size.y) {
             /* Center vertically if short. There is one empty paragraph line's worth of margin
                between the banner and the page contents. */
@@ -608,11 +609,13 @@ static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     int sm = size_GmDocument(d->doc).y - height_Rect(bounds_Widget(w)) +
              (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI +
-             height_Widget(d->footerButtons);
-    if (d->phoneToolbar) {
-        sm += size_Root(w->root).y -
-              top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
-    }
+             iMax(height_Widget(d->phoneToolbar), height_Widget(d->footerButtons));
+//    sm += height_Widget(d->phoneToolbar);
+//    if (d->phoneToolbar) {
+//        sm += size_Root(w->root).y -
+//              top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
+//        sm += height_Widget(d->phoneToolbar);
+//    }
     return sm;
 }
 
@@ -878,10 +881,12 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
         else {
             d->footerButtons->animOffsetRef = &d->scrollY.pos;
             d->footerButtons->rect.pos.y = size_GmDocument(d->doc).y + 2 * gap_UI * d->pageMargin;
+//            + height_Widget(d->phoneToolbar);
         }
     }
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax });
-    const int docSize = size_GmDocument(d->doc).y;
+    const int docSize = size_GmDocument(d->doc).y + iMax(height_Widget(d->phoneToolbar),
+                                                         height_Widget(d->footerButtons));
     setThumb_ScrollWidget(d->scroll,
                           pos_SmoothScroll(&d->scrollY),
                           docSize > 0 ? height_Rect(bounds) * size_Range(&visRange) / docSize : 0);

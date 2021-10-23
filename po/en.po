@@ -267,6 +267,9 @@ msgstr "Help"
 msgid "menu.releasenotes"
 msgstr "Release Notes"
 
+msgid "menu.website"
+msgstr "Project Website…"
+
 msgid "menu.quit"
 msgstr "Quit Lagrange"
 
