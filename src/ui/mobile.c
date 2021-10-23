@@ -176,13 +176,17 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
 //        openMenu_Widget(panel, innerToWindow_Widget(panel, zero_I2()));
 //        setFlags_Widget(panel, hidden_WidgetFlag, iFalse);
         unselectAllPanelButtons_(topPanel);
+        int panelIndex = -1;
+        size_t childIndex = 0;
         iForEach(ObjectList, i, children_Widget(findDetailStack_(topPanel))) {
             iWidget *child = i.object;
             setFlags_Widget(child, hidden_WidgetFlag | disabled_WidgetFlag, child != panel);
             /* Animate the current panel in. */
             if (child == panel && isPortrait) {
                 setupSheetTransition_Mobile(panel, iTrue);
+                panelIndex = childIndex;
             }
+            childIndex++;
         }
         iLabelWidget *detailTitle =
             findChild_Widget(parent_Widget(parent_Widget(topPanel)), "detailtitle");
@@ -191,6 +195,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         setTextColor_LabelWidget(detailTitle, uiHeading_ColorId);
         setText_LabelWidget(detailTitle, text_LabelWidget((iLabelWidget *) findTitleLabel_(panel)));
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
+        postCommand_Widget(topPanel, "panel.changed arg:%d", panelIndex);
         return iTrue;
     }
     if (equal_Command(cmd, "swipe.back")) {
@@ -209,6 +214,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
                     setFocus_Widget(NULL);
                     updateTextCStr_LabelWidget(findWidget_App("panel.back"), "Back");
                     wasClosed = iTrue;
+                    postCommand_Widget(topPanel, "panel.changed arg:-1");
                 }
             }
         }
@@ -741,6 +747,9 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
                 setIcon_LabelWidget(button, icon);
             }
             iWidget *panel = addChildPanel_(detailStack, button, NULL);
+            if (argLabel_Command(item->label, "noscroll")) {
+                setFlags_Widget(panel, overflowScrollable_WidgetFlag, iFalse);
+            }
             makePanelItems_Mobile(panel, item->data);
         }
         else {
