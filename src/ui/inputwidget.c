@@ -451,7 +451,8 @@ static const iInputLine *findLineByWrapY_InputWidget_(const iInputWidget *d, int
 
 static int visLineOffsetY_InputWidget_(const iInputWidget *d) {
     const iInputLine *line = findLineByWrapY_InputWidget_(d, d->visWrapLines.start);
-    return (line->wrapLines.start - d->visWrapLines.start) * lineHeight_Text(d->font);
+    return (line->wrapLines.start - d->visWrapLines.start) * lineHeight_Text(d->font) -
+           d->wheelAccum;
 }
 
 static const iChar sensitiveChar_ = 0x25cf;   /* black circle */
@@ -1855,6 +1856,17 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
     return ignored_EventResult;
 }
 
+static void clampWheelAccum_InputWidget_(iInputWidget *d, int wheel) {
+    if (wheel > 0 && d->visWrapLines.start == 0) {
+        d->wheelAccum = 0;
+        refresh_Widget(d);
+    }
+    else if (wheel < 0 && d->visWrapLines.end >= lastLine_InputWidget_(d)->wrapLines.end) {
+        d->wheelAccum = 0;
+        refresh_Widget(d);
+    }    
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Resize according to width immediately. */
@@ -1956,24 +1968,26 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         const int lineHeight = lineHeight_Text(d->font);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             d->wheelAccum -= ev->wheel.y;
+            refresh_Widget(d);
         }
         else {
             d->wheelAccum -= ev->wheel.y * 3 * lineHeight;
         }
+        clampWheelAccum_InputWidget_(d, ev->wheel.y);
         int lineDelta = d->wheelAccum / lineHeight;
         if (lineDelta < 0) {
             lineDelta = iMax(lineDelta, -d->visWrapLines.start);
             if (!lineDelta) d->wheelAccum = 0;
         }
         else if (lineDelta > 0) {
-            lineDelta = iMin(lineDelta,
-                             lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
+            lineDelta = iMin(lineDelta, lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
             if (!lineDelta) d->wheelAccum = 0;
         }
         if (lineDelta) {
             d->wheelAccum         -= lineDelta * lineHeight;
             d->visWrapLines.start += lineDelta;
             d->visWrapLines.end   += lineDelta;
+            clampWheelAccum_InputWidget_(d, ev->wheel.y);
             d->inFlags |= needUpdateBuffer_InputWidgetFlag;
             refresh_Widget(d);
             return true_EventResult;
