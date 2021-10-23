@@ -1143,6 +1143,10 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
         checkIcon_LabelWidget(button);
         setFont_LabelWidget(button, uiContent_FontId);
     }
+    if (deviceType_App() == phone_AppDeviceType) {
+        /* Footer buttons shouldn't be under the toolbar. */
+        addChild_Widget(d->footerButtons, iClob(makePadding_Widget(height_Widget(d->phoneToolbar))));
+    }
     addChild_Widget(as_Widget(d), iClob(d->footerButtons));
     arrange_Widget(d->footerButtons);
     arrange_Widget(w);
