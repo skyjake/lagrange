@@ -1708,7 +1708,7 @@ iAny *child_Widget(iWidget *d, size_t index) {
     return NULL;
 }
 
-size_t childIndex_Widget(const iWidget *d, const iAnyObject *child) {
+size_t indexOfChild_Widget(const iWidget *d, const iAnyObject *child) {
     size_t index = 0;
     iConstForEach(ObjectList, i, d->children) {
         if (i.object == child) {

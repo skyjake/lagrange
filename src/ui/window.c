@@ -1483,7 +1483,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             iRelease(tabs);
             postCommandf_App("tabs.switch id:%s", cstr_String(id_Widget(constAs_Widget(curPage))));
         }
-        else if (splitMode && oldCount == 1) {
+        else if (oldCount == 1 && splitMode) {
             /* Add a second root. */
             iDocumentWidget *moved = document_Root(w->roots[0]);
             iAssert(w->roots[1] == NULL);

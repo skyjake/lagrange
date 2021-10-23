@@ -1030,7 +1030,7 @@ const iString *debugInfo_App(void) {
         iDocumentWidget *doc = k.object;
         appendFormat_String(msg, "### Tab %d.%zu: %s\n",
                             constAs_Widget(doc)->root == get_Window()->roots[0] ? 1 : 2,
-                            childIndex_Widget(constAs_Widget(doc)->parent, k.object) + 1,
+                            indexOfChild_Widget(constAs_Widget(doc)->parent, k.object) + 1,
                             cstr_String(bookmarkTitle_DocumentWidget(doc)));
         append_String(msg, collect_String(debugInfo_History(history_DocumentWidget(doc))));
     }

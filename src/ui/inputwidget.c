@@ -278,7 +278,7 @@ static void eraseBackup_InputWidget_(iInputWidget *d) {
 static uint32_t backupTimeout_InputWidget_(uint32_t interval, void *context) {
     iInputWidget *d = context;
     postCommand_Widget(d, "input.backup");
-    return 0;
+    return 0; /* does not repeat */
 }
 
 static void restartBackupTimer_InputWidget_(iInputWidget *d) {

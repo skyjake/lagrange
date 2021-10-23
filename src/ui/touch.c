@@ -617,11 +617,11 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             if (touch->axis == y_TouchAxis) {
                 pixels.x = 0;
             }
-            printf("%p (%s) py: %i wy: %f acc: %f edge: %d\n",
-                   touch->affinity,
-                   class_Widget(touch->affinity)->name,
-                   pixels.y, y_F3(amount), y_F3(touch->accum),
-                   touch->edge);
+//            printf("%p (%s) py: %i wy: %f acc: %f edge: %d\n",
+//                   touch->affinity,
+//                   class_Widget(touch->affinity)->name,
+//                   pixels.y, y_F3(amount), y_F3(touch->accum),
+//                   touch->edge);
             if (pixels.x || pixels.y) {
                 //setFocus_Widget(NULL);
                 dispatchMotion_Touch_(touch->startPos /*pos[0]*/, 0);

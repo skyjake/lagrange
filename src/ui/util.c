@@ -1512,7 +1512,7 @@ void setTabPageLabel_Widget(iWidget *tabs, const iAnyObject *page, const iString
 
 size_t tabPageIndex_Widget(const iWidget *tabs, const iAnyObject *page) {
     iWidget *pages = findChild_Widget(tabs, "tabs.pages");
-    return childIndex_Widget(pages, page);
+    return indexOfChild_Widget(pages, page);
 }
 
 const iWidget *currentTabPage_Widget(const iWidget *tabs) {

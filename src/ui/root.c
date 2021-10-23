@@ -804,7 +804,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         if (isTabButton_Widget(widget)) {
             if (!isVisible_Widget(menu)) {
                 iWidget *tabs = findWidget_App("doctabs");
-                iWidget *page = tabPage_Widget(tabs, childIndex_Widget(widget->parent, widget));
+                iWidget *page = tabPage_Widget(tabs, indexOfChild_Widget(widget->parent, widget));
                 if (argLabel_Command(cmd, "button") == SDL_BUTTON_MIDDLE) {
                     postCommandf_App("tabs.close id:%s", cstr_String(id_Widget(page)));
                     return iTrue;
@@ -1327,7 +1327,7 @@ void createUserInterface_Root(iRoot *d) {
             /* The search bar appears at the top on mobile, because there is a virtual keyboard
                covering the bottom. */
             insertChildAfter_Widget(div, iClob(searchBar),
-                                    childIndex_Widget(div, findChild_Widget(div, "navbar")));
+                                    indexOfChild_Widget(div, findChild_Widget(div, "navbar")));
         }
         setBackgroundColor_Widget(searchBar, uiBackground_ColorId);
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
