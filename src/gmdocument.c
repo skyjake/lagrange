@@ -1908,9 +1908,9 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
                 if (isLastEmpty) {
                     appendCStr_String(&result, "\n\n");
                 }
-                else if (size_Range(&line) >= 2 && isnumber(line.start[0]) &&
+                else if (size_Range(&line) >= 2 && isdigit(line.start[0]) &&
                          (line.start[1] == '.' ||
-                          (isnumber(line.start[1]) && line.start[2] == '.'))) {
+                          (isdigit(line.start[1]) && line.start[2] == '.'))) {
                     appendCStr_String(&result, "\n\n");
                 }
                 else if (endsWith_String(&result, "  ") ||
