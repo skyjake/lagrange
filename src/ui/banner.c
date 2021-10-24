@@ -53,6 +53,7 @@ struct Impl_Banner {
     iString site;
     iString icon;
     iArray items;
+    iBool isClick;
 };
 
 iDefineTypeConstruction(Banner)
@@ -70,6 +71,7 @@ void init_Banner(iBanner *d) {
     init_String(&d->site);
     init_String(&d->icon);
     init_Array(&d->items, sizeof(iBannerItem));
+    d->isClick = iFalse;
 }
 
 void deinit_Banner(iBanner *d) {
@@ -94,6 +96,10 @@ void setPos_Banner(iBanner *d, iInt2 pos) {
 
 int height_Banner(const iBanner *d) {
     return d->rect.size.y;
+}
+
+iBool contains_Banner(const iBanner *d, iInt2 coord) {
+    return contains_Rect(d->rect, coord);
 }
 
 void clear_Banner(iBanner *d) {
@@ -139,8 +145,36 @@ void remove_Banner(iBanner *d, enum iGmStatusCode code) {
 
 iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d->doc);
-    /* on motion: */
-//    setCursor_Window(window_Widget(w), SDL_SYSTEM_CURSOR_HAND);    
+    switch (ev->type) {
+        case SDL_MOUSEMOTION:
+            if (contains_Rect(d->rect, init_I2(ev->motion.x, ev->motion.y))) {
+                setCursor_Window(window_Widget(w), SDL_SYSTEM_CURSOR_HAND);
+            }
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+            /* Clicking on the top/side banner navigates to site root. */
+            if (ev->button.button == SDL_BUTTON_LEFT) {
+                const iBool isInside = contains_Rect(d->rect, init_I2(ev->button.x, ev->button.y));
+                if (isInside && ev->button.state == SDL_PRESSED) {
+                    d->isClick = iTrue;
+                    return iTrue;
+                }
+                else if (ev->button.state == SDL_RELEASED) {
+                    if (d->isClick && isInside) {
+                        postCommand_Widget(d->doc, "navigate.root");
+                    }
+                    d->isClick = iFalse;
+                }
+                /* Clicking on a warning? */
+//                if (bannerType_DocumentWidget_(d) == certificateWarning_GmDocumentBanner &&
+//                    pos_Click(&d->click).y - top_Rect(banRect) >
+//                    lineHeight_Text(banner_FontId) * 2) {
+//                    postCommand_Widget(d, "document.info");
+//                }
+            }
+            break;
+    }
     return iFalse;
 }
 

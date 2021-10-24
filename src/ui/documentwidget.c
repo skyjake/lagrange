@@ -342,6 +342,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->media            = new_ObjectList();
     d->doc              = new_GmDocument();
     d->banner           = new_Banner();
+    setOwner_Banner(d->banner, d);
     d->redirectCount    = 0;
     d->ordinalBase      = 0;
     d->initNormScrollY  = 0;
@@ -540,25 +541,10 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
         if (docSize.y < rect.size.y) {
             /* Center vertically if short. There is one empty paragraph line's worth of margin
                between the banner and the page contents. */
-//            const int bannerHeight = 0; //banner ? height_Rect(banner->visBounds) : 0;
-#if 0
-            int offset = iMax(0, (rect.size.y + margin - size_GmDocument(d->doc).y
-                                  //- lineHeight_Text(paragraph_FontId)
-                                  ) / 2 - height_Banner(d->banner)
-                              //-
-                              //documentTopPad_DocumentWidget_(d)
-                              );
-#endif
             int offset = iMax(0, height_Rect(bounds) / 2
-//                              - (isEmpty_Banner(d->banner) ? lineHeight_Text(paragraph_FontId) / 2 : 0)
                               - documentTopPad_DocumentWidget_(d)
-//                              + lineHeight_Text(paragraph_FontId) / 2
-//                              - isEmpty_Banner(d->banner) ?
                               - height_Banner(d->banner)
-                              - size_GmDocument(d->doc).y / 2
-                              );
-                              //(//documentTopPad_DocumentWidget_(d) +
-                               //size_GmDocument(d->doc).y) / 2);
+                              - size_GmDocument(d->doc).y / 2);
             rect.pos.y  = top_Rect(bounds) + offset;
             rect.size.y = docSize.y;
             wasCentered = iTrue;
@@ -594,9 +580,6 @@ static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
 }
 
 static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
-//    const int margin = -documentTopPad_DocumentWidget_(d) +
-//        d->pageMargin * gap_UI;
-    //const int top = -viewPos_DocumentWidget_(d) - margin;
     int top = pos_SmoothScroll(&d->scrollY) - height_Banner(d->banner) - documentTopPad_DocumentWidget_(d);
     if (isEmpty_Banner(d->banner)) {
         /* Top padding is not collapsed. */
@@ -3939,6 +3922,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     if (processMediaEvents_DocumentWidget_(d, ev)) {
         return iTrue;
     }
+    if (processEvent_Banner(d->banner, ev)) {
+        return iTrue;
+    }
     /* The left mouse button. */
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
@@ -4191,21 +4177,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     d->selectMark = iNullRange;
                     refresh_Widget(w);
                 }
-#if 0
-                /* Clicking on the top/side banner navigates to site root. */
-                const iRect banRect = siteBannerRect_DocumentWidget_(d);
-                if (contains_Rect(banRect, pos_Click(&d->click))) {
-                    /* Clicking on a warning? */
-                    if (bannerType_DocumentWidget_(d) == certificateWarning_GmDocumentBanner &&
-                        pos_Click(&d->click).y - top_Rect(banRect) >
-                            lineHeight_Text(banner_FontId) * 2) {
-                        postCommand_Widget(d, "document.info");
-                    }
-                    else {
-                        postCommand_Widget(d, "navigate.root");
-                    }
-                }
-#endif
             }
             return iTrue;
         case aborted_ClickResult:
