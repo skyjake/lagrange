@@ -65,12 +65,10 @@ void endTarget_Paint(iPaint *d) {
 }
 
 void setClip_Paint(iPaint *d, iRect rect) {
-    //rect = intersect_Rect(rect, rect_Root(get_Root()));
     addv_I2(&rect.pos, origin_Paint);
     if (isEmpty_Rect(rect)) {
         rect = init_Rect(0, 0, 1, 1);
     }
-//    iRect root = rect_Root(get_Root());
     iRect targetRect = zero_Rect();
     SDL_Texture *target = SDL_GetRenderTarget(renderer_Paint_(d));
     if (target) {
@@ -80,19 +78,6 @@ void setClip_Paint(iPaint *d, iRect rect) {
     else {
         rect = intersect_Rect(rect, rect_Root(get_Root()));
     }
-    
-    /*if (rect.pos.x < 0) {
-        adjustEdges_Rect(&rect, 0, 0, 0, -rect.pos.x);
-    }
-    if (rect.pos.y < 0) {
-        adjustEdges_Rect(&rect, -rect.pos.y, 0, 0, 0);
-    }
-    if (right_Rect(rect) > right_Rect(root)) {
-        adjustEdges_Rect(&rect, 0, right_Rect(root) - right_Rect(rect), 0, 0);
-    }
-    if (bottom_Rect(rect) > bottom_Rect(root)) {
-        adjustEdges_Rect(&rect, 0, bottom_Rect(root) - bottom_Rect(rect), 0, 0);
-    }*/
     SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 }
 

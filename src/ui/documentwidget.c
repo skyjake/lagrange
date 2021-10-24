@@ -5280,30 +5280,6 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
     arrange_Widget(d->footerButtons);
 }
 
-#if 0
-iBool findCachedContent_DocumentWidget(const iDocumentWidget *d, const iString *url,
-                                       iString *mime_out, iBlock *data_out) {
-    if (equal_String(d->mod.url, url) && !isRequestOngoing_DocumentWidget(d)) {
-        /* It's the currently open page. */
-        set_String(mime_out, &d->sourceMime);
-        set_Block(data_out, &d->sourceContent);
-        return iTrue;
-    }
-    /* Finished media requests are kept in memory while the page is open. */
-    iConstForEach(ObjectList, i, d->media) {
-        const iMediaRequest *mr = i.object;
-        if (mr->req &&
-            isFinished_GmRequest(mr->req) &&
-            equal_String(linkUrl_GmDocument(d->doc, mr->linkId), url)) {
-            set_String(mime_out, meta_GmRequest(mr->req));
-            set_Block(data_out, body_GmRequest(mr->req));
-            return iTrue;
-        }
-    }
-    return iFalse;
-}
-#endif
-
 iBeginDefineSubclass(DocumentWidget, Widget)
     .processEvent = (iAny *) processEvent_DocumentWidget_,
     .draw         = (iAny *) draw_DocumentWidget_,

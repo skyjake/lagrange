@@ -79,32 +79,6 @@ void dealloc_VisBuf(iVisBuf *d) {
     }
 }
 
-#if 0
-static size_t findMostDistant_VisBuf_(const iVisBuf *d, const size_t *avail, size_t numAvail,
-                                      const iRangei vis) {
-    size_t chosen = 0;
-    int distChosen = iAbsi(d->buffers[0].origin - vis.start);
-    printf("  avail (got %zu): %zu", numAvail, avail[0]);
-    for (size_t i = 1; i < numAvail; i++) {
-        printf(" %zu", avail[i]);
-        const int dist = iAbsi(d->buffers[i].origin - vis.start);
-        if (dist > distChosen) {
-            chosen = i;
-            distChosen = dist;
-        }
-    }
-    printf("\n  chose index %zu (%d)\n", chosen, distChosen);
-    return chosen;
-}
-
-static size_t take_(size_t *avail, size_t *numAvail, size_t index) {
-    const size_t value = avail[index];
-    memmove(avail + index, avail + index + 1, sizeof(size_t) * (*numAvail - index - 1));
-    (*numAvail)--;
-    return value;    
-}
-#endif
-
 static void roll_VisBuf_(iVisBuf *d, int dir) {
     const size_t lastPos = iElemCount(d->buffers) - 1;
     if (dir < 0) {
@@ -170,6 +144,7 @@ iBool reposition_VisBuf(iVisBuf *d, const iRangei vis) {
             wasChanged = iTrue;
         }
     }
+    iUnused(wasChanged);
 #if 0
     if (wasChanged) {
         printf("\nVISIBLE RANGE: %d ... %d\n", vis.start, vis.end);
