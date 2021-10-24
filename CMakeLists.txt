@@ -174,6 +174,8 @@ set (SOURCES
     src/audio/player.h
     src/audio/stb_vorbis.c
     # User interface:
+    src/ui/banner.c
+    src/ui/banner.h
     src/ui/bindingswidget.c
     src/ui/bindingswidget.h
     src/ui/certimportwidget.c

@@ -120,10 +120,10 @@ enum iGmRunFlags {
     decoration_GmRunFlag  = iBit(1), /* not part of the source */
     startOfLine_GmRunFlag = iBit(2),
     endOfLine_GmRunFlag   = iBit(3),
-    siteBanner_GmRunFlag  = iBit(4), /* area reserved for the site banner */
+//    siteBanner_GmRunFlag  = iBit(4), /* area reserved for the site banner */
     quoteBorder_GmRunFlag = iBit(5),
     wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
-    footer_GmRunFlag      = iBit(7),
+//    footer_GmRunFlag      = iBit(7),
     altText_GmRunFlag     = iBit(8),
 };
 
@@ -171,12 +171,13 @@ iRangecc    findLoc_GmRun           (const iGmRun *, iInt2 pos);
 
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
-
+    
+/*
 enum iGmDocumentBanner {
     none_GmDocumentBanner,
     siteDomain_GmDocumentBanner,
     certificateWarning_GmDocumentBanner,
-};
+};*/
 
 enum iGmDocumentUpdate {
     partial_GmDocumentUpdate, /* appending more content */
@@ -185,7 +186,7 @@ enum iGmDocumentUpdate {
 
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat format);
-void    setBanner_GmDocument    (iGmDocument *, enum iGmDocumentBanner type);
+//void    setBanner_GmDocument    (iGmDocument *, enum iGmDocumentBanner type);
 void    setWidth_GmDocument     (iGmDocument *, int width, int outsideMargin);
 void    redoLayout_GmDocument   (iGmDocument *);
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
@@ -213,10 +214,10 @@ const iGmRun *  renderProgressive_GmDocument(const iGmDocument *d, const iGmRun 
                                              iRangei visRangeY, iGmDocumentRenderFunc render,
                                              void *context);
 iInt2           size_GmDocument             (const iGmDocument *);
-const iGmRun *  siteBanner_GmDocument       (const iGmDocument *);
-iBool           hasSiteBanner_GmDocument    (const iGmDocument *);
-enum iGmDocumentBanner bannerType_GmDocument(const iGmDocument *);
-const iString * bannerText_GmDocument       (const iGmDocument *);
+//const iGmRun *  siteBanner_GmDocument       (const iGmDocument *);
+//iBool           hasSiteBanner_GmDocument    (const iGmDocument *);
+//enum iGmDocumentBanner bannerType_GmDocument(const iGmDocument *);
+//const iString * bannerText_GmDocument       (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);
 size_t          memorySize_GmDocument       (const iGmDocument *); /* bytes */

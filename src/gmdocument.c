@@ -97,8 +97,8 @@ struct Impl_GmDocument {
     iBool     enableCommandLinks; /* `about:command?` only allowed on selected pages */
     iArray    layout; /* contents of source, laid out in document space */
     iPtrArray links;
-    enum iGmDocumentBanner bannerType;
-    iString   bannerText;
+//    enum iGmDocumentBanner bannerType;
+//    iString   bannerText;
     iString   title; /* the first top-level title */
     iArray    headings;
     iArray    preMeta; /* metadata about preformatted blocks */
@@ -573,7 +573,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iArray *oldPreMeta = collect_Array(copy_Array(&d->preMeta)); /* remember fold states */
     clear_Array(&d->preMeta);
     clear_String(&d->title);
-    clear_String(&d->bannerText);
+//    clear_String(&d->bannerText);
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
     }
@@ -587,7 +587,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     int              preFont       = preformatted_FontId;
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
-    iBool            addSiteBanner = d->bannerType != none_GmDocumentBanner;
+//    iBool            addSiteBanner = d->bannerType != none_GmDocumentBanner;
     const iBool      isNormalized  = isNormalized_GmDocument_(d);
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = text_GmLineType;
@@ -669,7 +669,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (d->format == gemini_SourceFormat &&
                 startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
-                addSiteBanner = iFalse; /* overrides the banner */
+//                addSiteBanner = iFalse; /* overrides the banner */
                 continue;
             }
             run.mediaType = max_MediaType; /* preformatted block */
@@ -677,6 +677,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.font = (d->format == plainText_SourceFormat ? plainText_FontId : preFont);
             indent = indents[type];
         }
+#if 0
         if (addSiteBanner) {
             addSiteBanner = iFalse;
             const iRangecc bannerText = urlHost_String(&d->url);
@@ -697,6 +698,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                          1.5f * lineHeight_Text(paragraph_FontId) * prefs->lineSpacing;
             }
         }
+#endif
         /* Empty lines don't produce text runs. */
         if (isEmpty_Range(&line)) {
             if (type == quote_GmLineType && !prefs->quoteIcon) {
@@ -1068,13 +1070,13 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->source);
     init_String(&d->url);
     init_String(&d->localHost);
-    d->bannerType = siteDomain_GmDocumentBanner;
+//    d->bannerType = siteDomain_GmDocumentBanner;
     d->outsideMargin = 0;
     d->size = zero_I2();
     d->enableCommandLinks = iFalse;
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
-    init_String(&d->bannerText);
+//    init_String(&d->bannerText);
     init_String(&d->title);
     init_Array(&d->headings, sizeof(iGmHeading));
     init_Array(&d->preMeta, sizeof(iGmPreMeta));
@@ -1089,7 +1091,7 @@ void init_GmDocument(iGmDocument *d) {
 void deinit_GmDocument(iGmDocument *d) {
     iReleasePtr(&d->openURLs);
     delete_Media(d->media);
-    deinit_String(&d->bannerText);
+//    deinit_String(&d->bannerText);
     deinit_String(&d->title);
     clearLinks_GmDocument_(d);
     deinit_PtrArray(&d->links);
@@ -1625,9 +1627,11 @@ void setFormat_GmDocument(iGmDocument *d, enum iSourceFormat format) {
     d->format = format;
 }
 
+#if 0
 void setBanner_GmDocument(iGmDocument *d, enum iGmDocumentBanner type) {
     d->bannerType = type;
 }
+#endif
 
 void setWidth_GmDocument(iGmDocument *d, int width, int outsideMargin) {
     d->size.x = width;
@@ -2104,6 +2108,7 @@ iInt2 size_GmDocument(const iGmDocument *d) {
     return d->size;
 }
 
+#if 0
 enum iGmDocumentBanner bannerType_GmDocument(const iGmDocument *d) {
     return d->bannerType;
 }
@@ -2126,6 +2131,7 @@ const iGmRun *siteBanner_GmDocument(const iGmDocument *d) {
 const iString *bannerText_GmDocument(const iGmDocument *d) {
     return &d->bannerText;
 }
+#endif
 
 const iArray *headings_GmDocument(const iGmDocument *d) {
     return &d->headings;
