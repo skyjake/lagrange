@@ -159,6 +159,11 @@ enum iColorId {
     tmGopherLinkTextHover_ColorId,
     tmGopherLinkDomain_ColorId,
     tmGopherLinkLastVisitDate_ColorId,
+    
+    tmBannerItemBackground_ColorId,
+    tmBannerItemFrame_ColorId,
+    tmBannerItemTitle_ColorId,
+    tmBannerItemText_ColorId,
 
     max_ColorId, /* note: GmRun packs color into limited number of bits */
     tmMax_ColorId = max_ColorId - tmFirst_ColorId

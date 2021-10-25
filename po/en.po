@@ -1765,7 +1765,7 @@ msgid "error.tls"
 msgstr "Network/TLS Failure"
 
 msgid "error.tls.msg"
-msgstr "Failed to communicate with the server. Here is the error message:"
+msgstr "Failed to communicate with the server."
 
 msgid "error.certexpired"
 msgstr "Expired Certificate"

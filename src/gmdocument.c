@@ -1123,6 +1123,14 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
               mix_Color(get_Color(tmBannerTitle_ColorId),
                         get_Color(tmBackground_ColorId),
                         theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
+    const int bannerItemFg = isDark_GmDocumentTheme(currentTheme_()) ? white_ColorId : black_ColorId;
+    set_Color(tmBannerItemBackground_ColorId, mix_Color(get_Color(tmBannerBackground_ColorId),
+                                                        get_Color(tmBannerTitle_ColorId), 0.1f));
+    set_Color(tmBannerItemFrame_ColorId, mix_Color(get_Color(tmBannerBackground_ColorId),
+                                                   get_Color(tmBannerTitle_ColorId), 0.4f));
+    set_Color(tmBannerItemText_ColorId, mix_Color(get_Color(tmBannerBackground_ColorId),
+                                                  get_Color(bannerItemFg), 0.75f));
+    set_Color(tmBannerItemTitle_ColorId, get_Color(bannerItemFg));
     set_Color(tmBackgroundAltText_ColorId,
               mix_Color(get_Color(tmQuoteIcon_ColorId), get_Color(tmBackground_ColorId), 0.85f));
     set_Color(tmBackgroundOpenLink_ColorId,

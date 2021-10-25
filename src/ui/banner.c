@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "command.h"
 #include "documentwidget.h"
+#include "lang.h"
 #include "paint.h"
 #include "util.h"
 
@@ -32,17 +33,17 @@ iDeclareType(BannerItem)
 struct Impl_BannerItem {
     enum iBannerType type;
     enum iGmStatusCode code;
-    iString message;
+    iString text; /* Entire message in presentation form. */
     int height;
 };
 
 static void init_BannerItem(iBannerItem *d) {
-    init_String(&d->message);
+    init_String(&d->text);
     d->height = 0;
 }
 
 static void deinit_BannerItem(iBannerItem *d) {
-    deinit_String(&d->message);
+    deinit_String(&d->text);
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -60,8 +61,19 @@ iDefineTypeConstruction(Banner)
 
 static void updateHeight_Banner_(iBanner *d) {
     d->rect.size.y = 0;
-    if (!isEmpty_String(&d->site)) { //} || !isEmpty_String(&d->icon)) {
+    if (!isEmpty_String(&d->site)) {
         d->rect.size.y += lineHeight_Text(banner_FontId) * 2;
+    }
+    const size_t numItems = size_Array(&d->items);
+    if (numItems) {
+        const int outerPad = 2 * gap_UI;
+        const int innerPad = gap_UI;
+        iConstForEach(Array, i, &d->items) {
+            const iBannerItem *item = i.value;
+            d->rect.size.y += item->height;
+        }
+        d->rect.size.y += (numItems - 1) * innerPad;
+        d->rect.size.y += outerPad;
     }
 }
 
@@ -85,8 +97,18 @@ void setOwner_Banner(iBanner *d, iDocumentWidget *owner) {
     d->doc = owner;
 }
 
+static void updateItemHeight_Banner_(const iBanner *d, iBannerItem *item) {
+    item->height = measureWrapRange_Text(uiContent_FontId,
+                                         width_Rect(d->rect) - 6 * gap_UI,
+                                         range_String(&item->text))
+                       .bounds.size.y + 4 * gap_UI;
+}
+
 void setWidth_Banner(iBanner *d, int width) {
     d->rect.size.x = width;
+    iForEach(Array, i, &d->items) {
+        updateItemHeight_Banner_(d, i.value);
+    }
     updateHeight_Banner_(d);
 }
 
@@ -96,6 +118,10 @@ void setPos_Banner(iBanner *d, iInt2 pos) {
 
 int height_Banner(const iBanner *d) {
     return d->rect.size.y;
+}
+
+size_t numItems_Banner(const iBanner *d) {
+    return size_Array(&d->items);
 }
 
 iBool contains_Banner(const iBanner *d, iInt2 coord) {
@@ -127,7 +153,19 @@ void add_Banner(iBanner *d, enum iBannerType type, enum iGmStatusCode code, cons
     init_BannerItem(&item);
     item.type = type;
     item.code = code;
-    set_String(&item.message, message);
+    const iGmError *error = get_GmError(code);
+    if (error->icon) {
+        appendCStr_String(&item.text, escape_Color(tmBannerIcon_ColorId));
+        appendChar_String(&item.text, error->icon);
+        appendCStr_String(&item.text, restore_ColorEscape);
+    }
+    appendFormat_String(&item.text, "  \x1b[1m%s%s\x1b[0m \u2014 %s%s",
+                        escape_Color(tmBannerItemTitle_ColorId),
+                        !isEmpty_String(message) ? cstr_String(message) : error->title,
+                        escape_Color(tmBannerItemText_ColorId),
+                        error->info);
+    translate_Lang(&item.text);
+    updateItemHeight_Banner_(d, &item);
     pushBack_Array(&d->items, &item);
     updateHeight_Banner_(d);
 }
@@ -141,6 +179,53 @@ void remove_Banner(iBanner *d, enum iGmStatusCode code) {
         }
     }
     updateHeight_Banner_(d);
+}
+
+void draw_Banner(const iBanner *d) {
+    if (isEmpty_Banner(d)) {
+        return;
+    }
+    iRect  bounds = d->rect;
+    iInt2  pos    = addY_I2(topLeft_Rect(bounds), lineHeight_Text(banner_FontId) / 2);
+    iPaint p;
+    init_Paint(&p);
+//    drawRect_Paint(&p, bounds, red_ColorId);
+    /* Draw the icon. */
+    if (!isEmpty_String(&d->icon)) {
+        const int   font     = banner_FontId;
+        const iRect iconRect = visualBounds_Text(font, range_String(&d->icon));
+        drawRange_Text(font,
+                       addY_I2(pos, -mid_Rect(iconRect).y + lineHeight_Text(font) / 2),
+                       tmBannerIcon_ColorId,
+                       range_String(&d->icon));
+        pos.x += right_Rect(iconRect) + 3 * gap_Text;
+    }
+    /* Draw the site name. */
+    if (!isEmpty_String(&d->site)) {
+        drawRange_Text(banner_FontId, pos, tmBannerTitle_ColorId, range_String(&d->site));
+        pos.y += lineHeight_Text(banner_FontId) * 3 / 2;
+    }
+    else {
+        pos.y = top_Rect(bounds);
+    }
+    const int innerPad = gap_UI;
+    pos.x = left_Rect(bounds);
+    iConstForEach(Array, i, &d->items) {
+        const iBannerItem *item = i.value;
+        const iRect itemRect = { pos, init_I2(d->rect.size.x, item->height) };
+        fillRect_Paint(&p, itemRect, tmBannerItemBackground_ColorId);
+        drawRect_Paint(&p, itemRect, tmBannerItemFrame_ColorId);
+        setBaseAttributes_Text(uiContent_FontId, tmBannerItemText_ColorId);
+        iWrapText wt = {
+            .text = range_String(&item->text),
+            .maxWidth = width_Rect(itemRect) - 6 * gap_UI,
+            .mode = word_WrapTextMode
+        };
+        draw_WrapText(&wt, uiContent_FontId, add_I2(pos, init_I2(3 * gap_UI, 2 * gap_UI)),
+                      tmBannerItemText_ColorId);
+        pos.y += innerPad;
+    }
+    setBaseAttributes_Text(-1, -1);
 }
 
 iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
@@ -269,28 +354,3 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
     deinit_String(&str);
 }
 #endif
-
-void draw_Banner(const iBanner *d) {
-    if (isEmpty_Banner(d)) {
-        return;
-    }
-    iRect  bounds = d->rect;
-    iInt2  pos    = addY_I2(topLeft_Rect(bounds), lineHeight_Text(banner_FontId) / 2);
-    iPaint p;
-    init_Paint(&p);
-//    drawRect_Paint(&p, bounds, red_ColorId);
-    /* Draw the icon. */
-    if (!isEmpty_String(&d->icon)) {
-        const int   font     = banner_FontId;
-        const iRect iconRect = visualBounds_Text(font, range_String(&d->icon));
-        drawRange_Text(font,
-                       addY_I2(pos, -mid_Rect(iconRect).y + lineHeight_Text(font) / 2),
-                       tmBannerIcon_ColorId,
-                       range_String(&d->icon));
-        pos.x += right_Rect(iconRect) + 3 * gap_Text;
-    }
-    /* Draw the site name. */
-    if (!isEmpty_String(&d->site)) {
-        drawRange_Text(banner_FontId, pos, tmBannerTitle_ColorId, range_String(&d->site));
-    }
-}

@@ -538,9 +538,14 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     if (d->flags & centerVertically_DocumentWidgetFlag) {
         const iInt2 docSize = addY_I2(size_GmDocument(d->doc),
                                       iMax(height_Widget(d->footerButtons), height_Widget(d->phoneToolbar)));
-        if (docSize.y < rect.size.y) {
-            /* Center vertically if short. There is one empty paragraph line's worth of margin
-               between the banner and the page contents. */
+        if (size_GmDocument(d->doc).y == 0) {
+            rect.pos.y = top_Rect(bounds) + height_Rect(bounds) / 2 -
+                documentTopPad_DocumentWidget_(d) - height_Banner(d->banner) / 2;
+            rect.size.y = 0;
+            wasCentered = iTrue;
+        }
+        else if (docSize.y < rect.size.y) {
+            /* Center vertically if page is short. */
             int offset = iMax(0, height_Rect(bounds) / 2
                               - documentTopPad_DocumentWidget_(d)
                               - height_Banner(d->banner)
@@ -1126,7 +1131,7 @@ static void replaceDocument_DocumentWidget_(iDocumentWidget *d, iGmDocument *new
 }
 
 static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
-    clear_Banner(d->banner);
+    /* TODO: Set width. */
     setSite_Banner(d->banner, siteText_DocumentWidget_(d), siteIcon_GmDocument(d->doc));
 }
 
@@ -1197,21 +1202,22 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
 static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code,
                                           const iString *meta) {
     /* TODO: No such thing as an "error page". It should be an empty page with an error banner. */
-#if 0
-    iString *src = collectNewCStr_String("# ");
+    iString *src = collectNew_String();
     const iGmError *msg = get_GmError(code);
-    appendChar_String(src, msg->icon ? msg->icon : 0x2327); /* X in a box */
-    appendFormat_String(src, " %s\n%s", msg->title, msg->info);
-    iBool useBanner = iTrue;
+  //  appendChar_String(src, msg->icon ? msg->icon : 0x2327); /* X in a box */
+    //appendFormat_String(src, " %s\n%s", msg->title, msg->info);
+//    iBool useBanner = iTrue;
+    destroy_Widget(d->footerButtons);
+    d->footerButtons = NULL;
     if (meta) {
         switch (code) {
             case schemeChangeRedirect_GmStatusCode:
             case tooManyRedirects_GmStatusCode:
-                appendFormat_String(src, "\n=> %s\n", cstr_String(meta));
+                appendFormat_String(src, "=> %s\n", cstr_String(meta));
                 break;
             case tlsFailure_GmStatusCode:
-                useBanner = iFalse; /* valid data wasn't received from host */
-                appendFormat_String(src, "\n\n>%s\n", cstr_String(meta));
+//                useBanner = iFalse; /* valid data wasn't received from host */
+//                appendFormat_String(src, ">%s\n", cstr_String(meta));
                 break;
             case tlsServerCertificateExpired_GmStatusCode:
                 makeFooterButtons_DocumentWidget_(
@@ -1236,12 +1242,12 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 break;
             case failedToOpenFile_GmStatusCode:
             case certificateNotValid_GmStatusCode:
-                appendFormat_String(src, "\n\n%s", cstr_String(meta));
+//                appendFormat_String(src, "%s", cstr_String(meta));
                 break;
             case unsupportedMimeType_GmStatusCode: {
                 iString *key = collectNew_String();
                 toString_Sym(SDLK_s, KMOD_PRIMARY, key);
-                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
+//                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
                 const char *mtype = mediaTypeFromFileExtension_String(d->mod.url);
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
@@ -1264,9 +1270,9 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 break;
             }
             default:
-                if (!isEmpty_String(meta)) {
-                    appendFormat_String(src, "\n\n${error.server.msg}\n> %s", cstr_String(meta));
-                }
+//                if (!isEmpty_String(meta)) {
+//                    appendFormat_String(src, "\n\n${error.server.msg}\n> %s", cstr_String(meta));
+//                }
                 break;
         }
     }
@@ -1277,19 +1283,17 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                            { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" } },
             2);
     }
-    /* Make a new document for the error page.*/ {
-        iGmDocument *errorDoc = new_GmDocument();
-        setUrl_GmDocument(errorDoc, d->mod.url);
-//        setBanner_GmDocument(errorDoc, useBanner ? bannerType_DocumentWidget_(d) : none_GmDocumentBanner);
-        
-        setFormat_GmDocument(errorDoc, gemini_SourceFormat);
-        replaceDocument_DocumentWidget_(d, errorDoc);
-        iRelease(errorDoc);
-    }
-    translate_Lang(src);
-#endif
+    /* Make a new document for the error page.*/
+    iGmDocument *errorDoc = new_GmDocument();
+    setUrl_GmDocument(errorDoc, d->mod.url);
+    setFormat_GmDocument(errorDoc, gemini_SourceFormat);
+    replaceDocument_DocumentWidget_(d, errorDoc);
+    iRelease(errorDoc);
+    clear_Banner(d->banner);
+    add_Banner(d->banner, error_BannerType, code, meta);
+//    translate_Lang(src);
     d->state = ready_RequestState;
-//    setSource_DocumentWidget(d, src);
+    setSource_DocumentWidget(d, src);
     updateTheme_DocumentWidget_(d);
     reset_SmoothScroll(&d->scrollY);
     init_Anim(&d->sideOpacity, 0);
@@ -1818,6 +1822,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         updateDocument_DocumentWidget_(d, resp, cachedDoc, iTrue);
 //        setCachedDocument_History(d->mod.history, d->doc,
 //                                  (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
+        clear_Banner(d->banner);
         updateBanner_DocumentWidget_(d);
     }
     d->state = ready_RequestState;
@@ -2043,6 +2048,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     iGmResponse *resp = lockResponse_GmRequest(d->request);
     if (d->state == fetching_RequestState) {
         d->state = receivedPartialResponse_RequestState;
+        clear_Banner(d->banner);
         updateTrust_DocumentWidget_(d, resp);
         if (~d->certFlags & trusted_GmCertFlag &&
             isSuccess_GmStatusCode(statusCode) &&
@@ -4941,9 +4947,12 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     int         yTop             = docBounds.pos.y + viewPos_DocumentWidget_(d);
     const iBool isDocEmpty       = size_GmDocument(d->doc).y == 0;
     const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
-    if (!isDocEmpty) {
+    if (!isDocEmpty || !isEmpty_Banner(d->banner)) {
+        const int docBgColor = isDocEmpty ? tmBannerBackground_ColorId : tmBackground_ColorId;
         setClip_Paint(&ctx.paint, clipBounds);
-        draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop), ySpan_Rect(bounds));
+        if (!isDocEmpty) {
+            draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop), ySpan_Rect(bounds));
+        }
         /* Text markers. */
         if (!isEmpty_Range(&d->foundMark) || !isEmpty_Range(&d->selectMark)) {
             SDL_Renderer *render = renderer_Window(get_Window());
@@ -4980,23 +4989,24 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             fillRect_Paint(&ctx.paint,
                            (iRect){ bounds.pos, init_I2(bounds.size.x, yTop - top_Rect(bounds)) },
                            !isEmpty_Banner(d->banner) ? tmBannerBackground_ColorId
-                                                      : tmBackground_ColorId);
+                                                      : docBgColor);
         }
-        /* Banner. */ {
+        /* Banner. */
+        if (!isDocEmpty || numItems_Banner(d->banner) > 0) {
             /* Fill the part between the banner and the top of the document. */
             fillRect_Paint(&ctx.paint,
                            (iRect){ init_I2(left_Rect(bounds),
                                             top_Rect(docBounds) + viewPos_DocumentWidget_(d) -
                                                 documentTopPad_DocumentWidget_(d)),
                                     init_I2(bounds.size.x, documentTopPad_DocumentWidget_(d)) },
-                           tmBackground_ColorId);
+                           docBgColor);
             draw_Banner(d->banner);
         }
-        const int yBottom = yTop + size_GmDocument(d->doc).y + 1;
+        const int yBottom = yTop + size_GmDocument(d->doc).y;
         if (yBottom < bottom_Rect(bounds)) {
             fillRect_Paint(&ctx.paint,
                            init_Rect(bounds.pos.x, yBottom, bounds.size.x, bottom_Rect(bounds) - yBottom),
-                           tmBackground_ColorId);
+                           !isDocEmpty ? docBgColor : tmBannerBackground_ColorId);
         }
         unsetClip_Paint(&ctx.paint);
         drawSideElements_DocumentWidget_(d);
@@ -5016,9 +5026,9 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     drawChildren_Widget(w);
     if (d->flags & drawDownloadCounter_DocumentWidgetFlag && isRequestOngoing_DocumentWidget(d)) {
         const int font = uiLabelLarge_FontId;
-        const iInt2 sevenSegWidth = measureRange_Text(font, range_CStr("\U0001fbf0")).advance;
+        const iInt2 sevenSegWidth = measureRange_Text(font, range_CStr("\U0001fbf0")).bounds.size;
         drawSevenSegmentBytes_MediaUI(font,
-                                      add_I2(mid_Rect(docBounds),
+                                      add_I2(mid_Rect(bounds),
                                              init_I2(sevenSegWidth.x * 4.5f, -sevenSegWidth.y / 2)),
                                       uiTextStrong_ColorId, uiTextDim_ColorId,
                                       bodySize_GmRequest(d->request));
