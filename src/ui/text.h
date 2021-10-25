@@ -220,6 +220,7 @@ struct Impl_WrapText {
 iTextMetrics    measure_WrapText    (iWrapText *, int fontId);
 iTextMetrics    draw_WrapText       (iWrapText *, int fontId, iInt2 pos, int color);
 
+iBool           checkMissing_Text   (void); /* returns the flag, and clears it */
 SDL_Texture *   glyphCache_Text     (void);
 
 enum iTextBlockMode { quadrants_TextBlockMode, shading_TextBlockMode };

@@ -934,7 +934,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     updateSideOpacity_DocumentWidget_(d, iTrue);
     animateMedia_DocumentWidget_(d);
     setPos_Banner(d->banner, addY_I2(topLeft_Rect(documentBounds_DocumentWidget_(d)),
-                                          -pos_SmoothScroll(&d->scrollY)));
+                                     -pos_SmoothScroll(&d->scrollY)));
     /*init_I2(documentBounds_DocumentWidget_(d).pos.x,
                                      viewPos_DocumentWidget_(d) -
                                      documentTopPad_DocumentWidget_(d)));*/
@@ -1291,7 +1291,6 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     iRelease(errorDoc);
     clear_Banner(d->banner);
     add_Banner(d->banner, error_BannerType, code, meta);
-//    translate_Lang(src);
     d->state = ready_RequestState;
     setSource_DocumentWidget(d, src);
     updateTheme_DocumentWidget_(d);
@@ -1798,6 +1797,16 @@ static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
     }
 }
 
+static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
+    if (warnings_GmDocument(d->doc) & missingGlyphs_GmDocumentWarning) {
+        add_Banner(d->banner, warning_BannerType, missingGlyphs_GmStatusCode, NULL);
+        /* TODO: List one or more of the missing characters and/or their Unicode blocks? */
+    }
+    if (warnings_GmDocument(d->doc) & ansiEscapes_GmDocumentWarning) {
+        add_Banner(d->banner, warning_BannerType, ansiEscapes_GmStatusCode, NULL);
+    }
+}
+
 static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float normScrollY,
                                                      const iGmResponse *resp, iGmDocument *cachedDoc) {
     setLinkNumberMode_DocumentWidget_(d, iFalse);
@@ -1824,6 +1833,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 //                                  (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
         clear_Banner(d->banner);
         updateBanner_DocumentWidget_(d);
+        addBannerWarnings_DocumentWidget_(d);
     }
     d->state = ready_RequestState;
     postProcessRequestContent_DocumentWidget_(d, iTrue);
@@ -2864,10 +2874,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                            size_Array(items));
         delete_Array(items);
         /* Enforce a minimum size. */
-        iWidget *sizer = new_Widget();
-        setFixedSize_Widget(sizer, init_I2(gap_UI * 65, 1));
-        addChildFlags_Widget(dlg, iClob(sizer), frameless_WidgetFlag);
-        setFlags_Widget(dlg, centerHorizontal_WidgetFlag, iFalse);
+//        iWidget *sizer = new_Widget();
+//        setFixedSize_Widget(sizer, init_I2(gap_UI * 65, 1));
+//        addChildFlags_Widget(dlg, iClob(sizer), frameless_WidgetFlag);
+//        setFlags_Widget(dlg, centerHorizontal_WidgetFlag, iFalse);
         if (deviceType_App() != phone_AppDeviceType) {
             const iWidget *lockButton = findWidget_Root("navbar.lock");
             setPos_Widget(dlg, windowToLocal_Widget(dlg, bottomLeft_Rect(bounds_Widget(lockButton))));
@@ -2989,6 +2999,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (category_GmStatusCode(status_GmRequest(d->request)) == categorySuccess_GmStatusCode) {
             init_Anim(&d->scrollY.pos, d->initNormScrollY * pageHeight_DocumentWidget_(d)); /* TODO: unless user already scrolled! */
         }
+        addBannerWarnings_DocumentWidget_(d);
         iChangeFlags(d->flags,
                      urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag,
                      iFalse);
@@ -4377,7 +4388,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     if (run->flags & altText_GmRunFlag) {
         const iInt2 margin = preRunMargin_GmDocument(doc, preId_GmRun(run));
         fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackgroundAltText_ColorId);
-        drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmQuoteIcon_ColorId);
+        drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmFrameAltText_ColorId);
         drawWrapRange_Text(run->font,
                            add_I2(visPos, margin),
                            run->visBounds.size.x - 2 * margin.x,
@@ -5053,7 +5064,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                 SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
             }
             fillRect_Paint(&ctx.paint, altRect, tmBackgroundAltText_ColorId);
-            drawRect_Paint(&ctx.paint, altRect, tmQuoteIcon_ColorId);
+            drawRect_Paint(&ctx.paint, altRect, tmFrameAltText_ColorId);
             setOpacity_Text(altTextOpacity);
             drawWrapRange_Text(altFont, addX_I2(pos, margin), wrap,
                                tmQuote_ColorId, meta->altText);

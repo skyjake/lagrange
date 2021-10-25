@@ -380,8 +380,12 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     if (d->flags.wrap) {
         const iRect cont = contentBounds_LabelWidget_(d);
-        drawWrapRange_Text(
-            d->font, topLeft_Rect(cont), width_Rect(cont), fg, range_String(&d->label));
+        iWrapText wt = {
+            .text = range_String(&d->label),
+            .maxWidth = width_Rect(cont),
+            .mode = word_WrapTextMode,
+        };
+        draw_WrapText(&wt, d->font, topLeft_Rect(cont), fg);
     }
     else if (flags & alignLeft_WidgetFlag) {
         draw_Text(d->font, add_I2(bounds.pos, addX_I2(padding_LabelWidget_(d, 0), iconPad)),

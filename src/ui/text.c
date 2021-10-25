@@ -264,6 +264,7 @@ struct Impl_Text {
     int            ansiFlags;
     int            baseFontId; /* base attributes (for restoring via escapes) */
     int            baseColorId;
+    iBool          missingGlyphs; /* true if a glyph couldn't be found */
 };
 
 iDefineTypeConstructionArgs(Text, (SDL_Renderer *render), render)
@@ -797,6 +798,7 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     }
 #endif // 0
     if (!*glyphIndex) {
+        activeText_->missingGlyphs = iTrue;
         fprintf(stderr, "failed to find %08x (%lc)\n", ch, (int)ch); fflush(stderr);
     }
     return d;
@@ -2258,6 +2260,13 @@ iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
     });
 #endif
     return tm;
+}
+
+iBool checkMissing_Text(void) {
+    iText *d = activeText_;
+    const iBool missing = d->missingGlyphs;
+    d->missingGlyphs = iFalse;
+    return missing;
 }
 
 SDL_Texture *glyphCache_Text(void) {

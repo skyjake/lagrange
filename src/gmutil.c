@@ -755,6 +755,14 @@ static const struct {
       { 0x1f645, /* no good */
         "${error.certverify}",
         "${error.certverify.msg}" } },
+    { ansiEscapes_GmStatusCode,
+      { 0x1f5b3, /* old computer */
+        "${error.ansi}",
+        "${error.ansi.msg}" } },
+    { missingGlyphs_GmStatusCode,
+      { 0x1f520, /* ABCD */
+        "${error.glyphs}",
+        "${error.glyphs.msg}" } },
     { temporaryFailure_GmStatusCode,
       { 0x1f50c, /* electric plug */
         "${error.temporary}",

@@ -647,7 +647,7 @@ msgstr "DELETE IDENTITY"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
-msgstr "Do you really want to delete the identity\n%s%s%s\nincluding its certificate and private key files?"
+msgstr "Do you really want to delete the identity %s\"%s\"%s including its certificate and private key files?"
 
 msgid "dlg.ident.delete"
 msgstr "Delete Identity and Files"
@@ -665,7 +665,7 @@ msgstr "UNSUBSCRIBE"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr "Really unsubscribe from feed\n\"%s\"?"
+msgstr "Really unsubscribe from feed \"%s\"?"
 
 msgid "dlg.unsub"
 msgstr "Unsubscribe"
@@ -1014,7 +1014,7 @@ msgid "heading.uploadport"
 msgstr "TITAN UPLOAD PORT"
 
 msgid "dlg.uploadport.msg"
-msgstr "Set the Titan server port to use for this URL.\nThe port is saved in the site-specific configuration."
+msgstr "Set the Titan server port to use for this URL. The port is saved in the site-specific configuration."
 
 msgid "dlg.uploadport.set"
 msgstr "Set Port"
@@ -1857,6 +1857,18 @@ msgstr "Invalid Certificate"
 msgid "error.cert.invalid.msg"
 msgstr "The provided client certificate is expired or invalid."
 
+msgid "error.ansi"
+msgstr "Terminal Emulation"
+
+msgid "error.ansi.msg"
+msgstr "This page may not be displayed correctly. It uses ANSI escape sequences to style text, which is only partially supported. You could try using a terminal emulator to view it."
+
+msgid "error.glyphs"
+msgstr "Missing Glyphs"
+
+msgid "error.glyphs.msg"
+msgstr "This page could not displayed in full because some characters are missing. You can install additional fonts to fix this."
+
 msgid "gempub.cover.viewlocal"
 msgstr "This Gempub book can be viewed after it has been saved locally."
 
@@ -1947,7 +1959,7 @@ msgstr "DELETE FONTPACK"
 
 #, c-format
 msgid "dlg.fontpack.delete.confirm"
-msgstr "Do you really want to permanently delete\nthe fontpack \"%s\"?"
+msgstr "Do you really want to permanently delete the fontpack \"%s\"?"
 
 msgid "dlg.fontpack.delete"
 msgstr "Delete Fontpack"
@@ -1969,4 +1981,14 @@ msgstr "Lagrange attempts to load all individual TrueType files that are copied 
 
 msgid "truetype.help.installed"
 msgstr "This font is installed in the user fonts directory."
+
+msgid "heading.dismiss.warning"
+msgstr "DISMISS WARNING"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Permanently dismiss warning about terminal emulation on %s?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Dismiss Warning"
 

@@ -172,6 +172,11 @@ iRangecc    findLoc_GmRun           (const iGmRun *, iInt2 pos);
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
     
+enum iGmDocumentWarning {
+    ansiEscapes_GmDocumentWarning   = iBit(1),
+    missingGlyphs_GmDocumentWarning = iBit(2),
+};
+
 /*
 enum iGmDocumentBanner {
     none_GmDocumentBanner,
@@ -221,6 +226,7 @@ iInt2           size_GmDocument             (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);
 size_t          memorySize_GmDocument       (const iGmDocument *); /* bytes */
+int             warnings_GmDocument         (const iGmDocument *);
 
 iRangecc        findText_GmDocument                 (const iGmDocument *, const iString *text, const char *start);
 iRangecc        findTextBefore_GmDocument           (const iGmDocument *, const iString *text, const char *before);

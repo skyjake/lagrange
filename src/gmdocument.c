@@ -107,6 +107,7 @@ struct Impl_GmDocument {
     iChar     siteIcon;
     iMedia *  media;
     iStringSet *openURLs; /* currently open URLs for highlighting links */
+    int       warnings;
     iBool     isPaletteValid;
     iColor    palette[tmMax_ColorId]; /* copy of the color palette */
 };
@@ -596,6 +597,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         isPreformat = iTrue;
         isFirstText = iFalse;
     }
+    d->warnings &= ~missingGlyphs_GmDocumentWarning;
+    checkMissing_Text(); /* clear the flag */
     setAnsiFlags_Text(d->theme.ansiEscapes);
     while (nextSplit_Rangecc(content, "\n", &contentLine)) {
         iRangecc line = contentLine; /* `line` will be trimmed; modifying would confuse `nextSplit_Rangecc` */
@@ -1045,6 +1048,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     }
 #endif
     d->size.y = pos.y;
+    if (checkMissing_Text()) {
+        d->warnings |= missingGlyphs_GmDocumentWarning;
+    }
     /* Go over the preformatted blocks and mark them wide if at least one run is wide. */ {
         /* TODO: Store the dimensions and ranges for later access. */
         iForEach(Array, i, &d->layout) {
@@ -1084,6 +1090,7 @@ void init_GmDocument(iGmDocument *d) {
     d->siteIcon = 0;
     d->media = new_Media();
     d->openURLs = NULL;
+    d->warnings = 0;
     d->isPaletteValid = iFalse;
     iZap(d->palette);
 }
@@ -1123,16 +1130,28 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
               mix_Color(get_Color(tmBannerTitle_ColorId),
                         get_Color(tmBackground_ColorId),
                         theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
-    const int bannerItemFg = isDark_GmDocumentTheme(currentTheme_()) ? white_ColorId : black_ColorId;
-    set_Color(tmBannerItemBackground_ColorId, mix_Color(get_Color(tmBannerBackground_ColorId),
-                                                        get_Color(tmBannerTitle_ColorId), 0.1f));
-    set_Color(tmBannerItemFrame_ColorId, mix_Color(get_Color(tmBannerBackground_ColorId),
-                                                   get_Color(tmBannerTitle_ColorId), 0.4f));
-    set_Color(tmBannerItemText_ColorId, mix_Color(get_Color(tmBannerBackground_ColorId),
-                                                  get_Color(bannerItemFg), 0.75f));
-    set_Color(tmBannerItemTitle_ColorId, get_Color(bannerItemFg));
+    /* Banner colors. */
+    if (theme == highContrast_GmDocumentTheme) {
+        set_Color(tmBannerItemBackground_ColorId, get_Color(tmBannerBackground_ColorId));
+        set_Color(tmBannerItemFrame_ColorId, get_Color(tmBannerIcon_ColorId));
+        set_Color(tmBannerItemTitle_ColorId, get_Color(tmBannerTitle_ColorId));
+        set_Color(tmBannerItemText_ColorId, get_Color(tmBannerTitle_ColorId));
+    }
+    else {
+        const int bannerItemFg = isDark_GmDocumentTheme(currentTheme_()) ? white_ColorId : black_ColorId;
+        set_Color(tmBannerItemBackground_ColorId, mix_Color(get_Color(tmBannerBackground_ColorId),
+                                                            get_Color(tmBannerTitle_ColorId), 0.1f));
+        set_Color(tmBannerItemFrame_ColorId, mix_Color(get_Color(tmBannerBackground_ColorId),
+                                                       get_Color(tmBannerTitle_ColorId), 0.4f));
+        set_Color(tmBannerItemText_ColorId, mix_Color(get_Color(tmBannerTitle_ColorId),
+                                                      get_Color(bannerItemFg), 0.5f));
+        set_Color(tmBannerItemTitle_ColorId, get_Color(bannerItemFg));
+    }
+    /* Modified backgrounds. */
     set_Color(tmBackgroundAltText_ColorId,
               mix_Color(get_Color(tmQuoteIcon_ColorId), get_Color(tmBackground_ColorId), 0.85f));
+    set_Color(tmFrameAltText_ColorId,
+              mix_Color(get_Color(tmQuoteIcon_ColorId), get_Color(tmBackground_ColorId), 0.4f));
     set_Color(tmBackgroundOpenLink_ColorId,
               mix_Color(get_Color(tmLinkText_ColorId), get_Color(tmBackground_ColorId), 0.90f));
     set_Color(tmFrameOpenLink_ColorId,
@@ -2008,6 +2027,14 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     /* Normalize and convert to Gemtext if needed. */
     set_String(&d->unormSource, source);
     set_String(&d->source, source);
+    /* Detect use of ANSI escapes. */ {
+        iRegExp *ansiEsc = new_RegExp("\x1b[[()]([0-9;AB]*?)m", 0);
+        iRegExpMatch m;
+        init_RegExpMatch(&m);
+        const iBool found = matchString_RegExp(ansiEsc, &d->unormSource, &m);
+        iChangeFlags(d->warnings, ansiEscapes_GmDocumentWarning, found);
+        iRelease(ansiEsc);
+    }
     if (d->format == gemini_SourceFormat) {
         d->theme.ansiEscapes = prefs_App()->gemtextAnsiEscapes;
     }
@@ -2155,6 +2182,10 @@ size_t memorySize_GmDocument(const iGmDocument *d) {
            size_Array(&d->layout) * sizeof(iGmRun) +
            size_Array(&d->links)  * sizeof(iGmLink) +
            memorySize_Media(d->media);
+}
+
+int warnings_GmDocument(const iGmDocument *d) {
+    return d->warnings;
 }
 
 iRangecc findText_GmDocument(const iGmDocument *d, const iString *text, const char *start) {

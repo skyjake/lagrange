@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "lang.h"
 #include "paint.h"
 #include "util.h"
+#include "app.h"
 
 iDeclareType(BannerItem)
     
@@ -53,27 +54,33 @@ struct Impl_Banner {
     iRect rect;
     iString site;
     iString icon;
+    int siteHeight;
     iArray items;
     iBool isClick;
 };
 
 iDefineTypeConstruction(Banner)
 
+#define itemGap_Banner_     (3 * gap_UI)
+#define itemVPad_Banner_    (2 * gap_UI)
+#define itemHPad_Banner_    (3 * gap_UI)
+#define bottomPad_Banner_   (4 * gap_UI)
+
 static void updateHeight_Banner_(iBanner *d) {
     d->rect.size.y = 0;
     if (!isEmpty_String(&d->site)) {
-        d->rect.size.y += lineHeight_Text(banner_FontId) * 2;
+        d->siteHeight = lineHeight_Text(banner_FontId) * 2;
+        d->rect.size.y += d->siteHeight;
     }
     const size_t numItems = size_Array(&d->items);
     if (numItems) {
-        const int outerPad = 2 * gap_UI;
         const int innerPad = gap_UI;
         iConstForEach(Array, i, &d->items) {
             const iBannerItem *item = i.value;
             d->rect.size.y += item->height;
         }
-        d->rect.size.y += (numItems - 1) * innerPad;
-        d->rect.size.y += outerPad;
+        d->rect.size.y += (numItems - 1) * itemGap_Banner_;
+        d->rect.size.y += bottomPad_Banner_;
     }
 }
 
@@ -99,9 +106,9 @@ void setOwner_Banner(iBanner *d, iDocumentWidget *owner) {
 
 static void updateItemHeight_Banner_(const iBanner *d, iBannerItem *item) {
     item->height = measureWrapRange_Text(uiContent_FontId,
-                                         width_Rect(d->rect) - 6 * gap_UI,
+                                         width_Rect(d->rect) - 2 * itemHPad_Banner_,
                                          range_String(&item->text))
-                       .bounds.size.y + 4 * gap_UI;
+                       .bounds.size.y + 2 * itemVPad_Banner_;
 }
 
 void setWidth_Banner(iBanner *d, int width) {
@@ -186,6 +193,7 @@ void draw_Banner(const iBanner *d) {
         return;
     }
     iRect  bounds = d->rect;
+    /* TODO: use d->siteHeight */
     iInt2  pos    = addY_I2(topLeft_Rect(bounds), lineHeight_Text(banner_FontId) / 2);
     iPaint p;
     init_Paint(&p);
@@ -218,14 +226,26 @@ void draw_Banner(const iBanner *d) {
         setBaseAttributes_Text(uiContent_FontId, tmBannerItemText_ColorId);
         iWrapText wt = {
             .text = range_String(&item->text),
-            .maxWidth = width_Rect(itemRect) - 6 * gap_UI,
+            .maxWidth = width_Rect(itemRect) - 2 * itemHPad_Banner_,
             .mode = word_WrapTextMode
         };
-        draw_WrapText(&wt, uiContent_FontId, add_I2(pos, init_I2(3 * gap_UI, 2 * gap_UI)),
+        draw_WrapText(&wt, uiContent_FontId, add_I2(pos, init_I2(itemHPad_Banner_, itemVPad_Banner_)),
                       tmBannerItemText_ColorId);
-        pos.y += innerPad;
+        pos.y += item->height + itemGap_Banner_;
     }
     setBaseAttributes_Text(-1, -1);
+}
+
+static size_t itemAtCoord_Banner_(const iBanner *d, iInt2 coord) {
+    iInt2 pos = addY_I2(topLeft_Rect(d->rect), lineHeight_Text(banner_FontId) * 2);
+    iConstForEach(Array, i, &d->items) {
+        const iBannerItem *item = i.value;
+        if (contains_Rect((iRect){ pos, init_I2(d->rect.size.x, item->height)}, coord)) {
+            return index_ArrayConstIterator(&i);
+        }
+        pos.y += itemGap_Banner_ + item->height;
+    }
+    return iInvalidPos;
 }
 
 iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
@@ -240,14 +260,49 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
         case SDL_MOUSEBUTTONUP:
             /* Clicking on the top/side banner navigates to site root. */
             if (ev->button.button == SDL_BUTTON_LEFT) {
-                const iBool isInside = contains_Rect(d->rect, init_I2(ev->button.x, ev->button.y));
+                const iInt2 coord = init_I2(ev->button.x, ev->button.y);
+                const iBool isInside = contains_Rect(d->rect, coord);
                 if (isInside && ev->button.state == SDL_PRESSED) {
                     d->isClick = iTrue;
                     return iTrue;
                 }
                 else if (ev->button.state == SDL_RELEASED) {
                     if (d->isClick && isInside) {
-                        postCommand_Widget(d->doc, "navigate.root");
+                        const size_t index = itemAtCoord_Banner_(d, coord);
+                        if (index == iInvalidPos) {
+                            if (coord.y < top_Rect(d->rect) + d->siteHeight) {
+                                postCommand_Widget(d->doc, "navigate.root");
+                            }
+                        }
+                        else {
+                            const iBannerItem *item = constAt_Array(&d->items, index);
+                            if (item->type == error_BannerType) {
+                                postCommand_Widget(d->doc, "document.info");
+                            }
+                            else {
+                                switch (item->code) {
+                                    case missingGlyphs_GmStatusCode:
+                                        postCommandf_App("open newtab:1 url:about:fonts");
+                                        break;
+                                    case ansiEscapes_GmStatusCode:
+                                        makeQuestion_Widget(uiHeading_ColorEscape "${heading.dismiss.warning}",
+                                                            format_Lang("${dlg.dismiss.ansi}",
+                                                                        format_CStr(uiTextStrong_ColorEscape "%s"
+                                                                                    restore_ColorEscape, cstr_Rangecc(urlHost_String(url_DocumentWidget(d->doc))))),
+                                                            (iMenuItem[]){ { "${cancel}" },
+                                            { uiTextAction_ColorEscape "${dlg.dismiss.warning}",
+                                                SDLK_RETURN, 0,
+                                                format_CStr("document.dismiss warning:%d",
+                                                            ansiEscapes_GmDocumentWarning)
+                                            }
+                                        }, 2);
+                                        break;
+                                    default:
+                                        postCommand_Widget(d->doc, "document.info");
+                                        break;
+                                }
+                            }
+                        }
                     }
                     d->isClick = iFalse;
                 }
