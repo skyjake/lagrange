@@ -134,6 +134,7 @@ enum iColorId {
     tmBannerSideTitle_ColorId,
     tmInlineContentMetadata_ColorId,
     tmBackgroundAltText_ColorId,     /* derived from other theme colors */
+    tmFrameAltText_ColorId,          /* derived from other theme colors */
     tmBackgroundOpenLink_ColorId,    /* derived from other theme colors */
     tmFrameOpenLink_ColorId,         /* derived from other theme colors */
     tmLinkCustomIconVisited_ColorId, /* derived from other theme colors */

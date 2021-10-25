@@ -1758,6 +1758,20 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
     updateValueInputWidth_(d);
 }
 
+static void updateQuestionWidth_(iWidget *dlg) {
+    iWidget *title = findChild_Widget(dlg, "question.title");
+    iWidget *msg   = findChild_Widget(dlg, "question.msg");
+    if (title && msg) {
+        const iRect safeRoot = safeRect_Root(dlg->root);
+        const iInt2 rootSize = safeRoot.size;
+        const int padding = 6 * gap_UI;
+        dlg->rect.size.x =
+            iMin(iMin(150 * gap_UI, rootSize.x),
+                 iMaxi(iMaxi(100 * gap_UI, padding + title->rect.size.x),
+                       padding + msg->rect.size.x));
+    }
+}
+
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
     /* TODO: Add a "notification" type of user events to separate them from user actions. */
@@ -1767,12 +1781,19 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "document.autoreload") ||
           equal_Command(cmd, "document.reload") ||
           equal_Command(cmd, "document.request.updated") ||
+          equal_Command(cmd, "document.linkkeys") ||
           equal_Command(cmd, "scrollbar.fade") ||
           equal_Command(cmd, "widget.overflow") ||
           equal_Command(cmd, "edgeswipe.ended") ||
+          equal_Command(cmd, "layout.changed") ||
+          equal_Command(cmd, "theme.changed") ||
+          startsWith_CStr(cmd, "feeds.update.") ||
           startsWith_CStr(cmd, "window."))) {
         setupSheetTransition_Mobile(msg, iFalse);
         destroy_Widget(msg);
+    }
+    else if (equal_Command(cmd, "window.resized")) {
+        updateQuestionWidth_(msg);
     }
     return iFalse;
 }
@@ -1819,8 +1840,16 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     }
     iWidget *dlg = makeSheet_Widget("");
     setCommandHandler_Widget(dlg, messageHandler_);
-    addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag);
-    addChildFlags_Widget(dlg, iClob(new_LabelWidget(msg, NULL)), frameless_WidgetFlag);
+    setId_Widget(
+        addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag),
+        "question.title");
+    iLabelWidget *msgLabel;
+    setId_Widget(addChildFlags_Widget(dlg,
+                                      iClob(msgLabel = new_LabelWidget(msg, NULL)),
+                                      frameless_WidgetFlag | fixedHeight_WidgetFlag |
+                                          resizeToParentWidth_WidgetFlag),
+                 "question.msg");
+    setWrap_LabelWidget(msgLabel, iTrue);
     /* Check for value selections. */
     for (size_t i = 0; i < numItems; i++) {
         const iMenuItem *item = &items[i];
@@ -1842,6 +1871,8 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(dlg, iClob(makeDialogButtons_Widget(items, numItems)));
     addChild_Widget(dlg->root->widget, iClob(dlg));
+    updateQuestionWidth_(dlg);
+    class_Widget(as_Widget(msgLabel))->sizeChanged(as_Widget(msgLabel));
     arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
                             be arranged correctly unless it's here. */
     setupSheetTransition_Mobile(dlg, iTrue);
