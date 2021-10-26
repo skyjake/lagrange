@@ -402,8 +402,10 @@ void registerURLHandler_MacOS(void) {
     [handler release];
 }
 
-void setupApplication_MacOS(void) {
+void setupApplication_MacOS(void) {    
     NSApplication *app = [NSApplication sharedApplication];
+    [app setActivationPolicy:NSApplicationActivationPolicyRegular];
+    [app activateIgnoringOtherApps:YES];
     /* Our delegate will override SDL's delegate. */
     MyDelegate *myDel = [[MyDelegate alloc] initWithSDLDelegate:app.delegate];
     [myDel setAppearance:currentSystemAppearance_()];
@@ -539,7 +541,7 @@ enum iColorId removeColorEscapes_String(iString *d) {
     return color;
 }
 
-// returns the selected item, if any
+/* returns the selected item, if any */
 static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem *items, size_t n) {
     NSMenuItem *selectedItem = nil;
     for (size_t i = 0; i < n && items[i].label; ++i) {
