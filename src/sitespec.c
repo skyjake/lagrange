@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/stringhash.h>
+#include <the_Foundation/toml.h>
 
 iDeclareClass(SiteParams)
 iDeclareObjectConstruction(SiteParams)
@@ -32,11 +33,13 @@ iDeclareObjectConstruction(SiteParams)
 struct Impl_SiteParams {
     iObject  object;
     uint16_t titanPort;
+    int      dismissWarnings;
     /* TODO: theme seed, style settings */
 };
 
 void init_SiteParams(iSiteParams *d) {
-    d->titanPort = 0; /* undefined */
+    d->titanPort       = 0; /* undefined */
+    d->dismissWarnings = 0;
 }
 
 void deinit_SiteParams(iSiteParams *d) {
@@ -49,14 +52,17 @@ iDefineObjectConstruction(SiteParams)
 /*----------------------------------------------------------------------------------------------*/
     
 struct Impl_SiteSpec {
-    iString     savePath;
+    iString     saveDir;
     iStringHash sites;
+    iSiteParams *loadParams;
 };
 
-static iSiteSpec siteSpec_;
+static iSiteSpec   siteSpec_;
+static const char *fileName_SiteSpec_ = "sitespec.ini";
 
-static void load_SiteSpec_(iSiteSpec *d) {
-    iFile *f = iClob(new_File(&d->savePath));
+static void loadOldFormat_SiteSpec_(iSiteSpec *d) {
+    clear_StringHash(&d->sites);
+    iFile *f = iClob(new_File(collect_String(concatCStr_Path(&d->saveDir, "sitespec.txt"))));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         iString *src = collect_String(readString_File(f));
         iRangecc split = iNullRange;
@@ -93,15 +99,63 @@ static void load_SiteSpec_(iSiteSpec *d) {
     }
 }
 
+static void handleIniTable_SiteSpec_(void *context, const iString *table, iBool isStart) {
+    iSiteSpec *d = context;
+    if (isStart) {
+        iAssert(d->loadParams == NULL);
+        d->loadParams = new_SiteParams();                
+    }
+    else {
+        iAssert(d->loadParams != NULL);
+        insert_StringHash(&d->sites, table, d->loadParams);
+        iReleasePtr(&d->loadParams);
+    }
+}
+
+static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, const iString *key,
+                                        const iTomlValue *value) {
+    iSiteSpec *d = context;
+    iUnused(table);
+    if (!d->loadParams) {
+        return;
+    }
+    if (!cmp_String(key, "titanPort")) {
+        d->loadParams->titanPort = number_TomlValue(value);
+    }
+    else if (!cmp_String(key, "dismissWarnings") && value->type == int64_TomlType) {
+        d->loadParams->dismissWarnings = value->value.int64;
+    }
+}
+
+static iBool load_SiteSpec_(iSiteSpec *d) {
+    iBool ok = iFalse;
+    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, fileName_SiteSpec_)));
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        iTomlParser *toml = new_TomlParser();
+        setHandlers_TomlParser(toml, handleIniTable_SiteSpec_, handleIniKeyValue_SiteSpec_, d);
+        ok = parse_TomlParser(toml, collect_String(readString_File(f)));
+        delete_TomlParser(toml);
+    }
+    iRelease(f);
+    iAssert(d->loadParams == NULL);
+    return ok;
+}
+
 static void save_SiteSpec_(iSiteSpec *d) {
-    iFile *f = new_File(&d->savePath);
+    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, fileName_SiteSpec_)));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         iString *buf = new_String();
         iConstForEach(StringHash, i, &d->sites) {
             const iBlock *     key    = &i.value->keyBlock;
             const iSiteParams *params = i.value->object;
-            format_String(buf, "# %s\n", cstr_Block(key));
-            appendFormat_String(buf, "titanPort: %u\n", params->titanPort);
+            format_String(buf, "[%s]\n", cstr_Block(key));
+            if (params->titanPort) {
+                appendFormat_String(buf, "titanPort = %u\n", params->titanPort);
+            }
+            if (params->dismissWarnings) {
+                appendFormat_String(buf, "dismissWarnings = 0x%x\n", params->dismissWarnings);
+            }
+            appendCStr_String(buf, "\n");
             write_File(f, utf8_String(buf));
         }
         delete_String(buf);
@@ -111,15 +165,18 @@ static void save_SiteSpec_(iSiteSpec *d) {
 
 void init_SiteSpec(const char *saveDir) {
     iSiteSpec *d = &siteSpec_;
-    initCStr_String(&d->savePath, concatPath_CStr(saveDir, "sitespec.txt"));
+    d->loadParams = NULL;
     init_StringHash(&d->sites);
-    load_SiteSpec_(d);
+    initCStr_String(&d->saveDir, saveDir);
+    if (!load_SiteSpec_(d)) {
+        loadOldFormat_SiteSpec_(d);
+    }
 }
 
 void deinit_SiteSpec(void) {
     iSiteSpec *d = &siteSpec_;
     deinit_StringHash(&d->sites);
-    deinit_String(&d->savePath);
+    deinit_String(&d->saveDir);
 }
 
 void setValue_SiteSpec(const iString *site, enum iSiteSpecKey key, int value) {
@@ -135,6 +192,11 @@ void setValue_SiteSpec(const iString *site, enum iSiteSpecKey key, int value) {
         case titanPort_SiteSpecKey:
             params->titanPort = iClamp(value, 0, 0xffff);
             needSave = iTrue;
+            break;
+        case dismissWarnings_SiteSpecKey:
+            params->dismissWarnings = value;
+            needSave = iTrue;
+            break;
         default:
             break;
     }
@@ -152,6 +214,8 @@ int value_SiteSpec(const iString *site, enum iSiteSpecKey key) {
     switch (key) {
         case titanPort_SiteSpecKey:
             return params->titanPort;
+        case dismissWarnings_SiteSpecKey:
+            return params->dismissWarnings;
         default:
             return 0;
     }    
