@@ -2064,6 +2064,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         d->state = receivedPartialResponse_RequestState;
         clear_Banner(d->banner);
         updateTrust_DocumentWidget_(d, resp);
+        updateTheme_DocumentWidget_(d);
         if (~d->certFlags & trusted_GmCertFlag &&
             isSuccess_GmStatusCode(statusCode) &&
             equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini")) {
