@@ -1137,6 +1137,9 @@ static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
+    if (category_GmStatusCode(d->sourceStatus) == categoryInput_GmStatusCode) {
+        return;
+    }
     if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
         iBlock empty;
         init_Block(&empty, 0);
@@ -2062,9 +2065,11 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     iGmResponse *resp = lockResponse_GmRequest(d->request);
     if (d->state == fetching_RequestState) {
         d->state = receivedPartialResponse_RequestState;
-        clear_Banner(d->banner);
         updateTrust_DocumentWidget_(d, resp);
-        updateTheme_DocumentWidget_(d);
+        if (isSuccess_GmStatusCode(statusCode)) {
+            clear_Banner(d->banner);
+            updateTheme_DocumentWidget_(d);
+        }
         if (~d->certFlags & trusted_GmCertFlag &&
             isSuccess_GmStatusCode(statusCode) &&
             equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini")) {
