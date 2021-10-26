@@ -67,12 +67,12 @@ message (STATUS "Preparing resources...")
 make_fontpack (res/default.fontpack)
 # Fonts to install as separate files.
 set (FONTPACKS
-    arabic.fontpack
-    cjk.fontpack
-    firasans.fontpack
-    literata.fontpack
-    nunito.fontpack
-    tinos.fontpack      
+#    arabic.fontpack
+#    cjk.fontpack
+#    firasans.fontpack
+#    literata.fontpack
+#    nunito.fontpack
+#    tinos.fontpack      
 )
 foreach (fp ${FONTPACKS})
     make_fontpack (res/${fp})
