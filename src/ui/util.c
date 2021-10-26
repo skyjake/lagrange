@@ -2629,7 +2629,8 @@ iWidget *makePreferences_Widget(void) {
                 updateSize_LabelWidget((iLabelWidget *) tog);
             }
             addChildFlags_Widget(values, iClob(ansi), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-            addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
+            addDialogToggle_(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
+            addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");                
             addDialogPadding_(headings, values);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
             addFontButtons_(values, "ui");

@@ -255,6 +255,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.hoverlink", &d->prefs.hoverLink },
         { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
         { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
+        { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
     };
     iForIndices(i, boolPrefs) {
         appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
@@ -2493,6 +2494,10 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.addBookmarksToBottom = arg_Command(cmd) != 0;
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.font.warnmissing.changed")) {
+        d->prefs.warnAboutMissingGlyphs = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.animate.changed")) {
         d->prefs.uiAnimations = arg_Command(cmd) != 0;
         return iTrue;
@@ -2802,6 +2807,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetoolbarscroll"), d->prefs.hideToolbarOnScroll);
         setToggle_Widget(findChild_Widget(dlg, "prefs.bookmarks.addbottom"), d->prefs.addBookmarksToBottom);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.font.warnmissing"), d->prefs.warnAboutMissingGlyphs);
         setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);

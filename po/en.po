@@ -1521,6 +1521,9 @@ msgstr "FG Color"
 msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Font Style"
 
+msgid "prefs.font.warnmissing"
+msgstr "Glyph warnings:"
+
 msgid "prefs.font.smooth"
 msgstr "Smoothing:"
 

@@ -1802,8 +1802,10 @@ static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
-    const int dismissed = value_SiteSpec(collectNewRange_String(urlRoot_String(d->mod.url)),
-                                         dismissWarnings_SiteSpecKey);
+    const int dismissed =
+        value_SiteSpec(collectNewRange_String(urlRoot_String(d->mod.url)),
+                       dismissWarnings_SiteSpecKey) |
+        (!prefs_App()->warnAboutMissingGlyphs ? missingGlyphs_GmDocumentWarning : 0);
     const int warnings = warnings_GmDocument(d->doc) & ~dismissed;
     if (warnings & missingGlyphs_GmDocumentWarning) {
         add_Banner(d->banner, warning_BannerType, missingGlyphs_GmStatusCode, NULL);

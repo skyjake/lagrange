@@ -49,10 +49,11 @@ void init_Prefs(iPrefs *d) {
     d->smoothScrollSpeed[keyboard_ScrollType] = 13;
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling = iFalse;
-    d->collapsePreOnLoad = iFalse;
-    d->openArchiveIndexPages = iTrue;
-    d->addBookmarksToBottom  = iTrue;
-    d->decodeUserVisibleURLs = iTrue;
+    d->collapsePreOnLoad      = iFalse;
+    d->openArchiveIndexPages  = iTrue;
+    d->addBookmarksToBottom   = iTrue;
+    d->warnAboutMissingGlyphs = iTrue;
+    d->decodeUserVisibleURLs  = iTrue;
     d->maxCacheSize      = 10;
     d->maxMemorySize     = 200;
     setCStr_String(&d->strings[uiFont_PrefsString], "default");
