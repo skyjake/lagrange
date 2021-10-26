@@ -56,6 +56,8 @@ struct Impl_Banner {
     iString icon;
     int siteHeight;
     iArray items;
+    iBool isHover;
+    size_t hoverIndex;
     iBool isClick;
 };
 
@@ -91,6 +93,8 @@ void init_Banner(iBanner *d) {
     init_String(&d->icon);
     init_Array(&d->items, sizeof(iBannerItem));
     d->isClick = iFalse;
+    d->isHover = iFalse;
+    d->hoverIndex = iInvalidPos;
 }
 
 void deinit_Banner(iBanner *d) {
@@ -222,7 +226,12 @@ void draw_Banner(const iBanner *d) {
         const iBannerItem *item = i.value;
         const iRect itemRect = { pos, init_I2(d->rect.size.x, item->height) };
         fillRect_Paint(&p, itemRect, tmBannerItemBackground_ColorId);
-        drawRect_Paint(&p, itemRect, tmBannerItemFrame_ColorId);
+        drawRect_Paint(&p,
+                       itemRect,
+                       item->type == warning_BannerType && d->isHover &&
+                               d->hoverIndex == index_ArrayConstIterator(&i)
+                           ? tmBannerItemText_ColorId
+                           : tmBannerItemFrame_ColorId);
         setBaseAttributes_Text(uiContent_FontId, tmBannerItemText_ColorId);
         iWrapText wt = {
             .text = range_String(&item->text),
@@ -251,11 +260,22 @@ static size_t itemAtCoord_Banner_(const iBanner *d, iInt2 coord) {
 iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d->doc);
     switch (ev->type) {
-        case SDL_MOUSEMOTION:
-            if (contains_Rect(d->rect, init_I2(ev->motion.x, ev->motion.y))) {
+        case SDL_MOUSEMOTION: {
+            const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);
+            const iBool isInside = contains_Rect(d->rect, coord);
+            if (isInside) {
                 setCursor_Window(window_Widget(w), SDL_SYSTEM_CURSOR_HAND);
             }
+            if (isInside ^ d->isHover) {
+                d->isHover = isInside;
+            }
+            const size_t at = d->isHover ? itemAtCoord_Banner_(d, coord) : iInvalidPos;
+            if (at != d->hoverIndex) {
+                d->hoverIndex = at;
+                refresh_Widget(w);
+            }
             break;
+        }
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
             /* Clicking on the top/side banner navigates to site root. */
@@ -276,6 +296,7 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
                         }
                         else {
                             const iBannerItem *item = constAt_Array(&d->items, index);
+                            d->isHover = iFalse;
                             if (item->type == error_BannerType) {
                                 postCommand_Widget(d->doc, "document.info");
                             }
@@ -285,17 +306,23 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
                                         postCommandf_App("open newtab:1 url:about:fonts");
                                         break;
                                     case ansiEscapes_GmStatusCode:
-                                        makeQuestion_Widget(uiHeading_ColorEscape "${heading.dismiss.warning}",
-                                                            format_Lang("${dlg.dismiss.ansi}",
-                                                                        format_CStr(uiTextStrong_ColorEscape "%s"
-                                                                                    restore_ColorEscape, cstr_Rangecc(urlHost_String(url_DocumentWidget(d->doc))))),
-                                                            (iMenuItem[]){ { "${cancel}" },
-                                            { uiTextAction_ColorEscape "${dlg.dismiss.warning}",
-                                                SDLK_RETURN, 0,
-                                                format_CStr("document.dismiss warning:%d",
-                                                            ansiEscapes_GmDocumentWarning)
-                                            }
-                                        }, 2);
+                                        makeQuestion_Widget(
+                                            uiHeading_ColorEscape "${heading.dismiss.warning}",
+                                            format_Lang(
+                                                "${dlg.dismiss.ansi}",
+                                                format_CStr(uiTextStrong_ColorEscape
+                                                            "%s" restore_ColorEscape,
+                                                            cstr_Rangecc(urlHost_String(
+                                                                url_DocumentWidget(d->doc))))),
+                                            (iMenuItem[]){
+                                                { "${cancel}" },
+                                                { uiTextAction_ColorEscape "${dlg.dismiss.warning}",
+                                                  SDLK_RETURN,
+                                                  0,
+                                                  format_CStr("!document.dismiss warning:%d ptr:%p",
+                                                              ansiEscapes_GmDocumentWarning,
+                                                              d->doc) } },
+                                            2);
                                         break;
                                     default:
                                         postCommand_Widget(d->doc, "document.info");

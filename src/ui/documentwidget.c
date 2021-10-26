@@ -47,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "root.h"
 #include "mediaui.h"
 #include "scrollwidget.h"
+#include "sitespec.h"
 #include "touch.h"
 #include "translation.h"
 #include "uploadwidget.h"
@@ -1798,11 +1799,14 @@ static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
-    if (warnings_GmDocument(d->doc) & missingGlyphs_GmDocumentWarning) {
+    const int dismissed = value_SiteSpec(collectNewRange_String(urlRoot_String(d->mod.url)),
+                                         dismissWarnings_SiteSpecKey);
+    const int warnings = warnings_GmDocument(d->doc) & ~dismissed;
+    if (warnings & missingGlyphs_GmDocumentWarning) {
         add_Banner(d->banner, warning_BannerType, missingGlyphs_GmStatusCode, NULL);
         /* TODO: List one or more of the missing characters and/or their Unicode blocks? */
     }
-    if (warnings_GmDocument(d->doc) & ansiEscapes_GmDocumentWarning) {
+    if (warnings & ansiEscapes_GmDocumentWarning) {
         add_Banner(d->banner, warning_BannerType, ansiEscapes_GmStatusCode, NULL);
     }
 }
@@ -3382,6 +3386,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.autoreload.set") && document_App() == d) {
         d->mod.reloadInterval = arg_Command(cmd);
+    }
+    else if (equalWidget_Command(cmd, w, "document.dismiss")) {
+        const iString *site = collectNewRange_String(urlRoot_String(d->mod.url));
+        const int dismissed = value_SiteSpec(site, dismissWarnings_SiteSpecKey);
+        const int arg = argLabel_Command(cmd, "warning");
+        setValue_SiteSpec(site, dismissWarnings_SiteSpecKey, dismissed | arg);
+        if (arg == ansiEscapes_GmDocumentWarning) {
+            remove_Banner(d->banner, ansiEscapes_GmStatusCode);
+            refresh_Widget(w);
+        }
+        return iTrue;
     }
     else if (startsWith_CStr(cmd, "pinch.") && document_Command(cmd) == d) {
         return handlePinch_DocumentWidget_(d, cmd);

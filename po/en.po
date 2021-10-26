@@ -1983,7 +1983,7 @@ msgid "truetype.help.installed"
 msgstr "This font is installed in the user fonts directory."
 
 msgid "heading.dismiss.warning"
-msgstr "DISMISS WARNING"
+msgstr "DISMISS WARNING?"
 
 #, c-format
 msgid "dlg.dismiss.ansi"
