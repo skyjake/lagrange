@@ -1600,7 +1600,6 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     clear_String(&str);
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
-                    format_String(&str, "# %s\n", zipPageHeading_(param));
                     if (equal_Rangecc(param, mimeType_FontPack)) {
                         /* Show some information about fontpacks, and set up footer actions. */
                         iArchive *zip = iClob(new_Archive());
@@ -1609,7 +1608,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                             setUrl_FontPack(fp, d->mod.url);
                             setStandalone_FontPack(fp, iTrue);
                             if (loadArchive_FontPack(fp, zip)) {
-                                appendFormat_String(&str, "## %s\n%s",
+                                appendFormat_String(&str, "# " fontpack_Icon "%s\n%s",
                                                     cstr_String(id_FontPack(fp).id),
                                                     cstrCollect_String(infoText_FontPack(fp)));
                             }
@@ -1623,6 +1622,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                         }
                     }
                     else {
+                        format_String(&str, "# %s\n", zipPageHeading_(param));
                         appendFormat_String(&str,
                                             cstr_Lang("doc.archive"),
                                             cstr_Rangecc(baseName_Path(d->mod.url)));

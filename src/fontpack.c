@@ -767,7 +767,8 @@ const iArray *actions_FontPack(const iFontPack *d, iBool showInstalled) {
     }
     else if (d->isStandalone) {
         pushBack_Array(items,
-                       &(iMenuItem){ format_Lang(add_Icon " ${fontpack.install}", fpId),
+                       &(iMenuItem){ format_Lang(add_Icon " " uiTextAction_ColorEscape
+                                                          "\x1b[1m${fontpack.install}", fpId),
                                      SDLK_RETURN,
                                      0,
                                      "fontpack.install" });
