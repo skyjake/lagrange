@@ -987,10 +987,6 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     arrange_Widget(findWidget_Root("stack"));
     checkModeButtonLayout_SidebarWidget_(d);
     updateItemHeight_SidebarWidget_(d);
-    if (!isFixedWidth && !isRefreshPending_App()) {
-        updateSize_DocumentWidget(document_App());
-        invalidate_ListWidget(d->list);
-    }
 }
 
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {

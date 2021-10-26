@@ -1968,7 +1968,7 @@ msgid "dlg.fontpack.delete"
 msgstr "Delete Fontpack"
 
 msgid "fontpack.help"
-msgstr "Lagrange fontpacks are ZIP archives that contain a set of font files and associated configuration parameters. Once installed, the fonts can be used for document content and the UI. The active fonts are selected using Preferences > Fonts."
+msgstr "Lagrange fontpacks are ZIP archives that contain a set of font files and associated configuration parameters. Once installed, the fonts can be used for document content and the UI. The active fonts are selected in Preferences > Fonts."
 
 msgid "fontpack.install.ttf"
 msgstr "Install TrueType Font"

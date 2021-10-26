@@ -7,10 +7,11 @@
 # Release notes
 
 ## 1.8
-⚠️ Font settings are reset to defaults. Only a minimal set of fonts is bundled with the app. If additional fonts are needed, they can be downloaded or one can use custom TrueType fonts.
+⚠️ Font settings will be reset to defaults. Only a minimal set of fonts is bundled with the app. If additional fonts are needed, one can use custom TrueType fonts or download some from the Font Library:
+=> gemini://skyjake.fi/fonts/
 
 New features:
-* Added a customizable font library. One can open "about:fonts" to view and manage the installed fonts.
+* Added a customizable font library. Open "about:fonts" to view and manage the installed fonts.
 * Added TrueType fonts as a recognized content type. When one is viewed in the app (e.g., via a drag-and-drop), there is an option to install it as a user font.
 * Added fontpacks. They are ZIP archives containing one or more TrueType fonts and parameters about how they should be used.
 * Added new font options: separate preformatted and monospace body fonts, UI font, smoothing.
@@ -23,7 +24,6 @@ New features:
 * Added an automatic conversion of Markdown to Gemtext when viewing local files. (Not all Markdown features are supported.)
 
 Changes and enhancements:
-=> gemini://skyjake.fi/fonts/ Additional fonts are available as optional downloads.
 * Removed all alternative built-in content fonts.
 * The default content font is Source Sans, same as the UI font.
 * Redesigned error/warning messages. These now show up as part of the page top banner, and their appearance can no longer be replicated via Gemtext.

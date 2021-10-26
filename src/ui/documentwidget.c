@@ -934,11 +934,6 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window(), 0));
     updateSideOpacity_DocumentWidget_(d, iTrue);
     animateMedia_DocumentWidget_(d);
-    setPos_Banner(d->banner, addY_I2(topLeft_Rect(documentBounds_DocumentWidget_(d)),
-                                     -pos_SmoothScroll(&d->scrollY)));
-    /*init_I2(documentBounds_DocumentWidget_(d).pos.x,
-                                     viewPos_DocumentWidget_(d) -
-                                     documentTopPad_DocumentWidget_(d)));*/
     /* Remember scroll positions of recently visited pages. */ {
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
         if (recent && docSize && d->state == ready_RequestState) {
@@ -1137,7 +1132,7 @@ static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
-    if (category_GmStatusCode(d->sourceStatus) == categoryInput_GmStatusCode) {
+    if (document_App() != d || category_GmStatusCode(d->sourceStatus) == categoryInput_GmStatusCode) {
         return;
     }
     if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
@@ -5034,6 +5029,8 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                                                 documentTopPad_DocumentWidget_(d)),
                                     init_I2(bounds.size.x, documentTopPad_DocumentWidget_(d)) },
                            docBgColor);
+            setPos_Banner(d->banner, addY_I2(topLeft_Rect(docBounds),
+                                             -pos_SmoothScroll(&d->scrollY)));
             draw_Banner(d->banner);
         }
         const int yBottom = yTop + size_GmDocument(d->doc).y;
@@ -5064,7 +5061,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         drawSevenSegmentBytes_MediaUI(font,
                                       add_I2(mid_Rect(bounds),
                                              init_I2(sevenSegWidth.x * 4.5f, -sevenSegWidth.y / 2)),
-                                      uiTextStrong_ColorId, uiTextDim_ColorId,
+                                      tmQuote_ColorId, tmQuoteIcon_ColorId,
                                       bodySize_GmRequest(d->request));
     }
     /* Alt text. */
