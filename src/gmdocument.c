@@ -1998,7 +1998,7 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
                 replaceRegExp_String(&ln, iClob(new_RegExp("__(.+?)__", 0)), "\x1b[1m\\1\x1b[0m", NULL, NULL);
                 replaceRegExp_String(&ln, iClob(new_RegExp("\\*(.+?)\\*", 0)), "\x1b[3m\\1\x1b[0m", NULL, NULL);
                 replaceRegExp_String(&ln, iClob(new_RegExp("\\b_(.+?)_\\b", 0)), "\x1b[3m\\1\x1b[0m", NULL, NULL);
-                replaceRegExp_String(&ln, iClob(new_RegExp("(?<!`)`([^`]+?)`(?!`)", 0)), "\x1b[4m\\1\x1b[0m", NULL, NULL);
+                replaceRegExp_String(&ln, iClob(new_RegExp("(?<!`)`([^`]+?)`(?!`)", 0)), "\x1b[11m\\1\x1b[0m", NULL, NULL);
                 append_String(&result, &ln);
                 deinit_String(&ln);
             }

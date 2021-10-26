@@ -1076,7 +1076,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
                         attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
                                                                    italic_FontStyle));
                     }
-                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "4")) {
+                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "11")) {
                         run.attrib.monospace = iTrue;
                         setFgColor_AttributedRun_(&run, tmPreformatted_ColorId);
                         attribFont = font_Text_(fontWithFamily_Text(fontId_Text_(d->baseFont),
