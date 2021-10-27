@@ -159,22 +159,22 @@ void setSite_Banner(iBanner *d, iRangecc site, iChar icon) {
     updateHeight_Banner_(d);
 }
 
-void add_Banner(iBanner *d, enum iBannerType type, enum iGmStatusCode code, const iString *message) {
+void add_Banner(iBanner *d, enum iBannerType type, enum iGmStatusCode code,
+                const iString *message, const iString *details) {
     iBannerItem item;
     init_BannerItem(&item);
     item.type = type;
     item.code = code;
     const iGmError *error = get_GmError(code);
-    if (error->icon) {
-        appendCStr_String(&item.text, escape_Color(tmBannerIcon_ColorId));
-        appendChar_String(&item.text, error->icon);
-        appendCStr_String(&item.text, restore_ColorEscape);
-    }
+    iChar icon = code && error->icon ? error->icon : 0x26a0; /* /!\ */
+    appendCStr_String(&item.text, escape_Color(tmBannerIcon_ColorId));
+    appendChar_String(&item.text, icon);
+    appendCStr_String(&item.text, restore_ColorEscape);
     appendFormat_String(&item.text, "  \x1b[1m%s%s\x1b[0m \u2014 %s%s",
                         escape_Color(tmBannerItemTitle_ColorId),
                         !isEmpty_String(message) ? cstr_String(message) : error->title,
                         escape_Color(tmBannerItemText_ColorId),
-                        error->info);
+                        !isEmpty_String(details) ? cstr_String(details) : error->info);
     translate_Lang(&item.text);
     updateItemHeight_Banner_(d, &item);
     pushBack_Array(&d->items, &item);

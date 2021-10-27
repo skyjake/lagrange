@@ -51,7 +51,9 @@ iLocalDef iBool isEmpty_Banner(const iBanner *d) {
 
 void    clear_Banner        (iBanner *);
 void    setSite_Banner      (iBanner *, iRangecc site, iChar icon);
-void    add_Banner          (iBanner *, enum iBannerType type, enum iGmStatusCode code, const iString *message);
+void    add_Banner          (iBanner *, enum iBannerType type, enum iGmStatusCode code,
+                             const iString *message,
+                             const iString *details);
 void    remove_Banner       (iBanner *, enum iGmStatusCode code);
 
 iBool   processEvent_Banner (iBanner *, const SDL_Event *ev);

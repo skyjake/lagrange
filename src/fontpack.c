@@ -848,8 +848,8 @@ const iString *infoPage_Fonts(iRangecc query) {
     }
     iString *str = collectNewCStr_String("# ${heading.fontpack.meta}\n"
          "=> gemini://skyjake.fi/fonts/  Download new fonts\n"
-         "=> about:command?!open%20newtab:1%20gotoheading:1%20url:about:help  Using fonts in Lagrange\n"
-         "=> about:command?!open%20newtab:1%20gotoheading:1%20url:about:help  How to create a fontpack\n");
+         "=> about:command?!open%20newtab:1%20gotoheading:2.4%20url:about:help  Using fonts in Lagrange\n"
+         "=> about:command?!open%20newtab:1%20gotoheading:5%20url:about:help  How to create a fontpack\n");
     iPtrArray *specsByPack = collectNew_PtrArray();
     setCopy_PtrArray(specsByPack, &d->specOrder);
     sort_Array(specsByPack, cmpSourceAndPriority_FontSpecPtr_);

@@ -835,8 +835,8 @@ msgstr "Open this link in the default browser?\n%s%s"
 msgid "dlg.openlink"
 msgstr "Open Link"
 
-msgid "heading.certwarn"
-msgstr "UNTRUSTED CERTIFICATE"
+msgid "dlg.certwarn.title"
+msgstr "Security Issue"
 
 #, c-format
 msgid "dlg.certwarn.mayberenewed"

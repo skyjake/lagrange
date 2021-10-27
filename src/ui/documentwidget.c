@@ -1152,18 +1152,6 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     updateBanner_DocumentWidget_(d);
 }
 
-#if 0
-static enum iGmDocumentBanner bannerType_DocumentWidget_(const iDocumentWidget *d) {
-    if (d->certFlags & available_GmCertFlag) {
-        const int req = domainVerified_GmCertFlag | timeVerified_GmCertFlag | trusted_GmCertFlag;
-        if ((d->certFlags & req) != req) {
-            return certificateWarning_GmDocumentBanner;
-        }
-    }
-    return siteDomain_GmDocumentBanner;
-}
-#endif
-
 static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuItem *items, size_t count) {
     iWidget *w = as_Widget(d);
     destroy_Widget(d->footerButtons);
@@ -1289,7 +1277,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     replaceDocument_DocumentWidget_(d, errorDoc);
     iRelease(errorDoc);
     clear_Banner(d->banner);
-    add_Banner(d->banner, error_BannerType, code, meta);
+    add_Banner(d->banner, error_BannerType, code, meta, NULL);
     d->state = ready_RequestState;
     setSource_DocumentWidget(d, src);
     updateTheme_DocumentWidget_(d);
@@ -1771,7 +1759,6 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     else {
         updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_Icon);
     }
-//    setBanner_GmDocument(d->doc, bannerType_DocumentWidget_(d));
 }
 
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
@@ -1797,17 +1784,59 @@ static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
+    /* Warnings related to certificates and trust. */
+    const int certFlags = d->certFlags;
+    const int req = timeVerified_GmCertFlag | domainVerified_GmCertFlag | trusted_GmCertFlag;
+    if (certFlags & available_GmCertFlag && (certFlags & req) != req &&
+        numItems_Banner(d->banner) == 0) {
+        iString *title = collectNewCStr_String(cstr_Lang("dlg.certwarn.title"));
+        iString *str   = collectNew_String();
+        if (certFlags & timeVerified_GmCertFlag && certFlags & domainVerified_GmCertFlag) {
+            iUrl parts;
+            init_Url(&parts, d->mod.url);
+            const iTime oldUntil =
+                domainValidUntil_GmCerts(certs_App(), parts.host, port_Url(&parts));
+            iDate exp;
+            init_Date(&exp, &oldUntil);
+            iTime now;
+            initCurrent_Time(&now);
+            const int days = secondsSince_Time(&oldUntil, &now) / 3600 / 24;
+            if (days <= 30) {
+                appendCStr_String(str,
+                                  format_CStr(cstrCount_Lang("dlg.certwarn.mayberenewed.n", days),
+                                              cstrCollect_String(format_Date(&exp, "%Y-%m-%d")),
+                                              days));
+            }
+            else {
+                appendCStr_String(str, cstr_Lang("dlg.certwarn.different"));
+            }
+        }
+        else if (certFlags & domainVerified_GmCertFlag) {
+            setCStr_String(title, get_GmError(tlsServerCertificateExpired_GmStatusCode)->title);
+            appendFormat_String(str, cstr_Lang("dlg.certwarn.expired"),
+                                cstrCollect_String(format_Date(&d->certExpiry, "%Y-%m-%d")));
+        }
+        else if (certFlags & timeVerified_GmCertFlag) {
+            appendFormat_String(str, cstr_Lang("dlg.certwarn.domain"),
+                                cstr_String(d->certSubject));
+        }
+        else {
+            appendCStr_String(str, cstr_Lang("dlg.certwarn.domain.expired"));
+        }
+        add_Banner(d->banner, warning_BannerType, none_GmStatusCode, title, str);
+    }
+    /* Warnings related to page contents. */
     const int dismissed =
         value_SiteSpec(collectNewRange_String(urlRoot_String(d->mod.url)),
                        dismissWarnings_SiteSpecKey) |
         (!prefs_App()->warnAboutMissingGlyphs ? missingGlyphs_GmDocumentWarning : 0);
     const int warnings = warnings_GmDocument(d->doc) & ~dismissed;
     if (warnings & missingGlyphs_GmDocumentWarning) {
-        add_Banner(d->banner, warning_BannerType, missingGlyphs_GmStatusCode, NULL);
+        add_Banner(d->banner, warning_BannerType, missingGlyphs_GmStatusCode, NULL, NULL);
         /* TODO: List one or more of the missing characters and/or their Unicode blocks? */
     }
     if (warnings & ansiEscapes_GmDocumentWarning) {
-        add_Banner(d->banner, warning_BannerType, ansiEscapes_GmStatusCode, NULL);
+        add_Banner(d->banner, warning_BannerType, ansiEscapes_GmStatusCode, NULL, NULL);
     }
 }
 
