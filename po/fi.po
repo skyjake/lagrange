@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-10-12 19:50+0000\n"
-"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"PO-Revision-Date: 2021-10-28 03:37+0000\n"
+"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
@@ -434,9 +434,8 @@ msgstr "POISTA IDENTITEETTI"
 
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"Oletko varma, että haluat poistaa identiteetin\n"
-"%s%s%s\n"
-"mukaanlukien sen sertifikaatin ja salaisen avaimen?"
+"Oletko varma, että haluat poistaa identiteetin %s%s%s mukaanlukien sen "
+"sertifikaatin ja salaisen avaimen?"
 
 msgid "dlg.ident.delete"
 msgstr "Poista identiteetti ja tiedostot"
@@ -451,10 +450,7 @@ msgid "heading.unsub"
 msgstr "POISTA TILAUS"
 
 msgid "dlg.confirm.unsub"
-msgstr ""
-"Haluatko varmasti poistaa syötteen\n"
-"\"%s\"\n"
-"tilauksen?"
+msgstr "Haluatko varmasti poistaa syötteen \"%s\" tilauksen?"
 
 msgid "dlg.unsub"
 msgstr "Poista tilaus"
@@ -1133,9 +1129,7 @@ msgid "error.tls"
 msgstr "Verkko/TLS-virhe"
 
 msgid "error.tls.msg"
-msgstr ""
-"Viestintä palvelimen kanssa epäonnistui. Tässä on järjestelmän antama "
-"virheilmoitus:"
+msgstr "Viestintä palvelimen kanssa epäonnistui."
 
 msgid "error.temporary.msg"
 msgstr "Pyyntö epäonnistui, mutta voi onnistua myöhemmin, jos yrität uudelleen."
@@ -1761,8 +1755,8 @@ msgstr "TITAN-LÄHETYSPORTTI"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"Aseta Titan-palvelimen portti, jota käytetään tämän URL:n kanssa.\n"
-"Portti talletetaan palvelinkohtaisiin asetuksiin."
+"Aseta Titan-palvelimen portti, jota käytetään tämän URL:n kanssa. Portti "
+"talletetaan palvelinkohtaisiin asetuksiin."
 
 msgid "dlg.uploadport.set"
 msgstr "Aseta portti"
@@ -1913,3 +1907,198 @@ msgstr "Galicia"
 
 msgid "lang.isv"
 msgstr "Interslaavi"
+
+msgid "menu.website"
+msgstr "Projektin verkkosivut…"
+
+msgid "dlg.certwarn.title"
+msgstr "Tietoturvavaroitus"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Sivuuta HTTP(S)-linkit:"
+
+msgid "prefs.gemtext.ansi"
+msgstr "ANSI-koodit:"
+
+msgid "prefs.font.smooth"
+msgstr "Pehmennys:"
+
+msgid "error.ansi.msg"
+msgstr ""
+"Tämän sivun ulkonäkö voi olla virheellinen. Se käyttää ANSI-koodeja tekstin "
+"ulkoasun muokkaamiseen, mutta tätä tuetaan vain osittain. Voisit yrittää "
+"katsoa sivua pääte-emulaattorissa."
+
+msgid "fontpack.export"
+msgstr "Näytä fontpack.ini-malli"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Haluatko varmasti poistaa ja tuhota fonttipaketin \"%s\"?"
+
+msgid "fontpack.help"
+msgstr ""
+"Lagrange-fonttipaketit ovat ZIP-kansioita, jotka sisältävät joukon "
+"fonttitiedostoja ja niihin liittyviä kokoonpanotietoja. Asennuksen jälkeen "
+"kirjasinlajeja voi käyttää sivujen sisällön ja käyttöliittymän teksteissä. "
+"Aktiiviset kirjasinlajt valitaan Asetukset-dialogin kautta."
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange yrittää ladata kaikki yksittäiset TrueType-tiedostot, jotka on "
+"kopioitu käyttäjän fonttihakemistoon."
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Luettelo- ja lainausrivit ovat varattu edeltävään kirjanmerkkiin liittyville "
+"lisätiedoille. Tekstirivit ja esimuotoiltu teksti ovat kommentteja ja ne "
+"tulee sivuuttaa."
+
+msgid "prefs.font.ui"
+msgstr "Käyttöliittymä:"
+
+msgid "prefs.font.heading"
+msgstr "Otsikot:"
+
+msgid "prefs.font.body"
+msgstr "Leipäteksti:"
+
+msgid "prefs.font.mono"
+msgstr "Esimuotoiltu:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Tasalevyinen kirjasinlaji:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Vierailtu"
+
+msgid "menu.fonts"
+msgstr "Hallinnoi fontteja…"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu tiedosto"
+msgstr[1] "%zu tiedostoa"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu fontti"
+msgstr[1] "%zu fonttia"
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"Tässä luettelossa jokainen otsikko edustaa kirjanmerkin avainsanaa. Vain "
+"avainsanoilla varustetut kirjanmerkit ovat mukana luettelossa. Kirjanmerkit "
+"joilla on monta avainsanaa on toistettu jokaisen avainsanaotsikon alla."
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Tämä sivu on muotoiltu \"Subscribing to Gemini pages\" -spesifikaation "
+"mukaisesti."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Jokainen linkki edustaa kirjanmerkkiä."
+
+msgid "bookmark.export.format.folders"
+msgstr "Kansiorakenteen määrittävät 2. ja 3. tason otsikot."
+
+msgid "bookmark.export.format.tags"
+msgstr "Avainsanoja edustavat 2. tason otsikot."
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Lisää kirjanmerkit loppuun:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Tekstin väri"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Kirjasinlaji"
+
+msgid "prefs.font.warnmissing"
+msgstr "Varoita puuttuvista:"
+
+msgid "error.ansi"
+msgstr "Pääte-emulointi"
+
+msgid "error.glyphs"
+msgstr "Kirjaimia puuttuu"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Tätä sivua ei voitu näyttää kokonaisuudessaan, koska yksi tai useampi "
+"kirjainmerkki puuttuu. Voit asentaa lisää fontteja korjataksesi ongelman."
+
+msgid "heading.fontpack.meta"
+msgstr "Kirjasinlajit"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Käytössä olevat fonttipaketit"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Estetyt fonttipaketit"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Näytä tiedosto"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Versio %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Asennettu"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Ei asennettu"
+
+msgid "fontpack.meta.disabled"
+msgstr ", käyttö estetty"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Ota \"%s\" käyttöön"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Estä \"%s\":n käyttö"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Asenna \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Päivitä \"%s\" versioon %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Poista ja tuhoa \"%s\""
+
+msgid "heading.fontpack.delete"
+msgstr "POISTA FONTTIPAKETTI"
+
+msgid "dlg.fontpack.delete"
+msgstr "Tuhoa fonttipaketti"
+
+msgid "fontpack.install.ttf"
+msgstr "Asenna TrueType-fontti"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Avaa käyttäjän fonttihakemisto"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Näytä asennetut kirjasinlajit"
+
+msgid "truetype.help.installed"
+msgstr "Tämä fontti on asennettu käyttäjän fonttihakemistoon."
+
+msgid "heading.dismiss.warning"
+msgstr "POISTA VAROITUS?"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Poista pääte-emulaatiovaroitus sivustolla %s?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Poista varoitus"
