@@ -13,7 +13,7 @@
 New features:
 * Added a customizable font library. Open "about:fonts" to view and manage the installed fonts.
 * Added TrueType fonts as a recognized content type. When one is viewed in the app (e.g., via a drag-and-drop), there is an option to install it as a user font.
-* Added fontpacks. They are ZIP archives containing one or more TrueType fonts and parameters about how they should be used.
+* Added fontpacks: ZIP archives containing one or more TrueType fonts and parameters about how they should be used.
 * Added new font options: separate preformatted and monospace body fonts, UI font, smoothing.
 * Added style option to show all links as bold regardless of visited status.
 * Added warning message about missing font glyphs.

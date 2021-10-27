@@ -20,6 +20,9 @@ Runtime debug information: contents of currently open tabs, navigation history, 
 => about:feeds
 List of all entries from subscribed feeds.
 
+=> about:fonts
+Installed fonts, and actions for viewing and managing fontpacks.
+
 => about:help
 User manual.
 
