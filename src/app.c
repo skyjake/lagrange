@@ -55,6 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/process.h>
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/time.h>
+#include <the_Foundation/version.h>
 #include <SDL.h>
 
 #include <stdio.h>
@@ -176,6 +177,7 @@ const iString *dateStr_(const iDate *date) {
 
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
+    appendCStr_String(str, "version app:" LAGRANGE_APP_VERSION "\n");
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     appendFormat_String(str, "customframe arg:%d\n", d->prefs.customFrame);
 #endif
@@ -336,6 +338,7 @@ static void loadPrefs_App_(iApp *d) {
     iUnused(d);
     iBool haveCA = iFalse;
     d->isLoadingPrefs = iTrue; /* affects which notifications get posted */
+    iVersion upgradedFromAppVersion = { 0 };
     /* Create the data dir if it doesn't exist yet. */
     makeDirs_Path(collectNewCStr_String(dataDir_App_()));
     iFile *f = new_File(prefsFileName_());
@@ -379,6 +382,11 @@ static void loadPrefs_App_(iApp *d) {
                 continue; /* can't change downloads directory */
             }
 #endif
+            else if (equal_Command(cmd, "version")) {
+                /* This is a special command that lets us know which version we're upgrading from.
+                   It was added in v1.8.0. */
+                init_Version(&upgradedFromAppVersion, range_Command(cmd, "app"));
+            }
             else {
                 postCommandString_Root(NULL, &cmdStr);
             }
@@ -391,10 +399,17 @@ static void loadPrefs_App_(iApp *d) {
         setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString],
                                      &d->prefs.strings[caPath_PrefsString]);
     }
+    iRelease(f);
+    /* Upgrade checks. */
+    if (cmp_Version(&upgradedFromAppVersion, &(iVersion){ 1, 8, 0 }) < 0) {
+        /* When upgrading to v1.8.0, the old hardcoded font library is gone and that means
+           UI strings may not have the right fonts available for the UI to remain
+           usable. */
+        postCommandf_App("uilang id:en");
+    }
 #if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;
 #endif
-    iRelease(f);
     d->isLoadingPrefs = iFalse;
 }
 
