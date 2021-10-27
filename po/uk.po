@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-24 22:50+0000\n"
+"PO-Revision-Date: 2021-10-28 03:37+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -931,9 +931,8 @@ msgstr "ВИДАЛЕННЯ ІДЕНТИЧНОСТІ"
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"Ви справді бажаєте видалити ідентичність\n"
-"%s%s%s\n"
-"включно з файлами сертифікату та закритого ключа?"
+"Ви справді бажаєте видалити ідентичність %s\"%s\"%s включно з файлами "
+"сертифікату та закритого ключа?"
 
 # The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
 #, c-format
@@ -947,9 +946,7 @@ msgstr "ВІДПИСКА"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"Справді відписатися від стрічки\n"
-"\"%s\"?"
+msgstr "Справді відписатися від стрічки \"%s\"?"
 
 msgid "dlg.unsub"
 msgstr "Відписатися"
@@ -1076,8 +1073,8 @@ msgstr "див. інструкції від сервера"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"Вкажіть порт Titan-сервера для цієї адреси.\n"
-"Порт зберігається в налаштуваннях сайту."
+"Вкажіть порт Titan-сервера для цієї адреси. Порт зберігається в "
+"налаштуваннях сайту."
 
 # used on mobile
 msgid "dlg.upload.text"
@@ -1645,7 +1642,7 @@ msgstr ""
 "відкрити адресу вручну."
 
 msgid "error.tls.msg"
-msgstr "От халепа! Не вдалося зв'язатися з сервером. Код помилки:"
+msgstr "От халепа! Не вдалося зв'язатися з сервером."
 
 msgid "error.certverify.msg"
 msgstr ""
@@ -1962,3 +1959,174 @@ msgstr "Про цю книжку"
 
 msgid "gempub.cover.view"
 msgstr "Переглянути вміст Gempub"
+
+msgid "error.ansi.msg"
+msgstr ""
+"Цю сторінку неможливо правильно відобразити. Вона використовує частково "
+"підтримувані керуючі символи ANSI для форматування тексту. Можете спробувати "
+"переглянути її у емуляторі терміналу."
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Не встановлено"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Оновити \"%s\" до версії %d"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Справді бажаєте назавжди видалити пакет шрифтів \"%s\"?"
+
+msgid "fontpack.help"
+msgstr ""
+"Пакети шрифтв для Lagrange є ZIP-архівами, що містять файли шрифтів та "
+"пов'язані з ними параметри конфігурації. Після встановлення їх можна "
+"використати для ІК та вмісту документів. Активні шрифти можна обрати у меню "
+"Налаштування > Шрифти."
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Назавжди усунути попередження про емуляцію терміналу на %s?"
+
+msgid "menu.website"
+msgstr "Вебсайт проєкту…"
+
+msgid "menu.fonts"
+msgstr "Керування шрифтами…"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu файл"
+msgstr[1] "%zu файли"
+msgstr[2] "%zu файлів"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu шрифт"
+msgstr[1] "%zu шрифти"
+msgstr[2] "%zu шрифтів"
+
+msgid "dlg.certwarn.title"
+msgstr "Проблема з сертифікатом безпеки"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ігнорувати HTTP(S) посилання:"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Додати закладки донизу:"
+
+msgid "prefs.font.ui"
+msgstr "ІК:"
+
+msgid "prefs.font.heading"
+msgstr "Заголовки:"
+
+msgid "prefs.font.body"
+msgstr "Вміст:"
+
+msgid "prefs.font.mono"
+msgstr "Фіксованого кроку:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Шрифт фіксованого кроку:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Відвідані"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Керівні символи ANSI:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Колір тексту"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Стиль шрифту"
+
+msgid "prefs.font.warnmissing"
+msgstr "Попередження про відсутні гліфи:"
+
+msgid "prefs.font.smooth"
+msgstr "Згладжування:"
+
+msgid "error.ansi"
+msgstr "Емуляція терміналу"
+
+msgid "error.glyphs"
+msgstr "Гліфи відсутні"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Цю сторінку неможливо відобразити повністю, оскільки гарнітурові шрифту "
+"бракує гліфів. Це можна виправити, встановивши додаткові шрифти."
+
+msgid "heading.fontpack.meta"
+msgstr "Шрифти"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Версія %d"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Переглянути файл"
+
+msgid "fontpack.meta.installed"
+msgstr "Встановлено"
+
+msgid "fontpack.meta.disabled"
+msgstr ", вимкнено"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Увімкнені пакети шрифтів"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Вимкнені пакети шрифтів"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Увімкнути \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Вимкнути \"%s\""
+
+msgid "fontpack.export"
+msgstr "Переглянути шаблон файлу fontpack.ini"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Встановити \"%s\""
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Назавжди видалити \"%s\""
+
+msgid "heading.fontpack.delete"
+msgstr "ВИДАЛЕННЯ ПАКЕТУ ШРИФТІВ"
+
+msgid "dlg.fontpack.delete"
+msgstr "Видалити пакет шрифту"
+
+msgid "fontpack.install.ttf"
+msgstr "Встановити TrueType-шрифт"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Відкрити каталог користувацьких шрифтів"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Показати встановлені шрифти"
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange намагається завантажити всі файли TrueType у каталозі "
+"користувацьких шрифтів."
+
+msgid "truetype.help.installed"
+msgstr "Цей шрифт встановлено до каталогу користувацьких шрифтів."
+
+msgid "dlg.dismiss.warning"
+msgstr "Усунути попередження"
+
+msgid "heading.dismiss.warning"
+msgstr "УСУНУТИ ПОПЕРЕДЖЕННЯ?"
