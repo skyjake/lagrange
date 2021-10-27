@@ -406,6 +406,7 @@ static void loadPrefs_App_(iApp *d) {
            UI strings may not have the right fonts available for the UI to remain
            usable. */
         postCommandf_App("uilang id:en");
+        postCommand_App("~fontpack.suggest.classic");
     }
 #if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;
@@ -2133,6 +2134,21 @@ iBool handleCommand_App(const char *cmd) {
                                  format_CStr("Error in config file: %s\n"
                                              "See \"about:debug\" for details.",
                                              suffixPtr_Command(cmd, "where")));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "fontpack.suggest.classic")) {
+        if (!isInstalled_Fonts("classic-set") && !isInstalled_Fonts("cjk")) {
+            makeQuestion_Widget(
+                uiHeading_ColorEscape "${heading.fontpack.classic}",
+                "${dlg.fontpack.classic.msg}",
+                (iMenuItem[]){
+                    { "${cancel}" },
+                    { uiTextAction_ColorEscape "${dlg.fontpack.classic}",
+                      0,
+                      0,
+                      "!open newtab:1 url:gemini://skyjake.fi/fonts/classic-set.fontpack" } },
+                2);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.changed")) {

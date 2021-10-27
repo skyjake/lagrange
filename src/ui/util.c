@@ -1778,6 +1778,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
     if (!(equal_Command(cmd, "media.updated") ||
           equal_Command(cmd, "media.player.update") ||
           equal_Command(cmd, "bookmarks.request.finished") ||
+          equal_Command(cmd, "bookmarks.changed") ||
           equal_Command(cmd, "document.autoreload") ||
           equal_Command(cmd, "document.reload") ||
           equal_Command(cmd, "document.request.updated") ||
