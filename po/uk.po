@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-28 03:37+0000\n"
+"PO-Revision-Date: 2021-10-29 07:50+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -2130,3 +2130,14 @@ msgstr "Усунути попередження"
 
 msgid "heading.dismiss.warning"
 msgstr "УСУНУТИ ПОПЕРЕДЖЕННЯ?"
+
+msgid "dlg.fontpack.classic"
+msgstr "Завантажити пакет шрифтів (25 МБ)"
+
+msgid "heading.fontpack.classic"
+msgstr "ЗАВАНТАЖЕННЯ ПАКЕТУ ШРИФТІВ"
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Шрифти, що раніше були у складі дотдатку тепер постачаються окремо. Бажаєте "
+"завантажити пакет шрифтів \"Класичний\" зараз?"
