@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-10-28 03:37+0000\n"
+"PO-Revision-Date: 2021-10-28 03:42+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -2102,3 +2102,14 @@ msgstr "Poista pääte-emulaatiovaroitus sivustolla %s?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Poista varoitus"
+
+msgid "dlg.fontpack.classic"
+msgstr "Lataa fonttipaketti (25 Mt)"
+
+msgid "heading.fontpack.classic"
+msgstr "LATAA FONTTIPAKETTI"
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Aiemmin sovelluksen kanssa tulleet fontit ovat nyt saatavilla erillisenä "
+"latauksena. Haluaisitko ladata Classic set -fonttipaketin nyt?"
