@@ -558,6 +558,9 @@ void init_Fonts(const char *userDir) {
             const iString *dir = collect_String(concatCStr_Path(execDir, locations[i]));
             iForEach(DirFileInfo, entry, iClob(new_DirFileInfo(dir))) {
                 const iString *entryPath = path_FileInfo(entry.value);
+                if (equalCase_Rangecc(baseName_Path(entryPath), "default.fontpack")) {
+                    continue; /* The default pack only comes from resources.lgr. */
+                }
                 if (endsWithCase_String(entryPath, ".fontpack")) {
                     iArchive *arch = new_Archive();
                     if (openFile_Archive(arch, entryPath)) {
