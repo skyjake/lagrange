@@ -78,6 +78,7 @@ iDeclareObjectConstruction(FontFile)
 struct Impl_FontFile {
     iObject         object; /* reference-counted */
     iString         id; /* for detecting when the same file is used in many places */
+    int             colIndex;
     enum iFontStyle style;
     iBlock          sourceData;
     stbtt_fontinfo  stbInfo;

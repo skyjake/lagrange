@@ -318,134 +318,6 @@ static const iFontSpec *tryFindSpec_(enum iPrefsString ps, const char *fallback)
 }
 
 static void initFonts_Text_(iText *d) {
-#if 0
-    const iBlock *regularFont   = &fontNunitoRegular_Embedded;
-    const iBlock *boldFont      = &fontNunitoBold_Embedded;
-    const iBlock *italicFont    = &fontNunitoLightItalic_Embedded;
-    const iBlock *h12Font       = &fontNunitoExtraBold_Embedded;
-    const iBlock *h3Font        = &fontNunitoRegular_Embedded;
-    const iBlock *lightFont     = &fontNunitoExtraLight_Embedded;
-    float         scaling       = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
-    float         italicScaling = 1.0f;
-    float         lightScaling  = 1.0f;
-    float         h123Scaling   = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
-    if (d->contentFont == firaSans_TextFont) {
-        regularFont = &fontFiraSansRegular_Embedded;
-        boldFont    = &fontFiraSansSemiBold_Embedded;
-        lightFont   = &fontFiraSansLight_Embedded;
-        italicFont  = &fontFiraSansItalic_Embedded;
-        scaling     = italicScaling = lightScaling = 0.85f;
-    }
-    else if (d->contentFont == tinos_TextFont) {
-        regularFont = &fontTinosRegular_Embedded;
-        boldFont    = &fontTinosBold_Embedded;
-        lightFont   = &fontLiterataExtraLightopsz18_Embedded;
-        italicFont  = &fontTinosItalic_Embedded;
-        scaling      = italicScaling = 0.85f;
-    }
-    else if (d->contentFont == literata_TextFont) {
-        regularFont = &fontLiterataRegularopsz14_Embedded;
-        boldFont    = &fontLiterataBoldopsz36_Embedded;
-        italicFont  = &fontLiterataLightItalicopsz10_Embedded;
-        lightFont   = &fontLiterataExtraLightopsz18_Embedded;
-    }
-    else if (d->contentFont == sourceSans3_TextFont) {
-        regularFont = &fontSourceSans3Regular_Embedded;
-        boldFont    = &fontSourceSans3Semibold_Embedded;
-        italicFont  = &fontSourceSans3It_Embedded;
-        lightFont   = &fontSourceSans3ExtraLight_Embedded;
-    }
-    else if (d->contentFont == iosevka_TextFont) {
-        regularFont = &fontIosevkaTermExtended_Embedded;
-        boldFont    = &fontIosevkaTermExtended_Embedded;
-        italicFont  = &fontIosevkaTermExtended_Embedded;
-        lightFont   = &fontIosevkaTermExtended_Embedded;
-        scaling     = italicScaling = lightScaling = 0.866f;
-    }
-    if (d->headingFont == firaSans_TextFont) {
-        h12Font     = &fontFiraSansBold_Embedded;
-        h3Font      = &fontFiraSansRegular_Embedded;
-        h123Scaling = 0.85f;
-    }
-    else if (d->headingFont == tinos_TextFont) {
-        h12Font = &fontTinosBold_Embedded;
-        h3Font  = &fontTinosRegular_Embedded;
-        h123Scaling = 0.85f;
-    }
-    else if (d->headingFont == literata_TextFont) {
-        h12Font = &fontLiterataBoldopsz36_Embedded;
-        h3Font  = &fontLiterataRegularopsz14_Embedded;
-    }
-    else if (d->headingFont == sourceSans3_TextFont) {
-        h12Font = &fontSourceSans3Bold_Embedded;
-        h3Font = &fontSourceSans3Regular_Embedded;
-    }
-    else if (d->headingFont == iosevka_TextFont) {
-        h12Font = &fontIosevkaTermExtended_Embedded;
-        h3Font  = &fontIosevkaTermExtended_Embedded;
-    }
-    const struct {
-        const iFontFile *fontFile;
-        int size; /* pixels */
-//        float scaling;
-        enum iFontSize sizeId;
-        /* UI sizes: 1.0, 1.125, 1.333, 1.666 */
-        /* Content sizes: smallmono, mono, 1.0, 1.2, 1.333, 1.666, 2.0 */
-    } fontData[max_FontId] = {
-        /* UI fonts: normal weight */
-        { &fontSourceSans3Regular_Embedded,   uiSize,               1.0f, uiNormal_FontSize },
-        { &fontSourceSans3Regular_Embedded,   uiSize * 1.125f,      1.0f, uiMedium_FontSize },
-        { &fontSourceSans3Regular_Embedded,   uiSize * 1.333f,      1.0f, uiBig_FontSize },
-        { &fontSourceSans3Regular_Embedded,   uiSize * 1.666f,      1.0f, uiLarge_FontSize },
-        { &fontSourceSans3Semibold_Embedded,  uiSize * 0.800f,      1.0f, uiTiny_FontSize },
-        { &fontSourceSans3Regular_Embedded,   uiSize * 0.900f,      1.0f, uiSmall_FontSize },
-        /* UI fonts: bold weight */
-        { &fontSourceSans3Bold_Embedded,      uiSize,               1.0f, uiNormal_FontSize },
-        { &fontSourceSans3Bold_Embedded,      uiSize * 1.125f,      1.0f, uiMedium_FontSize },
-        { &fontSourceSans3Bold_Embedded,      uiSize * 1.333f,      1.0f, uiBig_FontSize },
-        { &fontSourceSans3Bold_Embedded,      uiSize * 1.666f,      1.0f, uiLarge_FontSize },
-        /* content fonts */
-        { regularFont,                        textSize,             scaling,      contentRegular_FontSize },
-        { boldFont,                           textSize,             scaling,      contentRegular_FontSize },
-        { italicFont,                         textSize,             italicScaling,contentRegular_FontSize },
-        { regularFont,                        textSize * 1.200f,    scaling,      contentMedium_FontSize },
-        { h3Font,                             textSize * 1.333f,    h123Scaling,  contentBig_FontSize },
-        { h12Font,                            textSize * 1.666f,    h123Scaling,  contentLarge_FontSize },
-        { lightFont,                          textSize * 1.666f,    lightScaling, contentLarge_FontSize },
-        { h12Font,                            textSize * 2.000f,    h123Scaling,  contentHuge_FontSize },
-        { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         contentMonoSmall_FontSize },
-        { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         contentMono_FontSize },
-        /* extra content fonts */
-        { &fontSourceSans3Regular_Embedded,   textSize,             scaling, contentRegular_FontSize },
-        { &fontSourceSans3Regular_Embedded,   textSize * 0.80f,     scaling, contentRegular_FontSize },
-        /* symbols and scripts */
-#define DEFINE_FONT_SET(data, glyphScale) \
-        { (data), uiSize * 0.800f,   glyphScale, uiTiny_FontSize }, \
-        { (data), uiSize * 0.900f,   glyphScale, uiSmall_FontSize }, \
-        { (data), uiSize,            glyphScale, uiNormal_FontSize }, \
-        { (data), uiSize * 1.125f,   glyphScale, uiMedium_FontSize }, \
-        { (data), uiSize * 1.333f,   glyphScale, uiBig_FontSize }, \
-        { (data), uiSize * 1.666f,   glyphScale, uiLarge_FontSize }, \
-        { (data), textSize,          glyphScale, contentRegular_FontSize }, \
-        { (data), textSize * 1.200f, glyphScale, contentMedium_FontSize }, \
-        { (data), textSize * 1.333f, glyphScale, contentBig_FontSize }, \
-        { (data), textSize * 1.666f, glyphScale, contentLarge_FontSize }, \
-        { (data), textSize * 2.000f, glyphScale, contentHuge_FontSize }, \
-        { (data), smallMonoSize,     glyphScale, contentMonoSmall_FontSize }, \
-        { (data), monoSize,          glyphScale, contentMono_FontSize }
-        DEFINE_FONT_SET(userFont_ ? userFont_ : &fontIosevkaTermExtended_Embedded, 1.0f),
-        DEFINE_FONT_SET(&fontIosevkaTermExtended_Embedded, 0.866f),
-        DEFINE_FONT_SET(&fontNotoSansSymbolsRegular_Embedded, 2.0f),
-        DEFINE_FONT_SET(&fontNotoSansSymbols2Regular_Embedded, 1.45f),
-        DEFINE_FONT_SET(&fontSmolEmojiRegular_Embedded, 1.0f),
-        DEFINE_FONT_SET(&fontNotoEmojiRegular_Embedded, 1.10f),
-        DEFINE_FONT_SET(&fontNotoSansJPRegular_Embedded, 1.0f),
-        DEFINE_FONT_SET(&fontNotoSansSCRegular_Embedded, 1.0f),
-        DEFINE_FONT_SET(&fontNanumGothicRegular_Embedded, 1.0f), /* TODO: should use Noto Sans here, too */
-        DEFINE_FONT_SET(&fontNotoSansArabicUIRegular_Embedded, 1.0f),
-//        DEFINE_FONT_SET(&fontScheherazadeNewRegular_Embedded, 1.0f),
-    };
-#endif
     /* The `fonts` array has precomputed scaling factors and other parameters in all sizes
        and styles for each available font. Indices to `fonts` act as font runtime IDs. */
     /* First the mandatory fonts. */
@@ -465,6 +337,9 @@ static void initFonts_Text_(iText *d) {
             setupFontVariants_Text_(d, spec, fontId);
         }
     }
+#if !defined (NDEBUG)
+    printf("[Text] %zu fonts ready\n", size_Array(&d->fonts));
+#endif
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }
 

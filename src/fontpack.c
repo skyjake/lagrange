@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
+#include <the_Foundation/regexp.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/stringlist.h>
 #include <the_Foundation/toml.h>
@@ -65,6 +66,7 @@ iDefineObjectConstruction(FontFile)
 
 void init_FontFile(iFontFile *d) {
     init_String(&d->id);
+    d->colIndex = 0;
     d->style = regular_FontStyle;
     init_Block(&d->sourceData, 0);
     iZap(d->stbInfo);
@@ -77,15 +79,17 @@ void init_FontFile(iFontFile *d) {
 
 static void load_FontFile_(iFontFile *d, const iBlock *data) {
     set_Block(&d->sourceData, data);
-    stbtt_InitFont(&d->stbInfo, constData_Block(&d->sourceData), 0);
+    const size_t offset = stbtt_GetFontOffsetForIndex(constData_Block(&d->sourceData),
+                                                      d->colIndex);
+    stbtt_InitFont(&d->stbInfo, constData_Block(data), offset);
     /* Basic metrics. */
     stbtt_GetFontVMetrics(&d->stbInfo, &d->ascent, &d->descent, NULL);
     stbtt_GetCodepointHMetrics(&d->stbInfo, 'M', &d->emAdvance, NULL);
 #if defined(LAGRANGE_ENABLE_HARFBUZZ)
     /* HarfBuzz will read the font data. */
-    d->hbBlob = hb_blob_create(constData_Block(&d->sourceData), size_Block(&d->sourceData),
+    d->hbBlob = hb_blob_create(constData_Block(data), size_Block(&d->sourceData),
                                HB_MEMORY_MODE_READONLY, NULL, NULL);
-    d->hbFace = hb_face_create(d->hbBlob, 0);
+    d->hbFace = hb_face_create(d->hbBlob, d->colIndex);
     d->hbFont = hb_font_create(d->hbFace);
 #endif
 }
@@ -173,6 +177,7 @@ struct Impl_Fonts {
     iPtrArray packs;
     iObjectList *files;
     iPtrArray specOrder; /* specs sorted by priority */
+    iRegExp *indexPattern; /* collection index filename suffix */
 };
 
 static iFonts fonts_;
@@ -371,22 +376,40 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
     else if (value->type == string_TomlType) {
         iForIndices(i, styles_) {
             if (!cmp_String(key, styles_[i]) && !d->loadSpec->styles[i]) {
+                iBeginCollect();
                 iFontFile *ff = NULL;
-                iString *fontFileId = concat_Path(d->loadPath, value->value.string);
-                if (!(ff = findFile_Fonts_(&fonts_, fontFileId))) {
-                    iBlock *data = readFile_FontPack_(d, value->value.string);
-                    if (data) {
-                        ff = new_FontFile();
-                        set_String(&ff->id, fontFileId);
-                        load_FontFile_(ff, data);
-                        pushBack_ObjectList(fonts_.files, ff); /* centralized ownership */
-                        iRelease(ff);
-                        delete_Block(data);
-//                        printf("[FontPack] loaded file: %s\n", cstr_String(fontFileId));
+                iString *cleanPath = collect_String(copy_String(value->value.string));
+                int colIndex = 0;
+                /* Remove the collection index from the path. */ {
+                    iRegExpMatch m;
+                    init_RegExpMatch(&m);
+                    if (matchString_RegExp(fonts_.indexPattern, cleanPath, &m)) {
+                        colIndex = toInt_String(collect_String(captured_RegExpMatch(&m, 1)));
+                        removeEnd_String(cleanPath, size_Range(&m.range));
                     }
+                }
+                iString *fontFileId = concat_Path(d->loadPath, cleanPath);
+                /* FontFiles share source data blocks. The entire FontFiles can be reused, too, 
+                   if have the same collection index is in use. */
+                iBlock *data = NULL;
+                ff = findFile_Fonts_(&fonts_, fontFileId);
+                if (ff) {
+                    data = &ff->sourceData;
+                }
+                if (!ff || ff->colIndex != colIndex) {
+                    if (!data) {
+                        data = collect_Block(readFile_FontPack_(d, cleanPath));
+                    }
+                    ff = new_FontFile();
+                    set_String(&ff->id, fontFileId);
+                    ff->colIndex = colIndex;
+                    load_FontFile_(ff, data);
+                    pushBack_ObjectList(fonts_.files, ff); /* centralized ownership */
+                    iRelease(ff);
                 }
                 d->loadSpec->styles[i] = ref_Object(ff);
                 delete_String(fontFileId);
+                iEndCollect();
                 break;
             }
         }
@@ -528,6 +551,7 @@ static const iString *userFontsDirectory_Fonts_(const iFonts *d) {
 
 void init_Fonts(const char *userDir) {
     iFonts *d = &fonts_;
+    d->indexPattern = new_RegExp(":([0-9]+)$", 0);    
     initCStr_String(&d->userDir, userDir);
     const iString *userFontsDir = userFontsDirectory_Fonts_(d);
     makeDirs_Path(userFontsDir);
@@ -659,6 +683,7 @@ void deinit_Fonts(void) {
     deinit_PtrArray(&d->specOrder);
     deinit_PtrArray(&d->packs);
     iRelease(d->files);
+    iRelease(d->indexPattern);
     deinit_String(&d->userDir);
 }
 
@@ -706,18 +731,27 @@ iString *infoText_FontPack(const iFontPack *d) {
         const iFontSpec *spec = i.ptr;
         pushBack_StringList(names, &spec->name);
         iForIndices(j, spec->styles) {
-            insert_PtrSet(uniqueFiles, spec->styles[j]);
+            insert_PtrSet(uniqueFiles, spec->styles[j]->sourceData.i);
         }
     }
     iConstForEach(PtrSet, j, uniqueFiles) {
-        sizeInBytes += size_Block(&((const iFontFile *) *j.value)->sourceData);
+        sizeInBytes += ((const iBlockData *) *j.value)->size;
     }
-    appendFormat_String(str, "%.1f ${mb} (%s) \u2014 %s\n",
-                        sizeInBytes / 1.0e6,
-                        formatCStrs_Lang("num.files.n", size_PtrSet(uniqueFiles)),
-//                        formatCStrs_Lang("num.fonts.n", size_StringList(names)),
-                        cstrCollect_String(joinCStr_StringList(names, ", ")),
-                        d->version);
+    appendFormat_String(str, "%.1f ${mb} ", sizeInBytes / 1.0e6);
+    if (size_PtrSet(uniqueFiles) > 1 || size_StringList(names) > 1) {
+        appendFormat_String(str, "(");
+        if (size_PtrSet(uniqueFiles) > 1) {
+            appendCStr_String(str, formatCStrs_Lang("num.files.n", size_PtrSet(uniqueFiles)));
+        }
+        if (size_StringList(names) > 1) {
+            if (!endsWith_String(str, "(")) {
+                appendCStr_String(str, ", ");
+            }
+            appendCStr_String(str, formatCStrs_Lang("num.fonts.n", size_StringList(names)));
+        }
+        appendFormat_String(str, ")");
+    }
+    appendFormat_String(str, " \u2014 %s\n", cstrCollect_String(joinCStr_StringList(names, ", ")));
     if (isInstalled && installedVersion != d->version) {
         appendCStr_String(str, format_Lang("${fontpack.meta.version}\n", d->version));
     }
