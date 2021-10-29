@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-04 12:08+0000\n"
+"PO-Revision-Date: 2021-10-30 06:15+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -283,9 +283,7 @@ msgstr "Нема идентитета"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"Заиста уклонити претплату на фид\n"
-"„%s“?"
+msgstr "Заиста уклонити претплату на фид „%s“?"
 
 msgid "dlg.unsub"
 msgstr "Уклонити претплату"
@@ -882,7 +880,7 @@ msgid "dlg.certwarn.expired"
 msgstr "Примљени сертификат је истекао %s."
 
 msgid "error.tls.msg"
-msgstr "Неуспешна комуникација са сервером. Ево поруке о грешци:"
+msgstr "Неуспешна комуникација са сервером."
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
@@ -1233,9 +1231,8 @@ msgstr "Отварање везе у новој картици преко тас
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"Заиста желите да обришете идентитет\n"
-"%s%s%s,\n"
-"укључујући и његов сертификат и приватне кључеве?"
+"Заиста желите да обришете идентитет %s„%s“%s, укључујући и његов сертификат "
+"и приватне кључеве?"
 
 msgid "keys.link.homerow.hover"
 msgstr "Надношење над везу преко тастера основног реда"
@@ -1749,8 +1746,7 @@ msgstr "ПОРТ ЗА СЛАЊЕ ПРЕКО ТИТАНА"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"Поставља порт Титан сервера за овај УРЛ.\n"
-"Порт се чува у подешавањима сајта."
+"Поставља порт Титан сервера за овај УРЛ. Порт се чува у подешавањима сајта."
 
 msgid "dlg.uploadport.set"
 msgstr "Постави порт"
@@ -1982,3 +1978,131 @@ msgstr "Словачки"
 
 msgid "lang.isv"
 msgstr "Међусловенски"
+
+msgid "heading.fontpack.classic"
+msgstr "ПРЕУЗИМАЊЕ ПАКЕТА ФОНТОВА"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Стил фонта"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Отвори директоријум са фонтовима"
+
+msgid "menu.website"
+msgstr "Вебсајт пројекта…"
+
+msgid "menu.fonts"
+msgstr "Управљај фонтовима…"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu фонт"
+msgstr[1] "%zu фонта"
+msgstr[2] "%zu фонтова"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu датотека"
+msgstr[1] "%zu датотеке"
+msgstr[2] "%zu датотека"
+
+msgid "dlg.certwarn.title"
+msgstr "Безбедносни проблем"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Игнорисање HTTP(S) веза:"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Додавање обележивача на дно:"
+
+msgid "prefs.font.ui"
+msgstr "Интерфејс:"
+
+msgid "prefs.font.heading"
+msgstr "Наслови:"
+
+msgid "prefs.font.body"
+msgstr "Тело:"
+
+msgid "prefs.font.mono"
+msgstr "Преформатирано:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Фонт једнаке ширине:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Посећено"
+
+msgid "prefs.gemtext.ansi"
+msgstr "ANSI кодови:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Боја исписа"
+
+msgid "prefs.font.warnmissing"
+msgstr "Упозорења за глифове:"
+
+msgid "prefs.font.smooth"
+msgstr "Умекшавање:"
+
+msgid "error.ansi"
+msgstr "Емулација терминала"
+
+msgid "error.glyphs"
+msgstr "Недостају глифови"
+
+msgid "heading.fontpack.meta"
+msgstr "Фонтови"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Омогућени пакети фонтова"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Онемогућени пакети фонтова"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Верзија %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Инсталиран"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Није инсталиран"
+
+msgid "fontpack.meta.disabled"
+msgstr ", онемогућен"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Омогући „%s“"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Онемогући „%s“"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Инсталирај „%s“"
+
+msgid "heading.fontpack.delete"
+msgstr "БРИСАЊЕ ПАКЕТА ФОНТОВА"
+
+msgid "dlg.fontpack.delete"
+msgstr "Обриши пакет"
+
+msgid "fontpack.install.ttf"
+msgstr "Инсталирај TrueType фонт"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Прикажи инсталиране фонтове"
+
+msgid "truetype.help.installed"
+msgstr "Фонт је инсталиран у корисничком директоријуму са фонтовима."
+
+msgid "heading.dismiss.warning"
+msgstr "ОТКЛОНИТИ УПОЗОРЕЊЕ?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Отклони упозорење"
