@@ -699,9 +699,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     init_CommandLine(&d->args, argc, argv);
-    /* Where was the app started from? We ask SDL first because the command line alone is
-       not a reliable source of this information, particularly when it comes to different
-       operating systems. */ {
+    /* Where was the app started from? We ask SDL first because the command line alone 
+       cannot be relied on (behavior differs depending on OS). */ {
         char *exec = SDL_GetBasePath();
         if (exec) {
             d->execPath = newCStr_String(concatPath_CStr(
@@ -713,9 +712,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         SDL_free(exec);
     }
 #if defined (iHaveLoadEmbed)
-    /* Load the resources from a file. */ {
-        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
-            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
+    /* Load the resources from a file. Check the executable directory first, then a
+       system-wide location, and as a final fallback, the current working directory. */ {
+        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
+            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
                 if (!load_Embed("resources.lgr")) {
                     fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
                     exit(-1);
