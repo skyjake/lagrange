@@ -21,6 +21,7 @@ BUILD_LANGS = [
     'sk',
     'sr',
     'tok',
+    'uk',
     'zh_Hans',
     'zh_Hant'
 ]

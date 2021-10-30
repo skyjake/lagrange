@@ -107,6 +107,7 @@ set (EMBED_RESOURCES
     res/lang/sk.bin
     res/lang/sr.bin
     res/lang/tok.bin
+    res/lang/uk.bin
     res/lang/zh_Hans.bin
     res/lang/zh_Hant.bin
     res/shadow.png

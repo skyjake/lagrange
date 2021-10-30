@@ -14,6 +14,7 @@ New features:
 * Added a customizable font library. Open "about:fonts" to view and manage the installed fonts.
 * Added TrueType fonts as a recognized content type. When one is viewed in the app (e.g., via a drag-and-drop), there is an option to install it as a user font.
 * Added fontpacks: ZIP archives containing one or more TrueType fonts and parameters about how they should be used.
+* Added support for TrueType collections (.ttc).
 * Added new font options: separate preformatted and monospace body fonts, UI font, smoothing.
 * Added style option to show all links as bold regardless of visited status.
 * Added warning message about missing font glyphs.
@@ -22,6 +23,7 @@ New features:
 * Added style option to show links as bold regardless of visited status.
 * Added a feed subscription option to exclude web links (HTTP/HTTPS), since those are not viewable in the app by default. 
 * Added an automatic conversion of Markdown to Gemtext when viewing local files. (Not all Markdown features are supported.)
+* Added UI language for Ukrainian (uk).
 
 Changes and enhancements:
 * Removed all alternative built-in content fonts.

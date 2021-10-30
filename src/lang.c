@@ -100,10 +100,11 @@ static void load_Lang_(iLang *d, const char *id) {
                        : equal_CStr(id, "sk")      ? &blobSk_Embedded
                        : equal_CStr(id, "sr")      ? &blobSr_Embedded
                        : equal_CStr(id, "tok")     ? &blobTok_Embedded
+                       : equal_CStr(id, "uk")      ? &blobUk_Embedded
                        : equal_CStr(id, "zh_Hans") ? &blobZh_Hans_Embedded
                        : equal_CStr(id, "zh_Hant") ? &blobZh_Hant_Embedded
                                                    : &blobEn_Embedded;
-    if (data == &blobRu_Embedded || data == &blobSr_Embedded) {
+    if (data == &blobRu_Embedded || data == &blobSr_Embedded || data == &blobUk_Embedded) {
         d->pluralType = slavic_PluralType;
     }
     else if (data == &blobIsv_Embedded) {
