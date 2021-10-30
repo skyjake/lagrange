@@ -465,7 +465,16 @@ glyphscale = 0.85
 monospace = true
 ```
 
-About compatibility: fonts are complex, and while the TrueType format is not the most advanced one, it still has features that are not supported in Lagrange. The technical reason is that glyphs are rasterized using stb_truetype, a rather simple TrueType font library. (It's nice and small, though.) For example, hinting is not supported. You may find that some fonts simply fail to load correctly, or look wrong in the app.
+About compatibility: fonts are complex, and while the TrueType format is not the most advanced one, it still has features that are not supported in Lagrange. The technical reason is that glyphs are rasterized using stb_truetype, a rather simple TrueType font library. (It's nice and small, though.) You may find that some fonts simply fail to load correctly, or look wrong in the app.
+
+* Hinting is not supported. 
+* Bitmap glyphs are not supported.
+* Multi-color glyphs are not supported.
+
+TrueType Collections (.ttc) can be used, with the restriction that each declared font uses a single index from the collection. The index must be appended to the file name:
+```.ttc example
+regular = "NotoSansCJK-Regular.ttc:2"
+```
 
 ## 2.5 Page style
 
@@ -863,6 +872,11 @@ A single typeface can use up to five font files.
 * `bold` (string): path of a font file for the bold weight.
 
 Only the regular style is required. Undefined styles fall back to the closest available style. The same file path can be used in multiple styles; only one copy of the file will be loaded to memory.
+
+When the path refers to a TrueType Collection (.ttc), the font index to use must be appended to the file name:
+```.ttc example
+regular = "NotoSansCJK-Regular.ttc:2"
+```
  
 # Open source licenses
 
