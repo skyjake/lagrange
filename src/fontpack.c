@@ -389,6 +389,7 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
                     }
                 }
                 iString *fontFileId = concat_Path(d->loadPath, cleanPath);
+                iAssert(!isEmpty_String(fontFileId));
                 /* FontFiles share source data blocks. The entire FontFiles can be reused, too, 
                    if have the same collection index is in use. */
                 iBlock *data = NULL;
@@ -466,6 +467,7 @@ iBool loadArchive_FontPack(iFontPack *d, const iArchive *zip) {
 }
 
 void setLoadPath_FontPack(iFontPack *d, const iString *path) {
+    /* Note: `path` is for the local file system. */
     if (!d->loadPath) {
         d->loadPath = new_String();
     }
@@ -480,7 +482,8 @@ const iString *idFromUrl_FontPack(const iString *url) {
     iString *id = new_String();
     iUrl parts;
     init_Url(&parts, url);
-    setRange_String(id, baseName_Path(collectNewRange_String(parts.path)));
+    /* URLs always use slash as separator. */
+    setRange_String(id, baseNameSep_Path(collectNewRange_String(parts.path), "/"));
     setRange_String(id, withoutExtension_Path(id));
     replace_String(id, " ", "-");
     return collect_String(id);
