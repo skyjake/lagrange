@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-29 07:50+0000\n"
+"PO-Revision-Date: 2021-11-01 00:42+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -473,7 +473,7 @@ msgid "menu.page.copyurl"
 msgstr "Копіювати URL сторінки"
 
 msgid "menu.page.copysource"
-msgstr "Копіювати початковий код сторінки"
+msgstr "Копіювати джерельний код сторінки"
 
 msgid "menu.identity.notactive"
 msgstr "Активна ідентичність відсутня"
@@ -1979,7 +1979,7 @@ msgstr "Справді бажаєте назавжди видалити паке
 
 msgid "fontpack.help"
 msgstr ""
-"Пакети шрифтв для Lagrange є ZIP-архівами, що містять файли шрифтів та "
+"Пакети шрифтів для Lagrange є ZIP-архівами, що містять файли шрифтів та "
 "пов'язані з ними параметри конфігурації. Після встановлення їх можна "
 "використати для ІК та вмісту документів. Активні шрифти можна обрати у меню "
 "Налаштування > Шрифти."
