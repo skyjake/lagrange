@@ -22,12 +22,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "../media.h"
+
 #include <the_Foundation/rect.h>
 #include <SDL_events.h>
 
 iDeclareType(Paint)
 iDeclareType(Player)
 iDeclareType(PlayerUI)
+
+void    drawSevenSegmentBytes_MediaUI   (int font, iInt2 pos, int majorColor, int minorColor, size_t numBytes);
 
 struct Impl_PlayerUI {
     const iPlayer *player;
@@ -46,16 +50,14 @@ void    draw_PlayerUI   (iPlayerUI *, iPaint *p);
 
 /*----------------------------------------------------------------------------------------------*/
 
-iDeclareType(DocumentWidget)
-iDeclareType(Media)
 iDeclareType(DownloadUI)
 
 struct Impl_DownloadUI {
-    const iDocumentWidget *doc;
+    const iMedia *media;
     uint16_t mediaId;
     iRect bounds;
 };
 
-void    init_DownloadUI         (iDownloadUI *, const iDocumentWidget *doc, uint16_t mediaId, iRect bounds);
+void    init_DownloadUI         (iDownloadUI *, const iMedia *media, uint16_t mediaId, iRect bounds);
 iBool   processEvent_DownloadUI (iDownloadUI *, const SDL_Event *ev);
 void    draw_DownloadUI         (const iDownloadUI *, iPaint *p);

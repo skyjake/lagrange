@@ -146,6 +146,7 @@ void        setUiScale_Window       (iWindow *, float uiScale);
 void        setCursor_Window        (iWindow *, int cursor);
 iBool       setKeyRoot_Window       (iWindow *, iRoot *root);
 iBool       postContextClick_Window (iWindow *, const SDL_MouseButtonEvent *);
+void        updateHover_Window      (iWindow *);
 
 iWindow *   get_Window              (void);
 iBool       isOpenGLRenderer_Window (void);

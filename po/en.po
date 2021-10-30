@@ -267,6 +267,9 @@ msgstr "Help"
 msgid "menu.releasenotes"
 msgstr "Release Notes"
 
+msgid "menu.website"
+msgstr "Project Website…"
+
 msgid "menu.quit"
 msgstr "Quit Lagrange"
 
@@ -347,6 +350,9 @@ msgstr "About Pages"
 
 msgid "menu.about"
 msgstr "About"
+
+msgid "menu.fonts"
+msgstr "Manage Fonts…"
 
 msgid "panel.back"
 msgstr "Back"
@@ -447,6 +453,16 @@ msgid "num.bytes"
 msgid_plural "num.bytes.n"
 msgstr[0] "%zu byte"
 msgstr[1] "%zu bytes"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu file"
+msgstr[1] "%zu files"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu font"
+msgstr[1] "%zu fonts"
 
 # strftime() formatted, split on two lines
 #, c-format
@@ -631,7 +647,7 @@ msgstr "DELETE IDENTITY"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
-msgstr "Do you really want to delete the identity\n%s%s%s\nincluding its certificate and private key files?"
+msgstr "Do you really want to delete the identity %s\"%s\"%s including its certificate and private key files?"
 
 msgid "dlg.ident.delete"
 msgstr "Delete Identity and Files"
@@ -649,7 +665,7 @@ msgstr "UNSUBSCRIBE"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr "Really unsubscribe from feed\n\"%s\"?"
+msgstr "Really unsubscribe from feed \"%s\"?"
 
 msgid "dlg.unsub"
 msgstr "Unsubscribe"
@@ -819,8 +835,8 @@ msgstr "Open this link in the default browser?\n%s%s"
 msgid "dlg.openlink"
 msgstr "Open Link"
 
-msgid "heading.certwarn"
-msgstr "UNTRUSTED CERTIFICATE"
+msgid "dlg.certwarn.title"
+msgstr "Security Issue"
 
 #, c-format
 msgid "dlg.certwarn.mayberenewed"
@@ -998,7 +1014,7 @@ msgid "heading.uploadport"
 msgstr "TITAN UPLOAD PORT"
 
 msgid "dlg.uploadport.msg"
-msgstr "Set the Titan server port to use for this URL.\nThe port is saved in the site-specific configuration."
+msgstr "Set the Titan server port to use for this URL. The port is saved in the site-specific configuration."
 
 msgid "dlg.uploadport.set"
 msgstr "Set Port"
@@ -1083,6 +1099,9 @@ msgstr "Portuguese"
 
 msgid "lang.ru"
 msgstr "Russian"
+
+msgid "lang.uk"
+msgstr "Ukrainian"
 
 msgid "lang.eo"
 msgstr "Esperanto"
@@ -1194,6 +1213,9 @@ msgstr "YYYY-MM-DD Links"
 
 msgid "dlg.feed.type.headings"
 msgstr "New Headings"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignore HTTP(S) links:"
 
 msgid "dlg.feed.save"
 msgstr "Save Settings"
@@ -1451,14 +1473,27 @@ msgstr "Text Color"
 msgid "prefs.imagestyle.preformat"
 msgstr "Preformatted Color"
 
-msgid "prefs.headingfont"
-msgstr "Heading font:"
+msgid "prefs.font.ui"
+msgstr "UI:"
+
+msgid "prefs.font.heading"
+msgstr "Headings:"
+
+msgid "prefs.font.body"
+msgstr "Body:"
+
+msgid "prefs.font.mono"
+msgstr "Preformatted:"
 
 msgid "prefs.font"
 msgstr "Body font:"
 
 msgid "prefs.mono"
 msgstr "Monospace body:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Monospace font:"
 
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
@@ -1469,6 +1504,9 @@ msgstr "Gopher"
 msgid "prefs.boldlink"
 msgstr "Bold links:"
 
+msgid "prefs.boldlink.visited"
+msgstr "Visited"
+
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
 msgstr "On Dark"
@@ -1477,11 +1515,20 @@ msgstr "On Dark"
 msgid "prefs.boldlink.light"
 msgstr "On Light"
 
-msgid "prefs.userfont"
-msgstr "Symbol font:"
+msgid "prefs.gemtext.ansi"
+msgstr "ANSI escapes:"
 
-msgid "hint.prefs.userfont"
-msgstr "path of a TrueType font"
+msgid "prefs.gemtext.ansi.fg"
+msgstr "FG Color"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Font Style"
+
+msgid "prefs.font.warnmissing"
+msgstr "Glyph warnings:"
+
+msgid "prefs.font.smooth"
+msgstr "Smoothing:"
 
 msgid "prefs.linewidth"
 msgstr "Line width:"
@@ -1724,7 +1771,7 @@ msgid "error.tls"
 msgstr "Network/TLS Failure"
 
 msgid "error.tls.msg"
-msgstr "Failed to communicate with the server. Here is the error message:"
+msgstr "Failed to communicate with the server."
 
 msgid "error.certexpired"
 msgstr "Expired Certificate"
@@ -1816,6 +1863,18 @@ msgstr "Invalid Certificate"
 msgid "error.cert.invalid.msg"
 msgstr "The provided client certificate is expired or invalid."
 
+msgid "error.ansi"
+msgstr "Terminal Emulation"
+
+msgid "error.ansi.msg"
+msgstr "This page may not be displayed correctly. It uses ANSI escape sequences to style text, which is only partially supported. You could try using a terminal emulator to view it."
+
+msgid "error.glyphs"
+msgstr "Missing Glyphs"
+
+msgid "error.glyphs.msg"
+msgstr "This page could not displayed in full because some characters are missing. You can install additional fonts to fix this."
+
 msgid "gempub.cover.viewlocal"
 msgstr "This Gempub book can be viewed after it has been saved locally."
 
@@ -1851,3 +1910,99 @@ msgstr "Language"
 
 msgid "gempub.meta.license"
 msgstr "License"
+
+msgid "heading.fontpack.meta"
+msgstr "Fonts"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Enabled fontpacks"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Disabled fontpacks"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "View file"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Version %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Installed"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Not installed"
+
+msgid "fontpack.meta.disabled"
+msgstr ", disabled"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Enable \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Disable \"%s\""
+
+msgid "fontpack.export"
+msgstr "View fontpack.ini template"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Install \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Upgrade \"%s\" to version %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Permanently delete \"%s\""
+
+msgid "heading.fontpack.delete"
+msgstr "DELETE FONTPACK"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Do you really want to permanently delete the fontpack \"%s\"?"
+
+msgid "dlg.fontpack.delete"
+msgstr "Delete Fontpack"
+
+msgid "fontpack.help"
+msgstr "Lagrange fontpacks are ZIP archives that contain a set of font files and associated configuration parameters. Once installed, the fonts can be used for document content and the UI. The active fonts are selected in Preferences > Fonts."
+
+msgid "fontpack.install.ttf"
+msgstr "Install TrueType Font"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Open User Fonts Directory"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Show Installed Fonts"
+
+msgid "truetype.help"
+msgstr "Lagrange attempts to load all individual TrueType files that are copied to the user fonts directory."
+
+msgid "truetype.help.installed"
+msgstr "This font is installed in the user fonts directory."
+
+msgid "heading.dismiss.warning"
+msgstr "DISMISS WARNING?"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Permanently dismiss warning about terminal emulation on %s?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Dismiss Warning"
+
+msgid "heading.fontpack.classic"
+msgstr "DOWNLOAD FONTPACK"
+
+msgid "dlg.fontpack.classic.msg"
+msgstr "The fonts previously bundled with the app are now available as a separate download. Would you like to download the \"Classic set\" fontpack now?"
+
+msgid "dlg.fontpack.classic"
+msgstr "Download Fontpack (25 MB)"

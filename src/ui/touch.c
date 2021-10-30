@@ -166,6 +166,7 @@ static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
         .type = SDL_MOUSEMOTION,
         .timestamp = SDL_GetTicks(),
         .which = SDL_TOUCH_MOUSEID,
+        .windowID = id_Window(get_Window()),
         .state = buttonState,
         .x = x_F3(pos),
         .y = y_F3(pos)
@@ -183,6 +184,7 @@ static iBool dispatchClick_Touch_(const iTouch *d, int button) {
         .state = SDL_PRESSED,
         .timestamp = SDL_GetTicks(),
         .which = SDL_TOUCH_MOUSEID,
+        .windowID = id_Window(window),
         .x = x_F3(tapPos),
         .y = y_F3(tapPos)
     };
@@ -206,6 +208,7 @@ static void dispatchButtonDown_Touch_(iFloat3 pos) {
         .clicks = 1,
         .state = SDL_PRESSED,
         .which = SDL_TOUCH_MOUSEID,
+        .windowID = id_Window(get_Window()),
         .button = SDL_BUTTON_LEFT,
         .x = x_F3(pos),
         .y = y_F3(pos)
@@ -220,6 +223,7 @@ static void dispatchButtonUp_Touch_(iFloat3 pos) {
         .clicks = 1,
         .state = SDL_RELEASED,
         .which = SDL_TOUCH_MOUSEID,
+        .windowID = id_Window(get_Window()),
         .button = SDL_BUTTON_LEFT,
         .x = x_F3(pos),
         .y = y_F3(pos)
@@ -351,6 +355,7 @@ static void update_TouchState_(void *ptr) {
                 dispatchEvent_Widget(mom->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                                                         .type = SDL_MOUSEWHEEL,
                                                         .which = SDL_TOUCH_MOUSEID,
+                                                        .windowID = id_Window(window_Widget(mom->affinity)),
                                                         .timestamp = nowTime,
                                                         .x = pixels.x,
                                                         .y = pixels.y,
@@ -624,6 +629,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .which = SDL_TOUCH_MOUSEID,
+                    .windowID = id_Window(window_Widget(touch->affinity)),
                     .timestamp = SDL_GetTicks(),
                     .x = pixels.x,
                     .y = pixels.y,

@@ -278,7 +278,7 @@ static void eraseBackup_InputWidget_(iInputWidget *d) {
 static uint32_t backupTimeout_InputWidget_(uint32_t interval, void *context) {
     iInputWidget *d = context;
     postCommand_Widget(d, "input.backup");
-    return 0;
+    return 0; /* does not repeat */
 }
 
 static void restartBackupTimer_InputWidget_(iInputWidget *d) {
@@ -451,7 +451,8 @@ static const iInputLine *findLineByWrapY_InputWidget_(const iInputWidget *d, int
 
 static int visLineOffsetY_InputWidget_(const iInputWidget *d) {
     const iInputLine *line = findLineByWrapY_InputWidget_(d, d->visWrapLines.start);
-    return (line->wrapLines.start - d->visWrapLines.start) * lineHeight_Text(d->font);
+    return (line->wrapLines.start - d->visWrapLines.start) * lineHeight_Text(d->font) -
+           d->wheelAccum;
 }
 
 static const iChar sensitiveChar_ = 0x25cf;   /* black circle */
@@ -1855,6 +1856,17 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
     return ignored_EventResult;
 }
 
+static void clampWheelAccum_InputWidget_(iInputWidget *d, int wheel) {
+    if (wheel > 0 && d->visWrapLines.start == 0) {
+        d->wheelAccum = 0;
+        refresh_Widget(d);
+    }
+    else if (wheel < 0 && d->visWrapLines.end >= lastLine_InputWidget_(d)->wrapLines.end) {
+        d->wheelAccum = 0;
+        refresh_Widget(d);
+    }    
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Resize according to width immediately. */
@@ -1956,24 +1968,26 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         const int lineHeight = lineHeight_Text(d->font);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             d->wheelAccum -= ev->wheel.y;
+            refresh_Widget(d);
         }
         else {
             d->wheelAccum -= ev->wheel.y * 3 * lineHeight;
         }
+        clampWheelAccum_InputWidget_(d, ev->wheel.y);
         int lineDelta = d->wheelAccum / lineHeight;
         if (lineDelta < 0) {
             lineDelta = iMax(lineDelta, -d->visWrapLines.start);
             if (!lineDelta) d->wheelAccum = 0;
         }
         else if (lineDelta > 0) {
-            lineDelta = iMin(lineDelta,
-                             lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
+            lineDelta = iMin(lineDelta, lastLine_InputWidget_(d)->wrapLines.end - d->visWrapLines.end);
             if (!lineDelta) d->wheelAccum = 0;
         }
         if (lineDelta) {
             d->wheelAccum         -= lineDelta * lineHeight;
             d->visWrapLines.start += lineDelta;
             d->visWrapLines.end   += lineDelta;
+            clampWheelAccum_InputWidget_(d, ev->wheel.y);
             d->inFlags |= needUpdateBuffer_InputWidgetFlag;
             refresh_Widget(d);
             return true_EventResult;
@@ -2245,31 +2259,33 @@ struct Impl_MarkPainter {
     iRect               lastMarkRect;
 };
 
-static iBool draw_MarkPainter_(iWrapText *wrapText, iRangecc wrappedText, int origin, int advance,
-                               iBool isBaseRTL) {
-    iUnused(isBaseRTL);
+static iBool draw_MarkPainter_(iWrapText *wrapText, iRangecc wrappedText, iTextAttrib attrib,
+                               int origin, int advance) {
     iMarkPainter *mp = wrapText->context;
     const iRanges mark = mp->mark;
     if (isEmpty_Range(&mark)) {
         return iTrue; /* nothing marked */
     }
+    int fontId = mp->d->font;
+    /* TODO: Apply attrib on the font */
     const char *cstr = cstr_String(&mp->line->text);
     const iRanges lineRange = {
         wrappedText.start - cstr + mp->line->range.start,
         wrappedText.end   - cstr + mp->line->range.start
     };
+    const int lineHeight = lineHeight_Text(mp->d->font);
     if (mark.end <= lineRange.start || mark.start >= lineRange.end) {
-        mp->pos.y += lineHeight_Text(mp->d->font);
+        mp->pos.y += lineHeight;
         return iTrue; /* outside of mark */
     }
-    iRect rect = { addX_I2(mp->pos, origin), init_I2(advance, lineHeight_Text(mp->d->font)) };
+    iRect rect = { addX_I2(mp->pos, origin), init_I2(advance, lineHeight) };
     if (mark.end < lineRange.end) {
         /* Calculate where the mark ends. */
         const iRangecc markedPrefix = {
             wrappedText.start,
             wrappedText.start + mark.end - lineRange.start
         };
-        rect.size.x = measureRange_Text(mp->d->font, markedPrefix).advance.x;
+        rect.size.x = measureRange_Text(fontId, markedPrefix).advance.x;
     }
     if (mark.start > lineRange.start) {
         /* Calculate where the mark starts. */
@@ -2277,10 +2293,10 @@ static iBool draw_MarkPainter_(iWrapText *wrapText, iRangecc wrappedText, int or
             wrappedText.start,
             wrappedText.start + mark.start - lineRange.start
         };
-        adjustEdges_Rect(&rect, 0, 0, 0, measureRange_Text(mp->d->font, unmarkedPrefix).advance.x);
+        adjustEdges_Rect(&rect, 0, 0, 0, measureRange_Text(fontId, unmarkedPrefix).advance.x);
     }
     rect.size.x = iMax(gap_UI / 3, rect.size.x);
-    mp->pos.y += lineHeight_Text(mp->d->font);
+    mp->pos.y += lineHeight;
     fillRect_Paint(mp->paint, rect, uiMarked_ColorId | opaque_ColorId);
     if (deviceType_App() != desktop_AppDeviceType) {
         if (isEmpty_Rect(mp->firstMarkRect)) mp->firstMarkRect = rect;

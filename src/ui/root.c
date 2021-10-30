@@ -447,7 +447,7 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     if (toolName) {
         setOutline_LabelWidget(toolButton, ident == NULL);
         updateTextCStr_LabelWidget(toolName, subjectName ? cstr_String(subjectName) : "");
-        setFont_LabelWidget(toolButton, subjectName ? defaultMedium_FontId : uiLabelLarge_FontId);
+        setFont_LabelWidget(toolButton, subjectName ? uiLabelMedium_FontId : uiLabelLarge_FontId);
         arrange_Widget(parent_Widget(toolButton));
     }
 }
@@ -566,7 +566,8 @@ static iBool willPerformSearchQuery_(const iString *userInput) {
     if (isEmpty_String(clean)) {
         return iFalse;
     }
-    return !isEmpty_String(&prefs_App()->searchUrl) && !isLikelyUrl_String(userInput);
+    return !isEmpty_String(&prefs_App()->strings[searchUrl_PrefsString]) &&
+           !isLikelyUrl_String(userInput);
 }
 
 static void updateUrlInputContentPadding_(iWidget *navBar) {
@@ -803,7 +804,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         if (isTabButton_Widget(widget)) {
             if (!isVisible_Widget(menu)) {
                 iWidget *tabs = findWidget_App("doctabs");
-                iWidget *page = tabPage_Widget(tabs, childIndex_Widget(widget->parent, widget));
+                iWidget *page = tabPage_Widget(tabs, indexOfChild_Widget(widget->parent, widget));
                 if (argLabel_Command(cmd, "button") == SDL_BUTTON_MIDDLE) {
                     postCommandf_App("tabs.close id:%s", cstr_String(id_Widget(page)));
                     return iTrue;
@@ -996,7 +997,7 @@ void updateMetrics_Root(iRoot *d) {
             const iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
             const iWidget *viewButton = findChild_Widget(d->widget, "toolbar.view");
             const iWidget *idButton = findChild_Widget(toolBar, "toolbar.ident");
-            const int font = defaultTiny_FontId;
+            const int font = uiLabelTiny_FontId;
             setFont_LabelWidget(idName, font);
             setPos_Widget(as_Widget(idName),
                           windowToLocal_Widget(as_Widget(idName),
@@ -1125,7 +1126,7 @@ void createUserInterface_Root(iRoot *d) {
                     iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
                     embedFlags | moveToParentLeftEdge_WidgetFlag);
                 setId_Widget(as_Widget(lock), "navbar.lock");
-                setFont_LabelWidget(lock, symbols_FontId + uiNormal_FontSize);
+//                setFont_LabelWidget(lock, symbols_FontId + uiNormal_FontSize);
                 updateTextCStr_LabelWidget(lock, "\U0001f512");
             }
             /* Button for clearing the URL bar contents. */ {
@@ -1134,7 +1135,8 @@ void createUserInterface_Root(iRoot *d) {
                     iClob(newIcon_LabelWidget(delete_Icon, 0, 0, "navbar.clear")),
                     hidden_WidgetFlag | embedFlags | moveToParentLeftEdge_WidgetFlag | tight_WidgetFlag);
                 setId_Widget(as_Widget(clear), "navbar.clear");
-                setFont_LabelWidget(clear, symbols2_FontId + uiNormal_FontSize);
+//                setFont_LabelWidget(clear, symbols2_FontId + uiNormal_FontSize);
+                setFont_LabelWidget(clear, uiLabelSymbols_FontId);
 //                setFlags_Widget(as_Widget(clear), noBackground_WidgetFlag, iFalse);
 //                setBackgroundColor_Widget(as_Widget(clear), uiBackground_ColorId);
             }
@@ -1149,7 +1151,7 @@ void createUserInterface_Root(iRoot *d) {
                 iLabelWidget *queryInd = new_LabelWidget("${status.query} " return_Icon, NULL);
                 setId_Widget(as_Widget(queryInd), "input.indicator.search");
                 setTextColor_LabelWidget(queryInd, uiTextAction_ColorId);
-                setFont_LabelWidget(queryInd, defaultSmall_FontId);
+                setFont_LabelWidget(queryInd, uiLabelSmall_FontId);
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
 //                setAlignVisually_LabelWidget(queryInd, iTrue);
@@ -1162,7 +1164,7 @@ void createUserInterface_Root(iRoot *d) {
                 iLabelWidget *fprog = new_LabelWidget("", NULL);
                 setId_Widget(as_Widget(fprog), "feeds.progress");
                 setTextColor_LabelWidget(fprog, uiTextCaution_ColorId);
-                setFont_LabelWidget(fprog, defaultSmall_FontId);
+                setFont_LabelWidget(fprog, uiLabelSmall_FontId);
                 setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
 //                setAlignVisually_LabelWidget(fprog, iTrue);
                 setNoAutoMinHeight_LabelWidget(fprog, iTrue);
@@ -1279,7 +1281,9 @@ void createUserInterface_Root(iRoot *d) {
         iWidget *docTabs = makeTabs_Widget(mainStack);
         setId_Widget(docTabs, "doctabs");
         setBackgroundColor_Widget(docTabs, uiBackground_ColorId);
-        appendTabPage_Widget(docTabs, iClob(new_DocumentWidget()), "Document", 0, 0);
+        iDocumentWidget *doc;
+        appendTabPage_Widget(docTabs, iClob(doc = new_DocumentWidget()), "Document", 0, 0);
+        addTabCloseButton_Widget(docTabs, as_Widget(doc), "tabs.close");
         iWidget *buttons = findChild_Widget(docTabs, "tabs.buttons");
         setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag |
                                      drawBackgroundToHorizontalSafeArea_WidgetFlag, iTrue);
@@ -1323,7 +1327,7 @@ void createUserInterface_Root(iRoot *d) {
             /* The search bar appears at the top on mobile, because there is a virtual keyboard
                covering the bottom. */
             insertChildAfter_Widget(div, iClob(searchBar),
-                                    childIndex_Widget(div, findChild_Widget(div, "navbar")));
+                                    indexOfChild_Widget(div, findChild_Widget(div, "navbar")));
         }
         setBackgroundColor_Widget(searchBar, uiBackground_ColorId);
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);

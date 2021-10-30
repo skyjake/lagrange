@@ -1,0 +1,18 @@
+diff --git a/iconfigure b/iconfigure
+index 734bb47..e31c6cf 100755
+--- a/iconfigure
++++ b/iconfigure
+@@ -93,10 +93,10 @@ export CXX=$(xcrun --sdk $SDK --find g++)
+ export LD=$(xcrun --sdk $SDK --find ld)
+ 
+ # Flags
+-export CFLAGS="$CFLAGS -arch $ARCH -isysroot $SDKROOT -I$PREFIX/include -miphoneos-version-min=$SDKVERSION"
+-export CPPFLAGS="$CPPFLAGS -arch $ARCH -isysroot $SDKROOT -I$PREFIX/include -miphoneos-version-min=$SDKVERSION"
++export CFLAGS="$CFLAGS -arch $ARCH -isysroot $SDKROOT -I$PREFIX/include -miphoneos-version-min=$OSMINVER"
++export CPPFLAGS="$CPPFLAGS -arch $ARCH -isysroot $SDKROOT -I$PREFIX/include -miphoneos-version-min=$OSMINVER"
+ export CXXFLAGS="$CXXFLAGS -arch $ARCH -isysroot $SDKROOT -I$PREFIX/include"
+-export LDFLAGS="$LDFLAGS -arch $ARCH -isysroot $SDKROOT -L$PREFIX/lib"
++export LDFLAGS="$LDFLAGS -arch $ARCH -isysroot $SDKROOT -L$PREFIX/lib -miphoneos-version-min=$OSMINVER"
+ export PKG_CONFIG_PATH="$PKG_CONFIG_PATH":"$SDKROOT/usr/lib/pkgconfig":"$PREFIX/lib/pkgconfig"
+ 
+ # Remove script parameters

@@ -45,6 +45,8 @@ enum iGmStatusCode {
     tlsFailure_GmStatusCode,
     tlsServerCertificateExpired_GmStatusCode,
     tlsServerCertificateNotVerified_GmStatusCode,
+    ansiEscapes_GmStatusCode,
+    missingGlyphs_GmStatusCode,
 
     none_GmStatusCode                      = 0,
     /* general status code categories */

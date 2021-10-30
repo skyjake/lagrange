@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-17 05:50+0000\n"
+"PO-Revision-Date: 2021-10-30 06:15+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -23,9 +23,8 @@ msgstr "Notas acerca de %s:"
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"Tes a certeza de que queres eliminar a identidade\n"
-"%s%s%s\n"
-"incluíndo o seu certificado e ficheiro de chave privada?"
+"Tes a certeza de que queres eliminar a identidade %s\"%s\"%s incluíndo o seu "
+"certificado e ficheiro de chave privada?"
 
 # The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
 #, c-format
@@ -100,8 +99,8 @@ msgstr "Tamaño do ficheiro:"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"Establecer o porto do servidor Titan neste URL.\n"
-"O porto gárdase na configuración específica do sitio."
+"Establecer o porto do servidor Titan neste URL. O porto gárdase na "
+"configuración específica do sitio."
 
 msgid "lang.pt"
 msgstr "Portugués"
@@ -660,9 +659,7 @@ msgstr "RETIRAR SUBSCRICIÓN"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"Retirar subscrición a fonte\n"
-"\"%s\"?"
+msgstr "Retirar subscriciónñ á fonte \"%s\"?"
 
 msgid "dlg.unsub"
 msgstr "Retirar subscrición"
@@ -1685,7 +1682,7 @@ msgid "error.tls"
 msgstr "Fallo Rede/TLS"
 
 msgid "error.tls.msg"
-msgstr "Fallou a comunicación co servidor. Aquí está a mensaxe de erro:"
+msgstr "Fallou a comunicación co servidor."
 
 msgid "error.certexpired"
 msgstr "Certificado caducado"
@@ -1937,3 +1934,185 @@ msgstr "Intereslávico"
 
 msgid "lang.eo"
 msgstr "Esperanto"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu ficheiro"
+msgstr[1] "%zu ficheiros"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu tipografía"
+msgstr[1] "%zu tipografías"
+
+msgid "heading.fontpack.classic"
+msgstr "DESCARGAR PAQUETE TIPOGRAFÍA"
+
+msgid "dlg.fontpack.classic"
+msgstr "Descargar Paquete de tipografía (25 MB)"
+
+msgid "prefs.font.heading"
+msgstr "Titulares:"
+
+msgid "dlg.certwarn.title"
+msgstr "Problema de seguridade"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignorar ligazóns HTTP(S):"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Engadir marcadores ao final:"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Escapes ANSI:"
+
+msgid "error.ansi.msg"
+msgstr ""
+"Pode que non se mostre correctamente a páxina. Utiliza secuencias de escape "
+"ANSI para darlle estilos ao texto, e iso só ten soporte parcial. Podes usar "
+"un emulador de terminal para vela."
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Tipografías activadas"
+
+msgid "fontpack.export"
+msgstr "Ver modelo fontpack.ini"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Queres eliminar de xeito permanente o paquete de tipografía \"%s\"?"
+
+msgid "fontpack.help"
+msgstr ""
+"Os paquetes de tipografías Lagrange son ficheiros ZIP que conteñen un "
+"conxunto de ficheiros de tipografías e parámetros de configuración "
+"asociados. Unha vez instalados, as tipografías podense utilizar para contido "
+"dos documentos e IU. As tipografías activas elixense en Preferencias > Letra."
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"As tipografías empaquetadas previamente dentro da app están dispoñibles "
+"agora como descarga separada. Queres descargar o paquete \"Classic set\" "
+"agora?"
+
+msgid "prefs.font.body"
+msgstr "Corpo:"
+
+msgid "prefs.font.mono"
+msgstr "Sen formato:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Letra monoespazada:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Visitado"
+
+msgid "menu.website"
+msgstr "Web do proxecto…"
+
+msgid "menu.fonts"
+msgstr "Xestionar Letra…"
+
+msgid "prefs.font.ui"
+msgstr "IU:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Cor FG"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Estilo de letra"
+
+msgid "prefs.font.warnmissing"
+msgstr "Avisos Glyph:"
+
+msgid "prefs.font.smooth"
+msgstr "Suavizado:"
+
+msgid "error.ansi"
+msgstr "Emulación do terminal"
+
+msgid "error.glyphs"
+msgstr "Glyphs omitidos"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Pode que non vexas correctamente esta páxina porque faltan algúns "
+"caracteres. Podes instalar tipografías adicionais para arranxalo."
+
+msgid "heading.fontpack.meta"
+msgstr "Tipografías"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Tipografías desactivadas"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Ver ficheiro"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Versión %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Instalado"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Non instalado"
+
+msgid "fontpack.meta.disabled"
+msgstr ", desactivado"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Activar \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Desactivar \"%s\""
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Instalar \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Actualizar \"%s\" á versión %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Eliminar permanentemente \"%s\""
+
+msgid "heading.fontpack.delete"
+msgstr "ELIMINAR TIPOGRAFÍA"
+
+msgid "dlg.fontpack.delete"
+msgstr "Eliminar tipografía"
+
+msgid "fontpack.install.ttf"
+msgstr "Instalar tipografía TrueType"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Abrir directorio de tipografías da usuaria"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Mostrar tipografías instaladas"
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange intenta cargar tódolos ficheiros individuais TrueType que están "
+"copiados no directorio de tipografías da usuaria."
+
+msgid "truetype.help.installed"
+msgstr "Esta tipografía está instalada no directorio da usuaria."
+
+msgid "heading.dismiss.warning"
+msgstr "DESBOTAR AVISO?"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr ""
+"Desbotar permanentemente o aviso acerca da emulación nun terminal para %s?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Desbotar aviso"

@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/string.h>
+#include <the_Foundation/stringset.h>
 
 #include "gmdocument.h"
 #include "ui/color.h"
@@ -31,18 +31,38 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 /* User preferences */
 
 iDeclareType(Prefs)
+    
+enum iPrefsString {
+    uiLanguage_PrefsString,
+    downloadDir_PrefsString,
+    searchUrl_PrefsString,
+    /* Network */
+    caFile_PrefsString,
+    caPath_PrefsString,
+    geminiProxy_PrefsString,
+    gopherProxy_PrefsString,
+    httpProxy_PrefsString,
+    /* Style */
+    uiFont_PrefsString,
+    headingFont_PrefsString,
+    bodyFont_PrefsString,
+    monospaceFont_PrefsString,
+    monospaceDocumentFont_PrefsString,
+    max_PrefsString
+};
 
 /* TODO: Refactor at least the boolean values into an array for easier manipulation.
    Then they can be (de)serialized as a group. Need to use a systematic command naming
    convention for notifications.  */
 struct Impl_Prefs {
+    iString          strings[max_PrefsString];
     /* UI state */
     int              dialogTab;
     int              langFrom;
     int              langTo;
     /* Window */
-    iString          uiLanguage;
     iBool            useSystemTheme;
+    enum iColorTheme systemPreferredColorTheme[2]; /* dark, light */
     enum iColorTheme theme;    
     enum iColorAccent accent;
     iBool            customFrame; /* when LAGRANGE_ENABLE_CUSTOM_FRAME is defined */
@@ -55,30 +75,25 @@ struct Impl_Prefs {
     int              pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
     /* Behavior */
     int              returnKey;
-    iString          downloadDir;
     iBool            hoverLink;
     iBool            smoothScrolling;
     int              smoothScrollSpeed[max_ScrollType];
     iBool            loadImageInsteadOfScrolling;
     iBool            collapsePreOnLoad;
-    iString          searchUrl;
     iBool            openArchiveIndexPages;
     iBool            addBookmarksToBottom;
+    iBool            warnAboutMissingGlyphs;
     /* Network */
-    iString          caFile;
-    iString          caPath;
     iBool            decodeUserVisibleURLs;
     int              maxCacheSize; /* MB */
     int              maxMemorySize; /* MB */
-    iString          geminiProxy;
-    iString          gopherProxy;
-    iString          httpProxy;
     /* Style */
-    iString          symbolFontPath;
-    enum iTextFont   font;
-    enum iTextFont   headingFont;
+    iStringSet *     disabledFontPacks;
+    iBool            fontSmoothing;
+    int              gemtextAnsiEscapes;
     iBool            monospaceGemini;
     iBool            monospaceGopher;
+    iBool            boldLinkVisited;
     iBool            boldLinkDark;
     iBool            boldLinkLight;
     int              lineWidth;

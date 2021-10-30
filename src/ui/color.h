@@ -134,6 +134,7 @@ enum iColorId {
     tmBannerSideTitle_ColorId,
     tmInlineContentMetadata_ColorId,
     tmBackgroundAltText_ColorId,     /* derived from other theme colors */
+    tmFrameAltText_ColorId,          /* derived from other theme colors */
     tmBackgroundOpenLink_ColorId,    /* derived from other theme colors */
     tmFrameOpenLink_ColorId,         /* derived from other theme colors */
     tmLinkCustomIconVisited_ColorId, /* derived from other theme colors */
@@ -159,8 +160,13 @@ enum iColorId {
     tmGopherLinkTextHover_ColorId,
     tmGopherLinkDomain_ColorId,
     tmGopherLinkLastVisitDate_ColorId,
+    
+    tmBannerItemBackground_ColorId,
+    tmBannerItemFrame_ColorId,
+    tmBannerItemTitle_ColorId,
+    tmBannerItemText_ColorId,
 
-    max_ColorId,
+    max_ColorId, /* note: GmRun packs color into limited number of bits */
     tmMax_ColorId = max_ColorId - tmFirst_ColorId
 };
 

@@ -48,11 +48,11 @@ static iBool isSideBySideLayout_(void) {
 }
 
 static enum iFontId labelFont_(void) {
-    return deviceType_App() == phone_AppDeviceType ? defaultBig_FontId : defaultMedium_FontId;
+    return deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId : uiLabelMedium_FontId;
 }
 
 static enum iFontId labelBoldFont_(void) {
-    return deviceType_App() == phone_AppDeviceType ? defaultBigBold_FontId : defaultMediumBold_FontId;
+    return deviceType_App() == phone_AppDeviceType ? uiLabelBigBold_FontId : uiLabelMediumBold_FontId;
 }
 
 static void updatePanelSheetMetrics_(iWidget *sheet) {
@@ -176,13 +176,17 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
 //        openMenu_Widget(panel, innerToWindow_Widget(panel, zero_I2()));
 //        setFlags_Widget(panel, hidden_WidgetFlag, iFalse);
         unselectAllPanelButtons_(topPanel);
+        int panelIndex = -1;
+        size_t childIndex = 0;
         iForEach(ObjectList, i, children_Widget(findDetailStack_(topPanel))) {
             iWidget *child = i.object;
             setFlags_Widget(child, hidden_WidgetFlag | disabled_WidgetFlag, child != panel);
             /* Animate the current panel in. */
             if (child == panel && isPortrait) {
                 setupSheetTransition_Mobile(panel, iTrue);
+                panelIndex = childIndex;
             }
+            childIndex++;
         }
         iLabelWidget *detailTitle =
             findChild_Widget(parent_Widget(parent_Widget(topPanel)), "detailtitle");
@@ -191,6 +195,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         setTextColor_LabelWidget(detailTitle, uiHeading_ColorId);
         setText_LabelWidget(detailTitle, text_LabelWidget((iLabelWidget *) findTitleLabel_(panel)));
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
+        postCommand_Widget(topPanel, "panel.changed arg:%d", panelIndex);
         return iTrue;
     }
     if (equal_Command(cmd, "swipe.back")) {
@@ -209,6 +214,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
                     setFocus_Widget(NULL);
                     updateTextCStr_LabelWidget(findWidget_App("panel.back"), "Back");
                     wasClosed = iTrue;
+                    postCommand_Widget(topPanel, "panel.changed arg:-1");
                 }
             }
         }
@@ -546,7 +552,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 updateSize_LabelWidget(button);
             }
             setId_Widget(as_Widget(button), radId);
-            setFont_LabelWidget(button, defaultMedium_FontId);
+            setFont_LabelWidget(button, uiLabelMedium_FontId);
             addChildFlags_Widget(widget, iClob(button), flags);
         }
     }
@@ -734,12 +740,16 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             iLabelWidget * button =
                 addChildFlags_Widget(topPanel,
                                      iClob(makePanelButton_(cstr_String(label), "panel.open")),
-                                     chevron_WidgetFlag | borderTop_WidgetFlag);
+                                     borderTop_WidgetFlag);
+            setChevron_LabelWidget(button, iTrue);
             const iChar icon = toInt_String(string_Command(item->label, "icon"));
             if (icon) {
                 setIcon_LabelWidget(button, icon);
             }
             iWidget *panel = addChildPanel_(detailStack, button, NULL);
+            if (argLabel_Command(item->label, "noscroll")) {
+                setFlags_Widget(panel, overflowScrollable_WidgetFlag, iFalse);
+            }
             makePanelItems_Mobile(panel, item->data);
         }
         else {
@@ -814,413 +824,26 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
 //    printTree_Widget(panels);
 }
 
-#if 0
-    /* The sheet contents are completely rearranged and restyled on a phone.
-       We'll set up a linear fullscreen arrangement of the widgets. Sheets are already
-       scrollable so they can be taller than the display. In hindsight, it may have been
-       easier to create phone versions of each dialog, but at least this works with any
-       future changes to the UI (..."works"). At least this way it is possible to enforce
-       a consistent styling. */
-    if (useMobileSheetLayout_() && parent_Widget(sheet) == root_Widget(sheet)) {
-        if (~flags_Widget(sheet) & keepOnTop_WidgetFlag) {
-            /* Already finalized. */
-            arrange_Widget(sheet);
-            postRefresh_App();
-            return;
-        }
-        /* TODO: In portrait, top panel and detail stack are all stacked together.
-         
-                 Landscape Layout                 Portrait Layout
-                                              
-        ┌─────────┬──────Detail─Stack─────┐    ┌─────────┬ ─ ─ ─ ─ ┐
-        │         │┌───────────────────┐  │    │         │Detail
-        │         ││┌──────────────────┴┐ │    │         │Stack    │
-        │         │││┌──────────────────┴┐│    │         │┌──────┐
-        │         ││││                   ││    │         ││┌─────┴┐│
-        │         ││││                   ││    │         │││      │
-        │Top Panel││││                   ││    │Top Panel│││      ││
-        │         ││││      Panels       ││    │         │││Panels│
-        │         ││││                   ││    │         │││      ││
-        │         │└┤│                   ││    │         │││      │
-        │         │ └┤                   ││    │         │└┤      ││
-        │         │  └───────────────────┘│    │         │ └──────┘
-        └─────────┴───────────────────────┘    └─────────┴ ─ ─ ─ ─ ┘
-                                                          underneath
-        */
-        /* Modify the top sheet to act as a fullscreen background. */
-        setPadding1_Widget(sheet, 0);
-        setBackgroundColor_Widget(sheet, uiBackground_ColorId);
-        setFlags_Widget(sheet,
-                        keepOnTop_WidgetFlag |
-                        parentCannotResize_WidgetFlag |
-                        arrangeSize_WidgetFlag |
-                        centerHorizontal_WidgetFlag |
-                        arrangeVertical_WidgetFlag |
-                        arrangeHorizontal_WidgetFlag |
-                        overflowScrollable_WidgetFlag,
-                        iFalse);
-        setFlags_Widget(sheet,
-                        frameless_WidgetFlag |
-                        //resizeWidthOfChildren_WidgetFlag |
-                        leftEdgeDraggable_WidgetFlag |
-                        commandOnClick_WidgetFlag,
-                        iTrue);
-        iPtrArray *   contents         = collect_PtrArray(new_PtrArray()); /* two-column pages */
-        iPtrArray *   panelButtons     = collect_PtrArray(new_PtrArray());
-        iWidget *     prefsTabs        = findChild_Widget(sheet, "prefs.tabs");
-        iWidget *     dialogHeading    = (prefsTabs ? NULL : child_Widget(sheet, 0));
-        const iBool   isPrefs          = (prefsTabs != NULL);
-        const int64_t panelButtonFlags = borderBottom_WidgetFlag | alignLeft_WidgetFlag |
-                                         frameless_WidgetFlag | extraPadding_WidgetFlag;
-        iWidget *mainDetailSplit = makeHDiv_Widget();
-        setCommandHandler_Widget(mainDetailSplit, mainDetailSplitHandler_);
-        setFlags_Widget(mainDetailSplit, resizeHeightOfChildren_WidgetFlag, iFalse);
-        setId_Widget(mainDetailSplit, "mdsplit");
-        iWidget *topPanel = new_Widget(); {
-            setId_Widget(topPanel, "panel.top");
-            setCommandHandler_Widget(topPanel, topPanelHandler_);
-            setFlags_Widget(topPanel,
-                            arrangeVertical_WidgetFlag |
-                            resizeWidthOfChildren_WidgetFlag |
-                            arrangeHeight_WidgetFlag |
-                            overflowScrollable_WidgetFlag |
-                            commandOnClick_WidgetFlag,
-                            iTrue);
-            addChild_Widget(mainDetailSplit, iClob(topPanel));
-        }
-        iWidget *detailStack = new_Widget(); {
-            setId_Widget(detailStack, "detailstack");
-            setFlags_Widget(detailStack, collapse_WidgetFlag | resizeWidthOfChildren_WidgetFlag, iTrue);
-            addChild_Widget(mainDetailSplit, iClob(detailStack));
-        }
-        addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
-        /* Slide top panel with detail panels. */ {
-        setFlags_Widget(topPanel, refChildrenOffset_WidgetFlag, iTrue);
-            topPanel->offsetRef = detailStack;
-        }
-        if (prefsTabs) {
-            iRelease(removeChild_Widget(sheet, child_Widget(sheet, 0))); /* heading */
-            iRelease(removeChild_Widget(sheet, findChild_Widget(sheet, "dialogbuttons")));
-            /* Pull out the pages and make them panels. */
-            iWidget *pages = findChild_Widget(prefsTabs, "tabs.pages");
-            size_t pageCount = tabCount_Widget(prefsTabs);
-            for (size_t i = 0; i < pageCount; i++) {
-                iString *text = copy_String(text_LabelWidget(tabPageButton_Widget(prefsTabs, tabPage_Widget(prefsTabs, 0))));
-                iWidget *page = removeTabPage_Widget(prefsTabs, 0);
-                iWidget *pageContent = child_Widget(page, 1); /* surrounded by padding widgets */
-                pushBack_PtrArray(contents, ref_Object(pageContent));
-                iLabelWidget *panelButton;
-                pushBack_PtrArray(panelButtons,
-                                  addChildFlags_Widget(topPanel,
-                                                       iClob(panelButton = makePanelButton_(
-                                                             i == 1 ? "${heading.prefs.userinterface}" : cstr_String(text),
-                                                             "panel.open")),
-                                                       (i == 0 ? borderTop_WidgetFlag : 0) |
-                                                       chevron_WidgetFlag));
-                const iChar icons[] = {
-                    0x02699, /* gear */
-                    0x1f4f1, /* mobile phone */
-                    0x1f3a8, /* palette */
-                    0x1f5da, /* aA */
-                    0x1f660, /* pointing bud */
-                    0x1f5a7, /* computer network */
-                };
-                setIcon_LabelWidget(panelButton, icons[i]);
-//                setFont_LabelWidget(panelButton, labelFont_());
-//                setBackgroundColor_Widget(as_Widget(panelButton), uiBackgroundSidebar_ColorId);
-                iRelease(page);
-                delete_String(text);
-            }
-            destroy_Widget(prefsTabs);
-        }
-        iForEach(ObjectList, i, children_Widget(sheet)) {
-            iWidget *child = i.object;
-            if (isTwoColumnPage_(child)) {
-                pushBack_PtrArray(contents, removeChild_Widget(sheet, child));
-            }
-            else {
-                removeChild_Widget(sheet, child);
-                addChild_Widget(topPanel, child);
-                iRelease(child);
-            }
-        }
-        const iBool useSlidePanels = (size_PtrArray(contents) == size_PtrArray(panelButtons));
-        addChild_Widget(sheet, iClob(mainDetailSplit));
-        iForEach(PtrArray, j, contents) {
-            iWidget *owner = topPanel;
-            if (useSlidePanels) {
-                /* Create a new child panel. */
-                iLabelWidget *button = at_PtrArray(panelButtons, index_PtrArrayIterator(&j));
-                owner = addChildPanel_(detailStack, button,
-                                       collect_String(upper_String(text_LabelWidget(button))));
-            }
-            iWidget *pageContent = j.ptr;
-            iWidget *headings = child_Widget(pageContent, 0);
-            iWidget *values   = child_Widget(pageContent, 1);
-            enum iPrefsElement prevElement = panelTitle_PrefsElement;
-            /* Identify the types of controls in the dialog and restyle/organize them. */
-            while (!isEmpty_ObjectList(children_Widget(headings))) {
-                iWidget *heading = child_Widget(headings, 0);
-                iWidget *value   = child_Widget(values, 0);
-                removeChild_Widget(headings, heading);
-                removeChild_Widget(values, value);
-                /* Can we ignore these widgets? */
-                if (isOmittedPref_(id_Widget(value)) ||
-                    (class_Widget(heading) == &Class_Widget &&
-                     class_Widget(value) == &Class_Widget) /* just padding */) {
-                    iRelease(heading);
-                    iRelease(value);
-                    continue;
-                }
-                enum iPrefsElement element = toggle_PrefsElement;
-                iLabelWidget *headingLabel = NULL;
-                iLabelWidget *valueLabel = NULL;
-                iInputWidget *valueInput = NULL;
-                const iBool isMenuButton = findChild_Widget(value, "menu") != NULL;
-                if (isInstance_Object(heading, &Class_LabelWidget)) {
-                    headingLabel = (iLabelWidget *) heading;
-                    stripTrailingColon_(headingLabel);
-                }
-                if (isInstance_Object(value, &Class_LabelWidget)) {
-                    valueLabel = (iLabelWidget *) value;
-                    setFont_LabelWidget(valueLabel, labelFont_());
-                }
-                if (isInstance_Object(value, &Class_InputWidget)) {
-                    valueInput = (iInputWidget *) value;
-                    setFlags_Widget(value, borderBottom_WidgetFlag, iFalse);
-                    element = textInput_PrefsElement;
-                }
-                if (childCount_Widget(value) >= 2) {
-                    if (isInstance_Object(child_Widget(value, 0), &Class_InputWidget)) {
-                        element = textInput_PrefsElement;
-                        setPadding_Widget(value, 0, 0, gap_UI, 0);
-                        valueInput = child_Widget(value, 0);
-                    }
-                }
-                if (valueInput) {
-                    setFont_InputWidget(valueInput, labelFont_());
-                    setContentPadding_InputWidget(valueInput, 3 * gap_UI, 0);
-                }
-                /* Toggles have the button on the right. */
-                if (valueLabel && cmp_String(command_LabelWidget(valueLabel), "toggle") == 0) {
-                    element = toggle_PrefsElement;
-                    addPanelChild_(owner,
-                                   iClob(makeValuePaddingWithHeading_(headingLabel, value)),
-                                   0,
-                                   element,
-                                   prevElement);
-                }
-                else if (valueLabel && isEmpty_String(text_LabelWidget(valueLabel))) {
-                    element = heading_PrefsElement;
-                    iRelease(value);
-                    addPanelChild_(owner, iClob(heading), 0, element, prevElement);
-                    setFont_LabelWidget(headingLabel, uiLabel_FontId);
-                }
-                else if (isMenuButton) {
-                    element = dropdown_PrefsElement;
-                    setFlags_Widget(value,
-                                    alignRight_WidgetFlag | noBackground_WidgetFlag |
-                                    frameless_WidgetFlag, iTrue);
-                    setFlags_Widget(value, alignLeft_WidgetFlag, iFalse);
-                    iWidget *pad = addPanelChild_(owner, iClob(makeValuePaddingWithHeading_(headingLabel, value)), 0,
-                                                  element, prevElement);
-                    pad->padding[2] = gap_UI;
-                }
-                else if (valueInput) {
-                    addPanelChild_(owner, iClob(makeValuePaddingWithHeading_(headingLabel, value)), 0,
-                                       element, prevElement);
-                }
-                else {
-                    if (childCount_Widget(value) >= 2) {
-                        element = radioButton_PrefsElement;
-                        /* Always padding before radio buttons. */
-                        addChild_Widget(owner, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
-                    }
-                    addChildFlags_Widget(owner, iClob(heading), borderBottom_WidgetFlag);
-                    if (headingLabel) {
-                        setTextColor_LabelWidget(headingLabel, uiSubheading_ColorId);
-                        setText_LabelWidget(headingLabel,
-                                            collect_String(upper_String(text_LabelWidget(headingLabel))));
-                    }
-                    addPanelChild_(owner, iClob(value), 0, element, prevElement);
-                    /* Radio buttons expand to fill the space. */
-                    if (element == radioButton_PrefsElement) {
-                        setBackgroundColor_Widget(value, uiBackgroundSidebar_ColorId);
-                        setPadding_Widget(value, 4 * gap_UI, 2 * gap_UI, 4 * gap_UI, 2 * gap_UI);
-                        setFlags_Widget(value, arrangeWidth_WidgetFlag, iFalse);
-                        setFlags_Widget(value,
-                                        borderBottom_WidgetFlag |
-                                        resizeToParentWidth_WidgetFlag |
-                                        resizeWidthOfChildren_WidgetFlag,
-                                        iTrue);
-                        iForEach(ObjectList, sub, children_Widget(value)) {
-                            if (isInstance_Object(sub.object, &Class_LabelWidget)) {
-                                iLabelWidget *opt = sub.object;
-                                setFont_LabelWidget(opt, defaultMedium_FontId);
-                                setFlags_Widget(as_Widget(opt), noBackground_WidgetFlag, iTrue);
-                            }
-                        }
-                    }
-                }
-                prevElement = element;
-            }
-            addPanelChild_(owner, NULL, 0, 0, prevElement);
-            destroy_Widget(pageContent);
-        }
-        destroyPending_Root(sheet->root);
-        /* Additional elements for preferences. */
-        if (isPrefs) {
-            addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
-            /* Management. */ {
-                iLabelWidget *idManButton = addChildFlags_Widget(topPanel,
-                                                                 iClob(makePanelButton_(person_Icon " ${sidebar.identities}", "panel.open")),
-                                                                 chevron_WidgetFlag | borderTop_WidgetFlag);
-            }
-            addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
-            iLabelWidget *aboutButton = addChildFlags_Widget(topPanel,
-                                 iClob(makePanelButton_(planet_Icon " ${menu.about}", "panel.open")),
-                                 chevron_WidgetFlag | borderTop_WidgetFlag);
-            addChildFlags_Widget(topPanel,
-                                 iClob(makePanelButton_(info_Icon " ${menu.help}", "!open url:about:help")), 0);
-            /* The About panel. */ {
-                iWidget *panel = addChildPanel_(detailStack, aboutButton, NULL);
-                iString *msg = collectNew_String();
-                setCStr_String(msg, "Lagrange " LAGRANGE_APP_VERSION);
-#if defined (iPlatformAppleMobile)
-                appendCStr_String(msg, " (" LAGRANGE_IOS_VERSION ")");
-#endif
-                addChildFlags_Widget(panel, iClob(new_LabelWidget(cstr_String(msg), NULL)),
-                                     frameless_WidgetFlag);
-                addChildFlags_Widget(panel,
-                                     iClob(makePanelButton_(globe_Icon " By @jk@skyjake.fi",
-                                                            "!open url:https://skyjake.fi/@jk")),
-                                     borderTop_WidgetFlag);
-                addChildFlags_Widget(panel,
-                                     iClob(makePanelButton_(clock_Icon " ${menu.releasenotes}",
-                                                            "!open url:about:version")),
-                                     0);
-                addChildFlags_Widget(panel,
-                                     iClob(makePanelButton_(info_Icon " ${menu.aboutpages}",
-                                                            "!open url:about:about")),
-                                     0);
-                addChildFlags_Widget(panel,
-                                     iClob(makePanelButton_(bug_Icon " ${menu.debug}",
-                                                            "!open url:about:debug")),
-                                     0);
-            }
-        }
-        else {
-            setFlags_Widget(topPanel, overflowScrollable_WidgetFlag, iTrue);
-            /* Update heading style. */
-            setFont_LabelWidget((iLabelWidget *) dialogHeading, uiLabelLargeBold_FontId);
-            setFlags_Widget(dialogHeading, alignLeft_WidgetFlag, iTrue);
-        }
-        if (findChild_Widget(sheet, "valueinput.prompt")) {
-            iWidget *prompt = findChild_Widget(sheet, "valueinput.prompt");
-            setFlags_Widget(prompt, alignLeft_WidgetFlag, iTrue);
-            iInputWidget *input = findChild_Widget(sheet, "input");
-            removeChild_Widget(parent_Widget(input), input);
-            addChild_Widget(topPanel, iClob(makeValuePadding_(as_Widget(input))));
-        }
-        /* Top padding for each panel, to account for the overlaid navbar. */ {
-            setId_Widget(addChildPos_Widget(topPanel,
-                                            iClob(makePadding_Widget(0)), front_WidgetAddPos),
-                         "panel.toppad");
-        }
-        /* Navbar. */ {
-            iWidget *navi = new_Widget();
-            setId_Widget(navi, "panel.navi");
-            setBackgroundColor_Widget(navi, uiBackground_ColorId);
-            addChild_Widget(navi, iClob(makePadding_Widget(0)));
-            iLabelWidget *back = addChildFlags_Widget(navi,
-                                                      iClob(new_LabelWidget(leftAngle_Icon " ${panel.back}", "panel.close")),
-                                                      noBackground_WidgetFlag | frameless_WidgetFlag |
-                                                      alignLeft_WidgetFlag | extraPadding_WidgetFlag);
-            checkIcon_LabelWidget(back);
-            setId_Widget(as_Widget(back), "panel.back");
-            setFont_LabelWidget(back, labelFont_());
-            if (!isPrefs) {
-                /* Pick up the dialog buttons for the navbar. */
-                iWidget *buttons = findChild_Widget(sheet, "dialogbuttons");
-                iLabelWidget *cancel = findMenuItem_Widget(buttons, "cancel");
-//                if (!cancel) {
-//                    cancel = findMenuItem_Widget(buttons, "translation.cancel");
-//                }
-                if (cancel) {
-                    updateText_LabelWidget(back, text_LabelWidget(cancel));
-                    setCommand_LabelWidget(back, command_LabelWidget(cancel));
-                }
-                iLabelWidget *def = (iLabelWidget *) lastChild_Widget(buttons);
-                if (def && !cancel) {
-                    updateText_LabelWidget(back, text_LabelWidget(def));
-                    setCommand_LabelWidget(back, command_LabelWidget(def));
-                    setFlags_Widget(as_Widget(back), alignLeft_WidgetFlag, iFalse);
-                    setFlags_Widget(as_Widget(back), alignRight_WidgetFlag, iTrue);
-                    setIcon_LabelWidget(back, 0);
-                    setFont_LabelWidget(back, labelBoldFont_());
-                }
-                else if (def != cancel) {
-                    removeChild_Widget(buttons, def);
-                    setFont_LabelWidget(def, labelBoldFont_());
-                    setFlags_Widget(as_Widget(def),
-                                    frameless_WidgetFlag | extraPadding_WidgetFlag |
-                                    noBackground_WidgetFlag, iTrue);
-                    addChildFlags_Widget(as_Widget(back), iClob(def), moveToParentRightEdge_WidgetFlag);
-                    updateSize_LabelWidget(def);
-                }
-                /* Action buttons are added in the bottom as extra buttons. */ {
-                    iBool isFirstAction = iTrue;
-                    iForEach(ObjectList, i, children_Widget(buttons)) {
-                        if (isInstance_Object(i.object, &Class_LabelWidget) &&
-                            i.object != cancel && i.object != def) {
-                            iLabelWidget *item = i.object;
-                            setBackgroundColor_Widget(i.object, uiBackgroundSidebar_ColorId);
-                            setFont_LabelWidget(item, labelFont_());
-                            removeChild_Widget(buttons, item);
-                            addChildFlags_Widget(topPanel, iClob(item), panelButtonFlags |
-                                                 (isFirstAction ? borderTop_WidgetFlag : 0));
-                            updateSize_LabelWidget(item);
-                            isFirstAction = iFalse;
-                        }
-                    }
-                }
-                iRelease(removeChild_Widget(parent_Widget(buttons), buttons));
-                /* Styling for remaining elements. */
-                iForEach(ObjectList, i, children_Widget(topPanel)) {
-                    if (isInstance_Object(i.object, &Class_LabelWidget) &&
-                        isEmpty_String(command_LabelWidget(i.object)) &&
-                        isEmpty_String(id_Widget(i.object))) {
-                        setFlags_Widget(i.object, alignLeft_WidgetFlag, iTrue);
-                        if (font_LabelWidget(i.object) == uiLabel_FontId) {
-                            setFont_LabelWidget(i.object, uiContent_FontId);
-                        }
-                    }
-                }
-            }
-            addChildFlags_Widget(sheet, iClob(navi),
-                                 drawBackgroundToVerticalSafeArea_WidgetFlag |
-                                 arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
-                                 resizeToParentWidth_WidgetFlag | arrangeVertical_WidgetFlag);
-        }
-        if (isPrefs && isSideBySideLayout_()) {
-            /* Show the General panel. */
-            postCommand_Widget(at_PtrArray(panelButtons, 0), "panel.open");
-        }
-        mainDetailSplitHandler_(mainDetailSplit, "window.resized"); /* make it resize the split */
-        updatePanelSheetMetrics_(sheet);
-        iAssert(sheet->parent);
-        arrange_Widget(sheet->parent);
-        postCommand_App("widget.overflow"); /* with the correct dimensions */
-    }
-    else {
-        arrange_Widget(sheet);
-    }
-    if (!useMobileSheetLayout_()) {
-        setupSheetTransition_Mobile(sheet, iTrue);
-    }
-    postRefresh_App();
-}
-#endif
+/*
+         Landscape Layout                 Portrait Layout
+                                      
+┌─────────┬──────Detail─Stack─────┐    ┌─────────┬ ─ ─ ─ ─ ┐
+│         │┌───────────────────┐  │    │         │Detail
+│         ││┌──────────────────┴┐ │    │         │Stack    │
+│         │││┌──────────────────┴┐│    │         │┌──────┐
+│         ││││                   ││    │         ││┌─────┴┐│
+│         ││││                   ││    │         │││      │
+│Top Panel││││                   ││    │Top Panel│││      ││
+│         ││││      Panels       ││    │         │││Panels│
+│         ││││                   ││    │         │││      ││
+│         │└┤│                   ││    │         │││      │
+│         │ └┤                   ││    │         │└┤      ││
+│         │  └───────────────────┘│    │         │ └──────┘
+└─────────┴───────────────────────┘    └─────────┴ ─ ─ ─ ─ ┘
+                                                  underneath
+ 
+In portrait, top panel and detail stack are all stacked together.
+*/
 
 void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     if (!isUsingPanelLayout_Mobile()) {

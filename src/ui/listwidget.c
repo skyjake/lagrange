@@ -297,7 +297,8 @@ void setHoverItem_ListWidget(iListWidget *d, size_t index) {
 }
 
 void updateMouseHover_ListWidget(iListWidget *d) {
-    const iInt2 mouse = mouseCoord_Window(get_Window(), 0);
+    const iInt2 mouse = mouseCoord_Window(
+        get_Window(), deviceType_App() == desktop_AppDeviceType ? 0 : SDL_TOUCH_MOUSEID);
     setHoverItem_ListWidget(d, itemIndex_ListWidget(d, mouse));
 }
 

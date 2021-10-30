@@ -309,9 +309,10 @@ void setThemePalette_Color(enum iColorTheme theme) {
     setHsl_Color(uiBackgroundFolder_ColorId,
                  addSatLum_HSLColor(get_HSLColor(uiBackgroundSidebar_ColorId),
                                     0,
-                                    theme == pureBlack_ColorTheme ? -1
-                                    : theme == dark_ColorTheme    ? -0.04
-                                                                  : -0.075));
+                                    theme == pureBlack_ColorTheme   ? -1
+                                    : theme == dark_ColorTheme      ? -0.04
+                                    : theme == pureWhite_ColorTheme ? -0.04
+                                                                    : -0.055));
     set_Color(uiTextShortcut_ColorId, mix_Color(get_Color(uiTextShortcut_ColorId),
                                                 get_Color(uiBackground_ColorId),
                                                 0.4f));

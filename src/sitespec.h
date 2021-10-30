@@ -28,6 +28,7 @@ iDeclareType(SiteSpec)
     
 enum iSiteSpecKey {
     titanPort_SiteSpecKey,
+    dismissWarnings_SiteSpecKey,
 };
     
 void    init_SiteSpec       (const char *saveDir);

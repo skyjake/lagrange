@@ -25,10 +25,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/fileinfo.h>
 
 void init_Prefs(iPrefs *d) {
+    iForIndices(i, d->strings) {
+        init_String(&d->strings[i]);
+    }
     d->dialogTab         = 0;
     d->langFrom          = 3; /* fr */
     d->langTo            = 2; /* en */
     d->useSystemTheme    = iTrue;
+    d->systemPreferredColorTheme[0] = d->systemPreferredColorTheme[1] = -1;
     d->theme             = dark_ColorTheme;
     d->accent            = cyan_ColorAccent;
     d->customFrame       = iFalse; /* needs some more work to be default */
@@ -45,16 +49,24 @@ void init_Prefs(iPrefs *d) {
     d->smoothScrollSpeed[keyboard_ScrollType] = 13;
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling = iFalse;
-    d->collapsePreOnLoad = iFalse;
-    d->openArchiveIndexPages = iTrue;
-    d->addBookmarksToBottom  = iTrue;
-    d->decodeUserVisibleURLs = iTrue;
+    d->collapsePreOnLoad      = iFalse;
+    d->openArchiveIndexPages  = iTrue;
+    d->addBookmarksToBottom   = iTrue;
+    d->warnAboutMissingGlyphs = iTrue;
+    d->decodeUserVisibleURLs  = iTrue;
     d->maxCacheSize      = 10;
     d->maxMemorySize     = 200;
-    d->font              = nunito_TextFont;
-    d->headingFont       = nunito_TextFont;
+    setCStr_String(&d->strings[uiFont_PrefsString], "default");
+    setCStr_String(&d->strings[headingFont_PrefsString], "default");
+    setCStr_String(&d->strings[bodyFont_PrefsString], "default");
+    setCStr_String(&d->strings[monospaceFont_PrefsString], "iosevka");
+    setCStr_String(&d->strings[monospaceDocumentFont_PrefsString], "iosevka-body");
+    d->disabledFontPacks = new_StringSet();
+    d->fontSmoothing     = iTrue;
+    d->gemtextAnsiEscapes = allowFg_AnsiFlag;
     d->monospaceGemini   = iFalse;
     d->monospaceGopher   = iFalse;
+    d->boldLinkVisited   = iFalse;
     d->boldLinkDark      = iTrue;
     d->boldLinkLight     = iTrue;
     d->lineWidth         = 38;
@@ -67,37 +79,19 @@ void init_Prefs(iPrefs *d) {
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
     d->saturation        = 1.0f;
-    initCStr_String(&d->uiLanguage, "en");
-    init_String(&d->caFile);
-    init_String(&d->caPath);
-    init_String(&d->geminiProxy);
-    init_String(&d->gopherProxy);
-    init_String(&d->httpProxy);
-    init_String(&d->downloadDir);
-    init_String(&d->searchUrl);
-    init_String(&d->symbolFontPath);
+    setCStr_String(&d->strings[uiLanguage_PrefsString], "en");
     /* TODO: Add some platform-specific common locations? */
     if (fileExistsCStr_FileInfo("/etc/ssl/cert.pem")) { /* macOS */
-        setCStr_String(&d->caFile, "/etc/ssl/cert.pem");
+        setCStr_String(&d->strings[caFile_PrefsString], "/etc/ssl/cert.pem");
     }
     if (fileExistsCStr_FileInfo("/etc/ssl/certs")) {
-        setCStr_String(&d->caPath, "/etc/ssl/certs");
+        setCStr_String(&d->strings[caPath_PrefsString], "/etc/ssl/certs");
     }
-    /*
-#if defined (iPlatformAppleDesktop)
-    setCStr_String(&d->symbolFontPath, "/System/Library/Fonts/Apple Symbols.ttf");
-#endif
-     */
 }
 
 void deinit_Prefs(iPrefs *d) {
-    deinit_String(&d->symbolFontPath);
-    deinit_String(&d->searchUrl);
-    deinit_String(&d->geminiProxy);
-    deinit_String(&d->gopherProxy);
-    deinit_String(&d->httpProxy);
-    deinit_String(&d->downloadDir);
-    deinit_String(&d->caPath);
-    deinit_String(&d->caFile);
-    deinit_String(&d->uiLanguage);
+    iRelease(d->disabledFontPacks);
+    iForIndices(i, d->strings) {
+        deinit_String(&d->strings[i]);
+    }
 }

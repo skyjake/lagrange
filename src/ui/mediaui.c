@@ -28,8 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "util.h"
 #include "lang.h"
+#include "app.h"
 
 #include <the_Foundation/path.h>
+#include <the_Foundation/stringlist.h>
 
 static const char *volumeChar_(float volume) {
     if (volume <= 0) {
@@ -61,7 +63,7 @@ void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
     }
 }
 
-static void drawPlayerButton_(iPaint *p, iRect rect, const char *label, int font) {
+static void drawInlineButton_(iPaint *p, iRect rect, const char *label, int font) {
     const iInt2 mouse     = mouseCoord_Window(get_Window(), 0);
     const iBool isHover   = contains_Rect(rect, mouse);
     const iBool isPressed = isHover && (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LEFT) != 0;
@@ -86,7 +88,7 @@ static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) {
     const int hours = seconds / 3600;
     const int mins  = (seconds / 60) % 60;
     const int secs  = seconds % 60;
-    const int font  = defaultBig_FontId;
+    const int font  = uiLabelBig_FontId;
     iString   num;
     init_String(&num);
     if (hours) {
@@ -113,17 +115,17 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
     const iBool isAdjusting = (flags_Player(d->player) & adjustingVolume_PlayerFlag) != 0;
     fillRect_Paint(p, d->bounds, playerBackground_ColorId);
     drawRect_Paint(p, d->bounds, playerFrame_ColorId);
-    drawPlayerButton_(p,
+    drawInlineButton_(p,
                       d->playPauseRect,
                       isPaused_Player(d->player) ? "\U0001f782" : "\u23f8",
                       uiContent_FontId);
-    drawPlayerButton_(p, d->rewindRect, "\u23ee", uiContent_FontId);
-    drawPlayerButton_(p, d->menuRect, menu_Icon, uiContent_FontId);
+    drawInlineButton_(p, d->rewindRect, "\u23ee", uiContent_FontId);
+    drawInlineButton_(p, d->menuRect, menu_Icon, uiContent_FontId);
     if (!isAdjusting) {
-        drawPlayerButton_(
+        drawInlineButton_(
             p, d->volumeRect, volumeChar_(volume_Player(d->player)), uiContentSymbols_FontId);
     }
-    const int   hgt       = lineHeight_Text(defaultBig_FontId);
+    const int   hgt       = lineHeight_Text(uiLabelBig_FontId);
     const int   yMid      = mid_Rect(d->scrubberRect).y;
     const float playTime  = time_Player(d->player);
     const float totalTime = duration_Player(d->player);
@@ -196,7 +198,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static void drawSevenSegmentBytes_(iInt2 pos, int color, size_t numBytes) {
+void drawSevenSegmentBytes_MediaUI(int font, iInt2 pos, int majorColor, int minorColor, size_t numBytes) {
     iString digits;
     init_String(&digits);
     if (numBytes == 0) {
@@ -219,33 +221,34 @@ static void drawSevenSegmentBytes_(iInt2 pos, int color, size_t numBytes) {
             magnitude++;
         }
         if (magnitude > 6) {
-            prependCStr_String(&digits, uiTextStrong_ColorEscape);
+            prependCStr_String(&digits, escape_Color(majorColor));
         }
     }
-    const int font = uiLabel_FontId;
     const iInt2 dims = measureRange_Text(font, range_String(&digits)).bounds.size;
-    drawRange_Text(font, addX_I2(pos, -dims.x), color, range_String(&digits));
+    drawRange_Text(font, addX_I2(pos, -dims.x), minorColor, range_String(&digits));
     deinit_String(&digits);
 }
 
-void init_DownloadUI(iDownloadUI *d, const iDocumentWidget *doc, uint16_t mediaId, iRect bounds) {
-    d->doc     = doc;
+void init_DownloadUI(iDownloadUI *d, const iMedia *media, uint16_t mediaId, iRect bounds) {
+    d->media   = media;
     d->mediaId = mediaId;
     d->bounds  = bounds;
 }
+
+/*----------------------------------------------------------------------------------------------*/
 
 iBool processEvent_DownloadUI(iDownloadUI *d, const SDL_Event *ev) {
     return iFalse;
 }
 
 void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
-    const iMedia *media = constMedia_GmDocument(document_DocumentWidget(d->doc));
     iGmMediaInfo info;
     float bytesPerSecond;
     const iString *path;
     iBool isFinished;
-    downloadInfo_Media(media, d->mediaId, &info);
-    downloadStats_Media(media, d->mediaId, &path, &bytesPerSecond, &isFinished);
+    downloadInfo_Media(d->media, d->mediaId, &info);
+    downloadStats_Media(d->media, (iMediaId){ download_MediaType, d->mediaId },
+                        &path, &bytesPerSecond, &isFinished);
     fillRect_Paint(p, d->bounds, uiBackground_ColorId);
     drawRect_Paint(p, d->bounds, uiSeparator_ColorId);
     iRect rect = d->bounds;
@@ -263,7 +266,9 @@ void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
               isFinished ? uiTextAction_ColorId : uiTextDim_ColorId,
               cstr_Lang(isFinished ? "media.download.complete" : "media.download.warnclose"));
     const int x2 = right_Rect(rect);
-    drawSevenSegmentBytes_(init_I2(x2, y1), uiTextDim_ColorId, info.numBytes);
+    drawSevenSegmentBytes_MediaUI(uiLabel_FontId, init_I2(x2, y1),
+                                  uiTextStrong_ColorId, uiTextDim_ColorId,
+                                  info.numBytes);
     const iInt2 pos = init_I2(x2, y2);
     if (bytesPerSecond > 0) {
         drawAlign_Text(uiLabel_FontId, pos, uiTextDim_ColorId, right_Alignment,

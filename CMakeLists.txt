@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.7.3
+    VERSION 1.8.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -26,7 +26,7 @@ set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.7)
     set (IOS_BUNDLE_VERSION 23)
-    set (IOS_BUILD_DATE "2021-09-17")
+    set (IOS_BUILD_DATE "2021-10-23")
 endif ()
 
 # Default that depend on environment.
@@ -59,11 +59,31 @@ option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 
 include (BuildType.cmake)
 include (res/Embed.cmake)
+include (res/Fontpack.cmake)
 include (Depends.cmake)
 
-# Embedded resources are written to a generated source file.
-message (STATUS "Preparing embedded resources...")
-# Fonts are too large to comfortably embed as a C source.
+# Package resources.
+message (STATUS "Preparing resources...")
+make_fontpack (res/default.fontpack)
+# Fonts to install as separate files.
+set (FONTPACKS
+#    arabic.fontpack
+#    cjk.fontpack
+#    firasans.fontpack
+#    literata.fontpack
+#    nunito.fontpack
+#    tinos.fontpack      
+)
+foreach (fp ${FONTPACKS})
+    make_fontpack (res/${fp})
+    set_source_files_properties (${CMAKE_BINARY_DIR}/${fp} 
+        PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+endforeach (fp)
+macro (install_fonts dst)
+    foreach (fp ${FONTPACKS})
+        install (FILES ${CMAKE_BINARY_DIR}/${fp} DESTINATION ${dst})
+    endforeach (fp)
+endmacro ()
 set (EMBED_RESOURCES
     res/about/about.gmi
     res/about/help.gmi
@@ -71,37 +91,6 @@ set (EMBED_RESOURCES
     res/about/license.gmi
     res/about/version.gmi
     res/arg-help.txt
-    res/fonts/Tinos-Regular.ttf
-    res/fonts/Tinos-Italic.ttf
-    res/fonts/Tinos-Bold.ttf
-    res/fonts/IosevkaTerm-Extended.ttf
-    res/fonts/FiraSans-Bold.ttf
-    res/fonts/FiraSans-Italic.ttf
-    res/fonts/FiraSans-Light.ttf
-    res/fonts/FiraSans-Regular.ttf
-    res/fonts/FiraSans-SemiBold.ttf
-    res/fonts/Literata-Regular-opsz=14.ttf
-    res/fonts/Literata-Bold-opsz=36.ttf
-    res/fonts/Literata-ExtraLight-opsz=18.ttf
-    res/fonts/Literata-LightItalic-opsz=10.ttf
-    res/fonts/NanumGothic-Regular.ttf
-    res/fonts/NotoEmoji-Regular.ttf
-    res/fonts/NotoSansArabicUI-Regular.ttf
-    res/fonts/NotoSansJP-Regular.ttf
-    res/fonts/NotoSansSC-Regular.ttf
-    res/fonts/NotoSansSymbols-Regular.ttf
-    res/fonts/NotoSansSymbols2-Regular.ttf
-    res/fonts/Nunito-Bold.ttf
-    res/fonts/Nunito-ExtraBold.ttf
-    res/fonts/Nunito-ExtraLight.ttf
-    res/fonts/Nunito-LightItalic.ttf
-    res/fonts/Nunito-Regular.ttf
-    res/fonts/SmolEmoji-Regular.ttf
-    res/fonts/SourceSans3-Bold.ttf
-    res/fonts/SourceSans3-ExtraLight.ttf
-    res/fonts/SourceSans3-It.ttf
-    res/fonts/SourceSans3-Regular.ttf
-    res/fonts/SourceSans3-Semibold.ttf
     res/lang/de.bin
     res/lang/en.bin
     res/lang/eo.bin
@@ -118,9 +107,11 @@ set (EMBED_RESOURCES
     res/lang/sk.bin
     res/lang/sr.bin
     res/lang/tok.bin
+    res/lang/uk.bin
     res/lang/zh_Hans.bin
     res/lang/zh_Hant.bin
     res/shadow.png
+    ${CMAKE_BINARY_DIR}/default.fontpack
 )
 if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND EMBED_RESOURCES res/lagrange-64.png)
@@ -140,6 +131,8 @@ set (SOURCES
     src/defs.h
     src/feeds.c
     src/feeds.h
+    src/fontpack.c
+    src/fontpack.h
     src/gempub.c
     src/gempub.h
     src/gmcerts.c
@@ -182,6 +175,8 @@ set (SOURCES
     src/audio/player.h
     src/audio/stb_vorbis.c
     # User interface:
+    src/ui/banner.c
+    src/ui/banner.h
     src/ui/bindingswidget.c
     src/ui/bindingswidget.h
     src/ui/certimportwidget.c
@@ -241,10 +236,15 @@ set (SOURCES
     res/about/lagrange.gmi
     res/about/license.gmi
     res/about/version.gmi
-    ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
+    ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr
 )
+if (APPLE)
+    foreach (fp ${FONTPACKS})
+        list (APPEND SOURCES ${CMAKE_BINARY_DIR}/${fp})
+    endforeach (fp)
+endif ()
 if (ENABLE_IPC)
     list (APPEND SOURCES
         src/ipc.c
@@ -444,6 +444,7 @@ if (MSYS)
     if (NOT ENABLE_RESOURCE_EMBED)
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
+    install_fonts (.)
     install (PROGRAMS
         ${SDL2_LIBDIR}/SDL2.dll
         res/urlopen.bat
@@ -459,6 +460,7 @@ elseif (HAIKU)
             LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
+    install_fonts (.)
 elseif (UNIX AND NOT APPLE)
     set_target_properties (app PROPERTIES
         INSTALL_RPATH_USE_LINK_PATH YES
@@ -491,4 +493,5 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
         endif ()
         install (FILES ${EMB_BIN} DESTINATION share/lagrange)
     endif ()
+    install_fonts (share/lagrange)
 endif ()

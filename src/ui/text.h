@@ -25,108 +25,68 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/vec2.h>
-
 #include <SDL_render.h>
+
+#include "fontpack.h"
 
 /* Content sizes: regular (1x) -> medium (1.2x) -> big (1.33x) -> large (1.67x) -> huge (2x) */
 
-enum iFontSize {
-    uiNormal_FontSize, /* 1.000 */
-    uiMedium_FontSize, /* 1.125 */
-    uiBig_FontSize,    /* 1.333 */
-    uiLarge_FontSize,  /* 1.666 */
-    uiSmall_FontSize,  /* 0.900 */
-    uiTiny_FontSize,   /* 0.800 */
-    contentRegular_FontSize,
-    contentMedium_FontSize,
-    contentBig_FontSize,
-    contentLarge_FontSize,
-    contentHuge_FontSize,
-    contentMonoSmall_FontSize,
-    contentMono_FontSize,
-    max_FontSize,
-};
-
-iLocalDef enum iFontSize larger_FontSize(enum iFontSize size) {
-    if (size == uiLarge_FontSize || size == contentHuge_FontSize || size == contentMono_FontSize) {
-        return size; /* biggest available */
-    }
-    return size + 1;
-}
+#define FONT_ID(name, style, size)    ((name) + ((style) * max_FontSize) + (size))
 
 enum iFontId {
-    /* UI fonts: normal weight (1x, 1.125x, 1.33x, 1.67x) */
-    default_FontId = 0,
-    defaultMedium_FontId,
-    defaultBig_FontId,
-    defaultLarge_FontId,
-    defaultSmall_FontId,
-    defaultTiny_FontId,
-    /* UI fonts: bold weight */
-    defaultBold_FontId,
-    defaultMediumBold_FontId,
-    defaultBigBold_FontId,
-    defaultLargeBold_FontId,
-    /* content fonts */
-    regular_FontId,
-    bold_FontId,
-    italic_FontId,
-    medium_FontId,
-    big_FontId,
-    largeBold_FontId,
-    largeLight_FontId,
-    hugeBold_FontId,
-    monospaceSmall_FontId,
-    monospace_FontId,
-    /* extra content fonts */
-    defaultContentRegular_FontId, /* UI font but sized to regular_FontId */
-    defaultContentSmall_FontId, /* UI font but sized smaller */
-    /* symbols and scripts */
-    userSymbols_FontId,
-    iosevka_FontId           = userSymbols_FontId + max_FontSize,
-    symbols_FontId           = iosevka_FontId + max_FontSize,
-    symbols2_FontId          = symbols_FontId + max_FontSize,
-    smolEmoji_FontId         = symbols2_FontId + max_FontSize,
-    notoEmoji_FontId         = smolEmoji_FontId + max_FontSize,
-    japanese_FontId          = notoEmoji_FontId + max_FontSize,
-    chineseSimplified_FontId = japanese_FontId + max_FontSize,
-    korean_FontId            = chineseSimplified_FontId + max_FontSize,
-    arabic_FontId            = korean_FontId + max_FontSize,
-    max_FontId               = arabic_FontId + max_FontSize,
+    default_FontId           = 0,                     /* default is always the first font */
+    monospace_FontId         = maxVariants_Fonts,     /* 2nd font is always the monospace font */
+    documentHeading_FontId   = maxVariants_Fonts * 2, /* heading font */
+    documentBody_FontId      = maxVariants_Fonts * 3, /* body font */
+    documentMonospace_FontId = maxVariants_Fonts * 4,
+    auxiliary_FontId         = maxVariants_Fonts * 5, /* the first auxiliary font (e.g., symbols) */
 
     /* Meta: */
-    mask_FontId               = 0xffff,
-    alwaysVariableFlag_FontId = 0x10000,
+    mask_FontId               = 0x0000ffff, /* font IDs are 16-bit; see GmRun's packing */
+    alwaysVariableFlag_FontId = 0x00010000,
 
     /* UI fonts: */
-    uiLabel_FontId          = default_FontId,
-    uiLabelBold_FontId      = defaultBold_FontId,
-    uiLabelLarge_FontId     = defaultLarge_FontId,
-    uiLabelLargeBold_FontId = defaultLargeBold_FontId,
-    uiShortcuts_FontId      = default_FontId,
-    uiInput_FontId          = defaultMedium_FontId,
-    uiContent_FontId        = defaultMedium_FontId,
-    uiContentBold_FontId    = defaultMediumBold_FontId,
-    uiContentSymbols_FontId = symbols_FontId + uiMedium_FontSize,    
-    /* Document fonts: */
-    paragraph_FontId         = regular_FontId,
-    firstParagraph_FontId    = medium_FontId,
-    preformatted_FontId      = monospace_FontId,
-    preformattedSmall_FontId = monospaceSmall_FontId,
-    quote_FontId             = italic_FontId,
-    heading1_FontId          = hugeBold_FontId,
-    heading2_FontId          = largeBold_FontId,
-    heading3_FontId          = big_FontId,
-    banner_FontId            = largeLight_FontId,
-    regularMonospace_FontId  = iosevka_FontId + contentRegular_FontSize    
+    uiLabelTiny_FontId        = FONT_ID(default_FontId,   semiBold_FontStyle, uiTiny_FontSize),
+    uiLabelSmall_FontId       = FONT_ID(default_FontId,   regular_FontStyle,  uiSmall_FontSize),
+    uiLabel_FontId            = FONT_ID(default_FontId,   regular_FontStyle,  uiNormal_FontSize),
+    uiLabelMedium_FontId      = FONT_ID(default_FontId,   regular_FontStyle,  uiMedium_FontSize),
+    uiLabelMediumBold_FontId  = FONT_ID(default_FontId,   bold_FontStyle,     uiMedium_FontSize),
+    uiLabelBig_FontId         = FONT_ID(default_FontId,   regular_FontStyle,  uiBig_FontSize),
+    uiLabelBold_FontId        = FONT_ID(default_FontId,   bold_FontStyle,     uiNormal_FontSize),
+    uiLabelBigBold_FontId     = FONT_ID(default_FontId,   bold_FontStyle,     uiBig_FontSize),
+    uiLabelLarge_FontId       = FONT_ID(default_FontId,   regular_FontStyle,  uiLarge_FontSize),
+    uiLabelLargeBold_FontId   = FONT_ID(default_FontId,   bold_FontStyle,     uiLarge_FontSize),
+    uiLabelSymbols_FontId     = FONT_ID(auxiliary_FontId, regular_FontStyle,  uiNormal_FontSize),
+    uiShortcuts_FontId        = FONT_ID(default_FontId,   regular_FontStyle,  uiNormal_FontSize),
+    uiInput_FontId            = FONT_ID(default_FontId,   regular_FontStyle,  uiMedium_FontSize),
+    uiContent_FontId          = FONT_ID(default_FontId,   regular_FontStyle,  uiMedium_FontSize),
+    uiContentBold_FontId      = FONT_ID(default_FontId,   bold_FontStyle,     uiMedium_FontSize),
+    uiContentSymbols_FontId   = FONT_ID(auxiliary_FontId, regular_FontStyle,  uiMedium_FontSize),
+    
+    /* Document fonts: */     
+    paragraph_FontId          = FONT_ID(documentBody_FontId,      regular_FontStyle,  contentRegular_FontSize),
+    bold_FontId               = FONT_ID(documentBody_FontId,      semiBold_FontStyle, contentRegular_FontSize),
+    firstParagraph_FontId     = FONT_ID(documentBody_FontId,      regular_FontStyle,  contentMedium_FontSize),
+    preformatted_FontId       = FONT_ID(monospace_FontId,         regular_FontStyle,  contentSmall_FontSize),
+    preformattedSmall_FontId  = FONT_ID(monospace_FontId,         regular_FontStyle,  contentTiny_FontSize),
+    quote_FontId              = FONT_ID(documentBody_FontId,      italic_FontStyle,   contentRegular_FontSize),
+    heading1_FontId           = FONT_ID(documentHeading_FontId,   bold_FontStyle,     contentHuge_FontSize),
+    heading2_FontId           = FONT_ID(documentHeading_FontId,   bold_FontStyle,     contentLarge_FontSize),
+    heading3_FontId           = FONT_ID(documentHeading_FontId,   regular_FontStyle,  contentBig_FontSize),
+    banner_FontId             = FONT_ID(documentHeading_FontId,   light_FontStyle,    contentLarge_FontSize),
+    monospaceParagraph_FontId = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentRegular_FontSize),
+    monospaceBold_FontId      = FONT_ID(documentMonospace_FontId, semiBold_FontStyle, contentRegular_FontSize),
+    plainText_FontId          = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentRegular_FontSize),
 };
 
-iLocalDef iBool isJapanese_FontId(enum iFontId id) {
-    return id >= japanese_FontId && id < japanese_FontId + max_FontSize;
-}
+//iLocalDef iBool isJapanese_FontId(enum iFontId id) {
+//    return id >= japanese_FontId && id < japanese_FontId + max_FontSize;
+//}
 
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)
 
+#if 0
+/* TODO: get rid of this; configure using font ID strings, check RTL from FontFile flags */
 enum iTextFont {
     undefined_TextFont = -1,
     nunito_TextFont = 0,
@@ -139,6 +99,7 @@ enum iTextFont {
     arabic_TextFont,
     emojiAndSymbols_TextFont,
 };
+#endif
 
 extern int gap_Text; /* affected by content font size */
 
@@ -150,15 +111,15 @@ void    deinit_Text             (iText *);
 
 void    setCurrent_Text         (iText *);
 
-void    loadUserFonts_Text      (void); /* based on Prefs */
-
-void    setContentFont_Text     (iText *, enum iTextFont font);
-void    setHeadingFont_Text     (iText *, enum iTextFont font);
-void    setContentFontSize_Text (iText *, float fontSizeFactor); /* affects all except `default*` fonts */
+void    setDocumentFontSize_Text(iText *, float fontSizeFactor); /* affects all except `default*` fonts */
 void    resetFonts_Text         (iText *);
 
 int     lineHeight_Text         (int fontId);
+float   emRatio_Text            (int fontId); /* em advance to line height ratio */
 iRect   visualBounds_Text       (int fontId, iRangecc text);
+int     fontWithSize_Text       (int fontId, enum iFontSize sizeId);
+int     fontWithStyle_Text      (int fontId, enum iFontStyle styleId);
+int     fontWithFamily_Text     (int fontId, enum iFontId familyId);
 
 iDeclareType(TextMetrics)
 
@@ -188,9 +149,18 @@ enum iAlignment {
     right_Alignment,
 };
 
-void    setOpacity_Text     (float opacity);
+enum iAnsiFlag {
+    allowFg_AnsiFlag        = iBit(1),
+    allowBg_AnsiFlag        = iBit(2),
+    allowFontStyle_AnsiFlag = iBit(3),
+    allowAll_AnsiFlag       = 0x7,
+};
 
-void    cache_Text          (int fontId, iRangecc text); /* pre-render glyphs */
+void    setOpacity_Text         (float opacity);
+void    setBaseAttributes_Text  (int fontId, int colorId); /* current "normal" text attributes */
+void    setAnsiFlags_Text       (int ansiFlags);
+
+void    cache_Text              (int fontId, iRangecc text); /* pre-render glyphs */
 
 void    draw_Text               (int fontId, iInt2 pos, int color, const char *text, ...);
 void    drawAlign_Text          (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
@@ -212,12 +182,28 @@ enum iWrapTextMode {
     word_WrapTextMode,
 };
 
+iDeclareType(TextAttrib)
+    
+/* Initial attributes at the start of a text string. These may be modified by control
+   sequences inside a text run. */
+struct Impl_TextAttrib {
+    int16_t colorId;
+    struct {
+        uint16_t bold      : 1;
+        uint16_t italic    : 1;
+        uint16_t monospace : 1;
+        uint16_t isBaseRTL : 1;
+        uint16_t isRTL     : 1;
+    }; 
+};
+
 struct Impl_WrapText {
     /* arguments */
     iRangecc    text;
     int         maxWidth;
     enum iWrapTextMode mode;
-    iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance, iBool isBaseRTL);
+    iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, iTextAttrib attrib, int origin,
+                          int advance);
     void *      context;
     iChar       overrideChar; /* use this for all characters instead of the real ones */
     int         baseDir; /* set to +1 for LTR, -1 for RTL */
@@ -234,6 +220,7 @@ struct Impl_WrapText {
 iTextMetrics    measure_WrapText    (iWrapText *, int fontId);
 iTextMetrics    draw_WrapText       (iWrapText *, int fontId, iInt2 pos, int color);
 
+iBool           checkMissing_Text   (void); /* returns the flag, and clears it */
 SDL_Texture *   glyphCache_Text     (void);
 
 enum iTextBlockMode { quadrants_TextBlockMode, shading_TextBlockMode };

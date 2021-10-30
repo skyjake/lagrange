@@ -6,6 +6,44 @@
 ```
 # Release notes
 
+## 1.8
+⚠️ Font settings will be reset to defaults. Only a minimal set of fonts is bundled with the app. If additional fonts are needed, one can use custom TrueType fonts or download some from the Font Library:
+=> gemini://skyjake.fi/fonts/
+
+New features:
+* Added a customizable font library. Open "about:fonts" to view and manage the installed fonts.
+* Added TrueType fonts as a recognized content type. When one is viewed in the app (e.g., via a drag-and-drop), there is an option to install it as a user font.
+* Added fontpacks: ZIP archives containing one or more TrueType fonts and parameters about how they should be used.
+* Added support for TrueType collections (.ttc).
+* Added new font options: separate preformatted and monospace body fonts, UI font, smoothing.
+* Added style option to show all links as bold regardless of visited status.
+* Added warning message about missing font glyphs.
+* Added warning message about terminal emulation. Lagrange supports a small subset of ANSI escape sequences, so page appearance may be incorrect when these are used in content.
+* Added tab close buttons.
+* Added style option to show links as bold regardless of visited status.
+* Added a feed subscription option to exclude web links (HTTP/HTTPS), since those are not viewable in the app by default. 
+* Added an automatic conversion of Markdown to Gemtext when viewing local files. (Not all Markdown features are supported.)
+* Added UI language for Ukrainian (uk).
+
+Changes and enhancements:
+* Removed all alternative built-in content fonts.
+* The default content font is Source Sans, same as the UI font.
+* Redesigned error/warning messages. These now show up as part of the page top banner, and their appearance can no longer be replicated via Gemtext.
+* Warning messages are interactive. Click on them to perform relevant actions.
+* Per-pixel scrolling in input fields (e.g., when using a trackpad on macOS).
+* "file://" pages are always unthemed.
+* Show a byte counter during large downloads instead of instantly jumping to a content view. Content may not viewable correctly until the download has finished.
+* Site-specific settings (sitespec.txt) converted to .ini format. These are currently used for the Titan upload port and remembering which warnings have been dismissed.
+* macOS: One can choose between Black/Dark and Light/White UI palette when system color theme is enabled. Previously the system theme always switched to either Dark or Light.
+
+Fixes:
+* Fixed an issue where the page is unscrollable until the mouse cursor is moved (wrong hover state).
+* Fixed wrapping of long input prompts and dialog messages.
+* Titan upload token is remembered when the dialog is closed.
+* Fixed various layout issues with page footer buttons.
+* Fixed theme change glitches when an input prompt appears.
+* macOS: Fixed forced unhiding of the dock when the app is launched.
+
 ## 1.7.3
 * Fixed a memory leak in the text renderer.
 * Added option to place new bookmarks to the top of the bookmarks list.

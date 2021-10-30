@@ -1,0 +1,2143 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-10-29 07:50+0000\n"
+"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
+"Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
+"\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Завантаження"
+
+msgid "doc.archive.view"
+msgstr "Переглянути вміст архіву"
+
+msgid "media.untitled.image"
+msgstr "Зображення"
+
+msgid "media.untitled.audio"
+msgstr "Аудіо"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Завантаження завершено."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Назва"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Виконавець"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Жанр"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Дата"
+
+msgid "numbertype.integer"
+msgstr "ціле"
+
+msgid "numbertype.float"
+msgstr "з рухомою комою"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Гц"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "загалом %zu допис"
+msgstr[1] "загалом %zu дописи"
+msgstr[2] "загалом %zu дописів"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Востаннє оновлено %s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d хвилину тому"
+msgstr[1] "%d хвилини тому"
+msgstr[2] "%d хвилин тому"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d день тому"
+msgstr[1] "%d дні тому"
+msgstr[2] "%d днів тому"
+
+msgid "about.tagline"
+msgstr "Гарний Gemini-переглядач"
+
+msgid "about.version"
+msgstr "Версія"
+
+msgid "about.powered"
+msgstr "На основі SDL 2, OpenSSL та ☕️"
+
+msgid "cancel"
+msgstr "Скасувати"
+
+msgid "close"
+msgstr "Закрити"
+
+msgid "dlg.default"
+msgstr " ОК "
+
+msgid "toggle.yes"
+msgstr "ТАК"
+
+msgid "toggle.no"
+msgstr "НІ"
+
+msgid "menu.title.edit"
+msgstr "Редагувати"
+
+msgid "menu.title.view"
+msgstr "Перегляд"
+
+msgid "menu.title.bookmarks"
+msgstr "Закладки"
+
+msgid "menu.title.identity"
+msgstr "Ідентичність"
+
+msgid "menu.title.help"
+msgstr "Довідка"
+
+msgid "menu.newtab"
+msgstr "Нова вкладка"
+
+msgid "menu.closetab.left"
+msgstr "Закрити вкладки ліворуч"
+
+msgid "menu.closetab.right"
+msgstr "Закрити вкладки праворуч"
+
+msgid "menu.duptab"
+msgstr "Дублювати вкладку"
+
+msgid "menu.split.swap"
+msgstr "Поміняти сторони місцями"
+
+msgid "menu.split.vertical"
+msgstr "Вертикально"
+
+msgid "menu.openlocation"
+msgstr "Відкрити розташування…"
+
+msgid "menu.pageinfo"
+msgstr "Інформація про сторінку"
+
+msgid "menu.find"
+msgstr "Знайти на сторінці"
+
+msgid "macos.menu.find"
+msgstr "Знайти"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Зберегти до теки Завантаження"
+
+msgid "menu.save.downloads.open"
+msgstr "Зберегти і відкрити"
+
+msgid "menu.sidebar"
+msgstr "Показати/приховати бокову панель"
+
+msgid "menu.sidebar.left"
+msgstr "Показати/приховати ліву бокову панель"
+
+msgid "menu.zoom.in"
+msgstr "Збільшити"
+
+msgid "menu.zoom.out"
+msgstr "Зменшити"
+
+msgid "menu.view.split"
+msgstr "Розділити вікно…"
+
+msgid "menu.newfolder"
+msgstr "Створити теку…"
+
+msgid "menu.sort.alpha"
+msgstr "За алфавітом"
+
+msgid "menu.bookmarks.list"
+msgstr "Показати усі закладки"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Закладки за міткою"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "За часом створення"
+
+msgid "menu.feeds.entrylist"
+msgstr "Показати записи стрічки новин"
+
+msgid "menu.preferences"
+msgstr "Налаштування…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Налаштування"
+
+msgid "menu.help"
+msgstr "Довідка"
+
+msgid "menu.quit"
+msgstr "Вийти з Lagrange"
+
+msgid "menu.cut"
+msgstr "Вирізати"
+
+msgid "menu.paste"
+msgstr "Вставити"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Виділити все"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Видалити"
+
+msgid "menu.select.clear"
+msgstr "Зняти виділення"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Показати закладки"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Показати стрічки"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Показати мапу сторінки"
+
+msgid "menu.back"
+msgstr "Назад"
+
+msgid "menu.reload"
+msgstr "Оновити сторінку"
+
+msgid "menu.page.bookmark"
+msgstr "Додати сторінку до закладок…"
+
+msgid "menu.page.subscribe"
+msgstr "Підписатися на сторінку…"
+
+msgid "menu.about"
+msgstr "Про додаток"
+
+msgid "panel.back"
+msgstr "Назад"
+
+msgid "menu.debug"
+msgstr "Дані для зневадження"
+
+msgid "menu.page.import"
+msgstr "Імпортувати посилання, як закладки…"
+
+msgid "menu.page.translate"
+msgstr "Перекласти…"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Оновити зовнішні закладки"
+
+msgid "menu.feeds.refresh"
+msgstr "Оновити стрічки новин"
+
+msgid "menu.identity.new"
+msgstr "Нова ідентичність…"
+
+msgid "menu.identity.import"
+msgstr "Імпортувати…"
+
+msgid "sidebar.bookmarks"
+msgstr "Закладки"
+
+msgid "sidebar.feeds"
+msgstr "Стрічки новин"
+
+msgid "sidebar.outline"
+msgstr "Мапа"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Всі"
+
+msgid "sidebar.action.ident.new"
+msgstr "Нова…"
+
+msgid "toolbar.outline"
+msgstr "Мапа сторінки"
+
+msgid "hint.findtext"
+msgstr "знайти текст на сторінці"
+
+msgid "status.query"
+msgstr "Пошуковий запит"
+
+msgid "status.query.tight"
+msgstr "Запит"
+
+msgid "status.feeds"
+msgstr "Оновлюю стрічки"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "МБ"
+
+msgid "mb.per.sec"
+msgstr "МБ/с"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu байт"
+msgstr[1] "%zu байти"
+msgstr[2] "%zu байтів"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%b. %d"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%b. %d, %Y"
+
+msgid "feeds.today"
+msgstr "Сьогодні"
+
+msgid "feeds.entry.markread"
+msgstr "Позначити як прочитане"
+
+msgid "feeds.entry.bookmark"
+msgstr "Додати закладку…"
+
+msgid "feeds.edit"
+msgstr "Редагувати стрічку…"
+
+msgid "feeds.unsubscribe"
+msgstr "Відписатися…"
+
+msgid "feeds.markallread"
+msgstr "Позначити все як прочитане"
+
+msgid "feeds.refresh"
+msgstr "Оновити стрічки новин"
+
+msgid "doc.pre.nocaption"
+msgstr "Преформатований текст без опису"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s є стиснутим архівом."
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Завантаження буде перервано у разі закриття цієї вкладки."
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-розрядний"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Записи стрічки новин"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Ви підписані на %zu стрічку, що містить %%s.\n"
+msgstr[1] "Ви підписані на %zu стрічки, що містять %%s.\n"
+msgstr[2] "Ви підписані на %zu стрічок, що містять %%s.\n"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Востаннє оновлено мить тому."
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d годину тому"
+msgstr[1] "%d години тому"
+msgstr[2] "%d годин тому"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII-графіка: слово «Lagrange» великим шрифтом"
+
+msgid "dlg.message.ok"
+msgstr "Продовжити"
+
+msgid "menu.title.file"
+msgstr "Файл"
+
+msgid "menu.closetab"
+msgstr "Закрити вкладку"
+
+msgid "menu.closetab.other"
+msgstr "Закрити інші вкладки"
+
+msgid "menu.split.merge"
+msgstr "Об'єднати вкладки"
+
+msgid "menu.split.horizontal"
+msgstr "Горизонтально"
+
+msgid "menu.downloads"
+msgstr "Показати усі завантаження"
+
+msgid "menu.unexpire"
+msgstr "Ігнорувати недійсність і продовжити завантаження"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Зберегти до Файлів"
+
+msgid "menu.sidebar.right"
+msgstr "Показати/приховати праву бокову панель"
+
+msgid "menu.zoom.reset"
+msgstr "Звичайний розмір"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Показати усі"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "За міткою"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Закладки за часом створення"
+
+msgid "menu.releasenotes"
+msgstr "Нотатки про випуск"
+
+msgid "menu.copy"
+msgstr "Копіювати"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Скасувати"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Копіювати посилання на сторінку"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Показати історію"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Показати ідентичності"
+
+msgid "menu.forward"
+msgstr "Вперед"
+
+msgid "menu.parent"
+msgstr "Перейти до материнського каталогу"
+
+msgid "menu.root"
+msgstr "Перейти до кореня"
+
+msgid "menu.autoreload"
+msgstr "Увімкнути автооновлення…"
+
+msgid "menu.aboutpages"
+msgstr "Інформаційні сторінки"
+
+msgid "menu.import.links"
+msgstr "Імпортувати усі посилання на сторінці…"
+
+msgid "menu.page.copyurl"
+msgstr "Копіювати URL сторінки"
+
+msgid "menu.page.copysource"
+msgstr "Копіювати початковий код сторінки"
+
+msgid "menu.identity.notactive"
+msgstr "Активна ідентичність відсутня"
+
+msgid "sidebar.history"
+msgstr "Історія"
+
+msgid "sidebar.identities"
+msgstr "Ідентичності"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Непрочитані"
+
+msgid "sidebar.action.ident.import"
+msgstr "Імпортувати…"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Непрочитаний"
+msgstr[1] "Непрочитані"
+msgstr[2] "Непрочитаних"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "кБ"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Отримано о %I:%M %p\n"
+"%b %d, %Y"
+
+msgid "feeds.entry.newtab"
+msgstr "Відкрити допис у новій вкладці"
+
+msgid "feeds.entry.markunread"
+msgstr "Позначити як непрочитане"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Додати закладку…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Відкрити сторінку стрічки"
+
+msgid "pageinfo.domain.match"
+msgstr "Доменне ім'я збігається"
+
+msgid "heading.save"
+msgstr "ФАЙЛ ЗБЕРЕЖЕНО"
+
+msgid "heading.save.incomplete"
+msgstr "СТОРІНКА НЕПОВНА"
+
+msgid "dlg.save.incomplete"
+msgstr "ЗАВАНТАЖЕННЯ ЇЇ ВМІСТУ ПРОДОВЖУЄТЬСЯ."
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "На сторінці знайдено %d нове посилання."
+msgstr[1] "На сторінці знайдено %d нові посилання."
+msgstr[2] "На сторінці знайдено %d нових посилань."
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sДодати закладку"
+msgstr[1] "%sДодати %d закладки"
+msgstr[2] "%sДодати %d закладок"
+
+msgid "dlg.autoreload"
+msgstr "Виберіть інтервал автоматичого перезавантаження цієї вкладки."
+
+msgid "link.side"
+msgstr "Відкрити посилання у половині спільного вікна"
+
+msgid "link.browser"
+msgstr "Відкрити посилання у основному переглядачі"
+
+msgid "heading.file.delete"
+msgstr "ВИДАЛИТИ ФАЙЛ"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Справді бажаєте видалити цей файл?"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Можливо отриманий сертифікат нещодавно поновлено - він для коректного домена "
+"та дійсний понині. Термін дії поточного довіреного сертифікату закінчиться "
+"%s, за день."
+msgstr[1] ""
+"Можливо отриманий сертифікат нещодавно поновлено - він для коректного домена "
+"та дійсний понині. Термін дії поточного довіреного сертифікату закінчиться "
+"%s, за %d дні."
+msgstr[2] ""
+"Можливо отриманий сертифікат нещодавно поновлено - він для коректного домена "
+"та дійсний понині. Термін дії поточного довіреного сертифікату закінчиться "
+"%s, за %d днів."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Отриманий сертифікат належить іншому домену (%s). Це може бути спричинено "
+"неправильним налаштуванням сервера."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Вставте PEM-закодований сертифікат та/або закритий ключ,\n"
+"або ж перетягніть файл .crt/.key у це вікно."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Поточна сторінка не містить сертифікатів або ключів."
+
+msgid "bookmark.export.title.tag"
+msgstr "Мітки закладок"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Ви маєте %d закладку."
+msgstr[1] "Ви маєте %d закладки."
+msgstr[2] "Ви маєте %d закладок."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"Кожен заголовок у цьому переліку представляє мітку закладок. Присутні лише "
+"закладки з міткою. Якщо їх декілька, закладка буде під усіма."
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Цей XML-документ Atom було автоматично перетворено на стрічку Gemini, щоб на "
+"неї можна було підписатися."
+
+msgid "menu.opentab"
+msgstr "Відкрити у новій вкладці"
+
+msgid "menu.opentab.background"
+msgstr "Відкрити у фоновій вкладці"
+
+msgid "menu.openfile"
+msgstr "Відкрити файл…"
+
+msgid "menu.edit"
+msgstr "Редагувати…"
+
+msgid "menu.dup"
+msgstr "Дублювати…"
+
+msgid "menu.copyurl"
+msgstr "Копіювати URL"
+
+msgid "history.clear"
+msgstr "Очистити історію…"
+
+msgid "heading.history.clear"
+msgstr "ЧИЩЕННЯ ІСТОРІЇ"
+
+msgid "dlg.history.clear"
+msgstr "Очистити історію"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "ВИДАЛИТИ ЗАКЛАДКИ"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Видалити закладку"
+msgstr[1] "Видалити %u закладки"
+msgstr[2] "Видалити %u закладок"
+
+msgid "bookmark.tag.home"
+msgstr "Зробити домашньою сторінкою"
+
+msgid "bookmark.tag.sub"
+msgstr "Підписатися на стрічку"
+
+msgid "bookmark.untag.home"
+msgstr "Прибрати домашню сторінку"
+
+msgid "bookmark.untag.sub"
+msgstr "Відписатися від стрічки"
+
+msgid "bookmark.untag.remote"
+msgstr "Видалити джерело закладок"
+
+msgid "bookmark.delete"
+msgstr "Видалити закладку"
+
+msgid "bookmarks.reload"
+msgstr "Синхронізуватися з джерелами закладок"
+
+msgid "ident.notused"
+msgstr "Не використовується"
+
+msgid "ident.temporary"
+msgstr "Тимчасова"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Дійсна до %b %d, %Y"
+
+msgid "ident.use"
+msgstr "Використовувати на цій сторінці"
+
+msgid "ident.stopuse.all"
+msgstr "Припинити використання всюди"
+
+msgid "ident.export"
+msgstr "Експортувати"
+
+msgid "heading.ident.use"
+msgstr "ВИКОРИСТАННЯ ІДЕНТИЧНОСТІ"
+
+msgid "heading.ident.notes"
+msgstr "ПРИМІТКИ ІДЕНТИЧНОСТІ"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Примітки про %s:"
+
+msgid "ident.fingerprint"
+msgstr "Копіювати цифровий відбиток"
+
+msgid "dlg.ident.delete"
+msgstr "Видалити ідентичність та її файли"
+
+msgid "sidebar.empty.idents"
+msgstr "Ідентичності відсутні"
+
+msgid "error.server.msg"
+msgstr "Сервер повернув таке повідомлення:"
+
+msgid "heading.pageinfo"
+msgstr "ІНФОРМАЦІЯ ПРО СТОРІНКУ"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Підтверджено ЦС"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Непротермінований"
+
+msgid "pageinfo.cert.expired"
+msgstr "Протермінований"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Довірений"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Недовірений"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Невідповідність доменного імені"
+
+msgid "dlg.cert.trust"
+msgstr "Довіряти"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Копіювати відбиток"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Введіть дані для %s:"
+
+msgid "dlg.input.linebreak"
+msgstr "Розрив рядка"
+
+msgid "dlg.input.send"
+msgstr "Надіслати"
+
+msgid "dlg.save.size"
+msgstr "Розмір:"
+
+msgid "dlg.save.opendownload"
+msgstr "Відкрити завантажений файл"
+
+msgid "heading.save.error"
+msgstr "ПОМИЛКА ЗБЕРЕЖЕННЯ ФАЙЛУ"
+
+msgid "heading.import.bookmarks"
+msgstr "ІМПОРТ ЗАКЛАДОК"
+
+msgid "dlg.import.notnew"
+msgstr "Усі посилання на сторінці вже додані до закладок."
+
+msgid "heading.autoreload"
+msgstr "АВТООНОВЛЕННЯ"
+
+msgid "reload.never"
+msgstr "Ніколи"
+
+msgid "reload.onceperday"
+msgstr "Раз на день"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d хвилина"
+msgstr[1] "%d хвилини"
+msgstr[2] "%d хвилин"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d година"
+msgstr[1] "%d години"
+msgstr[2] "%d годин"
+
+msgid "link.newtab"
+msgstr "Відкрити посилання у новій вкладці"
+
+msgid "link.newtab.background"
+msgstr "Відкрити посилання у фоновій вкладці"
+
+msgid "link.side.newtab"
+msgstr "Відкрити посилання у новій вкладці половини спільного вікна"
+
+msgid "link.noproxy"
+msgstr "Відкрити без проксі"
+
+msgid "link.copy"
+msgstr "Копіювати посилання"
+
+msgid "link.bookmark"
+msgstr "Додати посилання до закладок…"
+
+msgid "link.download"
+msgstr "Завантажити файл за посиланням"
+
+msgid "link.file.delete"
+msgstr "Видалити файл"
+
+msgid "dlg.file.delete"
+msgstr "Видалити"
+
+msgid "heading.openlink"
+msgstr "ВІДКРИТИ ПОСИЛАННЯ"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Відкрити це посилання у основному переглядачі?\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "Відкрити посилання"
+
+msgid "heading.certwarn"
+msgstr "НЕНАДІЙНИЙ СЕРТИФІКАТ"
+
+msgid "dlg.certwarn.different"
+msgstr ""
+"Отриманий сертифікат дійсний, але відрізняється від того, якому ми довіряємо."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Термін дії отриманого сертифікату добіг кінця %s."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "Отриманий сертифікат протермінований ТА належить іншому домену."
+
+msgid "heading.certimport"
+msgstr "ІМПОРТ ІДЕНТИЧНОСТІ"
+
+msgid "dlg.certimport.notfound"
+msgstr "Не вдалося знайти сертифікат або закритий ключ."
+
+msgid "heading.certimport.pasted"
+msgstr "ВСТАВЛЕНО З БУФЕРА ОБМІНУ"
+
+msgid "heading.certimport.dropped"
+msgstr "ПЕРЕТЯГНУТО ФАЙЛ"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Імпорт сертифікату/файлу ключа"
+
+msgid "dlg.certimport.import"
+msgstr "Імпортувати"
+
+msgid "dlg.certimport.notes"
+msgstr "Примітки:"
+
+msgid "hint.certimport.description"
+msgstr "опис"
+
+msgid "dlg.certimport.nocert"
+msgstr "Сертифікат відсутній"
+
+msgid "dlg.certimport.nokey"
+msgstr "Закритий ключ відсутній"
+
+msgid "link.hint.audio"
+msgstr "Відтворити аудіо"
+
+msgid "link.hint.image"
+msgstr "Показати зображення"
+
+msgid "bookmark.title.blank"
+msgstr "Порожня сторінка"
+
+msgid "bookmark.export.title.folder"
+msgstr "Закладки"
+
+msgid "bookmark.export.title.time"
+msgstr "Створені закладки"
+
+msgid "bookmark.export.saving"
+msgstr "Збережіть цю сторінку для експорту чи скопіюйте їх до буферу обміну."
+
+msgid "menu.forgeturl"
+msgstr "Забути URL"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Ви дійсно бажаєте стерти історію всіх відвідуваних сторінок?"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Справді бажаєте видалити закладку з цієї теки?"
+msgstr[1] "Справді бажаєте видалити всі %u закладки з цієї теки?"
+msgstr[2] "Справді бажаєте видалити всі %u закладок з цієї теки?"
+
+msgid "bookmark.tag.remote"
+msgstr "Зробити джерелом закладок"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Посилання відкриті у розділеному вікні"
+
+msgid "ident.using"
+msgstr "Використовується на цій сторінці"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Використовується на %zu URL"
+msgstr[1] "Використовується на %zu URL"
+msgstr[2] "Використовується на %zu URL"
+
+msgid "ident.stopuse"
+msgstr "Припинити використання на цій сторінці"
+
+msgid "menu.edit.notes"
+msgstr "Редагувати нотатки…"
+
+msgid "ident.delete"
+msgstr "Видалити ідентичність…"
+
+msgid "heading.ident.delete"
+msgstr "ВИДАЛЕННЯ ІДЕНТИЧНОСТІ"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Ви справді бажаєте видалити ідентичність %s\"%s\"%s включно з файлами "
+"сертифікату та закритого ключа?"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Див. %sДовідка%s, щоб дізнатися більше про ідентичності та клієнтські TLS "
+"сертифікати."
+
+msgid "heading.unsub"
+msgstr "ВІДПИСКА"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "Справді відписатися від стрічки \"%s\"?"
+
+msgid "dlg.unsub"
+msgstr "Відписатися"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Ви можете зберегти його до теки Завантаження: натисніть %s або виберіть \"%"
+"s\" у меню."
+
+msgid "pageinfo.header.cached"
+msgstr "(кешований вміст)"
+
+msgid "pageinfo.cert.status"
+msgstr "Статус сертифіката:"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Не підтверджено ЦС"
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Ця сторінка відформатована згідно допоміжної специфікації \"Subscribing to "
+"Gemini pages\"."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Кожне посилання представляє закладку."
+
+msgid "bookmark.export.format.folders"
+msgstr "Структура тек визначається заголовками 2/3 рівня."
+
+msgid "bookmark.export.format.tags"
+msgstr "Мітки визначаються заголовками 2 рівня."
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "ЗАКЛАДКИ"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "ІСТОРІЯ"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "ІДЕНТИЧНОСТІ"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "ІНШІ"
+
+msgid "heading.upload"
+msgstr "ПЕРЕДАЧА ЗА ДОПОМОГОЮ TITAN"
+
+msgid "upload.id"
+msgstr "Ідентичність:"
+
+msgid "dlg.upload.id.none"
+msgstr "Жодної"
+
+msgid "dlg.upload.id.default"
+msgstr "Усталена"
+
+msgid "heading.upload.text"
+msgstr "Текст"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Маркери списку та цитати містять додаткову інформацію про закладку перед "
+"ними. Текстові рядки та преформатований текст вважаються коментарями та "
+"ігноруються."
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "СТРІЧКИ"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "ВМІСТ СТОРІНКИ"
+
+msgid "menu.page.upload"
+msgstr "Передати сторінку з Titan…"
+
+msgid "hint.upload.text"
+msgstr "Введіть текст для передачі"
+
+msgid "upload.file.name"
+msgstr "Назва файлу:"
+
+msgid "upload.file.size"
+msgstr "Розмір:"
+
+msgid "upload.mime"
+msgstr "MIME тип:"
+
+msgid "upload.token"
+msgstr "Токен:"
+
+msgid "dlg.upload.send"
+msgstr "Передати"
+
+msgid "upload.port"
+msgstr "Порт…"
+
+msgid "heading.uploadport"
+msgstr "ПОРТ ПЕРЕДАЧІ TITAN"
+
+msgid "dlg.uploadport.set"
+msgstr "Вказати порт"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Вибрати файл"
+
+msgid "heading.translate"
+msgstr "ПЕРЕКЛАД СТОРІНКИ"
+
+msgid "heading.upload.file"
+msgstr "Файл"
+
+msgid "upload.file.drophere"
+msgstr "(перетягніть файл на це вікно)"
+
+msgid "hint.upload.token"
+msgstr "див. інструкції від сервера"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Вкажіть порт Titan-сервера для цієї адреси. Порт зберігається в "
+"налаштуваннях сайту."
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Передати простий текст"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Передати файл"
+
+msgid "dlg.translate.unavail"
+msgstr "Сервіс недоступний"
+
+msgid "dlg.translate.fail"
+msgstr "Запит не виконано"
+
+msgid "dlg.translate.from"
+msgstr "З:"
+
+msgid "dlg.translate.to"
+msgstr "На:"
+
+msgid "lang.ar"
+msgstr "Арабська"
+
+msgid "lang.de"
+msgstr "Німецька"
+
+msgid "lang.ia"
+msgstr "Інтерлінгва"
+
+msgid "dlg.translate"
+msgstr "Перекласти"
+
+msgid "lang.zh"
+msgstr "Китайська"
+
+msgid "lang.zh.hans"
+msgstr "Китайська (спрощена)"
+
+msgid "lang.zh.hant"
+msgstr "Китайська (традиційна)"
+
+msgid "lang.en"
+msgstr "Англійська"
+
+msgid "lang.ie"
+msgstr "Інтерлінгве"
+
+msgid "lang.fi"
+msgstr "Фінська"
+
+msgid "lang.fr"
+msgstr "Французька"
+
+msgid "lang.it"
+msgstr "Італійська"
+
+msgid "lang.pl"
+msgstr "Польська"
+
+msgid "lang.pt"
+msgstr "Португальська"
+
+msgid "lang.ru"
+msgstr "Російська"
+
+msgid "lang.eo"
+msgstr "Есперанто"
+
+msgid "lang.es"
+msgstr "Іспанська"
+
+msgid "lang.sk"
+msgstr "Словацька"
+
+msgid "lang.sr"
+msgstr "Сербська"
+
+msgid "lang.isv"
+msgstr "Міжслов'янська"
+
+msgid "lang.gl"
+msgstr "Галісійська"
+
+msgid "lang.hi"
+msgstr "Гінді"
+
+msgid "lang.ja"
+msgstr "Японська"
+
+msgid "lang.es.mx"
+msgstr "Іспанська (Мексика)"
+
+msgid "lang.tok"
+msgstr "Токі-пона"
+
+msgid "heading.newident"
+msgstr "НОВА ІДЕНТИЧНІСТЬ"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Створення самопідписаного 2048-розрядного RSA сертифікату."
+
+msgid "dlg.newident.until"
+msgstr "Дійсна до:"
+
+msgid "hint.newident.optional"
+msgstr "необов'язково"
+
+msgid "dlg.newident.commonname"
+msgstr "Звичайне ім'я:"
+
+msgid "dlg.newident.temp"
+msgstr "Тимчасова:"
+
+msgid "dlg.newident.notsaved"
+msgstr "не зберігається на диску"
+
+msgid "hint.newident.date"
+msgstr "РРРР або РРРР-ММ-ДД"
+
+msgid "dlg.newident.scope"
+msgstr "Сфера вживання:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Поточний домен"
+
+msgid "dlg.newident.scope.page"
+msgstr "Поточна сторінка"
+
+msgid "dlg.newident.scope.none"
+msgstr "Ніде"
+
+msgid "dlg.newident.email"
+msgstr "Е-пошта:"
+
+msgid "dlg.newident.userid"
+msgstr "ID користувача:"
+
+msgid "dlg.newident.domain"
+msgstr "Домен:"
+
+msgid "dlg.newident.country"
+msgstr "Країна:"
+
+msgid "dlg.newident.more"
+msgstr "Ще…"
+
+msgid "heading.newident.missing"
+msgstr "ВІДСУТНЯ ІНФОРМАЦІЯ"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Потрібно вказати звичайне ім'я."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Буль ласка, перевірте дату в полі «Дійсна до». Зразок:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "heading.feedcfg"
+msgstr "НАЛАШТУВАННЯ СТРІЧКИ"
+
+msgid "heading.subscribe"
+msgstr "ПІДПИСКА НА СТОРІНКУ"
+
+msgid "dlg.feed.title"
+msgstr "Заголовок:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Посилання РРРР-ММ-ДД"
+
+msgid "dlg.feed.save"
+msgstr "Зберегти установки"
+
+msgid "dlg.feed.sub"
+msgstr "Підписатися"
+
+msgid "heading.bookmark.add"
+msgstr "ДОДАТИ ЗАКЛАДКУ"
+
+msgid "dlg.bookmark.save"
+msgstr "Збереги закладку"
+
+msgid "dlg.bookmark.title"
+msgstr "Заголовок:"
+
+msgid "dlg.newident.org"
+msgstr "Організація:"
+
+msgid "dlg.newident.create"
+msgstr "Створити ідентичність"
+
+msgid "heading.newident.date.bad"
+msgstr "НЕДІЙСНА ДАТА"
+
+msgid "dlg.newident.date.past"
+msgstr "Термін дії має закінчуватися у майбутньому."
+
+msgid "dlg.feed.entrytype"
+msgstr "Тип допису:"
+
+msgid "dlg.feed.type.headings"
+msgstr "Нові заголовки"
+
+msgid "heading.bookmark.edit"
+msgstr "РЕДАГУВАННЯ ЗАКЛАДКИ"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Мітки:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Значок:"
+
+msgid "heading.bookmark.tags"
+msgstr "ОСОБЛИВІ МІТКИ"
+
+msgid "heading.addfolder"
+msgstr "ДОДАТИ ТЕКУ"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Нова тека"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Назва створюваної теки:"
+
+msgid "heading.prefs.certs"
+msgstr "СЕРТИФІКАТИ"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Кольори"
+
+msgid "heading.prefs.fonts"
+msgstr "Шрифти"
+
+msgid "dlg.addfolder"
+msgstr "Додати теку"
+
+msgid "heading.prefs"
+msgstr "НАЛАШТУВАННЯ"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "НАЛАШТУВАННЯ"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Загальні"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Інтерфейс"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Клавіші"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Мережа"
+
+msgid "heading.prefs.paragraph"
+msgstr "АБЗАЦ"
+
+msgid "heading.prefs.uitheme"
+msgstr "КОЛЬОРИ ІК"
+
+msgid "heading.prefs.pagecontent"
+msgstr "КОЛЬОРИ СТОРІНКИ"
+
+msgid "heading.prefs.proxies"
+msgstr "ПРОКСІ"
+
+msgid "heading.prefs.scrolling"
+msgstr "ПРОКРУЧУВАННЯ"
+
+msgid "heading.prefs.sizing"
+msgstr "РОЗМІРИ"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Стиль"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Інтерфейс користувача"
+
+msgid "prefs.downloads"
+msgstr "Тека завантажень:"
+
+msgid "prefs.hoverlink"
+msgstr "Показувати URL при наведенні:"
+
+msgid "heading.prefs.widelayout"
+msgstr "ШИРОКИЙ МАКЕТ"
+
+msgid "prefs.searchurl"
+msgstr "URL пошуку:"
+
+msgid "prefs.centershort"
+msgstr "Вертикальне центрування:"
+
+msgid "prefs.collapsepreonload"
+msgstr "Згортати преформатований текст:"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Відкривати index.gmi при перегляді архівів:"
+
+msgid "prefs.pinsplit"
+msgstr "Відкривати посилання:"
+
+msgid "prefs.pinsplit.none"
+msgstr "У цьому вікні"
+
+msgid "prefs.pinsplit.left"
+msgstr "Ліворуч"
+
+msgid "prefs.pinsplit.right"
+msgstr "Праворуч"
+
+msgid "prefs.smoothscroll"
+msgstr "Плавне прокручування:"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Швидкість клавіатури:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Швидкість миші:"
+
+msgid "prefs.theme"
+msgstr "Тема:"
+
+msgid "prefs.theme.light"
+msgstr "Світла"
+
+msgid "prefs.theme.white"
+msgstr "Біла"
+
+msgid "prefs.imageloadscroll"
+msgstr "Схоплення зображень при прокручуванні:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Приховати панель інструментів при прокручуванні:"
+
+msgid "prefs.ostheme"
+msgstr "Використовувати системну тему:"
+
+msgid "prefs.theme.black"
+msgstr "Чорна"
+
+msgid "prefs.theme.dark"
+msgstr "Темна"
+
+msgid "prefs.accent"
+msgstr "Акцентний колір:"
+
+msgid "prefs.accent.teal"
+msgstr "Гряносиній"
+
+msgid "prefs.accent.orange"
+msgstr "Рудий"
+
+msgid "prefs.uilang"
+msgstr "Мова:"
+
+msgid "prefs.uiscale"
+msgstr "Коефіцієнт масштабування:"
+
+msgid "prefs.returnkey"
+msgstr "Поведінка клавіші Enter:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Новий рядок"
+
+msgid "prefs.returnkey.accept"
+msgstr "Підтвердити"
+
+msgid "prefs.animate"
+msgstr "Анімації:"
+
+msgid "prefs.retainwindow"
+msgstr "Зберігати розташування:"
+
+msgid "prefs.sideicon"
+msgstr "Значок капсули:"
+
+msgid "prefs.doctheme.light"
+msgstr "Світла тема:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Барвиста Темна"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Барвиста Світла"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Сіра"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Біла"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Сепія"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Висококонтрастна"
+
+msgid "prefs.saturation"
+msgstr "Насиченість:"
+
+msgid "prefs.imagestyle.original"
+msgstr "Ні"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Відтінки сірого"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Кольором фону"
+
+msgid "prefs.imagestyle.text"
+msgstr "Кольором тексту"
+
+msgid "prefs.headingfont"
+msgstr "Шрифт заголовків:"
+
+msgid "prefs.font"
+msgstr "Шрифт вмісту:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.boldlink"
+msgstr "Жирні посилання:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "На темному"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "На світлому"
+
+msgid "prefs.userfont"
+msgstr "Довільний TrueType-шрифт:"
+
+msgid "prefs.linewidth"
+msgstr "Ширина лінії:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Звичайна"
+
+msgid "prefs.linewidth.fill"
+msgstr "Заливка"
+
+msgid "prefs.linespacing"
+msgstr "Міжрядковий інтервал:"
+
+msgid "prefs.quoteicon"
+msgstr "Індикатор цитати:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "Значок \""
+
+msgid "prefs.quoteicon.line"
+msgstr "Лінія"
+
+msgid "prefs.customframe"
+msgstr "Користувацька рамка вікна:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Темна тема:"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Чорна"
+
+msgid "prefs.imagestyle"
+msgstr "Забарвлювати зображення:"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Преформатованим кольором"
+
+msgid "prefs.mono"
+msgstr "Текст сталої ширини в:"
+
+msgid "hint.prefs.userfont"
+msgstr "повний шлях до файлу TrueType-шрифту"
+
+msgid "prefs.ca.file"
+msgstr "Файл CA:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini-проксі:"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Архів містить %zu елемент, а його стиснутий розмір %.1f МБ."
+msgstr[1] "Архів містить %zu елементи, а його стиснутий розмір %.1f МБ."
+msgstr[2] "Архів містить %zu елементів, а його стиснутий розмір %.1f МБ."
+
+msgid "keys.scroll.down"
+msgstr "Прокрутити донизу"
+
+msgid "keys.scroll.page.up"
+msgstr "Прокрутити всю сторінку вгору"
+
+msgid "keys.reload"
+msgstr "Оновити сторінку"
+
+msgid "keys.link.homerow"
+msgstr "Відкрити посилання за допомогою клавіш домашнього ряду"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Відкрити посилання у новій вкладці за допомогою клавіш домашьного ряду"
+
+msgid "keys.findtext"
+msgstr "Знайти текст на сторінці"
+
+msgid "keys.tab.close"
+msgstr "Закрити вкладку"
+
+msgid "keys.split.menu"
+msgstr "Режим розділеного перегляду"
+
+msgid "keys.hoverurl"
+msgstr "Показувати URL при наведенні"
+
+msgid "error.unsupported.media"
+msgstr "Непідтримуваний тип вмісту"
+
+msgid "error.unsupported.protocol"
+msgstr "Непідтримуваний протокол"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Цей додаток не підтримує запитаний протокол."
+
+msgid "error.badheader.msg"
+msgstr ""
+"Отриманий заголовок не відповідає специфікації протоколу Gemini. Мабуть "
+"капсулу захопив Дарт Вейдер, або ви намагалися зв'язатися з сервером, що "
+"відрізняється від Gemini."
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Йой! Сервер відповів кодом стану, відсутнім у специфікації протоколу Gemini. "
+"Можливо, він з майбутнього? Або ж потрапив під автобус..."
+
+msgid "error.openfile.msg"
+msgstr ""
+"Запитаний файл недоступний або не існує. Будь ласка, перевірте вказаний шлях."
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Отакої! Сервер спробував перенаправити нас на URL, схема якого відрізняється "
+"від такої у початкового. Ось посилання, що за потреби дасть вам змогу "
+"відкрити адресу вручну."
+
+msgid "error.tls.msg"
+msgstr "От халепа! Не вдалося зв'язатися з сервером."
+
+msgid "error.certverify.msg"
+msgstr ""
+"Не вдалося з'єднатися з сервером, бо його TLS сертифікат не збігається з "
+"довіреним. Перевірте, чи не змінив, бува, сервер свій сертифікат. Якщо ні, "
+"це може бути зловмисник, що маскується під сервер, з яким ви намагалися "
+"з'єднатися.\n"
+"\n"
+"Сертифікат можна зробити довіреним у вікні «Інформація про сторінку»."
+
+msgid "error.cgi.msg"
+msgstr ""
+"Йой! Під час генерування динамічного контенту на сервері стався збій, "
+"можливо спричинений несправністю серверного ПЗ."
+
+msgid "error.proxy.msg"
+msgstr ""
+"Проксований запит не виконано, бо сервер не зміг вдало завершити транзакцію "
+"з цільовим хостом. З мережевим з'єднанням можуть бути труднощі."
+
+msgid "error.notfound.msg"
+msgstr "На жаль, зараз не вдається знайти запитаний ресурс."
+
+msgid "error.proxyrefusal"
+msgstr "Запит відхилено проксі-сервером"
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Запит стосується ресурсу в домені, що не обслуговується проксі-сервером, а "
+"сам сервер не приймає запити від проксі."
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Наданий клієнтський сертифікат дійсний, але не надає доступу до запитаного "
+"ресурсу."
+
+msgid "gempub.cover.image"
+msgstr "Обкладинка"
+
+msgid "gempub.cover.viewlocal"
+msgstr "Щоб переглянути цю книгу у форматі Gempub, її необхідно завантажити."
+
+msgid "prefs.biglede"
+msgstr "Великий 1-й абзац:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Переносити простий текст:"
+
+msgid "prefs.decodeurls"
+msgstr "Декодувати URL:"
+
+msgid "prefs.cachesize"
+msgstr "Обсяг кешу:"
+
+msgid "prefs.memorysize"
+msgstr "Обсяг пам'яті:"
+
+msgid "prefs.ca.path"
+msgstr "Шлях до сертифікатів CA:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher-проксі:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP-проксі:"
+
+msgid "menu.binding.reset"
+msgstr "Скинути налаштування"
+
+msgid "menu.binding.clear"
+msgstr "Видалити"
+
+msgid "archive.exit"
+msgstr "Вийти з архіву"
+
+msgid "dir.empty"
+msgstr "Цей каталог порожній."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Каталог містить %zu об'єкт."
+msgstr[1] "Каталог містить %zu об'єкти."
+msgstr[2] "Каталог містить %zu об'єктів."
+
+msgid "keys.top"
+msgstr "На початок"
+
+msgid "keys.bottom"
+msgstr "В кінець"
+
+msgid "keys.scroll.up"
+msgstr "Прокрутити вгору"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "На півсторінки вгору"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "На півсторінки донизу"
+
+msgid "keys.scroll.page.down"
+msgstr "Прокрутити всю сторінку донизу"
+
+msgid "keys.back"
+msgstr "Назад"
+
+msgid "keys.forward"
+msgstr "Вперед"
+
+msgid "keys.parent"
+msgstr "До материнського каталогу"
+
+msgid "keys.root"
+msgstr "До кореня капсули"
+
+msgid "keys.link.modkey"
+msgstr "Відкрити посиланння за допомогою клавіші-модифікатора"
+
+msgid "keys.link.homerow.hover"
+msgstr "Активувати посилання клавішами домашнього ряду"
+
+msgid "keys.link.homerow.next"
+msgstr "Наступний набір посилань домашнього ряду"
+
+msgid "keys.bookmark.add"
+msgstr "Додати закладку"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Додати теку закладок"
+
+msgid "keys.subscribe"
+msgstr "Підписатися на сторінку"
+
+msgid "keys.zoom.in"
+msgstr "Збільшити"
+
+msgid "keys.zoom.out"
+msgstr "Зменшити"
+
+msgid "keys.zoom.reset"
+msgstr "Звичайний розмір"
+
+msgid "keys.fullscreen"
+msgstr "Повноекранний режим"
+
+msgid "keys.tab.new"
+msgstr "Нова вкладка"
+
+msgid "keys.tab.close.other"
+msgstr "Закрити інші вкладки"
+
+msgid "keys.tab.prev"
+msgstr "Попередня вкладка"
+
+msgid "keys.tab.next"
+msgstr "Наступна вкладка"
+
+msgid "keys.split.next"
+msgstr "Зосередитися на наступному вікні"
+
+msgid "keys.split.item"
+msgstr "Меню розділеного перегляду:"
+
+msgid "keys.upload"
+msgstr "Передати сторінку з Titan"
+
+msgid "error.badstatus"
+msgstr "Невідомий код стану"
+
+msgid "error.openfile"
+msgstr "Не вдалося відкрити файл"
+
+msgid "error.badresource"
+msgstr "Ресурс недійсний"
+
+msgid "error.unsupported.media.msg"
+msgstr "Отриманий вміст неможливо переглянути у цьому додатку."
+
+msgid "error.badresource.msg"
+msgstr "Запитаний ресурс не існує."
+
+msgid "error.badheader"
+msgstr "Неправильний заголовок"
+
+msgid "error.badredirect"
+msgstr "Невірне перенаправлення"
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Сервер відповів перенаправленням без дійсного URL призначення. Він либонь "
+"несправний."
+
+msgid "error.schemeredirect"
+msgstr "Перенаправлення зі зміною схеми"
+
+msgid "error.manyredirects"
+msgstr "Забагато перенаправлень"
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"От халепа! Здається, ви застрягли у петлі перенаправлень. Скористайтеся "
+"наведеним нижче URL наступного перенаправлення, якщо бажаєте продовжити "
+"вручну."
+
+msgid "error.tls"
+msgstr "Помилка мережі/TLS"
+
+msgid "error.certexpired"
+msgstr "Йой! Протермінований сертифікат"
+
+msgid "error.certexpired.msg"
+msgstr ""
+"Не вдається з'єднатися з сервером, бо його TLS сертифікат протерміновано."
+
+msgid "error.certverify"
+msgstr "Ненадійний сервер"
+
+msgid "error.temporary"
+msgstr "Тимчасовий збій"
+
+msgid "error.temporary.msg"
+msgstr ""
+"Запит не виконано, але його можна буде виконати в майбутньому, спробувавши "
+"знову."
+
+msgid "error.unavail"
+msgstr "Сервер недоступний"
+
+msgid "error.unavail.msg"
+msgstr ""
+"Мережева служба недоступна через перевантаження або техобслуговування. "
+"Завітайте пізніше."
+
+msgid "error.cgi"
+msgstr "Помилка CGI"
+
+msgid "error.proxy"
+msgstr "Помилка проксі-сервера"
+
+msgid "error.slowdown"
+msgstr "Пригальмуй, ковбою"
+
+msgid "error.slowdown.msg"
+msgstr ""
+"Сервер обмежує частоту запитів. Насолодися піснею степових вітрів, поки він "
+"відпочиває…"
+
+msgid "error.permanent"
+msgstr "Постійний збій"
+
+msgid "error.permanent.msg"
+msgstr ""
+"Запит зник безвісти у кіберпросторі. Така ж доля спіткатиме й усі повторні "
+"запити."
+
+msgid "error.notfound"
+msgstr "Г'юстоне, в нас проблеми"
+
+msgid "error.gone"
+msgstr "Вилучено"
+
+msgid "error.gone.msg"
+msgstr "Запитаний ресурс більше недосяжний."
+
+msgid "error.badrequest"
+msgstr "Неправильний запит"
+
+msgid "error.badrequest.msg"
+msgstr "Сервер не зрозумів ваш запит."
+
+msgid "error.cert.needed"
+msgstr "Потрібен сертифікат"
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"Доступ до запитаного ресурсу вимагає ідентифікації за допомогою клієнтського "
+"сертифікату."
+
+msgid "error.cert.auth"
+msgstr "Сертифікат не авторизовано"
+
+msgid "error.cert.invalid"
+msgstr "Недійсний сертифікат"
+
+msgid "error.cert.invalid.msg"
+msgstr "Наданий клієнтський сертифікат протермінований або недійсний."
+
+msgid "gempub.meta.version"
+msgstr "Версія"
+
+msgid "gempub.meta.lang"
+msgstr "Мова"
+
+msgid "gempub.meta.license"
+msgstr "Ліцензія"
+
+msgid "gempub.meta.pubdate"
+msgstr "Дата оприлюднення"
+
+msgid "gempub.meta.revdate"
+msgstr "Дата останнього перегляду"
+
+msgid "gempub.meta.pub"
+msgstr "Рік оприлюдення"
+
+msgid "gempub.meta.author"
+msgstr "Автор(ка)"
+
+msgid "gempub.cover.untitled"
+msgstr "Безіменна книжка"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Про цю книжку"
+
+msgid "gempub.cover.view"
+msgstr "Переглянути вміст Gempub"
+
+msgid "error.ansi.msg"
+msgstr ""
+"Цю сторінку неможливо правильно відобразити. Вона використовує частково "
+"підтримувані керуючі символи ANSI для форматування тексту. Можете спробувати "
+"переглянути її у емуляторі терміналу."
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Не встановлено"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Оновити \"%s\" до версії %d"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Справді бажаєте назавжди видалити пакет шрифтів \"%s\"?"
+
+msgid "fontpack.help"
+msgstr ""
+"Пакети шрифтв для Lagrange є ZIP-архівами, що містять файли шрифтів та "
+"пов'язані з ними параметри конфігурації. Після встановлення їх можна "
+"використати для ІК та вмісту документів. Активні шрифти можна обрати у меню "
+"Налаштування > Шрифти."
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Назавжди усунути попередження про емуляцію терміналу на %s?"
+
+msgid "menu.website"
+msgstr "Вебсайт проєкту…"
+
+msgid "menu.fonts"
+msgstr "Керування шрифтами…"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu файл"
+msgstr[1] "%zu файли"
+msgstr[2] "%zu файлів"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu шрифт"
+msgstr[1] "%zu шрифти"
+msgstr[2] "%zu шрифтів"
+
+msgid "dlg.certwarn.title"
+msgstr "Проблема з сертифікатом безпеки"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ігнорувати HTTP(S) посилання:"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Додати закладки донизу:"
+
+msgid "prefs.font.ui"
+msgstr "ІК:"
+
+msgid "prefs.font.heading"
+msgstr "Заголовки:"
+
+msgid "prefs.font.body"
+msgstr "Вміст:"
+
+msgid "prefs.font.mono"
+msgstr "Фіксованого кроку:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Шрифт фіксованого кроку:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Відвідані"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Керівні символи ANSI:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Колір тексту"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Стиль шрифту"
+
+msgid "prefs.font.warnmissing"
+msgstr "Попередження про відсутні гліфи:"
+
+msgid "prefs.font.smooth"
+msgstr "Згладжування:"
+
+msgid "error.ansi"
+msgstr "Емуляція терміналу"
+
+msgid "error.glyphs"
+msgstr "Гліфи відсутні"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Цю сторінку неможливо відобразити повністю, оскільки гарнітурові шрифту "
+"бракує гліфів. Це можна виправити, встановивши додаткові шрифти."
+
+msgid "heading.fontpack.meta"
+msgstr "Шрифти"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Версія %d"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Переглянути файл"
+
+msgid "fontpack.meta.installed"
+msgstr "Встановлено"
+
+msgid "fontpack.meta.disabled"
+msgstr ", вимкнено"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Увімкнені пакети шрифтів"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Вимкнені пакети шрифтів"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Увімкнути \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Вимкнути \"%s\""
+
+msgid "fontpack.export"
+msgstr "Переглянути шаблон файлу fontpack.ini"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Встановити \"%s\""
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Назавжди видалити \"%s\""
+
+msgid "heading.fontpack.delete"
+msgstr "ВИДАЛЕННЯ ПАКЕТУ ШРИФТІВ"
+
+msgid "dlg.fontpack.delete"
+msgstr "Видалити пакет шрифту"
+
+msgid "fontpack.install.ttf"
+msgstr "Встановити TrueType-шрифт"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Відкрити каталог користувацьких шрифтів"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Показати встановлені шрифти"
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange намагається завантажити всі файли TrueType у каталозі "
+"користувацьких шрифтів."
+
+msgid "truetype.help.installed"
+msgstr "Цей шрифт встановлено до каталогу користувацьких шрифтів."
+
+msgid "dlg.dismiss.warning"
+msgstr "Усунути попередження"
+
+msgid "heading.dismiss.warning"
+msgstr "УСУНУТИ ПОПЕРЕДЖЕННЯ?"
+
+msgid "dlg.fontpack.classic"
+msgstr "Завантажити пакет шрифтів (25 МБ)"
+
+msgid "heading.fontpack.classic"
+msgstr "ЗАВАНТАЖЕННЯ ПАКЕТУ ШРИФТІВ"
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Шрифти, що раніше були у складі дотдатку тепер постачаються окремо. Бажаєте "
+"завантажити пакет шрифтів \"Класичний\" зараз?"

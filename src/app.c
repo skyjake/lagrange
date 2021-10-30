@@ -55,6 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/process.h>
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/time.h>
+#include <the_Foundation/version.h>
 #include <SDL.h>
 
 #include <stdio.h>
@@ -116,7 +117,7 @@ struct Impl_App {
     iMimeHooks * mimehooks;
     iGmCerts *   certs;
     iVisited *   visited;
-    iBookmarks * bookmarks;
+    iBookmarks * bookmarks;    
     iMainWindow *window;
     iPtrArray    popupWindows;
     iSortedArray tickers; /* per-frame callbacks, used for animations */
@@ -124,6 +125,7 @@ struct Impl_App {
     uint32_t     elapsedSinceLastTicker;
     iBool        isRunning;
     iBool        isRunningUnderWindowSystem;
+    iBool        isDarkSystemTheme;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
     uint32_t     lastEventTime;
@@ -175,6 +177,7 @@ const iString *dateStr_(const iDate *date) {
 
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
+    appendCStr_String(str, "version app:" LAGRANGE_APP_VERSION "\n");
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     appendFormat_String(str, "customframe arg:%d\n", d->prefs.customFrame);
 #endif
@@ -209,12 +212,16 @@ static iString *serializePrefs_App_(const iApp *d) {
         }
 #endif
     }
-    appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.uiLanguage));
+    appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
-    appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
-    appendFormat_String(str, "font.user path:%s\n", cstr_String(&d->prefs.symbolFontPath));
-    appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
+    appendFormat_String(str,
+                        "font.set ui:%s heading:%s body:%s mono:%s monodoc:%s\n",
+                        cstr_String(&d->prefs.strings[uiFont_PrefsString]),
+                        cstr_String(&d->prefs.strings[headingFont_PrefsString]),
+                        cstr_String(&d->prefs.strings[bodyFont_PrefsString]),
+                        cstr_String(&d->prefs.strings[monospaceFont_PrefsString]),
+                        cstr_String(&d->prefs.strings[monospaceDocumentFont_PrefsString]));
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
@@ -226,37 +233,55 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
     appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
-    /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
-    appendFormat_String(str, "prefs.animate.changed arg:%d\n", d->prefs.uiAnimations);
-    appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
-    appendFormat_String(str, "prefs.mono.gopher.changed arg:%d\n", d->prefs.monospaceGopher);
-    appendFormat_String(str, "prefs.boldlink.dark.changed arg:%d\n", d->prefs.boldLinkDark);
-    appendFormat_String(str, "prefs.boldlink.light.changed arg:%d\n", d->prefs.boldLinkLight);
-    appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
-    appendFormat_String(str, "prefs.plaintext.wrap.changed arg:%d\n", d->prefs.plainTextWrap);
-    appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
-    appendFormat_String(str, "prefs.centershort.changed arg:%d\n", d->prefs.centerShortDocs);
-    appendFormat_String(str, "prefs.collapsepreonload.changed arg:%d\n", d->prefs.collapsePreOnLoad);
-    appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
-    appendFormat_String(str, "prefs.bookmarks.addbottom.changed arg:%d\n", d->prefs.addBookmarksToBottom);
-    appendFormat_String(str, "prefs.archive.openindex.changed arg:%d\n", d->prefs.openArchiveIndexPages);
+    iConstForEach(StringSet, fp, d->prefs.disabledFontPacks) {
+        appendFormat_String(str, "fontpack.disable id:%s\n", cstr_String(fp.value));
+    }
+    appendFormat_String(str, "ansiescape arg:%d\n", d->prefs.gemtextAnsiEscapes);
+    /* TODO: This array belongs in Prefs. It can then be used for command handling as well. */
+    const struct {
+        const char * id;
+        const iBool *value;
+    } boolPrefs[] = {
+        { "prefs.animate", &d->prefs.uiAnimations },
+        { "prefs.font.smooth", &d->prefs.fontSmoothing },
+        { "prefs.mono.gemini", &d->prefs.monospaceGemini },
+        { "prefs.mono.gopher", &d->prefs.monospaceGopher },
+        { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
+        { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
+        { "prefs.boldlink.light", &d->prefs.boldLinkLight },
+        { "prefs.biglede", &d->prefs.bigFirstParagraph },
+        { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
+        { "prefs.sideicon", &d->prefs.sideIcon },
+        { "prefs.centershort", &d->prefs.centerShortDocs },
+        { "prefs.collapsepreonload", &d->prefs.collapsePreOnLoad },
+        { "prefs.hoverlink", &d->prefs.hoverLink },
+        { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
+        { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
+        { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
+    };
+    iForIndices(i, boolPrefs) {
+        appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
+    }
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
-    appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
+    appendFormat_String(str, "ostheme arg:%d preferdark:%d preferlight:%d\n",
+                        d->prefs.useSystemTheme,
+                        d->prefs.systemPreferredColorTheme[0],
+                        d->prefs.systemPreferredColorTheme[1]);
     appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
     appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
     appendFormat_String(str, "imagestyle.set arg:%d\n", d->prefs.imageStyle);
-    appendFormat_String(str, "ca.file noset:1 path:%s\n", cstr_String(&d->prefs.caFile));
-    appendFormat_String(str, "ca.path path:%s\n", cstr_String(&d->prefs.caPath));
-    appendFormat_String(str, "proxy.gemini address:%s\n", cstr_String(&d->prefs.geminiProxy));
-    appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
-    appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
+    appendFormat_String(str, "ca.file noset:1 path:%s\n", cstr_String(&d->prefs.strings[caFile_PrefsString]));
+    appendFormat_String(str, "ca.path path:%s\n", cstr_String(&d->prefs.strings[caPath_PrefsString]));
+    appendFormat_String(str, "proxy.gemini address:%s\n", cstr_String(&d->prefs.strings[geminiProxy_PrefsString]));
+    appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.strings[gopherProxy_PrefsString]));
+    appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.strings[httpProxy_PrefsString]));
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
-    appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.downloadDir));
+    appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.strings[downloadDir_PrefsString]));
 #endif
-    appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.searchUrl));
+    appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.strings[searchUrl_PrefsString]));
     appendFormat_String(str, "translation.languages from:%d to:%d\n", d->prefs.langFrom, d->prefs.langTo);
     return str;
 }
@@ -313,6 +338,7 @@ static void loadPrefs_App_(iApp *d) {
     iUnused(d);
     iBool haveCA = iFalse;
     d->isLoadingPrefs = iTrue; /* affects which notifications get posted */
+    iVersion upgradedFromAppVersion = { 0 };
     /* Create the data dir if it doesn't exist yet. */
     makeDirs_Path(collectNewCStr_String(dataDir_App_()));
     iFile *f = new_File(prefsFileName_());
@@ -330,7 +356,7 @@ static void loadPrefs_App_(iApp *d) {
             }
             else if (equal_Command(cmd, "uilang")) {
                 const char *id = cstr_Rangecc(range_Command(cmd, "id"));
-                setCStr_String(&d->prefs.uiLanguage, id);
+                setCStr_String(&d->prefs.strings[uiLanguage_PrefsString], id);
                 setCurrent_Lang(id);
             }
             else if (equal_Command(cmd, "ca.file") || equal_Command(cmd, "ca.path")) {
@@ -347,11 +373,20 @@ static void loadPrefs_App_(iApp *d) {
                 d->initialWindowRect = init_Rect(
                     pos.x, pos.y, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
             }
+            else if (equal_Command(cmd, "fontpack.disable")) {
+                insert_StringSet(d->prefs.disabledFontPacks,
+                                 collect_String(suffix_Command(cmd, "id")));
+            }
 #if !defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
             else if (equal_Command(cmd, "downloads")) {
                 continue; /* can't change downloads directory */
             }
 #endif
+            else if (equal_Command(cmd, "version")) {
+                /* This is a special command that lets us know which version we're upgrading from.
+                   It was added in v1.8.0. */
+                init_Version(&upgradedFromAppVersion, range_Command(cmd, "app"));
+            }
             else {
                 postCommandString_Root(NULL, &cmdStr);
             }
@@ -361,12 +396,21 @@ static void loadPrefs_App_(iApp *d) {
     }
     if (!haveCA) {
         /* Default CA setup. */
-        setCACertificates_TlsRequest(&d->prefs.caFile, &d->prefs.caPath);
+        setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString],
+                                     &d->prefs.strings[caPath_PrefsString]);
+    }
+    iRelease(f);
+    /* Upgrade checks. */
+    if (cmp_Version(&upgradedFromAppVersion, &(iVersion){ 1, 8, 0 }) < 0) {
+        /* When upgrading to v1.8.0, the old hardcoded font library is gone and that means
+           UI strings may not have the right fonts available for the UI to remain
+           usable. */
+        postCommandf_App("uilang id:en");
+        postCommand_App("~fontpack.suggest.classic");
     }
 #if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;
 #endif
-    iRelease(f);
     d->isLoadingPrefs = iFalse;
 }
 
@@ -653,10 +697,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #else
     d->isRunningUnderWindowSystem = iTrue;
 #endif
+    d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     init_CommandLine(&d->args, argc, argv);
-    /* Where was the app started from? We ask SDL first because the command line alone is
-       not a reliable source of this information, particularly when it comes to different
-       operating systems. */ {
+    /* Where was the app started from? We ask SDL first because the command line alone 
+       cannot be relied on (behavior differs depending on OS). */ {
         char *exec = SDL_GetBasePath();
         if (exec) {
             d->execPath = newCStr_String(concatPath_CStr(
@@ -668,9 +712,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         SDL_free(exec);
     }
 #if defined (iHaveLoadEmbed)
-    /* Load the resources from a file. */ {
-        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
-            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
+    /* Load the resources from a file. Check the executable directory first, then a
+       system-wide location, and as a final fallback, the current working directory. */ {
+        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
+            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
                 if (!load_Embed("resources.lgr")) {
                     fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
                     exit(-1);
@@ -759,7 +804,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         listen_Ipc(); /* We'll respond to commands from other instances. */
     }
 #endif
-    printf("Lagrange: A Beautiful Gemini Client\n");
+    puts("Lagrange: A Beautiful Gemini Client");
     const iBool isFirstRun =
         !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
     d->isFinishedLaunching = iFalse;
@@ -770,8 +815,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
     d->lastTickerTime         = SDL_GetTicks();
     d->elapsedSinceLastTicker = 0;
-    d->commandEcho            = checkArgument_CommandLine(&d->args, "echo;E") != NULL;
-    d->forceSoftwareRender    = checkArgument_CommandLine(&d->args, "sw") != NULL;
+    d->commandEcho            = iClob(checkArgument_CommandLine(&d->args, "echo;E")) != NULL;
+    d->forceSoftwareRender    = iClob(checkArgument_CommandLine(&d->args, "sw")) != NULL;
     d->initialWindowRect      = init_Rect(-1, -1, 900, 560);
 #if defined (iPlatformMsys)
     /* Must scale by UI scaling factor. */
@@ -788,7 +833,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     init_Prefs(&d->prefs);
     init_SiteSpec(dataDir_App_());
-    setCStr_String(&d->prefs.downloadDir, downloadDir_App_());
+    setCStr_String(&d->prefs.strings[downloadDir_PrefsString], downloadDir_App_());
     set_Atomic(&d->pendingRefresh, iFalse);
     d->isRunning = iFalse;
     d->window    = NULL;
@@ -804,9 +849,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     setupApplication_iOS();
 #endif
     init_Keys();
+    init_Fonts(dataDir_App_());
     loadPalette_Color(dataDir_App_());
     setThemePalette_Color(d->prefs.theme); /* default UI colors */
     loadPrefs_App_(d);
+    updateActive_Fonts();
     load_Keys(dataDir_App_());
     /* See if the user wants to override the window size. */ {
         iCommandLineArg *arg = iClob(checkArgument_CommandLine(&d->args, windowWidth_CommandLineOption));
@@ -881,11 +928,14 @@ static void deinit_App(iApp *d) {
 #endif
     SDL_RemoveTimer(d->autoReloadTimer);
     saveState_App_(d);
+    savePrefs_App_(d);
+    delete_MainWindow(d->window);
+    d->window = NULL;
     deinit_Feeds();
     save_Keys(dataDir_App_());
     deinit_Keys();
+    deinit_Fonts();
     deinit_SiteSpec();
-    savePrefs_App_(d);
     deinit_Prefs(&d->prefs);
     save_Bookmarks(d->bookmarks, dataDir_App_());
     delete_Bookmarks(d->bookmarks);
@@ -894,7 +944,6 @@ static void deinit_App(iApp *d) {
     delete_GmCerts(d->certs);
     save_MimeHooks(d->mimehooks);
     delete_MimeHooks(d->mimehooks);
-    delete_MainWindow(d->window);
     d->window = NULL;
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
@@ -917,7 +966,7 @@ const iString *dataDir_App(void) {
 }
 
 const iString *downloadDir_App(void) {
-    return collect_String(cleaned_Path(&app_.prefs.downloadDir));
+    return collect_String(cleaned_Path(&app_.prefs.strings[downloadDir_PrefsString]));
 }
 
 const iString *downloadPathForUrl_App(const iString *url, const iString *mime) {
@@ -998,7 +1047,7 @@ const iString *debugInfo_App(void) {
         iDocumentWidget *doc = k.object;
         appendFormat_String(msg, "### Tab %d.%zu: %s\n",
                             constAs_Widget(doc)->root == get_Window()->roots[0] ? 1 : 2,
-                            childIndex_Widget(constAs_Widget(doc)->parent, k.object) + 1,
+                            indexOfChild_Widget(constAs_Widget(doc)->parent, k.object) + 1,
                             cstr_String(bookmarkTitle_DocumentWidget(doc)));
         append_String(msg, collect_String(debugInfo_History(history_DocumentWidget(doc))));
     }
@@ -1080,6 +1129,20 @@ void trimMemory_App(void) {
     iRelease(docs);
 }
 
+#if 0
+iBool findCachedContent_App(const iString *url, iString *mime_out, iBlock *data_out) {
+    /* Cached content can be found in MediaRequests of DocumentWidgets (loaded on the currently
+       open page) and the DocumentWidget itself. `Media` doesn't store source data, only
+       presentation data. */
+    iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
+        if (findCachedContent_DocumentWidget(i.object, url, mime_out, data_out)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+#endif
+
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
     if (!isEmpty_Periodic(&d->periodic)) {
         return iFalse;
@@ -1109,13 +1172,13 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
     return SDL_PollEvent(event);
 }
 
-static const iPtrArray *listWindows_App_(const iApp *d) {
-    iPtrArray *list = collectNew_PtrArray();
+static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
+    clear_PtrArray(windows);
     iReverseConstForEach(PtrArray, i, &d->popupWindows) {
-        pushBack_PtrArray(list, i.ptr);
+        pushBack_PtrArray(windows, i.ptr);
     }
-    pushBack_PtrArray(list, d->window);
-    return list;
+    pushBack_PtrArray(windows, d->window);
+    return windows;
 }
 
 void processEvents_App(enum iAppEventMode eventMode) {
@@ -1123,6 +1186,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
     iRoot *oldCurrentRoot = current_Root(); /* restored afterwards */
     SDL_Event ev;
     iBool gotEvents = iFalse;
+    iPtrArray windows;
+    init_PtrArray(&windows);
     while (nextEvent_App_(d, eventMode, &ev)) {
 #if defined (iPlatformAppleMobile)
         if (processEvent_iOS(&ev)) {
@@ -1285,7 +1350,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #endif
                 /* Per-window processing. */
                 iBool wasUsed = iFalse;
-                iConstForEach(PtrArray, iter, listWindows_App_(d)) {
+                listWindows_App_(d, &windows);
+                iConstForEach(PtrArray, iter, &windows) {
                     iWindow *window = iter.ptr;
                     setCurrent_Window(window);
                     window->lastHover = window->hover;
@@ -1318,7 +1384,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     handleCommand_Win32(command_UserEvent(&ev));
 #endif
                     if (isMetricsChange_UserEvent(&ev)) {
-                        iConstForEach(PtrArray, iter, listWindows_App_(d)) {
+                        listWindows_App_(d, &windows);
+                        iConstForEach(PtrArray, iter, &windows) {
                             iWindow *window = iter.ptr;
                             iForIndices(i, window->roots) {
                                 iRoot *root = window->roots[i];
@@ -1337,7 +1404,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     free(ev.user.data1);
                 }
                 /* Refresh after hover changes. */ {
-                    iConstForEach(PtrArray, iter, listWindows_App_(d)) {
+                    listWindows_App_(d, &windows);
+                    iConstForEach(PtrArray, iter, &windows) {
                         iWindow *window = iter.ptr;
                         if (window->lastHover != window->hover) {
                             refresh_Widget(window->lastHover);
@@ -1349,6 +1417,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
             }
         }
     }
+    deinit_PtrArray(&windows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->isIdling && !gotEvents) {
         /* This is where we spend most of our time when idle. 60 Hz still quite a lot but we
@@ -1436,9 +1505,11 @@ void refresh_App(void) {
         return;
     }
 #endif
-    const iPtrArray *windows = listWindows_App_(d);
+    iPtrArray windows;
+    init_PtrArray(&windows);
+    listWindows_App_(d, &windows);
     /* Destroy pending widgets. */ {
-        iConstForEach(PtrArray, j, windows) {
+        iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             setCurrent_Window(win);
             iForIndices(i, win->roots) {
@@ -1449,12 +1520,10 @@ void refresh_App(void) {
             }
         }
     }
-    /* TODO: Pending refresh is window-specific. */
-    if (!exchange_Atomic(&d->pendingRefresh, iFalse)) {
-        return;
-    }
-    /* Draw each window. */ {
-        iConstForEach(PtrArray, j, windows) {
+    /* TODO: `pendingRefresh` should be window-specific. */
+    if (exchange_Atomic(&d->pendingRefresh, iFalse)) {
+        /* Draw each window. */
+        iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             setCurrent_Window(win);
             switch (win->type) {
@@ -1474,6 +1543,7 @@ void refresh_App(void) {
     if (d->warmupFrames > 0) {
         d->warmupFrames--;
     }
+    deinit_PtrArray(&windows);
 }
 
 iBool isRefreshPending_App(void) {
@@ -1516,13 +1586,13 @@ const iString *schemeProxy_App(iRangecc scheme) {
     iApp *d = &app_;
     const iString *proxy = NULL;
     if (equalCase_Rangecc(scheme, "gemini")) {
-        proxy = &d->prefs.geminiProxy;
+        proxy = &d->prefs.strings[geminiProxy_PrefsString];
     }
     else if (equalCase_Rangecc(scheme, "gopher")) {
-        proxy = &d->prefs.gopherProxy;
+        proxy = &d->prefs.strings[gopherProxy_PrefsString];
     }
     else if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
-        proxy = &d->prefs.httpProxy;
+        proxy = &d->prefs.strings[httpProxy_PrefsString];
     }
     return isEmpty_String(proxy) ? NULL : proxy;
 }
@@ -1726,9 +1796,9 @@ static void updateColorThemeButton_(iLabelWidget *button, int theme) {
     updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", theme));
 }
 
-static void updateFontButton_(iLabelWidget *button, int font) {
-    if (!button) return;
-    updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", font));
+static void updateFontButton_(iLabelWidget *button, const iString *fontId) {
+    if (!button || isEmpty_String(fontId)) return;
+    updateDropdownSelection_LabelWidget(button, format_CStr(":%s", cstr_String(fontId)));
 }
 
 static void updateImageStyleButton_(iLabelWidget *button, int style) {
@@ -1822,11 +1892,11 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "font.set")) {
-        updateFontButton_(findChild_Widget(d, "prefs.font"), arg_Command(cmd));
-        return iFalse;
-    }
-    else if (equal_Command(cmd, "headingfont.set")) {
-        updateFontButton_(findChild_Widget(d, "prefs.headingfont"), arg_Command(cmd));
+        updateFontButton_(findChild_Widget(d, "prefs.font.ui"),      string_Command(cmd, "ui"));
+        updateFontButton_(findChild_Widget(d, "prefs.font.heading"), string_Command(cmd, "heading"));
+        updateFontButton_(findChild_Widget(d, "prefs.font.body"),    string_Command(cmd, "body"));
+        updateFontButton_(findChild_Widget(d, "prefs.font.mono"),    string_Command(cmd, "mono"));
+        updateFontButton_(findChild_Widget(d, "prefs.font.monodoc"), string_Command(cmd, "monodoc"));
         return iFalse;
     }
     else if (startsWith_CStr(cmd, "input.ended id:prefs.linespacing")) {
@@ -1841,7 +1911,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     else if (equal_Command(cmd, "theme.changed")) {
         updatePrefsThemeButtons_(d);
         if (!argLabel_Command(cmd, "auto")) {
-            setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), iFalse);
+            setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), prefs_App()->useSystemTheme);
         }
     }
     else if (equalWidget_Command(cmd, d, "input.resized")) {
@@ -1889,6 +1959,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     }
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
+    addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
     if (switchToNew) {
         postCommandf_App("tabs.switch page:%p", doc);
@@ -2039,15 +2110,17 @@ iBool willUseProxy_App(const iRangecc scheme) {
 
 const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
     iApp *d = &app_;
-    if (isEmpty_String(&d->prefs.searchUrl)) {
+    if (isEmpty_String(&d->prefs.strings[searchUrl_PrefsString])) {
         return collectNew_String();
     }
     const iString *escaped = urlEncode_String(queryStringUnescaped);
-    return collectNewFormat_String("%s?%s", cstr_String(&d->prefs.searchUrl), cstr_String(escaped));
+    return collectNewFormat_String(
+        "%s?%s", cstr_String(&d->prefs.strings[searchUrl_PrefsString]), cstr_String(escaped));
 }
 
-static void resetFonts_App_(iApp *d) {
-    iConstForEach(PtrArray, win, listWindows_App_(d)) {
+void resetFonts_App(void) {
+    iApp *d = &app_;
+    iConstForEach(PtrArray, win, listWindows_App_(d, collectNew_PtrArray())) {
         resetFonts_Text(text_Window(win.ptr));
     }
 }
@@ -2063,6 +2136,21 @@ iBool handleCommand_App(const char *cmd) {
                                              suffixPtr_Command(cmd, "where")));
         return iTrue;
     }
+    else if (equal_Command(cmd, "fontpack.suggest.classic")) {
+        if (!isInstalled_Fonts("classic-set") && !isInstalled_Fonts("cjk")) {
+            makeQuestion_Widget(
+                uiHeading_ColorEscape "${heading.fontpack.classic}",
+                "${dlg.fontpack.classic.msg}",
+                (iMenuItem[]){
+                    { "${cancel}" },
+                    { uiTextAction_ColorEscape "${dlg.fontpack.classic}",
+                      0,
+                      0,
+                      "!open newtab:1 url:gemini://skyjake.fi/fonts/classic-set.fontpack" } },
+                2);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.changed")) {
         savePrefs_App_(d);
         return iTrue;
@@ -2073,9 +2161,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "uilang")) {
         const iString *lang = string_Command(cmd, "id");
-        if (!equal_String(lang, &d->prefs.uiLanguage)) {
-            set_String(&d->prefs.uiLanguage, lang);
-            setCurrent_Lang(cstr_String(&d->prefs.uiLanguage));
+        iString *val = &d->prefs.strings[uiLanguage_PrefsString];
+        if (!equal_String(lang, val)) {
+            set_String(val, lang);
+            setCurrent_Lang(cstr_String(val));
             postCommand_App("lang.changed");
         }
         return iTrue;
@@ -2122,9 +2211,14 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "font.reset")) {
-        resetFonts_App_(d);
+        resetFonts_App();
         return iTrue;
     }
+    else if (equal_Command(cmd, "font.reload")) {
+        reload_Fonts(); /* also does font cache reset, window invalidation */
+        return iTrue;
+    }
+#if 0
     else if (equal_Command(cmd, "font.user")) {
         const char *path = suffixPtr_Command(cmd, "path");
         if (cmp_String(&d->prefs.symbolFontPath, path)) {
@@ -2133,7 +2227,7 @@ iBool handleCommand_App(const char *cmd) {
             }
             setCStr_String(&d->prefs.symbolFontPath, path);
             loadUserFonts_Text();
-            resetFonts_App_(d);
+            resetFonts_App(d);
             if (!isFrozen) {
                 postCommand_App("font.changed");
                 postCommand_App("window.unfreeze");
@@ -2141,18 +2235,43 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+#endif
     else if (equal_Command(cmd, "font.set")) {
         if (!isFrozen) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
-        d->prefs.font = arg_Command(cmd);
-        setContentFont_Text(text_Window(d->window), d->prefs.font);
+        struct {
+            const char *label;
+            enum iPrefsString ps;
+            int fontId;
+        } params[] = {
+            { "ui",      uiFont_PrefsString,                default_FontId },
+            { "mono",    monospaceFont_PrefsString,         monospace_FontId },
+            { "heading", headingFont_PrefsString,           documentHeading_FontId },
+            { "body",    bodyFont_PrefsString,              documentBody_FontId },
+            { "monodoc", monospaceDocumentFont_PrefsString, documentMonospace_FontId },
+        };
+        iBool wasChanged = iFalse;
+        iForIndices(i, params) {
+            if (hasLabel_Command(cmd, params[i].label)) {
+                iString *ps = &d->prefs.strings[params[i].ps];
+                const iString *newFont = string_Command(cmd, params[i].label);
+                if (!equal_String(ps, newFont)) {
+                    set_String(ps, newFont);
+                    wasChanged = iTrue;
+                }
+            }
+        }
+        if (wasChanged) {
+            resetFonts_Text(text_Window(get_MainWindow()));
+        }
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
         }
         return iTrue;
     }
+#if 0
     else if (equal_Command(cmd, "headingfont.set")) {
         if (!isFrozen) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
@@ -2165,12 +2284,13 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+#endif
     else if (equal_Command(cmd, "zoom.set")) {
         if (!isFrozen) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue); /* no intermediate draws before docs updated */
         }
         d->prefs.zoomPercent = arg_Command(cmd);
-        setContentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
+        setDocumentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
@@ -2186,7 +2306,7 @@ iBool handleCommand_App(const char *cmd) {
             delta /= 2;
         }
         d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
-        setContentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
+        setDocumentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
         if (!isFrozen) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
@@ -2231,7 +2351,15 @@ iBool handleCommand_App(const char *cmd) {
         const int isAuto = argLabel_Command(cmd, "auto");
         d->prefs.theme = arg_Command(cmd);
         if (!isAuto) {
-            postCommand_App("ostheme arg:0");
+            if (isDark_ColorTheme(d->prefs.theme) && d->isDarkSystemTheme) {
+                d->prefs.systemPreferredColorTheme[0] = d->prefs.theme;
+            }
+            else if (!isDark_ColorTheme(d->prefs.theme) && !d->isDarkSystemTheme) {
+                d->prefs.systemPreferredColorTheme[1] = d->prefs.theme;
+            }
+            else {
+                postCommand_App("ostheme arg:0");
+            }
         }
         setThemePalette_Color(d->prefs.theme);
         postCommandf_App("theme.changed auto:%d", isAuto);
@@ -2247,6 +2375,12 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "ostheme")) {
         d->prefs.useSystemTheme = arg_Command(cmd);
+        if (hasLabel_Command(cmd, "preferdark")) {
+            d->prefs.systemPreferredColorTheme[0] = argLabel_Command(cmd, "preferdark");
+        }
+        if (hasLabel_Command(cmd, "preferlight")) {
+            d->prefs.systemPreferredColorTheme[1] = argLabel_Command(cmd, "preferlight");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "doctheme.dark.set")) {
@@ -2279,7 +2413,31 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "quoteicon.set")) {
         d->prefs.quoteIcon = arg_Command(cmd) != 0;
-        postCommand_App("document.layout.changed");
+        postCommand_App("document.layout.changed redo:1");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.font.smooth.changed")) {
+        if (!isFrozen) {
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
+        }
+        d->prefs.fontSmoothing = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            resetFonts_Text(text_Window(get_MainWindow())); /* clear the glyph cache */
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ansiescape")) {
+        d->prefs.gemtextAnsiEscapes = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.gemtext.ansi.fg.changed")) {
+        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFg_AnsiFlag, arg_Command(cmd));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.gemtext.ansi.fontstyle.changed")) {
+        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFontStyle_AnsiFlag, arg_Command(cmd));
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
@@ -2302,9 +2460,13 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.boldlink.dark.changed") ||
-             equal_Command(cmd, "prefs.boldlink.light.changed")) {
+             equal_Command(cmd, "prefs.boldlink.light.changed") ||
+             equal_Command(cmd, "prefs.boldlink.visited.changed")) {
         const iBool isSet = (arg_Command(cmd) != 0);
-        if (startsWith_CStr(cmd, "prefs.boldlink.dark")) {
+        if (startsWith_CStr(cmd, "prefs.boldlink.visited")) {
+            d->prefs.boldLinkVisited = isSet;
+        }
+        else if (startsWith_CStr(cmd, "prefs.boldlink.dark")) {
             d->prefs.boldLinkDark = isSet;
         }
         else {
@@ -2363,6 +2525,10 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.addBookmarksToBottom = arg_Command(cmd) != 0;
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.font.warnmissing.changed")) {
+        d->prefs.warnAboutMissingGlyphs = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.animate.changed")) {
         d->prefs.uiAnimations = arg_Command(cmd) != 0;
         return iTrue;
@@ -2389,7 +2555,7 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "searchurl")) {
-        iString *url = &d->prefs.searchUrl;
+        iString *url = &d->prefs.strings[searchUrl_PrefsString];
         setCStr_String(url, suffixPtr_Command(cmd, "address"));
         if (startsWith_String(url, "//")) {
             prependCStr_String(url, "gemini:");
@@ -2400,20 +2566,20 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "proxy.gemini")) {
-        setCStr_String(&d->prefs.geminiProxy, suffixPtr_Command(cmd, "address"));
+        setCStr_String(&d->prefs.strings[geminiProxy_PrefsString], suffixPtr_Command(cmd, "address"));
         return iTrue;
     }
     else if (equal_Command(cmd, "proxy.gopher")) {
-        setCStr_String(&d->prefs.gopherProxy, suffixPtr_Command(cmd, "address"));
+        setCStr_String(&d->prefs.strings[gopherProxy_PrefsString], suffixPtr_Command(cmd, "address"));
         return iTrue;
     }
     else if (equal_Command(cmd, "proxy.http")) {
-        setCStr_String(&d->prefs.httpProxy, suffixPtr_Command(cmd, "address"));
+        setCStr_String(&d->prefs.strings[httpProxy_PrefsString], suffixPtr_Command(cmd, "address"));
         return iTrue;
     }
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
     else if (equal_Command(cmd, "downloads")) {
-        setCStr_String(&d->prefs.downloadDir, suffixPtr_Command(cmd, "path"));
+        setCStr_String(&d->prefs.strings[downloadDir_PrefsString], suffixPtr_Command(cmd, "path"));
         return iTrue;
     }
 #endif
@@ -2422,16 +2588,16 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "ca.file")) {
-        setCStr_String(&d->prefs.caFile, suffixPtr_Command(cmd, "path"));
+        setCStr_String(&d->prefs.strings[caFile_PrefsString], suffixPtr_Command(cmd, "path"));
         if (!argLabel_Command(cmd, "noset")) {
-            setCACertificates_TlsRequest(&d->prefs.caFile, &d->prefs.caPath);
+            setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString], &d->prefs.strings[caPath_PrefsString]);
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "ca.path")) {
-        setCStr_String(&d->prefs.caPath, suffixPtr_Command(cmd, "path"));
+        setCStr_String(&d->prefs.strings[caPath_PrefsString], suffixPtr_Command(cmd, "path"));
         if (!argLabel_Command(cmd, "noset")) {
-            setCACertificates_TlsRequest(&d->prefs.caFile, &d->prefs.caPath);
+            setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString], &d->prefs.strings[caPath_PrefsString]);
         }
         return iTrue;
     }
@@ -2455,18 +2621,29 @@ iBool handleCommand_App(const char *cmd) {
         const iBool fromSidebar = argLabel_Command(cmd, "fromsidebar") != 0;
         iUrl parts;
         init_Url(&parts, url);
+        if (equal_Rangecc(parts.scheme, "about") && equal_Rangecc(parts.path, "command") &&
+            !isEmpty_Range(&parts.query)) {
+            /* NOTE: Careful here! `about:command` allows issuing UI events via links on the page.
+               There is a special set of pages where these are allowed (e.g., "about:fonts").
+               On every other page, `about:command` links will not be clickable. */
+            iString *query = collectNewRange_String((iRangecc){
+                parts.query.start + 1, parts.query.end
+            });
+            replace_String(query, "%20", " ");
+            postCommandString_Root(NULL, query);
+            return iTrue;
+        }
         if (equalCase_Rangecc(parts.scheme, "titan")) {
             iUploadWidget *upload = new_UploadWidget();
             setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, document_App());
             addChild_Widget(get_Root()->widget, iClob(upload));
-//            finalizeSheet_Mobile(as_Widget(upload));
             setupSheetTransition_Mobile(as_Widget(upload), iTrue);
             postRefresh_App();
             return iTrue;
         }
         if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
-            ((noProxy || isEmpty_String(&d->prefs.httpProxy)) &&
+            ((noProxy || isEmpty_String(&d->prefs.strings[httpProxy_PrefsString])) &&
              (equalCase_Rangecc(parts.scheme, "http") ||
               equalCase_Rangecc(parts.scheme, "https")))) {
             openInDefaultBrowser_App(url);
@@ -2586,7 +2763,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "tabs.close")) {
         iWidget *tabs = findWidget_App("doctabs");
 #if defined (iPlatformMobile)
-        /* Can't close the last on mobile. */
+        /* Can't close the last tab on mobile. */
         if (tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
             postCommand_App("navigate.home");
             return iTrue;
@@ -2619,6 +2796,7 @@ iBool handleCommand_App(const char *cmd) {
         const iBool isSplit = numRoots_Window(get_Window()) > 1;
         if (tabCount_Widget(tabs) > 1 || isSplit) {
             iWidget *closed = removeTabPage_Widget(tabs, index);
+            cancelAllRequests_DocumentWidget((iDocumentWidget *) closed);
             destroy_Widget(closed); /* released later */
             if (index == tabCount_Widget(tabs)) {
                 index--;
@@ -2654,46 +2832,55 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "preferences")) {
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.downloadDir);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.strings[downloadDir_PrefsString]);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoverlink"), d->prefs.hoverLink);
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetoolbarscroll"), d->prefs.hideToolbarOnScroll);
         setToggle_Widget(findChild_Widget(dlg, "prefs.bookmarks.addbottom"), d->prefs.addBookmarksToBottom);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.font.warnmissing"), d->prefs.warnAboutMissingGlyphs);
         setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.userfont"), &d->prefs.symbolFontPath);
+//        setText_InputWidget(findChild_Widget(dlg, "prefs.userfont"), &d->prefs.symbolFontPath);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
-        updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
+        updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
         updateDropdownSelection_LabelWidget(
             findChild_Widget(dlg, "prefs.returnkey"),
             format_CStr("returnkey.set arg:%d", d->prefs.returnKey));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(as_Window(d->window))));
-        setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.font.%d", d->prefs.font)),
-                        selected_WidgetFlag,
-                        iTrue);
-        setFlags_Widget(
-            findChild_Widget(dlg, format_CStr("prefs.headingfont.%d", d->prefs.headingFont)),
-            selected_WidgetFlag,
-            iTrue);
+//        setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.font.%d", d->prefs.font)),
+//                        selected_WidgetFlag,
+//                        iTrue);
+//        setFlags_Widget(
+//            findChild_Widget(dlg, format_CStr("prefs.headingfont.%d", d->prefs.headingFont)),
+//            selected_WidgetFlag,
+//            iTrue);
         setFlags_Widget(findChild_Widget(dlg, "prefs.mono.gemini"),
                         selected_WidgetFlag,
                         d->prefs.monospaceGemini);
         setFlags_Widget(findChild_Widget(dlg, "prefs.mono.gopher"),
                         selected_WidgetFlag,
                         d->prefs.monospaceGopher);
+        setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.visited"),
+                        selected_WidgetFlag,
+                        d->prefs.boldLinkVisited);
         setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.dark"),
                         selected_WidgetFlag,
                         d->prefs.boldLinkDark);
         setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.light"),
                         selected_WidgetFlag,
                         d->prefs.boldLinkLight);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fg"),
+                         d->prefs.gemtextAnsiEscapes & allowFg_AnsiFlag);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fontstyle"),
+                         d->prefs.gemtextAnsiEscapes & allowFontStyle_AnsiFlag);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.font.smooth"), d->prefs.fontSmoothing);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,
@@ -2712,8 +2899,11 @@ iBool handleCommand_App(const char *cmd) {
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.light"), d->prefs.docThemeLight);
         updateImageStyleButton_(findChild_Widget(dlg, "prefs.imagestyle"), d->prefs.imageStyle);
-        updateFontButton_(findChild_Widget(dlg, "prefs.font"), d->prefs.font);
-        updateFontButton_(findChild_Widget(dlg, "prefs.headingfont"), d->prefs.headingFont);
+        updateFontButton_(findChild_Widget(dlg, "prefs.font.ui"),      &d->prefs.strings[uiFont_PrefsString]);
+        updateFontButton_(findChild_Widget(dlg, "prefs.font.heading"), &d->prefs.strings[headingFont_PrefsString]);
+        updateFontButton_(findChild_Widget(dlg, "prefs.font.body"),    &d->prefs.strings[bodyFont_PrefsString]);
+        updateFontButton_(findChild_Widget(dlg, "prefs.font.mono"),    &d->prefs.strings[monospaceFont_PrefsString]);
+        updateFontButton_(findChild_Widget(dlg, "prefs.font.monodoc"), &d->prefs.strings[monospaceDocumentFont_PrefsString]);
         setFlags_Widget(
             findChild_Widget(
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),
@@ -2724,12 +2914,12 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.memorysize"),
                             collectNewFormat_String("%d", d->prefs.maxMemorySize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.searchUrl);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.caFile);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.ca.path"), &d->prefs.caPath);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.geminiProxy);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.gopherProxy);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"), &d->prefs.httpProxy);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.strings[searchUrl_PrefsString]);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.strings[caFile_PrefsString]);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.ca.path"), &d->prefs.strings[caPath_PrefsString]);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.strings[geminiProxy_PrefsString]);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.strings[gopherProxy_PrefsString]);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"), &d->prefs.strings[httpProxy_PrefsString]);
         iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");
         if (tabs) {
             showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
@@ -2911,14 +3101,52 @@ iBool handleCommand_App(const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "os.theme.changed")) {
+        const int dark = argLabel_Command(cmd, "dark");
+        d->isDarkSystemTheme = dark;
         if (d->prefs.useSystemTheme) {
-            const int dark     = argLabel_Command(cmd, "dark");
-            const int contrast = argLabel_Command(cmd, "contrast");
+            const int contrast  = argLabel_Command(cmd, "contrast");
+            const int preferred = d->prefs.systemPreferredColorTheme[dark ^ 1];
             postCommandf_App("theme.set arg:%d auto:1",
-                             dark ? (contrast ? pureBlack_ColorTheme : dark_ColorTheme)
-                                  : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
+                             preferred >= 0 ? preferred
+                             : dark ? (contrast ? pureBlack_ColorTheme : dark_ColorTheme)
+                                    : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
         }
         return iFalse;
+    }
+    else if (equal_Command(cmd, "fontpack.enable")) {
+        const iString *packId = collect_String(suffix_Command(cmd, "id"));
+        enablePack_Fonts(packId, arg_Command(cmd));
+        postCommand_App("navigate.reload");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "fontpack.delete")) {
+        const iString *packId = collect_String(suffix_Command(cmd, "id"));
+        if (isEmpty_String(packId)) {
+            return iTrue;
+        }
+        const iFontPack *pack = pack_Fonts(cstr_String(packId));
+        if (pack && loadPath_FontPack(pack)) {
+            if (argLabel_Command(cmd, "confirmed")) {
+                remove_StringSet(d->prefs.disabledFontPacks, packId);
+                remove(cstr_String(loadPath_FontPack(pack)));
+                reload_Fonts();
+                postCommand_App("navigate.reload");
+            }
+            else {
+                makeQuestion_Widget(
+                    uiTextCaution_ColorEscape "${heading.fontpack.delete}",
+                    format_Lang("${dlg.fontpack.delete.confirm}",
+                                cstr_String(packId)),
+                    (iMenuItem[]){ { "${cancel}" },
+                                   { uiTextCaution_ColorEscape " ${dlg.fontpack.delete}",
+                                     0,
+                                     0,
+                                     format_CStr("!fontpack.delete confirmed:1 id:%s",
+                                                 cstr_String(packId)) } },
+                    2);
+            }
+        }
+        return iTrue;
     }
 #if defined (LAGRANGE_ENABLE_IPC)
     else if (equal_Command(cmd, "ipc.list.urls")) {

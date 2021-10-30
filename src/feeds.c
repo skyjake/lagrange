@@ -85,6 +85,7 @@ struct Impl_FeedJob {
     iTime       startTime;
     iBool       isFirstUpdate; /* hasn't been checked ever before */
     iBool       checkHeadings;
+    iBool       ignoreWeb;
     iGmRequest *request;
     iPtrArray   results;
 };
@@ -97,6 +98,7 @@ static void init_FeedJob(iFeedJob *d, const iBookmark *bookmark) {
     iZap(d->startTime);
     d->isFirstUpdate = iFalse;
     d->checkHeadings = hasTag_Bookmark(bookmark, headings_BookmarkTag);
+    d->ignoreWeb     = hasTag_Bookmark(bookmark, ignoreWeb_BookmarkTag);
 }
 
 static void deinit_FeedJob(iFeedJob *d) {
@@ -189,6 +191,13 @@ static void trimTitle_(iString *title) {
     remove_Block(&title->chars, 0, start - constBegin_String(title));
 }
 
+static iBool isUrlIgnored_FeedJob_(const iFeedJob *d, iRangecc url) {
+    if (d->ignoreWeb) {
+        return startsWithCase_Rangecc(url, "http");
+    }
+    return iFalse;
+}
+
 static void parseResult_FeedJob_(iFeedJob *d) {
     /* TODO: Should tell the user if the request failed. */
     if (isSuccess_GmStatusCode(status_GmRequest(d->request))) {
@@ -214,7 +223,10 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                 const iRangecc url   = capturedRange_RegExpMatch(&m, 1);
                 const iRangecc date  = capturedRange_RegExpMatch(&m, 2);
                 const iRangecc title = capturedRange_RegExpMatch(&m, 3);
-                iFeedEntry *   entry = new_FeedEntry();
+                if (isUrlIgnored_FeedJob_(d, url)) {
+                    continue;
+                }
+                iFeedEntry *entry = new_FeedEntry();
                 entry->discovered = now;
                 sub_Time(&now, &perEntryAdjust);
                 entry->bookmarkId = d->bookmarkId;

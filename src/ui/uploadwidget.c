@@ -126,6 +126,17 @@ static const iArray *makeIdentityItems_UploadWidget_(const iUploadWidget *d) {
     return items;
 }
 
+static void enableUploadButton_UploadWidget_(iUploadWidget *d, iBool enable) {
+    if (isUsingPanelLayout_Mobile()) {
+        iWidget *back = findChild_Widget(as_Widget(d), "panel.back");
+        setFlags_Widget(child_Widget(back, 0), hidden_WidgetFlag, !enable);
+        refresh_Widget(back);
+    }
+    else {
+        /* Not on used in the desktop layout. */
+    }
+}
+
 void init_UploadWidget(iUploadWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -165,7 +176,7 @@ void init_UploadWidget(iUploadWidget *d) {
         initPanels_Mobile(w, NULL, (iMenuItem[]){
             { "title id:heading.upload" },
             { "label id:upload.info" },
-            { "panel id:dlg.upload.text icon:0x1f5b9", 0, 0, (const void *) textItems },
+            { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
             { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
             { "padding" },
             { "dropdown id:upload.id icon:0x1f464", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
@@ -179,6 +190,9 @@ void init_UploadWidget(iUploadWidget *d) {
         d->mime          = findChild_Widget(w, "upload.mime");
         d->token         = findChild_Widget(w, "upload.token");
         d->counter       = findChild_Widget(w, "upload.counter");
+        if (isPortraitPhone_App()) {
+            enableUploadButton_UploadWidget_(d, iFalse);
+        }
     }
     else {
         useSheetStyle_Widget(w);
@@ -255,11 +269,12 @@ void init_UploadWidget(iUploadWidget *d) {
         setFlags_Widget(as_Widget(d->token), expand_WidgetFlag, iTrue);
         setFocus_Widget(as_Widget(d->input));
     }
-    setFont_InputWidget(d->input, iosevka_FontId);
+    setFont_InputWidget(d->input, FONT_ID(monospace_FontId, regular_FontStyle, uiSmall_FontSize));
     setUseReturnKeyBehavior_InputWidget(d->input, iFalse); /* traditional text editor */
     setLineLimits_InputWidget(d->input, 7, 20);
     setHint_InputWidget(d->input, "${hint.upload.text}");
     setBackupFileName_InputWidget(d->input, "uploadbackup.txt");
+    setBackupFileName_InputWidget(d->token, "uploadtoken.txt"); /* TODO: site-specific config? */
     updateInputMaxHeight_UploadWidget_(d);
 }
 
@@ -361,18 +376,30 @@ static void updateFileInfo_UploadWidget_(iUploadWidget *d) {
     setTextCStr_InputWidget(d->mime, mediaType_Path(&d->filePath));
 }
 
+static void showOrHideUploadButton_UploadWidget_(iUploadWidget *d) {
+    if (isUsingPanelLayout_Mobile()) {
+        enableUploadButton_UploadWidget_(
+            d, currentPanelIndex_Mobile(as_Widget(d)) != iInvalidPos || !isPortraitPhone_App());
+    }
+}
+
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     const char *cmd = command_UserEvent(ev);
     if (isResize_UserEvent(ev) || equal_Command(cmd, "keyboard.changed")) {
         updateInputMaxHeight_UploadWidget_(d);
+        showOrHideUploadButton_UploadWidget_(d);
     }
-    if (equal_Command(cmd, "upload.cancel")) {
+    else if (equal_Command(cmd, "panel.changed")) {
+        showOrHideUploadButton_UploadWidget_(d);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "upload.cancel")) {
         setupSheetTransition_Mobile(w, iFalse);
         destroy_Widget(w);
         return iTrue;
     }
-    if (isCommand_Widget(w, ev, "upload.setport")) {
+    else if (isCommand_Widget(w, ev, "upload.setport")) {
         if (hasLabel_Command(cmd, "value")) {
             setValue_SiteSpec(collectNewRange_String(urlRoot_String(&d->originalUrl)),
                               titanPort_SiteSpecKey, arg_Command(cmd));

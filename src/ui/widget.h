@@ -109,7 +109,7 @@ enum iWidgetFlag {
 #define extraPadding_WidgetFlag             iBit64(49)
 #define borderBottom_WidgetFlag             iBit64(50)
 #define horizontalOffset_WidgetFlag         iBit64(51) /* default is vertical offset */
-#define chevron_WidgetFlag                  iBit64(52)
+#define visibleOnParentHover_WidgetFlag     iBit64(52)
 #define drawBackgroundToBottom_WidgetFlag   iBit64(53)
 #define dragged_WidgetFlag                  iBit64(54)
 #define hittable_WidgetFlag                 iBit64(55)
@@ -279,7 +279,7 @@ iAny *  insertChildAfter_Widget     (iWidget *, iAnyObject *child, size_t afterI
 iAny *  insertChildAfterFlags_Widget(iWidget *, iAnyObject *child, size_t afterIndex, int64_t childFlags);
 iAny *  removeChild_Widget          (iWidget *, iAnyObject *child); /* returns a ref */
 iAny *  child_Widget                (iWidget *, size_t index); /* O(n) */
-size_t  childIndex_Widget           (const iWidget *, const iAnyObject *child); /* O(n) */
+size_t  indexOfChild_Widget         (const iWidget *, const iAnyObject *child); /* O(n) */
 void    arrange_Widget              (iWidget *);
 iBool   scrollOverflow_Widget       (iWidget *, int delta); /* moves the widget */
 iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);

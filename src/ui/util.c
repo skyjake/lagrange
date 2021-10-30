@@ -841,7 +841,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
                         (isPortraitPhone_App() ? drawBackgroundToVerticalSafeArea_WidgetFlag : 0),
                     iTrue);
     if (!isPortraitPhone_App()) {
-        setFrameColor_Widget(menu, uiSeparator_ColorId);
+        setFrameColor_Widget(menu, uiBackgroundSelected_ColorId);
     }
     makeMenuItems_Widget(menu, items, n);
     addChild_Widget(parent, menu);
@@ -873,7 +873,7 @@ static void updateMenuItemFonts_Widget_(iWidget *d) {
             }
             else if (isPortraitPhone) {
                 if (!isSlidePanel) {
-                    setFont_LabelWidget(label, isCaution ? defaultBigBold_FontId : defaultBig_FontId);
+                    setFont_LabelWidget(label, isCaution ? uiLabelBigBold_FontId : uiLabelBig_FontId);
                 }
             }
             else {
@@ -1436,7 +1436,7 @@ void resizeToLargestPage_Widget(iWidget *tabs) {
 //    puts("... DONE WITH RESIZE TO LARGEST PAGE");
 }
 
-iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
+static iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
     iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
     iForEach(ObjectList, i, buttons->children) {
         iAssert(isInstance_Object(i.object, &Class_LabelWidget));
@@ -1446,6 +1446,27 @@ iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
         }
     }
     return NULL;
+}
+
+void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *command) {
+    if (deviceType_App() == phone_AppDeviceType) {
+        return; /* Close buttons not used on a phone due to lack of space. */
+    }
+    iLabelWidget *tabButton = tabButtonForPage_Widget_(tabs, page);
+    setPadding_Widget(as_Widget(tabButton), 0, 0, 0, gap_UI / 4);
+    setFlags_Widget(as_Widget(tabButton), arrangeVertical_WidgetFlag | resizeHeightOfChildren_WidgetFlag, iTrue);
+    iLabelWidget *close = addChildFlags_Widget(
+        as_Widget(tabButton),
+        iClob(new_LabelWidget(close_Icon,
+                              format_CStr("%s id:%s", command, cstr_String(id_Widget(page))))),
+        moveToParentRightEdge_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag |
+            noBackground_WidgetFlag | hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        setFlags_Widget(as_Widget(close),
+                        hidden_WidgetFlag | visibleOnParentHover_WidgetFlag, iFalse);
+    }
+    setNoAutoMinHeight_LabelWidget(close, iTrue);
+    updateSize_LabelWidget(close);
 }
 
 void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
@@ -1491,7 +1512,7 @@ void setTabPageLabel_Widget(iWidget *tabs, const iAnyObject *page, const iString
 
 size_t tabPageIndex_Widget(const iWidget *tabs, const iAnyObject *page) {
     iWidget *pages = findChild_Widget(tabs, "tabs.pages");
-    return childIndex_Widget(pages, page);
+    return indexOfChild_Widget(pages, page);
 }
 
 const iWidget *currentTabPage_Widget(const iWidget *tabs) {
@@ -1626,8 +1647,8 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
     }
     int fonts[2] = { uiLabel_FontId, uiLabelBold_FontId };
     if (deviceType_App() == phone_AppDeviceType) {
-        fonts[0] = defaultMedium_FontId;
-        fonts[1] = defaultMediumBold_FontId;
+        fonts[0] = uiLabelMedium_FontId;
+        fonts[1] = uiLabelMediumBold_FontId;
     }
     for (size_t i = 0; i < numActions; i++) {
         const char *label     = actions[i].label;
@@ -1687,14 +1708,17 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     setId_Widget(
         addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag),
         "valueinput.title");
-    setId_Widget(
-        addChildFlags_Widget(dlg, iClob(new_LabelWidget(prompt, NULL)), frameless_WidgetFlag),
-        "valueinput.prompt");
+    iLabelWidget *promptLabel;
+    setId_Widget(addChildFlags_Widget(
+                     dlg, iClob(promptLabel = new_LabelWidget(prompt, NULL)), frameless_WidgetFlag
+                     | resizeToParentWidth_WidgetFlag | fixedHeight_WidgetFlag),
+                 "valueinput.prompt");
+    setWrap_LabelWidget(promptLabel, iTrue);
     iInputWidget *input = addChildFlags_Widget(dlg, iClob(new_InputWidget(0)),
                                                resizeToParentWidth_WidgetFlag);
     setContentPadding_InputWidget(input, 0.5f * gap_UI, 0.5f * gap_UI);
     if (deviceType_App() == phone_AppDeviceType) {
-        setFont_InputWidget(input, defaultBig_FontId);
+        setFont_InputWidget(input, uiLabelBig_FontId);
         setBackgroundColor_Widget(dlg, uiBackgroundSidebar_ColorId);
         setContentPadding_InputWidget(input, gap_UI, gap_UI);
     }
@@ -1734,21 +1758,43 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
     updateValueInputWidth_(d);
 }
 
+static void updateQuestionWidth_(iWidget *dlg) {
+    iWidget *title = findChild_Widget(dlg, "question.title");
+    iWidget *msg   = findChild_Widget(dlg, "question.msg");
+    if (title && msg) {
+        const iRect safeRoot = safeRect_Root(dlg->root);
+        const iInt2 rootSize = safeRoot.size;
+        const int padding = 6 * gap_UI;
+        dlg->rect.size.x =
+            iMin(iMin(150 * gap_UI, rootSize.x),
+                 iMaxi(iMaxi(100 * gap_UI, padding + title->rect.size.x),
+                       padding + msg->rect.size.x));
+    }
+}
+
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
     /* TODO: Add a "notification" type of user events to separate them from user actions. */
     if (!(equal_Command(cmd, "media.updated") ||
           equal_Command(cmd, "media.player.update") ||
           equal_Command(cmd, "bookmarks.request.finished") ||
+          equal_Command(cmd, "bookmarks.changed") ||
           equal_Command(cmd, "document.autoreload") ||
           equal_Command(cmd, "document.reload") ||
           equal_Command(cmd, "document.request.updated") ||
+          equal_Command(cmd, "document.linkkeys") ||
           equal_Command(cmd, "scrollbar.fade") ||
           equal_Command(cmd, "widget.overflow") ||
           equal_Command(cmd, "edgeswipe.ended") ||
+          equal_Command(cmd, "layout.changed") ||
+          equal_Command(cmd, "theme.changed") ||
+          startsWith_CStr(cmd, "feeds.update.") ||
           startsWith_CStr(cmd, "window."))) {
         setupSheetTransition_Mobile(msg, iFalse);
         destroy_Widget(msg);
+    }
+    else if (equal_Command(cmd, "window.resized")) {
+        updateQuestionWidth_(msg);
     }
     return iFalse;
 }
@@ -1795,8 +1841,16 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     }
     iWidget *dlg = makeSheet_Widget("");
     setCommandHandler_Widget(dlg, messageHandler_);
-    addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag);
-    addChildFlags_Widget(dlg, iClob(new_LabelWidget(msg, NULL)), frameless_WidgetFlag);
+    setId_Widget(
+        addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag),
+        "question.title");
+    iLabelWidget *msgLabel;
+    setId_Widget(addChildFlags_Widget(dlg,
+                                      iClob(msgLabel = new_LabelWidget(msg, NULL)),
+                                      frameless_WidgetFlag | fixedHeight_WidgetFlag |
+                                          resizeToParentWidth_WidgetFlag),
+                 "question.msg");
+    setWrap_LabelWidget(msgLabel, iTrue);
     /* Check for value selections. */
     for (size_t i = 0; i < numItems; i++) {
         const iMenuItem *item = &items[i];
@@ -1811,13 +1865,15 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
                                  resizeToParentWidth_WidgetFlag |
                                  (first == '&' ? selected_WidgetFlag : 0));
             if (deviceType_App() != desktop_AppDeviceType) {
-                setFont_LabelWidget(option, defaultBig_FontId);
+                setFont_LabelWidget(option, uiLabelBig_FontId);
             }
         }
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(dlg, iClob(makeDialogButtons_Widget(items, numItems)));
     addChild_Widget(dlg->root->widget, iClob(dlg));
+    updateQuestionWidth_(dlg);
+    class_Widget(as_Widget(msgLabel))->sizeChanged(as_Widget(msgLabel));
     arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
                             be arranged correctly unless it's here. */
     setupSheetTransition_Mobile(dlg, iTrue);
@@ -1931,7 +1987,38 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
         id);
 }
 
+static iBool proportionalFonts_(const iFontSpec *spec) {
+    return (spec->flags & monospace_FontSpecFlag) == 0 && ~spec->flags & auxiliary_FontSpecFlag;
+}
+
+static iBool monospaceFonts_(const iFontSpec *spec) {
+    return (spec->flags & monospace_FontSpecFlag) != 0 && ~spec->flags & auxiliary_FontSpecFlag;
+}
+
 static const iArray *makeFontItems_(const char *id) {
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    if (!startsWith_CStr(id, "mono")) {
+        iConstForEach(PtrArray, i, listSpecs_Fonts(proportionalFonts_)) {
+            const iFontSpec *spec = i.ptr;
+            pushBack_Array(
+                items,
+                &(iMenuItem){ cstr_String(&spec->name),
+                              0,
+                              0,
+                              format_CStr("!font.set %s:%s", id, cstr_String(&spec->id)) });
+        }
+        pushBack_Array(items, &(iMenuItem){ "---" });
+    }
+    iConstForEach(PtrArray, j, listSpecs_Fonts(monospaceFonts_)) {
+        const iFontSpec *spec = j.ptr;
+        pushBack_Array(
+            items,
+            &(iMenuItem){ cstr_String(&spec->name),
+                          0,
+                          0,
+                          format_CStr("!font.set %s:%s", id, cstr_String(&spec->id)) });
+    }
+#if 0
     const struct {
         const char *   name;
         enum iTextFont cfgId;
@@ -1943,7 +2030,6 @@ static const iArray *makeFontItems_(const char *id) {
                   { "Tinos", tinos_TextFont },
                   { "---", -1 },
                   { "Iosevka", iosevka_TextFont } };
-    iArray *items = collectNew_Array(sizeof(iMenuItem));
     iForIndices(i, fonts) {
         pushBack_Array(items,
                        &(iMenuItem){ fonts[i].name,
@@ -1953,17 +2039,19 @@ static const iArray *makeFontItems_(const char *id) {
                                          ? format_CStr("!%s.set arg:%d", id, fonts[i].cfgId)
                                          : NULL });
     }
+#endif
     pushBack_Array(items, &(iMenuItem){ NULL }); /* terminator */
     return items;
 }
 
 static void addFontButtons_(iWidget *parent, const char *id) {
     const iArray *items = makeFontItems_(id);
-    iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans 3",
+    size_t widestIndex = findWidestLabel_MenuItem(constData_Array(items), size_Array(items));
+    iLabelWidget *button = makeMenuButton_LabelWidget(constValue_Array(items, widestIndex, iMenuItem).label,
                                                       constData_Array(items), size_Array(items));
     setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
                               uiBackgroundMenu_ColorId);
-    setId_Widget(as_Widget(button), format_CStr("prefs.%s", id));
+    setId_Widget(as_Widget(button), format_CStr("prefs.font.%s", id));
     addChildFlags_Widget(parent, iClob(button), alignLeft_WidgetFlag);
 }
 
@@ -2118,6 +2206,7 @@ iWidget *makePreferences_Widget(void) {
                                     { "${lang.sk} - sk", 0, 0, "uilang id:sk" },
                                     { "${lang.sr} - sr", 0, 0, "uilang id:sr" },
                                     { "${lang.tok} - tok", 0, 0, "uilang id:tok" },
+                                    { "${lang.uk} - uk", 0, 0, "uilang id:uk" },
                                     { "${lang.zh.hans} - zh", 0, 0, "uilang id:zh_Hans" },
                                     { "${lang.zh.hant} - zh", 0, 0, "uilang id:zh_Hant" },
                                     { NULL } };
@@ -2169,6 +2258,15 @@ iWidget *makePreferences_Widget(void) {
         { "${prefs.imagestyle.preformat}", 0, 0, format_CStr("imagestyle.set arg:%d", preformatColorized_ImageStyle) },
         { NULL }
     };
+    const iMenuItem lineWidthItems[] = {
+        { "button id:prefs.linewidth.30 text:\u20132",                 0, 0, "linewidth.set arg:30" },
+        { "button id:prefs.linewidth.34 text:\u20131",                 0, 0, "linewidth.set arg:34" },
+        { "button id:prefs.linewidth.38 label:prefs.linewidth.normal", 0, 0, "linewidth.set arg:38" },
+        { "button id:prefs.linewidth.43 text:+1",                      0, 0, "linewidth.set arg:43" },
+        { "button id:prefs.linewidth.48 text:+2",                      0, 0, "linewidth.set arg:48" },
+        { "button id:prefs.linewidth.1000 label:prefs.linewidth.fill", 0, 0, "linewidth.set arg:1000" },
+        { NULL }
+    };
     /* Create the Preferences UI. */
     if (isUsingPanelLayout_Mobile()) {
         const iMenuItem pinSplitItems[] = {
@@ -2202,18 +2300,10 @@ iWidget *makePreferences_Widget(void) {
             { NULL }  
         };
         const iMenuItem boldLinkItems[] = {
+            { "button id:prefs.boldlink.visited" },
             { "button id:prefs.boldlink.dark" },
             { "button id:prefs.boldlink.light" },
             { NULL }  
-        };
-        const iMenuItem lineWidthItems[] = {
-            { "button id:prefs.linewidth.30 text:\u20132", 0, 0, "linewidth.set arg:30" },
-            { "button id:prefs.linewidth.34 text:\u20131", 0, 0, "linewidth.set arg:34" },
-            { "button id:prefs.linewidth.38 label:prefs.linewidth.normal", 0, 0, "linewidth.set arg:38" },
-            { "button id:prefs.linewidth.43 text:+1", 0, 0, "linewidth.set arg:43" },
-            { "button id:prefs.linewidth.48 text:+2", 0, 0, "linewidth.set arg:48" },
-            { "button id:prefs.linewidth.1000 label:prefs.linewidth.fill", 0, 0, "linewidth.set arg:1000" },
-            { NULL }              
         };
         const iMenuItem quoteItems[] = {
             { "button id:prefs.quoteicon.1 label:prefs.quoteicon.icon", 0, 0, "quoteicon.set arg:1" },
@@ -2225,6 +2315,7 @@ iWidget *makePreferences_Widget(void) {
             { "heading text:${prefs.searchurl}" },
             { "input id:prefs.searchurl url:1 noheading:1" },
             { "padding" },
+            { "toggle id:prefs.bookmarks.addbottom" },
             { "toggle id:prefs.archive.openindex" },
             { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
             { "padding" },
@@ -2257,10 +2348,17 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem fontPanelItems[] = {
             { "title id:heading.prefs.fonts" },
-            { "dropdown id:prefs.headingfont", 0, 0, (const void *) constData_Array(makeFontItems_("headingfont")) },
-            { "dropdown id:prefs.font", 0, 0, (const void *) constData_Array(makeFontItems_("font")) },
+            { "dropdown id:prefs.font.heading", 0, 0, (const void *) constData_Array(makeFontItems_("heading")) },
+            { "dropdown id:prefs.font.body", 0, 0, (const void *) constData_Array(makeFontItems_("body")) },
+            { "dropdown id:prefs.font.mono", 0, 0, (const void *) constData_Array(makeFontItems_("mono")) },
             { "buttons id:prefs.mono", 0, 0, (const void *) monoFontItems },
-            { "buttons id:prefs.boldlink", 0, 0, (const void *) boldLinkItems },
+            { "dropdown id:prefs.font.monodoc", 0, 0, (const void *) constData_Array(makeFontItems_("monodoc")) },
+            { "padding" },
+            { "toggle id:prefs.font.smooth" },
+            { "padding" },
+            { "dropdown id:prefs.font.ui", 0, 0, (const void *) constData_Array(makeFontItems_("ui")) },
+            { "padding" },
+            { "button text:" fontpack_Icon " ${menu.fonts}", 0, 0, "!open url:about:fonts" },
             { NULL }  
         };
         const iMenuItem stylePanelItems[] = {
@@ -2269,6 +2367,7 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "input id:prefs.linespacing maxlen:5" },
             { "radio id:prefs.quoteicon", 0, 0, (const void *) quoteItems },
+            { "buttons id:prefs.boldlink", 0, 0, (const void *) boldLinkItems },
             { "padding" },
             { "toggle id:prefs.biglede" },
             { "toggle id:prefs.plaintext.wrap" },
@@ -2492,10 +2591,12 @@ iWidget *makePreferences_Widget(void) {
     /* Fonts. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.fonts}", '4', &headings, &values), "prefs.page.fonts");
         /* Fonts. */ {
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.headingfont}")));
-            addFontButtons_(values, "headingfont");
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font}")));
-            addFontButtons_(values, "font");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.heading}")));
+            addFontButtons_(values, "heading");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.body}")));
+            addFontButtons_(values, "body");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.mono}")));
+            addFontButtons_(values, "mono");
             addDialogPadding_(headings, values);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.mono}")));
             iWidget *mono = new_Widget(); {
@@ -2512,28 +2613,35 @@ iWidget *makePreferences_Widget(void) {
                 updateSize_LabelWidget((iLabelWidget *) tog);
             }
             addChildFlags_Widget(values, iClob(mono), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.boldlink}")));
-            iWidget *boldLink = new_Widget(); {
-                /* TODO: Add a utility function for this type of toggles? (also for above) */
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.monodoc}")));
+            addFontButtons_(values, "monodoc");
+            addDialogPadding_(headings, values);
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.gemtext.ansi}")));
+            iWidget *ansi = new_Widget(); {
                 iWidget *tog;
                 setTextCStr_LabelWidget(
-                    addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.dark"))),
-                    "${prefs.boldlink.dark}");
+                    addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.fg"))),
+                    "${prefs.gemtext.ansi.fg}");
                 setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
                 updateSize_LabelWidget((iLabelWidget *) tog);
                 setTextCStr_LabelWidget(
-                    addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.light"))),
-                    "${prefs.boldlink.light}");
+                    addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.fontstyle"))),
+                    "${prefs.gemtext.ansi.fontstyle}");
                 setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
                 updateSize_LabelWidget((iLabelWidget *) tog);
             }
-            addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addChildFlags_Widget(values, iClob(ansi), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addDialogToggle_(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
+            addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");                
             addDialogPadding_(headings, values);
-            /* Custom font. */ {
-                iInputWidget *customFont = new_InputWidget(0);
-                setHint_InputWidget(customFont, "${hint.prefs.userfont}");
-                addPrefsInputWithHeading_(headings, values, "prefs.userfont", iClob(customFont));
-            }
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
+            addFontButtons_(values, "ui");
+            //            addDialogPadding_(headings, values);
+//            /* Custom font. */ {
+//                iInputWidget *customFont = new_InputWidget(0);
+//                setHint_InputWidget(customFont, "${hint.prefs.userfont}");
+//                addPrefsInputWithHeading_(headings, values, "prefs.userfont", iClob(customFont));
+//            }
         }        
     }
     /* Style. */ {
@@ -2542,12 +2650,16 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.linewidth}")));
         iWidget *widths = new_Widget();
         /* Line widths. */ {
-            addRadioButton_(widths, "prefs.linewidth.30", "\u20132", "linewidth.set arg:30");
-            addRadioButton_(widths, "prefs.linewidth.34", "\u20131", "linewidth.set arg:34");
-            addRadioButton_(widths, "prefs.linewidth.38", "${prefs.linewidth.normal}", "linewidth.set arg:38");
-            addRadioButton_(widths, "prefs.linewidth.43", "+1", "linewidth.set arg:43");
-            addRadioButton_(widths, "prefs.linewidth.48", "+2", "linewidth.set arg:48");
-            addRadioButton_(widths, "prefs.linewidth.1000", "${prefs.linewidth.fill}", "linewidth.set arg:1000");
+            /* TODO: Make this a utility function to build radio buttons from items. */
+            for (size_t i = 0; lineWidthItems[i].label; i++) {
+                const iMenuItem *lw = &lineWidthItems[i];
+                addRadioButton_(widths,
+                                cstr_Command(lw->label, "id"),
+                                hasLabel_Command(lw->label, "label")
+                                    ? cstr_Lang(cstr_Command(lw->label, "label"))
+                                    : cstr_Command(lw->label, "text"),
+                                lw->command);
+            }
         }
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addPrefsInputWithHeading_(headings, values, "prefs.linespacing", iClob(new_InputWidget(5)));
@@ -2558,6 +2670,27 @@ iWidget *makePreferences_Widget(void) {
         }
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.boldlink}")));
+        iWidget *boldLink = new_Widget(); {
+            /* TODO: Add a utility function for this type of toggles? (also for above) */
+            iWidget *tog;
+            setTextCStr_LabelWidget(
+                addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.visited"))),
+                "${prefs.boldlink.visited}");
+            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+            updateSize_LabelWidget((iLabelWidget *) tog);
+            setTextCStr_LabelWidget(
+                addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.dark"))),
+                "${prefs.boldlink.dark}");
+            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+            updateSize_LabelWidget((iLabelWidget *) tog);
+            setTextCStr_LabelWidget(
+                addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.light"))),
+                "${prefs.boldlink.light}");
+            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+            updateSize_LabelWidget((iLabelWidget *) tog);
+        }
+        addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
         addDialogToggle_(headings, values, "${prefs.collapsepreonload}", "prefs.collapsepreonload");
         addDialogPadding_(headings, values);
@@ -2739,27 +2872,27 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         }
         int id = argLabel_Command(cmd, "bmid");
         const iBool headings = isSelected_Widget(findChild_Widget(dlg, "feedcfg.type.headings"));
-        const iString *tags = collectNewFormat_String("subscribed%s", headings ? " headings" : "");
+        const iBool ignoreWeb = isSelected_Widget(findChild_Widget(dlg, "feedcfg.ignoreweb"));
         if (!id) {
             const size_t numSubs = numSubscribed_Feeds();
             const iString *url   = url_DocumentWidget(document_App());
-            add_Bookmarks(bookmarks_App(),
-                          url,
-                          feedTitle,
-                          tags,
-                          siteIcon_GmDocument(document_DocumentWidget(document_App())));
+            id = add_Bookmarks(bookmarks_App(),
+                               url,
+                               feedTitle,
+                               NULL,
+                               siteIcon_GmDocument(document_DocumentWidget(document_App())));
             if (numSubs == 0) {
                 /* Auto-refresh after first addition. */
+                /* TODO: Also when settings changed? */
                 postCommand_App("feeds.refresh");
             }
         }
-        else {
-            iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
-            if (bm) {
-                set_String(&bm->title, feedTitle);
-                set_String(&bm->tags, tags);
-            }
-        }
+        iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
+        iAssert(bm);
+        set_String(&bm->title, feedTitle);
+        addOrRemoveTag_Bookmark(bm, subscribed_BookmarkTag, iTrue);
+        addOrRemoveTag_Bookmark(bm, headings_BookmarkTag, headings);
+        addOrRemoveTag_Bookmark(bm, ignoreWeb_BookmarkTag, ignoreWeb);
         postCommand_App("bookmarks.changed");
         setupSheetTransition_Mobile(dlg, iFalse);
         destroy_Widget(dlg);
@@ -2788,6 +2921,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
             { format_CStr("title id:feedcfg.heading text:%s", headingText) },
             { "input id:feedcfg.title text:${dlg.feed.title}" },
             { "radio id:dlg.feed.entrytype", 0, 0, (const void *) typeItems },
+            { "toggle id:feedcfg.ignoreweb text:${dlg.feed.ignoreweb}" },
             { NULL }
         }, actions, iElemCount(actions));
     }
@@ -2806,6 +2940,8 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
             addRadioButton_(types, "feedcfg.type.headings", "${dlg.feed.type.headings}", "feedcfg.type arg:1");
         }
         addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.feed.ignoreweb}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("feedcfg.ignoreweb")));
         iWidget *buttons =
             addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         setId_Widget(child_Widget(buttons, childCount_Widget(buttons) - 1), "feedcfg.save");
@@ -2824,6 +2960,8 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
                                              : "feedcfg.type.gemini"),
                         selected_WidgetFlag,
                         iTrue);
+        setToggle_Widget(findChild_Widget(dlg, "feedcfg.ignoreweb"),
+                         hasTag_Bookmark(bm, ignoreWeb_BookmarkTag));
         setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
     }
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag);

@@ -537,6 +537,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #elif defined (iPlatformAppleMobile)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
     flags |= SDL_WINDOW_METAL;
+    d->base.isExposed = iTrue;
 #else
     if (!forceSoftwareRender_App()) {
         flags |= SDL_WINDOW_OPENGL;
@@ -615,7 +616,11 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
     }
 #endif
+#if defined (iPlatformDesktop)
     SDL_HideWindow(d->base.win);
+#else
+    SDL_ShowWindow(d->base.win);
+#endif
 }
 
 void deinit_MainWindow(iMainWindow *d) {
@@ -947,6 +952,10 @@ static void applyCursor_Window_(iWindow *d) {
     }
 }
 
+void updateHover_Window(iWindow *d) {
+    d->hover = hitChild_Window(d, mouseCoord_Window(d, 0));
+}
+
 iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     iMainWindow *mw = (type_Window(d) == main_WindowType ? as_MainWindow(d) : NULL);
     switch (ev->type) {
@@ -1144,6 +1153,9 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
 }
 
 iAnyObject *hitChild_Window(const iWindow *d, iInt2 coord) {
+    if (coord.x < 0 || coord.y < 0) {
+        return NULL;
+    }
     iForIndices(i, d->roots) {
         if (d->roots[i]) {
             iAnyObject *hit = hitChild_Widget(d->roots[i]->widget, coord);
@@ -1188,12 +1200,12 @@ void draw_Window(iWindow *d) {
         extern int drawCount_;
         drawRoot_Widget(root->widget);
 #if !defined (NDEBUG)
-        draw_Text(defaultBold_FontId, safeRect_Root(root).pos, red_ColorId, "%d", drawCount_);
+        draw_Text(uiLabelBold_FontId, safeRect_Root(root).pos, red_ColorId, "%d", drawCount_);
         drawCount_ = 0;
 #endif
     }
-    drawRectThickness_Paint(
-        &p, (iRect){ zero_I2(), sub_I2(d->size, one_I2()) }, gap_UI / 4, uiSeparator_ColorId);
+    drawRectThickness_Paint(&p, (iRect){ zero_I2(), sub_I2(d->size, one_I2()) }, gap_UI / 4,
+                            uiBackgroundSelected_ColorId);
     setCurrent_Root(NULL);
     SDL_RenderPresent(d->render);
 }
@@ -1287,7 +1299,7 @@ void draw_MainWindow(iMainWindow *d) {
         }
         setCurrent_Root(NULL);
 #if !defined (NDEBUG)
-        draw_Text(defaultBold_FontId, safeRect_Root(w->roots[0]).pos, red_ColorId, "%d", drawCount_);
+        draw_Text(uiLabelBold_FontId, safeRect_Root(w->roots[0]).pos, red_ColorId, "%d", drawCount_);
         drawCount_ = 0;
 #endif
     }
@@ -1464,13 +1476,14 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             iWidget *docTabs = findWidget_Root("doctabs");
             iForEach(ObjectList, j, tabs) {
                 appendTabPage_Widget(docTabs, j.object, "", 0, 0);
+                addTabCloseButton_Widget(docTabs, j.object, "tabs.close");
             }
             /* The last child is the [+] button for adding a tab. */
             moveTabButtonToEnd_Widget(findChild_Widget(docTabs, "newtab"));
             iRelease(tabs);
             postCommandf_App("tabs.switch id:%s", cstr_String(id_Widget(constAs_Widget(curPage))));
         }
-        else if (splitMode && oldCount == 1) {
+        else if (oldCount == 1 && splitMode) {
             /* Add a second root. */
             iDocumentWidget *moved = document_Root(w->roots[0]);
             iAssert(w->roots[1] == NULL);

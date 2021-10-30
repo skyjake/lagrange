@@ -85,7 +85,7 @@ The user interface has been designed for both mouse and keyboard based use. When
 
 ### 1.1.1 URL entry and quick search
 
-The URL input field is in its typical location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L. You can then type or paste an URL and press Enter to load the page.
+The URL input field can be found in the traditional location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L. You can then type or paste an URL and press Enter to load the page.
 
 As you enter text in the URL input field, Lagrange starts looking for matches in bookmarks, history, identities, and content of cached pages. This provides an easy way to return to a page you've been on recently. Press Tab or ↓ to switch input focus to the results.
 
@@ -388,20 +388,97 @@ Page content color themes are selected on the "Colors" tab of Preferences. The "
 * Sepia: Light sepia background with black text. Does not change depending on domain; use this for readability if you prefer a sepia reading experience.
 * High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
 
-## 2.4 Page style
+## 2.4 Fonts
+
+This version of Lagrange supports TrueType fonts. To use a new font in the app, simply view the .ttf file in the app and a page footer action is available for performing the installation. For example, try drag-and-dropping a .ttf file on the window. Alternatively, you can manually copy the font to the "fonts" subdirectory of the user-specific configuration directory (see section 3.5). 
+
+The "Fonts" tab of the Preferences dialog contains options that affect the appearance of text in page content, the user interface, and text rendering in general.
+
+To be precise, on this tab you can select which _typefaces_ to use for certain elements of the page and the UI; picking a particular font (including its size, weight, style, etc.) for specific elements is not possible. Lagrange controls the size and styling of text by choosing fonts according to your theme and typeface preferences. The term "font" is often used to mean "typeface" in this document and in the app UI.
+
+The fonts for document headings, body text, preformatted blocks, and the user interface can be chosen separately. There is also a separate font for monospaced body text, used when the protocol-specific "Monospace body" option is enabled.
+
+There are two built-in fonts available:
+
+* "Source Sans" is the default UI font that is also used for page content.
+* "Iosevka" is the monospaced font.
+
+There is also an "Iosevka (compact)" variant that actually uses the font's original line spacing. It is the default for preformatted blocks to avoid gaps between lines of ASCII art, but not for body text for better legibility.
+
+See sections 2.4.4 and 5 for more details about font management, compatibility, and configuration.
+
+### 2.4.1 Monospace body
+
+The "Monospace body" option causes all pages to be displayed in a monospace font. For example, most Gopher content has been written with the assumption of a monospace font, so it may provide a better reading experience to enable this for Gopher pages. The selected "Monospace font" is applied to the entire document.
+
+Handling of whitespace in page content also changes when this option is enabled: spaces are no longer normalized so if the source uses multiple spaces somewhere, those are shown as-is.
+
+### 2.4.2 ANSI escapes
+
+=> https://en.wikipedia.org/wiki/ANSI_escape_code  ANSI escape code (Wikipedia):
+> ANSI escape sequences are a standard for in-band signaling to control cursor location, color, font styling, and other options on video text terminals and terminal emulators.
+
+Sometimes these codes are used for things like colored ASCII art. However, Lagrange is not a terminal emulator so only a very minimal set of codes have any effect; the rest are ignored.
+
+The "ANSI escapes" setting controls which ANSI escape codes are enabled:
+
+* "FG Color" enables changes to text foreground color.
+* "Font Style" enables changing the font style: bold, italic, or monospace. (These correspond to codes 1, 2, and 11.)
+
+A warning banner is displayed if any codes are detected on a page. This helps you be aware of potential visual artifacts, like text color that is being forced to black regardless of the page background color. Click on the warning to dismiss it on a per-site basis.
+
+If you serve content via Gemini, please be aware that ANSI escapes may not be supported by clients, and may in fact disrupt the behavior of a client in unexpected ways. For instance, consider a screen reader or a web proxy that doesn't filter out the codes. Only employ ANSI escapes when the user has somehow indicated that is their preference.
+
+### 2.4.3 Other font options
+
+The "Glyph warnings" option controls whether a warning will be shown when a page is missing one or more characters. This is typically due to the page being in a language that is not covered by any of the installed fonts. Clicking on the glyph warning banner opens the font management page.
+
+"Smoothing" enables or disables glyph antialiasing. In this version, it is recommended that smoothing is always enabled. This is because the text renderer does not support hinting of any kind, which means that without smoothing, glyph shapes will be severely distorted. You may still want to try disabling this option if antialiasing causes eye strain for you.
+
+### 2.4.4 Managing fonts
+
+Open "about:fonts" to see all the installed fonts, and enable, disable or uninstall individual fontpacks. At the top of the page, there is a link to the skyjake.fi Font Library: a curated collection of fontpacks that can be freely distributed. From there you can conveniently install more fonts specifically tuned for Lagrange.
+
+The rest of the page is divided to two sections: enabled and disabled fontpacks. Individual packs can be disabled, so they remain installed but not in use. (Tip: Use the Outline sidebar to see a list of all packs, if there are many.) 
+
+Click on the "View file" links to see what each fontpack contains. The fontpack format is described in section 5: it is simply a ZIP archive with some metadata and a bunch of font files. When you install a TrueType font (i.e., copy it to the user's fonts directory), it is treated as a fontpack containing a single file, although no ZIP archive is created for it. Use the "View fontpack.ini template" link to see the generated metadata that can be used as a basis for creating an actual fontpack.
+
+There are multiple locations where Lagrange looks for fontpacks at launch:
+
+* Directory containing the app binary (BIN_DIR)
+* (BIN_DIR)/fonts
+* (BIN_DIR)/../share/lagrange
+* (BIN_DIR)/../../share/lagrange
+* macOS: Lagrange.app/Contents/Resources
+* User configuration directory (CFG_DIR; see section 3.5)
+* (CFG_DIR)/fonts
+
+Individual TrueType fonts are automatically loaded only from the last one, (CFG_DIR)/fonts.
+
+If a "fonts.ini" file is present in the user configuration directory, it will be loaded as fontpack metadata (see section 5). This way you can manually configure fonts without creating a ZIP archive. For example:
+
+```fonts.ini example
+[couriercode]
+name = "Courier Code"
+regular = "/home/jaakko/Fonts/Courier Code/CourierCode-Roman.ttf"
+glyphscale = 0.85
+monospace = true
+```
+
+About compatibility: fonts are complex, and while the TrueType format is not the most advanced one, it still has features that are not supported in Lagrange. The technical reason is that glyphs are rasterized using stb_truetype, a rather simple TrueType font library. (It's nice and small, though.) You may find that some fonts simply fail to load correctly, or look wrong in the app.
+
+* Hinting is not supported. 
+* Bitmap glyphs are not supported.
+* Multi-color glyphs are not supported.
+
+TrueType Collections (.ttc) can be used, with the restriction that each declared font uses a single index from the collection. The index must be appended to the file name:
+```.ttc example
+regular = "NotoSansCJK-Regular.ttc:2"
+```
+
+## 2.5 Page style
 
 The "Style" tab of the Preferences dialog lets you customize the appearance and layout of page content.
-
-The fonts for headings and other text are selected separately. This way one can achieve a greater number of style variations. Also, headings that are in a different font are more visually distinct and thus easier for one's eyes to scan.
-
-There are six fonts available:
-
-* "Nunito" is a friendly rounded sans-serif font.
-* "Fira Sans" is a bolder, narrower, and more angular sans-serif font.
-* "Source Sans 3" is the Lagrange UI font (sans-serif).
-* "Literata" is a heavy and serious serif font.
-* "Tinos" is a lighter serif font.
-* "Iosevka" is the monospace font.
 
 Other style options:
 
@@ -409,13 +486,13 @@ Other style options:
 * Quote indicator: Quoted text is shown in an italic font. Additionally, you can select between a quotation mark icon and the traditional vertical line along the left edge of the quote.
 * Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font.
 
-## 2.5 Proxies
+## 2.6 Proxies
 
 Gemini allows relaying requests via a proxy server. On the "Network" tab, you can configure proxy servers for Gemini, Gopher, and HTTP/HTTPS requests.
 
 When an HTTP proxy server is configured, HTTP/HTTPS links will no longer open in the system's default web browser but will be loaded via the proxy, expecting it to serve a 'text/gemini' version of the link contents.
 
-## 2.6 Keybindings
+## 2.7 Keybindings
 
 The "Keys" tab lets you change which keys are bound to UI commands. Click on an item with the mouse and then press the new key combination that you want bound to it. Right-click on a binding to erase it or reset it to the default.
 
@@ -529,6 +606,9 @@ Each feed entry consists of five consecutive lines:
 * The posted time is a UNIX timestamp that specifies when the entry was posted. This is determined from the "YYYY-MM-DD" date found on the link line. If this is a "new headings" subscription, the posted time and the discovery time are the same.
 * The discovery time is a UNIX timestamp that marks when the entry was added to the cache.
 
+### fonts.ini
+This file is loaded as fontpack metadata (see section 5). It must be manually created.
+
 ### idents.lgr and idents/
 idents.lgr is a binary file that contains metadata about the client certificates known to the application, for example on which URLs a particular certificate should be active.
 
@@ -603,6 +683,9 @@ Persistent configuration variables. The file is rewritten when the application i
 ### state.lgr
 A binary file that contains the current state of the application: open tabs and their scroll positions, and navigation history with cached page content (up to the configured cache limit). You may delete this file when the application is not running to close all tabs and clear the page content cache.
 
+### sitespec.ini
+Site-specific settings.
+
 ### trusted.2.txt
 Trusted server certificates. Each line specifies the certificate fingerprint of one server:
 > {domain};{port} {valid-until} {fingerprint}
@@ -612,6 +695,9 @@ Trusted server certificates. Each line specifies the certificate fingerprint of 
 
 ### uploadbackup.txt
 Backup of the text entered into the Upload with Titan dialog.
+
+### uploadtoken.txt
+Backup of the server token.
 
 ### visited.2.txt
 The combined navigation history of all tabs. Each line specifies one URL:
@@ -675,7 +761,7 @@ Each hook is specified as three lines:
 * Command to execute, plus additional arguments each separated with semicolons
 
 For example:
-```
+```mimehooks.txt
 Convert Atom to Gemini feed
 application/xml
 /usr/bin/python3;/home/jaakko/atomconv.py
@@ -686,7 +772,7 @@ The hook program is executed directly without involving the shell. This means sc
 ## 4.3 Example: Converting from Atom to Gemini
 
 The following simple Python script demonstrates how a MIME hook could be used to parse an Atom XML document using Python 3 and output a Gemini feed index page based on the parsed entries. This is just a simple example; a more robust script could include more content from the Atom feed and handle errors, too.
-```
+```python
 import sys
 import xml.etree.ElementTree as ET
 
@@ -720,6 +806,78 @@ for entry in feed_entries:
     print(f'=> {entry_link} {entry_date} {entry_title}')
 ```
 
+# 5 Fontpacks
+
+Fontpack is a file format defined by Lagrange that is used to combine a set of font files with configuration metadata. The (unregistered) media type for .fontpack files is 'application/lagrange-fontpack+zip'.
+
+A fontpack is a ZIP archive that must have a "fontpack.ini" file at the root level.
+
+```fontpack.ini from firasans.fontpack
+version = 1
+
+[firasans]
+name        = "Fira Sans"
+glyphscale  = 0.85
+regular     = "FiraSans-Regular.ttf"
+italic      = "FiraSans-Italic.ttf"
+light       = "FiraSans-Light.ttf"
+semibold    = "FiraSans-SemiBold.ttf"
+bold        = "FiraSans-Bold.ttf"
+```
+
+Fontpacks may use the Deflate compression method, but that can slow down launching the app because each font must then be decompressed before loading.
+
+Each fontpack has an ID that comes from the file name: the ID of "firasans.fontpack" would be "firasans". Space characters are not allowed in the ID.
+
+Fontpacks are versioned, i.e., they have a version number in their metadata. This makes it possible to tell when a fontpack is an updated version of an existing one. The fontpack ID (file name) must remain the same, though, regardless of the version number.
+
+The "fontpack.ini" file uses TOML syntax and can specify any number of typefaces. In the example above, the line `[firasans]` begins the definition of a typeface called "firasans". If the same typeface is found in multiple fontpacks, only the first one that gets loaded is used; the rest are ignored. Typeface IDs can be the same or different than fontpack IDs; they exist in different namespaces. The typeface ID is what is actually used in "prefs.cfg" to save your font preferences.
+
+## 5.1 Fontpack properties
+
+`version` defines the version number of the fontpack. It is a single integer, and if omitted, defaults to zero. It has no specific meaning except that larger values are considered newer versions.
+
+## 5.2 Typeface properties
+
+### 5.2.1 General
+* `name` (string) is the human-readable name of the typeface. This is used in the Preferences dialog and elsewhere in the UI.
+
+### 5.2.2 Prioritization and exclusion
+The same character's glyph(s) may be found in several fonts, so a prioritization is applied to pick the most appropriate font. Font selection may also depend on the context, for example preformatted blocks must be displayed using monospace fonts. These properties control when and if the typeface will be used.
+
+* `priority` (integer) defines a sort order for typefaces. The ones with the highest priority are checked first.
+* `override` (bool): whether this typeface is always checked first before any other one, in any context. Only one typeface can use this flag.
+* `monospace` (bool): is this a monospace typeface and therefore suitable for preformatted blocks and monospace body text.
+* `auxiliary` (bool): if true, this typeface is not included in Preferences as a font choice, but is still checked for glyphs if other fonts do not provide them. Suitable for miscellaneous symbols or additional languages, for examples.
+* `allowspace` (bool): if true, an auxiliary font's metrics for space characters are used. Sometimes symbol fonts have extra wide spaces, so for example a space next to an Emoji would be too wide. This has no effect for non-auxiliary typefaces.
+
+### 5.2.3 Metrics
+These properties can be used to modify the height and spacing of the font.
+
+* `height` (float) is a multiplier to alter the height of the font. It can be at most 2.0, to double the height. This simply scales the font smaller or larger without altering spacing.
+* `glyphscale` (float) scales glyphs smaller without changing the height of the font. The value must be 1.0 or smaller. In effect, this lets you increase the spacing between consecutive lines of text. It can be combined with `height` to keep glyphs the same size but just increase line spacing. For example, `glyphscale` 0.833 would counter the scaling caused by `height` 1.2, increasing line spacing by 1.2x.
+* `voffset` (float) is multiplier applied to the vertical offset that normally centers scaled glyphs on the line. This allows fine-tuning where the baseline of scaled glyphs ends up. Setting this to 1.0 means that glyphs are vertically centered after scaling with `glyphscale`; 0.0 would disable the centering. Reasonable values are likely in the 0.5…1.5 range, depending on the amount of scaling.
+
+Changing only the `glyphscale` property is the recommended way to alter line spacing. This makes it easier to mix and match fonts on a single line without having to deal with changes in text height. Compare your adjusted scaling to see if it looks suitable next to normal body text.
+
+Each of these properties can be set separately for UI text and page content by using the prefixes `ui.` and `doc.`. For example, to only scale the font when used in the UI, set `ui.height` instead of `height`.
+
+### 5.2.4 Font files
+A single typeface can use up to five font files.
+
+* `regular` (string): path of a font file for the regular style. A relative path means that the file is loaded from inside the fontpack archive. Absolute paths can be used to refer to files on the local system.
+* `italic` (string): path of a font file for the italic style.
+* `light` (string): path of a font file for the light weight.
+* `semibold` (string): path of a font file for the semibold weight.
+* `bold` (string): path of a font file for the bold weight.
+
+Only the regular style is required. Undefined styles fall back to the closest available style. The same file path can be used in multiple styles; only one copy of the file will be loaded to memory.
+
+When the path refers to a TrueType Collection (.ttc), the font index to use must be appended to the file name:
+```.ttc example
+regular = "NotoSansCJK-Regular.ttc:2"
+```
+ 
 # Open source licenses
 
 => about:license

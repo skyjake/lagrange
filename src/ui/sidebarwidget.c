@@ -188,7 +188,7 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
                                              // extraPadding_WidgetFlag : 0) |
                                              flags);
     setFont_LabelWidget(btn, deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide
-                                 ? defaultBig_FontId
+                                 ? uiLabelBig_FontId
                                  : d->buttonFont);
     checkIcon_LabelWidget(btn);
     return btn;
@@ -742,8 +742,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->itemFonts[1] = uiContentBold_FontId;
 #if defined (iPlatformMobile)
     if (deviceType_App() == phone_AppDeviceType) {
-        d->itemFonts[0] = defaultBig_FontId;
-        d->itemFonts[1] = defaultBigBold_FontId;
+        d->itemFonts[0] = uiLabelBig_FontId;
+        d->itemFonts[1] = uiLabelBigBold_FontId;
     }
     d->widthAsGaps = 73.0f;
 #else
@@ -774,7 +774,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                     format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
                     frameless_WidgetFlag | noBackground_WidgetFlag);
         }
-        setButtonFont_SidebarWidget(d, isPhone ? defaultBig_FontId : uiLabel_FontId);
+        setButtonFont_SidebarWidget(d, isPhone ? uiLabelBig_FontId : uiLabel_FontId);
         addChildFlags_Widget(vdiv,
                              iClob(buttons),
                              arrangeHorizontal_WidgetFlag |
@@ -936,8 +936,8 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     if (deviceType_App() == phone_AppDeviceType) {
         /* Change font size depending on orientation. */
         const int fonts[2] = {
-            isPortrait_App() ? defaultBig_FontId : uiContent_FontId,
-            isPortrait_App() ? defaultBigBold_FontId : uiContentBold_FontId
+            isPortrait_App() ? uiLabelBig_FontId : uiContent_FontId,
+            isPortrait_App() ? uiLabelBigBold_FontId : uiContentBold_FontId
         };
         if (d->itemFonts[0] != fonts[0]) {
             d->itemFonts[0] = fonts[0];
@@ -945,7 +945,7 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
 //            updateMetrics_SidebarWidget_(d);
             updateItemHeight_SidebarWidget_(d);
         }
-        setButtonFont_SidebarWidget(d, isPortrait_App() ? defaultBig_FontId : uiLabel_FontId);
+        setButtonFont_SidebarWidget(d, isPortrait_App() ? uiLabelBig_FontId : uiLabel_FontId);
     }
     const iBool isTight =
         (width_Rect(bounds_Widget(as_Widget(d->modeButtons[0]))) < d->maxButtonLabelWidth);
@@ -987,10 +987,6 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     arrange_Widget(findWidget_Root("stack"));
     checkModeButtonLayout_SidebarWidget_(d);
     updateItemHeight_SidebarWidget_(d);
-    if (!isFixedWidth && !isRefreshPending_App()) {
-        updateSize_DocumentWidget(document_App());
-        invalidate_ListWidget(d->list);
-    }
 }
 
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
@@ -1962,7 +1958,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         deinit_String(&str);
         const iInt2 textPos = addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
         drawRange_Text(font, textPos, fg, range_String(&d->label));
-        const int metaFont = default_FontId;
+        const int metaFont = uiLabel_FontId;
         const int metaIconWidth = 4.5f * gap_UI;
         const iInt2 metaPos =
             init_I2(right_Rect(itemRect) -
@@ -2045,7 +2041,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int indent = 1.4f * lineHeight_Text(font);
         addv_I2(&cPos,
                 init_I2(3 * gap_UI,
-                        (itemHeight - lineHeight_Text(default_FontId) * 2 - lineHeight_Text(font)) /
+                        (itemHeight - lineHeight_Text(uiLabel_FontId) * 2 - lineHeight_Text(font)) /
                             2));
         const int metaFg = isHover ? permanent_ColorId | (isPressing ? uiTextPressed_ColorId
                                                                      : uiTextFramelessHover_ColorId)
@@ -2064,7 +2060,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                        add_I2(cPos, init_I2(indent, 0)),
                        fg,
                        range_String(&d->label));
-        drawRange_Text(default_FontId,
+        drawRange_Text(uiLabel_FontId,
                        add_I2(cPos, init_I2(indent, lineHeight_Text(font))),
                        metaFg,
                        range_String(&d->meta));

@@ -51,6 +51,7 @@ struct Impl_LabelWidget {
         uint8_t wrap                : 1;
         uint8_t allCaps             : 1;
         uint8_t removeTrailingColon : 1;
+        uint8_t chevron             : 1;
     } flags;
 };
 
@@ -267,7 +268,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         }
     }
     if (d->forceFg >= 0) {
-        *fg = *icon = *meta = d->forceFg;
+        *fg = /* *icon = */ *meta = d->forceFg;
     }
     if (isPress) {
         if (colorEscape == uiTextAction_ColorId || colorEscape == uiTextCaution_ColorId) {
@@ -307,7 +308,7 @@ static iRect contentBounds_LabelWidget_(const iLabelWidget *d) {
 
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
-    draw_Widget(w);
+    drawBackground_Widget(w);
     const iBool   isButton = d->click.button != 0;
     const int64_t flags    = flags_Widget(w);
     const iRect   bounds   = bounds_Widget(w);
@@ -379,12 +380,16 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     if (d->flags.wrap) {
         const iRect cont = contentBounds_LabelWidget_(d);
-        drawWrapRange_Text(
-            d->font, topLeft_Rect(cont), width_Rect(cont), fg, range_String(&d->label));
+        iWrapText wt = {
+            .text = range_String(&d->label),
+            .maxWidth = width_Rect(cont),
+            .mode = word_WrapTextMode,
+        };
+        draw_WrapText(&wt, d->font, topLeft_Rect(cont), fg);
     }
     else if (flags & alignLeft_WidgetFlag) {
         draw_Text(d->font, add_I2(bounds.pos, addX_I2(padding_LabelWidget_(d, 0), iconPad)),
-                  fg, cstr_String(&d->label));
+                  fg, "%s", cstr_String(&d->label));
         if ((flags & drawKey_WidgetFlag) && d->key) {
             iString str;
             init_String(&str);
@@ -399,6 +404,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                            : colorEscape != none_ColorId ? colorEscape
                                                       : uiTextShortcut_ColorId,*/
                            right_Alignment,
+                           "%s",
                            cstr_String(&str));
             deinit_String(&str);
         }
@@ -409,6 +415,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             add_I2(topRight_Rect(bounds), negX_I2(padding_LabelWidget_(d, 1))),
             fg,
             right_Alignment,
+            "%s",
             cstr_String(&d->label));
     }
     else {
@@ -421,7 +428,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             "%s",
             cstr_String(&d->label));
     }
-    if (flags & chevron_WidgetFlag) {
+    if (d->flags.chevron) {
         const iRect chRect = rect;
         const int chSize = lineHeight_Text(d->font);
         drawCentered_Text(d->font,
@@ -430,6 +437,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                           iTrue, iconColor, rightAngle_Icon);
     }
     unsetClip_Paint(&p);
+    drawChildren_Widget(w);
 }
 
 static void sizeChanged_LabelWidget_(iLabelWidget *d) {
@@ -565,6 +573,10 @@ void setNoAutoMinHeight_LabelWidget(iLabelWidget *d, iBool noAutoMinHeight) {
 
 void setNoTopFrame_LabelWidget(iLabelWidget *d, iBool noTopFrame) {
     d->flags.noTopFrame = noTopFrame;
+}
+
+void setChevron_LabelWidget(iLabelWidget *d, iBool chevron) {
+    d->flags.chevron = chevron;
 }
 
 void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {
