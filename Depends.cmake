@@ -114,7 +114,7 @@ add_custom_target (ext-deps DEPENDS ${_dependsToBuild})
 
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
     set (INSTALL_THE_FOUNDATION YES)
-    find_package (the_Foundation REQUIRED)
+    find_package (the_Foundation 1.0.0 REQUIRED)
 else ()
     if (EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/.git)
         # the_Foundation is checked out as a submodule, make sure it's up to date.
