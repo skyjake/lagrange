@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "text.h"
 #include "color.h"
 #include "metrics.h"
-#include "embedded.h"
+#include "resources.h"
 #include "window.h"
 #include "paint.h"
 #include "app.h"
@@ -180,21 +180,21 @@ static void init_Font(iFont *d, const iFontSpec *fontSpec, const iFontFile *font
     d->data = NULL;
     d->family = undefined_TextFont;
     /* Note: We only use `family` currently for applying a kerning fix to Nunito. */
-    if (data == &fontNunitoRegular_Embedded ||
-        data == &fontNunitoBold_Embedded ||
-        data == &fontNunitoExtraBold_Embedded ||
-        //data == &fontNunitoLightItalic_Embedded ||
-        data == &fontNunitoExtraLight_Embedded) {
+    if (data == &fontNunitoRegular_Resources ||
+        data == &fontNunitoBold_Resources ||
+        data == &fontNunitoExtraBold_Resources ||
+        //data == &fontNunitoLightItalic_Resources ||
+        data == &fontNunitoExtraLight_Resources) {
         d->family = nunito_TextFont;
     }
-    else if (//data == &fontScheherazadeNewRegular_Embedded) {
-             data == &fontNotoSansArabicUIRegular_Embedded) {
+    else if (//data == &fontScheherazadeNewRegular_Resources) {
+             data == &fontNotoSansArabicUIRegular_Resources) {
         d->family = arabic_TextFont;
     }
-    else if (data == &fontNotoSansSymbolsRegular_Embedded ||
-             data == &fontNotoSansSymbols2Regular_Embedded ||
-             data == &fontNotoEmojiRegular_Embedded ||
-             data == &fontSmolEmojiRegular_Embedded) {
+    else if (data == &fontNotoSansSymbolsRegular_Resources ||
+             data == &fontNotoSansSymbols2Regular_Resources ||
+             data == &fontNotoEmojiRegular_Resources ||
+             data == &fontSmolEmojiRegular_Resources) {
         d->family = emojiAndSymbols_TextFont;
     }
 #endif

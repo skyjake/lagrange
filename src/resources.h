@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -20,29 +20,41 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* bincat.c: Tiny tool for concatenating binary files */
+#pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <the_Foundation/block.h>
 
-int main(int argc, char *argv[]) {
-    const size_t bufSize = 1024 * 256;
-    char *buf = malloc(bufSize);
-    FILE *out = fopen(argv[1], "wb");
-    int i;
-    for (i = 2; i < argc; ++i) {
-        FILE *f = fopen(argv[i], "rb");
-        size_t fileSize = 0;
-        for (;;) {
-            size_t num = fread(buf, 1, bufSize, f);
-            if (num <= 0) break;
-            fileSize += num;
-            fwrite(buf, 1, num, out); 
-        }
-        fclose(f);
-        printf("%zu;", fileSize);
-    }
-    fclose(out);
-    free(buf);
-    return 0;
-}
+iDeclareType(Archive)
+
+iBool               init_Resources      (const char *path);
+void                deinit_Resources    (void);
+
+const iArchive *    archive_Resources   (void);
+
+extern iBlock blobAbout_Resources;
+extern iBlock blobHelp_Resources;
+extern iBlock blobLagrange_Resources;
+extern iBlock blobLicense_Resources;
+extern iBlock blobVersion_Resources;
+extern iBlock blobArghelp_Resources;
+extern iBlock blobDe_Resources;
+extern iBlock blobEn_Resources;
+extern iBlock blobEo_Resources;
+extern iBlock blobEs_Resources;
+extern iBlock blobEs_MX_Resources;
+extern iBlock blobFi_Resources;
+extern iBlock blobFr_Resources;
+extern iBlock blobGl_Resources;
+extern iBlock blobIa_Resources;
+extern iBlock blobIe_Resources;
+extern iBlock blobIsv_Resources;
+extern iBlock blobPl_Resources;
+extern iBlock blobRu_Resources;
+extern iBlock blobSk_Resources;
+extern iBlock blobSr_Resources;
+extern iBlock blobTok_Resources;
+extern iBlock blobUk_Resources;
+extern iBlock blobZh_Hans_Resources;
+extern iBlock blobZh_Hant_Resources;
+extern iBlock imageShadow_Resources;
+extern iBlock fontpackDefault_Resources;

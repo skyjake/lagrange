@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "defs.h"
 #include "documentwidget.h"
-#include "embedded.h"
+#include "resources.h"
 #include "inputwidget.h"
 #include "keys.h"
 #include "labelwidget.h"

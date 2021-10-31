@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.8.1
+    VERSION 1.9.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -29,7 +29,7 @@ if (IOS)
     set (IOS_BUILD_DATE "2021-10-23")
 endif ()
 
-# Default that depend on environment.
+# Defaults that depend on environment.
 set (DEFAULT_RESIZE_DRAW ON)
 if (HAIKU)
     set (DEFAULT_RESIZE_DRAW OFF)
@@ -52,20 +52,17 @@ option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_POPUP_MENUS      "Use popup windows for context menus (if OFF, menus are confined inside main window)" ON)
 option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
 option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAULT_RESIZE_DRAW})
-option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 
 include (BuildType.cmake)
-include (res/Embed.cmake)
-include (res/Fontpack.cmake)
+include (Resources.cmake)
 include (Depends.cmake)
 
 # Package resources.
 message (STATUS "Preparing resources...")
-make_fontpack (res/default.fontpack)
-set (EMBED_RESOURCES
+set (RESOURCES
     res/about/about.gmi
     res/about/help.gmi
     res/about/lagrange.gmi
@@ -92,12 +89,14 @@ set (EMBED_RESOURCES
     res/lang/zh_Hans.bin
     res/lang/zh_Hant.bin
     res/shadow.png
-    ${CMAKE_BINARY_DIR}/default.fontpack
+    res/fontpack.ini
 )
+file (GLOB FONTS RELATIVE ${CMAKE_SOURCE_DIR} res/fonts/*)
+list (APPEND RESOURCES ${FONTS})
 if ((UNIX AND NOT APPLE) OR MSYS)
-    list (APPEND EMBED_RESOURCES res/lagrange-64.png)
+    list (APPEND RESOURCES res/lagrange-64.png)
 endif ()
-embed_make (${EMBED_RESOURCES})
+make_resources (${CMAKE_CURRENT_BINARY_DIR}/resources.lgr ${RESOURCES})
 
 set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
@@ -142,6 +141,8 @@ set (SOURCES
     src/periodic.h
     src/prefs.c
     src/prefs.h
+    src/resources.c
+    src/resources.h
     src/sitespec.c
     src/sitespec.h
     src/stb_image.h
@@ -217,8 +218,6 @@ set (SOURCES
     res/about/lagrange.gmi
     res/about/license.gmi
     res/about/version.gmi
-    ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
-    ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
     ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr
 )
 if (ENABLE_IPC)
@@ -417,9 +416,7 @@ if (MSYS)
     if (TARGET PkgConfig::MPG123)
         install (PROGRAMS ${MPG123_LIBDIR}/../bin/msys-mpg123-0.dll DESTINATION .)
     endif ()
-    if (NOT ENABLE_RESOURCE_EMBED)
-        install (FILES ${EMB_BIN} DESTINATION .)
-    endif ()
+    install (FILES ${EMB_BIN} DESTINATION .)
     install (PROGRAMS
         ${SDL2_LIBDIR}/SDL2.dll
         res/urlopen.bat
@@ -430,11 +427,9 @@ if (MSYS)
     endif ()
 elseif (HAIKU)
     install (TARGETS app DESTINATION .)
-    if (NOT ENABLE_RESOURCE_EMBED)
-        target_compile_definitions (app PUBLIC
-            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
-        install (FILES ${EMB_BIN} DESTINATION .)
-    endif ()
+    target_compile_definitions (app PUBLIC
+        LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
+    install (FILES ${EMB_BIN} DESTINATION .)
 elseif (UNIX AND NOT APPLE)
     set_target_properties (app PROPERTIES
         INSTALL_RPATH_USE_LINK_PATH YES
@@ -460,11 +455,9 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
     install (FILES res/fi.skyjake.Lagrange.appdata.xml
         DESTINATION share/metainfo
     )
-    if (NOT ENABLE_RESOURCE_EMBED)
-        if (NOT ENABLE_RELATIVE_EMBED)
-            target_compile_definitions (app PUBLIC
-                LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.lgr")
-        endif ()
-        install (FILES ${EMB_BIN} DESTINATION share/lagrange)
+    if (NOT ENABLE_RELATIVE_EMBED)
+        target_compile_definitions (app PUBLIC
+            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.lgr")
     endif ()
+    install (FILES ${EMB_BIN} DESTINATION share/lagrange)
 endif ()

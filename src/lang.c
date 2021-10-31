@@ -21,7 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lang.h"
-#include "embedded.h"
+#include "resources.h"
 
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/string.h>
@@ -30,7 +30,7 @@ iDeclareType(Lang)
 iDeclareType(MsgStr)
 
 struct Impl_MsgStr {
-    iRangecc id; /* these point to null-terminated strings in embedded data */
+    iRangecc id; /* these point to null-terminated strings in resources */
     iRangecc str;
 };
 
@@ -83,41 +83,41 @@ static void clear_Lang_(iLang *d) {
 }
 
 static void load_Lang_(iLang *d, const char *id) {
-    /* Load compiled language strings from an embedded blob. */
+    /* Load compiled language strings from a resource blob. */
     iUnused(id);
-    const iBlock *data = equal_CStr(id, "fi")      ? &blobFi_Embedded
-                       : equal_CStr(id, "fr")      ? &blobFr_Embedded
-                       : equal_CStr(id, "ru")      ? &blobRu_Embedded
-                       : equal_CStr(id, "eo")      ? &blobEo_Embedded
-                       : equal_CStr(id, "es")      ? &blobEs_Embedded
-                       : equal_CStr(id, "es_MX")   ? &blobEs_MX_Embedded
-                       : equal_CStr(id, "de")      ? &blobDe_Embedded
-                       : equal_CStr(id, "gl")      ? &blobGl_Embedded
-                       : equal_CStr(id, "ia")      ? &blobIa_Embedded
-                       : equal_CStr(id, "ie")      ? &blobIe_Embedded
-                       : equal_CStr(id, "isv")     ? &blobIsv_Embedded
-                       : equal_CStr(id, "pl")      ? &blobPl_Embedded
-                       : equal_CStr(id, "sk")      ? &blobSk_Embedded
-                       : equal_CStr(id, "sr")      ? &blobSr_Embedded
-                       : equal_CStr(id, "tok")     ? &blobTok_Embedded
-                       : equal_CStr(id, "uk")      ? &blobUk_Embedded
-                       : equal_CStr(id, "zh_Hans") ? &blobZh_Hans_Embedded
-                       : equal_CStr(id, "zh_Hant") ? &blobZh_Hant_Embedded
-                                                   : &blobEn_Embedded;
-    if (data == &blobRu_Embedded || data == &blobSr_Embedded || data == &blobUk_Embedded) {
+    const iBlock *data = equal_CStr(id, "fi")      ? &blobFi_Resources
+                       : equal_CStr(id, "fr")      ? &blobFr_Resources
+                       : equal_CStr(id, "ru")      ? &blobRu_Resources
+                       : equal_CStr(id, "eo")      ? &blobEo_Resources
+                       : equal_CStr(id, "es")      ? &blobEs_Resources
+                       : equal_CStr(id, "es_MX")   ? &blobEs_MX_Resources
+                       : equal_CStr(id, "de")      ? &blobDe_Resources
+                       : equal_CStr(id, "gl")      ? &blobGl_Resources
+                       : equal_CStr(id, "ia")      ? &blobIa_Resources
+                       : equal_CStr(id, "ie")      ? &blobIe_Resources
+                       : equal_CStr(id, "isv")     ? &blobIsv_Resources
+                       : equal_CStr(id, "pl")      ? &blobPl_Resources
+                       : equal_CStr(id, "sk")      ? &blobSk_Resources
+                       : equal_CStr(id, "sr")      ? &blobSr_Resources
+                       : equal_CStr(id, "tok")     ? &blobTok_Resources
+                       : equal_CStr(id, "uk")      ? &blobUk_Resources
+                       : equal_CStr(id, "zh_Hans") ? &blobZh_Hans_Resources
+                       : equal_CStr(id, "zh_Hant") ? &blobZh_Hant_Resources
+                                                   : &blobEn_Resources;
+    if (data == &blobRu_Resources || data == &blobSr_Resources || data == &blobUk_Resources) {
         d->pluralType = slavic_PluralType;
     }
-    else if (data == &blobIsv_Embedded) {
+    else if (data == &blobIsv_Resources) {
         d->pluralType = oneTwoMany_PluralType;
     }
-    else if (data == &blobSk_Embedded) {
+    else if (data == &blobSk_Resources) {
         d->pluralType = oneFewMany_PluralType;
     }
-    else if (data == &blobPl_Embedded) {
+    else if (data == &blobPl_Resources) {
         d->pluralType = polish_PluralType;
     }
-    else if (data == &blobZh_Hans_Embedded || data == &blobZh_Hant_Embedded ||
-             data == &blobTok_Embedded) {
+    else if (data == &blobZh_Hans_Resources || data == &blobZh_Hant_Resources ||
+             data == &blobTok_Resources) {
         d->pluralType = none_PluralType;
     }
     else {

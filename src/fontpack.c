@@ -21,7 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "fontpack.h"
-#include "embedded.h"
+#include "resources.h"
 #include "ui/window.h"
 #include "app.h"
 
@@ -564,11 +564,8 @@ void init_Fonts(const char *userDir) {
     /* Load the required fonts. */ {
         iFontPack *pack = new_FontPack();
         setCStr_String(&pack->id, "default");
-        iArchive *arch = new_Archive();
         setReadOnly_FontPack(pack, iTrue);
-        openData_Archive(arch, &fontpackDefault_Embedded);
-        loadArchive_FontPack(pack, arch); /* should never fail if we've made it this far */
-        iRelease(arch);
+        loadArchive_FontPack(pack, archive_Resources()); /* should never fail if we've made it this far */
         pushBack_PtrArray(&d->packs, pack);
     }
     /* Find and load .fontpack files in known locations. */ {

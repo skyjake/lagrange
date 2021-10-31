@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "feeds.h"
 #include "bookmarks.h"
 #include "ui/text.h"
-#include "embedded.h"
+#include "resources.h"
 #include "defs.h"
 
 #include <the_Foundation/archive.h>
@@ -344,19 +344,19 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
 static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
     const iBlock *src = NULL;
     if (equalCase_Rangecc(path, "about")) {
-        return &blobAbout_Embedded;
+        return &blobAbout_Resources;
     }
     if (equalCase_Rangecc(path, "lagrange")) {
-        return &blobLagrange_Embedded;
+        return &blobLagrange_Resources;
     }
     if (equalCase_Rangecc(path, "help")) {
-        return &blobHelp_Embedded;
+        return &blobHelp_Resources;
     }
     if (equalCase_Rangecc(path, "license")) {
-        return &blobLicense_Embedded;
+        return &blobLicense_Resources;
     }
     if (equalCase_Rangecc(path, "version")) {
-        return &blobVersion_Embedded;
+        return &blobVersion_Resources;
     }
     if (equalCase_Rangecc(path, "debug")) {
         return utf8_String(debugInfo_App());
@@ -396,7 +396,7 @@ static const iBlock *replaceVariables_(const iBlock *block) {
 #if 0
             else if (startsWith_Rangecc(name, "BT:")) { /* block text */
                 repl = range_String(collect_String(renderBlockChars_Text(
-                    &fontFiraSansRegular_Embedded,
+                    &fontFiraSansRegular_Resources,
                     11, /* should be larger if shaded */
                     quadrants_TextBlockMode,
                     &(iString){ iBlockLiteral(
@@ -404,7 +404,7 @@ static const iBlock *replaceVariables_(const iBlock *block) {
             }
             else if (startsWith_Rangecc(name, "ST:")) { /* shaded text */
                 repl = range_String(collect_String(renderBlockChars_Text(
-                    &fontSmolEmojiRegular_Embedded,
+                    &fontSmolEmojiRegular_Resources,
                     20,
                     shading_TextBlockMode,
                     &(iString){ iBlockLiteral(

@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "bookmarks.h"
 #include "defs.h"
-#include "embedded.h"
+#include "resources.h"
 #include "feeds.h"
 #include "mimehooks.h"
 #include "gmcerts.h"
@@ -711,19 +711,17 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
         SDL_free(exec);
     }
-#if defined (iHaveLoadEmbed)
     /* Load the resources from a file. Check the executable directory first, then a
        system-wide location, and as a final fallback, the current working directory. */ {
-        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
-            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
-                if (!load_Embed("resources.lgr")) {
+        if (!init_Resources(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
+            if (!init_Resources(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
+                if (!init_Resources("resources.lgr")) {
                     fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
                     exit(-1);
                 }
             }
         }
     }
-#endif
     init_Lang();
     /* Configure the valid command line options. */ {
         defineValues_CommandLine(&d->args, "close-tab", 0);
@@ -742,7 +740,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     iStringList *openCmds = new_StringList();
     /* Handle command line options. */ {
         if (contains_CommandLine(&d->args, "help")) {
-            puts(cstr_Block(&blobArghelp_Embedded));
+            puts(cstr_Block(&blobArghelp_Resources));
             terminate_App_(0);
         }
         if (contains_CommandLine(&d->args, "version;V")) {

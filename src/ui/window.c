@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "command.h"
 #include "defs.h"
-#include "embedded.h"
+#include "resources.h"
 #include "keys.h"
 #include "labelwidget.h"
 #include "documentwidget.h"
@@ -583,7 +583,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #if defined (iPlatformLinux)
     SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
     /* Load the window icon. */ {
-        SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, 0);
+        SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, 0);
         SDL_SetWindowIcon(d->base.win, surf);
         free(surf->pixels);
         SDL_FreeSurface(surf);
@@ -597,7 +597,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     setupUserInterface_MainWindow(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
     /* Load the border shadow texture. */ {
-        SDL_Surface *surf = loadImage_(&imageShadow_Embedded, 0);
+        SDL_Surface *surf = loadImage_(&imageShadow_Resources, 0);
         d->base.borderShadow = SDL_CreateTextureFromSurface(d->base.render, surf);
         SDL_SetTextureBlendMode(d->base.borderShadow, SDL_BLENDMODE_BLEND);
         free(surf->pixels);
@@ -607,7 +607,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Load the app icon for drawing in the title bar. */
     if (prefs_App()->customFrame) {
-        SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, appIconSize_Root());
+        SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, appIconSize_Root());
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         d->appIcon = SDL_CreateTextureFromSurface(d->base.render, surf);
         free(surf->pixels);
