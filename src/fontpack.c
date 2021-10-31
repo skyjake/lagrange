@@ -79,6 +79,15 @@ void init_FontFile(iFontFile *d) {
 
 static void load_FontFile_(iFontFile *d, const iBlock *data) {
     set_Block(&d->sourceData, data);
+#if 0
+    /* Count the number of available fonts. */
+    for (int i = 0; ; i++) {
+        if (stbtt_GetFontOffsetForIndex(constData_Block(&d->sourceData), i) < 0) {
+            printf("%s: contains %d fonts\n", cstr_String(&d->id), i);
+            break;
+        }
+    }
+#endif
     const size_t offset = stbtt_GetFontOffsetForIndex(constData_Block(&d->sourceData),
                                                       d->colIndex);
     stbtt_InitFont(&d->stbInfo, constData_Block(data), offset);
