@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-10-12 19:50+0000\n"
-"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"PO-Revision-Date: 2021-11-01 00:42+0000\n"
+"Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -435,9 +435,8 @@ msgstr "УДАЛЕНИЕ КЛИЕНТСКОГО СЕРТИФИКАТА"
 
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"Вы действительно хотите удалить идентификатор\n"
-"%s%s%s,\n"
-"включая файлы сертификата и закрытого ключа?"
+"Вы действительно хотите удалить идентификатор «%s%s%s», включая файлы "
+"сертификата и закрытого ключа?"
 
 msgid "dlg.ident.delete"
 msgstr "Удалить клиентский сертификат и файлы"
@@ -454,9 +453,7 @@ msgid "heading.unsub"
 msgstr "ОТПИСКА"
 
 msgid "dlg.confirm.unsub"
-msgstr ""
-"Действительно отписаться от ленты\n"
-"«%s»?"
+msgstr "Действительно отписаться от ленты «%s»?"
 
 msgid "dlg.unsub"
 msgstr "Отписаться"
@@ -1172,7 +1169,7 @@ msgid "error.tls"
 msgstr "Ошибка сети/TLS"
 
 msgid "error.tls.msg"
-msgstr "Не удалось связаться с сервером. Вот сообщение об ошибке:"
+msgstr "Не удалось связаться с сервером."
 
 msgid "error.temporary"
 msgstr "Временный сбой"
@@ -1743,8 +1740,8 @@ msgstr "ПОРТ ЗАГРУЗОК TITAN"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"Задать порт сервера Titan для данного адреса.\n"
-"Порт сохраняется в настройках сайта."
+"Задать порт сервера Titan для данного адреса. Порт сохраняется в настройках "
+"сайта."
 
 msgid "dlg.uploadport.set"
 msgstr "Задать порт"
@@ -1927,3 +1924,192 @@ msgstr "Выбрать файл"
 
 msgid "upload.id"
 msgstr "Клиентский сертификат:"
+
+msgid "dlg.fontpack.classic"
+msgstr "Загрузить пакет шрифтов (25 МБ)"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu файл"
+msgstr[1] "%zu файла"
+msgstr[2] "%zu файлов"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu шрифт"
+msgstr[1] "%zu шрифта"
+msgstr[2] "%zu шрифтов"
+
+msgid "heading.fontpack.classic"
+msgstr "ЗАГРУЗИТЬ ПАКЕТ ШРИФТОВ"
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Шрифты, ранее поставляемые вместе с приложением, теперь распространяются "
+"отдельно. Хотите ли вы скачать пакет шрифтов \"Классический\" сейчас?"
+
+msgid "fontpack.help"
+msgstr ""
+"Пакеты шрифтов Lagrange — это ZIP-архивы, содержащие набор файлов шрифтов и "
+"относящиеся к ним параметры конфигурации. Будучи установленными, шрифты "
+"могут быть использованы для документов и интерфейса. Активные шрифты можно "
+"выбрать в меню Настройки > Шрифты."
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Вы действительно хотите безвозвратно удалить пакет шрифтов «%s»?"
+
+msgid "dlg.certwarn.title"
+msgstr "Угроза безопасности"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Игнорировать HTTP(S)-ссылки:"
+
+msgid "prefs.font.ui"
+msgstr "Интерфейс:"
+
+msgid "prefs.font.heading"
+msgstr "Заголовки:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Моноширинный шрифт:"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Эта страница отображена не полностью, так как некоторые символы отсутствуют. "
+"Установите дополнительные шрифты, чтобы исправить эту проблему."
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange будет пытаться загрузить все отдельные файлы TrueType, "
+"скопированные в каталог пользовательских шрифтов."
+
+msgid "error.ansi.msg"
+msgstr ""
+"Эта страница может быть отображена некорректна. Для стилизации текста на ней "
+"использованы управляющие последовательности ANSI, которые поддерживаются "
+"только частично. Вы можете использовать эмулятор терминала для её просмотра."
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Добавлять закладки в конец списка:"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Цвет преформатированных блоков"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Инвертировать"
+
+msgid "menu.website"
+msgstr "Веб-сайт проекта…"
+
+msgid "menu.fonts"
+msgstr "Менеджер шрифтов…"
+
+msgid "prefs.font.body"
+msgstr "Текст:"
+
+msgid "prefs.font.mono"
+msgstr "Преформатированные блоки:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Посещённые адреса"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Последовательности ANSI:"
+
+msgid "prefs.font.smooth"
+msgstr "Сглаживание:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Цвет текста"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Начертание шрифта"
+
+msgid "prefs.font.warnmissing"
+msgstr "Предупреждения о символах:"
+
+msgid "fontpack.install.ttf"
+msgstr "Установить шрифт TrueType"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Показать установленные шрифты"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Установить «%s»"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Обновить «%s» до версии «%d»"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Безвозвратно удалить «%s»"
+
+msgid "heading.fontpack.delete"
+msgstr "УДАЛИТЬ ПАКЕТ ШРИФТОВ"
+
+msgid "dlg.fontpack.delete"
+msgstr "Удалить пакет шрифтов"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Не установлен"
+
+msgid "fontpack.meta.installed"
+msgstr "Установлен"
+
+msgid "fontpack.meta.disabled"
+msgstr ", неактивен"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Версия %d"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Открыть файл"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Активные пакеты шрифтов"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Неактивные пакеты шрифтов"
+
+msgid "heading.fontpack.meta"
+msgstr "Шрифты"
+
+msgid "error.ansi"
+msgstr "Эмуляция терминала"
+
+msgid "error.glyphs"
+msgstr "Некоторые символы отсутствуют"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Активировать «%s»"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Деактивировать «%s»"
+
+msgid "fontpack.export"
+msgstr "Открыть шаблон файла fontpack.ini"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Открыть каталог пользовательских шрифтов"
+
+msgid "truetype.help.installed"
+msgstr "Этот шрифт установлен в каталог пользовательских шрифтов."
+
+msgid "heading.dismiss.warning"
+msgstr "СКРЫТЬ ПРЕДУПРЕЖДЕНИЕ?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Скрыть предупреждение"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Навсегда скрыть предупреждение об эмуляции терминала на %s?"
