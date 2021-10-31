@@ -20,7 +20,6 @@ New features:
 * Added warning message about missing font glyphs.
 * Added warning message about terminal emulation. Lagrange supports a small subset of ANSI escape sequences, so page appearance may be incorrect when these are used in content.
 * Added tab close buttons.
-* Added style option to show links as bold regardless of visited status.
 * Added a feed subscription option to exclude web links (HTTP/HTTPS), since those are not viewable in the app by default. 
 * Added an automatic conversion of Markdown to Gemtext when viewing local files. (Not all Markdown features are supported.)
 * Added UI language for Ukrainian (uk).
