@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-01 00:42+0000\n"
+"PO-Revision-Date: 2021-11-02 23:51+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -2126,3 +2126,6 @@ msgstr "Borrar \"%s\" permanentemente"
 
 msgid "heading.fontpack.delete"
 msgstr "BORRAR PAQUETE DE FUENTES"
+
+msgid "lang.uk"
+msgstr "Ucraniano"
