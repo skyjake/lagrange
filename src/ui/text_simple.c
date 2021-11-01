@@ -61,6 +61,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
        and other non-complex LTR scripts. Composed glyphs are not supported (must rely on text
        being in a pre-composed form). This algorithm is used if HarfBuzz is not available. */
     const iInt2 orig        = args->pos;
+    iTextAttrib attrib      = { .colorId = args->color };
     iRect       bounds      = { orig, init_I2(0, d->height) };
     float       xpos        = orig.x;
     float       xposMax     = xpos;
@@ -86,7 +87,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
 //    }
     const iBool checkHitPoint = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
     const iBool checkHitChar  = wrap && wrap->hitChar;
-    const iBool isMonospaced  = d->isMonospaced && !(mode & alwaysVariableWidthFlag_RunMode);
+    const iBool isMonospaced  = isMonospaced_Font(d) && !(mode & alwaysVariableWidthFlag_RunMode);
     if (isMonospaced) {
         monoAdvance = glyph_Font_(d, 'M')->advance;
     }
@@ -166,7 +167,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             /* TODO: Check out if `uc_wordbreak_property()` from libunistring can be used here. */
             if (ch == '\n') {
                 /* Notify about the wrap. */
-                if (!notify_WrapText_(wrap, chPos, 0, iMax(xpos, xposExtend) - orig.x, iFalse)) {
+                if (!notify_WrapText_(wrap, chPos, attrib, 0, iMax(xpos, xposExtend) - orig.x)) {
                     break;
                 }
                 lastWordEnd = NULL;
@@ -246,7 +247,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                 wrapPos = iMin(wrapPos, args->text.end);
                 advance = wrapAdvance;
             }
-            if (!notify_WrapText_(wrap, wrapPos, 0, advance, iFalse)) {
+            if (!notify_WrapText_(wrap, wrapPos, attrib, 0, advance)) {
                 break;
             }
             lastWordEnd = NULL;
@@ -282,8 +283,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
         }
         /* Symbols and emojis are NOT monospaced, so must conform when the primary font
            is monospaced. Except with Japanese script, that's larger than the normal monospace. */
-        const iBool useMonoAdvance =
-            monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font));
+        const iBool useMonoAdvance = monoAdvance > 0; // && !isJapanese_FontId(fontId_Text_(glyph->font));
         const float advance = (useMonoAdvance && glyph->advance > 0 ? monoAdvance : glyph->advance);
         if (!isMeasuring_(mode) && ch != 0x20 /* don't bother rendering spaces */) {
             if (useMonoAdvance && dst.w > advance && glyph->font != d && !isEmoji) {
@@ -328,9 +328,9 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             if (enableKerning_Text && next) {
                 const uint32_t nextGlyphIndex = glyphIndex_Font_(glyph->font, next);
                 int kern = stbtt_GetGlyphKernAdvance(
-                    &glyph->font->font, index_Glyph_(glyph), nextGlyphIndex);
+                    &glyph->font->fontFile->stbInfo, index_Glyph_(glyph), nextGlyphIndex);
                 /* Nunito needs some kerning fixes. */
-                if (glyph->font->family == nunito_TextFont) {
+                if (glyph->font->fontSpec->flags & fixNunitoKerning_FontSpecFlag) {
                     if (ch == 'W' && (next == 'i' || next == 'h')) {
                         kern = -30;
                     }
@@ -362,7 +362,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             break;
         }
     }
-    notify_WrapText_(wrap, chPos, 0, xpos - orig.x, iFalse);
+    notify_WrapText_(wrap, chPos, attrib, 0, xpos - orig.x);
     if (checkHitChar && wrap->hitChar == args->text.end) {
         wrap->hitAdvance_out = sub_I2(init_I2(xpos, ypos), orig);
     }
