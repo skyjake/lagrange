@@ -968,6 +968,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                        ? 4 : 0) * gap_Text;
             }
             if (!isMono) {
+#if 0
                 /* Upper-level headings are typeset a bit tighter. */
                 if (type == heading1_GmLineType) {
                     rts.lineHeightReduction = 0.10f;
@@ -975,6 +976,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 else if (type == heading2_GmLineType) {
                     rts.lineHeightReduction = 0.06f;
                 }
+#endif
                 /* Visited links are never bold. */
                 if (run.linkId && !prefs->boldLinkVisited &&
                     linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
