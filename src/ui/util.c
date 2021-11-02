@@ -1455,12 +1455,17 @@ void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *co
     iLabelWidget *tabButton = tabButtonForPage_Widget_(tabs, page);
     setPadding_Widget(as_Widget(tabButton), 0, 0, 0, gap_UI / 4);
     setFlags_Widget(as_Widget(tabButton), arrangeVertical_WidgetFlag | resizeHeightOfChildren_WidgetFlag, iTrue);
+#if defined (iPlatformApple)
+    const int64_t edge = moveToParentLeftEdge_WidgetFlag;
+#else
+    const int64_t edge = moveToParentRightEdge_WidgetFlag;
+#endif
     iLabelWidget *close = addChildFlags_Widget(
         as_Widget(tabButton),
         iClob(new_LabelWidget(close_Icon,
                               format_CStr("%s id:%s", command, cstr_String(id_Widget(page))))),
-        moveToParentRightEdge_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag |
-            noBackground_WidgetFlag | hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
+        edge | tight_WidgetFlag | frameless_WidgetFlag | noBackground_WidgetFlag |
+            hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(as_Widget(close),
                         hidden_WidgetFlag | visibleOnParentHover_WidgetFlag, iFalse);
