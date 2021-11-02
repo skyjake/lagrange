@@ -103,10 +103,10 @@ static iBool convertSource_Gopher_(iGopher *d) {
     for (;;) {
         /* Find the end of the line. */
         iRangecc line = { body.start, body.start };
-        while (line.end < body.end - 1 && !isCRLFLineTerminator_(line.end)) {
+        while (line.end < body.end - 1 && !isLineTerminator_(line.end)) {
             line.end++;
         }
-        if (line.end >= body.end - 1 || !isCRLFLineTerminator_(line.end)) {
+        if (line.end >= body.end - 1 || !isLineTerminator_(line.end)) {
             /* Not a complete line. More may be coming later. */
             break;
         }
