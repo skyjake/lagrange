@@ -2125,6 +2125,12 @@ void resetFonts_App(void) {
     }
 }
 
+static void invalidateCachedDocuments_App_(void) {
+    iForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
+        invalidateCachedLayout_History(history_DocumentWidget(i.object));
+    }
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     const iBool isFrozen = !d->window || d->window->isDrawFrozen;
@@ -2289,7 +2295,10 @@ iBool handleCommand_App(const char *cmd) {
         if (!isFrozen) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue); /* no intermediate draws before docs updated */
         }
-        d->prefs.zoomPercent = arg_Command(cmd);
+        if (arg_Command(cmd) != d->prefs.zoomPercent) {
+            d->prefs.zoomPercent = arg_Command(cmd);
+            invalidateCachedDocuments_App_();
+        }
         setDocumentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
         if (!isFrozen) {
             postCommand_App("font.changed");
@@ -2306,6 +2315,7 @@ iBool handleCommand_App(const char *cmd) {
             delta /= 2;
         }
         d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
+        invalidateCachedDocuments_App_();
         setDocumentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
         if (!isFrozen) {
             postCommand_App("font.changed");
