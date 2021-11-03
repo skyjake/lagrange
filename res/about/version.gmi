@@ -6,6 +6,14 @@
 ```
 # Release notes
 
+## 1.8.1
+* Added the `zip` utility as a build requirement. It is used for making fontpacks.
+* Fixed build failure with the simple text renderer, i.e., when HarfBuzz is disabled.
+* Fixed a line spacing artifact in long headings. With some fonts, the lines were clipping each other so the spacing was restored to normal.
+* Fixed a socket I/O issue that caused received data to be ignored when the peer closed the connection prematurely.
+* macOS: Tab close buttons are on the left side (platform UI convention).
+* Gopher: Recognize both LF and CRLF line endings in page content.
+
 ## 1.8
 ⚠️ Font settings will be reset to defaults. Only a minimal set of fonts is bundled with the app. If additional fonts are needed, one can use custom TrueType fonts or download some from the Font Library:
 => gemini://skyjake.fi/fonts/
