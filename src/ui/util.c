@@ -1023,11 +1023,13 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     arrange_Widget(d); /* need to know the height */
+    iBool allowOverflow = iFalse;
     /* A vertical offset determined by a possible selected label in the menu. */ {
         iConstForEach(ObjectList, child, children_Widget(d)) {
             const iWidget *item = constAs_Widget(child.object);
             if (flags_Widget(item) & selected_WidgetFlag) {
                 windowCoord.y -= item->rect.pos.y;
+                allowOverflow = iTrue;
             }
         }
     }
@@ -1129,11 +1131,13 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         rightExcess  += r;
     }
 #endif
-    if (bottomExcess > 0 && (!isPortraitPhone || !isSlidePanel)) {
-        d->rect.pos.y -= bottomExcess;
-    }
-    if (topExcess > 0) {
-        d->rect.pos.y += topExcess;
+    if (!allowOverflow) {
+        if (bottomExcess > 0 && (!isPortraitPhone || !isSlidePanel)) {
+            d->rect.pos.y -= bottomExcess;
+        }
+        if (topExcess > 0) {
+            d->rect.pos.y += topExcess;
+        }
     }
     if (rightExcess > 0) {
         d->rect.pos.x -= rightExcess;
