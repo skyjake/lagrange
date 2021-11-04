@@ -72,6 +72,7 @@ set (EMBED_RESOURCES
     res/about/license.gmi
     res/about/version.gmi
     res/arg-help.txt
+    res/lang/cs.bin
     res/lang/de.bin
     res/lang/en.bin
     res/lang/eo.bin

@@ -6,6 +6,7 @@ import os, sys
 
 BUILD_LANGS = [
     'en', # base strings
+    'cs',
     'de',
     'eo',
     'es',

@@ -2199,7 +2199,8 @@ iWidget *makeDialog_Widget(const char *id,
 
 iWidget *makePreferences_Widget(void) {
     /* Common items. */
-    const iMenuItem langItems[] = { { "${lang.de} - de", 0, 0, "uilang id:de" },
+    const iMenuItem langItems[] = { { "${lang.cs} - cs", 0, 0, "uilang id:cs" },
+                                    { "${lang.de} - de", 0, 0, "uilang id:de" },
                                     { "${lang.en} - en", 0, 0, "uilang id:en" },
                                     { "${lang.es} - es", 0, 0, "uilang id:es" },
                                     { "${lang.es.mx} - es", 0, 0, "uilang id:es_MX" },

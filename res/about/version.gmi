@@ -7,7 +7,7 @@
 # Release notes
 
 ## 1.8.1
-* Added UI translation for Hungarian.
+* Added UI translations: Hungarian, Czech.
 * Added the `zip` utility as a build requirement. It is used for making fontpacks.
 * Fixed build failure with the simple text renderer, i.e., when HarfBuzz is disabled.
 * Fixed a line spacing artifact in long headings. With some fonts, the lines were clipping each other so the spacing was restored to normal.
