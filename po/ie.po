@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-07 16:50+0000\n"
+"PO-Revision-Date: 2021-11-04 20:09+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -503,9 +503,7 @@ msgstr "DESABONNAR"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"Esque desabonnar li feed\n"
-"«%s»?"
+msgstr "Esque desabonnar li feed «%s»?"
 
 msgid "dlg.unsub"
 msgstr "Desabonnar"
@@ -1186,7 +1184,7 @@ msgid "error.tls"
 msgstr "Dessuccesse del rete o TLS"
 
 msgid "error.tls.msg"
-msgstr "Ne successat communicar con li servitor. Vi li textu de errore:"
+msgstr "Ne successat communicar con li servitor."
 
 msgid "error.temporary"
 msgstr "Temporari dessuccesse"
@@ -1712,8 +1710,8 @@ msgstr "Assignar li portu"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"Assignar li portu de Titan por ti-ci adresse.\n"
-"Li portu es gardat in li preferenties del site."
+"Assignar li portu de Titan por ti-ci adresse. Li portu es gardat in li "
+"preferenties del site."
 
 msgid "prefs.returnkey"
 msgstr "Coduida del taste Enter:"
@@ -1918,3 +1916,149 @@ msgstr "Sel. omni"
 # keep this short (3x1 horiz layout)
 msgid "menu.delete"
 msgstr "Remov."
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignorar ligamentes HTTP(s):"
+
+msgid "truetype.help.installed"
+msgstr "Ti-ci fonde es installat in li fólder de personal fondes."
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Li fondes quel esser includet in li app es nu disponibil quam un separat "
+"discarga. Esque vu vole descargar li «classic» collection ho-témpor?"
+
+msgid "lang.hu"
+msgstr "Hungarian"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Adjunter marca-págines a bass:"
+
+msgid "prefs.font.ui"
+msgstr "IdU:"
+
+msgid "prefs.font.heading"
+msgstr "Rubricas:"
+
+msgid "prefs.font.body"
+msgstr "Córpore:"
+
+msgid "prefs.font.mono"
+msgstr "Formatat:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Visitat"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Codes escape de ANSI:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Avanplan"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Stil de fonde"
+
+msgid "prefs.font.warnmissing"
+msgstr "Avise de glifes:"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu file"
+msgstr[1] "%zu files"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu fonde"
+msgstr[1] "%zu fondes"
+
+msgid "heading.fontpack.classic"
+msgstr "DESCARGAR UN FONDPAC"
+
+msgid "error.ansi"
+msgstr "Emulation del terminal"
+
+msgid "error.glyphs"
+msgstr "Glifes mancant"
+
+msgid "heading.fontpack.meta"
+msgstr "Fondes"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Monstrar li file"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Activ fondpacs"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Ínactiv fondpacs"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Version %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Installat"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Ne installat"
+
+msgid "fontpack.meta.disabled"
+msgstr ", ínactiv"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Desactivar «%s»"
+
+msgid "fontpack.export"
+msgstr "Monstrar li modelle fontpack.ini"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Installar «%s»"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Actualisar «%s» al version %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Remover «%s» permanentmen"
+
+msgid "dlg.fontpack.delete"
+msgstr "Remover li fondpac"
+
+msgid "fontpack.install.ttf"
+msgstr "Installar un fonde TrueType"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Aperter li fólder de personal fondes"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Monstrar installat fondes"
+
+msgid "dlg.fontpack.classic"
+msgstr "Descargar li fondpac (25 Mo)"
+
+msgid "lang.uk"
+msgstr "Ukrainan"
+
+msgid "heading.fontpack.delete"
+msgstr "REMOVER LI FONDPAC"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Esque vu vole remover li fondpac «%s» permanentmen?"
+
+msgid "menu.fonts"
+msgstr "Gerentie de fondes…"
+
+msgid "dlg.certwarn.title"
+msgstr "Problema de securitá"
+
+msgid "menu.website"
+msgstr "Website del projecte…"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Activar «%s»"
