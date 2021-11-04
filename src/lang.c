@@ -94,7 +94,7 @@ static void load_Lang_(iLang *d, const char *id) {
                        : equal_CStr(id, "es_MX")   ? &blobEs_MX_Resources
                        : equal_CStr(id, "de")      ? &blobDe_Resources
                        : equal_CStr(id, "gl")      ? &blobGl_Resources
-                       : equal_CStr(id, "hu")      ? &blobHu_Embedded
+                       : equal_CStr(id, "hu")      ? &blobHu_Resources
                        : equal_CStr(id, "ia")      ? &blobIa_Resources
                        : equal_CStr(id, "ie")      ? &blobIe_Resources
                        : equal_CStr(id, "isv")     ? &blobIsv_Resources
