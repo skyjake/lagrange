@@ -438,6 +438,7 @@ elseif (HAIKU)
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
 elseif (UNIX AND NOT APPLE)
+    include (GNUInstallDirs)
     set_target_properties (app PROPERTIES
         INSTALL_RPATH_USE_LINK_PATH YES
     )
@@ -453,20 +454,20 @@ StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
 MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;
 ")
-    install (TARGETS app DESTINATION bin)
-    install (FILES ${desktop} DESTINATION share/applications)
+    install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
     install (FILES res/lagrange-256.png
-         DESTINATION share/icons/hicolor/256x256/apps
+         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
          RENAME fi.skyjake.Lagrange.png
     )
     install (FILES res/fi.skyjake.Lagrange.appdata.xml
-        DESTINATION share/metainfo
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
     )
     if (NOT ENABLE_RESOURCE_EMBED)
         if (NOT ENABLE_RELATIVE_EMBED)
             target_compile_definitions (app PUBLIC
-                LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.lgr")
+                LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
         endif ()
-        install (FILES ${EMB_BIN} DESTINATION share/lagrange)
+        install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange)
     endif ()
 endif ()
