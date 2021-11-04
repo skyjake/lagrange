@@ -84,6 +84,7 @@ static void clear_Lang_(iLang *d) {
 
 static void load_Lang_(iLang *d, const char *id) {
     /* Load compiled language strings from an embedded blob. */
+    /* TODO: How about an array for these? (id, blob, pluralType) */
     iUnused(id);
     const iBlock *data = equal_CStr(id, "fi")      ? &blobFi_Embedded
                        : equal_CStr(id, "fr")      ? &blobFr_Embedded
@@ -93,6 +94,7 @@ static void load_Lang_(iLang *d, const char *id) {
                        : equal_CStr(id, "es_MX")   ? &blobEs_MX_Embedded
                        : equal_CStr(id, "de")      ? &blobDe_Embedded
                        : equal_CStr(id, "gl")      ? &blobGl_Embedded
+                       : equal_CStr(id, "hu")      ? &blobHu_Embedded
                        : equal_CStr(id, "ia")      ? &blobIa_Embedded
                        : equal_CStr(id, "ie")      ? &blobIe_Embedded
                        : equal_CStr(id, "isv")     ? &blobIsv_Embedded

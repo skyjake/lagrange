@@ -13,6 +13,7 @@ BUILD_LANGS = [
     'fi',
     'fr',
     'gl',
+    'hu',
     'ia',
     'ie',
     'isv',

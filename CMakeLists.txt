@@ -80,6 +80,7 @@ set (EMBED_RESOURCES
     res/lang/fi.bin
     res/lang/fr.bin
     res/lang/gl.bin
+    res/lang/hu.bin
     res/lang/ia.bin
     res/lang/ie.bin
     res/lang/isv.bin
