@@ -1100,6 +1100,9 @@ msgstr "Portuguese"
 msgid "lang.ru"
 msgstr "Russian"
 
+msgid "lang.hu"
+msgstr "Hungarian"
+
 msgid "lang.uk"
 msgstr "Ukrainian"
 

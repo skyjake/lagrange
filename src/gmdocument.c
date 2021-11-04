@@ -161,10 +161,9 @@ struct Impl_GmDocument {
     iInt2     size;
     int       outsideMargin;
     iBool     enableCommandLinks; /* `about:command?` only allowed on selected pages */
+    iBool     isLayoutInvalidated;
     iArray    layout; /* contents of source, laid out in document space */
     iPtrArray links;
-//    enum iGmDocumentBanner bannerType;
-//    iString   bannerText;
     iString   title; /* the first top-level title */
     iArray    headings;
     iArray    preMeta; /* metadata about preformatted blocks */
@@ -607,6 +606,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
 //    const iBool   isDarkBg          = isDark_GmDocumentTheme(
 //        isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
     initTheme_GmDocument_(d);
+    d->isLayoutInvalidated = iFalse;
     /* TODO: Collect these parameters into a GmTheme. */
     float indents[max_GmLineType] = { 5, 10, 5, isNarrow ? 5 : 10, 0, 0, 0, 5 };
     if (isExtremelyNarrow) {
@@ -968,6 +968,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                        ? 4 : 0) * gap_Text;
             }
             if (!isMono) {
+#if 0
                 /* Upper-level headings are typeset a bit tighter. */
                 if (type == heading1_GmLineType) {
                     rts.lineHeightReduction = 0.10f;
@@ -975,6 +976,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 else if (type == heading2_GmLineType) {
                     rts.lineHeightReduction = 0.06f;
                 }
+#endif
                 /* Visited links are never bold. */
                 if (run.linkId && !prefs->boldLinkVisited &&
                     linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
@@ -1142,13 +1144,12 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->source);
     init_String(&d->url);
     init_String(&d->localHost);
-//    d->bannerType = siteDomain_GmDocumentBanner;
     d->outsideMargin = 0;
     d->size = zero_I2();
     d->enableCommandLinks = iFalse;
+    d->isLayoutInvalidated = iFalse;
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
-//    init_String(&d->bannerText);
     init_String(&d->title);
     init_Array(&d->headings, sizeof(iGmHeading));
     init_Array(&d->preMeta, sizeof(iGmPreMeta));
@@ -1164,7 +1165,6 @@ void init_GmDocument(iGmDocument *d) {
 void deinit_GmDocument(iGmDocument *d) {
     iReleasePtr(&d->openURLs);
     delete_Media(d->media);
-//    deinit_String(&d->bannerText);
     deinit_String(&d->title);
     clearLinks_GmDocument_(d);
     deinit_PtrArray(&d->links);
@@ -1720,20 +1720,26 @@ void setFormat_GmDocument(iGmDocument *d, enum iSourceFormat format) {
     d->format = format;
 }
 
-#if 0
-void setBanner_GmDocument(iGmDocument *d, enum iGmDocumentBanner type) {
-    d->bannerType = type;
-}
-#endif
-
-void setWidth_GmDocument(iGmDocument *d, int width, int outsideMargin) {
-    d->size.x = width;
-    d->outsideMargin = outsideMargin; /* distance to edge of the viewport */
+void setWidth_GmDocument(iGmDocument *d, int width, int canvasWidth) {
+    d->size.x        = width;
+    d->outsideMargin = iMax(0, (canvasWidth - width) / 2); /* distance to edge of the canvas */
     doLayout_GmDocument_(d); /* TODO: just flag need-layout and do it later */
+}
+
+iBool updateWidth_GmDocument(iGmDocument *d, int width, int canvasWidth) {
+    if (d->size.x != width || d->isLayoutInvalidated) {
+        setWidth_GmDocument(d, width, canvasWidth);
+        return iTrue;
+    }
+    return iFalse;
 }
 
 void redoLayout_GmDocument(iGmDocument *d) {
     doLayout_GmDocument_(d);
+}
+
+void invalidateLayout_GmDocument(iGmDocument *d) {
+    d->isLayoutInvalidated = iTrue;
 }
 
 static void markLinkRunsVisited_GmDocument_(iGmDocument *d, const iIntSet *linkIds) {
@@ -2080,7 +2086,7 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
     d->format = gemini_SourceFormat;
 }
 
-void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int outsideMargin,
+void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int canvasWidth,
                           enum iGmDocumentUpdate updateType) {
     /* TODO: This API has been set up to allow partial/progressive updating of the content.
        Currently the entire source is replaced every time, though. */
@@ -2122,7 +2128,7 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
     }
-    setWidth_GmDocument(d, width, outsideMargin); /* re-do layout */
+    setWidth_GmDocument(d, width, canvasWidth); /* re-do layout */
 }
 
 void foldPre_GmDocument(iGmDocument *d, uint16_t preId) {

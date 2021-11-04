@@ -77,6 +77,7 @@ set (RESOURCES
     res/lang/fi.bin
     res/lang/fr.bin
     res/lang/gl.bin
+    res/lang/hu.bin
     res/lang/ia.bin
     res/lang/ie.bin
     res/lang/isv.bin
@@ -438,13 +439,13 @@ elseif (UNIX AND NOT APPLE)
     file (WRITE ${desktop} "[Desktop Entry]
 Name=Lagrange
 Comment=${PROJECT_DESCRIPTION}
-Categories=Network
+Categories=Network;
 Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange %U
 Terminal=false
 Type=Application
 StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
-MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;
 ")
     install (TARGETS app DESTINATION bin)
     install (FILES ${desktop} DESTINATION share/applications)

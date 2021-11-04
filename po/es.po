@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-04 12:08+0000\n"
+"PO-Revision-Date: 2021-11-02 23:51+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -661,9 +661,7 @@ msgstr ""
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"¿De verdad quiere eliminar la suscripción\n"
-"\"%s\"?"
+msgstr "¿De verdad quiere eliminar la suscripción \"%s\"?"
 
 msgid "dlg.openlink"
 msgstr "Abrir Enlace"
@@ -1198,7 +1196,7 @@ msgid "error.tls"
 msgstr "Falla de Red/TLS"
 
 msgid "error.tls.msg"
-msgstr "Fallo de comunicación con el servidor. Aquí está el mensaje de error:"
+msgstr "Fallo de comunicación con el servidor."
 
 msgid "error.temporary"
 msgstr "Falla Temporal"
@@ -1274,9 +1272,8 @@ msgstr "Descargar Archivo Enlazado"
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"¿De verdad quiere borrar la identidad\n"
-"%s%s%s\n"
-"incluyendo su certificado y archivos de clave privada?"
+"¿De verdad quiere borrar la identidad%s\"%s\"%s incluyendo su certificado y "
+"archivos de clave privada?"
 
 msgid "dlg.certwarn.different"
 msgstr ""
@@ -1668,8 +1665,8 @@ msgstr "PUERTO DE CARGA POR TITAN"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"Configurar el puerto de Titan a usar para este URL.\n"
-"El puerto es guardado en la configuración específica del sitio."
+"Configurar el puerto de Titan a usar para este URL. El puerto es guardado en "
+"la configuración específica del sitio."
 
 msgid "dlg.uploadport.set"
 msgstr "Configurar Puerto"
@@ -1946,3 +1943,189 @@ msgstr "Eslovaco"
 
 msgid "lang.isv"
 msgstr "Intereslavo"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignorar enlaces HTTP(S):"
+
+msgid "dlg.fontpack.classic"
+msgstr "Descargar Paquete de Fuentes (25MB)"
+
+msgid "error.ansi"
+msgstr "Emulación de Terminal"
+
+msgid "error.ansi.msg"
+msgstr ""
+"Esta página puede que no se esté mostrando correctamente. Hace uso de "
+"secuencias de escape ANSI para formatear el texto, lo que tiene soporte "
+"parcial. Puede tratar de abrirla en un emulador de terminal."
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Agregar marcadores al final:"
+
+msgid "fontpack.export"
+msgstr "Ver plantilla fontpack.ini"
+
+msgid "heading.fontpack.classic"
+msgstr "DESCARGAR PAQUETE DE FUENTES"
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Las fuentes previamente embebidas en esta aplicación ahora están disponibles "
+"como una descarga separada. Le gustaría descargar el paquete de fuentes "
+"\"Conjunto Clásico\" ahora?"
+
+msgid "prefs.font.ui"
+msgstr "IU:"
+
+msgid "prefs.font.heading"
+msgstr "Titulares:"
+
+msgid "prefs.font.body"
+msgstr "Cuerpo:"
+
+msgid "prefs.font.mono"
+msgstr "Pre-formateado:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Fuente mono-espaciada:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Visitado"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Escapes ANSI:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Color de Frente"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Estilo de Fuente"
+
+msgid "prefs.font.warnmissing"
+msgstr "Advertencias por glifos:"
+
+msgid "prefs.font.smooth"
+msgstr "Suavizado:"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "De verdad quiere borrar el paquete de fuentes \"%s\" permanentemente?"
+
+msgid "dlg.fontpack.delete"
+msgstr "Borrar Paquete de Fuentes"
+
+msgid "fontpack.help"
+msgstr ""
+"Los paquetes de fuentes de Lagrange son archivos ZIP que contienen un "
+"conjunto de archivos de fuentes y parámetros de configuración asociados. Una "
+"vez instaladas, las fuentes se pueden usar para mostrar documentos y la "
+"interfaz de usuario. Las fuentes activas se seleccionan en Preferencias > "
+"Fuentes."
+
+msgid "fontpack.install.ttf"
+msgstr "Instalar Fuente TrueType"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Abrir Directorio de Fuentes del Usuario"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Mostrar Fuentes Instaladas"
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange intenta cargar todas las fuentes TrueType individuales que estén "
+"copiadas en el directorio de fuentes del usuario."
+
+msgid "truetype.help.installed"
+msgstr "Esta fuente está instalada en el directorio de fuentes del usuario."
+
+msgid "heading.dismiss.warning"
+msgstr "DESCARTAR ADVERTENCIA?"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr ""
+"¿Descartar advertencia sobre emulación de terminal en %s permanentemente?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Descartar Advertencia"
+
+msgid "menu.website"
+msgstr "Sitio Web del Proyecto…"
+
+msgid "menu.fonts"
+msgstr "Administrar Fuentes…"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu archivo"
+msgstr[1] "%zu archivos"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu fuente"
+msgstr[1] "%zu fuentes"
+
+msgid "dlg.certwarn.title"
+msgstr "Incidencia de Seguridad"
+
+msgid "error.glyphs"
+msgstr "Glifos Faltantes"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Esta página no se pudo mostrar completa porque faltan algunos caracteres. "
+"Puede instalar fuentes adicionales para solventar esto."
+
+msgid "heading.fontpack.meta"
+msgstr "Fuentes"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Paquetes de fuentes activados"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Paquetes de fuentes desactivados"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Ver archivo"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Versión %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Instalado"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "No instalado"
+
+msgid "fontpack.meta.disabled"
+msgstr ", desactivado"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Activar \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Desactivar \"%s\""
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Instalar \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Actualizar \"%s\" a la versión %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Borrar \"%s\" permanentemente"
+
+msgid "heading.fontpack.delete"
+msgstr "BORRAR PAQUETE DE FUENTES"
+
+msgid "lang.uk"
+msgstr "Ucraniano"

@@ -1,0 +1,2111 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-11-04 13:12+0000\n"
+"Last-Translator: Botond Balázs <balazsbotond@gmail.com>\n"
+"Language-Team: Hungarian <http://weblate.skyjake.fi/projects/lagrange/ui/hu/>"
+"\n"
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "heading.fontpack.meta"
+msgstr "Betűtípusok"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "%d verzió"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "\"%s\" letiltása"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "\"%s\" végleges törlése"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Telepített betűtípusok megtekintése"
+
+msgid "truetype.help"
+msgstr ""
+"A Lagrange megpróbálja az összes különálló TrueType fájlt a felhasználói "
+"betűtípusmappából."
+
+msgid "truetype.help.installed"
+msgstr "Ez a font a felhasználói betűtípusmappába van telepítve."
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr ""
+"Véglegesen figyelmen kívül hagyja a terminálemulációval kapcsolatos "
+"figyelmeztetést a(z) %s oldalon?"
+
+msgid "heading.fontpack.classic"
+msgstr "BETŰTÍPUSKÉSZLET LETÖLTÉSE"
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"A korábban az alkalmazás részeként elérhető betűtípusok most külön "
+"letöltésként érhetők el. Szeretné letölteni a \"Classic set\" "
+"betűtípuskészletet?"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Engedélyezett betűtípuskészletek"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Valóban törli a \"%s\" betűtípuskészletet?"
+
+msgid "fontpack.help"
+msgstr ""
+"A Lagrange betűtípuskészletei betűtípusfájlokat és kapcsolódó konfigurációs "
+"paramétereket tartalmazó ZIP archívumok. Telepítés után a tartalomhoz és a "
+"felhasználói felületen is használhatók. A betűtípusokat a Beállítások > "
+"Betűtípusok lapon lehet kiválasztani."
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Betöltés"
+
+msgid "doc.archive.view"
+msgstr "Archívum tartalmának megtekintése"
+
+msgid "media.untitled.image"
+msgstr "Kép"
+
+msgid "media.untitled.audio"
+msgstr "Hang"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "A fül bezárásakor megszakad a letöltés."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Letöltés befejezve."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Előadó"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Műfaj"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Dátum"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bites"
+
+msgid "numbertype.integer"
+msgstr "egész szám"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Hírfolyam bejegyzései"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "összesen %zu bejegyzés"
+msgstr[1] "összesen %zu bejegyzés"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Az utolsó frissítés pillanatokkal ezelőtt történt."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Utolsó frissítés: %s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d perce"
+msgstr[1] "%d perce"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d napja"
+msgstr[1] "%d napja"
+
+msgid "about.tagline"
+msgstr "Egy tetszetős Gemini-kliens"
+
+msgid "about.version"
+msgstr "Verzió"
+
+msgid "about.powered"
+msgstr "Készült az SDL 2, az OpenSSL, és némi ☕️ felhasználásával"
+
+msgid "cancel"
+msgstr "Mégse"
+
+msgid "dlg.message.ok"
+msgstr "Folytatás"
+
+msgid "close"
+msgstr "Bezárás"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "toggle.yes"
+msgstr "IGEN"
+
+msgid "toggle.no"
+msgstr "NEM"
+
+msgid "menu.title.view"
+msgstr "Nézet"
+
+msgid "menu.title.bookmarks"
+msgstr "Könyvjelzők"
+
+msgid "menu.title.identity"
+msgstr "Identitás"
+
+msgid "menu.title.help"
+msgstr "Súgó"
+
+msgid "menu.closetab"
+msgstr "Lap bezárása"
+
+msgid "menu.newtab"
+msgstr "Új lap"
+
+msgid "menu.closetab.left"
+msgstr "Balra lévő lapok bezárása"
+
+msgid "menu.closetab.right"
+msgstr "Jobbra lévő lapok bezárása"
+
+msgid "menu.duptab"
+msgstr "Másodpéldány"
+
+msgid "menu.split.swap"
+msgstr "Oldalak felcserélése"
+
+msgid "menu.split.horizontal"
+msgstr "Vízszintes"
+
+msgid "menu.split.vertical"
+msgstr "Függőleges"
+
+msgid "menu.openlocation"
+msgstr "Hely megnyitása…"
+
+msgid "menu.downloads"
+msgstr "Letöltések mappa megnyitása"
+
+msgid "menu.unexpire"
+msgstr "Betöltés folytatása a lejárat figyelmen kívül hagyásával"
+
+msgid "menu.find"
+msgstr "Keresés az oldalon"
+
+msgid "macos.menu.find"
+msgstr "Keresés"
+
+msgid "menu.save.downloads.open"
+msgstr "Mentés a Letöltések mappába, majd megnyitás"
+
+msgid "menu.sidebar"
+msgstr "Oldalsáv ki/bekapcsolása"
+
+msgid "menu.sidebar.left"
+msgstr "Bal oldalsáv ki/bekapcsolása"
+
+msgid "menu.zoom.in"
+msgstr "Nagyítás"
+
+msgid "menu.zoom.out"
+msgstr "Kicsinyítés"
+
+msgid "menu.zoom.reset"
+msgstr "Eredeti méret"
+
+msgid "menu.view.split"
+msgstr "Osztott nézet…"
+
+msgid "menu.newfolder"
+msgstr "Új mappa…"
+
+msgid "menu.sort.alpha"
+msgstr "Rendezés betűrendben"
+
+msgid "menu.bookmarks.list"
+msgstr "Összes könyvjelző listázása"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Összes listázása"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Listázás címkék szerint"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Könyvjelzők listázása a létrehozás időrendjében"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Listázás a létrehozás időrendjében"
+
+msgid "menu.feeds.entrylist"
+msgstr "Hírfolyam bejegyzéseinek megtekintése"
+
+msgid "menu.preferences"
+msgstr "Beállítások…"
+
+msgid "menu.help"
+msgstr "Súgó"
+
+msgid "menu.releasenotes"
+msgstr "Újdonságok"
+
+msgid "menu.website"
+msgstr "A projekt weboldala…"
+
+msgid "menu.quit"
+msgstr "Kilépés a Lagrange-ból"
+
+msgid "menu.cut"
+msgstr "Kivágás"
+
+msgid "menu.copy"
+msgstr "Másolás"
+
+msgid "menu.paste"
+msgstr "Beillesztés"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Törlés"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Visszavonás"
+
+msgid "menu.select.clear"
+msgstr "Kijelölés törlése"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Hivatkozás másolása"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Könyvjelzők megjelenítése"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Előzmények megjelenítése"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Tartalomjegyzék megjelenítése"
+
+msgid "menu.back"
+msgstr "Vissza"
+
+msgid "menu.forward"
+msgstr "Tovább"
+
+msgid "menu.parent"
+msgstr "Fel"
+
+msgid "menu.root"
+msgstr "Gyökérhez"
+
+msgid "menu.reload"
+msgstr "Oldal újratöltése"
+
+msgid "menu.page.bookmark"
+msgstr "Könyvjelző létrehozása…"
+
+msgid "menu.page.subscribe"
+msgstr "Feliratkozás az oldalra…"
+
+msgid "menu.aboutpages"
+msgstr "Az oldalakról"
+
+msgid "menu.about"
+msgstr "Névjegy"
+
+msgid "menu.fonts"
+msgstr "Betűtípusok beállítása…"
+
+msgid "panel.back"
+msgstr "Vissza"
+
+msgid "menu.import.links"
+msgstr "Összes hivatkozás importálása az oldalról…"
+
+msgid "menu.page.translate"
+msgstr "Fordítás…"
+
+msgid "menu.page.copyurl"
+msgstr "Oldal címének másolása"
+
+msgid "menu.page.copysource"
+msgstr "Oldal forrásának másolása"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Távoli könyvjelzők frissítése"
+
+msgid "menu.feeds.refresh"
+msgstr "Hírfolyamok frissítése"
+
+msgid "menu.identity.new"
+msgstr "Új identitás…"
+
+msgid "menu.identity.notactive"
+msgstr "Nincs identitás kiválasztva"
+
+msgid "sidebar.bookmarks"
+msgstr "Könyvjelzők"
+
+msgid "sidebar.feeds"
+msgstr "Hírfolyamok"
+
+msgid "sidebar.history"
+msgstr "Előzmények"
+
+msgid "sidebar.identities"
+msgstr "Identitások"
+
+msgid "sidebar.outline"
+msgstr "Tartalomjegyzék"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Mind"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Olvasatlan"
+
+msgid "sidebar.action.ident.new"
+msgstr "Új…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importálás…"
+
+msgid "toolbar.outline"
+msgstr "Tartalomjegyzék"
+
+msgid "hint.findtext"
+msgstr "szöveg keresése az oldalon"
+
+msgid "status.query"
+msgstr "Keresőkifejezés"
+
+msgid "status.query.tight"
+msgstr "Keresés"
+
+msgid "status.feeds"
+msgstr "Hírfolyamok frissítése"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu bájt"
+msgstr[1] "%zu bájt"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%zu fájl"
+msgstr[1] "%zu fájl"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%zu betűtípus"
+msgstr[1] "%zu betűtípus"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%b. %d. %Y"
+
+msgid "feeds.today"
+msgstr "Ma"
+
+msgid "feeds.entry.newtab"
+msgstr "Bejegyzés megnyitása új lapon"
+
+msgid "feeds.entry.markread"
+msgstr "Megjelölés olvasottként"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%b. %d"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Könyvjelző hozzáadása…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Könyvjelző hozzáadása…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Hírfolyamok megnyitása"
+
+msgid "feeds.edit"
+msgstr "Hírfolyam szerkesztése…"
+
+msgid "menu.opentab"
+msgstr "Megnyitás új lapon"
+
+msgid "menu.opentab.background"
+msgstr "Megnyitás új lapon a háttérben"
+
+msgid "menu.openfile"
+msgstr "Fájl megnyitása…"
+
+msgid "menu.edit"
+msgstr "Szerkesztés…"
+
+msgid "menu.dup"
+msgstr "Másodpéldány…"
+
+msgid "menu.copyurl"
+msgstr "Cím másolása"
+
+msgid "menu.forgeturl"
+msgstr "Cím elfelejtése"
+
+msgid "history.clear"
+msgstr "Előzmények törlése…"
+
+msgid "dlg.history.clear"
+msgstr "Előzmények törlése"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "KÖNYVJELZŐK TÖRLÉSE"
+
+msgid "bookmark.tag.home"
+msgstr "Beállítás kezdőlapként"
+
+msgid "bookmark.tag.sub"
+msgstr "Feliratkozás a hírfolyamra"
+
+msgid "bookmark.tag.remote"
+msgstr "Használat könyvjelzőforrásként"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Hivatkozások oldalt nyíljanak meg"
+
+msgid "bookmark.untag.sub"
+msgstr "Leiratkozás a hírfolyamról"
+
+msgid "bookmark.delete"
+msgstr "Könyvjelző törlése"
+
+msgid "bookmarks.reload"
+msgstr "Távoli források frissítése"
+
+msgid "ident.using"
+msgstr "Ezen az oldalon használva"
+
+msgid "ident.notused"
+msgstr "Nincs használatban"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "%zu URL-en használva"
+msgstr[1] "%zu URL-en használva"
+
+msgid "ident.temporary"
+msgstr "Ideiglenes"
+
+msgid "ident.use"
+msgstr "Használat ezen az oldalon"
+
+msgid "ident.stopuse.all"
+msgstr "Ne használja sehol"
+
+msgid "ident.export"
+msgstr "Exportálás"
+
+msgid "heading.ident.use"
+msgstr "IDENTITÁSOK HASZNÁLATA"
+
+msgid "menu.edit.notes"
+msgstr "Jegyzet szerkesztése…"
+
+msgid "heading.ident.notes"
+msgstr "IDENTITÁS JEGYZETE"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "%s jegyzetei:"
+
+msgid "ident.fingerprint"
+msgstr "Lenyomat másolása"
+
+msgid "ident.delete"
+msgstr "Identitás törlése…"
+
+msgid "heading.ident.delete"
+msgstr "IDENTITÁS TÖRLÉSE"
+
+msgid "dlg.ident.delete"
+msgstr "Identitás és fájlok törlése"
+
+msgid "sidebar.empty.idents"
+msgstr "Nincs identitás"
+
+msgid "heading.unsub"
+msgstr "LEIRATKOZÁS"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "Valóban leiratkozik a(z) \"%s\" hírfolyamról?"
+
+msgid "dlg.unsub"
+msgstr "Leiratkozás"
+
+msgid "error.server.msg"
+msgstr "A szerver a következő üzenettel válaszolt:"
+
+msgid "heading.pageinfo"
+msgstr "OLDALINFORMÁCIÓ"
+
+msgid "pageinfo.header.cached"
+msgstr "(tartalom gyorsítótárból)"
+
+msgid "pageinfo.cert.status"
+msgstr "Tanúsítvány státusza:"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "CA által nem ellenőrizve"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Nem járt le"
+
+msgid "pageinfo.cert.expired"
+msgstr "Lejárt"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Nem megbízható"
+
+msgid "pageinfo.domain.match"
+msgstr "Domain név egyezik"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Domain név nem egyezik"
+
+msgid "dlg.cert.trust"
+msgstr "Bizalom"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Bemenet a %s részére:"
+
+msgid "dlg.input.linebreak"
+msgstr "Sortörés"
+
+msgid "heading.save"
+msgstr "FÁJL ELMENTVE"
+
+msgid "heading.save.incomplete"
+msgstr "HIÁNYOS OLDAL"
+
+msgid "dlg.save.incomplete"
+msgstr "Az oldal tartalma még töltődik."
+
+msgid "dlg.save.opendownload"
+msgstr "Letöltött fájl megnyitása"
+
+msgid "heading.save.error"
+msgstr "HIBA FÁJL MENTÉSEKOR"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sKönyvjelző hozzáadása"
+msgstr[1] "%s%d könyvjelző hozzáadása"
+
+msgid "heading.autoreload"
+msgstr "AUTOMATIKUS ÚJRATÖLTÉS"
+
+msgid "dlg.autoreload"
+msgstr "Válassza ki, milyen időközönként töltődjön újra ez a lap."
+
+msgid "reload.never"
+msgstr "Soha"
+
+msgid "reload.onceperday"
+msgstr "Naponta"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d percenként"
+msgstr[1] "%d percenként"
+
+msgid "link.newtab.background"
+msgstr "Hivatkozás megnyitása új lapon a háttérben"
+
+msgid "link.side"
+msgstr "Hivatkozás megnyitása oldalt"
+
+msgid "link.side.newtab"
+msgstr "Hivatkozás megnyitása új lapon, oldalt"
+
+msgid "link.noproxy"
+msgstr "Megnyitás proxy nélkül"
+
+msgid "link.copy"
+msgstr "Hivatkozás másolása"
+
+msgid "link.download"
+msgstr "Hivatkozott fájl letöltése"
+
+msgid "heading.file.delete"
+msgstr "FÁJL TÖRLÉSE"
+
+msgid "dlg.file.delete"
+msgstr "Törlés"
+
+msgid "heading.openlink"
+msgstr "HIVATKOZÁS MEGNYITÁSA"
+
+msgid "dlg.openlink"
+msgstr "Hivatkozás megnyitása"
+
+msgid "dlg.certwarn.title"
+msgstr "Biztonsági probléma"
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"A szervertől kapott tanúsítvány rossz domainhez tartozik (%s). Ezt "
+"szerverkonfigurációs probléma okozhatja."
+
+msgid "heading.certimport"
+msgstr "IDENTITÁS IMPORTÁLÁSA"
+
+msgid "dlg.certimport.notfound"
+msgstr "Nem található tanúsítvány vagy privát kulcs."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Az oldalhoz nem található tanúsítvány/privát kulcs."
+
+msgid "heading.certimport.pasted"
+msgstr "VÁGÓLAPRÓL BEILLESZTVE"
+
+msgid "heading.certimport.dropped"
+msgstr "BEHÚZOTT FÁJL"
+
+msgid "dlg.certimport.import"
+msgstr "Importálás"
+
+msgid "dlg.certimport.notes"
+msgstr "Jegyzet:"
+
+msgid "hint.certimport.description"
+msgstr "leírás"
+
+msgid "dlg.certimport.nocert"
+msgstr "Nincs tanúsítvány"
+
+msgid "dlg.certimport.nokey"
+msgstr "Nincs privát kulcs"
+
+msgid "link.hint.audio"
+msgstr "Hang lejátszása"
+
+msgid "link.hint.image"
+msgstr "Kép megtekintése"
+
+msgid "bookmark.export.title.folder"
+msgstr "Könyvjelzők"
+
+msgid "bookmark.export.title.tag"
+msgstr "Könyvjelzőcímkék"
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Az oldal formátuma megfelel a \"Feliratkozás Gemini oldalakra\" "
+"társspecifikáció előírásainak."
+
+msgid "bookmark.export.format.folders"
+msgstr "A mappaszerkezetet a 2. és 3. szintű fejezetcímek határozzák meg."
+
+msgid "bookmark.export.format.tags"
+msgstr "A címkéket a 2. szintű fejezetcímek határozzák meg."
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "KÖNYVJELZŐK"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "ELŐZMÉNYEK"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "OLDAL TARTALMÁBÓL"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "EGYÉB HELYRŐL"
+
+msgid "menu.page.upload"
+msgstr "Oldal feltöltése Titan protokollal…"
+
+msgid "heading.upload"
+msgstr "FELTÖLTÉS TITAN PROTOKOLLAL"
+
+msgid "upload.id"
+msgstr "Identitás:"
+
+msgid "dlg.upload.id.none"
+msgstr "Nincs"
+
+msgid "heading.upload.text"
+msgstr "Szöveg"
+
+msgid "hint.upload.text"
+msgstr "írja be a feltöltendő szöveget"
+
+msgid "upload.file.name"
+msgstr "Fájlnév:"
+
+msgid "upload.file.drophere"
+msgstr "(húzzon egy fájlt az egérrel ebbe az ablakba)"
+
+msgid "upload.file.size"
+msgstr "Fájlméret:"
+
+msgid "upload.mime"
+msgstr "MIME-típus:"
+
+msgid "upload.token"
+msgstr "Token:"
+
+msgid "upload.port"
+msgstr "Port…"
+
+msgid "heading.uploadport"
+msgstr "TITAN FELTÖLTÉSI PORT"
+
+msgid "dlg.uploadport.set"
+msgstr "Port beállítása"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Egyszerű szöveg feltöltése"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Fájl feltöltése"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Fájl kiválasztása"
+
+msgid "dlg.translate.fail"
+msgstr "Sikertelen kérés"
+
+msgid "dlg.translate"
+msgstr "Fordítás"
+
+msgid "dlg.translate.from"
+msgstr "Forrásnyelv:"
+
+msgid "dlg.translate.to"
+msgstr "Célnyelv:"
+
+msgid "lang.zh"
+msgstr "Kínai"
+
+msgid "lang.zh.hans"
+msgstr "Kínai (egyszerűsített)"
+
+msgid "lang.zh.hant"
+msgstr "Kínai (hagyományos)"
+
+msgid "lang.de"
+msgstr "Német"
+
+msgid "lang.ia"
+msgstr "Interlingua"
+
+msgid "lang.ie"
+msgstr "Interlingue"
+
+msgid "lang.fi"
+msgstr "Finn"
+
+msgid "lang.fr"
+msgstr "Francia"
+
+msgid "lang.gl"
+msgstr "Galíciai"
+
+msgid "lang.hi"
+msgstr "Hindi"
+
+msgid "lang.it"
+msgstr "Olasz"
+
+msgid "lang.ja"
+msgstr "Japán"
+
+msgid "lang.pl"
+msgstr "Lengyel"
+
+msgid "lang.ru"
+msgstr "Orosz"
+
+msgid "lang.uk"
+msgstr "Ukrán"
+
+msgid "lang.eo"
+msgstr "Eszperantó"
+
+msgid "lang.es"
+msgstr "Spanyol"
+
+msgid "lang.sr"
+msgstr "Szerb"
+
+msgid "lang.isv"
+msgstr "Interszláv"
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Önaláírt 2048-bites RSA tanúsítvány létrehozása."
+
+msgid "dlg.newident.until"
+msgstr "Érvényesség:"
+
+msgid "hint.newident.optional"
+msgstr "nem kötelező"
+
+msgid "dlg.newident.commonname"
+msgstr "Általános név (CN):"
+
+msgid "dlg.newident.temp"
+msgstr "Ideiglenes:"
+
+msgid "dlg.newident.scope"
+msgstr "Használat itt:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Jelenlegi domain"
+
+msgid "dlg.newident.scope.none"
+msgstr "Nincs használatban"
+
+msgid "dlg.newident.email"
+msgstr "E-mail:"
+
+msgid "dlg.newident.domain"
+msgstr "Domain:"
+
+msgid "dlg.newident.org"
+msgstr "Szervezet:"
+
+msgid "dlg.newident.country"
+msgstr "Ország:"
+
+msgid "dlg.newident.more"
+msgstr "Egyéb…"
+
+msgid "heading.newident.date.bad"
+msgstr "ÉRVÉNYTELEN DÁTUM"
+
+msgid "dlg.newident.date.past"
+msgstr "A lejárati dátum csak jövőbeli lehet."
+
+msgid "heading.feedcfg"
+msgstr "HÍRFOLYAM BEÁLLÍTÁSAI"
+
+msgid "dlg.feed.title"
+msgstr "Cím:"
+
+msgid "dlg.feed.entrytype"
+msgstr "Bejegyzés típusa:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "ÉÉÉÉ-HH-NN hivatkozások"
+
+msgid "dlg.feed.save"
+msgstr "Beállítások mentése"
+
+msgid "dlg.feed.sub"
+msgstr "Feliratkozás"
+
+msgid "heading.bookmark.add"
+msgstr "KÖNYVJELZŐ HOZZÁADÁSA"
+
+msgid "heading.bookmark.edit"
+msgstr "KÖNYVJELZŐ SZERKESZTÉSE"
+
+msgid "dlg.bookmark.save"
+msgstr "Könyvjelző mentése"
+
+msgid "dlg.bookmark.title"
+msgstr "Cím:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Címkék:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Ikon:"
+
+msgid "heading.addfolder"
+msgstr "MAPPA HOZZÁADÁSA"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Új mappa"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Írja be az új mappa nevét:"
+
+msgid "dlg.addfolder"
+msgstr "Új mappa"
+
+msgid "heading.prefs"
+msgstr "BEÁLLÍTÁSOK"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "BEÁLLÍTÁSOK"
+
+msgid "heading.prefs.certs"
+msgstr "TANÚSÍTVÁNYOK"
+
+msgid "heading.prefs.fonts"
+msgstr "Betűtípusok"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Általános"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Felhasználói felület"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Billentyűk"
+
+msgid "heading.prefs.paragraph"
+msgstr "BEKEZDÉS"
+
+msgid "heading.prefs.pagecontent"
+msgstr "OLDAL SZÍNEI"
+
+msgid "heading.prefs.proxies"
+msgstr "PROXYK"
+
+msgid "heading.prefs.scrolling"
+msgstr "GÖRGETÉS"
+
+msgid "heading.prefs.sizing"
+msgstr "MÉRETEZÉS"
+
+msgid "heading.prefs.widelayout"
+msgstr "SZÉLES ELRENDEZÉS"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Stílus"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Felhasználói felület"
+
+msgid "prefs.searchurl"
+msgstr "Kereső URL:"
+
+msgid "prefs.hoverlink"
+msgstr "URL megjelenítése, ha az egér a link felett van:"
+
+msgid "prefs.centershort"
+msgstr "Függőleges középre igazítás:"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Könyvjelzők hozzáadása alulra:"
+
+msgid "prefs.pinsplit"
+msgstr "Linkek megnyitása osztott nézetben:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Nincs"
+
+msgid "prefs.pinsplit.left"
+msgstr "Bal lap"
+
+msgid "prefs.pinsplit.right"
+msgstr "Jobb lap"
+
+msgid "prefs.smoothscroll"
+msgstr "Fokozatmentes görgetés:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Egeres görgetés sebessége:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Kép betöltése görgetéskor:"
+
+msgid "prefs.ostheme"
+msgstr "Rendszertéma használata:"
+
+msgid "prefs.theme"
+msgstr "Téma:"
+
+msgid "prefs.theme.black"
+msgstr "Fekete"
+
+msgid "prefs.theme.light"
+msgstr "Világos"
+
+msgid "prefs.theme.white"
+msgstr "Fehér"
+
+msgid "prefs.accent"
+msgstr "Hangsúlyszín:"
+
+msgid "prefs.accent.teal"
+msgstr "Türkiz"
+
+msgid "prefs.accent.orange"
+msgstr "Narancssárga"
+
+msgid "prefs.uilang"
+msgstr "Nyelv:"
+
+msgid "prefs.returnkey"
+msgstr "Enter billentyű viselkedése:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Sortörés"
+
+msgid "prefs.returnkey.accept"
+msgstr "Elfogadás"
+
+msgid "prefs.animate"
+msgstr "Animációk:"
+
+msgid "prefs.retainwindow"
+msgstr "Elhelyezés megtartása:"
+
+msgid "prefs.sideicon"
+msgstr "Kapszulaikon:"
+
+msgid "prefs.doctheme.light"
+msgstr "Világos téma:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Színes sötét"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Színes világos"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Fekete"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Szürke"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Fehér"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Szépia"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Nagy kontraszt"
+
+msgid "prefs.saturation"
+msgstr "Telítettség:"
+
+msgid "prefs.imagestyle"
+msgstr "Képek színezése:"
+
+msgid "prefs.imagestyle.original"
+msgstr "Nincs"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Szürkeárnyalatos"
+
+msgid "prefs.imagestyle.text"
+msgstr "Szövegszín"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Előreformázott blokkok színe"
+
+msgid "prefs.font.ui"
+msgstr "Felhasználói felület:"
+
+msgid "prefs.font.heading"
+msgstr "Fejezetcímek:"
+
+msgid "prefs.font.body"
+msgstr "Szövegtörzs:"
+
+msgid "prefs.font.mono"
+msgstr "Előreformázott:"
+
+msgid "prefs.font"
+msgstr "Szövegtörzs betűtípusa:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Fix szélességű betűtípus:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.boldlink"
+msgstr "Félkövér hivatkozások:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Meglátogatott"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Világos háttéren"
+
+msgid "prefs.gemtext.ansi"
+msgstr "ANSI escape szekvenciák:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Előtér színe"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Betűstílus"
+
+msgid "prefs.font.warnmissing"
+msgstr "Figyelmeztetés hiányzó karakterekre:"
+
+msgid "prefs.font.smooth"
+msgstr "Élsimítás:"
+
+msgid "prefs.linewidth"
+msgstr "Sorszélesség:"
+
+msgid "prefs.linewidth.fill"
+msgstr "Kitöltés"
+
+msgid "prefs.linespacing"
+msgstr "Sorköz:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "\" ikon"
+
+msgid "prefs.biglede"
+msgstr "Első bekezdés nagyobb méretű:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Egyszerű szöveg tördelése:"
+
+msgid "prefs.decodeurls"
+msgstr "URL-ek dekódolása:"
+
+msgid "prefs.cachesize"
+msgstr "Gyorsítótár mérete:"
+
+msgid "prefs.ca.file"
+msgstr "CA-fájl:"
+
+msgid "prefs.ca.path"
+msgstr "CA elérési útja:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini proxy:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher proxy:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP proxy:"
+
+msgid "menu.binding.clear"
+msgstr "Eltávolítás"
+
+msgid "archive.exit"
+msgstr "Kilépés az archívumból"
+
+msgid "dir.empty"
+msgstr "Ez a mappa üres."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Ez a könyvtár egy elemet tartalmaz."
+msgstr[1] "Ez a könyvtár %zu elemet tartalmaz."
+
+msgid "keys.top"
+msgstr "Ugrás az oldal tetejére"
+
+msgid "keys.bottom"
+msgstr "Ugrás az oldal aljára"
+
+msgid "keys.scroll.up"
+msgstr "Görgetés fel"
+
+msgid "keys.scroll.down"
+msgstr "Görgetés le"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Görgetés fél oldallal lejjebb"
+
+msgid "keys.scroll.page.down"
+msgstr "Görgetés egy oldallal lejjebb"
+
+msgid "keys.back"
+msgstr "Vissza"
+
+msgid "keys.forward"
+msgstr "Előre"
+
+msgid "keys.parent"
+msgstr "Ugrás a szülőmappára"
+
+msgid "keys.reload"
+msgstr "Oldal újratöltése"
+
+msgid "keys.link.homerow"
+msgstr "Hivatkozás megnyitása a középső billentyűsorral"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Hivatkozás megnyitása új lapon középső billentyűsorral"
+
+msgid "keys.link.homerow.next"
+msgstr "Következő adag hivatkozás a középső billentűsoron"
+
+msgid "keys.bookmark.add"
+msgstr "Könyvjelző hozzádaása"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Könyvjelzőmappa hozzáadása"
+
+msgid "keys.subscribe"
+msgstr "Feliratkozás az oldalra"
+
+msgid "keys.findtext"
+msgstr "Keresés az oldalon"
+
+msgid "keys.zoom.in"
+msgstr "Nagyítás"
+
+msgid "keys.zoom.reset"
+msgstr "Eredeti méret"
+
+msgid "keys.fullscreen"
+msgstr "Teljes képernyős mód ki-/bekapcsolása"
+
+msgid "keys.tab.new"
+msgstr "Új lap"
+
+msgid "keys.tab.close"
+msgstr "Lap bezárása"
+
+msgid "keys.tab.prev"
+msgstr "Előző lap"
+
+msgid "keys.tab.next"
+msgstr "Következő lap"
+
+msgid "keys.split.menu"
+msgstr "Osztott nézet beállítása"
+
+msgid "keys.split.item"
+msgstr "Osztott nézet menü:"
+
+msgid "keys.hoverurl"
+msgstr "URL megjelenítésének ki-/bekapcsolása, ha felette az egér"
+
+msgid "error.badstatus"
+msgstr "Ismeretlen státuszkód"
+
+msgid "error.openfile"
+msgstr "Fájl megnyitása sikertelen"
+
+msgid "error.openfile.msg"
+msgstr ""
+"A megadott fájl nem létezik, vagy nem elérhető. Kérjük, ellenőrizze az "
+"elérési útját."
+
+msgid "error.badresource"
+msgstr "Érvénytelen erőforrás"
+
+msgid "error.badresource.msg"
+msgstr "A kért erőforrás nem létezik."
+
+msgid "error.unsupported.media"
+msgstr "Nem támogatott tartalomtípus"
+
+msgid "error.unsupported.protocol"
+msgstr "Nem támogatott protokoll"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "A megadott protokollt ez az alkalmazás nem támogatja."
+
+msgid "error.badheader"
+msgstr "Érvénytelen fejléc"
+
+msgid "error.badredirect"
+msgstr "Érvénytelen átirányítás"
+
+msgid "error.schemeredirect"
+msgstr "Sémaváltó átirányítás"
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"A szerver olyan URL-re próbált irányítani, melynek sémája eltér az eredeti "
+"URL sémájától. Az alábbi linket ellenőrizve eldöntheti, szeretné-e "
+"manuálisan megnyitni."
+
+msgid "error.manyredirects"
+msgstr "Túl sok átirányítás"
+
+msgid "error.tls"
+msgstr "Hálózati/TLS hiba"
+
+msgid "error.tls.msg"
+msgstr "A szerverrel meghiúsult a kommunikáció."
+
+msgid "error.certexpired"
+msgstr "Lejárt tanúsítvány"
+
+msgid "error.certverify"
+msgstr "Nem megbízható szerver"
+
+msgid "error.temporary"
+msgstr "Átmeneti hiba"
+
+msgid "error.temporary.msg"
+msgstr "A kérés sikertelen volt, próbálkozzon később."
+
+msgid "error.unavail"
+msgstr "A szerver nem elérhető"
+
+msgid "error.cgi"
+msgstr "CGI hiba"
+
+msgid "error.proxy"
+msgstr "Proxyhiba"
+
+msgid "error.proxy.msg"
+msgstr ""
+"Proxyhiba lépett fel, mert a szerver nem tudott a távoli kiszolgálóhoz "
+"kapcsolódni. Ezt hálózati problémák okozhatják."
+
+msgid "error.slowdown"
+msgstr "Lassítson"
+
+msgid "error.slowdown.msg"
+msgstr "A szerver korlátozza a kérések gyakoriságát. Kérjük, várjon…"
+
+msgid "error.permanent"
+msgstr "Maradandó hiba"
+
+msgid "error.notfound"
+msgstr "Nem található"
+
+msgid "error.notfound.msg"
+msgstr "A kért erőforrás jelenleg nem található."
+
+msgid "error.gone"
+msgstr "Megszűnt"
+
+msgid "error.gone.msg"
+msgstr "A kért erőforrás többé nem érhető el."
+
+msgid "error.proxyrefusal"
+msgstr "Proxykérés elutasítva"
+
+msgid "error.badrequest"
+msgstr "Hibás kérés"
+
+msgid "error.badrequest.msg"
+msgstr "A szerver nem tudta értelmezni a kérést."
+
+msgid "error.cert.needed"
+msgstr "Tanúsítvány szükséges"
+
+msgid "error.cert.auth"
+msgstr "Tanúsítvány nem hitelesíthető"
+
+msgid "error.ansi"
+msgstr "Terminálemuláció"
+
+msgid "gempub.cover.viewlocal"
+msgstr "Ez a Gempub könyv lokális mentés után megjeleníthető."
+
+msgid "gempub.cover.untitled"
+msgstr "Cím nélküli könyv"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Könyv névjegye"
+
+msgid "gempub.cover.image"
+msgstr "Borítókép"
+
+msgid "gempub.meta.version"
+msgstr "Verzió"
+
+msgid "gempub.meta.revdate"
+msgstr "Verziószám"
+
+msgid "gempub.meta.pub"
+msgstr "Kiadva"
+
+msgid "gempub.meta.pubdate"
+msgstr "Kiadás dátuma"
+
+msgid "gempub.meta.lang"
+msgstr "Nyelv"
+
+msgid "gempub.meta.license"
+msgstr "Licenc"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Fájl megtekintése"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Letiltott betűtípuskészletek"
+
+msgid "fontpack.meta.installed"
+msgstr "Telepítve"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Nincs telepítve"
+
+msgid "fontpack.meta.disabled"
+msgstr ", letiltva"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "\"%s\" engedélyezése"
+
+msgid "fontpack.export"
+msgstr "fontpack.ini sablon megtekintése"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "\"%s\" telepítése"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "\"%s\" frissítése %d verzióra"
+
+msgid "fontpack.install.ttf"
+msgstr "TrueType betűtípsuok telepítése"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Felhasználói betűtípusmappa megnyitása"
+
+msgid "heading.fontpack.delete"
+msgstr "BETŰTÍPUSKÉSZLET TÖRLÉSE"
+
+msgid "dlg.fontpack.delete"
+msgstr "Betűtípuskészlet törlése"
+
+msgid "heading.dismiss.warning"
+msgstr "FIGYELMEZTETÉS ELVETÉSE?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Figyelmeztetés elvetése"
+
+msgid "dlg.fontpack.classic"
+msgstr "Betűtípuskészlet letöltése (25 MB)"
+
+msgid "doc.pre.nocaption"
+msgstr "Leírás nélküli előreformázott szöveg"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s egy tömörített archívum."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Cím"
+
+msgid "numbertype.float"
+msgstr "lebegőpontos szám"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "%zu hírfolyamra iratkoztál fel, amely %%s-t tartalmaz.\n"
+msgstr[1] "%zu hírfolyamra iratkoztál fel, amelyek %%s-t tartalmaznak.\n"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d órája"
+msgstr[1] "%d órája"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII art: a „Lagrange” szó nagy méretű betűkkel"
+
+msgid "menu.title.file"
+msgstr "Fájl"
+
+msgid "menu.title.edit"
+msgstr "Szerkesztés"
+
+msgid "menu.closetab.other"
+msgstr "Többi lap bezárása"
+
+msgid "menu.split.merge"
+msgstr "Lapok egyesítése"
+
+msgid "menu.pageinfo"
+msgstr "Oldaladatok megjelenítése"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Mentés a Fájlokba"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Mentés a Letöltések mappába"
+
+msgid "menu.sidebar.right"
+msgstr "Jobb oldalsáv ki/bekapcsolása"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Könyvjelzők listázása címkék szerint"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Beállítások"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Összes kijelölése"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Hírfolyamok megjelenítése"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Identitások megjelenítése"
+
+msgid "menu.autoreload"
+msgstr "Automatikus újratöltés…"
+
+msgid "menu.debug"
+msgstr "Hibakeresési információ"
+
+msgid "menu.page.import"
+msgstr "Hivatkozások importálása könyvjelzőként…"
+
+msgid "menu.identity.import"
+msgstr "Importálás…"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Olvasatlan"
+msgstr[1] "Olvasatlan"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Érkezés ideje: %I:%M %p\n"
+"Napja: %b %d, %Y."
+
+msgid "feeds.entry.markunread"
+msgstr "Megjelölés olvasatlanként"
+
+msgid "feeds.unsubscribe"
+msgstr "Leiratkozás…"
+
+msgid "feeds.markallread"
+msgstr "Összes megjelölése olvasottként"
+
+msgid "feeds.refresh"
+msgstr "Hírfolyamok újratöltése"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Ezt az Atom XML dokumentumot automatikusan Gemini hírfolyammá alakítottuk "
+"át, hogy fel lehessen iratkozni rá."
+
+msgid "heading.history.clear"
+msgstr "ELŐZMÉNYEK TÖRLÉSE"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Valóban törli az összes meglátogatott oldal előzményeit?"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Valóban törli a könyvjelzőt ebből a mappából?"
+msgstr[1] "Valóban törli a %u könyvjelzőt ebből a mappából?"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Könyvjelző törlése"
+msgstr[1] "%u könyvjelző törlése"
+
+msgid "bookmark.untag.home"
+msgstr "Kezdőlap eltávolítása"
+
+msgid "bookmark.untag.remote"
+msgstr "Könyvjelzőforrás eltávolítása"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Lejár: %b %d, %Y"
+
+msgid "ident.stopuse"
+msgstr "Ne használja ezen az oldalon"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Valóban törli a %s\"%s\"%s identitást a tanúsítvány- és privátkulcsfájlokkal "
+"együtt?"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "A TLS ügyféltanúsítványokról további információt talál a %sSúgó%sban."
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Elmentheti fájlként a Letöltések mappába: használja a %s "
+"billentyűparancsoat, vagy válassza ki a \"%s\" menüpontot."
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "CA által megerősítve"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Megbízható"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Lenyomat másolása"
+
+msgid "dlg.input.send"
+msgstr "Küldés"
+
+msgid "dlg.save.size"
+msgstr "Méret:"
+
+msgid "heading.import.bookmarks"
+msgstr "KÖNYVJELZŐK IMPORTÁLÁSA"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Egy új hivatkozás van az oldalon."
+msgstr[1] "%d új hivatkozás van az oldalon."
+
+msgid "dlg.import.notnew"
+msgstr "Az oldal összes hivatkozása szerepel már a könyvjelzők között."
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d óránként"
+msgstr[1] "%d óránként"
+
+msgid "link.newtab"
+msgstr "Hivatkozás megnyitása új lapon"
+
+msgid "link.browser"
+msgstr "Hivatkozás megnyitása alapértelmezett böngészőben"
+
+msgid "link.bookmark"
+msgstr "Hivatkozás mentése könyvjelzőként…"
+
+msgid "link.file.delete"
+msgstr "Fájl törlése"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Valóban törli ezt a fájlt?"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Megnyitja az alapértelmezett böngészőben?\n"
+"%s%s"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"A beérkezett tanúsítványt nemrég újíthatták meg — a megfelelő domainhez "
+"tartozik, és nem járt le. A jelenleg megbízhatónak jelölt tanúsítvány "
+"lejárati ideje %s, egy nap múlva."
+msgstr[1] ""
+"A szervertől kapott tanúsítványt nemrég újíthatták meg — a megfelelő "
+"domainhez tartozik, és nem járt le. A jelenleg megbízhatónak jelölt "
+"tanúsítvány lejárati ideje %s, %d nap múlva."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "A szervertől kapott tanúsítvány %s napon lejárt."
+
+msgid "dlg.certwarn.different"
+msgstr ""
+"A szervertől kapott tanúsítvány érvényes, de eltér a megbízhatónak jelölttől."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "A szervertől kapott tanúsítvány lejárt ÉS rossz domainhez tartozik."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Másoljon be egy PEM-kódolású tanúsítványt és/vagy privát kulcsot,\n"
+"vagy egérrel húzzon egy .crt/.key fájlt az ablakba."
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Tanúsítvány-/kulcsfájl importálása"
+
+msgid "bookmark.title.blank"
+msgstr "Üres oldal"
+
+msgid "bookmark.export.title.time"
+msgstr "Létrehozott könyvjelzők"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Önnek egy könyvjelzője van."
+msgstr[1] "Önnek %d könyvjelzője van."
+
+msgid "bookmark.export.saving"
+msgstr ""
+"A könyvjelzők exportálásához mentse el ezt az oldalt, vagy másolja ki őket a "
+"vágólapra."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"Ebben a listában minden címsor egy könyvjelzőcímkének felel meg. Csak a "
+"címkével ellátott könyvjelzők szerepelnek rajta. A több címkével is "
+"rendelkező könyvjelzők minden egyes címkéjük alatt megismétlődnek."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Minden hivatkozás egy könyvjelző."
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"A listaelemek és idézetek további információval szolgálnak az őket megelőző "
+"könyvjelzőről. A szöveges és előreformázott sorok megjegyzésnek számítanak, "
+"és figyelmen kívül kell őket hagyni."
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "HÍRFOLYAMOK"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "AZ IDENTITÁSOKBÓL"
+
+msgid "dlg.upload.id.default"
+msgstr "Alapértelmezett"
+
+msgid "heading.upload.file"
+msgstr "Fájl"
+
+msgid "hint.upload.token"
+msgstr "lásd a szerver utasításait"
+
+msgid "dlg.upload.send"
+msgstr "Feltöltés"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Állítsa be ehhez az URL-hez a Titan feltöltési portot. A port mentésre kerül "
+"az oldalbeállítások közé."
+
+msgid "heading.translate"
+msgstr "OLDAL FORDÍTÁSA"
+
+msgid "dlg.translate.unavail"
+msgstr "A szolgáltatás nem elérhető"
+
+msgid "lang.ar"
+msgstr "Arab"
+
+msgid "lang.en"
+msgstr "Angol"
+
+msgid "lang.pt"
+msgstr "Portugál"
+
+msgid "lang.es.mx"
+msgstr "Spanyol (mexikói)"
+
+msgid "lang.sk"
+msgstr "Szlovák"
+
+msgid "heading.newident"
+msgstr "ÚJ IDENTITÁS"
+
+msgid "hint.newident.date"
+msgstr "ÉÉÉÉ vagy ÉÉÉÉ-HH-NN"
+
+msgid "dlg.newident.notsaved"
+msgstr "nem mentve a lemezre"
+
+msgid "dlg.newident.scope.page"
+msgstr "Jelenlegi oldal"
+
+msgid "dlg.newident.userid"
+msgstr "Felhasználói azonosító:"
+
+msgid "dlg.newident.create"
+msgstr "Identitás létrehozása"
+
+msgid "heading.newident.missing"
+msgstr "HIÁNYZÓ ADAT"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Az \"Általános nevet (CN)\" kötelező megadni."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Kérem, ellenőrizze az \"Érvényesség\" mezőt. Példák:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "heading.subscribe"
+msgstr "FELIRATKOZÁS AZ OLDALRA"
+
+msgid "dlg.feed.type.headings"
+msgstr "Új fejezetcímek"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "HTTP(s) linkek figyelmen kívül hagyása:"
+
+msgid "heading.bookmark.tags"
+msgstr "KÜLÖNLEGES CÍMKÉK"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Színek"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Hálózat"
+
+msgid "heading.prefs.uitheme"
+msgstr "FELÜLET SZÍNEI"
+
+msgid "prefs.downloads"
+msgstr "Letöltések mappa:"
+
+msgid "prefs.collapsepreonload"
+msgstr "Előreformázott blokkok összecsukása:"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Archívumok indexfájljának megnyitása:"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Billentyűs görgetés sebessége:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Eszköztár elrejtése görgetéskor:"
+
+msgid "prefs.theme.dark"
+msgstr "Sötét"
+
+msgid "prefs.uiscale"
+msgstr "Felhasználói felület nagyítási faktora:"
+
+msgid "prefs.customframe"
+msgstr "Egyedi ablakkeret:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Sötét téma:"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Háttérből előtérbe"
+
+msgid "prefs.mono"
+msgstr "Fix szélességű szövegtörzs:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "Sötét háttéren"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normál"
+
+msgid "prefs.quoteicon"
+msgstr "Idézet jelölője:"
+
+msgid "prefs.quoteicon.line"
+msgstr "Vonal"
+
+msgid "prefs.memorysize"
+msgstr "Memória mérete:"
+
+msgid "menu.binding.reset"
+msgstr "Alapértékek visszaállítása"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Ez az archívum egy elemet tartalmaz, és %.1f MB méretű."
+msgstr[1] "Ez az archívum %zu elemet tartalmaz, és %.1f méretű."
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Görgetés fél oldallal feljebb"
+
+msgid "keys.scroll.page.up"
+msgstr "Görgetés egy oldallal feljebb"
+
+msgid "keys.root"
+msgstr "Ugrás a kapszula gyökérmappájára"
+
+msgid "keys.link.modkey"
+msgstr "Hivatkozás megnyitása módosítóbillentyűvel"
+
+msgid "keys.link.homerow.hover"
+msgstr "Egér a hivatkozás fölés középső billentyűsorral"
+
+msgid "keys.zoom.out"
+msgstr "Kicsinyítés"
+
+msgid "keys.tab.close.other"
+msgstr "Többi lap bezárása"
+
+msgid "keys.split.next"
+msgstr "Ugrás a következő osztásra"
+
+msgid "keys.upload"
+msgstr "Oldal feltöltése Titan protokollal"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"A szerver olyan státuszkóddal válaszolt, amely nem szerepel a Gemini "
+"protokoll specifikációjában. Lehet, hogy ez a szerver a jövőből érkezett? "
+"Vagy inkább hibásan működik."
+
+msgid "error.unsupported.media.msg"
+msgstr ""
+"A szervertől érkezett tartalomtípust ez az alkalmazás nem tudja "
+"megjeleníteni."
+
+msgid "error.badheader.msg"
+msgstr ""
+"A szervertől kapott fejléc nem felel meg a Gemini protokoll "
+"specifikációjának. Lehet, hogy szerverhiba lépett fel, vagy nem Gemini "
+"szerverhez próbált kapcsolódni."
+
+msgid "error.badredirect.msg"
+msgstr ""
+"A szerver átirányítással válaszolt, de érvénytelen cél-URL-t adott meg. "
+"Elképzelhető, hogy szerverhiba lépett fel."
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Elképzelhető, hogy átirányítási ciklusba került. Az alábbi linket "
+"ellenőrizve eldöntheti, szeretne-e manuálisan továbbmenni."
+
+msgid "error.certexpired.msg"
+msgstr ""
+"Megszakadt a kapcsolat a szerverrel, mert annak TLS tanúsítványa lejárt."
+
+msgid "error.certverify.msg"
+msgstr ""
+"A szerverrel megszakadt a kapcsolat, mert a TLS tanúsítványa nem egyezik "
+"azzal, amit korábban megbízhatónak jelölt. Kérem, ellenőrizze, hogy a "
+"szerver bejelentette-e, hogy a tanúsítványa megváltozik. Ha nem, akkor "
+"lehetséges, hogy egy rosszindulatú harmadik fél próbálja megszemélyesíteni "
+"ezt a szervert.\n"
+"\n"
+"A tanúsítványt az oldaladatoknál lehet megbízhatónak jelölni."
+
+msgid "error.unavail.msg"
+msgstr ""
+"A szerver túlterhelés vagy karbantartás miatt nem elérhető. Próbálkozzon "
+"később."
+
+msgid "error.cgi.msg"
+msgstr ""
+"Dinamikus tartalomgenerálási hiba lépett fel a szerveren. Ezt hibásan működő "
+"szerveroldali szoftver okozhatja."
+
+msgid "error.permanent.msg"
+msgstr "A kérés sikertelen, és jövőbeli megismétlése esetén is sikertelen lesz."
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"A kérés olyan domainre irányult, amelyet ez a szerver nem tud kiszolgálni, "
+"és nem proxykéréseket sem fogad."
+
+msgid "error.cert.needed.msg"
+msgstr "A kért erőforráshoz csak ügyféltanúsítvány birtokában férhet hozzá."
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"A kapott ügyféltanúsítvány érvényes, de nincs jogosultsága a kért "
+"erőforráshoz."
+
+msgid "error.cert.invalid"
+msgstr "Érvénytelen tanúsítvány"
+
+msgid "error.cert.invalid.msg"
+msgstr "A kapott ügyféltanúsítvány lejárt vagy érvénytelen."
+
+msgid "error.ansi.msg"
+msgstr ""
+"Elképzelhető, hogy az oldal helytelenül jelenik meg. ANSI escape "
+"szekvenciákat használ a szöveg formázására, és ez jelenleg csak részben "
+"támogatott. Próbálja terminálemulátorban megnyitni."
+
+msgid "error.glyphs"
+msgstr "Hiányzó karakterek"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Az oldalt nem lehetett teljesen megjeleníteni, mert a betűkészletből "
+"bizonyos karakterek hiányoznak. A hiba javításához telepítsen megfelelő "
+"betűtípusokat."
+
+msgid "gempub.cover.view"
+msgstr "Gempub tartalom megtekintése"
+
+msgid "gempub.meta.author"
+msgstr "Szerző"

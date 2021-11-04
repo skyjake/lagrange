@@ -120,10 +120,8 @@ enum iGmRunFlags {
     decoration_GmRunFlag  = iBit(1), /* not part of the source */
     startOfLine_GmRunFlag = iBit(2),
     endOfLine_GmRunFlag   = iBit(3),
-//    siteBanner_GmRunFlag  = iBit(4), /* area reserved for the site banner */
     quoteBorder_GmRunFlag = iBit(5),
     wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
-//    footer_GmRunFlag      = iBit(7),
     altText_GmRunFlag     = iBit(8),
 };
 
@@ -177,13 +175,6 @@ enum iGmDocumentWarning {
     missingGlyphs_GmDocumentWarning = iBit(2),
 };
 
-/*
-enum iGmDocumentBanner {
-    none_GmDocumentBanner,
-    siteDomain_GmDocumentBanner,
-    certificateWarning_GmDocumentBanner,
-};*/
-
 enum iGmDocumentUpdate {
     partial_GmDocumentUpdate, /* appending more content */
     final_GmDocumentUpdate,   /* process all lines, including the last one if not terminated */
@@ -191,20 +182,19 @@ enum iGmDocumentUpdate {
 
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat format);
-//void    setBanner_GmDocument    (iGmDocument *, enum iGmDocumentBanner type);
-void    setWidth_GmDocument     (iGmDocument *, int width, int outsideMargin);
+void    setWidth_GmDocument     (iGmDocument *, int width, int canvasWidth);
+iBool   updateWidth_GmDocument  (iGmDocument *, int width, int canvasWidth);
 void    redoLayout_GmDocument   (iGmDocument *);
+void    invalidateLayout_GmDocument(iGmDocument *); /* will have to be redone later */
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
-void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int outsideMargin,
+void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int canvasWidth,
                                  enum iGmDocumentUpdate updateType);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 
 void    updateVisitedLinks_GmDocument   (iGmDocument *); /* check all links for visited status */
 void    invalidatePalette_GmDocument    (iGmDocument *);
 void    makePaletteGlobal_GmDocument    (const iGmDocument *); /* copies document colors to the global palette */
-
-//void    reset_GmDocument        (iGmDocument *); /* free images */
 
 typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 
@@ -219,10 +209,6 @@ const iGmRun *  renderProgressive_GmDocument(const iGmDocument *d, const iGmRun 
                                              iRangei visRangeY, iGmDocumentRenderFunc render,
                                              void *context);
 iInt2           size_GmDocument             (const iGmDocument *);
-//const iGmRun *  siteBanner_GmDocument       (const iGmDocument *);
-//iBool           hasSiteBanner_GmDocument    (const iGmDocument *);
-//enum iGmDocumentBanner bannerType_GmDocument(const iGmDocument *);
-//const iString * bannerText_GmDocument       (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);
 size_t          memorySize_GmDocument       (const iGmDocument *); /* bytes */

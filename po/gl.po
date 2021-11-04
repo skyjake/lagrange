@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-30 06:15+0000\n"
+"PO-Revision-Date: 2021-11-02 23:51+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -2116,3 +2116,6 @@ msgstr ""
 
 msgid "dlg.dismiss.warning"
 msgstr "Desbotar aviso"
+
+msgid "lang.uk"
+msgstr "Ucraniano"

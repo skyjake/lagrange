@@ -1023,11 +1023,13 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     arrange_Widget(d); /* need to know the height */
+    iBool allowOverflow = iFalse;
     /* A vertical offset determined by a possible selected label in the menu. */ {
         iConstForEach(ObjectList, child, children_Widget(d)) {
             const iWidget *item = constAs_Widget(child.object);
             if (flags_Widget(item) & selected_WidgetFlag) {
                 windowCoord.y -= item->rect.pos.y;
+                allowOverflow = iTrue;
             }
         }
     }
@@ -1129,11 +1131,13 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         rightExcess  += r;
     }
 #endif
-    if (bottomExcess > 0 && (!isPortraitPhone || !isSlidePanel)) {
-        d->rect.pos.y -= bottomExcess;
-    }
-    if (topExcess > 0) {
-        d->rect.pos.y += topExcess;
+    if (!allowOverflow) {
+        if (bottomExcess > 0 && (!isPortraitPhone || !isSlidePanel)) {
+            d->rect.pos.y -= bottomExcess;
+        }
+        if (topExcess > 0) {
+            d->rect.pos.y += topExcess;
+        }
     }
     if (rightExcess > 0) {
         d->rect.pos.x -= rightExcess;
@@ -1455,12 +1459,17 @@ void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *co
     iLabelWidget *tabButton = tabButtonForPage_Widget_(tabs, page);
     setPadding_Widget(as_Widget(tabButton), 0, 0, 0, gap_UI / 4);
     setFlags_Widget(as_Widget(tabButton), arrangeVertical_WidgetFlag | resizeHeightOfChildren_WidgetFlag, iTrue);
+#if defined (iPlatformApple)
+    const int64_t edge = moveToParentLeftEdge_WidgetFlag;
+#else
+    const int64_t edge = moveToParentRightEdge_WidgetFlag;
+#endif
     iLabelWidget *close = addChildFlags_Widget(
         as_Widget(tabButton),
         iClob(new_LabelWidget(close_Icon,
                               format_CStr("%s id:%s", command, cstr_String(id_Widget(page))))),
-        moveToParentRightEdge_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag |
-            noBackground_WidgetFlag | hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
+        edge | tight_WidgetFlag | frameless_WidgetFlag | noBackground_WidgetFlag |
+            hidden_WidgetFlag | visibleOnParentHover_WidgetFlag);
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(as_Widget(close),
                         hidden_WidgetFlag | visibleOnParentHover_WidgetFlag, iFalse);
@@ -2198,6 +2207,7 @@ iWidget *makePreferences_Widget(void) {
                                     { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
                                     { "${lang.fr} - fr", 0, 0, "uilang id:fr" },
                                     { "${lang.gl} - gl", 0, 0, "uilang id:gl" },
+                                    { "${lang.hu} - hu", 0, 0, "uilang id:hu" },
                                     { "${lang.ia} - ia", 0, 0, "uilang id:ia" },
                                     { "${lang.ie} - ie", 0, 0, "uilang id:ie" },
                                     { "${lang.isv} - isv", 0, 0, "uilang id:isv" },

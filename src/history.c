@@ -440,6 +440,17 @@ void clearCache_History(iHistory *d) {
     unlock_Mutex(d->mtx);
 }
 
+void invalidateCachedLayout_History(iHistory *d) {
+    lock_Mutex(d->mtx);
+    iForEach(Array, i, &d->recent) {
+        iRecentUrl *url = i.value;
+        if (url->cachedDoc) {
+            invalidateLayout_GmDocument(url->cachedDoc);
+        }
+    }
+    unlock_Mutex(d->mtx);
+}
+
 size_t pruneLeastImportant_History(iHistory *d) {
     size_t delta  = 0;
     size_t chosen = iInvalidPos;
