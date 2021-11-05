@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-04 20:09+0000\n"
+"PO-Revision-Date: 2021-11-06 04:30+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -2062,3 +2062,6 @@ msgstr "Website del projecte…"
 #, c-format
 msgid "fontpack.enable"
 msgstr "Activar «%s»"
+
+msgid "lang.cs"
+msgstr "Tchec"
