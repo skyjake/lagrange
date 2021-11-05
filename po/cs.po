@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-04 13:20+0000\n"
+"PO-Revision-Date: 2021-11-06 04:30+0000\n"
 "Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
@@ -510,14 +510,14 @@ msgid "dlg.history.clear"
 msgstr "Vymazat historii"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "VYMAZAT ZÁLOŽKY"
+msgstr "ODSTRANIT ZÁLOŽKY"
 
 #, c-format
 msgid "dlg.bookmarks.delete"
 msgid_plural "dlg.bookmarks.delete.n"
-msgstr[0] "Vymazat záložku"
-msgstr[1] "Vymazat %u záložek"
-msgstr[2] "Vymazat %u záložky"
+msgstr[0] "Odstranit záložku"
+msgstr[1] "Odstranit %u záložek"
+msgstr[2] "Odstranit %u záložky"
 
 msgid "bookmark.tag.home"
 msgstr "Nastavit jako domovskou stránku"
@@ -575,9 +575,9 @@ msgstr "Opravdu chcete vymazat historii všech navštívených stránek?"
 #, c-format
 msgid "dlg.confirm.bookmarks.delete"
 msgid_plural "dlg.confirm.bookmarks.delete.n"
-msgstr[0] "Opravdu chcete smazat tu záložku v této složce?"
-msgstr[1] "Opravdu chcete smazat všech %u záložek v této složce?"
-msgstr[2] "Opravdu chcete smazat všechny %u záložky v této složce?"
+msgstr[0] "Opravdu chcete odstranit tu záložku v této složce?"
+msgstr[1] "Opravdu chcete odstranit všech %u záložek v této složce?"
+msgstr[2] "Opravdu chcete odstranit všechny %u záložky v této složce?"
 
 msgid "bookmark.tag.remote"
 msgstr "Použít jako zdroj záložek"
@@ -1616,7 +1616,7 @@ msgid "archive.exit"
 msgstr "Odejít z archivu"
 
 msgid "dir.empty"
-msgstr "Tento adresář je prázdný."
+msgstr "Tato složka je prázdná."
 
 #, c-format
 msgid "dir.summary"
@@ -1943,3 +1943,192 @@ msgstr "Příliš mnoho přesměrování"
 
 msgid "error.certexpired"
 msgstr "Certifikát s vypršenou platností"
+
+msgid "lang.cs"
+msgstr "Čeština"
+
+msgid "error.glyphs"
+msgstr "Chybějící znaky"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Tato stránka nebude plně vykreslena, jelikož některé znaky chybí. Můžete "
+"instalovat dodatečné písma aby jste to vyřešili."
+
+msgid "gempub.cover.viewlocal"
+msgstr "Tuto Gempub knihu lze zobrazit pouze po tom co byla uložena lokálně."
+
+msgid "gempub.cover.untitled"
+msgstr "Kniha beze jména"
+
+msgid "gempub.meta.revdate"
+msgstr "Datum revize"
+
+msgid "gempub.meta.pub"
+msgstr "Publikována"
+
+msgid "gempub.meta.pubdate"
+msgstr "Datum publikace"
+
+msgid "gempub.meta.lang"
+msgstr "Jazyk"
+
+msgid "gempub.meta.license"
+msgstr "Licence"
+
+msgid "heading.fontpack.meta"
+msgstr "Písma"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Nenainstalován"
+
+msgid "fontpack.meta.disabled"
+msgstr ", zakázán"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Povolit \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Zakázat \"%s\""
+
+msgid "fontpack.export"
+msgstr "Zobrazit šablonu fontpack.ini"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Instalovat \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Aktualizovat \"%s\" na verzi %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Trvale odstranit \"%s\""
+
+msgid "heading.fontpack.delete"
+msgstr "ODSTRANIT PÍSMOVÝ BALÍČEK"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Chcete opravdu trvale odstranit písmový balíček \"%s\"?"
+
+msgid "dlg.fontpack.delete"
+msgstr "Odstranit písmový balíček"
+
+msgid "fontpack.install.ttf"
+msgstr "Instalovat TrueType písmo"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Otevřít složku uživatelských písem"
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange se pokouší načíst všechny jednotlivé TrueType soubory, které jsou "
+"zkopírovány do složky uživatelských písem."
+
+msgid "heading.dismiss.warning"
+msgstr "PŘESTAT UKAZOVAT VAROVÁNÍ?"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Trvale přestat zobrazovat varování o emulaci terminálu na %s?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Přestat ukazovat varování"
+
+msgid "heading.fontpack.classic"
+msgstr "STÁHNOUT PÍSMOVÝ BALÍČEK"
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Písma, které byly dříve přibaleny s aplikací jsou nyní dostupné odděleně. "
+"Chtěli byste nyní stáhnout písmový balíček \"Klasická sada\"?"
+
+msgid "dlg.fontpack.classic"
+msgstr "Stáhnout písmový balíček (25MB)"
+
+msgid "error.badrequest.msg"
+msgstr "Server nepochopil váš požadavek."
+
+msgid "error.cert.needed"
+msgstr "Certifikát vyžadován"
+
+msgid "error.cert.auth"
+msgstr "Certifikát není autorizován"
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Předkládaný klientský certifikát je platný, ale není autorizován pro "
+"přistupování k danému zdroji."
+
+msgid "error.cert.invalid"
+msgstr "Neplatný certifikát"
+
+msgid "gempub.meta.version"
+msgstr "Verze"
+
+msgid "error.ansi"
+msgstr "Emulace terminálu"
+
+msgid "gempub.cover.image"
+msgstr "Titulní obrázek"
+
+msgid "gempub.meta.author"
+msgstr "Autor"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Povolené písmové balíčky"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Zakázané písmové balíčky"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Zobrazit soubor"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Verze %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Instalován"
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"Přístup k vyžádanému zdroji vyžaduje, aby jste prokázali totožnost pomocí "
+"klientského certifikátu."
+
+msgid "error.cert.invalid.msg"
+msgstr ""
+"Předkládanému klientskému certifikátu vypršela platnost nebo je neplatný."
+
+msgid "error.ansi.msg"
+msgstr ""
+"Tato stránka nemusí být správně vykreslena, používá totiž únikové znaky ANSI "
+"ke stylování textu, což je jen částečně podporováno. Můžete se ji pokusit "
+"zobrazit pomocí terminálového emulátoru."
+
+msgid "gempub.cover.view"
+msgstr "Zobrazit Gempub obsah"
+
+msgid "fontpack.help"
+msgstr ""
+"Písmové balíčky v Lagrange jsou archivy ZIP, které obsahují sadu písmových "
+"souborů a jejich příslušných konfiguračních parametrů. Po instalaci můžete "
+"písma použít pro obsah dokumentu a v rozhraní. Aktivní písma se vybírají v "
+"Předvolby > Písma"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Zobrazit instalovaná písma"
+
+msgid "truetype.help.installed"
+msgstr "Toto písmo je nainstalováno ve složce uživatelských písem."
+
+msgid "lang.hu"
+msgstr "Maďarština"
+
+msgid "gempub.cover.aboutbook"
+msgstr "O této knize"
