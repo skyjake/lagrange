@@ -40,6 +40,6 @@ void        updateToolbarColors_Root            (iRoot *);
 iInt2       size_Root                           (const iRoot *);
 iRect       rect_Root                           (const iRoot *);
 iRect       safeRect_Root                       (const iRoot *);
-iInt2       visibleSize_Root                    (const iRoot *); /* may be obstructed by software keyboard */
+iRect       visibleRect_Root                    (const iRoot *); /* may be obstructed by software keyboard */
 iBool       isNarrow_Root                       (const iRoot *);
 int         appIconSize_Root                    (void);

@@ -1529,6 +1529,35 @@ iRect safeRect_Root(const iRoot *d) {
     return rect;
 }
 
-iInt2 visibleSize_Root(const iRoot *d) {
-    return addY_I2(size_Root(d), -get_MainWindow()->keyboardHeight);
+iRect visibleRect_Root(const iRoot *d) {
+    iRect visRect = rect_Root(d);
+#if defined (iPlatformAppleMobile)
+    /* TODO: Check this on device... Maybe DisplayUsableBounds would be good here, too? */
+    float left, top, right, bottom;
+    safeAreaInsets_iOS(&left, &top, &right, &bottom);
+    visRect.pos.x = (int) left;
+    visRect.size.x -= (int) (left + right);
+    visRect.pos.y = (int) top;
+    visRect.size.y -= (int) (top + bottom);
+#endif
+#if defined (iPlatformDesktop)
+    /* Apply the usable bounds of the display. */
+    SDL_Rect usable; {
+        const float ratio = d->window->pixelRatio;
+        SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->window->win), &usable);
+        iInt2 winPos;
+        SDL_GetWindowPosition(d->window->win, &winPos.x, &winPos.y);
+        mulfv_I2(&winPos, ratio);
+        usable.x *= ratio;
+        usable.y *= ratio;
+        usable.w *= ratio;
+        usable.h *= ratio;
+        /* Make it relative to the window. */
+        usable.x -= winPos.x;
+        usable.y -= winPos.y;
+        visRect = intersect_Rect(visRect, init_Rect(usable.x, usable.y, usable.w, usable.h));        
+    }
+#endif
+    adjustEdges_Rect(&visRect, 0, 0, -get_MainWindow()->keyboardHeight, 0);
+    return visRect;
 }
