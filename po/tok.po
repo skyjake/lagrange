@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-02 23:51+0000\n"
+"PO-Revision-Date: 2021-11-06 04:30+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -496,7 +496,7 @@ msgid "pageinfo.domain.mismatch"
 msgstr "nimi li sama ala"
 
 msgid "dlg.cert.trust"
-msgstr "o pona"
+msgstr "o kepeken"
 
 msgid "heading.save"
 msgstr "IJO LI AWEN"
@@ -1305,8 +1305,7 @@ msgstr[0] ""
 "%d la sitelen len pona li wile tawa weka."
 
 msgid "dlg.certwarn.different"
-msgstr ""
-"sitelen len ni li pakala ala. taso ona li sama ala sitelen len pi pona lukin."
+msgstr "sitelen len ni li pakala ala. taso ona li sama ala sitelen len pini."
 
 msgid "dlg.certwarn.domain"
 msgstr "nimi pi sitelen len li ante. ken la jan lawa mun ni li pakala."
@@ -2018,3 +2017,34 @@ msgstr "o pali kepeken nasin nimi"
 
 msgid "bookmark.export.saving"
 msgstr ""
+"sina wile pana e lipu awen la o awen e lipu ni. sina ken kama sona e nimi "
+"tawa lon lipu ni kin."
+
+msgid "bookmark.export.format.folders"
+msgstr "sitelen suli pi nanpa 2/3 li sama poki."
+
+msgid "bookmark.export.format.tags"
+msgstr "sitelen suli pi nanpa 2 li sama nimi lili."
+
+msgid "lang.cs"
+msgstr "toki Seki"
+
+msgid "lang.uk"
+msgstr "toki Ukawina"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"linja kulupu en linja toki li jo e sona namako pi lipu awen sewi. ilo "
+"Lakelan li lukin ala e linja sitelen en sitelen namako tan ni: ona li jo e "
+"toki lili."
+
+msgid "error.certverify.msg"
+msgstr ""
+"mi pakala toki tawa ilo pana tan ni: sitelen len ona li sama ala sitelen len "
+"pini. o kama sona e ni: jan lawa mun li toki ala toki e ante pi sitelen len? "
+"ante la jan ike li ken lukin sama ilo pana.\n"
+"\n"
+"sina wile lukin e lipu kepeken len ni la o open e ijo \"sona lipu\"."
+
+msgid "lang.hu"
+msgstr "toki Mosijo"
