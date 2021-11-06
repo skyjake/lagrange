@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-02 23:51+0000\n"
+"PO-Revision-Date: 2021-11-04 13:20+0000\n"
 "Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
@@ -1191,3 +1191,755 @@ msgstr "Slovenština"
 
 msgid "keys.upload"
 msgstr "Nahrát stránku pomocí Titanu"
+
+msgid "error.proxy.msg"
+msgstr ""
+"Požadavek pomocí proxy selhal, protože server nebyl schopen utvořit spojení "
+"s vzdáleným hostitelem. Je možné, že existují problémy s konektivitou."
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Váš požadavek byl pro zdroj na doméně, která není obsluhována tímto serverem "
+"a ten server nepřijímá proxy požadavky."
+
+msgid "heading.bookmark.add"
+msgstr "PŘIDAT ZÁLOŽKU"
+
+msgid "heading.bookmark.edit"
+msgstr "UPRAVIT ZÁLOŽKU"
+
+msgid "dlg.bookmark.save"
+msgstr "Uložit záložku"
+
+msgid "dlg.bookmark.title"
+msgstr "Název:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Značení:"
+
+msgid "dlg.newident.notsaved"
+msgstr "není uložena na disk"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Nová složka"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Zadejte jméno nové složky:"
+
+msgid "heading.addfolder"
+msgstr "PŘIDAT SLOŽKU"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "heading.prefs.certs"
+msgstr "CERTIFIKÁTY"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "NASTAVENÍ"
+
+msgid "heading.prefs.uitheme"
+msgstr "BARVY ROZHRANÍ"
+
+msgid "prefs.searchurl"
+msgstr "URL vyhledávání:"
+
+msgid "prefs.hoverlink"
+msgstr "Ukázat URL po najetí kurzorem:"
+
+msgid "prefs.centershort"
+msgstr "Svislé vystředění"
+
+msgid "prefs.retainwindow"
+msgstr "Zachovat umístění:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Žádné"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Neproporcionální písmo:"
+
+msgid "prefs.biglede"
+msgstr "Velký první odstavec:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normální"
+
+msgid "prefs.linewidth"
+msgstr "Šířka textu:"
+
+msgid "keys.tab.new"
+msgstr "Nová karta"
+
+msgid "keys.split.item"
+msgstr "Nabídka rozděleného pohledu:"
+
+msgid "error.tls.msg"
+msgstr "Nepodařilo se komunikovat se serverem."
+
+msgid "error.tls"
+msgstr "Selhání sítě/TLS"
+
+msgid "error.unavail"
+msgstr "Server nedostupný"
+
+msgid "error.cgi"
+msgstr "CGI chyba"
+
+msgid "error.proxy"
+msgstr "Chyba proxy"
+
+msgid "error.permanent"
+msgstr "Trvalé selhání"
+
+msgid "error.permanent.msg"
+msgstr "Váš požadavek selhal a selže i v budoucnosti pokud jej zopakujete."
+
+msgid "error.notfound"
+msgstr "Nenalezen"
+
+msgid "error.gone"
+msgstr "Fuč"
+
+msgid "error.badrequest"
+msgstr "Špatný požadavek"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] ""
+"Tento archiv obsahuje %zu soubor a jeho zkomprimovaná velikost je %.1f MB."
+msgstr[1] ""
+"Tento archiv obsahuje %zu soubory a jeho zkomprimovaná velikost je %.1f MB."
+msgstr[2] ""
+"Tento archiv obsahuje %zu souborů a jeho zkomprimovaná velikost je %.1f MB."
+
+msgid "keys.link.modkey"
+msgstr "Otevřít odkaz pomocí modifikační klávesy"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Otevírat odkazy v nové kartě pomocí kláves na kterých spočívají prsty"
+
+msgid "keys.link.homerow.hover"
+msgstr "Najet na odkaz pomocí kláves na kterých spočívají prsty"
+
+msgid "lang.isv"
+msgstr "Interslavic"
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Vytváří se vlastně podepsaný 2048-bitový RSA certifikát."
+
+msgid "hint.newident.date"
+msgstr "RRRR nebo RRRR-MM-DD"
+
+msgid "hint.newident.optional"
+msgstr "volitelný"
+
+msgid "dlg.newident.until"
+msgstr "Platná do:"
+
+msgid "keys.fullscreen"
+msgstr "Zapnout/vypnout zobrazení na celou obrazovky"
+
+msgid "dlg.newident.commonname"
+msgstr "Obecné jméno:"
+
+msgid "dlg.newident.temp"
+msgstr "Dočasná:"
+
+msgid "dlg.newident.scope"
+msgstr "Použita na:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Aktuální doméně"
+
+msgid "dlg.newident.scope.page"
+msgstr "Aktuální stránce"
+
+msgid "dlg.newident.scope.none"
+msgstr "Nepoužívána"
+
+msgid "dlg.newident.email"
+msgstr "Email:"
+
+msgid "dlg.newident.userid"
+msgstr "ID uživatele:"
+
+msgid "dlg.newident.domain"
+msgstr "Doména:"
+
+msgid "dlg.newident.org"
+msgstr "Organizace:"
+
+msgid "keys.tab.close"
+msgstr "Zavřít kartu"
+
+msgid "dlg.newident.country"
+msgstr "Stát:"
+
+msgid "dlg.newident.more"
+msgstr "Více…"
+
+msgid "heading.newident.missing"
+msgstr "CHYBĚJÍCÍ INFORMACE"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "\"Obecné jméno\" musí být specifikováno."
+
+msgid "heading.newident.date.bad"
+msgstr "NEPLATNÉ DATUM"
+
+msgid "dlg.newident.date.past"
+msgstr "Datum vypršení platnosti musí být v budoucnosti."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Zkontrolujte prosím datum konce platnosti. Příklady:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "keys.split.menu"
+msgstr "Nastavit režim rozděleného pohledu"
+
+msgid "heading.feedcfg"
+msgstr "NASTAVENÍ KANÁLU"
+
+msgid "heading.subscribe"
+msgstr "ODEBÍRAT STRÁNKU"
+
+msgid "dlg.feed.title"
+msgstr "Název:"
+
+msgid "dlg.feed.entrytype"
+msgstr "Typ zápisu:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-MM-DD odkazy"
+
+msgid "keys.split.next"
+msgstr "Přepnout zaměření na následující polovinu"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Uživatelské rozhraní"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Klávesy"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Síť"
+
+msgid "heading.prefs.paragraph"
+msgstr "ODSTAVEC"
+
+msgid "heading.prefs.pagecontent"
+msgstr "BARVY STRÁNKY"
+
+msgid "heading.prefs.proxies"
+msgstr "PROXY"
+
+msgid "heading.prefs.scrolling"
+msgstr "POSOUVÁNÍ STRÁNKY"
+
+msgid "heading.prefs.sizing"
+msgstr "DIMENZOVÁNÍ"
+
+msgid "heading.prefs.widelayout"
+msgstr "ŠIROKÉ ROZLOŽENÍ"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Styl"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Uživatelské rozhraní"
+
+msgid "prefs.downloads"
+msgstr "Složka stažených souborů:"
+
+msgid "prefs.collapsepreonload"
+msgstr "Smrštit předformátovaný text:"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Přidat záložky ke spodku:"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Otevírat archivní indexy:"
+
+msgid "prefs.pinsplit.left"
+msgstr "Levé karty"
+
+msgid "prefs.pinsplit.right"
+msgstr "Pravé karty"
+
+msgid "prefs.pinsplit"
+msgstr "Přišpendlení v rozpůleném pohledu:"
+
+msgid "prefs.smoothscroll"
+msgstr "Plynulé posouvání:"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Rychlost posouvání klávesnicí:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Rychlost posouvání myší:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Načítat obrázky při posuvu:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Skrýt nástrojovou lištu při posuvu:"
+
+msgid "prefs.ostheme"
+msgstr "Použít systémové téma:"
+
+msgid "prefs.theme.black"
+msgstr "Černé"
+
+msgid "prefs.theme.dark"
+msgstr "Tmavé"
+
+msgid "prefs.theme.light"
+msgstr "Světlé"
+
+msgid "prefs.theme.white"
+msgstr "Bílé"
+
+msgid "prefs.accent"
+msgstr "Doplňková barva:"
+
+msgid "prefs.accent.teal"
+msgstr "Špinavě modrá"
+
+msgid "prefs.accent.orange"
+msgstr "Oranžová"
+
+msgid "prefs.uilang"
+msgstr "Jazyk:"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Sépiové"
+
+msgid "prefs.imagestyle"
+msgstr "Zbarvit obrázky:"
+
+msgid "prefs.imagestyle.original"
+msgstr "Nijak"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Černobíle"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Pozadí do popředí"
+
+msgid "prefs.imagestyle.text"
+msgstr "Barva textu"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Barva předformátovaného textu"
+
+msgid "prefs.font.ui"
+msgstr "Rozhraní:"
+
+msgid "prefs.font.heading"
+msgstr "Nadpisy:"
+
+msgid "prefs.font.body"
+msgstr "Tělo:"
+
+msgid "prefs.font.mono"
+msgstr "Předformátovaný text:"
+
+msgid "prefs.font"
+msgstr "Písmo těla:"
+
+msgid "prefs.mono"
+msgstr "Používat neproporcionální písmo pro tělo:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.linewidth.fill"
+msgstr "Vyplnit"
+
+msgid "prefs.quoteicon.icon"
+msgstr "Ikona \""
+
+msgid "prefs.linespacing"
+msgstr "Rozestup mezi řádky:"
+
+msgid "prefs.quoteicon"
+msgstr "Ukazatel citátu"
+
+msgid "prefs.decodeurls"
+msgstr "Dekódovat URL adresy:"
+
+msgid "prefs.memorysize"
+msgstr "Velikost paměti:"
+
+msgid "prefs.cachesize"
+msgstr "Velikost mezipaměti:"
+
+msgid "prefs.ca.file"
+msgstr "Soubor CA:"
+
+msgid "prefs.ca.path"
+msgstr "Cesta k CA:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Proxy pro Gemini:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Proxy pro Gopher:"
+
+msgid "prefs.proxy.http"
+msgstr "Proxy pro HTTP:"
+
+msgid "menu.binding.reset"
+msgstr "Obnovit výchozí"
+
+msgid "menu.binding.clear"
+msgstr "Odstranit"
+
+msgid "archive.exit"
+msgstr "Odejít z archivu"
+
+msgid "dir.empty"
+msgstr "Tento adresář je prázdný."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Tato složka obsahuje %zu položku."
+msgstr[1] "Tato složka obsahuje %zu položky."
+msgstr[2] "Tato složka obsahuje %zu položek."
+
+msgid "keys.top"
+msgstr "Přeskočit na začátek"
+
+msgid "keys.bottom"
+msgstr "Přeskočit na konec"
+
+msgid "keys.scroll.up"
+msgstr "Posunout nahoru"
+
+msgid "keys.scroll.down"
+msgstr "Posunout dolů"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Posunout nahoru o půl stránky"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Posunout dolů o půl stránky"
+
+msgid "keys.scroll.page.down"
+msgstr "Posunout stránku nahoru"
+
+msgid "keys.scroll.page.up"
+msgstr "Posunout stránku dolů"
+
+msgid "keys.back"
+msgstr "Jít zpět"
+
+msgid "keys.forward"
+msgstr "Jít vpřed"
+
+msgid "keys.parent"
+msgstr "Přejít na rodičovský adresář"
+
+msgid "keys.root"
+msgstr "Přejít na kořen kapsule"
+
+msgid "keys.reload"
+msgstr "Obnovit stránku"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Server odpověděl se stavovým kódem, který není ve specifikaci protokolu "
+"Gemini. Možná je z budoucnosti? Nebo prostě nefunguje."
+
+msgid "keys.link.homerow"
+msgstr "Otevřít odkaz pomocí kláves na kterých spočívají prsty"
+
+msgid "keys.link.homerow.next"
+msgstr "Následující sada kláves na kterých spočívají prsty"
+
+msgid "keys.bookmark.add"
+msgstr "Přidat záložku"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Přidat složku záložek"
+
+msgid "keys.subscribe"
+msgstr "Odebírat stránku"
+
+msgid "keys.findtext"
+msgstr "Najít text na stránce"
+
+msgid "error.certexpired.msg"
+msgstr ""
+"Připojení k serveru bylo přerušeno, neboť platnost jeho TLS certifikátu "
+"vypršela."
+
+msgid "error.certverify"
+msgstr "Nedůvěryhodný server"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Požadovaný protokol není podporovaný touto aplikací."
+
+msgid "error.temporary.msg"
+msgstr ""
+"Váš požadavek selhal, ale může uspět pokud to zkusíte znovu v budoucnosti."
+
+msgid "error.cgi.msg"
+msgstr ""
+"Chyba při dynamickém generování obsahu na serveru. Může to být způsobeno "
+"nefunkčním softwarem na straně serveru."
+
+msgid "error.slowdown"
+msgstr "Zpomalte"
+
+msgid "error.slowdown.msg"
+msgstr "Server omezuje množství požadavků, které zpracuje. Počkejte prosím…"
+
+msgid "error.notfound.msg"
+msgstr "Požadovaný zdroj v této chvíli nebylo možné nalézt."
+
+msgid "error.gone.msg"
+msgstr "Požadovaný zdroj již není dostupný."
+
+msgid "error.proxyrefusal"
+msgstr "Proxy požadavek byl odmítnut"
+
+msgid "error.badheader.msg"
+msgstr ""
+"Přijatá hlavička neodpovídá specifikaci protokolu Gemini. Možná server "
+"nefunguje, nebo jste se pokusili kontaktovat ne-Gemini server."
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Server se pokusil přesměrovat vás na URL, jehož schéma je jiné než schéma "
+"počáteční URL. Zde je ten odkaz, aby jste jej mohli otevřít ručně je li to "
+"vhodné."
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Je možné, že jste se ocitli v cyklu přesměrování. Následující URL je níže, "
+"chcete-li pokračovat ručně."
+
+msgid "error.certverify.msg"
+msgstr ""
+"Připojení k serveru bylo zrušeno, protože jeho TLS certifikát se neshoduje s "
+"tím, jemuž důvěřujeme. Zkontrolujte, zdali server neoznámil změnu "
+"certifikátu. Pokud ne, je možné že zlomyslná třetí strana se vydává se "
+"server k němuž se pokoušíte připojit.\n"
+"\n"
+"Tento certifikát můžete označit jako důvěryhodný v informacích o stránce."
+
+msgid "error.temporary"
+msgstr "Dočasné selhání"
+
+msgid "error.unavail.msg"
+msgstr "Server není dostupný kvůli přetížení nebo údržbě. Přijďte později."
+
+msgid "dlg.feed.type.headings"
+msgstr "Nové nadpisy"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignorovat HTTP(S) odkazy:"
+
+msgid "dlg.feed.save"
+msgstr "Uložit nastavení"
+
+msgid "dlg.feed.sub"
+msgstr "Odebírat"
+
+msgid "dlg.bookmark.icon"
+msgstr "Ikona:"
+
+msgid "heading.bookmark.tags"
+msgstr "SPECIÁLNÍ ZNAČENÍ"
+
+msgid "dlg.addfolder"
+msgstr "Přidat složku"
+
+msgid "heading.prefs"
+msgstr "PŘEDVOLBY"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Barvy"
+
+msgid "heading.prefs.fonts"
+msgstr "Písma"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Obecné"
+
+msgid "prefs.theme"
+msgstr "Téma:"
+
+msgid "prefs.uiscale"
+msgstr "Faktor velikosti rozhraní:"
+
+msgid "prefs.customframe"
+msgstr "Vlastní rámeček okna:"
+
+msgid "prefs.returnkey"
+msgstr "Chování klávesy Enter:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Zalomení stránky"
+
+msgid "prefs.returnkey.accept"
+msgstr "Přijmout"
+
+msgid "prefs.animate"
+msgstr "Animace:"
+
+msgid "prefs.sideicon"
+msgstr "Ikona kapsule:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Temné téma:"
+
+msgid "prefs.doctheme.light"
+msgstr "Světlé téma:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Barevná temné"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Barevné světlé"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Černé"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Šedé"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Bílé"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Vysoký kontrast"
+
+msgid "prefs.saturation"
+msgstr "Sytost:"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.boldlink"
+msgstr "Tlusté odkazy:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Navštívené"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "V temném tématu"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Ve světlém tématu"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Únikové znaky ANSI:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Barva popředí"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Styl písma"
+
+msgid "prefs.font.warnmissing"
+msgstr "Varovat při chybějících znacích:"
+
+msgid "prefs.font.smooth"
+msgstr "Vyhlazování:"
+
+msgid "prefs.quoteicon.line"
+msgstr "Čára"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Zalamovat prostý text:"
+
+msgid "keys.zoom.in"
+msgstr "Přiblížit"
+
+msgid "keys.zoom.out"
+msgstr "Oddálit"
+
+msgid "keys.zoom.reset"
+msgstr "Obnovit přiblížení"
+
+msgid "keys.tab.close.other"
+msgstr "Zavřít ostatní karty"
+
+msgid "keys.tab.prev"
+msgstr "Předchozí karta"
+
+msgid "keys.tab.next"
+msgstr "Následující karta"
+
+msgid "keys.hoverurl"
+msgstr "Zobrazit/skrýt URL při přejetí kurzorem"
+
+msgid "error.badstatus"
+msgstr "Neznámý stavový kód"
+
+msgid "error.openfile"
+msgstr "Nepodařilo se otevřít soubor"
+
+msgid "error.openfile.msg"
+msgstr ""
+"Požadovaný soubor neexistuje nebo je nedostupný. Prosím zkontrolujte adresu "
+"souboru."
+
+msgid "error.badresource"
+msgstr "Neplatný zdroj"
+
+msgid "error.badresource.msg"
+msgstr "Požadovaný zdroj neexistuje."
+
+msgid "error.unsupported.media"
+msgstr "Nepodporovaný typ obsahu"
+
+msgid "error.unsupported.media.msg"
+msgstr "Přijatý obsah nelze zobrazit pomocí této aplikace."
+
+msgid "error.unsupported.protocol"
+msgstr "Nepodporovaný protokol"
+
+msgid "error.badheader"
+msgstr "Neplatná hlavička"
+
+msgid "error.badredirect"
+msgstr "Neplatné přesměrování"
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Server odpověděl s přesměrováním, ale neposkytl platnou konečnou URL. Možná "
+"server nefunguje."
+
+msgid "error.schemeredirect"
+msgstr "Schéma-měnící přesměrování"
+
+msgid "error.manyredirects"
+msgstr "Příliš mnoho přesměrování"
+
+msgid "error.certexpired"
+msgstr "Certifikát s vypršenou platností"
