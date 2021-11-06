@@ -61,6 +61,7 @@ msgstr "Hz"
 msgid "feeds.list.title"
 msgstr "Feed entries"
 
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
