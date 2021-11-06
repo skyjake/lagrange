@@ -1256,8 +1256,6 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 if (ev->motion.y > bottomLimit) {
                     speed = -(ev->motion.y - bottomLimit) / (float) hoverScrollLimit;
                 }
-                printf("my:%d bottomLimit:%d => %f (%d)\n", ev->motion.y, bottomLimit, speed
-                       ,isOverflowScrollPossible_Widget_(d, speed)); fflush(stdout);
             }
             const int dir = speed > 0 ? 1 : -1;
             if (speed != 0.0f && isOverflowScrollPossible_Widget_(d, dir)) {
