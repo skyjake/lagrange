@@ -4,8 +4,7 @@
 
 import os, sys
 
-BUILD_LANGS = [
-    'en', # base strings
+BUILD_LANGS = [ 'en', # base strings
     'cs',
     'de',
     'eo',
