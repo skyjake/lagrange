@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-06 04:30+0000\n"
+"PO-Revision-Date: 2021-11-06 09:34+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -54,7 +54,7 @@ msgstr "Hz"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "lipu %zu"
+msgstr[0] "lipu %u"
 
 msgid "feeds.list.refreshtime.now"
 msgstr "tenpo pini lili la lipu lukin li sin."
@@ -294,7 +294,7 @@ msgstr "MB/s"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "tu suli %zu"
+msgstr[0] "tu suli %u"
 
 # megabytes, used as the unit after a number
 msgid "mb"
@@ -400,7 +400,7 @@ msgstr "lipu ala li kepeken e ona"
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "lipu %zu li kepeken"
+msgstr[0] "lipu %u li kepeken"
 
 msgid "ident.temporary"
 msgstr "nimi tawa tenpo lili"
@@ -1231,7 +1231,7 @@ msgstr[0] "nimi tawa sin %d li lon lipu ni."
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "lipu lukin %zu li lon. ona ale li jo e %%s.\n"
+msgstr[0] "lipu lukin %u li lon. ona ale li jo e %%s.\n"
 
 msgid "macos.menu.bookmarks.list"
 msgstr "lipu awen ali"
@@ -1549,7 +1549,7 @@ msgstr "poki nanpa tu"
 #, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
-msgstr[0] "ijo %zu li lon ijo ni (tu suli Meka %.1f)."
+msgstr[0] "ijo %u li lon ijo ni (tu suli Meka %.1f)."
 
 msgid "archive.exit"
 msgstr "o pini e ijo"
@@ -1563,7 +1563,7 @@ msgstr "poki sama"
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "ijo %zu li lon poki ni."
+msgstr[0] "ijo %u li lon poki ni."
 
 msgid "keys.tab.close.other"
 msgstr "o pini e poki ante"
@@ -1884,11 +1884,11 @@ msgstr "o ante e sitelen…"
 
 msgid "num.files"
 msgid_plural "num.files.n"
-msgstr[0] "ijo %zu"
+msgstr[0] "ijo %u"
 
 msgid "num.fonts"
 msgid_plural "num.fonts.n"
-msgstr[0] "sitelen %zu"
+msgstr[0] "sitelen %u"
 
 msgid "dlg.certwarn.title"
 msgstr "pakala len suli"
