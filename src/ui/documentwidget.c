@@ -1107,12 +1107,11 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
-    const int docWidth      = documentWidth_DocumentWidget_(d);
-    const int outsideMargin = (width_Widget(d) - docWidth) / 2;
+    const int docWidth = documentWidth_DocumentWidget_(d);
     setSource_GmDocument(d->doc,
                          source,
                          docWidth,
-                         outsideMargin,
+                         width_Widget(d),
                          isFinished_GmRequest(d->request) ? final_GmDocumentUpdate
                                                           : partial_GmDocumentUpdate);
     setWidth_Banner(d->banner, docWidth);
