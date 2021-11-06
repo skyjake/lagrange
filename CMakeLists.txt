@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.8.0
+    VERSION 1.8.1
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -65,25 +65,6 @@ include (Depends.cmake)
 # Package resources.
 message (STATUS "Preparing resources...")
 make_fontpack (res/default.fontpack)
-# Fonts to install as separate files.
-set (FONTPACKS
-#    arabic.fontpack
-#    cjk.fontpack
-#    firasans.fontpack
-#    literata.fontpack
-#    nunito.fontpack
-#    tinos.fontpack      
-)
-foreach (fp ${FONTPACKS})
-    make_fontpack (res/${fp})
-    set_source_files_properties (${CMAKE_BINARY_DIR}/${fp} 
-        PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-endforeach (fp)
-macro (install_fonts dst)
-    foreach (fp ${FONTPACKS})
-        install (FILES ${CMAKE_BINARY_DIR}/${fp} DESTINATION ${dst})
-    endforeach (fp)
-endmacro ()
 set (EMBED_RESOURCES
     res/about/about.gmi
     res/about/help.gmi
@@ -91,6 +72,7 @@ set (EMBED_RESOURCES
     res/about/license.gmi
     res/about/version.gmi
     res/arg-help.txt
+    res/lang/cs.bin
     res/lang/de.bin
     res/lang/en.bin
     res/lang/eo.bin
@@ -99,6 +81,7 @@ set (EMBED_RESOURCES
     res/lang/fi.bin
     res/lang/fr.bin
     res/lang/gl.bin
+    res/lang/hu.bin
     res/lang/ia.bin
     res/lang/ie.bin
     res/lang/isv.bin
@@ -240,11 +223,6 @@ set (SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
     ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr
 )
-if (APPLE)
-    foreach (fp ${FONTPACKS})
-        list (APPEND SOURCES ${CMAKE_BINARY_DIR}/${fp})
-    endforeach (fp)
-endif ()
 if (ENABLE_IPC)
     list (APPEND SOURCES
         src/ipc.c
@@ -444,7 +422,6 @@ if (MSYS)
     if (NOT ENABLE_RESOURCE_EMBED)
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
-    install_fonts (.)
     install (PROGRAMS
         ${SDL2_LIBDIR}/SDL2.dll
         res/urlopen.bat
@@ -460,7 +437,6 @@ elseif (HAIKU)
             LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
-    install_fonts (.)
 elseif (UNIX AND NOT APPLE)
     set_target_properties (app PROPERTIES
         INSTALL_RPATH_USE_LINK_PATH YES
@@ -469,13 +445,13 @@ elseif (UNIX AND NOT APPLE)
     file (WRITE ${desktop} "[Desktop Entry]
 Name=Lagrange
 Comment=${PROJECT_DESCRIPTION}
-Categories=Network
+Categories=Network;
 Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange %U
 Terminal=false
 Type=Application
 StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
-MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;
 ")
     install (TARGETS app DESTINATION bin)
     install (FILES ${desktop} DESTINATION share/applications)
@@ -493,5 +469,4 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
         endif ()
         install (FILES ${EMB_BIN} DESTINATION share/lagrange)
     endif ()
-    install_fonts (share/lagrange)
 endif ()

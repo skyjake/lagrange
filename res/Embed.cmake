@@ -100,7 +100,7 @@ function (embed_make)
             # Collect resources in a single binary file.
             set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
             file (REMOVE ${EMB_BIN})
-            list (LENGTH ARGV fileCount)            
+            list (LENGTH ARGV fileCount)
             execute_process (COMMAND ${BINCAT_COMMAND} ${EMB_BIN} ${ARGV}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 OUTPUT_VARIABLE fileSizes

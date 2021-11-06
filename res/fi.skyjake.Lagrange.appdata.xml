@@ -45,6 +45,31 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.8.1" date="2021-11-06">
+            <description>
+                <p>Version 1.8 adds a customizable font library and improves warning
+                    and errors messages. The bundled hardcoded fonts have been
+                    removed, and font configuration is now more flexible. Tabs have
+                    close buttons that appear on mouse hover. Added a Ukrainian UI
+                    translation.</p>
+                <p>Changes in v1.8.1:</p>
+                <ul>
+                    <li>Added UI translations: Hungarian, Czech.</li>
+                    <li>Fixed issues scrolling tall popup menus (e.g., UI language
+                        selection).</li>
+                    <li>Fixed a line spacing artifact in long headings. With some
+                        fonts, the lines were clipping each other so the spacing was
+                        restored to normal.</li>
+                    <li>Fixed a socket I/O issue that caused received data to be
+                        ignored when the peer closed the connection prematurely.</li>
+                    <li>Gopher: Recognize both LF and CRLF line endings in page
+                        content.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.8.1</url>
+        </release>                
         <release version="1.8" date="2021-10-30">
             <description>
                 <p>Version 1.8 adds a customizable font library and improves warning

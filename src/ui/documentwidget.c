@@ -1107,12 +1107,11 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
-    const int docWidth      = documentWidth_DocumentWidget_(d);
-    const int outsideMargin = (width_Widget(d) - docWidth) / 2;
+    const int docWidth = documentWidth_DocumentWidget_(d);
     setSource_GmDocument(d->doc,
                          source,
                          docWidth,
-                         outsideMargin,
+                         width_Widget(d),
                          isFinished_GmRequest(d->request) ? final_GmDocumentUpdate
                                                           : partial_GmDocumentUpdate);
     setWidth_Banner(d->banner, docWidth);
@@ -1702,6 +1701,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
         }
         if (cachedDoc) {
             replaceDocument_DocumentWidget_(d, cachedDoc);
+            updateWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d), width_Widget(d));
         }
         else if (setSource) {
             setSource_DocumentWidget(d, &str);
@@ -2498,7 +2498,7 @@ static iBool updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocumen
         /* TODO: First *fully* visible run? */
         voffset = visibleRange_DocumentWidget_(d).start - top_Rect(run->visBounds);
     }
-    setWidth_GmDocument(d->doc, newWidth, (width_Widget(d) - newWidth) / 2);
+    setWidth_GmDocument(d->doc, newWidth, width_Widget(d));
     setWidth_Banner(d->banner, newWidth);
     documentRunsInvalidated_DocumentWidget_(d);
     if (runLoc && !keepCenter) {
@@ -2734,6 +2734,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed") ||
              equal_Command(cmd, "keyroot.changed")) {
+        if (equal_Command(cmd, "font.changed")) {
+            invalidateCachedLayout_History(d->mod.history);   
+        }
         /* Alt/Option key may be involved in window size changes. */
         setLinkNumberMode_DocumentWidget_(d, iFalse);
         d->phoneToolbar = findWidget_App("toolbar");

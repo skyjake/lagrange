@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-29 07:50+0000\n"
+"PO-Revision-Date: 2021-11-06 04:30+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -473,7 +473,7 @@ msgid "menu.page.copyurl"
 msgstr "Копіювати URL сторінки"
 
 msgid "menu.page.copysource"
-msgstr "Копіювати початковий код сторінки"
+msgstr "Копіювати джерельний код сторінки"
 
 msgid "menu.identity.notactive"
 msgstr "Активна ідентичність відсутня"
@@ -1962,9 +1962,9 @@ msgstr "Переглянути вміст Gempub"
 
 msgid "error.ansi.msg"
 msgstr ""
-"Цю сторінку неможливо правильно відобразити. Вона використовує частково "
-"підтримувані керуючі символи ANSI для форматування тексту. Можете спробувати "
-"переглянути її у емуляторі терміналу."
+"Ця сторінка може відображатися неправильно. Вона використовує частково "
+"підтримувані керівні символи ANSI для стилізування тексту. Ви можете "
+"спробувати переглянути її у емуляторі терміналу."
 
 msgid "fontpack.meta.notinstalled"
 msgstr "Не встановлено"
@@ -1979,7 +1979,7 @@ msgstr "Справді бажаєте назавжди видалити паке
 
 msgid "fontpack.help"
 msgstr ""
-"Пакети шрифтв для Lagrange є ZIP-архівами, що містять файли шрифтів та "
+"Пакети шрифтів для Lagrange є ZIP-архівами, що містять файли шрифтів та "
 "пов'язані з ними параметри конфігурації. Після встановлення їх можна "
 "використати для ІК та вмісту документів. Активні шрифти можна обрати у меню "
 "Налаштування > Шрифти."
@@ -2013,7 +2013,7 @@ msgid "dlg.feed.ignoreweb"
 msgstr "Ігнорувати HTTP(S) посилання:"
 
 msgid "prefs.bookmarks.addbottom"
-msgstr "Додати закладки донизу:"
+msgstr "Додати закладки у кінець списку:"
 
 msgid "prefs.font.ui"
 msgstr "ІК:"
@@ -2041,7 +2041,7 @@ msgid "prefs.gemtext.ansi.fg"
 msgstr "Колір тексту"
 
 msgid "prefs.gemtext.ansi.fontstyle"
-msgstr "Стиль шрифту"
+msgstr "Накреслення шрифту"
 
 msgid "prefs.font.warnmissing"
 msgstr "Попередження про відсутні гліфи:"
@@ -2053,12 +2053,12 @@ msgid "error.ansi"
 msgstr "Емуляція терміналу"
 
 msgid "error.glyphs"
-msgstr "Гліфи відсутні"
+msgstr "Бракує гліфів"
 
 msgid "error.glyphs.msg"
 msgstr ""
-"Цю сторінку неможливо відобразити повністю, оскільки гарнітурові шрифту "
-"бракує гліфів. Це можна виправити, встановивши додаткові шрифти."
+"Цю сторінку не вдалося відобразити повністю, оскільки бракує деяких гліфів. "
+"Це можна виправити, встановивши додаткові шрифти."
 
 msgid "heading.fontpack.meta"
 msgstr "Шрифти"
@@ -2135,9 +2135,18 @@ msgid "dlg.fontpack.classic"
 msgstr "Завантажити пакет шрифтів (25 МБ)"
 
 msgid "heading.fontpack.classic"
-msgstr "ЗАВАНТАЖЕННЯ ПАКЕТУ ШРИФТІВ"
+msgstr "ЗАВАНТАЖИТИ ПАКЕТ ШРИФТІВ"
 
 msgid "dlg.fontpack.classic.msg"
 msgstr ""
 "Шрифти, що раніше були у складі дотдатку тепер постачаються окремо. Бажаєте "
 "завантажити пакет шрифтів \"Класичний\" зараз?"
+
+msgid "lang.uk"
+msgstr "Українська"
+
+msgid "lang.cs"
+msgstr "Чеська"
+
+msgid "lang.hu"
+msgstr "Угорська"

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-09-30 05:49+0000\n"
+"PO-Revision-Date: 2021-11-06 09:34+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -25,7 +25,7 @@ msgid "audio.meta.date"
 msgstr "tenpo"
 
 msgid "doc.pre.nocaption"
-msgstr "sinpin namako li jo ala e sinpin pona"
+msgstr "sitelen namako li jo ala e sitelen pona"
 
 # Link download progress message.
 msgid "doc.fetching"
@@ -54,7 +54,7 @@ msgstr "Hz"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "lipu %zu"
+msgstr[0] "lipu %u"
 
 msgid "feeds.list.refreshtime.now"
 msgstr "tenpo pini lili la lipu lukin li sin."
@@ -294,7 +294,7 @@ msgstr "MB/s"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "tu suli %zu"
+msgstr[0] "tu suli %u"
 
 # megabytes, used as the unit after a number
 msgid "mb"
@@ -400,7 +400,7 @@ msgstr "lipu ala li kepeken e ona"
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "lipu %zu li kepeken"
+msgstr[0] "lipu %u li kepeken"
 
 msgid "ident.temporary"
 msgstr "nimi tawa tenpo lili"
@@ -450,9 +450,7 @@ msgstr "O PINI LUKIN"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"sina wile ala wile pini lukin e lipu\n"
-"\"%s\"?"
+msgstr "sina wile ala wile pini lukin e lipu \"%s\"?"
 
 msgid "dlg.unsub"
 msgstr "o pini lukin"
@@ -498,7 +496,7 @@ msgid "pageinfo.domain.mismatch"
 msgstr "nimi li sama ala"
 
 msgid "dlg.cert.trust"
-msgstr "o pona"
+msgstr "o kepeken"
 
 msgid "heading.save"
 msgstr "IJO LI AWEN"
@@ -1233,7 +1231,7 @@ msgstr[0] "nimi tawa sin %d li lon lipu ni."
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "lipu lukin %zu li lon. ona ale li jo e %%s.\n"
+msgstr[0] "lipu lukin %u li lon. ona ale li jo e %%s.\n"
 
 msgid "macos.menu.bookmarks.list"
 msgstr "lipu awen ali"
@@ -1282,9 +1280,7 @@ msgstr "o kepeken ala e ona lon lipu ni"
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"sina wile ala wile weka e nimi\n"
-"%s%s%s\n"
-"e sitelen len ona e ijo len ona?"
+"sina wile ala wile weka e nimi \"%s%s%s\" e sitelen len ona e ijo len ona?"
 
 # The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
 #, c-format
@@ -1309,8 +1305,7 @@ msgstr[0] ""
 "%d la sitelen len pona li wile tawa weka."
 
 msgid "dlg.certwarn.different"
-msgstr ""
-"sitelen len ni li pakala ala. taso ona li sama ala sitelen len pi pona lukin."
+msgstr "sitelen len ni li pakala ala. taso ona li sama ala sitelen len pini."
 
 msgid "dlg.certwarn.domain"
 msgstr "nimi pi sitelen len li ante. ken la jan lawa mun ni li pakala."
@@ -1421,7 +1416,7 @@ msgid "error.tls"
 msgstr "kon en ilo TLS li pakala"
 
 msgid "error.tls.msg"
-msgstr "mi pakala toki tawa ilo pana. ona li toki e ni:"
+msgstr "mi pakala toki tawa ilo pana."
 
 msgid "error.unavail.msg"
 msgstr ""
@@ -1441,7 +1436,7 @@ msgid "gempub.meta.license"
 msgstr "nasin pana"
 
 msgid "menu.view.split"
-msgstr "o tu e poki..."
+msgstr "o tu e poki…"
 
 msgid "menu.split.vertical"
 msgstr "sewi en anpa"
@@ -1554,7 +1549,7 @@ msgstr "poki nanpa tu"
 #, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
-msgstr[0] "ijo %zu li lon ijo ni (tu suli Meka %.1f)."
+msgstr[0] "ijo %u li lon ijo ni (tu suli Meka %.1f)."
 
 msgid "archive.exit"
 msgstr "o pini e ijo"
@@ -1568,7 +1563,7 @@ msgstr "poki sama"
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "ijo %zu li lon poki ni."
+msgstr[0] "ijo %u li lon poki ni."
 
 msgid "keys.tab.close.other"
 msgstr "o pini e poki ante"
@@ -1641,8 +1636,8 @@ msgstr "o ante"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"o ante e nanpa pi ilo pana Tetan tawa nimi tawa ni.\n"
-"mun ni la nanpa kon li wile awen."
+"o ante e nanpa pi ilo pana Tetan tawa nimi tawa ni. mun ni la nanpa kon li "
+"wile awen."
 
 msgid "heading.prefs.uitheme"
 msgstr "KULE PI ILO LAKELAN"
@@ -1663,7 +1658,7 @@ msgid "heading.upload"
 msgstr "O PANA KEPEKEN KON TETAN"
 
 msgid "menu.page.upload"
-msgstr "o pana e lipu kepeken kon Tetan"
+msgstr "o pana e lipu kepeken kon Tetan…"
 
 msgid "heading.upload.text"
 msgstr "lipu"
@@ -1854,3 +1849,202 @@ msgstr[0] "o weka e lipu awen %u"
 msgid "feeds.atom.translated"
 msgstr ""
 "lipu sin Kemini li pali tan lipu Atom XML tan ni: jan li ken lukin e ni."
+
+msgid "dlg.fontpack.classic"
+msgstr "o kama jo e kulupu sitelen (tu suli meka 25)"
+
+msgid "heading.fontpack.classic"
+msgstr "O KAMA JO E KULUPU SITELEN"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "o pali e kulupu sitelen \"%s\""
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"tenpo pini la sitelen mute lon insa ilo ni. tenpo ni la sitelen ni lon insa "
+"ijo ante. sina wile ala wile kama jo e kulupu sitelen \"Classic set\"?"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "o pali e \"%s\""
+
+msgid "fontpack.help"
+msgstr ""
+"kulupu sitelen tawa ilo Lakelan li kepeken e ilo ZIP. kulupu sitelen li jo e "
+"ijo sitelen e ijo ante tawa sitelen. kulupu sitelen lon la sina ken kepeken "
+"e sitelen ni tawa lipu en ilo Lakelan. sina open e \"ijo ante > sitelen\" la "
+"sina ken ante e sitelen."
+
+msgid "menu.website"
+msgstr "lipu tomo WWW pi ilo Lakelan…"
+
+msgid "menu.fonts"
+msgstr "o ante e sitelen…"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "ijo %u"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "sitelen %u"
+
+msgid "dlg.certwarn.title"
+msgstr "pakala len suli"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "o lukin ala e nimi tawa HTTP(S):"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "o pali e lipu awen lon anpa:"
+
+msgid "prefs.font.ui"
+msgstr "ilo Lakelan:"
+
+msgid "prefs.font.heading"
+msgstr "sitelen suli:"
+
+msgid "prefs.font.body"
+msgstr "sitelen lipu:"
+
+msgid "prefs.font.mono"
+msgstr "sitelen namako:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "sitelen pi suli sama:"
+
+msgid "prefs.boldlink.visited"
+msgstr "lipu pini"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "sitelen kule"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "sitelen namako"
+
+msgid "prefs.gemtext.ansi"
+msgstr "namako ANSI:"
+
+msgid "prefs.font.smooth"
+msgstr "o sike e sitelen:"
+
+msgid "fontpack.meta.installed"
+msgstr "lon"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "lon ala"
+
+msgid "fontpack.meta.disabled"
+msgstr ", lape"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "nanpa sin %d"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "o lukin e ijo"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "kulupu sitelen lape"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "kulupu sitelen pali"
+
+msgid "heading.fontpack.meta"
+msgstr "sitelen mute"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "o lape e \"%s\""
+
+msgid "fontpack.export"
+msgstr "o lukin e ijo fontpack.ini"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "o sin e kulupu sitelen \"%s\". nanpa sin li %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "o weka e kulupu sitelen \"%s\""
+
+msgid "heading.fontpack.delete"
+msgstr "KULUPU SITELEN LI KAMA WEKA"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "sina wile ala wile weka e kulupu sitelen \"%s\"?"
+
+msgid "dlg.fontpack.delete"
+msgstr "o weka e kulupu sitelen"
+
+msgid "fontpack.install.ttf"
+msgstr "o pali e sitelen TrueType"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "o lukin e sitelen ante"
+
+msgid "fontpack.open.fontsdir"
+msgstr "o open e poki sitelen"
+
+msgid "truetype.help"
+msgstr "ilo Lakelan li wile open e ijo TrueType ale lon poki sitelen."
+
+msgid "truetype.help.installed"
+msgstr "sitelen ni lon poki sitelen."
+
+msgid "lang.eo"
+msgstr "toki Epelanto"
+
+msgid "lang.gl"
+msgstr "toki Kaleko"
+
+msgid "lang.es.mx"
+msgstr "toki Epanja Mesiko"
+
+msgid "lang.sk"
+msgstr "toki Lowenski"
+
+#, fuzzy
+msgid "lang.isv"
+msgstr "toki Metulowanski"
+
+msgid "menu.sort.alpha"
+msgstr "o pali kepeken nasin nimi"
+
+msgid "bookmark.export.saving"
+msgstr ""
+"sina wile pana e lipu awen la o awen e lipu ni. sina ken kama sona e nimi "
+"tawa lon lipu ni kin."
+
+msgid "bookmark.export.format.folders"
+msgstr "sitelen suli pi nanpa 2/3 li sama poki."
+
+msgid "bookmark.export.format.tags"
+msgstr "sitelen suli pi nanpa 2 li sama nimi lili."
+
+msgid "lang.cs"
+msgstr "toki Seki"
+
+msgid "lang.uk"
+msgstr "toki Ukawina"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"linja kulupu en linja toki li jo e sona namako pi lipu awen sewi. ilo "
+"Lakelan li lukin ala e linja sitelen en sitelen namako tan ni: ona li jo e "
+"toki lili."
+
+msgid "error.certverify.msg"
+msgstr ""
+"mi pakala toki tawa ilo pana tan ni: sitelen len ona li sama ala sitelen len "
+"pini. o kama sona e ni: jan lawa mun li toki ala toki e ante pi sitelen len? "
+"ante la jan ike li ken lukin sama ilo pana.\n"
+"\n"
+"sina wile lukin e lipu kepeken len ni la o open e ijo \"sona lipu\"."
+
+msgid "lang.hu"
+msgstr "toki Mosijo"

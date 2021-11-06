@@ -61,17 +61,18 @@ msgstr "Hz"
 msgid "feeds.list.title"
 msgstr "Feed entries"
 
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "You are subscribed to %zu feed that contains %%s.\n"
-msgstr[1] "You are subscribed to %zu feeds that contain %%s.\n"
+msgstr[0] "You are subscribed to %u feed that contains %%s.\n"
+msgstr[1] "You are subscribed to %u feeds that contain %%s.\n"
 
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "a total of %zu entry"
-msgstr[1] "a total of %zu entries"
+msgstr[0] "a total of %u entry"
+msgstr[1] "a total of %u entries"
 
 msgid "feeds.list.refreshtime.now"
 msgstr "The latest refresh occurred just a moment ago."
@@ -451,18 +452,18 @@ msgstr "KB"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu byte"
-msgstr[1] "%zu bytes"
+msgstr[0] "%u byte"
+msgstr[1] "%u bytes"
 
 msgid "num.files"
 msgid_plural "num.files.n"
-msgstr[0] "%zu file"
-msgstr[1] "%zu files"
+msgstr[0] "%u file"
+msgstr[1] "%u files"
 
 msgid "num.fonts"
 msgid_plural "num.fonts.n"
-msgstr[0] "%zu font"
-msgstr[1] "%zu fonts"
+msgstr[0] "%u font"
+msgstr[1] "%u fonts"
 
 # strftime() formatted, split on two lines
 #, c-format
@@ -599,8 +600,8 @@ msgstr "Not used"
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "Used on %zu URL"
-msgstr[1] "Used on %zu URLs"
+msgstr[0] "Used on %u URL"
+msgstr[1] "Used on %u URLs"
 
 msgid "ident.temporary"
 msgstr "Temporary"
@@ -1100,6 +1101,9 @@ msgstr "Portuguese"
 msgid "lang.ru"
 msgstr "Russian"
 
+msgid "lang.hu"
+msgstr "Hungarian"
+
 msgid "lang.uk"
 msgstr "Ukrainian"
 
@@ -1111,6 +1115,9 @@ msgstr "Spanish"
 
 msgid "lang.es.mx"
 msgstr "Spanish (Mexico)"
+
+msgid "lang.cs"
+msgstr "Czech"
 
 msgid "lang.sk"
 msgstr "Slovak"
@@ -1593,8 +1600,8 @@ msgstr "Exit the archive"
 #, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
-msgstr[0] "This archive contains %zu item and its compressed size is %.1f MB."
-msgstr[1] "This archive contains %zu items and its compressed size is %.1f MB."
+msgstr[0] "This archive contains %u item and its compressed size is %.1f MB."
+msgstr[1] "This archive contains %u items and its compressed size is %.1f MB."
 
 msgid "dir.empty"
 msgstr "This directory is empty."
@@ -1602,8 +1609,8 @@ msgstr "This directory is empty."
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "This directory contains %zu item."
-msgstr[1] "This directory contains %zu items."
+msgstr[0] "This directory contains %u item."
+msgstr[1] "This directory contains %u items."
 
 msgid "keys.top"
 msgstr "Jump to top"

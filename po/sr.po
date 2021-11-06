@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-30 06:15+0000\n"
+"PO-Revision-Date: 2021-11-06 04:30+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2106,3 +2106,66 @@ msgstr "ОТКЛОНИТИ УПОЗОРЕЊЕ?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Отклони упозорење"
+
+msgid "dlg.fontpack.classic"
+msgstr "Преузми пакет фонтова (25 МБ)"
+
+msgid "error.ansi.msg"
+msgstr ""
+"Ова страница можда није исправно приказана. Она користи ANSI ескејп секвенце "
+"за стилизовање текста, што је подржано само делимично. Можете пробати да "
+"употребите емулатор терминала да је прегледате."
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Фонтови који су раније испоручивани уз апликацију су сада доступни посебно. "
+"Желите ли да преузмете пакет фонтова „classic-set“?"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Ова страница се не може потпуно приказати јер недостају неки знакови. Можете "
+"инсталирати додатне фонтове да бисте то исправили."
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Прегледај датотеку"
+
+msgid "fontpack.export"
+msgstr "Прегледај fontpack.ini шаблон"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Надогради „%s“ на верзију %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Трајно обриши „%s“"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Да ли заиста желите да трајно обришете пакет фонтова „%s“?"
+
+msgid "fontpack.help"
+msgstr ""
+"Пакети фонтова Lagrange-а су ZIP архиве које садрже низ датотека са "
+"фонтовима и конфигурационе параметре у вези са њима. Када се једном "
+"инсталирају, фонтови се могу користити у садржају докумената и интерфејсу. "
+"Активни фонтови се бирају у Подешавања > Фонтови."
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange ће покушати да учита све појединачне TrueType датотеке које су "
+"копиране у кориснички директоријум са фонтовима."
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Трајно отклонити упозорење о емулацији терминала на %s?"
+
+msgid "lang.uk"
+msgstr "Украјински"
+
+msgid "lang.cs"
+msgstr "Чешки"
+
+msgid "lang.hu"
+msgstr "Мађарски"

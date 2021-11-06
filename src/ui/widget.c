@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/ptrset.h>
 #include <SDL_mouse.h>
+#include <SDL_timer.h>
 #include <stdarg.h>
 
 #if defined (iPlatformAppleMobile)
@@ -1136,18 +1137,32 @@ void scrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
     }
 }
 
-iBool scrollOverflow_Widget(iWidget *d, int delta) {
-    iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
-    const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
-                                        zero_I2(),
-                                        init_I2(0, -get_MainWindow()->keyboardHeight));
-    const int yTop    = top_Rect(winRect);
-    const int yBottom = bottom_Rect(winRect);
-    if (top_Rect(bounds) >= yTop && bottom_Rect(bounds) < yBottom) {
-        return iFalse; /* fits inside just fine */
+static iBool isOverflowScrollPossible_Widget_(const iWidget *d, int delta) {
+    if (~d->flags & overflowScrollable_WidgetFlag) {
+        return iFalse;
     }
-    //const int safeBottom = rootSize.y - yBottom;
-    iRangei validPosRange = { bottom_Rect(winRect) - height_Rect(bounds), yTop };
+    iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
+    const iRect winRect = visibleRect_Root(d->root);
+    const int   yTop    = top_Rect(winRect);
+    const int   yBottom = bottom_Rect(winRect);
+    if (delta == 0) {
+        if (top_Rect(bounds) >= yTop && bottom_Rect(bounds) <= yBottom) {
+            return iFalse; /* fits inside just fine */
+        }
+    }
+    else if (delta > 0) {
+        return top_Rect(bounds) < yTop;
+    }
+    return bottom_Rect(bounds) > yBottom;
+}
+
+iBool scrollOverflow_Widget(iWidget *d, int delta) {
+    if (!isOverflowScrollPossible_Widget_(d, delta)) {
+        return iFalse;
+    }
+    iRect       bounds        = boundsWithoutVisualOffset_Widget(d);
+    const iRect winRect       = visibleRect_Root(d->root);
+    iRangei     validPosRange = { bottom_Rect(winRect) - height_Rect(bounds), top_Rect(winRect) };
     if (validPosRange.start > validPosRange.end) {
         validPosRange.start = validPosRange.end; /* no room to scroll */
     }
@@ -1170,19 +1185,27 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     else {
         bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
     }
-//    if (delta >= 0) {
-//        bounds.pos.y = iMin(bounds.pos.y, yTop);
-//    }
-//    else {
-//        bounds.pos.y = iMax(bounds.pos.y, );
-//    }
     const iInt2 newPos = windowToInner_Widget(d->parent, bounds.pos);
     if (!isEqual_I2(newPos, d->rect.pos)) {
         d->rect.pos = newPos;
-//        refresh_Widget(d);
         postRefresh_App();
     }
     return height_Rect(bounds) > height_Rect(winRect);
+}
+
+static uint32_t lastHoverOverflowMotionTime_;
+
+static void overflowHoverAnimation_(iAny *widget) {
+    iWindow *win = window_Widget(widget);
+    iInt2 coord = mouseCoord_Window(win, 0);
+    /* A motion event will cause an overflow window to scroll. */
+    SDL_MouseMotionEvent ev = {
+        .type     = SDL_MOUSEMOTION,
+        .windowID = SDL_GetWindowID(win->win),
+        .x        = coord.x / win->pixelRatio,
+        .y        = coord.y / win->pixelRatio,
+    };
+    SDL_PushEvent((SDL_Event *) &ev);
 }
 
 iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
@@ -1202,14 +1225,55 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         postCommand_Widget(d, "mouse.moved coord:%d %d", ev->motion.x, ev->motion.y);
         return iTrue;
     }
-    else if (d->flags & overflowScrollable_WidgetFlag && ev->type == SDL_MOUSEWHEEL &&
-             ~d->flags & visualOffset_WidgetFlag) {
-        int step = ev->wheel.y;
-        if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
-            step *= lineHeight_Text(uiLabel_FontId);
+    else if (d->flags & overflowScrollable_WidgetFlag && ~d->flags & visualOffset_WidgetFlag) {
+        if (ev->type == SDL_MOUSEWHEEL) {
+            int step = ev->wheel.y;
+            if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
+                step *= lineHeight_Text(uiLabel_FontId);
+            }
+            if (scrollOverflow_Widget(d, step)) {
+                return iTrue;
+            }
         }
-        if (scrollOverflow_Widget(d, step)) {
-            return iTrue;
+        else if (ev->type == SDL_MOUSEMOTION && ev->motion.which != SDL_TOUCH_MOUSEID &&
+                 ev->motion.y >= 0) {
+            /* TODO: Motion events occur frequently. Maybe it would help if these were handled
+               via audiences that specifically register to listen for motion, to minimize the
+               number of widgets that need to process them. */
+            const int hoverScrollLimit = 1.5f * lineHeight_Text(default_FontId);
+            float speed = 0.0f;
+            if (ev->motion.y < hoverScrollLimit) {
+                speed = (hoverScrollLimit - ev->motion.y) / (float) hoverScrollLimit;
+            }
+            else {
+                const iWindow *win = window_Widget(d);
+                SDL_Rect usable;
+                SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(win->win),
+                                           &usable);
+                const int bottomLimit =
+                    iMin(bottom_Rect(rect_Root(d->root)), usable.h * win->pixelRatio) -
+                    hoverScrollLimit;
+                if (ev->motion.y > bottomLimit) {
+                    speed = -(ev->motion.y - bottomLimit) / (float) hoverScrollLimit;
+                }
+                printf("my:%d bottomLimit:%d => %f (%d)\n", ev->motion.y, bottomLimit, speed
+                       ,isOverflowScrollPossible_Widget_(d, speed)); fflush(stdout);
+            }
+            const int dir = speed > 0 ? 1 : -1;
+            if (speed != 0.0f && isOverflowScrollPossible_Widget_(d, dir)) {
+//                speed = dir * powf(speed, 1.5f);
+                const uint32_t nowTime = SDL_GetTicks();
+                uint32_t elapsed = nowTime - lastHoverOverflowMotionTime_;
+                if (elapsed > 100) {
+                    elapsed = 16;    
+                }
+                int step = elapsed * gap_UI / 16 * iClamp(speed, -1.0f, 1.0f);
+                if (step != 0) { 
+                    lastHoverOverflowMotionTime_ = nowTime;
+                    scrollOverflow_Widget(d, step);
+                }
+                addTicker_App(overflowHoverAnimation_, d);
+            }
         }
     }
     switch (ev->type) {

@@ -76,6 +76,7 @@ void        clearCache_History                  (iHistory *);
 size_t      pruneLeastImportant_History         (iHistory *);
 size_t      pruneLeastImportantMemory_History   (iHistory *);
 void        invalidateTheme_History             (iHistory *); /* theme has changed, cached contents need updating */
+void        invalidateCachedLayout_History      (iHistory *);
 
 iBool       atLatest_History            (const iHistory *);
 iBool       atOldest_History            (const iHistory *);
