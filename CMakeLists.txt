@@ -54,6 +54,7 @@ option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative p
 option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAULT_RESIZE_DRAW})
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
+option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates" OFF)
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 
 include (BuildType.cmake)
@@ -149,6 +150,8 @@ set (SOURCES
     src/stb_image.h
     src/stb_image_resize.h
     src/stb_truetype.h
+    src/updater.c
+    src/updater.h
     src/visited.c
     src/visited.h
     # Audio playback:
@@ -403,6 +406,10 @@ if (APPLE)
 endif ()
 if (MSYS)
     target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
+    if (ENABLE_WINSPARKLE)
+        target_link_libraries (app PUBLIC winsparkle)
+        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINSPARKLE=1)
+    endif ()
 endif ()
 if (UNIX)
     target_link_libraries (app PUBLIC m)

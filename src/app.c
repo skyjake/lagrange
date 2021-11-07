@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ipc.h"
 #include "periodic.h"
 #include "sitespec.h"
+#include "updater.h"
 #include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
@@ -3120,6 +3121,10 @@ iBool handleCommand_App(const char *cmd) {
                                     : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
         }
         return iFalse;
+    }
+    else if (equal_Command(cmd, "updater.check")) {
+        checkNow_Updater();
+        return iTrue;
     }
     else if (equal_Command(cmd, "fontpack.enable")) {
         const iString *packId = collect_String(suffix_Command(cmd, "id"));

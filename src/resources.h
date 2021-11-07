@@ -59,3 +59,4 @@ extern iBlock blobZh_Hans_Resources;
 extern iBlock blobZh_Hant_Resources;
 extern iBlock imageShadow_Resources;
 extern iBlock fontpackDefault_Resources;
+extern iBlock imageLagrange64_Resources;

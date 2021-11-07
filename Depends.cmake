@@ -146,6 +146,17 @@ else ()
     endif ()
 endif ()
 
+if (ENABLE_WINSPARKLE)
+    # We're assuming this is Windows.
+    add_library (winsparkle INTERFACE)
+    target_include_directories (winsparkle INTERFACE ${WINSPARKLE_DIR}/include)
+    target_link_libraries (winsparkle INTERFACE ${WINSPARKLE_DIR}/x64/Release/WinSparkle.dll)
+    install (
+        PROGRAMS ${WINSPARKLE_DIR}/x64/Release/WinSparkle.dll
+        DESTINATION .
+    )
+endif ()
+
 find_package (PkgConfig REQUIRED)
 pkg_check_modules (SDL2 REQUIRED sdl2)
 pkg_check_modules (MPG123 IMPORTED_TARGET libmpg123)

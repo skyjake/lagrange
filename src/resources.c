@@ -54,6 +54,7 @@ iBlock blobUk_Resources;
 iBlock blobZh_Hans_Resources;
 iBlock blobZh_Hant_Resources;
 iBlock imageShadow_Resources;
+iBlock imageLagrange64_Resources;
 
 static struct {
     iBlock *data;
@@ -86,6 +87,7 @@ static struct {
     { &blobZh_Hans_Resources, "lang/zh_Hans.bin" },
     { &blobZh_Hant_Resources, "lang/zh_Hant.bin" },
     { &imageShadow_Resources, "shadow.png" },
+    { &imageLagrange64_Resources, "lagrange-64.png" },
 };
 
 iBool init_Resources(const char *path) {
