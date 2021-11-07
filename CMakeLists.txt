@@ -52,9 +52,10 @@ option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_POPUP_MENUS      "Use popup windows for context menus (if OFF, menus are confined inside main window)" ON)
 option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
 option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAULT_RESIZE_DRAW})
+option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
-option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates" OFF)
+option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 
 include (BuildType.cmake)
@@ -98,9 +99,8 @@ list (APPEND RESOURCES ${FONTS})
 if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND RESOURCES res/lagrange-64.png)
 endif ()
-make_resources (${CMAKE_CURRENT_BINARY_DIR}/resources.lgr ${RESOURCES})
-
 set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
+make_resources (${EMB_BIN} ${RESOURCES})
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
 # Source files.
@@ -150,7 +150,6 @@ set (SOURCES
     src/stb_image.h
     src/stb_image_resize.h
     src/stb_truetype.h
-    src/updater.c
     src/updater.h
     src/visited.c
     src/visited.h
@@ -222,8 +221,11 @@ set (SOURCES
     res/about/lagrange.gmi
     res/about/license.gmi
     res/about/version.gmi
-    ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr
+    ${EMB_BIN}
 )
+if (NOT APPLE) # macos.m has Sparkle updater
+    list (APPEND SOURCES src/updater.c)
+endif ()
 if (ENABLE_IPC)
     list (APPEND SOURCES
         src/ipc.c
@@ -363,6 +365,9 @@ if (APPLE)
     else ()
         target_link_libraries (app PUBLIC "-framework AppKit")
     endif ()
+    if (ENABLE_SPARKLE)
+        target_link_libraries (app PUBLIC sparkle)
+    endif ()
     if (CMAKE_OSX_DEPLOYMENT_TARGET AND NOT IOS)
         target_compile_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
         target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
@@ -407,8 +412,7 @@ endif ()
 if (MSYS)
     target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
     if (ENABLE_WINSPARKLE)
-        target_link_libraries (app PUBLIC winsparkle)
-        target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINSPARKLE=1)
+        target_link_libraries (app PUBLIC winsparkle)        
     endif ()
 endif ()
 if (UNIX)

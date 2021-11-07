@@ -709,3 +709,25 @@ iColor systemAccent_Color(void) {
 #endif
     return (iColor){ 255, 255, 255, 255 };
 }
+
+#if defined (LAGRANGE_ENABLE_SPARKLE)
+#import <Sparkle/Sparkle.h>
+
+void init_Updater(void) {
+    SUUpdater *updater = [SUUpdater sharedUpdater];
+    /* Add it to the menu. */
+    NSMenu *appMenu = [[[NSApp mainMenu] itemAtIndex:0] submenu];
+    NSMenuItem *item = [appMenu insertItemWithTitle:@"Check for Updates…"
+                                             action:@selector(checkForUpdates:)
+                                      keyEquivalent:@""
+                                            atIndex:3];
+    item.target = updater;
+}
+
+#else
+/* dummy as a fallback */
+void init_Updater(void) {}
+#endif
+
+void deinit_Updater(void) {}
+void checkNow_Updater(void) {}
