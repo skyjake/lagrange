@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-06 04:44+0000\n"
-"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2021-11-10 04:50+0000\n"
+"Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -382,7 +382,7 @@ msgstr "Ukázat kanály"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.outline"
-msgstr "Ukázat obrys stránky"
+msgstr "Ukázat rozložení stránky"
 
 msgid "menu.back"
 msgstr "Jít zpět"
@@ -1427,7 +1427,7 @@ msgstr "Přepnout zaměření na následující polovinu"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "Uživatelské rozhraní"
+msgstr "Rozhraní"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -1461,7 +1461,7 @@ msgstr "Styl"
 
 # tab button
 msgid "heading.prefs.userinterface"
-msgstr "Uživatelské rozhraní"
+msgstr "Rozhraní"
 
 msgid "prefs.downloads"
 msgstr "Složka stažených souborů:"
@@ -1544,10 +1544,10 @@ msgid "prefs.imagestyle.bgfg"
 msgstr "Pozadí do popředí"
 
 msgid "prefs.imagestyle.text"
-msgstr "Barva textu"
+msgstr "Do barvy textu"
 
 msgid "prefs.imagestyle.preformat"
-msgstr "Barva předformátovaného textu"
+msgstr "Do barvy předformátovaného textu"
 
 msgid "prefs.font.ui"
 msgstr "Rozhraní:"
