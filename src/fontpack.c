@@ -410,12 +410,14 @@ void handleIniKeyValue_FontPack_(void *context, const iString *table, const iStr
                     if (!data) {
                         data = collect_Block(readFile_FontPack_(d, cleanPath));
                     }
-                    ff = new_FontFile();
-                    set_String(&ff->id, fontFileId);
-                    ff->colIndex = colIndex;
-                    load_FontFile_(ff, data);
-                    pushBack_ObjectList(fonts_.files, ff); /* centralized ownership */
-                    iRelease(ff);
+                    if (data) {
+                        ff = new_FontFile();
+                        set_String(&ff->id, fontFileId);
+                        ff->colIndex = colIndex;
+                        load_FontFile_(ff, data);
+                        pushBack_ObjectList(fonts_.files, ff); /* centralized ownership */
+                        iRelease(ff);
+                    }
                 }
                 d->loadSpec->styles[i] = ref_Object(ff);
                 delete_String(fontFileId);
