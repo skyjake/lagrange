@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.8.2
+* Fixed crash when fontpack.ini specifies a file that cannot be found.
+
 ## 1.8.1
 * Added UI translations: Hungarian, Czech.
 * Added the `zip` utility as a build requirement. It is used for making fontpacks.
