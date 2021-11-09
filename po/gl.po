@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-02 23:51+0000\n"
+"PO-Revision-Date: 2021-11-10 04:50+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -203,13 +203,13 @@ msgstr "Hz"
 
 # Used in about:feeds.
 msgid "feeds.list.title"
-msgstr "Entradas da fonte"
+msgstr "Artigos das Fontes"
 
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "un total de %zu entrada"
-msgstr[1] "un total de %zu entradas"
+msgstr[0] "un total de %u entrada"
+msgstr[1] "un total de %u entradas"
 
 msgid "feeds.list.refreshtime.now"
 msgstr "A última actualización fíxose hai xusto un intre."
@@ -355,7 +355,7 @@ msgid "macos.menu.bookmarks.bytime"
 msgstr "Lista por Data de creación"
 
 msgid "menu.feeds.entrylist"
-msgstr "Mostrar entrada da Fonte"
+msgstr "Ver Artigos das Fontes"
 
 msgid "menu.preferences"
 msgstr "Preferencias…"
@@ -501,8 +501,8 @@ msgstr "KB"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu byte"
-msgstr[1] "%zu bytes"
+msgstr[0] "%u byte"
+msgstr[1] "%u bytes"
 
 # strftime() formatted
 #, c-format
@@ -610,8 +610,8 @@ msgstr "Non utilizado"
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "Utilizado en %zu URL"
-msgstr[1] "Utilizado en %zu URLs"
+msgstr[0] "Utilizado en %u URL"
+msgstr[1] "Utilizado en %u URLs"
 
 msgid "ident.temporary"
 msgstr "Temporalmente"
@@ -1389,8 +1389,8 @@ msgstr "Xénero"
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "Estás subscrita a %zu fonte que contén %%s.\n"
-msgstr[1] "Estás subscrita a %zu fontes que conteñen %%s.\n"
+msgstr[0] "Estás subscrita a %u fonte que contén %%s.\n"
+msgstr[1] "Estás subscrita a %u fontes que conteñen %%s.\n"
 
 #, c-format
 msgid "hours.ago"
@@ -1532,8 +1532,8 @@ msgstr "Reter situación:"
 #, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
-msgstr[0] "Este arquivo contén %zu elemento e o seu tamaño comprimido é %.1f MB."
-msgstr[1] "Este arquivo contén %zu elementos e o seu tamaño comprimido é %.1f MB."
+msgstr[0] "Este arquivo contén %u elemento e o seu tamaño comprimido é %.1f MB."
+msgstr[1] "Este arquivo contén %u elementos e o seu tamaño comprimido é %.1f MB."
 
 msgid "dir.empty"
 msgstr "O directorio está baleiro."
@@ -1541,8 +1541,8 @@ msgstr "O directorio está baleiro."
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "O directorio contén %zu elemento."
-msgstr[1] "O directorio contén %zu elementos."
+msgstr[0] "O directorio contén %u elemento."
+msgstr[1] "O directorio contén %u elementos."
 
 msgid "keys.top"
 msgstr "Ir arriba"
@@ -1937,13 +1937,13 @@ msgstr "Esperanto"
 
 msgid "num.files"
 msgid_plural "num.files.n"
-msgstr[0] "%zu ficheiro"
-msgstr[1] "%zu ficheiros"
+msgstr[0] "%u ficheiro"
+msgstr[1] "%u ficheiros"
 
 msgid "num.fonts"
 msgid_plural "num.fonts.n"
-msgstr[0] "%zu tipografía"
-msgstr[1] "%zu tipografías"
+msgstr[0] "%u tipografía"
+msgstr[1] "%u tipografías"
 
 msgid "heading.fontpack.classic"
 msgstr "DESCARGAR PAQUETE TIPOGRAFÍA"
@@ -2119,3 +2119,9 @@ msgstr "Desbotar aviso"
 
 msgid "lang.uk"
 msgstr "Ucraniano"
+
+msgid "lang.cs"
+msgstr "Checo"
+
+msgid "lang.hu"
+msgstr "Húngaro"
