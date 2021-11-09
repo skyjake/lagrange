@@ -1195,6 +1195,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
 //    iBool useBanner = iTrue;
     destroy_Widget(d->footerButtons);
     d->footerButtons = NULL;
+    const iString *serverErrorMsg = NULL;
     if (meta) {
         switch (code) {
             case schemeChangeRedirect_GmStatusCode:
@@ -1253,12 +1254,13 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                                   "document.save" });
                 makeFooterButtons_DocumentWidget_(d, data_Array(&items), size_Array(&items));
                 deinit_Array(&items);
+                serverErrorMsg = collectNewFormat_String("%s (%s)", msg->title, cstr_String(meta));
                 break;
             }
             default:
-//                if (!isEmpty_String(meta)) {
-//                    appendFormat_String(src, "\n\n${error.server.msg}\n> %s", cstr_String(meta));
-//                }
+                if (!isEmpty_String(meta)) {
+                    serverErrorMsg = meta;
+                }
                 break;
         }
     }
@@ -1276,7 +1278,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     replaceDocument_DocumentWidget_(d, errorDoc);
     iRelease(errorDoc);
     clear_Banner(d->banner);
-    add_Banner(d->banner, error_BannerType, code, meta, NULL);
+    add_Banner(d->banner, error_BannerType, code, serverErrorMsg, NULL);
     d->state = ready_RequestState;
     setSource_DocumentWidget(d, src);
     updateTheme_DocumentWidget_(d);
@@ -2080,6 +2082,13 @@ static void inputQueryValidator_(iInputWidget *input, void *context) {
     arrange_Widget(findChild_Widget(dlg, "dialogbuttons"));
 }
 
+static const char *humanReadableStatusCode_(enum iGmStatusCode code) {
+    if (code <= 0) {
+        return "";
+    }
+    return format_CStr("%d ", code);
+}
+
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (!d->request) {
         return;
@@ -2104,8 +2113,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         init_Anim(&d->sideOpacity, 0);
         init_Anim(&d->altTextOpacity, 0);
         format_String(&d->sourceHeader,
-                      "%d %s",
-                      statusCode,
+                      "%s%s",
+                      humanReadableStatusCode_(statusCode),
                       isEmpty_String(&resp->meta) && !isSuccess_GmStatusCode(statusCode)
                           ? get_GmError(statusCode)->title
                           : cstr_String(&resp->meta));
@@ -3029,8 +3038,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (!isSuccess_GmStatusCode(status_GmRequest(d->request))) {
             /* TODO: Why is this here? Can it be removed? */
             format_String(&d->sourceHeader,
-                          "%d %s",
-                          status_GmRequest(d->request),
+                          "%s%s",
+                          humanReadableStatusCode_(status_GmRequest(d->request)),
                           cstr_String(meta_GmRequest(d->request)));
         }
         updateFetchProgress_DocumentWidget_(d);
