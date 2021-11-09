@@ -8,6 +8,8 @@
 
 ## 1.8.2
 * Fixed crash when fontpack.ini specifies a file that cannot be found.
+* Fixed manually trusting a certificate whose subject doesn't match domain name.
+* Fixed incorrect title of some error messages (was showing response meta info).
 
 ## 1.8.1
 * Added UI translations: Hungarian, Czech.
