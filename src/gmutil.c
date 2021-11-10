@@ -658,14 +658,14 @@ const iString *canonicalUrl_String(const iString *d) {
         /* This is done separately to avoid the copy if %3A is not present; it's rare. */
         canon = copy_String(d);
         urlDecodePath_String(canon);
-        iString *dec = maybeUrlDecodeExclude_String(canon, "%/?:;#&= "); /* decode everything else in all parts */
+        iString *dec = maybeUrlDecodeExclude_String(canon, "%/?:;#&+= "); /* decode everything else in all parts */
         if (dec) {
             set_String(canon, dec);
             delete_String(dec);
         }
     }
     else {
-        canon = maybeUrlDecodeExclude_String(d, "%/?:;#&= ");
+        canon = maybeUrlDecodeExclude_String(d, "%/?:;#&+= ");
     }
     /* `canon` may now be NULL if nothing was decoded. */
     if (indexOfCStr_String(canon ? canon : d, " ") != iInvalidPos ||
