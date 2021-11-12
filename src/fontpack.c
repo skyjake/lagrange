@@ -550,6 +550,21 @@ static void sortSpecs_Fonts_(iFonts *d) {
     sort_Array(&d->specOrder, cmpPriority_FontSpecPtr_);
 }
 
+static void disambiguateSpecs_Fonts_(iFonts *d) {
+    /* Names of specs with the same human-readable label are augmented with the font ID. */
+    const size_t numSpecs = size_PtrArray(&d->specOrder);
+    for (size_t i = 0; i < numSpecs; i++) {
+        iFontSpec *spec1 = at_PtrArray(&d->specOrder, i);
+        for (size_t j = i + 1; j < numSpecs; j++) {
+            iFontSpec *spec2 = at_PtrArray(&d->specOrder, j);
+            if (equalCase_String(&spec1->name, &spec2->name)) {
+                appendFormat_String(&spec1->name, " [%s]", cstr_String(&spec1->id));
+                appendFormat_String(&spec2->name, " [%s]", cstr_String(&spec2->id));
+            }
+        }
+    }    
+}
+
 static const iString *userFontsDirectory_Fonts_(const iFonts *d) {
     return collect_String(concatCStr_Path(&d->userDir, "fonts"));
 }
@@ -677,8 +692,12 @@ void init_Fonts(const char *userDir) {
                 pushBack_PtrArray(&d->packs, pack);
             }
         }
-    }    
+    }
     sortSpecs_Fonts_(d);
+    disambiguateSpecs_Fonts_(d);
+#if !defined (NDEBUG)
+    printf("[FontPack] %zu fonts available\n", size_Array(&d->specOrder));
+#endif
 }
 
 void deinit_Fonts(void) {
