@@ -11,6 +11,7 @@
 * Fixed crash when fontpack.ini specifies a file that cannot be found.
 * Fixed manually trusting a certificate whose subject doesn't match domain name.
 * Fixed incorrect title of some error messages (was showing response meta info).
+* Fixed ambiguous font dropdown menu items if some fonts have the same name. Now the unique font ID will be included in these cases.
 
 ## 1.8.1
 * Added UI translations: Hungarian, Czech.
