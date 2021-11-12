@@ -2626,7 +2626,11 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "open")) {
-        iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
+        const char *urlArg = suffixPtr_Command(cmd, "url");
+        if (!urlArg) {
+            return iTrue; /* invalid command */
+        }
+        iString    *url         = collectNewCStr_String(urlArg);
         const iBool noProxy     = argLabel_Command(cmd, "noproxy") != 0;
         const iBool fromSidebar = argLabel_Command(cmd, "fromsidebar") != 0;
         iUrl parts;
