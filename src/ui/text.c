@@ -338,7 +338,7 @@ static void initFonts_Text_(iText *d) {
     }
     }
 #if !defined (NDEBUG)
-    printf("[Text] %zu fonts ready\n", size_Array(&d->fonts));
+    printf("[Text] %zu font variants ready\n", size_Array(&d->fonts));
 #endif
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }

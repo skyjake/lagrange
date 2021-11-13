@@ -457,10 +457,8 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTls
         return iFalse;
     }
     /* We trust CA verification implicitly. */
-    const iBool isCATrusted = (verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus);
-    if (!verifyDomain_GmCerts(cert, domain)) {
-        return iFalse;
-    }
+    const iBool isCATrusted   = (verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus);
+    const iBool isDomainValid = verifyDomain_GmCerts(cert, domain);
     /* TODO: Could call setTrusted_GmCerts() instead of duplicating the trust-setting. */
     /* Good certificate. If not already trusted, add it now. */
     iDate until;
@@ -470,7 +468,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTls
     init_String(&key);
     makeTrustKey_(domain, port, &key);
     lock_Mutex(d->mtx);
-    iBool ok = !isExpired_TlsCertificate(cert);
+    iBool ok = isDomainValid && !isExpired_TlsCertificate(cert);
     iTrustEntry *trust = value_StringHash(d->trusted, &key);
     if (trust) {
         /* We already have it, check if it matches the one we trust for this domain (if it's

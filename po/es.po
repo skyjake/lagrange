@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-02 23:51+0000\n"
+"PO-Revision-Date: 2021-11-10 04:50+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -779,14 +779,14 @@ msgstr "Nueva pestaña"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu byte"
-msgstr[1] "%zu bytes"
+msgstr[0] "%u byte"
+msgstr[1] "%u bytes"
 
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "Usado en %zu URL"
-msgstr[1] "Usado en %zu URLs"
+msgstr[0] "Usado en %u URL"
+msgstr[1] "Usado en %u URLs"
 
 #, c-format
 msgid "dlg.import.found"
@@ -1406,14 +1406,14 @@ msgstr "Entradas de las suscripciones"
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "Está suscrito a %zu suscripción que contiene %%s.\n"
-msgstr[1] "Está suscrito a %zu suscripciones que contienen %%s.\n"
+msgstr[0] "Está suscrito a %u suscripción que contiene %%s.\n"
+msgstr[1] "Está suscrito a %u suscripciones que contienen %%s.\n"
 
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "un total de %zu entrada"
-msgstr[1] "un total de %zu entradas"
+msgstr[0] "un total de %u entrada"
+msgstr[1] "un total de %u entradas"
 
 msgid "feeds.list.refreshtime.now"
 msgstr "La última actualización ocurrió hace un momento."
@@ -1580,14 +1580,14 @@ msgstr "Salir del archivo"
 #, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
-msgstr[0] "Este archivo contiene %zu item y su tamaño comprimido es de %.1f MB."
-msgstr[1] "Este archivo contiene %zu items y su tamaño comprimido es de %.1f MB."
+msgstr[0] "Este archivo contiene %u item y su tamaño comprimido es de %.1f MB."
+msgstr[1] "Este archivo contiene %u items y su tamaño comprimido es de %.1f MB."
 
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "Este directorio contiene %zu item."
-msgstr[1] "Este directorio contiene %zu items."
+msgstr[0] "Este directorio contiene %u item."
+msgstr[1] "Este directorio contiene %u items."
 
 msgid "keys.tab.close.other"
 msgstr "Cerrar otras pestañas"
@@ -2059,13 +2059,13 @@ msgstr "Administrar Fuentes…"
 
 msgid "num.files"
 msgid_plural "num.files.n"
-msgstr[0] "%zu archivo"
-msgstr[1] "%zu archivos"
+msgstr[0] "%u archivo"
+msgstr[1] "%u archivos"
 
 msgid "num.fonts"
 msgid_plural "num.fonts.n"
-msgstr[0] "%zu fuente"
-msgstr[1] "%zu fuentes"
+msgstr[0] "%u fuente"
+msgstr[1] "%u fuentes"
 
 msgid "dlg.certwarn.title"
 msgstr "Incidencia de Seguridad"
@@ -2129,3 +2129,9 @@ msgstr "BORRAR PAQUETE DE FUENTES"
 
 msgid "lang.uk"
 msgstr "Ucraniano"
+
+msgid "lang.cs"
+msgstr "Checo"
+
+msgid "lang.hu"
+msgstr "Húngaro"

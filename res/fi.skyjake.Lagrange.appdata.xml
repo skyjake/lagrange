@@ -45,13 +45,38 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.8.2" date="2021-11-13">
+            <description>
+                <p>Version 1.8 adds a customizable font library and improves warning
+                    and errors messages. The bundled hardcoded fonts have been
+                    removed, and font configuration is now more flexible. Tabs have
+                    close buttons that appear on mouse hover.</p>
+                <p>Changes in v1.8.2:</p>
+                <ul>
+                    <li>Fixed encoding of <tt>+</tt> characters in URLs as per 
+                        RFC 3986.</li>
+                    <li>Fixed crash when fontpack.ini specifies a file that cannot
+                        be found.</li>
+                    <li>Fixed incorrect title of some error messages (was showing
+                        response meta info).</li>
+                    <li>Fixed ambiguous font dropdown menu items if some fonts have
+                        the same name. Now the unique font ID will be included in
+                        these cases.</li>
+                    <li>Made it possible to manually trust a certificate whose
+                        subject doesn't match domain name.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.8.2</url>
+        </release>                
         <release version="1.8.1" date="2021-11-06">
             <description>
                 <p>Version 1.8 adds a customizable font library and improves warning
                     and errors messages. The bundled hardcoded fonts have been
                     removed, and font configuration is now more flexible. Tabs have
-                    close buttons that appear on mouse hover. Added a Ukrainian UI
-                    translation.</p>
+                    close buttons that appear on mouse hover.</p>
                 <p>Changes in v1.8.1:</p>
                 <ul>
                     <li>Added UI translations: Hungarian, Czech.</li>
