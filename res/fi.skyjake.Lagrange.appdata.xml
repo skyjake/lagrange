@@ -53,7 +53,7 @@
                     close buttons that appear on mouse hover.</p>
                 <p>Changes in v1.8.2:</p>
                 <ul>
-                    <li>Fixed encoding of <tt>+</tt> characters in URLs as per 
+                    <li>Fixed encoding of <code>+</code> characters in URLs as per 
                         RFC 3986.</li>
                     <li>Fixed crash when fontpack.ini specifies a file that cannot
                         be found.</li>
