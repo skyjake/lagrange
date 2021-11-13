@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-09-20 20:49+0000\n"
+"PO-Revision-Date: 2021-11-14 20:50+0000\n"
 "Last-Translator: Alex Schroeder <alex@alexschroeder.ch>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
@@ -12,13 +12,13 @@ msgstr ""
 "X-Generator: Weblate 4.5.1\n"
 
 msgid "menu.opentab"
-msgstr "In neuem Tab öffnen"
+msgstr "In neuem Reiter öffnen"
 
 msgid "menu.feeds.entrylist"
 msgstr "Feed-Einträge anzeigen"
 
 msgid "feeds.entry.newtab"
-msgstr "Eintrag in neuem Tab öffnen"
+msgstr "Eintrag in neuem Reiter öffnen"
 
 msgid "cancel"
 msgstr "Abbrechen"
@@ -33,10 +33,10 @@ msgid "dlg.default"
 msgstr " Ok "
 
 msgid "toggle.yes"
-msgstr "JA"
+msgstr "Ja"
 
 msgid "toggle.no"
-msgstr "NEIN"
+msgstr "Nein"
 
 msgid "menu.title.file"
 msgstr "Datei"
@@ -57,22 +57,22 @@ msgid "menu.title.help"
 msgstr "Hilfe"
 
 msgid "menu.newtab"
-msgstr "Neuer Tab"
+msgstr "Neuer Reiter"
 
 msgid "menu.closetab"
-msgstr "Tab schließen"
+msgstr "Reiter schließen"
 
 msgid "menu.closetab.other"
-msgstr "Andere Tabs schließen"
+msgstr "Andere Reiter schließen"
 
 msgid "menu.closetab.left"
-msgstr "Tabs links schließen"
+msgstr "Reiter links schließen"
 
 msgid "menu.closetab.right"
-msgstr "Tabs rechts schließen"
+msgstr "Reiter rechts schließen"
 
 msgid "menu.duptab"
-msgstr "Tab duplizieren"
+msgstr "Reiter duplizieren"
 
 msgid "feeds.entry.markread"
 msgstr "Als gelesen markieren"
@@ -81,7 +81,7 @@ msgid "feeds.entry.markunread"
 msgstr "Als ungelesen markieren"
 
 msgid "menu.opentab.background"
-msgstr "Tab im Hintergrund öffnen"
+msgstr "Reiter im Hintergrund öffnen"
 
 msgid "about.logo"
 msgstr "ASCII-Kunst: Das Wort \"Lagrange\" in großer Schrift"
@@ -135,7 +135,7 @@ msgid "menu.bookmarks.list"
 msgstr "Alle Lesezeichen auflisten"
 
 msgid "menu.bookmarks.bytag"
-msgstr "Lesezeichen nach Tags auflisten"
+msgstr "Lesezeichen nach Schlagworten auflisten"
 
 msgid "menu.sidebar.right"
 msgstr "Rechte Seitenleiste ein-/ausblenden"
@@ -144,13 +144,13 @@ msgid "menu.zoom.in"
 msgstr "Vergrößern"
 
 msgid "macos.menu.bookmarks.bytag"
-msgstr "Nach Tags auflisten"
+msgstr "Nach Schlagworten auflisten"
 
 msgid "menu.bookmarks.bytime"
 msgstr "Lesezeichen nach Erstellungszeitpunkt auflisten"
 
 msgid "menu.preferences"
-msgstr "Einstellungen…"
+msgstr "Präferenzen…"
 
 msgid "menu.help"
 msgstr "Hilfe"
@@ -195,7 +195,7 @@ msgid "menu.parent"
 msgstr "Nach oben"
 
 msgid "keys.tab.next"
-msgstr "Nächster Tab"
+msgstr "Nächster Reiter"
 
 msgid "menu.sidebar.left"
 msgstr "Linke Seitenleiste ein-/ausblenden"
@@ -204,7 +204,7 @@ msgid "menu.root"
 msgstr "Zum Hauptknoten"
 
 msgid "menu.reload"
-msgstr "Seite neu laden"
+msgstr "Seite aktualisieren"
 
 msgid "menu.autoreload"
 msgstr "Automatische Aktualisierung…"
@@ -298,10 +298,10 @@ msgid "feeds.entry.bookmark"
 msgstr "Lesezeichen hinzufügen…"
 
 msgid "dlg.confirm.history.clear"
-msgstr "Wollen Sie wirklich die Chronik aller besuchten Seiten löschen?"
+msgstr "Wollen Sie wirklich den Verlauf aller besuchten Seiten löschen?"
 
 msgid "heading.bookmark.edit"
-msgstr "LESEZEICHEN BEARBEITEN"
+msgstr "Lesezeichen bearbeiten"
 
 msgid "dlg.openlink"
 msgstr "Link öffnen"
@@ -319,10 +319,10 @@ msgid "dlg.save.incomplete"
 msgstr "Die Seiteninhalte werden noch heruntergeladen."
 
 msgid "heading.save.incomplete"
-msgstr "SEITE UNVOLLSTÄNDIG"
+msgstr "Seite unvollständig"
 
 msgid "heading.save"
-msgstr "DATEI GESPEICHERT"
+msgstr "Datei gespeichert"
 
 msgid "dlg.input.send"
 msgstr "Senden"
@@ -375,7 +375,7 @@ msgid "heading.prefs.colors"
 msgstr "Farben"
 
 msgid "dlg.bookmark.tags"
-msgstr "Stichwörter:"
+msgstr "Schlagworte:"
 
 msgid "dlg.bookmark.url"
 msgstr "URL:"
@@ -384,7 +384,7 @@ msgid "dlg.feed.title"
 msgstr "Titel:"
 
 msgid "heading.feedcfg"
-msgstr "FEED EINSTELLUNGEN"
+msgstr "Feed Einstellungen"
 
 msgid "dlg.newident.country"
 msgstr "Land:"
@@ -396,7 +396,7 @@ msgid "dlg.newident.email"
 msgstr "Email:"
 
 msgid "heading.bookmark.add"
-msgstr "LESEZEICHEN HINZUFÜGEN"
+msgstr "Lesezeichen hinzufügen"
 
 msgid "dlg.feed.sub"
 msgstr "Abonnieren"
@@ -414,7 +414,7 @@ msgid "link.noproxy"
 msgstr "Ohne Proxy öffnen"
 
 msgid "link.newtab"
-msgstr "Link in neuem Tab öffnen"
+msgstr "Link in neuem Reiter öffnen"
 
 #, c-format
 msgid "dlg.import.add"
@@ -423,7 +423,7 @@ msgstr[0] "%sLesezeichen hinzufügen"
 msgstr[1] ""
 
 msgid "heading.import.bookmarks"
-msgstr "LESEZEICHEN IMPORTIEREN"
+msgstr "Lesezeichen importieren"
 
 msgid "sidebar.entry.bookmark"
 msgstr "Lesezeichen hinzufügen…"
@@ -447,10 +447,10 @@ msgid "menu.forgeturl"
 msgstr "URL vergessen"
 
 msgid "dlg.history.clear"
-msgstr "Chronik löschen"
+msgstr "Verlauf löschen"
 
 msgid "history.clear"
-msgstr "Chronik löschen…"
+msgstr "Verlauf löschen…"
 
 msgid "bookmark.tag.home"
 msgstr "Als Startseite verwenden"
@@ -494,7 +494,7 @@ msgid "dlg.translate.fail"
 msgstr "Anfrage fehlgeschlagen"
 
 msgid "heading.translate"
-msgstr "SEITE ÜBERSETZEN"
+msgstr "Seite übersetzen"
 
 msgid "bookmark.title.blank"
 msgstr "Leere Seite"
@@ -549,7 +549,7 @@ msgid "heading.prefs.network"
 msgstr "Netzwerk"
 
 msgid "heading.prefs.paragraph"
-msgstr "ABSATZ"
+msgstr "Absatz"
 
 msgid "prefs.theme.dark"
 msgstr "Dunkel"
@@ -583,16 +583,16 @@ msgid "prefs.proxy.gemini"
 msgstr "Gemini Proxy:"
 
 msgid "keys.reload"
-msgstr "Seite neu laden"
+msgstr "Seite aktualisieren"
 
 msgid "keys.bookmark.add"
 msgstr "Lesezeichen hinzufügen"
 
 msgid "keys.tab.new"
-msgstr "Neuer Tab"
+msgstr "Neuer Reiter"
 
 msgid "keys.tab.close"
-msgstr "Tab schließen"
+msgstr "Reiter schließen"
 
 msgid "error.cert.invalid"
 msgstr "Ungültiges Zertifikat"
@@ -632,8 +632,8 @@ msgstr "Eine Seite zurück"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu Byte"
-msgstr[1] "%zu Bytes"
+msgstr[0] "%u Byte"
+msgstr[1] "%u Bytes"
 
 # strftime() formatted, split on two lines
 #, c-format
@@ -652,19 +652,19 @@ msgid "menu.bookmarks.refresh"
 msgstr "Remote-Lesezeichen aktualisieren"
 
 msgid "feeds.unsubscribe"
-msgstr "Deabonnieren…"
+msgstr "Abonnement abbestellen…"
 
 msgid "menu.dup"
 msgstr "Duplizieren …"
 
 msgid "heading.history.clear"
-msgstr "VERLAUF LÖSCHEN"
+msgstr "Verlauf löschen"
 
 msgid "bookmark.tag.remote"
 msgstr "Als Lesezeichen-Quelle verwenden"
 
 msgid "bookmark.untag.sub"
-msgstr "Feed-Abonnement kündigen"
+msgstr "Feed-Abonnement abbestellen"
 
 msgid "bookmark.untag.remote"
 msgstr "Lesezeichen-Quelle entfernen"
@@ -688,7 +688,7 @@ msgstr "Laden"
 
 # Inline download status message.
 msgid "media.download.warnclose"
-msgstr "Der Download wird abgebrochen, wenn Sie diesen Tab schließen."
+msgstr "Der Download wird abgebrochen, wenn Sie diesen Reiter schließen."
 
 # Inline download status message.
 msgid "media.download.complete"
@@ -728,8 +728,8 @@ msgstr "Feed-Einträge"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "insgesamt %zu Eintrag"
-msgstr[1] "insgesamt %zu Einträge"
+msgstr[0] "insgesamt einen Eintrag"
+msgstr[1] "insgesamt %u Einträge"
 
 #, c-format
 msgid "feeds.list.refreshtime"
@@ -780,22 +780,22 @@ msgid "ident.delete"
 msgstr "Identität löschen …"
 
 msgid "heading.ident.delete"
-msgstr "IDENTITÄT LÖSCHEN"
+msgstr "Identität löschen"
 
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "Verwendet bei %zu URL"
-msgstr[1] "Verwendet bei %zu URLs"
+msgstr[0] "Verwendet für eine URL"
+msgstr[1] "Verwendet für %u URLs"
 
 msgid "ident.using"
 msgstr "Verwenden für diese Seite"
 
 msgid "heading.ident.use"
-msgstr "IDENTITÄTSVERWENDUNG"
+msgstr "Identitätsverwendung"
 
 msgid "heading.ident.notes"
-msgstr "IDENTITÄTSANMERKUNGEN"
+msgstr "Identitätsanmerkungen"
 
 msgid "ident.showuse"
 msgstr "Verwendung anzeigen"
@@ -807,20 +807,17 @@ msgid "sidebar.empty.idents"
 msgstr "keine Identitäten"
 
 msgid "heading.unsub"
-msgstr "ABONNEMENT KÜNDIGEN"
+msgstr "Abonnement abbestellen"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"Feed wirklich abbestellen:\n"
-"\"%s\"?"
+msgstr "Feed wirklich abbestellen: \"%s\"?"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"Wollen Sie wirklich die Identität\n"
-" %s%s%s\n"
-"einschließlich ihrer Zertifikats- und privaten Schlüsseldateien löschen?"
+"Wollen Sie wirklich die Identität %s\"%s\"%s einschließlich ihrer "
+"Zertifikats- und privaten Schlüsseldateien löschen?"
 
 # The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
 #, c-format
@@ -829,7 +826,7 @@ msgstr ""
 "Weitere Informationen zu TLS-Client-Zertifikaten finden Sie unter %sHelp%s."
 
 msgid "heading.openlink"
-msgstr "LINK ÖFFNEN"
+msgstr "Link öffnen"
 
 msgid "prefs.boldlink"
 msgstr "Fettgedruckte Links:"
@@ -846,7 +843,7 @@ msgid "lang.zh.hant"
 msgstr "Chinesisch (traditionell)"
 
 msgid "heading.newident"
-msgstr "NEUE IDENTITÄT"
+msgstr "Neue Identität"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Erstellen eines selbstsignierten 2048-Bit-RSA-Zertifikats."
@@ -890,11 +887,11 @@ msgstr[1] ""
 
 # Interpret as "Results from bookmarks..."
 msgid "heading.lookup.bookmarks"
-msgstr "LESEZEICHEN"
+msgstr "Lesezeichen"
 
 # Interpret as "Results from feeds..."
 msgid "heading.lookup.feeds"
-msgstr "FEEDS"
+msgstr "Feeds"
 
 msgid "dlg.newident.until"
 msgstr "Gültig bis:"
@@ -931,7 +928,7 @@ msgid "dlg.unsub"
 msgstr "Abbestellen"
 
 msgid "heading.pageinfo"
-msgstr "SEITENINFORMATION"
+msgstr "Seiteninformation"
 
 msgid "pageinfo.header.cached"
 msgstr "(zwischengespeicherter Inhalt)"
@@ -952,13 +949,14 @@ msgid "pageinfo.domain.match"
 msgstr "Domänenname stimmt überein"
 
 msgid "heading.save.error"
-msgstr "FEHLER BEIM SPEICHERN DER DATEI"
+msgstr "Fehler beim Speichern der Datei"
 
 msgid "dlg.autoreload"
-msgstr "Wählen Sie das Intervall für das automatische Neuladen für diese Tab."
+msgstr ""
+"Wählen Sie das Intervall für die automatische Aktualisierung des Reiters."
 
 msgid "link.newtab.background"
-msgstr "Link im Hintergrund-Tab öffnen"
+msgstr "Link in einem neuen Reiter im Hintergrund öffnen"
 
 msgid "link.browser"
 msgstr "Link im Standardbrowser öffnen"
@@ -973,23 +971,23 @@ msgstr ""
 "Problem der Serverkonfiguration sein."
 
 msgid "heading.certimport"
-msgstr "IDENTITÄT IMPORTIEREN"
+msgstr "Identität importieren"
 
 # Interpret as "Results from history..."
 msgid "heading.lookup.history"
-msgstr "Chronik"
+msgstr "Verlauf"
 
 # Interpret as "Results from page content..."
 msgid "heading.lookup.pagecontent"
-msgstr "SEITENINHALT"
+msgstr "Seiteninhalt"
 
 # Interpret as "Results from identitites..."
 msgid "heading.lookup.identities"
-msgstr "IDENTITÄTEN"
+msgstr "Identitäten"
 
 # Interpret as "Other results..."
 msgid "heading.lookup.other"
-msgstr "ANDERE"
+msgstr "Andere"
 
 msgid "dlg.translate.unavail"
 msgstr "Dienst nicht verfügbar"
@@ -1010,7 +1008,7 @@ msgid "dlg.newident.userid"
 msgstr "Benutzer-ID:"
 
 msgid "heading.subscribe"
-msgstr "SEITE ABONNIEREN"
+msgstr "Seite abonnieren"
 
 msgid "dlg.feed.entrytype"
 msgstr "Eintragstyp:"
@@ -1022,13 +1020,13 @@ msgid "dlg.bookmark.icon"
 msgstr "Symbol:"
 
 msgid "heading.prefs.scrolling"
-msgstr "BLÄTTERN"
+msgstr "Blättern"
 
 msgid "heading.prefs.sizing"
-msgstr "GRÖßENEINTEILUNG"
+msgstr "Größeneinteilung"
 
 msgid "heading.prefs.widelayout"
-msgstr "BREITES LAYOUT"
+msgstr "Breites Layout"
 
 msgid "prefs.hoverlink"
 msgstr "URL bei Mauszeiger anzeigen:"
@@ -1064,7 +1062,7 @@ msgid "prefs.accent.teal"
 msgstr "Türkisblau"
 
 msgid "prefs.uiscale"
-msgstr "UI-Skalierungsfaktor:"
+msgstr "Skalierungsfaktor der Oberfläche :"
 
 msgid "prefs.customframe"
 msgstr "Individueller Fensterrahmen:"
@@ -1154,10 +1152,10 @@ msgid "heading.certwarn"
 msgstr "NICHT VERTRAUENSWÜRDIGES ZERTIFIKAT"
 
 msgid "heading.certimport.pasted"
-msgstr "AUS DER ZWISCHENABLAGE EINGEFÜGT"
+msgstr "Aus der Zwischenablage eingefügt"
 
 msgid "heading.certimport.dropped"
-msgstr "VERLORENE DATEI"
+msgstr "Abgelegte Datei"
 
 msgid "hint.certimport.description"
 msgstr "Beschreibung"
@@ -1191,23 +1189,23 @@ msgid "dlg.newident.create"
 msgstr "Identität erstellen"
 
 msgid "heading.prefs"
-msgstr "PREFERENZEN"
+msgstr "Präferenzen"
 
 msgid "heading.prefs.certs"
-msgstr "ZERTIFIKATE"
+msgstr "Zertifikate"
 
 msgid "heading.prefs.fonts"
 msgstr "Schriftarten"
 
 # tab button
 msgid "heading.prefs.keys"
-msgstr "TASTEN"
+msgstr "Tasten"
 
 msgid "heading.prefs.pagecontent"
-msgstr "PAGE COLORS"
+msgstr "Seitenfarben"
 
 msgid "heading.prefs.proxies"
-msgstr "PROXIES"
+msgstr "Proxies"
 
 msgid "gempub.meta.lang"
 msgstr "Sprache"
@@ -1367,8 +1365,8 @@ msgstr "Server nicht erreichbar"
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "Sie haben %zu Feed mit %%s abonniert.\n"
-msgstr[1] "Sie haben %zu Feeds mit %%s abonniert.\n"
+msgstr[0] "Sie haben einen Feed mit %%s abonniert.\n"
+msgstr[1] "Sie haben %u Feeds mit %%s abonniert.\n"
 
 msgid "upload.port"
 msgstr "Port…"
@@ -1393,7 +1391,7 @@ msgid "prefs.linespacing"
 msgstr "Zeilenabstand:"
 
 msgid "error.tls.msg"
-msgstr "Die Kommunikation mit dem Server ist fehlgeschlagen. Die Fehlermeldung:"
+msgstr "Die Kommunikation mit dem Server ist fehlgeschlagen."
 
 msgid "error.certexpired"
 msgstr "Zertifikat abgelaufen"
@@ -1452,7 +1450,7 @@ msgid "sidebar.action.ident.import"
 msgstr "Importieren…"
 
 msgid "keys.parent"
-msgstr "Zum darüber liegenden Verzeichnis"
+msgstr "Zum darüber liegenden Ordner"
 
 msgid "feeds.atom.translated"
 msgstr ""
@@ -1478,13 +1476,13 @@ msgid "bookmark.export.format.tags"
 msgstr "Schlagworte werden mit Überschriften der Stufe 2 definiert."
 
 msgid "menu.page.upload"
-msgstr "Seite mit Titan hochladen"
+msgstr "Seite mit Titan hochladen…"
 
 msgid "heading.upload"
-msgstr "UPLOAD WITH TITAN"
+msgstr "Hochladen mit Titan"
 
 msgid "hint.upload.text"
-msgstr "Texteingabe für den Upload"
+msgstr "Texteingabe für das Hochladen"
 
 msgid "heading.upload.file"
 msgstr "Datei"
@@ -1502,10 +1500,10 @@ msgid "upload.token"
 msgstr "Kennwort:"
 
 msgid "dlg.upload.send"
-msgstr "Upload"
+msgstr "Hochladen"
 
 msgid "heading.uploadport"
-msgstr "TITAN UPLOAD PORT"
+msgstr "Titan Port"
 
 msgid "lang.ia"
 msgstr "Interlingua"
@@ -1526,13 +1524,13 @@ msgid "prefs.pinsplit.right"
 msgstr "Rechter Reiter"
 
 msgid "heading.newident.missing"
-msgstr "MISSING INFO"
+msgstr "Fehlende Information"
 
 msgid "heading.newident.date.bad"
-msgstr "INVALID DATE"
+msgstr "Ungültiges Datum"
 
 msgid "heading.prefs.uitheme"
-msgstr "UI COLORS"
+msgstr "Oberflächenfarben"
 
 msgid "prefs.scrollspeed.keyboard"
 msgstr "Tastaturgeschwindigkeit:"
@@ -1626,13 +1624,13 @@ msgid "menu.split.horizontal"
 msgstr "Horizontal"
 
 msgid "menu.downloads"
-msgstr "Download Verzeichnis anzeigen"
+msgstr "Downloads anzeigen"
 
 msgid "menu.unexpire"
 msgstr "Ablaufdatum ignorieren und weiter laden"
 
 msgid "menu.save.downloads.open"
-msgstr "Im Downloadverzeichnis speichern und Datei öffnen"
+msgstr "In den Downloads speichern und Datei öffnen"
 
 msgid "menu.select.clear"
 msgstr "Auswahl aufheben"
@@ -1656,7 +1654,7 @@ msgid "dlg.save.opendownload"
 msgstr "Runtergeladene Datei öffnen"
 
 msgid "heading.autoreload"
-msgstr "AUTO-RELOAD"
+msgstr "Automatische Aktualisierung"
 
 msgid "link.side"
 msgstr "Link seitlich öffnen"
@@ -1668,7 +1666,7 @@ msgid "link.file.delete"
 msgstr "Datei löschen"
 
 msgid "heading.file.delete"
-msgstr "DELETE FILE"
+msgstr "Datei löschen"
 
 msgid "dlg.file.delete.confirm"
 msgstr "Wollen Sie die Datei wirklich löschen?"
@@ -1680,7 +1678,7 @@ msgid "menu.pageinfo"
 msgstr "Seiteninformation anzeigen"
 
 msgid "bookmark.export.title.tag"
-msgstr "Schlagworte für Lesenzeichen"
+msgstr "Schlagworte für Lesezeichen"
 
 msgid "bookmark.export.count"
 msgid_plural "bookmark.export.count.n"
@@ -1698,8 +1696,8 @@ msgstr "Links seitlich öffnen"
 msgid "bookmark.export.taginfo"
 msgstr ""
 "In diese Liste steht jede Überschrift für ein Lesezeichenschlagwort. Nur "
-"verschlagwortete Lesezeichen werden aufgeführt. Lesezeichen mir mehreren "
-"Schlagworten werden jedem dieser Schlagworte aufgeführt."
+"verschlagwortete Lesezeichen werden aufgeführt. Lesezeichen mit mehreren "
+"Schlagworten werden unter jedem dieser Schlagworte aufgeführt."
 
 msgid "prefs.memorysize"
 msgstr "Speichergrösse:"
@@ -1710,17 +1708,17 @@ msgstr "Archiv verlassen"
 #, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
-msgstr[0] "Dieses Archiv enthält %zu Eintrag und wurde auf %.1f MB komprimiert."
-msgstr[1] "Dieses Archiv enthält %zu Einträge und wurde auf %.1f MB komprimiert."
+msgstr[0] "Dieses Archiv enthält einen Eintrag und wurde auf %.1f MB komprimiert."
+msgstr[1] "Dieses Archiv enthält %u Einträge und wurde auf %.1f MB komprimiert."
 
 msgid "dir.empty"
-msgstr "Dieses Verzeichnis ist leer."
+msgstr "Dieser Ordner ist leer."
 
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "Dieses Verzeichnis enthält %zu Eintrag."
-msgstr[1] "Dieses Verzeichnis enthält %zu Einträge."
+msgstr[0] "Dieser Ordner enthält einen Eintrag."
+msgstr[1] "Dieser Ordner enthält %u Einträge."
 
 msgid "keys.zoom.out"
 msgstr "Verkleinern"
@@ -1745,8 +1743,8 @@ msgstr "siehe Instruktionen des Servers"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"Setzt den Port des Titanservers für diese URL.\n"
-"Der Port wird für diesen Site gespeichert."
+"Setzt den Port des Titanservers für diese URL. Der Port wird in der "
+"Konfiguration für diesen Seiten gespeichert."
 
 msgid "lang.tok"
 msgstr "Toki Pona"
@@ -1814,3 +1812,303 @@ msgstr ""
 
 msgid "error.unsupported.protocol.msg"
 msgstr "Das gewünschte Protokoll wird von dieser Applikation nicht unterstützt."
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Neuer Ordner"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "Einstellungen"
+
+msgid "prefs.imagestyle"
+msgstr "Bilder einfärben:"
+
+msgid "prefs.imagestyle.original"
+msgstr "Keine"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Graustufen"
+
+msgid "prefs.imagestyle.text"
+msgstr "Textfarbe"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Textfarbe für vorformatierten Text"
+
+msgid "prefs.font.heading"
+msgstr "Titel:"
+
+msgid "prefs.font.body"
+msgstr "Textkörper:"
+
+msgid "prefs.font.ui"
+msgstr "Oberfläche :"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Nichtproportionale Schrift:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Besucht"
+
+msgid "prefs.gemtext.ansi"
+msgstr "ANSI Code-Umschaltungen:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Vordergrundfarbe"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Schriftstil"
+
+msgid "prefs.font.warnmissing"
+msgstr "Glyphenwarnungen:"
+
+msgid "prefs.font.smooth"
+msgstr "Glättung:"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Lesezeichenordner hinzufügen"
+
+msgid "keys.split.item"
+msgstr "Aufteilungsmenü:"
+
+msgid "keys.hoverurl"
+msgstr "URL beim Darüberfahren anzeigen"
+
+msgid "error.ansi"
+msgstr "Terminalemulation"
+
+msgid "error.glyphs"
+msgstr "Fehlende Glyphen"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Diese Seite kann nicht vollständig angezeigt werden, weil gewisse Charaktere "
+"fehlen. Mit der Installation zusätzlicher Schriftarten kann dies behoben "
+"werden."
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Wollen Sie das Schriftartenpaket \"%s\" wirklich für immer löschen?"
+
+msgid "dlg.fontpack.delete"
+msgstr "Schriftartenpaket löschen"
+
+msgid "fontpack.install.ttf"
+msgstr "TrueType Schriftart installieren"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Installierte Schriftarten anzeigen"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Benutzerschriftartenordner öffnen"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Die Warnung zur Terminalemulation für %s zukünftig ignorieren?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Warnung ignorieren"
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Die Schriftarten, welche bisher mit der Applikation verteilt wurden, gibt es "
+"nun als separates Download. Wollen Sie das \"Klassik\" Set runterladen?"
+
+msgid "dlg.fontpack.classic"
+msgstr "Schriftartenpaket runterladen (25 MB)"
+
+msgid "heading.dismiss.warning"
+msgstr "Warnung ignorieren?"
+
+msgid "heading.fontpack.classic"
+msgstr "Schriftartenpaket runterladen"
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange probiert alle TrueType Schriftartendateien zu laden, welche im "
+"Benutzerschriftartenordner liegen."
+
+msgid "truetype.help.installed"
+msgstr "Diese Schriftart ist im Benutzerschriftartenordner installiert."
+
+msgid "lang.gl"
+msgstr "Galizisch"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "HTTP(S) Links ignorieren:"
+
+msgid "heading.bookmark.tags"
+msgstr "Spezielle Schlagworte"
+
+msgid "heading.addfolder"
+msgstr "Ordner hinzufügen"
+
+msgid "keys.link.homerow.next"
+msgstr "Nächster Satz von Mittelzeiletastenlinks"
+
+msgid "menu.newfolder"
+msgstr "Neuer Ordner…"
+
+msgid "menu.sort.alpha"
+msgstr "Alphabetisch sortieren"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Einstellungen"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Alles auswählen"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Löschen"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Rückgängig"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Deaktivierte Schriftartenpakete"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Datei anzeigen"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Version %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Installiert"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Nicht installiert"
+
+msgid "fontpack.meta.disabled"
+msgstr ", deaktiviert"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Name des neuen Ordners:"
+
+msgid "dlg.addfolder"
+msgstr "Ordner hinzufügen"
+
+msgid "menu.website"
+msgstr "Projektwebseite…"
+
+msgid "menu.fonts"
+msgstr "Schriftarten verwalten…"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "Lesezeichen löschen"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Zertifikats- und privaten Schlüsseldateien importieren"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Wollen Sie das Lesezeichen in diesem Ordner wirklich löschen?"
+msgstr[1] "Wollen Sie die %u Lesezeichen in diesem Ordner wirklich löschen?"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "eine Datei"
+msgstr[1] "%u Dateien"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "eine Schriftart"
+msgstr[1] "%u Schriftarten"
+
+msgid "upload.id"
+msgstr "Identität:"
+
+msgid "dlg.upload.id.none"
+msgstr "Keine"
+
+msgid "dlg.upload.id.default"
+msgstr "Default"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Text hochladen"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Datei hochladen"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Datei auswählen"
+
+msgid "prefs.font.mono"
+msgstr "Vorformatiert:"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Installation von \"%s\""
+
+msgid "heading.fontpack.delete"
+msgstr "Schriftartenpaket löschen"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Lesezeichen löschen"
+msgstr[1] "%u Lesezeichen löschen"
+
+msgid "dlg.certwarn.title"
+msgstr "Sicherheitsproblem"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Lesezeichen am Ende hinzufügen:"
+
+msgid "error.ansi.msg"
+msgstr ""
+"Diese Seite wird möglicherweise nicht richtig dargestellt. Es werden ANSI-"
+"Code-Umschaltungen verwendet um die Darstellung zu kontrollieren, und das "
+"wird nur teilweise unterstützt. Verwenden Sie einen Terminalemulator, um "
+"diese Seite darzustellen."
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Hintergrund zu Vordergrund"
+
+msgid "keys.split.next"
+msgstr "Fokus zur nächsten Aufteilung"
+
+msgid "fontpack.help"
+msgstr ""
+"Lagrange Schriftartenpakete sind ZIP Dateien, welche Schriftarten und "
+"dazugehörige Konfigurationen enthalten. Einmal installiert, können diese "
+"Schriftarten für die Dokumenteninhalte und die Oberfläche verwendet werden. "
+"Die aktive Schriftart wählen sie unter Präferenzen > Schriftarten."
+
+msgid "heading.fontpack.meta"
+msgstr "Schriftarten"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Aktivierte Schriftartenpakete"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Aktivierung von \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Deaktivierung von \"%s\""
+
+msgid "fontpack.export"
+msgstr "Anzeige der fontpack.ini Vorlage"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Aktualisieren von \"%s\" auf Version %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "\"%s\" für immer löschen"
