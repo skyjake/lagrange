@@ -2843,9 +2843,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const char *unchecked       = red_ColorEscape "\u2610";
         const char *checked         = green_ColorEscape "\u2611";
         const iBool haveFingerprint = (d->certFlags & haveFingerprint_GmCertFlag) != 0;
-        const iBool canTrust =
-            (d->certFlags == (available_GmCertFlag | haveFingerprint_GmCertFlag |
-                              timeVerified_GmCertFlag /* | domainVerified_GmCertFlag*/));
+        const int requiredForTrust = (available_GmCertFlag | haveFingerprint_GmCertFlag |
+                                      timeVerified_GmCertFlag);
+        const iBool canTrust = ((d->certFlags & requiredForTrust) == requiredForTrust);
         const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
         const iString *meta = &d->sourceMime;
         if (recent && recent->cachedResponse) {
