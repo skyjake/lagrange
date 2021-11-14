@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-02 23:51+0000\n"
+"PO-Revision-Date: 2021-11-10 04:50+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -193,9 +193,9 @@ msgstr "КБ"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu бајт"
-msgstr[1] "%zu бајта"
-msgstr[2] "%zu бајтова"
+msgstr[0] "%u бајт"
+msgstr[1] "%u бајта"
+msgstr[2] "%u бајтова"
 
 # strftime() formatted
 #, c-format
@@ -1191,9 +1191,9 @@ msgstr "Икона за \""
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "Користи се на %zu УРЛ-у"
-msgstr[1] "Користи се на %zu УРЛ-а"
-msgstr[2] "Користи се на %zu УРЛ-ова"
+msgstr[0] "Користи се на %u УРЛ-у"
+msgstr[1] "Користи се на %u УРЛ-а"
+msgstr[2] "Користи се на %u УРЛ-ова"
 
 msgid "prefs.plaintext.wrap"
 msgstr "Прелом чистог текста:"
@@ -1356,16 +1356,16 @@ msgstr "Интерлингве"
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "Претплаћени сте на %zu фид који садржи %%s.\n"
-msgstr[1] "Претплаћени сте на %zu фида који садрже %%s.\n"
-msgstr[2] "Претплаћени сте на %zu фидова који садрже %%s.\n"
+msgstr[0] "Претплаћени сте на %u фид који садржи %%s.\n"
+msgstr[1] "Претплаћени сте на %u фида који садрже %%s.\n"
+msgstr[2] "Претплаћени сте на %u фидова који садрже %%s.\n"
 
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "укупно %zu ставку"
-msgstr[1] "укупно %zu ставке"
-msgstr[2] "укупно %zu ставки"
+msgstr[0] "укупно %u ставку"
+msgstr[1] "укупно %u ставке"
+msgstr[2] "укупно %u ставки"
 
 #, c-format
 msgid "minutes.ago"
@@ -1594,9 +1594,9 @@ msgstr "У десној картици"
 #, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
-msgstr[0] "Ова архива садржи %zu ставку, а њена компресована величина је %.1f МБ."
-msgstr[1] "Ова архива садржи %zu ставке, а њена компресована величина је %.1f МБ."
-msgstr[2] "Ова архива садржи %zu ставки, а њена компресована величина је %.1f МБ."
+msgstr[0] "Ова архива садржи %u ставку, а њена компресована величина је %.1f МБ."
+msgstr[1] "Ова архива садржи %u ставке, а њена компресована величина је %.1f МБ."
+msgstr[2] "Ова архива садржи %u ставки, а њена компресована величина је %.1f МБ."
 
 msgid "archive.exit"
 msgstr "Изађи из архиве"
@@ -1607,9 +1607,9 @@ msgstr "Овај директоријум је празан."
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "Овај директоријум садржи %zu ставку."
-msgstr[1] "Овај директоријум садржи %zu ставке."
-msgstr[2] "Овај директоријум садржи %zu ставки."
+msgstr[0] "Овај директоријум садржи %u ставку."
+msgstr[1] "Овај директоријум садржи %u ставке."
+msgstr[2] "Овај директоријум садржи %u ставки."
 
 msgid "keys.tab.close.other"
 msgstr "Затварање осталих картица"
@@ -1996,15 +1996,15 @@ msgstr "Управљај фонтовима…"
 
 msgid "num.fonts"
 msgid_plural "num.fonts.n"
-msgstr[0] "%zu фонт"
-msgstr[1] "%zu фонта"
-msgstr[2] "%zu фонтова"
+msgstr[0] "%u фонт"
+msgstr[1] "%u фонта"
+msgstr[2] "%u фонтова"
 
 msgid "num.files"
 msgid_plural "num.files.n"
-msgstr[0] "%zu датотека"
-msgstr[1] "%zu датотеке"
-msgstr[2] "%zu датотека"
+msgstr[0] "%u датотека"
+msgstr[1] "%u датотеке"
+msgstr[2] "%u датотека"
 
 msgid "dlg.certwarn.title"
 msgstr "Безбедносни проблем"
@@ -2163,3 +2163,9 @@ msgstr "Трајно отклонити упозорење о емулацији
 
 msgid "lang.uk"
 msgstr "Украјински"
+
+msgid "lang.cs"
+msgstr "Чешки"
+
+msgid "lang.hu"
+msgstr "Мађарски"

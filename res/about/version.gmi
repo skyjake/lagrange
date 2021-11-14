@@ -6,9 +6,19 @@
 ```
 # Release notes
 
+## 1.8.2
+* Fixed encoding of `+` characters in URLs as per RFC 3986.
+* Fixed crash when fontpack.ini specifies a file that cannot be found.
+* Fixed incorrect title of some error messages (was showing response meta info).
+* Fixed ambiguous font dropdown menu items if some fonts have the same name. Now the unique font ID will be included in these cases.
+* Made it possible to manually trust a certificate whose subject doesn't match domain name.
+* Updated UI translations.
+
 ## 1.8.1
+* Added UI translations: Hungarian, Czech.
 * Added the `zip` utility as a build requirement. It is used for making fontpacks.
 * Fixed build failure with the simple text renderer, i.e., when HarfBuzz is disabled.
+* Fixed issues scrolling tall popup menus (e.g., UI language selection).
 * Fixed a line spacing artifact in long headings. With some fonts, the lines were clipping each other so the spacing was restored to normal.
 * Fixed a socket I/O issue that caused received data to be ignored when the peer closed the connection prematurely.
 * macOS: Tab close buttons are on the left side (platform UI convention).

@@ -1676,9 +1676,13 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
 #if !defined (iPlatformApple)
     setForceSoftwareRender_App(iTrue);
 #endif
+    SDL_Rect usableRect;
+    SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(get_MainWindow()->base.win),
+                               &usableRect);
     iWindow *win =
         new_Window(popup_WindowType,
-                   (iRect){ screenPos, divf_I2(rootWidget->rect.size, get_Window()->pixelRatio) },
+                   (iRect){ screenPos, min_I2(divf_I2(rootWidget->rect.size, get_Window()->pixelRatio),
+                                              init_I2(usableRect.w, usableRect.h)) },
                    SDL_WINDOW_ALWAYS_ON_TOP |
 #if !defined (iPlatformAppleDesktop)
                    SDL_WINDOW_BORDERLESS |

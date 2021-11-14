@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-07 16:50+0000\n"
+"PO-Revision-Date: 2021-11-10 04:50+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -259,14 +259,14 @@ msgstr ""
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu octete"
-msgstr[1] "%zu octetes"
+msgstr[0] "%u octete"
+msgstr[1] "%u octetes"
 
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "Usat por %zu URL"
-msgstr[1] "Usat por %zu URLs"
+msgstr[0] "Usat por %u URL"
+msgstr[1] "Usat por %u URLs"
 
 msgid "error.cert.invalid.msg"
 msgstr "Li providet certificate de cliente es expirat o ínvalid."
@@ -503,9 +503,7 @@ msgstr "DESABONNAR"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"Esque desabonnar li feed\n"
-"«%s»?"
+msgstr "Esque desabonnar li feed «%s»?"
 
 msgid "dlg.unsub"
 msgstr "Desabonnar"
@@ -1027,9 +1025,7 @@ msgstr "REMOVER LI IDENTITÁ"
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"Esque vu vole remover li identitá\n"
-"%s%s%s\n"
-"con su certificate e clave privat?"
+"Esque vu vole remover li identitá %s«%s»%s con su certificate e clave privat?"
 
 msgid "dlg.ident.delete"
 msgstr "Remover li identitá e files"
@@ -1186,7 +1182,7 @@ msgid "error.tls"
 msgstr "Dessuccesse del rete o TLS"
 
 msgid "error.tls.msg"
-msgstr "Ne successat communicar con li servitor. Vi li textu de errore:"
+msgstr "Ne successat communicar con li servitor."
 
 msgid "error.temporary"
 msgstr "Temporari dessuccesse"
@@ -1345,14 +1341,14 @@ msgstr "Serbian"
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "Vu abonat %zu feed quel contene %%s.\n"
-msgstr[1] "Vu abonat %zu feedes quel contene %%s.\n"
+msgstr[0] "Vu abonat %u feed quel contene %%s.\n"
+msgstr[1] "Vu abonat %u feedes quel contene %%s.\n"
 
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "%zu element in tot"
-msgstr[1] "%zu elementes in tot"
+msgstr[0] "%u element in tot"
+msgstr[1] "%u elementes in tot"
 
 #, c-format
 msgid "minutes.ago"
@@ -1544,14 +1540,14 @@ msgstr "On posse leer ti libre Gempub pos que it ha esset gardat localmen."
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "Ti fólder contene %zu element."
-msgstr[1] "Ti fólder contene %zu elementes."
+msgstr[0] "Ti fólder contene %u element."
+msgstr[1] "Ti fólder contene %u elementes."
 
 #, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
-msgstr[0] "Ti archive contene %zu element e su compresset grandore es %.1f Mo."
-msgstr[1] "Ti archive contene %zu elementes e su compresset grandore es %.1f Mo."
+msgstr[0] "Ti archive contene %u element e su compresset grandore es %.1f Mo."
+msgstr[1] "Ti archive contene %u elementes e su compresset grandore es %.1f Mo."
 
 msgid "link.side"
 msgstr "Aperter li ligament láteralmen"
@@ -1712,8 +1708,8 @@ msgstr "Assignar li portu"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"Assignar li portu de Titan por ti-ci adresse.\n"
-"Li portu es gardat in li preferenties del site."
+"Assignar li portu de Titan por ti-ci adresse. Li portu es gardat in li "
+"preferenties del site."
 
 msgid "prefs.returnkey"
 msgstr "Coduida del taste Enter:"
@@ -1918,3 +1914,188 @@ msgstr "Sel. omni"
 # keep this short (3x1 horiz layout)
 msgid "menu.delete"
 msgstr "Remov."
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignorar ligamentes HTTP(s):"
+
+msgid "truetype.help.installed"
+msgstr "Ti-ci fonde es installat in li fólder de personal fondes."
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Li fondes quel esser includet in li app es nu disponibil quam un separat "
+"discarga. Esque vu vole descargar li «classic» collection ho-témpor?"
+
+msgid "lang.hu"
+msgstr "Hungarian"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Adjunter marca-págines a bass:"
+
+msgid "prefs.font.ui"
+msgstr "IdU:"
+
+msgid "prefs.font.heading"
+msgstr "Rubricas:"
+
+msgid "prefs.font.body"
+msgstr "Córpore:"
+
+msgid "prefs.font.mono"
+msgstr "Formatat:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Visitat"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Codes escape de ANSI:"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Avanplan"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Stil de fonde"
+
+msgid "prefs.font.warnmissing"
+msgstr "Avise de glifes:"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u file"
+msgstr[1] "%u files"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u fonde"
+msgstr[1] "%u fondes"
+
+msgid "heading.fontpack.classic"
+msgstr "DESCARGAR UN FONDPAC"
+
+msgid "error.ansi"
+msgstr "Emulation del terminal"
+
+msgid "error.glyphs"
+msgstr "Glifes mancant"
+
+msgid "heading.fontpack.meta"
+msgstr "Fondes"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Monstrar li file"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Activ fondpacs"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Ínactiv fondpacs"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Version %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Installat"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Ne installat"
+
+msgid "fontpack.meta.disabled"
+msgstr ", ínactiv"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Desactivar «%s»"
+
+msgid "fontpack.export"
+msgstr "Monstrar li modelle fontpack.ini"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Installar «%s»"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Actualisar «%s» al version %d"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Remover «%s» permanentmen"
+
+msgid "dlg.fontpack.delete"
+msgstr "Remover li fondpac"
+
+msgid "fontpack.install.ttf"
+msgstr "Installar un fonde TrueType"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Aperter li fólder de personal fondes"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Monstrar installat fondes"
+
+msgid "dlg.fontpack.classic"
+msgstr "Descargar li fondpac (25 Mo)"
+
+msgid "lang.uk"
+msgstr "Ukrainan"
+
+msgid "heading.fontpack.delete"
+msgstr "REMOVER LI FONDPAC"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Esque vu vole remover li fondpac «%s» permanentmen?"
+
+msgid "menu.fonts"
+msgstr "Gerentie de fondes…"
+
+msgid "dlg.certwarn.title"
+msgstr "Problema de securitá"
+
+msgid "menu.website"
+msgstr "Website del projecte…"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Activar «%s»"
+
+msgid "lang.cs"
+msgstr "Tchec"
+
+msgid "prefs.font.smooth"
+msgstr "Glattar:"
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"In ti-ci liste chascun rubrica representa un etiquette de marca-págines. "
+"Solmen marca-págines con un etiquette es monstrat. Marca-págines con "
+"multiplic etiquettes es duplicat sub chascun etiquette."
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Ti-ci págine ne es monstrat completmen pro que alcun caracteres es mancant. "
+"On posse installar suplementari fondes por correcter to."
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange pena cargar omni files de fondes TrueType quel esset copiat al "
+"fólder de personal fondes."
+
+msgid "fontpack.help"
+msgstr ""
+"Fondpacs de Lagrange es archives ZIP quel contene files de fondes e li "
+"associat configuration. Pos li installation, on posse usar ti fondes por "
+"contenete de documentes e li interfacie. On posse selecter li activ fondes "
+"in Preferenties > Fondes."
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Ti-ci págine es formatat secun li specification suplementari «Subscribing to "
+"Gemini pages»."
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Ti document Atom XML esset convertet in un feed de Gemini por que on vell "
+"posse abonnar it."

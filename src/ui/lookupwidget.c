@@ -665,8 +665,9 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                                            (bottom_Rect(rect_Root(root)) - bottom_Rect(navBarBounds)) / 2));
             setPos_Widget(w, windowToLocal_Widget(w, bottomLeft_Rect(bounds_Widget(url))));
 #if defined (iPlatformAppleMobile)
+            /* TODO: Check this again. */
             /* Adjust height based on keyboard size. */ {
-                w->rect.size.y = visibleSize_Root(root).y - top_Rect(bounds_Widget(w));
+                w->rect.size.y = bottom_Rect(visibleRect_Root(root)) - top_Rect(bounds_Widget(w));
                 if (deviceType_App() == phone_AppDeviceType) {
                     float l, r;
                     safeAreaInsets_iOS(&l, NULL, &r, NULL);

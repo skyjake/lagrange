@@ -1038,7 +1038,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     iRect displayRect = zero_Rect(); 
     for (int i = 0; i < SDL_GetNumVideoDisplays(); i++) {
         SDL_Rect dispBounds;
-        SDL_GetDisplayBounds(i, &dispBounds);
+        SDL_GetDisplayUsableBounds(i, &dispBounds);
         displayRect = union_Rect(
             displayRect, init_Rect(dispBounds.x, dispBounds.y, dispBounds.w, dispBounds.h));
     }
@@ -1070,7 +1070,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         iInt2 menuPos = add_I2(winPos,
                                divf_I2(sub_I2(windowCoord, divi_I2(gap2_UI, 2)), pixelRatio));
         /* Check display bounds. */ {
-            const iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);
+            iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);
             if (menuOpenFlags & center_MenuOpenFlags) {
                 iInt2 winSize;
                 SDL_GetWindowSize(sdlWin, &winSize.x, &winSize.y);
@@ -2199,7 +2199,8 @@ iWidget *makeDialog_Widget(const char *id,
 
 iWidget *makePreferences_Widget(void) {
     /* Common items. */
-    const iMenuItem langItems[] = { { "${lang.de} - de", 0, 0, "uilang id:de" },
+    const iMenuItem langItems[] = { { "${lang.cs} - cs", 0, 0, "uilang id:cs" },
+                                    { "${lang.de} - de", 0, 0, "uilang id:de" },
                                     { "${lang.en} - en", 0, 0, "uilang id:en" },
                                     { "${lang.es} - es", 0, 0, "uilang id:es" },
                                     { "${lang.es.mx} - es", 0, 0, "uilang id:es_MX" },

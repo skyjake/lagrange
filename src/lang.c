@@ -88,6 +88,7 @@ static void load_Lang_(iLang *d, const char *id) {
     iUnused(id);
     const iBlock *data = equal_CStr(id, "fi")      ? &blobFi_Resources
                        : equal_CStr(id, "fr")      ? &blobFr_Resources
+                       : equal_CStr(id, "cs")      ? &blobCs_Resources
                        : equal_CStr(id, "ru")      ? &blobRu_Resources
                        : equal_CStr(id, "eo")      ? &blobEo_Resources
                        : equal_CStr(id, "es")      ? &blobEs_Resources
@@ -112,7 +113,7 @@ static void load_Lang_(iLang *d, const char *id) {
     else if (data == &blobIsv_Resources) {
         d->pluralType = oneTwoMany_PluralType;
     }
-    else if (data == &blobSk_Resources) {
+    else if (data == &blobCs_Resources || data == &blobSk_Resources) {
         d->pluralType = oneFewMany_PluralType;
     }
     else if (data == &blobPl_Resources) {

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-04 13:12+0000\n"
+"PO-Revision-Date: 2021-11-11 16:50+0000\n"
 "Last-Translator: Botond Balázs <balazsbotond@gmail.com>\n"
 "Language-Team: Hungarian <http://weblate.skyjake.fi/projects/lagrange/ui/hu/>"
 "\n"
@@ -119,8 +119,8 @@ msgstr "Hírfolyam bejegyzései"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "összesen %zu bejegyzés"
-msgstr[1] "összesen %zu bejegyzés"
+msgstr[0] "összesen %u bejegyzés"
+msgstr[1] "összesen %u bejegyzés"
 
 msgid "feeds.list.refreshtime.now"
 msgstr "Az utolsó frissítés pillanatokkal ezelőtt történt."
@@ -262,7 +262,7 @@ msgid "macos.menu.bookmarks.bytime"
 msgstr "Listázás a létrehozás időrendjében"
 
 msgid "menu.feeds.entrylist"
-msgstr "Hírfolyam bejegyzéseinek megtekintése"
+msgstr "Hírfolyambejegyzések listája"
 
 msgid "menu.preferences"
 msgstr "Beállítások…"
@@ -420,18 +420,18 @@ msgstr "KB"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu bájt"
-msgstr[1] "%zu bájt"
+msgstr[0] "%u bájt"
+msgstr[1] "%u bájt"
 
 msgid "num.files"
 msgid_plural "num.files.n"
-msgstr[0] "%zu fájl"
-msgstr[1] "%zu fájl"
+msgstr[0] "%u fájl"
+msgstr[1] "%u fájl"
 
 msgid "num.fonts"
 msgid_plural "num.fonts.n"
-msgstr[0] "%zu betűtípus"
-msgstr[1] "%zu betűtípus"
+msgstr[0] "%u betűtípus"
+msgstr[1] "%u betűtípus"
 
 # strftime() formatted
 #, c-format
@@ -459,7 +459,7 @@ msgid "feeds.entry.bookmark"
 msgstr "Könyvjelző hozzáadása…"
 
 msgid "feeds.entry.openfeed"
-msgstr "Hírfolyamok megnyitása"
+msgstr "Forrásoldal megnyitása"
 
 msgid "feeds.edit"
 msgstr "Hírfolyam szerkesztése…"
@@ -524,8 +524,8 @@ msgstr "Nincs használatban"
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "%zu URL-en használva"
-msgstr[1] "%zu URL-en használva"
+msgstr[0] "%u URL-en használva"
+msgstr[1] "%u URL-en használva"
 
 msgid "ident.temporary"
 msgstr "Ideiglenes"
@@ -654,7 +654,7 @@ msgstr "Naponta"
 #, c-format
 msgid "num.minutes"
 msgid_plural "num.minutes.n"
-msgstr[0] "%d percenként"
+msgstr[0] "Percenként"
 msgstr[1] "%d percenként"
 
 msgid "link.newtab.background"
@@ -664,7 +664,7 @@ msgid "link.side"
 msgstr "Hivatkozás megnyitása oldalt"
 
 msgid "link.side.newtab"
-msgstr "Hivatkozás megnyitása új lapon, oldalt"
+msgstr "Hivatkozás megnyitása oldalt, új lapon"
 
 msgid "link.noproxy"
 msgstr "Megnyitás proxy nélkül"
@@ -739,8 +739,8 @@ msgstr "Könyvjelzőcímkék"
 
 msgid "bookmark.export.format.sub"
 msgstr ""
-"Az oldal formátuma megfelel a \"Feliratkozás Gemini oldalakra\" "
-"társspecifikáció előírásainak."
+"Az oldal formátuma megfelel a \"Feliratkozás Gemini oldalakra\" kiegészítő "
+"specifikáció előírásainak."
 
 msgid "bookmark.export.format.folders"
 msgstr "A mappaszerkezetet a 2. és 3. szintű fejezetcímek határozzák meg."
@@ -927,7 +927,7 @@ msgid "dlg.newident.country"
 msgstr "Ország:"
 
 msgid "dlg.newident.more"
-msgstr "Egyéb…"
+msgstr "Továbbiak…"
 
 msgid "heading.newident.date.bad"
 msgstr "ÉRVÉNYTELEN DÁTUM"
@@ -1005,7 +1005,7 @@ msgstr "Általános"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "Felhasználói felület"
+msgstr "Felület"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -1211,7 +1211,7 @@ msgid "prefs.linewidth"
 msgstr "Sorszélesség:"
 
 msgid "prefs.linewidth.fill"
-msgstr "Kitöltés"
+msgstr "Teljes"
 
 msgid "prefs.linespacing"
 msgstr "Sorköz:"
@@ -1259,7 +1259,7 @@ msgstr "Ez a mappa üres."
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
 msgstr[0] "Ez a könyvtár egy elemet tartalmaz."
-msgstr[1] "Ez a könyvtár %zu elemet tartalmaz."
+msgstr[1] "Ez a könyvtár %u elemet tartalmaz."
 
 msgid "keys.top"
 msgstr "Ugrás az oldal tetejére"
@@ -1556,8 +1556,8 @@ msgstr "lebegőpontos szám"
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "%zu hírfolyamra iratkoztál fel, amely %%s-t tartalmaz.\n"
-msgstr[1] "%zu hírfolyamra iratkoztál fel, amelyek %%s-t tartalmaznak.\n"
+msgstr[0] "%u hírfolyamra iratkozott fel, amely %%st tartalmaz.\n"
+msgstr[1] "%u hírfolyamra iratkozott fel, amelyek %%st tartalmaznak.\n"
 
 #, c-format
 msgid "hours.ago"
@@ -1742,7 +1742,7 @@ msgstr "Az oldal összes hivatkozása szerepel már a könyvjelzők között."
 #, c-format
 msgid "num.hours"
 msgid_plural "num.hours.n"
-msgstr[0] "%d óránként"
+msgstr[0] "Óránként"
 msgstr[1] "%d óránként"
 
 msgid "link.newtab"
@@ -1987,7 +1987,7 @@ msgstr "Alapértékek visszaállítása"
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
 msgstr[0] "Ez az archívum egy elemet tartalmaz, és %.1f MB méretű."
-msgstr[1] "Ez az archívum %zu elemet tartalmaz, és %.1f méretű."
+msgstr[1] "Ez az archívum %u elemet tartalmaz, és %.1f méretű."
 
 msgid "keys.scroll.halfpage.up"
 msgstr "Görgetés fél oldallal feljebb"
@@ -2091,7 +2091,7 @@ msgstr "A kapott ügyféltanúsítvány lejárt vagy érvénytelen."
 
 msgid "error.ansi.msg"
 msgstr ""
-"Elképzelhető, hogy az oldal helytelenül jelenik meg. ANSI escape "
+"Elképzelhető, hogy az oldal helytelenül jelenik meg, mivel ANSI escape "
 "szekvenciákat használ a szöveg formázására, és ez jelenleg csak részben "
 "támogatott. Próbálja terminálemulátorban megnyitni."
 
@@ -2109,3 +2109,9 @@ msgstr "Gempub tartalom megtekintése"
 
 msgid "gempub.meta.author"
 msgstr "Szerző"
+
+msgid "lang.hu"
+msgstr "Magyar"
+
+msgid "lang.cs"
+msgstr "Cseh"

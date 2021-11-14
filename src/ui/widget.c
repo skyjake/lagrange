@@ -1142,11 +1142,9 @@ static iBool isOverflowScrollPossible_Widget_(const iWidget *d, int delta) {
         return iFalse;
     }
     iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
-    const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
-                                        zero_I2(),
-                                        init_I2(0, -get_MainWindow()->keyboardHeight));
-    const int yTop    = top_Rect(winRect);
-    const int yBottom = bottom_Rect(winRect);
+    const iRect winRect = visibleRect_Root(d->root);
+    const int   yTop    = top_Rect(winRect);
+    const int   yBottom = bottom_Rect(winRect);
     if (delta == 0) {
         if (top_Rect(bounds) >= yTop && bottom_Rect(bounds) <= yBottom) {
             return iFalse; /* fits inside just fine */
@@ -1162,11 +1160,9 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     if (!isOverflowScrollPossible_Widget_(d, delta)) {
         return iFalse;
     }
-    iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
-    const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
-                                        zero_I2(),
-                                        init_I2(0, -get_MainWindow()->keyboardHeight));
-    iRangei validPosRange = { bottom_Rect(winRect) - height_Rect(bounds), top_Rect(winRect) };
+    iRect       bounds        = boundsWithoutVisualOffset_Widget(d);
+    const iRect winRect       = visibleRect_Root(d->root);
+    iRangei     validPosRange = { bottom_Rect(winRect) - height_Rect(bounds), top_Rect(winRect) };
     if (validPosRange.start > validPosRange.end) {
         validPosRange.start = validPosRange.end; /* no room to scroll */
     }
@@ -1244,18 +1240,26 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             /* TODO: Motion events occur frequently. Maybe it would help if these were handled
                via audiences that specifically register to listen for motion, to minimize the
                number of widgets that need to process them. */
-            const int hoverScrollLimit = 2 * lineHeight_Text(default_FontId);
+            const int hoverScrollLimit = 1.5f * lineHeight_Text(default_FontId);
             float speed = 0.0f;
             if (ev->motion.y < hoverScrollLimit) {
                 speed = (hoverScrollLimit - ev->motion.y) / (float) hoverScrollLimit;
             }
             else {
-                const int bottomLimit = bottom_Rect(rect_Root(d->root)) - hoverScrollLimit;
-                if (ev->motion.y > bottomLimit ) {
+                const iWindow *win = window_Widget(d);
+                SDL_Rect usable;
+                SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(win->win),
+                                           &usable);
+                const int bottomLimit =
+                    iMin(bottom_Rect(rect_Root(d->root)), usable.h * win->pixelRatio) -
+                    hoverScrollLimit;
+                if (ev->motion.y > bottomLimit) {
                     speed = -(ev->motion.y - bottomLimit) / (float) hoverScrollLimit;
                 }
             }
-            if (speed != 0.0f && isOverflowScrollPossible_Widget_(d, speed > 0 ? 1 : -1)) {
+            const int dir = speed > 0 ? 1 : -1;
+            if (speed != 0.0f && isOverflowScrollPossible_Widget_(d, dir)) {
+//                speed = dir * powf(speed, 1.5f);
                 const uint32_t nowTime = SDL_GetTicks();
                 uint32_t elapsed = nowTime - lastHoverOverflowMotionTime_;
                 if (elapsed > 100) {

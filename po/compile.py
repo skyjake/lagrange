@@ -4,8 +4,8 @@
 
 import os, sys
 
-BUILD_LANGS = [
-    'en', # base strings
+BUILD_LANGS = [ 'en', # base strings
+    'cs',
     'de',
     'eo',
     'es',
@@ -35,6 +35,9 @@ ESCAPES = {
     't': '\t',
     'v': '\v',
 }
+missing_count = {}
+for lang in BUILD_LANGS:
+    missing_count[lang] = 0
 
 if '--new' in sys.argv:
     MODE = 'new'
@@ -122,6 +125,7 @@ if MODE == 'compile':
     for src in os.listdir('.'):
         if src.endswith('.po') and src.split('.')[0] in BUILD_LANGS:
             # Make a binary blob with strings sorted by ID.
+            lang_id = src[:-3]
             have_ids = set()
             compiled = bytes()
             lang = parse_po(src)
@@ -130,11 +134,16 @@ if MODE == 'compile':
             # Take missing strings from the base language.
             for msg_id in BASE_STRINGS:
                 if msg_id not in have_ids and not msg_id[:-2] in PLURALS:
-                    print('%10s' % src, 'missing:', msg_id)
+                    #print('%10s' % src, 'missing:', msg_id)
+                    missing_count[lang_id] += 1
                     lang.append((msg_id, BASE_STRINGS[msg_id]))
             for msg_id, msg_str in sorted(lang):
                 compiled += compile_string(msg_id, msg_str)
-            open(f'../res/lang/{src[:-3]}.bin', 'wb').write(compiled)
+            open(f'../res/lang/{lang_id}.bin', 'wb').write(compiled)
+    # Show statistics.
+    for lang_id in missing_count:
+        if missing_count[lang_id] > 0:
+            print('%7s: %4d missing' % (lang_id, missing_count[lang_id]))
 
 elif MODE == 'new':
     messages = parse_po('en.po')
