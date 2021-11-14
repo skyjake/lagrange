@@ -6,6 +6,17 @@
 ```
 # Release notes
 
+# 1.9
+
+New features:
+* macOS: Automatic updates using the Sparkle framework.
+* Windows: Automatic updates using the WinSparkle library.
+
+Changes and enhancements:
+* The resource bundle (resources.lgr) is now a regular ZIP archive. This allows it to do double duty as a fontpack containing the built-in fonts. The archive contains a version number to avoid use of obsolete resources.
+
+Fixes:
+
 ## 1.8.2
 * Fixed encoding of `+` characters in URLs as per RFC 3986.
 * Fixed crash when fontpack.ini specifies a file that cannot be found.
