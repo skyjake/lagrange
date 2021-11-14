@@ -1050,86 +1050,49 @@ msgstr "From:"
 msgid "dlg.translate.to"
 msgstr "To:"
 
+# A language choice in the Translation dialog.
 msgid "lang.ar"
 msgstr "Arabic"
 
+# A language choice in the Translation dialog.
 msgid "lang.zh"
 msgstr "Chinese"
 
-msgid "lang.zh.hans"
-msgstr "Chinese (Simplified)"
-
-msgid "lang.zh.hant"
-msgstr "Chinese (Traditional)"
-
+# A language choice in the Translation dialog.
 msgid "lang.de"
 msgstr "German"
 
+# A language choice in the Translation dialog.
 msgid "lang.en"
 msgstr "English"
 
-msgid "lang.ia"
-msgstr "Interlingua"
-
-msgid "lang.ie"
-msgstr "Interlingue"
-
-msgid "lang.fi"
-msgstr "Finnish"
-
+# A language choice in the Translation dialog.
 msgid "lang.fr"
 msgstr "French"
 
-msgid "lang.gl"
-msgstr "Galician"
-
+# A language choice in the Translation dialog.
 msgid "lang.hi"
 msgstr "Hindi"
 
+# A language choice in the Translation dialog.
 msgid "lang.it"
 msgstr "Italian"
 
+# A language choice in the Translation dialog.
 msgid "lang.ja"
 msgstr "Japanese"
 
-msgid "lang.pl"
-msgstr "Polish"
-
+# A language choice in the Translation dialog.
 msgid "lang.pt"
 msgstr "Portuguese"
 
+# A language choice in the Translation dialog.
 msgid "lang.ru"
 msgstr "Russian"
 
-msgid "lang.hu"
-msgstr "Hungarian"
-
-msgid "lang.uk"
-msgstr "Ukrainian"
-
-msgid "lang.eo"
-msgstr "Esperanto"
-
+# A language choice in the Translation dialog.
 msgid "lang.es"
 msgstr "Spanish"
-
-msgid "lang.es.mx"
-msgstr "Spanish (Mexico)"
-
-msgid "lang.cs"
-msgstr "Czech"
-
-msgid "lang.sk"
-msgstr "Slovak"
-
-msgid "lang.sr"
-msgstr "Serbian"
-
-msgid "lang.isv"
-msgstr "Interslavic"
-
-msgid "lang.tok"
-msgstr "Toki Pona"
 
 msgid "heading.newident"
 msgstr "NEW IDENTITY"

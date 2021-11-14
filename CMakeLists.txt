@@ -281,6 +281,7 @@ endif ()
 
 # Target.
 add_executable (app ${SOURCES} ${RESOURCES})
+set_property (TARGET app PROPERTY C_STANDARD 11)
 if (TARGET ext-deps)
     add_dependencies (app ext-deps)
 endif ()
