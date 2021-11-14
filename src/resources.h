@@ -37,6 +37,7 @@ extern iBlock blobLagrange_Resources;
 extern iBlock blobLicense_Resources;
 extern iBlock blobVersion_Resources;
 extern iBlock blobArghelp_Resources;
+extern iBlock blobCs_Resources;
 extern iBlock blobDe_Resources;
 extern iBlock blobEn_Resources;
 extern iBlock blobEo_Resources;

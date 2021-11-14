@@ -33,6 +33,7 @@ iBlock blobLagrange_Resources;
 iBlock blobLicense_Resources;
 iBlock blobVersion_Resources;
 iBlock blobArghelp_Resources;
+iBlock blobCs_Resources;
 iBlock blobDe_Resources;
 iBlock blobEn_Resources;
 iBlock blobEo_Resources;
@@ -66,6 +67,7 @@ static struct {
     { &blobLicense_Resources, "about/license.gmi" },
     { &blobVersion_Resources, "about/version.gmi" },
     { &blobArghelp_Resources, "arg-help.txt" },
+    { &blobCs_Resources, "lang/cs.bin" },
     { &blobDe_Resources, "lang/de.bin" },
     { &blobEn_Resources, "lang/en.bin" },
     { &blobEo_Resources, "lang/eo.bin" },
