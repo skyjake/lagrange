@@ -274,7 +274,7 @@ static iBool isInside_Banner_(const iBanner *d, const SDL_Event *ev) {
 
 iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d->doc);
-    if (!isInside_Banner(d, ev)) {
+    if (!isInside_Banner_(d, ev)) {
         return iFalse;
     }
     switch (ev->type) {
