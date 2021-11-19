@@ -257,7 +257,7 @@ static size_t itemAtCoord_Banner_(const iBanner *d, iInt2 coord) {
     return iInvalidPos;
 }
 
-static iBool isInside_Banner(const iBanner *d, const SDL_Event *ev) {
+static iBool isInside_Banner_(const iBanner *d, const SDL_Event *ev) {
     if (ev->type == SDL_MOUSEMOTION || ev->type == SDL_MOUSEBUTTONDOWN ||
         ev->type == SDL_MOUSEBUTTONDOWN) {
         iInt2 coord;
