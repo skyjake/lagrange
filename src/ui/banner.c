@@ -257,8 +257,26 @@ static size_t itemAtCoord_Banner_(const iBanner *d, iInt2 coord) {
     return iInvalidPos;
 }
 
+static iBool isInside_Banner(const iBanner *d, const SDL_Event *ev) {
+    if (ev->type == SDL_MOUSEMOTION || ev->type == SDL_MOUSEBUTTONDOWN ||
+        ev->type == SDL_MOUSEBUTTONDOWN) {
+        iInt2 coord;
+        if (ev->type == SDL_MOUSEMOTION) {
+            coord = init_I2(ev->motion.x, ev->motion.y);
+        }
+        else {
+            coord = init_I2(ev->button.x, ev->button.y);
+        }
+        return contains_Rect(bounds_Widget(constAs_Widget(d->doc)), coord);
+    }
+    return iTrue;
+}
+
 iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d->doc);
+    if (!isInside_Banner(d, ev)) {
+        return iFalse;
+    }
     switch (ev->type) {
         case SDL_MOUSEMOTION: {
             const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);

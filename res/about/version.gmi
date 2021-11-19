@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.8.3
+* Fixed clicking on UI elements that are over the page top banner. The banner would always get clicked instead.
+
 ## 1.8.2
 * Fixed encoding of `+` characters in URLs as per RFC 3986.
 * Fixed crash when fontpack.ini specifies a file that cannot be found.
