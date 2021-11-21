@@ -473,7 +473,6 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;
     if (NOT ENABLE_RELATIVE_EMBED)
         target_compile_definitions (app PUBLIC
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
-        endif ()
     endif ()
     install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange)
 endif ()
