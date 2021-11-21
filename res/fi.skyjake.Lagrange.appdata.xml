@@ -45,6 +45,25 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.8.3" date="2021-11-21">
+            <description>
+                <p>Version 1.8 adds a customizable font library and improves warning
+                    and errors messages. The bundled hardcoded fonts have been
+                    removed, and font configuration is now more flexible. Tabs have
+                    close buttons that appear on mouse hover.</p>
+                <p>Changes in v1.8.3:</p>
+                <ul>
+                    <li>Fixed clicking on UI elements that are over the page top
+                        banner. The banner would always get clicked instead.</li>
+                    <li>Titan upload identity is remembered as a site-specific
+                        setting. It is no longer affected by selections in the
+                        Identities sidebar.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.8.3</url>
+        </release>
         <release version="1.8.2" date="2021-11-13">
             <description>
                 <p>Version 1.8 adds a customizable font library and improves warning
