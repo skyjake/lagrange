@@ -28,11 +28,16 @@ iDeclareType(SiteSpec)
     
 enum iSiteSpecKey {
     titanPort_SiteSpecKey,
+    titanIdentity_SiteSpecKey,
     dismissWarnings_SiteSpecKey,
 };
     
 void    init_SiteSpec       (const char *saveDir);
 void    deinit_SiteSpec     (void);
 
-void    setValue_SiteSpec   (const iString *site, enum iSiteSpecKey key, int value); /* changes saved immediately */
-int     value_SiteSpec      (const iString *site, enum iSiteSpecKey key);
+/* changes saved immediately */
+void    setValue_SiteSpec       (const iString *site, enum iSiteSpecKey key, int value); 
+void    setValueString_SiteSpec (const iString *site, enum iSiteSpecKey key, const iString *value);
+
+int             value_SiteSpec          (const iString *site, enum iSiteSpecKey key);
+const iString * valueString_SiteSpec    (const iString *site, enum iSiteSpecKey key);

@@ -33,17 +33,19 @@ iDeclareObjectConstruction(SiteParams)
 struct Impl_SiteParams {
     iObject  object;
     uint16_t titanPort;
+    iString  titanIdentity; /* fingerprint */
     int      dismissWarnings;
     /* TODO: theme seed, style settings */
 };
 
 void init_SiteParams(iSiteParams *d) {
-    d->titanPort       = 0; /* undefined */
+    d->titanPort = 0; /* undefined */
+    init_String(&d->titanIdentity);
     d->dismissWarnings = 0;
 }
 
 void deinit_SiteParams(iSiteParams *d) {
-    iUnused(d);
+    deinit_String(&d->titanIdentity);
 }
 
 iDefineClass(SiteParams)
@@ -122,6 +124,9 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
     if (!cmp_String(key, "titanPort")) {
         d->loadParams->titanPort = number_TomlValue(value);
     }
+    else if (!cmp_String(key, "titanIdentity") && value->type == string_TomlType) {
+        set_String(&d->loadParams->titanIdentity, value->value.string);
+    }
     else if (!cmp_String(key, "dismissWarnings") && value->type == int64_TomlType) {
         d->loadParams->dismissWarnings = value->value.int64;
     }
@@ -151,6 +156,10 @@ static void save_SiteSpec_(iSiteSpec *d) {
             format_String(buf, "[%s]\n", cstr_Block(key));
             if (params->titanPort) {
                 appendFormat_String(buf, "titanPort = %u\n", params->titanPort);
+            }
+            if (!isEmpty_String(&params->titanIdentity)) {
+                appendFormat_String(
+                    buf, "titanIdentity = \"%s\"\n", cstr_String(&params->titanIdentity));
             }
             if (params->dismissWarnings) {
                 appendFormat_String(buf, "dismissWarnings = 0x%x\n", params->dismissWarnings);
@@ -205,6 +214,30 @@ void setValue_SiteSpec(const iString *site, enum iSiteSpecKey key, int value) {
     }
 }
 
+void setValueString_SiteSpec(const iString *site, enum iSiteSpecKey key, const iString *value) {
+    iSiteSpec *d = &siteSpec_;
+    const iString *hashKey = collect_String(lower_String(site));
+    iSiteParams *params = value_StringHash(&d->sites, hashKey);
+    if (!params) {
+        params = new_SiteParams();
+        insert_StringHash(&d->sites, hashKey, params);
+    }
+    iBool needSave = iFalse;
+    switch (key) {
+        case titanIdentity_SiteSpecKey:
+            if (!equal_String(&params->titanIdentity, value)) {
+                needSave = iTrue;
+                set_String(&params->titanIdentity, value);
+            }
+            break;
+        default:
+            break;
+    }
+    if (needSave) {
+        save_SiteSpec_(d);
+    }
+}
+
 int value_SiteSpec(const iString *site, enum iSiteSpecKey key) {
     iSiteSpec *d = &siteSpec_;
     const iSiteParams *params = constValue_StringHash(&d->sites, collect_String(lower_String(site)));
@@ -218,5 +251,19 @@ int value_SiteSpec(const iString *site, enum iSiteSpecKey key) {
             return params->dismissWarnings;
         default:
             return 0;
+    }    
+}
+
+const iString *valueString_SiteSpec(const iString *site, enum iSiteSpecKey key) {
+    iSiteSpec *d = &siteSpec_;
+    const iSiteParams *params = constValue_StringHash(&d->sites, collect_String(lower_String(site)));
+    if (!params) {
+        return 0;
+    }
+    switch (key) {
+        case titanIdentity_SiteSpecKey:
+            return &params->titanIdentity;
+        default:
+            return collectNew_String();
     }    
 }

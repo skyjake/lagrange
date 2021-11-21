@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.8.3
+* Fixed clicking on UI elements that are over the page top banner. The banner would always get clicked instead.
+* Titan upload identity is remembered as a site-specific setting. It is no longer affected by selections in the Identities sidebar.
+* macOS: Fixed updating items in native menus, e.g., upload identity selection.
+
 ## 1.8.2
 * Fixed encoding of `+` characters in URLs as per RFC 3986.
 * Fixed crash when fontpack.ini specifies a file that cannot be found.
