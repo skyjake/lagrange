@@ -19,11 +19,13 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 
 ## Downloads
 
-Prebuilt binaries for Windows, macOS and Linux can be found in [Releases][rel]. You can also find [Lagrange on Flathub for Linux](https://flathub.org/apps/details/fi.skyjake.Lagrange).
+Prebuilt binaries for Windows, macOS (10.13 or later) and Linux can be found in [Releases][rel]. You can also find [Lagrange on Flathub for Linux](https://flathub.org/apps/details/fi.skyjake.Lagrange).
 
 On macOS you can install and upgrade via Homebrew:
 
     brew install --cask lagrange
+
+Please check [MacPorts](https://www.macports.org) if you are using macOS 10.12 or older.
 
 On openSUSE Tumbleweed:
 
