@@ -785,8 +785,14 @@ static const iColor ansi8BitColors_[256] = {
     { 255, 255, 255, 255 }
 };
 
-iColor ansiForeground_Color(iRangecc escapeSequence, int fallback) {
-    iColor clr = get_Color(fallback);
+void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
+                      iColor *fg_out, iColor *bg_out) {
+    if (!fg_out && !bg_out) {
+        return;
+    }
+    iColor fg, bg;
+    iZap(fg);
+    iZap(bg);
     for (const char *ch = escapeSequence.start; ch < escapeSequence.end; ch++) {
         char *endPtr;
         unsigned long arg = strtoul(ch, &endPtr, 10);
@@ -802,19 +808,37 @@ iColor ansiForeground_Color(iRangecc escapeSequence, int fallback) {
             case 35:
             case 36:
             case 37:
-                clr = ansi8BitColors_[arg - 30];
+                fg = ansi8BitColors_[arg - 30];
                 break;
-            case 38: {
+            case 38:
+            case 48: {
+                iColor *dst = (arg == 38 ? &fg : &bg);
                 /* Extended foreground color. */
                 arg = strtoul(ch + 1, &endPtr, 10);
                 ch  = endPtr;
                 if (arg == 5) /* 8-bit palette */ {
                     arg = strtoul(ch + 1, &endPtr, 10);
                     ch  = endPtr;
-                    clr = ansi8BitColors_[iClamp(arg, 0, 255)];
+                    *dst = ansi8BitColors_[iClamp(arg, 0, 255)];
                 }
                 break;
             }
+            case 39:
+                fg = get_Color(fgDefault);
+                break;
+            case 40:
+            case 41:
+            case 42:
+            case 43:
+            case 44:
+            case 45:
+            case 46:
+            case 47:
+                bg = ansi8BitColors_[arg - 40];
+                break;
+            case 49:
+                bg = get_Color(bgDefault);
+                break;
             case 90:
             case 91:
             case 92:
@@ -823,17 +847,36 @@ iColor ansiForeground_Color(iRangecc escapeSequence, int fallback) {
             case 95:
             case 96:
             case 97:
-                clr = ansi8BitColors_[8 + arg - 90];
+                fg = ansi8BitColors_[8 + arg - 90];
                 break;
         }
     }
-    /* On light backgrounds, darken the colors to make them more legible. */
-    if (get_HSLColor(tmBackground_ColorId).lum > 0.5f) {
-        clr.r /= 2;
-        clr.g /= 2;
-        clr.b /= 2;
+    /* Ensure legibility if only one of the colors is set. */
+    /* TODO: Force darkening of the background color, unless it is also specified. */
+#if 0
+    if (bg.a == 0 && !equal_Color(fg, get_Color(fgDefault))) {
+        if (delta_Color(fg, get_Color(tmBackground_ColorId)) < 64) {
+            const iHSLColor fgHsl = hsl_Color(fg);
+            iHSLColor legibleBg = get_HSLColor(tmBackground_ColorId);
+            if ()
+            bg = rgb_HSLColor(bgHsl);
+        }            
+        }
     }
-    return clr;
+#endif
+    /*
+    if (!bg_out || get_HSLColor(tmBackground_ColorId).lum > 0.5f) {
+        fg.r /= 2;
+        fg.g /= 2;
+        fg.b /= 2;
+    }
+    */
+    if (fg.a && fg_out) {
+        *fg_out = fg;
+    }
+    if (bg.a && bg_out) {
+        *bg_out = bg;
+    }
 }
 
 iBool loadPalette_Color(const char *path) {

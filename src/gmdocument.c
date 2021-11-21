@@ -2101,7 +2101,7 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     set_String(&d->unormSource, source);
     set_String(&d->source, source);
     /* Detect use of ANSI escapes. */ {
-        iRegExp *ansiEsc = new_RegExp("\x1b[[()]([0-9;AB]*?)m", 0);
+        iRegExp *ansiEsc = new_RegExp("\x1b[[()]([0-9;AB]*?)[ABCDEFGHJKSTfimn]", 0);
         iRegExpMatch m;
         init_RegExpMatch(&m);
         const iBool found = matchString_RegExp(ansiEsc, &d->unormSource, &m);
@@ -2125,6 +2125,7 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     else {
         d->theme.ansiEscapes = allowAll_AnsiFlag;
     }
+    d->theme.ansiEscapes |= allowBg_AnsiFlag; /* TODO: add setting */
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
     }

@@ -157,7 +157,7 @@ enum iAnsiFlag {
 };
 
 void    setOpacity_Text         (float opacity);
-void    setBaseAttributes_Text  (int fontId, int colorId); /* current "normal" text attributes */
+void    setBaseAttributes_Text  (int fontId, int fgColorId); /* current "normal" text attributes */
 void    setAnsiFlags_Text       (int ansiFlags);
 
 void    cache_Text              (int fontId, iRangecc text); /* pre-render glyphs */
@@ -187,7 +187,8 @@ iDeclareType(TextAttrib)
 /* Initial attributes at the start of a text string. These may be modified by control
    sequences inside a text run. */
 struct Impl_TextAttrib {
-    int16_t colorId;
+    int16_t fgColorId;
+    int16_t bgColorId;
     struct {
         uint16_t bold      : 1;
         uint16_t italic    : 1;
