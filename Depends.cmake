@@ -43,12 +43,13 @@ else ()
     endif ()
 endif ()
 
-if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
+if (ENABLE_HARFBUZZ)
     # Find HarfBuzz with pkg-config.
     if (NOT ENABLE_HARFBUZZ_MINIMAL AND PKG_CONFIG_FOUND)
         pkg_check_modules (HARFBUZZ IMPORTED_TARGET harfbuzz)
     endif ()
-    if (ENABLE_HARFBUZZ_MINIMAL OR NOT HARFBUZZ_FOUND)
+    if (EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt AND 
+            (ENABLE_HARFBUZZ_MINIMAL OR NOT HARFBUZZ_FOUND))            
         # Build HarfBuzz with minimal dependencies.
         if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
             set (_dst ${CMAKE_BINARY_DIR}/lib/harfbuzz)
@@ -107,12 +108,12 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
     endif ()
 endif ()
 
-if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
+if (ENABLE_FRIBIDI)
     # Find FriBidi with pkg-config.
     if (NOT ENABLE_FRIBIDI_BUILD AND PKG_CONFIG_FOUND)
         pkg_check_modules (FRIBIDI IMPORTED_TARGET fribidi)
     endif ()
-    if (ENABLE_FRIBIDI_BUILD OR NOT FRIBIDI_FOUND)
+    if (EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi AND (ENABLE_FRIBIDI_BUILD OR NOT FRIBIDI_FOUND))
         # Build FriBidi with Meson.
         set (_dst ${CMAKE_BINARY_DIR}/lib/fribidi)
         if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)

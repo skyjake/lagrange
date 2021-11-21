@@ -809,14 +809,27 @@ static void deleteMenuItems_(iArray *items) {
     delete_Array(items);
 }
 
-iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
-    iWidget *menu = new_Widget();
+void releaseNativeMenu_Widget(iWidget *d) {
 #if defined (iHaveNativeContextMenus)
-    setFlags_Widget(menu, hidden_WidgetFlag | nativeMenu_WidgetFlag, iTrue);
+    iArray *items = userData_Object(d);
+    if (items) {
+        iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
+        iAssert(items);
+        deleteMenuItems_(items);
+        setUserData_Object(d, NULL);
+    }
+#else
+    iUnused(d);
+#endif
+}
+
+void setNativeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
+#if defined (iHaveNativeContextMenus)
+    iAssert(flags_Widget(menu) & nativeMenu_WidgetFlag);
+    releaseNativeMenu_Widget(menu);
     setUserData_Object(menu, deepCopyMenuItems_(menu, items, n));
-    addChild_Widget(parent, menu);
-    iRelease(menu); /* owned by parent now */
     /* Keyboard shortcuts still need to triggerable via the menu, although the items don't exist. */ {
+        releaseChildren_Widget(menu);
         for (size_t i = 0; i < n; i++) {
             const iMenuItem *item = &items[i];
             if (item->key) {
@@ -824,6 +837,17 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
             }
         }
     }
+#endif    
+}
+
+iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
+    iWidget *menu = new_Widget();
+#if defined (iHaveNativeContextMenus)
+    setFlags_Widget(menu, hidden_WidgetFlag | nativeMenu_WidgetFlag, iTrue);
+    addChild_Widget(parent, menu);
+    iRelease(menu); /* owned by parent now */
+    setUserData_Object(menu, NULL);
+    setNativeMenuItems_Widget(menu, items, n);
 #else
     /* Non-native custom popup menu. This may still be displayed inside a separate window. */
     setDrawBufferEnabled_Widget(menu, iTrue);
@@ -987,18 +1011,6 @@ iLocalDef iBool isUsingMenuPopupWindows_(void) {
     return deviceType_App() == desktop_AppDeviceType;
 #else
     return iFalse;
-#endif
-}
-
-void releaseNativeMenu_Widget(iWidget *d) {
-#if defined (iHaveNativeContextMenus)
-    iArray *items = userData_Object(d);
-    iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
-    iAssert(items);
-    deleteMenuItems_(items);
-    setUserData_Object(d, NULL);
-#else
-    iUnused(d);
 #endif
 }
 
@@ -1263,8 +1275,8 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
         iMenuItem *item = findNativeMenuItem_Widget(menu, selectedCommand);
         if (item) {
             setSelected_NativeMenuItem(item, iTrue);
-            updateText_LabelWidget(dropButton,
-                                   removeMenuItemLabelPrefixes_String(collectNewCStr_String(item->label)));
+            updateText_LabelWidget(
+                dropButton, removeMenuItemLabelPrefixes_String(collectNewCStr_String(item->label)));
         }
         return;
     }
@@ -2199,27 +2211,27 @@ iWidget *makeDialog_Widget(const char *id,
 
 iWidget *makePreferences_Widget(void) {
     /* Common items. */
-    const iMenuItem langItems[] = { { "${lang.cs} - cs", 0, 0, "uilang id:cs" },
-                                    { "${lang.de} - de", 0, 0, "uilang id:de" },
-                                    { "${lang.en} - en", 0, 0, "uilang id:en" },
-                                    { "${lang.es} - es", 0, 0, "uilang id:es" },
-                                    { "${lang.es.mx} - es", 0, 0, "uilang id:es_MX" },
-                                    { "${lang.eo} - eo", 0, 0, "uilang id:eo" },
-                                    { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
-                                    { "${lang.fr} - fr", 0, 0, "uilang id:fr" },
-                                    { "${lang.gl} - gl", 0, 0, "uilang id:gl" },
-                                    { "${lang.hu} - hu", 0, 0, "uilang id:hu" },
-                                    { "${lang.ia} - ia", 0, 0, "uilang id:ia" },
-                                    { "${lang.ie} - ie", 0, 0, "uilang id:ie" },
-                                    { "${lang.isv} - isv", 0, 0, "uilang id:isv" },
-                                    { "${lang.pl} - pl", 0, 0, "uilang id:pl" },
-                                    { "${lang.ru} - ru", 0, 0, "uilang id:ru" },
-                                    { "${lang.sk} - sk", 0, 0, "uilang id:sk" },
-                                    { "${lang.sr} - sr", 0, 0, "uilang id:sr" },
-                                    { "${lang.tok} - tok", 0, 0, "uilang id:tok" },
-                                    { "${lang.uk} - uk", 0, 0, "uilang id:uk" },
-                                    { "${lang.zh.hans} - zh", 0, 0, "uilang id:zh_Hans" },
-                                    { "${lang.zh.hant} - zh", 0, 0, "uilang id:zh_Hant" },
+    const iMenuItem langItems[] = { { u8"Čeština - cs", 0, 0, "uilang id:cs" },
+                                    { u8"Deutsch - de", 0, 0, "uilang id:de" },
+                                    { u8"English - en", 0, 0, "uilang id:en" },
+                                    { u8"Español - es", 0, 0, "uilang id:es" },
+                                    { u8"Español (México) - es", 0, 0, "uilang id:es_MX" },
+                                    { u8"Esperanto - eo", 0, 0, "uilang id:eo" },
+                                    { u8"Suomi - fi", 0, 0, "uilang id:fi" },
+                                    { u8"Français - fr", 0, 0, "uilang id:fr" },
+                                    { u8"Galego - gl", 0, 0, "uilang id:gl" },
+                                    { u8"Magyar - hu", 0, 0, "uilang id:hu" },
+                                    { u8"Interlingua - ia", 0, 0, "uilang id:ia" },
+                                    { u8"Interlingue - ie", 0, 0, "uilang id:ie" },
+                                    { u8"Interslavic - isv", 0, 0, "uilang id:isv" },
+                                    { u8"Polski - pl", 0, 0, "uilang id:pl" },
+                                    { u8"Русский - ru", 0, 0, "uilang id:ru" },
+                                    { u8"Slovak - sk", 0, 0, "uilang id:sk" },
+                                    { u8"Српски - sr", 0, 0, "uilang id:sr" },
+                                    { u8"Toki pona - tok", 0, 0, "uilang id:tok" },
+                                    { u8"Українська - uk", 0, 0, "uilang id:uk" },
+                                    { u8"简体中文 - zh", 0, 0, "uilang id:zh_Hans" },
+                                    { u8"繁體/正體中文 - zh", 0, 0, "uilang id:zh_Hant" },
                                     { NULL } };
     const iMenuItem returnKeyBehaviors[] = {
         { "${prefs.returnkey.linebreak} " uiTextAction_ColorEscape shift_Icon return_Icon

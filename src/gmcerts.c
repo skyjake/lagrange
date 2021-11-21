@@ -295,6 +295,9 @@ static void loadIdentities_GmCerts_(iGmCerts *d) {
 }
 
 iGmIdentity *findIdentity_GmCerts(iGmCerts *d, const iBlock *fingerprint) {
+    if (isEmpty_Block(fingerprint)) {
+        return NULL;
+    }
     iForEach(PtrArray, i, &d->idents) {
         iGmIdentity *ident = i.ptr;
         if (cmp_Block(fingerprint, &ident->fingerprint) == 0) { /* TODO: could use a hash */
@@ -549,6 +552,9 @@ const iGmIdentity *constIdentity_GmCerts(const iGmCerts *d, unsigned int id) {
 }
 
 const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url) {
+    if (isEmpty_String(url)) {
+        return NULL;
+    }
     lock_Mutex(d->mtx);
     const iGmIdentity *found = NULL;
     iConstForEach(PtrArray, i, &d->idents) {

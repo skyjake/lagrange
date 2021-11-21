@@ -825,7 +825,7 @@ semibold    = "FiraSans-SemiBold.ttf"
 bold        = "FiraSans-Bold.ttf"
 ```
 
-Fontpacks may use the Deflate compression method, but that can slow down launching the app because each font must then be decompressed before loading.
+Fontpacks may use the Deflate compression method, but that can slow down launching the app because each font must then be decompressed before loading. Therefore, it is recommended to use the -0 (--compression-method store) option when creating the archive. You may also find the -j (--junk-paths) option helpful if the current working directory is not the one where fontpack.ini is located.
 
 Each fontpack has an ID that comes from the file name: the ID of "firasans.fontpack" would be "firasans". Space characters are not allowed in the ID.
 
