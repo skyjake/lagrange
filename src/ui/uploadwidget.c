@@ -45,7 +45,7 @@ iDefineObjectConstruction(UploadWidget)
     
 enum iUploadIdentity {
     none_UploadIdentity,
-    defaultForUrl_UploadIdentity,
+    defaultForSite_UploadIdentity,
     dropdown_UploadIdentity,
 };
 
@@ -104,9 +104,16 @@ static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
                                     (avail - inputPos.y) / lineHeight_Text(font_InputWidget(d->input))));
 }
 
+static const iGmIdentity *titanIdentityForUrl_(const iString *url) {
+    return findIdentity_GmCerts(
+        certs_App(),
+        collect_Block(hexDecode_Rangecc(range_String(valueString_SiteSpec(
+            collectNewRange_String(urlRoot_String(url)), titanIdentity_SiteSpecKey)))));
+}
+
 static const iArray *makeIdentityItems_UploadWidget_(const iUploadWidget *d) {
     iArray *items = collectNew_Array(sizeof(iMenuItem));
-    const iGmIdentity *urlId = identityForUrl_GmCerts(certs_App(), &d->url);
+    const iGmIdentity *urlId = titanIdentityForUrl_(&d->url);
     pushBack_Array(items,
                    &(iMenuItem){ format_CStr("${dlg.upload.id.default} (%s)",
                                              urlId ? cstr_String(name_GmIdentity(urlId))
@@ -147,7 +154,7 @@ void init_UploadWidget(iUploadWidget *d) {
     d->request = NULL;
     init_String(&d->filePath);
     d->fileSize = 0;
-    d->idMode = defaultForUrl_UploadIdentity;
+    d->idMode = defaultForSite_UploadIdentity;
     init_Block(&d->idFingerprint, 0);
     const iMenuItem actions[] = {
         { "${upload.port}", 0, 0, "upload.setport" },
@@ -289,16 +296,22 @@ void deinit_UploadWidget(iUploadWidget *d) {
 
 static void remakeIdentityItems_UploadWidget_(iUploadWidget *d) {
     iWidget *dropMenu = findChild_Widget(findChild_Widget(as_Widget(d), "upload.id"), "menu");
-    releaseChildren_Widget(dropMenu);
     const iArray *items = makeIdentityItems_UploadWidget_(d);
-    makeMenuItems_Widget(dropMenu, constData_Array(items), size_Array(items));
+    /* TODO: Make the following a utility method. */
+    if (flags_Widget(dropMenu) & nativeMenu_WidgetFlag) {
+        setNativeMenuItems_Widget(dropMenu, constData_Array(items), size_Array(items));
+    }
+    else {
+        releaseChildren_Widget(dropMenu);
+        makeMenuItems_Widget(dropMenu, constData_Array(items), size_Array(items));
+    }
 }
 
 static void updateIdentityDropdown_UploadWidget_(iUploadWidget *d) {
     updateDropdownSelection_LabelWidget(
         findChild_Widget(as_Widget(d), "upload.id"),
         d->idMode == none_UploadIdentity ? " arg:0"
-        : d->idMode == defaultForUrl_UploadIdentity
+        : d->idMode == defaultForSite_UploadIdentity
             ? " arg:1"
             : format_CStr(" fp:%s", cstrCollect_String(hexEncode_Block(&d->idFingerprint))));
 }
@@ -422,7 +435,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         }
         else if (arg_Command(cmd)) {
             clear_Block(&d->idFingerprint);
-            d->idMode = defaultForUrl_UploadIdentity;
+            d->idMode = defaultForSite_UploadIdentity;
         }
         else {
             clear_Block(&d->idFingerprint);
@@ -452,19 +465,27 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         setSendProgressFunc_GmRequest(d->request, updateProgress_UploadWidget_);
         setUserData_Object(d->request, d);
         setUrl_GmRequest(d->request, &d->url);
+        const iString     *site    = collectNewRange_String(urlRoot_String(&d->url));
         switch (d->idMode) {
-            case defaultForUrl_UploadIdentity:
-                break; /* GmRequest handles it */
             case none_UploadIdentity:
-                setIdentity_GmRequest(d->request, NULL);
+                /* Ensure no identity will be used for this specific URL. */
                 signOut_GmCerts(certs_App(), url_GmRequest(d->request));
+                setValueString_SiteSpec(site, titanIdentity_SiteSpecKey, collectNew_String());
                 break;
             case dropdown_UploadIdentity: {
                 iGmIdentity *ident = findIdentity_GmCerts(certs_App(), &d->idFingerprint);
-                setIdentity_GmRequest(d->request, ident);
-                signIn_GmCerts(certs_App(), ident, url_GmRequest(d->request));
+                if (ident) {
+                    setValueString_SiteSpec(site,
+                                            titanIdentity_SiteSpecKey,
+                                            collect_String(hexEncode_Block(&ident->fingerprint)));
+                }
                 break;
             }
+            default:
+                break;
+        }
+        if (d->idMode != none_UploadIdentity) {
+            setIdentity_GmRequest(d->request, titanIdentityForUrl_(&d->url));
         }
         if (isText) {
             /* Uploading text. */

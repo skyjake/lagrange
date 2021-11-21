@@ -809,14 +809,27 @@ static void deleteMenuItems_(iArray *items) {
     delete_Array(items);
 }
 
-iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
-    iWidget *menu = new_Widget();
+void releaseNativeMenu_Widget(iWidget *d) {
 #if defined (iHaveNativeContextMenus)
-    setFlags_Widget(menu, hidden_WidgetFlag | nativeMenu_WidgetFlag, iTrue);
+    iArray *items = userData_Object(d);
+    if (items) {
+        iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
+        iAssert(items);
+        deleteMenuItems_(items);
+        setUserData_Object(d, NULL);
+    }
+#else
+    iUnused(d);
+#endif
+}
+
+void setNativeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
+#if defined (iHaveNativeContextMenus)
+    iAssert(flags_Widget(menu) & nativeMenu_WidgetFlag);
+    releaseNativeMenu_Widget(menu);
     setUserData_Object(menu, deepCopyMenuItems_(menu, items, n));
-    addChild_Widget(parent, menu);
-    iRelease(menu); /* owned by parent now */
     /* Keyboard shortcuts still need to triggerable via the menu, although the items don't exist. */ {
+        releaseChildren_Widget(menu);
         for (size_t i = 0; i < n; i++) {
             const iMenuItem *item = &items[i];
             if (item->key) {
@@ -824,6 +837,17 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
             }
         }
     }
+#endif    
+}
+
+iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
+    iWidget *menu = new_Widget();
+#if defined (iHaveNativeContextMenus)
+    setFlags_Widget(menu, hidden_WidgetFlag | nativeMenu_WidgetFlag, iTrue);
+    addChild_Widget(parent, menu);
+    iRelease(menu); /* owned by parent now */
+    setUserData_Object(menu, NULL);
+    setNativeMenuItems_Widget(menu, items, n);
 #else
     /* Non-native custom popup menu. This may still be displayed inside a separate window. */
     setDrawBufferEnabled_Widget(menu, iTrue);
@@ -987,18 +1011,6 @@ iLocalDef iBool isUsingMenuPopupWindows_(void) {
     return deviceType_App() == desktop_AppDeviceType;
 #else
     return iFalse;
-#endif
-}
-
-void releaseNativeMenu_Widget(iWidget *d) {
-#if defined (iHaveNativeContextMenus)
-    iArray *items = userData_Object(d);
-    iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
-    iAssert(items);
-    deleteMenuItems_(items);
-    setUserData_Object(d, NULL);
-#else
-    iUnused(d);
 #endif
 }
 
@@ -1263,8 +1275,8 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
         iMenuItem *item = findNativeMenuItem_Widget(menu, selectedCommand);
         if (item) {
             setSelected_NativeMenuItem(item, iTrue);
-            updateText_LabelWidget(dropButton,
-                                   removeMenuItemLabelPrefixes_String(collectNewCStr_String(item->label)));
+            updateText_LabelWidget(
+                dropButton, removeMenuItemLabelPrefixes_String(collectNewCStr_String(item->label)));
         }
         return;
     }
