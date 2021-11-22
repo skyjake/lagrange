@@ -2019,7 +2019,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                       add_I2(topLeft_Rect(itemRect),
                              init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(font)) / 2)),
                       fg,
-                      "%s%s%s%s%s%s",
+                      "%s%s%s%s%s%s%s%s",
                       isGemini ? "" : cstr_Rangecc(parts.scheme),
                       isGemini ? "" : isAbout ? ":" : "://",
                       escape_Color(isHover ? (isPressing ? uiTextPressed_ColorId
@@ -2027,7 +2027,9 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                            : uiTextStrong_ColorId),
                       cstr_Rangecc(parts.host),
                       escape_Color(fg),
-                      cstr_Rangecc(parts.path));
+                      cstr_Rangecc(parts.path),
+                      !isEmpty_Range(&parts.query) ? escape_Color(uiAnnotation_ColorId) : "",
+                      !isEmpty_Range(&parts.query) ? cstr_Rangecc(parts.query) : "");
         }
         iEndCollect();
     }

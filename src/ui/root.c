@@ -760,9 +760,17 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             if (equal_Command(cmd, "document.changed")) {
                 iInputWidget *url = findWidget_Root("url");
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
+                const enum iGmStatusCode statusCode = argLabel_Command(cmd, "status");
                 trimCache_App();
                 trimMemory_App();
-                visitUrl_Visited(visited_App(), urlStr, 0);
+                visitUrl_Visited(visited_App(),
+                                 urlStr,
+                                 /* The transient flag modifies history navigation behavior on
+                                    special responses like input queries. */
+                                 category_GmStatusCode(statusCode) == categoryInput_GmStatusCode ||
+                                 category_GmStatusCode(statusCode) == categoryRedirect_GmStatusCode
+                                     ? transient_VisitedUrlFlag
+                                     : 0);
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Root_(get_Root());

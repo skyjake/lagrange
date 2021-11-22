@@ -3012,7 +3012,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.input.submit") && document_Command(cmd) == d) {
         postCommandf_Root(w->root,
-                          "open url:%s",
+                          /* use the `redirect:1` argument to cause the input query URL to be
+                             replaced in History; we don't want to navigate onto it */
+                          "open redirect:1 url:%s",
                           cstrCollect_String(makeQueryUrl_DocumentWidget_
                                              (d, collect_String(suffix_Command(cmd, "value")))));
         return iTrue;
@@ -3066,7 +3068,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iReleasePtr(&d->request);
         updateVisible_DocumentWidget_(d);
         d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
-        postCommandf_Root(w->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+        postCommandf_Root(w->root,
+                          "document.changed doc:%p status:%d url:%s",
+                          d,
+                          d->sourceStatus,
+                          cstr_String(d->mod.url));
         /* Check for a pending goto. */
         if (!isEmpty_String(&d->pendingGotoHeading)) {
             scrollToHeading_DocumentWidget_(d, cstr_String(&d->pendingGotoHeading));
