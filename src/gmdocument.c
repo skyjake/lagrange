@@ -306,8 +306,10 @@ static iBool isAllowedLinkIcon_Char_(iChar icon) {
     }
     return isPictograph_Char(icon) || isEmoji_Char(icon) ||
            /* TODO: Add range(s) of 0x2nnn symbols. */
-           icon == 0x2139 /* info */ || icon == 0x2191 /* up arrow */ ||
-           icon == 0x2022 /* bullet */ || icon == 0x2a2f /* close X */ || icon == 0x2b50;
+           icon == 0x2022 /* bullet */ || 
+           icon == 0x2139 /* info */ ||
+           (icon >= 0x2190 && icon <= 0x21ff /* arrows */) ||
+           icon == 0x2a2f /* close X */ || icon == 0x2b50;
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
