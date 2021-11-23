@@ -9,6 +9,7 @@
 # 1.9
 
 New features:
+* Choose parent folder when creating or editing a bookmark.
 * macOS: Automatic updates using the Sparkle framework.
 * Windows: Automatic updates using the WinSparkle library.
 
@@ -17,7 +18,7 @@ Changes and enhancements:
 * The resource bundle (resources.lgr) is now a regular ZIP archive. This allows it to do double duty as a fontpack containing the built-in fonts. The archive contains a version number to avoid use of obsolete resources.
 
 Fixes:
-* Handling duplicate feed entries: if multiple entries in a feed have the same URL, only handle the first one.
+* Handling duplicate feed entries: if multiple entries in a feed have the same URL, only use the first one.
 
 ## 1.8.3
 * Fixed clicking on UI elements that are over the page top banner. The banner would always get clicked instead.

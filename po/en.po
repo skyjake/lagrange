@@ -1208,6 +1208,9 @@ msgstr "Title:"
 msgid "dlg.bookmark.url"
 msgstr "URL:"
 
+msgid "dlg.bookmark.folder"
+msgstr "Folder:"
+
 msgid "dlg.bookmark.tags"
 msgstr "Tags:"
 

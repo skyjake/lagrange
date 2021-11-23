@@ -3004,6 +3004,7 @@ iBool handleCommand_App(const char *cmd) {
                 get_Bookmarks(d->bookmarks, id)->parentId = parentId;
             }
             postCommandf_App("bookmarks.changed added:%zu", id);
+            setRecentFolder_Bookmarks(d->bookmarks, id);
         }
         else {
             iWidget *dlg = makeValueInput_Widget(

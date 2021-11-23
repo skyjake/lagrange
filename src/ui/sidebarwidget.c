@@ -893,6 +893,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             if (isEmpty_String(&item->url)) /* a folder */ {
                 if (contains_IntSet(d->closedFolders, item->id)) {
                     remove_IntSet(d->closedFolders, item->id);
+                    setRecentFolder_Bookmarks(bookmarks_App(), item->id);
                 }
                 else {
                     insert_IntSet(d->closedFolders, item->id);
@@ -990,6 +991,10 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
 }
 
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
+    if (equal_Command(cmd, "dlg.bookmark.setfolder")) {
+        setBookmarkEditorFolder_Widget(editor, arg_Command(cmd));
+        return iTrue;
+    }
     if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
         iAssert(startsWith_String(id_Widget(editor), "bmed."));
         iSidebarWidget *d = findWidget_App(cstr_String(id_Widget(editor)) + 5); /* bmed.sidebar */
@@ -1020,7 +1025,11 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
                                         isSelected_Widget(findChild_Widget(editor, "bmed.tag.remote")));
                 addOrRemoveTag_Bookmark(bm, linkSplit_BookmarkTag,
                                         isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit")));
-            }            
+            }
+            const iBookmark *folder = userData_Object(findChild_Widget(editor, "bmed.folder"));
+            if (!folder || !hasParent_Bookmark(folder, id_Bookmark(bm))) {
+                bm->parentId = folder ? id_Bookmark(folder) : 0;
+            }
             postCommand_App("bookmarks.changed");
         }
         setupSheetTransition_Mobile(editor, iFalse);
@@ -1327,6 +1336,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         setFlags_Widget(notNeeded[i], disabled_WidgetFlag, iTrue);
                     }
                 }
+                setBookmarkEditorFolder_Widget(dlg, bm ? bm->parentId : 0);
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
                 setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
             }
