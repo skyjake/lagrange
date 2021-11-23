@@ -12,6 +12,7 @@ New features:
 * Choose parent folder when creating or editing a bookmark.
 * macOS: Automatic updates using the Sparkle framework.
 * Windows: Automatic updates using the WinSparkle library.
+* Added support for ANSI background color escapes (disabled by default).
 * Added UI language for Turkish.
 
 Changes and enhancements:
