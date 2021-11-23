@@ -460,6 +460,10 @@ iColor rgb_HSLColor(iHSLColor hsl) {
     return toColor_(init_F4(r, g, b, hsl.a));
 }
 
+float luma_Color(iColor color) {
+    return 0.299f * color.r / 255.0f + 0.587f * color.g / 255.0f + 0.114f * color.b / 255.0f;
+}
+
 const char *escape_Color(int color) {
     static const char *esc[] = {
         black_ColorEscape,
@@ -851,26 +855,23 @@ void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
                 break;
         }
     }
-    /* Ensure legibility if only one of the colors is set. */
-    /* TODO: Force darkening of the background color, unless it is also specified. */
-#if 0
-    if (bg.a == 0 && !equal_Color(fg, get_Color(fgDefault))) {
-        if (delta_Color(fg, get_Color(tmBackground_ColorId)) < 64) {
-            const iHSLColor fgHsl = hsl_Color(fg);
-            iHSLColor legibleBg = get_HSLColor(tmBackground_ColorId);
-            if ()
-            bg = rgb_HSLColor(bgHsl);
-        }            
+    /* Ensure legibility if only the foreground color is set. */
+    if (fg.a) {
+        const iHSLColor themeBg = get_HSLColor(tmBackground_ColorId);
+        const float bgLuminance = luma_Color(get_Color(tmBackground_ColorId));
+        if (bgLuminance > 0.4f) {
+            float dim = (bgLuminance - 0.4f);
+            fg.r *= 0.5f * dim;
+            fg.g *= 0.5f * dim;
+            fg.b *= 0.5f * dim;
+        }
+        if (themeBg.sat > 0.15f && themeBg.lum >= 0.5f) {
+            iHSLColor fgHsl = hsl_Color(fg);
+            fgHsl.hue = themeBg.hue;
+            fgHsl.lum = themeBg.lum * 0.5f;
+            fg = rgb_HSLColor(fgHsl);
         }
     }
-#endif
-    /*
-    if (!bg_out || get_HSLColor(tmBackground_ColorId).lum > 0.5f) {
-        fg.r /= 2;
-        fg.g /= 2;
-        fg.b /= 2;
-    }
-    */
     if (fg.a && fg_out) {
         *fg_out = fg;
     }

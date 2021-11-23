@@ -233,6 +233,7 @@ struct Impl_HSLColor {
 
 iHSLColor       hsl_Color       (iColor);
 iColor          rgb_HSLColor    (iHSLColor);
+float           luma_Color      (iColor);
 
 iHSLColor       setSat_HSLColor     (iHSLColor, float sat);
 iHSLColor       setLum_HSLColor     (iHSLColor, float lum);
