@@ -2047,14 +2047,19 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                       fg,
                       "%s%s%s%s%s%s%s%s",
                       isGemini ? "" : cstr_Rangecc(parts.scheme),
-                      isGemini ? "" : isAbout ? ":" : "://",
+                      isGemini  ? ""
+                      : isAbout ? ":"
+                                : "://",
                       escape_Color(isHover ? (isPressing ? uiTextPressed_ColorId
                                                          : uiTextFramelessHover_ColorId)
                                            : uiTextStrong_ColorId),
                       cstr_Rangecc(parts.host),
                       escape_Color(fg),
                       cstr_Rangecc(parts.path),
-                      !isEmpty_Range(&parts.query) ? escape_Color(uiAnnotation_ColorId) : "",
+                      !isEmpty_Range(&parts.query) ? escape_Color(isPressing ? uiTextPressed_ColorId
+                                                                  : isHover  ? uiText_ColorId
+                                                                             : uiAnnotation_ColorId)
+                                                   : "",
                       !isEmpty_Range(&parts.query) ? cstr_Rangecc(parts.query) : "");
         }
         iEndCollect();
