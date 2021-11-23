@@ -2657,6 +2657,11 @@ iWidget *makePreferences_Widget(void) {
                 setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
                 updateSize_LabelWidget((iLabelWidget *) tog);
                 setTextCStr_LabelWidget(
+                    addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.bg"))),
+                    "${prefs.gemtext.ansi.bg}");
+                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget((iLabelWidget *) tog);
+                setTextCStr_LabelWidget(
                     addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.fontstyle"))),
                     "${prefs.gemtext.ansi.fontstyle}");
                 setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);

@@ -1494,8 +1494,13 @@ msgstr "On Light"
 msgid "prefs.gemtext.ansi"
 msgstr "ANSI escapes:"
 
+# Color of the text foreground, i.e., the characters.
 msgid "prefs.gemtext.ansi.fg"
 msgstr "FG Color"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "BG Color"
 
 msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Font Style"

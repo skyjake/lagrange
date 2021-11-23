@@ -2445,6 +2445,10 @@ iBool handleCommand_App(const char *cmd) {
         iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFg_AnsiFlag, arg_Command(cmd));
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.gemtext.ansi.bg.changed")) {
+        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowBg_AnsiFlag, arg_Command(cmd));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.gemtext.ansi.fontstyle.changed")) {
         iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFontStyle_AnsiFlag, arg_Command(cmd));
         return iTrue;
@@ -2891,6 +2895,8 @@ iBool handleCommand_App(const char *cmd) {
                         d->prefs.boldLinkLight);
         setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fg"),
                          d->prefs.gemtextAnsiEscapes & allowFg_AnsiFlag);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.bg"),
+                         d->prefs.gemtextAnsiEscapes & allowBg_AnsiFlag);
         setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fontstyle"),
                          d->prefs.gemtextAnsiEscapes & allowFontStyle_AnsiFlag);
         setToggle_Widget(findChild_Widget(dlg, "prefs.font.smooth"), d->prefs.fontSmoothing);
