@@ -17,6 +17,7 @@ New features:
 
 Changes and enhancements:
 * Feeds tab in the sidebar has a redesigned action toolbar with "Mark All as Read", and dropdown menu and keyboard shortcuts for changing the filter mode.
+* ANSI foreground colors are modified to match colored theme backgrounds (e.g., Sepia).
 * Navigating back and forward in history will skip input query prompts (status 1x), showing only the query results. 
 * The resource bundle (resources.lgr) is now a regular ZIP archive. This allows it to do double duty as a fontpack containing the built-in fonts. The archive contains a version number to avoid use of obsolete resources.
 
