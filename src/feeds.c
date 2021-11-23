@@ -386,10 +386,18 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
                 setUrlKept_Visited(visited_App(), &entry->url, iTrue);
             }
         }
+        iStringSet *handledUrls = new_StringSet();
         lock_Mutex(d->mtx);
         iForEach(PtrArray, i, incoming) {
             iFeedEntry *entry = i.ptr;
             size_t pos;
+            if (contains_StringSet(handledUrls, &entry->url)) {
+                /* This is a duplicate. Each unique URL is handled only once. */
+                delete_FeedEntry(entry);
+                remove_PtrArrayIterator(&i);
+                continue;
+            }
+            insert_StringSet(handledUrls, &entry->url);
             if (locate_SortedArray(&d->entries, &entry, &pos)) {
                 iFeedEntry *existing = *(iFeedEntry **) at_SortedArray(&d->entries, pos);
                 iAssert(!isHeadingEntry_FeedEntry_(existing));
@@ -422,6 +430,8 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
             remove_PtrArrayIterator(&i);
         }
         unlock_Mutex(d->mtx);
+        fflush(stdout);
+        iRelease(handledUrls);
     }
     return gotNew;
 }
