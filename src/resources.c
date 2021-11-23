@@ -51,6 +51,7 @@ iBlock blobRu_Resources;
 iBlock blobSk_Resources;
 iBlock blobSr_Resources;
 iBlock blobTok_Resources;
+iBlock blobTr_Resources;
 iBlock blobUk_Resources;
 iBlock blobZh_Hans_Resources;
 iBlock blobZh_Hant_Resources;
@@ -85,6 +86,7 @@ static struct {
     { &blobSk_Resources, "lang/sk.bin" },
     { &blobSr_Resources, "lang/sr.bin" },
     { &blobTok_Resources, "lang/tok.bin" },
+    { &blobTr_Resources, "lang/tr.bin" },
     { &blobUk_Resources, "lang/uk.bin" },
     { &blobZh_Hans_Resources, "lang/zh_Hans.bin" },
     { &blobZh_Hant_Resources, "lang/zh_Hant.bin" },

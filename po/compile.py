@@ -22,6 +22,7 @@ BUILD_LANGS = [ 'en', # base strings
     'sk',
     'sr',
     'tok',
+    'tr',
     'uk',
     'zh_Hans',
     'zh_Hant'

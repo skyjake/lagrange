@@ -55,6 +55,7 @@ extern iBlock blobRu_Resources;
 extern iBlock blobSk_Resources;
 extern iBlock blobSr_Resources;
 extern iBlock blobTok_Resources;
+extern iBlock blobTr_Resources;
 extern iBlock blobUk_Resources;
 extern iBlock blobZh_Hans_Resources;
 extern iBlock blobZh_Hant_Resources;

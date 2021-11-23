@@ -2237,6 +2237,7 @@ iWidget *makePreferences_Widget(void) {
                                     { u8"Slovak - sk", 0, 0, "uilang id:sk" },
                                     { u8"Српски - sr", 0, 0, "uilang id:sr" },
                                     { u8"Toki pona - tok", 0, 0, "uilang id:tok" },
+                                    { u8"Türkçe - tr", 0, 0, "uilang id:tr" },
                                     { u8"Українська - uk", 0, 0, "uilang id:uk" },
                                     { u8"简体中文 - zh", 0, 0, "uilang id:zh_Hans" },
                                     { u8"繁體/正體中文 - zh", 0, 0, "uilang id:zh_Hant" },

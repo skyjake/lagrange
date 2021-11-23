@@ -12,6 +12,7 @@ New features:
 * Choose parent folder when creating or editing a bookmark.
 * macOS: Automatic updates using the Sparkle framework.
 * Windows: Automatic updates using the WinSparkle library.
+* Added UI language for Turkish.
 
 Changes and enhancements:
 * Feeds tab in the sidebar has a redesigned action toolbar with "Mark All as Read", and dropdown menu and keyboard shortcuts for changing the filter mode.
