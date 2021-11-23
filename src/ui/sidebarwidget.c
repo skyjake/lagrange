@@ -346,10 +346,24 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 }
             }
             /* Actions. */ {
-                addActionButton_SidebarWidget_(d, "${sidebar.action.feeds.showall}", "feeds.mode arg:0",
-                                               d->feedsMode == all_FeedsMode ? selected_WidgetFlag : 0);
-                addActionButton_SidebarWidget_(d, "${sidebar.action.feeds.showunread}", "feeds.mode arg:1",
-                                               d->feedsMode == unread_FeedsMode ? selected_WidgetFlag : 0);
+                addActionButton_SidebarWidget_(
+                    d, check_Icon " ${feeds.markallread}", "feeds.markallread", expand_WidgetFlag);
+                addChild_Widget(d->actions, iClob(new_LabelWidget("${sidebar.action.show}", NULL)));
+                const iMenuItem items[] = {
+                    { "${sidebar.action.feeds.showall}",    SDLK_u, KMOD_SHIFT, "feeds.mode arg:0" },
+                    { "${sidebar.action.feeds.showunread}", SDLK_u, 0, "feeds.mode arg:1" },
+                };
+                iWidget *dropButton = addChild_Widget(
+                    d->actions,
+                    iClob(makeMenuButton_LabelWidget(items[d->feedsMode].label, items, 2)));
+                setFixedSize_Widget(
+                    dropButton,
+                    init_I2(measure_Text(
+                                default_FontId,
+                                translateCStr_Lang(items[findWidestLabel_MenuItem(items, 2)].label))
+                                    .advance.x +
+                                6 * gap_UI,
+                            -1));
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
@@ -995,7 +1009,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
         setBookmarkEditorFolder_Widget(editor, arg_Command(cmd));
         return iTrue;
     }
-    if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
+    if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "bmed.cancel")) {
         iAssert(startsWith_String(id_Widget(editor), "bmed."));
         iSidebarWidget *d = findWidget_App(cstr_String(id_Widget(editor)) + 5); /* bmed.sidebar */
         if (equal_Command(cmd, "bmed.accept")) {

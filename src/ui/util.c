@@ -2811,7 +2811,7 @@ static const iArray *makeBookmarkFolderItems_(void) {
 
 iWidget *makeBookmarkEditor_Widget(void) {
     const iMenuItem actions[] = {
-        { "${cancel}" },
+        { "${cancel}", 0, 0, "bmed.cancel" },
         { uiTextCaution_ColorEscape "${dlg.bookmark.save}", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept" }
     };
     if (isUsingPanelLayout_Mobile()) {
@@ -2891,7 +2891,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
         setBookmarkEditorFolder_Widget(editor, arg_Command(cmd));
         return iTrue;
     }
-    if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
+    if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "bmed.cancel")) {
         if (equal_Command(cmd, "bmed.accept")) {
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));

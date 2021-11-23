@@ -421,7 +421,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     else {
         drawCenteredOutline_Text(
             d->font,
-            adjusted_Rect(bounds, add_I2(zero_I2(), init_I2(iconPad, 0)), neg_I2(zero_I2())),
+            adjusted_Rect(bounds, init_I2(iconPad * 1.5f, 0), init_I2(-iconPad, 0)),
             d->flags.alignVisual,
             d->flags.drawAsOutline ? fg : none_ColorId,
             d->flags.drawAsOutline ? d->widget.bgColor : fg,

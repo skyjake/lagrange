@@ -406,6 +406,9 @@ msgstr "Identities"
 msgid "sidebar.outline"
 msgstr "Outline"
 
+msgid "sidebar.action.show"
+msgstr "Show:"
+
 msgid "sidebar.action.feeds.showall"
 msgstr "All"
 
