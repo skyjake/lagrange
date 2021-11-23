@@ -1,0 +1,2076 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-11-22 19:50+0000\n"
+"Last-Translator: Emir <emir_sari@msn.com>\n"
+"Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Getiriliyor"
+
+msgid "doc.archive.view"
+msgstr "Arşiv içeriğini görüntüle"
+
+msgid "media.untitled.image"
+msgstr "Görsel"
+
+msgid "media.untitled.audio"
+msgstr "Ses"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "İndirme tamamlandı."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Başlık"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Sanatçı"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Tarz"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Tarih"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d bit"
+
+msgid "numbertype.integer"
+msgstr "tamsayı"
+
+msgid "numbertype.float"
+msgstr "kayan noktalı değer"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Besleme girdileri"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d dakika önce"
+msgstr[1] "%d dakika önce"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d saat önce"
+msgstr[1] "%d saat önce"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d gün önce"
+msgstr[1] "%d gün önce"
+
+msgid "about.tagline"
+msgstr "Göze hoş gelen bir Gemini istemcisi"
+
+msgid "about.version"
+msgstr "Sürüm"
+
+msgid "cancel"
+msgstr "İptal"
+
+msgid "close"
+msgstr "Kapat"
+
+msgid "dlg.default"
+msgstr " Tamam "
+
+msgid "toggle.yes"
+msgstr "EVET"
+
+msgid "toggle.no"
+msgstr "HAYIR"
+
+msgid "menu.title.file"
+msgstr "Dosya"
+
+msgid "menu.title.edit"
+msgstr "Düzen"
+
+msgid "menu.title.bookmarks"
+msgstr "Yer İmleri"
+
+msgid "menu.title.identity"
+msgstr "Kimlik"
+
+msgid "menu.title.help"
+msgstr "Yardım"
+
+msgid "menu.closetab"
+msgstr "Sekmeyi kapat"
+
+msgid "menu.closetab.left"
+msgstr "Soldaki sekmeleri kapat"
+
+msgid "menu.closetab.right"
+msgstr "Sağdaki sekmeleri kapat"
+
+msgid "menu.duptab"
+msgstr "Sekmeyi çoğalt"
+
+msgid "menu.split.merge"
+msgstr "Sekmeleri birleştir"
+
+msgid "menu.split.horizontal"
+msgstr "Yatay"
+
+msgid "menu.split.vertical"
+msgstr "Dikey"
+
+msgid "menu.openlocation"
+msgstr "Konum aç…"
+
+msgid "macos.menu.find"
+msgstr "Bul"
+
+msgid "menu.downloads"
+msgstr "İndirilenleri göster"
+
+msgid "menu.pageinfo"
+msgstr "Sayfa bilgisini göster"
+
+msgid "menu.find"
+msgstr "Sayfada bul"
+
+msgid "menu.save.downloads.open"
+msgstr "İndirilenlere kaydet ve dosyayı aç"
+
+msgid "menu.sidebar"
+msgstr "Kenar çubuğunu aç/kapa"
+
+msgid "menu.sidebar.left"
+msgstr "Sol kenar çubuğunu aç/kapa"
+
+msgid "menu.sidebar.right"
+msgstr "Sağ kenar çubuğunu aç/kapa"
+
+msgid "menu.zoom.reset"
+msgstr "Yakınlaştırmayı sıfırla"
+
+msgid "menu.view.split"
+msgstr "Görünümü böl…"
+
+msgid "menu.newfolder"
+msgstr "Yeni klasör…"
+
+msgid "menu.sort.alpha"
+msgstr "Abecesel sırala"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Tümünü listele"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Etikete göre listele"
+
+msgid "menu.feeds.entrylist"
+msgstr "Besleme girdilerini göster"
+
+msgid "menu.preferences"
+msgstr "Tercihler…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Ayarlar"
+
+msgid "menu.website"
+msgstr "Proje web sitesi…"
+
+msgid "menu.quit"
+msgstr "Lagrange'den çık"
+
+msgid "menu.cut"
+msgstr "Kes"
+
+msgid "menu.paste"
+msgstr "Yapıştır"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Sil"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Geri al"
+
+msgid "menu.select.clear"
+msgstr "Seçimi temizle"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Sayfa bağlantısını kopyala"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Beslemeleri göster"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Sayfa ana hattını göster"
+
+msgid "menu.back"
+msgstr "Geri git"
+
+msgid "menu.forward"
+msgstr "İleri git"
+
+msgid "menu.parent"
+msgstr "Üste git"
+
+msgid "menu.root"
+msgstr "Köke git"
+
+msgid "menu.reload"
+msgstr "Sayfayı yeniden yükle"
+
+msgid "menu.page.bookmark"
+msgstr "Sayfayı yer imlerine ekle…"
+
+msgid "menu.page.subscribe"
+msgstr "Sayfaya abone ol…"
+
+msgid "menu.about"
+msgstr "Hakkında"
+
+msgid "menu.aboutpages"
+msgstr "\"about:\" sayfaları"
+
+msgid "menu.import.links"
+msgstr "Sayfadaki tüm bağlantıları içe aktar…"
+
+msgid "menu.page.translate"
+msgstr "Çevir…"
+
+msgid "menu.page.copyurl"
+msgstr "Sayfa URL'sini kopyala"
+
+msgid "menu.page.copysource"
+msgstr "Sayfa kaynağını kopyala"
+
+msgid "menu.feeds.refresh"
+msgstr "Beslemeleri yenile"
+
+msgid "menu.identity.new"
+msgstr "Yeni kimlik…"
+
+msgid "menu.identity.import"
+msgstr "İçe aktar…"
+
+msgid "menu.identity.notactive"
+msgstr "Etkin kimlik yok"
+
+msgid "sidebar.bookmarks"
+msgstr "Yer imleri"
+
+msgid "sidebar.feeds"
+msgstr "Beslemeler"
+
+msgid "sidebar.history"
+msgstr "Geçmiş"
+
+msgid "sidebar.identities"
+msgstr "Kimlikler"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Tümü"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Okunmamış"
+
+msgid "sidebar.action.ident.new"
+msgstr "Yeni…"
+
+msgid "sidebar.action.ident.import"
+msgstr "İçe aktar…"
+
+msgid "toolbar.outline"
+msgstr "Sayfa ana hattı"
+
+msgid "hint.findtext"
+msgstr "sayfada metin bul"
+
+msgid "status.query"
+msgstr "Arama sorgusu"
+
+msgid "status.query.tight"
+msgstr "Sorgu"
+
+msgid "status.feeds"
+msgstr "Beslemeler güncelleniyor"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "mb.per.sec"
+msgstr "MB/sn"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%u bayt"
+msgstr[1] "%u bayt"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u dosya"
+msgstr[1] "%u dosya"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u yazıtipi"
+msgstr[1] "%u yazıtipi"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%b. %d"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%b. %d, %Y"
+
+msgid "feeds.today"
+msgstr "Bugün"
+
+msgid "feeds.entry.newtab"
+msgstr "Girdiyi yeni sekmede aç"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Yer imi ekle…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Yer imi ekle…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Beslemeler sayfasını aç"
+
+msgid "feeds.edit"
+msgstr "Beslemeyi düzenle…"
+
+msgid "feeds.markallread"
+msgstr "Tümünü okundu olarak imle"
+
+msgid "feeds.refresh"
+msgstr "Beslemeleri yenile"
+
+msgid "menu.opentab"
+msgstr "Yeni sekmede aç"
+
+msgid "menu.opentab.background"
+msgstr "Arka plan sekmesinde aç"
+
+msgid "menu.openfile"
+msgstr "Dosya aç…"
+
+msgid "menu.edit"
+msgstr "Düzenle…"
+
+msgid "menu.dup"
+msgstr "Çoğalt…"
+
+msgid "menu.copyurl"
+msgstr "URL'yi kopyala"
+
+msgid "history.clear"
+msgstr "Geçmişi temizle…"
+
+msgid "heading.history.clear"
+msgstr "GEÇMİŞİ TEMİZLE"
+
+msgid "dlg.history.clear"
+msgstr "Geçmişi temizle"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Yer imini sil"
+msgstr[1] "%u yer imini sil"
+
+msgid "bookmark.tag.home"
+msgstr "Ana sayfa olarak kullan"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Bağlantılar yan tarafa doğru açılır"
+
+msgid "bookmark.untag.home"
+msgstr "Ana sayfayı kaldır"
+
+msgid "bookmark.untag.sub"
+msgstr "Abonelikten çık"
+
+msgid "bookmark.untag.remote"
+msgstr "Yer imi kaynağını kaldır"
+
+msgid "bookmark.delete"
+msgstr "Yer imini sil"
+
+msgid "bookmarks.reload"
+msgstr "Uzak konum kaynaklarını yenile"
+
+msgid "ident.using"
+msgstr "Bu sayfada kullanılıyor"
+
+msgid "ident.notused"
+msgstr "Kullanılmıyor"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "%u URL'de kullanılıyor"
+msgstr[1] "%u URL'de kullanılıyor"
+
+msgid "ident.temporary"
+msgstr "Geçici"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "%b %d, %Y tarihinde süresi doluyor"
+
+msgid "ident.use"
+msgstr "Bu sayfada kullanılıyor"
+
+msgid "ident.stopuse.all"
+msgstr "Her yerde kullanmayı bırak"
+
+msgid "ident.export"
+msgstr "Dışa aktar"
+
+msgid "heading.ident.use"
+msgstr "KİMLİK KULLANIMI"
+
+msgid "menu.edit.notes"
+msgstr "Notları düzenle…"
+
+msgid "heading.ident.notes"
+msgstr "KİMLİK NOTLARI"
+
+msgid "ident.fingerprint"
+msgstr "Parmak izini kopyala"
+
+msgid "ident.delete"
+msgstr "Kimliği sil…"
+
+msgid "heading.ident.delete"
+msgstr "KİMLİĞİ SİL"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"%s\"%s\"%s kimliğini, sertifikası ve özel anahtar dosyaları da dahil olmak "
+"üzere silmek istediğinizden emin misiniz?"
+
+msgid "dlg.ident.delete"
+msgstr "Kimliği ve dosyaları sil"
+
+msgid "sidebar.empty.idents"
+msgstr "Kimlik yok"
+
+msgid "heading.unsub"
+msgstr "ABONELİKTEN ÇIK"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "\"%s\" beslemesinin aboneliğinden çıkmak istediğinizden emin misiniz?"
+
+msgid "dlg.unsub"
+msgstr "Abonelikten çık"
+
+msgid "heading.pageinfo"
+msgstr "SAYFA BİLGİSİ"
+
+msgid "pageinfo.header.cached"
+msgstr "(önbelleklenmiş içerik)"
+
+msgid "pageinfo.cert.status"
+msgstr "Sertifika durumu:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "CA tarafından doğrulanmış"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "CA tarafından doğrulanmamış"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Süresi dolmamış"
+
+msgid "pageinfo.cert.expired"
+msgstr "Süresi dolmuş"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Güvenilen"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Alan adı eşleşmiyor"
+
+msgid "dlg.cert.trust"
+msgstr "Güven"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Parmak izini kopyala"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "%s için bir girdi girin:"
+
+msgid "dlg.input.linebreak"
+msgstr "Satır sonu"
+
+msgid "heading.save"
+msgstr "DOSYA KAYDEDİLDİ"
+
+msgid "dlg.save.incomplete"
+msgstr "Sayfa içeriği hâlâ indiriliyor."
+
+msgid "dlg.save.size"
+msgstr "Boyut:"
+
+msgid "dlg.save.opendownload"
+msgstr "İndirilen dosyayı aç"
+
+msgid "heading.import.bookmarks"
+msgstr "YER İMLERİNİ İÇE AKTAR"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sYer imi ekle"
+msgstr[1] "%s%d yer imi ekle"
+
+msgid "heading.autoreload"
+msgstr "OTOMATİK YENİDEN YÜKLEME"
+
+msgid "reload.never"
+msgstr "Hiçbir zaman"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d dakika"
+msgstr[1] "%d dakika"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d saat"
+msgstr[1] "%d saat"
+
+msgid "link.newtab"
+msgstr "Bağlantıyı yeni sekmede aç"
+
+msgid "link.side"
+msgstr "Bağlantıyı yan tarafa doğru aç"
+
+msgid "link.side.newtab"
+msgstr "Bağlantıyı yan tarafa doğru yeni sekmede aç"
+
+msgid "link.browser"
+msgstr "Bağlantıyı öntanımlı tarayıcıda aç"
+
+msgid "link.copy"
+msgstr "Bağlantıyı kopyala"
+
+msgid "link.download"
+msgstr "Bağlantılı dosyayı indir"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Bu dosyayı silmek istediğinizden emin misiniz?"
+
+msgid "dlg.file.delete"
+msgstr "Sil"
+
+msgid "heading.openlink"
+msgstr "BAĞLANTI AÇ"
+
+msgid "heading.file.delete"
+msgstr "DOSYA SİL"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Bağlantıyı öntanımlı tarayıcıda aç?\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "Bağlantı aç"
+
+msgid "dlg.certwarn.title"
+msgstr "Güvenlik sorunu"
+
+msgid "dlg.certwarn.different"
+msgstr "Alınan sertifika geçerli ancak bizim güvendiğimizden farklı."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Alınan sertifika başka bir alan adı için (%s). Bu bir sunucu yapılandırma "
+"sorunu olabilir."
+
+msgid "heading.certimport"
+msgstr "KİMLİK İÇE AKTAR"
+
+msgid "dlg.certimport.notfound"
+msgstr "Bir sertifika veya gizli anahtar bulunamadı."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Geçerli sayfada bir sertifika/anahtar bulunamadı."
+
+msgid "heading.certimport.pasted"
+msgstr "PANODAN YAPIŞTIRILMIŞ"
+
+msgid "heading.certimport.dropped"
+msgstr "BIRAKILAN DOSYA"
+
+msgid "dlg.certimport.import"
+msgstr "İçe aktar"
+
+msgid "dlg.certimport.notes"
+msgstr "Notlar:"
+
+msgid "dlg.certimport.nocert"
+msgstr "Sertifika yok"
+
+msgid "dlg.certimport.nokey"
+msgstr "Gizli anahtar yok"
+
+msgid "link.hint.audio"
+msgstr "Ses çal"
+
+msgid "link.hint.image"
+msgstr "Görsel görüntüle"
+
+msgid "bookmark.title.blank"
+msgstr "Boş sayfa"
+
+msgid "bookmark.export.title.folder"
+msgstr "Yer imleri"
+
+msgid "bookmark.export.title.time"
+msgstr "Oluşturulan yer imleri"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "%d yer iminiz var."
+msgstr[1] "%d yer iminiz var."
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Bu sayfa \"Subscribing to Gemini pages\" eşlik belirtimine göre "
+"biçimlendirilmiştir."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Her bir bağlantı bir yer imini gösterir."
+
+msgid "bookmark.export.format.folders"
+msgstr "Klasör yapısı ikinci/üçüncü düzey başlık olarak tanımlanmıştır."
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "YER İMLERİ"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "BESLEMELER"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "GEÇMİŞ"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "KİMLİKLER"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "DİĞER"
+
+msgid "heading.upload"
+msgstr "TITAN İLE GÖNDER"
+
+msgid "upload.id"
+msgstr "Kimlik:"
+
+msgid "dlg.upload.id.none"
+msgstr "Yok"
+
+msgid "dlg.upload.id.default"
+msgstr "Öntanımlı"
+
+msgid "heading.upload.text"
+msgstr "Metin"
+
+msgid "heading.upload.file"
+msgstr "Dosya"
+
+msgid "upload.file.name"
+msgstr "Dosya adı:"
+
+msgid "upload.file.size"
+msgstr "Dosya boyutu:"
+
+msgid "upload.mime"
+msgstr "MIME türü:"
+
+msgid "upload.token"
+msgstr "Jeton:"
+
+msgid "dlg.upload.send"
+msgstr "Gönder"
+
+msgid "upload.port"
+msgstr "Kapı…"
+
+msgid "heading.uploadport"
+msgstr "TITAN GÖNDERME KAPISI"
+
+msgid "dlg.uploadport.set"
+msgstr "Kapı ayarla"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Düz metin gönder"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Dosya göndre"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Dosya seç"
+
+msgid "heading.translate"
+msgstr "SAYFAYI ÇEVİR"
+
+msgid "dlg.translate.fail"
+msgstr "İstek başarısız oldu"
+
+msgid "dlg.translate"
+msgstr "Çevir"
+
+msgid "dlg.translate.from"
+msgstr "Şundan:"
+
+msgid "dlg.translate.to"
+msgstr "Şuna:"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "Çince"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "Almanca"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "İngilizce"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "Fransızca"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "İtalyanca"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "Japonca"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "Rusça"
+
+msgid "heading.newident"
+msgstr "YENİ KİMLİK"
+
+msgid "dlg.newident.until"
+msgstr "Şu tarihe kadar geçerli:"
+
+msgid "hint.newident.date"
+msgstr "YYYY or YYYY-AA-GG"
+
+msgid "dlg.newident.commonname"
+msgstr "Ortak ad:"
+
+msgid "dlg.newident.temp"
+msgstr "Geçici:"
+
+msgid "dlg.newident.scope"
+msgstr "Şunda kullan:"
+
+msgid "dlg.newident.scope.page"
+msgstr "Geçerli sayfa"
+
+msgid "dlg.newident.scope.none"
+msgstr "Kullanılmıyor"
+
+msgid "dlg.newident.userid"
+msgstr "Kullanıcı kimliği:"
+
+msgid "dlg.newident.domain"
+msgstr "Alan adı:"
+
+msgid "dlg.newident.org"
+msgstr "Organizasyon:"
+
+msgid "dlg.newident.country"
+msgstr "Ülke:"
+
+msgid "dlg.newident.more"
+msgstr "Daha fazla…"
+
+msgid "heading.newident.missing"
+msgstr "EKSİK BİLGİ"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Bir \"Ortak ad\" belirtilmelidir."
+
+msgid "heading.newident.date.bad"
+msgstr "GEÇERSİZ TARİH"
+
+msgid "heading.feedcfg"
+msgstr "BESLEME AYARLARI"
+
+msgid "heading.subscribe"
+msgstr "SAYFAYA ABONE OL"
+
+msgid "dlg.feed.title"
+msgstr "Başlık:"
+
+msgid "dlg.feed.entrytype"
+msgstr "Girdi türü:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-AA-GG bağlantıları"
+
+msgid "dlg.feed.type.headings"
+msgstr "Yeni başlıklar"
+
+msgid "dlg.feed.save"
+msgstr "Ayarları kaydet"
+
+msgid "dlg.feed.sub"
+msgstr "Abone ol"
+
+msgid "heading.bookmark.add"
+msgstr "YER İMİ EKLE"
+
+msgid "heading.bookmark.edit"
+msgstr "YER İMİNİ DÜZENLE"
+
+msgid "dlg.bookmark.title"
+msgstr "Başlık:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Etiketler:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Simge:"
+
+msgid "heading.bookmark.tags"
+msgstr "ÖZEL ETİKETLER"
+
+msgid "heading.addfolder"
+msgstr "KLASÖR EKLE"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Yeni klasörün adını girin:"
+
+msgid "dlg.addfolder"
+msgstr "Klasör ekle"
+
+msgid "heading.prefs"
+msgstr "TERCİHLER"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "AYARLAR"
+
+msgid "heading.prefs.certs"
+msgstr "SERTİFİKALAR"
+
+msgid "heading.prefs.fonts"
+msgstr "Yazıtipleri"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Genel"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Kullanıcı arabirimi"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Anahtarlar"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Ağ"
+
+msgid "heading.prefs.paragraph"
+msgstr "PARAGRAF"
+
+msgid "heading.prefs.pagecontent"
+msgstr "SAYFA RENKLERİ"
+
+msgid "heading.prefs.proxies"
+msgstr "VEKİLLER"
+
+msgid "heading.prefs.scrolling"
+msgstr "KAYDIRMA"
+
+msgid "heading.prefs.sizing"
+msgstr "BOYUTLANDIRMA"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Stil"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Kullanıcı arabirimi"
+
+msgid "prefs.downloads"
+msgstr "İndirilenler klasörü:"
+
+msgid "prefs.searchurl"
+msgstr "Arama URL'si:"
+
+msgid "prefs.centershort"
+msgstr "Dikey ortalama:"
+
+msgid "prefs.pinsplit"
+msgstr "Bölünmüş görünüm iğnelemesi:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Yok"
+
+msgid "prefs.pinsplit.left"
+msgstr "Sol sekme"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Klavye hızı:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Fare hızı:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Kaydırırken görseli yükle:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Kaydırırken araç çubuğunu gizle:"
+
+msgid "prefs.theme"
+msgstr "Tema:"
+
+msgid "prefs.theme.black"
+msgstr "Siyah"
+
+msgid "prefs.theme.dark"
+msgstr "Koyu"
+
+msgid "prefs.theme.white"
+msgstr "Beyaz"
+
+msgid "prefs.accent"
+msgstr "Diğer renk:"
+
+msgid "prefs.accent.teal"
+msgstr "Camgöbeği"
+
+msgid "prefs.accent.orange"
+msgstr "Turuncu"
+
+msgid "prefs.uilang"
+msgstr "Dil:"
+
+msgid "prefs.customframe"
+msgstr "Özel pencere çerçevesi:"
+
+msgid "prefs.returnkey"
+msgstr "Enter düğmesi davranışı:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Satır sonu"
+
+msgid "prefs.animate"
+msgstr "Animasyonlar:"
+
+msgid "prefs.sideicon"
+msgstr "Kapsül simgesi:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Koyu tema:"
+
+msgid "prefs.doctheme.light"
+msgstr "Açık tema:"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Renkli açık"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Siyah"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Gri"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Beyaz"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Sepya"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Yüksek karşıtlık"
+
+msgid "prefs.saturation"
+msgstr "Kaynaşma:"
+
+msgid "prefs.imagestyle.original"
+msgstr "Yok"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Gri tonlu"
+
+msgid "prefs.imagestyle.text"
+msgstr "Metin rengi"
+
+msgid "prefs.font.ui"
+msgstr "Kullanıcı arabirimi:"
+
+msgid "prefs.font.heading"
+msgstr "Başlıklar:"
+
+msgid "prefs.font.mono"
+msgstr "Önceden biçimlendirilmiş:"
+
+msgid "prefs.font"
+msgstr "Gövde yazıtipi:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "Koyu temada"
+
+msgid "prefs.gemtext.ansi"
+msgstr "ANSI kaçışları:"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Yazıtipi stili"
+
+msgid "prefs.font.warnmissing"
+msgstr "Glif uyarıları:"
+
+msgid "prefs.font.smooth"
+msgstr "Düzleştirme:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normal"
+
+msgid "prefs.linewidth.fill"
+msgstr "Doldur"
+
+msgid "prefs.linespacing"
+msgstr "Satır aralığı:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Düz metni kaydır:"
+
+msgid "prefs.cachesize"
+msgstr "Arabellek boyutu:"
+
+msgid "prefs.memorysize"
+msgstr "Bellek boyutu:"
+
+msgid "prefs.ca.file"
+msgstr "CA dosyası:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini vekili:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher vekili:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP vekili:"
+
+msgid "archive.exit"
+msgstr "Arşivden çık"
+
+msgid "keys.top"
+msgstr "Üste atla"
+
+msgid "keys.bottom"
+msgstr "Alta atla"
+
+msgid "keys.scroll.down"
+msgstr "Aşağı kaydır"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Yarım sayfa yukarı kaydır"
+
+msgid "keys.scroll.page.up"
+msgstr "Bir sayfa yukarı kaydır"
+
+msgid "keys.back"
+msgstr "Geri git"
+
+msgid "keys.forward"
+msgstr "İleri git"
+
+msgid "keys.root"
+msgstr "Kapsül köküne git"
+
+msgid "keys.link.modkey"
+msgstr "Bağlantıyı değiştiren düğmeyle aç"
+
+msgid "keys.link.homerow.hover"
+msgstr "Bağlantılar üzerine orta düğme dizisiyle gel"
+
+msgid "keys.bookmark.add"
+msgstr "Yer imi ekle"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Yer imi klasörü ekle"
+
+msgid "keys.subscribe"
+msgstr "Sayfaya abone ol"
+
+msgid "keys.findtext"
+msgstr "Sayfada metin bul"
+
+msgid "keys.zoom.in"
+msgstr "Yakınlaştır"
+
+msgid "keys.zoom.reset"
+msgstr "Yakınlaştırmayı sıfırla"
+
+msgid "keys.fullscreen"
+msgstr "Tam ekran kipini aç/kapa"
+
+msgid "keys.tab.new"
+msgstr "Yeni sekme"
+
+msgid "keys.tab.close"
+msgstr "Sekmeyi kapat"
+
+msgid "keys.tab.close.other"
+msgstr "Diğer sekmeleri kapat"
+
+msgid "keys.tab.next"
+msgstr "Sonraki sekme"
+
+msgid "keys.split.menu"
+msgstr "Bölünmüş görünümü ayarla"
+
+msgid "keys.split.next"
+msgstr "Odağı bir sonraki bölüntüye taşı"
+
+msgid "keys.upload"
+msgstr "Sayfayı Titan ile gönder"
+
+msgid "error.openfile.msg"
+msgstr ""
+"İstenen dosya mevcut değil veya erişilemiyor. Lütfen dosya yolunu denetleyin."
+
+msgid "error.badresource"
+msgstr "Geçersiz Kaynak"
+
+msgid "error.openfile"
+msgstr "Dosya Açılamadı"
+
+msgid "error.badstatus"
+msgstr "Bilinmeyen Durum Kodu"
+
+msgid "error.badresource.msg"
+msgstr "İstenen kaynak mevcut değil."
+
+msgid "error.unsupported.media.msg"
+msgstr "Alınan içerik bu uygulama ile görüntülenemiyor."
+
+msgid "error.badheader"
+msgstr "Geçersiz Başlık"
+
+msgid "error.unsupported.protocol"
+msgstr "Desteklenmeyen Protokol"
+
+msgid "error.unsupported.media"
+msgstr "Desteklenmeyen İçerik Türü"
+
+msgid "error.badheader.msg"
+msgstr ""
+"Alınan başlık Gemin protokol belirtimine uymuyor. Belki sunucu hata veriyor "
+"olabilir veya Gemini olmayan bir sunucuya bağlanmaya çalışıyor olabilirsiniz."
+
+msgid "error.badredirect"
+msgstr "Geçersiz Yeniden Yönlendirme"
+
+msgid "error.schemeredirect"
+msgstr "Şema Değiştiren Yeniden Yönlendirme"
+
+msgid "error.manyredirects"
+msgstr "Pek Çok Yeniden Yönlendirme"
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Bir yeniden yönlendirme döngüsünde takılı kalmış olabilirsiniz. El ile "
+"sürdürmek isterseniz bir sonraki yeniden yönlendirilmiş URL'yi aşağıda "
+"bulabilirsiniz."
+
+msgid "error.tls"
+msgstr "Ağ/TLS Hatası"
+
+msgid "error.tls.msg"
+msgstr "Sunucu ile iletişim kurulamadı."
+
+msgid "error.certverify"
+msgstr "Güvenilmeyen Sunucu"
+
+msgid "error.temporary"
+msgstr "Geçici Hata"
+
+msgid "error.temporary.msg"
+msgstr ""
+"İstek başarısız oldu; ancak ileride yeniden denerseniz başarılı olabilir."
+
+msgid "error.unavail"
+msgstr "Servis Kullanılamıyor"
+
+msgid "error.cgi"
+msgstr "CGI Hatası"
+
+msgid "error.proxy"
+msgstr "Vekil Hatası"
+
+msgid "error.proxy.msg"
+msgstr ""
+"Bir vekil isteği başarısız oldu; çünkü sunucu uzak makine ile bir işlemi "
+"başarıyla tamamlayamadı. Belki ağ bağlantısı konusunda güçlükler olabilir."
+
+msgid "error.slowdown"
+msgstr "Yavaşlama Durumu"
+
+msgid "error.permanent"
+msgstr "Kalıcı Hata"
+
+msgid "error.permanent.msg"
+msgstr "İsteğiniz başarısız oldu ve ileride de başarısız olmayı sürdürecek."
+
+msgid "error.notfound"
+msgstr "Bulunamadı"
+
+msgid "error.notfound.msg"
+msgstr "İstenen kaynak şu anda bulunamıyor."
+
+msgid "error.gone"
+msgstr "Yok"
+
+msgid "error.gone.msg"
+msgstr "İstenen kaynak artık kullanılabilir değil."
+
+msgid "error.proxyrefusal"
+msgstr "Vekil İsteği Reddedildi"
+
+msgid "error.badrequest"
+msgstr "Hatalı İstek"
+
+msgid "error.badrequest.msg"
+msgstr "Sunucu isteğinizi anlamadı."
+
+msgid "error.cert.needed"
+msgstr "Sertifika Gerekiyor"
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"İstenen kaynağa erişim bir istemci sertifikası yoluyla kimlik tanımlaması "
+"gerektiriyor."
+
+msgid "error.cert.auth"
+msgstr "Sertifika Yetkili Değil"
+
+msgid "error.cert.invalid"
+msgstr "Geçersiz Sertifika"
+
+msgid "error.cert.invalid.msg"
+msgstr "Sağlanan sunucu sertifikası geçersiz veya süresi dolmuş."
+
+msgid "error.ansi"
+msgstr "Uçbirim Öykünmesi"
+
+msgid "error.glyphs"
+msgstr "Eksik Glifler"
+
+msgid "gempub.cover.viewlocal"
+msgstr "Gempub kitabı yerel olarak kaydedildikten sonra görüntülenebilir."
+
+msgid "gempub.cover.untitled"
+msgstr "Başlıksız Kitap"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Bu kitap hakkında"
+
+msgid "gempub.cover.view"
+msgstr "Gempub içeriğini görüntüle"
+
+msgid "gempub.cover.image"
+msgstr "Kapak görseli"
+
+msgid "gempub.meta.author"
+msgstr "Yazar"
+
+msgid "gempub.meta.version"
+msgstr "Sürüm"
+
+msgid "gempub.meta.revdate"
+msgstr "Revizyon tarihi"
+
+msgid "gempub.meta.pub"
+msgstr "Basım"
+
+msgid "gempub.meta.pubdate"
+msgstr "Basım tarihi"
+
+msgid "gempub.meta.lang"
+msgstr "Dil"
+
+msgid "gempub.meta.license"
+msgstr "Lisans"
+
+msgid "heading.fontpack.meta"
+msgstr "Yazıtipleri"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Yazıtipi paketlerini etkinleştir"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Devre dışı bırakılan yazıtipi paketleri"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Dosyayı görüntüle"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Sürüm %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Yüklü"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Yüklü değil"
+
+msgid "fontpack.meta.disabled"
+msgstr ", devre dışı"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Etkinleştir: \"%s\""
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Devre dışı bırak: \"%s\""
+
+msgid "fontpack.export"
+msgstr "fontpack.ini şablonunu görüntüle"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Yükle: \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "\"%s\" ögesini %d sürümüne yükselt"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "\"%s\" ögesini kalıcı olarak sil"
+
+msgid "heading.fontpack.delete"
+msgstr "YAZITİPİ PAKETİNİ SİL"
+
+msgid "dlg.fontpack.delete"
+msgstr "Yazıtipi paketini sil"
+
+msgid "fontpack.install.ttf"
+msgstr "TrueType yazıtipi yükle"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Kullanıcı yazıtipleri dizinini aç"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Yüklü yazıtiplerini göster"
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange, kullanıcı yazıtipleri dizinine kopyalanan tüm bireysel TrueType "
+"dosyalarını yüklemeyi dener."
+
+msgid "truetype.help.installed"
+msgstr "Bu yazıtipi, kullanıcı yazıtipleri dizinine yüklenmiş."
+
+msgid "heading.dismiss.warning"
+msgstr "UYARIYI ATLA?"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "%s üzerinde uçbirim öykünmesi ile ilgili uyarıyı kalıcı olarak atla?"
+
+msgid "dlg.dismiss.warning"
+msgstr "Uyarıyı atla"
+
+msgid "heading.fontpack.classic"
+msgstr "YAZITİPİ PAKETİNİ İNDİR"
+
+msgid "dlg.fontpack.classic"
+msgstr "Yazıtipi paketini indir (25 MB)"
+
+msgid "doc.pre.nocaption"
+msgstr "Altyazısız önceden biçimlendirilmiş metin"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s, sıkıştırılmış bir arşiv."
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Bu sekme kapatılırsa indirme iptal edilecek."
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Şunu içeren %u beslemeye abonesiniz: %%s.\n"
+msgstr[1] "Şunu içeren %u beslemeye abonesiniz: %%s.\n"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "toplam %u girdi"
+msgstr[1] "toplam %u girdi"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "En son yenileme biraz önce gerçekleşti."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "En son yenileme: %s."
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII sanatı: Büyükçe bir yazıtipi kullanarak \"Lagrange\" sözcüğü"
+
+msgid "about.powered"
+msgstr "SDL 2, OpenSSL ve ☕️ yardımıyla yazılmıştır"
+
+msgid "dlg.message.ok"
+msgstr "Sürdür"
+
+msgid "menu.title.view"
+msgstr "Görünüm"
+
+msgid "menu.newtab"
+msgstr "Yeni sekme"
+
+msgid "menu.closetab.other"
+msgstr "Diğer sekmeleri kapat"
+
+msgid "menu.split.swap"
+msgstr "Tarafları değiştir"
+
+msgid "menu.unexpire"
+msgstr "Süre dolmasını yok say ve yüklemeyi sürdür"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Dosyalara kaydet"
+
+msgid "menu.zoom.in"
+msgstr "Yakınlaştır"
+
+msgid "menu.zoom.out"
+msgstr "Uzaklaştır"
+
+msgid "menu.bookmarks.list"
+msgstr "Tüm yer imlerini listele"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Yer imlerini etikete göre listele"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Yer imlerini oluşturulma zamanına göre listele"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Oluşturulma zamanına göre listele"
+
+msgid "menu.help"
+msgstr "Yardım"
+
+msgid "menu.releasenotes"
+msgstr "Sürüm notları"
+
+msgid "menu.copy"
+msgstr "Kopyala"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Tümünü seç"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "İndirilenlere kaydet"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Yer imlerini göster"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Geçmişi göster"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Kimlikleri göster"
+
+msgid "menu.autoreload"
+msgstr "Kendiliğinden yeniden yüklemeyi ayarla…"
+
+msgid "menu.fonts"
+msgstr "Yazıtiplerini yönet…"
+
+msgid "panel.back"
+msgstr "Geri"
+
+msgid "menu.debug"
+msgstr "Hata ayıklama bilgisi"
+
+msgid "menu.page.import"
+msgstr "Bağlantıları yer imi olarak içe aktar…"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Uzak konum yer imlerini yenile"
+
+msgid "sidebar.outline"
+msgstr "Ana hat"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "okunmamış"
+msgstr[1] "okunmamış"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Alınma zamanı ve tarihi: %I:%M %p,\n"
+" %b %d, %Y"
+
+msgid "feeds.entry.markread"
+msgstr "Okundu olarak imle"
+
+msgid "feeds.entry.markunread"
+msgstr "Okunmadı olarak imle"
+
+msgid "feeds.unsubscribe"
+msgstr "Abonelikten çık…"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Bu Atom XML belgesi, ona abone olunabilmesi için otomatik olarak Gemini "
+"beslemesine çevrildi."
+
+msgid "menu.forgeturl"
+msgstr "URL'yi unut"
+
+msgid "dlg.confirm.history.clear"
+msgstr ""
+"Tüm ziyaret edilen sayfalar geçmişini temizlemek istediğinizden emin misiniz?"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "YER İMLERİNİ SİL"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Bu klasördeki yer imini silmek istediğinizden emin misiniz?"
+msgstr[1] "Bu klasördeki %u yer imini silmek istediğinizden emin misiniz?"
+
+msgid "bookmark.tag.sub"
+msgstr "Beslemeye abone ol"
+
+msgid "bookmark.tag.remote"
+msgstr "Yer imi kaynağı olarak kullan"
+
+msgid "ident.stopuse"
+msgstr "Bu sayfada kullanmayı bırak"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "%s hakkındaki notlar:"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"TLS istemci sertifikaları hakkında daha fazla bilgi için %sYardım%s bölümüne "
+"bakın."
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"İndirilenler klasörünüze bir dosya olarak kaydedebilirsiniz: %s düğmelerine "
+"basın veya menüden \"%s\" ögesini seçin."
+
+msgid "error.server.msg"
+msgstr "Sunucu şu iletiyle yanıtladı:"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Güvenilmeyen"
+
+msgid "pageinfo.domain.match"
+msgstr "Alan adı eşleşiyor"
+
+msgid "dlg.input.send"
+msgstr "Gönder"
+
+msgid "heading.save.incomplete"
+msgstr "SAYFA TAM DEĞİL"
+
+msgid "heading.save.error"
+msgstr "DOSYA KAYDEDİLİRKEN HATA"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Sayfada bir yeni bağlantı bulundu."
+msgstr[1] "Sayfada %d yeni bağlantı bulundu."
+
+msgid "dlg.import.notnew"
+msgstr "Bu sayfadaki bağlantıların hepsi halihazırda yer imlerine eklenmiş."
+
+msgid "dlg.autoreload"
+msgstr "Bu sekme için otomatik yeniden yükleme aralığını seçin."
+
+msgid "reload.onceperday"
+msgstr "Günde bir kez"
+
+msgid "link.newtab.background"
+msgstr "Bağlantıyı arka plan sekmesinde aç"
+
+msgid "link.noproxy"
+msgstr "Vekil olmadan aç"
+
+msgid "link.bookmark"
+msgstr "Bağlantıyı yer imlerine ekle…"
+
+msgid "link.file.delete"
+msgstr "Dosyayı sil"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Alınan sertifika yakın zamanda yenilenmiş olabilir — doğru alan adı için ve "
+"henüz süresi dolmamış. Şu anki güvenilen sertifikanın %s tarihinde, bir gün "
+"içerisinde süresi dolacak."
+msgstr[1] ""
+"Alınan sertifika yakın zamanda yenilenmiş olabilir — doğru alan adı için ve "
+"henüz süresi dolmamış. Şu anki güvenilen sertifikanın %s tarihinde, %d gün "
+"içerisinde süresi dolacak."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Alınan sertifikanın süresi %s tarihinde dolmuş."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "Alınan sertifikanın süresi dolmuş VE başka bir alan adı için."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"PEM ile kodlanmış bir sertifika ve/veya gizli anahtar yapıştırın\n"
+"veya pencereye bir .crt/.key dosyası bırakın."
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Sertifika/Anahtar dosyası içe aktar"
+
+msgid "hint.certimport.description"
+msgstr "tanım"
+
+msgid "bookmark.export.title.tag"
+msgstr "Yer imi etiketleri"
+
+msgid "bookmark.export.saving"
+msgstr ""
+"Bu sayfayı dışa aktarmak için kaydedin veya onu panoya da "
+"kopyalayabilirsiniz."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"Bu listede her bir başlık bir yer imi etiketini gösterir. Yalnızca "
+"etiketlenen yer imleri listelenirler. Birden çok etikete iye yer imleri her "
+"bir etiketin altında yinelenirler."
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Maddeli listeler ve tırnaklar bir önceki yer imi hakkında ek bilgi için "
+"rezerve edilmiştir. Metin satırları ve önceden biçimlendirilmiş metin yorum "
+"olarak işlem görür ve yok sayılmalıdır."
+
+msgid "bookmark.export.format.tags"
+msgstr "Etiketler ikinci düzey başlık olarak tanımlanmıştır."
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "SAYFA İÇERİĞİ"
+
+msgid "menu.page.upload"
+msgstr "Sayfayı Titan ile gönder…"
+
+msgid "hint.upload.text"
+msgstr "gönderilecek metni girin"
+
+msgid "upload.file.drophere"
+msgstr "(pencereye bir dosyayı sürükleyip bırakın)"
+
+msgid "hint.upload.token"
+msgstr "sunucunun yönergelerine bakın"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Bu URL için kullanılacak Titan sunucu kapısını ayarlayın. Kapı, sayfaya özel "
+"yapılandırmaya kaydedilir."
+
+msgid "dlg.translate.unavail"
+msgstr "Servis kullanılamıyor"
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "Arapça"
+
+# A language choice in the Translation dialog.
+msgid "lang.hi"
+msgstr "Hintçe"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "Portekizce"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "İspanyolca"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Kendinden imzalı 2048 bit RSA sertifikası oluşturuluyor."
+
+msgid "hint.newident.optional"
+msgstr "isteğe bağlı"
+
+msgid "dlg.newident.notsaved"
+msgstr "diske kaydedilmedi"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Geçerli alan adı"
+
+msgid "dlg.newident.email"
+msgstr "E-posta:"
+
+msgid "dlg.newident.create"
+msgstr "Kimlik oluştur"
+
+msgid "dlg.newident.date.past"
+msgstr "Son kullanma tarihi gelecekte olmalıdır."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Lütfen \"Şu tarihe kadar geçerli\" bölümünü denetleyin. Örnekler:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "HTTP(S) bağlantılarını yok say:"
+
+msgid "dlg.bookmark.save"
+msgstr "Yer imini kaydet"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Yeni klasör"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Renkler"
+
+msgid "heading.prefs.uitheme"
+msgstr "KULLANICI ARABİRİMİ RENKLERİ"
+
+msgid "heading.prefs.widelayout"
+msgstr "GENİŞ DİZİLİM"
+
+msgid "prefs.collapsepreonload"
+msgstr "Önceden biçimlendirilenleri daralt:"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Yer imlerini alta ekle:"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Arşiv belirticisini aç:"
+
+msgid "prefs.pinsplit.right"
+msgstr "Sağ sekme"
+
+msgid "prefs.smoothscroll"
+msgstr "Pürüzsüz kaydırma:"
+
+msgid "prefs.ostheme"
+msgstr "Sistem temasını kullan:"
+
+msgid "prefs.theme.light"
+msgstr "Açık"
+
+msgid "prefs.uiscale"
+msgstr "UI ölçeklendirme faktörü:"
+
+msgid "prefs.returnkey.accept"
+msgstr "Kabul et"
+
+msgid "prefs.retainwindow"
+msgstr "Konumlandırmayı koru:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Renkli koyu"
+
+msgid "prefs.imagestyle"
+msgstr "Görselleri renklendir:"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Arka plan ön plana"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Önceden biçimlendirilmiş renk"
+
+msgid "prefs.font.body"
+msgstr "Gövde:"
+
+msgid "prefs.mono"
+msgstr "Eş aralıklı gövde:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Eş aralıklı yazıtipi:"
+
+msgid "prefs.boldlink"
+msgstr "Kalın bağlantılar:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Ziyaret edilen"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Açık temada"
+
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Ön plan rengi"
+
+msgid "prefs.linewidth"
+msgstr "Satır genişliği:"
+
+msgid "prefs.quoteicon"
+msgstr "Tırnak belirteci:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "\" Simge"
+
+msgid "prefs.quoteicon.line"
+msgstr "Satır"
+
+msgid "prefs.biglede"
+msgstr "Birinci büyük paragraf:"
+
+msgid "prefs.decodeurls"
+msgstr "URL kodunu çözme:"
+
+msgid "prefs.ca.path"
+msgstr "CA yolu:"
+
+msgid "menu.binding.reset"
+msgstr "Öntanımlılara sıfırla"
+
+msgid "menu.binding.clear"
+msgstr "Kaldır"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Bu arşiv %u öge içeriyor ve sıkıştırılmış boyutu %.1f MB."
+msgstr[1] "Bu arşiv %u öge içeriyor ve sıkıştırılmış boyutu %.1f MB."
+
+msgid "dir.empty"
+msgstr "Bu dizin boş."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Bu dizin %u öge içeriyor."
+msgstr[1] "Bu dizin %u öge içeriyor."
+
+msgid "keys.scroll.up"
+msgstr "Yukarı kaydır"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Yarım sayfa aşağı kaydır"
+
+msgid "keys.scroll.page.down"
+msgstr "Bir sayfa aşağı kaydır"
+
+msgid "keys.parent"
+msgstr "Üst dizine git"
+
+msgid "keys.reload"
+msgstr "Sayfayı yeniden yükle"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Bağlantıyı yeni sekmede orta düğme dizisiyle aç"
+
+msgid "keys.link.homerow"
+msgstr "Bağlantıyı orta düğme dizisiyle aç"
+
+msgid "keys.link.homerow.next"
+msgstr "Orta düğme dizisi bağlantılarının bir sonraki kümesi"
+
+msgid "keys.zoom.out"
+msgstr "Uzaklaştır"
+
+msgid "keys.tab.prev"
+msgstr "Önceki sekme"
+
+msgid "keys.split.item"
+msgstr "Bölünmüş görünüm menüsü:"
+
+msgid "keys.hoverurl"
+msgstr "Üzerine geldiğinde URL'yi göster aç/kapa"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Sunucu Gemini protokolü belirtiminde bulunmayan bir durum kodu ile "
+"yanıtladı. Sunucu gelecekten olabilir mi? Bence bozulmuş."
+
+msgid "error.unsupported.protocol.msg"
+msgstr "İstenen protokol bu uygulama tarafından desteklenmiyor."
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Sunucu yanıtladı; ancak geçerli bir hedef URL sağlamadı. Sunucu bozuk "
+"olabilir."
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Sunucu bizi kaynak URL'nin şemasından farklı olan bir URL'ye yeniden "
+"yönlendirmeye çalıştı. Eğer uygunsa el ile açmanız için bağlantıyı aşağıda "
+"bulabilirsiniz."
+
+msgid "error.certexpired"
+msgstr "Süresi Dolmuş Sertifika"
+
+msgid "error.certexpired.msg"
+msgstr "Sunucu bağlantısı iptal edildi; çünkü TLS sertifikasının süresi dolmuş."
+
+msgid "error.certverify.msg"
+msgstr ""
+"Sunucu bağlantısı iptal edildi; çünkü TLS sertifikası bizim güvendiğimiz "
+"sertifikayla eşleşmiyor. Lütfen sunucunun yeni bir sertifika çıkarıp "
+"çıkarmadığına bakın. Değilse kötü niyetli bir üçüncü kişi erişmeye "
+"çalıştığınız sunucu şeklinde gizleniyor olabilir.\n"
+"\n"
+"Sayfa bilgisi bölümünde bu sertifika güvenilir olarak imlenebilir."
+
+msgid "error.unavail.msg"
+msgstr ""
+"Sunucu aşırı yükleme veya bakım nedeniyle kullanılamıyor. Daha sonra yeniden "
+"deneyin."
+
+msgid "error.cgi.msg"
+msgstr ""
+"Sunucuda devingen içerik oluşturma sırasında hata. Bu sunucu tarafında doğru "
+"çalışmayan yazılım nedeniyle olabilir."
+
+msgid "error.slowdown.msg"
+msgstr "Sunucu tarafı istekleri sınırlıyor. Lütfen bekleyin…"
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Bu istek sunucu tarafından sunulmayan bir alan adındaki kaynak içindi ve "
+"sunucu vekil isteklerini kabul etmiyor."
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Sağlanan istemci sertifikası geçerli; ancak istenen kaynağa erişim için "
+"yetkili değil."
+
+msgid "error.ansi.msg"
+msgstr ""
+"Bu sayfa düzgünce görüntülenemeyebilir. Metin stilleri için tam olarak "
+"desteklenmeyen ANSI kaçış dizileri kullanıyor. Görüntülemek için bir uçbirim "
+"öykünücüsü kullanabilirsiniz."
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Bu sayfa tam olarak görüntülenemiyor; çünkü bazı karakterler eksik. Bu "
+"sorunu çözmek için ek yazıtipleri yükleyebilirsiniz."
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "\"%s\" yazıtipi paketini kalıcı olarak silmek istiyor musunuz?"
+
+msgid "fontpack.help"
+msgstr ""
+"Lagrange yazıtipi paketleri bir yazıtipi paketini ve ilişkin yapılandırma "
+"parametrelerini içeren ZIP arşivleridir. Yüklendikten sonra, yazıtipleri "
+"belge içeriği ve kullanıcı arabirimi için kullanılabilir. Etkin "
+"yazıtiplerini Tercihler > Yazıtipleri bölümünden seçebilirsiniz."
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Daha önceden uygulamayla birlikte gelen yazıtipleri artık ayrı olarak "
+"indirilebilir. \"Classic set\" yazıtipi paketini şimdi indirmek istiyor "
+"musunuz?"
+
+msgid "prefs.hoverlink"
+msgstr "Üzerine gelince URL'yi göster:"
