@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-10 04:50+0000\n"
+"PO-Revision-Date: 2021-11-25 14:43+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -2125,3 +2125,13 @@ msgstr "Checo"
 
 msgid "lang.hu"
 msgstr "Húngaro"
+
+msgid "sidebar.action.show"
+msgstr "Mostrar:"
+
+msgid "dlg.bookmark.folder"
+msgstr "Cartafol:"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Cor BG"
