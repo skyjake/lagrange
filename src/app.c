@@ -94,17 +94,14 @@ static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange"
 #endif
 #if defined (iPlatformLinux) || defined (iPlatformOther)
 #define EMB_BIN  "../../share/lagrange/resources.lgr"
+#define EMB_BIN2  "../../../share/lagrange/resources.lgr"
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
 #if defined (iPlatformHaiku)
 #define EMB_BIN "./resources.lgr"
 static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
 #endif
-#if defined (LAGRANGE_EMB_BIN) /* specified in build config */
-#  undef EMB_BIN
-#  define EMB_BIN LAGRANGE_EMB_BIN
-#endif
-#define EMB_BIN2 "../resources.lgr" /* fallback from build/executable dir */
+#define EMB_BIN_EXEC "../resources.lgr" /* fallback from build/executable dir */
 static const char *prefsFileName_App_      = "prefs.cfg";
 static const char *oldStateFileName_App_   = "state.binary";
 static const char *stateFileName_App_      = "state.lgr";
@@ -722,13 +719,28 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
     /* Load the resources from a file. Check the executable directory first, then a
        system-wide location, and as a final fallback, the current working directory. */ {
-        if (!init_Resources(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
-            if (!init_Resources(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
-                if (!init_Resources("resources.lgr")) {
-                    fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
-                    exit(-1);
-                }
+        const char *execPath = cstr_String(execPath_App());
+        const char *paths[] = {
+            concatPath_CStr(execPath, EMB_BIN_EXEC), /* first the executable's directory */
+#if defined (LAGRANGE_EMB_BIN) /* specified in build config (absolute path) */
+            LAGRANGE_EMB_BIN,
+#endif
+#if defined (EMB_BIN2) /* alternative location */
+            concatPath_CStr(execPath, EMB_BIN2),
+#endif
+            concatPath_CStr(execPath, EMB_BIN),
+            "resources.lgr" /* cwd */
+        };
+        iBool wasLoaded = iFalse;
+        iForIndices(i, paths) {
+            if (init_Resources(paths[i])) {
+                wasLoaded = iTrue;
+                break;
             }
+        }
+        if (!wasLoaded) {
+            fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
+            exit(-1);
         }
     }
     init_Lang();
