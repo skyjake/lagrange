@@ -68,6 +68,7 @@ static float initialUiScale_ = 1.1f;
 #endif
 
 static iBool isOpenGLRenderer_;
+static iBool isDrawing_;
 
 iDefineTypeConstructionArgs(Window,
                             (enum iWindowType type, iRect rect, uint32_t flags),
@@ -244,7 +245,9 @@ static void updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
 }
 
 void drawWhileResizing_MainWindow(iMainWindow *d, int w, int h) {
-    draw_MainWindow(d);
+    if (!isDrawing_) {
+        draw_MainWindow(d);
+    }
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
@@ -1183,9 +1186,10 @@ iBool postContextClick_Window(iWindow *d, const SDL_MouseButtonEvent *ev) {
 }
 
 void draw_Window(iWindow *d) {
-    if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
+    if (isDrawing_ || SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
         return;
     }
+    isDrawing_ = iTrue;
     iPaint p;
     init_Paint(&p);
     iRoot *root = d->roots[0];
@@ -1208,14 +1212,20 @@ void draw_Window(iWindow *d) {
                             uiBackgroundSelected_ColorId);
     setCurrent_Root(NULL);
     SDL_RenderPresent(d->render);
+    isDrawing_ = iFalse;
 }
 
 void draw_MainWindow(iMainWindow *d) {
+    if (isDrawing_) {
+        /* Already drawing! */
+        return;
+    }
     /* TODO: Try to make this a specialization of `draw_Window`? */
     iWindow *w = as_Window(d);
     if (d->isDrawFrozen) {
         return;
     }
+    isDrawing_ = iTrue;
     setCurrent_Text(d->base.text);
     /* Check if root needs resizing. */ {
         iInt2 renderSize;
@@ -1312,6 +1322,7 @@ void draw_MainWindow(iMainWindow *d) {
     }
 #endif
     SDL_RenderPresent(w->render);
+    isDrawing_ = iFalse;
 }
 
 void resize_MainWindow(iMainWindow *d, int w, int h) {
