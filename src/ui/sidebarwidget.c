@@ -350,10 +350,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             /* Actions. */ {
                 addActionButton_SidebarWidget_(
-                    d, check_Icon " ${feeds.markallread}", "feeds.markallread", expand_WidgetFlag);
-                addChildFlags_Widget(d->actions,
+                    d, check_Icon " ${feeds.markallread}", "feeds.markallread", expand_WidgetFlag |
+                    tight_WidgetFlag);
+                updateSize_LabelWidget(addChildFlags_Widget(d->actions,
                                      iClob(new_LabelWidget("${sidebar.action.show}", NULL)),
-                                     frameless_WidgetFlag);
+                                                            frameless_WidgetFlag | tight_WidgetFlag));
                 const iMenuItem items[] = {
                     { "${sidebar.action.feeds.showall}", SDLK_u, KMOD_SHIFT, "feeds.mode arg:0" },
                     { "${sidebar.action.feeds.showunread}", SDLK_u, 0, "feeds.mode arg:1" },
