@@ -360,11 +360,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     iClob(makeMenuButton_LabelWidget(items[d->feedsMode].label, items, 2)));
                 setFixedSize_Widget(
                     dropButton,
-                    init_I2(measure_Text(
+                    init_I2(iMaxi(20 * gap_UI, measure_Text(
                                 default_FontId,
                                 translateCStr_Lang(items[findWidestLabel_MenuItem(items, 2)].label))
                                     .advance.x +
-                                6 * gap_UI,
+                                                   6 * gap_UI),
                             -1));
             }
             d->menu = makeMenu_Widget(
@@ -689,6 +689,10 @@ void setClosedFolders_SidebarWidget(iSidebarWidget *d, const iIntSet *closedFold
 
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->mode : 0;
+}
+
+enum iFeedsMode feedsMode_SidebarWidget(const iSidebarWidget *d) {
+    return d ? d->feedsMode : 0;
 }
 
 float width_SidebarWidget(const iSidebarWidget *d) {

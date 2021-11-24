@@ -491,7 +491,13 @@ static iBool loadState_App_(iApp *d) {
                     setClosedFolders_SidebarWidget(sidebar, closedFolders[0]);
                     setClosedFolders_SidebarWidget(sidebar2, closedFolders[1]);
                     postCommandf_Root(root, "sidebar.mode arg:%u", modes & 0xf);
-                    postCommandf_Root(root, "sidebar2.mode arg:%u", modes >> 4);
+                    postCommandf_Root(root, "sidebar2.mode arg:%u", (modes >> 4) & 0xf);
+                    if (flags & 4) {
+                        postCommand_Widget(sidebar, "feeds.mode arg:%d", unread_FeedsMode);
+                    }
+                    if (flags & 8) {
+                        postCommand_Widget(sidebar2, "feeds.mode arg:%d", unread_FeedsMode);
+                    }
                     if (deviceType_App() != phone_AppDeviceType) {
                         setWidth_SidebarWidget(sidebar,  widths[0]);
                         setWidth_SidebarWidget(sidebar2, widths[1]);
@@ -566,7 +572,9 @@ static void saveState_App_(const iApp *d) {
                     const iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
                     writeU16_File(f, i |
                                   (isVisible_Widget(sidebar)  ? 0x100 : 0) |
-                                  (isVisible_Widget(sidebar2) ? 0x200 : 0));
+                                  (isVisible_Widget(sidebar2) ? 0x200 : 0) |
+                                  (feedsMode_SidebarWidget(sidebar)  == unread_FeedsMode ? 0x400 : 0) |
+                                  (feedsMode_SidebarWidget(sidebar2) == unread_FeedsMode ? 0x800 : 0));
                     writeU8_File(f,
                                  mode_SidebarWidget(sidebar) |
                                  (mode_SidebarWidget(sidebar2) << 4));
