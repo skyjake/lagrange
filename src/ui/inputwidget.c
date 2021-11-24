@@ -2161,11 +2161,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_a:
-#if defined (iPlatformApple)
                 if (mods == KMOD_PRIMARY) {
-#else
-                if (mods == (KMOD_PRIMARY | KMOD_SHIFT)) {
-#endif
                     selectAll_InputWidget(d);
                     d->mark.start = 0;
                     d->mark.end   = cursorToIndex_InputWidget_(d, curMax);
@@ -2174,6 +2170,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     refresh_Widget(w);
                     return iTrue;
                 }
+#if defined (iPlatformApple)
                 /* fall through for Emacs-style Home/End */
             case SDLK_e:
                 if (mods == KMOD_CTRL || mods == (KMOD_CTRL | KMOD_SHIFT)) {
@@ -2182,6 +2179,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     return iTrue;
                 }
                 break;
+#endif
             case SDLK_LEFT:
             case SDLK_RIGHT: {
                 const int dir = (key == SDLK_LEFT ? -1 : +1);
