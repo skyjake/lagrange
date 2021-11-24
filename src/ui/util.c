@@ -2919,9 +2919,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
                 addTag_Bookmark(bm, linkSplit_BookmarkTag);
             }
             bm->parentId = folder ? id_Bookmark(folder) : 0;
-            if (bm->parentId) {
-                setRecentFolder_Bookmarks(bookmarks_App(), bm->parentId);
-            }
+            setRecentFolder_Bookmarks(bookmarks_App(), bm->parentId);
             postCommandf_App("bookmarks.changed added:%zu", id);
         }
         setupSheetTransition_Mobile(editor, iFalse);
