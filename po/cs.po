@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-11 16:50+0000\n"
+"PO-Revision-Date: 2021-11-25 14:43+0000\n"
 "Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
@@ -1819,7 +1819,7 @@ msgid "prefs.doctheme.light"
 msgstr "Světlé téma:"
 
 msgid "prefs.doctheme.name.colorfuldark"
-msgstr "Barevná temné"
+msgstr "Barevné temné"
 
 msgid "prefs.doctheme.name.colorfullight"
 msgstr "Barevné světlé"
@@ -2122,7 +2122,7 @@ msgstr ""
 "Předvolby > Písma."
 
 msgid "fontpack.open.aboutfonts"
-msgstr "Zobrazit instalovaná písma"
+msgstr "Ukázat instalovaná písma"
 
 msgid "truetype.help.installed"
 msgstr "Toto písmo je nainstalováno ve složce uživatelských písem."
@@ -2132,3 +2132,13 @@ msgstr "Maďarština"
 
 msgid "gempub.cover.aboutbook"
 msgstr "O této knize"
+
+msgid "dlg.bookmark.folder"
+msgstr "Složka:"
+
+msgid "sidebar.action.show"
+msgstr "Ukázat:"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Barva pozadí"
