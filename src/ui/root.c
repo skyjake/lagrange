@@ -142,11 +142,11 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
     { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---" },
-    { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
+    { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
 # else
     { add_Icon " ${menu.identity.new}", 0, 0, "ident.new" },
     { "---" },
-    { person_Icon " ${menu.show.identities}", 0, 0, "sidebar.mode arg:3 show:1" },
+    { person_Icon " ${menu.show.identities}", 0, 0, "sidebar.mode arg:3 toggle:1" },
 # endif
 };
 #endif
@@ -626,6 +626,7 @@ static void updateNavBarSize_(iWidget *navBar) {
     /* Button sizing. */
     if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
         setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
+        showCollapsed_Widget(findChild_Widget(navBar, "navbar.sidebar"), !isNarrow);
         iObjectList *lists[] = {
             children_Widget(navBar),
             children_Widget(findChild_Widget(navBar, "url")),
@@ -1103,19 +1104,13 @@ void createUserInterface_Root(iRoot *d) {
         iWidget *navBack;
         setId_Widget(navBack = addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(forwardArrow_Icon, 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.forward");
-        /* Mobile devices have a button for easier access to the left sidebar. */
-        if (deviceType_App() != desktop_AppDeviceType) {
-            setId_Widget(addChildFlags_Widget(
-                             navBar,
-                             iClob(newIcon_LabelWidget(leftHalf_Icon, 0, 0, "sidebar.toggle")),
-                             collapse_WidgetFlag),
-                         "navbar.sidebar");
-        }
+        /* Button for toggling the left sidebar. */
+        setId_Widget(addChildFlags_Widget(
+                         navBar,
+                         iClob(newIcon_LabelWidget(leftHalf_Icon, 0, 0, "sidebar.toggle")),
+                         collapse_WidgetFlag),
+                     "navbar.sidebar");
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
-        iLabelWidget *idMenu = makeMenuButton_LabelWidget(
-            "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
-        setAlignVisually_LabelWidget(idMenu, iTrue);
-        setId_Widget(addChildFlags_Widget(navBar, iClob(idMenu), collapse_WidgetFlag), "navbar.ident");
         iInputWidget *url;
         /* URL input field. */ {
             url = new_InputWidget(0);
@@ -1257,10 +1252,11 @@ void createUserInterface_Root(iRoot *d) {
             arrange_Widget(urlButtons);
             setId_Widget(addChild_Widget(rightEmbed, iClob(makePadding_Widget(0))), "url.embedpad");
         }
-        if (deviceType_App() != desktop_AppDeviceType) {
-            /* On mobile, the Identities button is on the right side of the URL bar. */
-            iWidget *ident = removeChild_Widget(navBar, findChild_Widget(navBar, "navbar.ident"));
-            addChild_Widget(navBar, iClob(ident));
+        /* The active identity menu. */ {
+            iLabelWidget *idMenu = makeMenuButton_LabelWidget(
+                "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
+            setAlignVisually_LabelWidget(idMenu, iTrue);
+            setId_Widget(addChildFlags_Widget(navBar, iClob(idMenu), collapse_WidgetFlag), "navbar.ident");
         }
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         setId_Widget(addChildFlags_Widget(navBar,
