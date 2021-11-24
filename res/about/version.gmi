@@ -20,6 +20,7 @@ Changes and enhancements:
 * Feeds tab remembers the unread/all filter mode persistently.
 * ANSI foreground colors are modified to match colored theme backgrounds (e.g., Sepia).
 * Navigating back and forward in history will skip input query prompts (status 1x), showing only the query results. 
+* Ctrl+A now selects all text in input fields (except on macOS, where it remains the Emacs-style jump to start/end of line).
 * The resource bundle (resources.lgr) is now a regular ZIP archive. This allows it to do double duty as a fontpack containing the built-in fonts. The archive contains a version number to avoid use of obsolete resources.
 
 Fixes:
