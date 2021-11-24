@@ -105,7 +105,8 @@ struct Impl_SidebarWidget {
     int               itemFonts[2];
     size_t            numUnreadEntries;
     iWidget *         resizer;
-    iWidget *         menu;
+    iWidget *         menu; /* context menu for an item */
+    iWidget *         modeMenu; /* context menu for the sidebar mode (no item) */
     iSidebarItem *    contextItem;  /* list item accessed in the context menu */
     size_t            contextIndex; /* index of list item accessed in the context menu */
     iIntSet *         closedFolders; /* otherwise open */
@@ -269,7 +270,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     releaseChildren_Widget(d->actions);
     d->actions->rect.size.y = 0;
     destroy_Widget(d->menu);
-    d->menu = NULL;
+    destroy_Widget(d->modeMenu);
+    d->menu       = NULL;
+    d->modeMenu   = NULL;
     iBool isEmpty = iFalse; /* show blank? */
     switch (d->mode) {
         case feeds_SidebarMode: {
@@ -380,6 +383,12 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
                                { reload_Icon " ${feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
                 10);
+            d->modeMenu = makeMenu_Widget(
+                as_Widget(d),
+                (iMenuItem[]){
+                    { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
+                    { reload_Icon " ${feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
+                2);
             break;
         }
         case documentOutline_SidebarMode: {
@@ -467,6 +476,15 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                { "---", 0, 0, NULL },
                                { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" } },
                17);
+            d->modeMenu = makeMenu_Widget(
+                as_Widget(d),
+                (iMenuItem[]){ { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+                               { add_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
+                               { "---", 0, 0, NULL },                               
+                               { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
+                               { "---", 0, 0, NULL },
+                               { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" } },               
+                6);
             break;
         }
         case history_SidebarMode: {
@@ -521,6 +539,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     { "---", 0, 0, NULL },
                     { delete_Icon " " uiTextCaution_ColorEscape "${history.clear}", 0, 0, "history.clear confirm:1" },
                 }, 6);
+            d->modeMenu = makeMenu_Widget(
+                as_Widget(d),
+                (iMenuItem[]){
+                    { delete_Icon " " uiTextCaution_ColorEscape "${history.clear}", 0, 0, "history.clear confirm:1" },
+                }, 1);
             break;
         }
         case identities_SidebarMode: {
@@ -569,21 +592,6 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 addActionButton_SidebarWidget_(d, add_Icon " ${sidebar.action.ident.new}", "ident.new", 0);
                 addActionButton_SidebarWidget_(d, "${sidebar.action.ident.import}", "ident.import", 0);
             }
-            /*
-            const iMenuItem menuItems[] = {
-                { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
-                { close_Icon " ${ident.stopuse}", 0, 0, "ident.use arg:0" },
-                { close_Icon " ${ident.stopuse.all}", 0, 0, "ident.use arg:0 clear:1" },
-                { "---", 0, 0, NULL },
-                { edit_Icon " ${menu.edit.notes}", 0, 0, "ident.edit" },
-                { "${ident.fingerprint}", 0, 0, "ident.fingerprint" },
-//                { "Pick Icon...", 0, 0, "ident.pickicon" },
-                { "---", 0, 0, NULL },
-                //{ "Reveal Files", 0, 0, "ident.reveal" },
-                { delete_Icon " " uiTextCaution_ColorEscape "${ident.delete}", 0, 0, "ident.delete confirm:1" },
-            };
-            d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
-            */
             break;
         }
         default:
@@ -850,7 +858,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     }
     setId_Widget(d->resizer, side == left_SidebarSide ? "sidebar.grab" : "sidebar2.grab");
     setBackgroundColor_Widget(d->resizer, none_ColorId);
-    d->menu = NULL;
+    d->menu     = NULL;
+    d->modeMenu = NULL;
     addAction_Widget(w, SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh");
     updateMetrics_SidebarWidget_(d);
     if (side == left_SidebarSide) {
@@ -1678,7 +1687,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
     }
-    if (ev->type == SDL_MOUSEMOTION && !isVisible_Widget(d->menu)) {
+    if (ev->type == SDL_MOUSEMOTION &&
+        (!isVisible_Widget(d->menu) && !isVisible_Widget(d->modeMenu))) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         if (contains_Widget(d->resizer, mouse)) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_SIZEWE);
@@ -1700,7 +1710,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             d->contextIndex = iInvalidPos;
         }
     }
-    if ((d->menu || d->mode == identities_SidebarMode )&& ev->type == SDL_MOUSEBUTTONDOWN) {
+    /* Update context menu items. */
+    if ((d->menu || d->mode == identities_SidebarMode) && ev->type == SDL_MOUSEBUTTONDOWN) {
         if (ev->button.button == SDL_BUTTON_RIGHT) {
             d->contextItem = NULL;
             if (!isVisible_Widget(d->menu)) {
@@ -1713,10 +1724,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     invalidateItem_ListWidget(d->list, d->contextIndex);
                 }
                 d->contextIndex = hoverItemIndex_ListWidget(d->list);
-                /* Update menu items. */
                 updateContextMenu_SidebarWidget_(d);                
                 /* TODO: Some callback-based mechanism would be nice for updating menus right
-                   before they open? */
+                   before they open? At least move these to `updateContextMenu_ */
                 if (d->mode == bookmarks_SidebarMode && d->contextItem) {
                     const iBookmark *bm = get_Bookmarks(bookmarks_App(), d->contextItem->id);
                     if (bm) {
@@ -1761,13 +1771,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                         (!cmdClear && cmdUse && isUsedOn_GmIdentity(ident, docUrl)) ||
                                         (!cmdClear && !cmdUse && !isUsedOn_GmIdentity(ident, docUrl)));
                             }
-                            /*
-                            else if (equal_Command(cmdItem, "ident.showuse")) {
-                                setFlags_Widget(as_Widget(menuItem),
-                                                disabled_WidgetFlag,
-                                                !isUsed_GmIdentity(ident));
-                            }
-                            */
                         }
                     }
                 }
@@ -1784,28 +1787,33 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
     }
     if (ev->type == SDL_MOUSEBUTTONDOWN &&
-        contains_Widget(as_Widget(d->list), init_I2(ev->button.x, ev->button.y)) &&
-        (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu))) {
-        /* Update the menu before opening. */
-        if (d->mode == bookmarks_SidebarMode && !isVisible_Widget(d->menu)) {
-            /* Remote bookmarks have limitations. */
-            const iSidebarItem *hoverItem = hoverItem_ListWidget(d->list);
-            iAssert(hoverItem);
-            const iBookmark *  bm              = get_Bookmarks(bookmarks_App(), hoverItem->id);
-            const iBool        isRemote        = hasTag_Bookmark(bm, remote_BookmarkTag);
-            static const char *localOnlyCmds[] = { "bookmark.edit",
-                                                   "bookmark.delete",
-                                                   "bookmark.tag tag:" subscribed_BookmarkTag,
-                                                   "bookmark.tag tag:" homepage_BookmarkTag,
-                                                   "bookmark.tag tag:" remoteSource_BookmarkTag,
-                                                   "bookmark.tag tag:" subscribed_BookmarkTag };
-            iForIndices(i, localOnlyCmds) {
-                setFlags_Widget(as_Widget(findMenuItem_Widget(d->menu, localOnlyCmds[i])),
-                                disabled_WidgetFlag,
-                                isRemote);
+        contains_Widget(as_Widget(d->list), init_I2(ev->button.x, ev->button.y))) {
+        if (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
+            /* Update the menu before opening. */
+            /* TODO: This kind of updating is already done above, and in `updateContextMenu_`... */
+            if (d->mode == bookmarks_SidebarMode && !isVisible_Widget(d->menu)) {
+                /* Remote bookmarks have limitations. */
+                const iSidebarItem *hoverItem = hoverItem_ListWidget(d->list);
+                iAssert(hoverItem);
+                const iBookmark *  bm              = get_Bookmarks(bookmarks_App(), hoverItem->id);
+                const iBool        isRemote        = hasTag_Bookmark(bm, remote_BookmarkTag);
+                static const char *localOnlyCmds[] = { "bookmark.edit",
+                                                       "bookmark.delete",
+                                                       "bookmark.tag tag:" subscribed_BookmarkTag,
+                                                       "bookmark.tag tag:" homepage_BookmarkTag,
+                                                       "bookmark.tag tag:" remoteSource_BookmarkTag,
+                                                       "bookmark.tag tag:" subscribed_BookmarkTag };
+                iForIndices(i, localOnlyCmds) {
+                    setFlags_Widget(as_Widget(findMenuItem_Widget(d->menu, localOnlyCmds[i])),
+                                    disabled_WidgetFlag,
+                                    isRemote);
+                }
             }
+            processContextMenuEvent_Widget(d->menu, ev, {});
         }
-        processContextMenuEvent_Widget(d->menu, ev, {});
+        else if (!constHoverItem_ListWidget(d->list) || isVisible_Widget(d->modeMenu)) {
+            processContextMenuEvent_Widget(d->modeMenu, ev, {});
+        }
     }
     return processEvent_Widget(w, ev);
 }

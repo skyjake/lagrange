@@ -16,6 +16,7 @@ New features:
 * Windows: Automatic updates using the WinSparkle library.
 
 Changes and enhancements:
+* Sidebar context menus also appear when clicking over the sidebar background. In this case the menu contains general functions not related to any item.
 * Feeds tab in the sidebar has a redesigned action toolbar with "Mark All as Read", and dropdown menu and keyboard shortcuts for changing the filter mode.
 * Feeds tab remembers the unread/all filter mode persistently.
 * ANSI foreground colors are modified to match colored theme backgrounds (e.g., Sepia).
