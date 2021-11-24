@@ -523,8 +523,21 @@ static int documentTopPad_DocumentWidget_(const iDocumentWidget *d) {
     return isEmpty_Banner(d->banner) ? 0 : lineHeight_Text(paragraph_FontId);
 }
 
+static int documentTopMargin_DocumentWidget_(const iDocumentWidget *d) {
+    return (isEmpty_Banner(d->banner) ? d->pageMargin * gap_UI : height_Banner(d->banner)) +
+           documentTopPad_DocumentWidget_(d);
+}
+
 static int pageHeight_DocumentWidget_(const iDocumentWidget *d) {
     return height_Banner(d->banner) + documentTopPad_DocumentWidget_(d) + size_GmDocument(d->doc).y;
+}
+
+static int footerButtonsHeight_DocumentWidget_(const iDocumentWidget *d) {
+    int height = height_Widget(d->footerButtons);
+//    if (height) {
+//        height += 3 * gap_UI; /* padding */
+//    }
+    return height;
 }
 
 static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
@@ -537,29 +550,34 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     rect.size.y = height_Rect(bounds) - margin;
     iBool wasCentered = iFalse;
     if (d->flags & centerVertically_DocumentWidgetFlag) {
-        const iInt2 docSize = addY_I2(size_GmDocument(d->doc),
-                                      iMax(height_Widget(d->footerButtons), height_Widget(d->phoneToolbar)));
+        const int docSize = size_GmDocument(d->doc).y +
+                            documentTopMargin_DocumentWidget_(d);
         if (size_GmDocument(d->doc).y == 0) {
+            /* Document is empty; maybe just showing an error banner. */
             rect.pos.y = top_Rect(bounds) + height_Rect(bounds) / 2 -
                 documentTopPad_DocumentWidget_(d) - height_Banner(d->banner) / 2;
             rect.size.y = 0;
             wasCentered = iTrue;
         }
-        else if (docSize.y < rect.size.y) {
-            /* Center vertically if page is short. */
-            int offset = iMax(0, height_Rect(bounds) / 2
-                              - documentTopPad_DocumentWidget_(d)
-                              - height_Banner(d->banner)
-                              - size_GmDocument(d->doc).y / 2);
-            rect.pos.y  = top_Rect(bounds) + offset;
-            rect.size.y = docSize.y;
+        else if (docSize < rect.size.y - footerButtonsHeight_DocumentWidget_(d)) {
+            /* TODO: Phone toolbar? */
+            /* Center vertically when the document is short. */
+            const int relMidY   = (height_Rect(bounds) - footerButtonsHeight_DocumentWidget_(d)) / 2;
+            const int visHeight = size_GmDocument(d->doc).y;
+            const int offset    = -height_Banner(d->banner) - documentTopPad_DocumentWidget_(d);
+            rect.pos.y  = top_Rect(bounds) + iMaxi(0, relMidY - visHeight / 2 + offset);
+            rect.size.y = size_GmDocument(d->doc).y + documentTopMargin_DocumentWidget_(d);
             wasCentered = iTrue;
         }
     }
-    if (!wasCentered && !isEmpty_Banner(d->banner)) {
-        /* The banner overtakes the top banner. */
-        rect.pos.y -= margin;
-        rect.size.y -= margin;
+    if (!wasCentered) {
+        /* The banner overtakes the top margin. */
+        if (!isEmpty_Banner(d->banner)) {
+            rect.pos.y -= margin;
+        }
+        else {
+            rect.size.y -= margin;
+        }
     }
     return rect;
 }
@@ -895,29 +913,22 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     /* Reposition the footer buttons as appropriate. */
     /* TODO: You can just position `footerButtons` here completely without having to get
        `Widget` involved with the offset in any way. */
+    setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax });
+    const int docSize = pageHeight_DocumentWidget_(d) + iMax(height_Widget(d->phoneToolbar),
+                                                             height_Widget(d->footerButtons));
+    const float scrollPos = pos_SmoothScroll(&d->scrollY);
+    setThumb_ScrollWidget(d->scroll,
+                          pos_SmoothScroll(&d->scrollY),
+                          docSize > 0 ? height_Rect(bounds) * size_Range(&visRange) / docSize : 0);
     if (d->footerButtons) {
         const iRect bounds    = bounds_Widget(as_Widget(d));
         const iRect docBounds = documentBounds_DocumentWidget_(d);
         const int   hPad      = (width_Rect(bounds) - iMin(120 * gap_UI, width_Rect(docBounds))) / 2;
         const int   vPad      = 3 * gap_UI;
-        setPadding_Widget(d->footerButtons, hPad, vPad, hPad, vPad);
-        d->footerButtons->animOffsetRef = (scrollMax > 0 ? &d->scrollY.pos : NULL);
-        if (scrollMax <= 0) {
-            d->footerButtons->animOffsetRef = NULL;
-            d->footerButtons->rect.pos.y = height_Rect(bounds) - height_Widget(d->footerButtons);
-        }
-        else {
-            d->footerButtons->animOffsetRef = &d->scrollY.pos;
-            d->footerButtons->rect.pos.y = pageHeight_DocumentWidget_(d) + 2 * gap_UI * d->pageMargin;
-//            + height_Widget(d->phoneToolbar);
-        }
+        setPadding_Widget(d->footerButtons, hPad, 0, hPad, vPad);
+        d->footerButtons->rect.pos.y = height_Rect(bounds) - height_Widget(d->footerButtons) +
+                                       (scrollMax > 0 ? scrollMax - scrollPos : 0);
     }
-    setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax });
-    const int docSize = pageHeight_DocumentWidget_(d) + iMax(height_Widget(d->phoneToolbar),
-                                                             height_Widget(d->footerButtons));
-    setThumb_ScrollWidget(d->scroll,
-                          pos_SmoothScroll(&d->scrollY),
-                          docSize > 0 ? height_Rect(bounds) * size_Range(&visRange) / docSize : 0);
     clear_PtrArray(&d->visibleLinks);
     clear_PtrArray(&d->visibleWideRuns);
     clear_PtrArray(&d->visiblePre);
@@ -5176,6 +5187,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             mut->flags &= ~refChildrenOffset_WidgetFlag;
         }
     }
+//    drawRect_Paint(&ctx.paint, docBounds, red_ColorId);
 }
 
 /*----------------------------------------------------------------------------------------------*/
