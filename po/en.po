@@ -167,7 +167,7 @@ msgid "menu.duptab"
 msgstr "Duplicate Tab"
 
 msgid "menu.split.merge"
-msgstr "Merge Tabs"
+msgstr "Unsplit"
 
 msgid "menu.split.swap"
 msgstr "Swap Sides"
