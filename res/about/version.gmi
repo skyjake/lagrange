@@ -10,19 +10,21 @@
 
 New features:
 * Choose parent folder when creating or editing a bookmark.
+* Support for ANSI background color escapes (disabled by default).
+* UI language for Turkish.
 * macOS: Automatic updates using the Sparkle framework.
 * Windows: Automatic updates using the WinSparkle library.
-* Added support for ANSI background color escapes (disabled by default).
-* Added UI language for Turkish.
 
 Changes and enhancements:
 * Feeds tab in the sidebar has a redesigned action toolbar with "Mark All as Read", and dropdown menu and keyboard shortcuts for changing the filter mode.
+* Feeds tab remembers the unread/all filter mode persistently.
 * ANSI foreground colors are modified to match colored theme backgrounds (e.g., Sepia).
 * Navigating back and forward in history will skip input query prompts (status 1x), showing only the query results. 
 * The resource bundle (resources.lgr) is now a regular ZIP archive. This allows it to do double duty as a fontpack containing the built-in fonts. The archive contains a version number to avoid use of obsolete resources.
 
 Fixes:
-* Handling duplicate feed entries: if multiple entries in a feed have the same URL, only use the first one.
+* Fixed layout issues related to footer action buttons. Sometimes the buttons would overlap page content.
+* Fixed handling duplicate feed entries: if multiple entries in a feed have the same URL, only use the first one.
 
 ## 1.8.3
 * Fixed clicking on UI elements that are over the page top banner. The banner would always get clicked instead.
