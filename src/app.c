@@ -2204,6 +2204,13 @@ iBool handleCommand_App(const char *cmd) {
             swapRoots_MainWindow(d->window);
             return iTrue;
         }
+        if (argLabel_Command(cmd, "focusother")) {
+            iWindow *baseWin = &d->window->base;
+            if (baseWin->roots[1]) {
+                baseWin->keyRoot =
+                    (baseWin->keyRoot == baseWin->roots[1] ? baseWin->roots[0] : baseWin->roots[1]);
+            }
+        }
         d->window->pendingSplitMode =
             (argLabel_Command(cmd, "axis") ? vertical_WindowSplit : 0) | (arg_Command(cmd) << 1);
         const char *url = suffixPtr_Command(cmd, "url");

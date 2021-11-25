@@ -635,10 +635,12 @@ static void updateNavBarSize_(iWidget *navBar) {
         iForIndices(k, lists) {
             iForEach(ObjectList, i, lists[k]) {
                 iWidget *child = as_Widget(i.object);
-                setFlags_Widget(child, tight_WidgetFlag, isNarrow);
-                if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                    iLabelWidget *label = i.object;
-                    updateSize_LabelWidget(label);
+                if (cmp_String(id_Widget(i.object), "navbar.unsplit")) {
+                    setFlags_Widget(child, tight_WidgetFlag, isNarrow);
+                    if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                        iLabelWidget *label = i.object;
+                        updateSize_LabelWidget(label);
+                    }
                 }
             }
         }
@@ -1023,6 +1025,16 @@ void updateMetrics_Root(iRoot *d) {
     postRefresh_App();
 }
 
+static void addUnsplitButton_(iWidget *navBar) {
+    iLabelWidget *unsplit = addChildFlags_Widget(
+        navBar,
+        iClob(newIcon_LabelWidget(close_Icon, 0, 0, "ui.split arg:0 focusother:1")),
+        collapse_WidgetFlag | frameless_WidgetFlag | tight_WidgetFlag | hidden_WidgetFlag);
+    setId_Widget(as_Widget(unsplit), "navbar.unsplit");
+    setTextColor_LabelWidget(unsplit, uiTextAction_ColorId);
+    updateSize_LabelWidget(unsplit);
+}
+
 void createUserInterface_Root(iRoot *d) {
     iWidget *root = d->widget = new_Widget();
     root->rect.size = get_Window()->size;
@@ -1101,6 +1113,9 @@ void createUserInterface_Root(iRoot *d) {
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, uiBackground_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
+#if defined (iPlatformApple)
+        addUnsplitButton_(navBar);
+#endif
         iWidget *navBack;
         setId_Widget(navBack = addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(forwardArrow_Icon, 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.forward");
@@ -1278,6 +1293,10 @@ void createUserInterface_Root(iRoot *d) {
 #   endif
         setAlignVisually_LabelWidget(navMenu, iTrue);
         setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
+#endif
+#if !defined (iPlatformApple)
+        /* On PC platforms, the close buttons are generally on the top right. */
+        addUnsplitButton_(navBar);
 #endif
     }
     /* Tab bar. */ {

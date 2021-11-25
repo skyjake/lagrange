@@ -1,4 +1,4 @@
-``` LAGRANGE
+```LAGRANGE
            __   __             __   ___
 |     /\  / _` |__)  /\  |\ | / _` |__
 |___ /~~\ \__> |  \ /~~\ | \| \__> |___
@@ -10,11 +10,12 @@
 
 New features:
 * Added a toolbar button for toggling the left sidebar.
+* Added an unsplit button in the toolbar when in split view mode.
 * Choose parent folder when creating or editing a bookmark.
 * Support for ANSI background color escapes (disabled by default).
-* UI language for Turkish.
 * macOS: Automatic updates using the Sparkle framework.
 * Windows: Automatic updates using the WinSparkle library.
+* UI language for Turkish.
 
 Changes and enhancements:
 * Adjusted font styles of heading levels 2 and 3.

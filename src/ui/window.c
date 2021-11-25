@@ -1491,6 +1491,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             }
             /* The last child is the [+] button for adding a tab. */
             moveTabButtonToEnd_Widget(findChild_Widget(docTabs, "newtab"));
+            setFlags_Widget(findWidget_Root("navbar.unsplit"), hidden_WidgetFlag, iTrue);
             iRelease(tabs);
             postCommandf_App("tabs.switch id:%s", cstr_String(id_Widget(constAs_Widget(curPage))));
         }
@@ -1539,6 +1540,11 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                 else {
                     postCommand_Root(w->roots[newRootIndex], "navigate.home");
                 }
+            }
+            /* Show unsplit buttons. */
+            for (int i = 0; i < 2; i++) {
+                setFlags_Widget(findChild_Widget(w->roots[i]->widget, "navbar.unsplit"),
+                                hidden_WidgetFlag, iFalse);
             }
             setCurrent_Root(NULL);
         }
