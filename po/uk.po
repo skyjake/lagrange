@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2021-11-25 16:30+0000\n"
-"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
+"Last-Translator: Andrij Mizyk <andmizyk@gmail.com>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
 "Language: uk\n"
@@ -24,7 +24,7 @@ msgid "media.untitled.image"
 msgstr "Зображення"
 
 msgid "media.untitled.audio"
-msgstr "Аудіо"
+msgstr "Звук"
 
 # Inline download status message.
 msgid "media.download.complete"
