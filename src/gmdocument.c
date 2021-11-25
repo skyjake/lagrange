@@ -215,8 +215,8 @@ static void initTheme_GmDocument_(iGmDocument *d) {
     theme->fonts[preformatted_GmLineType] = preformatted_FontId;
     theme->fonts[quote_GmLineType] = isMono ? monospaceParagraph_FontId : quote_FontId;
     theme->fonts[heading1_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentHuge_FontSize);
-    theme->fonts[heading2_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentLarge_FontSize);
-    theme->fonts[heading3_GmLineType] = FONT_ID(headingFont, regular_FontStyle, contentBig_FontSize);
+    theme->fonts[heading2_GmLineType] = FONT_ID(headingFont, regular_FontStyle, contentLarge_FontSize);
+    theme->fonts[heading3_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentBig_FontSize);
     theme->fonts[link_GmLineType] = FONT_ID(
         bodyFont,
         ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight)) ? semiBold_FontStyle

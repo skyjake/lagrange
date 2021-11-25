@@ -6,7 +6,7 @@
 ```
 # Release notes
 
-# 1.9
+## 1.9
 
 New features:
 * Added a toolbar button for toggling the left sidebar.
@@ -17,6 +17,7 @@ New features:
 * Windows: Automatic updates using the WinSparkle library.
 
 Changes and enhancements:
+* Adjusted font styles of heading levels 2 and 3.
 * Sidebar context menus also appear when clicking over the sidebar background. In this case the menu contains general functions not related to any item.
 * Feeds tab in the sidebar has a redesigned action toolbar with "Mark All as Read", and dropdown menu and keyboard shortcuts for changing the filter mode.
 * Feeds tab remembers the unread/all filter mode persistently.

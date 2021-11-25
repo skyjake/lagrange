@@ -4718,8 +4718,9 @@ static void updateSideIconBuf_DocumentWidget_(const iDocumentWidget *d) {
     iBool       isHeadingVisible = isSideHeadingVisible_DocumentWidget_(d);
     /* Determine the required size. */
     iInt2 bufSize = init1_I2(minBannerSize);
+    const int sideHeadingFont = FONT_ID(documentHeading_FontId, regular_FontStyle, contentBig_FontSize);
     if (isHeadingVisible) {
-        const iInt2 headingSize = measureWrapRange_Text(heading3_FontId, avail,
+        const iInt2 headingSize = measureWrapRange_Text(sideHeadingFont, avail,
                                                         currentHeading_DocumentWidget_(d)).bounds.size;
         if (headingSize.x > 0) {
             bufSize.y += gap_Text + headingSize.y;
@@ -4749,7 +4750,7 @@ static void updateSideIconBuf_DocumentWidget_(const iDocumentWidget *d) {
     if (isHeadingVisible) {
         iRangecc    text = currentHeading_DocumentWidget_(d);
         iInt2       pos  = addY_I2(bottomLeft_Rect(iconRect), gap_Text);
-        const int   font = heading3_FontId;
+        const int   font = sideHeadingFont;
         drawWrapRange_Text(font, pos, avail, tmBannerSideTitle_ColorId, text);
     }
     endTarget_Paint(&p);
