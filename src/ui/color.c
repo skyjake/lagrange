@@ -818,12 +818,27 @@ void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
             case 48: {
                 iColor *dst = (arg == 38 ? &fg : &bg);
                 /* Extended foreground color. */
+                /* TODO: Cleanup? More robust parsing? */
+                if (ch >= escapeSequence.end) break;
                 arg = strtoul(ch + 1, &endPtr, 10);
                 ch  = endPtr;
                 if (arg == 5) /* 8-bit palette */ {
-                    arg = strtoul(ch + 1, &endPtr, 10);
-                    ch  = endPtr;
+                    if (ch >= escapeSequence.end) break;
+                    arg  = strtoul(ch + 1, &endPtr, 10);
+                    ch   = endPtr;
                     *dst = ansi8BitColors_[iClamp(arg, 0, 255)];
+                }
+                else if (arg == 2) /* 24-bit RGB */ {
+                    int rgb[3] = { 0, 0, 0 };
+                    iForIndices(i, rgb) {
+                        if (ch >= escapeSequence.end) break;
+                        rgb[i] = strtoul(ch + 1, &endPtr, 10);
+                        ch = endPtr;
+                    }
+                    dst->r = iClamp(rgb[0], 0, 255);
+                    dst->g = iClamp(rgb[1], 0, 255);
+                    dst->b = iClamp(rgb[2], 0, 255);
+                    dst->a = 255;
                 }
                 break;
             }
