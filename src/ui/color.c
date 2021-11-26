@@ -460,6 +460,10 @@ iColor rgb_HSLColor(iHSLColor hsl) {
     return toColor_(init_F4(r, g, b, hsl.a));
 }
 
+float luma_Color(iColor color) {
+    return 0.299f * color.r / 255.0f + 0.587f * color.g / 255.0f + 0.114f * color.b / 255.0f;
+}
+
 const char *escape_Color(int color) {
     static const char *esc[] = {
         black_ColorEscape,
@@ -785,8 +789,14 @@ static const iColor ansi8BitColors_[256] = {
     { 255, 255, 255, 255 }
 };
 
-iColor ansiForeground_Color(iRangecc escapeSequence, int fallback) {
-    iColor clr = get_Color(fallback);
+void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
+                      iColor *fg_out, iColor *bg_out) {
+    if (!fg_out && !bg_out) {
+        return;
+    }
+    iColor fg, bg;
+    iZap(fg);
+    iZap(bg);
     for (const char *ch = escapeSequence.start; ch < escapeSequence.end; ch++) {
         char *endPtr;
         unsigned long arg = strtoul(ch, &endPtr, 10);
@@ -802,19 +812,52 @@ iColor ansiForeground_Color(iRangecc escapeSequence, int fallback) {
             case 35:
             case 36:
             case 37:
-                clr = ansi8BitColors_[arg - 30];
+                fg = ansi8BitColors_[arg - 30];
                 break;
-            case 38: {
+            case 38:
+            case 48: {
+                iColor *dst = (arg == 38 ? &fg : &bg);
                 /* Extended foreground color. */
+                /* TODO: Cleanup? More robust parsing? */
+                if (ch >= escapeSequence.end) break;
                 arg = strtoul(ch + 1, &endPtr, 10);
                 ch  = endPtr;
                 if (arg == 5) /* 8-bit palette */ {
-                    arg = strtoul(ch + 1, &endPtr, 10);
-                    ch  = endPtr;
-                    clr = ansi8BitColors_[iClamp(arg, 0, 255)];
+                    if (ch >= escapeSequence.end) break;
+                    arg  = strtoul(ch + 1, &endPtr, 10);
+                    ch   = endPtr;
+                    *dst = ansi8BitColors_[iClamp(arg, 0, 255)];
+                }
+                else if (arg == 2) /* 24-bit RGB */ {
+                    int rgb[3] = { 0, 0, 0 };
+                    iForIndices(i, rgb) {
+                        if (ch >= escapeSequence.end) break;
+                        rgb[i] = strtoul(ch + 1, &endPtr, 10);
+                        ch = endPtr;
+                    }
+                    dst->r = iClamp(rgb[0], 0, 255);
+                    dst->g = iClamp(rgb[1], 0, 255);
+                    dst->b = iClamp(rgb[2], 0, 255);
+                    dst->a = 255;
                 }
                 break;
             }
+            case 39:
+                fg = get_Color(fgDefault);
+                break;
+            case 40:
+            case 41:
+            case 42:
+            case 43:
+            case 44:
+            case 45:
+            case 46:
+            case 47:
+                bg = ansi8BitColors_[arg - 40];
+                break;
+            case 49:
+                bg = get_Color(bgDefault);
+                break;
             case 90:
             case 91:
             case 92:
@@ -823,17 +866,33 @@ iColor ansiForeground_Color(iRangecc escapeSequence, int fallback) {
             case 95:
             case 96:
             case 97:
-                clr = ansi8BitColors_[8 + arg - 90];
+                fg = ansi8BitColors_[8 + arg - 90];
                 break;
         }
     }
-    /* On light backgrounds, darken the colors to make them more legible. */
-    if (get_HSLColor(tmBackground_ColorId).lum > 0.5f) {
-        clr.r /= 2;
-        clr.g /= 2;
-        clr.b /= 2;
+    /* Ensure legibility if only the foreground color is set. */
+    if (fg.a) {
+        const iHSLColor themeBg = get_HSLColor(tmBackground_ColorId);
+        const float bgLuminance = luma_Color(get_Color(tmBackground_ColorId));
+        if (bgLuminance > 0.4f) {
+            float dim = (bgLuminance - 0.4f);
+            fg.r *= 0.5f * dim;
+            fg.g *= 0.5f * dim;
+            fg.b *= 0.5f * dim;
+        }
+        if (themeBg.sat > 0.15f && themeBg.lum >= 0.5f) {
+            iHSLColor fgHsl = hsl_Color(fg);
+            fgHsl.hue = themeBg.hue;
+            fgHsl.lum = themeBg.lum * 0.5f;
+            fg = rgb_HSLColor(fgHsl);
+        }
     }
-    return clr;
+    if (fg.a && fg_out) {
+        *fg_out = fg;
+    }
+    if (bg.a && bg_out) {
+        *bg_out = bg;
+    }
 }
 
 iBool loadPalette_Color(const char *path) {

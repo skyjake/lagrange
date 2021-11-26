@@ -143,7 +143,6 @@ struct Impl_Widget {
     iInt2        minSize;
     iWidget *    sizeRef;
     iWidget *    offsetRef;
-    const iAnim *animOffsetRef;
     int          padding[4]; /* left, top, right, bottom */
     iAnim        visualOffset;
     int          bgColor;

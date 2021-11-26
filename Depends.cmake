@@ -146,6 +146,32 @@ endif ()
 
 add_custom_target (ext-deps DEPENDS ${_dependsToBuild})
 
+if (ENABLE_SPARKLE)
+    # macOS only.
+    add_library (sparkle INTERFACE)
+    set (SPARKLE_FRAMEWORK ${SPARKLE_DIR}/Sparkle.framework)
+    target_link_libraries (sparkle INTERFACE ${SPARKLE_FRAMEWORK})
+    target_compile_definitions (sparkle INTERFACE LAGRANGE_ENABLE_SPARKLE=1)
+    message (STATUS "Using Sparkle: ${SPARKLE_FRAMEWORK}")
+    if (NOT SPARKLE_ARCH)
+        message (FATAL_ERROR "Set SPARKLE_ARCH to a CPU architecture ID (e.g., arm64)")
+    endif ()
+endif ()
+
+if (ENABLE_WINSPARKLE)
+    # Windows only.
+    add_library (winsparkle INTERFACE)
+    target_include_directories (winsparkle INTERFACE ${WINSPARKLE_DIR}/include)
+    set (WINSPARKLE_DLL ${WINSPARKLE_DIR}/x64/Release/WinSparkle.dll)
+    target_link_libraries (winsparkle INTERFACE ${WINSPARKLE_DLL})
+    target_compile_definitions (winsparkle INTERFACE LAGRANGE_ENABLE_WINSPARKLE=1)
+    install (
+        PROGRAMS ${WINSPARKLE_DLL}
+        DESTINATION .
+    )
+    message (STATUS "Using WinSparkle: ${WINSPARKLE_DLL}")
+endif ()
+
 find_package (PkgConfig REQUIRED)
 pkg_check_modules (SDL2 REQUIRED sdl2)
 pkg_check_modules (MPG123 IMPORTED_TARGET libmpg123)

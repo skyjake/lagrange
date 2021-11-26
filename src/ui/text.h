@@ -71,8 +71,8 @@ enum iFontId {
     preformattedSmall_FontId  = FONT_ID(monospace_FontId,         regular_FontStyle,  contentTiny_FontSize),
     quote_FontId              = FONT_ID(documentBody_FontId,      italic_FontStyle,   contentRegular_FontSize),
     heading1_FontId           = FONT_ID(documentHeading_FontId,   bold_FontStyle,     contentHuge_FontSize),
-    heading2_FontId           = FONT_ID(documentHeading_FontId,   bold_FontStyle,     contentLarge_FontSize),
-    heading3_FontId           = FONT_ID(documentHeading_FontId,   regular_FontStyle,  contentBig_FontSize),
+    heading2_FontId           = FONT_ID(documentHeading_FontId,   regular_FontStyle,  contentLarge_FontSize),
+    heading3_FontId           = FONT_ID(documentHeading_FontId,   bold_FontStyle,     contentBig_FontSize),
     banner_FontId             = FONT_ID(documentHeading_FontId,   light_FontStyle,    contentLarge_FontSize),
     monospaceParagraph_FontId = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentRegular_FontSize),
     monospaceBold_FontId      = FONT_ID(documentMonospace_FontId, semiBold_FontStyle, contentRegular_FontSize),
@@ -157,7 +157,7 @@ enum iAnsiFlag {
 };
 
 void    setOpacity_Text         (float opacity);
-void    setBaseAttributes_Text  (int fontId, int colorId); /* current "normal" text attributes */
+void    setBaseAttributes_Text  (int fontId, int fgColorId); /* current "normal" text attributes */
 void    setAnsiFlags_Text       (int ansiFlags);
 
 void    cache_Text              (int fontId, iRangecc text); /* pre-render glyphs */
@@ -187,7 +187,8 @@ iDeclareType(TextAttrib)
 /* Initial attributes at the start of a text string. These may be modified by control
    sequences inside a text run. */
 struct Impl_TextAttrib {
-    int16_t colorId;
+    int16_t fgColorId;
+    int16_t bgColorId;
     struct {
         uint16_t bold      : 1;
         uint16_t italic    : 1;

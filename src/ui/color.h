@@ -233,6 +233,7 @@ struct Impl_HSLColor {
 
 iHSLColor       hsl_Color       (iColor);
 iColor          rgb_HSLColor    (iHSLColor);
+float           luma_Color      (iColor);
 
 iHSLColor       setSat_HSLColor     (iHSLColor, float sat);
 iHSLColor       setLum_HSLColor     (iHSLColor, float lum);
@@ -255,7 +256,8 @@ iLocalDef void setHsl_Color(int color, iHSLColor hsl) {
 iBool           loadPalette_Color       (const char *path);
 void            setThemePalette_Color   (enum iColorTheme theme);
 
-iColor          ansiForeground_Color    (iRangecc escapeSequence, int fallback);
+void            ansiColors_Color        (iRangecc escapeSequence, int fgDefault, int bgDefault,
+                                         iColor *fg_out, iColor *bg_out); /* can be NULL */
 const char *    escape_Color            (int color);
 enum iColorId   parseEscape_Color       (const char *cstr, const char **endp);
 

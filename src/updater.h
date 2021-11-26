@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -20,29 +20,9 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* bincat.c: Tiny tool for concatenating binary files */
+#pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
+void    init_Updater        (void);
+void    deinit_Updater      (void);
 
-int main(int argc, char *argv[]) {
-    const size_t bufSize = 1024 * 256;
-    char *buf = malloc(bufSize);
-    FILE *out = fopen(argv[1], "wb");
-    int i;
-    for (i = 2; i < argc; ++i) {
-        FILE *f = fopen(argv[i], "rb");
-        size_t fileSize = 0;
-        for (;;) {
-            size_t num = fread(buf, 1, bufSize, f);
-            if (num <= 0) break;
-            fileSize += num;
-            fwrite(buf, 1, num, out); 
-        }
-        fclose(f);
-        printf("%zu;", fileSize);
-    }
-    fclose(out);
-    free(buf);
-    return 0;
-}
+void    checkNow_Updater    (void);

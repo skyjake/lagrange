@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "bookmarks.h"
 #include "defs.h"
-#include "embedded.h"
+#include "resources.h"
 #include "feeds.h"
 #include "mimehooks.h"
 #include "gmcerts.h"
@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ipc.h"
 #include "periodic.h"
 #include "sitespec.h"
+#include "updater.h"
 #include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
@@ -93,17 +94,14 @@ static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange"
 #endif
 #if defined (iPlatformLinux) || defined (iPlatformOther)
 #define EMB_BIN  "../../share/lagrange/resources.lgr"
+#define EMB_BIN2  "../../../share/lagrange/resources.lgr"
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
 #if defined (iPlatformHaiku)
 #define EMB_BIN "./resources.lgr"
 static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
 #endif
-#if defined (LAGRANGE_EMB_BIN) /* specified in build config */
-#  undef EMB_BIN
-#  define EMB_BIN LAGRANGE_EMB_BIN
-#endif
-#define EMB_BIN2 "../resources.lgr" /* fallback from build/executable dir */
+#define EMB_BIN_EXEC "../resources.lgr" /* fallback from build/executable dir */
 static const char *prefsFileName_App_      = "prefs.cfg";
 static const char *oldStateFileName_App_   = "state.binary";
 static const char *stateFileName_App_      = "state.lgr";
@@ -490,7 +488,13 @@ static iBool loadState_App_(iApp *d) {
                     setClosedFolders_SidebarWidget(sidebar, closedFolders[0]);
                     setClosedFolders_SidebarWidget(sidebar2, closedFolders[1]);
                     postCommandf_Root(root, "sidebar.mode arg:%u", modes & 0xf);
-                    postCommandf_Root(root, "sidebar2.mode arg:%u", modes >> 4);
+                    postCommandf_Root(root, "sidebar2.mode arg:%u", (modes >> 4) & 0xf);
+                    if (flags & 4) {
+                        postCommand_Widget(sidebar, "feeds.mode arg:%d", unread_FeedsMode);
+                    }
+                    if (flags & 8) {
+                        postCommand_Widget(sidebar2, "feeds.mode arg:%d", unread_FeedsMode);
+                    }
                     if (deviceType_App() != phone_AppDeviceType) {
                         setWidth_SidebarWidget(sidebar,  widths[0]);
                         setWidth_SidebarWidget(sidebar2, widths[1]);
@@ -565,7 +569,9 @@ static void saveState_App_(const iApp *d) {
                     const iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
                     writeU16_File(f, i |
                                   (isVisible_Widget(sidebar)  ? 0x100 : 0) |
-                                  (isVisible_Widget(sidebar2) ? 0x200 : 0));
+                                  (isVisible_Widget(sidebar2) ? 0x200 : 0) |
+                                  (feedsMode_SidebarWidget(sidebar)  == unread_FeedsMode ? 0x400 : 0) |
+                                  (feedsMode_SidebarWidget(sidebar2) == unread_FeedsMode ? 0x800 : 0));
                     writeU8_File(f,
                                  mode_SidebarWidget(sidebar) |
                                  (mode_SidebarWidget(sidebar2) << 4));
@@ -711,19 +717,32 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
         SDL_free(exec);
     }
-#if defined (iHaveLoadEmbed)
     /* Load the resources from a file. Check the executable directory first, then a
        system-wide location, and as a final fallback, the current working directory. */ {
-        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
-            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
-                if (!load_Embed("resources.lgr")) {
-                    fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
-                    exit(-1);
-                }
+        const char *execPath = cstr_String(execPath_App());
+        const char *paths[] = {
+            concatPath_CStr(execPath, EMB_BIN_EXEC), /* first the executable's directory */
+#if defined (LAGRANGE_EMB_BIN) /* specified in build config (absolute path) */
+            LAGRANGE_EMB_BIN,
+#endif
+#if defined (EMB_BIN2) /* alternative location */
+            concatPath_CStr(execPath, EMB_BIN2),
+#endif
+            concatPath_CStr(execPath, EMB_BIN),
+            "resources.lgr" /* cwd */
+        };
+        iBool wasLoaded = iFalse;
+        iForIndices(i, paths) {
+            if (init_Resources(paths[i])) {
+                wasLoaded = iTrue;
+                break;
             }
         }
+        if (!wasLoaded) {
+            fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
+            exit(-1);
+        }
     }
-#endif
     init_Lang();
     /* Configure the valid command line options. */ {
         defineValues_CommandLine(&d->args, "close-tab", 0);
@@ -742,7 +761,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     iStringList *openCmds = new_StringList();
     /* Handle command line options. */ {
         if (contains_CommandLine(&d->args, "help")) {
-            puts(cstr_Block(&blobArghelp_Embedded));
+            puts(cstr_Block(&blobArghelp_Resources));
             terminate_App_(0);
         }
         if (contains_CommandLine(&d->args, "version;V")) {
@@ -2185,6 +2204,13 @@ iBool handleCommand_App(const char *cmd) {
             swapRoots_MainWindow(d->window);
             return iTrue;
         }
+        if (argLabel_Command(cmd, "focusother")) {
+            iWindow *baseWin = &d->window->base;
+            if (baseWin->roots[1]) {
+                baseWin->keyRoot =
+                    (baseWin->keyRoot == baseWin->roots[1] ? baseWin->roots[0] : baseWin->roots[1]);
+            }
+        }
         d->window->pendingSplitMode =
             (argLabel_Command(cmd, "axis") ? vertical_WindowSplit : 0) | (arg_Command(cmd) << 1);
         const char *url = suffixPtr_Command(cmd, "url");
@@ -2444,6 +2470,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "prefs.gemtext.ansi.fg.changed")) {
         iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFg_AnsiFlag, arg_Command(cmd));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.gemtext.ansi.bg.changed")) {
+        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowBg_AnsiFlag, arg_Command(cmd));
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.gemtext.ansi.fontstyle.changed")) {
@@ -2892,6 +2922,8 @@ iBool handleCommand_App(const char *cmd) {
                         d->prefs.boldLinkLight);
         setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fg"),
                          d->prefs.gemtextAnsiEscapes & allowFg_AnsiFlag);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.bg"),
+                         d->prefs.gemtextAnsiEscapes & allowBg_AnsiFlag);
         setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fontstyle"),
                          d->prefs.gemtextAnsiEscapes & allowFontStyle_AnsiFlag);
         setToggle_Widget(findChild_Widget(dlg, "prefs.font.smooth"), d->prefs.fontSmoothing);
@@ -3005,6 +3037,7 @@ iBool handleCommand_App(const char *cmd) {
                 get_Bookmarks(d->bookmarks, id)->parentId = parentId;
             }
             postCommandf_App("bookmarks.changed added:%zu", id);
+            setRecentFolder_Bookmarks(d->bookmarks, id);
         }
         else {
             iWidget *dlg = makeValueInput_Widget(
@@ -3126,6 +3159,10 @@ iBool handleCommand_App(const char *cmd) {
                                     : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
         }
         return iFalse;
+    }
+    else if (equal_Command(cmd, "updater.check")) {
+        checkNow_Updater();
+        return iTrue;
     }
     else if (equal_Command(cmd, "fontpack.enable")) {
         const iString *packId = collect_String(suffix_Command(cmd, "id"));

@@ -126,7 +126,6 @@ void init_Widget(iWidget *d) {
     d->minSize        = zero_I2();
     d->sizeRef        = NULL;
     d->offsetRef      = NULL;
-    d->animOffsetRef  = NULL;
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
     init_Anim(&d->visualOffset, 0.0f);
@@ -890,9 +889,6 @@ static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
             pos->y += off;
         }
     }
-    if (d->animOffsetRef) {
-        pos->y -= value_Anim(d->animOffsetRef);
-    }
     if (d->flags & refChildrenOffset_WidgetFlag) {
         pos->x += visualOffsetByReference_Widget(d);
     }
@@ -955,12 +951,6 @@ iBool containsExpanded_Widget(const iWidget *d, iInt2 windowCoord, int expand) {
         addY_I2(d->rect.size,
                 d->flags & drawBackgroundToBottom_WidgetFlag ? size_Root(d->root).y : 0)
     };
-    /* Apply the animated offset. (Visual offsets don't affect interaction.) */
-    for (const iWidget *w = d; w; w = w->parent) {
-        if (w->animOffsetRef) {
-            windowCoord.y += value_Anim(w->animOffsetRef);
-        }
-    }
     return contains_Rect(expand ? expanded_Rect(bounds, init1_I2(expand)) : bounds,
                          windowToInner_Widget(d, windowCoord));
 }

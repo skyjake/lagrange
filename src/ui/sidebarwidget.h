@@ -56,5 +56,6 @@ iBool               setButtonFont_SidebarWidget (iSidebarWidget *, int font);
 void                setClosedFolders_SidebarWidget  (iSidebarWidget *, const iIntSet *closedFolders);
 
 enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
+enum iFeedsMode     feedsMode_SidebarWidget     (const iSidebarWidget *);
 float               width_SidebarWidget         (const iSidebarWidget *);
 const iIntSet *     closedFolders_SidebarWidget (const iSidebarWidget *);

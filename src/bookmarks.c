@@ -96,7 +96,8 @@ struct Impl_Bookmarks {
     iMutex *  mtx;
     int       idEnum;
     iHash     bookmarks; /* bookmark ID is the hash key */
-    iPtrArray remoteRequests;
+    uint32_t  recentFolderId; /* recently interacted with */
+    iPtrArray remoteRequests;   
 };
 
 iDefineTypeConstruction(Bookmarks)
@@ -105,6 +106,7 @@ void init_Bookmarks(iBookmarks *d) {
     d->mtx = new_Mutex();
     d->idEnum = 0;
     init_Hash(&d->bookmarks);
+    d->recentFolderId = 0;
     init_PtrArray(&d->remoteRequests);
 }
 
@@ -232,6 +234,9 @@ static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, 
             bm->order = tv->value.int64;
         }
     }
+    else if (!cmp_String(key, "recentfolder") && tv->type == int64_TomlType) {
+        d->bookmarks->recentFolderId = tv->value.int64;
+    }
 }
 
 static void init_BookmarkLoader(iBookmarkLoader *d, iBookmarks *bookmarks) {
@@ -289,8 +294,10 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     lock_Mutex(d->mtx);
     iRegExp *remotePattern = iClob(new_RegExp("\\bremote\\b", caseSensitive_RegExpOption));
     iFile *f = newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_));
-    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
+    if (open_File(f, writeOnly_FileMode | text_FileMode)) {        
         iString *str = collectNew_String();
+        format_String(str, "recentfolder = %u\n\n", d->recentFolderId);
+        writeData_File(f, cstr_String(str), size_String(str));
         iConstForEach(Hash, i, &d->bookmarks) {
             const iBookmark *bm = (const iBookmark *) i.value;
             iRegExpMatch m;
@@ -299,6 +306,7 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
                 /* Remote bookmarks are not saved. */
                 continue;
             }
+            iBeginCollect();
             format_String(str,
                           "[%d]\n"
                           "url = \"%s\"\n"
@@ -321,7 +329,8 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
             }
             appendCStr_String(str, "\n");
             writeData_File(f, cstr_String(str), size_String(str));
-        }
+            iEndCollect();
+        }        
     }
     iRelease(f);
     unlock_Mutex(d->mtx);
@@ -399,6 +408,16 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
     return changed;
 }
 
+void setRecentFolder_Bookmarks(iBookmarks *d, uint32_t folderId) {
+    iBookmark *bm = get_Bookmarks(d, folderId);
+    if (isFolder_Bookmark(bm)) {
+        d->recentFolderId = folderId;
+    }
+    else {
+        d->recentFolderId = 0;
+    }
+}
+
 iChar siteIcon_Bookmarks(const iBookmarks *d, const iString *url) {
     if (isEmpty_String(url)) {
         return 0;
@@ -464,6 +483,10 @@ uint32_t findUrl_Bookmarks(const iBookmarks *d, const iString *url) {
     const iPtrArray *found = list_Bookmarks(d, NULL, matchUrl_, (void *) url);
     if (isEmpty_PtrArray(found)) return 0;
     return id_Bookmark(constFront_PtrArray(found));
+}
+
+uint32_t recentFolder_Bookmarks(const iBookmarks *d) {
+    return d->recentFolderId;
 }
 
 const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,

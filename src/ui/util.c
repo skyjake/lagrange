@@ -2181,6 +2181,14 @@ size_t findWidestLabel_MenuItem(const iMenuItem *items, size_t num) {
     return widestPos;
 }
 
+const char *widestLabel_MenuItemArray(const iArray *items) {
+    size_t index = findWidestLabel_MenuItem(constData_Array(items), size_Array(items));
+    if (index == iInvalidPos) {
+        return "";
+    }
+    return constValue_Array(items, index, iMenuItem).label;
+}
+
 iChar removeIconPrefix_String(iString *d) {
     if (isEmpty_String(d)) {
         return 0;
@@ -2229,6 +2237,7 @@ iWidget *makePreferences_Widget(void) {
                                     { u8"Slovak - sk", 0, 0, "uilang id:sk" },
                                     { u8"Српски - sr", 0, 0, "uilang id:sr" },
                                     { u8"Toki pona - tok", 0, 0, "uilang id:tok" },
+                                    { u8"Türkçe - tr", 0, 0, "uilang id:tr" },
                                     { u8"Українська - uk", 0, 0, "uilang id:uk" },
                                     { u8"简体中文 - zh", 0, 0, "uilang id:zh_Hans" },
                                     { u8"繁體/正體中文 - zh", 0, 0, "uilang id:zh_Hant" },
@@ -2648,6 +2657,11 @@ iWidget *makePreferences_Widget(void) {
                 setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
                 updateSize_LabelWidget((iLabelWidget *) tog);
                 setTextCStr_LabelWidget(
+                    addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.bg"))),
+                    "${prefs.gemtext.ansi.bg}");
+                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget((iLabelWidget *) tog);
+                setTextCStr_LabelWidget(
                     addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.fontstyle"))),
                     "${prefs.gemtext.ansi.fontstyle}");
                 setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
@@ -2772,9 +2786,38 @@ iWidget *makePreferences_Widget(void) {
     return dlg;
 }
 
+static iBool isBookmarkFolder_(void *context, const iBookmark *bm) {
+    iUnused(context);
+    return isFolder_Bookmark(bm);
+}
+
+static const iArray *makeBookmarkFolderItems_(void) {
+    iArray *folders = new_Array(sizeof(iMenuItem));
+    pushBack_Array(folders, &(iMenuItem){ "\u2014", 0, 0, "dlg.bookmark.setfolder arg:0" });
+    iConstForEach(
+        PtrArray,
+        i,
+        list_Bookmarks(bookmarks_App(), cmpTree_Bookmark, isBookmarkFolder_, NULL)) {
+        const iBookmark *bm = i.ptr;
+        iString *title = collect_String(copy_String(&bm->title));
+        for (const iBookmark *j = bm; j && j->parentId; ) {
+            j = get_Bookmarks(bookmarks_App(), j->parentId);
+            prependCStr_String(title, " > ");
+            prepend_String(title, &j->title);
+        }
+        pushBack_Array(
+            folders,
+            &(iMenuItem){ cstr_String(title),
+                          0,
+                          0,
+                          format_CStr("dlg.bookmark.setfolder arg:%u", id_Bookmark(bm)) });
+    }
+    return collect_Array(folders); 
+}
+
 iWidget *makeBookmarkEditor_Widget(void) {
     const iMenuItem actions[] = {
-        { "${cancel}" },
+        { "${cancel}", 0, 0, "bmed.cancel" },
         { uiTextCaution_ColorEscape "${dlg.bookmark.save}", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept" }
     };
     if (isUsingPanelLayout_Mobile()) {
@@ -2808,6 +2851,19 @@ iWidget *makeBookmarkEditor_Widget(void) {
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.title}", "bmed.title", iClob(inputs[0] = new_InputWidget(0)));
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.url}",   "bmed.url",   iClob(inputs[1] = new_InputWidget(0)));
     setUrlContent_InputWidget(inputs[1], iTrue);
+    /* Folder to add to. */ {
+        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.folder}")));
+        const iArray *folderItems = makeBookmarkFolderItems_();
+        iLabelWidget *folderButton;
+        setId_Widget(addChildFlags_Widget(values,
+                                     iClob(folderButton = makeMenuButton_LabelWidget(
+                                               widestLabel_MenuItemArray(folderItems),
+                                               constData_Array(folderItems),
+                                               size_Array(folderItems))), alignLeft_WidgetFlag),
+                     "bmed.folder");
+        updateDropdownSelection_LabelWidget(
+            folderButton, format_CStr(" arg:%u", recentFolder_Bookmarks(bookmarks_App())));        
+    }
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.tags}",  "bmed.tags",  iClob(inputs[2] = new_InputWidget(0)));
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));
     /* Buttons for special tags. */
@@ -2830,12 +2886,23 @@ iWidget *makeBookmarkEditor_Widget(void) {
     return dlg;
 }
 
+void setBookmarkEditorFolder_Widget(iWidget *editor, uint32_t folderId) {
+    iLabelWidget *button = findChild_Widget(editor, "bmed.folder");
+    updateDropdownSelection_LabelWidget(button, format_CStr(" arg:%u", folderId));
+    setUserData_Object(button, get_Bookmarks(bookmarks_App(), folderId));    
+}
+
 static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
-    if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
+    if (equal_Command(cmd, "dlg.bookmark.setfolder")) {
+        setBookmarkEditorFolder_Widget(editor, arg_Command(cmd));
+        return iTrue;
+    }
+    if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "bmed.cancel")) {
         if (equal_Command(cmd, "bmed.accept")) {
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
+            const iBookmark *folder = userData_Object(findChild_Widget(editor, "bmed.folder"));
             const iString *icon  = collect_String(trimmed_String(text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
             const uint32_t id    = add_Bookmarks(bookmarks_App(), url, title, tags, first_String(icon));
             iBookmark *    bm    = get_Bookmarks(bookmarks_App(), id);
@@ -2851,6 +2918,8 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit"))) {
                 addTag_Bookmark(bm, linkSplit_BookmarkTag);
             }
+            bm->parentId = folder ? id_Bookmark(folder) : 0;
+            setRecentFolder_Bookmarks(bookmarks_App(), bm->parentId);
             postCommandf_App("bookmarks.changed added:%zu", id);
         }
         setupSheetTransition_Mobile(editor, iFalse);

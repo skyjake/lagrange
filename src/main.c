@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
+#include "updater.h"
 
 #if defined (iPlatformAppleDesktop)
 #  include "macos.h"
@@ -82,11 +83,13 @@ int main(int argc, char **argv) {
     if (SDL_Init(SDL_INIT_AUDIO)) {
         fprintf(stderr, "[SDL] audio init failed: %s\n", SDL_GetError());
     }
+    init_Updater();
     run_App(argc, argv);
     SDL_Quit();
 #if defined (LAGRANGE_ENABLE_MPG123)
     mpg123_exit();
 #endif
+    deinit_Updater();
     deinit_Foundation();
     return 0;
 }

@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "command.h"
 #include "defs.h"
-#include "embedded.h"
+#include "resources.h"
 #include "keys.h"
 #include "labelwidget.h"
 #include "documentwidget.h"
@@ -68,6 +68,7 @@ static float initialUiScale_ = 1.1f;
 #endif
 
 static iBool isOpenGLRenderer_;
+static iBool isDrawing_;
 
 iDefineTypeConstructionArgs(Window,
                             (enum iWindowType type, iRect rect, uint32_t flags),
@@ -244,7 +245,9 @@ static void updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
 }
 
 void drawWhileResizing_MainWindow(iMainWindow *d, int w, int h) {
-    draw_MainWindow(d);
+    if (!isDrawing_) {
+        draw_MainWindow(d);
+    }
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
@@ -583,7 +586,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #if defined (iPlatformLinux)
     SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
     /* Load the window icon. */ {
-        SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, 0);
+        SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, 0);
         SDL_SetWindowIcon(d->base.win, surf);
         free(surf->pixels);
         SDL_FreeSurface(surf);
@@ -597,7 +600,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     setupUserInterface_MainWindow(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
     /* Load the border shadow texture. */ {
-        SDL_Surface *surf = loadImage_(&imageShadow_Embedded, 0);
+        SDL_Surface *surf = loadImage_(&imageShadow_Resources, 0);
         d->base.borderShadow = SDL_CreateTextureFromSurface(d->base.render, surf);
         SDL_SetTextureBlendMode(d->base.borderShadow, SDL_BLENDMODE_BLEND);
         free(surf->pixels);
@@ -607,7 +610,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Load the app icon for drawing in the title bar. */
     if (prefs_App()->customFrame) {
-        SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, appIconSize_Root());
+        SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, appIconSize_Root());
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         d->appIcon = SDL_CreateTextureFromSurface(d->base.render, surf);
         free(surf->pixels);
@@ -1183,9 +1186,10 @@ iBool postContextClick_Window(iWindow *d, const SDL_MouseButtonEvent *ev) {
 }
 
 void draw_Window(iWindow *d) {
-    if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
+    if (isDrawing_ || SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
         return;
     }
+    isDrawing_ = iTrue;
     iPaint p;
     init_Paint(&p);
     iRoot *root = d->roots[0];
@@ -1208,14 +1212,20 @@ void draw_Window(iWindow *d) {
                             uiBackgroundSelected_ColorId);
     setCurrent_Root(NULL);
     SDL_RenderPresent(d->render);
+    isDrawing_ = iFalse;
 }
 
 void draw_MainWindow(iMainWindow *d) {
+    if (isDrawing_) {
+        /* Already drawing! */
+        return;
+    }
     /* TODO: Try to make this a specialization of `draw_Window`? */
     iWindow *w = as_Window(d);
     if (d->isDrawFrozen) {
         return;
     }
+    isDrawing_ = iTrue;
     setCurrent_Text(d->base.text);
     /* Check if root needs resizing. */ {
         iInt2 renderSize;
@@ -1312,6 +1322,7 @@ void draw_MainWindow(iMainWindow *d) {
     }
 #endif
     SDL_RenderPresent(w->render);
+    isDrawing_ = iFalse;
 }
 
 void resize_MainWindow(iMainWindow *d, int w, int h) {
@@ -1480,6 +1491,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             }
             /* The last child is the [+] button for adding a tab. */
             moveTabButtonToEnd_Widget(findChild_Widget(docTabs, "newtab"));
+            setFlags_Widget(findWidget_Root("navbar.unsplit"), hidden_WidgetFlag, iTrue);
             iRelease(tabs);
             postCommandf_App("tabs.switch id:%s", cstr_String(id_Widget(constAs_Widget(curPage))));
         }
@@ -1528,6 +1540,11 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                 else {
                     postCommand_Root(w->roots[newRootIndex], "navigate.home");
                 }
+            }
+            /* Show unsplit buttons. */
+            for (int i = 0; i < 2; i++) {
+                setFlags_Widget(findChild_Widget(w->roots[i]->widget, "navbar.unsplit"),
+                                hidden_WidgetFlag, iFalse);
             }
             setCurrent_Root(NULL);
         }

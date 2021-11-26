@@ -215,8 +215,8 @@ static void initTheme_GmDocument_(iGmDocument *d) {
     theme->fonts[preformatted_GmLineType] = preformatted_FontId;
     theme->fonts[quote_GmLineType] = isMono ? monospaceParagraph_FontId : quote_FontId;
     theme->fonts[heading1_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentHuge_FontSize);
-    theme->fonts[heading2_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentLarge_FontSize);
-    theme->fonts[heading3_GmLineType] = FONT_ID(headingFont, regular_FontStyle, contentBig_FontSize);
+    theme->fonts[heading2_GmLineType] = FONT_ID(headingFont, regular_FontStyle, contentLarge_FontSize);
+    theme->fonts[heading3_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentBig_FontSize);
     theme->fonts[link_GmLineType] = FONT_ID(
         bodyFont,
         ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight)) ? semiBold_FontStyle
@@ -306,8 +306,10 @@ static iBool isAllowedLinkIcon_Char_(iChar icon) {
     }
     return isPictograph_Char(icon) || isEmoji_Char(icon) ||
            /* TODO: Add range(s) of 0x2nnn symbols. */
-           icon == 0x2139 /* info */ || icon == 0x2191 /* up arrow */ ||
-           icon == 0x2022 /* bullet */ || icon == 0x2a2f /* close X */ || icon == 0x2b50;
+           icon == 0x2022 /* bullet */ || 
+           icon == 0x2139 /* info */ ||
+           (icon >= 0x2190 && icon <= 0x21ff /* arrows */) ||
+           icon == 0x2a2f /* close X */ || icon == 0x2b50;
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
@@ -2101,7 +2103,7 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     set_String(&d->unormSource, source);
     set_String(&d->source, source);
     /* Detect use of ANSI escapes. */ {
-        iRegExp *ansiEsc = new_RegExp("\x1b[[()]([0-9;AB]*?)m", 0);
+        iRegExp *ansiEsc = new_RegExp("\x1b[[()]([0-9;AB]*?)[ABCDEFGHJKSTfimn]", 0);
         iRegExpMatch m;
         init_RegExpMatch(&m);
         const iBool found = matchString_RegExp(ansiEsc, &d->unormSource, &m);
@@ -2125,6 +2127,7 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     else {
         d->theme.ansiEscapes = allowAll_AnsiFlag;
     }
+    d->theme.ansiEscapes |= allowBg_AnsiFlag; /* TODO: add setting */
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
     }

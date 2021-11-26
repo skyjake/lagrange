@@ -100,12 +100,14 @@ iBool       remove_Bookmarks            (iBookmarks *, uint32_t id);
 iBookmark * get_Bookmarks               (iBookmarks *, uint32_t id);
 void        reorder_Bookmarks           (iBookmarks *, uint32_t id, int newOrder);
 iBool       updateBookmarkIcon_Bookmarks(iBookmarks *, const iString *url, iChar icon);
+void        setRecentFolder_Bookmarks   (iBookmarks *, uint32_t folderId);
 void        sort_Bookmarks              (iBookmarks *, uint32_t parentId, iBookmarksCompareFunc cmp);
 void        fetchRemote_Bookmarks       (iBookmarks *);
 void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
 
 iChar       siteIcon_Bookmarks          (const iBookmarks *, const iString *url);
 uint32_t    findUrl_Bookmarks           (const iBookmarks *, const iString *url); /* O(n) */
+uint32_t    recentFolder_Bookmarks      (const iBookmarks *);
 
 iBool   filterTagsRegExp_Bookmarks      (void *regExp, const iBookmark *);
 

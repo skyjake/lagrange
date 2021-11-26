@@ -35,10 +35,10 @@ On openSUSE Tumbleweed:
 
 You need a POSIX-compatible environment to compile Lagrange.
 
-The required tools are a C11 compiler (e.g., Clang or GCC), CMake and `pkg-config`. Additional tools are required for the optional compilation of HarfBuzz and GNU FriBidi (see next section for details).
+The required tools are a C11 compiler (e.g., Clang or GCC), CMake, `pkg-config`, and `zip`. Additional tools are required for the optional compilation of HarfBuzz and GNU FriBidi (see next section for details).
 
 1. Download and extract a source tarball from [Releases][rel]. Please note that the GitHub/Gitea-generated tarballs do not contain HarfBuzz, GNU FriBidi, or [the_Foundation](https://git.skyjake.fi/skyjake/the_Foundation) submodules; check which tarball you are getting. Alternatively, you may also clone the repository and its submodules: `git clone --recursive --branch release https://git.skyjake.fi/gemini/lagrange`
-2. Check that you have the recommended build tools and dependencies installed: CMake, SDL 2, OpenSSL 1.1.1, libpcre, libunistring, GNU FriBidi, and zlib. For example, on macOS this would do the trick (using Homebrew): ```brew install cmake sdl2 openssl@1.1 pcre libunistring fribidi``` Or on Ubuntu: ```sudo apt install cmake libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libfribidi-dev```
+2. Check that you have the recommended build tools and dependencies installed: SDL 2, OpenSSL 1.1.1, libpcre, libunistring, GNU FriBidi, and zlib. For example, on macOS this would do the trick (using Homebrew): ```brew install cmake sdl2 openssl@1.1 pcre libunistring fribidi``` Or on Ubuntu: ```sudo apt install cmake zip libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libfribidi-dev```
 3. Optionally, install the mpg123 decoder library for MPEG audio support. For example, the macOS Homebrew package is `mpg123` and on Ubuntu it is `libmpg123-dev`.
 4. Create a build directory.
 5. In your empty build directory, run CMake: ```cmake {path_of_lagrange_sources} -DCMAKE_BUILD_TYPE=Release```

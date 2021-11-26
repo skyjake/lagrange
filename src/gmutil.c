@@ -301,6 +301,10 @@ void urlEncodePath_String(iString *d) {
         return;
     }
     if (isEmpty_Range(&url.path)) {
+        if (equalCase_Rangecc(url.scheme, "gemini") && url.path.start) {            
+            /* Normalize to "/" as per specification (November 2021 update). */
+            insertData_Block(&d->chars, url.path.start - constBegin_String(d), "/", 1);
+        }        
         return;
     }
     iString *encoded = new_String();

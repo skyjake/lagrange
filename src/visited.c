@@ -46,7 +46,7 @@ static int cmpUrl_VisitedUrl_(const void *a, const void *b) {
 }
 
 static int cmpNewer_VisitedUrl_(const void *insert, const void *existing) {
-    return seconds_Time(&((const iVisitedUrl *) insert  )->when) >
+    return seconds_Time(&((const iVisitedUrl *) insert  )->when) >=
            seconds_Time(&((const iVisitedUrl *) existing)->when);
 }
 

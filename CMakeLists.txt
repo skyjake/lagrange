@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.8.3
+    VERSION 1.9.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -29,7 +29,7 @@ if (IOS)
     set (IOS_BUILD_DATE "2021-10-23")
 endif ()
 
-# Default that depend on environment.
+# Defaults that depend on environment.
 set (DEFAULT_RESIZE_DRAW ON)
 if (HAIKU)
     set (DEFAULT_RESIZE_DRAW OFF)
@@ -52,20 +52,19 @@ option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_POPUP_MENUS      "Use popup windows for context menus (if OFF, menus are confined inside main window)" ON)
 option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
 option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAULT_RESIZE_DRAW})
-option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
+option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
+option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 
 include (BuildType.cmake)
-include (res/Embed.cmake)
-include (res/Fontpack.cmake)
+include (Resources.cmake)
 include (Depends.cmake)
 
 # Package resources.
 message (STATUS "Preparing resources...")
-make_fontpack (res/default.fontpack)
-set (EMBED_RESOURCES
+set (RESOURCES
     res/about/about.gmi
     res/about/help.gmi
     res/about/lagrange.gmi
@@ -90,18 +89,20 @@ set (EMBED_RESOURCES
     res/lang/sk.bin
     res/lang/sr.bin
     res/lang/tok.bin
+    res/lang/tr.bin
     res/lang/uk.bin
     res/lang/zh_Hans.bin
     res/lang/zh_Hant.bin
     res/shadow.png
-    ${CMAKE_BINARY_DIR}/default.fontpack
+    res/fontpack.ini
 )
+file (GLOB FONTS RELATIVE ${CMAKE_SOURCE_DIR} res/fonts/*)
+list (APPEND RESOURCES ${FONTS})
 if ((UNIX AND NOT APPLE) OR MSYS)
-    list (APPEND EMBED_RESOURCES res/lagrange-64.png)
+    list (APPEND RESOURCES res/lagrange-64.png)
 endif ()
-embed_make (${EMBED_RESOURCES})
-
 set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
+make_resources (${EMB_BIN} ${RESOURCES})
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
 # Source files.
@@ -144,11 +145,14 @@ set (SOURCES
     src/periodic.h
     src/prefs.c
     src/prefs.h
+    src/resources.c
+    src/resources.h
     src/sitespec.c
     src/sitespec.h
     src/stb_image.h
     src/stb_image_resize.h
     src/stb_truetype.h
+    src/updater.h
     src/visited.c
     src/visited.h
     # Audio playback:
@@ -219,10 +223,11 @@ set (SOURCES
     res/about/lagrange.gmi
     res/about/license.gmi
     res/about/version.gmi
-    ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
-    ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
-    ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr
+    ${EMB_BIN}
 )
+if (NOT APPLE) # macos.m has Sparkle updater
+    list (APPEND SOURCES src/updater.c)
+endif ()
 if (ENABLE_IPC)
     list (APPEND SOURCES
         src/ipc.c
@@ -363,6 +368,9 @@ if (APPLE)
     else ()
         target_link_libraries (app PUBLIC "-framework AppKit")
     endif ()
+    if (ENABLE_SPARKLE)
+        target_link_libraries (app PUBLIC sparkle)
+    endif ()
     if (CMAKE_OSX_DEPLOYMENT_TARGET AND NOT IOS)
         target_compile_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
         target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
@@ -406,6 +414,9 @@ if (APPLE)
 endif ()
 if (MSYS)
     target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
+    if (ENABLE_WINSPARKLE)
+        target_link_libraries (app PUBLIC winsparkle)        
+    endif ()
 endif ()
 if (UNIX)
     target_link_libraries (app PUBLIC m)
@@ -420,9 +431,7 @@ if (MSYS)
     if (TARGET PkgConfig::MPG123)
         install (PROGRAMS ${MPG123_LIBDIR}/../bin/msys-mpg123-0.dll DESTINATION .)
     endif ()
-    if (NOT ENABLE_RESOURCE_EMBED)
-        install (FILES ${EMB_BIN} DESTINATION .)
-    endif ()
+    install (FILES ${EMB_BIN} DESTINATION .)
     install (PROGRAMS
         ${SDL2_LIBDIR}/SDL2.dll
         res/urlopen.bat
@@ -433,11 +442,9 @@ if (MSYS)
     endif ()
 elseif (HAIKU)
     install (TARGETS app DESTINATION .)
-    if (NOT ENABLE_RESOURCE_EMBED)
-        target_compile_definitions (app PUBLIC
-            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
-        install (FILES ${EMB_BIN} DESTINATION .)
-    endif ()
+    target_compile_definitions (app PUBLIC
+        LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
+    install (FILES ${EMB_BIN} DESTINATION .)
 elseif (UNIX AND NOT APPLE)
     include (GNUInstallDirs)
     set_target_properties (app PROPERTIES
@@ -464,11 +471,9 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;
     install (FILES res/fi.skyjake.Lagrange.appdata.xml
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
     )
-    if (NOT ENABLE_RESOURCE_EMBED)
-        if (NOT ENABLE_RELATIVE_EMBED)
-            target_compile_definitions (app PUBLIC
+    if (NOT ENABLE_RELATIVE_EMBED)
+        target_compile_definitions (app PUBLIC
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
-        endif ()
-        install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange)
     endif ()
+    install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange)
 endif ()
