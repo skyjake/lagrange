@@ -258,6 +258,9 @@ msgstr "Show Feed Entries"
 msgid "menu.preferences"
 msgstr "Preferences…"
 
+msgid "menu.update"
+msgstr "Check for Updates…"
+
 # used for Preferences on mobile
 msgid "menu.settings"
 msgstr "Settings"
