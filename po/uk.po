@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-10 04:50+0000\n"
-"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
+"PO-Revision-Date: 2021-11-25 16:30+0000\n"
+"Last-Translator: Andrij Mizyk <andmizyk@gmail.com>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
 "Language: uk\n"
@@ -24,7 +24,7 @@ msgid "media.untitled.image"
 msgstr "Зображення"
 
 msgid "media.untitled.audio"
-msgstr "Аудіо"
+msgstr "Звук"
 
 # Inline download status message.
 msgid "media.download.complete"
@@ -346,7 +346,7 @@ msgid "feeds.refresh"
 msgstr "Оновити стрічки новин"
 
 msgid "doc.pre.nocaption"
-msgstr "Преформатований текст без опису"
+msgstr "Заздалегідь форматований текст без опису"
 
 #, c-format
 msgid "doc.archive"
@@ -354,7 +354,7 @@ msgstr "%s є стиснутим архівом."
 
 # Inline download status message.
 msgid "media.download.warnclose"
-msgstr "Завантаження буде перервано у разі закриття цієї вкладки."
+msgstr "Завантаження буде перервано в разі закриття цієї вкладки."
 
 # used as adjective, n is 8, 16, 24, 32, or 64
 #, c-format
@@ -399,7 +399,7 @@ msgid "menu.closetab.other"
 msgstr "Закрити інші вкладки"
 
 msgid "menu.split.merge"
-msgstr "Об'єднати вкладки"
+msgstr "Об'єднати"
 
 msgid "menu.split.horizontal"
 msgstr "Горизонтально"
@@ -2150,3 +2150,13 @@ msgstr "Чеська"
 
 msgid "lang.hu"
 msgstr "Угорська"
+
+msgid "dlg.bookmark.folder"
+msgstr "Тека:"
+
+msgid "sidebar.action.show"
+msgstr "Показати:"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Колір фону"
