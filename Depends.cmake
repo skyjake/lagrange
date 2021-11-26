@@ -43,6 +43,15 @@ else ()
     endif ()
 endif ()
 
+if (APPLE AND CMAKE_OSX_DEPLOYMENT_TARGET)
+    set (_dependMacOpts 
+        -Dc_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
+        -Dc_link_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
+        -Dcpp_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
+        -Dcpp_link_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
+    )
+endif ()
+
 if (ENABLE_HARFBUZZ)
     # Find HarfBuzz with pkg-config.
     if (NOT ENABLE_HARFBUZZ_MINIMAL AND PKG_CONFIG_FOUND)
@@ -64,6 +73,7 @@ if (ENABLE_HARFBUZZ)
                                         -Dtests=disabled -Dglib=disabled -Dgobject=disabled
                                         -Dcairo=disabled -Dicu=disabled -Dfreetype=disabled
                                         -Ddocs=disabled
+                                        ${_dependMacOpts}
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE} install
                 INSTALL_COMMAND     ""
@@ -94,6 +104,7 @@ if (ENABLE_HARFBUZZ)
             set (HB_HAVE_GOBJECT  OFF CACHE BOOL "" FORCE)
             set (HB_HAVE_ICU      OFF CACHE BOOL "" FORCE)
             set (SKIP_INSTALL_ALL YES CACHE BOOL "" FORCE)
+            set (CMAKE_CXX_FLAGS)
             add_subdirectory (${CMAKE_SOURCE_DIR}/lib/harfbuzz)
             set (HARFBUZZ_LIBRARIES harfbuzz)
             # HarfBuzz is C++ so must link with the standard library.
@@ -127,6 +138,7 @@ if (ENABLE_FRIBIDI)
                                         -Dtests=false -Ddocs=false -Dbin=false
                                         -Dc_flags=-Wno-macro-redefined
                                         -Dlibdir=lib
+                                        ${_dependMacOpts}
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE} install
                 INSTALL_COMMAND     ""
