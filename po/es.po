@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-25 14:43+0000\n"
+"PO-Revision-Date: 2021-11-28 23:50+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1465,7 +1465,7 @@ msgid "sidebar.action.ident.import"
 msgstr "Importar…"
 
 msgid "menu.split.merge"
-msgstr "Unir pestañas"
+msgstr "Reunir"
 
 msgid "menu.split.swap"
 msgstr "Intercambiar Lados"
@@ -2145,3 +2145,6 @@ msgstr "Carpeta:"
 # Color of text background.
 msgid "prefs.gemtext.ansi.bg"
 msgstr "Color de Fondo"
+
+msgid "menu.update"
+msgstr "Buscar Actualizaciones…"
