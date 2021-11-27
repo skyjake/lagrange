@@ -2127,7 +2127,6 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     else {
         d->theme.ansiEscapes = allowAll_AnsiFlag;
     }
-    d->theme.ansiEscapes |= allowBg_AnsiFlag; /* TODO: add setting */
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
     }
