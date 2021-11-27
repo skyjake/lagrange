@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-26 18:17+0000\n"
+"PO-Revision-Date: 2021-11-28 23:50+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -179,7 +179,7 @@ msgid "menu.sort.alpha"
 msgstr "За алфавітом"
 
 msgid "menu.bookmarks.list"
-msgstr "Показати усі закладки"
+msgstr "Показати всі закладки"
 
 msgid "menu.bookmarks.bytag"
 msgstr "Закладки за міткою"
@@ -405,7 +405,7 @@ msgid "menu.split.horizontal"
 msgstr "Горизонтально"
 
 msgid "menu.downloads"
-msgstr "Показати усі завантаження"
+msgstr "Показати всі завантаження"
 
 msgid "menu.unexpire"
 msgstr "Ігнорувати недійсність і продовжити завантаження"
@@ -421,7 +421,7 @@ msgid "menu.zoom.reset"
 msgstr "Звичайний розмір"
 
 msgid "macos.menu.bookmarks.list"
-msgstr "Показати усі"
+msgstr "Показати всі"
 
 msgid "macos.menu.bookmarks.bytag"
 msgstr "За міткою"
@@ -467,7 +467,7 @@ msgid "menu.aboutpages"
 msgstr "Інформаційні сторінки"
 
 msgid "menu.import.links"
-msgstr "Імпортувати усі посилання на сторінці…"
+msgstr "Імпортувати всі посилання на сторінці…"
 
 msgid "menu.page.copyurl"
 msgstr "Копіювати URL сторінки"
