@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-14 20:50+0000\n"
-"Last-Translator: Alex Schroeder <alex@alexschroeder.ch>\n"
+"PO-Revision-Date: 2021-11-27 04:58+0000\n"
+"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -2112,3 +2112,16 @@ msgstr "Aktualisieren von \"%s\" auf Version %d"
 #, c-format
 msgid "fontpack.delete"
 msgstr "\"%s\" für immer löschen"
+
+msgid "menu.update"
+msgstr "Auf Updates prüfen…"
+
+msgid "dlg.bookmark.folder"
+msgstr "Ordner:"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Hintergrundfarbe"
+
+msgid "sidebar.action.show"
+msgstr "Anzeigen:"
