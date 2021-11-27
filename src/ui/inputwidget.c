@@ -2178,8 +2178,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     refresh_Widget(w);
                     return iTrue;
                 }
-                break;
 #endif
+                break;
             case SDLK_LEFT:
             case SDLK_RIGHT: {
                 const int dir = (key == SDLK_LEFT ? -1 : +1);

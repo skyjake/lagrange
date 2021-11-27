@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-22 19:50+0000\n"
+"PO-Revision-Date: 2021-11-27 04:58+0000\n"
 "Last-Translator: Emir <emir_sari@msn.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -126,7 +126,7 @@ msgid "menu.duptab"
 msgstr "Sekmeyi çoğalt"
 
 msgid "menu.split.merge"
-msgstr "Sekmeleri birleştir"
+msgstr "Bölme yapma"
 
 msgid "menu.split.horizontal"
 msgstr "Yatay"
@@ -2074,3 +2074,16 @@ msgstr ""
 
 msgid "prefs.hoverlink"
 msgstr "Üzerine gelince URL'yi göster:"
+
+msgid "menu.update"
+msgstr "Güncellemeleri denetle…"
+
+msgid "dlg.bookmark.folder"
+msgstr "Klasör:"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Arka plan rengi"
+
+msgid "sidebar.action.show"
+msgstr "Göster:"

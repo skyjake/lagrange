@@ -917,7 +917,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             return iTrue;
         case SDL_WINDOWEVENT_ENTER:
             d->base.isMouseInside = iTrue;
-            SDL_SetWindowInputFocus(d->base.win);
+            //SDL_SetWindowInputFocus(d->base.win); /* BUG? */
             postCommand_App("window.mouse.entered");
             return iTrue;
         case SDL_WINDOWEVENT_FOCUS_GAINED:
