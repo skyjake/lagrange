@@ -72,7 +72,7 @@ enum iFontId {
     quote_FontId              = FONT_ID(documentBody_FontId,      italic_FontStyle,   contentRegular_FontSize),
     heading1_FontId           = FONT_ID(documentHeading_FontId,   bold_FontStyle,     contentHuge_FontSize),
     heading2_FontId           = FONT_ID(documentHeading_FontId,   regular_FontStyle,  contentLarge_FontSize),
-    heading3_FontId           = FONT_ID(documentHeading_FontId,   semiBold_FontStyle, contentBig_FontSize),
+    heading3_FontId           = FONT_ID(documentHeading_FontId,   bold_FontStyle,     contentBig_FontSize),
     banner_FontId             = FONT_ID(documentHeading_FontId,   light_FontStyle,    contentLarge_FontSize),
     monospaceParagraph_FontId = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentRegular_FontSize),
     monospaceBold_FontId      = FONT_ID(documentMonospace_FontId, semiBold_FontStyle, contentRegular_FontSize),

@@ -216,7 +216,7 @@ static void initTheme_GmDocument_(iGmDocument *d) {
     theme->fonts[quote_GmLineType] = isMono ? monospaceParagraph_FontId : quote_FontId;
     theme->fonts[heading1_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentHuge_FontSize);
     theme->fonts[heading2_GmLineType] = FONT_ID(headingFont, regular_FontStyle, contentLarge_FontSize);
-    theme->fonts[heading3_GmLineType] = FONT_ID(headingFont, semiBold_FontStyle, contentBig_FontSize);
+    theme->fonts[heading3_GmLineType] = FONT_ID(headingFont, bold_FontStyle, contentBig_FontSize);
     theme->fonts[link_GmLineType] = FONT_ID(
         bodyFont,
         ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight)) ? semiBold_FontStyle
@@ -610,10 +610,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     initTheme_GmDocument_(d);
     d->isLayoutInvalidated = iFalse;
     /* TODO: Collect these parameters into a GmTheme. */
-    float indents[max_GmLineType] = { 5, 10, 5, isNarrow ? 5 : 10, 0, 0, 0, 5 };
+    float indents[max_GmLineType] = { 5, 10, 5, isNarrow ? 5 : 10, 0, 0, 5, 5 };
     if (isExtremelyNarrow) {
         /* Further reduce the margins. */
         indents[text_GmLineType] -= 5;
+        indents[heading3_GmLineType] -= 5;
         indents[bullet_GmLineType] -= 5;
         indents[preformatted_GmLineType] -= 5;
     }
@@ -624,7 +625,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         0.0f, 0.25f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.25f, 1.0f, 0.5f, 1.5f, 0.5f, 0.5f, 0.25f
+        0.0f, 0.25f, 1.0f, 0.5f, 1.5f, 0.5f, 0.25f, 0.25f
     };
     static const char *arrow           = rightArrowhead_Icon;
     static const char *envelope        = envelope_Icon;

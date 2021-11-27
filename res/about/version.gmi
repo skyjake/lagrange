@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.9.1
+* Heading level 3 is indented like regular text lines, making the difference to level 2 evident.
+
 ## 1.9
 
 New features:
