@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-10 04:50+0000\n"
+"PO-Revision-Date: 2021-11-28 23:50+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1475,7 +1475,7 @@ msgid "menu.downloads"
 msgstr "Прикажи Преузимања"
 
 msgid "menu.split.merge"
-msgstr "Спој картице"
+msgstr "Спој"
 
 msgid "menu.view.split"
 msgstr "Раздвој поглед…"
@@ -2169,3 +2169,16 @@ msgstr "Чешки"
 
 msgid "lang.hu"
 msgstr "Мађарски"
+
+msgid "menu.update"
+msgstr "Провери ажурирања…"
+
+msgid "dlg.bookmark.folder"
+msgstr "Фасцикла:"
+
+msgid "sidebar.action.show"
+msgstr "Прикажи:"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Боја позадине"
