@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-03 04:50+0000\n"
+"PO-Revision-Date: 2021-11-28 23:50+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -75,8 +75,8 @@ msgstr "Coller"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu octet"
-msgstr[1] "%zu octets"
+msgstr[0] "%u octet"
+msgstr[1] "%u octets"
 
 msgid "menu.title.view"
 msgstr "Affichage"
@@ -312,8 +312,8 @@ msgstr "Copier l’empreinte"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "un total de %zu entrée"
-msgstr[1] "un total de %zu entrées"
+msgstr[0] "un total de %u entrée"
+msgstr[1] "un total de %u entrées"
 
 #, c-format
 msgid "minutes.ago"
@@ -496,8 +496,8 @@ msgstr "Entrées de flux"
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "Vous êtes abonné à %zu flux contenant %%s.\n"
-msgstr[1] "Vous êtes abonné à %zu flux contenant %%s.\n"
+msgstr[0] "Vous êtes abonné à %u flux contenant %%s.\n"
+msgstr[1] "Vous êtes abonné à %u flux contenant %%s.\n"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
@@ -637,9 +637,7 @@ msgstr "PARAMÈTRES DE FLUX"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"Vraiment se désabonner du flux\n"
-"« %s » ?"
+msgstr "Vraiment se désabonner du flux « %s » ?"
 
 msgid "keys.zoom.reset"
 msgstr "Réinitialiser le zoom"
@@ -869,7 +867,7 @@ msgid "error.tls"
 msgstr "Échec réseau/TLS"
 
 msgid "error.tls.msg"
-msgstr "La communication avec le serveur a échoué. Voici le message d’erreur :"
+msgstr "La communication avec le serveur a échoué."
 
 msgid "error.temporary"
 msgstr "Échec temporaire"
@@ -973,8 +971,8 @@ msgstr "Le certificat client fourni a expiré ou est invalide."
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "Utilisée sur %zu URL"
-msgstr[1] "Utilisée sur %zu URLs"
+msgstr[0] "Utilisée sur %u URL"
+msgstr[1] "Utilisée sur %u URLs"
 
 msgid "heading.ident.notes"
 msgstr "NOTES SUR L'IDENTITÉ"
@@ -1028,9 +1026,8 @@ msgstr "Utilisée pour cette page"
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"Voulez-vous vraiment supprimer l'identité\n"
-"%s%s%s\n"
-"y compris ses fichiers de certificat et clé privée ?"
+"Voulez-vous vraiment supprimer l'identité %s%s%s y compris ses fichiers de "
+"certificat et clé privée ?"
 
 msgid "heading.unsub"
 msgstr "DÉSABONNEMENT"
@@ -1586,9 +1583,9 @@ msgstr "Sortir de l’archive"
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
 msgstr[0] ""
-"Cette archive contient %zu élément et sa taille compressée est de %.1f Mo."
+"Cette archive contient %u élément et sa taille compressée est de %.1f Mo."
 msgstr[1] ""
-"Cette archive contient %zu éléments et sa taille compressée est de %.1f Mo."
+"Cette archive contient %u éléments et sa taille compressée est de %.1f Mo."
 
 msgid "dir.empty"
 msgstr "Ce répertoire est vide."
@@ -1596,8 +1593,8 @@ msgstr "Ce répertoire est vide."
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "Ce répertoire contient %zu élément."
-msgstr[1] "Ce répertoire contient %zu éléments."
+msgstr[0] "Ce répertoire contient %u élément."
+msgstr[1] "Ce répertoire contient %u éléments."
 
 msgid "menu.split.swap"
 msgstr "Échanger les côtés"
@@ -1665,8 +1662,8 @@ msgstr "PORT DE TÉLÉVERSEMENT TITAN"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
-"Définit le port du serveur Titan à utiliser pour cette URL.\n"
-"Le port est enregistré dans la configuration spécifique au site."
+"Définit le port du serveur Titan à utiliser pour cette URL. Le port est "
+"enregistré dans la configuration spécifique au site."
 
 msgid "dlg.uploadport.set"
 msgstr "Définir le port"
@@ -1932,3 +1929,200 @@ msgstr "Couleur du préformaté"
 
 msgid "keys.bookmark.addfolder"
 msgstr "Ajouter un dossier de signets"
+
+msgid "menu.website"
+msgstr "Site Web du projet…"
+
+msgid "dlg.bookmark.folder"
+msgstr "Dossier :"
+
+msgid "heading.fontpack.meta"
+msgstr "Polices"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Afficher les polices installées"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u police"
+msgstr[1] "%u polices"
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange essaye de charger tous les fichiers TrueType individuels qui sont "
+"copiés dans le répertoire des polices utilisateur."
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr ""
+"Ignorer de manière permanente l’avertissement à propos de l’émulation de "
+"terminal sur %s ?"
+
+msgid "error.ansi.msg"
+msgstr ""
+"Cette page peut ne pas être affichée correctement. Elle utilise des "
+"séquences d’échappement ANSI pour appliquer des styles au texte, ce qui n’"
+"est que partiellement supporté. Vous pouvez essayer d'utiliser un émulateur "
+"de terminal pour la visualiser."
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignorer les liens HTTP(S) :"
+
+msgid "prefs.boldlink.visited"
+msgstr "Visité"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Échappements ANSI :"
+
+# Color of the text foreground, i.e., the characters.
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Couleur avant-plan"
+
+msgid "error.ansi"
+msgstr "Émulation de terminal"
+
+msgid "error.glyphs"
+msgstr "Glyphes manquants"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Packs de polices désactivés"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Installer « %s »"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Mettre à jour « %s » vers la version %d"
+
+msgid "dlg.fontpack.classic.msg"
+msgstr ""
+"Les polices qui étaient auparavant fournies avec l'application sont à "
+"présent disponibles en tant que téléchargement séparé. Souhaitez-vous "
+"télécharger le pack de polices « Classic set » maintenant ?"
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Cette page ne peut pas être affichée en totalité car certains caractères "
+"sont manquants. Vous pouvez installer des polices supplémentaires pour "
+"corriger cela."
+
+msgid "sidebar.action.show"
+msgstr "Afficher :"
+
+msgid "dlg.certwarn.title"
+msgstr "Problème de sécurité"
+
+msgid "prefs.font.ui"
+msgstr "Interface :"
+
+msgid "truetype.help.installed"
+msgstr "Cette police est installée dans le répertoire des polices utilisateur."
+
+msgid "dlg.dismiss.warning"
+msgstr "Ignorer l’avertissement"
+
+msgid "heading.dismiss.warning"
+msgstr "IGNORER L’AVERTISSEMENT ?"
+
+msgid "menu.update"
+msgstr "Rechercher des mises à jour…"
+
+msgid "menu.fonts"
+msgstr "Gérer les polices…"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Ajouter les signets en bas :"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Arrière-plan vers avant-plan"
+
+msgid "prefs.font.heading"
+msgstr "Titres :"
+
+msgid "prefs.font.body"
+msgstr "Corps :"
+
+msgid "prefs.font.mono"
+msgstr "Préformaté :"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Police à chasse fixe :"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Couleur d'arrière-plan"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Style de police"
+
+msgid "prefs.font.smooth"
+msgstr "Lissage :"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Packs de polices activés"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Afficher le fichier"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Version %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Installé"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Non installé"
+
+msgid "fontpack.meta.disabled"
+msgstr ", désactivé"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Activer « %s »"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Désactiver « %s »"
+
+msgid "fontpack.export"
+msgstr "Afficher le modèle fontpack.ini"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Supprimer définitivement « %s »"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr ""
+"Voulez-vous vraiment supprimer définitivement le pack de polices « %s » ?"
+
+msgid "dlg.fontpack.delete"
+msgstr "Supprimer le pack de polices"
+
+msgid "heading.fontpack.delete"
+msgstr "SUPPRIMER LE PACK DE POLICES"
+
+msgid "fontpack.help"
+msgstr ""
+"Les packs de polices de Lagrange sont des archives ZIP qui contiennent un "
+"ensemble de fichiers de polices et leurs paramètres de configuration "
+"associés. Une fois installées, les polices peuvent être utilisées pour le "
+"contenu des documents et l'UI. Les polices actives sont choisies dans "
+"Préférences > Polices."
+
+msgid "fontpack.install.ttf"
+msgstr "Installer une police TrueType"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Ouvrir le répertoire des polices utilisateur"
+
+msgid "dlg.fontpack.classic"
+msgstr "Télécharger le pack de polices (25 Mo)"
+
+msgid "heading.fontpack.classic"
+msgstr "TÉLÉCHARGER LE PACK DE POLICES"
