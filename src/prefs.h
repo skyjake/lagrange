@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Prefs)
     
 enum iPrefsString {
+    /* General */
     uiLanguage_PrefsString,
     downloadDir_PrefsString,
     searchUrl_PrefsString,
@@ -56,25 +57,27 @@ enum iPrefsString {
    convention for notifications.  */
 struct Impl_Prefs {
     iString          strings[max_PrefsString];
-    /* UI state */
+    /* UI state (belongs to state.lgr...) */
     int              dialogTab;
     int              langFrom;
     int              langTo;
-    /* Window */
+    /* Colors */
     iBool            useSystemTheme;
     enum iColorTheme systemPreferredColorTheme[2]; /* dark, light */
     enum iColorTheme theme;    
     enum iColorAccent accent;
+    /* Window and User Interface */
     iBool            customFrame; /* when LAGRANGE_ENABLE_CUSTOM_FRAME is defined */
     iBool            retainWindowSize;
     iBool            uiAnimations;
     float            uiScale;
+    iBool            hideToolbarOnScroll;
+    /* Document presentation */
     int              zoomPercent;
     iBool            sideIcon;
-    iBool            hideToolbarOnScroll;
-    int              pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
     iBool            time24h;
     /* Behavior */
+    int              pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
     int              returnKey;
     iBool            hoverLink;
     iBool            smoothScrolling;
