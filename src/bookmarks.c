@@ -502,7 +502,7 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
 
 void setRecentFolder_Bookmarks(iBookmarks *d, uint32_t folderId) {
     iBookmark *bm = get_Bookmarks(d, folderId);
-    if (isFolder_Bookmark(bm)) {
+    if (bm && isFolder_Bookmark(bm)) {
         d->recentFolderId = folderId;
     }
     else {
