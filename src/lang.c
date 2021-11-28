@@ -22,6 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lang.h"
 #include "resources.h"
+#include "prefs.h"
+#include "app.h"
 
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/string.h>
@@ -260,4 +262,18 @@ const char *format_Lang(const char *formatTextWithIds, ...) {
     vprintf_Block(msg, translateCStr_Lang(formatTextWithIds), args);
     va_end(args);
     return cstr_Block(collect_Block(msg));
+}
+
+iString *timeFormatHourPreference_Lang(const char *formatMsgId) {
+    iString *str = newCStr_String(cstr_Lang(formatMsgId));
+    translate_Lang(str);
+    if (prefs_App()->time24h) {
+        replace_String(str, "%I", "%H");
+        replace_String(str, " %p", "");
+        replace_String(str, "%p", "");
+    }
+    else {
+        replace_String(str, "%H:%M", "%I:%M %p");
+    }
+    return str;
 }

@@ -7,6 +7,8 @@
 # Release notes
 
 ## 1.9.1
+* Added "24-Hour Time" preference.
+* Fixed drawing the page timestamp (bottom left corner) that was always hidden.
 * Heading level 3 is indented like regular text lines, making the difference to level 2 evident.
 
 ## 1.9

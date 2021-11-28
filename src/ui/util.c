@@ -2507,6 +2507,7 @@ iWidget *makePreferences_Widget(void) {
                                               alignLeft_WidgetFlag),
                          "prefs.uilang");
         }
+        addDialogToggle_(headings, values, "${prefs.time.24h}", "prefs.time.24h");
     }
     /* User Interface. */ {
         appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.interface}", '2', &headings, &values);

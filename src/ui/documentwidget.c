@@ -1038,10 +1038,12 @@ static void updateTimestampBuf_DocumentWidget_(const iDocumentWidget *d) {
         d->drawBufs->timestampBuf = NULL;
     }
     if (isValid_Time(&d->sourceTime)) {
+        iString *fmt = timeFormatHourPreference_Lang("page.timestamp");
         d->drawBufs->timestampBuf = newRange_TextBuf(
             uiLabel_FontId,
             white_ColorId,
-            range_String(collect_String(format_Time(&d->sourceTime, cstr_Lang("page.timestamp")))));
+            range_String(collect_String(format_Time(&d->sourceTime, cstr_String(fmt)))));
+        delete_String(fmt);
     }
     d->drawBufs->flags &= ~updateTimestampBuf_DrawBufsFlag;
 }
@@ -4792,7 +4794,7 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
                 bottomLeft_Rect(bounds),
                 init_I2(margin,
                         -margin + -dbuf->timestampBuf->size.y +
-                            iMax(0, d->scrollY.max + viewPos_DocumentWidget_(d)))),
+                            iMax(0, d->scrollY.max - pos_SmoothScroll(&d->scrollY)))),
             tmQuoteIcon_ColorId);
     }
     unsetClip_Paint(&p);
