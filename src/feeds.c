@@ -97,8 +97,8 @@ static void init_FeedJob(iFeedJob *d, const iBookmark *bookmark) {
     init_PtrArray(&d->results);
     iZap(d->startTime);
     d->isFirstUpdate = iFalse;
-    d->checkHeadings = hasTag_Bookmark(bookmark, headings_BookmarkTag);
-    d->ignoreWeb     = hasTag_Bookmark(bookmark, ignoreWeb_BookmarkTag);
+    d->checkHeadings = (bookmark->flags & headings_BookmarkFlag) != 0;
+    d->ignoreWeb     = (bookmark->flags & ignoreWeb_BookmarkFlag) != 0;
 }
 
 static void deinit_FeedJob(iFeedJob *d) {
@@ -146,13 +146,7 @@ static void submit_FeedJob_(iFeedJob *d) {
 
 static iBool isSubscribed_(void *context, const iBookmark *bm) {
     iUnused(context);
-    static iRegExp *pattern_ = NULL;
-    if (!pattern_) {
-        pattern_ = new_RegExp("\\bsubscribed\\b", caseSensitive_RegExpOption);
-    }
-    iRegExpMatch m;
-    init_RegExpMatch(&m);
-    return matchString_RegExp(pattern_, &bm->tags, &m);
+    return (bm->flags & subscribed_BookmarkFlag) != 0;
 }
 
 static const iPtrArray *listSubscriptions_(void) {

@@ -1108,7 +1108,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     const uint16_t bmid = findUrl_Bookmarks(bookmarks_App(), d->mod.url);
     if (bmid) {
         const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
-        if (hasTag_Bookmark(bm, linkSplit_BookmarkTag)) {
+        if (bm->flags & linkSplit_BookmarkFlag) {
             d->flags |= otherRootByDefault_DocumentWidgetFlag;
         }
     }
@@ -3383,7 +3383,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                           linkUrl_GmDocument(d->doc, run->linkId))) != 0) {
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
                 /* We can import local copies of remote bookmarks. */
-                if (!hasTag_Bookmark(bm, remote_BookmarkTag)) {
+                if (~bm->flags & remote_BookmarkFlag) {
                     remove_PtrArrayIterator(&i);
                 }
             }

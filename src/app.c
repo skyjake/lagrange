@@ -2980,10 +2980,8 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "navigate.home")) {
         /* Look for bookmarks tagged "homepage". */
-        iRegExp *pattern = iClob(new_RegExp("\\b" homepage_BookmarkTag "\\b",
-                                            caseInsensitive_RegExpOption));
         const iPtrArray *homepages =
-            list_Bookmarks(d->bookmarks, NULL, filterTagsRegExp_Bookmarks, pattern);
+            list_Bookmarks(d->bookmarks, NULL, filterHomepage_Bookmark, NULL);
         if (isEmpty_PtrArray(homepages)) {
             postCommand_Root(get_Root(), "open url:about:lagrange");
         }

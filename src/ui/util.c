@@ -2908,16 +2908,16 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             const uint32_t id    = add_Bookmarks(bookmarks_App(), url, title, tags, first_String(icon));
             iBookmark *    bm    = get_Bookmarks(bookmarks_App(), id);
             if (!isEmpty_String(icon)) {
-                addTagIfMissing_Bookmark(bm, userIcon_BookmarkTag);
+                bm->flags |= userIcon_BookmarkFlag;
             }
             if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.home"))) {
-                addTag_Bookmark(bm, homepage_BookmarkTag);
+                bm->flags |= homepage_BookmarkFlag;
             }
             if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.remote"))) {
-                addTag_Bookmark(bm, remoteSource_BookmarkTag);
+                bm->flags |= remoteSource_BookmarkFlag;
             }
             if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit"))) {
-                addTag_Bookmark(bm, linkSplit_BookmarkTag);
+                bm->flags |= linkSplit_BookmarkFlag;
             }
             bm->parentId = folder ? id_Bookmark(folder) : 0;
             setRecentFolder_Bookmarks(bookmarks_App(), bm->parentId);
@@ -2983,9 +2983,9 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
         iAssert(bm);
         set_String(&bm->title, feedTitle);
-        addOrRemoveTag_Bookmark(bm, subscribed_BookmarkTag, iTrue);
-        addOrRemoveTag_Bookmark(bm, headings_BookmarkTag, headings);
-        addOrRemoveTag_Bookmark(bm, ignoreWeb_BookmarkTag, ignoreWeb);
+        bm->flags |= subscribed_BookmarkFlag;
+        iChangeFlags(bm->flags, headings_BookmarkFlag, headings);
+        iChangeFlags(bm->flags, ignoreWeb_BookmarkFlag, ignoreWeb);
         postCommand_App("bookmarks.changed");
         setupSheetTransition_Mobile(dlg, iFalse);
         destroy_Widget(dlg);
@@ -3048,13 +3048,13 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
                             bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
         setFlags_Widget(findChild_Widget(dlg,
-                                         hasTag_Bookmark(bm, headings_BookmarkTag)
+                                         bm->flags & headings_BookmarkFlag
                                              ? "feedcfg.type.headings"
                                              : "feedcfg.type.gemini"),
                         selected_WidgetFlag,
                         iTrue);
         setToggle_Widget(findChild_Widget(dlg, "feedcfg.ignoreweb"),
-                         hasTag_Bookmark(bm, ignoreWeb_BookmarkTag));
+                         bm->flags & ignoreWeb_BookmarkFlag);
         setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
     }
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag);
