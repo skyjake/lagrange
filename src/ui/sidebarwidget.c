@@ -927,6 +927,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 }
                 else {
                     insert_IntSet(d->closedFolders, item->id);
+                    setRecentFolder_Bookmarks(bookmarks_App(), 0);
                 }
                 updateItems_SidebarWidget_(d);
                 break;
