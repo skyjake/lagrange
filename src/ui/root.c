@@ -1317,7 +1317,8 @@ void createUserInterface_Root(iRoot *d) {
             setBackgroundColor_Widget(buttons, uiBackground_ColorId);
         }
         setId_Widget(
-            addChild_Widget(buttons, iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new"))),
+            addChildFlags_Widget(buttons, iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new")),
+                                 moveToParentRightEdge_WidgetFlag),
             "newtab");
     }
     /* Sidebars. */ {
