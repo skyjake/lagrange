@@ -240,6 +240,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         const char * id;
         const iBool *value;
     } boolPrefs[] = {
+        { "prefs.time.24h", &d->prefs.time24h },
         { "prefs.animate", &d->prefs.uiAnimations },
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
         { "prefs.mono.gemini", &d->prefs.monospaceGemini },
@@ -2573,6 +2574,10 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.uiAnimations = arg_Command(cmd) != 0;
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.time.24h.changed")) {
+        d->prefs.time24h = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "saturation.set")) {
         d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
         if (!isFrozen) {
@@ -2892,6 +2897,7 @@ iBool handleCommand_App(const char *cmd) {
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
         updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
+        setToggle_Widget(findChild_Widget(dlg, "prefs.time.24h"), d->prefs.time24h);
         updateDropdownSelection_LabelWidget(
             findChild_Widget(dlg, "prefs.returnkey"),
             format_CStr("returnkey.set arg:%d", d->prefs.returnKey));

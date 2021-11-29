@@ -6,6 +6,16 @@
 ```
 # Release notes
 
+## 1.9.1
+* Added "24-Hour Time" preference. Currently it only affects the page timestamp in the bottom left corner.
+* Heading level 3 is indented like regular text lines, making the difference to level 2 evident.
+* Fixed crash when creating a top-level bookmark.
+* Fixed drawing the page timestamp.
+* Fixed layout of tab buttons and other resizing widgets so all available space is used.
+* Fixed tab close buttons preventing activation of very short tab buttons. The close buttons only appear if there is room for them.
+* Fixed very short tab labels not getting truncated.
+* Fixed the New Tab button not staying at the right edge of the window, depending on how many tabs are open.
+
 ## 1.9
 
 New features:

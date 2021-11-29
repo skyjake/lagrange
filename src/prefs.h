@@ -73,6 +73,7 @@ struct Impl_Prefs {
     iBool            sideIcon;
     iBool            hideToolbarOnScroll;
     int              pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
+    iBool            time24h;
     /* Behavior */
     int              returnKey;
     iBool            hoverLink;

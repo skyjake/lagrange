@@ -692,8 +692,16 @@ static void arrange_Widget_(iWidget *d) {
                 }
             }
         }
+        /* Keep track of the fractional pixels so a large number to children will cover 
+           the full area. */
+        const iInt2 totalAvail = avail;
         avail = divi_I2(max_I2(zero_I2(), avail), expCount);
+        float availFract[2] = { 
+            iMax(0, (totalAvail.x - avail.x * expCount) / (float) expCount),
+            iMax(0, (totalAvail.y - avail.y * expCount) / (float) expCount)
+        };
         TRACE(d, "available for expansion (per child): %d\n", d->flags & arrangeHorizontal_WidgetFlag ? avail.x : avail.y);
+        float fract[2] = { 0, 0 };
         iForEach(ObjectList, j, d->children) {
             iWidget *child = as_Widget(j.object);
             if (!isArrangedSize_Widget_(child)) {
@@ -703,12 +711,16 @@ static void arrange_Widget_(iWidget *d) {
             iBool sizeChanged = iFalse;
             if (child->flags & expand_WidgetFlag) {
                 if (d->flags & arrangeHorizontal_WidgetFlag) {
-                    sizeChanged |= setWidth_Widget_(child, avail.x);
+                    const int fracti = (int) (fract[0] += availFract[0]);
+                    fract[0] -= fracti;
+                    sizeChanged |= setWidth_Widget_(child, avail.x + fracti);
                     sizeChanged |= setHeight_Widget_(child, height_Rect(innerRect));
                 }
                 else if (d->flags & arrangeVertical_WidgetFlag) {
                     sizeChanged |= setWidth_Widget_(child, width_Rect(innerRect));
-                    sizeChanged |= setHeight_Widget_(child, avail.y);
+                    const int fracti = (int) (fract[1] += availFract[1]);
+                    fract[1] -= fracti;
+                    sizeChanged |= setHeight_Widget_(child, avail.y + fracti);
                 }
             }
             if (sizeChanged) {
