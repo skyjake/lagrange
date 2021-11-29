@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-10-12 19:50+0000\n"
+"PO-Revision-Date: 2021-11-28 23:50+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -208,8 +208,8 @@ msgstr "Malplenigi historion"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu bajto"
-msgstr[1] "%zu bajtoj"
+msgstr[0] "%u bajto"
+msgstr[1] "%u bajtoj"
 
 msgid "feeds.refresh"
 msgstr "Reŝargi abonfluojn"
@@ -725,3 +725,6 @@ msgstr "Donalistaj eniroj"
 # Inline download status message.
 msgid "media.download.complete"
 msgstr "La ŝarĝado finita."
+
+msgid "menu.update"
+msgstr "Kontroli ĝisdatigojn…"
