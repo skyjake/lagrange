@@ -45,6 +45,30 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.9.1" date="2021-11-29">
+            <description>
+                <p>Changes in v1.9.1:</p>
+                <ul>
+                    <li>Added "24-Hour Time" preference. Currently it only affects the page
+                        timestamp in the bottom left corner.</li>
+                    <li>Heading level 3 is indented like regular text lines, making the
+                        difference to level 2 evident.</li>
+                    <li>Fixed crash when creating a top-level bookmark.</li>
+                    <li>Fixed drawing the page timestamp.</li>
+                    <li>Fixed layout of tab buttons and other resizing widgets so all
+                        available space is used.</li>
+                    <li>Fixed tab close buttons preventing activation of very short tab
+                        buttons. The close buttons only appear if there is room for
+                        them.</li>
+                    <li>Fixed very short tab labels not getting truncated.</li>
+                    <li>Fixed the New Tab button not staying at the right edge of the
+                        window, depending on how many tabs are open.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.9.1</url>
+        </release>
         <release version="1.9" date="2021-11-27">
             <description>
                 <p>Changes in v1.9:</p>
