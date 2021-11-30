@@ -8,6 +8,8 @@
 
 ## 1.9.2
 * Windows: Use the correct version number for update checks.
+* Shorter label for "Mark All as Read" in Feeds sidebar actions.
+* Updated UI translations.
 
 ## 1.9.1
 * Added "24-Hour Time" preference. Currently it only affects the page timestamp in the bottom left corner.
