@@ -1528,7 +1528,7 @@ static void addToPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs, iR
         }
         if (isFullyContainedByOther_Rect(bounds, *fullyMasked)) {
             return; /* can't be seen */
-        }                
+        }
         pushBack_PtrArray(pvs, d);
         if (d->bgColor >= 0 && ~d->flags & noBackground_WidgetFlag &&
             isFullyContainedByOther_Rect(*fullyMasked, bounds)) {
