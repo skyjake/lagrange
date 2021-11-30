@@ -2862,8 +2862,10 @@ iWidget *makeBookmarkEditor_Widget(void) {
                                                constData_Array(folderItems),
                                                size_Array(folderItems))), alignLeft_WidgetFlag),
                      "bmed.folder");
+        const uint32_t recentFolderId = recentFolder_Bookmarks(bookmarks_App());
         updateDropdownSelection_LabelWidget(
-            folderButton, format_CStr(" arg:%u", recentFolder_Bookmarks(bookmarks_App())));        
+            folderButton, format_CStr(" arg:%u", recentFolderId));
+        setUserData_Object(folderButton, get_Bookmarks(bookmarks_App(), recentFolderId));
     }
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.tags}",  "bmed.tags",  iClob(inputs[2] = new_InputWidget(0)));
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));

@@ -350,7 +350,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             /* Actions. */ {
                 addActionButton_SidebarWidget_(
-                    d, check_Icon " ${feeds.markallread}", "feeds.markallread", expand_WidgetFlag |
+                    d, check_Icon " ${sidebar.action.feeds.markallread}", "feeds.markallread", expand_WidgetFlag |
                     tight_WidgetFlag);
                 updateSize_LabelWidget(addChildFlags_Widget(d->actions,
                                      iClob(new_LabelWidget("${sidebar.action.show}", NULL)),
@@ -916,6 +916,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 }
                 else {
                     insert_IntSet(d->closedFolders, item->id);
+                    setRecentFolder_Bookmarks(bookmarks_App(), 0);
                 }
                 updateItems_SidebarWidget_(d);
                 break;

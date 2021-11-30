@@ -67,6 +67,9 @@ static const char *signaturePublicKeyPem_ =
 void init_Updater(void) {
     win_sparkle_set_appcast_url("https://etc.skyjake.fi/lagrange/appcast-windows.xml");
     win_sparkle_set_dsa_pub_pem(signaturePublicKeyPem_);
+    win_sparkle_set_app_details(L"Jaakko Keränen", 
+                                L"Lagrange", 
+                                L"" LAGRANGE_APP_VERSION);
     win_sparkle_init();
 }
 

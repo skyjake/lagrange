@@ -409,6 +409,10 @@ msgstr "Identities"
 msgid "sidebar.outline"
 msgstr "Outline"
 
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Read All"
+
 msgid "sidebar.action.show"
 msgstr "Show:"
 
@@ -471,18 +475,15 @@ msgid_plural "num.fonts.n"
 msgstr[0] "%u font"
 msgstr[1] "%u fonts"
 
-# strftime() formatted, split on two lines
-#, c-format
+# strftime() formatted. Should be split evenly on two lines with a newline character.
 msgid "page.timestamp"
 msgstr "Received at %I:%M %p\non %b %d, %Y"
 
 # strftime() formatted
-#, c-format
 msgid "sidebar.date.thisyear"
 msgstr "%b. %d"
 
 # strftime() formatted
-#, c-format
 msgid "sidebar.date.otheryear"
 msgstr "%b. %d, %Y"
 
@@ -613,7 +614,6 @@ msgid "ident.temporary"
 msgstr "Temporary"
 
 # strftime() formatted
-#, c-format
 msgid "ident.expiry"
 msgstr "Expires %b %d, %Y"
 

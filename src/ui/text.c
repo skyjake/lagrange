@@ -1871,6 +1871,10 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
 }
 
 iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
+    if (width <= 1) {
+        *endPos = text.start;
+        return zero_I2();
+    }
     /* "NoWrap" means words aren't wrapped; the line is broken at nearest character. */
     iWrapText wrap = { .mode     = anyCharacter_WrapTextMode,
                        .text     = text,
