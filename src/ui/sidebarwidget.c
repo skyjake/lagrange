@@ -356,19 +356,21 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                      iClob(new_LabelWidget("${sidebar.action.show}", NULL)),
                                                             frameless_WidgetFlag | tight_WidgetFlag));
                 const iMenuItem items[] = {
-                    { "${sidebar.action.feeds.showall}", SDLK_u, KMOD_SHIFT, "feeds.mode arg:0" },
-                    { "${sidebar.action.feeds.showunread}", SDLK_u, 0, "feeds.mode arg:1" },
+                    { page_Icon " ${sidebar.action.feeds.showall}", SDLK_u, KMOD_SHIFT, "feeds.mode arg:0" },
+                    { circle_Icon " ${sidebar.action.feeds.showunread}", SDLK_u, 0, "feeds.mode arg:1" },
                 };
                 iWidget *dropButton = addChild_Widget(
                     d->actions,
                     iClob(makeMenuButton_LabelWidget(items[d->feedsMode].label, items, 2)));
+                checkIcon_LabelWidget((iLabelWidget *) dropButton);
                 setFixedSize_Widget(
                     dropButton,
-                    init_I2(iMaxi(20 * gap_UI, measure_Text(
-                                default_FontId,
-                                translateCStr_Lang(items[findWidestLabel_MenuItem(items, 2)].label))
-                                    .advance.x +
-                                                   6 * gap_UI),
+                    init_I2(iMaxi(20 * gap_UI, 
+                                  measure_Text(default_FontId,
+                                               translateCStr_Lang(
+                                                   items[findWidestLabel_MenuItem(items, 2)].label))
+                                          .advance.x +
+                                      13 * gap_UI),
                             -1));
             }
             d->menu = makeMenu_Widget(
