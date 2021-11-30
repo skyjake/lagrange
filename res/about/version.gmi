@@ -24,7 +24,6 @@
 * Fixed the New Tab button not staying at the right edge of the window, depending on how many tabs are open.
 
 ## 1.9
-
 New features:
 * Added a toolbar button for toggling the left sidebar.
 * Added an unsplit button in the toolbar when in split view mode.
