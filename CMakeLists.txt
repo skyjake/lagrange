@@ -18,15 +18,15 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.9.2
+    VERSION 1.10.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2021)
 if (IOS)
-    set (PROJECT_VERSION 1.7)
-    set (IOS_BUNDLE_VERSION 23)
-    set (IOS_BUILD_DATE "2021-10-23")
+    set (PROJECT_VERSION 1.10)
+    set (IOS_BUNDLE_VERSION 1)
+    set (IOS_BUILD_DATE "2021-12-05")
 endif ()
 
 # Defaults that depend on environment.
@@ -225,7 +225,7 @@ set (SOURCES
     res/about/version.gmi
     ${EMB_BIN}
 )
-if (NOT APPLE) # macos.m has Sparkle updater
+if (IOS OR NOT APPLE) # macos.m has Sparkle updater
     list (APPEND SOURCES src/updater.c)
 endif ()
 if (ENABLE_IPC)
@@ -264,7 +264,7 @@ if (MSYS)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
     list (APPEND SOURCES src/win32.c src/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
 endif ()
-set_source_files_properties (${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+#set_source_files_properties (${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 if (MSYS OR (APPLE AND NOT MOBILE) OR (UNIX AND NOT MOBILE))
     add_definitions (-DiPlatformPcDesktop=1)
 endif ()
