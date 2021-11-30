@@ -1036,7 +1036,8 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     arrange_Widget(d); /* need to know the height */
     iBool allowOverflow = iFalse;
-    /* A vertical offset determined by a possible selected label in the menu. */ {
+    /* A vertical offset determined by a possible selected label in the menu. */ 
+    if (windowCoord.y < rootSize.y - lineHeight_Text(uiNormal_FontSize) * 3) {
         iConstForEach(ObjectList, child, children_Widget(d)) {
             const iWidget *item = constAs_Widget(child.object);
             if (flags_Widget(item) & selected_WidgetFlag) {
