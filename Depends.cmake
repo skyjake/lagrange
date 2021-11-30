@@ -1,9 +1,10 @@
+find_package (PkgConfig)
+
 if (IOS)
     include (Depends-iOS.cmake)
     return ()
 endif ()
 
-find_package (PkgConfig)
 find_program (MESON_EXECUTABLE meson DOC "Meson build system")
 find_program (NINJA_EXECUTABLE ninja DOC "Ninja build tool")
 include (ExternalProject)
