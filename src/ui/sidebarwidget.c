@@ -264,10 +264,12 @@ static iBool isBookmarkFolded_SidebarWidget_(const iSidebarWidget *d, const iBoo
     return iFalse;
 }
 
-static void updateItems_SidebarWidget_(iSidebarWidget *d) {
+static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     clear_ListWidget(d->list);
     releaseChildren_Widget(d->blank);
-    releaseChildren_Widget(d->actions);
+    if (!keepActions) {
+        releaseChildren_Widget(d->actions);
+    }
     d->actions->rect.size.y = 0;
     destroy_Widget(d->menu);
     destroy_Widget(d->modeMenu);
@@ -348,7 +350,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     break;
                 }
             }
-            /* Actions. */ {
+            /* Actions. */
+            if (!keepActions) {
                 addActionButton_SidebarWidget_(
                     d, check_Icon " ${sidebar.action.feeds.markallread}", "feeds.markallread", expand_WidgetFlag |
                     tight_WidgetFlag);
@@ -362,6 +365,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 iWidget *dropButton = addChild_Widget(
                     d->actions,
                     iClob(makeMenuButton_LabelWidget(items[d->feedsMode].label, items, 2)));
+                setId_Widget(dropButton, "feeds.modebutton");
                 checkIcon_LabelWidget((iLabelWidget *) dropButton);
                 setFixedSize_Widget(
                     dropButton,
@@ -372,6 +376,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                           .advance.x +
                                       13 * gap_UI),
                             -1));
+            }
+            else {
+                updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, "feeds.modebutton"),
+                                                    format_CStr(" arg:%d", d->feedsMode));
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
@@ -642,6 +650,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     arrange_Widget(d->actions);
     arrange_Widget(as_Widget(d));
     updateMouseHover_ListWidget(d->list);
+}
+
+static void updateItems_SidebarWidget_(iSidebarWidget *d) {
+    updateItemsWithFlags_SidebarWidget_(d, iFalse);
 }
 
 static size_t findItem_SidebarWidget_(const iSidebarWidget *d, int id) {
@@ -1304,9 +1316,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (isCommand_Widget(w, ev, "menu.closed")) {
+//        else if (isCommand_Widget(w, ev, "menu.closed")) {
          //   invalidateItem_ListWidget(d->list, d->contextIndex);
-        }
+//        }
         else if (isCommand_Widget(w, ev, "bookmark.open")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
@@ -1462,7 +1474,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (equalWidget_Command(cmd, w, "feeds.mode")) {
             d->feedsMode = arg_Command(cmd);
-            updateItems_SidebarWidget_(d);
+            updateItemsWithFlags_SidebarWidget_(d, iTrue);
             return iTrue;
         }
         else if (equal_Command(cmd, "feeds.markallread") && d->mode == feeds_SidebarMode) {

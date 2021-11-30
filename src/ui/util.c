@@ -1269,6 +1269,9 @@ const iString *removeMenuItemLabelPrefixes_String(const iString *d) {
 }
 
 void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *selectedCommand) {
+    if (!dropButton) {
+        return;
+    }
     iWidget *menu = findChild_Widget(as_Widget(dropButton), "menu");
     if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
         unselectAllNativeMenuItems_Widget(menu);
@@ -1277,6 +1280,7 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
             setSelected_NativeMenuItem(item, iTrue);
             updateText_LabelWidget(
                 dropButton, removeMenuItemLabelPrefixes_String(collectNewCStr_String(item->label)));
+            checkIcon_LabelWidget(dropButton);
         }
         return;
     }
@@ -1287,6 +1291,7 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
             setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
             if (isSelected) {
                 updateText_LabelWidget(dropButton, sourceText_LabelWidget(item));
+                checkIcon_LabelWidget(dropButton);
             }
         }
     }
@@ -2352,6 +2357,7 @@ iWidget *makePreferences_Widget(void) {
             { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
             { "padding" },
             { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
+            { "toggle id:prefs.time.24h" },
             { NULL }
         };
         const iMenuItem uiPanelItems[] = {
@@ -2436,6 +2442,7 @@ iWidget *makePreferences_Widget(void) {
         const iMenuItem aboutPanelItems[] = {
             { format_CStr("heading text:%s", cstr_String(aboutText)) },
             { "button text:" clock_Icon " ${menu.releasenotes}", 0, 0, "!open url:about:version" },
+            { "padding" },
             { "button text:" globe_Icon " ${menu.website}", 0, 0, "!open url:https://gmi.skyjake.fi/lagrange" },
             { "button text:" envelope_Icon " @jk@skyjake.fi", 0, 0, "!open url:https://skyjake.fi/@jk" },
             { "padding" },
