@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-11-30 05:33+0000\n"
+"PO-Revision-Date: 2021-11-30 05:35+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -2136,3 +2136,7 @@ msgstr "Tarkista päivitykset…"
 
 msgid "prefs.time.24h"
 msgstr "24 tunnin kellonajat"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Lue kaikki"
