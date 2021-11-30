@@ -398,6 +398,7 @@ void init_Text(iText *d, SDL_Renderer *render) {
     d->ansiEscape      = new_RegExp("[[()][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])", 0);
     d->baseFontId      = -1;
     d->baseFgColorId   = -1;
+    d->missingGlyphs   = iFalse;
     d->render          = render;
     /* A grayscale palette for rasterized glyphs. */ {
         SDL_Color colors[256];

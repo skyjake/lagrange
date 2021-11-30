@@ -401,11 +401,13 @@ static void loadPrefs_App_(iApp *d) {
     iRelease(f);
     /* Upgrade checks. */
     if (cmp_Version(&upgradedFromAppVersion, &(iVersion){ 1, 8, 0 }) < 0) {
+#if !defined (iPlatformAppleMobile)
         /* When upgrading to v1.8.0, the old hardcoded font library is gone and that means
            UI strings may not have the right fonts available for the UI to remain
            usable. */
         postCommandf_App("uilang id:en");
         postCommand_App("~fontpack.suggest.classic");
+#endif
     }
 #if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;
