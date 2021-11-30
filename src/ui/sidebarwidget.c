@@ -350,7 +350,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             /* Actions. */ {
                 addActionButton_SidebarWidget_(
-                    d, check_Icon " ${feeds.markallread}", "feeds.markallread", expand_WidgetFlag |
+                    d, check_Icon " ${sidebar.action.feeds.markallread}", "feeds.markallread", expand_WidgetFlag |
                     tight_WidgetFlag);
                 updateSize_LabelWidget(addChildFlags_Widget(d->actions,
                                      iClob(new_LabelWidget("${sidebar.action.show}", NULL)),

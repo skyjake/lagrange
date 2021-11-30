@@ -409,6 +409,10 @@ msgstr "Identities"
 msgid "sidebar.outline"
 msgstr "Outline"
 
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Read All"
+
 msgid "sidebar.action.show"
 msgstr "Show:"
 
