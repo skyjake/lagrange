@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../history.h"
 #include "../gmcerts.h"
 #include "../gmutil.h"
+#include "../sitespec.h"
 #include "../visited.h"
 
 #if defined (iPlatformMsys)
@@ -328,6 +329,66 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         setFocus_Widget(NULL);
         iWidget *menu = findWidget_Root("splitmenu");
         openMenuFlags_Widget(menu, zero_I2(), postCommands_MenuOpenFlags | center_MenuOpenFlags);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "identmenu.open")) {
+        iWidget *button = findWidget_Root("navbar.ident");
+        iArray items;
+        init_Array(&items, sizeof(iMenuItem));
+        /* Current identity. */
+        const iString     *docUrl = url_DocumentWidget(document_App());
+        const iGmIdentity *ident  = identityForUrl_GmCerts(certs_App(), docUrl);
+        const iString     *fp     = collect_String(hexEncode_Block(&ident->fingerprint));
+        pushBackN_Array(&items,
+                        (iMenuItem[]){ { format_CStr("///" uiHeading_ColorEscape "%s",
+                                                     ident ? cstr_String(name_GmIdentity(ident))
+                                                           : "${menu.identity.notactive}") },
+                                       { "---" } },
+                        2);
+        /* Alternate identities. */ {
+            const iString *site = collectNewRange_String(urlRoot_String(docUrl));
+            iBool haveAlts = iFalse;
+            iConstForEach(StringArray, i, strings_SiteSpec(site, usedIdentities_SiteSpecKey)) {
+                if (!equal_String(i.value, fp)) {
+                    const iBlock *otherFp = collect_Block(hexDecode_Rangecc(range_String(i.value)));
+                    const iGmIdentity *other = findIdentity_GmCerts(certs_App(), otherFp);
+                    if (other) {
+                        pushBack_Array(
+                            &items,
+                            &(iMenuItem){
+                                format_CStr(translateCStr_Lang("\U0001f816 ${ident.switch}"),
+                                            cstr_String(name_GmIdentity(other))),
+                                0,
+                                0,
+                                format_CStr("ident.switch fp:%s", cstr_String(i.value)) });
+                        haveAlts = iTrue;
+                    }
+                }
+            }
+            if (haveAlts) {
+                pushBack_Array(&items, &(iMenuItem){ "---" });
+            }
+        }
+        iSidebarWidget *sidebar = findWidget_App("sidebar");
+        pushBackN_Array(
+            &items,
+            (iMenuItem[]){
+                { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
+                { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+                { "---" },
+                { isVisible_Widget(sidebar) && mode_SidebarWidget(sidebar) == identities_SidebarMode
+                      ? leftHalf_Icon " ${menu.hide.identities}"
+                      : leftHalf_Icon " ${menu.show.identities}",
+                  0,
+                  0,
+                  deviceType_App() == phone_AppDeviceType ? "toolbar.showident"
+                                                          : "sidebar.mode arg:3 toggle:1" },
+            },
+            4);
+        iWidget *menu =
+            makeMenu_Widget(button, constData_Array(&items), size_Array(&items));
+        openMenu_Widget(menu, topLeft_Rect(bounds_Widget(button)));
+        deinit_Array(&items);
         return iTrue;
     }
     else if (equal_Command(cmd, "contextclick")) {
@@ -780,6 +841,26 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 dismissPortraitPhoneSidebars_Root(get_Root());
                 updateNavBarIdentity_(navBar);
                 updateNavDirButtons_(navBar);
+                /* Update site-specific used identities. */ {
+                    const iGmIdentity *ident =
+                        identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
+                    if (ident) {
+                        const iString *site =
+                            collectNewRange_String(urlRoot_String(canonicalUrl_String(urlStr)));
+                        const iStringArray *usedIdents =
+                            strings_SiteSpec(site, usedIdentities_SiteSpecKey);
+                        const iString *fingerprint = collect_String(hexEncode_Block(&ident->fingerprint));
+                        /* Keep this identity at the end of the list. */
+                        removeString_SiteSpec(site, usedIdentities_SiteSpecKey, fingerprint);
+                        insertString_SiteSpec(site, usedIdentities_SiteSpecKey, fingerprint);
+                        /* Keep the list short. */
+                        while (size_StringArray(usedIdents) > 5) {
+                            removeString_SiteSpec(site,
+                                                  usedIdentities_SiteSpecKey,
+                                                  constAt_StringArray(usedIdents, 0));
+                        }
+                    }
+                }
                 /* Icon updates should be limited to automatically chosen icons if the user
                    is allowed to pick their own in the future. */
                 if (updateBookmarkIcon_Bookmarks(bookmarks_App(), urlStr,
@@ -1268,10 +1349,10 @@ void createUserInterface_Root(iRoot *d) {
             setId_Widget(addChild_Widget(rightEmbed, iClob(makePadding_Widget(0))), "url.embedpad");
         }
         /* The active identity menu. */ {
-            iLabelWidget *idMenu = makeMenuButton_LabelWidget(
-                "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
-            setAlignVisually_LabelWidget(idMenu, iTrue);
-            setId_Widget(addChildFlags_Widget(navBar, iClob(idMenu), collapse_WidgetFlag), "navbar.ident");
+            iLabelWidget *idButton = new_LabelWidget(person_Icon, "identmenu.open");
+//                "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
+            setAlignVisually_LabelWidget(idButton, iTrue);
+            setId_Widget(addChildFlags_Widget(navBar, iClob(idButton), collapse_WidgetFlag), "navbar.ident");
         }
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         setId_Widget(addChildFlags_Widget(navBar,

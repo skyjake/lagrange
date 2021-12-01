@@ -201,6 +201,15 @@ void clearUse_GmIdentity(iGmIdentity *d) {
     clear_StringSet(d->useUrls);
 }
 
+const iString *findUse_GmIdentity(const iGmIdentity *d, const iString *url) {
+    iConstForEach(StringSet, using, d->useUrls) {
+        if (startsWith_String(url, cstr_String(using.value))) {
+            return using.value;
+        }
+    }
+    return NULL;
+}
+
 const iString *name_GmIdentity(const iGmIdentity *d) {
     iString *name = collect_String(subject_TlsCertificate(d->cert));
     if (startsWith_String(name, "CN = ")) {

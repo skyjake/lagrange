@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.10
+New features:
+* Identity toolbar menu can be used to switch between alternate identities that have been used on the site. If you have multiple accounts on a site, this makes it more convenient to switch between them.
+
 ## 1.9.2
 * Windows: Use the correct version number for update checks.
 * Shorter label for "Mark All as Read" in Feeds sidebar actions.
@@ -22,7 +26,6 @@
 * Fixed the New Tab button not staying at the right edge of the window, depending on how many tabs are open.
 
 ## 1.9
-
 New features:
 * Added a toolbar button for toggling the left sidebar.
 * Added an unsplit button in the toolbar when in split view mode.

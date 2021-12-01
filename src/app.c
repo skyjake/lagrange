@@ -3149,6 +3149,25 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("idents.changed");
         return iTrue;
     }
+    else if (equal_Command(cmd, "ident.switch")) {
+        /* This is different than "ident.signin" in that the currently used identity's activation
+           URL is used instead of the current one. */
+        const iString     *docUrl = url_DocumentWidget(document_App());
+        const iGmIdentity *cur    = identityForUrl_GmCerts(d->certs, docUrl);
+        iGmIdentity       *dst    = findIdentity_GmCerts(
+            d->certs, collect_Block(hexDecode_Rangecc(range_Command(cmd, "fp"))));
+        if (cur && dst && cur != dst) {
+            iString *useUrl = copy_String(findUse_GmIdentity(cur, docUrl));
+            if (isEmpty_String(useUrl)) {
+                useUrl = copy_String(docUrl);
+            }
+            signIn_GmCerts(d->certs, dst, useUrl);
+            postCommand_App("idents.changed");
+            postCommand_App("navigate.reload");
+            delete_String(useUrl);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "idents.changed")) {
         saveIdentities_GmCerts(d->certs);
         return iFalse;

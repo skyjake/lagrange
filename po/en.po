@@ -321,6 +321,10 @@ msgstr "Show History"
 msgid "menu.show.identities"
 msgstr "Show Identities"
 
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Hide Identities"
+""
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.outline"
 msgstr "Show Page Outline"
@@ -628,6 +632,11 @@ msgstr "Stop Using Everywhere"
 
 msgid "ident.export"
 msgstr "Export"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Switch to %s"
 
 msgid "heading.ident.use"
 msgstr "IDENTITY USAGE"
