@@ -651,7 +651,7 @@ const iString *withSpacesEncoded_String(const iString *d) {
 const iString *canonicalUrl_String(const iString *d) {
     /* The "canonical" form, used for internal storage and comparisons, is:
        - all non-reserved characters decoded (i.e., it's an IRI)
-       - expect for spaces, which are always `%20`
+       - except spaces, which are always `%20`
        This means a canonical URL can be used on a gemtext link line without modifications. */
     iString *canon = NULL;
     iUrl parts;
