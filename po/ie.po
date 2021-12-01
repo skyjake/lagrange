@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-10 04:50+0000\n"
+"PO-Revision-Date: 2021-12-04 10:50+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -2099,3 +2099,23 @@ msgid "feeds.atom.translated"
 msgstr ""
 "Ti document Atom XML esset convertet in un feed de Gemini por que on vell "
 "posse abonnar it."
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Leer omni"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Color del funde"
+
+msgid "dlg.bookmark.folder"
+msgstr "Fólder:"
+
+msgid "prefs.time.24h"
+msgstr "Usar 24 hores"
+
+msgid "menu.update"
+msgstr "Controlar actualisamentes…"
+
+msgid "sidebar.action.show"
+msgstr "Monstrar:"
