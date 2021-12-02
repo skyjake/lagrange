@@ -582,7 +582,9 @@ static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
     if (d->list) {
         setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(d->itemFonts[0]));
     }
-    updateItemHeight_CertListWidget(d->certList);
+    if (d->certList) {
+        updateItemHeight_CertListWidget(d->certList);
+    }
 }
 
 iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {

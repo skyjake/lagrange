@@ -515,6 +515,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     }
     else if (equal_Command(spec, "radio") || equal_Command(spec, "buttons")) {
         const iBool isRadio = equal_Command(spec, "radio");
+        const iBool isHorizontal = argLabel_Command(spec, "horizontal");
         addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
         iLabelWidget *head = makeHeading_Widget(label);
         setAllCaps_LabelWidget(head, iTrue);
@@ -522,11 +523,12 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         addChild_Widget(panel, iClob(head));
         widget = new_Widget();
         setBackgroundColor_Widget(widget, uiBackgroundSidebar_ColorId);
-        setPadding_Widget(widget, 4 * gap_UI, 2 * gap_UI, 4 * gap_UI, 2 * gap_UI);
+        const int hPad = (isHorizontal ? 0 : 1);
+        setPadding_Widget(widget, hPad * gap_UI, 2 * gap_UI, hPad * gap_UI, 2 * gap_UI);
         setFlags_Widget(widget,
                         borderTop_WidgetFlag |
                             borderBottom_WidgetFlag |
-                            arrangeHorizontal_WidgetFlag |
+                            (isHorizontal ? arrangeHorizontal_WidgetFlag : arrangeVertical_WidgetFlag) |
                             arrangeHeight_WidgetFlag |
                             resizeToParentWidth_WidgetFlag |
                             resizeWidthOfChildren_WidgetFlag,
@@ -534,7 +536,10 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setId_Widget(widget, id);
         for (const iMenuItem *radioItem = item->data; radioItem->label; radioItem++) {
             const char *  radId = cstr_Rangecc(range_Command(radioItem->label, "id"));
-            int64_t       flags = noBackground_WidgetFlag;
+            int64_t       flags = noBackground_WidgetFlag | frameless_WidgetFlag;
+            if (!isHorizontal) {
+                flags |= alignLeft_WidgetFlag;
+            }
             iLabelWidget *button;
             if (isRadio) {
                 const char *radLabel =
@@ -552,7 +557,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 updateSize_LabelWidget(button);
             }
             setId_Widget(as_Widget(button), radId);
-            setFont_LabelWidget(button, uiLabelMedium_FontId);
+            setFont_LabelWidget(button, isHorizontal ? uiLabelMedium_FontId : uiLabelBig_FontId);
             addChildFlags_Widget(widget, iClob(button), flags);
         }
     }

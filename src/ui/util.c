@@ -2380,7 +2380,7 @@ iWidget *makePreferences_Widget(void) {
             { "heading id:heading.prefs.pagecontent" },
             { "dropdown id:prefs.doctheme.dark", 0, 0, (const void *) docThemes[0] },
             { "dropdown id:prefs.doctheme.light", 0, 0, (const void *) docThemes[1] },
-            { "radio id:prefs.saturation", 0, 0, (const void *) satItems },
+            { "radio horizontal:1 id:prefs.saturation", 0, 0, (const void *) satItems },
             { "padding" },
             { "dropdown id:prefs.imagestyle", 0, 0, (const void *) imgStyles },
             { NULL }  
@@ -2397,12 +2397,12 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "dropdown id:prefs.font.ui", 0, 0, (const void *) constData_Array(makeFontItems_("ui")) },
             { "padding" },
-            { "button text:" fontpack_Icon " ${menu.fonts}", 0, 0, "!open url:about:fonts" },
+            { "button text:" fontpack_Icon " " uiTextAction_ColorEscape "${menu.fonts}", 0, 0, "!open url:about:fonts" },
             { NULL }  
         };
         const iMenuItem stylePanelItems[] = {
             { "title id:heading.prefs.style" },
-            { "radio id:prefs.linewidth", 0, 0, (const void *) lineWidthItems },
+            { "radio horizontal:1 id:prefs.linewidth", 0, 0, (const void *) lineWidthItems },
             { "padding" },
             { "input id:prefs.linespacing maxlen:5" },
             { "radio id:prefs.quoteicon", 0, 0, (const void *) quoteItems },
