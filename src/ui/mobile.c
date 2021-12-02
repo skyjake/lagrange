@@ -100,6 +100,16 @@ static iWidget *findTitleLabel_(iWidget *panel) {
     return NULL;
 }
 
+static void updateCertListHeight_(iWidget *detailStack) {
+    iWidget *certList = findChild_Widget(detailStack, "certlist");
+    if (certList) {
+        setFixedSize_Widget(certList,
+                            init_I2(-1,
+                                    -1 * gap_UI + bottom_Rect(safeRect_Root(certList->root)) -
+                                        top_Rect(boundsWithoutVisualOffset_Widget(certList))));
+    }
+}
+
 static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
         const iBool  isPortrait   = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
@@ -147,6 +157,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
             setPadding_Widget(panel, pad, 0, pad, pad);
         }
         arrange_Widget(mainDetailSplit);
+        updateCertListHeight_(detailStack);
     }
     else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
         if (focus_Widget() && class_Widget(focus_Widget()) == &Class_InputWidget) {
@@ -199,6 +210,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         postCommand_Widget(topPanel, "panel.changed arg:%d", panelIndex);
         //printTree_Widget(findDetailStack_(topPanel));
 //        updateVisible_ListWidget(findChild_Widget(findDetailStack_(topPanel), "certlist"));
+        updateCertListHeight_(findDetailStack_(topPanel));
         return iTrue;
     }
     if (equal_Command(cmd, "swipe.back")) {
@@ -619,8 +631,6 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         widget = as_Widget(certList);
         updateItems_CertListWidget(certList);
         invalidate_ListWidget(list);
-        setFixedSize_Widget(widget,
-                            init_I2(-1, numItems_ListWidget(list) * itemHeight_ListWidget(list)));
     }
     else if (equal_Command(spec, "button")) {
         widget = as_Widget(heading = makePanelButton_(label, item->command));
@@ -885,18 +895,21 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     if (!isUsingPanelLayout_Mobile()) {
         return;    
     }
-    const iBool isSlidePanel = (flags_Widget(sheet) & horizontalOffset_WidgetFlag) != 0;
-    if (isSlidePanel && isLandscape_App()) {
+    const iBool isHorizPanel = (flags_Widget(sheet) & horizontalOffset_WidgetFlag) != 0;
+    if (isHorizPanel && isLandscape_App()) {
         return;
     }
+    const int maxOffset = isHorizPanel            ? width_Widget(sheet)
+                          : isPortraitPhone_App() ? height_Widget(sheet)
+                                                  : (12 * gap_UI);
     if (isIncoming) {
-        setVisualOffset_Widget(sheet, isSlidePanel ? width_Widget(sheet) : height_Widget(sheet), 0, 0);
+        setVisualOffset_Widget(sheet, maxOffset, 0, 0);
         setVisualOffset_Widget(sheet, 0, 330, easeOut_AnimFlag | softer_AnimFlag);
     }
     else {
         const iBool wasDragged = iAbs(value_Anim(&sheet->visualOffset) - 0) > 1;
         setVisualOffset_Widget(sheet,
-                               isSlidePanel ? width_Widget(sheet) : height_Widget(sheet),
+                               maxOffset,
                                wasDragged ? 100 : 200,
                                wasDragged ? 0 : easeIn_AnimFlag | softer_AnimFlag);
     }
