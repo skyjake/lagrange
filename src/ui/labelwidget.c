@@ -491,9 +491,9 @@ int font_LabelWidget(const iLabelWidget *d) {
 }
 
 void updateSize_LabelWidget(iLabelWidget *d) {
-    iWidget *w = as_Widget(d);
+    iWidget      *w     = as_Widget(d);
     const int64_t flags = flags_Widget(w);
-    const iInt2 size = defaultSize_LabelWidget(d);
+    const iInt2   size  = defaultSize_LabelWidget(d);
     if (!d->flags.noAutoMinHeight) {
         w->minSize.y = size.y; /* vertically text must remain visible */
     }

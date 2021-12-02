@@ -861,12 +861,8 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     setFlags_Widget(menu,
                     keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
                         arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
-                        resizeChildrenToWidestChild_WidgetFlag | overflowScrollable_WidgetFlag |
-                        (isPortraitPhone_App() ? drawBackgroundToVerticalSafeArea_WidgetFlag : 0),
+                        resizeChildrenToWidestChild_WidgetFlag | overflowScrollable_WidgetFlag,
                     iTrue);
-    if (!isPortraitPhone_App()) {
-        setFrameColor_Widget(menu, uiBackgroundSelected_ColorId);
-    }
     makeMenuItems_Widget(menu, items, n);
     addChild_Widget(parent, menu);
     iRelease(menu); /* owned by parent now */
@@ -884,6 +880,7 @@ void openMenu_Widget(iWidget *d, iInt2 windowCoord) {
 
 static void updateMenuItemFonts_Widget_(iWidget *d) {
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
+    const iBool isMobile        = (deviceType_App() != desktop_AppDeviceType);
     const iBool isSlidePanel    = (flags_Widget(d) & horizontalOffset_WidgetFlag) != 0;
     iForEach(ObjectList, i, children_Widget(d)) {
         if (isInstance_Object(i.object, &Class_LabelWidget)) {
@@ -895,14 +892,14 @@ static void updateMenuItemFonts_Widget_(iWidget *d) {
             if (deviceType_App() == desktop_AppDeviceType) {
                 setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
             }
-            else if (isPortraitPhone) {
-                if (!isSlidePanel) {
-                    setFont_LabelWidget(label, isCaution ? uiLabelBigBold_FontId : uiLabelBig_FontId);
-                }
+            else { //if (isPortraitPhone) {
+                //if (!isSlidePanel) {
+                setFont_LabelWidget(label, isCaution ? uiLabelBigBold_FontId : uiLabelBig_FontId);
+              //  }
             }
-            else {
-                setFont_LabelWidget(label, isCaution ? uiContentBold_FontId : uiContent_FontId);
-            }
+//            else {
+//                setFont_LabelWidget(label, isCaution ? uiContentBold_FontId : uiContent_FontId);
+//            }
         }
         else if (childCount_Widget(i.object)) {
             updateMenuItemFonts_Widget_(i.object);
@@ -1034,6 +1031,12 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
+    if (!isPortraitPhone) {   
+        setFrameColor_Widget(d, uiBackgroundSelected_ColorId);
+    }
+    else {
+        setFrameColor_Widget(d, none_ColorId);
+    }
     arrange_Widget(d); /* need to know the height */
     iBool allowOverflow = iFalse;
     /* A vertical offset determined by a possible selected label in the menu. */
@@ -1104,13 +1107,22 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     }
 #endif
     raise_Widget(d);
-    if (isPortraitPhone) {
-        setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, iFalse);
-        setFlags_Widget(d, resizeWidthOfChildren_WidgetFlag | drawBackgroundToBottom_WidgetFlag, iTrue);
-        if (!isSlidePanel) {
-            setFlags_Widget(d, borderTop_WidgetFlag, iTrue);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, 
+                        !isPortraitPhone);
+        setFlags_Widget(d,
+                        resizeWidthOfChildren_WidgetFlag | drawBackgroundToBottom_WidgetFlag |
+                            drawBackgroundToVerticalSafeArea_WidgetFlag,
+                        isPortraitPhone);
+        if (isPortraitPhone) {
+            if (!isSlidePanel) {
+                setFlags_Widget(d, borderTop_WidgetFlag, iTrue);
+            }
+            d->rect.size.x = rootSize.x;
         }
-        d->rect.size.x = rootSize.x;
+        else {
+            d->rect.size.x = 0;
+        }
     }
     updateMenuItemFonts_Widget_(d);
     arrange_Widget(d);
@@ -2458,7 +2470,7 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.settings" },
             { "panel text:" gear_Icon " ${heading.prefs.general}", 0, 0, (const void *) generalPanelItems },
             { "panel icon:0x1f5a7 id:heading.prefs.network", 0, 0, (const void *) networkPanelItems },
-            { "panel text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
+            { "panel noscroll:1 text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
             { "padding" },
             { "panel icon:0x1f4f1 id:heading.prefs.interface", 0, 0, (const void *) uiPanelItems },
             { "panel icon:0x1f3a8 id:heading.prefs.colors", 0, 0, (const void *) colorPanelItems },

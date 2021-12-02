@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "window.h"
 
+#include "labelwidget.h"
+
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/ptrset.h>
 #include <SDL_mouse.h>
@@ -836,6 +838,12 @@ static void arrange_Widget_(iWidget *d) {
 }
 
 static void resetArrangement_Widget_(iWidget *d) {
+    if (d->flags & resizeToParentWidth_WidgetFlag) {
+        d->rect.size.x = 0;
+    }
+    if (d->flags & resizeToParentHeight_WidgetFlag) {
+        d->rect.size.y = 0;
+    }
     iForEach(ObjectList, i, children_Widget(d)) {
         iWidget *child = as_Widget(i.object);
         resetArrangement_Widget_(child);
@@ -846,6 +854,14 @@ static void resetArrangement_Widget_(iWidget *d) {
             if (d->flags & resizeWidthOfChildren_WidgetFlag && child->flags & expand_WidgetFlag &&
                 ~child->flags & fixedWidth_WidgetFlag) {
                 child->rect.size.x = 0;
+            }
+            if (d->flags & resizeChildrenToWidestChild_WidgetFlag) {
+                if (isInstance_Object(child, &Class_LabelWidget)) {
+                    updateSize_LabelWidget((iLabelWidget *) child);
+                }
+                else {
+                    child->rect.size.x = 0;
+                }
             }
             if (d->flags & arrangeVertical_WidgetFlag) {
                 child->rect.pos.y = 0;
