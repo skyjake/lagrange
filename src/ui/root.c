@@ -339,14 +339,15 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         /* Current identity. */
         const iString     *docUrl = url_DocumentWidget(document_App());
         const iGmIdentity *ident  = identityForUrl_GmCerts(certs_App(), docUrl);
-        const iString     *fp     = collect_String(hexEncode_Block(&ident->fingerprint));
+        const iString     *fp     = ident ? collect_String(hexEncode_Block(&ident->fingerprint)) : NULL;
         pushBackN_Array(&items,
                         (iMenuItem[]){ { format_CStr("///" uiHeading_ColorEscape "%s",
                                                      ident ? cstr_String(name_GmIdentity(ident))
                                                            : "${menu.identity.notactive}") },
                                        { "---" } },
                         2);
-        /* Alternate identities. */ {
+        /* Alternate identities. */
+        if (ident) {
             const iString *site = collectNewRange_String(urlRoot_String(docUrl));
             iBool haveAlts = iFalse;
             iConstForEach(StringArray, i, strings_SiteSpec(site, usedIdentities_SiteSpecKey)) {

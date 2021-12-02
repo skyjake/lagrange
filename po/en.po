@@ -982,7 +982,7 @@ msgid "menu.page.upload"
 msgstr "Upload Page with Titan…"
 
 msgid "heading.upload"
-msgstr "UPLOAD WITH TITAN"
+msgstr "Upload with Titan"
 
 msgid "upload.id"
 msgstr "Identity:"
@@ -1239,7 +1239,7 @@ msgid "dlg.bookmark.icon"
 msgstr "Icon:"
 
 msgid "heading.bookmark.tags"
-msgstr "SPECIAL TAGS"
+msgstr "Special Tags"
 
 msgid "heading.addfolder"
 msgstr "ADD FOLDER"
@@ -1254,14 +1254,14 @@ msgid "dlg.addfolder"
 msgstr "Add Folder"
 
 msgid "heading.prefs"
-msgstr "PREFERENCES"
+msgstr "Preferences"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "SETTINGS"
+msgstr "Settings"
 
 msgid "heading.prefs.certs"
-msgstr "CERTIFICATES"
+msgstr "Certificates"
 
 # tab button
 msgid "heading.prefs.colors"
@@ -1287,25 +1287,25 @@ msgid "heading.prefs.network"
 msgstr "Network"
 
 msgid "heading.prefs.paragraph"
-msgstr "PARAGRAPH"
+msgstr "Paragraph"
 
 msgid "heading.prefs.uitheme"
-msgstr "UI COLORS"
+msgstr "UI Colors"
 
 msgid "heading.prefs.pagecontent"
-msgstr "PAGE COLORS"
+msgstr "Page Colors"
 
 msgid "heading.prefs.proxies"
-msgstr "PROXIES"
+msgstr "Proxies"
 
 msgid "heading.prefs.scrolling"
-msgstr "SCROLLING"
+msgstr "Scrolling"
 
 msgid "heading.prefs.sizing"
-msgstr "SIZING"
+msgstr "Sizing"
 
 msgid "heading.prefs.widelayout"
-msgstr "WIDE LAYOUT"
+msgstr "Wide Layout"
 
 # tab button
 msgid "heading.prefs.style"

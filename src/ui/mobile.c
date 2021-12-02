@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "mobile.h"
 
 #include "app.h"
+#include "certlistwidget.h"
 #include "command.h"
 #include "defs.h"
 #include "inputwidget.h"
@@ -196,6 +197,8 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         setText_LabelWidget(detailTitle, text_LabelWidget((iLabelWidget *) findTitleLabel_(panel)));
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
         postCommand_Widget(topPanel, "panel.changed arg:%d", panelIndex);
+        //printTree_Widget(findDetailStack_(topPanel));
+//        updateVisible_ListWidget(findChild_Widget(findDetailStack_(topPanel), "certlist"));
         return iTrue;
     }
     if (equal_Command(cmd, "swipe.back")) {
@@ -482,7 +485,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                                                    collapse_WidgetFlag);
         setFont_LabelWidget(title, uiLabelLargeBold_FontId);
         setTextColor_LabelWidget(title, uiHeading_ColorId);
-        setAllCaps_LabelWidget(title, iTrue);
+//        setAllCaps_LabelWidget(title, iTrue);
         setId_Widget(as_Widget(title), id);
     }
     else if (equal_Command(spec, "heading")) {
@@ -608,6 +611,16 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
             setCommandHandler_Widget(widget, inputHeadingHandler_);
             setUserData_Object(widget, input);
         }
+    }
+    else if (equal_Command(spec, "certlist")) {
+        iCertListWidget *certList = new_CertListWidget();
+        iListWidget *list = (iListWidget *) certList;
+        setBackgroundColor_Widget(as_Widget(list), uiBackgroundSidebar_ColorId);
+        widget = as_Widget(certList);
+        updateItems_CertListWidget(certList);
+        invalidate_ListWidget(list);
+        setFixedSize_Widget(widget,
+                            init_I2(-1, numItems_ListWidget(list) * itemHeight_ListWidget(list)));
     }
     else if (equal_Command(spec, "button")) {
         widget = as_Widget(heading = makePanelButton_(label, item->command));

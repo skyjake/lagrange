@@ -1995,9 +1995,11 @@ iWidget *appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int sho
 }
 
 static void makeTwoColumnHeading_(const char *title, iWidget *headings, iWidget *values) {
-    addChildFlags_Widget(headings,
-                         iClob(makeHeading_Widget(format_CStr(uiHeading_ColorEscape "%s", title))),
-                         ignoreForParentWidth_WidgetFlag);
+    setFont_LabelWidget(addChildFlags_Widget(headings,
+                                             iClob(makeHeading_Widget(
+                                                 format_CStr(uiHeading_ColorEscape "%s", title))),
+                                             ignoreForParentWidth_WidgetFlag),
+                        uiLabelBold_FontId);
     addChild_Widget(values, iClob(makeHeading_Widget("")));
 }
 
@@ -2431,6 +2433,7 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem identityPanelItems[] = {
             { "title id:sidebar.identities" },
+            { "certlist" },
             { NULL }  
         };
         iString *aboutText = collectNew_String(); {
@@ -2471,9 +2474,9 @@ iWidget *makePreferences_Widget(void) {
         return dlg;
     }
     iWidget *dlg = makeSheet_Widget("prefs");
-    addChildFlags_Widget(dlg,
+    setAllCaps_LabelWidget(addChildFlags_Widget(dlg,
                          iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.prefs}", NULL)),
-                         frameless_WidgetFlag);
+                         frameless_WidgetFlag), iTrue);
     iWidget *tabs = makeTabs_Widget(dlg);
     setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
     setId_Widget(tabs, "prefs.tabs");

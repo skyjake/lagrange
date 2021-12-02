@@ -388,6 +388,7 @@ void init_CertListWidget(iCertListWidget *d) {
     init_ListWidget(&d->list);
     setId_Widget(w, "certlist");
     setBackgroundColor_Widget(w, none_ColorId);
+    setItemHeight_ListWidget(&d->list, 3.5f * lineHeight_Text(default_FontId));
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
 #if defined (iPlatformMobile)
