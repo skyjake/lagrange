@@ -511,6 +511,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setId_Widget(as_Widget(drop), id);
         widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label), as_Widget(drop));
         setCommandHandler_Widget(widget, dropdownHeadingHandler_);
+        widget->padding[2] = gap_UI;
         setUserData_Object(widget, drop);
     }
     else if (equal_Command(spec, "radio") || equal_Command(spec, "buttons")) {
@@ -534,7 +535,20 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                             resizeWidthOfChildren_WidgetFlag,
                         iTrue);
         setId_Widget(widget, id);
+        iBool isFirst = iTrue;
         for (const iMenuItem *radioItem = item->data; radioItem->label; radioItem++) {
+            if (!isHorizontal && !isFirst) {
+                /* The separator is padded from the left so we need two. */
+                iWidget *sep = new_Widget();
+                iWidget *sep2 = new_Widget();
+                addChildFlags_Widget(sep, iClob(sep2), 0);
+                setFlags_Widget(sep, arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag, iTrue);
+                setBackgroundColor_Widget(sep2, uiSeparator_ColorId);
+                setFixedSize_Widget(sep2, init_I2(-1, gap_UI / 4));
+                setPadding_Widget(sep, 5 * gap_UI, 0, 0, 0);
+                addChildFlags_Widget(widget, iClob(sep), 0);
+            }
+            isFirst = iFalse;
             const char *  radId = cstr_Rangecc(range_Command(radioItem->label, "id"));
             int64_t       flags = noBackground_WidgetFlag | frameless_WidgetFlag;
             if (!isHorizontal) {
@@ -554,10 +568,13 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 button = (iLabelWidget *) makeToggle_Widget(radId);
                 setTextCStr_LabelWidget(button, format_CStr("${%s}", radId));
                 setFlags_Widget(as_Widget(button), fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget(button);
             }
             setId_Widget(as_Widget(button), radId);
             setFont_LabelWidget(button, isHorizontal ? uiLabelMedium_FontId : uiLabelBig_FontId);
+            setCheckMark_LabelWidget(button, !isHorizontal);
+            setPadding_Widget(as_Widget(button), gap_UI, 1 * gap_UI, 0, 1 * gap_UI);
+            updateSize_LabelWidget(button);
+            setPadding_Widget(widget, 0, 0, 0, 0);
             addChildFlags_Widget(widget, iClob(button), flags);
         }
     }
@@ -575,6 +592,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
             setFlags_Widget(widget, expand_WidgetFlag, iTrue);
         }
         else {
+            setFlags_Widget(as_Widget(input), alignRight_WidgetFlag, iTrue);
             setContentPadding_InputWidget(input, 3 * gap_UI, 0);
             if (hasLabel_Command(spec, "unit")) {
                 iWidget *unit = addChildFlags_Widget(

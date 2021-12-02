@@ -44,14 +44,15 @@ struct Impl_LabelWidget {
     iString command;
     iClick  click;
     struct {
-        uint8_t alignVisual         : 1; /* align according to visible bounds, not font metrics */
-        uint8_t noAutoMinHeight     : 1; /* minimum height is not set automatically */
-        uint8_t drawAsOutline       : 1; /* draw as outline, filled with background color */
-        uint8_t noTopFrame          : 1;
-        uint8_t wrap                : 1;
-        uint8_t allCaps             : 1;
-        uint8_t removeTrailingColon : 1;
-        uint8_t chevron             : 1;
+        uint16_t alignVisual         : 1; /* align according to visible bounds, not font metrics */
+        uint16_t noAutoMinHeight     : 1; /* minimum height is not set automatically */
+        uint16_t drawAsOutline       : 1; /* draw as outline, filled with background color */
+        uint16_t noTopFrame          : 1;
+        uint16_t wrap                : 1;
+        uint16_t allCaps             : 1;
+        uint16_t removeTrailingColon : 1;
+        uint16_t chevron             : 1;        
+        uint16_t checkMark           : 1;
     } flags;
 };
 
@@ -204,6 +205,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     *bg     = isButton && ~flags & noBackground_WidgetFlag ? (d->widget.bgColor != none_ColorId ?
                                                               d->widget.bgColor : uiBackground_ColorId)
                                                            : none_ColorId;
+    if (d->flags.checkMark) {
+        *bg = none_ColorId;
+    }
     *fg     = uiText_ColorId;
     *frame1 = isButton ? uiEmboss1_ColorId : d->widget.frameColor;
     *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
@@ -215,13 +219,15 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         *meta = uiTextDisabled_ColorId;
     }
     if (isSel) {
-        *bg = uiBackgroundSelected_ColorId;
+        if (!d->flags.checkMark) {     
+            *bg = uiBackgroundSelected_ColorId;
 //        if (!isKeyRoot) {
 //            *bg = uiEmbossSelected1_ColorId; //uiBackgroundUnfocusedSelection_ColorId;
 //        }
-        if (!isKeyRoot) {
-            *bg = isDark_ColorTheme(colorTheme_App()) ? uiBackgroundUnfocusedSelection_ColorId
-                : uiMarked_ColorId ;
+            if (!isKeyRoot) {
+                *bg = isDark_ColorTheme(colorTheme_App()) ? uiBackgroundUnfocusedSelection_ColorId
+                    : uiMarked_ColorId;
+            }
         }
         *fg = uiTextSelected_ColorId;
         if (isButton) {
@@ -429,14 +435,23 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             "%s",
             cstr_String(&d->label));
     }
-    if (d->flags.chevron) {
+    if (d->flags.chevron || (flags & selected_WidgetFlag && d->flags.checkMark)) {
         const iRect chRect = rect;
         const int chSize = lineHeight_Text(d->font);
+        int offset = 0;
+        if (d->flags.chevron) {
+            offset = -iconPad;
+        }
+        else {
+            offset = -10 * gap_UI;
+        }
         drawCentered_Text(d->font,
-                          (iRect){ addX_I2(topRight_Rect(chRect), -iconPad),
+                          (iRect){ addX_I2(topRight_Rect(chRect), offset),
                                    init_I2(chSize, height_Rect(chRect)) },
-                          iTrue, iconColor, rightAngle_Icon);
-    }
+                          iTrue,
+                          iconColor,
+                          d->flags.chevron ? rightAngle_Icon : check_Icon);
+    }    
     unsetClip_Paint(&p);
     drawChildren_Widget(w);
 }
@@ -578,6 +593,10 @@ void setNoTopFrame_LabelWidget(iLabelWidget *d, iBool noTopFrame) {
 
 void setChevron_LabelWidget(iLabelWidget *d, iBool chevron) {
     d->flags.chevron = chevron;
+}
+
+void setCheckMark_LabelWidget(iLabelWidget *d, iBool checkMark) {
+    d->flags.checkMark = checkMark;
 }
 
 void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {

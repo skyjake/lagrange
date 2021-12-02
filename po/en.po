@@ -987,6 +987,9 @@ msgstr "UPLOAD WITH TITAN"
 msgid "upload.id"
 msgstr "Identity:"
 
+msgid "heading.upload.id"
+msgstr "Identification"
+
 msgid "dlg.upload.id.none"
 msgstr "None"
 
@@ -1019,6 +1022,9 @@ msgstr "Token:"
 
 msgid "hint.upload.token"
 msgstr "see server's instructions"
+
+msgid "hint.upload.token.long"
+msgstr "token — see server's instructions"
 
 msgid "dlg.upload.send"
 msgstr "Upload"

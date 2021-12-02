@@ -33,6 +33,7 @@ void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 void    setNoAutoMinHeight_LabelWidget  (iLabelWidget *, iBool noAutoMinHeight);
 void    setNoTopFrame_LabelWidget   (iLabelWidget *, iBool noTopFrame);
 void    setChevron_LabelWidget      (iLabelWidget *, iBool chevron);
+void    setCheckMark_LabelWidget    (iLabelWidget *, iBool checkMark);
 void    setWrap_LabelWidget         (iLabelWidget *, iBool wrap);
 void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);
 void    setAllCaps_LabelWidget      (iLabelWidget *, iBool allCaps);

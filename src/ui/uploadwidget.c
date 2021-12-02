@@ -185,9 +185,9 @@ void init_UploadWidget(iUploadWidget *d) {
             { "label id:upload.info" },
             { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
             { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
-            { "padding" },
-            { "dropdown id:upload.id icon:0x1f464", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
-            { "input id:upload.token hint:hint.upload.token icon:0x1f511" },
+            { "heading text:${heading.upload.id}" },
+            { "dropdown id:upload.id icon:0x1f464 text:", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
+            { "input id:upload.token hint:hint.upload.token.long icon:0x1f516 text:" },
             { NULL }
         }, actions, iElemCount(actions));
         d->info          = findChild_Widget(w, "upload.info");

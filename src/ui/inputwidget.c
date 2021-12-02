@@ -2343,10 +2343,29 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* If buffered, just draw the buffered copy. */
     if (d->buffered && !isFocused) {
         /* Most input widgets will use this, since only one is focused at a time. */
-        draw_TextBuf(d->buffered, addY_I2(drawPos, visLineOffsetY), white_ColorId);
+        if (flags_Widget(w) & alignRight_WidgetFlag) {
+            draw_TextBuf(
+                d->buffered,
+                addY_I2(init_I2(right_Rect(contentBounds) - d->buffered->size.x, drawPos.y),
+                        visLineOffsetY),
+                white_ColorId);
+        }
+        else {        
+            draw_TextBuf(d->buffered, addY_I2(drawPos, visLineOffsetY), white_ColorId);
+        }
     }
     else if (isHint) {
-        drawRange_Text(d->font, drawPos, uiAnnotation_ColorId, range_String(&d->hint));
+        if (flags_Widget(w) & alignRight_WidgetFlag) {
+            drawAlign_Text(d->font,
+                           init_I2(right_Rect(contentBounds), drawPos.y),
+                           uiAnnotation_ColorId,
+                           right_Alignment,
+                           "%s",
+                           cstr_String(&d->hint));
+        }
+        else {
+            drawRange_Text(d->font, drawPos, uiAnnotation_ColorId, range_String(&d->hint));
+        }
     }
     else {
         iAssert(~d->inFlags & isSensitive_InputWidgetFlag || size_Range(&visLines) == 1);
