@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "visbuf.h"
+#include "paint.h"
 #include "window.h"
 #include "util.h"
 
@@ -224,6 +225,8 @@ void draw_VisBuf(const iVisBuf *d, const iInt2 topLeft, const iRangei yClipBound
             continue; /* Outside the clipping area. */
 #endif
         }
+        dst.x += origin_Paint.x;
+        dst.y += origin_Paint.y;
 #if defined (DEBUG_SCALE)
         dst.w *= DEBUG_SCALE;
         dst.h *= DEBUG_SCALE;

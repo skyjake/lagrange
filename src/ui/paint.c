@@ -41,6 +41,7 @@ void init_Paint(iPaint *d) {
     d->dst       = get_Window();
     d->setTarget = NULL;
     d->oldTarget = NULL;
+    d->oldOrigin = zero_I2();
     d->alpha     = 255;
 }
 
@@ -48,6 +49,8 @@ void beginTarget_Paint(iPaint *d, SDL_Texture *target) {
     SDL_Renderer *rend = renderer_Paint_(d);
     if (!d->setTarget) {
         d->oldTarget = SDL_GetRenderTarget(rend);
+        d->oldOrigin = origin_Paint;
+        origin_Paint = zero_I2();
         SDL_SetRenderTarget(rend, target);
         d->setTarget = target;
     }
@@ -59,8 +62,10 @@ void beginTarget_Paint(iPaint *d, SDL_Texture *target) {
 void endTarget_Paint(iPaint *d) {
     if (d->setTarget) {
         SDL_SetRenderTarget(renderer_Paint_(d), d->oldTarget);
+        origin_Paint = d->oldOrigin;
+        d->oldOrigin = zero_I2();
         d->oldTarget = NULL;
-        d->setTarget = NULL;
+        d->setTarget = NULL;        
     }
 }
 
