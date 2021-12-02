@@ -8,7 +8,7 @@
 
 ## 1.10
 New features:
-* Identity toolbar menu can be used to switch between alternate identities that have been used on the site. If you have multiple accounts on a site, this makes it more convenient to switch between them.
+* Identity toolbar menu can be used to switch between alternate identities. If you have used multiple identities on one site, this makes it more convenient to switch between them.
 
 ## 1.9.2
 * Windows: Use the correct version number for update checks.

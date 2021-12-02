@@ -332,7 +332,8 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "identmenu.open")) {
-        iWidget *button = findWidget_Root("navbar.ident");
+        iWidget *toolBar = findWidget_Root("toolbar");
+        iWidget *button = findWidget_Root(toolBar ? "toolbar.ident" : "navbar.ident");
         iArray items;
         init_Array(&items, sizeof(iMenuItem));
         /* Current identity. */
@@ -375,16 +376,21 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             (iMenuItem[]){
                 { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
                 { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
-                { "---" },
+                { "---" } }, 3);
+        if (deviceType_App() == desktop_AppDeviceType) {
+            pushBack_Array(&items, &(iMenuItem)
                 { isVisible_Widget(sidebar) && mode_SidebarWidget(sidebar) == identities_SidebarMode
                       ? leftHalf_Icon " ${menu.hide.identities}"
                       : leftHalf_Icon " ${menu.show.identities}",
                   0,
                   0,
                   deviceType_App() == phone_AppDeviceType ? "toolbar.showident"
-                                                          : "sidebar.mode arg:3 toggle:1" },
-            },
-            4);
+                                                          : "sidebar.mode arg:3 toggle:1" });
+        }
+        else {
+            pushBack_Array(&items, &(iMenuItem){ gear_Icon " ${menu.identities}", 0, 0,
+                                                 "toolbar.showident"});
+        }
         iWidget *menu =
             makeMenu_Widget(button, constData_Array(&items), size_Array(&items));
         openMenu_Widget(menu, topLeft_Rect(bounds_Widget(button)));
@@ -1475,7 +1481,7 @@ void createUserInterface_Root(iRoot *d) {
                                           frameless_WidgetFlag),
                      "toolbar.forward");
         setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(newLargeIcon_LabelWidget("\U0001f464", "toolbar.showident")),
+                                          iClob(newLargeIcon_LabelWidget("\U0001f464", "identmenu.open")),
                                           frameless_WidgetFlag),
                      "toolbar.ident");
         setId_Widget(addChildFlags_Widget(toolBar,

@@ -168,6 +168,8 @@ set (SOURCES
     src/ui/bindingswidget.h
     src/ui/certimportwidget.c
     src/ui/certimportwidget.h
+    src/ui/certlistwidget.c
+    src/ui/certlistwidget.h
     src/ui/color.c
     src/ui/color.h
     src/ui/command.c

@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "paint.h"
 
+#include <the_Foundation/intset.h>
 #include <the_Foundation/ptrarray.h>
 
 iDeclareType(ListWidget)
@@ -47,6 +48,25 @@ iDeclareObjectConstruction(ListItem)
 
 iDeclareWidgetClass(ListWidget)
 iDeclareObjectConstruction(ListWidget)
+
+iDeclareType(VisBuf)
+
+struct Impl_ListWidget {
+    iWidget        widget;
+    iScrollWidget *scroll;
+    iSmoothScroll  scrollY;
+    int            itemHeight;
+    iPtrArray      items;
+    size_t         hoverItem;
+    size_t         dragItem;
+    iInt2          dragOrigin; /* offset from mouse to drag item's top-left corner */
+    iClick         click;
+    iIntSet        invalidItems;
+    iVisBuf       *visBuf;
+    iBool          noHoverWhileScrolling;
+};
+
+void    init_ListWidget             (iListWidget *);
 
 void    setItemHeight_ListWidget    (iListWidget *, int itemHeight);
 

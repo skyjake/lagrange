@@ -49,21 +49,6 @@ iDefineClass(ListItem)
 
 iDefineObjectConstruction(ListWidget)
 
-struct Impl_ListWidget {
-    iWidget widget;
-    iScrollWidget *scroll;
-    iSmoothScroll scrollY;
-    int itemHeight;
-    iPtrArray items;
-    size_t hoverItem;
-    size_t dragItem;
-    iInt2 dragOrigin; /* offset from mouse to drag item's top-left corner */
-    iClick click;
-    iIntSet invalidItems;
-    iVisBuf *visBuf;
-    iBool noHoverWhileScrolling;
-};
-
 static void refreshWhileScrolling_ListWidget_(iAnyObject *any) {
     iListWidget *d = any;
     updateVisible_ListWidget(d);

@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "defs.h"
 #include "bookmarks.h"
+#include "certlistwidget.h"
 #include "command.h"
 #include "documentwidget.h"
 #include "feeds.h"
@@ -96,6 +97,7 @@ struct Impl_SidebarWidget {
     iString           cmdPrefix;
     iWidget *         blank;
     iListWidget *     list;
+    iCertListWidget * certList;
     iWidget *         actions; /* below the list, area for buttons */
     int               modeScroll[max_SidebarMode];
     iLabelWidget *    modeButtons[max_SidebarMode];
@@ -113,6 +115,10 @@ struct Impl_SidebarWidget {
 };
 
 iDefineObjectConstructionArgs(SidebarWidget, (enum iSidebarSide side), side)
+
+iLocalDef iListWidget *list_SidebarWidget_(iSidebarWidget *d) {
+    return d->mode == identities_SidebarMode ? (iListWidget *) d->certList : d->list;
+}
 
 static iBool isResizing_SidebarWidget_(const iSidebarWidget *d) {
     return (flags_Widget(d->resizer) & pressed_WidgetFlag) != 0;
@@ -193,65 +199,6 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
                                  : d->buttonFont);
     checkIcon_LabelWidget(btn);
     return btn;
-}
-
-static iGmIdentity *menuIdentity_SidebarWidget_(const iSidebarWidget *d) {
-    if (d->mode == identities_SidebarMode) {
-        if (d->contextItem) {
-            return identity_GmCerts(certs_App(), d->contextItem->id);
-        }
-    }
-    return NULL;
-}
-
-static void updateContextMenu_SidebarWidget_(iSidebarWidget *d) {
-    if (d->mode != identities_SidebarMode) {
-        return;
-    }
-    iArray *items = collectNew_Array(sizeof(iMenuItem));
-    pushBackN_Array(items, (iMenuItem[]){
-        { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
-        { close_Icon " ${ident.stopuse}", 0, 0, "ident.use arg:0" },
-        { close_Icon " ${ident.stopuse.all}", 0, 0, "ident.use arg:0 clear:1" },
-        { "---", 0, 0, NULL },
-        { edit_Icon " ${menu.edit.notes}", 0, 0, "ident.edit" },
-        { "${ident.fingerprint}", 0, 0, "ident.fingerprint" },
-        { export_Icon " ${ident.export}", 0, 0, "ident.export" },
-        { "---", 0, 0, NULL },
-        { delete_Icon " " uiTextCaution_ColorEscape "${ident.delete}", 0, 0, "ident.delete confirm:1" },
-    }, 9);
-    /* Used URLs. */
-    const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
-    if (ident) {
-        size_t insertPos = 3;
-        if (!isEmpty_StringSet(ident->useUrls)) {
-            insert_Array(items, insertPos++, &(iMenuItem){ "---", 0, 0, NULL });
-        }
-        const iString *docUrl = url_DocumentWidget(document_App());
-        iBool usedOnCurrentPage = iFalse;
-        iConstForEach(StringSet, i, ident->useUrls) {            
-            const iString *url = i.value;
-            usedOnCurrentPage |= equalCase_String(docUrl, url);
-            iRangecc urlStr = range_String(url);
-            if (startsWith_Rangecc(urlStr, "gemini://")) {
-                urlStr.start += 9; /* omit the default scheme */
-            }
-            if (endsWith_Rangecc(urlStr, "/")) {
-                urlStr.end--; /* looks cleaner */
-            }
-            insert_Array(items,
-                         insertPos++,
-                         &(iMenuItem){ format_CStr(globe_Icon " %s", cstr_Rangecc(urlStr)),
-                                       0,
-                                       0,
-                                       format_CStr("!open url:%s", cstr_String(url)) });
-        }
-        if (!usedOnCurrentPage) {
-            remove_Array(items, 1);
-        }
-    }
-    destroy_Widget(d->menu);    
-    d->menu = makeMenu_Widget(as_Widget(d), data_Array(items), size_Array(items));    
 }
 
 static iBool isBookmarkFolded_SidebarWidget_(const iSidebarWidget *d, const iBookmark *bm) {
@@ -547,46 +494,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             break;
         }
         case identities_SidebarMode: {
-            const iString *tabUrl = url_DocumentWidget(document_App());
-            const iRangecc tabHost = urlHost_String(tabUrl);
-            isEmpty = iTrue;
-            iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
-                const iGmIdentity *ident = i.ptr;
-                iSidebarItem *item = new_SidebarItem();
-                item->id = (uint32_t) index_PtrArrayConstIterator(&i);
-                item->icon = 0x1f464; /* person */
-                set_String(&item->label, name_GmIdentity(ident));
-                iDate until;
-                validUntil_TlsCertificate(ident->cert, &until);
-                const iBool isActive = isUsedOn_GmIdentity(ident, tabUrl);
-                format_String(&item->meta,
-                              "%s",
-                              isActive ? cstr_Lang("ident.using")
-                              : isUsed_GmIdentity(ident)
-                                  ? formatCStrs_Lang("ident.usedonurls.n", size_StringSet(ident->useUrls))
-                                  : cstr_Lang("ident.notused"));
-                const char *expiry =
-                    ident->flags & temporary_GmIdentityFlag
-                        ? cstr_Lang("ident.temporary")
-                        : cstrCollect_String(format_Date(&until, cstr_Lang("ident.expiry")));
-                if (isEmpty_String(&ident->notes)) {
-                    appendFormat_String(&item->meta, "\n%s", expiry);
-                }
-                else {
-                    appendFormat_String(&item->meta,
-                                        " \u2014 %s\n%s%s",
-                                        expiry,
-                                        escape_Color(uiHeading_ColorId),
-                                        cstr_String(&ident->notes));
-                }
-                item->listItem.isSelected = isActive;
-                if (isUsedOnDomain_GmIdentity(ident, tabHost)) {
-                    item->indent = 1; /* will be highlighted */
-                }
-                addItem_ListWidget(d->list, item);
-                iRelease(item);
-                isEmpty = iFalse;
-            }
+            isEmpty = !updateItems_CertListWidget(d->certList);
             /* Actions. */
             if (!isEmpty) {
                 addActionButton_SidebarWidget_(d, add_Icon " ${sidebar.action.ident.new}", "ident.new", 0);
@@ -597,9 +505,11 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
         default:
             break;
     }
-    scrollOffset_ListWidget(d->list, 0);
-    updateVisible_ListWidget(d->list);
-    invalidate_ListWidget(d->list);
+    setFlags_Widget(as_Widget(d->list), hidden_WidgetFlag, d->mode == identities_SidebarMode);
+    setFlags_Widget(as_Widget(d->certList), hidden_WidgetFlag, d->mode != identities_SidebarMode);    
+    scrollOffset_ListWidget(list_SidebarWidget_(d), 0);
+    updateVisible_ListWidget(list_SidebarWidget_(d));
+    invalidate_ListWidget(list_SidebarWidget_(d));
     /* Content for a blank tab. */
     if (isEmpty) {
         if (d->mode == feeds_SidebarMode) {
@@ -649,7 +559,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
 #endif
     arrange_Widget(d->actions);
     arrange_Widget(as_Widget(d));
-    updateMouseHover_ListWidget(d->list);
+    updateMouseHover_ListWidget(list_SidebarWidget_(d));
 }
 
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
@@ -668,10 +578,11 @@ static size_t findItem_SidebarWidget_(const iSidebarWidget *d, int id) {
 }
 
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
+    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
     if (d->list) {
-        const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
         setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(d->itemFonts[0]));
     }
+    updateItemHeight_CertListWidget(d->certList);
 }
 
 iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
@@ -679,18 +590,18 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
         return iFalse;
     }
     if (d->mode >= 0 && d->mode < max_SidebarMode) {
-        d->modeScroll[d->mode] = scrollPos_ListWidget(d->list); /* saved for later */
+        d->modeScroll[d->mode] = scrollPos_ListWidget(list_SidebarWidget_(d)); /* saved for later */
     }
     d->mode = mode;
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    setBackgroundColor_Widget(as_Widget(d->list),
+    setBackgroundColor_Widget(as_Widget(list_SidebarWidget_(d)),
                               d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
                                                                      : uiBackgroundSidebar_ColorId);
     updateItemHeight_SidebarWidget_(d);
     /* Restore previous scroll position. */
-    setScrollPos_ListWidget(d->list, d->modeScroll[mode]);
+    setScrollPos_ListWidget(list_SidebarWidget_(d), d->modeScroll[mode]);
     return iTrue;
 }
 
@@ -787,6 +698,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iZap(d->modeButtons);
     d->resizer = NULL;
     d->list = NULL;
+    d->certList = NULL;
     d->actions = NULL;
     d->closedFolders = new_IntSet();
     /* On a phone, the right sidebar is used exclusively for Identities. */
@@ -829,10 +741,16 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
     iWidget *listAndActions = makeVDiv_Widget();
     addChild_Widget(content, iClob(listAndActions));
-    d->list = new_ListWidget();
+    iWidget *listArea = new_Widget();
+    setFlags_Widget(listArea, resizeChildren_WidgetFlag, iTrue);
+    d->list = new_ListWidget();    
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
+    addChild_Widget(listArea, iClob(d->list));
+    d->certList = new_CertListWidget();
+    setPadding_Widget(as_Widget(d->certList), 0, gap_UI, 0, gap_UI);
+    addChild_Widget(listArea, iClob(d->certList));
     addChildFlags_Widget(listAndActions,
-                         iClob(d->list),
+                         iClob(listArea),
                          expand_WidgetFlag); // | drawBackgroundToHorizontalSafeArea_WidgetFlag);
     setId_Widget(addChildPosFlags_Widget(listAndActions,
                                          iClob(d->actions = new_Widget()),
@@ -892,16 +810,16 @@ iBool setButtonFont_SidebarWidget(iSidebarWidget *d, int font) {
 
 static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
     if (d->mode == identities_SidebarMode) {
-        const iSidebarItem *hoverItem = constHoverItem_ListWidget(d->list);
-        if (hoverItem) {
-            return identity_GmCerts(certs_App(), hoverItem->id);
-        }
+        return constHoverIdentity_CertListWidget(d->certList);
     }
     return NULL;
 }
 
 static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
-    return iConstCast(iGmIdentity *, constHoverIdentity_SidebarWidget_(d));
+    if (d->mode == identities_SidebarMode) {
+        return hoverIdentity_CertListWidget(d->certList);
+    }
+    return NULL;
 }
 
 static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, size_t itemIndex) {
@@ -941,23 +859,6 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 postCommandf_Root(get_Root(), "open fromsidebar:1 newtab:%d url:%s",
                                  openTabMode_Sym(modState_Keys()),
                                  cstr_String(&item->url));
-            }
-            break;
-        }
-        case identities_SidebarMode: {
-            d->contextItem  = item;
-            if (d->contextIndex != iInvalidPos) {
-                invalidateItem_ListWidget(d->list, d->contextIndex);
-            }
-            d->contextIndex = itemIndex;
-            if (itemIndex < numItems_ListWidget(d->list)) {
-                updateContextMenu_SidebarWidget_(d);
-                arrange_Widget(d->menu);
-                openMenu_Widget(d->menu,
-                                d->side == left_SidebarSide
-                                    ? topRight_Rect(itemRect_ListWidget(d->list, itemIndex))
-                                    : addX_I2(topLeft_Rect(itemRect_ListWidget(d->list, itemIndex)),
-                                              -width_Widget(d->menu)));
             }
             break;
         }
@@ -1245,9 +1146,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
             }
         }
-        else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
-            updateItems_SidebarWidget_(d);
-        }
         else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "toolbar.showident")) {
             postCommandf_App("sidebar.mode arg:%d toggle:1", identities_SidebarMode);
             return iTrue;
@@ -1316,9 +1214,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-//        else if (isCommand_Widget(w, ev, "menu.closed")) {
-         //   invalidateItem_ListWidget(d->list, d->contextIndex);
-//        }
         else if (isCommand_Widget(w, ev, "bookmark.open")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
@@ -1548,103 +1443,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
             }
         }
-        else if (isCommand_Widget(w, ev, "ident.use")) {
-            iGmIdentity *  ident  = menuIdentity_SidebarWidget_(d);
-            const iString *tabUrl = url_DocumentWidget(document_App());
-            if (ident) {
-                if (argLabel_Command(cmd, "clear")) {
-                    clearUse_GmIdentity(ident);
-                }
-                else if (arg_Command(cmd)) {
-                    signIn_GmCerts(certs_App(), ident, tabUrl);
-                    postCommand_App("navigate.reload");
-                }
-                else {
-                    signOut_GmCerts(certs_App(), tabUrl);
-                    postCommand_App("navigate.reload");
-                }
-                saveIdentities_GmCerts(certs_App());
-                updateItems_SidebarWidget_(d);
-            }
-            return iTrue;
-        }
-        else if (isCommand_Widget(w, ev, "ident.edit")) {
-            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
-            if (ident) {
-                makeValueInput_Widget(get_Root()->widget,
-                                      &ident->notes,
-                                      uiHeading_ColorEscape "${heading.ident.notes}",
-                                      format_CStr(cstr_Lang("dlg.ident.notes"), cstr_String(name_GmIdentity(ident))),
-                                      uiTextAction_ColorEscape "${dlg.default}",
-                                      format_CStr("!ident.setnotes ident:%p ptr:%p", ident, d));
-            }
-            return iTrue;
-        }
-        else if (isCommand_Widget(w, ev, "ident.fingerprint")) {
-            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
-            if (ident) {
-                const iString *fps = collect_String(
-                    hexEncode_Block(collect_Block(fingerprint_TlsCertificate(ident->cert))));
-                SDL_SetClipboardText(cstr_String(fps));
-            }
-            return iTrue;
-        }
-        else if (isCommand_Widget(w, ev, "ident.export")) {
-            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
-            if (ident) {
-                iString *pem = collect_String(pem_TlsCertificate(ident->cert));
-                append_String(pem, collect_String(privateKeyPem_TlsCertificate(ident->cert)));
-                iDocumentWidget *expTab = newTab_App(NULL, iTrue);
-                setUrlAndSource_DocumentWidget(
-                    expTab,
-                    collectNewFormat_String("file:%s.pem", cstr_String(name_GmIdentity(ident))),
-                    collectNewCStr_String("text/plain"),
-                    utf8_String(pem));
-            }
-            return iTrue;
-        }
-        else if (isCommand_Widget(w, ev, "ident.setnotes")) {
-            iGmIdentity *ident = pointerLabel_Command(cmd, "ident");
-            if (ident) {
-                setCStr_String(&ident->notes, suffixPtr_Command(cmd, "value"));
-                updateItems_SidebarWidget_(d);
-            }
-            return iTrue;
-        }
-        else if (isCommand_Widget(w, ev, "ident.pickicon")) {
-            return iTrue;
-        }
-        else if (isCommand_Widget(w, ev, "ident.reveal")) {
-            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
-            if (ident) {
-                const iString *crtPath = certificatePath_GmCerts(certs_App(), ident);
-                if (crtPath) {
-                    revealPath_App(crtPath);
-                }
-            }
-            return iTrue;
-        }
-        else if (isCommand_Widget(w, ev, "ident.delete")) {
-            iSidebarItem *item = d->contextItem;
-            if (argLabel_Command(cmd, "confirm")) {
-                makeQuestion_Widget(
-                    uiTextCaution_ColorEscape "${heading.ident.delete}",
-                    format_CStr(cstr_Lang("dlg.confirm.ident.delete"),
-                                uiTextAction_ColorEscape,
-                                cstr_String(&item->label),
-                                uiText_ColorEscape),
-                    (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
-                                   { uiTextCaution_ColorEscape "${dlg.ident.delete}",
-                                     0,
-                                     0,
-                                     format_CStr("!ident.delete confirm:0 ptr:%p", d) } },
-                    2);
-                return iTrue;
-            }
-            deleteIdentity_GmCerts(certs_App(), menuIdentity_SidebarWidget_(d));
-            postCommand_App("idents.changed");
-            return iTrue;
-        }
         else if (isCommand_Widget(w, ev, "history.delete")) {
             if (d->contextItem && !isEmpty_String(&d->contextItem->url)) {
                 removeUrl_Visited(visited_App(), &d->contextItem->url);
@@ -1698,14 +1496,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         /* Update cursor. */
         else if (contains_Widget(w, mouse)) {
             const iSidebarItem *item = constHoverItem_ListWidget(d->list);
-            if (item && d->mode != identities_SidebarMode) {
-                setCursor_Window(get_Window(),
-                                 item->listItem.isSeparator ? SDL_SYSTEM_CURSOR_ARROW
-                                                            : SDL_SYSTEM_CURSOR_HAND);
-            }
-            else {
-                setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
-            }
+            setCursor_Window(get_Window(),
+                             item ? (item->listItem.isSeparator ? SDL_SYSTEM_CURSOR_ARROW
+                                                                : SDL_SYSTEM_CURSOR_HAND)
+                                  : SDL_SYSTEM_CURSOR_ARROW);
         }
         if (d->contextIndex != iInvalidPos) {
             invalidateItem_ListWidget(d->list, d->contextIndex);
@@ -1713,7 +1507,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
     }
     /* Update context menu items. */
-    if ((d->menu || d->mode == identities_SidebarMode) && ev->type == SDL_MOUSEBUTTONDOWN) {
+    if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
         if (ev->button.button == SDL_BUTTON_RIGHT) {
             d->contextItem = NULL;
             if (!isVisible_Widget(d->menu)) {
@@ -1726,7 +1520,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     invalidateItem_ListWidget(d->list, d->contextIndex);
                 }
                 d->contextIndex = hoverItemIndex_ListWidget(d->list);
-                updateContextMenu_SidebarWidget_(d);                
                 /* TODO: Some callback-based mechanism would be nice for updating menus right
                    before they open? At least move these to `updateContextMenu_ */
                 if (d->mode == bookmarks_SidebarMode && d->contextItem) {
@@ -1755,26 +1548,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                             "feed.entry.toggleread",
                                             isRead ? circle_Icon " ${feeds.entry.markunread}"
                                                    : circleWhite_Icon " ${feeds.entry.markread}");
-                }
-                else if (d->mode == identities_SidebarMode) {
-                    const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);
-                    const iString *    docUrl = url_DocumentWidget(document_App());
-                    iForEach(ObjectList, i, children_Widget(d->menu)) {
-                        if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                            iLabelWidget *menuItem = i.object;
-                            const char *  cmdItem  = cstr_String(command_LabelWidget(menuItem));
-                            if (equal_Command(cmdItem, "ident.use")) {
-                                const iBool cmdUse   = arg_Command(cmdItem) != 0;
-                                const iBool cmdClear = argLabel_Command(cmdItem, "clear") != 0;
-                                setFlags_Widget(
-                                    as_Widget(menuItem),
-                                    disabled_WidgetFlag,
-                                    (cmdClear && !isUsed_GmIdentity(ident)) ||
-                                        (!cmdClear && cmdUse && isUsedOn_GmIdentity(ident, docUrl)) ||
-                                        (!cmdClear && !cmdUse && !isUsedOn_GmIdentity(ident, docUrl)));
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -2076,40 +1849,6 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                       !isEmpty_Range(&parts.query) ? cstr_Rangecc(parts.query) : "");
         }
         iEndCollect();
-    }
-    else if (sidebar->mode == identities_SidebarMode) {
-        const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-                               : uiTextStrong_ColorId;
-        const iBool isUsedOnDomain = (d->indent != 0);
-        iString icon;
-        initUnicodeN_String(&icon, &d->icon, 1);
-        iInt2 cPos = topLeft_Rect(itemRect);
-        const int indent = 1.4f * lineHeight_Text(font);
-        addv_I2(&cPos,
-                init_I2(3 * gap_UI,
-                        (itemHeight - lineHeight_Text(uiLabel_FontId) * 2 - lineHeight_Text(font)) /
-                            2));
-        const int metaFg = isHover ? permanent_ColorId | (isPressing ? uiTextPressed_ColorId
-                                                                     : uiTextFramelessHover_ColorId)
-                                   : uiTextDim_ColorId;
-        if (!d->listItem.isSelected && !isUsedOnDomain) {
-            drawOutline_Text(font, cPos, metaFg, none_ColorId, range_String(&icon));
-        }
-        drawRange_Text(font,
-                       cPos,
-                       d->listItem.isSelected ? iconColor
-                       : isUsedOnDomain       ? altIconColor
-                                              : uiBackgroundSidebar_ColorId,
-                       range_String(&icon));
-        deinit_String(&icon);
-        drawRange_Text(d->listItem.isSelected ? sidebar->itemFonts[1] : font,
-                       add_I2(cPos, init_I2(indent, 0)),
-                       fg,
-                       range_String(&d->label));
-        drawRange_Text(uiLabel_FontId,
-                       add_I2(cPos, init_I2(indent, lineHeight_Text(font))),
-                       metaFg,
-                       range_String(&d->meta));
     }
 }
 
