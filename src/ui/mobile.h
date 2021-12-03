@@ -39,6 +39,7 @@ void        initPanels_Mobile           (iWidget *panels, iWidget *parentWidget,
                                          const iMenuItem *itemsNullTerminated,
                                          const iMenuItem *actions, size_t numActions);
 
+iWidget *   panel_Mobile                (const iWidget *panels, size_t index);
 size_t      currentPanelIndex_Mobile    (const iWidget *panels);
 
 enum iTransitionFlags {

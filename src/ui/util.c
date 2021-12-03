@@ -1215,6 +1215,15 @@ iLabelWidget *findMenuItem_Widget(iWidget *menu, const char *command) {
     return NULL;
 }
 
+iWidget *findUserData_Widget(iWidget *d, void *userData) {
+    iForEach(ObjectList, i, children_Widget(d)) {
+        if (userData_Object(i.object) == userData) {
+            return i.object;
+        }
+    }
+    return NULL;
+}
+
 void setMenuItemDisabled_Widget(iWidget *menu, const char *command, iBool disable) {
     if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
         setDisabled_NativeMenuItem(findNativeMenuItem_Widget(menu, command), disable);

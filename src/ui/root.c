@@ -333,19 +333,28 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "identmenu.open")) {
         iWidget *toolBar = findWidget_Root("toolbar");
-        iWidget *button = findWidget_Root(toolBar ? "toolbar.ident" : "navbar.ident");
+        iWidget *button = findWidget_Root(toolBar && isPortraitPhone_App() ? "toolbar.ident" : "navbar.ident");
         iArray items;
         init_Array(&items, sizeof(iMenuItem));
         /* Current identity. */
         const iString     *docUrl = url_DocumentWidget(document_App());
         const iGmIdentity *ident  = identityForUrl_GmCerts(certs_App(), docUrl);
         const iString     *fp     = ident ? collect_String(hexEncode_Block(&ident->fingerprint)) : NULL;
-        pushBackN_Array(&items,
-                        (iMenuItem[]){ { format_CStr("///" uiHeading_ColorEscape "%s",
-                                                     ident ? cstr_String(name_GmIdentity(ident))
-                                                           : "${menu.identity.notactive}") },
-                                       { "---" } },
-                        2);
+        iString           *str    = NULL;
+        if (ident) {
+            str = copy_String(name_GmIdentity(ident));
+            if (!isEmpty_String(&ident->notes)) {
+                appendFormat_String(str, "\n%s%s", escape_Color(uiAnnotation_ColorId),
+                                    cstr_String(&ident->notes));
+            }
+        }
+        pushBackN_Array(
+            &items,
+            (iMenuItem[]){ { format_CStr("///" uiHeading_ColorEscape "%s",
+                                         str ? cstr_String(str) : "${menu.identity.notactive}") },
+                           { "---" } },
+            2);
+        delete_String(str);
         /* Alternate identities. */
         if (ident) {
             const iString *site = collectNewRange_String(urlRoot_String(docUrl));
@@ -385,8 +394,8 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
                       : leftHalf_Icon " ${menu.show.identities}",
                   0,
                   0,
-                  deviceType_App() == phone_AppDeviceType ? "toolbar.showident"
-                                                          : "sidebar.mode arg:3 toggle:1" });
+                  //deviceType_App() == phone_AppDeviceType ? "toolbar.showident"
+                                                          "sidebar.mode arg:3 toggle:1" });
         }
         else {
             pushBack_Array(&items, &(iMenuItem){ gear_Icon " ${menu.identities}", 0, 0,
@@ -517,9 +526,21 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     iLabelWidget *toolName = findWidget_App("toolbar.name");
     if (toolName) {
         setOutline_LabelWidget(toolButton, ident == NULL);
-        updateTextCStr_LabelWidget(toolName, subjectName ? cstr_String(subjectName) : "");
+        /* Fit the name in the widget. */ 
+        if (subjectName) {
+            const char *endPos;
+            tryAdvanceNoWrap_Text(uiLabelTiny_FontId, range_String(subjectName), width_Widget(toolName),
+                &endPos);
+            updateText_LabelWidget(
+                toolName,
+                collectNewRange_String((iRangecc){ constBegin_String(subjectName), endPos }));
+        }
+        else {
+            updateTextCStr_LabelWidget(toolName, "");
+        }
         setFont_LabelWidget(toolButton, subjectName ? uiLabelMedium_FontId : uiLabelLarge_FontId);
-        arrange_Widget(parent_Widget(toolButton));
+        setTextOffset_LabelWidget(toolButton, init_I2(0, subjectName ? -1.5f * gap_UI : 0));
+        arrange_Widget(parent_Widget(toolButton));        
     }
 }
 
@@ -604,11 +625,13 @@ void updateToolbarColors_Root(iRoot *d) {
                                           tmBannerBackground_ColorId;
         setBackgroundColor_Widget(toolBar, bg);
         iForEach(ObjectList, i, children_Widget(toolBar)) {
-            iLabelWidget *btn = i.object;
+//            iLabelWidget *btn = i.object;
             setTextColor_LabelWidget(i.object, isSidebarVisible ? uiTextDim_ColorId :
                                      tmBannerIcon_ColorId);
             setBackgroundColor_Widget(i.object, bg); /* using noBackground, but ident has outline */
         }
+        setTextColor_LabelWidget(findChild_Widget(toolBar, "toolbar.name"),
+                                 isSidebarVisible ? uiTextDim_ColorId : tmBannerIcon_ColorId);
     }
 #else
     iUnused(d);
@@ -1014,8 +1037,13 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "toolbar.showident")) {
-        /* TODO: Clean this up. */
         iWidget *sidebar  = findWidget_App("sidebar");
+        if (isVisible_Widget(sidebar)) {
+            postCommandf_App("sidebar.toggle");
+        }
+        postCommand_App("preferences idents:1");
+#if 0
+        /* TODO: Clean this up. */
         iWidget *sidebar2 = findWidget_App("sidebar2");
         //dismissSidebar_(sidebar, "toolbar.view");
         if (isVisible_Widget(sidebar)) {
@@ -1036,6 +1064,7 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
             setVisualOffset_Widget(sidebar2, offset, 0, 0);
             setVisualOffset_Widget(sidebar2, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
         }
+#endif
         return iTrue;
     }
     else if (equal_Command(cmd, "sidebar.mode.changed")) {
@@ -1099,15 +1128,16 @@ void updateMetrics_Root(iRoot *d) {
             const iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
             const iWidget *viewButton = findChild_Widget(d->widget, "toolbar.view");
             const iWidget *idButton = findChild_Widget(toolBar, "toolbar.ident");
-            const int font = uiLabelTiny_FontId;
-            setFont_LabelWidget(idName, font);
-            setPos_Widget(as_Widget(idName),
+//            const int font = uiLabelTiny_FontId;
+            setFixedSize_Widget(as_Widget(idName), init_I2(-1, 2 * gap_UI + lineHeight_Text(uiLabelTiny_FontId)));
+//            setFont_LabelWidget(idName, font);
+            /*setPos_Widget(as_Widget(idName),
                           windowToLocal_Widget(as_Widget(idName),
                                                init_I2(left_Rect(bounds_Widget(idButton)),
                                                        bottom_Rect(bounds_Widget(viewButton)) -
                                                            lineHeight_Text(font) - gap_UI / 2)));
             setFixedSize_Widget(as_Widget(idName), init_I2(width_Widget(idButton),
-                                                           lineHeight_Text(font)));
+                                                           lineHeight_Text(font)));*/
         }
     }
     postRefresh_App();
@@ -1413,15 +1443,17 @@ void createUserInterface_Root(iRoot *d) {
         iWidget *content = findChild_Widget(root, "tabs.content");
         iSidebarWidget *sidebar1 = new_SidebarWidget(left_SidebarSide);
         addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
-        iSidebarWidget *sidebar2 = new_SidebarWidget(right_SidebarSide);
         if (deviceType_App() != phone_AppDeviceType) {
+            iSidebarWidget *sidebar2 = new_SidebarWidget(right_SidebarSide);
             addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
         }
+#if 0
         else {
             /* The identities sidebar is always in the main area. */
             addChild_Widget(findChild_Widget(root, "stack"), iClob(sidebar2));
             setFlags_Widget(as_Widget(sidebar2), hidden_WidgetFlag, iTrue);
         }
+#endif
     }
     /* Lookup results. */ {
         iLookupWidget *lookup = new_LookupWidget();
@@ -1481,23 +1513,29 @@ void createUserInterface_Root(iRoot *d) {
                                           iClob(newLargeIcon_LabelWidget(forwardArrow_Icon, "navigate.forward")),
                                           frameless_WidgetFlag),
                      "toolbar.forward");
-        setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(newLargeIcon_LabelWidget("\U0001f464", "identmenu.open")),
-                                          frameless_WidgetFlag),
+        iWidget *identButton;
+        setId_Widget(identButton = addChildFlags_Widget(
+                         toolBar,
+                         iClob(newLargeIcon_LabelWidget("\U0001f464", "identmenu.open")),
+                         frameless_WidgetFlag | fixedHeight_WidgetFlag),
                      "toolbar.ident");
         setId_Widget(addChildFlags_Widget(toolBar,
                                           iClob(newLargeIcon_LabelWidget(book_Icon, "toolbar.showview arg:-1")),
                                           frameless_WidgetFlag | commandOnClick_WidgetFlag),
                      "toolbar.view");
-        setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(new_LabelWidget("", "toolbar.showident")),
+                     iLabelWidget *idName;
+        setId_Widget(addChildFlags_Widget(identButton,
+                                          iClob(idName = new_LabelWidget("", NULL)),
                                           frameless_WidgetFlag |
                                           noBackground_WidgetFlag |
-                                          fixedPosition_WidgetFlag |
+                                          moveToParentBottomEdge_WidgetFlag |
+                                          resizeToParentWidth_WidgetFlag
+                                          /*fixedPosition_WidgetFlag |
                                           fixedSize_WidgetFlag |
                                           ignoreForParentWidth_WidgetFlag |
-                                          ignoreForParentHeight_WidgetFlag),
+                                          ignoreForParentHeight_WidgetFlag*/),
                      "toolbar.name");
+        setFont_LabelWidget(idName, uiLabelTiny_FontId);
         iLabelWidget *menuButton = makeMenuButton_LabelWidget(menu_Icon, phoneNavMenuItems_,
                                                               iElemCount(phoneNavMenuItems_));
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);

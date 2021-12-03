@@ -123,9 +123,14 @@ static const iArray *makeIdentityItems_UploadWidget_(const iUploadWidget *d) {
     pushBack_Array(items, &(iMenuItem){ "---" });
     iConstForEach(PtrArray, i, listIdentities_GmCerts(certs_App(), NULL, NULL)) {
         const iGmIdentity *id = i.ptr;
+        iString *str = collect_String(copy_String(name_GmIdentity(id)));
+        if (!isEmpty_String(&id->notes)) {
+            appendFormat_String(
+                str, "\n%s%s", escape_Color(uiAnnotation_ColorId), cstr_String(&id->notes));
+        }
         pushBack_Array(
             items,
-            &(iMenuItem){ cstr_String(name_GmIdentity(id)), 0, 0,
+            &(iMenuItem){ cstr_String(str), 0, 0,
                           format_CStr("upload.setid fp:%s",
                                       cstrCollect_String(hexEncode_Block(&id->fingerprint))) });
     }

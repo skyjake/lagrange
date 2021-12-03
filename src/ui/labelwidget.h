@@ -38,6 +38,7 @@ void    setWrap_LabelWidget         (iLabelWidget *, iBool wrap);
 void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);
 void    setAllCaps_LabelWidget      (iLabelWidget *, iBool allCaps);
 void    setRemoveTrailingColon_LabelWidget  (iLabelWidget *, iBool removeTrailingColon);
+void    setTextOffset_LabelWidget   (iLabelWidget *, iInt2 offset);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
 void    setTextColor_LabelWidget    (iLabelWidget *, int color);
 void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */

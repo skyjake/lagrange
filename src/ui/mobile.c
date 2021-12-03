@@ -180,13 +180,16 @@ size_t currentPanelIndex_Mobile(const iWidget *panels) {
     return iInvalidPos;
 }
 
+iWidget *panel_Mobile(const iWidget *panels, size_t index) {
+    return child_Widget(findChild_Widget(panels, "detailstack"), index);
+}
+
 static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
     const iBool isPortrait = !isSideBySideLayout_();
     if (equal_Command(cmd, "panel.open")) {
-        iWidget *button = pointer_Command(cmd);
+        /* This command is sent by the button that opens the panel. */
+        iWidget *button = pointer_Command(cmd);        
         iWidget *panel = userData_Object(button);
-//        openMenu_Widget(panel, innerToWindow_Widget(panel, zero_I2()));
-//        setFlags_Widget(panel, hidden_WidgetFlag, iFalse);
         unselectAllPanelButtons_(topPanel);
         int panelIndex = -1;
         size_t childIndex = 0;
@@ -208,8 +211,6 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         setText_LabelWidget(detailTitle, text_LabelWidget((iLabelWidget *) findTitleLabel_(panel)));
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
         postCommand_Widget(topPanel, "panel.changed arg:%d", panelIndex);
-        //printTree_Widget(findDetailStack_(topPanel));
-//        updateVisible_ListWidget(findChild_Widget(findDetailStack_(topPanel), "certlist"));
         updateCertListHeight_(findDetailStack_(topPanel));
         return iTrue;
     }

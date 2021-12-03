@@ -395,6 +395,9 @@ msgstr "New Identity…"
 msgid "menu.identity.import"
 msgstr "Import…"
 
+msgid "menu.identities"
+msgstr "Manage Identities"
+
 msgid "menu.identity.notactive"
 msgstr "No Active Identity"
 
@@ -988,7 +991,7 @@ msgid "upload.id"
 msgstr "Identity:"
 
 msgid "heading.upload.id"
-msgstr "Identification"
+msgstr "Authorization"
 
 msgid "dlg.upload.id.none"
 msgstr "None"

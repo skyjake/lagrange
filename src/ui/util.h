@@ -249,7 +249,8 @@ void            setMenuItemDisabled_Widget      (iWidget *menu, const char *comm
 void            setMenuItemDisabledByIndex_Widget(iWidget *menu, size_t index, iBool disable);
 void            setMenuItemLabel_Widget         (iWidget *menu, const char *command, const char *newLabel);
 void            setMenuItemLabelByIndex_Widget  (iWidget *menu, size_t index, const char *newLabel);
-void            setNativeMenuItems_Widget       (iWidget *, const iMenuItem *items, size_t n);
+void            setNativeMenuItems_Widget       (iWidget *menu, const iMenuItem *items, size_t n);
+iWidget *       findUserData_Widget             (iWidget *, void *userData);
 
 int             checkContextMenu_Widget         (iWidget *, const SDL_Event *ev); /* see macro below */
 

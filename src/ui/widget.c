@@ -271,10 +271,12 @@ void setMinSize_Widget(iWidget *d, iInt2 minSize) {
 }
 
 void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
-    d->padding[0] = left;
-    d->padding[1] = top;
-    d->padding[2] = right;
-    d->padding[3] = bottom;
+    if (d) {
+        d->padding[0] = left;
+        d->padding[1] = top;
+        d->padding[2] = right;
+        d->padding[3] = bottom;
+    }
 }
 
 iWidget *root_Widget(const iWidget *d) {

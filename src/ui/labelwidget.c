@@ -36,6 +36,7 @@ struct Impl_LabelWidget {
     iWidget widget;
     iString srcLabel;
     iString label;
+    iInt2   labelOffset;
     int     font;
     int     key;
     int     kmods;
@@ -362,10 +363,6 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     setClip_Paint(&p, rect);
     const int iconPad = iconPadding_LabelWidget_(d);
-//    const int iconColor = isCaution ? uiTextCaution_ColorId
-//                          : flags & (disabled_WidgetFlag | pressed_WidgetFlag) ? fg
-//                          : isHover                                            ? uiIconHover_ColorId
-//                                                                               : uiIcon_ColorId;
     if (d->icon && d->icon != 0x20) { /* no need to draw an empty icon */
         iString str;
         initUnicodeN_String(&str, &d->icon, 1);
@@ -427,8 +424,11 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     else {
         drawCenteredOutline_Text(
             d->font,
-            adjusted_Rect(bounds, init_I2(iconPad * (flags & tight_WidgetFlag ? 1.0f : 1.5f), 0),
-                          init_I2(-iconPad * (flags & tight_WidgetFlag ? 0.5f : 1.0f), 0)),
+            moved_Rect(
+                adjusted_Rect(bounds,
+                              init_I2(iconPad * (flags & tight_WidgetFlag ? 1.0f : 1.5f), 0),
+                              init_I2(-iconPad * (flags & tight_WidgetFlag ? 0.5f : 1.0f), 0)),
+                d->labelOffset),
             d->flags.alignVisual,
             d->flags.drawAsOutline ? fg : none_ColorId,
             d->flags.drawAsOutline ? d->widget.bgColor : fg,
@@ -523,6 +523,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->font = uiLabel_FontId;
     d->forceFg = none_ColorId;
     d->icon = 0;
+    d->labelOffset = zero_I2();
     initCStr_String(&d->srcLabel, label);
     initCopy_String(&d->label, &d->srcLabel);
     replaceVariables_LabelWidget_(d);
@@ -621,6 +622,10 @@ void setRemoveTrailingColon_LabelWidget(iLabelWidget *d, iBool removeTrailingCol
         d->flags.removeTrailingColon = removeTrailingColon;
         replaceVariables_LabelWidget_(d);
     }
+}
+
+void setTextOffset_LabelWidget(iLabelWidget *d, iInt2 offset) {
+    d->labelOffset = offset;
 }
 
 void updateText_LabelWidget(iLabelWidget *d, const iString *text) {

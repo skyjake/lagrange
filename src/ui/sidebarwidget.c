@@ -608,8 +608,10 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
 }
 
 void setClosedFolders_SidebarWidget(iSidebarWidget *d, const iIntSet *closedFolders) {
-    delete_IntSet(d->closedFolders);
-    d->closedFolders = copy_IntSet(closedFolders);
+    if (d) {
+        delete_IntSet(d->closedFolders);
+        d->closedFolders = copy_IntSet(closedFolders);
+    }
 }
 
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
@@ -625,7 +627,7 @@ float width_SidebarWidget(const iSidebarWidget *d) {
 }
 
 const iIntSet *closedFolders_SidebarWidget(const iSidebarWidget *d) {
-    return d->closedFolders;
+    return d ? d->closedFolders : collect_IntSet(new_IntSet());
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
@@ -710,7 +712,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         setId_Widget(buttons, "buttons");
         setDrawBufferEnabled_Widget(buttons, iTrue);
         for (int i = 0; i < max_SidebarMode; i++) {
-            if (deviceType_App() == phone_AppDeviceType && i == identities_SidebarMode) {
+            if (i == identities_SidebarMode && deviceType_App() != desktop_AppDeviceType) {
+                /* On mobile, identities are managed via Settings. */
                 continue;
             }
             d->modeButtons[i] = addChildFlags_Widget(
@@ -911,6 +914,7 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
 }
 
 void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
+    if (!d) return;
     iWidget *w = as_Widget(d);
     const iBool isFixedWidth = deviceType_App() == phone_AppDeviceType;
     int width = widthAsGaps * gap_UI; /* in pixels */
@@ -1148,10 +1152,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
             }
         }
-        else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "toolbar.showident")) {
-            postCommandf_App("sidebar.mode arg:%d toggle:1", identities_SidebarMode);
-            return iTrue;
-        }
+//        else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "toolbar.showident")) {
+//            postCommandf_App("sidebar.mode arg:%d toggle:1", identities_SidebarMode);
+//            return iTrue;
+//        }
         else if (isPortraitPhone_App() && isVisible_Widget(w) && d->side == left_SidebarSide &&
                  equal_Command(cmd, "swipe.forward")) {
             postCommand_App("sidebar.toggle");

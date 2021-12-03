@@ -2667,6 +2667,9 @@ iBool handleCommand_App(const char *cmd) {
         if (!urlArg) {
             return iTrue; /* invalid command */
         }
+        if (findWidget_App("prefs")) {
+            postCommand_App("prefs.dismiss");        
+        }
         iString    *url         = collectNewCStr_String(urlArg);
         const iBool noProxy     = argLabel_Command(cmd, "noproxy") != 0;
         const iBool fromSidebar = argLabel_Command(cmd, "fromsidebar") != 0;
@@ -2979,6 +2982,11 @@ iBool handleCommand_App(const char *cmd) {
             showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
         }
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
+        if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
+            iWidget *idPanel = panel_Mobile(dlg, 2);
+            iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
+            postCommand_Widget(button, "panel.open");
+        }
     }
     else if (equal_Command(cmd, "navigate.home")) {
         /* Look for bookmarks tagged "homepage". */
