@@ -146,6 +146,7 @@ iBool isUsed_GmIdentity(const iGmIdentity *d) {
 }
 
 iBool isUsedOn_GmIdentity(const iGmIdentity *d, const iString *url) {
+#if 0
     size_t pos = iInvalidPos;
     locate_StringSet(d->useUrls, url, &pos);
     if (pos < size_StringSet(d->useUrls)) {
@@ -156,6 +157,12 @@ iBool isUsedOn_GmIdentity(const iGmIdentity *d, const iString *url) {
     if (pos > 0) {
         /* URLs with a longer path will be following the shorter URL(s). */
         if (startsWithCase_String(url, cstr_String(constAt_StringSet(d->useUrls, pos - 1)))) {
+            return iTrue;
+        }
+    }
+#endif
+    iConstForEach(StringSet, i, d->useUrls) {
+        if (startsWithCase_String(url, cstr_String(i.value))) {
             return iTrue;
         }
     }
@@ -193,7 +200,13 @@ void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
         iAssert(wasInserted);
     }
     else {
-        remove_StringSet(d->useUrls, url);
+        iForEach(Array, i, &d->useUrls->strings.values) {
+            iString *used = i.value;
+            if (startsWithCase_String(url, cstr_String(used))) {
+                deinit_String(used);
+                remove_ArrayIterator(&i);
+            }
+        }        
     }
 }
 
@@ -202,6 +215,7 @@ void clearUse_GmIdentity(iGmIdentity *d) {
 }
 
 const iString *findUse_GmIdentity(const iGmIdentity *d, const iString *url) {
+    if (!d) return NULL;
     iConstForEach(StringSet, using, d->useUrls) {
         if (startsWith_String(url, cstr_String(using.value))) {
             return using.value;

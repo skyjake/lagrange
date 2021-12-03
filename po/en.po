@@ -639,7 +639,7 @@ msgstr "Export"
 # The %s represents the name of an identity.
 #, c-format
 msgid "ident.switch"
-msgstr "Switch to %s"
+msgstr "Use %s"
 
 msgid "heading.ident.use"
 msgstr "IDENTITY USAGE"

@@ -591,6 +591,9 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     if (d->mode == mode) {
         return iFalse;
     }
+    if (mode == identities_SidebarMode && deviceType_App() != desktop_AppDeviceType) {
+        return iFalse; /* Identities are in Settings. */
+    }
     if (d->mode >= 0 && d->mode < max_SidebarMode) {
         d->modeScroll[d->mode] = scrollPos_ListWidget(list_SidebarWidget_(d)); /* saved for later */
     }
@@ -705,33 +708,34 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->certList = NULL;
     d->actions = NULL;
     d->closedFolders = new_IntSet();
-    /* On a phone, the right sidebar is used exclusively for Identities. */
+    /* On a phone, the right sidebar is not used. */
     const iBool isPhone = deviceType_App() == phone_AppDeviceType;
-    if (!isPhone || d->side == left_SidebarSide) {
-        iWidget *buttons = new_Widget();        
-        setId_Widget(buttons, "buttons");
-        setDrawBufferEnabled_Widget(buttons, iTrue);
-        for (int i = 0; i < max_SidebarMode; i++) {
-            if (i == identities_SidebarMode && deviceType_App() != desktop_AppDeviceType) {
-                /* On mobile, identities are managed via Settings. */
-                continue;
-            }
-            d->modeButtons[i] = addChildFlags_Widget(
-                buttons,
-                iClob(new_LabelWidget(
-                    tightModeLabels_[i],
-                    format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
-                    frameless_WidgetFlag | noBackground_WidgetFlag);
+    //if (!isPhone || d->side == left_SidebarSide) {
+    iWidget *buttons = new_Widget();        
+    setId_Widget(buttons, "buttons");
+    setDrawBufferEnabled_Widget(buttons, iTrue);
+    for (int i = 0; i < max_SidebarMode; i++) {
+        if (i == identities_SidebarMode && deviceType_App() != desktop_AppDeviceType) {
+            /* On mobile, identities are managed via Settings. */
+            continue;
         }
-        setButtonFont_SidebarWidget(d, isPhone ? uiLabelBig_FontId : uiLabel_FontId);
-        addChildFlags_Widget(vdiv,
-                             iClob(buttons),
-                             arrangeHorizontal_WidgetFlag |
-                                 resizeWidthOfChildren_WidgetFlag |
-                             arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag); // |
-//                             drawBackgroundToHorizontalSafeArea_WidgetFlag);
-        setBackgroundColor_Widget(buttons, uiBackgroundSidebar_ColorId);
+        d->modeButtons[i] = addChildFlags_Widget(
+            buttons,
+            iClob(new_LabelWidget(
+                tightModeLabels_[i],
+                format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
+                frameless_WidgetFlag | noBackground_WidgetFlag);
     }
+    setButtonFont_SidebarWidget(d, isPhone ? uiLabelBig_FontId : uiLabel_FontId);
+    addChildFlags_Widget(vdiv,
+                         iClob(buttons),
+                         arrangeHorizontal_WidgetFlag |
+                             resizeWidthOfChildren_WidgetFlag |
+                         arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag); // |
+//                             drawBackgroundToHorizontalSafeArea_WidgetFlag);
+    setBackgroundColor_Widget(buttons, uiBackgroundSidebar_ColorId);
+//    }
+#if 0
     else {
         iLabelWidget *heading = new_LabelWidget(person_Icon " ${sidebar.identities}", NULL);
         checkIcon_LabelWidget(heading);
@@ -742,6 +746,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                                                  drawBackgroundToHorizontalSafeArea_WidgetFlag),
                             uiLabelLargeBold_FontId);
     }
+#endif
     iWidget *content = new_Widget();
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
     iWidget *listAndActions = makeVDiv_Widget();
@@ -771,8 +776,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
     addChildFlags_Widget(vdiv, iClob(content), expand_WidgetFlag);
     setMode_SidebarWidget(d,
-                          deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide ?
-                          identities_SidebarMode : bookmarks_SidebarMode);
+                          /*deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide ?
+                          identities_SidebarMode :*/ bookmarks_SidebarMode);
     d->resizer =
         addChildFlags_Widget(w,
                              iClob(new_Widget()),

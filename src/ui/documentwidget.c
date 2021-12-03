@@ -1289,8 +1289,13 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     if (category_GmStatusCode(code) == categoryClientCertificate_GmStatus) {
         makeFooterButtons_DocumentWidget_(
             d,
-            (iMenuItem[]){ { leftHalf_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
-                           { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" } },
+            (iMenuItem[]){
+                { leftHalf_Icon " ${menu.show.identities}",
+                  '4',
+                  KMOD_PRIMARY,
+                  deviceType_App() == desktop_AppDeviceType ? "sidebar.mode arg:3 show:1"
+                                                            : "preferences idents:1" },
+                { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" } },
             2);
     }
     /* Make a new document for the error page.*/

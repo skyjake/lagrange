@@ -3142,6 +3142,7 @@ iBool handleCommand_App(const char *cmd) {
             d->certs,
             findIdentity_GmCerts(d->certs, collect_Block(hexDecode_Rangecc(range_Command(cmd, "ident")))),
             url);
+        postCommand_App("navigate.reload");
         postCommand_App("idents.changed");
         return iTrue;
     }
@@ -3154,6 +3155,7 @@ iBool handleCommand_App(const char *cmd) {
         else {
             setUse_GmIdentity(ident, collect_String(suffix_Command(cmd, "url")), iFalse);
         }
+        postCommand_App("navigate.reload");
         postCommand_App("idents.changed");
         return iTrue;
     }
@@ -3164,7 +3166,7 @@ iBool handleCommand_App(const char *cmd) {
         const iGmIdentity *cur    = identityForUrl_GmCerts(d->certs, docUrl);
         iGmIdentity       *dst    = findIdentity_GmCerts(
             d->certs, collect_Block(hexDecode_Rangecc(range_Command(cmd, "fp"))));
-        if (cur && dst && cur != dst) {
+        if (dst && cur != dst) {
             iString *useUrl = copy_String(findUse_GmIdentity(cur, docUrl));
             if (isEmpty_String(useUrl)) {
                 useUrl = copy_String(docUrl);

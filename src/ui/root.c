@@ -344,41 +344,47 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         if (ident) {
             str = copy_String(name_GmIdentity(ident));
             if (!isEmpty_String(&ident->notes)) {
-                appendFormat_String(str, "\n%s%s", escape_Color(uiAnnotation_ColorId),
-                                    cstr_String(&ident->notes));
+                appendFormat_String(str, "\n\x1b[0m" uiHeading_ColorEscape "%s", cstr_String(&ident->notes));
             }
         }
-        pushBackN_Array(
+        pushBack_Array(
             &items,
-            (iMenuItem[]){ { format_CStr("///" uiHeading_ColorEscape "%s",
-                                         str ? cstr_String(str) : "${menu.identity.notactive}") },
-                           { "---" } },
-            2);
+            &(iMenuItem){ format_CStr("```" uiHeading_ColorEscape "\x1b[1m%s",
+                                      str ? cstr_String(str) : "${menu.identity.notactive}") });
+        if (ident && isUsedOn_GmIdentity(ident, docUrl)) {
+            pushBack_Array(&items,
+                           &(iMenuItem){ close_Icon " ${ident.stopuse}",
+                                         0,
+                                         0,
+                                         format_CStr("ident.signout ident:%s url:%s",
+                                                     cstr_String(fp),
+                                                     cstr_String(docUrl)) });
+        }
+        pushBack_Array(&items, &(iMenuItem){ "---" });
         delete_String(str);
         /* Alternate identities. */
-        if (ident) {
-            const iString *site = collectNewRange_String(urlRoot_String(docUrl));
-            iBool haveAlts = iFalse;
-            iConstForEach(StringArray, i, strings_SiteSpec(site, usedIdentities_SiteSpecKey)) {
-                if (!equal_String(i.value, fp)) {
-                    const iBlock *otherFp = collect_Block(hexDecode_Rangecc(range_String(i.value)));
-                    const iGmIdentity *other = findIdentity_GmCerts(certs_App(), otherFp);
-                    if (other) {
-                        pushBack_Array(
-                            &items,
-                            &(iMenuItem){
-                                format_CStr(translateCStr_Lang("\U0001f816 ${ident.switch}"),
-                                            cstr_String(name_GmIdentity(other))),
-                                0,
-                                0,
-                                format_CStr("ident.switch fp:%s", cstr_String(i.value)) });
-                        haveAlts = iTrue;
-                    }
+        const iString *site = collectNewRange_String(urlRoot_String(docUrl));
+        iBool haveAlts = iFalse;
+        iConstForEach(StringArray, i, strings_SiteSpec(site, usedIdentities_SiteSpecKey)) {
+            if (!fp || !equal_String(i.value, fp)) {
+                const iBlock *otherFp = collect_Block(hexDecode_Rangecc(range_String(i.value)));
+                const iGmIdentity *other = findIdentity_GmCerts(certs_App(), otherFp);
+                if (other && other != ident) {
+                    pushBack_Array(
+                        &items,
+                        &(iMenuItem){
+                            format_CStr(translateCStr_Lang("\U0001f816 ${ident.switch}"),
+                                        format_CStr("\x1b[1m%s",
+                                                    cstr_String(name_GmIdentity(other)))),
+                            0,
+                            0,
+                            format_CStr("ident.switch fp:%s", cstr_String(i.value)) });
+                    haveAlts = iTrue;
                 }
             }
-            if (haveAlts) {
-                pushBack_Array(&items, &(iMenuItem){ "---" });
-            }
+        }
+        if (haveAlts) {
+            pushBack_Array(&items, &(iMenuItem){ "---" });
         }
         iSidebarWidget *sidebar = findWidget_App("sidebar");
         pushBackN_Array(
@@ -388,14 +394,14 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
                 { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
                 { "---" } }, 3);
         if (deviceType_App() == desktop_AppDeviceType) {
-            pushBack_Array(&items, &(iMenuItem)
-                { isVisible_Widget(sidebar) && mode_SidebarWidget(sidebar) == identities_SidebarMode
-                      ? leftHalf_Icon " ${menu.hide.identities}"
-                      : leftHalf_Icon " ${menu.show.identities}",
-                  0,
-                  0,
-                  //deviceType_App() == phone_AppDeviceType ? "toolbar.showident"
-                                                          "sidebar.mode arg:3 toggle:1" });
+            pushBack_Array(&items,
+                           &(iMenuItem){ isVisible_Widget(sidebar) && mode_SidebarWidget(sidebar) ==
+                                                                          identities_SidebarMode
+                                             ? leftHalf_Icon " ${menu.hide.identities}"
+                                             : leftHalf_Icon " ${menu.show.identities}",
+                                         0,
+                                         0,
+                                         "sidebar.mode arg:3 toggle:1" });
         }
         else {
             pushBack_Array(&items, &(iMenuItem){ gear_Icon " ${menu.identities}", 0, 0,

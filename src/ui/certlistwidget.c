@@ -113,7 +113,7 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
         iBool usedOnCurrentPage = iFalse;
         iConstForEach(StringSet, i, ident->useUrls) {            
             const iString *url = i.value;
-            usedOnCurrentPage |= equalCase_String(docUrl, url);
+            usedOnCurrentPage |= startsWithCase_String(docUrl, cstr_String(url));
             iRangecc urlStr = range_String(url);
             if (startsWith_Rangecc(urlStr, "gemini://")) {
                 urlStr.start += 9; /* omit the default scheme */
@@ -127,6 +127,9 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
         }
         if (!usedOnCurrentPage) {
             remove_Array(items, 1);
+        }
+        else {
+            remove_Array(items, 0);
         }
     }
     destroy_Widget(d->menu);    
@@ -166,8 +169,8 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.use")) {
-            iGmIdentity *  ident  = menuIdentity_CertListWidget_(d);
-            const iString *tabUrl = url_DocumentWidget(document_App());
+            iGmIdentity *ident = menuIdentity_CertListWidget_(d);            
+            const iString *tabUrl = urlQueryStripped_String(url_DocumentWidget(document_App()));
             if (ident) {
                 if (argLabel_Command(cmd, "clear")) {
                     clearUse_GmIdentity(ident);
@@ -388,7 +391,6 @@ void init_CertListWidget(iCertListWidget *d) {
     init_ListWidget(&d->list);
     setId_Widget(w, "certlist");
     setBackgroundColor_Widget(w, none_ColorId);
-    setItemHeight_ListWidget(&d->list, 3.5f * lineHeight_Text(default_FontId));
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
 #if defined (iPlatformMobile)
@@ -397,6 +399,7 @@ void init_CertListWidget(iCertListWidget *d) {
         d->itemFonts[1] = uiLabelBigBold_FontId;
     }
 #endif
+    updateItemHeight_CertListWidget(d);
     d->menu = NULL;
     d->contextItem = NULL;
     d->contextIndex = iInvalidPos;
@@ -443,7 +446,7 @@ iBool updateItems_CertListWidget(iCertListWidget *d) {
                                 cstr_String(&ident->notes));
         }
         item->listItem.isSelected = isActive;
-        if (isUsedOnDomain_GmIdentity(ident, tabHost)) {
+        if (!isActive && isUsedOnDomain_GmIdentity(ident, tabHost)) {
             item->indent = 1; /* will be highlighted */
         }
         addItem_ListWidget(&d->list, item);
