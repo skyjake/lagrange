@@ -1051,8 +1051,8 @@ void begin_InputWidget(iInputWidget *d) {
     mergeLines_(&d->lines, &d->oldText);
 #if defined (LAGRANGE_ENABLE_SYSTEM_INPUT)
     d->sysCtrl = new_SystemTextInput((d->inFlags & isUrl_InputWidgetFlag ? disableAutocorrect_SystemTextInputFlag : 0) |
-                                     (!cmp_String(id_Widget(w), "url") ? returnGo_SystemTextInputFlags : 0) );
-//                                     (flags_Widget(w) & alignRight_WidgetFlag ? alignRight_SystemTextInputFlag : 0));
+                                     (!cmp_String(id_Widget(w), "url") ? returnGo_SystemTextInputFlags : 0) |
+                                     (flags_Widget(w) & alignRight_WidgetFlag ? alignRight_SystemTextInputFlag : 0));
     setFont_SystemTextInput(d->sysCtrl, d->font);
     setRect_SystemTextInput(d->sysCtrl, contentBounds_InputWidget_(d));
     setText_SystemTextInput(d->sysCtrl, &d->oldText);

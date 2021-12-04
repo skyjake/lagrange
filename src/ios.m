@@ -663,7 +663,7 @@ void init_SystemTextInput(iSystemTextInput *d, int flags) {
         [field setAutocapitalizationType:UITextAutocapitalizationTypeNone];
         [field setSpellCheckingType:UITextSpellCheckingTypeNo];
     }
-    if (flags & alignRight_WidgetFlag) {
+    if (flags & alignRight_SystemTextInputFlag) {
         [field setTextAlignment:NSTextAlignmentRight];
     }
     [field setDelegate:appState_];
