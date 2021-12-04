@@ -419,6 +419,12 @@ msgstr "Identities"
 msgid "sidebar.outline"
 msgstr "Outline"
 
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "New Folder"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Edit"
+
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
 msgstr "Read All"

@@ -117,7 +117,7 @@ struct Impl_SidebarWidget {
     iCertListWidget * certList;
     iWidget *         actions; /* below the list, area for buttons */
     int               midHeight; /* on portrait phone, the height for the middle state */
-    iBool             isBeingDraggedVertically; /* on portrait phone, sidebar can be dragged up/down */
+    iBool             isEditing; /* mobile edit mode */
     int               modeScroll[max_SidebarMode];
     iLabelWidget *    modeButtons[max_SidebarMode];
     int               maxButtonLabelWidth;
@@ -235,7 +235,18 @@ static iBool isBookmarkFolded_SidebarWidget_(const iSidebarWidget *d, const iBoo
 }
 
 static iBool isSlidingSheet_SidebarWidget_(const iSidebarWidget *d) {
-    return isPortraitPhone_App();// && scrollPos_ListWidget(d->list) <= 0;
+    return isPortraitPhone_App();
+}
+
+static void setMobileEditMode_SidebarWidget_(iSidebarWidget *d, iBool editing) {
+    iWidget *w = as_Widget(d);
+    d->isEditing = editing;
+    setFlags_Widget(findChild_Widget(w, "sidebar.close"), hidden_WidgetFlag, editing);
+    setFlags_Widget(child_Widget(d->actions, 0), hidden_WidgetFlag, !editing);
+    setTextCStr_LabelWidget(child_Widget(as_Widget(d->actions), 2),
+                            editing ? "${sidebar.close}" : "${sidebar.action.bookmarks.edit}");
+    setDragHandleWidth_ListWidget(d->list, editing ? itemHeight_ListWidget(d->list) * 3 / 2 : 0);
+    arrange_Widget(d->actions);
 }
 
 static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
@@ -482,6 +493,14 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                                { "---", 0, 0, NULL },
                                { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" } },               
                 6);
+            if (isMobile) {
+                addActionButton_SidebarWidget_(d, "${sidebar.action.bookmarks.newfolder}",
+                                               "bookmarks.addfolder", !d->isEditing ? hidden_WidgetFlag : 0);
+                addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
+                iLabelWidget *btn = addActionButton_SidebarWidget_(d,
+                    d->isEditing ? "${sidebar.close}" : "${sidebar.action.bookmarks.edit}",
+                    "sidebar.bookmarks.edit", 0);
+            }
             break;
         }
         case history_SidebarMode: {
@@ -545,7 +564,6 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
                 iLabelWidget *btn = addActionButton_SidebarWidget_(d, "${sidebar.action.history.clear}",
                                                                    "history.clear confirm:1", 0);
-                setFont_LabelWidget(btn, uiLabelBigBold_FontId);
             }
             break;
         }
@@ -740,7 +758,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->mode = -1;
     d->feedsMode = all_FeedsMode;
     d->midHeight = 0;
-    d->isBeingDraggedVertically = iFalse;
+    d->isEditing = iFalse;
     d->numUnreadEntries = 0;
     d->buttonFont = uiLabel_FontId; /* wiil be changed later */
     d->itemFonts[0] = uiContent_FontId;
@@ -918,6 +936,12 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             break;
         }
         case bookmarks_SidebarMode:
+            if (d->isEditing) {
+                d->contextItem = item;
+                d->contextIndex = itemIndex;
+                postCommand_Widget(d, "bookmark.edit");
+                break;
+            }
             if (isEmpty_String(&item->url)) /* a folder */ {
                 if (contains_IntSet(d->closedFolders, item->id)) {
                     remove_IntSet(d->closedFolders, item->id);
@@ -1174,6 +1198,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             }
             else {
                 setVisualOffset_Widget(w, bottom_Rect(rect_Root(w->root)) - w->rect.pos.y, 300, animFlags);
+                if (d->isEditing) {
+                    setMobileEditMode_SidebarWidget_(d, iFalse);
+                }
             }
             showToolbar_Root(w->root, isHiding);
         }
@@ -1188,6 +1215,10 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         }
         refresh_Widget(w->parent);
         return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.edit")) {
+        setMobileEditMode_SidebarWidget_(d, !d->isEditing);
+        invalidate_ListWidget(d->list);
     }
     return iFalse;
 }
@@ -1853,6 +1884,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                                            &Class_SidebarWidget);
     const iBool isMenuVisible = isVisible_Widget(sidebar->menu);
     const iBool isDragging   = constDragItem_ListWidget(list) == d;
+    const iBool isEditing    = sidebar->isEditing; /* only on mobile */
     const iBool isPressing   = isMouseDown_ListWidget(list) && !isDragging;
     const iBool isHover      =
             (!isMenuVisible &&
@@ -2006,6 +2038,16 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         drawRange_Text(font, textPos, fg, range_String(&d->label));
         const int metaFont = uiLabel_FontId;
         const int metaIconWidth = 4.5f * gap_UI;
+        if (isEditing) {
+            iRect dragRect = {
+                addX_I2(topRight_Rect(itemRect), -itemHeight * 3 / 2),
+                init_I2(itemHeight * 3 / 2, itemHeight)
+            };
+            fillRect_Paint(p, dragRect, bg);
+            drawVLine_Paint(p, topLeft_Rect(dragRect), height_Rect(dragRect), uiSeparator_ColorId);
+            drawCentered_Text(uiContent_FontId, dragRect, iTrue, uiAnnotation_ColorId, menu_Icon);
+            adjustEdges_Rect(&itemRect, 0, -width_Rect(dragRect), 0, 0);
+        }
         const iInt2 metaPos =
             init_I2(right_Rect(itemRect) -
                         length_String(&d->meta) *

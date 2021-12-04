@@ -66,6 +66,7 @@ struct Impl_ListWidget {
     size_t         hoverItem;
     size_t         dragItem;
     iInt2          dragOrigin; /* offset from mouse to drag item's top-left corner */
+    int            dragHandleWidth;
     iClick         click;
     iIntSet        invalidItems;
     iVisBuf       *visBuf;
@@ -90,6 +91,7 @@ int     scrollPos_ListWidget        (const iListWidget *);
 
 void    setScrollPos_ListWidget     (iListWidget *, int pos);
 void    setScrollMode_ListWidget    (iListWidget *, enum iScrollMode mode);
+void    setDragHandleWidth_ListWidget(iListWidget *, int dragHandleWidth);
 void    scrollToItem_ListWidget     (iListWidget *, size_t index, uint32_t span);
 void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    scrollOffsetSpan_ListWidget (iListWidget *, int offset, uint32_t span);
