@@ -40,6 +40,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "macos.h"
 #endif
 
+#if defined (iPlatformAppleMobile)
+#   include "ios.h"
+#   define LAGRANGE_ENABLE_SYSTEM_INPUT 1
+#endif
+
 static const int    refreshInterval_InputWidget_ = 512;
 static const size_t maxUndo_InputWidget_         = 64;
 static const int    unlimitedWidth_InputWidget_  = 1000000; /* TODO: WrapText disables some functionality if maxWidth==0 */
@@ -233,6 +238,7 @@ struct Impl_InputWidget {
     void *          validatorContext;
     iString *       backupPath;
     int             backupTimer;
+    iSystemTextInput *sysCtrl;
 };
 
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
@@ -721,10 +727,12 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->buffered = NULL;
     d->backupPath = NULL;
     d->backupTimer = 0;
+    d->sysCtrl = NULL;
     updateMetrics_InputWidget_(d);
 }
 
 void deinit_InputWidget(iInputWidget *d) {
+    delete_SystemTextInput(d->sysCtrl);
     if (d->backupTimer) {
         SDL_RemoveTimer(d->backupTimer);
     }
@@ -953,6 +961,9 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     iString *nfcText = collect_String(copy_String(text));
     normalize_String(nfcText);
     splitToLines_(nfcText, &d->lines);
+    if (d->sysCtrl) {
+        setText_SystemTextInput(d->sysCtrl, nfcText);
+    }
     iAssert(!isEmpty_Array(&d->lines));
     iForEach(Array, i, &d->lines) {
         updateLine_InputWidget_(d, i.value); /* count number of visible lines */
@@ -1008,6 +1019,16 @@ iLocalDef iBool isEditing_InputWidget_(const iInputWidget *d) {
     return (flags_Widget(constAs_Widget(d)) & selected_WidgetFlag) != 0;
 }
 
+static void contentsWereChanged_InputWidget_(iInputWidget *);
+
+#if defined (LAGRANGE_ENABLE_SYSTEM_INPUT)
+void systemInputChanged_InputWidget_(iSystemTextInput *sysCtrl, void *widget) {
+    iInputWidget *d = widget;
+    splitToLines_(text_SystemTextInput(sysCtrl), &d->lines);
+    contentsWereChanged_InputWidget_(d);
+}
+#endif
+
 void begin_InputWidget(iInputWidget *d) {
     iWidget *w = as_Widget(d);
     if (isEditing_InputWidget_(d)) {
@@ -1016,7 +1037,18 @@ void begin_InputWidget(iInputWidget *d) {
     }
     invalidateBuffered_InputWidget_(d);
     setFlags_Widget(w, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
+    setFlags_Widget(w, selected_WidgetFlag, iTrue);
     mergeLines_(&d->lines, &d->oldText);
+#if defined (LAGRANGE_ENABLE_SYSTEM_INPUT)
+    d->sysCtrl = new_SystemTextInput((d->inFlags & isUrl_InputWidgetFlag ? disableAutocorrect_SystemTextInputFlag : 0) |
+                                     (!cmp_String(id_Widget(w), "url") ? returnGo_SystemTextInputFlags : 0) );
+//                                     (flags_Widget(w) & alignRight_WidgetFlag ? alignRight_SystemTextInputFlag : 0));
+    setFont_SystemTextInput(d->sysCtrl, d->font);
+    setRect_SystemTextInput(d->sysCtrl, contentBounds_InputWidget_(d));
+    setText_SystemTextInput(d->sysCtrl, &d->oldText);
+    setTextChangedFunc_SystemTextInput(d->sysCtrl, systemInputChanged_InputWidget_, d);
+    return;
+#endif
     if (d->mode == overwrite_InputMode) {
         d->cursor = zero_I2();
     }
@@ -1025,7 +1057,6 @@ void begin_InputWidget(iInputWidget *d) {
         d->cursor.x = iMin(d->cursor.x, cursorLine_InputWidget_(d)->range.end);
     }
     SDL_StartTextInput();
-    setFlags_Widget(w, selected_WidgetFlag, iTrue);
     showCursor_InputWidget_(d);
     refresh_Widget(w);
     startOrStopCursorTimer_InputWidget_(d, iTrue);
@@ -1048,15 +1079,22 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         /* Was not active. */
         return;
     }
-    enableEditorKeysInMenus_(iTrue);
-    if (!accept) {
+    if (d->sysCtrl) {
+        if (accept) {
+            splitToLines_(text_SystemTextInput(d->sysCtrl), &d->lines);
+        }
+        delete_SystemTextInput(d->sysCtrl);
+        d->sysCtrl = NULL;
+    }
+    else if (!accept) {
         /* Overwrite the edited lines. */
         splitToLines_(&d->oldText, &d->lines);
+        SDL_StopTextInput();
     }
+    enableEditorKeysInMenus_(iTrue);
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     d->inFlags &= ~isMarking_InputWidgetFlag;
     startOrStopCursorTimer_InputWidget_(d, iFalse);
-    SDL_StopTextInput();
     setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag | touchDrag_WidgetFlag, iFalse);
     const char *id = cstr_String(id_Widget(as_Widget(d)));
     if (!*id) id = "_";
@@ -2324,6 +2362,10 @@ static void draw_InputWidget_(const iInputWidget *d) {
                             isFocused ? gap_UI / 4 : 1,
                             isFocused ? uiInputFrameFocused_ColorId
                                       : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
+    if (d->sysCtrl) {
+        drawChildren_Widget(w);
+        return;
+    }
     setClip_Paint(&p, adjusted_Rect(bounds, init_I2(d->leftPadding, 0),
                                     init_I2(-d->rightPadding, w->flags & extraPadding_WidgetFlag ? -gap_UI / 2 : 0)));
     const iRect contentBounds = contentBounds_InputWidget_(d);

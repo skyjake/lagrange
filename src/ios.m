@@ -60,6 +60,8 @@ static UIViewController *viewController_(iWindow *window) {
     return NULL;
 }
 
+static void notifyChange_SystemTextInput_(iSystemTextInput *);
+
 /*----------------------------------------------------------------------------------------------*/
 
 API_AVAILABLE(ios(13.0))
@@ -159,9 +161,10 @@ API_AVAILABLE(ios(13.0))
 
 /*----------------------------------------------------------------------------------------------*/
 
-@interface AppState : NSObject<UIDocumentPickerDelegate> {
+@interface AppState : NSObject<UIDocumentPickerDelegate, UITextFieldDelegate> {
     iString *fileBeingSaved;
     iString *pickFileCommand;
+    iSystemTextInput *sysCtrl;
 }
 @property (nonatomic, assign) BOOL isHapticsAvailable;
 @property (nonatomic, strong) NSObject *haptic;
@@ -175,7 +178,16 @@ static AppState *appState_;
     self = [super init];
     fileBeingSaved = NULL;
     pickFileCommand = NULL;
+    sysCtrl = NULL;
     return self;
+}
+
+-(void)setSystemTextInput:(iSystemTextInput *)sys {
+    sysCtrl = sys;
+}
+
+-(iSystemTextInput *)systemTextInput {
+    return sysCtrl;
 }
 
 -(void)setPickFileCommand:(const char *)command {
@@ -256,6 +268,21 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
 -(void)keyboardOffScreen:(NSNotification *)notification {
     setKeyboardHeight_MainWindow(get_MainWindow(), 0);
 }
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    SDL_Event ev = { .type = SDL_KEYDOWN };
+    ev.key.keysym.sym = SDLK_RETURN;
+    SDL_PushEvent(&ev);
+    printf("Return pressed\n");
+    return NO;
+}
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+    iSystemTextInput *sysCtrl = [appState_ systemTextInput];
+    notifyChange_SystemTextInput_(sysCtrl);
+    return YES;
+}
+
 @end
 
 static void enableMouse_(iBool yes) {
@@ -606,4 +633,86 @@ iBool isStarted_AVFAudioPlayer(const iAVFAudioPlayer *d) {
 
 iBool isPaused_AVFAudioPlayer(const iAVFAudioPlayer *d) {
     return d->state == paused_AVFAudioPlayerState;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+struct Impl_SystemTextInput {
+    void *ctrl;
+    void (*textChangedFunc)(iSystemTextInput *, void *);
+    void *textChangedContext;
+};
+
+iDefineTypeConstructionArgs(SystemTextInput, (int flags), flags)
+
+#define REF_d_ctrl  (__bridge UITextField *)d->ctrl
+
+void init_SystemTextInput(iSystemTextInput *d, int flags) {
+    d->ctrl = (void *) CFBridgingRetain([[UITextField alloc] init]);
+    UITextField *field = REF_d_ctrl;
+    // TODO: Use the right font:  https://developer.apple.com/documentation/uikit/text_display_and_fonts/adding_a_custom_font_to_your_app?language=objc
+    [[viewController_(get_Window()) view] addSubview:REF_d_ctrl];
+    if (flags & returnGo_SystemTextInputFlags) {
+        [field setReturnKeyType:UIReturnKeyGo];
+    }
+    if (flags & returnSend_SystemTextInputFlags) {
+        [field setReturnKeyType:UIReturnKeySend];
+    }
+    if (flags & disableAutocorrect_SystemTextInputFlag) {
+        [field setAutocorrectionType:UITextAutocorrectionTypeNo];
+        [field setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+        [field setSpellCheckingType:UITextSpellCheckingTypeNo];
+    }
+    if (flags & alignRight_WidgetFlag) {
+        [field setTextAlignment:NSTextAlignmentRight];
+    }
+    [field setDelegate:appState_];
+    [field becomeFirstResponder];
+    d->textChangedFunc = NULL;
+    d->textChangedContext = NULL;
+    [appState_ setSystemTextInput:d];
+}
+
+void deinit_SystemTextInput(iSystemTextInput *d) {
+    [appState_ setSystemTextInput:nil];
+    [REF_d_ctrl removeFromSuperview];
+    d->ctrl = nil; // TODO: Does this need to be released??
+}
+
+void setText_SystemTextInput(iSystemTextInput *d, const iString *text) {
+    [REF_d_ctrl setText:[NSString stringWithUTF8String:cstr_String(text)]];
+    [REF_d_ctrl selectAll:nil];
+}
+
+void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
+    int height = lineHeight_Text(fontId);
+    UIFont *font = [UIFont systemFontOfSize:0.65f * height / get_Window()->pixelRatio];
+    [REF_d_ctrl setFont:font];
+}
+
+const iString *text_SystemTextInput(const iSystemTextInput *d) {
+    return collectNewCStr_String([[REF_d_ctrl text] cStringUsingEncoding:NSUTF8StringEncoding]);;
+}
+
+void setRect_SystemTextInput(iSystemTextInput *d, iRect rect) {
+    const iWindow *win = get_Window();
+    CGRect frame;
+    frame.origin.x = rect.pos.x / win->pixelRatio;
+    frame.origin.y = (rect.pos.y - gap_UI + 2) / win->pixelRatio;
+    frame.size.width = rect.size.x / win->pixelRatio;
+    frame.size.height = rect.size.y / win->pixelRatio;
+    [REF_d_ctrl setFrame:frame];
+}
+
+void setTextChangedFunc_SystemTextInput(iSystemTextInput *d,
+                                        void (*textChangedFunc)(iSystemTextInput *, void *),
+                                        void *context) {
+    d->textChangedFunc = textChangedFunc;
+    d->textChangedContext = context;
+}
+
+static void notifyChange_SystemTextInput_(iSystemTextInput *d) {
+    if (d && d->textChangedFunc) {
+        d->textChangedFunc(d, d->textChangedContext);
+    }
 }
