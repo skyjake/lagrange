@@ -1812,7 +1812,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     w->rect.size.y = height_Rect(rootRect);
                 }
                 else {
-                    setScrollMode_ListWidget(d->list, disabledAtTopBothDirections_ScrollMode);
+                    setScrollMode_ListWidget(d->list, disabled_ScrollMode);
                 }
                 arrange_Widget(w);
                 refresh_Widget(w);

@@ -55,6 +55,7 @@ enum iScrollMode {
     normal_ScrollMode,
     disabledAtTopBothDirections_ScrollMode,
     disabledAtTopUpwards_ScrollMode,
+    disabled_ScrollMode,
 };
 
 struct Impl_ListWidget {

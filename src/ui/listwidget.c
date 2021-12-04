@@ -386,6 +386,8 @@ static iBool isScrollDisabled_ListWidget_(const iListWidget *d, const SDL_Event 
         dir = iSign(ev->wheel.y);
     }
     switch (d->scrollMode) {
+        case disabled_ScrollMode:
+            return iTrue;
         case disabledAtTopBothDirections_ScrollMode:
             return scrollPos_ListWidget(d) <= 0;
         case disabledAtTopUpwards_ScrollMode:
@@ -401,7 +403,8 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     if (isMetricsChange_UserEvent(ev)) {
         invalidate_ListWidget(d);
     }
-    else if (!isScrollDisabled_ListWidget_(d, ev) && processEvent_SmoothScroll(&d->scrollY, ev)) {
+    else if (!isScrollDisabled_ListWidget_(d, ev) &&
+             processEvent_SmoothScroll(&d->scrollY, ev)) {
         return iTrue;
     }
     else if (isCommand_SDLEvent(ev)) {
