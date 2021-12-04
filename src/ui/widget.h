@@ -123,6 +123,10 @@ enum iWidgetFlag {
 #define refChildrenOffset_WidgetFlag        iBit64(63) /* visual offset determined by the offset of referenced children */
 #define nativeMenu_WidgetFlag               iBit64(64)
 
+enum iWidgetFlag2 {
+    slidingSheetDraggable_WidgetFlag2 = iBit(1),
+};
+
 enum iWidgetAddPos {
     back_WidgetAddPos,
     front_WidgetAddPos,
@@ -139,6 +143,7 @@ struct Impl_Widget {
     iObject      object;
     iString      id;
     int64_t      flags;
+    int          flags2;
     iRect        rect;
     iInt2        minSize;
     iWidget *    sizeRef;

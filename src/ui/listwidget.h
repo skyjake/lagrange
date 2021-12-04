@@ -51,6 +51,12 @@ iDeclareObjectConstruction(ListWidget)
 
 iDeclareType(VisBuf)
 
+enum iScrollMode {
+    normal_ScrollMode,
+    disabledAtTopBothDirections_ScrollMode,
+    disabledAtTopUpwards_ScrollMode,
+};
+
 struct Impl_ListWidget {
     iWidget        widget;
     iScrollWidget *scroll;
@@ -63,6 +69,7 @@ struct Impl_ListWidget {
     iClick         click;
     iIntSet        invalidItems;
     iVisBuf       *visBuf;
+    enum iScrollMode scrollMode;
     iBool          noHoverWhileScrolling;
 };
 
@@ -82,6 +89,7 @@ int     itemHeight_ListWidget       (const iListWidget *);
 int     scrollPos_ListWidget        (const iListWidget *);
 
 void    setScrollPos_ListWidget     (iListWidget *, int pos);
+void    setScrollMode_ListWidget    (iListWidget *, enum iScrollMode mode);
 void    scrollToItem_ListWidget     (iListWidget *, size_t index, uint32_t span);
 void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    scrollOffsetSpan_ListWidget (iListWidget *, int offset, uint32_t span);

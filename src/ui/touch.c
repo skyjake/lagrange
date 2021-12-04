@@ -589,9 +589,18 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     divvf_F3(&touch->accum, 6);
                     divfv_I2(&pixels, 6);
                     /* Allow scrolling a scrollable widget. */
-                    iWidget *flow = findOverflowScrollable_Widget(touch->affinity);
-                    if (flow) {
-                        touch->affinity = flow;
+                    if (touch->affinity && touch->affinity->flags2 & slidingSheetDraggable_WidgetFlag2) {
+                        extern iWidgetClass Class_SidebarWidget; /* The only type of sliding sheet for now. */
+                        iWidget *slider = findParentClass_Widget(touch->affinity, &Class_SidebarWidget);
+                        if (slider) {
+                            touch->affinity = slider;
+                        }
+                    }
+                    else {
+                        iWidget *flow = findOverflowScrollable_Widget(touch->affinity);
+                        if (flow) {
+                            touch->affinity = flow;
+                        }
                     }
                 }
                 else {
@@ -617,11 +626,13 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             if (touch->axis == y_TouchAxis) {
                 pixels.x = 0;
             }
-//            printf("%p (%s) py: %i wy: %f acc: %f edge: %d\n",
-//                   touch->affinity,
-//                   class_Widget(touch->affinity)->name,
-//                   pixels.y, y_F3(amount), y_F3(touch->accum),
-//                   touch->edge);
+#if 0
+            printf("%p (%s) py: %i wy: %f acc: %f edge: %d\n",
+                   touch->affinity,
+                   class_Widget(touch->affinity)->name,
+                   pixels.y, y_F3(amount), y_F3(touch->accum),
+                   touch->edge);
+#endif
             if (pixels.x || pixels.y) {
                 //setFocus_Widget(NULL);
                 dispatchMotion_Touch_(touch->startPos /*pos[0]*/, 0);
@@ -797,6 +808,16 @@ void widgetDestroyed_Touch(iWidget *widget) {
         iMomentum *mom = m.value;
         if (mom->affinity == widget) {
             remove_ArrayIterator(&m);
+        }
+    }
+}
+
+void transferAffinity_Touch(iWidget *src, iWidget *dst) {
+    iTouchState *d = touchState_();
+    iForEach(Array, i, d->touches) {
+        iTouch *touch = i.value;
+        if (touch->affinity == src) {
+            touch->affinity = dst;
         }
     }
 }

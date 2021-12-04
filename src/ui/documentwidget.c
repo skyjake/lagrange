@@ -2620,9 +2620,9 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             /* The temporary "swipeIn" will display the previous page until the finger is lifted. */
             iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
             if (!swipeIn) {
-                const iBool sidebarSwipe = (isPortraitPhone_App() &&
+                const iBool sidebarSwipe = iFalse; /* && (isPortraitPhone_App() &&
                                             d->flags & openedFromSidebar_DocumentWidgetFlag &&
-                                            !isVisible_Widget(findWidget_App("sidebar")));
+                                            !isVisible_Widget(findWidget_App("sidebar"))); */
                 swipeIn = new_DocumentWidget();
                 setId_Widget(as_Widget(swipeIn), "swipein");
                 setFlags_Widget(as_Widget(swipeIn),
@@ -3235,6 +3235,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
+#if 0
         if (isPortraitPhone_App()) {
             if (d->flags & openedFromSidebar_DocumentWidgetFlag &&
                 !isVisible_Widget(findWidget_App("sidebar"))) {
@@ -3247,6 +3248,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
             d->flags &= ~openedFromSidebar_DocumentWidgetFlag;
         }
+#endif
         if (d->request) {
             postCommandf_Root(w->root,
                 "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));

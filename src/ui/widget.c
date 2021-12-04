@@ -124,6 +124,7 @@ void init_Widget(iWidget *d) {
     init_String(&d->id);
     d->root           = get_Root(); /* never changes after this */
     d->flags          = 0;
+    d->flags2         = 0;
     d->rect           = zero_Rect();
     d->minSize        = zero_I2();
     d->sizeRef        = NULL;

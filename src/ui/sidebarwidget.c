@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "root.h"
 #include "scrollwidget.h"
+#include "touch.h"
 #include "util.h"
 #include "visited.h"
 
@@ -99,13 +100,15 @@ struct Impl_SidebarWidget {
     iListWidget *     list;
     iCertListWidget * certList;
     iWidget *         actions; /* below the list, area for buttons */
+    int               midHeight; /* on portrait phone, the height for the middle state */
+    iBool             isBeingDraggedVertically; /* on portrait phone, sidebar can be dragged up/down */
     int               modeScroll[max_SidebarMode];
     iLabelWidget *    modeButtons[max_SidebarMode];
     int               maxButtonLabelWidth;
     float             widthAsGaps;
     int               buttonFont;
     int               itemFonts[2];
-    size_t            numUnreadEntries;
+    size_t            numUnreadEntries;    
     iWidget *         resizer;
     iWidget *         menu; /* context menu for an item */
     iWidget *         modeMenu; /* context menu for the sidebar mode (no item) */
@@ -194,9 +197,9 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
                                              //(deviceType_App() != desktop_AppDeviceType ?
                                              // extraPadding_WidgetFlag : 0) |
                                              flags);
-    setFont_LabelWidget(btn, deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide
-                                 ? uiLabelBig_FontId
-                                 : d->buttonFont);
+    setFont_LabelWidget(btn, /*deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide
+                                 ? uiLabelBig_FontId : */
+                                 d->buttonFont);
     checkIcon_LabelWidget(btn);
     return btn;
 }
@@ -211,7 +214,12 @@ static iBool isBookmarkFolded_SidebarWidget_(const iSidebarWidget *d, const iBoo
     return iFalse;
 }
 
+static iBool isSlidingSheet_SidebarWidget_(const iSidebarWidget *d) {
+    return isPortraitPhone_App();// && scrollPos_ListWidget(d->list) <= 0;
+}
+
 static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
+    const iBool isMobile = (deviceType_App() != desktop_AppDeviceType);
     clear_ListWidget(d->list);
     releaseChildren_Widget(d->blank);
     if (!keepActions) {
@@ -299,9 +307,10 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             }
             /* Actions. */
             if (!keepActions) {
-                addActionButton_SidebarWidget_(
-                    d, check_Icon " ${sidebar.action.feeds.markallread}", "feeds.markallread", expand_WidgetFlag |
-                    tight_WidgetFlag);
+                addActionButton_SidebarWidget_(d,
+                                               check_Icon " ${sidebar.action.feeds.markallread}",
+                                               "feeds.markallread",
+                                               expand_WidgetFlag | tight_WidgetFlag);
                 updateSize_LabelWidget(addChildFlags_Widget(d->actions,
                                      iClob(new_LabelWidget("${sidebar.action.show}", NULL)),
                                                             frameless_WidgetFlag | tight_WidgetFlag));
@@ -617,6 +626,10 @@ void setClosedFolders_SidebarWidget(iSidebarWidget *d, const iIntSet *closedFold
     }
 }
 
+void setMidHeight_SidebarWidget(iSidebarWidget *d, int midHeight) {
+    d->midHeight = midHeight;
+}
+
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->mode : 0;
 }
@@ -686,6 +699,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->side = side;
     d->mode = -1;
     d->feedsMode = all_FeedsMode;
+    d->midHeight = 0;
+    d->isBeingDraggedVertically = iFalse;
     d->numUnreadEntries = 0;
     d->buttonFont = uiLabel_FontId; /* wiil be changed later */
     d->itemFonts[0] = uiContent_FontId;
@@ -703,15 +718,24 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iWidget *vdiv = makeVDiv_Widget();
     addChildFlags_Widget(w, vdiv, resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
     iZap(d->modeButtons);
-    d->resizer = NULL;
-    d->list = NULL;
-    d->certList = NULL;
-    d->actions = NULL;
+    d->resizer       = NULL;
+    d->list          = NULL;
+    d->certList      = NULL;
+    d->actions       = NULL;
     d->closedFolders = new_IntSet();
     /* On a phone, the right sidebar is not used. */
-    const iBool isPhone = deviceType_App() == phone_AppDeviceType;
-    //if (!isPhone || d->side == left_SidebarSide) {
-    iWidget *buttons = new_Widget();        
+    const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
+    if (isPhone) {
+        iLabelWidget *closeButton =
+            addChildFlags_Widget(vdiv,
+                                 iClob(new_LabelWidget("${sidebar.close}", "sidebar.toggle")),
+                                 collapse_WidgetFlag | alignRight_WidgetFlag |
+                                 extraPadding_WidgetFlag | frameless_WidgetFlag);
+        as_Widget(closeButton)->flags2 |= slidingSheetDraggable_WidgetFlag2; /* phone */
+        setId_Widget(as_Widget(closeButton), "sidebar.close");
+        setFont_LabelWidget(closeButton, uiLabelBigBold_FontId);
+    }
+    iWidget *buttons = new_Widget();
     setId_Widget(buttons, "buttons");
     setDrawBufferEnabled_Widget(buttons, iTrue);
     for (int i = 0; i < max_SidebarMode; i++) {
@@ -725,28 +749,14 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                 tightModeLabels_[i],
                 format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
                 frameless_WidgetFlag | noBackground_WidgetFlag);
+        as_Widget(d->modeButtons[i])->flags2 |= slidingSheetDraggable_WidgetFlag2; /* phone */
     }
     setButtonFont_SidebarWidget(d, isPhone ? uiLabelBig_FontId : uiLabel_FontId);
     addChildFlags_Widget(vdiv,
                          iClob(buttons),
-                         arrangeHorizontal_WidgetFlag |
-                             resizeWidthOfChildren_WidgetFlag |
-                         arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag); // |
-//                             drawBackgroundToHorizontalSafeArea_WidgetFlag);
+                         arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                             arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag);
     setBackgroundColor_Widget(buttons, uiBackgroundSidebar_ColorId);
-//    }
-#if 0
-    else {
-        iLabelWidget *heading = new_LabelWidget(person_Icon " ${sidebar.identities}", NULL);
-        checkIcon_LabelWidget(heading);
-        setBackgroundColor_Widget(as_Widget(heading), uiBackgroundSidebar_ColorId);
-        setTextColor_LabelWidget(heading, uiTextSelected_ColorId);
-        setFont_LabelWidget(addChildFlags_Widget(vdiv, iClob(heading), borderTop_WidgetFlag |
-                                                 alignLeft_WidgetFlag | frameless_WidgetFlag |
-                                                 drawBackgroundToHorizontalSafeArea_WidgetFlag),
-                            uiLabelLargeBold_FontId);
-    }
-#endif
     iWidget *content = new_Widget();
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
     iWidget *listAndActions = makeVDiv_Widget();
@@ -756,15 +766,17 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->list = new_ListWidget();    
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
     addChild_Widget(listArea, iClob(d->list));
-    d->certList = new_CertListWidget();
-    setPadding_Widget(as_Widget(d->certList), 0, gap_UI, 0, gap_UI);
-    addChild_Widget(listArea, iClob(d->certList));
+    if (!isPhone) {
+        d->certList = new_CertListWidget();
+        setPadding_Widget(as_Widget(d->certList), 0, gap_UI, 0, gap_UI);
+        addChild_Widget(listArea, iClob(d->certList));
+    }
     addChildFlags_Widget(listAndActions,
                          iClob(listArea),
                          expand_WidgetFlag); // | drawBackgroundToHorizontalSafeArea_WidgetFlag);
     setId_Widget(addChildPosFlags_Widget(listAndActions,
                                          iClob(d->actions = new_Widget()),
-                                         isPhone ? front_WidgetAddPos : back_WidgetAddPos,
+                                         /*isPhone ? front_WidgetAddPos :*/ back_WidgetAddPos,
                                          arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
                                          resizeWidthOfChildren_WidgetFlag), // |
 //                                             drawBackgroundToHorizontalSafeArea_WidgetFlag),
@@ -891,7 +903,7 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
 //            updateMetrics_SidebarWidget_(d);
             updateItemHeight_SidebarWidget_(d);
         }
-        setButtonFont_SidebarWidget(d, isPortrait_App() ? uiLabelBig_FontId : uiLabel_FontId);
+        setButtonFont_SidebarWidget(d, isPortrait_App() ? uiLabelMedium_FontId : uiLabel_FontId);
     }
     const iBool isTight =
         (width_Rect(bounds_Widget(as_Widget(d->modeButtons[0]))) < d->maxButtonLabelWidth);
@@ -982,6 +994,52 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
     return iFalse;
 }
 
+static void animateSlidingSheetHeight_SidebarWidget_(iAny *sidebar) {
+    iWidget *d = sidebar;
+    const int oldSize = d->rect.size.y;
+    const int newSize = bottom_Rect(safeRect_Root(d->root)) - top_Rect(bounds_Widget(d));
+    if (oldSize != newSize) {
+        d->rect.size.y = newSize;
+        arrange_Widget(d);
+    }
+//    printf("[%p] %u: %d  animating %d\n", d, window_Widget(d)->frameTime,
+//           (flags_Widget(sidebar) & visualOffset_WidgetFlag) != 0,
+//           newSize);
+    if (!isFinished_Anim(&d->visualOffset)) {
+        addTicker_App(animateSlidingSheetHeight_SidebarWidget_, sidebar);
+    }
+}
+
+enum iSlidingSheetPos {
+    top_SlidingSheetPos,
+    middle_SlidingSheetPos,
+    bottom_SlidingSheetPos,
+};
+
+static void setSlidingSheetPos_SidebarWidget_(iSidebarWidget *d, enum iSlidingSheetPos slide) {
+    iWidget *w = as_Widget(d);
+    const int pos = w->rect.pos.y;
+    const iRect safeRect = safeRect_Root(w->root);
+    if (slide == top_SlidingSheetPos) {
+        w->rect.pos.y = top_Rect(safeRect);
+        w->rect.size.y = height_Rect(safeRect);
+        setVisualOffset_Widget(w, pos - w->rect.pos.y, 0, 0);
+        setVisualOffset_Widget(w, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
+        setScrollMode_ListWidget(d->list, disabledAtTopUpwards_ScrollMode);
+    }
+    else if (slide == bottom_SlidingSheetPos) {
+        postCommand_Widget(w, "sidebar.toggle");
+    }
+    else {
+        w->rect.size.y = d->midHeight;
+        w->rect.pos.y = height_Rect(safeRect) - w->rect.size.y;
+        setVisualOffset_Widget(w, pos - w->rect.pos.y, 0, 0);
+        setVisualOffset_Widget(w, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
+        setScrollMode_ListWidget(d->list, disabledAtTopBothDirections_ScrollMode);
+    }
+    animateSlidingSheetHeight_SidebarWidget_(d);
+}
+
 static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "width")) {
@@ -1011,35 +1069,58 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
                                  argLabel_Command(cmd, "noanim") == 0 &&
                                  (d->side == left_SidebarSide || deviceType_App() != phone_AppDeviceType);
         int visX = 0;
+        int visY = 0;
         if (isVisible_Widget(w)) {
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
+            visY = top_Rect(bounds_Widget(w)) - top_Rect(w->root->widget->rect);
         }
-        setFlags_Widget(w, hidden_WidgetFlag, isVisible_Widget(w));
+        const iBool isHiding = isVisible_Widget(w);
+        setFlags_Widget(w, hidden_WidgetFlag, isHiding);
         /* Safe area inset for mobile. */
         const int safePad = (d->side == left_SidebarSide ? left_Rect(safeRect_Root(w->root)) : 0);
-        if (isVisible_Widget(w)) {
-            setFlags_Widget(w, keepOnTop_WidgetFlag, iFalse);
-            w->rect.size.x = d->widthAsGaps * gap_UI;
-            invalidate_ListWidget(d->list);
-            if (isAnimated) {
-                setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
-                setVisualOffset_Widget(
-                    w, (d->side == left_SidebarSide ? -1 : 1) * (w->rect.size.x + safePad), 0, 0);
-                setVisualOffset_Widget(w, 0, 300, easeOut_AnimFlag | softer_AnimFlag);
+        const int animFlags = easeOut_AnimFlag | softer_AnimFlag;
+        if (!isPortraitPhone_App()) {
+            if (!isHiding) {
+                setFlags_Widget(w, keepOnTop_WidgetFlag, iFalse);
+                w->rect.size.x = d->widthAsGaps * gap_UI;
+                invalidate_ListWidget(d->list);
+                if (isAnimated) {
+                    setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
+                    setVisualOffset_Widget(
+                        w, (d->side == left_SidebarSide ? -1 : 1) * (w->rect.size.x + safePad), 0, 0);
+                    setVisualOffset_Widget(w, 0, 300, animFlags);
+                }
             }
+            else if (isAnimated) {
+                setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
+                if (d->side == right_SidebarSide) {
+                    setVisualOffset_Widget(w, visX, 0, 0);
+                    setVisualOffset_Widget(
+                        w, visX + w->rect.size.x + safePad, 300, animFlags);
+                }
+                else {
+                    setFlags_Widget(w, keepOnTop_WidgetFlag, iTrue);
+                    setVisualOffset_Widget(
+                        w, -w->rect.size.x - safePad, 300, animFlags);
+                }
+            }
+            setScrollMode_ListWidget(d->list, normal_ScrollMode);
         }
-        else if (isAnimated) {
-            setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
-            if (d->side == right_SidebarSide) {
-                setVisualOffset_Widget(w, visX, 0, 0);
-                setVisualOffset_Widget(
-                    w, visX + w->rect.size.x + safePad, 300, easeOut_AnimFlag | softer_AnimFlag);
+        else {
+            /* Portrait phone sidebar works differently: it slides up from the bottom. */
+            setFlags_Widget(w, horizontalOffset_WidgetFlag, iFalse);
+            if (!isHiding) {
+                invalidate_ListWidget(d->list);
+                w->rect.pos.y = height_Rect(safeRect_Root(w->root)) - d->midHeight;
+                setVisualOffset_Widget(w, bottom_Rect(rect_Root(w->root)) - w->rect.pos.y, 0, 0);
+                setVisualOffset_Widget(w, 0, 300, animFlags);
+                animateSlidingSheetHeight_SidebarWidget_(d);
+                setScrollMode_ListWidget(d->list, disabledAtTopBothDirections_ScrollMode);
             }
             else {
-                setFlags_Widget(w, keepOnTop_WidgetFlag, iTrue);
-                setVisualOffset_Widget(
-                    w, -w->rect.size.x - safePad, 300, easeOut_AnimFlag | softer_AnimFlag);
+                setVisualOffset_Widget(w, bottom_Rect(rect_Root(w->root)) - w->rect.pos.y, 300, animFlags);
             }
+            showToolbar_Root(w->root, isHiding);
         }
         updateToolbarColors_Root(w->root);
         arrange_Widget(w->parent);
@@ -1097,13 +1178,32 @@ static size_t numBookmarks_(const iPtrArray *bmList) {
     return num;
 }
 
+static iRangei SlidingSheetMiddleRegion_SidebarWidget_(const iSidebarWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    const iRect safeRect = safeRect_Root(w->root);
+    const int midY = bottom_Rect(safeRect) - d->midHeight;
+    const int topHalf = (top_Rect(safeRect) + midY) / 2;
+    const int bottomHalf = (bottom_Rect(safeRect) + midY * 2) / 3;
+    return (iRangei){ topHalf, bottomHalf };
+}
+
+static void gotoNearestSlidingSheetPos_SidebarWidget_(iSidebarWidget *d) {
+    const iRangei midRegion = SlidingSheetMiddleRegion_SidebarWidget_(d);
+    const int pos = top_Rect(d->widget.rect);
+    setSlidingSheetPos_SidebarWidget_(d, pos < midRegion.start
+                                      ? top_SlidingSheetPos
+                                      : pos > midRegion.end ? bottom_SlidingSheetPos
+                                                            : middle_SlidingSheetPos);
+}
+
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Handle commands. */
     if (isResize_UserEvent(ev)) {
         checkModeButtonLayout_SidebarWidget_(d);
-        if (deviceType_App() == phone_AppDeviceType && d->side == left_SidebarSide) {
-            setFlags_Widget(w, rightEdgeDraggable_WidgetFlag, isPortrait_App());
+        if (deviceType_App() == phone_AppDeviceType) { // && d->side == left_SidebarSide) {
+//            setFlags_Widget(w, rightEdgeDraggable_WidgetFlag, isPortrait_App());
+            setFlags_Widget(findChild_Widget(w, "sidebar.close"), hidden_WidgetFlag, isLandscape_App());
             /* In landscape, visibility of the toolbar is controlled separately. */
             if (isVisible_Widget(w)) {
                 postCommand_Widget(w, "sidebar.toggle");
@@ -1117,6 +1217,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             setFlags_Widget(as_Widget(d->list),
                             drawBackgroundToHorizontalSafeArea_WidgetFlag,
                             isLandscape_App());
+            setFlags_Widget(w,
+                            drawBackgroundToBottom_WidgetFlag,
+                            isPortrait_App());
+            setBackgroundColor_Widget(w, isPortrait_App() ? uiBackgroundSidebar_ColorId : none_ColorId);
             return iFalse;
         }
     }
@@ -1569,6 +1673,61 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         /* Hide the sidebar when Escape is pressed. */
         if (kmods == 0 && key == SDLK_ESCAPE && isVisible_Widget(d)) {
             postCommand_Widget(d, "%s.toggle", cstr_String(id_Widget(w)));
+            return iTrue;
+        }
+    }
+    if (isSlidingSheet_SidebarWidget_(d)) {
+        if (ev->type == SDL_MOUSEWHEEL) {
+            enum iWidgetTouchMode touchMode = widgetMode_Touch(w);
+            if (touchMode == momentum_WidgetTouchMode) {
+                /* We don't do momentum. */
+                float swipe = stopWidgetMomentum_Touch(w);
+//                printf("swipe: %f\n", swipe);
+                const iRangei midRegion = SlidingSheetMiddleRegion_SidebarWidget_(d);
+                const int pos = top_Rect(w->rect);
+                if (swipe < 500) {
+                    gotoNearestSlidingSheetPos_SidebarWidget_(d);
+                }
+                else if (swipe > 6500 && ev->wheel.y > 0) {
+                    /* Fast swipe down will dismiss. */
+                    setSlidingSheetPos_SidebarWidget_(d, bottom_SlidingSheetPos);
+                }
+                else if (ev->wheel.y < 0) {
+                    setSlidingSheetPos_SidebarWidget_(d, top_SlidingSheetPos);
+                }
+                else if (pos < (midRegion.start + midRegion.end) / 2) {
+                    setSlidingSheetPos_SidebarWidget_(d, middle_SlidingSheetPos);
+                }
+                else {
+                    setSlidingSheetPos_SidebarWidget_(d, bottom_SlidingSheetPos);
+                }
+            }
+            else if (touchMode == touch_WidgetTouchMode) {
+                /* Move with the finger. */
+                adjustEdges_Rect(&w->rect, ev->wheel.y, 0, 0, 0);
+                /* Upon reaching the top, scrolling is switched back to the list. */
+                const iRect rootRect = safeRect_Root(w->root);
+                const int top = top_Rect(rootRect);
+                if (w->rect.pos.y < top) {
+                    setScrollMode_ListWidget(d->list, disabledAtTopUpwards_ScrollMode);
+                    setScrollPos_ListWidget(d->list, top - w->rect.pos.y);
+                    transferAffinity_Touch(w, as_Widget(d->list));
+                    w->rect.pos.y = top;
+                    w->rect.size.y = height_Rect(rootRect);
+                }
+                else {
+                    setScrollMode_ListWidget(d->list, disabledAtTopBothDirections_ScrollMode);
+                }
+                arrange_Widget(w);
+                refresh_Widget(w);
+            }
+            else {
+                return iFalse;
+            }
+            return iTrue;
+        }
+        if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+            gotoNearestSlidingSheetPos_SidebarWidget_(d);
             return iTrue;
         }
     }

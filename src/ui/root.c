@@ -487,11 +487,23 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     else if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "window.resized")) {
         /* Place the sidebar next to or under doctabs depending on orientation. */
         iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
-        iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
         removeChild_Widget(parent_Widget(sidebar), sidebar);
-        //        setBackgroundColor_Widget(findChild_Widget(as_Widget(sidebar), "buttons"),
-        //                                  isPortrait_App() ? uiBackgroundUnfocusedSelection_ColorId
-        //                                                   : uiBackgroundSidebar_ColorId);
+        if (isLandscape_App()) {
+            addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
+            setWidth_SidebarWidget(sidebar, 73.0f);
+            setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag, iFalse);
+        }
+        else {
+            addChild_Widget(root, iClob(sidebar));
+            setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
+            const int midHeight = height_Widget(root) / 2;// + lineHeight_Text(uiLabelLarge_FontId);
+            setMidHeight_SidebarWidget(sidebar, midHeight);
+            setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
+            setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));
+        }
+#if 0
+        iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
+        iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
         setFlags_Widget(findChild_Widget(as_Widget(sidebar), "buttons"),
                         borderTop_WidgetFlag,
                         isPortrait_App());
@@ -507,6 +519,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
             setWidth_SidebarWidget(sidebar2, (float) width_Widget(root) / (float) gap_UI);
         }
+#endif
         return iFalse;
     }
     else if (handleCommand_App(cmd)) {
@@ -609,14 +622,14 @@ void updatePadding_Root(iRoot *d) {
         }
     }
 #endif
-    if (toolBar) {
+//    if (toolBar) {
         /* TODO: get this from toolBar height, but it's buggy for some reason */
-        const int sidebarBottomPad = isPortrait_App() ? 11 * gap_UI + bottom : 0;
-        setPadding_Widget(findChild_Widget(d->widget, "sidebar"), 0, 0, 0, sidebarBottomPad);
-        setPadding_Widget(findChild_Widget(d->widget, "sidebar2"), 0, 0, 0, sidebarBottomPad);
+//        const int sidebarBottomPad = isPortrait_App() ? 11 * gap_UI + bottom : 0;
+//        setPadding_Widget(findChild_Widget(d->widget, "sidebar"), 0, 0, 0, sidebarBottomPad);
+        //setPadding_Widget(findChild_Widget(d->widget, "sidebar2"), 0, 0, 0, sidebarBottomPad);
         /* TODO: There seems to be unrelated layout glitch in the sidebar where its children
            are not arranged correctly until it's hidden and reshown. */
-    }
+//    }
     /* Note that `handleNavBarCommands_` also adjusts padding and spacing. */
 }
 
@@ -1015,30 +1028,17 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "toolbar.showview")) {
         /* TODO: Clean this up. */
-        iWidget *sidebar  = findWidget_App("sidebar");
-        iWidget *sidebar2 = findWidget_App("sidebar2");
-        dismissSidebar_(sidebar2, "toolbar.ident");
-        const iBool isVisible = isVisible_Widget(sidebar);
-        //        setFlags_Widget(findChild_Widget(toolBar, "toolbar.view"), noBackground_WidgetFlag,
-        //                        isVisible);
+//        iWidget *sidebar  = findWidget_App("sidebar");
+//        iWidget *sidebar2 = findWidget_App("sidebar2");
+//        dismissSidebar_(sidebar2, "toolbar.ident");
+//        const iBool isVisible = isVisible_Widget(sidebar);
         /* If a sidebar hasn't been shown yet, it's height is zero. */
-        const int viewHeight = size_Root(get_Root()).y;
+//        const int viewHeight = size_Root(get_Root()).y;
         if (arg_Command(cmd) >= 0) {
             postCommandf_App("sidebar.mode arg:%d show:1", arg_Command(cmd));
-//            if (!isVisible) {
-//                setVisualOffset_Widget(sidebar, viewHeight, 0, 0);
-//                setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
-//            }
         }
         else {
             postCommandf_App("sidebar.toggle");
-//            if (isVisible) {
-//                setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
-//            }
-//            else {
-//                setVisualOffset_Widget(sidebar, viewHeight, 0, 0);
-//                setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
-//            }
         }
         return iTrue;
     }
@@ -1110,41 +1110,22 @@ void updateMetrics_Root(iRoot *d) {
         setFixedSize_Widget(appClose, appMin->rect.size);
         setFixedSize_Widget(appIcon, init_I2(appIconSize_Root(), appMin->rect.size.y));
     }
-    iWidget *navBar     = findChild_Widget(d->widget, "navbar");
-//    iWidget *lock       = findChild_Widget(navBar, "navbar.lock");
-    iWidget *url        = findChild_Widget(d->widget, "url");
-    iWidget *rightEmbed = findChild_Widget(navBar, "url.rightembed");
-    iWidget *embedPad   = findChild_Widget(navBar, "url.embedpad");
-    iWidget *urlButtons = findChild_Widget(navBar, "url.buttons");
+    iWidget      *navBar     = findChild_Widget(d->widget, "navbar");
+    iWidget      *url        = findChild_Widget(d->widget, "url");
+    iWidget      *rightEmbed = findChild_Widget(navBar, "url.rightembed");
+    iWidget      *embedPad   = findChild_Widget(navBar, "url.embedpad");
+    iWidget      *urlButtons = findChild_Widget(navBar, "url.buttons");
+    iLabelWidget *idName     = findChild_Widget(d->widget, "toolbar.name");
     setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
     navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
-//    updateSize_LabelWidget((iLabelWidget *) lock);
-//    updateSize_LabelWidget((iLabelWidget *) findChild_Widget(navBar, "reload"));
-//    arrange_Widget(urlButtons);
     setFixedSize_Widget(embedPad, init_I2(width_Widget(urlButtons) + gap_UI / 2, 1));
-//    setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75,
-//                                  width_Widget(lock) * 0.75);
     rightEmbed->rect.pos.y = gap_UI;
     updatePadding_Root(d);
     arrange_Widget(d->widget);
     updateUrlInputContentPadding_(navBar);
-    /* Position the toolbar identity name label manually. */ {
-        iLabelWidget *idName = findChild_Widget(d->widget, "toolbar.name");
-        if (idName) {
-            const iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
-            const iWidget *viewButton = findChild_Widget(d->widget, "toolbar.view");
-            const iWidget *idButton = findChild_Widget(toolBar, "toolbar.ident");
-//            const int font = uiLabelTiny_FontId;
-            setFixedSize_Widget(as_Widget(idName), init_I2(-1, 2 * gap_UI + lineHeight_Text(uiLabelTiny_FontId)));
-//            setFont_LabelWidget(idName, font);
-            /*setPos_Widget(as_Widget(idName),
-                          windowToLocal_Widget(as_Widget(idName),
-                                               init_I2(left_Rect(bounds_Widget(idButton)),
-                                                       bottom_Rect(bounds_Widget(viewButton)) -
-                                                           lineHeight_Text(font) - gap_UI / 2)));
-            setFixedSize_Widget(as_Widget(idName), init_I2(width_Widget(idButton),
-                                                           lineHeight_Text(font)));*/
-        }
+    if (idName) {
+        setFixedSize_Widget(as_Widget(idName),
+                            init_I2(-1, 2 * gap_UI + lineHeight_Text(uiLabelTiny_FontId)));
     }
     postRefresh_App();
 }
@@ -1168,11 +1149,9 @@ void createUserInterface_Root(iRoot *d) {
     setFlags_Widget(
         root, resizeChildren_WidgetFlag | fixedSize_WidgetFlag | focusRoot_WidgetFlag, iTrue);
     setCommandHandler_Widget(root, handleRootCommands_);
-
     iWidget *div = makeVDiv_Widget();
     setId_Widget(div, "navdiv");
     addChild_Widget(root, iClob(div));
-
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Window title bar. */
     if (prefs_App()->customFrame) {
@@ -1446,20 +1425,19 @@ void createUserInterface_Root(iRoot *d) {
             "newtab");
     }
     /* Sidebars. */ {
-        iWidget *content = findChild_Widget(root, "tabs.content");
         iSidebarWidget *sidebar1 = new_SidebarWidget(left_SidebarSide);
-        addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
         if (deviceType_App() != phone_AppDeviceType) {
+            /* Sidebars are next to the tab content. */
+            iWidget *content = findChild_Widget(root, "tabs.content");
+            addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
             iSidebarWidget *sidebar2 = new_SidebarWidget(right_SidebarSide);
             addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
         }
-#if 0
         else {
-            /* The identities sidebar is always in the main area. */
-            addChild_Widget(findChild_Widget(root, "stack"), iClob(sidebar2));
-            setFlags_Widget(as_Widget(sidebar2), hidden_WidgetFlag, iTrue);
+            /* Sidebar is a slide-over. */
+            addChild_Widget(/*findChild_Widget(root, "stack")*/ root, iClob(sidebar1));
+            setFlags_Widget(as_Widget(sidebar1), hidden_WidgetFlag, iTrue);            
         }
-#endif
     }
     /* Lookup results. */ {
         iLookupWidget *lookup = new_LookupWidget();

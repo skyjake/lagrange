@@ -401,6 +401,9 @@ msgstr "Manage Identities"
 msgid "menu.identity.notactive"
 msgstr "No Active Identity"
 
+msgid "sidebar.close"
+msgstr "Done"
+
 msgid "sidebar.bookmarks"
 msgstr "Bookmarks"
 

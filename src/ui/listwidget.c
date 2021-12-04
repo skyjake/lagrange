@@ -81,6 +81,7 @@ void init_ListWidget(iListWidget *d) {
     setThumb_ScrollWidget(d->scroll, 0, 0);
     init_SmoothScroll(&d->scrollY, w, scrollBegan_ListWidget_);
     d->itemHeight = 0;
+    d->scrollMode = normal_ScrollMode;
     d->noHoverWhileScrolling = iFalse;
     init_PtrArray(&d->items);
     d->hoverItem = iInvalidPos;
@@ -185,6 +186,10 @@ void setScrollPos_ListWidget(iListWidget *d, int pos) {
     setValue_Anim(&d->scrollY.pos, pos, 0);
     d->hoverItem = iInvalidPos;
     refresh_Widget(as_Widget(d));
+}
+
+void setScrollMode_ListWidget(iListWidget *d, enum iScrollMode mode) {
+    d->scrollMode = mode;
 }
 
 void scrollOffset_ListWidget(iListWidget *d, int offset) {
@@ -366,12 +371,28 @@ static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
     return iTrue;
 }
 
+static iBool isScrollDisabled_ListWidget_(const iListWidget *d, const SDL_Event *ev) {
+    int dir = 0;
+    if (ev->type == SDL_MOUSEWHEEL) {
+        dir = iSign(ev->wheel.y);
+    }
+    switch (d->scrollMode) {
+        case disabledAtTopBothDirections_ScrollMode:
+            return scrollPos_ListWidget(d) <= 0;
+        case disabledAtTopUpwards_ScrollMode:
+            return scrollPos_ListWidget(d) <= 0 && dir > 0;
+        default:
+            break;
+    }
+    return iFalse;
+}
+
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
         invalidate_ListWidget(d);
     }
-    else if (processEvent_SmoothScroll(&d->scrollY, ev)) {
+    else if (!isScrollDisabled_ListWidget_(d, ev) && processEvent_SmoothScroll(&d->scrollY, ev)) {
         return iTrue;
     }
     else if (isCommand_SDLEvent(ev)) {
@@ -420,6 +441,18 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         }
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
+        if (isScrollDisabled_ListWidget_(d, ev)) {
+            if (ev->wheel.which == SDL_TOUCH_MOUSEID) {
+                /* TODO: Could generalize this selection of the scrollable parent. */
+                extern iWidgetClass Class_SidebarWidget;
+                iWidget *sidebar = findParentClass_Widget(w, &Class_SidebarWidget);
+                if (sidebar) {
+                    transferAffinity_Touch(w, sidebar);
+                    d->noHoverWhileScrolling = iTrue;
+                }
+            }
+            return iFalse;
+        }
         int amount = -ev->wheel.y;
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             stop_Anim(&d->scrollY.pos);
