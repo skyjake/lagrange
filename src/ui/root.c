@@ -241,6 +241,7 @@ static int       loadAnimIndex_      = 0;
 static iRoot *   activeRoot_     = NULL;
 
 iDefineTypeConstruction(Root)
+iDefineAudienceGetter(Root, visualOffsetsChanged)
 
 void init_Root(iRoot *d) {
     iZap(*d);
@@ -250,6 +251,7 @@ void deinit_Root(iRoot *d) {
     iReleasePtr(&d->widget);
     delete_PtrArray(d->onTop);
     delete_PtrSet(d->pendingDestruction);
+    delete_Audience(d->visualOffsetsChanged);
 }
 
 void setCurrent_Root(iRoot *root) {
@@ -656,6 +658,12 @@ void updateToolbarColors_Root(iRoot *d) {
 #else
     iUnused(d);
 #endif
+}
+
+void notifyVisualOffsetChange_Root(iRoot *d) {
+    if (d && d->didAnimateVisualOffsets) {
+        iNotifyAudience(d, visualOffsetsChanged, RootVisualOffsetsChanged);
+    }
 }
 
 void dismissPortraitPhoneSidebars_Root(iRoot *d) {

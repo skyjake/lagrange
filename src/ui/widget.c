@@ -142,6 +142,7 @@ void init_Widget(iWidget *d) {
 static void visualOffsetAnimation_Widget_(void *ptr) {
     iWidget *d = ptr;
     postRefresh_App();
+    d->root->didAnimateVisualOffsets = iTrue;
     if (!isFinished_Anim(&d->visualOffset)) {
         addTicker_App(visualOffsetAnimation_Widget_, ptr);
     }

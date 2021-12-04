@@ -756,6 +756,16 @@ void deinit_InputWidget(iInputWidget *d) {
     deinit_Array(&d->lines);
 }
 
+#if defined (LAGRANGE_ENABLE_SYSTEM_INPUT)
+static void updateAfterVisualOffsetChange_InputWidget_(iInputWidget *d, iRoot *root) {
+    iAssert(as_Widget(d)->root == root);
+    iUnused(root);
+    if (d->sysCtrl) {
+        setRect_SystemTextInput(d->sysCtrl, contentBounds_InputWidget_(d));
+    }
+}
+#endif
+
 void setFont_InputWidget(iInputWidget *d, int fontId) {
     d->font = fontId;
     updateMetrics_InputWidget_(d);
@@ -1047,6 +1057,7 @@ void begin_InputWidget(iInputWidget *d) {
     setRect_SystemTextInput(d->sysCtrl, contentBounds_InputWidget_(d));
     setText_SystemTextInput(d->sysCtrl, &d->oldText);
     setTextChangedFunc_SystemTextInput(d->sysCtrl, systemInputChanged_InputWidget_, d);
+    iConnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
     return;
 #endif
     if (d->mode == overwrite_InputMode) {
@@ -1080,6 +1091,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         return;
     }
     if (d->sysCtrl) {
+        iDisconnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
         if (accept) {
             splitToLines_(text_SystemTextInput(d->sysCtrl), &d->lines);
         }

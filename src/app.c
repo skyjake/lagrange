@@ -1455,10 +1455,16 @@ backToMainLoop:;
 static void runTickers_App_(iApp *d) {
     const uint32_t now = SDL_GetTicks();
     d->elapsedSinceLastTicker = (d->lastTickerTime ? now - d->lastTickerTime : 0);
-    d->lastTickerTime = now;
+    d->lastTickerTime = now;    
     if (isEmpty_SortedArray(&d->tickers)) {
         d->lastTickerTime = 0;
         return;
+    }
+    iForIndices(i, d->window->base.roots) {
+        iRoot *root = d->window->base.roots[i];
+        if (root) {
+            root->didAnimateVisualOffsets = iFalse;
+        }
     }
     /* Tickers may add themselves again, so we'll run off a copy. */
     iSortedArray *pending = copy_SortedArray(&d->tickers);
@@ -1475,6 +1481,10 @@ static void runTickers_App_(iApp *d) {
     delete_SortedArray(pending);
     if (isEmpty_SortedArray(&d->tickers)) {
         d->lastTickerTime = 0;
+    }
+    iForIndices(i, d->window->base.roots) {
+        iRoot *root = d->window->base.roots[i];
+        notifyVisualOffsetChange_Root(root);
     }
 }
 
