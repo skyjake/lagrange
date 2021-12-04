@@ -243,7 +243,8 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             else if (findWidget_App("upload")) {
                 postCommand_App("upload.cancel");
             }
-            else if (findWidget_App("bmed.sidebar")) {
+            else if (findWidget_App("bmed.sidebar") || findWidget_App("bmed.create") ||
+                     findWidget_App("bmed")) {
                 postCommand_App("bmed.cancel");
             }
             else if (findWidget_App("ident")) {
