@@ -438,6 +438,9 @@ msgstr "New…"
 msgid "sidebar.action.ident.import"
 msgstr "Import…"
 
+msgid "sidebar.action.history.clear"
+msgstr "Clear"
+
 # Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
 msgid "sidebar.unread"
 msgid_plural "sidebar.unread.n"

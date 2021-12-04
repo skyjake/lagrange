@@ -90,6 +90,22 @@ iDefineObjectConstruction(SidebarItem)
 
 /*----------------------------------------------------------------------------------------------*/
 
+static const char *normalModeLabels_[max_SidebarMode] = {
+    book_Icon   " ${sidebar.bookmarks}",
+    star_Icon   " ${sidebar.feeds}",
+    clock_Icon  " ${sidebar.history}",
+    person_Icon " ${sidebar.identities}",
+    page_Icon   " ${sidebar.outline}",
+};
+
+static const char *tightModeLabels_[max_SidebarMode] = {
+    book_Icon,
+    star_Icon,
+    clock_Icon,
+    person_Icon,
+    page_Icon,
+};
+
 struct Impl_SidebarWidget {
     iWidget           widget;
     enum iSidebarSide side;
@@ -197,10 +213,14 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
                                              //(deviceType_App() != desktop_AppDeviceType ?
                                              // extraPadding_WidgetFlag : 0) |
                                              flags);
-    setFont_LabelWidget(btn, /*deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide
+    setFont_LabelWidget(btn, deviceType_App() == desktop_AppDeviceType ? /*deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide
                                  ? uiLabelBig_FontId : */
-                                 d->buttonFont);
+                        d->buttonFont : uiLabelBig_FontId);
     checkIcon_LabelWidget(btn);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        setFlags_Widget(as_Widget(btn), frameless_WidgetFlag, iTrue);
+        setBackgroundColor_Widget(as_Widget(btn), uiBackground_ColorId);
+    }
     return btn;
 }
 
@@ -306,36 +326,57 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 }
             }
             /* Actions. */
-            if (!keepActions) {
-                addActionButton_SidebarWidget_(d,
-                                               check_Icon " ${sidebar.action.feeds.markallread}",
-                                               "feeds.markallread",
-                                               expand_WidgetFlag | tight_WidgetFlag);
-                updateSize_LabelWidget(addChildFlags_Widget(d->actions,
-                                     iClob(new_LabelWidget("${sidebar.action.show}", NULL)),
-                                                            frameless_WidgetFlag | tight_WidgetFlag));
-                const iMenuItem items[] = {
-                    { page_Icon " ${sidebar.action.feeds.showall}", SDLK_u, KMOD_SHIFT, "feeds.mode arg:0" },
-                    { circle_Icon " ${sidebar.action.feeds.showunread}", SDLK_u, 0, "feeds.mode arg:1" },
-                };
-                iWidget *dropButton = addChild_Widget(
-                    d->actions,
-                    iClob(makeMenuButton_LabelWidget(items[d->feedsMode].label, items, 2)));
-                setId_Widget(dropButton, "feeds.modebutton");
-                checkIcon_LabelWidget((iLabelWidget *) dropButton);
-                setFixedSize_Widget(
-                    dropButton,
-                    init_I2(iMaxi(20 * gap_UI, 
-                                  measure_Text(default_FontId,
-                                               translateCStr_Lang(
-                                                   items[findWidestLabel_MenuItem(items, 2)].label))
-                                          .advance.x +
-                                      13 * gap_UI),
-                            -1));
+            if (!isMobile) {
+                if (!keepActions) {
+                    addActionButton_SidebarWidget_(d,
+                                                   check_Icon " ${sidebar.action.feeds.markallread}",
+                                                   "feeds.markallread",
+                                                   expand_WidgetFlag | tight_WidgetFlag);
+                    updateSize_LabelWidget(addChildFlags_Widget(d->actions,
+                                         iClob(new_LabelWidget("${sidebar.action.show}", NULL)),
+                                                                frameless_WidgetFlag | tight_WidgetFlag));
+                    const iMenuItem items[] = {
+                        { page_Icon " ${sidebar.action.feeds.showall}", SDLK_u, KMOD_SHIFT, "feeds.mode arg:0" },
+                        { circle_Icon " ${sidebar.action.feeds.showunread}", SDLK_u, 0, "feeds.mode arg:1" },
+                    };
+                    iWidget *dropButton = addChild_Widget(
+                        d->actions,
+                        iClob(makeMenuButton_LabelWidget(items[d->feedsMode].label, items, 2)));
+                    setId_Widget(dropButton, "feeds.modebutton");
+                    checkIcon_LabelWidget((iLabelWidget *) dropButton);
+                    setFixedSize_Widget(
+                        dropButton,
+                        init_I2(iMaxi(20 * gap_UI,
+                                      measure_Text(default_FontId,
+                                                   translateCStr_Lang(
+                                                       items[findWidestLabel_MenuItem(items, 2)].label))
+                                              .advance.x +
+                                          13 * gap_UI),
+                                -1));
+                }
+                else {
+                    updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, "feeds.modebutton"),
+                                                        format_CStr(" arg:%d", d->feedsMode));
+                }
             }
             else {
-                updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, "feeds.modebutton"),
-                                                    format_CStr(" arg:%d", d->feedsMode));
+                if (!keepActions) {
+                    iLabelWidget *readAll = addActionButton_SidebarWidget_(d,
+                                                   check_Icon,
+                                                   "feeds.markallread confirm:1",
+                                                   0);
+                    setTextColor_LabelWidget(readAll, uiTextCaution_ColorId);
+                    addActionButton_SidebarWidget_(d,
+                                                   page_Icon,
+                                                   "feeds.mode arg:0",
+                                                   0);
+                    addActionButton_SidebarWidget_(d,
+                                                   circle_Icon,
+                                                   "feeds.mode arg:1",
+                                                   0);
+                }
+                setOutline_LabelWidget(child_Widget(d->actions, 1), d->feedsMode != all_FeedsMode);
+                setOutline_LabelWidget(child_Widget(d->actions, 2), d->feedsMode != unread_FeedsMode);
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
@@ -500,6 +541,12 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 (iMenuItem[]){
                     { delete_Icon " " uiTextCaution_ColorEscape "${history.clear}", 0, 0, "history.clear confirm:1" },
                 }, 1);
+            if (isMobile) {
+                addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
+                iLabelWidget *btn = addActionButton_SidebarWidget_(d, "${sidebar.action.history.clear}",
+                                                                   "history.clear confirm:1", 0);
+                setFont_LabelWidget(btn, uiLabelBigBold_FontId);
+            }
             break;
         }
         case identities_SidebarMode: {
@@ -616,6 +663,15 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     updateItemHeight_SidebarWidget_(d);
     /* Restore previous scroll position. */
     setScrollPos_ListWidget(list_SidebarWidget_(d), d->modeScroll[mode]);
+    /* Title of the mobile sliding sheet. */
+    iLabelWidget *sheetTitle = findChild_Widget(&d->widget, "sidebar.title");
+    if (sheetTitle) {
+        iString title;
+        initCStr_String(&title, normalModeLabels_[d->mode]);
+        removeIconPrefix_String(&title);
+        setText_LabelWidget(sheetTitle, &title);
+        deinit_String(&title);
+    }
     return iTrue;
 }
 
@@ -645,22 +701,6 @@ float width_SidebarWidget(const iSidebarWidget *d) {
 const iIntSet *closedFolders_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->closedFolders : collect_IntSet(new_IntSet());
 }
-
-static const char *normalModeLabels_[max_SidebarMode] = {
-    book_Icon   " ${sidebar.bookmarks}",
-    star_Icon   " ${sidebar.feeds}",
-    clock_Icon  " ${sidebar.history}",
-    person_Icon " ${sidebar.identities}",
-    page_Icon   " ${sidebar.outline}",
-};
-
-static const char *tightModeLabels_[max_SidebarMode] = {
-    book_Icon,
-    star_Icon,
-    clock_Icon,
-    person_Icon,
-    page_Icon,
-};
 
 const char *icon_SidebarMode(enum iSidebarMode mode) {
     return tightModeLabels_[mode];
@@ -726,13 +766,21 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     /* On a phone, the right sidebar is not used. */
     const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
     if (isPhone) {
-        iLabelWidget *closeButton =
+        iLabelWidget *sheetTitle =
             addChildFlags_Widget(vdiv,
-                                 iClob(new_LabelWidget("${sidebar.close}", "sidebar.toggle")),
-                                 collapse_WidgetFlag | alignRight_WidgetFlag |
+                                 iClob(new_LabelWidget("", NULL)),
+                                 collapse_WidgetFlag |
                                  extraPadding_WidgetFlag | frameless_WidgetFlag);
+        setBackgroundColor_Widget(as_Widget(sheetTitle), uiBackground_ColorId);
+        iLabelWidget *closeButton = addChildFlags_Widget(as_Widget(sheetTitle),
+                                                  iClob(new_LabelWidget(uiTextAction_ColorEscape "${sidebar.close}", "sidebar.toggle")),
+                                                  extraPadding_WidgetFlag | frameless_WidgetFlag |
+                                                  alignRight_WidgetFlag | moveToParentRightEdge_WidgetFlag);
+        as_Widget(sheetTitle)->flags2 |= slidingSheetDraggable_WidgetFlag2; /* phone */
         as_Widget(closeButton)->flags2 |= slidingSheetDraggable_WidgetFlag2; /* phone */
+        setId_Widget(as_Widget(sheetTitle), "sidebar.title");
         setId_Widget(as_Widget(closeButton), "sidebar.close");
+        setFont_LabelWidget(sheetTitle, uiLabelBig_FontId);
         setFont_LabelWidget(closeButton, uiLabelBigBold_FontId);
     }
     iWidget *buttons = new_Widget();
@@ -781,7 +829,14 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                                          resizeWidthOfChildren_WidgetFlag), // |
 //                                             drawBackgroundToHorizontalSafeArea_WidgetFlag),
                  "actions");
-    setBackgroundColor_Widget(d->actions, uiBackgroundSidebar_ColorId);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        setFlags_Widget(findChild_Widget(w, "sidebar.title"), borderTop_WidgetFlag, iTrue);
+        setFlags_Widget(d->actions, drawBackgroundToBottom_WidgetFlag, iTrue);
+        setBackgroundColor_Widget(d->actions, uiBackground_ColorId);
+    }
+    else {
+        setBackgroundColor_Widget(d->actions, uiBackgroundSidebar_ColorId);
+    }
     d->contextItem = NULL;
     d->contextIndex = iInvalidPos;
     d->blank = new_Widget();
@@ -1488,6 +1543,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "feeds.markallread") && d->mode == feeds_SidebarMode) {
+            if (argLabel_Command(cmd, "confirm")) {
+                /* This is used on mobile. */
+                iWidget *menu = makeMenu_Widget(w->root->widget, (iMenuItem[]){
+                    check_Icon " " uiTextCaution_ColorEscape "${feeds.markallread}", 0, 0,
+                    "feeds.markallread"
+                }, 1);
+                openMenu_Widget(menu, topLeft_Rect(bounds_Widget(d->actions)));
+                return iTrue;
+            }
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
                 const iString *url = url_FeedEntry(entry);
