@@ -489,9 +489,10 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
         removeChild_Widget(parent_Widget(sidebar), sidebar);
         if (isLandscape_App()) {
-            addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
+            setVisualOffset_Widget(as_Widget(sidebar), 0, 0, 0);
+            addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);            
             setWidth_SidebarWidget(sidebar, 73.0f);
-            setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag, iFalse);
+            setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag | fixedPosition_WidgetFlag, iFalse);
         }
         else {
             addChild_Widget(root, iClob(sidebar));

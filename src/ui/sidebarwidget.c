@@ -1289,6 +1289,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         checkModeButtonLayout_SidebarWidget_(d);
         if (deviceType_App() == phone_AppDeviceType) { // && d->side == left_SidebarSide) {
 //            setFlags_Widget(w, rightEdgeDraggable_WidgetFlag, isPortrait_App());
+            setFlags_Widget(findChild_Widget(w, "sidebar.title"), hidden_WidgetFlag, isLandscape_App());
             setFlags_Widget(findChild_Widget(w, "sidebar.close"), hidden_WidgetFlag, isLandscape_App());
             /* In landscape, visibility of the toolbar is controlled separately. */
             if (isVisible_Widget(w)) {
