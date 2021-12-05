@@ -479,12 +479,14 @@ void init_SmoothScroll(iSmoothScroll *d, iWidget *owner, iSmoothScrollNotifyFunc
     reset_SmoothScroll(d);
     d->widget = owner;
     d->notify = notify;
+    d->pullActionTriggered = 0;
 }
 
 void reset_SmoothScroll(iSmoothScroll *d) {
     init_Anim(&d->pos, 0);
     d->max = 0;
     d->overscroll = (deviceType_App() != desktop_AppDeviceType ? 100 * gap_UI : 0);
+    d->pullActionTriggered = 0;
 }
 
 void setMax_SmoothScroll(iSmoothScroll *d, int max) {
@@ -518,6 +520,29 @@ iBool isFinished_SmoothScroll(const iSmoothScroll *d) {
     return isFinished_Anim(&d->pos);
 }
 
+iLocalDef int pullActionThreshold_SmoothScroll_(const iSmoothScroll *d) {
+    return d->overscroll * 6 / 10;
+}
+
+float pullActionPos_SmoothScroll(const iSmoothScroll *d) {
+    if (d->pullActionTriggered >= 1) {
+        return 1.0f;
+    }
+    float pos = overscroll_SmoothScroll_(d);
+    if (pos >= 0.0f) {
+        return 0.0f;
+    }
+    pos = -pos / (float) pullActionThreshold_SmoothScroll_(d);
+    return iMin(pos, 1.0f);
+}
+
+static void checkPullAction_SmoothScroll_(iSmoothScroll *d) {
+    if (d->pullActionTriggered == 1 && d->widget) {
+        postCommand_Widget(d->widget, "pullaction");
+        d->pullActionTriggered = 2; /* pending handling */
+    }
+}
+
 void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
 #if !defined (iPlatformMobile)
     if (!prefs_App()->smoothScrolling) {
@@ -525,6 +550,14 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
     }
 #endif
     int destY = targetValue_Anim(&d->pos) + offset;
+    if (destY < -pullActionThreshold_SmoothScroll_(d)) {
+        if (d->pullActionTriggered == 0) {
+            d->pullActionTriggered = iTrue;
+#if defined (iPlatformAppleMobile)
+            playHapticEffect_iOS(tap_HapticEffect);
+#endif
+        }
+    }
     if (destY < -d->overscroll) {
         destY = -d->overscroll;
     }
@@ -552,6 +585,7 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
             //            printf("remaining: %f  dur: %d\n", remaining, duration);
             d->pos.bounce = (osDelta < 0 ? -1 : 1) *
                             iMini(5 * d->overscroll, remaining * remaining * 0.00005f);
+            checkPullAction_SmoothScroll_(d);
         }
     }
     if (d->notify) {
@@ -570,6 +604,7 @@ iBool processEvent_SmoothScroll(iSmoothScroll *d, const SDL_Event *ev) {
             moveSpan_SmoothScroll(d, -osDelta, 100 * sqrt(iAbs(osDelta) / gap_UI));
             d->pos.flags = easeOut_AnimFlag | muchSofter_AnimFlag;
         }
+        checkPullAction_SmoothScroll_(d);
         return iTrue;
     }
     return iFalse;
@@ -1622,6 +1657,11 @@ static void updateValueInputWidth_(iWidget *dlg) {
     }
     /* Adjust the maximum number of visible lines. */
     int footer = 6 * gap_UI + get_MainWindow()->keyboardHeight;
+#if defined (iPlatformAppleMobile)
+    if (deviceType_App() == phone_AppDeviceType) {
+        footer -= 12 * gap_UI; /* A little suspect, this... Check the math? */
+    }
+#endif
     iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
     if (buttons) {
         footer += height_Widget(buttons);
@@ -1695,8 +1735,8 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
     }
     int fonts[2] = { uiLabel_FontId, uiLabelBold_FontId };
     if (deviceType_App() == phone_AppDeviceType) {
-        fonts[0] = uiLabelMedium_FontId;
-        fonts[1] = uiLabelMediumBold_FontId;
+        fonts[0] = uiLabelBig_FontId;
+        fonts[1] = uiLabelBigBold_FontId;
     }
     for (size_t i = 0; i < numActions; i++) {
         const char *label     = actions[i].label;
@@ -1738,6 +1778,10 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
             setId_Widget(as_Widget(button), "default");
         }
         setFlags_Widget(as_Widget(button), alignLeft_WidgetFlag | drawKey_WidgetFlag, isDefault);
+        if (deviceType_App() != desktop_AppDeviceType) {
+            setFlags_Widget(as_Widget(button), frameless_WidgetFlag | noBackground_WidgetFlag, iTrue);
+            setTextColor_LabelWidget(button, uiTextAction_ColorId);
+        }
         setFont_LabelWidget(button, isDefault ? fonts[1] : fonts[0]);
     }
     return div;
@@ -1753,9 +1797,12 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     if (parent) {
         addChild_Widget(parent, iClob(dlg));
     }
-    setId_Widget(
-        addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag),
-        "valueinput.title");
+    if (deviceType_App() != phone_AppDeviceType) {
+        setId_Widget(
+            addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)),
+                                 frameless_WidgetFlag),
+            "valueinput.title");
+    }
     iLabelWidget *promptLabel;
     setId_Widget(addChildFlags_Widget(
                      dlg, iClob(promptLabel = new_LabelWidget(prompt, NULL)), frameless_WidgetFlag
@@ -1775,15 +1822,25 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     }
     setId_Widget(as_Widget(input), "input");
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    addChild_Widget(dlg,
-                    iClob(makeDialogButtons_Widget(
-                        (iMenuItem[]){ { "${cancel}", SDLK_ESCAPE, 0, "valueinput.cancel" },
-                                       { acceptLabel,
-                                         SDLK_RETURN,
-                                         acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey),
-                                         "valueinput.accept" } },
-                        2)));
-//    finalizeSheet_Mobile(dlg);
+    /* On mobile, the actions are laid out a bit differently: buttons on top, on opposite edges. */
+    iArray actions;
+    init_Array(&actions, sizeof(iMenuItem));
+    pushBack_Array(&actions, &(iMenuItem){ "${cancel}", SDLK_ESCAPE, 0, "valueinput.cancel" });
+    if (deviceType_App() != desktop_AppDeviceType) {
+        pushBack_Array(&actions, &(iMenuItem){ "---" });
+    }
+    pushBack_Array(&actions, &(iMenuItem){
+        acceptLabel,
+        SDLK_RETURN,
+        acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey),
+        "valueinput.accept"
+    });
+    addChildPos_Widget(dlg,
+                       iClob(makeDialogButtons_Widget(constData_Array(&actions),
+                                                      size_Array(&actions))),
+                       deviceType_App() != desktop_AppDeviceType ?
+                        front_WidgetAddPos : back_WidgetAddPos);
+    deinit_Array(&actions);
     arrange_Widget(dlg);
     if (parent) {
         setFocus_Widget(as_Widget(input));
@@ -2396,7 +2453,7 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem colorPanelItems[] = {
             { "title id:heading.prefs.colors" },
-            { "heading id:heading.prefs.uitheme" },
+            //{ "heading id:heading.prefs.uitheme" },
             { "toggle id:prefs.ostheme" },
             { "radio id:prefs.theme", 0, 0, (const void *) themeItems },
             { "radio id:prefs.accent", 0, 0, (const void *) accentItems },
@@ -2414,11 +2471,16 @@ iWidget *makePreferences_Widget(void) {
             { "dropdown id:prefs.font.body", 0, 0, (const void *) constData_Array(makeFontItems_("body")) },
             { "dropdown id:prefs.font.mono", 0, 0, (const void *) constData_Array(makeFontItems_("mono")) },
             { "buttons id:prefs.mono", 0, 0, (const void *) monoFontItems },
+            { "padding" },
             { "dropdown id:prefs.font.monodoc", 0, 0, (const void *) constData_Array(makeFontItems_("monodoc")) },
-            { "padding" },
-            { "toggle id:prefs.font.smooth" },
-            { "padding" },
-            { "dropdown id:prefs.font.ui", 0, 0, (const void *) constData_Array(makeFontItems_("ui")) },
+//            { "padding" },
+            { "heading id:prefs.gemtext.ansi" },
+            { "toggle id:prefs.gemtext.ansi.fg" },
+            { "toggle id:prefs.gemtext.ansi.bg" },
+            { "toggle id:prefs.gemtext.ansi.fontstyle" },
+//            { "toggle id:prefs.font.smooth" },
+//            { "padding" },
+//            { "dropdown id:prefs.font.ui", 0, 0, (const void *) constData_Array(makeFontItems_("ui")) },
             { "padding" },
             { "button text:" fontpack_Icon " " uiTextAction_ColorEscape "${menu.fonts}", 0, 0, "!open url:about:fonts" },
             { NULL }  
@@ -3048,6 +3110,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
             { format_CStr("title id:feedcfg.heading text:%s", headingText) },
             { "input id:feedcfg.title text:${dlg.feed.title}" },
             { "radio id:dlg.feed.entrytype", 0, 0, (const void *) typeItems },
+            { "padding" },
             { "toggle id:feedcfg.ignoreweb text:${dlg.feed.ignoreweb}" },
             { NULL }
         }, actions, iElemCount(actions));

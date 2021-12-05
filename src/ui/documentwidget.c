@@ -649,7 +649,8 @@ static const iGmRun *lastVisibleLink_DocumentWidget_(const iDocumentWidget *d) {
 static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
     const int docSize = pageHeight_DocumentWidget_(d); //  size_GmDocument(d->doc).y;
     if (docSize) {
-        return pos_SmoothScroll(&d->scrollY) / (float) docSize;
+        float pos = pos_SmoothScroll(&d->scrollY) / (float) docSize;
+        return iMax(pos, 0.0f);
     }
     return 0;
 }
@@ -2179,15 +2180,24 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                         insertChildAfter_Widget(buttons, iClob(lineBreak), 0);
                     }
                     else {
+#if !defined (iPlatformAppleMobile)
                         lineBreak = new_LabelWidget("${dlg.input.linebreak}", "text.insert arg:10");
+#endif
                     }
-                    setFlags_Widget(as_Widget(lineBreak), frameless_WidgetFlag, iTrue);
-                    setTextColor_LabelWidget(lineBreak, uiTextDim_ColorId);
+                    if (lineBreak) {
+                        setFlags_Widget(as_Widget(lineBreak), frameless_WidgetFlag, iTrue);
+                        setTextColor_LabelWidget(lineBreak, uiTextDim_ColorId);
+                    }
                 }
-                setId_Widget(addChildPosFlags_Widget(buttons,
-                                                     iClob(new_LabelWidget("", NULL)),
-                                                     front_WidgetAddPos, frameless_WidgetFlag),
-                             "valueinput.counter");
+                iWidget *counter = (iWidget *) new_LabelWidget("", NULL);
+                setId_Widget(counter, "valueinput.counter");
+                setFlags_Widget(counter, frameless_WidgetFlag, iTrue);
+                if (deviceType_App() == desktop_AppDeviceType) {
+                    addChildPos_Widget(buttons, iClob(counter), front_WidgetAddPos);
+                }
+                else {
+                    insertChildAfter_Widget(buttons, iClob(counter), 0);
+                }
                 if (lineBreak && deviceType_App() != desktop_AppDeviceType) {
                     addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
                 }
@@ -2207,6 +2217,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     /* Keep scroll position when reloading the same page. */
                     reset_SmoothScroll(&d->scrollY);
                 }
+                d->scrollY.pullActionTriggered = 0;
                 pauseAllPlayers_Media(media_GmDocument(d->doc), iTrue);
                 iRelease(d->doc); /* new content incoming */
                 d->doc = new_GmDocument();
@@ -3698,6 +3709,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         return iTrue;
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+        if (isCommand_Widget(w, ev, "pullaction")) {
+            postCommand_Widget(w, "navigate.reload");
+            return iTrue;
+        }
         if (!handleCommand_DocumentWidget_(d, command_UserEvent(ev))) {
             /* Base class commands. */
             return processEvent_Widget(w, ev);
@@ -5131,6 +5146,25 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     }
     if (colorTheme_App() == pureWhite_ColorTheme) {
         drawHLine_Paint(&ctx.paint, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
+    }
+    /* Pull action indicator. */
+    if (deviceType_App() != desktop_AppDeviceType) {
+        float pullPos = pullActionPos_SmoothScroll(&d->scrollY);
+        /* Account for the part where the indicator isn't yet visible. */
+        pullPos = (pullPos - 0.2f) / 0.8f;
+        iRect indRect = initCentered_Rect(init_I2(mid_Rect(bounds).x,
+                                                  top_Rect(bounds) - 5 * gap_UI -
+                                                  pos_SmoothScroll(&d->scrollY)),
+                                          init_I2(25 * gap_UI, 2 * gap_UI));
+        setClip_Paint(&ctx.paint, clipBounds);
+        int color = pullPos < 1.0f ? tmBannerItemFrame_ColorId : tmBannerItemText_ColorId;
+        drawRect_Paint(&ctx.paint, indRect, color);
+        if (pullPos > 0) {
+            shrink_Rect(&indRect, divi_I2(gap2_UI, 2));
+            indRect.size.x *= pullPos;
+            fillRect_Paint(&ctx.paint, indRect, color);
+        }
+        unsetClip_Paint(&ctx.paint);
     }
     drawChildren_Widget(w);
     if (d->flags & drawDownloadCounter_DocumentWidgetFlag && isRequestOngoing_DocumentWidget(d)) {

@@ -184,6 +184,7 @@ struct Impl_SmoothScroll {
     int      max;
     int      overscroll;
     iWidget *widget;
+    int      pullActionTriggered;
     iSmoothScrollNotifyFunc notify;
 };
 
@@ -197,6 +198,7 @@ iBool   processEvent_SmoothScroll   (iSmoothScroll *, const SDL_Event *ev);
 
 float   pos_SmoothScroll            (const iSmoothScroll *);
 iBool   isFinished_SmoothScroll     (const iSmoothScroll *);
+float   pullActionPos_SmoothScroll  (const iSmoothScroll *); /* 0...1 */
 
 /*-----------------------------------------------------------------------------------------------*/
 
