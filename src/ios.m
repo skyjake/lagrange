@@ -768,8 +768,14 @@ int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
 }
 
 void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
-    int height = lineHeight_Text(fontId);
-    UIFont *font = [UIFont systemFontOfSize:0.65f * height / get_Window()->pixelRatio];
+    float height = lineHeight_Text(fontId) / get_Window()->pixelRatio;
+    UIFont *font;
+    if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
+        font = [UIFont monospacedSystemFontOfSize:0.8f * height weight:UIFontWeightRegular];
+    }
+    else {
+        font = [UIFont systemFontOfSize:0.65f * height];
+    }
     if (d->field) {
         [REF_d_field setFont:font];
     }
