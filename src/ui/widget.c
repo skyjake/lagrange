@@ -1393,7 +1393,8 @@ void drawLayerEffects_Widget(const iWidget *d) {
             shadowBorder = iFalse;
         }
     }
-    const iBool isFaded = fadeBackground && ~d->flags & noFadeBackground_WidgetFlag;
+    const iBool isFaded = (fadeBackground && ~d->flags & noFadeBackground_WidgetFlag) ||
+                          (d->flags2 & fadeBackground_WidgetFlag2);
     if (shadowBorder && ~d->flags & noShadowBorder_WidgetFlag) {
         iPaint p;
         init_Paint(&p);

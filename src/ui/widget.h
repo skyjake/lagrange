@@ -125,6 +125,7 @@ enum iWidgetFlag {
 
 enum iWidgetFlag2 {
     slidingSheetDraggable_WidgetFlag2 = iBit(1),
+    fadeBackground_WidgetFlag2        = iBit(2),
 };
 
 enum iWidgetAddPos {

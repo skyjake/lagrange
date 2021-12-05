@@ -490,6 +490,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         /* Place the sidebar next to or under doctabs depending on orientation. */
         iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
         removeChild_Widget(parent_Widget(sidebar), sidebar);
+        iChangeFlags(as_Widget(sidebar)->flags2, fadeBackground_WidgetFlag2, isPortrait_App());
         if (isLandscape_App()) {
             setVisualOffset_Widget(as_Widget(sidebar), 0, 0, 0);
             addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);            
@@ -829,6 +830,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "navbar.clear")) {
         iInputWidget *url = findChild_Widget(navBar, "url");
+        setText_InputWidget(url, collectNew_String());
+#if 0
         selectAll_InputWidget(url);
         /* Emulate a Backspace keypress. */
         class_InputWidget(url)->processEvent(
@@ -837,6 +840,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                                                 .timestamp = SDL_GetTicks(),
                                                 .state     = SDL_PRESSED,
                                                 .keysym    = { .sym = SDLK_BACKSPACE } });
+#endif
         return iTrue;
     }
     else if (equal_Command(cmd, "navbar.cancel")) {
