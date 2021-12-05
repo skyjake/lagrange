@@ -70,7 +70,9 @@ enum iSystemTextInputFlags {
     returnGo_SystemTextInputFlags          = iBit(3),
     returnSend_SystemTextInputFlags        = iBit(4),
     disableAutocorrect_SystemTextInputFlag = iBit(5),
-    alignRight_SystemTextInputFlag         = iBit(6),
+    disableAutocapitalize_SystemTextInputFlag = iBit(6),
+    alignRight_SystemTextInputFlag         = iBit(7),
+    insertNewlines_SystemTextInputFlag     = iBit(8),
 };
 
 iDeclareType(SystemTextInput)

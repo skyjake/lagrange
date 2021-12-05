@@ -104,6 +104,12 @@ endif ()
 set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
 make_resources (${EMB_BIN} ${RESOURCES})
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+if (IOS)
+    set (EMB_FONTS res/fonts/SourceSans3-Regular.ttf)
+    set_source_files_properties (${EMB_FONTS}
+        PROPERTIES MACOSX_PACKAGE_LOCATION Resources
+    )
+endif ()
 
 # Source files.
 set (SOURCES
@@ -287,7 +293,7 @@ else ()
 endif ()
 
 # Target.
-add_executable (app ${SOURCES} ${RESOURCES})
+add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS})
 set_property (TARGET app PROPERTY C_STANDARD 11)
 if (TARGET ext-deps)
     add_dependencies (app ext-deps)

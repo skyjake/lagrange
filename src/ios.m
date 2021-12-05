@@ -61,6 +61,7 @@ static UIViewController *viewController_(iWindow *window) {
 }
 
 static void notifyChange_SystemTextInput_(iSystemTextInput *);
+static BOOL isNewlineAllowed_SystemTextInput_(const iSystemTextInput *);
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -269,10 +270,19 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     setKeyboardHeight_MainWindow(get_MainWindow(), 0);
 }
 
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+static void sendReturnKeyPress_(void) {
     SDL_Event ev = { .type = SDL_KEYDOWN };
+    ev.key.timestamp = SDL_GetTicks();
     ev.key.keysym.sym = SDLK_RETURN;
+    ev.key.state = SDL_PRESSED;
     SDL_PushEvent(&ev);
+    ev.type = SDL_KEYUP;
+    ev.key.state = SDL_RELEASED;
+    SDL_PushEvent(&ev);
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    sendReturnKeyPress_();
     return NO;
 }
 
@@ -280,6 +290,17 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
 replacementString:(NSString *)string {
     iSystemTextInput *sysCtrl = [appState_ systemTextInput];
     notifyChange_SystemTextInput_(sysCtrl);
+    return YES;
+}
+
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range
+ replacementText:(NSString *)text {
+    if ([text isEqualToString:@"\n"]) {
+        if (!isNewlineAllowed_SystemTextInput_([appState_ systemTextInput])) {
+            sendReturnKeyPress_();
+            return NO;
+        }
+    }
     return YES;
 }
 
@@ -659,14 +680,23 @@ iDefineTypeConstructionArgs(SystemTextInput, (iRect rect, int flags), rect, flag
 #define REF_d_field  (__bridge UITextField *)d->field
 #define REF_d_view   (__bridge UITextView *)d->view
 
-static CGRect convertToCGRect_(const iRect *rect) {
+static CGRect convertToCGRect_(const iRect *rect, iBool expanded) {
     const iWindow *win = get_Window();
     CGRect frame;
     // TODO: Convert coordinates properly!
     frame.origin.x = rect->pos.x / win->pixelRatio;
-    frame.origin.y = (rect->pos.y - gap_UI + 2) / win->pixelRatio;
+    frame.origin.y = (rect->pos.y - gap_UI + 1) / win->pixelRatio;
     frame.size.width = rect->size.x / win->pixelRatio;
     frame.size.height = rect->size.y / win->pixelRatio;
+    /* Some padding to account for insets. If we just zero out the insets, the insertion point
+       may be clipped at the edges. */
+    if (expanded) {
+        const float inset = gap_UI / get_Window()->pixelRatio;
+        frame.origin.x -= inset + 1;
+        frame.origin.y -= inset + 1;
+        frame.size.width += 2 * inset + 2;
+        frame.size.height += inset + 1;
+    }
     return frame;
 }
 
@@ -682,7 +712,7 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     d->flags = flags;
     d->field = NULL;
     d->view  = NULL;
-    CGRect frame = convertToCGRect_(&rect);
+    CGRect frame = convertToCGRect_(&rect, (flags & multiLine_SystemTextInputFlags) != 0);
     if (flags & multiLine_SystemTextInputFlags) {
         d->view = (void *) CFBridgingRetain([[UITextView alloc] initWithFrame:frame textContainer:nil]);
         [[viewController_(get_Window()) view] addSubview:REF_d_view];
@@ -692,7 +722,9 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
         [[viewController_(get_Window()) view] addSubview:REF_d_field];
     }
     UIControl<UITextInputTraits> *traits = (UIControl<UITextInputTraits> *) (d->view ? REF_d_view : REF_d_field);
-    // TODO: Use the right font:  https://developer.apple.com/documentation/uikit/text_display_and_fonts/adding_a_custom_font_to_your_app?language=objc
+    if (~flags & insertNewlines_SystemTextInputFlag) {
+        [traits setReturnKeyType:UIReturnKeyDone];
+    }
     if (flags & returnGo_SystemTextInputFlags) {
         [traits setReturnKeyType:UIReturnKeyGo];
     }
@@ -701,29 +733,38 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     }
     if (flags & disableAutocorrect_SystemTextInputFlag) {
         [traits setAutocorrectionType:UITextAutocorrectionTypeNo];
-        [traits setAutocapitalizationType:UITextAutocapitalizationTypeNone];
         [traits setSpellCheckingType:UITextSpellCheckingTypeNo];
+    }
+    if (flags & disableAutocapitalize_SystemTextInputFlag) {
+        [traits setAutocapitalizationType:UITextAutocapitalizationTypeNone];
     }
     if (flags & alignRight_SystemTextInputFlag) {
         if (d->field) {
             [REF_d_field setTextAlignment:NSTextAlignmentRight];
+        }
+        if (d->view) {
+            [REF_d_view setTextAlignment:NSTextAlignmentRight];
         }
     }
     UIColor *textColor = makeUIColor_(uiInputTextFocused_ColorId);
     UIColor *backgroundColor = makeUIColor_(uiInputBackgroundFocused_ColorId);
     [appState_ setSystemTextInput:d];
     if (d->field) {
-        [REF_d_field setTextColor:textColor];
-        [REF_d_field setDelegate:appState_];
-        [REF_d_field becomeFirstResponder];
+        UITextField *field = REF_d_field;
+        [field setTextColor:textColor];
+        [field setDelegate:appState_];
+        [field becomeFirstResponder];
     }
     else {
-        [REF_d_view setTextColor:textColor];
-        [REF_d_view setBackgroundColor:backgroundColor];
-        [REF_d_view setEditable:YES];
+        UITextView *view = REF_d_view;
+        [view setTextColor:textColor];
+        [view setBackgroundColor:backgroundColor];
+        [view setEditable:YES];
 //        [REF_d_view setSelectable:YES];
-        [REF_d_view setDelegate:appState_];
-        [REF_d_view becomeFirstResponder];
+        const float inset = gap_UI / get_Window()->pixelRatio;
+        //[view setTextContainerInset:(UIEdgeInsets){ inset - 1, -inset - 1, 0, -inset - 1 }];
+        [view setDelegate:appState_];
+        [view becomeFirstResponder];
     }
     d->textChangedFunc = NULL;
     d->textChangedContext = NULL;
@@ -774,7 +815,11 @@ void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
         font = [UIFont monospacedSystemFontOfSize:0.8f * height weight:UIFontWeightRegular];
     }
     else {
-        font = [UIFont systemFontOfSize:0.65f * height];
+//        font = [UIFont systemFontOfSize:0.65f * height];
+//        for (NSString *name in [UIFont fontNamesForFamilyName:@"Source Sans 3"]) {
+//            printf("fontname: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+//        }
+        font = [UIFont fontWithName:@"SourceSans3-Regular" size:height * 0.7f];
     }
     if (d->field) {
         [REF_d_field setFont:font];
@@ -795,7 +840,7 @@ const iString *text_SystemTextInput(const iSystemTextInput *d) {
 }
 
 void setRect_SystemTextInput(iSystemTextInput *d, iRect rect) {
-    CGRect frame = convertToCGRect_(&rect);
+    CGRect frame = convertToCGRect_(&rect, (d->flags & multiLine_SystemTextInputFlags) != 0);
     if (d->field) {
         [REF_d_field setFrame:frame];
     }
@@ -815,4 +860,8 @@ static void notifyChange_SystemTextInput_(iSystemTextInput *d) {
     if (d && d->textChangedFunc) {
         d->textChangedFunc(d, d->textChangedContext);
     }
+}
+
+static BOOL isNewlineAllowed_SystemTextInput_(const iSystemTextInput *d) {
+    return (d->flags & insertNewlines_SystemTextInputFlag) != 0;
 }

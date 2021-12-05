@@ -765,6 +765,12 @@ void deinit_InputWidget(iInputWidget *d) {
     deinit_Array(&d->lines);
 }
 
+static iBool isAllowedToInsertNewline_InputWidget_(const iInputWidget *d) {
+    return ~d->inFlags & isSensitive_InputWidgetFlag &&
+        ~d->inFlags & isUrl_InputWidgetFlag &&
+        d->inFlags & lineBreaksEnabled_InputWidgetFlag && d->maxLen == 0;
+}
+
 #if defined (LAGRANGE_ENABLE_SYSTEM_INPUT)
 static void updateAfterVisualOffsetChange_InputWidget_(iInputWidget *d, iRoot *root) {
     iAssert(as_Widget(d)->root == root);
@@ -1062,9 +1068,11 @@ void begin_InputWidget(iInputWidget *d) {
 #if defined (LAGRANGE_ENABLE_SYSTEM_INPUT)
     d->sysCtrl = new_SystemTextInput(contentBounds_InputWidget_(d),
                                      (d->maxWrapLines > 1 ? multiLine_SystemTextInputFlags : 0) |
-                                     (d->inFlags & isUrl_InputWidgetFlag ? disableAutocorrect_SystemTextInputFlag : 0) |
+                                     (d->inFlags & isUrl_InputWidgetFlag ? (disableAutocorrect_SystemTextInputFlag |
+                                                                            disableAutocapitalize_SystemTextInputFlag) : 0) |
                                      (!cmp_String(id_Widget(w), "url") ? returnGo_SystemTextInputFlags : 0) |
-                                     (flags_Widget(w) & alignRight_WidgetFlag ? alignRight_SystemTextInputFlag : 0));
+                                     (flags_Widget(w) & alignRight_WidgetFlag ? alignRight_SystemTextInputFlag : 0) |
+                                     (isAllowedToInsertNewline_InputWidget_(d) ? insertNewlines_SystemTextInputFlag : 0));
     setFont_SystemTextInput(d->sysCtrl, d->font);
     setText_SystemTextInput(d->sysCtrl, &d->oldText);
     setTextChangedFunc_SystemTextInput(d->sysCtrl, systemInputChanged_InputWidget_, d);
@@ -2110,9 +2118,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
-                if (~d->inFlags & isSensitive_InputWidgetFlag &&
-                    ~d->inFlags & isUrl_InputWidgetFlag &&
-                    d->inFlags & lineBreaksEnabled_InputWidgetFlag && d->maxLen == 0) {
+                if (isAllowedToInsertNewline_InputWidget_(d)) {
                     if (checkLineBreakMods_InputWidget_(d, mods)) {
                         pushUndo_InputWidget_(d);
                         deleteMarked_InputWidget_(d);
