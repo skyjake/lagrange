@@ -811,14 +811,18 @@ int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
 void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
     float height = lineHeight_Text(fontId) / get_Window()->pixelRatio;
     UIFont *font;
+    //        for (NSString *name in [UIFont familyNames]) {
+    //            printf("family: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+    //        }
     if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
-        font = [UIFont monospacedSystemFontOfSize:0.8f * height weight:UIFontWeightRegular];
+//        font = [UIFont monospacedSystemFontOfSize:0.8f * height weight:UIFontWeightRegular];
+//        for (NSString *name in [UIFont fontNamesForFamilyName:@"Iosevka Term"]) {
+//            printf("fontname: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+//        }
+        font = [UIFont fontWithName:@"Iosevka-Term-Extended" size:height * 0.8f];
     }
     else {
 //        font = [UIFont systemFontOfSize:0.65f * height];
-//        for (NSString *name in [UIFont fontNamesForFamilyName:@"Source Sans 3"]) {
-//            printf("fontname: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
-//        }
         font = [UIFont fontWithName:@"SourceSans3-Regular" size:height * 0.7f];
     }
     if (d->field) {

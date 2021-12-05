@@ -105,7 +105,10 @@ set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
 make_resources (${EMB_BIN} ${RESOURCES})
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 if (IOS)
-    set (EMB_FONTS res/fonts/SourceSans3-Regular.ttf)
+    set (EMB_FONTS
+        res/fonts/SourceSans3-Regular.ttf
+        res/fonts/IosevkaTerm-Extended.ttf
+    )
     set_source_files_properties (${EMB_FONTS}
         PROPERTIES MACOSX_PACKAGE_LOCATION Resources
     )

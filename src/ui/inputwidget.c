@@ -711,10 +711,11 @@ static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, iBool doStart) 
 static void updateAllLinesAndResizeHeight_InputWidget_(iInputWidget *d) {
     /* Rewrap the buffered text and resize accordingly. */
     iWrapText wt = wrap_InputWidget_(d, 0);
+    /* TODO: Set max lines limit for WrapText. */
     const int height = measure_WrapText(&wt, d->font).bounds.size.y;
     /* We use this to store the number wrapped lines for determining widget height. */
     d->visWrapLines.start = 0;
-    d->visWrapLines.end = height / lineHeight_Text(d->font);
+    d->visWrapLines.end = iMin(d->maxWrapLines, height / lineHeight_Text(d->font));
     updateMetrics_InputWidget_(d);
 }
 
