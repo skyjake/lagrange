@@ -1203,6 +1203,9 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
             bounds.pos.y = iMin(bounds.pos.y, validPosRange.end);
         }
 //    printf("range: %d ... %d\n", range.start, range.end);
+        if (delta) {
+            d->root->didOverflowScroll = iTrue; /* ensure that widgets update if needed */
+        }
     }
     else {
         bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
@@ -1871,7 +1874,7 @@ iAny *findParentClass_Widget(const iWidget *d, const iAnyClass *class) {
 }
 
 iAny *findOverflowScrollable_Widget(iWidget *d) {
-    const iRect rootRect = rect_Root(d->root);
+    const iRect rootRect = visibleRect_Root(d->root);
     for (iWidget *w = d; w; w = parent_Widget(w)) {
         if (flags_Widget(w) & overflowScrollable_WidgetFlag) {
             const iRect bounds = boundsWithoutVisualOffset_Widget(w);

@@ -661,7 +661,7 @@ void updateToolbarColors_Root(iRoot *d) {
 }
 
 void notifyVisualOffsetChange_Root(iRoot *d) {
-    if (d && d->didAnimateVisualOffsets) {
+    if (d && (d->didAnimateVisualOffsets || d->didOverflowScroll)) {
         iNotifyAudience(d, visualOffsetsChanged, RootVisualOffsetsChanged);
     }
 }
