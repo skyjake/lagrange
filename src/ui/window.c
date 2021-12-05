@@ -1260,6 +1260,14 @@ void draw_MainWindow(iMainWindow *d) {
     }
     /* Draw widgets. */
     w->frameTime = SDL_GetTicks();
+    iForIndices(i, d->base.roots) {
+        iRoot *root = d->base.roots[i];
+        if (root) {
+            /* Some widgets may need a just-in-time visual update. */
+            notifyVisualOffsetChange_Root(root);
+            root->didOverflowScroll = iFalse;
+        }
+    }
     if (isExposed_Window(w)) {
         w->isInvalidated = iFalse;
         extern int drawCount_;

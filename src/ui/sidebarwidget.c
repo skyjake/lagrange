@@ -220,6 +220,7 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(as_Widget(btn), frameless_WidgetFlag, iTrue);
         setBackgroundColor_Widget(as_Widget(btn), uiBackground_ColorId);
+        setTextColor_LabelWidget(btn, uiTextAction_ColorId);
     }
     return btn;
 }
@@ -741,6 +742,20 @@ static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
     updateItemHeight_SidebarWidget_(d);
 }
 
+static void updateSlidingSheetHeight_SidebarWidget_(iSidebarWidget *sidebar, iRoot *root) {
+    if (!isPortraitPhone_App() || !isVisible_Widget(sidebar)) return;
+    iWidget *d = as_Widget(sidebar);
+    const int oldSize = d->rect.size.y;
+    const int newSize = bottom_Rect(safeRect_Root(d->root)) - top_Rect(bounds_Widget(d));
+    if (oldSize != newSize) {
+        d->rect.size.y = newSize;
+        arrange_Widget(d);
+    }
+//    printf("[%p] %u: %d  animating %d\n", d, window_Widget(d)->frameTime,
+//           (flags_Widget(d) & visualOffset_WidgetFlag) != 0,
+//           newSize);
+}
+
 void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -800,6 +815,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         setId_Widget(as_Widget(closeButton), "sidebar.close");
         setFont_LabelWidget(sheetTitle, uiLabelBig_FontId);
         setFont_LabelWidget(closeButton, uiLabelBigBold_FontId);
+        iConnect(Root, get_Root(), visualOffsetsChanged, d, updateSlidingSheetHeight_SidebarWidget_);
     }
     iWidget *buttons = new_Widget();
     setId_Widget(buttons, "buttons");
@@ -1073,22 +1089,6 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
     return iFalse;
 }
 
-static void animateSlidingSheetHeight_SidebarWidget_(iAny *sidebar) {
-    iWidget *d = sidebar;
-    const int oldSize = d->rect.size.y;
-    const int newSize = bottom_Rect(safeRect_Root(d->root)) - top_Rect(bounds_Widget(d));
-    if (oldSize != newSize) {
-        d->rect.size.y = newSize;
-        arrange_Widget(d);
-    }
-//    printf("[%p] %u: %d  animating %d\n", d, window_Widget(d)->frameTime,
-//           (flags_Widget(sidebar) & visualOffset_WidgetFlag) != 0,
-//           newSize);
-    if (!isFinished_Anim(&d->visualOffset)) {
-        addTicker_App(animateSlidingSheetHeight_SidebarWidget_, sidebar);
-    }
-}
-
 enum iSlidingSheetPos {
     top_SlidingSheetPos,
     middle_SlidingSheetPos,
@@ -1116,7 +1116,7 @@ static void setSlidingSheetPos_SidebarWidget_(iSidebarWidget *d, enum iSlidingSh
         setVisualOffset_Widget(w, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
         setScrollMode_ListWidget(d->list, disabledAtTopBothDirections_ScrollMode);
     }
-    animateSlidingSheetHeight_SidebarWidget_(d);
+//    animateSlidingSheetHeight_SidebarWidget_(d);
 }
 
 static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *cmd) {
@@ -1193,7 +1193,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
                 w->rect.pos.y = height_Rect(safeRect_Root(w->root)) - d->midHeight;
                 setVisualOffset_Widget(w, bottom_Rect(rect_Root(w->root)) - w->rect.pos.y, 0, 0);
                 setVisualOffset_Widget(w, 0, 300, animFlags);
-                animateSlidingSheetHeight_SidebarWidget_(d);
+                //animateSlidingSheetHeight_SidebarWidget_(d);
                 setScrollMode_ListWidget(d->list, disabledAtTopBothDirections_ScrollMode);
             }
             else {
@@ -1719,6 +1719,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     }
     /* Update context menu items. */
     if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
+        if (isSlidingSheet_SidebarWidget_(d) &&
+            ev->button.button == SDL_BUTTON_LEFT &&
+            isVisible_Widget(d) &&
+            !contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
+            setSlidingSheetPos_SidebarWidget_(d, bottom_SlidingSheetPos);
+            return iTrue;
+        }
         if (ev->button.button == SDL_BUTTON_RIGHT) {
             d->contextItem = NULL;
             if (!isVisible_Widget(d->menu)) {

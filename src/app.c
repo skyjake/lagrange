@@ -1482,12 +1482,12 @@ static void runTickers_App_(iApp *d) {
     if (isEmpty_SortedArray(&d->tickers)) {
         d->lastTickerTime = 0;
     }
-    iForIndices(i, d->window->base.roots) {
-        iRoot *root = d->window->base.roots[i];
-        if (root) {
-            notifyVisualOffsetChange_Root(root);
-        }
-    }
+//    iForIndices(i, d->window->base.roots) {
+//        iRoot *root = d->window->base.roots[i];
+//        if (root) {
+//            notifyVisualOffsetChange_Root(root);
+//        }
+//    }
 }
 
 static int resizeWatcher_(void *user, SDL_Event *event) {
@@ -1560,14 +1560,6 @@ void refresh_App(void) {
         iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             setCurrent_Window(win);
-            iForIndices(i, win->roots) {
-                iRoot *root = win->roots[i];
-                if (root && root->didOverflowScroll) {
-                    /* Some widgets may need a just-in-time visual update. */
-                    notifyVisualOffsetChange_Root(root);
-                    root->didOverflowScroll = iFalse;
-                }
-            }
             switch (win->type) {
                 case main_WindowType:
     //                iTime draw;
