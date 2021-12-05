@@ -310,9 +310,6 @@ static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, 
         }
         else if (!cmp_String(key, "tags") && tv->type == string_TomlType) {
             set_String(&bm->tags, tv->value.string);
-            if (strstr(cstr_String(&bm->tags), "subscribed")) {
-                printf("a\n");
-            }
             unpackDotTags_Bookmark_(bm);
         }
         else if (!cmp_String(key, "icon") && tv->type == int64_TomlType) {
