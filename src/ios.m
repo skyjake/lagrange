@@ -161,7 +161,7 @@ API_AVAILABLE(ios(13.0))
 
 /*----------------------------------------------------------------------------------------------*/
 
-@interface AppState : NSObject<UIDocumentPickerDelegate, UITextFieldDelegate> {
+@interface AppState : NSObject<UIDocumentPickerDelegate, UITextFieldDelegate, UITextViewDelegate> {
     iString *fileBeingSaved;
     iString *pickFileCommand;
     iSystemTextInput *sysCtrl;
@@ -273,14 +273,19 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     SDL_Event ev = { .type = SDL_KEYDOWN };
     ev.key.keysym.sym = SDLK_RETURN;
     SDL_PushEvent(&ev);
-    printf("Return pressed\n");
     return NO;
 }
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range
+replacementString:(NSString *)string {
     iSystemTextInput *sysCtrl = [appState_ systemTextInput];
     notifyChange_SystemTextInput_(sysCtrl);
     return YES;
+}
+
+- (void)textViewDidChange:(UITextView *)textView {
+    iSystemTextInput *sysCtrl = [appState_ systemTextInput];
+    notifyChange_SystemTextInput_(sysCtrl);
 }
 
 @end
@@ -538,6 +543,10 @@ void init_AVFAudioPlayer(iAVFAudioPlayer *d) {
 
 void deinit_AVFAudioPlayer(iAVFAudioPlayer *d) {
     setInput_AVFAudioPlayer(d, NULL, NULL);
+    if (d->player) {
+        CFBridgingRelease(d->player);
+        d->player = nil;
+    }
 }
 
 static const char *cacheDir_ = "~/Library/Caches/Audio";
@@ -638,70 +647,155 @@ iBool isPaused_AVFAudioPlayer(const iAVFAudioPlayer *d) {
 /*----------------------------------------------------------------------------------------------*/
 
 struct Impl_SystemTextInput {
-    void *ctrl;
+    int flags;
+    void *field; /* single-line text field */
+    void *view;  /* multi-line text view */
     void (*textChangedFunc)(iSystemTextInput *, void *);
     void *textChangedContext;
 };
 
-iDefineTypeConstructionArgs(SystemTextInput, (int flags), flags)
+iDefineTypeConstructionArgs(SystemTextInput, (iRect rect, int flags), rect, flags)
 
-#define REF_d_ctrl  (__bridge UITextField *)d->ctrl
+#define REF_d_field  (__bridge UITextField *)d->field
+#define REF_d_view   (__bridge UITextView *)d->view
 
-void init_SystemTextInput(iSystemTextInput *d, int flags) {
-    d->ctrl = (void *) CFBridgingRetain([[UITextField alloc] init]);
-    UITextField *field = REF_d_ctrl;
+static CGRect convertToCGRect_(const iRect *rect) {
+    const iWindow *win = get_Window();
+    CGRect frame;
+    // TODO: Convert coordinates properly!
+    frame.origin.x = rect->pos.x / win->pixelRatio;
+    frame.origin.y = (rect->pos.y - gap_UI + 2) / win->pixelRatio;
+    frame.size.width = rect->size.x / win->pixelRatio;
+    frame.size.height = rect->size.y / win->pixelRatio;
+    return frame;
+}
+
+static UIColor *makeUIColor_(enum iColorId colorId) {
+    iColor color = get_Color(colorId);
+    return [UIColor colorWithRed:color.r / 255.0
+                           green:color.g / 255.0
+                            blue:color.b / 255.0
+                           alpha:color.a / 255.0];
+}
+
+void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
+    d->flags = flags;
+    d->field = NULL;
+    d->view  = NULL;
+    CGRect frame = convertToCGRect_(&rect);
+    if (flags & multiLine_SystemTextInputFlags) {
+        d->view = (void *) CFBridgingRetain([[UITextView alloc] initWithFrame:frame textContainer:nil]);
+        [[viewController_(get_Window()) view] addSubview:REF_d_view];
+    }
+    else {
+        d->field = (void *) CFBridgingRetain([[UITextField alloc] initWithFrame:frame]);
+        [[viewController_(get_Window()) view] addSubview:REF_d_field];
+    }
+    UIControl<UITextInputTraits> *traits = (UIControl<UITextInputTraits> *) (d->view ? REF_d_view : REF_d_field);
     // TODO: Use the right font:  https://developer.apple.com/documentation/uikit/text_display_and_fonts/adding_a_custom_font_to_your_app?language=objc
-    [[viewController_(get_Window()) view] addSubview:REF_d_ctrl];
     if (flags & returnGo_SystemTextInputFlags) {
-        [field setReturnKeyType:UIReturnKeyGo];
+        [traits setReturnKeyType:UIReturnKeyGo];
     }
     if (flags & returnSend_SystemTextInputFlags) {
-        [field setReturnKeyType:UIReturnKeySend];
+        [traits setReturnKeyType:UIReturnKeySend];
     }
     if (flags & disableAutocorrect_SystemTextInputFlag) {
-        [field setAutocorrectionType:UITextAutocorrectionTypeNo];
-        [field setAutocapitalizationType:UITextAutocapitalizationTypeNone];
-        [field setSpellCheckingType:UITextSpellCheckingTypeNo];
+        [traits setAutocorrectionType:UITextAutocorrectionTypeNo];
+        [traits setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+        [traits setSpellCheckingType:UITextSpellCheckingTypeNo];
     }
     if (flags & alignRight_SystemTextInputFlag) {
-        [field setTextAlignment:NSTextAlignmentRight];
+        if (d->field) {
+            [REF_d_field setTextAlignment:NSTextAlignmentRight];
+        }
     }
-    [field setDelegate:appState_];
-    [field becomeFirstResponder];
+    UIColor *textColor = makeUIColor_(uiInputTextFocused_ColorId);
+    UIColor *backgroundColor = makeUIColor_(uiInputBackgroundFocused_ColorId);
+    [appState_ setSystemTextInput:d];
+    if (d->field) {
+        [REF_d_field setTextColor:textColor];
+        [REF_d_field setDelegate:appState_];
+        [REF_d_field becomeFirstResponder];
+    }
+    else {
+        [REF_d_view setTextColor:textColor];
+        [REF_d_view setBackgroundColor:backgroundColor];
+        [REF_d_view setEditable:YES];
+//        [REF_d_view setSelectable:YES];
+        [REF_d_view setDelegate:appState_];
+        [REF_d_view becomeFirstResponder];
+    }
     d->textChangedFunc = NULL;
     d->textChangedContext = NULL;
-    [appState_ setSystemTextInput:d];
 }
 
 void deinit_SystemTextInput(iSystemTextInput *d) {
     [appState_ setSystemTextInput:nil];
-    [REF_d_ctrl removeFromSuperview];
-    d->ctrl = nil; // TODO: Does this need to be released??
+    if (d->field) {
+        [REF_d_field removeFromSuperview];
+        CFBridgingRelease(d->field);
+        d->field = nil;
+    }
+    if (d->view) {
+        [REF_d_view removeFromSuperview];
+        CFBridgingRelease(d->view);
+        d->view = nil;
+    }
 }
 
 void setText_SystemTextInput(iSystemTextInput *d, const iString *text) {
-    [REF_d_ctrl setText:[NSString stringWithUTF8String:cstr_String(text)]];
-    [REF_d_ctrl selectAll:nil];
+    NSString *str = [NSString stringWithUTF8String:cstr_String(text)];
+    if (d->field) {
+        [REF_d_field setText:str];
+        if (d->flags & selectAll_SystemTextInputFlags) {
+            [REF_d_field selectAll:nil];
+        }
+    }
+    else {
+        [REF_d_view setText:str];
+        if (d->flags & selectAll_SystemTextInputFlags) {
+            [REF_d_view selectAll:nil];
+        }
+    }
+}
+
+int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
+    if (d->view) {
+        CGRect usedRect = [[REF_d_view layoutManager] usedRectForTextContainer:[REF_d_view textContainer]];
+        return usedRect.size.height * get_Window()->pixelRatio;
+    }
+    return 0;
 }
 
 void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
     int height = lineHeight_Text(fontId);
     UIFont *font = [UIFont systemFontOfSize:0.65f * height / get_Window()->pixelRatio];
-    [REF_d_ctrl setFont:font];
+    if (d->field) {
+        [REF_d_field setFont:font];
+    }
+    if (d->view) {
+        [REF_d_view setFont:font];
+    }
 }
 
 const iString *text_SystemTextInput(const iSystemTextInput *d) {
-    return collectNewCStr_String([[REF_d_ctrl text] cStringUsingEncoding:NSUTF8StringEncoding]);;
+    if (d->field) {
+        return collectNewCStr_String([[REF_d_field text] cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+    if (d->view) {
+        return collectNewCStr_String([[REF_d_view text] cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+    return NULL;
 }
 
 void setRect_SystemTextInput(iSystemTextInput *d, iRect rect) {
-    const iWindow *win = get_Window();
-    CGRect frame;
-    frame.origin.x = rect.pos.x / win->pixelRatio;
-    frame.origin.y = (rect.pos.y - gap_UI + 2) / win->pixelRatio;
-    frame.size.width = rect.size.x / win->pixelRatio;
-    frame.size.height = rect.size.y / win->pixelRatio;
-    [REF_d_ctrl setFrame:frame];
+    CGRect frame = convertToCGRect_(&rect);
+    if (d->field) {
+        [REF_d_field setFrame:frame];
+    }
+    else {
+        [REF_d_view setFrame:frame];
+    }
 }
 
 void setTextChangedFunc_SystemTextInput(iSystemTextInput *d,

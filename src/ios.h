@@ -65,15 +65,16 @@ void    updateNowPlayingInfo_iOS    (void);
 /*----------------------------------------------------------------------------------------------*/
 
 enum iSystemTextInputFlags {
-    multiLine_SystemTextInputFlags         = iBit(1),
-    returnGo_SystemTextInputFlags          = iBit(2),
-    returnSend_SystemTextInputFlags        = iBit(3),
-    disableAutocorrect_SystemTextInputFlag = iBit(4),
-    alignRight_SystemTextInputFlag         = iBit(5),
+    selectAll_SystemTextInputFlags         = iBit(1),
+    multiLine_SystemTextInputFlags         = iBit(2),
+    returnGo_SystemTextInputFlags          = iBit(3),
+    returnSend_SystemTextInputFlags        = iBit(4),
+    disableAutocorrect_SystemTextInputFlag = iBit(5),
+    alignRight_SystemTextInputFlag         = iBit(6),
 };
 
 iDeclareType(SystemTextInput)
-iDeclareTypeConstructionArgs(SystemTextInput, int flags)
+iDeclareTypeConstructionArgs(SystemTextInput, iRect rect, int flags)
 
 void    setRect_SystemTextInput  (iSystemTextInput *, iRect rect);
 void    setText_SystemTextInput  (iSystemTextInput *, const iString *text);
@@ -81,3 +82,4 @@ void    setFont_SystemTextInput  (iSystemTextInput *, int fontId);
 void    setTextChangedFunc_SystemTextInput  (iSystemTextInput *, void (*textChangedFunc)(iSystemTextInput *, void *), void *);
 
 const iString * text_SystemTextInput    (const iSystemTextInput *);
+int     preferredHeight_SystemTextInput (const iSystemTextInput *);

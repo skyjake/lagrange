@@ -596,10 +596,19 @@ static size_t length_InputWidget_(const iInputWidget *d) {
 }
 
 static int contentHeight_InputWidget_(const iInputWidget *d) {
+    if (d->sysCtrl) {
+        const int preferred = preferredHeight_SystemTextInput(d->sysCtrl);
+        return iClamp(preferred,
+                      d->minWrapLines * lineHeight_Text(d->font),
+                      d->maxWrapLines * lineHeight_Text(d->font));
+    }
     return size_Range(&d->visWrapLines) * lineHeight_Text(d->font);
 }
 
 static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
+    if (d->sysCtrl) {
+        setRect_SystemTextInput(d->sysCtrl, contentBounds_InputWidget_(d));
+    }
 #if !defined (iPlatformAppleMobile)
     const iRect bounds = bounds_Widget(constAs_Widget(d));
     SDL_SetTextInputRect(&(SDL_Rect){ bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y });
@@ -1036,6 +1045,7 @@ void systemInputChanged_InputWidget_(iSystemTextInput *sysCtrl, void *widget) {
     iInputWidget *d = widget;
     splitToLines_(text_SystemTextInput(sysCtrl), &d->lines);
     contentsWereChanged_InputWidget_(d);
+    updateMetrics_InputWidget_(d);
 }
 #endif
 
@@ -1050,14 +1060,16 @@ void begin_InputWidget(iInputWidget *d) {
     setFlags_Widget(w, selected_WidgetFlag, iTrue);
     mergeLines_(&d->lines, &d->oldText);
 #if defined (LAGRANGE_ENABLE_SYSTEM_INPUT)
-    d->sysCtrl = new_SystemTextInput((d->inFlags & isUrl_InputWidgetFlag ? disableAutocorrect_SystemTextInputFlag : 0) |
+    d->sysCtrl = new_SystemTextInput(contentBounds_InputWidget_(d),
+                                     (d->maxWrapLines > 1 ? multiLine_SystemTextInputFlags : 0) |
+                                     (d->inFlags & isUrl_InputWidgetFlag ? disableAutocorrect_SystemTextInputFlag : 0) |
                                      (!cmp_String(id_Widget(w), "url") ? returnGo_SystemTextInputFlags : 0) |
                                      (flags_Widget(w) & alignRight_WidgetFlag ? alignRight_SystemTextInputFlag : 0));
     setFont_SystemTextInput(d->sysCtrl, d->font);
-    setRect_SystemTextInput(d->sysCtrl, contentBounds_InputWidget_(d));
     setText_SystemTextInput(d->sysCtrl, &d->oldText);
     setTextChangedFunc_SystemTextInput(d->sysCtrl, systemInputChanged_InputWidget_, d);
     iConnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
+    updateMetrics_InputWidget_(d);
     return;
 #endif
     if (d->mode == overwrite_InputMode) {
