@@ -241,6 +241,7 @@ struct Impl_InputWidget {
     int             backupTimer;
     iString         oldText; /* for restoring if edits cancelled */
     int             lastUpdateWidth;
+    uint32_t        lastOverflowScrollTime; /* scrolling to show focused widget */
     iSystemTextInput *sysCtrl;
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
     iString         text;
@@ -2065,6 +2066,30 @@ static void clampWheelAccum_InputWidget_(iInputWidget *d, int wheel) {
 }
 #endif
 
+static void overflowScrollToKeepVisible_InputWidget_(iAny *widget) {
+    iInputWidget *d = widget;
+    iWidget *w = as_Widget(d);
+    if (!isFocused_Widget(w) || isAffectedByVisualOffset_Widget(w)) {
+        return;
+    }
+    iRect rect    = boundsWithoutVisualOffset_Widget(w);
+    iRect visible = visibleRect_Root(w->root);
+    const uint32_t nowTime = SDL_GetTicks();
+    const double elapsed = (nowTime - d->lastOverflowScrollTime) / 1000.0;
+    int dist = bottom_Rect(rect) + gap_UI - bottom_Rect(visible);
+    const int step = iRound(10 * dist * elapsed);
+    if (step > 0) {
+        iWidget *scrollable = findOverflowScrollable_Widget(w);
+        if (scrollable) {
+            scrollOverflow_Widget(scrollable, -iClamp(step, 1, dist));
+            d->lastOverflowScrollTime = nowTime;
+        }
+    }
+    if (dist > 0) {
+        addTicker_App(overflowScrollToKeepVisible_InputWidget_, widget);
+    }
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Resize according to width immediately. */
@@ -2077,6 +2102,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         updateAllLinesAndResizeHeight_InputWidget_(d);
         d->lastUpdateWidth = w->rect.size.x;
     }
+#if LAGRANGE_USE_SYSTEM_TEXT_INPUT
+    if (isResize_UserEvent(ev)) {
+        if (d->sysCtrl) {
+            updateAfterVisualOffsetChange_InputWidget_(d, w->root);
+        }
+    }
+#endif
     if (isCommand_Widget(w, ev, "focus.gained")) {
         begin_InputWidget(d);
         return iFalse;
@@ -2139,18 +2171,19 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
         return iFalse;
     }
-    /* TODO: Scroll to keep widget visible when keyboard appears. */
-//    else if (isCommand_UserEvent(ev, "keyboard.changed")) {
-//        if (isFocused_Widget(d) && arg_Command(command_UserEvent(ev))) {
-//            iRect rect = bounds_Widget(w);
+    else if (isCommand_UserEvent(ev, "keyboard.changed")) {
+    /* Scroll to keep widget visible when keyboard appears. */
+        if (isFocused_Widget(d) && arg_Command(command_UserEvent(ev))) {
+            d->lastOverflowScrollTime = SDL_GetTicks();
+            overflowScrollToKeepVisible_InputWidget_(d);
 //            rect.pos.y -= value_Anim(&get_Window()->rootOffset);
-//            const iInt2 visRoot = visibleSize_Root(w->root);
-//            if (bottom_Rect(rect) > visRoot.y) {
-//                setValue_Anim(&get_Window()->rootOffset, -(bottom_Rect(rect) - visRoot.y), 250);
-//            }
-//        }
-//        return iFalse;
-//    }
+            //const iInt2 visRoot = visibleSize_Root(w->root);
+            //if (bottom_Rect(rect) > visRoot.y) {
+                //setValue_Anim(&get_Window()->rootOffset, -(bottom_Rect(rect) - visRoot.y), 250);
+            //}
+        }
+        return iFalse;
+    }
     else if (isCommand_Widget(w, ev, "input.backup")) {
         if (d->inFlags & needBackup_InputWidgetFlag) {
             saveBackup_InputWidget_(d);
