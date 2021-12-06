@@ -498,7 +498,7 @@ static iBool loadState_App_(iApp *d) {
                     if (flags & 8) {
                         postCommand_Widget(sidebar2, "feeds.mode arg:%d", unread_FeedsMode);
                     }
-                    if (deviceType_App() != phone_AppDeviceType) {
+                    if (deviceType_App() == desktop_AppDeviceType) {
                         setWidth_SidebarWidget(sidebar,  widths[0]);
                         setWidth_SidebarWidget(sidebar2, widths[1]);
                         if (flags & 1) postCommand_Root(root, "sidebar.toggle noanim:1");

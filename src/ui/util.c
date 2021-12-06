@@ -924,17 +924,17 @@ static void updateMenuItemFonts_Widget_(iWidget *d) {
             if (isWrapped_LabelWidget(label)) {
                 continue;
             }
-            if (deviceType_App() == desktop_AppDeviceType) {
-                setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
+            switch (deviceType_App()) {
+                case desktop_AppDeviceType:
+                    setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
+                    break;
+                case tablet_AppDeviceType:
+                    setFont_LabelWidget(label, isCaution ? uiLabelMediumBold_FontId : uiLabelMedium_FontId);
+                    break;
+                case phone_AppDeviceType:
+                    setFont_LabelWidget(label, isCaution ? uiLabelBigBold_FontId : uiLabelBig_FontId);
+                    break;
             }
-            else { //if (isPortraitPhone) {
-                //if (!isSlidePanel) {
-                setFont_LabelWidget(label, isCaution ? uiLabelBigBold_FontId : uiLabelBig_FontId);
-              //  }
-            }
-//            else {
-//                setFont_LabelWidget(label, isCaution ? uiContentBold_FontId : uiContent_FontId);
-//            }
         }
         else if (childCount_Widget(i.object)) {
             updateMenuItemFonts_Widget_(i.object);
@@ -1734,7 +1734,7 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
         addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
     }
     int fonts[2] = { uiLabel_FontId, uiLabelBold_FontId };
-    if (deviceType_App() == phone_AppDeviceType) {
+    if (deviceType_App() != desktop_AppDeviceType) {
         fonts[0] = uiLabelBig_FontId;
         fonts[1] = uiLabelBigBold_FontId;
     }

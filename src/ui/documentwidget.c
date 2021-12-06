@@ -5258,7 +5258,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             mut->flags &= ~refChildrenOffset_WidgetFlag;
         }
     }
-    drawRect_Paint(&ctx.paint, docBounds, red_ColorId);
+//    drawRect_Paint(&ctx.paint, docBounds, red_ColorId);
 }
 
 /*----------------------------------------------------------------------------------------------*/

@@ -333,6 +333,11 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         openMenuFlags_Widget(menu, zero_I2(), postCommands_MenuOpenFlags | center_MenuOpenFlags);
         return iTrue;
     }
+    else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "toolbar.showident")) {
+        /* No toolbar on tablet, so we handle this command here. */
+        postCommand_App("preferences idents:1");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "identmenu.open")) {
         iWidget *toolBar = findWidget_Root("toolbar");
         iWidget *button = findWidget_Root(toolBar && isPortraitPhone_App() ? "toolbar.ident" : "navbar.ident");
@@ -485,6 +490,13 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     else if (equal_Command(cmd, "window.close")) {
         SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
         return iTrue;
+    }
+    else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "window.resized")) {
+        iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
+        iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
+        setWidth_SidebarWidget(sidebar, 73.0f);
+        setWidth_SidebarWidget(sidebar2, 73.0f);
+        return iFalse;
     }
     else if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "window.resized")) {
         /* Place the sidebar next to or under doctabs depending on orientation. */
@@ -1056,7 +1068,7 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "toolbar.showident")) {
-        iWidget *sidebar  = findWidget_App("sidebar");
+        iWidget *sidebar = findWidget_App("sidebar");
         if (isVisible_Widget(sidebar)) {
             postCommandf_App("sidebar.toggle");
         }

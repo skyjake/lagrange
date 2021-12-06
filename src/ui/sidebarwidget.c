@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "labelwidget.h"
 #include "listwidget.h"
+#include "mobile.h"
 #include "keys.h"
 #include "paint.h"
 #include "root.h"
@@ -206,6 +207,18 @@ int cmpTree_Bookmark(const iBookmark **a, const iBookmark **b) {
     return cmpStringCase_String(&bm1->title, &bm2->title);
 }
 
+static enum iFontId actionButtonFont_SidebarWidget_(const iSidebarWidget *d) {
+    switch (deviceType_App()) {
+        default:
+            break;
+        case phone_AppDeviceType:
+            return uiLabelBig_FontId;
+        case tablet_AppDeviceType:
+            return uiLabelMedium_FontId;
+    }
+    return d->buttonFont;
+}
+
 static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const char *label,
                                                     const char *command, int64_t flags) {
     iLabelWidget *btn = addChildFlags_Widget(d->actions,
@@ -213,14 +226,12 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
                                              //(deviceType_App() != desktop_AppDeviceType ?
                                              // extraPadding_WidgetFlag : 0) |
                                              flags);
-    setFont_LabelWidget(btn, deviceType_App() == desktop_AppDeviceType ? /*deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide
-                                 ? uiLabelBig_FontId : */
-                        d->buttonFont : uiLabelBig_FontId);
+    setFont_LabelWidget(btn, actionButtonFont_SidebarWidget_(d));
     checkIcon_LabelWidget(btn);
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(as_Widget(btn), frameless_WidgetFlag, iTrue);
-        setBackgroundColor_Widget(as_Widget(btn), uiBackground_ColorId);
         setTextColor_LabelWidget(btn, uiTextAction_ColorId);
+        setBackgroundColor_Widget(as_Widget(btn), uiBackground_ColorId);
     }
     return btn;
 }
@@ -886,7 +897,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                                  resizeToParentHeight_WidgetFlag |
                                  (side == left_SidebarSide ? moveToParentRightEdge_WidgetFlag
                                                            : moveToParentLeftEdge_WidgetFlag));
-    if (deviceType_App() == phone_AppDeviceType) {
+    if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(d->resizer, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
     }
     setId_Widget(d->resizer, side == left_SidebarSide ? "sidebar.grab" : "sidebar2.grab");
@@ -1308,8 +1319,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                             drawBackgroundToBottom_WidgetFlag,
                             isPortrait_App());
             setBackgroundColor_Widget(w, isPortrait_App() ? uiBackgroundSidebar_ColorId : none_ColorId);
-            return iFalse;
         }
+        if (!isPortraitPhone_App()) {
+            /* In sliding sheet mode, sidebar is resized to fit in the safe area. */
+            setPadding_Widget(d->actions, 0, 0, 0, bottomSafeInset_Mobile());
+        }
+        return iFalse;
     }
     else if (isMetricsChange_UserEvent(ev)) {
         if (isVisible_Widget(w)) {
@@ -1348,10 +1363,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
             }
         }
-//        else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "toolbar.showident")) {
-//            postCommandf_App("sidebar.mode arg:%d toggle:1", identities_SidebarMode);
-//            return iTrue;
-//        }
         else if (isPortraitPhone_App() && isVisible_Widget(w) && d->side == left_SidebarSide &&
                  equal_Command(cmd, "swipe.forward")) {
             postCommand_App("sidebar.toggle");

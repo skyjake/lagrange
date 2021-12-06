@@ -590,7 +590,8 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 setFlags_Widget(as_Widget(button), fixedWidth_WidgetFlag, iFalse);
             }
             setId_Widget(as_Widget(button), radId);
-            setFont_LabelWidget(button, isHorizontal ? uiLabelMedium_FontId : uiLabelBig_FontId);
+            setFont_LabelWidget(button, deviceType_App() == phone_AppDeviceType ?
+                                (isHorizontal ? uiLabelMedium_FontId : uiLabelBig_FontId) : labelFont_());
             setCheckMark_LabelWidget(button, !isHorizontal);
             setPadding_Widget(as_Widget(button), gap_UI, 1 * gap_UI, 0, 1 * gap_UI);
             updateSize_LabelWidget(button);
@@ -983,4 +984,14 @@ void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
                 break;
         }
     }
+}
+
+int bottomSafeInset_Mobile(void) {
+#if defined (iPlatformAppleMobile)
+    float bot;
+    safeAreaInsets_iOS(NULL, NULL, NULL, &bot);
+    return iRound(bot);
+#else
+    return 0;
+#endif
 }
