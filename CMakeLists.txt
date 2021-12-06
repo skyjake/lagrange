@@ -66,11 +66,8 @@ include (Depends.cmake)
 message (STATUS "Preparing resources...")
 set (RESOURCES
     res/about/about.gmi
-    res/about/help.gmi
     res/about/lagrange.gmi
     res/about/license.gmi
-    res/about/version.gmi
-    res/arg-help.txt
     res/lang/cs.bin
     res/lang/de.bin
     res/lang/en.bin
@@ -98,6 +95,18 @@ set (RESOURCES
 )
 file (GLOB FONTS RELATIVE ${CMAKE_SOURCE_DIR} res/fonts/*)
 list (APPEND RESOURCES ${FONTS})
+if (IOS)
+    list (APPEND RESOURCES
+        res/about/ios-help.gmi
+        res/about/ios-version.gmi
+    )
+else ()
+    list (APPEND RESOURCES
+        res/about/help.gmi
+        res/about/version.gmi
+        res/arg-help.txt
+    )
+endif ()
 if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND RESOURCES res/lagrange-64.png)
 endif ()

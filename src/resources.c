@@ -63,10 +63,15 @@ static struct {
     const char *archivePath;
 } entries_[] = {
     { &blobAbout_Resources, "about/about.gmi" },
-    { &blobHelp_Resources, "about/help.gmi" },
     { &blobLagrange_Resources, "about/lagrange.gmi" },
     { &blobLicense_Resources, "about/license.gmi" },
+#if defined (iPlatformAppleMobile)
+    { &blobHelp_Resources, "about/ios-help.gmi" },
+    { &blobVersion_Resources, "about/ios-version.gmi" },
+#else
+    { &blobHelp_Resources, "about/help.gmi" },
     { &blobVersion_Resources, "about/version.gmi" },
+#endif
     { &blobArghelp_Resources, "arg-help.txt" },
     { &blobCs_Resources, "lang/cs.bin" },
     { &blobDe_Resources, "lang/de.bin" },

@@ -1,0 +1,20 @@
+```LAGRANGE
+           __   __             __   ___
+|     /\  / _` |__)  /\  |\ | / _` |__
+|___ /~~\ \__> |  \ /~~\ | \| \__> |___
+
+```
+# Release notes
+
+## 1.10 (1)
+* Use native iOS text input UI controls for entering text.
+* Redesigned phone sidebar that mimics Safari on iPhone. Opens half-height for better reachability of tab buttons, can be swiped up and down.
+* Bookmark edit mode for reordering and organizing bookmarks into folders.
+* Sidebar has new action buttons for Feeds and History.
+* Identity toolbar button has been revised for quickly switching between alternate identities for current site, and opening Settings > Identities.
+* Settings: Managing identities.
+* Settings: Improved widgets used in button/radio groups to closer match iOS design.
+* Settings: Added new options from desktop version.
+* Mobile-friendly layout for value input dialogs.
+* Various animation issues fixes, e.g., context menu animations on iPad.
+* Various layout issues fixed, e.g., related to safe area insets.
