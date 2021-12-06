@@ -8,6 +8,7 @@
 
 ## 1.10 (1)
 * Use native iOS text input UI controls for entering text.
+* Pull-to-refresh on pages.
 * Redesigned phone sidebar that mimics Safari on iPhone. Opens half-height for better reachability of tab buttons, can be swiped up and down.
 * Bookmark edit mode for reordering and organizing bookmarks into folders.
 * Sidebar has new action buttons for Feeds and History.
