@@ -532,12 +532,28 @@ static int pageHeight_DocumentWidget_(const iDocumentWidget *d) {
     return height_Banner(d->banner) + documentTopPad_DocumentWidget_(d) + size_GmDocument(d->doc).y;
 }
 
-static int footerButtonsHeight_DocumentWidget_(const iDocumentWidget *d) {
-    int height = height_Widget(d->footerButtons);
-//    if (height) {
-//        height += 3 * gap_UI; /* padding */
-//    }
-    return height;
+//static int footerButtonsHeight_DocumentWidget_(const iDocumentWidget *d) {
+//    int height = height_Widget(d->footerButtons);
+////    if (height) {
+////        height += 3 * gap_UI; /* padding */
+////    }
+//    return height;
+//}
+
+static int phoneToolbarHeight_DocumentWidget_(const iDocumentWidget *d) {
+    if (!d->phoneToolbar) {
+        return 0;
+    }
+    const iWidget *w = constAs_Widget(d);
+    return bottom_Rect(rect_Root(w->root)) - top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
+}
+
+static int footerHeight_DocumentWidget_(const iDocumentWidget *d) {
+    int hgt = height_Widget(d->footerButtons);
+    if (isPortraitPhone_App()) {
+        hgt += phoneToolbarHeight_DocumentWidget_(d);
+    }
+    return hgt;
 }
 
 static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
@@ -559,10 +575,10 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
             rect.size.y = 0;
             wasCentered = iTrue;
         }
-        else if (docSize < rect.size.y - footerButtonsHeight_DocumentWidget_(d)) {
+        else if (docSize < rect.size.y - footerHeight_DocumentWidget_(d)) {
             /* TODO: Phone toolbar? */
             /* Center vertically when the document is short. */
-            const int relMidY   = (height_Rect(bounds) - footerButtonsHeight_DocumentWidget_(d)) / 2;
+            const int relMidY   = (height_Rect(bounds) - footerHeight_DocumentWidget_(d)) / 2;
             const int visHeight = size_GmDocument(d->doc).y;
             const int offset    = -height_Banner(d->banner) - documentTopPad_DocumentWidget_(d);
             rect.pos.y  = top_Rect(bounds) + iMaxi(0, relMidY - visHeight / 2 + offset);
@@ -657,9 +673,9 @@ static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
 
 static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
-    int sm = pageHeight_DocumentWidget_(d) - height_Rect(bounds_Widget(w)) +
+    int sm = pageHeight_DocumentWidget_(d) +
              (isEmpty_Banner(d->banner) ? 2 : 1) * d->pageMargin * gap_UI + /* top and bottom margins */
-             iMax(height_Widget(d->phoneToolbar), height_Widget(d->footerButtons));
+             footerHeight_DocumentWidget_(d) - height_Rect(bounds_Widget(w));
     return sm;
 }
 
@@ -912,11 +928,8 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     const iRect   bounds    = bounds_Widget(as_Widget(d));
     const int     scrollMax = updateScrollMax_DocumentWidget_(d);
     /* Reposition the footer buttons as appropriate. */
-    /* TODO: You can just position `footerButtons` here completely without having to get
-       `Widget` involved with the offset in any way. */
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax });
-    const int docSize = pageHeight_DocumentWidget_(d) + iMax(height_Widget(d->phoneToolbar),
-                                                             height_Widget(d->footerButtons));
+    const int docSize = pageHeight_DocumentWidget_(d) + footerHeight_DocumentWidget_(d);
     const float scrollPos = pos_SmoothScroll(&d->scrollY);
     setThumb_ScrollWidget(d->scroll,
                           pos_SmoothScroll(&d->scrollY),
@@ -927,7 +940,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
         const int   hPad      = (width_Rect(bounds) - iMin(120 * gap_UI, width_Rect(docBounds))) / 2;
         const int   vPad      = 3 * gap_UI;
         setPadding_Widget(d->footerButtons, hPad, 0, hPad, vPad);
-        d->footerButtons->rect.pos.y = height_Rect(bounds) - height_Widget(d->footerButtons) +
+        d->footerButtons->rect.pos.y = height_Rect(bounds) - footerHeight_DocumentWidget_(d) +
                                        (scrollMax > 0 ? scrollMax - scrollPos : 0);
     }
     clear_PtrArray(&d->visibleLinks);
@@ -1198,10 +1211,10 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
         checkIcon_LabelWidget(button);
         setFont_LabelWidget(button, uiContent_FontId);
     }
-    if (deviceType_App() == phone_AppDeviceType) {
+//    if (deviceType_App() == phone_AppDeviceType) {
         /* Footer buttons shouldn't be under the toolbar. */
-        addChild_Widget(d->footerButtons, iClob(makePadding_Widget(height_Widget(d->phoneToolbar))));
-    }
+//        addChild_Widget(d->footerButtons, iClob(makePadding_Widget(height_Widget(d->phoneToolbar))));
+//    }
     addChild_Widget(as_Widget(d), iClob(d->footerButtons));
     arrange_Widget(d->footerButtons);
     arrange_Widget(w);
@@ -2081,7 +2094,12 @@ static iString *makeQueryUrl_DocumentWidget_(const iDocumentWidget *d,
         remove_Block(&url->chars, qPos, iInvalidSize);
     }
     appendCStr_String(url, "?");
-    append_String(url, collect_String(urlEncode_String(userEnteredText)));
+    iString *cleaned = copy_String(userEnteredText);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        trim_String(cleaned); /* autocorrect may insert an extra space */
+    }
+    append_String(url, collect_String(urlEncode_String(cleaned)));
+    delete_String(cleaned);
     return url;
 }
 
@@ -5155,7 +5173,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         iRect indRect = initCentered_Rect(init_I2(mid_Rect(bounds).x,
                                                   top_Rect(bounds) - 5 * gap_UI -
                                                   pos_SmoothScroll(&d->scrollY)),
-                                          init_I2(25 * gap_UI, 2 * gap_UI));
+                                          init_I2(20 * gap_UI, 2 * gap_UI));
         setClip_Paint(&ctx.paint, clipBounds);
         int color = pullPos < 1.0f ? tmBannerItemFrame_ColorId : tmBannerItemText_ColorId;
         drawRect_Paint(&ctx.paint, indRect, color);
@@ -5240,7 +5258,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             mut->flags &= ~refChildrenOffset_WidgetFlag;
         }
     }
-//    drawRect_Paint(&ctx.paint, docBounds, red_ColorId);
+    drawRect_Paint(&ctx.paint, docBounds, red_ColorId);
 }
 
 /*----------------------------------------------------------------------------------------------*/
