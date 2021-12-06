@@ -130,9 +130,10 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
             iAssert(topPanel);
             topPanel->rect.size.x = (deviceType_App() == phone_AppDeviceType ?
                                      safeRoot.size.x * 2 / 5 : (safeRoot.size.x / 3));
-        }        
+        }
         if (deviceType_App() == tablet_AppDeviceType) {
             setPadding_Widget(topPanel, pad, 0, pad, pad);
+#if 0
             if (numPanels == 0) {
                 setFlags_Widget(sheet, centerHorizontal_WidgetFlag, iTrue);
                 const int sheetWidth = iMin(safeRoot.size.x, safeRoot.size.y);
@@ -140,6 +141,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
                 setFixedSize_Widget(sheet, init_I2(sheetWidth, -1));
                 setFixedSize_Widget(navi, init_I2(sheetWidth, -1));
             }
+#endif
         }
         iWidget *detailTitle = findChild_Widget(navi, "detailtitle"); {
             setPos_Widget(detailTitle, init_I2(width_Widget(topPanel), 0));
@@ -722,6 +724,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
     setFlags_Widget(panels,
                     resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
                         frameless_WidgetFlag | focusRoot_WidgetFlag | commandOnClick_WidgetFlag |
+                        horizontalOffset_WidgetFlag |
                         /*overflowScrollable_WidgetFlag |*/ leftEdgeDraggable_WidgetFlag,
                     iTrue);
     setFlags_Widget(panels, overflowScrollable_WidgetFlag, iFalse);
