@@ -2735,35 +2735,41 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     if (equal_Command(cmd, "edgeswipe.ended") && argLabel_Command(cmd, "side") == 1) {
         iWidget *swipeParent = swipeParent_DocumentWidget_(d);
         iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
-//        iDocumentWidget *swipeInDoc = (iDocumentWidget *) swipeIn;
         /* "swipe.back" will soon follow. The `d` document will do the actual back navigation,
             switching immediately to a cached page. However, if one is not available, we'll need
             to show a blank page for a while. */
         if (swipeIn) {
+            iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+            iDocumentWidget *target = new_DocumentWidget();
+            addChildPos_Widget(swipeParent, iClob(target), back_WidgetAddPos);
+            setId_Widget(as_Widget(target), "swipeout");
+            swap_DocumentWidget_(target, d->doc, d);
             setUrlAndSource_DocumentWidget(d,
                                            swipeIn->mod.url,
                                            collectNewCStr_String("text/gemini"),
                                            collect_Block(new_Block(0)));
-            //swap_DocumentWidget_(d, swipeIn->doc, swipeIn);
             as_Widget(swipeIn)->offsetRef = NULL;
             destroy_Widget(as_Widget(swipeIn));
         }
     }
     if (equal_Command(cmd, "swipe.back")) {
+        iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+        iDocumentWidget *target = findChild_Widget(swipeParent, "swipeout");
         if (atOldest_History(d->mod.history)) {
             setVisualOffset_Widget(w, 0, 100, 0);
+            if (target) {
+                destroy_Widget(as_Widget(target)); /* didn't need it after all */
+            }
             return iTrue;
         }
-        iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-        iDocumentWidget *target = new_DocumentWidget();
-        setId_Widget(as_Widget(target), "swipeout");
+//        iDocumentWidget *target = new_DocumentWidget();
+//        setId_Widget(as_Widget(target), "swipeout");
         /* The target takes the old document and jumps on top. */
         target->widget.rect.pos = windowToInner_Widget(swipeParent, innerToWindow_Widget(w, zero_I2()));
         /* Note: `innerToWindow_Widget` does not apply visual offset. */
         target->widget.rect.size = w->rect.size;
         setFlags_Widget(as_Widget(target), fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
-        swap_DocumentWidget_(target, d->doc, d);
-        addChildPos_Widget(swipeParent, iClob(target), back_WidgetAddPos);
+//        swap_DocumentWidget_(target, d->doc, d);
         setFlags_Widget(as_Widget(d), refChildrenOffset_WidgetFlag, iTrue);
         as_Widget(d)->offsetRef = swipeParent;
         setVisualOffset_Widget(as_Widget(target), value_Anim(&w->visualOffset), 0, 0);
