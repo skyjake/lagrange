@@ -1797,7 +1797,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     if (parent) {
         addChild_Widget(parent, iClob(dlg));
     }
-    if (deviceType_App() != phone_AppDeviceType) {
+    if (deviceType_App() == desktop_AppDeviceType) { /* conserve space on mobile */
         setId_Widget(
             addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)),
                                  frameless_WidgetFlag),
