@@ -2614,14 +2614,15 @@ static void swap_DocumentWidget_(iDocumentWidget *d, iGmDocument *doc,
                                  iDocumentWidget *swapBuffersWith) {
     if (doc) {
         iAssert(isInstance_Object(doc, &Class_GmDocument));
-        iGmDocument *copy = ref_Object(doc);
-        iRelease(d->doc);
-        d->doc = copy;
+        replaceDocument_DocumentWidget_(d, doc);
         d->scrollY = swapBuffersWith->scrollY;
-        updateVisible_DocumentWidget_(d);
+        iSwap(iBanner *, d->banner, swapBuffersWith->banner);
+        setOwner_Banner(d->banner, d);
+        setOwner_Banner(swapBuffersWith->banner, swapBuffersWith);
         iSwap(iVisBuf *,     d->visBuf,     swapBuffersWith->visBuf);
         iSwap(iVisBufMeta *, d->visBufMeta, swapBuffersWith->visBufMeta);
         iSwap(iDrawBufs *,   d->drawBufs,   swapBuffersWith->drawBufs);
+        updateVisible_DocumentWidget_(d);
         invalidate_DocumentWidget_(swapBuffersWith);
     }
 }
@@ -2645,12 +2646,9 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 return iTrue;
             }
             iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-            /* The temporary "swipeIn" will display the previous page until the finger is lifted. */
+            /* The temporary "swipein" will display the previous page until the finger is lifted. */
             iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
             if (!swipeIn) {
-                const iBool sidebarSwipe = iFalse; /* && (isPortraitPhone_App() &&
-                                            d->flags & openedFromSidebar_DocumentWidgetFlag &&
-                                            !isVisible_Widget(findWidget_App("sidebar"))); */
                 swipeIn = new_DocumentWidget();
                 setId_Widget(as_Widget(swipeIn), "swipein");
                 setFlags_Widget(as_Widget(swipeIn),
@@ -2659,11 +2657,12 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 swipeIn->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
                 swipeIn->widget.rect.size = d->widget.rect.size;
                 swipeIn->widget.offsetRef = parent_Widget(w);
-                if (!sidebarSwipe) {
+                /* Use a cached document for the layer underneath. */ {
                     iRecentUrl *recent = new_RecentUrl();
                     preceding_History(d->mod.history, recent);
                     if (recent->cachedDoc) {
                         iChangeRef(swipeIn->doc, recent->cachedDoc);
+                        updateBanner_DocumentWidget_(swipeIn);
                         updateScrollMax_DocumentWidget_(d);
                         setValue_Anim(&swipeIn->scrollY.pos,
                                       pageHeight_DocumentWidget_(d) * recent->normScrollY, 0);
@@ -2687,7 +2686,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     iWidget *swipeParent = swipeParent_DocumentWidget_(d);
                     iDocumentWidget *target = new_DocumentWidget();
                     setId_Widget(as_Widget(target), "swipeout");
-                    /* The target takes the old document and jumps on top. */
+                    /* The target takes the old document and goes underneath. */
                     target->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
                     target->widget.rect.size = d->widget.rect.size;
                     setFlags_Widget(as_Widget(target), fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
