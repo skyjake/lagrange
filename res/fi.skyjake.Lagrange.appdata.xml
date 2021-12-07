@@ -45,6 +45,22 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.9.2" date="2021-12-07">
+            <description>
+                <p>Changes in v1.9.2:</p>
+                <ul>
+                    <li>Fixed possible crash when switching Feeds sidebar filter mode
+                        via the popup menu.</li>
+                    <li>Shorter label for "Mark All as Read" in Feeds sidebar actions.</li>
+                    <li>In popup menus, differentiate between selected item and
+                        hover item.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.9.2</url>
+        </release>
         <release version="1.9.1" date="2021-11-29">
             <description>
                 <p>Changes in v1.9.1:</p>
