@@ -561,13 +561,8 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
     if (destY < -d->overscroll) {
         destY = -d->overscroll;
     }
-    if (d->max > 0) {
-        if (destY >= d->max + d->overscroll) {
-            destY = d->max + d->overscroll;
-        }
-    }
-    else {
-        destY = 0;
+    if (destY >= d->max + d->overscroll) {
+        destY = d->max + d->overscroll;
     }
     if (span) {
         setValueEased_Anim(&d->pos, destY, span);
