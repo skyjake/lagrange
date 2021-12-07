@@ -748,10 +748,12 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     }
     UIColor *textColor = makeUIColor_(uiInputTextFocused_ColorId);
     UIColor *backgroundColor = makeUIColor_(uiInputBackgroundFocused_ColorId);
+    UIColor *tintColor = makeUIColor_(uiInputCursor_ColorId);
     [appState_ setSystemTextInput:d];
     if (d->field) {
         UITextField *field = REF_d_field;
         [field setTextColor:textColor];
+        [field setTintColor:tintColor];
         [field setDelegate:appState_];
         [field becomeFirstResponder];
     }
@@ -759,6 +761,7 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
         UITextView *view = REF_d_view;
         [view setTextColor:textColor];
         [view setBackgroundColor:backgroundColor];
+        [view setTintColor:tintColor];
         [view setEditable:YES];
 //        [REF_d_view setSelectable:YES];
         const float inset = gap_UI / get_Window()->pixelRatio;
