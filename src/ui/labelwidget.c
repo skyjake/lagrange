@@ -198,6 +198,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     const iBool    isSel       = (flags & selected_WidgetFlag) != 0;
     const iBool    isFrameless = (flags & frameless_WidgetFlag) != 0;
     const iBool    isButton    = d->click.button != 0;
+    const iBool    isMenuItem  = !cmp_String(id_Widget(parent_Widget(d)), "menu");
     const iBool    isKeyRoot   = (w->root == get_Window()->keyRoot);
     const iBool    isDarkTheme = isDark_ColorTheme(colorTheme_App());
     /* Default color state. */
@@ -215,7 +216,12 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         *meta = uiTextDisabled_ColorId;
     }
     if (isSel) {
-        *bg = uiBackgroundSelected_ColorId;
+        if (isMenuItem) {
+            *bg = uiBackgroundUnfocusedSelection_ColorId;
+        }
+        else {
+            *bg = uiBackgroundSelected_ColorId;            
+        }
 //        if (!isKeyRoot) {
 //            *bg = uiEmbossSelected1_ColorId; //uiBackgroundUnfocusedSelection_ColorId;
 //        }

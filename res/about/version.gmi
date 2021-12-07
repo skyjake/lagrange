@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.9.2
+* Windows: Use the correct version number for update checks.
+* Fixed possible crash when switching Feeds sidebar filter mode via the popup menu.
+* Shorter label for "Mark All as Read" in Feeds sidebar actions.
+* In popup menus, differentiate between selected item and hover item.
+* Updated UI translations.
+
 ## 1.9.1
 * Added "24-Hour Time" preference. Currently it only affects the page timestamp in the bottom left corner.
 * Heading level 3 is indented like regular text lines, making the difference to level 2 evident.
@@ -17,7 +24,6 @@
 * Fixed the New Tab button not staying at the right edge of the window, depending on how many tabs are open.
 
 ## 1.9
-
 New features:
 * Added a toolbar button for toggling the left sidebar.
 * Added an unsplit button in the toolbar when in split view mode.
