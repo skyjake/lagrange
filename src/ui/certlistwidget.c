@@ -91,6 +91,12 @@ static iGmIdentity *menuIdentity_CertListWidget_(const iCertListWidget *d) {
 
 static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
     iArray *items = collectNew_Array(sizeof(iMenuItem));
+    const iString *docUrl = url_DocumentWidget(document_App());
+    size_t firstIndex = 0;
+    if (deviceType_App() != desktop_AppDeviceType && !isEmpty_String(docUrl)) {
+        pushBack_Array(items, &(iMenuItem){ format_CStr("```%s", cstr_String(docUrl)) });
+        firstIndex = 1;
+    }
     pushBackN_Array(items, (iMenuItem[]){
         { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
         { close_Icon " ${ident.stopuse}", 0, 0, "ident.use arg:0" },
@@ -105,11 +111,10 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
     /* Used URLs. */
     const iGmIdentity *ident = menuIdentity_CertListWidget_(d);
     if (ident) {
-        size_t insertPos = 3;
+        size_t insertPos = firstIndex + 3;
         if (!isEmpty_StringSet(ident->useUrls)) {
             insert_Array(items, insertPos++, &(iMenuItem){ "---", 0, 0, NULL });
         }
-        const iString *docUrl = url_DocumentWidget(document_App());
         iBool usedOnCurrentPage = iFalse;
         iConstForEach(StringSet, i, ident->useUrls) {            
             const iString *url = i.value;
@@ -126,10 +131,10 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
                                        format_CStr("!open url:%s", cstr_String(url)) });
         }
         if (!usedOnCurrentPage) {
-            remove_Array(items, 1);
+            remove_Array(items, firstIndex + 1);
         }
         else {
-            remove_Array(items, 0);
+            remove_Array(items, firstIndex);
         }
     }
     destroy_Widget(d->menu);    
