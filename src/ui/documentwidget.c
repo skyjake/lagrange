@@ -2096,7 +2096,10 @@ static iString *makeQueryUrl_DocumentWidget_(const iDocumentWidget *d,
     appendCStr_String(url, "?");
     iString *cleaned = copy_String(userEnteredText);
     if (deviceType_App() != desktop_AppDeviceType) {
-        trim_String(cleaned); /* autocorrect may insert an extra space */
+        trimEnd_String(cleaned); /* autocorrect may insert an extra space */
+        if (isEmpty_String(cleaned)) {
+            set_String(cleaned, userEnteredText); /* user wanted just spaces? */
+        }
     }
     append_String(url, collect_String(urlEncode_String(cleaned)));
     delete_String(cleaned);
