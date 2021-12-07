@@ -1397,7 +1397,6 @@ void createUserInterface_Root(iRoot *d) {
         }
         /* The active identity menu. */ {
             iLabelWidget *idButton = new_LabelWidget(person_Icon, "identmenu.open");
-//                "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
             setAlignVisually_LabelWidget(idButton, iTrue);
             setId_Widget(addChildFlags_Widget(navBar, iClob(idButton), collapse_WidgetFlag), "navbar.ident");
         }
@@ -1459,8 +1458,8 @@ void createUserInterface_Root(iRoot *d) {
             addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
         }
         else {
-            /* Sidebar is a slide-over. */
-            addChild_Widget(/*findChild_Widget(root, "stack")*/ root, iClob(sidebar1));
+            /* Sidebar is a slide-over sheet. */
+            addChild_Widget(root, iClob(sidebar1));
             setFlags_Widget(as_Widget(sidebar1), hidden_WidgetFlag, iTrue);            
         }
     }
