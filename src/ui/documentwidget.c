@@ -1200,7 +1200,6 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
                         resizeWidthOfChildren_WidgetFlag | arrangeHeight_WidgetFlag |
                         fixedPosition_WidgetFlag | resizeToParentWidth_WidgetFlag,
                     iTrue);
-    //setBackgroundColor_Widget(d->footerButtons, tmBackground_ColorId);
     for (size_t i = 0; i < count; ++i) {
         iLabelWidget *button = addChildFlags_Widget(
             d->footerButtons,
@@ -1210,11 +1209,8 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
         setPadding1_Widget(as_Widget(button), gap_UI / 2);
         checkIcon_LabelWidget(button);
         setFont_LabelWidget(button, uiContent_FontId);
+        setBackgroundColor_Widget(as_Widget(button), uiBackgroundSidebar_ColorId);
     }
-//    if (deviceType_App() == phone_AppDeviceType) {
-        /* Footer buttons shouldn't be under the toolbar. */
-//        addChild_Widget(d->footerButtons, iClob(makePadding_Widget(height_Widget(d->phoneToolbar))));
-//    }
     addChild_Widget(as_Widget(d), iClob(d->footerButtons));
     arrange_Widget(d->footerButtons);
     arrange_Widget(w);
