@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-28 23:50+0000\n"
+"PO-Revision-Date: 2021-12-01 16:50+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -2163,3 +2163,10 @@ msgstr "Колір фону"
 
 msgid "menu.update"
 msgstr "Перевірити наявність оновлень…"
+
+msgid "prefs.time.24h"
+msgstr "24-годинний час"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Прочитати всі"
