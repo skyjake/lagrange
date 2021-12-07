@@ -1038,7 +1038,6 @@ static iBool isHintVisible_InputWidget_(const iInputWidget *d) {
 static void updateBuffered_InputWidget_(iInputWidget *d) {
     invalidateBuffered_InputWidget_(d);
     if (isHintVisible_InputWidget_(d)) {
-        /* TODO: This should have a "maximum number of lines" parameter! */
         d->buffered = newRange_TextBuf(d->font, uiAnnotation_ColorId, range_String(&d->hint));
     }
     else {
@@ -1069,6 +1068,7 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
             }
         }
         iWrapText wt = wrap_InputWidget_(d, 0);
+        wt.maxLines = d->maxWrapLines;
         wt.text = range_String(visText);
         const int fg = uiInputText_ColorId;
         d->buffered = new_TextBuf(&wt, d->font, fg);

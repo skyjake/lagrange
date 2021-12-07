@@ -1406,6 +1406,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iBool        isFirst            = iTrue;
     const iBool  checkHitPoint      = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
     const iBool  checkHitChar       = wrap && wrap->hitChar;
+    size_t       numWrapLines       = 0;
     while (!isEmpty_Range(&wrapRuns)) {
         if (isFirst) {
             isFirst = iFalse;
@@ -1633,6 +1634,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                               wrapAttrib,
                               origin,
                               iRound(wrapAdvance))) {
+            willAbortDueToWrap = iTrue;
+        }
+        numWrapLines++;
+        if (wrap && wrap->maxLines && numWrapLines == wrap->maxLines) {
             willAbortDueToWrap = iTrue;
         }
         wrapAttrib = lastAttrib;

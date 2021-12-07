@@ -202,6 +202,7 @@ struct Impl_WrapText {
     /* arguments */
     iRangecc    text;
     int         maxWidth;
+    size_t      maxLines; /* 0: unlimited */
     enum iWrapTextMode mode;
     iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, iTextAttrib attrib, int origin,
                           int advance);
@@ -239,6 +240,5 @@ struct Impl_TextBuf {
     iInt2        size;
 };
 
-iTextBuf *  newRange_TextBuf (int font, int color, iRangecc text);
-
+iTextBuf *  newRange_TextBuf(int font, int color, iRangecc text);
 void        draw_TextBuf    (const iTextBuf *, iInt2 pos, int color);
