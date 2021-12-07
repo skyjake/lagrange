@@ -330,7 +330,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     }
     init_PersistentDocumentState(&d->mod);
     d->flags           = 0;
-    d->phoneToolbar    = NULL;
+    d->phoneToolbar    = findWidget_App("toolbar");
     d->footerButtons   = NULL;
     iZap(d->certExpiry);
     d->certFingerprint  = new_Block(0);
@@ -961,7 +961,8 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     animateMedia_DocumentWidget_(d);
     /* Remember scroll positions of recently visited pages. */ {
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
-        if (recent && docSize && d->state == ready_RequestState) {
+        if (recent && docSize && d->state == ready_RequestState &&
+            equal_String(&recent->url, d->mod.url)) {
             recent->normScrollY = normScrollPos_DocumentWidget_(d);
         }
     }
@@ -1162,27 +1163,14 @@ static void replaceDocument_DocumentWidget_(iDocumentWidget *d, iGmDocument *new
 }
 
 static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
-    /* TODO: Set width. */
     setSite_Banner(d->banner, siteText_DocumentWidget_(d), siteIcon_GmDocument(d->doc));
 }
 
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     if (document_App() != d || category_GmStatusCode(d->sourceStatus) == categoryInput_GmStatusCode) {
         return;
-    }
-    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
-        iBlock empty;
-        init_Block(&empty, 0);
-        setThemeSeed_GmDocument(d->doc, &empty);
-        deinit_Block(&empty);
-    }
-    else if (isEmpty_String(d->titleUser)) {
-        setThemeSeed_GmDocument(d->doc,
-                                collect_Block(newRange_Block(urlHost_String(d->mod.url))));
-    }
-    else {
-        setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
-    }
+    }    
+//    setThemeSeed_GmDocument(d->doc, urlThemeSeed_String(d->mod.url)); /* theme palette and icon */
     d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
     updateBanner_DocumentWidget_(d);
 }
@@ -2616,6 +2604,7 @@ static void swap_DocumentWidget_(iDocumentWidget *d, iGmDocument *doc,
         iAssert(isInstance_Object(doc, &Class_GmDocument));
         replaceDocument_DocumentWidget_(d, doc);
         d->scrollY = swapBuffersWith->scrollY;
+        d->scrollY.widget = as_Widget(d);
         iSwap(iBanner *, d->banner, swapBuffersWith->banner);
         setOwner_Banner(d->banner, d);
         setOwner_Banner(swapBuffersWith->banner, swapBuffersWith);
@@ -2629,6 +2618,14 @@ static void swap_DocumentWidget_(iDocumentWidget *d, iGmDocument *doc,
 
 static iWidget *swipeParent_DocumentWidget_(iDocumentWidget *d) {
     return findChild_Widget(as_Widget(d)->root->widget, "doctabs");
+}
+
+static void setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
+    url = canonicalUrl_String(url);
+    if (!equal_String(d->mod.url, url)) {
+        d->flags |= urlChanged_DocumentWidgetFlag;
+        set_String(d->mod.url, url);
+    }
 }
 
 static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -2658,18 +2655,31 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 swipeIn->widget.rect.size = d->widget.rect.size;
                 swipeIn->widget.offsetRef = parent_Widget(w);
                 /* Use a cached document for the layer underneath. */ {
-                    iRecentUrl *recent = new_RecentUrl();
-                    preceding_History(d->mod.history, recent);
-                    if (recent->cachedDoc) {
+//                    iRecentUrl *recent = new_RecentUrl();
+                    lock_History(d->mod.history);
+                    iRecentUrl *recent = precedingLocked_History(d->mod.history);
+                    if (recent && recent->cachedResponse) {
+                        /*
                         iChangeRef(swipeIn->doc, recent->cachedDoc);
                         updateBanner_DocumentWidget_(swipeIn);
                         updateScrollMax_DocumentWidget_(d);
                         setValue_Anim(&swipeIn->scrollY.pos,
                                       pageHeight_DocumentWidget_(d) * recent->normScrollY, 0);
                         updateVisible_DocumentWidget_(swipeIn);
-                        swipeIn->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
+                        swipeIn->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;*/
+                        setUrl_DocumentWidget_(swipeIn, &recent->url);
+                        updateFromCachedResponse_DocumentWidget_(swipeIn,
+                                                                 recent->normScrollY,
+                                                                 recent->cachedResponse,
+                                                                 recent->cachedDoc);
                     }
-                    delete_RecentUrl(recent);
+                    else {
+                        setUrlAndSource_DocumentWidget(swipeIn, &recent->url,
+                                                       collectNewCStr_String("text/gemini"),
+                                                       collect_Block(new_Block(0)));
+                    }
+//                    delete_RecentUrl(recent);
+                    unlock_History(d->mod.history);
                 }
                 addChildPos_Widget(swipeParent, iClob(swipeIn), front_WidgetAddPos);
             }
@@ -2677,8 +2687,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         if (side == 2) { /* right edge */
             if (offset < -get_Window()->pixelRatio * 10) {
                 int animSpan = 10;
-                if (!atLatest_History(d->mod.history) &&
-                    ~flags_Widget(w) & dragged_WidgetFlag) {
+                if (!atLatest_History(d->mod.history) && ~flags_Widget(w) & dragged_WidgetFlag) {
                     animSpan = 0;
                     postCommand_Widget(d, "navigate.forward");
                     setFlags_Widget(w, dragged_WidgetFlag, iTrue);
@@ -2695,6 +2704,13 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     setFlags_Widget(as_Widget(target), refChildrenOffset_WidgetFlag, iTrue);
                     as_Widget(target)->offsetRef = parent_Widget(w);
                     destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
+                    /* The `d` document will now navigate forward and be replaced with a cached
+                       copy. However, if a cached response isn't available, we'll need to show a
+                       blank page. */
+                    setUrlAndSource_DocumentWidget(d,
+                                                   collectNewCStr_String("about:blank"),
+                                                   collectNewCStr_String("text/gemini"),
+                                                   collect_Block(new_Block(0)));
                 }
                 if (flags_Widget(w) & dragged_WidgetFlag) {
                     setVisualOffset_Widget(w, width_Widget(w) +
@@ -2718,10 +2734,19 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     }
     if (equal_Command(cmd, "edgeswipe.ended") && argLabel_Command(cmd, "side") == 1) {
         iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-        iWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
+        iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
+//        iDocumentWidget *swipeInDoc = (iDocumentWidget *) swipeIn;
+        /* "swipe.back" will soon follow. The `d` document will do the actual back navigation,
+            switching immediately to a cached page. However, if one is not available, we'll need
+            to show a blank page for a while. */
         if (swipeIn) {
-            swipeIn->offsetRef = NULL;
-            destroy_Widget(swipeIn);
+            setUrlAndSource_DocumentWidget(d,
+                                           swipeIn->mod.url,
+                                           collectNewCStr_String("text/gemini"),
+                                           collect_Block(new_Block(0)));
+            //swap_DocumentWidget_(d, swipeIn->doc, swipeIn);
+            as_Widget(swipeIn)->offsetRef = NULL;
+            destroy_Widget(as_Widget(swipeIn));
         }
     }
     if (equal_Command(cmd, "swipe.back")) {
@@ -2824,14 +2849,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "window.mouse.exited")) {
         return iFalse;
     }
-    else if (equal_Command(cmd, "theme.changed") && document_App() == d) {
-//        invalidateTheme_History(d->mod.history); /* cached colors */
-        updateTheme_DocumentWidget_(d);
-        updateVisible_DocumentWidget_(d);
-        updateTrust_DocumentWidget_(d, NULL);
-        d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
-        invalidate_DocumentWidget_(d);
-        refresh_Widget(w);
+    else if (equal_Command(cmd, "theme.changed")) {
+        invalidateTheme_History(d->mod.history); /* forget cached color palettes */
+        if (document_App() == d) {
+            updateTheme_DocumentWidget_(d);
+            updateVisible_DocumentWidget_(d);
+            updateTrust_DocumentWidget_(d, NULL);
+            d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
+            invalidate_DocumentWidget_(d);
+            refresh_Widget(w);
+        }
     }
     else if (equal_Command(cmd, "document.layout.changed") && document_Root(get_Root()) == d) {
         if (argLabel_Command(cmd, "redo")) {
@@ -5047,6 +5074,7 @@ static void prerender_DocumentWidget_(iAny *context) {
     };
 //    printf("%u prerendering\n", SDL_GetTicks());
     if (d->visBuf->buffers[0].texture) {
+        makePaletteGlobal_GmDocument(d->doc);
         if (render_DocumentWidget_(d, &ctx, iTrue /* just fill up progressively */)) {
             /* Something was drawn, should check if there is still more to do. */
             addTicker_App(prerender_DocumentWidget_, context);
@@ -5062,10 +5090,11 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (width_Rect(bounds) <= 0) {
         return;
     }
-    /* TODO: Come up with a better palette caching system.
-       It should be able to recompute cached colors in `History` when the theme has changed.
-       Cache the theme seed in `GmDocument`? */
-//    makePaletteGlobal_GmDocument(d->doc);
+    /* Each document has its own palette, but the drawing routines rely on a global one.
+       As we're now drawing a document, ensure that the right palette is in effect.
+       Document theme colors can be used elsewhere, too, but first a document's palette
+       must be made global. */
+    makePaletteGlobal_GmDocument(d->doc);
     if (d->drawBufs->flags & updateTimestampBuf_DrawBufsFlag) {
         updateTimestampBuf_DocumentWidget_(d);
     }
@@ -5319,14 +5348,6 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
     updateFromHistory_DocumentWidget_(d);
 }
 
-static void setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
-    url = canonicalUrl_String(url);
-    if (!equal_String(d->mod.url, url)) {
-        d->flags |= urlChanged_DocumentWidgetFlag;
-        set_String(d->mod.url, url);
-    }
-}
-
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags) {
     iChangeFlags(d->flags, openedFromSidebar_DocumentWidgetFlag,
                  (setUrlFlags & openedFromSidebar_DocumentWidgetSetUrlFlag) != 0);
@@ -5352,6 +5373,7 @@ void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, cons
     set_String(&resp->meta, mime);
     set_Block(&resp->body, source);
     updateFromCachedResponse_DocumentWidget_(d, 0, resp, NULL);
+    updateBanner_DocumentWidget_(d);
     delete_GmResponse(resp);
 }
 

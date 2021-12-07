@@ -110,6 +110,14 @@ iHistory *copy_History(const iHistory *d) {
     return copy;
 }
 
+void lock_History(iHistory *d) {
+    lock_Mutex(d->mtx);
+}
+
+void unlock_History(iHistory *d) {
+    unlock_Mutex(d->mtx);
+}
+
 iMemInfo memoryUsage_History(const iHistory *d) {
     iMemInfo mem = { 0, 0 };
     iConstForEach(Array, i, &d->recent) {
@@ -297,20 +305,22 @@ void add_History(iHistory *d, const iString *url) {
     unlock_Mutex(d->mtx);
 }
 
-iBool preceding_History(iHistory *d, iRecentUrl *recent_out) {
+iRecentUrl *precedingLocked_History(iHistory *d) {
+    /* NOTE: Manual lock and unlock are required when using this; returning an internal pointer. */
     iBool ok = iFalse;
-    lock_Mutex(d->mtx);
-    if (!isEmpty_Array(&d->recent) && d->recentPos < size_Array(&d->recent) - 1) {
-        const iRecentUrl *recent = constAt_Array(&d->recent, size_Array(&d->recent) - 1 -
-                                                 (d->recentPos + 1));
-        set_String(&recent_out->url, &recent->url);
-        recent_out->normScrollY = recent->normScrollY;
-        iChangeRef(recent_out->cachedDoc, recent->cachedDoc);
+    //lock_Mutex(d->mtx);
+    const size_t lastIndex = size_Array(&d->recent) - 1;
+    if (!isEmpty_Array(&d->recent) && d->recentPos < lastIndex) {
+        return at_Array(&d->recent, lastIndex - (d->recentPos + 1));
+//        set_String(&recent_out->url, &recent->url);
+//        recent_out->normScrollY = recent->normScrollY;
+//        iChangeRef(recent_out->cachedDoc, recent->cachedDoc);
         /* Cached response is not returned, would involve a deep copy. */
-        ok = iTrue;
+//        ok = iTrue;
     }
-    unlock_Mutex(d->mtx);
-    return ok;
+    //unlock_Mutex(d->mtx);
+//    return ok;
+    return NULL;
 }
 
 #if 0
@@ -395,12 +405,20 @@ void setCachedDocument_History(iHistory *d, iGmDocument *doc, iBool openedFromSi
     lock_Mutex(d->mtx);
     iRecentUrl *item = mostRecentUrl_History(d);
     if (item) {
-        iAssert(equal_String(url_GmDocument(doc), &item->url));
-        item->flags.openedFromSidebar = openedFromSidebar;
-        if (item->cachedDoc != doc) {
-            iRelease(item->cachedDoc);
-            item->cachedDoc = ref_Object(doc);
+        if (equal_String(url_GmDocument(doc), &item->url)) {
+            item->flags.openedFromSidebar = openedFromSidebar;
+            if (item->cachedDoc != doc) {
+                iRelease(item->cachedDoc);
+                item->cachedDoc = ref_Object(doc);
+            }
         }
+#if !defined (NDEBUG)
+        else {
+            printf("[History] Not updating cached document; expecting {%s} but document URL is {%s}\n",
+                   cstr_String(&item->url),
+                   cstr_String(url_GmDocument(doc)));
+        }
+#endif
     }
     unlock_Mutex(d->mtx);
 }

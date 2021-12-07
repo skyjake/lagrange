@@ -1710,9 +1710,12 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 }
 
 void makePaletteGlobal_GmDocument(const iGmDocument *d) {
-    if (d->isPaletteValid) {
-        memcpy(get_Root()->tmPalette, d->palette, sizeof(d->palette));
+    if (!d->isPaletteValid) {
+        /* Recompute the palette since it's needed now. */
+        setThemeSeed_GmDocument((iGmDocument *) d, urlThemeSeed_String(&d->url));
     }
+    iAssert(d->isPaletteValid);
+    memcpy(get_Root()->tmPalette, d->palette, sizeof(d->palette));
 }
 
 void invalidatePalette_GmDocument(iGmDocument *d) {
@@ -1885,6 +1888,7 @@ static void normalize_GmDocument(iGmDocument *d) {
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     url = canonicalUrl_String(url);
     set_String(&d->url, url);
+    setThemeSeed_GmDocument(d, urlThemeSeed_String(url));
     iUrl parts;
     init_Url(&parts, url);
     setRange_String(&d->localHost, parts.host);

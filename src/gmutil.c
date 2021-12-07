@@ -253,6 +253,17 @@ iRangecc urlRoot_String(const iString *d) {
     return (iRangecc){ constBegin_String(d), rootEnd };
 }
 
+const iBlock *urlThemeSeed_String(const iString *url) {
+    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
+        return collect_Block(new_Block(0));
+    }
+    const iRangecc user = urlUser_String(url);
+    if (isEmpty_Range(&user)) {
+        return collect_Block(newRange_Block(urlHost_String(url)));
+    }
+    return collect_Block(newRange_Block(user));
+}
+
 static iBool isAbsolutePath_(iRangecc path) {
     return isAbsolute_Path(collect_String(urlDecode_String(collect_String(newRange_String(path)))));
 }

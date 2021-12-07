@@ -58,6 +58,8 @@ iDeclareTypeConstruction(History)
 iDeclareTypeSerialization(History)
 
 iHistory *  copy_History                (const iHistory *);
+void        lock_History                (iHistory *);
+void        unlock_History              (iHistory *);
 
 void        clear_History               (iHistory *);
 void        add_History                 (iHistory *, const iString *url);
@@ -66,8 +68,7 @@ void        setCachedResponse_History   (iHistory *, const iGmResponse *response
 void        setCachedDocument_History   (iHistory *, iGmDocument *doc, iBool openedFromSidebar);
 iBool       goBack_History              (iHistory *);
 iBool       goForward_History           (iHistory *);
-iBool       preceding_History           (iHistory *d, iRecentUrl *recent_out);
-//iBool       following_History           (iHistory *d, iRecentUrl *recent_out);
+iRecentUrl *precedingLocked_History     (iHistory *); /* requires manual lock/unlock! */
 iRecentUrl *recentUrl_History           (iHistory *, size_t pos);
 iRecentUrl *mostRecentUrl_History       (iHistory *);
 iRecentUrl *findUrl_History             (iHistory *, const iString *url);
