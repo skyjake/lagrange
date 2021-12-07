@@ -759,13 +759,10 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     }
     else {
         UITextView *view = REF_d_view;
-        [view setTextColor:textColor];
         [view setBackgroundColor:backgroundColor];
+        [view setTextColor:textColor];
         [view setTintColor:tintColor];
         [view setEditable:YES];
-//        [REF_d_view setSelectable:YES];
-        const float inset = gap_UI / get_Window()->pixelRatio;
-        //[view setTextContainerInset:(UIEdgeInsets){ inset - 1, -inset - 1, 0, -inset - 1 }];
         [view setDelegate:appState_];
         [view becomeFirstResponder];
     }
