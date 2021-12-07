@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-28 23:50+0000\n"
+"PO-Revision-Date: 2021-12-08 14:50+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -728,3 +728,21 @@ msgstr "La ŝarĝado finita."
 
 msgid "menu.update"
 msgstr "Kontroli ĝisdatigojn…"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Versio %d"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Malebligi \"%s\":n"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Ebligi \"%s\":n"
+
+msgid "heading.fontpack.meta"
+msgstr "Tiparoj"
+
+msgid "dlg.dismiss.warning"
+msgstr "Ignori averton"
