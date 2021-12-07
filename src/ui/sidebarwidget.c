@@ -299,12 +299,12 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
                     break; /* the rest are even older */
                 }
-                isEmpty = iFalse;
                 const iBool isOpen = equal_String(docUrl, &entry->url);
                 const iBool isUnread = isUnread_FeedEntry(entry);
                 if (d->feedsMode == unread_FeedsMode && !isUnread && !isOpen) {
                     continue;
                 }
+                isEmpty = iFalse;
                 /* Insert date separators. */ {
                     iDate entryDate;
                     init_Date(&entryDate, &entry->posted);
@@ -600,9 +600,18 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
     if (isEmpty) {
         if (d->mode == feeds_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
-            setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
+            //setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
+            arrange_Widget(d->actions);
+            setPadding_Widget(div, 0, 0, 0, height_Widget(d->actions));
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
-            addChild_Widget(div, iClob(new_LabelWidget("${menu.feeds.refresh}", "feeds.refresh")));
+            if (d->feedsMode == all_FeedsMode) {
+                addChild_Widget(div, iClob(new_LabelWidget("${menu.feeds.refresh}", "feeds.refresh")));
+            }
+            else {
+                iLabelWidget *msg = addChildFlags_Widget(div, iClob(new_LabelWidget("${sidebar.empty.unread}", NULL)),
+                                                         frameless_WidgetFlag);
+                setFont_LabelWidget(msg, uiLabelLarge_FontId);
+            }
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             addChild_Widget(d->blank, iClob(div));
         }
@@ -963,12 +972,6 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             break;
         }
         case bookmarks_SidebarMode:
-            if (d->isEditing) {
-                d->contextItem = item;
-                d->contextIndex = itemIndex;
-                postCommand_Widget(d, "bookmark.edit");
-                break;
-            }
             if (isEmpty_String(&item->url)) /* a folder */ {
                 if (contains_IntSet(d->closedFolders, item->id)) {
                     remove_IntSet(d->closedFolders, item->id);
@@ -979,6 +982,12 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                     setRecentFolder_Bookmarks(bookmarks_App(), 0);
                 }
                 updateItems_SidebarWidget_(d);
+                break;
+            }
+            if (d->isEditing) {
+                d->contextItem = item;
+                d->contextIndex = itemIndex;
+                postCommand_Widget(d, "bookmark.edit");
                 break;
             }
             /* fall through */
@@ -1298,8 +1307,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     /* Handle commands. */
     if (isResize_UserEvent(ev)) {
         checkModeButtonLayout_SidebarWidget_(d);
-        if (deviceType_App() == phone_AppDeviceType) { // && d->side == left_SidebarSide) {
-//            setFlags_Widget(w, rightEdgeDraggable_WidgetFlag, isPortrait_App());
+        if (deviceType_App() == phone_AppDeviceType) {
             setPadding_Widget(d->actions, 0, 0, 0, 0);
             setFlags_Widget(findChild_Widget(w, "sidebar.title"), hidden_WidgetFlag, isLandscape_App());
             setFlags_Widget(findChild_Widget(w, "sidebar.close"), hidden_WidgetFlag, isLandscape_App());

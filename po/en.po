@@ -686,6 +686,9 @@ msgstr "Delete Identity and Files"
 msgid "sidebar.empty.idents"
 msgstr "No Identities"
 
+msgid "sidebar.empty.unread"
+msgstr "No Unread Entries"
+
 # The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
 #, c-format
 msgid "ident.gotohelp"
