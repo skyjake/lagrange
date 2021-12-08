@@ -1123,6 +1123,8 @@ static void showOrHidePinningIndicator_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
+    iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
+    setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse);
     updateVisitedLinks_GmDocument(d->doc);
     documentRunsInvalidated_DocumentWidget_(d);
     updateWindowTitle_DocumentWidget_(d);
