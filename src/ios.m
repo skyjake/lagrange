@@ -695,7 +695,7 @@ static CGRect convertToCGRect_(const iRect *rect, iBool expanded) {
         frame.origin.x -= inset + 1;
         frame.origin.y -= inset + 1;
         frame.size.width += 2 * inset + 2;
-        frame.size.height += inset + 1;
+        frame.size.height += inset + 1 + inset;
     }
     return frame;
 }

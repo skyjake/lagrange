@@ -722,18 +722,19 @@ static void updateAllLinesAndResizeHeight_InputWidget_(iInputWidget *d) {
 #endif
 
 static int contentHeight_InputWidget_(const iInputWidget *d) {
+    const int lineHeight = lineHeight_Text(d->font);
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
-    const int minHeight = d->minWrapLines * lineHeight_Text(d->font);
-    const int maxHeight = d->maxWrapLines * lineHeight_Text(d->font);
+    const int minHeight = d->minWrapLines * lineHeight;
+    const int maxHeight = d->maxWrapLines * lineHeight;
     if (d->sysCtrl) {
-        const int preferred = preferredHeight_SystemTextInput(d->sysCtrl);
-        return iClamp(preferred, minHeight, maxHeight);
+        const int preferred = (preferredHeight_SystemTextInput(d->sysCtrl) + gap_UI) / lineHeight;
+        return iClamp(preferred * lineHeight, minHeight, maxHeight);
     }
     if (d->buffered && ~d->inFlags & needUpdateBuffer_InputWidgetFlag) {
         return iClamp(d->buffered->size.y, minHeight, maxHeight);
     }
 #endif
-    return size_Range(&d->visWrapLines) * lineHeight_Text(d->font);
+    return (int) size_Range(&d->visWrapLines) * lineHeight;
 }
 
 static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
@@ -1178,6 +1179,7 @@ void begin_InputWidget(iInputWidget *d) {
     setText_SystemTextInput(d->sysCtrl, &d->oldText);
     setTextChangedFunc_SystemTextInput(d->sysCtrl, systemInputChanged_InputWidget_, d);
     iConnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
+    updateTextInputRect_InputWidget_(d);
     updateMetrics_InputWidget_(d);
 #else
     mergeLines_(&d->lines, &d->oldText);
