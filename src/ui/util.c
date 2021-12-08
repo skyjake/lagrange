@@ -480,6 +480,7 @@ void init_SmoothScroll(iSmoothScroll *d, iWidget *owner, iSmoothScrollNotifyFunc
     d->widget = owner;
     d->notify = notify;
     d->pullActionTriggered = 0;
+    d->flags = 0;
 }
 
 void reset_SmoothScroll(iSmoothScroll *d) {
@@ -550,7 +551,7 @@ void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
     }
 #endif
     int destY = targetValue_Anim(&d->pos) + offset;
-    if (destY < -pullActionThreshold_SmoothScroll_(d)) {
+    if (d->flags & pullDownAction_SmoothScrollFlag && destY < -pullActionThreshold_SmoothScroll_(d)) {
         if (d->pullActionTriggered == 0) {
             d->pullActionTriggered = iTrue;
 #if defined (iPlatformAppleMobile)
@@ -764,12 +765,13 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 drawKey_WidgetFlag | itemFlags);
             setWrap_LabelWidget(label, isInfo);
             haveIcons |= checkIcon_LabelWidget(label);
-            updateSize_LabelWidget(label); /* drawKey was set */
             setFlags_Widget(as_Widget(label), disabled_WidgetFlag, isDisabled);
             if (isInfo) {
-                setFlags_Widget(as_Widget(label), fixedHeight_WidgetFlag, iTrue); /* wrap changes height */
+                setFlags_Widget(as_Widget(label), resizeToParentWidth_WidgetFlag |
+                                fixedHeight_WidgetFlag, iTrue); /* wrap changes height */
                 setTextColor_LabelWidget(label, uiTextAction_ColorId);
             }
+            updateSize_LabelWidget(label); /* drawKey was set */
         }
     }
     if (deviceType_App() == phone_AppDeviceType) {
@@ -1051,7 +1053,8 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
 #else
     const iRect rootRect        = rect_Root(d->root);
     const iInt2 rootSize        = rootRect.size;
-    const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
+    const iBool isPhone         = (deviceType_App() == phone_AppDeviceType);
+    const iBool isPortraitPhone = (isPhone && isPortrait_App());
     const iBool isSlidePanel    = (flags_Widget(d) & horizontalOffset_WidgetFlag) != 0;
     if (postCommands) {
         postCommand_App("cancel"); /* dismiss any other menus */
@@ -1139,16 +1142,14 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     raise_Widget(d);
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, 
-                        !isPortraitPhone);
+                        !isPhone);
         setFlags_Widget(d,
                         resizeWidthOfChildren_WidgetFlag | drawBackgroundToBottom_WidgetFlag |
                             drawBackgroundToVerticalSafeArea_WidgetFlag,
-                        isPortraitPhone);
-        if (isPortraitPhone) {
-            if (!isSlidePanel) {
-                setFlags_Widget(d, borderTop_WidgetFlag, iTrue);
-            }
-            d->rect.size.x = rootSize.x;
+                        isPhone);
+        if (isPhone) {
+            setFlags_Widget(d, borderTop_WidgetFlag, !isSlidePanel && isPortrait_App()); /* menu is otherwise frameless */
+            setFixedSize_Widget(d, init_I2(iMin(rootSize.x, rootSize.y), -1));
         }
         else {
             d->rect.size.x = 0;
@@ -1156,12 +1157,18 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     }
     updateMenuItemFonts_Widget_(d);
     arrange_Widget(d);
-    if (isPortraitPhone) {
+    if (!isSlidePanel) {
+        /* LAYOUT BUG: Height of wrapped menu items is incorrect with a single arrange! */
+        arrange_Widget(d);
+    }
+    if (deviceType_App() == phone_AppDeviceType) {
         if (isSlidePanel) {
             d->rect.pos = zero_I2();
         }
         else {
-            d->rect.pos = init_I2(0, rootSize.y);
+            d->rect.pos = windowToLocal_Widget(d,
+                                               init_I2(rootSize.x / 2 - d->rect.size.x / 2,
+                                                       rootSize.y));
         }
     }
     else if (menuOpenFlags & center_MenuOpenFlags) {
@@ -1638,7 +1645,7 @@ static void acceptValueInput_(iWidget *dlg) {
     }
 }
 
-static void updateValueInputWidth_(iWidget *dlg) {
+static void updateValueInputSizing_(iWidget *dlg) {
     const iRect safeRoot = safeRect_Root(dlg->root);
     const iInt2 rootSize = safeRoot.size;
     iWidget *   title    = findChild_Widget(dlg, "valueinput.title");
@@ -1651,20 +1658,15 @@ static void updateValueInputWidth_(iWidget *dlg) {
             iMin(rootSize.x, iMaxi(iMaxi(100 * gap_UI, title->rect.size.x), prompt->rect.size.x));
     }
     /* Adjust the maximum number of visible lines. */
-    int footer = 6 * gap_UI + get_MainWindow()->keyboardHeight;
-#if defined (iPlatformAppleMobile)
-    if (deviceType_App() == phone_AppDeviceType) {
-        footer -= 12 * gap_UI; /* A little suspect, this... Check the math? */
-    }
-#endif
+    int footer = 6 * gap_UI;
     iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
-    if (buttons) {
+    if (buttons && deviceType_App() == desktop_AppDeviceType) {
         footer += height_Widget(buttons);
     }
     iInputWidget *input = findChild_Widget(dlg, "input");
     setLineLimits_InputWidget(input,
                               1,
-                              (bottom_Rect(safeRect_Root(dlg->root)) - footer -
+                              (bottom_Rect(visibleRect_Root(dlg->root)) - footer -
                                top_Rect(boundsWithoutVisualOffset_Widget(as_Widget(input)))) /
                                   lineHeight_Text(font_InputWidget(input)));
 }
@@ -1673,7 +1675,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     iWidget *ptr = as_Widget(pointer_Command(cmd));
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "keyboard.changed")) {
         if (isVisible_Widget(dlg)) {
-            updateValueInputWidth_(dlg);
+            updateValueInputSizing_(dlg);
             arrange_Widget(dlg);
         }
         return iFalse;
@@ -1847,7 +1849,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
             dlg->rect.pos.y -= delta;
         }
     }
-    updateValueInputWidth_(dlg);
+    updateValueInputSizing_(dlg);
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | top_TransitionDir);
     return dlg;
 }
@@ -1855,7 +1857,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
 void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) {
     setTextCStr_LabelWidget(findChild_Widget(d, "valueinput.title"), title);
     setTextCStr_LabelWidget(findChild_Widget(d, "valueinput.prompt"), prompt);
-    updateValueInputWidth_(d);
+    updateValueInputSizing_(d);
 }
 
 static void updateQuestionWidth_(iWidget *dlg) {

@@ -348,6 +348,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->ordinalBase      = 0;
     d->initNormScrollY  = 0;
     init_SmoothScroll(&d->scrollY, w, scrollBegan_DocumentWidget_);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        d->scrollY.flags |= pullDownAction_SmoothScrollFlag; /* pull to refresh */
+    }
     d->animWideRunId = 0;
     init_Anim(&d->animWideRunOffset, 0);
     d->selectMark       = iNullRange;

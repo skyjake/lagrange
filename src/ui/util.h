@@ -179,11 +179,17 @@ iDeclareType(SmoothScroll)
 
 typedef void (*iSmoothScrollNotifyFunc)(iAnyObject *, int offset, uint32_t span);
 
+enum iSmoothScrollFlags {
+    pullDownAction_SmoothScrollFlag = iBit(1),
+    pullUpAction_SmoothScrollFlag = iBit(2),
+};
+
 struct Impl_SmoothScroll {
     iAnim    pos;
     int      max;
     int      overscroll;
     iWidget *widget;
+    int      flags;
     int      pullActionTriggered;
     iSmoothScrollNotifyFunc notify;
 };
