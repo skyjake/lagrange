@@ -3204,6 +3204,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "document.translate") && d == document_App()) {
         if (!d->translation) {
             d->translation = new_Translation(d);
+            if (isUsingPanelLayout_Mobile()) {
+                const iRect safe = safeRect_Root(w->root);
+                d->translation->dlg->rect.pos = windowToLocal_Widget(w, zero_I2());
+                d->translation->dlg->rect.size = safe.size;
+            }
         }
         return iTrue;
     }

@@ -759,7 +759,7 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     }
     else {
         UITextView *view = REF_d_view;
-        [view setBackgroundColor:backgroundColor];
+        [view setBackgroundColor:[UIColor colorWithWhite:1.0f alpha:0.0f]];
         [view setTextColor:textColor];
         [view setTintColor:tintColor];
         [view setEditable:YES];

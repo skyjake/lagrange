@@ -1655,7 +1655,8 @@ static void updateValueInputSizing_(iWidget *dlg) {
     }
     else {
         dlg->rect.size.x =
-            iMin(rootSize.x, iMaxi(iMaxi(100 * gap_UI, title->rect.size.x), prompt->rect.size.x));
+            iMin(rootSize.x, iMaxi(iMaxi(100 * gap_UI, title ? title->rect.size.x : 0),
+                                   prompt->rect.size.x));
     }
     /* Adjust the maximum number of visible lines. */
     int footer = 6 * gap_UI;
