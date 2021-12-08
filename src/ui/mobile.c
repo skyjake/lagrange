@@ -156,7 +156,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
             if (isSideBySide) {
                 setVisualOffset_Widget(panel, 0, 0, 0);
             }
-            setPadding_Widget(panel, pad, 0, pad, pad);
+            setPadding_Widget(panel, pad, 0, pad, pad + bottomSafeInset_Mobile());
         }
         arrange_Widget(mainDetailSplit);
         updateCertListHeight_(detailStack);

@@ -1698,9 +1698,10 @@ iRect safeRect_Root(const iRoot *d) {
 
 iRect visibleRect_Root(const iRoot *d) {
     iRect visRect = rect_Root(d);
+    float bottom = 0.0f;
 #if defined (iPlatformAppleMobile)
     /* TODO: Check this on device... Maybe DisplayUsableBounds would be good here, too? */
-    float left, top, right, bottom;
+    float left, top, right;
     safeAreaInsets_iOS(&left, &top, &right, &bottom);
     visRect.pos.x = (int) left;
     visRect.size.x -= (int) (left + right);
@@ -1725,6 +1726,6 @@ iRect visibleRect_Root(const iRoot *d) {
         visRect = intersect_Rect(visRect, init_Rect(usable.x, usable.y, usable.w, usable.h));        
     }
 #endif
-    adjustEdges_Rect(&visRect, 0, 0, -get_MainWindow()->keyboardHeight, 0);
+    adjustEdges_Rect(&visRect, 0, 0, -get_MainWindow()->keyboardHeight + bottom, 0);
     return visRect;
 }
