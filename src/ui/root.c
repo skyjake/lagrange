@@ -581,14 +581,20 @@ static void updateNavBarIdentity_(iWidget *navBar) {
 
 static void updateNavDirButtons_(iWidget *navBar) {
     const iHistory *history = history_DocumentWidget(document_App());
-    setFlags_Widget(findChild_Widget(navBar, "navbar.back"), disabled_WidgetFlag,
-                    atOldest_History(history));
-    setFlags_Widget(findChild_Widget(navBar, "navbar.forward"), disabled_WidgetFlag,
-                    atLatest_History(history));
-    setFlags_Widget(findWidget_App("toolbar.back"), disabled_WidgetFlag,
-                    atOldest_History(history));
-    setFlags_Widget(findWidget_App("toolbar.forward"), disabled_WidgetFlag,
-                    atLatest_History(history));
+    const iBool atOldest = atOldest_History(history);
+    const iBool atNewest = atNewest_History(history);
+    setFlags_Widget(findChild_Widget(navBar, "navbar.back"), disabled_WidgetFlag, atOldest);
+    setFlags_Widget(findChild_Widget(navBar, "navbar.forward"), disabled_WidgetFlag, atNewest);
+    iWidget *toolBar = findWidget_App("toolbar");
+    if (toolBar) {
+        iLabelWidget *back = findChild_Widget(toolBar, "toolbar.back");
+        iLabelWidget *fwd  = findChild_Widget(toolBar, "toolbar.forward");
+        setFlags_Widget(as_Widget(back), disabled_WidgetFlag, atOldest);
+        setOutline_LabelWidget(back, atOldest);
+        setFlags_Widget(as_Widget(fwd), disabled_WidgetFlag, atNewest);
+        setOutline_LabelWidget(fwd, atNewest);
+        refresh_Widget(toolBar);
+    }
 }
 
 static const char *loadAnimationCStr_(void) {
