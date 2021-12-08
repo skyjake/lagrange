@@ -6,6 +6,17 @@
 ```
 # Release notes
 
+## 1.10 (2)
+* Fixed pull-to-refresh on short pages.
+* Fixed URL field contents not being clipped to widget bounds.
+* Fixed major glitches in back/forward swipe navigation, e.g., top banner showing incorrect contents, incorrect theme colors, scroll position jumping.
+* Fixed major and minor UI element positioning glitches, e.g., native text fields, maximum height of input fields, input length counter, Translate dialog.
+* Fixed inappropriate font sizes, e.g., sidebar action labels.
+* Fixed color issues: tint color of native input, and footer buttons not being prominent enough.
+* Bookmarks: In Edit mode, folders still get (un)folded when tapped.
+* Feeds: Added "No Unread Entries" message.
+* Identities: Show the current page's URL in the context menu to make it clearer what "This Page" refers to.
+
 ## 1.10 (1)
 * Use native iOS text input UI controls for entering text.
 * Pull-to-refresh on pages.
