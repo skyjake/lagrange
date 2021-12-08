@@ -2628,11 +2628,36 @@ static void setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     }
 }
 
-static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
+static void setupSwipeOverlay_DocumentWidget_(iDocumentWidget *d, iWidget *overlay) {
     iWidget *w = as_Widget(d);
-    /* Swipe animations are rather complex and utilize both cached GmDocument content
-       and temporary DocumentWidgets. Depending on the swipe direction, this DocumentWidget
-       may wait until the finger is released to actually perform the navigation action. */
+    iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+    /* The target takes the old document and jumps on top. */
+    overlay->rect.pos = windowToInner_Widget(swipeParent, innerToWindow_Widget(w, zero_I2()));
+    /* Note: `innerToWindow_Widget` does not apply visual offset. */
+    overlay->rect.size = w->rect.size;
+    setFlags_Widget(overlay, fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
+//        swap_DocumentWidget_(target, d->doc, d);
+    setFlags_Widget(as_Widget(d), refChildrenOffset_WidgetFlag, iTrue);
+    as_Widget(d)->offsetRef = swipeParent;
+    /* `overlay` animates off the screen to the right. */
+    setVisualOffset_Widget(overlay, value_Anim(&w->visualOffset), 0, 0);
+    setVisualOffset_Widget(overlay, width_Widget(overlay), 150, 0);
+    setVisualOffset_Widget(w, 0, 0, 0);
+}
+
+static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
+    /* TODO: Cleanup
+       If DocumentWidget is refactored to split the document presentation from state
+       and request management (a new DocumentView class), plain views could be used for this
+       animation without having to mess with the complete state of the DocumentWidget. That
+       seems like a less error-prone approach -- the current implementation will likely break
+       down (again) if anything is changed in the document internals.
+    */
+    iWidget *w = as_Widget(d);
+    /* The swipe animation is implemented in a rather complex way. It utilizes both cached
+       GmDocument content and temporary underlay/overlay DocumentWidgets. Depending on the
+       swipe direction, the DocumentWidget `d` may wait until the finger is released to actually
+       perform the navigation action. */
     if (equal_Command(cmd, "edgeswipe.moved")) {
         //printf("[%p] responds to edgeswipe.moved\n", d);
         as_Widget(d)->offsetRef = NULL;
@@ -2651,34 +2676,27 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 setFlags_Widget(as_Widget(swipeIn),
                                 disabled_WidgetFlag | refChildrenOffset_WidgetFlag |
                                 fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
+                setFlags_Widget(findChild_Widget(as_Widget(swipeIn), "scroll"), hidden_WidgetFlag, iTrue);
                 swipeIn->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
                 swipeIn->widget.rect.size = d->widget.rect.size;
                 swipeIn->widget.offsetRef = parent_Widget(w);
                 /* Use a cached document for the layer underneath. */ {
-//                    iRecentUrl *recent = new_RecentUrl();
                     lock_History(d->mod.history);
                     iRecentUrl *recent = precedingLocked_History(d->mod.history);
                     if (recent && recent->cachedResponse) {
-                        /*
-                        iChangeRef(swipeIn->doc, recent->cachedDoc);
-                        updateBanner_DocumentWidget_(swipeIn);
-                        updateScrollMax_DocumentWidget_(d);
-                        setValue_Anim(&swipeIn->scrollY.pos,
-                                      pageHeight_DocumentWidget_(d) * recent->normScrollY, 0);
-                        updateVisible_DocumentWidget_(swipeIn);
-                        swipeIn->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;*/
                         setUrl_DocumentWidget_(swipeIn, &recent->url);
                         updateFromCachedResponse_DocumentWidget_(swipeIn,
                                                                  recent->normScrollY,
                                                                  recent->cachedResponse,
                                                                  recent->cachedDoc);
+                        parseUser_DocumentWidget_(swipeIn);
+                        updateBanner_DocumentWidget_(swipeIn);
                     }
                     else {
                         setUrlAndSource_DocumentWidget(swipeIn, &recent->url,
                                                        collectNewCStr_String("text/gemini"),
                                                        collect_Block(new_Block(0)));
                     }
-//                    delete_RecentUrl(recent);
                     unlock_History(d->mod.history);
                 }
                 addChildPos_Widget(swipeParent, iClob(swipeIn), front_WidgetAddPos);
@@ -2687,7 +2705,8 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         if (side == 2) { /* right edge */
             if (offset < -get_Window()->pixelRatio * 10) {
                 int animSpan = 10;
-                if (!atLatest_History(d->mod.history) && ~flags_Widget(w) & dragged_WidgetFlag) {
+                if (!atNewest_History(d->mod.history) && ~flags_Widget(w) & dragged_WidgetFlag) {
+                    /* Setup the drag. `d` will be moving with the finger. */
                     animSpan = 0;
                     postCommand_Widget(d, "navigate.forward");
                     setFlags_Widget(w, dragged_WidgetFlag, iTrue);
@@ -2695,7 +2714,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     iWidget *swipeParent = swipeParent_DocumentWidget_(d);
                     iDocumentWidget *target = new_DocumentWidget();
                     setId_Widget(as_Widget(target), "swipeout");
-                    /* The target takes the old document and goes underneath. */
+                    /* "swipeout" takes `d`'s document and goes underneath. */
                     target->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
                     target->widget.rect.size = d->widget.rect.size;
                     setFlags_Widget(as_Widget(target), fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
@@ -2703,7 +2722,8 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     addChildPos_Widget(swipeParent, iClob(target), front_WidgetAddPos);
                     setFlags_Widget(as_Widget(target), refChildrenOffset_WidgetFlag, iTrue);
                     as_Widget(target)->offsetRef = parent_Widget(w);
-                    destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
+                    /* Mark it for deletion after animation finishes. */
+                    destroy_Widget(as_Widget(target));
                     /* The `d` document will now navigate forward and be replaced with a cached
                        copy. However, if a cached response isn't available, we'll need to show a
                        blank page. */
@@ -2726,10 +2746,26 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     }
     if (equal_Command(cmd, "edgeswipe.ended") && argLabel_Command(cmd, "side") == 2) {
         if (argLabel_Command(cmd, "abort") && flags_Widget(w) & dragged_WidgetFlag) {
+            setFlags_Widget(w, dragged_WidgetFlag, iFalse);
             postCommand_Widget(d, "navigate.back");
+            /* We must now undo the swap that was done when the drag started. */
+            /* TODO: Currently not animated! What exactly is the appropriate thing to do here? */
+            iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+            iDocumentWidget *swipeOut = findChild_Widget(swipeParent, "swipeout");
+            swap_DocumentWidget_(d, swipeOut->doc, swipeOut);
+//            const int visOff = visualOffsetByReference_Widget(w);
+            w->offsetRef = NULL;
+//            setVisualOffset_Widget(w, visOff, 0, 0);
+//            setVisualOffset_Widget(w, 0, 150, 0);
+            setVisualOffset_Widget(w, 0, 0, 0);
+            /* Make it an overlay instead. */
+//            removeChild_Widget(swipeParent, swipeOut);
+//            addChildPos_Widget(swipeParent, iClob(swipeOut), back_WidgetAddPos);
+//            setupSwipeOverlay_DocumentWidget_(d, as_Widget(swipeOut));
+            return iTrue;
         }
         setFlags_Widget(w, dragged_WidgetFlag, iFalse);
-        setVisualOffset_Widget(w, 0, 100, 0);
+        setVisualOffset_Widget(w, 0, 150, 0);
         return iTrue;
     }
     if (equal_Command(cmd, "edgeswipe.ended") && argLabel_Command(cmd, "side") == 1) {
@@ -2739,16 +2775,20 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             switching immediately to a cached page. However, if one is not available, we'll need
             to show a blank page for a while. */
         if (swipeIn) {
-            iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-            iDocumentWidget *target = new_DocumentWidget();
-            addChildPos_Widget(swipeParent, iClob(target), back_WidgetAddPos);
-            setId_Widget(as_Widget(target), "swipeout");
-            swap_DocumentWidget_(target, d->doc, d);
-            setUrlAndSource_DocumentWidget(d,
-                                           swipeIn->mod.url,
-                                           collectNewCStr_String("text/gemini"),
-                                           collect_Block(new_Block(0)));
-            as_Widget(swipeIn)->offsetRef = NULL;
+            if (!argLabel_Command(cmd, "abort")) {
+                iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+                /* What was being shown in the `d` document is now being swapped to
+                   the outgoing page animation. */
+                iDocumentWidget *target = new_DocumentWidget();
+                addChildPos_Widget(swipeParent, iClob(target), back_WidgetAddPos);
+                setId_Widget(as_Widget(target), "swipeout");
+                swap_DocumentWidget_(target, d->doc, d);
+                setUrlAndSource_DocumentWidget(d,
+                                               swipeIn->mod.url,
+                                               collectNewCStr_String("text/gemini"),
+                                               collect_Block(new_Block(0)));
+                as_Widget(swipeIn)->offsetRef = NULL;
+            }
             destroy_Widget(as_Widget(swipeIn));
         }
     }
@@ -2762,20 +2802,8 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             }
             return iTrue;
         }
-//        iDocumentWidget *target = new_DocumentWidget();
-//        setId_Widget(as_Widget(target), "swipeout");
-        /* The target takes the old document and jumps on top. */
-        target->widget.rect.pos = windowToInner_Widget(swipeParent, innerToWindow_Widget(w, zero_I2()));
-        /* Note: `innerToWindow_Widget` does not apply visual offset. */
-        target->widget.rect.size = w->rect.size;
-        setFlags_Widget(as_Widget(target), fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
-//        swap_DocumentWidget_(target, d->doc, d);
-        setFlags_Widget(as_Widget(d), refChildrenOffset_WidgetFlag, iTrue);
-        as_Widget(d)->offsetRef = swipeParent;
-        setVisualOffset_Widget(as_Widget(target), value_Anim(&w->visualOffset), 0, 0);
-        setVisualOffset_Widget(as_Widget(target), width_Widget(target), 150, 0);
+        setupSwipeOverlay_DocumentWidget_(d, as_Widget(target));
         destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
-        setVisualOffset_Widget(w, 0, 0, 0);
         postCommand_Widget(d, "navigate.back");
         return iTrue;
     }
@@ -5292,6 +5320,11 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
     }
 //    drawRect_Paint(&ctx.paint, docBounds, red_ColorId);
+    if (deviceType_App() == phone_AppDeviceType) {
+        /* The phone toolbar uses the palette of the active tab, but there may be other
+           documents drawn before the toolbar, causing the colors to be incorrect. */
+        makePaletteGlobal_GmDocument(document_App()->doc);
+    }
 }
 
 /*----------------------------------------------------------------------------------------------*/

@@ -370,7 +370,7 @@ iBool goForward_History(iHistory *d) {
     return iFalse;
 }
 
-iBool atLatest_History(const iHistory *d) {
+iBool atNewest_History(const iHistory *d) {
     iBool isLatest;
     iGuardMutex(d->mtx, isLatest = (d->recentPos == 0));
     return isLatest;

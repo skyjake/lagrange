@@ -79,7 +79,7 @@ size_t      pruneLeastImportantMemory_History   (iHistory *);
 void        invalidateTheme_History             (iHistory *); /* theme has changed, cached contents need updating */
 void        invalidateCachedLayout_History      (iHistory *);
 
-iBool       atLatest_History            (const iHistory *);
+iBool       atNewest_History            (const iHistory *);
 iBool       atOldest_History            (const iHistory *);
 
 const iStringArray *   searchContents_History   (const iHistory *, const iRegExp *pattern); /* chronologically ascending */
