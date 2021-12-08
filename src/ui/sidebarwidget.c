@@ -212,7 +212,7 @@ static enum iFontId actionButtonFont_SidebarWidget_(const iSidebarWidget *d) {
         default:
             break;
         case phone_AppDeviceType:
-            return uiLabelBig_FontId;
+            return isPortrait_App() ? uiLabelBig_FontId : uiLabelMedium_FontId;
         case tablet_AppDeviceType:
             return uiLabelMedium_FontId;
     }

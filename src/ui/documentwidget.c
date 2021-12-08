@@ -2201,7 +2201,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 }
                 iWidget *counter = (iWidget *) new_LabelWidget("", NULL);
                 setId_Widget(counter, "valueinput.counter");
-                setFlags_Widget(counter, frameless_WidgetFlag, iTrue);
+                setFlags_Widget(counter, frameless_WidgetFlag | resizeToParentHeight_WidgetFlag, iTrue);
                 if (deviceType_App() == desktop_AppDeviceType) {
                     addChildPos_Widget(buttons, iClob(counter), front_WidgetAddPos);
                 }
@@ -3215,17 +3215,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return wasHandled;
     }
-    else if (equal_Command(cmd, "document.upload") && d == document_App()) {
+    else if (equal_Command(cmd, "document.upload") && d == document_App()) {        
         if (findChild_Widget(root_Widget(w), "upload")) {
             return iTrue; /* already open */
         }
-        if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") ||
-            equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
+        const iBool isGemini = equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini");
+        if (isGemini || equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
             iUploadWidget *upload = new_UploadWidget();
             setUrl_UploadWidget(upload, d->mod.url);
             setResponseViewer_UploadWidget(upload, d);
             addChild_Widget(get_Root()->widget, iClob(upload));
-//            finalizeSheet_Mobile(as_Widget(upload));
             setupSheetTransition_Mobile(as_Widget(upload), iTrue);
             postRefresh_App();
         }
