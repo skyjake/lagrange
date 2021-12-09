@@ -92,17 +92,19 @@ static void updateProgress_UploadWidget_(iGmRequest *request, size_t current, si
 static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
     iWidget *w = as_Widget(d);    
     /* Calculate how many lines fits vertically in the view. */
-    const iInt2 inputPos     = topLeft_Rect(bounds_Widget(as_Widget(d->input)));
-    const int   footerHeight = isUsingPanelLayout_Mobile() ? 0 :
-                                (height_Widget(d->token) +
-                                 height_Widget(findChild_Widget(w, "dialogbuttons")) +
-                                 12 * gap_UI);
-    const int   avail        = bottom_Rect(safeRect_Root(w->root)) - footerHeight -
-                               get_MainWindow()->keyboardHeight;
-    setLineLimits_InputWidget(d->input,
-                              minLines_InputWidget(d->input),
-                              iMaxi(minLines_InputWidget(d->input),
-                                    (avail - inputPos.y) / lineHeight_Text(font_InputWidget(d->input))));
+    const iInt2 inputPos = topLeft_Rect(bounds_Widget(as_Widget(d->input)));
+    int footerHeight = 0;
+    if (!isUsingPanelLayout_Mobile()) {
+        footerHeight = (height_Widget(d->token) +
+                        height_Widget(findChild_Widget(w, "dialogbuttons")) +
+                        12 * gap_UI);
+    }
+    const int avail = bottom_Rect(visibleRect_Root(w->root)) - footerHeight - inputPos.y;
+    /* On desktop, retain the previously set minLines value. */
+    int minLines = isUsingPanelLayout_Mobile() ? 1 : minLines_InputWidget(d->input);
+    int maxLines = iMaxi(minLines, avail / lineHeight_Text(font_InputWidget(d->input)));
+    /* On mobile, the height is fixed to the available space. */
+    setLineLimits_InputWidget(d->input, isUsingPanelLayout_Mobile() ? maxLines : minLines, maxLines);
 }
 
 static const iGmIdentity *titanIdentityForUrl_(const iString *url) {
@@ -208,11 +210,7 @@ void init_UploadWidget(iUploadWidget *d) {
             enableUploadButton_UploadWidget_(d, iFalse);
         }
         iWidget *title = findChild_Widget(w, "heading.upload.text");
-        iLabelWidget *menu = makeMenuButton_LabelWidget(midEllipsis_Icon, (iMenuItem[]){
-            { export_Icon " ${upload.text.export}", 0, 0, "upload.text.export" },
-            { "---" },
-            { delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "upload.text.delete" }
-        }, 3);
+        iLabelWidget *menu = new_LabelWidget(midEllipsis_Icon, "upload.editmenu.open");
         setTextColor_LabelWidget(menu, uiTextAction_ColorId);
         setFont_LabelWidget(menu, uiLabelBigBold_FontId);
         addChildFlags_Widget(title, iClob(menu), frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag);
@@ -428,12 +426,19 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     }
     else if (equal_Command(cmd, "panel.changed")) {
         showOrHideUploadButton_UploadWidget_(d);
-        setFocus_Widget(NULL);
+        if (currentPanelIndex_Mobile(w) == 0) {
+            setFocus_Widget(as_Widget(d->input));
+        }
+        else {
+            setFocus_Widget(NULL);
+        }
+        refresh_Widget(d->input);
         return iFalse;
     }
 #if defined (iPlatformAppleMobile)
     else if (deviceType_App() != desktop_AppDeviceType && equal_Command(cmd, "menu.opened")) {
         setFocus_Widget(NULL); /* overlaid text fields! */
+        refresh_Widget(d->input);
         return iFalse;
     }
 #endif
@@ -472,6 +477,44 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             d->idMode = none_UploadIdentity;
         }
         updateIdentityDropdown_UploadWidget_(d);
+        return iTrue;
+    }
+    if (isCommand_Widget(w, ev, "upload.editmenu.open")) {
+        setFocus_Widget(NULL);
+        refresh_Widget(as_Widget(d->input));
+        iWidget *editMenu = makeMenu_Widget(root_Widget(w), (iMenuItem[]){
+            { select_Icon " ${menu.selectall}", 0, 0, "upload.text.selectall" },
+            { export_Icon " ${menu.upload.export}", 0, 0, "upload.text.export" },
+            { "---" },
+            { delete_Icon " " uiTextCaution_ColorEscape "${menu.upload.delete}", 0, 0, "upload.text.delete" }
+        }, 4);
+        openMenu_Widget(editMenu, topLeft_Rect(bounds_Widget(as_Widget(d->input))));
+        return iTrue;
+    }
+    if (isCommand_UserEvent(ev, "upload.text.export")) {
+#if defined (iPlatformAppleMobile)
+        openTextActivityView_iOS(text_InputWidget(d->input));
+#endif
+        return iTrue;
+    }
+    if (isCommand_UserEvent(ev, "upload.text.delete")) {
+        if (argLabel_Command(command_UserEvent(ev), "confirmed")) {
+            setTextCStr_InputWidget(d->input, "");
+            setFocus_Widget(as_Widget(d->input));
+        }
+        else {
+            iWidget *confirm = makeMenu_Widget(root_Widget(w), (iMenuItem[]){
+                { delete_Icon " " uiTextCaution_ColorEscape "${menu.upload.delete.confirm}", 0, 0,
+                    "upload.text.delete confirmed:1" }
+                }, 1);
+            openMenu_Widget(confirm, zero_I2());
+        }
+        return iTrue;
+    }
+    if (isCommand_UserEvent(ev, "upload.text.selectall")) {
+        setFocus_Widget(as_Widget(d->input));
+        refresh_Widget(as_Widget(d->input));
+        postCommand_Widget(d->input, "input.selectall");
         return iTrue;
     }
     if (isCommand_Widget(w, ev, "upload.accept")) {
@@ -569,11 +612,16 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         destroy_Widget(w);
         return iTrue;        
     }
-    else if (!isUsingPanelLayout_Mobile() && isCommand_Widget(w, ev, "input.resized")) {
-        resizeToLargestPage_Widget(findChild_Widget(w, "upload.tabs"));
-        arrange_Widget(w);
-        refresh_Widget(w);
-        return iTrue;
+    else if (isCommand_Widget(w, ev, "input.resized")) {
+        if (!isUsingPanelLayout_Mobile()) {
+            resizeToLargestPage_Widget(findChild_Widget(w, "upload.tabs"));
+            arrange_Widget(w);
+            refresh_Widget(w);
+            return iTrue;
+        }
+        else {
+            refresh_Widget(as_Widget(d->input));
+        }
     }
     else if (isCommand_Widget(w, ev, "upload.pickfile")) {
 #if defined (iPlatformAppleMobile)

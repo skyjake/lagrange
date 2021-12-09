@@ -715,7 +715,8 @@ static void updateAllLinesAndResizeHeight_InputWidget_(iInputWidget *d) {
     const int height = measure_WrapText(&wt, d->font).bounds.size.y;
     /* We use this to store the number wrapped lines for determining widget height. */
     d->visWrapLines.start = 0;
-    d->visWrapLines.end = iMin(d->maxWrapLines, height / lineHeight_Text(d->font));
+    d->visWrapLines.end = iMax(d->minWrapLines,
+                               iMin(d->maxWrapLines, height / lineHeight_Text(d->font)));
     updateMetrics_InputWidget_(d);
 }
 
@@ -733,8 +734,10 @@ static int contentHeight_InputWidget_(const iInputWidget *d) {
     if (d->buffered && ~d->inFlags & needUpdateBuffer_InputWidgetFlag) {
         return iClamp(d->buffered->size.y, minHeight, maxHeight);
     }
-#endif
+    return minHeight;
+#else
     return (int) size_Range(&d->visWrapLines) * lineHeight;
+#endif
 }
 
 static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
@@ -1111,7 +1114,7 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
 #else
     set_String(&d->text, nfcText);
     if (d->sysCtrl) {
-        setText_SystemTextInput(d->sysCtrl, nfcText);
+        setText_SystemTextInput(d->sysCtrl, nfcText, iTrue);
     }
     else {
         updateAllLinesAndResizeHeight_InputWidget_(d); /* need to know the new height */
@@ -1134,7 +1137,11 @@ void setTextCStr_InputWidget(iInputWidget *d, const char *cstr) {
 }
 
 void selectAll_InputWidget(iInputWidget *d) {
-#if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
+#if LAGRANGE_USE_SYSTEM_TEXT_INPUT
+    if (d->sysCtrl) {
+        selectAll_SystemTextInput(d->sysCtrl);
+    }
+#else
     d->mark = (iRanges){ 0, lastLine_InputWidget_(d)->range.end };
     refresh_Widget(as_Widget(d));
 #endif
@@ -1177,7 +1184,7 @@ void begin_InputWidget(iInputWidget *d) {
                                      (isAllowedToInsertNewline_InputWidget_(d) ? insertNewlines_SystemTextInputFlag : 0) |
                                      (d->inFlags & selectAllOnFocus_InputWidgetFlag ? selectAll_SystemTextInputFlags : 0));
     setFont_SystemTextInput(d->sysCtrl, d->font);
-    setText_SystemTextInput(d->sysCtrl, &d->oldText);
+    setText_SystemTextInput(d->sysCtrl, &d->oldText, iFalse);
     setTextChangedFunc_SystemTextInput(d->sysCtrl, systemInputChanged_InputWidget_, d);
     iConnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
     updateTextInputRect_InputWidget_(d);
@@ -2157,10 +2164,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
         return iTrue;
     }
-    else if (isCommand_UserEvent(ev, "input.selectall") && isEditing_InputWidget_(d)) {
-        selectAll_InputWidget(d);
-        return iTrue;
-    }
     else if (isCommand_UserEvent(ev, "text.insert")) {
         pushUndo_InputWidget_(d);
         deleteMarked_InputWidget_(d);
@@ -2169,6 +2172,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
 #endif
+    else if (isCommand_UserEvent(ev, "input.selectall") && isEditing_InputWidget_(d)) {
+        selectAll_InputWidget(d);
+        return iTrue;
+    }
     else if (isCommand_UserEvent(ev, "theme.changed")) {
         if (d->buffered) {
             d->inFlags |= needUpdateBuffer_InputWidgetFlag;

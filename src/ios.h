@@ -38,6 +38,7 @@ void    playHapticEffect_iOS    (enum iHapticEffect effect);
 void    exportDownloadedFile_iOS(const iString *path);
 void    pickFileForOpening_iOS  (void);
 void    pickFile_iOS            (const char *command); /* ` path:%s` will be appended */
+void    openTextActivityView_iOS(const iString *text);
 
 iBool   isPhone_iOS             (void);
 void    safeAreaInsets_iOS      (float *left, float *top, float *right, float *bottom);
@@ -79,9 +80,11 @@ iDeclareType(SystemTextInput)
 iDeclareTypeConstructionArgs(SystemTextInput, iRect rect, int flags)
 
 void    setRect_SystemTextInput  (iSystemTextInput *, iRect rect);
-void    setText_SystemTextInput  (iSystemTextInput *, const iString *text);
+void    setText_SystemTextInput  (iSystemTextInput *, const iString *text, iBool allowUndo);
 void    setFont_SystemTextInput  (iSystemTextInput *, int fontId);
-void    setTextChangedFunc_SystemTextInput  (iSystemTextInput *, void (*textChangedFunc)(iSystemTextInput *, void *), void *);
+void    setTextChangedFunc_SystemTextInput
+                                 (iSystemTextInput *, void (*textChangedFunc)(iSystemTextInput *, void *), void *);
+void    selectAll_SystemTextInput(iSystemTextInput *);
 
 const iString * text_SystemTextInput    (const iSystemTextInput *);
 int     preferredHeight_SystemTextInput (const iSystemTextInput *);

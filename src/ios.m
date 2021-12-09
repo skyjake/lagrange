@@ -536,6 +536,15 @@ void pickFile_iOS(const char *command) {
     [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
 }
 
+void openTextActivityView_iOS(const iString *text) {
+    UIActivityViewController *actView =
+        [[UIActivityViewController alloc]
+         initWithActivityItems:@[
+            [NSString stringWithUTF8String:cstr_String(text)]]
+         applicationActivities:nil];
+    [viewController_(get_Window()) presentViewController:actView animated:YES completion:nil];
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 enum iAVFAudioPlayerState {
@@ -784,7 +793,16 @@ void deinit_SystemTextInput(iSystemTextInput *d) {
     }
 }
 
-void setText_SystemTextInput(iSystemTextInput *d, const iString *text) {
+void selectAll_SystemTextInput(iSystemTextInput *d) {
+    if (d->field) {
+        [REF_d_field selectAll:nil];
+    }
+    if (d->view) {
+        [REF_d_view selectAll:nil];
+    }
+}
+
+void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool allowUndo) {
     NSString *str = [NSString stringWithUTF8String:cstr_String(text)];
     if (d->field) {
         [REF_d_field setText:str];
@@ -793,9 +811,22 @@ void setText_SystemTextInput(iSystemTextInput *d, const iString *text) {
         }
     }
     else {
-        [REF_d_view setText:str];
+        UITextView *view = REF_d_view;
+//        if (allowUndo) {
+//            [view selectAll:nil];
+//            if ([view shouldChangeTextInRange:[view selectedTextRange] replacementText:@""]) {
+//                [[view textStorage] beginEditing];
+//                [[view textStorage] replaceCharactersInRange:[view selectedRange] withString:@""];
+//                [[view textStorage] endEditing];
+//            }
+//        }
+//        else {
+        // TODO: How to implement `allowUndo`, given that UITextView does not exist when unfocused?
+        // Maybe keep the UITextStorage (if it has the undo?)?
+        [view setText:str];
+//        }
         if (d->flags & selectAll_SystemTextInputFlags) {
-            [REF_d_view selectAll:nil];
+            [view selectAll:nil];
         }
     }
 }

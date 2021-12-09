@@ -671,6 +671,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "window.reload.update") ||
            equal_Command(cmd, "window.mouse.exited") ||
            equal_Command(cmd, "window.mouse.entered") ||
+           equal_Command(cmd, "input.backup") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
 

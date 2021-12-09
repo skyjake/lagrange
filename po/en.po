@@ -1017,6 +1017,15 @@ msgstr "Default"
 msgid "heading.upload.text"
 msgstr "Text"
 
+msgid "menu.upload.export"
+msgstr "Export Text"
+
+msgid "menu.upload.delete"
+msgstr "Delete All"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Really Delete All (No Undo)"
+
 msgid "hint.upload.text"
 msgstr "enter text to upload"
 

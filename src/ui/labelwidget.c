@@ -134,6 +134,10 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
         refresh_Widget(d);
         return iFalse;
     }
+    else if (isCommand_Widget(w, ev, "trigger")) {
+        trigger_LabelWidget_(d);
+        return iTrue;
+    }
     if (!isEmpty_String(&d->command)) {
 #if 0 && defined (iPlatformAppleMobile)
         /* Touch allows activating any button on release. */
