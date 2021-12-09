@@ -58,6 +58,7 @@ struct Impl_UploadWidget {
     iLabelWidget *   info;
     iInputWidget *   mime;
     iInputWidget *   token;
+    iLabelWidget *   ident;       
     iInputWidget *   input;
     iLabelWidget *   filePathLabel;
     iLabelWidget *   fileSizeLabel;
@@ -124,9 +125,10 @@ static const iArray *makeIdentityItems_UploadWidget_(const iUploadWidget *d) {
     iConstForEach(PtrArray, i, listIdentities_GmCerts(certs_App(), NULL, NULL)) {
         const iGmIdentity *id = i.ptr;
         iString *str = collect_String(copy_String(name_GmIdentity(id)));
+        prependCStr_String(str, uiTextStrong_ColorEscape);
         if (!isEmpty_String(&id->notes)) {
             appendFormat_String(
-                str, "\n%s%s", escape_Color(uiAnnotation_ColorId), cstr_String(&id->notes));
+                str, "\n%s%s", escape_Color(uiTextDim_ColorId), cstr_String(&id->notes));
         }
         pushBack_Array(
             items,
@@ -259,19 +261,20 @@ void init_UploadWidget(iUploadWidget *d) {
         /* Identity and Token. */ {
             addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
             iWidget *page = makeTwoColumns_Widget(&headings, &values);
+            /* Identity. */
+            const iArray *   identItems = makeIdentityItems_UploadWidget_(d);
+            const iMenuItem *items      = constData_Array(identItems);
+            const size_t     numItems   = size_Array(identItems);
+            d->ident                    = makeMenuButton_LabelWidget("${upload.id}", items, numItems);
+            setTextCStr_LabelWidget(d->ident, items[findWidestLabel_MenuItem(items, numItems)].label);
+            //setFixedSize_Widget(as_Widget(d->ident), init_I2(50 * gap_UI, ));
+            addChild_Widget(headings, iClob(makeHeading_Widget("${upload.id}")));
+            setId_Widget(addChildFlags_Widget(values, iClob(d->ident), alignLeft_WidgetFlag), "upload.id");
             /* Token. */
             d->token = addTwoColumnDialogInputField_Widget(
                 headings, values, "${upload.token}", "upload.token", iClob(new_InputWidget(0)));
             setHint_InputWidget(d->token, "${hint.upload.token}");
             setFixedSize_Widget(as_Widget(d->token), init_I2(50 * gap_UI, -1));            
-            /* Identity. */
-            const iArray *   identItems = makeIdentityItems_UploadWidget_(d);
-            const iMenuItem *items      = constData_Array(identItems);
-            const size_t     numItems   = size_Array(identItems);
-            iLabelWidget *   ident      = makeMenuButton_LabelWidget("${upload.id}", items, numItems);
-            setTextCStr_LabelWidget(ident, items[findWidestLabel_MenuItem(items, numItems)].label);
-            addChild_Widget(headings, iClob(makeHeading_Widget("${upload.id}")));
-            setId_Widget(addChildFlags_Widget(values, iClob(ident), alignLeft_WidgetFlag), "upload.id");
             addChild_Widget(w, iClob(page));
         }
         /* Buttons. */ {
@@ -287,6 +290,8 @@ void init_UploadWidget(iUploadWidget *d) {
         resizeToLargestPage_Widget(tabs);
         arrange_Widget(w);
         setFixedSize_Widget(as_Widget(d->token), init_I2(width_Widget(tabs) - left_Rect(parent_Widget(d->token)->rect), -1));
+        setFixedSize_Widget(as_Widget(d->ident), init_I2(width_Widget(d->token),
+                                                         lineHeight_Text(uiLabel_FontId) + 2 * gap_UI));
         setFlags_Widget(as_Widget(d->token), expand_WidgetFlag, iTrue);
         setFocus_Widget(as_Widget(d->input));
     }
@@ -560,7 +565,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         destroy_Widget(w);
         return iTrue;        
     }
-    else if (isCommand_Widget(w, ev, "input.resized")) {
+    else if (!isUsingPanelLayout_Mobile() && isCommand_Widget(w, ev, "input.resized")) {
         resizeToLargestPage_Widget(findChild_Widget(w, "upload.tabs"));
         arrange_Widget(w);
         refresh_Widget(w);

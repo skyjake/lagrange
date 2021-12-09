@@ -195,6 +195,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                                    int *icon, int *meta) {
     const iWidget *w           = constAs_Widget(d);
     const int64_t  flags       = flags_Widget(w);
+    const iBool    isHover     = isHover_LabelWidget_(d);
     const iBool    isFocus     = (flags & focusable_WidgetFlag && isFocused_Widget(d));
     const iBool    isPress     = (flags & pressed_WidgetFlag) != 0;
     const iBool    isSel       = (flags & selected_WidgetFlag) != 0;
@@ -222,9 +223,6 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     if (isSel) {
         if (!d->flags.checkMark) {     
             *bg = uiBackgroundSelected_ColorId;
-//        if (!isKeyRoot) {
-//            *bg = uiEmbossSelected1_ColorId; //uiBackgroundUnfocusedSelection_ColorId;
-//        }
             if (!isKeyRoot) {
                 *bg = isDark_ColorTheme(colorTheme_App()) ? uiBackgroundUnfocusedSelection_ColorId
                     : uiMarked_ColorId;
@@ -249,7 +247,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     if (colorEscape == uiTextCaution_ColorId) {
         *icon = *meta = colorEscape;
     }
-    if (isHover_LabelWidget_(d)) {
+    if (isHover) {
         if (isFrameless) {
             *bg = uiBackgroundFramelessHover_ColorId;
             *fg = uiTextFramelessHover_ColorId;
@@ -275,7 +273,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         }
     }
     if (d->forceFg >= 0) {
-        *fg = /* *icon = */ *meta = d->forceFg;
+        *fg = *meta = d->forceFg;
     }
     if (isPress) {
         if (colorEscape == uiTextAction_ColorId || colorEscape == uiTextCaution_ColorId) {
@@ -290,13 +288,12 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 *frame1 = uiEmbossPressed1_ColorId;
                 *frame2 = colorEscape != none_ColorId ? colorEscape : uiEmbossPressed2_ColorId;
             }
-            //if (colorEscape == none_ColorId || colorEscape == uiTextAction_ColorId) {
             *fg = *icon = *meta = uiTextPressed_ColorId | permanent_ColorId;
-    //        }
-    //        else {
-    //            *fg = (isDark_ColorTheme(colorTheme_App()) ? white_ColorId : black_ColorId) | permanent_ColorId;
-    //        }
         }
+    }
+    if (((isSel || isHover) && isFrameless) || isPress) {
+        /* Ensure that the full label text remains readable. */
+        *fg |= permanent_ColorId;
     }
 }
 

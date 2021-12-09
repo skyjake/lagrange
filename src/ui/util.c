@@ -1327,6 +1327,12 @@ const iString *removeMenuItemLabelPrefixes_String(const iString *d) {
     return collect_String(str);
 }
 
+static const iString *replaceNewlinesWithDash_(const iString *str) {
+    iString *mod = copy_String(str);
+    replace_String(mod, "\n", "  ");
+    return collect_String(mod);
+}
+
 void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *selectedCommand) {
     if (!dropButton) {
         return;
@@ -1337,8 +1343,9 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
         iMenuItem *item = findNativeMenuItem_Widget(menu, selectedCommand);
         if (item) {
             setSelected_NativeMenuItem(item, iTrue);
-            updateText_LabelWidget(
-                dropButton, removeMenuItemLabelPrefixes_String(collectNewCStr_String(item->label)));
+            updateText_LabelWidget(dropButton,
+                                   replaceNewlinesWithDash_(removeMenuItemLabelPrefixes_String(
+                                       collectNewCStr_String(item->label))));
             checkIcon_LabelWidget(dropButton);
         }
         return;
@@ -1349,7 +1356,8 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
             const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
             setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
             if (isSelected) {
-                updateText_LabelWidget(dropButton, sourceText_LabelWidget(item));
+                updateText_LabelWidget(dropButton,
+                                       replaceNewlinesWithDash_(text_LabelWidget(item)));
                 checkIcon_LabelWidget(dropButton);
             }
         }
