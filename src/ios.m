@@ -748,7 +748,7 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     }
     UIColor *textColor = makeUIColor_(uiInputTextFocused_ColorId);
     UIColor *backgroundColor = makeUIColor_(uiInputBackgroundFocused_ColorId);
-    UIColor *tintColor = makeUIColor_(uiInputCursor_ColorId);
+    UIColor *tintColor = makeUIColor_(uiInputFrameHover_ColorId); /* use the accent color */ //uiInputCursor_ColorId);
     [appState_ setSystemTextInput:d];
     if (d->field) {
         UITextField *field = REF_d_field;
