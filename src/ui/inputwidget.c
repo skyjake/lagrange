@@ -1150,6 +1150,7 @@ static void contentsWereChanged_InputWidget_(iInputWidget *);
 void systemInputChanged_InputWidget_(iSystemTextInput *sysCtrl, void *widget) {
     iInputWidget *d = widget;
     set_String(&d->text, text_SystemTextInput(sysCtrl));
+    restartBackupTimer_InputWidget_(d);
     contentsWereChanged_InputWidget_(d);
     updateMetrics_InputWidget_(d);
 }
