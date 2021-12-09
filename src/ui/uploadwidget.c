@@ -125,10 +125,10 @@ static const iArray *makeIdentityItems_UploadWidget_(const iUploadWidget *d) {
     iConstForEach(PtrArray, i, listIdentities_GmCerts(certs_App(), NULL, NULL)) {
         const iGmIdentity *id = i.ptr;
         iString *str = collect_String(copy_String(name_GmIdentity(id)));
-        prependCStr_String(str, uiTextStrong_ColorEscape);
+        prependCStr_String(str, "\x1b[1m");
         if (!isEmpty_String(&id->notes)) {
             appendFormat_String(
-                str, "\n%s%s", escape_Color(uiTextDim_ColorId), cstr_String(&id->notes));
+                str, "\x1b[0m\n%s%s", escape_Color(uiTextDim_ColorId), cstr_String(&id->notes));
         }
         pushBack_Array(
             items,
@@ -220,12 +220,16 @@ void init_UploadWidget(iUploadWidget *d) {
     else {
         useSheetStyle_Widget(w);
         setFlags_Widget(w, overflowScrollable_WidgetFlag, iFalse);
-        addChildFlags_Widget(w,
-                             iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.upload}", NULL)),
-                             frameless_WidgetFlag);
-        d->info = addChildFlags_Widget(w, iClob(new_LabelWidget("", NULL)),
+        setAllCaps_LabelWidget(
+            addChildFlags_Widget(
+                w,
+                iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.upload}", NULL)),
+                frameless_WidgetFlag),
+            iTrue);
+        d->info = addChildFlags_Widget(w,
+                                       iClob(new_LabelWidget("", NULL)),
                                        frameless_WidgetFlag | resizeToParentWidth_WidgetFlag |
-                                       fixedHeight_WidgetFlag);
+                                           fixedHeight_WidgetFlag);
         setWrap_LabelWidget(d->info, iTrue);
         /* Tabs for input data. */
         iWidget *tabs = makeTabs_Widget(w);
