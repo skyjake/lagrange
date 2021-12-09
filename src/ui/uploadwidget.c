@@ -205,6 +205,15 @@ void init_UploadWidget(iUploadWidget *d) {
         if (isPortraitPhone_App()) {
             enableUploadButton_UploadWidget_(d, iFalse);
         }
+        iWidget *title = findChild_Widget(w, "heading.upload.text");
+        iLabelWidget *menu = makeMenuButton_LabelWidget(midEllipsis_Icon, (iMenuItem[]){
+            { export_Icon " ${upload.text.export}", 0, 0, "upload.text.export" },
+            { "---" },
+            { delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "upload.text.delete" }
+        }, 3);
+        setTextColor_LabelWidget(menu, uiTextAction_ColorId);
+        setFont_LabelWidget(menu, uiLabelBigBold_FontId);
+        addChildFlags_Widget(title, iClob(menu), frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag);
     }
     else {
         useSheetStyle_Widget(w);
@@ -410,8 +419,15 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     }
     else if (equal_Command(cmd, "panel.changed")) {
         showOrHideUploadButton_UploadWidget_(d);
+        setFocus_Widget(NULL);
         return iFalse;
     }
+#if defined (iPlatformAppleMobile)
+    else if (deviceType_App() != desktop_AppDeviceType && equal_Command(cmd, "menu.opened")) {
+        setFocus_Widget(NULL); /* overlaid text fields! */
+        return iFalse;
+    }
+#endif
     else if (equal_Command(cmd, "upload.cancel")) {
         setupSheetTransition_Mobile(w, iFalse);
         destroy_Widget(w);
