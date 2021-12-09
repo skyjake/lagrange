@@ -850,7 +850,7 @@ void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
 //        for (NSString *name in [UIFont fontNamesForFamilyName:@"Iosevka Term"]) {
 //            printf("fontname: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
 //        }
-        font = [UIFont fontWithName:@"Iosevka-Term-Extended" size:height * 0.8f];
+        font = [UIFont fontWithName:@"Iosevka-Term-Extended" size:height * 0.82f];
     }
     else {
 //        font = [UIFont systemFontOfSize:0.65f * height];

@@ -56,6 +56,7 @@ struct Impl_UploadWidget {
     iDocumentWidget *viewer;
     iGmRequest *     request;
     iLabelWidget *   info;
+    iInputWidget *   path;
     iInputWidget *   mime;
     iInputWidget *   token;
     iLabelWidget *   ident;       
@@ -192,14 +193,17 @@ void init_UploadWidget(iUploadWidget *d) {
         initPanels_Mobile(w, NULL, (iMenuItem[]){
             { "title id:heading.upload" },
             { "label id:upload.info" },
-            { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
-            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
+            { "input id:upload.path hint:hint.upload.path noheading:1 url:1 text:" },
             { "heading text:${heading.upload.id}" },
             { "dropdown id:upload.id icon:0x1f464 text:", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
             { "input id:upload.token hint:hint.upload.token.long icon:0x1f516 text:" },
+            { "padding" },
+            { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
+            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
             { NULL }
         }, actions, iElemCount(actions));
         d->info          = findChild_Widget(w, "upload.info");
+        d->path          = findChild_Widget(w, "upload.path");
         d->input         = findChild_Widget(w, "upload.text");
         d->filePathLabel = findChild_Widget(w, "upload.filepathlabel");
         d->fileSizeLabel = findChild_Widget(w, "upload.filesizelabel");
@@ -360,7 +364,10 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
     appendRange_String(&d->url, (iRangecc){ parts.scheme.end, parts.host.end });
     appendFormat_String(&d->url, ":%u", overridePort ? overridePort : titanPortForUrl_(url));
     appendRange_String(&d->url, (iRangecc){ parts.path.start, constEnd_String(url) });
-    setText_LabelWidget(d->info, &d->url);
+    const iRangecc siteRoot = urlRoot_String(&d->url);
+    setTextCStr_LabelWidget(d->info, cstr_Rangecc((iRangecc){ constBegin_String(&d->url), siteRoot.end }));
+    /* From root onwards, the URL is editable. */
+    setTextCStr_InputWidget(d->path, cstr_Rangecc((iRangecc){ siteRoot.end, constEnd_String(&d->url) }));
     arrange_Widget(as_Widget(d));
 }
 
@@ -415,6 +422,18 @@ static void showOrHideUploadButton_UploadWidget_(iUploadWidget *d) {
         enableUploadButton_UploadWidget_(
             d, currentPanelIndex_Mobile(as_Widget(d)) != iInvalidPos || !isPortraitPhone_App());
     }
+}
+
+static const iString *requestUrl_UploadWidget_(const iUploadWidget *d) {
+    const iRangecc siteRoot = urlRoot_String(&d->url);
+    iString *reqUrl = collectNew_String();
+    setRange_String(reqUrl, (iRangecc){ constBegin_String(&d->url), siteRoot.end });
+    const iString *path = text_InputWidget(d->path);
+    if (!startsWith_String(path, "/")) {
+        appendCStr_String(reqUrl, "/");
+    }
+    append_String(reqUrl, path);
+    return reqUrl;
 }
 
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
@@ -503,11 +522,10 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             setFocus_Widget(as_Widget(d->input));
         }
         else {
-            iWidget *confirm = makeMenu_Widget(root_Widget(w), (iMenuItem[]){
+            openMenu_Widget(makeMenu_Widget(root_Widget(w), (iMenuItem[]){
                 { delete_Icon " " uiTextCaution_ColorEscape "${menu.upload.delete.confirm}", 0, 0,
                     "upload.text.delete confirmed:1" }
-                }, 1);
-            openMenu_Widget(confirm, zero_I2());
+            }, 1), zero_I2());
         }
         return iTrue;
     }
@@ -537,7 +555,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         d->request = new_GmRequest(certs_App());
         setSendProgressFunc_GmRequest(d->request, updateProgress_UploadWidget_);
         setUserData_Object(d->request, d);
-        setUrl_GmRequest(d->request, &d->url);
+        setUrl_GmRequest(d->request, requestUrl_UploadWidget_(d));
         const iString     *site    = collectNewRange_String(urlRoot_String(&d->url));
         switch (d->idMode) {
             case none_UploadIdentity:

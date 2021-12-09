@@ -1047,6 +1047,9 @@ msgstr "MIME type:"
 msgid "upload.token"
 msgstr "Token:"
 
+msgid "hint.upload.path"
+msgstr "URL path"
+
 msgid "hint.upload.token"
 msgstr "see server's instructions"
 
