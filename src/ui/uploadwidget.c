@@ -228,11 +228,18 @@ void init_UploadWidget(iUploadWidget *d) {
                 iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.upload}", NULL)),
                 frameless_WidgetFlag),
             iTrue);
-        d->info = addChildFlags_Widget(w,
-                                       iClob(new_LabelWidget("", NULL)),
-                                       frameless_WidgetFlag | resizeToParentWidth_WidgetFlag |
-                                           fixedHeight_WidgetFlag);
-        setWrap_LabelWidget(d->info, iTrue);
+        iWidget *headings, *values;
+        /* URL path. */ {
+            iWidget *page = makeTwoColumns_Widget(&headings, &values);
+            d->path = new_InputWidget(0);
+            addTwoColumnDialogInputField_Widget(
+                headings, values, "", "upload.path", iClob(d->path));
+            d->info = (iLabelWidget *) lastChild_Widget(headings);
+            setFont_LabelWidget(d->info, uiContent_FontId);
+            setTextColor_LabelWidget(d->info, uiInputTextFocused_ColorId);
+            addChild_Widget(w, iClob(page));
+            addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+        }
         /* Tabs for input data. */
         iWidget *tabs = makeTabs_Widget(w);
         /* Make the tabs support vertical expansion based on content. */ {
@@ -242,7 +249,6 @@ void init_UploadWidget(iUploadWidget *d) {
             setFlags_Widget(tabPages, resizeHeightOfChildren_WidgetFlag, iFalse);
             setFlags_Widget(tabPages, arrangeHeight_WidgetFlag, iTrue);
         }
-        iWidget *headings, *values;
         setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
         setId_Widget(tabs, "upload.tabs");
         /* Text input. */ {
@@ -255,7 +261,8 @@ void init_UploadWidget(iUploadWidget *d) {
             appendFramelessTabPage_Widget(tabs, iClob(page), "${heading.upload.text}", '1', 0);
         }
         /* File content. */ {
-            appendTwoColumnTabPage_Widget(tabs, "${heading.upload.file}", '2', &headings, &values);        
+            iWidget *page = appendTwoColumnTabPage_Widget(tabs, "${heading.upload.file}", '2', &headings, &values);
+            setBackgroundColor_Widget(page, uiBackgroundSidebar_ColorId);
             addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.name}", NULL)), frameless_WidgetFlag);
             d->filePathLabel = addChildFlags_Widget(values, iClob(new_LabelWidget(uiTextAction_ColorEscape "${upload.file.drophere}", NULL)), frameless_WidgetFlag);
             addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)), frameless_WidgetFlag);
@@ -295,6 +302,9 @@ void init_UploadWidget(iUploadWidget *d) {
         }
         resizeToLargestPage_Widget(tabs);
         arrange_Widget(w);
+        setFixedSize_Widget(as_Widget(d->path),  init_I2(width_Widget(tabs) - width_Widget(d->info), -1));
+        setFixedSize_Widget(as_Widget(d->mime),  init_I2(width_Widget(tabs) - 3 * gap_UI -
+                                                            left_Rect(parent_Widget(d->mime)->rect), -1));
         setFixedSize_Widget(as_Widget(d->token), init_I2(width_Widget(tabs) - left_Rect(parent_Widget(d->token)->rect), -1));
         setFixedSize_Widget(as_Widget(d->ident), init_I2(width_Widget(d->token),
                                                          lineHeight_Text(uiLabel_FontId) + 2 * gap_UI));
@@ -365,10 +375,23 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
     appendFormat_String(&d->url, ":%u", overridePort ? overridePort : titanPortForUrl_(url));
     appendRange_String(&d->url, (iRangecc){ parts.path.start, constEnd_String(url) });
     const iRangecc siteRoot = urlRoot_String(&d->url);
-    setTextCStr_LabelWidget(d->info, cstr_Rangecc((iRangecc){ constBegin_String(&d->url), siteRoot.end }));
+    setTextCStr_LabelWidget(d->info, cstr_Rangecc((iRangecc){ urlHost_String(&d->url).start,
+                                                              siteRoot.end }));
     /* From root onwards, the URL is editable. */
-    setTextCStr_InputWidget(d->path, cstr_Rangecc((iRangecc){ siteRoot.end, constEnd_String(&d->url) }));
-    arrange_Widget(as_Widget(d));
+    setTextCStr_InputWidget(d->path,
+                            cstr_Rangecc((iRangecc){ siteRoot.end, constEnd_String(&d->url) }));
+    if (!cmp_String(text_InputWidget(d->path), "/")) {
+        setTextCStr_InputWidget(d->path, ""); /* might as well show the hint */
+    }
+    if (isUsingPanelLayout_Mobile()) {
+        arrange_Widget(as_Widget(d)); /* a wrapped label */
+    }
+    else {
+        setFixedSize_Widget(as_Widget(d->path),
+                            init_I2(width_Widget(findChild_Widget(as_Widget(d), "upload.tabs")) -
+                                        width_Widget(d->info),
+                                    -1));
+    }
 }
 
 void setUrl_UploadWidget(iUploadWidget *d, const iString *url) {

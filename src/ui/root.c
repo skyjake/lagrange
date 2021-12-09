@@ -824,6 +824,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "navigate.focus")) {
+        /* The upload dialog has its own path field. */
+        if (findWidget_App("upload")) {
+            postCommand_App("focus.set id:upload.path");
+            return iTrue;
+        }
         iWidget *url = findChild_Widget(navBar, "url");
         if (focus_Widget() != url) {
             setFocus_Widget(findChild_Widget(navBar, "url"));
