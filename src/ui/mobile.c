@@ -653,6 +653,9 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                         fixedHeight_WidgetFlag |
                             (!argLabel_Command(spec, "frame") ? frameless_WidgetFlag : 0),
                         iTrue);
+        if (argLabel_Command(spec, "font")) {
+            setFont_LabelWidget(lab, argLabel_Command(spec, "font"));
+        }
     }
     else if (equal_Command(spec, "padding")) {
         float height = 1.5f;

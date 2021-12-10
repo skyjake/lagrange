@@ -1047,6 +1047,14 @@ msgstr "MIME type:"
 msgid "upload.token"
 msgstr "Token:"
 
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Content"
+
 msgid "hint.upload.path"
 msgstr "URL path"
 
