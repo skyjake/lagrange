@@ -226,8 +226,6 @@ struct Impl_InputWidget {
     iInt2           lastTapPos;
     int             tapCount;
     int             wheelAccum;
-    int             cursorVis;
-    uint32_t        timer;
     iTextBuf *      buffered; /* pre-rendered static text */
     iInputWidgetValidatorFunc validator;
     void *          validatorContext;
@@ -546,11 +544,6 @@ static void updateVisible_InputWidget_(iInputWidget *d) {
 //           d, totalWraps, visWraps, d->cursor.y, d->visWrapLines.start, d->visWrapLines.end);
 }
 
-static void showCursor_InputWidget_(iInputWidget *d) {
-    d->cursorVis = 2;
-    updateVisible_InputWidget_(d);
-}
-
 static void invalidateBuffered_InputWidget_(iInputWidget *d) {
     if (d->buffered) {
         delete_TextBuf(d->buffered);
@@ -656,28 +649,6 @@ static void updateAllLinesAndResizeHeight_InputWidget_(iInputWidget *d) {
     }
 }
 
-static uint32_t cursorTimer_(uint32_t interval, void *w) {
-    iInputWidget *d = w;
-    if (d->cursorVis > 1) {
-        d->cursorVis--;
-    }
-    else {
-        d->cursorVis ^= 1;
-    }
-    refresh_Widget(w);
-    return interval;
-}
-
-static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, iBool doStart) {
-    if (doStart && !d->timer) {
-        d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);
-    }
-    else if (!doStart && d->timer) {
-        SDL_RemoveTimer(d->timer);
-        d->timer = 0;
-    }
-}
-
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
@@ -716,8 +687,6 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->lastTapTime = 0;
     d->tapCount = 0;
     d->wheelAccum = 0;
-    d->timer = 0;
-    d->cursorVis = 0;
     d->buffered = NULL;
     d->backupPath = NULL;
     d->backupTimer = 0;
@@ -741,7 +710,6 @@ void deinit_InputWidget(iInputWidget *d) {
     delete_TextBuf(d->buffered);
     clearUndo_InputWidget_(d);
     deinit_Array(&d->undoStack);
-    startOrStopCursorTimer_InputWidget_(d, iFalse);
     deinit_String(&d->srcHint);
     deinit_String(&d->hint);
     deinit_String(&d->oldText);
@@ -1026,9 +994,7 @@ void begin_InputWidget(iInputWidget *d) {
     }
     SDL_StartTextInput();
     setFlags_Widget(w, selected_WidgetFlag, iTrue);
-    showCursor_InputWidget_(d);
     refresh_Widget(w);
-    startOrStopCursorTimer_InputWidget_(d, iTrue);
     d->inFlags &= ~enterPressed_InputWidgetFlag;
     if (d->inFlags & selectAllOnFocus_InputWidgetFlag) {
         d->mark = (iRanges){ 0, lastLine_InputWidget_(d)->range.end };
@@ -1055,7 +1021,6 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     }
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     d->inFlags &= ~isMarking_InputWidgetFlag;
-    startOrStopCursorTimer_InputWidget_(d, iFalse);
     SDL_StopTextInput();
     setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag | touchDrag_WidgetFlag, iFalse);
     const char *id = cstr_String(id_Widget(as_Widget(d)));
@@ -1124,7 +1089,6 @@ static void insertRange_InputWidget_(iInputWidget *d, iRangecc range) {
         }
     }
     textOfLinesWasChanged_InputWidget_(d, (iRangei){ firstModified, d->cursor.y + 1 });
-    showCursor_InputWidget_(d);
     refresh_Widget(as_Widget(d));
 }
 
@@ -1156,7 +1120,6 @@ void setCursor_InputWidget(iInputWidget *d, iInt2 pos) {
     else {
         iZap(d->mark);
     }
-    showCursor_InputWidget_(d);
 }
 
 static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) {
@@ -1562,7 +1525,6 @@ static enum iEventResult processPointerEvents_InputWidget_(iInputWidget *d, cons
             return true_EventResult;
         case drag_ClickResult:
             d->cursor = coordCursor_InputWidget_(d, pos_Click(&d->click));
-            showCursor_InputWidget_(d);
             if (~d->inFlags & isMarking_InputWidgetFlag) {
                 d->inFlags |= isMarking_InputWidgetFlag;
                 d->mark.start = cursorToIndex_InputWidget_(d, d->cursor);
@@ -1763,7 +1725,6 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
             if (d->inFlags & dragCursor_InputWidgetFlag) {
                 iZap(d->mark);
                 d->cursor = touchCoordCursor_InputWidget_(d, pos_Click(&d->click));
-                showCursor_InputWidget_(d);
                 refresh_Widget(w);
             }
             else if (d->inFlags & dragMarkerStart_InputWidgetFlag) {
@@ -1790,7 +1751,6 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
                 d->tapStartTime = SDL_GetTicks();
                 d->tapCount = 0;
                 d->cursor = touchCoordCursor_InputWidget_(d, pos_Click(&d->click));
-                showCursor_InputWidget_(d);
             }
             else if (!isEmpty_Range(&d->mark) && !isMoved_Click(&d->click)) {
                 if (isInsideMark_InputWidget_(d, cursorToIndex_InputWidget_(d, touchCoordCursor_InputWidget_(d, latestPosition_Touch())))) {
@@ -1821,7 +1781,6 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
                 setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
             }
             d->inFlags &= ~isMarking_InputWidgetFlag;
-            showCursor_InputWidget_(d);
             refresh_Widget(w);
 #if 0
             d->inFlags &= ~touchBehavior_InputWidgetFlag;
@@ -1881,13 +1840,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
     if (isCommand_Widget(w, ev, "focus.gained")) {
         begin_InputWidget(d);
-        return iFalse;
-    }
-    else if (isEditing_InputWidget_(d) && (isCommand_UserEvent(ev, "window.focus.lost") ||
-                                           isCommand_UserEvent(ev, "window.focus.gained"))) {
-        startOrStopCursorTimer_InputWidget_(d, isCommand_UserEvent(ev, "window.focus.gained"));
-        d->cursorVis = 1;
-        refresh_Widget(d);
         return iFalse;
     }
     else if (isCommand_UserEvent(ev, "keyroot.changed")) {
@@ -2099,7 +2051,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     lineTextWasChanged_InputWidget_(d, line);
                     contentsWereChanged_InputWidget_(d);
                 }
-                showCursor_InputWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_d:
@@ -2125,7 +2076,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     });
                     contentsWereChanged_InputWidget_(d);
                 }
-                showCursor_InputWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_k:
@@ -2145,7 +2095,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                         lineTextWasChanged_InputWidget_(d, line);
                         contentsWereChanged_InputWidget_(d);
                     }
-                    showCursor_InputWidget_(d);
                     refresh_Widget(w);
                     return iTrue;
                 }
@@ -2166,7 +2115,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     d->mark.start = 0;
                     d->mark.end   = cursorToIndex_InputWidget_(d, curMax);
                     d->cursor     = curMax;
-                    showCursor_InputWidget_(d);
                     refresh_Widget(w);
                     return iTrue;
                 }
@@ -2372,7 +2320,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         wrapText.context  = NULL;
     }
     /* Draw the insertion point. */
-    if (isFocused && d->cursorVis && contains_Range(&visLines, d->cursor.y) &&
+    if (isFocused && contains_Range(&visLines, d->cursor.y) &&
         (deviceType_App() == desktop_AppDeviceType || isEmpty_Range(&d->mark))) {
         iInt2    curSize;
         iRangecc cursorChar    = iNullRange;
