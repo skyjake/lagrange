@@ -74,6 +74,7 @@ enum iSystemTextInputFlags {
     disableAutocapitalize_SystemTextInputFlag = iBit(6),
     alignRight_SystemTextInputFlag         = iBit(7),
     insertNewlines_SystemTextInputFlag     = iBit(8),
+    extraPadding_SystemTextInputFlag       = iBit(9),
 };
 
 iDeclareType(SystemTextInput)

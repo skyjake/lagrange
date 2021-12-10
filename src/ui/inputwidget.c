@@ -1179,7 +1179,9 @@ void begin_InputWidget(iInputWidget *d) {
                                      (d->maxWrapLines > 1 ? multiLine_SystemTextInputFlags : 0) |
                                      (d->inFlags & isUrl_InputWidgetFlag ? (disableAutocorrect_SystemTextInputFlag |
                                                                             disableAutocapitalize_SystemTextInputFlag) : 0) |
+                                     /* widget-specific tweaks (hacks) */
                                      (!cmp_String(id_Widget(w), "url") ? returnGo_SystemTextInputFlags : 0) |
+                                     (!cmp_String(id_Widget(w), "upload.text") ? extraPadding_SystemTextInputFlag : 0) |
                                      (flags_Widget(w) & alignRight_WidgetFlag ? alignRight_SystemTextInputFlag : 0) |
                                      (isAllowedToInsertNewline_InputWidget_(d) ? insertNewlines_SystemTextInputFlag : 0) |
                                      (d->inFlags & selectAllOnFocus_InputWidgetFlag ? selectAll_SystemTextInputFlags : 0));

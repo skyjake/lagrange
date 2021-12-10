@@ -771,6 +771,9 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
         [view setBackgroundColor:[UIColor colorWithWhite:1.0f alpha:0.0f]];
         [view setTextColor:textColor];
         [view setTintColor:tintColor];
+        if (flags & extraPadding_SystemTextInputFlag) {
+            [view setContentInset:(UIEdgeInsets){ 0, 0, 3 * gap_UI / get_Window()->pixelRatio, 0}];
+        }
         [view setEditable:YES];
         [view setDelegate:appState_];
         [view becomeFirstResponder];
