@@ -2450,7 +2450,7 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem uiPanelItems[] = {
             { "title id:heading.prefs.interface" },
-            { "dropdown device:1 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
+            { "dropdown device:0 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
             { "padding device:1" },
             { "toggle id:prefs.hoverlink" },
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
