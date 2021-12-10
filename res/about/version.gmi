@@ -10,6 +10,9 @@
 New features:
 * Identity toolbar menu can be used to switch between alternate identities. If you have used multiple identities on one site, this makes it more convenient to switch between them.
 
+Fixes:
+* Fixed a history caching issue: if there were multiple instances of the same URL in history, only the latest one's content would be used when navigating back/forward.
+
 ## 1.9.2
 * Windows: Use the correct version number for update checks.
 * Shorter label for "Mark All as Read" in Feeds sidebar actions.

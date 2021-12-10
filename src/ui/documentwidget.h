@@ -48,12 +48,9 @@ const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
 
-//iBool   findCachedContent_DocumentWidget(const iDocumentWidget *, const iString *url,
-//                                         iString *mime_out, iBlock *data_out);
-
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),
-    openedFromSidebar_DocumentWidgetSetUrlFlag = iBit(2),
+    openedFromSidebar_DocumentWidgetSetUrlFlag           = iBit(2),
 };
 
 void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);

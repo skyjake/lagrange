@@ -71,7 +71,7 @@ iBool       goForward_History           (iHistory *);
 iRecentUrl *precedingLocked_History     (iHistory *); /* requires manual lock/unlock! */
 iRecentUrl *recentUrl_History           (iHistory *, size_t pos);
 iRecentUrl *mostRecentUrl_History       (iHistory *);
-iRecentUrl *findUrl_History             (iHistory *, const iString *url);
+//iRecentUrl *findUrl_History             (iHistory *, const iString *url, int timeDir);
 
 void        clearCache_History                  (iHistory *);
 size_t      pruneLeastImportant_History         (iHistory *);

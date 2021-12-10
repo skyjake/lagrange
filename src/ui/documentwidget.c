@@ -231,6 +231,8 @@ enum iDocumentWidgetFlag {
     urlChanged_DocumentWidgetFlag            = iBit(13),
     openedFromSidebar_DocumentWidgetFlag     = iBit(14),
     drawDownloadCounter_DocumentWidgetFlag   = iBit(15),
+    fromCache_DocumentWidgetFlag             = iBit(16), /* don't write anything to cache */
+    animationPlaceholder_DocumentWidgetFlag  = iBit(17), /* avoid slow operations */
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -1142,9 +1144,11 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
         }
     }
     showOrHidePinningIndicator_DocumentWidget_(d);
-    setCachedDocument_History(d->mod.history,
-                              d->doc, /* keeps a ref */
-                              (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
+    if (~d->flags & fromCache_DocumentWidgetFlag) {
+        setCachedDocument_History(d->mod.history,
+                                  d->doc, /* keeps a ref */
+                                  (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
+    }
 }
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
@@ -1743,6 +1747,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
 }
 
 static void fetch_DocumentWidget_(iDocumentWidget *d) {
+    iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
     /* Forget the previous request. */
     if (d->request) {
         iRelease(d->request);
@@ -1756,6 +1761,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     d->certFlags = 0;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
+    d->flags &= ~fromCache_DocumentWidgetFlag;
     d->state = fetching_RequestState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
@@ -1805,7 +1811,8 @@ static void cacheRunGlyphs_(void *data, const iGmRun *run) {
 }
 
 static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
-    if (isFinishedLaunching_App() && isExposed_Window(get_Window())) {
+    if (isFinishedLaunching_App() && isExposed_Window(get_Window()) &&
+        ~d->flags & animationPlaceholder_DocumentWidgetFlag) {
         /* Just cache the top of the document, since this is what we usually need. */
         int maxY = height_Widget(&d->widget) * 2;
         if (maxY == 0) {
@@ -1885,6 +1892,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     d->doc = new_GmDocument();
     resetWideRuns_DocumentWidget_(d);
     d->state = fetching_RequestState;
+    d->flags |= fromCache_DocumentWidgetFlag;
     /* Do the fetch. */ {
         d->initNormScrollY = normScrollY;
         /* Use the cached response data. */
@@ -1916,7 +1924,8 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 }
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
-    const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
+    const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
+    iAssert(equalCase_String(&recent->url, d->mod.url));
     if (recent && recent->cachedResponse) {
         iChangeFlags(d->flags,
                      openedFromSidebar_DocumentWidgetFlag,
@@ -2677,6 +2686,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
             if (!swipeIn) {
                 swipeIn = new_DocumentWidget();
+                swipeIn->flags |= animationPlaceholder_DocumentWidgetFlag;
                 setId_Widget(as_Widget(swipeIn), "swipein");
                 setFlags_Widget(as_Widget(swipeIn),
                                 disabled_WidgetFlag | refChildrenOffset_WidgetFlag |
@@ -2718,6 +2728,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     /* Set up the swipe dummy. */
                     iWidget *swipeParent = swipeParent_DocumentWidget_(d);
                     iDocumentWidget *target = new_DocumentWidget();
+                    target->flags |= animationPlaceholder_DocumentWidgetFlag;
                     setId_Widget(as_Widget(target), "swipeout");
                     /* "swipeout" takes `d`'s document and goes underneath. */
                     target->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
@@ -2785,6 +2796,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 /* What was being shown in the `d` document is now being swapped to
                    the outgoing page animation. */
                 iDocumentWidget *target = new_DocumentWidget();
+                target->flags |= animationPlaceholder_DocumentWidgetFlag;
                 addChildPos_Widget(swipeParent, iClob(target), back_WidgetAddPos);
                 setId_Widget(as_Widget(target), "swipeout");
                 swap_DocumentWidget_(target, d->doc, d);
@@ -2967,7 +2979,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                       timeVerified_GmCertFlag);
         const iBool canTrust = ~d->certFlags & trusted_GmCertFlag &&
                                ((d->certFlags & requiredForTrust) == requiredForTrust);
-        const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
+        const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
         const iString *meta = &d->sourceMime;
         if (recent && recent->cachedResponse) {
             meta = &recent->cachedResponse->meta;
@@ -3178,6 +3190,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         postProcessRequestContent_DocumentWidget_(d, iFalse);
         /* The response may be cached. */
         if (d->request) {
+            iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
+            iAssert(~d->flags & fromCache_DocumentWidgetFlag);
             if (!equal_Rangecc(urlScheme_String(d->mod.url), "about") &&
                 (startsWithCase_String(meta_GmRequest(d->request), "text/") ||
                  !cmp_String(&d->sourceMime, mimeType_Gempub))) {
@@ -5399,12 +5413,12 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags) {
     iChangeFlags(d->flags, openedFromSidebar_DocumentWidgetFlag,
                  (setUrlFlags & openedFromSidebar_DocumentWidgetSetUrlFlag) != 0);
-    const iBool isFromCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
+    const iBool allowCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
-    if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
+    if (!allowCache || !updateFromHistory_DocumentWidget_(d)) {
         fetch_DocumentWidget_(d);
     }
 }

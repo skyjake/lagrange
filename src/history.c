@@ -254,18 +254,26 @@ const iString *url_History(const iHistory *d, size_t pos) {
     return collectNew_String();
 }
 
-iRecentUrl *findUrl_History(iHistory *d, const iString *url) {
+#if 0
+iRecentUrl *findUrl_History(iHistory *d, const iString *url, int timeDir) {
     url = canonicalUrl_String(url);
+//    if (!timeDir) {
+//        timeDir = -1;
+//    }
     lock_Mutex(d->mtx);
-    iReverseForEach(Array, i, &d->recent) {
-        if (cmpStringCase_String(url, &((iRecentUrl *) i.value)->url) == 0) {
+    for (size_t i = size_Array(&d->recent) - 1 - d->recentPos; i < size_Array(&d->recent);
+         i += timeDir) {
+        iRecentUrl *item = at_Array(&d->recent, i);
+        if (cmpStringCase_String(url, &item->url) == 0) {
             unlock_Mutex(d->mtx);
-            return i.value;
+            return item; /* FIXME: Returning an internal pointer; should remain locked. */
         }
+        if (!timeDir) break;
     }
     unlock_Mutex(d->mtx);
     return NULL;
 }
+#endif
 
 void replace_History(iHistory *d, const iString *url) {
     url = canonicalUrl_String(url);
@@ -405,20 +413,18 @@ void setCachedDocument_History(iHistory *d, iGmDocument *doc, iBool openedFromSi
     lock_Mutex(d->mtx);
     iRecentUrl *item = mostRecentUrl_History(d);
     if (item) {
-        if (equal_String(url_GmDocument(doc), &item->url)) {
-            item->flags.openedFromSidebar = openedFromSidebar;
-            if (item->cachedDoc != doc) {
-                iRelease(item->cachedDoc);
-                item->cachedDoc = ref_Object(doc);
-            }
-        }
 #if !defined (NDEBUG)
-        else {
-            printf("[History] Not updating cached document; expecting {%s} but document URL is {%s}\n",
+        if (!equal_String(url_GmDocument(doc), &item->url)) {
+            printf("[History] Cache mismatch! Expecting data for item {%s} but document URL is {%s}\n",
                    cstr_String(&item->url),
                    cstr_String(url_GmDocument(doc)));
         }
 #endif
+        item->flags.openedFromSidebar = openedFromSidebar;
+        if (item->cachedDoc != doc) {
+            iRelease(item->cachedDoc);
+            item->cachedDoc = ref_Object(doc);
+        }
     }
     unlock_Mutex(d->mtx);
 }
