@@ -658,13 +658,25 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
              (equal_Command(cmd, "layout.changed") &&
               equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
         /* Position the lookup popup under the URL bar. */ {
-            iRoot *root = w->root;
+            iRoot    *root       = w->root;
+            iWidget  *url        = findChild_Widget(root->widget, "url");
+            const int minWidth   = iMin(120 * gap_UI, width_Rect(safeRect_Root(root)));
+            const int urlWidth   = width_Widget(url);
+            int       extraWidth = 0;
+            if (urlWidth < minWidth) {
+                extraWidth = minWidth - urlWidth;
+            }
             const iRect navBarBounds = bounds_Widget(findChild_Widget(root->widget, "navbar"));
-            iWidget *url = findChild_Widget(root->widget, "url");
-            setFixedSize_Widget(w, init_I2(width_Widget(url),
-                                           (bottom_Rect(rect_Root(root)) - bottom_Rect(navBarBounds)) / 2));
-            setPos_Widget(w, windowToLocal_Widget(w, bottomLeft_Rect(bounds_Widget(url))));
-#if defined (iPlatformAppleMobile)
+            setFixedSize_Widget(
+                w,
+                init_I2(width_Widget(url) + extraWidth,
+                        (bottom_Rect(rect_Root(root)) - bottom_Rect(navBarBounds)) / 2));
+            setPos_Widget(w,
+                          windowToLocal_Widget(w,
+                                               max_I2(zero_I2(),
+                                                      addX_I2(bottomLeft_Rect(bounds_Widget(url)),
+                                                              -extraWidth / 2))));
+#if defined(iPlatformAppleMobile)
             /* TODO: Check this again. */
             /* Adjust height based on keyboard size. */ {
                 w->rect.size.y = bottom_Rect(visibleRect_Root(root)) - top_Rect(bounds_Widget(w));
