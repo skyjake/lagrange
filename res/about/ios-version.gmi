@@ -6,6 +6,16 @@
 ```
 # Release notes
 
+## 1.10 (3)
+* Revised layout of the Upload dialog. There is a new edit field that lets you modify the file path of the URL. Identity names are in bold.
+* Added an edit actions menu in the Upload text editor (only in portrait phone layout for now).
+* Fixed persistent storage of the Upload text field contents.
+* Fixed input widget positioning and behavior in the Upload dialog.
+* Fixed minimum width of main panel in dialogs.
+* Fixed use of cached content when the same URL was found multiple times in history. Previously, only the latest page was used.
+* Changed input field tint color to match chosen UI accent color.
+* Optimized memory use during UI event processing.
+
 ## 1.10 (2)
 * Fixed pull-to-refresh on short pages.
 * Fixed URL field contents not being clipped to widget bounds.
