@@ -104,7 +104,7 @@ static const iMenuItem tabletNavMenuItems_[] = {
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     //{ "${menu.downloads}", 0, 0, "downloads.open" },
     { "---" },
-    { gear_Icon " ${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { gear_Icon " ${menu.settings}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
     { "${menu.help}", SDLK_F1, 0, "!open url:about:help" },
     { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
 };
