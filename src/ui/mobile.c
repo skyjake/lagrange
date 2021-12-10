@@ -41,12 +41,12 @@ iBool isUsingPanelLayout_Mobile(void) {
     return deviceType_App() != desktop_AppDeviceType;
 }
 
-#define sidebarMinWidth_Mobile     (80 * gap_UI)
+#define topPanelMinWidth_Mobile     (80 * gap_UI)
 
 static iBool isSideBySideLayout_(void) {
     /* Minimum is an even split. */
     const int safeWidth = safeRect_Root(get_Root()).size.x;
-    if (safeWidth / 2 < sidebarMinWidth_Mobile) {
+    if (safeWidth / 2 < topPanelMinWidth_Mobile) {
         return iFalse;
     }
     if (deviceType_App() == phone_AppDeviceType) {
@@ -136,7 +136,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         const int pad = isPortrait ? 0 : 3 * gap_UI;
         if (isSideBySide) {
             iAssert(topPanel);
-            topPanel->rect.size.x = iMax(sidebarMinWidth_Mobile,
+            topPanel->rect.size.x = iMax(topPanelMinWidth_Mobile,
                                          (deviceType_App() == phone_AppDeviceType ?
                                           safeRoot.size.x * 2 / 5 : safeRoot.size.x / 3));
         }
