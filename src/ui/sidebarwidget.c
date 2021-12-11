@@ -223,8 +223,6 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
                                                     const char *command, int64_t flags) {
     iLabelWidget *btn = addChildFlags_Widget(d->actions,
                                              iClob(new_LabelWidget(label, command)),
-                                             //(deviceType_App() != desktop_AppDeviceType ?
-                                             // extraPadding_WidgetFlag : 0) |
                                              flags);
     setFont_LabelWidget(btn, actionButtonFont_SidebarWidget_(d));
     checkIcon_LabelWidget(btn);

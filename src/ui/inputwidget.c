@@ -1175,16 +1175,18 @@ void begin_InputWidget(iInputWidget *d) {
     d->inFlags &= ~enterPressed_InputWidgetFlag;
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
     set_String(&d->oldText, &d->text);
-    d->sysCtrl = new_SystemTextInput(contentBounds_InputWidget_(d),
-                                     (d->maxWrapLines > 1 ? multiLine_SystemTextInputFlags : 0) |
-                                     (d->inFlags & isUrl_InputWidgetFlag ? (disableAutocorrect_SystemTextInputFlag |
-                                                                            disableAutocapitalize_SystemTextInputFlag) : 0) |
-                                     /* widget-specific tweaks (hacks) */
-                                     (!cmp_String(id_Widget(w), "url") ? returnGo_SystemTextInputFlags : 0) |
-                                     (!cmp_String(id_Widget(w), "upload.text") ? extraPadding_SystemTextInputFlag : 0) |
-                                     (flags_Widget(w) & alignRight_WidgetFlag ? alignRight_SystemTextInputFlag : 0) |
-                                     (isAllowedToInsertNewline_InputWidget_(d) ? insertNewlines_SystemTextInputFlag : 0) |
-                                     (d->inFlags & selectAllOnFocus_InputWidgetFlag ? selectAll_SystemTextInputFlags : 0));
+    d->sysCtrl = new_SystemTextInput(
+        contentBounds_InputWidget_(d),
+        (d->maxWrapLines > 1 ? multiLine_SystemTextInputFlags : 0) |
+            (d->inFlags & isUrl_InputWidgetFlag ? (disableAutocorrect_SystemTextInputFlag |
+                                                   disableAutocapitalize_SystemTextInputFlag)
+                                                : 0) |
+            /* widget-specific tweaks (hacks) */
+            (!cmp_String(id_Widget(w), "url") ? returnGo_SystemTextInputFlags : 0) |
+            (!cmp_String(id_Widget(w), "upload.text") ? extraPadding_SystemTextInputFlag : 0) |
+            (flags_Widget(w) & alignRight_WidgetFlag ? alignRight_SystemTextInputFlag : 0) |
+            (isAllowedToInsertNewline_InputWidget_(d) ? insertNewlines_SystemTextInputFlag : 0) |
+            (d->inFlags & selectAllOnFocus_InputWidgetFlag ? selectAll_SystemTextInputFlags : 0));
     setFont_SystemTextInput(d->sysCtrl, d->font);
     setText_SystemTextInput(d->sysCtrl, &d->oldText, iFalse);
     setTextChangedFunc_SystemTextInput(d->sysCtrl, systemInputChanged_InputWidget_, d);
@@ -2589,8 +2591,11 @@ static void draw_InputWidget_(const iInputWidget *d) {
                              : isFocused /*&& !isEmpty_Array(&d->lines)*/ ? uiInputTextFocused_ColorId
                                                                       : uiInputText_ColorId;
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
-    setClip_Paint(&p, adjusted_Rect(bounds, init_I2(d->leftPadding, 0),
-                                    init_I2(-d->rightPadding, w->flags & extraPadding_WidgetFlag ? -gap_UI / 2 : 0)));
+    setClip_Paint(&p,
+                  adjusted_Rect(bounds,
+                                init_I2(d->leftPadding, 0),
+                                init_I2(-d->rightPadding,
+                                        w->flags & extraPadding_WidgetFlag ? -gap_UI / 2 : 0)));
     iWrapText wrapText = {
         .maxWidth     = d->maxLen == 0 ? width_Rect(contentBounds) : unlimitedWidth_InputWidget_,
         .mode         = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
