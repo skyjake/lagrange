@@ -10,8 +10,13 @@
 New features:
 * Identity toolbar menu can be used to switch between alternate identities. If you have used multiple identities on one site, this makes it more convenient to switch between them.
 
+Changes and enhancements:
+* Revised layout of the Upload dialog. There is a new edit field that lets you modify the file path of the URL. Identity names are in bold.
+* Optimized memory use during UI event processing.
+
 Fixes:
 * Fixed a history caching issue: if there were multiple instances of the same URL in history, only the latest one's content would be used when navigating back/forward.
+* Fixed lookup results list becoming too narrow.
 
 ## 1.9.2
 * Windows: Use the correct version number for update checks.
