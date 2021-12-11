@@ -61,7 +61,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
        and other non-complex LTR scripts. Composed glyphs are not supported (must rely on text
        being in a pre-composed form). This algorithm is used if HarfBuzz is not available. */
     const iInt2 orig        = args->pos;
-    iTextAttrib attrib      = { .colorId = args->color };
+    iTextAttrib attrib      = { .fgColorId = args->color };
     iRect       bounds      = { orig, init_I2(0, d->height) };
     float       xpos        = orig.x;
     float       xposMax     = xpos;
@@ -118,8 +118,9 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             if (match_RegExp(activeText_->ansiEscape, chPos, args->text.end - chPos, &m)) {
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     /* Change the color. */
-                    const iColor clr =
-                        ansiForeground_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId);
+                    iColor clr;
+                    ansiColors_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId,
+                                     none_ColorId, &clr, NULL);
                     SDL_SetTextureColorMod(activeText_->cache, clr.r, clr.g, clr.b);
                     if (args->mode & fillBackground_RunMode) {
                         SDL_SetRenderDrawColor(activeText_->render, clr.r, clr.g, clr.b, 0);
