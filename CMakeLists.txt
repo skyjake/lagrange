@@ -285,7 +285,12 @@ else ()
 endif ()
 
 # Target.
-add_executable (app ${SOURCES} ${RESOURCES})
+if (NOT ANDROID)
+    add_executable (app ${SOURCES} ${RESOURCES})
+else ()
+    # The whole app becomes one shared library, based on this static one.
+    add_library (app STATIC ${SOURCES})
+endif ()
 set_property (TARGET app PROPERTY C_STANDARD 11)
 if (TARGET ext-deps)
     add_dependencies (app ext-deps)
