@@ -217,7 +217,7 @@ set (SOURCES
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
-    src/ui/sidebarwidget.h    
+    src/ui/sidebarwidget.h
     src/ui/text.c
     src/ui/text.h
     src/ui/touch.c
@@ -307,7 +307,12 @@ else ()
 endif ()
 
 # Target.
-add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS})
+if (NOT ANDROID)
+    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS})
+else ()
+    # The whole app becomes one shared library, based on this static one.
+    add_library (app STATIC ${SOURCES})
+endif ()
 set_property (TARGET app PROPERTY C_STANDARD 11)
 if (TARGET ext-deps)
     add_dependencies (app ext-deps)
@@ -414,7 +419,7 @@ if (APPLE)
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
     )
     if (IOS)
-        target_compile_definitions (app PUBLIC 
+        target_compile_definitions (app PUBLIC
             LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}"
             LAGRANGE_IOS_BUILD_DATE="${IOS_BUILD_DATE}"
         )
@@ -437,7 +442,7 @@ endif ()
 if (MSYS)
     target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
     if (ENABLE_WINSPARKLE)
-        target_link_libraries (app PUBLIC winsparkle)        
+        target_link_libraries (app PUBLIC winsparkle)
     endif ()
 endif ()
 if (UNIX)

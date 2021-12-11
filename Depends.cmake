@@ -5,6 +5,12 @@ if (IOS)
     return ()
 endif ()
 
+if (ANDROID)
+    include (Depends-Android.cmake)
+    return ()
+endif ()
+
+find_package (PkgConfig)
 find_program (MESON_EXECUTABLE meson DOC "Meson build system")
 find_program (NINJA_EXECUTABLE ninja DOC "Ninja build tool")
 include (ExternalProject)
@@ -45,7 +51,7 @@ else ()
 endif ()
 
 if (APPLE AND CMAKE_OSX_DEPLOYMENT_TARGET)
-    set (_dependMacOpts 
+    set (_dependMacOpts
         -Dc_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
         -Dc_link_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
         -Dcpp_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
@@ -58,8 +64,8 @@ if (ENABLE_HARFBUZZ)
     if (NOT ENABLE_HARFBUZZ_MINIMAL AND PKG_CONFIG_FOUND)
         pkg_check_modules (HARFBUZZ IMPORTED_TARGET harfbuzz)
     endif ()
-    if (EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt AND 
-            (ENABLE_HARFBUZZ_MINIMAL OR NOT HARFBUZZ_FOUND))            
+    if (EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt AND
+            (ENABLE_HARFBUZZ_MINIMAL OR NOT HARFBUZZ_FOUND))
         # Build HarfBuzz with minimal dependencies.
         if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
             set (_dst ${CMAKE_BINARY_DIR}/lib/harfbuzz)
