@@ -492,6 +492,7 @@ int font_LabelWidget(const iLabelWidget *d) {
 }
 
 void updateSize_LabelWidget(iLabelWidget *d) {
+    if (!d) return;
     iWidget      *w     = as_Widget(d);
     const int64_t flags = flags_Widget(w);
     const iInt2   size  = defaultSize_LabelWidget(d);
@@ -562,18 +563,22 @@ void setTextColor_LabelWidget(iLabelWidget *d, int color) {
 }
 
 void setText_LabelWidget(iLabelWidget *d, const iString *text) {
-    updateText_LabelWidget(d, text);
-    updateSize_LabelWidget(d);
-    if (isWrapped_LabelWidget(d)) {
-        sizeChanged_LabelWidget_(d);
+    if (d) {
+        updateText_LabelWidget(d, text);
+        updateSize_LabelWidget(d);
+        if (isWrapped_LabelWidget(d)) {
+            sizeChanged_LabelWidget_(d);
+        }
     }
 }
 
 void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
-    updateTextCStr_LabelWidget(d, text);
-    updateSize_LabelWidget(d);
-    if (isWrapped_LabelWidget(d)) {
-        sizeChanged_LabelWidget_(d);
+    if (d) {
+        updateTextCStr_LabelWidget(d, text);
+        updateSize_LabelWidget(d);
+        if (isWrapped_LabelWidget(d)) {
+            sizeChanged_LabelWidget_(d);
+        }
     }
 }
 

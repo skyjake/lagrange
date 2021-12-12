@@ -251,12 +251,14 @@ static iBool isSlidingSheet_SidebarWidget_(const iSidebarWidget *d) {
 static void setMobileEditMode_SidebarWidget_(iSidebarWidget *d, iBool editing) {
     iWidget *w = as_Widget(d);
     d->isEditing = editing;
-    setFlags_Widget(findChild_Widget(w, "sidebar.close"), hidden_WidgetFlag, editing);
-    setFlags_Widget(child_Widget(d->actions, 0), hidden_WidgetFlag, !editing);
-    setTextCStr_LabelWidget(child_Widget(as_Widget(d->actions), 2),
-                            editing ? "${sidebar.close}" : "${sidebar.action.bookmarks.edit}");
-    setDragHandleWidth_ListWidget(d->list, editing ? itemHeight_ListWidget(d->list) * 3 / 2 : 0);
-    arrange_Widget(d->actions);
+    if (d->actions) {
+        setFlags_Widget(findChild_Widget(w, "sidebar.close"), hidden_WidgetFlag, editing);
+        setFlags_Widget(child_Widget(d->actions, 0), hidden_WidgetFlag, !editing);
+        setTextCStr_LabelWidget(child_Widget(as_Widget(d->actions), 2),
+                                editing ? "${sidebar.close}" : "${sidebar.action.bookmarks.edit}");
+        setDragHandleWidth_ListWidget(d->list, editing ? itemHeight_ListWidget(d->list) * 3 / 2 : 0);
+        arrange_Widget(d->actions);
+    }
 }
 
 static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
@@ -698,6 +700,9 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
                               d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
                                                                      : uiBackgroundSidebar_ColorId);
     updateItemHeight_SidebarWidget_(d);
+    if (deviceType_App() != desktop_AppDeviceType && mode != bookmarks_SidebarMode) {
+        setMobileEditMode_SidebarWidget_(d, iFalse);
+    }
     /* Restore previous scroll position. */
     setScrollPos_ListWidget(list_SidebarWidget_(d), d->modeScroll[mode]);
     /* Title of the mobile sliding sheet. */
