@@ -263,6 +263,10 @@ static float pixelRatio_Window_(const iWindow *d) {
 #   define baseDPI_Window   96.0f
 #endif
 
+#if defined (iPlatformAndroidMobile)
+float displayDensity_Android(void);
+#endif
+
 static float displayScale_Window_(const iWindow *d) {
     /* The environment variable LAGRANGE_OVERRIDE_DPI can be used to override the automatic
        display DPI detection. If not set, or is an empty string, ignore it.
@@ -289,6 +293,8 @@ static float displayScale_Window_(const iWindow *d) {
 #elif defined (iPlatformMsys)
     iUnused(d);
     return desktopDPI_Win32();
+#elif defined (iPlatformAndroidMobile)
+    return displayDensity_Android();
 #else
     if (isRunningUnderWindowSystem_App()) {
         float vdpi = 0.0f;
@@ -457,7 +463,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->mouseGrab     = NULL;
     d->focus         = NULL;
     d->pendingCursor = NULL;
-    d->isExposed     = iFalse;
+    d->isExposed     = (deviceType_App() != desktop_AppDeviceType);
     d->isMinimized   = iFalse;
     d->isInvalidated = iFalse; /* set when posting event, to avoid repeated events */
     d->isMouseInside = iTrue;
@@ -540,6 +546,8 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #elif defined (iPlatformAppleMobile)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
     flags |= SDL_WINDOW_METAL;
+    d->base.isExposed = iTrue;
+#elif defined (iPlatformAndroidMobile)
     d->base.isExposed = iTrue;
 #else
     if (!forceSoftwareRender_App()) {

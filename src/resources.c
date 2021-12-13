@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/version.h>
 
 static iArchive *archive_;
-    
+
 iBlock blobAbout_Resources;
 iBlock blobHelp_Resources;
 iBlock blobLagrange_Resources;
@@ -101,7 +101,23 @@ static struct {
 
 iBool init_Resources(const char *path) {
     archive_ = new_Archive();
-    if (openFile_Archive(archive_, collectNewCStr_String(path))) {
+    iBool ok = iFalse;
+#if defined (iPlatformAndroidMobile)
+    /* Resources are bundled as assets so they cannot be loaded as a regular file.
+       Fortunately, SDL implements a file wrapper. */
+    SDL_RWops *io = SDL_RWFromFile(path, "rb");
+    if (io) {
+        iBlock buf;
+        init_Block(&buf, (size_t) SDL_RWsize(io));
+        SDL_RWread(io, data_Block(&buf), size_Block(&buf), 1);
+        SDL_RWclose(io);
+        ok = openData_Archive(archive_, &buf);
+        deinit_Block(&buf);
+    }
+#else
+    ok = openFile_Archive(archive_, collectNewCStr_String(path));
+#endif
+    if (ok) {
         iVersion appVer;
         init_Version(&appVer, range_CStr(LAGRANGE_APP_VERSION));
         iVersion resVer;

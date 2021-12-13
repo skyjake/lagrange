@@ -225,7 +225,7 @@ enum iDocumentWidgetFlag {
     animationPlaceholder_DocumentWidgetFlag  = iBit(16), /* avoid slow operations */
     invalidationPending_DocumentWidgetFlag   = iBit(17), /* invalidate as soon as convenient */
     leftWheelSwipe_DocumentWidgetFlag        = iBit(18), /* swipe state flags are used on desktop */
-    rightWheelSwipe_DocumentWidgetFlag       = iBit(19), 
+    rightWheelSwipe_DocumentWidgetFlag       = iBit(19),
     eitherWheelSwipe_DocumentWidgetFlag      = leftWheelSwipe_DocumentWidgetFlag |
                                                rightWheelSwipe_DocumentWidgetFlag,
 };
@@ -242,8 +242,8 @@ enum iWheelSwipeState {
 
 /* TODO: DocumentView is supposed to be useful on its own; move to a separate source file. */
 iDeclareType(DocumentView)
-    
-struct Impl_DocumentView { 
+
+struct Impl_DocumentView {
     iDocumentWidget *owner; /* TODO: Convert to an abstract provider of metrics? */
     iGmDocument *  doc;
     int            pageMargin;
@@ -253,7 +253,7 @@ struct Impl_DocumentView {
     iGmRunRange    visibleRuns;
     iPtrArray      visibleLinks;
     iPtrArray      visiblePre;
-    iPtrArray      visibleMedia; /* currently playing audio / ongoing downloads */   
+    iPtrArray      visibleMedia; /* currently playing audio / ongoing downloads */
     iPtrArray      visibleWideRuns; /* scrollable blocks; TODO: merge into `visiblePre` */
     const iGmRun * hoverPre;    /* for clicking */
     const iGmRun * hoverAltPre; /* for drawing alt text */
@@ -263,7 +263,7 @@ struct Impl_DocumentView {
     uint16_t       animWideRunId;
     iGmRunRange    animWideRunRange;
     iDrawBufs *    drawBufs; /* dynamic state for drawing */
-    iVisBuf *      visBuf;    
+    iVisBuf *      visBuf;
     iVisBufMeta *  visBufMeta;
     iGmRunRange    renderRuns;
     iPtrSet *      invalidRuns;
@@ -272,7 +272,7 @@ struct Impl_DocumentView {
 struct Impl_DocumentWidget {
     iWidget        widget;
     int            flags; /* internal behavior, see enum iDocumentWidgetFlag */
-    
+
     /* User interface: */
     enum iDocumentLinkOrdinalMode ordinalMode;
     size_t         ordinalBase;
@@ -293,7 +293,7 @@ struct Impl_DocumentWidget {
     enum iWheelSwipeState wheelSwipeState;
     iString        pendingGotoHeading;
     iString        linePrecedingLink;
-    
+
     /* Network request: */
     enum iRequestState state;
     iGmRequest *   request;
@@ -304,7 +304,7 @@ struct Impl_DocumentWidget {
     iString *      certSubject;
     int            redirectCount;
     iObjectList *  media; /* inline media requests */
-    
+
     /* Document: */
     iPersistentDocumentState mod;
     iString *      titleUser;
@@ -316,12 +316,12 @@ struct Impl_DocumentWidget {
     iGempub *      sourceGempub; /* NULL unless the page is Gempub content */
     iBanner *      banner;
     float          initNormScrollY;
-    
+
     /* Rendering: */
     iDocumentView  view;
     iLinkInfo *    linkInfo;
-    
-    /* Widget structure: */    
+
+    /* Widget structure: */
     iScrollWidget *scroll;
     iWidget *      footerButtons;
     iWidget *      menu;
@@ -332,7 +332,7 @@ struct Impl_DocumentWidget {
 };
 
 iDefineObjectConstruction(DocumentWidget)
-    
+
 /* Sorted by proximity to F and J. */
 static const int homeRowKeys_[] = {
     'f', 'd', 's', 'a',
@@ -344,7 +344,7 @@ static const int homeRowKeys_[] = {
     'g', 'h',
     'b',
     't', 'y',
-};    
+};
 static int docEnum_ = 0;
 
 static void animate_DocumentWidget_                 (void *ticker);
@@ -909,7 +909,7 @@ static void updateTimestampBuf_DocumentView_(const iDocumentView *d) {
 
 static void invalidate_DocumentView_(iDocumentView *d) {
     invalidate_VisBuf(d->visBuf);
-    clear_PtrSet(d->invalidRuns);    
+    clear_PtrSet(d->invalidRuns);
 }
 
 static void documentRunsInvalidated_DocumentView_(iDocumentView *d) {
@@ -928,11 +928,11 @@ static void resetScroll_DocumentView_(iDocumentView *d) {
 }
 
 static void updateWidth_DocumentView_(iDocumentView *d) {
-    updateWidth_GmDocument(d->doc, documentWidth_DocumentView_(d), width_Widget(d->owner));    
+    updateWidth_GmDocument(d->doc, documentWidth_DocumentView_(d), width_Widget(d->owner));
 }
 
 static void updateWidthAndRedoLayout_DocumentView_(iDocumentView *d) {
-    setWidth_GmDocument(d->doc, documentWidth_DocumentView_(d), width_Widget(d->owner));    
+    setWidth_GmDocument(d->doc, documentWidth_DocumentView_(d), width_Widget(d->owner));
 }
 
 static void clampScroll_DocumentView_(iDocumentView *d) {
@@ -1025,7 +1025,7 @@ static iRangecc sourceLoc_DocumentView_(const iDocumentView *d, iInt2 pos) {
 }
 
 iDeclareType(MiddleRunParams)
-    
+
 struct Impl_MiddleRunParams {
     int midY;
     const iGmRun *closest;
@@ -1126,7 +1126,7 @@ static iRect runRect_DocumentView_(const iDocumentView *d, const iGmRun *run) {
 }
 
 iDeclareType(DrawContext)
-    
+
 struct Impl_DrawContext {
     const iDocumentView *view;
     iRect widgetBounds;
@@ -1260,7 +1260,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             isInlineImageCaption = iFalse;
         }
 #endif
-        /* While this is consistent, it's a bit excessive to indicate that an inlined image 
+        /* While this is consistent, it's a bit excessive to indicate that an inlined image
            is open: the image itself is the indication. */
         const iBool isInlineImageCaption = iFalse;
         if (run->linkId && (linkFlags & isOpen_GmLinkFlag || isInlineImageCaption)) {
@@ -1285,7 +1285,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
             fillRect_Paint(&d->paint, wideRect, bg);
         }
-        else { 
+        else {
             /* Normal background for other runs. There are cases when runs get drawn multiple times,
                e.g., at the buffer boundary, and there are slightly overlapping characters in
                monospace blocks. Clearing the background here ensures a cleaner visual appearance
@@ -2095,7 +2095,7 @@ static void invalidate_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static iRangecc siteText_DocumentWidget_(const iDocumentWidget *d) {
-    return isEmpty_String(d->titleUser) ? urlHost_String(d->mod.url) 
+    return isEmpty_String(d->titleUser) ? urlHost_String(d->mod.url)
                                         : range_String(d->titleUser);
 }
 
@@ -2161,7 +2161,7 @@ static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     if (document_App() != d || category_GmStatusCode(d->sourceStatus) == categoryInput_GmStatusCode) {
         return;
-    }    
+    }
     d->view.drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
     updateBanner_DocumentWidget_(d);
 }
@@ -2620,7 +2620,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                         appendFormat_String(&str,
                                             cstr_Lang("doc.archive"),
                                             cstr_Rangecc(baseName_Path(d->mod.url)));
-                        appendCStr_String(&str, "\n");                        
+                        appendCStr_String(&str, "\n");
                     }
                     appendCStr_String(&str, "\n");
                     iString *localPath = localFilePathFromUrl_String(d->mod.url);
@@ -2768,7 +2768,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     }
     else if (~d->certFlags & timeVerified_GmCertFlag) {
         updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape warning_Icon
-                                                    : black_ColorEscape warning_Icon);        
+                                                    : black_ColorEscape warning_Icon);
     }
     else {
         updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_Icon);
@@ -3067,7 +3067,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                    it is only displayed as an input dialog. */
                 visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
                 iUrl parts;
-                init_Url(&parts, d->mod.url);                
+                init_Url(&parts, d->mod.url);
                 iWidget *dlg = makeValueInput_Widget(
                     as_Widget(d),
                     NULL,
@@ -3132,7 +3132,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                         setFont_LabelWidget(menu, font_LabelWidget((iLabelWidget *) lastChild_Widget(buttons)));
                         setTextColor_LabelWidget(menu, uiTextAction_ColorId);
                     }
-                }                
+                }
                 setValidator_InputWidget(findChild_Widget(dlg, "input"), inputQueryValidator_, d);
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
                                                 statusCode == sensitiveInput_GmStatusCode);
@@ -3491,7 +3491,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             }
             /* The temporary "swipein" will display the previous page until the finger is lifted. */
             iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
-            if (!swipeIn) {                
+            if (!swipeIn) {
                 swipeIn = new_DocumentWidget();
                 swipeIn->flags |= animationPlaceholder_DocumentWidgetFlag;
                 setId_Widget(as_Widget(swipeIn), "swipein");
@@ -3531,7 +3531,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     iWidget *swipeParent = swipeParent_DocumentWidget_(d);
                     if (findChild_Widget(swipeParent, "swipeout")) {
                         return iTrue; /* too fast, previous animation hasn't finished */
-                    }                
+                    }
                     /* Setup the drag. `d` will be moving with the finger. */
                     animSpan = 0;
                     postCommand_Widget(d, "navigate.forward");
@@ -3694,7 +3694,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed") ||
              equal_Command(cmd, "keyroot.changed")) {
         if (equal_Command(cmd, "font.changed")) {
-            invalidateCachedLayout_History(d->mod.history);   
+            invalidateCachedLayout_History(d->mod.history);
         }
         /* Alt/Option key may be involved in window size changes. */
         setLinkNumberMode_DocumentWidget_(d, iFalse);
@@ -4056,7 +4056,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return wasHandled;
     }
-    else if (equal_Command(cmd, "document.upload") && d == document_App()) {        
+    else if (equal_Command(cmd, "document.upload") && d == document_App()) {
         if (findChild_Widget(root_Widget(w), "upload")) {
             return iTrue; /* already open */
         }
@@ -4124,7 +4124,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
             /* Reopen so the Upload dialog gets shown. */
             postCommandf_App("open url:%s", cstr_String(d->mod.url));
-            return iTrue;            
+            return iTrue;
         }
         fetch_DocumentWidget_(d);
         return iTrue;
@@ -4416,7 +4416,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (argLabel_Command(cmd, "ttf")) {
             iAssert(!cmp_String(&d->sourceMime, "font/ttf"));
             installFontFile_Fonts(collect_String(suffix_Command(cmd, "name")), &d->sourceContent);
-            postCommand_App("open url:about:fonts");                
+            postCommand_App("open url:about:fonts");
         }
         else {
             const iString *id = idFromUrl_FontPack(d->mod.url);
@@ -5435,7 +5435,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Widget(w);
     setId_Widget(w, format_CStr("document%03d", ++docEnum_));
     setFlags_Widget(w, hover_WidgetFlag | noBackground_WidgetFlag, iTrue);
-#if defined (iPlatformAppleDesktop)    
+#if defined (iPlatformAppleDesktop)
     iBool enableSwipeNavigation = iTrue; /* swipes on the trackpad */
 #else
     iBool enableSwipeNavigation = (deviceType_App() != desktop_AppDeviceType);
@@ -5671,7 +5671,7 @@ iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
 void takeRequest_DocumentWidget(iDocumentWidget *d, iGmRequest *finishedRequest) {
     cancelRequest_DocumentWidget_(d, iFalse /* don't post anything */);
     const iString *url = url_GmRequest(finishedRequest);
-    
+
     add_History(d->mod.history, url);
     setUrl_DocumentWidget_(d, url);
     d->state = fetching_RequestState;
