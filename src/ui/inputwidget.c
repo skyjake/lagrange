@@ -734,10 +734,8 @@ static int contentHeight_InputWidget_(const iInputWidget *d) {
     if (d->buffered && ~d->inFlags & needUpdateBuffer_InputWidgetFlag) {
         return iClamp(d->buffered->size.y, minHeight, maxHeight);
     }
-    return minHeight;
-#else
-    return (int) size_Range(&d->visWrapLines) * lineHeight;
 #endif
+    return (int) size_Range(&d->visWrapLines) * lineHeight;
 }
 
 static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
