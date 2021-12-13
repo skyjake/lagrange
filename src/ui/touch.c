@@ -42,7 +42,11 @@ iDeclareType(TouchState)
 
 static const uint32_t longPressSpanMs_  = 500;
 static const uint32_t shortPressSpanMs_ = 250;
+#if defined (iPlatformAndroidMobile)
+static const int      tapRadiusPt_      = 30; /* inaccurate sensors? */
+#else
 static const int      tapRadiusPt_      = 10;
+#endif
 
 enum iTouchEdge {
     none_TouchEdge,

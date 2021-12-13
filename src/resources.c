@@ -101,8 +101,9 @@ iBool init_Resources(const char *path) {
     iBool ok = iFalse;
 #if defined (iPlatformAndroidMobile)
     /* Resources are bundled as assets so they cannot be loaded as a regular file.
-       Fortunately, SDL implements a file wrapper. */ {
-        SDL_RWops *io = SDL_RWFromFile(path, "rb");
+       Fortunately, SDL implements a file wrapper. */
+    SDL_RWops *io = SDL_RWFromFile(path, "rb");
+    if (io) {
         iBlock buf;
         init_Block(&buf, (size_t) SDL_RWsize(io));
         SDL_RWread(io, data_Block(&buf), size_Block(&buf), 1);

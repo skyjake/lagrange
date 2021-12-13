@@ -1224,10 +1224,6 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
             case tooManyRedirects_GmStatusCode:
                 appendFormat_String(src, "=> %s\n", cstr_String(meta));
                 break;
-            case tlsFailure_GmStatusCode:
-//                useBanner = iFalse; /* valid data wasn't received from host */
-//                appendFormat_String(src, ">%s\n", cstr_String(meta));
-                break;
             case tlsServerCertificateExpired_GmStatusCode:
                 makeFooterButtons_DocumentWidget_(
                     d,
