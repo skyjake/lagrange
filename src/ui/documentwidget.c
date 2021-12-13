@@ -1881,6 +1881,7 @@ static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
 
 static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float normScrollY,
                                                      const iGmResponse *resp, iGmDocument *cachedDoc) {
+    iAssert(width_Widget(d) > 0); /* must be laid out by now */
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     clear_ObjectList(d->media);
     delete_Gempub(d->sourceGempub);
@@ -1901,9 +1902,13 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         d->sourceStatus = success_GmStatusCode;
         format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
         set_Block(&d->sourceContent, &resp->body);
+        if (!cachedDoc) {
+            setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d), width_Widget(d));
+        }
         updateDocument_DocumentWidget_(d, resp, cachedDoc, iTrue);
-//        setCachedDocument_History(d->mod.history, d->doc,
-//                                  (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
+//        if (!cachedDoc) {
+//            setCachedDocument_History(d->mod.history, d->doc, iFalse);
+//        }
         clear_Banner(d->banner);
         updateBanner_DocumentWidget_(d);
         addBannerWarnings_DocumentWidget_(d);
@@ -1932,6 +1937,10 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
                      recent->flags.openedFromSidebar);
         updateFromCachedResponse_DocumentWidget_(
             d, recent->normScrollY, recent->cachedResponse, recent->cachedDoc);
+        if (!recent->cachedDoc) {
+            /* We have a cached copy now. */
+            setCachedDocument_History(d->mod.history, d->doc, iFalse);
+        }
         return iTrue;
     }
     else if (!isEmpty_String(d->mod.url)) {

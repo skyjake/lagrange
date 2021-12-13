@@ -412,6 +412,7 @@ void setCachedResponse_History(iHistory *d, const iGmResponse *response) {
 void setCachedDocument_History(iHistory *d, iGmDocument *doc, iBool openedFromSidebar) {
     lock_Mutex(d->mtx);
     iRecentUrl *item = mostRecentUrl_History(d);
+    iAssert(size_GmDocument(doc).x > 0);
     if (item) {
 #if !defined (NDEBUG)
         if (!equal_String(url_GmDocument(doc), &item->url)) {
