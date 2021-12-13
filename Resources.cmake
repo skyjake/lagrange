@@ -16,11 +16,11 @@ function (make_resources dst)
     file (REMOVE ${dst})
     get_filename_component (dstName ${dst} NAME)
     message (STATUS "  ${dstName}")
-    set (versionTempPath ${CMAKE_SOURCE_DIR}/res/VERSION)
+    set (versionTempPath ${CMAKE_CURRENT_SOURCE_DIR}/res/VERSION)
     file (WRITE ${versionTempPath} ${PROJECT_VERSION})
     execute_process (
         COMMAND ${ZIP_EXECUTABLE} -1 ${dst} VERSION ${files}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/res
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/res
         OUTPUT_QUIET
     )
     file (REMOVE ${versionTempPath})

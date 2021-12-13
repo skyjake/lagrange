@@ -96,7 +96,7 @@ set (RESOURCES
     res/shadow.png
     res/fontpack.ini
 )
-file (GLOB FONTS RELATIVE ${CMAKE_SOURCE_DIR} res/fonts/*)
+file (GLOB FONTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} res/fonts/*)
 list (APPEND RESOURCES ${FONTS})
 if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND RESOURCES res/lagrange-64.png)
@@ -450,6 +450,8 @@ elseif (HAIKU)
     target_compile_definitions (app PUBLIC
         LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
     install (FILES ${EMB_BIN} DESTINATION .)
+elseif (ANDROID)
+    file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../app/src/main/assets)
 elseif (UNIX AND NOT APPLE)
     include (GNUInstallDirs)
     set_target_properties (app PROPERTIES
