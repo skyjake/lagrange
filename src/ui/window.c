@@ -1265,7 +1265,7 @@ void draw_MainWindow(iMainWindow *d) {
         if (root) {
             /* Some widgets may need a just-in-time visual update. */
             notifyVisualOffsetChange_Root(root);
-            root->didOverflowScroll = iFalse;
+            root->didChangeArrangement = iFalse;
         }
     }
     if (isExposed_Window(w)) {

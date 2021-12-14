@@ -901,6 +901,7 @@ void arrange_Widget(iWidget *d) {
         resetArrangement_Widget_(d); /* back to initial default sizes */
         arrange_Widget_(d);
         notifySizeChanged_Widget_(d);
+        d->root->didChangeArrangement = iTrue;
     }
 }
 
@@ -1218,7 +1219,7 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
         }
 //    printf("range: %d ... %d\n", range.start, range.end);
         if (delta) {
-            d->root->didOverflowScroll = iTrue; /* ensure that widgets update if needed */
+            d->root->didChangeArrangement = iTrue; /* ensure that widgets update if needed */
         }
     }
     else {

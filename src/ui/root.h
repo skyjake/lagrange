@@ -19,7 +19,7 @@ struct Impl_Root {
     iBool      pendingArrange;
     int        loadAnimTimer;
     iBool      didAnimateVisualOffsets;
-    iBool      didOverflowScroll;
+    iBool      didChangeArrangement;
     iAudience *visualOffsetsChanged; /* called after running tickers */
     iColor     tmPalette[tmMax_ColorId]; /* theme-specific palette */
 };
