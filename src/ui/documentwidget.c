@@ -233,6 +233,7 @@ enum iDocumentWidgetFlag {
     drawDownloadCounter_DocumentWidgetFlag   = iBit(15),
     fromCache_DocumentWidgetFlag             = iBit(16), /* don't write anything to cache */
     animationPlaceholder_DocumentWidgetFlag  = iBit(17), /* avoid slow operations */
+    invalidationPending_DocumentWidgetFlag   = iBit(18), /* invalidate as soon as convenient */
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -261,6 +262,7 @@ struct Impl_DocumentWidget {
     iInt2          contextPos; /* coordinates of latest right click */
     int            pinchZoomInitial;
     int            pinchZoomPosted;
+    float          swipeSpeed; /* points/sec */
     iString        pendingGotoHeading;
     
     /* Network request: */
@@ -1081,8 +1083,17 @@ static void invalidate_DocumentWidget_(iDocumentWidget *d) {
     if (flags_Widget(as_Widget(d)) & destroyPending_WidgetFlag) {
         return;
     }
+    if (d->flags & invalidationPending_DocumentWidgetFlag) {
+        return;
+    }
+    if (isAffectedByVisualOffset_Widget(as_Widget(d))) {
+        d->flags |= invalidationPending_DocumentWidgetFlag;
+        return;
+    }
+    d->flags &= ~invalidationPending_DocumentWidgetFlag;
     invalidate_VisBuf(d->visBuf);
     clear_PtrSet(d->invalidRuns);
+//    printf("[%p] '%s' invalidated\n", d, cstr_String(id_Widget(as_Widget(d))));
 }
 
 static iRangecc siteText_DocumentWidget_(const iDocumentWidget *d) {
@@ -2157,6 +2168,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     iGmResponse *resp = lockResponse_GmRequest(d->request);
     if (d->state == fetching_RequestState) {
         d->state = receivedPartialResponse_RequestState;
+        d->flags &= ~fromCache_DocumentWidgetFlag;
         updateTrust_DocumentWidget_(d, resp);
         if (isSuccess_GmStatusCode(statusCode)) {
             clear_Banner(d->banner);
@@ -2309,6 +2321,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         }
     }
     else if (d->state == receivedPartialResponse_RequestState) {
+        d->flags &= ~fromCache_DocumentWidgetFlag;
         switch (category_GmStatusCode(statusCode)) {
             case categorySuccess_GmStatusCode:
                 /* More content available. */
@@ -2664,8 +2677,13 @@ static void setupSwipeOverlay_DocumentWidget_(iDocumentWidget *d, iWidget *overl
     setFlags_Widget(as_Widget(d), refChildrenOffset_WidgetFlag, iTrue);
     as_Widget(d)->offsetRef = swipeParent;
     /* `overlay` animates off the screen to the right. */
-    setVisualOffset_Widget(overlay, value_Anim(&w->visualOffset), 0, 0);
-    setVisualOffset_Widget(overlay, width_Widget(overlay), 150, 0);
+    const int fromPos = value_Anim(&w->visualOffset);
+    const int toPos   = width_Widget(overlay);
+    setVisualOffset_Widget(overlay, fromPos, 0, 0);
+    float swipe = iClamp(d->swipeSpeed, 400, 1000) * gap_UI;
+    uint32_t span = ((toPos - fromPos) / swipe) * 1000;
+//    printf("from:%d to:%d swipe:%f span:%u\n", fromPos, toPos, d->swipeSpeed, span);
+    setVisualOffset_Widget(overlay, toPos, span, 0);
     setVisualOffset_Widget(w, 0, 0, 0);
 }
 
@@ -2791,12 +2809,13 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             return iTrue;
         }
         setFlags_Widget(w, dragged_WidgetFlag, iFalse);
-        setVisualOffset_Widget(w, 0, 150, 0);
+        setVisualOffset_Widget(w, 0, 250, easeOut_AnimFlag | softer_AnimFlag);
         return iTrue;
     }
     if (equal_Command(cmd, "edgeswipe.ended") && argLabel_Command(cmd, "side") == 1) {
         iWidget *swipeParent = swipeParent_DocumentWidget_(d);
         iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
+        d->swipeSpeed = argLabel_Command(cmd, "speed") / gap_UI;
         /* "swipe.back" will soon follow. The `d` document will do the actual back navigation,
             switching immediately to a cached page. However, if one is not available, we'll need
             to show a blank page for a while. */
@@ -2858,6 +2877,9 @@ static iBool cancelRequest_DocumentWidget_(iDocumentWidget *d, iBool postBack) {
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "document.openurls.changed")) {
+        if (d->flags & animationPlaceholder_DocumentWidgetFlag) {
+            return iFalse;
+        }
         /* When any tab changes its document URL, update the open link indicators. */
         if (updateOpenURLs_GmDocument(d->doc)) {
             invalidate_DocumentWidget_(d);
@@ -3179,6 +3201,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
+        d->flags &= ~fromCache_DocumentWidgetFlag;
         set_Block(&d->sourceContent, body_GmRequest(d->request));
         if (!isSuccess_GmStatusCode(status_GmRequest(d->request))) {
             /* TODO: Why is this here? Can it be removed? */
@@ -5149,6 +5172,16 @@ static void prerender_DocumentWidget_(iAny *context) {
     }
 }
 
+static void checkPendingInvalidation_DocumentWidget_(const iDocumentWidget *d) {
+    if (d->flags & invalidationPending_DocumentWidgetFlag &&
+        !isAffectedByVisualOffset_Widget(constAs_Widget(d))) {
+//        printf("%p visoff: %d\n", d, left_Rect(bounds_Widget(w)) - left_Rect(boundsWithoutVisualOffset_Widget(w)));
+        iDocumentWidget *m = (iDocumentWidget *) d; /* Hrrm, not const... */
+        m->flags &= ~invalidationPending_DocumentWidgetFlag;
+        invalidate_DocumentWidget_(m);
+    }
+}
+
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w                   = constAs_Widget(d);
     const iRect    bounds              = bounds_Widget(w);
@@ -5157,6 +5190,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (width_Rect(bounds) <= 0) {
         return;
     }
+    checkPendingInvalidation_DocumentWidget_(d);
     /* Each document has its own palette, but the drawing routines rely on a global one.
        As we're now drawing a document, ensure that the right palette is in effect.
        Document theme colors can be used elsewhere, too, but first a document's palette

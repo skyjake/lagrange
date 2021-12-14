@@ -1809,14 +1809,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             enum iWidgetTouchMode touchMode = widgetMode_Touch(w);
             if (touchMode == momentum_WidgetTouchMode) {
                 /* We don't do momentum. */
-                float swipe = stopWidgetMomentum_Touch(w);
+                float swipe = stopWidgetMomentum_Touch(w) / gap_UI;
 //                printf("swipe: %f\n", swipe);
                 const iRangei midRegion = SlidingSheetMiddleRegion_SidebarWidget_(d);
                 const int pos = top_Rect(w->rect);
-                if (swipe < 500) {
+                if (swipe < 170) {
                     gotoNearestSlidingSheetPos_SidebarWidget_(d);
                 }
-                else if (swipe > 6500 && ev->wheel.y > 0) {
+                else if (swipe > 500 && ev->wheel.y > 0) {
                     /* Fast swipe down will dismiss. */
                     setSlidingSheetPos_SidebarWidget_(d, bottom_SlidingSheetPos);
                 }
