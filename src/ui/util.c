@@ -651,7 +651,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
     if (equal_Command(cmd, "window.focus.lost") ||
         equal_Command(cmd, "window.focus.gained")) return iTrue;
     /* TODO: Perhaps a common way of indicating which commands are notifications and should not
-       be reacted to by menus? */
+       be reacted to by menus?! */
     return equal_Command(cmd, "media.updated") ||
            equal_Command(cmd, "media.player.update") ||
            startsWith_CStr(cmd, "feeds.update.") ||
@@ -672,6 +672,8 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "window.mouse.exited") ||
            equal_Command(cmd, "window.mouse.entered") ||
            equal_Command(cmd, "input.backup") ||
+           equal_Command(cmd, "input.ended") ||
+           equal_Command(cmd, "focus.lost") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
 
@@ -702,6 +704,13 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
             /* Dismiss open menus when clicking outside them. */
             closeMenu_Widget(menu);
             return iTrue;
+        }
+        if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "keyboard.changed") &&
+            arg_Command(cmd) == 0) {
+            /* May need to reposition the menu. */
+            menu->rect.pos = windowToLocal_Widget(menu, init_I2(left_Rect(bounds_Widget(menu)),
+                                                                bottom_Rect(safeRect_Root(menu->root)) - menu->rect.size.y));
+            return iFalse;
         }
         if (!isCommandIgnoredByMenus_(cmd)) {
             closeMenu_Widget(menu);
@@ -2894,7 +2903,7 @@ static iBool isBookmarkFolder_(void *context, const iBookmark *bm) {
     return isFolder_Bookmark(bm);
 }
 
-static const iArray *makeBookmarkFolderItems_(void) {
+static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator) {
     iArray *folders = new_Array(sizeof(iMenuItem));
     pushBack_Array(folders, &(iMenuItem){ "\u2014", 0, 0, "dlg.bookmark.setfolder arg:0" });
     iConstForEach(
@@ -2915,6 +2924,9 @@ static const iArray *makeBookmarkFolderItems_(void) {
                           0,
                           format_CStr("dlg.bookmark.setfolder arg:%u", id_Bookmark(bm)) });
     }
+    if (withNullTerminator) {
+        pushBack_Array(folders, &(iMenuItem){ NULL });
+    }
     return collect_Array(folders); 
 }
 
@@ -2924,6 +2936,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
         { uiTextCaution_ColorEscape "${dlg.bookmark.save}", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept" }
     };
     if (isUsingPanelLayout_Mobile()) {
+        const iArray *folderItems = makeBookmarkFolderItems_(iTrue);
         const iMenuItem items[] = {
             { "title id:bmed.heading text:${heading.bookmark.edit}" },
             { "heading id:dlg.bookmark.url" },
@@ -2932,6 +2945,8 @@ iWidget *makeBookmarkEditor_Widget(void) {
             { "input id:bmed.title text:${dlg.bookmark.title}" },
             { "input id:bmed.tags text:${dlg.bookmark.tags}" },
             { "input id:bmed.icon maxlen:1 text:${dlg.bookmark.icon}" },
+            { "padding" },
+            { "dropdown id:bmed.folder text:${dlg.bookmark.folder}", 0, 0, (const void *) constData_Array(folderItems) },
             { "heading text:${heading.bookmark.tags}" },
             { "toggle id:bmed.tag.home text:${bookmark.tag.home}" },
             { "toggle id:bmed.tag.remote text:${bookmark.tag.remote}" },
@@ -2956,7 +2971,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     setUrlContent_InputWidget(inputs[1], iTrue);
     /* Folder to add to. */ {
         addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.folder}")));
-        const iArray *folderItems = makeBookmarkFolderItems_();
+        const iArray *folderItems = makeBookmarkFolderItems_(iFalse);
         iLabelWidget *folderButton;
         setId_Widget(addChildFlags_Widget(values,
                                      iClob(folderButton = makeMenuButton_LabelWidget(
@@ -3153,13 +3168,13 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
                             bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
         setFlags_Widget(findChild_Widget(dlg,
-                                         bm->flags & headings_BookmarkFlag
+                                         bm && bm->flags & headings_BookmarkFlag
                                              ? "feedcfg.type.headings"
                                              : "feedcfg.type.gemini"),
                         selected_WidgetFlag,
                         iTrue);
         setToggle_Widget(findChild_Widget(dlg, "feedcfg.ignoreweb"),
-                         bm->flags & ignoreWeb_BookmarkFlag);
+                         bm && bm->flags & ignoreWeb_BookmarkFlag);
         setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
     }
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag);

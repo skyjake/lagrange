@@ -2121,6 +2121,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             updateAfterVisualOffsetChange_InputWidget_(d, w->root);
         }
     }
+    else if (d->sysCtrl && isCommand_UserEvent(ev, "menu.opened")) {
+        setFocus_Widget(NULL);
+        return iFalse;
+    }
 #endif
     if (isCommand_Widget(w, ev, "focus.gained")) {
         begin_InputWidget(d);
