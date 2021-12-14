@@ -790,6 +790,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             pushBack_Array(&d->logicalToSourceOffset, &(int){ ch - d->source.start });
             ch += len;
         }
+        iBool bidiOk = iFalse;
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
         /* Use FriBidi to reorder the codepoints. */
         resize_Array(&d->visual, length);
@@ -797,25 +798,25 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         resize_Array(&d->visualToLogical, length);
         d->bidiLevels = length ? malloc(length) : NULL;
         FriBidiParType baseDir = (FriBidiParType) FRIBIDI_TYPE_ON;
-        /* TODO: If this returns zero (error occurred), act like everything is LTR. */
-        fribidi_log2vis(constData_Array(&d->logical),
-                        length,
-                        &baseDir,
-                        data_Array(&d->visual),
-                        data_Array(&d->logicalToVisual),
-                        data_Array(&d->visualToLogical),
-                        (FriBidiLevel *) d->bidiLevels);
+        bidiOk = fribidi_log2vis(constData_Array(&d->logical),
+                                 (FriBidiStrIndex) length,
+                                 &baseDir,
+                                 data_Array(&d->visual),
+                                 data_Array(&d->logicalToVisual),
+                                 data_Array(&d->visualToLogical),
+                                 (FriBidiLevel *) d->bidiLevels) > 0;
         d->isBaseRTL = (overrideBaseDir == 0 ? FRIBIDI_IS_RTL(baseDir) : (overrideBaseDir < 0));
-#else
-        /* 1:1 mapping. */
-        setCopy_Array(&d->visual, &d->logical);
-        resize_Array(&d->logicalToVisual, length);
-        for (size_t i = 0; i < length; i++) {
-            set_Array(&d->logicalToVisual, i, &(int){ i });
-        }
-        setCopy_Array(&d->visualToLogical, &d->logicalToVisual);
-        d->isBaseRTL = iFalse;
 #endif
+        if (!bidiOk) {
+            /* 1:1 mapping. */
+            setCopy_Array(&d->visual, &d->logical);
+            resize_Array(&d->logicalToVisual, length);
+            for (size_t i = 0; i < length; i++) {
+                set_Array(&d->logicalToVisual, i, &(int){ i });
+            }
+            setCopy_Array(&d->visualToLogical, &d->logicalToVisual);
+            d->isBaseRTL = iFalse;
+        }
     }
     /* The mapping needs to include the terminating NULL position. */ {
         pushBack_Array(&d->logicalToSourceOffset, &(int){ d->source.end - d->source.start });
