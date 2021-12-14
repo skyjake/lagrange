@@ -146,6 +146,7 @@ struct Impl_Widget {
     int64_t      flags;
     int          flags2;
     iRect        rect;
+    iInt2        oldSize; /* in previous arrangement; for notification */
     iInt2        minSize;
     iWidget *    sizeRef;
     iWidget *    offsetRef;

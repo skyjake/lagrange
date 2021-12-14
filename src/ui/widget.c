@@ -126,6 +126,7 @@ void init_Widget(iWidget *d) {
     d->flags          = 0;
     d->flags2         = 0;
     d->rect           = zero_Rect();
+    d->oldSize        = zero_I2();
     d->minSize        = zero_I2();
     d->sizeRef        = NULL;
     d->offsetRef      = NULL;
@@ -420,9 +421,10 @@ static iBool setWidth_Widget_(iWidget *d, int width) {
         if (d->rect.size.x != width) {
             d->rect.size.x = width;
             TRACE(d, "width has changed to %d", width);
-            if (class_Widget(d)->sizeChanged) {
-                class_Widget(d)->sizeChanged(d);
-            }
+//            if (~d->flags2 & undefinedWidth_WidgetFlag2 && class_Widget(d)->sizeChanged) {
+//                class_Widget(d)->sizeChanged(d);
+//            }
+//            d->flags2 &= ~undefinedWidth_WidgetFlag2;
             return iTrue;
         }
     }
@@ -443,9 +445,10 @@ static iBool setHeight_Widget_(iWidget *d, int height) {
         if (d->rect.size.y != height) {
             d->rect.size.y = height;
             TRACE(d, "height has changed to %d", height);
-            if (class_Widget(d)->sizeChanged) {
-                class_Widget(d)->sizeChanged(d);
-            }
+//            if (~d->flags2 & undefinedHeight_WidgetFlag2 && class_Widget(d)->sizeChanged) {
+//                class_Widget(d)->sizeChanged(d);
+//            }
+//            d->flags2 &= ~undefinedHeight_WidgetFlag2;
             return iTrue;
         }
     }
@@ -842,6 +845,7 @@ static void arrange_Widget_(iWidget *d) {
 }
 
 static void resetArrangement_Widget_(iWidget *d) {
+    d->oldSize = d->rect.size;
     if (d->flags & resizeToParentWidth_WidgetFlag) {
         d->rect.size.x = 0;
     }
@@ -878,6 +882,15 @@ static void resetArrangement_Widget_(iWidget *d) {
     }
 }
 
+static void notifySizeChanged_Widget_(iWidget *d) {
+    if (class_Widget(d)->sizeChanged && !isEqual_I2(d->rect.size, d->oldSize)) {
+        class_Widget(d)->sizeChanged(d);
+    }
+    iForEach(ObjectList, child, d->children) {
+        notifySizeChanged_Widget_(child.object);
+    }
+}
+
 void arrange_Widget(iWidget *d) {
     if (d) {
 #if !defined (NDEBUG)
@@ -887,6 +900,7 @@ void arrange_Widget(iWidget *d) {
 #endif
         resetArrangement_Widget_(d); /* back to initial default sizes */
         arrange_Widget_(d);
+        notifySizeChanged_Widget_(d);
     }
 }
 
