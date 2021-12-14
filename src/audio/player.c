@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/thread.h>
 #include <SDL_audio.h>
 #include <SDL_timer.h>
+#include <SDL.h>
 
 #if defined (LAGRANGE_ENABLE_MPG123)
 #   include <mpg123.h>
@@ -739,6 +740,22 @@ size_t sourceDataSize_Player(const iPlayer *d) {
     return size;
 }
 
+static iBool setupSDLAudio_(iBool init) {
+    static iBool isAudioInited_ = iFalse;
+    if (init) {
+        if (SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+            fprintf(stderr, "[SDL] audio init failed: %s\n", SDL_GetError());
+            return iFalse;
+        }
+        isAudioInited_ = iTrue;
+    }
+    else if (isAudioInited_) {
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        isAudioInited_ = iFalse;
+    }
+    return isAudioInited_;
+}
+
 iBool start_Player(iPlayer *d) {
     if (isStarted_Player(d)) {
         return iFalse;
@@ -757,6 +774,9 @@ iBool start_Player(iPlayer *d) {
     }
     content.output.callback = writeOutputSamples_Player_;
     content.output.userdata = d;
+    if (!setupSDLAudio_(iTrue)) {
+        return iFalse;
+    }
     d->device = SDL_OpenAudioDevice(NULL, SDL_FALSE /* playback */, &content.output, &d->spec, 0);
     if (!d->device) {
         return iFalse;
@@ -796,6 +816,7 @@ void stop_Player(iPlayer *d) {
         d->device = 0;
         delete_Decoder(d->decoder);
         d->decoder = NULL;
+        setupSDLAudio_(iFalse);
     }
 }
 

@@ -80,9 +80,6 @@ int main(int argc, char **argv) {
         fprintf(stderr, "[SDL] init failed: %s\n", SDL_GetError());
         return -1;
     }
-    if (SDL_Init(SDL_INIT_AUDIO)) {
-        fprintf(stderr, "[SDL] audio init failed: %s\n", SDL_GetError());
-    }
     init_Updater();
     run_App(argc, argv);
     SDL_Quit();
