@@ -1231,7 +1231,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         arrange_Widget(w->parent);
         /* BUG: Rearranging because the arrange above didn't fully resolve the height. */
         arrange_Widget(w);
-        updateSize_DocumentWidget(document_App());
+        if (!isPortraitPhone_App()) {
+            updateSize_DocumentWidget(document_App());
+        }
         if (isVisible_Widget(w)) {
             updateItems_SidebarWidget_(d);
             scrollOffset_ListWidget(d->list, 0);
