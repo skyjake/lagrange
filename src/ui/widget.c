@@ -1980,6 +1980,9 @@ iBool isAffectedByVisualOffset_Widget(const iWidget *d) {
         if (w->flags & visualOffset_WidgetFlag) {
             return iTrue;
         }
+        if (visualOffsetByReference_Widget(w) != 0) {
+            return iTrue;
+        }
     }
     return iFalse;
 }
