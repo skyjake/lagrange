@@ -105,6 +105,7 @@ static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
 static const char *prefsFileName_App_      = "prefs.cfg";
 static const char *oldStateFileName_App_   = "state.binary";
 static const char *stateFileName_App_      = "state.lgr";
+static const char *tempStateFileName_App_  = "state.lgr.tmp";
 static const char *defaultDownloadDir_App_ = "~/Downloads";
 
 static const int idleThreshold_App_ = 1000; /* ms */
@@ -554,7 +555,7 @@ static void saveState_App_(const iApp *d) {
        navigation history, cached content) and depends closely on the widget
        tree. The data is largely not reorderable and should not be modified
        by the user manually. */
-    iFile *f = newCStr_File(concatPath_CStr(dataDir_App_(), stateFileName_App_));
+    iFile *f = newCStr_File(concatPath_CStr(dataDir_App_(), tempStateFileName_App_));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
         writeU32_File(f, latest_FileVersion); /* version */
@@ -596,11 +597,19 @@ static void saveState_App_(const iApp *d) {
             write8_File(f, flags);
             serializeState_DocumentWidget(i.object, stream_File(f));
         }
+        iRelease(f);
     }
     else {
+        iRelease(f);
         fprintf(stderr, "[App] failed to save state: %s\n", strerror(errno));
+        return;
     }
-    iRelease(f);
+    /* Copy it over to the real file. This avoids truncation if the app for any reason crashes
+       before the state file is fully written. */
+    const char *tempName = concatPath_CStr(dataDir_App_(), tempStateFileName_App_);
+    const char *finalName = concatPath_CStr(dataDir_App_(), stateFileName_App_);
+    remove(finalName);
+    rename(tempName, finalName);
 }
 
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
