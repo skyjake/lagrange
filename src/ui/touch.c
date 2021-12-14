@@ -256,6 +256,11 @@ static iFloat3 gestureVector_Touch_(const iTouch *d) {
     return sub_F3(d->pos[0], d->pos[lastIndex]);
 }
 
+static uint32_t gestureSpan_Touch_(const iTouch *d) {
+    const size_t lastIndex = iMin(d->posCount - 1, lastIndex_Touch_);
+    return d->posTime[0] - d->posTime[lastIndex];
+}
+
 static void update_TouchState_(void *ptr) {
     iWindow *win = get_Window();
     const iWidget *oldHover = win->hover;
@@ -668,11 +673,14 @@ iBool processEvent_Touch(const SDL_Event *ev) {
 #endif
             if (touch->edge && !isStationary_Touch_(touch)) {
                 const iFloat3 gesture = gestureVector_Touch_(touch);
+                const uint32_t duration = gestureSpan_Touch_(touch);
                 const float pixel = window->pixelRatio;
                 const int moveDir = x_F3(gesture) < -pixel ? -1 : x_F3(gesture) > pixel ? +1 : 0;
                 const int didAbort = (touch->edge == left_TouchEdge  && moveDir < 0) ||
                                      (touch->edge == right_TouchEdge && moveDir > 0);
-                postCommandf_App("edgeswipe.ended abort:%d side:%d id:%llu", didAbort, touch->edge, touch->id);
+                postCommandf_App("edgeswipe.ended abort:%d side:%d id:%llu speed:%d", didAbort,
+                                 touch->edge, touch->id,
+                                 (int) (duration > 0 ? length_F3(gesture) / (duration / 1000.0f) : 0));
                 remove_ArrayIterator(&i);
                 continue;
             }
@@ -696,8 +704,8 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             }
             /* Edge swipes do not generate momentum. */
             const size_t lastIndex = iMin(touch->posCount - 1, lastIndex_Touch_);
-            const uint32_t duration = nowTime - touch->startTime;
             const iFloat3 gestureVector = sub_F3(pos, touch->pos[lastIndex]);
+            const uint32_t duration = nowTime - touch->startTime;
             iFloat3 velocity = zero_F3();
 #if 0
             if (touch->edge && fabsf(2 * x_F3(gestureVector)) > fabsf(y_F3(gestureVector)) &&
