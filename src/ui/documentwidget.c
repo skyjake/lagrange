@@ -2680,10 +2680,13 @@ static void setupSwipeOverlay_DocumentWidget_(iDocumentWidget *d, iWidget *overl
     const int fromPos = value_Anim(&w->visualOffset);
     const int toPos   = width_Widget(overlay);
     setVisualOffset_Widget(overlay, fromPos, 0, 0);
-    float swipe = iClamp(d->swipeSpeed, 400, 1000) * gap_UI;
+    /* Bigger screen, faster swipes. */
+    const float devFactor = (deviceType_App() == tablet_AppDeviceType ? 2.0f : 1.0f);
+    float swipe = iClamp(d->swipeSpeed, devFactor * 400, devFactor * 1000) * gap_UI;
     uint32_t span = ((toPos - fromPos) / swipe) * 1000;
 //    printf("from:%d to:%d swipe:%f span:%u\n", fromPos, toPos, d->swipeSpeed, span);
-    setVisualOffset_Widget(overlay, toPos, span, 0);
+    setVisualOffset_Widget(overlay, toPos, span, deviceType_App() == tablet_AppDeviceType ?
+                           easeOut_AnimFlag : 0);
     setVisualOffset_Widget(w, 0, 0, 0);
 }
 
