@@ -538,6 +538,14 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 #endif
         return iFalse;
     }
+    else if (equal_Command(cmd, "root.arrange")) {
+        iWidget *prefs = findWidget_Root("prefs");
+        if (prefs) {
+            updatePreferencesLayout_Widget(prefs);
+        }
+        root->root->pendingArrange = iFalse;
+        return iTrue;
+    }
     else if (handleCommand_App(cmd)) {
         return iTrue;
     }

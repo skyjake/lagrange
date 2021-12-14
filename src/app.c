@@ -1949,8 +1949,11 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         }
     }
     else if (equalWidget_Command(cmd, d, "input.resized")) {
-        updatePreferencesLayout_Widget(d);
-        return iFalse;
+        if (!d->root->pendingArrange) {
+            d->root->pendingArrange = iTrue;
+            postCommand_Root(d->root, "root.arrange");
+        }
+        return iTrue;
     }
     return iFalse;
 }
