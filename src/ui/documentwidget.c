@@ -1307,6 +1307,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     }
     /* Make a new document for the error page.*/
     iGmDocument *errorDoc = new_GmDocument();
+    setWidth_GmDocument(errorDoc, documentWidth_DocumentWidget_(d), width_Widget(d));
     setUrl_GmDocument(errorDoc, d->mod.url);
     setFormat_GmDocument(errorDoc, gemini_SourceFormat);
     replaceDocument_DocumentWidget_(d, errorDoc);

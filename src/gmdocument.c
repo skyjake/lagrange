@@ -2102,6 +2102,7 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     if (size_String(source) == size_String(&d->unormSource)) {
         iAssert(equal_String(source, &d->unormSource));
 //        printf("[GmDocument] source is unchanged!\n");
+        updateWidth_GmDocument(d, width, canvasWidth);
         return; /* Nothing to do. */
     }
     /* Normalize and convert to Gemtext if needed. */
