@@ -6,6 +6,20 @@
 ```
 # Release notes
 
+## 1.10 (4)
+* Fixed crash when closing sidebar in bookmark edit mode.
+* Fixed incorrect initial height of an unfocused multiline input widget.
+* Fixed lookup results having too narrow a width.
+* Fixed padding at bottom of the upload text editor.
+* Fixed missing "Folder" field in the bookmark editor. Edited bookmarks would be moved to the root folder.
+* Fixed missing "Glyph Warnings" toggle in Settings.
+* Removed "Return Key Behavior" from Settings since it has no effect.
+* Minor improvements in page caching.
+* Tuned page swipe animations.
+* Optimized UI layout updates.
+* Audio subsystem is only initialized when actually needed.
+* Prevent state file corruption if the app happens to get killed while state is being saved.
+
 ## 1.10 (3)
 * Revised layout of the Upload dialog. There is a new edit field that lets you modify the file path of the URL. Identity names are in bold.
 * Added an edit actions menu in the Upload text editor (only in portrait phone layout for now).
