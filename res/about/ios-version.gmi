@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.10 (5)
+* Fixed positioning of native UI controls in non-animated input widgets.
+* Fixed input widgets not reacting to keyboard being dismissed by system.
+* iPad: Faster back swipe animation.
+
 ## 1.10 (4)
 * Fixed crash when closing sidebar in bookmark edit mode.
 * Fixed incorrect initial height of an unfocused multiline input widget.
