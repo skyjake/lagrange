@@ -390,12 +390,16 @@ static void deinitCache_Text_(iText *d) {
     SDL_DestroyTexture(d->cache);
 }
 
+iRegExp *makeAnsiEscapePattern_Text(void) {
+    return new_RegExp("[[()][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])", 0);
+}
+
 void init_Text(iText *d, SDL_Renderer *render) {
     iText *oldActive = activeText_;
     activeText_ = d;
     init_Array(&d->fonts, sizeof(iFont));
     d->contentFontSize = contentScale_Text_;
-    d->ansiEscape      = new_RegExp("[[()][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])", 0);
+    d->ansiEscape      = makeAnsiEscapePattern_Text();
     d->baseFontId      = -1;
     d->baseFgColorId   = -1;
     d->missingGlyphs   = iFalse;

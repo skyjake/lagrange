@@ -1899,9 +1899,9 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     }
 }
 
-static int replaceRegExp_String(iString *d, const iRegExp *regexp, const char *replacement,
-                                void (*matchHandler)(void *, const iRegExpMatch *),
-                                void *context) {
+int replaceRegExp_String(iString *d, const iRegExp *regexp, const char *replacement,
+                         void (*matchHandler)(void *, const iRegExpMatch *),
+                         void *context) {
     iRegExpMatch m;
     iString      result;
     int          numMatches = 0;

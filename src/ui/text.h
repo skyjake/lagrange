@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "fontpack.h"
 
+iDeclareType(RegExp)
+
 /* Content sizes: regular (1x) -> medium (1.2x) -> big (1.33x) -> large (1.67x) -> huge (2x) */
 
 #define FONT_ID(name, style, size)    ((name) + ((style) * max_FontSize) + (size))
@@ -229,6 +231,8 @@ enum iTextBlockMode { quadrants_TextBlockMode, shading_TextBlockMode };
 
 iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iTextBlockMode,
                                      const iString *text);
+
+iRegExp *   makeAnsiEscapePattern_Text  (void);
 
 /*-----------------------------------------------------------------------------------------------*/
 

@@ -110,7 +110,7 @@ static void ignoreImmediateKeyDownEvents_(void) {
 - (id)initWithIdentifier:(NSTouchBarItemIdentifier)identifier
                    title:(NSString *)title
                  command:(NSString *)cmd {
-    [super initWithIdentifier:identifier];
+    self = [super initWithIdentifier:identifier];
     self.view = [NSButton buttonWithTitle:title target:self action:@selector(buttonPressed)];
     command = cmd;
     return self;
@@ -120,7 +120,7 @@ static void ignoreImmediateKeyDownEvents_(void) {
                    image:(NSImage *)image
                   widget:(iWidget *)widget
                  command:(NSString *)cmd {
-    [super initWithIdentifier:identifier];
+    self = [super initWithIdentifier:identifier];
     self.view = [NSButton buttonWithImage:image target:self action:@selector(buttonPressed)];
     command = cmd;
     return self;
@@ -163,12 +163,13 @@ static void ignoreImmediateKeyDownEvents_(void) {
 @implementation MenuCommands
 
 - (id)init {
+    self = [super init];
     commands = [[NSMutableDictionary<NSString *, NSString *> alloc] init];
     source = NULL;
     return self;
 }
 
-- (void)setCommand:(NSString *)command forMenuItem:(NSMenuItem *)menuItem {
+- (void)setCommand:(NSString * __nonnull)command forMenuItem:(NSMenuItem * __nonnull)menuItem {
     [commands setObject:command forKey:[menuItem title]];
 }
 
@@ -220,7 +221,7 @@ static void ignoreImmediateKeyDownEvents_(void) {
 @implementation MyDelegate
 
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl {
-    [super init];
+    self = [super init];
     currentAppearanceName = nil;
     menuCommands = [[MenuCommands alloc] init];
     touchBarVariant = default_TouchBarVariant;
@@ -541,6 +542,29 @@ enum iColorId removeColorEscapes_String(iString *d) {
     return color;
 }
 
+static NSString *cleanString_(const iString *ansiEscapedText) {
+    iString mod;
+    initCopy_String(&mod, ansiEscapedText);
+    iRegExp *ansi = makeAnsiEscapePattern_Text();
+    replaceRegExp_String(&mod, ansi, "", NULL, NULL);
+    iRelease(ansi);
+    NSString *clean = [NSString stringWithUTF8String:cstr_String(&mod)];    
+    deinit_String(&mod);
+    return clean;
+}
+
+#if 0
+static NSAttributedString *makeAttributedString_(const iString *ansiEscapedText) {
+    iString mod;
+    initCopy_String(&mod, ansiEscapedText);
+    NSData *data = [NSData dataWithBytesNoCopy:data_Block(&mod.chars) length:size_String(&mod)];
+    NSAttributedString *as = [[NSAttributedString alloc] initWithHTML:data
+                                                   documentAttributes:nil];    
+    deinit_String(&mod);
+    return as;
+}
+#endif
+
 /* returns the selected item, if any */
 static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem *items, size_t n) {
     NSMenuItem *selectedItem = nil;
@@ -557,7 +581,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iM
                 isChecked = iTrue;
                 label += 3;
             }
-            else if (startsWith_CStr(label, "///")) {
+            else if (startsWith_CStr(label, "///") || startsWith_CStr(label, "```")) {
                 isDisabled = iTrue;
                 label += 3;
             }
@@ -567,9 +591,13 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iM
             if (removeColorEscapes_String(&itemTitle) == uiTextCaution_ColorId) {
 //                prependCStr_String(&itemTitle, "\u26a0\ufe0f ");
             }
-            NSMenuItem *item = [menu addItemWithTitle:[NSString stringWithUTF8String:cstr_String(&itemTitle)]
-                                               action:(hasCommand ? @selector(postMenuItemCommand:) : nil)
-                                        keyEquivalent:@""];
+            NSMenuItem *item = [[NSMenuItem alloc] init];
+            /* Use attributed string to allow newlines. */
+            NSAttributedString *title = [[NSAttributedString alloc] initWithString:cleanString_(&itemTitle)];
+            item.attributedTitle = title;
+            [title release];
+            item.action = (hasCommand ? @selector(postMenuItemCommand:) : nil);
+            [menu addItem:item];
             deinit_String(&itemTitle);
             [item setTarget:commands];
             if (isChecked) {
