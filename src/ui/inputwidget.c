@@ -374,6 +374,8 @@ static iRect contentBounds_InputWidget_(const iInputWidget *d) {
     return bounds;
 }
 
+#define minWidth_InputWidget_   (3 * gap_UI)
+
 static iWrapText wrap_InputWidget_(const iInputWidget *d, int y) {
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
     iUnused(y); /* full text is wrapped always */
@@ -383,7 +385,8 @@ static iWrapText wrap_InputWidget_(const iInputWidget *d, int y) {
 #endif
     return (iWrapText){
         .text = text,
-        .maxWidth = d->maxLen == 0 ? width_Rect(contentBounds_InputWidget_(d))
+        .maxWidth = d->maxLen == 0 ? iMaxi(minWidth_InputWidget_,
+                                           width_Rect(contentBounds_InputWidget_(d)))
                                    : unlimitedWidth_InputWidget_,
         .mode =
             (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode : word_WrapTextMode),
@@ -647,7 +650,7 @@ static size_t length_InputWidget_(const iInputWidget *d) {
 static void updateLine_InputWidget_(iInputWidget *d, iInputLine *line) {
     iAssert(endsWith_String(&line->text, "\n") || isLastLine_InputWidget_(d, line));
     iWrapText wrapText = wrap_InputWidget_(d, indexOf_Array(&d->lines, line));
-    if (wrapText.maxWidth <= 0) {
+    if (wrapText.maxWidth <= minWidth_InputWidget_) {
         line->wrapLines.end = line->wrapLines.start + 1;
         return;
     }
@@ -1524,7 +1527,7 @@ static iInt2 coordCursor_InputWidget_(const iInputWidget *d, iInt2 coord) {
 //        return cursorMax_InputWidget_(d);
 //    }
     iWrapText wrapText = {
-        .maxWidth = d->maxLen == 0 ? width_Rect(bounds) : unlimitedWidth_InputWidget_,
+        .maxWidth = d->maxLen == 0 ? iMaxi(minWidth_InputWidget_, width_Rect(bounds)) : unlimitedWidth_InputWidget_,
         .mode = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode : word_WrapTextMode),
         .hitPoint = relCoord,
         .overrideChar = (d->inFlags & isSensitive_InputWidgetFlag ? sensitiveChar_ : 0),
@@ -2108,6 +2111,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     /* Resize according to width immediately. */
     if (d->lastUpdateWidth != w->rect.size.x) {
         d->inFlags |= needUpdateBuffer_InputWidgetFlag;
+        if (contentBounds_InputWidget_(d).size.x < minWidth_InputWidget_) {
+            setFocus_Widget(NULL);
+            return iFalse;
+        }
         if (d->inFlags & isUrl_InputWidgetFlag) {
             /* Restore/omit the default scheme if necessary. */
             setText_InputWidget(d, text_InputWidget(d));
@@ -2127,7 +2134,12 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
 #endif
     if (isCommand_Widget(w, ev, "focus.gained")) {
-        begin_InputWidget(d);
+        if (contentBounds_InputWidget_(d).size.x < minWidth_InputWidget_) {
+            setFocus_Widget(NULL);
+        }
+        else {
+            begin_InputWidget(d);
+        }
         return iFalse;
     }
     else if (isCommand_UserEvent(ev, "keyroot.changed")) {
