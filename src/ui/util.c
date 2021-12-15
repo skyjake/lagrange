@@ -1699,6 +1699,12 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         }
         return iFalse;
     }
+    if (equal_Command(cmd, "input.resized")) {
+        /* BUG: A single arrange here is not sufficient, leaving a big gap between prompt and input. Why? */
+        arrange_Widget(dlg);
+        arrange_Widget(dlg);
+        return iTrue;
+    }
     if (equal_Command(cmd, "input.ended")) {
         if (argLabel_Command(cmd, "enter") && hasParent_Widget(ptr, dlg)) {
             if (arg_Command(cmd)) {
@@ -1861,8 +1867,9 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     if (parent) {
         setFocus_Widget(as_Widget(input));
     }
-    /* Check that the top is in the safe area. */ {
-        int top = top_Rect(bounds_Widget(dlg));
+    /* Check that the top is in the safe area. */
+    if (deviceType_App() != desktop_AppDeviceType) {
+        int top = top_Rect(boundsWithoutVisualOffset_Widget(dlg));
         int delta = top - top_Rect(safeRect_Root(dlg->root));
         if (delta < 0) {
             dlg->rect.pos.y -= delta;
@@ -2943,10 +2950,10 @@ iWidget *makeBookmarkEditor_Widget(void) {
             { "input id:bmed.url url:1 noheading:1" },
             { "padding" },
             { "input id:bmed.title text:${dlg.bookmark.title}" },
-            { "input id:bmed.tags text:${dlg.bookmark.tags}" },
-            { "input id:bmed.icon maxlen:1 text:${dlg.bookmark.icon}" },
-            { "padding" },
             { "dropdown id:bmed.folder text:${dlg.bookmark.folder}", 0, 0, (const void *) constData_Array(folderItems) },
+            { "padding" },
+            { "input id:bmed.icon maxlen:1 text:${dlg.bookmark.icon}" },
+            { "input id:bmed.tags text:${dlg.bookmark.tags}" },
             { "heading text:${heading.bookmark.tags}" },
             { "toggle id:bmed.tag.home text:${bookmark.tag.home}" },
             { "toggle id:bmed.tag.remote text:${bookmark.tag.remote}" },
@@ -2966,24 +2973,24 @@ iWidget *makeBookmarkEditor_Widget(void) {
     iWidget *headings, *values;
     addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
     iInputWidget *inputs[4];
-    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.title}", "bmed.title", iClob(inputs[0] = new_InputWidget(0)));
-    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.url}",   "bmed.url",   iClob(inputs[1] = new_InputWidget(0)));
-    setUrlContent_InputWidget(inputs[1], iTrue);
     /* Folder to add to. */ {
         addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.folder}")));
         const iArray *folderItems = makeBookmarkFolderItems_(iFalse);
         iLabelWidget *folderButton;
         setId_Widget(addChildFlags_Widget(values,
-                                     iClob(folderButton = makeMenuButton_LabelWidget(
-                                               widestLabel_MenuItemArray(folderItems),
-                                               constData_Array(folderItems),
-                                               size_Array(folderItems))), alignLeft_WidgetFlag),
+                                          iClob(folderButton = makeMenuButton_LabelWidget(
+                                                    widestLabel_MenuItemArray(folderItems),
+                                                    constData_Array(folderItems),
+                                                    size_Array(folderItems))), alignLeft_WidgetFlag),
                      "bmed.folder");
         const uint32_t recentFolderId = recentFolder_Bookmarks(bookmarks_App());
         updateDropdownSelection_LabelWidget(
             folderButton, format_CStr(" arg:%u", recentFolderId));
         setUserData_Object(folderButton, get_Bookmarks(bookmarks_App(), recentFolderId));
     }
+    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.title}", "bmed.title", iClob(inputs[0] = new_InputWidget(0)));
+    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.url}",   "bmed.url",   iClob(inputs[1] = new_InputWidget(0)));
+    setUrlContent_InputWidget(inputs[1], iTrue);
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.tags}",  "bmed.tags",  iClob(inputs[2] = new_InputWidget(0)));
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));
     /* Buttons for special tags. */
