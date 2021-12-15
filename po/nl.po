@@ -1,2 +1,1049 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-12-17 22:50+0000\n"
+"Last-Translator: Jop <jop@jopv.net>\n"
+"Language-Team: Dutch <http://weblate.skyjake.fi/projects/lagrange/ui/nl/>\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Ophalen"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s is een gecomprimeerd archief."
+
+msgid "doc.archive.view"
+msgstr "Bekijk archiefinhoud"
+
+msgid "media.untitled.image"
+msgstr "Afbeelding"
+
+msgid "media.untitled.audio"
+msgstr "Audio"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titel"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artiest"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genre"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Datum"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bit"
+
+msgid "numbertype.integer"
+msgstr "integer"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "in totaal %u artikel"
+msgstr[1] "in totaal %u artikelen"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Net ververst."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d minuut geleden"
+msgstr[1] "%d minuten geleden"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d dag geleden"
+msgstr[1] "%d dagen geleden"
+
+msgid "about.tagline"
+msgstr "Een prachtige Gemini-client"
+
+msgid "about.version"
+msgstr "Versie"
+
+msgid "close"
+msgstr "Sluiten"
+
+msgid "dlg.default"
+msgstr " Oké "
+
+msgid "toggle.yes"
+msgstr "JA"
+
+msgid "toggle.no"
+msgstr "NEE"
+
+msgid "menu.title.edit"
+msgstr "Wijzig"
+
+msgid "menu.title.view"
+msgstr "Weergave"
+
+msgid "menu.title.bookmarks"
+msgstr "Bladwijzers"
+
+msgid "menu.title.identity"
+msgstr "Identiteit"
+
+msgid "menu.title.help"
+msgstr "Help"
+
+msgid "menu.closetab"
+msgstr "Sluit tabblad"
+
+msgid "menu.closetab.other"
+msgstr "Sluit andere tabbladen"
+
+msgid "menu.closetab.left"
+msgstr "Sluit tabbladen links"
+
+msgid "menu.closetab.right"
+msgstr "Sluit tabbladen rechts"
+
+msgid "menu.duptab"
+msgstr "Dupliceer tabblad"
+
+msgid "menu.split.swap"
+msgstr "Kanten verwisselen"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontaal"
+
+msgid "menu.split.vertical"
+msgstr "Verticaal"
+
+msgid "menu.openlocation"
+msgstr "Open locatie…"
+
+msgid "menu.downloads"
+msgstr "Toon Downloads"
+
+msgid "menu.unexpire"
+msgstr "Negeer verloopdatum en ga door met laden"
+
+msgid "menu.find"
+msgstr "Zoek in pagina"
+
+msgid "macos.menu.find"
+msgstr "Zoeken"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Opslaan naar Downloads"
+
+msgid "menu.sidebar"
+msgstr "Zijbalk aan/uit"
+
+msgid "menu.sidebar.right"
+msgstr "Rechter-zijbalk aan/uit"
+
+msgid "menu.zoom.in"
+msgstr "Inzoomen"
+
+msgid "menu.zoom.reset"
+msgstr "Zoom resetten"
+
+msgid "menu.view.split"
+msgstr "Gesplitste weergave…"
+
+msgid "menu.bookmarks.list"
+msgstr "Toon alle bladwijzers"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Toon alle"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Toon bladwijzers op tag"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Toon op tag"
+
+msgid "menu.feeds.entrylist"
+msgstr "Toon feed-artiekelen"
+
+msgid "menu.preferences"
+msgstr "Voorkeuren…"
+
+msgid "menu.update"
+msgstr "Controleer op updates…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Voorkeuren"
+
+msgid "menu.help"
+msgstr "Help"
+
+msgid "menu.releasenotes"
+msgstr "Uitgavenotities"
+
+msgid "menu.quit"
+msgstr "Lagrange afsluiten"
+
+msgid "menu.cut"
+msgstr "Knippen"
+
+msgid "menu.copy"
+msgstr "Kopiëren"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Verwijder"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Ongedaan"
+
+msgid "menu.select.clear"
+msgstr "Ontselecteren"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Toon identiteiten"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Toon inhoudsopgave"
+
+msgid "menu.parent"
+msgstr "Ga naar bovenliggende"
+
+msgid "menu.root"
+msgstr "Ga naar hoofd"
+
+msgid "menu.reload"
+msgstr "Herlaad pagina"
+
+msgid "menu.autoreload"
+msgstr "Automatisch herladen…"
+
+msgid "menu.aboutpages"
+msgstr "About-pagina's"
+
+msgid "menu.about"
+msgstr "Over"
+
+msgid "menu.fonts"
+msgstr "Beheer lettertypes…"
+
+msgid "menu.debug"
+msgstr "Debug-informatie"
+
+msgid "menu.page.import"
+msgstr "Importeer links als bladwijzers…"
+
+msgid "menu.page.copyurl"
+msgstr "Kopieer pagina-URL"
+
+msgid "menu.page.copysource"
+msgstr "Kopieer paginabron"
+
+msgid "menu.feeds.refresh"
+msgstr "Ververs feeds"
+
+msgid "menu.identity.new"
+msgstr "Nieuwe identiteit…"
+
+msgid "menu.identity.import"
+msgstr "Importeren…"
+
+msgid "sidebar.bookmarks"
+msgstr "Bladwijzers"
+
+msgid "sidebar.feeds"
+msgstr "Feeds"
+
+msgid "sidebar.identities"
+msgstr "Identiteiten"
+
+msgid "sidebar.outline"
+msgstr "Opgave"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Alles gelezen"
+
+msgid "sidebar.action.show"
+msgstr "Toon:"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Ongelezen"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nieuwe…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importeren…"
+
+msgid "hint.findtext"
+msgstr "zoek tekst in pagina"
+
+msgid "status.query"
+msgstr "Zoekopdracht"
+
+msgid "status.query.tight"
+msgstr "Opdracht"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%u byte"
+msgstr[1] "%u bytes"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u bestand"
+msgstr[1] "%u bestanden"
+
+# strftime() formatted
+msgid "sidebar.date.thisyear"
+msgstr "%d %b"
+
+# strftime() formatted
+msgid "sidebar.date.otheryear"
+msgstr "%d %b %Y"
+
+msgid "feeds.today"
+msgstr "Vandaag"
+
+msgid "feeds.entry.newtab"
+msgstr "Open artikel in nieuw tabblad"
+
+msgid "feeds.entry.markread"
+msgstr "Markeer als gelezen"
+
+msgid "feeds.entry.markunread"
+msgstr "Markeer als ongelezen"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Bladwijzer toevoegen…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Open feedpagina"
+
+msgid "feeds.edit"
+msgstr "Feed bewerken…"
+
+msgid "feeds.unsubscribe"
+msgstr "De-abonneren…"
+
+msgid "feeds.markallread"
+msgstr "Markeer alles als gelezen"
+
+msgid "menu.opentab"
+msgstr "Open in nieuw tabblad"
+
+msgid "menu.opentab.background"
+msgstr "Open in achtergrondtabblad"
+
+msgid "menu.edit"
+msgstr "Bewerken…"
+
+msgid "menu.dup"
+msgstr "Dupliceren…"
+
+msgid "menu.copyurl"
+msgstr "Kopieer URL"
+
+msgid "menu.forgeturl"
+msgstr "Vergeet URL"
+
+msgid "history.clear"
+msgstr "Geschiedenis wissen…"
+
+msgid "dlg.history.clear"
+msgstr "Wis geschiedenis"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "WIS BLADWIJZERS"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Verwijder bladwijzer"
+msgstr[1] "Verwijder %u bladwijzers"
+
+msgid "bookmark.tag.sub"
+msgstr "Abonneer op feed"
+
+msgid "bookmark.tag.remote"
+msgstr "Gebruik als bladwijzerbron"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Links openen aan zijkant"
+
+msgid "bookmark.untag.sub"
+msgstr "Deabonneer van feed"
+
+msgid "bookmark.delete"
+msgstr "Verwijder bladwijzer"
+
+msgid "bookmarks.reload"
+msgstr "Externe bronnen verversen"
+
+msgid "ident.using"
+msgstr "Voor deze pagina gebruikt"
+
+msgid "ident.notused"
+msgstr "Niet gebruikt"
+
+msgid "ident.temporary"
+msgstr "Tijdelijk"
+
+msgid "ident.use"
+msgstr "Gebruik op deze pagina"
+
+msgid "ident.stopuse"
+msgstr "Stop te gebruiken op deze pagina"
+
+msgid "ident.stopuse.all"
+msgstr "Stop te gebruiken overal"
+
+msgid "ident.export"
+msgstr "Exporteer"
+
+msgid "heading.ident.use"
+msgstr "IDENTITEITSGEBRUIK"
+
+msgid "heading.ident.notes"
+msgstr "IDENTITEITSNOTITIES"
+
+msgid "ident.fingerprint"
+msgstr "Kopieer vingerafdruk"
+
+msgid "ident.delete"
+msgstr "Verwijder identiteit…"
+
+msgid "heading.ident.delete"
+msgstr "VERWIJDER IDENTITEIT"
+
+msgid "sidebar.empty.idents"
+msgstr "Geen identiteiten"
+
+msgid "heading.unsub"
+msgstr "DEABONNEREN"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "Weet je zeker dat je van feed \"%s\" wilt deabonneren?"
+
+msgid "dlg.unsub"
+msgstr "Deabonneren"
+
+msgid "error.server.msg"
+msgstr "Server reageerde met bericht:"
+
+msgid "heading.pageinfo"
+msgstr "PAGINA-INFORMATIE"
+
+msgid "pageinfo.header.cached"
+msgstr "(inhoud uit cache)"
+
+msgid "pageinfo.cert.status"
+msgstr "Status certificaat:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Geverifieerd door CA"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Niet verlopen"
+
+msgid "pageinfo.cert.expired"
+msgstr "Verlopen"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Niet vertrouwd"
+
+msgid "dlg.cert.trust"
+msgstr "Vertrouw"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Kopieer vingerafdruk"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Geef invoer voor %s:"
+
+msgid "dlg.input.linebreak"
+msgstr "Regeleinde"
+
+msgid "dlg.input.send"
+msgstr "Verstuur"
+
+msgid "heading.save.incomplete"
+msgstr "PAGINA ONVOLLEDIG"
+
+msgid "dlg.save.size"
+msgstr "Grootte:"
+
+msgid "dlg.save.opendownload"
+msgstr "Open gedownload bestand"
+
+msgid "heading.save.error"
+msgstr "FOUT BIJ OPSLAAN BESTAND"
+
+msgid "heading.import.bookmarks"
+msgstr "IMPORTEER BLADWIJZERS"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sVoeg bladwijzer toe"
+msgstr[1] "%sVoeg %d bladwijzers toe"
+
+msgid "dlg.import.notnew"
+msgstr "Je hebt al bladwijzers voor alle links op deze pagina."
+
+msgid "heading.autoreload"
+msgstr "AUTO-HERLADEN"
+
+msgid "dlg.autoreload"
+msgstr "Kies het auto-herlaad-interval voor dit tabblad."
+
+msgid "reload.never"
+msgstr "Nooit"
+
+msgid "reload.onceperday"
+msgstr "Eens per dag"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minuut"
+msgstr[1] "%d minuten"
+
+msgid "link.newtab"
+msgstr "Open link in nieuw tabblad"
+
+msgid "link.newtab.background"
+msgstr "Open link in achtergrondtabblad"
+
+msgid "link.side"
+msgstr "Open link aan de zijkant"
+
+msgid "link.copy"
+msgstr "Kopieer link"
+
+msgid "link.bookmark"
+msgstr "Maak bladwijzer voor link…"
+
+msgid "link.download"
+msgstr "Download gelinkt bestand"
+
+msgid "link.file.delete"
+msgstr "Verwijder bestand"
+
+msgid "heading.file.delete"
+msgstr "VERWIJDER BESTAND"
+
+msgid "dlg.file.delete"
+msgstr "Verwijder"
+
+msgid "heading.openlink"
+msgstr "OPEN LINK"
+
+msgid "dlg.openlink"
+msgstr "Open link"
+
+msgid "dlg.certwarn.title"
+msgstr "Beveiligingsprobleem"
+
+msgid "dlg.certwarn.different"
+msgstr ""
+"Het ontvangen certificaat is geldig, maar anders dan degene die we "
+"vertrouwen."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr ""
+"Het ontvangen certificaat is verlopen en ook nog voor het verkeerde domein."
+
+msgid "heading.certimport"
+msgstr "IMPORTEER IDENTITEIT"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Plak een certificaat en/of privésleutel in PEM-formaat,\n"
+"of sleep een .crt/.key-bestand naar het venster."
+
+msgid "dlg.certimport.notfound"
+msgstr "Geen certificaat of privésleutel gevonden."
+
+msgid "heading.certimport.dropped"
+msgstr "GEDROPT BESTAND"
+
+msgid "dlg.certimport.import"
+msgstr "Importeer"
+
+msgid "dlg.certimport.notes"
+msgstr "Notities:"
+
+msgid "hint.certimport.description"
+msgstr "omschrijving"
+
+msgid "dlg.certimport.nocert"
+msgstr "Geen certificaat"
+
+msgid "link.hint.audio"
+msgstr "Speel audio"
+
+msgid "link.hint.image"
+msgstr "Toon afbeelding"
+
+msgid "bookmark.title.blank"
+msgstr "Blanco pagina"
+
+msgid "bookmark.export.title.folder"
+msgstr "Bladwijzers"
+
+msgid "bookmark.export.title.time"
+msgstr "Aangemaakte bladwijzers"
+
+msgid "bookmark.export.saving"
+msgstr ""
+"Bewaar deze pagina om ze te exporteren, of kopieer ze naar het klembord."
+
+msgid "bookmark.export.title.tag"
+msgstr "Bladwijzer-tags"
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Deze pagina is ingedeeld volgens de \"Subscribing to Gemini pages\""
+"-specificatie."
+
+msgid "bookmark.export.format.linklines"
+msgstr "Elke link staat voor een bladwijzer."
+
+msgid "bookmark.export.format.tags"
+msgstr "Tags worden bepaald door koppen van niveau 2."
+
+msgid "bookmark.export.format.folders"
+msgstr "Mapstructuur wordt bepaald door koppen van niveau 2 en 3."
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "BLADWIJZERS"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "FEEDS"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "PAGINA-INHOUD"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTITEITEN"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "OVERIGE"
+
+msgid "menu.page.upload"
+msgstr "Upload pagina via Titan…"
+
+msgid "heading.upload"
+msgstr "UPLOAD VIA TITAN"
+
+msgid "dlg.upload.id.none"
+msgstr "Geen"
+
+msgid "dlg.upload.id.default"
+msgstr "Standaard"
+
+msgid "heading.upload.text"
+msgstr "Tekst"
+
+msgid "heading.upload.file"
+msgstr "Bestand"
+
+msgid "upload.file.name"
+msgstr "Bestandsnaam:"
+
+msgid "upload.file.size"
+msgstr "Bestandsgrootte:"
+
+msgid "doc.pre.nocaption"
+msgstr "Vooringedeelde tekst zonder bijschrift"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Download wordt geannuleerd als deze tab wordt gesloten."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Download voltooid."
+
+msgid "numbertype.float"
+msgstr "float"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Feed-artiekelen"
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Je bent geabbonneerd op %u feed die %%s bevat.\n"
+msgstr[1] "Je bent geabbonneerd op %u feeds die %%s bevatten.\n"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "%s ververst."
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d uur geleden"
+msgstr[1] "%d uren geleden"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII-kunst: het woord \"Lagrange\" in grote letters"
+
+msgid "about.powered"
+msgstr "Mede mogelijk gemaakt door SDL 2, OpenSSL, en ☕️"
+
+msgid "cancel"
+msgstr "Annuleren"
+
+msgid "dlg.message.ok"
+msgstr "Doorgaan"
+
+msgid "menu.title.file"
+msgstr "Archief"
+
+msgid "menu.newtab"
+msgstr "Nieuw tabblad"
+
+msgid "menu.split.merge"
+msgstr "Ontsplitsen"
+
+msgid "menu.pageinfo"
+msgstr "Toon pagina-informatie"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Opslaan naar Bestanden"
+
+msgid "menu.save.downloads.open"
+msgstr "Sla op naar Downloads en open bestand"
+
+msgid "menu.sidebar.left"
+msgstr "Linker-zijbalk aan/uit"
+
+msgid "menu.zoom.out"
+msgstr "Uitzoomen"
+
+msgid "menu.newfolder"
+msgstr "Nieuwe map…"
+
+msgid "menu.sort.alpha"
+msgstr "Sorteer alfabetisch"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Toon bladwijzers op aanmaakdatum"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Toon op aanmaakdatum"
+
+msgid "menu.website"
+msgstr "Projectwebsite…"
+
+msgid "menu.paste"
+msgstr "Plakken"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Selecteer alles"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Toon bladwijzers"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Toon feeds"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Toon geschiedenis"
+
+msgid "menu.back"
+msgstr "Ga terug"
+
+msgid "menu.forward"
+msgstr "Ga vooruit"
+
+msgid "menu.page.bookmark"
+msgstr "Maak bladwijzer…"
+
+msgid "menu.page.subscribe"
+msgstr "Abonneer op pagina…"
+
+msgid "panel.back"
+msgstr "Terug"
+
+msgid "menu.import.links"
+msgstr "Importeer alle links op pagina…"
+
+msgid "menu.page.translate"
+msgstr "Vertaal…"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Kopieer link naar pagina"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Ververs externe bladwijzers"
+
+msgid "menu.identity.notactive"
+msgstr "Geen actieve identiteit"
+
+msgid "sidebar.history"
+msgstr "Geschiedenis"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Alle"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "ongelezen"
+msgstr[1] "ongelezen"
+
+msgid "toolbar.outline"
+msgstr "Inhoudsopgave"
+
+msgid "status.feeds"
+msgstr "Feeds bijwerken"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u lettertype"
+msgstr[1] "%u lettertypes"
+
+# strftime() formatted. Should be split evenly on two lines with a newline character.
+msgid "page.timestamp"
+msgstr ""
+"Ontvangen om %H:%M\n"
+"op %d %b %Y"
+
+msgid "feeds.entry.bookmark"
+msgstr "Bladwijzer toevoegen…"
+
+msgid "feeds.refresh"
+msgstr "Feeds verversen"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Dit Atom XML-document is automatisch omgezet naar een Gemini-feed zodat je "
+"je er op kunt abonneren."
+
+msgid "menu.openfile"
+msgstr "Open bestand…"
+
+msgid "heading.history.clear"
+msgstr "GESCHIEDENIS WISSEN"
+
+msgid "dlg.confirm.history.clear"
+msgstr ""
+"Weet je zeker dat je de hele geschiedenis van bezochte pagina's wil wissen?"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Wil je echt de bladwijzer in deze map verwijderen?"
+msgstr[1] "Wil je echt alle %u bladwijzers in deze map verwijderen?"
+
+msgid "bookmark.tag.home"
+msgstr "Gebruik als startpagina"
+
+msgid "bookmark.untag.home"
+msgstr "Wis startpagina"
+
+msgid "bookmark.untag.remote"
+msgstr "Verwijder bladwijzerbron"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Gebruikt op %u URL"
+msgstr[1] "Gebruikt op %u URL's"
+
+# strftime() formatted
+msgid "ident.expiry"
+msgstr "Verloopt op %d %b %Y"
+
+msgid "menu.edit.notes"
+msgstr "Bewerk notities…"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notities over %s:"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Weet je zeker dat je de identiteit %s\"%s\"%s wilt verwijderen, inclusief "
+"zijn certificaat- en privésleutel-bestanden?"
+
+msgid "dlg.ident.delete"
+msgstr "Verwijder identiteit en bestanden"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "Zie %sHelp%s voor meer informatie over TLS-clientcertificaten."
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Je kan hem opslaan als bestand naar je Downloads-map: druk op %s of "
+"selecteer \"%s\" in het menu."
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Niet geverifieerd door CA"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Vertrouwd"
+
+msgid "pageinfo.domain.match"
+msgstr "Domeinnaam komt overeen"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Domeinnaam komt niet overeen"
+
+msgid "heading.save"
+msgstr "BESTAND OPGESLAGEN"
+
+msgid "dlg.save.incomplete"
+msgstr "De pagina-inhoud wordt nog steeds gedownload."
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Er is één nieuwe link gevonden op de pagina."
+msgstr[1] "Er zijn %d nieuwe links gevonden op de pagina."
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d uur"
+msgstr[1] "%d uren"
+
+msgid "link.side.newtab"
+msgstr "Open link in nieuw tabblad aan de zijkant"
+
+msgid "link.browser"
+msgstr "Open link in standaard browser"
+
+msgid "link.noproxy"
+msgstr "Open zonder proxy"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Weet je zeker dat je dit bestand wilt verwijderen?"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Open deze link in de standaard browser?\n"
+"%s%s"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Het ontvangen certificaat is misschien recent vernieuwd — het is voor het "
+"correcte domein en niet verlopen. Het huidig vertrouwde certificaat verloopt "
+"op %s, over één dag."
+msgstr[1] ""
+"Het ontvangen certificaat is misschien recent vernieuwd — het is voor het "
+"correcte domein en niet verlopen. Het huidig vertrouwde certificaat verloopt "
+"op %s, over %d dagen."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Het ontvangen certificaat is verlopen op %s."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Het ontvangen certificaat is voor het verkeerde domein (%s). Dit kan een "
+"serverconfiguratieprobleem zijn."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Geen certificaat/sleutel gevonden op deze pagina."
+
+msgid "heading.certimport.pasted"
+msgstr "GEPLAKT UIT KLEMBORD"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Importeer certificaat- of sleutel-bestand"
+
+msgid "dlg.certimport.nokey"
+msgstr "Geen privésleutel"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Je hebt %d bladwijzer."
+msgstr[1] "Je hebt %d bladwijzers."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"In deze lijst staat elke kop voor een bladwijzer-tag. Alleen bladwijzers met "
+"tags worden getoond. Bladwijzers met meerdere tags worden onder elke tag "
+"herhaald."
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Opsommingslijsten en citaten zijn gereserveerd voor extra informatie over de "
+"voorgaande bladwijzer. Tekstregels en vooringedeelde tekst worden als "
+"opmerkingen beschouwd en moeten genegeerd worden."
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "GESCHIEDENIS"
+
+msgid "upload.id"
+msgstr "Identiteit:"
+
+msgid "hint.upload.text"
+msgstr "voer tekst in om te uploaden"
+
+msgid "upload.file.drophere"
+msgstr "(sleep een bestand naar het venster)"
