@@ -2629,9 +2629,8 @@ iWidget *makePreferences_Widget(void) {
     }
     /* User Interface. */ {
         appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.interface}", '2', &headings, &values);
-#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-        addDialogToggle_(headings, values, "${prefs.customframe}", "prefs.customframe");
-#endif
+        addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
+        addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
         /* Return key behaviors. */ {
             iLabelWidget *returnKey = makeMenuButton_LabelWidget(
@@ -2645,7 +2644,9 @@ iWidget *makePreferences_Widget(void) {
             setId_Widget(addChildFlags_Widget(values, iClob(returnKey), alignLeft_WidgetFlag),
                          "prefs.returnkey");
         }
-        addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
+        addDialogToggle_(headings, values, "${prefs.customframe}", "prefs.customframe");
+#endif
         makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
         addDialogToggle_(headings, values, "${prefs.smoothscroll}", "prefs.smoothscroll");
         /* Scroll speeds. */ {

@@ -72,6 +72,7 @@ struct Impl_Prefs {
     iBool            uiAnimations;
     float            uiScale;
     iBool            hideToolbarOnScroll;
+    iBool            blinkingCursor;
     /* Document presentation */
     int              zoomPercent;
     iBool            sideIcon;

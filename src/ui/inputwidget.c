@@ -588,7 +588,7 @@ static void updateVisible_InputWidget_(iInputWidget *d) {
     }
     d->visWrapLines.start += delta;
     d->visWrapLines.end   += delta;
-    iAssert(contains_Range(&d->visWrapLines, cursorY));
+//    iAssert(contains_Range(&d->visWrapLines, cursorY));
     if (!isFocused_Widget(d) && d->maxWrapLines == 1) {
         d->visWrapLines.start = 0;
         d->visWrapLines.end = 1;
@@ -711,7 +711,10 @@ static uint32_t cursorTimer_(uint32_t interval, void *w) {
     return interval;
 }
 
-static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, iBool doStart) {
+static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, int doStart) {
+    if (!prefs_App()->blinkingCursor && doStart == 1) {
+        doStart = iFalse;
+    }
     if (doStart && !d->timer) {
         d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);
     }
@@ -2167,6 +2170,12 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iFalse;
     }
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
+    else if (isCommand_UserEvent(ev, "prefs.blink.changed")) {
+        if (isEditing_InputWidget_(d) && arg_Command(command_UserEvent(ev))) {
+            startOrStopCursorTimer_InputWidget_(d, 2);
+        }
+        return iFalse;
+    }
     else if (isEditing_InputWidget_(d) && (isCommand_UserEvent(ev, "window.focus.lost") ||
                                            isCommand_UserEvent(ev, "window.focus.gained"))) {
         startOrStopCursorTimer_InputWidget_(d, isCommand_UserEvent(ev, "window.focus.gained"));
@@ -2613,10 +2622,10 @@ static void draw_InputWidget_(const iInputWidget *d) {
         return;
     }
     const iRect contentBounds = contentBounds_InputWidget_(d);
-    iInt2       drawPos    = topLeft_Rect(contentBounds);
-    const int   fg         = isHint                                   ? uiAnnotation_ColorId
-                             : isFocused /*&& !isEmpty_Array(&d->lines)*/ ? uiInputTextFocused_ColorId
-                                                                      : uiInputText_ColorId;
+    iInt2       drawPos       = topLeft_Rect(contentBounds);
+    const int   fg            = isHint      ? uiAnnotation_ColorId
+                                : isFocused ? uiInputTextFocused_ColorId
+                                            : uiInputText_ColorId;
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
     setClip_Paint(&p,
                   adjusted_Rect(bounds,
@@ -2685,7 +2694,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
         wrapText.context  = NULL;
     }
     /* Draw the insertion point. */
-    if (isFocused && d->cursorVis && contains_Range(&visLines, d->cursor.y) &&
+    if (isFocused && (d->cursorVis || !prefs_App()->blinkingCursor) &&
+        contains_Range(&visLines, d->cursor.y) &&
         (deviceType_App() == desktop_AppDeviceType || isEmpty_Range(&d->mark))) {
         iInt2    curSize;
         iRangecc cursorChar    = iNullRange;

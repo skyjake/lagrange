@@ -1441,6 +1441,9 @@ msgstr "UI scale factor:"
 msgid "prefs.customframe"
 msgstr "Custom window frame:"
 
+msgid "prefs.blink"
+msgstr "Blinking cursor:"
+
 msgid "prefs.returnkey"
 msgstr "Return key behavior:"
 

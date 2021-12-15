@@ -258,6 +258,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
         { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
+        { "prefs.blink", &d->prefs.blinkingCursor },
     };
     iForIndices(i, boolPrefs) {
         appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
@@ -2600,6 +2601,10 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.uiAnimations = arg_Command(cmd) != 0;
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.blink.changed")) {
+        d->prefs.blinkingCursor = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.time.24h.changed")) {
         d->prefs.time24h = arg_Command(cmd) != 0;
         return iTrue;
@@ -2911,6 +2916,8 @@ iBool handleCommand_App(const char *cmd) {
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.strings[downloadDir_PrefsString]);
+        /* TODO: Use a common table in Prefs to do this more conviently.
+           Also see `serializePrefs_App_()`. */
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoverlink"), d->prefs.hoverLink);
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
@@ -2921,7 +2928,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
-//        setText_InputWidget(findChild_Widget(dlg, "prefs.userfont"), &d->prefs.symbolFontPath);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.blink"), d->prefs.blinkingCursor);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
@@ -2933,13 +2940,6 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(as_Window(d->window))));
-//        setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.font.%d", d->prefs.font)),
-//                        selected_WidgetFlag,
-//                        iTrue);
-//        setFlags_Widget(
-//            findChild_Widget(dlg, format_CStr("prefs.headingfont.%d", d->prefs.headingFont)),
-//            selected_WidgetFlag,
-//            iTrue);
         setFlags_Widget(findChild_Widget(dlg, "prefs.mono.gemini"),
                         selected_WidgetFlag,
                         d->prefs.monospaceGemini);
