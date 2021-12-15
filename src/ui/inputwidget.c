@@ -2189,15 +2189,16 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iFalse;
     }
     else if (isCommand_UserEvent(ev, "keyboard.changed")) {
-    /* Scroll to keep widget visible when keyboard appears. */
-        if (isFocused_Widget(d) && arg_Command(command_UserEvent(ev))) {
-            d->lastOverflowScrollTime = SDL_GetTicks();
-            overflowScrollToKeepVisible_InputWidget_(d);
-//            rect.pos.y -= value_Anim(&get_Window()->rootOffset);
-            //const iInt2 visRoot = visibleSize_Root(w->root);
-            //if (bottom_Rect(rect) > visRoot.y) {
-                //setValue_Anim(&get_Window()->rootOffset, -(bottom_Rect(rect) - visRoot.y), 250);
-            //}
+        const iBool isKeyboardVisible = (arg_Command(command_UserEvent(ev)) != 0);
+        /* Scroll to keep widget visible when keyboard appears. */
+        if (isFocused_Widget(d)) {
+            if (isKeyboardVisible) {
+                d->lastOverflowScrollTime = SDL_GetTicks();
+                overflowScrollToKeepVisible_InputWidget_(d);
+            }
+            else {
+                setFocus_Widget(NULL); /* stop editing */
+            }
         }
         return iFalse;
     }
