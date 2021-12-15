@@ -529,7 +529,7 @@ On macOS and Windows, Lagrange registers itself as a "gemini:" URL scheme handle
 
 Likewise (on macOS), .gmi/.gemini file extensions are registered as file formats that Lagrange can view so Finder will know how to open those automatically using Lagrange.
 
-## 3.3 Drop and drop
+## 3.3 Drag and drop
 
 You can drag and drop .gmi files on the Lagrange window to open them in the current tab. Dropping multiple files opens them in separate tabs. This is the recommended way to view local files, because there is no "Open File" menu item. You may also type "file://" URLs in the URL field.
 
