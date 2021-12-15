@@ -558,6 +558,9 @@ static iInt2 relativeCursorCoord_InputWidget_(const iInputWidget *d) {
 }
 
 static void updateVisible_InputWidget_(iInputWidget *d) {
+    if (width_Widget(d) == 0) {
+        return; /* Nothing to do yet. */
+    }
     const int totalWraps = numWrapLines_InputWidget_(d);
     const int visWraps = iClamp(totalWraps, d->minWrapLines, d->maxWrapLines);
     /* Resize the height of the editor. */
@@ -575,6 +578,14 @@ static void updateVisible_InputWidget_(iInputWidget *d) {
     else if (cursorY < d->visWrapLines.start) {
         delta = cursorY - d->visWrapLines.start;
     }
+    if (d->visWrapLines.end + delta > totalWraps) {
+        /* Don't scroll past the bottom. */
+        delta = totalWraps - d->visWrapLines.end;
+    }
+    if (d->visWrapLines.start + delta < 0) {
+        /* Don't ever scroll above the top. */
+        delta = -d->visWrapLines.start;
+    }
     d->visWrapLines.start += delta;
     d->visWrapLines.end   += delta;
     iAssert(contains_Range(&d->visWrapLines, cursorY));
@@ -584,6 +595,7 @@ static void updateVisible_InputWidget_(iInputWidget *d) {
     }
 //    printf("[InputWidget %p] total:%d viswrp:%d cur:%d vis:%d..%d\n",
 //           d, totalWraps, visWraps, d->cursor.y, d->visWrapLines.start, d->visWrapLines.end);
+//    fflush(stdout);
 }
 
 static void showCursor_InputWidget_(iInputWidget *d) {
