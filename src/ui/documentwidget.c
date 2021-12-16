@@ -264,6 +264,7 @@ struct Impl_DocumentWidget {
     int            pinchZoomPosted;
     float          swipeSpeed; /* points/sec */
     iString        pendingGotoHeading;
+    iString        linePrecedingLink;
     
     /* Network request: */
     enum iRequestState state;
@@ -391,6 +392,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->grabbedPlayer = NULL;
     d->mediaTimer    = 0;
     init_String(&d->pendingGotoHeading);
+    init_String(&d->linePrecedingLink);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu         = NULL; /* created when clicking */
@@ -437,6 +439,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     iRelease(d->media);
     iRelease(d->request);
     delete_Gempub(d->sourceGempub);
+    deinit_String(&d->linePrecedingLink);
     deinit_String(&d->pendingGotoHeading);
     deinit_Block(&d->sourceContent);
     deinit_String(&d->sourceMime);
@@ -1893,7 +1896,7 @@ static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
 
 static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float normScrollY,
                                                      const iGmResponse *resp, iGmDocument *cachedDoc) {
-    iAssert(width_Widget(d) > 0); /* must be laid out by now */
+//    iAssert(width_Widget(d) > 0); /* must be laid out by now */
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     clear_ObjectList(d->media);
     delete_Gempub(d->sourceGempub);
@@ -1918,9 +1921,6 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
             setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d), width_Widget(d));
         }
         updateDocument_DocumentWidget_(d, resp, cachedDoc, iTrue);
-//        if (!cachedDoc) {
-//            setCachedDocument_History(d->mod.history, d->doc, iFalse);
-//        }
         clear_Banner(d->banner);
         updateBanner_DocumentWidget_(d);
         addBannerWarnings_DocumentWidget_(d);
@@ -2242,6 +2242,16 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 if (lineBreak && deviceType_App() != desktop_AppDeviceType) {
                     addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
                 }
+                /* Menu for additional actions, past entries. */ {
+                    iMenuItem items[] = { { "${menu.input.precedingline}",
+                                            SDLK_v,
+                                            KMOD_PRIMARY | KMOD_SHIFT,
+                                            format_CStr("!valueinput.set ptr:%p text:%s",
+                                                        buttons,
+                                                        cstr_String(&d->linePrecedingLink)) } };
+                    iLabelWidget *menu = makeMenuButton_LabelWidget(midEllipsis_Icon, items, 1);
+                    addChildPos_Widget(buttons, iClob(menu), front_WidgetAddPos);
+                }                
                 setValidator_InputWidget(findChild_Widget(dlg, "input"), inputQueryValidator_, d);
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
                                                 statusCode == sensitiveInput_GmStatusCode);
@@ -3836,6 +3846,30 @@ static void beginMarkingSelection_DocumentWidget_(iDocumentWidget *d, iInt2 pos)
     refresh_Widget(as_Widget(d));
 }
 
+static void linkWasTriggered_DocumentWidget_(iDocumentWidget *d, iGmLinkId id) {
+    iRangecc loc = linkUrlRange_GmDocument(d->doc, id);
+    if (!loc.start) {
+        clear_String(&d->linePrecedingLink);
+        return;
+    }
+    const char *start = range_String(source_GmDocument(d->doc)).start;
+    /* Find the preceding line. This is offered as a prefill option for a possible input query. */
+    while (loc.start > start && *loc.start != '\n') {
+        loc.start--;
+    }
+    loc.end = loc.start; /* End of the preceding line. */
+    if (loc.start > start) {
+        loc.start--;
+    }
+    while (loc.start > start && *loc.start != '\n') {
+        loc.start--;
+    }
+    if (*loc.start == '\n') {
+        loc.start++; /* Start of the preceding line. */
+    }
+    setRange_String(&d->linePrecedingLink, loc);
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
@@ -3878,6 +3912,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                              : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0)),
                                           cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
+                        linkWasTriggered_DocumentWidget_(d, run->linkId);
                     }
                     setLinkNumberMode_DocumentWidget_(d, iFalse);
                     invalidateVisibleLinks_DocumentWidget_(d);
@@ -3995,6 +4030,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && d->hoverLink) {
+            linkWasTriggered_DocumentWidget_(d, d->hoverLink->linkId);
             postCommandf_Root(w->root, "open newtab:%d url:%s",
                               (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
                               (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag),
@@ -4015,6 +4051,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
                     /* Context menu for a link. */
+                    linkWasTriggered_DocumentWidget_(d, d->contextLink->linkId); /* perhaps will be triggered */
                     const iString *linkUrl  = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
 //                    const int      linkFlags = linkFlags_GmDocument(d->doc, d->contextLink->linkId);
                     const iRangecc scheme   = urlScheme_String(linkUrl);
@@ -4034,23 +4071,30 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         /* Regular links that we can open. */
                         pushBackN_Array(
                             &items,
-                            (iMenuItem[]){
-                                { openTab_Icon " ${link.newtab}",
-                                  0,
-                                  0,
-                                  format_CStr("!open newtab:1 url:%s", cstr_String(linkUrl)) },
-                                { openTabBg_Icon " ${link.newtab.background}",
-                                  0,
-                                  0,
-                                  format_CStr("!open newtab:2 url:%s", cstr_String(linkUrl)) },
-                                { "${link.side}",
-                                  0,
-                                  0,
-                                  format_CStr("!open newtab:4 url:%s", cstr_String(linkUrl)) },
-                                { "${link.side.newtab}",
-                                  0,
-                                  0,
-                                  format_CStr("!open newtab:5 url:%s", cstr_String(linkUrl)) } },
+                            (iMenuItem[]){ { openTab_Icon " ${link.newtab}",
+                                             0,
+                                             0,
+                                             format_CStr("!open newtab:1 origin:%s url:%s",
+                                                         cstr_String(id_Widget(w)),
+                                                         cstr_String(linkUrl)) },
+                                           { openTabBg_Icon " ${link.newtab.background}",
+                                             0,
+                                             0,
+                                             format_CStr("!open newtab:2 origin:%s url:%s",
+                                                         cstr_String(id_Widget(w)),
+                                                         cstr_String(linkUrl)) },
+                                           { "${link.side}",
+                                             0,
+                                             0,
+                                             format_CStr("!open newtab:4 origin:%s url:%s",
+                                                         cstr_String(id_Widget(w)),
+                                                         cstr_String(linkUrl)) },
+                                           { "${link.side.newtab}",
+                                             0,
+                                             0,
+                                             format_CStr("!open newtab:5 origin:%s url:%s",
+                                                         cstr_String(id_Widget(w)),
+                                                         cstr_String(linkUrl)) } },
                             4);
                         if (deviceType_App() == phone_AppDeviceType) {
                             removeN_Array(&items, size_Array(&items) - 2, iInvalidSize);
@@ -4072,7 +4116,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 { isGemini ? "${link.noproxy}" : openExt_Icon " ${link.browser}",
                                   0,
                                   0,
-                                  format_CStr("!open noproxy:1 url:%s", cstr_String(linkUrl)) } },
+                                  format_CStr("!open origin:%s noproxy:1 url:%s",
+                                              cstr_String(id_Widget(w)),
+                                              cstr_String(linkUrl)) } },
                             2);
                     }
                     iString *linkLabel = collectNewRange_String(
@@ -4414,6 +4460,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         if (isPinned_DocumentWidget_(d)) {
                             tabMode ^= otherRoot_OpenTabFlag;
                         }
+                        linkWasTriggered_DocumentWidget_(d, linkId);
                         postCommandf_Root(w->root, "open newtab:%d url:%s",
                                          tabMode,
                                          cstr_String(absoluteUrl_String(
@@ -5493,6 +5540,13 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     d->mod.history = copy_History(orig->mod.history);
     setUrlFlags_DocumentWidget(d, orig->mod.url, useCachedContentIfAvailable_DocumentWidgetSetUrlFlag);
     return d;
+}
+
+void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other) {
+    if (d != other) {
+        /* TODO: Could remember the other's ID? */
+        set_String(&d->linePrecedingLink, &other->linePrecedingLink);
+    }
 }
 
 void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {

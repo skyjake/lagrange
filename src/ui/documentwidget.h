@@ -53,6 +53,7 @@ enum iDocumentWidgetSetUrlFlags {
     openedFromSidebar_DocumentWidgetSetUrlFlag           = iBit(2),
 };
 
+void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other);
 void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);
 void    setUrlFlags_DocumentWidget      (iDocumentWidget *, const iString *url, int setUrlFlags);
 void    setUrlAndSource_DocumentWidget  (iDocumentWidget *, const iString *url, const iString *mime, const iBlock *source);

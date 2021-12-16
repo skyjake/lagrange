@@ -441,7 +441,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "focus.set")) {
-        setFocus_Widget(findWidget_App(cstr_Rangecc(range_Command(cmd, "id"))));
+        setFocus_Widget(findWidget_App(cstr_Command(cmd, "id")));
         return iTrue;
     }
     else if (equal_Command(cmd, "input.resized")) {

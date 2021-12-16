@@ -1392,7 +1392,7 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
     if (equal_Command(cmd, "tabs.switch")) {
         iWidget *target = pointerLabel_Command(cmd, "page");
         if (!target) {
-            target = findChild_Widget(tabs, cstr_Rangecc(range_Command(cmd, "id")));
+            target = findChild_Widget(tabs, cstr_Command(cmd, "id"));
         }
         if (!target) return iFalse;
         unfocusFocusInsideTabPage_(currentTabPage_Widget(tabs));
@@ -1719,6 +1719,12 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
             return iTrue;
         }
         return iFalse;
+    }
+    else if (equal_Command(cmd, "valueinput.set")) {
+        iInputWidget *input = findChild_Widget(dlg, "input");
+        setTextCStr_InputWidget(input, suffixPtr_Command(cmd, "text"));
+        validate_InputWidget(input);
+        return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancel")) {
         postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
@@ -3317,7 +3323,7 @@ static const iMenuItem languages[] = {
 static iBool translationHandler_(iWidget *dlg, const char *cmd) {
     iUnused(dlg);
     if (equal_Command(cmd, "xlt.lang")) {
-        const iMenuItem *langItem = &languages[languageIndex_CStr(cstr_Rangecc(range_Command(cmd, "id")))];
+        const iMenuItem *langItem = &languages[languageIndex_CStr(cstr_Command(cmd, "id"))];
         iWidget *widget = pointer_Command(cmd);
         iLabelWidget *drop;
         if (flags_Widget(widget) & nativeMenu_WidgetFlag) {
@@ -3337,7 +3343,7 @@ const char *languageId_String(const iString *menuItemLabel) {
     iForIndices(i, languages) {
         if (!languages[i].label) break;
         if (!cmp_String(menuItemLabel, translateCStr_Lang(languages[i].label))) {
-            return cstr_Rangecc(range_Command(languages[i].command, "id"));
+            return cstr_Command(languages[i].command, "id");
         }
     }
     return "";

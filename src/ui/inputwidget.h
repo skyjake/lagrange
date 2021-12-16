@@ -57,6 +57,7 @@ void    setBackupFileName_InputWidget   (iInputWidget *, const char *fileName);
 void    begin_InputWidget               (iInputWidget *);
 void    end_InputWidget                 (iInputWidget *, iBool accept);
 void    selectAll_InputWidget           (iInputWidget *);
+void    validate_InputWidget            (iInputWidget *);
 
 void    setSelectAllOnFocus_InputWidget (iInputWidget *, iBool selectAllOnFocus);
 void    setSensitiveContent_InputWidget (iInputWidget *, iBool isSensitive);

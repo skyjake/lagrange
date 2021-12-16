@@ -760,6 +760,10 @@ msgstr "Line break"
 msgid "dlg.input.send"
 msgstr "Send"
 
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Paste Preceding Line"
+
 msgid "heading.save"
 msgstr "FILE SAVED"
 

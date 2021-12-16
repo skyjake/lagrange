@@ -356,7 +356,7 @@ static void loadPrefs_App_(iApp *d) {
                 setUiScale_Window(get_Window(), argf_Command(cmd));
             }
             else if (equal_Command(cmd, "uilang")) {
-                const char *id = cstr_Rangecc(range_Command(cmd, "id"));
+                const char *id = cstr_Command(cmd, "id");
                 setCStr_String(&d->prefs.strings[uiLanguage_PrefsString], id);
                 setCurrent_Lang(id);
             }
@@ -2190,6 +2190,7 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "fontpack.suggest.classic")) {
+        /* TODO: Don't use this when system fonts are accessible. */
         if (!isInstalled_Fonts("classic-set") && !isInstalled_Fonts("cjk")) {
             makeQuestion_Widget(
                 uiHeading_ColorEscape "${heading.fontpack.classic}",
@@ -2243,6 +2244,9 @@ iBool handleCommand_App(const char *cmd) {
             (argLabel_Command(cmd, "axis") ? vertical_WindowSplit : 0) | (arg_Command(cmd) << 1);
         const char *url = suffixPtr_Command(cmd, "url");
         setCStr_String(d->window->pendingSplitUrl, url ? url : "");
+        if (hasLabel_Command(cmd, "origin")) {
+            set_String(d->window->pendingSplitOrigin, string_Command(cmd, "origin"));
+        }
         postRefresh_App();
         return iTrue;
     }
@@ -2732,12 +2736,21 @@ iBool handleCommand_App(const char *cmd) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }
+        iDocumentWidget *doc = document_Command(cmd);
+        iDocumentWidget *origin = doc;
+        if (hasLabel_Command(cmd, "origin")) {
+            iDocumentWidget *cmdOrig = findWidget_App(cstr_Command(cmd, "origin"));
+            if (cmdOrig) {
+                origin = cmdOrig;
+            }
+        }
         const int newTab = argLabel_Command(cmd, "newtab");
         if (newTab & otherRoot_OpenTabFlag && numRoots_Window(get_Window()) == 1) {
             /* Need to split first. */
             const iInt2 winSize = get_Window()->size;
-            postCommandf_App("ui.split arg:3 axis:%d newtab:%d url:%s",
+            postCommandf_App("ui.split arg:3 axis:%d origin:%s newtab:%d url:%s",
                              (float) winSize.x / (float) winSize.y < 0.7f ? 1 : 0,
+                             cstr_String(id_Widget(as_Widget(origin))),
                              newTab & ~otherRoot_OpenTabFlag,
                              cstr_String(url));
             return iTrue;
@@ -2749,7 +2762,6 @@ iBool handleCommand_App(const char *cmd) {
             setKeyRoot_Window(as_Window(d->window), root);
             setCurrent_Root(root); /* need to change for widget creation */
         }
-        iDocumentWidget *doc = document_Command(cmd);
         if (newTab & (new_OpenTabFlag | newBackground_OpenTabFlag)) {
             doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0); /* `newtab:2` to open in background */
         }
@@ -2766,13 +2778,14 @@ iBool handleCommand_App(const char *cmd) {
         }
         setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
         setRedirectCount_DocumentWidget(doc, redirectCount);
+        setOrigin_DocumentWidget(doc, origin);
         showCollapsed_Widget(findWidget_App("document.progress"), iFalse);
         if (prefs_App()->decodeUserVisibleURLs) {
             urlDecodePath_String(url);
         }
         else {
             urlEncodePath_String(url);
-        }
+        }            
         setUrlFlags_DocumentWidget(doc, url,
            (isHistory   ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
            (fromSidebar ? openedFromSidebar_DocumentWidgetSetUrlFlag : 0));

@@ -499,7 +499,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     iLabelWidget *heading = NULL;
     iWidget *     value   = NULL;
     const char *  spec    = item->label;
-    const char *  id      = cstr_Rangecc(range_Command(spec, "id"));
+    const char *  id      = cstr_Command(spec, "id");
     const char *  label   = hasLabel_Command(spec, "text")
                                 ? suffixPtr_Command(spec, "text")
                                 : format_CStr("${%s}", id);
@@ -580,7 +580,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 addChildFlags_Widget(widget, iClob(sep), 0);
             }
             isFirst = iFalse;
-            const char *  radId = cstr_Rangecc(range_Command(radioItem->label, "id"));
+            const char *  radId = cstr_Command(radioItem->label, "id");
             int64_t       flags = noBackground_WidgetFlag | frameless_WidgetFlag;
             if (!isHorizontal) {
                 flags |= alignLeft_WidgetFlag;
@@ -590,7 +590,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 const char *radLabel =
                     hasLabel_Command(radioItem->label, "label")
                         ? format_CStr("${%s}",
-                                      cstr_Rangecc(range_Command(radioItem->label, "label")))
+                                      cstr_Command(radioItem->label, "label"))
                         : suffixPtr_Command(radioItem->label, "text");
                 button = new_LabelWidget(radLabel, radioItem->command);
                 flags |= radio_WidgetFlag;
@@ -613,7 +613,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     else if (equal_Command(spec, "input")) {
         iInputWidget *input = new_InputWidget(argU32Label_Command(spec, "maxlen"));
         if (hasLabel_Command(spec, "hint")) {
-            setHint_InputWidget(input, cstr_Lang(cstr_Rangecc(range_Command(spec, "hint"))));
+            setHint_InputWidget(input, cstr_Lang(cstr_Command(spec, "hint")));
         }
         setId_Widget(as_Widget(input), id);
         setUrlContent_InputWidget(input, argLabel_Command(spec, "url"));
@@ -630,7 +630,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 iWidget *unit = addChildFlags_Widget(
                     as_Widget(input),
                     iClob(new_LabelWidget(
-                        format_CStr("${%s}", cstr_Rangecc(range_Command(spec, "unit"))), NULL)),
+                        format_CStr("${%s}", cstr_Command(spec, "unit")), NULL)),
                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
                         resizeToParentHeight_WidgetFlag);
                 setContentPadding_InputWidget(input, -1, width_Widget(unit) - 4 * gap_UI);
@@ -800,7 +800,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
         const iMenuItem *item = &itemsNullTerminated[i];
         if (equal_Command(item->label, "panel")) {
             haveDetailPanels = iTrue;
-            const char *id = cstr_Rangecc(range_Command(item->label, "id"));
+            const char *id = cstr_Command(item->label, "id");
             const iString *label = hasLabel_Command(item->label, "text")
                                        ? collect_String(suffix_Command(item->label, "text"))
                                        : collectNewFormat_String("${%s}", id);

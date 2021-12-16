@@ -1163,6 +1163,12 @@ void selectAll_InputWidget(iInputWidget *d) {
 #endif
 }
 
+void validate_InputWidget(iInputWidget *d) {
+    if (d->validator) {
+        d->validator(d, d->validatorContext); /* this may change the contents */
+    }    
+}
+
 iLocalDef iBool isEditing_InputWidget_(const iInputWidget *d) {
     return (flags_Widget(constAs_Widget(d)) & selected_WidgetFlag) != 0;
 }
@@ -1653,9 +1659,7 @@ void setEatEscape_InputWidget(iInputWidget *d, iBool eatEscape) {
 }
 
 static void contentsWereChanged_InputWidget_(iInputWidget *d) {
-    if (d->validator) {
-        d->validator(d, d->validatorContext); /* this may change the contents */
-    }
+    validate_InputWidget(d);
     if (d->inFlags & notifyEdits_InputWidgetFlag) {
         postCommand_Widget(d, "input.edited id:%s", cstr_String(id_Widget(constAs_Widget(d))));
     }
