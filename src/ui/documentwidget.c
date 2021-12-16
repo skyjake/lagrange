@@ -3846,7 +3846,7 @@ static void beginMarkingSelection_DocumentWidget_(iDocumentWidget *d, iInt2 pos)
     refresh_Widget(as_Widget(d));
 }
 
-static void linkWasTriggered_DocumentWidget_(iDocumentWidget *d, iGmLinkId id) {
+static void interactingWithLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id) {
     iRangecc loc = linkUrlRange_GmDocument(d->doc, id);
     if (!loc.start) {
         clear_String(&d->linePrecedingLink);
@@ -3912,7 +3912,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                              : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0)),
                                           cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
-                        linkWasTriggered_DocumentWidget_(d, run->linkId);
+                        interactingWithLink_DocumentWidget_(d, run->linkId);
                     }
                     setLinkNumberMode_DocumentWidget_(d, iFalse);
                     invalidateVisibleLinks_DocumentWidget_(d);
@@ -4030,7 +4030,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && d->hoverLink) {
-            linkWasTriggered_DocumentWidget_(d, d->hoverLink->linkId);
+            interactingWithLink_DocumentWidget_(d, d->hoverLink->linkId);
             postCommandf_Root(w->root, "open newtab:%d url:%s",
                               (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
                               (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag),
@@ -4051,7 +4051,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
                     /* Context menu for a link. */
-                    linkWasTriggered_DocumentWidget_(d, d->contextLink->linkId); /* perhaps will be triggered */
+                    interactingWithLink_DocumentWidget_(d, d->contextLink->linkId); /* perhaps will be triggered */
                     const iString *linkUrl  = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
 //                    const int      linkFlags = linkFlags_GmDocument(d->doc, d->contextLink->linkId);
                     const iRangecc scheme   = urlScheme_String(linkUrl);
@@ -4460,7 +4460,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         if (isPinned_DocumentWidget_(d)) {
                             tabMode ^= otherRoot_OpenTabFlag;
                         }
-                        linkWasTriggered_DocumentWidget_(d, linkId);
+                        interactingWithLink_DocumentWidget_(d, linkId);
                         postCommandf_Root(w->root, "open newtab:%d url:%s",
                                          tabMode,
                                          cstr_String(absoluteUrl_String(
