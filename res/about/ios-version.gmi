@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.10 (6)
+* Added "Paste Preceding Line" in the input prompt dialog. Potential use cases include user-editable sections on a page and suggested/example input values.
+* Fixed UI glitches and a potential memory leak when navigating via swipes. Sometimes swipe navigation would stop working because animation placeholders were not destroyed.
+* Fixed Settings background fade.
+* Fixed sidebar background fade in portrait phone layout.
+
 ## 1.10 (5)
 * Fixed positioning of native UI controls in non-animated input widgets.
 * Fixed input widgets not reacting to keyboard being dismissed by system.
