@@ -159,7 +159,11 @@ struct Impl_Ticker {
 
 static int cmp_Ticker_(const void *a, const void *b) {
     const iTicker *elems[2] = { a, b };
-    return iCmp(elems[0]->context, elems[1]->context);
+    const int cmp = iCmp(elems[0]->context, elems[1]->context);
+    if (cmp) {
+        return cmp;
+    }
+    return iCmp((void *) elems[0]->callback, (void *) elems[1]->callback);
 }
 
 /*----------------------------------------------------------------------------------------------*/
