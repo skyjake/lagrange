@@ -3905,6 +3905,9 @@ static void finishWheelSwipe_DocumentWidget_(iDocumentWidget *d) {
 
 static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_MouseWheelEvent *ev) {
     iWidget *w = as_Widget(d);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        return iFalse;
+    }
     if (~flags_Widget(w) & horizontalOffset_WidgetFlag) {
         return iFalse;
     }
@@ -4064,12 +4067,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 #endif
         }
     }
+#if defined (iPlatformAppleDesktop)
     else if (ev->type == SDL_MOUSEWHEEL &&
              ev->wheel.y == 0 &&
              d->wheelSwipeState == direct_WheelSwipeState &&
              handleWheelSwipe_DocumentWidget_(d, &ev->wheel)) {
         return iTrue;
     }
+#endif
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
         const iInt2 mouseCoord = coord_MouseWheelEvent(&ev->wheel);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
