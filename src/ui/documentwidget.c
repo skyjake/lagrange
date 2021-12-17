@@ -561,14 +561,6 @@ static int pageHeight_DocumentWidget_(const iDocumentWidget *d) {
     return height_Banner(d->banner) + documentTopPad_DocumentWidget_(d) + size_GmDocument(d->doc).y;
 }
 
-//static int footerButtonsHeight_DocumentWidget_(const iDocumentWidget *d) {
-//    int height = height_Widget(d->footerButtons);
-////    if (height) {
-////        height += 3 * gap_UI; /* padding */
-////    }
-//    return height;
-//}
-
 static int phoneToolbarHeight_DocumentWidget_(const iDocumentWidget *d) {
     if (!d->phoneToolbar) {
         return 0;
@@ -630,18 +622,6 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
 static int viewPos_DocumentWidget_(const iDocumentWidget *d) {
     return height_Banner(d->banner) + documentTopPad_DocumentWidget_(d) - pos_SmoothScroll(&d->scrollY);
 }
-
-#if 0
-static iRect siteBannerRect_DocumentWidget_(const iDocumentWidget *d) {
-    const iGmRun *banner = siteBanner_GmDocument(d->doc);
-    if (!banner) {
-        return zero_Rect();
-    }
-    const iRect docBounds = documentBounds_DocumentWidget_(d);
-    const iInt2 origin = addY_I2(topLeft_Rect(docBounds), -pos_SmoothScroll(&d->scrollY));
-    return moved_Rect(banner->visBounds, origin);
-}
-#endif
 
 static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return addY_I2(sub_I2(pos, topLeft_Rect(documentBounds_DocumentWidget_(d))),
@@ -3893,18 +3873,14 @@ static void interactingWithLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id
 iLocalDef int wheelSwipeSide_DocumentWidget_(const iDocumentWidget *d) {
     return (d->flags & rightWheelSwipe_DocumentWidgetFlag  ? 2
             : d->flags & leftWheelSwipe_DocumentWidgetFlag ? 1
-                                                          : 0);
+                                                           : 0);
 }
 
 static void finishWheelSwipe_DocumentWidget_(iDocumentWidget *d) {
     if (d->flags & eitherWheelSwipe_DocumentWidgetFlag &&
         d->wheelSwipeState == direct_WheelSwipeState) {
-//        ~d->flags & wheelSwipeFinished_DocumentWidgetFlag) {
-//        d->wheelSwipeState = inertia_WheelSwipeState;
         const int side = wheelSwipeSide_DocumentWidget_(d);
-//        d->flags |= wheelSwipeFinished_DocumentWidgetFlag;
         int abort = (side == 1 && d->swipeSpeed < 0 || side == 2 && d->swipeSpeed > 0);
-        printf("speed:%f\n", d->swipeSpeed / gap_UI);
         if (iAbs(d->wheelSwipeDistance) < width_Widget(d) / 4 && iAbs(d->swipeSpeed) < 4 * gap_UI) {
             abort = 1;
         }
@@ -3944,10 +3920,6 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
                 finishWheelSwipe_DocumentWidget_(d);
                 d->wheelSwipeState = none_WheelSwipeState;
             }
-//            else if (isInertia_MouseWheelEvent(ev)) {
-//                finishWheelSwipe_DocumentWidget_(d);
-//                d->wheelSwipeState = inertia_WheelSwipeState;
-//            }
             else {
                 int step = -ev->x * 2;
                 d->wheelSwipeDistance += step;
@@ -3977,14 +3949,6 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
                                    wheelSwipeSide_DocumentWidget_(d));
             }
             return iTrue;
-//        case inertia_WheelSwipeState:
-//            if (isScrollFinished_MouseWheelEvent(ev)) {
-//                d->wheelSwipeState = none_WheelSwipeState;
-//            }
-//            else if (!isInertia_MouseWheelEvent(ev)) {
-//                d->wheelSwipeState = none_WheelSwipeState;
-//            }
-//            return iTrue;
     }
     return iFalse;
 }
@@ -4627,6 +4591,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     return processEvent_Widget(w, ev);
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
 iDeclareType(DrawContext)
 
 struct Impl_DrawContext {
@@ -4753,15 +4719,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                  /* Preformatted runs can be scrolled. */
                                  runOffset_DocumentWidget_(d->widget, run));
     const iRect visRect = { visPos, run->visBounds.size };
-#if 0
-    if (run->flags & footer_GmRunFlag) {
-        iRect footerBack =
-            (iRect){ visPos, init_I2(width_Rect(d->widgetBounds), run->visBounds.size.y) };
-        footerBack.pos.x = left_Rect(d->widgetBounds);
-        fillRect_Paint(&d->paint, footerBack, tmBackground_ColorId);
-        return;
-    }
-#endif
     /* Fill the background. */ {
         if (run->linkId && linkFlags & isOpen_GmLinkFlag && ~linkFlags & content_GmLinkFlag) {
             /* Open links get a highlighted background. */
@@ -4814,16 +4771,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                            run->color,
                            run->text);
     }
-#if 0
-    else if (run->flags & siteBanner_GmRunFlag) {
-        /* Banner background. */
-        iRect bannerBack = initCorners_Rect(topLeft_Rect(d->widgetBounds),
-                                            init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
-                                                    visPos.y + height_Rect(run->visBounds)));
-        fillRect_Paint(&d->paint, bannerBack, tmBannerBackground_ColorId);
-        drawBannerRun_DrawContext_(d, run, visPos);
-    }
-#endif
     else {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
             const size_t ord = visibleLinkOrdinal_DocumentWidget_(d->widget, run->linkId);
@@ -5722,18 +5669,7 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
     arrange_Widget(d->footerButtons);
 }
 
-#if 0
-static void sizeChanged_DocumentWidget_(iDocumentWidget *d) {
-    if (current_Root()) {
-        /* TODO: This gets called more than once during a single arrange.
-           It could be done via some sort of callback instead. */
-        updateVisible_DocumentWidget_(d);
-    }
-}
-#endif
-
 iBeginDefineSubclass(DocumentWidget, Widget)
     .processEvent = (iAny *) processEvent_DocumentWidget_,
     .draw         = (iAny *) draw_DocumentWidget_,
-//    .sizeChanged  = (iAny *) sizeChanged_DocumentWidget_,
 iEndDefineSubclass(DocumentWidget)
