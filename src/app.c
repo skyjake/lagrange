@@ -2743,13 +2743,14 @@ iBool handleCommand_App(const char *cmd) {
             root = otherRoot_Window(as_Window(d->window), root);
             setKeyRoot_Window(as_Window(d->window), root);
             setCurrent_Root(root); /* need to change for widget creation */
+            doc = document_Command(cmd); /* may be different */
         }
         if (newTab & (new_OpenTabFlag | newBackground_OpenTabFlag)) {
             doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0); /* `newtab:2` to open in background */
         }
-        iHistory *history = history_DocumentWidget(doc);
-        const iBool isHistory = argLabel_Command(cmd, "history") != 0;
-        int redirectCount = argLabel_Command(cmd, "redirect");
+        iHistory   *history       = history_DocumentWidget(doc);
+        const iBool isHistory     = argLabel_Command(cmd, "history") != 0;
+        int         redirectCount = argLabel_Command(cmd, "redirect");
         if (!isHistory) {
             if (redirectCount) {
                 replace_History(history, url);
