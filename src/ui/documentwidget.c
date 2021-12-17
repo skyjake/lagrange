@@ -2238,7 +2238,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     addChildPos_Widget(buttons, iClob(counter), front_WidgetAddPos);
                 }
                 else {
-                    insertChildAfter_Widget(buttons, iClob(counter), 0);
+                    insertChildAfter_Widget(buttons, iClob(counter), 1);
                 }
                 if (lineBreak && deviceType_App() != desktop_AppDeviceType) {
                     addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
@@ -2251,7 +2251,15 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                                                         buttons,
                                                         cstr_String(&d->linePrecedingLink)) } };
                     iLabelWidget *menu = makeMenuButton_LabelWidget(midEllipsis_Icon, items, 1);
-                    addChildPos_Widget(buttons, iClob(menu), front_WidgetAddPos);
+                    if (deviceType_App() == desktop_AppDeviceType) {
+                        addChildPos_Widget(buttons, iClob(menu), front_WidgetAddPos);
+                    }
+                    else {
+                        insertChildAfterFlags_Widget(buttons, iClob(menu), 0,
+                                                     frameless_WidgetFlag | noBackground_WidgetFlag);
+                        setFont_LabelWidget(menu, font_LabelWidget((iLabelWidget *) lastChild_Widget(buttons)));
+                        setTextColor_LabelWidget(menu, uiTextAction_ColorId);
+                    }
                 }                
                 setValidator_InputWidget(findChild_Widget(dlg, "input"), inputQueryValidator_, d);
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
@@ -3894,7 +3902,7 @@ static void finishWheelSwipe_DocumentWidget_(iDocumentWidget *d) {
     if (d->flags & eitherWheelSwipe_DocumentWidgetFlag &&
         d->wheelSwipeState == direct_WheelSwipeState) {
         const int side = wheelSwipeSide_DocumentWidget_(d);
-        int abort = (side == 1 && d->swipeSpeed < 0 || side == 2 && d->swipeSpeed > 0);
+        int abort = ((side == 1 && d->swipeSpeed < 0) || (side == 2 && d->swipeSpeed > 0));
         if (iAbs(d->wheelSwipeDistance) < width_Widget(d) / 4 && iAbs(d->swipeSpeed) < 4 * gap_UI) {
             abort = 1;
         }
