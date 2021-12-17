@@ -37,76 +37,142 @@ enum iPrefsString {
     uiLanguage_PrefsString,
     downloadDir_PrefsString,
     searchUrl_PrefsString,
+        
     /* Network */
     caFile_PrefsString,
     caPath_PrefsString,
     geminiProxy_PrefsString,
     gopherProxy_PrefsString,
     httpProxy_PrefsString,
+        
     /* Style */
     uiFont_PrefsString,
     headingFont_PrefsString,
     bodyFont_PrefsString,
     monospaceFont_PrefsString,
     monospaceDocumentFont_PrefsString,
+        
+    /* Meta */
     max_PrefsString
 };
 
-/* TODO: Refactor at least the boolean values into an array for easier manipulation.
-   Then they can be (de)serialized as a group. Need to use a systematic command naming
-   convention for notifications.  */
+/* Note: These match match the array/struct in Prefs. */
+enum iPrefsBool {
+    /* Window and User Interface */
+    useSystemTheme_PrefsBool,
+    customFrame_PrefsBool,
+    retainWindowSize_PrefsBool,
+    uiAnimations_PrefsBool,
+    hideToolbarOnScroll_PrefsBool,
+    
+    blinkingCursor_PrefsBool,
+    
+    /* Document presentation */
+    sideIcon_PrefsBool,
+    time24h_PrefsBool,
+    
+    /* Behavior */
+    hoverLink_PrefsBool,
+    smoothScrolling_PrefsBool,
+    loadImageInsteadOfScrolling_PrefsBool,
+    collapsePreOnLoad_PrefsBool,
+    openArchiveIndexPages_PrefsBool,
+    
+    addBookmarksToBottom_PrefsBool,
+    warnAboutMissingGlyphs_PrefsBool,
+    
+    /* Network */
+    decodeUserVisibleURLs_PrefsBool,
+    
+    /* Style */
+    monospaceGemini_PrefsBool,
+    monospaceGopher_PrefsBool,
+    boldLinkVisited_PrefsBool,
+    boldLinkDark_PrefsBool,    
+    boldLinkLight_PrefsBool,
+    
+    fontSmoothing_PrefsBool,
+    bigFirstParagraph_PrefsBool,
+    quoteIcon_PrefsBool,
+    centerShortDocs_PrefsBool,
+    plainTextWrap_PrefsBool,
+    
+    /* Meta */
+    max_PrefsBool
+};
+
+/* TODO: Use a systematic command naming convention for notifications. */
+
 struct Impl_Prefs {
-    iString          strings[max_PrefsString];
+    iString strings[max_PrefsString];
+    union {
+        iBool bools[max_PrefsBool];
+        /* For convenience, contents of the array are accessible also via these members. */
+        struct {
+            /* Window and User Interface */
+            iBool useSystemTheme;
+            iBool customFrame; /* when LAGRANGE_ENABLE_CUSTOM_FRAME is defined */
+            iBool retainWindowSize;
+            iBool uiAnimations;
+            iBool hideToolbarOnScroll;
+            
+            iBool blinkingCursor;
+            
+            /* Document presentation */
+            iBool sideIcon;
+            iBool time24h;
+            
+            /* Behavior */
+            iBool hoverLink;
+            iBool smoothScrolling;
+            iBool loadImageInsteadOfScrolling;
+            iBool collapsePreOnLoad;
+            iBool openArchiveIndexPages;
+            
+            iBool addBookmarksToBottom;
+            iBool warnAboutMissingGlyphs;
+            
+            /* Network */
+            iBool decodeUserVisibleURLs;
+            
+            /* Style */
+            iBool monospaceGemini;
+            iBool monospaceGopher;
+            iBool boldLinkVisited;
+            iBool boldLinkDark;            
+            iBool boldLinkLight;
+            
+            iBool fontSmoothing;
+            iBool bigFirstParagraph;
+            iBool quoteIcon;
+            iBool centerShortDocs;
+            iBool plainTextWrap;
+        };
+    };
     /* UI state (belongs to state.lgr...) */
     int              dialogTab;
     int              langFrom;
     int              langTo;
     /* Colors */
-    iBool            useSystemTheme;
     enum iColorTheme systemPreferredColorTheme[2]; /* dark, light */
     enum iColorTheme theme;    
     enum iColorAccent accent;
     /* Window and User Interface */
-    iBool            customFrame; /* when LAGRANGE_ENABLE_CUSTOM_FRAME is defined */
-    iBool            retainWindowSize;
-    iBool            uiAnimations;
     float            uiScale;
-    iBool            hideToolbarOnScroll;
-    iBool            blinkingCursor;
     /* Document presentation */
     int              zoomPercent;
-    iBool            sideIcon;
-    iBool            time24h;
     /* Behavior */
     int              pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
     int              returnKey;
-    iBool            hoverLink;
-    iBool            smoothScrolling;
     int              smoothScrollSpeed[max_ScrollType];
-    iBool            loadImageInsteadOfScrolling;
-    iBool            collapsePreOnLoad;
-    iBool            openArchiveIndexPages;
-    iBool            addBookmarksToBottom;
-    iBool            warnAboutMissingGlyphs;
     /* Network */
-    iBool            decodeUserVisibleURLs;
     int              maxCacheSize; /* MB */
     int              maxMemorySize; /* MB */
     /* Style */
     iStringSet *     disabledFontPacks;
-    iBool            fontSmoothing;
     int              gemtextAnsiEscapes;
-    iBool            monospaceGemini;
-    iBool            monospaceGopher;
-    iBool            boldLinkVisited;
-    iBool            boldLinkDark;
-    iBool            boldLinkLight;
     int              lineWidth;
     float            lineSpacing;
-    iBool            bigFirstParagraph;
-    iBool            quoteIcon;
-    iBool            centerShortDocs;
-    iBool            plainTextWrap;
     enum iImageStyle imageStyle;
     /* Colors */
     enum iGmDocumentTheme docThemeDark;
