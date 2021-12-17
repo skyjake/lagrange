@@ -1430,9 +1430,19 @@ void drawLayerEffects_Widget(const iWidget *d) {
         init_Paint(&p);
         p.alpha = 0x50;
         if (flags_Widget(d) & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
-            const float area = d->rect.size.x * d->rect.size.y;
+            const float area        = d->rect.size.x * d->rect.size.y;
+            const float rootArea    = area_Rect(rect_Root(d->root));
             const float visibleArea = area_Rect(intersect_Rect(bounds_Widget(d), rect_Root(d->root)));
-            p.alpha *= (area > 0 ? visibleArea / area : 0.0f);
+            if (isPortraitPhone_App() && !cmp_String(&d->id, "sidebar")) {
+                p.alpha *= iClamp(visibleArea / rootArea * 2, 0.0f, 1.0f);
+            }
+            else if (area > 0) {
+                p.alpha *= visibleArea / area;
+            }
+            else {
+                p.alpha = 0;
+            }
+            //printf("area:%f visarea:%f alpha:%d\n", rootArea, visibleArea, p.alpha);
         }
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         fillRect_Paint(&p, rect_Root(d->root), backgroundFadeColor_Widget());

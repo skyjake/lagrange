@@ -739,6 +739,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
                         horizontalOffset_WidgetFlag |
                         /*overflowScrollable_WidgetFlag |*/ leftEdgeDraggable_WidgetFlag,
                     iTrue);
+    panels->flags2 |= fadeBackground_WidgetFlag2;
     setFlags_Widget(panels, overflowScrollable_WidgetFlag, iFalse);
     /* The top-level split between main and detail panels. */
     iWidget *mainDetailSplit = makeHDiv_Widget(); {
