@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "prefs.h"
 
 #include <the_Foundation/fileinfo.h>
+#include <assert.h>
 
 static_assert(offsetof(iPrefs, plainTextWrap) == offsetof(iPrefs, bools[plainTextWrap_PrefsBool]),
               "memory layout mismatch (needs struct packing?)");
