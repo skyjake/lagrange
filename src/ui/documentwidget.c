@@ -3917,8 +3917,8 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
         case none_WheelSwipeState:
             /* A new swipe starts. */
             if (!isInertia_MouseWheelEvent(ev) && !isScrollFinished_MouseWheelEvent(ev)) {
-                int side = ev->x < 0 ? 1 : 2;
-                d->wheelSwipeDistance = -ev->x;
+                int side = ev->x > 0 ? 1 : 2;
+                d->wheelSwipeDistance = ev->x * 2;
                 d->flags &= ~eitherWheelSwipe_DocumentWidgetFlag;
                 d->flags |= (side == 1 ? leftWheelSwipe_DocumentWidgetFlag
                                        : rightWheelSwipe_DocumentWidgetFlag);
@@ -3935,7 +3935,7 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
                 d->wheelSwipeState = none_WheelSwipeState;
             }
             else {
-                int step = -ev->x * 2;
+                int step = ev->x * 2;
                 d->wheelSwipeDistance += step;
                 /* Remember the maximum speed. */
                 if (d->swipeSpeed < 0 && step < 0) {
@@ -4064,7 +4064,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 #endif
         }
     }
-    else if (ev->type == SDL_MOUSEWHEEL && ev->wheel.y == 0 &&
+    else if (ev->type == SDL_MOUSEWHEEL &&
+             ev->wheel.y == 0 &&
+             d->wheelSwipeState == direct_WheelSwipeState &&
              handleWheelSwipe_DocumentWidget_(d, &ev->wheel)) {
         return iTrue;
     }
