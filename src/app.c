@@ -1315,28 +1315,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
                 /* Scroll events may be per-pixel or mouse wheel steps. */
                 if (ev.type == SDL_MOUSEWHEEL) {
-#if defined (iPlatformAppleDesktop)
-                    /* On macOS, we handle both trackpad and mouse events. We expect SDL to identify
-                       which device is sending the event. */
-                    if (ev.wheel.which == 0) {
-                        /* Trackpad with precise scrolling w/inertia (points). */
-                        setPerPixel_MouseWheelEvent(&ev.wheel, iTrue);
-                        ev.wheel.x *= -d->window->base.pixelRatio;
-                        ev.wheel.y *= d->window->base.pixelRatio;
-                        /* Only scroll on one axis at a time. */
-                        if (iAbs(ev.wheel.x) > iAbs(ev.wheel.y)) {
-                            ev.wheel.y = 0;
-                        }
-                        else {
-                            ev.wheel.x = 0;
-                        }
-                    }
-                    else {
-                        /* Disregard wheel acceleration applied by the OS. */
-                        ev.wheel.x = -ev.wheel.x;
-                        ev.wheel.y = iSign(ev.wheel.y);
-                    }
-#endif
 #if defined (iPlatformMsys)
                     ev.wheel.x = -ev.wheel.x;
 #endif

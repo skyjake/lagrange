@@ -47,15 +47,30 @@ iLocalDef iBool isMetricsChange_UserEvent(const SDL_Event *d) {
 }
 
 enum iMouseWheelFlag {
-    perPixel_MouseWheelFlag = iBit(9), /* e.g., trackpad or finger scroll; applied to `direction` */
+    /* Note: A future version of SDL may support per-pixel scrolling, but 2.0.x doesn't. */
+    perPixel_MouseWheelFlag       = iBit(9), /* e.g., trackpad or finger scroll; applied to `direction` */
+    inertia_MouseWheelFlag        = iBit(10),
+    scrollFinished_MouseWheelFlag = iBit(11),
 };
 
-/* Note: A future version of SDL may support per-pixel scrolling, but 2.0.x doesn't. */
 iLocalDef void setPerPixel_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
     iChangeFlags(ev->direction, perPixel_MouseWheelFlag, set);
 }
+iLocalDef void setInertia_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
+    iChangeFlags(ev->direction, inertia_MouseWheelFlag, set);
+}
+iLocalDef void setScrollFinished_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
+    iChangeFlags(ev->direction, scrollFinished_MouseWheelFlag, set);
+}
+
 iLocalDef iBool isPerPixel_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
     return (ev->direction & perPixel_MouseWheelFlag) != 0;
+}
+iLocalDef iBool isInertia_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
+    return (ev->direction & inertia_MouseWheelFlag) != 0;
+}
+iLocalDef iBool isScrollFinished_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
+    return (ev->direction & scrollFinished_MouseWheelFlag) != 0;
 }
 
 iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);

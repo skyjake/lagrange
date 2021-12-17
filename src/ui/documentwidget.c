@@ -234,11 +234,21 @@ enum iDocumentWidgetFlag {
     fromCache_DocumentWidgetFlag             = iBit(16), /* don't write anything to cache */
     animationPlaceholder_DocumentWidgetFlag  = iBit(17), /* avoid slow operations */
     invalidationPending_DocumentWidgetFlag   = iBit(18), /* invalidate as soon as convenient */
+    leftWheelSwipe_DocumentWidgetFlag         = iBit(19), /* swipe state flags are used on desktop */
+    rightWheelSwipe_DocumentWidgetFlag        = iBit(20), 
+    eitherWheelSwipe_DocumentWidgetFlag       = leftWheelSwipe_DocumentWidgetFlag | rightWheelSwipe_DocumentWidgetFlag,
+//    wheelSwipeFinished_DocumentWidgetFlag     = iBit(21),
 };
 
 enum iDocumentLinkOrdinalMode {
     numbersAndAlphabet_DocumentLinkOrdinalMode,
     homeRow_DocumentLinkOrdinalMode,
+};
+
+enum iWheelSwipeState {
+    none_WheelSwipeState,
+    direct_WheelSwipeState,
+    //inertia_WheelSwipeState,
 };
 
 struct Impl_DocumentWidget {
@@ -263,6 +273,9 @@ struct Impl_DocumentWidget {
     int            pinchZoomInitial;
     int            pinchZoomPosted;
     float          swipeSpeed; /* points/sec */
+    uint32_t       lastSwipeTime;
+    int            wheelSwipeDistance;
+    enum iWheelSwipeState wheelSwipeState;
     iString        pendingGotoHeading;
     iString        linePrecedingLink;
     
@@ -329,7 +342,12 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Widget(w);
     setId_Widget(w, format_CStr("document%03d", ++docEnum_));
     setFlags_Widget(w, hover_WidgetFlag | noBackground_WidgetFlag, iTrue);
-    if (deviceType_App() != desktop_AppDeviceType) {
+#if defined (iPlatformAppleDesktop)    
+    iBool enableSwipeNavigation = iTrue; /* swipes on the trackpad */
+#else
+    iBool enableSwipeNavigation = (deviceType_App() != desktop_AppDeviceType);
+#endif
+    if (enableSwipeNavigation) {
         setFlags_Widget(w, leftEdgeDraggable_WidgetFlag | rightEdgeDraggable_WidgetFlag |
                         horizontalOffset_WidgetFlag, iTrue);
     }
@@ -358,6 +376,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     }
     d->animWideRunId = 0;
     init_Anim(&d->animWideRunOffset, 0);
+    d->wheelSwipeState  = none_WheelSwipeState;
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
     d->pageMargin       = 5;
@@ -1942,8 +1961,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
-    iAssert(equalCase_String(&recent->url, d->mod.url));
-    if (recent && recent->cachedResponse) {
+    if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url)) {
         iChangeFlags(d->flags,
                      openedFromSidebar_DocumentWidgetFlag,
                      recent->flags.openedFromSidebar);
@@ -2043,10 +2061,10 @@ static void scrollToHeading_DocumentWidget_(iDocumentWidget *d, const char *head
     }
 }
 
-static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, int delta,
+static iBool scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, int delta,
                                             int duration) {
-    if (delta == 0) {
-        return;
+    if (delta == 0 || d->flags & eitherWheelSwipe_DocumentWidgetFlag) {
+        return iFalse;
     }
     const iInt2 docPos = documentPos_DocumentWidget_(d, mousePos);
     iConstForEach(PtrArray, i, &d->visibleWideRuns) {
@@ -2087,9 +2105,10 @@ static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, 
                 d->animWideRunId = 0;
                 init_Anim(&d->animWideRunOffset, 0);
             }
-            break;
+            return iTrue;
         }
     }
+    return iFalse;
 }
 
 static void togglePreFold_DocumentWidget_(iDocumentWidget *d, uint16_t preId) {
@@ -2691,7 +2710,7 @@ static void setupSwipeOverlay_DocumentWidget_(iDocumentWidget *d, iWidget *overl
     const int toPos   = width_Widget(overlay);
     setVisualOffset_Widget(overlay, fromPos, 0, 0);
     /* Bigger screen, faster swipes. */
-    const float devFactor = (deviceType_App() == tablet_AppDeviceType ? 2.0f : 1.0f);
+    const float devFactor = (deviceType_App() == phone_AppDeviceType ? 1.0f : 2.0f);
     float swipe = iClamp(d->swipeSpeed, devFactor * 400, devFactor * 1000) * gap_UI;
     uint32_t span = ((toPos - fromPos) / swipe) * 1000;
 //    printf("from:%d to:%d swipe:%f span:%u\n", fromPos, toPos, d->swipeSpeed, span);
@@ -2841,6 +2860,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 target->flags |= animationPlaceholder_DocumentWidgetFlag;
                 addChildPos_Widget(swipeParent, iClob(target), back_WidgetAddPos);
                 setId_Widget(as_Widget(target), "swipeout");
+                setFlags_Widget(as_Widget(target), disabled_WidgetFlag, iTrue);
                 swap_DocumentWidget_(target, d->doc, d);
                 setUrlAndSource_DocumentWidget(d,
                                                swipeIn->mod.url,
@@ -3870,6 +3890,105 @@ static void interactingWithLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id
     setRange_String(&d->linePrecedingLink, loc);
 }
 
+iLocalDef int wheelSwipeSide_DocumentWidget_(const iDocumentWidget *d) {
+    return (d->flags & rightWheelSwipe_DocumentWidgetFlag  ? 2
+            : d->flags & leftWheelSwipe_DocumentWidgetFlag ? 1
+                                                          : 0);
+}
+
+static void finishWheelSwipe_DocumentWidget_(iDocumentWidget *d) {
+    if (d->flags & eitherWheelSwipe_DocumentWidgetFlag &&
+        d->wheelSwipeState == direct_WheelSwipeState) {
+//        ~d->flags & wheelSwipeFinished_DocumentWidgetFlag) {
+//        d->wheelSwipeState = inertia_WheelSwipeState;
+        const int side = wheelSwipeSide_DocumentWidget_(d);
+//        d->flags |= wheelSwipeFinished_DocumentWidgetFlag;
+        int abort = (side == 1 && d->swipeSpeed < 0 || side == 2 && d->swipeSpeed > 0);
+        printf("speed:%f\n", d->swipeSpeed / gap_UI);
+        if (iAbs(d->wheelSwipeDistance) < width_Widget(d) / 4 && iAbs(d->swipeSpeed) < 4 * gap_UI) {
+            abort = 1;
+        }
+        postCommand_Widget(d, "edgeswipe.ended side:%d abort:%d", side, abort);
+        d->flags &= ~eitherWheelSwipe_DocumentWidgetFlag;
+    }
+}
+
+static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_MouseWheelEvent *ev) {
+    iWidget *w = as_Widget(d);
+    if (~flags_Widget(w) & horizontalOffset_WidgetFlag) {
+        return iFalse;
+    }
+    iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
+//    printf("STATE:%d wheel x:%d inert:%d end:%d\n", d->wheelSwipeState,
+//           ev->x, isInertia_MouseWheelEvent(ev),
+//           isScrollFinished_MouseWheelEvent(ev));
+//    fflush(stdout);
+    switch (d->wheelSwipeState) {
+        case none_WheelSwipeState:
+            /* A new swipe starts. */
+            if (!isInertia_MouseWheelEvent(ev) && !isScrollFinished_MouseWheelEvent(ev)) {
+                int side = ev->x < 0 ? 1 : 2;
+                d->wheelSwipeDistance = -ev->x;
+                d->flags &= ~eitherWheelSwipe_DocumentWidgetFlag;
+                d->flags |= (side == 1 ? leftWheelSwipe_DocumentWidgetFlag
+                                       : rightWheelSwipe_DocumentWidgetFlag);
+                //        printf("swipe starts at %d, side %d\n", d->wheelSwipeDistance, side);
+                d->wheelSwipeState = direct_WheelSwipeState;
+                d->swipeSpeed = 0;
+                postCommand_Widget(d, "edgeswipe.moved arg:%d side:%d", d->wheelSwipeDistance, side);
+                return iTrue;
+            }
+            break;
+        case direct_WheelSwipeState:
+            if (isInertia_MouseWheelEvent(ev) || isScrollFinished_MouseWheelEvent(ev)) {
+                finishWheelSwipe_DocumentWidget_(d);
+                d->wheelSwipeState = none_WheelSwipeState;
+            }
+//            else if (isInertia_MouseWheelEvent(ev)) {
+//                finishWheelSwipe_DocumentWidget_(d);
+//                d->wheelSwipeState = inertia_WheelSwipeState;
+//            }
+            else {
+                int step = -ev->x * 2;
+                d->wheelSwipeDistance += step;
+                /* Remember the maximum speed. */
+                if (d->swipeSpeed < 0 && step < 0) {
+                    d->swipeSpeed = iMin(d->swipeSpeed, step);
+                }
+                else if (d->swipeSpeed > 0 && step > 0) {
+                    d->swipeSpeed = iMax(d->swipeSpeed, step);
+                }
+                else {
+                    d->swipeSpeed = step;
+                }
+                switch (wheelSwipeSide_DocumentWidget_(d)) {
+                    case 1:
+                        d->wheelSwipeDistance = iMax(0, d->wheelSwipeDistance);
+                        d->wheelSwipeDistance = iMin(width_Widget(d), d->wheelSwipeDistance);
+                        break;
+                    case 2:
+                        d->wheelSwipeDistance = iMin(0, d->wheelSwipeDistance);
+                        d->wheelSwipeDistance = iMax(-width_Widget(d), d->wheelSwipeDistance);
+                        break;
+                }
+                /* TODO: calculate speed, rememeber direction */
+                //printf("swipe moved to %d, side %d\n", d->wheelSwipeDistance, side);
+                postCommand_Widget(d, "edgeswipe.moved arg:%d side:%d", d->wheelSwipeDistance,
+                                   wheelSwipeSide_DocumentWidget_(d));
+            }
+            return iTrue;
+//        case inertia_WheelSwipeState:
+//            if (isScrollFinished_MouseWheelEvent(ev)) {
+//                d->wheelSwipeState = none_WheelSwipeState;
+//            }
+//            else if (!isInertia_MouseWheelEvent(ev)) {
+//                d->wheelSwipeState = none_WheelSwipeState;
+//            }
+//            return iTrue;
+    }
+    return iFalse;
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
@@ -3967,13 +4086,20 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 #endif
         }
     }
+    else if (ev->type == SDL_MOUSEWHEEL && ev->wheel.y == 0 &&
+             handleWheelSwipe_DocumentWidget_(d, &ev->wheel)) {
+        return iTrue;
+    }
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
         const iInt2 mouseCoord = coord_MouseWheelEvent(&ev->wheel);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
             stop_Anim(&d->scrollY.pos);
             immediateScroll_DocumentWidget_(d, -wheel.y);
-            scrollWideBlock_DocumentWidget_(d, mouseCoord, -wheel.x, 0);
+            if (!scrollWideBlock_DocumentWidget_(d, mouseCoord, -wheel.x, 0) &&
+                wheel.x) {
+                handleWheelSwipe_DocumentWidget_(d, &ev->wheel);
+            }
         }
         else {
             /* Traditional mouse wheel. */

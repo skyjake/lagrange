@@ -403,6 +403,94 @@ void registerURLHandler_MacOS(void) {
     [handler release];
 }
 
+#if 0
+static iBool isTracking_;
+
+static void trackSwipe_(NSEvent *event) {
+    if (isTracking_) {
+        return;
+    }
+    isTracking_ = iTrue;
+    [event trackSwipeEventWithOptions:NSEventSwipeTrackingLockDirection
+             dampenAmountThresholdMin:-1.0
+                                  max:1.0
+                         usingHandler:^(CGFloat gestureAmount, NSEventPhase phase,
+                                        BOOL isComplete, BOOL *stop) {
+                        printf("TRACK: amount:%f phase:%lu complete:%d\n",
+                               gestureAmount, (unsigned long) phase, isComplete);
+                        fflush(stdout);
+                        if (isComplete) {
+                            isTracking_ = iFalse;
+                        }
+                      }
+    ];
+}
+#endif
+
+static int swipeDir_ = 0;
+
+static iBool processScrollWheelEvent_(NSEvent *event) {
+    const iBool isPerPixel = (event.hasPreciseScrollingDeltas != 0);
+    const iBool isInertia  = (event.momentumPhase & (NSEventPhaseBegan | NSEventPhaseChanged)) != 0;
+    const iBool isEnded    = event.scrollingDeltaX == 0.0f && event.scrollingDeltaY == 0.0f && !isInertia;
+    const iWindow *win     = &get_MainWindow()->base;
+    /* Post corresponding MOUSEWHEEL events. */
+    SDL_MouseWheelEvent e = { .type = SDL_MOUSEWHEEL };
+    e.timestamp = SDL_GetTicks();
+    e.which = isPerPixel ? 0 : 1; /* Distinction between trackpad and regular mouse. TODO: Still needed? */
+    setPerPixel_MouseWheelEvent(&e, isPerPixel);
+    if (isPerPixel) {
+        setInertia_MouseWheelEvent(&e, isInertia);
+        setScrollFinished_MouseWheelEvent(&e, isEnded);
+        e.x = -event.scrollingDeltaX * win->pixelRatio;
+        e.y = event.scrollingDeltaY * win->pixelRatio;        
+        /* Only scroll on one axis at a time. */
+        if (swipeDir_ == 0) {
+            swipeDir_ = iAbs(e.x) > iAbs(e.y) ? 1 : 2;
+        }
+        if (swipeDir_ == 1) {
+            e.y = 0;
+        }
+        else if (swipeDir_ == 2) {
+            e.x = 0;
+        }
+        if (isEnded) {
+            swipeDir_ = 0;
+        }
+    }
+    else {
+        /* Disregard wheel acceleration applied by the OS. */
+        e.x = -event.scrollingDeltaX;
+        e.y = iSign(event.scrollingDeltaY);
+    }
+//    printf("#### dx:%d dy:%d phase:%ld end:%d\n", e.x, e.y, (long) event.momentumPhase, isEnded); fflush(stdout);
+    SDL_PushEvent((SDL_Event *) &e);
+#if 0
+        /* On macOS, we handle both trackpad and mouse events. We expect SDL to identify
+           which device is sending the event. */
+        if (ev.wheel.which == 0) {
+            /* Trackpad with precise scrolling w/inertia (points). */
+            setPerPixel_MouseWheelEvent(&ev.wheel, iTrue);
+            ev.wheel.x *= -d->window->base.pixelRatio;
+            ev.wheel.y *= d->window->base.pixelRatio;
+            /* Only scroll on one axis at a time. */
+            if (iAbs(ev.wheel.x) > iAbs(ev.wheel.y)) {
+                ev.wheel.y = 0;
+            }
+            else {
+                ev.wheel.x = 0;
+            }
+        }
+        else {
+            /* Disregard wheel acceleration applied by the OS. */
+            ev.wheel.x = -ev.wheel.x;
+            ev.wheel.y = iSign(ev.wheel.y);
+        }
+#endif
+    
+    return iTrue;        
+}
+
 void setupApplication_MacOS(void) {    
     NSApplication *app = [NSApplication sharedApplication];
     [app setActivationPolicy:NSApplicationActivationPolicyRegular];
@@ -424,6 +512,21 @@ void setupApplication_MacOS(void) {
     NSMenuItem *windowCloseItem = [windowMenu itemWithTitle:@"Close"];
     windowCloseItem.target = myDel;
     windowCloseItem.action = @selector(closeTab);
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskScrollWheel
+                                          handler:^NSEvent*(NSEvent *event){
+//                                            printf("event type: %lu\n", (unsigned long) event.type);
+//                                            fflush(stdout);
+//                                            if (event.type == NSEventTypeGesture) {
+//                                                trackSwipe_(event);
+//                                                printf("GESTURE phase:%lu\n", (unsigned long) event.phase);
+//fflush(stdout);
+//                                            }
+                                            if (event.type == NSEventTypeScrollWheel &&
+                                                processScrollWheelEvent_(event)) {
+                                                return nil; /* was eaten */                                                
+                                            }
+                                            return event;
+                                          }];
 }
 
 void hideTitleBar_MacOS(iWindow *window) {
