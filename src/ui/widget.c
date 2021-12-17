@@ -144,8 +144,10 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
     iWidget *d = ptr;
     postRefresh_App();
     d->root->didAnimateVisualOffsets = iTrue;
+//    printf("'%s' visoffanim: fin:%d val:%f\n", cstr_String(&d->id),
+//           isFinished_Anim(&d->visualOffset), value_Anim(&d->visualOffset)); fflush(stdout);
     if (!isFinished_Anim(&d->visualOffset)) {
-        addTicker_App(visualOffsetAnimation_Widget_, ptr);
+        addTickerRoot_App(visualOffsetAnimation_Widget_, d->root, ptr);
     }
     else {
         d->flags &= ~visualOffset_WidgetFlag;
@@ -919,6 +921,14 @@ int visualOffsetByReference_Widget(const iWidget *d) {
 //                const float factor = width_Widget(d) / (float) size_Root(d->root).x;
                 const int invOff = width_Widget(d) - iRound(value_Anim(&child->visualOffset));
                 offX -= invOff / 4;
+#if 0
+                if (invOff) {
+                    printf("  [%p] %s (%p, fin:%d visoff:%d drag:%d): invOff %d\n", d, cstr_String(&child->id), child,
+                           isFinished_Anim(&child->visualOffset),
+                           (child->flags & visualOffset_WidgetFlag) != 0,
+                           (child->flags & dragged_WidgetFlag) != 0, invOff); fflush(stdout);
+                }
+#endif
             }
         }
         return offX;

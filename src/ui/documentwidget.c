@@ -445,6 +445,8 @@ void cancelAllRequests_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
+//    printf("\n* * * * * * * *\nDEINIT DOCUMENT: %s\n* * * * * * * *\n\n",
+//           cstr_String(&d->widget.id)); fflush(stdout);
     cancelAllRequests_DocumentWidget(d);
     pauseAllPlayers_Media(media_GmDocument(d->doc), iTrue);
     removeTicker_App(animate_DocumentWidget_, d);
@@ -2690,12 +2692,17 @@ static void setupSwipeOverlay_DocumentWidget_(iDocumentWidget *d, iWidget *overl
     const int toPos   = width_Widget(overlay);
     setVisualOffset_Widget(overlay, fromPos, 0, 0);
     /* Bigger screen, faster swipes. */
-    const float devFactor = (deviceType_App() == phone_AppDeviceType ? 1.0f : 2.0f);
-    float swipe = iClamp(d->swipeSpeed, devFactor * 400, devFactor * 1000) * gap_UI;
-    uint32_t span = ((toPos - fromPos) / swipe) * 1000;
-//    printf("from:%d to:%d swipe:%f span:%u\n", fromPos, toPos, d->swipeSpeed, span);
-    setVisualOffset_Widget(overlay, toPos, span, deviceType_App() == tablet_AppDeviceType ?
-                           easeOut_AnimFlag : 0);
+    if (deviceType_App() == desktop_AppDeviceType) {
+        setVisualOffset_Widget(overlay, toPos, 250, easeOut_AnimFlag | softer_AnimFlag);
+    }
+    else {
+        const float devFactor = (deviceType_App() == phone_AppDeviceType ? 1.0f : 2.0f);
+        float swipe = iClamp(d->swipeSpeed, devFactor * 400, devFactor * 1000) * gap_UI;
+        uint32_t span = ((toPos - fromPos) / swipe) * 1000;
+    //    printf("from:%d to:%d swipe:%f span:%u\n", fromPos, toPos, d->swipeSpeed, span);
+        setVisualOffset_Widget(overlay, toPos, span, deviceType_App() == tablet_AppDeviceType ?
+                               easeOut_AnimFlag : 0);
+    }
     setVisualOffset_Widget(w, 0, 0, 0);
 }
 
@@ -2722,9 +2729,12 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 return iTrue;
             }
             iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+            if (findChild_Widget(swipeParent, "swipeout")) {
+                return iTrue; /* too fast, previous animation hasn't finished */
+            }
             /* The temporary "swipein" will display the previous page until the finger is lifted. */
             iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
-            if (!swipeIn) {
+            if (!swipeIn) {                
                 swipeIn = new_DocumentWidget();
                 swipeIn->flags |= animationPlaceholder_DocumentWidgetFlag;
                 setId_Widget(as_Widget(swipeIn), "swipein");
@@ -2761,12 +2771,15 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             if (offset < -get_Window()->pixelRatio * 10) {
                 int animSpan = 10;
                 if (!atNewest_History(d->mod.history) && ~flags_Widget(w) & dragged_WidgetFlag) {
+                    iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+                    if (findChild_Widget(swipeParent, "swipeout")) {
+                        return iTrue; /* too fast, previous animation hasn't finished */
+                    }                
                     /* Setup the drag. `d` will be moving with the finger. */
                     animSpan = 0;
                     postCommand_Widget(d, "navigate.forward");
                     setFlags_Widget(w, dragged_WidgetFlag, iTrue);
                     /* Set up the swipe dummy. */
-                    iWidget *swipeParent = swipeParent_DocumentWidget_(d);
                     iDocumentWidget *target = new_DocumentWidget();
                     target->flags |= animationPlaceholder_DocumentWidgetFlag;
                     setId_Widget(as_Widget(target), "swipeout");
@@ -2820,6 +2833,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
 //            setupSwipeOverlay_DocumentWidget_(d, as_Widget(swipeOut));
             return iTrue;
         }
+        iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
         setFlags_Widget(w, dragged_WidgetFlag, iFalse);
         setVisualOffset_Widget(w, 0, 250, easeOut_AnimFlag | softer_AnimFlag);
         return iTrue;
