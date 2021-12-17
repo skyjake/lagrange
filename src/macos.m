@@ -442,7 +442,7 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     if (isPerPixel) {
         setInertia_MouseWheelEvent(&e, isInertia);
         setScrollFinished_MouseWheelEvent(&e, isEnded);
-        e.x = -event.scrollingDeltaX * win->pixelRatio;
+        e.x = event.scrollingDeltaX * win->pixelRatio;
         e.y = event.scrollingDeltaY * win->pixelRatio;        
         /* Only scroll on one axis at a time. */
         if (swipeDir_ == 0) {
