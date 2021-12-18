@@ -1895,6 +1895,9 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const iRect    bounds = bounds_Widget(w);
     iPaint p;
     init_Paint(&p);
+    if (d->mode == documentOutline_SidebarMode) {
+        makePaletteGlobal_GmDocument(document_DocumentWidget(document_App()));
+    }
     if (!isPortraitPhone_App()) { /* this would erase page contents during transition on the phone */
         if (flags_Widget(w) & visualOffset_WidgetFlag &&
             flags_Widget(w) & horizontalOffset_WidgetFlag && isVisible_Widget(w)) {
