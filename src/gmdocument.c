@@ -925,7 +925,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                                                  : paragraph_FontId;
             alignDecoration_GmRun_(&icon, iFalse);
             icon.color = linkColor_GmDocument(d, run.linkId, icon_GmLinkPart);
-            icon.flags |= decoration_GmRunFlag;
+            icon.flags |= decoration_GmRunFlag | startOfLine_GmRunFlag;
             pushBack_Array(&d->layout, &icon);
         }
         run.lineType = type;
@@ -1039,7 +1039,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             deinit_RunTypesetter_(&rts);
         }
         /* Flag the end of line, too. */
-        ((iGmRun *) back_Array(&d->layout))->flags |= endOfLine_GmRunFlag;
+        iGmRun *lastRun = back_Array(&d->layout);
+        lastRun->flags |= endOfLine_GmRunFlag;
+        if (lastRun->linkId && lastRun->flags & startOfLine_GmRunFlag) {
+            /* Single-run link: the icon should also be marked endOfLine. */
+            lastRun[-1].flags |= endOfLine_GmRunFlag;
+        }
         /* Image or audio content. */
         if (type == link_GmLineType) {
             /* TODO: Cleanup here? Move to a function of its own. */

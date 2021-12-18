@@ -4749,7 +4749,18 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                  runOffset_DocumentWidget_(d->widget, run));
     const iRect visRect = { visPos, run->visBounds.size };
     /* Fill the background. */ {
-        if (run->linkId && linkFlags & isOpen_GmLinkFlag && ~linkFlags & content_GmLinkFlag) {
+#if 0
+        iBool isInlineImageCaption = run->linkId && linkFlags & content_GmLinkFlag &&
+                                     ~linkFlags & permanent_GmLinkFlag;
+        if (run->flags & decoration_GmRunFlag && ~run->flags & startOfLine_GmRunFlag) {
+            /* This is the metadata. */
+            isInlineImageCaption = iFalse;
+        }
+#endif
+        /* While this is consistent, it's a bit excessive to indicate that an inlined image 
+           is open: the image itself is the indication. */
+        const iBool isInlineImageCaption = iFalse;
+        if (run->linkId && (linkFlags & isOpen_GmLinkFlag || isInlineImageCaption)) {
             /* Open links get a highlighted background. */
             int       bg       = tmBackgroundOpenLink_ColorId;
             const int frame    = tmFrameOpenLink_ColorId;
@@ -4757,6 +4768,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             iRect     wideRect = { init_I2(d->docBounds.pos.x - pad, visPos.y),
                                    init_I2(d->docBounds.size.x + 2 * pad,
                                            height_Rect(run->visBounds)) };
+            adjustEdges_Rect(&wideRect,
+                             run->flags & startOfLine_GmRunFlag ? -pad * 3 / 4 : 0, 0,
+                             run->flags & endOfLine_GmRunFlag ? pad * 3 / 4 : 0, 0);
             /* The first line is composed of two runs that may be drawn in either order, so
                only draw half of the background. */
             if (run->flags & decoration_GmRunFlag) {
@@ -4773,13 +4787,21 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                e.g., at the buffer boundary, and there are slightly overlapping characters in
                monospace blocks. Clearing the background here ensures a cleaner visual appearance
                since only one glyph is visible at any given point. */
-            fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackground_ColorId);
+            fillRect_Paint(&d->paint, visRect, tmBackground_ColorId);
         }
     }
-    if (run->linkId && ~run->flags & decoration_GmRunFlag) {
-        fg = linkColor_GmDocument(doc, run->linkId, isHover ? textHover_GmLinkPart : text_GmLinkPart);
-        if (linkFlags & content_GmLinkFlag) {
-            fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart); /* link is inactive */
+    if (run->linkId) {
+        if (run->flags & decoration_GmRunFlag && run->flags & startOfLine_GmRunFlag) {
+            /* Link icon. */
+            if (linkFlags & content_GmLinkFlag) {
+                fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart);
+            }
+        }
+        else if (~run->flags & decoration_GmRunFlag) {
+            fg = linkColor_GmDocument(doc, run->linkId, isHover ? textHover_GmLinkPart : text_GmLinkPart);
+            if (linkFlags & content_GmLinkFlag) {
+                fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart); /* link is inactive */
+            }
         }
     }
     if (run->flags & altText_GmRunFlag) {
@@ -4877,16 +4899,18 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     &text, "  %s" close_Icon, isHover ? escape_Color(tmLinkText_ColorId) : "");
             }
             const iInt2 size = measureRange_Text(metaFont, range_String(&text)).bounds.size;
-            fillRect_Paint(
-                &d->paint,
-                (iRect){ add_I2(origin, addX_I2(topRight_Rect(run->bounds), -size.x - gap_UI)),
-                         addX_I2(size, 2 * gap_UI) },
-                tmBackground_ColorId);
-            drawAlign_Text(metaFont,
-                           add_I2(topRight_Rect(run->bounds), origin),
-                           fg,
-                           right_Alignment,
-                           "%s", cstr_String(&text));
+            if (size.x) {
+                fillRect_Paint(
+                    &d->paint,
+                    (iRect){ add_I2(origin, addX_I2(topRight_Rect(run->bounds), -size.x - gap_UI)),
+                             addX_I2(size, 2 * gap_UI) },
+                    tmBackground_ColorId);
+                drawAlign_Text(metaFont,
+                               add_I2(topRight_Rect(run->bounds), origin),
+                               fg,
+                               right_Alignment,
+                               "%s", cstr_String(&text));
+            }
             deinit_String(&text);
         }
         else if (run->flags & endOfLine_GmRunFlag &&
