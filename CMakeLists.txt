@@ -196,6 +196,8 @@ set (SOURCES
     src/ui/documentwidget.h
     src/ui/indicatorwidget.c
     src/ui/indicatorwidget.h
+    src/ui/linkinfo.c
+    src/ui/linkinfo.h
     src/ui/listwidget.c
     src/ui/listwidget.h
     src/ui/lookupwidget.c
