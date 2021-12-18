@@ -1529,7 +1529,7 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
                     }
                     else {
                         postCommandf_App(
-                            "open newtab:%d url:%s", otherRoot_OpenTabFlag, cstr_String(navStart));
+                            "open splitmode:1 newtab:%d url:%s", otherRoot_OpenTabFlag, cstr_String(navStart));
                     }
                 }
             }
@@ -4753,9 +4753,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             /* Open links get a highlighted background. */
             int       bg       = tmBackgroundOpenLink_ColorId;
             const int frame    = tmFrameOpenLink_ColorId;
-            iRect     wideRect = { init_I2(left_Rect(d->widgetBounds), visPos.y),
-                                   init_I2(width_Rect(d->widgetBounds) +
-                                           width_Widget(d->widget->scroll),
+            const int pad      = gap_Text;
+            iRect     wideRect = { init_I2(d->docBounds.pos.x - pad, visPos.y),
+                                   init_I2(d->docBounds.size.x + 2 * pad,
                                            height_Rect(run->visBounds)) };
             /* The first line is composed of two runs that may be drawn in either order, so
                only draw half of the background. */
@@ -4767,14 +4767,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 wideRect.pos.x  = left_Rect(visRect);
             }
             fillRect_Paint(&d->paint, wideRect, bg);
-            if (run->flags & (startOfLine_GmRunFlag | decoration_GmRunFlag)) {
-                drawHLine_Paint(&d->paint, topLeft_Rect(wideRect), width_Rect(wideRect), frame);
-            }
-            /* TODO: The decoration is not marked as endOfLine, so it lacks the bottom line. */
-//            if (run->flags & endOfLine_GmRunFlag) {
-//                drawHLine_Paint(
-//                    &d->paint, addY_I2(bottomLeft_Rect(wideRect), -1), width_Rect(wideRect), frame);
-//            }
         }
         else { 
             /* Normal background for other runs. There are cases when runs get drawn multiple times,
@@ -4866,11 +4858,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             info_Media(constMedia_GmDocument(doc), linkMedia, &info);
             switch (linkMedia.type) {
                 case image_MediaType: {
-                    iAssert(!isEmpty_Rect(run->bounds));
-                    const iInt2 imgSize = imageSize_Media(constMedia_GmDocument(doc), linkMedia);
-                    format_String(&text, "%s \u2014 %d x %d \u2014 %.1f%s",
-                                  info.type, imgSize.x, imgSize.y, info.numBytes / 1.0e6f,
-                                  cstr_Lang("mb"));
+                    /* There's a separate decorative GmRun for the metadata. */
                     break;
                 }
                 case audio_MediaType:
@@ -4883,6 +4871,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     break;
             }
             if (linkMedia.type != download_MediaType && /* can't cancel downloads currently */
+                linkMedia.type != image_MediaType && 
                 findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
                 appendFormat_String(
                     &text, "  %s" close_Icon, isHover ? escape_Color(tmLinkText_ColorId) : "");
@@ -4911,6 +4900,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
         else if (isHover) {
+            /* TODO: Make this a dynamic overlay, not part of the VisBuf content. */
             const iGmLinkId linkId = d->widget->hoverLink->linkId;
             const iString * url    = linkUrl_GmDocument(doc, linkId);
             const int       flags  = linkFlags;

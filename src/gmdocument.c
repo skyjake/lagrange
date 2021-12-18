@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/intset.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/stringarray.h>
 #include <the_Foundation/stringset.h>
 
 #include <ctype.h>
@@ -163,6 +164,7 @@ struct Impl_GmDocument {
     iBool     enableCommandLinks; /* `about:command?` only allowed on selected pages */
     iBool     isLayoutInvalidated;
     iArray    layout; /* contents of source, laid out in document space */
+    iStringArray auxText; /* generated text that appears on the page but is not part of the source */
     iPtrArray links;
     iString   title; /* the first top-level title */
     iArray    headings;
@@ -638,6 +640,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *uploadArrow     = upload_Icon;
     static const char *image           = photo_Icon;
     clear_Array(&d->layout);
+    clear_StringArray(&d->auxText);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);
     const iArray *oldPreMeta = collect_Array(copy_Array(&d->preMeta)); /* remember fold states */
@@ -1070,7 +1073,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                         run.bounds.pos.x  -= d->outsideMargin;
                     }
                     run.visBounds = run.bounds;
-                    const iInt2 maxSize = mulf_I2(imgSize, get_Window()->pixelRatio);
+                    const iInt2 maxSize = mulf_I2(
+                        imgSize,
+                        get_Window()->pixelRatio * iMax(1.0f, (prefs_App()->zoomPercent / 100.0f)));
                     if (width_Rect(run.visBounds) > maxSize.x) {
                         /* Don't scale the image up. */
                         run.visBounds.size.y =
@@ -1080,6 +1085,34 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                         run.bounds.size.y    = run.visBounds.size.y;
                     }
                     pushBack_Array(&d->layout, &run);
+                    pos.y += run.bounds.size.y + margin / 2;
+                    /* Image metadata caption. */ {
+                        run.font = FONT_ID(documentBody_FontId, semiBold_FontStyle, contentSmall_FontSize);
+                        run.color = tmQuoteIcon_ColorId;
+                        run.flags = decoration_GmRunFlag;
+                        run.mediaId = 0;
+                        run.mediaType = 0;
+                        run.visBounds.pos.y = pos.y;
+                        run.visBounds.size.y = lineHeight_Text(run.font);
+                        run.bounds = zero_Rect();
+                        iString caption;
+                        init_String(&caption);
+                        format_String(&caption,
+                                      "%s \u2014 %d x %d \u2014 %.1f%s",
+                                      info.type,
+                                      imgSize.x,
+                                      imgSize.y,
+                                      info.numBytes / 1.0e6f,
+                                      cstr_Lang("mb"));
+                        pushBack_StringArray(&d->auxText, &caption);
+                        run.text = range_String(&caption);
+                        /* Center it. */
+                        run.visBounds.size.x = measureRange_Text(run.font, range_String(&caption)).bounds.size.x;
+                        run.visBounds.pos.x = d->size.x / 2 - run.visBounds.size.x / 2;
+                        deinit_String(&caption);
+                        pushBack_Array(&d->layout, &run);
+                        pos.y += run.visBounds.size.y + margin;
+                    }
                     break;
                 }
                 case audio_MediaType: {
@@ -1152,6 +1185,7 @@ void init_GmDocument(iGmDocument *d) {
     d->enableCommandLinks = iFalse;
     d->isLayoutInvalidated = iFalse;
     init_Array(&d->layout, sizeof(iGmRun));
+    init_StringArray(&d->auxText);
     init_PtrArray(&d->links);
     init_String(&d->title);
     init_Array(&d->headings, sizeof(iGmHeading));
@@ -1173,6 +1207,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_PtrArray(&d->links);
     deinit_Array(&d->preMeta);
     deinit_Array(&d->headings);
+    deinit_StringArray(&d->auxText);
     deinit_Array(&d->layout);
     deinit_String(&d->localHost);
     deinit_String(&d->url);
