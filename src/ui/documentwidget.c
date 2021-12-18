@@ -4765,7 +4765,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             int       bg       = tmBackgroundOpenLink_ColorId;
             const int frame    = tmFrameOpenLink_ColorId;
             const int pad      = gap_Text;
-            iRect     wideRect = { init_I2(d->docBounds.pos.x - pad, visPos.y),
+            iRect     wideRect = { init_I2(origin.x - pad, visPos.y),
                                    init_I2(d->docBounds.size.x + 2 * pad,
                                            height_Rect(run->visBounds)) };
             adjustEdges_Rect(&wideRect,
