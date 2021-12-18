@@ -2242,6 +2242,7 @@ void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
         SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
         const iInt2 oldOrigin = origin_Paint;
         origin_Paint = zero_I2();
+        setBaseAttributes_Text(font, color);
         SDL_SetRenderTarget(render, d->texture);
         SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
         SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
@@ -2252,6 +2253,7 @@ void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
         SDL_SetRenderTarget(render, oldTarget);
         origin_Paint = oldOrigin;
         SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+        setBaseAttributes_Text(-1, -1);
     }
 }
 
