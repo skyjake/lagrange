@@ -23,10 +23,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "text.h"
+#include "util.h"
+#include "../gmdocument.h"
 
 iDeclareType(LinkInfo)
 iDeclareTypeConstruction(LinkInfo)
     
 struct Impl_LinkInfo {
+    iGmLinkId linkId;
+    int       maxWidth;
     iTextBuf *buf;
+    iAnim     opacity;
+    iBool     isAltPos;
 };
+
+iBool   update_LinkInfo     (iLinkInfo *, const iGmDocument *doc, iGmLinkId linkId,
+                             int maxWidth); /* returns true if changed */
+void    invalidate_LinkInfo (iLinkInfo *);
+
+iInt2   size_LinkInfo       (const iLinkInfo *);
+void    draw_LinkInfo       (const iLinkInfo *, iInt2 topLeft);

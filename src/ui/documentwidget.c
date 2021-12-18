@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "keys.h"
 #include "labelwidget.h"
+#include "linkinfo.h"
 #include "media.h"
 #include "paint.h"
 #include "periodic.h"
@@ -161,10 +162,10 @@ enum iDrawBufsFlag {
 };
 
 struct Impl_DrawBufs {
-    int            flags;
-    SDL_Texture *  sideIconBuf;
-    iTextBuf *     timestampBuf;
-    uint32_t       lastRenderTime;
+    int          flags;
+    SDL_Texture *sideIconBuf;
+    iTextBuf    *timestampBuf;
+    uint32_t     lastRenderTime;
 };
 
 static void init_DrawBufs(iDrawBufs *d) {
@@ -234,10 +235,11 @@ enum iDocumentWidgetFlag {
     fromCache_DocumentWidgetFlag             = iBit(16), /* don't write anything to cache */
     animationPlaceholder_DocumentWidgetFlag  = iBit(17), /* avoid slow operations */
     invalidationPending_DocumentWidgetFlag   = iBit(18), /* invalidate as soon as convenient */
-    leftWheelSwipe_DocumentWidgetFlag         = iBit(19), /* swipe state flags are used on desktop */
-    rightWheelSwipe_DocumentWidgetFlag        = iBit(20), 
-    eitherWheelSwipe_DocumentWidgetFlag       = leftWheelSwipe_DocumentWidgetFlag | rightWheelSwipe_DocumentWidgetFlag,
-//    wheelSwipeFinished_DocumentWidgetFlag     = iBit(21),
+    leftWheelSwipe_DocumentWidgetFlag        = iBit(19), /* swipe state flags are used on desktop */
+    rightWheelSwipe_DocumentWidgetFlag       = iBit(20), 
+    eitherWheelSwipe_DocumentWidgetFlag      = leftWheelSwipe_DocumentWidgetFlag |
+                                               rightWheelSwipe_DocumentWidgetFlag,
+//    wheelSwipeFinished_DocumentWidgetFlag    = iBit(21),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -322,6 +324,7 @@ struct Impl_DocumentWidget {
     iVisBufMeta *  visBufMeta;
     iGmRunRange    renderRuns;
     iPtrSet *      invalidRuns;
+    iLinkInfo *    linkInfo;
     
     /* Widget structure: */    
     iScrollWidget *scroll;
@@ -413,6 +416,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_String(&d->pendingGotoHeading);
     init_String(&d->linePrecedingLink);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
+    d->linkInfo = (deviceType_App() == desktop_AppDeviceType ? new_LinkInfo() : NULL);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu         = NULL; /* created when clicking */
     d->playerMenu   = NULL;
@@ -457,6 +461,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_VisBuf(d->visBuf);
     free(d->visBufMeta);
     delete_PtrSet(d->invalidRuns);
+    delete_LinkInfo(d->linkInfo);
     iRelease(d->media);
     iRelease(d->request);
     delete_Gempub(d->sourceGempub);
@@ -737,7 +742,8 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse);
 static void animate_DocumentWidget_(void *ticker) {
     iDocumentWidget *d = ticker;
     refresh_Widget(d);
-    if (!isFinished_Anim(&d->sideOpacity) || !isFinished_Anim(&d->altTextOpacity)) {
+    if (!isFinished_Anim(&d->sideOpacity) || !isFinished_Anim(&d->altTextOpacity) ||
+        (d->linkInfo && !isFinished_Anim(&d->linkInfo->opacity))) {
         addTicker_App(animate_DocumentWidget_, d);
     }
 }
@@ -788,6 +794,10 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         }
         if (d->hoverLink) {
             invalidateLink_DocumentWidget_(d, d->hoverLink->linkId);
+        }
+        if (update_LinkInfo(d->linkInfo, d->doc, d->hoverLink ? d->hoverLink->linkId : 0,
+                            width_Widget(w))) {
+            animate_DocumentWidget_(d);            
         }
         refresh_Widget(w);
     }
@@ -4923,6 +4933,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                           (float) bodySize_GmRequest(mr->req) / 1.0e6f);
             }
         }
+#if 0
         else if (isHover) {
             /* TODO: Make this a dynamic overlay, not part of the VisBuf content. */
             const iGmLinkId linkId = d->widget->hoverLink->linkId;
@@ -5002,6 +5013,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 deinit_String(&str);
             }
         }
+#endif
     }
     if (0) {
         drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
@@ -5446,6 +5458,25 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
         unsetClip_Paint(&ctx.paint);
         drawSideElements_DocumentWidget_(d);
+        if (deviceType_App() == desktop_AppDeviceType && prefs_App()->hoverLink && d->linkInfo) {
+            const int pad = gap_UI;
+            update_LinkInfo(d->linkInfo,
+                            d->doc,
+                            d->hoverLink ? d->hoverLink->linkId : 0,
+                            width_Rect(bounds) - 2 * pad);
+            const iInt2 infoSize = size_LinkInfo(d->linkInfo);
+            iInt2 infoPos = add_I2(bottomLeft_Rect(bounds), init_I2(pad, -infoSize.y - pad));
+            if (d->hoverLink) {
+                const iRect runRect = runRect_DocumentWidget_(d, d->hoverLink);
+                d->linkInfo->isAltPos =
+                    (bottom_Rect(runRect) >= infoPos.y - lineHeight_Text(paragraph_FontId));
+            }
+            if (d->linkInfo->isAltPos) {
+                infoPos.y = top_Rect(bounds) + pad;
+            }
+            draw_LinkInfo(d->linkInfo, infoPos);
+        }
+#if 0
         if (prefs_App()->hoverLink && d->hoverLink) {
             const int      font     = uiLabel_FontId;
             const iRangecc linkUrl  = range_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId));
@@ -5455,6 +5486,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             fillRect_Paint(&ctx.paint, linkRect, tmBackground_ColorId);
             drawRange_Text(font, addX_I2(topLeft_Rect(linkRect), gap_UI), tmParagraph_ColorId, linkUrl);
         }
+#endif
     }
     if (colorTheme_App() == pureWhite_ColorTheme) {
         drawHLine_Paint(&ctx.paint, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
