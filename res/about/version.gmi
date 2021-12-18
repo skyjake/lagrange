@@ -14,10 +14,13 @@ New features:
 * UI language for Dutch.
 
 Changes and enhancements:
+* Inline image metadata goes under the image instead of possibly overlapping the image caption text.
+* Improved apperance of opened links highlighting. It no longer goes under the side elements on the page.
 * Revised layout of the Upload dialog. There is a new edit field that lets you modify the file path of the URL. Identity names are in bold.
 * Optimized UI layout procedure and memory use during UI event processing.
 * Audio subsystem is only initialized when actually needed.
 * Prevent state file corruption if the app happens to get killed while state is being saved.
+* Gempub: Open books in 1:2 split mode instead of 1:1.
 * Minor improvements in page caching.
 
 Fixes:

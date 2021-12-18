@@ -7,6 +7,9 @@
 # Release notes
 
 ## 1.10 (7)
+* Inline image metadata goes under the image instead of possibly overlapping the image caption text.
+* Improved apperance of opened links highlighting. It no longer goes under the side elements on the page.
+* Gempub: Open books in 1:2 split mode instead of 1:1.
 * Fixed opening links in split view mode. Links would open on the wrong side.
 
 ## 1.10 (6)
