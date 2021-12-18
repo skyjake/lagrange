@@ -78,13 +78,6 @@ iBool update_LinkInfo(iLinkInfo *d, const iGmDocument *doc, iGmLinkId linkId, in
 //            int fg                = linkColor_GmDocument(doc, linkId, textHover_GmLinkPart);
             iString str;
             init_String(&str);
-            /* Identity that will be used. */
-            const iGmIdentity *ident = identityForUrl_GmCerts(certs_App(), url);
-            if (ident) {
-                appendFormat_String(&str, person_Icon " %s",
-                                                             //escape_Color(tmBannerItemTitle_ColorId),
-                                    cstr_String(name_GmIdentity(ident)));                
-            }            /* Show scheme and host. */
             if ((showHost ||
                  (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag))) &&
                 scheme != mailto_GmLinkScheme) {
@@ -133,6 +126,17 @@ iBool update_LinkInfo(iLinkInfo *d, const iGmDocument *doc, iGmLinkId linkId, in
                 append_String(&str, dateStr);
                 delete_String(dateStr);
             }
+            /* Identity that will be used. */
+            const iGmIdentity *ident = identityForUrl_GmCerts(certs_App(), url);
+            if (ident) {
+                if (!isEmpty_String(&str)) {
+                    appendCStr_String(&str, " \u2014 ");
+                }
+                appendFormat_String(&str, person_Icon " %s",
+                                                             //escape_Color(tmBannerItemTitle_ColorId),
+                                    cstr_String(name_GmIdentity(ident)));                
+            }
+            /* Show scheme and host. */            
             if (!isEmpty_String(&str)) {
                 appendCStr_String(&str, "\n");
             }
