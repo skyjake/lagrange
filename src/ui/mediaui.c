@@ -104,7 +104,7 @@ static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) {
     if (align == right_Alignment) {
         pos.x -= size.x;
     }
-    drawRange_Text(font, addY_I2(pos, -gap_UI / 8), color, range_String(&num));
+    drawRange_Text(font, addY_I2(pos, gap_UI / 2), color, range_String(&num));
     deinit_String(&num);
     return size.x;
 }
