@@ -2730,7 +2730,9 @@ iBool handleCommand_App(const char *cmd) {
         if (newTab & otherRoot_OpenTabFlag && numRoots_Window(get_Window()) == 1) {
             /* Need to split first. */
             const iInt2 winSize = get_Window()->size;
-            postCommandf_App("ui.split arg:3 axis:%d origin:%s newtab:%d url:%s",
+            const int splitMode = argLabel_Command(cmd, "splitmode");
+            postCommandf_App("ui.split arg:%d axis:%d origin:%s newtab:%d url:%s",
+                             splitMode ? splitMode : 3,
                              (float) winSize.x / (float) winSize.y < 0.7f ? 1 : 0,
                              cstr_String(id_Widget(as_Widget(origin))),
                              newTab & ~otherRoot_OpenTabFlag,
