@@ -95,24 +95,10 @@ iBool update_LinkInfo(iLinkInfo *d, const iGmDocument *doc, iGmLinkId linkId, in
                 if (showImage || showAudio) {
                     appendFormat_String(
                         &str,
-                        "%s%s%s",
-    //                    showHost ? (scheme == mailto_GmLinkScheme ? cstr_String(url)
-    //                                : scheme != gemini_GmLinkScheme
-    //                                    ? format_CStr("%s \u2014 %s",
-    //                                                  cstrCollect_String(upper_String(
-    //                                                      collectNewRange_String(parts.scheme))),
-    //                                                  cstr_Rangecc(parts.host))
-    //                                    : cstr_Rangecc(parts.host))
-    //                             : "",
-    //                    showHost ? format_CStr("\x1b[1m%s\x1b[0m", cstr_Rangecc(parts.host)) : "",
-                        showHost && (showImage || showAudio) ? " \u2014" : "",
-                        showImage || showAudio
-                            ? ""
-                            : "", // escape_Color(linkColor_GmDocument(doc, linkId, domain_GmLinkPart)),
-                        showImage || showAudio
-                            ? format_CStr(showImage ? photo_Icon " %s " : "\U0001f3b5 %s",
-                                          cstr_Lang(showImage ? "link.hint.image" : "link.hint.audio"))
-                            : "");
+                        "%s%s",
+                        showHost ? " \u2014" : "",
+                        format_CStr(showImage ? photo_Icon " %s " : "\U0001f3b5 %s",
+                                    cstr_Lang(showImage ? "link.hint.image" : "link.hint.audio")));
                 }
             }
             if (flags & visited_GmLinkFlag) {

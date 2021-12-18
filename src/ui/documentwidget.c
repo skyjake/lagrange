@@ -239,7 +239,6 @@ enum iDocumentWidgetFlag {
     rightWheelSwipe_DocumentWidgetFlag       = iBit(20), 
     eitherWheelSwipe_DocumentWidgetFlag      = leftWheelSwipe_DocumentWidgetFlag |
                                                rightWheelSwipe_DocumentWidgetFlag,
-//    wheelSwipeFinished_DocumentWidgetFlag    = iBit(21),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -250,7 +249,6 @@ enum iDocumentLinkOrdinalMode {
 enum iWheelSwipeState {
     none_WheelSwipeState,
     direct_WheelSwipeState,
-    //inertia_WheelSwipeState,
 };
 
 struct Impl_DocumentWidget {
