@@ -125,6 +125,7 @@ struct Impl_App {
     iBool        isRunning;
     iBool        isRunningUnderWindowSystem;
     iBool        isDarkSystemTheme;
+    iBool        isSuspended;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
     uint32_t     lastEventTime;
@@ -721,6 +722,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->isRunningUnderWindowSystem = iTrue;
 #endif
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
+    d->isSuspended = iFalse;
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone 
        cannot be relied on (behavior differs depending on OS). */ {
@@ -1195,6 +1197,10 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
 }
 
 static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *event) {
+    if (d->isSuspended) {
+        /* Do nothing except wait for the app to return to the foreground. */
+        return SDL_WaitEvent(event);
+    }
     if (eventMode == waitForNewEvents_AppEventMode && isWaitingAllowed_App_(d)) {
         /* If there are periodic commands pending, wait only for a short while. */
         if (!isEmpty_Periodic(&d->periodic)) {
@@ -1244,6 +1250,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 break;
             case SDL_APP_WILLENTERFOREGROUND:
                 invalidate_Window(as_Window(d->window));
+                d->isSuspended = iFalse;
                 break;
             case SDL_APP_DIDENTERFOREGROUND:
                 gotEvents = iTrue;
@@ -1251,7 +1258,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
                 d->isIdling = iFalse;
                 d->lastEventTime = SDL_GetTicks();
-#endif
+#endif                
                 postRefresh_App();
                 break;
             case SDL_APP_WILLENTERBACKGROUND:
@@ -1261,6 +1268,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 setFreezeDraw_MainWindow(d->window, iTrue);
                 savePrefs_App_(d);
                 saveState_App_(d);
+                d->isSuspended = iTrue;
                 break;
             case SDL_APP_TERMINATING:
                 setFreezeDraw_MainWindow(d->window, iTrue);
