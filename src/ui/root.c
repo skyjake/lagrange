@@ -1034,7 +1034,14 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     else if (equal_Command(cmd, "focus.gained")) {
         if (pointer_Command(cmd) == findChild_Widget(searchBar, "find.input")) {
             if (!isVisible_Widget(searchBar)) {
+                /* InputWidget will unfocus itself if there isn't enough space for editing
+                   text. A collapsed widget will not have been arranged yet, so on the first
+                   time the widget will just be unfocused immediately. */
+                const iBool wasArranged = area_Rect(bounds_Widget(searchBar)) > 0;
                 showCollapsed_Widget(searchBar, iTrue);
+                if (!wasArranged) {
+                    postCommand_App("focus.set id:find.input");
+                }
             }
         }
     }
