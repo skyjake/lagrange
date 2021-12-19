@@ -121,6 +121,7 @@ void deinit_Periodic(iPeriodic *d) {
 }
 
 void add_Periodic(iPeriodic *d, iAny *context, const char *command) {
+    iAssert(isInstance_Object(context, &Class_Widget));
     lock_Mutex(d->mutex);
     size_t pos;
     iPeriodicCommand key = { .context = context };
