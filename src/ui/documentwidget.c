@@ -997,7 +997,7 @@ static iBool scrollWideBlock_DocumentView_(iDocumentView *d, iInt2 mousePos, int
                 for (const iGmRun *r = range.start; r != range.end; r++) {
                     insert_PtrSet(d->invalidRuns, r);
                 }
-                refresh_Widget(d);
+                refresh_Widget(d->owner);
                 d->owner->selectMark = iNullRange;
                 d->owner->foundMark  = iNullRange;
             }
@@ -1008,7 +1008,7 @@ static iBool scrollWideBlock_DocumentView_(iDocumentView *d, iInt2 mousePos, int
                 }
                 setValueEased_Anim(&d->animWideRunOffset, *offset, duration);
                 d->animWideRunRange = range;
-                addTicker_App(refreshWhileScrolling_DocumentWidget_, d);
+                addTicker_App(refreshWhileScrolling_DocumentWidget_, d->owner);
             }
             else {
                 d->animWideRunId = 0;
