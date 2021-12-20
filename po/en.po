@@ -3,7 +3,7 @@ msgstr "Preformatted text without a caption"
 
 # Link download progress message.
 msgid "doc.fetching"
-msgstr "Fetching"
+msgstr "Loading"
 
 #, c-format
 msgid "doc.archive"
@@ -933,10 +933,10 @@ msgid "dlg.certimport.nokey"
 msgstr "No Private Key"
 
 msgid "link.hint.audio"
-msgstr "Play Audio"
+msgstr "Audio"
 
 msgid "link.hint.image"
-msgstr "View Image"
+msgstr "Image"
 
 msgid "bookmark.title.blank"
 msgstr "Blank Page"
