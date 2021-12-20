@@ -965,7 +965,6 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
                 postCommandf_App("document.goto loc:%p", head->text.start);
                 dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
-                setOpenedFromSidebar_DocumentWidget(document_App(), iTrue);
             }
             break;
         }

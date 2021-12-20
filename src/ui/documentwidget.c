@@ -220,13 +220,12 @@ enum iDocumentWidgetFlag {
     movingSelectMarkEnd_DocumentWidgetFlag   = iBit(11),
     otherRootByDefault_DocumentWidgetFlag    = iBit(12), /* links open to other root by default */
     urlChanged_DocumentWidgetFlag            = iBit(13),
-    openedFromSidebar_DocumentWidgetFlag     = iBit(14),
-    drawDownloadCounter_DocumentWidgetFlag   = iBit(15),
-    fromCache_DocumentWidgetFlag             = iBit(16), /* don't write anything to cache */
-    animationPlaceholder_DocumentWidgetFlag  = iBit(17), /* avoid slow operations */
-    invalidationPending_DocumentWidgetFlag   = iBit(18), /* invalidate as soon as convenient */
-    leftWheelSwipe_DocumentWidgetFlag        = iBit(19), /* swipe state flags are used on desktop */
-    rightWheelSwipe_DocumentWidgetFlag       = iBit(20), 
+    drawDownloadCounter_DocumentWidgetFlag   = iBit(14),
+    fromCache_DocumentWidgetFlag             = iBit(15), /* don't write anything to cache */
+    animationPlaceholder_DocumentWidgetFlag  = iBit(16), /* avoid slow operations */
+    invalidationPending_DocumentWidgetFlag   = iBit(17), /* invalidate as soon as convenient */
+    leftWheelSwipe_DocumentWidgetFlag        = iBit(18), /* swipe state flags are used on desktop */
+    rightWheelSwipe_DocumentWidgetFlag       = iBit(19), 
     eitherWheelSwipe_DocumentWidgetFlag      = leftWheelSwipe_DocumentWidgetFlag |
                                                rightWheelSwipe_DocumentWidgetFlag,
 };
@@ -2144,9 +2143,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     }
     showOrHidePinningIndicator_DocumentWidget_(d);
     if (~d->flags & fromCache_DocumentWidgetFlag) {
-        setCachedDocument_History(d->mod.history,
-                                  d->view.doc, /* keeps a ref */
-                                  (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
+        setCachedDocument_History(d->mod.history, d->view.doc /* keeps a ref */);
     }
 }
 
@@ -2905,14 +2902,11 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
     if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url)) {
-        iChangeFlags(d->flags,
-                     openedFromSidebar_DocumentWidgetFlag,
-                     recent->flags.openedFromSidebar);
         updateFromCachedResponse_DocumentWidget_(
             d, recent->normScrollY, recent->cachedResponse, recent->cachedDoc);
         if (!recent->cachedDoc) {
             /* We have a cached copy now. */
-            setCachedDocument_History(d->mod.history, d->view.doc, iFalse);
+            setCachedDocument_History(d->mod.history, d->view.doc);
         }
         return iTrue;
     }
@@ -5617,8 +5611,6 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 }
 
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags) {
-    iChangeFlags(d->flags, openedFromSidebar_DocumentWidgetFlag,
-                 (setUrlFlags & openedFromSidebar_DocumentWidgetSetUrlFlag) != 0);
     const iBool allowCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
@@ -5631,7 +5623,6 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
 
 void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, const iString *mime,
                                     const iBlock *source) {
-    d->flags &= ~openedFromSidebar_DocumentWidgetFlag;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, url);
     parseUser_DocumentWidget_(d);
@@ -5671,11 +5662,6 @@ void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
 
 void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
     d->redirectCount = count;
-}
-
-void setOpenedFromSidebar_DocumentWidget(iDocumentWidget *d, iBool fromSidebar) {
-    iChangeFlags(d->flags, openedFromSidebar_DocumentWidgetFlag, fromSidebar);
-//    setCachedDocument_History(d->mod.history, d->doc, fromSidebar);
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {

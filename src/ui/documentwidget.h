@@ -50,7 +50,6 @@ int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
 
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),
-    openedFromSidebar_DocumentWidgetSetUrlFlag           = iBit(2),
 };
 
 void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other);
@@ -60,7 +59,6 @@ void    setUrlAndSource_DocumentWidget  (iDocumentWidget *, const iString *url, 
 void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); /* set after content received */
 void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);
 void    setSource_DocumentWidget        (iDocumentWidget *, const iString *sourceText);
-void    setOpenedFromSidebar_DocumentWidget(iDocumentWidget *, iBool fromSidebar);
 
 void    takeRequest_DocumentWidget      (iDocumentWidget *, iGmRequest *finishedRequest); /* ownership given */
 

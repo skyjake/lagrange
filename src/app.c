@@ -2780,8 +2780,7 @@ iBool handleCommand_App(const char *cmd) {
             urlEncodePath_String(url);
         }            
         setUrlFlags_DocumentWidget(doc, url,
-           (isHistory   ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
-           (fromSidebar ? openedFromSidebar_DocumentWidgetSetUrlFlag : 0));
+           isHistory ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0);
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */
         const iRangecc gotoHeading = range_Command(cmd, "gotoheading");

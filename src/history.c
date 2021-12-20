@@ -37,7 +37,7 @@ void init_RecentUrl(iRecentUrl *d) {
     d->normScrollY    = 0;
     d->cachedResponse = NULL;
     d->cachedDoc      = NULL;
-    d->flags.openedFromSidebar = iFalse;
+    d->flags          = 0;
 }
 
 void deinit_RecentUrl(iRecentUrl *d) {
@@ -181,7 +181,7 @@ void serialize_History(const iHistory *d, iStream *outs) {
         const iRecentUrl *item = i.value;
         serialize_String(&item->url, outs);
         write32_Stream(outs, item->normScrollY * 1.0e6f);
-        writeU16_Stream(outs, item->flags.openedFromSidebar ? iBit(1) : 0);
+        writeU16_Stream(outs, item->flags);
         if (item->cachedResponse) {
             write8_Stream(outs, 1);
             serialize_GmResponse(item->cachedResponse, outs);
@@ -205,10 +205,7 @@ void deserialize_History(iHistory *d, iStream *ins) {
         set_String(&item.url, canonicalUrl_String(&item.url));
         item.normScrollY = (float) read32_Stream(ins) / 1.0e6f;
         if (version_Stream(ins) >= addedRecentUrlFlags_FileVersion) {
-            uint16_t flags = readU16_Stream(ins);
-            if (flags & iBit(1)) {
-                item.flags.openedFromSidebar = iTrue;
-            }
+            item.flags = readU16_Stream(ins);
         }
         if (read8_Stream(ins)) {
             item.cachedResponse = new_GmResponse();
@@ -409,7 +406,7 @@ void setCachedResponse_History(iHistory *d, const iGmResponse *response) {
     unlock_Mutex(d->mtx);
 }
 
-void setCachedDocument_History(iHistory *d, iGmDocument *doc, iBool openedFromSidebar) {
+void setCachedDocument_History(iHistory *d, iGmDocument *doc) {
     lock_Mutex(d->mtx);
     iRecentUrl *item = mostRecentUrl_History(d);
     iAssert(size_GmDocument(doc).x > 0);
@@ -421,7 +418,6 @@ void setCachedDocument_History(iHistory *d, iGmDocument *doc, iBool openedFromSi
                    cstr_String(url_GmDocument(doc)));
         }
 #endif
-        item->flags.openedFromSidebar = openedFromSidebar;
         if (item->cachedDoc != doc) {
             iRelease(item->cachedDoc);
             item->cachedDoc = ref_Object(doc);

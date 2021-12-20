@@ -39,9 +39,7 @@ struct Impl_RecentUrl {
     float        normScrollY;    /* normalized to document height */
     iGmResponse *cachedResponse; /* kept in memory for quicker back navigation */
     iGmDocument *cachedDoc;      /* cached copy of the presentation: layout and media (not serialized) */
-    struct {
-        uint8_t openedFromSidebar : 1;
-    } flags;
+    uint16_t     flags;
 };
 
 iDeclareType(MemInfo)
@@ -65,7 +63,7 @@ void        clear_History               (iHistory *);
 void        add_History                 (iHistory *, const iString *url);
 void        replace_History             (iHistory *, const iString *url);
 void        setCachedResponse_History   (iHistory *, const iGmResponse *response);
-void        setCachedDocument_History   (iHistory *, iGmDocument *doc, iBool openedFromSidebar);
+void        setCachedDocument_History   (iHistory *, iGmDocument *doc);
 iBool       goBack_History              (iHistory *);
 iBool       goForward_History           (iHistory *);
 iRecentUrl *precedingLocked_History     (iHistory *); /* requires manual lock/unlock! */
