@@ -7,6 +7,8 @@
 # Release notes
 
 ## 1.9.3
+* Added UI language for Dutch.
+* Updated UI translations.
 * Fixed the simple text renderer (build error, hanging).
 
 ## 1.9.2
