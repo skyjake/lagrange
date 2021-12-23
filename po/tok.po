@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-06 09:34+0000\n"
+"PO-Revision-Date: 2021-12-08 14:50+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -2048,3 +2048,23 @@ msgstr ""
 
 msgid "lang.hu"
 msgstr "toki Mosijo"
+
+msgid "prefs.time.24h"
+msgstr "tenpo 24"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "o lukin ala"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "lipu kule"
+
+msgid "menu.update"
+msgstr "o sin e ilo Lakelan…"
+
+msgid "dlg.bookmark.folder"
+msgstr "poki:"
+
+msgid "sidebar.action.show"
+msgstr "o len ala:"
