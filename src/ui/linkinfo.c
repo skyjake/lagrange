@@ -116,6 +116,10 @@ iBool update_LinkInfo(iLinkInfo *d, const iGmDocument *doc, iGmLinkId linkId, in
             else {
                 appendCStr_String(&str, "\x1b[1m");
                 appendRange_String(&str, parts.host);
+                if (!isEmpty_Range(&parts.port)) {
+                    appendCStr_String(&str, ":");
+                    appendRange_String(&str, parts.port);
+                }
                 appendCStr_String(&str, "\x1b[0m");
                 appendRange_String(&str, (iRangecc){ parts.path.start, constEnd_String(url) });
             }
