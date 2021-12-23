@@ -25,6 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/archive.h>
 #include <the_Foundation/version.h>
 
+#include <SDL_rwops.h>
+
 static iArchive *archive_;
 
 iBlock blobAbout_Resources;
