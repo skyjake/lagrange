@@ -45,6 +45,20 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.9.3" date="2021-12-24">
+            <description>
+                <p>Changes in v1.9.3:</p>
+                <ul>
+                    <li>Added UI language for Dutch.</li>
+                    <li>Updated UI translations.</li>
+                    <li>Fixed the simple text renderer (build error, hanging).</li>
+                    <li>Fixed time zone of the "valid from" time in created client certificates.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.9.3</url>
+        </release>
         <release version="1.9.2" date="2021-12-07">
             <description>
                 <p>Changes in v1.9.2:</p>
