@@ -92,7 +92,10 @@ static const char *defaultDataDir_App_ = "~/Library/Application Support";
 #define EMB_BIN "../resources.lgr"
 static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
-#if defined (iPlatformLinux) || defined (iPlatformOther)
+#if defined (iPlatformAndroidMobile)
+#define EMB_BIN "resources.lgr" /* loaded from assets with SDL_rwops */
+static const char *defaultDataDir_App_ = NULL; /* will ask SDL */
+#elif defined (iPlatformLinux) || defined (iPlatformOther)
 #define EMB_BIN  "../../share/lagrange/resources.lgr"
 #define EMB_BIN2  "../../../share/lagrange/resources.lgr"
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
@@ -137,6 +140,9 @@ struct Impl_App {
     int          autoReloadTimer;
     iPeriodic    periodic;
     int          warmupFrames; /* forced refresh just after resuming from background; FIXME: shouldn't be needed */
+#if defined (iPlatformAndroidMobile)
+    float        displayDensity;
+#endif
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
@@ -300,7 +306,10 @@ static const char *dataDir_App_(void) {
         return userDir;
     }
 #endif
-    return defaultDataDir_App_;
+    if (defaultDataDir_App_) {
+        return defaultDataDir_App_;
+    }
+    return SDL_GetPrefPath("Jaakko Keränen", "fi.skyjake.lagrange");
 }
 
 static const char *downloadDir_App_(void) {
@@ -698,7 +707,7 @@ static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
 }
 
 static void init_App_(iApp *d, int argc, char **argv) {
-#if defined (iPlatformLinux)
+#if defined (iPlatformLinux) && !defined (iPlatformAndroid)
     d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
                                     !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
 #else
@@ -745,6 +754,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
     }
     init_Lang();
+    iStringList *openCmds = new_StringList();
+#if !defined (iPlatformAndroidMobile)
     /* Configure the valid command line options. */ {
         defineValues_CommandLine(&d->args, "close-tab", 0);
         defineValues_CommandLine(&d->args, "echo;E", 0);
@@ -759,7 +770,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, "sw", 0);
         defineValues_CommandLine(&d->args, "version;V", 0);
     }
-    iStringList *openCmds = new_StringList();
     /* Handle command line options. */ {
         if (contains_CommandLine(&d->args, "help")) {
             puts(cstr_Block(&blobArghelp_Resources));
@@ -808,6 +818,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
             }
         }
     }
+#endif
 #if defined (LAGRANGE_ENABLE_IPC)
     /* Only one instance is allowed to run at a time; the runtime files (bookmarks, etc.)
        are not shareable. */ {
@@ -842,7 +853,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     /* Must scale by UI scaling factor. */
     mulfv_I2(&d->initialWindowRect.size, desktopDPI_Win32());
 #endif
-#if defined (iPlatformLinux)
+#if defined (iPlatformLinux) && !defined (iPlatformAndroid)
     /* Scale by the primary (?) monitor DPI. */
     if (isRunningUnderWindowSystem_App()) {
         float vdpi;
@@ -1301,6 +1312,15 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                     ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
                 }
+#if defined (iPlatformAndroidMobile)
+                /* Ignore all mouse events; just use touch. */
+                if (ev.type == SDL_MOUSEBUTTONDOWN ||
+                    ev.type == SDL_MOUSEBUTTONUP ||
+                    ev.type == SDL_MOUSEMOTION ||
+                    ev.type == SDL_MOUSEWHEEL) {
+                    continue;
+                }
+#endif
                 /* Scroll events may be per-pixel or mouse wheel steps. */
                 if (ev.type == SDL_MOUSEWHEEL) {
 #if defined (iPlatformAppleDesktop)
@@ -1759,6 +1779,8 @@ enum iAppDeviceType deviceType_App(void) {
     return tablet_AppDeviceType;
 #elif defined (iPlatformAppleMobile)
     return isPhone_iOS() ? phone_AppDeviceType : tablet_AppDeviceType;
+#elif defined (iPlatformAndroidMobile)
+    return phone_AppDeviceType; /* TODO: Java side could tell us via cmdline if this is a tablet. */
 #else
     return desktop_AppDeviceType;
 #endif
@@ -2013,9 +2035,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     }
     if (equal_Command(cmd, "ident.scope")) {
         iLabelWidget *scope = findChild_Widget(dlg, "ident.scope");
-        setText_LabelWidget(scope,
-                            text_LabelWidget(child_Widget(
-                                findChild_Widget(as_Widget(scope), "menu"), arg_Command(cmd))));
+        updateDropdownSelection_LabelWidget(scope, format_CStr(" arg:%d", arg_Command(cmd)));
+        updateSize_LabelWidget(scope);
         arrange_Widget(findWidget_App("ident"));
         return iTrue;
     }
@@ -2082,19 +2103,11 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                                                      organization,
                                                      country);
             /* Use in the chosen scope. */ {
-                const iLabelWidget *scope    = findChild_Widget(dlg, "ident.scope");
-                const iString *     selLabel = text_LabelWidget(scope);
-                int                 selScope = 0;
-                iConstForEach(ObjectList,
-                              i,
-                              children_Widget(findChild_Widget(constAs_Widget(scope), "menu"))) {
-                    if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                        const iLabelWidget *item = i.object;
-                        if (equal_String(text_LabelWidget(item), selLabel)) {
-                            break;
-                        }
-                        selScope++;
-                    }
+                int         selScope = 2;
+                const char *scopeCmd =
+                    selectedDropdownCommand_LabelWidget(findChild_Widget(dlg, "ident.scope"));
+                if (startsWith_CStr(scopeCmd, "ident.scope arg:")) {
+                    selScope = arg_Command(scopeCmd);
                 }
                 const iString *docUrl = url_DocumentWidget(document_Root(dlg->root));
                 iString *useUrl = NULL;
@@ -3350,3 +3363,10 @@ void closePopups_App(void) {
         }
     }
 }
+
+#if defined (iPlatformAndroidMobile)
+float displayDensity_Android(void) {
+    iApp *d = &app_;
+    return toFloat_String(at_CommandLine(&d->args, 1));
+}
+#endif

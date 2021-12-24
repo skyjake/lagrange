@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-25 14:43+0000\n"
+"PO-Revision-Date: 2021-12-19 06:50+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -288,7 +288,7 @@ msgid "menu.duptab"
 msgstr "Duplicar lapela"
 
 msgid "menu.split.merge"
-msgstr "Fusionar lapelas"
+msgstr "Fusionar"
 
 msgid "menu.split.swap"
 msgstr "Cambiar os lados"
@@ -542,7 +542,7 @@ msgid "feeds.unsubscribe"
 msgstr "Dar de baixa…"
 
 msgid "feeds.markallread"
-msgstr "Marcar todo como lido"
+msgstr "Marcar todo lido"
 
 msgid "feeds.refresh"
 msgstr "Actualizar fontes"
@@ -2135,3 +2135,13 @@ msgstr "Cartafol:"
 # Color of text background.
 msgid "prefs.gemtext.ansi.bg"
 msgstr "Cor BG"
+
+msgid "prefs.time.24h"
+msgstr "Formato 24-Horas"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Ler todo"
+
+msgid "menu.update"
+msgstr "Comprobar actualización…"

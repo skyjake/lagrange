@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.9.3
+* Added UI language for Dutch.
+* Updated UI translations.
+* Fixed the simple text renderer (build error, hanging).
+* Fixed time zone of the "valid from" time in created client certificates.
+* macOS: Fixed selecting scope for a newly created identity.
+
 ## 1.9.2
 * Windows: Use the correct version number for update checks.
 * Fixed possible crash when switching Feeds sidebar filter mode via the popup menu.

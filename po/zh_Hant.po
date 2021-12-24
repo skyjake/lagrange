@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-09-06 10:49+0000\n"
+"PO-Revision-Date: 2021-12-23 11:10+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hant/>\n"
@@ -68,7 +68,7 @@ msgstr "通用名稱（CN）："
 msgid "dlg.confirm.ident.delete"
 msgstr ""
 "確定要刪除這個身分嗎？\n"
-"%s%s%s\n"
+"%s\"%s\"%s\n"
 "此操作亦將刪除它對應的憑證和私鑰檔案。"
 
 # The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
@@ -555,7 +555,7 @@ msgstr "未使用"
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "在 %zu 個地址上使用"
+msgstr[0] "在 %u 個地址上使用"
 
 # strftime() formatted
 #, c-format
@@ -611,13 +611,11 @@ msgstr "退訂"
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"確定要退訂\n"
-"「%s」嗎？"
+msgstr "確定要退訂「%s」嗎？"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu 位元組"
+msgstr[0] "%u 位元組"
 
 msgid "dlg.unsub"
 msgstr "退訂"
@@ -1304,12 +1302,12 @@ msgstr "塞爾維亞語"
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "您訂閱了 %zu 個源，%%s。\n"
+msgstr[0] "您訂閱了 %u 個源，%%s。\n"
 
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "共 %zu 項"
+msgstr[0] "共 %u 項"
 
 msgid "prefs.boldlink"
 msgstr "加粗展示連結："
@@ -1477,7 +1475,7 @@ msgstr ""
 "• 2021-12-31 23:59:59"
 
 msgid "menu.split.merge"
-msgstr "合併標籤頁"
+msgstr "取消分欄"
 
 msgid "menu.split.swap"
 msgstr "交換位置"
@@ -1489,7 +1487,7 @@ msgid "menu.split.vertical"
 msgstr "縱向"
 
 msgid "menu.view.split"
-msgstr "分屏…"
+msgstr "分欄…"
 
 msgid "gempub.cover.untitled"
 msgstr "未名書"
@@ -1628,9 +1626,7 @@ msgid "heading.uploadport"
 msgstr "TITAN 上載埠號"
 
 msgid "dlg.uploadport.msg"
-msgstr ""
-"為此 URL 設定 Titan 伺服器埠號。\n"
-"埠號設定分站點儲存。"
+msgstr "為此 URL 設定 Titan 伺服器埠號。埠號設定分站點儲存。"
 
 msgid "dlg.uploadport.set"
 msgstr "設定埠號"
@@ -1694,7 +1690,7 @@ msgid "bookmark.export.format.tags"
 msgstr "標籤以二級標題呈現。"
 
 msgid "menu.page.upload"
-msgstr "透過 Titan 上載頁面"
+msgstr "透過 Titan 上載頁面…"
 
 msgid "heading.upload"
 msgstr "透過 TITAN 上載"
@@ -1721,7 +1717,7 @@ msgid "upload.mime"
 msgstr "MIME 類型："
 
 msgid "upload.token"
-msgstr "上載令牌："
+msgstr "令牌："
 
 msgid "hint.upload.token"
 msgstr "參見伺服器的指引"
@@ -1752,3 +1748,173 @@ msgstr "行距："
 
 msgid "prefs.memorysize"
 msgstr "記憶體大小："
+
+msgid "prefs.imagestyle.text"
+msgstr "文字顏色"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "預格式顏色"
+
+msgid "prefs.boldlink.visited"
+msgstr "訪問過"
+
+msgid "menu.newfolder"
+msgstr "創建檔案夾…"
+
+msgid "menu.sort.alpha"
+msgstr "依字母序排序"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "設定"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "全選"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "刪去"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "還原"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "確實要移除此檔案夾中全部 %u 個書籤嗎？"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "移除 %u 個書籤"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "匯入憑證或金鑰檔案"
+
+msgid "upload.id"
+msgstr "身份："
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "上載一個檔案"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "選取檔案"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "忽略 HTTP(S) 連結："
+
+msgid "dlg.bookmark.folder"
+msgstr "檔案夾："
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "在底部添加書籤："
+
+msgid "prefs.time.24h"
+msgstr "24小時制"
+
+msgid "prefs.imagestyle"
+msgstr "影像著色："
+
+msgid "prefs.imagestyle.original"
+msgstr "無"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "灰度"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "背景至前景"
+
+msgid "prefs.font.ui"
+msgstr "UI："
+
+msgid "prefs.font.heading"
+msgstr "標題："
+
+msgid "prefs.font.body"
+msgstr "內文："
+
+msgid "prefs.font.mono"
+msgstr "預格式文本："
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "背景色"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "字體樣式"
+
+msgid "menu.website"
+msgstr "專案網站…"
+
+msgid "menu.fonts"
+msgstr "管理字體…"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u 檔案"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u 字體"
+
+msgid "dlg.certwarn.title"
+msgstr "安全問題"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "全部已讀"
+
+msgid "sidebar.action.show"
+msgstr "顯示："
+
+msgid "dlg.upload.id.default"
+msgstr "預設"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "上載純文本"
+
+msgid "prefs.gemtext.ansi"
+msgstr "ANSI 跳脫："
+
+# Color of the text foreground, i.e., the characters.
+msgid "prefs.gemtext.ansi.fg"
+msgstr "前景色"
+
+msgid "dlg.upload.id.none"
+msgstr "無"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "新檔案夾"
+
+msgid "dlg.addfolder.prompt"
+msgstr "填寫新檔案夾名稱："
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "等寬字體："
+
+msgid "menu.update"
+msgstr "檢查更新…"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "移除書籤"
+
+msgid "heading.bookmark.tags"
+msgstr "特殊標籤"
+
+msgid "heading.addfolder"
+msgstr "新增檔案夾"
+
+msgid "dlg.addfolder"
+msgstr "創建檔案夾"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "設定"

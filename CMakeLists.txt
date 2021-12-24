@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.9.2
+    VERSION 1.9.3
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -84,6 +84,7 @@ set (RESOURCES
     res/lang/ia.bin
     res/lang/ie.bin
     res/lang/isv.bin
+    res/lang/nl.bin
     res/lang/pl.bin
     res/lang/ru.bin
     res/lang/sk.bin
@@ -96,7 +97,7 @@ set (RESOURCES
     res/shadow.png
     res/fontpack.ini
 )
-file (GLOB FONTS RELATIVE ${CMAKE_SOURCE_DIR} res/fonts/*)
+file (GLOB FONTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} res/fonts/*)
 list (APPEND RESOURCES ${FONTS})
 if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND RESOURCES res/lagrange-64.png)
@@ -285,7 +286,12 @@ else ()
 endif ()
 
 # Target.
-add_executable (app ${SOURCES} ${RESOURCES})
+if (NOT ANDROID)
+    add_executable (app ${SOURCES} ${RESOURCES})
+else ()
+    # The whole app becomes one shared library, based on this static one.
+    add_library (app STATIC ${SOURCES})
+endif ()
 set_property (TARGET app PROPERTY C_STANDARD 11)
 if (TARGET ext-deps)
     add_dependencies (app ext-deps)
@@ -445,6 +451,8 @@ elseif (HAIKU)
     target_compile_definitions (app PUBLIC
         LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
     install (FILES ${EMB_BIN} DESTINATION .)
+elseif (ANDROID)
+    file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../app/src/main/assets)
 elseif (UNIX AND NOT APPLE)
     include (GNUInstallDirs)
     set_target_properties (app PROPERTIES

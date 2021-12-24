@@ -261,6 +261,7 @@ int             checkContextMenu_Widget         (iWidget *, const SDL_Event *ev)
 
 iLabelWidget *  makeMenuButton_LabelWidget          (const char *label, const iMenuItem *items, size_t n);
 void            updateDropdownSelection_LabelWidget (iLabelWidget *dropButton, const char *selectedCommand);
+const char *    selectedDropdownCommand_LabelWidget (const iLabelWidget *dropButton);
 
 /*-----------------------------------------------------------------------------------------------*/
 

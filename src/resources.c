@@ -25,6 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/archive.h>
 #include <the_Foundation/version.h>
 
+#include <SDL_rwops.h>
+
 static iArchive *archive_;
     
 iBlock blobAbout_Resources;
@@ -46,6 +48,7 @@ iBlock blobHu_Resources;
 iBlock blobIa_Resources;
 iBlock blobIe_Resources;
 iBlock blobIsv_Resources;
+iBlock blobNl_Resources;
 iBlock blobPl_Resources;
 iBlock blobRu_Resources;
 iBlock blobSk_Resources;
@@ -81,6 +84,7 @@ static struct {
     { &blobIa_Resources, "lang/ia.bin" },
     { &blobIe_Resources, "lang/ie.bin" },
     { &blobIsv_Resources, "lang/isv.bin" },
+    { &blobNl_Resources, "lang/nl.bin" },
     { &blobPl_Resources, "lang/pl.bin" },
     { &blobRu_Resources, "lang/ru.bin" },
     { &blobSk_Resources, "lang/sk.bin" },
@@ -96,7 +100,23 @@ static struct {
 
 iBool init_Resources(const char *path) {
     archive_ = new_Archive();
-    if (openFile_Archive(archive_, collectNewCStr_String(path))) {
+    iBool ok = iFalse;
+#if defined (iPlatformAndroidMobile)
+    /* Resources are bundled as assets so they cannot be loaded as a regular file.
+       Fortunately, SDL implements a file wrapper. */
+    SDL_RWops *io = SDL_RWFromFile(path, "rb");
+    if (io) {
+        iBlock buf;
+        init_Block(&buf, (size_t) SDL_RWsize(io));
+        SDL_RWread(io, data_Block(&buf), size_Block(&buf), 1);
+        SDL_RWclose(io);
+        ok = openData_Archive(archive_, &buf);
+        deinit_Block(&buf);
+    }
+#else
+    ok = openFile_Archive(archive_, collectNewCStr_String(path));
+#endif
+    if (ok) {
         iVersion appVer;
         init_Version(&appVer, range_CStr(LAGRANGE_APP_VERSION));
         iVersion resVer;

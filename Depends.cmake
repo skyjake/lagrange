@@ -3,6 +3,11 @@ if (IOS)
     return ()
 endif ()
 
+if (ANDROID)
+    include (Depends-Android.cmake)
+    return ()
+endif ()
+
 find_package (PkgConfig)
 find_program (MESON_EXECUTABLE meson DOC "Meson build system")
 find_program (NINJA_EXECUTABLE ninja DOC "Ninja build tool")
