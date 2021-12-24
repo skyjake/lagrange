@@ -2035,9 +2035,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     }
     if (equal_Command(cmd, "ident.scope")) {
         iLabelWidget *scope = findChild_Widget(dlg, "ident.scope");
-        setText_LabelWidget(scope,
-                            text_LabelWidget(child_Widget(
-                                findChild_Widget(as_Widget(scope), "menu"), arg_Command(cmd))));
+        updateDropdownSelection_LabelWidget(scope, format_CStr(" arg:%d", arg_Command(cmd)));
+        updateSize_LabelWidget(scope);
         arrange_Widget(findWidget_App("ident"));
         return iTrue;
     }
@@ -2104,19 +2103,11 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                                                      organization,
                                                      country);
             /* Use in the chosen scope. */ {
-                const iLabelWidget *scope    = findChild_Widget(dlg, "ident.scope");
-                const iString *     selLabel = text_LabelWidget(scope);
-                int                 selScope = 0;
-                iConstForEach(ObjectList,
-                              i,
-                              children_Widget(findChild_Widget(constAs_Widget(scope), "menu"))) {
-                    if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                        const iLabelWidget *item = i.object;
-                        if (equal_String(text_LabelWidget(item), selLabel)) {
-                            break;
-                        }
-                        selScope++;
-                    }
+                int         selScope = 2;
+                const char *scopeCmd =
+                    selectedDropdownCommand_LabelWidget(findChild_Widget(dlg, "ident.scope"));
+                if (startsWith_CStr(scopeCmd, "ident.scope arg:")) {
+                    selScope = arg_Command(scopeCmd);
                 }
                 const iString *docUrl = url_DocumentWidget(document_Root(dlg->root));
                 iString *useUrl = NULL;

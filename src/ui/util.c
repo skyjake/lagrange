@@ -1298,6 +1298,32 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
     }
 }
 
+const char *selectedDropdownCommand_LabelWidget(const iLabelWidget *dropButton) {
+    if (!dropButton) {
+        return "";
+    }
+    iWidget *menu = findChild_Widget(constAs_Widget(dropButton), "menu");
+    if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
+        iConstForEach(Array, i, userData_Object(menu)) {
+            const iMenuItem *item = i.value;
+            if (item->label && startsWithCase_CStr(item->label, "###")) {
+                return item->command ? item->command : "";
+            }
+        }        
+    }
+    else {
+        iForEach(ObjectList, i, children_Widget(menu)) {
+            if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                iLabelWidget *item = i.object;
+                if (flags_Widget(i.object) & selected_WidgetFlag) {
+                    return cstr_String(command_LabelWidget(item));
+                }
+            }
+        }
+    }
+    return "";
+}
+
 /*-----------------------------------------------------------------------------------------------*/
 
 static iBool isTabPage_Widget_(const iWidget *tabs, const iWidget *page) {
