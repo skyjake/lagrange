@@ -1243,9 +1243,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     const iGmDocument *doc       = d->view->doc;
     const int          linkFlags = linkFlags_GmDocument(doc, run->linkId);
     /* Hover state of a link. */
-    iBool isHover =
-        (run->linkId && d->view->hoverLink && run->linkId == d->view->hoverLink->linkId &&
-         ~run->flags & decoration_GmRunFlag);
+    const iBool isPartOfHover = (run->linkId && d->view->hoverLink &&
+                                 run->linkId == d->view->hoverLink->linkId);
+    iBool isHover = (isPartOfHover && ~run->flags & decoration_GmRunFlag);
     /* Visible (scrolled) position of the run. */
     const iInt2 visPos = addX_I2(add_I2(run->visBounds.pos, origin),
                                  /* Preformatted runs can be scrolled. */
@@ -1260,18 +1260,23 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             isInlineImageCaption = iFalse;
         }
 #endif
+        iBool isMobileHover = deviceType_App() != desktop_AppDeviceType &&
+            (isPartOfHover || contains_PtrSet(d->view->invalidRuns, run));
         /* While this is consistent, it's a bit excessive to indicate that an inlined image
            is open: the image itself is the indication. */
         const iBool isInlineImageCaption = iFalse;
-        if (run->linkId && (linkFlags & isOpen_GmLinkFlag || isInlineImageCaption)) {
+        if (run->linkId && (linkFlags & isOpen_GmLinkFlag || isInlineImageCaption || isMobileHover)) {
             /* Open links get a highlighted background. */
             int       bg       = tmBackgroundOpenLink_ColorId;
+            if (isMobileHover && !isPartOfHover) {
+                bg = tmBackground_ColorId; /* hover ended and was invalidated */
+            }
             const int frame    = tmFrameOpenLink_ColorId;
             const int pad      = gap_Text;
             iRect     wideRect = { init_I2(origin.x - pad, visPos.y),
                                init_I2(d->docBounds.size.x + 2 * pad,
                                        height_Rect(run->visBounds)) };
-            adjustEdges_Rect(&wideRect,
+            adjustEdges_Rect(&wideRect, 
                              run->flags & startOfLine_GmRunFlag ? -pad * 3 / 4 : 0, 0,
                              run->flags & endOfLine_GmRunFlag ? pad * 3 / 4 : 0, 0);
             /* The first line is composed of two runs that may be drawn in either order, so
