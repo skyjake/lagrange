@@ -51,6 +51,73 @@ iInt2 size_LinkInfo(const iLinkInfo *d) {
     return add_I2(d->buf->size, init_I2(2 * hPad_LinkInfo_, 2 * vPad_LinkInfo_));
 }
 
+void infoText_LinkInfo(const iGmDocument *doc, iGmLinkId linkId, iString *text_out) {
+    const iString *url = linkUrl_GmDocument(doc, linkId);
+    iUrl parts;
+    init_Url(&parts, url);
+    const int                flags   = linkFlags_GmDocument(doc, linkId);
+    const enum iGmLinkScheme scheme  = scheme_GmLinkFlag(flags);
+    const iBool              isImage = (flags & imageFileExtension_GmLinkFlag) != 0;
+    const iBool              isAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
+    /* Most important info first: the identity that will be used. */
+    const iGmIdentity *ident = identityForUrl_GmCerts(certs_App(), url);
+    if (ident) {
+        appendFormat_String(text_out, person_Icon " %s",
+                                                     //escape_Color(tmBannerItemTitle_ColorId),
+                            cstr_String(name_GmIdentity(ident)));
+    }
+    /* Possibly inlined content. */
+    if (isImage || isAudio) {
+        if (!isEmpty_String(text_out)) {
+            appendCStr_String(text_out, "\n");
+        }
+        appendCStr_String(
+                          text_out,
+            format_CStr(isImage ? photo_Icon " %s " : "\U0001f3b5 %s",
+                        cstr_Lang(isImage ? "link.hint.image" : "link.hint.audio")));
+    }
+    if (!isEmpty_String(text_out)) {
+        appendCStr_String(text_out, " \u2014 ");
+    }
+    /* Indicate non-Gemini schemes. */
+    if (scheme == mailto_GmLinkScheme) {
+        appendCStr_String(text_out, envelope_Icon " ");
+        append_String(text_out, url);
+    }
+    else if (scheme != gemini_GmLinkScheme && !isEmpty_Range(&parts.host)) {
+        appendCStr_String(text_out, globe_Icon " \x1b[1m");
+        appendRange_String(text_out, (iRangecc){ constBegin_String(url),
+                                             parts.host.end });
+        appendCStr_String(text_out, "\x1b[0m");
+        appendRange_String(text_out, (iRangecc){ parts.path.start, constEnd_String(url) });
+    }
+    else if (scheme != gemini_GmLinkScheme) {
+        appendCStr_String(text_out, globe_Icon " ");
+        append_String(text_out, url);
+    }
+    else {
+        appendCStr_String(text_out, "\x1b[1m");
+        appendRange_String(text_out, parts.host);
+        if (!isEmpty_Range(&parts.port)) {
+            appendCStr_String(text_out, ":");
+            appendRange_String(text_out, parts.port);
+        }
+        appendCStr_String(text_out, "\x1b[0m");
+        appendRange_String(text_out, (iRangecc){ parts.path.start, constEnd_String(url) });
+    }
+    /* Date of last visit. */
+    if (flags & visited_GmLinkFlag) {
+        iDate date;
+        init_Date(&date, linkTime_GmDocument(doc, linkId));
+        if (!isEmpty_String(text_out)) {
+            appendCStr_String(text_out, " \u2014 ");
+        }
+        iString *dateStr = format_Date(&date, "%b %d");
+        append_String(text_out, dateStr);
+        delete_String(dateStr);
+    }
+}
+
 iBool update_LinkInfo(iLinkInfo *d, const iGmDocument *doc, iGmLinkId linkId, int maxWidth) {    
     if (!d) {
         return iFalse;
@@ -61,80 +128,14 @@ iBool update_LinkInfo(iLinkInfo *d, const iGmDocument *doc, iGmLinkId linkId, in
         d->maxWidth = maxWidth;
         invalidate_LinkInfo(d);
         if (linkId) {
-            /* Measure and draw. */
+            iString str;
+            init_String(&str);
+            infoText_LinkInfo(doc, linkId, &str);
             if (targetValue_Anim(&d->opacity) < 1) {
                 setValue_Anim(&d->opacity, 1, isAnimated ? 75 : 0);
             }
-            const int avail = iMax(minWidth_LinkInfo_, maxWidth) - 2 * hPad_LinkInfo_;
-            const iString *url = linkUrl_GmDocument(doc, linkId);
-            iUrl parts;
-            init_Url(&parts, url);
-            const int                flags   = linkFlags_GmDocument(doc, linkId);
-            const enum iGmLinkScheme scheme  = scheme_GmLinkFlag(flags);
-            const iBool              isImage = (flags & imageFileExtension_GmLinkFlag) != 0;
-            const iBool              isAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
-            //            int fg                = linkColor_GmDocument(doc, linkId,
-            //            textHover_GmLinkPart);
-            iString str;
-            init_String(&str);
-            /* Most important info first: the identity that will be used. */
-            const iGmIdentity *ident = identityForUrl_GmCerts(certs_App(), url);
-            if (ident) {
-                appendFormat_String(&str, person_Icon " %s",
-                                                             //escape_Color(tmBannerItemTitle_ColorId),
-                                    cstr_String(name_GmIdentity(ident)));                
-            }
-            /* Possibly inlined content. */
-            if (isImage || isAudio) {
-                if (!isEmpty_String(&str)) {
-                    appendCStr_String(&str, "\n");
-                }
-                appendCStr_String(
-                    &str,
-                    format_CStr(isImage ? photo_Icon " %s " : "\U0001f3b5 %s",
-                                cstr_Lang(isImage ? "link.hint.image" : "link.hint.audio")));
-            }
-            if (!isEmpty_String(&str)) {
-                appendCStr_String(&str, " \u2014 ");
-            }
-            /* Indicate non-Gemini schemes. */
-            if (scheme == mailto_GmLinkScheme) {
-                appendCStr_String(&str, envelope_Icon " ");
-                append_String(&str, url);
-            }
-            else if (scheme != gemini_GmLinkScheme && !isEmpty_Range(&parts.host)) {
-                appendCStr_String(&str, globe_Icon " \x1b[1m");
-                appendRange_String(&str, (iRangecc){ constBegin_String(url),
-                                                     parts.host.end });
-                appendCStr_String(&str, "\x1b[0m");
-                appendRange_String(&str, (iRangecc){ parts.path.start, constEnd_String(url) });
-            }
-            else if (scheme != gemini_GmLinkScheme) {
-                appendCStr_String(&str, globe_Icon " ");
-                append_String(&str, url);
-            }
-            else {
-                appendCStr_String(&str, "\x1b[1m");
-                appendRange_String(&str, parts.host);
-                if (!isEmpty_Range(&parts.port)) {
-                    appendCStr_String(&str, ":");
-                    appendRange_String(&str, parts.port);
-                }
-                appendCStr_String(&str, "\x1b[0m");
-                appendRange_String(&str, (iRangecc){ parts.path.start, constEnd_String(url) });
-            }
-            /* Date of last visit. */
-            if (flags & visited_GmLinkFlag) {
-                iDate date;
-                init_Date(&date, linkTime_GmDocument(doc, linkId));
-                if (!isEmpty_String(&str)) {
-                    appendCStr_String(&str, " \u2014 ");
-                }
-                iString *dateStr = format_Date(&date, "%b %d");
-                append_String(&str, dateStr);
-                delete_String(dateStr);
-            }
             /* Draw to a buffer, wrapped. */
+            const int avail = iMax(minWidth_LinkInfo_, maxWidth) - 2 * hPad_LinkInfo_;
             iWrapText wt = { .text = range_String(&str), .maxWidth = avail, .mode = word_WrapTextMode };
             d->buf = new_TextBuf(&wt, uiLabel_FontId, tmQuote_ColorId);
             deinit_String(&str);

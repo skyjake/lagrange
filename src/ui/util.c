@@ -774,7 +774,9 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
                 drawKey_WidgetFlag | itemFlags);
             setWrap_LabelWidget(label, isInfo);
-            haveIcons |= checkIcon_LabelWidget(label);
+            if (!isInfo) {
+                haveIcons |= checkIcon_LabelWidget(label);
+            }
             setFlags_Widget(as_Widget(label), disabled_WidgetFlag, isDisabled);
             if (isInfo) {
                 setFlags_Widget(as_Widget(label), resizeToParentWidth_WidgetFlag |

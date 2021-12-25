@@ -41,5 +41,7 @@ iBool   update_LinkInfo     (iLinkInfo *, const iGmDocument *doc, iGmLinkId link
                              int maxWidth); /* returns true if changed */
 void    invalidate_LinkInfo (iLinkInfo *);
 
+void    infoText_LinkInfo   (const iGmDocument *doc, iGmLinkId linkId, iString *text_out);
+
 iInt2   size_LinkInfo       (const iLinkInfo *);
 void    draw_LinkInfo       (const iLinkInfo *, iInt2 topLeft);

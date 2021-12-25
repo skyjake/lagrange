@@ -4851,8 +4851,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     iBool          isNative = iFalse;
                     if (deviceType_App() != desktop_AppDeviceType) {
                         /* Show the link as the first, non-interactive item. */
+                        iString *infoText = collectNew_String();
+                        infoText_LinkInfo(d->view.doc, d->contextLink->linkId, infoText);
                         pushBack_Array(&items, &(iMenuItem){
-                            format_CStr("```%s", cstr_String(linkUrl)),
+                            format_CStr("```%s", cstr_String(infoText)),
                             0, 0, NULL });
                     }
                     if (willUseProxy_App(scheme) || isGemini ||

@@ -330,6 +330,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     init_Paint(&p);
     int bg, fg, frame, frame2, iconColor, metaColor;
     getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2, &iconColor, &metaColor);
+    setBaseAttributes_Text(d->font, fg);
     const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
     const iBool isCaution = (colorEscape == uiTextCaution_ColorId);
     if (bg >= 0) {
@@ -452,7 +453,8 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                           iTrue,
                           iconColor,
                           d->flags.chevron ? rightAngle_Icon : check_Icon);
-    }    
+    }
+    setBaseAttributes_Text(-1, -1);
     unsetClip_Paint(&p);
     drawChildren_Widget(w);
 }
