@@ -437,7 +437,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
     iZap(work);
     iBool gotNew = iFalse;
     postCommand_App("feeds.update.started");
-    const int totalJobs = size_PtrArray(&d->jobs);
+    const size_t totalJobs = size_PtrArray(&d->jobs);
     int numFinishedJobs = 0;
     while (!d->stopWorker) {
         /* Start new jobs. */
@@ -476,7 +476,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
             }
         }
         if (doNotify) {
-            postCommandf_App("feeds.update.progress arg:%d total:%d", numFinishedJobs, totalJobs);
+            postCommandf_App("feeds.update.progress arg:%d total:%zu", numFinishedJobs, totalJobs);
         }
         /* Stop if everything has finished. */
         if (ongoing == 0 && isEmpty_PtrArray(&d->jobs)) {
@@ -614,7 +614,7 @@ static void load_Feeds_(iFeeds *d) {
                     /* TODO: Cleanup needed...
                        All right, this could maybe use a bit more robust, structured format.
                        The code below is messy. */
-                    const uint32_t feedId = strtoul(line.start, NULL, 16);
+                    const uint32_t feedId = (uint32_t) strtoul(line.start, NULL, 16);
                     if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
                         goto aborted;
                     }

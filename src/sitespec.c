@@ -141,7 +141,7 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
         set_String(&d->loadParams->titanIdentity, value->value.string);
     }
     else if (!cmp_String(key, "dismissWarnings") && value->type == int64_TomlType) {
-        d->loadParams->dismissWarnings = value->value.int64;
+        d->loadParams->dismissWarnings = (int) value->value.int64;
     }
     else if (!cmp_String(key, "usedIdentities") && value->type == string_TomlType) {
         iRangecc seg = iNullRange;

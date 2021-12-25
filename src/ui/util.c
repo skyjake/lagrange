@@ -1427,7 +1427,7 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
             iWidget *nextTabs = findChild_Widget(otherRoot_Window(get_Window(), tabs->root)->widget,
                                                  "doctabs");
             iWidget *nextPages = findChild_Widget(nextTabs, "tabs.pages");
-            tabIndex = (dir < 0 ? childCount_Widget(nextPages) - 1 : 0);
+            tabIndex = (int) (dir < 0 ? childCount_Widget(nextPages) - 1 : 0);
             showTabPage_Widget(nextTabs, child_Widget(nextPages, tabIndex));
             postCommand_App("keyroot.next");
         }

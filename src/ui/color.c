@@ -832,7 +832,7 @@ void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
                     int rgb[3] = { 0, 0, 0 };
                     iForIndices(i, rgb) {
                         if (ch >= escapeSequence.end) break;
-                        rgb[i] = strtoul(ch + 1, &endPtr, 10);
+                        rgb[i] = (int) strtoul(ch + 1, &endPtr, 10);
                         ch = endPtr;
                     }
                     dst->r = iClamp(rgb[0], 0, 255);

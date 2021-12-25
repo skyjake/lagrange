@@ -80,7 +80,7 @@ uint32_t argU32Label_Command(const char *cmd, const char *label) {
     init_Token(&tok, label);
     const iRangecc ptr = find_Token(&tok, cmd);    
     if (ptr.start) {
-        return strtoul(ptr.end, NULL, 10);
+        return (uint32_t) strtoul(ptr.end, NULL, 10);
     }
     return 0;
 }

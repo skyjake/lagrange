@@ -442,7 +442,7 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 static SDL_Surface *loadImage_(const iBlock *data, int resized) {
     int      w = 0, h = 0, num = 4;
     stbi_uc *pixels = stbi_load_from_memory(
-        constData_Block(data), size_Block(data), &w, &h, &num, STBI_rgb_alpha);
+        constData_Block(data), (int) size_Block(data), &w, &h, &num, STBI_rgb_alpha);
     if (resized) {
         stbi_uc *rsPixels = malloc(num * resized * resized);
         stbir_resize_uint8(pixels, w, h, 0, rsPixels, resized, resized, 0, num);
@@ -1549,9 +1549,9 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                 iWidget *docTabs1 = findChild_Widget(w->roots[newRootIndex]->widget, "doctabs");
                 /* If the old root has multiple tabs, move the current one to the new split. */
                 if (tabCount_Widget(docTabs0) >= 2) {
-                    int movedIndex = tabPageIndex_Widget(docTabs0, moved);
+                    size_t movedIndex = tabPageIndex_Widget(docTabs0, moved);
                     removeTabPage_Widget(docTabs0, movedIndex);
-                    showTabPage_Widget(docTabs0, tabPage_Widget(docTabs0, iMax(movedIndex - 1, 0)));
+                    showTabPage_Widget(docTabs0, tabPage_Widget(docTabs0, iMax((int) movedIndex - 1, 0)));
                     iRelease(removeTabPage_Widget(docTabs1, 0)); /* delete the default tab */
                     setRoot_Widget(as_Widget(moved), w->roots[newRootIndex]);
                     prependTabPage_Widget(docTabs1, iClob(moved), "", 0, 0);

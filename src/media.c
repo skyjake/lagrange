@@ -144,7 +144,7 @@ void makeTexture_GmImage(iGmImage *d) {
     }
     else {
         imgData = stbi_load_from_memory(
-            constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
+            constData_Block(data), (int) size_Block(data), &d->size.x, &d->size.y, NULL, 4);
         if (!imgData) {
             fprintf(stderr, "[media] image load failed: %s\n", stbi_failure_reason());
         }

@@ -90,7 +90,7 @@ void serialize_GmIdentity(const iGmIdentity *d, iStream *outs) {
     writeU32_Stream(outs, d->icon);
     serialize_String(&d->notes, outs);
     write32_Stream(outs, d->flags);
-    writeU32_Stream(outs, size_StringSet(d->useUrls));
+    writeU32_Stream(outs, (uint32_t) size_StringSet(d->useUrls));
     iConstForEach(StringSet, i, d->useUrls) {
         serialize_String(i.value, outs);
     }

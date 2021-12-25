@@ -192,7 +192,7 @@ static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d) {
         int error;
         int consumed;
         d->vorbis = stb_vorbis_open_pushdata(
-            constData_Block(input), size_Block(input), &consumed, &error, NULL);
+            constData_Block(input), (int) size_Block(input), &consumed, &error, NULL);
         if (!d->vorbis) {
             return needMoreInput_DecoderStatus;
         }
@@ -225,7 +225,7 @@ static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d) {
         lock_Mutex(&d->input->mtx);
         d->totalInputSize = size_Block(input);
         int error = 0;
-        stb_vorbis *vrb = stb_vorbis_open_memory(constData_Block(input), size_Block(input),
+        stb_vorbis *vrb = stb_vorbis_open_memory(constData_Block(input), (int) size_Block(input),
                                                  &error, NULL);
         if (vrb) {
             d->totalSamples = stb_vorbis_stream_length_in_samples(vrb);

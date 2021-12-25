@@ -790,7 +790,8 @@ void submit_GmRequest(iGmRequest *d) {
                                                 cstr_String(containerUrl));
                             appendFormat_String(page, "# %s\n\n", cstr_Rangecc(containerName));
                             appendFormat_String(page,
-                                                cstrCount_Lang("archive.summary.n", numEntries_Archive(arch)),
+                                                cstrCount_Lang("archive.summary.n",
+                                                               (int) numEntries_Archive(arch)),
                                                 numEntries_Archive(arch),
                                                 (double) sourceSize_Archive(arch) / 1.0e6);
                             appendCStr_String(page, "\n\n");
@@ -802,7 +803,7 @@ void submit_GmRequest(iGmRequest *d) {
                             }
                             else if (size_StringSet(contents) > 1) {
                                 appendFormat_String(page, cstrCount_Lang("dir.summary.n",
-                                                                         size_StringSet(contents)),
+                                                                         (int) size_StringSet(contents)),
                                                     size_StringSet(contents));
                                 appendCStr_String(page, "\n\n");
                             }

@@ -210,7 +210,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             /* Animate the current panel in. */
             if (child == panel && isPortrait) {
                 setupSheetTransition_Mobile(panel, iTrue);
-                panelIndex = childIndex;
+                panelIndex = (int) childIndex;
             }
             childIndex++;
         }

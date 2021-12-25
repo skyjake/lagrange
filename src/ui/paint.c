@@ -175,7 +175,7 @@ void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t n, int color) 
     for (size_t i = 0; i < n; i++) {
         offsetPoints[i] = add_I2(points[i], origin_Paint);
     }
-    SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) offsetPoints, n);
+    SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) offsetPoints, (int) n);
     free(offsetPoints);
 }
 
