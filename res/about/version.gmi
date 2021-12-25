@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.9.4
+* Fixed crash when a link is missing both URL and label (just a `=>`).
+
 ## 1.9.3
 * Added UI language for Dutch.
 * Updated UI translations.
