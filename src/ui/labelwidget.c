@@ -349,7 +349,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                 bottomRight_Rect(frameRect),
                 bottomLeft_Rect(frameRect)
             };
-#if SDL_VERSION_ATLEAST(2, 0, 16)
+#if SDL_COMPILEDVERSION == SDL_VERSIONNUM(2, 0, 16)
             if (isOpenGLRenderer_Window()) {
                 /* A very curious regression in SDL 2.0.16. */
                 points[3].x--;    
