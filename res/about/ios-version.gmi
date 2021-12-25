@@ -11,6 +11,7 @@
 * Improved apperance of opened links highlighting. It no longer goes under the side elements on the page.
 * Gempub: Open books in 1:2 split mode instead of 1:1.
 * Fixed opening links in split view mode. Links would open on the wrong side.
+* Upgraded SDL to version 2.0.18.
 
 ## 1.10 (6)
 * Added "Paste Preceding Line" in the input prompt dialog. Potential use cases include user-editable sections on a page and suggested/example input values.
