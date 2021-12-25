@@ -480,9 +480,6 @@ void init_DocumentView(iDocumentView *d) {
     d->invalidRuns      = new_PtrSet();
     d->drawBufs         = new_DrawBufs();
     d->pageMargin       = 5;
-    if (deviceType_App() != desktop_AppDeviceType) {
-        d->scrollY.flags |= pullDownAction_SmoothScrollFlag; /* pull to refresh */
-    }
     d->hoverPre      = NULL;
     d->hoverAltPre   = NULL;
     d->hoverLink     = NULL;
@@ -523,6 +520,9 @@ void deinit_DocumentView(iDocumentView *d) {
 static void setOwner_DocumentView_(iDocumentView *d, iDocumentWidget *doc) {
     d->owner = doc;
     init_SmoothScroll(&d->scrollY, as_Widget(doc), scrollBegan_DocumentWidget_);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        d->scrollY.flags |= pullDownAction_SmoothScrollFlag; /* pull to refresh */
+    }
 }
 
 static void resetWideRuns_DocumentView_(iDocumentView *d) {
