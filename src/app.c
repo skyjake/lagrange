@@ -1208,10 +1208,6 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
 }
 
 static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *event) {
-    if (d->isSuspended) {
-        /* Do nothing except wait for the app to return to the foreground. */
-        return SDL_WaitEvent(event);
-    }
     if (eventMode == waitForNewEvents_AppEventMode && isWaitingAllowed_App_(d)) {
         /* If there are periodic commands pending, wait only for a short while. */
         if (!isEmpty_Periodic(&d->periodic)) {
@@ -1462,10 +1458,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
     deinit_PtrArray(&windows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->isIdling && !gotEvents) {
-        /* This is where we spend most of our time when idle. 60 Hz still quite a lot but we
+        /* This is where we spend most of our time when idle. 30 Hz still quite a lot but we
            can't wait too long after the user tries to interact again with the app. In any
-           case, on macOS SDL_WaitEvent() seems to use 10x more CPU time than sleeping. */
-        SDL_Delay(1000 / 60);
+           case, on iOS SDL_WaitEvent() seems to use 10x more CPU time than sleeping (2.0.18). */
+        SDL_Delay(1000 / 30);
     }
 #endif
 backToMainLoop:;
