@@ -238,7 +238,12 @@ enum iGmLineType lineType_Rangecc(const iRangecc line) {
         return text_GmLineType;
     }
     if (startsWith_Rangecc(line, "=>")) {
-        return link_GmLineType;
+        iRangecc trim = line;
+        trim_Rangecc(&trim);
+        if (size_Range(&trim) > 2) {
+            return link_GmLineType;
+        }
+        return text_GmLineType;
     }
     if (startsWith_Rangecc(line, "###")) {
         return heading3_GmLineType;
