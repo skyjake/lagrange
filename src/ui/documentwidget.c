@@ -1261,7 +1261,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
 #endif
         iBool isMobileHover = deviceType_App() != desktop_AppDeviceType &&
-            (isPartOfHover || contains_PtrSet(d->view->invalidRuns, run));
+            (isPartOfHover || contains_PtrSet(d->view->invalidRuns, run)) &&
+            (~run->flags & decoration_GmRunFlag || run->flags & startOfLine_GmRunFlag
+             /* highlight link icon but not image captions */);
         /* While this is consistent, it's a bit excessive to indicate that an inlined image
            is open: the image itself is the indication. */
         const iBool isInlineImageCaption = iFalse;
