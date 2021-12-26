@@ -7,8 +7,10 @@
 # Release notes
 
 ## 1.10 (7)
+* Link context menu shows used identity and date of last visit in addition to the URL.
+* Removed the "Show URL on hover" setting. URLs are shown in the link context menu.
 * Inline image metadata goes under the image instead of possibly overlapping the image caption text.
-* Improved apperance of opened links highlighting. It no longer goes under the side elements on the page.
+* Improved appearance of hover/open link highlighting. It no longer goes under the side elements on the page.
 * Gempub: Open books in 1:2 split mode instead of 1:1.
 * Fixed opening links in split view mode. Links would open on the wrong side.
 * Upgraded SDL to version 2.0.18.
