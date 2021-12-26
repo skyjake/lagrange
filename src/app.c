@@ -71,6 +71,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAppleMobile)
 #   include "ios.h"
 #endif
+#if defined (iPlatformAndroidMobile)
+#include <SDL_log.h>
+#endif
 #if defined (iPlatformMsys)
 #   include "win32.h"
 #endif
@@ -1690,13 +1693,20 @@ void postCommand_Root(iRoot *d, const char *command) {
     ev.user.data1 = strdup(command);
     ev.user.data2 = d; /* all events are root-specific */
     SDL_PushEvent(&ev);
+    iWindow *win = get_Window();
+#if defined (iPlatformAndroid)
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s[command] {%d} %s",
+                app_.isLoadingPrefs ? "[Prefs] " : "",
+                (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
+                command);
+#else
     if (app_.commandEcho) {
-        iWindow *win = get_Window();
         printf("%s[command] {%d} %s\n",
                app_.isLoadingPrefs ? "[Prefs] " : "",
                (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
                command); fflush(stdout);
     }
+#endif
 }
 
 void postCommandf_Root(iRoot *d, const char *command, ...) {
