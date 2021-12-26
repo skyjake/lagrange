@@ -2476,7 +2476,7 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.prefs.interface" },
             { "dropdown device:0 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
             { "padding device:1" },
-            { "toggle id:prefs.hoverlink" },
+            //{ "toggle id:prefs.hoverlink" },
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
             { "heading id:heading.prefs.sizing" },
             { "input id:prefs.uiscale maxlen:8" },
