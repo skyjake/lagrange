@@ -2791,12 +2791,6 @@ iBool handleCommand_App(const char *cmd) {
         setRedirectCount_DocumentWidget(doc, redirectCount);
         setOrigin_DocumentWidget(doc, origin);
         showCollapsed_Widget(findWidget_App("document.progress"), iFalse);
-        if (prefs_App()->decodeUserVisibleURLs) {
-            urlDecodePath_String(url);
-        }
-        else {
-            urlEncodePath_String(url);
-        }            
         setUrlFlags_DocumentWidget(doc, url,
            isHistory ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0);
         /* Optionally, jump to a text in the document. This will only work if the document

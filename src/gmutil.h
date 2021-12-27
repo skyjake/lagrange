@@ -100,6 +100,7 @@ iRegExp *       newGemtextLink_RegExp   (void);
 
 #define GEMINI_DEFAULT_PORT         ((uint16_t) 1965)
 #define GEMINI_DEFAULT_PORT_CSTR    "1965"
+#define URL_RESERVED_CHARS          ":/?#[]@!$&'()*+,;=" /* RFC 3986 */
 
 struct Impl_Url {
     iRangecc scheme;
@@ -131,6 +132,7 @@ const iString * urlFragmentStripped_String(const iString *);
 const iString * urlQueryStripped_String (const iString *);
 void            urlDecodePath_String    (iString *);
 void            urlEncodePath_String    (iString *);
+void            urlEncodeQuery_String   (iString *);
 iString *       makeFileUrl_String      (const iString *localFilePath);
 const char *    makeFileUrl_CStr        (const char *localFilePath);
 iString *       localFilePathFromUrl_String(const iString *);

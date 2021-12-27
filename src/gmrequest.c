@@ -585,8 +585,10 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     /* TODO: Gemini spec allows UTF-8 encoded URLs, but still need to percent-encode non-ASCII
        characters? Could be a server-side issue, e.g., if they're using a URL parser meant for
        the web. */
-    urlEncodePath_String(&d->url);
-    urlEncodeSpaces_String(&d->url);
+    /* Encode everything except already-percent encoded characters. */
+    iString *enc = urlEncodeExclude_String(&d->url, "%" URL_RESERVED_CHARS);
+    set_String(&d->url, enc);
+    delete_String(enc);
     d->identity = identityForUrl_GmCerts(d->certs, &d->url);
 }
 
