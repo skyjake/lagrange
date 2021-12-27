@@ -118,8 +118,9 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             if (match_RegExp(activeText_->ansiEscape, chPos, args->text.end - chPos, &m)) {
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     /* Change the color. */
-                    iColor clr;
-                    ansiColors_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId,
+                    iColor clr = get_Color(args->color);
+                    ansiColors_Color(capturedRange_RegExpMatch(&m, 1),
+                                     activeText_->baseFgColorId,
                                      none_ColorId, &clr, NULL);
                     SDL_SetTextureColorMod(activeText_->cache, clr.r, clr.g, clr.b);
                     if (args->mode & fillBackground_RunMode) {
