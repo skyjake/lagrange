@@ -420,7 +420,7 @@ static void loadPrefs_App_(iApp *d) {
     iRelease(f);
     /* Upgrade checks. */
     if (cmp_Version(&upgradedFromAppVersion, &(iVersion){ 1, 8, 0 }) < 0) {
-#if !defined (iPlatformAppleMobile)
+#if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile)
         /* When upgrading to v1.8.0, the old hardcoded font library is gone and that means
            UI strings may not have the right fonts available for the UI to remain
            usable. */
