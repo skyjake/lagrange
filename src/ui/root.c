@@ -512,7 +512,10 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         else {
             addChild_Widget(root, iClob(sidebar));
             setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
-            const int midHeight = height_Widget(root) / 2;// + lineHeight_Text(uiLabelLarge_FontId);
+            int midHeight = height_Widget(root) / 2;// + lineHeight_Text(uiLabelLarge_FontId);
+#if defined (iPlatformAndroidMobile)
+            midHeight += 2 * lineHeight_Text(uiLabelLarge_FontId);
+#endif
             setMidHeight_SidebarWidget(sidebar, midHeight);
             setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
             setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));

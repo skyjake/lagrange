@@ -676,17 +676,19 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                                                max_I2(zero_I2(),
                                                       addX_I2(bottomLeft_Rect(bounds_Widget(url)),
                                                               -extraWidth / 2))));
-#if defined(iPlatformAppleMobile)
+#if defined(iPlatformMobile)
             /* TODO: Check this again. */
             /* Adjust height based on keyboard size. */ {
                 w->rect.size.y = bottom_Rect(visibleRect_Root(root)) - top_Rect(bounds_Widget(w));
+#   if defined (iPlatformAppleMobile)
                 if (deviceType_App() == phone_AppDeviceType) {
-                    float l, r;
+                    float l = 0.0f, r = 0.0f;
                     safeAreaInsets_iOS(&l, NULL, &r, NULL);
                     w->rect.size.x = size_Root(root).x - l - r;
                     w->rect.pos.x  = l;
                     /* TODO: Need to use windowToLocal_Widget? */
                 }
+#   endif
             }
 #endif
             arrange_Widget(w);

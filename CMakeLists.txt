@@ -31,7 +31,7 @@ endif ()
 
 # Defaults that depend on environment.
 set (DEFAULT_RESIZE_DRAW ON)
-if (HAIKU)
+if (HAIKU OR ANDROID)
     set (DEFAULT_RESIZE_DRAW OFF)
 endif ()
 set (DEFAULT_IDLE_SLEEP OFF)

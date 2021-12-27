@@ -3432,8 +3432,21 @@ void closePopups_App(void) {
 }
 
 #if defined (iPlatformAndroidMobile)
+
 float displayDensity_Android(void) {
     iApp *d = &app_;
     return toFloat_String(at_CommandLine(&d->args, 1));
 }
+
+#include <jni.h>
+
+JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_SDLActivity_postAppCommand(
+        JNIEnv* env, jclass jcls,
+        jstring command)
+{
+    const char *cmd = (*env)->GetStringUTFChars(env, command, NULL);
+    postCommand_Root(NULL, cmd);
+    (*env)->ReleaseStringUTFChars(env, command, cmd);
+}
+
 #endif

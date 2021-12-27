@@ -1269,8 +1269,8 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     if (!accept) {
         /* Overwrite the edited lines. */
         splitToLines_(&d->oldText, &d->lines);
-        SDL_StopTextInput();
     }
+    SDL_StopTextInput();
     enableEditorKeysInMenus_(iTrue);
     d->inFlags &= ~isMarking_InputWidgetFlag;
     startOrStopCursorTimer_InputWidget_(d, iFalse);
@@ -2153,11 +2153,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             updateAfterVisualOffsetChange_InputWidget_(d, w->root);
         }
     }
-    else if (d->sysCtrl && isCommand_UserEvent(ev, "menu.opened")) {
+#endif
+    if (deviceType_App() != desktop_AppDeviceType && isCommand_UserEvent(ev, "menu.opened")) {
         setFocus_Widget(NULL);
         return iFalse;
     }
-#endif
     if (isCommand_Widget(w, ev, "focus.gained")) {
         if (contentBounds_InputWidget_(d).size.x < minWidth_InputWidget_) {
             setFocus_Widget(NULL);

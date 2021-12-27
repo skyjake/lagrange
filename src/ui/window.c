@@ -1008,6 +1008,13 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 postCommand_App("media.player.update"); /* in case a player needs updating */
                 return iTrue;
             }
+            if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.sysframe") && mw) {
+                /* This command is sent on Android to update the keyboard height. */
+                const char *cmd = command_UserEvent(ev);
+                setKeyboardHeight_MainWindow(mw, argLabel_Command(cmd, "fullheight") -
+                                                 argLabel_Command(cmd, "bottom"));
+                return iTrue;
+            }
             if (processEvent_Touch(&event)) {
                 return iTrue;
             }

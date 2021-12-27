@@ -3100,11 +3100,6 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                             NULL);
                         insertChildAfter_Widget(buttons, iClob(lineBreak), 0);
                     }
-                    else {
-#if !defined (iPlatformAppleMobile)
-                        lineBreak = new_LabelWidget("${dlg.input.linebreak}", "text.insert arg:10");
-#endif
-                    }
                     if (lineBreak) {
                         setFlags_Widget(as_Widget(lineBreak), frameless_WidgetFlag, iTrue);
                         setTextColor_LabelWidget(lineBreak, uiTextDim_ColorId);
