@@ -1542,10 +1542,19 @@ void createUserInterface_Root(iRoot *d) {
                                      arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag |
                                      commandOnClick_WidgetFlag |
                                      drawBackgroundToBottom_WidgetFlag, iTrue);
+#if defined (iPlatformAndroidMobile)
+        /* Android has a system-provided back button (or gesture?), or in the toolbar we can have
+           a different in the place of Back. */
+        setId_Widget(addChildFlags_Widget(toolBar,
+                                          iClob(newLargeIcon_LabelWidget(close_Icon, "tabs.close")),
+                                          frameless_WidgetFlag),
+                     "toolbar.close");
+#else
         setId_Widget(addChildFlags_Widget(toolBar,
                                           iClob(newLargeIcon_LabelWidget(backArrow_Icon, "navigate.back")),
                                           frameless_WidgetFlag),
                      "toolbar.back");
+#endif
         setId_Widget(addChildFlags_Widget(toolBar,
                                           iClob(newLargeIcon_LabelWidget(forwardArrow_Icon, "navigate.forward")),
                                           frameless_WidgetFlag),
