@@ -2260,6 +2260,11 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                                       0,
                                       format_CStr("document.setmediatype mime:%s", mtype) });
                 }
+                pushBack_Array(&items,
+                               &(iMenuItem){ export_Icon " ${menu.open.external}",
+                                             SDLK_RETURN,
+                                             KMOD_PRIMARY,
+                                             "document.save extview:1" });
                 pushBack_Array(
                     &items,
                     &(iMenuItem){ translateCStr_Lang(download_Icon " " saveToDownloads_Label),
@@ -3337,9 +3342,8 @@ static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
     return iFalse;
 }
 
-static const iString *saveToDownloads_(const iString *url, const iString *mime, const iBlock *content,
-                                       iBool showDialog) {
-    const iString *savePath = downloadPathForUrl_App(url, mime);
+static iBool saveToFile_(const iString *savePath, const iBlock *content, iBool showDialog) {
+    iBool ok = iFalse;
     /* Write the file. */ {
         iFile *f = new_File(savePath);
         if (open_File(f, writeOnly_FileMode)) {
@@ -3351,21 +3355,21 @@ static const iString *saveToDownloads_(const iString *url, const iString *mime, 
             exportDownloadedFile_iOS(savePath);
 #else
             if (showDialog) {
-            const iMenuItem items[2] = {
-                { "${dlg.save.opendownload}", 0, 0,
-                    format_CStr("!open url:%s", cstrCollect_String(makeFileUrl_String(savePath))) },
-                { "${dlg.message.ok}", 0, 0, "message.ok" },
-            };
-            makeMessage_Widget(uiHeading_ColorEscape "${heading.save}",
-                                   format_CStr("%s\n${dlg.save.size} %.3f %s",
-                                               cstr_String(path_File(f)),
-                                           isMega ? size / 1.0e6f : (size / 1.0e3f),
-                                           isMega ? "${mb}" : "${kb}"),
-                                   items,
-                                   iElemCount(items));
+                const iMenuItem items[2] = {
+                    { "${dlg.save.opendownload}", 0, 0,
+                        format_CStr("!open url:%s", cstrCollect_String(makeFileUrl_String(savePath))) },
+                    { "${dlg.message.ok}", 0, 0, "message.ok" },
+                };
+                makeMessage_Widget(uiHeading_ColorEscape "${heading.save}",
+                                       format_CStr("%s\n${dlg.save.size} %.3f %s",
+                                                   cstr_String(path_File(f)),
+                                               isMega ? size / 1.0e6f : (size / 1.0e3f),
+                                               isMega ? "${mb}" : "${kb}"),
+                                       items,
+                                       iElemCount(items));
             }
 #endif
-            return savePath;
+            ok = iTrue;
         }
         else {
             makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.error}",
@@ -3373,7 +3377,16 @@ static const iString *saveToDownloads_(const iString *url, const iString *mime, 
         }
         iRelease(f);
     }
-    return collectNew_String();
+    return ok;
+}
+
+static const iString *saveToDownloads_(const iString *url, const iString *mime, const iBlock *content,
+                                       iBool showDialog) {
+    const iString *savePath = downloadPathForUrl_App(url, mime);
+    if (!saveToFile_(savePath, content, showDialog)) {
+        return collectNew_String();
+    }
+    return savePath;
 }
 
 static void addAllLinks_(void *context, const iGmRun *run) {
@@ -4111,12 +4124,27 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                      "${dlg.save.incomplete}");
         }
         else if (!isEmpty_Block(&d->sourceContent)) {
-            const iBool    doOpen   = argLabel_Command(cmd, "open");
-            const iString *savePath = saveToDownloads_(d->mod.url, &d->sourceMime,
-                                                       &d->sourceContent, !doOpen);
-            if (!isEmpty_String(savePath) && doOpen) {
-                postCommandf_Root(
-                    w->root, "!open url:%s", cstrCollect_String(makeFileUrl_String(savePath)));
+            if (argLabel_Command(cmd, "extview")) {
+                iString       *tmpPath = collectNewCStr_String(tmpnam(NULL));
+                const iRangecc tmpDir  = dirName_Path(tmpPath);
+                set_String(
+                    tmpPath,
+                    collect_String(concat_Path(collectNewRange_String(tmpDir),
+                                               fileNameForUrl_App(d->mod.url, &d->sourceMime))));
+                if (saveToFile_(tmpPath, &d->sourceContent, iFalse)) {
+                    /* TODO: Remember this temporary path and delete it when quitting the app. */
+                    postCommandf_Root(w->root, "!open default:1 url:%s",
+                                      cstrCollect_String(makeFileUrl_String(tmpPath)));
+                }
+            }
+            else {
+                const iBool    doOpen   = argLabel_Command(cmd, "open");
+                const iString *savePath = saveToDownloads_(d->mod.url, &d->sourceMime,
+                                                           &d->sourceContent, !doOpen);
+                if (!isEmpty_String(savePath) && doOpen) {
+                    postCommandf_Root(
+                        w->root, "!open url:%s", cstrCollect_String(makeFileUrl_String(savePath)));
+                }
             }
         }
         return iTrue;

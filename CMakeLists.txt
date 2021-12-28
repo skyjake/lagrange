@@ -330,6 +330,7 @@ target_include_directories (app PUBLIC
 target_compile_options (app PUBLIC
     -Werror=implicit-function-declaration
     -Werror=incompatible-pointer-types
+    -Wno-deprecated-declarations
     ${SDL2_CFLAGS}
     -DSTB_VORBIS_NO_STDIO=1
     -DSTB_VORBIS_NO_INTEGER_CONVERSION=1

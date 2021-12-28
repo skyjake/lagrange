@@ -1021,7 +1021,7 @@ const iString *downloadDir_App(void) {
     return collect_String(cleaned_Path(&app_.prefs.strings[downloadDir_PrefsString]));
 }
 
-const iString *downloadPathForUrl_App(const iString *url, const iString *mime) {
+const iString *fileNameForUrl_App(const iString *url, const iString *mime) {
     /* Figure out a file name from the URL. */
     iUrl parts;
     init_Url(&parts, url);
@@ -1047,22 +1047,27 @@ const iString *downloadPathForUrl_App(const iString *url, const iString *mime) {
         }
     }
     if (startsWith_String(name, "~")) {
-        /* This would be interpreted as a reference to a home directory. */
+        /* This might be interpreted as a reference to a home directory. */
         remove_Block(&name->chars, 0, 1);
     }
-    iString *savePath = concat_Path(downloadDir_App(), name);
-    if (lastIndexOfCStr_String(savePath, ".") == iInvalidPos) {
+    if (lastIndexOfCStr_String(name, ".") == iInvalidPos) {
+        /* TODO: Needs the inverse of `mediaTypeFromFileExtension_String()`. */
         /* No extension specified in URL. */
         if (startsWith_String(mime, "text/gemini")) {
-            appendCStr_String(savePath, ".gmi");
+            appendCStr_String(name, ".gmi");
         }
         else if (startsWith_String(mime, "text/")) {
-            appendCStr_String(savePath, ".txt");
+            appendCStr_String(name, ".txt");
         }
         else if (startsWith_String(mime, "image/")) {
-            appendCStr_String(savePath, cstr_String(mime) + 6);
+            appendCStr_String(name, cstr_String(mime) + 6);
         }
     }
+    return name;
+}
+
+const iString *downloadPathForUrl_App(const iString *url, const iString *mime) {
+    iString *savePath = concat_Path(downloadDir_App(), fileNameForUrl_App(url, mime));
     if (fileExists_FileInfo(savePath)) {
         /* Make it unique. */
         iDate now;

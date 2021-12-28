@@ -196,6 +196,9 @@ msgstr "Find on Page"
 msgid "macos.menu.find"
 msgstr "Find"
 
+msgid "menu.open.external"
+msgstr "Open in Another App"
+
 # Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
 msgid "menu.save.files"
 msgstr "Save to Files"
