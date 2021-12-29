@@ -97,17 +97,21 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
         pushBack_Array(items, &(iMenuItem){ format_CStr("```%s", cstr_String(docUrl)) });
         firstIndex = 1;
     }
-    pushBackN_Array(items, (iMenuItem[]){
+    const iMenuItem ctxItems[] = {
         { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
         { close_Icon " ${ident.stopuse}", 0, 0, "ident.use arg:0" },
         { close_Icon " ${ident.stopuse.all}", 0, 0, "ident.use arg:0 clear:1" },
         { "---", 0, 0, NULL },
         { edit_Icon " ${menu.edit.notes}", 0, 0, "ident.edit" },
         { "${ident.fingerprint}", 0, 0, "ident.fingerprint" },
+#if defined (iPlatformAppleDesktop)
+        { magnifyingGlass_Icon " ${menu.reveal.macos}", 0, 0, "ident.reveal" },
+#endif
         { export_Icon " ${ident.export}", 0, 0, "ident.export" },
         { "---", 0, 0, NULL },
         { delete_Icon " " uiTextCaution_ColorEscape "${ident.delete}", 0, 0, "ident.delete confirm:1" },
-    }, 9);
+    };
+    pushBackN_Array(items, ctxItems, iElemCount(ctxItems));
     /* Used URLs. */
     const iGmIdentity *ident = menuIdentity_CertListWidget_(d);
     if (ident) {
@@ -244,7 +248,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
             if (ident) {
                 const iString *crtPath = certificatePath_GmCerts(certs_App(), ident);
                 if (crtPath) {
-                    revealPath_App(crtPath);
+                    postCommandf_App("reveal path:%s", cstr_String(crtPath));
                 }
             }
             return iTrue;

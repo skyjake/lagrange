@@ -654,7 +654,7 @@ void importIdentity_GmCerts(iGmCerts *d, iTlsCertificate *cert, const iString *n
 }
 
 static const char *certPath_GmCerts_(const iGmCerts *d, const iGmIdentity *identity) {
-    if (!(identity->flags & (temporary_GmIdentityFlag | imported_GmIdentityFlag))) {
+    if (!(identity->flags & temporary_GmIdentityFlag)) {
         const char *finger = cstrCollect_String(hexEncode_Block(&identity->fingerprint));
         return concatPath_CStr(cstr_String(&d->saveDir), format_CStr("idents/%s", finger));
     }

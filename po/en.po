@@ -854,6 +854,10 @@ msgstr "Bookmark Link…"
 msgid "link.download"
 msgstr "Download Linked File"
 
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Show in Finder"
+
 msgid "link.file.delete"
 msgstr "Delete File"
 

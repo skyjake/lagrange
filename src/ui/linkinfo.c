@@ -92,7 +92,7 @@ void infoText_LinkInfo(const iGmDocument *doc, iGmLinkId linkId, iString *text_o
         appendRange_String(text_out, (iRangecc){ parts.path.start, constEnd_String(url) });
     }
     else if (scheme != gemini_GmLinkScheme) {
-        appendCStr_String(text_out, globe_Icon " ");
+        appendCStr_String(text_out, scheme == file_GmLinkScheme ? "" : globe_Icon " ");
         append_String(text_out, url);
     }
     else {

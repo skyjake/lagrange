@@ -238,6 +238,44 @@ void init_DownloadUI(iDownloadUI *d, const iMedia *media, uint16_t mediaId, iRec
 /*----------------------------------------------------------------------------------------------*/
 
 iBool processEvent_DownloadUI(iDownloadUI *d, const SDL_Event *ev) {
+    if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) {
+        const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
+        if (!contains_Rect(d->bounds, mouse)) {
+            return iFalse;
+        }
+        float bytesPerSecond;
+        const iString *path;
+        iBool isFinished;
+        downloadStats_Media(d->media, (iMediaId){ download_MediaType, d->mediaId },
+                            &path, &bytesPerSecond, &isFinished);
+        if (isFinished) {
+            if (ev->button.button == SDL_BUTTON_RIGHT && ev->type == SDL_MOUSEBUTTONDOWN) {
+                const iMenuItem items[] = {
+                    /* Items related to the file */
+                    { openTab_Icon " ${menu.opentab}",
+                      0,
+                      0,
+                      format_CStr("!open newtab:1 url:%s",
+                                  cstrCollect_String(makeFileUrl_String(path))) },
+#if defined (iPlatformAppleDesktop)
+                    { "${menu.reveal.macos}",
+                      0,
+                      0,
+                      format_CStr("!reveal path:%s", cstr_String(path)) },
+#endif
+                    { "---" },
+                    /* Generic items */
+                    { "${menu.downloads}", 0, 0, "downloads.open newtab:1" },
+                };
+                openMenu_Widget(makeMenu_Widget(get_Root()->widget, items, iElemCount(items)),
+                                mouse);
+                return iTrue;
+            }
+            else if (ev->button.button == SDL_BUTTON_LEFT && ev->type == SDL_MOUSEBUTTONUP) {
+                postCommandf_App("open default:1 url:%s", cstrCollect_String(makeFileUrl_String(path)));
+            }
+        }
+    }
     return iFalse;
 }
 

@@ -111,6 +111,7 @@ const iString *     schemeProxy_App     (iRangecc scheme);
 iBool               willUseProxy_App    (const iRangecc scheme);
 const iString *     searchQueryUrl_App  (const iString *queryStringUnescaped);
 const iString *     fileNameForUrl_App  (const iString *url, const iString *mime);
+const iString *     temporaryPathForUrl_App(const iString *url, const iString *mime); /* deleted before quitting */
 const iString *     downloadPathForUrl_App(const iString *url, const iString *mime);
 
 typedef void (*iTickerFunc)(iAny *);

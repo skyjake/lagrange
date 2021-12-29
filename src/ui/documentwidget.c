@@ -4125,16 +4125,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         else if (!isEmpty_Block(&d->sourceContent)) {
             if (argLabel_Command(cmd, "extview")) {
-                iString       *tmpPath = collectNewCStr_String(tmpnam(NULL));
-                const iRangecc tmpDir  = dirName_Path(tmpPath);
-                set_String(
-                    tmpPath,
-                    collect_String(concat_Path(collectNewRange_String(tmpDir),
-                                               fileNameForUrl_App(d->mod.url, &d->sourceMime))));
-                if (saveToFile_(tmpPath, &d->sourceContent, iFalse)) {
-                    /* TODO: Remember this temporary path and delete it when quitting the app. */
-                    postCommandf_Root(w->root, "!open default:1 url:%s",
-                                      cstrCollect_String(makeFileUrl_String(tmpPath)));
+                if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
+                    /* Already a file so just open it directly. */
+                    postCommandf_Root(w->root, "!open default:1 url:%s", cstr_String(d->mod.url));
+                }
+                else {
+                    const iString *tmpPath = temporaryPathForUrl_App(d->mod.url, &d->sourceMime);
+                    if (saveToFile_(tmpPath, &d->sourceContent, iFalse)) {
+                        postCommandf_Root(w->root, "!open default:1 url:%s",
+                                          cstrCollect_String(makeFileUrl_String(tmpPath)));
+                    }
                 }
             }
             else {
@@ -4484,11 +4484,6 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
         ev->type != SDL_MOUSEMOTION) {
         return iFalse;
     }
-    if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) {
-        if (ev->button.button != SDL_BUTTON_LEFT) {
-            return iFalse;
-        }
-    }
     if (d->grabbedPlayer) {
         /* Updated in the drag. */
         return iFalse;
@@ -4496,8 +4491,22 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
     const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
     iConstForEach(PtrArray, i, &d->view.visibleMedia) {
         const iGmRun *run  = i.ptr;
+        if (run->mediaType == download_MediaType) {
+            iDownloadUI ui;
+            init_DownloadUI(&ui, media_GmDocument(d->view.doc), mediaId_GmRun(run).id,
+                            runRect_DocumentView_(&d->view, run));
+            if (processEvent_DownloadUI(&ui, ev)) {
+                return iTrue;
+            }
+            continue;
+        }
         if (run->mediaType != audio_MediaType) {
             continue;
+        }
+        if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) {
+            if (ev->button.button != SDL_BUTTON_LEFT) {
+                return iFalse;
+            }
         }
         /* TODO: move this to mediaui.c */
         const iRect rect = runRect_DocumentView_(&d->view, run);
@@ -4842,6 +4851,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
         return iTrue;
     }
+    if (processMediaEvents_DocumentWidget_(d, ev)) {
+        return iTrue;
+    }
     if (ev->type == SDL_MOUSEBUTTONDOWN) {
         if (ev->button.button == SDL_BUTTON_X1) {
             postCommand_Root(w->root, "navigate.back");
@@ -4923,6 +4935,23 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         if (deviceType_App() == phone_AppDeviceType) {
                             removeN_Array(&items, size_Array(&items) - 2, iInvalidSize);
                         }
+                        if (equalCase_Rangecc(scheme, "file")) {
+                            pushBack_Array(&items, &(iMenuItem){ "---" });
+                            pushBack_Array(&items,
+                                           &(iMenuItem){ export_Icon " ${menu.open.external}",
+                                                         0,
+                                                         0,
+                                                         format_CStr("!open default:1 url:%s",
+                                                                     cstr_String(linkUrl)) });
+#if defined (iPlatformAppleDesktop)
+                            pushBack_Array(&items,
+                                           &(iMenuItem){ "${menu.reveal.macos}",
+                                                         0,
+                                                         0,
+                                                         format_CStr("!reveal url:%s",
+                                                                     cstr_String(linkUrl)) });
+#endif
+                        }                        
                     }
                     else if (!willUseProxy_App(scheme)) {
                         pushBack_Array(
@@ -4959,7 +4988,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                                  cstr_String(linkUrl)) },
                                                    },
                                     3);
-                    if (isNative && d->contextLink->mediaType != download_MediaType) {
+                    if (isNative && d->contextLink->mediaType != download_MediaType &&
+                        !equalCase_Rangecc(scheme, "file")) {
                         pushBackN_Array(&items, (iMenuItem[]){
                             { "---" },
                             { download_Icon " ${link.download}", 0, 0, "document.downloadlink" },
@@ -4979,6 +5009,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                     if (equalCase_Rangecc(scheme, "file")) {
                         /* Local files may be deleted. */
+                        pushBack_Array(&items, &(iMenuItem){ "---" });
                         pushBack_Array(
                             &items,
                             &(iMenuItem){ delete_Icon " " uiTextCaution_ColorEscape
@@ -5051,9 +5082,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             processContextMenuEvent_Widget(d->menu, ev, {});
         }
-    }
-    if (processMediaEvents_DocumentWidget_(d, ev)) {
-        return iTrue;
     }
     if (processEvent_Banner(d->banner, ev)) {
         return iTrue;

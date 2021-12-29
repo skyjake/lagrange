@@ -55,6 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <the_Foundation/process.h>
 #include <the_Foundation/sortedarray.h>
+#include <the_Foundation/stringset.h>
 #include <the_Foundation/time.h>
 #include <the_Foundation/version.h>
 #include <SDL.h>
@@ -119,6 +120,7 @@ static const int idleThreshold_App_ = 1000; /* ms */
 struct Impl_App {
     iCommandLine args;
     iString *    execPath;
+    iStringSet * tempFilesPendingDeletion;
     iMimeHooks * mimehooks;
     iGmCerts *   certs;
     iVisited *   visited;
@@ -735,6 +737,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     d->isSuspended = iFalse;
+    d->tempFilesPendingDeletion = new_StringSet();
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone 
        cannot be relied on (behavior differs depending on OS). */ {
@@ -1005,8 +1008,13 @@ static void deinit_App(iApp *d) {
 #endif
     deinit_SortedArray(&d->tickers);
     deinit_Periodic(&d->periodic);
-    deinit_Lang();
+    deinit_Lang();    
     iRecycle();
+    /* Delete all temporary files created while running. */
+    iConstForEach(StringSet, tmp, d->tempFilesPendingDeletion) {
+        remove(cstr_String(tmp.value));
+    }
+    iRelease(d->tempFilesPendingDeletion);
 }
 
 const iString *execPath_App(void) {
@@ -1080,6 +1088,17 @@ const iString *downloadPathForUrl_App(const iString *url, const iString *mime) {
         insertData_Block(&savePath->chars, insPos, cstr_String(date), size_String(date));
     }
     return collect_String(savePath);
+}
+
+const iString *temporaryPathForUrl_App(const iString *url, const iString *mime) {
+    iApp *d = &app_;
+    iString       *tmpPath = collectNewCStr_String(tmpnam(NULL));
+    const iRangecc tmpDir  = dirName_Path(tmpPath);
+    set_String(
+        tmpPath,
+        collect_String(concat_Path(collectNewRange_String(tmpDir), fileNameForUrl_App(url, mime))));
+    insert_StringSet(d->tempFilesPendingDeletion, tmpPath); /* deleted in `deinit_App` */
+    return tmpPath;
 }
 
 const iString *debugInfo_App(void) {
@@ -2687,7 +2706,9 @@ iBool handleCommand_App(const char *cmd) {
     }
 #endif
     else if (equal_Command(cmd, "downloads.open")) {
-        postCommandf_App("open url:%s", cstrCollect_String(makeFileUrl_String(downloadDir_App())));
+        postCommandf_App("open newtab:%d url:%s",
+                         argLabel_Command(cmd, "newtab"),
+                         cstrCollect_String(makeFileUrl_String(downloadDir_App())));
         return iTrue;
     }
     else if (equal_Command(cmd, "ca.file")) {
@@ -2718,6 +2739,19 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "reveal")) {
+        const iString *path = NULL;
+        if (hasLabel_Command(cmd, "path")) {
+            path = suffix_Command(cmd, "path");
+        }
+        else if (hasLabel_Command(cmd, "url")) {
+            path = collect_String(localFilePathFromUrl_String(suffix_Command(cmd, "url")));
+        }
+        if (path) {
+            revealPath_App(path);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "open")) {
         const char *urlArg = suffixPtr_Command(cmd, "url");
         if (!urlArg) {
@@ -2726,9 +2760,8 @@ iBool handleCommand_App(const char *cmd) {
         if (findWidget_App("prefs")) {
             postCommand_App("prefs.dismiss");        
         }
-        iString    *url         = collectNewCStr_String(urlArg);
-        const iBool noProxy     = argLabel_Command(cmd, "noproxy") != 0;
-        const iBool fromSidebar = argLabel_Command(cmd, "fromsidebar") != 0;
+        iString    *url     = collectNewCStr_String(urlArg);
+        const iBool noProxy = argLabel_Command(cmd, "noproxy") != 0;
         iUrl parts;
         init_Url(&parts, url);
         if (equal_Rangecc(parts.scheme, "about") && equal_Rangecc(parts.path, "command") &&
@@ -3354,26 +3387,11 @@ void openInDefaultBrowser_App(const iString *url) {
 
 void revealPath_App(const iString *path) {
 #if defined (iPlatformAppleDesktop)
-    const char *scriptPath = concatPath_CStr(dataDir_App_(), "revealfile.scpt");
-    iFile *f = newCStr_File(scriptPath);
-    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        /* AppleScript to select a specific file. */
-        write_File(f, collect_Block(newCStr_Block("on run argv\n"
-                                                  "  tell application \"Finder\"\n"
-                                                  "    activate\n"
-                                                  "    reveal POSIX file (item 1 of argv) as text\n"
-                                                  "  end tell\n"
-                                                  "end run\n")));
-        close_File(f);
-        iProcess *proc = new_Process();
-        setArguments_Process(
-            proc,
-            iClob(newStringsCStr_StringList(
-                "/usr/bin/osascript", scriptPath, cstr_String(path), NULL)));
-        start_Process(proc);
-        iRelease(proc);
-    }
-    iRelease(f);
+    iProcess *proc = new_Process();
+    setArguments_Process(
+        proc, iClob(newStringsCStr_StringList("/usr/bin/open", "-R", cstr_String(path), NULL)));
+    start_Process(proc);
+    iRelease(proc);
 #elif defined (iPlatformLinux) || defined (iPlatformHaiku)
     iFileInfo *inf = iClob(new_FileInfo(path));
     iRangecc target;
