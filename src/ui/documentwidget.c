@@ -3945,7 +3945,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             /* Full document. */
             copied = copy_String(source_GmDocument(d->view.doc));
         }
-        SDL_SetClipboardText(cstr_String(copied));
+        if (argLabel_Command(cmd, "share")) {
+#if defined (iPlatformAppleMobile)
+            openTextActivityView_iOS(copied);
+#endif
+        }
+        else {
+            SDL_SetClipboardText(cstr_String(copied));
+        }
         delete_String(copied);
         if (flags_Widget(w) & touchDrag_WidgetFlag) {
             postCommand_Widget(w, "document.select arg:0");
@@ -5227,6 +5234,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         }
                         d->copyMenu = makeMenu_Widget(w, (iMenuItem[]){
                             { clipCopy_Icon " ${menu.copy}", 0, 0, "copy" },
+#if defined (iPlatformAppleMobile)
+                            { export_Icon " ${menu.share}", 0, 0, "copy share:1" },
+#endif
                             { "---" },
                             { close_Icon " ${menu.select.clear}", 0, 0, "document.select arg:0" },
                         }, 3);

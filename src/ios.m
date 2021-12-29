@@ -536,13 +536,22 @@ void pickFile_iOS(const char *command) {
     [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
 }
 
-void openTextActivityView_iOS(const iString *text) {
+static void openActivityView_(NSArray *activityItems) {
     UIActivityViewController *actView =
         [[UIActivityViewController alloc]
-         initWithActivityItems:@[
-            [NSString stringWithUTF8String:cstr_String(text)]]
+         initWithActivityItems:activityItems
          applicationActivities:nil];
     [viewController_(get_Window()) presentViewController:actView animated:YES completion:nil];
+}
+
+void openTextActivityView_iOS(const iString *text) {
+    openActivityView_(@[[NSString stringWithUTF8String:cstr_String(text)]]);
+}
+
+void openFileActivityView_iOS(const iString *path) {
+    NSURL *url = [NSURL fileURLWithPath:[[NSString alloc] initWithCString:cstr_String(path)
+                                                                 encoding:NSUTF8StringEncoding]];
+    openActivityView_(@[url]);
 }
 
 /*----------------------------------------------------------------------------------------------*/

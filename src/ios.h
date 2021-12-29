@@ -39,6 +39,7 @@ void    exportDownloadedFile_iOS(const iString *path);
 void    pickFileForOpening_iOS  (void);
 void    pickFile_iOS            (const char *command); /* ` path:%s` will be appended */
 void    openTextActivityView_iOS(const iString *text);
+void    openFileActivityView_iOS(const iString *path);
 
 iBool   isPhone_iOS             (void);
 void    safeAreaInsets_iOS      (float *left, float *top, float *right, float *bottom);

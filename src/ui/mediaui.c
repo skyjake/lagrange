@@ -263,6 +263,12 @@ iBool processEvent_DownloadUI(iDownloadUI *d, const SDL_Event *ev) {
                       0,
                       format_CStr("!reveal path:%s", cstr_String(path)) },
 #endif
+#if defined (iPlatformAppleMobile)
+                    { export_Icon " ${menu.share}",
+                      0,
+                      0,
+                      format_CStr("!reveal path:%s", cstr_String(path)) },
+#endif
                     { "---" },
                     /* Generic items */
                     { "${menu.downloads}", 0, 0, "downloads.open newtab:1" },

@@ -694,9 +694,11 @@ void submit_GmRequest(iGmRequest *d) {
             setCStr_String(&resp->meta, "text/gemini");
             iString *page = collectNew_String();
             iString *parentDir = collectNewRange_String(dirName_Path(path));
+#if !defined (iPlatformMobile)
             appendFormat_String(page, "=> %s " upArrow_Icon " %s" iPathSeparator "\n\n",
                                 cstrCollect_String(makeFileUrl_String(parentDir)),
                                 cstr_String(parentDir));
+#endif
             appendFormat_String(page, "# %s\n", cstr_Rangecc(baseName_Path(path)));
             /* Make a directory index page. */
             iPtrArray *sortedInfo = collectNew_PtrArray();

@@ -3364,25 +3364,32 @@ void openInDefaultBrowser_App(const iString *url) {
         return;
     }
 #endif
-#if !defined (iPlatformAppleMobile)
+#if defined (iPlatformAppleMobile)
+    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
+        revealPath_App(collect_String(localFilePathFromUrl_String(url)));
+    }
+    return;
+#endif
     iProcess *proc = new_Process();
-    setArguments_Process(proc,
+    setArguments_Process(proc, iClob(newStringsCStr_StringList(
 #if defined (iPlatformAppleDesktop)
-                         iClob(newStringsCStr_StringList("/usr/bin/env", "open", cstr_String(url), NULL))
+        "/usr/bin/env",
+        "open",
+        cstr_String(url),
 #elif defined (iPlatformLinux) || defined (iPlatformOther) || defined (iPlatformHaiku)
-                         iClob(newStringsCStr_StringList("/usr/bin/env", "xdg-open", cstr_String(url), NULL))
+        "/usr/bin/env",
+        "xdg-open",
+        cstr_String(url),
 #elif defined (iPlatformMsys)
-        iClob(newStringsCStr_StringList(
-            concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
-            cstr_String(url),
-            NULL))
+        concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
+        cstr_String(url),
         /* TODO: The prompt window is shown momentarily... */
 #endif
+        NULL))
     );
     start_Process(proc);
     waitForFinished_Process(proc); /* TODO: test on Windows */
     iRelease(proc);
-#endif
 }
 
 void revealPath_App(const iString *path) {
@@ -3392,6 +3399,9 @@ void revealPath_App(const iString *path) {
         proc, iClob(newStringsCStr_StringList("/usr/bin/open", "-R", cstr_String(path), NULL)));
     start_Process(proc);
     iRelease(proc);
+#elif defined (iPlatformAppleMobile)
+    /* Use a share sheet. */
+    openFileActivityView_iOS(path);
 #elif defined (iPlatformLinux) || defined (iPlatformHaiku)
     iFileInfo *inf = iClob(new_FileInfo(path));
     iRangecc target;

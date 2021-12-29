@@ -858,6 +858,9 @@ msgstr "Download Linked File"
 msgid "menu.reveal.macos"
 msgstr "Show in Finder"
 
+msgid "menu.share"
+msgstr "Share"
+
 msgid "link.file.delete"
 msgstr "Delete File"
 
