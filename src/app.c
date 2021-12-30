@@ -118,7 +118,7 @@ struct Impl_App {
     iMimeHooks * mimehooks;
     iGmCerts *   certs;
     iVisited *   visited;
-    iBookmarks * bookmarks;    
+    iBookmarks * bookmarks;
     iMainWindow *window;
     iPtrArray    popupWindows;
     iSortedArray tickers; /* per-frame callbacks, used for animations */
@@ -715,7 +715,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     init_CommandLine(&d->args, argc, argv);
-    /* Where was the app started from? We ask SDL first because the command line alone 
+    /* Where was the app started from? We ask SDL first because the command line alone
        cannot be relied on (behavior differs depending on OS). */ {
         char *exec = SDL_GetBasePath();
         if (exec) {
