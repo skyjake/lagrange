@@ -20,8 +20,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* TODO: This file is a little (!) too large. DocumentWidget could be split into
-   a couple of smaller objects. One for rendering the document, for instance. */
+/* TODO: Move DocumentView into a source file of its own. Consider cleaning up the network 
+   request handling. */
 
 #include "documentwidget.h"
 
@@ -297,6 +297,7 @@ struct Impl_DocumentWidget {
     /* Network request: */
     enum iRequestState state;
     iGmRequest *   request;
+    iGmLinkId      requestLinkId; /* ID of the link that initiated the current request */
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
     int            certFlags;
     iBlock *       certFingerprint;
@@ -1079,9 +1080,9 @@ static size_t visibleLinkOrdinal_DocumentView_(const iDocumentView *d, iGmLinkId
 }
 
 static void documentRunsInvalidated_DocumentWidget_(iDocumentWidget *d) {
-    d->foundMark   = iNullRange;
-    d->selectMark  = iNullRange;
-    d->contextLink = NULL;
+    d->foundMark     = iNullRange;
+    d->selectMark    = iNullRange;
+    d->contextLink   = NULL;
     documentRunsInvalidated_DocumentView_(&d->view);
 }
 
@@ -2136,6 +2137,7 @@ static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
 static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
     setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse);
+    d->requestLinkId = 0;
     updateVisitedLinks_GmDocument(d->view.doc);
     documentRunsInvalidated_DocumentWidget_(d);
     updateWindowTitle_DocumentWidget_(d);
@@ -2746,11 +2748,8 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
                       "document.request.started doc:%p url:%s",
                       d,
                       cstr_String(d->mod.url));
-    clear_ObjectList(d->media);
-    d->certFlags = 0;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
-    d->flags &= ~fromCache_DocumentWidgetFlag;
     d->state = fetching_RequestState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
@@ -3043,6 +3042,14 @@ static const char *humanReadableStatusCode_(enum iGmStatusCode code) {
     return format_CStr("%d ", code);
 }
 
+static void setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
+    url = canonicalUrl_String(url);
+    if (!equal_String(d->mod.url, url)) {
+        d->flags |= urlChanged_DocumentWidgetFlag;
+        set_String(d->mod.url, url);
+    }
+}
+
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (!d->request) {
         return;
@@ -3053,8 +3060,35 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     }
     iGmResponse *resp = lockResponse_GmRequest(d->request);
     if (d->state == fetching_RequestState) {
+        /* Under certain conditions, inline any image response into the current document. */
+        if (d->requestLinkId &&
+            isSuccess_GmStatusCode(d->sourceStatus) &&
+            startsWithCase_String(&d->sourceMime, "text/gemini") &&
+            isSuccess_GmStatusCode(statusCode) &&
+            startsWithCase_String(&resp->meta, "image/")) {
+            /* This request is turned into a new media request in the current document. */
+            iDisconnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
+            iDisconnect(GmRequest, d->request, finished, d, requestFinished_DocumentWidget_);
+            iMediaRequest *mr = newReused_MediaRequest(d, d->requestLinkId, d->request);
+            unlockResponse_GmRequest(d->request);
+            d->request = NULL; /* ownership moved */
+            postCommand_Widget(d, "document.request.cancelled doc:%p", d);
+            pushBack_ObjectList(d->media, mr);
+            iRelease(mr);
+            /* Reset the fetch state, returning to the originating page. */
+            d->state = ready_RequestState;
+            if (equal_String(&mostRecentUrl_History(d->mod.history)->url, url_GmRequest(mr->req))) {
+                undo_History(d->mod.history);
+            }
+            setUrl_DocumentWidget_(d, url_GmDocument(d->view.doc));            
+            updateFetchProgress_DocumentWidget_(d);
+            postCommand_Widget(d, "media.updated link:%u request:%p", d->requestLinkId, mr);
+            return;
+        }
+        /* Get ready for the incoming new document. */
         d->state = receivedPartialResponse_RequestState;
         d->flags &= ~fromCache_DocumentWidgetFlag;
+        clear_ObjectList(d->media);
         updateTrust_DocumentWidget_(d, resp);
         if (isSuccess_GmStatusCode(statusCode)) {
             clear_Banner(d->banner);
@@ -3439,14 +3473,6 @@ static void swap_DocumentWidget_(iDocumentWidget *d, iGmDocument *doc,
 
 static iWidget *swipeParent_DocumentWidget_(iDocumentWidget *d) {
     return findChild_Widget(as_Widget(d)->root->widget, "doctabs");
-}
-
-static void setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
-    url = canonicalUrl_String(url);
-    if (!equal_String(d->mod.url, url)) {
-        d->flags |= urlChanged_DocumentWidgetFlag;
-        set_String(d->mod.url, url);
-    }
 }
 
 static void setupSwipeOverlay_DocumentWidget_(iDocumentWidget *d, iWidget *overlay) {
@@ -4598,6 +4624,7 @@ static void interactingWithLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id
         clear_String(&d->linePrecedingLink);
         return;
     }
+    d->requestLinkId = id;
     const char *start = range_String(source_GmDocument(d->view.doc)).start;
     /* Find the preceding line. This is offered as a prefill option for a possible input query. */
     while (loc.start > start && *loc.start != '\n') {
@@ -5526,6 +5553,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->state            = blank_RequestState;
     d->titleUser        = new_String();
     d->request          = NULL;
+    d->requestLinkId    = 0;
     d->isRequestUpdated = iFalse;
     d->media            = new_ObjectList();
     d->banner           = new_Banner();

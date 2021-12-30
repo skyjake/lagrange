@@ -61,6 +61,7 @@ void        unlock_History              (iHistory *);
 
 void        clear_History               (iHistory *);
 void        add_History                 (iHistory *, const iString *url);
+void        undo_History                (iHistory *); /* removes the most recent URL */
 void        replace_History             (iHistory *, const iString *url);
 void        setCachedResponse_History   (iHistory *, const iGmResponse *response);
 void        setCachedDocument_History   (iHistory *, iGmDocument *doc);

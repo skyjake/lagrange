@@ -629,6 +629,17 @@ void deinit_MediaRequest(iMediaRequest *d) {
     iRelease(d->req);
 }
 
+iMediaRequest *newReused_MediaRequest(iDocumentWidget *doc, unsigned int linkId,
+                                      iGmRequest *request) {
+    iMediaRequest *d = new_Object(&Class_MediaRequest);
+    d->doc = doc;
+    d->linkId = linkId;
+    d->req = request; /* takes ownership */
+    iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
+    iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
+    return d;
+}
+
 iDefineObjectConstructionArgs(MediaRequest,
                               (iDocumentWidget *doc, unsigned int linkId, const iString *url,
                                iBool enableFilters),

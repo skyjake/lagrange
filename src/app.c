@@ -2828,6 +2828,7 @@ iBool handleCommand_App(const char *cmd) {
         const iBool isHistory     = argLabel_Command(cmd, "history") != 0;
         int         redirectCount = argLabel_Command(cmd, "redirect");
         if (!isHistory) {
+            /* TODO: Shouldn't DocumentWidget manage history on its own? */
             if (redirectCount) {
                 replace_History(history, url);
             }

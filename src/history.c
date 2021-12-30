@@ -310,6 +310,15 @@ void add_History(iHistory *d, const iString *url) {
     unlock_Mutex(d->mtx);
 }
 
+void undo_History(iHistory *d) {
+    lock_Mutex(d->mtx);
+    if (!isEmpty_Array(&d->recent) || d->recentPos != 0) {
+        deinit_RecentUrl(back_Array(&d->recent));
+        popBack_Array(&d->recent);
+    }
+    unlock_Mutex(d->mtx);    
+}
+
 iRecentUrl *precedingLocked_History(iHistory *d) {
     /* NOTE: Manual lock and unlock are required when using this; returning an internal pointer. */
     iBool ok = iFalse;
