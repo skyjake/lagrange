@@ -4116,6 +4116,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             setResponseViewer_UploadWidget(upload, d);
             addChild_Widget(get_Root()->widget, iClob(upload));
             setupSheetTransition_Mobile(as_Widget(upload), iTrue);
+            if (argLabel_Command(cmd, "copy") && isUtf8_Rangecc(range_Block(&d->sourceContent))) {
+                iString text;
+                initBlock_String(&text, &d->sourceContent);
+                setText_UploadWidget(upload, &text);
+                deinit_String(&text);
+            }
             postRefresh_App();
         }
         return iTrue;
@@ -5080,6 +5086,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                             { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
+                            { "${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
                             { "---" },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
                         16);

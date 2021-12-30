@@ -1402,6 +1402,7 @@ void createUserInterface_Root(iRoot *d) {
                         { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                         { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                         { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
+                        { "${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
                         { "---" },
                         { "${menu.page.copyurl}", 0, 0, "document.copylink" },
                         { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },

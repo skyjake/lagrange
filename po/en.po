@@ -1011,7 +1011,10 @@ msgid "heading.lookup.other"
 msgstr "OTHER"
 
 msgid "menu.page.upload"
-msgstr "Upload Page with Titan…"
+msgstr "Upload with Titan…"
+
+msgid "menu.page.upload.edit"
+msgstr "Edit Page with Titan…"
 
 msgid "heading.upload"
 msgstr "Upload with Titan"
@@ -1768,7 +1771,10 @@ msgid "keys.hoverurl"
 msgstr "Toggle show URL on hover"
 
 msgid "keys.upload"
-msgstr "Upload page with Titan"
+msgstr "Upload with Titan"
+
+msgid "keys.upload.edit"
+msgstr "Edit Page with Titan"
 
 msgid "error.badstatus"
 msgstr "Unknown Status Code"

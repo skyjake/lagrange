@@ -406,6 +406,10 @@ void setResponseViewer_UploadWidget(iUploadWidget *d, iDocumentWidget *doc) {
     d->viewer = doc;
 }
 
+void setText_UploadWidget(iUploadWidget *d, const iString *text) {
+    setText_InputWidget(findChild_Widget(as_Widget(d), "upload.text"), text);    
+}
+
 static iWidget *acceptButton_UploadWidget_(iUploadWidget *d) {
     return lastChild_Widget(findChild_Widget(as_Widget(d), "dialogbuttons"));
 }
