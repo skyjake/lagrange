@@ -2129,12 +2129,17 @@ static void showOrHidePinningIndicator_DocumentWidget_(iDocumentWidget *d) {
                          isPinned_DocumentWidget_(d));
 }
 
+static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
+    setSite_Banner(d->banner, siteText_DocumentWidget_(d), siteIcon_GmDocument(d->view.doc));
+}
+
 static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
     setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse);
     updateVisitedLinks_GmDocument(d->view.doc);
     documentRunsInvalidated_DocumentWidget_(d);
     updateWindowTitle_DocumentWidget_(d);
+    updateBanner_DocumentWidget_(d);
     updateVisible_DocumentView_(&d->view);
     d->view.drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     invalidate_DocumentWidget_(d);
@@ -2159,10 +2164,6 @@ static void replaceDocument_DocumentWidget_(iDocumentWidget *d, iGmDocument *new
     iRelease(d->view.doc);
     d->view.doc = ref_Object(newDoc);
     documentWasChanged_DocumentWidget_(d);
-}
-
-static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
-    setSite_Banner(d->banner, siteText_DocumentWidget_(d), siteIcon_GmDocument(d->view.doc));
 }
 
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
