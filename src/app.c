@@ -3474,7 +3474,7 @@ float displayDensity_Android(void) {
 
 #include <jni.h>
 
-JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_SDLActivity_postAppCommand(
+JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_postAppCommand(
         JNIEnv* env, jclass jcls,
         jstring command)
 {
