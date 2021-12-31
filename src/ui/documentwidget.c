@@ -5267,14 +5267,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             destroy_Widget(d->copyMenu);
                             d->copyMenu = NULL;
                         }
-                        d->copyMenu = makeMenu_Widget(w, (iMenuItem[]){
+                        const iMenuItem items[] = {
                             { clipCopy_Icon " ${menu.copy}", 0, 0, "copy" },
 #if defined (iPlatformAppleMobile)
                             { export_Icon " ${menu.share}", 0, 0, "copy share:1" },
 #endif
                             { "---" },
                             { close_Icon " ${menu.select.clear}", 0, 0, "document.select arg:0" },
-                        }, 3);
+                        };
+                        d->copyMenu = makeMenu_Widget(w, items, iElemCount(items));
                         setFlags_Widget(d->copyMenu, noFadeBackground_WidgetFlag, iTrue);
                         openMenu_Widget(d->copyMenu, pos_Click(&d->click));
                         return iTrue;

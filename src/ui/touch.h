@@ -42,5 +42,6 @@ void                    widgetDestroyed_Touch       (iWidget *widget);
 void                    transferAffinity_Touch      (iWidget *src, iWidget *dst);
 
 iInt2   latestPosition_Touch    (void); /* valid during processing of current event */
+iInt2   latestTapPosition_Touch (void);
 iBool   isHovering_Touch        (void); /* stationary touch or a long-press drag ongoing */
 size_t  numFingers_Touch        (void);

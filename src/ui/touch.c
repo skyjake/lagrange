@@ -111,6 +111,7 @@ struct Impl_TouchState {
     double momFrictionPerStep;
     double lastMomTime;
     iInt2 currentTouchPos; /* for emulating SDL_GetMouseState() */
+    iInt2 latestLongPressStartPos;
 };
 
 static iTouchState *touchState_(void) {
@@ -313,6 +314,7 @@ static void update_TouchState_(void *ptr) {
             }
             if (!touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
                 touch->affinity) {
+                touchState_()->latestLongPressStartPos = initF3_I2(touch->pos[0]);
                 dispatchClick_Touch_(touch, SDL_BUTTON_RIGHT);
                 touch->isTapAndHold = iTrue;
                 touch->hasMoved = iFalse;
@@ -836,6 +838,10 @@ void transferAffinity_Touch(iWidget *src, iWidget *dst) {
 
 iInt2 latestPosition_Touch(void) {
     return touchState_()->currentTouchPos;
+}
+
+iInt2 latestTapPosition_Touch(void) {
+    return touchState_()->latestLongPressStartPos;
 }
 
 iBool isHovering_Touch(void) {

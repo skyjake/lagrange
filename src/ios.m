@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "audio/player.h"
 #include "ui/command.h"
 #include "ui/window.h"
+#include "ui/touch.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -541,7 +542,18 @@ static void openActivityView_(NSArray *activityItems) {
         [[UIActivityViewController alloc]
          initWithActivityItems:activityItems
          applicationActivities:nil];
-    [viewController_(get_Window()) presentViewController:actView animated:YES completion:nil];
+    iWindow *win = get_Window();
+    UIViewController *viewCtl = viewController_(win);
+    UIPopoverPresentationController *popover = [actView popoverPresentationController];
+    if (popover) {
+        [popover setSourceView:[viewCtl view]];
+        iInt2 tapPos = latestTapPosition_Touch();
+        tapPos.x /= win->pixelRatio;
+        tapPos.y /= win->pixelRatio;
+        [popover setSourceRect:(CGRect){{tapPos.x - 10, tapPos.y - 10}, {20, 20}}];
+        [popover setCanOverlapSourceViewRect:YES];
+    }
+    [viewCtl presentViewController:actView animated:YES completion:nil];
 }
 
 void openTextActivityView_iOS(const iString *text) {
