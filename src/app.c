@@ -325,6 +325,9 @@ static const char *dataDir_App_(void) {
 }
 
 static const char *downloadDir_App_(void) {
+#if defined (iPlatformAndroidMobile)
+    return concatPath_CStr(SDL_AndroidGetInternalStoragePath(), "Downloads");
+#endif
 #if defined (iPlatformLinux) || defined (iPlatformOther)
     /* Parse user-dirs.dirs using the `xdg-user-dir` tool. */
     iProcess *proc = iClob(new_Process());
@@ -346,9 +349,6 @@ static const char *downloadDir_App_(void) {
         makeDirs_Path(dlDir);
     }
     return cstr_String(dlDir);
-#endif
-#if defined (iPlatformAndroidMobile)
-    return SDL_AndroidGetInternalStoragePath();
 #endif
     return defaultDownloadDir_App_;
 }
