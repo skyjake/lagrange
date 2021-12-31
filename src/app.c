@@ -347,6 +347,9 @@ static const char *downloadDir_App_(void) {
     }
     return cstr_String(dlDir);
 #endif
+#if defined (iPlatformAndroidMobile)
+    return SDL_AndroidGetInternalStoragePath();
+#endif
     return defaultDownloadDir_App_;
 }
 
