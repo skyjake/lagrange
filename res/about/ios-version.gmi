@@ -6,7 +6,7 @@
 ```
 # Release notes
 
-## 1.10 (8)
+## 1.10 (9)
 * Added "Share" actions for downloaded files (via "Download Linked File") and selected text on page.
 * Added "Edit Page with Titan": opens the Upload dialog with the page contents prefilled (previous contents are lost!).
 * Inlining `image/*` responses into the current document regardless of file extension in URL.
