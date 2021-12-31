@@ -2951,6 +2951,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
         { "${cancel}", 0, 0, "bmed.cancel" },
         { uiTextCaution_ColorEscape "${dlg.bookmark.save}", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept" }
     };
+    iWidget *dlg = NULL;
     if (isUsingPanelLayout_Mobile()) {
         const iArray *folderItems = makeBookmarkFolderItems_(iTrue);
         const iMenuItem items[] = {
@@ -2969,56 +2970,58 @@ iWidget *makeBookmarkEditor_Widget(void) {
             { "toggle id:bmed.tag.linksplit text:${bookmark.tag.linksplit}" },
             { NULL }
         };
-        iWidget *dlg = makePanels_Mobile("bmed", items, actions, iElemCount(actions));
+        dlg = makePanels_Mobile("bmed", items, actions, iElemCount(actions));
         setupSheetTransition_Mobile(dlg, iTrue);
-        return dlg;
     }
-    iWidget *dlg = makeSheet_Widget("bmed");
-    setId_Widget(addChildFlags_Widget(
-                     dlg,
-                     iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.bookmark.edit}", NULL)),
-                     frameless_WidgetFlag),
-                 "bmed.heading");
-    iWidget *headings, *values;
-    addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
-    iInputWidget *inputs[4];
-    /* Folder to add to. */ {
-        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.folder}")));
-        const iArray *folderItems = makeBookmarkFolderItems_(iFalse);
-        iLabelWidget *folderButton;
-        setId_Widget(addChildFlags_Widget(values,
-                                          iClob(folderButton = makeMenuButton_LabelWidget(
-                                                    widestLabel_MenuItemArray(folderItems),
-                                                    constData_Array(folderItems),
-                                                    size_Array(folderItems))), alignLeft_WidgetFlag),
-                     "bmed.folder");
-        const uint32_t recentFolderId = recentFolder_Bookmarks(bookmarks_App());
-        updateDropdownSelection_LabelWidget(
-            folderButton, format_CStr(" arg:%u", recentFolderId));
-        setUserData_Object(folderButton, get_Bookmarks(bookmarks_App(), recentFolderId));
+    else {
+        dlg = makeSheet_Widget("bmed");
+        setId_Widget(addChildFlags_Widget(
+                         dlg,
+                         iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.bookmark.edit}", NULL)),
+                         frameless_WidgetFlag),
+                     "bmed.heading");
+        iWidget *headings, *values;
+        addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        iInputWidget *inputs[4];
+        /* Folder to add to. */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.folder}")));
+            const iArray *folderItems = makeBookmarkFolderItems_(iFalse);
+            iLabelWidget *folderButton;
+            setId_Widget(addChildFlags_Widget(values,
+                                              iClob(folderButton = makeMenuButton_LabelWidget(
+                                                        widestLabel_MenuItemArray(folderItems),
+                                                        constData_Array(folderItems),
+                                                        size_Array(folderItems))), alignLeft_WidgetFlag),
+                         "bmed.folder");
+        }
+        addDialogInputWithHeading_(headings, values, "${dlg.bookmark.title}", "bmed.title", iClob(inputs[0] = new_InputWidget(0)));
+        addDialogInputWithHeading_(headings, values, "${dlg.bookmark.url}",   "bmed.url",   iClob(inputs[1] = new_InputWidget(0)));
+        setUrlContent_InputWidget(inputs[1], iTrue);
+        addDialogInputWithHeading_(headings, values, "${dlg.bookmark.tags}",  "bmed.tags",  iClob(inputs[2] = new_InputWidget(0)));
+        addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));
+        /* Buttons for special tags. */
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        iWidget *special = addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        setFlags_Widget(special, collapse_WidgetFlag, iTrue);
+        setId_Widget(special, "bmed.special");
+        makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
+        addDialogToggle_(headings, values, "${bookmark.tag.home}", "bmed.tag.home");
+        addDialogToggle_(headings, values, "${bookmark.tag.remote}", "bmed.tag.remote");
+        addDialogToggle_(headings, values, "${bookmark.tag.linksplit}", "bmed.tag.linksplit");
+        arrange_Widget(dlg);
+        for (int i = 0; i < 3; ++i) {
+            as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
+        }
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+        setupSheetTransition_Mobile(dlg, iTrue);
     }
-    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.title}", "bmed.title", iClob(inputs[0] = new_InputWidget(0)));
-    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.url}",   "bmed.url",   iClob(inputs[1] = new_InputWidget(0)));
-    setUrlContent_InputWidget(inputs[1], iTrue);
-    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.tags}",  "bmed.tags",  iClob(inputs[2] = new_InputWidget(0)));
-    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));
-    /* Buttons for special tags. */
-    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    iWidget *special = addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
-    setFlags_Widget(special, collapse_WidgetFlag, iTrue);
-    setId_Widget(special, "bmed.special");
-    makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
-    addDialogToggle_(headings, values, "${bookmark.tag.home}", "bmed.tag.home");
-    addDialogToggle_(headings, values, "${bookmark.tag.remote}", "bmed.tag.remote");
-    addDialogToggle_(headings, values, "${bookmark.tag.linksplit}", "bmed.tag.linksplit");
-    arrange_Widget(dlg);
-    for (int i = 0; i < 3; ++i) {
-        as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
-    }
-    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
-    addChild_Widget(get_Root()->widget, iClob(dlg));
-    setupSheetTransition_Mobile(dlg, iTrue);
+    /* Use a recently accessed folder as the default. */
+    const uint32_t recentFolderId = recentFolder_Bookmarks(bookmarks_App());
+    iLabelWidget *folderDrop = findChild_Widget(dlg, "bmed.folder");
+    updateDropdownSelection_LabelWidget(folderDrop, format_CStr(" arg:%u", recentFolderId));
+    setUserData_Object(folderDrop, get_Bookmarks(bookmarks_App(), recentFolderId));
     return dlg;
 }
 
