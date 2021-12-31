@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.10 (8)
+* Added "Share" actions for downloaded files (via "Download Linked File") and selected text on page.
+* Added "Edit Page with Titan": opens the Upload dialog with the page contents prefilled (previous contents are lost!).
+* Inlining `image/*` responses into the current document regardless of file extension in URL.
+* Fixed glitch with banner not being visible until page has finished loading.
+* Fixed possible crash when creating a bookmark.
+
 ## 1.10 (7)
 * Link context menu shows used identity and date of last visit in addition to the URL.
 * Removed the "Show URL on hover" setting. URLs are shown in the link context menu.

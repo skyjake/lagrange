@@ -25,8 +25,8 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.10)
-    set (IOS_BUNDLE_VERSION 7)
-    set (IOS_BUILD_DATE "2021-12-26")
+    set (IOS_BUNDLE_VERSION 8)
+    set (IOS_BUILD_DATE "2021-12-31")
 endif ()
 
 # Defaults that depend on environment.
