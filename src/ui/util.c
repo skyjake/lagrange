@@ -1204,6 +1204,9 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         leftExcess   += l;
         rightExcess  += r;
     }
+#elif defined (iPlatformMobile)
+    /* Reserve space for the keyboard. */
+    bottomExcess += get_MainWindow()->keyboardHeight;
 #endif
     if (!allowOverflow) {
         if (bottomExcess > 0 && (!isPortraitPhone || !isSlidePanel)) {
@@ -2495,8 +2498,9 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem colorPanelItems[] = {
             { "title id:heading.prefs.colors" },
-            //{ "heading id:heading.prefs.uitheme" },
+#if !defined (iPlatformAndroidMobile)
             { "toggle id:prefs.ostheme" },
+#endif
             { "radio id:prefs.theme", 0, 0, (const void *) themeItems },
             { "radio id:prefs.accent", 0, 0, (const void *) accentItems },
             { "heading id:heading.prefs.pagecontent" },

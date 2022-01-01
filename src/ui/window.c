@@ -606,6 +606,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #endif
     setCurrent_Text(d->base.text);
     SDL_GetRendererOutputSize(d->base.render, &d->base.size.x, &d->base.size.y);
+    d->maxDrawableHeight = d->base.size.y;
     setupUserInterface_MainWindow(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
     /* Load the border shadow texture. */ {
@@ -1011,8 +1012,19 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.sysframe") && mw) {
                 /* This command is sent on Android to update the keyboard height. */
                 const char *cmd = command_UserEvent(ev);
-                setKeyboardHeight_MainWindow(mw, argLabel_Command(cmd, "fullheight") -
-                                                 argLabel_Command(cmd, "bottom"));
+                /*
+                    0
+                    |
+                 top
+                 |  |
+                 | bottom (top of keyboard)   :
+                 |  |                         : keyboardHeight
+                 maxDrawableHeight            :
+                    |
+                   fullheight
+                 */
+                setKeyboardHeight_MainWindow(mw, argLabel_Command(cmd, "top") +
+                    mw->maxDrawableHeight - argLabel_Command(cmd, "bottom"));
                 return iTrue;
             }
             if (processEvent_Touch(&event)) {
@@ -1245,11 +1257,15 @@ void draw_MainWindow(iMainWindow *d) {
     isDrawing_ = iTrue;
     setCurrent_Text(d->base.text);
     /* Check if root needs resizing. */ {
+        const iBool wasPortrait = isPortrait_App();
         iInt2 renderSize;
         SDL_GetRendererOutputSize(w->render, &renderSize.x, &renderSize.y);
         if (!isEqual_I2(renderSize, w->size)) {
             updateSize_MainWindow_(d, iTrue);
             processEvents_App(postedEventsOnly_AppEventMode);
+            if (isPortrait_App() != wasPortrait) {
+                d->maxDrawableHeight = renderSize.y;
+            }
         }
     }
     const int   winFlags = SDL_GetWindowFlags(d->base.win);

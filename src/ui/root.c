@@ -1534,19 +1534,10 @@ void createUserInterface_Root(iRoot *d) {
                                      arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag |
                                      commandOnClick_WidgetFlag |
                                      drawBackgroundToBottom_WidgetFlag, iTrue);
-#if defined (iPlatformAndroidMobile)
-        /* Android has a system-provided back button (or gesture?), or in the toolbar we can have
-           a different in the place of Back. */
-        setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(newLargeIcon_LabelWidget(close_Icon, "tabs.close")),
-                                          frameless_WidgetFlag),
-                     "toolbar.close");
-#else
         setId_Widget(addChildFlags_Widget(toolBar,
                                           iClob(newLargeIcon_LabelWidget("", "...")),
                                           frameless_WidgetFlag),
                      "toolbar.action1");
-#endif
         setId_Widget(addChildFlags_Widget(toolBar,
                                           iClob(newLargeIcon_LabelWidget("", "...")),
                                           frameless_WidgetFlag),
@@ -1638,6 +1629,12 @@ void createUserInterface_Root(iRoot *d) {
                 { select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
             }, 8);
 #endif
+        if (deviceType_App() == phone_AppDeviceType) {
+            /* Small screen; conserve space by removing the Cancel item. */
+            iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
+            iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
+            iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
+        }
         iWidget *splitMenu = makeMenu_Widget(root, (iMenuItem[]){
             { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
             { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
