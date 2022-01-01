@@ -22,7 +22,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "defs.h"
 #include <the_Foundation/rect.h>
+
+iDeclareType(ToolbarActionSpec)
+    
+struct Impl_ToolbarActionSpec {
+    const char *icon;
+    const char *label;
+    const char *command;
+};
+
+const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction];
 
 iDeclareType(Widget)
 iDeclareType(MenuItem)

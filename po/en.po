@@ -344,6 +344,9 @@ msgstr "Go to Parent"
 msgid "menu.root"
 msgstr "Go to Root"
 
+msgid "menu.home"
+msgstr "Go Home"
+
 msgid "menu.reload"
 msgstr "Reload Page"
 
@@ -1418,6 +1421,15 @@ msgstr "Load image on scroll:"
 
 msgid "prefs.hidetoolbarscroll"
 msgstr "Hide toolbar on scroll:"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Toolbar Actions"
+
+msgid "prefs.toolbaraction1"
+msgstr "Button 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Button 2"
 
 msgid "prefs.ostheme"
 msgstr "Use system theme:"

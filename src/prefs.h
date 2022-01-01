@@ -159,6 +159,7 @@ struct Impl_Prefs {
     enum iColorAccent accent;
     /* Window and User Interface */
     float            uiScale;
+    enum iToolbarAction toolbarActions[2];
     /* Document presentation */
     int              zoomPercent;
     /* Behavior */

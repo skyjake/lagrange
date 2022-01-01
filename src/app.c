@@ -248,6 +248,10 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
     appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
+#if defined (iPlatformMobile)
+    appendFormat_String(str, "toolbar.action.set arg:%d button:0\n", d->prefs.toolbarActions[0]);
+    appendFormat_String(str, "toolbar.action.set arg:%d button:1\n", d->prefs.toolbarActions[1]);
+#endif
     iConstForEach(StringSet, fp, d->prefs.disabledFontPacks) {
         appendFormat_String(str, "fontpack.disable id:%s\n", cstr_String(fp.value));
     }
@@ -1870,6 +1874,12 @@ static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
     }
 }
 
+static void updatePrefsToolBarActionButton_(iWidget *prefs, int buttonIndex, int action) {
+    updateDropdownSelection_LabelWidget(
+        findChild_Widget(prefs, format_CStr("prefs.toolbaraction%d", buttonIndex + 1)),
+        format_CStr(" arg:%d button:%d", action, buttonIndex));    
+}
+
 static void updateScrollSpeedButtons_(iWidget *d, enum iScrollType type, const int value) {
     const char *typeStr = (type == mouse_ScrollType ? "mouse" : "keyboard");
     for (int i = 0; i <= 40; i++) {
@@ -1958,6 +1968,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     else if (equal_Command(cmd, "returnkey.set")) {
         updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.returnkey"),
                                             format_CStr("returnkey.set arg:%d", arg_Command(cmd)));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "toolbar.action.set")) {
+        updatePrefsToolBarActionButton_(d, argLabel_Command(cmd, "button"), arg_Command(cmd));
         return iFalse;
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
@@ -2267,6 +2281,12 @@ iBool handleCommand_App(const char *cmd) {
             postCommand_App("lang.changed");
         }
         return iTrue;
+    }
+    else if (equal_Command(cmd, "toolbar.action.set")) {
+        d->prefs.toolbarActions[iClamp(argLabel_Command(cmd, "button"), 0, 1)] =
+            iClamp(arg_Command(cmd), 0, max_ToolbarAction - 1);
+        postCommand_App("~toolbar.actions.changed");
+        return iTrue;        
     }
     else if (equal_Command(cmd, "translation.languages")) {
         d->prefs.langFrom = argLabel_Command(cmd, "from");
@@ -3006,6 +3026,8 @@ iBool handleCommand_App(const char *cmd) {
         updateDropdownSelection_LabelWidget(
             findChild_Widget(dlg, "prefs.returnkey"),
             format_CStr("returnkey.set arg:%d", d->prefs.returnKey));
+        updatePrefsToolBarActionButton_(dlg, 0, d->prefs.toolbarActions[0]);
+        updatePrefsToolBarActionButton_(dlg, 1, d->prefs.toolbarActions[1]);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(as_Window(d->window))));

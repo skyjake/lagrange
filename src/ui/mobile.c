@@ -37,6 +37,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "ios.h"
 #endif
 
+const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction] = {
+    { backArrow_Icon, "${menu.back}", "navigate.back" },
+    { forwardArrow_Icon, "${menu.forward}", "navigate.forward" },
+    { home_Icon, "${menu.home}", "navigate.home" },
+    { upArrow_Icon, "${menu.parent}", "navigate.parent" },
+    { reload_Icon, "${menu.reload}", "navigate.reload" },
+    { openTab_Icon, "${menu.newtab}", "tabs.new" },
+    { close_Icon, "${menu.closetab}", "tabs.close" },
+    { bookmark_Icon, "${menu.page.bookmark}", "bookmark.add" },
+    { globe_Icon, "${menu.page.translate}", "document.translate" },
+    { upload_Icon, "${menu.page.upload}", "document.upload" },
+    { edit_Icon, "${menu.page.upload.edit}", "document.upload copy:1" },
+    { magnifyingGlass_Icon, "${menu.find}", "focus.set id:find.input" },
+    { gear_Icon, "${menu.settings}", "preferences" },        
+};
+
 iBool isUsingPanelLayout_Mobile(void) {
     return deviceType_App() != desktop_AppDeviceType;
 }

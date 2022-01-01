@@ -2383,6 +2383,15 @@ iWidget *makePreferences_Widget(void) {
           format_CStr("returnkey.set arg:%d", acceptWithPrimaryMod_ReturnKeyBehavior) },
         { NULL }
     };
+    iMenuItem toolbarActionItems[2][max_ToolbarAction + 1];
+    iZap(toolbarActionItems);
+    for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < max_ToolbarAction; i++) {
+            toolbarActionItems[j][i].label = toolbarActions_Mobile[i].label;
+            toolbarActionItems[j][i].command =
+                format_CStr("toolbar.action.set arg:%d button:%d", i, j);
+        }
+    }
     iMenuItem docThemes[2][max_GmDocumentTheme + 1];
     for (int i = 0; i < 2; ++i) {
         const iBool isDark = (i == 0);
@@ -2476,8 +2485,10 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.prefs.interface" },
             { "dropdown device:0 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
             { "padding device:1" },
-            //{ "toggle id:prefs.hoverlink" },
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
+            { "heading device:2 id:heading.prefs.toolbaractions" },
+            { "dropdown device:2 id:prefs.toolbaraction1", 0, 0, (const void *) toolbarActionItems[0] },
+            { "dropdown device:2 id:prefs.toolbaraction2", 0, 0, (const void *) toolbarActionItems[1] },
             { "heading id:heading.prefs.sizing" },
             { "input id:prefs.uiscale maxlen:8" },
             { NULL }

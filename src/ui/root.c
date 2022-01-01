@@ -592,14 +592,21 @@ static void updateNavBarIdentity_(iWidget *navBar) {
 
 static void updateNavDirButtons_(iWidget *navBar) {
     const iHistory *history = history_DocumentWidget(document_App());
-    const iBool atOldest = atOldest_History(history);
-    const iBool atNewest = atNewest_History(history);
+    iBool atOldest = atOldest_History(history);
+    iBool atNewest = atNewest_History(history);
     setFlags_Widget(findChild_Widget(navBar, "navbar.back"), disabled_WidgetFlag, atOldest);
     setFlags_Widget(findChild_Widget(navBar, "navbar.forward"), disabled_WidgetFlag, atNewest);
     iWidget *toolBar = findWidget_App("toolbar");
     if (toolBar) {
-        iLabelWidget *back = findChild_Widget(toolBar, "toolbar.back");
-        iLabelWidget *fwd  = findChild_Widget(toolBar, "toolbar.forward");
+        /* Reset the state. */
+        for (int i = 0; i < 2; i++) {
+            const char *id = (i == 0 ? "toolbar.action1" : "toolbar.action2");            
+            setFlags_Widget(findChild_Widget(toolBar, id), disabled_WidgetFlag, iFalse);
+            setOutline_LabelWidget(findChild_Widget(toolBar, id), iFalse);
+        }
+        /* Disable certain actions. */
+        iLabelWidget *back = findMenuItem_Widget(toolBar, "navigate.back");
+        iLabelWidget *fwd  = findMenuItem_Widget(toolBar, "navigate.forward");
         setFlags_Widget(as_Widget(back), disabled_WidgetFlag, atOldest);
         setOutline_LabelWidget(back, atOldest);
         setFlags_Widget(as_Widget(fwd), disabled_WidgetFlag, atNewest);
@@ -1062,14 +1069,23 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
 }
 
 #if defined (iPlatformMobile)
-static void dismissSidebar_(iWidget *sidebar, const char *toolButtonId) {
-    if (isVisible_Widget(sidebar)) {
-        postCommandf_App("%s.toggle", cstr_String(id_Widget(sidebar)));
-//        if (toolButtonId) {
-            //            setFlags_Widget(findWidget_App(toolButtonId), noBackground_WidgetFlag, iTrue);
-//        }
-        setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
+
+static void updateToolBarActions_(iWidget *toolBar) {
+    const iPrefs *prefs = prefs_App();
+    for (int i = 0; i < 2; i++) {
+        int action = prefs->toolbarActions[i]
+                         ? prefs->toolbarActions[i]
+                         : (i == 0 ? back_ToolbarAction : forward_ToolbarAction);
+        iLabelWidget *button =
+            findChild_Widget(toolBar, i == 0 ? "toolbar.action1" : "toolbar.action2");
+        if (button) {
+            setFlags_Widget(as_Widget(button), disabled_WidgetFlag, iFalse);
+            setOutline_LabelWidget(button, iFalse);
+            updateTextCStr_LabelWidget(button, toolbarActions_Mobile[action].icon);
+            setCommand_LabelWidget(button, collectNewCStr_String(toolbarActions_Mobile[action].command));
+        }
     }
+    refresh_Widget(toolBar);
 }
 
 static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
@@ -1081,13 +1097,6 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "toolbar.showview")) {
-        /* TODO: Clean this up. */
-//        iWidget *sidebar  = findWidget_App("sidebar");
-//        iWidget *sidebar2 = findWidget_App("sidebar2");
-//        dismissSidebar_(sidebar2, "toolbar.ident");
-//        const iBool isVisible = isVisible_Widget(sidebar);
-        /* If a sidebar hasn't been shown yet, it's height is zero. */
-//        const int viewHeight = size_Root(get_Root()).y;
         if (arg_Command(cmd) >= 0) {
             postCommandf_App("sidebar.mode arg:%d show:1", arg_Command(cmd));
         }
@@ -1102,29 +1111,6 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
             postCommandf_App("sidebar.toggle");
         }
         postCommand_App("preferences idents:1");
-#if 0
-        /* TODO: Clean this up. */
-        iWidget *sidebar2 = findWidget_App("sidebar2");
-        //dismissSidebar_(sidebar, "toolbar.view");
-        if (isVisible_Widget(sidebar)) {
-            postCommandf_App("sidebar.toggle");
-        }
-        const iBool isVisible = isVisible_Widget(sidebar2);
-        //        setFlags_Widget(findChild_Widget(toolBar, "toolbar.ident"), noBackground_WidgetFlag,
-        //                        isVisible);
-        /* If a sidebar hasn't been shown yet, it's height is zero. */
-        const int viewHeight = size_Root(get_Root()).y;
-        if (isVisible) {
-            dismissSidebar_(sidebar2, NULL);
-        }
-        else {
-            postCommand_App("sidebar2.mode arg:3 show:1");
-            int offset = height_Widget(sidebar2);
-            if (offset == 0) offset = size_Root(get_Root()).y;
-            setVisualOffset_Widget(sidebar2, offset, 0, 0);
-            setVisualOffset_Widget(sidebar2, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
-        }
-#endif
         return iTrue;
     }
     else if (equal_Command(cmd, "sidebar.mode.changed")) {
@@ -1132,8 +1118,13 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         updateTextCStr_LabelWidget(viewTool, icon_SidebarMode(arg_Command(cmd)));
         return iFalse;
     }
+    else if (equal_Command(cmd, "toolbar.actions.changed")) {
+        updateToolBarActions_(toolBar);
+        return iFalse;        
+    }
     return iFalse;
 }
+
 #endif /* defined (iPlatformMobile) */
 
 static iLabelWidget *newLargeIcon_LabelWidget(const char *text, const char *cmd) {
@@ -1552,14 +1543,14 @@ void createUserInterface_Root(iRoot *d) {
                      "toolbar.close");
 #else
         setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(newLargeIcon_LabelWidget(backArrow_Icon, "navigate.back")),
+                                          iClob(newLargeIcon_LabelWidget("", "...")),
                                           frameless_WidgetFlag),
-                     "toolbar.back");
+                     "toolbar.action1");
 #endif
         setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(newLargeIcon_LabelWidget(forwardArrow_Icon, "navigate.forward")),
+                                          iClob(newLargeIcon_LabelWidget("", "...")),
                                           frameless_WidgetFlag),
-                     "toolbar.forward");
+                     "toolbar.action2");
         iWidget *identButton;
         setId_Widget(identButton = addChildFlags_Widget(
                          toolBar,
@@ -1589,10 +1580,10 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(as_Widget(menuButton), "toolbar.navmenu");
         addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);
         iForEach(ObjectList, i, children_Widget(toolBar)) {
-            iLabelWidget *btn = i.object;
             setFlags_Widget(i.object, noBackground_WidgetFlag, iTrue);
         }
         updateToolbarColors_Root(d);
+        updateToolBarActions_(toolBar);
         const iMenuItem items[] = {
             { book_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
             { star_Icon " ${sidebar.feeds}", 0, 0, "toolbar.showview arg:1" },

@@ -44,6 +44,8 @@ void init_Prefs(iPrefs *d) {
     d->uiAnimations      = iTrue;
     d->uiScale           = 1.0f; /* default set elsewhere */
     d->zoomPercent       = 100;
+    d->toolbarActions[0] = back_ToolbarAction;
+    d->toolbarActions[1] = forward_ToolbarAction;
     d->sideIcon          = iTrue;
     d->hideToolbarOnScroll = iTrue;
     d->blinkingCursor    = iTrue;

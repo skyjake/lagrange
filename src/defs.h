@@ -66,6 +66,23 @@ enum iReturnKeyFlag {
     accept_ReturnKeyFlag        = 4, /* shift */
 };
 
+enum iToolbarAction {
+    back_ToolbarAction        = 0,
+    forward_ToolbarAction     = 1,
+    home_ToolbarAction        = 2,
+    parent_ToolbarAction      = 3,
+    reload_ToolbarAction      = 4,
+    newTab_ToolbarAction      = 5,
+    closeTab_ToolbarAction    = 6,
+    addBookmark_ToolbarAction = 7,
+    translate_ToolbarAction   = 8,
+    upload_ToolbarAction      = 9,
+    editPage_ToolbarAction    = 10,
+    findText_ToolbarAction    = 11,
+    settings_ToolbarAction    = 12,
+    max_ToolbarAction
+};
+
 /* Return key behavior is not handled via normal bindings because only certain combinations
    are valid. */
 enum iReturnKeyBehavior {
