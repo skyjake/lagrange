@@ -2572,6 +2572,10 @@ iWidget *makePreferences_Widget(void) {
             appendFormat_String(aboutText, " (" LAGRANGE_IOS_VERSION ") %s" LAGRANGE_IOS_BUILD_DATE,
                                 escape_Color(uiTextDim_ColorId));
 #endif
+#if defined (iPlatformAndroidMobile)
+            appendFormat_String(aboutText, " (" LAGRANGE_ANDROID_VERSION ") %s" LAGRANGE_ANDROID_BUILD_DATE,
+                                escape_Color(uiTextDim_ColorId));
+#endif
         }
         const iMenuItem aboutPanelItems[] = {
             { format_CStr("heading text:%s", cstr_String(aboutText)) },

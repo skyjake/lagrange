@@ -28,6 +28,11 @@ if (IOS)
     set (IOS_BUNDLE_VERSION 9)
     set (IOS_BUILD_DATE "2022-01-01")
 endif ()
+if (ANDROID)
+    set (PROJECT_VERSION 1.10)
+    set (ANDROID_BUILD_VERSION a3)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-01-01")
+endif ()
 
 # Defaults that depend on environment.
 set (DEFAULT_RESIZE_DRAW ON)
@@ -443,6 +448,12 @@ if (APPLE)
             XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${XCODE_DEVELOPMENT_TEAM}
         )
     endif ()
+endif ()
+if (ANDROID)
+    target_compile_definitions (app PUBLIC
+        LAGRANGE_ANDROID_VERSION="${ANDROID_BUILD_VERSION}"
+        LAGRANGE_ANDROID_BUILD_DATE="${ANDROID_BUILD_DATE}"
+    )
 endif ()
 if (MSYS)
     target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
