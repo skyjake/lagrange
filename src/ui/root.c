@@ -650,10 +650,10 @@ static void checkLoadAnimation_Root_(iRoot *d) {
 
 void updatePadding_Root(iRoot *d) {
     if (d == NULL) return;
-    iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
-    float bottom = 0.0f;
 #if defined (iPlatformAppleMobile)
+    iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
     float left, top, right;
+    float bottom = 0.0f;
     safeAreaInsets_iOS(&left, &top, &right, &bottom);
     /* Respect the safe area insets. */ {
         setPadding_Widget(findChild_Widget(d->widget, "navdiv"), left, top, right, 0);
@@ -662,15 +662,6 @@ void updatePadding_Root(iRoot *d) {
         }
     }
 #endif
-//    if (toolBar) {
-        /* TODO: get this from toolBar height, but it's buggy for some reason */
-//        const int sidebarBottomPad = isPortrait_App() ? 11 * gap_UI + bottom : 0;
-//        setPadding_Widget(findChild_Widget(d->widget, "sidebar"), 0, 0, 0, sidebarBottomPad);
-        //setPadding_Widget(findChild_Widget(d->widget, "sidebar2"), 0, 0, 0, sidebarBottomPad);
-        /* TODO: There seems to be unrelated layout glitch in the sidebar where its children
-           are not arranged correctly until it's hidden and reshown. */
-//    }
-    /* Note that `handleNavBarCommands_` also adjusts padding and spacing. */
 }
 
 void updateToolbarColors_Root(iRoot *d) {
@@ -773,9 +764,8 @@ static void updateNavBarSize_(iWidget *navBar) {
     const iBool isPhone = deviceType_App() == phone_AppDeviceType;
     const iBool isNarrow = !isPhone && isNarrow_Root(navBar->root);
     /* Adjust navbar padding. */ {
-        int hPad = isPhone && isPortrait_App() ? 0 : (isPhone || isNarrow) ? gap_UI / 2
-                                                                             : gap_UI * 3 / 2;
-        int vPad = gap_UI * 3 / 2;
+        int hPad = isPortraitPhone_App() ? 0 : isPhone || isNarrow ? gap_UI / 2 : (gap_UI * 3 / 2);
+        int vPad   = gap_UI * 3 / 2;
         int topPad = !findWidget_Root("winbar") ? gap_UI / 2 : 0;
         setPadding_Widget(navBar, hPad, vPad / 3 + topPad, hPad, vPad / 2);
     }
@@ -1162,7 +1152,7 @@ void updateMetrics_Root(iRoot *d) {
     iWidget      *urlButtons = findChild_Widget(navBar, "url.buttons");
     iLabelWidget *idName     = findChild_Widget(d->widget, "toolbar.name");
     setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
-    navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
+//    navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
     setFixedSize_Widget(embedPad, init_I2(width_Widget(urlButtons) + gap_UI / 2, 1));
     rightEmbed->rect.pos.y = gap_UI;
     updatePadding_Root(d);
@@ -1403,13 +1393,15 @@ void createUserInterface_Root(iRoot *d) {
                 setFont_LabelWidget(pageMenuButton, uiContentBold_FontId);
                 setAlignVisually_LabelWidget(pageMenuButton, iTrue);
                 addChildFlags_Widget(urlButtons, iClob(pageMenuButton),
-                                     embedFlags | tight_WidgetFlag | collapse_WidgetFlag);
+                                     embedFlags | tight_WidgetFlag | collapse_WidgetFlag |
+                                     resizeToParentHeight_WidgetFlag);
                 updateSize_LabelWidget(pageMenuButton);
             }
             /* Reload button. */ {
                 iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
                 setId_Widget(as_Widget(reload), "reload");
-                addChildFlags_Widget(urlButtons, iClob(reload), embedFlags | collapse_WidgetFlag);
+                addChildFlags_Widget(urlButtons, iClob(reload), embedFlags | collapse_WidgetFlag |
+                                     resizeToParentHeight_WidgetFlag);
                 updateSize_LabelWidget(reload);
             }
             addChildFlags_Widget(as_Widget(url), iClob(urlButtons), moveToParentRightEdge_WidgetFlag);

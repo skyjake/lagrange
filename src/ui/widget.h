@@ -237,6 +237,24 @@ iLocalDef int height_Widget(const iAnyObject *d) {
     }
     return 0;
 }
+iLocalDef int leftPad_Widget(const iWidget *d) {
+    return d->padding[0];
+}
+iLocalDef int topPad_Widget(const iWidget *d) {
+    return d->padding[1];
+}
+iLocalDef int rightPad_Widget(const iWidget *d) {
+    return d->padding[2];
+}
+iLocalDef int bottomPad_Widget(const iWidget *d) {
+    return d->padding[3];
+}
+iLocalDef iInt2 tlPad_Widget(const iWidget *d) {
+    return init_I2(leftPad_Widget(d), topPad_Widget(d));
+}
+iLocalDef iInt2 brPad_Widget(const iWidget *d) {
+    return init_I2(rightPad_Widget(d), bottomPad_Widget(d));
+}
 iLocalDef iObjectList *children_Widget(iAnyObject *d) {
     if (d == NULL) return NULL;
     iAssert(isInstance_Object(d, &Class_Widget));

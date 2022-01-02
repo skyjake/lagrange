@@ -59,6 +59,9 @@ static const int    unlimitedWidth_InputWidget_  = 1000000; /* TODO: WrapText di
 static const iChar  sensitiveChar_ = 0x25cf;   /* black circle */
 static const char * sensitive_     = "\u25cf";
 
+#define extraPaddingHeight_     ((isPortraitPhone_App() ? 3.0f : 1.25f) * gap_UI) /* phone: proper tap target */
+#define minWidth_InputWidget_   (3 * gap_UI)
+
 static void enableEditorKeysInMenus_(iBool enable) {
 #if defined (iPlatformAppleDesktop)
     enableMenuItemsByKey_MacOS(SDLK_LEFT,  KMOD_PRIMARY, enable);
@@ -228,7 +231,7 @@ struct Impl_InputWidget {
     size_t          maxLen;  /* characters */
     iString         srcHint;
     iString         hint;
-    int             leftPadding;
+    int             leftPadding; /* additional padding between frame and content */
     int             rightPadding;
     int             minWrapLines, maxWrapLines; /* min/max number of visible lines allowed */
     iRangei         visWrapLines; /* which wrap lines are current visible */
@@ -359,8 +362,6 @@ static const iInputLine *line_InputWidget_(const iInputWidget *d, size_t index) 
 
 #endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
 
-#define extraPaddingHeight_ (1.25f * gap_UI)
-
 static iRect contentBounds_InputWidget_(const iInputWidget *d) {
     const iWidget *w      = constAs_Widget(d);
     iRect          bounds = adjusted_Rect(bounds_Widget(w),
@@ -373,8 +374,6 @@ static iRect contentBounds_InputWidget_(const iInputWidget *d) {
     }
     return bounds;
 }
-
-#define minWidth_InputWidget_   (3 * gap_UI)
 
 static iWrapText wrap_InputWidget_(const iInputWidget *d, int y) {
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
