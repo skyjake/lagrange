@@ -59,7 +59,6 @@ static const int    unlimitedWidth_InputWidget_  = 1000000; /* TODO: WrapText di
 static const iChar  sensitiveChar_ = 0x25cf;   /* black circle */
 static const char * sensitive_     = "\u25cf";
 
-#define extraPaddingHeight_     ((isPortraitPhone_App() ? 3.0f : 1.25f) * gap_UI) /* phone: proper tap target */
 #define minWidth_InputWidget_   (3 * gap_UI)
 
 static void enableEditorKeysInMenus_(iBool enable) {
@@ -266,6 +265,15 @@ struct Impl_InputWidget {
 
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
 
+static int extraPaddingHeight_InputWidget_(const iInputWidget *d) {
+    if (isPortraitPhone_App() && !cmp_String(id_Widget(&d->widget), "url")) {
+        /* Special case: the URL input field gets taller in portrait phone mode to make
+           the tap target more generous. */
+        return 2.5f * gap_UI;
+    }
+    return 1.25f * gap_UI;
+}
+
 static void restoreBackup_InputWidget_(iInputWidget *d) {
     if (!d->backupPath) return;
     iFile *f = new_File(d->backupPath);
@@ -370,7 +378,15 @@ static iRect contentBounds_InputWidget_(const iInputWidget *d) {
     shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
     bounds.pos.y += padding_().y / 2;
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
-        bounds.pos.y += extraPaddingHeight_ / 2;
+        if (d->sysCtrl && !cmp_String(id_Widget(w), "url")) {
+            /* TODO: This is super hacky: the native UI control would be offset incorrectly.
+               These paddings/offsets are getting a bit ridiculous, should rethink the whole thing.
+               Use the Widget paddings! */
+            bounds.pos.y += 1.25f * gap_UI / 2;
+        }
+        else {
+            bounds.pos.y += extraPaddingHeight_InputWidget_(d) / 2;
+        }
     }
     return bounds;
 }
@@ -627,7 +643,7 @@ static void updateSizeForFixedLength_InputWidget_(iInputWidget *d) {
         /* Set a fixed size based on maximum possible width of the text. */
         iBlock *content = new_Block(d->maxLen);
         fill_Block(content, 'M');
-        int extraHeight = (flags_Widget(as_Widget(d)) & extraPadding_WidgetFlag ? extraPaddingHeight_ : 0);
+        int extraHeight = (flags_Widget(as_Widget(d)) & extraPadding_WidgetFlag ? extraPaddingHeight_InputWidget_(d) : 0);
         setFixedSize_Widget(
             as_Widget(d),
             add_I2(measure_Text(d->font, cstr_Block(content)).bounds.size,
@@ -774,7 +790,7 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     const int oldHeight = height_Rect(w->rect);
     w->rect.size.y = contentHeight_InputWidget_(d) + 3.0f * padding_().y; /* TODO: Why 3x? */
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
-        w->rect.size.y += extraPaddingHeight_;
+        w->rect.size.y += extraPaddingHeight_InputWidget_(d);
     }
     invalidateBuffered_InputWidget_(d);
     if (height_Rect(w->rect) != oldHeight) {
@@ -1679,7 +1695,7 @@ static iRect bounds_InputWidget_(const iInputWidget *d) {
     /* There may be more visible lines than fits in the widget bounds. */
     bounds.size.y = contentHeight_InputWidget_(d) + 3 * padding_().y;
     if (w->flags & extraPadding_WidgetFlag) {
-        bounds.size.y += extraPaddingHeight_;
+        bounds.size.y += extraPaddingHeight_InputWidget_(d);
     }
     return bounds;
 }
