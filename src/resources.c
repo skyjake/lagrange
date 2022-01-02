@@ -70,6 +70,9 @@ static struct {
 #if defined (iPlatformAppleMobile)
     { &blobHelp_Resources, "about/ios-help.gmi" },
     { &blobVersion_Resources, "about/ios-version.gmi" },
+#elif defined (iPlatformAndroidMobile)
+    { &blobHelp_Resources, "about/android-help.gmi" },
+    { &blobVersion_Resources, "about/android-version.gmi" },
 #else
     { &blobHelp_Resources, "about/help.gmi" },
     { &blobVersion_Resources, "about/version.gmi" },

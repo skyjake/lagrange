@@ -109,6 +109,11 @@ if (IOS)
         res/about/ios-help.gmi
         res/about/ios-version.gmi
     )
+elseif (ANDROID)
+    list (APPEND RESOURCES
+        res/about/android-help.gmi
+        res/about/android-version.gmi
+    )
 else ()
     list (APPEND RESOURCES
         res/about/help.gmi
