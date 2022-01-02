@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
                           "ECDHE-RSA-AES128-GCM-SHA256:"
                           "DHE-RSA-AES256-GCM-SHA384");
     SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
+    SDL_EnableScreenSaver();
     SDL_SetHint(SDL_HINT_MAC_BACKGROUND_APP, "1");
     SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
 #if SDL_VERSION_ATLEAST(2, 0, 8)
