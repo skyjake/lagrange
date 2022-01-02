@@ -3763,6 +3763,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "theme.changed")) {
+        invalidatePalette_GmDocument(d->view.doc);
         invalidateTheme_History(d->mod.history); /* forget cached color palettes */
         if (document_App() == d) {
             updateTheme_DocumentWidget_(d);

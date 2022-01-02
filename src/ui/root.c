@@ -549,6 +549,11 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         root->root->pendingArrange = iFalse;
         return iTrue;
     }
+    else if (equal_Command(cmd, "theme.changed")) {
+        /* The phone toolbar is draw-buffered so it needs refreshing. */
+        refresh_Widget(findWidget_App("toolbar"));
+        return iFalse;
+    }
     else if (handleCommand_App(cmd)) {
         return iTrue;
     }
