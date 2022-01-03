@@ -1023,8 +1023,12 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     |
                    fullheight
                  */
-                setKeyboardHeight_MainWindow(mw, argLabel_Command(cmd, "top") +
-                    mw->maxDrawableHeight - argLabel_Command(cmd, "bottom"));
+                const int top    = argLabel_Command(cmd, "top");
+                const int bottom = argLabel_Command(cmd, "bottom");
+                if (!SDL_IsScreenKeyboardShown(mw->base.win)) {
+                    mw->maxDrawableHeight = bottom - top;
+                }
+                setKeyboardHeight_MainWindow(mw, top + mw->maxDrawableHeight - bottom);
                 return iTrue;
             }
             if (processEvent_Touch(&event)) {
@@ -1475,6 +1479,7 @@ iBool isOpenGLRenderer_Window(void) {
 }
 
 void setKeyboardHeight_MainWindow(iMainWindow *d, int height) {
+    height = iMax(0, height);
     if (d->keyboardHeight != height) {
         d->keyboardHeight = height;
         postCommandf_App("keyboard.changed arg:%d", height);
