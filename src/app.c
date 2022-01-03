@@ -404,6 +404,12 @@ static void loadPrefs_App_(iApp *d) {
                 insert_StringSet(d->prefs.disabledFontPacks,
                                  collect_String(suffix_Command(cmd, "id")));
             }
+#if defined (iPlatformAndroidMobile)
+            else if (equal_Command(cmd, "returnkey.set")) {
+                /* Hardcoded to avoid accidental presses of the virtual Return key. */
+                d->prefs.returnKey = default_ReturnKeyBehavior;
+            }
+#endif
 #if !defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
             else if (equal_Command(cmd, "downloads")) {
                 continue; /* can't change downloads directory */

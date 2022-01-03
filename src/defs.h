@@ -86,7 +86,7 @@ enum iToolbarAction {
 /* Return key behavior is not handled via normal bindings because only certain combinations
    are valid. */
 enum iReturnKeyBehavior {
-    default_ReturnKeyBehavior =
+    acceptWithoutMod_ReturnKeyBehavior =
         shiftReturn_ReturnKeyFlag | (return_ReturnKeyFlag << accept_ReturnKeyFlag),
     acceptWithShift_ReturnKeyBehavior =
         return_ReturnKeyFlag | (shiftReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
@@ -95,6 +95,11 @@ enum iReturnKeyBehavior {
         return_ReturnKeyFlag | (guiReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
 #else
         return_ReturnKeyFlag | (controlReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
+#endif
+#if defined (iPlatformAndroidMobile)
+    default_ReturnKeyBehavior = acceptWithShift_ReturnKeyBehavior,
+#else
+    default_ReturnKeyBehavior = acceptWithoutMod_ReturnKeyBehavior,
 #endif
 };
 
