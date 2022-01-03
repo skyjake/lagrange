@@ -15,7 +15,7 @@
 * Fixed system Auto-Rotate setting not locking the screen orientation.
 
 ## 1.10 (Alpha 2)
-* Upgraded SDL to 2.0.8, which fixed a lot of stability issues.
+* Upgraded SDL to 2.0.18, which fixed a lot of stability issues.
 * Added native binaries for arm64, x86, and x86_64.
 * Enabled bidirectional text and complex scripts (with HarfBuzz and FriBidi).
 * Enabled switching to landscape orientation.
