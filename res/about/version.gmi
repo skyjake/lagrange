@@ -8,7 +8,9 @@
 
 ## 1.9.4
 * Fixed crash when a link is missing both URL and label (just a `=>`).
+* Fixed handling of foreground color escapes in the simple text renderer.
 * Updated UI translations.
+* Upgraded SDL to 2.0.18.
 
 ## 1.9.3
 * Added UI language for Dutch.
