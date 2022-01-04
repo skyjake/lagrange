@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.9.4" date="2022-01-04">
+            <description>
+                <p>Changes in v1.9.4:</p>
+                <ul>
+                    <li>Fixed crash when a link is missing both URL and label (just a `=>`).</li>
+                    <li>Fixed handling of foreground color escapes in the simple text renderer.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.9.4</url>
+        </release>
         <release version="1.9.3" date="2021-12-24">
             <description>
                 <p>Changes in v1.9.3:</p>
