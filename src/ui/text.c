@@ -453,6 +453,10 @@ void setAnsiFlags_Text(int ansiFlags) {
     activeText_->ansiFlags = ansiFlags;
 }
 
+int ansiFlags_Text(void) {
+    return activeText_->ansiFlags;
+}
+
 void setDocumentFontSize_Text(iText *d, float fontSizeFactor) {
     fontSizeFactor *= contentScale_Text_;
     iAssert(fontSizeFactor > 0);
@@ -834,7 +838,6 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         .font    = d->font,
     };
     const int     *logToSource = constData_Array(&d->logicalToSourceOffset);
-    const int *    logToVis    = constData_Array(&d->logicalToVisual);
     const iChar *  logicalText = constData_Array(&d->logical);
     iBool          isRTL       = d->isBaseRTL;
     int            numNonSpace = 0;
@@ -874,16 +877,33 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
                     /* Note: This styling is hardcoded to match `typesetOneLine_RunTypesetter_()`. */
                     if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "1")) {
                         run.attrib.bold = iTrue;
+                        run.attrib.regular = iFalse;
+                        run.attrib.light = iFalse;
                         if (d->baseFgColorId == tmParagraph_ColorId) {
                             setFgColor_AttributedRun_(&run, tmFirstParagraph_ColorId);
                         }
                         attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
                                                                    bold_FontStyle));
                     }
+                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "2")) {
+                        run.attrib.light = iTrue;
+                        run.attrib.regular = iFalse;
+                        run.attrib.bold = iFalse;
+                        attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
+                                                                   light_FontStyle));
+                    }
                     else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "3")) {
                         run.attrib.italic = iTrue;
                         attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
                                                                    italic_FontStyle));
+                    }
+                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "10")) {
+                        run.attrib.regular = iTrue;
+                        run.attrib.bold = iFalse;
+                        run.attrib.light = iFalse;
+                        run.attrib.italic = iFalse;
+                        attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
+                                                                   regular_FontStyle));
                     }
                     else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "11")) {
                         run.attrib.monospace = iTrue;
@@ -892,7 +912,9 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
                                                                     monospace_FontId));
                     }
                     else if (equal_Rangecc(sequence, "0")) {
+                        run.attrib.regular = iFalse;
                         run.attrib.bold = iFalse;
+                        run.attrib.light = iFalse;
                         run.attrib.italic = iFalse;
                         run.attrib.monospace = iFalse;
                         attribFont = run.font = d->baseFont;
@@ -973,6 +995,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         pushBack_Array(&d->runs, &run);
     }
 #if 0
+    const int *logToVis = constData_Array(&d->logicalToVisual);
     printf("[AttributedText] %zu runs:\n", size_Array(&d->runs));
     iConstForEach(Array, i, &d->runs) {
         const iAttributedRun *run = i.value;

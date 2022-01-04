@@ -556,16 +556,22 @@ static const int maxLedeLines_ = 10;
 
 static void applyAttributes_RunTypesetter_(iRunTypesetter *d, iTextAttrib attrib) {
     /* WARNING: This is duplicated in run_Font_(). Make sure they behave identically. */
-    if (attrib.bold) {
-        d->run.font = fontWithStyle_Text(d->baseFont, bold_FontStyle);
-        d->run.color = tmFirstParagraph_ColorId;
+    if (attrib.monospace) {
+        d->run.font = fontWithFamily_Text(d->baseFont, monospace_FontId);
+        d->run.color = tmPreformatted_ColorId;
     }
     else if (attrib.italic) {
         d->run.font = fontWithStyle_Text(d->baseFont, italic_FontStyle);
     }
-    else if (attrib.monospace) {
-        d->run.font = fontWithFamily_Text(d->baseFont, monospace_FontId);
-        d->run.color = tmPreformatted_ColorId;
+    else if (attrib.regular) {
+        d->run.font = fontWithStyle_Text(d->baseFont, regular_FontStyle);
+    }
+    else if (attrib.bold) {
+        d->run.font = fontWithStyle_Text(d->baseFont, bold_FontStyle);
+        d->run.color = tmFirstParagraph_ColorId;
+    }
+    else if (attrib.light) {
+        d->run.font = fontWithStyle_Text(d->baseFont, light_FontStyle);
     }
     else {
         d->run.font  = d->baseFont;

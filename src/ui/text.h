@@ -161,6 +161,7 @@ enum iAnsiFlag {
 void    setOpacity_Text         (float opacity);
 void    setBaseAttributes_Text  (int fontId, int fgColorId); /* current "normal" text attributes */
 void    setAnsiFlags_Text       (int ansiFlags);
+int     ansiFlags_Text          (void);
 
 void    cache_Text              (int fontId, iRangecc text); /* pre-render glyphs */
 
@@ -192,7 +193,9 @@ struct Impl_TextAttrib {
     int16_t fgColorId;
     int16_t bgColorId;
     struct {
+        uint16_t regular   : 1;
         uint16_t bold      : 1;
+        uint16_t light     : 1;
         uint16_t italic    : 1;
         uint16_t monospace : 1;
         uint16_t isBaseRTL : 1;
