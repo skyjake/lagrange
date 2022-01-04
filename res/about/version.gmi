@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.9.5
+* Fixed misshapen button borders due to an SDL line drawing glitch.
+
 ## 1.9.4
 * Fixed crash when a link is missing both URL and label (just a `=>`).
 * Fixed handling of foreground color escapes in the simple text renderer.
