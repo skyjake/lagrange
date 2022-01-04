@@ -1274,8 +1274,8 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
               mix_Color(get_Color(tmQuoteIcon_ColorId), get_Color(tmBackground_ColorId), 0.4f));
     set_Color(tmBackgroundOpenLink_ColorId,
               mix_Color(get_Color(tmLinkText_ColorId), get_Color(tmBackground_ColorId), 0.90f));
-    set_Color(tmFrameOpenLink_ColorId,
-              mix_Color(get_Color(tmLinkText_ColorId), get_Color(tmBackground_ColorId), 0.75f));
+    set_Color(tmLinkFeedEntryDate_ColorId,
+              mix_Color(get_Color(tmLinkText_ColorId), get_Color(tmBackground_ColorId), 0.25f));
     if (theme == colorfulDark_GmDocumentTheme) {
         /* Ensure paragraph text and link text aren't too similarly colored. */
         if (delta_Color(get_Color(tmLinkText_ColorId), get_Color(tmParagraph_ColorId)) < 100) {
@@ -1803,6 +1803,7 @@ static void markLinkRunsVisited_GmDocument_(iGmDocument *d, const iIntSet *linkI
     iForEach(Array, r, &d->layout) {
         iGmRun *run = r.value;
         if (run->linkId && !run->mediaId && contains_IntSet(linkIds, run->linkId)) {
+            /* TODO: Does this even work? The font IDs may be different. */
             if (run->font == bold_FontId) {
                 run->font = paragraph_FontId;
             }

@@ -1274,7 +1274,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             if (isMobileHover && !isPartOfHover) {
                 bg = tmBackground_ColorId; /* hover ended and was invalidated */
             }
-            const int frame    = tmFrameOpenLink_ColorId;
+//            const int frame    = tmFrameOpenLink_ColorId;
             const int pad      = gap_Text;
             iRect     wideRect = { init_I2(origin.x - pad, visPos.y),
                                init_I2(d->docBounds.size.x + 2 * pad,
@@ -1364,13 +1364,46 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             runBaseAttributes_GmDocument(doc, run, &f, &c);
             setBaseAttributes_Text(f, c);
         }
+        /* Fancy date in Gemini feed links. */ {
+            if (run->linkId && run->flags & startOfLine_GmRunFlag && ~run->flags & decoration_GmRunFlag) {
+                static iRegExp *datePattern_;
+                if (!datePattern_) {
+                    datePattern_ = new_RegExp("^[12][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]\\s", 0);
+                }
+                iRegExpMatch m;
+                init_RegExpMatch(&m);
+                if (matchRange_RegExp(datePattern_, run->text, &m)) {
+                    /* The date uses regular weight and a dimmed color. */
+                    iString styled;
+                    initRange_String(&styled, run->text);
+                    insertData_Block(&styled.chars, 10, "\x1b[0m", 4); /* restore */
+                    iBlock buf;
+                    init_Block(&buf, 0);
+                    appendCStr_Block(&buf, "\x1b[10m"); /* regular font weight */
+                    appendCStr_Block(&buf, escape_Color(isHover ? fg : tmLinkFeedEntryDate_ColorId));
+                    insertData_Block(&styled.chars, 0, constData_Block(&buf), size_Block(&buf));
+                    deinit_Block(&buf);
+                    const int oldAnsi = ansiFlags_Text();
+                    setAnsiFlags_Text(oldAnsi | allowFontStyle_AnsiFlag);
+                    setBaseAttributes_Text(run->font, fg);
+                    drawBoundRange_Text(run->font,
+                                        visPos,
+                                        (run->isRTL ? -1 : 1) * width_Rect(run->visBounds),
+                                        fg,
+                                        range_String(&styled));
+                    setAnsiFlags_Text(oldAnsi);
+                    deinit_String(&styled);
+                    goto runDrawn;                    
+                }
+            }
+        }
         drawBoundRange_Text(run->font,
                             visPos,
                             (run->isRTL ? -1 : 1) * width_Rect(run->visBounds),
                             fg,
                             run->text);
-        setBaseAttributes_Text(-1, -1);
     runDrawn:;
+        setBaseAttributes_Text(-1, -1);
     }
     /* Presentation of links. */
     if (run->linkId && ~run->flags & decoration_GmRunFlag) {
@@ -5472,7 +5505,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     drawChildren_Widget(w);
     /* Information about the hovered link. */
     if (deviceType_App() == desktop_AppDeviceType && prefs_App()->hoverLink && d->linkInfo) {
-        const int pad = gap_UI;
+        const int pad = 0; /*gap_UI;*/
         update_LinkInfo(d->linkInfo,
                         d->view.doc,
                         d->view.hoverLink ? d->view.hoverLink->linkId : 0,

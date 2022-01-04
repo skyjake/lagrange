@@ -16,6 +16,7 @@ New features:
 Changes and enhancements:
 * Inline image metadata goes under the image instead of possibly overlapping the image caption text.
 * Improved apperance of opened links highlighting. It no longer goes under the side elements on the page.
+* Entry dates in feed links are de-emphasized for improved readability.
 * Revised layout of the Upload dialog. There is a new edit field that lets you modify the file path of the URL. Identity names are in bold.
 * Optimized UI layout procedure and memory use during UI event processing.
 * Audio subsystem is only initialized when actually needed.
