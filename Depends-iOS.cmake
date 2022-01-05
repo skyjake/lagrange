@@ -22,6 +22,8 @@ set (SDL2_LDFLAGS
     "-framework UIKit"
 )
 
+pkg_check_modules (WEBP IMPORTED_TARGET libwebpdecoder)
+
 set (FRIBIDI_FOUND YES)
 set (FRIBIDI_LIBRARIES ${IOS_DIR}/lib/libfribidi.a)
 

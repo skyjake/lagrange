@@ -31,3 +31,4 @@ iDeclareType(DocumentWidget)
     
 void    setUrl_UploadWidget             (iUploadWidget *, const iString *url);
 void    setResponseViewer_UploadWidget  (iUploadWidget *, iDocumentWidget *doc);
+void    setText_UploadWidget            (iUploadWidget *, const iString *text);

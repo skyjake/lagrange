@@ -37,6 +37,7 @@ void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
     init_String(&d->title);
     init_String(&d->tags);
+    iZap(d->flags);
     iZap(d->when);
     d->parentId = 0;
     d->order = 0;
@@ -48,6 +49,7 @@ void deinit_Bookmark(iBookmark *d) {
     deinit_String(&d->url);
 }
 
+#if 0
 iBool hasTag_Bookmark(const iBookmark *d, const char *tag) {
     if (!d) return iFalse;
     iRegExp *pattern = new_RegExp(format_CStr("\\b%s\\b", tag), caseSensitive_RegExpOption);
@@ -60,7 +62,7 @@ iBool hasTag_Bookmark(const iBookmark *d, const char *tag) {
 
 void addTag_Bookmark(iBookmark *d, const char *tag) {
     if (!isEmpty_String(&d->tags)) {
-        appendChar_String(&d->tags, ' ');
+        appendCStr_String(&d->tags, " ");
     }
     appendCStr_String(&d->tags, tag);
 }
@@ -71,6 +73,93 @@ void removeTag_Bookmark(iBookmark *d, const char *tag) {
         remove_Block(&d->tags.chars, pos, strlen(tag));
         trim_String(&d->tags);
     }
+}
+#endif
+
+static struct {
+    uint32_t    bit;
+    const char *tag;
+    iRegExp *   pattern;
+    iRegExp *   oldPattern;
+}
+specialTags_[] = {
+    { homepage_BookmarkFlag, ".homepage" },
+    { remoteSource_BookmarkFlag, ".remotesource" },
+    { linkSplit_BookmarkFlag, ".linksplit" },
+    { userIcon_BookmarkFlag, ".usericon" },
+    { subscribed_BookmarkFlag, ".subscribed" },
+    { headings_BookmarkFlag, ".headings" },
+    { ignoreWeb_BookmarkFlag, ".ignoreweb" },
+    /* `remote_BookmarkFlag` not included because it's runtime only */
+};
+
+static void updatePatterns_(size_t index) {
+    if (!specialTags_[index].pattern) {
+        specialTags_[index].pattern = new_RegExp(format_CStr("(?<!\\w)\\%s\\b(?!\\w)",
+                                                             specialTags_[index].tag),
+                                                 caseSensitive_RegExpOption); /* never released */
+    }
+    if (!specialTags_[index].oldPattern) {
+        /* TODO: Get rid of these when compatibility with v1.9 or older is not important. */
+        specialTags_[index].oldPattern =
+            new_RegExp(format_CStr("\\b%s\\b", specialTags_[index].tag + 1), /* dotless */
+                       caseSensitive_RegExpOption); /* never released */
+    }
+}
+
+static void normalizeSpacesInTags_(iString *tags) {
+    iBool wasSpace = iFalse;
+    iString out;
+    init_String(&out);
+    for (const char *ch = constBegin_String(tags); ch != constEnd_String(tags); ch++) {
+        if (*ch == ' ') {
+            if (!wasSpace) {
+                wasSpace = iTrue;
+            }
+            else {
+                continue;
+            }
+        }
+        else {
+            wasSpace = iFalse;
+        }
+        appendData_Block(&out.chars, ch, 1);
+    }
+    trim_String(&out);
+    set_String(tags, &out);
+    deinit_String(&out);
+}
+
+static void unpackDotTags_Bookmark_(iBookmark *d) {
+    iZap(d->flags);
+    iForIndices(i, specialTags_) {
+        updatePatterns_(i);
+        iRegExpMatch m;
+        init_RegExpMatch(&m);
+        iBool isSet = matchString_RegExp(specialTags_[i].pattern, &d->tags, &m);
+        if (!isSet) {
+            init_RegExpMatch(&m);
+            isSet = matchString_RegExp(specialTags_[i].oldPattern, &d->tags, &m);
+        }
+        iChangeFlags(d->flags, specialTags_[i].bit, isSet);
+        if (isSet) {
+            remove_Block(&d->tags.chars, m.range.start, size_Range(&m.range));
+        }
+    }
+    normalizeSpacesInTags_(&d->tags);
+}
+
+static iString *packedDotTags_Bookmark_(const iBookmark *d) {
+    iString *withDot = copy_String(&d->tags);
+    iForIndices(i, specialTags_) {
+        if (d->flags & specialTags_[i].bit) {
+            if (!isEmpty_String(withDot)) {
+                appendCStr_String(withDot, " ");
+            }
+            appendCStr_String(withDot, specialTags_[i].tag);
+        }
+    }
+    return withDot;
 }
 
 iDefineTypeConstruction(Bookmark)
@@ -176,6 +265,7 @@ static void loadOldFormat_Bookmarks(iBookmarks *d, const char *dirPath) {
             setRange_String(&bm->title, line);
             nextSplit_Rangecc(src, "\n", &line);
             setRange_String(&bm->tags, line);
+            unpackDotTags_Bookmark_(bm);
             insert_Bookmarks_(d, bm);
         }
     }
@@ -220,6 +310,7 @@ static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, 
         }
         else if (!cmp_String(key, "tags") && tv->type == string_TomlType) {
             set_String(&bm->tags, tv->value.string);
+            unpackDotTags_Bookmark_(bm);
         }
         else if (!cmp_String(key, "icon") && tv->type == int64_TomlType) {
             bm->icon = (iChar) tv->value.int64;
@@ -292,7 +383,6 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
 
 void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     lock_Mutex(d->mtx);
-    iRegExp *remotePattern = iClob(new_RegExp("\\bremote\\b", caseSensitive_RegExpOption));
     iFile *f = newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {        
         iString *str = collectNew_String();
@@ -300,13 +390,12 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
         writeData_File(f, cstr_String(str), size_String(str));
         iConstForEach(Hash, i, &d->bookmarks) {
             const iBookmark *bm = (const iBookmark *) i.value;
-            iRegExpMatch m;
-            init_RegExpMatch(&m);
-            if (matchString_RegExp(remotePattern, &bm->tags, &m)) {
+            if (bm->flags & remote_BookmarkFlag) {
                 /* Remote bookmarks are not saved. */
                 continue;
             }
             iBeginCollect();
+            const iString *packedTags = collect_String(packedDotTags_Bookmark_(bm));
             format_String(str,
                           "[%d]\n"
                           "url = \"%s\"\n"
@@ -317,7 +406,7 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
                           id_Bookmark(bm),
                           cstrCollect_String(quote_String(&bm->url, iFalse)),
                           cstrCollect_String(quote_String(&bm->title, iFalse)),
-                          cstrCollect_String(quote_String(&bm->tags, iFalse)),
+                          cstrCollect_String(quote_String(packedTags, iFalse)),
                           bm->icon,
                           seconds_Time(&bm->when),
                           cstrCollect_String(format_Time(&bm->when, "%Y-%m-%d")));
@@ -397,7 +486,7 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
     const uint32_t id = findUrl_Bookmarks(d, url);
     if (id) {
         iBookmark *bm = get_Bookmarks(d, id);
-        if (!hasTag_Bookmark(bm, remote_BookmarkTag) && !hasTag_Bookmark(bm, userIcon_BookmarkTag)) {
+        if (~bm->flags & remote_BookmarkFlag && ~bm->flags & userIcon_BookmarkFlag) {
             if (icon != bm->icon) {
                 bm->icon = icon;
                 changed = iTrue;
@@ -422,19 +511,13 @@ iChar siteIcon_Bookmarks(const iBookmarks *d, const iString *url) {
     if (isEmpty_String(url)) {
         return 0;
     }
-    static iRegExp *tagPattern_;
-    if (!tagPattern_) {
-        tagPattern_ = new_RegExp("\\b" userIcon_BookmarkTag "\\b", caseSensitive_RegExpOption);
-    }
     const iRangecc urlRoot      = urlRoot_String(url);
     size_t         matchingSize = iInvalidSize; /* we'll pick the shortest matching */
     iChar          icon         = 0;
     lock_Mutex(d->mtx);
     iConstForEach(Hash, i, &d->bookmarks) {
         const iBookmark *bm = (const iBookmark *) i.value;
-        iRegExpMatch m;
-        init_RegExpMatch(&m);
-        if (bm->icon && matchString_RegExp(tagPattern_, &bm->tags, &m)) {
+        if (bm->icon && bm->flags & userIcon_BookmarkFlag) {
             const iRangecc bmRoot = urlRoot_String(&bm->url);
             if (equalRangeCase_Rangecc(urlRoot, bmRoot)) {
                 const size_t n = size_String(&bm->url);
@@ -467,10 +550,15 @@ void reorder_Bookmarks(iBookmarks *d, uint32_t id, int newOrder) {
     unlock_Mutex(d->mtx);
 }
 
-iBool filterTagsRegExp_Bookmarks(void *regExp, const iBookmark *bm) {
-    iRegExpMatch m;
-    init_RegExpMatch(&m);
-    return matchString_RegExp(regExp, &bm->tags, &m);
+//iBool filterTagsRegExp_Bookmarks(void *regExp, const iBookmark *bm) {
+//    iRegExpMatch m;
+//    init_RegExpMatch(&m);
+//    return matchString_RegExp(regExp, &bm->tags, &m);
+//}
+
+iBool filterHomepage_Bookmark(void *d, const iBookmark *bm) {
+    iUnused(d);
+    return (bm->flags & homepage_BookmarkFlag) != 0;
 }
 
 static iBool matchUrl_(void *url, const iBookmark *bm) {
@@ -618,7 +706,7 @@ const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkLis
 
 static iBool isRemoteSource_Bookmark_(void *context, const iBookmark *d) {
     iUnused(context);
-    return hasTag_Bookmark(d, remoteSource_BookmarkTag);
+    return (d->flags & remoteSource_BookmarkFlag) != 0;
 }
 
 void remoteRequestFinished_Bookmarks_(iBookmarks *d, iGmRequest *req) {
@@ -642,7 +730,6 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
         initCurrent_Time(&now);
         iRegExp *linkPattern = new_RegExp("^=>\\s*([^\\s]+)(\\s+(.*))?", 0);
         iString src;
-        const iString *remoteTag = collectNewCStr_String("remote");
         initBlock_String(&src, body_GmRequest(req));
         iRangecc srcLine = iNullRange;
         while (nextSplit_Rangecc(range_String(&src), "\n", &srcLine)) {
@@ -660,8 +747,9 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
                     if (isEmpty_String(titleStr)) {
                         setRange_String(titleStr, urlHost_String(urlStr));
                     }
-                    const uint32_t bmId = add_Bookmarks(d, absUrl, titleStr, remoteTag, 0x2913);
+                    const uint32_t bmId = add_Bookmarks(d, absUrl, titleStr, NULL, 0x2913);
                     iBookmark *bm = get_Bookmarks(d, bmId);
+                    bm->flags |= remote_BookmarkFlag;
                     bm->parentId = *(uint32_t *) userData_Object(req);
                     delete_String(titleStr);
                 }
@@ -690,7 +778,7 @@ void fetchRemote_Bookmarks(iBookmarks *d) {
         size_t numRemoved = 0;
         iForEach(Hash, i, &d->bookmarks) {
             iBookmark *bm = (iBookmark *) i.value;
-            if (hasTag_Bookmark(bm, remote_BookmarkTag)) {
+            if (bm->flags & remote_BookmarkFlag) {
                 remove_HashIterator(&i);
                 delete_Bookmark(bm);
                 numRemoved++;

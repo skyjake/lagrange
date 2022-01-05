@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "mobile.h"
 
 #include "app.h"
+#include "certlistwidget.h"
 #include "command.h"
 #include "defs.h"
 #include "inputwidget.h"
@@ -36,14 +37,38 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "ios.h"
 #endif
 
+const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction] = {
+    { backArrow_Icon, "${menu.back}", "navigate.back" },
+    { forwardArrow_Icon, "${menu.forward}", "navigate.forward" },
+    { home_Icon, "${menu.home}", "navigate.home" },
+    { upArrow_Icon, "${menu.parent}", "navigate.parent" },
+    { reload_Icon, "${menu.reload}", "navigate.reload" },
+    { openTab_Icon, "${menu.newtab}", "tabs.new" },
+    { close_Icon, "${menu.closetab}", "tabs.close" },
+    { bookmark_Icon, "${menu.page.bookmark}", "bookmark.add" },
+    { globe_Icon, "${menu.page.translate}", "document.translate" },
+    { upload_Icon, "${menu.page.upload}", "document.upload" },
+    { edit_Icon, "${menu.page.upload.edit}", "document.upload copy:1" },
+    { magnifyingGlass_Icon, "${menu.find}", "focus.set id:find.input" },
+    { gear_Icon, "${menu.settings}", "preferences" },        
+};
+
 iBool isUsingPanelLayout_Mobile(void) {
     return deviceType_App() != desktop_AppDeviceType;
 }
 
+#define topPanelMinWidth_Mobile     (80 * gap_UI)
+
 static iBool isSideBySideLayout_(void) {
+    /* Minimum is an even split. */
+    const int safeWidth = safeRect_Root(get_Root()).size.x;
+    if (safeWidth / 2 < topPanelMinWidth_Mobile) {
+        return iFalse;
+    }
     if (deviceType_App() == phone_AppDeviceType) {
         return isLandscape_App();
     }
+    /* Tablet may still be too narrow. */
     return numRoots_Window(get_Window()) == 1;
 }
 
@@ -99,6 +124,16 @@ static iWidget *findTitleLabel_(iWidget *panel) {
     return NULL;
 }
 
+static void updateCertListHeight_(iWidget *detailStack) {
+    iWidget *certList = findChild_Widget(detailStack, "certlist");
+    if (certList) {
+        setFixedSize_Widget(certList,
+                            init_I2(-1,
+                                    -1 * gap_UI + bottom_Rect(safeRect_Root(certList->root)) -
+                                        top_Rect(boundsWithoutVisualOffset_Widget(certList))));
+    }
+}
+
 static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
         const iBool  isPortrait   = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
@@ -117,11 +152,13 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         const int pad = isPortrait ? 0 : 3 * gap_UI;
         if (isSideBySide) {
             iAssert(topPanel);
-            topPanel->rect.size.x = (deviceType_App() == phone_AppDeviceType ?
-                                     safeRoot.size.x * 2 / 5 : (safeRoot.size.x / 3));
-        }        
+            topPanel->rect.size.x = iMax(topPanelMinWidth_Mobile,
+                                         (deviceType_App() == phone_AppDeviceType ?
+                                          safeRoot.size.x * 2 / 5 : safeRoot.size.x / 3));
+        }
         if (deviceType_App() == tablet_AppDeviceType) {
             setPadding_Widget(topPanel, pad, 0, pad, pad);
+#if 0
             if (numPanels == 0) {
                 setFlags_Widget(sheet, centerHorizontal_WidgetFlag, iTrue);
                 const int sheetWidth = iMin(safeRoot.size.x, safeRoot.size.y);
@@ -129,6 +166,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
                 setFixedSize_Widget(sheet, init_I2(sheetWidth, -1));
                 setFixedSize_Widget(navi, init_I2(sheetWidth, -1));
             }
+#endif
         }
         iWidget *detailTitle = findChild_Widget(navi, "detailtitle"); {
             setPos_Widget(detailTitle, init_I2(width_Widget(topPanel), 0));
@@ -143,9 +181,10 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
             if (isSideBySide) {
                 setVisualOffset_Widget(panel, 0, 0, 0);
             }
-            setPadding_Widget(panel, pad, 0, pad, pad);
+            setPadding_Widget(panel, pad, 0, pad, pad + bottomSafeInset_Mobile());
         }
         arrange_Widget(mainDetailSplit);
+        updateCertListHeight_(detailStack);
     }
     else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
         if (focus_Widget() && class_Widget(focus_Widget()) == &Class_InputWidget) {
@@ -168,13 +207,16 @@ size_t currentPanelIndex_Mobile(const iWidget *panels) {
     return iInvalidPos;
 }
 
+iWidget *panel_Mobile(const iWidget *panels, size_t index) {
+    return child_Widget(findChild_Widget(panels, "detailstack"), index);
+}
+
 static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
     const iBool isPortrait = !isSideBySideLayout_();
     if (equal_Command(cmd, "panel.open")) {
-        iWidget *button = pointer_Command(cmd);
+        /* This command is sent by the button that opens the panel. */
+        iWidget *button = pointer_Command(cmd);        
         iWidget *panel = userData_Object(button);
-//        openMenu_Widget(panel, innerToWindow_Widget(panel, zero_I2()));
-//        setFlags_Widget(panel, hidden_WidgetFlag, iFalse);
         unselectAllPanelButtons_(topPanel);
         int panelIndex = -1;
         size_t childIndex = 0;
@@ -184,7 +226,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             /* Animate the current panel in. */
             if (child == panel && isPortrait) {
                 setupSheetTransition_Mobile(panel, iTrue);
-                panelIndex = childIndex;
+                panelIndex = (int) childIndex;
             }
             childIndex++;
         }
@@ -196,6 +238,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         setText_LabelWidget(detailTitle, text_LabelWidget((iLabelWidget *) findTitleLabel_(panel)));
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
         postCommand_Widget(topPanel, "panel.changed arg:%d", panelIndex);
+        updateCertListHeight_(findDetailStack_(topPanel));
         return iTrue;
     }
     if (equal_Command(cmd, "swipe.back")) {
@@ -226,6 +269,10 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             }
             else if (findWidget_App("upload")) {
                 postCommand_App("upload.cancel");
+            }
+            else if (findWidget_App("bmed.sidebar") || findWidget_App("bmed.create") ||
+                     findWidget_App("bmed")) {
+                postCommand_App("bmed.cancel");
             }
             else if (findWidget_App("ident")) {
                 postCommand_Widget(topPanel, "ident.cancel");
@@ -468,7 +515,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     iLabelWidget *heading = NULL;
     iWidget *     value   = NULL;
     const char *  spec    = item->label;
-    const char *  id      = cstr_Rangecc(range_Command(spec, "id"));
+    const char *  id      = cstr_Command(spec, "id");
     const char *  label   = hasLabel_Command(spec, "text")
                                 ? suffixPtr_Command(spec, "text")
                                 : format_CStr("${%s}", id);
@@ -482,7 +529,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                                                    collapse_WidgetFlag);
         setFont_LabelWidget(title, uiLabelLargeBold_FontId);
         setTextColor_LabelWidget(title, uiHeading_ColorId);
-        setAllCaps_LabelWidget(title, iTrue);
+//        setAllCaps_LabelWidget(title, iTrue);
         setId_Widget(as_Widget(title), id);
     }
     else if (equal_Command(spec, "heading")) {
@@ -511,10 +558,12 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setId_Widget(as_Widget(drop), id);
         widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label), as_Widget(drop));
         setCommandHandler_Widget(widget, dropdownHeadingHandler_);
+        widget->padding[2] = gap_UI;
         setUserData_Object(widget, drop);
     }
     else if (equal_Command(spec, "radio") || equal_Command(spec, "buttons")) {
         const iBool isRadio = equal_Command(spec, "radio");
+        const iBool isHorizontal = argLabel_Command(spec, "horizontal");
         addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
         iLabelWidget *head = makeHeading_Widget(label);
         setAllCaps_LabelWidget(head, iTrue);
@@ -522,25 +571,42 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         addChild_Widget(panel, iClob(head));
         widget = new_Widget();
         setBackgroundColor_Widget(widget, uiBackgroundSidebar_ColorId);
-        setPadding_Widget(widget, 4 * gap_UI, 2 * gap_UI, 4 * gap_UI, 2 * gap_UI);
+        const int hPad = (isHorizontal ? 0 : 1);
+        setPadding_Widget(widget, hPad * gap_UI, 2 * gap_UI, hPad * gap_UI, 2 * gap_UI);
         setFlags_Widget(widget,
                         borderTop_WidgetFlag |
                             borderBottom_WidgetFlag |
-                            arrangeHorizontal_WidgetFlag |
+                            (isHorizontal ? arrangeHorizontal_WidgetFlag : arrangeVertical_WidgetFlag) |
                             arrangeHeight_WidgetFlag |
                             resizeToParentWidth_WidgetFlag |
                             resizeWidthOfChildren_WidgetFlag,
                         iTrue);
         setId_Widget(widget, id);
+        iBool isFirst = iTrue;
         for (const iMenuItem *radioItem = item->data; radioItem->label; radioItem++) {
-            const char *  radId = cstr_Rangecc(range_Command(radioItem->label, "id"));
-            int64_t       flags = noBackground_WidgetFlag;
+            if (!isHorizontal && !isFirst) {
+                /* The separator is padded from the left so we need two. */
+                iWidget *sep = new_Widget();
+                iWidget *sep2 = new_Widget();
+                addChildFlags_Widget(sep, iClob(sep2), 0);
+                setFlags_Widget(sep, arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag, iTrue);
+                setBackgroundColor_Widget(sep2, uiSeparator_ColorId);
+                setFixedSize_Widget(sep2, init_I2(-1, gap_UI / 4));
+                setPadding_Widget(sep, 5 * gap_UI, 0, 0, 0);
+                addChildFlags_Widget(widget, iClob(sep), 0);
+            }
+            isFirst = iFalse;
+            const char *  radId = cstr_Command(radioItem->label, "id");
+            int64_t       flags = noBackground_WidgetFlag | frameless_WidgetFlag;
+            if (!isHorizontal) {
+                flags |= alignLeft_WidgetFlag;
+            }
             iLabelWidget *button;
             if (isRadio) {
                 const char *radLabel =
                     hasLabel_Command(radioItem->label, "label")
                         ? format_CStr("${%s}",
-                                      cstr_Rangecc(range_Command(radioItem->label, "label")))
+                                      cstr_Command(radioItem->label, "label"))
                         : suffixPtr_Command(radioItem->label, "text");
                 button = new_LabelWidget(radLabel, radioItem->command);
                 flags |= radio_WidgetFlag;
@@ -549,17 +615,21 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                 button = (iLabelWidget *) makeToggle_Widget(radId);
                 setTextCStr_LabelWidget(button, format_CStr("${%s}", radId));
                 setFlags_Widget(as_Widget(button), fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget(button);
             }
             setId_Widget(as_Widget(button), radId);
-            setFont_LabelWidget(button, uiLabelMedium_FontId);
+            setFont_LabelWidget(button, deviceType_App() == phone_AppDeviceType ?
+                                (isHorizontal ? uiLabelMedium_FontId : uiLabelBig_FontId) : labelFont_());
+            setCheckMark_LabelWidget(button, !isHorizontal);
+            setPadding_Widget(as_Widget(button), gap_UI, 1 * gap_UI, 0, 1 * gap_UI);
+            updateSize_LabelWidget(button);
+            setPadding_Widget(widget, 0, 0, 0, 0);
             addChildFlags_Widget(widget, iClob(button), flags);
         }
     }
     else if (equal_Command(spec, "input")) {
         iInputWidget *input = new_InputWidget(argU32Label_Command(spec, "maxlen"));
         if (hasLabel_Command(spec, "hint")) {
-            setHint_InputWidget(input, cstr_Lang(cstr_Rangecc(range_Command(spec, "hint"))));
+            setHint_InputWidget(input, cstr_Lang(cstr_Command(spec, "hint")));
         }
         setId_Widget(as_Widget(input), id);
         setUrlContent_InputWidget(input, argLabel_Command(spec, "url"));
@@ -570,12 +640,13 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
             setFlags_Widget(widget, expand_WidgetFlag, iTrue);
         }
         else {
+            setFlags_Widget(as_Widget(input), alignRight_WidgetFlag, iTrue);
             setContentPadding_InputWidget(input, 3 * gap_UI, 0);
             if (hasLabel_Command(spec, "unit")) {
                 iWidget *unit = addChildFlags_Widget(
                     as_Widget(input),
                     iClob(new_LabelWidget(
-                        format_CStr("${%s}", cstr_Rangecc(range_Command(spec, "unit"))), NULL)),
+                        format_CStr("${%s}", cstr_Command(spec, "unit")), NULL)),
                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
                         resizeToParentHeight_WidgetFlag);
                 setContentPadding_InputWidget(input, -1, width_Widget(unit) - 4 * gap_UI);
@@ -585,6 +656,14 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
             setCommandHandler_Widget(widget, inputHeadingHandler_);
             setUserData_Object(widget, input);
         }
+    }
+    else if (equal_Command(spec, "certlist")) {
+        iCertListWidget *certList = new_CertListWidget();
+        iListWidget *list = (iListWidget *) certList;
+        setBackgroundColor_Widget(as_Widget(list), uiBackgroundSidebar_ColorId);
+        widget = as_Widget(certList);
+        updateItems_CertListWidget(certList);
+        invalidate_ListWidget(list);
     }
     else if (equal_Command(spec, "button")) {
         widget = as_Widget(heading = makePanelButton_(label, item->command));
@@ -599,6 +678,9 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                         fixedHeight_WidgetFlag |
                             (!argLabel_Command(spec, "frame") ? frameless_WidgetFlag : 0),
                         iTrue);
+        if (argLabel_Command(spec, "font")) {
+            setFont_LabelWidget(lab, argLabel_Command(spec, "font"));
+        }
     }
     else if (equal_Command(spec, "padding")) {
         float height = 1.5f;
@@ -670,8 +752,10 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
     setFlags_Widget(panels,
                     resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
                         frameless_WidgetFlag | focusRoot_WidgetFlag | commandOnClick_WidgetFlag |
+                        horizontalOffset_WidgetFlag |
                         /*overflowScrollable_WidgetFlag |*/ leftEdgeDraggable_WidgetFlag,
                     iTrue);
+    panels->flags2 |= fadeBackground_WidgetFlag2;
     setFlags_Widget(panels, overflowScrollable_WidgetFlag, iFalse);
     /* The top-level split between main and detail panels. */
     iWidget *mainDetailSplit = makeHDiv_Widget(); {
@@ -733,7 +817,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
         const iMenuItem *item = &itemsNullTerminated[i];
         if (equal_Command(item->label, "panel")) {
             haveDetailPanels = iTrue;
-            const char *id = cstr_Rangecc(range_Command(item->label, "id"));
+            const char *id = cstr_Command(item->label, "id");
             const iString *label = hasLabel_Command(item->label, "text")
                                        ? collect_String(suffix_Command(item->label, "text"))
                                        : collectNewFormat_String("${%s}", id);
@@ -849,18 +933,21 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     if (!isUsingPanelLayout_Mobile()) {
         return;    
     }
-    const iBool isSlidePanel = (flags_Widget(sheet) & horizontalOffset_WidgetFlag) != 0;
-    if (isSlidePanel && isLandscape_App()) {
+    const iBool isHorizPanel = (flags_Widget(sheet) & horizontalOffset_WidgetFlag) != 0;
+    if (isHorizPanel && isLandscape_App()) {
         return;
     }
+    const int maxOffset = isHorizPanel            ? width_Widget(sheet)
+                          : isPortraitPhone_App() ? height_Widget(sheet)
+                                                  : (12 * gap_UI);
     if (isIncoming) {
-        setVisualOffset_Widget(sheet, isSlidePanel ? width_Widget(sheet) : height_Widget(sheet), 0, 0);
+        setVisualOffset_Widget(sheet, maxOffset, 0, 0);
         setVisualOffset_Widget(sheet, 0, 330, easeOut_AnimFlag | softer_AnimFlag);
     }
     else {
         const iBool wasDragged = iAbs(value_Anim(&sheet->visualOffset) - 0) > 1;
         setVisualOffset_Widget(sheet,
-                               isSlidePanel ? width_Widget(sheet) : height_Widget(sheet),
+                               maxOffset,
                                wasDragged ? 100 : 200,
                                wasDragged ? 0 : easeIn_AnimFlag | softer_AnimFlag);
     }
@@ -929,4 +1016,14 @@ void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
                 break;
         }
     }
+}
+
+int bottomSafeInset_Mobile(void) {
+#if defined (iPlatformAppleMobile)
+    float bot;
+    safeAreaInsets_iOS(NULL, NULL, NULL, &bot);
+    return iRound(bot);
+#else
+    return 0;
+#endif
 }

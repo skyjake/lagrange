@@ -390,14 +390,19 @@ static void deinitCache_Text_(iText *d) {
     SDL_DestroyTexture(d->cache);
 }
 
+iRegExp *makeAnsiEscapePattern_Text(void) {
+    return new_RegExp("[[()][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])", 0);
+}
+
 void init_Text(iText *d, SDL_Renderer *render) {
     iText *oldActive = activeText_;
     activeText_ = d;
     init_Array(&d->fonts, sizeof(iFont));
     d->contentFontSize = contentScale_Text_;
-    d->ansiEscape      = new_RegExp("[[()][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])", 0);
+    d->ansiEscape      = makeAnsiEscapePattern_Text();
     d->baseFontId      = -1;
     d->baseFgColorId   = -1;
+    d->missingGlyphs   = iFalse;
     d->render          = render;
     /* A grayscale palette for rasterized glyphs. */ {
         SDL_Color colors[256];
@@ -446,6 +451,10 @@ void setBaseAttributes_Text(int fontId, int fgColorId) {
 
 void setAnsiFlags_Text(int ansiFlags) {
     activeText_->ansiFlags = ansiFlags;
+}
+
+int ansiFlags_Text(void) {
+    return activeText_->ansiFlags;
 }
 
 void setDocumentFontSize_Text(iText *d, float fontSizeFactor) {
@@ -789,6 +798,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             pushBack_Array(&d->logicalToSourceOffset, &(int){ ch - d->source.start });
             ch += len;
         }
+        iBool bidiOk = iFalse;
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
         /* Use FriBidi to reorder the codepoints. */
         resize_Array(&d->visual, length);
@@ -796,25 +806,25 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         resize_Array(&d->visualToLogical, length);
         d->bidiLevels = length ? malloc(length) : NULL;
         FriBidiParType baseDir = (FriBidiParType) FRIBIDI_TYPE_ON;
-        /* TODO: If this returns zero (error occurred), act like everything is LTR. */
-        fribidi_log2vis(constData_Array(&d->logical),
-                        length,
-                        &baseDir,
-                        data_Array(&d->visual),
-                        data_Array(&d->logicalToVisual),
-                        data_Array(&d->visualToLogical),
-                        (FriBidiLevel *) d->bidiLevels);
+        bidiOk = fribidi_log2vis(constData_Array(&d->logical),
+                                 (FriBidiStrIndex) length,
+                                 &baseDir,
+                                 data_Array(&d->visual),
+                                 data_Array(&d->logicalToVisual),
+                                 data_Array(&d->visualToLogical),
+                                 (FriBidiLevel *) d->bidiLevels) > 0;
         d->isBaseRTL = (overrideBaseDir == 0 ? FRIBIDI_IS_RTL(baseDir) : (overrideBaseDir < 0));
-#else
-        /* 1:1 mapping. */
-        setCopy_Array(&d->visual, &d->logical);
-        resize_Array(&d->logicalToVisual, length);
-        for (size_t i = 0; i < length; i++) {
-            set_Array(&d->logicalToVisual, i, &(int){ i });
-        }
-        setCopy_Array(&d->visualToLogical, &d->logicalToVisual);
-        d->isBaseRTL = iFalse;
 #endif
+        if (!bidiOk) {
+            /* 1:1 mapping. */
+            setCopy_Array(&d->visual, &d->logical);
+            resize_Array(&d->logicalToVisual, length);
+            for (size_t i = 0; i < length; i++) {
+                set_Array(&d->logicalToVisual, i, &(int){ i });
+            }
+            setCopy_Array(&d->visualToLogical, &d->logicalToVisual);
+            d->isBaseRTL = iFalse;
+        }
     }
     /* The mapping needs to include the terminating NULL position. */ {
         pushBack_Array(&d->logicalToSourceOffset, &(int){ d->source.end - d->source.start });
@@ -828,7 +838,6 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         .font    = d->font,
     };
     const int     *logToSource = constData_Array(&d->logicalToSourceOffset);
-    const int *    logToVis    = constData_Array(&d->logicalToVisual);
     const iChar *  logicalText = constData_Array(&d->logical);
     iBool          isRTL       = d->isBaseRTL;
     int            numNonSpace = 0;
@@ -868,16 +877,33 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
                     /* Note: This styling is hardcoded to match `typesetOneLine_RunTypesetter_()`. */
                     if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "1")) {
                         run.attrib.bold = iTrue;
+                        run.attrib.regular = iFalse;
+                        run.attrib.light = iFalse;
                         if (d->baseFgColorId == tmParagraph_ColorId) {
                             setFgColor_AttributedRun_(&run, tmFirstParagraph_ColorId);
                         }
                         attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
                                                                    bold_FontStyle));
                     }
+                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "2")) {
+                        run.attrib.light = iTrue;
+                        run.attrib.regular = iFalse;
+                        run.attrib.bold = iFalse;
+                        attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
+                                                                   light_FontStyle));
+                    }
                     else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "3")) {
                         run.attrib.italic = iTrue;
                         attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
                                                                    italic_FontStyle));
+                    }
+                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "10")) {
+                        run.attrib.regular = iTrue;
+                        run.attrib.bold = iFalse;
+                        run.attrib.light = iFalse;
+                        run.attrib.italic = iFalse;
+                        attribFont = font_Text_(fontWithStyle_Text(fontId_Text_(d->baseFont),
+                                                                   regular_FontStyle));
                     }
                     else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "11")) {
                         run.attrib.monospace = iTrue;
@@ -886,7 +912,9 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
                                                                     monospace_FontId));
                     }
                     else if (equal_Rangecc(sequence, "0")) {
+                        run.attrib.regular = iFalse;
                         run.attrib.bold = iFalse;
+                        run.attrib.light = iFalse;
                         run.attrib.italic = iFalse;
                         run.attrib.monospace = iFalse;
                         attribFont = run.font = d->baseFont;
@@ -967,6 +995,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         pushBack_Array(&d->runs, &run);
     }
 #if 0
+    const int *logToVis = constData_Array(&d->logicalToVisual);
     printf("[AttributedText] %zu runs:\n", size_Array(&d->runs));
     iConstForEach(Array, i, &d->runs) {
         const iAttributedRun *run = i.value;
@@ -1405,6 +1434,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iBool        isFirst            = iTrue;
     const iBool  checkHitPoint      = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
     const iBool  checkHitChar       = wrap && wrap->hitChar;
+    size_t       numWrapLines       = 0;
     while (!isEmpty_Range(&wrapRuns)) {
         if (isFirst) {
             isFirst = iFalse;
@@ -1632,6 +1662,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                               wrapAttrib,
                               origin,
                               iRound(wrapAdvance))) {
+            willAbortDueToWrap = iTrue;
+        }
+        numWrapLines++;
+        if (wrap && wrap->maxLines && numWrapLines == wrap->maxLines) {
             willAbortDueToWrap = iTrue;
         }
         wrapAttrib = lastAttrib;
@@ -2231,6 +2265,7 @@ void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
         SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
         const iInt2 oldOrigin = origin_Paint;
         origin_Paint = zero_I2();
+        setBaseAttributes_Text(font, color);
         SDL_SetRenderTarget(render, d->texture);
         SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
         SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
@@ -2241,6 +2276,7 @@ void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
         SDL_SetRenderTarget(render, oldTarget);
         origin_Paint = oldOrigin;
         SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+        setBaseAttributes_Text(-1, -1);
     }
 }
 

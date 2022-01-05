@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
                           "ECDHE-RSA-AES128-GCM-SHA256:"
                           "DHE-RSA-AES256-GCM-SHA384");
     SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
+    SDL_EnableScreenSaver();
     SDL_SetHint(SDL_HINT_MAC_BACKGROUND_APP, "1");
     SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
 #if SDL_VERSION_ATLEAST(2, 0, 8)
@@ -81,9 +82,6 @@ int main(int argc, char **argv) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {
         fprintf(stderr, "[SDL] init failed: %s\n", SDL_GetError());
         return -1;
-    }
-    if (SDL_Init(SDL_INIT_AUDIO)) {
-        fprintf(stderr, "[SDL] audio init failed: %s\n", SDL_GetError());
     }
     init_Updater();
     run_App(argc, argv);

@@ -48,8 +48,9 @@ iBool   isUsed_GmIdentity           (const iGmIdentity *);
 iBool   isUsedOn_GmIdentity         (const iGmIdentity *, const iString *url);
 iBool   isUsedOnDomain_GmIdentity   (const iGmIdentity *, const iRangecc domain);
 
-void    setUse_GmIdentity   (iGmIdentity *, const iString *url, iBool use);
-void    clearUse_GmIdentity (iGmIdentity *);
+void    setUse_GmIdentity           (iGmIdentity *, const iString *url, iBool use);
+void    clearUse_GmIdentity         (iGmIdentity *);
+const iString *findUse_GmIdentity   (const iGmIdentity *, const iString *url);
 
 const iString *name_GmIdentity(const iGmIdentity *);
 

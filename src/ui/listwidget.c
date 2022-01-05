@@ -49,21 +49,6 @@ iDefineClass(ListItem)
 
 iDefineObjectConstruction(ListWidget)
 
-struct Impl_ListWidget {
-    iWidget widget;
-    iScrollWidget *scroll;
-    iSmoothScroll scrollY;
-    int itemHeight;
-    iPtrArray items;
-    size_t hoverItem;
-    size_t dragItem;
-    iInt2 dragOrigin; /* offset from mouse to drag item's top-left corner */
-    iClick click;
-    iIntSet invalidItems;
-    iVisBuf *visBuf;
-    iBool noHoverWhileScrolling;
-};
-
 static void refreshWhileScrolling_ListWidget_(iAnyObject *any) {
     iListWidget *d = any;
     updateVisible_ListWidget(d);
@@ -96,11 +81,13 @@ void init_ListWidget(iListWidget *d) {
     setThumb_ScrollWidget(d->scroll, 0, 0);
     init_SmoothScroll(&d->scrollY, w, scrollBegan_ListWidget_);
     d->itemHeight = 0;
+    d->scrollMode = normal_ScrollMode;
     d->noHoverWhileScrolling = iFalse;
     init_PtrArray(&d->items);
     d->hoverItem = iInvalidPos;
     d->dragItem = iInvalidPos;
     d->dragOrigin = zero_I2();
+    d->dragHandleWidth = 0;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_IntSet(&d->invalidItems);
     d->visBuf = new_VisBuf();
@@ -200,6 +187,17 @@ void setScrollPos_ListWidget(iListWidget *d, int pos) {
     setValue_Anim(&d->scrollY.pos, pos, 0);
     d->hoverItem = iInvalidPos;
     refresh_Widget(as_Widget(d));
+}
+
+void setScrollMode_ListWidget(iListWidget *d, enum iScrollMode mode) {
+    d->scrollMode = mode;
+}
+
+void setDragHandleWidth_ListWidget(iListWidget *d, int dragHandleWidth) {
+    d->dragHandleWidth = dragHandleWidth;
+    if (dragHandleWidth == 0) {
+        setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
+    }
 }
 
 void scrollOffset_ListWidget(iListWidget *d, int offset) {
@@ -363,6 +361,7 @@ static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
     if (d->dragItem == iInvalidPos) {
         return iFalse;
     }
+    setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse); /* mobile drag handles */
     stop_Anim(&d->scrollY.pos);
     enum iDragDestination dstKind;
     const size_t index = resolveDragDestination_ListWidget_(d, endPos, &dstKind);
@@ -381,12 +380,31 @@ static iBool endDrag_ListWidget_(iListWidget *d, iInt2 endPos) {
     return iTrue;
 }
 
+static iBool isScrollDisabled_ListWidget_(const iListWidget *d, const SDL_Event *ev) {
+    int dir = 0;
+    if (ev->type == SDL_MOUSEWHEEL) {
+        dir = iSign(ev->wheel.y);
+    }
+    switch (d->scrollMode) {
+        case disabled_ScrollMode:
+            return iTrue;
+        case disabledAtTopBothDirections_ScrollMode:
+            return scrollPos_ListWidget(d) <= 0;
+        case disabledAtTopUpwards_ScrollMode:
+            return scrollPos_ListWidget(d) <= 0 && dir > 0;
+        default:
+            break;
+    }
+    return iFalse;
+}
+
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
         invalidate_ListWidget(d);
     }
-    else if (processEvent_SmoothScroll(&d->scrollY, ev)) {
+    else if (!isScrollDisabled_ListWidget_(d, ev) &&
+             processEvent_SmoothScroll(&d->scrollY, ev)) {
         return iTrue;
     }
     else if (isCommand_SDLEvent(ev)) {
@@ -435,6 +453,29 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         }
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
+        if (d->dragHandleWidth) {
+            if (d->dragItem == iInvalidPos) {
+                const iInt2 wpos = coord_MouseWheelEvent(&ev->wheel);
+                if (contains_Widget(w, wpos) &&
+                    wpos.x >= right_Rect(boundsWithoutVisualOffset_Widget(w)) - d->dragHandleWidth) {
+                    setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
+                    printf("[%p] touch drag started\n", d);
+                    return iTrue;
+                }
+            }
+        }
+        if (isScrollDisabled_ListWidget_(d, ev)) {
+            if (ev->wheel.which == SDL_TOUCH_MOUSEID) {
+                /* TODO: Could generalize this selection of the scrollable parent. */
+                extern iWidgetClass Class_SidebarWidget;
+                iWidget *sidebar = findParentClass_Widget(w, &Class_SidebarWidget);
+                if (sidebar) {
+                    transferAffinity_Touch(w, sidebar);
+                    d->noHoverWhileScrolling = iTrue;
+                }
+            }
+            return iFalse;
+        }
         int amount = -ev->wheel.y;
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             stop_Anim(&d->scrollY.pos);
@@ -480,7 +521,9 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                 return iTrue;
             }
             redrawHoverItem_ListWidget_(d);
-            if (contains_Rect(itemRect_ListWidget(d, d->hoverItem), pos_Click(&d->click)) &&
+            if (contains_Rect(adjusted_Rect(itemRect_ListWidget(d, d->hoverItem),
+                                            zero_I2(), init_I2(-d->dragHandleWidth, 0)),
+                              pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidPos) {
                 postCommand_Widget(w, "list.clicked arg:%zu item:%p",
                                    d->hoverItem, constHoverItem_ListWidget(d));
@@ -580,8 +623,9 @@ static void draw_ListWidget_(const iListWidget *d) {
     }
     setClip_Paint(&p, bounds_Widget(w));
     draw_VisBuf(d->visBuf, addY_I2(topLeft_Rect(bounds), -scrollY), ySpan_Rect(bounds));
-    const iInt2 mousePos = mouseCoord_Window(get_Window(), 0);
-    if (d->dragItem != iInvalidPos && contains_Rect(bounds, mousePos)) {
+    const iBool isMobile = (deviceType_App() != desktop_AppDeviceType);
+    const iInt2 mousePos = mouseCoord_Window(get_Window(), isMobile ? SDL_TOUCH_MOUSEID : 0);
+    if (d->dragItem != iInvalidPos && (isMobile || contains_Rect(bounds, mousePos))) {
         iInt2 pos = add_I2(mousePos, d->dragOrigin);
         const iListItem *item = constAt_PtrArray(&d->items, d->dragItem);
         const iRect itemRect = { init_I2(left_Rect(bounds), pos.y),

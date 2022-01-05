@@ -49,6 +49,11 @@
 		</array>
 		<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
+		<key>UIAppFonts</key>
+		<array>
+			<string>IosevkaTerm-Extended.ttf</string>
+			<string>SourceSans3-Regular.ttf</string>
+		</array>
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>audio</string>

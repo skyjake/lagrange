@@ -1,0 +1,25 @@
+```LAGRANGE
+           __   __             __   ___
+|     /\  / _` |__)  /\  |\ | / _` |__
+|___ /~~\ \__> |  \ /~~\ | \| \__> |___
+
+```
+# Release notes
+
+## 1.10 (Alpha 3)
+* Added Android-specific release notes.
+* Added Settings > UI > Toolbar Actions: customize the two leftmost phone toolbar buttons.
+* Show build version in Settings > About.
+* Changed return key behavior to insert newlines where possible.
+* Fixed sizing of the UI when the device has on-screen system keys.
+* Fixed the copy/paste menu staying hidden behind the keyboard.
+* Fixed system Auto-Rotate setting not locking the screen orientation.
+
+## 1.10 (Alpha 2)
+* Upgraded SDL to 2.0.18, which fixed a lot of stability issues.
+* Added native binaries for arm64, x86, and x86_64.
+* Enabled bidirectional text and complex scripts (with HarfBuzz and FriBidi).
+* Enabled switching to landscape orientation.
+
+## 1.10 (Alpha 1)
+Initial test build with SDL 2.0.5 and 32-bit ARM binaries. It works, but barely.

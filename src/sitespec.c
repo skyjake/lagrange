@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/stringhash.h>
+#include <the_Foundation/stringarray.h>
 #include <the_Foundation/toml.h>
 
 iDeclareClass(SiteParams)
@@ -35,6 +36,7 @@ struct Impl_SiteParams {
     uint16_t titanPort;
     iString  titanIdentity; /* fingerprint */
     int      dismissWarnings;
+    iStringArray usedIdentities; /* fingerprints; latest ones at the end */
     /* TODO: theme seed, style settings */
 };
 
@@ -42,10 +44,21 @@ void init_SiteParams(iSiteParams *d) {
     d->titanPort = 0; /* undefined */
     init_String(&d->titanIdentity);
     d->dismissWarnings = 0;
+    init_StringArray(&d->usedIdentities);
 }
 
 void deinit_SiteParams(iSiteParams *d) {
+    deinit_StringArray(&d->usedIdentities);
     deinit_String(&d->titanIdentity);
+}
+
+static size_t findUsedIdentity_SiteParams_(const iSiteParams *d, const iString *fingerprint) {
+    iConstForEach(StringArray, i, &d->usedIdentities) {
+        if (equal_String(i.value, fingerprint)) {
+            return index_StringArrayConstIterator(&i);
+        }
+    }
+    return iInvalidPos;
 }
 
 iDefineClass(SiteParams)
@@ -128,7 +141,13 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
         set_String(&d->loadParams->titanIdentity, value->value.string);
     }
     else if (!cmp_String(key, "dismissWarnings") && value->type == int64_TomlType) {
-        d->loadParams->dismissWarnings = value->value.int64;
+        d->loadParams->dismissWarnings = (int) value->value.int64;
+    }
+    else if (!cmp_String(key, "usedIdentities") && value->type == string_TomlType) {
+        iRangecc seg = iNullRange;
+        while (nextSplit_Rangecc(range_String(value->value.string), " ", &seg)) {
+            pushBack_StringArray(&d->loadParams->usedIdentities, collectNewRange_String(seg));
+        }
     }
 }
 
@@ -151,6 +170,7 @@ static void save_SiteSpec_(iSiteSpec *d) {
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         iString *buf = new_String();
         iConstForEach(StringHash, i, &d->sites) {
+            iBeginCollect();
             const iBlock *     key    = &i.value->keyBlock;
             const iSiteParams *params = i.value->object;
             format_String(buf, "[%s]\n", cstr_Block(key));
@@ -164,8 +184,15 @@ static void save_SiteSpec_(iSiteSpec *d) {
             if (params->dismissWarnings) {
                 appendFormat_String(buf, "dismissWarnings = 0x%x\n", params->dismissWarnings);
             }
+            if (!isEmpty_StringArray(&params->usedIdentities)) {
+                appendFormat_String(
+                    buf,
+                    "usedIdentities = \"%s\"\n",
+                    cstrCollect_String(joinCStr_StringArray(&params->usedIdentities, " ")));
+            }
             appendCStr_String(buf, "\n");
             write_File(f, utf8_String(buf));
+            iEndCollect();
         }
         delete_String(buf);
     }
@@ -188,14 +215,19 @@ void deinit_SiteSpec(void) {
     deinit_String(&d->saveDir);
 }
 
-void setValue_SiteSpec(const iString *site, enum iSiteSpecKey key, int value) {
-    iSiteSpec *d = &siteSpec_;
+static iSiteParams *findParams_SiteSpec_(iSiteSpec *d, const iString *site) {
     const iString *hashKey = collect_String(lower_String(site));
     iSiteParams *params = value_StringHash(&d->sites, hashKey);
     if (!params) {
         params = new_SiteParams();
         insert_StringHash(&d->sites, hashKey, params);
     }
+    return params;
+}
+
+void setValue_SiteSpec(const iString *site, enum iSiteSpecKey key, int value) {
+    iSiteSpec *d = &siteSpec_;
+    iSiteParams *params = findParams_SiteSpec_(d, site);
     iBool needSave = iFalse;
     switch (key) {
         case titanPort_SiteSpecKey:
@@ -216,12 +248,7 @@ void setValue_SiteSpec(const iString *site, enum iSiteSpecKey key, int value) {
 
 void setValueString_SiteSpec(const iString *site, enum iSiteSpecKey key, const iString *value) {
     iSiteSpec *d = &siteSpec_;
-    const iString *hashKey = collect_String(lower_String(site));
-    iSiteParams *params = value_StringHash(&d->sites, hashKey);
-    if (!params) {
-        params = new_SiteParams();
-        insert_StringHash(&d->sites, hashKey, params);
-    }
+    iSiteParams *params = findParams_SiteSpec_(d, site);
     iBool needSave = iFalse;
     switch (key) {
         case titanIdentity_SiteSpecKey:
@@ -236,6 +263,44 @@ void setValueString_SiteSpec(const iString *site, enum iSiteSpecKey key, const i
     if (needSave) {
         save_SiteSpec_(d);
     }
+}
+
+static void insertOrRemoveString_SiteSpec_(iSiteSpec *d, const iString *site, enum iSiteSpecKey key,
+                                           const iString *value, iBool doInsert) {
+    iSiteParams *params = findParams_SiteSpec_(d, site);
+    iBool needSave = iFalse;
+    switch (key) {
+        case usedIdentities_SiteSpecKey: {
+            const size_t index = findUsedIdentity_SiteParams_(params, value);
+            if (doInsert && index == iInvalidPos) {
+                pushBack_StringArray(&params->usedIdentities, value);
+                needSave = iTrue;
+            }
+            else if (!doInsert && index != iInvalidPos) {
+                remove_StringArray(&params->usedIdentities, index);
+                needSave = iTrue;
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    if (needSave) {
+        save_SiteSpec_(d);
+    }    
+}
+
+void insertString_SiteSpec(const iString *site, enum iSiteSpecKey key, const iString *value) {
+    insertOrRemoveString_SiteSpec_(&siteSpec_, site, key, value, iTrue);
+}
+
+void removeString_SiteSpec(const iString *site, enum iSiteSpecKey key, const iString *value) {
+    insertOrRemoveString_SiteSpec_(&siteSpec_, site, key, value, iFalse);
+}
+
+const iStringArray *strings_SiteSpec(const iString *site, enum iSiteSpecKey key) {
+    const iSiteParams *params = findParams_SiteSpec_(&siteSpec_, site);
+    return &params->usedIdentities;
 }
 
 int value_SiteSpec(const iString *site, enum iSiteSpecKey key) {

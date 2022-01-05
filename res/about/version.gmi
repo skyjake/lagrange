@@ -6,6 +6,30 @@
 ```
 # Release notes
 
+## 1.10
+New features:
+* Added "Paste Preceding Line" in the input prompt dialog. Potential use cases include user-editable sections on a page and suggested/example input values.
+* Identity toolbar menu can be used to switch between alternate identities. If you have used multiple identities on one site, this makes it more convenient to switch between them.
+* Added option to disable cursor blinking in input fields.
+* UI language for Dutch.
+
+Changes and enhancements:
+* Inline image metadata goes under the image instead of possibly overlapping the image caption text.
+* Improved apperance of opened links highlighting. It no longer goes under the side elements on the page.
+* Entry dates in feed links are de-emphasized for improved readability.
+* Revised layout of the Upload dialog. There is a new edit field that lets you modify the file path of the URL. Identity names are in bold.
+* Optimized UI layout procedure and memory use during UI event processing.
+* Audio subsystem is only initialized when actually needed.
+* Prevent state file corruption if the app happens to get killed while state is being saved.
+* Gempub: Open books in 1:2 split mode instead of 1:1.
+* Minor improvements in page caching.
+
+Fixes:
+* Fixed a history caching issue: if there were multiple instances of the same URL in history, only the latest one's content would be used when navigating back/forward.
+* Fixed very narrow input fields causing the app to hang.
+* Fixed initial scroll position in multiline input fields.
+* Fixed lookup results list becoming too narrow.
+
 ## 1.9.5
 * Fixed misshapen button borders (SDL 2.0.16 line drawing workaround).
 * Fixed actions being triggered when navigating via home row keys.

@@ -105,7 +105,7 @@ void load_Visited(iVisited *d, const char *dirPath) {
             char *endp = NULL;
             const unsigned long long ts = strtoull(line.start, &endp, 10);
             if (ts == 0) break;
-            const uint32_t flags = strtoul(skipSpace_CStr(endp), &endp, 16);
+            const uint32_t flags = (uint32_t) strtoul(skipSpace_CStr(endp), &endp, 16);
             const char *urlStart = skipSpace_CStr(endp);
             iVisitedUrl item;
             item.when.ts = (struct timespec){ .tv_sec = ts };

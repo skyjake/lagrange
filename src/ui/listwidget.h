@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "paint.h"
 
+#include <the_Foundation/intset.h>
 #include <the_Foundation/ptrarray.h>
 
 iDeclareType(ListWidget)
@@ -48,6 +49,34 @@ iDeclareObjectConstruction(ListItem)
 iDeclareWidgetClass(ListWidget)
 iDeclareObjectConstruction(ListWidget)
 
+iDeclareType(VisBuf)
+
+enum iScrollMode {
+    normal_ScrollMode,
+    disabledAtTopBothDirections_ScrollMode,
+    disabledAtTopUpwards_ScrollMode,
+    disabled_ScrollMode,
+};
+
+struct Impl_ListWidget {
+    iWidget        widget;
+    iScrollWidget *scroll;
+    iSmoothScroll  scrollY;
+    int            itemHeight;
+    iPtrArray      items;
+    size_t         hoverItem;
+    size_t         dragItem;
+    iInt2          dragOrigin; /* offset from mouse to drag item's top-left corner */
+    int            dragHandleWidth;
+    iClick         click;
+    iIntSet        invalidItems;
+    iVisBuf       *visBuf;
+    enum iScrollMode scrollMode;
+    iBool          noHoverWhileScrolling;
+};
+
+void    init_ListWidget             (iListWidget *);
+
 void    setItemHeight_ListWidget    (iListWidget *, int itemHeight);
 
 void    invalidate_ListWidget       (iListWidget *);
@@ -62,6 +91,8 @@ int     itemHeight_ListWidget       (const iListWidget *);
 int     scrollPos_ListWidget        (const iListWidget *);
 
 void    setScrollPos_ListWidget     (iListWidget *, int pos);
+void    setScrollMode_ListWidget    (iListWidget *, enum iScrollMode mode);
+void    setDragHandleWidth_ListWidget(iListWidget *, int dragHandleWidth);
 void    scrollToItem_ListWidget     (iListWidget *, size_t index, uint32_t span);
 void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    scrollOffsetSpan_ListWidget (iListWidget *, int offset, uint32_t span);

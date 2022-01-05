@@ -139,7 +139,7 @@ struct Impl_GmRun {
 
         uint32_t font      : 14;
         uint32_t mediaType : 3; /* note: max_MediaType means preformatted block */
-        uint32_t mediaId   : 11; /* zero if not an image */
+        uint32_t mediaId   : 11;
         uint32_t lineType  : 3;
         uint32_t isLede    : 1;
     };

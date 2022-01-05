@@ -76,7 +76,6 @@ static void updateHeight_Banner_(iBanner *d) {
     }
     const size_t numItems = size_Array(&d->items);
     if (numItems) {
-        const int innerPad = gap_UI;
         iConstForEach(Array, i, &d->items) {
             const iBannerItem *item = i.value;
             d->rect.size.y += item->height;
