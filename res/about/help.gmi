@@ -424,7 +424,7 @@ The "ANSI escapes" setting controls which ANSI escape codes are enabled:
 
 * "FG Color" enables changes to text foreground color.
 * "BG Color" enables changes to text background color.
-* "Font Style" enables changing the font style: bold, italic, or monospace. (These correspond to codes 1, 3, and 11.)
+* "Font Style" enables changing the font style: bold, light, italic, regular, or monospace. (These correspond to codes 1, 2, 3, 10, and 11.)
 
 A warning banner is displayed if any codes are detected on a page. This helps you be aware of potential visual artifacts, like text color that is being forced to black regardless of the page background color. Click on the warning to dismiss it on a per-site basis.
 
