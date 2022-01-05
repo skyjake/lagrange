@@ -1393,7 +1393,7 @@ void createUserInterface_Root(iRoot *d) {
                         { "${menu.page.copyurl}", 0, 0, "document.copylink" },
                         { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
                         { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
-                    12);
+                    14);
                 setId_Widget(as_Widget(pageMenuButton), "pagemenubutton");
                 setFont_LabelWidget(pageMenuButton, uiContentBold_FontId);
                 setAlignVisually_LabelWidget(pageMenuButton, iTrue);
