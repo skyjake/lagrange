@@ -1521,8 +1521,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
                 if (flag == subscribed_BookmarkFlag && (bm->flags & flag)) {
                     removeEntries_Feeds(item->id); /* get rid of unsubscribed entries */
+                }
                 bm->flags ^= flag;
-                    }
                 postCommand_App("bookmarks.changed");
             }
             return iTrue;

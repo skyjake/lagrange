@@ -2547,17 +2547,16 @@ iWidget *makePreferences_Widget(void) {
             { "buttons id:prefs.mono", 0, 0, (const void *) monoFontItems },
             { "padding" },
             { "dropdown id:prefs.font.monodoc", 0, 0, (const void *) constData_Array(makeFontItems_("monodoc")) },
-            { "toggle id:prefs.font.warnmissing" },
             { "padding" },
+            { "toggle id:prefs.font.warnmissing" },
             { "heading id:prefs.gemtext.ansi" },
             { "toggle id:prefs.gemtext.ansi.fg" },
             { "toggle id:prefs.gemtext.ansi.bg" },
             { "toggle id:prefs.gemtext.ansi.fontstyle" },
-//            { "toggle id:prefs.font.smooth" },
 //            { "padding" },
 //            { "dropdown id:prefs.font.ui", 0, 0, (const void *) constData_Array(makeFontItems_("ui")) },
-            { "button text:" fontpack_Icon " " uiTextAction_ColorEscape "${menu.fonts}", 0, 0, "!open url:about:fonts" },
             { "padding" },
+            { "button text:" fontpack_Icon " " uiTextAction_ColorEscape "${menu.fonts}", 0, 0, "!open url:about:fonts" },
             { NULL }  
         };
         const iMenuItem stylePanelItems[] = {

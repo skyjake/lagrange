@@ -226,8 +226,13 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         *meta = uiTextDisabled_ColorId;
     }
     if (isSel) {
-        if (!d->flags.checkMark) {     
-            *bg = uiBackgroundSelected_ColorId;
+        if (!d->flags.checkMark) {
+            if (isMenuItem) {
+                *bg = uiBackgroundUnfocusedSelection_ColorId;
+            }
+            else {
+                *bg = uiBackgroundSelected_ColorId;
+            }
             if (!isKeyRoot) {
                 *bg = isDark_ColorTheme(colorTheme_App()) ? uiBackgroundUnfocusedSelection_ColorId
                                                           : uiMarked_ColorId;

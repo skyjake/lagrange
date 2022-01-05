@@ -5,7 +5,7 @@ Lagrange was created by Jaakko Keränen (<jaakko.keranen@iki.fi>) in July 2020. 
 Legend: `C` code, `T` translation
 
 ```
-C  2757  Jaakko Keränen <jaakko.keranen@iki.fi>
+C  2975  Jaakko Keränen <jaakko.keranen@iki.fi>
 CT   43  Nikolay Korotkiy <sikmir@gmail.com>
  T   41  Olga Smirnova <mistresssilvara@hotmail.com>
  T   39  Alyssa Liddell <e-liss@tuta.io>
