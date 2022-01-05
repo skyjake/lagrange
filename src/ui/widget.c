@@ -1961,7 +1961,8 @@ iBool isAffectedByVisualOffset_Widget(const iWidget *d) {
 }
 
 void setFocus_Widget(iWidget *d) {
-    iWindow *win = get_Window();
+    iWindow *win = d ? window_Widget(d) : get_Window();
+    iAssert(win);
     if (win->focus != d) {
         if (win->focus) {
             iAssert(!contains_PtrSet(win->focus->root->pendingDestruction, win->focus));
@@ -1974,6 +1975,13 @@ void setFocus_Widget(iWidget *d) {
             postCommand_Widget(d, "focus.gained");
         }
     }
+}
+
+void setKeyboardGrab_Widget(iWidget *d) {
+    iWindow *win = d ? window_Widget(d) : get_Window();
+    iAssert(win);
+    win->focus = d;
+    /* no notifications sent */
 }
 
 iWidget *focus_Widget(void) {

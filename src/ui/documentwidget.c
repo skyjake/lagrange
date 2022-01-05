@@ -55,6 +55,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "visbuf.h"
 #include "visited.h"
 
+#if defined (iPlatformAppleDesktop)
+#   include "macos.h"
+#endif
 #if defined (iPlatformAppleMobile)
 #   include "ios.h"
 #endif
@@ -469,11 +472,18 @@ static void enableActions_DocumentWidget_(iDocumentWidget *d, iBool enable) {
 }
 
 static void setLinkNumberMode_DocumentWidget_(iDocumentWidget *d, iBool set) {
-    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, set);
-    /* Children have priority when handling events. */
-    enableActions_DocumentWidget_(d, !set);
-    if (d->menu) {
-        setFlags_Widget(d->menu, disabled_WidgetFlag, set);
+    if (((d->flags & showLinkNumbers_DocumentWidgetFlag) != 0) != set) {
+        iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, set);
+        /* Children have priority when handling events. */
+        enableActions_DocumentWidget_(d, !set);
+#if defined (iPlatformAppleDesktop)
+        enableMenuItemsOnHomeRow_MacOS(!set);
+#endif
+        /* Ensure all keyboard events come here first. */
+        setKeyboardGrab_Widget(set ? as_Widget(d) : NULL);
+        if (d->menu) {
+            setFlags_Widget(d->menu, disabled_WidgetFlag, set);
+        }
     }
 }
 

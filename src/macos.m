@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_timer.h>
 #include <SDL_syswm.h>
+#include <the_Foundation/stringset.h>
 
 #import <AppKit/AppKit.h>
 
@@ -439,6 +440,13 @@ void enableMenu_MacOS(const char *menuLabel, iBool enable) {
     [menuItem setEnabled:enable];
 }
 
+void enableMenuIndex_MacOS(int index, iBool enable) {
+    NSApplication *app = [NSApplication sharedApplication];
+    NSMenu *appMenu = [app mainMenu];
+    NSMenuItem *menuItem = [appMenu itemAtIndex:index];
+    [menuItem setEnabled:enable];        
+}
+
 void enableMenuItem_MacOS(const char *menuItemCommand, iBool enable) {
     NSApplication *app = [NSApplication sharedApplication];
     NSMenu *appMenu = [app mainMenu];
@@ -511,6 +519,47 @@ void enableMenuItemsByKey_MacOS(int key, int kmods, iBool enable) {
         }
     }
     delete_String(keyEquiv);
+}
+
+void enableMenuItemsOnHomeRow_MacOS(iBool enable) {
+    iStringSet *homeRowKeys = new_StringSet();
+    const char *keys[] = { /* Note: another array in documentwidget.c */
+        "f", "d", "s", "a",
+        "j", "k", "l",
+        "r", "e", "w", "q",
+        "u", "i", "o", "p",
+        "v", "c", "x", "z",
+        "m", "n",
+        "g", "h",
+        "b",
+        "t", "y"
+    };
+    iForIndices(i, keys) {
+        iString str;
+        initCStr_String(&str, keys[i]);
+        insert_StringSet(homeRowKeys, &str);
+        deinit_String(&str);
+    }
+    NSApplication *app = [NSApplication sharedApplication];
+    NSMenu *appMenu = [app mainMenu];
+    for (NSMenuItem *mainMenuItem in appMenu.itemArray) {
+        NSMenu *menu = mainMenuItem.submenu;
+        if (menu) {
+            for (NSMenuItem *menuItem in menu.itemArray) {
+                if (menuItem.keyEquivalentModifierMask == 0) {
+                    iString equiv;
+                    initCStr_String(&equiv, [menuItem.keyEquivalent
+                                                cStringUsingEncoding:NSUTF8StringEncoding]);
+                    if (contains_StringSet(homeRowKeys, &equiv)) {
+                        [menuItem setEnabled:enable];
+                        [menu setAutoenablesItems:NO];
+                    }
+                    deinit_String(&equiv);
+                }
+            }
+        }
+    }
+    iRelease(homeRowKeys);
 }
 
 static void setShortcut_NSMenuItem_(NSMenuItem *item, int key, int kmods) {
