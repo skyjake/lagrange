@@ -302,7 +302,8 @@ void        scrollInfo_Widget           (const iWidget *, iWidgetScrollInfo *inf
 
 int         backgroundFadeColor_Widget  (void);
 
-void        setFocus_Widget         (iWidget *);
+void        setFocus_Widget         (iWidget *); /* widget must be flagged `focusable` */
+void        setKeyboardGrab_Widget  (iWidget *); /* sets focus on any widget */
 iWidget *   focus_Widget            (void);
 void        setHover_Widget         (iWidget *);
 iWidget *   hover_Widget            (void);
