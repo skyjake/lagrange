@@ -266,9 +266,9 @@ struct Impl_InputWidget {
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
 
 static int extraPaddingHeight_InputWidget_(const iInputWidget *d) {
-    if (isPortraitPhone_App() && !cmp_String(id_Widget(&d->widget), "url")) {
-        /* Special case: the URL input field gets taller in portrait phone mode to make
-           the tap target more generous. */
+    if ((isPortraitPhone_App() || deviceType_App() == tablet_AppDeviceType) &&
+        !cmp_String(id_Widget(&d->widget), "url")) {
+        /* Make the tap target more generous. */
         return 2.5f * gap_UI;
     }
     return 1.25f * gap_UI;
