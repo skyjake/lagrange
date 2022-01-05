@@ -1684,6 +1684,22 @@ void useSheetStyle_Widget(iWidget *d) {
                     iTrue);
 }
 
+static iLabelWidget *addDialogTitle_(iWidget *dlg, const char *text, const char *id) {
+    iLabelWidget *label = new_LabelWidget(text, NULL);
+    addChildFlags_Widget(dlg, iClob(label), alignLeft_WidgetFlag | frameless_WidgetFlag |
+                                                resizeToParentWidth_WidgetFlag);
+    setAllCaps_LabelWidget(label, iTrue);
+    setTextColor_LabelWidget(label, uiHeading_ColorId);
+    if (id) {
+        setId_Widget(as_Widget(label), id);
+    }
+    return label;
+}
+
+iLabelWidget *addDialogTitle_Widget(iWidget *dlg, const char *text, const char *idOrNull) {
+    return addDialogTitle_(dlg, text, idOrNull);
+}
+
 static void acceptValueInput_(iWidget *dlg) {
     const iInputWidget *input = findChild_Widget(dlg, "input");
     if (!isEmpty_String(id_Widget(dlg))) {
@@ -1858,10 +1874,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
         addChild_Widget(parent, iClob(dlg));
     }
     if (deviceType_App() == desktop_AppDeviceType) { /* conserve space on mobile */
-    setId_Widget(
-            addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)),
-                                 frameless_WidgetFlag),
-        "valueinput.title");
+        addDialogTitle_(dlg, title, "valueinput.title");
     }
     iLabelWidget *promptLabel;
     setId_Widget(addChildFlags_Widget(
@@ -2007,9 +2020,7 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     }
     iWidget *dlg = makeSheet_Widget("");
     setCommandHandler_Widget(dlg, messageHandler_);
-    setId_Widget(
-        addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag),
-        "question.title");
+    addDialogTitle_(dlg, title, "question.title");
     iLabelWidget *msgLabel;
     setId_Widget(addChildFlags_Widget(dlg,
                                       iClob(msgLabel = new_LabelWidget(msg, NULL)),
@@ -2186,28 +2197,6 @@ static const iArray *makeFontItems_(const char *id) {
                           0,
                           format_CStr("!font.set %s:%s", id, cstr_String(&spec->id)) });
     }
-#if 0
-    const struct {
-        const char *   name;
-        enum iTextFont cfgId;
-    } fonts[] = { { "Nunito", nunito_TextFont },
-                  { "Source Sans 3", sourceSans3_TextFont },
-                  { "Fira Sans", firaSans_TextFont },
-                  { "---", -1 },
-                  { "Literata", literata_TextFont },
-                  { "Tinos", tinos_TextFont },
-                  { "---", -1 },
-                  { "Iosevka", iosevka_TextFont } };
-    iForIndices(i, fonts) {
-        pushBack_Array(items,
-                       &(iMenuItem){ fonts[i].name,
-                                     0,
-                                     0,
-                                     fonts[i].cfgId >= 0
-                                         ? format_CStr("!%s.set arg:%d", id, fonts[i].cfgId)
-                                         : NULL });
-    }
-#endif
     pushBack_Array(items, &(iMenuItem){ NULL }); /* terminator */
     return items;
 }
@@ -2222,13 +2211,6 @@ static void addFontButtons_(iWidget *parent, const char *id) {
     setId_Widget(as_Widget(button), format_CStr("prefs.font.%s", id));
     addChildFlags_Widget(parent, iClob(button), alignLeft_WidgetFlag);
 }
-
-#if 0
-static int cmp_MenuItem_(const void *e1, const void *e2) {
-    const iMenuItem *a = e1, *b = e2;
-    return iCmpStr(a->label, b->label);
-}
-#endif
 
 void updatePreferencesLayout_Widget(iWidget *prefs) {
     if (!prefs || deviceType_App() != desktop_AppDeviceType) {
@@ -2635,9 +2617,7 @@ iWidget *makePreferences_Widget(void) {
         return dlg;
     }
     iWidget *dlg = makeSheet_Widget("prefs");
-    setAllCaps_LabelWidget(addChildFlags_Widget(dlg,
-                         iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.prefs}", NULL)),
-                         frameless_WidgetFlag), iTrue);
+    addDialogTitle_(dlg, "${heading.prefs}", NULL);
     iWidget *tabs = makeTabs_Widget(dlg);
     setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
     setId_Widget(tabs, "prefs.tabs");
@@ -3021,11 +3001,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     }
     else {
         dlg = makeSheet_Widget("bmed");
-    setId_Widget(addChildFlags_Widget(
-                     dlg,
-                     iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.bookmark.edit}", NULL)),
-                     frameless_WidgetFlag),
-                 "bmed.heading");
+    addDialogTitle_(dlg, "${heading.bookmark.edit}", "bmed.heading");
     iWidget *headings, *values;
     addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
     iInputWidget *inputs[4];
@@ -3205,9 +3181,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     }
     else {
         dlg = makeSheet_Widget("feedcfg");
-        setId_Widget(
-            addChildFlags_Widget(dlg, iClob(new_LabelWidget(headingText, NULL)), frameless_WidgetFlag),
-            "feedcfg.heading");
+        addDialogTitle_(dlg, headingText, "feedcfg.heading");
         iWidget *headings, *values;
         addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
         iInputWidget *input = new_InputWidget(0);
@@ -3286,11 +3260,7 @@ iWidget *makeIdentityCreation_Widget(void) {
     }
     else {
         dlg = makeSheet_Widget("ident");
-        setId_Widget(addChildFlags_Widget(
-                         dlg,
-                         iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.newident}", NULL)),
-                         frameless_WidgetFlag),
-                     "ident.heading");
+        addDialogTitle_(dlg, "${heading.newident}", "ident.heading");
         iWidget *page = new_Widget();
         addChildFlags_Widget(
             dlg, iClob(new_LabelWidget("${dlg.newident.rsa.selfsign}", NULL)), frameless_WidgetFlag);
@@ -3428,10 +3398,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
         dlg = makeSheet_Widget("xlt");
         setFlags_Widget(dlg, keepOnTop_WidgetFlag, iFalse);
         dlg->minSize.x = 70 * gap_UI;
-        addChildFlags_Widget(
-            dlg,
-            iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.translate}", NULL)),
-            frameless_WidgetFlag);
+        addDialogTitle_(dlg, "${heading.translate}", NULL);
         addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
         iWidget *headings, *values;
         iWidget *page;

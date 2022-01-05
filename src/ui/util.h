@@ -317,6 +317,7 @@ iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
 
 iLabelWidget *dialogAcceptButton_Widget (const iWidget *);
 
+iLabelWidget *addDialogTitle_Widget     (iWidget *, const char *text, const char *idOrNull);
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,
                                                   iInputWidget *input);

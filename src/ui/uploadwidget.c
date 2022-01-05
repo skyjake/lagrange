@@ -224,12 +224,7 @@ void init_UploadWidget(iUploadWidget *d) {
     else {
         useSheetStyle_Widget(w);
         setFlags_Widget(w, overflowScrollable_WidgetFlag, iFalse);
-        setAllCaps_LabelWidget(
-            addChildFlags_Widget(
-                w,
-                iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.upload}", NULL)),
-                frameless_WidgetFlag),
-            iTrue);
+        addDialogTitle_Widget(w, "${heading.upload}", NULL);
         iWidget *headings, *values;
         /* URL path. */ {
             iWidget *page = makeTwoColumns_Widget(&headings, &values);

@@ -5129,7 +5129,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
                             { "---" },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
-                        16);
+                        17);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
