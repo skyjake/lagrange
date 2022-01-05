@@ -7,7 +7,10 @@
 # Release notes
 
 ## 1.9.5
-* Fixed misshapen button borders due to an SDL line drawing glitch.
+* Fixed misshapen button borders (SDL 2.0.16 line drawing workaround).
+* Fixed actions being triggered when navigating via home row keys.
+* macOS: Fixed native menu items being triggered when navigating via home row keys.
+* macOS: Fixed native menu items triggering when changing key bindings.
 
 ## 1.9.4
 * Fixed crash when a link is missing both URL and label (just a `=>`).
