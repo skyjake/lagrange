@@ -655,8 +655,23 @@ iDeclareType(AttributedRun)
 enum iScript {
     unspecified_Script,
     arabic_Script,
+    bengali_Script,
     devanagari_Script,
+    oriya_Script,
+    tamil_Script,
+    max_Script
 };
+
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
+static const hb_script_t hbScripts_[max_Script] = {
+    0,
+    HB_SCRIPT_ARABIC,
+    HB_SCRIPT_BENGALI,
+    HB_SCRIPT_DEVANAGARI,
+    HB_SCRIPT_ORIYA,
+    HB_SCRIPT_TAMIL,
+};
+#endif
 
 struct Impl_AttributedRun {
     iRangei     logical; /* UTF-32 codepoint indices in the logical-order text */
@@ -998,8 +1013,20 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         }
         else
 #endif
-        if (!iCmpStr(script_Char(ch), "Devanagari")) {
-            run.flags.script = devanagari_Script;
+        {
+            const char *scr = script_Char(ch);
+            if (!iCmpStr(scr, "Bengali")) {
+                run.flags.script = bengali_Script;
+            }
+            else if (!iCmpStr(scr, "Devanagari")) {
+                run.flags.script = devanagari_Script;
+            }
+            else if (!iCmpStr(scr, "Oriya")) {
+                run.flags.script = oriya_Script;
+            }
+            else if (!iCmpStr(scr, "Tamil")) {
+                run.flags.script = tamil_Script;
+            }
         }
     }
     if (!isEmpty_Range(&run.logical)) {
@@ -1420,15 +1447,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
         hb_buffer_set_content_type(buf->hb, HB_BUFFER_CONTENT_TYPE_UNICODE);
         hb_buffer_set_direction(buf->hb, HB_DIRECTION_LTR); /* visual */
-        switch (run->flags.script) {
-            case arabic_Script:
-                hb_buffer_set_script(buf->hb, HB_SCRIPT_ARABIC);
-                break;
-            case devanagari_Script:
-                hb_buffer_set_script(buf->hb, HB_SCRIPT_DEVANAGARI);
-                break;
-            default:
-                break;
+        const hb_script_t script = hbScripts_[run->flags.script];
+        if (script) {
+            hb_buffer_set_script(buf->hb, script);
         }
     }
     if (isMonospaced) {
