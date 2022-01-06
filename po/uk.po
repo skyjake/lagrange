@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-12-23 11:10+0000\n"
+"PO-Revision-Date: 2022-01-08 14:50+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -524,13 +524,13 @@ msgid "pageinfo.domain.match"
 msgstr "Доменне ім'я збігається"
 
 msgid "heading.save"
-msgstr "ФАЙЛ ЗБЕРЕЖЕНО"
+msgstr "Файл Збережено"
 
 msgid "heading.save.incomplete"
-msgstr "СТОРІНКА НЕПОВНА"
+msgstr "Сторінка неповна"
 
 msgid "dlg.save.incomplete"
-msgstr "ЗАВАНТАЖЕННЯ ЇЇ ВМІСТУ ПРОДОВЖУЄТЬСЯ."
+msgstr "Завантаження її вмісту ще триває."
 
 #, c-format
 msgid "dlg.import.found"
@@ -556,7 +556,7 @@ msgid "link.browser"
 msgstr "Відкрити посилання у основному переглядачі"
 
 msgid "heading.file.delete"
-msgstr "ВИДАЛИТИ ФАЙЛ"
+msgstr "Видалити файл"
 
 msgid "dlg.file.delete.confirm"
 msgstr "Справді бажаєте видалити цей файл?"
@@ -631,13 +631,13 @@ msgid "history.clear"
 msgstr "Очистити історію…"
 
 msgid "heading.history.clear"
-msgstr "ЧИЩЕННЯ ІСТОРІЇ"
+msgstr "Чищення історії"
 
 msgid "dlg.history.clear"
 msgstr "Очистити історію"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "ВИДАЛИТИ ЗАКЛАДКИ"
+msgstr "Видалення закладок"
 
 #, c-format
 msgid "dlg.bookmarks.delete"
@@ -688,10 +688,10 @@ msgid "ident.export"
 msgstr "Експортувати"
 
 msgid "heading.ident.use"
-msgstr "ВИКОРИСТАННЯ ІДЕНТИЧНОСТІ"
+msgstr "Використання ідентичності"
 
 msgid "heading.ident.notes"
-msgstr "ПРИМІТКИ ІДЕНТИЧНОСТІ"
+msgstr "Примітки про ідентичність"
 
 # %s refers to name of an identity.
 #, c-format
@@ -711,7 +711,7 @@ msgid "error.server.msg"
 msgstr "Сервер повернув таке повідомлення:"
 
 msgid "heading.pageinfo"
-msgstr "ІНФОРМАЦІЯ ПРО СТОРІНКУ"
+msgstr "Інформація Про Сторінку"
 
 msgid "pageinfo.cert.ca.verified"
 msgstr "Підтверджено ЦС"
@@ -754,16 +754,16 @@ msgid "dlg.save.opendownload"
 msgstr "Відкрити завантажений файл"
 
 msgid "heading.save.error"
-msgstr "ПОМИЛКА ЗБЕРЕЖЕННЯ ФАЙЛУ"
+msgstr "Помилка збереження файлу"
 
 msgid "heading.import.bookmarks"
-msgstr "ІМПОРТ ЗАКЛАДОК"
+msgstr "Імпорт закладок"
 
 msgid "dlg.import.notnew"
 msgstr "Усі посилання на сторінці вже додані до закладок."
 
 msgid "heading.autoreload"
-msgstr "АВТООНОВЛЕННЯ"
+msgstr "Автооновлення"
 
 msgid "reload.never"
 msgstr "Ніколи"
@@ -813,7 +813,7 @@ msgid "dlg.file.delete"
 msgstr "Видалити"
 
 msgid "heading.openlink"
-msgstr "ВІДКРИТИ ПОСИЛАННЯ"
+msgstr "Відкрити посилання"
 
 #, c-format
 msgid "dlg.openlink.confirm"
@@ -839,16 +839,16 @@ msgid "dlg.certwarn.domain.expired"
 msgstr "Отриманий сертифікат протермінований ТА належить іншому домену."
 
 msgid "heading.certimport"
-msgstr "ІМПОРТ ІДЕНТИЧНОСТІ"
+msgstr "Імпорт Ідентичності"
 
 msgid "dlg.certimport.notfound"
 msgstr "Не вдалося знайти сертифікат або закритий ключ."
 
 msgid "heading.certimport.pasted"
-msgstr "ВСТАВЛЕНО З БУФЕРА ОБМІНУ"
+msgstr "Вставлено з буфера обміну"
 
 msgid "heading.certimport.dropped"
-msgstr "ПЕРЕТЯГНУТО ФАЙЛ"
+msgstr "Перетягнуто файл"
 
 # button in the mobile New Identity dialog
 msgid "dlg.certimport.pickfile"
@@ -870,10 +870,10 @@ msgid "dlg.certimport.nokey"
 msgstr "Закритий ключ відсутній"
 
 msgid "link.hint.audio"
-msgstr "Відтворити аудіо"
+msgstr "Аудіозапис"
 
 msgid "link.hint.image"
-msgstr "Показати зображення"
+msgstr "Зображення"
 
 msgid "bookmark.title.blank"
 msgstr "Порожня сторінка"
@@ -926,7 +926,7 @@ msgid "ident.delete"
 msgstr "Видалити ідентичність…"
 
 msgid "heading.ident.delete"
-msgstr "ВИДАЛЕННЯ ІДЕНТИЧНОСТІ"
+msgstr "Видалення ідентичності"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
@@ -942,7 +942,7 @@ msgstr ""
 "сертифікати."
 
 msgid "heading.unsub"
-msgstr "ВІДПИСКА"
+msgstr "Відписка"
 
 #, c-format
 msgid "dlg.confirm.unsub"
@@ -997,7 +997,7 @@ msgid "heading.lookup.other"
 msgstr "ІНШІ"
 
 msgid "heading.upload"
-msgstr "ПЕРЕДАЧА ЗА ДОПОМОГОЮ TITAN"
+msgstr "Передача за допомогою Titan"
 
 msgid "upload.id"
 msgstr "Ідентичність:"
@@ -1026,7 +1026,7 @@ msgid "heading.lookup.pagecontent"
 msgstr "ВМІСТ СТОРІНКИ"
 
 msgid "menu.page.upload"
-msgstr "Передати сторінку з Titan…"
+msgstr "Передати за допомогою Titan…"
 
 msgid "hint.upload.text"
 msgstr "Введіть текст для передачі"
@@ -1050,7 +1050,7 @@ msgid "upload.port"
 msgstr "Порт…"
 
 msgid "heading.uploadport"
-msgstr "ПОРТ ПЕРЕДАЧІ TITAN"
+msgstr "Порт передачі Titan"
 
 msgid "dlg.uploadport.set"
 msgstr "Вказати порт"
@@ -1060,7 +1060,7 @@ msgid "dlg.upload.pickfile"
 msgstr "Вибрати файл"
 
 msgid "heading.translate"
-msgstr "ПЕРЕКЛАД СТОРІНКИ"
+msgstr "Переклад сторінки"
 
 msgid "heading.upload.file"
 msgstr "Файл"
@@ -1172,7 +1172,7 @@ msgid "lang.tok"
 msgstr "Токі-пона"
 
 msgid "heading.newident"
-msgstr "НОВА ІДЕНТИЧНІСТЬ"
+msgstr "Нова ідентичність"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Створення самопідписаного 2048-розрядного RSA сертифікату."
@@ -1223,7 +1223,7 @@ msgid "dlg.newident.more"
 msgstr "Ще…"
 
 msgid "heading.newident.missing"
-msgstr "ВІДСУТНЯ ІНФОРМАЦІЯ"
+msgstr "Відсутня інформація"
 
 msgid "dlg.newindent.missing.commonname"
 msgstr "Потрібно вказати звичайне ім'я."
@@ -1236,10 +1236,10 @@ msgstr ""
 "• 2021-12-31 23:59:59"
 
 msgid "heading.feedcfg"
-msgstr "НАЛАШТУВАННЯ СТРІЧКИ"
+msgstr "Налаштування стічки"
 
 msgid "heading.subscribe"
-msgstr "ПІДПИСКА НА СТОРІНКУ"
+msgstr "Підписка на сторінку"
 
 msgid "dlg.feed.title"
 msgstr "Заголовок:"
@@ -1254,7 +1254,7 @@ msgid "dlg.feed.sub"
 msgstr "Підписатися"
 
 msgid "heading.bookmark.add"
-msgstr "ДОДАТИ ЗАКЛАДКУ"
+msgstr "Додати закладку"
 
 msgid "dlg.bookmark.save"
 msgstr "Збереги закладку"
@@ -1269,7 +1269,7 @@ msgid "dlg.newident.create"
 msgstr "Створити ідентичність"
 
 msgid "heading.newident.date.bad"
-msgstr "НЕДІЙСНА ДАТА"
+msgstr "Недійсна дата"
 
 msgid "dlg.newident.date.past"
 msgstr "Термін дії має закінчуватися у майбутньому."
@@ -1281,7 +1281,7 @@ msgid "dlg.feed.type.headings"
 msgstr "Нові заголовки"
 
 msgid "heading.bookmark.edit"
-msgstr "РЕДАГУВАННЯ ЗАКЛАДКИ"
+msgstr "Редагування закладки"
 
 msgid "dlg.bookmark.url"
 msgstr "URL:"
@@ -1293,10 +1293,10 @@ msgid "dlg.bookmark.icon"
 msgstr "Значок:"
 
 msgid "heading.bookmark.tags"
-msgstr "ОСОБЛИВІ МІТКИ"
+msgstr "Особливі мітки"
 
 msgid "heading.addfolder"
-msgstr "ДОДАТИ ТЕКУ"
+msgstr "Додати теку"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Нова тека"
@@ -1305,7 +1305,7 @@ msgid "dlg.addfolder.prompt"
 msgstr "Назва створюваної теки:"
 
 msgid "heading.prefs.certs"
-msgstr "СЕРТИФІКАТИ"
+msgstr "Сертифікати"
 
 # tab button
 msgid "heading.prefs.colors"
@@ -1318,11 +1318,11 @@ msgid "dlg.addfolder"
 msgstr "Додати теку"
 
 msgid "heading.prefs"
-msgstr "НАЛАШТУВАННЯ"
+msgstr "Налаштування"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "НАЛАШТУВАННЯ"
+msgstr "Налаштування"
 
 # tab button
 msgid "heading.prefs.general"
@@ -1341,22 +1341,22 @@ msgid "heading.prefs.network"
 msgstr "Мережа"
 
 msgid "heading.prefs.paragraph"
-msgstr "АБЗАЦ"
+msgstr "Абзац"
 
 msgid "heading.prefs.uitheme"
-msgstr "КОЛЬОРИ ІК"
+msgstr "Кольори ІК"
 
 msgid "heading.prefs.pagecontent"
-msgstr "КОЛЬОРИ СТОРІНКИ"
+msgstr "Кольори сторінки"
 
 msgid "heading.prefs.proxies"
-msgstr "ПРОКСІ"
+msgstr "Проксі"
 
 msgid "heading.prefs.scrolling"
-msgstr "ПРОКРУЧУВАННЯ"
+msgstr "Прокручування"
 
 msgid "heading.prefs.sizing"
-msgstr "РОЗМІРИ"
+msgstr "Розміри"
 
 # tab button
 msgid "heading.prefs.style"
@@ -1373,7 +1373,7 @@ msgid "prefs.hoverlink"
 msgstr "Показувати URL при наведенні:"
 
 msgid "heading.prefs.widelayout"
-msgstr "ШИРОКИЙ МАКЕТ"
+msgstr "Широкий макет"
 
 msgid "prefs.searchurl"
 msgstr "URL пошуку:"
@@ -1807,7 +1807,7 @@ msgid "keys.split.item"
 msgstr "Меню розділеного перегляду:"
 
 msgid "keys.upload"
-msgstr "Передати сторінку з Titan"
+msgstr "Передати за допомогою Titan"
 
 msgid "error.badstatus"
 msgstr "Невідомий код стану"
@@ -2016,7 +2016,7 @@ msgid "prefs.bookmarks.addbottom"
 msgstr "Додати закладки у кінець списку:"
 
 msgid "prefs.font.ui"
-msgstr "ІК:"
+msgstr "Інтерфейс Користувача:"
 
 msgid "prefs.font.heading"
 msgstr "Заголовки:"
@@ -2103,7 +2103,7 @@ msgid "fontpack.delete"
 msgstr "Назавжди видалити \"%s\""
 
 msgid "heading.fontpack.delete"
-msgstr "ВИДАЛЕННЯ ПАКЕТУ ШРИФТІВ"
+msgstr "Видалення пакету шрифтів"
 
 msgid "dlg.fontpack.delete"
 msgstr "Видалити пакет шрифту"
@@ -2129,13 +2129,13 @@ msgid "dlg.dismiss.warning"
 msgstr "Усунути попередження"
 
 msgid "heading.dismiss.warning"
-msgstr "УСУНУТИ ПОПЕРЕДЖЕННЯ?"
+msgstr "Усунути попередження?"
 
 msgid "dlg.fontpack.classic"
 msgstr "Завантажити пакет шрифтів (25 МБ)"
 
 msgid "heading.fontpack.classic"
-msgstr "ЗАВАНТАЖИТИ ПАКЕТ ШРИФТІВ"
+msgstr "Завантажити пакет шрифтів"
 
 msgid "dlg.fontpack.classic.msg"
 msgstr ""
@@ -2170,3 +2170,91 @@ msgstr "24-годинний час"
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
 msgstr "Прочитати всі"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Панель інструментів"
+
+msgid "prefs.toolbaraction1"
+msgstr "Кнопка 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Кнопка 2"
+
+msgid "prefs.blink"
+msgstr "Моргання курсору:"
+
+msgid "keys.upload.edit"
+msgstr "Редагувати сторінку за дпомогою Titan"
+
+msgid "menu.open.external"
+msgstr "Відкрити в іншому додатку"
+
+msgid "sidebar.action.history.clear"
+msgstr "Очистити"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Приховати панель ідентичностей"
+
+msgid "menu.home"
+msgstr "Додому"
+
+msgid "menu.identities"
+msgstr "Керувати ідентичностями"
+
+msgid "sidebar.close"
+msgstr "Готово"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Нова тека"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Редагувати"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Використовувати %s"
+
+msgid "sidebar.empty.unread"
+msgstr "Непрочитані дописи відсутні"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Вставити попередній рядок"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Показати в Finder"
+
+msgid "menu.share"
+msgstr "Поділитися"
+
+msgid "menu.page.upload.edit"
+msgstr "Редагувати сторінку за допомогою Titan…"
+
+msgid "heading.upload.id"
+msgstr "Авторизація"
+
+msgid "menu.upload.export"
+msgstr "Експортувати текст"
+
+msgid "menu.upload.delete"
+msgstr "Видалити все"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Справді видалити все (незворотньо)"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Вміст"
+
+msgid "hint.upload.path"
+msgstr "Шлях URL"
+
+msgid "hint.upload.token.long"
+msgstr "токен — див. вказівки сервера"
