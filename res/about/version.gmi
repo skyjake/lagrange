@@ -30,6 +30,7 @@ Changes and enhancements:
 * Prevent state file corruption if the app happens to get killed while state is being saved.
 * Gempub: Open books in 1:2 split mode instead of 1:1.
 * Minor improvements in page caching.
+* Detect when text is Devanagari.
 
 Fixes:
 * Fixed a history caching issue: if there were multiple instances of the same URL in history, only the latest one's content would be used when navigating back/forward.

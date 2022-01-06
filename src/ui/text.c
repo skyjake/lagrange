@@ -651,6 +651,12 @@ static iBool isControl_Char_(iChar c) {
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(AttributedRun)
+    
+enum iScript {
+    unspecified_Script,
+    arabic_Script,
+    devanagari_Script,
+};
 
 struct Impl_AttributedRun {
     iRangei     logical; /* UTF-32 codepoint indices in the logical-order text */
@@ -660,8 +666,7 @@ struct Impl_AttributedRun {
     iColor      bgColor_; /* any RGB color; A > 0 */
     struct {
         uint8_t isLineBreak : 1;
-//        uint8_t isRTL : 1;
-        uint8_t isArabic : 1; /* Arabic script detected */
+        uint8_t script      : 7; /* if script detected */
     } flags;
 };
 
@@ -753,7 +758,7 @@ static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, i
 #endif
         pushBack_Array(&d->runs, &finishedRun);
         run->flags.isLineBreak = iFalse;
-        run->flags.isArabic    = iFalse;
+        run->flags.script      = unspecified_Script;
     }
     run->logical.start = endAt;
 }
@@ -985,11 +990,17 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
                    (int)logicalText[pos]);
 #endif
         }
+        /* Detect the script. */
+        //            printf("Char %08x %lc => %s\n", ch, (int) ch, script_Char(ch));
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
         if (fribidi_get_bidi_type(ch) == FRIBIDI_TYPE_AL) {
-            run.flags.isArabic = iTrue; /* Arabic letter */
+            run.flags.script = arabic_Script;
         }
+        else
 #endif
+        if (!iCmpStr(script_Char(ch), "Devanagari")) {
+            run.flags.script = devanagari_Script;
+        }
     }
     if (!isEmpty_Range(&run.logical)) {
         pushBack_Array(&d->runs, &run);
@@ -1409,8 +1420,15 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
         hb_buffer_set_content_type(buf->hb, HB_BUFFER_CONTENT_TYPE_UNICODE);
         hb_buffer_set_direction(buf->hb, HB_DIRECTION_LTR); /* visual */
-        if (run->flags.isArabic) {
-            hb_buffer_set_script(buf->hb, HB_SCRIPT_ARABIC);
+        switch (run->flags.script) {
+            case arabic_Script:
+                hb_buffer_set_script(buf->hb, HB_SCRIPT_ARABIC);
+                break;
+            case devanagari_Script:
+                hb_buffer_set_script(buf->hb, HB_SCRIPT_DEVANAGARI);
+                break;
+            default:
+                break;
         }
     }
     if (isMonospaced) {
