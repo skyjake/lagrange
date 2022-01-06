@@ -713,18 +713,22 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
         appendCStr_String(cmds, "tabs.new\n");
         requestRaise = iTrue;
     }
+    iBool gotResult = iFalse;
     if (!isEmpty_String(cmds)) {
         iString *result = communicate_Ipc(cmds, requestRaise);
         if (result) {
             fwrite(cstr_String(result), 1, size_String(result), stdout);
             fflush(stdout);
+            if (!isEmpty_String(result)) {
+                gotResult = iTrue;
+            }
         }
         delete_String(result);
     }
     iUnused(instance);
-//    else {
-//        printf("Lagrange already running (PID %d)\n", instance);
-//    }
+    if (!gotResult) {
+        printf("Commands sent to Lagrange process %d\n", instance);
+    }
     terminate_App_(0);
 }
 #endif /* defined (LAGRANGE_ENABLE_IPC) */
