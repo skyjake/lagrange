@@ -39,6 +39,7 @@ Fixes:
 * Fixed initial scroll position in multiline input fields.
 * Fixed lookup results list becoming too narrow.
 * Fixed glitches when a widget has multiple simultanous animations.
+* Fixed mixed-language CJK word wrapping.
 * macOS: Line breaks inside menu items (e.g., info about current identity).
 
 ## 1.9.5
