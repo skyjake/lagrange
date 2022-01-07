@@ -1237,9 +1237,6 @@ iBool findCachedContent_App(const iString *url, iString *mime_out, iBlock *data_
 #endif
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
-    if (!isEmpty_Periodic(&d->periodic)) {
-        return iFalse;
-    }
     if (d->warmupFrames > 0) {
         return iFalse;
     }
@@ -1253,10 +1250,6 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
 
 static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *event) {
     if (eventMode == waitForNewEvents_AppEventMode && isWaitingAllowed_App_(d)) {
-        /* If there are periodic commands pending, wait only for a short while. */
-        if (!isEmpty_Periodic(&d->periodic)) {
-            return SDL_WaitEventTimeout(event, 500);
-        }
         /* We may be allowed to block here until an event comes in. */
         if (isWaitingAllowed_App_(d)) {
             return SDL_WaitEvent(event);
@@ -1348,6 +1341,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 break;
             }
             default: {
+                if (ev.type == SDL_USEREVENT && ev.user.code == periodic_UserEventCode) {
+                    dispatchCommands_Periodic(&d->periodic);
+                    continue;
+                }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
                 if (ev.type == SDL_USEREVENT && ev.user.code == asleep_UserEventCode) {
                     if (SDL_GetTicks() - d->lastEventTime > idleThreshold_App_ &&
@@ -1580,7 +1577,6 @@ static int run_App_(iApp *d) {
     SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
 #endif
     while (d->isRunning) {
-        dispatchCommands_Periodic(&d->periodic);
         processEvents_App(waitForNewEvents_AppEventMode);
         runTickers_App_(d);
         refresh_App();

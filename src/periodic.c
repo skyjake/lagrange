@@ -57,6 +57,25 @@ iDefineTypeConstructionArgs(PeriodicCommand, (iAny *ctx, const char *cmd), ctx, 
 
 static const uint32_t postingInterval_Periodic_ = 500;
 
+static uint32_t postEvent_Periodic_(uint32_t interval, void *context) {
+    iUnused(context);
+    SDL_UserEvent ev = { .type      = SDL_USEREVENT,
+                         .timestamp = SDL_GetTicks(),
+                         .code      = periodic_UserEventCode };
+    SDL_PushEvent((SDL_Event *) &ev);
+    return interval;
+}
+
+static void startOrStopWakeupTimer_Periodic_(iPeriodic *d, iBool start) {
+    if (start && !d->wakeupTimer) {
+        d->wakeupTimer = SDL_AddTimer(postingInterval_Periodic_, postEvent_Periodic_, d);
+    }
+    else if (!start && d->wakeupTimer) {
+        SDL_RemoveTimer(d->wakeupTimer);
+        d->wakeupTimer = 0;
+    }
+}
+
 static void removePending_Periodic_(iPeriodic *d) {
     iForEach(PtrSet, i, &d->pendingRemoval) {
         size_t pos;
@@ -68,6 +87,9 @@ static void removePending_Periodic_(iPeriodic *d) {
         }
     }
     clear_PtrSet(&d->pendingRemoval);
+    if (isEmpty_SortedArray(&d->commands)) {
+        startOrStopWakeupTimer_Periodic_(d, iFalse);
+    }
 }
 
 static iBool isDispatching_;
@@ -109,9 +131,11 @@ void init_Periodic(iPeriodic *d) {
     init_SortedArray(&d->commands, sizeof(iPeriodicCommand), cmp_PeriodicCommand_);
     d->lastPostTime = 0;
     init_PtrSet(&d->pendingRemoval);
+    d->wakeupTimer = 0;
 }
 
 void deinit_Periodic(iPeriodic *d) {
+    startOrStopWakeupTimer_Periodic_(d, iFalse);
     deinit_PtrSet(&d->pendingRemoval);
     iForEach(Array, i, &d->commands.values) {
         deinit_PeriodicCommand(i.value);
@@ -134,6 +158,7 @@ void add_Periodic(iPeriodic *d, iAny *context, const char *command) {
         init_PeriodicCommand(&pc, context, command);
         insert_SortedArray(&d->commands, &pc);
     }
+    startOrStopWakeupTimer_Periodic_(d, iTrue);
     unlock_Mutex(d->mutex);
 }
 

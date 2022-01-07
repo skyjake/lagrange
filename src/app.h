@@ -61,6 +61,7 @@ enum iUserEventCode {
     command_UserEventCode = 1,
     refresh_UserEventCode,
     asleep_UserEventCode,
+    periodic_UserEventCode,
     /* The start of a potential touch tap event is notified via a custom event because
        sending SDL_MOUSEBUTTONDOWN would be premature: we don't know how long the tap will
        take, it could turn into a tap-and-hold for example. */
