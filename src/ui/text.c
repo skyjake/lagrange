@@ -1107,10 +1107,10 @@ struct Impl_RasterGlyph {
     iRect   rect;
 };
 
-static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
+static void cacheGlyphs_Font_(iFont *d, const uint32_t *glyphIndices, size_t numGlyphIndices) {
     /* TODO: Make this an object so it can be used sequentially without reallocating buffers. */
     SDL_Surface *buf     = NULL;
-    const iInt2  bufSize = init_I2(iMin(512, d->height * iMin(2 * size_Array(glyphIndices), 20)),
+    const iInt2  bufSize = init_I2(iMin(512, d->height * iMin(2 * numGlyphIndices, 20)),
                                    d->height * 4 / 3);
     int          bufX    = 0;
     iArray *     rasters = NULL;
@@ -1119,9 +1119,9 @@ static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
     iAssert(isExposed_Window(get_Window()));
     /* We'll flush the buffered rasters periodically until everything is cached. */
     size_t index = 0;
-    while (index < size_Array(glyphIndices)) {
-        for (; index < size_Array(glyphIndices); index++) {
-            const uint32_t glyphIndex = constValue_Array(glyphIndices, index, uint32_t);
+    while (index < numGlyphIndices) {
+        for (; index < numGlyphIndices; index++) {
+            const uint32_t glyphIndex = glyphIndices[index];
             const int lastCacheBottom = activeText_->cacheBottom;
             iGlyph *glyph = glyphByIndex_Font_(d, glyphIndex);
             if (activeText_->cacheBottom < lastCacheBottom) {
@@ -1223,12 +1223,8 @@ static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
     }
 }
 
-static void cacheSingleGlyph_Font_(iFont *d, uint32_t glyphIndex) {
-    iArray indices;
-    init_Array(&indices, sizeof(uint32_t));
-    pushBack_Array(&indices, &glyphIndex);
-    cacheGlyphs_Font_(d, &indices);
-    deinit_Array(&indices);
+iLocalDef void cacheSingleGlyph_Font_(iFont *d, uint32_t glyphIndex) {
+    cacheGlyphs_Font_(d, &glyphIndex, 1);
 }
 
 static void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
@@ -1257,7 +1253,7 @@ static void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
     }
     deinit_AttributedText(&attrText);
     /* TODO: Cache glyphs from ALL the fonts we encountered above. */
-    cacheGlyphs_Font_(d, &glyphIndices);
+    cacheGlyphs_Font_(d, constData_Array(&glyphIndices), size_Array(&glyphIndices));
     deinit_Array(&glyphIndices);
 }
 
