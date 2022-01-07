@@ -3431,6 +3431,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(parent, iClob(dlg));
         arrange_Widget(dlg);
+        arrange_Widget(dlg); /* TODO: Augh, another layout bug: two arranges required. */
     }
     /* Update choices. */
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.from"),
