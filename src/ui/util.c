@@ -3438,14 +3438,6 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
                                         languages[prefs_App()->langFrom].command);
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.to"),
                                         languages[prefs_App()->langTo].command);
-//    updateText_LabelWidget(
-//        findChild_Widget(dlg, "xlt.from"),
-//        text_LabelWidget(child_Widget(findChild_Widget(findChild_Widget(dlg, "xlt.from"), "menu"),
-//                                      prefs_App()->langFrom)));
-//    updateText_LabelWidget(
-//        findChild_Widget(dlg, "xlt.to"),
-//        text_LabelWidget(child_Widget(findChild_Widget(findChild_Widget(dlg, "xlt.to"), "menu"),
-//                                      prefs_App()->langTo)));
     setCommandHandler_Widget(dlg, translationHandler_);
     setupSheetTransition_Mobile(dlg, iTrue);
     return dlg;

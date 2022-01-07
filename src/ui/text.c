@@ -657,10 +657,17 @@ enum iScript {
     arabic_Script,
     bengali_Script,
     devanagari_Script,
+    han_Script,
+    hiragana_Script,
+    katakana_Script,
     oriya_Script,
     tamil_Script,
     max_Script
 };
+
+iLocalDef iBool isCJK_Script_(enum iScript d) {
+    return d == han_Script || d == hiragana_Script || d == katakana_Script;
+}
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 static const hb_script_t hbScripts_[max_Script] = {
@@ -668,6 +675,9 @@ static const hb_script_t hbScripts_[max_Script] = {
     HB_SCRIPT_ARABIC,
     HB_SCRIPT_BENGALI,
     HB_SCRIPT_DEVANAGARI,
+    HB_SCRIPT_HAN,
+    HB_SCRIPT_HIRAGANA,
+    HB_SCRIPT_KATAKANA,
     HB_SCRIPT_ORIYA,
     HB_SCRIPT_TAMIL,
 };
@@ -1006,7 +1016,6 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
 #endif
         }
         /* Detect the script. */
-        //            printf("Char %08x %lc => %s\n", ch, (int) ch, script_Char(ch));
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
         if (fribidi_get_bidi_type(ch) == FRIBIDI_TYPE_AL) {
             run.flags.script = arabic_Script;
@@ -1015,11 +1024,21 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
 #endif
         {
             const char *scr = script_Char(ch);
+//            printf("Char %08x %lc => %s\n", ch, (int) ch, scr);
             if (!iCmpStr(scr, "Bengali")) {
                 run.flags.script = bengali_Script;
             }
             else if (!iCmpStr(scr, "Devanagari")) {
                 run.flags.script = devanagari_Script;
+            }
+            else if (!iCmpStr(scr, "Han")) {
+                run.flags.script = han_Script;
+            }
+            else if (!iCmpStr(scr, "Hiragana")) {
+                run.flags.script = hiragana_Script;
+            }
+            else if (!iCmpStr(scr, "Katakana")) {
+                run.flags.script = katakana_Script;
             }
             else if (!iCmpStr(scr, "Oriya")) {
                 run.flags.script = oriya_Script;
@@ -1538,8 +1557,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     const float   xOffset    = run->font->xScale * buf->glyphPos[i].x_offset;
                     const float   xAdvance   = run->font->xScale * buf->glyphPos[i].x_advance;
                     const iChar   ch         = logicalText[logPos];
+                    const enum iWrapTextMode wrapMode = isCJK_Script_(run->flags.script)
+                                                              ? anyCharacter_WrapTextMode
+                                                              : args->wrap->mode;
                     iAssert(xAdvance >= 0);
-                    if (args->wrap->mode == word_WrapTextMode) {
+                    if (wrapMode == word_WrapTextMode) {
                         /* When word wrapping, only consider certain places breakable. */
                         if ((prevCh == '-' || prevCh == '/') && !isPunct_Char(ch)) {
                             safeBreakPos = logPos;
@@ -1584,7 +1606,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                             wrapPosRange.end = safeBreakPos;
                         }
                         else {
-                            if (args->wrap->mode == word_WrapTextMode && run->logical.start > wrapPosRange.start) {
+                            if (wrapMode == word_WrapTextMode && run->logical.start > wrapPosRange.start) {
                                 /* Don't have a word break position, so the whole run needs
                                    to be cut. */
                                 wrapPosRange.end = run->logical.start;
@@ -1598,7 +1620,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                             breakRunIndex    = runIndex;
                         }
                         wrapResumePos = wrapPosRange.end;
-                        if (args->wrap->mode != anyCharacter_WrapTextMode) {
+                        if (wrapMode != anyCharacter_WrapTextMode) {
                             while (wrapResumePos < textLen && isSpace_Char(logicalText[wrapResumePos])) {
                                 wrapResumePos++; /* skip space */
                             }
@@ -1737,12 +1759,13 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     /* Already handled this part of the run. */
                     continue;
                 }
-                const float xOffset  = run->font->xScale * buf->glyphPos[i].x_offset;
-                const float yOffset  = run->font->yScale * buf->glyphPos[i].y_offset;
-                const float xAdvance = run->font->xScale * buf->glyphPos[i].x_advance;
-                const float yAdvance = run->font->yScale * buf->glyphPos[i].y_advance;
-                const iGlyph *glyph = glyphByIndex_Font_(run->font, glyphId);
-                if (logicalText[logPos] == '\t') {
+                const float   xOffset  = run->font->xScale * buf->glyphPos[i].x_offset;
+                float         yOffset  = run->font->yScale * buf->glyphPos[i].y_offset;
+                const float   xAdvance = run->font->xScale * buf->glyphPos[i].x_advance;
+                const float   yAdvance = run->font->yScale * buf->glyphPos[i].y_advance;
+                const iGlyph *glyph    = glyphByIndex_Font_(run->font, glyphId);
+                const iChar   ch       = logicalText[logPos];
+                if (ch == '\t') {
 #if 0
                     if (mode & draw_RunMode) {
                         /* Tab indicator. */
@@ -1761,6 +1784,13 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 }
                 const float xf = xCursor + xOffset;
                 const int hoff = enableHalfPixelGlyphs_Text ? (xf - ((int) xf) > 0.5f ? 1 : 0) : 0;
+                if (ch == 0x3001 || ch == 0x3002) {
+                    /* Vertical misalignment?? */
+                    if (yOffset == 0.0f) {
+                        /* Move down to baseline. Why doesn't HarfBuzz do this? */
+                        yOffset = glyph->d[hoff].y + glyph->rect[hoff].size.y + glyph->d[hoff].y / 4;
+                    }
+                }
                 /* Output position for the glyph. */
                 SDL_Rect dst = { orig.x + xCursor + xOffset + glyph->d[hoff].x,
                                  orig.y + yCursor - yOffset + glyph->font->baseline + glyph->d[hoff].y,
