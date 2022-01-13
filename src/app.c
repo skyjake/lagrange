@@ -1109,8 +1109,13 @@ const iString *downloadPathForUrl_App(const iString *url, const iString *mime) {
 
 const iString *temporaryPathForUrl_App(const iString *url, const iString *mime) {
     iApp *d = &app_;
-    iString       *tmpPath = collectNewCStr_String(tmpnam(NULL));
+#if defined (P_tmpdir)
+    iString *      tmpPath = collectNew_String();
+    const iRangecc tmpDir  = range_CStr(P_tmpdir);
+#else
+    iString *      tmpPath = collectNewCStr_String(tmpnam(NULL));
     const iRangecc tmpDir  = dirName_Path(tmpPath);
+#endif
     set_String(
         tmpPath,
         collect_String(concat_Path(collectNewRange_String(tmpDir), fileNameForUrl_App(url, mime))));
