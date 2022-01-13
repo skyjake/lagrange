@@ -33,7 +33,7 @@ struct Impl_ToolbarActionSpec {
     const char *command;
 };
 
-const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction];
+extern const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction];
 
 iDeclareType(Widget)
 iDeclareType(MenuItem)
