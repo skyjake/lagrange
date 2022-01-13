@@ -3404,28 +3404,52 @@ void openInDefaultBrowser_App(const iString *url) {
         "xdg-open",
         cstr_String(url),
 #elif defined (iPlatformMsys)
-            concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
-            cstr_String(url),
+        concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
+        cstr_String(url),
         /* TODO: The prompt window is shown momentarily... */
 #endif
         NULL))
     );
     start_Process(proc);
-    waitForFinished_Process(proc); /* TODO: test on Windows */
+    waitForFinished_Process(proc);
     iRelease(proc);
 }
 
+#include <the_Foundation/thread.h>
+
 void revealPath_App(const iString *path) {
 #if defined (iPlatformAppleDesktop)
-        iProcess *proc = new_Process();
-        setArguments_Process(
+    iProcess *proc = new_Process();
+    setArguments_Process(
         proc, iClob(newStringsCStr_StringList("/usr/bin/open", "-R", cstr_String(path), NULL)));
-        start_Process(proc);
-        iRelease(proc);
+    start_Process(proc);
+    iRelease(proc);
 #elif defined (iPlatformAppleMobile)
     /* Use a share sheet. */
     openFileActivityView_iOS(path);
 #elif defined (iPlatformLinux) || defined (iPlatformHaiku)
+    iProcess *proc = NULL;
+    /* Try with `dbus-send` first. */ {
+        proc = new_Process();
+        setArguments_Process(
+            proc,
+            iClob(newStringsCStr_StringList(
+                "/usr/bin/dbus-send",
+                "--print-reply",
+                "--dest=org.freedesktop.FileManager1",
+                "/org/freedesktop/FileManager1",
+                "org.freedesktop.FileManager1.ShowItems",
+                format_CStr("array:string:%s", makeFileUrl_CStr(cstr_String(path))),
+                "string:",
+                NULL)));
+        start_Process(proc);
+        waitForFinished_Process(proc);
+        const iBool dbusDidSucceed = (exitStatus_Process(proc) == 0);
+        iRelease(proc);
+        if (dbusDidSucceed) {
+            return;
+        }
+    }
     iFileInfo *inf = iClob(new_FileInfo(path));
     iRangecc target;
     if (isDirectory_FileInfo(inf)) {
@@ -3434,7 +3458,7 @@ void revealPath_App(const iString *path) {
     else {
         target = dirName_Path(path);
     }
-    iProcess *proc = new_Process();
+    proc = new_Process();
     setArguments_Process(
         proc, iClob(newStringsCStr_StringList("/usr/bin/env", "xdg-open", cstr_Rangecc(target), NULL)));
     start_Process(proc);

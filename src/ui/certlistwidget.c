@@ -107,6 +107,9 @@ static void updateContextMenu_CertListWidget_(iCertListWidget *d) {
 #if defined (iPlatformAppleDesktop)
         { magnifyingGlass_Icon " ${menu.reveal.macos}", 0, 0, "ident.reveal" },
 #endif
+#if defined (iPlatformLinux)
+        { magnifyingGlass_Icon " ${menu.reveal.filemgr}", 0, 0, "ident.reveal" },
+#endif
         { export_Icon " ${ident.export}", 0, 0, "ident.export" },
         { "---", 0, 0, NULL },
         { delete_Icon " " uiTextCaution_ColorEscape "${ident.delete}", 0, 0, "ident.delete confirm:1" },

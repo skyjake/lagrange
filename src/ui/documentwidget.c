@@ -5032,6 +5032,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                          format_CStr("!reveal url:%s",
                                                                      cstr_String(linkUrl)) });
 #endif
+#if defined (iPlatformLinux)
+                            pushBack_Array(&items,
+                                           &(iMenuItem){ "${menu.reveal.filemgr}",
+                                                         0,
+                                                         0,
+                                                         format_CStr("!reveal url:%s",
+                                                                     cstr_String(linkUrl)) });
+#endif
                         }                        
                     }
                     else if (!willUseProxy_App(scheme)) {

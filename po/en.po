@@ -861,6 +861,10 @@ msgstr "Download Linked File"
 msgid "menu.reveal.macos"
 msgstr "Show in Finder"
 
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Show in File Manager"
+
 msgid "menu.share"
 msgstr "Share"
 
