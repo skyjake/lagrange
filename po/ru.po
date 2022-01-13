@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-12-08 14:50+0000\n"
-"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"PO-Revision-Date: 2022-01-08 14:50+0000\n"
+"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -350,7 +350,7 @@ msgid "history.clear"
 msgstr "Очистить историю…"
 
 msgid "heading.history.clear"
-msgstr "ОЧИСТКА ИСТОРИИ"
+msgstr "Очистка истории"
 
 msgid "dlg.confirm.history.clear"
 msgstr "Вы действительно хотите стереть историю посещений страниц?"
@@ -413,13 +413,13 @@ msgid "ident.showuse"
 msgstr "Показать использование"
 
 msgid "heading.ident.use"
-msgstr "ИСПОЛЬЗОВАНИЕ КЛИЕНТСКОГО СЕРТИФИКАТА"
+msgstr "Использование клиентского сертификата"
 
 msgid "menu.edit.notes"
 msgstr "Редактировать заметки…"
 
 msgid "heading.ident.notes"
-msgstr "ЗАМЕТКИ КЛИЕНТСКОГО СЕРТИФИКАТА"
+msgstr "Заметки клиентского сертификата"
 
 msgid "dlg.ident.notes"
 msgstr "Заметки о %s:"
@@ -431,7 +431,7 @@ msgid "ident.delete"
 msgstr "Удалить клиентский сертификат…"
 
 msgid "heading.ident.delete"
-msgstr "УДАЛЕНИЕ КЛИЕНТСКОГО СЕРТИФИКАТА"
+msgstr "Удаление клиентского сертификата"
 
 msgid "dlg.confirm.ident.delete"
 msgstr ""
@@ -450,7 +450,7 @@ msgstr ""
 "сертификатах."
 
 msgid "heading.unsub"
-msgstr "ОТПИСКА"
+msgstr "Отписка"
 
 msgid "dlg.confirm.unsub"
 msgstr "Действительно отписаться от ленты «%s»?"
@@ -464,7 +464,7 @@ msgstr ""
 "«%s»."
 
 msgid "heading.pageinfo"
-msgstr "ИНФОРМАЦИЯ О СТРАНИЦЕ"
+msgstr "Информация о странице"
 
 msgid "pageinfo.header.cached"
 msgstr "(кешированный контент)"
@@ -509,10 +509,10 @@ msgid "dlg.input.send"
 msgstr "Отправить"
 
 msgid "heading.save"
-msgstr "ФАЙЛ СОХРАНЁН"
+msgstr "Файл сохранён"
 
 msgid "heading.save.incomplete"
-msgstr "СТРАНИЦА В ПРОЦЕССЕ ЗАГРУЗКИ"
+msgstr "Страница в процессе загрузки"
 
 msgid "dlg.save.incomplete"
 msgstr "Содержимое страницы всё еще загружается."
@@ -521,10 +521,10 @@ msgid "dlg.save.size"
 msgstr "Размер:"
 
 msgid "heading.save.error"
-msgstr "ОШИБКА СОХРАНЕНИЯ ФАЙЛА"
+msgstr "Ошибка сохранения файла"
 
 msgid "heading.import.bookmarks"
-msgstr "ИМПОРТ ЗАКЛАДОК"
+msgstr "Импорт закладок"
 
 msgid "dlg.import.found"
 msgid_plural "dlg.import.found.n"
@@ -542,7 +542,7 @@ msgid "dlg.import.notnew"
 msgstr "Все ссылки на этой странице уже добавлены в закладки."
 
 msgid "heading.autoreload"
-msgstr "АВТОЗАГРУЗКА"
+msgstr "Автозагрузка"
 
 msgid "dlg.autoreload"
 msgstr "Выберите интервал автоматической перезагрузки для этой вкладки."
@@ -569,7 +569,7 @@ msgid "link.download"
 msgstr "Скачать файл"
 
 msgid "heading.openlink"
-msgstr "ОТКРЫТЬ ССЫЛКУ"
+msgstr "Открыть ссылку"
 
 msgid "dlg.openlink.confirm"
 msgstr ""
@@ -616,16 +616,16 @@ msgstr ""
 "домену."
 
 msgid "link.hint.audio"
-msgstr "Воспроизвести аудио"
+msgstr "Аудио"
 
 msgid "link.hint.image"
-msgstr "Показать изображение"
+msgstr "Изображение"
 
 msgid "bookmark.title.blank"
 msgstr "Пустая страница"
 
 msgid "heading.translate"
-msgstr "ПЕРЕВОД СТРАНИЦЫ"
+msgstr "Перевод страницы"
 
 msgid "dlg.translate.unavail"
 msgstr "Сервис недоступен"
@@ -676,7 +676,7 @@ msgid "lang.es"
 msgstr "Испанский"
 
 msgid "heading.newident"
-msgstr "НОВЫЙ КЛИЕНТСКИЙ СЕРТИФИКАТ"
+msgstr "Новый клиентский сертификат"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Создание самоподписанного 2048-битного RSA-сертификата."
@@ -718,10 +718,10 @@ msgid "dlg.newident.create"
 msgstr "Создать сертификат"
 
 msgid "heading.feedcfg"
-msgstr "НАСТРОЙКИ ЛЕНТЫ"
+msgstr "Настройки ленты"
 
 msgid "heading.subscribe"
-msgstr "ПОДПИСКА НА СТРАНИЦУ"
+msgstr "Подписка на страницу"
 
 msgid "dlg.feed.title"
 msgstr "Заголовок:"
@@ -742,10 +742,10 @@ msgid "dlg.feed.sub"
 msgstr "Подписаться"
 
 msgid "heading.bookmark.add"
-msgstr "ДОБАВИТЬ ЗАКЛАДКУ"
+msgstr "Добавить закладку"
 
 msgid "heading.bookmark.edit"
-msgstr "РЕДАКТИРОВАНИЕ ЗАКЛАДКИ"
+msgstr "Редактирование закладки"
 
 msgid "dlg.bookmark.save"
 msgstr "Сохранить закладку"
@@ -763,10 +763,10 @@ msgid "dlg.bookmark.icon"
 msgstr "Иконка:"
 
 msgid "heading.prefs"
-msgstr "НАСТРОЙКИ"
+msgstr "Настройки"
 
 msgid "heading.prefs.certs"
-msgstr "СЕРТИФИКАТЫ"
+msgstr "Сертификаты"
 
 msgid "heading.prefs.colors"
 msgstr "Цвета"
@@ -787,22 +787,22 @@ msgid "heading.prefs.network"
 msgstr "Сеть"
 
 msgid "heading.prefs.paragraph"
-msgstr "ПАРАГРАФ"
+msgstr "Параграф"
 
 msgid "heading.prefs.pagecontent"
-msgstr "ЦВЕТА СТРАНИЦЫ"
+msgstr "Цвета страницы"
 
 msgid "heading.prefs.proxies"
-msgstr "ПРОКСИ"
+msgstr "Прокси"
 
 msgid "heading.prefs.scrolling"
-msgstr "ПРОКРУТКА"
+msgstr "Прокрутка"
 
 msgid "heading.prefs.sizing"
-msgstr "РАЗМЕР"
+msgstr "Размер"
 
 msgid "heading.prefs.widelayout"
-msgstr "ШИРОКИЙ МАКЕТ"
+msgstr "Широкий макет"
 
 msgid "heading.prefs.style"
 msgstr "Стиль"
@@ -1060,7 +1060,7 @@ msgid "prefs.uilang"
 msgstr "Язык:"
 
 msgid "heading.certimport"
-msgstr "ИМПОРТ КЛИЕНТСКОГО СЕРТИФИКАТА"
+msgstr "Импорт клиентского сертификата"
 
 msgid "dlg.certimport.notfound"
 msgstr "Сертификат или закрытый ключ не найдены."
@@ -1075,7 +1075,7 @@ msgid "lang.fi"
 msgstr "Финский"
 
 msgid "heading.certimport.pasted"
-msgstr "ВСТАВЛЕНО ИЗ БУФЕРА ОБМЕНА"
+msgstr "Вставлено из буфера обмена"
 
 msgid "dlg.certimport.import"
 msgstr "Импортировать"
@@ -1252,7 +1252,7 @@ msgid "keys.subscribe"
 msgstr "Подписаться на страницу"
 
 msgid "heading.certimport.dropped"
-msgstr "ПЕРЕТАЩЕН ФАЙЛ"
+msgstr "Перетащен файл"
 
 msgid "error.permanent.msg"
 msgstr ""
@@ -1498,10 +1498,10 @@ msgid "dlg.newident.date.past"
 msgstr "Срок действия не должен заканчиваться в прошлом."
 
 msgid "heading.newident.date.bad"
-msgstr "НЕПРАВИЛЬНАЯ ДАТА"
+msgstr "Неправильная дата"
 
 msgid "heading.newident.missing"
-msgstr "ТРЕБУЕТСЯ ИНФОРМАЦИЯ"
+msgstr "Требуется информация"
 
 msgid "keys.split.menu"
 msgstr "Управлять разделением окна"
@@ -1648,7 +1648,7 @@ msgid "link.file.delete"
 msgstr "Удалить файл"
 
 msgid "heading.file.delete"
-msgstr "УДАЛИТЬ ФАЙЛ"
+msgstr "Удалить файл"
 
 msgid "dlg.file.delete.confirm"
 msgstr "Вы действительно хотите удалить этот файл?"
@@ -1657,7 +1657,7 @@ msgid "dlg.file.delete"
 msgstr "Удалить"
 
 msgid "heading.prefs.uitheme"
-msgstr "ЦВЕТА ИНТЕРФЕЙСА"
+msgstr "Цвета интерфейса"
 
 msgid "prefs.scrollspeed.keyboard"
 msgstr "Скорость клавиатуры:"
@@ -1681,10 +1681,10 @@ msgid "menu.unexpire"
 msgstr "Все равно загрузить"
 
 msgid "menu.page.upload"
-msgstr "Загрузить страницу (Titan)…"
+msgstr "Загрузить (Titan)…"
 
 msgid "heading.upload"
-msgstr "ЗАГРУЗКА ΤΙΤΑΝ"
+msgstr "Загрузка Titan"
 
 msgid "heading.upload.text"
 msgstr "Текст"
@@ -1723,7 +1723,7 @@ msgid "prefs.returnkey.accept"
 msgstr "Подтверждение"
 
 msgid "keys.upload"
-msgstr "Загрузить страницу (Titan)"
+msgstr "Загрузить (Titan)"
 
 msgid "error.certexpired"
 msgstr "Сертификат просрочен"
@@ -1736,7 +1736,7 @@ msgid "upload.port"
 msgstr "Порт…"
 
 msgid "heading.uploadport"
-msgstr "ПОРТ ЗАГРУЗОК TITAN"
+msgstr "Порт загрузок Titan"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
@@ -1845,10 +1845,10 @@ msgid "lang.isv"
 msgstr "Междуславянский"
 
 msgid "heading.bookmark.tags"
-msgstr "ОСОБЫЕ ТЕГИ"
+msgstr "Особые теги"
 
 msgid "heading.addfolder"
-msgstr "ДОБАВИТЬ ПАПКУ"
+msgstr "Добавить папку"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Новая папка"
@@ -1861,7 +1861,7 @@ msgstr "Добавить папку"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "НАСТРОЙКИ"
+msgstr "Настройки"
 
 msgid "prefs.imagestyle"
 msgstr "Окрашивать изображения:"
@@ -1898,7 +1898,7 @@ msgid "menu.undo"
 msgstr "Отмена"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "УДАЛИТЬ ЗАКЛАДКИ"
+msgstr "Удалить закладки"
 
 # button in the mobile New Identity dialog
 msgid "dlg.certimport.pickfile"
@@ -1941,7 +1941,7 @@ msgstr[1] "%u шрифта"
 msgstr[2] "%u шрифтов"
 
 msgid "heading.fontpack.classic"
-msgstr "ЗАГРУЗИТЬ ПАКЕТ ШРИФТОВ"
+msgstr "Загрузить пакет шрифтов"
 
 msgid "dlg.fontpack.classic.msg"
 msgstr ""
@@ -2050,7 +2050,7 @@ msgid "fontpack.delete"
 msgstr "Безвозвратно удалить «%s»"
 
 msgid "heading.fontpack.delete"
-msgstr "УДАЛИТЬ ПАКЕТ ШРИФТОВ"
+msgstr "Удалить пакет шрифтов"
 
 msgid "dlg.fontpack.delete"
 msgstr "Удалить пакет шрифтов"
@@ -2105,7 +2105,7 @@ msgid "truetype.help.installed"
 msgstr "Этот шрифт установлен в каталог пользовательских шрифтов."
 
 msgid "heading.dismiss.warning"
-msgstr "СКРЫТЬ ПРЕДУПРЕЖДЕНИЕ?"
+msgstr "Скрыть предупреждение?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Скрыть предупреждение"
@@ -2142,3 +2142,91 @@ msgstr "24-часовой формат времени"
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
 msgstr "Прочитать все"
+
+msgid "menu.open.external"
+msgstr "Открыть в другом приложении"
+
+msgid "menu.identities"
+msgstr "Управление клиентскими сертификатами"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Использовать %s"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Вставить предыдущую строку"
+
+msgid "menu.page.upload.edit"
+msgstr "Редактировать страницу (Titan)…"
+
+msgid "menu.upload.export"
+msgstr "Экспортировать текст"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Содержимое"
+
+msgid "prefs.blink"
+msgstr "Мигание курсора мыши:"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Скрыть панель клиентских сертификатов"
+
+msgid "menu.home"
+msgstr "Домой"
+
+msgid "sidebar.close"
+msgstr "Готово"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Новая папка"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Редактировать"
+
+msgid "sidebar.action.history.clear"
+msgstr "Очистить"
+
+msgid "sidebar.empty.unread"
+msgstr "Непрочитанных записей нет"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Показать в Finder"
+
+msgid "menu.share"
+msgstr "Поделиться"
+
+msgid "heading.upload.id"
+msgstr "Авторизация"
+
+msgid "menu.upload.delete"
+msgstr "Удалить всё"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Действительно удалить всё (безвозвратно)"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+msgid "hint.upload.path"
+msgstr "Путь URL"
+
+msgid "hint.upload.token.long"
+msgstr "токен — см. инструкции сервера"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Панель инструментов"
+
+msgid "prefs.toolbaraction1"
+msgstr "Кнопка 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Кнопка 2"
+
+msgid "keys.upload.edit"
+msgstr "Редактировать страницу (Titan)"

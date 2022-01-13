@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-27 04:58+0000\n"
+"PO-Revision-Date: 2022-01-08 14:50+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
@@ -1167,7 +1167,7 @@ msgid "dlg.certimport.nokey"
 msgstr "Kein privater Schlüssel"
 
 msgid "link.hint.audio"
-msgstr "Audio abspielen"
+msgstr "Audio"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -2125,3 +2125,32 @@ msgstr "Hintergrundfarbe"
 
 msgid "sidebar.action.show"
 msgstr "Anzeigen:"
+
+msgid "sidebar.close"
+msgstr "Fertig"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Neuer Ordner"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Bearbeiten"
+
+msgid "menu.upload.delete"
+msgstr "Alles löschen"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Inhalt"
+
+msgid "menu.page.upload.edit"
+msgstr "Seite mit Titan bearbeiten…"
+
+msgid "prefs.toolbaraction1"
+msgstr "Taste 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Taste 2"
