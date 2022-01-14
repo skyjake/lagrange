@@ -65,7 +65,9 @@ const iString *url_FeedEntry(const iFeedEntry *d) {
 iBool isUnread_FeedEntry(const iFeedEntry *d) {
     const size_t fragPos = indexOf_String(&d->url, '#');
     if (fragPos != iInvalidPos) {
-        /* Check if the entry is newer than the latest visit. */
+        /* Check if the entry is newer than the latest visit. If the URL has not been visited,
+           `urlVisitTime_Visited` returns a zero timestamp that is always earlier than
+           `posted`. */
         const iTime visTime = urlVisitTime_Visited(visited_App(), url_FeedEntry(d));
         return cmp_Time(&visTime, &d->posted) < 0;
     }

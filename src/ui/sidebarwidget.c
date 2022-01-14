@@ -266,7 +266,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
     clear_ListWidget(d->list);
     releaseChildren_Widget(d->blank);
     if (!keepActions) {
-    releaseChildren_Widget(d->actions);
+        releaseChildren_Widget(d->actions);
     }
     d->actions->rect.size.y = 0;
     destroy_Widget(d->menu);
