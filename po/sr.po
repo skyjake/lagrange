@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-08 14:50+0000\n"
+"PO-Revision-Date: 2022-01-16 09:50+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2123,7 +2123,7 @@ msgstr ""
 
 msgid "error.glyphs.msg"
 msgstr ""
-"Ова страница се не може потпуно приказати јер недостају неки знакови. Можете "
+"Ова страница се не може потпуно приказати јер недостају неки знаци. Можете "
 "инсталирати додатне фонтове да бисте то исправили."
 
 # Action label
