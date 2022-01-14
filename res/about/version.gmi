@@ -41,6 +41,7 @@ Fixes:
 * Fixed glitches when a widget has multiple simultanous animations.
 * Fixed mixed-language CJK word wrapping.
 * Fixed parsing Atom feed dates with leading whitespace.
+* Windows: Fixed installing individual TrueType fonts via drag and drop.
 * macOS: Fixed high CPU usage during audio playback and UI animations.
 * macOS: Line breaks inside menu items (e.g., info about current identity).
 
