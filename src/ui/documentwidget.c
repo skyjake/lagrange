@@ -392,7 +392,8 @@ static iBool isHoverAllowed_DocumentWidget_(const iDocumentWidget *d) {
     if (!(d->state == ready_RequestState || d->state == receivedPartialResponse_RequestState)) {
         return iFalse;
     }
-    if (d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
+    if (d->flags & (noHoverWhileScrolling_DocumentWidgetFlag |
+                    drawDownloadCounter_DocumentWidgetFlag)) {
         return iFalse;
     }
     if (d->flags & pinchZoom_DocumentWidgetFlag) {
