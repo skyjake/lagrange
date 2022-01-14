@@ -20,7 +20,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* TODO: Move DocumentView into a source file of its own. Consider cleaning up the network 
+/* TODO: Move DocumentView into a source file of its own. Consider cleaning up the network
    request handling. */
 
 #include "documentwidget.h"
@@ -1283,7 +1283,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             iRect     wideRect = { init_I2(origin.x - pad, visPos.y),
                                init_I2(d->docBounds.size.x + 2 * pad,
                                        height_Rect(run->visBounds)) };
-            adjustEdges_Rect(&wideRect, 
+            adjustEdges_Rect(&wideRect,
                              run->flags & startOfLine_GmRunFlag ? -pad * 3 / 4 : 0, 0,
                              run->flags & endOfLine_GmRunFlag ? pad * 3 / 4 : 0, 0);
             /* The first line is composed of two runs that may be drawn in either order, so
@@ -1397,7 +1397,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                         range_String(&styled));
                     setAnsiFlags_Text(oldAnsi);
                     deinit_String(&styled);
-                    goto runDrawn;                    
+                    goto runDrawn;
                 }
             }
         }
@@ -2612,7 +2612,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     setRange_String(&d->sourceMime, param);
                     format_String(&str, "# TrueType Font\n");
                     iString *decUrl      = collect_String(urlDecode_String(d->mod.url));
-                    iRangecc name        = baseName_Path(decUrl);
+                    iRangecc name        = baseNameSep_Path(decUrl, "/");
                     iBool    isInstalled = iFalse;
                     if (startsWith_String(collect_String(localFilePathFromUrl_String(d->mod.url)),
                                           cstr_String(dataDir_App()))) {
@@ -3120,7 +3120,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             if (equal_String(&mostRecentUrl_History(d->mod.history)->url, url_GmRequest(mr->req))) {
                 undo_History(d->mod.history);
             }
-            setUrl_DocumentWidget_(d, url_GmDocument(d->view.doc));            
+            setUrl_DocumentWidget_(d, url_GmDocument(d->view.doc));
             updateFetchProgress_DocumentWidget_(d);
             postCommand_Widget(d, "media.updated link:%u request:%p", d->requestLinkId, mr);
             return;
@@ -5041,7 +5041,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                          format_CStr("!reveal url:%s",
                                                                      cstr_String(linkUrl)) });
 #endif
-                        }                        
+                        }
                     }
                     else if (!willUseProxy_App(scheme)) {
                         pushBack_Array(
