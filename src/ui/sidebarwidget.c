@@ -350,37 +350,47 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             }
             /* Actions. */
             if (!isMobile) {
-            if (!keepActions) {
+                if (!keepActions && !isEmpty) {
                     addActionButton_SidebarWidget_(d,
-                                                   check_Icon " ${sidebar.action.feeds.markallread}",
+                                                   check_Icon
+                                                   " ${sidebar.action.feeds.markallread}",
                                                    "feeds.markallread",
                                                    expand_WidgetFlag | tight_WidgetFlag);
-                updateSize_LabelWidget(addChildFlags_Widget(d->actions,
-                                     iClob(new_LabelWidget("${sidebar.action.show}", NULL)),
-                                                            frameless_WidgetFlag | tight_WidgetFlag));
-                const iMenuItem items[] = {
-                        { page_Icon " ${sidebar.action.feeds.showall}", SDLK_u, KMOD_SHIFT, "feeds.mode arg:0" },
-                        { circle_Icon " ${sidebar.action.feeds.showunread}", SDLK_u, 0, "feeds.mode arg:1" },
-                };
-                iWidget *dropButton = addChild_Widget(
-                    d->actions,
-                    iClob(makeMenuButton_LabelWidget(items[d->feedsMode].label, items, 2)));
-                setId_Widget(dropButton, "feeds.modebutton");
-                checkIcon_LabelWidget((iLabelWidget *) dropButton);
-                setFixedSize_Widget(
-                    dropButton,
-                        init_I2(iMaxi(20 * gap_UI,
-                                      measure_Text(default_FontId,
-                                                   translateCStr_Lang(
-                                                       items[findWidestLabel_MenuItem(items, 2)].label))
-                                    .advance.x +
-                                          13 * gap_UI),
+                    updateSize_LabelWidget(
+                        addChildFlags_Widget(d->actions,
+                                             iClob(new_LabelWidget("${sidebar.action.show}", NULL)),
+                                             frameless_WidgetFlag | tight_WidgetFlag));
+                    const iMenuItem items[] = {
+                        { page_Icon " ${sidebar.action.feeds.showall}",
+                          SDLK_u,
+                          KMOD_SHIFT,
+                          "feeds.mode arg:0" },
+                        { circle_Icon " ${sidebar.action.feeds.showunread}",
+                          SDLK_u,
+                          0,
+                          "feeds.mode arg:1" },
+                    };
+                    iWidget *dropButton = addChild_Widget(
+                        d->actions,
+                        iClob(makeMenuButton_LabelWidget(items[d->feedsMode].label, items, 2)));
+                    setId_Widget(dropButton, "feeds.modebutton");
+                    checkIcon_LabelWidget((iLabelWidget *) dropButton);
+                    setFixedSize_Widget(
+                        dropButton,
+                        init_I2(
+                            iMaxi(20 * gap_UI,
+                                  measure_Text(default_FontId,
+                                               translateCStr_Lang(
+                                                   items[findWidestLabel_MenuItem(items, 2)].label))
+                                          .advance.x +
+                                      13 * gap_UI),
                             -1));
-            }
-            else {
-                updateDropdownSelection_LabelWidget(findChild_Widget(d->actions, "feeds.modebutton"),
-                                                    format_CStr(" arg:%d", d->feedsMode));
-            }
+                }
+                else {
+                    updateDropdownSelection_LabelWidget(
+                        findChild_Widget(d->actions, "feeds.modebutton"),
+                        format_CStr(" arg:%d", d->feedsMode));
+                }
             }
             else {
                 if (!keepActions) {
@@ -600,12 +610,12 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
     if (isEmpty) {
         if (d->mode == feeds_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
-            //setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
+            setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
             arrange_Widget(d->actions);
-            setPadding_Widget(div, 0, 0, 0, height_Widget(d->actions));
+//            setPadding_Widget(div, 0, 0, 0, height_Widget(d->actions));
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             if (d->feedsMode == all_FeedsMode) {
-            addChild_Widget(div, iClob(new_LabelWidget("${menu.feeds.refresh}", "feeds.refresh")));
+                addChild_Widget(div, iClob(new_LabelWidget("${menu.feeds.refresh}", "feeds.refresh")));
             }
             else {
                 iLabelWidget *msg = addChildFlags_Widget(div, iClob(new_LabelWidget("${sidebar.empty.unread}", NULL)),
@@ -640,7 +650,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             setWrap_LabelWidget(linkLabel, iTrue);
             addChild_Widget(d->blank, iClob(div));
         }
-//        arrange_Widget(d->blank);
+        arrange_Widget(d->blank);
     }
 #if 0
     if (deviceType_App() != desktop_AppDeviceType) {
