@@ -407,6 +407,10 @@ msgstr "Manage Identities"
 msgid "menu.identity.notactive"
 msgstr "No Active Identity"
 
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Set Action:"
+
 msgid "sidebar.close"
 msgstr "Done"
 
