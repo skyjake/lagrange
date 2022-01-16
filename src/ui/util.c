@@ -711,8 +711,10 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
         if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "keyboard.changed") &&
             arg_Command(cmd) == 0) {
             /* May need to reposition the menu. */
-            menu->rect.pos = windowToLocal_Widget(menu, init_I2(left_Rect(bounds_Widget(menu)),
-                                                                bottom_Rect(safeRect_Root(menu->root)) - menu->rect.size.y));
+            menu->rect.pos = windowToLocal_Widget(
+                menu,
+                init_I2(left_Rect(bounds_Widget(menu)),
+                        bottom_Rect(safeRect_Root(menu->root)) - menu->rect.size.y));
             return iFalse;
         }
         if (!isCommandIgnoredByMenus_(cmd)) {
