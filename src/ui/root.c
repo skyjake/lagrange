@@ -318,9 +318,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     if (equal_Command(cmd, "menu.open")) {
         iWidget *button = pointer_Command(cmd);
         iWidget *menu = findChild_Widget(button, "menu");
+        const iBool isPlacedUnder = argLabel_Command(cmd, "under");
         iAssert(menu);
         if (!isVisible_Widget(menu)) {
-            openMenu_Widget(menu, topLeft_Rect(bounds_Widget(button)));
+            openMenu_Widget(menu,
+                            isPlacedUnder ? bottomLeft_Rect(bounds_Widget(button))
+                                          : topLeft_Rect(bounds_Widget(button)));
         }
         else {
             closeMenu_Widget(menu);
@@ -416,7 +419,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         }
         iWidget *menu =
             makeMenu_Widget(button, constData_Array(&items), size_Array(&items));
-        openMenu_Widget(menu, topLeft_Rect(bounds_Widget(button)));
+        openMenu_Widget(menu, bottomLeft_Rect(bounds_Widget(button)));
         deinit_Array(&items);
         return iTrue;
     }
@@ -1484,6 +1487,7 @@ void createUserInterface_Root(iRoot *d) {
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget(menu_Icon, navMenuItems_, iElemCount(navMenuItems_));
 #   endif
+        setCommand_LabelWidget(navMenu, collectNewCStr_String("menu.open under:1"));
         setAlignVisually_LabelWidget(navMenu, iTrue);
         setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
 #endif

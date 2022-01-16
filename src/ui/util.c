@@ -680,7 +680,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
 static iLabelWidget *parentMenuButton_(const iWidget *menu) {
     if (isInstance_Object(menu->parent, &Class_LabelWidget)) {
         iLabelWidget *button = (iLabelWidget *) menu->parent;
-        if (!cmp_String(command_LabelWidget(button), "menu.open")) {
+        if (equal_Command(cstr_String(command_LabelWidget(button)), "menu.open")) {
             return button;
         }
     }
