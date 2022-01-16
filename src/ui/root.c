@@ -872,6 +872,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             const int buttonIndex = id.end[-1] - '1';
             iArray items;
             init_Array(&items, sizeof(iMenuItem));
+            pushBack_Array(&items, &(iMenuItem){ "```${menu.toolbar.setaction}" });
             for (size_t i = 0; i < max_ToolbarAction; i++) {
                 pushBack_Array(
                     &items,
@@ -886,6 +887,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 makeMenu_Widget(get_Root()->widget, constData_Array(&items), size_Array(&items)),
                 coord_Command(cmd));
             deinit_Array(&items);
+            return iTrue;
         }
         return iFalse;
     }
