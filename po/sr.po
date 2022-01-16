@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-16 09:50+0000\n"
+"PO-Revision-Date: 2022-01-16 17:31+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2277,3 +2277,7 @@ msgstr "Трепћући курсор:"
 
 msgid "keys.upload.edit"
 msgstr "Уређивање странице преко Титана"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Прикажи у Менаџеру датотека"
