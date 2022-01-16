@@ -101,6 +101,8 @@ enum iPrefsBool {
     max_PrefsBool
 };
 
+#define maxNavbarActions_Prefs  4
+
 /* TODO: Use a systematic command naming convention for notifications. */
 
 struct Impl_Prefs {
@@ -159,6 +161,7 @@ struct Impl_Prefs {
     enum iColorAccent accent;
     /* Window and User Interface */
     float            uiScale;
+    enum iToolbarAction navbarActions[maxNavbarActions_Prefs];
     enum iToolbarAction toolbarActions[2];
     /* Document presentation */
     int              zoomPercent;

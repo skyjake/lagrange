@@ -50,7 +50,8 @@ const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction] = {
     { upload_Icon, "${menu.page.upload}", "document.upload" },
     { edit_Icon, "${menu.page.upload.edit}", "document.upload copy:1" },
     { magnifyingGlass_Icon, "${menu.find}", "focus.set id:find.input" },
-    { gear_Icon, "${menu.settings}", "preferences" },        
+    { gear_Icon, "${menu.settings}", "preferences" },
+    { leftHalf_Icon, "${menu.sidebar.left}", "sidebar.toggle" },        
 };
 
 iBool isUsingPanelLayout_Mobile(void) {

@@ -596,11 +596,17 @@ static void updateNavBarIdentity_(iWidget *navBar) {
 }
 
 static void updateNavDirButtons_(iWidget *navBar) {
-    const iHistory *history = history_DocumentWidget(document_App());
-    iBool atOldest = atOldest_History(history);
-    iBool atNewest = atNewest_History(history);
-    setFlags_Widget(findChild_Widget(navBar, "navbar.back"), disabled_WidgetFlag, atOldest);
-    setFlags_Widget(findChild_Widget(navBar, "navbar.forward"), disabled_WidgetFlag, atNewest);
+    iBeginCollect();
+    const iHistory *history  = history_DocumentWidget(document_App());
+    const iBool     atOldest = atOldest_History(history);
+    const iBool     atNewest = atNewest_History(history);
+    /* Reset button state. */
+    for (size_t i = 0; i < maxNavbarActions_Prefs; i++) {
+        const char *id = format_CStr("navbar.action%d", i + 1);
+        setFlags_Widget(findChild_Widget(navBar, id), disabled_WidgetFlag, iFalse);
+    }
+    setFlags_Widget(as_Widget(findMenuItem_Widget(navBar, "navigate.back")), disabled_WidgetFlag, atOldest);
+    setFlags_Widget(as_Widget(findMenuItem_Widget(navBar, "navigate.forward")), disabled_WidgetFlag, atNewest);
     iWidget *toolBar = findWidget_App("toolbar");
     if (toolBar) {
         /* Reset the state. */
@@ -618,6 +624,7 @@ static void updateNavDirButtons_(iWidget *navBar) {
         setOutline_LabelWidget(fwd, atNewest);
         refresh_Widget(toolBar);
     }
+    iEndCollect();
 }
 
 static const char *loadAnimationCStr_(void) {
@@ -777,7 +784,7 @@ static void updateNavBarSize_(iWidget *navBar) {
     /* Button sizing. */
     if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
         setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
-        showCollapsed_Widget(findChild_Widget(navBar, "navbar.sidebar"), !isNarrow);
+        showCollapsed_Widget(findChild_Widget(navBar, "navbar.action3"), !isNarrow);
         iObjectList *lists[] = {
             children_Widget(navBar),
             children_Widget(findChild_Widget(navBar, "url")),
@@ -798,8 +805,8 @@ static void updateNavBarSize_(iWidget *navBar) {
         updateUrlInputContentPadding_(navBar);
     }
     if (isPhone) {
-        static const char *buttons[] = { "navbar.back",  "navbar.forward", "navbar.sidebar",
-                                         "navbar.ident", "navbar.home",    "navbar.menu" };
+        static const char *buttons[] = { "navbar.action1", "navbar.action2", "navbar.action3",
+                                         "navbar.action4", "navbar.ident",   "navbar.menu" };
         iWidget *toolBar = findWidget_Root("toolbar");
         setVisualOffset_Widget(toolBar, 0, 0, 0);
         setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
@@ -824,6 +831,22 @@ static void updateNavBarSize_(iWidget *navBar) {
     postCommand_Widget(navBar, "layout.changed id:navbar");
 }
 
+static void updateNavBarActions_(iWidget *navBar) {
+    const iPrefs *prefs = prefs_App();
+    for (size_t i = 0; i < iElemCount(prefs->navbarActions); i++) {
+        iBeginCollect();
+        const int action = prefs->navbarActions[i];
+        iLabelWidget *button =
+            findChild_Widget(navBar, format_CStr("navbar.action%d", i + 1));
+        if (button) {
+            setFlags_Widget(as_Widget(button), disabled_WidgetFlag, iFalse);
+            updateTextCStr_LabelWidget(button, toolbarActions_Mobile[action].icon);
+            setCommand_LabelWidget(button, collectNewCStr_String(toolbarActions_Mobile[action].command));
+        }
+        iEndCollect();
+    }
+}
+
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "metrics.changed")) {
         updateNavBarSize_(navBar);
@@ -833,6 +856,33 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         if (pointerLabel_Command(cmd, "root") == get_Root()) {
             checkLoadAnimation_Root_(get_Root());
             return iTrue;
+        }
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "navbar.actions.changed")) {
+        updateNavBarActions_(navBar);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "contextclick")) {
+        const iRangecc id = range_Command(cmd, "id");
+        if (id.start && startsWith_CStr(id.start, "navbar.action")) {
+            const int buttonIndex = id.end[-1] - '1';
+            iArray items;
+            init_Array(&items, sizeof(iMenuItem));
+            for (size_t i = 0; i < max_ToolbarAction; i++) {
+                pushBack_Array(
+                    &items,
+                    &(iMenuItem){
+                        format_CStr(
+                            "%s %s", toolbarActions_Mobile[i].icon, toolbarActions_Mobile[i].label),
+                        0,
+                        0,
+                        format_CStr("navbar.action.set arg:%d button:%d", i, buttonIndex) });
+            }
+            openMenu_Widget(
+                makeMenu_Widget(get_Root()->widget, constData_Array(&items), size_Array(&items)),
+                coord_Command(cmd));
+            deinit_Array(&items);
         }
         return iFalse;
     }
@@ -1068,9 +1118,7 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
 static void updateToolBarActions_(iWidget *toolBar) {
     const iPrefs *prefs = prefs_App();
     for (int i = 0; i < 2; i++) {
-        int action = prefs->toolbarActions[i]
-                         ? prefs->toolbarActions[i]
-                         : (i == 0 ? back_ToolbarAction : forward_ToolbarAction);
+        const int action = prefs->toolbarActions[i];
         iLabelWidget *button =
             findChild_Widget(toolBar, i == 0 ? "toolbar.action1" : "toolbar.action2");
         if (button) {
@@ -1260,14 +1308,14 @@ void createUserInterface_Root(iRoot *d) {
         addUnsplitButton_(navBar);
 #endif
         iWidget *navBack;
-        setId_Widget(navBack = addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
-        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(forwardArrow_Icon, 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.forward");
+        setId_Widget(navBack = addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.action1");
+        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(forwardArrow_Icon, 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.action2");
         /* Button for toggling the left sidebar. */
         setId_Widget(addChildFlags_Widget(
                          navBar,
                          iClob(newIcon_LabelWidget(leftHalf_Icon, 0, 0, "sidebar.toggle")),
                          collapse_WidgetFlag),
-                     "navbar.sidebar");
+                     "navbar.action3");
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         iInputWidget *url;
         /* URL input field. */ {
@@ -1421,9 +1469,9 @@ void createUserInterface_Root(iRoot *d) {
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         setId_Widget(addChildFlags_Widget(navBar,
                                           iClob(newIcon_LabelWidget(
-                                              home_Icon, SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")),
+                                              home_Icon, 0, 0, "navigate.home")),
                                           collapse_WidgetFlag),
-                     "navbar.home");
+                     "navbar.action4");
 #if defined (iPlatformMobile)
         const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
 #endif
@@ -1583,6 +1631,7 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(menu, "toolbar.menu"); /* view menu */
     }
 #endif
+    updateNavBarActions_(navBar);
     updatePadding_Root(d);
     /* Global context menus. */ {
         iWidget *tabsMenu = makeMenu_Widget(
@@ -1651,6 +1700,7 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(splitMenu, "splitmenu");
     }
     /* Global keyboard shortcuts. */ {
+        addAction_Widget(root, SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home");
         addAction_Widget(root, 'l', KMOD_PRIMARY, "navigate.focus");
         addAction_Widget(root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
         addAction_Widget(root, '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1");

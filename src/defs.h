@@ -80,6 +80,7 @@ enum iToolbarAction {
     editPage_ToolbarAction    = 10,
     findText_ToolbarAction    = 11,
     settings_ToolbarAction    = 12,
+    sidebar_ToolbarAction     = 13, /* desktop only */
     max_ToolbarAction
 };
 
@@ -116,7 +117,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 
 #define menu_Icon           "\U0001d362"
 #define rightArrowhead_Icon "\u27a4"
-#define leftArrowhead_Icon  "\u27a4"
+#define leftArrowhead_Icon  "\u2b9c"
 #define warning_Icon        "\u26a0"
 #define openLock_Icon       "\U0001f513"
 #define closedLock_Icon     "\U0001f512"
@@ -124,7 +125,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define reload_Icon         "\U0001f503"
 #define backArrow_Icon      "\U0001f870"
 #define forwardArrow_Icon   "\U0001f872"
-#define upArrow_Icon        "\u2191"
+#define upArrow_Icon        "\U0001f871"
 #define upArrowBar_Icon     "\u2912"
 #define downArrowBar_Icon   "\u2913"
 #define rightArrowWhite_Icon "\u21e8"

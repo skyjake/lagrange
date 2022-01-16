@@ -2404,10 +2404,10 @@ iWidget *makePreferences_Widget(void) {
           format_CStr("returnkey.set arg:%d", acceptWithPrimaryMod_ReturnKeyBehavior) },
         { NULL }
     };
-    iMenuItem toolbarActionItems[2][max_ToolbarAction + 1];
+    iMenuItem toolbarActionItems[2][max_ToolbarAction];
     iZap(toolbarActionItems);
     for (int j = 0; j < 2; j++) {
-        for (int i = 0; i < max_ToolbarAction; i++) {
+        for (int i = 0; i < sidebar_ToolbarAction; i++) {
             toolbarActionItems[j][i].label = toolbarActions_Mobile[i].label;
             toolbarActionItems[j][i].command =
                 format_CStr("toolbar.action.set arg:%d button:%d", i, j);

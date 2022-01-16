@@ -9,6 +9,7 @@
 ## 1.10
 New features:
 * macOS: Trackpad swipe navigation.
+* Customizable navbar actions. Right-click on a button to change its action. (Identity and hamburger buttons cannot be changed.)
 * Identity toolbar menu can be used to switch between alternate identities. If you have used multiple identities on one site, this makes it more convenient to switch between them.
 * Added "Edit Page with Titan": opens the upload dialog with current page's content prefilled.
 * Added "Paste Preceding Line" in the input prompt dialog. Potential use cases include user-editable sections on a page and suggested/example input values.
@@ -35,6 +36,8 @@ Changes and enhancements:
 Fixes:
 * Fixed a history caching issue: if there were multiple instances of the same URL in history, only the latest one's content would be used when navigating back/forward.
 * Fixed handling of reserved characters in URLs (cf. RFC 3986, section 2.2).
+* Fixed the copy/paste context menu not showing in input fields.
+* Fixed duplicated warnings showing in the page banner.
 * Fixed very narrow input fields causing the app to hang.
 * Fixed initial scroll position in multiline input fields.
 * Fixed lookup results list becoming too narrow.

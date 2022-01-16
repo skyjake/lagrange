@@ -248,6 +248,9 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
     appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
+    for (size_t i = 0; i < iElemCount(d->prefs.navbarActions); i++) {
+        appendFormat_String(str, "navbar.action.set arg:%d button:%d\n", d->prefs.navbarActions[i], i);
+    }
 #if defined (iPlatformMobile)
     appendFormat_String(str, "toolbar.action.set arg:%d button:0\n", d->prefs.toolbarActions[0]);
     appendFormat_String(str, "toolbar.action.set arg:%d button:1\n", d->prefs.toolbarActions[1]);
@@ -961,6 +964,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     if (!loadState_App_(d)) {
         postCommand_Root(NULL, "open url:about:help");
     }
+    postCommand_App("~navbar.actions.changed");
+    postCommand_App("~toolbar.actions.changed");
     postCommand_Root(NULL, "~window.unfreeze");
     postCommand_Root(NULL, "font.reset");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
@@ -2291,10 +2296,20 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "navbar.action.set")) {
+        d->prefs.navbarActions[iClamp(argLabel_Command(cmd, "button"), 0, maxNavbarActions_Prefs - 1)] =
+            iClamp(arg_Command(cmd), 0, max_ToolbarAction - 1);
+        if (!isFrozen) {
+            postCommand_App("~navbar.actions.changed");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "toolbar.action.set")) {
         d->prefs.toolbarActions[iClamp(argLabel_Command(cmd, "button"), 0, 1)] =
             iClamp(arg_Command(cmd), 0, max_ToolbarAction - 1);
-        postCommand_App("~toolbar.actions.changed");
+        if (!isFrozen) {
+            postCommand_App("~toolbar.actions.changed");
+        }
         return iTrue;        
     }
     else if (equal_Command(cmd, "translation.languages")) {

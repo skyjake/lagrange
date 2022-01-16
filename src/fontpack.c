@@ -818,7 +818,7 @@ const iArray *actions_FontPack(const iFontPack *d, iBool showInstalled) {
         pushBack_Array(
             items,
             &(iMenuItem){ format_Lang(isEnabled ? close_Icon " ${fontpack.disable}"
-                                                : leftArrowhead_Icon " ${fontpack.enable}",
+                                                : "${fontpack.enable}",
                                       fpId),
                           0,
                           0,
