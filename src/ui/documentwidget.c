@@ -2851,6 +2851,12 @@ static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
+    updateBanner_DocumentWidget_(d);
+    /* Warnings are not shown on internal pages. */
+    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "about")) {
+        clear_Banner(d->banner);
+        return;
+    }
     /* Warnings related to certificates and trust. */
     const int certFlags = d->certFlags;
     const int req = timeVerified_GmCertFlag | domainVerified_GmCertFlag | trusted_GmCertFlag;
