@@ -47,15 +47,30 @@ iLocalDef iBool isMetricsChange_UserEvent(const SDL_Event *d) {
 }
 
 enum iMouseWheelFlag {
-    perPixel_MouseWheelFlag = iBit(9), /* e.g., trackpad or finger scroll; applied to `direction` */
+    /* Note: A future version of SDL may support per-pixel scrolling, but 2.0.x doesn't. */
+    perPixel_MouseWheelFlag       = iBit(9), /* e.g., trackpad or finger scroll; applied to `direction` */
+    inertia_MouseWheelFlag        = iBit(10),
+    scrollFinished_MouseWheelFlag = iBit(11),
 };
 
-/* Note: A future version of SDL may support per-pixel scrolling, but 2.0.x doesn't. */
 iLocalDef void setPerPixel_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
     iChangeFlags(ev->direction, perPixel_MouseWheelFlag, set);
 }
+iLocalDef void setInertia_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
+    iChangeFlags(ev->direction, inertia_MouseWheelFlag, set);
+}
+iLocalDef void setScrollFinished_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
+    iChangeFlags(ev->direction, scrollFinished_MouseWheelFlag, set);
+}
+
 iLocalDef iBool isPerPixel_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
     return (ev->direction & perPixel_MouseWheelFlag) != 0;
+}
+iLocalDef iBool isInertia_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
+    return (ev->direction & inertia_MouseWheelFlag) != 0;
+}
+iLocalDef iBool isScrollFinished_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
+    return (ev->direction & scrollFinished_MouseWheelFlag) != 0;
 }
 
 iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
@@ -179,11 +194,18 @@ iDeclareType(SmoothScroll)
 
 typedef void (*iSmoothScrollNotifyFunc)(iAnyObject *, int offset, uint32_t span);
 
+enum iSmoothScrollFlags {
+    pullDownAction_SmoothScrollFlag = iBit(1),
+    pullUpAction_SmoothScrollFlag = iBit(2),
+};
+
 struct Impl_SmoothScroll {
     iAnim    pos;
     int      max;
     int      overscroll;
     iWidget *widget;
+    int      flags;
+    int      pullActionTriggered;
     iSmoothScrollNotifyFunc notify;
 };
 
@@ -197,6 +219,7 @@ iBool   processEvent_SmoothScroll   (iSmoothScroll *, const SDL_Event *ev);
 
 float   pos_SmoothScroll            (const iSmoothScroll *);
 iBool   isFinished_SmoothScroll     (const iSmoothScroll *);
+float   pullActionPos_SmoothScroll  (const iSmoothScroll *); /* 0...1 */
 
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -249,7 +272,8 @@ void            setMenuItemDisabled_Widget      (iWidget *menu, const char *comm
 void            setMenuItemDisabledByIndex_Widget(iWidget *menu, size_t index, iBool disable);
 void            setMenuItemLabel_Widget         (iWidget *menu, const char *command, const char *newLabel);
 void            setMenuItemLabelByIndex_Widget  (iWidget *menu, size_t index, const char *newLabel);
-void            setNativeMenuItems_Widget       (iWidget *, const iMenuItem *items, size_t n);
+void            setNativeMenuItems_Widget       (iWidget *menu, const iMenuItem *items, size_t n);
+iWidget *       findUserData_Widget             (iWidget *, void *userData);
 
 int             checkContextMenu_Widget         (iWidget *, const SDL_Event *ev); /* see macro below */
 
@@ -293,6 +317,7 @@ iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
 
 iLabelWidget *dialogAcceptButton_Widget (const iWidget *);
 
+iLabelWidget *addDialogTitle_Widget     (iWidget *, const char *text, const char *idOrNull);
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,
                                                   iInputWidget *input);

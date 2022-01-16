@@ -37,7 +37,7 @@ void init_RecentUrl(iRecentUrl *d) {
     d->normScrollY    = 0;
     d->cachedResponse = NULL;
     d->cachedDoc      = NULL;
-    d->flags.openedFromSidebar = iFalse;
+    d->flags          = 0;
 }
 
 void deinit_RecentUrl(iRecentUrl *d) {
@@ -110,6 +110,14 @@ iHistory *copy_History(const iHistory *d) {
     return copy;
 }
 
+void lock_History(iHistory *d) {
+    lock_Mutex(d->mtx);
+}
+
+void unlock_History(iHistory *d) {
+    unlock_Mutex(d->mtx);
+}
+
 iMemInfo memoryUsage_History(const iHistory *d) {
     iMemInfo mem = { 0, 0 };
     iConstForEach(Array, i, &d->recent) {
@@ -173,7 +181,7 @@ void serialize_History(const iHistory *d, iStream *outs) {
         const iRecentUrl *item = i.value;
         serialize_String(&item->url, outs);
         write32_Stream(outs, item->normScrollY * 1.0e6f);
-        writeU16_Stream(outs, item->flags.openedFromSidebar ? iBit(1) : 0);
+        writeU16_Stream(outs, item->flags);
         if (item->cachedResponse) {
             write8_Stream(outs, 1);
             serialize_GmResponse(item->cachedResponse, outs);
@@ -197,10 +205,7 @@ void deserialize_History(iHistory *d, iStream *ins) {
         set_String(&item.url, canonicalUrl_String(&item.url));
         item.normScrollY = (float) read32_Stream(ins) / 1.0e6f;
         if (version_Stream(ins) >= addedRecentUrlFlags_FileVersion) {
-            uint16_t flags = readU16_Stream(ins);
-            if (flags & iBit(1)) {
-                item.flags.openedFromSidebar = iTrue;
-            }
+            item.flags = readU16_Stream(ins);
         }
         if (read8_Stream(ins)) {
             item.cachedResponse = new_GmResponse();
@@ -246,18 +251,26 @@ const iString *url_History(const iHistory *d, size_t pos) {
     return collectNew_String();
 }
 
-iRecentUrl *findUrl_History(iHistory *d, const iString *url) {
+#if 0
+iRecentUrl *findUrl_History(iHistory *d, const iString *url, int timeDir) {
     url = canonicalUrl_String(url);
+//    if (!timeDir) {
+//        timeDir = -1;
+//    }
     lock_Mutex(d->mtx);
-    iReverseForEach(Array, i, &d->recent) {
-        if (cmpStringCase_String(url, &((iRecentUrl *) i.value)->url) == 0) {
+    for (size_t i = size_Array(&d->recent) - 1 - d->recentPos; i < size_Array(&d->recent);
+         i += timeDir) {
+        iRecentUrl *item = at_Array(&d->recent, i);
+        if (cmpStringCase_String(url, &item->url) == 0) {
             unlock_Mutex(d->mtx);
-            return i.value;
+            return item; /* FIXME: Returning an internal pointer; should remain locked. */
         }
+        if (!timeDir) break;
     }
     unlock_Mutex(d->mtx);
     return NULL;
 }
+#endif
 
 void replace_History(iHistory *d, const iString *url) {
     url = canonicalUrl_String(url);
@@ -297,20 +310,31 @@ void add_History(iHistory *d, const iString *url) {
     unlock_Mutex(d->mtx);
 }
 
-iBool preceding_History(iHistory *d, iRecentUrl *recent_out) {
-    iBool ok = iFalse;
+void undo_History(iHistory *d) {
     lock_Mutex(d->mtx);
-    if (!isEmpty_Array(&d->recent) && d->recentPos < size_Array(&d->recent) - 1) {
-        const iRecentUrl *recent = constAt_Array(&d->recent, size_Array(&d->recent) - 1 -
-                                                 (d->recentPos + 1));
-        set_String(&recent_out->url, &recent->url);
-        recent_out->normScrollY = recent->normScrollY;
-        iChangeRef(recent_out->cachedDoc, recent->cachedDoc);
-        /* Cached response is not returned, would involve a deep copy. */
-        ok = iTrue;
+    if (!isEmpty_Array(&d->recent) || d->recentPos != 0) {
+        deinit_RecentUrl(back_Array(&d->recent));
+        popBack_Array(&d->recent);
     }
-    unlock_Mutex(d->mtx);
-    return ok;
+    unlock_Mutex(d->mtx);    
+}
+
+iRecentUrl *precedingLocked_History(iHistory *d) {
+    /* NOTE: Manual lock and unlock are required when using this; returning an internal pointer. */
+    iBool ok = iFalse;
+    //lock_Mutex(d->mtx);
+    const size_t lastIndex = size_Array(&d->recent) - 1;
+    if (!isEmpty_Array(&d->recent) && d->recentPos < lastIndex) {
+        return at_Array(&d->recent, lastIndex - (d->recentPos + 1));
+//        set_String(&recent_out->url, &recent->url);
+//        recent_out->normScrollY = recent->normScrollY;
+//        iChangeRef(recent_out->cachedDoc, recent->cachedDoc);
+        /* Cached response is not returned, would involve a deep copy. */
+//        ok = iTrue;
+    }
+    //unlock_Mutex(d->mtx);
+//    return ok;
+    return NULL;
 }
 
 #if 0
@@ -360,7 +384,7 @@ iBool goForward_History(iHistory *d) {
     return iFalse;
 }
 
-iBool atLatest_History(const iHistory *d) {
+iBool atNewest_History(const iHistory *d) {
     iBool isLatest;
     iGuardMutex(d->mtx, isLatest = (d->recentPos == 0));
     return isLatest;
@@ -391,12 +415,18 @@ void setCachedResponse_History(iHistory *d, const iGmResponse *response) {
     unlock_Mutex(d->mtx);
 }
 
-void setCachedDocument_History(iHistory *d, iGmDocument *doc, iBool openedFromSidebar) {
+void setCachedDocument_History(iHistory *d, iGmDocument *doc) {
     lock_Mutex(d->mtx);
     iRecentUrl *item = mostRecentUrl_History(d);
+    iAssert(size_GmDocument(doc).x > 0);
     if (item) {
-        iAssert(equal_String(url_GmDocument(doc), &item->url));
-        item->flags.openedFromSidebar = openedFromSidebar;
+#if !defined (NDEBUG)
+        if (!equal_String(url_GmDocument(doc), &item->url)) {
+            printf("[History] Cache mismatch! Expecting data for item {%s} but document URL is {%s}\n",
+                   cstr_String(&item->url),
+                   cstr_String(url_GmDocument(doc)));
+        }
+#endif
         if (item->cachedDoc != doc) {
             iRelease(item->cachedDoc);
             item->cachedDoc = ref_Object(doc);

@@ -31,27 +31,30 @@ iDeclareType(GmRequest)
 
 iDeclareType(Bookmark)
 iDeclareTypeConstruction(Bookmark)
-
-/* TODO: Make the special internal tags a bitfield, separate from user's tags. */
-
-#define headings_BookmarkTag        "headings"
-#define ignoreWeb_BookmarkTag       "ignoreweb"
-#define homepage_BookmarkTag        "homepage"
-#define linkSplit_BookmarkTag       "linksplit"
-#define remote_BookmarkTag          "remote"
-#define remoteSource_BookmarkTag    "remotesource"
-#define subscribed_BookmarkTag      "subscribed"
-#define userIcon_BookmarkTag        "usericon"
+    
+/* These values are not serialized as-is in bookmarks.ini. Instead, they are included in `tags`
+   with a dot prefix. This helps retain backwards and forwards compatibility. */
+enum iBookmarkFlags {
+    homepage_BookmarkFlag     = iBit(1),
+    remoteSource_BookmarkFlag = iBit(2),
+    linkSplit_BookmarkFlag    = iBit(3),
+    userIcon_BookmarkFlag     = iBit(4),
+    subscribed_BookmarkFlag   = iBit(17),
+    headings_BookmarkFlag     = iBit(18),
+    ignoreWeb_BookmarkFlag    = iBit(19),
+    remote_BookmarkFlag       = iBit(31),
+};
 
 struct Impl_Bookmark {
     iHashNode node;
-    iString url;
-    iString title;
-    iString tags;
-    iChar icon;
-    iTime when;
-    uint32_t parentId; /* remote source or folder */
-    int order;         /* sort order */
+    iString   url;
+    iString   title;
+    iString   tags;
+    uint32_t  flags;
+    iChar     icon;
+    iTime     when;
+    uint32_t  parentId; /* remote source or folder */
+    int       order;    /* sort order */
 };
 
 iLocalDef uint32_t  id_Bookmark         (const iBookmark *d) { return d->node.key; }
@@ -59,23 +62,24 @@ iLocalDef iBool     isFolder_Bookmark   (const iBookmark *d) { return isEmpty_St
 
 iBool   hasParent_Bookmark  (const iBookmark *, uint32_t parentId);
 int     depth_Bookmark      (const iBookmark *);
-iBool   hasTag_Bookmark     (const iBookmark *, const char *tag);
-void    addTag_Bookmark     (iBookmark *, const char *tag);
-void    removeTag_Bookmark  (iBookmark *, const char *tag);
 
-iLocalDef void addTagIfMissing_Bookmark(iBookmark *d, const char *tag) {
-    if (!hasTag_Bookmark(d, tag)) {
-        addTag_Bookmark(d, tag);
-    }
-}
-iLocalDef void addOrRemoveTag_Bookmark(iBookmark *d, const char *tag, iBool add) {
-    if (add) {
-        addTagIfMissing_Bookmark(d, tag);
-    }
-    else {
-        removeTag_Bookmark(d, tag);
-    }
-}
+//iBool   hasTag_Bookmark     (const iBookmark *, const char *tag);
+//void    addTag_Bookmark     (iBookmark *, const char *tag);
+//void    removeTag_Bookmark  (iBookmark *, const char *tag);
+
+//iLocalDef void addTagIfMissing_Bookmark(iBookmark *d, const char *tag) {
+//    if (!hasTag_Bookmark(d, tag)) {
+//        addTag_Bookmark(d, tag);
+//    }
+//}
+//iLocalDef void addOrRemoveTag_Bookmark(iBookmark *d, const char *tag, iBool add) {
+//    if (add) {
+//        addTagIfMissing_Bookmark(d, tag);
+//    }
+//    else {
+//        removeTag_Bookmark(d, tag);
+//    }
+//}
 
 int     cmpTitleAscending_Bookmark      (const iBookmark **, const iBookmark **);
 int     cmpTree_Bookmark                (const iBookmark **, const iBookmark **);
@@ -109,7 +113,8 @@ iChar       siteIcon_Bookmarks          (const iBookmarks *, const iString *url)
 uint32_t    findUrl_Bookmarks           (const iBookmarks *, const iString *url); /* O(n) */
 uint32_t    recentFolder_Bookmarks      (const iBookmarks *);
 
-iBool   filterTagsRegExp_Bookmarks      (void *regExp, const iBookmark *);
+//iBool   filterTagsRegExp_Bookmarks      (void *regExp, const iBookmark *);
+iBool       filterHomepage_Bookmark     (void *, const iBookmark *);
 
 /**
  * Lists all or a subset of the bookmarks in a sorted array of Bookmark pointers.

@@ -136,7 +136,7 @@ enum iColorId {
     tmBackgroundAltText_ColorId,     /* derived from other theme colors */
     tmFrameAltText_ColorId,          /* derived from other theme colors */
     tmBackgroundOpenLink_ColorId,    /* derived from other theme colors */
-    tmFrameOpenLink_ColorId,         /* derived from other theme colors */
+    tmLinkFeedEntryDate_ColorId,     /* derived from other theme colors */
     tmLinkCustomIconVisited_ColorId, /* derived from other theme colors */
     tmBadLink_ColorId,
 

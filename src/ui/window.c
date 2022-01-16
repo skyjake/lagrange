@@ -442,7 +442,7 @@ void create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 static SDL_Surface *loadImage_(const iBlock *data, int resized) {
     int      w = 0, h = 0, num = 4;
     stbi_uc *pixels = stbi_load_from_memory(
-        constData_Block(data), size_Block(data), &w, &h, &num, STBI_rgb_alpha);
+        constData_Block(data), (int) size_Block(data), &w, &h, &num, STBI_rgb_alpha);
     if (resized) {
         stbi_uc *rsPixels = malloc(num * resized * resized);
         stbir_resize_uint8(pixels, w, h, 0, rsPixels, resized, resized, 0, num);
@@ -560,6 +560,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     d->splitMode              = 0;
     d->pendingSplitMode       = 0;
     d->pendingSplitUrl        = new_String();
+    d->pendingSplitOrigin     = new_String();
     d->place.initialPos       = rect.pos;
     d->place.normalRect       = rect;
     d->place.lastNotifiedSize = zero_I2();
@@ -605,6 +606,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 #endif
     setCurrent_Text(d->base.text);
     SDL_GetRendererOutputSize(d->base.render, &d->base.size.x, &d->base.size.y);
+    d->maxDrawableHeight = d->base.size.y;
     setupUserInterface_MainWindow(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
     /* Load the border shadow texture. */ {
@@ -642,6 +644,7 @@ void deinit_MainWindow(iMainWindow *d) {
     if (theMainWindow_ == d) {
         theMainWindow_ = NULL;
     }
+    delete_String(d->pendingSplitOrigin);
     delete_String(d->pendingSplitUrl);
     deinit_Window(&d->base);
 }
@@ -1006,6 +1009,28 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 postCommand_App("media.player.update"); /* in case a player needs updating */
                 return iTrue;
             }
+            if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.sysframe") && mw) {
+                /* This command is sent on Android to update the keyboard height. */
+                const char *cmd = command_UserEvent(ev);
+                /*
+                    0
+                    |
+                 top
+                 |  |
+                 | bottom (top of keyboard)   :
+                 |  |                         : keyboardHeight
+                 maxDrawableHeight            :
+                    |
+                   fullheight
+                 */
+                const int top    = argLabel_Command(cmd, "top");
+                const int bottom = argLabel_Command(cmd, "bottom");
+                if (!SDL_IsScreenKeyboardShown(mw->base.win)) {
+                    mw->maxDrawableHeight = bottom - top;
+                }
+                setKeyboardHeight_MainWindow(mw, top + mw->maxDrawableHeight - bottom);
+                return iTrue;
+            }
             if (processEvent_Touch(&event)) {
                 return iTrue;
             }
@@ -1236,11 +1261,15 @@ void draw_MainWindow(iMainWindow *d) {
     isDrawing_ = iTrue;
     setCurrent_Text(d->base.text);
     /* Check if root needs resizing. */ {
+        const iBool wasPortrait = isPortrait_App();
         iInt2 renderSize;
         SDL_GetRendererOutputSize(w->render, &renderSize.x, &renderSize.y);
         if (!isEqual_I2(renderSize, w->size)) {
             updateSize_MainWindow_(d, iTrue);
             processEvents_App(postedEventsOnly_AppEventMode);
+            if (isPortrait_App() != wasPortrait) {
+                d->maxDrawableHeight = renderSize.y;
+            }
         }
     }
     const int   winFlags = SDL_GetWindowFlags(d->base.win);
@@ -1268,6 +1297,14 @@ void draw_MainWindow(iMainWindow *d) {
     }
     /* Draw widgets. */
     w->frameTime = SDL_GetTicks();
+    iForIndices(i, d->base.roots) {
+        iRoot *root = d->base.roots[i];
+        if (root) {
+            /* Some widgets may need a just-in-time visual update. */
+            notifyVisualOffsetChange_Root(root);
+            root->didChangeArrangement = iFalse;
+        }
+    }
     if (isExposed_Window(w)) {
         w->isInvalidated = iFalse;
         extern int drawCount_;
@@ -1442,6 +1479,7 @@ iBool isOpenGLRenderer_Window(void) {
 }
 
 void setKeyboardHeight_MainWindow(iMainWindow *d, int height) {
+    height = iMax(0, height);
     if (d->keyboardHeight != height) {
         d->keyboardHeight = height;
         postCommandf_App("keyboard.changed arg:%d", height);
@@ -1528,18 +1566,20 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                 }
             }
             if (!isEmpty_String(d->pendingSplitUrl)) {
-                postCommandf_Root(w->roots[newRootIndex], "open url:%s",
+                postCommandf_Root(w->roots[newRootIndex], "open origin:%s url:%s",
+                                  cstr_String(d->pendingSplitOrigin),
                                   cstr_String(d->pendingSplitUrl));
                 clear_String(d->pendingSplitUrl);
+                clear_String(d->pendingSplitOrigin);
             }
             else if (~splitFlags & noEvents_WindowSplit) {
                 iWidget *docTabs0 = findChild_Widget(w->roots[newRootIndex ^ 1]->widget, "doctabs");
                 iWidget *docTabs1 = findChild_Widget(w->roots[newRootIndex]->widget, "doctabs");
                 /* If the old root has multiple tabs, move the current one to the new split. */
                 if (tabCount_Widget(docTabs0) >= 2) {
-                    int movedIndex = tabPageIndex_Widget(docTabs0, moved);
+                    size_t movedIndex = tabPageIndex_Widget(docTabs0, moved);
                     removeTabPage_Widget(docTabs0, movedIndex);
-                    showTabPage_Widget(docTabs0, tabPage_Widget(docTabs0, iMax(movedIndex - 1, 0)));
+                    showTabPage_Widget(docTabs0, tabPage_Widget(docTabs0, iMax((int) movedIndex - 1, 0)));
                     iRelease(removeTabPage_Widget(docTabs1, 0)); /* delete the default tab */
                     setRoot_Widget(as_Widget(moved), w->roots[newRootIndex]);
                     prependTabPage_Widget(docTabs1, iClob(moved), "", 0, 0);

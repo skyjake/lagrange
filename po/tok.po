@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-12-08 14:50+0000\n"
+"PO-Revision-Date: 2022-01-08 14:50+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -29,7 +29,7 @@ msgstr "sitelen namako li jo ala e sitelen pona"
 
 # Link download progress message.
 msgid "doc.fetching"
-msgstr "mi kama jo"
+msgstr "lipu li kama"
 
 # Inline download status message.
 msgid "media.download.complete"
@@ -389,7 +389,7 @@ msgid "history.clear"
 msgstr "o kama sin e sona pi tenpo pini…"
 
 msgid "heading.history.clear"
-msgstr "SONA PI TENPO PINI LI WILE KAMA SIN"
+msgstr "o kama sin e sona pi tenpo pini"
 
 msgid "ident.using"
 msgstr "lipu ni li kepeken e ona"
@@ -428,25 +428,25 @@ msgid "dlg.ident.notes"
 msgstr "toki lili pi nimi %s:"
 
 msgid "heading.ident.use"
-msgstr "LIPU NI LI KEPEKEN E ONA"
+msgstr "lipu ni li kepeken e ona"
 
 msgid "menu.edit.notes"
 msgstr "o ante e toki lili…"
 
 msgid "heading.ident.notes"
-msgstr "TOKI LILI NIMI"
+msgstr "toki lili nimi"
 
 msgid "ident.delete"
 msgstr "o weka e ona…"
 
 msgid "heading.ident.delete"
-msgstr "NIMI LI WILE TAWA WEKA"
+msgstr "o weka e nimi"
 
 msgid "ident.fingerprint"
 msgstr "o kama sona e sitelen len lili"
 
 msgid "heading.unsub"
-msgstr "O PINI LUKIN"
+msgstr "o pini lukin"
 
 #, c-format
 msgid "dlg.confirm.unsub"
@@ -499,10 +499,10 @@ msgid "dlg.cert.trust"
 msgstr "o kepeken"
 
 msgid "heading.save"
-msgstr "IJO LI AWEN"
+msgstr "ijo li awen"
 
 msgid "heading.save.incomplete"
-msgstr "LIPU LI WAN ALA"
+msgstr "lipu li wan ala"
 
 msgid "dlg.save.incomplete"
 msgstr "mi kin kama jo e lipu ni."
@@ -511,10 +511,10 @@ msgid "dlg.save.size"
 msgstr "suli:"
 
 msgid "heading.save.error"
-msgstr "PAKALA! MI AWEN ALA E IJO"
+msgstr "pakala! mi awen ala e ijo"
 
 msgid "heading.import.bookmarks"
-msgstr "O KAMA JO E LIPU AWEN"
+msgstr "o kama jo e lipu awen"
 
 msgid "reload.onceperday"
 msgstr "tenpo wan pi tenpo suno"
@@ -532,7 +532,7 @@ msgid "link.bookmark"
 msgstr "o awen e nimi tawa…"
 
 msgid "heading.openlink"
-msgstr "O OPEN E NIMI TAWA"
+msgstr "o open e nimi tawa"
 
 #, c-format
 msgid "dlg.import.add"
@@ -546,7 +546,7 @@ msgid "link.noproxy"
 msgstr "o open kepeken ala lupa"
 
 msgid "heading.autoreload"
-msgstr "O SIN E LIPU"
+msgstr "o sin e lipu"
 
 #, c-format
 msgid "num.minutes"
@@ -586,16 +586,16 @@ msgid "dlg.certimport.notfound.page"
 msgstr "sitelen len en ijo len li lon ala lon lipu ni."
 
 msgid "heading.certimport"
-msgstr "O KAMA JO E NIMI"
+msgstr "o kama jo e nimi"
 
 msgid "heading.certimport.pasted"
-msgstr "PANA TAN SONA"
+msgstr "pana tan sona"
 
 msgid "bookmark.title.blank"
 msgstr "lipu li jo e ala insa"
 
 msgid "heading.certimport.dropped"
-msgstr "TAWA TAN IJO"
+msgstr "tawa tan ijo"
 
 msgid "dlg.certimport.import"
 msgstr "o kama jo"
@@ -610,10 +610,10 @@ msgid "dlg.certimport.nokey"
 msgstr "ijo len li lon ala"
 
 msgid "link.hint.audio"
-msgstr "o kute e kalama musi"
+msgstr "kalama musi"
 
 msgid "link.hint.image"
-msgstr "o lukin e sitelen"
+msgstr "sitelen"
 
 # Interpret as "Results from bookmarks..."
 msgid "heading.lookup.bookmarks"
@@ -632,7 +632,7 @@ msgid "heading.lookup.other"
 msgstr "TAN IJO ANTE"
 
 msgid "heading.translate"
-msgstr "O TOKI ANTE E LIPU"
+msgstr "o toki ante e lipu"
 
 msgid "dlg.translate.fail"
 msgstr "toki li pakala"
@@ -719,7 +719,7 @@ msgid "dlg.newident.create"
 msgstr "o pali e nimi"
 
 msgid "heading.subscribe"
-msgstr "O LUKIN E IJO SIN LON LIPU"
+msgstr "o lukin e ijo sin lon lipu"
 
 msgid "dlg.feed.title"
 msgstr "nimi:"
@@ -740,10 +740,10 @@ msgid "dlg.feed.sub"
 msgstr "o lukin"
 
 msgid "heading.bookmark.add"
-msgstr "O AWEN E LIPU"
+msgstr "o awen e lipu"
 
 msgid "heading.bookmark.edit"
-msgstr "O ANTE E LIPU AWEN"
+msgstr "o ante e lipu awen"
 
 msgid "dlg.bookmark.save"
 msgstr "o awen"
@@ -758,7 +758,7 @@ msgid "dlg.bookmark.icon"
 msgstr "sitelen:"
 
 msgid "heading.prefs"
-msgstr "IJO ANTE"
+msgstr "ijo ante"
 
 # tab button
 msgid "heading.prefs.colors"
@@ -780,7 +780,7 @@ msgid "heading.prefs.network"
 msgstr "kon"
 
 msgid "heading.prefs.paragraph"
-msgstr "WAN SITELEN"
+msgstr "wan sitelen"
 
 msgid "prefs.searchurl"
 msgstr "nimi tawa lukin e nimi:"
@@ -801,19 +801,19 @@ msgid "prefs.hidetoolbarscroll"
 msgstr "tawa la mi len e ijo sewi:"
 
 msgid "heading.prefs.pagecontent"
-msgstr "KULE LIPU"
+msgstr "kule lipu"
 
 msgid "heading.prefs.proxies"
-msgstr "LUPA"
+msgstr "lupa"
 
 msgid "heading.prefs.scrolling"
-msgstr "TAWA"
+msgstr "tawa"
 
 msgid "heading.prefs.sizing"
-msgstr "SULI"
+msgstr "suli"
 
 msgid "heading.prefs.widelayout"
-msgstr "SULI MUTE"
+msgstr "suli mute"
 
 # tab button
 msgid "heading.prefs.style"
@@ -1288,7 +1288,7 @@ msgid "ident.gotohelp"
 msgstr "sina wile kama sona e sitelen jan pi ilo TLS la o lukin e %ssona%s."
 
 msgid "heading.pageinfo"
-msgstr "SONA PI LIPU NI"
+msgstr "sona pi lipu ni"
 
 msgid "pageinfo.header.cached"
 msgstr "(ijo lon sona pi tenpo pini lili)"
@@ -1317,7 +1317,7 @@ msgid "dlg.newident.rsa.selfsign"
 msgstr "sina ken pali e sitelen len kepeken e sitelen RSA pi tu 2048."
 
 msgid "heading.prefs.certs"
-msgstr "SITELEN LEN MUTE"
+msgstr "sitelen len mute"
 
 msgid "error.cert.needed"
 msgstr "sina wile e sitelen len"
@@ -1348,7 +1348,7 @@ msgid "lang.hi"
 msgstr "toki Insi"
 
 msgid "heading.newident"
-msgstr "NIMI SIN"
+msgstr "nimi sin"
 
 msgid "dlg.newident.domain"
 msgstr "nimi pi ilo sona:"
@@ -1357,7 +1357,7 @@ msgid "dlg.newident.country"
 msgstr "ma:"
 
 msgid "heading.feedcfg"
-msgstr "IJO ANTE PI LIPU LUKIN"
+msgstr "ijo ante pi lipu lukin"
 
 msgid "dlg.bookmark.tags"
 msgstr "nimi lili:"
@@ -1448,7 +1448,7 @@ msgid "dlg.save.opendownload"
 msgstr "o open e ijo"
 
 msgid "heading.newident.date.bad"
-msgstr "TENPO LI PAKALA"
+msgstr "tenpo li pakala"
 
 msgid "gempub.cover.aboutbook"
 msgstr "sona lipu"
@@ -1476,7 +1476,7 @@ msgid "lang.ia"
 msgstr "toki Intelinwa"
 
 msgid "heading.newident.missing"
-msgstr "NIMI LI LON ALA"
+msgstr "nimi li lon ala"
 
 msgid "link.side"
 msgstr "o open e nimi tawa lon poki ante"
@@ -1611,7 +1611,7 @@ msgid "dlg.newident.scope"
 msgstr "o kepeken e ona lon:"
 
 msgid "keys.upload"
-msgstr "o pana e lipu kepeken kon Tetan"
+msgstr "o pana kepeken kon Tetan"
 
 msgid "menu.pageinfo"
 msgstr "o lukin e sona lipu"
@@ -1629,7 +1629,7 @@ msgid "upload.port"
 msgstr "nanpa kon…"
 
 msgid "heading.uploadport"
-msgstr "NANPA PI KON TETAN"
+msgstr "nanpa pi kon Tetan"
 
 msgid "dlg.uploadport.set"
 msgstr "o ante"
@@ -1640,13 +1640,13 @@ msgstr ""
 "wile awen."
 
 msgid "heading.prefs.uitheme"
-msgstr "KULE PI ILO LAKELAN"
+msgstr "kule pi ilo Lakelan"
 
 msgid "link.file.delete"
 msgstr "o weka e ijo"
 
 msgid "heading.file.delete"
-msgstr "O WEKA E IJO"
+msgstr "o weka e ijo"
 
 msgid "dlg.file.delete.confirm"
 msgstr "sina wile ala wile weka e ijo ni?"
@@ -1655,10 +1655,10 @@ msgid "dlg.file.delete"
 msgstr "o weka"
 
 msgid "heading.upload"
-msgstr "O PANA KEPEKEN KON TETAN"
+msgstr "o pana kepeken kon Tetan"
 
 msgid "menu.page.upload"
-msgstr "o pana e lipu kepeken kon Tetan…"
+msgstr "o pana kepeken kon Tetan…"
 
 msgid "heading.upload.text"
 msgstr "lipu"
@@ -1768,7 +1768,7 @@ msgid "dlg.upload.pickfile"
 msgstr "open e ijo"
 
 msgid "heading.addfolder"
-msgstr "O PALI E POKI"
+msgstr "o pali e poki"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "poki sin"
@@ -1781,7 +1781,7 @@ msgstr "o pali e poki"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "IJO ANTE"
+msgstr "ijo ante"
 
 msgid "prefs.imagestyle"
 msgstr "o kule e sitelen:"
@@ -1806,7 +1806,7 @@ msgid "keys.bookmark.addfolder"
 msgstr "o pali e poki tawa lipu awen"
 
 msgid "heading.bookmark.tags"
-msgstr "NIMI LILI NAMAKO"
+msgstr "nimi lili namako"
 
 msgid "media.untitled.image"
 msgstr "sitelen"
@@ -1834,7 +1834,7 @@ msgid "menu.undo"
 msgstr "o ante monsi"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "LIPU AWEN LI WILE KAMA WEKA"
+msgstr "o weka e lipu awen"
 
 #, c-format
 msgid "dlg.confirm.bookmarks.delete"
@@ -1854,7 +1854,7 @@ msgid "dlg.fontpack.classic"
 msgstr "o kama jo e kulupu sitelen (tu suli meka 25)"
 
 msgid "heading.fontpack.classic"
-msgstr "O KAMA JO E KULUPU SITELEN"
+msgstr "o kama jo e kulupu sitelen"
 
 #, c-format
 msgid "fontpack.install"
@@ -1972,7 +1972,7 @@ msgid "fontpack.delete"
 msgstr "o weka e kulupu sitelen \"%s\""
 
 msgid "heading.fontpack.delete"
-msgstr "KULUPU SITELEN LI KAMA WEKA"
+msgstr "o weka e kulupu sitelen"
 
 #, c-format
 msgid "dlg.fontpack.delete.confirm"
@@ -2068,3 +2068,56 @@ msgstr "poki:"
 
 msgid "sidebar.action.show"
 msgstr "o len ala:"
+
+msgid "menu.open.external"
+msgstr "o open kepeken ilo ante"
+
+msgid "sidebar.action.history.clear"
+msgstr "o weka"
+
+msgid "keys.upload.edit"
+msgstr "o ante e lipu kepeken kon Tetan"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "o len e nimi"
+
+msgid "menu.home"
+msgstr "o tawa lipu tomo"
+
+msgid "menu.identities"
+msgstr "o ante e nimi"
+
+msgid "sidebar.close"
+msgstr "awen"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "poki sin"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "o ante"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "o kepeken e nimi %s"
+
+msgid "menu.share"
+msgstr "o pana"
+
+msgid "menu.page.upload.edit"
+msgstr "o ante e lipu kepeken kon Tetan…"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "o lukin kepeken ilo Finder"
+
+msgid "menu.upload.delete"
+msgstr "o weka e ijo ale"
+
+msgid "menu.upload.delete.confirm"
+msgstr "sina wile ala wile weka e ijo ale? sina ken ala ante monsi"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "nimi tawa"

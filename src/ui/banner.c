@@ -76,7 +76,6 @@ static void updateHeight_Banner_(iBanner *d) {
     }
     const size_t numItems = size_Array(&d->items);
     if (numItems) {
-        const int innerPad = gap_UI;
         iConstForEach(Array, i, &d->items) {
             const iBannerItem *item = i.value;
             d->rect.size.y += item->height;
@@ -161,6 +160,13 @@ void setSite_Banner(iBanner *d, iRangecc site, iChar icon) {
 
 void add_Banner(iBanner *d, enum iBannerType type, enum iGmStatusCode code,
                 const iString *message, const iString *details) {
+    /* If there already is a matching item, don't add a second one. */
+    iConstForEach(Array, i, &d->items) {
+        const iBannerItem *item = i.value;
+        if (item->type == type && item->code == code) {
+            return;
+        }
+    }
     iBannerItem item;
     init_BannerItem(&item);
     item.type = type;

@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "window.h"
 
+#include "labelwidget.h"
+
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/ptrset.h>
 #include <SDL_mouse.h>
@@ -122,7 +124,9 @@ void init_Widget(iWidget *d) {
     init_String(&d->id);
     d->root           = get_Root(); /* never changes after this */
     d->flags          = 0;
+    d->flags2         = 0;
     d->rect           = zero_Rect();
+    d->oldSize        = zero_I2();
     d->minSize        = zero_I2();
     d->sizeRef        = NULL;
     d->offsetRef      = NULL;
@@ -139,8 +143,11 @@ void init_Widget(iWidget *d) {
 static void visualOffsetAnimation_Widget_(void *ptr) {
     iWidget *d = ptr;
     postRefresh_App();
+    d->root->didAnimateVisualOffsets = iTrue;
+//    printf("'%s' visoffanim: fin:%d val:%f\n", cstr_String(&d->id),
+//           isFinished_Anim(&d->visualOffset), value_Anim(&d->visualOffset)); fflush(stdout);
     if (!isFinished_Anim(&d->visualOffset)) {
-        addTicker_App(visualOffsetAnimation_Widget_, ptr);
+        addTickerRoot_App(visualOffsetAnimation_Widget_, d->root, ptr);
     }
     else {
         d->flags &= ~visualOffset_WidgetFlag;
@@ -269,10 +276,12 @@ void setMinSize_Widget(iWidget *d, iInt2 minSize) {
 }
 
 void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
-    d->padding[0] = left;
-    d->padding[1] = top;
-    d->padding[2] = right;
-    d->padding[3] = bottom;
+    if (d) {
+        d->padding[0] = left;
+        d->padding[1] = top;
+        d->padding[2] = right;
+        d->padding[3] = bottom;
+    }
 }
 
 iWidget *root_Widget(const iWidget *d) {
@@ -414,9 +423,10 @@ static iBool setWidth_Widget_(iWidget *d, int width) {
         if (d->rect.size.x != width) {
             d->rect.size.x = width;
             TRACE(d, "width has changed to %d", width);
-            if (class_Widget(d)->sizeChanged) {
-                class_Widget(d)->sizeChanged(d);
-            }
+//            if (~d->flags2 & undefinedWidth_WidgetFlag2 && class_Widget(d)->sizeChanged) {
+//                class_Widget(d)->sizeChanged(d);
+//            }
+//            d->flags2 &= ~undefinedWidth_WidgetFlag2;
             return iTrue;
         }
     }
@@ -437,9 +447,10 @@ static iBool setHeight_Widget_(iWidget *d, int height) {
         if (d->rect.size.y != height) {
             d->rect.size.y = height;
             TRACE(d, "height has changed to %d", height);
-            if (class_Widget(d)->sizeChanged) {
-                class_Widget(d)->sizeChanged(d);
-            }
+//            if (~d->flags2 & undefinedHeight_WidgetFlag2 && class_Widget(d)->sizeChanged) {
+//                class_Widget(d)->sizeChanged(d);
+//            }
+//            d->flags2 &= ~undefinedHeight_WidgetFlag2;
             return iTrue;
         }
     }
@@ -836,6 +847,13 @@ static void arrange_Widget_(iWidget *d) {
 }
 
 static void resetArrangement_Widget_(iWidget *d) {
+    d->oldSize = d->rect.size;
+    if (d->flags & resizeToParentWidth_WidgetFlag) {
+        d->rect.size.x = 0;
+    }
+    if (d->flags & resizeToParentHeight_WidgetFlag) {
+        d->rect.size.y = 0;
+    }
     iForEach(ObjectList, i, children_Widget(d)) {
         iWidget *child = as_Widget(i.object);
         resetArrangement_Widget_(child);
@@ -846,6 +864,14 @@ static void resetArrangement_Widget_(iWidget *d) {
             if (d->flags & resizeWidthOfChildren_WidgetFlag && child->flags & expand_WidgetFlag &&
                 ~child->flags & fixedWidth_WidgetFlag) {
                 child->rect.size.x = 0;
+            }
+            if (d->flags & resizeChildrenToWidestChild_WidgetFlag) {
+                if (isInstance_Object(child, &Class_LabelWidget)) {
+                    updateSize_LabelWidget((iLabelWidget *) child);
+                }
+                else {
+                    child->rect.size.x = 0;
+                }
             }
             if (d->flags & arrangeVertical_WidgetFlag) {
                 child->rect.pos.y = 0;
@@ -858,6 +884,15 @@ static void resetArrangement_Widget_(iWidget *d) {
     }
 }
 
+static void notifySizeChanged_Widget_(iWidget *d) {
+    if (class_Widget(d)->sizeChanged && !isEqual_I2(d->rect.size, d->oldSize)) {
+        class_Widget(d)->sizeChanged(d);
+    }
+    iForEach(ObjectList, child, d->children) {
+        notifySizeChanged_Widget_(child.object);
+    }
+}
+
 void arrange_Widget(iWidget *d) {
     if (d) {
 #if !defined (NDEBUG)
@@ -867,6 +902,8 @@ void arrange_Widget(iWidget *d) {
 #endif
         resetArrangement_Widget_(d); /* back to initial default sizes */
         arrange_Widget_(d);
+        notifySizeChanged_Widget_(d);
+        d->root->didChangeArrangement = iTrue;
     }
 }
 
@@ -884,6 +921,14 @@ int visualOffsetByReference_Widget(const iWidget *d) {
 //                const float factor = width_Widget(d) / (float) size_Root(d->root).x;
                 const int invOff = width_Widget(d) - iRound(value_Anim(&child->visualOffset));
                 offX -= invOff / 4;
+#if 0
+                if (invOff) {
+                    printf("  [%p] %s (%p, fin:%d visoff:%d drag:%d): invOff %d\n", d, cstr_String(&child->id), child,
+                           isFinished_Anim(&child->visualOffset),
+                           (child->flags & visualOffset_WidgetFlag) != 0,
+                           (child->flags & dragged_WidgetFlag) != 0, invOff); fflush(stdout);
+                }
+#endif
             }
         }
         return offX;
@@ -1183,6 +1228,9 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
             bounds.pos.y = iMin(bounds.pos.y, validPosRange.end);
         }
 //    printf("range: %d ... %d\n", range.start, range.end);
+        if (delta) {
+            d->root->didChangeArrangement = iTrue; /* ensure that widgets update if needed */
+        }
     }
     else {
         bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
@@ -1370,7 +1418,8 @@ void drawLayerEffects_Widget(const iWidget *d) {
             shadowBorder = iFalse;
         }
     }
-    const iBool isFaded = fadeBackground && ~d->flags & noFadeBackground_WidgetFlag;
+    const iBool isFaded = (fadeBackground && ~d->flags & noFadeBackground_WidgetFlag) ||
+                          (d->flags2 & fadeBackground_WidgetFlag2);
     if (shadowBorder && ~d->flags & noShadowBorder_WidgetFlag) {
         iPaint p;
         init_Paint(&p);
@@ -1381,9 +1430,19 @@ void drawLayerEffects_Widget(const iWidget *d) {
         init_Paint(&p);
         p.alpha = 0x50;
         if (flags_Widget(d) & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
-            const float area = d->rect.size.x * d->rect.size.y;
+            const float area        = d->rect.size.x * d->rect.size.y;
+            const float rootArea    = area_Rect(rect_Root(d->root));
             const float visibleArea = area_Rect(intersect_Rect(bounds_Widget(d), rect_Root(d->root)));
-            p.alpha *= (area > 0 ? visibleArea / area : 0.0f);
+            if (isPortraitPhone_App() && !cmp_String(&d->id, "sidebar")) {
+                p.alpha *= iClamp(visibleArea / rootArea * 2, 0.0f, 1.0f);
+            }
+            else if (area > 0) {
+                p.alpha *= visibleArea / area;
+            }
+            else {
+                p.alpha = 0;
+            }
+            //printf("area:%f visarea:%f alpha:%d\n", rootArea, visibleArea, p.alpha);
         }
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         fillRect_Paint(&p, rect_Root(d->root), backgroundFadeColor_Widget());
@@ -1851,7 +1910,7 @@ iAny *findParentClass_Widget(const iWidget *d, const iAnyClass *class) {
 }
 
 iAny *findOverflowScrollable_Widget(iWidget *d) {
-    const iRect rootRect = rect_Root(d->root);
+    const iRect rootRect = visibleRect_Root(d->root);
     for (iWidget *w = d; w; w = parent_Widget(w)) {
         if (flags_Widget(w) & overflowScrollable_WidgetFlag) {
             const iRect bounds = boundsWithoutVisualOffset_Widget(w);
@@ -1954,6 +2013,9 @@ iBool hasParent_Widget(const iWidget *d, const iWidget *someParent) {
 iBool isAffectedByVisualOffset_Widget(const iWidget *d) {
     for (const iWidget *w = d; w; w = w->parent) {
         if (w->flags & visualOffset_WidgetFlag) {
+            return iTrue;
+        }
+        if (visualOffsetByReference_Widget(w) != 0) {
             return iTrue;
         }
     }

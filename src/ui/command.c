@@ -26,6 +26,34 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <ctype.h>
 
+iDeclareType(Token)
+
+#define maxLen_Token 64
+    
+struct Impl_Token {
+    char buf[64];
+    size_t size;
+};
+
+static void init_Token(iToken *d, const char *label) {
+    const size_t len = strlen(label);
+    iAssert(len < sizeof(d->buf) - 3);
+    d->buf[0] = ' ';
+    memcpy(d->buf + 1, label, len);
+    d->buf[1 + len] = ':';
+    d->buf[1 + len + 1] = 0;
+    d->size = len + 2;
+}
+
+static iRangecc find_Token(const iToken *d, const char *cmd) {
+    iRangecc range = iNullRange;
+    range.start = strstr(cmd, d->buf);
+    if (range.start) {
+        range.end = range.start + d->size;
+    }
+    return range;
+}
+
 iBool equal_Command(const char *cmdWithArgs, const char *cmd) {
     if (strchr(cmdWithArgs, ':')) {
         return startsWith_CStr(cmdWithArgs, cmd) && cmdWithArgs[strlen(cmd)] == ' ';
@@ -33,15 +61,12 @@ iBool equal_Command(const char *cmdWithArgs, const char *cmd) {
     return equal_CStr(cmdWithArgs, cmd);
 }
 
-static const iString *tokenString_(const char *label) {
-    return collectNewFormat_String(" %s:", label);
-}
-
 int argLabel_Command(const char *cmd, const char *label) {
-    const iString *tok = tokenString_(label);
-    const char *ptr = strstr(cmd, cstr_String(tok));
-    if (ptr) {
-        return atoi(ptr + size_String(tok));
+    iToken tok;
+    init_Token(&tok, label);
+    iRangecc ptr = find_Token(&tok, cmd);
+    if (ptr.start) {
+        return atoi(ptr.end);
     }
     return 0;
 }
@@ -51,19 +76,21 @@ int arg_Command(const char *cmd) {
 }
 
 uint32_t argU32Label_Command(const char *cmd, const char *label) {
-    const iString *tok = tokenString_(label);
-    const char *ptr = strstr(cmd, cstr_String(tok));
-    if (ptr) {
-        return strtoul(ptr + size_String(tok), NULL, 10);
+    iToken tok;
+    init_Token(&tok, label);
+    const iRangecc ptr = find_Token(&tok, cmd);    
+    if (ptr.start) {
+        return (uint32_t) strtoul(ptr.end, NULL, 10);
     }
     return 0;
 }
 
 float argfLabel_Command(const char *cmd, const char *label) {
-    const iString *tok = tokenString_(label);
-    const char *ptr = strstr(cmd, cstr_String(tok));
-    if (ptr) {
-        return strtof(ptr + size_String(tok), NULL);
+    iToken tok;
+    init_Token(&tok, label);
+    const iRangecc ptr = find_Token(&tok, cmd);    
+    if (ptr.start) {
+        return strtof(ptr.end, NULL);
     }
     return 0.0f;
 }
@@ -77,11 +104,12 @@ float argf_Command(const char *cmd) {
 }
 
 void *pointerLabel_Command(const char *cmd, const char *label) {
-    const iString *tok = tokenString_(label);
-    const char *ptr = strstr(cmd, cstr_String(tok));
-    if (ptr) {
+    iToken tok;
+    init_Token(&tok, label);
+    const iRangecc ptr = find_Token(&tok, cmd);        
+    if (ptr.start) {
         void *val = NULL;
-        sscanf(ptr + size_String(tok), "%p", &val);
+        sscanf(ptr.end, "%p", &val);
         return val;
     }
     return NULL;
@@ -92,10 +120,11 @@ void *pointer_Command(const char *cmd) {
 }
 
 const char *suffixPtr_Command(const char *cmd, const char *label) {
-    const iString *tok = tokenString_(label);
-    const char *ptr = strstr(cmd, cstr_String(tok));
-    if (ptr) {
-        return ptr + size_String(tok);
+    iToken tok;
+    init_Token(&tok, label);
+    const iRangecc ptr = find_Token(&tok, cmd);        
+    if (ptr.start) {
+        return ptr.end;
     }
     return NULL;
 }

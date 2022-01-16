@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/thread.h>
 #include <SDL_audio.h>
 #include <SDL_timer.h>
+#include <SDL.h>
 
 #if defined (LAGRANGE_ENABLE_MPG123)
 #   include <mpg123.h>
@@ -191,7 +192,7 @@ static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d) {
         int error;
         int consumed;
         d->vorbis = stb_vorbis_open_pushdata(
-            constData_Block(input), size_Block(input), &consumed, &error, NULL);
+            constData_Block(input), (int) size_Block(input), &consumed, &error, NULL);
         if (!d->vorbis) {
             return needMoreInput_DecoderStatus;
         }
@@ -224,7 +225,7 @@ static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d) {
         lock_Mutex(&d->input->mtx);
         d->totalInputSize = size_Block(input);
         int error = 0;
-        stb_vorbis *vrb = stb_vorbis_open_memory(constData_Block(input), size_Block(input),
+        stb_vorbis *vrb = stb_vorbis_open_memory(constData_Block(input), (int) size_Block(input),
                                                  &error, NULL);
         if (vrb) {
             d->totalSamples = stb_vorbis_stream_length_in_samples(vrb);
@@ -739,6 +740,22 @@ size_t sourceDataSize_Player(const iPlayer *d) {
     return size;
 }
 
+static iBool setupSDLAudio_(iBool init) {
+    static iBool isAudioInited_ = iFalse;
+    if (init) {
+        if (SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+            fprintf(stderr, "[SDL] audio init failed: %s\n", SDL_GetError());
+            return iFalse;
+        }
+        isAudioInited_ = iTrue;
+    }
+    else if (isAudioInited_) {
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        isAudioInited_ = iFalse;
+    }
+    return isAudioInited_;
+}
+
 iBool start_Player(iPlayer *d) {
     if (isStarted_Player(d)) {
         return iFalse;
@@ -757,6 +774,9 @@ iBool start_Player(iPlayer *d) {
     }
     content.output.callback = writeOutputSamples_Player_;
     content.output.userdata = d;
+    if (!setupSDLAudio_(iTrue)) {
+        return iFalse;
+    }
     d->device = SDL_OpenAudioDevice(NULL, SDL_FALSE /* playback */, &content.output, &d->spec, 0);
     if (!d->device) {
         return iFalse;
@@ -796,6 +816,7 @@ void stop_Player(iPlayer *d) {
         d->device = 0;
         delete_Decoder(d->decoder);
         d->decoder = NULL;
+        setupSDLAudio_(iFalse);
     }
 }
 

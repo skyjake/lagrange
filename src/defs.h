@@ -66,10 +66,28 @@ enum iReturnKeyFlag {
     accept_ReturnKeyFlag        = 4, /* shift */
 };
 
+enum iToolbarAction {
+    back_ToolbarAction        = 0,
+    forward_ToolbarAction     = 1,
+    home_ToolbarAction        = 2,
+    parent_ToolbarAction      = 3,
+    reload_ToolbarAction      = 4,
+    newTab_ToolbarAction      = 5,
+    closeTab_ToolbarAction    = 6,
+    addBookmark_ToolbarAction = 7,
+    translate_ToolbarAction   = 8,
+    upload_ToolbarAction      = 9,
+    editPage_ToolbarAction    = 10,
+    findText_ToolbarAction    = 11,
+    settings_ToolbarAction    = 12,
+    sidebar_ToolbarAction     = 13, /* desktop only */
+    max_ToolbarAction
+};
+
 /* Return key behavior is not handled via normal bindings because only certain combinations
    are valid. */
 enum iReturnKeyBehavior {
-    default_ReturnKeyBehavior =
+    acceptWithoutMod_ReturnKeyBehavior =
         shiftReturn_ReturnKeyFlag | (return_ReturnKeyFlag << accept_ReturnKeyFlag),
     acceptWithShift_ReturnKeyBehavior =
         return_ReturnKeyFlag | (shiftReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
@@ -78,6 +96,11 @@ enum iReturnKeyBehavior {
         return_ReturnKeyFlag | (guiReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
 #else
         return_ReturnKeyFlag | (controlReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
+#endif
+#if defined (iPlatformAndroidMobile)
+    default_ReturnKeyBehavior = acceptWithShift_ReturnKeyBehavior,
+#else
+    default_ReturnKeyBehavior = acceptWithoutMod_ReturnKeyBehavior,
 #endif
 };
 
@@ -94,7 +117,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 
 #define menu_Icon           "\U0001d362"
 #define rightArrowhead_Icon "\u27a4"
-#define leftArrowhead_Icon  "\u27a4"
+#define leftArrowhead_Icon  "\u2b9c"
 #define warning_Icon        "\u26a0"
 #define openLock_Icon       "\U0001f513"
 #define closedLock_Icon     "\U0001f512"
@@ -102,7 +125,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define reload_Icon         "\U0001f503"
 #define backArrow_Icon      "\U0001f870"
 #define forwardArrow_Icon   "\U0001f872"
-#define upArrow_Icon        "\u2191"
+#define upArrow_Icon        "\U0001f871"
 #define upArrowBar_Icon     "\u2912"
 #define downArrowBar_Icon   "\u2913"
 #define rightArrowWhite_Icon "\u21e8"

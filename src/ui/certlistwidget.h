@@ -22,26 +22,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/stringarray.h>
+#include "listwidget.h"
 
-iDeclareType(SiteSpec)
+iDeclareType(CertListWidget)
 
-enum iSiteSpecKey {
-    titanPort_SiteSpecKey,       /* int */
-    titanIdentity_SiteSpecKey,   /* String */
-    dismissWarnings_SiteSpecKey, /* int */
-    usedIdentities_SiteSpecKey,  /* StringArray */
-};
+typedef iListWidgetClass iCertListWidgetClass;
+extern iCertListWidgetClass Class_CertListWidget;
 
-void    init_SiteSpec       (const char *saveDir);
-void    deinit_SiteSpec     (void);
+iDeclareObjectConstruction(CertListWidget)
 
-/* changes saved immediately */
-void    setValue_SiteSpec       (const iString *site, enum iSiteSpecKey key, int value); 
-void    setValueString_SiteSpec (const iString *site, enum iSiteSpecKey key, const iString *value);
-void    insertString_SiteSpec   (const iString *site, enum iSiteSpecKey key, const iString *value);
-void    removeString_SiteSpec   (const iString *site, enum iSiteSpecKey key, const iString *value);
+iDeclareType(GmIdentity)
 
-int                 value_SiteSpec          (const iString *site, enum iSiteSpecKey key);
-const iString *     valueString_SiteSpec    (const iString *site, enum iSiteSpecKey key);
-const iStringArray *strings_SiteSpec        (const iString *site, enum iSiteSpecKey key);
+const iGmIdentity * constHoverIdentity_CertListWidget(const iCertListWidget *);
+iGmIdentity *       hoverIdentity_CertListWidget     (const iCertListWidget *);
+
+iBool   updateItems_CertListWidget      (iCertListWidget *); /* returns False is empty */
+void    updateItemHeight_CertListWidget (iCertListWidget *);

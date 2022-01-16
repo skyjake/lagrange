@@ -18,21 +18,30 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.9.5
+    VERSION 1.10.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2022)
 if (IOS)
-    set (PROJECT_VERSION 1.7)
-    set (IOS_BUNDLE_VERSION 23)
-    set (IOS_BUILD_DATE "2021-10-23")
+    set (PROJECT_VERSION 1.10)
+    set (IOS_BUNDLE_VERSION 9)
+    set (IOS_BUILD_DATE "2022-01-01")
+endif ()
+if (ANDROID)
+    set (PROJECT_VERSION 1.10)
+    set (ANDROID_BUILD_VERSION a3)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-01-03")
 endif ()
 
 # Defaults that depend on environment.
 set (DEFAULT_RESIZE_DRAW ON)
-if (HAIKU)
+if (HAIKU OR ANDROID)
     set (DEFAULT_RESIZE_DRAW OFF)
+endif ()
+set (DEFAULT_IDLE_SLEEP OFF)
+if (IOS)
+    set (DEFAULT_IDLE_SLEEP ON)
 endif ()
 
 # Build configuration.
@@ -42,7 +51,7 @@ option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional t
 option (ENABLE_FRIBIDI_BUILD    "Build the GNU FriBidi library (if OFF, try pkg-config)" OFF)
 option (ENABLE_HARFBUZZ         "Use the HarfBuzz library to shape text" ON)
 option (ENABLE_HARFBUZZ_MINIMAL "Build the HarfBuzz library with minimal dependencies (if OFF, try pkg-config)" OFF)
-option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ON)
+option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ${DEFAULT_IDLE_SLEEP})
 option (ENABLE_IPC              "Use IPC to communicate between running instances" ON)
 option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
 option (ENABLE_MAC_MENUS        "Use native context menus (macOS)" ON)
@@ -66,11 +75,8 @@ include (Depends.cmake)
 message (STATUS "Preparing resources...")
 set (RESOURCES
     res/about/about.gmi
-    res/about/help.gmi
     res/about/lagrange.gmi
     res/about/license.gmi
-    res/about/version.gmi
-    res/arg-help.txt
     res/lang/cs.bin
     res/lang/de.bin
     res/lang/en.bin
@@ -99,12 +105,38 @@ set (RESOURCES
 )
 file (GLOB FONTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} res/fonts/*)
 list (APPEND RESOURCES ${FONTS})
+if (IOS)
+    list (APPEND RESOURCES
+        res/about/ios-help.gmi
+        res/about/ios-version.gmi
+    )
+elseif (ANDROID)
+    list (APPEND RESOURCES
+        res/about/android-help.gmi
+        res/about/android-version.gmi
+    )
+else ()
+    list (APPEND RESOURCES
+        res/about/help.gmi
+        res/about/version.gmi
+        res/arg-help.txt
+    )
+endif ()
 if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND RESOURCES res/lagrange-64.png)
 endif ()
 set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
 make_resources (${EMB_BIN} ${RESOURCES})
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+if (IOS)
+    set (EMB_FONTS
+        res/fonts/SourceSans3-Regular.ttf
+        res/fonts/IosevkaTerm-Extended.ttf
+    )
+    set_source_files_properties (${EMB_FONTS}
+        PROPERTIES MACOSX_PACKAGE_LOCATION Resources
+    )
+endif ()
 
 # Source files.
 set (SOURCES
@@ -169,6 +201,8 @@ set (SOURCES
     src/ui/bindingswidget.h
     src/ui/certimportwidget.c
     src/ui/certimportwidget.h
+    src/ui/certlistwidget.c
+    src/ui/certlistwidget.h
     src/ui/color.c
     src/ui/color.h
     src/ui/command.c
@@ -177,6 +211,8 @@ set (SOURCES
     src/ui/documentwidget.h
     src/ui/indicatorwidget.c
     src/ui/indicatorwidget.h
+    src/ui/linkinfo.c
+    src/ui/linkinfo.h
     src/ui/listwidget.c
     src/ui/listwidget.h
     src/ui/lookupwidget.c
@@ -226,7 +262,7 @@ set (SOURCES
     res/about/version.gmi
     ${EMB_BIN}
 )
-if (NOT APPLE) # macos.m has Sparkle updater
+if (IOS OR NOT APPLE) # macos.m has Sparkle updater
     list (APPEND SOURCES src/updater.c)
 endif ()
 if (ENABLE_IPC)
@@ -265,7 +301,7 @@ if (MSYS)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
     list (APPEND SOURCES src/win32.c src/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
 endif ()
-set_source_files_properties (${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+#set_source_files_properties (${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 if (MSYS OR (APPLE AND NOT MOBILE) OR (UNIX AND NOT MOBILE))
     add_definitions (-DiPlatformPcDesktop=1)
 endif ()
@@ -287,10 +323,10 @@ endif ()
 
 # Target.
 if (NOT ANDROID)
-    add_executable (app ${SOURCES} ${RESOURCES})
+    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS})
 else ()
     # The whole app becomes one shared library, based on this static one.
-    add_library (app STATIC ${SOURCES})
+    add_library (app SHARED ${SOURCES})
 endif ()
 set_property (TARGET app PROPERTY C_STANDARD 11)
 if (TARGET ext-deps)
@@ -305,6 +341,7 @@ target_include_directories (app PUBLIC
 target_compile_options (app PUBLIC
     -Werror=implicit-function-declaration
     -Werror=incompatible-pointer-types
+    -Wno-deprecated-declarations
     ${SDL2_CFLAGS}
     -DSTB_VORBIS_NO_STDIO=1
     -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
@@ -418,6 +455,12 @@ if (APPLE)
         )
     endif ()
 endif ()
+if (ANDROID)
+    target_compile_definitions (app PUBLIC
+        LAGRANGE_ANDROID_VERSION="${ANDROID_BUILD_VERSION}"
+        LAGRANGE_ANDROID_BUILD_DATE="${ANDROID_BUILD_DATE}"
+    )
+endif ()
 if (MSYS)
     target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
     if (ENABLE_WINSPARKLE)
@@ -452,7 +495,7 @@ elseif (HAIKU)
         LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
     install (FILES ${EMB_BIN} DESTINATION .)
 elseif (ANDROID)
-    file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../app/src/main/assets)
+    file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../src/main/assets)
 elseif (UNIX AND NOT APPLE)
     include (GNUInstallDirs)
     set_target_properties (app PROPERTIES

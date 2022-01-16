@@ -19,29 +19,29 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
-
+ 
 #pragma once
 
-#include <the_Foundation/stringarray.h>
+#include "text.h"
+#include "util.h"
+#include "../gmdocument.h"
 
-iDeclareType(SiteSpec)
-
-enum iSiteSpecKey {
-    titanPort_SiteSpecKey,       /* int */
-    titanIdentity_SiteSpecKey,   /* String */
-    dismissWarnings_SiteSpecKey, /* int */
-    usedIdentities_SiteSpecKey,  /* StringArray */
+iDeclareType(LinkInfo)
+iDeclareTypeConstruction(LinkInfo)
+    
+struct Impl_LinkInfo {
+    iGmLinkId linkId;
+    int       maxWidth;
+    iTextBuf *buf;
+    iAnim     opacity;
+    iBool     isAltPos;
 };
 
-void    init_SiteSpec       (const char *saveDir);
-void    deinit_SiteSpec     (void);
+iBool   update_LinkInfo     (iLinkInfo *, const iGmDocument *doc, iGmLinkId linkId,
+                             int maxWidth); /* returns true if changed */
+void    invalidate_LinkInfo (iLinkInfo *);
 
-/* changes saved immediately */
-void    setValue_SiteSpec       (const iString *site, enum iSiteSpecKey key, int value); 
-void    setValueString_SiteSpec (const iString *site, enum iSiteSpecKey key, const iString *value);
-void    insertString_SiteSpec   (const iString *site, enum iSiteSpecKey key, const iString *value);
-void    removeString_SiteSpec   (const iString *site, enum iSiteSpecKey key, const iString *value);
+void    infoText_LinkInfo   (const iGmDocument *doc, iGmLinkId linkId, iString *text_out);
 
-int                 value_SiteSpec          (const iString *site, enum iSiteSpecKey key);
-const iString *     valueString_SiteSpec    (const iString *site, enum iSiteSpecKey key);
-const iStringArray *strings_SiteSpec        (const iString *site, enum iSiteSpecKey key);
+iInt2   size_LinkInfo       (const iLinkInfo *);
+void    draw_LinkInfo       (const iLinkInfo *, iInt2 topLeft);

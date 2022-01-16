@@ -6,6 +6,49 @@
 ```
 # Release notes
 
+## 1.10
+New features:
+* macOS: Trackpad swipe navigation.
+* Customizable navbar actions. Right-click on a button to change its action. (Identity and hamburger buttons cannot be changed.)
+* Identity toolbar menu can be used to switch between alternate identities. If you have used multiple identities on one site, this makes it more convenient to switch between them.
+* Added "Edit Page with Titan": opens the upload dialog with current page's content prefilled.
+* Added "Paste Preceding Line" in the input prompt dialog. Potential use cases include user-editable sections on a page and suggested/example input values.
+* Added footer action to open file in another app when the media type is unsupported.
+* Added option to disable cursor blinking in input fields.
+* Added ANSI SGR codes for light and regular font weights (2, 10).
+* macOS: Added "Show in Finder" in the Identities sidebar.
+
+Changes and enhancements:
+* Improved image inlining: all responses with an image media type can get inlined, regardless of the file extension in the URL.
+* Inline image metadata goes under the image instead of possibly overlapping the label text.
+* Inline downloads have a context menu for relevant actions, and clicking on the download opens the file.
+* Improved highlighting of open pages. The highlight no longer goes under the side elements on the page.
+* Entry dates in feed links are de-emphasized for improved readability.
+* Revised link hover popup. None of the information appears on the same line any more (which was problematic if there wasn't enough space). Instead, everything is shown in a popup at the bottom/top of the view, including the identity that will be used when opening the link and the date of last visit.
+* Revised layout of the Upload dialog. There is a new edit field that lets you modify the file path of the URL. Identity names are in bold.
+* Optimized UI layout procedure and memory use during UI event processing.
+* Audio subsystem is only initialized when actually needed.
+* Prevent state file corruption if the app happens to get killed while state is being saved.
+* Gempub: Open books in 1:2 split mode instead of 1:1.
+* Minor improvements in page caching.
+* Detect when text is Bengali, Devanagari, Oriya, or Tamil.
+
+Fixes:
+* Fixed a history caching issue: if there were multiple instances of the same URL in history, only the latest one's content would be used when navigating back/forward.
+* Fixed handling of reserved characters in URLs (cf. RFC 3986, section 2.2).
+* Fixed the copy/paste context menu not showing in input fields.
+* Fixed duplicated warnings showing in the page banner.
+* Fixed very narrow input fields causing the app to hang.
+* Fixed initial scroll position in multiline input fields.
+* Fixed layout issues in the sidebar on empty Feeds and Identities tabs.
+* Fixed lookup results list becoming too narrow.
+* Fixed glitches when a widget has multiple simultanous animations.
+* Fixed mixed-language CJK word wrapping.
+* Fixed parsing Atom feed dates with leading whitespace.
+* Windows: Fixed installing individual TrueType fonts via drag and drop.
+* macOS: Fixed high CPU usage during audio playback and UI animations.
+* macOS: Line breaks inside menu items (e.g., info about current identity).
+
 ## 1.9.5
 * Fixed misshapen button borders (SDL 2.0.16 line drawing workaround).
 * Fixed actions being triggered when navigating via home row keys.

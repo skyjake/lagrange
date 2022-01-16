@@ -585,8 +585,10 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     /* TODO: Gemini spec allows UTF-8 encoded URLs, but still need to percent-encode non-ASCII
        characters? Could be a server-side issue, e.g., if they're using a URL parser meant for
        the web. */
-    urlEncodePath_String(&d->url);
-    urlEncodeSpaces_String(&d->url);
+    /* Encode everything except already-percent encoded characters. */
+    iString *enc = urlEncodeExclude_String(&d->url, "%" URL_RESERVED_CHARS);
+    set_String(&d->url, enc);
+    delete_String(enc);
     d->identity = identityForUrl_GmCerts(d->certs, &d->url);
 }
 
@@ -692,9 +694,11 @@ void submit_GmRequest(iGmRequest *d) {
             setCStr_String(&resp->meta, "text/gemini");
             iString *page = collectNew_String();
             iString *parentDir = collectNewRange_String(dirName_Path(path));
+#if !defined (iPlatformMobile)
             appendFormat_String(page, "=> %s " upArrow_Icon " %s" iPathSeparator "\n\n",
                                 cstrCollect_String(makeFileUrl_String(parentDir)),
                                 cstr_String(parentDir));
+#endif
             appendFormat_String(page, "# %s\n", cstr_Rangecc(baseName_Path(path)));
             /* Make a directory index page. */
             iPtrArray *sortedInfo = collectNew_PtrArray();
@@ -790,7 +794,8 @@ void submit_GmRequest(iGmRequest *d) {
                                                 cstr_String(containerUrl));
                             appendFormat_String(page, "# %s\n\n", cstr_Rangecc(containerName));
                             appendFormat_String(page,
-                                                cstrCount_Lang("archive.summary.n", numEntries_Archive(arch)),
+                                                cstrCount_Lang("archive.summary.n",
+                                                               (int) numEntries_Archive(arch)),
                                                 numEntries_Archive(arch),
                                                 (double) sourceSize_Archive(arch) / 1.0e6);
                             appendCStr_String(page, "\n\n");
@@ -802,7 +807,7 @@ void submit_GmRequest(iGmRequest *d) {
                             }
                             else if (size_StringSet(contents) > 1) {
                                 appendFormat_String(page, cstrCount_Lang("dir.summary.n",
-                                                                         size_StringSet(contents)),
+                                                                         (int) size_StringSet(contents)),
                                                     size_StringSet(contents));
                                 appendCStr_String(page, "\n\n");
                             }

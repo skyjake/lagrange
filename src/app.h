@@ -61,6 +61,7 @@ enum iUserEventCode {
     command_UserEventCode = 1,
     refresh_UserEventCode,
     asleep_UserEventCode,
+    periodic_UserEventCode,
     /* The start of a potential touch tap event is notified via a custom event because
        sending SDL_MOUSEBUTTONDOWN would be premature: we don't know how long the tap will
        take, it could turn into a tap-and-hold for example. */
@@ -110,6 +111,8 @@ enum iColorTheme    colorTheme_App      (void);
 const iString *     schemeProxy_App     (iRangecc scheme);
 iBool               willUseProxy_App    (const iRangecc scheme);
 const iString *     searchQueryUrl_App  (const iString *queryStringUnescaped);
+const iString *     fileNameForUrl_App  (const iString *url, const iString *mime);
+const iString *     temporaryPathForUrl_App(const iString *url, const iString *mime); /* deleted before quitting */
 const iString *     downloadPathForUrl_App(const iString *url, const iString *mime);
 
 typedef void (*iTickerFunc)(iAny *);

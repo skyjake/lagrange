@@ -2,10 +2,14 @@
 
 #include "widget.h"
 #include "color.h"
+#include <the_Foundation/audience.h>
 #include <the_Foundation/ptrset.h>
 #include <the_Foundation/vec2.h>
 
 iDeclareType(Root)
+
+iDeclareNotifyFunc(Root, VisualOffsetsChanged)
+iDeclareAudienceGetter(Root, visualOffsetsChanged)
 
 struct Impl_Root {
     iWidget *  widget;
@@ -14,6 +18,9 @@ struct Impl_Root {
     iPtrSet *  pendingDestruction;
     iBool      pendingArrange;
     int        loadAnimTimer;
+    iBool      didAnimateVisualOffsets;
+    iBool      didChangeArrangement;
+    iAudience *visualOffsetsChanged; /* called after running tickers */
     iColor     tmPalette[tmMax_ColorId]; /* theme-specific palette */
 };
 
@@ -36,6 +43,7 @@ void        updatePadding_Root                  (iRoot *); /* TODO: is part of m
 void        dismissPortraitPhoneSidebars_Root   (iRoot *);
 void        showToolbar_Root                    (iRoot *, iBool show);
 void        updateToolbarColors_Root            (iRoot *);
+void        notifyVisualOffsetChange_Root       (iRoot *);
 
 iInt2       size_Root                           (const iRoot *);
 iRect       rect_Root                           (const iRoot *);

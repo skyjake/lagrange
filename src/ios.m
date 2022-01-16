@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "audio/player.h"
 #include "ui/command.h"
 #include "ui/window.h"
+#include "ui/touch.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -59,6 +60,9 @@ static UIViewController *viewController_(iWindow *window) {
     iAssert(false);
     return NULL;
 }
+
+static void notifyChange_SystemTextInput_(iSystemTextInput *);
+static BOOL isNewlineAllowed_SystemTextInput_(const iSystemTextInput *);
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -159,9 +163,10 @@ API_AVAILABLE(ios(13.0))
 
 /*----------------------------------------------------------------------------------------------*/
 
-@interface AppState : NSObject<UIDocumentPickerDelegate> {
+@interface AppState : NSObject<UIDocumentPickerDelegate, UITextFieldDelegate, UITextViewDelegate> {
     iString *fileBeingSaved;
     iString *pickFileCommand;
+    iSystemTextInput *sysCtrl;
 }
 @property (nonatomic, assign) BOOL isHapticsAvailable;
 @property (nonatomic, strong) NSObject *haptic;
@@ -175,7 +180,16 @@ static AppState *appState_;
     self = [super init];
     fileBeingSaved = NULL;
     pickFileCommand = NULL;
+    sysCtrl = NULL;
     return self;
+}
+
+-(void)setSystemTextInput:(iSystemTextInput *)sys {
+    sysCtrl = sys;
+}
+
+-(iSystemTextInput *)systemTextInput {
+    return sysCtrl;
 }
 
 -(void)setPickFileCommand:(const char *)command {
@@ -256,6 +270,46 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
 -(void)keyboardOffScreen:(NSNotification *)notification {
     setKeyboardHeight_MainWindow(get_MainWindow(), 0);
 }
+
+static void sendReturnKeyPress_(void) {
+    SDL_Event ev = { .type = SDL_KEYDOWN };
+    ev.key.timestamp = SDL_GetTicks();
+    ev.key.keysym.sym = SDLK_RETURN;
+    ev.key.state = SDL_PRESSED;
+    SDL_PushEvent(&ev);
+    ev.type = SDL_KEYUP;
+    ev.key.state = SDL_RELEASED;
+    SDL_PushEvent(&ev);
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    sendReturnKeyPress_();
+    return NO;
+}
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range
+replacementString:(NSString *)string {
+    iSystemTextInput *sysCtrl = [appState_ systemTextInput];
+    notifyChange_SystemTextInput_(sysCtrl);
+    return YES;
+}
+
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range
+ replacementText:(NSString *)text {
+    if ([text isEqualToString:@"\n"]) {
+        if (!isNewlineAllowed_SystemTextInput_([appState_ systemTextInput])) {
+            sendReturnKeyPress_();
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (void)textViewDidChange:(UITextView *)textView {
+    iSystemTextInput *sysCtrl = [appState_ systemTextInput];
+    notifyChange_SystemTextInput_(sysCtrl);
+}
+
 @end
 
 static void enableMouse_(iBool yes) {
@@ -483,6 +537,35 @@ void pickFile_iOS(const char *command) {
     [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
 }
 
+static void openActivityView_(NSArray *activityItems) {
+    UIActivityViewController *actView =
+        [[UIActivityViewController alloc]
+         initWithActivityItems:activityItems
+         applicationActivities:nil];
+    iWindow *win = get_Window();
+    UIViewController *viewCtl = viewController_(win);
+    UIPopoverPresentationController *popover = [actView popoverPresentationController];
+    if (popover) {
+        [popover setSourceView:[viewCtl view]];
+        iInt2 tapPos = latestTapPosition_Touch();
+        tapPos.x /= win->pixelRatio;
+        tapPos.y /= win->pixelRatio;
+        [popover setSourceRect:(CGRect){{tapPos.x - 10, tapPos.y - 10}, {20, 20}}];
+        [popover setCanOverlapSourceViewRect:YES];
+    }
+    [viewCtl presentViewController:actView animated:YES completion:nil];
+}
+
+void openTextActivityView_iOS(const iString *text) {
+    openActivityView_(@[[NSString stringWithUTF8String:cstr_String(text)]]);
+}
+
+void openFileActivityView_iOS(const iString *path) {
+    NSURL *url = [NSURL fileURLWithPath:[[NSString alloc] initWithCString:cstr_String(path)
+                                                                 encoding:NSUTF8StringEncoding]];
+    openActivityView_(@[url]);
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 enum iAVFAudioPlayerState {
@@ -511,6 +594,10 @@ void init_AVFAudioPlayer(iAVFAudioPlayer *d) {
 
 void deinit_AVFAudioPlayer(iAVFAudioPlayer *d) {
     setInput_AVFAudioPlayer(d, NULL, NULL);
+    if (d->player) {
+        CFBridgingRelease(d->player);
+        d->player = nil;
+    }
 }
 
 static const char *cacheDir_ = "~/Library/Caches/Audio";
@@ -606,4 +693,234 @@ iBool isStarted_AVFAudioPlayer(const iAVFAudioPlayer *d) {
 
 iBool isPaused_AVFAudioPlayer(const iAVFAudioPlayer *d) {
     return d->state == paused_AVFAudioPlayerState;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+struct Impl_SystemTextInput {
+    int flags;
+    void *field; /* single-line text field */
+    void *view;  /* multi-line text view */
+    void (*textChangedFunc)(iSystemTextInput *, void *);
+    void *textChangedContext;
+};
+
+iDefineTypeConstructionArgs(SystemTextInput, (iRect rect, int flags), rect, flags)
+
+#define REF_d_field  (__bridge UITextField *)d->field
+#define REF_d_view   (__bridge UITextView *)d->view
+
+static CGRect convertToCGRect_(const iRect *rect, iBool expanded) {
+    const iWindow *win = get_Window();
+    CGRect frame;
+    // TODO: Convert coordinates properly!
+    frame.origin.x = rect->pos.x / win->pixelRatio;
+    frame.origin.y = (rect->pos.y - gap_UI + 1) / win->pixelRatio;
+    frame.size.width = rect->size.x / win->pixelRatio;
+    frame.size.height = rect->size.y / win->pixelRatio;
+    /* Some padding to account for insets. If we just zero out the insets, the insertion point
+       may be clipped at the edges. */
+    if (expanded) {
+        const float inset = gap_UI / get_Window()->pixelRatio;
+        frame.origin.x -= inset + 1;
+        frame.origin.y -= inset + 1;
+        frame.size.width += 2 * inset + 2;
+        frame.size.height += inset + 1 + inset;
+    }
+    return frame;
+}
+
+static UIColor *makeUIColor_(enum iColorId colorId) {
+    iColor color = get_Color(colorId);
+    return [UIColor colorWithRed:color.r / 255.0
+                           green:color.g / 255.0
+                            blue:color.b / 255.0
+                           alpha:color.a / 255.0];
+}
+
+void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
+    d->flags = flags;
+    d->field = NULL;
+    d->view  = NULL;
+    CGRect frame = convertToCGRect_(&rect, (flags & multiLine_SystemTextInputFlags) != 0);
+    if (flags & multiLine_SystemTextInputFlags) {
+        d->view = (void *) CFBridgingRetain([[UITextView alloc] initWithFrame:frame textContainer:nil]);
+        [[viewController_(get_Window()) view] addSubview:REF_d_view];
+    }
+    else {
+        d->field = (void *) CFBridgingRetain([[UITextField alloc] initWithFrame:frame]);
+        [[viewController_(get_Window()) view] addSubview:REF_d_field];
+    }
+    UIControl<UITextInputTraits> *traits = (UIControl<UITextInputTraits> *) (d->view ? REF_d_view : REF_d_field);
+    if (~flags & insertNewlines_SystemTextInputFlag) {
+        [traits setReturnKeyType:UIReturnKeyDone];
+    }
+    if (flags & returnGo_SystemTextInputFlags) {
+        [traits setReturnKeyType:UIReturnKeyGo];
+    }
+    if (flags & returnSend_SystemTextInputFlags) {
+        [traits setReturnKeyType:UIReturnKeySend];
+    }
+    if (flags & disableAutocorrect_SystemTextInputFlag) {
+        [traits setAutocorrectionType:UITextAutocorrectionTypeNo];
+        [traits setSpellCheckingType:UITextSpellCheckingTypeNo];
+    }
+    if (flags & disableAutocapitalize_SystemTextInputFlag) {
+        [traits setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+    }
+    if (flags & alignRight_SystemTextInputFlag) {
+        if (d->field) {
+            [REF_d_field setTextAlignment:NSTextAlignmentRight];
+        }
+        if (d->view) {
+            [REF_d_view setTextAlignment:NSTextAlignmentRight];
+        }
+    }
+    UIColor *textColor = makeUIColor_(uiInputTextFocused_ColorId);
+    UIColor *backgroundColor = makeUIColor_(uiInputBackgroundFocused_ColorId);
+    UIColor *tintColor = makeUIColor_(uiInputFrameHover_ColorId); /* use the accent color */ //uiInputCursor_ColorId);
+    [appState_ setSystemTextInput:d];
+    if (d->field) {
+        UITextField *field = REF_d_field;
+        [field setTextColor:textColor];
+        [field setTintColor:tintColor];
+        [field setDelegate:appState_];
+        [field becomeFirstResponder];
+    }
+    else {
+        UITextView *view = REF_d_view;
+        [view setBackgroundColor:[UIColor colorWithWhite:1.0f alpha:0.0f]];
+        [view setTextColor:textColor];
+        [view setTintColor:tintColor];
+        if (flags & extraPadding_SystemTextInputFlag) {
+            [view setContentInset:(UIEdgeInsets){ 0, 0, 3 * gap_UI / get_Window()->pixelRatio, 0}];
+        }
+        [view setEditable:YES];
+        [view setDelegate:appState_];
+        [view becomeFirstResponder];
+    }
+    d->textChangedFunc = NULL;
+    d->textChangedContext = NULL;
+}
+
+void deinit_SystemTextInput(iSystemTextInput *d) {
+    [appState_ setSystemTextInput:nil];
+    if (d->field) {
+        [REF_d_field removeFromSuperview];
+        CFBridgingRelease(d->field);
+        d->field = nil;
+    }
+    if (d->view) {
+        [REF_d_view removeFromSuperview];
+        CFBridgingRelease(d->view);
+        d->view = nil;
+    }
+}
+
+void selectAll_SystemTextInput(iSystemTextInput *d) {
+    if (d->field) {
+        [REF_d_field selectAll:nil];
+    }
+    if (d->view) {
+        [REF_d_view selectAll:nil];
+    }
+}
+
+void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool allowUndo) {
+    NSString *str = [NSString stringWithUTF8String:cstr_String(text)];
+    if (d->field) {
+        [REF_d_field setText:str];
+        if (d->flags & selectAll_SystemTextInputFlags) {
+            [REF_d_field selectAll:nil];
+        }
+    }
+    else {
+        UITextView *view = REF_d_view;
+//        if (allowUndo) {
+//            [view selectAll:nil];
+//            if ([view shouldChangeTextInRange:[view selectedTextRange] replacementText:@""]) {
+//                [[view textStorage] beginEditing];
+//                [[view textStorage] replaceCharactersInRange:[view selectedRange] withString:@""];
+//                [[view textStorage] endEditing];
+//            }
+//        }
+//        else {
+        // TODO: How to implement `allowUndo`, given that UITextView does not exist when unfocused?
+        // Maybe keep the UITextStorage (if it has the undo?)?
+        [view setText:str];
+//        }
+        if (d->flags & selectAll_SystemTextInputFlags) {
+            [view selectAll:nil];
+        }
+    }
+}
+
+int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
+    if (d->view) {
+        CGRect usedRect = [[REF_d_view layoutManager] usedRectForTextContainer:[REF_d_view textContainer]];
+        return usedRect.size.height * get_Window()->pixelRatio;
+    }
+    return 0;
+}
+
+void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
+    float height = lineHeight_Text(fontId) / get_Window()->pixelRatio;
+    UIFont *font;
+    //        for (NSString *name in [UIFont familyNames]) {
+    //            printf("family: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+    //        }
+    if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
+//        font = [UIFont monospacedSystemFontOfSize:0.8f * height weight:UIFontWeightRegular];
+//        for (NSString *name in [UIFont fontNamesForFamilyName:@"Iosevka Term"]) {
+//            printf("fontname: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+//        }
+        font = [UIFont fontWithName:@"Iosevka-Term-Extended" size:height * 0.82f];
+    }
+    else {
+//        font = [UIFont systemFontOfSize:0.65f * height];
+        font = [UIFont fontWithName:@"SourceSans3-Regular" size:height * 0.7f];
+    }
+    if (d->field) {
+        [REF_d_field setFont:font];
+    }
+    if (d->view) {
+        [REF_d_view setFont:font];
+    }
+}
+
+const iString *text_SystemTextInput(const iSystemTextInput *d) {
+    if (d->field) {
+        return collectNewCStr_String([[REF_d_field text] cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+    if (d->view) {
+        return collectNewCStr_String([[REF_d_view text] cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+    return NULL;
+}
+
+void setRect_SystemTextInput(iSystemTextInput *d, iRect rect) {
+    CGRect frame = convertToCGRect_(&rect, (d->flags & multiLine_SystemTextInputFlags) != 0);
+    if (d->field) {
+        [REF_d_field setFrame:frame];
+    }
+    else {
+        [REF_d_view setFrame:frame];
+    }
+}
+
+void setTextChangedFunc_SystemTextInput(iSystemTextInput *d,
+                                        void (*textChangedFunc)(iSystemTextInput *, void *),
+                                        void *context) {
+    d->textChangedFunc = textChangedFunc;
+    d->textChangedContext = context;
+}
+
+static void notifyChange_SystemTextInput_(iSystemTextInput *d) {
+    if (d && d->textChangedFunc) {
+        d->textChangedFunc(d, d->textChangedContext);
+    }
+}
+
+static BOOL isNewlineAllowed_SystemTextInput_(const iSystemTextInput *d) {
+    return (d->flags & insertNewlines_SystemTextInputFlag) != 0;
 }

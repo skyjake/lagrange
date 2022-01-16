@@ -90,7 +90,7 @@ void serialize_GmIdentity(const iGmIdentity *d, iStream *outs) {
     writeU32_Stream(outs, d->icon);
     serialize_String(&d->notes, outs);
     write32_Stream(outs, d->flags);
-    writeU32_Stream(outs, size_StringSet(d->useUrls));
+    writeU32_Stream(outs, (uint32_t) size_StringSet(d->useUrls));
     iConstForEach(StringSet, i, d->useUrls) {
         serialize_String(i.value, outs);
     }
@@ -146,6 +146,7 @@ iBool isUsed_GmIdentity(const iGmIdentity *d) {
 }
 
 iBool isUsedOn_GmIdentity(const iGmIdentity *d, const iString *url) {
+#if 0
     size_t pos = iInvalidPos;
     locate_StringSet(d->useUrls, url, &pos);
     if (pos < size_StringSet(d->useUrls)) {
@@ -156,6 +157,12 @@ iBool isUsedOn_GmIdentity(const iGmIdentity *d, const iString *url) {
     if (pos > 0) {
         /* URLs with a longer path will be following the shorter URL(s). */
         if (startsWithCase_String(url, cstr_String(constAt_StringSet(d->useUrls, pos - 1)))) {
+            return iTrue;
+        }
+    }
+#endif
+    iConstForEach(StringSet, i, d->useUrls) {
+        if (startsWithCase_String(url, cstr_String(i.value))) {
             return iTrue;
         }
     }
@@ -193,12 +200,28 @@ void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
         iAssert(wasInserted);
     }
     else {
-        remove_StringSet(d->useUrls, url);
+        iForEach(Array, i, &d->useUrls->strings.values) {
+            iString *used = i.value;
+            if (startsWithCase_String(url, cstr_String(used))) {
+                deinit_String(used);
+                remove_ArrayIterator(&i);
+            }
+        }        
     }
 }
 
 void clearUse_GmIdentity(iGmIdentity *d) {
     clear_StringSet(d->useUrls);
+}
+
+const iString *findUse_GmIdentity(const iGmIdentity *d, const iString *url) {
+    if (!d) return NULL;
+    iConstForEach(StringSet, using, d->useUrls) {
+        if (startsWith_String(url, cstr_String(using.value))) {
+            return using.value;
+        }
+    }
+    return NULL;
 }
 
 const iString *name_GmIdentity(const iGmIdentity *d) {
@@ -631,7 +654,7 @@ void importIdentity_GmCerts(iGmCerts *d, iTlsCertificate *cert, const iString *n
 }
 
 static const char *certPath_GmCerts_(const iGmCerts *d, const iGmIdentity *identity) {
-    if (!(identity->flags & (temporary_GmIdentityFlag | imported_GmIdentityFlag))) {
+    if (!(identity->flags & temporary_GmIdentityFlag)) {
         const char *finger = cstrCollect_String(hexEncode_Block(&identity->fingerprint));
         return concatPath_CStr(cstr_String(&d->saveDir), format_CStr("idents/%s", finger));
     }

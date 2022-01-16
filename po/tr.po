@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-12-27 13:50+0000\n"
-"Last-Translator: Emir <emir_sari@msn.com>\n"
+"PO-Revision-Date: 2022-01-08 14:50+0000\n"
+"Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -13,7 +13,7 @@ msgstr ""
 
 # Link download progress message.
 msgid "doc.fetching"
-msgstr "Getiriliyor"
+msgstr "Yükleniyor"
 
 msgid "doc.archive.view"
 msgstr "Arşiv içeriğini görüntüle"
@@ -392,7 +392,7 @@ msgid "history.clear"
 msgstr "Geçmişi temizle…"
 
 msgid "heading.history.clear"
-msgstr "GEÇMİŞİ TEMİZLE"
+msgstr "Geçmişi temizle"
 
 msgid "dlg.history.clear"
 msgstr "Geçmişi temizle"
@@ -425,7 +425,7 @@ msgid "bookmarks.reload"
 msgstr "Uzak konum kaynaklarını yenile"
 
 msgid "ident.using"
-msgstr "Bu sayfada kullanılıyor"
+msgstr "Bu sayfada kullan"
 
 msgid "ident.notused"
 msgstr "Kullanılmıyor"
@@ -454,13 +454,13 @@ msgid "ident.export"
 msgstr "Dışa aktar"
 
 msgid "heading.ident.use"
-msgstr "KİMLİK KULLANIMI"
+msgstr "Kimlik kullanımı"
 
 msgid "menu.edit.notes"
 msgstr "Notları düzenle…"
 
 msgid "heading.ident.notes"
-msgstr "KİMLİK NOTLARI"
+msgstr "Kimlik notlar"
 
 msgid "ident.fingerprint"
 msgstr "Parmak izini kopyala"
@@ -469,7 +469,7 @@ msgid "ident.delete"
 msgstr "Kimliği sil…"
 
 msgid "heading.ident.delete"
-msgstr "KİMLİĞİ SİL"
+msgstr "Kimliği sil"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
@@ -484,7 +484,7 @@ msgid "sidebar.empty.idents"
 msgstr "Kimlik yok"
 
 msgid "heading.unsub"
-msgstr "ABONELİKTEN ÇIK"
+msgstr "Abonelikten çık"
 
 #, c-format
 msgid "dlg.confirm.unsub"
@@ -494,7 +494,7 @@ msgid "dlg.unsub"
 msgstr "Abonelikten çık"
 
 msgid "heading.pageinfo"
-msgstr "SAYFA BİLGİSİ"
+msgstr "Sayfa bilgisi"
 
 msgid "pageinfo.header.cached"
 msgstr "(önbelleklenmiş içerik)"
@@ -534,7 +534,7 @@ msgid "dlg.input.linebreak"
 msgstr "Satır sonu"
 
 msgid "heading.save"
-msgstr "DOSYA KAYDEDİLDİ"
+msgstr "Dosya kaydedildi"
 
 msgid "dlg.save.incomplete"
 msgstr "Sayfa içeriği hâlâ indiriliyor."
@@ -546,7 +546,7 @@ msgid "dlg.save.opendownload"
 msgstr "İndirilen dosyayı aç"
 
 msgid "heading.import.bookmarks"
-msgstr "YER İMLERİNİ İÇE AKTAR"
+msgstr "Yer imlerini içe aktar"
 
 #, c-format
 msgid "dlg.import.add"
@@ -555,7 +555,7 @@ msgstr[0] "%sYer imi ekle"
 msgstr[1] "%s%d yer imi ekle"
 
 msgid "heading.autoreload"
-msgstr "OTOMATİK YENİDEN YÜKLEME"
+msgstr "Otomatik yeniden yükleme"
 
 msgid "reload.never"
 msgstr "Hiçbir zaman"
@@ -597,10 +597,10 @@ msgid "dlg.file.delete"
 msgstr "Sil"
 
 msgid "heading.openlink"
-msgstr "BAĞLANTI AÇ"
+msgstr "Bağlantı aç"
 
 msgid "heading.file.delete"
-msgstr "DOSYA SİL"
+msgstr "Dosyayı sil"
 
 #, c-format
 msgid "dlg.openlink.confirm"
@@ -623,7 +623,7 @@ msgstr ""
 "sorunu olabilir."
 
 msgid "heading.certimport"
-msgstr "KİMLİK İÇE AKTAR"
+msgstr "Kimlik içe aktar"
 
 msgid "dlg.certimport.notfound"
 msgstr "Bir sertifika veya gizli anahtar bulunamadı."
@@ -632,10 +632,10 @@ msgid "dlg.certimport.notfound.page"
 msgstr "Geçerli sayfada bir sertifika/anahtar bulunamadı."
 
 msgid "heading.certimport.pasted"
-msgstr "PANODAN YAPIŞTIRILMIŞ"
+msgstr "Panodan yapıştırılmış"
 
 msgid "heading.certimport.dropped"
-msgstr "BIRAKILAN DOSYA"
+msgstr "Bırakılan dosya"
 
 msgid "dlg.certimport.import"
 msgstr "İçe aktar"
@@ -650,10 +650,10 @@ msgid "dlg.certimport.nokey"
 msgstr "Gizli anahtar yok"
 
 msgid "link.hint.audio"
-msgstr "Ses çal"
+msgstr "Ses"
 
 msgid "link.hint.image"
-msgstr "Görsel görüntüle"
+msgstr "Görsel"
 
 msgid "bookmark.title.blank"
 msgstr "Boş sayfa"
@@ -701,7 +701,7 @@ msgid "heading.lookup.other"
 msgstr "DİĞER"
 
 msgid "heading.upload"
-msgstr "TITAN İLE GÖNDER"
+msgstr "Titan ile gönder"
 
 msgid "upload.id"
 msgstr "Kimlik:"
@@ -737,7 +737,7 @@ msgid "upload.port"
 msgstr "Kapı…"
 
 msgid "heading.uploadport"
-msgstr "TITAN GÖNDERME KAPISI"
+msgstr "Titan gönderim kapısı"
 
 msgid "dlg.uploadport.set"
 msgstr "Kapı ayarla"
@@ -755,7 +755,7 @@ msgid "dlg.upload.pickfile"
 msgstr "Dosya seç"
 
 msgid "heading.translate"
-msgstr "SAYFAYI ÇEVİR"
+msgstr "Sayfayı çevir"
 
 msgid "dlg.translate.fail"
 msgstr "İstek başarısız oldu"
@@ -798,7 +798,7 @@ msgid "lang.ru"
 msgstr "Rusça"
 
 msgid "heading.newident"
-msgstr "YENİ KİMLİK"
+msgstr "Yeni kimlik"
 
 msgid "dlg.newident.until"
 msgstr "Şu tarihe kadar geçerli:"
@@ -837,19 +837,19 @@ msgid "dlg.newident.more"
 msgstr "Daha fazla…"
 
 msgid "heading.newident.missing"
-msgstr "EKSİK BİLGİ"
+msgstr "Bilgi eksik"
 
 msgid "dlg.newindent.missing.commonname"
 msgstr "Bir \"Ortak ad\" belirtilmelidir."
 
 msgid "heading.newident.date.bad"
-msgstr "GEÇERSİZ TARİH"
+msgstr "Geçersiz tarih"
 
 msgid "heading.feedcfg"
-msgstr "BESLEME AYARLARI"
+msgstr "Besleme ayarları"
 
 msgid "heading.subscribe"
-msgstr "SAYFAYA ABONE OL"
+msgstr "Sayfaya abone ol"
 
 msgid "dlg.feed.title"
 msgstr "Başlık:"
@@ -870,10 +870,10 @@ msgid "dlg.feed.sub"
 msgstr "Abone ol"
 
 msgid "heading.bookmark.add"
-msgstr "YER İMİ EKLE"
+msgstr "Yer imi ekle"
 
 msgid "heading.bookmark.edit"
-msgstr "YER İMİNİ DÜZENLE"
+msgstr "Yer imini düzenle"
 
 msgid "dlg.bookmark.title"
 msgstr "Başlık:"
@@ -888,10 +888,10 @@ msgid "dlg.bookmark.icon"
 msgstr "Simge:"
 
 msgid "heading.bookmark.tags"
-msgstr "ÖZEL ETİKETLER"
+msgstr "Özel etiketler"
 
 msgid "heading.addfolder"
-msgstr "KLASÖR EKLE"
+msgstr "Klasör ekle"
 
 msgid "dlg.addfolder.prompt"
 msgstr "Yeni klasörün adını girin:"
@@ -900,14 +900,14 @@ msgid "dlg.addfolder"
 msgstr "Klasör ekle"
 
 msgid "heading.prefs"
-msgstr "TERCİHLER"
+msgstr "Tercihler"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "AYARLAR"
+msgstr "Ayarlar"
 
 msgid "heading.prefs.certs"
-msgstr "SERTİFİKALAR"
+msgstr "Sertifikalar"
 
 msgid "heading.prefs.fonts"
 msgstr "Yazıtipleri"
@@ -929,19 +929,19 @@ msgid "heading.prefs.network"
 msgstr "Ağ"
 
 msgid "heading.prefs.paragraph"
-msgstr "PARAGRAF"
+msgstr "Paragraf"
 
 msgid "heading.prefs.pagecontent"
-msgstr "SAYFA RENKLERİ"
+msgstr "Sayfa renkleri"
 
 msgid "heading.prefs.proxies"
-msgstr "VEKİLLER"
+msgstr "Vekiller"
 
 msgid "heading.prefs.scrolling"
-msgstr "KAYDIRMA"
+msgstr "Kaydırma"
 
 msgid "heading.prefs.sizing"
-msgstr "BOYUTLANDIRMA"
+msgstr "Boyutlandırma"
 
 # tab button
 msgid "heading.prefs.style"
@@ -1193,7 +1193,7 @@ msgid "keys.split.next"
 msgstr "Odağı bir sonraki bölüntüye taşı"
 
 msgid "keys.upload"
-msgstr "Sayfayı Titan ile gönder"
+msgstr "Titan ile gönder"
 
 msgid "error.openfile.msg"
 msgstr ""
@@ -1412,7 +1412,7 @@ msgid "fontpack.delete"
 msgstr "\"%s\" ögesini kalıcı olarak sil"
 
 msgid "heading.fontpack.delete"
-msgstr "YAZITİPİ PAKETİNİ SİL"
+msgstr "Yazıtipi paketini sil"
 
 msgid "dlg.fontpack.delete"
 msgstr "Yazıtipi paketini sil"
@@ -1435,7 +1435,7 @@ msgid "truetype.help.installed"
 msgstr "Bu yazıtipi, kullanıcı yazıtipleri dizinine yüklenmiş."
 
 msgid "heading.dismiss.warning"
-msgstr "UYARIYI ATLA?"
+msgstr "Uyarı atlansın mı?"
 
 #, c-format
 msgid "dlg.dismiss.ansi"
@@ -1445,7 +1445,7 @@ msgid "dlg.dismiss.warning"
 msgstr "Uyarıyı atla"
 
 msgid "heading.fontpack.classic"
-msgstr "YAZITİPİ PAKETİNİ İNDİR"
+msgstr "Yazıtipi paketini indir"
 
 msgid "dlg.fontpack.classic"
 msgstr "Yazıtipi paketini indir (25 MB)"
@@ -1621,7 +1621,7 @@ msgstr ""
 "Tüm ziyaret edilen sayfalar geçmişini temizlemek istediğinizden emin misiniz?"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "YER İMLERİNİ SİL"
+msgstr "Yer imlerini sil"
 
 #, c-format
 msgid "dlg.confirm.bookmarks.delete"
@@ -1669,10 +1669,10 @@ msgid "dlg.input.send"
 msgstr "Gönder"
 
 msgid "heading.save.incomplete"
-msgstr "SAYFA TAM DEĞİL"
+msgstr "Sayfa tam değil"
 
 msgid "heading.save.error"
-msgstr "DOSYA KAYDEDİLİRKEN HATA"
+msgstr "Dosya kaydedilirken hata"
 
 #, c-format
 msgid "dlg.import.found"
@@ -1760,7 +1760,7 @@ msgid "heading.lookup.pagecontent"
 msgstr "SAYFA İÇERİĞİ"
 
 msgid "menu.page.upload"
-msgstr "Sayfayı Titan ile gönder…"
+msgstr "Titan ile gönder…"
 
 msgid "hint.upload.text"
 msgstr "gönderilecek metni girin"
@@ -1837,10 +1837,10 @@ msgid "heading.prefs.colors"
 msgstr "Renkler"
 
 msgid "heading.prefs.uitheme"
-msgstr "KULLANICI ARABİRİMİ RENKLERİ"
+msgstr "Arabirim renkleri"
 
 msgid "heading.prefs.widelayout"
-msgstr "GENİŞ DİZİLİM"
+msgstr "Geniş dizilim"
 
 msgid "prefs.collapsepreonload"
 msgstr "Önceden biçimlendirilenleri daralt:"
@@ -2094,3 +2094,91 @@ msgstr "24 saat biçimi"
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
 msgstr "Tümünü oku"
+
+msgid "menu.home"
+msgstr "Ana sayfaya git"
+
+msgid "menu.identities"
+msgstr "Kimlikleri yönet"
+
+msgid "prefs.toolbaraction1"
+msgstr "Düğme 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Düğme 2"
+
+msgid "prefs.blink"
+msgstr "Yanıp sönen imleç:"
+
+msgid "sidebar.close"
+msgstr "Tamam"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "%s kullan"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Tümünü gerçekten sil (geri alınamaz)"
+
+msgid "keys.upload.edit"
+msgstr "Sayfayı Titan ile düzenle"
+
+msgid "menu.open.external"
+msgstr "Başka bir uygulamada aç"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Kimlikleri gizle"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Yeni klasör"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Düzenle"
+
+msgid "sidebar.action.history.clear"
+msgstr "Temizle"
+
+msgid "sidebar.empty.unread"
+msgstr "Okunmamış girdi yok"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Önceki satırı yapıştır"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Finder'da göster"
+
+msgid "menu.share"
+msgstr "Paylaş"
+
+msgid "menu.page.upload.edit"
+msgstr "Sayfayı Titan ile düzenle…"
+
+msgid "heading.upload.id"
+msgstr "Kimlik doğrulama"
+
+msgid "menu.upload.export"
+msgstr "Metni dışa aktar"
+
+msgid "menu.upload.delete"
+msgstr "Tümünü sil"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "İçerik"
+
+msgid "hint.upload.path"
+msgstr "URL yolu"
+
+msgid "hint.upload.token.long"
+msgstr "jeton — sunucunun yönergelerine bakın"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Araç çubuğu eylemleri"
