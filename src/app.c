@@ -1260,7 +1260,14 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
             return SDL_WaitEvent(event);
         }
     }
+    /* SDL regression circa 2.0.18? SDL_PollEvent() doesn't always return 
+       events posted immediately beforehand. Waiting with a very short timeout
+       seems to work better. */
+#if defined (iPlatformLinux)
+    return SDL_WaitEventTimeout(event, 1);
+#else
     return SDL_PollEvent(event);
+#endif
 }
 
 static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {

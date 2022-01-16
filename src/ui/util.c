@@ -705,6 +705,9 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
             closeMenu_Widget(menu);
             return iTrue;
         }
+        if (equal_Command(cmd, "cancel") && pointerLabel_Command(cmd, "menu") == menu) {
+            return iFalse;
+        }
         if (equal_Command(cmd, "contextclick") && pointer_Command(cmd) == menu) {
             return iFalse;
         }
@@ -1074,7 +1077,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     const iBool isPortraitPhone = (isPhone && isPortrait_App());
     const iBool isSlidePanel    = (flags_Widget(d) & horizontalOffset_WidgetFlag) != 0;
     if (postCommands) {
-        postCommand_App("cancel"); /* dismiss any other menus */
+        postCommandf_App("cancel menu:%p", d); /* dismiss any other menus */
     }
     /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
     processEvents_App(postedEventsOnly_AppEventMode);
