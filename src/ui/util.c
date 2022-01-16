@@ -705,6 +705,9 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
             closeMenu_Widget(menu);
             return iTrue;
         }
+        if (equal_Command(cmd, "contextclick") && pointer_Command(cmd) == menu) {
+            return iFalse;
+        }
         if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "keyboard.changed") &&
             arg_Command(cmd) == 0) {
             /* May need to reposition the menu. */
