@@ -429,12 +429,48 @@ static void trackSwipe_(NSEvent *event) {
 #endif
 
 static int swipeDir_ = 0;
+static int preventTapGlitch_ = 0;
 
 static iBool processScrollWheelEvent_(NSEvent *event) {
     const iBool isPerPixel = (event.hasPreciseScrollingDeltas != 0);
     const iBool isInertia  = (event.momentumPhase & (NSEventPhaseBegan | NSEventPhaseChanged)) != 0;
     const iBool isEnded    = event.scrollingDeltaX == 0.0f && event.scrollingDeltaY == 0.0f && !isInertia;
     const iWindow *win     = &get_MainWindow()->base;
+    if (isPerPixel) {
+        /* On macOS 12.1, stopping ongoing inertia scroll with a tap seems to sometimes produce
+           spurious large scroll events. */
+        switch (preventTapGlitch_) {
+            case 0:
+                if (isInertia && event.momentumPhase == NSEventPhaseChanged) {
+                    preventTapGlitch_++;
+                }
+                else {
+                    preventTapGlitch_ = 0;
+                }
+                break;
+            case 1:
+                if (event.scrollingDeltaY == 0 && event.momentumPhase == NSEventPhaseEnded) {
+                    preventTapGlitch_++;
+                }
+                break;
+            case 2:
+                if (event.scrollingDeltaY == 0 && event.momentumPhase == 0 && isEnded) {
+                    preventTapGlitch_++;
+                }
+                else {
+                    preventTapGlitch_ = 0;
+                }
+                break;
+            case 3:
+                if (event.scrollingDeltaY != 0 && event.momentumPhase == 0 && !isInertia) {
+                    preventTapGlitch_ = 0;
+                    // printf("SPURIOUS\n"); fflush(stdout);
+                    return iTrue;
+                }
+                preventTapGlitch_ = 0;
+                break;
+        }
+    }
     /* Post corresponding MOUSEWHEEL events. */
     SDL_MouseWheelEvent e = { .type = SDL_MOUSEWHEEL };
     e.timestamp = SDL_GetTicks();
@@ -464,7 +500,8 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
         e.x = -event.scrollingDeltaX;
         e.y = iSign(event.scrollingDeltaY);
     }
-//    printf("#### dx:%d dy:%d phase:%ld end:%d\n", e.x, e.y, (long) event.momentumPhase, isEnded); fflush(stdout);
+    // printf("#### [%d] dx:%d dy:%d phase:%ld inertia:%d end:%d\n", preventTapGlitch_, e.x, e.y, (long) event.momentumPhase,
+    //        isInertia, isEnded); fflush(stdout);
     SDL_PushEvent((SDL_Event *) &e);
 #if 0
         /* On macOS, we handle both trackpad and mouse events. We expect SDL to identify
