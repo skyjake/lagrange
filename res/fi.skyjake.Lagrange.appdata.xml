@@ -45,6 +45,47 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.10" date="2022-01-17">
+            <description>
+                <p>Changes in v1.10:</p>
+                <ul>
+                    <li>Customizable navbar actions. Right-click on a button to change its action. (Identity and hamburger buttons cannot be changed.)</li>
+                    <li>Identity toolbar menu can be used to switch between alternate identities. If you have used multiple identities on one site, this makes it more convenient to switch between them.</li>
+                    <li>Added "Edit Page with Titan": opens the upload dialog with current page's content prefilled.</li>
+                    <li>Added "Paste Preceding Line" in the input prompt dialog. Potential use cases include user-editable sections on a page and suggested/example input values.</li>
+                    <li>Added footer action to open file in another app when the media type is unsupported.</li>
+                    <li>Added option to disable cursor blinking in input fields.</li>
+                    <li>Added ANSI SGR codes for light and regular font weights (2, 10).</li>
+                    <li>Improved image inlining: all responses with an image media type can get inlined, regardless of the file extension in the URL.</li>
+                    <li>Inline image metadata goes under the image instead of possibly overlapping the label text.</li>
+                    <li>Inline downloads have a context menu for relevant actions, and clicking on the download opens the file.</li>
+                    <li>Improved highlighting of open pages. The highlight no longer goes under the side elements on the page.</li>
+                    <li>Entry dates in feed links are de-emphasized for improved readability.</li>
+                    <li>Revised link hover popup. None of the information appears on the same line any more (which was problematic if there wasn't enough space). Instead, everything is shown in a popup at the bottom/top of the view, including the identity that will be used when opening the link and the date of last visit.</li>
+                    <li>Revised layout of the Upload dialog. There is a new edit field that lets you modify the file path of the URL. Identity names are in bold.</li>
+                    <li>Optimized UI layout procedure and memory use during UI event processing.</li>
+                    <li>Audio subsystem is only initialized when actually needed.</li>
+                    <li>Prevent state file corruption if the app happens to get killed while state is being saved.</li>
+                    <li>Gempub: Open books in 1:2 split mode instead of 1:1.</li>
+                    <li>Minor improvements in page caching.</li>
+                    <li>Detect when text is Bengali, Devanagari, Oriya, or Tamil.</li>
+                    <li>Fixed a history caching issue: if there were multiple instances of the same URL in history, only the latest one's content would be used when navigating back/forward.</li>
+                    <li>Fixed handling of reserved characters in URLs (cf. RFC 3986, section 2.2).</li>
+                    <li>Fixed the copy/paste context menu not showing in input fields.</li>
+                    <li>Fixed duplicated warnings showing in the page banner.</li>
+                    <li>Fixed very narrow input fields causing the app to hang.</li>
+                    <li>Fixed initial scroll position in multiline input fields.</li>
+                    <li>Fixed layout issues in the sidebar on empty Feeds and Identities tabs.</li>
+                    <li>Fixed lookup results list becoming too narrow.</li>
+                    <li>Fixed glitches when a widget has multiple simultanous animations.</li>
+                    <li>Fixed mixed-language CJK word wrapping.</li>
+                    <li>Fixed parsing Atom feed dates with leading whitespace.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.10.0</url>
+        </release>
         <release version="1.9.5" date="2022-01-05">
             <description>
                 <p>Changes in v1.9.5:</p>
