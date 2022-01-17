@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-12-08 14:50+0000\n"
+"PO-Revision-Date: 2022-01-16 17:31+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -227,7 +227,7 @@ msgid "feeds.entry.markunread"
 msgstr "Marki nelegita"
 
 msgid "heading.history.clear"
-msgstr "MALPLENIGI HISTORION"
+msgstr "Malplenigi historion"
 
 msgid "ident.delete"
 msgstr "Forigi identecon…"
@@ -236,7 +236,7 @@ msgid "ident.fingerprint"
 msgstr "Kopii fingropremaĵon"
 
 msgid "heading.ident.use"
-msgstr "IDENTECA UZADO"
+msgstr "Identeca uzado"
 
 msgid "menu.edit.notes"
 msgstr "Redakti notojn…"
@@ -259,10 +259,10 @@ msgid "dlg.input.send"
 msgstr "Sendi"
 
 msgid "heading.unsub"
-msgstr "MALABONO"
+msgstr "Malabono"
 
 msgid "heading.pageinfo"
-msgstr "PAĜINFORMOJ"
+msgstr "Paĝinformoj"
 
 msgid "dlg.cert.fingerprint"
 msgstr "Kopii fingropremaĵon"
@@ -301,10 +301,10 @@ msgstr[0] "%d horo"
 msgstr[1] "%d horoj"
 
 msgid "heading.openlink"
-msgstr "MALFERMI LIGILON"
+msgstr "Malfermi ligilon"
 
 msgid "heading.certimport"
-msgstr "IMPORTI IDENTECON"
+msgstr "Importi identecon"
 
 msgid "hint.certimport.description"
 msgstr "priskribo"
@@ -332,7 +332,7 @@ msgid "link.hint.audio"
 msgstr "Ludi la sondosieron"
 
 msgid "link.hint.image"
-msgstr "Montri la bildon"
+msgstr "Bildo"
 
 msgid "lang.ar"
 msgstr "Araba"
@@ -380,7 +380,7 @@ msgid "dlg.newident.country"
 msgstr "Lando:"
 
 msgid "heading.newident"
-msgstr "NOVA IDENTECO"
+msgstr "Nova identeco"
 
 msgid "dlg.newident.domain"
 msgstr "Domajno:"
@@ -411,7 +411,7 @@ msgid "dlg.bookmark.icon"
 msgstr "Bildsimbolo:"
 
 msgid "heading.prefs"
-msgstr "AGORDOJ"
+msgstr "Agordoj"
 
 msgid "heading.prefs.fonts"
 msgstr "Tiparoj"
@@ -421,10 +421,10 @@ msgid "heading.prefs.network"
 msgstr "Reto"
 
 msgid "heading.prefs.paragraph"
-msgstr "ALINEO"
+msgstr "Alineo"
 
 msgid "heading.prefs.scrolling"
-msgstr "RULUMADO"
+msgstr "Rulumado"
 
 msgid "prefs.theme"
 msgstr "Temo:"
@@ -559,7 +559,7 @@ msgid "dlg.newident.temp"
 msgstr "Provizora:"
 
 msgid "heading.prefs.certs"
-msgstr "ATESTILOJ"
+msgstr "Atestiloj"
 
 #, c-format
 msgid "num.minutes"
@@ -580,7 +580,7 @@ msgid "keys.fullscreen"
 msgstr "Baskuligi plenekranan reĝimon"
 
 msgid "heading.import.bookmarks"
-msgstr "IMPORTI LEGOSIGNOJN"
+msgstr "Importi legosignojn"
 
 msgid "lang.sr"
 msgstr "Serba"
@@ -679,7 +679,7 @@ msgid "heading.prefs.interface"
 msgstr "Fasado"
 
 msgid "heading.prefs.proxies"
-msgstr "PROKURILOJ"
+msgstr "Prokuriloj"
 
 msgid "gempub.meta.lang"
 msgstr "Lingvo"
@@ -746,3 +746,60 @@ msgstr "Tiparoj"
 
 msgid "dlg.dismiss.warning"
 msgstr "Ignori averton"
+
+msgid "menu.newfolder"
+msgstr "Nova dosierujo…"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Elekti ĉiujn"
+
+msgid "menu.copyurl"
+msgstr "Kopii URL"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "antaŭ %d minuto"
+msgstr[1] "antaŭ %d minutoj"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "antaŭ %d horo"
+msgstr[1] "antaŭ %d horoj"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Agordoj"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Forigi"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Nova dosierujo"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Redakti"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u dosiero"
+msgstr[1] "%u dosieroj"
+
+msgid "ident.export"
+msgstr "Eksporti"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "antaŭ %d tago"
+msgstr[1] "antaŭ %d tagoj"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Malfari"
+
+msgid "sidebar.action.show"
+msgstr "Montri:"
