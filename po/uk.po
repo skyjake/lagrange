@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-16 17:31+0000\n"
+"PO-Revision-Date: 2022-01-18 17:50+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -2262,3 +2262,7 @@ msgstr "токен — див. вказівки сервера"
 # Shows where a local file is using the File Manager.
 msgid "menu.reveal.filemgr"
 msgstr "Показати у файловому менеджері"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Призначити дію:"
