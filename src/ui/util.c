@@ -3451,6 +3451,54 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
     return dlg;
 }
 
+iWidget *makeGlyphFinder_Widget(void) {
+    iString msg;
+    iString command;
+    init_String(&msg);
+    initCStr_String(&command, "!font.find chars:");
+    for (size_t i = 0; ; i++) {
+        iChar ch = missing_Text(i);
+        if (!ch) break;
+        appendFormat_String(&msg, " U+%04X", ch);
+        appendChar_String(&command, ch);
+    }
+    iArray items;
+    init_Array(&items, sizeof(iMenuItem));
+    if (!isEmpty_String(&msg)) {
+        prependCStr_String(&msg, "${dlg.glyphfinder.missing} ");
+        appendCStr_String(&msg, "\n\n${dlg.glyphfinder.help}");
+        pushBackN_Array(
+            &items,
+            (iMenuItem[]){
+                { "${menu.fonts}", 0, 0, "!open newtab:1 url:about:fonts" },
+                { "${dlg.glyphfinder.disable}", 0, 0, "prefs.font.warnmissing.changed arg:0" },
+                { "---" },
+                { uiTextCaution_ColorEscape magnifyingGlass_Icon " ${dlg.glyphfinder.search}",
+                  0,
+                  0,
+                  cstr_String(&command) },
+                { "${close}", 0, 0, "cancel" } },
+            5);
+    }
+    else {
+        setCStr_String(&msg, "${dlg.glyphfinder.help.empty}");
+        pushBackN_Array(&items,
+                        (iMenuItem[]){ { "${menu.reload}", 0, 0, "navigate.reload" },
+                                       { "${close}", 0, 0, "cancel" } },
+                        2);
+    }
+    iWidget *dlg = makeQuestion_Widget("${heading.glyphfinder}", cstr_String(&msg),
+                                       constData_Array(&items),
+                                       size_Array(&items));
+    arrange_Widget(dlg);
+    deinit_Array(&items);
+    deinit_String(&command);
+    deinit_String(&msg);
+    return dlg;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 void init_PerfTimer(iPerfTimer *d) {
     d->ticks = SDL_GetPerformanceCounter();
 }

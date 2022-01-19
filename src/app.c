@@ -2245,6 +2245,13 @@ void resetFonts_App(void) {
     }
 }
 
+void availableFontsChanged_App(void) {
+    iApp *d = &app_;
+    iConstForEach(PtrArray, win, listWindows_App_(d, collectNew_PtrArray())) {
+        resetMissing_Text(text_Window(win.ptr));
+    }    
+}
+
 static void invalidateCachedDocuments_App_(void) {
     iForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
         invalidateCachedLayout_History(history_DocumentWidget(i.object));
@@ -2371,24 +2378,42 @@ iBool handleCommand_App(const char *cmd) {
         reload_Fonts(); /* also does font cache reset, window invalidation */
         return iTrue;
     }
-#if 0
-    else if (equal_Command(cmd, "font.user")) {
-        const char *path = suffixPtr_Command(cmd, "path");
-        if (cmp_String(&d->prefs.symbolFontPath, path)) {
-            if (!isFrozen) {
-                setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
-            }
-            setCStr_String(&d->prefs.symbolFontPath, path);
-            loadUserFonts_Text();
-            resetFonts_App(d);
-            if (!isFrozen) {
-                postCommand_App("font.changed");
-                postCommand_App("window.unfreeze");
-            }
-        }
+    else if (equal_Command(cmd, "font.find")) {
+        searchOnlineLibraryForCharacters_Fonts(string_Command(cmd, "chars"));
         return iTrue;
     }
-#endif
+    else if (equal_Command(cmd, "font.found")) {
+        if (hasLabel_Command(cmd, "error")) {
+            makeSimpleMessage_Widget("${heading.glyphfinder}",
+                                     format_CStr("%d %s",
+                                                 argLabel_Command(cmd, "error"),
+                                                 suffixPtr_Command(cmd, "msg")));
+            return iTrue;
+        }
+        iString *src = collectNew_String();
+        setCStr_String(src, "# ${heading.glyphfinder.results}\n\n");
+        iRangecc path = iNullRange;
+        iBool isFirst = iTrue;
+        while (nextSplit_Rangecc(range_Command(cmd, "packs"), ";", &path)) {
+            if (isFirst) {
+                appendCStr_String(src, "${glyphfinder.results}\n\n");
+            }
+            const char *fp = cstr_Rangecc(path);
+            appendFormat_String(src, "=> gemini://skyjake.fi/fonts/%s %s\n", fp, fp);
+            isFirst = iFalse;
+        }
+        if (isFirst) {
+            appendFormat_String(src, "${glyphfinder.results.empty}\n");
+        }
+        appendCStr_String(src, "\n=> about:fonts ${menu.fonts}");
+        iDocumentWidget *page = newTab_App(NULL, iTrue);
+        translate_Lang(src);
+        setUrlAndSource_DocumentWidget(page,
+                                       collectNewCStr_String(""),
+                                       collectNewCStr_String("text/gemini"),
+                                       utf8_String(src));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "font.set")) {
         if (!isFrozen) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue);

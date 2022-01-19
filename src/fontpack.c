@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "fontpack.h"
 #include "resources.h"
 #include "ui/window.h"
+#include "gmrequest.h"
 #include "app.h"
 
 #include <the_Foundation/archive.h>
@@ -1018,6 +1019,7 @@ void install_Fonts(const iString *packId, const iBlock *data) {
     iRelease(f);
     /* Newly installed fontpacks may have a higher priority that overrides other fonts. */
     reload_Fonts();
+    availableFontsChanged_App();
 }
 
 void installFontFile_Fonts(const iString *fileName, const iBlock *data) {
@@ -1028,6 +1030,7 @@ void installFontFile_Fonts(const iString *fileName, const iBlock *data) {
     }
     iRelease(f);
     reload_Fonts();
+    availableFontsChanged_App();
 }
 
 void enablePack_Fonts(const iString *packId, iBool enable) {
@@ -1040,6 +1043,7 @@ void enablePack_Fonts(const iString *packId, iBool enable) {
     }
     updateActive_Fonts();
     resetFonts_App();
+    availableFontsChanged_App();
     invalidate_Window(get_MainWindow());
 }
 
@@ -1047,5 +1051,98 @@ void updateActive_Fonts(void) {
     sortSpecs_Fonts_(&fonts_);
 }
 
-iDefineClass(FontFile)
+static void findCharactersInCMap_(iGmRequest *d, iGmRequest *req) {
+    /* Note: Called in background thread. */
+    iUnused(req);
+    const iString *missingChars = userData_Object(d);
+    if (isSuccess_GmStatusCode(status_GmRequest(d))) {
+        iStringList *matchingPacks = new_StringList();
+        iChar needed[20];
+        iChar minChar = UINT32_MAX, maxChar = 0;
+        size_t numNeeded = 0;
+        iConstForEach(String, ch, missingChars) {
+            needed[numNeeded++] = ch.value;
+            minChar = iMin(minChar, ch.value);
+            maxChar = iMax(maxChar, ch.value);
+            if (numNeeded == iElemCount(needed)) {
+                /* Shouldn't be that many. */
+                break;
+            }
+        }
+        iBlock  *data = decompressGzip_Block(body_GmRequest(d));
+        iRangecc line = iNullRange;
+        while (nextSplit_Rangecc(range_Block(data), "\n", &line)) {
+            iRangecc fontpackPath = iNullRange;
+            for (const char *pos = line.start; pos < line.end; pos++) {
+                if (*pos == ':') {
+                    fontpackPath.start = line.start;
+                    fontpackPath.end = pos;
+                    line.start = pos + 1;
+                    trimStart_Rangecc(&line);
+                    break;
+                }
+            }
+            if (fontpackPath.start) {
+                /* Parse the character ranges and see if any match what we need. */
+                const char *pos = line.start;
+                while (pos < line.end) {
+                    char *endp;
+                    uint32_t first = strtoul(pos, &endp, 10);
+                    uint32_t last  = first;
+                    if (*endp == '-') {
+                        last = strtoul(endp + 1, &endp, 10);        
+                    }
+                    if (maxChar < first) {
+                        break; /* The rest are even higher. */
+                    }
+                    if (minChar <= last) {
+                        for (size_t i = 0; i < numNeeded; i++) {
+                            if (needed[i] >= first && needed[i] <= last) {
+                                /* Got it. */
+                                pushBackRange_StringList(matchingPacks, fontpackPath);
+                                break;
+                            }
+                        }
+                    }
+                    pos = endp + 1;
+                }
+            }
+        }
+        delete_Block(data);
+        iString result;
+        init_String(&result);
+        format_String(&result, "font.found chars:%s packs:", cstr_String(missingChars));
+        iConstForEach(StringList, s, matchingPacks) {
+            if (s.pos != 0) {
+                appendCStr_String(&result, ";");
+            }
+            append_String(&result, s.value);
+        }
+        postCommandString_Root(NULL, &result);
+        deinit_String(&result);
+        iRelease(matchingPacks);
+    }
+    else {
+        /* Report error. */
+        postCommandf_Root(NULL,
+                          "font.found chars:%s error:%d msg:\x1b[1m%s\x1b[0m\n%s",
+                          cstr_String(missingChars),
+                          status_GmRequest(d),
+                          cstr_String(meta_GmRequest(d)),
+                          cstr_String(url_GmRequest(d)));
+    }
+    fflush(stdout);
+    delete_String(userData_Object(d));
+    iReleaseLater(d);
+}
 
+void searchOnlineLibraryForCharacters_Fonts(const iString *chars) {
+    /* Fetch the character map from skyjake.fi. */
+    iGmRequest *req = new_GmRequest(certs_App());
+    setUrl_GmRequest(req, collectNewCStr_String("gemini://skyjake.fi/fonts/cmap.txt.gz"));
+    setUserData_Object(req, copy_String(chars));
+    iConnect(GmRequest, req, finished, req, findCharactersInCMap_);
+    submit_GmRequest(req);
+}
+
+iDefineClass(FontFile)

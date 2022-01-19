@@ -1181,6 +1181,33 @@ msgstr "Russian"
 msgid "lang.es"
 msgstr "Spanish"
 
+msgid "heading.glyphfinder"
+msgstr "Missing Glyphs"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "The following characters could not be shown:"
+
+msgid "dlg.glyphfinder.help"
+msgstr "You can try searching the skyjake.fi Font Library for fonts that provide glyphs for these characters, or manually install new TrueType fonts."
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "Please reload the page to check again for missing glyphs."
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Disable Warnings"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Search Font Library"
+
+msgid "heading.glyphfinder.results"
+msgstr "Search Results"
+
+msgid "glyphfinder.results"
+msgstr "The following fontpacks provide one or more of the missing glyphs:"
+
+msgid "glyphfinder.results.empty"
+msgstr "Sorry, no matching fontpacks were found."
+
 msgid "heading.newident"
 msgstr "New Identity"
 

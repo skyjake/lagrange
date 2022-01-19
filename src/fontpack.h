@@ -186,3 +186,5 @@ void                reload_Fonts                (void);
 iLocalDef iBool isInstalled_Fonts(const char *packId) {
     return pack_Fonts(packId) != NULL;
 }
+
+void                searchOnlineLibraryForCharacters_Fonts  (const iString *chars);

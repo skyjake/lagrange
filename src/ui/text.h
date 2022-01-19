@@ -227,6 +227,8 @@ struct Impl_WrapText {
 iTextMetrics    measure_WrapText    (iWrapText *, int fontId);
 iTextMetrics    draw_WrapText       (iWrapText *, int fontId, iInt2 pos, int color);
 
+iChar           missing_Text        (size_t index);
+void            resetMissing_Text   (iText *);
 iBool           checkMissing_Text   (void); /* returns the flag, and clears it */
 SDL_Texture *   glyphCache_Text     (void);
 

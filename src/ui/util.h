@@ -342,6 +342,7 @@ iWidget *   makeBookmarkCreation_Widget (const iString *url, const iString *titl
 iWidget *   makeIdentityCreation_Widget (void);
 iWidget *   makeFeedSettings_Widget     (uint32_t bookmarkId);
 iWidget *   makeTranslation_Widget      (iWidget *parent);
+iWidget *   makeGlyphFinder_Widget      (void);
 
 const char *    languageId_String   (const iString *menuItemLabel);
 int             languageIndex_CStr  (const char *langId);

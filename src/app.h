@@ -142,6 +142,7 @@ iDocumentWidget *   document_Command    (const char *cmd);
 void            openInDefaultBrowser_App(const iString *url);
 void            revealPath_App          (const iString *path);
 void            resetFonts_App          (void);
+void            availableFontsChanged_App(void);
 
 iMainWindow *   mainWindow_App  (void);
 void            closePopups_App (void);
