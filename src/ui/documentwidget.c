@@ -2756,6 +2756,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                 }
                 d->flags |= drawDownloadCounter_DocumentWidgetFlag;
                 clear_PtrSet(d->view.invalidRuns);
+                documentRunsInvalidated_DocumentWidget_(d);
                 deinit_String(&str);
                 return;
             }

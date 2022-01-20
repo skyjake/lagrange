@@ -286,7 +286,8 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             iZap(on);
             size_t numItems = 0;
             isEmpty = iTrue;
-            iConstForEach(PtrArray, i, listEntries_Feeds()) {
+            const iPtrArray *feedEntries = listEntries_Feeds();
+            iConstForEach(PtrArray, i, feedEntries) {
                 const iFeedEntry *entry = i.ptr;
                 if (isHidden_FeedEntry(entry)) {
                     continue; /* A hidden entry. */
@@ -350,7 +351,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             }
             /* Actions. */
             if (!isMobile) {
-                if (!keepActions && !isEmpty) {
+                if (!keepActions && !isEmpty_PtrArray(feedEntries)) {
                     addActionButton_SidebarWidget_(d,
                                                    check_Icon
                                                    " ${sidebar.action.feeds.markallread}",

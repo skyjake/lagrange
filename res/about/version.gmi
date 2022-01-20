@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.10.1
+* Fixed bottom actions of the Feeds sidebar getting hidden when all entries are read. This prevented switching between Unread/All filter modes.
+* Fixed potential crash when downloading a large file (e.g., a fontpack).
+* Linux: SDL event handling workaround adjusted to only apply to 2.0.18+.
+* Updated UI translations.
+
 ## 1.10
 New features:
 * macOS: Trackpad swipe navigation.
