@@ -1268,7 +1268,7 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
     /* SDL regression circa 2.0.18? SDL_PollEvent() doesn't always return 
        events posted immediately beforehand. Waiting with a very short timeout
        seems to work better. */
-#if defined (iPlatformLinux)
+#if defined (iPlatformLinux) && SDL_VERSION_ATLEAST(2, 0, 18)
     return SDL_WaitEventTimeout(event, 1);
 #else
     return SDL_PollEvent(event);
