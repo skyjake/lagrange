@@ -33,6 +33,7 @@ struct Impl_Paint {
     iWindow *    dst;
     SDL_Texture *setTarget;
     SDL_Texture *oldTarget;
+    iInt2        oldOrigin;
     uint8_t      alpha;
 };
 

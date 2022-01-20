@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-12-07 04:50+0000\n"
+"PO-Revision-Date: 2022-01-18 17:50+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -18,13 +18,13 @@ msgid "dlg.newident.rsa.selfsign"
 msgstr "Creando un certificado RSA autofirmado de 2048 bits."
 
 msgid "heading.subscribe"
-msgstr "SUSCRIBIR A PÁGINA"
+msgstr "Suscribir a Página"
 
 msgid "dlg.bookmark.save"
 msgstr "Guardar Marcador"
 
 msgid "heading.prefs.sizing"
-msgstr "TAMAÑOS"
+msgstr "Tamaños"
 
 msgid "prefs.uiscale"
 msgstr "Factor de escalamiento de la Interfaz:"
@@ -135,7 +135,7 @@ msgid "dlg.feed.title"
 msgstr "Título:"
 
 msgid "heading.bookmark.add"
-msgstr "AGREGAR MARCADOR"
+msgstr "Agregar Marcador"
 
 # tab button
 msgid "heading.prefs.colors"
@@ -479,7 +479,7 @@ msgid "history.clear"
 msgstr "Limpiar Historial…"
 
 msgid "heading.history.clear"
-msgstr "LIMPIAR HISTORIAL"
+msgstr "Limpiar Historial"
 
 msgid "dlg.history.clear"
 msgstr "Limpiar Historial"
@@ -535,7 +535,7 @@ msgid "menu.edit.notes"
 msgstr "Editar Notas…"
 
 msgid "heading.ident.notes"
-msgstr "NOTAS SOBRE IDENTIDAD"
+msgstr "Notas Sobre Identidades"
 
 msgid "ident.fingerprint"
 msgstr "Copiar Huella Digital"
@@ -544,7 +544,7 @@ msgid "ident.delete"
 msgstr "Borrar Identidad…"
 
 msgid "heading.ident.delete"
-msgstr "BORRAR IDENTIDAD"
+msgstr "Borrar Identidad"
 
 msgid "dlg.ident.delete"
 msgstr "Borrar Identidad y Archivos"
@@ -559,13 +559,13 @@ msgstr ""
 "Vea la %sAyuda%s para más información sobre los certificados TLS de cliente."
 
 msgid "heading.unsub"
-msgstr "ELIMINAR SUSCRIPCIÓN"
+msgstr "Eliminar Suscripción"
 
 msgid "dlg.unsub"
 msgstr "Eliminar suscripción"
 
 msgid "heading.pageinfo"
-msgstr "INFORMACIÓN DE PÁGINA"
+msgstr "Información de Página"
 
 msgid "pageinfo.header.cached"
 msgstr "(contenido en caché)"
@@ -611,26 +611,26 @@ msgid "dlg.input.send"
 msgstr "Enviar"
 
 msgid "heading.save"
-msgstr "ARCHIVO GUARDADO"
+msgstr "Archivo Guardado"
 
 msgid "heading.save.incomplete"
-msgstr "PÁGINA INCOMPLETA"
+msgstr "Página Incompleta"
 
 msgid "dlg.save.size"
 msgstr "Tamaño:"
 
 msgid "heading.save.error"
-msgstr "ERROR GUARDANDO ARCHIVO"
+msgstr "Error Guardando Archivo"
 
 msgid "heading.import.bookmarks"
-msgstr "IMPORTAR MARCADORES"
+msgstr "Importar Marcadores"
 
 msgid "dlg.import.notnew"
 msgstr ""
 "Todos los enlaces de esta página ya se encuentran guardados en marcadores."
 
 msgid "heading.autoreload"
-msgstr "AUTO-RECARGAR"
+msgstr "Auto-Recargar"
 
 msgid "link.newtab"
 msgstr "Abrir Enlace en Nueva Pestaña"
@@ -651,7 +651,7 @@ msgid "link.bookmark"
 msgstr "Guardar Enlace en Marcadores…"
 
 msgid "heading.openlink"
-msgstr "ABRIR ENLACE"
+msgstr "Abrir Enlace"
 
 #, c-format
 msgid "dlg.openlink.confirm"
@@ -670,7 +670,7 @@ msgid "bookmark.title.blank"
 msgstr "Página en Blanco"
 
 msgid "heading.translate"
-msgstr "TRADUCIR PÁGINA"
+msgstr "Traducir Página"
 
 msgid "dlg.translate.unavail"
 msgstr "Servicio no Disponible"
@@ -719,7 +719,7 @@ msgid "dlg.certwarn.domain.expired"
 msgstr "El certificado recibido ha expirado Y es para el dominio incorrecto."
 
 msgid "heading.certimport"
-msgstr "IMPORTAR IDENTIDAD"
+msgstr "Importar Identidad"
 
 msgid "dlg.certimport.help"
 msgstr ""
@@ -733,10 +733,10 @@ msgid "dlg.certimport.notfound.page"
 msgstr "No se encontró un certificado/clave en la página actual."
 
 msgid "heading.certimport.pasted"
-msgstr "PEGADO DESDE EL PORTAPAPELES"
+msgstr "Pegado del Portapapeles"
 
 msgid "heading.certimport.dropped"
-msgstr "ARCHIVO ARRASTRADO Y SOLTADO"
+msgstr "Archivo Soltado"
 
 msgid "dlg.certimport.import"
 msgstr "Importar"
@@ -754,7 +754,7 @@ msgid "dlg.certimport.nokey"
 msgstr "Sin Clave Privada"
 
 msgid "link.hint.image"
-msgstr "Ver Imagen"
+msgstr "Imagen"
 
 msgid "keys.subscribe"
 msgstr "Suscribirse a página"
@@ -861,7 +861,7 @@ msgid "ident.temporary"
 msgstr "Temporal"
 
 msgid "heading.ident.use"
-msgstr "USO DE IDENTIDADES"
+msgstr "Uso de Identidades"
 
 # %s refers to name of an identity.
 #, c-format
@@ -911,7 +911,7 @@ msgid "lang.ru"
 msgstr "Ruso"
 
 msgid "heading.newident"
-msgstr "NUEVA IDENTIDAD"
+msgstr "Nueva Identidad"
 
 msgid "dlg.newident.until"
 msgstr "Válido hasta:"
@@ -944,7 +944,7 @@ msgid "dlg.newident.create"
 msgstr "Crear Identidad"
 
 msgid "heading.feedcfg"
-msgstr "CONFIGURACIÓN DE SUSCRIPCIONES"
+msgstr "Configuración de Suscripciones"
 
 msgid "dlg.feed.entrytype"
 msgstr "Tipo de entrada:"
@@ -962,7 +962,7 @@ msgid "dlg.feed.sub"
 msgstr "Suscribir"
 
 msgid "heading.bookmark.edit"
-msgstr "EDITAR MARCADOR"
+msgstr "Editar Marcador"
 
 msgid "dlg.bookmark.title"
 msgstr "Título:"
@@ -977,25 +977,25 @@ msgid "dlg.bookmark.icon"
 msgstr "Ícono:"
 
 msgid "heading.prefs"
-msgstr "PREFERENCIAS"
+msgstr "Preferencias"
 
 msgid "heading.prefs.certs"
-msgstr "CERTIFICADOS"
+msgstr "Certificados"
 
 msgid "heading.prefs.paragraph"
-msgstr "PÁRRAFO"
+msgstr "Párrafo"
 
 msgid "heading.prefs.pagecontent"
-msgstr "COLORES DE LA PÁGINA"
+msgstr "Colores de la Página"
 
 msgid "heading.prefs.proxies"
-msgstr "PROXIES"
+msgstr "Proxies"
 
 msgid "heading.prefs.scrolling"
-msgstr "DESPLAZAMIENTO"
+msgstr "Desplazamiento"
 
 msgid "heading.prefs.widelayout"
-msgstr "DISPOSICIÓN AMPLIA"
+msgstr "Disposición Amplia"
 
 msgid "prefs.smoothscroll"
 msgstr "Desplazamiento suave:"
@@ -1313,7 +1313,7 @@ msgid "prefs.doctheme.name.highcontrast"
 msgstr "Alto Contraste"
 
 msgid "link.hint.audio"
-msgstr "Reproducir Audio"
+msgstr "Audio"
 
 #, c-format
 msgid "num.minutes"
@@ -1358,7 +1358,7 @@ msgstr "En Tema Claro"
 
 # Link download progress message.
 msgid "doc.fetching"
-msgstr "Recibiendo"
+msgstr "Cargando"
 
 # Inline download status message.
 msgid "media.download.warnclose"
@@ -1492,13 +1492,13 @@ msgid "lang.ia"
 msgstr "Interlingua"
 
 msgid "heading.newident.missing"
-msgstr "INFORMACIÓN FALTANTE"
+msgstr "Información Faltante"
 
 msgid "dlg.newindent.missing.commonname"
 msgstr "Debe especificar un \"nombre común\"."
 
 msgid "heading.newident.date.bad"
-msgstr "FECHA NO VÁLIDA"
+msgstr "Fecha no Válida"
 
 msgid "dlg.newident.date.past"
 msgstr "La fecha de vencimiento debe ser en el futuro."
@@ -1661,7 +1661,7 @@ msgid "upload.port"
 msgstr "Puerto…"
 
 msgid "heading.uploadport"
-msgstr "PUERTO DE CARGA POR TITAN"
+msgstr "Puerto de Carga con Titan"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
@@ -1678,7 +1678,7 @@ msgid "prefs.linespacing"
 msgstr "Espaciado de linea:"
 
 msgid "keys.upload"
-msgstr "Cargar página con Titan"
+msgstr "Cargar con Titan"
 
 msgid "error.certexpired"
 msgstr "Certificado Expirado"
@@ -1698,7 +1698,7 @@ msgid "link.file.delete"
 msgstr "Borrar Archivo"
 
 msgid "heading.file.delete"
-msgstr "BORRAR ARCHIVO"
+msgstr "Borrar Archivo"
 
 msgid "dlg.file.delete.confirm"
 msgstr "Está seguro de que quiere borrar este archivo?"
@@ -1707,10 +1707,10 @@ msgid "dlg.file.delete"
 msgstr "Borrar"
 
 msgid "menu.page.upload"
-msgstr "Cargar Página con Titan…"
+msgstr "Cargar con Titan…"
 
 msgid "heading.upload"
-msgstr "CARGAR PÁGINA CON TITAN"
+msgstr "Cargar con Titan"
 
 msgid "heading.upload.text"
 msgstr "Texto"
@@ -1770,7 +1770,7 @@ msgid "menu.openfile"
 msgstr "Abrir Archivo…"
 
 msgid "heading.prefs.uitheme"
-msgstr "COLORES DE IU"
+msgstr "Colores de la IU"
 
 msgid "media.untitled.image"
 msgstr "Imagen"
@@ -1830,7 +1830,7 @@ msgid "menu.newfolder"
 msgstr "Nueva Carpeta…"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "BORRAR MARCADORES"
+msgstr "Borrar Marcadores"
 
 #, c-format
 msgid "dlg.confirm.bookmarks.delete"
@@ -1849,7 +1849,7 @@ msgid "dlg.upload.id.none"
 msgstr "Ninguno"
 
 msgid "heading.bookmark.tags"
-msgstr "ETIQUETAS ESPECIALES"
+msgstr "Etiquetas Especiales"
 
 msgid "dlg.addfolder.prompt"
 msgstr "Nombre de la nueva carpeta:"
@@ -1898,7 +1898,7 @@ msgid "dlg.upload.pickfile"
 msgstr "Escoger Archivo"
 
 msgid "heading.addfolder"
-msgstr "AGREGAR CARPETA"
+msgstr "Agregar Carpeta"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Nueva Carpeta"
@@ -1908,7 +1908,7 @@ msgstr "Agregar Carpeta"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "CONFIGURACIÓN"
+msgstr "Configuración"
 
 msgid "prefs.imagestyle"
 msgstr "Colorear imágenes:"
@@ -1966,7 +1966,7 @@ msgid "fontpack.export"
 msgstr "Ver plantilla fontpack.ini"
 
 msgid "heading.fontpack.classic"
-msgstr "DESCARGAR PAQUETE DE FUENTES"
+msgstr "Descargar Paquete de Fuentes"
 
 msgid "dlg.fontpack.classic.msg"
 msgstr ""
@@ -2041,7 +2041,7 @@ msgid "truetype.help.installed"
 msgstr "Esta fuente está instalada en el directorio de fuentes del usuario."
 
 msgid "heading.dismiss.warning"
-msgstr "DESCARTAR ADVERTENCIA?"
+msgstr "¿Descartar Advertencia?"
 
 #, c-format
 msgid "dlg.dismiss.ansi"
@@ -2125,7 +2125,7 @@ msgid "fontpack.delete"
 msgstr "Borrar \"%s\" permanentemente"
 
 msgid "heading.fontpack.delete"
-msgstr "BORRAR PAQUETE DE FUENTES"
+msgstr "Borrar Paquete de Fuentes"
 
 msgid "lang.uk"
 msgstr "Ucraniano"
@@ -2155,3 +2155,99 @@ msgstr "Hora de 24 Horas"
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
 msgstr "Leer Todo"
+
+msgid "menu.open.external"
+msgstr "Abrir en Otra App"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Ocultar Identidades"
+
+msgid "menu.home"
+msgstr "Ir a la Página Principal"
+
+msgid "menu.identities"
+msgstr "Gestionar Identidades"
+
+msgid "sidebar.close"
+msgstr "Listo"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Nueva Carpeta"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Editar"
+
+msgid "sidebar.action.history.clear"
+msgstr "Limpiar"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Usar %s"
+
+msgid "sidebar.empty.unread"
+msgstr "Sin Entradas no Leídas"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Pegar la Linea Precedente"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Mostrar en el Finder"
+
+msgid "menu.share"
+msgstr "Compartir"
+
+msgid "menu.page.upload.edit"
+msgstr "Editar Página con Titan…"
+
+msgid "heading.upload.id"
+msgstr "Autorización"
+
+msgid "menu.upload.export"
+msgstr "Exportar Texto"
+
+msgid "menu.upload.delete"
+msgstr "Borrar Todo"
+
+msgid "menu.upload.delete.confirm"
+msgstr "De Verdad Borrar Todo (No se Puede Deshacer)"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Contenido"
+
+msgid "hint.upload.path"
+msgstr "Ruta del URL"
+
+msgid "hint.upload.token.long"
+msgstr "Token — ver instrucciones del servidor"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Acciones de la Barra de Herramientas"
+
+msgid "prefs.toolbaraction1"
+msgstr "Botón 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Botón 2"
+
+msgid "prefs.blink"
+msgstr "Cursor parpadeante:"
+
+msgid "keys.upload.edit"
+msgstr "Editar Página con Titan"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Establecer Acción:"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Mostrar en Administrador de Archivos"

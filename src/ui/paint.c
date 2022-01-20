@@ -41,6 +41,7 @@ void init_Paint(iPaint *d) {
     d->dst       = get_Window();
     d->setTarget = NULL;
     d->oldTarget = NULL;
+    d->oldOrigin = zero_I2();
     d->alpha     = 255;
 }
 
@@ -48,6 +49,8 @@ void beginTarget_Paint(iPaint *d, SDL_Texture *target) {
     SDL_Renderer *rend = renderer_Paint_(d);
     if (!d->setTarget) {
         d->oldTarget = SDL_GetRenderTarget(rend);
+        d->oldOrigin = origin_Paint;
+        origin_Paint = zero_I2();
         SDL_SetRenderTarget(rend, target);
         d->setTarget = target;
     }
@@ -59,8 +62,10 @@ void beginTarget_Paint(iPaint *d, SDL_Texture *target) {
 void endTarget_Paint(iPaint *d) {
     if (d->setTarget) {
         SDL_SetRenderTarget(renderer_Paint_(d), d->oldTarget);
+        origin_Paint = d->oldOrigin;
+        d->oldOrigin = zero_I2();
         d->oldTarget = NULL;
-        d->setTarget = NULL;
+        d->setTarget = NULL;        
     }
 }
 
@@ -108,7 +113,7 @@ void drawRect_Paint(const iPaint *d, iRect rect, int color) {
         { left_Rect(rect),  br.y },
         { left_Rect(rect),  top_Rect(rect) }
     };
-#if SDL_VERSION_ATLEAST(2, 0, 16)
+#if SDL_COMPILEDVERSION == SDL_VERSIONNUM(2, 0, 16)
     if (isOpenGLRenderer_Window()) {
         /* A very curious regression in SDL 2.0.16. */
         edges[3].y--;
@@ -170,7 +175,7 @@ void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t n, int color) 
     for (size_t i = 0; i < n; i++) {
         offsetPoints[i] = add_I2(points[i], origin_Paint);
     }
-    SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) offsetPoints, n);
+    SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) offsetPoints, (int) n);
     free(offsetPoints);
 }
 

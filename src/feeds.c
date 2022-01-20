@@ -65,7 +65,9 @@ const iString *url_FeedEntry(const iFeedEntry *d) {
 iBool isUnread_FeedEntry(const iFeedEntry *d) {
     const size_t fragPos = indexOf_String(&d->url, '#');
     if (fragPos != iInvalidPos) {
-        /* Check if the entry is newer than the latest visit. */
+        /* Check if the entry is newer than the latest visit. If the URL has not been visited,
+           `urlVisitTime_Visited` returns a zero timestamp that is always earlier than
+           `posted`. */
         const iTime visTime = urlVisitTime_Visited(visited_App(), url_FeedEntry(d));
         return cmp_Time(&visTime, &d->posted) < 0;
     }
@@ -97,8 +99,8 @@ static void init_FeedJob(iFeedJob *d, const iBookmark *bookmark) {
     init_PtrArray(&d->results);
     iZap(d->startTime);
     d->isFirstUpdate = iFalse;
-    d->checkHeadings = hasTag_Bookmark(bookmark, headings_BookmarkTag);
-    d->ignoreWeb     = hasTag_Bookmark(bookmark, ignoreWeb_BookmarkTag);
+    d->checkHeadings = (bookmark->flags & headings_BookmarkFlag) != 0;
+    d->ignoreWeb     = (bookmark->flags & ignoreWeb_BookmarkFlag) != 0;
 }
 
 static void deinit_FeedJob(iFeedJob *d) {
@@ -146,13 +148,7 @@ static void submit_FeedJob_(iFeedJob *d) {
 
 static iBool isSubscribed_(void *context, const iBookmark *bm) {
     iUnused(context);
-    static iRegExp *pattern_ = NULL;
-    if (!pattern_) {
-        pattern_ = new_RegExp("\\bsubscribed\\b", caseSensitive_RegExpOption);
-    }
-    iRegExpMatch m;
-    init_RegExpMatch(&m);
-    return matchString_RegExp(pattern_, &bm->tags, &m);
+    return (bm->flags & subscribed_BookmarkFlag) != 0;
 }
 
 static const iPtrArray *listSubscriptions_(void) {
@@ -443,7 +439,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
     iZap(work);
     iBool gotNew = iFalse;
     postCommand_App("feeds.update.started");
-    const int totalJobs = size_PtrArray(&d->jobs);
+    const size_t totalJobs = size_PtrArray(&d->jobs);
     int numFinishedJobs = 0;
     while (!d->stopWorker) {
         /* Start new jobs. */
@@ -482,7 +478,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
             }
         }
         if (doNotify) {
-            postCommandf_App("feeds.update.progress arg:%d total:%d", numFinishedJobs, totalJobs);
+            postCommandf_App("feeds.update.progress arg:%d total:%zu", numFinishedJobs, totalJobs);
         }
         /* Stop if everything has finished. */
         if (ongoing == 0 && isEmpty_PtrArray(&d->jobs)) {
@@ -620,7 +616,7 @@ static void load_Feeds_(iFeeds *d) {
                     /* TODO: Cleanup needed...
                        All right, this could maybe use a bit more robust, structured format.
                        The code below is messy. */
-                    const uint32_t feedId = strtoul(line.start, NULL, 16);
+                    const uint32_t feedId = (uint32_t) strtoul(line.start, NULL, 16);
                     if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
                         goto aborted;
                     }

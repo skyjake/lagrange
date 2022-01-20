@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-12-01 16:50+0000\n"
+"PO-Revision-Date: 2022-01-18 17:50+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -289,7 +289,7 @@ msgid "dlg.unsub"
 msgstr "Уклонити претплату"
 
 msgid "heading.pageinfo"
-msgstr "ПОДАЦИ О СТРАНИЦИ"
+msgstr "Подаци о страници"
 
 msgid "pageinfo.header.cached"
 msgstr "(кеширани садржај)"
@@ -316,7 +316,7 @@ msgid "pageinfo.cert.untrusted"
 msgstr "Без поверења"
 
 msgid "heading.unsub"
-msgstr "УКЛАЊАЊЕ ПРЕТПЛАТЕ"
+msgstr "Уклањање претплате"
 
 msgid "pageinfo.domain.mismatch"
 msgstr "Назив домена не одговара"
@@ -331,10 +331,10 @@ msgid "dlg.input.send"
 msgstr "Пошаљи"
 
 msgid "heading.save"
-msgstr "ДАТОТЕКА САЧУВАНА"
+msgstr "Датотека је сачувана"
 
 msgid "heading.save.incomplete"
-msgstr "НЕПОТПУНА СТРАНИЦА"
+msgstr "Непотпуна страница"
 
 msgid "dlg.save.incomplete"
 msgstr "Садржај странице се и даље преузима."
@@ -343,7 +343,7 @@ msgid "dlg.save.size"
 msgstr "Величина:"
 
 msgid "heading.import.bookmarks"
-msgstr "УВОЗ ОБЕЛЕЖИВАЧА"
+msgstr "Увоз обележивача"
 
 #, c-format
 msgid "dlg.import.add"
@@ -356,7 +356,7 @@ msgid "dlg.import.notnew"
 msgstr "Све везе на овој страници су већ додате у обележиваче."
 
 msgid "heading.autoreload"
-msgstr "АУТОМАТСКО УЧИТАВАЊЕ"
+msgstr "Аутоматско освежавање"
 
 msgid "reload.never"
 msgstr "Никад"
@@ -394,7 +394,7 @@ msgid "link.bookmark"
 msgstr "Додај везу у обележиваче…"
 
 msgid "heading.openlink"
-msgstr "ОТВАРАЊЕ ВЕЗЕ"
+msgstr "Отварање везе"
 
 msgid "dlg.openlink"
 msgstr "Отвори везу"
@@ -403,10 +403,10 @@ msgid "dlg.certimport.notfound.page"
 msgstr "Ниједан сертификат нити кључ није пронађен на текућој страници."
 
 msgid "heading.certimport.pasted"
-msgstr "НАЛЕПЉЕНО ИЗ КЛИПБОРДА"
+msgstr "Налепљено из клипборда"
 
 msgid "heading.certimport.dropped"
-msgstr "ПРЕВУЧЕНА ДАТОТЕКА"
+msgstr "Превучена датотека"
 
 msgid "dlg.certimport.import"
 msgstr "Увези"
@@ -421,7 +421,7 @@ msgid "dlg.certimport.nocert"
 msgstr "Без сертификата"
 
 msgid "link.hint.audio"
-msgstr "Пусти аудио"
+msgstr "Аудио"
 
 msgid "bookmark.title.blank"
 msgstr "Празна страница"
@@ -447,7 +447,7 @@ msgid "heading.lookup.other"
 msgstr "ОСТАЛО"
 
 msgid "heading.translate"
-msgstr "ПРЕВОД СТРАНИЦЕ"
+msgstr "Превод странице"
 
 msgid "dlg.translate.unavail"
 msgstr "Сервис недоступан"
@@ -495,7 +495,7 @@ msgid "lang.es"
 msgstr "Шпански"
 
 msgid "heading.newident"
-msgstr "НОВ ИДЕНТИТЕТ"
+msgstr "Нов идентитет"
 
 msgid "dlg.newident.until"
 msgstr "Важи до:"
@@ -534,7 +534,7 @@ msgid "dlg.feed.sub"
 msgstr "Претплати се"
 
 msgid "heading.bookmark.add"
-msgstr "ДОДАВАЊЕ ОБЕЛЕЖИВАЧА"
+msgstr "Додавање обележивача"
 
 msgid "dlg.bookmark.save"
 msgstr "Сачувај обележивач"
@@ -552,10 +552,10 @@ msgid "dlg.bookmark.icon"
 msgstr "Икона:"
 
 msgid "heading.prefs"
-msgstr "ПОДЕШАВАЊА"
+msgstr "Подешавања"
 
 msgid "heading.prefs.certs"
-msgstr "СЕРТИФИКАТИ"
+msgstr "Сертификати"
 
 msgid "heading.prefs.fonts"
 msgstr "Фонтови"
@@ -573,16 +573,16 @@ msgid "heading.prefs.network"
 msgstr "Мрежа"
 
 msgid "heading.prefs.paragraph"
-msgstr "ПАСУС"
+msgstr "Пасус"
 
 msgid "heading.prefs.pagecontent"
-msgstr "БОЈЕ СТРАНИЦЕ"
+msgstr "Боје странице"
 
 msgid "heading.prefs.sizing"
-msgstr "ВЕЛИЧИНА"
+msgstr "Величина"
 
 msgid "heading.prefs.widelayout"
-msgstr "ШИРОКИ ИЗГЛЕД"
+msgstr "Широки изглед"
 
 # tab button
 msgid "heading.prefs.style"
@@ -890,7 +890,7 @@ msgid "about.tagline"
 msgstr "Прелепи Џемини клијент"
 
 msgid "heading.history.clear"
-msgstr "ЧИШЋЕЊЕ ИСТОРИЈЕ"
+msgstr "Чишћење историје"
 
 msgid "error.unavail.msg"
 msgstr ""
@@ -915,7 +915,7 @@ msgid "menu.title.file"
 msgstr "Датотека"
 
 msgid "heading.certimport"
-msgstr "УВОЗ ИДЕНТИТЕТА"
+msgstr "Увоз идентитета"
 
 msgid "error.proxy"
 msgstr "Грешка проксија"
@@ -949,7 +949,7 @@ msgid "dlg.certimport.nokey"
 msgstr "Без приватног кључа"
 
 msgid "link.hint.image"
-msgstr "Прикажи слику"
+msgstr "Слика"
 
 msgid "menu.closetab.other"
 msgstr "Затвори остале картице"
@@ -1021,13 +1021,13 @@ msgid "menu.show.outline"
 msgstr "Прикажи структуру странице"
 
 msgid "heading.feedcfg"
-msgstr "ПОДЕШАВАЊА ФИДА"
+msgstr "Подешавања фида"
 
 msgid "menu.autoreload"
 msgstr "Постави аутоматско учитавање…"
 
 msgid "heading.subscribe"
-msgstr "ПРЕТПЛАТА НА СТРАНИЦУ"
+msgstr "Претплата на страницу"
 
 msgid "menu.page.subscribe"
 msgstr "Претплати се на страницу…"
@@ -1045,7 +1045,7 @@ msgid "menu.bookmarks.refresh"
 msgstr "Освежи удаљене обележиваче"
 
 msgid "heading.bookmark.edit"
-msgstr "УРЕЂИВАЊЕ ОБЕЛЕЖИВАЧА"
+msgstr "Уређивање обележивача"
 
 msgid "sidebar.feeds"
 msgstr "Фидови"
@@ -1065,7 +1065,7 @@ msgid "sidebar.identities"
 msgstr "Идентитети"
 
 msgid "heading.prefs.proxies"
-msgstr "ПРОКСИЈИ"
+msgstr "Проксији"
 
 # Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
 msgid "sidebar.unread"
@@ -1075,7 +1075,7 @@ msgstr[1] "непрочитана"
 msgstr[2] "непрочитаних"
 
 msgid "heading.prefs.scrolling"
-msgstr "СКРОЛОВАЊЕ"
+msgstr "Скроловање"
 
 msgid "status.query"
 msgstr "Упит за претрагу"
@@ -1205,7 +1205,7 @@ msgid "prefs.proxy.gopher"
 msgstr "Прокси за Gopher:"
 
 msgid "heading.ident.use"
-msgstr "УПОТРЕБА ИДЕНТИТЕТА"
+msgstr "Употреба идентитета"
 
 msgid "keys.scroll.halfpage.up"
 msgstr "Скроловање нагоре за пола странице"
@@ -1217,13 +1217,13 @@ msgid "keys.scroll.page.down"
 msgstr "Скроловање надоле за једну страницу"
 
 msgid "heading.ident.notes"
-msgstr "ЗАБЕЛЕШКЕ О ИДЕНТИТЕТУ"
+msgstr "Забелешке о идентитету"
 
 msgid "keys.link.modkey"
 msgstr "Отварање везе преко тастера модификатора"
 
 msgid "heading.ident.delete"
-msgstr "БРИСАЊЕ ИДЕНТИТЕТА"
+msgstr "Брисање идентитета"
 
 msgid "keys.link.homerow.newtab"
 msgstr "Отварање везе у новој картици преко тастера основног реда"
@@ -1277,7 +1277,7 @@ msgid "keys.hoverurl"
 msgstr "Смена приказивања УРЛ-ова при надношењу показивача"
 
 msgid "heading.save.error"
-msgstr "ГРЕШКА ПРИ ЧУВАЊУ ДАТОТЕКЕ"
+msgstr "Грешка при чувању датотеке"
 
 msgid "error.badstatus.msg"
 msgstr ""
@@ -1390,7 +1390,7 @@ msgstr[2] "пре %d дана"
 
 # Link download progress message.
 msgid "doc.fetching"
-msgstr "Допремање"
+msgstr "Учитавање"
 
 # Inline download status message.
 msgid "media.download.warnclose"
@@ -1521,10 +1521,10 @@ msgid "link.side"
 msgstr "Отвори везу са стране"
 
 msgid "heading.newident.missing"
-msgstr "НЕМА ИНФОРМАЦИЈА"
+msgstr "Нема информација"
 
 msgid "heading.newident.date.bad"
-msgstr "НЕИСПРАВАН ДАТУМ"
+msgstr "Неисправан датум"
 
 msgid "dlg.newident.date.past"
 msgstr "Рок трајања мора бити у будућности."
@@ -1696,7 +1696,7 @@ msgid "link.file.delete"
 msgstr "Обриши датотеку"
 
 msgid "heading.file.delete"
-msgstr "БРИСАЊЕ ДАТОТЕКЕ"
+msgstr "Брисање датотеке"
 
 msgid "dlg.file.delete.confirm"
 msgstr "Да ли сте сигурни да желите да обришете ову датотеку?"
@@ -1705,7 +1705,7 @@ msgid "dlg.file.delete"
 msgstr "Обриши"
 
 msgid "heading.prefs.uitheme"
-msgstr "БОЈЕ ИНТЕРФЕЈСА"
+msgstr "Боје интерфејса"
 
 msgid "prefs.scrollspeed.keyboard"
 msgstr "Брзина тастатуре:"
@@ -1742,7 +1742,7 @@ msgid "upload.port"
 msgstr "Порт…"
 
 msgid "heading.uploadport"
-msgstr "ПОРТ ЗА СЛАЊЕ ПРЕКО ТИТАНА"
+msgstr "Порт за слање преко Титана"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
@@ -1761,10 +1761,10 @@ msgid "prefs.returnkey.accept"
 msgstr "Прихватање"
 
 msgid "menu.page.upload"
-msgstr "Пошаљи страницу преко Титана…"
+msgstr "Пошаљи преко Титана…"
 
 msgid "heading.upload"
-msgstr "СЛАЊЕ ПРЕКО ТИТАНА"
+msgstr "Слање преко Титана"
 
 msgid "heading.upload.text"
 msgstr "Текст"
@@ -1801,7 +1801,7 @@ msgstr ""
 "Повезивање са сервером је поништено јер је његов TLS сертификат истекао."
 
 msgid "keys.upload"
-msgstr "Слање странице преко Титана"
+msgstr "Слање преко Титана"
 
 msgid "media.untitled.image"
 msgstr "Слика"
@@ -1907,7 +1907,7 @@ msgid "menu.undo"
 msgstr "Опозови"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "БРИСАЊЕ ОБЕЛЕЖИВАЧА"
+msgstr "Брисање обележивача"
 
 #, c-format
 msgid "dlg.bookmarks.delete"
@@ -1934,10 +1934,10 @@ msgid "dlg.upload.pickfile"
 msgstr "Изабери датотеку"
 
 msgid "heading.bookmark.tags"
-msgstr "ПОСЕБНЕ ОЗНАКЕ"
+msgstr "Посебне ознаке"
 
 msgid "heading.addfolder"
-msgstr "ДОДАВАЊЕ ФАСЦИКЛЕ"
+msgstr "Додавање фасцикле"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Нова фасцикла"
@@ -1947,7 +1947,7 @@ msgstr "Додавање фасцикле"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "ПОДЕШАВАЊА"
+msgstr "Подешавања"
 
 msgid "prefs.imagestyle.original"
 msgstr "Ниједно"
@@ -1980,7 +1980,7 @@ msgid "lang.isv"
 msgstr "Међусловенски"
 
 msgid "heading.fontpack.classic"
-msgstr "ПРЕУЗИМАЊЕ ПАКЕТА ФОНТОВА"
+msgstr "Преузимање пакета фонтова"
 
 msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Стил фонта"
@@ -2087,7 +2087,7 @@ msgid "fontpack.install"
 msgstr "Инсталирај „%s“"
 
 msgid "heading.fontpack.delete"
-msgstr "БРИСАЊЕ ПАКЕТА ФОНТОВА"
+msgstr "Брисање пакета фонтова"
 
 msgid "dlg.fontpack.delete"
 msgstr "Обриши пакет"
@@ -2102,7 +2102,7 @@ msgid "truetype.help.installed"
 msgstr "Фонт је инсталиран у корисничком директоријуму са фонтовима."
 
 msgid "heading.dismiss.warning"
-msgstr "ОТКЛОНИТИ УПОЗОРЕЊЕ?"
+msgstr "Отклонити упозорење?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Отклони упозорење"
@@ -2123,7 +2123,7 @@ msgstr ""
 
 msgid "error.glyphs.msg"
 msgstr ""
-"Ова страница се не може потпуно приказати јер недостају неки знакови. Можете "
+"Ова страница се не може потпуно приказати јер недостају неки знаци. Можете "
 "инсталирати додатне фонтове да бисте то исправили."
 
 # Action label
@@ -2189,3 +2189,99 @@ msgstr "24-часовно време"
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
 msgstr "Прочитај све"
+
+msgid "menu.open.external"
+msgstr "Отвори у другој апликацији"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Сакриј идентитете"
+
+msgid "menu.identities"
+msgstr "Управљај идентитетима"
+
+msgid "sidebar.action.history.clear"
+msgstr "Очисти"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Уметни претходни ред"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Заиста обриши све (неповратно)"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Садржај"
+
+msgid "hint.upload.token.long"
+msgstr "токен — видети инструкције сервера"
+
+msgid "menu.home"
+msgstr "Иди на почетну"
+
+msgid "sidebar.close"
+msgstr "Готово"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Нова фасцикла"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Уреди"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Користити %s"
+
+msgid "sidebar.empty.unread"
+msgstr "Нема непрочитаних ставки"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Прикажи у Finder-у"
+
+msgid "menu.share"
+msgstr "Подели"
+
+msgid "menu.page.upload.edit"
+msgstr "Уреди страницу преко Титана…"
+
+msgid "heading.upload.id"
+msgstr "Ауторизација"
+
+msgid "menu.upload.export"
+msgstr "Извези текст"
+
+msgid "menu.upload.delete"
+msgstr "Обриши све"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "УРЛ"
+
+msgid "hint.upload.path"
+msgstr "УРЛ путања"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Акције палете алатки"
+
+msgid "prefs.toolbaraction1"
+msgstr "Дугме 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Дугме 2"
+
+msgid "prefs.blink"
+msgstr "Трепћући курсор:"
+
+msgid "keys.upload.edit"
+msgstr "Уређивање странице преко Титана"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Прикажи у Менаџеру датотека"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Постави акцију:"

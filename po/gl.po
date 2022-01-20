@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-12-19 06:50+0000\n"
+"PO-Revision-Date: 2022-01-20 06:20+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -122,13 +122,13 @@ msgstr ""
 "• 2021-12-31 23:59:59"
 
 msgid "heading.prefs.pagecontent"
-msgstr "CORES DA PÁXINA"
+msgstr "Cores da páxina"
 
 msgid "heading.prefs.sizing"
-msgstr "TAMAÑO"
+msgstr "Tamaño"
 
 msgid "heading.prefs.widelayout"
-msgstr "ANCHO DA DISPOSICIÓN"
+msgstr "Ancho da disposición"
 
 msgid "prefs.collapsepreonload"
 msgstr "Pregar texto preformatado:"
@@ -572,7 +572,7 @@ msgid "history.clear"
 msgstr "Limpar historial…"
 
 msgid "heading.history.clear"
-msgstr "LIMPAR HISTORIAL"
+msgstr "Limpar historial"
 
 msgid "dlg.history.clear"
 msgstr "Limpar historial"
@@ -631,13 +631,13 @@ msgid "ident.export"
 msgstr "Exportar"
 
 msgid "heading.ident.use"
-msgstr "USO DA IDENTIDADE"
+msgstr "Uso de identidade"
 
 msgid "menu.edit.notes"
 msgstr "Editar notas…"
 
 msgid "heading.ident.notes"
-msgstr "NOTAS DA IDENTIDADE"
+msgstr "Notas da identidade"
 
 msgid "ident.fingerprint"
 msgstr "Copiar impresión dixital"
@@ -646,7 +646,7 @@ msgid "ident.delete"
 msgstr "Eliiminar identidade…"
 
 msgid "heading.ident.delete"
-msgstr "ELIMINAR IDENTIDADE"
+msgstr "Eliminar identidade"
 
 msgid "dlg.ident.delete"
 msgstr "Eliminar Identidade e Ficheiros"
@@ -655,7 +655,7 @@ msgid "sidebar.empty.idents"
 msgstr "Sen identidades"
 
 msgid "heading.unsub"
-msgstr "RETIRAR SUBSCRICIÓN"
+msgstr "Retirar subscrición"
 
 #, c-format
 msgid "dlg.confirm.unsub"
@@ -674,7 +674,7 @@ msgid "error.server.msg"
 msgstr "O servidor respondeu coa mensaxe:"
 
 msgid "heading.pageinfo"
-msgstr "INFORMACIÓN DA PÁXINA"
+msgstr "Información da páxina"
 
 msgid "pageinfo.header.cached"
 msgstr "(contido na caché)"
@@ -723,10 +723,10 @@ msgid "dlg.input.send"
 msgstr "Enviar"
 
 msgid "heading.save"
-msgstr "FICHEIRO GARDADO"
+msgstr "Ficheiro gardado"
 
 msgid "heading.save.incomplete"
-msgstr "PÁXINA INCOMPLETA"
+msgstr "Páxina incompleta"
 
 msgid "dlg.save.size"
 msgstr "Tamaño:"
@@ -735,10 +735,10 @@ msgid "dlg.save.opendownload"
 msgstr "Abrir ficheiro descargado"
 
 msgid "heading.save.error"
-msgstr "ERRO AO GARDAR O FICHEIRO"
+msgstr "Erro ao gardar o ficheiro"
 
 msgid "heading.import.bookmarks"
-msgstr "IMPORTAR MARCADORES"
+msgstr "Importar marcadores"
 
 #, c-format
 msgid "dlg.import.found"
@@ -756,7 +756,7 @@ msgid "dlg.import.notnew"
 msgstr "Xa están marcadas tódalas ligazóns desta páxina."
 
 msgid "heading.autoreload"
-msgstr "AUTO-RECARGA"
+msgstr "Auto-Recarga"
 
 msgid "dlg.autoreload"
 msgstr "Elixe o intervalo para a auto-recarga nesta lapela."
@@ -798,13 +798,13 @@ msgid "link.file.delete"
 msgstr "Eliminar ficheiro"
 
 msgid "heading.file.delete"
-msgstr "ELIMINAR FICHEIRO"
+msgstr "Eliminar ficheiro"
 
 msgid "dlg.file.delete"
 msgstr "Eliminar"
 
 msgid "heading.openlink"
-msgstr "ABRIR LIGAZÓN"
+msgstr "Abrir Ligazón"
 
 #, c-format
 msgid "dlg.openlink.confirm"
@@ -827,7 +827,7 @@ msgid "dlg.certwarn.domain.expired"
 msgstr "O certificado recibido está caducado E era para un dominio incorrecto."
 
 msgid "heading.certimport"
-msgstr "IMPORTAR IDENTIDADE"
+msgstr "Importar identidade"
 
 msgid "dlg.certimport.help"
 msgstr ""
@@ -838,10 +838,10 @@ msgid "dlg.certimport.notfound"
 msgstr "Non se atopa certificado ou chave privada."
 
 msgid "heading.certimport.pasted"
-msgstr "PEGADO DESDE PORTAPAPEIS"
+msgstr "Pegado desde portapapeis"
 
 msgid "heading.certimport.dropped"
-msgstr "FICHEIRO APORTADO"
+msgstr "Ficheiro aportado"
 
 msgid "dlg.certimport.import"
 msgstr "Importar"
@@ -859,10 +859,10 @@ msgid "dlg.certimport.nokey"
 msgstr "Sen chave privada"
 
 msgid "link.hint.audio"
-msgstr "Reproducir"
+msgstr "Audio"
 
 msgid "link.hint.image"
-msgstr "Ver imaxe"
+msgstr "Imaxe"
 
 msgid "bookmark.title.blank"
 msgstr "Páxina baleira"
@@ -912,10 +912,10 @@ msgid "heading.lookup.other"
 msgstr "OUTRO"
 
 msgid "menu.page.upload"
-msgstr "Subir páxina con Titan…"
+msgstr "Subir con Titan…"
 
 msgid "heading.upload"
-msgstr "SUBIR CON TITAN"
+msgstr "Subir con Titan"
 
 msgid "heading.upload.text"
 msgstr "Texto"
@@ -951,13 +951,13 @@ msgid "upload.port"
 msgstr "Porto…"
 
 msgid "heading.uploadport"
-msgstr "PORTO TITAN PARA SUBIDAS"
+msgstr "Porto de subida Titan"
 
 msgid "dlg.uploadport.set"
 msgstr "Establecer porto"
 
 msgid "heading.translate"
-msgstr "TRADUCIR PÁXINA"
+msgstr "Traducir páxina"
 
 msgid "dlg.translate.unavail"
 msgstr "Servizo non dispoñible"
@@ -1029,7 +1029,7 @@ msgid "lang.tok"
 msgstr "Toki Pona"
 
 msgid "heading.newident"
-msgstr "NOVA IDENTIDADE"
+msgstr "Nova Identidade"
 
 msgid "dlg.newident.until"
 msgstr "Válido ata:"
@@ -1080,19 +1080,19 @@ msgid "dlg.newident.create"
 msgstr "Crear identidade"
 
 msgid "heading.newident.missing"
-msgstr "INFO QUE FALTA"
+msgstr "Info que falta"
 
 msgid "heading.newident.date.bad"
-msgstr "DATA NON VÁLIDA"
+msgstr "Data non válida"
 
 msgid "dlg.newident.date.past"
 msgstr "A data de caducidade ten que estar no futuro."
 
 msgid "heading.feedcfg"
-msgstr "AXUSTES DA FONTE"
+msgstr "Axustes da Fonte"
 
 msgid "heading.subscribe"
-msgstr "SUBSCRIBIRSE A PÁXINA"
+msgstr "Subscribirse á Páxina"
 
 msgid "dlg.feed.title"
 msgstr "Título:"
@@ -1113,10 +1113,10 @@ msgid "dlg.feed.sub"
 msgstr "Subscribirse"
 
 msgid "heading.bookmark.add"
-msgstr "ENGADIR MARCADOR"
+msgstr "Engadir Marcador"
 
 msgid "heading.bookmark.edit"
-msgstr "EDITAR MARCADOR"
+msgstr "Editar Marcador"
 
 msgid "dlg.bookmark.save"
 msgstr "Gardar marcador"
@@ -1134,10 +1134,10 @@ msgid "dlg.bookmark.icon"
 msgstr "Icona:"
 
 msgid "heading.prefs"
-msgstr "PREFERENCIAS"
+msgstr "Preferencias"
 
 msgid "heading.prefs.certs"
-msgstr "CERTIFICADOS"
+msgstr "Certificados"
 
 # tab button
 msgid "heading.prefs.colors"
@@ -1163,16 +1163,16 @@ msgid "heading.prefs.network"
 msgstr "Rede"
 
 msgid "heading.prefs.paragraph"
-msgstr "PARÁGRAFO"
+msgstr "Parágrafo"
 
 msgid "heading.prefs.uitheme"
-msgstr "CORES DA IU"
+msgstr "Cores da IU"
 
 msgid "heading.prefs.proxies"
-msgstr "PROXIES"
+msgstr "Proxies"
 
 msgid "heading.prefs.scrolling"
-msgstr "DESPRAZAMENTO"
+msgstr "Desprazamento"
 
 # tab button
 msgid "heading.prefs.style"
@@ -1480,7 +1480,7 @@ msgid "keys.tab.close.other"
 msgstr "Pechar outras lapelas"
 
 msgid "keys.upload"
-msgstr "Subir páxina con Titan"
+msgstr "Subir con Titan"
 
 msgid "error.badstatus.msg"
 msgstr ""
@@ -1825,7 +1825,7 @@ msgid "menu.undo"
 msgstr "Desfacer"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "ELIMINAR MARCADORES"
+msgstr "Eliminar marcadores"
 
 #, c-format
 msgid "dlg.confirm.bookmarks.delete"
@@ -1840,7 +1840,7 @@ msgid "dlg.upload.id.none"
 msgstr "Ningunha"
 
 msgid "heading.bookmark.tags"
-msgstr "ETIQUETAS ESPECIAIS"
+msgstr "Etiquetas especiais"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Novo cartafol"
@@ -1890,7 +1890,7 @@ msgid "dlg.upload.pickfile"
 msgstr "Elexir ficheiro"
 
 msgid "heading.addfolder"
-msgstr "ENGADIR CARTAFOL"
+msgstr "Engadir Cartafol"
 
 msgid "dlg.addfolder.prompt"
 msgstr "Escribe o nome do novo cartafol:"
@@ -1900,7 +1900,7 @@ msgstr "Engadir cartafol"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "AXUSTES"
+msgstr "Axustes"
 
 msgid "prefs.imagestyle"
 msgstr "Imaxes coloridas:"
@@ -1946,7 +1946,7 @@ msgstr[0] "%u tipografía"
 msgstr[1] "%u tipografías"
 
 msgid "heading.fontpack.classic"
-msgstr "DESCARGAR PAQUETE TIPOGRAFÍA"
+msgstr "Descargar paquete de tipografía"
 
 msgid "dlg.fontpack.classic"
 msgstr "Descargar Paquete de tipografía (25 MB)"
@@ -2084,7 +2084,7 @@ msgid "fontpack.delete"
 msgstr "Eliminar permanentemente \"%s\""
 
 msgid "heading.fontpack.delete"
-msgstr "ELIMINAR TIPOGRAFÍA"
+msgstr "Eliminar tipografía"
 
 msgid "dlg.fontpack.delete"
 msgstr "Eliminar tipografía"
@@ -2107,7 +2107,7 @@ msgid "truetype.help.installed"
 msgstr "Esta tipografía está instalada no directorio da usuaria."
 
 msgid "heading.dismiss.warning"
-msgstr "DESBOTAR AVISO?"
+msgstr "Desbotar aviso?"
 
 #, c-format
 msgid "dlg.dismiss.ansi"
@@ -2145,3 +2145,99 @@ msgstr "Ler todo"
 
 msgid "menu.update"
 msgstr "Comprobar actualización…"
+
+msgid "menu.open.external"
+msgstr "Abrir noutra app"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Agochar identidades"
+
+msgid "menu.home"
+msgstr "Ir a Inicio"
+
+msgid "menu.identities"
+msgstr "Xestión Identidades"
+
+msgid "sidebar.close"
+msgstr "Feito"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Novo cartafol"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Editar"
+
+msgid "sidebar.action.history.clear"
+msgstr "Limpar"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Usar %s"
+
+msgid "sidebar.empty.unread"
+msgstr "Sen entradas non lidas"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Pegar a liña anterior"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Mostrar no buscador"
+
+msgid "menu.share"
+msgstr "Compartir"
+
+msgid "menu.page.upload.edit"
+msgstr "Editar páxina con Titan…"
+
+msgid "heading.upload.id"
+msgstr "Autorización"
+
+msgid "menu.upload.export"
+msgstr "Exportar texto"
+
+msgid "menu.upload.delete"
+msgstr "Eliminar todo"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Quero Eliminar Todo (non ten volta)"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Contido"
+
+msgid "hint.upload.path"
+msgstr "Ruta URL"
+
+msgid "hint.upload.token.long"
+msgstr "token — mira instruccións no servidor"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Accións da barra de ferramentas"
+
+msgid "prefs.toolbaraction1"
+msgstr "Botón 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Botón 2"
+
+msgid "prefs.blink"
+msgstr "Cursor intermitente:"
+
+msgid "keys.upload.edit"
+msgstr "Editar páxina con Titan"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Mostrar no Xestor de ficheiros"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Establece acción:"

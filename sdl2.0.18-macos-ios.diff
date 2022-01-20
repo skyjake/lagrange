@@ -1,0 +1,129 @@
+diff --git a/src/events/SDL_mouse.c b/src/events/SDL_mouse.c
+index 539f17138..a5a5b00fd 100644
+--- a/src/events/SDL_mouse.c
++++ b/src/events/SDL_mouse.c
+@@ -709,8 +709,8 @@ SDL_SendMouseWheel(SDL_Window * window, SDL_MouseID mouseID, float x, float y, S
+         event.type = SDL_MOUSEWHEEL;
+         event.wheel.windowID = mouse->focus ? mouse->focus->id : 0;
+         event.wheel.which = mouseID;
+-        event.wheel.x = integral_x;
+-        event.wheel.y = integral_y;
++        event.wheel.x = x; //integral_x;
++        event.wheel.y = y; //integral_y;
+         event.wheel.preciseX = x;
+         event.wheel.preciseY = y;
+         event.wheel.direction = (Uint32)direction;
+diff --git a/src/video/cocoa/SDL_cocoamouse.m b/src/video/cocoa/SDL_cocoamouse.m
+index e9d832d64..4cfa3624b 100644
+--- a/src/video/cocoa/SDL_cocoamouse.m
++++ b/src/video/cocoa/SDL_cocoamouse.m
+@@ -463,10 +463,16 @@ + (NSCursor *)invisibleCursor
+     }
+ 
+     SDL_MouseID mouseID = mouse->mouseID;
+-    CGFloat x = -[event deltaX];
+-    CGFloat y = [event deltaY];
++    CGFloat x = -[event scrollingDeltaX];
++    CGFloat y = [event scrollingDeltaY];
+     SDL_MouseWheelDirection direction = SDL_MOUSEWHEEL_NORMAL;
+ 
++    /* HACK: Make a distinction between precise and imprecise scrolling.
++       Trackpad seems to be mouseID 0. */
++    if (![event hasPreciseScrollingDeltas]) {
++        mouseID = 1;
++    }
++
+     if ([event respondsToSelector:@selector(isDirectionInvertedFromDevice)]) {
+         if ([event isDirectionInvertedFromDevice] == YES) {
+             direction = SDL_MOUSEWHEEL_FLIPPED;
+diff --git a/src/video/cocoa/SDL_cocoawindow.h b/src/video/cocoa/SDL_cocoawindow.h
+index 489db169f..79a41dd50 100644
+--- a/src/video/cocoa/SDL_cocoawindow.h
++++ b/src/video/cocoa/SDL_cocoawindow.h
+@@ -110,6 +110,8 @@ typedef enum
+ /* Touch event handling */
+ -(void) handleTouches:(NSTouchPhase) phase withEvent:(NSEvent*) theEvent;
+ 
++-(void) syncMouseButtonAndKeyboardModifierState;
++
+ @end
+ /* *INDENT-ON* */
+ 
+diff --git a/src/video/cocoa/SDL_cocoawindow.m b/src/video/cocoa/SDL_cocoawindow.m
+index f09088c45..7379c2269 100644
+--- a/src/video/cocoa/SDL_cocoawindow.m
++++ b/src/video/cocoa/SDL_cocoawindow.m
+@@ -1236,6 +1236,25 @@ - (void)otherMouseDown:(NSEvent *)theEvent
+     [self mouseDown:theEvent];
+ }
+ 
++- (void)syncMouseButtonAndKeyboardModifierState {
++    SDL_Mouse *mouse = SDL_GetMouse();
++    if (mouse) {
++        for (int i = 0; i < mouse->num_sources; i++) {
++            if (mouse->sources[i].mouseID == mouse->mouseID) {
++                mouse->sources[i].buttonstate = 0;
++            }
++        }
++    }
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LGUI);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RGUI);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LSHIFT);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RSHIFT);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LCTRL);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RCTRL);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LALT);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RALT);
++}
++
+ - (void)mouseUp:(NSEvent *)theEvent
+ {
+     SDL_Mouse *mouse = SDL_GetMouse();
+diff --git a/src/video/uikit/SDL_uikitviewcontroller.h b/src/video/uikit/SDL_uikitviewcontroller.h
+index f7f4c9de6..50c72aad0 100644
+--- a/src/video/uikit/SDL_uikitviewcontroller.h
++++ b/src/video/uikit/SDL_uikitviewcontroller.h
+@@ -58,10 +58,13 @@
+ #if !TARGET_OS_TV
+ - (NSUInteger)supportedInterfaceOrientations;
+ - (BOOL)prefersStatusBarHidden;
++- (void)setStatusStyle:(UIStatusBarStyle)style;
++- (UIStatusBarStyle)preferredStatusBarStyle;
+ - (BOOL)prefersHomeIndicatorAutoHidden;
+ - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures;
+ 
+ @property (nonatomic, assign) int homeIndicatorHidden;
++@property (nonatomic, assign) UIStatusBarStyle statusBarStyle;
+ #endif
+ 
+ #if SDL_IPHONE_KEYBOARD
+diff --git a/src/video/uikit/SDL_uikitviewcontroller.m b/src/video/uikit/SDL_uikitviewcontroller.m
+index b2db4037d..d39f8085c 100644
+--- a/src/video/uikit/SDL_uikitviewcontroller.m
++++ b/src/video/uikit/SDL_uikitviewcontroller.m
+@@ -105,6 +105,7 @@ - (instancetype)initWithSDLWindow:(SDL_Window *)_window
+ #endif
+ 
+ #if !TARGET_OS_TV
++        self.statusBarStyle = UIStatusBarStyleDefault;
+         SDL_AddHintCallback(SDL_HINT_IOS_HIDE_HOME_INDICATOR,
+                             SDL_HideHomeIndicatorHintChanged,
+                             (__bridge void *) self);
+@@ -230,6 +231,17 @@ - (BOOL)prefersHomeIndicatorAutoHidden
+     return hidden;
+ }
+ 
++- (void)setStatusStyle:(UIStatusBarStyle)style
++{
++    self.statusBarStyle = style;
++    [self setNeedsStatusBarAppearanceUpdate];
++}
++
++- (UIStatusBarStyle)preferredStatusBarStyle
++{
++    return self.statusBarStyle;
++}
++
+ - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures
+ {
+     if (self.homeIndicatorHidden >= 0) {

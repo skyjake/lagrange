@@ -39,8 +39,10 @@ void    hideTitleBar_MacOS          (iWindow *window);
 void    insertMenuItems_MacOS       (const char *menuLabel, int atIndex, const iMenuItem *items, size_t count);
 void    removeMenu_MacOS            (int atIndex);
 void    enableMenu_MacOS            (const char *menuLabel, iBool enable);
+void    enableMenuIndex_MacOS       (int index, iBool enable);
 void    enableMenuItem_MacOS        (const char *menuItemCommand, iBool enable);
 void    enableMenuItemsByKey_MacOS  (int key, int kmods, iBool enable);
+void    enableMenuItemsOnHomeRow_MacOS(iBool enable);
 void    handleCommand_MacOS         (const char *cmd);
 
 void    showPopupMenu_MacOS         (iWidget *source, iInt2 windowCoord, const iMenuItem *items, size_t n);

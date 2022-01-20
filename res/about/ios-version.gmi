@@ -1,0 +1,83 @@
+```LAGRANGE
+           __   __             __   ___
+|     /\  / _` |__)  /\  |\ | / _` |__
+|___ /~~\ \__> |  \ /~~\ | \| \__> |___
+
+```
+# Release notes
+
+## 1.10 (9)
+* Added "Share" actions for downloaded files (via "Download Linked File") and selected text on page.
+* Added "Edit Page with Titan": opens the Upload dialog with the page contents prefilled (previous contents are lost!).
+* Inlining `image/*` responses into the current document regardless of file extension in URL.
+* Fixed glitch with banner not being visible until page has finished loading.
+* Fixed possible crash when creating a bookmark.
+
+## 1.10 (7)
+* Link context menu shows used identity and date of last visit in addition to the URL.
+* Removed the "Show URL on hover" setting. URLs are shown in the link context menu.
+* Inline image metadata goes under the image instead of possibly overlapping the image caption text.
+* Improved appearance of hover/open link highlighting. It no longer goes under the side elements on the page.
+* Gempub: Open books in 1:2 split mode instead of 1:1.
+* Fixed opening links in split view mode. Links would open on the wrong side.
+* Upgraded SDL to version 2.0.18.
+
+## 1.10 (6)
+* Added "Paste Preceding Line" in the input prompt dialog. Potential use cases include user-editable sections on a page and suggested/example input values.
+* Fixed UI glitches and a potential memory leak when navigating via swipes. Sometimes swipe navigation would stop working because animation placeholders were not destroyed.
+* Fixed Settings background fade.
+* Fixed sidebar background fade in portrait phone layout.
+
+## 1.10 (5)
+* Fixed positioning of native UI controls in non-animated input widgets.
+* Fixed input widgets not reacting to keyboard being dismissed by system.
+* iPad: Faster back swipe animation.
+
+## 1.10 (4)
+* Fixed crash when closing sidebar in bookmark edit mode.
+* Fixed incorrect initial height of an unfocused multiline input widget.
+* Fixed lookup results having too narrow a width.
+* Fixed padding at bottom of the upload text editor.
+* Fixed missing "Folder" field in the bookmark editor. Edited bookmarks would be moved to the root folder.
+* Fixed missing "Glyph Warnings" toggle in Settings.
+* Removed "Return Key Behavior" from Settings since it has no effect.
+* Minor improvements in page caching.
+* Tuned page swipe animations.
+* Optimized UI layout updates.
+* Audio subsystem is only initialized when actually needed.
+* Prevent state file corruption if the app happens to get killed while state is being saved.
+
+## 1.10 (3)
+* Revised layout of the Upload dialog. There is a new edit field that lets you modify the file path of the URL. Identity names are in bold.
+* Added an edit actions menu in the Upload text editor (only in portrait phone layout for now).
+* Fixed persistent storage of the Upload text field contents.
+* Fixed input widget positioning and behavior in the Upload dialog.
+* Fixed minimum width of main panel in dialogs.
+* Fixed use of cached content when the same URL was found multiple times in history. Previously, only the latest page was used.
+* Changed input field tint color to match chosen UI accent color.
+* Optimized memory use during UI event processing.
+
+## 1.10 (2)
+* Fixed pull-to-refresh on short pages.
+* Fixed URL field contents not being clipped to widget bounds.
+* Fixed major glitches in back/forward swipe navigation, e.g., top banner showing incorrect contents, incorrect theme colors, scroll position jumping.
+* Fixed major and minor UI element positioning glitches, e.g., native text fields, maximum height of input fields, input length counter, Translate dialog.
+* Fixed inappropriate font sizes, e.g., sidebar action labels.
+* Fixed color issues: tint color of native input, and footer buttons not being prominent enough.
+* Bookmarks: In Edit mode, folders still get (un)folded when tapped.
+* Feeds: Added "No Unread Entries" message.
+* Identities: Show the current page's URL in the context menu to make it clearer what "This Page" refers to.
+
+## 1.10 (1)
+* Use native iOS text input UI controls for entering text.
+* Pull-to-refresh on pages.
+* Redesigned phone sidebar that mimics Safari on iPhone. Opens half-height for better reachability of tab buttons, can be swiped up and down.
+* Bookmark edit mode for reordering and organizing bookmarks into folders.
+* Sidebar has new action buttons for Feeds and History.
+* Identity toolbar button has been revised for quickly switching between alternate identities for current site, and opening Settings > Identities.
+* Settings: Managing identities.
+* Settings: Improved widgets used in button/radio groups to closer match iOS design.
+* Settings: Added new options from desktop version.
+* Mobile-friendly layout for value input dialogs.
+* Various animation issues fixes, e.g., context menu animations on iPad.
+* Various layout issues fixed, e.g., related to safe area insets.

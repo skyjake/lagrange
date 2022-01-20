@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-11-30 05:35+0000\n"
+"PO-Revision-Date: 2022-01-17 09:43+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -348,7 +348,7 @@ msgid "history.clear"
 msgstr "Tyhjennä historia…"
 
 msgid "heading.history.clear"
-msgstr "TYHJENNÄ HISTORIA"
+msgstr "Tyhjennä historia"
 
 msgid "dlg.confirm.history.clear"
 msgstr "Haluatko varmasti tyhjentää selaushistorian?"
@@ -410,13 +410,13 @@ msgid "ident.showuse"
 msgstr "Näytä käyttö"
 
 msgid "heading.ident.use"
-msgstr "IDENTITEETIN KÄYTTÖ"
+msgstr "Identiteetin käyttö"
 
 msgid "menu.edit.notes"
 msgstr "Muokkaa muistiinpanoja…"
 
 msgid "heading.ident.notes"
-msgstr "IDENTITEETIN MUISTIINPANOT"
+msgstr "Identiteetin muistiinpanot"
 
 msgid "dlg.ident.notes"
 msgstr "Muistiinpanot liittyen identiteettiin %s:"
@@ -428,7 +428,7 @@ msgid "ident.delete"
 msgstr "Poista identiteetti…"
 
 msgid "heading.ident.delete"
-msgstr "POISTA IDENTITEETTI"
+msgstr "Poista identiteetti"
 
 msgid "dlg.confirm.ident.delete"
 msgstr ""
@@ -445,7 +445,7 @@ msgid "ident.gotohelp"
 msgstr "Katso %sOhjeesta%s lisätietoja TLS-asiakassertifikaateista."
 
 msgid "heading.unsub"
-msgstr "POISTA TILAUS"
+msgstr "Poista tilaus"
 
 msgid "dlg.confirm.unsub"
 msgstr "Haluatko varmasti poistaa syötteen \"%s\" tilauksen?"
@@ -458,7 +458,7 @@ msgstr ""
 "Voit tallentaa sen latauskansioon: paina %s tai valitse \"%s\" valikosta."
 
 msgid "heading.pageinfo"
-msgstr "SIVUN TIEDOT"
+msgstr "Sivun tiedot"
 
 msgid "pageinfo.header.cached"
 msgstr "(sisältö välimuistista)"
@@ -503,10 +503,10 @@ msgid "dlg.input.send"
 msgstr "Lähetä"
 
 msgid "heading.save"
-msgstr "TIEDOSTO TALLENNETTU"
+msgstr "Tiedosto tallennettu"
 
 msgid "heading.save.incomplete"
-msgstr "SIVUN LATAUS KESKEN"
+msgstr "Sivun lataus kesken"
 
 msgid "dlg.save.incomplete"
 msgstr "Sivun sisällön lataus ei ole vielä päättynyt."
@@ -515,10 +515,10 @@ msgid "dlg.save.size"
 msgstr "Koko:"
 
 msgid "heading.save.error"
-msgstr "VIRHE TALLENTAESSA"
+msgstr "Virhe tallentaessa"
 
 msgid "heading.import.bookmarks"
-msgstr "TUO KIRJANMERKKEJÄ"
+msgstr "Tuo kirjanmerkkejä"
 
 msgid "dlg.import.found"
 msgid_plural "dlg.import.found.n"
@@ -534,7 +534,7 @@ msgid "dlg.import.notnew"
 msgstr "Kaikki sivun linkit on jo kirjanmerkkeinä."
 
 msgid "heading.autoreload"
-msgstr "AUTOMAATTINEN LATAUS"
+msgstr "Automaattinen lataus"
 
 msgid "dlg.autoreload"
 msgstr "Valitse välilehden uudelleenlataustiheys."
@@ -561,7 +561,7 @@ msgid "link.download"
 msgstr "Lataa kohde tiedostoon"
 
 msgid "heading.openlink"
-msgstr "AVAA LINKKI"
+msgstr "Avaa linkki"
 
 msgid "dlg.openlink.confirm"
 msgstr ""
@@ -604,16 +604,16 @@ msgstr ""
 "verkkotunnukselle."
 
 msgid "link.hint.audio"
-msgstr "Toista äänitiedosto"
+msgstr "Ääni"
 
 msgid "link.hint.image"
-msgstr "Katso kuva"
+msgstr "Kuva"
 
 msgid "bookmark.title.blank"
 msgstr "Tyhjä sivu"
 
 msgid "heading.translate"
-msgstr "KÄÄNNÄ SIVU"
+msgstr "Käännä sivu"
 
 msgid "dlg.translate.unavail"
 msgstr "Palvelu ei ole toiminnassa"
@@ -664,7 +664,7 @@ msgid "lang.es"
 msgstr "Espanja"
 
 msgid "heading.newident"
-msgstr "UUSI IDENTITEETTI"
+msgstr "Uusi identiteetti"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Luodaan itse allekirjoitettu 2048-bittinen RSA-sertifikaatti."
@@ -706,10 +706,10 @@ msgid "dlg.newident.create"
 msgstr "Luo identiteetti"
 
 msgid "heading.feedcfg"
-msgstr "SYÖTTEEN ASETUKSET"
+msgstr "Syötteen asetukset"
 
 msgid "heading.subscribe"
-msgstr "TILAA SIVU SYÖTTEENÄ"
+msgstr "Tilaa sivu syötteenä"
 
 msgid "dlg.feed.title"
 msgstr "Otsikko:"
@@ -730,10 +730,10 @@ msgid "dlg.feed.sub"
 msgstr "Tilaa"
 
 msgid "heading.bookmark.add"
-msgstr "LISÄÄ KIRJANMERKKI"
+msgstr "Lisää kirjanmerkki"
 
 msgid "heading.bookmark.edit"
-msgstr "MUOKKAA KIRJANMERKKIÄ"
+msgstr "Muokkaa kirjanmerkkiä"
 
 msgid "dlg.bookmark.save"
 msgstr "Talleta kirjanmerkki"
@@ -751,10 +751,10 @@ msgid "dlg.bookmark.icon"
 msgstr "Kuvake:"
 
 msgid "heading.prefs"
-msgstr "ASETUKSET"
+msgstr "Asetukset"
 
 msgid "heading.prefs.certs"
-msgstr "SERTIFIKAATIT"
+msgstr "Sertifikaatit"
 
 msgid "heading.prefs.colors"
 msgstr "Värit"
@@ -775,22 +775,22 @@ msgid "heading.prefs.network"
 msgstr "Verkko"
 
 msgid "heading.prefs.paragraph"
-msgstr "KAPPALE"
+msgstr "Kappale"
 
 msgid "heading.prefs.pagecontent"
-msgstr "SIVUN VÄRIT"
+msgstr "Sivun värit"
 
 msgid "heading.prefs.proxies"
-msgstr "VÄLIPALVELIMET"
+msgstr "Välipalvelimet"
 
 msgid "heading.prefs.scrolling"
-msgstr "VIERITYS"
+msgstr "Vieritys"
 
 msgid "heading.prefs.sizing"
-msgstr "KOKO"
+msgstr "Koko"
 
 msgid "heading.prefs.widelayout"
-msgstr "LEVEÄ ULKOASU"
+msgstr "Leveä ulkoasu"
 
 msgid "heading.prefs.style"
 msgstr "Tyyli"
@@ -1042,7 +1042,7 @@ msgid "keys.hoverurl"
 msgstr "Näytä URL kursorin alla"
 
 msgid "heading.certimport"
-msgstr "TUO IDENTITEETTI"
+msgstr "Tuo identiteetti"
 
 msgid "dlg.certimport.help"
 msgstr ""
@@ -1059,10 +1059,10 @@ msgid "dlg.certimport.notfound.page"
 msgstr "Sivulta ei löytynyt sertifikaattia tai avainta."
 
 msgid "heading.certimport.pasted"
-msgstr "LIIMATTU LEIKEPÖYDÄLTÄ"
+msgstr "Liimattu leikepöydältä"
 
 msgid "heading.certimport.dropped"
-msgstr "PUDOTETTU TIEDOSTO"
+msgstr "Pudotettu tiedosto"
 
 msgid "dlg.certimport.import"
 msgstr "Tuo"
@@ -1508,13 +1508,13 @@ msgid "lang.tok"
 msgstr "Toki Pona"
 
 msgid "heading.newident.missing"
-msgstr "PUUTTUVA TIETO"
+msgstr "Puuttuva tieto"
 
 msgid "dlg.newindent.missing.commonname"
 msgstr "\"Yleisnimi\" on pakollinen tieto."
 
 msgid "heading.newident.date.bad"
-msgstr "VIRHEELLINEN PÄIVÄMÄÄRÄ"
+msgstr "Virheellinen päivämäärä"
 
 msgid "dlg.newident.date.past"
 msgstr "Voimassaolon täytyy päättyä tulevaisuudessa."
@@ -1657,7 +1657,7 @@ msgid "link.file.delete"
 msgstr "Poista tiedosto"
 
 msgid "heading.file.delete"
-msgstr "POISTA TIEDOSTO"
+msgstr "Poista tiedosto"
 
 msgid "dlg.file.delete.confirm"
 msgstr "Oletko varma, että haluat poistaa tämän tiedoston?"
@@ -1666,7 +1666,7 @@ msgid "dlg.file.delete"
 msgstr "Poista"
 
 msgid "heading.prefs.uitheme"
-msgstr "KÄYTTÖLIITTYMÄN VÄRIT"
+msgstr "Käyttöliittymän värit"
 
 msgid "prefs.scrollspeed.keyboard"
 msgstr "Näppäimistön nopeus:"
@@ -1690,10 +1690,10 @@ msgid "menu.unexpire"
 msgstr "Jatka lataamista vanhentumisesta huolimatta"
 
 msgid "menu.page.upload"
-msgstr "Lähetä sivu Titanilla…"
+msgstr "Lähetä Titanilla…"
 
 msgid "heading.upload"
-msgstr "TITAN-LÄHETYS"
+msgstr "Titan-lähetys"
 
 msgid "heading.upload.text"
 msgstr "Teksti"
@@ -1735,7 +1735,7 @@ msgid "prefs.returnkey"
 msgstr "Palautusnäppäin:"
 
 msgid "keys.upload"
-msgstr "Lähetä sivu Titanilla"
+msgstr "Lähetä Titanilla"
 
 msgid "error.certexpired"
 msgstr "Vanhentunut sertifikaatti"
@@ -1749,7 +1749,7 @@ msgid "upload.port"
 msgstr "Portti…"
 
 msgid "heading.uploadport"
-msgstr "TITAN-LÄHETYSPORTTI"
+msgstr "Titan-lähetysportti"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
@@ -1780,7 +1780,7 @@ msgid "menu.sort.alpha"
 msgstr "Järjestä aakkosjärjestykseen"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "TUHOA KIRJANMERKIT"
+msgstr "Tuhoa kirjanmerkit"
 
 #, c-format
 msgid "dlg.confirm.bookmarks.delete"
@@ -1803,7 +1803,7 @@ msgstr "Lähetä tekstiä"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "ASETUKSET"
+msgstr "Asetukset"
 
 msgid "prefs.imagestyle"
 msgstr "Kuvien väritys:"
@@ -1862,10 +1862,10 @@ msgid "dlg.upload.pickfile"
 msgstr "Valitse tiedosto"
 
 msgid "heading.bookmark.tags"
-msgstr "ERIKOISAVAINSANAT"
+msgstr "Erikoisavainsanat"
 
 msgid "heading.addfolder"
-msgstr "LISÄÄ KANSIO"
+msgstr "Lisää kansio"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Uusi kansio"
@@ -2074,7 +2074,7 @@ msgid "fontpack.delete"
 msgstr "Poista ja tuhoa \"%s\""
 
 msgid "heading.fontpack.delete"
-msgstr "POISTA FONTTIPAKETTI"
+msgstr "Poista fonttipaketti"
 
 msgid "dlg.fontpack.delete"
 msgstr "Tuhoa fonttipaketti"
@@ -2092,7 +2092,7 @@ msgid "truetype.help.installed"
 msgstr "Tämä fontti on asennettu käyttäjän fonttihakemistoon."
 
 msgid "heading.dismiss.warning"
-msgstr "POISTA VAROITUS?"
+msgstr "Poista varoitus?"
 
 #, c-format
 msgid "dlg.dismiss.ansi"
@@ -2105,7 +2105,7 @@ msgid "dlg.fontpack.classic"
 msgstr "Lataa fonttipaketti (25 Mt)"
 
 msgid "heading.fontpack.classic"
-msgstr "LATAA FONTTIPAKETTI"
+msgstr "Lataa fonttipaketti"
 
 msgid "dlg.fontpack.classic.msg"
 msgstr ""
@@ -2140,3 +2140,99 @@ msgstr "24 tunnin kellonajat"
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
 msgstr "Lue kaikki"
+
+msgid "menu.page.upload.edit"
+msgstr "Muokkaa sivua Titanilla…"
+
+msgid "heading.upload.id"
+msgstr "Valtuudet"
+
+msgid "menu.upload.export"
+msgstr "Vie teksti"
+
+msgid "menu.upload.delete"
+msgstr "Poista kaikki"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Sisältö"
+
+msgid "hint.upload.path"
+msgstr "Polku"
+
+msgid "hint.upload.token.long"
+msgstr "avainsana — katso palvelimen ohjeet"
+
+msgid "prefs.toolbaraction1"
+msgstr "Painike 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Painike 2"
+
+msgid "keys.upload.edit"
+msgstr "Muokkaa sivua Titanilla"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Ota käyttöön %s"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Poista kaikki (ei voi peruuttaa)"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Työkalupalkin toiminnot"
+
+msgid "prefs.blink"
+msgstr "Vilkkuva kursori:"
+
+msgid "menu.open.external"
+msgstr "Avaa toisessa sovelluksessa"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Piilota identiteetit"
+
+msgid "menu.home"
+msgstr "Mene kotiin"
+
+msgid "menu.identities"
+msgstr "Hallinnoi identiteettejä"
+
+msgid "sidebar.close"
+msgstr "Valmis"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Uusi kansio"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Muokkaa"
+
+msgid "sidebar.action.history.clear"
+msgstr "Tyhjennä"
+
+msgid "sidebar.empty.unread"
+msgstr "Kaikki luettu"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Liimaa edeltävä rivi"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Näytä Finderissa"
+
+msgid "menu.share"
+msgstr "Jaa"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Näytä tiedostonhallinnassa"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Aseta toiminto:"

@@ -90,8 +90,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
     const int accentLo    = (prefs->accent == cyan_ColorAccent ? teal_ColorId : brown_ColorId);
     const int altAccentHi = (prefs->accent == cyan_ColorAccent ? orange_ColorId : cyan_ColorId);
     const int altAccentLo = (prefs->accent == cyan_ColorAccent ? brown_ColorId : teal_ColorId);
-    const iColor accentMid    = mix_Color(get_Color(accentHi), get_Color(accentLo), 0.5f);
-    const iColor altAccentMid = mix_Color(get_Color(altAccentHi), get_Color(altAccentLo), 0.5f);
+    //const iColor accentMid    = mix_Color(get_Color(accentHi), get_Color(accentLo), 0.5f);
+    //const iColor altAccentMid = mix_Color(get_Color(altAccentHi), get_Color(altAccentLo), 0.5f);
     switch (theme) {
         case pureBlack_ColorTheme: {
             copy_(uiBackground_ColorId, black_ColorId);
@@ -832,7 +832,7 @@ void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
                     int rgb[3] = { 0, 0, 0 };
                     iForIndices(i, rgb) {
                         if (ch >= escapeSequence.end) break;
-                        rgb[i] = strtoul(ch + 1, &endPtr, 10);
+                        rgb[i] = (int) strtoul(ch + 1, &endPtr, 10);
                         ch = endPtr;
                     }
                     dst->r = iClamp(rgb[0], 0, 255);

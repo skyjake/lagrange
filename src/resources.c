@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_rwops.h>
 
 static iArchive *archive_;
-    
+
 iBlock blobAbout_Resources;
 iBlock blobHelp_Resources;
 iBlock blobLagrange_Resources;
@@ -66,10 +66,18 @@ static struct {
     const char *archivePath;
 } entries_[] = {
     { &blobAbout_Resources, "about/about.gmi" },
-    { &blobHelp_Resources, "about/help.gmi" },
     { &blobLagrange_Resources, "about/lagrange.gmi" },
     { &blobLicense_Resources, "about/license.gmi" },
+#if defined (iPlatformAppleMobile)
+    { &blobHelp_Resources, "about/ios-help.gmi" },
+    { &blobVersion_Resources, "about/ios-version.gmi" },
+#elif defined (iPlatformAndroidMobile)
+    { &blobHelp_Resources, "about/android-help.gmi" },
+    { &blobVersion_Resources, "about/android-version.gmi" },
+#else
+    { &blobHelp_Resources, "about/help.gmi" },
     { &blobVersion_Resources, "about/version.gmi" },
+#endif
     { &blobArghelp_Resources, "arg-help.txt" },
     { &blobCs_Resources, "lang/cs.bin" },
     { &blobDe_Resources, "lang/de.bin" },

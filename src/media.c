@@ -144,7 +144,7 @@ void makeTexture_GmImage(iGmImage *d) {
     }
     else {
         imgData = stbi_load_from_memory(
-            constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
+            constData_Block(data), (int) size_Block(data), &d->size.x, &d->size.y, NULL, 4);
         if (!imgData) {
             fprintf(stderr, "[media] image load failed: %s\n", stbi_failure_reason());
         }
@@ -627,6 +627,17 @@ void deinit_MediaRequest(iMediaRequest *d) {
     iDisconnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
     iDisconnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
     iRelease(d->req);
+}
+
+iMediaRequest *newReused_MediaRequest(iDocumentWidget *doc, unsigned int linkId,
+                                      iGmRequest *request) {
+    iMediaRequest *d = new_Object(&Class_MediaRequest);
+    d->doc = doc;
+    d->linkId = linkId;
+    d->req = request; /* takes ownership */
+    iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
+    iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
+    return d;
 }
 
 iDefineObjectConstructionArgs(MediaRequest,

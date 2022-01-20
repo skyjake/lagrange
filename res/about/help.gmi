@@ -253,7 +253,7 @@ You will need to select an identity when you encounter this error message:
 
 > 🔑 Certificate Required
 
-Clicking on an identity in the sidebar will toggle it on/off for the currently open URL. On subsequent page loads, the certificate will then be sent to the server when the URL or any URL under it is fetched. You can click on the 👤 button in the navigation bar to see which identity is being used for the current page.
+Clicking on an identity in the sidebar shows a menu where you can control usage of the identity for the currently open URL. On subsequent page loads, the certificate will then be sent to the server when the URL or any URL under it is fetched. You can click on the 👤 button in the navigation bar to see which identity is being used for the current page.
 
 As the sidebar is not keyboard-navigable, note that identities can also be accessed via lookup results. Identities matching the search terms are shown as the last category in the lookup results list. From there, one can toggle an identity for the current page, or stop using it on all pages.
 
@@ -390,7 +390,7 @@ Page content color themes are selected on the "Colors" tab of Preferences. The "
 
 ## 2.4 Fonts
 
-This version of Lagrange supports TrueType fonts. To use a new font in the app, simply view the .ttf file in the app and a page footer action is available for performing the installation. For example, try drag-and-dropping a .ttf file on the window. Alternatively, you can manually copy the font to the "fonts" subdirectory of the user-specific configuration directory (see section 3.5). 
+This version of Lagrange supports TrueType fonts. To use a new font, simply view a .ttf file in the app and a page footer action is available for performing the installation. For example, try drag-and-dropping a .ttf file on the window. Alternatively, you can manually copy the font to the "fonts" subdirectory of the user-specific configuration directory (see section 3.5). 
 
 The "Fonts" tab of the Preferences dialog contains options that affect the appearance of text in page content, the user interface, and text rendering in general.
 
@@ -424,7 +424,7 @@ The "ANSI escapes" setting controls which ANSI escape codes are enabled:
 
 * "FG Color" enables changes to text foreground color.
 * "BG Color" enables changes to text background color.
-* "Font Style" enables changing the font style: bold, italic, or monospace. (These correspond to codes 1, 3, and 11.)
+* "Font Style" enables changing the font style: bold, light, italic, regular, or monospace. (These correspond to codes 1, 2, 3, 10, and 11.)
 
 A warning banner is displayed if any codes are detected on a page. This helps you be aware of potential visual artifacts, like text color that is being forced to black regardless of the page background color. Click on the warning to dismiss it on a per-site basis.
 

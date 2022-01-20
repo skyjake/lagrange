@@ -145,10 +145,7 @@ void init_CertImportWidget(iCertImportWidget *d) {
     else {
         /* This should behave similar to sheets. */ 
         useSheetStyle_Widget(w);
-        addChildFlags_Widget(
-            w,
-            iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.certimport}", NULL)),
-            frameless_WidgetFlag);
+        addDialogTitle_Widget(w, "${heading.certimport}", NULL);
         d->info = addChildFlags_Widget(w, iClob(new_LabelWidget(infoText_, NULL)), frameless_WidgetFlag);
         addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
         d->crtLabel = new_LabelWidget("", NULL); {

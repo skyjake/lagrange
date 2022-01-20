@@ -143,12 +143,16 @@ static void setActiveItem_BindingsWidget_(iBindingsWidget *d, size_t pos) {
         item->isWaitingForEvent = iTrue;
         invalidateItem_ListWidget(d->list, d->activePos);
     }
-#if defined (iPlatformAppleDesktop)
+#if defined (iPlatformAppleDesktop) && defined (iHaveNativeContextMenus)
     /* Native menus must be disabled while grabbing keys so the shortcuts don't trigger. */
     const iBool enableNativeMenus = (d->activePos == iInvalidPos);
+    enableMenu_MacOS("${menu.title.file}", enableNativeMenus);
     enableMenu_MacOS("${menu.title.edit}", enableNativeMenus);
     enableMenu_MacOS("${menu.title.view}", enableNativeMenus);
+    enableMenu_MacOS("${menu.title.bookmarks}", enableNativeMenus);
     enableMenu_MacOS("${menu.title.identity}", enableNativeMenus);
+    enableMenuIndex_MacOS(6, enableNativeMenus);
+    enableMenuIndex_MacOS(7, enableNativeMenus);
 #endif
 }
 

@@ -22,7 +22,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "defs.h"
 #include <the_Foundation/rect.h>
+
+iDeclareType(ToolbarActionSpec)
+    
+struct Impl_ToolbarActionSpec {
+    const char *icon;
+    const char *label;
+    const char *command;
+};
+
+extern const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction];
 
 iDeclareType(Widget)
 iDeclareType(MenuItem)
@@ -39,6 +50,7 @@ void        initPanels_Mobile           (iWidget *panels, iWidget *parentWidget,
                                          const iMenuItem *itemsNullTerminated,
                                          const iMenuItem *actions, size_t numActions);
 
+iWidget *   panel_Mobile                (const iWidget *panels, size_t index);
 size_t      currentPanelIndex_Mobile    (const iWidget *panels);
 
 enum iTransitionFlags {
@@ -55,3 +67,5 @@ enum iTransitionDir {
 
 void        setupMenuTransition_Mobile  (iWidget *menu,  iBool isIncoming);
 void        setupSheetTransition_Mobile (iWidget *sheet, int flags);
+
+int         bottomSafeInset_Mobile      (void);

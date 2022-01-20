@@ -107,7 +107,7 @@ static iRect bounds_ScrollWidget_(const iScrollWidget *d) {
 static iRect thumbRect_ScrollWidget_(const iScrollWidget *d) {
     const iRect bounds = bounds_ScrollWidget_(d);
     iRect rect = init_Rect(bounds.pos.x, bounds.pos.y, bounds.size.x, 0);
-    const int total = size_Range(&d->range);
+    const int total = (int) size_Range(&d->range);
     if (total > 0) {
         const int tsize = thumbSize_ScrollWidget_(d);
 //        iAssert(tsize <= height_Rect(bounds));
@@ -197,7 +197,7 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
         case drag_ClickResult: {
             const iRect bounds = bounds_ScrollWidget_(d);
             const int offset = delta_Click(&d->click).y;
-            const int total = size_Range(&d->range);
+            const int total = (int) size_Range(&d->range);
             int dpos = (float) offset / (float) (height_Rect(bounds) - thumbSize_ScrollWidget_(d)) * total;
             d->thumb = iClamp(d->startThumb + dpos, d->range.start, d->range.end);
             postCommand_Widget(w, "scroll.moved arg:%d", d->thumb);

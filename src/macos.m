@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_timer.h>
 #include <SDL_syswm.h>
+#include <the_Foundation/stringset.h>
 
 #import <AppKit/AppKit.h>
 
@@ -110,7 +111,7 @@ static void ignoreImmediateKeyDownEvents_(void) {
 - (id)initWithIdentifier:(NSTouchBarItemIdentifier)identifier
                    title:(NSString *)title
                  command:(NSString *)cmd {
-    [super initWithIdentifier:identifier];
+    self = [super initWithIdentifier:identifier];
     self.view = [NSButton buttonWithTitle:title target:self action:@selector(buttonPressed)];
     command = cmd;
     return self;
@@ -120,7 +121,7 @@ static void ignoreImmediateKeyDownEvents_(void) {
                    image:(NSImage *)image
                   widget:(iWidget *)widget
                  command:(NSString *)cmd {
-    [super initWithIdentifier:identifier];
+    self = [super initWithIdentifier:identifier];
     self.view = [NSButton buttonWithImage:image target:self action:@selector(buttonPressed)];
     command = cmd;
     return self;
@@ -163,12 +164,13 @@ static void ignoreImmediateKeyDownEvents_(void) {
 @implementation MenuCommands
 
 - (id)init {
+    self = [super init];
     commands = [[NSMutableDictionary<NSString *, NSString *> alloc] init];
     source = NULL;
     return self;
 }
 
-- (void)setCommand:(NSString *)command forMenuItem:(NSMenuItem *)menuItem {
+- (void)setCommand:(NSString * __nonnull)command forMenuItem:(NSMenuItem * __nonnull)menuItem {
     [commands setObject:command forKey:[menuItem title]];
 }
 
@@ -220,7 +222,7 @@ static void ignoreImmediateKeyDownEvents_(void) {
 @implementation MyDelegate
 
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl {
-    [super init];
+    self = [super init];
     currentAppearanceName = nil;
     menuCommands = [[MenuCommands alloc] init];
     touchBarVariant = default_TouchBarVariant;
@@ -402,6 +404,131 @@ void registerURLHandler_MacOS(void) {
     [handler release];
 }
 
+#if 0
+static iBool isTracking_;
+
+static void trackSwipe_(NSEvent *event) {
+    if (isTracking_) {
+        return;
+    }
+    isTracking_ = iTrue;
+    [event trackSwipeEventWithOptions:NSEventSwipeTrackingLockDirection
+             dampenAmountThresholdMin:-1.0
+                                  max:1.0
+                         usingHandler:^(CGFloat gestureAmount, NSEventPhase phase,
+                                        BOOL isComplete, BOOL *stop) {
+                        printf("TRACK: amount:%f phase:%lu complete:%d\n",
+                               gestureAmount, (unsigned long) phase, isComplete);
+                        fflush(stdout);
+                        if (isComplete) {
+                            isTracking_ = iFalse;
+                        }
+                      }
+    ];
+}
+#endif
+
+static int swipeDir_ = 0;
+static int preventTapGlitch_ = 0;
+
+static iBool processScrollWheelEvent_(NSEvent *event) {
+    const iBool isPerPixel = (event.hasPreciseScrollingDeltas != 0);
+    const iBool isInertia  = (event.momentumPhase & (NSEventPhaseBegan | NSEventPhaseChanged)) != 0;
+    const iBool isEnded    = event.scrollingDeltaX == 0.0f && event.scrollingDeltaY == 0.0f && !isInertia;
+    const iWindow *win     = &get_MainWindow()->base;
+    if (isPerPixel) {
+        /* On macOS 12.1, stopping ongoing inertia scroll with a tap seems to sometimes produce
+           spurious large scroll events. */
+        switch (preventTapGlitch_) {
+            case 0:
+                if (isInertia && event.momentumPhase == NSEventPhaseChanged) {
+                    preventTapGlitch_++;
+                }
+                else {
+                    preventTapGlitch_ = 0;
+                }
+                break;
+            case 1:
+                if (event.scrollingDeltaY == 0 && event.momentumPhase == NSEventPhaseEnded) {
+                    preventTapGlitch_++;
+                }
+                break;
+            case 2:
+                if (event.scrollingDeltaY == 0 && event.momentumPhase == 0 && isEnded) {
+                    preventTapGlitch_++;
+                }
+                else {
+                    preventTapGlitch_ = 0;
+                }
+                break;
+            case 3:
+                if (event.scrollingDeltaY != 0 && event.momentumPhase == 0 && !isInertia) {
+                    preventTapGlitch_ = 0;
+                    // printf("SPURIOUS\n"); fflush(stdout);
+                    return iTrue;
+                }
+                preventTapGlitch_ = 0;
+                break;
+        }
+    }
+    /* Post corresponding MOUSEWHEEL events. */
+    SDL_MouseWheelEvent e = { .type = SDL_MOUSEWHEEL };
+    e.timestamp = SDL_GetTicks();
+    e.which = isPerPixel ? 0 : 1; /* Distinction between trackpad and regular mouse. TODO: Still needed? */
+    setPerPixel_MouseWheelEvent(&e, isPerPixel);
+    if (isPerPixel) {
+        setInertia_MouseWheelEvent(&e, isInertia);
+        setScrollFinished_MouseWheelEvent(&e, isEnded);
+        e.x = event.scrollingDeltaX * win->pixelRatio;
+        e.y = event.scrollingDeltaY * win->pixelRatio;        
+        /* Only scroll on one axis at a time. */
+        if (swipeDir_ == 0) {
+            swipeDir_ = iAbs(e.x) > iAbs(e.y) ? 1 : 2;
+        }
+        if (swipeDir_ == 1) {
+            e.y = 0;
+        }
+        else if (swipeDir_ == 2) {
+            e.x = 0;
+        }
+        if (isEnded) {
+            swipeDir_ = 0;
+        }
+    }
+    else {
+        /* Disregard wheel acceleration applied by the OS. */
+        e.x = -event.scrollingDeltaX;
+        e.y = iSign(event.scrollingDeltaY);
+    }
+    // printf("#### [%d] dx:%d dy:%d phase:%ld inertia:%d end:%d\n", preventTapGlitch_, e.x, e.y, (long) event.momentumPhase,
+    //        isInertia, isEnded); fflush(stdout);
+    SDL_PushEvent((SDL_Event *) &e);
+#if 0
+        /* On macOS, we handle both trackpad and mouse events. We expect SDL to identify
+           which device is sending the event. */
+        if (ev.wheel.which == 0) {
+            /* Trackpad with precise scrolling w/inertia (points). */
+            setPerPixel_MouseWheelEvent(&ev.wheel, iTrue);
+            ev.wheel.x *= -d->window->base.pixelRatio;
+            ev.wheel.y *= d->window->base.pixelRatio;
+            /* Only scroll on one axis at a time. */
+            if (iAbs(ev.wheel.x) > iAbs(ev.wheel.y)) {
+                ev.wheel.y = 0;
+            }
+            else {
+                ev.wheel.x = 0;
+            }
+        }
+        else {
+            /* Disregard wheel acceleration applied by the OS. */
+            ev.wheel.x = -ev.wheel.x;
+            ev.wheel.y = iSign(ev.wheel.y);
+        }
+#endif
+    
+    return iTrue;        
+}
+
 void setupApplication_MacOS(void) {    
     NSApplication *app = [NSApplication sharedApplication];
     [app setActivationPolicy:NSApplicationActivationPolicyRegular];
@@ -423,6 +550,21 @@ void setupApplication_MacOS(void) {
     NSMenuItem *windowCloseItem = [windowMenu itemWithTitle:@"Close"];
     windowCloseItem.target = myDel;
     windowCloseItem.action = @selector(closeTab);
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskScrollWheel
+                                          handler:^NSEvent*(NSEvent *event){
+//                                            printf("event type: %lu\n", (unsigned long) event.type);
+//                                            fflush(stdout);
+//                                            if (event.type == NSEventTypeGesture) {
+//                                                trackSwipe_(event);
+//                                                printf("GESTURE phase:%lu\n", (unsigned long) event.phase);
+//fflush(stdout);
+//                                            }
+                                            if (event.type == NSEventTypeScrollWheel &&
+                                                processScrollWheelEvent_(event)) {
+                                                return nil; /* was eaten */                                                
+                                            }
+                                            return event;
+                                          }];
 }
 
 void hideTitleBar_MacOS(iWindow *window) {
@@ -437,6 +579,13 @@ void enableMenu_MacOS(const char *menuLabel, iBool enable) {
     NSString *label = [NSString stringWithUTF8String:menuLabel];
     NSMenuItem *menuItem = [appMenu itemAtIndex:[appMenu indexOfItemWithTitle:label]];
     [menuItem setEnabled:enable];
+}
+
+void enableMenuIndex_MacOS(int index, iBool enable) {
+    NSApplication *app = [NSApplication sharedApplication];
+    NSMenu *appMenu = [app mainMenu];
+    NSMenuItem *menuItem = [appMenu itemAtIndex:index];
+    [menuItem setEnabled:enable];        
 }
 
 void enableMenuItem_MacOS(const char *menuItemCommand, iBool enable) {
@@ -513,6 +662,47 @@ void enableMenuItemsByKey_MacOS(int key, int kmods, iBool enable) {
     delete_String(keyEquiv);
 }
 
+void enableMenuItemsOnHomeRow_MacOS(iBool enable) {
+    iStringSet *homeRowKeys = new_StringSet();
+    const char *keys[] = { /* Note: another array in documentwidget.c */
+        "f", "d", "s", "a",
+        "j", "k", "l",
+        "r", "e", "w", "q",
+        "u", "i", "o", "p",
+        "v", "c", "x", "z",
+        "m", "n",
+        "g", "h",
+        "b",
+        "t", "y"
+    };
+    iForIndices(i, keys) {
+        iString str;
+        initCStr_String(&str, keys[i]);
+        insert_StringSet(homeRowKeys, &str);
+        deinit_String(&str);
+    }
+    NSApplication *app = [NSApplication sharedApplication];
+    NSMenu *appMenu = [app mainMenu];
+    for (NSMenuItem *mainMenuItem in appMenu.itemArray) {
+        NSMenu *menu = mainMenuItem.submenu;
+        if (menu) {
+            for (NSMenuItem *menuItem in menu.itemArray) {
+                if (menuItem.keyEquivalentModifierMask == 0) {
+                    iString equiv;
+                    initCStr_String(&equiv, [menuItem.keyEquivalent
+                                                cStringUsingEncoding:NSUTF8StringEncoding]);
+                    if (contains_StringSet(homeRowKeys, &equiv)) {
+                        [menuItem setEnabled:enable];
+                        [menu setAutoenablesItems:NO];
+                    }
+                    deinit_String(&equiv);
+                }
+            }
+        }
+    }
+    iRelease(homeRowKeys);
+}
+
 static void setShortcut_NSMenuItem_(NSMenuItem *item, int key, int kmods) {
     NSEventModifierFlags modMask;
     iString *str = composeKeyEquivalent_(key, kmods, &modMask);
@@ -541,6 +731,29 @@ enum iColorId removeColorEscapes_String(iString *d) {
     return color;
 }
 
+static NSString *cleanString_(const iString *ansiEscapedText) {
+    iString mod;
+    initCopy_String(&mod, ansiEscapedText);
+    iRegExp *ansi = makeAnsiEscapePattern_Text();
+    replaceRegExp_String(&mod, ansi, "", NULL, NULL);
+    iRelease(ansi);
+    NSString *clean = [NSString stringWithUTF8String:cstr_String(&mod)];    
+    deinit_String(&mod);
+    return clean;
+}
+
+#if 0
+static NSAttributedString *makeAttributedString_(const iString *ansiEscapedText) {
+    iString mod;
+    initCopy_String(&mod, ansiEscapedText);
+    NSData *data = [NSData dataWithBytesNoCopy:data_Block(&mod.chars) length:size_String(&mod)];
+    NSAttributedString *as = [[NSAttributedString alloc] initWithHTML:data
+                                                   documentAttributes:nil];    
+    deinit_String(&mod);
+    return as;
+}
+#endif
+
 /* returns the selected item, if any */
 static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem *items, size_t n) {
     NSMenuItem *selectedItem = nil;
@@ -557,7 +770,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iM
                 isChecked = iTrue;
                 label += 3;
             }
-            else if (startsWith_CStr(label, "///")) {
+            else if (startsWith_CStr(label, "///") || startsWith_CStr(label, "```")) {
                 isDisabled = iTrue;
                 label += 3;
             }
@@ -567,9 +780,13 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iM
             if (removeColorEscapes_String(&itemTitle) == uiTextCaution_ColorId) {
 //                prependCStr_String(&itemTitle, "\u26a0\ufe0f ");
             }
-            NSMenuItem *item = [menu addItemWithTitle:[NSString stringWithUTF8String:cstr_String(&itemTitle)]
-                                               action:(hasCommand ? @selector(postMenuItemCommand:) : nil)
-                                        keyEquivalent:@""];
+            NSMenuItem *item = [[NSMenuItem alloc] init];
+            /* Use attributed string to allow newlines. */
+            NSAttributedString *title = [[NSAttributedString alloc] initWithString:cleanString_(&itemTitle)];
+            item.attributedTitle = title;
+            [title release];
+            item.action = (hasCommand ? @selector(postMenuItemCommand:) : nil);
+            [menu addItem:item];
             deinit_String(&itemTitle);
             [item setTarget:commands];
             if (isChecked) {

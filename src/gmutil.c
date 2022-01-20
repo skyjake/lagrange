@@ -253,6 +253,17 @@ iRangecc urlRoot_String(const iString *d) {
     return (iRangecc){ constBegin_String(d), rootEnd };
 }
 
+const iBlock *urlThemeSeed_String(const iString *url) {
+    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
+        return collect_Block(new_Block(0));
+    }
+    const iRangecc user = urlUser_String(url);
+    if (isEmpty_Range(&user)) {
+        return collect_Block(newRange_Block(urlHost_String(url)));
+    }
+    return collect_Block(newRange_Block(user));
+}
+
 static iBool isAbsolutePath_(iRangecc path) {
     return isAbsolute_Path(collect_String(urlDecode_String(collect_String(newRange_String(path)))));
 }
@@ -317,6 +328,28 @@ void urlEncodePath_String(iString *d) {
     appendRange_String(encoded, (iRangecc){ url.path.end, constEnd_String(d) });
     set_String(d, encoded);
     delete_String(encoded);
+}
+
+void urlEncodeQuery_String(iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    if (isEmpty_Range(&url.query)) {
+        return;
+    }
+    iString encoded;
+    init_String(&encoded);
+    appendRange_String(&encoded, (iRangecc){ constBegin_String(d), url.query.start });
+    iString query;
+    url.query.start++; /* omit the question mark */
+    initRange_String(&query, url.query);
+    iString *encQuery = urlEncode_String(&query); /* fully encoded */
+    appendCStr_String(&encoded, "?");
+    append_String(&encoded, encQuery);    
+    delete_String(encQuery);
+    deinit_String(&query);
+    appendRange_String(&encoded, (iRangecc){ url.query.end, constEnd_String(d) });
+    set_String(d, &encoded);
+    deinit_String(&encoded);
 }
 
 iBool isKnownScheme_Rangecc(iRangecc scheme) {
@@ -651,25 +684,25 @@ const iString *withSpacesEncoded_String(const iString *d) {
 const iString *canonicalUrl_String(const iString *d) {
     /* The "canonical" form, used for internal storage and comparisons, is:
        - all non-reserved characters decoded (i.e., it's an IRI)
-       - expect for spaces, which are always `%20`
+       - except spaces, which are always `%20`
        This means a canonical URL can be used on a gemtext link line without modifications. */
     iString *canon = NULL;
     iUrl parts;
     init_Url(&parts, d);
-    /* Colons are in decoded form in the URL path. */
+    /* Colons (0x3a) are in decoded form in the URL path. */
     if (iStrStrN(parts.path.start, "%3A", size_Range(&parts.path)) ||
         iStrStrN(parts.path.start, "%3a", size_Range(&parts.path))) {
         /* This is done separately to avoid the copy if %3A is not present; it's rare. */
         canon = copy_String(d);
         urlDecodePath_String(canon);
-        iString *dec = maybeUrlDecodeExclude_String(canon, "%/?:;#&+= "); /* decode everything else in all parts */
+        iString *dec = maybeUrlDecodeExclude_String(canon, "% " URL_RESERVED_CHARS); /* decode everything else in all parts */
         if (dec) {
             set_String(canon, dec);
             delete_String(dec);
         }
     }
     else {
-        canon = maybeUrlDecodeExclude_String(d, "%/?:;#&+= ");
+        canon = maybeUrlDecodeExclude_String(d, "% " URL_RESERVED_CHARS);
     }
     /* `canon` may now be NULL if nothing was decoded. */
     if (indexOfCStr_String(canon ? canon : d, " ") != iInvalidPos ||
@@ -678,7 +711,7 @@ const iString *canonicalUrl_String(const iString *d) {
             canon = copy_String(d);
         }
         urlEncodeSpaces_String(canon);
-    }
+    }    
     return canon ? collect_String(canon) : d;
 }
 

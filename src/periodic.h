@@ -35,6 +35,7 @@ struct Impl_Periodic {
     iSortedArray commands;
     uint32_t     lastPostTime;
     iPtrSet      pendingRemoval; /* contexts */
+    int          wakeupTimer; /* running while there are pending periodic commands */
 };
 
 void    init_Periodic   (iPeriodic *);

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-12-01 16:50+0000\n"
+"PO-Revision-Date: 2022-01-20 04:05+0000\n"
 "Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
@@ -13,7 +13,7 @@ msgstr ""
 
 # Link download progress message.
 msgid "doc.fetching"
-msgstr "Stahování"
+msgstr "Načítání"
 
 #, c-format
 msgid "doc.archive"
@@ -504,13 +504,13 @@ msgid "menu.copyurl"
 msgstr "Kopírovat adresu URL"
 
 msgid "heading.history.clear"
-msgstr "VYMAZAT HISTORII"
+msgstr "Vymazat historii"
 
 msgid "dlg.history.clear"
 msgstr "Vymazat historii"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "ODSTRANIT ZÁLOŽKY"
+msgstr "Odstranit záložky"
 
 #, c-format
 msgid "dlg.bookmarks.delete"
@@ -640,7 +640,7 @@ msgid "dlg.input.send"
 msgstr "Odeslat"
 
 msgid "heading.save"
-msgstr "SOUBOR ULOŽEN"
+msgstr "Soubor uložen"
 
 msgid "dlg.save.opendownload"
 msgstr "Otevřít stažený soubor"
@@ -728,19 +728,19 @@ msgid "dlg.save.incomplete"
 msgstr "Obsah této stránky se ještě stahuje."
 
 msgid "heading.autoreload"
-msgstr "AUTOMATICKÉ OBNOVOVÁNÍ"
+msgstr "Automatické obnovování"
 
 msgid "dlg.autoreload"
 msgstr "Vyberte interval automatických aktualizací pro tuto kartu."
 
 msgid "heading.file.delete"
-msgstr "ODSTRANIT SOUBOR"
+msgstr "Odstranit soubor"
 
 msgid "dlg.certwarn.different"
 msgstr "Přijatý certifikát je platný, ale je jiný než ten, kterému důvěřujeme."
 
 msgid "link.hint.image"
-msgstr "Zobrazit obrázek"
+msgstr "Obrázek"
 
 msgid "bookmark.export.format.sub"
 msgstr ""
@@ -787,7 +787,7 @@ msgid "lang.es.mx"
 msgstr "Španělština (Mexická)"
 
 msgid "heading.newident"
-msgstr "NOVÁ TOTOŽNOST"
+msgstr "Nová totožnost"
 
 msgid "lang.uk"
 msgstr "Ukrajinština"
@@ -826,19 +826,19 @@ msgid "ident.export"
 msgstr "Exportovat"
 
 msgid "heading.ident.use"
-msgstr "POUŽITÍ TOTOŽNOSTI"
+msgstr "Použití totožnosti"
 
 msgid "menu.edit.notes"
 msgstr "Upravit poznámky…"
 
 msgid "heading.ident.notes"
-msgstr "POZNÁMKY TOTOŽNOSTI"
+msgstr "Poznámky k totožnosti"
 
 msgid "ident.fingerprint"
 msgstr "Zkopírovat otisk"
 
 msgid "heading.unsub"
-msgstr "UKONČIT ODBĚR"
+msgstr "Ukončit odběr"
 
 #, c-format
 msgid "dlg.confirm.unsub"
@@ -857,7 +857,7 @@ msgid "error.server.msg"
 msgstr "Server odpověděl s následující zprávou:"
 
 msgid "heading.pageinfo"
-msgstr "INFORMACE O STRÁNCE"
+msgstr "Informace o stránce"
 
 msgid "pageinfo.cert.status"
 msgstr "Stav certifikátu:"
@@ -869,7 +869,7 @@ msgid "ident.delete"
 msgstr "Odstranit totožnost…"
 
 msgid "heading.ident.delete"
-msgstr "ODSTRANIT TOTOŽNOST"
+msgstr "Odstranit totožnost"
 
 msgid "dlg.ident.delete"
 msgstr "Odstranit totožnost a její soubory"
@@ -903,16 +903,16 @@ msgid "dlg.input.linebreak"
 msgstr "Zalomení řádku"
 
 msgid "heading.save.incomplete"
-msgstr "STRÁNKA NEÚPLNÁ"
+msgstr "Stránka neúplná"
 
 msgid "dlg.save.size"
 msgstr "Velikost:"
 
 msgid "heading.save.error"
-msgstr "CHYBA PŘI UKLÁDÁNÍ SOUBORU"
+msgstr "Chyba při ukládání souboru"
 
 msgid "heading.import.bookmarks"
-msgstr "NAHRÁT ZÁLOŽKY"
+msgstr "Nahrát záložky"
 
 #, c-format
 msgid "dlg.import.add"
@@ -964,7 +964,7 @@ msgid "link.browser"
 msgstr "Otevřít odkaz ve výchozím prohlížeči"
 
 msgid "link.noproxy"
-msgstr "Otevřít bez použití proxy"
+msgstr "Otevřít bez použití prostředníka"
 
 msgid "link.copy"
 msgstr "Zkopírovat odkaz"
@@ -979,7 +979,7 @@ msgid "dlg.file.delete"
 msgstr "Odstranit"
 
 msgid "heading.openlink"
-msgstr "OTEVŘÍT ODKAZ"
+msgstr "Otevřít odkaz"
 
 #, c-format
 msgid "dlg.openlink.confirm"
@@ -1014,16 +1014,16 @@ msgid "dlg.certimport.notfound"
 msgstr "Žádný certifikát nebo soukromý klíč nebyl nalezen."
 
 msgid "heading.certimport.pasted"
-msgstr "VLOŽENO ZE SCHRÁNKY"
+msgstr "Vloženo ze schránky"
 
 msgid "heading.certimport.dropped"
-msgstr "PŘETÁHNUTÝ SOUBOR"
+msgstr "Přetáhnutý soubor"
 
 msgid "dlg.certimport.import"
 msgstr "Nahrát"
 
 msgid "heading.certimport"
-msgstr "NAHRÁT TOTOŽNOST"
+msgstr "Nahrát totožnost"
 
 msgid "dlg.certimport.notes"
 msgstr "Poznámky:"
@@ -1038,7 +1038,7 @@ msgid "dlg.certimport.nokey"
 msgstr "Žádný soukromý klíč"
 
 msgid "link.hint.audio"
-msgstr "Přehrát zvuk"
+msgstr "Zvuk"
 
 msgid "bookmark.title.blank"
 msgstr "Prázdná stránka"
@@ -1088,10 +1088,10 @@ msgid "hint.upload.text"
 msgstr "vložte text k odeslání"
 
 msgid "menu.page.upload"
-msgstr "Nahrát stránku na server pomocí Titanu…"
+msgstr "Nahrát na server pomocí Titanu…"
 
 msgid "heading.upload"
-msgstr "NAHRÁT NA SERVER POMOCÍ TITANU"
+msgstr "Nahrát pomocí titanu"
 
 msgid "upload.file.name"
 msgstr "Jméno souboru:"
@@ -1127,7 +1127,7 @@ msgid "dlg.upload.pickfile"
 msgstr "Vybrat soubor"
 
 msgid "heading.translate"
-msgstr "PŘELOŽIT STRÁNKU"
+msgstr "Přeložit stránku"
 
 msgid "dlg.translate.unavail"
 msgstr "Služba nedostupná"
@@ -1190,23 +1190,23 @@ msgid "lang.sk"
 msgstr "Slovenština"
 
 msgid "keys.upload"
-msgstr "Nahrát stránku pomocí Titanu"
+msgstr "Nahrát pomocí Titanu"
 
 msgid "error.proxy.msg"
 msgstr ""
-"Požadavek pomocí proxy selhal, protože server nebyl schopen utvořit spojení "
-"s vzdáleným hostitelem. Je možné, že existují problémy s konektivitou."
+"Požadavek pomocí prostředníka selhal, protože server nebyl schopen utvořit "
+"spojení s vzdáleným hostitelem. Je možné, že existují problémy s připojením."
 
 msgid "error.proxyrefusal.msg"
 msgstr ""
 "Váš požadavek byl pro zdroj na doméně, která není obsluhována tímto serverem "
-"a ten server nepřijímá proxy požadavky."
+"a ten server nepřijímá požadavky přes prostředníky."
 
 msgid "heading.bookmark.add"
-msgstr "PŘIDAT ZÁLOŽKU"
+msgstr "Přidat záložku"
 
 msgid "heading.bookmark.edit"
-msgstr "UPRAVIT ZÁLOŽKU"
+msgstr "Upravit záložku"
 
 msgid "dlg.bookmark.save"
 msgstr "Uložit záložku"
@@ -1227,20 +1227,20 @@ msgid "dlg.addfolder.prompt"
 msgstr "Zadejte jméno nové složky:"
 
 msgid "heading.addfolder"
-msgstr "PŘIDAT SLOŽKU"
+msgstr "Přidat složku"
 
 msgid "dlg.bookmark.url"
 msgstr "URL:"
 
 msgid "heading.prefs.certs"
-msgstr "CERTIFIKÁTY"
+msgstr "Certifikáty"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "NASTAVENÍ"
+msgstr "Nastavení"
 
 msgid "heading.prefs.uitheme"
-msgstr "BARVY ROZHRANÍ"
+msgstr "Barvy rozhraní"
 
 msgid "prefs.searchurl"
 msgstr "URL vyhledávání:"
@@ -1289,7 +1289,7 @@ msgid "error.cgi"
 msgstr "CGI chyba"
 
 msgid "error.proxy"
-msgstr "Chyba proxy"
+msgstr "Chyba prostředníka"
 
 msgid "error.permanent"
 msgstr "Trvalé selhání"
@@ -1386,13 +1386,13 @@ msgid "dlg.newident.more"
 msgstr "Více…"
 
 msgid "heading.newident.missing"
-msgstr "CHYBĚJÍCÍ INFORMACE"
+msgstr "Chybějící informace"
 
 msgid "dlg.newindent.missing.commonname"
 msgstr "\"Obecné jméno\" musí být specifikováno."
 
 msgid "heading.newident.date.bad"
-msgstr "NEPLATNÉ DATUM"
+msgstr "Neplatné datum"
 
 msgid "dlg.newident.date.past"
 msgstr "Datum vypršení platnosti musí být v budoucnosti."
@@ -1408,10 +1408,10 @@ msgid "keys.split.menu"
 msgstr "Nastavit režim rozpůleného okna"
 
 msgid "heading.feedcfg"
-msgstr "NASTAVENÍ KANÁLU"
+msgstr "Nastavení kanálu"
 
 msgid "heading.subscribe"
-msgstr "ODEBÍRAT STRÁNKU"
+msgstr "Odebírat stránku"
 
 msgid "dlg.feed.title"
 msgstr "Název:"
@@ -1438,22 +1438,22 @@ msgid "heading.prefs.network"
 msgstr "Síť"
 
 msgid "heading.prefs.paragraph"
-msgstr "ODSTAVEC"
+msgstr "Odstavec"
 
 msgid "heading.prefs.pagecontent"
-msgstr "BARVY STRÁNKY"
+msgstr "Barvy stránky"
 
 msgid "heading.prefs.proxies"
-msgstr "PROXY"
+msgstr "Prostředníci"
 
 msgid "heading.prefs.scrolling"
-msgstr "POSOUVÁNÍ STRÁNKY"
+msgstr "Posouvání stránky"
 
 msgid "heading.prefs.sizing"
-msgstr "DIMENZOVÁNÍ"
+msgstr "Dimenzování"
 
 msgid "heading.prefs.widelayout"
-msgstr "ŠIROKÉ ROZLOŽENÍ"
+msgstr "Široké rozložení"
 
 # tab button
 msgid "heading.prefs.style"
@@ -1598,13 +1598,13 @@ msgid "prefs.ca.path"
 msgstr "Cesta k CA:"
 
 msgid "prefs.proxy.gemini"
-msgstr "Proxy pro Gemini:"
+msgstr "Prostředník pro Gemini:"
 
 msgid "prefs.proxy.gopher"
-msgstr "Proxy pro Gopher:"
+msgstr "Prostředník pro Gopher:"
 
 msgid "prefs.proxy.http"
-msgstr "Proxy pro HTTP:"
+msgstr "Prostředník pro HTTP:"
 
 msgid "menu.binding.reset"
 msgstr "Obnovit výchozí"
@@ -1720,7 +1720,7 @@ msgid "error.gone.msg"
 msgstr "Požadovaný zdroj již není dostupný."
 
 msgid "error.proxyrefusal"
-msgstr "Proxy požadavek byl odmítnut"
+msgstr "Požadavek na prostředníka byl odmítnut"
 
 msgid "error.badheader.msg"
 msgstr ""
@@ -1769,13 +1769,13 @@ msgid "dlg.bookmark.icon"
 msgstr "Ikona:"
 
 msgid "heading.bookmark.tags"
-msgstr "SPECIÁLNÍ ZNAČENÍ"
+msgstr "Speciální značení"
 
 msgid "dlg.addfolder"
 msgstr "Přidat složku"
 
 msgid "heading.prefs"
-msgstr "PŘEDVOLBY"
+msgstr "Předvolby"
 
 # tab button
 msgid "heading.prefs.colors"
@@ -2009,7 +2009,7 @@ msgid "fontpack.delete"
 msgstr "Trvale odstranit \"%s\""
 
 msgid "heading.fontpack.delete"
-msgstr "ODSTRANIT PÍSMOVÝ BALÍČEK"
+msgstr "Odstranit písmový balíček"
 
 #, c-format
 msgid "dlg.fontpack.delete.confirm"
@@ -2030,7 +2030,7 @@ msgstr ""
 "zkopírovány do složky uživatelských písem."
 
 msgid "heading.dismiss.warning"
-msgstr "PŘESTAT UKAZOVAT VAROVÁNÍ?"
+msgstr "Skrýt varování?"
 
 #, c-format
 msgid "dlg.dismiss.ansi"
@@ -2040,7 +2040,7 @@ msgid "dlg.dismiss.warning"
 msgstr "Přestat ukazovat varování"
 
 msgid "heading.fontpack.classic"
-msgstr "STÁHNOUT PÍSMOVÝ BALÍČEK"
+msgstr "Stáhnout písmový balíček"
 
 msgid "dlg.fontpack.classic.msg"
 msgstr ""
@@ -2152,3 +2152,99 @@ msgstr "Zkontrolovat dostupné aktualizace…"
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
 msgstr "Označit vše jako přečtené"
+
+msgid "menu.open.external"
+msgstr "Otevřít v jiné aplikaci"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Skrýt totožnosti"
+
+msgid "menu.home"
+msgstr "Jít domů"
+
+msgid "menu.identities"
+msgstr "Spravovat totožnosti"
+
+msgid "sidebar.close"
+msgstr "Hotovo"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Nová složka"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Upravit"
+
+msgid "sidebar.action.history.clear"
+msgstr "Vymazat"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Používat %s"
+
+msgid "sidebar.empty.unread"
+msgstr "Žádné nepřečtené záznamy"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Vložit předcházející řádek"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Ukázat ve Finderu"
+
+msgid "menu.share"
+msgstr "Sdílet"
+
+msgid "menu.page.upload.edit"
+msgstr "Upravit pomocí Titanu…"
+
+msgid "heading.upload.id"
+msgstr "Oprávnění"
+
+msgid "menu.upload.export"
+msgstr "Exportovat text"
+
+msgid "menu.upload.delete"
+msgstr "Odstranit vše"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Opravdu odstranit vše (není cesty zpět)"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Obsah"
+
+msgid "hint.upload.path"
+msgstr "Cesta URL"
+
+msgid "hint.upload.token.long"
+msgstr "token - podívejte se na instrukce serveru"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Akce panelu nástrojů"
+
+msgid "prefs.toolbaraction1"
+msgstr "Tlačítko 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Tlačítko 2"
+
+msgid "prefs.blink"
+msgstr "Blikající kurzor:"
+
+msgid "keys.upload.edit"
+msgstr "Upravit pomocí Titanu"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Nastavit akci:"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Otevřít v průzkumníku souborů"

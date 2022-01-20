@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(GmError)
 iDeclareType(RegExp)
+iDeclareType(RegExpMatch)
 iDeclareType(Url)
 
 /* Response status codes. */
@@ -99,6 +100,7 @@ iRegExp *       newGemtextLink_RegExp   (void);
 
 #define GEMINI_DEFAULT_PORT         ((uint16_t) 1965)
 #define GEMINI_DEFAULT_PORT_CSTR    "1965"
+#define URL_RESERVED_CHARS          ":/?#[]@!$&'()*+,;=" /* RFC 3986 */
 
 struct Impl_Url {
     iRangecc scheme;
@@ -117,6 +119,8 @@ iRangecc        urlHost_String          (const iString *);
 uint16_t        urlPort_String          (const iString *);
 iRangecc        urlUser_String          (const iString *);
 iRangecc        urlRoot_String          (const iString *);
+const iBlock *  urlThemeSeed_String     (const iString *);
+
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
 iBool           isLikelyUrl_String      (const iString *);
 iBool           isKnownScheme_Rangecc   (iRangecc scheme); /* any URI scheme */
@@ -128,6 +132,7 @@ const iString * urlFragmentStripped_String(const iString *);
 const iString * urlQueryStripped_String (const iString *);
 void            urlDecodePath_String    (iString *);
 void            urlEncodePath_String    (iString *);
+void            urlEncodeQuery_String   (iString *);
 iString *       makeFileUrl_String      (const iString *localFilePath);
 const char *    makeFileUrl_CStr        (const char *localFilePath);
 iString *       localFilePathFromUrl_String(const iString *);
@@ -143,3 +148,8 @@ const iString * findContainerArchive_Path           (const iString *path);
 
 
 const iString * feedEntryOpenCommand_String (const iString *url, int newTab); /* checks fragment */
+
+/* TODO: Consider adding this to the_Foundation. */
+int     replaceRegExp_String    (iString *, const iRegExp *regexp, const char *replacement,
+                                 void (*matchHandler)(void *, const iRegExpMatch *),
+                                 void *context);

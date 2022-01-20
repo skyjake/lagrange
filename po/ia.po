@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-07-19 19:06+0000\n"
+"PO-Revision-Date: 2022-01-02 15:50+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -133,7 +133,7 @@ msgid "toolbar.outline"
 msgstr "Structura del pagina"
 
 msgid "hint.findtext"
-msgstr "Trovar texto in le pagina"
+msgstr "trovar texto in le pagina"
 
 msgid "status.feeds"
 msgstr "Actualisation del syndicationes"
@@ -760,8 +760,8 @@ msgstr "Certificato non valide"
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "Usate por %zu URL"
-msgstr[1] "Usate por %zu URLs"
+msgstr[0] "Usate por %u URL"
+msgstr[1] "Usate por %u URLs"
 
 #, c-format
 msgid "dlg.import.add"
@@ -926,9 +926,7 @@ msgstr "Vide %sAdjuta%s por plus de information re certificatos de cliente TLS."
 
 #, c-format
 msgid "dlg.confirm.unsub"
-msgstr ""
-"Disabonar le syndication\n"
-"«%s»?"
+msgstr "Disabonar le syndication «%s»?"
 
 msgid "heading.pageinfo"
 msgstr "INFORMATION RE LE PAGINA"
@@ -1001,7 +999,7 @@ msgid "error.tls"
 msgstr "Fallimento del rete o TLS"
 
 msgid "error.tls.msg"
-msgstr "Fallite a communicar con le servitor. Ecce le message de error:"
+msgstr "Fallite a communicar con le servitor."
 
 msgid "error.slowdown"
 msgstr "Relentamento"
@@ -1020,8 +1018,8 @@ msgstr "Monstrar tote"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu byte"
-msgstr[1] "%zu bytes"
+msgstr[0] "%u byte"
+msgstr[1] "%u bytes"
 
 msgid "prefs.doctheme.name.colorfuldark"
 msgstr "Colorate obscur"
@@ -1211,9 +1209,8 @@ msgstr "Actualisar marcapaginas remote"
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-"Vole tu vermente deler le identitate\n"
-"%s%s%s\n"
-"con su certificato e clave private?"
+"Vole tu vermente deler le identitate %s«%s»%s con su certificato e clave "
+"private?"
 
 msgid "lang.ie"
 msgstr "Interlingue"
@@ -1241,14 +1238,14 @@ msgstr "Le contento del pagina se carga ancora."
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "%zu abonate syndication que contine %%s.\n"
-msgstr[1] "%zu abonate syndicationes que contine %%s.\n"
+msgstr[0] "%u abonate syndication que contine %%s.\n"
+msgstr[1] "%u abonate syndicationes que contine %%s.\n"
 
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "%zu elemento in toto"
-msgstr[1] "%zu elementos in toto"
+msgstr[0] "%u elemento in toto"
+msgstr[1] "%u elementos in toto"
 
 msgid "dlg.autoreload"
 msgstr "Interstitio de recarga automatic por iste scheda."
@@ -1458,7 +1455,7 @@ msgid "menu.split.vertical"
 msgstr "Vertical"
 
 msgid "menu.view.split"
-msgstr "Finder le vista..."
+msgstr "Finder le vista…"
 
 msgid "bookmark.tag.linksplit"
 msgstr "Ligamines que aperi al latere"
@@ -1507,9 +1504,8 @@ msgstr "Sortir le archivo"
 #, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
-msgstr[0] "Iste archivo contine %zu elemento e su dimension comprimite es %.1f MB."
-msgstr[1] ""
-"Iste archivo contine %zu elementos e su dimension comprimite es %.1f MB."
+msgstr[0] "Iste archivo contine %u elemento e su dimension comprimite es %.1f MB."
+msgstr[1] "Iste archivo contine %u elementos e su dimension comprimite es %.1f MB."
 
 msgid "dir.empty"
 msgstr "Iste directorio es vacue."
@@ -1517,8 +1513,8 @@ msgstr "Iste directorio es vacue."
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "Iste directorio contine %zu elemento."
-msgstr[1] "Iste directorio contine %zu elementos."
+msgstr[0] "Iste directorio contine %u elemento."
+msgstr[1] "Iste directorio contine %u elementos."
 
 msgid "keys.tab.close.other"
 msgstr "Clauder le altere schedas"
@@ -1579,3 +1575,355 @@ msgstr "DELER LE FILE"
 
 msgid "dlg.file.delete"
 msgstr "Deler"
+
+msgid "upload.file.name"
+msgstr "Nomine de file:"
+
+msgid "upload.file.drophere"
+msgstr "(trahe e depone un file al fenestra)"
+
+msgid "upload.mime"
+msgstr "Typo MIME:"
+
+msgid "upload.token"
+msgstr "Token:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Velocitate del mus:"
+
+msgid "dlg.newident.more"
+msgstr "Plus…"
+
+msgid "dlg.fontpack.classic"
+msgstr "Discargar le fontpack (25 MB)"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Ruptura de linea"
+
+msgid "error.certverify"
+msgstr "Servitor non fidabile"
+
+msgid "prefs.imagestyle"
+msgstr "Colorisar imagines:"
+
+msgid "prefs.font.mono"
+msgstr "Preformattate:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Typo de characteres mono-spatio:"
+
+msgid "upload.port"
+msgstr "Porta…"
+
+msgid "heading.uploadport"
+msgstr "PORTA DE INCARGAMENTO DE TITAN"
+
+msgid "prefs.returnkey.accept"
+msgstr "Acceptar"
+
+msgid "prefs.returnkey"
+msgstr "Comportamento del clave Enter:"
+
+msgid "prefs.time.24h"
+msgstr "Tempore a 24-horas"
+
+msgid "prefs.imagestyle.original"
+msgstr "Nulle"
+
+msgid "prefs.imagestyle.text"
+msgstr "Color del texto"
+
+msgid "prefs.gemtext.ansi"
+msgstr "Escappamentos ANSI:"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Color de fundo"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Stilo del characteres"
+
+msgid "prefs.memorysize"
+msgstr "Dimension de memoria:"
+
+msgid "keys.upload"
+msgstr "Incargar un pagina via Titan"
+
+msgid "error.server.msg"
+msgstr "Le servitor ha respondite:"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Vider le file"
+
+msgid "dlg.newident.scope"
+msgstr "Usar pro:"
+
+msgid "menu.pageinfo"
+msgstr "Monstrar information re le pagina"
+
+msgid "menu.save.downloads.open"
+msgstr "Salvar a Discargas e aperir le file"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Velocitate de claviero:"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u dossier"
+msgstr[1] "%u dossiers"
+
+msgid "prefs.font.ui"
+msgstr "IdU:"
+
+msgid "fontpack.meta.disabled"
+msgstr ", inactive"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Activar «%s»"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Disactivar «%s»"
+
+msgid "fontpack.export"
+msgstr "Vider un patrono de fontpack.ini"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Installar «%s»"
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Promover «%s» al version %d"
+
+msgid "media.untitled.image"
+msgstr "Imagine"
+
+msgid "media.untitled.audio"
+msgstr "Audio"
+
+msgid "dlg.fontpack.delete"
+msgstr "Deler le fontpack"
+
+msgid "prefs.font.body"
+msgstr "Corpore:"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Fontpacks active"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Fontpacks inactive"
+
+msgid "menu.newfolder"
+msgstr "Nove dossier…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Parametros"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Seliger toto"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Deler"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Deler le marcapagina"
+msgstr[1] "Deler %u marcapaginas"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Vos have %d marcapagina."
+msgstr[1] "Vos have %d marcapaginas."
+
+msgid "sidebar.action.show"
+msgstr "Monstrar:"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "DELER MARCAPAGINAS"
+
+msgid "menu.website"
+msgstr "Sito web del projecto…"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Disfacer"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Aperir le directorio del typos del usator"
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Monstrar le typos de character installate"
+
+msgid "menu.fonts"
+msgstr "Gerer typos de litteras…"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Toto legite"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u typo"
+msgstr[1] "%u typos"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Desira tu vermente deler iste file?"
+
+msgid "bookmark.export.format.linklines"
+msgstr "Cata ligamine representa un marcapagina."
+
+msgid "menu.page.upload"
+msgstr "Incargar un pagina via Titan…"
+
+msgid "heading.upload"
+msgstr "INCARGAR VIA TITAN"
+
+msgid "upload.id"
+msgstr "Identitate:"
+
+msgid "dlg.upload.id.none"
+msgstr "Nulle"
+
+msgid "heading.upload.file"
+msgstr "File"
+
+msgid "upload.file.size"
+msgstr "Dimension de file:"
+
+msgid "dlg.upload.send"
+msgstr "Incargar"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Incargar un texto simple"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Incargar un file"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Seliger un file"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Dominio actual"
+
+msgid "dlg.newident.scope.page"
+msgstr "Pagina actual"
+
+msgid "dlg.newident.scope.none"
+msgstr "Non usate"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignorar ligamines HTTP(S):"
+
+msgid "dlg.bookmark.folder"
+msgstr "Dossier:"
+
+msgid "heading.bookmark.tags"
+msgstr "ETIQUETTAS SPECIAL"
+
+msgid "heading.addfolder"
+msgstr "ADDER UN DOSSIER"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Nove dossier"
+
+msgid "menu.update"
+msgstr "Controlar pro le actualisationes…"
+
+msgid "status.query.tight"
+msgstr "Requesta"
+
+msgid "dlg.addfolder"
+msgstr "Adder un dossier"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "PARAMETROS"
+
+msgid "prefs.font.heading"
+msgstr "Capites:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Visitate"
+
+msgid "prefs.font.warnmissing"
+msgstr "Advertimentos de glyphos:"
+
+msgid "prefs.linespacing"
+msgstr "Spatiamento inter lineas:"
+
+msgid "error.certexpired"
+msgstr "Certificato perimite"
+
+msgid "error.glyphs"
+msgstr "Glyphos mancante"
+
+msgid "heading.fontpack.meta"
+msgstr "Typos de character"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Version %d"
+
+msgid "fontpack.meta.installed"
+msgstr "Installate"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Non installate"
+
+msgid "heading.fontpack.delete"
+msgstr "DELER UN FONTPACK"
+
+msgid "fontpack.install.ttf"
+msgstr "Installar un typo de litteras TrueType"
+
+msgid "dlg.dismiss.warning"
+msgstr "Dimitter le advertimento"
+
+msgid "heading.fontpack.classic"
+msgstr "DISCARGAR UN FONTPACK"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Color de preformattate"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Deler permanentemente «%s»"
+
+msgid "dlg.certwarn.title"
+msgstr "Problema de securitate"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Importar un certificato o un file clave"
+
+msgid "bookmark.export.title.folder"
+msgstr "Marcapaginas"
+
+msgid "bookmark.export.title.tag"
+msgstr "Etiquettas de marcapaginas"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Scala de gris"
+
+msgid "error.ansi"
+msgstr "Emulation de terminal"
+
+msgid "dlg.upload.id.default"
+msgstr "Predefinite"
+
+msgid "heading.upload.text"
+msgstr "Texto"
+
+msgid "hint.upload.text"
+msgstr "Insere texto a incargar"

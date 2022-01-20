@@ -123,6 +123,11 @@ enum iWidgetFlag {
 #define refChildrenOffset_WidgetFlag        iBit64(63) /* visual offset determined by the offset of referenced children */
 #define nativeMenu_WidgetFlag               iBit64(64)
 
+enum iWidgetFlag2 {
+    slidingSheetDraggable_WidgetFlag2 = iBit(1),
+    fadeBackground_WidgetFlag2        = iBit(2),
+};
+
 enum iWidgetAddPos {
     back_WidgetAddPos,
     front_WidgetAddPos,
@@ -139,7 +144,9 @@ struct Impl_Widget {
     iObject      object;
     iString      id;
     int64_t      flags;
+    int          flags2;
     iRect        rect;
+    iInt2        oldSize; /* in previous arrangement; for notification */
     iInt2        minSize;
     iWidget *    sizeRef;
     iWidget *    offsetRef;
@@ -230,6 +237,24 @@ iLocalDef int height_Widget(const iAnyObject *d) {
     }
     return 0;
 }
+iLocalDef int leftPad_Widget(const iWidget *d) {
+    return d->padding[0];
+}
+iLocalDef int topPad_Widget(const iWidget *d) {
+    return d->padding[1];
+}
+iLocalDef int rightPad_Widget(const iWidget *d) {
+    return d->padding[2];
+}
+iLocalDef int bottomPad_Widget(const iWidget *d) {
+    return d->padding[3];
+}
+iLocalDef iInt2 tlPad_Widget(const iWidget *d) {
+    return init_I2(leftPad_Widget(d), topPad_Widget(d));
+}
+iLocalDef iInt2 brPad_Widget(const iWidget *d) {
+    return init_I2(rightPad_Widget(d), bottomPad_Widget(d));
+}
 iLocalDef iObjectList *children_Widget(iAnyObject *d) {
     if (d == NULL) return NULL;
     iAssert(isInstance_Object(d, &Class_Widget));
@@ -302,7 +327,8 @@ void        scrollInfo_Widget           (const iWidget *, iWidgetScrollInfo *inf
 
 int         backgroundFadeColor_Widget  (void);
 
-void        setFocus_Widget         (iWidget *);
+void        setFocus_Widget         (iWidget *); /* widget must be flagged `focusable` */
+void        setKeyboardGrab_Widget  (iWidget *); /* sets focus on any widget */
 iWidget *   focus_Widget            (void);
 void        setHover_Widget         (iWidget *);
 iWidget *   hover_Widget            (void);

@@ -1,3 +1,5 @@
+find_package (PkgConfig)
+
 if (IOS)
     include (Depends-iOS.cmake)
     return ()
@@ -16,7 +18,7 @@ set (_dependsToBuild)
 
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
     set (INSTALL_THE_FOUNDATION YES)
-    find_package (the_Foundation 1.0.1 REQUIRED)
+    find_package (the_Foundation 1.1.0 REQUIRED)
 else ()
     if (EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/.git)
         # the_Foundation is checked out as a submodule, make sure it's up to date.
@@ -49,7 +51,7 @@ else ()
 endif ()
 
 if (APPLE AND CMAKE_OSX_DEPLOYMENT_TARGET)
-    set (_dependMacOpts 
+    set (_dependMacOpts
         -Dc_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
         -Dc_link_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
         -Dcpp_args=-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}
@@ -62,8 +64,8 @@ if (ENABLE_HARFBUZZ)
     if (NOT ENABLE_HARFBUZZ_MINIMAL AND PKG_CONFIG_FOUND)
         pkg_check_modules (HARFBUZZ IMPORTED_TARGET harfbuzz)
     endif ()
-    if (EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt AND 
-            (ENABLE_HARFBUZZ_MINIMAL OR NOT HARFBUZZ_FOUND))            
+    if (EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt AND
+            (ENABLE_HARFBUZZ_MINIMAL OR NOT HARFBUZZ_FOUND))
         # Build HarfBuzz with minimal dependencies.
         if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
             set (_dst ${CMAKE_BINARY_DIR}/lib/harfbuzz)
