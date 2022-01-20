@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.10 (Alpha 4)
+* Save downloads to the external storage so they're accessible from a file manager.
+* Handle Gemini, Gopher and Finger URIs opened from other apps.
+* Back button dismisses UI panels/dialogs when appropriate instead of navigating back.
+
 ## 1.10 (Alpha 3)
 * Added Android-specific release notes.
 * Added Settings > UI > Toolbar Actions: customize the two leftmost phone toolbar buttons.

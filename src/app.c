@@ -333,7 +333,9 @@ static const char *dataDir_App_(void) {
 
 static const char *downloadDir_App_(void) {
 #if defined (iPlatformAndroidMobile)
-    return concatPath_CStr(SDL_AndroidGetInternalStoragePath(), "Downloads");
+    const char *dir = concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "Downloads");
+    makeDirs_Path(collectNewCStr_String(dir));
+    return dir;
 #endif
 #if defined (iPlatformLinux) || defined (iPlatformOther)
     /* Parse user-dirs.dirs using the `xdg-user-dir` tool. */
@@ -1391,6 +1393,16 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
                 }
 #if defined (iPlatformAndroidMobile)
+                /* Use the system Back button to close panels, if they're open. */
+                if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_AC_BACK) {
+                    SDL_UserEvent panelBackCmd = { .type = SDL_USEREVENT,
+                                                   .code = command_UserEventCode,
+                                                   .data1 = iDupStr("panel.close"),
+                                                   .data2 = d->window->base.keyRoot };
+                    if (dispatchEvent_Window(&d->window->base, (SDL_Event *) &panelBackCmd)) {
+                        continue; /* Was handled by someone. */
+                    }
+                }
                 /* Ignore all mouse events; just use touch. */
                 if (ev.type == SDL_MOUSEBUTTONDOWN ||
                     ev.type == SDL_MOUSEBUTTONUP ||
