@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-16 09:50+0000\n"
+"PO-Revision-Date: 2022-01-20 04:05+0000\n"
 "Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
@@ -2240,3 +2240,11 @@ msgstr "Blikající kurzor:"
 
 msgid "keys.upload.edit"
 msgstr "Upravit pomocí Titanu"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Nastavit akci:"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Otevřít v průzkumníku souborů"
