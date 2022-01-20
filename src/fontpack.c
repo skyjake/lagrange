@@ -1114,7 +1114,7 @@ static void findCharactersInCMap_(iGmRequest *d, iGmRequest *req) {
         format_String(&result, "font.found chars:%s packs:", cstr_String(missingChars));
         iConstForEach(StringList, s, matchingPacks) {
             if (s.pos != 0) {
-                appendCStr_String(&result, ";");
+                appendCStr_String(&result, ",");
             }
             append_String(&result, s.value);
         }
@@ -1131,9 +1131,11 @@ static void findCharactersInCMap_(iGmRequest *d, iGmRequest *req) {
                           cstr_String(meta_GmRequest(d)),
                           cstr_String(url_GmRequest(d)));
     }
-    fflush(stdout);
+//    fflush(stdout);
     delete_String(userData_Object(d));
-    iReleaseLater(d);
+    /* We can't delete ourselves; threads must be joined from another thread. */
+    SDL_PushEvent((SDL_Event *) &(SDL_UserEvent){
+        .type = SDL_USEREVENT, .code = releaseObject_UserEventCode, .data1 = d });
 }
 
 void searchOnlineLibraryForCharacters_Fonts(const iString *chars) {

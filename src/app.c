@@ -1362,6 +1362,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     dispatchCommands_Periodic(&d->periodic);
                     continue;
                 }
+                if (ev.type == SDL_USEREVENT && ev.user.code == releaseObject_UserEventCode) {
+                    iRelease(ev.user.data1);
+                    continue;
+                }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
                 if (ev.type == SDL_USEREVENT && ev.user.code == asleep_UserEventCode) {
                     if (SDL_GetTicks() - d->lastEventTime > idleThreshold_App_ &&
@@ -2394,12 +2398,19 @@ iBool handleCommand_App(const char *cmd) {
         setCStr_String(src, "# ${heading.glyphfinder.results}\n\n");
         iRangecc path = iNullRange;
         iBool isFirst = iTrue;
-        while (nextSplit_Rangecc(range_Command(cmd, "packs"), ";", &path)) {
+        while (nextSplit_Rangecc(range_Command(cmd, "packs"), ",", &path)) {
             if (isFirst) {
                 appendCStr_String(src, "${glyphfinder.results}\n\n");
             }
-            const char *fp = cstr_Rangecc(path);
-            appendFormat_String(src, "=> gemini://skyjake.fi/fonts/%s %s\n", fp, fp);
+            iRangecc fpath = path;
+            iRangecc fsize = path;
+            fpath.end = strchr(fpath.start, ';');
+            fsize.start = fpath.end + 1;
+            const uint32_t size = strtoul(fsize.start, NULL, 10);
+            appendFormat_String(src, "=> gemini://skyjake.fi/fonts/%s %s (%.1f MB)\n",
+                                cstr_Rangecc(fpath),
+                                cstr_Rangecc(fpath),
+                                (double) size / 1.0e6);
             isFirst = iFalse;
         }
         if (isFirst) {
