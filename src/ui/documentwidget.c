@@ -2659,7 +2659,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                             if (loadArchive_FontPack(fp, zip)) {
                                 appendFormat_String(&str, "# " fontpack_Icon "%s\n%s",
                                                     cstr_String(id_FontPack(fp).id),
-                                                    cstrCollect_String(infoText_FontPack(fp)));
+                                                    cstrCollect_String(infoText_FontPack(fp, iTrue)));
                             }
                             appendCStr_String(&str, "\n");
                             appendCStr_String(&str, cstr_Lang("fontpack.help"));

@@ -749,7 +749,7 @@ const iPtrArray *listSpecsByPriority_Fonts(void) {
     return &fonts_.specOrder;
 }
 
-iString *infoText_FontPack(const iFontPack *d) {
+iString *infoText_FontPack(const iFontPack *d, iBool isFull) {
     const iFontPack *installed        = pack_Fonts(cstr_String(&d->id));
     const iBool      isInstalled      = (installed != NULL);
     const int        installedVersion = installed ? installed->version : 0;
@@ -758,9 +758,17 @@ iString *infoText_FontPack(const iFontPack *d) {
     size_t           sizeInBytes      = 0;
     iPtrSet         *uniqueFiles      = new_PtrSet();
     iStringList     *names            = new_StringList();
+    size_t           numNames         = 0;
+    iBool            isAbbreviated    = iFalse;
     iConstForEach(PtrArray, i, listSpecs_FontPack(d)) {
         const iFontSpec *spec = i.ptr;
-        pushBack_StringList(names, &spec->name);
+        numNames++;
+        if (isFull || size_StringList(names) < 20) {
+            pushBack_StringList(names, &spec->name);
+        }
+        else {
+            isAbbreviated = iTrue;
+        }
         iForIndices(j, spec->styles) {
             insert_PtrSet(uniqueFiles, spec->styles[j]->sourceData.i);
         }
@@ -778,11 +786,12 @@ iString *infoText_FontPack(const iFontPack *d) {
             if (!endsWith_String(str, "(")) {
                 appendCStr_String(str, ", ");
             }
-            appendCStr_String(str, formatCStrs_Lang("num.fonts.n", size_StringList(names)));
+            appendCStr_String(str, formatCStrs_Lang("num.fonts.n", numNames));
         }
         appendFormat_String(str, ")");
     }
-    appendFormat_String(str, " \u2014 %s\n", cstrCollect_String(joinCStr_StringList(names, ", ")));
+    appendFormat_String(str, " \u2014 %s%s\n", cstrCollect_String(joinCStr_StringList(names, ", ")),
+                        isAbbreviated ? ", ..." : "");
     if (isInstalled && installedVersion != d->version) {
         appendCStr_String(str, format_Lang("${fontpack.meta.version}\n", d->version));
     }
@@ -946,7 +955,7 @@ const iString *infoPage_Fonts(iRangecc query) {
                         appendFormat_String(str, "### %s\n",
                                             isEmpty_String(packId) ? "fonts.ini" :
                                             cstr_String(packId));
-                        append_String(str, collect_String(infoText_FontPack(pack)));
+                        append_String(str, collect_String(infoText_FontPack(pack, iFalse)));
                         appendFormat_String(str, "=> %s ${fontpack.meta.viewfile}\n",
                                             cstrCollect_String(makeFileUrl_String(&spec->sourcePath)));
                         if (pack->isStandalone) {
