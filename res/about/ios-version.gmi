@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.10 (10)
+* Fixed a hang when tapping "New Folder" while editing bookmarks.
+* Bug fixes, improvements, and updated UI translations from the desktop version (v1.10.1).
+
 ## 1.10 (9)
 * Added "Share" actions for downloaded files (via "Download Linked File") and selected text on page.
 * Added "Edit Page with Titan": opens the Upload dialog with the page contents prefilled (previous contents are lost!).
