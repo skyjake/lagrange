@@ -1001,10 +1001,11 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         default: {
             SDL_Event event = *ev;
             if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze") && mw) {
-                mw->isDrawFrozen = iFalse;
                 if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
+                    mw->isDrawFrozen = iTrue; /* don't trigger a redraw now */
                     SDL_ShowWindow(d->win);
                 }
+                mw->isDrawFrozen = iFalse;
                 draw_MainWindow(mw); /* don't show a frame of placeholder content */
                 postCommand_App("media.player.update"); /* in case a player needs updating */
                 return iTrue;
