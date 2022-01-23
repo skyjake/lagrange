@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-12-04 10:50+0000\n"
+"PO-Revision-Date: 2022-01-24 10:50+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -614,10 +614,10 @@ msgid "dlg.certimport.nokey"
 msgstr "Null clave privat"
 
 msgid "link.hint.audio"
-msgstr "Reproducter li audio"
+msgstr "Audio"
 
 msgid "link.hint.image"
-msgstr "Vider li image"
+msgstr "Image"
 
 msgid "bookmark.title.blank"
 msgstr "Págine blanc"
@@ -638,20 +638,20 @@ msgid "dlg.bookmark.icon"
 msgstr "Icone:"
 
 msgid "heading.prefs"
-msgstr "PREFERENTIES"
+msgstr "Preferenties"
 
 msgid "heading.prefs.certs"
-msgstr "CERTIFICATES"
+msgstr "Certificates"
 
 # tab button
 msgid "heading.prefs.colors"
 msgstr "Colores"
 
 msgid "heading.prefs.proxies"
-msgstr "PROXYS"
+msgstr "Proxys"
 
 msgid "heading.prefs.scrolling"
-msgstr "RULAMENT"
+msgstr "Rulament"
 
 # tab button
 msgid "heading.prefs.style"
@@ -806,7 +806,7 @@ msgid "heading.prefs.network"
 msgstr "Rete"
 
 msgid "heading.prefs.paragraph"
-msgstr "PARAGRAF"
+msgstr "Paragraf"
 
 msgid "prefs.saturation"
 msgstr "Saturation:"
@@ -976,7 +976,7 @@ msgid "menu.autoreload"
 msgstr "Auto-recarga…"
 
 msgid "heading.history.clear"
-msgstr "VACUAR LI DIARIUM"
+msgstr "Vacuar li diarium"
 
 msgid "dlg.confirm.history.clear"
 msgstr "Esque vu vole efaciar li diarium de omni visitat págines?"
@@ -1077,7 +1077,7 @@ msgid "heading.prefs.pagecontent"
 msgstr "COLORES DE PÁGINE"
 
 msgid "heading.prefs.sizing"
-msgstr "DIMENSION"
+msgstr "Dimension"
 
 msgid "heading.prefs.widelayout"
 msgstr "LARG ARANGEMENT"
@@ -1384,7 +1384,7 @@ msgstr "sur clar"
 
 # Link download progress message.
 msgid "doc.fetching"
-msgstr "Obtenente"
+msgstr "Cargante"
 
 # Inline download status message.
 msgid "media.download.complete"
@@ -1455,7 +1455,7 @@ msgid "menu.downloads"
 msgstr "Monstrar Descargates"
 
 msgid "menu.split.merge"
-msgstr "Unir cartes"
+msgstr "Reunir"
 
 msgid "menu.view.split"
 msgstr "Fender li vise…"
@@ -1671,7 +1671,7 @@ msgid "dlg.file.delete"
 msgstr "Remover"
 
 msgid "heading.prefs.uitheme"
-msgstr "COLORES DE IDU"
+msgstr "Colores de IdU"
 
 msgid "prefs.scrollspeed.keyboard"
 msgstr "Rapiditá del tastatura:"
@@ -1721,7 +1721,7 @@ msgid "prefs.returnkey.accept"
 msgstr "Acceptar"
 
 msgid "keys.upload"
-msgstr "Cargar un págine med Titan"
+msgstr "Cargar med Titan"
 
 msgid "error.certexpired"
 msgstr "Certificate ha expirat"
@@ -1734,10 +1734,10 @@ msgid "menu.unexpire"
 msgstr "Ignorar li expiration e continuar cargar"
 
 msgid "menu.page.upload"
-msgstr "Cargar un págine med Titan…"
+msgstr "Cargar med Titan…"
 
 msgid "heading.upload"
-msgstr "CARGAR MED TITAN"
+msgstr "Cargar med Titan"
 
 msgid "heading.upload.text"
 msgstr "Textu"
@@ -1851,7 +1851,7 @@ msgstr "Adjunter un fólder"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "PARAMETRES"
+msgstr "Parametres"
 
 msgid "prefs.imagestyle"
 msgstr "Colorisar images:"
@@ -2119,3 +2119,93 @@ msgstr "Controlar actualisamentes…"
 
 msgid "sidebar.action.show"
 msgstr "Monstrar:"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Usar %s"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Collar li precedent linea"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Monstrar in li gerente de files"
+
+msgid "menu.page.upload.edit"
+msgstr "Modificar li págine med Titan…"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Actiones del instrumentarium"
+
+msgid "prefs.toolbaraction1"
+msgstr "Buton 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Buton 2"
+
+msgid "keys.upload.edit"
+msgstr "Modificar li págine med Titan"
+
+msgid "menu.open.external"
+msgstr "Aperter med un altri app"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Celar identitás"
+
+msgid "menu.home"
+msgstr "Ear al hem"
+
+msgid "menu.identities"
+msgstr "Gerer identitás"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Monstrar in Finder"
+
+msgid "menu.share"
+msgstr "Partir"
+
+msgid "heading.upload.id"
+msgstr "Autorisation"
+
+msgid "menu.upload.export"
+msgstr "Exportar li textu"
+
+msgid "menu.upload.delete"
+msgstr "Remover omni"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Vermen remover omni (impossibil a defar)"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "Adresse"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Assignar un action:"
+
+msgid "sidebar.close"
+msgstr "Fin"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Nov fólder"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Modificar"
+
+msgid "sidebar.action.history.clear"
+msgstr "Vacuar"
+
+msgid "sidebar.empty.unread"
+msgstr "Null ínleet elementes"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Contenete"
+
+msgid "hint.upload.path"
+msgstr "Rute"
