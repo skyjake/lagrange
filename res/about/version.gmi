@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.10.2
+* Fixed cancelling an input query. Now pressing Cancel will navigate back to the previous page as expected.
+* macOS: Workaround for a crash when launching. Prevent event processing from being triggered while the app window is becoming visible for the first time.
+* Fixed a build issue on Haiku OS.
+* Updated Smol Emoji: added the rest of Unicode 8 Emoji glyphs.
+
 ## 1.10.1
 * Fixed bottom actions of the Feeds sidebar getting hidden when all entries are read. This prevented switching between Unread/All filter modes.
 * Fixed potential crash when downloading a large file (e.g., a fontpack).
