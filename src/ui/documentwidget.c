@@ -4069,14 +4069,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
-             equal_Rangecc(range_Command(cmd, "id"), "document.input.submit") && document_App() == d) {
+             equal_Rangecc(range_Command(cmd, "id"), "!document.input.submit") && document_App() == d) {
         postCommand_Root(get_Root(), "navigate.back");
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
-//        set_Block(&d->sourceContent, &lockResponse_GmRequest(d->request)->body);
-//        unlockResponse_GmRequest(d->request);
         if (document_App() == d) {
             updateFetchProgress_DocumentWidget_(d);
         }
@@ -4311,9 +4309,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 if (parts.path.end[-1] == '/') break;
                 parts.path.end--;
             }
-            postCommandf_Root(w->root,
-                "open url:%s",
-                cstr_Rangecc((iRangecc){ constBegin_String(d->mod.url), parts.path.end }));
+            iString *parentUrl = collectNewRange_String((iRangecc){ constBegin_String(d->mod.url),
+                                                                    parts.path.end });
+            if (equalCase_Rangecc(parts.scheme, "gopher")) {
+                /* Always go to a gophermap. */
+                iZap(parts);
+                init_Url(&parts, parentUrl);
+                if (parts.path.start && size_Range(&parts.path) >= 2) {
+                    ((char *) parts.path.start)[1] = '1';
+                }
+            }
+            postCommandf_Root(w->root, "open url:%s", cstr_String(parentUrl));
         }
         return iTrue;
     }

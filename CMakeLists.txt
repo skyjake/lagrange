@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.10.1
+    VERSION 1.10.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2022)
 if (IOS)
     set (PROJECT_VERSION 1.10)
-    set (IOS_BUNDLE_VERSION 9)
-    set (IOS_BUILD_DATE "2022-01-01")
+    set (IOS_BUNDLE_VERSION 10)
+    set (IOS_BUILD_DATE "2022-01-21")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.10)
-    set (ANDROID_BUILD_VERSION a3)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-01-03")
+    set (ANDROID_BUILD_VERSION a4)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-01-20")
 endif ()
 
 # Defaults that depend on environment.
@@ -232,7 +232,7 @@ set (SOURCES
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
-    src/ui/sidebarwidget.h    
+    src/ui/sidebarwidget.h
     src/ui/text.c
     src/ui/text.h
     src/ui/touch.c
@@ -435,7 +435,7 @@ if (APPLE)
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
     )
     if (IOS)
-        target_compile_definitions (app PUBLIC 
+        target_compile_definitions (app PUBLIC
             LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}"
             LAGRANGE_IOS_BUILD_DATE="${IOS_BUILD_DATE}"
         )
@@ -464,7 +464,7 @@ endif ()
 if (MSYS)
     target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
     if (ENABLE_WINSPARKLE)
-        target_link_libraries (app PUBLIC winsparkle)        
+        target_link_libraries (app PUBLIC winsparkle)
     endif ()
 endif ()
 if (UNIX)
