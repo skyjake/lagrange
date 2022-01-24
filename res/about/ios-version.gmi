@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.10 (11)
+* Fixed cancelling an input query. Now pressing Cancel will navigate back to the previous page as intended.
+* Gopher: Fixed navigating to parent. Set item type to 1 to show a gophermap and not the plain source.
+* Updated Smol Emoji: added the rest of Unicode 8 Emoji glyphs.
+
 ## 1.10 (10)
 * Fixed a hang when tapping "New Folder" while editing bookmarks.
 * Bug fixes, improvements, and updated UI translations from the desktop version (v1.10.1).
