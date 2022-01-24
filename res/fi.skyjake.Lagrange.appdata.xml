@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.10.2" date="2022-01-24">
+            <description>
+                <p>Changes in v1.10.2:</p>
+                <ul>
+                    <li>Fixed cancelling an input query. Now pressing Cancel will navigate back to the previous page as intended.</li>
+                    <li>Gopher: Fixed navigating to parent. Set item type to 1 to show a gophermap and not the plain source.</li>
+                    <li>Updated Smol Emoji: added the rest of Unicode 8 Emoji glyphs.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.10.2</url>
+        </release>
         <release version="1.10.1" date="2022-01-20">
             <description>
                 <p>Changes in v1.10.1:</p>
