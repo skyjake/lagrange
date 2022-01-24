@@ -7,7 +7,8 @@
 # Release notes
 
 ## 1.10.2
-* Fixed cancelling an input query. Now pressing Cancel will navigate back to the previous page as expected.
+* Fixed cancelling an input query. Now pressing Cancel will navigate back to the previous page as intended.
+* Gopher: Fixed navigating to parent. Set item type to 1 to show a gophermap and not the plain source.
 * macOS: Workaround for a crash when launching. Prevent event processing from being triggered while the app window is becoming visible for the first time.
 * Fixed a build issue on Haiku OS.
 * Updated Smol Emoji: added the rest of Unicode 8 Emoji glyphs.
