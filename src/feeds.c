@@ -275,7 +275,8 @@ static void save_Feeds_(iFeeds *d) {
     if (open_File(f, write_FileMode | text_FileMode)) {
         lock_Mutex(d->mtx);
         iString *str = new_String();
-        format_String(str, "%llu\n# Feeds\n", integralSeconds_Time(&d->lastRefreshedAt));
+        format_String(str, "%llu\n# Feeds\n", (unsigned long long)
+                      integralSeconds_Time(&d->lastRefreshedAt));
         write_File(f, utf8_String(str));
         /* Index of feeds for IDs. */ {
             iConstForEach(PtrArray, i, listSubscriptions_()) {
@@ -296,8 +297,8 @@ static void save_Feeds_(iFeeds *d) {
             }
             format_String(str, "%x\n%llu\n%llu\n%s\n%s\n",
                           entry->bookmarkId,
-                          integralSeconds_Time(&entry->posted),
-                          integralSeconds_Time(&entry->discovered),
+                          (unsigned long long) integralSeconds_Time(&entry->posted),
+                          (unsigned long long) integralSeconds_Time(&entry->discovered),
                           cstr_String(&entry->url),
                           cstr_String(&entry->title));
             write_File(f, utf8_String(str));
