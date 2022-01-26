@@ -522,6 +522,7 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;
     install (FILES res/fi.skyjake.Lagrange.appdata.xml
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
     )
+    install (FILES res/lagrange.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
     if (NOT ENABLE_RELATIVE_EMBED)
         target_compile_definitions (app PUBLIC
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
