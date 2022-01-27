@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.10.3
+* Added a man page.
+* "/index.gmi" is considered equal to "/" when navigating to parent directory.
+* Fixed crash when a media player is active and a new download is started.
+* Fixed a possible crash when saving state of subscribed feeds.
+
 ## 1.10.2
 * Fixed cancelling an input query. Now pressing Cancel will navigate back to the previous page as intended.
 * Gopher: Fixed navigating to parent. Set item type to 1 to show a gophermap and not the plain source.
