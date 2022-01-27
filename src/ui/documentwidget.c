@@ -4301,6 +4301,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "navigate.parent") && document_App() == d) {
         iUrl parts;
         init_Url(&parts, d->mod.url);
+        if (endsWith_Rangecc(parts.path, "/index.gmi")) {
+            parts.path.end -= 9; /* This is the default index page. */
+        }
         /* Remove the last path segment. */
         if (size_Range(&parts.path) > 1) {
             if (parts.path.end[-1] == '/') {
