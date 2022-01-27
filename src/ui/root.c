@@ -1528,6 +1528,7 @@ void createUserInterface_Root(iRoot *d) {
             addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
             iSidebarWidget *sidebar2 = new_SidebarWidget(right_SidebarSide);
             addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
+            setFlags_Widget(as_Widget(sidebar2), disabledWhenHidden_WidgetFlag, iTrue);
         }
         else {
             /* Sidebar is a slide-over sheet. */
