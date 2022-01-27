@@ -921,6 +921,7 @@ static void documentRunsInvalidated_DocumentView_(iDocumentView *d) {
     d->hoverPre    = NULL;
     d->hoverAltPre = NULL;
     d->hoverLink   = NULL;
+    clear_PtrArray(&d->visibleMedia);
     iZap(d->visibleRuns);
     iZap(d->renderRuns);
 }
