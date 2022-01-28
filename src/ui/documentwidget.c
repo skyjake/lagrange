@@ -4351,6 +4351,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
+        if (argLabel_Command(cmd, "smooth")) {
+            stopWidgetMomentum_Touch(w);
+            smoothScroll_DocumentView_(&d->view, -pos_SmoothScroll(&d->view.scrollY), 500);
+            d->view.scrollY.flags |= muchSofter_AnimFlag;
+            return iTrue;
+        }
         init_Anim(&d->view.scrollY.pos, 0);
         invalidate_VisBuf(d->view.visBuf);
         clampScroll_DocumentView_(&d->view);
