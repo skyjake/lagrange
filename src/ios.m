@@ -312,6 +312,8 @@ replacementString:(NSString *)string {
 
 @end
 
+/*----------------------------------------------------------------------------------------------*/
+
 static void enableMouse_(iBool yes) {
     SDL_EventState(SDL_MOUSEBUTTONDOWN, yes);
     SDL_EventState(SDL_MOUSEMOTION, yes);
