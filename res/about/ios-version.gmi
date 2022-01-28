@@ -11,6 +11,7 @@
 * "/index.gmi" is considered equal to "/" when navigating to parent directory.
 * Fixed crash when a media player is active and a new download is started.
 * Fixed crash when a line contains nothing but an ANSI escape sequence.
+* Fixed height of navbar buttons on iPad.
 
 ## 1.10 (11)
 * Fixed cancelling an input query. Now pressing Cancel will navigate back to the previous page as intended.
