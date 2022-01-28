@@ -547,9 +547,11 @@ static void clear_RunTypesetter_(iRunTypesetter *d) {
     clear_Array(&d->layout);
 }
 
-static void commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
+static size_t commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
+    const size_t n = size_Array(&d->layout);
     pushBackN_Array(&doc->layout, constData_Array(&d->layout), size_Array(&d->layout));
     clear_RunTypesetter_(d);
+    return n;
 }
 
 static const int maxLedeLines_ = 10;
@@ -964,6 +966,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         iAssert(!isEmpty_Range(&line)); /* must have something at this point */
+        size_t numRunsAdded = 0;
         /* Typeset the paragraph. */ {
             iRunTypesetter rts;
             init_RunTypesetter_(&rts);
@@ -1036,7 +1039,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                                                                             : 1.0f);
                         }
                     }
-                    commit_RunTypesetter_(&rts, d);
+                    numRunsAdded = commit_RunTypesetter_(&rts, d);
                     break;
                 }
                 /* Try again... */
@@ -1050,6 +1053,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             deinit_RunTypesetter_(&rts);
         }
         /* Flag the end of line, too. */
+        if (numRunsAdded == 0) {
+            pos.y += lineHeight_Text(run.font) * prefs->lineSpacing;
+            followsBlank = iTrue;
+            continue;
+        }
         iGmRun *lastRun = back_Array(&d->layout);
         lastRun->flags |= endOfLine_GmRunFlag;
         if (lastRun->linkId && lastRun->flags & startOfLine_GmRunFlag) {
