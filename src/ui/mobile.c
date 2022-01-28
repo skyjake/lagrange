@@ -940,7 +940,7 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     }
     const int maxOffset = isHorizPanel            ? width_Widget(sheet)
                           : isPortraitPhone_App() ? height_Widget(sheet)
-                                                  : (12 * gap_UI);
+                                                  : (6 * gap_UI);
     if (isIncoming) {
         setVisualOffset_Widget(sheet, maxOffset, 0, 0);
         setVisualOffset_Widget(sheet, 0, 330, easeOut_AnimFlag | softer_AnimFlag);

@@ -1312,8 +1312,7 @@ void createUserInterface_Root(iRoot *d) {
 #if defined (iPlatformApple)
         addUnsplitButton_(navBar);
 #endif
-        iWidget *navBack;
-        setId_Widget(navBack = addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.action1");
+        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.action1");
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(forwardArrow_Icon, 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.action2");
         /* Button for toggling the left sidebar. */
         setId_Widget(addChildFlags_Widget(
@@ -1497,6 +1496,16 @@ void createUserInterface_Root(iRoot *d) {
         /* On PC platforms, the close buttons are generally on the top right. */
         addUnsplitButton_(navBar);
 #endif
+        if (deviceType_App() == tablet_AppDeviceType) {
+            /* Ensure that all navbar buttons match the height of the input field.
+               This is required because touch input fields are given extra padding,
+               making them taller than buttons by default. */
+            iForEach(ObjectList, i, children_Widget(navBar)) {
+                if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                    as_Widget(i.object)->sizeRef = as_Widget(url);
+                }
+            }
+        }
     }
     /* Tab bar. */ {
         iWidget *mainStack = new_Widget();
