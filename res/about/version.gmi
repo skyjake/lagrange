@@ -10,6 +10,7 @@
 * Added a man page.
 * "/index.gmi" is considered equal to "/" when navigating to parent directory.
 * Fixed crash when a media player is active and a new download is started.
+* Fixed crash when a line contains nothing but an ANSI escape sequence.
 * Fixed a possible crash when saving state of subscribed feeds.
 * Fixed the right-hand sidebar handling the U and Shift+U key events if it was showing the Feeds tab, even though the sidebar was hidden.
 
