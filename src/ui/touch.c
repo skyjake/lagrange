@@ -638,11 +638,14 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 pixels.x = 0;
             }
 #if 0
-            printf("%p (%s) py: %i wy: %f acc: %f edge: %d\n",
+            static uint32_t lastTime = 0;
+            printf("%u :: %p (%s) py: %i wy: %f acc: %f edge: %d\n",
+                   nowTime - lastTime,
                    touch->affinity,
                    class_Widget(touch->affinity)->name,
                    pixels.y, y_F3(amount), y_F3(touch->accum),
                    touch->edge);
+            lastTime = nowTime;
 #endif
             if (pixels.x || pixels.y) {
                 //setFocus_Widget(NULL);
