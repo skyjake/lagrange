@@ -127,6 +127,7 @@ iBool           isKnownScheme_Rangecc   (iRangecc scheme); /* any URI scheme */
 iBool           isKnownUrlScheme_Rangecc(iRangecc scheme); /* URL schemes only */
 void            punyEncodeDomain_Rangecc(iRangecc domain, iString *encoded_out);
 void            punyEncodeUrlHost_String(iString *absoluteUrl);
+void            stripUrlPort_String     (iString *);
 void            stripDefaultUrlPort_String(iString *);
 const iString * urlFragmentStripped_String(const iString *);
 const iString * urlQueryStripped_String (const iString *);
@@ -138,6 +139,7 @@ const char *    makeFileUrl_CStr        (const char *localFilePath);
 iString *       localFilePathFromUrl_String(const iString *);
 void            urlEncodeSpaces_String  (iString *);
 const iString * withSpacesEncoded_String(const iString *);
+const iString * withScheme_String       (const iString *, const char *scheme); /* replace URI scheme */
 const iString * canonicalUrl_String     (const iString *);
 
 const char *    mediaType_Path                      (const iString *path);

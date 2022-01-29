@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "gmutil.h"
+#include "gopher.h"
 #include "history.h"
 #include "indicatorwidget.h"
 #include "inputwidget.h"
@@ -4315,20 +4316,31 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
             iString *parentUrl = collectNewRange_String((iRangecc){ constBegin_String(d->mod.url),
                                                                     parts.path.end });
-            if (equalCase_Rangecc(parts.scheme, "gopher")) {
-                /* Always go to a gophermap. */
-                iZap(parts);
-                init_Url(&parts, parentUrl);
-                if (parts.path.start && size_Range(&parts.path) >= 2) {
-                    ((char *) parts.path.start)[1] = '1';
-                }
+            /* Always go to a gophermap. */
+            setUrlItemType_Gopher(parentUrl, '1');
+            /* Hierarchical navigation doesn't make sense with Titan. */
+            if (startsWith_String(parentUrl, "titan://")) {
+                /* We have no way of knowing if the corresponding URL is valid for Gemini,
+                   but let's try anyway. */                
+                set_String(parentUrl, withScheme_String(parentUrl, "gemini"));
+                stripUrlPort_String(parentUrl);
             }
             postCommandf_Root(w->root, "open url:%s", cstr_String(parentUrl));
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.root") && document_App() == d) {
-        postCommandf_Root(w->root, "open url:%s/", cstr_Rangecc(urlRoot_String(d->mod.url)));
+        iString *rootUrl = collectNewRange_String(urlRoot_String(d->mod.url));
+        /* Always go to a gophermap. */
+        setUrlItemType_Gopher(rootUrl, '1');
+        /* Hierarchical navigation doesn't make sense with Titan. */
+        if (startsWith_String(rootUrl, "titan://")) {
+            /* We have no way of knowing if the corresponding URL is valid for Gemini,
+               but let's try anyway. */                
+            set_String(rootUrl, withScheme_String(rootUrl, "gemini"));
+            stripUrlPort_String(rootUrl);
+        }        
+        postCommandf_Root(w->root, "open url:%s/", cstr_String(rootUrl));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {

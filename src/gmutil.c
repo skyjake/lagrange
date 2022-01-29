@@ -131,6 +131,16 @@ static iRangecc prevPathSeg_(const char *end, const char *start) {
     return seg;
 }
 
+void stripUrlPort_String(iString *d) {
+    iUrl parts;
+    init_Url(&parts, d);
+    if (!isEmpty_Range(&parts.port)) {
+        /* Always preceded by a colon. */
+        remove_Block(&d->chars, parts.port.start - 1 - constBegin_String(d),
+                     size_Range(&parts.port) + 1);
+    }
+}
+
 void stripDefaultUrlPort_String(iString *d) {
     iUrl parts;
     init_Url(&parts, d);
@@ -677,6 +687,17 @@ const iString *withSpacesEncoded_String(const iString *d) {
         iString *enc = copy_String(d);
         urlEncodeSpaces_String(enc);
         return collect_String(enc);
+    }
+    return d;
+}
+
+const iString *withScheme_String(const iString *d, const char *scheme) {
+    iUrl parts;
+    init_Url(&parts, d);
+    if (!equalCase_Rangecc(parts.scheme, scheme)) {
+        iString *repl = collectNewCStr_String(scheme);
+        appendRange_String(repl, (iRangecc){ parts.scheme.end, constEnd_String(d) });
+        return repl;
     }
     return d;
 }
