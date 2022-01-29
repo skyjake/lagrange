@@ -8,6 +8,7 @@
 
 ## 1.10.3
 * Added a man page.
+* Hide the [+] on the row of tab buttons if the navbar has a New Tab button.
 * "/index.gmi" is considered equal to "/" when navigating to parent directory.
 * Gopher: Fixed navigating to root, e.g., when clicking on the page top banner. Set item type to 1 to show a gophermap and not the plain source.
 * Titan: When navigating to parent/root, switch URL scheme to "gemini". This action occurs on a Titan response page, so initiating a new upload with the parent/root URL is probably not appropriate.

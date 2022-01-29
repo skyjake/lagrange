@@ -703,6 +703,20 @@ void updateToolbarColors_Root(iRoot *d) {
 #endif
 }
 
+void showOrHideNewTabButton_Root(iRoot *d) {
+    iWidget *tabs = findChild_Widget(d->widget, "doctabs");
+    iWidget *newTabButton = findChild_Widget(tabs, "newtab");
+    iBool hide = iFalse;
+    iForIndices(i, prefs_App()->navbarActions) {
+        if (prefs_App()->navbarActions[i] == newTab_ToolbarAction) {
+            hide = iTrue;
+            break;
+        }
+    }
+    setFlags_Widget(newTabButton, hidden_WidgetFlag, hide);
+    arrange_Widget(findChild_Widget(tabs, "tabs.buttons"));
+}
+
 void notifyVisualOffsetChange_Root(iRoot *d) {
     if (d && (d->didAnimateVisualOffsets || d->didChangeArrangement)) {
         iNotifyAudience(d, visualOffsetsChanged, RootVisualOffsetsChanged);
@@ -848,6 +862,7 @@ static void updateNavBarActions_(iWidget *navBar) {
         }
         iEndCollect();
     }
+    showOrHideNewTabButton_Root(navBar->root);
 }
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
@@ -1526,7 +1541,7 @@ void createUserInterface_Root(iRoot *d) {
         }
         setId_Widget(
             addChildFlags_Widget(buttons, iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new")),
-                                 moveToParentRightEdge_WidgetFlag),
+                                 moveToParentRightEdge_WidgetFlag | collapse_WidgetFlag),
             "newtab");
     }
     /* Sidebars. */ {

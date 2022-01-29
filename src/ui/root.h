@@ -43,6 +43,8 @@ void        updatePadding_Root                  (iRoot *); /* TODO: is part of m
 void        dismissPortraitPhoneSidebars_Root   (iRoot *);
 void        showToolbar_Root                    (iRoot *, iBool show);
 void        updateToolbarColors_Root            (iRoot *);
+void        showOrHideNewTabButton_Root         (iRoot *);
+
 void        notifyVisualOffsetChange_Root       (iRoot *);
 
 iInt2       size_Root                           (const iRoot *);
