@@ -358,6 +358,12 @@ static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
     if (equalCase_Rangecc(path, "version")) {
         return &blobVersion_Resources;
     }
+    if (equalCase_Rangecc(path, "version-1.5")) {
+        return &blobVersion_1_5_Resources;
+    }
+    if (equalCase_Rangecc(path, "version-0.13")) {
+        return &blobVersion_0_13_Resources;
+    }
     if (equalCase_Rangecc(path, "debug")) {
         return utf8_String(debugInfo_App());
     }
