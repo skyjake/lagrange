@@ -258,6 +258,9 @@ iRangecc urlRoot_String(const iString *d) {
     else {
         iUrl parts;
         init_Url(&parts, d);
+        if (equalCase_Rangecc(parts.scheme, "about")) {
+            return (iRangecc){ constBegin_String(d), parts.path.start };
+        }
         rootEnd = parts.path.start;
     }
     return (iRangecc){ constBegin_String(d), rootEnd };

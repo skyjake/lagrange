@@ -4325,6 +4325,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 set_String(parentUrl, withScheme_String(parentUrl, "gemini"));
                 stripUrlPort_String(parentUrl);
             }
+            if (!cmpCase_String(parentUrl, "about:")) {
+                setCStr_String(parentUrl, "about:about");
+            }
             postCommandf_Root(w->root, "open url:%s", cstr_String(parentUrl));
         }
         return iTrue;
@@ -4339,8 +4342,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                but let's try anyway. */                
             set_String(rootUrl, withScheme_String(rootUrl, "gemini"));
             stripUrlPort_String(rootUrl);
-        }        
-        postCommandf_Root(w->root, "open url:%s/", cstr_String(rootUrl));
+        }
+        if (!cmpCase_String(rootUrl, "about:")) {
+            setCStr_String(rootUrl, "about:about");
+        }
+        else {
+            appendCStr_String(rootUrl, "/");
+        }
+        postCommandf_Root(w->root, "open url:%s", cstr_String(rootUrl));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
