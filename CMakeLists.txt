@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.10.2
+    VERSION 1.10.3
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2022)
 if (IOS)
     set (PROJECT_VERSION 1.10)
-    set (IOS_BUNDLE_VERSION 10)
-    set (IOS_BUILD_DATE "2022-01-21")
+    set (IOS_BUNDLE_VERSION 12)
+    set (IOS_BUILD_DATE "2022-01-28")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.10)
-    set (ANDROID_BUILD_VERSION a4)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-01-20")
+    set (ANDROID_BUILD_VERSION a5)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-01-24")
 endif ()
 
 # Defaults that depend on environment.
@@ -118,6 +118,8 @@ elseif (ANDROID)
 else ()
     list (APPEND RESOURCES
         res/about/help.gmi
+        res/about/version-0.13.gmi
+        res/about/version-1.5.gmi
         res/about/version.gmi
         res/arg-help.txt
     )
@@ -522,6 +524,7 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;
     install (FILES res/fi.skyjake.Lagrange.appdata.xml
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
     )
+    install (FILES res/lagrange.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
     if (NOT ENABLE_RELATIVE_EMBED)
         target_compile_definitions (app PUBLIC
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")

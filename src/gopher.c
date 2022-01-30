@@ -299,3 +299,13 @@ iBool processResponse_Gopher(iGopher *d, const iBlock *data) {
     }
     return changed;
 }
+
+void setUrlItemType_Gopher(iString *url, char itemType) {
+    iUrl parts;
+    init_Url(&parts, url);
+    if (equalCase_Rangecc(parts.scheme, "gopher")) {
+        if (parts.path.start && size_Range(&parts.path) >= 2) {
+            ((char *) parts.path.start)[1] = itemType;
+        }
+    }   
+}

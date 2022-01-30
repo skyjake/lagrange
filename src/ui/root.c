@@ -703,6 +703,20 @@ void updateToolbarColors_Root(iRoot *d) {
 #endif
 }
 
+void showOrHideNewTabButton_Root(iRoot *d) {
+    iWidget *tabs = findChild_Widget(d->widget, "doctabs");
+    iWidget *newTabButton = findChild_Widget(tabs, "newtab");
+    iBool hide = iFalse;
+    iForIndices(i, prefs_App()->navbarActions) {
+        if (prefs_App()->navbarActions[i] == newTab_ToolbarAction) {
+            hide = iTrue;
+            break;
+        }
+    }
+    setFlags_Widget(newTabButton, hidden_WidgetFlag, hide);
+    arrange_Widget(findChild_Widget(tabs, "tabs.buttons"));
+}
+
 void notifyVisualOffsetChange_Root(iRoot *d) {
     if (d && (d->didAnimateVisualOffsets || d->didChangeArrangement)) {
         iNotifyAudience(d, visualOffsetsChanged, RootVisualOffsetsChanged);
@@ -848,6 +862,7 @@ static void updateNavBarActions_(iWidget *navBar) {
         }
         iEndCollect();
     }
+    showOrHideNewTabButton_Root(navBar->root);
 }
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
@@ -1312,8 +1327,7 @@ void createUserInterface_Root(iRoot *d) {
 #if defined (iPlatformApple)
         addUnsplitButton_(navBar);
 #endif
-        iWidget *navBack;
-        setId_Widget(navBack = addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.action1");
+        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.action1");
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(forwardArrow_Icon, 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.action2");
         /* Button for toggling the left sidebar. */
         setId_Widget(addChildFlags_Widget(
@@ -1497,6 +1511,16 @@ void createUserInterface_Root(iRoot *d) {
         /* On PC platforms, the close buttons are generally on the top right. */
         addUnsplitButton_(navBar);
 #endif
+        if (deviceType_App() == tablet_AppDeviceType) {
+            /* Ensure that all navbar buttons match the height of the input field.
+               This is required because touch input fields are given extra padding,
+               making them taller than buttons by default. */
+            iForEach(ObjectList, i, children_Widget(navBar)) {
+                if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                    as_Widget(i.object)->sizeRef = as_Widget(url);
+                }
+            }
+        }
     }
     /* Tab bar. */ {
         iWidget *mainStack = new_Widget();
@@ -1517,7 +1541,7 @@ void createUserInterface_Root(iRoot *d) {
         }
         setId_Widget(
             addChildFlags_Widget(buttons, iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new")),
-                                 moveToParentRightEdge_WidgetFlag),
+                                 moveToParentRightEdge_WidgetFlag | collapse_WidgetFlag),
             "newtab");
     }
     /* Sidebars. */ {
@@ -1528,6 +1552,7 @@ void createUserInterface_Root(iRoot *d) {
             addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
             iSidebarWidget *sidebar2 = new_SidebarWidget(right_SidebarSide);
             addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
+            setFlags_Widget(as_Widget(sidebar2), disabledWhenHidden_WidgetFlag, iTrue);
         }
         else {
             /* Sidebar is a slide-over sheet. */

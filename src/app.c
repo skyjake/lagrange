@@ -2086,7 +2086,6 @@ iDocumentWidget *document_Command(const char *cmd) {
 }
 
 iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNew) {
-    //iApp *d = &app_;
     iWidget *tabs = findWidget_Root("doctabs");
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
     iWidget *newTabButton = findChild_Widget(tabs, "newtab");
@@ -2102,6 +2101,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     iRelease(doc); /* now owned by the tabs */
     addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
+    showOrHideNewTabButton_Root(tabs->root);
     if (switchToNew) {
         postCommandf_App("tabs.switch page:%p", doc);
     }
@@ -2852,6 +2852,7 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
         iDocumentWidget *doc = document_Command(cmd);
+        iAssert(doc);
         iDocumentWidget *origin = doc;
         if (hasLabel_Command(cmd, "origin")) {
             iDocumentWidget *cmdOrig = findWidget_App(cstr_Command(cmd, "origin"));

@@ -1,0 +1,246 @@
+# Release notes
+
+=> about:version-1.5  Newer versions
+
+## 0.13.2
+* Added a little spinner to indicate ongoing requests.
+* Fixed very thin progress bar on HiDPI displays.
+* Fixed link to Help page from the Identities sidebar tab.
+* Fixed incorrect text colors in the UI (e.g., selected lookup result).
+* macOS: Disable menu shortcuts for navigation when editing text to prevent accidental page changes.
+
+## 0.13.1
+* Fixed build failure on Linux.
+
+## 0.13
+* Support for Internationalized Domain Names (IDN) in network requests.
+* Percent-encoded URL paths are shown decoded in the UI, and encoded in outgoing requests.
+* Added option to disable decoding of percent-encoded paths for the UI.
+* Quick search via URL bar shows entries from subscribed feeds.
+* Added keybindings for zooming.
+* Improved usability of page content searching (${CTRL+}F, Escape).
+* Clicking on a certificate warning shows the Certificate Status dialog.
+* macOS: Keyboard shortcuts in native menus are updated according to bindings.
+* Tweaked handling of Emojis in monospace text. They are given more space as needed, but the original monospace spacing is restored after whitespace.
+* Fira Mono replaced with Iosevka Term Extended.
+* Fixed use of variable-width fonts in input fields.
+* Fixed handling of Unicode joiners and modifiers (by ignoring them, since we lack the glyphs).
+* Fixed a layout issue with sidebars where the bottommost content line was occasionally not visible.
+* Fixed exit when a hook program didn't read its input.
+* Fixed crash when using an identity (with LibreSSL on OpenBSD).
+
+## 0.12.1
+* 'text/*' content falls back to plain text.
+* Minimized visual artifacts in Unicode box-drawing characters (overlapping/gaps) by fine-tuning glyph scaling.
+* Fixed truncated tab titles when opening tabs in background.
+* Fixed possible exit if hook program not found (SIGPIPE).
+* REQUEST_URL is set in the environment when running MIME hooks.
+* "about:debug" lists the configured MIME hooks.
+* macOS: Fixed excessive CPU usage while idling.
+
+## 0.12
+* Added MIME hooks: pipe Gemini responses through external programs for arbitrary processing. (See "about:help" for usage.)
+* Added a right-hand sidebar; have a sidebar on the right or on both sides at once.
+* Added a clear warning banner when there is an issue with the server's TLS certificate.
+* Follow Weiph/pikkulogs — subscribe to new headings on pages.
+* Added UI for subscribing: feed name, entry type (Gemini feed or new headings).
+* Added keyboard shortcut ${SHIFT+}${CTRL+}D for subscribing to page.
+* Feeds sidebar is capped to 100 entries. "about:feeds" shows all known entries.
+* Network connections have a timeout in case server doesn't respond at all.
+* Adjusted spacing before/after links to reflect use of empty lines in the source.
+* Clicking on page area unfocuses URL input field.
+* Added keybindings for switching tabs.
+* Gopher: Query links have a 🔍 icon.
+* Fixed handling of "file:///" URIs on Windows.
+* Fixed misaligned Unicode box-drawing characters.
+* Fixed missing error page if status code is unknown (torture test 34).
+* Fixed detection of invalid headers (torture test 39).
+* Fixed rendering of soft hyphens (torture test 50).
+
+## 0.11
+* Added feed subscriptions. A subscription is any bookmark with the "subscribed" tag. Subscribed feeds are refreshed in the background while Lagrange is running.
+* Added a new sidebar tab for feeds.
+* Added "about:feeds" to show entries from all subscriptions on one page.
+* Added icons for special bookmark tags, and context menu items for toggling "homepage" and "subscribed".
+* Improved stability: fixed data races, undefined behavior, thread leaks.
+* Wide preformatted blocks can be scrolled horizontally with the mouse wheel or trackpad.
+* Line widths are slightly narrower for improved readability.
+* Light mode UI color palette is less saturated, more sepia-toned.
+* Tall menus/dialogs can be scrolled with the mouse wheel.
+* Improved download progress updates: never update more often than the UI can be refreshed.
+* macOS: Control-Click works as a right mouse click.
+* Unix: Location of `xdg-open` is no longer hardcoded.
+* Fixed large downloads (10 MB+) stopping prematurely due to a decryption error.
+* Fixed window contents not being updated during window resizing.
+* Fixed selection/search markers disappearing when scrolling down.
+* Fixed displaying of "about:" URLs in history.
+* Fixed build on FreeBSD (tested on 12.1).
+
+## 0.10
+* Added option to load inline images when pressing Space or ↓ for a more focused reading experience — just keep tapping a single key to proceed. If an image link is visible, it will be loaded instead of scrolling. This option is disabled by default.
+* Added context menu item to save inline images to Downloads.
+* Added an option to use a proxy server for Gemini requests.
+* Added a new keyboard link navigation mode focusing on the home row keys. The default keybinding for this is "F".
+* Added a keybinding to activate keyboard link modifier mode. The keyboard link keys are active while the modifier is held down. The default is ${ALT}.
+* Clearing and resetting keybindings via a context menu.
+* Added a Window tab in the Preferences dialog; moved some of the settings around for better organization.
+* Improved page search visualization: if the match is inside a link URL, the link icon is now highlighted. Previously these matches were not visualized in any way.
+* Improvements to URI parsing with regard to RFC 3986. Cases that are handled better are double slashes, query-only relative URIs, relative URIs that begin with a tilde, IPv6 literals, username in the authority.
+* Replaced EB Garamond with Tinos for improved readability.
+* Replaced Kosugi Maru with Noto Sans CJK JP for better glyph coverage.
+* Fixed font sizing of level 3 headings.
+* Fixed download progress indicators sometimes remaining visible even after leaving the page.
+
+## 0.9
+* Clicking on the top banner of a page (where the site icon and hostname are shown) navigates to the root directory of the site.
+* Added menu items and keybindings for navigating to site root or the parent directory.
+* Added option to use a monospace body text font on all Gemini and/or Gopher pages.
+* Remember redirect source URLs as visited but not shown in the History tab. Note that "visited.txt" is no longer fully compatible if opened in an older version of Lagrange.
+* "gopher:" scheme is allowed in command line arguments.
+* XDG: .desktop file declares support for opening Gopher URLs.
+* Fixed an issue where copying the URL input field would not place anything on the clipboard.
+* Fixed the Lagrange window visibly changing position during launch.
+* Fixed crash when a single percent sign was typed in an input field.
+* macOS: Fixed native menu keyboard shortcuts causing redundant command activations.
+* macOS: Fixed assigning keybindings when there is an equivalent native menu shortcut.
+
+## 0.8.1
+* Fixed potential lockup when navigating back to a query prompt.
+* macOS: Improved handling of scroll wheel events from a mouse.
+
+## 0.8
+* Added support for Gopher.
+* Added support for the full palette of 8-bit ANSI foreground colors.
+* Added option to disable smooth scrolling.
+* Added button to manually set server certificate as trusted (if the certificate is valid but untrusted).
+* Added keybindings for Back/Forward navigation.
+* Added a context menu item for opening HTTP links in the default browser even when a proxy is configured.
+* Revised identity creation dialog: changed field order, added warning about temporary identities not being saved.
+* ${CTRL+}Click opens tab in background, ${SHIFT+}${CTRL+}Click opens as foreground tab. The same modifier keys work with keyboard navigation.
+* Improved word wrapping of emoticons (:D).
+* Automatic redirects allowed when the destination URL uses the same scheme as the originating URL. For example, when using a proxy, HTTP(S) is allowed to automatically redirect to other HTTP(S) URLs.
+* Windows: Fixed handling of drag-and-dropped and command line file paths.
+
+## 0.7.2
+* Fixed parsing of the server's response. In some cases it was possible that the response was only partially read.
+* Fixed handling of TLS/SSL connection being closed without the socket being closed.
+
+## 0.7.1
+* Fixed build on OpenBSD.
+* Fixed build with LibreSSL.
+* Fixed a potential crash at app shutdown.
+* Fixed a potential crash when a thread exits.
+* Fixed a potential lockup when a thread exits.
+* Linux/Unix: Open "mailto:" links with xdg-open instead of the web browser.
+
+## 0.7
+* Basic set of user-configurable key bindings.
+* Sidebar: Added a "New Identity" button and a link to "about:help" if there are no identities.
+* Faster drawing of certain UI elements: site icon and current heading in the left margin, unfocused input fields, timestamp at the end of the page.
+* History is not updated until a network request finishes.
+* Improved opening connections when multiple IP addresses are found for a hostname.
+* Fixed handling of TLS/SSL errors and hostname lookup problems — an error page is shown.
+* Fixed an issue where window contents were not being updated immediately after the window gets exposed when using, e.g., openbox or dwm.
+
+## 0.6
+* Added an indicator to visualize progress of network requests.
+* Added new color themes for page content: Colorful Light, Black, Gray, Sepia, High Contrast.
+* Added page content color theme selection in Preferences.
+* Added quote indicator option: icon or vertical line.
+* Added a new font for Korean glyphs.
+* Smoother smooth scrolling, making it easier to keep one's eyes on the content throughout the motion.
+* Windows: Register Lagrange as a handler of "gemini:" URLs.
+* macOS: Fixed glitchy window dragging during audio playback.
+* Fixed timestamps of cached pages.
+
+## 0.5
+* Added MP3 support in the audio player (using mpg123).
+* Added volume control in the audio player.
+* Metadata in Vorbis and MP3 audio content (title, artist, etc.) is shown in the audio player menu.
+* Added new serif fonts: EB Garamond and Literata.
+* Allow configuring separate fonts for headings and body text for better visual distinction.
+* Preferences dialog remembers the previously open tab.
+* Paste from clipboard on middle mouse button click.
+* Open links in new tab with middle mouse button.
+* Fixed failure to find resources when launching via PATH.
+* Fixed color saturation setting not affecting the default color theme.
+=> https://mpg123.org/ mpg123: MPEG audio player and decoder library
+
+## 0.4.1
+* Set keyboard focus to URL input field after opening a new tab.
+* Pause other audio players when a new one is started. One can still choose to have multiple audio players playing simultaneously by unpausing them again.
+* Fixed dismissing an audio player that is still downloading content. The partially downloaded data is discarded.
+* Fixed saving pages whose name starts with a tilde.
+* Fixed saving pages restored from cache.
+* Windows: The app is now distributed as an installer created with Inno Setup.
+* Windows: All binaries are signed.
+
+## 0.4
+* Added audio playback with support for streaming. Supported audio formats in this release are WAV (PCM, mono/stereo, 8/16/24/32 integer/float) and Ogg Vorbis. Shoutout to Sean Barrett et al. for stb_vorbis.
+* Added inline audio player that works like inline images. Clicking on an audio link opens the audio player below the link (works for URLs that have file extension .wav/.ogg).
+* Visual fine-tuning: increased Fira Sans line spacing; list bullets use an accent color; adjusted accent colors in the light mode palette.
+* Sidebar has a maximum width — the document must remain visible.
+* Windows: Support for HiDPI displays and the system UI scaling factor. The UI will be scaled according to your settings automatically without having to adjust the UI scaling in Preferences.
+* macOS: Use OpenGL on 10.13 for potentially better compatibility.
+* Fixed a memory leak when closing tabs.
+* Fixed unnecessary continual window redrawing related to the scrollbar hover outline.
+=> https://github.com/nothings/stb stb: single-file public domain libraries for C/C++
+
+## 0.3
+* Added style customization.
+* Added new font option: Fira Sans.
+* Added a setting for maximum line width.
+* Added a setting for adjusting color saturation.
+* Added an option for "Outline on scrollbar": page outline appears when mouse is hovering over the scrollbar.
+* Added an option for site icon and current top heading that appear when the window is wide enough.
+* Added tabs in Preferences for better grouping.
+* Added "Open Link in Background Tab" in link context menus.
+* More flexible text selection behavior when starting on empty space.
+* Smaller first paragraph font size.
+* Fixed centering of popups so they remain centered when window is resized.
+* Fixed sizing and alignment of Unicode symbols in preformatted text.
+* Fixed sizing of Japanese glyphs in UI text (e.g., tab titles).
+
+## 0.2.1
+* Fixed window size/state restoration issues, e.g., after window is maximized.
+* Windows: Fixed text disappearing when window is resized.
+
+## 0.2
+* Added an icon for quote paragraphs.
+* Added Downloads folder to Preferences.
+* Added "Save to Downloads" menu item (${CTRL+}S) for saving page contents.
+* Added a download progress indicator in the URL input field.
+* Added a progress indicator for inline image fetching.
+* Added `--sw` option to force software rendering.
+* Added macOS touch bar buttons for Back, Forward, Find, New Tab, and sidebar modes.
+* Home button opens a random bookmark with the "homepage" tag.
+* Improved context menu when right-clicking on links or the page.
+* Recognize and handle "mailto:" links.
+* Fixed behavior of images on single-image pages; cannot be hidden like inline images.
+* Fall back to software rendering automatically if accelerated graphics are not available.
+* Minor bug fixes.
+
+## 0.1.1
+* Fixed a potential crash at startup.
+* Fixed bug where user's query input is handled by all tabs.
+* Default sidebar mode is Bookmarks.
+* Windows: Fixed opening HTTP links in the default web browser.
+
+## 0.1
+* The major version zero is reserved for non-feature-complete releases.
+* Beautiful typography using Unicode fonts.
+* Autogenerated page style and Unicode icon for each Gemini domain.
+* Smart suggestions when typing the URL — search bookmarks, history, identities.
+* Sidebar for page outline, managing bookmarks and identities, and viewing history.
+* Multiple tabs.
+* Identity management — create and use TLS client certificates.
+* Light and dark UI themes.
+* Select and copy text with the mouse.
+* Find text on the page.
+* Open image links inline on the same page.
+* Open links via keyboard shortcuts.
+* Instant back/forward navigation.
+* Smooth scrolling.
+* Scaling page content (50%...200%).
+* Scaling factor for the UI (for arbitrary monitor DPI).
+* Persistent app state — tabs and history are restored on next run.

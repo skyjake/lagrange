@@ -547,9 +547,11 @@ static void clear_RunTypesetter_(iRunTypesetter *d) {
     clear_Array(&d->layout);
 }
 
-static void commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
+static size_t commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
+    const size_t n = size_Array(&d->layout);
     pushBackN_Array(&doc->layout, constData_Array(&d->layout), size_Array(&d->layout));
     clear_RunTypesetter_(d);
+    return n;
 }
 
 static const int maxLedeLines_ = 10;
@@ -964,6 +966,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         iAssert(!isEmpty_Range(&line)); /* must have something at this point */
+        size_t numRunsAdded = 0;
         /* Typeset the paragraph. */ {
             iRunTypesetter rts;
             init_RunTypesetter_(&rts);
@@ -1036,7 +1039,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                                                                             : 1.0f);
                         }
                     }
-                    commit_RunTypesetter_(&rts, d);
+                    numRunsAdded = commit_RunTypesetter_(&rts, d);
                     break;
                 }
                 /* Try again... */
@@ -1050,6 +1053,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             deinit_RunTypesetter_(&rts);
         }
         /* Flag the end of line, too. */
+        if (numRunsAdded == 0) {
+            pos.y += lineHeight_Text(run.font) * prefs->lineSpacing;
+            followsBlank = iTrue;
+            continue;
+        }
         iGmRun *lastRun = back_Array(&d->layout);
         lastRun->flags |= endOfLine_GmRunFlag;
         if (lastRun->linkId && lastRun->flags & startOfLine_GmRunFlag) {
@@ -1301,7 +1309,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         0x203b,  0x2042,  0x205c,  0x2182,  0x25ed,  0x2600,  0x2601,  0x2604,  0x2605,  0x2606,
         0x265c,  0x265e,  0x2690,  0x2691,  0x2693,  0x2698,  0x2699,  0x26f0,  0x270e,  0x2728,
         0x272a,  0x272f,  0x2731,  0x2738,  0x273a,  0x273e,  0x2740,  0x2742,  0x2744,  0x2748,
-        0x274a,  0x2751,  0x2756,  0x2766,  0x27bd,  0x27c1,  0x27d0,  0x2b19,  0x1f300, 0x1f303,
+        0x274a,  0x2318,  0x2756,  0x2766,  0x27bd,  0x27c1,  0x27d0,  0x2b19,  0x1f300, 0x1f303,
         0x1f306, 0x1f308, 0x1f30a, 0x1f319, 0x1f31f, 0x1f320, 0x1f340, 0x1f4cd, 0x1f4e1, 0x1f531,
         0x1f533, 0x1f657, 0x1f659, 0x1f665, 0x1f668, 0x1f66b, 0x1f78b, 0x1f796, 0x1f79c,
     };

@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "gmutil.h"
+#include "gopher.h"
 #include "history.h"
 #include "indicatorwidget.h"
 #include "inputwidget.h"
@@ -921,6 +922,7 @@ static void documentRunsInvalidated_DocumentView_(iDocumentView *d) {
     d->hoverPre    = NULL;
     d->hoverAltPre = NULL;
     d->hoverLink   = NULL;
+    clear_PtrArray(&d->visibleMedia);
     iZap(d->visibleRuns);
     iZap(d->renderRuns);
 }
@@ -4300,6 +4302,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "navigate.parent") && document_App() == d) {
         iUrl parts;
         init_Url(&parts, d->mod.url);
+        if (endsWith_Rangecc(parts.path, "/index.gmi")) {
+            parts.path.end -= 9; /* This is the default index page. */
+        }
         /* Remove the last path segment. */
         if (size_Range(&parts.path) > 1) {
             if (parts.path.end[-1] == '/') {
@@ -4311,20 +4316,40 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
             iString *parentUrl = collectNewRange_String((iRangecc){ constBegin_String(d->mod.url),
                                                                     parts.path.end });
-            if (equalCase_Rangecc(parts.scheme, "gopher")) {
-                /* Always go to a gophermap. */
-                iZap(parts);
-                init_Url(&parts, parentUrl);
-                if (parts.path.start && size_Range(&parts.path) >= 2) {
-                    ((char *) parts.path.start)[1] = '1';
-                }
+            /* Always go to a gophermap. */
+            setUrlItemType_Gopher(parentUrl, '1');
+            /* Hierarchical navigation doesn't make sense with Titan. */
+            if (startsWith_String(parentUrl, "titan://")) {
+                /* We have no way of knowing if the corresponding URL is valid for Gemini,
+                   but let's try anyway. */                
+                set_String(parentUrl, withScheme_String(parentUrl, "gemini"));
+                stripUrlPort_String(parentUrl);
+            }
+            if (!cmpCase_String(parentUrl, "about:")) {
+                setCStr_String(parentUrl, "about:about");
             }
             postCommandf_Root(w->root, "open url:%s", cstr_String(parentUrl));
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.root") && document_App() == d) {
-        postCommandf_Root(w->root, "open url:%s/", cstr_Rangecc(urlRoot_String(d->mod.url)));
+        iString *rootUrl = collectNewRange_String(urlRoot_String(d->mod.url));
+        /* Always go to a gophermap. */
+        setUrlItemType_Gopher(rootUrl, '1');
+        /* Hierarchical navigation doesn't make sense with Titan. */
+        if (startsWith_String(rootUrl, "titan://")) {
+            /* We have no way of knowing if the corresponding URL is valid for Gemini,
+               but let's try anyway. */                
+            set_String(rootUrl, withScheme_String(rootUrl, "gemini"));
+            stripUrlPort_String(rootUrl);
+        }
+        if (!cmpCase_String(rootUrl, "about:")) {
+            setCStr_String(rootUrl, "about:about");
+        }
+        else {
+            appendCStr_String(rootUrl, "/");
+        }
+        postCommandf_Root(w->root, "open url:%s", cstr_String(rootUrl));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
@@ -4347,6 +4372,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
+        if (argLabel_Command(cmd, "smooth")) {
+            stopWidgetMomentum_Touch(w);
+            smoothScroll_DocumentView_(&d->view, -pos_SmoothScroll(&d->view.scrollY), 500);
+            d->view.scrollY.flags |= muchSofter_AnimFlag;
+            return iTrue;
+        }
         init_Anim(&d->view.scrollY.pos, 0);
         invalidate_VisBuf(d->view.visBuf);
         clampScroll_DocumentView_(&d->view);
