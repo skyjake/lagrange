@@ -16,6 +16,7 @@
 * Fixed crash when a line contains nothing but an ANSI escape sequence.
 * Fixed a possible crash when saving state of subscribed feeds.
 * Fixed the right-hand sidebar handling the U and Shift+U key events if it was showing the Feeds tab, even though the sidebar was hidden.
+* Fixed line wrapping at backslashes. They are now considered word-breaking characters.
 
 ## 1.10.2
 * Fixed cancelling an input query. Now pressing Cancel will navigate back to the previous page as intended.
