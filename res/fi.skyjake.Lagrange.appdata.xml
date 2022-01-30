@@ -45,6 +45,28 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.10.3" date="2022-01-30">
+            <description>
+                <p>Changes in v1.10.3:</p>
+                <ul>
+                    <li>Unix: Added a lagrange(1) manual page.</li>
+                    <li>Hide the [+] button on the tab button row if the navbar has a New Tab button.</li>
+                    <li>"/index.gmi" is considered equal to "/" when navigating to parent directory.</li>
+                    <li>Site icon ❑ replaced with ⌘ ("place of interest") for a more distinct appearance and to avoid similarity with the ❐ "Open in New Tab" icon.</li>
+                    <li>Navigating to parent or root from "about:" pages goes to "about:about" to see overview of all the About pages.</li>
+                    <li>Gopher: Fixed navigating to root, e.g., when clicking on the page top banner. Set item type to 1 to show a gophermap and not the plain source.</li>
+                    <li>Titan: When navigating to parent/root, switch URL scheme to "gemini". This action occurs on a Titan response page, so initiating a new upload with the parent/root URL is probably not appropriate.</li>
+                    <li>Fixed crash when a media player is active and a new download is started.</li>
+                    <li>Fixed crash when a line contains nothing but an ANSI escape sequence.</li>
+                    <li>Fixed a possible crash when saving state of subscribed feeds.</li>
+                    <li>Fixed the right-hand sidebar handling the U and Shift+U key events if it was showing the Feeds tab, even though the sidebar was hidden.</li>
+                    <li>Fixed line wrapping at backslashes. They are now considered word-breaking characters.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.10.3</url>
+        </release>
         <release version="1.10.2" date="2022-01-24">
             <description>
                 <p>Changes in v1.10.2:</p>
