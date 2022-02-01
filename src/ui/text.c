@@ -697,6 +697,25 @@ struct Impl_AttributedRun {
 
 static iColor fgColor_AttributedRun_(const iAttributedRun *d) {
     if (d->fgColor_.a) {
+        /* Ensure legibility if only the foreground color is set. */
+        if (!d->bgColor_.a) {
+            iColor fg = d->fgColor_;
+            const iHSLColor themeBg = get_HSLColor(tmBackground_ColorId);
+            const float bgLuminance = luma_Color(get_Color(tmBackground_ColorId));
+            if (bgLuminance > 0.4f) {
+                float dim = (bgLuminance - 0.4f);
+                fg.r *= 0.5f * dim;
+                fg.g *= 0.5f * dim;
+                fg.b *= 0.5f * dim;
+            }
+            if (themeBg.sat > 0.15f && themeBg.lum >= 0.5f) {
+                iHSLColor fgHsl = hsl_Color(fg);
+                fgHsl.hue = themeBg.hue;
+                fgHsl.lum = themeBg.lum * 0.5f;
+                fg = rgb_HSLColor(fgHsl);
+            }
+            return fg;
+        }        
         return d->fgColor_;
     }
     if (d->attrib.fgColorId == none_ColorId) {

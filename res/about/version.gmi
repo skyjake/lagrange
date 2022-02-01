@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.10.4
+* Added missing ANSI background color codes 100-107 (high-intensity VGA).
+* Fixed how the ANSI FG color is adjusted to keep text legible on bright backgrounds when BG color is unset.
+
 ## 1.10.3
 * Unix: Added a lagrange(1) manual page.
 * Hide the [+] button on the tab button row if the navbar has a New Tab button.
