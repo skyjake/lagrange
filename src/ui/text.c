@@ -702,11 +702,20 @@ static iColor fgColor_AttributedRun_(const iAttributedRun *d) {
             iColor fg = d->fgColor_;
             const iHSLColor themeBg = get_HSLColor(tmBackground_ColorId);
             const float bgLuminance = luma_Color(get_Color(tmBackground_ColorId));
+            /* TODO: Actually this should check if the FG is too close to the BG, and
+               either darken or brighten the FG. Now it only accounts for nearly black/white
+               backgrounds. */
+            if (bgLuminance < 0.1f) {
+                /* Background is dark. Lighten the foreground. */
+                iHSLColor fgHsl = hsl_Color(fg);
+                fgHsl.lum = iMax(0.2f, fgHsl.lum);
+                return rgb_HSLColor(fgHsl);
+            }
             if (bgLuminance > 0.4f) {
                 float dim = (bgLuminance - 0.4f);
-                fg.r *= 0.5f * dim;
-                fg.g *= 0.5f * dim;
-                fg.b *= 0.5f * dim;
+                fg.r *= 1.0f * dim;
+                fg.g *= 1.0f * dim;
+                fg.b *= 1.0f * dim;
             }
             if (themeBg.sat > 0.15f && themeBg.lum >= 0.5f) {
                 iHSLColor fgHsl = hsl_Color(fg);
