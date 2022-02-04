@@ -12,6 +12,7 @@
 * Fixed possible crash when there are ANSI escapes in the alt text of a preformatted block.
 * Fixed tab/window titles containing ANSI escapes (escapes are removed).
 * macOS: Use Metal for drawing graphics if display refresh rate is higher than 60 Hz.
+* macOS: Handling scroll events meant for other windows.
 
 ## 1.10.3
 * Unix: Added a lagrange(1) manual page.
