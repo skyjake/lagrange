@@ -11,6 +11,7 @@
 * Fixed how the ANSI FG color is adjusted to keep text legible on dark or bright backgrounds when BG color is unset.
 * Fixed possible crash when there are ANSI escapes in the alt text of a preformatted block.
 * Fixed tab/window titles containing ANSI escapes (escapes are removed).
+* macOS: Use Metal for drawing graphics if display refresh rate is higher than 60 Hz.
 
 ## 1.10.3
 * Unix: Added a lagrange(1) manual page.
