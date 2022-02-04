@@ -436,6 +436,10 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     const iBool isInertia  = (event.momentumPhase & (NSEventPhaseBegan | NSEventPhaseChanged)) != 0;
     const iBool isEnded    = event.scrollingDeltaX == 0.0f && event.scrollingDeltaY == 0.0f && !isInertia;
     const iWindow *win     = &get_MainWindow()->base;
+    if (event.window != nsWindow_(win->win)) {
+        /* Not the main window. */
+        return iFalse;
+    }
     if (isPerPixel) {
         /* On macOS 12.1, stopping ongoing inertia scroll with a tap seems to sometimes produce
            spurious large scroll events. */
@@ -525,7 +529,6 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
             ev.wheel.y = iSign(ev.wheel.y);
         }
 #endif
-    
     return iTrue;        
 }
 
