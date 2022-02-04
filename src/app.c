@@ -1291,9 +1291,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
     iRoot *oldCurrentRoot = current_Root(); /* restored afterwards */
     SDL_Event ev;
     iBool gotEvents = iFalse;
+    iBool gotRefresh = iFalse;
     iPtrArray windows;
     init_PtrArray(&windows);
-    while (nextEvent_App_(d, eventMode, &ev)) {
+    while (nextEvent_App_(d, gotRefresh ? postedEventsOnly_AppEventMode : eventMode, &ev)) {
 #if defined (iPlatformAppleMobile)
         if (processEvent_iOS(&ev)) {
             continue;
@@ -1362,6 +1363,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
             default: {
                 if (ev.type == SDL_USEREVENT && ev.user.code == periodic_UserEventCode) {
                     dispatchCommands_Periodic(&d->periodic);
+                    continue;
+                }
+                if (ev.type == SDL_USEREVENT && ev.user.code == refresh_UserEventCode) {
+                    gotRefresh = iTrue;
                     continue;
                 }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
