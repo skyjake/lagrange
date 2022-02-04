@@ -734,7 +734,7 @@ enum iColorId removeColorEscapes_String(iString *d) {
 static NSString *cleanString_(const iString *ansiEscapedText) {
     iString mod;
     initCopy_String(&mod, ansiEscapedText);
-    iRegExp *ansi = makeAnsiEscapePattern_Text();
+    iRegExp *ansi = makeAnsiEscapePattern_Text(iTrue /* with ESC */);
     replaceRegExp_String(&mod, ansi, "", NULL, NULL);
     iRelease(ansi);
     NSString *clean = [NSString stringWithUTF8String:cstr_String(&mod)];    

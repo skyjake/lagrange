@@ -390,8 +390,12 @@ static void deinitCache_Text_(iText *d) {
     SDL_DestroyTexture(d->cache);
 }
 
-iRegExp *makeAnsiEscapePattern_Text(void) {
-    return new_RegExp("[[()][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])", 0);
+iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar) {
+    const char *pattern = "\x1b[[()][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])";
+    if (!includeEscChar) {
+        pattern++;
+    }
+    return new_RegExp(pattern, 0);
 }
 
 void init_Text(iText *d, SDL_Renderer *render) {
@@ -399,7 +403,7 @@ void init_Text(iText *d, SDL_Renderer *render) {
     activeText_ = d;
     init_Array(&d->fonts, sizeof(iFont));
     d->contentFontSize = contentScale_Text_;
-    d->ansiEscape      = makeAnsiEscapePattern_Text();
+    d->ansiEscape      = makeAnsiEscapePattern_Text(iFalse /* no ESC */);
     d->baseFontId      = -1;
     d->baseFgColorId   = -1;
     d->missingGlyphs   = iFalse;
@@ -1988,6 +1992,7 @@ static iBool cbAdvanceOneLine_(iWrapText *d, iRangecc range, iTextAttrib attrib,
 }
 
 iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
+    *endPos = text.end;
     iWrapText wrap = { .mode     = word_WrapTextMode,
                        .text     = text,
                        .maxWidth = width,
@@ -2002,6 +2007,7 @@ iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **e
         *endPos = text.start;
         return zero_I2();
     }
+    *endPos = text.end;
     /* "NoWrap" means words aren't wrapped; the line is broken at nearest character. */
     iWrapText wrap = { .mode     = anyCharacter_WrapTextMode,
                        .text     = text,
