@@ -390,8 +390,12 @@ static void deinitCache_Text_(iText *d) {
     SDL_DestroyTexture(d->cache);
 }
 
-iRegExp *makeAnsiEscapePattern_Text(void) {
-    return new_RegExp("[[()][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])", 0);
+iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar) {
+    const char *pattern = "\x1b[[()][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])";
+    if (!includeEscChar) {
+        pattern++;
+    }
+    return new_RegExp(pattern, 0);
 }
 
 void init_Text(iText *d, SDL_Renderer *render) {
@@ -399,7 +403,7 @@ void init_Text(iText *d, SDL_Renderer *render) {
     activeText_ = d;
     init_Array(&d->fonts, sizeof(iFont));
     d->contentFontSize = contentScale_Text_;
-    d->ansiEscape      = makeAnsiEscapePattern_Text();
+    d->ansiEscape      = makeAnsiEscapePattern_Text(iFalse /* no ESC */);
     d->baseFontId      = -1;
     d->baseFgColorId   = -1;
     d->missingGlyphs   = iFalse;
@@ -697,6 +701,34 @@ struct Impl_AttributedRun {
 
 static iColor fgColor_AttributedRun_(const iAttributedRun *d) {
     if (d->fgColor_.a) {
+        /* Ensure legibility if only the foreground color is set. */
+        if (!d->bgColor_.a) {
+            iColor fg = d->fgColor_;
+            const iHSLColor themeBg = get_HSLColor(tmBackground_ColorId);
+            const float bgLuminance = luma_Color(get_Color(tmBackground_ColorId));
+            /* TODO: Actually this should check if the FG is too close to the BG, and
+               either darken or brighten the FG. Now it only accounts for nearly black/white
+               backgrounds. */
+            if (bgLuminance < 0.1f) {
+                /* Background is dark. Lighten the foreground. */
+                iHSLColor fgHsl = hsl_Color(fg);
+                fgHsl.lum = iMax(0.2f, fgHsl.lum);
+                return rgb_HSLColor(fgHsl);
+            }
+            if (bgLuminance > 0.4f) {
+                float dim = (bgLuminance - 0.4f);
+                fg.r *= 1.0f * dim;
+                fg.g *= 1.0f * dim;
+                fg.b *= 1.0f * dim;
+            }
+            if (themeBg.sat > 0.15f && themeBg.lum >= 0.5f) {
+                iHSLColor fgHsl = hsl_Color(fg);
+                fgHsl.hue = themeBg.hue;
+                fgHsl.lum = themeBg.lum * 0.5f;
+                fg = rgb_HSLColor(fgHsl);
+            }
+            return fg;
+        }        
         return d->fgColor_;
     }
     if (d->attrib.fgColorId == none_ColorId) {
@@ -1959,6 +1991,7 @@ static iBool cbAdvanceOneLine_(iWrapText *d, iRangecc range, iTextAttrib attrib,
 }
 
 iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
+    *endPos = text.end;
     iWrapText wrap = { .mode     = word_WrapTextMode,
                        .text     = text,
                        .maxWidth = width,
@@ -1973,6 +2006,7 @@ iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **e
         *endPos = text.start;
         return zero_I2();
     }
+    *endPos = text.end;
     /* "NoWrap" means words aren't wrapped; the line is broken at nearest character. */
     iWrapText wrap = { .mode     = anyCharacter_WrapTextMode,
                        .text     = text,

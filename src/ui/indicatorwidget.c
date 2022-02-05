@@ -28,32 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_timer.h>
 
-static int timerId_;   /* common timer for all indicators */
-static int animCount_; /* number of animating indicators */
-
-static uint32_t postRefresh_(uint32_t interval, void *context) {
-    iUnused(context);
-    postRefresh_App();
-    return interval;
-}
-
-static void startTimer_(void) {
-    animCount_++;
-    if (!timerId_) {
-        timerId_ = SDL_AddTimer(1000 / 60, postRefresh_, NULL);
-    }
-}
-
-static void stopTimer_(void) {
-    iAssert(animCount_ > 0);
-    if (--animCount_ == 0) {
-        iAssert(timerId_);
-        SDL_RemoveTimer(timerId_);
-        timerId_ = 0;
-    }
-}
-
-struct Impl_IndicatorWidget{
+struct Impl_IndicatorWidget {
     iWidget widget;
     iAnim   pos;
 };
@@ -62,6 +37,14 @@ iDefineObjectConstruction(IndicatorWidget)
 
 iLocalDef iBool isActive_IndicatorWidget_(const iIndicatorWidget *d) {
     return isSelected_Widget(d);
+}
+
+static void animate_IndicatorWidget_(void *ptr) {
+    iIndicatorWidget *d = ptr;
+    if (!isFinished_Anim(&d->pos)) {
+        addTickerRoot_App(animate_IndicatorWidget_, d->widget.root, ptr);
+    }
+    postRefresh_App();
 }
 
 static void setActive_IndicatorWidget_(iIndicatorWidget *d, iBool set) {
@@ -75,22 +58,8 @@ void init_IndicatorWidget(iIndicatorWidget *d) {
     setFlags_Widget(w, unhittable_WidgetFlag, iTrue);
 }
 
-static void startTimer_IndicatorWidget_(iIndicatorWidget *d) {
-    if (!isActive_IndicatorWidget_(d)) {
-        startTimer_();
-        setActive_IndicatorWidget_(d, iTrue);
-    }
-}
-
-static void stopTimer_IndicatorWidget_(iIndicatorWidget *d) {
-    if (isActive_IndicatorWidget_(d)) {
-        stopTimer_();
-        setActive_IndicatorWidget_(d, iFalse);
-    }
-}
-
 void deinit_IndicatorWidget(iIndicatorWidget *d) {
-    stopTimer_IndicatorWidget_(d);
+    removeTicker_App(animate_IndicatorWidget_, d);
 }
 
 static iBool isCompleted_IndicatorWidget_(const iIndicatorWidget *d) {
@@ -116,12 +85,7 @@ void draw_IndicatorWidget_(const iIndicatorWidget *d) {
 
 iBool processEvent_IndicatorWidget_(iIndicatorWidget *d, const SDL_Event *ev) {
     iWidget *w = &d->widget;
-    if (ev->type == SDL_USEREVENT && ev->user.code == refresh_UserEventCode) {
-        if (isFinished_Anim(&d->pos)) {
-            stopTimer_IndicatorWidget_(d);
-        }
-    }
-    else if (isCommand_SDLEvent(ev)) {
+    if (isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
         if (startsWith_CStr(cmd, "document.request.")) {
             if (pointerLabel_Command(cmd, "doc") == parent_Widget(w)) {
@@ -130,23 +94,23 @@ iBool processEvent_IndicatorWidget_(iIndicatorWidget *d, const SDL_Event *ev) {
                     setValue_Anim(&d->pos, 0, 0);
                     setValue_Anim(&d->pos, 0.75f, 4000);
                     setFlags_Anim(&d->pos, easeOut_AnimFlag, iTrue);
-                    startTimer_IndicatorWidget_(d);
+                    animate_IndicatorWidget_(d);
                 }
                 else if (equal_Command(cmd, "finished")) {
                     if (value_Anim(&d->pos) > 0.01f) {
                         setValue_Anim(&d->pos, 1.0f, 250);
                         setFlags_Anim(&d->pos, easeOut_AnimFlag, iFalse);
-                        startTimer_IndicatorWidget_(d);
+                        animate_IndicatorWidget_(d);
                     }
                     else {
                         setValue_Anim(&d->pos, 0, 0);
-                        stopTimer_IndicatorWidget_(d);
+                        animate_IndicatorWidget_(d);
                         refresh_Widget(d);
                     }
                 }
                 else if (equal_Command(cmd, "cancelled")) {
                     setValue_Anim(&d->pos, 0, 0);
-                    stopTimer_IndicatorWidget_(d);
+                    animate_IndicatorWidget_(d);
                     refresh_Widget(d);
                 }
             }

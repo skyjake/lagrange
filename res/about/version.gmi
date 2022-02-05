@@ -6,6 +6,15 @@
 ```
 # Release notes
 
+## 1.10.4
+* Added missing ANSI background color codes 100-107 (high-intensity VGA).
+* Fixed how the ANSI FG color is adjusted to keep text legible on dark or bright backgrounds when BG color is unset.
+* Fixed possible crash when there are ANSI escapes in the alt text of a preformatted block.
+* Fixed tab/window titles containing ANSI escapes (escapes are removed).
+* macOS: Use Metal for drawing graphics if display refresh rate is higher than 60 Hz.
+* macOS: Handling scroll events meant for other windows.
+* Updated UI translations.
+
 ## 1.10.3
 * Unix: Added a lagrange(1) manual page.
 * Hide the [+] button on the tab button row if the navbar has a New Tab button.

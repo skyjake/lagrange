@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-16 17:31+0000\n"
+"PO-Revision-Date: 2022-02-05 04:50+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -329,7 +329,7 @@ msgid "heading.lookup.identities"
 msgstr "IDENTECOJ"
 
 msgid "link.hint.audio"
-msgstr "Ludi la sondosieron"
+msgstr "Sonaĵo"
 
 msgid "link.hint.image"
 msgstr "Bildo"
@@ -803,3 +803,16 @@ msgstr "Malfari"
 
 msgid "sidebar.action.show"
 msgstr "Montri:"
+
+msgid "fontpack.meta.installed"
+msgstr "Instalita"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Pri ĉi tiu libro"
+
+msgid "gempub.cover.untitled"
+msgstr "Sentitola libro"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Instali \"%s\""

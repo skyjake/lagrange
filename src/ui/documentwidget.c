@@ -2902,10 +2902,14 @@ static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
         add_Banner(d->banner, warning_BannerType, none_GmStatusCode, title, str);
     }
     /* Warnings related to page contents. */
-    const int dismissed =
+    int dismissed =
         value_SiteSpec(collectNewRange_String(urlRoot_String(d->mod.url)),
                        dismissWarnings_SiteSpecKey) |
         (!prefs_App()->warnAboutMissingGlyphs ? missingGlyphs_GmDocumentWarning : 0);
+    /* File pages don't allow dismissing warnings, so skip it. */
+    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
+        dismissed |= ansiEscapes_GmDocumentWarning;
+    }
     const int warnings = warnings_GmDocument(d->view.doc) & ~dismissed;
     if (warnings & missingGlyphs_GmDocumentWarning) {
         add_Banner(d->banner, warning_BannerType, missingGlyphs_GmStatusCode, NULL, NULL);

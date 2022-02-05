@@ -868,23 +868,16 @@ void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
             case 97:
                 fg = ansi8BitColors_[8 + arg - 90];
                 break;
-        }
-    }
-    /* Ensure legibility if only the foreground color is set. */
-    if (fg.a) {
-        const iHSLColor themeBg = get_HSLColor(tmBackground_ColorId);
-        const float bgLuminance = luma_Color(get_Color(tmBackground_ColorId));
-        if (bgLuminance > 0.4f) {
-            float dim = (bgLuminance - 0.4f);
-            fg.r *= 0.5f * dim;
-            fg.g *= 0.5f * dim;
-            fg.b *= 0.5f * dim;
-        }
-        if (themeBg.sat > 0.15f && themeBg.lum >= 0.5f) {
-            iHSLColor fgHsl = hsl_Color(fg);
-            fgHsl.hue = themeBg.hue;
-            fgHsl.lum = themeBg.lum * 0.5f;
-            fg = rgb_HSLColor(fgHsl);
+            case 100:
+            case 101:
+            case 102:
+            case 103:
+            case 104:
+            case 105:
+            case 106:
+            case 107:
+                bg = ansi8BitColors_[8 + arg - 100];
+                break;
         }
     }
     if (fg.a && fg_out) {

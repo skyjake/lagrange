@@ -1291,9 +1291,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
     iRoot *oldCurrentRoot = current_Root(); /* restored afterwards */
     SDL_Event ev;
     iBool gotEvents = iFalse;
+    iBool gotRefresh = iFalse;
     iPtrArray windows;
     init_PtrArray(&windows);
-    while (nextEvent_App_(d, eventMode, &ev)) {
+    while (nextEvent_App_(d, gotRefresh ? postedEventsOnly_AppEventMode : eventMode, &ev)) {
 #if defined (iPlatformAppleMobile)
         if (processEvent_iOS(&ev)) {
             continue;
@@ -1316,9 +1317,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isSuspended = iFalse;
                 break;
             case SDL_APP_DIDENTERFOREGROUND:
-                gotEvents = iTrue;
                 d->warmupFrames = 5;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
+                gotEvents = iTrue;
                 d->isIdling = iFalse;
                 d->lastEventTime = SDL_GetTicks();
 #endif
@@ -1364,6 +1365,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     dispatchCommands_Periodic(&d->periodic);
                     continue;
                 }
+                if (ev.type == SDL_USEREVENT && ev.user.code == refresh_UserEventCode) {
+                    gotRefresh = iTrue;
+                    continue;
+                }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
                 if (ev.type == SDL_USEREVENT && ev.user.code == asleep_UserEventCode) {
                     if (SDL_GetTicks() - d->lastEventTime > idleThreshold_App_ &&
@@ -1382,8 +1387,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
 //                    fflush(stdout);
                 }
                 d->isIdling = iFalse;
-#endif
                 gotEvents = iTrue;
+#endif
                 /* Keyboard modifier mapping. */
                 if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
                     /* Track Caps Lock state as a modifier. */
