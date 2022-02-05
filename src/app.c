@@ -1317,9 +1317,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isSuspended = iFalse;
                 break;
             case SDL_APP_DIDENTERFOREGROUND:
-                gotEvents = iTrue;
                 d->warmupFrames = 5;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
+                gotEvents = iTrue;
                 d->isIdling = iFalse;
                 d->lastEventTime = SDL_GetTicks();
 #endif
@@ -1387,8 +1387,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
 //                    fflush(stdout);
                 }
                 d->isIdling = iFalse;
-#endif
                 gotEvents = iTrue;
+#endif
                 /* Keyboard modifier mapping. */
                 if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
                     /* Track Caps Lock state as a modifier. */
