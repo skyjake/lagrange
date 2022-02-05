@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.10.5
+* Fixed animation issue with sidebars in the right side of split view.
+* macOS: Fixed a sidebar clipping issue with Metal.
+
 ## 1.10.4
 * Added missing ANSI background color codes 100-107 (high-intensity VGA).
 * Fixed how the ANSI FG color is adjusted to keep text legible on dark or bright backgrounds when BG color is unset.
