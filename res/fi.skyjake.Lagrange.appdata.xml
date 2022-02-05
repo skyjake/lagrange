@@ -45,6 +45,21 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.10.4" date="2022-02-05">
+            <description>
+                <p>Changes in v1.10.4:</p>
+                <ul>
+                    <li>Added missing ANSI background color codes 100-107 (high-intensity VGA).</li>
+                    <li>Fixed how the ANSI FG color is adjusted to keep text legible on dark or bright backgrounds when BG color is unset.</li>
+                    <li>Fixed possible crash when there are ANSI escapes in the alt text of a preformatted block.</li>
+                    <li>Fixed tab/window titles containing ANSI escapes (escapes are removed).</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.10.4</url>
+        </release>
         <release version="1.10.3" date="2022-01-30">
             <description>
                 <p>Changes in v1.10.3:</p>
