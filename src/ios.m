@@ -163,7 +163,8 @@ API_AVAILABLE(ios(13.0))
 
 /*----------------------------------------------------------------------------------------------*/
 
-@interface AppState : NSObject<UIDocumentPickerDelegate, UITextFieldDelegate, UITextViewDelegate> {
+@interface AppState : NSObject<UIDocumentPickerDelegate, UITextFieldDelegate, UITextViewDelegate,
+                               UIScrollViewDelegate> {
     iString *fileBeingSaved;
     iString *pickFileCommand;
     iSystemTextInput *sysCtrl;
@@ -173,6 +174,7 @@ API_AVAILABLE(ios(13.0))
 @end
 
 static AppState *appState_;
+static UIScrollView *statusBarTapper_; /* dummy scroll view just for getting notified of taps */
 
 @implementation AppState
 
@@ -310,7 +312,14 @@ replacementString:(NSString *)string {
     notifyChange_SystemTextInput_(sysCtrl);
 }
 
+- (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView {
+    postCommand_App("scroll.top smooth:1");
+    return NO;
+}
+
 @end
+
+/*----------------------------------------------------------------------------------------------*/
 
 static void enableMouse_(iBool yes) {
     SDL_EventState(SDL_MOUSEBUTTONDOWN, yes);
@@ -426,6 +435,19 @@ void setupWindow_iOS(iWindow *window) {
     UIViewController *ctl = viewController_(window);
     isSystemDarkMode_ = isDarkMode_(window);
     postCommandf_App("~os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
+    /* A hack to get notified on status bar taps. We create a thin dummy UIScrollView
+       that occupies the top of the screen where the status bar is located. */ {
+        CGRect statusBarFrame = [UIApplication sharedApplication].statusBarFrame;
+        statusBarTapper_ = [[UIScrollView alloc] initWithFrame:statusBarFrame];
+//        [statusBarTapper_ setBackgroundColor:[UIColor greenColor]]; /* to see where it is */
+        [statusBarTapper_ setShowsVerticalScrollIndicator:NO];
+        [statusBarTapper_ setShowsHorizontalScrollIndicator:NO];
+        [statusBarTapper_ setContentSize:(CGSize){ 10000, 10000 }];
+        [statusBarTapper_ setContentOffset:(CGPoint){ 0, 1000 }];
+        [statusBarTapper_ setScrollsToTop:YES];
+        [statusBarTapper_ setDelegate:appState_];
+        [ctl.view addSubview:statusBarTapper_];
+    }
 }
 
 void playHapticEffect_iOS(enum iHapticEffect effect) {
@@ -443,6 +465,14 @@ void playHapticEffect_iOS(enum iHapticEffect effect) {
 }
 
 iBool processEvent_iOS(const SDL_Event *ev) {
+    if (ev->type == SDL_DISPLAYEVENT) {
+        if (deviceType_App() == phone_AppDeviceType) {
+            [statusBarTapper_ setHidden:(ev->display.data1 == SDL_ORIENTATION_LANDSCAPE ||
+                                     ev->display.data1 == SDL_ORIENTATION_LANDSCAPE_FLIPPED)];
+        }
+        [statusBarTapper_ setFrame:[UIApplication sharedApplication].statusBarFrame];
+        return iFalse;
+    }
     if (ev->type == SDL_WINDOWEVENT) {
         if (ev->window.event == SDL_WINDOWEVENT_RESTORED) {
             const iBool isDark = isDarkMode_(get_Window());

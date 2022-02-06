@@ -30,7 +30,11 @@ Please check [MacPorts](https://www.macports.org) if you are using macOS 10.12 o
 On openSUSE Tumbleweed:
 
     sudo zypper install lagrange
+    
+Using GNU Guix:
 
+    guix install lagrange
+    
 ## How to compile
 
 You need a POSIX-compatible environment to compile Lagrange.

@@ -131,6 +131,16 @@ static iRangecc prevPathSeg_(const char *end, const char *start) {
     return seg;
 }
 
+void stripUrlPort_String(iString *d) {
+    iUrl parts;
+    init_Url(&parts, d);
+    if (!isEmpty_Range(&parts.port)) {
+        /* Always preceded by a colon. */
+        remove_Block(&d->chars, parts.port.start - 1 - constBegin_String(d),
+                     size_Range(&parts.port) + 1);
+    }
+}
+
 void stripDefaultUrlPort_String(iString *d) {
     iUrl parts;
     init_Url(&parts, d);
@@ -248,6 +258,9 @@ iRangecc urlRoot_String(const iString *d) {
     else {
         iUrl parts;
         init_Url(&parts, d);
+        if (equalCase_Rangecc(parts.scheme, "about")) {
+            return (iRangecc){ constBegin_String(d), parts.path.start };
+        }
         rootEnd = parts.path.start;
     }
     return (iRangecc){ constBegin_String(d), rootEnd };
@@ -681,6 +694,17 @@ const iString *withSpacesEncoded_String(const iString *d) {
     return d;
 }
 
+const iString *withScheme_String(const iString *d, const char *scheme) {
+    iUrl parts;
+    init_Url(&parts, d);
+    if (!equalCase_Rangecc(parts.scheme, scheme)) {
+        iString *repl = collectNewCStr_String(scheme);
+        appendRange_String(repl, (iRangecc){ parts.scheme.end, constEnd_String(d) });
+        return repl;
+    }
+    return d;
+}
+
 const iString *canonicalUrl_String(const iString *d) {
     /* The "canonical" form, used for internal storage and comparisons, is:
        - all non-reserved characters decoded (i.e., it's an IRI)
@@ -879,4 +903,42 @@ const iGmError *get_GmError(enum iGmStatusCode code) {
     }
     iAssert(errors_[0].code == unknownStatusCode_GmStatusCode);
     return &errors_[0].err; /* unknown */
+}
+
+int replaceRegExp_String(iString *d, const iRegExp *regexp, const char *replacement,
+                         void (*matchHandler)(void *, const iRegExpMatch *),
+                         void *context) {
+    iRegExpMatch m;
+    iString      result;
+    int          numMatches = 0;
+    const char  *pos        = constBegin_String(d);
+    init_RegExpMatch(&m);
+    init_String(&result);
+    while (matchString_RegExp(regexp, d, &m)) {
+        appendRange_String(&result, (iRangecc){ pos, begin_RegExpMatch(&m) });
+        /* Replace any capture group back-references. */
+        for (const char *ch = replacement; *ch; ch++) {
+            if (*ch == '\\') {
+                ch++;
+                if (*ch == '\\') {
+                    appendCStr_String(&result, "\\");
+                }
+                else if (*ch >= '0' && *ch <= '9') {
+                    appendRange_String(&result, capturedRange_RegExpMatch(&m, *ch - '0'));
+                }
+            }
+            else {
+                appendData_Block(&result.chars, ch, 1);
+            }
+        }
+        if (matchHandler) {
+            matchHandler(context, &m);
+        }
+        pos = end_RegExpMatch(&m);
+        numMatches++;
+    }
+    appendRange_String(&result, (iRangecc){ pos, constEnd_String(d) });
+    set_String(d, &result);
+    deinit_String(&result);
+    return numMatches;
 }

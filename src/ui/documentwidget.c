@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "gmutil.h"
+#include "gopher.h"
 #include "history.h"
 #include "indicatorwidget.h"
 #include "inputwidget.h"
@@ -921,6 +922,7 @@ static void documentRunsInvalidated_DocumentView_(iDocumentView *d) {
     d->hoverPre    = NULL;
     d->hoverAltPre = NULL;
     d->hoverLink   = NULL;
+    clear_PtrArray(&d->visibleMedia);
     iZap(d->visibleRuns);
     iZap(d->renderRuns);
 }
@@ -2900,10 +2902,14 @@ static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
         add_Banner(d->banner, warning_BannerType, none_GmStatusCode, title, str);
     }
     /* Warnings related to page contents. */
-    const int dismissed =
+    int dismissed =
         value_SiteSpec(collectNewRange_String(urlRoot_String(d->mod.url)),
                        dismissWarnings_SiteSpecKey) |
         (!prefs_App()->warnAboutMissingGlyphs ? missingGlyphs_GmDocumentWarning : 0);
+    /* File pages don't allow dismissing warnings, so skip it. */
+    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
+        dismissed |= ansiEscapes_GmDocumentWarning;
+    }
     const int warnings = warnings_GmDocument(d->view.doc) & ~dismissed;
     if (warnings & missingGlyphs_GmDocumentWarning) {
         add_Banner(d->banner, warning_BannerType, missingGlyphs_GmStatusCode, NULL, NULL);
@@ -4069,14 +4075,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
-             equal_Rangecc(range_Command(cmd, "id"), "document.input.submit") && document_App() == d) {
+             equal_Rangecc(range_Command(cmd, "id"), "!document.input.submit") && document_App() == d) {
         postCommand_Root(get_Root(), "navigate.back");
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
-//        set_Block(&d->sourceContent, &lockResponse_GmRequest(d->request)->body);
-//        unlockResponse_GmRequest(d->request);
         if (document_App() == d) {
             updateFetchProgress_DocumentWidget_(d);
         }
@@ -4302,6 +4306,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "navigate.parent") && document_App() == d) {
         iUrl parts;
         init_Url(&parts, d->mod.url);
+        if (endsWith_Rangecc(parts.path, "/index.gmi")) {
+            parts.path.end -= 9; /* This is the default index page. */
+        }
         /* Remove the last path segment. */
         if (size_Range(&parts.path) > 1) {
             if (parts.path.end[-1] == '/') {
@@ -4311,14 +4318,42 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 if (parts.path.end[-1] == '/') break;
                 parts.path.end--;
             }
-            postCommandf_Root(w->root,
-                "open url:%s",
-                cstr_Rangecc((iRangecc){ constBegin_String(d->mod.url), parts.path.end }));
+            iString *parentUrl = collectNewRange_String((iRangecc){ constBegin_String(d->mod.url),
+                                                                    parts.path.end });
+            /* Always go to a gophermap. */
+            setUrlItemType_Gopher(parentUrl, '1');
+            /* Hierarchical navigation doesn't make sense with Titan. */
+            if (startsWith_String(parentUrl, "titan://")) {
+                /* We have no way of knowing if the corresponding URL is valid for Gemini,
+                   but let's try anyway. */                
+                set_String(parentUrl, withScheme_String(parentUrl, "gemini"));
+                stripUrlPort_String(parentUrl);
+            }
+            if (!cmpCase_String(parentUrl, "about:")) {
+                setCStr_String(parentUrl, "about:about");
+            }
+            postCommandf_Root(w->root, "open url:%s", cstr_String(parentUrl));
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.root") && document_App() == d) {
-        postCommandf_Root(w->root, "open url:%s/", cstr_Rangecc(urlRoot_String(d->mod.url)));
+        iString *rootUrl = collectNewRange_String(urlRoot_String(d->mod.url));
+        /* Always go to a gophermap. */
+        setUrlItemType_Gopher(rootUrl, '1');
+        /* Hierarchical navigation doesn't make sense with Titan. */
+        if (startsWith_String(rootUrl, "titan://")) {
+            /* We have no way of knowing if the corresponding URL is valid for Gemini,
+               but let's try anyway. */                
+            set_String(rootUrl, withScheme_String(rootUrl, "gemini"));
+            stripUrlPort_String(rootUrl);
+        }
+        if (!cmpCase_String(rootUrl, "about:")) {
+            setCStr_String(rootUrl, "about:about");
+        }
+        else {
+            appendCStr_String(rootUrl, "/");
+        }
+        postCommandf_Root(w->root, "open url:%s", cstr_String(rootUrl));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
@@ -4341,6 +4376,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
+        if (argLabel_Command(cmd, "smooth")) {
+            stopWidgetMomentum_Touch(w);
+            smoothScroll_DocumentView_(&d->view, -pos_SmoothScroll(&d->view.scrollY), 500);
+            d->view.scrollY.flags |= muchSofter_AnimFlag;
+            return iTrue;
+        }
         init_Anim(&d->view.scrollY.pos, 0);
         invalidate_VisBuf(d->view.visBuf);
         clampScroll_DocumentView_(&d->view);

@@ -237,7 +237,7 @@ enum iTextBlockMode { quadrants_TextBlockMode, shading_TextBlockMode };
 iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iTextBlockMode,
                                      const iString *text);
 
-iRegExp *   makeAnsiEscapePattern_Text  (void);
+iRegExp *   makeAnsiEscapePattern_Text  (iBool includeEscChar);
 
 /*-----------------------------------------------------------------------------------------------*/
 

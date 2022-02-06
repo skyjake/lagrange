@@ -72,10 +72,10 @@ static NSString *currentSystemAppearance_(void) {
 }
 
 iBool shouldDefaultToMetalRenderer_MacOS(void) {
-    /* TODO: Test if SDL 2.0.16 works better (no stutters with Metal?). */
-    return iFalse; /*
     const iInt2 ver = macVer_();
-    return ver.x > 10 || ver.y > 13;*/
+    SDL_DisplayMode dispMode;
+    SDL_GetDesktopDisplayMode(0, &dispMode);
+    return dispMode.refresh_rate > 60 && (ver.x > 10 || ver.y > 13);
 }
 
 static void ignoreImmediateKeyDownEvents_(void) {
@@ -436,6 +436,10 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     const iBool isInertia  = (event.momentumPhase & (NSEventPhaseBegan | NSEventPhaseChanged)) != 0;
     const iBool isEnded    = event.scrollingDeltaX == 0.0f && event.scrollingDeltaY == 0.0f && !isInertia;
     const iWindow *win     = &get_MainWindow()->base;
+    if (event.window != nsWindow_(win->win)) {
+        /* Not the main window. */
+        return iFalse;
+    }
     if (isPerPixel) {
         /* On macOS 12.1, stopping ongoing inertia scroll with a tap seems to sometimes produce
            spurious large scroll events. */
@@ -525,7 +529,6 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
             ev.wheel.y = iSign(ev.wheel.y);
         }
 #endif
-    
     return iTrue;        
 }
 
@@ -734,7 +737,7 @@ enum iColorId removeColorEscapes_String(iString *d) {
 static NSString *cleanString_(const iString *ansiEscapedText) {
     iString mod;
     initCopy_String(&mod, ansiEscapedText);
-    iRegExp *ansi = makeAnsiEscapePattern_Text();
+    iRegExp *ansi = makeAnsiEscapePattern_Text(iTrue /* with ESC */);
     replaceRegExp_String(&mod, ansi, "", NULL, NULL);
     iRelease(ansi);
     NSString *clean = [NSString stringWithUTF8String:cstr_String(&mod)];    

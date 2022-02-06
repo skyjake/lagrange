@@ -43,7 +43,7 @@ const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction] = {
     { home_Icon, "${menu.home}", "navigate.home" },
     { upArrow_Icon, "${menu.parent}", "navigate.parent" },
     { reload_Icon, "${menu.reload}", "navigate.reload" },
-    { openTab_Icon, "${menu.newtab}", "tabs.new" },
+    { add_Icon, "${menu.newtab}", "tabs.new" },
     { close_Icon, "${menu.closetab}", "tabs.close" },
     { bookmark_Icon, "${menu.page.bookmark}", "bookmark.add" },
     { globe_Icon, "${menu.page.translate}", "document.translate" },
@@ -940,7 +940,7 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     }
     const int maxOffset = isHorizPanel            ? width_Widget(sheet)
                           : isPortraitPhone_App() ? height_Widget(sheet)
-                                                  : (12 * gap_UI);
+                                                  : (6 * gap_UI);
     if (isIncoming) {
         setVisualOffset_Widget(sheet, maxOffset, 0, 0);
         setVisualOffset_Widget(sheet, 0, 330, easeOut_AnimFlag | softer_AnimFlag);

@@ -1,0 +1,371 @@
+# Release notes
+
+=> about:version  Newer versions
+
+## 1.5.2
+* Fixed pasting a PEM-formatted certificate and/or private key via clipboard in Import Identity.
+* Possible workaround for a visual glitch in the URL field.
+* Specify `StartupWMClass` in .desktop file.
+* Normalize page contents to avoid the most common issues with diacritics (Unicode NFC).
+* Expanded the set of recognized custom link icons.
+* Updated "Smol Emoji" font with new glyphs.
+* Allow use of TLS cipher "DHE-RSA-AES256-GCM-SHA384".
+
+## 1.5.1
+* Updated UI translations.
+* Updated "Smol Emoji" font with new and improved glyphs.
+
+## 1.5
+* Added "Smol Emoji" and "Noto Sans Symbols" fonts, removed Symbola.
+⚠️ Many Emoji and pictographs defined in the last five years are currently missing.
+* Added document footer buttons: on certain pages (e.g., error messages) show relevant actions in the bottom of the page. For example, if a certificate is required for viewing a page, show buttons for creating a new identity and showing the Identities sidebar.
+* Error pages include the human-readable text sent by the server.
+* Disregard old feed entries whose unread status would have been forgotten.
+* Added UI language: Polish.
+
+Identity management:
+* Revised New Identity dialog. An option is provided to automatically use the new identity on the current domain/page. The additional fields are hidden by default.
+* Improved usability of Identities sidebar. No more accidental activations: left-clicking an identity opens the context menu without making any changes. The context menu shows each active URL as a menu item for easy access. Identity icons reflect the usage status: all identities used on the current domain get highlighted in addition to the currently used one.
+* Identities can be exported: certificate and private key are opened in a new tab in plain text PEM format.
+* Fixed issues with identity usage: a higher-up URL overrides and deactivates all contained URLs to avoid redundant activation.
+
+Text input:
+* Revised text input widgets: added support for multiple lines, and when entering user response to a query, show how many bytes are remaining for the response URL about to be submitted. In dialogs, input fields expand vertically instead of scrolling their content horizontally.
+* Input widgets allow inserting newlines using Shift+Return.
+* Disallow sending query responses that are too long (1024 bytes maximum).
+* Shift-click to select a range of text in input widgets (i.e, without dragging).
+
+Rendering:
+* Animate showing and hiding of sidebars and dialogs. Animations are enabled by default, by can be disabled with Preferences > Interface > Animations.
+* Added setting for a custom TrueType symbol font for any missing characters. Note: Must be a .TTF file — OpenType and bitmap fonts are not supported.
+* Link navigation shortcut icons (home row and numbered) are drawn with a consistent appearance.
+* Improved icon alignment in lists.
+* Reduced line gap between word-wrapped top-level headings.
+* Modal dialog background dimming fades in/out smoothly.
+* macOS: Workaround for an issue that causes UI refresh to pause occasionally for ~100 ms.
+
+Split view:
+* Added keybindings for split view menu items.
+* Changed default split view keys to conform to Emacs (3 for horizontal, 2 for vertical split).
+* Fixes and improvements for touch screen event handling in split view mode.
+
+Command line:
+* Added --url-or-search (-u) command line option. Depending on the parameter, either open an URL or make a search query.
+* Open all URLs/files specified on the command line in new tabs, and raise the window if the app is already running. (Kudos to Alyssa Rosenzweig.)
+
+Gempub:
+* Linear navigation through the book with Left/Right arrow keys and via footer buttons. The navigation order is determined by links on the Gempub index page.
+
+## 1.4.2
+* Fixed UI colors being all black on the first run.
+* Fixed right mouse click on an inactive split not having any effect.
+* Fixed action buttons showing under the Help link in an empty Identities sidebar.
+* Fixed potential crash at shutdown.
+* Fixed minor UI layout issues.
+
+## 1.4.1
+* Fixed removing the left side split by closing all its tabs. The URL input field got confused about which tab was currently open, and the wrong theme was active.
+* Fixed tab merging when unsplitting the window: keep the currently active tab open.
+* Fixed issue with sidebars sometimes becoming unresponsive.
+* Fixed font used for visited monospace Gopher links.
+* Fixed incorrectly shown/hidden ◧ indicator.
+* Fixed scrollbar in Preferences > Keys being hidden until the list is scrolled.
+
+## 1.4
+* Added split view modes: two tabs at once, horizontal/vertical split, 1:1/2:1/1:2 weights, merge tabs, swap sides. See section 1.8 in Help for details.
+* Split view pinning: keep a page pinned on one side while all opened links go to the other side.
+* "file://" URLs can be used for viewing contents of local directories and ZIP archives.
+* Basic Gempub support: a cover page is generated based on metadata, and there's an automatic split view for index and contents. On macOS, Lagrange is registered as a viewer of .gpub files.
+* Bold link styling is used for indicating which links are unvisited.
+* Page rendering was optimized: now each line of text is rendered into the view buffer only once, and whenever the view is stationary, content is prefilled in the available space outside the viewport. Previously, at least one line of text was rendered every frame when the viewport was moving, which was mostly redundant.
+* Added UI languages: Interlingua, Toki Pona.
+* Added "New"/"Import" buttons in the bottom of the Identities tab.
+* Added an "All"/"Unread" mode switch in the bottom of the Feeds tab.
+* Added toggles for special tags in the bookmark creation/editor dialog.
+* Added "Show Downloads" to the File/main menu.
+* Added "Open Downloaded File" to the file save dialog to make it easy to find the local copy of the file.
+* Updated the UI font to Source Sans 3. It now has all the styles and weights needed for page rendering, too.
+* Added a semibold Fira Sans weight (used for unvisited links).
+* Preferences: Reorganized the fonts dropdown menu.
+* Changed popup dismiss behavior so that a click outside just dismisses the popup and does not trigger further actions.
+* All lists support smooth scrolling.
+* Multitouch scrolling: each finger can scroll a different widget.
+* Adjustments to how display DPI affects UI scaling.
+* Fixed allocation of page rendering buffers. Previously, some buffers may have gone unused or were allocated erroneously to the same position, causing unnecessary work for the page renderer.
+* Fixed various issues in the UI layout.
+* Fixed parsing URI scheme (limited set of characters allowed).
+* Don't percent encode equal signs in URL paths.
+
+## 1.3.4
+* Allow server certificates with a `*.tld` subject wildcard.
+* Updated the French UI translation.
+* Fixed media type check in the audio player. Media types with parameters failed to be recognized.
+* Fixed crash after a redirect.
+* Fixed a rare issue with handling multiple rapid network requests.
+* Fixed a rare situation where a network connection would fail to open.
+* Minor stability improvements.
+
+## 1.3.3
+* Added UI languages: French, German. (Note that neither is 100% finished yet.)
+* Added build option to disable IPC for compatibility reasons.
+* Added environment variable LAGRANGE_OVERRIDE_DPI.
+* Back/forward navigation buttons are disabled if they have no more pages to switch to.
+* Minor UI color tuning.
+* Fixed possible crash when closing a tab.
+* Fixed possible crash when restoring application state at launch.
+* Fixed problems parsing and making requests with literal IPv6 addresses.
+
+## 1.3.2
+* Fixed crash after updating from v1.2 due to undefined CA file/path configuration.
+* Fixed conflation of pixel ratio and display DPI. Pixel ratio is now always separately detected so mouse events can be correctly positioned. You may find that adjusting the UI scale factor (Preferences > Interface) is necessary after upgrading.
+* Fixed sidebar width changing when moving the window to a different display.
+* Fixed inability to use Tab in keybindings.
+* Fixed opening Gopher URLs via drag-and-drop.
+* Fixed "Add bookmark..." on a feed entry.
+* Fixed keybindings list not being updated immediately when UI language changes.
+* Fixed trimming of link label text when a custom Emoji is used.
+* Windows: Fixed maximum window size being restricted to the initial display's size.
+
+## 1.3.1
+* Added UI languages: Serbian, Interlingue.
+* Added option to disable bold links for light/dark backgrounds.
+* Updated the Nunito font to the latest version.
+* Fixed crash during word wrapping.
+* Fixed keybindings overriding the home row key navigation mode.
+* Fixed kerning in the text renderer.
+* Fixed issue with overlapped drawing of list bullets vs. list items.
+* Fixed cropped list bullets when using Literata.
+* Fixed whitespace normalization in plain text files (tab characters).
+* Fixed issues buffering window contents, possibly causing missing font glyphs.
+
+## 1.3
+
+Localization:
+* Added the first set of UI translations: Chinese (Simplified, Traditional), Finnish, Russian, and Spanish. Many thanks to the translators!
+* Added page content translation using a LibreTranslate instance running on `xlt.skyjake.fi`. This is somewhat experimental and may occasionally mess up Gemtext markup. Expect long pages to be quite slow to translate (more than a minute).
+=> https://weblate.skyjake.fi/projects/lagrange/ui  Lagrange UI translations (Weblate project)
+=> https://libretranslate.com                       More information about LibreTranslate
+=> gemini://skyjake.fi/lagrange/privacy.gmi         Lagrange privacy policy
+
+Resources:
+* Added Noto Sans CJK (Simplified Chinese) font.
+* Added Noto Sans Arabic font. Note that right-to-left/bidirectional text rendering is *not* implemented yet.
+* Added "about:about" that lists all the available "about:" pages.
+
+Browsing:
+* Alt text is shown when hovering over a preformatted block.
+* Clicking on a preformatted block collapses it, leaving only the alt text.
+* Added option to collapse all preformatted blocks on page load.
+* A server certificate can also be verified by Certificate Authorities. When "CA file" and/or "CA path" are set in Preferences, CA verification will mark a certificate as trusted.
+* Relaxed TOFU certificate checking when it comes to domain names: `domain.tld` in a certificate is implicitly considered to also mean `*.domain.tld`.
+* Fixed handling of IDNs when the user sets a server certificate as trusted via the UI.
+* Fixed handling of unknown URI schemes. Previously they were forcefully converted to absolute URIs, breaking them.
+
+Page content and rendering:
+* Color adjustments to the "Colorful Dark", "Colorful Light", and "Gray" themes. "Gray" looks different in dark and light UI modes.
+* Spacing of bullet lists vs. link lists is more consistent.
+* Links are shown in bold, and tinted with the page theme color for more coherent appearance.
+* Custom link icons: Gemini links whose destination is on the same domain use as icon the Emoji or other pictograph at the start of the link label. (For example, see Astrobotany menus.)
+* Added option to wrap lines in plain text files. This is on by default because there is no horizontal scrolling for plain text.
+* Large images are downscaled to an appropriate size for presentation.
+* Improved font glyph caching to reduce stuttering during scrolling. All required glyphs are cached after a page load finishes. This allows more efficient copying of glyphs as the operations can be batched.
+* Larger content buffers for scrolling, reducing need to redraw content.
+* Gopher: Handling the 'h' line type.
+* Fixed minor issues with word wrapping.
+* Fixed minor blending artifacts with the current heading shown on the right side of the page.
+
+User interface:
+* Improved event handling to support touch screens on any platform (if supported by SDL).
+* UI scaling factor is applied immediately when closing Preferences. Restarting is no longer necessary.
+* Window rescaled automatically when moving it to a display with a different DPI.
+* Added unread feed entry count to the sidebar.
+* Added a context menu for toggling sidebars. The menu appears when right-clicking on the navbar or on the sidebar tab buttons.
+* Double/triple click selection modes. Double click and drag will select by word, triple click by paragraph.
+* Popup menus have icons for items to make it faster to find the item you're looking for.
+* Soft shadows for popup menus.
+* Scrollbars fade away on macOS/iOS and dim on other platforms.
+* Reload button moved into the URL field.
+* Narrow URL input fields will not display the default "gemini" scheme.
+* Domain name is highlighted in URL fields.
+* Added a cut/copy/paste context menu to input fields.
+* Added an "Import..." button to the empty Identities sidebar.
+* Preferences dialog was partially reorganized for clarity.
+* Tabs in Preferences look the same as tabs in the sidebar.
+* Cleaner appearance for unread feed items in the sidebar.
+* Dialog buttons show the corresponding shortcut key.
+* Fixed background activity indicators overlapping each other.
+* Fixed glitches when widgets extend beyond the left edge of the window.
+* Fixed use of plurals in UI strings, enabling support for three or more plural forms.
+
+Keybindings:
+* Default page scroll keybindings changed: PageUp/Down scroll a whole page, and Space/Shift+Space scrolls half a page. If you're changed these bindings, note that they will be reset to defaults.
+* Added keybinding for subscribing to a page.
+* Keyboard modifiers can be remapped using the `modmap.txt` configuration file.
+* Caps Lock can be used as a modifier key.
+* Internet hot keys (if present on a keyboard) can be used to navigate back/forward and reload the page.
+
+Command line use:
+* Added conventional `--help`, `--version` options.
+* A previously started instance can be controlled with command line options.
+* `--list-tab-urls` prints a list of the currently open URLs in the running instance.
+
+Bug fixes:
+* Only one instance of Lagrange is allowed to run per user directory. This prevents instances from overwriting each other's data.
+* Fixed use of multiple search terms for quick lookup.
+* Fixed handling of multiple feeds having an entry with the same URL.
+* Fixed percent-decoding of URLs on the command line and coming in via system URL handlers.
+
+## 1.2.3
+* Fixed XML parser hanging on numeric character entities.
+* Fixed "Monospace Body" option causing Gemtext line markup to be visible.
+* Fixed bookmarking a wrapped link. Now the entire label text gets used instead of just the clicked segment.
+* Fixed handling of non-advancing monospace glyphs.
+* CMake: Automatically check if `lib/the_Foundation` is up-to-date.
+* CMake: Build configuration fails if an SSL library is not found.
+* Reverted default bookmarks having "Getting Started" as a remote bookmark source. Now it's just a regular bookmark.
+
+## 1.2.2
+* Stability improvements.
+* Whitespace is no longer normalized when using the monospace body setting.
+* Fixed issues with percent-encoded Gopher paths.
+* macOS: Try to prevent forced use of high-performance GPU.
+
+## 1.2.1
+* Fixed crash when creating a bookmark.
+
+## 1.2
+
+New features:
+* Atom feed subscriptions: Atom XML documents are automatically converted to Gemini feed index pages. This is a built-in version of the Atom-to-Gemini example on the Help page.
+* Inline downloads: right-click on any link that is openable inside Lagrange and select "Download Linked File".
+* Editable bookmark icons: use your favorite Unicode character as the symbol to represent a bookmarked site.
+* Searching via URL field: non-URL text entered in the field is passed onto the configured search query URL (Preferences > Network). An indicator is shown if a query will take place.
+* Tab auto-reloading: configure a reloading interval using the page context menu ("Set Auto-Reload..."). Auto-reloading is part of the persistent state of the tab.
+* "Iosevka" and "Source Sans Pro" (the UI font) can be used as heading and body fonts.
+* User preference for aligning all pages to the top of the window.
+* Keybinding (F11) for toggling fullscreen mode. On macOS, the shortcut is ⌃⌘F as before.
+* Keybinding for finding text on page.
+
+UI design:
+* Enhanced navbar: adjusted spacing, URL field has a maximum width, tab titles have less pronounced borders.
+* Improved sidebar appearance: bold subheadings, larger feed icons, adjusted spacing, background color.
+* Font consistency: all UI elements use the same font (i.e., no more monospace input fields).
+* Added setting for UI accent color (teal, orange).
+* General fine-tuning of the color palette.
+* Dialog buttons are aligned to the right edge, leaving room for additional action buttons on the left.
+* Page Information button is embedded in the URL field.
+* Page Information dialog is attached to its button.
+* Site icons use a different color in tab titles for visual distinction.
+* Fade background behind modal dialogs.
+* Responsive page margins.
+* Windows: Added a custom window frame to replace the default Windows one. This looks nicer but does not behave exactly like a native window frame. Added a setting to Preferences for switching back to the default frame.
+
+Other changes:
+* Help is opened on first run instead of the "About Lagrange" page to make it easier to discover important Gemini links like the FAQ.
+* "Go to Root" respects a user name found in the URL. One can still "Go to Parent" to get above the user level.
+* Feed entries are sorted by refresh time if they are published on the same date.
+* Don't show future-dated feed entries in Feeds.
+* Middle-clicking on links: open new tab in background or foreground depending on the Shift key.
+* Shift+Insert can be used for pasting clipboard contents into input fields.
+* Removed a strange violet-on-green color theme pairing.
+
+Bug fixes:
+* Fixed text prompt dialogs closing and accepting the entered text when switching focus away from the app.
+* Scroll position remains fixed while horizontally resizing the window or sidebars.
+* Fixed a crash when opening the audio player menu.
+* Fixed Gopher requests that were using URL (percent) encoded characters.
+* Windows: Fixed a flash of white when the window is first opened.
+
+## 1.1.4
+* Fixed feed entry highlight/read status issue in the sidebar.
+* Fixed Gopher menu links that contain spaces.
+* Fixed vertical alignment of short pages: top banner is excluded because it is not part of the content.
+
+## 1.1.3
+* Fixed crash when deleting a bookmark that was being used as a remote bookmark source.
+* Fixed potential crash at shutdown.
+* Fixed URL path decoding not respecting reserved characters.
+* AppImage: Disable SSE 4.1 for improved compatibility.
+* Windows: Fixed portable build so it stores user files under the "userdata" directory and not under AppData\Roaming\.
+
+## 1.1.2
+* Fixed potential crash at launch.
+* Fixed input query from a background tab being applied to the foreground tab. An input query now forces a tab to the foreground.
+* Fixed window scroll position moving when resizing vertically.
+* Fixed feed refresh waiting forever if a server doesn't respond.
+* Fixed hover state not being cleared when right-clicking links.
+* Fixed remote bookmarks not appearing if they lacked a user-friendly name on the source page.
+
+## 1.1.1
+* Fixed focus cycling inside dialogs. Widgets outside a dialog are not allowed to be focused.
+* Fixed missing cursor in the New Identity "Valid until" field.
+* Fixed "Import Links as Bookmarks" so it can be used to import local copies of remote bookmarks when viewing the remote source page.
+* Fixed a cosmetic issue in the Import Identity dialog where part of the widget frames were not drawn.
+* Fixed word wrapping issue in unread feed entry titles.
+* Fixed opening a URI that contains a fragment in the default browser. The fragment is no longer omitted.
+* Fixed default value for the Line Width setting.
+* Linux: Check monitor DPI for UI scaling like on Windows and macOS.
+* Allow reloading the same URL when clicking on a link or bookmark, or pressing Enter in the navbar.
+* Bookmark URLs are normalized by removing the default Gemini port.
+* Added a list of environment variables to "about:debug".
+* XDG: Respect `XDG_CONFIG_HOME` environment variable for storing user files.
+* XDG: Use the configured XDG download directory as default Downloads location.
+* The default set of bookmarks now uses a remote source.
+=> gemini://skyjake.fi/lagrange/getting_started.gmi  "Getting Started" bookmarks
+
+## 1.1
+* Added identity importing: existing client certificates in PEM format can be imported from the current page, from clipboard, or from drag-and-dropped files.
+* Added setting for maximum cache size. This is the amount of fetched data kept in memory for page navigation and content lookup. The default is 10 MB.
+* Added option to show full link URL when hovering on it.
+* Added support for Finger links (courtesy of John Cowan).
+* Added keybindings for page reload, opening link in new tab via home row keys (${SHIFT+}F), and hovering on a link via home row keys (H).
+* Added keybinding for switching to next set of links for home row navigation.
+* Added keybindings for new tab, close tab, adding a bookmark.
+* Added a bold UI font. It is used for unread feed entries and default dialog buttons.
+* Better alignment of quick lookup result icons and labels.
+* Remote bookmarks are grouped under their source in the bookmark list.
+* A bookmark's icon is updated after loading the page so it matches the site.
+* Trusting a new server certificate manually will update the current page without reloading.
+* Middle-clicking on a tab title closes the tab.
+* Internal state files now use an ".lgr" extension. If downgrading after running v1.1, note that the old version will not read these.
+* Fixed timestamps of visited URLs. Your browsing history will be cleared but can still be viewed manually in "visited.txt".
+* Fixed issue where "heading" feed entries would turn unread after a while.
+* Fixed duplicate U key for home row navigation.
+* Fixed an issue with Unicode characters in quick lookup search terms.
+
+## 1.0.3
+* Improved font glyph caching: only rasterize glyphs when drawing text, and retry after failure. This makes initial document layout faster and avoids issues with permanently lost glyphs.
+* Fixed parts of text disappearing when the glyph cache fills up. The cache also uses less memory now.
+* Fixed percent-encoding of spaces when copying URLs to clipboard.
+* Fixed feed entry context menu showing the wrong menu item for Mark as Read/Unread.
+* Fixed parentheses and brackets being trimmed from feed entry titles.
+* Fixed quotes appearing continuous even when there are empty lines in between.
+* Fixed quote border line not showing up on empty quote lines.
+* Fixed handling of redirection in a background tab — redirected URL would open in the current tab.
+* Fixed Gemini URL normalization with regard to default port.
+* Fixed a very minor memory leak.
+* Fixed missing "gopher:" URL scheme registration on macOS.
+
+## 1.0.2
+* Fixed URL input field showing the wrong URL when opening tabs in the background.
+* Fixed trusting a renewed server certificate when multiple tabs are open.
+* Fixed opening sidebar feed entries in new/background tab with modifier keys.
+* Fixed editing identity notes. The entered new notes were not being applied.
+* Server certificate domain name check accepts a matching CN even when SAN doesn't match.
+
+## 1.0.1
+* Fixed percent-encoding of the query string.
+* Fixed cursor positioning in input fields.
+
+## 1.0
+* Added remote bookmarks. Any bookmarked 'text/gemini' page with the "remotesource" tag is a source of remote bookmarks. Each link on the page is shown as a remote bookmark in Bookmarks.
+* Added a way to export bookmarks via the special page "about:bookmarks". The page can also list all bookmarks by tag or by creation date.
+* Added context menu item for duplicating a bookmark.
+* Import all links on a page as bookmarks. (Importing tags is not supported in this version.)
+* Links can be bookmarked via context menu.
+* Open links with an unrecognized scheme in the default browser.
+* Open sidebar items in new/background tab via context menu or modifier keys.
+* "Edit Feed..." menu item shows the Feed Settings dialog.
+* Removed unimplemented menu items.
+
+=> about:version-0.13  Older versions

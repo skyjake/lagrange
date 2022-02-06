@@ -25,13 +25,13 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2022)
 if (IOS)
     set (PROJECT_VERSION 1.10)
-    set (IOS_BUNDLE_VERSION 9)
-    set (IOS_BUILD_DATE "2022-01-01")
+    set (IOS_BUNDLE_VERSION 12)
+    set (IOS_BUILD_DATE "2022-01-28")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.10)
-    set (ANDROID_BUILD_VERSION a3)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-01-03")
+    set (ANDROID_BUILD_VERSION a5)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-01-24")
 endif ()
 
 # Defaults that depend on environment.
@@ -118,6 +118,8 @@ elseif (ANDROID)
 else ()
     list (APPEND RESOURCES
         res/about/help.gmi
+        res/about/version-0.13.gmi
+        res/about/version-1.5.gmi
         res/about/version.gmi
         res/arg-help.txt
     )
@@ -232,7 +234,7 @@ set (SOURCES
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
-    src/ui/sidebarwidget.h    
+    src/ui/sidebarwidget.h
     src/ui/text.c
     src/ui/text.h
     src/ui/touch.c
@@ -435,7 +437,7 @@ if (APPLE)
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
     )
     if (IOS)
-        target_compile_definitions (app PUBLIC 
+        target_compile_definitions (app PUBLIC
             LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}"
             LAGRANGE_IOS_BUILD_DATE="${IOS_BUILD_DATE}"
         )
@@ -464,7 +466,7 @@ endif ()
 if (MSYS)
     target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
     if (ENABLE_WINSPARKLE)
-        target_link_libraries (app PUBLIC winsparkle)        
+        target_link_libraries (app PUBLIC winsparkle)
     endif ()
 endif ()
 if (UNIX)
@@ -522,6 +524,7 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;
     install (FILES res/fi.skyjake.Lagrange.appdata.xml
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
     )
+    install (FILES res/lagrange.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
     if (NOT ENABLE_RELATIVE_EMBED)
         target_compile_definitions (app PUBLIC
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")

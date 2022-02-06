@@ -547,9 +547,11 @@ static void clear_RunTypesetter_(iRunTypesetter *d) {
     clear_Array(&d->layout);
 }
 
-static void commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
+static size_t commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
+    const size_t n = size_Array(&d->layout);
     pushBackN_Array(&doc->layout, constData_Array(&d->layout), size_Array(&d->layout));
     clear_RunTypesetter_(d);
+    return n;
 }
 
 static const int maxLedeLines_ = 10;
@@ -611,6 +613,10 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
 }
 
 static void doLayout_GmDocument_(iGmDocument *d) {
+    static iRegExp *ansiPattern_;
+    if (!ansiPattern_) {
+        ansiPattern_ = makeAnsiEscapePattern_Text(iTrue /* with ESC */);
+    }
     const iPrefs *prefs             = prefs_App();
     const iBool   isMono            = isForcedMonospace_GmDocument_(d);
     const iBool   isGopher          = isGopher_GmDocument_(d);
@@ -618,8 +624,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text;
     const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text;
     const iBool   isFullWidthImages = (d->outsideMargin < 5 * gap_UI);
-//    const iBool   isDarkBg          = isDark_GmDocumentTheme(
-//        isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
+    
     initTheme_GmDocument_(d);
     d->isLayoutInvalidated = iFalse;
     /* TODO: Collect these parameters into a GmTheme. */
@@ -657,7 +662,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iArray *oldPreMeta = collect_Array(copy_Array(&d->preMeta)); /* remember fold states */
     clear_Array(&d->preMeta);
     clear_String(&d->title);
-//    clear_String(&d->bannerText);
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
     }
@@ -671,7 +675,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     int              preFont       = preformatted_FontId;
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
-//    iBool            addSiteBanner = d->bannerType != none_GmDocumentBanner;
     const iBool      isNormalized  = isNormalized_GmDocument_(d);
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = text_GmLineType;
@@ -755,7 +758,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (d->format == gemini_SourceFormat &&
                 startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
-//                addSiteBanner = iFalse; /* overrides the banner */
                 continue;
             }
             run.mediaType = max_MediaType; /* preformatted block */
@@ -763,28 +765,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.font = (d->format == plainText_SourceFormat ? plainText_FontId : preFont);
             indent = indents[type];
         }
-#if 0
-        if (addSiteBanner) {
-            addSiteBanner = iFalse;
-            const iRangecc bannerText = urlHost_String(&d->url);
-            if (!isEmpty_Range(&bannerText)) {
-                setRange_String(&d->bannerText, bannerText);
-                iGmRun banner    = { .flags = decoration_GmRunFlag | siteBanner_GmRunFlag };
-                banner.bounds    = zero_Rect();
-                banner.visBounds = init_Rect(0, 0, d->size.x, lineHeight_Text(banner_FontId) * 2);
-                if (d->bannerType == certificateWarning_GmDocumentBanner) {
-                    banner.visBounds.size.y += iMaxi(6000 * lineHeight_Text(uiLabel_FontId) /
-                                                         d->size.x, lineHeight_Text(uiLabel_FontId) * 5);
-                }
-                banner.text  = bannerText;
-                banner.font  = banner_FontId;
-                banner.color = tmBannerTitle_ColorId;
-                pushBack_Array(&d->layout, &banner);
-                pos.y += height_Rect(banner.visBounds) +
-                         1.5f * lineHeight_Text(paragraph_FontId) * prefs->lineSpacing;
-            }
-        }
-#endif
         /* Empty lines don't produce text runs. */
         if (isEmpty_Range(&line)) {
             if (type == quote_GmLineType && !prefs->quoteIcon) {
@@ -865,6 +845,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if ((type == heading1_GmLineType || type == heading2_GmLineType) &&
             isEmpty_String(&d->title)) {
             setRange_String(&d->title, line);
+            /* Get rid of ANSI escapes. */
+            replaceRegExp_String(&d->title, ansiPattern_, "", NULL, NULL);
         }
         /* List bullet. */
         if (type == bullet_GmLineType) {
@@ -964,6 +946,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         iAssert(!isEmpty_Range(&line)); /* must have something at this point */
+        size_t numRunsAdded = 0;
         /* Typeset the paragraph. */ {
             iRunTypesetter rts;
             init_RunTypesetter_(&rts);
@@ -1036,7 +1019,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                                                                             : 1.0f);
                         }
                     }
-                    commit_RunTypesetter_(&rts, d);
+                    numRunsAdded = commit_RunTypesetter_(&rts, d);
                     break;
                 }
                 /* Try again... */
@@ -1050,6 +1033,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             deinit_RunTypesetter_(&rts);
         }
         /* Flag the end of line, too. */
+        if (numRunsAdded == 0) {
+            pos.y += lineHeight_Text(run.font) * prefs->lineSpacing;
+            followsBlank = iTrue;
+            continue;
+        }
         iGmRun *lastRun = back_Array(&d->layout);
         lastRun->flags |= endOfLine_GmRunFlag;
         if (lastRun->linkId && lastRun->flags & startOfLine_GmRunFlag) {
@@ -1301,7 +1289,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         0x203b,  0x2042,  0x205c,  0x2182,  0x25ed,  0x2600,  0x2601,  0x2604,  0x2605,  0x2606,
         0x265c,  0x265e,  0x2690,  0x2691,  0x2693,  0x2698,  0x2699,  0x26f0,  0x270e,  0x2728,
         0x272a,  0x272f,  0x2731,  0x2738,  0x273a,  0x273e,  0x2740,  0x2742,  0x2744,  0x2748,
-        0x274a,  0x2751,  0x2756,  0x2766,  0x27bd,  0x27c1,  0x27d0,  0x2b19,  0x1f300, 0x1f303,
+        0x274a,  0x2318,  0x2756,  0x2766,  0x27bd,  0x27c1,  0x27d0,  0x2b19,  0x1f300, 0x1f303,
         0x1f306, 0x1f308, 0x1f30a, 0x1f319, 0x1f31f, 0x1f320, 0x1f340, 0x1f4cd, 0x1f4e1, 0x1f531,
         0x1f533, 0x1f657, 0x1f659, 0x1f665, 0x1f668, 0x1f66b, 0x1f78b, 0x1f796, 0x1f79c,
     };
@@ -1949,44 +1937,6 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
         /* This is an interactive internal page. */
         d->enableCommandLinks = iTrue;
     }
-}
-
-int replaceRegExp_String(iString *d, const iRegExp *regexp, const char *replacement,
-                         void (*matchHandler)(void *, const iRegExpMatch *),
-                         void *context) {
-    iRegExpMatch m;
-    iString      result;
-    int          numMatches = 0;
-    const char  *pos        = constBegin_String(d);
-    init_RegExpMatch(&m);
-    init_String(&result);
-    while (matchString_RegExp(regexp, d, &m)) {
-        appendRange_String(&result, (iRangecc){ pos, begin_RegExpMatch(&m) });
-        /* Replace any capture group back-references. */
-        for (const char *ch = replacement; *ch; ch++) {
-            if (*ch == '\\') {
-                ch++;
-                if (*ch == '\\') {
-                    appendCStr_String(&result, "\\");
-                }
-                else if (*ch >= '0' && *ch <= '9') {
-                    appendRange_String(&result, capturedRange_RegExpMatch(&m, *ch - '0'));
-                }
-            }
-            else {
-                appendData_Block(&result.chars, ch, 1);
-            }
-        }
-        if (matchHandler) {
-            matchHandler(context, &m);
-        }
-        pos = end_RegExpMatch(&m);
-        numMatches++;
-    }
-    appendRange_String(&result, (iRangecc){ pos, constEnd_String(d) });
-    set_String(d, &result);
-    deinit_String(&result);
-    return numMatches;
 }
 
 iDeclareType(PendingLink)
