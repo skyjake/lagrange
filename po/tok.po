@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-08 14:50+0000\n"
+"PO-Revision-Date: 2022-02-07 14:50+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -2121,3 +2121,36 @@ msgstr "sina wile ala wile weka e ijo ale? sina ken ala ante monsi"
 # Mobile subheading in the Upload dialog.
 msgid "upload.url"
 msgstr "nimi tawa"
+
+msgid "prefs.toolbaraction1"
+msgstr "nena pi nanpa wan"
+
+msgid "prefs.toolbaraction2"
+msgstr "nena pi nanpa tu"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "o ante e pali:"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "o open"
+
+msgid "menu.upload.export"
+msgstr "o pana e sitelen"
+
+msgid "heading.upload.id"
+msgstr "len"
+
+msgid "hint.upload.path"
+msgstr "nasin URL"
+
+msgid "hint.upload.token.long"
+msgstr "sitelen len — o lukin e nasin tan ilo sona"
+
+msgid "sidebar.empty.unread"
+msgstr "lipu ale li lukin"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "o pana e linja pini"
