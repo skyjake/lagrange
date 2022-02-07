@@ -1638,7 +1638,7 @@ void refresh_App(void) {
         }
     }
     /* TODO: `pendingRefresh` should be window-specific. */
-    if (exchange_Atomic(&d->pendingRefresh, iFalse)) {
+    if (d->warmupFrames || exchange_Atomic(&d->pendingRefresh, iFalse)) {
         /* Draw each window. */
         iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
