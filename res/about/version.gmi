@@ -9,6 +9,7 @@
 ## 1.10.5
 * Fixed animation issue with sidebars in the right side of split view.
 * macOS: Fixed a sidebar clipping issue with Metal.
+* Updated UI translations.
 
 ## 1.10.4
 * Added missing ANSI background color codes 100-107 (high-intensity VGA).
@@ -17,7 +18,6 @@
 * Fixed tab/window titles containing ANSI escapes (escapes are removed).
 * macOS: Use Metal for drawing graphics if display refresh rate is higher than 60 Hz.
 * macOS: Handling scroll events meant for other windows.
-* Updated UI translations.
 
 ## 1.10.3
 * Unix: Added a lagrange(1) manual page.
