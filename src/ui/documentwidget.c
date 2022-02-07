@@ -3095,12 +3095,14 @@ static const char *humanReadableStatusCode_(enum iGmStatusCode code) {
     return format_CStr("%d ", code);
 }
 
-static void setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
+static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     url = canonicalUrl_String(url);
     if (!equal_String(d->mod.url, url)) {
         d->flags |= urlChanged_DocumentWidgetFlag;
         set_String(d->mod.url, url);
+        return iTrue;
     }
+    return iFalse;
 }
 
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
@@ -3125,7 +3127,9 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             iMediaRequest *mr = newReused_MediaRequest(d, d->requestLinkId, d->request);
             unlockResponse_GmRequest(d->request);
             d->request = NULL; /* ownership moved */
-            postCommand_Widget(d, "document.request.cancelled doc:%p", d);
+            if (!isFinished_GmRequest(mr->req)) {
+                postCommand_Widget(d, "document.request.cancelled doc:%p", d);
+            }
             pushBack_ObjectList(d->media, mr);
             iRelease(mr);
             /* Reset the fetch state, returning to the originating page. */
@@ -3133,9 +3137,14 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             if (equal_String(&mostRecentUrl_History(d->mod.history)->url, url_GmRequest(mr->req))) {
                 undo_History(d->mod.history);
             }
-            setUrl_DocumentWidget_(d, url_GmDocument(d->view.doc));
+            if (setUrl_DocumentWidget_(d, url_GmDocument(d->view.doc))) {
+                postCommand_Widget(d, "!document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+            }
             updateFetchProgress_DocumentWidget_(d);
             postCommand_Widget(d, "media.updated link:%u request:%p", d->requestLinkId, mr);
+            if (isFinished_GmRequest(mr->req)) {
+                postCommand_Widget(d, "media.finished link:%u request:%p", d->requestLinkId, mr);
+            }
             return;
         }
         /* Get ready for the incoming new document. */
