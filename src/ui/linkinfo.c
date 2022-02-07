@@ -93,7 +93,7 @@ void infoText_LinkInfo(const iGmDocument *doc, iGmLinkId linkId, iString *text_o
     }
     else if (scheme != gemini_GmLinkScheme) {
         appendCStr_String(text_out, scheme == file_GmLinkScheme ? "" : globe_Icon " ");
-        append_String(text_out, url);
+        appendCStrN_String(text_out, cstr_String(url), iMin(500, size_String(url)));
     }
     else {
         appendCStr_String(text_out, "\x1b[1m");
