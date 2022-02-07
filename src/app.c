@@ -1560,7 +1560,6 @@ static void runTickers_App_(iApp *d) {
     /* Tickers may add themselves again, so we'll run off a copy. */
     iSortedArray *pending = copy_SortedArray(&d->tickers);
     clear_SortedArray(&d->tickers);
-    postRefresh_App();
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
@@ -1573,12 +1572,6 @@ static void runTickers_App_(iApp *d) {
     if (isEmpty_SortedArray(&d->tickers)) {
         d->lastTickerTime = 0;
     }
-//    iForIndices(i, d->window->base.roots) {
-//        iRoot *root = d->window->base.roots[i];
-//        if (root) {
-//            notifyVisualOffsetChange_Root(root);
-//        }
-//    }
 }
 
 static int resizeWatcher_(void *user, SDL_Event *event) {
