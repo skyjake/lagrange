@@ -91,6 +91,14 @@ void infoText_LinkInfo(const iGmDocument *doc, iGmLinkId linkId, iString *text_o
         appendCStr_String(text_out, "\x1b[0m");
         appendRange_String(text_out, (iRangecc){ parts.path.start, constEnd_String(url) });
     }
+    else if (scheme == data_GmLinkScheme) {
+        appendCStr_String(text_out, "\U0001f4e6 ");
+        const char *comma = strchr(cstr_String(url), ',');
+        if (!comma) {
+            comma = iMin(constEnd_String(url), constBegin_String(url) + 256);
+        }
+        appendRange_String(text_out, (iRangecc){ constBegin_String(url), comma });
+    }
     else if (scheme != gemini_GmLinkScheme) {
         appendCStr_String(text_out, scheme == file_GmLinkScheme ? "" : globe_Icon " ");
         append_String(text_out, url);

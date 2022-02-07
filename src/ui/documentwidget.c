@@ -358,6 +358,7 @@ static void updateSideIconBuf_DocumentWidget_       (const iDocumentWidget *d);
 static void prerender_DocumentWidget_               (iAny *);
 static void scrollBegan_DocumentWidget_             (iAnyObject *, int, uint32_t);
 static void refreshWhileScrolling_DocumentWidget_   (iAny *);
+static iBool requestMedia_DocumentWidget_           (iDocumentWidget *d, iGmLinkId linkId, iBool enableFilters);
 
 /* TODO: The following methods are called from DocumentView, which goes the wrong way. */
 
@@ -2390,6 +2391,19 @@ static const char *zipPageHeading_(const iRangecc mime) {
 
 static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool isCached) {
     iWidget *w = as_Widget(d);
+    /* Embedded images in data links should be shown immediately as they are already fetched
+       data that is part of the document. */ {
+        iGmDocument *doc = d->view.doc;
+        for (size_t linkId = 1; ; linkId++) {
+            const int      linkFlags = linkFlags_GmDocument(doc, linkId);
+            const iString *linkUrl   = linkUrl_GmDocument(doc, linkId);
+            if (!linkUrl) break;
+            if (scheme_GmLinkFlag(linkFlags) == data_GmLinkScheme &&
+                (linkFlags & imageFileExtension_GmLinkFlag)) {
+                requestMedia_DocumentWidget_(d, linkId, 0);
+            }
+        }               
+    }
     /* Gempub page behavior and footer actions. */ {
         /* TODO: move this to gempub.c */
         delete_Gempub(d->sourceGempub);
@@ -3136,6 +3150,9 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             setUrl_DocumentWidget_(d, url_GmDocument(d->view.doc));
             updateFetchProgress_DocumentWidget_(d);
             postCommand_Widget(d, "media.updated link:%u request:%p", d->requestLinkId, mr);
+            if (isFinished_GmRequest(mr->req)) {
+                postCommand_Widget(d, "media.finished link:%u request:%p", d->requestLinkId, mr);
+            }
             return;
         }
         /* Get ready for the incoming new document. */
@@ -5515,10 +5532,10 @@ static void prerender_DocumentWidget_(iAny *context) {
     }
     const iDocumentWidget *d = context;
     iDrawContext ctx = {
-                  .view          = &d->view,
-                  .docBounds       = documentBounds_DocumentView_(&d->view),
-                  .vis             = visibleRange_DocumentView_(&d->view),
-                  .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0
+        .view            = &d->view,
+        .docBounds       = documentBounds_DocumentView_(&d->view),
+        .vis             = visibleRange_DocumentView_(&d->view),
+        .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0
     };
     //    printf("%u prerendering\n", SDL_GetTicks());
     if (d->view.visBuf->buffers[0].texture) {

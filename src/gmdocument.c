@@ -369,6 +369,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
             else if (equalCase_Rangecc(parts.scheme, "data")) {
                 setScheme_GmLink_(link, data_GmLinkScheme);
+                if (startsWith_Rangecc(parts.path, "image/")) {
+                    link->flags |= imageFileExtension_GmLinkFlag;
+                }
             }
             else if (equalCase_Rangecc(parts.scheme, "about")) {
                 setScheme_GmLink_(link, about_GmLinkScheme);
