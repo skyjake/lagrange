@@ -1804,7 +1804,7 @@ static void draw_DocumentView_(const iDocumentView *d) {
     }
     if (d->drawBufs->flags & updateSideBuf_DrawBufsFlag) {
         updateSideIconBuf_DocumentView_(d);
-        }
+    }
     const iRect   docBounds = documentBounds_DocumentView_(d);
     const iRangei vis       = visibleRange_DocumentView_(d);
     iDrawContext  ctx       = {
