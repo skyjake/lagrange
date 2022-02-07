@@ -1093,7 +1093,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     /* Image metadata caption. */ {
                         run.font = FONT_ID(documentBody_FontId, semiBold_FontStyle, contentSmall_FontSize);
                         run.color = tmQuoteIcon_ColorId;
-                        run.flags = decoration_GmRunFlag;
+                        run.flags = decoration_GmRunFlag | caption_GmRunFlag;
                         run.mediaId = 0;
                         run.mediaType = 0;
                         run.visBounds.pos.y = pos.y;

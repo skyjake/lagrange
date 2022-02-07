@@ -1332,7 +1332,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                            run->text);
     }
     else {
-        if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
+        if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag &&
+            ~run->flags & caption_GmRunFlag) {
             const size_t ord = visibleLinkOrdinal_DocumentView_(d->view, run->linkId);
             if (ord >= d->view->owner->ordinalBase) {
                 const iChar ordChar =
