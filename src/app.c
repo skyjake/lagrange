@@ -1257,7 +1257,7 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
         return iFalse;
     }
 #endif
-    return !value_Atomic(&d->pendingRefresh) && isEmpty_SortedArray(&d->tickers);
+    return !isRefreshPending_App();
 }
 
 static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *event) {
@@ -1664,7 +1664,8 @@ void refresh_App(void) {
 }
 
 iBool isRefreshPending_App(void) {
-    return value_Atomic(&app_.pendingRefresh);
+    const iApp *d = &app_;
+    return !isEmpty_SortedArray(&d->tickers) || value_Atomic(&app_.pendingRefresh);
 }
 
 iBool isFinishedLaunching_App(void) {
