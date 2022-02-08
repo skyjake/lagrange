@@ -246,12 +246,24 @@ struct Impl_CacheRow {
     iInt2 pos;
 };
 
+iDeclareType(PrioMapItem)
+struct Impl_PrioMapItem {
+    int priority;
+    uint32_t fontIndex;
+};
+
+static int cmp_PrioMapItem_(const void *a, const void *b) {
+    const iPrioMapItem *i = a, *j = b;
+    return -iCmp(i->priority, j->priority);
+}
+
 struct Impl_Text {
 //    enum iTextFont contentFont;
 //    enum iTextFont headingFont;
     float          contentFontSize;
     iArray         fonts; /* fonts currently selected for use (incl. all styles/sizes) */
-    int            overrideFontId; /* always checked for glyphs first, regardless of which font is used */
+    int            overrideFontId; /* always checked for glyphs first, regardless of which font is used */    
+    iArray         fontPriorityOrder;
     SDL_Renderer * render;
     SDL_Texture *  cache;
     iInt2          cacheSize;
@@ -284,8 +296,9 @@ static void setupFontVariants_Text_(iText *d, const iFontSpec *spec, int baseId)
         /* This is the highest priority override font. */
         d->overrideFontId = baseId;
     }
+    pushBack_Array(&d->fontPriorityOrder, &(iPrioMapItem){ spec->priority, baseId });
     for (enum iFontStyle style = 0; style < max_FontStyle; style++) {
-        for (enum iFontSize sizeId = 0; sizeId < max_FontSize; sizeId++) {
+        for (enum iFontSize sizeId = 0; sizeId < max_FontSize; sizeId++) {            
             init_Font(font_Text_(FONT_ID(baseId, style, sizeId)),
                       spec,
                       spec->styles[style],
@@ -322,6 +335,7 @@ static void initFonts_Text_(iText *d) {
        and styles for each available font. Indices to `fonts` act as font runtime IDs. */
     /* First the mandatory fonts. */
     d->overrideFontId = -1;
+    clear_Array(&d->fontPriorityOrder);
     resize_Array(&d->fonts, auxiliary_FontId); /* room for the built-ins */
     setupFontVariants_Text_(d, tryFindSpec_(uiFont_PrefsString, "default"), default_FontId);
     setupFontVariants_Text_(d, tryFindSpec_(monospaceFont_PrefsString, "iosevka"), monospace_FontId);
@@ -331,12 +345,14 @@ static void initFonts_Text_(iText *d) {
     /* Check if there are auxiliary fonts available and set those up, too. */
     iConstForEach(PtrArray, s, listSpecsByPriority_Fonts()) {
         const iFontSpec *spec = s.ptr;
+//        printf("spec '%s': prio=%d\n", cstr_String(&spec->name), spec->priority);
         if (spec->flags & (auxiliary_FontSpecFlag | user_FontSpecFlag)) {
             const int fontId = size_Array(&d->fonts);
             resize_Array(&d->fonts, fontId + maxVariants_Fonts);
             setupFontVariants_Text_(d, spec, fontId);
         }
     }
+    sort_Array(&d->fontPriorityOrder, cmp_PrioMapItem_);
 #if !defined (NDEBUG)
     printf("[Text] %zu font variants ready\n", size_Array(&d->fonts));
 #endif
@@ -402,6 +418,7 @@ void init_Text(iText *d, SDL_Renderer *render) {
     iText *oldActive = activeText_;
     activeText_ = d;
     init_Array(&d->fonts, sizeof(iFont));
+    init_Array(&d->fontPriorityOrder, sizeof(iPrioMapItem));
     d->contentFontSize = contentScale_Text_;
     d->ansiEscape      = makeAnsiEscapePattern_Text(iFalse /* no ESC */);
     d->baseFontId      = -1;
@@ -436,6 +453,7 @@ void deinit_Text(iText *d) {
     deinitCache_Text_(d);
     d->render = NULL;
     iRelease(d->ansiEscape);
+    deinit_Array(&d->fontPriorityOrder);
     deinit_Array(&d->fonts);
 }
 
@@ -571,25 +589,24 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
         return d;
     }
-    /* As a fallback, check all other available fonts of this size. */
-    for (int aux = 0; aux < 2; aux++) {
-        for (iFont *font = font_Text_(FONT_ID(0, styleId, sizeId));
-             font < (iFont *) end_Array(&activeText_->fonts);
-             font += maxVariants_Fonts) {
-            const iBool isAuxiliary = (font->fontSpec->flags & auxiliary_FontSpecFlag) ? 1 : 0;
-            if (aux == isAuxiliary) {
-                /* First try auxiliary fonts, then other remaining fonts. */
-                continue;
-            }
-            if (font == d || font == overrideFont) {
-                continue; /* already checked this one */
-            }
-            if ((*glyphIndex = glyphIndex_Font_(font, ch)) != 0) {
-//                printf("using %s[%f] for %lc (%x) => %d\n",
-//                       cstr_String(&font->fontSpec->name), font->fontSpec->scaling,
-//                       (int) ch, ch, glyphIndex_Font_(font, ch));
-                return font;
-            }
+    /* As a fallback, check all other available fonts of this size in priority order. */
+    iConstForEach(Array, i, &activeText_->fontPriorityOrder) {
+        iFont *font = font_Text_(FONT_ID(((const iPrioMapItem *) i.value)->fontIndex,
+                                         styleId, sizeId));
+        if (font == d || font == overrideFont) {
+            continue; /* already checked this one */
+        }
+        if ((*glyphIndex = glyphIndex_Font_(font, ch)) != 0) {
+#if 0
+            printf("using '%s' (pr:%d) for %lc (%x) => %d  [missing in '%s']\n",
+                   cstr_String(&font->fontSpec->id),
+                   font->fontSpec->priority,
+                   (int) ch,
+                   ch,
+                   glyphIndex_Font_(font, ch),
+                   cstr_String(&d->fontSpec->id));
+#endif
+            return font;
         }
     }
     if (!*glyphIndex) {
