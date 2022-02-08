@@ -2209,7 +2209,7 @@ const iGmRun *renderProgressive_GmDocument(const iGmDocument *d, const iGmRun *f
     setAnsiFlags_Text(d->theme.ansiEscapes);
     const iGmRun *run = first;
     while (isValidRun_GmDocument_(d, run)) {
-        if ((dir < 0 && bottom_Rect(run->visBounds) < visRangeY.start) ||
+        if ((dir < 0 && bottom_Rect(run->visBounds) <= visRangeY.start) ||
             (dir > 0 && top_Rect(run->visBounds) >= visRangeY.end)) {
             break;
         }
@@ -2258,6 +2258,10 @@ const iArray *headings_GmDocument(const iGmDocument *d) {
 
 const iString *source_GmDocument(const iGmDocument *d) {
     return &d->source;
+}
+
+iGmRunRange runRange_GmDocument(const iGmDocument *d) {
+    return (iGmRunRange){ constFront_Array(&d->layout), constEnd_Array(&d->layout) };
 }
 
 size_t memorySize_GmDocument(const iGmDocument *d) {

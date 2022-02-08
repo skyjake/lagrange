@@ -1656,7 +1656,6 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
             ctx->viewPos      = init_I2(left_Rect(ctx->docBounds) - left_Rect(bounds), -buf->origin);
             //            printf("  buffer %zu: buf vis range %d...%d\n", i, bufVisRange.start, bufVisRange.end);
             if (!prerenderExtra && !isEmpty_Range(&bufVisRange)) {
-                didDraw = iTrue;
                 if (isEmpty_Rangei(buf->validRange)) {
                     /* Fill the required currently visible range (vis). */
                     const iRangei bufVisRange = intersect_Rangei(bufRange, vis);
@@ -1669,26 +1668,46 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                         extend_GmRunRange_(&meta->runsDrawn);
                         buf->validRange = bufVisRange;
                         //                printf("  buffer %zu valid %d...%d\n", i, bufRange.start, bufRange.end);
+                        didDraw = iTrue;
                     }
                 }
                 else {
                     /* Progressively fill the required runs. */
-                    if (meta->runsDrawn.start) {
+                    if (meta->runsDrawn.start && buf->validRange.start > bufRange.start) {
                         beginTarget_Paint(p, buf->texture);
-                        meta->runsDrawn.start = renderProgressive_GmDocument(d->doc, meta->runsDrawn.start,
-                                                                             -1, iInvalidSize,
-                                                                             bufVisRange,
-                                                                             drawRun_DrawContext_,
-                                                                             ctx);
-                        buf->validRange.start = bufVisRange.start;
+                        iZap(ctx->runsDrawn);
+                        const iGmRun *newStart = renderProgressive_GmDocument(d->doc,
+                                                                              meta->runsDrawn.start,
+                                                                              -1,
+                                                                              iInvalidSize,
+                                                                              bufVisRange,
+                                                                              drawRun_DrawContext_,
+                                                                              ctx);
+                        if (ctx->runsDrawn.start) {
+                            /* Something was actually drawn, so update the valid range. */
+                            const int newTop = top_Rect(ctx->runsDrawn.start->visBounds);
+                            if (newTop != buf->validRange.start) {
+                                didDraw = iTrue;
+//                                printf("render: valid:%d->%d run:%p->%p\n",
+//                                       buf->validRange.start, newTop,
+//                                       meta->runsDrawn.start,
+//                                       ctx->runsDrawn.start); fflush(stdout);
+                                buf->validRange.start = newTop;
+                            }
+                            meta->runsDrawn.start = newStart;
+                        }
                     }
                     if (meta->runsDrawn.end) {
                         beginTarget_Paint(p, buf->texture);
+                        iZap(ctx->runsDrawn);
                         meta->runsDrawn.end = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
                                                                            +1, iInvalidSize,
                                                                            bufVisRange,
                                                                            drawRun_DrawContext_,
                                                                            ctx);
+                        if (ctx->runsDrawn.start) {
+                            didDraw = iTrue;
+                        }
                         buf->validRange.end = bufVisRange.end;
                     }
                 }
