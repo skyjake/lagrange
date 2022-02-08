@@ -1300,7 +1300,7 @@ void draw_MainWindow(iMainWindow *d) {
                                                SDL_TEXTUREACCESS_TARGET,
                                                renderSize.x,
                                                renderSize.y);
-                printf("NEW BACKING: %dx%d %p\n", renderSize.x, renderSize.y, d->backBuf); fflush(stdout);
+//                printf("NEW BACKING: %dx%d %p\n", renderSize.x, renderSize.y, d->backBuf); fflush(stdout);
             }
         }
     }
