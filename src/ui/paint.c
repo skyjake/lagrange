@@ -77,7 +77,8 @@ void setClip_Paint(iPaint *d, iRect rect) {
         SDL_QueryTexture(target, NULL, NULL, &targetRect.size.x, &targetRect.size.y);
         rect = intersect_Rect(rect, targetRect);
     }
-    else {
+    /* The origin is non-zero when drawing into a widget's own buffer. */
+    if (isEqual_I2(zero_I2(), origin_Paint)) {
         rect = intersect_Rect(rect, rect_Root(get_Root()));
     }
     if (isEmpty_Rect(rect)) {
