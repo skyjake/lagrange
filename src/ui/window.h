@@ -118,6 +118,8 @@ struct Impl_MainWindow {
     SDL_Texture * appIcon;
     int           keyboardHeight; /* mobile software keyboards */
     int           maxDrawableHeight;
+    iBool         enableBackBuf; /* only used on macOS with Metal (helps with refresh glitches for some reason??) */
+    SDL_Texture * backBuf; /* enables refreshing the window without redrawing anything */
 };
 
 iLocalDef enum iWindowType type_Window(const iAnyWindow *d) {

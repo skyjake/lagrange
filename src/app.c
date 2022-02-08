@@ -1644,13 +1644,14 @@ void refresh_App(void) {
             iWindow *win = j.ptr;
             setCurrent_Window(win);
             switch (win->type) {
-                case main_WindowType:
-    //                iTime draw;
-    //                initCurrent_Time(&draw);
+                case main_WindowType: {
+//                    iTime draw;
+//                    initCurrent_Time(&draw);
                     draw_MainWindow(as_MainWindow(win));
-    //                printf("draw: %lld \u03bcs\n", (long long) (elapsedSeconds_Time(&draw) * 1000000));
-    //                fflush(stdout);
+//                    printf("draw: %lld \u03bcs\n", (long long) (elapsedSeconds_Time(&draw) * 1000000));
+//                    fflush(stdout);
                     break;
+                }
                 default:
                     draw_Window(win);
                     break;
