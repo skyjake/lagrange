@@ -1290,7 +1290,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             /* TODO: Motion events occur frequently. Maybe it would help if these were handled
                via audiences that specifically register to listen for motion, to minimize the
                number of widgets that need to process them. */
-            const int hoverScrollLimit = 1.5f * lineHeight_Text(default_FontId);
+            const int hoverScrollLimit = 3.0f * lineHeight_Text(default_FontId);
             float speed = 0.0f;
             if (ev->motion.y < hoverScrollLimit) {
                 speed = (hoverScrollLimit - ev->motion.y) / (float) hoverScrollLimit;
@@ -1315,7 +1315,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 if (elapsed > 100) {
                     elapsed = 16;    
                 }
-                int step = elapsed * gap_UI / 16 * iClamp(speed, -1.0f, 1.0f);
+                int step = elapsed * gap_UI / 8 * iClamp(speed, -1.0f, 1.0f);
                 if (step != 0) { 
                     lastHoverOverflowMotionTime_ = nowTime;
                     scrollOverflow_Widget(d, step);
