@@ -903,6 +903,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
 #else
     /* Non-native custom popup menu. This may still be displayed inside a separate window. */
     setDrawBufferEnabled_Widget(menu, iTrue);
+    setFrameColor_Widget(menu, uiSeparator_ColorId);
     setBackgroundColor_Widget(menu, uiBackgroundMenu_ColorId);
     if (deviceType_App() != desktop_AppDeviceType) {
         setPadding1_Widget(menu, 2 * gap_UI);
@@ -1084,12 +1085,12 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
-    if (!isPortraitPhone) {   
-        setFrameColor_Widget(d, uiBackgroundSelected_ColorId);
-    }
-    else {
-        setFrameColor_Widget(d, none_ColorId);
-    }
+//    if (!isPortraitPhone) {   
+//        setFrameColor_Widget(d, uiSeparator_ColorId);
+//    }
+//    else {
+//        setFrameColor_Widget(d, none_ColorId);
+//    }
     arrange_Widget(d); /* need to know the height */
     iBool allowOverflow = iFalse;
     /* A vertical offset determined by a possible selected label in the menu. */ 
@@ -1327,6 +1328,7 @@ int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
 iLabelWidget *makeMenuButton_LabelWidget(const char *label, const iMenuItem *items, size_t n) {
     iLabelWidget *button = new_LabelWidget(label, "menu.open");
     iWidget *menu = makeMenu_Widget(as_Widget(button), items, n);
+    setFrameColor_Widget(menu, uiBackgroundSelected_ColorId);
     setId_Widget(menu, "menu");
     return button;
 }
