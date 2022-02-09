@@ -1450,7 +1450,7 @@ static void evenMonospaceAdvances_GlyphBuffer_(iGlyphBuffer *d, iFont *baseFont)
         if (d->glyphPos[i].x_advance > 0 && d->font != baseFont) {
             const iChar ch = d->logicalText[info->cluster];
             if (isPictograph_Char(ch) || isEmoji_Char(ch)) {
-                const float dw = d->font->xScale * d->glyphPos[i].x_advance - monoAdvance;
+                const float dw = d->font->xScale * d->glyphPos[i].x_advance - (isEmoji_Char(ch) ? 2 : 1) * monoAdvance;
                 d->glyphPos[i].x_offset  -= dw / 2 / d->font->xScale - 1;
                 d->glyphPos[i].x_advance -= dw     / d->font->xScale - 1;
             }
