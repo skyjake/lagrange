@@ -10,6 +10,7 @@
 * The "Miscellaneous Symbols and Arrows" Unicode block (U+2B00...U+2BFF) is accepted as custom link icons.
 * When mixing Emoji into preformatted text (glyphs are from different fonts), lay out the Emoji as double-wide characters to avoid overlapping.
 * Faster hover-scrolling of long popup menus.
+* Fixed "Paste Preceding Line" not being undoable.
 * Fixed lookup of missing glyphs. Fontpack priorities are now applied as documented.
 * Fixed animation issue with sidebars in the right side of split view.
 * Fixed a refresh issue that caused the first line of the page to be redrawn continuously, spiking CPU usage.

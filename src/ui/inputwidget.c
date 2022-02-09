@@ -1115,7 +1115,14 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {
+    setTextUndoable_InputWidget(d, text, iFalse);
+}
+
+void setTextUndoable_InputWidget(iInputWidget *d, const iString *text, iBool isUndoable) {
     if (!d) return;
+    if (isUndoable) {
+        pushUndo_InputWidget_(d);
+    }
     if (d->inFlags & isUrl_InputWidgetFlag) {
         if (prefs_App()->decodeUserVisibleURLs) {
             iString *enc = collect_String(copy_String(text));
@@ -1139,7 +1146,9 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     iString *nfcText = collect_String(copy_String(text));
     normalize_String(nfcText);
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
-    clearUndo_InputWidget_(d);
+    if (!isUndoable) {
+        clearUndo_InputWidget_(d);
+    }
     splitToLines_(nfcText, &d->lines);
     iAssert(!isEmpty_Array(&d->lines));
     iForEach(Array, i, &d->lines) {
@@ -1172,6 +1181,12 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
 void setTextCStr_InputWidget(iInputWidget *d, const char *cstr) {
     iString *str = newCStr_String(cstr);
     setText_InputWidget(d, str);
+    delete_String(str);
+}
+
+void setTextUndoableCStr_InputWidget(iInputWidget *d, const char *cstr, iBool isUndoable) {
+    iString *str = newCStr_String(cstr);
+    setTextUndoable_InputWidget(d, str, isUndoable);
     delete_String(str);
 }
 
