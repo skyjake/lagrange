@@ -316,7 +316,8 @@ static iBool isAllowedLinkIcon_Char_(iChar icon) {
            icon == 0x2022 /* bullet */ || 
            icon == 0x2139 /* info */ ||
            (icon >= 0x2190 && icon <= 0x21ff /* arrows */) ||
-           icon == 0x2a2f /* close X */ || icon == 0x2b50;
+           icon == 0x2a2f /* close X */ ||
+           (icon >= 0x2b00 && icon <= 0x2bff);
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
@@ -1097,7 +1098,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     /* Image metadata caption. */ {
                         run.font = FONT_ID(documentBody_FontId, semiBold_FontStyle, contentSmall_FontSize);
                         run.color = tmQuoteIcon_ColorId;
-                        run.flags = decoration_GmRunFlag;
+                        run.flags = decoration_GmRunFlag | caption_GmRunFlag;
                         run.mediaId = 0;
                         run.mediaType = 0;
                         run.visBounds.pos.y = pos.y;
@@ -2212,7 +2213,7 @@ const iGmRun *renderProgressive_GmDocument(const iGmDocument *d, const iGmRun *f
     setAnsiFlags_Text(d->theme.ansiEscapes);
     const iGmRun *run = first;
     while (isValidRun_GmDocument_(d, run)) {
-        if ((dir < 0 && bottom_Rect(run->visBounds) < visRangeY.start) ||
+        if ((dir < 0 && bottom_Rect(run->visBounds) <= visRangeY.start) ||
             (dir > 0 && top_Rect(run->visBounds) >= visRangeY.end)) {
             break;
         }
@@ -2261,6 +2262,10 @@ const iArray *headings_GmDocument(const iGmDocument *d) {
 
 const iString *source_GmDocument(const iGmDocument *d) {
     return &d->source;
+}
+
+iGmRunRange runRange_GmDocument(const iGmDocument *d) {
+    return (iGmRunRange){ constFront_Array(&d->layout), constEnd_Array(&d->layout) };
 }
 
 size_t memorySize_GmDocument(const iGmDocument *d) {

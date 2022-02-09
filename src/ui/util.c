@@ -1780,7 +1780,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     }
     else if (equal_Command(cmd, "valueinput.set")) {
         iInputWidget *input = findChild_Widget(dlg, "input");
-        setTextCStr_InputWidget(input, suffixPtr_Command(cmd, "text"));
+        setTextUndoableCStr_InputWidget(input, suffixPtr_Command(cmd, "text"), iTrue);
         validate_InputWidget(input);
         return iTrue;
     }

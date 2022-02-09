@@ -1257,7 +1257,7 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
         return iFalse;
     }
 #endif
-    return !value_Atomic(&d->pendingRefresh) && isEmpty_SortedArray(&d->tickers);
+    return !isRefreshPending_App();
 }
 
 static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *event) {
@@ -1564,7 +1564,6 @@ static void runTickers_App_(iApp *d) {
     /* Tickers may add themselves again, so we'll run off a copy. */
     iSortedArray *pending = copy_SortedArray(&d->tickers);
     clear_SortedArray(&d->tickers);
-    postRefresh_App();
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
@@ -1577,12 +1576,6 @@ static void runTickers_App_(iApp *d) {
     if (isEmpty_SortedArray(&d->tickers)) {
         d->lastTickerTime = 0;
     }
-//    iForIndices(i, d->window->base.roots) {
-//        iRoot *root = d->window->base.roots[i];
-//        if (root) {
-//            notifyVisualOffsetChange_Root(root);
-//        }
-//    }
 }
 
 static int resizeWatcher_(void *user, SDL_Event *event) {
@@ -1649,19 +1642,20 @@ void refresh_App(void) {
         }
     }
     /* TODO: `pendingRefresh` should be window-specific. */
-    if (exchange_Atomic(&d->pendingRefresh, iFalse)) {
+    if (d->warmupFrames || exchange_Atomic(&d->pendingRefresh, iFalse)) {
         /* Draw each window. */
         iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             setCurrent_Window(win);
             switch (win->type) {
-                case main_WindowType:
-    //                iTime draw;
-    //                initCurrent_Time(&draw);
+                case main_WindowType: {
+//                    iTime draw;
+//                    initCurrent_Time(&draw);
                     draw_MainWindow(as_MainWindow(win));
-    //                printf("draw: %lld \u03bcs\n", (long long) (elapsedSeconds_Time(&draw) * 1000000));
-    //                fflush(stdout);
+//                    printf("draw: %lld \u03bcs\n", (long long) (elapsedSeconds_Time(&draw) * 1000000));
+//                    fflush(stdout);
                     break;
+                }
                 default:
                     draw_Window(win);
                     break;
@@ -1675,7 +1669,8 @@ void refresh_App(void) {
 }
 
 iBool isRefreshPending_App(void) {
-    return value_Atomic(&app_.pendingRefresh);
+    const iApp *d = &app_;
+    return !isEmpty_SortedArray(&d->tickers) || value_Atomic(&app_.pendingRefresh);
 }
 
 iBool isFinishedLaunching_App(void) {

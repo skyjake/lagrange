@@ -539,10 +539,19 @@ void deinit_Window(iWindow *d) {
 void init_MainWindow(iMainWindow *d, iRect rect) {
     theWindow_ = &d->base;
     theMainWindow_ = d;
+    d->enableBackBuf = iFalse;
     uint32_t flags = 0;
 #if defined (iPlatformAppleDesktop)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
     flags |= shouldDefaultToMetalRenderer_MacOS() ? SDL_WINDOW_METAL : SDL_WINDOW_OPENGL;
+    if (flags & SDL_WINDOW_METAL) {
+        /* There are some really odd refresh glitches that only occur with the Metal 
+           backend. It's perhaps related to it not expecting refresh to stop intermittently
+           to wait for input events. If forcing constant refreshing at full frame rate, the
+           problems seem to go away... Rendering everything to a separate render target
+           appears to sidestep some of the glitches. */
+        d->enableBackBuf = iTrue;
+    }
 #elif defined (iPlatformAppleMobile)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
     flags |= SDL_WINDOW_METAL;
@@ -566,6 +575,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     d->place.lastNotifiedSize = zero_I2();
     d->place.snap             = 0;
     d->keyboardHeight         = 0;
+    d->backBuf                = NULL;
 #if defined(iPlatformMobile)
     const iInt2 minSize = zero_I2(); /* windows aren't independently resizable */
 #else
@@ -637,6 +647,9 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 }
 
 void deinit_MainWindow(iMainWindow *d) {
+    if (d->backBuf) {
+        SDL_DestroyTexture(d->backBuf);
+    }
     deinitRoots_Window_(as_Window(d));
     if (theWindow_ == as_Window(d)) {
         theWindow_ = NULL;
@@ -682,6 +695,10 @@ iRoot *otherRoot_Window(const iWindow *d, iRoot *root) {
 static void invalidate_MainWindow_(iMainWindow *d, iBool forced) {
     if (d && (!d->base.isInvalidated || forced)) {
         d->base.isInvalidated = iTrue;
+        if (d->enableBackBuf && d->backBuf) {
+            SDL_DestroyTexture(d->backBuf);
+            d->backBuf = NULL;
+        }
         resetFonts_Text(text_Window(d));
         postCommand_App("theme.changed auto:1"); /* forces UI invalidation */
     }
@@ -1272,11 +1289,28 @@ void draw_MainWindow(iMainWindow *d) {
                 d->maxDrawableHeight = renderSize.y;
             }
         }
+        if (d->enableBackBuf) {
+            /* Possible resize the backing buffer. */
+            if (!d->backBuf || !isEqual_I2(size_SDLTexture(d->backBuf), renderSize)) {
+                if (d->backBuf) {
+                    SDL_DestroyTexture(d->backBuf);
+                }
+                d->backBuf = SDL_CreateTexture(d->base.render,
+                                               SDL_PIXELFORMAT_RGB888,
+                                               SDL_TEXTUREACCESS_TARGET,
+                                               renderSize.x,
+                                               renderSize.y);
+//                printf("NEW BACKING: %dx%d %p\n", renderSize.x, renderSize.y, d->backBuf); fflush(stdout);
+            }
+        }
     }
     const int   winFlags = SDL_GetWindowFlags(d->base.win);
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
     iPaint p;
     init_Paint(&p);
+    if (d->backBuf) {
+        SDL_SetRenderTarget(d->base.render, d->backBuf);
+    }
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
         setCurrent_Root(w->roots[0]);
@@ -1358,6 +1392,10 @@ void draw_MainWindow(iMainWindow *d) {
         draw_Text(uiLabelBold_FontId, safeRect_Root(w->roots[0]).pos, red_ColorId, "%d", drawCount_);
         drawCount_ = 0;
 #endif
+    }
+    if (d->backBuf) {
+        SDL_SetRenderTarget(d->base.render, NULL);
+        SDL_RenderCopy(d->base.render, d->backBuf, NULL, NULL);
     }
 #if 0
     /* Text cache debugging. */ {
