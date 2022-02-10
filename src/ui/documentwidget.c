@@ -2731,7 +2731,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                                                                  : "media.untitled.audio");
                         iUrl parts;
                         init_Url(&parts, d->mod.url);
-                        if (!isEmpty_Range(&parts.path)) {
+                        if (!isEmpty_Range(&parts.path) && !equalCase_Rangecc(parts.scheme, "data")) {
                             linkTitle =
                                 baseName_Path(collect_String(newRange_String(parts.path))).start;
                         }
