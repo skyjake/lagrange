@@ -45,6 +45,28 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.10.5" date="2022-02-11">
+            <description>
+                <p>Changes in v1.10.5:</p>
+                <ul>
+                    <li>Added a keybinding for "Paste Preceding Line" (in input prompt menu).</li>
+                    <li>The "Miscellaneous Symbols and Arrows" Unicode block (U+2B00...U+2BFF) is accepted as custom link icons.</li>
+                    <li>When mixing Emoji into preformatted text (glyphs are from different fonts), lay out the Emoji as double-wide characters to avoid overlapping.</li>
+                    <li>Faster hover-scrolling of long popup menus.</li>
+                    <li>Fixed sidebars not getting updated after identity addition/deletion.</li>
+                    <li>Fixed "Paste Preceding Line" not being undoable.</li>
+                    <li>Fixed lookup of missing glyphs. Fontpack priorities are now applied as documented.</li>
+                    <li>Fixed animation issue with sidebars in the right side of split view.</li>
+                    <li>Fixed a refresh issue that caused the first line of the page to be redrawn continuously, spiking CPU usage.</li>
+                    <li>Fixed link numbers showing up next to image captions.</li>
+                    <li>Fixed how the link hover popup handles extremely long URLs.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.10.5</url>
+        </release>
         <release version="1.10.4" date="2022-02-05">
             <description>
                 <p>Changes in v1.10.4:</p>
@@ -925,68 +947,6 @@
                 </ul>
             </description>
             <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.3</url>
-        </release>
-        <release version="1.1.2" date="2021-02-10">
-            <description>
-                <p>Bug fixes:</p>
-                <ul>
-                    <li>Potential crash at launch.</li>
-                    <li>Input query from a background tab was being applied to 
-                        the foreground tab. An input query now forces a tab to 
-                        the foreground.</li>
-                    <li>Window scroll position moving when resizing vertically.</li>
-                    <li>Feed refresh waiting forever if a server doesn't respond.</li>
-                    <li>Hover state not being cleared when right-clicking links.</li>
-                    <li>Remote bookmarks not appearing if they lack a user-friendly 
-                        name on the source page.</li>
-                </ul>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.2</url>
-        </release>
-        <release version="1.1.1" date="2021-02-03">
-            <description>
-                <p>Miscellaneous fixes for bugs and other incorrect behavior:</p>
-                <ul>
-                    <li>Monitor DPI will now affect UI scaling.</li>
-                    <li>Input focus can no longer be cycled outside an open dialog.</li>
-                    <li>Missing cursor and invalid data in the New Identity "Valid until" field.</li>
-                    <li>Missing frames in the Import Identity dialog.</li>
-                    <li>Word wrapping slightly off in unread feed entry titles.</li>
-                    <li>URI fragments should not be stripped from all links.</li>
-                    <li>Allow reloading the same URL when clicking on a link or bookmark, 
-                        or pressing Enter in the navbar.</li>
-                    <li>Existing bookmark URLs are normalized like all other URLs.</li>
-                    <li>"Import Links as Bookmarks" can be used on an active bookmark source page.</li>
-                    <li>Fixed default values for preferences: line width, Downloads directory.</li>
-                    <li>Store files in XDG user directories.</li>
-                </ul>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.1</url>
-        </release>
-        <release version="1.1" date="2021-01-28">
-            <description>
-                <p>
-                    This version adds new features to enhance user experience 
-                    and fixes incorrect behavior.
-                </p>
-                <ul>
-                    <li>Import existing X.509 client certificates via the UI.</li>
-                    <li>Setting for maximum cache size.</li>
-                    <li>Option to show full URL when hovering mouse over a link.</li>
-                    <li>Support for Finger links.</li>
-                    <li>More keybindings: e.g., opening and closing tabs.</li>
-                    <li>Visual UI improvements.</li> 
-                    <li>Fix for history timestamps that were shifting on every launch.</li>
-                </ul>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.0</url>
-        </release>
-        <release version="1.0.3" date="2021-01-12">
-            <description>
-                <p>This release contains bug fixes and performance improvements.</p>
-                <p>Version 1.0 is the first stable release of Lagrange.</p>
-            </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.0.3</url>
         </release>
     </releases>
 </component>
