@@ -104,7 +104,7 @@ static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) {
     if (align == right_Alignment) {
         pos.x -= size.x;
     }
-    drawRange_Text(font, addY_I2(pos, gap_UI / 2), color, range_String(&num));
+    drawRange_Text(font, addY_I2(pos, 0/*gap_UI / 2*/), color, range_String(&num));
     deinit_String(&num);
     return size.x;
 }
@@ -316,7 +316,7 @@ void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
               isFinished ? uiTextAction_ColorId : uiTextDim_ColorId,
               cstr_Lang(isFinished ? "media.download.complete" : "media.download.warnclose"));
     const int x2 = right_Rect(rect);
-    drawSevenSegmentBytes_MediaUI(uiLabel_FontId, init_I2(x2, y1),
+    drawSevenSegmentBytes_MediaUI(uiContent_FontId, init_I2(x2, y1),
                                   uiTextStrong_ColorId, uiTextDim_ColorId,
                                   info.numBytes);
     const iInt2 pos = init_I2(x2, y2);

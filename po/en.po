@@ -774,6 +774,9 @@ msgstr "Send"
 msgid "menu.input.precedingline"
 msgstr "Paste Preceding Line"
 
+msgid "keys.input.precedingline"
+msgstr "Input prompt: Paste preceding line"
+
 msgid "heading.save"
 msgstr "File Saved"
 

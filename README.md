@@ -27,14 +27,18 @@ On macOS you can install and upgrade via Homebrew:
 
 Please check [MacPorts](https://www.macports.org) if you are using macOS 10.12 or older.
 
+On Fedora and any RHEL/CentOS Stream 8 and 9 derivatives (RHEL, CentOS Stream, Alma, Rocky) that have the EPEL repos enabled:
+
+    sudo dnf install lagrange
+
 On openSUSE Tumbleweed:
 
     sudo zypper install lagrange
-    
+
 Using GNU Guix:
 
     guix install lagrange
-    
+
 ## How to compile
 
 You need a POSIX-compatible environment to compile Lagrange.

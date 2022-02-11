@@ -92,8 +92,12 @@ void infoText_LinkInfo(const iGmDocument *doc, iGmLinkId linkId, iString *text_o
         appendRange_String(text_out, (iRangecc){ parts.path.start, constEnd_String(url) });
     }
     else if (scheme != gemini_GmLinkScheme) {
+        const size_t maxDispLen = 300;
         appendCStr_String(text_out, scheme == file_GmLinkScheme ? "" : globe_Icon " ");
-        append_String(text_out, url);
+        appendCStrN_String(text_out, cstr_String(url), iMin(maxDispLen, size_String(url)));
+        if (size_String(url) > maxDispLen) {
+            appendCStr_String(text_out, "...");
+        }
     }
     else {
         appendCStr_String(text_out, "\x1b[1m");

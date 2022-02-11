@@ -122,6 +122,7 @@ enum iGmRunFlags {
     endOfLine_GmRunFlag   = iBit(3),
     quoteBorder_GmRunFlag = iBit(5),
     wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
+    caption_GmRunFlag     = iBit(7),
     altText_GmRunFlag     = iBit(8),
 };
 
@@ -211,6 +212,7 @@ const iGmRun *  renderProgressive_GmDocument(const iGmDocument *d, const iGmRun 
 iInt2           size_GmDocument             (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);
+iGmRunRange     runRange_GmDocument         (const iGmDocument *);
 size_t          memorySize_GmDocument       (const iGmDocument *); /* bytes */
 int             warnings_GmDocument         (const iGmDocument *);
 

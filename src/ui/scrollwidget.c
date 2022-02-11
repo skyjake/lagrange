@@ -239,15 +239,17 @@ static void draw_ScrollWidget_(const iScrollWidget *d) {
         init_Paint(&p);
         /* Blend if opacity is not at maximum. */
         p.alpha = 255 * value_Anim(&d->opacity);
-        SDL_Renderer *render = renderer_Window(get_Window());
-        if (p.alpha < 255) {
-            SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
-        }
-        const iRect thumbRect = shrunk_Rect(
-            thumbRect_ScrollWidget_(d), init_I2(isPressed ? gap_UI : (gap_UI * 4 / 3), gap_UI / 2));
-        fillRect_Paint(&p, thumbRect, isPressed ? uiBackgroundPressed_ColorId : tmQuote_ColorId);
-        if (p.alpha < 255) {
-            SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
+        if (p.alpha > 0) {
+            SDL_Renderer *render = renderer_Window(get_Window());
+            if (p.alpha < 255) {
+                SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
+            }
+            const iRect thumbRect = shrunk_Rect(
+                thumbRect_ScrollWidget_(d), init_I2(isPressed ? gap_UI : (gap_UI * 4 / 3), gap_UI / 2));
+            fillRect_Paint(&p, thumbRect, isPressed ? uiBackgroundPressed_ColorId : tmQuote_ColorId);
+            if (p.alpha < 255) {
+                SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
+            }
         }
     }
 }

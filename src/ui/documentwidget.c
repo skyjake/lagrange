@@ -1332,7 +1332,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                            run->text);
     }
     else {
-        if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
+        if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag &&
+            ~run->flags & caption_GmRunFlag) {
             const size_t ord = visibleLinkOrdinal_DocumentView_(d->view, run->linkId);
             if (ord >= d->view->owner->ordinalBase) {
                 const iChar ordChar =
@@ -1655,7 +1656,6 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
             ctx->viewPos      = init_I2(left_Rect(ctx->docBounds) - left_Rect(bounds), -buf->origin);
             //            printf("  buffer %zu: buf vis range %d...%d\n", i, bufVisRange.start, bufVisRange.end);
             if (!prerenderExtra && !isEmpty_Range(&bufVisRange)) {
-                didDraw = iTrue;
                 if (isEmpty_Rangei(buf->validRange)) {
                     /* Fill the required currently visible range (vis). */
                     const iRangei bufVisRange = intersect_Rangei(bufRange, vis);
@@ -1668,26 +1668,46 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                         extend_GmRunRange_(&meta->runsDrawn);
                         buf->validRange = bufVisRange;
                         //                printf("  buffer %zu valid %d...%d\n", i, bufRange.start, bufRange.end);
+                        didDraw = iTrue;
                     }
                 }
                 else {
                     /* Progressively fill the required runs. */
-                    if (meta->runsDrawn.start) {
+                    if (meta->runsDrawn.start && buf->validRange.start > bufRange.start) {
                         beginTarget_Paint(p, buf->texture);
-                        meta->runsDrawn.start = renderProgressive_GmDocument(d->doc, meta->runsDrawn.start,
-                                                                             -1, iInvalidSize,
-                                                                             bufVisRange,
-                                                                             drawRun_DrawContext_,
-                                                                             ctx);
-                        buf->validRange.start = bufVisRange.start;
+                        iZap(ctx->runsDrawn);
+                        const iGmRun *newStart = renderProgressive_GmDocument(d->doc,
+                                                                              meta->runsDrawn.start,
+                                                                              -1,
+                                                                              iInvalidSize,
+                                                                              bufVisRange,
+                                                                              drawRun_DrawContext_,
+                                                                              ctx);
+                        if (ctx->runsDrawn.start) {
+                            /* Something was actually drawn, so update the valid range. */
+                            const int newTop = top_Rect(ctx->runsDrawn.start->visBounds);
+                            if (newTop != buf->validRange.start) {
+                                didDraw = iTrue;
+//                                printf("render: valid:%d->%d run:%p->%p\n",
+//                                       buf->validRange.start, newTop,
+//                                       meta->runsDrawn.start,
+//                                       ctx->runsDrawn.start); fflush(stdout);
+                                buf->validRange.start = newTop;
+                            }
+                            meta->runsDrawn.start = newStart;
+                        }
                     }
                     if (meta->runsDrawn.end) {
                         beginTarget_Paint(p, buf->texture);
+                        iZap(ctx->runsDrawn);
                         meta->runsDrawn.end = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
                                                                            +1, iInvalidSize,
                                                                            bufVisRange,
                                                                            drawRun_DrawContext_,
                                                                            ctx);
+                        if (ctx->runsDrawn.start) {
+                            didDraw = iTrue;
+                        }
                         buf->validRange.end = bufVisRange.end;
                     }
                 }
@@ -2711,7 +2731,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                                                                  : "media.untitled.audio");
                         iUrl parts;
                         init_Url(&parts, d->mod.url);
-                        if (!isEmpty_Range(&parts.path)) {
+                        if (!isEmpty_Range(&parts.path) && !equalCase_Rangecc(parts.scheme, "data")) {
                             linkTitle =
                                 baseName_Path(collect_String(newRange_String(parts.path))).start;
                         }
@@ -3095,12 +3115,14 @@ static const char *humanReadableStatusCode_(enum iGmStatusCode code) {
     return format_CStr("%d ", code);
 }
 
-static void setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
+static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     url = canonicalUrl_String(url);
     if (!equal_String(d->mod.url, url)) {
         d->flags |= urlChanged_DocumentWidgetFlag;
         set_String(d->mod.url, url);
+        return iTrue;
     }
+    return iFalse;
 }
 
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
@@ -3125,7 +3147,9 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             iMediaRequest *mr = newReused_MediaRequest(d, d->requestLinkId, d->request);
             unlockResponse_GmRequest(d->request);
             d->request = NULL; /* ownership moved */
-            postCommand_Widget(d, "document.request.cancelled doc:%p", d);
+            if (!isFinished_GmRequest(mr->req)) {
+                postCommand_Widget(d, "document.request.cancelled doc:%p", d);
+            }
             pushBack_ObjectList(d->media, mr);
             iRelease(mr);
             /* Reset the fetch state, returning to the originating page. */
@@ -3133,9 +3157,14 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             if (equal_String(&mostRecentUrl_History(d->mod.history)->url, url_GmRequest(mr->req))) {
                 undo_History(d->mod.history);
             }
-            setUrl_DocumentWidget_(d, url_GmDocument(d->view.doc));
+            if (setUrl_DocumentWidget_(d, url_GmDocument(d->view.doc))) {
+                postCommand_Widget(d, "!document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+            }
             updateFetchProgress_DocumentWidget_(d);
             postCommand_Widget(d, "media.updated link:%u request:%p", d->requestLinkId, mr);
+            if (isFinished_GmRequest(mr->req)) {
+                postCommand_Widget(d, "media.finished link:%u request:%p", d->requestLinkId, mr);
+            }
             return;
         }
         /* Get ready for the incoming new document. */
@@ -3211,9 +3240,10 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
                 }
                 /* Menu for additional actions, past entries. */ {
+                    const iBinding *bind = findCommand_Keys("input.precedingline");
                     iMenuItem items[] = { { "${menu.input.precedingline}",
-                                            SDLK_v,
-                                            KMOD_PRIMARY | KMOD_SHIFT,
+                                            bind->key,
+                                            bind->mods,
                                             format_CStr("!valueinput.set ptr:%p text:%s",
                                                         buttons,
                                                         cstr_String(&d->linePrecedingLink)) } };

@@ -1181,39 +1181,43 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
                                  argLabel_Command(cmd, "noanim") == 0 &&
                                  (d->side == left_SidebarSide || deviceType_App() != phone_AppDeviceType);
         int visX = 0;
-        int visY = 0;
+//        int visY = 0;
         if (isVisible_Widget(w)) {
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
-            visY = top_Rect(bounds_Widget(w)) - top_Rect(w->root->widget->rect);
+//            visY = top_Rect(bounds_Widget(w)) - top_Rect(w->root->widget->rect);
         }
         const iBool isHiding = isVisible_Widget(w);
         setFlags_Widget(w, hidden_WidgetFlag, isHiding);
         /* Safe area inset for mobile. */
-        const int safePad = (d->side == left_SidebarSide ? left_Rect(safeRect_Root(w->root)) : 0);
+        const int safePad =
+            deviceType_App() == desktop_AppDeviceType
+                ? 0
+                : (d->side == left_SidebarSide ? left_Rect(safeRect_Root(w->root)) : 0);
         const int animFlags = easeOut_AnimFlag | softer_AnimFlag;
         if (!isPortraitPhone_App()) {
             if (!isHiding) {
-            setFlags_Widget(w, keepOnTop_WidgetFlag, iFalse);
-            w->rect.size.x = d->widthAsGaps * gap_UI;
-            invalidate_ListWidget(d->list);
-            if (isAnimated) {
-                setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
-                setVisualOffset_Widget(
-                    w, (d->side == left_SidebarSide ? -1 : 1) * (w->rect.size.x + safePad), 0, 0);
+                setFlags_Widget(w, keepOnTop_WidgetFlag, iFalse);
+                w->rect.size.x = d->widthAsGaps * gap_UI;
+                invalidate_ListWidget(d->list);
+                if (isAnimated) {
+                    setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
+                    setVisualOffset_Widget(w,
+                                           (d->side == left_SidebarSide ? -1 : 1) *
+                                               (w->rect.size.x + safePad),
+                                           0,
+                                           0);
                     setVisualOffset_Widget(w, 0, 300, animFlags);
+                }
             }
-        }
-        else if (isAnimated) {
-            setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
-            if (d->side == right_SidebarSide) {
-                setVisualOffset_Widget(w, visX, 0, 0);
-                setVisualOffset_Widget(
-                        w, visX + w->rect.size.x + safePad, 300, animFlags);
-            }
-            else {
-                setFlags_Widget(w, keepOnTop_WidgetFlag, iTrue);
-                setVisualOffset_Widget(
-                        w, -w->rect.size.x - safePad, 300, animFlags);
+            else if (isAnimated) {
+                setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
+                if (d->side == right_SidebarSide) {
+                    setVisualOffset_Widget(w, visX, 0, 0);
+                    setVisualOffset_Widget(w, visX + w->rect.size.x + safePad, 300, animFlags);
+                }
+                else {
+                    setFlags_Widget(w, keepOnTop_WidgetFlag, iTrue);
+                    setVisualOffset_Widget(w, -w->rect.size.x - safePad, 300, animFlags);
                 }
             }
             setScrollMode_ListWidget(d->list, normal_ScrollMode);
@@ -1226,15 +1230,16 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
                 w->rect.pos.y = height_Rect(safeRect_Root(w->root)) - d->midHeight;
                 setVisualOffset_Widget(w, bottom_Rect(rect_Root(w->root)) - w->rect.pos.y, 0, 0);
                 setVisualOffset_Widget(w, 0, 300, animFlags);
-                //animateSlidingSheetHeight_SidebarWidget_(d);
+                // animateSlidingSheetHeight_SidebarWidget_(d);
                 setScrollMode_ListWidget(d->list, disabledAtTopBothDirections_ScrollMode);
             }
             else {
-                setVisualOffset_Widget(w, bottom_Rect(rect_Root(w->root)) - w->rect.pos.y, 300, animFlags);
+                setVisualOffset_Widget(
+                    w, bottom_Rect(rect_Root(w->root)) - w->rect.pos.y, 300, animFlags);
                 if (d->isEditing) {
                     setMobileEditMode_SidebarWidget_(d, iFalse);
+                }
             }
-        }
             showToolbar_Root(w->root, isHiding);
         }
         updateToolbarColors_Root(w->root);
@@ -1242,7 +1247,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         /* BUG: Rearranging because the arrange above didn't fully resolve the height. */
         arrange_Widget(w);
         if (!isPortraitPhone_App()) {
-        updateSize_DocumentWidget(document_App());
+            updateSize_DocumentWidget(document_App());
         }
         if (isVisible_Widget(w)) {
             updateItems_SidebarWidget_(d);
@@ -1386,6 +1391,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     scrollToItem_ListWidget(d->list, addedIndex, 200);
                 }
             }
+        }
+        else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
+            updateItems_SidebarWidget_(d);
+            return iTrue;
         }
         else if (isPortraitPhone_App() && isVisible_Widget(w) && d->side == left_SidebarSide &&
                  equal_Command(cmd, "swipe.forward")) {

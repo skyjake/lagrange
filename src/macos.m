@@ -475,10 +475,20 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
                 break;
         }
     }
+    else {
+        SDL_MouseWheelEvent e = { .type = SDL_MOUSEWHEEL };
+        e.timestamp = SDL_GetTicks();
+        e.which = 1; /* Distinction between trackpad and regular mouse. */
+        /* Disregard any wheel acceleration. */
+        e.x = event.scrollingDeltaX > 0 ? 1 : event.scrollingDeltaX < 0 ? -1 : 0;
+        e.y = event.scrollingDeltaY > 0 ? 1 : event.scrollingDeltaY < 0 ? -1 : 0;
+        SDL_PushEvent((SDL_Event *) &e);
+        return iTrue;
+    }                
     /* Post corresponding MOUSEWHEEL events. */
     SDL_MouseWheelEvent e = { .type = SDL_MOUSEWHEEL };
     e.timestamp = SDL_GetTicks();
-    e.which = isPerPixel ? 0 : 1; /* Distinction between trackpad and regular mouse. TODO: Still needed? */
+    e.which = isPerPixel ? 0 : 1; /* Distinction between trackpad and regular mouse. */
     setPerPixel_MouseWheelEvent(&e, isPerPixel);
     if (isPerPixel) {
         setInertia_MouseWheelEvent(&e, isInertia);

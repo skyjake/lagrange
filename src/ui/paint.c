@@ -71,17 +71,18 @@ void endTarget_Paint(iPaint *d) {
 
 void setClip_Paint(iPaint *d, iRect rect) {
     addv_I2(&rect.pos, origin_Paint);
-    if (isEmpty_Rect(rect)) {
-        rect = init_Rect(0, 0, 1, 1);
-    }
     iRect targetRect = zero_Rect();
     SDL_Texture *target = SDL_GetRenderTarget(renderer_Paint_(d));
     if (target) {
         SDL_QueryTexture(target, NULL, NULL, &targetRect.size.x, &targetRect.size.y);
         rect = intersect_Rect(rect, targetRect);
     }
-    else {
+    /* The origin is non-zero when drawing into a widget's own buffer. */
+    if (isEqual_I2(zero_I2(), origin_Paint)) {
         rect = intersect_Rect(rect, rect_Root(get_Root()));
+    }
+    if (isEmpty_Rect(rect)) {
+        rect = init_Rect(0, 0, 1, 1);
     }
     SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 }
