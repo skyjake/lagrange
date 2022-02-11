@@ -3240,9 +3240,10 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
                 }
                 /* Menu for additional actions, past entries. */ {
+                    const iBinding *bind = findCommand_Keys("input.precedingline");
                     iMenuItem items[] = { { "${menu.input.precedingline}",
-                                            SDLK_v,
-                                            KMOD_PRIMARY | KMOD_SHIFT,
+                                            bind->key,
+                                            bind->mods,
                                             format_CStr("!valueinput.set ptr:%p text:%s",
                                                         buttons,
                                                         cstr_String(&d->linePrecedingLink)) } };
