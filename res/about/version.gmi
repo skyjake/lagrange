@@ -7,14 +7,18 @@
 # Release notes
 
 ## 1.10.5
+* Added a keybinding for "Paste Preceding Line" (in input prompt menu).
 * The "Miscellaneous Symbols and Arrows" Unicode block (U+2B00...U+2BFF) is accepted as custom link icons.
 * When mixing Emoji into preformatted text (glyphs are from different fonts), lay out the Emoji as double-wide characters to avoid overlapping.
 * Faster hover-scrolling of long popup menus.
+* Fixed sidebars not getting updated after identity addition/deletion.
 * Fixed "Paste Preceding Line" not being undoable.
 * Fixed lookup of missing glyphs. Fontpack priorities are now applied as documented.
 * Fixed animation issue with sidebars in the right side of split view.
 * Fixed a refresh issue that caused the first line of the page to be redrawn continuously, spiking CPU usage.
 * Fixed link numbers showing up next to image captions.
+* Fixed how the link hover popup handles extremely long URLs.
+* macOS: Handling regular mouse wheel events. Each step of the wheel should cause a single scroll event.
 * macOS: Fixed a sidebar clipping issue with Metal.
 * macOS: Possible workaround for a window refresh glitch when using SDL's Metal renderer. (Sometimes animated elements like the URL hover info would stop at being partially transparent and not complete the fade.)
 * Updated UI translations.

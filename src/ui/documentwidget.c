@@ -2745,7 +2745,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                                                                  : "media.untitled.audio");
                         iUrl parts;
                         init_Url(&parts, d->mod.url);
-                        if (!isEmpty_Range(&parts.path)) {
+                        if (!isEmpty_Range(&parts.path) && !equalCase_Rangecc(parts.scheme, "data")) {
                             linkTitle =
                                 baseName_Path(collect_String(newRange_String(parts.path))).start;
                         }
@@ -3254,9 +3254,10 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
                 }
                 /* Menu for additional actions, past entries. */ {
+                    const iBinding *bind = findCommand_Keys("input.precedingline");
                     iMenuItem items[] = { { "${menu.input.precedingline}",
-                                            SDLK_v,
-                                            KMOD_PRIMARY | KMOD_SHIFT,
+                                            bind->key,
+                                            bind->mods,
                                             format_CStr("!valueinput.set ptr:%p text:%s",
                                                         buttons,
                                                         cstr_String(&d->linePrecedingLink)) } };

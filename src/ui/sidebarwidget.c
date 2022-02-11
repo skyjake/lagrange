@@ -1392,6 +1392,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
             }
         }
+        else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
+            updateItems_SidebarWidget_(d);
+            return iTrue;
+        }
         else if (isPortraitPhone_App() && isVisible_Widget(w) && d->side == left_SidebarSide &&
                  equal_Command(cmd, "swipe.forward")) {
             postCommand_App("sidebar.toggle");
