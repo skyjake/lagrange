@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.10.5
+* Added a keybinding for "Paste Preceding Line" (in input prompt menu).
 * The "Miscellaneous Symbols and Arrows" Unicode block (U+2B00...U+2BFF) is accepted as custom link icons.
 * When mixing Emoji into preformatted text (glyphs are from different fonts), lay out the Emoji as double-wide characters to avoid overlapping.
 * Faster hover-scrolling of long popup menus.
