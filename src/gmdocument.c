@@ -907,7 +907,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : scheme == titan_GmLinkScheme    ? uploadArrow
                                              : scheme == finger_GmLinkScheme   ? pointingFinger
                                              : scheme == mailto_GmLinkScheme   ? envelope
-                                             : scheme == data_GmLinkScheme     ? package_Icon
+                                             : scheme == data_GmLinkScheme     ? paperclip_Icon
                                              : link->flags & remote_GmLinkFlag ? globe
                                              : link->flags & imageFileExtension_GmLinkFlag ? image
                                              : link->flags & fontpackFileExtension_GmLinkFlag ? fontpack_Icon
