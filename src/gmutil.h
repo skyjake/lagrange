@@ -141,6 +141,7 @@ void            urlEncodeSpaces_String  (iString *);
 const iString * withSpacesEncoded_String(const iString *);
 const iString * withScheme_String       (const iString *, const char *scheme); /* replace URI scheme */
 const iString * canonicalUrl_String     (const iString *);
+const iString * prettyDataUrl_String    (const iString *, int contentColor);
 
 const char *    mediaType_Path                      (const iString *path);
 const char *    mediaTypeFromFileExtension_String   (const iString *);

@@ -2156,28 +2156,38 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                    : uiTextDim_ColorId;
             iUrl parts;
             init_Url(&parts, &d->label);
-            const iBool isAbout  = equalCase_Rangecc(parts.scheme, "about");
-            const iBool isGemini = equalCase_Rangecc(parts.scheme, "gemini");
-            draw_Text(font,
-                      add_I2(topLeft_Rect(itemRect),
-                             init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(font)) / 2)),
-                      fg,
-                      "%s%s%s%s%s%s%s%s",
-                      isGemini ? "" : cstr_Rangecc(parts.scheme),
-                      isGemini  ? ""
-                      : isAbout ? ":"
-                                : "://",
-                      escape_Color(isHover ? (isPressing ? uiTextPressed_ColorId
-                                                         : uiTextFramelessHover_ColorId)
-                                           : uiTextStrong_ColorId),
-                      cstr_Rangecc(parts.host),
-                      escape_Color(fg),
-                      cstr_Rangecc(parts.path),
-                      !isEmpty_Range(&parts.query) ? escape_Color(isPressing ? uiTextPressed_ColorId
-                                                                  : isHover  ? uiText_ColorId
-                                                                             : uiAnnotation_ColorId)
-                                                   : "",
-                      !isEmpty_Range(&parts.query) ? cstr_Rangecc(parts.query) : "");
+            const iBool isAbout    = equalCase_Rangecc(parts.scheme, "about");
+            const iBool isGemini   = equalCase_Rangecc(parts.scheme, "gemini");
+            const iBool isData     = equalCase_Rangecc(parts.scheme, "data");
+            const int   queryColor = isPressing ? uiTextPressed_ColorId
+                                     : isHover  ? uiText_ColorId
+                                                : uiAnnotation_ColorId;
+            const iInt2 textPos =
+                add_I2(topLeft_Rect(itemRect),
+                       init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(font)) / 2));
+            if (isData) {
+                drawRange_Text(
+                    font, textPos, fg, range_String(prettyDataUrl_String(&d->label, queryColor)));
+            }
+            else {
+                draw_Text(
+                    font,
+                    textPos,
+                    fg,
+                    "%s%s%s%s%s%s%s%s",
+                    isGemini ? "" : cstr_Rangecc(parts.scheme),
+                    isGemini  ? ""
+                    : isAbout ? ":"
+                              : "://",
+                    escape_Color(isHover ? (isPressing ? uiTextPressed_ColorId
+                                                       : uiTextFramelessHover_ColorId)
+                                         : uiTextStrong_ColorId),
+                    cstr_Rangecc(parts.host),
+                    escape_Color(fg),
+                    cstr_Rangecc(parts.path),
+                    !isEmpty_Range(&parts.query) ? escape_Color(queryColor) : "",
+                    !isEmpty_Range(&parts.query) ? cstr_Rangecc(parts.query) : "");
+            }
         }
         iEndCollect();
     }

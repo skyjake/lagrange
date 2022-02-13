@@ -92,12 +92,8 @@ void infoText_LinkInfo(const iGmDocument *doc, iGmLinkId linkId, iString *text_o
         appendRange_String(text_out, (iRangecc){ parts.path.start, constEnd_String(url) });
     }
     else if (scheme == data_GmLinkScheme) {
-        appendCStr_String(text_out, "\U0001f4e6 ");
-        const char *comma = strchr(cstr_String(url), ',');
-        if (!comma) {
-            comma = iMin(constEnd_String(url), constBegin_String(url) + 256);
-        }
-        appendRange_String(text_out, (iRangecc){ constBegin_String(url), comma });
+        appendCStr_String(text_out, paperclip_Icon " ");
+        append_String(text_out, prettyDataUrl_String(url, none_ColorId));
     }
     else if (scheme != gemini_GmLinkScheme) {
         const size_t maxDispLen = 300;
