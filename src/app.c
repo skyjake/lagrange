@@ -244,6 +244,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
     appendFormat_String(str, "memorysize.set arg:%d\n", d->prefs.maxMemorySize);
+    appendFormat_String(str, "urlsize.set arg:%d\n", d->prefs.maxUrlSize);
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
@@ -1974,6 +1975,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
         postCommandf_App("memorysize.set arg:%d",
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.memorysize"))));
+        postCommandf_App("urlsize.set arg:%d",
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.urlsize"))));
         postCommandf_App("ca.file path:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.ca.file")));
         postCommandf_App("ca.path path:%s",
@@ -2771,6 +2774,13 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "urlsize.set")) {
+        d->prefs.maxUrlSize = arg_Command(cmd);
+        if (d->prefs.maxUrlSize < 1024) {
+            d->prefs.maxUrlSize = 1024; /* Gemini protocol requirement */
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "searchurl")) {
         iString *url = &d->prefs.strings[searchUrl_PrefsString];
         setCStr_String(url, suffixPtr_Command(cmd, "address"));
@@ -3158,6 +3168,8 @@ iBool handleCommand_App(const char *cmd) {
                             collectNewFormat_String("%d", d->prefs.maxCacheSize));
         setText_InputWidget(findChild_Widget(dlg, "prefs.memorysize"),
                             collectNewFormat_String("%d", d->prefs.maxMemorySize));
+        setText_InputWidget(findChild_Widget(dlg, "prefs.urlsize"),
+                            collectNewFormat_String("%d", d->prefs.maxUrlSize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.strings[searchUrl_PrefsString]);
         setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.strings[caFile_PrefsString]);

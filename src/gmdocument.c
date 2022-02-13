@@ -333,13 +333,14 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         link->urlRange = capturedRange_RegExpMatch(&m, 1);
         setRange_String(&link->url, link->urlRange);
         set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
-        if (startsWithCase_String(&link->url, "about:command")) {
-            /* This is a special internal page that allows submitting UI events. */
-            if (!d->enableCommandLinks) {
-                delete_GmLink(link);
-                *linkId = 0;
-                return line;
-            }
+        /* If invalid, disregard the link. */
+        if (size_String(&link->url) > prefs_App()->maxUrlSize ||
+            (startsWithCase_String(&link->url, "about:command")
+             /* this is a special internal page that allows submitting UI events */
+             && !d->enableCommandLinks)) {
+            delete_GmLink(link);
+            *linkId = 0;
+            return line;
         }
         /* Check the URL. */ {
             iUrl parts;
@@ -385,7 +386,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 iString *path = newRange_String(parts.path);
                 if (endsWithCase_String(path, ".gif")  || endsWithCase_String(path, ".jpg") ||
                     endsWithCase_String(path, ".jpeg") || endsWithCase_String(path, ".png") ||
-                    endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||                    
+                    endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||
 #if defined (LAGRANGE_ENABLE_WEBP)
                     endsWithCase_String(path, ".webp") ||
 #endif

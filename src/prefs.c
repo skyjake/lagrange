@@ -73,6 +73,7 @@ void init_Prefs(iPrefs *d) {
     d->decodeUserVisibleURLs  = iTrue;
     d->maxCacheSize      = 10;
     d->maxMemorySize     = 200;
+    d->maxUrlSize        = 8192;
     setCStr_String(&d->strings[uiFont_PrefsString], "default");
     setCStr_String(&d->strings[headingFont_PrefsString], "default");
     setCStr_String(&d->strings[bodyFont_PrefsString], "default");

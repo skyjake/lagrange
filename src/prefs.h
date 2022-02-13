@@ -172,6 +172,7 @@ struct Impl_Prefs {
     /* Network */
     int              maxCacheSize; /* MB */
     int              maxMemorySize; /* MB */
+    int              maxUrlSize; /* bytes; longer ones will be disregarded */
     /* Style */
     iStringSet *     disabledFontPacks;
     int              gemtextAnsiEscapes;

@@ -106,9 +106,14 @@ The type and destination of a link are indicated by the link's icon and color: â
 
 Link colors remain the same regardless of which color theme is being used for page content. (Color themes are discussed in the Customization section.)
 
-When you move the mouse cursor over a link, additional information will appear: the destination domain, with the URL scheme shown for non-Gemini links, and the date of the last visit to the URL.
+The "Show URL on hover" option can be enabled in Preferences to show additional information when you move the mouse cursor over a link: the destination domain, URL scheme for non-Gemini links, date of the last visit to the URL, and the identity that will be used when opening the link.
 
 If a link would normally use the default âž¤ icon but there is an Emoji at the beginning of the link label, that Emoji is used as the link icon instead. In these cases, you can always assume that the link is a Gemini link whose destination is the same domain that you're currently on.
+
+The "Network" tab of Preferences has a few settings that affect the presentation of links and URLs in general:
+
+* "Decode URLs" causes percent-coding to be decoded for the user interface, so one can see international characters in URLs.
+* "Maximum URL size" sets a limit for how long URLs can be. While Gemini servers are required to enforce a limit of 1024 bytes for URLs, this setting affects all URLs regardless of scheme. Link lines with URLs longer than this will be presented as plain text.
 
 ### 1.1.3 Page caching
 

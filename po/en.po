@@ -1670,6 +1670,9 @@ msgstr "Wrap plain text:"
 msgid "prefs.decodeurls"
 msgstr "Decode URLs:"
 
+msgid "prefs.urlsize"
+msgstr "Maximum URL size:"
+
 msgid "prefs.cachesize"
 msgstr "Cache size:"
 
