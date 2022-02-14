@@ -151,8 +151,3 @@ const iString * findContainerArchive_Path           (const iString *path);
 
 
 const iString * feedEntryOpenCommand_String (const iString *url, int newTab); /* checks fragment */
-
-/* TODO: Consider adding this to the_Foundation. */
-int     replaceRegExp_String    (iString *, const iRegExp *regexp, const char *replacement,
-                                 void (*matchHandler)(void *, const iRegExpMatch *),
-                                 void *context);
