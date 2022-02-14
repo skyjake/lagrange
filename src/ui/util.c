@@ -2497,6 +2497,7 @@ iWidget *makePreferences_Widget(void) {
             { "input id:prefs.searchurl url:1 noheading:1" },
             { "padding" },
             { "toggle id:prefs.bookmarks.addbottom" },
+            { "toggle id:prefs.dataurl.openimages" },
             { "toggle id:prefs.archive.openindex" },
             { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
             { "padding" },
@@ -2569,6 +2570,7 @@ iWidget *makePreferences_Widget(void) {
         const iMenuItem networkPanelItems[] = {
             { "title id:heading.prefs.network" },
             { "toggle id:prefs.decodeurls" },
+            { "input id:prefs.urlsize maxlen:10 selectall:1" },
             { "padding" },
             { "input id:prefs.cachesize maxlen:4 selectall:1 unit:mb" },
             { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
@@ -2643,6 +2645,7 @@ iWidget *makePreferences_Widget(void) {
         addDialogPadding_(headings, values);
         addDialogToggle_(headings, values, "${prefs.hoverlink}", "prefs.hoverlink");
         addDialogToggle_(headings, values, "${prefs.bookmarks.addbottom}", "prefs.bookmarks.addbottom");
+        addDialogToggle_(headings, values, "${prefs.dataurl.openimages}", "prefs.dataurl.openimages");
         addDialogToggle_(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
         if (deviceType_App() != phone_AppDeviceType) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pinsplit}")));

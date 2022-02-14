@@ -334,7 +334,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         setRange_String(&link->url, link->urlRange);
         set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
         /* If invalid, disregard the link. */
-        if (size_String(&link->url) > prefs_App()->maxUrlSize ||
+        if ((d->format == gemini_SourceFormat && size_String(&link->url) > prefs_App()->maxUrlSize) ||
             (startsWithCase_String(&link->url, "about:command")
              /* this is a special internal page that allows submitting UI events */
              && !d->enableCommandLinks)) {
@@ -371,7 +371,11 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
             else if (equalCase_Rangecc(parts.scheme, "data")) {
                 setScheme_GmLink_(link, data_GmLinkScheme);
-                if (startsWith_Rangecc(parts.path, "image/")) {
+                if (startsWith_Rangecc(parts.path, "image/png") ||
+                    startsWith_Rangecc(parts.path, "image/jpg") ||
+                    startsWith_Rangecc(parts.path, "image/jpeg") ||
+                    startsWith_Rangecc(parts.path, "image/webp") ||
+                    startsWith_Rangecc(parts.path, "image/gif")) {
                     link->flags |= imageFileExtension_GmLinkFlag;
                 }
             }

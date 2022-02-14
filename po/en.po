@@ -1429,6 +1429,10 @@ msgstr "Collapse preformatted:"
 msgid "prefs.bookmarks.addbottom"
 msgstr "Add bookmarks to bottom:"
 
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Open images in Data URLs:"
+
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
 msgstr "Open archive indices:"

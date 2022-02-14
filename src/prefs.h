@@ -75,6 +75,7 @@ enum iPrefsBool {
     hoverLink_PrefsBool,
     smoothScrolling_PrefsBool,
     loadImageInsteadOfScrolling_PrefsBool,
+    openDataUrlImagesOnLoad_PrefsBool,
     collapsePreOnLoad_PrefsBool,
     openArchiveIndexPages_PrefsBool,
     
@@ -128,6 +129,7 @@ struct Impl_Prefs {
             iBool hoverLink;
             iBool smoothScrolling;
             iBool loadImageInsteadOfScrolling;
+            iBool openDataUrlImagesOnLoad;
             iBool collapsePreOnLoad;
             iBool openArchiveIndexPages;
             

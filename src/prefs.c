@@ -66,11 +66,12 @@ void init_Prefs(iPrefs *d) {
     d->smoothScrollSpeed[keyboard_ScrollType] = 13;
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling = iFalse;
-    d->collapsePreOnLoad      = iFalse;
-    d->openArchiveIndexPages  = iTrue;
-    d->addBookmarksToBottom   = iTrue;
-    d->warnAboutMissingGlyphs = iTrue;
-    d->decodeUserVisibleURLs  = iTrue;
+    d->openDataUrlImagesOnLoad = iFalse;
+    d->collapsePreOnLoad       = iFalse;
+    d->openArchiveIndexPages   = iTrue;
+    d->addBookmarksToBottom    = iTrue;
+    d->warnAboutMissingGlyphs  = iTrue;
+    d->decodeUserVisibleURLs   = iTrue;
     d->maxCacheSize      = 10;
     d->maxMemorySize     = 200;
     d->maxUrlSize        = 8192;

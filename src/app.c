@@ -280,6 +280,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.collapsepreonload", &d->prefs.collapsePreOnLoad },
         { "prefs.hoverlink", &d->prefs.hoverLink },
         { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
+        { "prefs.dataurl.openimages", &d->prefs.openDataUrlImagesOnLoad },
         { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
         { "prefs.blink", &d->prefs.blinkingCursor },
@@ -2729,6 +2730,10 @@ iBool handleCommand_App(const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.dataurl.openimages.changed")) {
+        d->prefs.openDataUrlImagesOnLoad = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.archive.openindex.changed")) {
         d->prefs.openArchiveIndexPages = arg_Command(cmd) != 0;
         return iTrue;
@@ -3096,6 +3101,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetoolbarscroll"), d->prefs.hideToolbarOnScroll);
         setToggle_Widget(findChild_Widget(dlg, "prefs.bookmarks.addbottom"), d->prefs.addBookmarksToBottom);
         setToggle_Widget(findChild_Widget(dlg, "prefs.font.warnmissing"), d->prefs.warnAboutMissingGlyphs);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.dataurl.openimages"), d->prefs.openDataUrlImagesOnLoad);
         setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);

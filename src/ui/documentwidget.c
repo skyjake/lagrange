@@ -2411,8 +2411,9 @@ static const char *zipPageHeading_(const iRangecc mime) {
 
 static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool isCached) {
     iWidget *w = as_Widget(d);
-    /* Embedded images in data links should be shown immediately as they are already fetched
-       data that is part of the document. */ {
+    /* Embedded images in data links can be shown immediately as they are already fetched
+       data that is part of the document. */
+    if (prefs_App()->openDataUrlImagesOnLoad) {
         iGmDocument *doc = d->view.doc;
         for (size_t linkId = 1; ; linkId++) {
             const int      linkFlags = linkFlags_GmDocument(doc, linkId);
