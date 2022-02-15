@@ -593,6 +593,15 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
        the web. */
     /* Encode everything except already-percent encoded characters. */
     iString *enc = urlEncodeExclude_String(&d->url, "%" URL_RESERVED_CHARS);
+    /* Normalize empty paths to /. */ {
+        iUrl parts;
+        init_Url(&parts, enc);
+        if (isEmpty_Range(&parts.path) && equalCase_Rangecc(parts.scheme, "gemini") &&
+            parts.path.start) {
+            /* Normalize to "/" as per specification (November 2021 update). */
+            insertData_Block(&enc->chars, parts.path.start - constBegin_String(enc), "/", 1);
+        }
+    }
     set_String(&d->url, enc);
     delete_String(enc);
     d->identity = identityForUrl_GmCerts(d->certs, &d->url);
