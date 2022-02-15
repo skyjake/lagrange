@@ -3936,12 +3936,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const char *unchecked       = red_ColorEscape "\u2610";
         const char *checked         = green_ColorEscape "\u2611";
         const iBool haveFingerprint = (d->certFlags & haveFingerprint_GmCertFlag) != 0;
-        const int requiredForTrust = (available_GmCertFlag | haveFingerprint_GmCertFlag |
-                                      timeVerified_GmCertFlag);
+        const int   requiredForTrust =
+            (available_GmCertFlag | haveFingerprint_GmCertFlag | timeVerified_GmCertFlag);
         const iBool canTrust = ~d->certFlags & trusted_GmCertFlag &&
                                ((d->certFlags & requiredForTrust) == requiredForTrust);
         const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
-        const iString *meta = &d->sourceMime;
+        const iString    *meta   = &d->sourceMime;
         if (recent && recent->cachedResponse) {
             meta = &recent->cachedResponse->meta;
         }
@@ -4005,6 +4005,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         if (haveFingerprint) {
             pushBack_Array(items, &(iMenuItem){ "${dlg.cert.fingerprint}", 0, 0, "server.copycert" });
+        }
+        const iRangecc root = urlRoot_String(d->mod.url);
+        if (!isEmpty_Range(&root)) {
+            pushBack_Array(items, &(iMenuItem){ "${pageinfo.settings}", 0, 0, "document.sitespec" });
         }
         if (!isEmpty_Array(items)) {
             pushBack_Array(items, &(iMenuItem){ "---", 0, 0, 0 });
@@ -4937,7 +4941,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 for (size_t i = 0; i < 64; ++i) {
                     setByte_Block(seed, i, iRandom(0, 256));
                 }
-                setThemeSeed_GmDocument(view->doc, seed);
+                setThemeSeed_GmDocument(view->doc, seed, NULL);
                 delete_Block(seed);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(w);

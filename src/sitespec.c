@@ -37,7 +37,8 @@ struct Impl_SiteParams {
     iString  titanIdentity; /* fingerprint */
     int      dismissWarnings;
     iStringArray usedIdentities; /* fingerprints; latest ones at the end */
-    /* TODO: theme seed, style settings */
+    iString  paletteSeed;
+    /* TODO: style settings */
 };
 
 void init_SiteParams(iSiteParams *d) {
@@ -45,9 +46,11 @@ void init_SiteParams(iSiteParams *d) {
     init_String(&d->titanIdentity);
     d->dismissWarnings = 0;
     init_StringArray(&d->usedIdentities);
+    init_String(&d->paletteSeed);
 }
 
 void deinit_SiteParams(iSiteParams *d) {
+    deinit_String(&d->paletteSeed);
     deinit_StringArray(&d->usedIdentities);
     deinit_String(&d->titanIdentity);
 }
@@ -149,6 +152,9 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
             pushBack_StringArray(&d->loadParams->usedIdentities, collectNewRange_String(seg));
         }
     }
+    else if (!cmp_String(key, "paletteSeed") && value->type == string_TomlType) {
+        set_String(&d->loadParams->paletteSeed, value->value.string);
+    }
 }
 
 static iBool load_SiteSpec_(iSiteSpec *d) {
@@ -189,6 +195,11 @@ static void save_SiteSpec_(iSiteSpec *d) {
                     buf,
                     "usedIdentities = \"%s\"\n",
                     cstrCollect_String(joinCStr_StringArray(&params->usedIdentities, " ")));
+            }
+            if (!isEmpty_String(&params->paletteSeed)) {
+                appendCStr_String(buf, "paletteSeed = \"");
+                append_String(buf, collect_String(quote_String(&params->paletteSeed, iFalse)));
+                appendCStr_String(buf, "\"\n");
             }
             appendCStr_String(buf, "\n");
             write_File(f, utf8_String(buf));

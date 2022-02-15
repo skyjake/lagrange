@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "fontpack.h"
 #include "lang.h"
+#include "sitespec.h"
 #include "ui/color.h"
 
 #include <the_Foundation/file.h>
@@ -277,6 +278,19 @@ const iBlock *urlThemeSeed_String(const iString *url) {
         return collect_Block(newRange_Block(urlHost_String(url)));
     }
     return collect_Block(newRange_Block(user));
+}
+
+const iBlock *urlPaletteSeed_String(const iString *url) {
+    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
+        return urlThemeSeed_String(url);
+    }
+    /* Check for a site-specific setting. */
+    const iString *seed =
+        valueString_SiteSpec(collectNewRange_String(urlRoot_String(url)), paletteSeed_SiteSpecKey);
+    if (!isEmpty_String(seed)) {
+        return utf8_String(seed);
+    }
+    return urlThemeSeed_String(url);
 }
 
 static iBool isAbsolutePath_(iRangecc path) {

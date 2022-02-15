@@ -3169,15 +3169,14 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
 }
 
 iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
-    const char *headingText = bookmarkId ? uiHeading_ColorEscape "${heading.feedcfg}"
-                                         : uiHeading_ColorEscape "${heading.subscribe}";
-    const iMenuItem actions[] = { { "${cancel}" },
-                                  { bookmarkId ? uiTextCaution_ColorEscape "${dlg.feed.save}"
-                                               : uiTextCaution_ColorEscape "${dlg.feed.sub}",
-                                    SDLK_RETURN,
-                                    KMOD_PRIMARY,
-                                    format_CStr("feedcfg.accept bmid:%d", bookmarkId) } };
-    iWidget *dlg;
+    iWidget        *dlg;
+    const char     *headingText = bookmarkId ? "${heading.feedcfg}" : "${heading.subscribe}";
+    const iMenuItem actions[]   = { { "${cancel}" },
+                                    { bookmarkId ? uiTextCaution_ColorEscape "${dlg.feed.save}"
+                                                 : uiTextCaution_ColorEscape "${dlg.feed.sub}",
+                                      SDLK_RETURN,
+                                      KMOD_PRIMARY,
+                                      format_CStr("feedcfg.accept bmid:%d", bookmarkId) } };
     if (isUsingPanelLayout_Mobile()) {
         const iMenuItem typeItems[] = {
             { "button id:feedcfg.type.gemini label:dlg.feed.type.gemini", 0, 0, "feedcfg.type arg:0" },
@@ -3231,6 +3230,32 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
     }
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag);
+    return dlg;
+}
+
+iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
+    iWidget *dlg;
+    const iMenuItem actions[] = {
+        { "${cancel}" }, { "${sitespec.accept}", SDLK_RETURN, KMOD_PRIMARY, "sitespec.accept" }
+    };
+    if (isUsingPanelLayout_Mobile()) {
+        iAssert(iFalse);
+    }
+    else {
+        iWidget *headings, *values;
+        dlg = makeSheet_Widget("sitespec");
+        addDialogTitle_(dlg, "${heading.sitespec}", "heading.sitespec");
+        addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        addDialogToggle_(headings, values, "${sitespec.ansi}", "sitespec.ansi");
+        iInputWidget *palInput = new_InputWidget(0);
+        addPrefsInputWithHeading_(headings, values, "sitespec.palette", iClob(palInput));
+        as_Widget(palInput)->rect.size.x = 80 * gap_UI;
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+    }
+    /* Initialize. */ {
+        const iRangecc root = urlRoot_String(url);
+        
+    }
     return dlg;
 }
 

@@ -181,7 +181,9 @@ enum iGmDocumentUpdate {
     final_GmDocumentUpdate,   /* process all lines, including the last one if not terminated */
 };
 
-void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
+void    setThemeSeed_GmDocument (iGmDocument *,
+                                 const iBlock *paletteSeed,
+                                 const iBlock *iconSeed); /* seeds may be NULL; NULL iconSeed will use paletteSeed instead */
 void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat format);
 void    setWidth_GmDocument     (iGmDocument *, int width, int canvasWidth);
 iBool   updateWidth_GmDocument  (iGmDocument *, int width, int canvasWidth);

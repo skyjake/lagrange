@@ -120,6 +120,7 @@ uint16_t        urlPort_String          (const iString *);
 iRangecc        urlUser_String          (const iString *);
 iRangecc        urlRoot_String          (const iString *);
 const iBlock *  urlThemeSeed_String     (const iString *);
+const iBlock *  urlPaletteSeed_String   (const iString *);
 
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
 iBool           isLikelyUrl_String      (const iString *);

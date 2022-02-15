@@ -1292,7 +1292,7 @@ static void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
     }
 }
 
-void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
+void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iBlock *iconSeed) {
     const iPrefs *        prefs = prefs_App();
     enum iGmDocumentTheme theme = currentTheme_();
     static const iChar siteIcons[] = {
@@ -1303,6 +1303,16 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         0x1f306, 0x1f308, 0x1f30a, 0x1f319, 0x1f31f, 0x1f320, 0x1f340, 0x1f4cd, 0x1f4e1, 0x1f531,
         0x1f533, 0x1f657, 0x1f659, 0x1f665, 0x1f668, 0x1f66b, 0x1f78b, 0x1f796, 0x1f79c,
     };
+    if (!iconSeed) {
+        iconSeed = paletteSeed;
+    }
+    if (iconSeed && !isEmpty_Block(iconSeed)) {
+        const uint32_t seedHash = themeHash_(iconSeed);
+        d->siteIcon = siteIcons[(seedHash >> 7) % iElemCount(siteIcons)];
+    }
+    else {
+        d->siteIcon = 0;        
+    }
     /* Default colors. These are used on "about:" pages and local files, for example. */ {
         /* Link colors are generally the same in all themes. */
         set_Color(tmBadLink_ColorId, get_Color(red_ColorId));
@@ -1504,13 +1514,11 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             }
         }
     }
-    if (seed && !isEmpty_Block(seed)) {
-        d->themeSeed = themeHash_(seed);
-        d->siteIcon  = siteIcons[(d->themeSeed >> 7) % iElemCount(siteIcons)];
+    if (paletteSeed && !isEmpty_Block(paletteSeed)) {
+        d->themeSeed = themeHash_(paletteSeed);
     }
     else {
         d->themeSeed = 0;
-        d->siteIcon  = 0;
     }
     /* Set up colors. */
     if (d->themeSeed) {
@@ -1739,8 +1747,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     /* Derived colors. */
     setDerivedThemeColors_(theme);
     /* Special exceptions. */
-    if (seed) {
-        if (equal_CStr(cstr_Block(seed), "gemini.circumlunar.space")) {
+    if (iconSeed) {
+        if (equal_CStr(cstr_Block(iconSeed), "gemini.circumlunar.space")) {
             d->siteIcon = 0x264a; /* gemini symbol */
         }
         updateIconBasedOnUrl_GmDocument_(d);
@@ -1761,7 +1769,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 void makePaletteGlobal_GmDocument(const iGmDocument *d) {
     if (!d->isPaletteValid) {
         /* Recompute the palette since it's needed now. */
-        setThemeSeed_GmDocument((iGmDocument *) d, urlThemeSeed_String(&d->url));
+        setThemeSeed_GmDocument(
+            (iGmDocument *) d, urlPaletteSeed_String(&d->url), urlThemeSeed_String(&d->url));
     }
     iAssert(d->isPaletteValid);
     memcpy(get_Root()->tmPalette, d->palette, sizeof(d->palette));
@@ -1938,7 +1947,7 @@ static void normalize_GmDocument(iGmDocument *d) {
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     url = canonicalUrl_String(url);
     set_String(&d->url, url);
-    setThemeSeed_GmDocument(d, urlThemeSeed_String(url));
+    setThemeSeed_GmDocument(d, urlPaletteSeed_String(url), urlThemeSeed_String(url));
     iUrl parts;
     init_Url(&parts, url);
     setRange_String(&d->localHost, parts.host);

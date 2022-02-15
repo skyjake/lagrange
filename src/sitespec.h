@@ -31,6 +31,7 @@ enum iSiteSpecKey {
     titanIdentity_SiteSpecKey,   /* String */
     dismissWarnings_SiteSpecKey, /* int */
     usedIdentities_SiteSpecKey,  /* StringArray */
+    paletteSeed_SiteSpecKey,     /* String */
 };
 
 void    init_SiteSpec       (const char *saveDir);
