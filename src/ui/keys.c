@@ -215,6 +215,8 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 50, { "${keys.bookmark.add}",         'd', KMOD_PRIMARY,              "bookmark.add"                      }, 0 },
     { 51, { "${keys.bookmark.addfolder}",   'n', KMOD_SHIFT,                "bookmarks.addfolder"               }, 0 },
     { 55, { "${keys.subscribe}",            subscribeToPage_KeyModifier,    "feeds.subscribe"                   }, 0 },
+    { 56, { "${keys.feeds.showall}",        SDLK_u, KMOD_SHIFT,             "feeds.mode arg:0"                  }, 0 },
+    { 57, { "${keys.feeds.showunread}",     SDLK_u, 0,                      "feeds.mode arg:1"                  }, 0 },
     { 60, { "${keys.findtext}",             'f', KMOD_PRIMARY,              "focus.set id:find.input"           }, 0 },
     { 70, { "${keys.zoom.in}",              SDLK_EQUALS, KMOD_PRIMARY,      "zoom.delta arg:10"                 }, 0 },
     { 71, { "${keys.zoom.out}",             SDLK_MINUS, KMOD_PRIMARY,       "zoom.delta arg:-10"                }, 0 },
@@ -242,8 +244,6 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 120,{ "${keys.upload}",               SDLK_u, KMOD_PRIMARY,           "document.upload"                   }, 0 },
     { 121,{ "${keys.upload.edit}",          SDLK_e, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
     { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_PRIMARY | KMOD_SHIFT, "input.precedingline"            }, 0 },
-    { 150,{ "${keys.feeds.showall}",        SDLK_u, KMOD_SHIFT,             "feeds.mode arg:0"                  }, 0 },
-    { 151,{ "${keys.feeds.showunread}",     SDLK_u, 0,                      "feeds.mode arg:1"                  }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)
     { 1002, { NULL, SDLK_LEFTBRACKET,  KMOD_PRIMARY,             "navigate.back"        }, 0 },
