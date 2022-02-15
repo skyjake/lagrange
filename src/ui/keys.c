@@ -243,6 +243,8 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 110,{ "${menu.save.downloads}",       SDLK_s, KMOD_PRIMARY,           "document.save"                     }, 0 },
     { 120,{ "${keys.upload}",               SDLK_u, KMOD_PRIMARY,           "document.upload"                   }, 0 },
     { 121,{ "${keys.upload.edit}",          SDLK_e, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
+    { 125,{ "${keys.pageinfo}",             SDLK_i, KMOD_PRIMARY,           "document.info"                     }, 0 },
+    { 126,{ "${keys.sitespec}",             ',', KMOD_PRIMARY | KMOD_SHIFT, "document.sitespec"                 }, 0 },
     { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_PRIMARY | KMOD_SHIFT, "input.precedingline"            }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)

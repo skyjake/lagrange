@@ -760,6 +760,27 @@ msgstr "Trust"
 msgid "dlg.cert.fingerprint"
 msgstr "Copy Fingerprint"
 
+msgid "pageinfo.settings"
+msgstr "Settings"
+
+msgid "heading.sitespec"
+msgstr "Site-Specific Settings"
+
+msgid "sitespec.ansi"
+msgstr "ANSI escape warnings:"
+
+msgid "sitespec.palette"
+msgstr "Theme palette seed:"
+
+msgid "sitespec.accept"
+msgstr "Save Settings"
+
+msgid "keys.pageinfo"
+msgstr "Show page information"
+
+msgid "keys.sitespec"
+msgstr "Show site-specific settings"
+
 #, c-format
 msgid "dlg.input.prompt"
 msgstr "Please enter input for %s:"

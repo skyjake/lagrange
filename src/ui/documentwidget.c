@@ -4033,6 +4033,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
         return iTrue;
     }
+    else if (equal_Command(cmd, "document.sitespec") && d == document_App()) {
+        if (!findWidget_App("sitespec.palette")) {
+            makeSiteSpecificSettings_Widget(d->mod.url);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "server.unexpire") && document_App() == d) {
         const iRangecc host = urlHost_String(d->mod.url);
         const uint16_t port = urlPort_String(d->mod.url);

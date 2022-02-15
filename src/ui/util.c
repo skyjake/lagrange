@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "labelwidget.h"
 #include "root.h"
+#include "sitespec.h"
 #include "text.h"
 #include "touch.h"
 #include "widget.h"
@@ -3126,7 +3127,7 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
 
 static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
     if (equal_Command(cmd, "cancel")) {
-        setupSheetTransition_Mobile(dlg, iFalse);
+        setupSheetTransition_Mobile(dlg, 0);
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -3233,31 +3234,107 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     return dlg;
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
+static void siteSpecificThemeChanged_(const iWidget *dlg) {
+    iDocumentWidget *doc = document_App();
+    setThemeSeed_GmDocument((iGmDocument *) document_DocumentWidget(doc),
+                            urlPaletteSeed_String(url_DocumentWidget(doc)),
+                            urlThemeSeed_String(url_DocumentWidget(doc)));
+    postCommand_App("theme.changed");    
+}
+
+static const iString *siteSpecificRoot_(const iWidget *dlg) {
+    return collect_String(suffix_Command(cstr_String(id_Widget(dlg)), "site"));
+}
+
+static void updateSiteSpecificTheme_(iInputWidget *palSeed, void *context) {
+    iWidget *dlg = context;
+    const iString *siteRoot = siteSpecificRoot_(dlg);
+    setValueString_SiteSpec(siteRoot, paletteSeed_SiteSpecKey, text_InputWidget(palSeed));
+    siteSpecificThemeChanged_(dlg);
+    /* Allow seeing the new theme. */
+    setFlags_Widget(dlg, noFadeBackground_WidgetFlag, iTrue);
+}
+
+static void closeSiteSpecific_(iWidget *dlg) {
+    setupSheetTransition_Mobile(dlg, 0);
+    delete_String(userData_Object(dlg)); /* saved original palette seed */
+    destroy_Widget(dlg);
+}
+
+static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
+    if (equal_Command(cmd, "cancel")) {
+        iInputWidget *palSeed = findChild_Widget(dlg, "sitespec.palette");
+        setText_InputWidget(palSeed, userData_Object(dlg));
+        updateSiteSpecificTheme_(palSeed, dlg);
+        closeSiteSpecific_(dlg);
+        return iTrue;
+    }
+    if (startsWith_CStr(cmd, "input.ended id:sitespec.palette")) {
+        setFlags_Widget(dlg, noFadeBackground_WidgetFlag, iFalse);
+        refresh_Widget(dlg);
+        siteSpecificThemeChanged_(dlg);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "sitespec.accept")) {
+        const iInputWidget *palSeed   = findChild_Widget(dlg, "sitespec.palette");
+        const iBool         warnAnsi  = isSelected_Widget(findChild_Widget(dlg, "sitespec.ansi"));
+        const iString      *siteRoot  = siteSpecificRoot_(dlg);
+        int                 dismissed = value_SiteSpec(siteRoot, dismissWarnings_SiteSpecKey);
+        iChangeFlags(dismissed, ansiEscapes_GmDocumentWarning, !warnAnsi);
+        setValue_SiteSpec(siteRoot, dismissWarnings_SiteSpecKey, dismissed);
+        setValueString_SiteSpec(siteRoot, paletteSeed_SiteSpecKey, text_InputWidget(palSeed));
+        siteSpecificThemeChanged_(dlg);
+        /* Note: The active DocumentWidget may actually be different than when opening the dialog. */
+        closeSiteSpecific_(dlg);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
     iWidget *dlg;
     const iMenuItem actions[] = {
-        { "${cancel}" }, { "${sitespec.accept}", SDLK_RETURN, KMOD_PRIMARY, "sitespec.accept" }
+        { "${cancel}" },
+        { "${sitespec.accept}", SDLK_RETURN, KMOD_PRIMARY, "sitespec.accept" }
     };
     if (isUsingPanelLayout_Mobile()) {
         iAssert(iFalse);
     }
     else {
         iWidget *headings, *values;
-        dlg = makeSheet_Widget("sitespec");
+        dlg = makeSheet_Widget(format_CStr("sitespec site:%s", cstr_Rangecc(urlRoot_String(url))));
         addDialogTitle_(dlg, "${heading.sitespec}", "heading.sitespec");
         addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        iInputWidget *palSeed = new_InputWidget(0);
+        setHint_InputWidget(palSeed, cstr_Block(urlThemeSeed_String(url)));
+        addPrefsInputWithHeading_(headings, values, "sitespec.palette", iClob(palSeed));
         addDialogToggle_(headings, values, "${sitespec.ansi}", "sitespec.ansi");
-        iInputWidget *palInput = new_InputWidget(0);
-        addPrefsInputWithHeading_(headings, values, "sitespec.palette", iClob(palInput));
-        as_Widget(palInput)->rect.size.x = 80 * gap_UI;
-        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));        
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+        as_Widget(palSeed)->rect.size.x = 60 * gap_UI;
+        arrange_Widget(dlg);
     }
     /* Initialize. */ {
-        const iRangecc root = urlRoot_String(url);
-        
+        const iString *site = collectNewRange_String(urlRoot_String(url));
+        setToggle_Widget(findChild_Widget(dlg, "sitespec.ansi"),
+                         ~value_SiteSpec(site, dismissWarnings_SiteSpecKey) & ansiEscapes_GmDocumentWarning);
+        setText_InputWidget(findChild_Widget(dlg, "sitespec.palette"),
+                            valueString_SiteSpec(site, paletteSeed_SiteSpecKey));
+        /* Keep a copy of the original palette seed for restoring on cancel. */
+        setUserData_Object(dlg, copy_String(valueString_SiteSpec(site, paletteSeed_SiteSpecKey)));
+        if (!isUsingPanelLayout_Mobile()) {
+            setValidator_InputWidget(findChild_Widget(dlg, "sitespec.palette"),
+                                     updateSiteSpecificTheme_, dlg);
+        }        
     }
+    setCommandHandler_Widget(dlg, siteSpecificSettingsHandler_);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag);
     return dlg;
 }
+
+/*----------------------------------------------------------------------------------------------*/
 
 iWidget *makeIdentityCreation_Widget(void) {
     const iMenuItem actions[] = { { "${dlg.newident.more}", 0, 0, "ident.showmore" },

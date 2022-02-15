@@ -268,6 +268,12 @@ void setValueString_SiteSpec(const iString *site, enum iSiteSpecKey key, const i
                 set_String(&params->titanIdentity, value);
             }
             break;
+        case paletteSeed_SiteSpecKey:
+            if (!equal_String(&params->paletteSeed, value)) {
+                needSave = iTrue;
+                set_String(&params->paletteSeed, value);
+            }
+            break;            
         default:
             break;
     }
@@ -339,6 +345,8 @@ const iString *valueString_SiteSpec(const iString *site, enum iSiteSpecKey key) 
     switch (key) {
         case titanIdentity_SiteSpecKey:
             return &params->titanIdentity;
+        case paletteSeed_SiteSpecKey:
+            return &params->paletteSeed;
         default:
             return collectNew_String();
     }    
