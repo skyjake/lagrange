@@ -360,6 +360,8 @@ You can find a number of settings in Preferences to customize the user interface
 
 One important characteristic of Gemini is that you remain in control of what gets loaded and when. The browser will not suddenly fetch a ton of images, autoplay videos, or make surreptitious connections to any tracking servers — each network request is purposeful and manually triggered. With this in mind, the "Load image on scroll" option is provided to assist keyboard-only browsing and to facilitate a focused reading experience. When enabled, if there is an image link visible on the page and you press Space or ↓, it will be loaded and shown inline _instead_ of the view scrolling down. This allows you to read and see all the content of the page while only tapping on a single key on the keyboard.
 
+The "Show images in Data URLs" option determines if image data embedded into links using data URLs is automatically shown after the page has finished loading. This only applies to a handful of common image media types: JPEG, PNG, GIF, and WebP. Note that the maximum size of an URL has a limit, so these embedded images have to fit under the configured limit to be recognized as valid links. Image from data URLs are displayed as links' inline content, just like with any other URL scheme.
+
 The "Open archive indices" option controls whether index.gmi pages are automatically opened while browsing the contents of a ZIP archive. The purpose is to simulate the behavior of a Gemini server where opening a directory will by default show its index page. Enabling this option makes navigating an archived copy of a capsule a more streamlined experience.
 
 "Split view pinning" controls which tab links will be opened on when browsing in split view mode. The default mode is "Left Tab", which means that the page in the left tab is pinned (remains unchanged) when clicking on a link. For more information, see section 1.9.
@@ -392,6 +394,17 @@ Page content color themes are selected on the "Colors" tab of Preferences. The "
 * White: Colored headings on a white background.
 * Sepia: Light sepia background with black text. Does not change depending on domain; use this for readability if you prefer a sepia reading experience.
 * High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
+
+### 2.3.1 Site-specific theme
+
+You can manually customize the color theme of a site. Open "Page Information" and click on "Settings" to open the Site-Specific Settings dialog. The default keyboard shortcut for this is ${SHIFT+}${CTRL+}Comma.
+
+The "Theme palette seed" is the input data given to the theme generator that determines a site's color palette. The theme generator is designed to algorithmically choose a palette whose colors go together. It is not possible to individually pick the colors of a theme.
+
+You can enter any text as the palette seed. By default, the seed is the site's hostname, or a user name found in the URL path (e.g., "gemini://example.com/~User/" → seed "User"). Examples of how to use this:
+
+* Enter a word or phrase, or just random characters, to find a theme that you like.
+* To copy the theme of another site, enter the hostname of that site as the seed.
 
 ## 2.4 Fonts
 
@@ -498,7 +511,19 @@ Gemini allows relaying requests via a proxy server. On the "Network" tab, you ca
 
 When an HTTP proxy server is configured, HTTP/HTTPS links will no longer open in the system's default web browser but will be loaded via the proxy, expecting it to serve a 'text/gemini' version of the link contents.
 
-## 2.7 Keybindings
+## 2.7 URL handling
+
+The "Network" tab of Preferences has a few options related to handling URLs.
+
+Enabling the "Decode URLs" option causes all percent-encoded URLs to be shown in decoded form in the UI. Enabling this option is useful when encountering URLs that contain characters outside the basic Latin (A-Z) alphabet. This does not affect what gets sent to a server when loading pages: Gemini requests are always required to be sent in encoded form. 
+
+The "Maximum URL size" setting defines what is considered a valid link in Gemtext. Link lines with URLs longer than this are not considered to be links and are displayed like regular text lines. This only affects links that don't use the "gemini" scheme. The maximum size of a Gemini URL is 1024 bytes.
+
+Having a length limit is necessary due the special case of Data URLs:
+=> https://datatracker.ietf.org/doc/html/rfc2397  RFC 2397: The "data" URL scheme
+With Data URLs, one is able to embed arbitrary data into a Gemtext file using link lines. This makes it possible to circumvent the intentional limitations of Gemini and override the clients' ability to choose which linked resources should be loaded and when. Without a limit, a server could for example send an arbitrarily large image attachment as part of the page, with no regard to the user's or client's preferences or abilities to view images. Also note that like any non-Gemini scheme, "data" is not expected to be supported by Gemini clients.
+
+## 2.8 Keybindings
 
 The "Keys" tab lets you change which keys are bound to UI commands. Click on an item with the mouse and then press the new key combination that you want bound to it. Right-click on a binding to erase it or reset it to the default.
 
