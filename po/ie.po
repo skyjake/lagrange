@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-24 10:50+0000\n"
+"PO-Revision-Date: 2022-02-17 14:50+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -70,7 +70,7 @@ msgid "pageinfo.cert.notexpired"
 msgstr "Ne expirat"
 
 msgid "heading.certimport"
-msgstr "IMPORTAR LI IDENTITA"
+msgstr "Importar li identitá"
 
 msgid "dlg.newident.email"
 msgstr "E-post:"
@@ -499,7 +499,7 @@ msgid "sidebar.empty.idents"
 msgstr "Null identitás"
 
 msgid "heading.unsub"
-msgstr "DESABONNAR"
+msgstr "Desabonnar"
 
 #, c-format
 msgid "dlg.confirm.unsub"
@@ -509,7 +509,7 @@ msgid "dlg.unsub"
 msgstr "Desabonnar"
 
 msgid "heading.pageinfo"
-msgstr "INFORMATION PRI PÁGINE"
+msgstr "Information pri págine"
 
 msgid "pageinfo.header.cached"
 msgstr "(cachat contenete)"
@@ -542,13 +542,13 @@ msgid "dlg.input.send"
 msgstr "Inviar"
 
 msgid "heading.save.incomplete"
-msgstr "PÁGINE ES ÍNCOMPLET"
+msgstr "Págine es íncomplet"
 
 msgid "dlg.save.size"
 msgstr "Grandore:"
 
 msgid "heading.import.bookmarks"
-msgstr "IMPORTAR MARCA-PÁGINES"
+msgstr "Importar marca-págines"
 
 msgid "link.newtab"
 msgstr "Aperter ligament in un nov carte"
@@ -925,13 +925,13 @@ msgid "dlg.input.prompt"
 msgstr "Ples provider li intrada por %s:"
 
 msgid "heading.save"
-msgstr "FILE STA GARDAT"
+msgstr "File sta gardat"
 
 msgid "dlg.save.incomplete"
 msgstr "Li contenete del págine es ancor descargat."
 
 msgid "heading.save.error"
-msgstr "ERRORE GARDANTE LI FILE"
+msgstr "Errore gardante li file"
 
 msgid "dlg.import.notnew"
 msgstr "Omni ligamentes sur li págine ja es adjuntet."
@@ -1011,16 +1011,16 @@ msgid "ident.showuse"
 msgstr "Monstrar li usage"
 
 msgid "heading.ident.use"
-msgstr "USAGE DEL IDENTITÁ"
+msgstr "Usage del identitá"
 
 msgid "menu.edit.notes"
 msgstr "Redacter notas…"
 
 msgid "heading.ident.notes"
-msgstr "NOTAS DEL IDENTITÁ"
+msgstr "Notas del identitá"
 
 msgid "heading.ident.delete"
-msgstr "REMOVER LI IDENTITÁ"
+msgstr "Remover li identitá"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
@@ -1879,7 +1879,7 @@ msgid "menu.undo"
 msgstr "Defar"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "REMOVER MARCA-PÁGINES"
+msgstr "Remover marca-págines"
 
 #, c-format
 msgid "dlg.confirm.bookmarks.delete"
@@ -2209,3 +2209,6 @@ msgstr "Contenete"
 
 msgid "hint.upload.path"
 msgstr "Rute"
+
+msgid "keys.input.precedingline"
+msgstr "Intrada: Collar li precedent linea"
