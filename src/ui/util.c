@@ -3265,9 +3265,11 @@ static void closeSiteSpecific_(iWidget *dlg) {
 
 static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
     if (equal_Command(cmd, "cancel")) {
+        const iBool wasNoFade = (flags_Widget(dlg) & noFadeBackground_WidgetFlag) != 0;
         iInputWidget *palSeed = findChild_Widget(dlg, "sitespec.palette");
         setText_InputWidget(palSeed, userData_Object(dlg));
         updateSiteSpecificTheme_(palSeed, dlg);
+        setFlags_Widget(dlg, noFadeBackground_WidgetFlag, wasNoFade);
         closeSiteSpecific_(dlg);
         return iTrue;
     }

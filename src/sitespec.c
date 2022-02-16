@@ -179,7 +179,7 @@ static void save_SiteSpec_(iSiteSpec *d) {
             iBeginCollect();
             const iBlock *     key    = &i.value->keyBlock;
             const iSiteParams *params = i.value->object;
-            format_String(buf, "[%s]\n", cstr_Block(key));
+            clear_String(buf);
             if (params->titanPort) {
                 appendFormat_String(buf, "titanPort = %u\n", params->titanPort);
             }
@@ -201,8 +201,13 @@ static void save_SiteSpec_(iSiteSpec *d) {
                 append_String(buf, collect_String(quote_String(&params->paletteSeed, iFalse)));
                 appendCStr_String(buf, "\"\n");
             }
-            appendCStr_String(buf, "\n");
-            write_File(f, utf8_String(buf));
+            if (!isEmpty_String(buf)) {
+                writeData_File(f, "[", 1);
+                writeData_File(f, constData_Block(key), size_Block(key));
+                writeData_File(f, "]\n", 2);
+                appendCStr_String(buf, "\n");
+                write_File(f, utf8_String(buf));
+            }
             iEndCollect();
         }
         delete_String(buf);
