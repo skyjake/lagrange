@@ -3335,6 +3335,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
     }
     setCommandHandler_Widget(dlg, siteSpecificSettingsHandler_);
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag);
+    setFocus_Widget(findChild_Widget(dlg, "sitespec.palette"));
     return dlg;
 }
 
