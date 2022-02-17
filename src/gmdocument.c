@@ -1569,7 +1569,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
 
         if (theme == colorfulDark_GmDocumentTheme) {
             iHSLColor base    = { hues[primIndex],
-                                  0.8f * (d->themeSeed >> 24) / 255.0f,
+                                  0.8f * (d->themeSeed >> 24) / 255.0f + minSat_HSLColor,
                                   0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
                                   1.0f };
             iHSLColor altBase = { altHue, base.sat, base.lum, 1 };
@@ -1579,13 +1579,13 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
             setHsl_Color(tmBannerTitle_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.1f, 0), 0.55f));
             setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
-
+            
 //            printf("primHue: %zu  alts: %d %d  isDarkBgSat: %d\n",
 //                   primIndex,
 //                   altHues[primIndex].index[altIndex[0]],
 //                   altHues[primIndex].index[altIndex[1]],
 //                   isDarkBgSat);
-
+            
             const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
             setHsl_Color(tmHeading1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
             setHsl_Color(tmHeading2_ColorId, setLum_HSLColor(altBase, titleLum + 0.70f));
