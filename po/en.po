@@ -2144,12 +2144,3 @@ msgstr "Permanently dismiss warning about terminal emulation on %s?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Dismiss Warning"
-
-msgid "heading.fontpack.classic"
-msgstr "Download Fontpack"
-
-msgid "dlg.fontpack.classic.msg"
-msgstr "The fonts previously bundled with the app are now available as a separate download. Would you like to download the \"Classic set\" fontpack now?"
-
-msgid "dlg.fontpack.classic"
-msgstr "Download Fontpack (25 MB)"

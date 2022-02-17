@@ -441,6 +441,7 @@ static void loadPrefs_App_(iApp *d) {
     }
     iRelease(f);
     /* Upgrade checks. */
+#if 0 /* disabled in v1.11 (font library search) */
     if (cmp_Version(&upgradedFromAppVersion, &(iVersion){ 1, 8, 0 }) < 0) {
 #if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile)
         /* When upgrading to v1.8.0, the old hardcoded font library is gone and that means
@@ -450,6 +451,7 @@ static void loadPrefs_App_(iApp *d) {
         postCommand_App("~fontpack.suggest.classic");
 #endif
     }
+#endif
 #if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;
 #endif
@@ -2289,6 +2291,7 @@ iBool handleCommand_App(const char *cmd) {
                                              suffixPtr_Command(cmd, "where")));
         return iTrue;
     }
+#if 0 /* disabled in v1.11 */
     else if (equal_Command(cmd, "fontpack.suggest.classic")) {
         /* TODO: Don't use this when system fonts are accessible. */
         if (!isInstalled_Fonts("classic-set") && !isInstalled_Fonts("cjk")) {
@@ -2305,6 +2308,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+#endif
     else if (equal_Command(cmd, "prefs.changed")) {
         savePrefs_App_(d);
         return iTrue;
