@@ -491,8 +491,7 @@ static iBool isNormalized_GmDocument_(const iGmDocument *d) {
 }
 
 static enum iGmDocumentTheme currentTheme_(void) {
-    return (isDark_ColorTheme(colorTheme_App()) ? prefs_App()->docThemeDark
-                                                : prefs_App()->docThemeLight);
+    return docTheme_Prefs(prefs_App());
 }
 
 static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {

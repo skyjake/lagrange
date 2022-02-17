@@ -193,3 +193,7 @@ iLocalDef float scrollSpeedFactor_Prefs(const iPrefs *d, enum iScrollType type) 
     iAssert(type >= 0 && type < max_ScrollType);
     return 10.0f / iMax(1, d->smoothScrollSpeed[type]) * (type == mouse_ScrollType ? 0.5f : 1.0f);
 }
+
+iLocalDef enum iGmDocumentTheme docTheme_Prefs(const iPrefs *d) {
+    return isDark_ColorTheme(d->theme) ? d->docThemeDark : d->docThemeLight;
+}
