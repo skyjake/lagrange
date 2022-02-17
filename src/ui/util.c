@@ -1712,13 +1712,14 @@ iLabelWidget *addDialogTitle_Widget(iWidget *dlg, const char *text, const char *
 }
 
 static void acceptValueInput_(iWidget *dlg) {
-    const iInputWidget *input = findChild_Widget(dlg, "input");
+    iInputWidget *input = findChild_Widget(dlg, "input");
     if (!isEmpty_String(id_Widget(dlg))) {
         const iString *val = text_InputWidget(input);
         postCommandf_App("%s arg:%d value:%s",
                          cstr_String(id_Widget(dlg)),
                          toInt_String(val),
                          cstr_String(val));
+        setBackupFileName_InputWidget(input, NULL);
     }
 }
 
@@ -1782,6 +1783,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     else if (equal_Command(cmd, "valueinput.set")) {
         iInputWidget *input = findChild_Widget(dlg, "input");
         setTextUndoableCStr_InputWidget(input, suffixPtr_Command(cmd, "text"), iTrue);
+        deselect_InputWidget(input);
         validate_InputWidget(input);
         return iTrue;
     }

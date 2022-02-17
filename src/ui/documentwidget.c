@@ -3273,9 +3273,11 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                         setTextColor_LabelWidget(menu, uiTextAction_ColorId);
                     }
                 }
-                setValidator_InputWidget(findChild_Widget(dlg, "input"), inputQueryValidator_, d);
-                setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
-                                                statusCode == sensitiveInput_GmStatusCode);
+                iInputWidget *input = findChild_Widget(dlg, "input");
+                setValidator_InputWidget(input, inputQueryValidator_, d);
+                setBackupFileName_InputWidget(input, "inputbackup.txt");
+                setSelectAllOnFocus_InputWidget(input, iTrue);
+                setSensitiveContent_InputWidget(input, statusCode == sensitiveInput_GmStatusCode);
                 if (document_App() != d) {
                     postCommandf_App("tabs.switch page:%p", d);
                 }
