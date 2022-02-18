@@ -476,7 +476,11 @@ static const char *magicSidebar_App_     = "side";
 
 enum iDocumentStateFlag {
     current_DocumentStateFlag    = iBit(1),
-    rootIndex1_DocumentStateFlag = iBit(2)
+    rootIndex1_DocumentStateFlag = iBit(2),
+};
+
+enum iWindowStateFlag {
+    current_WindowStateFlag = iBit(9),
 };
 
 static iBool loadState_App_(iApp *d) {
@@ -499,19 +503,48 @@ static iBool loadState_App_(iApp *d) {
         }
         setVersion_Stream(stream_File(f), version);
         /* Window state. */
-        iDocumentWidget *doc           = NULL;
-        iDocumentWidget *current[2]    = { NULL, NULL };
-        iBool            isFirstTab[2] = { iTrue, iTrue };
+        iDeclareType(CurrentTabs);
+        struct Impl_CurrentTabs {
+            iDocumentWidget *currentTab[2]; /* for each root */
+        };
+        int              numWins       = 0;
+        iMainWindow *    win           = NULL;
+        iMainWindow *    currentWin    = d->window;
+        iArray *         currentTabs; /* two per window (per root per window) */
+        iBool            isFirstTab[2];
+        currentTabs = collectNew_Array(sizeof(iCurrentTabs));
         while (!atEnd_File(f)) {
             readData_File(f, 4, magic);
             if (!memcmp(magic, magicWindow_App_, 4)) {
-                const int splitMode = read32_File(f);
-                const int keyRoot   = read32_File(f);
-                d->window->pendingSplitMode = splitMode;
-                setSplitMode_MainWindow(d->window, splitMode | noEvents_WindowSplit);
-                d->window->base.keyRoot = d->window->base.roots[keyRoot];
+                numWins++;
+                const int   splitMode = read32_File(f);
+                const int   winState  = read32_File(f);
+                const int   keyRoot   = (winState & 1);
+                const iBool isCurrent = (winState & current_WindowStateFlag) != 0;
+                if (numWins == 1) {
+                    win = d->window;
+                }
+                else {
+                    win = new_MainWindow(d->initialWindowRect);
+                    addWindow_App(win);
+                }
+                pushBack_Array(currentTabs, &(iCurrentTabs){ { NULL, NULL } });
+                isFirstTab[0] = isFirstTab[1] = iTrue;
+                if (isCurrent) {
+                    currentWin = win;
+                }
+                setCurrent_Window(win);
+                setCurrent_Root(NULL);
+                win->pendingSplitMode = splitMode;
+                setSplitMode_MainWindow(win, splitMode | noEvents_WindowSplit);
+                win->base.keyRoot = d->window->base.roots[keyRoot];
             }
             else if (!memcmp(magic, magicSidebar_App_, 4)) {
+                if (!win) {
+                    printf("%s: missing window\n", cstr_String(path_File(f)));
+                    setCurrent_Root(NULL);
+                    return iFalse;                    
+                }
                 const uint16_t bits = readU16_File(f);
                 const uint8_t modes = readU8_File(f);
                 const float widths[2] = {
@@ -528,7 +561,7 @@ static iBool loadState_App_(iApp *d) {
                 }
                 const uint8_t rootIndex = bits & 0xff;
                 const uint8_t flags     = bits >> 8;
-                iRoot *root = d->window->base.roots[rootIndex];
+                iRoot *root = win->base.roots[rootIndex];
                 if (root) {
                     iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
                     iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
@@ -551,12 +584,18 @@ static iBool loadState_App_(iApp *d) {
                 }
             }
             else if (!memcmp(magic, magicTabDocument_App_, 4)) {
+                if (!win) {
+                    printf("%s: missing window\n", cstr_String(path_File(f)));
+                    setCurrent_Root(NULL);
+                    return iFalse;                    
+                }
                 const int8_t flags = read8_File(f);
                 int rootIndex = flags & rootIndex1_DocumentStateFlag ? 1 : 0;
-                if (rootIndex > numRoots_Window(as_Window(d->window)) - 1) {
+                if (rootIndex > numRoots_Window(as_Window(win)) - 1) {
                     rootIndex = 0;
                 }
-                setCurrent_Root(d->window->base.roots[rootIndex]);
+                setCurrent_Root(win->base.roots[rootIndex]);
+                iDocumentWidget *doc;
                 if (isFirstTab[rootIndex]) {
                     isFirstTab[rootIndex] = iFalse;
                     /* There is one pre-created tab in each root. */
@@ -566,7 +605,7 @@ static iBool loadState_App_(iApp *d) {
                     doc = newTab_App(NULL, iFalse /* no switching */);
                 }
                 if (flags & current_DocumentStateFlag) {
-                    current[rootIndex] = doc;
+                    value_Array(currentTabs, numWins - 1, iCurrentTabs).currentTab[rootIndex] = doc;
                 }
                 deserializeState_DocumentWidget(doc, stream_File(f));
                 doc = NULL;
@@ -577,12 +616,23 @@ static iBool loadState_App_(iApp *d) {
                 return iFalse;
             }
         }
-        if (d->window->splitMode) {
-            /* Update root placement. */
-            resize_MainWindow(d->window, -1, -1);
+        iForEach(Array, i, currentTabs) {
+            const iCurrentTabs *cur = i.value;
+            win = at_PtrArray(&d->mainWindows, index_ArrayIterator(&i));
+            for (size_t j = 0; j < 2; ++j) {
+                postCommandf_Root(win->base.roots[j], "tabs.switch page:%p", cur->currentTab[j]);
+            }
+            if (win->splitMode) {
+                /* Update root placement. */
+                resize_MainWindow(win, -1, -1);
+            }
+//            postCommand_Root(win->base.roots[0], "window.unfreeze");
+            win->isDrawFrozen = iFalse;
+            SDL_ShowWindow(win->base.win);
         }
-        iForIndices(i, current) {
-            postCommandf_Root(NULL, "tabs.switch page:%p", current[i]);
+        if (numWindows_App() > 1) {
+            SDL_RaiseWindow(currentWin->base.win);
+            setActiveWindow_App(currentWin);
         }
         setCurrent_Root(NULL);
         return iTrue;
@@ -593,7 +643,6 @@ static iBool loadState_App_(iApp *d) {
 static void saveState_App_(const iApp *d) {
     iUnused(d);
     trimCache_App();
-    iMainWindow *win = d->window;
     /* UI state is saved in binary because it is quite complex (e.g.,
        navigation history, cached content) and depends closely on the widget
        tree. The data is largely not reorderable and should not be modified
@@ -602,43 +651,48 @@ static void saveState_App_(const iApp *d) {
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
         writeU32_File(f, latest_FileVersion); /* version */
-        /* Begin with window state. */ {
-            writeData_File(f, magicWindow_App_, 4);
-            writeU32_File(f, win->splitMode);
-            writeU32_File(f, win->base.keyRoot == win->base.roots[0] ? 0 : 1);
-        }
-        /* State of UI elements. */ {
-            iForIndices(i, win->base.roots) {
-                const iRoot *root = win->base.roots[i];
-                if (root) {
-                    writeData_File(f, magicSidebar_App_, 4);
-                    const iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
-                    const iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
-                    writeU16_File(f, i |
-                                  (isVisible_Widget(sidebar)  ? 0x100 : 0) |
-                                  (isVisible_Widget(sidebar2) ? 0x200 : 0) |
-                                  (feedsMode_SidebarWidget(sidebar)  == unread_FeedsMode ? 0x400 : 0) |
-                                  (feedsMode_SidebarWidget(sidebar2) == unread_FeedsMode ? 0x800 : 0));
-                    writeU8_File(f,
-                                 mode_SidebarWidget(sidebar) |
-                                 (mode_SidebarWidget(sidebar2) << 4));
-                    writef_Stream(stream_File(f), width_SidebarWidget(sidebar));
-                    writef_Stream(stream_File(f), width_SidebarWidget(sidebar2));
-                    serialize_IntSet(closedFolders_SidebarWidget(sidebar), stream_File(f));
-                    serialize_IntSet(closedFolders_SidebarWidget(sidebar2), stream_File(f));
+        iConstForEach(PtrArray, winIter, &d->mainWindows) {
+            const iMainWindow *win = winIter.ptr;
+            setCurrent_Window(winIter.ptr);
+            /* Window state. */ {
+                writeData_File(f, magicWindow_App_, 4);
+                writeU32_File(f, win->splitMode);
+                writeU32_File(f, (win->base.keyRoot == win->base.roots[0] ? 0 : 1) |
+                                 (win == d->window ? current_WindowStateFlag : 0));
+            }
+            /* State of UI elements. */ {
+                iForIndices(i, win->base.roots) {
+                    const iRoot *root = win->base.roots[i];
+                    if (root) {
+                        writeData_File(f, magicSidebar_App_, 4);
+                        const iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
+                        const iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
+                        writeU16_File(f, i |
+                                      (isVisible_Widget(sidebar)  ? 0x100 : 0) |
+                                      (isVisible_Widget(sidebar2) ? 0x200 : 0) |
+                                      (feedsMode_SidebarWidget(sidebar)  == unread_FeedsMode ? 0x400 : 0) |
+                                      (feedsMode_SidebarWidget(sidebar2) == unread_FeedsMode ? 0x800 : 0));
+                        writeU8_File(f,
+                                     mode_SidebarWidget(sidebar) |
+                                     (mode_SidebarWidget(sidebar2) << 4));
+                        writef_Stream(stream_File(f), width_SidebarWidget(sidebar));
+                        writef_Stream(stream_File(f), width_SidebarWidget(sidebar2));
+                        serialize_IntSet(closedFolders_SidebarWidget(sidebar), stream_File(f));
+                        serialize_IntSet(closedFolders_SidebarWidget(sidebar2), stream_File(f));
+                    }
                 }
             }
-        }
-        iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
-            iAssert(isInstance_Object(i.object, &Class_DocumentWidget));
-            const iWidget *widget = constAs_Widget(i.object);
-            writeData_File(f, magicTabDocument_App_, 4);
-            int8_t flags = (document_Root(widget->root) == i.object ? current_DocumentStateFlag : 0);
-            if (widget->root == win->base.roots[1]) {
-                flags |= rootIndex1_DocumentStateFlag;
+            iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
+                iAssert(isInstance_Object(i.object, &Class_DocumentWidget));
+                const iWidget *widget = constAs_Widget(i.object);
+                writeData_File(f, magicTabDocument_App_, 4);
+                int8_t flags = (document_Root(widget->root) == i.object ? current_DocumentStateFlag : 0);
+                if (widget->root == win->base.roots[1]) {
+                    flags |= rootIndex1_DocumentStateFlag;
+                }
+                write8_File(f, flags);
+                serializeState_DocumentWidget(i.object, stream_File(f));
             }
-            write8_File(f, flags);
-            serializeState_DocumentWidget(i.object, stream_File(f));
         }
         iRelease(f);
     }
@@ -1491,6 +1545,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     window->lastHover = window->hover;
                     wasUsed = processEvent_Window(window, &ev);
                     if (ev.type == SDL_MOUSEMOTION || ev.type == SDL_MOUSEBUTTONDOWN) {
+                        /* Only offered to the frontmost window. */
                         break;
                     }
                     if (wasUsed) break;
@@ -1776,7 +1831,7 @@ void postCommand_Root(iRoot *d, const char *command) {
     }
     SDL_Event ev = { .type = SDL_USEREVENT };
     ev.user.code = command_UserEventCode;
-    /*ev.user.windowID = id_Window(get_Window());*/
+//    ev.user.windowID = id_Window(get_Window());
     ev.user.data1 = strdup(command);
     ev.user.data2 = d; /* all events are root-specific */
     SDL_PushEvent(&ev);
@@ -1788,10 +1843,17 @@ void postCommand_Root(iRoot *d, const char *command) {
                 command);
 #else
     if (app_.commandEcho) {
-        printf("%s[command] {%d} %s\n",
-               app_.isLoadingPrefs ? "[Prefs] " : "",
-               (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
-               command); fflush(stdout);
+        const int windowIndex =
+            win && type_Window(win) == main_WindowType ? windowIndex_App(as_MainWindow(win)) + 1 : 0;
+        printf("%s%s[command] {%d:%d} %s\n",
+               !app_.isFinishedLaunching ? "<Ln> " : "",
+               app_.isLoadingPrefs ? "<Pr> " : "",
+               windowIndex,
+               (d == NULL || win == NULL ? 0
+                : d == win->roots[0]     ? 1
+                                         : 2),
+               command);
+        fflush(stdout);
     }
 #endif
 }
@@ -1868,6 +1930,10 @@ void removeWindow_App(iMainWindow *win) {
 
 size_t numWindows_App(void) {
     return size_PtrArray(&app_.mainWindows);
+}
+
+size_t windowIndex_App(const iMainWindow *win) {
+    return indexOf_PtrArray(&app_.mainWindows, win); 
 }
 
 void setActiveWindow_App(iMainWindow *win) {
@@ -3066,12 +3132,12 @@ iBool handleCommand_App(const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "window.new")) {
-        iMainWindow *newWin = new_MainWindow(moved_Rect(d->initialWindowRect, init_I2(20, 20)));
-        addWindow_App(newWin);
+        iMainWindow *newWin = new_MainWindow(moved_Rect(d->initialWindowRect, init_I2(30, 30)));
+        addWindow_App(newWin); /* takes ownership */
         SDL_ShowWindow(newWin->base.win);
         setCurrent_Window(newWin);
-        postCommand_Root(newWin->base.roots[0], "navigate.home");
-        postCommand_Root(newWin->base.roots[0], "window.unfreeze");
+        postCommand_Root(newWin->base.roots[0], "~navigate.home");
+        postCommand_Root(newWin->base.roots[0], "~window.unfreeze");
         return iTrue;
     }
     else if (equal_Command(cmd, "tabs.new")) {
@@ -3659,12 +3725,16 @@ iMainWindow *mainWindow_App(void) {
     return app_.window;
 }
 
-void closePopups_App(void) {
+void closePopups_App(iBool doForce) {
     iApp *d = &app_;
     const uint32_t now = SDL_GetTicks();
-    iConstForEach(PtrArray, i, &d->popupWindows) {
-        const iWindow *win = i.ptr;
-        if (now - win->focusGainedAt > 200) {
+    iForEach(PtrArray, i, &d->popupWindows) {
+        iWindow *win = i.ptr;
+//        if (doForce) {
+//            collect_Garbage(win, (iDeleteFunc) delete_Window);
+//        }
+//        else
+            if (now - win->focusGainedAt > 200) {
             postCommand_Root(((const iWindow *) i.ptr)->roots[0], "cancel");
         }
     }

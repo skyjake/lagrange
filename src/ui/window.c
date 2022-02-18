@@ -865,7 +865,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             if (d->base.isMinimized) {
                 return iFalse;
             }
-            closePopups_App();
+            closePopups_App(iFalse);
             checkPixelRatioChange_Window_(as_Window(d));
             const iInt2 newPos = init_I2(ev->data1, ev->data2);
             if (isEqual_I2(newPos, init1_I2(-32000))) { /* magic! */
@@ -915,7 +915,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
                 // updateSize_Window_(d, iTrue);
                 return iTrue;
             }
-            closePopups_App();
+            closePopups_App(iFalse);
             if (unsnap_MainWindow_(d, NULL)) {
                 return iTrue;
             }
@@ -937,7 +937,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             return iTrue;
         case SDL_WINDOWEVENT_MINIMIZED:
             d->base.isMinimized = iTrue;
-            closePopups_App();
+            closePopups_App(iTrue);
             return iTrue;
 #else /* if defined (!iPlatformDesktop) */
         case SDL_WINDOWEVENT_RESIZED:
@@ -973,7 +973,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
 #if !defined (iPlatformDesktop)
             setFreezeDraw_MainWindow(d, iTrue);
 #endif
-            closePopups_App();
+            closePopups_App(iTrue);
             return iFalse;
         case SDL_WINDOWEVENT_TAKE_FOCUS:
             SDL_SetWindowInputFocus(d->base.win);
@@ -1178,7 +1178,35 @@ iLocalDef iBool isEscapeKeypress_(const SDL_Event *ev) {
     return (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) && ev->key.keysym.sym == SDLK_ESCAPE;
 }
 
+static uint32_t windowId_SDLEvent_(const SDL_Event *ev) {
+    switch (ev->type) {
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+            return ev->button.windowID;
+        case SDL_MOUSEMOTION:
+            return ev->motion.windowID;
+        case SDL_MOUSEWHEEL:
+            return ev->wheel.windowID;
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
+            return ev->key.windowID;
+        case SDL_TEXTINPUT:
+            return ev->text.windowID;
+        case SDL_USEREVENT:
+            return ev->user.windowID;
+        default:
+            return 0;
+    }
+}
+
 iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
+#if 0
+    /* For the right window? */    
+    const uint32_t evWin = windowId_SDLEvent_(ev);
+    if (evWin && evWin != id_Window(d)) {
+        return iFalse; /* Meant for a different window. */
+    }
+#endif
     if (ev->type == SDL_MOUSEMOTION) {
         /* Hover widget may change. */
         setHover_Widget(NULL);

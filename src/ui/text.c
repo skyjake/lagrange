@@ -295,6 +295,7 @@ static void setupFontVariants_Text_(iText *d, const iFontSpec *spec, int baseId)
         /* This is the highest priority override font. */
         d->overrideFontId = baseId;
     }
+    iAssert(activeText_ == d);
     pushBack_Array(&d->fontPriorityOrder, &(iPrioMapItem){ spec->priority, baseId });
     for (enum iFontStyle style = 0; style < max_FontStyle; style++) {
         for (enum iFontSize sizeId = 0; sizeId < max_FontSize; sizeId++) {            
@@ -499,10 +500,13 @@ static void resetCache_Text_(iText *d) {
 }
 
 void resetFonts_Text(iText *d) {
+    iText *oldActive = activeText_;
+    setCurrent_Text(d); /* some routines rely on the global `activeText_` pointer */
     deinitFonts_Text_(d);
     deinitCache_Text_(d);
     initCache_Text_(d);
     initFonts_Text_(d);
+    setCurrent_Text(oldActive);
 }
 
 static SDL_Palette *glyphPalette_(void) {
@@ -1476,14 +1480,14 @@ static void evenMonospaceAdvances_GlyphBuffer_(iGlyphBuffer *d, iFont *baseFont)
 }
 
 static iRect run_Font_(iFont *d, const iRunArgs *args) {
-    const int    mode       = args->mode;
-    const iInt2  orig       = args->pos;
-    iRect        bounds     = { orig, init_I2(0, d->height) };
-    float        xCursor    = 0.0f;
-    float        yCursor    = 0.0f;
-    float        xCursorMax = 0.0f;
-    const iBool  isMonospaced = isMonospaced_Font(d);
-    iWrapText *wrap = args->wrap;
+    const int   mode         = args->mode;
+    const iInt2 orig         = args->pos;
+    iRect       bounds       = { orig, init_I2(0, d->height) };
+    float       xCursor      = 0.0f;
+    float       yCursor      = 0.0f;
+    float       xCursorMax   = 0.0f;
+    const iBool isMonospaced = isMonospaced_Font(d);
+    iWrapText  *wrap         = args->wrap;
     iAssert(args->text.end >= args->text.start);
     /* Split the text into a number of attributed runs that specify exactly which
        font is used and other attributes such as color. (HarfBuzz shaping is done

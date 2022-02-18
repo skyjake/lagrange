@@ -127,6 +127,7 @@ void        removeWindow_App    (iMainWindow *win);
 void        setActiveWindow_App (iMainWindow *win);
 void        closeWindow_App     (iMainWindow *win);
 size_t      numWindows_App      (void);
+size_t      windowIndex_App     (const iMainWindow *win);
 void        addPopup_App        (iWindow *popup);
 void        removePopup_App     (iWindow *popup);
 void        postRefresh_App     (void);
@@ -151,4 +152,4 @@ void            resetFonts_App          (void);
 void            availableFontsChanged_App(void);
 
 iMainWindow *   mainWindow_App  (void);
-void            closePopups_App (void);
+void            closePopups_App (iBool doForce);
