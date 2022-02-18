@@ -125,7 +125,8 @@ struct Impl_App {
     iGmCerts *   certs;
     iVisited *   visited;
     iBookmarks * bookmarks;
-    iMainWindow *window;
+    iMainWindow *window; /* currently active MainWindow */
+    iPtrArray    mainWindows;
     iPtrArray    popupWindows;
     iSortedArray tickers; /* per-frame callbacks, used for animations */
     uint32_t     lastTickerTime;
@@ -474,7 +475,7 @@ static const char *magicTabDocument_App_ = "tabd";
 static const char *magicSidebar_App_     = "side";
 
 enum iDocumentStateFlag {
-    current_DocumentStateFlag     = iBit(1),
+    current_DocumentStateFlag    = iBit(1),
     rootIndex1_DocumentStateFlag = iBit(2)
 };
 
@@ -946,8 +947,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
             d->initialWindowRect.size.y = toInt_String(value_CommandLineArg(arg, 0));
         }
     }
+    init_PtrArray(&d->mainWindows);
     init_PtrArray(&d->popupWindows);
     d->window = new_MainWindow(d->initialWindowRect);
+    addWindow_App(d->window);
     load_Visited(d->visited, dataDir_App_());
     load_Bookmarks(d->bookmarks, dataDir_App_());
     load_MimeHooks(d->mimehooks, dataDir_App_());
@@ -1012,7 +1015,11 @@ static void deinit_App(iApp *d) {
     SDL_RemoveTimer(d->autoReloadTimer);
     saveState_App_(d);
     savePrefs_App_(d);
-    delete_MainWindow(d->window);
+    iReverseForEach(PtrArray, j, &d->mainWindows) {
+        delete_MainWindow(j.ptr);
+    }
+    iAssert(isEmpty_PtrArray(&d->mainWindows));
+    deinit_PtrArray(&d->mainWindows);
     d->window = NULL;
     deinit_Feeds();
     save_Keys(dataDir_App_());
@@ -1027,7 +1034,6 @@ static void deinit_App(iApp *d) {
     delete_GmCerts(d->certs);
     save_MimeHooks(d->mimehooks);
     delete_MimeHooks(d->mimehooks);
-    d->window = NULL;
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
     delete_String(d->execPath);
@@ -1286,7 +1292,14 @@ static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
     iReverseConstForEach(PtrArray, i, &d->popupWindows) {
         pushBack_PtrArray(windows, i.ptr);
     }
-    pushBack_PtrArray(windows, d->window);
+    if (d->window) {
+        pushBack_PtrArray(windows, d->window);
+    }
+    iConstForEach(PtrArray, j, &d->mainWindows) {
+        if (j.ptr != d->window) {
+            pushBack_PtrArray(windows, j.ptr);
+        }
+    }
     return windows;
 }
 
@@ -1843,6 +1856,26 @@ void removeTicker_App(iTickerFunc ticker, iAny *context) {
     remove_SortedArray(&d->tickers, &(iTicker){ context, NULL, ticker });
 }
 
+void addWindow_App(iMainWindow *win) {
+    iApp *d = &app_;
+    pushBack_PtrArray(&d->mainWindows, win);
+}
+
+void removeWindow_App(iMainWindow *win) {
+    iApp *d = &app_;
+    removeOne_PtrArray(&d->mainWindows, win);
+}
+
+size_t numWindows_App(void) {
+    return size_PtrArray(&app_.mainWindows);
+}
+
+void setActiveWindow_App(iMainWindow *win) {
+    iApp *d = &app_;
+    d->window = win;
+    printf("Active window: %p\n", win); fflush(stdout);
+}
+
 void addPopup_App(iWindow *popup) {
     iApp *d = &app_;
     pushBack_PtrArray(&d->popupWindows, popup);
@@ -2119,6 +2152,22 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     refresh_Widget(tabs);
     postCommandf_Root(get_Root(), "tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
+}
+
+void closeWindow_App(iMainWindow *win) {
+    iApp *d = &app_;
+    delete_MainWindow(win);
+    if (d->window == win) {
+        /* Activate another window. */
+        iForEach(PtrArray, i, &d->mainWindows) {
+            if (i.ptr != d->window) {
+                SDL_RaiseWindow(i.ptr);
+                setActiveWindow_App(i.ptr);
+                setCurrent_Window(i.ptr);
+                break;
+            }
+        }
+    }
 }
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
@@ -3016,6 +3065,15 @@ iBool handleCommand_App(const char *cmd) {
 #endif
         return iFalse;
     }
+    else if (equal_Command(cmd, "window.new")) {
+        iMainWindow *newWin = new_MainWindow(moved_Rect(d->initialWindowRect, init_I2(20, 20)));
+        addWindow_App(newWin);
+        SDL_ShowWindow(newWin->base.win);
+        setCurrent_Window(newWin);
+        postCommand_Root(newWin->base.roots[0], "navigate.home");
+        postCommand_Root(newWin->base.roots[0], "window.unfreeze");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "tabs.new")) {
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
         newTab_App(isDuplicate ? document_App() : NULL, iTrue);
@@ -3075,6 +3133,9 @@ iBool handleCommand_App(const char *cmd) {
                     postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
                 }
             }
+        }
+        else if (numWindows_App() > 1) {
+            closeWindow_App(d->window);
         }
         else {
             postCommand_App("quit");

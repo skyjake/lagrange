@@ -80,6 +80,7 @@ iDefineTypeConstructionArgs(MainWindow, (iRect rect), rect)
 #if defined (iHaveNativeMenus)
 /* Using native menus. */
 static const iMenuItem fileMenuItems_[] = {
+    { "${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
     { "${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
@@ -210,7 +211,9 @@ static void windowSizeChanged_MainWindow_(iMainWindow *d) {
 
 static void setupUserInterface_MainWindow(iMainWindow *d) {
 #if defined (iHaveNativeMenus)
-    insertMacMenus_();
+    if (numWindows_App() == 0) {
+        insertMacMenus_(); /* TODO: Shouldn't this be in the App? */
+    }
 #endif
     /* One root is created by default. */
     d->base.roots[0] = new_Root();
@@ -246,6 +249,7 @@ static void updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
 
 void drawWhileResizing_MainWindow(iMainWindow *d, int w, int h) {
     if (!isDrawing_) {
+        setCurrent_Window(d);
         draw_MainWindow(d);
     }
 }
@@ -647,6 +651,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 }
 
 void deinit_MainWindow(iMainWindow *d) {
+    removeWindow_App(d);
     if (d->backBuf) {
         SDL_DestroyTexture(d->backBuf);
     }
@@ -830,6 +835,9 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
 }
 
 static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent *ev) {
+    if (ev->windowID != SDL_GetWindowID(d->base.win)) {
+        return iFalse;
+    }
     switch (ev->event) {
 #if defined(iPlatformDesktop)
         case SDL_WINDOWEVENT_EXPOSED:
@@ -953,6 +961,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             setCapsLockDown_Keys(iFalse);
             postCommand_App("window.focus.gained");
             d->base.isExposed = iTrue;
+            setActiveWindow_App(d);
 #if !defined (iPlatformDesktop)
             /* Returned to foreground, may have lost buffered content. */
             invalidate_MainWindow_(d, iTrue);
@@ -969,6 +978,11 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
         case SDL_WINDOWEVENT_TAKE_FOCUS:
             SDL_SetWindowInputFocus(d->base.win);
             postRefresh_App();
+            return iTrue;
+        case SDL_WINDOWEVENT_CLOSE:
+            if (numWindows_App() > 1) {
+                closeWindow_App(d);
+            }
             return iTrue;
         default:
             break;
