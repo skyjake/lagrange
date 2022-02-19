@@ -168,7 +168,8 @@ void deinit_Widget(iWidget *d) {
     if (d->flags & visualOffset_WidgetFlag) {
         removeTicker_App(visualOffsetAnimation_Widget_, d);
     }
-    iWindow *win = get_Window();
+    iWindow *win = d->root->window;
+    iAssert(win);
     if (win->lastHover == d) {
         win->lastHover = NULL;
     }

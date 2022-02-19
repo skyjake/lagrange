@@ -244,7 +244,8 @@ static void dispatchNotification_Touch_(const iTouch *d, int code) {
             .timestamp = SDL_GetTicks(),
             .code = code,
             .data1 = d->affinity,
-            .data2 = d->affinity->root
+            .data2 = d->affinity->root,
+            .windowID = id_Window(window_Widget(d->affinity)),
         });
         setCurrent_Root(oldRoot);
     }

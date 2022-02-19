@@ -682,6 +682,7 @@ iBool isFullscreen_MainWindow(const iMainWindow *d) {
 }
 
 iRoot *findRoot_Window(const iWindow *d, const iWidget *widget) {
+    
     while (widget->parent) {
         widget = widget->parent;
     }
@@ -1023,7 +1024,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             }
         }
         case SDL_RENDER_TARGETS_RESET:
-        case SDL_RENDER_DEVICE_RESET: {
+        case SDL_RENDER_DEVICE_RESET: {            
             if (mw) {
                 invalidate_MainWindow_(mw, iTrue /* force full reset */);
             }
@@ -1109,7 +1110,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN) {
                 if (mouseGrab_Widget()) {
                     iWidget *grabbed = mouseGrab_Widget();
-                    setCurrent_Root(findRoot_Window(d, grabbed));
+                    setCurrent_Root(grabbed->root /* findRoot_Window(d, grabbed)*/);
                     wasUsed = dispatchEvent_Widget(grabbed, &event);
                 }
             }
@@ -1200,13 +1201,11 @@ static uint32_t windowId_SDLEvent_(const SDL_Event *ev) {
 }
 
 iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
-#if 0
     /* For the right window? */    
     const uint32_t evWin = windowId_SDLEvent_(ev);
     if (evWin && evWin != id_Window(d)) {
         return iFalse; /* Meant for a different window. */
     }
-#endif
     if (ev->type == SDL_MOUSEMOTION) {
         /* Hover widget may change. */
         setHover_Widget(NULL);
@@ -1591,6 +1590,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
     }
     iWindow *w = as_Window(d);
     iAssert(current_Root() == NULL);
+    setCurrent_Window(w);
     if (d->splitMode != splitMode) {
         int oldCount = numRoots_Window(w);
         setFreezeDraw_MainWindow(d, iTrue);
@@ -1619,8 +1619,8 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             /* The last child is the [+] button for adding a tab. */
             moveTabButtonToEnd_Widget(findChild_Widget(docTabs, "newtab"));
             setFlags_Widget(findWidget_Root("navbar.unsplit"), hidden_WidgetFlag, iTrue);
-            iRelease(tabs);
             postCommandf_App("tabs.switch id:%s", cstr_String(id_Widget(constAs_Widget(curPage))));
+            iRelease(tabs);
         }
         else if (oldCount == 1 && splitMode) {
             /* Add a second root. */

@@ -559,6 +559,7 @@ static iBool loadState_App_(iApp *d) {
                 const int   winState  = read32_File(f);
                 const int   keyRoot   = (winState & 1);
                 const iBool isCurrent = (winState & current_WindowStateFlag) != 0;
+//                printf("[State] '%.4s' split:%d state:%x\n", magic, splitMode, winState);
                 if (numWins == 1) {
                     win = d->window;
                 }
@@ -575,7 +576,7 @@ static iBool loadState_App_(iApp *d) {
                 setCurrent_Root(NULL);
                 win->pendingSplitMode = splitMode;
                 setSplitMode_MainWindow(win, splitMode | noEvents_WindowSplit);
-                win->base.keyRoot = d->window->base.roots[keyRoot];
+                win->base.keyRoot = win->base.roots[keyRoot];
             }
             else if (!memcmp(magic, magicSidebar_App_, 4)) {
                 if (!win) {
@@ -1061,8 +1062,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
     postCommand_App("~navbar.actions.changed");
     postCommand_App("~toolbar.actions.changed");
-    postCommand_Root(NULL, "~window.unfreeze");
-    postCommand_Root(NULL, "font.reset");
+    postCommand_App("~window.unfreeze");
+    postCommand_App("font.reset");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
     postCommand_Root(NULL, "document.autoreload");
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
@@ -1390,6 +1391,12 @@ static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
     return windows;
 }
 
+iPtrArray *listWindows_App(void) {
+    iPtrArray *wins = new_PtrArray();
+    listWindows_App_(&app_, wins);
+    return wins;
+}
+
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     iRoot *oldCurrentRoot = current_Root(); /* restored afterwards */
@@ -1672,6 +1679,9 @@ static void runTickers_App_(iApp *d) {
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
+            if (ticker->root) {
+                setCurrent_Window(ticker->root->window);
+            }
             setCurrent_Root(ticker->root); /* root might be NULL */
             ticker->callback(ticker->context);
         }
@@ -1864,9 +1874,9 @@ void postCommand_Root(iRoot *d, const char *command) {
     }
     SDL_Event ev = { .type = SDL_USEREVENT };
     ev.user.code = command_UserEventCode;
-//    ev.user.windowID = id_Window(get_Window());
     ev.user.data1 = strdup(command);
     ev.user.data2 = d; /* all events are root-specific */
+    ev.user.windowID = d ? id_Window(d->window) : 0; /* root-specific means window-specific */
     SDL_PushEvent(&ev);
     iWindow *win = get_Window();
 #if defined (iPlatformAndroid)
@@ -1967,6 +1977,10 @@ size_t numWindows_App(void) {
 
 size_t windowIndex_App(const iMainWindow *win) {
     return indexOf_PtrArray(&app_.mainWindows, win); 
+}
+
+const iPtrArray *mainWindows_App(void) {
+    return &app_.mainWindows;
 }
 
 void setActiveWindow_App(iMainWindow *win) {
@@ -2527,12 +2541,16 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.maximize")) {
-        if (!argLabel_Command(cmd, "toggle")) {
-            setSnap_MainWindow(d->window, maximized_WindowSnap);
-        }
-        else {
-            setSnap_MainWindow(d->window, snap_MainWindow(d->window) == maximized_WindowSnap ? 0 :
-                           maximized_WindowSnap);
+        const size_t winIndex = argU32Label_Command(cmd, "index");
+        if (winIndex < size_PtrArray(&d->mainWindows)) {
+            iMainWindow *win = at_PtrArray(&d->mainWindows, winIndex);
+            if (!argLabel_Command(cmd, "toggle")) {
+                setSnap_MainWindow(win, maximized_WindowSnap);
+            }
+            else {
+                setSnap_MainWindow(
+                    win, snap_MainWindow(win) == maximized_WindowSnap ? 0 : maximized_WindowSnap);
+            }
         }
         return iTrue;
     }

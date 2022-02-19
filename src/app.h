@@ -98,6 +98,7 @@ iPeriodic *         periodic_App        (void);
 iDocumentWidget *   document_App        (void);
 iObjectList *       listDocuments_App   (const iRoot *rootOrNull); /* NULL for all roots */
 iStringSet *        listOpenURLs_App    (void); /* all tabs */
+iPtrArray *         listWindows_App     (void);
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 void                trimCache_App       (void);
 void                trimMemory_App      (void);
@@ -128,6 +129,7 @@ void        setActiveWindow_App (iMainWindow *win);
 void        closeWindow_App     (iMainWindow *win);
 size_t      numWindows_App      (void);
 size_t      windowIndex_App     (const iMainWindow *win);
+const iPtrArray *mainWindows_App(void);
 void        addPopup_App        (iWindow *popup);
 void        removePopup_App     (iWindow *popup);
 void        postRefresh_App     (void);

@@ -5582,7 +5582,7 @@ static void prerender_DocumentWidget_(iAny *context) {
         .vis             = visibleRange_DocumentView_(&d->view),
         .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0
     };
-    //    printf("%u prerendering\n", SDL_GetTicks());
+    //    printf("%u prerendering\n", SDL_GetTicks());    
     if (d->view.visBuf->buffers[0].texture) {
         makePaletteGlobal_GmDocument(d->view.doc);
         if (render_DocumentView_(&d->view, &ctx, iTrue /* just fill up progressively */)) {
