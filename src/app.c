@@ -154,7 +154,8 @@ struct Impl_App {
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
-    iRect        initialWindowRect;
+    //iRect        initialWindowRect;
+    iArray       initialWindowRects; /* one per window */
     iPrefs       prefs;
 };
 
@@ -200,33 +201,43 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
         int w, h, x, y;
-        x = d->window->place.normalRect.pos.x;
-        y = d->window->place.normalRect.pos.y;
-        w = d->window->place.normalRect.size.x;
-        h = d->window->place.normalRect.size.y;
-        appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
-        /* On macOS, maximization should be applied at creation time or the window will take
-           a moment to animate to its maximized size. */
+        iConstForEach(PtrArray, i, &d->mainWindows) {
+            const iMainWindow *win = i.ptr;
+            const size_t winIndex = index_PtrArrayConstIterator(&i);
+            x = win->place.normalRect.pos.x;
+            y = win->place.normalRect.pos.y;
+            w = win->place.normalRect.size.x;
+            h = win->place.normalRect.size.y;
+            appendFormat_String(str,
+                                "window.setrect index:%zu width:%d height:%d coord:%d %d\n",
+                                winIndex,
+                                w,
+                                h,
+                                x,
+                                y);
+            /* On macOS, maximization should be applied at creation time or the window will take
+               a moment to animate to its maximized size. */
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-        if (snap_MainWindow(d->window)) {
-            if (snap_MainWindow(d->window) == maximized_WindowSnap) {
-                appendFormat_String(str, "~window.maximize\n");
+            if (snap_MainWindow(win)) {
+                if (snap_MainWindow(win) == maximized_WindowSnap) {
+                    appendFormat_String(str, "~window.maximize index:%zu\n", winIndex);
+                }
+                else if (~SDL_GetWindowFlags(win->base.win) & SDL_WINDOW_MINIMIZED) {
+                    /* Save the actual visible window position, too, because snapped windows may
+                       still be resized/moved without affecting normalRect. */
+                    SDL_GetWindowPosition(win->base.win, &x, &y);
+                    SDL_GetWindowSize(win->base.win, &w, &h);
+                    appendFormat_String(
+                        str, "~window.setrect index:%zu snap:%d width:%d height:%d coord:%d %d\n",
+                        winIndex, snap_MainWindow(d->window), w, h, x, y);
+                }
             }
-            else if (~SDL_GetWindowFlags(d->window->base.win) & SDL_WINDOW_MINIMIZED) {
-                /* Save the actual visible window position, too, because snapped windows may
-                   still be resized/moved without affecting normalRect. */
-                SDL_GetWindowPosition(d->window->base.win, &x, &y);
-                SDL_GetWindowSize(d->window->base.win, &w, &h);
-                appendFormat_String(
-                    str, "~window.setrect snap:%d width:%d height:%d coord:%d %d\n",
-                    snap_MainWindow(d->window), w, h, x, y);
-            }
-        }
 #elif !defined (iPlatformApple)
-        if (snap_MainWindow(d->window) == maximized_WindowSnap) {
-            appendFormat_String(str, "~window.maximize\n");
-        }
+            if (snap_MainWindow(win) == maximized_WindowSnap) {
+                appendFormat_String(str, "~window.maximize index:%zu\n", winIndex);
+            }
 #endif
+        }
     }
     appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
@@ -404,9 +415,14 @@ static void loadPrefs_App_(iApp *d) {
                 d->prefs.customFrame = arg_Command(cmd);
             }
             else if (equal_Command(cmd, "window.setrect") && !argLabel_Command(cmd, "snap")) {
-                const iInt2 pos = coord_Command(cmd);
-                d->initialWindowRect = init_Rect(
+                const int   index   = argLabel_Command(cmd, "index");
+                const iInt2 pos     = coord_Command(cmd);
+                iRect       winRect = init_Rect(
                     pos.x, pos.y, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
+                if (index >= 0 && index < 100) {
+                    resize_Array(&d->initialWindowRects, index + 1);
+                    set_Array(&d->initialWindowRects, index, &winRect);
+                }
             }
             else if (equal_Command(cmd, "fontpack.disable")) {
                 insert_StringSet(d->prefs.disabledFontPacks,
@@ -483,6 +499,28 @@ enum iWindowStateFlag {
     current_WindowStateFlag = iBit(9),
 };
 
+static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
+    if (windowIndex < size_Array(&d->initialWindowRects)) {
+        return constValue_Array(&d->initialWindowRects, windowIndex, iRect);
+    }
+    /* The default window rectangle. */
+    iRect rect = init_Rect(-1, -1, 900, 560);
+#if defined (iPlatformMsys)
+    /* Must scale by UI scaling factor. */
+    mulfv_I2(&rect.size, desktopDPI_Win32());
+#endif
+#if defined (iPlatformLinux) && !defined (iPlatformAndroid)
+    /* Scale by the primary (?) monitor DPI. */
+    if (isRunningUnderWindowSystem_App()) {
+        float vdpi;
+        SDL_GetDisplayDPI(0, NULL, NULL, &vdpi);
+        const float factor = vdpi / 96.0f;
+        mulfv_I2(&rect.size, iMax(factor, 1.0f));
+    }
+#endif
+    return rect;    
+}
+
 static iBool loadState_App_(iApp *d) {
     iUnused(d);
     const char *oldPath = concatPath_CStr(dataDir_App_(), oldStateFileName_App_);
@@ -525,7 +563,7 @@ static iBool loadState_App_(iApp *d) {
                     win = d->window;
                 }
                 else {
-                    win = new_MainWindow(d->initialWindowRect);
+                    win = new_MainWindow(initialWindowRect_App_(d, numWins - 1));
                     addWindow_App(win);
                 }
                 pushBack_Array(currentTabs, &(iCurrentTabs){ { NULL, NULL } });
@@ -819,6 +857,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     d->isSuspended = iFalse;
     d->tempFilesPendingDeletion = new_StringSet();
+    init_Array(&d->initialWindowRects, sizeof(iRect));
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone
        cannot be relied on (behavior differs depending on OS). */ {
@@ -953,20 +992,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->elapsedSinceLastTicker = 0;
     d->commandEcho            = iClob(checkArgument_CommandLine(&d->args, "echo;E")) != NULL;
     d->forceSoftwareRender    = iClob(checkArgument_CommandLine(&d->args, "sw")) != NULL;
-    d->initialWindowRect      = init_Rect(-1, -1, 900, 560);
-#if defined (iPlatformMsys)
-    /* Must scale by UI scaling factor. */
-    mulfv_I2(&d->initialWindowRect.size, desktopDPI_Win32());
-#endif
-#if defined (iPlatformLinux) && !defined (iPlatformAndroid)
-    /* Scale by the primary (?) monitor DPI. */
-    if (isRunningUnderWindowSystem_App()) {
-        float vdpi;
-        SDL_GetDisplayDPI(0, NULL, NULL, &vdpi);
-        const float factor = vdpi / 96.0f;
-        mulfv_I2(&d->initialWindowRect.size, iMax(factor, 1.0f));
-    }
-#endif
     init_Prefs(&d->prefs);
     init_SiteSpec(dataDir_App_());
     setCStr_String(&d->prefs.strings[downloadDir_PrefsString], downloadDir_App_());
@@ -988,22 +1013,29 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_Fonts(dataDir_App_());
     loadPalette_Color(dataDir_App_());
     setThemePalette_Color(d->prefs.theme); /* default UI colors */
-    loadPrefs_App_(d);
+    /* Initial window rectangle of the first window. */ {
+        iAssert(isEmpty_Array(&d->initialWindowRects));
+        const iRect winRect = initialWindowRect_App_(d, 0); /* calculated */
+        resize_Array(&d->initialWindowRects, 1);
+        set_Array(&d->initialWindowRects, 0, &winRect);
+    }
+    loadPrefs_App_(d); 
     updateActive_Fonts();
     load_Keys(dataDir_App_());
+    iRect *winRect0 = at_Array(&d->initialWindowRects, 0);
     /* See if the user wants to override the window size. */ {
         iCommandLineArg *arg = iClob(checkArgument_CommandLine(&d->args, windowWidth_CommandLineOption));
         if (arg) {
-            d->initialWindowRect.size.x = toInt_String(value_CommandLineArg(arg, 0));
+            winRect0->size.x = toInt_String(value_CommandLineArg(arg, 0));
         }
         arg = iClob(checkArgument_CommandLine(&d->args, windowHeight_CommandLineOption));
         if (arg) {
-            d->initialWindowRect.size.y = toInt_String(value_CommandLineArg(arg, 0));
+            winRect0->size.y = toInt_String(value_CommandLineArg(arg, 0));
         }
     }
     init_PtrArray(&d->mainWindows);
     init_PtrArray(&d->popupWindows);
-    d->window = new_MainWindow(d->initialWindowRect);
+    d->window = new_MainWindow(*winRect0); /* first window is always created */
     addWindow_App(d->window);
     load_Visited(d->visited, dataDir_App_());
     load_Bookmarks(d->bookmarks, dataDir_App_());
@@ -1101,7 +1133,8 @@ static void deinit_App(iApp *d) {
     /* Delete all temporary files created while running. */
     iConstForEach(StringSet, tmp, d->tempFilesPendingDeletion) {
         remove(cstr_String(tmp.value));
-}
+    }
+    deinit_Array(&d->initialWindowRects);
     iRelease(d->tempFilesPendingDeletion);
 }
 
@@ -3132,7 +3165,7 @@ iBool handleCommand_App(const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "window.new")) {
-        iMainWindow *newWin = new_MainWindow(moved_Rect(d->initialWindowRect, init_I2(30, 30)));
+        iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
         addWindow_App(newWin); /* takes ownership */
         SDL_ShowWindow(newWin->base.win);
         setCurrent_Window(newWin);

@@ -468,6 +468,10 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "window.setrect")) {
+        if (hasLabel_Command(cmd, "index") &&
+            argU32Label_Command(cmd, "index") != windowIndex_Root(root->root)) {
+            return iFalse;
+        }
         const int snap = argLabel_Command(cmd, "snap");
         if (snap) {
             iMainWindow *window = get_MainWindow();
@@ -1774,6 +1778,13 @@ void showToolbar_Root(iRoot *d, iBool show) {
         setFlags_Widget(toolBar, hidden_WidgetFlag, iTrue);
         setVisualOffset_Widget(toolBar, height, 200, easeOut_AnimFlag);
     }
+}
+
+size_t windowIndex_Root(const iRoot *d) {
+    if (type_Window(d->window) == main_WindowType) {
+        return windowIndex_App(as_MainWindow(d->window));
+    }
+    return iInvalidPos;
 }
 
 iInt2 size_Root(const iRoot *d) {
