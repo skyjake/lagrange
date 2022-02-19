@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.10.6" date="2022-02-19">
+            <description>
+                <p>Changes in v1.10.6:</p>
+                <ul>
+                    <li>Added bindings for switching Feeds list to Unread/All mode.</li>
+                    <li>Fixed normalization of empty Gemini URL paths to `/` as per the November 2021 spec update.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.10.6</url>
+        </release>
         <release version="1.10.5" date="2022-02-11">
             <description>
                 <p>Changes in v1.10.5:</p>
