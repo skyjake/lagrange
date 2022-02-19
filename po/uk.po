@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-18 17:50+0000\n"
+"PO-Revision-Date: 2022-02-16 12:50+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -2266,3 +2266,6 @@ msgstr "Показати у файловому менеджері"
 # Menu heading shown when customizing navbar button actions.
 msgid "menu.toolbar.setaction"
 msgstr "Призначити дію:"
+
+msgid "keys.input.precedingline"
+msgstr "Вставити попередній рядок"

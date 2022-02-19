@@ -1799,6 +1799,12 @@ msgstr "Upload with Titan"
 msgid "keys.upload.edit"
 msgstr "Edit Page with Titan"
 
+msgid "keys.feeds.showall"
+msgstr "Sidebar: Show all feed entries"
+
+msgid "keys.feeds.showunread"
+msgstr "Sidebar: Show unread feed entries"
+
 msgid "error.badstatus"
 msgstr "Unknown Status Code"
 

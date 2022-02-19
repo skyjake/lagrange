@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-18 17:50+0000\n"
+"PO-Revision-Date: 2022-02-16 12:50+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -2251,3 +2251,6 @@ msgstr "Establecer Acción:"
 # Shows where a local file is using the File Manager.
 msgid "menu.reveal.filemgr"
 msgstr "Mostrar en Administrador de Archivos"
+
+msgid "keys.input.precedingline"
+msgstr "Indicador de entrada: Pegar la linea precedente"
