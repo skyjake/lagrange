@@ -9,6 +9,7 @@
 ## 1.10.6
 * Added bindings for switching Feeds list to Unread/All mode.
 * Fixed normalization of empty Gemini URL paths to `/` as per the November 2021 spec update.
+* Updated UI translations.
 
 ## 1.10.5
 * Added a keybinding for "Paste Preceding Line" (in input prompt menu).
