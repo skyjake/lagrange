@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-16 12:50+0000\n"
+"PO-Revision-Date: 2022-02-21 13:50+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2288,3 +2288,9 @@ msgstr "Постави акцију:"
 
 msgid "keys.input.precedingline"
 msgstr "Дијалог за унос: Уметни претходни ред"
+
+msgid "keys.feeds.showall"
+msgstr "Панел: Прикажи све ставке фида"
+
+msgid "keys.feeds.showunread"
+msgstr "Панел: Прикажи непрочитане ставке фида"
