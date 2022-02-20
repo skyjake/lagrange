@@ -107,14 +107,17 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
     iConstForEach(Array, i, &d->commands.values) {
         const iPeriodicCommand *pc = i.value;
         iAssert(isInstance_Object(pc->context, &Class_Widget));
-        const SDL_UserEvent ev = {
-            .type  = SDL_USEREVENT,
-            .code  = command_UserEventCode,
-            .data1 = (void *) cstr_String(&pc->command),
-            .data2 = findRoot_Window(get_Window(), pc->context)
-        };
-        if (ev.data2) {
-            setCurrent_Root(ev.data2);
+        iRoot *root = constAs_Widget(pc->context)->root;
+        if (root) {
+            const SDL_UserEvent ev = {
+                .type     = SDL_USEREVENT,
+                .code     = command_UserEventCode,
+                .data1    = (void *) cstr_String(&pc->command),
+                .data2    = root,
+                .windowID = id_Window(root->window),
+            };
+            setCurrent_Window(root->window);
+            setCurrent_Root(root);
             dispatchEvent_Widget(pc->context, (const SDL_Event *) &ev);
             wasPosted = iTrue;
         }

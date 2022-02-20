@@ -37,7 +37,8 @@ struct Impl_SiteParams {
     iString  titanIdentity; /* fingerprint */
     int      dismissWarnings;
     iStringArray usedIdentities; /* fingerprints; latest ones at the end */
-    /* TODO: theme seed, style settings */
+    iString  paletteSeed;
+    /* TODO: style settings */
 };
 
 void init_SiteParams(iSiteParams *d) {
@@ -45,9 +46,11 @@ void init_SiteParams(iSiteParams *d) {
     init_String(&d->titanIdentity);
     d->dismissWarnings = 0;
     init_StringArray(&d->usedIdentities);
+    init_String(&d->paletteSeed);
 }
 
 void deinit_SiteParams(iSiteParams *d) {
+    deinit_String(&d->paletteSeed);
     deinit_StringArray(&d->usedIdentities);
     deinit_String(&d->titanIdentity);
 }
@@ -149,6 +152,9 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
             pushBack_StringArray(&d->loadParams->usedIdentities, collectNewRange_String(seg));
         }
     }
+    else if (!cmp_String(key, "paletteSeed") && value->type == string_TomlType) {
+        set_String(&d->loadParams->paletteSeed, value->value.string);
+    }
 }
 
 static iBool load_SiteSpec_(iSiteSpec *d) {
@@ -173,7 +179,7 @@ static void save_SiteSpec_(iSiteSpec *d) {
             iBeginCollect();
             const iBlock *     key    = &i.value->keyBlock;
             const iSiteParams *params = i.value->object;
-            format_String(buf, "[%s]\n", cstr_Block(key));
+            clear_String(buf);
             if (params->titanPort) {
                 appendFormat_String(buf, "titanPort = %u\n", params->titanPort);
             }
@@ -190,8 +196,18 @@ static void save_SiteSpec_(iSiteSpec *d) {
                     "usedIdentities = \"%s\"\n",
                     cstrCollect_String(joinCStr_StringArray(&params->usedIdentities, " ")));
             }
-            appendCStr_String(buf, "\n");
-            write_File(f, utf8_String(buf));
+            if (!isEmpty_String(&params->paletteSeed)) {
+                appendCStr_String(buf, "paletteSeed = \"");
+                append_String(buf, collect_String(quote_String(&params->paletteSeed, iFalse)));
+                appendCStr_String(buf, "\"\n");
+            }
+            if (!isEmpty_String(buf)) {
+                writeData_File(f, "[", 1);
+                writeData_File(f, constData_Block(key), size_Block(key));
+                writeData_File(f, "]\n", 2);
+                appendCStr_String(buf, "\n");
+                write_File(f, utf8_String(buf));
+            }
             iEndCollect();
         }
         delete_String(buf);
@@ -257,6 +273,12 @@ void setValueString_SiteSpec(const iString *site, enum iSiteSpecKey key, const i
                 set_String(&params->titanIdentity, value);
             }
             break;
+        case paletteSeed_SiteSpecKey:
+            if (!equal_String(&params->paletteSeed, value)) {
+                needSave = iTrue;
+                set_String(&params->paletteSeed, value);
+            }
+            break;            
         default:
             break;
     }
@@ -328,6 +350,8 @@ const iString *valueString_SiteSpec(const iString *site, enum iSiteSpecKey key) 
     switch (key) {
         case titanIdentity_SiteSpecKey:
             return &params->titanIdentity;
+        case paletteSeed_SiteSpecKey:
+            return &params->paletteSeed;
         default:
             return collectNew_String();
     }    

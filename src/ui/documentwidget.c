@@ -358,6 +358,7 @@ static void updateSideIconBuf_DocumentWidget_       (const iDocumentWidget *d);
 static void prerender_DocumentWidget_               (iAny *);
 static void scrollBegan_DocumentWidget_             (iAnyObject *, int, uint32_t);
 static void refreshWhileScrolling_DocumentWidget_   (iAny *);
+static iBool requestMedia_DocumentWidget_           (iDocumentWidget *d, iGmLinkId linkId, iBool enableFilters);
 
 /* TODO: The following methods are called from DocumentView, which goes the wrong way. */
 
@@ -1824,7 +1825,7 @@ static void draw_DocumentView_(const iDocumentView *d) {
     }
     if (d->drawBufs->flags & updateSideBuf_DrawBufsFlag) {
         updateSideIconBuf_DocumentView_(d);
-        }
+    }
     const iRect   docBounds = documentBounds_DocumentView_(d);
     const iRangei vis       = visibleRange_DocumentView_(d);
     iDrawContext  ctx       = {
@@ -2410,6 +2411,20 @@ static const char *zipPageHeading_(const iRangecc mime) {
 
 static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool isCached) {
     iWidget *w = as_Widget(d);
+    /* Embedded images in data links can be shown immediately as they are already fetched
+       data that is part of the document. */
+    if (prefs_App()->openDataUrlImagesOnLoad) {
+        iGmDocument *doc = d->view.doc;
+        for (size_t linkId = 1; ; linkId++) {
+            const int      linkFlags = linkFlags_GmDocument(doc, linkId);
+            const iString *linkUrl   = linkUrl_GmDocument(doc, linkId);
+            if (!linkUrl) break;
+            if (scheme_GmLinkFlag(linkFlags) == data_GmLinkScheme &&
+                (linkFlags & imageFileExtension_GmLinkFlag)) {
+                requestMedia_DocumentWidget_(d, linkId, 0);
+            }
+        }               
+    }
     /* Gempub page behavior and footer actions. */ {
         /* TODO: move this to gempub.c */
         delete_Gempub(d->sourceGempub);
@@ -2681,7 +2696,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                             if (loadArchive_FontPack(fp, zip)) {
                                 appendFormat_String(&str, "# " fontpack_Icon "%s\n%s",
                                                     cstr_String(id_FontPack(fp).id),
-                                                    cstrCollect_String(infoText_FontPack(fp)));
+                                                    cstrCollect_String(infoText_FontPack(fp, iTrue)));
                             }
                             appendCStr_String(&str, "\n");
                             appendCStr_String(&str, cstr_Lang("fontpack.help"));
@@ -3258,9 +3273,11 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                         setTextColor_LabelWidget(menu, uiTextAction_ColorId);
                     }
                 }
-                setValidator_InputWidget(findChild_Widget(dlg, "input"), inputQueryValidator_, d);
-                setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
-                                                statusCode == sensitiveInput_GmStatusCode);
+                iInputWidget *input = findChild_Widget(dlg, "input");
+                setValidator_InputWidget(input, inputQueryValidator_, d);
+                setBackupFileName_InputWidget(input, "inputbackup.txt");
+                setSelectAllOnFocus_InputWidget(input, iTrue);
+                setSensitiveContent_InputWidget(input, statusCode == sensitiveInput_GmStatusCode);
                 if (document_App() != d) {
                     postCommandf_App("tabs.switch page:%p", d);
                 }
@@ -3921,12 +3938,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const char *unchecked       = red_ColorEscape "\u2610";
         const char *checked         = green_ColorEscape "\u2611";
         const iBool haveFingerprint = (d->certFlags & haveFingerprint_GmCertFlag) != 0;
-        const int requiredForTrust = (available_GmCertFlag | haveFingerprint_GmCertFlag |
-                                      timeVerified_GmCertFlag);
+        const int   requiredForTrust =
+            (available_GmCertFlag | haveFingerprint_GmCertFlag | timeVerified_GmCertFlag);
         const iBool canTrust = ~d->certFlags & trusted_GmCertFlag &&
                                ((d->certFlags & requiredForTrust) == requiredForTrust);
         const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
-        const iString *meta = &d->sourceMime;
+        const iString    *meta   = &d->sourceMime;
         if (recent && recent->cachedResponse) {
             meta = &recent->cachedResponse->meta;
         }
@@ -3991,6 +4008,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (haveFingerprint) {
             pushBack_Array(items, &(iMenuItem){ "${dlg.cert.fingerprint}", 0, 0, "server.copycert" });
         }
+        const iRangecc root = urlRoot_String(d->mod.url);
+        if (!isEmpty_Range(&root)) {
+            pushBack_Array(items, &(iMenuItem){ "${pageinfo.settings}", 0, 0, "document.sitespec" });
+        }
         if (!isEmpty_Array(items)) {
             pushBack_Array(items, &(iMenuItem){ "---", 0, 0, 0 });
         }
@@ -4012,6 +4033,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         arrange_Widget(dlg);
         addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
         addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "document.sitespec") && d == document_App()) {
+        if (!findWidget_App("sitespec.palette")) {
+            makeSiteSpecificSettings_Widget(d->mod.url);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "server.unexpire") && document_App() == d) {
@@ -4922,7 +4949,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 for (size_t i = 0; i < 64; ++i) {
                     setByte_Block(seed, i, iRandom(0, 256));
                 }
-                setThemeSeed_GmDocument(view->doc, seed);
+                setThemeSeed_GmDocument(view->doc, seed, NULL);
                 delete_Block(seed);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(w);
@@ -5044,10 +5071,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
-                    /* Context menu for a link. */
+                    /* Construct the link context menu, depending on what kind of link was clicked. */
                     interactingWithLink_DocumentWidget_(d, d->contextLink->linkId); /* perhaps will be triggered */
                     const iString *linkUrl  = linkUrl_GmDocument(view->doc, d->contextLink->linkId);
-//                    const int      linkFlags = linkFlags_GmDocument(d->doc, d->contextLink->linkId);
                     const iRangecc scheme   = urlScheme_String(linkUrl);
                     const iBool    isGemini = equalCase_Rangecc(scheme, "gemini");
                     iBool          isNative = iFalse;
@@ -5059,41 +5085,55 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             format_CStr("```%s", cstr_String(infoText)),
                             0, 0, NULL });
                     }
-                    if (willUseProxy_App(scheme) || isGemini ||
+                    if (isGemini ||
+                        willUseProxy_App(scheme) ||
+                        equalCase_Rangecc(scheme, "data") ||
                         equalCase_Rangecc(scheme, "file") ||
                         equalCase_Rangecc(scheme, "finger") ||
                         equalCase_Rangecc(scheme, "gopher")) {
                         isNative = iTrue;
                         /* Regular links that we can open. */
-                        pushBackN_Array(
-                            &items,
-                            (iMenuItem[]){ { openTab_Icon " ${link.newtab}",
-                                             0,
-                                             0,
-                                             format_CStr("!open newtab:1 origin:%s url:%s",
-                                                         cstr_String(id_Widget(w)),
-                                                         cstr_String(linkUrl)) },
-                                           { openTabBg_Icon " ${link.newtab.background}",
-                                             0,
-                                             0,
-                                             format_CStr("!open newtab:2 origin:%s url:%s",
-                                                         cstr_String(id_Widget(w)),
-                                                         cstr_String(linkUrl)) },
-                                           { "${link.side}",
-                                             0,
-                                             0,
-                                             format_CStr("!open newtab:4 origin:%s url:%s",
-                                                         cstr_String(id_Widget(w)),
-                                                         cstr_String(linkUrl)) },
-                                           { "${link.side.newtab}",
-                                             0,
-                                             0,
-                                             format_CStr("!open newtab:5 origin:%s url:%s",
-                                                         cstr_String(id_Widget(w)),
-                                                         cstr_String(linkUrl)) } },
-                            4);
+                        pushBackN_Array(&items,
+                                        (iMenuItem[]){
+                                            { openTab_Icon " ${link.newtab}",
+                                              0,
+                                              0,
+                                              format_CStr("!open newtab:1 origin:%s url:%s",
+                                                          cstr_String(id_Widget(w)),
+                                                          cstr_String(linkUrl)) },
+                                            { openTabBg_Icon " ${link.newtab.background}",
+                                              0,
+                                              0,
+                                              format_CStr("!open newtab:2 origin:%s url:%s",
+                                                          cstr_String(id_Widget(w)),
+                                                          cstr_String(linkUrl)) },
+                                            { openWindow_Icon " ${link.newwindow}",
+                                              0,
+                                              0,
+                                              format_CStr("!open newwindow:1 origin:%s url:%s",
+                                                          cstr_String(id_Widget(w)),
+                                                          cstr_String(linkUrl)) },
+                                            { "${link.side}",
+                                              0,
+                                              0,
+                                              format_CStr("!open newtab:4 origin:%s url:%s",
+                                                          cstr_String(id_Widget(w)),
+                                                          cstr_String(linkUrl)) },
+                                            { "${link.side.newtab}",
+                                              0,
+                                              0,
+                                              format_CStr("!open newtab:5 origin:%s url:%s",
+                                                          cstr_String(id_Widget(w)),
+                                                          cstr_String(linkUrl)) },
+                                        },
+                                        5);
                         if (deviceType_App() == phone_AppDeviceType) {
-                            removeN_Array(&items, size_Array(&items) - 2, iInvalidSize);
+                            /* Phones don't do windows or splits. */
+                            removeN_Array(&items, size_Array(&items) - 3, iInvalidSize);
+                        }
+                        else if (deviceType_App() == tablet_AppDeviceType) {
+                            /* Tablets only do splits. */
+                            removeN_Array(&items, size_Array(&items) - 3, 1);
                         }
                         if (equalCase_Rangecc(scheme, "file")) {
                             pushBack_Array(&items, &(iMenuItem){ "---" });
@@ -5248,6 +5288,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     "document.upload",
                     !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
                     !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
+                setMenuItemDisabled_Widget(
+                    d->menu,
+                    "document.upload copy:1",
+                    !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
+                        !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
             }
             processContextMenuEvent_Widget(d->menu, ev, {});
         }
@@ -5545,12 +5590,12 @@ static void prerender_DocumentWidget_(iAny *context) {
     }
     const iDocumentWidget *d = context;
     iDrawContext ctx = {
-                  .view          = &d->view,
-                  .docBounds       = documentBounds_DocumentView_(&d->view),
-                  .vis             = visibleRange_DocumentView_(&d->view),
-                  .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0
+        .view            = &d->view,
+        .docBounds       = documentBounds_DocumentView_(&d->view),
+        .vis             = visibleRange_DocumentView_(&d->view),
+        .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0
     };
-    //    printf("%u prerendering\n", SDL_GetTicks());
+    //    printf("%u prerendering\n", SDL_GetTicks());    
     if (d->view.visBuf->buffers[0].texture) {
         makePaletteGlobal_GmDocument(d->view.doc);
         if (render_DocumentView_(&d->view, &ctx, iTrue /* just fill up progressively */)) {

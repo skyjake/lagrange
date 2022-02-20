@@ -231,7 +231,17 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 *bg = uiBackgroundUnfocusedSelection_ColorId;
             }
             else {
-                *bg = uiBackgroundSelected_ColorId;
+                const enum iGmDocumentTheme docTheme = docTheme_Prefs(prefs_App());
+                if ((docTheme == colorfulLight_GmDocumentTheme || docTheme == sepia_GmDocumentTheme) &&
+                    !cmp_String(&d->widget.parent->id, "tabs.buttons")) {
+                    *bg = (docTheme == sepia_GmDocumentTheme &&
+                                   colorTheme_App() == pureWhite_ColorTheme
+                               ? tmBackground_ColorId
+                               : tmBannerBackground_ColorId);
+                }
+                else {
+                    *bg = uiBackgroundSelected_ColorId;
+                }
             }
             if (!isKeyRoot) {
                 *bg = isDark_ColorTheme(colorTheme_App()) ? uiBackgroundUnfocusedSelection_ColorId

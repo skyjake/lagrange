@@ -231,6 +231,8 @@ struct Impl_HSLColor {
     float hue, sat, lum, a;
 };
 
+#define minSat_HSLColor 0.013f   /* Conversion to 8-bit RGB may result in saturation dropping to zero. */
+
 iHSLColor       hsl_Color       (iColor);
 iColor          rgb_HSLColor    (iHSLColor);
 float           luma_Color      (iColor);

@@ -67,6 +67,7 @@ enum iUserEventCode {
        take, it could turn into a tap-and-hold for example. */
     widgetTapBegins_UserEventCode,
     widgetTouchEnds_UserEventCode, /* finger lifted, but momentum may continue */
+    releaseObject_UserEventCode, /* object that needs releasing in the main thread */
 };
 
 const iString *execPath_App     (void);
@@ -97,6 +98,7 @@ iPeriodic *         periodic_App        (void);
 iDocumentWidget *   document_App        (void);
 iObjectList *       listDocuments_App   (const iRoot *rootOrNull); /* NULL for all roots */
 iStringSet *        listOpenURLs_App    (void); /* all tabs */
+iPtrArray *         listWindows_App     (void);
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 void                trimCache_App       (void);
 void                trimMemory_App      (void);
@@ -121,6 +123,14 @@ iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (iTickerFunc ticker, iAny *context);
 void        addTickerRoot_App   (iTickerFunc ticker, iRoot *root, iAny *context);
 void        removeTicker_App    (iTickerFunc ticker, iAny *context);
+void        addWindow_App       (iMainWindow *win);
+void        removeWindow_App    (iMainWindow *win);
+void        setActiveWindow_App (iMainWindow *win);
+void        closeWindow_App     (iMainWindow *win);
+size_t      numWindows_App      (void);
+size_t      windowIndex_App     (const iMainWindow *win);
+iMainWindow *newMainWindow_App  (void);
+const iPtrArray *mainWindows_App(void);
 void        addPopup_App        (iWindow *popup);
 void        removePopup_App     (iWindow *popup);
 void        postRefresh_App     (void);
@@ -142,6 +152,7 @@ iDocumentWidget *   document_Command    (const char *cmd);
 void            openInDefaultBrowser_App(const iString *url);
 void            revealPath_App          (const iString *path);
 void            resetFonts_App          (void);
+void            availableFontsChanged_App(void);
 
 iMainWindow *   mainWindow_App  (void);
-void            closePopups_App (void);
+void            closePopups_App (iBool doForce);

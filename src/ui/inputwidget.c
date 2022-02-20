@@ -1201,6 +1201,11 @@ void selectAll_InputWidget(iInputWidget *d) {
 #endif
 }
 
+void deselect_InputWidget(iInputWidget *d) {
+    iZap(d->mark);
+    refresh_Widget(as_Widget(d));
+}
+
 void validate_InputWidget(iInputWidget *d) {
     if (d->validator) {
         d->validator(d, d->validatorContext); /* this may change the contents */

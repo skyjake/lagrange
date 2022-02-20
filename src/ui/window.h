@@ -139,7 +139,7 @@ iAnyObject *    hitChild_Window         (const iWindow *, iInt2 coord);
 uint32_t        frameTime_Window        (const iWindow *);
 SDL_Renderer *  renderer_Window         (const iWindow *);
 int             numRoots_Window         (const iWindow *);
-iRoot *         findRoot_Window         (const iWindow *, const iWidget *widget);
+//iRoot *         findRoot_Window         (const iWindow *, const iWidget *widget);
 iRoot *         otherRoot_Window        (const iWindow *, iRoot *root);
 
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
@@ -187,6 +187,7 @@ void        setTitle_MainWindow             (iMainWindow *, const iString *title
 void        setSnap_MainWindow              (iMainWindow *, int snapMode);
 void        setFreezeDraw_MainWindow        (iMainWindow *, iBool freezeDraw);
 void        setKeyboardHeight_MainWindow    (iMainWindow *, int height);
+iObjectList *listDocuments_MainWindow       (iMainWindow *, const iRoot *rootOrNull);
 void        setSplitMode_MainWindow         (iMainWindow *, int splitMode);
 void        checkPendingSplit_MainWindow    (iMainWindow *);
 void        swapRoots_MainWindow            (iMainWindow *);

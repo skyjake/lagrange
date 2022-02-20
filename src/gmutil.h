@@ -120,6 +120,7 @@ uint16_t        urlPort_String          (const iString *);
 iRangecc        urlUser_String          (const iString *);
 iRangecc        urlRoot_String          (const iString *);
 const iBlock *  urlThemeSeed_String     (const iString *);
+const iBlock *  urlPaletteSeed_String   (const iString *);
 
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
 iBool           isLikelyUrl_String      (const iString *);
@@ -141,6 +142,7 @@ void            urlEncodeSpaces_String  (iString *);
 const iString * withSpacesEncoded_String(const iString *);
 const iString * withScheme_String       (const iString *, const char *scheme); /* replace URI scheme */
 const iString * canonicalUrl_String     (const iString *);
+const iString * prettyDataUrl_String    (const iString *, int contentColor);
 
 const char *    mediaType_Path                      (const iString *path);
 const char *    mediaTypeFromFileExtension_String   (const iString *);
@@ -149,9 +151,4 @@ iRangecc        mediaTypeWithoutParameters_Rangecc  (iRangecc mime);
 const iString * findContainerArchive_Path           (const iString *path);
 
 
-const iString * feedEntryOpenCommand_String (const iString *url, int newTab); /* checks fragment */
-
-/* TODO: Consider adding this to the_Foundation. */
-int     replaceRegExp_String    (iString *, const iRegExp *regexp, const char *replacement,
-                                 void (*matchHandler)(void *, const iRegExpMatch *),
-                                 void *context);
+const iString * feedEntryOpenCommand_String (const iString *url, int newTab, int newWindow); /* checks fragment */

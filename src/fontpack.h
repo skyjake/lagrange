@@ -160,7 +160,7 @@ const iString *     loadPath_FontPack       (const iFontPack *); /* may return N
 iBool               isDisabled_FontPack     (const iFontPack *);
 iBool               isReadOnly_FontPack     (const iFontPack *);
 const iPtrArray *   listSpecs_FontPack      (const iFontPack *);
-iString *           infoText_FontPack       (const iFontPack *);
+iString *           infoText_FontPack       (const iFontPack *, iBool isFull);
 const iArray *      actions_FontPack        (const iFontPack *, iBool showInstalled);
 
 const iString *     idFromUrl_FontPack      (const iString *url);
@@ -186,3 +186,5 @@ void                reload_Fonts                (void);
 iLocalDef iBool isInstalled_Fonts(const char *packId) {
     return pack_Fonts(packId) != NULL;
 }
+
+void                searchOnlineLibraryForCharacters_Fonts  (const iString *chars);

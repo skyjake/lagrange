@@ -56,7 +56,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformPcDesktop)
 /* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems_[] = {
-    { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
+    { openWindow_Icon " ${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
+    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---" },
     { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
@@ -468,6 +469,10 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "window.setrect")) {
+        if (hasLabel_Command(cmd, "index") &&
+            argU32Label_Command(cmd, "index") != windowIndex_Root(root->root)) {
+            return iFalse;
+        }
         const int snap = argLabel_Command(cmd, "snap");
         if (snap) {
             iMainWindow *window = get_MainWindow();
@@ -1059,6 +1064,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             updateNavBarIdentity_(navBar);
         }
         setFocus_Widget(NULL);
+        makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
+        refresh_Widget(findWidget_Root("doctabs"));
     }
     else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
         iWidget *widget = pointer_Command(cmd);
@@ -1772,6 +1779,13 @@ void showToolbar_Root(iRoot *d, iBool show) {
         setFlags_Widget(toolBar, hidden_WidgetFlag, iTrue);
         setVisualOffset_Widget(toolBar, height, 200, easeOut_AnimFlag);
     }
+}
+
+size_t windowIndex_Root(const iRoot *d) {
+    if (type_Window(d->window) == main_WindowType) {
+        return windowIndex_App(as_MainWindow(d->window));
+    }
+    return iInvalidPos;
 }
 
 iInt2 size_Root(const iRoot *d) {
