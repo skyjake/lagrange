@@ -1040,7 +1040,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 mw->isDrawFrozen = iFalse;
                 draw_MainWindow(mw); /* don't show a frame of placeholder content */
                 postCommand_App("media.player.update"); /* in case a player needs updating */
-                return iTrue;
+                return iFalse; /* unfreeze all frozen windows */
             }
             if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.sysframe") && mw) {
                 /* This command is sent on Android to update the keyboard height. */
