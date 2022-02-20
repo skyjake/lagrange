@@ -420,7 +420,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                                { "---", 0, 0, NULL },
                                { circle_Icon " ${feeds.entry.markread}", 0, 0, "feed.entry.toggleread" },
                                { bookmark_Icon " ${feeds.entry.bookmark}", 0, 0, "feed.entry.bookmark" },
-                               { "${menu.copyurl}", 0, 0, "feed.entry.copyurl" },
+                               { "${menu.copyurl}", 0, 0, "feed.entry.copy" },
                                { "---", 0, 0, NULL },
                                { page_Icon " ${feeds.entry.openfeed}", 0, 0, "feed.entry.openfeed" },
                                { edit_Icon " ${feeds.edit}", 0, 0, "feed.entry.edit" },
@@ -580,8 +580,8 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                     { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "history.open newtab:2" },
                     { openWindow_Icon " ${menu.openwindow}", 0, 0, "history.open newwindow:1" },
                     { "---" },
-                    { "${menu.copyurl}", 0, 0, "history.copy" },
                     { bookmark_Icon " ${sidebar.entry.bookmark}", 0, 0, "history.addbookmark" },
+                    { "${menu.copyurl}", 0, 0, "history.copy" },
                     { "---", 0, 0, NULL },
                     { close_Icon " ${menu.forgeturl}", 0, 0, "history.delete" },
                     { "---", 0, 0, NULL },
@@ -1652,12 +1652,18 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (item) {
                 if (isCommand_Widget(w, ev, "feed.entry.open")) {
                     const char *cmd = command_UserEvent(ev);
-                    postCommandString_Root(get_Root(), feedEntryOpenCommand_String(&item->url,
-                                                                                   argLabel_Command(cmd, "newtab"),
-                                                                                   argLabel_Command(cmd, "newwindow")));
+                    postCommandString_Root(
+                        get_Root(),
+                        feedEntryOpenCommand_String(&item->url,
+                                                    argLabel_Command(cmd, "newtab"),
+                                                    argLabel_Command(cmd, "newwindow")));
                     return iTrue;
                 }
-                if (isCommand_Widget(w, ev, "feed.entry.toggleread")) {
+                else if (isCommand_Widget(w, ev, "feed.entry.copy")) {
+                    SDL_SetClipboardText(cstr_String(&item->url));
+                    return iTrue;
+                }
+                else if (isCommand_Widget(w, ev, "feed.entry.toggleread")) {
                     iVisited *vis = visited_App();
                     const iString *url = urlFragmentStripped_String(&item->url);
                     if (containsUrl_Visited(vis, url)) {
@@ -1669,7 +1675,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     postCommand_App("visited.changed");
                     return iTrue;
                 }
-                if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {
+                else if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {
                     makeBookmarkCreation_Widget(&item->url, &item->label, item->icon);
                     if (deviceType_App() == desktop_AppDeviceType) {
                         postCommand_App("focus.set id:bmed.title");
@@ -1715,6 +1721,18 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 removeUrl_Visited(visited_App(), &d->contextItem->url);
                 updateItems_SidebarWidget_(d);
                 scrollOffset_ListWidget(d->list, 0);
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "history.open")) {
+            const iSidebarItem *item = d->contextItem;
+            if (item && !isEmpty_String(&item->url)) {
+                const char *cmd = command_UserEvent(ev);
+                postCommand_Widget(d,
+                                   "!open newtab:%d newwindow:%d url:%s",
+                                   argLabel_Command(cmd, "newtab"),
+                                   argLabel_Command(cmd, "newwindow"),
+                                   cstr_String(&item->url));
             }
             return iTrue;
         }
