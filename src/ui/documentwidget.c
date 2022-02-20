@@ -5128,7 +5128,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                         },
                                         5);
                         if (deviceType_App() == phone_AppDeviceType) {
-                            removeN_Array(&items, size_Array(&items) - 2, iInvalidSize);
+                            /* Phones don't do windows or splits. */
+                            removeN_Array(&items, size_Array(&items) - 3, iInvalidSize);
+                        }
+                        else if (deviceType_App() == tablet_AppDeviceType) {
+                            /* Tablets only do splits. */
+                            removeN_Array(&items, size_Array(&items) - 3, 1);
                         }
                         if (equalCase_Rangecc(scheme, "file")) {
                             pushBack_Array(&items, &(iMenuItem){ "---" });

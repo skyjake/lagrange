@@ -412,23 +412,25 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 setOutline_LabelWidget(child_Widget(d->actions, 1), d->feedsMode != all_FeedsMode);
                 setOutline_LabelWidget(child_Widget(d->actions, 2), d->feedsMode != unread_FeedsMode);
             }
-            d->menu = makeMenu_Widget(
-                as_Widget(d),
-                (iMenuItem[]){ { openTab_Icon " ${menu.opentab}", 0, 0, "feed.entry.open newtab:1" },
-                               { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "feed.entry.open newtab:2" },
-                               { openWindow_Icon " ${menu.openwindow}", 0, 0, "feed.entry.open newwindow:1" },
-                               { "---", 0, 0, NULL },
-                               { circle_Icon " ${feeds.entry.markread}", 0, 0, "feed.entry.toggleread" },
-                               { bookmark_Icon " ${feeds.entry.bookmark}", 0, 0, "feed.entry.bookmark" },
-                               { "${menu.copyurl}", 0, 0, "feed.entry.copy" },
-                               { "---", 0, 0, NULL },
-                               { page_Icon " ${feeds.entry.openfeed}", 0, 0, "feed.entry.openfeed" },
-                               { edit_Icon " ${feeds.edit}", 0, 0, "feed.entry.edit" },
-                               { whiteStar_Icon " " uiTextCaution_ColorEscape "${feeds.unsubscribe}", 0, 0, "feed.entry.unsubscribe" },
-                               { "---", 0, 0, NULL },
-                               { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
-                               { reload_Icon " ${feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
-                13);
+            const iMenuItem menuItems[] = {
+                { openTab_Icon " ${menu.opentab}", 0, 0, "feed.entry.open newtab:1" },
+                { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "feed.entry.open newtab:2" },
+#if defined (iPlatformDesktop)
+                { openWindow_Icon " ${menu.openwindow}", 0, 0, "feed.entry.open newwindow:1" },
+#endif
+                { "---", 0, 0, NULL },
+                { circle_Icon " ${feeds.entry.markread}", 0, 0, "feed.entry.toggleread" },
+                { bookmark_Icon " ${feeds.entry.bookmark}", 0, 0, "feed.entry.bookmark" },
+                { "${menu.copyurl}", 0, 0, "feed.entry.copy" },
+                { "---", 0, 0, NULL },
+                { page_Icon " ${feeds.entry.openfeed}", 0, 0, "feed.entry.openfeed" },
+                { edit_Icon " ${feeds.edit}", 0, 0, "feed.entry.edit" },
+                { whiteStar_Icon " " uiTextCaution_ColorEscape "${feeds.unsubscribe}", 0, 0, "feed.entry.unsubscribe" },
+                { "---", 0, 0, NULL },
+                { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
+                { reload_Icon " ${feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" }
+            };
+            d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             d->modeMenu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]){
@@ -491,27 +493,29 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
-            d->menu = makeMenu_Widget(
-                as_Widget(d),
-                (iMenuItem[]){ { openTab_Icon " ${menu.opentab}", 0, 0, "bookmark.open newtab:1" },
-                               { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "bookmark.open newtab:2" },
-                               { openWindow_Icon " ${menu.openwindow}", 0, 0, "bookmark.open newwindow:1" },
-                               { "---", 0, 0, NULL },
-                               { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
-                               { copy_Icon " ${menu.dup}", 0, 0, "bookmark.dup" },
-                               { "${menu.copyurl}", 0, 0, "bookmark.copy" },
-                               { "---", 0, 0, NULL },
-                               { "", 0, 0, "bookmark.tag tag:subscribed" },
-                               { "", 0, 0, "bookmark.tag tag:homepage" },
-                               { "", 0, 0, "bookmark.tag tag:remotesource" },
-                               { "---", 0, 0, NULL },
-                               { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
-                               { "---", 0, 0, NULL },
-                               { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
-                               { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
-                               { "---", 0, 0, NULL },
-                               { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" } },
-               18);
+            const iMenuItem menuItems[] = {
+                { openTab_Icon " ${menu.opentab}", 0, 0, "bookmark.open newtab:1" },
+                { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "bookmark.open newtab:2" },
+#if defined (iPlatformDesktop)
+                { openWindow_Icon " ${menu.openwindow}", 0, 0, "bookmark.open newwindow:1" },
+#endif
+                { "---", 0, 0, NULL },
+                { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
+                { copy_Icon " ${menu.dup}", 0, 0, "bookmark.dup" },
+                { "${menu.copyurl}", 0, 0, "bookmark.copy" },
+                { "---", 0, 0, NULL },
+                { "", 0, 0, "bookmark.tag tag:subscribed" },
+                { "", 0, 0, "bookmark.tag tag:homepage" },
+                { "", 0, 0, "bookmark.tag tag:remotesource" },
+                { "---", 0, 0, NULL },
+                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
+                { "---", 0, 0, NULL },
+                { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
+                { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
+                { "---", 0, 0, NULL },
+                { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" }
+            };
+            d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             d->modeMenu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]){ { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
@@ -525,7 +529,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 addActionButton_SidebarWidget_(d, "${sidebar.action.bookmarks.newfolder}",
                                                "bookmarks.addfolder", !d->isEditing ? hidden_WidgetFlag : 0);
                 addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
-                iLabelWidget *btn = addActionButton_SidebarWidget_(d,
+                addActionButton_SidebarWidget_(d,
                     d->isEditing ? "${sidebar.close}" : "${sidebar.action.bookmarks.edit}",
                     "sidebar.bookmarks.edit", 0);
             }
@@ -573,20 +577,21 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
-            d->menu = makeMenu_Widget(
-                as_Widget(d),
-                (iMenuItem[]){
-                    { openTab_Icon " ${menu.opentab}", 0, 0, "history.open newtab:1" },
-                    { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "history.open newtab:2" },
-                    { openWindow_Icon " ${menu.openwindow}", 0, 0, "history.open newwindow:1" },
-                    { "---" },
-                    { bookmark_Icon " ${sidebar.entry.bookmark}", 0, 0, "history.addbookmark" },
-                    { "${menu.copyurl}", 0, 0, "history.copy" },
-                    { "---", 0, 0, NULL },
-                    { close_Icon " ${menu.forgeturl}", 0, 0, "history.delete" },
-                    { "---", 0, 0, NULL },
-                    { delete_Icon " " uiTextCaution_ColorEscape "${history.clear}", 0, 0, "history.clear confirm:1" },
-                }, 10);
+            const iMenuItem menuItems[] = {
+                { openTab_Icon " ${menu.opentab}", 0, 0, "history.open newtab:1" },
+                { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "history.open newtab:2" },
+#if defined (iPlatformDesktop)
+                { openWindow_Icon " ${menu.openwindow}", 0, 0, "history.open newwindow:1" },
+#endif
+                { "---" },
+                { bookmark_Icon " ${sidebar.entry.bookmark}", 0, 0, "history.addbookmark" },
+                { "${menu.copyurl}", 0, 0, "history.copy" },
+                { "---", 0, 0, NULL },
+                { close_Icon " ${menu.forgeturl}", 0, 0, "history.delete" },
+                { "---", 0, 0, NULL },
+                { delete_Icon " " uiTextCaution_ColorEscape "${history.clear}", 0, 0, "history.clear confirm:1" },                
+            };
+            d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             d->modeMenu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]){
