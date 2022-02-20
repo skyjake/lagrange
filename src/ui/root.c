@@ -72,10 +72,9 @@ static const iMenuItem navMenuItems_[] = {
     { "---" },
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
-    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
-    { "---" },
-    { "${menu.downloads}", 0, 0, "downloads.open" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+//    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
+    { "${menu.downloads}", 0, 0, "downloads.open" },
     { "---" },
     { gear_Icon " ${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
  #if defined (LAGRANGE_ENABLE_WINSPARKLE)
