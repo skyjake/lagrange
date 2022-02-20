@@ -1386,6 +1386,9 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
                 updateText_LabelWidget(dropButton,
                                        replaceNewlinesWithDash_(text_LabelWidget(item)));
                 checkIcon_LabelWidget(dropButton);
+                if (!icon_LabelWidget(dropButton)) {
+                    setIcon_LabelWidget(dropButton, icon_LabelWidget(item));
+                }
             }
         }
     }
