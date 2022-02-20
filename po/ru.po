@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2022-02-16 12:50+0000\n"
+"PO-Revision-Date: 2022-02-21 13:50+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -2241,3 +2241,9 @@ msgstr "Установить действие:"
 
 msgid "keys.input.precedingline"
 msgstr "Вставить предыдущую строку"
+
+msgid "keys.feeds.showall"
+msgstr "Боковая панель: показать все записи в ленте"
+
+msgid "keys.feeds.showunread"
+msgstr "Боковая панель: показать непрочитанные записи в ленте"
