@@ -157,8 +157,9 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define bookmark_Icon       "\U0001f516"
 #define folder_Icon         "\U0001f4c1"
 #define file_Icon           "\U0001f5ce"
-#define openTab_Icon        "\u2750"
-#define openTabBg_Icon      "\u2b1a"
+#define openWindow_Icon     "\u2b1a" //"\U0001F5d4"
+#define openTab_Icon        add_Icon
+#define openTabBg_Icon      "\u2750" //"\u2b1a"
 #define openExt_Icon        "\u27a0"
 #define add_Icon            "\u2795"
 #define page_Icon           "\U00010117"

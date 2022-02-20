@@ -1567,6 +1567,23 @@ void setKeyboardHeight_MainWindow(iMainWindow *d, int height) {
     }
 }
 
+iObjectList *listDocuments_MainWindow(iMainWindow *d, const iRoot *rootOrNull) {
+    iObjectList *docs = new_ObjectList();
+    iForIndices(i, d->base.roots) {
+        iRoot *root = d->base.roots[i];
+        if (!root) continue;
+        if (!rootOrNull || root == rootOrNull) {
+            const iWidget *tabs = findChild_Widget(root->widget, "doctabs");
+            iForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
+                if (isInstance_Object(i.object, &Class_DocumentWidget)) {
+                    pushBack_ObjectList(docs, i.object);
+                }
+            }
+        }
+    }
+    return docs;
+}
+
 void checkPendingSplit_MainWindow(iMainWindow *d) {
     if (d->splitMode != d->pendingSplitMode) {
         setSplitMode_MainWindow(d, d->pendingSplitMode);

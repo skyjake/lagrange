@@ -148,6 +148,9 @@ msgstr "Identity"
 msgid "menu.title.help"
 msgstr "Help"
 
+msgid "menu.newwindow"
+msgstr "New Window"
+
 msgid "menu.newtab"
 msgstr "New Tab"
 
@@ -519,9 +522,6 @@ msgstr "%b. %d, %Y"
 msgid "feeds.today"
 msgstr "Today"
 
-msgid "feeds.entry.newtab"
-msgstr "Open Entry in New Tab"
-
 msgid "feeds.entry.markread"
 msgstr "Mark as Read"
 
@@ -557,6 +557,9 @@ msgstr "Open in New Tab"
 
 msgid "menu.opentab.background"
 msgstr "Open in Background Tab"
+
+msgid "menu.openwindow"
+msgstr "Open in New Window"
 
 msgid "menu.openfile"
 msgstr "Open File…"
@@ -869,6 +872,9 @@ msgstr "Open Link to the Side"
 
 msgid "link.side.newtab"
 msgstr "Open Link in New Tab to the Side"
+
+msgid "link.newwindow"
+msgstr "Open Link in New Window"
 
 msgid "link.browser"
 msgstr "Open Link in Default Browser"

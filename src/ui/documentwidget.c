@@ -5071,10 +5071,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
-                    /* Context menu for a link. */
+                    /* Construct the link context menu, depending on what kind of link was clicked. */
                     interactingWithLink_DocumentWidget_(d, d->contextLink->linkId); /* perhaps will be triggered */
                     const iString *linkUrl  = linkUrl_GmDocument(view->doc, d->contextLink->linkId);
-//                    const int      linkFlags = linkFlags_GmDocument(d->doc, d->contextLink->linkId);
                     const iRangecc scheme   = urlScheme_String(linkUrl);
                     const iBool    isGemini = equalCase_Rangecc(scheme, "gemini");
                     iBool          isNative = iFalse;
@@ -5086,39 +5085,48 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             format_CStr("```%s", cstr_String(infoText)),
                             0, 0, NULL });
                     }
-                    if (willUseProxy_App(scheme) || isGemini ||
+                    if (isGemini ||
+                        willUseProxy_App(scheme) ||
+                        equalCase_Rangecc(scheme, "data") ||
                         equalCase_Rangecc(scheme, "file") ||
                         equalCase_Rangecc(scheme, "finger") ||
                         equalCase_Rangecc(scheme, "gopher")) {
                         isNative = iTrue;
                         /* Regular links that we can open. */
-                        pushBackN_Array(
-                            &items,
-                            (iMenuItem[]){ { openTab_Icon " ${link.newtab}",
-                                             0,
-                                             0,
-                                             format_CStr("!open newtab:1 origin:%s url:%s",
-                                                         cstr_String(id_Widget(w)),
-                                                         cstr_String(linkUrl)) },
-                                           { openTabBg_Icon " ${link.newtab.background}",
-                                             0,
-                                             0,
-                                             format_CStr("!open newtab:2 origin:%s url:%s",
-                                                         cstr_String(id_Widget(w)),
-                                                         cstr_String(linkUrl)) },
-                                           { "${link.side}",
-                                             0,
-                                             0,
-                                             format_CStr("!open newtab:4 origin:%s url:%s",
-                                                         cstr_String(id_Widget(w)),
-                                                         cstr_String(linkUrl)) },
-                                           { "${link.side.newtab}",
-                                             0,
-                                             0,
-                                             format_CStr("!open newtab:5 origin:%s url:%s",
-                                                         cstr_String(id_Widget(w)),
-                                                         cstr_String(linkUrl)) } },
-                            4);
+                        pushBackN_Array(&items,
+                                        (iMenuItem[]){
+                                            { openTab_Icon " ${link.newtab}",
+                                              0,
+                                              0,
+                                              format_CStr("!open newtab:1 origin:%s url:%s",
+                                                          cstr_String(id_Widget(w)),
+                                                          cstr_String(linkUrl)) },
+                                            { openTabBg_Icon " ${link.newtab.background}",
+                                              0,
+                                              0,
+                                              format_CStr("!open newtab:2 origin:%s url:%s",
+                                                          cstr_String(id_Widget(w)),
+                                                          cstr_String(linkUrl)) },
+                                            { "${link.side}",
+                                              0,
+                                              0,
+                                              format_CStr("!open newtab:4 origin:%s url:%s",
+                                                          cstr_String(id_Widget(w)),
+                                                          cstr_String(linkUrl)) },
+                                            { "${link.side.newtab}",
+                                              0,
+                                              0,
+                                              format_CStr("!open newtab:5 origin:%s url:%s",
+                                                          cstr_String(id_Widget(w)),
+                                                          cstr_String(linkUrl)) },
+                                            { openWindow_Icon " ${link.newwindow}",
+                                              0,
+                                              0,
+                                              format_CStr("!open newwindow:1 origin:%s url:%s",
+                                                          cstr_String(id_Widget(w)),
+                                                          cstr_String(linkUrl)) },
+                                        },
+                                        5);
                         if (deviceType_App() == phone_AppDeviceType) {
                             removeN_Array(&items, size_Array(&items) - 2, iInvalidSize);
                         }

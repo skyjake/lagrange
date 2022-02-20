@@ -187,6 +187,7 @@ void        setTitle_MainWindow             (iMainWindow *, const iString *title
 void        setSnap_MainWindow              (iMainWindow *, int snapMode);
 void        setFreezeDraw_MainWindow        (iMainWindow *, iBool freezeDraw);
 void        setKeyboardHeight_MainWindow    (iMainWindow *, int height);
+iObjectList *listDocuments_MainWindow       (iMainWindow *, const iRoot *rootOrNull);
 void        setSplitMode_MainWindow         (iMainWindow *, int splitMode);
 void        checkPendingSplit_MainWindow    (iMainWindow *);
 void        swapRoots_MainWindow            (iMainWindow *);

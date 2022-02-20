@@ -151,4 +151,4 @@ iRangecc        mediaTypeWithoutParameters_Rangecc  (iRangecc mime);
 const iString * findContainerArchive_Path           (const iString *path);
 
 
-const iString * feedEntryOpenCommand_String (const iString *url, int newTab); /* checks fragment */
+const iString * feedEntryOpenCommand_String (const iString *url, int newTab, int newWindow); /* checks fragment */

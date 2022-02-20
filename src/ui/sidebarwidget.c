@@ -414,9 +414,13 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
-                (iMenuItem[]){ { openTab_Icon " ${feeds.entry.newtab}", 0, 0, "feed.entry.opentab" },
+                (iMenuItem[]){ { openTab_Icon " ${menu.opentab}", 0, 0, "feed.entry.open newtab:1" },
+                               { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "feed.entry.open newtab:2" },
+                               { openWindow_Icon " ${menu.openwindow}", 0, 0, "feed.entry.open newwindow:1" },
+                               { "---", 0, 0, NULL },
                                { circle_Icon " ${feeds.entry.markread}", 0, 0, "feed.entry.toggleread" },
                                { bookmark_Icon " ${feeds.entry.bookmark}", 0, 0, "feed.entry.bookmark" },
+                               { "${menu.copyurl}", 0, 0, "feed.entry.copyurl" },
                                { "---", 0, 0, NULL },
                                { page_Icon " ${feeds.entry.openfeed}", 0, 0, "feed.entry.openfeed" },
                                { edit_Icon " ${feeds.edit}", 0, 0, "feed.entry.edit" },
@@ -424,7 +428,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                                { "---", 0, 0, NULL },
                                { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
                                { reload_Icon " ${feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
-                10);
+                13);
             d->modeMenu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]){
@@ -491,6 +495,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 as_Widget(d),
                 (iMenuItem[]){ { openTab_Icon " ${menu.opentab}", 0, 0, "bookmark.open newtab:1" },
                                { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "bookmark.open newtab:2" },
+                               { openWindow_Icon " ${menu.openwindow}", 0, 0, "bookmark.open newwindow:1" },
                                { "---", 0, 0, NULL },
                                { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
                                { copy_Icon " ${menu.dup}", 0, 0, "bookmark.dup" },
@@ -502,11 +507,11 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                                { "---", 0, 0, NULL },
                                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
                                { "---", 0, 0, NULL },
-                               { add_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
+                               { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
                                { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
                                { "---", 0, 0, NULL },
                                { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" } },
-               17);
+               18);
             d->modeMenu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]){ { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
@@ -571,13 +576,17 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             d->menu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]){
+                    { openTab_Icon " ${menu.opentab}", 0, 0, "history.open newtab:1" },
+                    { openTabBg_Icon " ${menu.opentab.background}", 0, 0, "history.open newtab:2" },
+                    { openWindow_Icon " ${menu.openwindow}", 0, 0, "history.open newwindow:1" },
+                    { "---" },
                     { "${menu.copyurl}", 0, 0, "history.copy" },
                     { bookmark_Icon " ${sidebar.entry.bookmark}", 0, 0, "history.addbookmark" },
                     { "---", 0, 0, NULL },
                     { close_Icon " ${menu.forgeturl}", 0, 0, "history.delete" },
                     { "---", 0, 0, NULL },
                     { delete_Icon " " uiTextCaution_ColorEscape "${history.clear}", 0, 0, "history.clear confirm:1" },
-                }, 6);
+                }, 10);
             d->modeMenu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]){
@@ -981,7 +990,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
         }
         case feeds_SidebarMode: {
             postCommandString_Root(get_Root(),
-                feedEntryOpenCommand_String(&item->url, openTabMode_Sym(modState_Keys())));
+                feedEntryOpenCommand_String(&item->url, openTabMode_Sym(modState_Keys()), 0));
             break;
         }
         case bookmarks_SidebarMode:
@@ -1641,8 +1650,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (startsWith_CStr(cmd, "feed.entry.") && d->mode == feeds_SidebarMode) {
             const iSidebarItem *item = d->contextItem;
             if (item) {
-                if (isCommand_Widget(w, ev, "feed.entry.opentab")) {
-                    postCommandString_Root(get_Root(), feedEntryOpenCommand_String(&item->url, 1));
+                if (isCommand_Widget(w, ev, "feed.entry.open")) {
+                    const char *cmd = command_UserEvent(ev);
+                    postCommandString_Root(get_Root(), feedEntryOpenCommand_String(&item->url,
+                                                                                   argLabel_Command(cmd, "newtab"),
+                                                                                   argLabel_Command(cmd, "newwindow")));
                     return iTrue;
                 }
                 if (isCommand_Widget(w, ev, "feed.entry.toggleread")) {

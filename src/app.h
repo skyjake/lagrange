@@ -129,6 +129,7 @@ void        setActiveWindow_App (iMainWindow *win);
 void        closeWindow_App     (iMainWindow *win);
 size_t      numWindows_App      (void);
 size_t      windowIndex_App     (const iMainWindow *win);
+iMainWindow *newMainWindow_App  (void);
 const iPtrArray *mainWindows_App(void);
 void        addPopup_App        (iWindow *popup);
 void        removePopup_App     (iWindow *popup);

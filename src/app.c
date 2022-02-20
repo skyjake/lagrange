@@ -1878,7 +1878,7 @@ void postCommand_Root(iRoot *d, const char *command) {
     ev.user.data2 = d; /* all events are root-specific */
     ev.user.windowID = d ? id_Window(d->window) : 0; /* root-specific means window-specific */
     SDL_PushEvent(&ev);
-    iWindow *win = get_Window();
+    iWindow *win = d ? d->window : NULL;
 #if defined (iPlatformAndroid)
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s[command] {%d} %s",
                 app_.isLoadingPrefs ? "[Prefs] " : "",
@@ -1977,6 +1977,13 @@ size_t numWindows_App(void) {
 
 size_t windowIndex_App(const iMainWindow *win) {
     return indexOf_PtrArray(&app_.mainWindows, win); 
+}
+
+iMainWindow *newMainWindow_App(void) {
+    iApp *d = &app_;
+    iMainWindow *win = new_MainWindow(initialWindowRect_App_(d, size_PtrArray(&d->mainWindows)));
+    addWindow_App(win);
+    return win;
 }
 
 const iPtrArray *mainWindows_App(void) {
@@ -3038,7 +3045,18 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue; /* invalid command */
         }
         if (findWidget_App("prefs")) {
-            postCommand_App("prefs.dismiss");        
+            postCommand_App("prefs.dismiss");
+        }
+        if (argLabel_Command(cmd, "newwindow")) {
+            const iRangecc gotoheading = range_Command(cmd, "gotoheading");
+            const iRangecc gotourlheading = range_Command(cmd, "gotourlheading");
+            postCommandf_Root(get_Root(), "window.new%s%s%s%s url:%s",
+                              isEmpty_Range(&gotoheading) ? "" : " gotoheading:",
+                              isEmpty_Range(&gotoheading) ? "" : cstr_Rangecc(gotoheading),
+                              isEmpty_Range(&gotourlheading) ? "" : " gotourlheading:",
+                              isEmpty_Range(&gotourlheading) ? "" : cstr_Rangecc(gotourlheading),
+                              urlArg);
+            return iTrue;
         }
         iString    *url     = collectNewCStr_String(urlArg);
         const iBool noProxy = argLabel_Command(cmd, "noproxy") != 0;
@@ -3187,7 +3205,12 @@ iBool handleCommand_App(const char *cmd) {
         addWindow_App(newWin); /* takes ownership */
         SDL_ShowWindow(newWin->base.win);
         setCurrent_Window(newWin);
-        postCommand_Root(newWin->base.roots[0], "~navigate.home");
+        if (hasLabel_Command(cmd, "url")) {
+            postCommandf_Root(newWin->base.roots[0], "~open %s", cmd + 11 /* all arguments passed on */);
+        }
+        else {
+            postCommand_Root(newWin->base.roots[0], "~navigate.home");
+        }
         postCommand_Root(newWin->base.roots[0], "~window.unfreeze");
         return iTrue;
     }
@@ -3745,21 +3768,7 @@ void revealPath_App(const iString *path) {
 }
 
 iObjectList *listDocuments_App(const iRoot *rootOrNull) {
-    iWindow *win = get_Window();
-    iObjectList *docs = new_ObjectList();
-    iForIndices(i, win->roots) {
-        iRoot *root = win->roots[i];
-        if (!root) continue;
-        if (!rootOrNull || root == rootOrNull) {
-            const iWidget *tabs = findChild_Widget(root->widget, "doctabs");
-            iForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
-                if (isInstance_Object(i.object, &Class_DocumentWidget)) {
-                    pushBack_ObjectList(docs, i.object);
-                }
-            }
-        }
-    }
-    return docs;
+    return listDocuments_MainWindow(get_MainWindow(), rootOrNull);
 }
 
 iStringSet *listOpenURLs_App(void) {
