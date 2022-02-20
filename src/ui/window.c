@@ -1346,6 +1346,7 @@ void draw_MainWindow(iMainWindow *d) {
             }
         }
     }
+    setCurrent_Window(d);
     const int   winFlags = SDL_GetWindowFlags(d->base.win);
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
     iPaint p;
