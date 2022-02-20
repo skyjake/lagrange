@@ -471,16 +471,17 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->isMinimized   = iFalse;
     d->isInvalidated = iFalse; /* set when posting event, to avoid repeated events */
     d->isMouseInside = iTrue;
+    set_Atomic(&d->isRefreshPending, iTrue);
     d->ignoreClick   = iFalse;
     d->focusGainedAt = SDL_GetTicks();
-    d->presentTime   = 0.0;
     d->frameTime     = SDL_GetTicks();
     d->keyRoot       = NULL;
     d->borderShadow  = NULL;
+    d->frameCount    = 0;
     iZap(d->roots);
     iZap(d->cursors);
     create_Window_(d, rect, flags);
-        /* No luck, maybe software only? This should always work as long as there is a display. */
+    /* No luck, maybe software only? This should always work as long as there is a display. */
     //    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
 //        flags &= ~SDL_WINDOW_OPENGL;
 //        start_PerfTimer(create_Window_);
@@ -1430,7 +1431,11 @@ void draw_MainWindow(iMainWindow *d) {
         }
         setCurrent_Root(NULL);
 #if !defined (NDEBUG)
-        draw_Text(uiLabelBold_FontId, safeRect_Root(w->roots[0]).pos, red_ColorId, "%d", drawCount_);
+        draw_Text(uiLabelBold_FontId,
+                  safeRect_Root(w->roots[0]).pos,
+                  d->base.frameCount & 1 ? red_ColorId : white_ColorId,
+                  "%d",
+                  drawCount_);
         drawCount_ = 0;
 #endif
     }

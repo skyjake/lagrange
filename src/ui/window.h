@@ -86,6 +86,7 @@ struct Impl_Window {
     iBool         isMinimized;
     iBool         isMouseInside;
     iBool         isInvalidated;
+    iAtomicInt    isRefreshPending;
     iBool         ignoreClick;
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
@@ -98,13 +99,13 @@ struct Impl_Window {
     float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */
     float         uiScale;
     uint32_t      frameTime;
-    double        presentTime;
     SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
     SDL_Cursor *  pendingCursor;
     iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
     iRoot *       keyRoot;      /* root that has the current keyboard input focus */
     SDL_Texture * borderShadow;
     iText *       text;
+    unsigned int  frameCount;
 };
 
 struct Impl_MainWindow {

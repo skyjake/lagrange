@@ -1761,6 +1761,9 @@ void refresh_App(void) {
         /* Draw each window. */
         iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
+            if (!d->warmupFrames && !exchange_Atomic(&win->isRefreshPending, iFalse)) {
+                continue; /* No need to draw this window. */
+            }
             setCurrent_Window(win);
             switch (win->type) {
                 case main_WindowType: {
@@ -1775,6 +1778,7 @@ void refresh_App(void) {
                     draw_Window(win);
                     break;
             }
+            win->frameCount++;
         }
     }
     if (d->warmupFrames > 0) {
@@ -1847,7 +1851,12 @@ void postRefresh_App(void) {
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     d->isIdling = iFalse;
 #endif
-    const iBool wasPending = exchange_Atomic(&d->pendingRefresh, iTrue);
+    iAtomicInt *pendingWindow = (get_Window() ? &get_Window()->isRefreshPending
+                                              : NULL);
+    iBool wasPending = exchange_Atomic(&d->pendingRefresh, iTrue);
+    if (pendingWindow) {
+        wasPending |= exchange_Atomic(pendingWindow, iTrue);
+    }
     if (!wasPending) {
         SDL_Event ev = { .type = SDL_USEREVENT };
         ev.user.code = refresh_UserEventCode;
