@@ -1644,6 +1644,8 @@ static void paste_InputWidget_(iInputWidget *d) {
         if (d->inFlags & isUrl_InputWidgetFlag) {
             if (prefs_App()->decodeUserVisibleURLs) {
                 paste = collect_String(urlDecode_String(paste));
+                replace_String(paste, "\n", "%0A");
+                replace_String(paste, "\t", "%09");
             }
             else {
                 urlEncodePath_String(paste);
