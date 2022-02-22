@@ -357,8 +357,6 @@ static void initFonts_Text_(iText *d) {
     printf("[Text] %zu font variants ready\n", size_Array(&d->fonts));
 #endif
     gap_Text = iRound(gap_UI * d->contentFontSize);
-//    d->missingGlyphs = iFalse;
-//    iZap(d->missingChars);
 }
 
 static void deinitFonts_Text_(iText *d) {
@@ -506,6 +504,13 @@ void resetFonts_Text(iText *d) {
     deinitCache_Text_(d);
     initCache_Text_(d);
     initFonts_Text_(d);
+    setCurrent_Text(oldActive);
+}
+
+void resetFontCache_Text(iText *d) {
+    iText *oldActive = activeText_;
+    setCurrent_Text(d); /* some routines rely on the global `activeText_` pointer */
+    resetCache_Text_(d);
     setCurrent_Text(oldActive);
 }
 

@@ -115,6 +115,7 @@ void    setCurrent_Text         (iText *);
 
 void    setDocumentFontSize_Text(iText *, float fontSizeFactor); /* affects all except `default*` fonts */
 void    resetFonts_Text         (iText *);
+void    resetFontCache_Text     (iText *);
 
 int     lineHeight_Text         (int fontId);
 float   emRatio_Text            (int fontId); /* em advance to line height ratio */

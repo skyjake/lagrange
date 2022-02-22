@@ -429,6 +429,11 @@ static void loadPrefs_App_(iApp *d) {
                 insert_StringSet(d->prefs.disabledFontPacks,
                                  collect_String(suffix_Command(cmd, "id")));
             }
+            else if (equal_Command(cmd, "font.set")) {
+                /* Handle this immediately so the first initialization of the fonts already
+                   has the right ones. */
+                handleCommand_App(cmd);
+            }
 #if defined (iPlatformAndroidMobile)
             else if (equal_Command(cmd, "returnkey.set")) {
                 /* Hardcoded to avoid accidental presses of the virtual Return key. */
@@ -1699,7 +1704,8 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
     if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
         const SDL_WindowEvent *winev = &event->window;
 #if defined (iPlatformMsys)
-        resetFonts_Text(text_Window(d->window)); {
+        /* TODO: Investigate if this is still necessary. */
+        resetFontCache_Text(text_Window(d->window)); {
             SDL_Event u = { .type = SDL_USEREVENT };
             u.user.code = command_UserEventCode;
             u.user.data1 = strdup("theme.changed auto:1");
@@ -2660,28 +2666,16 @@ iBool handleCommand_App(const char *cmd) {
             }
         }
         if (wasChanged) {
-            resetFonts_Text(text_Window(get_MainWindow()));
+            if (isFinishedLaunching_App()) { /* there's a reset when launch is finished */
+                resetFonts_Text(text_Window(get_MainWindow()));
+            }
+            postCommand_App("font.changed");
         }
         if (!isFrozen) {
-            postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
         }
         return iTrue;
     }
-#if 0
-    else if (equal_Command(cmd, "headingfont.set")) {
-        if (!isFrozen) {
-            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
-        }
-        d->prefs.headingFont = arg_Command(cmd);
-        setHeadingFont_Text(text_Window(d->window), d->prefs.headingFont);
-        if (!isFrozen) {
-            postCommand_App("font.changed");
-            postCommand_App("window.unfreeze");
-        }
-        return iTrue;
-    }
-#endif
     else if (equal_Command(cmd, "zoom.set")) {
         if (!isFrozen) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue); /* no intermediate draws before docs updated */
@@ -2823,7 +2817,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         d->prefs.fontSmoothing = arg_Command(cmd) != 0;
         if (!isFrozen) {
-            resetFonts_Text(text_Window(get_MainWindow())); /* clear the glyph cache */
+            resetFontCache_Text(text_Window(get_MainWindow())); /* clear the glyph cache */
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
         }
@@ -2858,7 +2852,6 @@ iBool handleCommand_App(const char *cmd) {
             d->prefs.monospaceGopher = isSet;
         }
         if (!isFrozen) {
-            //resetFonts_Text(); /* clear the glyph cache */
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
         }

@@ -708,7 +708,7 @@ static void invalidate_MainWindow_(iMainWindow *d, iBool forced) {
             SDL_DestroyTexture(d->backBuf);
             d->backBuf = NULL;
         }
-        resetFonts_Text(text_Window(d));
+        resetFontCache_Text(text_Window(d));
         postCommand_App("theme.changed auto:1"); /* forces UI invalidation */
     }
 }
