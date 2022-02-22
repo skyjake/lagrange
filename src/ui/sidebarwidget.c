@@ -837,7 +837,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
 #endif
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     iWidget *vdiv = makeVDiv_Widget();
-    addChildFlags_Widget(w, vdiv, resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
+    addChildFlags_Widget(w, iClob(vdiv), resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
     iZap(d->modeButtons);
     d->resizer       = NULL;
     d->list          = NULL;
