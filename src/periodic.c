@@ -107,6 +107,8 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
     iConstForEach(Array, i, &d->commands.values) {
         const iPeriodicCommand *pc = i.value;
         iAssert(isInstance_Object(pc->context, &Class_Widget));
+        iAssert(~flags_Widget(constAs_Widget(pc->context)) & destroyPending_WidgetFlag);
+        iAssert(!contains_PtrSet(&d->pendingRemoval, pc->context));
         iRoot *root = constAs_Widget(pc->context)->root;
         if (root) {
             const SDL_UserEvent ev = {
@@ -149,6 +151,7 @@ void deinit_Periodic(iPeriodic *d) {
 
 void add_Periodic(iPeriodic *d, iAny *context, const char *command) {
     iAssert(isInstance_Object(context, &Class_Widget));
+    iAssert(~flags_Widget(constAs_Widget(context)) & destroyPending_WidgetFlag);
     lock_Mutex(d->mutex);
     size_t pos;
     iPeriodicCommand key = { .context = context };
@@ -172,4 +175,9 @@ void remove_Periodic(iPeriodic *d, iAny *context) {
         removePending_Periodic_(d);
     }
     unlock_Mutex(d->mutex);
+}
+
+iBool contains_Periodic(const iPeriodic *d, iAnyObject *context) {
+    iPeriodicCommand key = { .context = context };
+    return contains_SortedArray(&d->commands, &key);
 }

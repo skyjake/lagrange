@@ -516,6 +516,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
 
 static void deinitRoots_Window_(iWindow *d) {
     iRecycle();
+    setCurrent_Window(d);
     iForIndices(i, d->roots) {
         if (d->roots[i]) {
             setCurrent_Root(d->roots[i]);
@@ -524,6 +525,7 @@ static void deinitRoots_Window_(iWindow *d) {
         }
     }
     setCurrent_Root(NULL);
+    setCurrent_Window(NULL);
 }
 
 void deinit_Window(iWindow *d) {

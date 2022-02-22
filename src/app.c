@@ -52,6 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/commandline.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
+#include <the_Foundation/garbage.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/process.h>
 #include <the_Foundation/sortedarray.h>
@@ -2002,7 +2003,6 @@ const iPtrArray *mainWindows_App(void) {
 void setActiveWindow_App(iMainWindow *win) {
     iApp *d = &app_;
     d->window = win;
-    printf("Active window: %p\n", win); fflush(stdout);
 }
 
 void addPopup_App(iWindow *popup) {
@@ -2285,7 +2285,13 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
 
 void closeWindow_App(iMainWindow *win) {
     iApp *d = &app_;
-    delete_MainWindow(win);
+    iForIndices(r, win->base.roots) {
+        if (win->base.roots[r]) {
+            setTreeFlags_Widget(win->base.roots[r]->widget, destroyPending_WidgetFlag, iTrue);
+        }
+    }
+    collect_Garbage(win, (iDeleteFunc) delete_MainWindow);
+    postRefresh_App();
     if (d->window == win) {
         /* Activate another window. */
         iForEach(PtrArray, i, &d->mainWindows) {

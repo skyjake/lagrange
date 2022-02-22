@@ -122,7 +122,7 @@ iDefineObjectConstruction(Widget)
 
 void init_Widget(iWidget *d) {
     init_String(&d->id);
-    d->root           = get_Root(); /* never changes after this */
+    d->root           = get_Root();
     d->flags          = 0;
     d->flags2         = 0;
     d->rect           = zero_Rect();
@@ -154,8 +154,18 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
     }
 }
 
+static int treeSize_Widget_(const iWidget *d, int n) {
+    iConstForEach(ObjectList, i, d->children) {
+        n = treeSize_Widget_(i.object, n);
+    }
+    return n + size_ObjectList(d->children);
+}
+
 void deinit_Widget(iWidget *d) {
+//    const int nt = treeSize_Widget_(d, 0);
+//    const int no = totalCount_Object();
     releaseChildren_Widget(d);
+//    printf("deinit_Widget %p (%s):\ttreesize=%d\td_obj=%d\n", d, class_Widget(d)->name, nt, totalCount_Object() - no);
     delete_WidgetDrawBuffer(d->drawBuf);
 #if 0 && !defined (NDEBUG)
     printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
@@ -180,6 +190,8 @@ void deinit_Widget(iWidget *d) {
         releaseNativeMenu_Widget(d);
     }
     widgetDestroyed_Touch(d);
+    iAssert(!contains_Periodic(periodic_App(), d));
+    d->root = NULL;
 }
 
 static void aboutToBeDestroyed_Widget_(iWidget *d) {
@@ -248,6 +260,15 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
             d->flags & resizeToParentWidth_WidgetFlag) {
             printf("[Widget] Conflicting flags for ");
             identify_Widget(d);
+        }
+    }
+}
+
+void setTreeFlags_Widget(iWidget *d, int64_t flags, iBool set) {
+    if (d) {
+        setFlags_Widget(d, flags, iTrue);
+        iForEach(ObjectList, i, d->children) {
+            setTreeFlags_Widget(i.object, flags, set);
         }
     }
 }

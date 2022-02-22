@@ -284,6 +284,7 @@ iBool   isBeingVisuallyOffsetByReference_Widget (const iWidget *);
 int     visualOffsetByReference_Widget          (const iWidget *);
 void    setId_Widget                (iWidget *, const char *id);
 void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
+void    setTreeFlags_Widget         (iWidget *, int64_t flags, iBool set);
 void    setPos_Widget               (iWidget *, iInt2 pos);
 void    setFixedSize_Widget         (iWidget *, iInt2 fixedSize);
 void    setMinSize_Widget           (iWidget *, iInt2 minSize);
