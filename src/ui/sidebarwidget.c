@@ -847,46 +847,46 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     /* On a phone, the right sidebar is not used. */
     const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
     if (isPhone) {
-        iLabelWidget *sheetTitle =
-            addChildFlags_Widget(vdiv,
-                                 iClob(new_LabelWidget("", NULL)),
-                                 collapse_WidgetFlag |
-                                 extraPadding_WidgetFlag | frameless_WidgetFlag);
+        iLabelWidget *sheetTitle = addChildFlags_Widget(
+            vdiv,
+            iClob(new_LabelWidget("", NULL)),
+            collapse_WidgetFlag | extraPadding_WidgetFlag | frameless_WidgetFlag);
         setBackgroundColor_Widget(as_Widget(sheetTitle), uiBackground_ColorId);
-        iLabelWidget *closeButton = addChildFlags_Widget(as_Widget(sheetTitle),
-                                                  iClob(new_LabelWidget(uiTextAction_ColorEscape "${sidebar.close}", "sidebar.toggle")),
-                                                  extraPadding_WidgetFlag | frameless_WidgetFlag |
-                                                  alignRight_WidgetFlag | moveToParentRightEdge_WidgetFlag);
-        as_Widget(sheetTitle)->flags2 |= slidingSheetDraggable_WidgetFlag2; /* phone */
+        iLabelWidget *closeButton = addChildFlags_Widget(
+            as_Widget(sheetTitle),
+            iClob(new_LabelWidget(uiTextAction_ColorEscape "${sidebar.close}", "sidebar.toggle")),
+            extraPadding_WidgetFlag | frameless_WidgetFlag | alignRight_WidgetFlag |
+                moveToParentRightEdge_WidgetFlag);
+        as_Widget(sheetTitle)->flags2 |= slidingSheetDraggable_WidgetFlag2;  /* phone */
         as_Widget(closeButton)->flags2 |= slidingSheetDraggable_WidgetFlag2; /* phone */
         setId_Widget(as_Widget(sheetTitle), "sidebar.title");
         setId_Widget(as_Widget(closeButton), "sidebar.close");
         setFont_LabelWidget(sheetTitle, uiLabelBig_FontId);
         setFont_LabelWidget(closeButton, uiLabelBigBold_FontId);
-        iConnect(Root, get_Root(), visualOffsetsChanged, d, updateSlidingSheetHeight_SidebarWidget_);
+        iConnect(
+            Root, get_Root(), visualOffsetsChanged, d, updateSlidingSheetHeight_SidebarWidget_);
     }
-        iWidget *buttons = new_Widget();        
-        setId_Widget(buttons, "buttons");
-        setDrawBufferEnabled_Widget(buttons, iTrue);
-        for (int i = 0; i < max_SidebarMode; i++) {
+    iWidget *buttons = new_Widget();
+    setId_Widget(buttons, "buttons");
+    setDrawBufferEnabled_Widget(buttons, iTrue);
+    for (int i = 0; i < max_SidebarMode; i++) {
         if (i == identities_SidebarMode && deviceType_App() != desktop_AppDeviceType) {
             /* On mobile, identities are managed via Settings. */
-                continue;
-            }
-            d->modeButtons[i] = addChildFlags_Widget(
-                buttons,
-                iClob(new_LabelWidget(
-                    tightModeLabels_[i],
-                    format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
-                    frameless_WidgetFlag | noBackground_WidgetFlag);
-        as_Widget(d->modeButtons[i])->flags2 |= slidingSheetDraggable_WidgetFlag2; /* phone */
+            continue;
         }
-        setButtonFont_SidebarWidget(d, isPhone ? uiLabelBig_FontId : uiLabel_FontId);
-        addChildFlags_Widget(vdiv,
-                             iClob(buttons),
+        d->modeButtons[i] = addChildFlags_Widget(
+            buttons,
+            iClob(new_LabelWidget(tightModeLabels_[i],
+                                  format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
+            frameless_WidgetFlag | noBackground_WidgetFlag);
+        as_Widget(d->modeButtons[i])->flags2 |= slidingSheetDraggable_WidgetFlag2; /* phone */
+    }
+    setButtonFont_SidebarWidget(d, isPhone ? uiLabelBig_FontId : uiLabel_FontId);
+    addChildFlags_Widget(vdiv,
+                         iClob(buttons),
                          arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                              arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag);
-        setBackgroundColor_Widget(buttons, uiBackgroundSidebar_ColorId);
+    setBackgroundColor_Widget(buttons, uiBackgroundSidebar_ColorId);
     iWidget *content = new_Widget();
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
     iWidget *listAndActions = makeVDiv_Widget();
@@ -904,29 +904,31 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     addChildFlags_Widget(listAndActions,
                          iClob(listArea),
                          expand_WidgetFlag); // | drawBackgroundToHorizontalSafeArea_WidgetFlag);
-    setId_Widget(addChildPosFlags_Widget(listAndActions,
-                                         iClob(d->actions = new_Widget()),
-                                         /*isPhone ? front_WidgetAddPos :*/ back_WidgetAddPos,
-                                         arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
-                                         resizeWidthOfChildren_WidgetFlag), // |
-//                                             drawBackgroundToHorizontalSafeArea_WidgetFlag),
-                 "actions");
+    setId_Widget(
+        addChildPosFlags_Widget(listAndActions,
+                                iClob(d->actions = new_Widget()),
+                                /*isPhone ? front_WidgetAddPos :*/ back_WidgetAddPos,
+                                arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
+                                    resizeWidthOfChildren_WidgetFlag), // |
+        //                                             drawBackgroundToHorizontalSafeArea_WidgetFlag),
+        "actions");
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(findChild_Widget(w, "sidebar.title"), borderTop_WidgetFlag, iTrue);
         setFlags_Widget(d->actions, drawBackgroundToBottom_WidgetFlag, iTrue);
         setBackgroundColor_Widget(d->actions, uiBackground_ColorId);
     }
     else {
-    setBackgroundColor_Widget(d->actions, uiBackgroundSidebar_ColorId);
+        setBackgroundColor_Widget(d->actions, uiBackgroundSidebar_ColorId);
     }
-    d->contextItem = NULL;
+    d->contextItem  = NULL;
     d->contextIndex = iInvalidPos;
-    d->blank = new_Widget();
+    d->blank        = new_Widget();
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
     addChildFlags_Widget(vdiv, iClob(content), expand_WidgetFlag);
     setMode_SidebarWidget(d,
-                          /*deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide ?
-                          identities_SidebarMode :*/ bookmarks_SidebarMode);
+                          /*deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide
+                          ? identities_SidebarMode :*/
+                          bookmarks_SidebarMode);
     d->resizer =
         addChildFlags_Widget(w,
                              iClob(new_Widget()),
@@ -970,7 +972,7 @@ iBool setButtonFont_SidebarWidget(iSidebarWidget *d, int font) {
 static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
     if (d->mode == identities_SidebarMode) {
         return constHoverIdentity_CertListWidget(d->certList);
-        }
+    }
     return NULL;
 }
 
