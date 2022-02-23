@@ -1342,7 +1342,7 @@ void createUserInterface_Root(iRoot *d) {
                          iClob(newIcon_LabelWidget(leftHalf_Icon, 0, 0, "sidebar.toggle")),
                          collapse_WidgetFlag),
                      "navbar.action3");
-        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
+        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag | fixedHeight_WidgetFlag);
         iInputWidget *url;
         /* URL input field. */ {
             url = new_InputWidget(0);
@@ -1492,7 +1492,7 @@ void createUserInterface_Root(iRoot *d) {
             setAlignVisually_LabelWidget(idButton, iTrue);
             setId_Widget(addChildFlags_Widget(navBar, iClob(idButton), collapse_WidgetFlag), "navbar.ident");
         }
-        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
+        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag | fixedHeight_WidgetFlag);
         setId_Widget(addChildFlags_Widget(navBar,
                                           iClob(newIcon_LabelWidget(
                                               home_Icon, 0, 0, "navigate.home")),

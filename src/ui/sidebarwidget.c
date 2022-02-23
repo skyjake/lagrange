@@ -1372,9 +1372,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iFalse;
     }
     else if (isMetricsChange_UserEvent(ev)) {
-        if (isVisible_Widget(w)) {
-            w->rect.size.x = d->widthAsGaps * gap_UI;
-        }
+        w->rect.size.x = d->widthAsGaps * gap_UI;
         updateMetrics_SidebarWidget_(d);
         arrange_Widget(w);
         checkModeButtonLayout_SidebarWidget_(d);
