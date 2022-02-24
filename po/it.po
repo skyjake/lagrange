@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:50+0000\n"
-"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
+"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -977,3 +977,45 @@ msgstr "Non Letti"
 
 msgid "sidebar.action.ident.import"
 msgstr "Importa…"
+
+msgid "heading.bookmark.add"
+msgstr "Aggiungi Segnalibro"
+
+msgid "heading.prefs.pagecontent"
+msgstr "Colori della pagina"
+
+msgid "heading.subscribe"
+msgstr "Iscriviti alla Pagina"
+
+msgid "heading.prefs"
+msgstr "Preferenze"
+
+msgid "heading.prefs.certs"
+msgstr "Certificati"
+
+msgid "heading.prefs.paragraph"
+msgstr "Paragrafo"
+
+msgid "heading.newident.missing"
+msgstr "Informazione mancante"
+
+msgid "heading.newident.date.bad"
+msgstr "Data invalida"
+
+msgid "heading.feedcfg"
+msgstr "Impostazioni Feed"
+
+msgid "heading.bookmark.edit"
+msgstr "Modifica Segnalibro"
+
+msgid "heading.prefs.proxies"
+msgstr "Proxy"
+
+msgid "heading.prefs.scrolling"
+msgstr "Scorrimento"
+
+msgid "heading.prefs.widelayout"
+msgstr "Layout ampio"
+
+msgid "heading.prefs.uitheme"
+msgstr "Colori dell'interfaccia"
