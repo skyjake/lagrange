@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-24 10:50+0000\n"
-"Last-Translator: dalz <weblate@alsd.eu>\n"
+"PO-Revision-Date: 2022-02-24 10:53+0000\n"
+"Last-Translator: Marco Andronaco <andronacomarco@gmail.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -86,3 +86,23 @@ msgstr "intero"
 
 msgid "numbertype.float"
 msgstr "numero in virgola mobile"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII art: la parola \"Lagrange\" scritta in grande"
+
+msgid "menu.split.horizontal"
+msgstr "Orizzontale"
+
+msgid "menu.split.vertical"
+msgstr "Verticale"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "L'ultimo aggiornamento risale a un momento fa."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "L'ultimo aggiornamento risale a %s."
+
+msgid "menu.openlocation"
+msgstr "Apri Indirizzo…"
