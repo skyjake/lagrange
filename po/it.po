@@ -478,3 +478,9 @@ msgstr "Errore nel salvataggio del file"
 
 msgid "heading.import.bookmarks"
 msgstr "Importa segnalibri"
+
+msgid "heading.openlink"
+msgstr "Apri link"
+
+msgid "heading.file.delete"
+msgstr "Cancella file"
