@@ -310,6 +310,7 @@ static void setupFontVariants_Text_(iText *d, const iFontSpec *spec, int baseId)
 }
 
 iLocalDef iFont *font_Text_(enum iFontId id) {
+    iAssert(activeText_);
     return at_Array(&activeText_->fonts, id & mask_FontId);
 }
 

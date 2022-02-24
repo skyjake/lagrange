@@ -279,6 +279,7 @@ void setPos_Widget(iWidget *d, iInt2 pos) {
 }
 
 void setFixedSize_Widget(iWidget *d, iInt2 fixedSize) {
+    if (!d) return;
     int flags = fixedSize_WidgetFlag;
     if (fixedSize.x < 0) {
         fixedSize.x = d->rect.size.x;

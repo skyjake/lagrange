@@ -652,7 +652,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
     if (equal_Command(cmd, "window.focus.lost") ||
         equal_Command(cmd, "window.focus.gained")) return iTrue;
     /* TODO: Perhaps a common way of indicating which commands are notifications and should not
-       be reacted to by menus?! */
+       be reacted to by menus?! A prefix character could do the trick. */
     return equal_Command(cmd, "media.updated") ||
            equal_Command(cmd, "media.player.update") ||
            startsWith_CStr(cmd, "feeds.update.") ||
@@ -669,6 +669,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "visited.changed") ||
            (deviceType_App() == desktop_AppDeviceType && equal_Command(cmd, "window.resized")) ||
            equal_Command(cmd, "widget.overflow") ||
+           equal_Command(cmd, "metrics.changed") ||
            equal_Command(cmd, "window.reload.update") ||
            equal_Command(cmd, "window.mouse.exited") ||
            equal_Command(cmd, "window.mouse.entered") ||

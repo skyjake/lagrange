@@ -669,7 +669,7 @@ static void checkLoadAnimation_Root_(iRoot *d) {
 }
 
 void updatePadding_Root(iRoot *d) {
-    if (d == NULL) return;
+    if (!d) return;
 #if defined (iPlatformAppleMobile)
     iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
     float left, top, right;
@@ -1231,13 +1231,16 @@ void updateMetrics_Root(iRoot *d) {
     iWidget      *embedPad   = findChild_Widget(navBar, "url.embedpad");
     iWidget      *urlButtons = findChild_Widget(navBar, "url.buttons");
     iLabelWidget *idName     = findChild_Widget(d->widget, "toolbar.name");
-    setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
-//    navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
-    setFixedSize_Widget(embedPad, init_I2(width_Widget(urlButtons) + gap_UI / 2, 1));
-    rightEmbed->rect.pos.y = gap_UI;
+    if (navBar) {
+        setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
+        setFixedSize_Widget(embedPad, init_I2(width_Widget(urlButtons) + gap_UI / 2, 1));
+        rightEmbed->rect.pos.y = gap_UI;
+    }
     updatePadding_Root(d);
     arrange_Widget(d->widget);
-    updateUrlInputContentPadding_(navBar);
+    if (navBar) {
+        updateUrlInputContentPadding_(navBar);
+    }
     if (idName) {
         setFixedSize_Widget(as_Widget(idName),
                             init_I2(-1, 2 * gap_UI + lineHeight_Text(uiLabelTiny_FontId)));
