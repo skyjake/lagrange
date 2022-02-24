@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:42+0000\n"
-"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -606,3 +606,88 @@ msgstr "Porta del caricamento per Titan"
 
 msgid "heading.upload"
 msgstr "Carica con Titan"
+
+msgid "bookmark.export.format.folders"
+msgstr "La struttura delle calrtelle è definita dai livelli 2/3 dei titoli."
+
+msgid "upload.port"
+msgstr "Porta…"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Linee puntate e citazioni sono riservati per informazioni addizionali per il "
+"precedente segnalibro. Le linee di testo e preformattate vengono considerate "
+"commenti e dovrebbero essere ignorate."
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTITÀ"
+
+msgid "heading.upload.text"
+msgstr "Testo"
+
+msgid "hint.upload.text"
+msgstr "scrivi del testo da caricare"
+
+msgid "upload.file.name"
+msgstr "Nome del file:"
+
+msgid "upload.file.drophere"
+msgstr "(trascina un file sulla finestra)"
+
+msgid "upload.file.size"
+msgstr "Dimensione del file:"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "STORICO"
+
+msgid "upload.mime"
+msgstr "Tipo MIME:"
+
+msgid "hint.upload.token"
+msgstr "vedi le istruzioni del server"
+
+msgid "dlg.upload.send"
+msgstr "Carica"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Configura la porta per Titan da usare per questo URL.\n"
+"La porta viene salvata nella configurazione specifica del sito."
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "ISCRIZIONI"
+
+msgid "bookmark.export.format.tags"
+msgstr "Le etichette vengono definite dai titoli di livello 2."
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "SEGNALIBRI"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "CONTENUTO DELLA PAGINA"
+
+msgid "bookmark.export.format.linklines"
+msgstr "Ogni link rappresenta un segnalibro."
+
+msgid "menu.page.upload"
+msgstr "Carica Pagina con Titan"
+
+msgid "heading.upload.file"
+msgstr "File"
+
+msgid "upload.token"
+msgstr "Token per l'upload"
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Questa pagina è formattata in accordo la specifica d'accompagnamento "
+"\"Iscriversi alle pagine Gemini\"."
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "ALTRO"
