@@ -805,9 +805,11 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         return iFalse;
     }
     switch (ev->event) {
+#if SDL_VERSION_ATLEAST(2, 0, 18)
         case SDL_WINDOWEVENT_DISPLAY_CHANGED:
             checkPixelRatioChange_Window_(as_Window(d));
             return iTrue;
+#endif
         case SDL_WINDOWEVENT_EXPOSED:
             d->isExposed = iTrue;
 //            checkPixelRatioChange_Window_(as_Window(d));
