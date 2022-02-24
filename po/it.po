@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-24 10:55+0000\n"
-"Last-Translator: Marco Andronaco <andronacomarco@gmail.com>\n"
+"PO-Revision-Date: 2022-02-24 12:07+0000\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -85,7 +85,7 @@ msgid "numbertype.integer"
 msgstr "intero"
 
 msgid "numbertype.float"
-msgstr "numero in virgola mobile"
+msgstr "numero a virgola mobile"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
@@ -261,3 +261,28 @@ msgstr "Impostazioni…"
 
 msgid "menu.feeds.entrylist"
 msgstr "Mostra i Feed"
+
+msgid "prefs.centershort"
+msgstr "Centrato verticalmente:"
+
+msgid "menu.parent"
+msgstr "Sali di un livello"
+
+msgid "menu.root"
+msgstr "Vai alla radice"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"Vuoi davvero disiscriverti dal feed\n"
+"\"%s\"?"
+
+msgid "menu.quit"
+msgstr "Chiudi Lagrange"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Mostra l'Outline della pagina"
+
+msgid "menu.autoreload"
+msgstr "Imposta Auto-Ricaricamento"
