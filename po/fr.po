@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-28 23:50+0000\n"
-"Last-Translator: Timothée Goguely <timothee@goguely.com>\n"
+"PO-Revision-Date: 2022-02-23 21:50+0000\n"
+"Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -220,7 +220,7 @@ msgstr[0] "%d heure"
 msgstr[1] "%d heures"
 
 msgid "heading.prefs"
-msgstr "PRÉFÉRENCES"
+msgstr "Préférences"
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.artist"
@@ -392,10 +392,10 @@ msgid "dlg.save.size"
 msgstr "Taille :"
 
 msgid "heading.autoreload"
-msgstr "RECHARGEMENT AUTO"
+msgstr "Rechargement auto"
 
 msgid "heading.pageinfo"
-msgstr "INFORMATIONS SUR LA PAGE"
+msgstr "Informations sur la page"
 
 msgid "pageinfo.header.cached"
 msgstr "(contenu en cache)"
@@ -404,7 +404,7 @@ msgid "ident.delete"
 msgstr "Supprimer l’identité…"
 
 msgid "heading.ident.delete"
-msgstr "SUPPRESSION D’IDENTITÉ"
+msgstr "Supprimer l’identité"
 
 msgid "sidebar.empty.idents"
 msgstr "Aucune identité"
@@ -633,7 +633,7 @@ msgid "toolbar.outline"
 msgstr "Sommaire"
 
 msgid "heading.feedcfg"
-msgstr "PARAMÈTRES DE FLUX"
+msgstr "Paramètres de flux"
 
 #, c-format
 msgid "dlg.confirm.unsub"
@@ -801,16 +801,16 @@ msgid "heading.prefs.network"
 msgstr "Réseau"
 
 msgid "heading.prefs.paragraph"
-msgstr "PARAGRAPHE"
+msgstr "Paragraphe"
 
 msgid "prefs.quoteicon"
 msgstr "Indicateur de citation :"
 
 msgid "heading.prefs.proxies"
-msgstr "PROXYS"
+msgstr "Proxys"
 
 msgid "heading.prefs.scrolling"
-msgstr "DÉFILEMENT"
+msgstr "Défilement"
 
 msgid "prefs.centershort"
 msgstr "Centrage vertical :"
@@ -960,7 +960,7 @@ msgid "ident.showuse"
 msgstr "Afficher les utilisations"
 
 msgid "heading.ident.use"
-msgstr "UTILISATIONS DE L’IDENTITÉ"
+msgstr "Utilisations de l'identité"
 
 msgid "error.cert.auth"
 msgstr "Certificat non autorisé"
@@ -975,7 +975,7 @@ msgstr[0] "Utilisée sur %u URL"
 msgstr[1] "Utilisée sur %u URLs"
 
 msgid "heading.ident.notes"
-msgstr "NOTES SUR L'IDENTITÉ"
+msgstr "Notes sur l’identité"
 
 # %s refers to name of an identity.
 #, c-format
@@ -998,7 +998,7 @@ msgid "ident.stopuse.all"
 msgstr "Arrêter d’utiliser partout"
 
 msgid "heading.certimport"
-msgstr "IMPORTATION D’IDENTITÉ"
+msgstr "Importer l’identité"
 
 msgid "error.cert.auth.msg"
 msgstr ""
@@ -1030,7 +1030,7 @@ msgstr ""
 "certificat et clé privée ?"
 
 msgid "heading.unsub"
-msgstr "DÉSABONNEMENT"
+msgstr "Se désabonner"
 
 #, c-format
 msgid "error.unsupported.suggestsave"
@@ -1042,19 +1042,19 @@ msgid "pageinfo.cert.status"
 msgstr "État du certificat :"
 
 msgid "heading.save.incomplete"
-msgstr "PAGE INCOMPLÈTE"
+msgstr "Page incomplète"
 
 msgid "dlg.autoreload"
 msgstr "Sélectionnez l’intervalle de rechargement auto pour cet onglet."
 
 msgid "heading.certimport.pasted"
-msgstr "COLLÉ DEPUIS LE PRESSE-PAPIERS"
+msgstr "Collé depuis le presse-papiers"
 
 msgid "heading.certimport.dropped"
-msgstr "FICHIER DÉPOSÉ"
+msgstr "Fichier déposé"
 
 msgid "link.hint.image"
-msgstr "Afficher l’image"
+msgstr "Image"
 
 msgid "bookmark.title.blank"
 msgstr "Page vide"
@@ -1079,7 +1079,7 @@ msgid "pageinfo.cert.ca.unverified"
 msgstr "Non vérifié par une AC"
 
 msgid "heading.import.bookmarks"
-msgstr "IMPORTER DES SIGNETS"
+msgstr "Importer des signets"
 
 msgid "dlg.certwarn.domain"
 msgstr ""
@@ -1096,7 +1096,7 @@ msgid "bookmark.untag.remote"
 msgstr "Retirer la source de signets"
 
 msgid "heading.newident"
-msgstr "NOUVELLE IDENTITÉ"
+msgstr "Nouvelle identité"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Création d'un certificat RSA 2048 bits auto-signé."
@@ -1127,13 +1127,13 @@ msgid "prefs.doctheme.name.colorfullight"
 msgstr "Couleurs claires"
 
 msgid "heading.subscribe"
-msgstr "S’ABONNER À LA PAGE"
+msgstr "S’abonner à la page"
 
 msgid "dlg.bookmark.tags"
 msgstr "Étiquettes :"
 
 msgid "heading.prefs.certs"
-msgstr "CERTIFICATS"
+msgstr "Certificats"
 
 msgid "dlg.certwarn.domain.expired"
 msgstr "Le certificat reçu est pour le mauvais domaine ET a expiré."
@@ -1151,7 +1151,7 @@ msgstr[0] "%sAjouter un signet"
 msgstr[1] "%sAjouter %d signets"
 
 msgid "heading.history.clear"
-msgstr "EFFACER L’HISTORIQUE"
+msgstr "Effacer l’historique"
 
 msgid "menu.bookmarks.refresh"
 msgstr "Actualiser les signets distants"
@@ -1260,10 +1260,10 @@ msgid "dlg.newident.create"
 msgstr "Créer l’identité"
 
 msgid "heading.save"
-msgstr "FICHIER ENREGISTRÉ"
+msgstr "Fichier enregistré"
 
 msgid "heading.save.error"
-msgstr "ERREUR LORS DE L’ENREGISTREMENT DU FICHIER"
+msgstr "Erreur lors de l’enregistrement du fichier"
 
 msgid "dlg.import.notnew"
 msgstr "Tous les liens sur cette page sont déjà dans les signets."
@@ -1275,7 +1275,7 @@ msgid "link.download"
 msgstr "Télécharger la cible du lien"
 
 msgid "heading.openlink"
-msgstr "OUVRIR LE LIEN"
+msgstr "Ouvrir le lien"
 
 msgid "pageinfo.cert.ca.verified"
 msgstr "Vérifié par une AC"
@@ -1297,7 +1297,7 @@ msgid "heading.lookup.other"
 msgstr "AUTRE"
 
 msgid "heading.translate"
-msgstr "TRADUIRE LA PAGE"
+msgstr "Traduire la page"
 
 msgid "lang.zh"
 msgstr "Chinois"
@@ -1309,10 +1309,10 @@ msgid "lang.zh.hant"
 msgstr "Chinois (traditionnel)"
 
 msgid "heading.bookmark.add"
-msgstr "AJOUTER UN SIGNET"
+msgstr "Ajouter un signet"
 
 msgid "heading.bookmark.edit"
-msgstr "MODIFIER UN SIGNET"
+msgstr "Modifier un signet"
 
 msgid "dlg.bookmark.save"
 msgstr "Enregistrer le signet"
@@ -1389,7 +1389,7 @@ msgid "heading.lookup.pagecontent"
 msgstr "PAGE"
 
 msgid "heading.prefs.pagecontent"
-msgstr "PAGE"
+msgstr "Page"
 
 msgid "prefs.ca.file"
 msgstr "Fichier de l’AC :"
@@ -1437,16 +1437,16 @@ msgid "hint.newident.date"
 msgstr "AAAA ou AAAA-MM-JJ"
 
 msgid "link.hint.audio"
-msgstr "Lire l’audio"
+msgstr "Audio"
 
 msgid "heading.prefs.sizing"
-msgstr "DIMENSION"
+msgstr "Dimension"
 
 msgid "prefs.accent"
 msgstr "Couleur de mise en valeur :"
 
 msgid "heading.prefs.widelayout"
-msgstr "AFFICHAGE LARGE"
+msgstr "Affichage large"
 
 msgid "keys.hoverurl"
 msgstr "Activer/désactiver l’affichage d’URL au survol"
@@ -1495,10 +1495,10 @@ msgid "lang.ia"
 msgstr "Interlingua"
 
 msgid "heading.newident.missing"
-msgstr "INFORMATION MANQUANTE"
+msgstr "Information manquante"
 
 msgid "heading.newident.date.bad"
-msgstr "DATE INVALIDE"
+msgstr "Date invalide"
 
 msgid "dlg.newident.date.past"
 msgstr "La date d’expiration doit être dans le futur."
@@ -1643,7 +1643,7 @@ msgid "link.file.delete"
 msgstr "Supprimer le fichier"
 
 msgid "heading.file.delete"
-msgstr "SUPPRESSION DE FICHIER"
+msgstr "Supprimer le fichier"
 
 msgid "dlg.file.delete.confirm"
 msgstr "Voulez-vous vraiment supprimer ce fichier ?"
@@ -1658,7 +1658,7 @@ msgid "upload.port"
 msgstr "Port…"
 
 msgid "heading.uploadport"
-msgstr "PORT DE TÉLÉVERSEMENT TITAN"
+msgstr "Port de téléversement Titan"
 
 msgid "dlg.uploadport.msg"
 msgstr ""
@@ -1669,7 +1669,7 @@ msgid "dlg.uploadport.set"
 msgstr "Définir le port"
 
 msgid "heading.prefs.uitheme"
-msgstr "INTERFACE"
+msgstr "Interface"
 
 msgid "prefs.userfont"
 msgstr "Police des symboles :"
@@ -1789,10 +1789,10 @@ msgid "bookmark.export.format.tags"
 msgstr "Les étiquettes sont définies par les titres de niveau 2."
 
 msgid "menu.page.upload"
-msgstr "Téléverser la page avec Titan…"
+msgstr "Téléverser avec Titan…"
 
 msgid "heading.upload"
-msgstr "TÉLÉVERSEMENT AVEC TITAN"
+msgstr "Téléverser avec Titan"
 
 msgid "heading.upload.text"
 msgstr "Texte"
@@ -1819,7 +1819,7 @@ msgid "dlg.upload.send"
 msgstr "Téléverser"
 
 msgid "keys.upload"
-msgstr "Téléverser la page avec Titan"
+msgstr "Téléverser avec Titan"
 
 msgid "keys.split.next"
 msgstr "Basculer entre les côtés"
@@ -1845,7 +1845,7 @@ msgid "dlg.certimport.pickfile"
 msgstr "Importer un fichier de certificat/clé"
 
 msgid "heading.bookmark.tags"
-msgstr "ÉTIQUETTES SPÉCIALES"
+msgstr "Étiquettes spéciales"
 
 msgid "dlg.addfolder.prompt"
 msgstr "Entrez le nom du nouveau dossier :"
@@ -1870,7 +1870,7 @@ msgid "menu.undo"
 msgstr "Annuler"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "SUPPRESSION DE SIGNETS"
+msgstr "Supprimer les signets"
 
 #, c-format
 msgid "dlg.bookmarks.delete"
@@ -1900,7 +1900,7 @@ msgid "dlg.upload.pickfile"
 msgstr "Sélectionner un fichier"
 
 msgid "heading.addfolder"
-msgstr "AJOUT DE DOSSIER"
+msgstr "Ajouter un dossier"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Nouveau dossier"
@@ -1910,7 +1910,7 @@ msgstr "Ajouter un dossier"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "PARAMÈTRES"
+msgstr "Paramètres"
 
 msgid "prefs.imagestyle"
 msgstr "Colorisation d'images :"
@@ -2023,7 +2023,7 @@ msgid "dlg.dismiss.warning"
 msgstr "Ignorer l’avertissement"
 
 msgid "heading.dismiss.warning"
-msgstr "IGNORER L’AVERTISSEMENT ?"
+msgstr "Ignorer l’avertissement ?"
 
 msgid "menu.update"
 msgstr "Rechercher des mises à jour…"
@@ -2105,7 +2105,7 @@ msgid "dlg.fontpack.delete"
 msgstr "Supprimer le pack de polices"
 
 msgid "heading.fontpack.delete"
-msgstr "SUPPRIMER LE PACK DE POLICES"
+msgstr "Supprimer le pack de polices"
 
 msgid "fontpack.help"
 msgstr ""
@@ -2125,9 +2125,124 @@ msgid "dlg.fontpack.classic"
 msgstr "Télécharger le pack de polices (25 Mo)"
 
 msgid "heading.fontpack.classic"
-msgstr "TÉLÉCHARGER LE PACK DE POLICES"
+msgstr "Télécharger le pack de polices"
 
 msgid "num.files"
 msgid_plural "num.files.n"
 msgstr[0] "%u fichier"
 msgstr[1] "%u fichiers"
+
+msgid "menu.open.external"
+msgstr "Ouvrir dans une autre application"
+
+msgid "menu.home"
+msgstr "Aller à l'accueil"
+
+msgid "sidebar.close"
+msgstr "Terminé"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Nouveau dossier"
+
+msgid "sidebar.action.history.clear"
+msgstr "Effacer"
+
+msgid "sidebar.empty.unread"
+msgstr "Aucune entrée non lue"
+
+msgid "menu.page.upload.edit"
+msgstr "Modifier la page avec Titan…"
+
+msgid "heading.upload.id"
+msgstr "Autorisation"
+
+msgid "menu.upload.export"
+msgstr "Exporter le texte"
+
+msgid "menu.upload.delete"
+msgstr "Tout supprimer"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Contenu"
+
+msgid "hint.upload.path"
+msgstr "Chemin de l’URL"
+
+msgid "prefs.toolbaraction2"
+msgstr "Bouton 2"
+
+msgid "prefs.time.24h"
+msgstr "Horaires sur 24h"
+
+msgid "prefs.font.warnmissing"
+msgstr "Avertissements sur les glyphes :"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Afficher dans le gestionnaire de fichiers"
+
+msgid "hint.upload.token.long"
+msgstr "jeton — voir les instructions du serveur"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Définir l’action :"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Modifier"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Utiliser %s"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Coller la ligne précédente"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Masquer les identités"
+
+msgid "menu.identities"
+msgstr "Gérer les identités"
+
+msgid "keys.feeds.showall"
+msgstr "Barre latérale : afficher toutes les entrées de flux"
+
+msgid "keys.feeds.showunread"
+msgstr "Barre latérale : afficher les entrées de flux non lues"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Actions de la barre d’outils"
+
+msgid "prefs.toolbaraction1"
+msgstr "Bouton 1"
+
+msgid "prefs.blink"
+msgstr "Curseur clignotant :"
+
+msgid "keys.upload.edit"
+msgstr "Modifier la page avec Titan"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Tout lire"
+
+msgid "keys.input.precedingline"
+msgstr "Invite de saisie : Coller la ligne précédente"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Afficher dans le Finder"
+
+msgid "menu.share"
+msgstr "Partager"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Vraiment tout supprimer (pas d’annulation)"

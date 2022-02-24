@@ -1,2 +1,1234 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2022-02-24 12:57+0000\n"
+"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
+"Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s è un archivio compresso."
+
+msgid "doc.archive.view"
+msgstr "Mostra il contenuto dell'archivio"
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Sei iscritto a %zu feed che contiene %%s.\n"
+msgstr[1] "Sei iscritto a %zu feed che contengono %%s.\n"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Se chiudi questa scheda, il download sarà annullato."
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Voci feed"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "un totale di %u voce"
+msgstr[1] "un totale di %u voci"
+
+msgid "doc.pre.nocaption"
+msgstr "Testo preformattato senza una didascalia"
+
+msgid "media.untitled.image"
+msgstr "Immagine"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Scaricando"
+
+msgid "media.untitled.audio"
+msgstr "Audio"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Download completato."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titolo"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artista"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genere"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Data"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bit"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+msgid "numbertype.integer"
+msgstr "intero"
+
+msgid "numbertype.float"
+msgstr "numero a virgola mobile"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII art: la parola \"Lagrange\" scritta in grande"
+
+msgid "menu.split.horizontal"
+msgstr "Orizzontale"
+
+msgid "menu.split.vertical"
+msgstr "Verticale"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "L'ultimo aggiornamento risale a un momento fa."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "L'ultimo aggiornamento risale a %s."
+
+msgid "menu.openlocation"
+msgstr "Apri un indirizzo…"
+
+msgid "about.tagline"
+msgstr "Un client Gemini stupendo"
+
+msgid "menu.split.swap"
+msgstr "Scambia gli split"
+
+msgid "cancel"
+msgstr "Annulla"
+
+msgid "dlg.message.ok"
+msgstr "Continua"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "toggle.yes"
+msgstr "SÌ"
+
+msgid "toggle.no"
+msgstr "NO"
+
+msgid "menu.title.file"
+msgstr "File"
+
+msgid "menu.title.view"
+msgstr "Visualizza"
+
+msgid "menu.title.bookmarks"
+msgstr "Segnalibri"
+
+msgid "menu.title.identity"
+msgstr "Identità"
+
+msgid "menu.title.help"
+msgstr "Aiuto"
+
+msgid "menu.newtab"
+msgstr "Nuova Scheda"
+
+msgid "menu.closetab"
+msgstr "Chiudi Scheda"
+
+msgid "menu.closetab.other"
+msgstr "Chiudi le altre schede"
+
+msgid "menu.closetab.left"
+msgstr "Chidui Schede a Sinistra"
+
+msgid "menu.closetab.right"
+msgstr "Chiudi Schede a Destra"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d minuto fa"
+msgstr[1] "%d minuti fa"
+
+msgid "about.version"
+msgstr "Versione"
+
+msgid "menu.title.edit"
+msgstr "Modifica"
+
+msgid "menu.duptab"
+msgstr "Duplica Scheda"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d ora fa"
+msgstr[1] "%d ore fa"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d giorno fa"
+msgstr[1] "%d giorni fa"
+
+msgid "close"
+msgstr "Chiudi"
+
+msgid "menu.split.merge"
+msgstr "Unisci le schede"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Salva nei Download"
+
+msgid "menu.sidebar"
+msgstr "Visualizza/Nascondi barra laterale"
+
+msgid "menu.find"
+msgstr "Cerca nella pagina"
+
+msgid "macos.menu.find"
+msgstr "Cerca"
+
+msgid "menu.downloads"
+msgstr "Mostra i Download"
+
+msgid "menu.zoom.reset"
+msgstr "Resetta ingrandimento"
+
+msgid "menu.view.split"
+msgstr "Dividi la schermata…"
+
+msgid "menu.save.downloads.open"
+msgstr "Salva nei Download e apri il file"
+
+msgid "menu.sidebar.left"
+msgstr "Visualizza/Nascondi barra laterale sinistra"
+
+msgid "menu.sidebar.right"
+msgstr "Visualizza/Nascondi barra laterale destra"
+
+msgid "menu.zoom.in"
+msgstr "Ingrandisci"
+
+msgid "menu.zoom.out"
+msgstr "Rimpicciolisci"
+
+msgid "menu.unexpire"
+msgstr "Ignora scandenza e continua a caricare"
+
+msgid "menu.pageinfo"
+msgstr "Mostra informazioni sulla pagina"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Salva su File"
+
+msgid "menu.bookmarks.list"
+msgstr "Visualizza tutti i segnalibri"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Visualizza tutti"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Visualizza i Segnalibri per Tag"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Visualizza per Tag"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Visualizza i Segnalibri per Data di Creazione"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Visualizza per Data di Creazione"
+
+msgid "menu.preferences"
+msgstr "Impostazioni…"
+
+msgid "menu.feeds.entrylist"
+msgstr "Mostra i Feed"
+
+msgid "prefs.centershort"
+msgstr "Centrato verticalmente:"
+
+msgid "menu.parent"
+msgstr "Sali di un livello"
+
+msgid "menu.root"
+msgstr "Vai alla radice"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "Vuoi davvero disiscriverti dal feed \"%s\"?"
+
+msgid "menu.quit"
+msgstr "Chiudi Lagrange"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Mostra l'Outline della pagina"
+
+msgid "menu.autoreload"
+msgstr "Imposta Auto-Ricaricamento…"
+
+msgid "menu.back"
+msgstr "Indietro"
+
+msgid "menu.forward"
+msgstr "Avanti"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Copia Link alla Pagina"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Visualizza Segnalibri"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Visualizza Identità"
+
+msgid "menu.paste"
+msgstr "Incolla"
+
+msgid "menu.help"
+msgstr "Aiuto"
+
+msgid "menu.releasenotes"
+msgstr "Note di Rilascio"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Visualizza Feed"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Visualizza Cronologia"
+
+msgid "menu.reload"
+msgstr "Ricarica Pagina"
+
+msgid "menu.select.clear"
+msgstr "Deseleziona"
+
+msgid "menu.cut"
+msgstr "Taglia"
+
+msgid "menu.copy"
+msgstr "Copia"
+
+msgid "heading.unsub"
+msgstr "Disiscrivi"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Non verificato dalla CA"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Non scaduto"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Puoi salvare questo file nei Download. Premi %s o seleziona \"%s\" dal menu."
+
+msgid "pageinfo.header.cached"
+msgstr "(nella cache)"
+
+msgid "pageinfo.cert.status"
+msgstr "Stato Certificato:"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Non verificato"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Verificato dalla CA"
+
+msgid "pageinfo.cert.expired"
+msgstr "Scaduto"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Verificato"
+
+msgid "dlg.import.notnew"
+msgstr "Tutti i link della pagina sono già nei segnalibri."
+
+msgid "dlg.unsub"
+msgstr "Disiscrivi"
+
+msgid "dlg.cert.trust"
+msgstr "Fidati"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Copia Fingerprint"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Per favore fornisci l'input per %s:"
+
+msgid "dlg.input.send"
+msgstr "Invia"
+
+msgid "heading.save"
+msgstr "FILE SALVATO"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Il nome del dominio non coincide"
+
+msgid "dlg.save.incomplete"
+msgstr "I contenuti della pagina sono ancora in scaricamento."
+
+msgid "dlg.save.opendownload"
+msgstr "Apri File Scaricato"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Trovato un nuovo link nella pagina."
+msgstr[1] "Trovati %d nuovi link nella pagina."
+
+msgid "dlg.autoreload"
+msgstr "Imposta l'intervallo per l'auto-ricaricamento del tab."
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "un minuto"
+msgstr[1] "%d minuti"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "un'ora"
+msgstr[1] "%d ore"
+
+msgid "link.newtab"
+msgstr "Apri link in un Nuovo Tab"
+
+msgid "link.newtab.background"
+msgstr "Apri Link in un Tab in Background"
+
+msgid "link.side"
+msgstr "Apri Link a Lato"
+
+msgid "link.side.newtab"
+msgstr "Apri Link in un Nuovo Tab a Lato"
+
+msgid "error.server.msg"
+msgstr "Il server ha risposto col messaggio:"
+
+msgid "dlg.input.linebreak"
+msgstr "Fine linea"
+
+msgid "reload.onceperday"
+msgstr "Una volta al giorno"
+
+msgid "link.noproxy"
+msgstr "Apri senza Proxy"
+
+msgid "link.copy"
+msgstr "Copia Link"
+
+msgid "link.bookmark"
+msgstr "Aggiungi Link ai Segnalibri…"
+
+msgid "link.browser"
+msgstr "Apri link nel Browser di Default"
+
+msgid "pageinfo.domain.match"
+msgstr "Il nome del dominio concide"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sAggiungi Segnalibro"
+msgstr[1] "%sAggiungi %d Segnalibri"
+
+msgid "reload.never"
+msgstr "Mai"
+
+msgid "dlg.save.size"
+msgstr "Dimensione:"
+
+msgid "heading.autoreload"
+msgstr "Auto-ricarica"
+
+msgid "heading.pageinfo"
+msgstr "Informazioni sulla pagina"
+
+msgid "heading.save.incomplete"
+msgstr "Pagina incompleta"
+
+msgid "heading.save.error"
+msgstr "Errore nel salvataggio del file"
+
+msgid "heading.import.bookmarks"
+msgstr "Importa segnalibri"
+
+msgid "heading.openlink"
+msgstr "Apri link"
+
+msgid "heading.file.delete"
+msgstr "Cancella file"
+
+msgid "link.file.delete"
+msgstr "Cancella File"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Sei sicuro di voler cancellare questo file?"
+
+msgid "dlg.file.delete"
+msgstr "Cancella"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Aprire questo link nel browser di default?\n"
+"%s%s"
+
+msgid "link.download"
+msgstr "Scarica File linkato"
+
+msgid "dlg.certwarn.different"
+msgstr "Il certificato ricevuto è valido ma diverso da quello fidato."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Il certificato ricevuto è per un dominio sbagliato (%s). Potrebbe essere un "
+"errore di configurazione del server."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr ""
+"Il certificato ricevuto è scaduto ed INOLTRE è per il dominio sbagliato."
+
+msgid "dlg.openlink"
+msgstr "Apri Link"
+
+msgid "dlg.certimport.notfound"
+msgstr "Nessun certificato o chiave privata trovati."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Nessun certificato/chiave trovata per la pagina corrente."
+
+msgid "dlg.certimport.import"
+msgstr "Importa"
+
+msgid "dlg.certimport.notes"
+msgstr "Note:"
+
+msgid "hint.certimport.description"
+msgstr "descrizione"
+
+msgid "bookmark.export.title.tag"
+msgstr "Tag del segnalibro"
+
+msgid "bookmark.export.title.time"
+msgstr "Segnalibri creati"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Il certificato ricevuto potrebbe essere stato rinnovato di recente — è per "
+"il dominio corretto e non è scaduto. Il certificato attualmente fidato "
+"scadrà il %s, fra un giorno."
+msgstr[1] ""
+"Il certificato ricevuto potrebbe essere stato rinnovato di recente — è per "
+"il dominio corretto e non è scaduto. Il certificato attualmente fidato "
+"scadrà il %s, fra %d giorni."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Il certificato ricevuto è scaduto il %s."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Incolla un certificato in fromato PEM e/o una chiave privata,\n"
+"o trascina sulla finestra un file .crt/.key."
+
+msgid "dlg.certimport.nocert"
+msgstr "Senza Certificato"
+
+msgid "dlg.certimport.nokey"
+msgstr "Senza Chiave Privata"
+
+msgid "bookmark.title.blank"
+msgstr "Pagina Vuota"
+
+msgid "bookmark.export.title.folder"
+msgstr "Segnalibri"
+
+msgid "bookmark.export.saving"
+msgstr "Salva questa pagina per esportarli, oppure copiali nella clipboard."
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Hai un segnalibro."
+msgstr[1] "Hai %d segnalibri."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"In questa lista ogni titolo rappresenta un tag dei segnalibri. Solo i "
+"segnalibri con un'etichetta sono presenti nella lista. I segnalibri con "
+"multiple etichette sono ripetuti sotto ogni etichetta."
+
+msgid "heading.certimport.pasted"
+msgstr "Incolla dalla clipboard"
+
+msgid "heading.certimport"
+msgstr "Importa identità"
+
+msgid "heading.certimport.dropped"
+msgstr "File trascinato"
+
+msgid "link.hint.audio"
+msgstr "Audio"
+
+msgid "link.hint.image"
+msgstr "Immagine"
+
+msgid "heading.uploadport"
+msgstr "Porta del caricamento per Titan"
+
+msgid "heading.upload"
+msgstr "Carica con Titan"
+
+msgid "bookmark.export.format.folders"
+msgstr "La struttura delle calrtelle è definita dai livelli 2/3 dei titoli."
+
+msgid "upload.port"
+msgstr "Porta…"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"Linee puntate e citazioni sono riservati per informazioni addizionali per il "
+"precedente segnalibro. Le linee di testo e preformattate vengono considerate "
+"commenti e dovrebbero essere ignorate."
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTITÀ"
+
+msgid "heading.upload.text"
+msgstr "Testo"
+
+msgid "hint.upload.text"
+msgstr "scrivi del testo da caricare"
+
+msgid "upload.file.name"
+msgstr "Nome del file:"
+
+msgid "upload.file.drophere"
+msgstr "(trascina un file sulla finestra)"
+
+msgid "upload.file.size"
+msgstr "Dimensione del file:"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "STORICO"
+
+msgid "upload.mime"
+msgstr "Tipo MIME:"
+
+msgid "hint.upload.token"
+msgstr "vedi le istruzioni del server"
+
+msgid "dlg.upload.send"
+msgstr "Carica"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Configura la porta per Titan da usare per questo URL. La porta viene salvata "
+"nella configurazione specifica del sito."
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "ISCRIZIONI"
+
+msgid "bookmark.export.format.tags"
+msgstr "Le etichette vengono definite dai titoli di livello 2."
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "SEGNALIBRI"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "CONTENUTO DELLA PAGINA"
+
+msgid "bookmark.export.format.linklines"
+msgstr "Ogni link rappresenta un segnalibro."
+
+msgid "menu.page.upload"
+msgstr "Carica Pagina con Titan…"
+
+msgid "heading.upload.file"
+msgstr "File"
+
+msgid "upload.token"
+msgstr "Token per l'upload:"
+
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Questa pagina è formattata in accordo la specifica d'accompagnamento "
+"\"Iscriversi alle pagine Gemini\"."
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "ALTRO"
+
+msgid "heading.translate"
+msgstr "Traduci pagina"
+
+msgid "dlg.translate.unavail"
+msgstr "Servizio non disponibile"
+
+msgid "dlg.translate.fail"
+msgstr "Richiesta fallita"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "Giapponese"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "Francese"
+
+msgid "dlg.uploadport.set"
+msgstr "Configura la Porta"
+
+msgid "dlg.translate"
+msgstr "Traduci"
+
+msgid "dlg.translate.from"
+msgstr "Da:"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "Cinese"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "Tedesco"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "Inglese"
+
+# A language choice in the Translation dialog.
+msgid "lang.hi"
+msgstr "Hindi"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "Italiano"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "Portoghese"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "Russo"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "Spagnolo"
+
+msgid "dlg.newident.domain"
+msgstr "Dominio:"
+
+msgid "dlg.translate.to"
+msgstr "Per:"
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "Arabo"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Creando un certificato RSA autofirmato da 2048 bit."
+
+msgid "dlg.newident.until"
+msgstr "Valido fino:"
+
+msgid "hint.newident.date"
+msgstr "YYYY oppure YYYY-MM-DD"
+
+msgid "hint.newident.optional"
+msgstr "opzionale"
+
+msgid "dlg.newident.commonname"
+msgstr "Nome comune:"
+
+msgid "dlg.newident.temp"
+msgstr "Temporaneo:"
+
+msgid "dlg.newident.notsaved"
+msgstr "non salvato sul disco"
+
+msgid "dlg.newident.scope"
+msgstr "Usato in:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Dominio Corrente"
+
+msgid "dlg.newident.scope.page"
+msgstr "Pagina Corrente"
+
+msgid "dlg.newident.scope.none"
+msgstr "Non usato"
+
+msgid "dlg.newident.userid"
+msgstr "ID Utente:"
+
+msgid "dlg.newident.more"
+msgstr "Più…"
+
+msgid "dlg.newident.email"
+msgstr "Email:"
+
+msgid "heading.newident"
+msgstr "NUOVA IDENTITÀ"
+
+msgid "dlg.newident.org"
+msgstr "Organizzazione:"
+
+msgid "dlg.newident.country"
+msgstr "Paese:"
+
+msgid "menu.import.links"
+msgstr "Importa tutti i link nella Pagina…"
+
+msgid "prefs.downloads"
+msgstr "Cartella degli Scaricati:"
+
+msgid "prefs.searchurl"
+msgstr "URL delle ricerche:"
+
+msgid "menu.aboutpages"
+msgstr "Riguardo la Pagina"
+
+msgid "dlg.feed.title"
+msgstr "Titolo:"
+
+msgid "sidebar.outline"
+msgstr "Schema"
+
+msgid "dlg.newident.create"
+msgstr "Crea un'identità"
+
+msgid "dlg.bookmark.save"
+msgstr "Salva Segnalibro"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Un \"Nome comune\" dev'essere specificato."
+
+msgid "dlg.newident.date.past"
+msgstr "La data di scadenza deve essere nel futuro."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Per favore ricontrolla la data \"Valido fino\". Esempi:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "dlg.feed.entrytype"
+msgstr "Tipo di elemento:"
+
+msgid "dlg.feed.type.headings"
+msgstr "Nuova Intestazione"
+
+msgid "dlg.feed.save"
+msgstr "Salva Impostazioni"
+
+msgid "dlg.feed.sub"
+msgstr "Iscriviti"
+
+msgid "dlg.bookmark.title"
+msgstr "Titolo:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Etichetta:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Icona:"
+
+msgid "heading.prefs.fonts"
+msgstr "Font"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Generale"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "UI"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Tasti"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Rete"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Colori"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Link YYY-MM-DD"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Stile"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Interfaccia utente"
+
+msgid "toolbar.outline"
+msgstr "Schema"
+
+msgid "menu.feeds.refresh"
+msgstr "Aggiorna Feed"
+
+msgid "menu.page.subscribe"
+msgstr "Iscriviti alla Pagina…"
+
+msgid "sidebar.history"
+msgstr "Cronologia"
+
+msgid "sidebar.identities"
+msgstr "Identità"
+
+msgid "menu.page.bookmark"
+msgstr "Aggiungi ai Segnalibri…"
+
+msgid "panel.back"
+msgstr "Indietro"
+
+msgid "menu.page.import"
+msgstr "Importa Link come Segnalibri…"
+
+msgid "menu.page.translate"
+msgstr "Traduci…"
+
+msgid "menu.page.copyurl"
+msgstr "Copia URL Pagina"
+
+msgid "menu.page.copysource"
+msgstr "Copia Sorgente Pagina"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Ricarica Segnalibri Remoti"
+
+msgid "menu.identity.new"
+msgstr "Nuova Identità…"
+
+msgid "menu.identity.import"
+msgstr "Importa…"
+
+msgid "menu.identity.notactive"
+msgstr "Nessuna Identità Attiva"
+
+msgid "sidebar.bookmarks"
+msgstr "Segnalibri"
+
+msgid "sidebar.feeds"
+msgstr "Feed"
+
+msgid "menu.debug"
+msgstr "Informazioni di Debug"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Tutti"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Non letto"
+msgstr[1] "Non letti"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nuova…"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Non Letti"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importa…"
+
+msgid "heading.bookmark.add"
+msgstr "Aggiungi Segnalibro"
+
+msgid "heading.prefs.pagecontent"
+msgstr "Colori della pagina"
+
+msgid "heading.subscribe"
+msgstr "Iscriviti alla Pagina"
+
+msgid "heading.prefs"
+msgstr "Preferenze"
+
+msgid "heading.prefs.certs"
+msgstr "Certificati"
+
+msgid "heading.prefs.paragraph"
+msgstr "Paragrafo"
+
+msgid "heading.newident.missing"
+msgstr "Informazione mancante"
+
+msgid "heading.newident.date.bad"
+msgstr "Data invalida"
+
+msgid "heading.feedcfg"
+msgstr "Impostazioni Feed"
+
+msgid "heading.bookmark.edit"
+msgstr "Modifica Segnalibro"
+
+msgid "heading.prefs.proxies"
+msgstr "Proxy"
+
+msgid "heading.prefs.scrolling"
+msgstr "Scorrimento"
+
+msgid "heading.prefs.widelayout"
+msgstr "Layout ampio"
+
+msgid "heading.prefs.uitheme"
+msgstr "Colori dell'interfaccia"
+
+msgid "menu.about"
+msgstr "Informazioni"
+
+msgid "hint.findtext"
+msgstr "cerca testo nella pagina"
+
+msgid "feeds.entry.markread"
+msgstr "Segna come già letto"
+
+msgid "feeds.markallread"
+msgstr "Segna tutti come già letti"
+
+msgid "feeds.refresh"
+msgstr "Aggiorna Feed"
+
+msgid "menu.opentab"
+msgstr "Apri in Nuova Scheda"
+
+msgid "menu.opentab.background"
+msgstr "Apri in Nuova Scheda in Background"
+
+msgid "menu.edit"
+msgstr "Modifica…"
+
+msgid "menu.copyurl"
+msgstr "Copia URL"
+
+msgid "menu.forgeturl"
+msgstr "Dimentica URL"
+
+msgid "history.clear"
+msgstr "Elimina Cronologia…"
+
+msgid "dlg.confirm.history.clear"
+msgstr ""
+"Sei sicuro di voler eliminare tutta la cronologia delle pagine visitate?"
+
+msgid "bookmark.untag.home"
+msgstr "Rimuovi Homepage"
+
+msgid "ident.notused"
+msgstr "Non utilizzata"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Sei sicuro di voler eliminare questa identità %s\"%s\"%s compreso il suo "
+"certificato e le sue chiavi private?"
+
+msgid "feeds.unsubscribe"
+msgstr "Annulla Iscrizione…"
+
+msgid "bookmark.tag.home"
+msgstr "Imposta come Homepage"
+
+msgid "bookmark.tag.sub"
+msgstr "Iscriviti al Feed"
+
+msgid "bookmark.delete"
+msgstr "Elimina Segnalibro"
+
+msgid "feeds.today"
+msgstr "Oggi"
+
+msgid "menu.dup"
+msgstr "Duplica…"
+
+msgid "ident.using"
+msgstr "Utilizza su questa pagina"
+
+msgid "ident.use"
+msgstr "Utilizza in Questa Pagina"
+
+msgid "ident.stopuse"
+msgstr "Non Utilizzare in Questa Pagina"
+
+msgid "menu.edit.notes"
+msgstr "Modifica Note…"
+
+msgid "ident.fingerprint"
+msgstr "Copia Firma"
+
+msgid "ident.delete"
+msgstr "Elimina Identità…"
+
+msgid "dlg.history.clear"
+msgstr "Elimina Cronologia"
+
+msgid "bookmark.untag.sub"
+msgstr "Annulla Iscrizione dal Feed"
+
+msgid "ident.temporary"
+msgstr "Temporanea"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu byte"
+msgstr[1] "%zu byte"
+
+msgid "status.feeds"
+msgstr "Aggiornamento Feed"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "feeds.entry.markunread"
+msgstr "Segna come da leggere"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Aggiungi ai Segnalibri…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Apri Pagina Feed"
+
+msgid "feeds.edit"
+msgstr "Modifica Feed…"
+
+# strftime() formatted
+msgid "ident.expiry"
+msgstr "Scade il %d %b %Y"
+
+msgid "ident.stopuse.all"
+msgstr "Non Utilizzare in Tutte le Pagine"
+
+msgid "feeds.entry.bookmark"
+msgstr "Aggiungi ai Segnalibri…"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Questo documento XML Atom è stato automaticamente tradotto in un feed Gemini "
+"per permetterne l'iscrizione."
+
+msgid "bookmark.untag.remote"
+msgstr "Rimuovi fonte dei Segnalibri"
+
+msgid "bookmark.tag.remote"
+msgstr "Usa come fonte per i Segnalibri"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Usato in un URL"
+msgstr[1] "Usato in %zu URL"
+
+msgid "ident.export"
+msgstr "Esporta"
+
+msgid "menu.openfile"
+msgstr "Apri un File…"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Apri link a lato"
+
+msgid "status.query"
+msgstr "Cerca"
+
+msgid "status.query.tight"
+msgstr "Cerca"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Note su %s:"
+
+# strftime() formatted. Should be split evenly on two lines with a newline character.
+msgid "page.timestamp"
+msgstr ""
+"Scaricato alle %I:%M %p\n"
+"il %d %b %Y"
+
+# strftime() formatted
+msgid "sidebar.date.thisyear"
+msgstr "%d %b"
+
+# strftime() formatted
+msgid "sidebar.date.otheryear"
+msgstr "%d.%b %Y"
+
+msgid "bookmarks.reload"
+msgstr "Ricarica Sorgenti Remote"
+
+msgid "heading.ident.use"
+msgstr "Uso dell'identità"
+
+msgid "heading.ident.notes"
+msgstr "Note sull'identità"
+
+msgid "heading.ident.delete"
+msgstr "Elimina identità"
+
+msgid "heading.history.clear"
+msgstr "Elimina Cronologia"
+
+msgid "sidebar.empty.idents"
+msgstr "Nessuna Identità"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Vedi %sHelp%s per maggiori informazioni sui certificati TLS per i client."
+
+msgid "dlg.ident.delete"
+msgstr "Elimina Identità e Chiavi"

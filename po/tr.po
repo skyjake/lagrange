@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-20 04:05+0000\n"
+"PO-Revision-Date: 2022-02-21 13:50+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -2190,3 +2190,12 @@ msgstr "Eylem Ayarla:"
 # Shows where a local file is using the File Manager.
 msgid "menu.reveal.filemgr"
 msgstr "Dosya Yöneticisinde Göster"
+
+msgid "keys.feeds.showall"
+msgstr "Kenar çubuğu: Tüm besleme girdilerini göster"
+
+msgid "keys.feeds.showunread"
+msgstr "Kenar çubuğu: Okunmamış besleme girdilerini göster"
+
+msgid "keys.input.precedingline"
+msgstr "Girdi istemi: Önceki satırı yapıştır"

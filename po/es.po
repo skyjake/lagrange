@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-16 12:50+0000\n"
+"PO-Revision-Date: 2022-02-23 21:50+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -2254,3 +2254,9 @@ msgstr "Mostrar en Administrador de Archivos"
 
 msgid "keys.input.precedingline"
 msgstr "Indicador de entrada: Pegar la linea precedente"
+
+msgid "keys.feeds.showall"
+msgstr "Barra lateral: Mostrar todas las entradas de las suscripciones"
+
+msgid "keys.feeds.showunread"
+msgstr "Barra lateral: Mostrar entradas no leídas de las suscripciones"

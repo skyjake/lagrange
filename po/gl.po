@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-20 06:20+0000\n"
+"PO-Revision-Date: 2022-02-23 21:50+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -2241,3 +2241,9 @@ msgstr "Mostrar no Xestor de ficheiros"
 # Menu heading shown when customizing navbar button actions.
 msgid "menu.toolbar.setaction"
 msgstr "Establece acción:"
+
+msgid "keys.feeds.showall"
+msgstr "Panel lateral: mostra as entradas de tódalas fontes"
+
+msgid "keys.feeds.showunread"
+msgstr "Panel lateral: mostra entradas non lidas"
