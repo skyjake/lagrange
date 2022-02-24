@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-24 10:53+0000\n"
-"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"PO-Revision-Date: 2022-02-24 10:54+0000\n"
+"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -190,3 +190,16 @@ msgstr "Chiudi"
 
 msgid "menu.split.merge"
 msgstr "Unisci le schede"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Salva nei Download"
+
+msgid "menu.sidebar"
+msgstr "Visualizza/Nascondi barra laterale"
+
+msgid "menu.find"
+msgstr "Cerca nella pagina"
+
+msgid "macos.menu.find"
+msgstr "Cerca"
