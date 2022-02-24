@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 15:22+0000\n"
-"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -1204,7 +1204,7 @@ msgstr "%d. %b"
 
 # strftime() formatted
 msgid "sidebar.date.otheryear"
-msgstr "%d.%b %Y"
+msgstr "%b. %d, %Y"
 
 msgid "bookmarks.reload"
 msgstr "Ricarica Sorgenti Remote"
