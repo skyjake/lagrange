@@ -458,6 +458,10 @@ static SDL_Surface *loadImage_(const iBlock *data, int resized) {
         pixels, w, h, 8 * num, w * num, SDL_PIXELFORMAT_RGBA32);
 }
 
+static void updateMetrics_Window_(const iWindow *d) {
+    setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
+}
+
 void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) {
     d->type          = type;
     d->win           = NULL;
@@ -509,7 +513,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->uiScale      = initialUiScale_;
     /* TODO: Ratios, scales, and metrics must be window-specific, not global. */
     if (d->type == main_WindowType) {
-        setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
+        updateMetrics_Window_(d);
     }
     d->text = new_Text(d->render);
 }
@@ -770,7 +774,7 @@ static iBool unsnap_MainWindow_(iMainWindow *d, const iInt2 *newPos) {
 
 static void notifyMetricsChange_Window_(const iWindow *d) {
     /* Dynamic UI metrics change. Widgets need to update themselves. */
-    setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
+    updateMetrics_Window_(d);
     resetFonts_Text(d->text);
     postCommand_App("metrics.changed");
 }
@@ -1551,6 +1555,7 @@ void setCurrent_Window(iAnyWindow *d) {
     if (d) {
         setCurrent_Text(theWindow_->text);
         setCurrent_Root(theWindow_->keyRoot);
+        updateMetrics_Window_(d);
     }
     else {
         setCurrent_Text(NULL);
