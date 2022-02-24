@@ -1352,7 +1352,10 @@ void draw_MainWindow(iMainWindow *d) {
                 d->maxDrawableHeight = renderSize.y;
             }
         }
-        if (0 && d->enableBackBuf) { /* XXX: re-enable this */
+        /* TODO: On macOS, a detached popup window will mess up the main window's rendering
+           completely. Looks like a render target mixup. macOS builds normally use native menus,
+           though, so leaving it in. */
+        if (d->enableBackBuf) { 
             /* Possible resize the backing buffer. */
             if (!d->backBuf || !isEqual_I2(size_SDLTexture(d->backBuf), renderSize)) {
                 if (d->backBuf) {
