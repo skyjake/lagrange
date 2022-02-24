@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-24 12:07+0000\n"
-"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2022-02-24 12:25+0000\n"
+"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -336,3 +336,32 @@ msgstr "Copia"
 
 msgid "heading.unsub"
 msgstr "Disiscrivi"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Non verificato dalla CA"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Non scaduto"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Puoi salvare questo file nei Download. Premi %s o seleziona \"%s\" dal menu."
+
+msgid "pageinfo.header.cached"
+msgstr "(nella cache)"
+
+msgid "pageinfo.cert.status"
+msgstr "Stato Certificato:"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Non verificato"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Verificato dalla CA"
+
+msgid "pageinfo.cert.expired"
+msgstr "Scaduto"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Verificato"
