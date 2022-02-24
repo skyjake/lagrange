@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-24 12:54+0000\n"
-"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"PO-Revision-Date: 2022-02-24 12:57+0000\n"
+"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -283,7 +283,7 @@ msgid "menu.show.outline"
 msgstr "Mostra l'Outline della pagina"
 
 msgid "menu.autoreload"
-msgstr "Imposta Auto-Ricaricamento"
+msgstr "Imposta Auto-Ricaricamento…"
 
 msgid "menu.back"
 msgstr "Indietro"
@@ -333,7 +333,7 @@ msgid "menu.copy"
 msgstr "Copia"
 
 msgid "heading.unsub"
-msgstr "DISISCRIVI"
+msgstr "Disiscrivi"
 
 msgid "pageinfo.cert.ca.unverified"
 msgstr "Non verificato dalla CA"
@@ -398,11 +398,11 @@ msgstr "Apri File Scaricato"
 #, c-format
 msgid "dlg.import.found"
 msgid_plural "dlg.import.found.n"
-msgstr[0] "Trovato un nuovo link nella pagina"
+msgstr[0] "Trovato un nuovo link nella pagina."
 msgstr[1] "Trovati %d nuovi link nella pagina."
 
 msgid "dlg.autoreload"
-msgstr "Imposta l'intervallo per l'auto-ricaricamento del tab"
+msgstr "Imposta l'intervallo per l'auto-ricaricamento del tab."
 
 #, c-format
 msgid "num.minutes"
@@ -675,13 +675,13 @@ msgid "bookmark.export.format.linklines"
 msgstr "Ogni link rappresenta un segnalibro."
 
 msgid "menu.page.upload"
-msgstr "Carica Pagina con Titan"
+msgstr "Carica Pagina con Titan…"
 
 msgid "heading.upload.file"
 msgstr "File"
 
 msgid "upload.token"
-msgstr "Token per l'upload"
+msgstr "Token per l'upload:"
 
 msgid "bookmark.export.format.sub"
 msgstr ""
@@ -815,7 +815,7 @@ msgid "menu.import.links"
 msgstr "Importa tutti i link nella Pagina…"
 
 msgid "prefs.downloads"
-msgstr "Cartella degli Scaricati"
+msgstr "Cartella degli Scaricati:"
 
 msgid "prefs.searchurl"
 msgstr "URL delle ricerche:"
@@ -843,7 +843,7 @@ msgstr "La data di scadenza deve essere nel futuro."
 
 msgid "dlg.newident.date.example"
 msgstr ""
-"Per favore ricontrolla la data \"Valido fino\".  Esempi:\n"
+"Per favore ricontrolla la data \"Valido fino\". Esempi:\n"
 "• 2030\n"
 "• 2025-06-30\n"
 "• 2021-12-31 23:59:59"
