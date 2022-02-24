@@ -9,6 +9,13 @@
 ## 1.11
 ⚠️ Downgrading back to v1.10 causes all site-specific themes to be forgotten. Back up your sitespec.ini beforehand.
 
+New features:
+* UI language for Italian.
+
+Changes and enhancements:
+
+Fixes:
+
 ## 1.10.6
 * Added bindings for switching Feeds list to Unread/All mode.
 * Fixed normalization of empty Gemini URL paths to `/` as per the November 2021 spec update.

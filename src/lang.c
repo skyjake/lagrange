@@ -101,6 +101,7 @@ static void load_Lang_(iLang *d, const char *id) {
                        : equal_CStr(id, "ia")      ? &blobIa_Resources
                        : equal_CStr(id, "ie")      ? &blobIe_Resources
                        : equal_CStr(id, "isv")     ? &blobIsv_Resources
+                       : equal_CStr(id, "it")      ? &blobIt_Resources
                        : equal_CStr(id, "nl")      ? &blobNl_Resources
                        : equal_CStr(id, "pl")      ? &blobPl_Resources
                        : equal_CStr(id, "sk")      ? &blobSk_Resources

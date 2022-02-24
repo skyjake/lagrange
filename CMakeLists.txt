@@ -90,6 +90,7 @@ set (RESOURCES
     res/lang/ia.bin
     res/lang/ie.bin
     res/lang/isv.bin
+    res/lang/it.bin
     res/lang/nl.bin
     res/lang/pl.bin
     res/lang/ru.bin
