@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-24 12:44+0000\n"
+"PO-Revision-Date: 2022-02-24 12:50+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -810,3 +810,101 @@ msgstr "Organizzazione:"
 
 msgid "dlg.newident.country"
 msgstr "Paese:"
+
+msgid "menu.import.links"
+msgstr "Importa tutti i link nella Pagina…"
+
+msgid "prefs.downloads"
+msgstr "Cartella degli Scaricati"
+
+msgid "prefs.searchurl"
+msgstr "URL delle ricerche:"
+
+msgid "menu.aboutpages"
+msgstr "Riguardo la Pagina"
+
+msgid "dlg.feed.title"
+msgstr "Titolo:"
+
+msgid "sidebar.outline"
+msgstr "Schema"
+
+msgid "dlg.newident.create"
+msgstr "Crea un'identità"
+
+msgid "dlg.bookmark.save"
+msgstr "Salva Segnalibro"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Un \"Nome comune\" dev'essere specificato."
+
+msgid "dlg.newident.date.past"
+msgstr "La data di scadenza deve essere nel futuro."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Per favore ricontrolla la data \"Valido fino\".  Esempi:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "dlg.feed.entrytype"
+msgstr "Tipo di elemento:"
+
+msgid "dlg.feed.type.headings"
+msgstr "Nuova Intestazione"
+
+msgid "dlg.feed.save"
+msgstr "Salva Impostazioni"
+
+msgid "dlg.feed.sub"
+msgstr "Iscriviti"
+
+msgid "dlg.bookmark.title"
+msgstr "Titolo:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Etichetta:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Icona:"
+
+msgid "heading.prefs.fonts"
+msgstr "Font"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Generale"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "UI"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Tasti"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Rete"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Colori"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Link YYY-MM-DD"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Stile"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Interfaccia utente"
+
+msgid "toolbar.outline"
+msgstr "Schema della Pagina"
