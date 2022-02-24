@@ -700,9 +700,6 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
         }
         if ((equal_Command(cmd, "mouse.clicked") || equal_Command(cmd, "mouse.missed")) &&
             arg_Command(cmd)) {
-            if (hitChild_Window(get_Window(), coord_Command(cmd)) == parentMenuButton_(menu)) {
-                return iFalse;
-            }
             /* Dismiss open menus when clicking outside them. */
             closeMenu_Widget(menu);
             return iTrue;

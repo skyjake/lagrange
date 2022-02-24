@@ -840,7 +840,6 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
     if (isNormalPlacement_MainWindow_(d)) {
         iInt2 newPos;
         SDL_GetWindowPosition(d->base.win, &newPos.x, &newPos.y);
-        printf("savePlace_MainWindow_ sets normalRect %d,%d\n", newPos.x, newPos.y); fflush(stdout);
         d->place.normalRect.pos = newPos;
         iInt2 border = zero_I2();
 #if !defined(iPlatformApple)
@@ -1136,6 +1135,9 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 wasUsed = dispatchEvent_Window(d, &event);
             }
             if (!wasUsed) {
+                if (event.type == SDL_MOUSEBUTTONDOWN) {
+                    closePopups_App(iFalse);
+                }
                 /* As a special case, clicking the middle mouse button can be used for pasting
                    from the clipboard. */
                 if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) {
@@ -1264,8 +1266,7 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
     }
     if (d->hover != oldHover) {
-        refresh_Widget(oldHover);
-        refresh_Widget(d->hover);
+        refresh_Widget(d->hover); /* Note: oldHover may have been deleted */
     }
     return wasUsed;
 }
@@ -1868,8 +1869,8 @@ int snap_MainWindow(const iMainWindow *d) {
 iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
     start_PerfTimer(newPopup_Window);
     const iBool oldSw = forceSoftwareRender_App();
-    /* On macOS, SDL seems to want to not use HiDPI with software rendering. */
 #if !defined (iPlatformApple)
+    /* On macOS, SDL seems to want to not use HiDPI with software rendering. */
     setForceSoftwareRender_App(iTrue);
 #endif
     SDL_Rect usableRect;
@@ -1906,7 +1907,5 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
 #if !defined (NDEBUG)
     stop_PerfTimer(newPopup_Window);
 #endif
-//    SDL_PumpEvents();
-//    processEvents_App(postedEventsOnly_AppEventMode);
     return win;
 }
