@@ -1,2 +1,40 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2022-02-24 10:50+0000\n"
+"Last-Translator: Marco Andronaco <andronacomarco@gmail.com>\n"
+"Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s è un archivio compresso."
+
+msgid "doc.archive.view"
+msgstr "Mostra il contenuto dell'archivio"
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Sei iscritto a %zu feed che contiene %%s.\n"
+msgstr[1] "Sei iscritto a %zu feed che contengono %%s.\n"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Se chiudi questa scheda, il download sarà annullato."
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Voci feed"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "un totale di %zu voce"
+msgstr[1] "un totale di %zu voci"
