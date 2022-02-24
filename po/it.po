@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 10:50+0000\n"
-"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -51,3 +51,32 @@ msgstr "Scaricando"
 
 msgid "media.untitled.audio"
 msgstr "Audio"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Download completato."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titolo"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artista"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genere"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Data"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bit"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
