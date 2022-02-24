@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:53+0000\n"
-"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -1152,3 +1152,60 @@ msgstr "Scade il %d %b %Y"
 
 msgid "ident.stopuse.all"
 msgstr "Non Utilizzare in Tutte le Pagine"
+
+msgid "feeds.entry.bookmark"
+msgstr "Aggiungi ai Segnalibri…"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Questo documento XML Atom è stato automaticamente tradotto in un feed Gemini "
+"per permetterne l'iscrizione."
+
+msgid "bookmark.untag.remote"
+msgstr "Rimuovi fonte dei Segnalibri"
+
+msgid "bookmark.tag.remote"
+msgstr "Usa come fonte per i Segnalibri"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Usato in un URL"
+msgstr[1] "Usato in %zu URL"
+
+msgid "ident.export"
+msgstr "Esporta"
+
+msgid "menu.openfile"
+msgstr "Apri un File…"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Apri link a lato"
+
+msgid "status.query"
+msgstr "Cerca"
+
+msgid "status.query.tight"
+msgstr "Cerca"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Note su %s:"
+
+# strftime() formatted. Should be split evenly on two lines with a newline character.
+msgid "page.timestamp"
+msgstr ""
+"Scaricato alle %I:%M %p\n"
+"il %d %b %Y"
+
+# strftime() formatted
+msgid "sidebar.date.thisyear"
+msgstr "%d %b"
+
+# strftime() formatted
+msgid "sidebar.date.otheryear"
+msgstr "%d.%b %Y"
+
+msgid "bookmarks.reload"
+msgstr "Ricarica Sorgenti Remote"
