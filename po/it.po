@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:41+0000\n"
-"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -585,3 +585,18 @@ msgstr ""
 "In questa lista ogni titolo rappresenta un tag dei segnalibri. Solo i "
 "segnalibri con un'etichetta sono presenti nella lista.  I segnalibri con "
 "multiple etichette sono ripetuti sotto ogni etichetta."
+
+msgid "heading.certimport.pasted"
+msgstr "Incolla dalla clipboard"
+
+msgid "heading.certimport"
+msgstr "Importa identità"
+
+msgid "heading.certimport.dropped"
+msgstr "File trascinato"
+
+msgid "link.hint.audio"
+msgstr "Audio"
+
+msgid "link.hint.image"
+msgstr "Immagine"
