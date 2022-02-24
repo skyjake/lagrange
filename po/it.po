@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 15:22+0000\n"
-"Last-Translator: Marco Andronaco <andronacomarco@gmail.com>\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -22,8 +22,8 @@ msgstr "Mostra il contenuto dell'archivio"
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "Sei iscritto a %zu feed che contiene %%s.\n"
-msgstr[1] "Sei iscritto a %zu feed che contengono %%s.\n"
+msgstr[0] "Sei iscritto ad un feed che contiene %%s.\n"
+msgstr[1] "Sei iscritto a %u feed che contengono %%s.\n"
 
 # Inline download status message.
 msgid "media.download.warnclose"
@@ -1119,8 +1119,8 @@ msgstr "MB/s"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "%zu byte"
-msgstr[1] "%zu byte"
+msgstr[0] "%u byte"
+msgstr[1] "%u byte"
 
 msgid "status.feeds"
 msgstr "Aggiornamento Feed"
@@ -1170,7 +1170,7 @@ msgstr "Usa come fonte per i Segnalibri"
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
 msgstr[0] "Usato in un URL"
-msgstr[1] "Usato in %zu URL"
+msgstr[1] "Usato in %u URL"
 
 msgid "ident.export"
 msgstr "Esporta"
@@ -1200,7 +1200,7 @@ msgstr ""
 
 # strftime() formatted
 msgid "sidebar.date.thisyear"
-msgstr "%d %b"
+msgstr "%d. %b"
 
 # strftime() formatted
 msgid "sidebar.date.otheryear"
