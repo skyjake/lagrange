@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:25+0000\n"
-"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -484,3 +484,21 @@ msgstr "Apri link"
 
 msgid "heading.file.delete"
 msgstr "Cancella file"
+
+msgid "link.file.delete"
+msgstr "Cancella File"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Sei sicuro di voler cancellare questo file?"
+
+msgid "dlg.file.delete"
+msgstr "Cancella"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Aprire questo link nel browser di default?\n"
+"%s%s"
+
+msgid "link.download"
+msgstr "Scarica File linkato"
