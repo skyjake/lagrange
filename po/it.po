@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:07+0000\n"
-"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -286,3 +286,50 @@ msgstr "Mostra l'Outline della pagina"
 
 msgid "menu.autoreload"
 msgstr "Imposta Auto-Ricaricamento"
+
+msgid "menu.back"
+msgstr "Indietro"
+
+msgid "menu.forward"
+msgstr "Avanti"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Copia Link alla Pagina"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Visualizza Segnalibri"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Visualizza Identità"
+
+msgid "menu.paste"
+msgstr "Incolla"
+
+msgid "menu.help"
+msgstr "Aiuto"
+
+msgid "menu.releasenotes"
+msgstr "Note di Rilascio"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Visualizza Feed"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Visualizza Cronologia"
+
+msgid "menu.reload"
+msgstr "Ricarica Pagina"
+
+msgid "menu.select.clear"
+msgstr "Deseleziona"
+
+msgid "menu.cut"
+msgstr "Taglia"
+
+msgid "menu.copy"
+msgstr "Copia"
