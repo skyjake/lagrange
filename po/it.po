@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:50+0000\n"
-"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -908,3 +908,72 @@ msgstr "Interfaccia utente"
 
 msgid "toolbar.outline"
 msgstr "Schema della Pagina"
+
+msgid "menu.feeds.refresh"
+msgstr "Aggiorna Feed"
+
+msgid "menu.page.subscribe"
+msgstr "Iscriviti alla Pagina…"
+
+msgid "sidebar.history"
+msgstr "Cronologia"
+
+msgid "sidebar.identities"
+msgstr "Identità"
+
+msgid "menu.page.bookmark"
+msgstr "Aggiungi ai Segnalibri…"
+
+msgid "panel.back"
+msgstr "Indietro"
+
+msgid "menu.page.import"
+msgstr "Importa Link come Segnalibri…"
+
+msgid "menu.page.translate"
+msgstr "Traduci…"
+
+msgid "menu.page.copyurl"
+msgstr "Copia URL Pagina"
+
+msgid "menu.page.copysource"
+msgstr "Copia Sorgente Pagina"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Ricarica Segnalibri Remoti"
+
+msgid "menu.identity.new"
+msgstr "Nuova Identità…"
+
+msgid "menu.identity.import"
+msgstr "Importa…"
+
+msgid "menu.identity.notactive"
+msgstr "Nessuna Identità Attiva"
+
+msgid "sidebar.bookmarks"
+msgstr "Segnalibri"
+
+msgid "sidebar.feeds"
+msgstr "Feed"
+
+msgid "menu.debug"
+msgstr "Informazioni di Debug"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Tutti"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Non letto"
+msgstr[1] "Non letti"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nuova…"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Non Letti"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importa…"
