@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 10:54+0000\n"
-"Last-Translator: Marco Andronaco <andronacomarco@gmail.com>\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -206,3 +206,34 @@ msgstr "Cerca"
 
 msgid "menu.downloads"
 msgstr "Mostra i Download"
+
+msgid "menu.zoom.reset"
+msgstr "Resetta ingrandimento"
+
+msgid "menu.view.split"
+msgstr "Dividi la schermata"
+
+msgid "menu.save.downloads.open"
+msgstr "Salva nei Download e apri il file"
+
+msgid "menu.sidebar.left"
+msgstr "Visualizza/Nascondi barra laterale sinistra"
+
+msgid "menu.sidebar.right"
+msgstr "Visualizza/Nascondi barra laterale destra"
+
+msgid "menu.zoom.in"
+msgstr "Ingrandisci"
+
+msgid "menu.zoom.out"
+msgstr "Rimpicciolisci"
+
+msgid "menu.unexpire"
+msgstr "Ignora scandenza e continua a caricare"
+
+msgid "menu.pageinfo"
+msgstr "Mostra informazioni sulla pagina"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Salva su File"
