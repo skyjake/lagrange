@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-24 12:25+0000\n"
+"PO-Revision-Date: 2022-02-24 12:41+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -502,3 +502,86 @@ msgstr ""
 
 msgid "link.download"
 msgstr "Scarica File linkato"
+
+msgid "dlg.certwarn.different"
+msgstr "Il certificato ricevuto è valido ma diverso da quello fidato."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Il certificato ricevuto è per un dominio sbagliato (%s). Potrebbe essere un "
+"errore di configurazione del server."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr ""
+"Il certificato ricevuto è scaduto ed INOLTRE è per il dominio sbagliato."
+
+msgid "dlg.openlink"
+msgstr "Apri Link"
+
+msgid "dlg.certimport.notfound"
+msgstr "Nessun certificato o chiave privata trovati."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Nessun certificato/chiave trovata per la pagina corrente."
+
+msgid "dlg.certimport.import"
+msgstr "Importa"
+
+msgid "dlg.certimport.notes"
+msgstr "Note:"
+
+msgid "hint.certimport.description"
+msgstr "descrizione"
+
+msgid "bookmark.export.title.tag"
+msgstr "Tag del segnalibro"
+
+msgid "bookmark.export.title.time"
+msgstr "Segnalibri creati"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Il certificato ricevuto potrebbe essere stato rinnovato di recente — è per "
+"il dominio corretto e non è scaduto. Il certificato attualmente fidato "
+"scadrà il %s, fra un giorno."
+msgstr[1] ""
+"Il certificato ricevuto potrebbe essere stato rinnovato di recente — è per "
+"il dominio corretto e non è scaduto. Il certificato attualmente fidato "
+"scadrà il %s, fra %d giorni."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Il certificato ricevuto è scaduto il %s."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Incolla un certificato in fromato PEM e/o una chiave privata,\n"
+"o trascina sulla finestra un file .crt/.key."
+
+msgid "dlg.certimport.nocert"
+msgstr "Senza Certificato"
+
+msgid "dlg.certimport.nokey"
+msgstr "Senza Chiave Privata"
+
+msgid "bookmark.title.blank"
+msgstr "Pagina Vuota"
+
+msgid "bookmark.export.title.folder"
+msgstr "Segnalibri"
+
+msgid "bookmark.export.saving"
+msgstr "Salva questa pagina per esportarli, oppure copiali nella clipboard."
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Hai un segnalibro."
+msgstr[1] "Hai %d segnalibri."
+
+msgid "bookmark.export.taginfo"
+msgstr ""
+"In questa lista ogni titolo rappresenta un tag dei segnalibri. Solo i "
+"segnalibri con un'etichetta sono presenti nella lista.  I segnalibri con "
+"multiple etichette sono ripetuti sotto ogni etichetta."
