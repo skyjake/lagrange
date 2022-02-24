@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 10:50+0000\n"
-"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
+"Last-Translator: dalz <weblate@alsd.eu>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -80,3 +80,9 @@ msgstr "%d-bit"
 # Hertz, unit for frequency values
 msgid "hz"
 msgstr "Hz"
+
+msgid "numbertype.integer"
+msgstr "intero"
+
+msgid "numbertype.float"
+msgstr "numero in virgola mobile"
