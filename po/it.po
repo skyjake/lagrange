@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-24 12:50+0000\n"
+"PO-Revision-Date: 2022-02-24 12:53+0000\n"
 "Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -1025,3 +1025,130 @@ msgstr "Informazioni"
 
 msgid "hint.findtext"
 msgstr "Cerca testo nella pagina"
+
+msgid "feeds.entry.markread"
+msgstr "Segna come già letto"
+
+msgid "feeds.markallread"
+msgstr "Segna tutti come già letti"
+
+msgid "feeds.refresh"
+msgstr "Aggiorna Feed"
+
+msgid "menu.opentab"
+msgstr "Apri in Nuova Scheda"
+
+msgid "menu.opentab.background"
+msgstr "Apri in Nuova Scheda in Background"
+
+msgid "menu.edit"
+msgstr "Modifica…"
+
+msgid "menu.copyurl"
+msgstr "Copia URL"
+
+msgid "menu.forgeturl"
+msgstr "Dimentica URL"
+
+msgid "history.clear"
+msgstr "Elimina Cronologia…"
+
+msgid "dlg.confirm.history.clear"
+msgstr ""
+"Sei sicuro di voler eliminare tutta la cronologia delle pagine visitate?"
+
+msgid "bookmark.untag.home"
+msgstr "Rimuovi Homepage"
+
+msgid "ident.notused"
+msgstr "Non utilizzata"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Sei sicuro di voler eliminare questa identità\n"
+"%s%s%s\n"
+"compreso il suo certificato e le sue chiavi private?"
+
+msgid "feeds.unsubscribe"
+msgstr "Annulla Iscrizione…"
+
+msgid "bookmark.tag.home"
+msgstr "Imposta come Homepage"
+
+msgid "bookmark.tag.sub"
+msgstr "Iscriviti al Feed"
+
+msgid "bookmark.delete"
+msgstr "Elimina Segnalibro"
+
+msgid "feeds.today"
+msgstr "Oggi"
+
+msgid "menu.dup"
+msgstr "Duplica…"
+
+msgid "ident.using"
+msgstr "Utilizza su questa pagina"
+
+msgid "ident.use"
+msgstr "Utilizza in Questa Pagina"
+
+msgid "ident.stopuse"
+msgstr "Non Utilizzare in Questa Pagina"
+
+msgid "menu.edit.notes"
+msgstr "Modifica Note…"
+
+msgid "ident.fingerprint"
+msgstr "Copia Firma"
+
+msgid "ident.delete"
+msgstr "Elimina Identità…"
+
+msgid "dlg.history.clear"
+msgstr "Elimina Cronologia"
+
+msgid "bookmark.untag.sub"
+msgstr "Annulla Iscrizione dal Feed"
+
+msgid "ident.temporary"
+msgstr "Temporanea"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu byte"
+msgstr[1] "%zu byte"
+
+msgid "status.feeds"
+msgstr "Aggiornamento Feed"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "feeds.entry.markunread"
+msgstr "Segna come da leggere"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Aggiungi ai Segnalibri…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Apri Pagina Feed"
+
+msgid "feeds.edit"
+msgstr "Modifica Feed…"
+
+# strftime() formatted
+msgid "ident.expiry"
+msgstr "Scade il %d %b %Y"
+
+msgid "ident.stopuse.all"
+msgstr "Non Utilizzare in Tutte le Pagine"
