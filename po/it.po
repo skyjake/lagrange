@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-24 15:22+0000\n"
-"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
+"PO-Revision-Date: 2022-02-26 06:21+0000\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -402,7 +402,7 @@ msgstr[0] "Trovato un nuovo link nella pagina."
 msgstr[1] "Trovati %d nuovi link nella pagina."
 
 msgid "dlg.autoreload"
-msgstr "Imposta l'intervallo per l'auto-ricaricamento del tab."
+msgstr "Imposta l'intervallo per l'auto-ricaricamento delle schede."
 
 #, c-format
 msgid "num.minutes"
@@ -417,16 +417,16 @@ msgstr[0] "un'ora"
 msgstr[1] "%d ore"
 
 msgid "link.newtab"
-msgstr "Apri link in un Nuovo Tab"
+msgstr "Apri link in una Nuova Scheda"
 
 msgid "link.newtab.background"
-msgstr "Apri Link in un Tab in Background"
+msgstr "Apri Link in una Scheda in Background"
 
 msgid "link.side"
 msgstr "Apri Link a Lato"
 
 msgid "link.side.newtab"
-msgstr "Apri Link in un Nuovo Tab a Lato"
+msgstr "Apri Link in una Nuova Scheda a Lato"
 
 msgid "error.server.msg"
 msgstr "Il server ha risposto col messaggio:"
@@ -602,7 +602,7 @@ msgid "link.hint.image"
 msgstr "Immagine"
 
 msgid "heading.uploadport"
-msgstr "Porta del caricamento per Titan"
+msgstr "Porta dell'upload per Titan"
 
 msgid "heading.upload"
 msgstr "Carica con Titan"
@@ -1204,7 +1204,7 @@ msgstr "%d. %b"
 
 # strftime() formatted
 msgid "sidebar.date.otheryear"
-msgstr "%b. %d, %Y"
+msgstr "%d.%b, %Y"
 
 msgid "bookmarks.reload"
 msgstr "Ricarica Sorgenti Remote"
@@ -1232,3 +1232,929 @@ msgstr ""
 
 msgid "dlg.ident.delete"
 msgstr "Elimina Identità e Chiavi"
+
+msgid "about.powered"
+msgstr "Realizzato con SDL 2, OpenSSL e"
+
+msgid "error.certverify"
+msgstr "Server non fidato"
+
+msgid "menu.binding.clear"
+msgstr "Rimuovi"
+
+msgid "prefs.uiscale"
+msgstr "Fattore di scala dell'interfaccia:"
+
+msgid "prefs.customframe"
+msgstr "Cornice della finestra personalizzata:"
+
+msgid "prefs.accent.orange"
+msgstr "Arancione"
+
+msgid "keys.zoom.reset"
+msgstr "Resetta l'ingrandimento"
+
+msgid "keys.tab.new"
+msgstr "Nuova scheda"
+
+msgid "error.manyredirects"
+msgstr "Troppi Redirect"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Importa Certificato/Chiave da File"
+
+msgid "prefs.smoothscroll"
+msgstr "Smooth scrolling:"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Velocità della tastiera:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Velocità del mouse:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Carica immagini allo scroll:"
+
+msgid "prefs.theme.white"
+msgstr "Bianco"
+
+msgid "prefs.accent"
+msgstr "Colore d'accento:"
+
+msgid "prefs.returnkey"
+msgstr "Comportamento del tasto Invio:"
+
+msgid "prefs.returnkey.accept"
+msgstr "Conferma"
+
+msgid "prefs.font.heading"
+msgstr "Intestazioni:"
+
+msgid "prefs.font.body"
+msgstr "Corpo:"
+
+msgid "error.notfound"
+msgstr "Non trovata"
+
+msgid "prefs.font.mono"
+msgstr "Preformattato:"
+
+#, c-format
+msgid "fontpack.enable"
+msgstr "Attiva \"%s\""
+
+msgid "fontpack.meta.disabled"
+msgstr ", disattivato"
+
+msgid "fontpack.meta.installed"
+msgstr "Installato"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Versione %d"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Mostra file"
+
+msgid "heading.fontpack.meta.disabled"
+msgstr "Fontpack Disattivati"
+
+msgid "keys.scroll.up"
+msgstr "Scorri in alto"
+
+msgid "keys.zoom.in"
+msgstr "Ingrandisci"
+
+msgid "keys.zoom.out"
+msgstr "Rimpicciolisci"
+
+msgid "prefs.memorysize"
+msgstr "Dimensione della memoria:"
+
+msgid "prefs.hoverlink"
+msgstr "Mostra URL al posizionamento del cursore:"
+
+msgid "error.cgi"
+msgstr "Errore CGI"
+
+msgid "keys.bottom"
+msgstr "Salta in fondo"
+
+msgid "gempub.meta.pubdate"
+msgstr "Data di pubblicazione"
+
+msgid "menu.newwindow"
+msgstr "Nuova Finestra"
+
+msgid "menu.update"
+msgstr "Controlla aggiornamenti…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Impostazioni"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Seleziona Tutto"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Elimina"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Annulla"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Nascondi Identità"
+
+msgid "heading.dismiss.warning"
+msgstr "Ignorare Avviso?"
+
+msgid "menu.home"
+msgstr "Vai alla pagina principale"
+
+msgid "menu.fonts"
+msgstr "Gestisci i Font…"
+
+msgid "menu.identities"
+msgstr "Gestisci le Identità"
+
+msgid "sidebar.close"
+msgstr "Fatto"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Nuova Cartella"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Modifica"
+
+msgid "sidebar.action.show"
+msgstr "Mostra:"
+
+msgid "menu.openwindow"
+msgstr "Apri in una Nuova Finestra"
+
+msgid "pageinfo.settings"
+msgstr "Impostazioni"
+
+msgid "heading.sitespec"
+msgstr "Impostazioni specifice per il sito"
+
+msgid "sitespec.ansi"
+msgstr "Avviso sui codici di escape ANSI:"
+
+msgid "sitespec.palette"
+msgstr "Seed per la palette del Tema:"
+
+msgid "sitespec.accept"
+msgstr "Salva Impostazioni"
+
+msgid "keys.pageinfo"
+msgstr "Mostra informazioni pagina"
+
+msgid "keys.sitespec"
+msgstr "Mostra le impostazioni specifiche per alcuni siti"
+
+msgid "keys.input.precedingline"
+msgstr "Richiesta di Input: Incolla la riga precedente"
+
+msgid "menu.share"
+msgstr "Condividi"
+
+msgid "link.newwindow"
+msgstr "Apri link in una nuova finestra"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Mostra nel Finder"
+
+msgid "dlg.certwarn.title"
+msgstr "Problemi di sicurezza"
+
+msgid "menu.page.upload.edit"
+msgstr "Modifica la Pagina con Titan…"
+
+msgid "upload.id"
+msgstr "Identità:"
+
+msgid "heading.upload.id"
+msgstr "Autorizzazione"
+
+msgid "dlg.upload.id.none"
+msgstr "Nessuna"
+
+msgid "dlg.upload.id.default"
+msgstr "Default"
+
+msgid "menu.upload.export"
+msgstr "Esporta Testo"
+
+msgid "menu.upload.delete"
+msgstr "Cancella Tutto"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Cancella Tutto Definitivamente (Irreversibile)"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Contenuto"
+
+msgid "hint.upload.path"
+msgstr "Percorso dell'URL"
+
+msgid "hint.upload.token.long"
+msgstr "token — vedi istruzioni del server"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Carica Testo Semplice"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Carica un File"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Seleziona un File"
+
+msgid "heading.glyphfinder"
+msgstr "Glifi Mancanti"
+
+msgid "prefs.mono.gopher"
+msgstr "gopher"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "da-sfondo-a-fronte"
+
+msgid "prefs.font"
+msgstr "Font per il Corpo:"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Non è stato possibile mostrare i seguenti caratteri:"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Puoi provare a cercare la Libreria di Font su skyjake.fi (\"Font Library\") "
+"per font che forniscono glifi per quei caratteri oppure installare "
+"manualmente un nuovo font TrueType."
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr ""
+"Per favore ricarica la pagina per controllare di nuovo i glifi mancanti."
+
+msgid "prefs.proxy.gopher"
+msgstr "Proxy Gopher:"
+
+msgid "menu.binding.reset"
+msgstr "Reimposta i Default"
+
+msgid "archive.exit"
+msgstr "Esci dall'archivio"
+
+msgid "keys.top"
+msgstr "Torna in cima"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Scorri in basso di metà pagina"
+
+msgid "keys.scroll.page.up"
+msgstr "Scorri in alto di una pagina"
+
+msgid "keys.scroll.page.down"
+msgstr "Scorri in basso di una pagina"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Disattiva Avviso"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Cerca Libreria Font"
+
+msgid "heading.glyphfinder.results"
+msgstr "Risultati della Ricerca"
+
+msgid "glyphfinder.results"
+msgstr "I seguenti fontpacks forniscono uno o più dei glifi mancanti:"
+
+msgid "glyphfinder.results.empty"
+msgstr "Spiacente, non è stato trovato un fontpack corrispondente."
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Ignora link HTTP(S):"
+
+msgid "dlg.bookmark.folder"
+msgstr "Cartella:"
+
+msgid "heading.bookmark.tags"
+msgstr "Etichetta Speciale"
+
+msgid "heading.addfolder"
+msgstr "Aggiungi Cartella"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Nome della nuova cartella:"
+
+msgid "heading.prefs.sizing"
+msgstr "Dimensioni"
+
+msgid "prefs.collapsepreonload"
+msgstr "Collassa preformattatto:"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Apri immagini in data URL:"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Aggiungi Segnalibro alla fine:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Nascondi barra degli strumenti allo scroll:"
+
+msgid "prefs.theme.dark"
+msgstr "Scuro"
+
+msgid "prefs.theme.light"
+msgstr "Chiaro"
+
+msgid "prefs.accent.teal"
+msgstr "Verde acqua"
+
+msgid "prefs.uilang"
+msgstr "Lingua:"
+
+msgid "prefs.time.24h"
+msgstr "Formato tempo 24 Ore"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Fine riga"
+
+msgid "prefs.retainwindow"
+msgstr "Ricorda Posizionamento:"
+
+msgid "prefs.doctheme.light"
+msgstr "Tema chiaro:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Scuro colorato"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Chiaro colorato"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Nero"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Grigio"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Bianco"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Seppia"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Alto Contrasto"
+
+msgid "prefs.saturation"
+msgstr "Saturazione:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normale"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "Col tema scuro"
+
+msgid "dlg.addfolder"
+msgstr "Aggiungi Cartella"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "Impostazioni"
+
+msgid "prefs.imagestyle"
+msgstr "Colorizza Immagini:"
+
+msgid "prefs.imagestyle.original"
+msgstr "Nessuno"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Scala di Grigi"
+
+msgid "prefs.imagestyle.text"
+msgstr "Colore del Testo"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "Colore preformattato"
+
+msgid "prefs.font.ui"
+msgstr "UI:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Font Monospace:"
+
+msgid "prefs.mono"
+msgstr "Contenuto Monospace:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.boldlink"
+msgstr "Link in grossetto:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Visitato"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Colore di sfondo"
+
+# Color of the text foreground, i.e., the characters.
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Colore di primo piano"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Stile del Font"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Col tema chiaro"
+
+msgid "prefs.linewidth"
+msgstr "Larghezza delle righe:"
+
+msgid "prefs.quoteicon"
+msgstr "Indicatore Citazioni:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "Icona \""
+
+msgid "prefs.quoteicon.line"
+msgstr "Linea"
+
+msgid "prefs.biglede"
+msgstr "Primo paragrafo più grande:"
+
+msgid "error.unavail.msg"
+msgstr ""
+"Il server non è disponibile per sovraccarico o manutenzione. Riprova più "
+"tardi."
+
+msgid "prefs.linespacing"
+msgstr "Spaziatura tra le righe:"
+
+msgid "prefs.decodeurls"
+msgstr "Decodifica URL:"
+
+msgid "prefs.cachesize"
+msgstr "Dimensione della cache:"
+
+msgid "prefs.ca.file"
+msgstr "File CA:"
+
+msgid "prefs.ca.path"
+msgstr "Percorso al CA:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Proxy Gemini:"
+
+msgid "prefs.urlsize"
+msgstr "Massima dimensione degli URL:"
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Questa cartella contiene %u elemento."
+msgstr[1] "Questa cartella contiene %u elementi."
+
+msgid "keys.back"
+msgstr "Indietro"
+
+msgid "keys.forward"
+msgstr "Avanti"
+
+msgid "keys.scroll.down"
+msgstr "Scorri in basso"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Scorri in l'alto di metà pagina"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Apri link in una nuova scheda mediante tasti della riga principale"
+
+msgid "keys.bookmark.add"
+msgstr "Aggiungi segnalibro"
+
+msgid "keys.tab.close"
+msgstr "Chiudi scheda"
+
+msgid "keys.tab.next"
+msgstr "Scheda seguente"
+
+msgid "keys.link.homerow.hover"
+msgstr "Focus dei link mediante tasti della riga principale"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Aggiungi cartella di segnalibri"
+
+msgid "keys.fullscreen"
+msgstr "Attiva/disattiva modalità a schermo interno"
+
+msgid "keys.split.menu"
+msgstr "Abilità modalità di visualizzazione divisa"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "Cancella Preferiti"
+
+msgid "error.badresource"
+msgstr "Risorsa invalida"
+
+msgid "error.badheader"
+msgstr "Intestazione Invalida"
+
+msgid "fontpack.install.ttf"
+msgstr "Installa font TrueType"
+
+msgid "dlg.fontpack.delete"
+msgstr "Cancella Fontpack"
+
+msgid "error.tls"
+msgstr "Errore di Rete/TLS"
+
+msgid "error.certexpired"
+msgstr "Certificato Scaduto"
+
+msgid "prefs.proxy.http"
+msgstr "Proxy HTTP:"
+
+msgid "error.temporary"
+msgstr "Fallimento Temporaneo"
+
+msgid "error.unsupported.protocol"
+msgstr "Protocollo non supportato"
+
+msgid "prefs.font.warnmissing"
+msgstr "Avviso Glifi:"
+
+msgid "error.proxy"
+msgstr "Errore del Proxy"
+
+msgid "error.cgi.msg"
+msgstr ""
+"Errore nella generazione dinamica del contenuto nel server. Forse per via di "
+"un malfunzionamento del software lato server."
+
+msgid "error.unavail"
+msgstr "Server Non Disponibile"
+
+msgid "error.temporary.msg"
+msgstr "La richiesta è fallita ma potrebbe funzionare se riprovi in seguito."
+
+msgid "error.permanent"
+msgstr "Fallimento Permanente"
+
+msgid "error.slowdown.msg"
+msgstr "Il server sta limitando le richiest. Aspetta perfavore…"
+
+msgid "error.slowdown"
+msgstr "Rallenta"
+
+msgid "error.proxy.msg"
+msgstr ""
+"La richesta per il proxy è fallita perchè il server non è stato in grado di "
+"completare con successo la trasazione con l'host remoto. Forse ci sono "
+"errori di connettività."
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"La richiesta era per una risorsa su un dominio non servito da questo server "
+"e il server non accetta richieste di proxy."
+
+msgid "error.proxyrefusal"
+msgstr "Richiesta di Proxy Rifiutata"
+
+msgid "error.gone.msg"
+msgstr "La risorsa richiesta non è più disponibile."
+
+msgid "error.gone"
+msgstr "Andato"
+
+msgid "error.notfound.msg"
+msgstr "La risorsa richiesta non è stata trovata al momento."
+
+msgid "error.permanent.msg"
+msgstr "La tua richiesta ha fallito e fallirà in futuro se ripetuta."
+
+msgid "error.cert.invalid"
+msgstr "Certificato non valido"
+
+msgid "error.cert.auth"
+msgstr "Certificato Non Autorizzato"
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"L'accesso alla risorsa richiesta richiede un'identificazione con un "
+"certificato client."
+
+msgid "error.cert.needed"
+msgstr "Certificato Richiesto"
+
+msgid "error.badrequest.msg"
+msgstr "Il server non ha capito la tua richiesta."
+
+msgid "error.glyphs.msg"
+msgstr ""
+"Non è stato possibile mostrare la pagina correttamente perchè alcuni "
+"caratteri sono mancanti. Puoi installare dei font addizionali per risolvere "
+"il problema."
+
+msgid "error.ansi.msg"
+msgstr ""
+"Questa pagina potrebbe non essere mostrata correttamente. Fa uso di sequenze "
+"di escape ANSI per formattare il testo, cosa che è solo parzialmente "
+"supportata. Puoi provare ad usare un emulatore terminale per vederla."
+
+msgid "gempub.meta.author"
+msgstr "Autore"
+
+msgid "gempub.cover.image"
+msgstr "Immagine Copertina"
+
+msgid "gempub.cover.view"
+msgstr "Mostra contenuto del Gempub"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Riguardo questo libro"
+
+msgid "heading.fontpack.meta.enabled"
+msgstr "Fontpack attivati"
+
+msgid "heading.fontpack.meta"
+msgstr "Font"
+
+msgid "gempub.meta.license"
+msgstr "Licenza"
+
+msgid "gempub.meta.lang"
+msgstr "Lingua"
+
+msgid "gempub.meta.version"
+msgstr "Versione"
+
+msgid "keys.link.modkey"
+msgstr "Apri link mediante tasto modificatore"
+
+#, c-format
+msgid "fontpack.install"
+msgstr "Installa \"%s\""
+
+msgid "fontpack.export"
+msgstr "Mostra il template fontpack.ini"
+
+#, c-format
+msgid "fontpack.disable"
+msgstr "Disattiva \"%s\""
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Non installato"
+
+msgid "fontpack.open.fontsdir"
+msgstr "Apri Cartella dei Font dell'Utente"
+
+msgid "fontpack.help"
+msgstr ""
+"I fontpack di Lagrange sono archivi ZIP che contengono un insieme di font "
+"associati a dei parametri di configurazione. Una volta installati, i font "
+"possono essere usati per il contenuto dei documenti e per l'interfaccia "
+"utente. I font attivi selezionati in Preferenze > Font."
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Vuoi davvero cancellare definitivamente il fontpack \"%s\"?"
+
+msgid "heading.fontpack.delete"
+msgstr "Cancella Fontpack"
+
+msgid "truetype.help.installed"
+msgstr "Questo font è installato nella cartella dei font dell'utente."
+
+msgid "truetype.help"
+msgstr ""
+"Lagrange prova a caricare individualmente tutti i font TrueType presenti "
+"nella cartella dei font dell'utente."
+
+msgid "fontpack.open.aboutfonts"
+msgstr "Mostra Font Installati"
+
+msgid "dlg.dismiss.warning"
+msgstr "Ignora Avviso"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Ignorare permanentemente l'avviso sull'emulazione del terminale su %s?"
+
+msgid "keys.tab.close.other"
+msgstr "Chiudi le altre schede"
+
+msgid "keys.tab.prev"
+msgstr "Scheda precedente"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u file"
+msgstr[1] "%u file"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Nuova Cartella"
+
+msgid "prefs.ostheme"
+msgstr "Usa il tema del sistema:"
+
+msgid "prefs.theme"
+msgstr "tema:"
+
+msgid "prefs.theme.black"
+msgstr "Nero"
+
+msgid "prefs.gemtext.ansi"
+msgstr "codici ANSI:"
+
+msgid "error.badredirect"
+msgstr "Redirect Invalido"
+
+msgid "error.schemeredirect"
+msgstr "Redirect con cambio di schema"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Cancella Segnalibro"
+msgstr[1] "Cancella %u Segnalibri"
+
+msgid "prefs.font.smooth"
+msgstr "Smoothing:"
+
+msgid "prefs.linewidth.fill"
+msgstr "Riempi"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Cancella permanentemente \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Aggiorna \"%s\" alla versione %d"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] ""
+"Questo archivio contiene %u elemento e la sua dimensione compressa è di %.1f "
+"MB."
+msgstr[1] ""
+"Questo archivio contiene %u elementi e la sua dimensione compressa è di %.1f "
+"MB."
+
+msgid "menu.newfolder"
+msgstr "Nuova Cartella…"
+
+msgid "menu.sort.alpha"
+msgstr "Ordina Alfabeticamente"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "Vuoi davvero cancellare il segnalibro in questa cartella?"
+msgstr[1] "Vuoi davvero cancellare tutti i %u segnalibri in questa cartella?"
+
+msgid "menu.website"
+msgstr "Sito web del Progetto…"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u fonte"
+msgstr[1] "%u fonti"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Mostra nel File Manager"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+msgid "menu.open.external"
+msgstr "Apri in un'altra App"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Apri indice dell'archivio:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Nessuno"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Azioni della Barra degli Strumenti"
+
+msgid "prefs.pinsplit"
+msgstr "Scheda per la split-view:"
+
+msgid "prefs.pinsplit.right"
+msgstr "Scheda Destra"
+
+msgid "prefs.pinsplit.left"
+msgstr "Scheda Sinistra"
+
+msgid "prefs.blink"
+msgstr "Lampeggiamento Cursore:"
+
+msgid "prefs.animate"
+msgstr "Animazioni:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Tema scuro:"
+
+msgid "prefs.toolbaraction1"
+msgstr "Pulsante 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Pulsante 2"
+
+msgid "prefs.sideicon"
+msgstr "Icona della capsula:"
+
+msgid "keys.subscribe"
+msgstr "Iscriviti alla pagina"
+
+msgid "keys.findtext"
+msgstr "Trova testo nella pagina"
+
+msgid "gempub.cover.untitled"
+msgstr "Libro senza titolo"
+
+msgid "gempub.cover.viewlocal"
+msgstr ""
+"Questo libro Gempub può essere visto solo dopo averlo salvato in locale."
+
+msgid "error.glyphs"
+msgstr "Glifi Mancanti"
+
+msgid "error.ansi"
+msgstr "Emulatore Terminale"
+
+msgid "error.cert.invalid.msg"
+msgstr "Il certificato client fornito è scaduto o invalido."
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Il certificato client fornito è valido ma non è autorizzato ad accedere la "
+"risorsa richiesta."
+
+msgid "gempub.meta.pub"
+msgstr "Pubblicato il"
+
+msgid "gempub.meta.revdate"
+msgstr "Data di Revisione"
+
+msgid "dir.empty"
+msgstr "Questa cartella è vuota."
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Leggi Tutto"
+
+msgid "keys.reload"
+msgstr "Ricarica Pagina"
+
+msgid "keys.parent"
+msgstr "Vai alla directory padre"
+
+msgid "keys.root"
+msgstr "Vai alla radice della capsula"
+
+msgid "keys.link.homerow"
+msgstr "Apri link mediante tasti della riga principale"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Imposta Azione:"
+
+msgid "sidebar.action.history.clear"
+msgstr "Pulisci"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Usa %s"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Incolla la riga precedente"
+
+msgid "sidebar.empty.unread"
+msgstr "Nessuna entry da leggere"
