@@ -96,7 +96,7 @@ iBookmarks *        bookmarks_App       (void);
 iMimeHooks *        mimeHooks_App       (void);
 iPeriodic *         periodic_App        (void);
 iDocumentWidget *   document_App        (void);
-iObjectList *       listDocuments_App   (const iRoot *rootOrNull); /* NULL for all roots */
+iObjectList *       listDocuments_App   (const iRoot *rootOrNull); /* NULL for all roots of current window */
 iStringSet *        listOpenURLs_App    (void); /* all tabs */
 iPtrArray *         listWindows_App     (void);
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);

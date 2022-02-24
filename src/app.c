@@ -1284,11 +1284,26 @@ static void clearCache_App_(void) {
     }
 }
 
+iObjectList *listAllDocuments_App(void) {
+    iWindow *oldWindow = get_Window();
+    iObjectList *allDocs = new_ObjectList();
+    iConstForEach(PtrArray, window, mainWindows_App()) {
+        setCurrent_Window(window.ptr);
+        iObjectList *docs = listDocuments_App(NULL);
+        iForEach(ObjectList, i, docs) {
+            pushBack_ObjectList(allDocs, i.object);
+        }
+        iRelease(docs);
+    }
+    setCurrent_Window(oldWindow);
+    return allDocs;
+}
+
 void trimCache_App(void) {
     iApp *d = &app_;
     size_t cacheSize = 0;
     const size_t limit = d->prefs.maxCacheSize * 1000000;
-    iObjectList *docs = listDocuments_App(NULL);
+    iObjectList *docs = listAllDocuments_App();
     iForEach(ObjectList, i, docs) {
         cacheSize += cacheSize_History(history_DocumentWidget(i.object));
     }
@@ -1315,7 +1330,7 @@ void trimMemory_App(void) {
     iApp *d = &app_;
     size_t memorySize = 0;
     const size_t limit = d->prefs.maxMemorySize * 1000000;
-    iObjectList *docs = listDocuments_App(NULL);
+    iObjectList *docs = listAllDocuments_App();
     iForEach(ObjectList, i, docs) {
         memorySize += memorySize_History(history_DocumentWidget(i.object));
     }
@@ -1337,20 +1352,6 @@ void trimMemory_App(void) {
     }
     iRelease(docs);
 }
-
-#if 0
-iBool findCachedContent_App(const iString *url, iString *mime_out, iBlock *data_out) {
-    /* Cached content can be found in MediaRequests of DocumentWidgets (loaded on the currently
-       open page) and the DocumentWidget itself. `Media` doesn't store source data, only
-       presentation data. */
-    iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
-        if (findCachedContent_DocumentWidget(i.object, url, mime_out, data_out)) {
-            return iTrue;
-        }
-    }
-    return iFalse;
-}
-#endif
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
     if (d->warmupFrames > 0) {
