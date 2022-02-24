@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:53+0000\n"
-"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -1024,7 +1024,7 @@ msgid "menu.about"
 msgstr "Informazioni"
 
 msgid "hint.findtext"
-msgstr "Cerca testo nella pagina"
+msgstr "cerca testo nella pagina"
 
 msgid "feeds.entry.markread"
 msgstr "Segna come già letto"
@@ -1209,3 +1209,15 @@ msgstr "%d.%b %Y"
 
 msgid "bookmarks.reload"
 msgstr "Ricarica Sorgenti Remote"
+
+msgid "heading.ident.use"
+msgstr "Uso dell'identità"
+
+msgid "heading.ident.notes"
+msgstr "Note sull'identità"
+
+msgid "heading.ident.delete"
+msgstr "Elimina identità"
+
+msgid "heading.history.clear"
+msgstr "Elimina Cronologia"
