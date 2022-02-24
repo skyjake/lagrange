@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:44+0000\n"
-"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -694,3 +694,119 @@ msgstr "ALTRO"
 
 msgid "heading.translate"
 msgstr "Traduci pagina"
+
+msgid "dlg.translate.unavail"
+msgstr "Servizio non disponibile"
+
+msgid "dlg.translate.fail"
+msgstr "Richiesta fallita"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "Giapponese"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "Francese"
+
+msgid "dlg.uploadport.set"
+msgstr "Configura la Porta"
+
+msgid "dlg.translate"
+msgstr "Traduci"
+
+msgid "dlg.translate.from"
+msgstr "Da:"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "Cinese"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "Tedesco"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "Inglese"
+
+# A language choice in the Translation dialog.
+msgid "lang.hi"
+msgstr "Hindi"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "Italiano"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "Portoghese"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "Russo"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "Spagnolo"
+
+msgid "dlg.newident.domain"
+msgstr "Dominio:"
+
+msgid "dlg.translate.to"
+msgstr "Per:"
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "Arabo"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Creando un certificato RSA autofirmato da 2048 bit."
+
+msgid "dlg.newident.until"
+msgstr "Valido fino:"
+
+msgid "hint.newident.date"
+msgstr "YYYY oppure YYYY-MM-DD"
+
+msgid "hint.newident.optional"
+msgstr "opzionale"
+
+msgid "dlg.newident.commonname"
+msgstr "Nome comune:"
+
+msgid "dlg.newident.temp"
+msgstr "Temporaneo:"
+
+msgid "dlg.newident.notsaved"
+msgstr "non salvato sul disco"
+
+msgid "dlg.newident.scope"
+msgstr "Usato in:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Dominio Corrente"
+
+msgid "dlg.newident.scope.page"
+msgstr "Pagina Corrente"
+
+msgid "dlg.newident.scope.none"
+msgstr "Non usato"
+
+msgid "dlg.newident.userid"
+msgstr "ID Utente:"
+
+msgid "dlg.newident.more"
+msgstr "Più…"
+
+msgid "dlg.newident.email"
+msgstr "Email:"
+
+msgid "heading.newident"
+msgstr "NUOVA IDENTITÀ"
+
+msgid "dlg.newident.org"
+msgstr "Organizzazione:"
+
+msgid "dlg.newident.country"
+msgstr "Paese:"
