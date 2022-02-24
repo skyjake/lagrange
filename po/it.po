@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:54+0000\n"
-"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
+"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -1220,3 +1220,15 @@ msgstr "Elimina identità"
 
 msgid "heading.history.clear"
 msgstr "Elimina Cronologia"
+
+msgid "sidebar.empty.idents"
+msgstr "Nessuna Identità"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Vedi %sHelp%s per maggiori informazioni sui certificati TLS per i client."
+
+msgid "dlg.ident.delete"
+msgstr "Elimina Identità e Chiavi"
