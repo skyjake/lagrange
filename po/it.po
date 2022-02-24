@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 12:25+0000\n"
-"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -365,3 +365,103 @@ msgstr "Scaduto"
 
 msgid "pageinfo.cert.trusted"
 msgstr "Verificato"
+
+msgid "dlg.import.notnew"
+msgstr "Tutti i link della pagina sono già nei segnalibri."
+
+msgid "dlg.unsub"
+msgstr "Disiscrivi"
+
+msgid "dlg.cert.trust"
+msgstr "Fidati"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Copia Fingerprint"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Per favore fornisci l'input per %s:"
+
+msgid "dlg.input.send"
+msgstr "Invia"
+
+msgid "heading.save"
+msgstr "FILE SALVATO"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Il nome del dominio non coincide"
+
+msgid "dlg.save.incomplete"
+msgstr "I contenuti della pagina sono ancora in scaricamento."
+
+msgid "dlg.save.opendownload"
+msgstr "Apri File Scaricato"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Trovato un nuovo link nella pagina"
+msgstr[1] "Trovati %d nuovi link nella pagina."
+
+msgid "dlg.autoreload"
+msgstr "Imposta l'intervallo per l'auto-ricaricamento del tab"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "un minuto"
+msgstr[1] "%d minuti"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "un'ora"
+msgstr[1] "%d ore"
+
+msgid "link.newtab"
+msgstr "Apri link in un Nuovo Tab"
+
+msgid "link.newtab.background"
+msgstr "Apri Link in un Tab in Background"
+
+msgid "link.side"
+msgstr "Apri Link a Lato"
+
+msgid "link.side.newtab"
+msgstr "Apri Link in un Nuovo Tab a Lato"
+
+msgid "error.server.msg"
+msgstr "Il server ha risposto col messaggio:"
+
+msgid "dlg.input.linebreak"
+msgstr "Fine linea"
+
+msgid "reload.onceperday"
+msgstr "Una volta al giorno"
+
+msgid "link.noproxy"
+msgstr "Apri senza Proxy"
+
+msgid "link.copy"
+msgstr "Copia Link"
+
+msgid "link.bookmark"
+msgstr "Aggiungi Link ai Segnalibri…"
+
+msgid "link.browser"
+msgstr "Apri link nel Browser di Default"
+
+msgid "pageinfo.domain.match"
+msgstr "Il nome del dominio concide"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sAggiungi Segnalibro"
+msgstr[1] "%sAggiungi %d Segnalibri"
+
+msgid "reload.never"
+msgstr "Mai"
+
+msgid "dlg.save.size"
+msgstr "Dimensione:"
