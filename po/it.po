@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-24 10:53+0000\n"
-"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -112,3 +112,75 @@ msgstr "Un client Gemini stupendo"
 
 msgid "menu.split.swap"
 msgstr "Scambia gli split"
+
+msgid "cancel"
+msgstr "Annulla"
+
+msgid "dlg.message.ok"
+msgstr "Continua"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "toggle.yes"
+msgstr "SÌ"
+
+msgid "toggle.no"
+msgstr "NO"
+
+msgid "menu.title.file"
+msgstr "File"
+
+msgid "menu.title.view"
+msgstr "Visualizza"
+
+msgid "menu.title.bookmarks"
+msgstr "Segnalibri"
+
+msgid "menu.title.identity"
+msgstr "Identità"
+
+msgid "menu.title.help"
+msgstr "Aiuto"
+
+msgid "menu.newtab"
+msgstr "Nuova Scheda"
+
+msgid "menu.closetab"
+msgstr "Chiudi Scheda"
+
+msgid "menu.closetab.other"
+msgstr "Chiudi le altre schede"
+
+msgid "menu.closetab.left"
+msgstr "Chidui Schede a Sinistra"
+
+msgid "menu.closetab.right"
+msgstr "Chiudi Schede a Destra"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d minuto fa"
+msgstr[1] "%d minuti fa"
+
+msgid "about.version"
+msgstr "Versione"
+
+msgid "menu.title.edit"
+msgstr "Modifica"
+
+msgid "menu.duptab"
+msgstr "Duplica Scheda"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d ora fa"
+msgstr[1] "%d ore fa"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d giorno fa"
+msgstr[1] "%d giorni fa"
