@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-21 13:50+0000\n"
+"PO-Revision-Date: 2022-02-26 06:21+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -78,7 +78,7 @@ msgstr[0] "%d gün önce"
 msgstr[1] "%d gün önce"
 
 msgid "about.tagline"
-msgstr "Göze hoş gelen bir Gemini istemcisi"
+msgstr "Yakışıklı bir Gemini istemcisi"
 
 msgid "about.version"
 msgstr "Sürüm"
@@ -153,13 +153,13 @@ msgid "menu.save.downloads.open"
 msgstr "İndirilenlere kaydet ve dosyayı aç"
 
 msgid "menu.sidebar"
-msgstr "Kenar çubuğunu aç/kapa"
+msgstr "Kenar çubuğunu aç/kapat"
 
 msgid "menu.sidebar.left"
-msgstr "Sol kenar çubuğunu aç/kapa"
+msgstr "Sol kenar çubuğunu aç/kapat"
 
 msgid "menu.sidebar.right"
-msgstr "Sağ kenar çubuğunu aç/kapa"
+msgstr "Sağ kenar çubuğunu aç/kapat"
 
 msgid "menu.zoom.reset"
 msgstr "Yakınlaştırmayı sıfırla"
@@ -764,7 +764,7 @@ msgid "dlg.translate"
 msgstr "Çevir"
 
 msgid "dlg.translate.from"
-msgstr "Şundan:"
+msgstr "Şuradan:"
 
 msgid "dlg.translate.to"
 msgstr "Şuna:"
@@ -813,7 +813,7 @@ msgid "dlg.newident.temp"
 msgstr "Geçici:"
 
 msgid "dlg.newident.scope"
-msgstr "Şunda kullan:"
+msgstr "Şurada kullan:"
 
 msgid "dlg.newident.scope.page"
 msgstr "Geçerli sayfa"
@@ -2185,7 +2185,7 @@ msgstr "Araç çubuğu eylemleri"
 
 # Menu heading shown when customizing navbar button actions.
 msgid "menu.toolbar.setaction"
-msgstr "Eylem Ayarla:"
+msgstr "Eylem ayarla:"
 
 # Shows where a local file is using the File Manager.
 msgid "menu.reveal.filemgr"
@@ -2199,3 +2199,72 @@ msgstr "Kenar çubuğu: Okunmamış besleme girdilerini göster"
 
 msgid "keys.input.precedingline"
 msgstr "Girdi istemi: Önceki satırı yapıştır"
+
+msgid "menu.newwindow"
+msgstr "Yeni pencere"
+
+msgid "heading.sitespec"
+msgstr "Siteye Özel Ayarlar"
+
+msgid "keys.sitespec"
+msgstr "Siteye özel ayarları göster"
+
+msgid "heading.glyphfinder"
+msgstr "Eksik Glifler"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Bu karakterler için glifler sağlayan yazıtipleri için skyjake.fi Yazıtipi "
+"Kitaplığı'nı aramayı veya el ile yeni TrueType yazıtipleri yüklemeyi "
+"deneyebilirsiniz."
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Veri URL'lerindeki görselleri aç:"
+
+msgid "prefs.urlsize"
+msgstr "En büyük URL boyutu:"
+
+msgid "pageinfo.settings"
+msgstr "Ayarlar"
+
+msgid "sitespec.ansi"
+msgstr "ANSI kaçış uyarıları:"
+
+msgid "sitespec.palette"
+msgstr "Tema paleti beslemesi:"
+
+msgid "sitespec.accept"
+msgstr "Ayarları Kaydet"
+
+msgid "keys.pageinfo"
+msgstr "Sayfa bilgisini göster"
+
+msgid "menu.openwindow"
+msgstr "Yeni pencerede aç"
+
+msgid "link.newwindow"
+msgstr "Bağlantıyı yeni pencerede aç"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Aşağıdaki karakterler gösterilemedi:"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "Eksik glifleri yeniden denetlemek için sayfayı yenileyin."
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Uyarıları Devre Dışı Bırak"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Yazıtipi Kitaplığı'nda Ara"
+
+msgid "heading.glyphfinder.results"
+msgstr "Arama Sonuçları"
+
+msgid "glyphfinder.results"
+msgstr ""
+"Aşağıdaki yazıtipi paketleri bir veya daha fazla eksik glif için karakter "
+"sağlıyor:"
+
+msgid "glyphfinder.results.empty"
+msgstr "Üzgünüm; eşleşen yazıtipi paketi bulunamadı."
