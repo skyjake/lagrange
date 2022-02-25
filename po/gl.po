@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-23 21:50+0000\n"
+"PO-Revision-Date: 2022-02-26 06:21+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -2247,3 +2247,72 @@ msgstr "Panel lateral: mostra as entradas de tódalas fontes"
 
 msgid "keys.feeds.showunread"
 msgstr "Panel lateral: mostra entradas non lidas"
+
+msgid "sitespec.accept"
+msgstr "Gardar Axustes"
+
+msgid "keys.pageinfo"
+msgstr "Mostra páxina de información"
+
+msgid "keys.sitespec"
+msgstr "Mostrar axustes específicos do sitio"
+
+msgid "pageinfo.settings"
+msgstr "Axustes"
+
+msgid "sitespec.palette"
+msgstr "Semente da paleta do decorado:"
+
+msgid "link.newwindow"
+msgstr "Abrir ligazón en Nova ventá"
+
+msgid "heading.glyphfinder"
+msgstr "Glyphs faltantes"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Non se puideron mostrar os seguintes caracteres:"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Podes buscar na biblioteca de tipografías skyjake.fi as Tipografías que "
+"proporcionen imaxes destos caracteres, ou instalar manualmente tipografías "
+"TrueType."
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "Recarga a páxina para comprobar de novo os caracteres que faltan."
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Desactivar avisos"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Buscar Biblioteca de tipografías"
+
+msgid "heading.glyphfinder.results"
+msgstr "Resultados da busca"
+
+msgid "glyphfinder.results"
+msgstr ""
+"Os seguintes paquetes de tipografías proporcionan algún dos carateres que "
+"faltan:"
+
+msgid "glyphfinder.results.empty"
+msgstr "Non se atopan paquetes de tipografía que concorden."
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Abrir imaxes de URLs con Datos:"
+
+msgid "prefs.urlsize"
+msgstr "Tamaño máx. URL:"
+
+msgid "menu.newwindow"
+msgstr "Nova ventá"
+
+msgid "menu.openwindow"
+msgstr "Abrir nunha Nova ventá"
+
+msgid "heading.sitespec"
+msgstr "Axustes específicos dun Sitio"
+
+msgid "sitespec.ansi"
+msgstr "Avisos de escape ANSI:"
