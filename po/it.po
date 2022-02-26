@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-26 09:19+0000\n"
-"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -1190,7 +1190,7 @@ msgstr "Cerca"
 # %s refers to name of an identity.
 #, c-format
 msgid "dlg.ident.notes"
-msgstr "Note %s:"
+msgstr "Note riguardo %s:"
 
 # strftime() formatted. Should be split evenly on two lines with a newline character.
 msgid "page.timestamp"
