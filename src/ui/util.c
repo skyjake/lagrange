@@ -2640,7 +2640,8 @@ iWidget *makePreferences_Widget(void) {
     setId_Widget(tabs, "prefs.tabs");
     iWidget *headings, *values;
     /* General preferences. */ {
-        appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.general}", '1', &headings, &values);
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.general}", '1', &headings, &values),
+                     "prefs.page.general");
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
         addPrefsInputWithHeading_(headings, values, "prefs.downloads", iClob(new_InputWidget(0)));
 #endif
@@ -2680,7 +2681,8 @@ iWidget *makePreferences_Widget(void) {
         addDialogToggle_(headings, values, "${prefs.time.24h}", "prefs.time.24h");
     }
     /* User Interface. */ {
-        appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.interface}", '2', &headings, &values);
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.interface}", '2', &headings, &values),
+                     "prefs.page.ui");
         addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
         addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
@@ -2731,7 +2733,8 @@ iWidget *makePreferences_Widget(void) {
         }
     }
     /* Colors. */ {
-        appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.colors}", '3', &headings, &values);
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.colors}", '3', &headings, &values),
+                     "prefs.page.color");
         makeTwoColumnHeading_("${heading.prefs.uitheme}", headings, values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
         addDialogToggle_(headings, values, "${prefs.ostheme}", "prefs.ostheme");
@@ -2908,7 +2911,7 @@ iWidget *makePreferences_Widget(void) {
         addDialogToggle_(headings, values, "${prefs.centershort}", "prefs.centershort");
     }
     /* Network. */ {
-        appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.network}", '6', &headings, &values);
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.network}", '6', &headings, &values), "prefs.page.network");
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.decodeurls}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
         addPrefsInputWithHeading_(headings, values, "prefs.urlsize", iClob(new_InputWidget(10)));
@@ -2949,14 +2952,16 @@ iWidget *makePreferences_Widget(void) {
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     updatePreferencesLayout_Widget(dlg);
-    addChild_Widget(dlg,
+    iWidget *buttons = addChild_Widget(dlg,
                     iClob(makeDialogButtons_Widget(
-                        (iMenuItem[]){ { "${close}", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
+                        (iMenuItem[]){ { "${menu.fonts}", 0, 0, "!open url:about:fonts" },
+                                       { "---" },
+                                       { "${close}", SDLK_ESCAPE, 0, "prefs.dismiss" } },
+                        3)));
+    setId_Widget(child_Widget(buttons, 0), "prefs.aboutfonts");
+    setFlags_Widget(findChild_Widget(dlg, "prefs.aboutfonts"), hidden_WidgetFlag, iTrue);
     addChild_Widget(dlg->root->widget, iClob(dlg));
-//    finalizeSheet_Mobile(dlg);
-//    arrange_Widget(dlg);
     setupSheetTransition_Mobile(dlg, iTrue);
-//    printTree_Widget(dlg);
     return dlg;
 }
 
@@ -3021,43 +3026,43 @@ iWidget *makeBookmarkEditor_Widget(void) {
     }
     else {
         dlg = makeSheet_Widget("bmed");
-    addDialogTitle_(dlg, "${heading.bookmark.edit}", "bmed.heading");
-    iWidget *headings, *values;
-    addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
-    iInputWidget *inputs[4];
-    /* Folder to add to. */ {
-        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.folder}")));
-            const iArray *folderItems = makeBookmarkFolderItems_(iFalse);
-        iLabelWidget *folderButton;
-        setId_Widget(addChildFlags_Widget(values,
-                                     iClob(folderButton = makeMenuButton_LabelWidget(
-                                               widestLabel_MenuItemArray(folderItems),
-                                               constData_Array(folderItems),
-                                               size_Array(folderItems))), alignLeft_WidgetFlag),
-                     "bmed.folder");
-    }
+        addDialogTitle_(dlg, "${heading.bookmark.edit}", "bmed.heading");
+        iWidget *headings, *values;
+        addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        iInputWidget *inputs[4];
+        /* Folder to add to. */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.folder}")));
+                const iArray *folderItems = makeBookmarkFolderItems_(iFalse);
+            iLabelWidget *folderButton;
+            setId_Widget(addChildFlags_Widget(values,
+                                         iClob(folderButton = makeMenuButton_LabelWidget(
+                                                   widestLabel_MenuItemArray(folderItems),
+                                                   constData_Array(folderItems),
+                                                   size_Array(folderItems))), alignLeft_WidgetFlag),
+                         "bmed.folder");
+        }
         addDialogInputWithHeading_(headings, values, "${dlg.bookmark.title}", "bmed.title", iClob(inputs[0] = new_InputWidget(0)));
         addDialogInputWithHeading_(headings, values, "${dlg.bookmark.url}",   "bmed.url",   iClob(inputs[1] = new_InputWidget(0)));
         setUrlContent_InputWidget(inputs[1], iTrue);
-    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.tags}",  "bmed.tags",  iClob(inputs[2] = new_InputWidget(0)));
-    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));
-    /* Buttons for special tags. */
-    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    iWidget *special = addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
-    setFlags_Widget(special, collapse_WidgetFlag, iTrue);
-    setId_Widget(special, "bmed.special");
-    makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
-    addDialogToggle_(headings, values, "${bookmark.tag.home}", "bmed.tag.home");
-    addDialogToggle_(headings, values, "${bookmark.tag.remote}", "bmed.tag.remote");
-    addDialogToggle_(headings, values, "${bookmark.tag.linksplit}", "bmed.tag.linksplit");
-    arrange_Widget(dlg);
-    for (int i = 0; i < 3; ++i) {
-        as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
-    }
-    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
-    addChild_Widget(get_Root()->widget, iClob(dlg));
-    setupSheetTransition_Mobile(dlg, iTrue);
+        addDialogInputWithHeading_(headings, values, "${dlg.bookmark.tags}",  "bmed.tags",  iClob(inputs[2] = new_InputWidget(0)));
+        addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));
+        /* Buttons for special tags. */
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        iWidget *special = addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        setFlags_Widget(special, collapse_WidgetFlag, iTrue);
+        setId_Widget(special, "bmed.special");
+        makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
+        addDialogToggle_(headings, values, "${bookmark.tag.home}", "bmed.tag.home");
+        addDialogToggle_(headings, values, "${bookmark.tag.remote}", "bmed.tag.remote");
+        addDialogToggle_(headings, values, "${bookmark.tag.linksplit}", "bmed.tag.linksplit");
+        arrange_Widget(dlg);
+        for (int i = 0; i < 3; ++i) {
+            as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
+        }
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+        setupSheetTransition_Mobile(dlg, iTrue);
     }
     /* Use a recently accessed folder as the default. */
     const uint32_t recentFolderId = recentFolder_Bookmarks(bookmarks_App());
