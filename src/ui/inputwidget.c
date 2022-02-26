@@ -347,6 +347,12 @@ void setBackupFileName_InputWidget(iInputWidget *d, const char *fileName) {
         d->backupPath = copy_String(dataDir_App());
     }
     append_Path(d->backupPath, collectNewCStr_String(fileName));
+    const size_t windowIndex = windowIndex_Root(as_Widget(d)->root);
+    /* Each window has its own separate backup. */
+    if (windowIndex > 0) {
+        appendFormat_String(d->backupPath, ".%zu", windowIndex);
+    }
+    appendCStr_String(d->backupPath, ".txt");
     restoreBackup_InputWidget_(d);
 }
 

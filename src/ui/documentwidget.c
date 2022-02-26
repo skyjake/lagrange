@@ -3275,7 +3275,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 }
                 iInputWidget *input = findChild_Widget(dlg, "input");
                 setValidator_InputWidget(input, inputQueryValidator_, d);
-                setBackupFileName_InputWidget(input, "inputbackup.txt");
+                setBackupFileName_InputWidget(input, "inputbackup");
                 setSelectAllOnFocus_InputWidget(input, iTrue);
                 setSensitiveContent_InputWidget(input, statusCode == sensitiveInput_GmStatusCode);
                 if (document_App() != d) {
