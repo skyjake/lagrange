@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-26 09:17+0000\n"
+"PO-Revision-Date: 2022-02-26 09:19+0000\n"
 "Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -1213,7 +1213,7 @@ msgid "heading.ident.use"
 msgstr "UTILIZZATA IN"
 
 msgid "heading.ident.notes"
-msgstr "Note sull'identità"
+msgstr "NOTE"
 
 msgid "heading.ident.delete"
 msgstr "Elimina identità"
