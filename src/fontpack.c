@@ -1066,6 +1066,7 @@ static void findCharactersInCMap_(iGmRequest *d, iGmRequest *req) {
     const iString *missingChars = userData_Object(d);
     if (isSuccess_GmStatusCode(status_GmRequest(d))) {
         iStringList *matchingPacks = new_StringList();
+        iStringSet  *matchingSet   = new_StringSet();
         iChar needed[20];
         iChar minChar = UINT32_MAX, maxChar = 0;
         size_t numNeeded = 0;
@@ -1108,7 +1109,13 @@ static void findCharactersInCMap_(iGmRequest *d, iGmRequest *req) {
                         for (size_t i = 0; i < numNeeded; i++) {
                             if (needed[i] >= first && needed[i] <= last) {
                                 /* Got it. */
-                                pushBackRange_StringList(matchingPacks, fontpackPath);
+                                iString fp;
+                                initRange_String(&fp, fontpackPath);
+                                if (!contains_StringSet(matchingSet, &fp)) {
+                                    pushBack_StringList(matchingPacks, &fp);
+                                    insert_StringSet(matchingSet, &fp);
+                                }
+                                deinit_String(&fp);
                                 break;
                             }
                         }
@@ -1130,6 +1137,7 @@ static void findCharactersInCMap_(iGmRequest *d, iGmRequest *req) {
         postCommandString_Root(NULL, &result);
         deinit_String(&result);
         iRelease(matchingPacks);
+        iRelease(matchingSet);
     }
     else {
         /* Report error. */
