@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-26 06:21+0000\n"
+"PO-Revision-Date: 2022-02-26 09:14+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -111,7 +111,7 @@ msgid "about.tagline"
 msgstr "Un client Gemini stupendo"
 
 msgid "menu.split.swap"
-msgstr "Scambia gli split"
+msgstr "Scambia Lati"
 
 msgid "cancel"
 msgstr "Annulla"
@@ -189,7 +189,7 @@ msgid "close"
 msgstr "Chiudi"
 
 msgid "menu.split.merge"
-msgstr "Unisci le schede"
+msgstr "Riunisci"
 
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
@@ -211,7 +211,7 @@ msgid "menu.zoom.reset"
 msgstr "Resetta ingrandimento"
 
 msgid "menu.view.split"
-msgstr "Dividi la schermata…"
+msgstr "Vista Divisa…"
 
 msgid "menu.save.downloads.open"
 msgstr "Salva nei Download e apri il file"
@@ -232,7 +232,7 @@ msgid "menu.unexpire"
 msgstr "Ignora scandenza e continua a caricare"
 
 msgid "menu.pageinfo"
-msgstr "Mostra informazioni sulla pagina"
+msgstr "Mostra Informazioni sulla Pagina"
 
 # Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
 msgid "menu.save.files"
@@ -1265,7 +1265,7 @@ msgid "dlg.certimport.pickfile"
 msgstr "Importa Certificato/Chiave da File"
 
 msgid "prefs.smoothscroll"
-msgstr "Smooth scrolling:"
+msgstr "Scorrimento fluido:"
 
 msgid "prefs.scrollspeed.keyboard"
 msgstr "Velocità della tastiera:"
@@ -1334,7 +1334,7 @@ msgid "prefs.memorysize"
 msgstr "Dimensione della memoria:"
 
 msgid "prefs.hoverlink"
-msgstr "Mostra URL al posizionamento del cursore:"
+msgstr "Mostra URL al passaggio del mouse:"
 
 msgid "error.cgi"
 msgstr "Errore CGI"
@@ -1414,7 +1414,7 @@ msgid "sitespec.accept"
 msgstr "Salva Impostazioni"
 
 msgid "keys.pageinfo"
-msgstr "Mostra informazioni pagina"
+msgstr "Mostra le informazioni sulla pagina"
 
 msgid "keys.sitespec"
 msgstr "Mostra le impostazioni specifiche per alcuni siti"
@@ -1745,7 +1745,7 @@ msgid "keys.scroll.halfpage.up"
 msgstr "Scorri in l'alto di metà pagina"
 
 msgid "keys.link.homerow.newtab"
-msgstr "Apri link in una nuova scheda mediante tasti della riga principale"
+msgstr "Apri link in una nuova scheda con tasti della riga principale"
 
 msgid "keys.bookmark.add"
 msgstr "Aggiungi segnalibro"
@@ -1757,7 +1757,9 @@ msgid "keys.tab.next"
 msgstr "Scheda seguente"
 
 msgid "keys.link.homerow.hover"
-msgstr "Focus dei link mediante tasti della riga principale"
+msgstr ""
+"Simula il passaggio del mouse con la pressione dei tasti della riga "
+"principale"
 
 msgid "keys.bookmark.addfolder"
 msgstr "Aggiungi cartella di segnalibri"
@@ -1766,7 +1768,7 @@ msgid "keys.fullscreen"
 msgstr "Attiva/disattiva modalità a schermo interno"
 
 msgid "keys.split.menu"
-msgstr "Abilità modalità di visualizzazione divisa"
+msgstr "Attiva modalità vista divisa"
 
 msgid "heading.confirm.bookmarks.delete"
 msgstr "Cancella Preferiti"
@@ -1997,7 +1999,7 @@ msgstr[0] "Cancella Segnalibro"
 msgstr[1] "Cancella %u Segnalibri"
 
 msgid "prefs.font.smooth"
-msgstr "Smoothing:"
+msgstr "Caratteri smussati:"
 
 msgid "prefs.linewidth.fill"
 msgstr "Riempi"
@@ -2062,7 +2064,7 @@ msgid "heading.prefs.toolbaractions"
 msgstr "Azioni della Barra degli Strumenti"
 
 msgid "prefs.pinsplit"
-msgstr "Scheda per la split-view:"
+msgstr "Fissa scheda per la vista divisa:"
 
 msgid "prefs.pinsplit.right"
 msgstr "Scheda Destra"
@@ -2138,7 +2140,7 @@ msgid "keys.root"
 msgstr "Vai alla radice della capsula"
 
 msgid "keys.link.homerow"
-msgstr "Apri link mediante tasti della riga principale"
+msgstr "Apri link con i tasti della riga principale"
 
 # Menu heading shown when customizing navbar button actions.
 msgid "menu.toolbar.setaction"
@@ -2158,3 +2160,105 @@ msgstr "Incolla la riga precedente"
 
 msgid "sidebar.empty.unread"
 msgstr "Nessuna entry da leggere"
+
+msgid "prefs.tabwidth"
+msgstr "Larghezza del caratter Tab:"
+
+msgid "keys.feeds.showunread"
+msgstr "Barra laterale: Mostra tutte le voci non lette"
+
+msgid "keys.feeds.showall"
+msgstr "Barra laterale: Mostra tutte le voci dalle iscrizioni"
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Si potrebbe essere intrappolati in un ciclo di reindirizzamenti. Il prossimo "
+"reindirizzamento è mostrato sotto se si desidera continuare manualmente."
+
+msgid "keys.hoverurl"
+msgstr "Alterna il mostrare l'URL al passaggio del mouse"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Formatta il testo semplice:"
+
+msgid "keys.upload.edit"
+msgstr "Modifica la Pagina con Titan"
+
+msgid "keys.split.next"
+msgstr "Muovi il focus al prossimo split"
+
+msgid "keys.split.item"
+msgstr "Menu della vista divisa:"
+
+msgid "error.badstatus"
+msgstr "Codice di Stato Sconosciuto"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Il server ha risposto con un codice di stato che non è presente nella "
+"specifica del protocollo Gemini. Forse viene dal futuro? Oppure soltanto un "
+"malfunzionamento."
+
+msgid "error.openfile"
+msgstr "Impossibile Aprire il File"
+
+msgid "error.openfile.msg"
+msgstr ""
+"Il file richiesto non esiste o non è accessibile. Per favore, ricontrolla il "
+"percorso del file."
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Il protocollo richiesto non è supportato da questa applicazione."
+
+msgid "error.badheader.msg"
+msgstr ""
+"L'header ricevuto non è conforme alla specifica del protocollo Gemini. Forse "
+"il server non sta funzionando correttamente, oppure hai provato a contattare "
+"un server non Gemini."
+
+msgid "error.tls.msg"
+msgstr "Fallimento della comunicazione con il server."
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Il server ha tentato di reindirizzarci a un URL il cui schema è diverso da "
+"quello dell'URL originale. Questo è il link per aprirlo manualmente se "
+"appropriato."
+
+msgid "error.certverify.msg"
+msgstr ""
+"La connessione al server è stata cancellata perchè il suo certificato TLS "
+"non corrisponde a quello fidato. Per favore controlla se il server ha "
+"annunciato il cambio del certificato. Altrimenti potrebbe essere possibile "
+"che qualcuno stia cercando di spacciarsi per il server che vuoi contattare.\n"
+"\n"
+"Il certificato può essere segnato come fidato nelle Informazioni sulla "
+"Pagina."
+
+msgid "error.badresource.msg"
+msgstr "La risorsa richiesta non esiste."
+
+msgid "error.unsupported.media"
+msgstr "Tipo di Contenuto non Supportato"
+
+msgid "error.unsupported.media.msg"
+msgstr "Il contenuto ricevuto non può essere visto con questa applicazione."
+
+msgid "error.badrequest"
+msgstr "Brutta Richiesta"
+
+msgid "keys.link.homerow.next"
+msgstr "Prossimo set di tasti della riga principale"
+
+msgid "keys.upload"
+msgstr "Carica con Titan"
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Il server ha risposto con un reindirizzamento ma non ha fornito un URL "
+"valido di destinazione. Forse è un malfunzionamento del server."
+
+msgid "error.certexpired.msg"
+msgstr ""
+"La connessione con il server è stata cancellata perché il suo certificato "
+"TLS è scaduto."
