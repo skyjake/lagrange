@@ -1216,7 +1216,7 @@ msgid "heading.ident.notes"
 msgstr "Note sull'identità"
 
 msgid "heading.ident.delete"
-msgstr "Elimina identità"
+msgstr "ELIMINA IDENTITÀ"
 
 msgid "heading.history.clear"
 msgstr "Elimina Cronologia"
