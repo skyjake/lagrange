@@ -179,9 +179,10 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                 continue;
             }
             if (ch == '\t') {
-                const int tabStopWidth = d->height * 10;
-                const int halfWidth    = (xposLimit - orig.x) / 2;
+//                const int tabStopWidth = d->height * 10;
+//                const int halfWidth    = (xposLimit - orig.x) / 2;
                 const int xRel         = xpos - orig.x;
+#if 0
                 /* First stop is always to half width. */
                 if (halfWidth > 0 && xRel < halfWidth) {
                     xpos = orig.x + halfWidth;
@@ -192,6 +193,8 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                 else {
                     xpos = orig.x + ((xRel / tabStopWidth) + 1) * tabStopWidth;
                 }
+#endif
+                xpos = orig.x + nextTabStop_Font_(d, xRel);
                 xposExtend = iMax(xposExtend, xpos);
                 prevCh = 0;
                 continue;

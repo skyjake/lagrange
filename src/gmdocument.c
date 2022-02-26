@@ -1863,13 +1863,14 @@ static void normalize_GmDocument(iGmDocument *d) {
     if (d->format == plainText_SourceFormat) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
-    const int preTabWidth = 4; /* TODO: user-configurable parameter */
+    const int preTabWidth = prefs_App()->tabWidth;
     iBool wasNormalized = iFalse;
     iBool hasTabs = iFalse;
     while (nextSplit_Rangecc(src, "\n", &line)) {
         if (isPreformat) {
             /* Replace any tab characters with spaces for visualization. */
             for (const char *ch = line.start; ch != line.end; ch++) {
+#if 0
                 if (*ch == '\t') {
                     int column = ch - line.start;
                     int numSpaces = (column / preTabWidth + 1) * preTabWidth - column;
@@ -1879,7 +1880,9 @@ static void normalize_GmDocument(iGmDocument *d) {
                     hasTabs = iTrue;
                     wasNormalized = iTrue;
                 }
-                else if (*ch != '\v') {
+                else
+#endif
+                if (*ch != '\v') {
                     appendCStrN_String(normalized, ch, 1);
                 }
                 else {

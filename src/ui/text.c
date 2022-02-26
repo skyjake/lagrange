@@ -1410,6 +1410,11 @@ float horizKern_Font_(iFont *d, uint32_t glyph1, uint32_t glyph2) {
     return 0.0f;
 }
 
+static float nextTabStop_Font_(const iFont *d, float x) {
+    const float stop = prefs_App()->tabWidth * d->emAdvance;
+    return floorf(x / stop) * stop + stop;
+}
+
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 
 iDeclareType(GlyphBuffer)
@@ -1442,11 +1447,6 @@ static void shape_GlyphBuffer_(iGlyphBuffer *d) {
         d->glyphInfo = hb_buffer_get_glyph_infos(d->hb, &d->glyphCount);
         d->glyphPos  = hb_buffer_get_glyph_positions(d->hb, &d->glyphCount);
     }
-}
-
-static float nextTabStop_Font_(const iFont *d, float x) {
-    const float stop = 8 * d->emAdvance;
-    return floorf(x / stop) * stop + stop;
 }
 
 static float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapPosRange) {

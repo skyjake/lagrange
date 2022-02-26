@@ -261,6 +261,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
+    appendFormat_String(str, "tabwidth.set arg:%d\n", d->prefs.tabWidth);
     appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
     for (size_t i = 0; i < iElemCount(d->prefs.navbarActions); i++) {
         appendFormat_String(str, "navbar.action.set arg:%d button:%d\n", d->prefs.navbarActions[i], i);
@@ -2143,6 +2144,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.decodeurls")));
         postCommandf_App("searchurl address:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.searchurl")));
+        postCommandf_App("tabwidth.set arg:%d",
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.tabwidth"))));
         postCommandf_App("cachesize.set arg:%d",
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
         postCommandf_App("memorysize.set arg:%d",
@@ -2807,6 +2810,11 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("document.layout.changed redo:1");
         return iTrue;
     }
+    else if (equal_Command(cmd, "tabwidth.set")) {
+        d->prefs.tabWidth = iMax(1, arg_Command(cmd));
+        postCommand_App("document.layout.changed redo:1"); /* spaces need renormalizing */
+        return iTrue;
+    }
     else if (equal_Command(cmd, "quoteicon.set")) {
         d->prefs.quoteIcon = arg_Command(cmd) != 0;
         postCommand_App("document.layout.changed redo:1");
@@ -3362,6 +3370,8 @@ iBool handleCommand_App(const char *cmd) {
             iTrue);
         setText_InputWidget(findChild_Widget(dlg, "prefs.linespacing"),
                             collectNewFormat_String("%.2f", d->prefs.lineSpacing));
+        setText_InputWidget(findChild_Widget(dlg, "prefs.tabwidth"),
+                            collectNewFormat_String("%d", d->prefs.tabWidth));
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.quoteicon.%d", d->prefs.quoteIcon)),
             selected_WidgetFlag,

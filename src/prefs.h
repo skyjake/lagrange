@@ -180,6 +180,7 @@ struct Impl_Prefs {
     int              gemtextAnsiEscapes;
     int              lineWidth;
     float            lineSpacing;
+    int              tabWidth;
     enum iImageStyle imageStyle;
     /* Colors */
     enum iGmDocumentTheme docThemeDark;
