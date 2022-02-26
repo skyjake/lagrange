@@ -225,6 +225,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         *fg   = uiTextDisabled_ColorId;
         *meta = uiTextDisabled_ColorId;
     }
+    iBool isThemeBackground = iFalse;
     if (isSel) {
         if (!d->flags.checkMark) {
             if (isMenuItem) {
@@ -238,6 +239,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                                    colorTheme_App() == pureWhite_ColorTheme
                                ? tmBackground_ColorId
                                : tmBannerBackground_ColorId);
+                    isThemeBackground = iTrue;
                 }
                 else {
                     *bg = uiBackgroundSelected_ColorId;
@@ -249,6 +251,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             }
         }
         *fg = uiTextSelected_ColorId;
+        if (isThemeBackground) {
+            *fg = tmParagraph_ColorId;
+        }
         if (isButton) {
             *frame1 = uiEmbossSelected1_ColorId;
             *frame2 = uiEmbossSelected2_ColorId;
@@ -256,7 +261,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 *frame1 = *bg;
             }
         }
-    }
+    }    
     if (isFocus) {
         *frame1 = *frame2 = (isSel ? uiText_ColorId : uiInputFrameFocused_ColorId);
     }
@@ -310,7 +315,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             }
             *fg = *icon = *meta = uiTextPressed_ColorId | permanent_ColorId;
         }
-        }
+    }
     if (((isSel || isHover) && isFrameless) || isPress) {
         /* Ensure that the full label text remains readable. */
         *fg |= permanent_ColorId;
