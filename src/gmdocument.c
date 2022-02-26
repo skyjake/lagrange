@@ -1312,6 +1312,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
     else {
         d->siteIcon = 0;        
     }
+    const iBool isDarkUI = isDark_ColorTheme(colorTheme_App());
     /* Default colors. These are used on "about:" pages and local files, for example. */ {
         /* Link colors are generally the same in all themes. */
         set_Color(tmBadLink_ColorId, get_Color(red_ColorId));
@@ -1409,7 +1410,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
         }
         else if (theme == gray_GmDocumentTheme) {
-            if (isDark_ColorTheme(colorTheme_App())) {
+            if (isDarkUI) {
                 set_Color(tmBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.25f));
                 set_Color(tmParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.25f));
                 set_Color(tmFirstParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.5f));
@@ -1442,7 +1443,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         }
         else if (theme == sepia_GmDocumentTheme) {
             iHSLColor base = { 40, 0.6f, 0.9f, 1.0f };
-            if (0 && isDark_ColorTheme(colorTheme_App())) { /* TODO */
+            if (0 && isDarkUI) { /* TODO */
                 base.lum = 0.15f;
                 base.sat = 0.15f;
                 setHsl_Color(tmBackground_ColorId, base);
@@ -1564,7 +1565,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         const int   altIndex[2] = { (d->themeSeed & 0x4) != 0, (d->themeSeed & 0x40) != 0 };
         const float altHue      = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
         const float altHue2     = hues[d->themeSeed ? altHues[primIndex].index[altIndex[1]] : 8];
-
+        
         const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;        
         const iBool isDarkBgSat =
             (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
@@ -1636,7 +1637,6 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
             set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.7f));
             set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.6f));
-            const iBool isDarkUI = isDark_ColorTheme(colorTheme_App());
             setHsl_Color(
                 tmBannerBackground_ColorId,
                 addSatLum_HSLColor(base, 0, isDarkUI ? -0.04f : 0.06f));
@@ -1663,9 +1663,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
         }
-        else if (theme == black_GmDocumentTheme ||
-                 (theme == gray_GmDocumentTheme && isDark_ColorTheme(colorTheme_App()))) {
-            const float primHue        = hues[primIndex];
+        else if (theme == black_GmDocumentTheme || (theme == gray_GmDocumentTheme && isDarkUI)) {
+            const float     primHue    = hues[primIndex];
             const iHSLColor primBright = { primHue, 1, 0.6f, 1 };
             const iHSLColor primDim    = { primHue, 1, normLum[primIndex] + (theme == gray_GmDocumentTheme ? 0.0f : -0.15f), 1};
             const iHSLColor altBright  = { altHue, 1, normLum[altIndex[0]] + (theme == gray_GmDocumentTheme ? 0.1f : 0.0f), 1 };
@@ -1691,9 +1690,11 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         /* Tone down the link colors a bit because bold white is quite strong to look at. */
         if (isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) {
             iHSLColor base = { hues[primIndex], 1.0f, normLum[primIndex], 1.0f };
-            if (/*theme == black_GmDocumentTheme ||*/ theme == gray_GmDocumentTheme) {
+            if (theme == gray_GmDocumentTheme) {
                 setHsl_Color(tmLinkText_ColorId,
                              addSatLum_HSLColor(get_HSLColor(tmLinkText_ColorId), 0.0f, -0.15f));
+                set_Color(tmLinkText_ColorId, mix_Color(get_Color(tmLinkText_ColorId),
+                                                        rgb_HSLColor(base), 0.1f));
             }
             else {
                 /* Tinted with base color. */
