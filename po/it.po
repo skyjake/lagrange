@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-02-26 09:14+0000\n"
-"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"Last-Translator: Giosuè Iaccarino <iaccagio9@outlook.it>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -1200,7 +1200,7 @@ msgstr ""
 
 # strftime() formatted
 msgid "sidebar.date.thisyear"
-msgstr "%d. %b"
+msgstr "%b. %d"
 
 # strftime() formatted
 msgid "sidebar.date.otheryear"
