@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-26 09:19+0000\n"
+"PO-Revision-Date: 2022-02-28 11:53+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -468,7 +468,7 @@ msgid "heading.autoreload"
 msgstr "Auto-ricarica"
 
 msgid "heading.pageinfo"
-msgstr "INFORMAZIONI PAGINA"
+msgstr "Informazioni sulla pagina"
 
 msgid "heading.save.incomplete"
 msgstr "Pagina incompleta"
@@ -602,7 +602,7 @@ msgid "link.hint.image"
 msgstr "Immagine"
 
 msgid "heading.uploadport"
-msgstr "Porta dell'upload per Titan"
+msgstr "Porta del caricamento per Titan"
 
 msgid "heading.upload"
 msgstr "Carica con Titan"
