@@ -1213,7 +1213,7 @@ msgid "heading.ident.use"
 msgstr "Uso dell'identità"
 
 msgid "heading.ident.notes"
-msgstr "NOTE"
+msgstr "Note sull'identità"
 
 msgid "heading.ident.delete"
 msgstr "Elimina identità"
