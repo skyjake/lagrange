@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-28 11:53+0000\n"
+"PO-Revision-Date: 2022-03-02 06:32+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2364,3 +2364,9 @@ msgstr "Нажалост, није пронађен ниједан одгова�
 # User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
 msgid "prefs.dataurl.openimages"
 msgstr "Отварање слика у Data УРЛ-овима:"
+
+msgid "menu.paste.go"
+msgstr "Налепи и иди"
+
+msgid "prefs.retaintabs"
+msgstr "Враћање картица при покретању:"
