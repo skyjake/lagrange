@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-28 11:53+0000\n"
+"PO-Revision-Date: 2022-03-02 06:32+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -2262,3 +2262,9 @@ msgid "error.certexpired.msg"
 msgstr ""
 "La connessione con il server è stata cancellata perché il suo certificato "
 "TLS è scaduto."
+
+msgid "prefs.retaintabs"
+msgstr "Riapri le schede all'avvio:"
+
+msgid "menu.paste.go"
+msgstr "Incolla e Vai"
