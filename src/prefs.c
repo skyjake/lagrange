@@ -61,7 +61,8 @@ void init_Prefs(iPrefs *d) {
     d->pinSplit          = 1;
     d->time24h           = iTrue;
     d->returnKey         = default_ReturnKeyBehavior;
-    d->hoverLink         = iFalse;
+    d->retainTabs        = iTrue;
+    d->hoverLink         = iTrue;
     d->smoothScrolling   = iTrue;
     d->smoothScrollSpeed[keyboard_ScrollType] = 13;
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;

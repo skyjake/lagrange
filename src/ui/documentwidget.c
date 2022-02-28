@@ -5884,9 +5884,17 @@ void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
 }
 
 void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
-    deserialize_PersistentDocumentState(&d->mod, ins);
-    parseUser_DocumentWidget_(d);
-    updateFromHistory_DocumentWidget_(d);
+    if (d) {
+        deserialize_PersistentDocumentState(&d->mod, ins);
+        parseUser_DocumentWidget_(d);
+        updateFromHistory_DocumentWidget_(d);
+    }
+    else {
+        /* Read and throw away the data. */
+        iPersistentDocumentState *dummy = new_PersistentDocumentState();
+        deserialize_PersistentDocumentState(dummy, ins);
+        delete_PersistentDocumentState(dummy);
+    }
 }
 
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags) {

@@ -279,25 +279,26 @@ static iString *serializePrefs_App_(const iApp *d) {
         const char * id;
         const iBool *value;
     } boolPrefs[] = {
-        { "prefs.time.24h", &d->prefs.time24h },
         { "prefs.animate", &d->prefs.uiAnimations },
-        { "prefs.font.smooth", &d->prefs.fontSmoothing },
-        { "prefs.mono.gemini", &d->prefs.monospaceGemini },
-        { "prefs.mono.gopher", &d->prefs.monospaceGopher },
-        { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
+        { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
+        { "prefs.biglede", &d->prefs.bigFirstParagraph },
+        { "prefs.blink", &d->prefs.blinkingCursor },
         { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
         { "prefs.boldlink.light", &d->prefs.boldLinkLight },
-        { "prefs.biglede", &d->prefs.bigFirstParagraph },
-        { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
-        { "prefs.sideicon", &d->prefs.sideIcon },
+        { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
+        { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
         { "prefs.centershort", &d->prefs.centerShortDocs },
         { "prefs.collapsepreonload", &d->prefs.collapsePreOnLoad },
-        { "prefs.hoverlink", &d->prefs.hoverLink },
-        { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
         { "prefs.dataurl.openimages", &d->prefs.openDataUrlImagesOnLoad },
-        { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
+        { "prefs.font.smooth", &d->prefs.fontSmoothing },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
-        { "prefs.blink", &d->prefs.blinkingCursor },
+        { "prefs.hoverlink", &d->prefs.hoverLink },
+        { "prefs.mono.gemini", &d->prefs.monospaceGemini },
+        { "prefs.mono.gopher", &d->prefs.monospaceGopher },
+        { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
+        { "prefs.retaintabs", &d->prefs.retainTabs },
+        { "prefs.sideicon", &d->prefs.sideIcon },
+        { "prefs.time.24h", &d->prefs.time24h },
     };
     iForIndices(i, boolPrefs) {
         appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
@@ -430,9 +431,10 @@ static void loadPrefs_App_(iApp *d) {
                 insert_StringSet(d->prefs.disabledFontPacks,
                                  collect_String(suffix_Command(cmd, "id")));
             }
-            else if (equal_Command(cmd, "font.set")) {
-                /* Handle this immediately so the first initialization of the fonts already
-                   has the right ones. */
+            else if (equal_Command(cmd, "font.set") ||
+                     equal_Command(cmd, "prefs.retaintabs.changed")) {
+                /* Fonts are set immediately so the first initialization already has 
+                   the right ones. */
                 handleCommand_App(cmd);
             }
 #if defined (iPlatformAndroidMobile)
@@ -641,17 +643,19 @@ static iBool loadState_App_(iApp *d) {
                     rootIndex = 0;
                 }
                 setCurrent_Root(win->base.roots[rootIndex]);
-                iDocumentWidget *doc;
-                if (isFirstTab[rootIndex]) {
-                    isFirstTab[rootIndex] = iFalse;
-                    /* There is one pre-created tab in each root. */
-                    doc = document_Root(get_Root());
-                }
-                else {
-                    doc = newTab_App(NULL, iFalse /* no switching */);
-                }
-                if (flags & current_DocumentStateFlag) {
-                    value_Array(currentTabs, numWins - 1, iCurrentTabs).currentTab[rootIndex] = doc;
+                iDocumentWidget *doc = NULL;
+                if (d->prefs.retainTabs) {
+                    if (isFirstTab[rootIndex]) {
+                        isFirstTab[rootIndex] = iFalse;
+                        /* There is one pre-created tab in each root. */
+                        doc = document_Root(get_Root());
+                    }
+                    else {
+                        doc = newTab_App(NULL, iFalse /* no switching */);
+                    }
+                    if (flags & current_DocumentStateFlag) {
+                        value_Array(currentTabs, numWins - 1, iCurrentTabs).currentTab[rootIndex] = doc;
+                    }
                 }
                 deserializeState_DocumentWidget(doc, stream_File(f));
                 doc = NULL;
@@ -1066,6 +1070,17 @@ static void init_App_(iApp *d, int argc, char **argv) {
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
         postCommand_Root(NULL, "open url:about:help");
+    }
+    else if (!d->prefs.retainTabs) {
+        /* All roots will just show home. */
+        iForEach(PtrArray, w, &d->mainWindows) {
+            const iWindow *win = w.ptr;
+            iForIndices(ri, win->roots) {
+                if (win->roots[ri]) {
+                    postCommand_Root(win->roots[ri], "navigate.home");
+                }
+            }
+        }
     }
     postCommand_App("~navbar.actions.changed");
     postCommand_App("~toolbar.actions.changed");
@@ -2597,6 +2612,10 @@ iBool handleCommand_App(const char *cmd) {
         postCommandf_App("window.fullscreen.changed arg:%d", !wasFull);
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.retaintabs.changed")) {
+        d->prefs.retainTabs = arg_Command(cmd);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "font.reset")) {
         resetFonts_App();
         return iTrue;
@@ -3323,6 +3342,7 @@ iBool handleCommand_App(const char *cmd) {
         /* TODO: Use a common table in Prefs to do this more conviently.
            Also see `serializePrefs_App_()`. */
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoverlink"), d->prefs.hoverLink);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.retaintabs"), d->prefs.retainTabs);
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetoolbarscroll"), d->prefs.hideToolbarOnScroll);

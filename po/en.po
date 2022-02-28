@@ -1533,6 +1533,9 @@ msgstr "Language:"
 msgid "prefs.time.24h"
 msgstr "24-Hour Time"
 
+msgid "prefs.retaintabs"
+msgstr "Restore tabs at launch:"
+
 msgid "prefs.uiscale"
 msgstr "UI scale factor:"
 

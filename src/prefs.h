@@ -72,6 +72,7 @@ enum iPrefsBool {
     time24h_PrefsBool,
     
     /* Behavior */
+    retainTabs_PrefsBool,
     hoverLink_PrefsBool,
     smoothScrolling_PrefsBool,
     loadImageInsteadOfScrolling_PrefsBool,
@@ -126,6 +127,7 @@ struct Impl_Prefs {
             iBool time24h;
             
             /* Behavior */
+            iBool retainTabs;
             iBool hoverLink;
             iBool smoothScrolling;
             iBool loadImageInsteadOfScrolling;
