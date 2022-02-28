@@ -646,7 +646,7 @@ static iBool moveCursor_LookupWidget_(iLookupWidget *d, int delta) {
 static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     const char *cmd = command_UserEvent(ev);
-    if (isCommand_Widget(w, ev, "lookup.ready")) {
+    if (isCommand_Widget(w, ev, "lookup.ready") && isFocused_Widget(findWidget_App("url"))) {
         /* Take the results and present them in the list. */
         presentResults_LookupWidget_(d);
         return iTrue;

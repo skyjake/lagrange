@@ -1293,6 +1293,7 @@ void setMenuItemDisabled_Widget(iWidget *menu, const char *command, iBool disabl
         iLabelWidget *item = findMenuItem_Widget(menu, command);
         if (item) {
             setFlags_Widget(as_Widget(item), disabled_WidgetFlag, disable);
+            refresh_Widget(item);
         }
     }
 }

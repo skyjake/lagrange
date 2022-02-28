@@ -1766,12 +1766,14 @@ static void markWordAtCursor_InputWidget_(iInputWidget *d) {
     d->initialMark = d->mark;
 }
 
-static void showClipMenu_(iInt2 coord) {
+static void showClipMenu_InputWidget_(const iInputWidget *d, iInt2 coord) {
     iWidget *clipMenu = findWidget_App("clipmenu");
     if (isVisible_Widget(clipMenu)) {
         closeMenu_Widget(clipMenu);
     }
     else {
+        setMenuItemDisabled_Widget(
+            clipMenu, "input.paste enter:1", cmp_String(id_Widget(constAs_Widget(d)), "url"));
         openMenuFlags_Widget(clipMenu, coord, iFalse);
     }
 }
@@ -1791,7 +1793,8 @@ static enum iEventResult processPointerEvents_InputWidget_(iInputWidget *d, cons
     }
     if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&
         contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
-        showClipMenu_(mouseCoord_Window(get_Window(), ev->button.which));
+        setFocus_Widget(w);
+        showClipMenu_InputWidget_(d, mouseCoord_Window(get_Window(), ev->button.which));
         return iTrue;
     }
     switch (processEvent_Click(&d->click, ev)) {
@@ -2065,7 +2068,7 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
             }
             else if (!isEmpty_Range(&d->mark) && !isMoved_Click(&d->click)) {
                 if (isInsideMark_InputWidget_(d, cursorToIndex_InputWidget_(d, touchCoordCursor_InputWidget_(d, latestPosition_Touch())))) {
-                    showClipMenu_(latestPosition_Touch());
+                    showClipMenu_InputWidget_(d, latestPosition_Touch());
                 }
                 else {
                     iZap(d->mark);
@@ -2075,7 +2078,7 @@ static enum iEventResult processTouchEvents_InputWidget_(iInputWidget *d, const 
             else if (SDL_GetTicks() - d->lastTapTime > 1000 &&
                      d->tapCount == 0 && isEmpty_Range(&d->mark) && !isMoved_Click(&d->click) &&
                      distanceToPos_InputWidget_(d, latestPosition_Touch(), d->cursor) < gap_UI * 5) {
-                showClipMenu_(latestPosition_Touch());
+                showClipMenu_InputWidget_(d, latestPosition_Touch());
             }
             else {
                 if (~d->inFlags & isMarking_InputWidgetFlag) {
@@ -2249,6 +2252,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
 //    }
     else if (isCommand_UserEvent(ev, "input.paste") && isEditing_InputWidget_(d)) {
         paste_InputWidget_(d);
+        if (argLabel_Command(command_UserEvent(ev), "enter")) {
+            d->inFlags |= enterPressed_InputWidgetFlag;
+            setFocus_Widget(NULL);            
+        }
         return iTrue;
     }
     else if (isCommand_UserEvent(ev, "input.undo") && isEditing_InputWidget_(d)) {

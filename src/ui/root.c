@@ -1716,12 +1716,13 @@ void createUserInterface_Root(iRoot *d) {
                 { scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
                 { clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
                 { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
+                { return_Icon " ${menu.paste.go}", 0, 0, "input.paste enter:1" },
                 { "---" },
                 { delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
                 { undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
                 { "---" },
                 { select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
-            }, 8);
+            }, 9);
 #endif
         if (deviceType_App() == phone_AppDeviceType) {
             /* Small screen; conserve space by removing the Cancel item. */

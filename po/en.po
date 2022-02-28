@@ -292,6 +292,9 @@ msgstr "Copy"
 msgid "menu.paste"
 msgstr "Paste"
 
+msgid "menu.paste.go"
+msgstr "Paste and Go"
+
 # keep this short (3x1 horiz layout)
 msgid "menu.selectall"
 msgstr "Select All"
