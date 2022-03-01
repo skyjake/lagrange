@@ -19,6 +19,7 @@ New features:
 * Setting for maximum valid URI length on 'text/gemini' link lines.
 * Option to show images decoded from data URLs immediately after loading a page. This is limited to JPEG, PNG, WebP, and GIF (no animations).
 * "Paste and Go" in the input field context menu.
+* TLS session caching: reduces the need for redundant handshaking by keeping old TLS sessions cached for 10 minutes.
 * UI language for Italian.
 
 Changes and enhancements:
