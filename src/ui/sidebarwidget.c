@@ -1477,8 +1477,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "bookmark.open")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
-                postCommandf_App("open newtab:%d url:%s",
+                postCommandf_App("open newtab:%d newwindow:%d url:%s",
                                  argLabel_Command(cmd, "newtab"),
+                                 argLabel_Command(cmd, "newwindow"),
                                  cstr_String(&item->url));
             }
             return iTrue;
