@@ -5,15 +5,15 @@ Lagrange was created by Jaakko Keränen (<jaakko.keranen@iki.fi>) in July 2020. 
 Legend: `C` code, `T` translation
 
 ```
-C  3192  Jaakko Keränen <jaakko.keranen@iki.fi>
- T   49  Alyssa Liddell <e-liss@tuta.io>
+C  3198  Jaakko Keränen <jaakko.keranen@iki.fi>
+ T   50  Alyssa Liddell <e-liss@tuta.io>
 CT   47  Nikolay Korotkiy <sikmir@gmail.com>
  T   43  Olga Smirnova <mistresssilvara@hotmail.com>
- T   32  Страхиња Радић <contact@strahinja.org>
+ T   33  Страхиња Радић <contact@strahinja.org>
  T   31  Anna “CyberTailor” <cyber@sysrq.in>
+ T   26  Omar Polo <weblate@omarpolo.com>
  T   26  Shibo Lyu <github@of.sb>
- T   25  Omar Polo <weblate@omarpolo.com>
- T   22  Wally Hackenslacker <mastor89@protonmail.com>
+ T   23  Wally Hackenslacker <mastor89@protonmail.com>
  T   20  Giosuè Iaccarino <iaccagio9@outlook.it>
  T   19  MCMic <come@chilliet.eu>
  T   17  Xosé M <correoxm@disroot.org>
@@ -21,9 +21,9 @@ CT   47  Nikolay Korotkiy <sikmir@gmail.com>
  T    9  Aaron Fischer <mail@aaron-fischer.net>
  T    8  El Mau <public@correolibre.net>
  T    7  Waterrail <maksymiliankrol03@gmail.com>
+ T    6  Emir SARI <emir_sari@icloud.com>
  T    6  Marco Andronaco <andronacomarco@gmail.com>
  T    5  Emir <emir_sari@msn.com>
- T    5  Emir SARI <emir_sari@icloud.com>
  T    5  roy niang <roy@royniang.com>
  T    3  Alex Schroeder <alex@alexschroeder.ch>
  T    3  Botond Balázs <balazsbotond@gmail.com>
