@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-16 12:50+0000\n"
+"PO-Revision-Date: 2022-03-02 06:32+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2288,3 +2288,85 @@ msgstr "Постави акцију:"
 
 msgid "keys.input.precedingline"
 msgstr "Дијалог за унос: Уметни претходни ред"
+
+msgid "keys.feeds.showall"
+msgstr "Панел: Прикажи све ставке фида"
+
+msgid "keys.feeds.showunread"
+msgstr "Панел: Прикажи непрочитане ставке фида"
+
+msgid "prefs.tabwidth"
+msgstr "Ширина табулатора:"
+
+msgid "prefs.urlsize"
+msgstr "Максимална величина УРЛ-а:"
+
+msgid "menu.openwindow"
+msgstr "Отвори у новом прозору"
+
+msgid "link.newwindow"
+msgstr "Отвори везу у новом прозору"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Следећи знакови се не могу приказати:"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Можете пробати да потражите фонтове који садрже глифове тих знакова у "
+"Библиотеци фонтова на skyjake.fi, или да ручно инсталирате нове TrueType "
+"фонтове."
+
+msgid "glyphfinder.results"
+msgstr "Следећи пакети фонтова садрже један или више недостајућих глифова:"
+
+msgid "pageinfo.settings"
+msgstr "Подешавања"
+
+msgid "heading.sitespec"
+msgstr "Подешавања сајта"
+
+msgid "sitespec.ansi"
+msgstr "Упозорења ANSI секвенци:"
+
+msgid "sitespec.palette"
+msgstr "Семе палете тема:"
+
+msgid "sitespec.accept"
+msgstr "Сачувај подешавања"
+
+msgid "keys.pageinfo"
+msgstr "Приказ информација о страници"
+
+msgid "keys.sitespec"
+msgstr "Приказ подешавања сајта"
+
+msgid "menu.newwindow"
+msgstr "Нови прозор"
+
+msgid "heading.glyphfinder"
+msgstr "Недостају глифови"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "Поново учитајте страницу да поново проверите недостајуће глифове."
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Искључи упозорења"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Претражи Библиотеку фонтова"
+
+msgid "heading.glyphfinder.results"
+msgstr "Резултати претраге"
+
+msgid "glyphfinder.results.empty"
+msgstr "Нажалост, није пронађен ниједан одговарајући пакет фонтова."
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Отварање слика у Data УРЛ-овима:"
+
+msgid "menu.paste.go"
+msgstr "Налепи и иди"
+
+msgid "prefs.retaintabs"
+msgstr "Враћање картица при покретању:"

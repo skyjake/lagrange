@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2022-01-17 09:43+0000\n"
+"PO-Revision-Date: 2022-02-28 11:57+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -2236,3 +2236,89 @@ msgstr "Näytä tiedostonhallinnassa"
 # Menu heading shown when customizing navbar button actions.
 msgid "menu.toolbar.setaction"
 msgstr "Aseta toiminto:"
+
+msgid "menu.newwindow"
+msgstr "Uusi ikkuna"
+
+msgid "keys.feeds.showall"
+msgstr "Sivupaneeli: Näytä kaikki syötteiden artikkelit"
+
+msgid "keys.feeds.showunread"
+msgstr "Sivupaneeli: Näytä lukemattomat artikkelit"
+
+msgid "menu.openwindow"
+msgstr "Avaa uuteen ikkunaan"
+
+msgid "pageinfo.settings"
+msgstr "Asetukset"
+
+msgid "heading.sitespec"
+msgstr "Palvelinkohtaiset asetukset"
+
+msgid "sitespec.ansi"
+msgstr "ANSI-varoitukset:"
+
+msgid "sitespec.palette"
+msgstr "Teemapaletin siemen:"
+
+msgid "sitespec.accept"
+msgstr "Talleta asetukset"
+
+msgid "keys.pageinfo"
+msgstr "Näytä sivun tiedot"
+
+msgid "keys.sitespec"
+msgstr "Näytä palvelinkohtaiset asetukset"
+
+msgid "link.newwindow"
+msgstr "Avaa linkki uuteen ikkunaan"
+
+msgid "heading.glyphfinder"
+msgstr "Puuttuvia merkkejä"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Seuraavia merkkejä ei voitu näyttää:"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Voit etsiä skyjake.fi-fonttikirjastosta fontteja, jotka tarjoavat nämä "
+"merkit, tai asentaa käsin lisää TrueType-fontteja."
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr ""
+"Ole hyvä ja lataa sivu uudestaan tarkistaaksesi puuttuuko siitä merkkejä."
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Älä varoita enää"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Etsi fonttikirjastosta"
+
+msgid "heading.glyphfinder.results"
+msgstr "Hakutulokset"
+
+msgid "glyphfinder.results"
+msgstr ""
+"Seuraavat fonttipaketit sisältävät yhden tai useamman puuttuvista merkeistä:"
+
+msgid "glyphfinder.results.empty"
+msgstr "Sopivia fonttipaketteja ei löytynyt."
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Avaa Data URL -kuvat:"
+
+msgid "prefs.urlsize"
+msgstr "URL-pituusraja:"
+
+msgid "keys.input.precedingline"
+msgstr "Syötekysely: Liimaa edeltävä rivi"
+
+msgid "prefs.tabwidth"
+msgstr "Sarkaimen leveys:"
+
+msgid "menu.paste.go"
+msgstr "Liimaa ja mene"
+
+msgid "prefs.retaintabs"
+msgstr "Palauta välilehdet:"

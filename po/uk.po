@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-16 12:50+0000\n"
+"PO-Revision-Date: 2022-03-02 06:32+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -2269,3 +2269,84 @@ msgstr "Призначити дію:"
 
 msgid "keys.input.precedingline"
 msgstr "Вставити попередній рядок"
+
+msgid "keys.feeds.showunread"
+msgstr "Бічна панель: показати непрочитані записи стрічки новин"
+
+msgid "keys.feeds.showall"
+msgstr "Бічна панель: показати всі записи стрічки новин"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Не вдається відобразити такі символи:"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Можете пошукати шрифти, що містять гліфи для відображення цих символів у "
+"бібліотеці skyjake.fi або ж встановити нові шрифти TrueType вручну."
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Показувати зображення, вбудовані в Data URL:"
+
+msgid "prefs.tabwidth"
+msgstr "Ширина відступу Tab у пробілах:"
+
+msgid "prefs.urlsize"
+msgstr "Максимальна довжина URL:"
+
+msgid "heading.glyphfinder.results"
+msgstr "Результати пошуку"
+
+msgid "glyphfinder.results"
+msgstr "Відсутні гліфи надаються такими шрифтами:"
+
+msgid "glyphfinder.results.empty"
+msgstr "На жаль, жоден шрифт не відповідає пошуковим критеріям."
+
+msgid "menu.paste.go"
+msgstr "Вставити та перейти"
+
+msgid "pageinfo.settings"
+msgstr "Налаштування"
+
+msgid "heading.sitespec"
+msgstr "Налаштування сайту"
+
+msgid "sitespec.ansi"
+msgstr "Попередження про помилки символів ANSI:"
+
+msgid "sitespec.palette"
+msgstr "Сід палітри теми:"
+
+msgid "sitespec.accept"
+msgstr "Збрегти налаштування"
+
+msgid "keys.pageinfo"
+msgstr "Показати інформацію про сторінку"
+
+msgid "keys.sitespec"
+msgstr "Показати налаштування сайту"
+
+msgid "link.newwindow"
+msgstr "Відкрити посилання у новому вікні"
+
+msgid "heading.glyphfinder"
+msgstr "Відсутні гліфи"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "Оновіть будь ласка сторінку, щоб знову перевірити її на відсутні гліфи."
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Вимкнути попередження"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Пошук бібліотекою шрифтів"
+
+msgid "prefs.retaintabs"
+msgstr "Відновлювати відкриті вкладки при запуску:"
+
+msgid "menu.newwindow"
+msgstr "Нове вікно"
+
+msgid "menu.openwindow"
+msgstr "Відкрити у новому вікні"

@@ -312,8 +312,8 @@ void init_UploadWidget(iUploadWidget *d) {
     setUseReturnKeyBehavior_InputWidget(d->input, iFalse); /* traditional text editor */
     setLineLimits_InputWidget(d->input, 7, 20);
     setHint_InputWidget(d->input, "${hint.upload.text}");
-    setBackupFileName_InputWidget(d->input, "uploadbackup.txt");
-    setBackupFileName_InputWidget(d->token, "uploadtoken.txt"); /* TODO: site-specific config? */
+    setBackupFileName_InputWidget(d->input, "uploadbackup");
+    setBackupFileName_InputWidget(d->token, "uploadtoken"); /* TODO: site-specific config? */
     updateInputMaxHeight_UploadWidget_(d);
 }
 

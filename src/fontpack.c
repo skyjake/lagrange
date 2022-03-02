@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "fontpack.h"
 #include "resources.h"
 #include "ui/window.h"
+#include "gmrequest.h"
 #include "app.h"
 
 #include <the_Foundation/archive.h>
@@ -748,7 +749,7 @@ const iPtrArray *listSpecsByPriority_Fonts(void) {
     return &fonts_.specOrder;
 }
 
-iString *infoText_FontPack(const iFontPack *d) {
+iString *infoText_FontPack(const iFontPack *d, iBool isFull) {
     const iFontPack *installed        = pack_Fonts(cstr_String(&d->id));
     const iBool      isInstalled      = (installed != NULL);
     const int        installedVersion = installed ? installed->version : 0;
@@ -757,9 +758,17 @@ iString *infoText_FontPack(const iFontPack *d) {
     size_t           sizeInBytes      = 0;
     iPtrSet         *uniqueFiles      = new_PtrSet();
     iStringList     *names            = new_StringList();
+    size_t           numNames         = 0;
+    iBool            isAbbreviated    = iFalse;
     iConstForEach(PtrArray, i, listSpecs_FontPack(d)) {
         const iFontSpec *spec = i.ptr;
-        pushBack_StringList(names, &spec->name);
+        numNames++;
+        if (isFull || size_StringList(names) < 20) {
+            pushBack_StringList(names, &spec->name);
+        }
+        else {
+            isAbbreviated = iTrue;
+        }
         iForIndices(j, spec->styles) {
             insert_PtrSet(uniqueFiles, spec->styles[j]->sourceData.i);
         }
@@ -777,11 +786,12 @@ iString *infoText_FontPack(const iFontPack *d) {
             if (!endsWith_String(str, "(")) {
                 appendCStr_String(str, ", ");
             }
-            appendCStr_String(str, formatCStrs_Lang("num.fonts.n", size_StringList(names)));
+            appendCStr_String(str, formatCStrs_Lang("num.fonts.n", numNames));
         }
         appendFormat_String(str, ")");
     }
-    appendFormat_String(str, " \u2014 %s\n", cstrCollect_String(joinCStr_StringList(names, ", ")));
+    appendFormat_String(str, " \u2014 %s%s\n", cstrCollect_String(joinCStr_StringList(names, ", ")),
+                        isAbbreviated ? ", ..." : "");
     if (isInstalled && installedVersion != d->version) {
         appendCStr_String(str, format_Lang("${fontpack.meta.version}\n", d->version));
     }
@@ -945,7 +955,7 @@ const iString *infoPage_Fonts(iRangecc query) {
                         appendFormat_String(str, "### %s\n",
                                             isEmpty_String(packId) ? "fonts.ini" :
                                             cstr_String(packId));
-                        append_String(str, collect_String(infoText_FontPack(pack)));
+                        append_String(str, collect_String(infoText_FontPack(pack, iFalse)));
                         appendFormat_String(str, "=> %s ${fontpack.meta.viewfile}\n",
                                             cstrCollect_String(makeFileUrl_String(&spec->sourcePath)));
                         if (pack->isStandalone) {
@@ -1018,6 +1028,7 @@ void install_Fonts(const iString *packId, const iBlock *data) {
     iRelease(f);
     /* Newly installed fontpacks may have a higher priority that overrides other fonts. */
     reload_Fonts();
+    availableFontsChanged_App();
 }
 
 void installFontFile_Fonts(const iString *fileName, const iBlock *data) {
@@ -1028,6 +1039,7 @@ void installFontFile_Fonts(const iString *fileName, const iBlock *data) {
     }
     iRelease(f);
     reload_Fonts();
+    availableFontsChanged_App();
 }
 
 void enablePack_Fonts(const iString *packId, iBool enable) {
@@ -1040,6 +1052,7 @@ void enablePack_Fonts(const iString *packId, iBool enable) {
     }
     updateActive_Fonts();
     resetFonts_App();
+    availableFontsChanged_App();
     invalidate_Window(get_MainWindow());
 }
 
@@ -1047,5 +1060,108 @@ void updateActive_Fonts(void) {
     sortSpecs_Fonts_(&fonts_);
 }
 
-iDefineClass(FontFile)
+static void findCharactersInCMap_(iGmRequest *d, iGmRequest *req) {
+    /* Note: Called in background thread. */
+    iUnused(req);
+    const iString *missingChars = userData_Object(d);
+    if (isSuccess_GmStatusCode(status_GmRequest(d))) {
+        iStringList *matchingPacks = new_StringList();
+        iStringSet  *matchingSet   = new_StringSet();
+        iChar needed[20];
+        iChar minChar = UINT32_MAX, maxChar = 0;
+        size_t numNeeded = 0;
+        iConstForEach(String, ch, missingChars) {
+            needed[numNeeded++] = ch.value;
+            minChar = iMin(minChar, ch.value);
+            maxChar = iMax(maxChar, ch.value);
+            if (numNeeded == iElemCount(needed)) {
+                /* Shouldn't be that many. */
+                break;
+            }
+        }
+        iBlock  *data = decompressGzip_Block(body_GmRequest(d));
+        iRangecc line = iNullRange;
+        while (nextSplit_Rangecc(range_Block(data), "\n", &line)) {
+            iRangecc fontpackPath = iNullRange;
+            for (const char *pos = line.start; pos < line.end; pos++) {
+                if (*pos == ':') {
+                    fontpackPath.start = line.start;
+                    fontpackPath.end = pos;
+                    line.start = pos + 1;
+                    trimStart_Rangecc(&line);
+                    break;
+                }
+            }
+            if (fontpackPath.start) {
+                /* Parse the character ranges and see if any match what we need. */
+                const char *pos = line.start;
+                while (pos < line.end) {
+                    char *endp;
+                    uint32_t first = strtoul(pos, &endp, 10);
+                    uint32_t last  = first;
+                    if (*endp == '-') {
+                        last = strtoul(endp + 1, &endp, 10);        
+                    }
+                    if (maxChar < first) {
+                        break; /* The rest are even higher. */
+                    }
+                    if (minChar <= last) {
+                        for (size_t i = 0; i < numNeeded; i++) {
+                            if (needed[i] >= first && needed[i] <= last) {
+                                /* Got it. */
+                                iString fp;
+                                initRange_String(&fp, fontpackPath);
+                                if (!contains_StringSet(matchingSet, &fp)) {
+                                    pushBack_StringList(matchingPacks, &fp);
+                                    insert_StringSet(matchingSet, &fp);
+                                }
+                                deinit_String(&fp);
+                                break;
+                            }
+                        }
+                    }
+                    pos = endp + 1;
+                }
+            }
+        }
+        delete_Block(data);
+        iString result;
+        init_String(&result);
+        format_String(&result, "font.found chars:%s packs:", cstr_String(missingChars));
+        iConstForEach(StringList, s, matchingPacks) {
+            if (s.pos != 0) {
+                appendCStr_String(&result, ",");
+            }
+            append_String(&result, s.value);
+        }
+        postCommandString_Root(NULL, &result);
+        deinit_String(&result);
+        iRelease(matchingPacks);
+        iRelease(matchingSet);
+    }
+    else {
+        /* Report error. */
+        postCommandf_Root(NULL,
+                          "font.found chars:%s error:%d msg:\x1b[1m%s\x1b[0m\n%s",
+                          cstr_String(missingChars),
+                          status_GmRequest(d),
+                          cstr_String(meta_GmRequest(d)),
+                          cstr_String(url_GmRequest(d)));
+    }
+//    fflush(stdout);
+    delete_String(userData_Object(d));
+    /* We can't delete ourselves; threads must be joined from another thread. */
+    SDL_PushEvent((SDL_Event *) &(SDL_UserEvent){
+        .type = SDL_USEREVENT, .code = releaseObject_UserEventCode, .data1 = d });
+}
 
+void searchOnlineLibraryForCharacters_Fonts(const iString *chars) {
+    /* Fetch the character map from skyjake.fi. */
+    iGmRequest *req = new_GmRequest(certs_App());
+    setUrl_GmRequest(req, collectNewCStr_String("gemini://skyjake.fi/fonts/cmap.txt.gz"));
+    setUserData_Object(req, copy_String(chars));
+    iConnect(GmRequest, req, finished, req, findCharactersInCMap_);
+    submit_GmRequest(req);
+}
+
+iDefineClass(FontFile)

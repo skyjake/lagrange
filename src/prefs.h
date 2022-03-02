@@ -72,9 +72,11 @@ enum iPrefsBool {
     time24h_PrefsBool,
     
     /* Behavior */
+    retainTabs_PrefsBool,
     hoverLink_PrefsBool,
     smoothScrolling_PrefsBool,
     loadImageInsteadOfScrolling_PrefsBool,
+    openDataUrlImagesOnLoad_PrefsBool,
     collapsePreOnLoad_PrefsBool,
     openArchiveIndexPages_PrefsBool,
     
@@ -125,9 +127,11 @@ struct Impl_Prefs {
             iBool time24h;
             
             /* Behavior */
+            iBool retainTabs;
             iBool hoverLink;
             iBool smoothScrolling;
             iBool loadImageInsteadOfScrolling;
+            iBool openDataUrlImagesOnLoad;
             iBool collapsePreOnLoad;
             iBool openArchiveIndexPages;
             
@@ -172,11 +176,13 @@ struct Impl_Prefs {
     /* Network */
     int              maxCacheSize; /* MB */
     int              maxMemorySize; /* MB */
+    int              maxUrlSize; /* bytes; longer ones will be disregarded */
     /* Style */
     iStringSet *     disabledFontPacks;
     int              gemtextAnsiEscapes;
     int              lineWidth;
     float            lineSpacing;
+    int              tabWidth;
     enum iImageStyle imageStyle;
     /* Colors */
     enum iGmDocumentTheme docThemeDark;
@@ -189,4 +195,8 @@ iDeclareTypeConstruction(Prefs)
 iLocalDef float scrollSpeedFactor_Prefs(const iPrefs *d, enum iScrollType type) {
     iAssert(type >= 0 && type < max_ScrollType);
     return 10.0f / iMax(1, d->smoothScrollSpeed[type]) * (type == mouse_ScrollType ? 0.5f : 1.0f);
+}
+
+iLocalDef enum iGmDocumentTheme docTheme_Prefs(const iPrefs *d) {
+    return isDark_ColorTheme(d->theme) ? d->docThemeDark : d->docThemeLight;
 }

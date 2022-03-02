@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-08 14:50+0000\n"
-"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
+"PO-Revision-Date: 2022-02-28 11:53+0000\n"
+"Last-Translator: Florian Viehweger <openbsd@out-of-creativity.de>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -500,7 +500,7 @@ msgid "bookmark.title.blank"
 msgstr "Leere Seite"
 
 msgid "link.hint.image"
-msgstr "Bild anzeigen"
+msgstr "Zeige Bild"
 
 msgid "dlg.certimport.notes"
 msgstr "Notizen:"
@@ -1189,7 +1189,7 @@ msgid "dlg.newident.create"
 msgstr "Identität erstellen"
 
 msgid "heading.prefs"
-msgstr "Präferenzen"
+msgstr "Einstellungen"
 
 msgid "heading.prefs.certs"
 msgstr "Zertifikate"
@@ -1615,7 +1615,7 @@ msgid "doc.archive"
 msgstr "%s ist ein komprimiertes Archiv."
 
 msgid "menu.split.merge"
-msgstr "Reiter zusammenlegen"
+msgstr "Reiter zusammenführen"
 
 msgid "menu.split.swap"
 msgstr "Seite wechseln"
@@ -2154,3 +2154,160 @@ msgstr "Taste 1"
 
 msgid "prefs.toolbaraction2"
 msgstr "Taste 2"
+
+msgid "prefs.tabwidth"
+msgstr "Tab-Breite:"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Wähle Aktion:"
+
+msgid "keys.upload.edit"
+msgstr "Seite mit Titan bearbeiten"
+
+msgid "keys.feeds.showall"
+msgstr "Seitenleiste: Zeige alle Feed-Einträge"
+
+msgid "keys.feeds.showunread"
+msgstr "Seitenleiste: Zeige alle ungelesenen Feed-Einträge"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Zeige in der Suche"
+
+msgid "menu.upload.export"
+msgstr "Exportiere Text"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Wirklich alles löschen (kein rückgängig möglich)"
+
+msgid "heading.glyphfinder.results"
+msgstr "Suchergebnisse"
+
+msgid "glyphfinder.results"
+msgstr ""
+"Die folgenden Schriftarten beinhalten eine oder mehrere der fehlenden "
+"Schriftzeichen:"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Öffne Bilder in Data URLs:"
+
+msgid "prefs.time.24h"
+msgstr "24-Stunden Zeit"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Sie können die skyjake.fi Schriftarten-Bibliothek durchsuchen um "
+"Schriftarten zu finden, die die Schriftzeichen beinhalten oder manuell neue "
+"TrueType Schriftarten installieren."
+
+msgid "menu.open.external"
+msgstr "Extern öffnen"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Identitäten verbergen"
+
+msgid "menu.home"
+msgstr "Startseite"
+
+msgid "menu.identities"
+msgstr "Identitäten verwalten"
+
+msgid "sidebar.action.history.clear"
+msgstr "Leeren"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Benutze %s"
+
+msgid "sidebar.empty.unread"
+msgstr "Keine ungelesenen Einträge"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Füge vorangehende Zeile ein"
+
+msgid "hint.upload.token.long"
+msgstr "Token — Server Richtlinien beachten"
+
+msgid "prefs.blink"
+msgstr "Blinkender Cursor:"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Alles als gelesen markieren"
+
+msgid "keys.input.precedingline"
+msgstr "Texteingabe: füge vorangehende Zeile ein"
+
+msgid "heading.upload.id"
+msgstr "Berechtigung"
+
+msgid "menu.newwindow"
+msgstr "Neues Fenster"
+
+msgid "menu.openwindow"
+msgstr "In neuem Fenster öffnen"
+
+msgid "pageinfo.settings"
+msgstr "Einstellungen"
+
+msgid "heading.sitespec"
+msgstr "Seitenspezifische Einstellungen"
+
+msgid "sitespec.ansi"
+msgstr "ANSI-Escapesequenz Warnungen:"
+
+msgid "sitespec.accept"
+msgstr "Einstellungen speichern"
+
+msgid "keys.pageinfo"
+msgstr "Zeige Seiteninformationen"
+
+msgid "keys.sitespec"
+msgstr "Zeige seitenspezifische Einstellungen"
+
+msgid "link.newwindow"
+msgstr "Öffne Link in neuem Fenster"
+
+msgid "sitespec.palette"
+msgstr "Startwert des Erscheinungsbildes:"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Zeige im Dateimanager"
+
+msgid "menu.share"
+msgstr "Teilen"
+
+msgid "hint.upload.path"
+msgstr "URL Pfad"
+
+msgid "heading.glyphfinder"
+msgstr "Fehlende Schriftzeichen"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Die folgenden Zeichen konnten nicht dargestellt werden:"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Warnungen ausschalten"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Schriftarten durchsuchen"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr ""
+"Bitte laden Sie die Seite neu, um erneut nach fehlenden Schriftzeichen zu "
+"suchen."
+
+msgid "glyphfinder.results.empty"
+msgstr "Es wurden leider keine passenden Schriftarten gefunden."
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Werkzeugleisten-Aktionen"
+
+msgid "prefs.urlsize"
+msgstr "Maximale URL Länge:"

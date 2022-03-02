@@ -86,6 +86,7 @@ struct Impl_Window {
     iBool         isMinimized;
     iBool         isMouseInside;
     iBool         isInvalidated;
+    iAtomicInt    isRefreshPending;
     iBool         ignoreClick;
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
@@ -98,13 +99,13 @@ struct Impl_Window {
     float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */
     float         uiScale;
     uint32_t      frameTime;
-    double        presentTime;
     SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
     SDL_Cursor *  pendingCursor;
     iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
     iRoot *       keyRoot;      /* root that has the current keyboard input focus */
     SDL_Texture * borderShadow;
     iText *       text;
+    unsigned int  frameCount;
 };
 
 struct Impl_MainWindow {
@@ -139,7 +140,7 @@ iAnyObject *    hitChild_Window         (const iWindow *, iInt2 coord);
 uint32_t        frameTime_Window        (const iWindow *);
 SDL_Renderer *  renderer_Window         (const iWindow *);
 int             numRoots_Window         (const iWindow *);
-iRoot *         findRoot_Window         (const iWindow *, const iWidget *widget);
+//iRoot *         findRoot_Window         (const iWindow *, const iWidget *widget);
 iRoot *         otherRoot_Window        (const iWindow *, iRoot *root);
 
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
@@ -187,6 +188,7 @@ void        setTitle_MainWindow             (iMainWindow *, const iString *title
 void        setSnap_MainWindow              (iMainWindow *, int snapMode);
 void        setFreezeDraw_MainWindow        (iMainWindow *, iBool freezeDraw);
 void        setKeyboardHeight_MainWindow    (iMainWindow *, int height);
+iObjectList *listDocuments_MainWindow       (iMainWindow *, const iRoot *rootOrNull);
 void        setSplitMode_MainWindow         (iMainWindow *, int splitMode);
 void        checkPendingSplit_MainWindow    (iMainWindow *);
 void        swapRoots_MainWindow            (iMainWindow *);

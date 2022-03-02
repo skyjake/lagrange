@@ -56,7 +56,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformPcDesktop)
 /* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems_[] = {
-    { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
+    { openWindow_Icon " ${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
+    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
+    { close_Icon " ${menu.closetab}", SDLK_w, KMOD_PRIMARY, "tabs.close" },
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---" },
     { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
@@ -71,10 +73,9 @@ static const iMenuItem navMenuItems_[] = {
     { "---" },
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
-    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
-    { "---" },
-    { "${menu.downloads}", 0, 0, "downloads.open" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+//    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
+    { "${menu.downloads}", 0, 0, "downloads.open" },
     { "---" },
     { gear_Icon " ${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
  #if defined (LAGRANGE_ENABLE_WINSPARKLE)
@@ -318,6 +319,11 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     if (equal_Command(cmd, "menu.open")) {
         iWidget *button = pointer_Command(cmd);
         iWidget *menu = findChild_Widget(button, "menu");
+        if (!menu) {
+            /* Independent popup window. */
+            postCommand_App("cancel");
+            return iTrue;
+        }
         const iBool isPlacedUnder = argLabel_Command(cmd, "under");
         iAssert(menu);
         if (!isVisible_Widget(menu)) {
@@ -326,7 +332,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
                                           : topLeft_Rect(bounds_Widget(button)));
         }
         else {
-            closeMenu_Widget(menu);
+            /* Already open, do nothing. */
         }
         return iTrue;
     }
@@ -468,6 +474,10 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "window.setrect")) {
+        if (hasLabel_Command(cmd, "index") &&
+            argU32Label_Command(cmd, "index") != windowIndex_Root(root->root)) {
+            return iFalse;
+        }
         const int snap = argLabel_Command(cmd, "snap");
         if (snap) {
             iMainWindow *window = get_MainWindow();
@@ -664,7 +674,7 @@ static void checkLoadAnimation_Root_(iRoot *d) {
 }
 
 void updatePadding_Root(iRoot *d) {
-    if (d == NULL) return;
+    if (!d) return;
 #if defined (iPlatformAppleMobile)
     iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
     float left, top, right;
@@ -1059,6 +1069,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             updateNavBarIdentity_(navBar);
         }
         setFocus_Widget(NULL);
+        makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
+        refresh_Widget(findWidget_Root("doctabs"));
     }
     else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
         iWidget *widget = pointer_Command(cmd);
@@ -1224,13 +1236,16 @@ void updateMetrics_Root(iRoot *d) {
     iWidget      *embedPad   = findChild_Widget(navBar, "url.embedpad");
     iWidget      *urlButtons = findChild_Widget(navBar, "url.buttons");
     iLabelWidget *idName     = findChild_Widget(d->widget, "toolbar.name");
-    setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
-//    navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
-    setFixedSize_Widget(embedPad, init_I2(width_Widget(urlButtons) + gap_UI / 2, 1));
-    rightEmbed->rect.pos.y = gap_UI;
+    if (navBar) {
+        setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
+        setFixedSize_Widget(embedPad, init_I2(width_Widget(urlButtons) + gap_UI / 2, 1));
+        rightEmbed->rect.pos.y = gap_UI;
+    }
     updatePadding_Root(d);
     arrange_Widget(d->widget);
-    updateUrlInputContentPadding_(navBar);
+    if (navBar) {
+        updateUrlInputContentPadding_(navBar);
+    }
     if (idName) {
         setFixedSize_Widget(as_Widget(idName),
                             init_I2(-1, 2 * gap_UI + lineHeight_Text(uiLabelTiny_FontId)));
@@ -1335,7 +1350,7 @@ void createUserInterface_Root(iRoot *d) {
                          iClob(newIcon_LabelWidget(leftHalf_Icon, 0, 0, "sidebar.toggle")),
                          collapse_WidgetFlag),
                      "navbar.action3");
-        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
+        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag | fixedHeight_WidgetFlag);
         iInputWidget *url;
         /* URL input field. */ {
             url = new_InputWidget(0);
@@ -1485,7 +1500,7 @@ void createUserInterface_Root(iRoot *d) {
             setAlignVisually_LabelWidget(idButton, iTrue);
             setId_Widget(addChildFlags_Widget(navBar, iClob(idButton), collapse_WidgetFlag), "navbar.ident");
         }
-        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
+        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag | fixedHeight_WidgetFlag);
         setId_Widget(addChildFlags_Widget(navBar,
                                           iClob(newIcon_LabelWidget(
                                               home_Icon, 0, 0, "navigate.home")),
@@ -1503,6 +1518,8 @@ void createUserInterface_Root(iRoot *d) {
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget(menu_Icon, navMenuItems_, iElemCount(navMenuItems_));
 #   endif
+        setFrameColor_Widget(findChild_Widget(as_Widget(navMenu), "menu"),
+                             uiSeparator_ColorId);
         setCommand_LabelWidget(navMenu, collectNewCStr_String("menu.open under:1"));
         setAlignVisually_LabelWidget(navMenu, iTrue);
         setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
@@ -1699,12 +1716,13 @@ void createUserInterface_Root(iRoot *d) {
                 { scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
                 { clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
                 { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
+                { return_Icon " ${menu.paste.go}", 0, 0, "input.paste enter:1" },
                 { "---" },
                 { delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
                 { undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
                 { "---" },
                 { select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
-            }, 8);
+            }, 9);
 #endif
         if (deviceType_App() == phone_AppDeviceType) {
             /* Small screen; conserve space by removing the Cancel item. */
@@ -1772,6 +1790,13 @@ void showToolbar_Root(iRoot *d, iBool show) {
         setFlags_Widget(toolBar, hidden_WidgetFlag, iTrue);
         setVisualOffset_Widget(toolBar, height, 200, easeOut_AnimFlag);
     }
+}
+
+size_t windowIndex_Root(const iRoot *d) {
+    if (type_Window(d->window) == main_WindowType) {
+        return windowIndex_App(as_MainWindow(d->window));
+    }
+    return iInvalidPos;
 }
 
 iInt2 size_Root(const iRoot *d) {

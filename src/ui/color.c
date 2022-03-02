@@ -522,8 +522,8 @@ iHSLColor setLum_HSLColor(iHSLColor d, float lum) {
 }
 
 iHSLColor addSatLum_HSLColor(iHSLColor d, float sat, float lum) {
-    d.sat = iClamp(d.sat + sat, 0, 1);
-    d.lum = iClamp(d.lum + lum, 0, 1);
+    d.sat = iClamp(d.sat + sat, minSat_HSLColor, 1);
+    d.lum = iClamp(d.lum + lum, minSat_HSLColor, 1);
     return d;
 }
 

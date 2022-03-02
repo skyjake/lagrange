@@ -25,6 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/command.h"
 #include "prefs.h"
 #include "app.h"
+
+#include <the_Foundation/sortedarray.h>
 #include <SDL_syswm.h>
 
 #define WIN32_LEAN_AND_MEAN
@@ -32,6 +34,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <d2d1.h>
+
+static HWND windowHandle_(SDL_Window *win) {
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    if (SDL_GetWindowWMInfo(win, &wmInfo)) {
+        return wmInfo.info.win.window;
+    }
+    return NULL;
+}
 
 /* Windows 10 Dark Mode Support
 
@@ -96,12 +107,64 @@ typedef BOOL (WINAPI *AllowDarkModeForWindowFunc)(HWND hWnd, BOOL allow);
 static AllowDarkModeForWindowFunc        AllowDarkModeForWindow_;
 static SetWindowCompositionAttributeFunc SetWindowCompositionAttribute_;
 
+iDeclareType(HandleDarkness)
+
+struct Impl_HandleDarkness {
+    HWND hwnd;
+    BOOL isDark;
+};
+
+static int cmp_HandleDarkness_(const void *a, const void *b) {
+    return iCmp(((const iHandleDarkness *) a)->hwnd,
+                ((const iHandleDarkness *) b)->hwnd);
+}
+
 static DWORD ntBuildNumber_;
-static BOOL  isDark_;
+static iSortedArray darkness_; /* state tracking; TODO: replace with a flag in MainWindow? */
+
+/* Ugly bit of bookkeeping here, but the idea is that the Windows-specific behavior
+   is invisible outside this source module. */
+
+static void maybeInitDarkness_(void) {
+    if (!darkness_.cmp) {
+        init_SortedArray(&darkness_, sizeof(iHandleDarkness), cmp_HandleDarkness_);
+    }
+}
+
+static BOOL isDark_(HWND hwnd) {
+    maybeInitDarkness_();
+    size_t pos;
+    if (locate_SortedArray(&darkness_, &(iHandleDarkness){ hwnd }, &pos)) {
+        return ((const iHandleDarkness *) at_SortedArray(&darkness_, pos))->isDark;
+    }
+    return FALSE;
+}
+
+static void setIsDark_(HWND hwnd, BOOL isDark) {
+    maybeInitDarkness_();
+    insert_SortedArray(&darkness_, &(iHandleDarkness){ hwnd, isDark });
+}
+
+static void cleanDark_(void) {
+    /* TODO: Just add a flag in MainWindow. */
+    iForEach(Array, i, &darkness_.values) {
+        iHandleDarkness *dark = i.value;
+        iBool exists = iFalse;
+        iConstForEach(PtrArray, iter, mainWindows_App()) {
+            if (windowHandle_(((const iMainWindow *) iter.ptr)->base.win) == dark->hwnd) {
+                exists = iTrue;
+                break;
+            }
+        }
+        if (!exists) {
+            remove_ArrayIterator(&i);
+        }
+    }
+}
 
 static iBool refreshTitleBarThemeColor_(HWND hwnd) {
 	BOOL dark = isDark_ColorTheme(prefs_App()->theme);
-    if (dark == isDark_) {
+    if (dark == isDark_(hwnd)) {
         return FALSE;
     }
 	if (ntBuildNumber_ < 18362) {
@@ -114,7 +177,7 @@ static iBool refreshTitleBarThemeColor_(HWND hwnd) {
         };
 		SetWindowCompositionAttribute_(hwnd, &data);
 	}
-    isDark_ = dark;
+    setIsDark_(hwnd, dark);
     return TRUE;
 }
 
@@ -176,15 +239,6 @@ float desktopDPI_Win32(void) {
     return ratio;
 }
 
-static HWND windowHandle_(SDL_Window *win) {
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    if (SDL_GetWindowWMInfo(win, &wmInfo)) {
-        return wmInfo.info.win.window;
-    }
-    return NULL;
-}
-
 void useExecutableIconResource_SDLWindow(SDL_Window *win) {
     HINSTANCE handle = GetModuleHandle(NULL);
     HICON icon = LoadIcon(handle, "IDI_ICON1");
@@ -204,15 +258,21 @@ void enableDarkMode_SDLWindow(SDL_Window *win) {
 
 void handleCommand_Win32(const char *cmd) {
     if (equal_Command(cmd, "theme.changed")) {        
-        iMainWindow *mw = get_MainWindow();
-        SDL_Window *win = mw->base.win;
-        if (refreshTitleBarThemeColor_(windowHandle_(win)) &&
-            !isFullscreen_MainWindow(mw) &&
-            !argLabel_Command(cmd, "auto")) {
-            /* This will ensure that the non-client area is repainted. */
-            SDL_MinimizeWindow(win);
-            SDL_RestoreWindow(win);
+        iConstForEach(PtrArray, iter, mainWindows_App()) {
+            iMainWindow *mw = iter.ptr;
+            SDL_Window *win = mw->base.win;
+            if (refreshTitleBarThemeColor_(windowHandle_(win)) &&
+                !isFullscreen_MainWindow(mw) &&
+                !argLabel_Command(cmd, "auto")) {
+                /* Silly hack, but this will ensure that the non-client area is repainted. */
+                SDL_MinimizeWindow(win);
+                SDL_RestoreWindow(win);
+            }
         }
+    }
+    else if (equal_Command(cmd, "window.focus.gained")) {
+        /* Purge old windows from the darkness. */ 
+        cleanDark_();
     }
 }
 

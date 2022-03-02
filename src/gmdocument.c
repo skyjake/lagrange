@@ -333,13 +333,14 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         link->urlRange = capturedRange_RegExpMatch(&m, 1);
         setRange_String(&link->url, link->urlRange);
         set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
-        if (startsWithCase_String(&link->url, "about:command")) {
-            /* This is a special internal page that allows submitting UI events. */
-            if (!d->enableCommandLinks) {
-                delete_GmLink(link);
-                *linkId = 0;
-                return line;
-            }
+        /* If invalid, disregard the link. */
+        if ((d->format == gemini_SourceFormat && size_String(&link->url) > prefs_App()->maxUrlSize) ||
+            (startsWithCase_String(&link->url, "about:command")
+             /* this is a special internal page that allows submitting UI events */
+             && !d->enableCommandLinks)) {
+            delete_GmLink(link);
+            *linkId = 0;
+            return line;
         }
         /* Check the URL. */ {
             iUrl parts;
@@ -370,6 +371,13 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
             else if (equalCase_Rangecc(parts.scheme, "data")) {
                 setScheme_GmLink_(link, data_GmLinkScheme);
+                if (startsWith_Rangecc(parts.path, "image/png") ||
+                    startsWith_Rangecc(parts.path, "image/jpg") ||
+                    startsWith_Rangecc(parts.path, "image/jpeg") ||
+                    startsWith_Rangecc(parts.path, "image/webp") ||
+                    startsWith_Rangecc(parts.path, "image/gif")) {
+                    link->flags |= imageFileExtension_GmLinkFlag;
+                }
             }
             else if (equalCase_Rangecc(parts.scheme, "about")) {
                 setScheme_GmLink_(link, about_GmLinkScheme);
@@ -382,7 +390,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 iString *path = newRange_String(parts.path);
                 if (endsWithCase_String(path, ".gif")  || endsWithCase_String(path, ".jpg") ||
                     endsWithCase_String(path, ".jpeg") || endsWithCase_String(path, ".png") ||
-                    endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||                    
+                    endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||
 #if defined (LAGRANGE_ENABLE_WEBP)
                     endsWithCase_String(path, ".webp") ||
 #endif
@@ -483,8 +491,7 @@ static iBool isNormalized_GmDocument_(const iGmDocument *d) {
 }
 
 static enum iGmDocumentTheme currentTheme_(void) {
-    return (isDark_ColorTheme(colorTheme_App()) ? prefs_App()->docThemeDark
-                                                : prefs_App()->docThemeLight);
+    return docTheme_Prefs(prefs_App());
 }
 
 static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
@@ -904,6 +911,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : scheme == titan_GmLinkScheme    ? uploadArrow
                                              : scheme == finger_GmLinkScheme   ? pointingFinger
                                              : scheme == mailto_GmLinkScheme   ? envelope
+                                             : scheme == data_GmLinkScheme     ? paperclip_Icon
                                              : link->flags & remote_GmLinkFlag ? globe
                                              : link->flags & imageFileExtension_GmLinkFlag ? image
                                              : link->flags & fontpackFileExtension_GmLinkFlag ? fontpack_Icon
@@ -1283,7 +1291,7 @@ static void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
     }
 }
 
-void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
+void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iBlock *iconSeed) {
     const iPrefs *        prefs = prefs_App();
     enum iGmDocumentTheme theme = currentTheme_();
     static const iChar siteIcons[] = {
@@ -1294,6 +1302,17 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         0x1f306, 0x1f308, 0x1f30a, 0x1f319, 0x1f31f, 0x1f320, 0x1f340, 0x1f4cd, 0x1f4e1, 0x1f531,
         0x1f533, 0x1f657, 0x1f659, 0x1f665, 0x1f668, 0x1f66b, 0x1f78b, 0x1f796, 0x1f79c,
     };
+    if (!iconSeed) {
+        iconSeed = paletteSeed;
+    }
+    if (iconSeed && !isEmpty_Block(iconSeed)) {
+        const uint32_t seedHash = themeHash_(iconSeed);
+        d->siteIcon = siteIcons[(seedHash >> 7) % iElemCount(siteIcons)];
+    }
+    else {
+        d->siteIcon = 0;        
+    }
+    const iBool isDarkUI = isDark_ColorTheme(colorTheme_App());
     /* Default colors. These are used on "about:" pages and local files, for example. */ {
         /* Link colors are generally the same in all themes. */
         set_Color(tmBadLink_ColorId, get_Color(red_ColorId));
@@ -1379,7 +1398,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         }
         else if (theme == black_GmDocumentTheme) {
             set_Color(tmBackground_ColorId, get_Color(black_ColorId));
-            set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
+            set_Color(tmParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.1f));
             set_Color(tmFirstParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.5f));
             set_Color(tmQuote_ColorId, get_Color(orange_ColorId));
             set_Color(tmPreformatted_ColorId, get_Color(orange_ColorId));
@@ -1391,7 +1410,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
         }
         else if (theme == gray_GmDocumentTheme) {
-            if (isDark_ColorTheme(colorTheme_App())) {
+            if (isDarkUI) {
                 set_Color(tmBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.25f));
                 set_Color(tmParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.25f));
                 set_Color(tmFirstParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.5f));
@@ -1424,7 +1443,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         }
         else if (theme == sepia_GmDocumentTheme) {
             iHSLColor base = { 40, 0.6f, 0.9f, 1.0f };
-            if (0 && isDark_ColorTheme(colorTheme_App())) { /* TODO */
+            if (0 && isDarkUI) { /* TODO */
                 base.lum = 0.15f;
                 base.sat = 0.15f;
                 setHsl_Color(tmBackground_ColorId, base);
@@ -1495,13 +1514,11 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             }
         }
     }
-    if (seed && !isEmpty_Block(seed)) {
-        d->themeSeed = themeHash_(seed);
-        d->siteIcon  = siteIcons[(d->themeSeed >> 7) % iElemCount(siteIcons)];
+    if (paletteSeed && !isEmpty_Block(paletteSeed)) {
+        d->themeSeed = themeHash_(paletteSeed);
     }
     else {
         d->themeSeed = 0;
-        d->siteIcon  = 0;
     }
     /* Set up colors. */
     if (d->themeSeed) {
@@ -1519,7 +1536,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             violet_Hue,
             pink_Hue
         };
-        static const float hues[] = { 5, 25, 40, 56, 80 + 15, 120, 160, 180, 208, 231, 270, 324 + 10 };
+        float hues[] = { 5, 25, 40, 56, 80 + 15, 120, 160, 180, 208, 231, 270, 324 + 10 };
         static const struct {
             int index[2];
         } altHues[iElemCount(hues)] = {
@@ -1536,13 +1553,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             { 8, 9 },  /* violet */
             { 7, 8 },  /* pink */
         };
+        if (d->themeSeed & 0xc00000) {
+            /* Hue shift for more variability. */
+            iForIndices(i, hues) {
+                hues[i] += (d->themeSeed & 0x200000 ? 10 : -10);
+            }
+        }
+//        printf("HUE SHIFT: %d\n", (int) hues[0] - 5); fflush(stdout);
         const size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
 
         const int   altIndex[2] = { (d->themeSeed & 0x4) != 0, (d->themeSeed & 0x40) != 0 };
         const float altHue      = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
         const float altHue2     = hues[d->themeSeed ? altHues[primIndex].index[altIndex[1]] : 8];
-
-        const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;
+        
+        const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;        
         const iBool isDarkBgSat =
             (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
 
@@ -1552,7 +1576,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 
         if (theme == colorfulDark_GmDocumentTheme) {
             iHSLColor base    = { hues[primIndex],
-                                  0.8f * (d->themeSeed >> 24) / 255.0f,
+                                  0.8f * (d->themeSeed >> 24) / 255.0f + minSat_HSLColor,
                                   0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
                                   1.0f };
             iHSLColor altBase = { altHue, base.sat, base.lum, 1 };
@@ -1562,13 +1586,13 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
             setHsl_Color(tmBannerTitle_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.1f, 0), 0.55f));
             setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
-
+            
 //            printf("primHue: %zu  alts: %d %d  isDarkBgSat: %d\n",
 //                   primIndex,
 //                   altHues[primIndex].index[altIndex[0]],
 //                   altHues[primIndex].index[altIndex[1]],
 //                   isDarkBgSat);
-
+            
             const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
             setHsl_Color(tmHeading1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
             setHsl_Color(tmHeading2_ColorId, setLum_HSLColor(altBase, titleLum + 0.70f));
@@ -1615,9 +1639,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.6f));
             setHsl_Color(
                 tmBannerBackground_ColorId,
-                addSatLum_HSLColor(base, 0, isDark_ColorTheme(colorTheme_App()) ? -0.04f : 0.06f));
-            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.3f));
-            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.25f));
+                addSatLum_HSLColor(base, 0, isDarkUI ? -0.04f : 0.06f));
+            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, isDarkUI ? -0.6f : -0.3f));
+            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, isDarkUI ? -0.5f : -0.25f));
             set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(teal_ColorId), 0.3f));
         }
         else if (theme == white_GmDocumentTheme) {
@@ -1639,11 +1663,10 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
         }
-        else if (theme == black_GmDocumentTheme ||
-                 (theme == gray_GmDocumentTheme && isDark_ColorTheme(colorTheme_App()))) {
-            const float primHue        = hues[primIndex];
+        else if (theme == black_GmDocumentTheme || (theme == gray_GmDocumentTheme && isDarkUI)) {
+            const float     primHue    = hues[primIndex];
             const iHSLColor primBright = { primHue, 1, 0.6f, 1 };
-            const iHSLColor primDim    = { primHue, 1, normLum[primIndex] + (theme == gray_GmDocumentTheme ? 0.0f : -0.25f), 1};
+            const iHSLColor primDim    = { primHue, 1, normLum[primIndex] + (theme == gray_GmDocumentTheme ? 0.0f : -0.15f), 1};
             const iHSLColor altBright  = { altHue, 1, normLum[altIndex[0]] + (theme == gray_GmDocumentTheme ? 0.1f : 0.0f), 1 };
             setHsl_Color(tmQuote_ColorId, altBright);
             setHsl_Color(tmPreformatted_ColorId, altBright);
@@ -1667,14 +1690,22 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         /* Tone down the link colors a bit because bold white is quite strong to look at. */
         if (isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) {
             iHSLColor base = { hues[primIndex], 1.0f, normLum[primIndex], 1.0f };
-            if (theme == black_GmDocumentTheme || theme == gray_GmDocumentTheme) {
+            if (theme == gray_GmDocumentTheme) {
                 setHsl_Color(tmLinkText_ColorId,
                              addSatLum_HSLColor(get_HSLColor(tmLinkText_ColorId), 0.0f, -0.15f));
+                set_Color(tmLinkText_ColorId, mix_Color(get_Color(tmLinkText_ColorId),
+                                                        rgb_HSLColor(base), 0.1f));
             }
             else {
                 /* Tinted with base color. */
                 set_Color(tmLinkText_ColorId, mix_Color(get_Color(tmLinkText_ColorId),
                                                         rgb_HSLColor(base), 0.25f));
+                if (theme == black_GmDocumentTheme) {
+                    /* With a full-on black background, links can have a bit of tint color. */
+                    setHsl_Color(
+                        tmLinkText_ColorId,
+                        addSatLum_HSLColor(get_HSLColor(tmLinkText_ColorId), -0.5f, -0.1f));
+                }
             }
             set_Color(tmHypertextLinkText_ColorId, get_Color(tmLinkText_ColorId));
             set_Color(tmGopherLinkText_ColorId, get_Color(tmLinkText_ColorId));
@@ -1730,8 +1761,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     /* Derived colors. */
     setDerivedThemeColors_(theme);
     /* Special exceptions. */
-    if (seed) {
-        if (equal_CStr(cstr_Block(seed), "gemini.circumlunar.space")) {
+    if (iconSeed) {
+        if (equal_CStr(cstr_Block(iconSeed), "gemini.circumlunar.space")) {
             d->siteIcon = 0x264a; /* gemini symbol */
         }
         updateIconBasedOnUrl_GmDocument_(d);
@@ -1752,7 +1783,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 void makePaletteGlobal_GmDocument(const iGmDocument *d) {
     if (!d->isPaletteValid) {
         /* Recompute the palette since it's needed now. */
-        setThemeSeed_GmDocument((iGmDocument *) d, urlThemeSeed_String(&d->url));
+        setThemeSeed_GmDocument(
+            (iGmDocument *) d, urlPaletteSeed_String(&d->url), urlThemeSeed_String(&d->url));
     }
     iAssert(d->isPaletteValid);
     memcpy(get_Root()->tmPalette, d->palette, sizeof(d->palette));
@@ -1846,13 +1878,14 @@ static void normalize_GmDocument(iGmDocument *d) {
     if (d->format == plainText_SourceFormat) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
-    const int preTabWidth = 4; /* TODO: user-configurable parameter */
+    const int preTabWidth = prefs_App()->tabWidth;
     iBool wasNormalized = iFalse;
     iBool hasTabs = iFalse;
     while (nextSplit_Rangecc(src, "\n", &line)) {
         if (isPreformat) {
             /* Replace any tab characters with spaces for visualization. */
             for (const char *ch = line.start; ch != line.end; ch++) {
+#if 0
                 if (*ch == '\t') {
                     int column = ch - line.start;
                     int numSpaces = (column / preTabWidth + 1) * preTabWidth - column;
@@ -1862,7 +1895,9 @@ static void normalize_GmDocument(iGmDocument *d) {
                     hasTabs = iTrue;
                     wasNormalized = iTrue;
                 }
-                else if (*ch != '\v') {
+                else
+#endif
+                if (*ch != '\v') {
                     appendCStrN_String(normalized, ch, 1);
                 }
                 else {
@@ -1929,7 +1964,7 @@ static void normalize_GmDocument(iGmDocument *d) {
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     url = canonicalUrl_String(url);
     set_String(&d->url, url);
-    setThemeSeed_GmDocument(d, urlThemeSeed_String(url));
+    setThemeSeed_GmDocument(d, urlPaletteSeed_String(url), urlThemeSeed_String(url));
     iUrl parts;
     init_Url(&parts, url);
     setRange_String(&d->localHost, parts.host);

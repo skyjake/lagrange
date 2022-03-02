@@ -148,6 +148,9 @@ msgstr "Identity"
 msgid "menu.title.help"
 msgstr "Help"
 
+msgid "menu.newwindow"
+msgstr "New Window"
+
 msgid "menu.newtab"
 msgstr "New Tab"
 
@@ -288,6 +291,9 @@ msgstr "Copy"
 
 msgid "menu.paste"
 msgstr "Paste"
+
+msgid "menu.paste.go"
+msgstr "Paste and Go"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.selectall"
@@ -519,9 +525,6 @@ msgstr "%b. %d, %Y"
 msgid "feeds.today"
 msgstr "Today"
 
-msgid "feeds.entry.newtab"
-msgstr "Open Entry in New Tab"
-
 msgid "feeds.entry.markread"
 msgstr "Mark as Read"
 
@@ -557,6 +560,9 @@ msgstr "Open in New Tab"
 
 msgid "menu.opentab.background"
 msgstr "Open in Background Tab"
+
+msgid "menu.openwindow"
+msgstr "Open in New Window"
 
 msgid "menu.openfile"
 msgstr "Open File…"
@@ -760,6 +766,27 @@ msgstr "Trust"
 msgid "dlg.cert.fingerprint"
 msgstr "Copy Fingerprint"
 
+msgid "pageinfo.settings"
+msgstr "Settings"
+
+msgid "heading.sitespec"
+msgstr "Site-Specific Settings"
+
+msgid "sitespec.ansi"
+msgstr "ANSI escape warnings:"
+
+msgid "sitespec.palette"
+msgstr "Theme palette seed:"
+
+msgid "sitespec.accept"
+msgstr "Save Settings"
+
+msgid "keys.pageinfo"
+msgstr "Show page information"
+
+msgid "keys.sitespec"
+msgstr "Show site-specific settings"
+
 #, c-format
 msgid "dlg.input.prompt"
 msgstr "Please enter input for %s:"
@@ -848,6 +875,9 @@ msgstr "Open Link to the Side"
 
 msgid "link.side.newtab"
 msgstr "Open Link in New Tab to the Side"
+
+msgid "link.newwindow"
+msgstr "Open Link in New Window"
 
 msgid "link.browser"
 msgstr "Open Link in Default Browser"
@@ -1184,6 +1214,33 @@ msgstr "Russian"
 msgid "lang.es"
 msgstr "Spanish"
 
+msgid "heading.glyphfinder"
+msgstr "Missing Glyphs"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "The following characters could not be shown:"
+
+msgid "dlg.glyphfinder.help"
+msgstr "You can try searching the skyjake.fi Font Library for fonts that provide glyphs for these characters, or manually install new TrueType fonts."
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "Please reload the page to check again for missing glyphs."
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Disable Warnings"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Search Font Library"
+
+msgid "heading.glyphfinder.results"
+msgstr "Search Results"
+
+msgid "glyphfinder.results"
+msgstr "The following fontpacks provide one or more of the missing glyphs:"
+
+msgid "glyphfinder.results.empty"
+msgstr "Sorry, no matching fontpacks were found."
+
 msgid "heading.newident"
 msgstr "New Identity"
 
@@ -1402,6 +1459,10 @@ msgstr "Collapse preformatted:"
 msgid "prefs.bookmarks.addbottom"
 msgstr "Add bookmarks to bottom:"
 
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Open images in Data URLs:"
+
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
 msgstr "Open archive indices:"
@@ -1474,6 +1535,9 @@ msgstr "Language:"
 
 msgid "prefs.time.24h"
 msgstr "24-Hour Time"
+
+msgid "prefs.retaintabs"
+msgstr "Restore tabs at launch:"
 
 msgid "prefs.uiscale"
 msgstr "UI scale factor:"
@@ -1625,6 +1689,9 @@ msgstr "Fill"
 msgid "prefs.linespacing"
 msgstr "Line spacing:"
 
+msgid "prefs.tabwidth"
+msgstr "Tab width:"
+
 msgid "prefs.quoteicon"
 msgstr "Quote indicator:"
 
@@ -1642,6 +1709,9 @@ msgstr "Wrap plain text:"
 
 msgid "prefs.decodeurls"
 msgstr "Decode URLs:"
+
+msgid "prefs.urlsize"
+msgstr "Maximum URL size:"
 
 msgid "prefs.cachesize"
 msgstr "Cache size:"
@@ -2089,12 +2159,3 @@ msgstr "Permanently dismiss warning about terminal emulation on %s?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Dismiss Warning"
-
-msgid "heading.fontpack.classic"
-msgstr "Download Fontpack"
-
-msgid "dlg.fontpack.classic.msg"
-msgstr "The fonts previously bundled with the app are now available as a separate download. Would you like to download the \"Classic set\" fontpack now?"
-
-msgid "dlg.fontpack.classic"
-msgstr "Download Fontpack (25 MB)"

@@ -47,5 +47,6 @@ iLocalDef iBool isEmpty_Periodic(const iPeriodic *d) {
 
 void    add_Periodic            (iPeriodic *, iAnyObject *context, const char *command);
 void    remove_Periodic         (iPeriodic *, iAnyObject *context);
+iBool   contains_Periodic       (const iPeriodic *, iAnyObject *context);
 
 iBool   dispatchCommands_Periodic( iPeriodic *);

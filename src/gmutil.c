@@ -22,6 +22,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmutil.h"
 #include "fontpack.h"
+#include "lang.h"
+#include "sitespec.h"
+#include "ui/color.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -275,6 +278,19 @@ const iBlock *urlThemeSeed_String(const iString *url) {
         return collect_Block(newRange_Block(urlHost_String(url)));
     }
     return collect_Block(newRange_Block(user));
+}
+
+const iBlock *urlPaletteSeed_String(const iString *url) {
+    if (equalCase_Rangecc(urlScheme_String(url), "file")) {
+        return urlThemeSeed_String(url);
+    }
+    /* Check for a site-specific setting. */
+    const iString *seed =
+        valueString_SiteSpec(collectNewRange_String(urlRoot_String(url)), paletteSeed_SiteSpecKey);
+    if (!isEmpty_String(seed)) {
+        return utf8_String(seed);
+    }
+    return urlThemeSeed_String(url);
 }
 
 static iBool isAbsolutePath_(iRangecc path) {
@@ -735,13 +751,36 @@ const iString *canonicalUrl_String(const iString *d) {
     return canon ? collect_String(canon) : d;
 }
 
+const iString *prettyDataUrl_String(const iString *d, int contentColor) {
+    iUrl url;
+    init_Url(&url, d);
+    if (!equalCase_Rangecc(url.scheme, "data")) {
+        return d;
+    }
+    iString *pretty = new_String();
+    const char *comma = strchr(url.path.start, ',');
+    if (!comma) {
+        comma = iMin(constEnd_String(d), constBegin_String(d) + 256);
+    }
+    appendRange_String(pretty, (iRangecc){ constBegin_String(d), comma });
+    if (size_Range(&url.path)) {
+        if (contentColor != none_ColorId) {
+            appendCStr_String(pretty, escape_Color(contentColor));
+        }
+        appendCStr_String(pretty, " (");
+        appendCStr_String(pretty, formatCStrs_Lang("num.bytes.n", size_Range(&url.path)));
+        appendCStr_String(pretty, ")");
+    }
+    return collect_String(pretty);
+}
+
 iRangecc mediaTypeWithoutParameters_Rangecc(iRangecc mime) {
     iRangecc part = iNullRange;
     nextSplit_Rangecc(mime, ";", &part);
     return part;
 }
 
-const iString *feedEntryOpenCommand_String(const iString *url, int newTab) {
+const iString *feedEntryOpenCommand_String(const iString *url, int newTab, int newWindow) {
     if (!isEmpty_String(url)) {
         iString *cmd = collectNew_String();
         const size_t fragPos = indexOf_String(url, '#');
@@ -749,15 +788,20 @@ const iString *feedEntryOpenCommand_String(const iString *url, int newTab) {
             iString *head = newRange_String(
                 (iRangecc){ constBegin_String(url) + fragPos + 1, constEnd_String(url) });
             format_String(cmd,
-                          "open fromsidebar:1 newtab:%d gotourlheading:%s url:%s",
+                          "open fromsidebar:1 newtab:%d newwindow:%d gotourlheading:%s url:%s",
                           newTab,
+                          newWindow,
                           cstr_String(head),
                           cstr_Rangecc((iRangecc){ constBegin_String(url),
                                                    constBegin_String(url) + fragPos }));
             delete_String(head);
         }
         else {
-            format_String(cmd, "open fromsidebar:1 newtab:%d url:%s", newTab, cstr_String(url));
+            format_String(cmd,
+                          "open fromsidebar:1 newtab:%d newwindow:%d url:%s",
+                          newTab,
+                          newWindow,
+                          cstr_String(url));
         }
         return cmd;
     }
@@ -901,40 +945,3 @@ const iGmError *get_GmError(enum iGmStatusCode code) {
     return &errors_[0].err; /* unknown */
 }
 
-int replaceRegExp_String(iString *d, const iRegExp *regexp, const char *replacement,
-                         void (*matchHandler)(void *, const iRegExpMatch *),
-                         void *context) {
-    iRegExpMatch m;
-    iString      result;
-    int          numMatches = 0;
-    const char  *pos        = constBegin_String(d);
-    init_RegExpMatch(&m);
-    init_String(&result);
-    while (matchString_RegExp(regexp, d, &m)) {
-        appendRange_String(&result, (iRangecc){ pos, begin_RegExpMatch(&m) });
-        /* Replace any capture group back-references. */
-        for (const char *ch = replacement; *ch; ch++) {
-            if (*ch == '\\') {
-                ch++;
-                if (*ch == '\\') {
-                    appendCStr_String(&result, "\\");
-                }
-                else if (*ch >= '0' && *ch <= '9') {
-                    appendRange_String(&result, capturedRange_RegExpMatch(&m, *ch - '0'));
-                }
-            }
-            else {
-                appendData_Block(&result.chars, ch, 1);
-            }
-        }
-        if (matchHandler) {
-            matchHandler(context, &m);
-        }
-        pos = end_RegExpMatch(&m);
-        numMatches++;
-    }
-    appendRange_String(&result, (iRangecc){ pos, constEnd_String(d) });
-    set_String(d, &result);
-    deinit_String(&result);
-    return numMatches;
-}

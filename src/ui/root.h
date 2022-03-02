@@ -47,6 +47,7 @@ void        showOrHideNewTabButton_Root         (iRoot *);
 
 void        notifyVisualOffsetChange_Root       (iRoot *);
 
+size_t      windowIndex_Root                    (const iRoot *);
 iInt2       size_Root                           (const iRoot *);
 iRect       rect_Root                           (const iRoot *);
 iRect       safeRect_Root                       (const iRoot *);

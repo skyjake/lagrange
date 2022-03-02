@@ -327,7 +327,8 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
                             else {
                                 switch (item->code) {
                                     case missingGlyphs_GmStatusCode:
-                                        postCommandf_App("open newtab:1 url:about:fonts");
+                                        //postCommandf_App("open newtab:1 url:about:fonts");
+                                        makeGlyphFinder_Widget();
                                         break;
                                     case ansiEscapes_GmStatusCode:
                                         makeQuestion_Widget(

@@ -258,8 +258,6 @@ static int cmp_PrioMapItem_(const void *a, const void *b) {
 }
 
 struct Impl_Text {
-//    enum iTextFont contentFont;
-//    enum iTextFont headingFont;
     float          contentFontSize;
     iArray         fonts; /* fonts currently selected for use (incl. all styles/sizes) */
     int            overrideFontId; /* always checked for glyphs first, regardless of which font is used */    
@@ -276,7 +274,8 @@ struct Impl_Text {
     int            ansiFlags;
     int            baseFontId; /* base attributes (for restoring via escapes) */
     int            baseFgColorId;
-    iBool          missingGlyphs; /* true if a glyph couldn't be found */
+    iBool          missingGlyphs;  /* true if a glyph couldn't be found */
+    iChar          missingChars[20]; /* rotating buffer of the latest missing characters */
 };
 
 iDefineTypeConstructionArgs(Text, (SDL_Renderer *render), render)
@@ -296,6 +295,7 @@ static void setupFontVariants_Text_(iText *d, const iFontSpec *spec, int baseId)
         /* This is the highest priority override font. */
         d->overrideFontId = baseId;
     }
+    iAssert(activeText_ == d);
     pushBack_Array(&d->fontPriorityOrder, &(iPrioMapItem){ spec->priority, baseId });
     for (enum iFontStyle style = 0; style < max_FontStyle; style++) {
         for (enum iFontSize sizeId = 0; sizeId < max_FontSize; sizeId++) {            
@@ -310,6 +310,7 @@ static void setupFontVariants_Text_(iText *d, const iFontSpec *spec, int baseId)
 }
 
 iLocalDef iFont *font_Text_(enum iFontId id) {
+    iAssert(activeText_);
     return at_Array(&activeText_->fonts, id & mask_FontId);
 }
 
@@ -424,6 +425,7 @@ void init_Text(iText *d, SDL_Renderer *render) {
     d->baseFontId      = -1;
     d->baseFgColorId   = -1;
     d->missingGlyphs   = iFalse;
+    iZap(d->missingChars);
     d->render          = render;
     /* A grayscale palette for rasterized glyphs. */ {
         SDL_Color colors[256];
@@ -497,10 +499,20 @@ static void resetCache_Text_(iText *d) {
 }
 
 void resetFonts_Text(iText *d) {
+    iText *oldActive = activeText_;
+    setCurrent_Text(d); /* some routines rely on the global `activeText_` pointer */
     deinitFonts_Text_(d);
     deinitCache_Text_(d);
     initCache_Text_(d);
     initFonts_Text_(d);
+    setCurrent_Text(oldActive);
+}
+
+void resetFontCache_Text(iText *d) {
+    iText *oldActive = activeText_;
+    setCurrent_Text(d); /* some routines rely on the global `activeText_` pointer */
+    resetCache_Text_(d);
+    setCurrent_Text(oldActive);
 }
 
 static SDL_Palette *glyphPalette_(void) {
@@ -610,8 +622,23 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
         }
     }
     if (!*glyphIndex) {
-        activeText_->missingGlyphs = iTrue;
-        fprintf(stderr, "failed to find %08x (%lc)\n", ch, (int)ch); fflush(stderr);
+        fprintf(stderr, "failed to find %08x (%lc)\n", ch, (int) ch); fflush(stderr);
+        iText *tx = activeText_;
+        tx->missingGlyphs = iTrue;
+        /* Remember a few of the latest missing characters. */
+        iBool gotIt = iFalse;
+        for (size_t i = 0; i < iElemCount(tx->missingChars); i++) {
+            if (tx->missingChars[i] == ch) {
+                gotIt = iTrue;
+                break;
+            }
+        }
+        if (!gotIt) {
+            memmove(tx->missingChars + 1,
+                    tx->missingChars,
+                    sizeof(tx->missingChars) - sizeof(tx->missingChars[0]));
+            tx->missingChars[0] = ch;
+        }
     }
     return d;
 }
@@ -1383,6 +1410,11 @@ float horizKern_Font_(iFont *d, uint32_t glyph1, uint32_t glyph2) {
     return 0.0f;
 }
 
+static float nextTabStop_Font_(const iFont *d, float x) {
+    const float stop = prefs_App()->tabWidth * d->emAdvance;
+    return floorf(x / stop) * stop + stop;
+}
+
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 
 iDeclareType(GlyphBuffer)
@@ -1415,11 +1447,6 @@ static void shape_GlyphBuffer_(iGlyphBuffer *d) {
         d->glyphInfo = hb_buffer_get_glyph_infos(d->hb, &d->glyphCount);
         d->glyphPos  = hb_buffer_get_glyph_positions(d->hb, &d->glyphCount);
     }
-}
-
-static float nextTabStop_Font_(const iFont *d, float x) {
-    const float stop = 8 * d->emAdvance;
-    return floorf(x / stop) * stop + stop;
 }
 
 static float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapPosRange) {
@@ -1459,14 +1486,14 @@ static void evenMonospaceAdvances_GlyphBuffer_(iGlyphBuffer *d, iFont *baseFont)
 }
 
 static iRect run_Font_(iFont *d, const iRunArgs *args) {
-    const int    mode       = args->mode;
-    const iInt2  orig       = args->pos;
-    iRect        bounds     = { orig, init_I2(0, d->height) };
-    float        xCursor    = 0.0f;
-    float        yCursor    = 0.0f;
-    float        xCursorMax = 0.0f;
-    const iBool  isMonospaced = isMonospaced_Font(d);
-    iWrapText *wrap = args->wrap;
+    const int   mode         = args->mode;
+    const iInt2 orig         = args->pos;
+    iRect       bounds       = { orig, init_I2(0, d->height) };
+    float       xCursor      = 0.0f;
+    float       yCursor      = 0.0f;
+    float       xCursorMax   = 0.0f;
+    const iBool isMonospaced = isMonospaced_Font(d);
+    iWrapText  *wrap         = args->wrap;
     iAssert(args->text.end >= args->text.start);
     /* Split the text into a number of attributed runs that specify exactly which
        font is used and other attributes such as color. (HarfBuzz shaping is done
@@ -2247,6 +2274,19 @@ iBool checkMissing_Text(void) {
     const iBool missing = d->missingGlyphs;
     d->missingGlyphs = iFalse;
     return missing;
+}
+
+iChar missing_Text(size_t index) {
+    const iText *d = activeText_;
+    if (index >= iElemCount(d->missingChars)) {
+        return 0;
+    }
+    return d->missingChars[index];
+}
+
+void resetMissing_Text(iText *d) {
+    d->missingGlyphs = iFalse;
+    iZap(d->missingChars);
 }
 
 SDL_Texture *glyphCache_Text(void) {

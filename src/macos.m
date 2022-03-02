@@ -83,7 +83,9 @@ static void ignoreImmediateKeyDownEvents_(void) {
        However, we shouldn't double-activate menu items when a shortcut key is used in our
        widgets. Quite a kludge: take advantage of Window's focus-acquisition threshold to
        ignore the immediately following key down events. */
-    get_Window()->focusGainedAt = SDL_GetTicks();
+    iForEach(PtrArray, w, collect_PtrArray(listWindows_App())) {
+        as_Window(w.ptr)->focusGainedAt = SDL_GetTicks();
+    }
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -435,9 +437,17 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     const iBool isPerPixel = (event.hasPreciseScrollingDeltas != 0);
     const iBool isInertia  = (event.momentumPhase & (NSEventPhaseBegan | NSEventPhaseChanged)) != 0;
     const iBool isEnded    = event.scrollingDeltaX == 0.0f && event.scrollingDeltaY == 0.0f && !isInertia;
-    const iWindow *win     = &get_MainWindow()->base;
-    if (event.window != nsWindow_(win->win)) {
-        /* Not the main window. */
+    const iWindow *win     = NULL; //&get_MainWindow()->base;
+    /* If this event belongs to one of the MainWindows, handle it and mark it for that window. 
+       If it's for an auxiliary window, let the system handle it. */
+    iConstForEach(PtrArray, i, mainWindows_App()) {
+        if (event.window == nsWindow_(as_Window(i.ptr)->win)) {
+            win = i.ptr;
+            break;
+        }            
+    }
+    if (!win) { //event.window != nsWindow_(win->win)) {
+        /* Not a main window. */
         return iFalse;
     }
     if (isPerPixel) {
@@ -478,16 +488,18 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     else {
         SDL_MouseWheelEvent e = { .type = SDL_MOUSEWHEEL };
         e.timestamp = SDL_GetTicks();
+        e.windowID = id_Window(win);
         e.which = 1; /* Distinction between trackpad and regular mouse. */
         /* Disregard any wheel acceleration. */
         e.x = event.scrollingDeltaX > 0 ? 1 : event.scrollingDeltaX < 0 ? -1 : 0;
-        e.y = event.scrollingDeltaY > 0 ? 1 : event.scrollingDeltaY < 0 ? -1 : 0;
+        e.y = event.scrollingDeltaY > 0 ? 1 : event.scrollingDeltaY < 0 ? -1 : 0;        
         SDL_PushEvent((SDL_Event *) &e);
         return iTrue;
     }                
     /* Post corresponding MOUSEWHEEL events. */
     SDL_MouseWheelEvent e = { .type = SDL_MOUSEWHEEL };
     e.timestamp = SDL_GetTicks();
+    e.windowID = id_Window(win);
     e.which = isPerPixel ? 0 : 1; /* Distinction between trackpad and regular mouse. */
     setPerPixel_MouseWheelEvent(&e, isPerPixel);
     if (isPerPixel) {
@@ -517,28 +529,6 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     // printf("#### [%d] dx:%d dy:%d phase:%ld inertia:%d end:%d\n", preventTapGlitch_, e.x, e.y, (long) event.momentumPhase,
     //        isInertia, isEnded); fflush(stdout);
     SDL_PushEvent((SDL_Event *) &e);
-#if 0
-        /* On macOS, we handle both trackpad and mouse events. We expect SDL to identify
-           which device is sending the event. */
-        if (ev.wheel.which == 0) {
-            /* Trackpad with precise scrolling w/inertia (points). */
-            setPerPixel_MouseWheelEvent(&ev.wheel, iTrue);
-            ev.wheel.x *= -d->window->base.pixelRatio;
-            ev.wheel.y *= d->window->base.pixelRatio;
-            /* Only scroll on one axis at a time. */
-            if (iAbs(ev.wheel.x) > iAbs(ev.wheel.y)) {
-                ev.wheel.y = 0;
-            }
-            else {
-                ev.wheel.x = 0;
-            }
-        }
-        else {
-            /* Disregard wheel acceleration applied by the OS. */
-            ev.wheel.x = -ev.wheel.x;
-            ev.wheel.y = iSign(ev.wheel.y);
-        }
-#endif
     return iTrue;        
 }
 
@@ -565,13 +555,6 @@ void setupApplication_MacOS(void) {
     windowCloseItem.action = @selector(closeTab);
     [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskScrollWheel
                                           handler:^NSEvent*(NSEvent *event){
-//                                            printf("event type: %lu\n", (unsigned long) event.type);
-//                                            fflush(stdout);
-//                                            if (event.type == NSEventTypeGesture) {
-//                                                trackSwipe_(event);
-//                                                printf("GESTURE phase:%lu\n", (unsigned long) event.phase);
-//fflush(stdout);
-//                                            }
                                             if (event.type == NSEventTypeScrollWheel &&
                                                 processScrollWheelEvent_(event)) {
                                                 return nil; /* was eaten */                                                

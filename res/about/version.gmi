@@ -6,6 +6,45 @@
 ```
 # Release notes
 
+## 1.11
+⚠️ Downgrading back to v1.10 causes all site-specific themes to be forgotten. Back up your sitespec.ini beforehand.
+
+New features:
+* Multiple windows. Windows can be opened via the menu, Ctrl/⌘+N, or link context menus.
+* Restoring tabs at launch is now optional. Added a toggle in Preferences > General.
+* Site-specific settings (Shift+Ctrl/⌘+Comma), with options for theme customization and showing ANSI escape warnings. The custom theme is based on a "seed string" chosen by the user.
+* Fontpack search. Fonts in the skyjake.fi font library have been indexed based on all the glyphs they provide, so one can look up which fontpacks provide any missing glyphs.
+* "Manage Fonts" button on the Preferences > Fonts tab. It opens "about:fonts".
+* "Tab width" setting (default: 8). This controls how TAB characters are displayed on pages.
+* Setting for maximum valid URI length on 'text/gemini' link lines.
+* Option to show images decoded from data URLs immediately after loading a page. This is limited to JPEG, PNG, WebP, and GIF (no animations).
+* "Paste and Go" in the input field context menu.
+* TLS session caching: reduces the need for redundant handshaking by keeping old TLS sessions cached for 10 minutes.
+* UI language for Italian.
+
+Changes and enhancements:
+* The input prompt dialog saves entered text persistently, just like the Upload dialog. This prevents losing text if the dialog is closed accidentally.
+* Input field backup is done per window, e.g., "uploadbackup.2.txt".
+* Sidebar context menus have more consistent "open" menu items, now including opening the item in a new window.
+* The missing glyphs warning dialog now shows a list of the missing code points.
+* Downloading the Classic Set fontpack is no longer suggested since fontpacks can be searched as needed.
+* Abbreviate font pack descriptions on "about:fonts". The full description is shown when viewing a single fontpack.
+* The active tab button uses the theme background color if the page color theme has a bright colorful background to avoid clashing with the UI accent color.
+* Adjusted colors of the Gray and Black page themes.
+* Added additional (small) variations to theme hues.
+* Data URLs have their own link icon.
+* Adjusted appearance of context menus.
+* Updated UI translations.
+
+Fixes:
+* Incorrect behavior and UI glitches related to data URLs. The UI will now omit the encoded part of data URLs.
+* Occasional mismatch between page and banner backgrounds. It was due to loss of precision when converting colors to 8-bit RGB.
+* Issues with changing UI metrics when a window moves between displays. Not all UI elements were rescaled properly.
+* Glitches with opening and closing context menus.
+* TAB characters are no longer forcibly normalized to spaces.
+* Pasting LF characters in the URL field should not be possible.
+* Avoid reinitializing fonts more than once during startup.
+
 ## 1.10.6
 * Added bindings for switching Feeds list to Unread/All mode.
 * Fixed normalization of empty Gemini URL paths to `/` as per the November 2021 spec update.
