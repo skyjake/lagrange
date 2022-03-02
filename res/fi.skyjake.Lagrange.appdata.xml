@@ -45,7 +45,7 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
-        <release version="1.11" date="2022-03-02">
+        <release version="1.11.1" date="2022-03-02">
             <description>
                 <p>Changes in v1.11:</p>
                 <ul>
@@ -83,7 +83,7 @@
                 <p>The full release notes can be viewed inside the app by opening
                     the "about:version" page.</p>
             </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.11.0</url>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.11.1</url>
         </release>
         <release version="1.10.6" date="2022-02-19">
             <description>
