@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-23 21:50+0000\n"
+"PO-Revision-Date: 2022-03-02 06:32+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -2260,3 +2260,81 @@ msgstr "Barra lateral: Mostrar todas las entradas de las suscripciones"
 
 msgid "keys.feeds.showunread"
 msgstr "Barra lateral: Mostrar entradas no leídas de las suscripciones"
+
+msgid "heading.glyphfinder"
+msgstr "Glifos faltantes"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Puede intentar buscar en la Biblioteca de Fuentes de skyjake.fi fuentes que "
+"provean glifos para estos caracteres, o instalar nuevas fuentes TrueType "
+"manualmente."
+
+msgid "prefs.tabwidth"
+msgstr "Anchura del tabulador:"
+
+msgid "menu.paste.go"
+msgstr "Pegar e Ir"
+
+msgid "menu.openwindow"
+msgstr "Abrir en Nueva Ventana"
+
+msgid "pageinfo.settings"
+msgstr "Configuración"
+
+msgid "heading.sitespec"
+msgstr "Configuración Específica del Sitio"
+
+msgid "sitespec.ansi"
+msgstr "Advertencia de escapes ANSI:"
+
+msgid "sitespec.palette"
+msgstr "Semilla para la paleta del tema:"
+
+msgid "sitespec.accept"
+msgstr "Guardar Configuraciones"
+
+msgid "keys.pageinfo"
+msgstr "Mostrar información de la página"
+
+msgid "keys.sitespec"
+msgstr "Mostrar configuración específica del sitio"
+
+msgid "link.newwindow"
+msgstr "Abrir Enlace en Nueva Ventana"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Los siguientes caracteres no pudieron mostrarse:"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr ""
+"Por favor recargue la página para revisar si hay glifos faltantes nuevamente."
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Desactivar Advertencias"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Buscar en la Biblioteca de Fuentes"
+
+msgid "heading.glyphfinder.results"
+msgstr "Resultados de la Búsqueda"
+
+msgid "glyphfinder.results"
+msgstr ""
+"Los siguientes paquetes de fuentes proveen uno o más de los glifos faltantes:"
+
+msgid "glyphfinder.results.empty"
+msgstr "Perdon, no se encontraron paquetes de fuentes correctos."
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Abrir imágenes embebidas en URLs tipo Data:"
+
+msgid "prefs.retaintabs"
+msgstr "Restaurar pestañas al iniciar:"
+
+msgid "prefs.urlsize"
+msgstr "Tamaño máximo de los URL:"
+
+msgid "menu.newwindow"
+msgstr "Nueva Ventana"
