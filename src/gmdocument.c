@@ -1406,8 +1406,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmHeading2_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(white_ColorId), 0.66f));
             set_Color(tmHeading3_ColorId, get_Color(white_ColorId));
             set_Color(tmBannerBackground_ColorId, get_Color(black_ColorId));
-            set_Color(tmBannerTitle_ColorId, get_Color(teal_ColorId));
-            set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
+            set_Color(tmBannerTitle_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmBannerIcon_ColorId, get_Color(cyan_ColorId));
         }
         else if (theme == gray_GmDocumentTheme) {
             if (isDarkUI) {
@@ -1420,8 +1420,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                 set_Color(tmHeading2_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(white_ColorId), 0.66f));
                 set_Color(tmHeading3_ColorId, get_Color(white_ColorId));
                 set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.5f));
-                set_Color(tmBannerTitle_ColorId, get_Color(teal_ColorId));
-                set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
+                set_Color(tmBannerTitle_ColorId, get_Color(cyan_ColorId));
+                set_Color(tmBannerIcon_ColorId, get_Color(cyan_ColorId));
             }
             else {
                 set_Color(tmBackground_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(gray50_ColorId), 0.33f));

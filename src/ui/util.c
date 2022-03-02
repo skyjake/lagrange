@@ -1084,12 +1084,9 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
-//    if (!isPortraitPhone) {   
-//        setFrameColor_Widget(d, uiSeparator_ColorId);
-//    }
-//    else {
-//        setFrameColor_Widget(d, none_ColorId);
-//    }
+    if (isPhone) {
+        setFrameColor_Widget(d, isPortraitPhone ? none_ColorId : uiSeparator_ColorId);
+    }
     arrange_Widget(d); /* need to know the height */
     iBool allowOverflow = iFalse;
     /* A vertical offset determined by a possible selected label in the menu. */ 
@@ -2563,6 +2560,7 @@ iWidget *makePreferences_Widget(void) {
             { "radio horizontal:1 id:prefs.linewidth", 0, 0, (const void *) lineWidthItems },
             { "padding" },
             { "input id:prefs.linespacing maxlen:5" },
+            { "input id:prefs.tabwidth maxlen:3" },
             { "radio id:prefs.quoteicon", 0, 0, (const void *) quoteItems },
             { "buttons id:prefs.boldlink", 0, 0, (const void *) boldLinkItems },
             { "padding" },
@@ -3309,16 +3307,23 @@ static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
 
 iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
     iWidget *dlg;
+    const char *sheetId = format_CStr("sitespec site:%s", cstr_Rangecc(urlRoot_String(url)));
     const iMenuItem actions[] = {
         { "${cancel}" },
         { "${sitespec.accept}", SDLK_RETURN, KMOD_PRIMARY, "sitespec.accept" }
     };
     if (isUsingPanelLayout_Mobile()) {
-        iAssert(iFalse);
+        dlg = makePanels_Mobile(sheetId, (iMenuItem[]){
+            { "title id:heading.sitespec" },
+            { "input id:sitespec.palette" },
+            { "padding" },
+            { "toggle id:sitespec.ansi" },
+            { NULL }
+        }, actions, iElemCount(actions));
     }
     else {
         iWidget *headings, *values;
-        dlg = makeSheet_Widget(format_CStr("sitespec site:%s", cstr_Rangecc(urlRoot_String(url))));
+        dlg = makeSheet_Widget(sheetId);
         addDialogTitle_(dlg, "${heading.sitespec}", "heading.sitespec");
         addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
         iInputWidget *palSeed = new_InputWidget(0);
@@ -3334,8 +3339,9 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
         const iString *site = collectNewRange_String(urlRoot_String(url));
         setToggle_Widget(findChild_Widget(dlg, "sitespec.ansi"),
                          ~value_SiteSpec(site, dismissWarnings_SiteSpecKey) & ansiEscapes_GmDocumentWarning);
-        setText_InputWidget(findChild_Widget(dlg, "sitespec.palette"),
-                            valueString_SiteSpec(site, paletteSeed_SiteSpecKey));
+        iInputWidget *palSeed = findChild_Widget(dlg, "sitespec.palette");
+        setText_InputWidget(palSeed, valueString_SiteSpec(site, paletteSeed_SiteSpecKey));
+        setHint_InputWidget(palSeed, cstr_Block(urlThemeSeed_String(url)));
         /* Keep a copy of the original palette seed for restoring on cancel. */
         setUserData_Object(dlg, copy_String(valueString_SiteSpec(site, paletteSeed_SiteSpecKey)));
         if (!isUsingPanelLayout_Mobile()) {
