@@ -6,6 +6,33 @@
 ```
 # Release notes
 
+## 1.11 (Alpha 6)
+⚠️ Downgrading back to v1.10 causes all site-specific themes to be forgotten.
+
+New features:
+* Site-specific settings dialog: theme customization and showing ANSI escape warnings. The custom theme is based on a "seed string" chosen by the user.
+* Fontpack search. Fonts in the skyjake.fi font library have been indexed based on all the glyphs they provide, so one can look up which fontpacks provide any missing glyphs.
+* "Tab width" setting (default: 8). This controls how TAB characters are displayed on pages.
+* Setting for maximum valid URI length on 'text/gemini' link lines.
+* Option to show images decoded from data URLs immediately after loading a page. This is limited to JPEG, PNG, WebP, and GIF (no animations).
+* TLS session caching: reduces the need for redundant handshaking by keeping old TLS sessions cached for 10 minutes.
+* UI language for Italian.
+
+Changes and enhancements:
+* The input prompt dialog saves entered text persistently, just like the Upload dialog. This prevents losing text if the dialog is closed accidentally.
+* The missing glyphs warning dialog now shows a list of the missing code points.
+* Abbreviate font pack descriptions on "about:fonts". The full description is shown when viewing a single fontpack.
+* The active tab button uses the theme background color if the page color theme has a bright colorful background to avoid clashing with the UI accent color.
+* Adjusted colors of the Gray and Black page themes.
+* Added additional (small) variations to theme hues.
+* Data URLs have their own link icon.
+
+Fixes:
+* Incorrect behavior and UI glitches related to data URLs. The UI will now omit the encoded part of data URLs.
+* Occasional mismatch between page and banner backgrounds. It was due to loss of precision when converting colors to 8-bit RGB.
+* TAB characters are no longer forcibly normalized to spaces.
+* Pasting LF characters in the URL field should not be possible.
+
 ## 1.10 (Alpha 5)
 * Fixed cancelling an input query. Now pressing Cancel will navigate back to the previous page as intended.
 * Gopher: Fixed navigating to parent. Set item type to 1 to show a gophermap and not the plain source.
