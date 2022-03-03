@@ -1049,6 +1049,9 @@ iLocalDef iBool isHidden_Widget_(const iWidget *d) {
         (isHover_Widget(d) || isHover_Widget(d->parent))) {
         return iFalse;
     }
+    if (d->flags2 & visibleOnParentSelected_WidgetFlag2 && isSelected_Widget(d->parent)) {
+        return iFalse;
+    }
     return (d->flags & hidden_WidgetFlag) != 0;
 }
 
@@ -1062,7 +1065,7 @@ static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
     }
     const iBool isKey   = isKeyboardEvent_(ev);
     const iBool isMouse = isMouseEvent_(ev);
-    if ((d->flags & disabled_WidgetFlag) || (d->flags & hidden_WidgetFlag &&
+    if ((d->flags & disabled_WidgetFlag) || (isHidden_Widget_(d) &&
                                              d->flags & disabledWhenHidden_WidgetFlag)) {
         if (isKey || isMouse) return iFalse;
     }

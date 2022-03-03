@@ -1610,6 +1610,10 @@ void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *co
         setFlags_Widget(as_Widget(close),
                         hidden_WidgetFlag | visibleOnParentHover_WidgetFlag, iFalse);
     }
+    if (deviceType_App() == tablet_AppDeviceType) {
+        setFlags_Widget(as_Widget(close), hidden_WidgetFlag | disabledWhenHidden_WidgetFlag, iTrue);
+        as_Widget(close)->flags2 |= visibleOnParentSelected_WidgetFlag2;
+    }
     setNoAutoMinHeight_LabelWidget(close, iTrue);
     updateSize_LabelWidget(close);
 }
