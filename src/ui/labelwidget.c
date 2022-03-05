@@ -534,7 +534,7 @@ void updateSize_LabelWidget(iLabelWidget *d) {
 static void replaceVariables_LabelWidget_(iLabelWidget *d) {
     translate_Lang(&d->label);
     if (d->flags.allCaps) {
-        set_String(&d->label, collect_String(upper_String(&d->label)));
+        set_String(&d->label, collect_String(upperLang_String(&d->label, code_Lang())));
     }
     if (d->flags.removeTrailingColon && endsWith_String(&d->label, ":")) {
         removeEnd_String(&d->label, 1);
