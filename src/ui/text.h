@@ -87,22 +87,6 @@ enum iFontId {
 
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)
 
-#if 0
-/* TODO: get rid of this; configure using font ID strings, check RTL from FontFile flags */
-enum iTextFont {
-    undefined_TextFont = -1,
-    nunito_TextFont = 0,
-    firaSans_TextFont,
-    literata_TextFont,
-    tinos_TextFont,
-    sourceSans3_TextFont,
-    iosevka_TextFont,
-    /* families: */
-    arabic_TextFont,
-    emojiAndSymbols_TextFont,
-};
-#endif
-
 extern int gap_Text; /* affected by content font size */
 
 iDeclareType(Text)

@@ -164,7 +164,7 @@ API_AVAILABLE(ios(13.0))
 /*----------------------------------------------------------------------------------------------*/
 
 @interface AppState : NSObject<UIDocumentPickerDelegate, UITextFieldDelegate, UITextViewDelegate,
-                               UIScrollViewDelegate> {
+                               UIScrollViewDelegate, NSLayoutManagerDelegate> {
     iString *fileBeingSaved;
     iString *pickFileCommand;
     iSystemTextInput *sysCtrl;
@@ -192,6 +192,12 @@ static UIScrollView *statusBarTapper_; /* dummy scroll view just for getting not
 
 -(iSystemTextInput *)systemTextInput {
     return sysCtrl;
+}
+
+- (CGFloat)layoutManager:(NSLayoutManager *)layoutManager
+        lineSpacingAfterGlyphAtIndex:(NSUInteger)glyphIndex
+        withProposedLineFragmentRect:(CGRect)rect {
+    return lineHeight_Text(default_FontId) / get_MainWindow()->base.pixelRatio * 0.3f;
 }
 
 -(void)setPickFileCommand:(const char *)command {
@@ -753,8 +759,8 @@ static CGRect convertToCGRect_(const iRect *rect, iBool expanded) {
     if (expanded) {
         const float inset = gap_UI / get_Window()->pixelRatio;
         frame.origin.x -= inset + 1;
-        frame.origin.y -= inset + 1;
-        frame.size.width += 2 * inset + 2;
+        frame.origin.y -= inset / 2;
+        frame.size.width += 2 * inset + 3;
         frame.size.height += inset + 1 + inset;
     }
     return frame;
@@ -819,6 +825,7 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     }
     else {
         UITextView *view = REF_d_view;
+        [[view layoutManager] setDelegate:appState_];
         [view setBackgroundColor:[UIColor colorWithWhite:1.0f alpha:0.0f]];
         [view setTextColor:textColor];
         [view setTintColor:tintColor];
@@ -896,9 +903,9 @@ int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
 void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
     float height = lineHeight_Text(fontId) / get_Window()->pixelRatio;
     UIFont *font;
-    //        for (NSString *name in [UIFont familyNames]) {
-    //            printf("family: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
-    //        }
+//            for (NSString *name in [UIFont familyNames]) {
+//                printf("family: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+//            }
     if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
 //        font = [UIFont monospacedSystemFontOfSize:0.8f * height weight:UIFontWeightRegular];
 //        for (NSString *name in [UIFont fontNamesForFamilyName:@"Iosevka Term"]) {
@@ -907,8 +914,7 @@ void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
         font = [UIFont fontWithName:@"Iosevka-Term-Extended" size:height * 0.82f];
     }
     else {
-//        font = [UIFont systemFontOfSize:0.65f * height];
-        font = [UIFont fontWithName:@"SourceSans3-Regular" size:height * 0.7f];
+        font = [UIFont fontWithName:@"Roboto-Regular" size:height * 0.66f];
     }
     if (d->field) {
         [REF_d_field setFont:font];

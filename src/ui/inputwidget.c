@@ -769,7 +769,7 @@ static int contentHeight_InputWidget_(const iInputWidget *d) {
     const int minHeight = d->minWrapLines * lineHeight;
     const int maxHeight = d->maxWrapLines * lineHeight;
     if (d->sysCtrl) {
-        const int preferred = (preferredHeight_SystemTextInput(d->sysCtrl) + gap_UI) / lineHeight;
+        const int preferred = (preferredHeight_SystemTextInput(d->sysCtrl) + 2 * gap_UI) / lineHeight;
         return iClamp(preferred * lineHeight, minHeight, maxHeight);
     }
     if (d->buffered && ~d->inFlags & needUpdateBuffer_InputWidgetFlag) {
