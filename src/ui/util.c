@@ -2553,8 +2553,8 @@ iWidget *makePreferences_Widget(void) {
             { "toggle id:prefs.gemtext.ansi.fg" },
             { "toggle id:prefs.gemtext.ansi.bg" },
             { "toggle id:prefs.gemtext.ansi.fontstyle" },
-//            { "padding" },
-//            { "dropdown id:prefs.font.ui", 0, 0, (const void *) constData_Array(makeFontItems_("ui")) },
+            { "padding android:1" },
+            { "dropdown android:1 id:prefs.font.ui", 0, 0, (const void *) constData_Array(makeFontItems_("ui")) },
             { "padding" },
             { "button text:" fontpack_Icon " " uiTextAction_ColorEscape "${menu.fonts}", 0, 0, "!open url:about:fonts" },
             { NULL }  

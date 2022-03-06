@@ -523,6 +523,14 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     if (hasLabel_Command(spec, "device") && deviceType_App() != argLabel_Command(spec, "device")) {
         return;
     }
+    if (hasLabel_Command(spec, "android")) {
+        const int requireAndroid = argLabel_Command(spec, "android");
+#if defined (iPlatformAndroid)
+        if (!requireAndroid) return;
+#else
+        if (requireAndroid) return;
+#endif
+    }
     if (equal_Command(spec, "title")) {
         iLabelWidget *title = addChildFlags_Widget(panel,
                                                    iClob(new_LabelWidget(label, NULL)),
