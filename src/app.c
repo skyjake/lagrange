@@ -3259,7 +3259,7 @@ iBool handleCommand_App(const char *cmd) {
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
         newTab_App(isDuplicate ? document_App() : NULL, iTrue);
         if (!isDuplicate) {
-            postCommand_App("navigate.home focus:1");
+            postCommandf_App("navigate.home focus:%d", deviceType_App() == desktop_AppDeviceType);
         }
         return iTrue;
     }
