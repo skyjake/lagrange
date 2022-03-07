@@ -877,7 +877,8 @@ const iArray *actions_FontPack(const iFontPack *d, iBool showInstalled) {
                               0,
                               "fontpack.install" });
         }
-        if (iCmpStr(fpId, "windows-system-fonts")) { /* system fonts can't be disabled */
+        if (iCmpStr(fpId, "windows-system-fonts") &&
+            iCmpStr(fpId, "macos-system-fonts")) { /* system fonts can't be disabled */
             pushBack_Array(
                 items,
                 &(iMenuItem){ format_Lang(isEnabled ? close_Icon " ${fontpack.disable}"
