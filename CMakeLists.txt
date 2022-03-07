@@ -103,6 +103,7 @@ set (RESOURCES
     res/lang/zh_Hant.bin
     res/shadow.png
     res/fontpack.ini
+    res/macos-system-fonts.ini
 )
 file (GLOB FONTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} res/fonts/*)
 list (APPEND RESOURCES ${FONTS})

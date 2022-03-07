@@ -631,6 +631,21 @@ void init_Fonts(const char *userDir) {
             }
         }
 #endif
+#if defined (iPlatformAppleDesktop)
+        pack = new_FontPack();
+        setReadOnly_FontPack(pack, iTrue);
+        pack->loadPath = newCStr_String("/System/Library/Fonts/");
+        setCStr_String(&pack->id, "macos-system-fonts");
+        iString ini;
+        initBlock_String(&ini, &blobMacosSystemFontsIni_Resources);
+        if (load_FontPack_(pack, &ini)) {
+            pushBack_PtrArray(&d->packs, pack);
+        }
+        else {
+            delete_FontPack(pack);
+        }
+        deinit_String(&ini);
+#endif
     }
     /* Find and load .fontpack files in known locations. */ {
         const char *locations[] = {
