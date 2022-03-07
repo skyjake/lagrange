@@ -1485,6 +1485,18 @@ static void evenMonospaceAdvances_GlyphBuffer_(iGlyphBuffer *d, iFont *baseFont)
     }
 }
 
+static void alignOtherFontsVertically_GlyphBuffer_(iGlyphBuffer *d, iFont *baseFont) {
+    shape_GlyphBuffer_(d);
+    int offset = 0;
+    if (d->font->height > baseFont->height) {
+        /* Doesn't fit on the baseline, so move it up. */
+        offset = (d->font->height - baseFont->height) / 2;
+        for (unsigned int i = 0; i < d->glyphCount; ++i) {
+            d->glyphPos[i].y_offset += offset / d->font->yScale;
+        }
+    }
+}
+
 static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const int   mode         = args->mode;
     const iInt2 orig         = args->pos;
@@ -1548,6 +1560,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         for (size_t runIndex = 0; runIndex < runCount; runIndex++) {
             evenMonospaceAdvances_GlyphBuffer_(at_Array(&buffers, runIndex), d);
         }
+    }
+    for (size_t runIndex = 0; runIndex < runCount; runIndex++) {
+        alignOtherFontsVertically_GlyphBuffer_(at_Array(&buffers, runIndex), d);
     }
     iBool        willAbortDueToWrap = iFalse;
     const size_t textLen            = size_Array(&attrText.logical);
