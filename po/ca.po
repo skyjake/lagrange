@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-03-08 11:50+0000\n"
+"PO-Revision-Date: 2022-03-09 21:50+0000\n"
 "Last-Translator: Xavier <dxpublica@posteo.net>\n"
 "Language-Team: Catalan <http://weblate.skyjake.fi/projects/lagrange/ui/ca/>\n"
 "Language: ca\n"
@@ -314,9 +314,8 @@ msgstr[1] "%u fonts"
 msgid "feeds.entry.markread"
 msgstr "Marca com a llegit"
 
-#, fuzzy
 msgid "sidebar.entry.bookmark"
-msgstr "Afegeix una adreça d'interès"
+msgstr "Afegeix un marcador…"
 
 msgid "sidebar.empty.idents"
 msgstr "Cap identitat"
@@ -768,3 +767,371 @@ msgstr "Pestanya posterior"
 
 msgid "keys.upload.edit"
 msgstr "Edita la pàgina amb Titan"
+
+msgid "doc.archive.view"
+msgstr "Visualitza el contingut del fitxer"
+
+msgid "menu.title.view"
+msgstr "Visualitza"
+
+msgid "menu.split.merge"
+msgstr "Reuneix"
+
+msgid "menu.unexpire"
+msgstr "Ignora l'expiració i continua carregant"
+
+msgid "menu.sidebar"
+msgstr "Alterna la barra lateral"
+
+msgid "menu.sidebar.left"
+msgstr "Alterna la barra lateral esquerra"
+
+msgid "menu.sidebar.right"
+msgstr "Alterna la barra lateral dreta"
+
+msgid "menu.view.split"
+msgstr "Parteix la visualització…"
+
+msgid "menu.bookmarks.list"
+msgstr "Llista tots els marcadors"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Llista-ho tot"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Llista per etiqueta"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Llista els marcadors per data de creació"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Llista per data de creació"
+
+msgid "menu.feeds.entrylist"
+msgstr "Visualitza les entrades de subscripció"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Configuració"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Visualitza les subscripcions"
+
+msgid "menu.select.clear"
+msgstr "Neteja la selecció"
+
+msgid "menu.page.subscribe"
+msgstr "Subscriu-te a la pàgina…"
+
+msgid "menu.parent"
+msgstr "Ves al node pare"
+
+msgid "menu.root"
+msgstr "Ves al node arrel"
+
+msgid "menu.aboutpages"
+msgstr "Quant a les pàgines"
+
+msgid "menu.import.links"
+msgstr "Importa tots els enllaços de la pàgina…"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Refresca els marcadors remots"
+
+msgid "menu.feeds.refresh"
+msgstr "Refresca les subcripcions"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Estableix acció:"
+
+msgid "sidebar.feeds"
+msgstr "Subscripcions"
+
+msgid "sidebar.action.history.clear"
+msgstr "Neteja"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Sense llegir"
+msgstr[1] "Sense llegir"
+
+msgid "status.query"
+msgstr "Consulta de la cerca"
+
+msgid "status.query.tight"
+msgstr "Consulta"
+
+msgid "status.feeds"
+msgstr "Actualitzant subscripcions"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%u byte"
+msgstr[1] "% bytes"
+
+# strftime() formatted. Should be split evenly on two lines with a newline character.
+msgid "page.timestamp"
+msgstr ""
+"Rebut a les %l:%M %p\n"
+"el %d %b %Y"
+
+# strftime() formatted
+msgid "sidebar.date.thisyear"
+msgstr "%d. %b"
+
+# strftime() formatted
+msgid "sidebar.date.otheryear"
+msgstr "%d.%b, %Y"
+
+msgid "feeds.entry.bookmark"
+msgstr "Afegeix marcador…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Obre pàgina de subcripcions"
+
+msgid "feeds.unsubscribe"
+msgstr "Elimina subscripció…"
+
+msgid "feeds.edit"
+msgstr "Edita subscripció…"
+
+msgid "feeds.markallread"
+msgstr "Marca tot com a llegit"
+
+msgid "feeds.refresh"
+msgstr "Refresca subscripcions"
+
+msgid "menu.opentab"
+msgstr "Obre a una nova pestanya"
+
+msgid "menu.opentab.background"
+msgstr "Obre a una pestanya de fons"
+
+msgid "menu.openfile"
+msgstr "Obre fitxer…"
+
+msgid "menu.edit"
+msgstr "Edita…"
+
+msgid "menu.dup"
+msgstr "Duplica…"
+
+msgid "menu.forgeturl"
+msgstr "Oblida l'URL"
+
+msgid "menu.copyurl"
+msgstr "Copia l'URL"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "Esborra marcadors"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Esborra marcador"
+msgstr[1] "Esborra %u marcadors"
+
+msgid "history.clear"
+msgstr "Neteja l'historial…"
+
+msgid "heading.history.clear"
+msgstr "Neteja l'historial"
+
+msgid "dlg.history.clear"
+msgstr "Neteja l'historial"
+
+msgid "bookmark.tag.sub"
+msgstr "Subcriure's-hi"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Obre enllaços al costat"
+
+msgid "bookmark.untag.home"
+msgstr "Lleva la pàgina d'inici"
+
+msgid "bookmark.untag.sub"
+msgstr "Elimina la subcripció"
+
+msgid "bookmark.untag.remote"
+msgstr "Lleva la font del marcador"
+
+msgid "bookmarks.reload"
+msgstr "Refresca les fonts remotes"
+
+msgid "ident.using"
+msgstr "Usant-lo en aquesta pàgina"
+
+msgid "ident.notused"
+msgstr "No usat"
+
+msgid "ident.temporary"
+msgstr "Temporal"
+
+# strftime() formatted
+msgid "ident.expiry"
+msgstr "Expira el %d %b %Y"
+
+msgid "ident.use"
+msgstr "Usa'l en aquesta pàgina"
+
+msgid "ident.stopuse.all"
+msgstr "Deixa d'usar-lo per tot"
+
+msgid "ident.export"
+msgstr "Exporta"
+
+msgid "heading.ident.use"
+msgstr "Ús d'identitats"
+
+msgid "menu.edit.notes"
+msgstr "Edita les notes…"
+
+msgid "heading.ident.notes"
+msgstr "Notes sobre identitats"
+
+msgid "ident.fingerprint"
+msgstr "Copia emprempta digital"
+
+msgid "ident.delete"
+msgstr "Esborra identitat…"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"De veres que voleu esborrar la identitat %s\"%s\"%s inclosos els seus "
+"fitxers de certificat i de clau privada?"
+
+msgid "heading.unsub"
+msgstr "Elimina subcripció"
+
+msgid "dlg.unsub"
+msgstr "Elimina subscripció"
+
+msgid "error.server.msg"
+msgstr "El servidor ha respost amb el missatge:"
+
+msgid "pageinfo.header.cached"
+msgstr "(contingut en la memòria cau)"
+
+msgid "pageinfo.cert.status"
+msgstr "Estat del certificat:"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "No verificat per CA"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "No expirat"
+
+msgid "pageinfo.cert.expired"
+msgstr "Expirat"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Confiable"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Si us plau, escriviu l'entrada per a %s:"
+
+msgid "keys.input.precedingline"
+msgstr "Indicador d'entrada: enganxa la línia precedent"
+
+msgid "sitespec.palette"
+msgstr "Llavor per a la paleta del tema"
+
+msgid "dlg.save.incomplete"
+msgstr "Els continguts de la pàgina ja s'estant descarregant."
+
+msgid "heading.save.error"
+msgstr "Error desant el fitxer"
+
+msgid "link.bookmark"
+msgstr "Desa l'enllaç a marcadors…"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Mostra en el Finder"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Mostra en l'administrador d'arxius"
+
+msgid "prefs.cachesize"
+msgstr "Mida de la memòria cau:"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Llista els marcadors per etiqueta"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Aquest document XML d'Atom ha estat automàticament traduit al format Gemini "
+"per permetre subscriure's-hi."
+
+msgid "menu.openwindow"
+msgstr "Obre a una nova finestra"
+
+msgid "dlg.confirm.history.clear"
+msgstr "De veres que voleu borrar la història de totes les pàgines visitades?"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "De veres que voleu esborrar el marcador en aquesta carpeta?"
+msgstr[1] "De veres que voleu esborrar tots els %u marcadors en aquesta carpeta?"
+
+msgid "bookmark.tag.home"
+msgstr "Usa com a pàgina d'inici"
+
+msgid "bookmark.tag.remote"
+msgstr "Usa com a una font de marcador"
+
+msgid "bookmark.delete"
+msgstr "Esborra el marcador"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Usat a %u URL"
+msgstr[1] "Usat a %u URL"
+
+msgid "ident.stopuse"
+msgstr "Deixa d'usar-lo en aquesta pàgina"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Usa %s"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notes sobre %s:"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Visualitza %sAjuda%s per més informació sobre els certificats de client de "
+"TLS."
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "De veres voleu eliminar la subcripció \"%s\"?"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Podeu desar-lo com un fitxer al directori Baixades: premeu %s o seleccineu \""
+"%s\" des del menú."
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Verificat per CA"
+
+msgid "dlg.certwarn.title"
+msgstr "Incidència de seguretat"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "El certificat rebut ha expirat el %s."
