@@ -3300,6 +3300,9 @@ static iBool siteSpecificSettingsHandler_(iWidget *dlg, const char *cmd) {
         int                 dismissed = value_SiteSpec(siteRoot, dismissWarnings_SiteSpecKey);
         iChangeFlags(dismissed, ansiEscapes_GmDocumentWarning, !warnAnsi);
         setValue_SiteSpec(siteRoot, dismissWarnings_SiteSpecKey, dismissed);
+        setValue_SiteSpec(siteRoot,
+                          tlsSessionCache_SiteSpeckey,
+                          isSelected_Widget(findChild_Widget(dlg, "sitespec.tlscache")));
         setValueString_SiteSpec(siteRoot, paletteSeed_SiteSpecKey, text_InputWidget(palSeed));
         siteSpecificThemeChanged_(dlg);
         /* Note: The active DocumentWidget may actually be different than when opening the dialog. */
@@ -3322,6 +3325,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
             { "input id:sitespec.palette" },
             { "padding" },
             { "toggle id:sitespec.ansi" },
+            { "toggle id:sitespec.tlscache" },
             { NULL }
         }, actions, iElemCount(actions));
     }
@@ -3334,6 +3338,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
         setHint_InputWidget(palSeed, cstr_Block(urlThemeSeed_String(url)));
         addPrefsInputWithHeading_(headings, values, "sitespec.palette", iClob(palSeed));
         addDialogToggle_(headings, values, "${sitespec.ansi}", "sitespec.ansi");
+        addDialogToggle_(headings, values, "${sitespec.tlscache}", "sitespec.tlscache");
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));        
         addChild_Widget(get_Root()->widget, iClob(dlg));
         as_Widget(palSeed)->rect.size.x = 60 * gap_UI;
@@ -3343,6 +3348,8 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
         const iString *site = collectNewRange_String(urlRoot_String(url));
         setToggle_Widget(findChild_Widget(dlg, "sitespec.ansi"),
                          ~value_SiteSpec(site, dismissWarnings_SiteSpecKey) & ansiEscapes_GmDocumentWarning);
+        setToggle_Widget(findChild_Widget(dlg, "sitespec.tlscache"),
+                         value_SiteSpec(site, tlsSessionCache_SiteSpeckey));
         iInputWidget *palSeed = findChild_Widget(dlg, "sitespec.palette");
         setText_InputWidget(palSeed, valueString_SiteSpec(site, paletteSeed_SiteSpecKey));
         setHint_InputWidget(palSeed, cstr_Block(urlThemeSeed_String(url)));

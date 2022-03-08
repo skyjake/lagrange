@@ -778,6 +778,9 @@ msgstr "ANSI escape warnings:"
 msgid "sitespec.palette"
 msgstr "Theme palette seed:"
 
+msgid "sitespec.tlscache"
+msgstr "Resume TLS session:"
+
 msgid "sitespec.accept"
 msgstr "Save Settings"
 

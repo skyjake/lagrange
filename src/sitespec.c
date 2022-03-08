@@ -38,6 +38,7 @@ struct Impl_SiteParams {
     int      dismissWarnings;
     iStringArray usedIdentities; /* fingerprints; latest ones at the end */
     iString  paletteSeed;
+    int      tlsSessionCache;
     /* TODO: style settings */
 };
 
@@ -47,6 +48,7 @@ void init_SiteParams(iSiteParams *d) {
     d->dismissWarnings = 0;
     init_StringArray(&d->usedIdentities);
     init_String(&d->paletteSeed);
+    d->tlsSessionCache = iTrue;
 }
 
 void deinit_SiteParams(iSiteParams *d) {
@@ -155,6 +157,9 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
     else if (!cmp_String(key, "paletteSeed") && value->type == string_TomlType) {
         set_String(&d->loadParams->paletteSeed, value->value.string);
     }
+    else if (!cmp_String(key, "tlsSessionCache") && value->type == boolean_TomlType) {
+        d->loadParams->tlsSessionCache = value->value.boolean;
+    }
 }
 
 static iBool load_SiteSpec_(iSiteSpec *d) {
@@ -200,6 +205,9 @@ static void save_SiteSpec_(iSiteSpec *d) {
                 appendCStr_String(buf, "paletteSeed = \"");
                 append_String(buf, collect_String(quote_String(&params->paletteSeed, iFalse)));
                 appendCStr_String(buf, "\"\n");
+            }
+            if (!params->tlsSessionCache) {
+                appendCStr_String(buf, "tlsSessionCache = false\n");
             }
             if (!isEmpty_String(buf)) {
                 writeData_File(f, "[", 1);
@@ -253,6 +261,12 @@ void setValue_SiteSpec(const iString *site, enum iSiteSpecKey key, int value) {
         case dismissWarnings_SiteSpecKey:
             params->dismissWarnings = value;
             needSave = iTrue;
+            break;
+        case tlsSessionCache_SiteSpeckey:
+            if (value != params->tlsSessionCache) {
+                params->tlsSessionCache = value;
+                needSave = iTrue;
+            }
             break;
         default:
             break;
@@ -329,13 +343,21 @@ int value_SiteSpec(const iString *site, enum iSiteSpecKey key) {
     iSiteSpec *d = &siteSpec_;
     const iSiteParams *params = constValue_StringHash(&d->sites, collect_String(lower_String(site)));
     if (!params) {
-        return 0;
+        /* Default values. */
+        switch (key) {
+            case tlsSessionCache_SiteSpeckey:
+                return 1;
+            default:                
+                return 0;
+        }
     }
     switch (key) {
         case titanPort_SiteSpecKey:
             return params->titanPort;
         case dismissWarnings_SiteSpecKey:
             return params->dismissWarnings;
+        case tlsSessionCache_SiteSpeckey:
+            return params->tlsSessionCache;
         default:
             return 0;
     }    

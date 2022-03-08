@@ -32,6 +32,7 @@ enum iSiteSpecKey {
     dismissWarnings_SiteSpecKey, /* int */
     usedIdentities_SiteSpecKey,  /* StringArray */
     paletteSeed_SiteSpecKey,     /* String */
+    tlsSessionCache_SiteSpeckey, /* int */
 };
 
 void    init_SiteSpec       (const char *saveDir);
