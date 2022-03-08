@@ -128,7 +128,7 @@ iLocalDef iTextMetrics measure_Text(int fontId, const char *text) {
 }
 
 iInt2   tryAdvance_Text         (int fontId, iRangecc text, int width, const char **endPos);
-iInt2   tryAdvanceNoWrap_Text   (int fontId, iRangecc text, int width, const char **endPos);
+iInt2   tryAdvanceNoWrap_Text   (int fontId, iRangecc text, int width, iBool justify, const char **endPos);
 
 enum iAlignment {
     left_Alignment,
@@ -160,7 +160,7 @@ void    drawString_Text         (int fontId, iInt2 pos, int color, const iString
 void    drawRange_Text          (int fontId, iInt2 pos, int color, iRangecc text);
 void    drawRangeN_Text         (int fontId, iInt2 pos, int color, iRangecc text, size_t maxLen);
 void    drawOutline_Text        (int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text);
-void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, int color, iRangecc text); /* bound does not wrap */
+void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, iBool justify, int color, iRangecc text); /* bound does not wrap */
 int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
 
 iDeclareType(WrapText)
@@ -194,6 +194,7 @@ struct Impl_WrapText {
     int         maxWidth;
     size_t      maxLines; /* 0: unlimited */
     enum iWrapTextMode mode;
+    iBool       justify;
     iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, iTextAttrib attrib, int origin,
                           int advance);
     void *      context;

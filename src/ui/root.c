@@ -593,8 +593,11 @@ static void updateNavBarIdentity_(iWidget *navBar) {
         /* Fit the name in the widget. */ 
         if (subjectName) {
             const char *endPos;
-            tryAdvanceNoWrap_Text(uiLabelTiny_FontId, range_String(subjectName), width_Widget(toolName),
-                &endPos);
+            tryAdvanceNoWrap_Text(uiLabelTiny_FontId,
+                                  range_String(subjectName),
+                                  width_Widget(toolName),
+                                  iFalse,
+                                  &endPos);
             updateText_LabelWidget(
                 toolName,
                 collectNewRange_String((iRangecc){ constBegin_String(subjectName), endPos }));

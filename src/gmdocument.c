@@ -2545,6 +2545,14 @@ void runBaseAttributes_GmDocument(const iGmDocument *d, const iGmRun *run, int *
     }
 }
 
+iBool isJustified_GmRun(const iGmRun *d) {
+    return !(d->flags & endOfLine_GmRunFlag);
+}
+
+int drawBoundWidth_GmRun(const iGmRun *d) {
+    return (d->isRTL ? -1 : 1) * width_Rect(isJustified_GmRun(d) ? d->bounds : d->visBounds);
+}
+
 iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
     if (pos.y < top_Rect(d->bounds)) {
         return (iRangecc){ d->text.start, d->text.start };
@@ -2560,8 +2568,13 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
         return (iRangecc){ d->text.end, d->text.end };
     }
     iRangecc loc;
-    tryAdvanceNoWrap_Text(d->font, d->text, x, &loc.start);
-    loc.end = loc.start;
+//    tryAdvanceNoWrap_Text(d->font, d->text, x, isJustified_GmRun(d), &loc.start);
+    iWrapText wt = { .text     = d->text,
+                     .maxWidth = drawBoundWidth_GmRun(d),
+                     .justify  = isJustified_GmRun(d),
+                     .hitPoint = init_I2(x, 0) };
+    measure_WrapText(&wt, d->font);
+    loc.start = loc.end = wt.hitChar_out;
     if (!contains_Range(&d->text, loc.start) && loc.start != d->text.end) {
         return iNullRange; /* it's some other text */
     }

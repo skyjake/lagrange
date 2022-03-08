@@ -166,6 +166,8 @@ iLocalDef uint32_t preId_GmRun(const iGmRun *d) {
     return d->mediaType == max_MediaType ? d->mediaId : 0;
 }
 
+iBool       isJustified_GmRun       (const iGmRun *);
+int         drawBoundWidth_GmRun    (const iGmRun *);
 iRangecc    findLoc_GmRun           (const iGmRun *, iInt2 pos);
 
 iDeclareClass(GmDocument)

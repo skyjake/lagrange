@@ -1150,6 +1150,16 @@ struct Impl_DrawContext {
     iGmRunRange runsDrawn;
 };
 
+static int measureAdvanceToLoc_(const iGmRun *run, const char *end) {
+    iWrapText wt = { .text     = run->text,
+                     .mode     = word_WrapTextMode,
+                     .maxWidth = drawBoundWidth_GmRun(run),
+                     .justify  = isJustified_GmRun(run),
+                     .hitChar  = end };
+    measure_WrapText(&wt, run->font);
+    return wt.hitAdvance_out.x;
+}
+
 static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iColorId color,
                                    iRangecc mark, iBool *isInside) {
     if (mark.start > mark.end) {
@@ -1159,25 +1169,28 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
     if (*isInside || (contains_Range(&run->text, mark.start) ||
                       contains_Range(&mark, run->text.start))) {
         int x = 0;
+        /* TODO: Justification requires that we measure the whole range and find the subregion. */
         if (!*isInside) {
-            x = measureRange_Text(run->font,
-                                  (iRangecc){ run->text.start, iMax(run->text.start, mark.start) })
-                    .advance.x;
+            x = measureAdvanceToLoc_(run, //) measureRange_Text(run->font,
+                                     /*(iRangecc){ run->text.start, */ iMax(run->text.start, mark.start));
+//                    .advance.x;
         }
-        int w = width_Rect(run->visBounds) - x;
+        int w = drawBoundWidth_GmRun(run) - x;
         if (contains_Range(&run->text, mark.end) || mark.end < run->text.start) {
             iRangecc mk = !*isInside ? mark
                                      : (iRangecc){ run->text.start, iMax(run->text.start, mark.end) };
             mk.start    = iMax(mk.start, run->text.start);
-            w           = measureRange_Text(run->font, mk).advance.x;
+            int x1 = measureAdvanceToLoc_(run, mk.start);
+            w           = //measureRange_Text(run->font, mk).advance.x;
+                measureAdvanceToLoc_(run, mk.end) - x1;
             *isInside   = iFalse;
         }
         else {
             *isInside = iTrue; /* at least until the next run */
         }
-        if (w > width_Rect(run->visBounds) - x) {
-            w = width_Rect(run->visBounds) - x;
-        }
+        if (w > drawBoundWidth_GmRun(run) - x) {
+            w = drawBoundWidth_GmRun(run) - x;
+        }        
         if (~run->flags & decoration_GmRunFlag) {
             const iInt2 visPos =
                 add_I2(run->bounds.pos, addY_I2(d->viewPos, viewPos_DocumentView_(d->view)));
@@ -1396,7 +1409,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     setBaseAttributes_Text(run->font, fg);
                     drawBoundRange_Text(run->font,
                                         visPos,
-                                        (run->isRTL ? -1 : 1) * width_Rect(run->visBounds),
+                                        drawBoundWidth_GmRun(run),
+                                        isJustified_GmRun(run),
                                         fg,
                                         range_String(&styled));
                     setAnsiFlags_Text(oldAnsi);
@@ -1407,7 +1421,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
         drawBoundRange_Text(run->font,
                             visPos,
-                            (run->isRTL ? -1 : 1) * width_Rect(run->visBounds),
+                            drawBoundWidth_GmRun(run),
+                            isJustified_GmRun(run),
                             fg,
                             run->text);
     runDrawn:;
@@ -2149,6 +2164,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
             tryAdvanceNoWrap_Text(font,
                                   range_String(text),
                                   avail - ellipsisWidth,
+                                  iFalse,
                                   &endPos);
             updateText_LabelWidget(
                 tabButton,
@@ -5417,8 +5433,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     d->selectMark.start = d->initialSelectMark.end;
                 }
             }
-//            printf("mark %zu ... %zu\n", d->selectMark.start - cstr_String(source_GmDocument(d->doc)),
-//                   d->selectMark.end - cstr_String(source_GmDocument(d->doc)));
+//            printf("mark %zu ... %zu {%s}\n", d->selectMark.start - cstr_String(source_GmDocument(d->view.doc)),
+//                   d->selectMark.end - cstr_String(source_GmDocument(d->view.doc)),
+//                   d->selectMark.end > d->selectMark.start ? cstr_Rangecc(d->selectMark) : "");
 //            fflush(stdout);
             refresh_Widget(w);
             return iTrue;
