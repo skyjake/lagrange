@@ -1500,25 +1500,38 @@ static void alignOtherFontsVertically_GlyphBuffer_(iGlyphBuffer *d, iFont *baseF
 }
 
 iLocalDef float justificationWeight_(iChar c) {
-    if (c == '.' || c == ':' || c == ';') {
-        return 3.0f;
+    if (c == '.' || c == '!' || c == '?' ||c == ';') {
+        return 2.0f;
     }
-    if (c == ',') {
-        return 1.75f;
+    if (c == ',' || c == ':') {
+        return 1.5f;
     }
     return 1.0f;
 }
 
 static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers, float *wrapAdvance,
                                  int available, iBool isLast) {
-    iGlyphBuffer *begin           = buffers;
-    iGlyphBuffer *end             = buffers + numBuffers;
-    float         outerSpace      = available - *wrapAdvance;
-    float         totalInnerSpace = 0.0f;
-    float         numSpaces       = 0;
+    iGlyphBuffer *begin             = buffers;
+    iGlyphBuffer *end               = buffers + numBuffers;
+    float         outerSpace        = available - *wrapAdvance;
+    float         totalInnerSpace   = 0.0f;
+    float         numSpaces         = 0;
+    const float   maxGlyphExpansion = 0.05f;
+    const float   maxSpaceExpansion = 0.10f;
     if (isLast || outerSpace <= 0) {
         return;
     }
+    /* First expand all glyphs evenly. This preserves readability pretty well. */ {
+        float expand = 1.0f + iMin(outerSpace, maxGlyphExpansion * *wrapAdvance) / *wrapAdvance;
+        for (iGlyphBuffer *buf = begin; buf != end; buf++) {
+            for (size_t i = 0; i < buf->glyphCount; i++) {
+                buf->glyphPos[i].x_advance *= expand;
+            }
+        }
+        *wrapAdvance *= expand;
+        outerSpace = available - *wrapAdvance;
+    }
+    /* Find out if there are spaces to expand further. */
     for (iGlyphBuffer *buf = begin; buf != end; buf++) {
         for (size_t i = 0; i < buf->glyphCount; i++) {
             hb_glyph_info_t *info   = &buf->glyphInfo[i];
@@ -1530,9 +1543,8 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers, float
             }
         }
     }
-    if (numSpaces >= 5 && totalInnerSpace > 0) {
-        const float maxSpace = iMax(10 * gap_Text, *wrapAdvance * 0.10f);
-        outerSpace = iMin(outerSpace, maxSpace);
+    if (numSpaces >= 6 && totalInnerSpace > 0) {
+        outerSpace = iMin(outerSpace, *wrapAdvance * maxSpaceExpansion);
         for (iGlyphBuffer *buf = begin; buf != end; buf++) {
             for (size_t i = 0; i < buf->glyphCount; i++) {
                 hb_glyph_info_t *info   = &buf->glyphInfo[i];
@@ -2138,7 +2150,7 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
     return measure_WrapText(&wrap, fontId).bounds.size;
 }
 
-iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, iBool justify, const char **endPos) {
+iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
     if (width && width <= 1) {
         *endPos = text.start;
         return zero_I2();
@@ -2148,7 +2160,6 @@ iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, iBool justify,
     iWrapText wrap = { .mode     = anyCharacter_WrapTextMode,
                        .text     = text,
                        .maxWidth = width,
-                       .justify  = justify,
                        .wrapFunc = cbAdvanceOneLine_,
                        .context  = endPos };
     iTextMetrics tm = measure_WrapText(&wrap, fontId);
@@ -2169,7 +2180,8 @@ iTextMetrics measureN_Text(int fontId, const char *text, size_t n) {
     return tm;
 }
 
-static void drawBoundedN_Text_(int fontId, iInt2 pos, int xposBound, iBool justify, int color, iRangecc text, size_t maxLen) {
+static void drawBoundedN_Text_(int fontId, iInt2 pos, int boundWidth, iBool justify,
+                               int color, iRangecc text, size_t maxLen) {
     iText *      d    = activeText_;
     iFont *      font = font_Text_(fontId);
     const iColor clr  = get_Color(color & mask_ColorId);
@@ -2182,14 +2194,14 @@ static void drawBoundedN_Text_(int fontId, iInt2 pos, int xposBound, iBool justi
                            .text            = text,
                            .maxLen          = maxLen,
                            .pos             = pos,
-                           .layoutBound     = xposBound > 0 ? xposBound - pos.x : 0,
+                           .layoutBound     = iAbs(boundWidth),
                            .justify         = justify,
                            .color           = color & mask_ColorId,
-                           .baseDir         = xposBound ? iSign(xposBound - pos.x) : 0 });
+                           .baseDir         = iSign(boundWidth) });
 }
 
-static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, iBool justify, int color, iRangecc text) {
-    drawBoundedN_Text_(fontId, pos, xposBound, justify, color, text, 0);
+static void drawBounded_Text_(int fontId, iInt2 pos, int boundWidth, iBool justify, int color, iRangecc text) {
+    drawBoundedN_Text_(fontId, pos, boundWidth, justify, color, text, 0);
 }
 
 static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
@@ -2258,7 +2270,7 @@ iTextMetrics measureWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
 void drawBoundRange_Text(int fontId, iInt2 pos, int boundWidth, iBool justify, int color, iRangecc text) {
     /* This function is used together with text that has already been wrapped, so we'll know
        the bound width but don't have to re-wrap the text. */
-    drawBounded_Text_(fontId, pos, pos.x + boundWidth, justify, color, text);
+    drawBounded_Text_(fontId, pos, boundWidth, justify, color, text);
 }
 
 int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {
@@ -2342,7 +2354,7 @@ iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
         const char *endPos;
         const int width = d->mode == word_WrapTextMode
                               ? tryAdvance_Text(fontId, text, d->maxWidth, &endPos).x
-                              : tryAdvanceNoWrap_Text(fontId, text, d->maxWidth, justify, &endPos).x;
+                              : tryAdvanceNoWrap_Text(fontId, text, d->maxWidth, &endPos).x;
         notify_WrapText_(d, endPos, (iTextAttrib){ .fgColorId = color }, 0, width);
         drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endPos });
         text.start = endPos;

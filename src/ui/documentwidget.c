@@ -1153,7 +1153,7 @@ struct Impl_DrawContext {
 static int measureAdvanceToLoc_(const iGmRun *run, const char *end) {
     iWrapText wt = { .text     = run->text,
                      .mode     = word_WrapTextMode,
-                     .maxWidth = drawBoundWidth_GmRun(run),
+                     .maxWidth = iAbsi(drawBoundWidth_GmRun(run)),
                      .justify  = isJustified_GmRun(run),
                      .hitChar  = end };
     measure_WrapText(&wt, run->font);
@@ -1169,27 +1169,24 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
     if (*isInside || (contains_Range(&run->text, mark.start) ||
                       contains_Range(&mark, run->text.start))) {
         int x = 0;
-        /* TODO: Justification requires that we measure the whole range and find the subregion. */
         if (!*isInside) {
-            x = measureAdvanceToLoc_(run, //) measureRange_Text(run->font,
-                                     /*(iRangecc){ run->text.start, */ iMax(run->text.start, mark.start));
-//                    .advance.x;
+            x = measureAdvanceToLoc_(run, iMax(run->text.start, mark.start));
         }
-        int w = drawBoundWidth_GmRun(run) - x;
+        const int boundWidth = iAbsi(drawBoundWidth_GmRun(run));
+        int w = boundWidth - x;
         if (contains_Range(&run->text, mark.end) || mark.end < run->text.start) {
-            iRangecc mk = !*isInside ? mark
-                                     : (iRangecc){ run->text.start, iMax(run->text.start, mark.end) };
-            mk.start    = iMax(mk.start, run->text.start);
-            int x1 = measureAdvanceToLoc_(run, mk.start);
-            w           = //measureRange_Text(run->font, mk).advance.x;
-                measureAdvanceToLoc_(run, mk.end) - x1;
-            *isInside   = iFalse;
+            iRangecc mk =
+                !*isInside ? mark : (iRangecc){ run->text.start, iMax(run->text.start, mark.end) };
+            mk.start  = iMax(mk.start, run->text.start);
+            int x1    = measureAdvanceToLoc_(run, mk.start);
+            w         = measureAdvanceToLoc_(run, mk.end) - x1;
+            *isInside = iFalse;
         }
         else {
             *isInside = iTrue; /* at least until the next run */
         }
-        if (w > drawBoundWidth_GmRun(run) - x) {
-            w = drawBoundWidth_GmRun(run) - x;
+        if (w > boundWidth - x) {
+            w = boundWidth - x;
         }        
         if (~run->flags & decoration_GmRunFlag) {
             const iInt2 visPos =
@@ -2161,11 +2158,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
                 break;
             }
             const char *endPos;
-            tryAdvanceNoWrap_Text(font,
-                                  range_String(text),
-                                  avail - ellipsisWidth,
-                                  iFalse,
-                                  &endPos);
+            tryAdvanceNoWrap_Text(font, range_String(text), avail - ellipsisWidth, &endPos);
             updateText_LabelWidget(
                 tabButton,
                 collectNewFormat_String(

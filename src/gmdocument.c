@@ -2568,7 +2568,6 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
         return (iRangecc){ d->text.end, d->text.end };
     }
     iRangecc loc;
-//    tryAdvanceNoWrap_Text(d->font, d->text, x, isJustified_GmRun(d), &loc.start);
     iWrapText wt = { .text     = d->text,
                      .maxWidth = drawBoundWidth_GmRun(d),
                      .justify  = isJustified_GmRun(d),

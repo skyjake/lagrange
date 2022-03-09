@@ -128,7 +128,7 @@ iLocalDef iTextMetrics measure_Text(int fontId, const char *text) {
 }
 
 iInt2   tryAdvance_Text         (int fontId, iRangecc text, int width, const char **endPos);
-iInt2   tryAdvanceNoWrap_Text   (int fontId, iRangecc text, int width, iBool justify, const char **endPos);
+iInt2   tryAdvanceNoWrap_Text   (int fontId, iRangecc text, int width, const char **endPos);
 
 enum iAlignment {
     left_Alignment,
