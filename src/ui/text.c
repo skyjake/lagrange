@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2020-2022 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -19,6 +19,21 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+/* Overview of types:
+
+- Text : top-level text renderer instance (one per window)
+- Font : a font's assets for rendering, e.g., metrics and cached glyphs
+- Glyph : hash node; a single cached glyph, with Rect in cache texture
+- AttributedText : text string to be drawn that is split into sub-runs by attributes (font, color)
+- AttributedRun : a run inside AttributedText
+- GlyphBuffer : HarfBuzz-shaped glyphs corresponding to an AttributedRun
+- FontRun : cached state (e.g., AttributedText, glyphs) needed for rendering a text string
+- FontRunArgs : set of arguments for constructing a FontRun
+- RunArgs : input arguments for `run_Font_` (the low-level text rendering routine)
+- RunLayer : arguments for processing the glyphs of a GlyphBuffer (layers: background, foreground)
+
+*/
 
 #include "text.h"
 #include "color.h"
