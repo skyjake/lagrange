@@ -1660,6 +1660,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iBool        isFirst            = iTrue;
     const iBool  checkHitPoint      = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
     const iBool  checkHitChar       = wrap && wrap->hitChar;
+    iBool        wasCharHit         = iFalse;
     size_t       numWrapLines       = 0;
     while (!isEmpty_Range(&wrapRuns)) {
         if (isFirst) {
@@ -1812,7 +1813,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             iAssert(wrap);
             const iBool isHitPointOnThisLine = (checkHitPoint && wrap->hitPoint.y >= orig.y + yCursor &&
                                                 wrap->hitPoint.y < orig.y + yCursor + d->height);
-            iBool wasCharHit = iFalse; /* on this line */
             float hitAdvance = 0.0f;
             for (size_t i = wrapRuns.start; i < wrapRuns.end; i++) {
                 iGlyphBuffer *buf = at_Array(&buffers, i);
@@ -1821,10 +1821,14 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     const int logPos = buf->glyphInfo[j].cluster;
                     CHECK_LOGPOS();
                     const float xAdvance = buf->glyphPos[j].x_advance * buf->font->xScale;
-                    if (checkHitChar && !wasCharHit &&
-                        wrap->hitChar == sourcePtr_AttributedText_(&attrText, logPos)) {
-                        wrap->hitAdvance_out = init_I2(hitAdvance, yCursor);
-                        wasCharHit = iTrue; /* variation selectors etc. have matching cluster */
+                    if (checkHitChar && !wasCharHit) {
+                        const char *sourceLoc = sourcePtr_AttributedText_(&attrText, logPos);
+                        if (sourceLoc <= wrap->hitChar) {
+                            wrap->hitAdvance_out = init_I2(hitAdvance, yCursor);
+                        }
+                        if (sourceLoc >= wrap->hitChar) {
+                            wasCharHit = iTrue; /* variation selectors etc. have matching cluster */
+                        }
                     }
                     if (isHitPointOnThisLine) {
                         if (wrap->hitPoint.x >= orig.x + hitAdvance &&
@@ -1836,6 +1840,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     hitAdvance += xAdvance;
                 }
             }
+            if (checkHitChar && !wasCharHit) {
+                wrap->hitAdvance_out = init_I2(hitAdvance, yCursor); /* last end of line */
+            }
             if (isHitPointOnThisLine && !wrap->hitChar_out) {
                 /* Check if the hit point is on the left side of this line. */
                 if (wrap->hitPoint.x < orig.x) {
@@ -1846,7 +1853,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     }
                 }
                 /* Maybe on the right side? */
-                if (wrap->hitPoint.x >= orig.x + wrapAdvance) {
+                else {
                     if (wrapResumePos == textLen) {
                         wrap->hitChar_out = sourcePtr_AttributedText_(&attrText, wrapResumePos);
                     }
@@ -1930,6 +1937,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         xCursor = origin;
         /* We have determined a possible wrap position and alignment for the work runs,
            so now we can process the glyphs. */
+        /* TODO: Shouldn't the hit tests be done here? */
         for (size_t logRunIndex = 0; logRunIndex < size_Array(&runOrder); logRunIndex++) {
             const size_t runIndex = constValue_Array(&runOrder, logRunIndex, size_t);
             const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
@@ -1952,10 +1960,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 const hb_glyph_info_t *info    = &buf->glyphInfo[i];
                 const hb_codepoint_t   glyphId = info->codepoint;
                 const int              logPos  = info->cluster;
+                CHECK_LOGPOS();/*
                 if (logPos < wrapPosRange.start || logPos >= wrapPosRange.end) {
-                    /* Already handled this part of the run. */
                     continue;
-                }
+                }*/
                 const float   xOffset  = run->font->xScale * buf->glyphPos[i].x_offset;
                 float         yOffset  = run->font->yScale * buf->glyphPos[i].y_offset;
                 const float   xAdvance = run->font->xScale * buf->glyphPos[i].x_advance;
