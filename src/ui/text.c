@@ -1516,7 +1516,7 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers, float
     float         outerSpace        = available - *wrapAdvance;
     float         totalInnerSpace   = 0.0f;
     float         numSpaces         = 0;
-    const float   maxGlyphExpansion = 0.05f;
+    const float   maxGlyphExpansion = 0.025f;
     const float   maxSpaceExpansion = 0.10f;
     if (isLast || outerSpace <= 0) {
         return;
