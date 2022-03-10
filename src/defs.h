@@ -190,6 +190,8 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define fontpack_Icon       "\U0001f520"
 #define package_Icon        "\U0001f4e6"
 #define paperclip_Icon      "\U0001f4ce"
+#define toggleYes_Icon      check_Icon
+#define toggleNo_Icon       "\u2013" /* en dash */
 
 #if defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"

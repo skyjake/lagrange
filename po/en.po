@@ -124,12 +124,6 @@ msgstr "Continue"
 msgid "dlg.default"
 msgstr " OK "
 
-msgid "toggle.yes"
-msgstr "YES"
-
-msgid "toggle.no"
-msgstr "NO"
-
 msgid "menu.title.file"
 msgstr "File"
 

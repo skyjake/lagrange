@@ -2077,11 +2077,11 @@ void setToggle_Widget(iWidget *d, iBool active) {
     if (d) {
         setFlags_Widget(d, selected_WidgetFlag, active);
         iLabelWidget *label = (iLabelWidget *) d;
-        if (!cmp_String(text_LabelWidget(label), cstr_Lang("toggle.yes")) ||
-            !cmp_String(text_LabelWidget(label), cstr_Lang("toggle.no"))) {
+        if (!cmp_String(text_LabelWidget(label), toggleYes_Icon) ||
+            !cmp_String(text_LabelWidget(label), toggleNo_Icon)) {
             updateText_LabelWidget(
                 (iLabelWidget *) d,
-                collectNewCStr_String(isSelected_Widget(d) ? "${toggle.yes}" : "${toggle.no}"));
+                collectNewCStr_String(isSelected_Widget(d) ? toggleYes_Icon : toggleNo_Icon));
         }
         else {
             refresh_Widget(d);
@@ -2105,10 +2105,10 @@ static iBool toggleHandler_(iWidget *d, const char *cmd) {
 }
 
 iWidget *makeToggle_Widget(const char *id) {
-    iWidget *toggle = as_Widget(new_LabelWidget("${toggle.yes}", "toggle")); /* "YES" for sizing */
+    iWidget *toggle = as_Widget(new_LabelWidget(toggleYes_Icon, "toggle")); /* "YES" for sizing */
     setId_Widget(toggle, id);
     /* TODO: Measure both labels and use the larger of the two. */
-    updateTextCStr_LabelWidget((iLabelWidget *) toggle, "${toggle.no}"); /* actual initial value */
+    updateTextCStr_LabelWidget((iLabelWidget *) toggle, toggleNo_Icon); /* actual initial value */
     setFlags_Widget(toggle, fixedWidth_WidgetFlag, iTrue);
     setCommandHandler_Widget(toggle, toggleHandler_);
     return toggle;
