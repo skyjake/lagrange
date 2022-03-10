@@ -117,13 +117,14 @@ struct Impl_GmPreMeta {
 };
 
 enum iGmRunFlags {
-    decoration_GmRunFlag  = iBit(1), /* not part of the source */
-    startOfLine_GmRunFlag = iBit(2),
-    endOfLine_GmRunFlag   = iBit(3),
-    quoteBorder_GmRunFlag = iBit(5),
-    wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
-    caption_GmRunFlag     = iBit(7),
-    altText_GmRunFlag     = iBit(8),
+    decoration_GmRunFlag   = iBit(1), /* not part of the source */
+    startOfLine_GmRunFlag  = iBit(2),
+    endOfLine_GmRunFlag    = iBit(3),
+    notJustified_GmRunFlag = iBit(4),
+    quoteBorder_GmRunFlag  = iBit(5),
+    wide_GmRunFlag         = iBit(6), /* horizontally scrollable */
+    caption_GmRunFlag      = iBit(7),
+    altText_GmRunFlag      = iBit(8),
 };
 
 /* This structure is tightly packed because GmDocuments are mostly composed of

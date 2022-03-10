@@ -1048,6 +1048,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             continue;
         }
         iGmRun *lastRun = back_Array(&d->layout);
+        if (numRunsAdded == 2) {
+            /* A small number of runs should not be justified, it would just look off.
+               This counts bytes for speed, but should be accurate enough. */
+            if (size_Range(&lastRun->text) < size_Range(&lastRun[-1].text) / 2) {
+                lastRun[ 0].flags |= notJustified_GmRunFlag;
+                lastRun[-1].flags |= notJustified_GmRunFlag;
+            }
+        }
         lastRun->flags |= endOfLine_GmRunFlag;
         if (lastRun->linkId && lastRun->flags & startOfLine_GmRunFlag) {
             /* Single-run link: the icon should also be marked endOfLine. */
@@ -2546,7 +2554,7 @@ void runBaseAttributes_GmDocument(const iGmDocument *d, const iGmRun *run, int *
 }
 
 iBool isJustified_GmRun(const iGmRun *d) {
-    return !(d->flags & endOfLine_GmRunFlag);
+    return (d->flags & (notJustified_GmRunFlag | endOfLine_GmRunFlag)) == 0;
 }
 
 int drawBoundWidth_GmRun(const iGmRun *d) {
