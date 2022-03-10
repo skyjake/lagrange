@@ -2568,6 +2568,7 @@ iWidget *makePreferences_Widget(void) {
             { "radio id:prefs.quoteicon", 0, 0, (const void *) quoteItems },
             { "buttons id:prefs.boldlink", 0, 0, (const void *) boldLinkItems },
             { "padding" },
+            { "toggle id:prefs.justify" },
             { "toggle id:prefs.biglede" },
             { "toggle id:prefs.plaintext.wrap" },
             { "toggle id:prefs.collapsepreonload" },
@@ -2879,6 +2880,7 @@ iWidget *makePreferences_Widget(void) {
         }
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addPrefsInputWithHeading_(headings, values, "prefs.linespacing", iClob(new_InputWidget(5)));
+        addDialogToggle_(headings, values, "${prefs.justify}", "prefs.justify");
         addPrefsInputWithHeading_(headings, values, "prefs.tabwidth", iClob(new_InputWidget(5)));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.quoteicon}")));
         iWidget *quote = new_Widget(); {

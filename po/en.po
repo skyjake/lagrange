@@ -1701,6 +1701,9 @@ msgstr "Line"
 msgid "prefs.biglede"
 msgstr "Big 1st paragaph:"
 
+msgid "prefs.justify"
+msgstr "Justify:"
+
 msgid "prefs.plaintext.wrap"
 msgstr "Wrap plain text:"
 

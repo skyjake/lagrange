@@ -93,6 +93,7 @@ void init_Prefs(iPrefs *d) {
     d->lineSpacing       = 1.0f;
     d->tabWidth          = 8;
     d->bigFirstParagraph = iTrue;
+    d->justifyParagraph  = iFalse;
     d->quoteIcon         = iTrue;
     d->centerShortDocs   = iTrue;
     d->plainTextWrap     = iTrue;

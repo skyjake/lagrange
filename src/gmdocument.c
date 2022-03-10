@@ -2554,7 +2554,8 @@ void runBaseAttributes_GmDocument(const iGmDocument *d, const iGmRun *run, int *
 }
 
 iBool isJustified_GmRun(const iGmRun *d) {
-    return (d->flags & (notJustified_GmRunFlag | endOfLine_GmRunFlag)) == 0;
+    return prefs_App()->justifyParagraph &&
+           (d->flags & (notJustified_GmRunFlag | endOfLine_GmRunFlag)) == 0;
 }
 
 int drawBoundWidth_GmRun(const iGmRun *d) {

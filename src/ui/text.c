@@ -1600,9 +1600,6 @@ enum iRunLayerType {
 };
 
 void process_RunLayer_(iRunLayer *d, int layerIndex) {
-    if (~d->mode & draw_RunMode && layerIndex == foreground_RunLayerType) {
-        return; /* just one layer for measurements */
-    }
     /* TODO: Shouldn't the hit tests be done here? */
     for (size_t logRunIndex = 0; logRunIndex < size_Array(d->runOrder); logRunIndex++) {
         const size_t runIndex = constValue_Array(d->runOrder, logRunIndex, size_t);
@@ -1768,16 +1765,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                         activeText_->baseFontId >= 0 ? font_Text_(activeText_->baseFontId) : d,
                         activeText_->baseFgColorId, 
                         wrap ? wrap->overrideChar : 0);
-    if (wrap) {
-        wrap->baseDir = attrText.isBaseRTL ? -1 : +1;
-        /* TODO: Duplicated args? */
-        iAssert(equalRange_Rangecc(wrap->text, args->text));
-        /* Initialize the wrap range. */
-        wrap->wrapRange_        = args->text;
-        wrap->hitAdvance_out    = zero_I2();
-        wrap->hitChar_out       = NULL;
-        wrap->hitGlyphNormX_out = 0.0f;
-    }
     const iChar *logicalText = constData_Array(&attrText.logical);
     const iChar *visualText  = constData_Array(&attrText.visual);
     const int *  logToVis    = constData_Array(&attrText.logicalToVisual);
@@ -1816,6 +1803,16 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     }
     for (size_t runIndex = 0; runIndex < runCount; runIndex++) {
         alignOtherFontsVertically_GlyphBuffer_(at_Array(&buffers, runIndex), d);
+    }
+    if (wrap) {
+        wrap->baseDir = attrText.isBaseRTL ? -1 : +1;
+        /* TODO: Duplicated args? */
+        iAssert(equalRange_Rangecc(wrap->text, args->text));
+        /* Initialize the wrap range. */
+        wrap->wrapRange_        = args->text;
+        wrap->hitAdvance_out    = zero_I2();
+        wrap->hitChar_out       = NULL;
+        wrap->hitGlyphNormX_out = 0.0f;
     }
     iBool        willAbortDueToWrap = iFalse;
     const size_t textLen            = size_Array(&attrText.logical);
@@ -2125,6 +2122,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             .yCursor      = yCursor,
         };
         for (int layerIndex = 0; layerIndex < 2; layerIndex++) {
+            if (~mode & draw_RunMode && layerIndex == foreground_RunLayerType) {
+                continue; /* just one layer for measurements */
+            }
             layer.xCursor = origin;
             layer.yCursor = yCursor;
             process_RunLayer_(&layer, layerIndex);

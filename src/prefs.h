@@ -95,6 +95,7 @@ enum iPrefsBool {
     
     fontSmoothing_PrefsBool,
     bigFirstParagraph_PrefsBool,
+    justifyParagraph_PrefsBool,
     quoteIcon_PrefsBool,
     centerShortDocs_PrefsBool,
     plainTextWrap_PrefsBool,
@@ -150,6 +151,7 @@ struct Impl_Prefs {
             
             iBool fontSmoothing;
             iBool bigFirstParagraph;
+            iBool justifyParagraph;
             iBool quoteIcon;
             iBool centerShortDocs;
             iBool plainTextWrap;

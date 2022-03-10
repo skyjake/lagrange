@@ -293,6 +293,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
         { "prefs.hoverlink", &d->prefs.hoverLink },
+        { "prefs.justify", &d->prefs.justifyParagraph },
         { "prefs.mono.gemini", &d->prefs.monospaceGemini },
         { "prefs.mono.gopher", &d->prefs.monospaceGopher },
         { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
@@ -2915,6 +2916,13 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.justify.changed")) {
+        d->prefs.justifyParagraph = arg_Command(cmd) != 0;
+        if (!d->isLoadingPrefs) {
+            postCommand_App("document.layout.changed");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.plaintext.wrap.changed")) {
         d->prefs.plainTextWrap = arg_Command(cmd) != 0;
         if (!d->isLoadingPrefs) {
@@ -3402,6 +3410,7 @@ iBool handleCommand_App(const char *cmd) {
             selected_WidgetFlag,
             iTrue);
         setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.justify"), d->prefs.justifyParagraph);
         setToggle_Widget(findChild_Widget(dlg, "prefs.plaintext.wrap"), d->prefs.plainTextWrap);
         setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
         setToggle_Widget(findChild_Widget(dlg, "prefs.centershort"), d->prefs.centerShortDocs);
