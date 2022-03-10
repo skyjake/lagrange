@@ -1428,6 +1428,7 @@ struct Impl_GlyphBuffer {
     hb_glyph_info_t *    glyphInfo;
     hb_glyph_position_t *glyphPos;
     unsigned int         glyphCount;
+    hb_script_t          script;
 };
 
 static void init_GlyphBuffer_(iGlyphBuffer *d, iFont *font, const iChar *logicalText) {
@@ -1437,6 +1438,7 @@ static void init_GlyphBuffer_(iGlyphBuffer *d, iFont *font, const iChar *logical
     d->glyphInfo   = NULL;
     d->glyphPos    = NULL;
     d->glyphCount  = 0;
+    d->script      = 0;
 }
 
 static void deinit_GlyphBuffer_(iGlyphBuffer *d) {
@@ -1501,7 +1503,7 @@ static void alignOtherFontsVertically_GlyphBuffer_(iGlyphBuffer *d, iFont *baseF
 
 iLocalDef float justificationWeight_(iChar c) {
     if (c == '.' || c == '!' || c == '?' ||c == ';') {
-        return 2.0f;
+        return 2.5f;
     }
     if (c == ',' || c == ':') {
         return 1.5f;
@@ -1509,22 +1511,33 @@ iLocalDef float justificationWeight_(iChar c) {
     return 1.0f;
 }
 
-static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers, float *wrapAdvance,
+static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers,
+                                 iRangei wrapPosRange,
+                                 float *wrapAdvance,
                                  int available, iBool isLast) {
     iGlyphBuffer *begin             = buffers;
     iGlyphBuffer *end               = buffers + numBuffers;
     float         outerSpace        = available - *wrapAdvance;
     float         totalInnerSpace   = 0.0f;
     float         numSpaces         = 0;
-    const float   maxGlyphExpansion = 0.025f;
+    const float   maxGlyphExpansion = 0.035f;
     const float   maxSpaceExpansion = 0.10f;
     if (isLast || outerSpace <= 0) {
         return;
     }
+    /* TODO: This could use a utility that handles the `wrapPosRange` character span inside 
+       a span of runs. */
+#define CHECK_LOGPOS() \
+    if (logPos < wrapPosRange.start) continue; \
+    if (logPos >= wrapPosRange.end) break
     /* First expand all glyphs evenly. This preserves readability pretty well. */ {
         float expand = 1.0f + iMin(outerSpace, maxGlyphExpansion * *wrapAdvance) / *wrapAdvance;
         for (iGlyphBuffer *buf = begin; buf != end; buf++) {
+            if (buf->script) continue;
             for (size_t i = 0; i < buf->glyphCount; i++) {
+                hb_glyph_info_t *info   = &buf->glyphInfo[i];
+                const int        logPos = info->cluster;
+                CHECK_LOGPOS();
                 buf->glyphPos[i].x_advance *= expand;
             }
         }
@@ -1533,9 +1546,11 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers, float
     }
     /* Find out if there are spaces to expand further. */
     for (iGlyphBuffer *buf = begin; buf != end; buf++) {
+        if (buf->script) continue;
         for (size_t i = 0; i < buf->glyphCount; i++) {
             hb_glyph_info_t *info   = &buf->glyphInfo[i];
             const int        logPos = info->cluster;
+            CHECK_LOGPOS();
             if (buf->logicalText[logPos] == 0x20) {
                 totalInnerSpace += buf->glyphPos[i].x_advance * buf->font->xScale;
                 float weight = justificationWeight_(buf->logicalText[iMax(0, logPos - 1)]);
@@ -1546,9 +1561,11 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers, float
     if (numSpaces >= 6 && totalInnerSpace > 0) {
         outerSpace = iMin(outerSpace, *wrapAdvance * maxSpaceExpansion);
         for (iGlyphBuffer *buf = begin; buf != end; buf++) {
+            if (buf->script) continue;
             for (size_t i = 0; i < buf->glyphCount; i++) {
                 hb_glyph_info_t *info   = &buf->glyphInfo[i];
                 const int        logPos = info->cluster;
+                CHECK_LOGPOS();
                 if (buf->logicalText[logPos] == 0x20) {
                     float weight = justificationWeight_(buf->logicalText[iMax(0, logPos - 1)]);
                     buf->glyphPos[i].x_advance =
@@ -1615,6 +1632,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         hb_buffer_set_direction(buf->hb, HB_DIRECTION_LTR); /* visual */
         const hb_script_t script = hbScripts_[run->flags.script];
         if (script) {
+            buf->script = script;
             hb_buffer_set_script(buf->hb, script);
         }
     }
@@ -1653,7 +1671,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
         float wrapAdvance = 0.0f;
         /* First we need to figure out how much text fits on the current line. */
-        if (wrap && (wrap->maxWidth > 0 || checkHitPoint)) {
+        if (wrap && wrap->maxWidth > 0) {
             float breakAdvance = -1.0f;
             size_t breakRunIndex = iInvalidPos;
             iAssert(wrapPosRange.end == textLen);
@@ -1784,12 +1802,14 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         if (args->justify && layoutBound && !isMonospaced) {
             justify_GlyphBuffer_(at_Array(&buffers, wrapRuns.start),
                                  size_Range(&wrapRuns),
+                                 wrapPosRange,
                                  &wrapAdvance,
                                  layoutBound,
                                  wrapRuns.start > 0 && wrapRuns.end == runCount /* last wrap? */);
         }
         /* Hit tests. */
-        if (wrap) {
+        if (checkHitPoint || checkHitChar) {
+            iAssert(wrap);
             const iBool isHitPointOnThisLine = (checkHitPoint && wrap->hitPoint.y >= orig.y + yCursor &&
                                                 wrap->hitPoint.y < orig.y + yCursor + d->height);
             iBool wasCharHit = iFalse; /* on this line */
@@ -1798,7 +1818,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 iGlyphBuffer *buf = at_Array(&buffers, i);
                 shape_GlyphBuffer_(buf);
                 for (size_t j = 0; j < buf->glyphCount; j++) {
-                    const int   logPos   = buf->glyphInfo[j].cluster;
+                    const int logPos = buf->glyphInfo[j].cluster;
+                    CHECK_LOGPOS();
                     const float xAdvance = buf->glyphPos[j].x_advance * buf->font->xScale;
                     if (checkHitChar && !wasCharHit &&
                         wrap->hitChar == sourcePtr_AttributedText_(&attrText, logPos)) {
@@ -1812,12 +1833,12 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                             wrap->hitGlyphNormX_out = (wrap->hitPoint.x - wrapAdvance) / xAdvance;
                         }
                     }
-                    hitAdvance += buf->glyphPos[j].x_advance * buf->font->xScale;
+                    hitAdvance += xAdvance;
                 }
             }
-            if (isHitPointOnThisLine) {
+            if (isHitPointOnThisLine && !wrap->hitChar_out) {
                 /* Check if the hit point is on the left side of this line. */
-                if (!wrap->hitChar_out && wrap->hitPoint.x < orig.x) {
+                if (wrap->hitPoint.x < orig.x) {
                     iGlyphBuffer *buf = at_Array(&buffers, wrapRuns.start);
                     if (buf->glyphCount > 0) {
                         wrap->hitChar_out = sourcePtr_AttributedText_(&attrText, buf->glyphInfo[0].cluster);
