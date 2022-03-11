@@ -32,6 +32,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 - FontRunArgs : set of arguments for constructing a FontRun
 - RunArgs : input arguments for `run_Font_` (the low-level text rendering routine)
 - RunLayer : arguments for processing the glyphs of a GlyphBuffer (layers: background, foreground)
+ 
+Optimization notes:
+
+- Caching FontRuns is quite effective, but there is still plenty of unnecessary iteration
+  of glyphs during wrapping of long text. It could help if there is a direct mapping between
+  wrapPosRange and a GlyphBuffer's glyph indices.
 
 */
 
@@ -295,7 +301,7 @@ struct Impl_Text {
     int            baseFgColorId;
     iBool          missingGlyphs;  /* true if a glyph couldn't be found */
     iChar          missingChars[20]; /* rotating buffer of the latest missing characters */
-    iFontRun *     cachedFontRuns[8];
+    iFontRun *     cachedFontRuns[16];
 };
 
 iDefineTypeConstructionArgs(Text, (SDL_Renderer *render), render)
@@ -1580,7 +1586,7 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers,
             }
         }
     }
-    if (numSpaces >= 6 && totalInnerSpace > 0) {
+    if (numSpaces >= 2 && totalInnerSpace > 0) {
         outerSpace = iMin(outerSpace, *wrapAdvance * maxSpaceExpansion);
         for (iGlyphBuffer *buf = begin; buf != end; buf++) {
             if (buf->script) continue;
@@ -1866,9 +1872,10 @@ static unsigned fontRunCacheTotal_ = 0;
 
 static iFontRun *makeOrFindCachedFontRun_Text_(iText *d,
                                                const iFontRunArgs *runArgs,
-                                               const iRangecc text) {
+                                               const iRangecc text,
+                                               iBool *wasFound) {
     fontRunCacheTotal_++;
-#if 1
+#if 0
     if (fontRunCacheTotal_ % 100 == 0) {
         printf("FONT RUN CACHE: %d/%d rate:%.1f%%\n",
                fontRunCacheHits_,
@@ -1883,9 +1890,11 @@ static iFontRun *makeOrFindCachedFontRun_Text_(iText *d,
             equal_FontRunArgs(runArgs, &d->cachedFontRuns[i]->args)) {
             d->cachedFontRuns[i]->attrText.source = text;
             fontRunCacheHits_++;
+            *wasFound = iTrue;
             return d->cachedFontRuns[i];
         }
     }
+    *wasFound = iFalse;
     delete_FontRun(d->cachedFontRuns[iElemCount(d->cachedFontRuns) - 1]);
     memmove(d->cachedFontRuns + 1,
             d->cachedFontRuns,
@@ -1904,6 +1913,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const iBool isMonospaced = isMonospaced_Font(d);
     iWrapText  *wrap         = args->wrap;
     iFontRun   *fontRun;
+    iBool       didFindCachedFontRun = iFalse;
     iAssert(args->text.end >= args->text.start);
     /* We keep a small cache of recently shaped runs because preparing these can be expensive.
        Quite frequently the same text is quickly re-drawn and/or measured (e.g., InputWidget). */
@@ -1916,7 +1926,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                          activeText_->baseFontId >= 0 ? font_Text_(activeText_->baseFontId) : d,
                          activeText_->baseFgColorId,
                          wrap ? wrap->overrideChar : 0 },
-        args->text);
+        args->text,
+        &didFindCachedFontRun);
     const iAttributedText *attrText    = &fontRun->attrText;
     const size_t           runCount    = size_Array(&attrText->runs);
     const iChar           *logicalText = constData_Array(&attrText->logical);
@@ -2084,7 +2095,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
         }
         /* Justification. */
-        if (args->justify && layoutBound && !isMonospaced) {
+        if (args->justify && !didFindCachedFontRun && layoutBound && !isMonospaced) {
             /* NOTE: May modify a cached FontRun! */
             justify_GlyphBuffer_(at_Array(&fontRun->buffers, wrapRuns.start),
                                  size_Range(&wrapRuns),
