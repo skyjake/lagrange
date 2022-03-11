@@ -135,7 +135,7 @@ enum iColorId {
     tmBannerBackground_ColorId,
     tmBannerTitle_ColorId,
     tmBannerIcon_ColorId,
-    tmBannerSideTitle_ColorId,
+    tmBannerSideTitle_ColorId,       /* derived from other theme colors */
     tmInlineContentMetadata_ColorId,
     tmBackgroundAltText_ColorId,     /* derived from other theme colors */
     tmFrameAltText_ColorId,          /* derived from other theme colors */
@@ -251,6 +251,7 @@ int             darker_Color    (int color);
 int             lighter_Color   (int color);
 void            set_Color       (int color, iColor rgba);
 iColor          mix_Color       (iColor c1, iColor c2, float t);
+iColor          getMixed_Color  (int color1, int color2, float t);
 int             delta_Color     (iColor c1, iColor c2);
 
 iLocalDef iHSLColor get_HSLColor(int color) {

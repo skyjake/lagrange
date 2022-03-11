@@ -2433,6 +2433,7 @@ iWidget *makePreferences_Widget(void) {
             { "${prefs.doctheme.name.gray}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, gray_GmDocumentTheme) },
             { "${prefs.doctheme.name.white}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, white_GmDocumentTheme) },
             { "${prefs.doctheme.name.sepia}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, sepia_GmDocumentTheme) },
+            { "${prefs.doctheme.name.oceanic}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, oceanic_GmDocumentTheme) },
             { "${prefs.doctheme.name.highcontrast}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, highContrast_GmDocumentTheme) },
             { NULL }
         };
@@ -2473,6 +2474,10 @@ iWidget *makePreferences_Widget(void) {
         const iMenuItem accentItems[] = {
             { "button id:prefs.accent.0 label:prefs.accent.teal", 0, 0, "accent.set arg:0" },
             { "button id:prefs.accent.1 label:prefs.accent.orange", 0, 0, "accent.set arg:1" },
+            { "button id:prefs.accent.2 label:prefs.accent.red", 0, 0, "accent.set arg:2" },
+            { "button id:prefs.accent.3 label:prefs.accent.green", 0, 0, "accent.set arg:3" },
+            { "button id:prefs.accent.4 label:prefs.accent.blue", 0, 0, "accent.set arg:4" },
+            { "button id:prefs.accent.5 label:prefs.accent.gray", 0, 0, "accent.set arg:5" },
             { NULL }
         };
         const iMenuItem satItems[] = {

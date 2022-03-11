@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <ctype.h>
 
 iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
-    if (d == gray_GmDocumentTheme) {
+    if (d == gray_GmDocumentTheme || d == oceanic_GmDocumentTheme) {
         return isDark_ColorTheme(colorTheme_App());
     }
     return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme;
@@ -1360,9 +1360,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
 //            set_Color(tmHypertextLinkDomain_ColorId, get_Color(orange_ColorId));
 //            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(brown_ColorId));
             set_Color(tmGopherLinkText_ColorId, get_Color(black_ColorId));
-            set_Color(tmGopherLinkTextHover_ColorId, get_Color(blue_ColorId));
-            set_Color(tmGopherLinkIcon_ColorId, get_Color(indigo_ColorId));
-            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkTextHover_ColorId, get_Color(darkGreen_ColorId));
+            set_Color(tmGopherLinkIcon_ColorId, get_Color(darkGreen_ColorId));
+            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(green_ColorId));
 //            set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
 //            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
@@ -1529,7 +1529,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         d->themeSeed = 0;
     }
     /* Set up colors. */
-    if (d->themeSeed) {
+    if (d->themeSeed || theme == oceanic_GmDocumentTheme) {
         enum iHue {
             red_Hue,
             reddishOrange_Hue,
@@ -1577,8 +1577,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         const int   altIndex[2] = { (d->themeSeed & 0x4) != 0, (d->themeSeed & 0x40) != 0 };
         float       altHue      = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
         float       altHue2     = hues[d->themeSeed ? altHues[primIndex].index[altIndex[1]] : 8];
-        
-        const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;        
+
+        const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0 || !isDarkUI;
         const iBool isDarkBgSat =
             (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
 
@@ -1699,8 +1699,54 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(tmBannerTitle_ColorId, primDim);
             setHsl_Color(tmBannerIcon_ColorId, primDim);
         }
+        else if (theme == oceanic_GmDocumentTheme) {
+            const float hues[3] = {
+                195, 210, 30    
+            };
+            const int bgIndex  = primIndex % 2;
+            const int altIndex = (d->themeSeed >> 7) & 1 ? 2 : bgIndex;            
+            const float lum    = ((d->themeSeed >> 19) & 0xff) / (float) 255.0f;
+            const float lum2   = ((d->themeSeed >> 25) & 0xff) / (float) 255.0f;
+            const float sat    = ((d->themeSeed >> 8) & 0xff) / (float) 255.0f;
+            iHSLColor base     = { hues[bgIndex],
+                                   0.5f + sat * 0.5f,
+                                   isDarkUI ? 0.05f + lum * 0.15f : (0.75f + lum * 0.3f),
+                                   1.0f };
+            iHSLColor altBase  = { hues[altIndex],
+                                   0.75f + sat * 0.25f,
+                                   isDarkUI ? 0.5f + lum * 0.5f : (0.35f + lum * 0.2f),
+                                   1.0f };
+            iHSLColor preBase  = { hues[d->themeSeed & 0x100 ? bgIndex : altIndex],
+                                   0.75f + sat * 0.25f,
+                                   isDarkUI ? 0.5f + lum2 * 0.5f : (0.25f + lum2 * 0.2f),
+                                   1.0f };
+            setHsl_Color(tmBackground_ColorId, base);
+            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, isDarkUI ? 0.04f * (isBannerLighter ? 1 : -1) : 0.05f));
+            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 1.0f, isDarkUI ? 0.5f : -0.5f));
+            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0.1f, isDarkUI ? 0.3f : -0.5f));
+//            setHsl_Color(tmBannerSideTitle_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
+            setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, -0.3f, isDarkUI ? 0.5f : -0.6f));
+            setHsl_Color(tmPreformatted_ColorId, preBase); //addSatLum_HSLColor(preBase, 0.4f, isDarkUI ? 0.4f : -0.2f));
+            set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
+            setHsl_Color(tmLinkText_ColorId,
+                         addSatLum_HSLColor(get_HSLColor(tmParagraph_ColorId), 0, isDarkUI ? 0.2f : -0.2f));
+            if (!isDarkUI) {
+                setHsl_Color(tmLinkIconVisited_ColorId,
+                             addSatLum_HSLColor(get_HSLColor(tmLinkIconVisited_ColorId), 0.0f, -0.25f * (1-lum)));
+            }
+            setHsl_Color(tmHypertextLinkText_ColorId,
+                         addSatLum_HSLColor(get_HSLColor(tmHypertextLinkIcon_ColorId), 0, lum * (isDarkUI ? 0.2f : -0.2f)));
+            set_Color(tmHypertextLinkText_ColorId,
+                      getMixed_Color(tmHypertextLinkText_ColorId, tmParagraph_ColorId, 0.66f));
+            setHsl_Color(tmHeading1_ColorId, altBase);
+            set_Color(tmHeading2_ColorId, get_Color(tmHeading1_ColorId));
+            set_Color(tmHeading3_ColorId, get_Color(tmParagraph_ColorId));
+            setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(get_HSLColor(tmParagraph_ColorId), 0.0f, isDarkUI ? 0.1f : -0.2f));
+            set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
+        }
         /* Tone down the link colors a bit because bold white is quite strong to look at. */
-        if (isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) {
+        if ((isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) &&
+            theme != oceanic_GmDocumentTheme) {
             iHSLColor base = { hues[primIndex], 1.0f, normLum[primIndex], 1.0f };
             if (theme == gray_GmDocumentTheme) {
                 setHsl_Color(tmLinkText_ColorId,

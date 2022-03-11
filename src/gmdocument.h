@@ -59,6 +59,7 @@ enum iGmDocumentTheme {
     white_GmDocumentTheme,
     sepia_GmDocumentTheme,
     highContrast_GmDocumentTheme,
+    oceanic_GmDocumentTheme,
     max_GmDocumentTheme
 };
 

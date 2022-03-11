@@ -369,6 +369,10 @@ iColor get_Color(int color) {
     return *rgba;
 }
 
+iColor getMixed_Color(int color1, int color2, float t) {
+    return mix_Color(get_Color(color1), get_Color(color2), t);
+}
+
 void set_Color(int color, iColor rgba) {
     if (color >= uiBackground_ColorId && color < max_ColorId) {
         *paletteColor_(color) = rgba;
