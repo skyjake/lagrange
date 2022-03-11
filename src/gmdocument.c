@@ -1544,35 +1544,39 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             violet_Hue,
             pink_Hue
         };
-        float hues[] = { 5, 25, 40, 56, 80 + 15, 120, 160, 180, 208, 231, 270, 324 + 10 };
+        float hues[] = { 5, 25, 40, 56, 95, 120, 160, 180, 208, 231, 270, 334 };
         static const struct {
             int index[2];
         } altHues[iElemCount(hues)] = {
-            { 2, 4 },  /* red */
-            { 8, 3 },  /* reddish orange */
-            { 7, 9 },  /* yellowish orange */
-            { 5, 7 },  /* yellow */
-            { 6, 2 },  /* greenish yellow */
-            { 1, 3 },  /* green */
-            { 2, 4 },  /* bluish green */
-            { 2, 11 }, /* cyan */
-            { 6, 10 }, /* sky blue */
-            { 3, 11 }, /* blue */
-            { 8, 9 },  /* violet */
-            { 7, 8 },  /* pink */
+            { 2, 3 },  /*  0: red */
+            { 8, 3 },  /*  1: reddish orange */
+            { 0, 7 },  /*  2: yellowish orange */
+            { 5, 7 },  /*  3: yellow */
+            { 6, 2 },  /*  4: greenish yellow */
+            { 1, 3 },  /*  5: green */
+            { 2, 9 },  /*  6: bluish green */
+            { 2, 5 },  /*  7: cyan */
+            { 6, 10 }, /*  8: sky blue */
+            { 3, 11 }, /*  9: blue */
+            { 8, 9 },  /* 10: violet */
+            { 7, 8 },  /* 11: pink */
         };
         if (d->themeSeed & 0xc00000) {
             /* Hue shift for more variability. */
             iForIndices(i, hues) {
                 hues[i] += (d->themeSeed & 0x200000 ? 10 : -10);
             }
-        }
-//        printf("HUE SHIFT: %d\n", (int) hues[0] - 5); fflush(stdout);
-        const size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
-
+        }        
+        size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
+        
+        if (d->themeSeed && primIndex == 11 && d->themeSeed & 0x4000000) {
+            /* De-pink some sites. */
+            primIndex = (primIndex + d->themeSeed & 0xf) % 12;
+        }        
+        
         const int   altIndex[2] = { (d->themeSeed & 0x4) != 0, (d->themeSeed & 0x40) != 0 };
-        const float altHue      = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
-        const float altHue2     = hues[d->themeSeed ? altHues[primIndex].index[altIndex[1]] : 8];
+        float       altHue      = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
+        float       altHue2     = hues[d->themeSeed ? altHues[primIndex].index[altIndex[1]] : 8];
         
         const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;        
         const iBool isDarkBgSat =
@@ -1599,7 +1603,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
 //                   primIndex,
 //                   altHues[primIndex].index[altIndex[0]],
 //                   altHues[primIndex].index[altIndex[1]],
-//                   isDarkBgSat);
+//                   isDarkBgSat); fflush(stdout);
             
             const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
             setHsl_Color(tmHeading1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
