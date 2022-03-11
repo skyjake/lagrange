@@ -2728,13 +2728,13 @@ static void draw_InputWidget_(const iInputWidget *d) {
         if (flags_Widget(w) & alignRight_WidgetFlag) {
             drawAlign_Text(d->font,
                            init_I2(right_Rect(contentBounds), drawPos.y),
-                           uiAnnotation_ColorId,
+                           uiInputCursor_ColorId,
                            right_Alignment,
                            "%s",
                            cstr_String(&d->hint));
         }
         else {
-            drawRange_Text(d->font, drawPos, uiAnnotation_ColorId, range_String(&d->hint));
+            drawRange_Text(d->font, drawPos, uiInputCursor_ColorId, range_String(&d->hint));
         }
     }
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT

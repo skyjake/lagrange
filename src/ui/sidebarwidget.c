@@ -1992,7 +1992,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const int itemHeight     = height_Rect(itemRect);
     const int iconColor      = isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
                                        : uiIcon_ColorId;
-    const int altIconColor   = isPressing ? uiTextPressed_ColorId : uiTextCaution_ColorId;
+//    const int altIconColor   = isPressing ? uiTextPressed_ColorId : uiTextAction_ColorId;
     const int font = sidebar->itemFonts[d->isBold ? 1 : 0];
     int bg         = uiBackgroundSidebar_ColorId;
     if (isHover) {
@@ -2108,7 +2108,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     }
     else if (sidebar->mode == bookmarks_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-            : d->listItem.isDropTarget ? uiHeading_ColorId : uiText_ColorId;
+                       : d->listItem.isDropTarget ? uiHeading_ColorId
+                                                  : uiText_ColorId;
         /* The icon. */
         iString str;
         init_String(&str);
@@ -2164,7 +2165,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             iRect visBounds = visualBounds_Text(metaFont, range);
             drawRange_Text(metaFont,
                            sub_I2(mid_Rect(iconArea), mid_Rect(visBounds)),
-                           isHover && isPressing ? fg : uiTextCaution_ColorId,
+                           isHover && isPressing ? fg : uiTextShortcut_ColorId,
                            range);
             mpos.x += metaIconWidth;
             range.start = range.end;            

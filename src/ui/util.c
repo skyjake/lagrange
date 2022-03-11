@@ -2757,6 +2757,10 @@ iWidget *makePreferences_Widget(void) {
         iWidget *accent = new_Widget(); {
             setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.teal}", "accent.set arg:0"))), "prefs.accent.0");
             setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.orange}", "accent.set arg:1"))), "prefs.accent.1");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.red}", "accent.set arg:2"))), "prefs.accent.2");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.green}", "accent.set arg:3"))), "prefs.accent.3");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.blue}", "accent.set arg:4"))), "prefs.accent.4");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.gray}", "accent.set arg:5"))), "prefs.accent.5");
 #if defined (iPlatformApple)
             /* TODO: Needs some tweaking. */
 //            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.system}", "accent.set arg:2"))), "prefs.accent.2");
@@ -3006,7 +3010,7 @@ static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator) {
 iWidget *makeBookmarkEditor_Widget(void) {
     const iMenuItem actions[] = {
         { "${cancel}", 0, 0, "bmed.cancel" },
-        { uiTextCaution_ColorEscape "${dlg.bookmark.save}", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept" }
+        { uiTextAction_ColorEscape "${dlg.bookmark.save}", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept" }
     };
     iWidget *dlg = NULL;
     if (isUsingPanelLayout_Mobile()) {
@@ -3189,8 +3193,8 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     iWidget        *dlg;
     const char     *headingText = bookmarkId ? "${heading.feedcfg}" : "${heading.subscribe}";
     const iMenuItem actions[]   = { { "${cancel}" },
-                                    { bookmarkId ? uiTextCaution_ColorEscape "${dlg.feed.save}"
-                                                 : uiTextCaution_ColorEscape "${dlg.feed.sub}",
+                                    { bookmarkId ? uiTextAction_ColorEscape "${dlg.feed.save}"
+                                                 : uiTextAction_ColorEscape "${dlg.feed.sub}",
                                       SDLK_RETURN,
                                       KMOD_PRIMARY,
                                       format_CStr("feedcfg.accept bmid:%d", bookmarkId) } };
@@ -3615,7 +3619,7 @@ iWidget *makeGlyphFinder_Widget(void) {
                 { "${menu.fonts}", 0, 0, "!open newtab:1 url:about:fonts" },
                 { "${dlg.glyphfinder.disable}", 0, 0, "prefs.font.warnmissing.changed arg:0" },
                 { "---" },
-                { uiTextCaution_ColorEscape magnifyingGlass_Icon " ${dlg.glyphfinder.search}",
+                { uiTextAction_ColorEscape magnifyingGlass_Icon " ${dlg.glyphfinder.search}",
                   0,
                   0,
                   cstr_String(&command) },

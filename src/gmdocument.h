@@ -233,8 +233,8 @@ enum iGmLinkPart {
     icon_GmLinkPart,
     text_GmLinkPart,
     textHover_GmLinkPart,
-    domain_GmLinkPart,
-    visited_GmLinkPart,
+//    domain_GmLinkPart,
+//    visited_GmLinkPart,
 };
 
 const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);

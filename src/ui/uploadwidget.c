@@ -529,7 +529,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             { select_Icon " ${menu.selectall}", 0, 0, "upload.text.selectall" },
             { export_Icon " ${menu.upload.export}", 0, 0, "upload.text.export" },
             { "---" },
-            { delete_Icon " " uiTextCaution_ColorEscape "${menu.upload.delete}", 0, 0, "upload.text.delete" }
+            { delete_Icon " " uiTextAction_ColorEscape "${menu.upload.delete}", 0, 0, "upload.text.delete" }
         }, 4);
         openMenu_Widget(editMenu, topLeft_Rect(bounds_Widget(as_Widget(d->input))));
         return iTrue;

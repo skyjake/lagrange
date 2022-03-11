@@ -473,7 +473,7 @@ msgid "status.query"
 msgstr "Search Query"
 
 msgid "status.query.tight"
-msgstr "Query"
+msgstr "Search"
 
 msgid "status.feeds"
 msgstr "Updating Feeds"
@@ -1526,6 +1526,18 @@ msgstr "Teal"
 
 msgid "prefs.accent.orange"
 msgstr "Orange"
+
+msgid "prefs.accent.red"
+msgstr "Red"
+
+msgid "prefs.accent.green"
+msgstr "Green"
+
+msgid "prefs.accent.blue"
+msgstr "Blue"
+
+msgid "prefs.accent.gray"
+msgstr "Gray"
 
 msgid "prefs.uilang"
 msgstr "Language:"

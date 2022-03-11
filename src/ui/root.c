@@ -159,10 +159,10 @@ static const char *pageMenuCStr_ = midEllipsis_Icon;
 /* TODO: A preference for these, maybe? */
 static const char *stopSeqCStr_[] = {
     /* Corners */
-    uiTextCaution_ColorEscape "\U0000231c",
-    uiTextCaution_ColorEscape "\U0000231d",
-    uiTextCaution_ColorEscape "\U0000231f",
-    uiTextCaution_ColorEscape "\U0000231e",
+    uiTextAction_ColorEscape "\U0000231c",
+    uiTextAction_ColorEscape "\U0000231d",
+    uiTextAction_ColorEscape "\U0000231f",
+    uiTextAction_ColorEscape "\U0000231e",
 #if 0
     /* Rotating arrow */
     uiTextCaution_ColorEscape "\U00002b62",

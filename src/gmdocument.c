@@ -1330,20 +1330,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmLinkIcon_ColorId, get_Color(cyan_ColorId));
             set_Color(tmLinkTextHover_ColorId, get_Color(cyan_ColorId));
             set_Color(tmLinkIconVisited_ColorId, get_Color(teal_ColorId));
-            set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
-            set_Color(tmLinkLastVisitDate_ColorId, get_Color(cyan_ColorId));
+//            set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
+//            set_Color(tmLinkLastVisitDate_ColorId, get_Color(cyan_ColorId));
             set_Color(tmHypertextLinkText_ColorId, get_Color(white_ColorId));
             set_Color(tmHypertextLinkIcon_ColorId, get_Color(orange_ColorId));
             set_Color(tmHypertextLinkTextHover_ColorId, get_Color(orange_ColorId));
             set_Color(tmHypertextLinkIconVisited_ColorId, get_Color(brown_ColorId));
-            set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
-            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(orange_ColorId));
+//            set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
+//            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(orange_ColorId));
             set_Color(tmGopherLinkText_ColorId, get_Color(white_ColorId));
-            set_Color(tmGopherLinkIcon_ColorId, get_Color(magenta_ColorId));
-            set_Color(tmGopherLinkTextHover_ColorId, get_Color(blue_ColorId));
-            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(blue_ColorId));
-            set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
-            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkIcon_ColorId, get_Color(green_ColorId));
+            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(darkGreen_ColorId));
+            set_Color(tmGopherLinkTextHover_ColorId, get_Color(green_ColorId));
+            //set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
+//            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
         else {
             set_Color(tmInlineContentMetadata_ColorId, get_Color(brown_ColorId));
@@ -1351,20 +1351,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmLinkIcon_ColorId, get_Color(teal_ColorId));
             set_Color(tmLinkTextHover_ColorId, get_Color(teal_ColorId));
             set_Color(tmLinkIconVisited_ColorId, get_Color(cyan_ColorId));
-            set_Color(tmLinkDomain_ColorId, get_Color(cyan_ColorId));
-            set_Color(tmLinkLastVisitDate_ColorId, get_Color(teal_ColorId));
+//            set_Color(tmLinkDomain_ColorId, get_Color(cyan_ColorId));
+//            set_Color(tmLinkLastVisitDate_ColorId, get_Color(teal_ColorId));
             set_Color(tmHypertextLinkText_ColorId, get_Color(black_ColorId));
-            set_Color(tmHypertextLinkIcon_ColorId, get_Color(brown_ColorId));
             set_Color(tmHypertextLinkTextHover_ColorId, get_Color(brown_ColorId));
+            set_Color(tmHypertextLinkIcon_ColorId, get_Color(brown_ColorId));
             set_Color(tmHypertextLinkIconVisited_ColorId, get_Color(orange_ColorId));
-            set_Color(tmHypertextLinkDomain_ColorId, get_Color(orange_ColorId));
-            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(brown_ColorId));
+//            set_Color(tmHypertextLinkDomain_ColorId, get_Color(orange_ColorId));
+//            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(brown_ColorId));
             set_Color(tmGopherLinkText_ColorId, get_Color(black_ColorId));
-            set_Color(tmGopherLinkIcon_ColorId, get_Color(magenta_ColorId));
             set_Color(tmGopherLinkTextHover_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkIcon_ColorId, get_Color(indigo_ColorId));
             set_Color(tmGopherLinkIconVisited_ColorId, get_Color(blue_ColorId));
-            set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
-            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
+//            set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
+//            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
         /* Set the non-link default colors. Note that some/most of these are overwritten later
            if a theme seed if available. */
@@ -1397,10 +1397,10 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.4f));
             setHsl_Color(tmLinkIcon_ColorId, addSatLum_HSLColor(get_HSLColor(teal_ColorId), 0, 0));
             set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(teal_ColorId), 0.35f));
-            set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
+//            set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
             setHsl_Color(tmHypertextLinkIcon_ColorId, get_HSLColor(white_ColorId));
             set_Color(tmHypertextLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(white_ColorId), 0.5f));
-            set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
+//            set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
             setHsl_Color(tmGopherLinkIcon_ColorId, addSatLum_HSLColor(get_HSLColor(tmGopherLinkIcon_ColorId), 0, -0.25f));
             setHsl_Color(tmGopherLinkTextHover_ColorId, addSatLum_HSLColor(get_HSLColor(tmGopherLinkTextHover_ColorId), 0, -0.3f));
         }
@@ -1444,9 +1444,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                 set_Color(tmBannerTitle_ColorId, get_Color(teal_ColorId));
                 set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
                 set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(black_ColorId), 0.20f));
-                set_Color(tmLinkDomain_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(black_ColorId), 0.33f));
+//                set_Color(tmLinkDomain_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(black_ColorId), 0.33f));
                 set_Color(tmHypertextLinkIconVisited_ColorId, mix_Color(get_Color(orange_ColorId), get_Color(black_ColorId), 0.33f));
-                set_Color(tmHypertextLinkDomain_ColorId, mix_Color(get_Color(orange_ColorId), get_Color(black_ColorId), 0.33f));
+//                set_Color(tmHypertextLinkDomain_ColorId, mix_Color(get_Color(orange_ColorId), get_Color(black_ColorId), 0.33f));
             }
         }
         else if (theme == sepia_GmDocumentTheme) {
@@ -2500,6 +2500,7 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                    : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkTextHover_ColorId
                                                       : tmLinkTextHover_ColorId;
         }
+        /*
         if (part == domain_GmLinkPart) {
             if (isUnsupported) {
                 return tmBadLink_ColorId;
@@ -2513,6 +2514,7 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                    : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkLastVisitDate_ColorId
                                                       : tmLinkLastVisitDate_ColorId;
         }
+        */
     }
     return tmLinkText_ColorId;
 }

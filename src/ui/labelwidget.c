@@ -281,7 +281,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             /* Frames matching color escaped text. */
             if (colorEscape == uiTextCaution_ColorId) {
                 *frame1 = colorEscape;
-                *frame2 = isDarkTheme ? darker_Color(*frame1) : lighter_Color(*frame1);
+                *frame2 = isDarkTheme ? black_ColorId : white_ColorId;
             }
             else if (isSel) {
                 *frame1 = uiEmbossSelectedHover1_ColorId;
@@ -293,8 +293,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             }
         }
         if (colorEscape == uiTextCaution_ColorId) {
-            *icon = *meta = *fg = colorEscape;
-            *bg = isDarkTheme ? darker_Color(colorEscape) : lighter_Color(colorEscape);
+//            *icon = *meta = colorEscape;
+            *icon = *meta = *fg = isDarkTheme ? black_ColorId : white_ColorId; // accent_Color(!isDarkTheme);
+            *bg = accent_Color(isDarkTheme); // ? black_ColorId : white_ColorId; //) : lighter_Color(colorEscape);
         }
     }
     if (d->forceFg >= 0) {

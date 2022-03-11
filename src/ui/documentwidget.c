@@ -4016,7 +4016,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iArray *items = new_Array(sizeof(iMenuItem));
         if (canTrust) {
             pushBack_Array(items,
-                           &(iMenuItem){ uiTextCaution_ColorEscape "${dlg.cert.trust}",
+                           &(iMenuItem){ uiTextAction_ColorEscape "${dlg.cert.trust}",
                                          SDLK_u,
                                          KMOD_PRIMARY | KMOD_SHIFT,
                                          "server.trustcert" });
@@ -5564,7 +5564,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 cstr_String(url)),
                             (iMenuItem[]){
                                 { "${cancel}" },
-                                { uiTextCaution_ColorEscape "${dlg.openlink}",
+                                { uiTextAction_ColorEscape "${dlg.openlink}",
                                   0, 0, format_CStr("!open default:1 url:%s", cstr_String(url)) } },
                             2);
                     }

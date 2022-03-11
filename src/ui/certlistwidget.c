@@ -266,7 +266,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
                                 cstr_String(&item->label),
                                 uiText_ColorEscape),
                     (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
-                                   { uiTextCaution_ColorEscape "${dlg.ident.delete}",
+                                   { uiTextAction_ColorEscape "${dlg.ident.delete}",
                                      0,
                                      0,
                                      format_CStr("!ident.delete confirm:0 ptr:%p", d) } },

@@ -3688,7 +3688,7 @@ iBool handleCommand_App(const char *cmd) {
                     format_Lang("${dlg.fontpack.delete.confirm}",
                                 cstr_String(packId)),
                     (iMenuItem[]){ { "${cancel}" },
-                                   { uiTextCaution_ColorEscape " ${dlg.fontpack.delete}",
+                                   { uiTextAction_ColorEscape " ${dlg.fontpack.delete}",
                                      0,
                                      0,
                                      format_CStr("!fontpack.delete confirmed:1 id:%s",

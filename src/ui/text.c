@@ -1553,6 +1553,9 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers,
     if (isLast || outerSpace <= 0) {
         return;
     }
+    if (outerSpace > 0.135f * *wrapAdvance) {
+        return;
+    }
     /* TODO: This could use a utility that handles the `wrapPosRange` character span inside 
        a span of runs. */
 #define CHECK_LOGPOS() \
