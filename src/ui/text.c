@@ -90,31 +90,40 @@ iDeclareTypeConstructionArgs(Glyph, iChar ch)
 
 static const float contentScale_Text_ = 1.3f;
 
-int gap_Text;                           /* cf. gap_UI in metrics.h */
-int enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
-int enableKerning_Text         = iTrue; /* looking up kern pairs is slow */
+int   gap_Text;                           /* cf. gap_UI in metrics.h */
+int   enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
+int   enableKerning_Text         = iTrue; /* looking up kern pairs is slow */
+int   numOffsetSteps_Glyph       = 4;     /* subpixel offsets for glyphs */
+
+iLocalDef float offsetStep_Glyph_(void) {
+    return 1.0f / (float) numOffsetSteps_Glyph;
+}
 
 enum iGlyphFlag {
     rasterized0_GlyphFlag = iBit(1),    /* zero offset */
-    rasterized1_GlyphFlag = iBit(2),    /* half-pixel offset */
+    rasterized1_GlyphFlag = iBit(2),    /* quarter pixel offset */
+    rasterized2_GlyphFlag = iBit(3),    /* half-pixel offset */
+    rasterized3_GlyphFlag = iBit(4),    /* three quarters offset */
+    rasterizedAll_GlyphFlag =
+        rasterized0_GlyphFlag | rasterized1_GlyphFlag | rasterized2_GlyphFlag | rasterized3_GlyphFlag,
 };
 
 struct Impl_Glyph {
     iHashNode node;
-    int flags;
-    iFont *font; /* may come from symbols/emoji */
-    iRect rect[2]; /* zero and half pixel offset */
-    iInt2 d[2];
-    float advance; /* scaled */
+    int       flags;
+    iFont    *font;    /* may come from symbols/emoji */
+    float     advance; /* scaled */
+    iRect     rect[4]; /* zero and half pixel offset */
+    iInt2     d[4];
 };
 
 void init_Glyph(iGlyph *d, uint32_t glyphIndex) {
     d->node.key   = glyphIndex;
     d->flags      = 0;
     d->font       = NULL;
-    d->rect[0]    = zero_Rect();
-    d->rect[1]    = zero_Rect();
     d->advance    = 0.0f;
+    iZap(d->rect);
+    iZap(d->d);
 }
 
 void deinit_Glyph(iGlyph *d) {
@@ -130,8 +139,7 @@ iLocalDef iBool isRasterized_Glyph_(const iGlyph *d, int hoff) {
 }
 
 iLocalDef iBool isFullyRasterized_Glyph_(const iGlyph *d) {
-    return (d->flags & (rasterized0_GlyphFlag | rasterized1_GlyphFlag)) ==
-           (rasterized0_GlyphFlag | rasterized1_GlyphFlag);
+    return (d->flags & rasterizedAll_GlyphFlag) == rasterizedAll_GlyphFlag;
 }
 
 iLocalDef void setRasterized_Glyph_(iGlyph *d, int hoff) {
@@ -402,8 +410,13 @@ static void initCache_Text_(iText *d) {
     init_Array(&d->cacheRows, sizeof(iCacheRow));
     const int textSize = d->contentFontSize * fontSize_UI;
     iAssert(textSize > 0);
-    const iInt2 cacheDims = init_I2(16, 40);
-    d->cacheSize = mul_I2(cacheDims, init1_I2(iMax(textSize, fontSize_UI)));
+    const iBool isLowResDisplay = get_Window()->pixelRatio <= 2.0f;
+    numOffsetSteps_Glyph        = isLowResDisplay ? 4 : 2;
+#if !defined (NDEBUG)
+    printf("[Text] subpixel offsets: %d\n", numOffsetSteps_Glyph);
+#endif
+    const iInt2 cacheDims       = init_I2(isLowResDisplay ? 32 : 16, 40);
+    d->cacheSize                = mul_I2(cacheDims, init1_I2(iMax(textSize, fontSize_UI)));
     SDL_RendererInfo renderInfo;
     SDL_GetRendererInfo(d->render, &renderInfo);
     if (renderInfo.max_texture_height > 0 && d->cacheSize.y > renderInfo.max_texture_height) {
@@ -457,7 +470,8 @@ void init_Text(iText *d, SDL_Renderer *render) {
     /* A grayscale palette for rasterized glyphs. */ {
         SDL_Color colors[256];
         for (int i = 0; i < 256; ++i) {
-            colors[i] = (SDL_Color){ 255, 255, 255, i };
+            /* TODO: On dark backgrounds, applying a gamma curve of some sort might be helpful. */
+            colors[i] = (SDL_Color){ 255, 255, 255, 255 * powf(i / 255.0f, 1.0f) + 0.5f };
         }
         d->grayscale = SDL_AllocPalette(256);
         SDL_SetPaletteColors(d->grayscale, colors, 0, 256);
@@ -599,7 +613,8 @@ static iInt2 assignCachePos_Text_(iText *d, iInt2 size) {
 static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
     iRect *glRect = &glyph->rect[hoff];
     int    x0, y0, x1, y1;
-    measureGlyph_FontFile(d->fontFile, index_Glyph_(glyph), d->xScale, d->yScale, hoff * 0.5f,
+    measureGlyph_FontFile(d->fontFile, index_Glyph_(glyph), d->xScale, d->yScale,
+                          hoff * offsetStep_Glyph_(),
                           &x0, &y0, &x1, &y1);
     glRect->size = init_I2(x1 - x0, y1 - y0);
     /* Determine placement in the glyph cache texture, advancing in rows. */
@@ -690,12 +705,13 @@ static iGlyph *glyphByIndex_Font_(iFont *d, uint32_t glyphIndex) {
 #endif
             resetCache_Text_(activeText_);
         }
-        glyph       = new_Glyph(glyphIndex);
+        glyph = new_Glyph(glyphIndex);
         glyph->font = d;
         /* New glyphs are always allocated at least. This reserves a position in the cache
            and updates the glyph metrics. */
-        allocate_Font_(d, glyph, 0);
-        allocate_Font_(d, glyph, 1);
+        iForIndices(offsetIndex, glyph->rect) {
+            allocate_Font_(d, glyph, offsetIndex);
+        }
         insert_Hash(&d->table->glyphs, &glyph->node);
     }
     return glyph;
@@ -1251,12 +1267,14 @@ static void cacheGlyphs_Font_(iFont *d, const uint32_t *glyphIndices, size_t num
                     SDL_SetSurfaceBlendMode(buf, SDL_BLENDMODE_NONE);
                     SDL_SetSurfacePalette(buf, glyphPalette_());
                 }
-                SDL_Surface *surfaces[2] = {
-                    !isRasterized_Glyph_(glyph, 0) ?
-                            rasterizeGlyph_Font_(glyph->font, index_Glyph_(glyph), 0) : NULL,
-                    !isRasterized_Glyph_(glyph, 1) ?
-                            rasterizeGlyph_Font_(glyph->font, index_Glyph_(glyph), 0.5f) : NULL
-                };
+                SDL_Surface *surfaces[4];
+                iForIndices(si, surfaces) {
+                    surfaces[si] = !isRasterized_Glyph_(glyph, si)
+                                       ? rasterizeGlyph_Font_(glyph->font,
+                                                              index_Glyph_(glyph),
+                                                              si * offsetStep_Glyph_())
+                                       : NULL;
+                }
                 iBool outOfSpace = iFalse;
                 iForIndices(i, surfaces) {
                     if (surfaces[i]) {
@@ -1774,7 +1792,8 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
                 d->xCursor = nextTabStop_Font_(d->font, d->xCursor) - xAdvance;
             }
             const float xf = d->xCursor + xOffset;
-            const int hoff = enableHalfPixelGlyphs_Text ? (xf - ((int) xf) > 0.5f ? 1 : 0) : 0;
+            const float subpixel = xf - (int) xf;
+            const int hoff = enableHalfPixelGlyphs_Text ? (int) (subpixel / offsetStep_Glyph_()) : 0;
             if (ch == 0x3001 || ch == 0x3002) {
                 /* Vertical misalignment?? */
                 if (yOffset == 0.0f) {
