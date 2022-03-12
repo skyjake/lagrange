@@ -255,7 +255,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             *fg = tmParagraph_ColorId;
         }
         if (isButton) {
-            *frame1 = uiEmbossSelected1_ColorId;
+            *frame1 = d->flags.noTopFrame ? uiEmboss1_ColorId : uiEmbossSelected1_ColorId;
             *frame2 = uiEmbossSelected2_ColorId;
             if (!isKeyRoot) {
                 *frame1 = *bg;
