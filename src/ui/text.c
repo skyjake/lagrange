@@ -1531,7 +1531,7 @@ static void alignOtherFontsVertically_GlyphBuffer_(iGlyphBuffer *d, iFont *baseF
 
 iLocalDef float justificationWeight_(iChar c) {
     if (c == '.' || c == '!' || c == '?' ||c == ';') {
-        return 3.0f;
+        return 2.0f;
     }
     if (c == ',' || c == ':') {
         return 1.5f;
@@ -1609,13 +1609,13 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers,
 }
 
 struct Impl_FontRunArgs {
-    size_t         maxLen;
-    iFont         *font;
-    int            color;
-    int            baseDir;
-    iFont         *baseFont;
-    int            baseFgColorId;
-    iChar          overrideChar;
+    size_t maxLen;
+    iFont *font;
+    int    color;
+    int    baseDir;
+    iFont *baseFont;
+    int    baseFgColorId;
+    iChar  overrideChar;
 };
 
 iLocalDef iBool equal_FontRunArgs(const iFontRunArgs *a, const iFontRunArgs *b) {
@@ -2393,13 +2393,13 @@ static void drawBoundedN_Text_(int fontId, iInt2 pos, int boundWidth, iBool just
                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
                                    (color & fillBackground_ColorId ? fillBackground_RunMode : 0) |
                                    runFlagsFromId_(fontId),
-                           .text            = text,
-                           .maxLen          = maxLen,
-                           .pos             = pos,
-                           .layoutBound     = iAbs(boundWidth),
-                           .justify         = justify,
-                           .color           = color & mask_ColorId,
-                           .baseDir         = iSign(boundWidth) });
+                           .text        = text,
+                           .maxLen      = maxLen,
+                           .pos         = pos,
+                           .layoutBound = iAbs(boundWidth),
+                           .justify     = justify,
+                           .color       = color & mask_ColorId,
+                           .baseDir     = iSign(boundWidth) });
 }
 
 static void drawBounded_Text_(int fontId, iInt2 pos, int boundWidth, iBool justify, int color, iRangecc text) {
