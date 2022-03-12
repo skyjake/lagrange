@@ -1531,7 +1531,7 @@ static void alignOtherFontsVertically_GlyphBuffer_(iGlyphBuffer *d, iFont *baseF
 
 iLocalDef float justificationWeight_(iChar c) {
     if (c == '.' || c == '!' || c == '?' ||c == ';') {
-        return 2.5f;
+        return 3.0f;
     }
     if (c == ',' || c == ':') {
         return 1.5f;
