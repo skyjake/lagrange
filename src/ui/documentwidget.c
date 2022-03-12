@@ -3235,7 +3235,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     isEmpty_String(&resp->meta)
                         ? format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path))
                         : cstr_String(&resp->meta),
-                    uiTextCaution_ColorEscape "${dlg.input.send}",
+                    uiTextAction_ColorEscape "${dlg.input.send}",
                     format_CStr("!document.input.submit doc:%p", d));
                 iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
                 iLabelWidget *lineBreak = NULL;
@@ -3987,7 +3987,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             "%s%s  %s",
             uiHeading_ColorEscape,
             d->certFlags & authorityVerified_GmCertFlag ? checked
-                                                        : uiTextAction_ColorEscape "\u2610",
+                                                        : uiText_ColorEscape "\u2610",
             uiText_ColorEscape,
             d->certFlags & authorityVerified_GmCertFlag ? "${pageinfo.cert.ca.verified}"
                                                         : "${pageinfo.cert.ca.unverified}",

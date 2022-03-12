@@ -1918,12 +1918,11 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     if (deviceType_App() != desktop_AppDeviceType) {
         pushBack_Array(&actions, &(iMenuItem){ "---" });
     }
-    pushBack_Array(&actions, &(iMenuItem){
-        acceptLabel,
-                                         SDLK_RETURN,
-                                         acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey),
-        "valueinput.accept"
-    });
+    pushBack_Array(&actions,
+                   &(iMenuItem){ acceptLabel,
+                                 SDLK_RETURN,
+                                 acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey),
+                                 "valueinput.accept" });
     addChildPos_Widget(dlg,
                        iClob(makeDialogButtons_Widget(constData_Array(&actions),
                                                       size_Array(&actions))),
