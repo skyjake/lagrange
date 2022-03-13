@@ -73,6 +73,7 @@ struct Impl_ListWidget {
     iVisBuf       *visBuf;
     enum iScrollMode scrollMode;
     iBool          noHoverWhileScrolling;
+    iBool          needRepaint;
 };
 
 void    init_ListWidget             (iListWidget *);

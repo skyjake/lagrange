@@ -91,6 +91,7 @@ void init_ListWidget(iListWidget *d) {
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_IntSet(&d->invalidItems);
     d->visBuf = new_VisBuf();
+    d->needRepaint = iFalse;
 }
 
 void deinit_ListWidget(iListWidget *d) {
@@ -103,6 +104,7 @@ void deinit_ListWidget(iListWidget *d) {
 void invalidate_ListWidget(iListWidget *d) {
     invalidate_VisBuf(d->visBuf);
     clear_IntSet(&d->invalidItems); /* all will be drawn */
+    d->needRepaint = iTrue;
     refresh_Widget(as_Widget(d));
 }
 
@@ -459,7 +461,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                 if (contains_Widget(w, wpos) &&
                     wpos.x >= right_Rect(boundsWithoutVisualOffset_Widget(w)) - d->dragHandleWidth) {
                     setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
-                    printf("[%p] touch drag started\n", d);
+//                    printf("[%p] touch drag started\n", d);
                     return iTrue;
                 }
             }
@@ -553,7 +555,15 @@ static void draw_ListWidget_(const iListWidget *d) {
     init_Paint(&p);
     drawLayerEffects_Widget(w);
     drawBackground_Widget(w);
-    alloc_VisBuf(d->visBuf, bounds.size, d->itemHeight);
+    if (alloc_VisBuf(d->visBuf, bounds.size, d->itemHeight) ||
+        d->needRepaint) {
+        iForIndices(i, d->visBuf->buffers) {
+            beginTarget_Paint(&p, d->visBuf->buffers[i].texture);
+            fillRect_Paint(&p, (iRect){ zero_I2(), d->visBuf->texSize }, w->bgColor);
+            endTarget_Paint(&p);
+        }
+        iConstCast(iListWidget *, d)->needRepaint = iFalse;
+    }
     /* Update invalid regions/items. */ {
         /* TODO: This seems to draw two items per each shift of the visible region, even though
            one should be enough. Probably an off-by-one error in the calculation of the
@@ -562,12 +572,12 @@ static void draw_ListWidget_(const iListWidget *d) {
             iAssert(d->visBuf->buffers[i].texture);
         }
         const int bg[iElemCount(d->visBuf->buffers)] = {
-            w->bgColor, w->bgColor, w->bgColor, w->bgColor
+            w->bgColor, w->bgColor, w->bgColor, w->bgColor /* Debug: Separate BG color for buffers. */
         };
         const int bottom = numItems_ListWidget(d) * d->itemHeight;
         const iRangei vis = { scrollY / d->itemHeight * d->itemHeight,
                              ((scrollY + bounds.size.y) / d->itemHeight + 1) * d->itemHeight };
-        reposition_VisBuf(d->visBuf, vis);
+        const iBool visChanged = reposition_VisBuf(d->visBuf, vis);
         /* Check which parts are invalid. */
         iRangei invalidRange[iElemCount(d->visBuf->buffers)];
         invalidRanges_VisBuf(d->visBuf, (iRangei){ 0, bottom }, invalidRange);
@@ -575,10 +585,12 @@ static void draw_ListWidget_(const iListWidget *d) {
             iVisBufTexture *buf = &d->visBuf->buffers[i];
             iRanges drawItems = { iMax(0, buf->origin) / d->itemHeight,
                                   iMax(0, buf->origin + d->visBuf->texSize.y) / d->itemHeight };
+#if 0
             if (isEmpty_Rangei(buf->validRange)) {
                 beginTarget_Paint(&p, buf->texture);
                 fillRect_Paint(&p, (iRect){ zero_I2(), d->visBuf->texSize }, bg[i]);
             }
+#endif
 #if defined (iPlatformApple)
             const int blankWidth = 0; /* scrollbars fade away */
 #else
