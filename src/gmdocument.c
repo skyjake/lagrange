@@ -684,6 +684,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
     const iBool      isNormalized  = isNormalized_GmDocument_(d);
+    const iBool      isJustified   = prefs->justifyParagraph;
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = text_GmLineType;
     iBool            followsBlank  = iFalse;
@@ -967,14 +968,17 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             rts.isPreformat   = isPreformat;
             rts.layoutWidth   = d->size.x;
             rts.indent        = indent * gap_Text;
+            const iBool isTextType =
+                (type == text_GmLineType || type == bullet_GmLineType || type == quote_GmLineType);
             /* The right margin is used for balancing lines horizontally. */
             if (isVeryNarrow || isFullWidthImages) {
-                rts.rightMargin = 0;
+                rts.rightMargin = (!isExtremelyNarrow && isJustified && isTextType ? 4 : 0) * gap_Text;
+                if (!isExtremelyNarrow && isJustified && type == link_GmLineType) {
+                    rts.rightMargin = gap_Text;
+                }
             }
             else {
-                rts.rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
-                                           type == quote_GmLineType
-                                       ? 4 : 0) * gap_Text;
+                rts.rightMargin = (isTextType ? 4 : 0) * gap_Text;
             }
             if (!isMono) {
 #if 0
@@ -1726,7 +1730,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                 if (altIndex == 2) {
 //                    altBase.sat = 0.5f;
                     altBase.sat *= 0.8f;
-                    altBase.hue -= 10;
+                    altBase.lum += 0.1f;
+                    altBase.hue -= 40;
                 }
             }
             setHsl_Color(tmBackground_ColorId, base);
