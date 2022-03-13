@@ -93,20 +93,34 @@ static const float contentScale_Text_ = 1.3f;
 int   gap_Text;                           /* cf. gap_UI in metrics.h */
 int   enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
 int   enableKerning_Text         = iTrue; /* looking up kern pairs is slow */
-int   numOffsetSteps_Glyph       = 4;     /* subpixel offsets for glyphs */
-
-iLocalDef float offsetStep_Glyph_(void) {
-    return 1.0f / (float) numOffsetSteps_Glyph;
-}
 
 enum iGlyphFlag {
     rasterized0_GlyphFlag = iBit(1),    /* zero offset */
     rasterized1_GlyphFlag = iBit(2),    /* quarter pixel offset */
     rasterized2_GlyphFlag = iBit(3),    /* half-pixel offset */
     rasterized3_GlyphFlag = iBit(4),    /* three quarters offset */
-    rasterizedAll_GlyphFlag =
-        rasterized0_GlyphFlag | rasterized1_GlyphFlag | rasterized2_GlyphFlag | rasterized3_GlyphFlag,
 };
+
+static int numOffsetSteps_Glyph_    = 4;   /* subpixel offsets for glyphs */
+static int rasterizedAll_GlyphFlag_ = 0xf; /* updated with numOffsetSteps_Glyph */
+
+iLocalDef float offsetStep_Glyph_(void) {
+    return 1.0f / (float) numOffsetSteps_Glyph_;
+}
+
+static int makeRasterizedAll_GlyphFlag_(int n) {
+    int flag = rasterized0_GlyphFlag;
+    if (n > 1) {
+        flag |= rasterized1_GlyphFlag;
+    }
+    if (n > 2) {
+        flag |= rasterized2_GlyphFlag;
+    }
+    if (n > 3) {
+        flag |= rasterized3_GlyphFlag;
+    }
+    return flag;
+}
 
 struct Impl_Glyph {
     iHashNode node;
@@ -139,7 +153,7 @@ iLocalDef iBool isRasterized_Glyph_(const iGlyph *d, int hoff) {
 }
 
 iLocalDef iBool isFullyRasterized_Glyph_(const iGlyph *d) {
-    return (d->flags & rasterizedAll_GlyphFlag) == rasterizedAll_GlyphFlag;
+    return (d->flags & rasterizedAll_GlyphFlag_) == rasterizedAll_GlyphFlag_;
 }
 
 iLocalDef void setRasterized_Glyph_(iGlyph *d, int hoff) {
@@ -410,13 +424,15 @@ static void initCache_Text_(iText *d) {
     init_Array(&d->cacheRows, sizeof(iCacheRow));
     const int textSize = d->contentFontSize * fontSize_UI;
     iAssert(textSize > 0);
-    const iBool isLowResDisplay = get_Window()->pixelRatio <= 2.0f;
-    numOffsetSteps_Glyph        = isLowResDisplay ? 4 : 2;
-#if !defined (NDEBUG)
-    printf("[Text] subpixel offsets: %d\n", numOffsetSteps_Glyph);
+    numOffsetSteps_Glyph_   = get_Window()->pixelRatio < 2.0f   ? 4
+                              : get_Window()->pixelRatio < 2.5f ? 3
+                                                                : 2;
+    rasterizedAll_GlyphFlag_ = makeRasterizedAll_GlyphFlag_(numOffsetSteps_Glyph_);
+#if !defined(NDEBUG)
+    printf("[Text] subpixel offsets: %d\n", numOffsetSteps_Glyph_);
 #endif
-    const iInt2 cacheDims       = init_I2(isLowResDisplay ? 32 : 16, 40);
-    d->cacheSize                = mul_I2(cacheDims, init1_I2(iMax(textSize, fontSize_UI)));
+    const iInt2 cacheDims = init_I2(8 * numOffsetSteps_Glyph_, 40);
+    d->cacheSize          = mul_I2(cacheDims, init1_I2(iMax(textSize, fontSize_UI)));
     SDL_RendererInfo renderInfo;
     SDL_GetRendererInfo(d->render, &renderInfo);
     if (renderInfo.max_texture_height > 0 && d->cacheSize.y > renderInfo.max_texture_height) {
@@ -709,7 +725,7 @@ static iGlyph *glyphByIndex_Font_(iFont *d, uint32_t glyphIndex) {
         glyph->font = d;
         /* New glyphs are always allocated at least. This reserves a position in the cache
            and updates the glyph metrics. */
-        iForIndices(offsetIndex, glyph->rect) {
+        for (int offsetIndex = 0; offsetIndex < numOffsetSteps_Glyph_; offsetIndex++) {
             allocate_Font_(d, glyph, offsetIndex);
         }
         insert_Hash(&d->table->glyphs, &glyph->node);
@@ -1267,8 +1283,8 @@ static void cacheGlyphs_Font_(iFont *d, const uint32_t *glyphIndices, size_t num
                     SDL_SetSurfaceBlendMode(buf, SDL_BLENDMODE_NONE);
                     SDL_SetSurfacePalette(buf, glyphPalette_());
                 }
-                SDL_Surface *surfaces[4];
-                iForIndices(si, surfaces) {
+                SDL_Surface *surfaces[4] = { NULL, NULL, NULL, NULL };
+                for (int si = 0; si < numOffsetSteps_Glyph_; si++) {
                     surfaces[si] = !isRasterized_Glyph_(glyph, si)
                                        ? rasterizeGlyph_Font_(glyph->font,
                                                               index_Glyph_(glyph),
