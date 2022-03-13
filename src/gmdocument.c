@@ -1714,8 +1714,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                                    isDarkUI ? 0.05f + lum * 0.15f : (0.75f + lum * 0.3f),
                                    1.0f };
             iHSLColor altBase  = { hues[altIndex],
-                                   0.75f + sat * 0.25f,
-                                   isDarkUI ? 0.5f + lum * 0.5f : (0.35f + lum * 0.2f),
+                                  0.75f + sat * 0.25f,
+                                  isDarkUI ? 0.5f + lum * 0.5f : (0.35f + lum * 0.2f),
                                    1.0f };
             iHSLColor preBase  = { hues[d->themeSeed & 0x100 ? bgIndex : altIndex],
                                    0.75f + sat * 0.25f,
@@ -1723,6 +1723,11 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                                    1.0f };
             if (!isDarkUI) {
                 base.sat *= 0.66f;
+                if (altIndex == 2) {
+//                    altBase.sat = 0.5f;
+                    altBase.sat *= 0.8f;
+                    altBase.hue -= 10;
+                }
             }
             setHsl_Color(tmBackground_ColorId, base);
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, isDarkUI ? 0.04f * (isBannerLighter ? 1 : -1) : 0.05f));
