@@ -1646,9 +1646,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
                 const iString *url = url_FeedEntry(entry);
-                if (!containsUrl_Visited(visited_App(), url)) {
-                    visitUrl_Visited(visited_App(), url, transient_VisitedUrlFlag);
-                }
+                markEntryAsRead_Feeds(entry->bookmarkId, &entry->url, iTrue);
+//                if (!containsUrl_Visited(visited_App(), url)) {
+//                    visitUrl_Visited(visited_App(), url,
+//                                     transient_VisitedUrlFlag | kept_VisitedUrlFlag);
+//                }
             }
             postCommand_App("visited.changed");
             return iTrue;
@@ -1670,14 +1672,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     return iTrue;
                 }
                 else if (isCommand_Widget(w, ev, "feed.entry.toggleread")) {
-                    iVisited *vis = visited_App();
                     const iString *url = urlFragmentStripped_String(&item->url);
-                    if (containsUrl_Visited(vis, url)) {
-                        removeUrl_Visited(vis, url);
-                    }
-                    else {
-                        visitUrl_Visited(vis, url, transient_VisitedUrlFlag | kept_VisitedUrlFlag);
-                    }
+                    markEntryAsRead_Feeds(
+                        item->id, &item->url, isUnreadEntry_Feeds(item->id, &item->url));
                     postCommand_App("visited.changed");
                     return iTrue;
                 }

@@ -734,6 +734,64 @@ void removeEntries_Feeds(uint32_t feedBookmarkId) {
     }
 }
 
+void markEntryAsRead_Feeds(uint32_t feedBookmarkId, const iString *entryUrl, iBool isRead) {
+    const iBookmark *bm = get_Bookmarks(bookmarks_App(), feedBookmarkId);
+    if (bm) {
+        iFeeds *d = &feeds_;
+        iVisited *vis = visited_App();
+        if (bm->flags & headings_BookmarkFlag) {
+            iTime oneSecond;
+            initSeconds_Time(&oneSecond, 1.0);
+            const iString *url = urlFragmentStripped_String(entryUrl);
+            /* The unread state of headings is tracked based on the last visit time. */
+            const iFeedEntry entry = { .url = *entryUrl, .bookmarkId = feedBookmarkId };
+            const iFeedEntry *entryPtr = &entry;
+            size_t pos;
+            lock_Mutex(d->mtx);
+            if (locate_SortedArray(&d->entries, &entryPtr, &pos)) {
+                const iFeedEntry *entry = *(const iFeedEntry **) at_SortedArray(&d->entries, pos);
+                if (isRead && !isUnread_FeedEntry(entry)) {
+                    unlock_Mutex(d->mtx);
+                    return;
+                }
+                iTime entryTime = entry->posted;
+                unlock_Mutex(d->mtx);
+                if (!isRead) {
+                    sub_Time(&entryTime, &oneSecond);
+                }
+                visitUrlTime_Visited(
+                    vis, url, transient_VisitedUrlFlag | kept_VisitedUrlFlag, entryTime);
+            }
+            else {
+                unlock_Mutex(d->mtx);
+            }            
+        }
+        else {
+            /* The unread state depends on whether the URL has been visited. */
+            if (!isRead && containsUrl_Visited(vis, entryUrl)) {
+                removeUrl_Visited(vis, entryUrl);
+            }
+            else if (isRead) {
+                visitUrl_Visited(vis, entryUrl, transient_VisitedUrlFlag | kept_VisitedUrlFlag);
+            }            
+        }
+    }
+}
+
+iBool isUnreadEntry_Feeds(uint32_t feedBookmarkId, const iString *entryUrl) {
+    iBool isUnread = iFalse;
+    iFeeds *d = &feeds_;
+    lock_Mutex(d->mtx);
+    iFeedEntry entry = { .url = *entryUrl, .bookmarkId = feedBookmarkId };
+    iFeedEntry *entryPtr = &entry;
+    size_t pos;
+    if (locate_SortedArray(&d->entries, &entryPtr, &pos)) {
+        isUnread = isUnread_FeedEntry(*(iFeedEntry **) at_SortedArray(&d->entries, pos));
+    }
+    unlock_Mutex(d->mtx);
+    return isUnread;
+}
+
 static int cmpTimeDescending_FeedEntryPtr_(const void *a, const void *b) {
     const iFeedEntry * const *e1 = a, * const *e2 = b;
     const int cmpPosted = -cmp_Time(&(*e1)->posted, &(*e2)->posted);

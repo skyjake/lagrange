@@ -145,10 +145,17 @@ static size_t find_Visited_(const iVisited *d, const iString *url) {
 }
 
 void visitUrl_Visited(iVisited *d, const iString *url, uint16_t visitFlags) {
+    iTime when;
+    initCurrent_Time(&when);
+    visitUrlTime_Visited(d, url, visitFlags, when);
+}
+
+void visitUrlTime_Visited(iVisited *d, const iString *url, uint16_t visitFlags, iTime when) {
     if (isEmpty_String(url)) return;
     url = canonicalUrl_String(url);
     iVisitedUrl visit;
     init_VisitedUrl(&visit);
+    visit.when = when;
     visit.flags = visitFlags;
     set_String(&visit.url, url);
     size_t pos;

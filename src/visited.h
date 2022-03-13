@@ -53,6 +53,7 @@ void    save_Visited            (const iVisited *, const char *dirPath);
 
 iTime   urlVisitTime_Visited    (const iVisited *, const iString *url);
 void    visitUrl_Visited        (iVisited *, const iString *url, uint16_t visitFlags); /* adds URL to the visited URLs set */
+void    visitUrlTime_Visited    (iVisited *, const iString *url, uint16_t visitFlags, iTime when);
 void    setUrlKept_Visited      (iVisited *, const iString *url, iBool isKept); /* URL is marked as (non)discardable */
 void    removeUrl_Visited       (iVisited *, const iString *url);
 iBool   containsUrl_Visited     (const iVisited *, const iString *url);
