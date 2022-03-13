@@ -1582,12 +1582,12 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers,
     float         outerSpace        = available - *wrapAdvance;
     float         totalInnerSpace   = 0.0f;
     float         numSpaces         = 0;
-    const float   maxGlyphExpansion = 0.0325f;
-    const float   maxSpaceExpansion = 0.1025f;
+    const float   maxGlyphExpansion = 0.022f;
+    const float   maxSpaceExpansion = 0.120f;
     if (isLast || outerSpace <= 0) {
         return;
     }
-    if (outerSpace > 0.135f * *wrapAdvance) {
+    if (outerSpace > 0.142f * *wrapAdvance) {
         return;
     }
     /* TODO: This could use a utility that handles the `wrapPosRange` character span inside 
@@ -1595,21 +1595,7 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers,
 #define CHECK_LOGPOS() \
     if (logPos < wrapPosRange.start) continue; \
     if (logPos >= wrapPosRange.end) break
-    /* First expand all glyphs evenly. This preserves readability pretty well. */ {
-        float expand = 1.0f + iMin(outerSpace, maxGlyphExpansion * *wrapAdvance) / *wrapAdvance;
-        for (iGlyphBuffer *buf = begin; buf != end; buf++) {
-            if (buf->script) continue;
-            for (size_t i = 0; i < buf->glyphCount; i++) {
-                hb_glyph_info_t *info   = &buf->glyphInfo[i];
-                const int        logPos = info->cluster;
-                CHECK_LOGPOS();
-                buf->glyphPos[i].x_advance *= expand;
-            }
-        }
-        *wrapAdvance *= expand;
-        outerSpace = available - *wrapAdvance;
-    }
-    /* Find out if there are spaces to expand further. */
+    /* Find out if there are spaces to expand. */
     for (iGlyphBuffer *buf = begin; buf != end; buf++) {
         if (buf->script) continue;
         for (size_t i = 0; i < buf->glyphCount; i++) {
@@ -1640,6 +1626,24 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers,
         }
         *wrapAdvance += outerSpace;
     }
+    /* Finally expand all glyphs a little, if we must. */ {
+        float outerSpace = available - *wrapAdvance;
+        if (outerSpace <= maxGlyphExpansion * *wrapAdvance) {
+            float expand = 1.0f + outerSpace / *wrapAdvance;
+            for (iGlyphBuffer *buf = begin; buf != end; buf++) {
+                if (buf->script) continue;
+                for (size_t i = 0; i < buf->glyphCount; i++) {
+                    hb_glyph_info_t *info   = &buf->glyphInfo[i];
+                    const int        logPos = info->cluster;
+                    CHECK_LOGPOS();
+                    if (buf->logicalText[logPos] != 0x20) {
+                        buf->glyphPos[i].x_advance *= expand;
+                    }
+                }
+            }
+            *wrapAdvance *= expand;
+        }
+    }    
 }
 
 struct Impl_FontRunArgs {
