@@ -1743,6 +1743,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                          addSatLum_HSLColor(get_HSLColor(tmHypertextLinkIcon_ColorId), 0, lum * (isDarkUI ? 0.2f : -0.2f)));
             set_Color(tmHypertextLinkText_ColorId,
                       getMixed_Color(tmHypertextLinkText_ColorId, tmParagraph_ColorId, 0.66f));
+            set_Color(tmGopherLinkText_ColorId, getMixed_Color(tmLinkText_ColorId, tmGopherLinkTextHover_ColorId, 0.2f));
             setHsl_Color(tmHeading1_ColorId, altBase);
             set_Color(tmHeading2_ColorId, get_Color(tmHeading1_ColorId));
             set_Color(tmHeading3_ColorId, get_Color(tmParagraph_ColorId));
