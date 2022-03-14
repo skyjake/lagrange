@@ -957,6 +957,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         iAssert(!isEmpty_Range(&line)); /* must have something at this point */
         size_t numRunsAdded = 0;
+        const iBool isTextType =
+            (type == text_GmLineType || type == bullet_GmLineType || type == quote_GmLineType);
+        const iBool isParagraphJustified = isJustified && (type == link_GmLineType || isTextType);
         /* Typeset the paragraph. */ {
             iRunTypesetter rts;
             init_RunTypesetter_(&rts);
@@ -968,17 +971,16 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             rts.isPreformat   = isPreformat;
             rts.layoutWidth   = d->size.x;
             rts.indent        = indent * gap_Text;
-            const iBool isTextType =
-                (type == text_GmLineType || type == bullet_GmLineType || type == quote_GmLineType);
             /* The right margin is used for balancing lines horizontally. */
             if (isVeryNarrow || isFullWidthImages) {
-                rts.rightMargin = (!isExtremelyNarrow && isJustified && isTextType ? 4 : 0) * gap_Text;
-                if (!isExtremelyNarrow && isJustified && type == link_GmLineType) {
+                rts.rightMargin =
+                    gap_Text * (!isExtremelyNarrow && isParagraphJustified && isTextType ? 5 : 0);
+                if (!isExtremelyNarrow && isParagraphJustified && type == link_GmLineType) {
                     rts.rightMargin = gap_Text;
                 }
             }
             else {
-                rts.rightMargin = (isTextType ? 4 : 0) * gap_Text;
+                rts.rightMargin = gap_Text * (isTextType ? 4 : 0);
             }
             if (!isMono) {
 #if 0
@@ -1001,6 +1003,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             for (;;) { /* need to retry if the font needs changing */
                 rts.run.flags |= startOfLine_GmRunFlag;
+                if (!isParagraphJustified) {
+                    rts.run.flags |= notJustified_GmRunFlag;
+                }
                 rts.baseFont  = rts.run.font;
                 rts.baseColor = rts.run.color;
                 iWrapText wrapText = { .text     = line,
@@ -1055,7 +1060,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (numRunsAdded == 2) {
             /* A small number of runs should not be justified, it would just look off.
                This counts bytes for speed, but should be accurate enough. */
-            if (size_Range(&lastRun->text) < size_Range(&lastRun[-1].text) / 2) {
+            if (size_Range(&lastRun->text) < size_Range(&lastRun[-1].text) * 2 / 3) {
                 lastRun[ 0].flags |= notJustified_GmRunFlag;
                 lastRun[-1].flags |= notJustified_GmRunFlag;
             }
