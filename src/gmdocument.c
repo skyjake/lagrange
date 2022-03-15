@@ -958,8 +958,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         iAssert(!isEmpty_Range(&line)); /* must have something at this point */
         size_t numRunsAdded = 0;
         const iBool isTextType =
-            (type == text_GmLineType || type == bullet_GmLineType || type == quote_GmLineType);
-        const iBool isParagraphJustified = isJustified && (type == link_GmLineType || isTextType);
+            (type == text_GmLineType || type == bullet_GmLineType || type == quote_GmLineType ||
+             type == link_GmLineType);
+        const iBool isParagraphJustified = isJustified && isTextType;
         /* Typeset the paragraph. */ {
             iRunTypesetter rts;
             init_RunTypesetter_(&rts);
@@ -975,9 +976,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (isVeryNarrow || isFullWidthImages) {
                 rts.rightMargin =
                     gap_Text * (!isExtremelyNarrow && isParagraphJustified && isTextType ? 5 : 0);
-                if (!isExtremelyNarrow && isParagraphJustified && type == link_GmLineType) {
-                    rts.rightMargin = gap_Text;
-                }
             }
             else {
                 rts.rightMargin = gap_Text * (isTextType ? 4 : 0);
