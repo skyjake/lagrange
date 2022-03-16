@@ -1058,7 +1058,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (numRunsAdded == 2) {
             /* A small number of runs should not be justified, it would just look off.
                This counts bytes for speed, but should be accurate enough. */
-            if (size_Range(&lastRun->text) < size_Range(&lastRun[-1].text) * 2 / 3) {
+            if (size_Range(&lastRun->text) < size_Range(&lastRun[-1].text) * 5 / 6) {
                 lastRun[ 0].flags |= notJustified_GmRunFlag;
                 lastRun[-1].flags |= notJustified_GmRunFlag;
             }
