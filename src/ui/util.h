@@ -290,6 +290,7 @@ const char *    selectedDropdownCommand_LabelWidget (const iLabelWidget *dropBut
 /*-----------------------------------------------------------------------------------------------*/
 
 iWidget *       makeTabs_Widget         (iWidget *parent);
+void            setTabBarPosition_Widget(iWidget *tabs, iBool atBottom);
 void            appendTabPage_Widget    (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 void            appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int shortcut, int kmods);
 iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int shortcut, iWidget **headings,

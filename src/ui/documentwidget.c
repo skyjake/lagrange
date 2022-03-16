@@ -881,7 +881,9 @@ static void updateVisible_DocumentView_(iDocumentView *d) {
     /* After scrolling/resizing stops, begin pre-rendering the visbuf contents. */ {
         removeTicker_App(prerender_DocumentWidget_, d->owner);
         remove_Periodic(periodic_App(), d);
-        add_Periodic(periodic_App(), d->owner, "document.render");
+        if (~d->owner->flags & animationPlaceholder_DocumentWidgetFlag) {
+            add_Periodic(periodic_App(), d->owner, "document.render");
+        }
     }
 }
 
@@ -3594,12 +3596,12 @@ static iWidget *swipeParent_DocumentWidget_(iDocumentWidget *d) {
 static void setupSwipeOverlay_DocumentWidget_(iDocumentWidget *d, iWidget *overlay) {
     iWidget *w = as_Widget(d);
     iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+    iAssert(overlay);
     /* The target takes the old document and jumps on top. */
     overlay->rect.pos = windowToInner_Widget(swipeParent, innerToWindow_Widget(w, zero_I2()));
     /* Note: `innerToWindow_Widget` does not apply visual offset. */
     overlay->rect.size = w->rect.size;
     setFlags_Widget(overlay, fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
-//        swap_DocumentWidget_(target, d->doc, d);
     setFlags_Widget(as_Widget(d), refChildrenOffset_WidgetFlag, iTrue);
     as_Widget(d)->offsetRef = swipeParent;
     /* `overlay` animates off the screen to the right. */
@@ -3623,11 +3625,15 @@ static void setupSwipeOverlay_DocumentWidget_(iDocumentWidget *d, iWidget *overl
 
 static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     /* TODO: Cleanup
+     
        If DocumentWidget is refactored to split the document presentation from state
        and request management (a new DocumentView class), plain views could be used for this
        animation without having to mess with the complete state of the DocumentWidget. That
        seems like a less error-prone approach -- the current implementation will likely break
        down (again) if anything is changed in the document internals.
+       
+       2022-03-16: Yeah, something did break, again. "swipeout" is not found if the tab bar
+       is moved to the bottom, when swiping back.
     */
     iWidget *w = as_Widget(d);
     /* The swipe animation is implemented in a rather complex way. It utilizes both cached

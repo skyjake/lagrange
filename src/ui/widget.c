@@ -168,8 +168,10 @@ void deinit_Widget(iWidget *d) {
 //    printf("deinit_Widget %p (%s):\ttreesize=%d\td_obj=%d\n", d, class_Widget(d)->name, nt, totalCount_Object() - no);
     delete_WidgetDrawBuffer(d->drawBuf);
 #if 0 && !defined (NDEBUG)
-    printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
-           d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+    if (cmp_String(&d->id, "")) {
+        printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
+               d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+    }
 #endif
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
@@ -960,7 +962,8 @@ int visualOffsetByReference_Widget(const iWidget *d) {
 }
 
 static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
-    if (d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
+    if (d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag) ||
+        (d->flags2 & permanentVisualOffset_WidgetFlag2)) {
         const int off = iRound(value_Anim(&d->visualOffset));
         if (d->flags & horizontalOffset_WidgetFlag) {
             pos->x += off;
@@ -1009,7 +1012,9 @@ iRect boundsWithoutVisualOffset_Widget(const iWidget *d) {
 
 iInt2 innerToWindow_Widget(const iWidget *d, iInt2 innerCoord) {
     for (const iWidget *w = d; w; w = w->parent) {
-        addv_I2(&innerCoord, w->rect.pos);
+        iInt2 pos = w->rect.pos;
+        applyVisualOffset_Widget_(w, &pos);
+        addv_I2(&innerCoord, pos);
     }
     return innerCoord;
 }
@@ -1026,13 +1031,13 @@ iBool contains_Widget(const iWidget *d, iInt2 windowCoord) {
 }
 
 iBool containsExpanded_Widget(const iWidget *d, iInt2 windowCoord, int expand) {
-    const iRect bounds = {
-        zero_I2(),
+    iRect bounds = {
+        innerToWindow_Widget(d, zero_I2()),
         addY_I2(d->rect.size,
                 d->flags & drawBackgroundToBottom_WidgetFlag ? size_Root(d->root).y : 0)
     };
     return contains_Rect(expand ? expanded_Rect(bounds, init1_I2(expand)) : bounds,
-                         windowToInner_Widget(d, windowCoord));
+                         windowCoord);
 }
 
 iLocalDef iBool isKeyboardEvent_(const SDL_Event *ev) {
@@ -1056,7 +1061,8 @@ iLocalDef iBool isHidden_Widget_(const iWidget *d) {
 }
 
 iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
-    return !isHidden_Widget_(d) || d->flags & visualOffset_WidgetFlag;
+    return !isHidden_Widget_(d) || (d->flags & visualOffset_WidgetFlag &&
+                                    ~d->flags2 & permanentVisualOffset_WidgetFlag2);
 }
 
 static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
@@ -1104,6 +1110,14 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 }
 #endif
 #if 0
+                if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                    printf("[%p] %s:'%s' (on top) ate the button\n",
+                           widget, class_Widget(widget)->name,
+                           cstr_String(id_Widget(widget)));
+                    fflush(stdout);
+                }
+#endif
+#if 0
                 if (ev->type == SDL_MOUSEMOTION) {
                     printf("[%p] %s:'%s' (on top) ate the motion\n",
                            widget, class_Widget(widget)->name,
@@ -1135,12 +1149,12 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
            handle the events first. */
         iReverseForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
-            //iAssert(child->root == d->root);
+            iAssert(child->root == d->root);
             if (child == window_Widget(d)->focus && isKeyboardEvent_(ev)) {
                 continue; /* Already dispatched. */
             }
             if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
-            /* Already dispatched. */
+                /* Already dispatched. */
                 continue;
             }
             if (dispatchEvent_Widget(child, ev)) {
@@ -1180,8 +1194,9 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 return iTrue;
             }
         }
+        iAssert(get_Root() == d->root);
         if (class_Widget(d)->processEvent(d, ev)) {
-            //iAssert(get_Root() == d->root);
+            iAssert(get_Root() == d->root);
             return iTrue;
         }
     }
@@ -1387,6 +1402,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                             d, argLabel_Command(cmd, "side") == 1 ? "swipe.back" : "swipe.forward");
                     }
                     setFlags_Widget(d, dragged_WidgetFlag, iFalse);
+                    return iTrue;
                 }
                 if (d->commandHandler && d->commandHandler(d, ev->user.data1)) {
                     return iTrue;

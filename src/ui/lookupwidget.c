@@ -657,7 +657,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
     else if (isResize_UserEvent(ev) || equal_Command(cmd, "keyboard.changed") ||
              (equal_Command(cmd, "layout.changed") &&
               equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
-        /* Position the lookup popup under the URL bar. */ {
+        /* Position the lookup popup in relation to the URL bar. */ {
             iRoot    *root       = w->root;
             iWidget  *url        = findChild_Widget(root->widget, "url");
             const int minWidth   = iMin(120 * gap_UI, width_Rect(safeRect_Root(root)));
@@ -667,19 +667,28 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                 extraWidth = minWidth - urlWidth;
             }
             const iRect navBarBounds = bounds_Widget(findChild_Widget(root->widget, "navbar"));
+            const iBool atBottom = prefs_App()->bottomNavBar;
             setFixedSize_Widget(
                 w,
                 init_I2(width_Widget(url) + extraWidth,
-                        (bottom_Rect(rect_Root(root)) - bottom_Rect(navBarBounds)) / 2));
-            setPos_Widget(w,
-                          windowToLocal_Widget(w,
-                                               max_I2(zero_I2(),
-                                                      addX_I2(bottomLeft_Rect(bounds_Widget(url)),
-                                                              -extraWidth / 2))));
+                        (atBottom ? top_Rect(navBarBounds)
+                                  : (bottom_Rect(rect_Root(root)) - bottom_Rect(navBarBounds))) /
+                            2));
+            const iInt2 topLeft = atBottom
+                                      ? addY_I2(topLeft_Rect(bounds_Widget(url)), -w->rect.size.y)
+                                      : bottomLeft_Rect(bounds_Widget(url));
+            setPos_Widget(
+                w, windowToLocal_Widget(w, max_I2(zero_I2(), addX_I2(topLeft, -extraWidth / 2))));
 #if defined(iPlatformMobile)
             /* TODO: Check this again. */
             /* Adjust height based on keyboard size. */ {
-                w->rect.size.y = bottom_Rect(visibleRect_Root(root)) - top_Rect(bounds_Widget(w));
+                if (!atBottom) {
+                    w->rect.size.y = bottom_Rect(visibleRect_Root(root)) - top_Rect(bounds_Widget(w));
+                }
+                else {
+                    w->rect.pos = windowToLocal_Widget(w, visibleRect_Root(root).pos);
+                    w->rect.size.y = height_Rect(visibleRect_Root(root)) - height_Rect(navBarBounds);
+                }
 #   if defined (iPlatformAppleMobile)
                 if (deviceType_App() == phone_AppDeviceType) {
                     float l = 0.0f, r = 0.0f;
@@ -738,7 +747,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                     setFocus_Widget(url);
                     return iTrue;
                 case SDLK_UP:
-                    if (!moveCursor_LookupWidget_(d, -1)) {
+                    if (!moveCursor_LookupWidget_(d, -1) && !prefs_App()->bottomNavBar) {
                         setCursor_LookupWidget_(d, iInvalidPos);
                         setFocus_Widget(url);
                     }
@@ -767,9 +776,10 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         }
         /* Focus switching between URL bar and lookup results. */
         if (isVisible_Widget(w)) {
-            if (((key == SDLK_DOWN && !mods) || key == SDLK_TAB) &&
-                focus_Widget() == findWidget_App("url") &&
-                numItems_ListWidget(d->list)) {
+            if (((!mods && ((key == SDLK_DOWN && !prefs_App()->bottomNavBar) ||
+                            (key == SDLK_UP && prefs_App()->bottomNavBar))) ||
+                 key == SDLK_TAB) &&
+                focus_Widget() == findWidget_App("url") && numItems_ListWidget(d->list)) {
                 setCursor_LookupWidget_(d, 1); /* item 0 is always the first heading */
                 setFocus_Widget(w);
                 return iTrue;

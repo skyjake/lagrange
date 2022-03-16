@@ -1818,7 +1818,10 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
                 d->xCursor = nextTabStop_Font_(d->font, d->xCursor) - xAdvance;
             }
             const float xf = d->xCursor + xOffset;
-            const float subpixel = xf - (int) xf;
+            float subpixel = xf - (int) xf;
+            if (subpixel < 0.0f) {
+                subpixel = 1.0f + subpixel;
+            }
             const int hoff = enableHalfPixelGlyphs_Text ? (int) (subpixel / offsetStep_Glyph_()) : 0;
             if (ch == 0x3001 || ch == 0x3002) {
                 /* Vertical misalignment?? */

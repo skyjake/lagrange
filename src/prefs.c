@@ -58,6 +58,8 @@ void init_Prefs(iPrefs *d) {
     d->sideIcon          = iTrue;
     d->hideToolbarOnScroll = iTrue;
     d->blinkingCursor    = iTrue;
+    d->bottomNavBar      = iTrue;
+    d->bottomTabBar      = iTrue;
     d->pinSplit          = 1;
     d->time24h           = iTrue;
     d->returnKey         = default_ReturnKeyBehavior;

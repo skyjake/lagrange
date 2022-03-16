@@ -1490,6 +1490,7 @@ iWidget *makeTabs_Widget(iWidget *parent) {
                         arrangeHeight_WidgetFlag,
                     iTrue);
     setId_Widget(buttons, "tabs.buttons");
+//    setBackgroundColor_Widget(buttons, red_ColorId);
     iWidget *content = addChildFlags_Widget(tabs, iClob(makeHDiv_Widget()), expand_WidgetFlag);
     setId_Widget(content, "tabs.content");
     iWidget *pages = addChildFlags_Widget(
@@ -1498,6 +1499,13 @@ iWidget *makeTabs_Widget(iWidget *parent) {
     addChild_Widget(parent, iClob(tabs));
     setCommandHandler_Widget(tabs, tabSwitcher_);
     return tabs;
+}
+
+void setTabBarPosition_Widget(iWidget *tabs, iBool atBottom) {
+    iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+    removeChild_Widget(tabs, buttons);
+    addChildPos_Widget(tabs, buttons, atBottom ? back_WidgetAddPos : front_WidgetAddPos);
+    iRelease(buttons);
 }
 
 static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget *page,

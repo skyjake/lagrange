@@ -454,6 +454,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             break;
         }
         case bookmarks_SidebarMode: {
+            iAssert(get_Root() == d->widget.root);
             iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTree_Bookmark, NULL, NULL)) {
                 const iBookmark *bm = i.ptr;
                 if (isBookmarkFolded_SidebarWidget_(d, bm)) {

@@ -283,6 +283,8 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
         { "prefs.biglede", &d->prefs.bigFirstParagraph },
         { "prefs.blink", &d->prefs.blinkingCursor },
+        { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
+        { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
         { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
         { "prefs.boldlink.light", &d->prefs.boldLinkLight },
         { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
@@ -1302,8 +1304,9 @@ static void clearCache_App_(void) {
 }
 
 iObjectList *listAllDocuments_App(void) {
-    iWindow *oldWindow = get_Window();
-    iObjectList *allDocs = new_ObjectList();
+    iWindow     *oldWindow = get_Window();
+    iRoot       *oldRoot   = current_Root();
+    iObjectList *allDocs   = new_ObjectList();
     iConstForEach(PtrArray, window, mainWindows_App()) {
         setCurrent_Window(window.ptr);
         iObjectList *docs = listDocuments_App(NULL);
@@ -1313,6 +1316,7 @@ iObjectList *listAllDocuments_App(void) {
         iRelease(docs);
     }
     setCurrent_Window(oldWindow);
+    setCurrent_Root(oldRoot);
     return allDocs;
 }
 
