@@ -2703,9 +2703,9 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.interface}", '2', &headings, &values),
                      "prefs.page.ui");
         addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
+        addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
         addDialogToggle_(headings, values, "${prefs.bottomnavbar}", "prefs.bottomnavbar");
         addDialogToggle_(headings, values, "${prefs.bottomtabbar}", "prefs.bottomtabbar");
-        addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
         /* Return key behaviors. */ {
             iLabelWidget *returnKey = makeMenuButton_LabelWidget(
