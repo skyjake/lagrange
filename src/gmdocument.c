@@ -975,7 +975,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             /* The right margin is used for balancing lines horizontally. */
             if (isVeryNarrow || isFullWidthImages) {
                 rts.rightMargin =
-                    gap_Text * (!isExtremelyNarrow && isParagraphJustified && isTextType ? 5 : 0);
+                    gap_Text * (!isExtremelyNarrow && isParagraphJustified && isTextType ? 1 : 0);
             }
             else {
                 rts.rightMargin = gap_Text * (isTextType ? 4 : 0);
