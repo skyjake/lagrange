@@ -567,7 +567,7 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     /* Update menu. */
     const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
     const char *   idLabel     = subjectName
-                                     ? format_CStr(uiTextAction_ColorEscape "%s", cstr_String(subjectName))
+                                     ? cstr_String(subjectName)
                                      : "${menu.identity.notactive}";
     setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
     setMenuItemDisabledByIndex_Widget(menu, 0, !ident);
@@ -575,6 +575,10 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     iLabelWidget *toolName = findWidget_App("toolbar.name");
     if (toolName) {
         setOutline_LabelWidget(toolButton, ident == NULL);
+        if (ident) {
+            setTextColor_LabelWidget(toolButton, uiTextAction_ColorId);
+            setTextColor_LabelWidget(toolName, uiTextAction_ColorId);
+        }
         /* Fit the name in the widget. */ 
         if (subjectName) {
             const char *endPos;
@@ -1058,13 +1062,14 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     else if (equal_Command(cmd, "tabs.changed")) {
         /* Update navbar according to the current tab. */
         iDocumentWidget *doc = document_App();
+        iAssert(doc);
         if (doc) {
             setText_InputWidget(findChild_Widget(navBar, "url"), url_DocumentWidget(doc));
             checkLoadAnimation_Root_(get_Root());
+            updateToolbarColors_Root(as_Widget(doc)->root);
             updateNavBarIdentity_(navBar);
         }
         setFocus_Widget(NULL);
-        updateToolbarColors_Root(as_Widget(doc)->root);
         makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         refresh_Widget(findWidget_Root("doctabs"));
     }
