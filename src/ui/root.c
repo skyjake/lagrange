@@ -547,6 +547,10 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         root->root->pendingArrange = iFalse;
         return iTrue;
     }
+    else if (equal_Command(cmd, "root.movable")) {
+        setupMovableElements_Root_(root->root);
+        return iFalse; /* all roots must handle this */
+    }
     else if (equal_Command(cmd, "theme.changed")) {
         /* The phone toolbar is draw-buffered so it needs refreshing. */
         refresh_Widget(findWidget_App("toolbar"));
@@ -789,12 +793,8 @@ iBool isNarrow_Root(const iRoot *d) {
     return width_Rect(safeRect_Root(d)) / gap_UI < 140;
 }
 
-static void updateNavBarParent_(iWidget *navBar) {
-    /* The navbar can be */
-}
-
 static void updateNavBarSize_(iWidget *navBar) {
-    const iBool isPhone = deviceType_App() == phone_AppDeviceType;
+    const iBool isPhone  = deviceType_App() == phone_AppDeviceType;
     const iBool isNarrow = !isPhone && isNarrow_Root(navBar->root);
     /* Adjust navbar padding. */ {
         int hPad   = isPortraitPhone_App() ? 0 : isPhone || isNarrow ? gap_UI / 2 : (gap_UI * 3 / 2);
@@ -804,6 +804,9 @@ static void updateNavBarSize_(iWidget *navBar) {
         if (isLandscape_App() && prefs_App()->bottomNavBar) {
             botPad += bottomSafeInset_Mobile();
             hPad += leftSafeInset_Mobile();
+        }
+        if (!isPhone && prefs_App()->bottomNavBar) {
+            topPad = vPad / 2 - vPad / 3;
         }
         setPadding_Widget(navBar, hPad, vPad / 3 + topPad, hPad, botPad);
     }

@@ -1488,6 +1488,12 @@ msgstr "Mouse speed:"
 msgid "prefs.imageloadscroll"
 msgstr "Load image on scroll:"
 
+msgid "prefs.bottomnavbar"
+msgstr "Bottom URL bar:"
+
+msgid "prefs.bottomtabbar"
+msgstr "Bottom tab bar:"
+
 msgid "prefs.hidetoolbarscroll"
 msgstr "Hide toolbar on scroll:"
 

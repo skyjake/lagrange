@@ -1087,6 +1087,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
     postCommand_App("~navbar.actions.changed");
     postCommand_App("~toolbar.actions.changed");
+    postCommand_App("~root.movable");
     postCommand_App("~window.unfreeze");
     postCommand_App("font.reset");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
@@ -2562,6 +2563,20 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;        
     }
+    else if (equal_Command(cmd, "prefs.bottomnavbar.changed")) {
+        d->prefs.bottomNavBar = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            postCommand_App("~root.movable");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.bottomtabbar.changed")) {
+        d->prefs.bottomTabBar = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            postCommand_App("~root.movable");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "translation.languages")) {
         d->prefs.langFrom = argLabel_Command(cmd, "from");
         d->prefs.langTo   = argLabel_Command(cmd, "to");
@@ -3365,6 +3380,8 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.bottomnavbar"), d->prefs.bottomNavBar);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.bottomtabbar"), d->prefs.bottomTabBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.blink"), d->prefs.blinkingCursor);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);

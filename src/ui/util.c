@@ -2528,6 +2528,8 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.prefs.interface" },
             { "dropdown device:0 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
             { "padding device:1" },
+            { "toggle id:prefs.bottomnavbar" },
+            { "toggle id:prefs.bottomtabbar" },
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
             { "heading device:2 id:heading.prefs.toolbaractions" },
             { "dropdown device:2 id:prefs.toolbaraction1", 0, 0, (const void *) toolbarActionItems[0] },
@@ -2701,6 +2703,8 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.interface}", '2', &headings, &values),
                      "prefs.page.ui");
         addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
+        addDialogToggle_(headings, values, "${prefs.bottomnavbar}", "prefs.bottomnavbar");
+        addDialogToggle_(headings, values, "${prefs.bottomtabbar}", "prefs.bottomtabbar");
         addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
         /* Return key behaviors. */ {
@@ -2897,6 +2901,9 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addPrefsInputWithHeading_(headings, values, "prefs.linespacing", iClob(new_InputWidget(5)));
         addDialogToggle_(headings, values, "${prefs.justify}", "prefs.justify");
+        addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
+        addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
+        addDialogPadding_(headings, values);
         addPrefsInputWithHeading_(headings, values, "prefs.tabwidth", iClob(new_InputWidget(5)));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.quoteicon}")));
         iWidget *quote = new_Widget(); {
@@ -2904,7 +2911,6 @@ iWidget *makePreferences_Widget(void) {
             addRadioButton_(quote, "prefs.quoteicon.0", "${prefs.quoteicon.line}", "quoteicon.set arg:0");
         }
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.boldlink}")));
         iWidget *boldLink = new_Widget(); {
             /* TODO: Add a utility function for this type of toggles? (also for above) */
@@ -2926,11 +2932,10 @@ iWidget *makePreferences_Widget(void) {
             updateSize_LabelWidget((iLabelWidget *) tog);
         }
         addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
-        addDialogToggle_(headings, values, "${prefs.collapsepreonload}", "prefs.collapsepreonload");
         addDialogPadding_(headings, values);
         addDialogToggle_(headings, values, "${prefs.sideicon}", "prefs.sideicon");
         addDialogToggle_(headings, values, "${prefs.centershort}", "prefs.centershort");
+        addDialogToggle_(headings, values, "${prefs.collapsepreonload}", "prefs.collapsepreonload");
     }
     /* Network. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.network}", '6', &headings, &values), "prefs.page.network");
