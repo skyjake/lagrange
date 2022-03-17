@@ -908,10 +908,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     setId_Widget(
         addChildPosFlags_Widget(listAndActions,
                                 iClob(d->actions = new_Widget()),
-                                /*isPhone ? front_WidgetAddPos :*/ back_WidgetAddPos,
+                                back_WidgetAddPos,
                                 arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
-                                    resizeWidthOfChildren_WidgetFlag), // |
-        //                                             drawBackgroundToHorizontalSafeArea_WidgetFlag),
+                                    resizeWidthOfChildren_WidgetFlag),
         "actions");
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(findChild_Widget(w, "sidebar.title"), borderTop_WidgetFlag, iTrue);
@@ -1366,11 +1365,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                             isPortrait_App());
             setBackgroundColor_Widget(w, isPortrait_App() ? uiBackgroundSidebar_ColorId : none_ColorId);
         }
-        if (!isPortraitPhone_App()) {
+        if (!isPortraitPhone_App() && !prefs_App()->bottomTabBar && !prefs_App()->bottomNavBar) {
             /* In sliding sheet mode, sidebar is resized to fit in the safe area. */
             setPadding_Widget(d->actions, 0, 0, 0, bottomSafeInset_Mobile());
         }
-            return iFalse;
+        else {
+            setPadding_Widget(d->actions, 0, 0, 0, 0);
+        }
+        return iFalse;
     }
     else if (isMetricsChange_UserEvent(ev)) {
         w->rect.size.x = d->widthAsGaps * gap_UI;

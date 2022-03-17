@@ -881,7 +881,7 @@ static void updateVisible_DocumentView_(iDocumentView *d) {
     /* After scrolling/resizing stops, begin pre-rendering the visbuf contents. */ {
         removeTicker_App(prerender_DocumentWidget_, d->owner);
         remove_Periodic(periodic_App(), d);
-        if (~d->owner->flags & animationPlaceholder_DocumentWidgetFlag) {
+        if (~d->owner->widget.flags & destroyPending_WidgetFlag) {
             add_Periodic(periodic_App(), d->owner, "document.render");
         }
     }
@@ -5640,8 +5640,20 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     draw_DocumentView_(&d->view);
     iPaint p;
     init_Paint(&p);
-    if (colorTheme_App() == pureWhite_ColorTheme) {
+    if (colorTheme_App() == pureWhite_ColorTheme &&
+        !(prefs_App()->bottomNavBar && prefs_App()->bottomTabBar)) {
+        /* A subtle separator between UI and content. */
         drawHLine_Paint(&p, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
+    }
+    if (isPortraitPhone_App() && prefs_App()->bottomNavBar) {
+        /* Fill the top safe area. */
+        if (topSafeInset_Mobile() > 0) {
+            const iRect docBounds = documentBounds_DocumentView_(&d->view);
+            fillRect_Paint(&p, initCorners_Rect(zero_I2(), topRight_Rect(safeRect_Root(w->root))),
+                            !isEmpty_Banner(d->banner) && docBounds.pos.y + viewPos_DocumentView_(&d->view) -
+                                documentTopPad_DocumentView_(&d->view) > bounds.pos.y ?
+                                tmBannerBackground_ColorId : tmBackground_ColorId);
+        }
     }
     /* Pull action indicator. */
     if (deviceType_App() != desktop_AppDeviceType) {

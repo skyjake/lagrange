@@ -687,10 +687,11 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                 }
                 else {
                     w->rect.pos = windowToLocal_Widget(w, visibleRect_Root(root).pos);
-                    w->rect.size.y = height_Rect(visibleRect_Root(root)) - height_Rect(navBarBounds);
+                    w->rect.size.y = height_Rect(visibleRect_Root(root)) - height_Rect(navBarBounds) +
+                        (!isPortraitPhone_App() ? bottomSafeInset_Mobile() : 0);
                 }
 #   if defined (iPlatformAppleMobile)
-                if (deviceType_App() == phone_AppDeviceType) {
+                if (deviceType_App() != desktop_AppDeviceType) {
                     float l = 0.0f, r = 0.0f;
                     safeAreaInsets_iOS(&l, NULL, &r, NULL);
                     w->rect.size.x = size_Root(root).x - l - r;

@@ -238,10 +238,10 @@ static const char *stopSeqCStr_[] = {
 
 static const int loadAnimIntervalMs_ = 133;
 static int       loadAnimIndex_      = 0;
-
-static iRoot *   activeRoot_     = NULL;
+static iRoot *   activeRoot_         = NULL;
 
 static void     setupMovableElements_Root_  (iRoot *);
+static void     setBottomBarPosition_       (iWidget *bottomBar, iBool show, iBool animate);
 
 iDefineTypeConstruction(Root)
 iDefineAudienceGetter(Root, visualOffsetsChanged)
@@ -549,6 +549,13 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "root.movable")) {
         setupMovableElements_Root_(root->root);
+        arrange_Widget(root);
+        iWidget *bottomBar = findChild_Widget(root, "bottombar");
+        if (bottomBar) {
+            /* Update bottom bar height and position. */
+            setBottomBarPosition_(bottomBar, isVisible_Widget(bottomBar), iFalse);
+            updateToolbarColors_Root(root->root);
+        }
         return iFalse; /* all roots must handle this */
     }
     else if (equal_Command(cmd, "theme.changed")) {
@@ -801,7 +808,8 @@ static void updateNavBarSize_(iWidget *navBar) {
         int vPad   = gap_UI * 3 / 2;
         int botPad = vPad / 2;
         int topPad = !findWidget_Root("winbar") ? gap_UI / 2 : 0;
-        if (isLandscape_App() && prefs_App()->bottomNavBar) {
+        if (prefs_App()->bottomNavBar &&
+            ((isPhone && isLandscape_App()) || deviceType_App() == tablet_AppDeviceType)) {
             botPad += bottomSafeInset_Mobile();
             hPad += leftSafeInset_Mobile();
         }
@@ -1103,6 +1111,17 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         }
         return iTrue;
     }
+    else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "keyboard.changed")) {
+        const int keyboardHeight = arg_Command(cmd);
+        if (focus_Widget() == findChild_Widget(navBar, "url")) {
+            setVisualOffset_Widget(navBar, -keyboardHeight + bottomSafeInset_Mobile(),
+                                   400, easeOut_AnimFlag | softer_AnimFlag);
+        }
+        else {
+            setVisualOffset_Widget(navBar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+        }
+        return iFalse;
+    }
     return iFalse;
 }
 
@@ -1207,7 +1226,8 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         if (!bottomBar) {
             return iFalse;
         }
-        if (focus_Widget() == findChild_Widget(root_Widget(toolBar), "url") && height > 0) {
+        iWidget *navBar = findChild_Widget(root_Widget(toolBar), "navbar");
+        if (focus_Widget() == findChild_Widget(navBar, "url") && height > 0) {
             int inputHeight = 5 * gap_UI; /* TODO: Why this amount? Something's funny here. */
             int keyboardPad = height - (isPortrait_App() ? height_Widget(toolBar) : inputHeight);
             bottomBar->padding[3] = keyboardPad;
@@ -1817,6 +1837,7 @@ static void setupMovableElements_Root_(iRoot *d) {
     iWidget *div       = findChild_Widget(d->widget, "navdiv");
     iWidget *docTabs   = findChild_Widget(d->widget, "doctabs");
     iWidget *tabBar    = findChild_Widget(docTabs, "tabs.buttons");
+    iChangeFlags(navBar->flags2, permanentVisualOffset_WidgetFlag2, iFalse);
     if (prefs->bottomNavBar) {
         if (deviceType_App() == phone_AppDeviceType) {
             /* When at the bottom, the navbar is at the top of the bottombar, and gets fully hidden
@@ -1832,6 +1853,9 @@ static void setupMovableElements_Root_(iRoot *d) {
             removeChild_Widget(navBar->parent, navBar);
             addChildPos_Widget(div, navBar, back_WidgetAddPos);
             iRelease(navBar);
+            /* We'll need to be able to move the input field from under the keyboard. */
+            iChangeFlags(navBar->flags2, permanentVisualOffset_WidgetFlag2,
+                         deviceType_App() == tablet_AppDeviceType);
         }
     }
     else {
@@ -1847,9 +1871,17 @@ static void setupMovableElements_Root_(iRoot *d) {
         iRelease(navBar);
     }
     iChangeFlags(tabBar->flags2, permanentVisualOffset_WidgetFlag2, prefs->bottomTabBar);
+    /* Adjust safe area paddings. */
+    if (deviceType_App() == tablet_AppDeviceType && prefs->bottomTabBar && !prefs->bottomNavBar) {
+        tabBar->padding[3] = bottomSafeInset_Mobile();
+    }
+    else {
+        tabBar->padding[3] = 0;
+    }
     setTabBarPosition_Widget(docTabs, prefs->bottomTabBar);
     arrange_Widget(d->widget);
     postRefresh_App();
+    postCommand_App("window.resized"); /* not really, but some widgets will update their layout */
 }
 
 static void setBottomBarPosition_(iWidget *bottomBar, iBool show, iBool animate) {
@@ -1863,7 +1895,7 @@ static void setBottomBarPosition_(iWidget *bottomBar, iBool show, iBool animate)
     iWidget *docTabs = findChild_Widget(root->widget, "doctabs");
     iWidget *toolBar = findChild_Widget(bottomBar, "toolbar");
     iWidget *navBar = findChild_Widget(root->widget, "navbar");
-    const int height = size_Root(root).y - top_Rect(boundsWithoutVisualOffset_Widget(bottomBar));
+    const int height = height_Widget(bottomBar);
     size_t numPages = 0;
     iBool bottomTabBar = prefs->bottomTabBar;
     if (prefs->bottomTabBar || prefs->bottomNavBar) {

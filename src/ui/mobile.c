@@ -1037,6 +1037,15 @@ int leftSafeInset_Mobile(void) {
 #endif
 }
 
+int topSafeInset_Mobile(void) {
+#if defined (iPlatformAppleMobile)
+    float top;
+    safeAreaInsets_iOS(NULL, &top, NULL, NULL);
+    return iRound(top);
+#else
+    return 0;
+#endif
+}
 
 int bottomSafeInset_Mobile(void) {
 #if defined (iPlatformAppleMobile)

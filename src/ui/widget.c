@@ -1509,10 +1509,10 @@ void drawLayerEffects_Widget(const iWidget *d) {
             }
         }
         if (d->flags & drawBackgroundToVerticalSafeArea_WidgetFlag) {
-            if (top_Rect(rect) > center.y) {
+            if (top_Rect(rect) > center.y * 3 / 2) {
                 bottom = rootSize.y - bottom_Rect(rect);
             }
-            if (bottom_Rect(rect) < center.y) {
+            if (bottom_Rect(rect) < center.y / 2) {
                 top = -top_Rect(rect);
             }
         }
