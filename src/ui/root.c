@@ -1227,6 +1227,15 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
             return iFalse;
         }
         iWidget *navBar = findChild_Widget(root_Widget(toolBar), "navbar");
+#if defined (iPlatformAppleMobile)
+        const int showSpan = 400;
+        const int hideSpan = 350;
+        const int animFlag = easeOut_AnimFlag | softer_AnimFlag;
+#else
+        const int showSpan = 100;
+        const int hideSpan = 200;
+        const int animFlag = easeOut_AnimFlag;
+#endif
         if (focus_Widget() == findChild_Widget(navBar, "url") && height > 0) {
             int inputHeight = 5 * gap_UI; /* TODO: Why this amount? Something's funny here. */
             int keyboardPad = height - (isPortrait_App() ? height_Widget(toolBar) : inputHeight);
@@ -1234,11 +1243,11 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
             arrange_Widget(bottomBar);
             arrange_Widget(bottomBar);
             setVisualOffset_Widget(bottomBar, keyboardPad, 0, 0);
-            setVisualOffset_Widget(bottomBar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+            setVisualOffset_Widget(bottomBar, 0, showSpan, animFlag);
         }
         if (height == 0) {
             setVisualOffset_Widget(bottomBar, -bottomBar->padding[3], 0, 0);
-            setVisualOffset_Widget(bottomBar, 0, 350, easeOut_AnimFlag | softer_AnimFlag);
+            setVisualOffset_Widget(bottomBar, 0, hideSpan, animFlag);
             bottomBar->padding[3] = 0;
             arrange_Widget(bottomBar);
             arrange_Widget(bottomBar);

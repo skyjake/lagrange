@@ -785,7 +785,7 @@ static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
         setRect_SystemTextInput(d->sysCtrl, contentBounds_InputWidget_(d));
     }
 #endif
-#if !defined (iPlatformAppleMobile)
+#if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile)
     const iRect bounds = bounds_Widget(constAs_Widget(d));
     SDL_SetTextInputRect(&(SDL_Rect){ bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y });
 #endif
