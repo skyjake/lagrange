@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2022-02-21 13:50+0000\n"
+"PO-Revision-Date: 2022-03-04 12:50+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -2247,3 +2247,80 @@ msgstr "Боковая панель: показать все записи в л�
 
 msgid "keys.feeds.showunread"
 msgstr "Боковая панель: показать непрочитанные записи в ленте"
+
+msgid "prefs.tabwidth"
+msgstr "Ширина Tab:"
+
+msgid "menu.paste.go"
+msgstr "Вставить и перейти"
+
+msgid "pageinfo.settings"
+msgstr "Настройки"
+
+msgid "sitespec.accept"
+msgstr "Сохранить настройки"
+
+msgid "keys.pageinfo"
+msgstr "Показать информацию о странице"
+
+msgid "heading.sitespec"
+msgstr "Настройки сайта"
+
+msgid "sitespec.ansi"
+msgstr "Предупреждения управляющих символов ANSI:"
+
+msgid "sitespec.palette"
+msgstr "Сид палитры темы:"
+
+msgid "keys.sitespec"
+msgstr "Показать настройки сайта"
+
+msgid "heading.glyphfinder"
+msgstr "Недостающие глифы"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Можете попытаться поискать шрифты, предоставляющие недостающие глифы для "
+"этих символов, в шрифтовой библиотеке skyjake.fi или вручную установить "
+"новые TrueType шрифты."
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr ""
+"Пожалуйста, обновите страницу, чтобы повторить проверку на недостающие глифы."
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Не удалось отобразить следующие символы:"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Отключить предупреждения"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Поиск по шрифтовой библиотеке"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Отображать изображения из Data URL:"
+
+msgid "prefs.retaintabs"
+msgstr "Восстанавливать открытые вкладки при запуске:"
+
+msgid "menu.newwindow"
+msgstr "Новое окно"
+
+msgid "menu.openwindow"
+msgstr "Открыть в новом окне"
+
+msgid "link.newwindow"
+msgstr "Открыть ссылку в новом окне"
+
+msgid "heading.glyphfinder.results"
+msgstr "Результаты поиска"
+
+msgid "glyphfinder.results"
+msgstr "Следующие шрифты предоставляют один или несколько недостающих глифов:"
+
+msgid "glyphfinder.results.empty"
+msgstr "Извините, подходящие пакеты шрифтов не найдены."
+
+msgid "prefs.urlsize"
+msgstr "Максимальный размер URL:"

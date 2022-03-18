@@ -1,0 +1,1137 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2022-03-09 21:50+0000\n"
+"Last-Translator: Xavier <dxpublica@posteo.net>\n"
+"Language-Team: Catalan <http://weblate.skyjake.fi/projects/lagrange/ui/ca/>\n"
+"Language: ca\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s és un arxiu comprimit."
+
+msgid "media.untitled.image"
+msgstr "Imatge"
+
+msgid "media.untitled.audio"
+msgstr "Audio"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Descàrrega completada."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Títol"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artista"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Gènere"
+
+msgid "doc.pre.nocaption"
+msgstr "Text preformatat sense llegenda"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Data"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bit"
+
+msgid "numbertype.integer"
+msgstr "enter"
+
+msgid "numbertype.float"
+msgstr "punt flotant"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Entrades de las subscripcions"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "fa %d hora"
+msgstr[1] "fa %d hores"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "fa %d dia"
+msgstr[1] "fa %d dies"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "un total de %u entrada"
+msgstr[1] "un total de %u entrades"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "La darrer actualització va ocórrer fa just un moment."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "La darrera actualització va ocórrer %s."
+
+msgid "about.tagline"
+msgstr "Un client Gemini maco"
+
+msgid "about.version"
+msgstr "Versió"
+
+msgid "cancel"
+msgstr "Cancel·la"
+
+msgid "close"
+msgstr "Tanca"
+
+msgid "dlg.message.ok"
+msgstr "Continua"
+
+msgid "dlg.default"
+msgstr " D'acord "
+
+msgid "toggle.yes"
+msgstr "SÍ"
+
+msgid "toggle.no"
+msgstr "NO"
+
+msgid "about.powered"
+msgstr "Fet amb SDL2, OpenSSL i ☕️"
+
+msgid "menu.title.edit"
+msgstr "Edita"
+
+msgid "menu.title.help"
+msgstr "Ajuda"
+
+msgid "menu.newwindow"
+msgstr "Nova finestra"
+
+msgid "menu.newtab"
+msgstr "Nova pestanya"
+
+msgid "menu.title.bookmarks"
+msgstr "Marcadors"
+
+msgid "menu.closetab.left"
+msgstr "Tanca pestanyes a l'esquerra"
+
+msgid "menu.closetab.right"
+msgstr "Tanca pestanyes a la dreta"
+
+msgid "menu.split.vertical"
+msgstr "Vertical"
+
+msgid "menu.openlocation"
+msgstr "Obre localització…"
+
+msgid "menu.pageinfo"
+msgstr "Mostra la informació de la pàgina"
+
+msgid "menu.downloads"
+msgstr "Mostra Baixades"
+
+msgid "menu.split.swap"
+msgstr "Intercanvia costats"
+
+msgid "menu.find"
+msgstr "Cerca a la pàgina"
+
+msgid "macos.menu.find"
+msgstr "Cerca"
+
+msgid "menu.open.external"
+msgstr "Obre en un altra aplicació"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Desa a Files"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Desa a Baixades"
+
+msgid "menu.save.downloads.open"
+msgstr "Desa a Baixades i obri el fitxer"
+
+msgid "menu.zoom.out"
+msgstr "Redueix"
+
+msgid "menu.zoom.reset"
+msgstr "Restaura el zoom"
+
+msgid "menu.sort.alpha"
+msgstr "Ordena alfabèticament"
+
+msgid "menu.update"
+msgstr "Comprova actualitzacions…"
+
+msgid "menu.help"
+msgstr "Ajuda"
+
+msgid "menu.website"
+msgstr "Pàgina web del projecte…"
+
+msgid "menu.cut"
+msgstr "Retalla"
+
+msgid "menu.copy"
+msgstr "Copia"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Borra"
+
+msgid "menu.paste.go"
+msgstr "Enganxa'l i ves-hi"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Selecciona-ho tot"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Mostra historial"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Mostra identitats"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Oculta identitats"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Mostra marcadors"
+
+msgid "menu.back"
+msgstr "Torna enrera"
+
+msgid "menu.forward"
+msgstr "Ves envant"
+
+msgid "menu.home"
+msgstr "Ves a l'inici"
+
+msgid "menu.reload"
+msgstr "Recarrega la pàgina"
+
+msgid "menu.autoreload"
+msgstr "Estableix l'auto-recàrrega…"
+
+msgid "menu.page.bookmark"
+msgstr "Afegeix a marcadors…"
+
+msgid "menu.fonts"
+msgstr "Administra les fonts…"
+
+msgid "panel.back"
+msgstr "Enrera"
+
+msgid "menu.debug"
+msgstr "Informació de depuració"
+
+msgid "menu.page.copyurl"
+msgstr "Copia la URL de la pàgina"
+
+msgid "menu.identity.new"
+msgstr "Nova identitat…"
+
+msgid "menu.identity.import"
+msgstr "Importa…"
+
+msgid "menu.page.import"
+msgstr "Importa enllaços com a marcadors…"
+
+msgid "menu.identity.notactive"
+msgstr "Cap identitat activa"
+
+msgid "sidebar.close"
+msgstr "Fet"
+
+msgid "sidebar.identities"
+msgstr "Identitats"
+
+msgid "sidebar.outline"
+msgstr "Resum"
+
+msgid "sidebar.bookmarks"
+msgstr "Marcadors"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Edita"
+
+msgid "sidebar.action.show"
+msgstr "Mostra:"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Tot"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Sense llegir"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importa…"
+
+msgid "toolbar.outline"
+msgstr "Resum de la pàgina"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "%u fitxer"
+msgstr[1] "%u fitxers"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u font"
+msgstr[1] "%u fonts"
+
+msgid "feeds.entry.markread"
+msgstr "Marca com a llegit"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Afegeix un marcador…"
+
+msgid "sidebar.empty.idents"
+msgstr "Cap identitat"
+
+msgid "sidebar.empty.unread"
+msgstr "Cap entrada no llegida"
+
+msgid "pageinfo.domain.match"
+msgstr "El nom del domini coincideix"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "El nom del domini no coincideix"
+
+msgid "dlg.cert.trust"
+msgstr "Confiança"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Copia empremta digital"
+
+msgid "heading.sitespec"
+msgstr "Configuració específica del lloc"
+
+msgid "sitespec.ansi"
+msgstr "Advertències d'escapament ANSI:"
+
+msgid "keys.pageinfo"
+msgstr "Mostra la informació de la pàgina"
+
+msgid "dlg.input.linebreak"
+msgstr "Salt de línia"
+
+msgid "dlg.input.send"
+msgstr "Envia"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Enganxa la línia precedent"
+
+msgid "heading.save.incomplete"
+msgstr "Pàgina incompleta"
+
+msgid "dlg.save.size"
+msgstr "Mida:"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sAfegeix marcador"
+msgstr[1] "%sAfegeix %d marcadors"
+
+msgid "heading.autoreload"
+msgstr "Auto-recarregar"
+
+msgid "dlg.autoreload"
+msgstr "Tria l'interval d'auto-recàrrega per aquesta pestanya."
+
+msgid "reload.never"
+msgstr "Mai"
+
+msgid "reload.onceperday"
+msgstr "Una vegada per dia"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d hora"
+msgstr[1] "%d hores"
+
+msgid "link.newtab.background"
+msgstr "Obre l'enllaç a una pestanya de fons"
+
+msgid "link.newwindow"
+msgstr "Obre l'enllaç a una nova finestra"
+
+msgid "link.noproxy"
+msgstr "Obre sense el servidor intermedi"
+
+msgid "link.copy"
+msgstr "Copia l'enllaç"
+
+msgid "link.download"
+msgstr "Descarrega el fitxer enllaçat"
+
+msgid "menu.share"
+msgstr "Comparteix"
+
+msgid "heading.file.delete"
+msgstr "Esborra arxiu"
+
+msgid "dlg.file.delete"
+msgstr "Esborra"
+
+msgid "dlg.openlink"
+msgstr "Obre l'enllaç"
+
+msgid "dlg.upload.id.none"
+msgstr "Cap"
+
+msgid "dlg.upload.id.default"
+msgstr "Per defecte"
+
+msgid "heading.upload.text"
+msgstr "Text"
+
+msgid "menu.upload.delete"
+msgstr "Esborra-ho tot"
+
+msgid "heading.upload.file"
+msgstr "Fitxer"
+
+msgid "upload.file.name"
+msgstr "Nom del fitxer:"
+
+msgid "upload.file.size"
+msgstr "Mida del fitxer:"
+
+msgid "upload.token"
+msgstr "Testimoni:"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Contingut"
+
+msgid "hint.upload.path"
+msgstr "Ruta de l'URL"
+
+msgid "dlg.upload.send"
+msgstr "Penja"
+
+msgid "heading.uploadport"
+msgstr "Port de pujada de Titan"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Selecciona un fitxer"
+
+msgid "heading.translate"
+msgstr "Tradueix la pàgina"
+
+msgid "dlg.translate.unavail"
+msgstr "Servei no disponible"
+
+msgid "dlg.translate.fail"
+msgstr "Sol·licitud fallida"
+
+msgid "dlg.translate"
+msgstr "Tradueix"
+
+msgid "dlg.translate.to"
+msgstr "Per a:"
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "Àrab"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "Alemany"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "Anglès"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "Francès"
+
+# A language choice in the Translation dialog.
+msgid "lang.hi"
+msgstr "Hindi"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "Italià"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "Portuguès"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "Rus"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "Espanyol"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Desactiva les advertències"
+
+msgid "heading.glyphfinder.results"
+msgstr "Resultats de la cerca"
+
+msgid "prefs.ca.path"
+msgstr "Ruta CA:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Servidor intermedi Gemini:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Servidor intermedi Gopher:"
+
+msgid "prefs.proxy.http"
+msgstr "Servidor intermedi HTTP:"
+
+msgid "error.badstatus"
+msgstr "Codi d'estat desconegut"
+
+msgid "error.openfile"
+msgstr "Falla a l'obrir el fitxer"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Carregant"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "La descàrrega serà cancel·lada si es tanca aquesta pestanya."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "fa %d minut"
+msgstr[1] "fa %d minuts"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "Art ASCII: la paraula \"Lagrange\" usant una font gran"
+
+msgid "menu.title.file"
+msgstr "Fitxer"
+
+msgid "menu.title.identity"
+msgstr "Indentitat"
+
+msgid "menu.closetab"
+msgstr "Tanca pestanya"
+
+msgid "menu.closetab.other"
+msgstr "Tanca les altres pestanyes"
+
+msgid "menu.duptab"
+msgstr "Duplica pestanya"
+
+msgid "menu.split.horizontal"
+msgstr "Horitzontal"
+
+msgid "menu.zoom.in"
+msgstr "Amplia"
+
+msgid "menu.newfolder"
+msgstr "Nou directori…"
+
+msgid "menu.preferences"
+msgstr "Preferències…"
+
+msgid "menu.releasenotes"
+msgstr "Notes de la versió"
+
+msgid "menu.quit"
+msgstr "Surt"
+
+msgid "menu.paste"
+msgstr "Enganxa"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Desfés"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Copia enllaç a la pàgina"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Mostra el resum de la pàgina"
+
+msgid "menu.about"
+msgstr "Quant a"
+
+msgid "menu.page.translate"
+msgstr "Tradueix…"
+
+msgid "menu.page.copysource"
+msgstr "Copia el codi font de la pàgina"
+
+msgid "menu.identities"
+msgstr "Administra identitats"
+
+msgid "sidebar.history"
+msgstr "Historial"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Nova carpeta"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Llegeix-los tots"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nou…"
+
+msgid "hint.findtext"
+msgstr "cerca text a la pàgina"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "feeds.today"
+msgstr "Avui"
+
+msgid "feeds.entry.markunread"
+msgstr "Marca com a no llegit"
+
+msgid "heading.ident.delete"
+msgstr "Esborra identitat"
+
+msgid "dlg.ident.delete"
+msgstr "Esborra la identitat i els fitxers"
+
+msgid "heading.pageinfo"
+msgstr "Informació de la pàgina"
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Esteu subscrit a la subscripció %u que conté %%s.\n"
+msgstr[1] "Esteu subscrit a les subscripcions %u que contenen %%s.\n"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "No confiable"
+
+msgid "pageinfo.settings"
+msgstr "Configuració"
+
+msgid "sitespec.accept"
+msgstr "Desa configuració"
+
+msgid "keys.sitespec"
+msgstr "Mostra la configuració específica de la pàgina"
+
+msgid "heading.save"
+msgstr "Fitxer desat"
+
+msgid "dlg.save.opendownload"
+msgstr "Obre fitxer descarregat"
+
+msgid "heading.import.bookmarks"
+msgstr "Importa marcadors"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Trobat un nou enllaç a la pàgina."
+msgstr[1] "Trobats %d nous enllaços a la pàgina."
+
+msgid "dlg.import.notnew"
+msgstr "Tots els enllaços d'aquesta pàgina ja estan descarregats."
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minut"
+msgstr[1] "%d minuts"
+
+msgid "link.newtab"
+msgstr "Obre l'enllaç a una nova pestanya"
+
+msgid "link.side"
+msgstr "Obre l'enllaç al costat"
+
+msgid "link.side.newtab"
+msgstr "Obre l'enllaç a una nova pestanya al costat"
+
+msgid "link.browser"
+msgstr "Obre l'enllaç al navegador per defecte"
+
+msgid "link.file.delete"
+msgstr "Esborra fitxer"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Esteu segur que voleu esborrar aquest fitxer?"
+
+msgid "heading.openlink"
+msgstr "Obre l'enllaç"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Obre aquest enllaç al navegador per defecte?\n"
+"%s%s"
+
+msgid "dlg.dismiss.warning"
+msgstr "Descarta l'advertència"
+
+msgid "prefs.memorysize"
+msgstr "Mida de la memòria:"
+
+msgid "prefs.ca.file"
+msgstr "Fitxer CA:"
+
+msgid "heading.upload.id"
+msgstr "Autorització"
+
+msgid "menu.upload.export"
+msgstr "Exporta text"
+
+msgid "upload.file.drophere"
+msgstr "(arrossega i amolla un fitxer a la finestra)"
+
+msgid "upload.mime"
+msgstr "Tipus MIME:"
+
+msgid "upload.port"
+msgstr "Port…"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Penja un fitxer"
+
+msgid "dlg.translate.from"
+msgstr "De:"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "Xinès"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "Japonès"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Els caràcters següents no s'han pogut mostrar:"
+
+msgid "heading.newident"
+msgstr "Nova identitat"
+
+msgid "keys.tab.prev"
+msgstr "Pestanya anterior"
+
+msgid "keys.tab.next"
+msgstr "Pestanya posterior"
+
+msgid "keys.upload.edit"
+msgstr "Edita la pàgina amb Titan"
+
+msgid "doc.archive.view"
+msgstr "Visualitza el contingut del fitxer"
+
+msgid "menu.title.view"
+msgstr "Visualitza"
+
+msgid "menu.split.merge"
+msgstr "Reuneix"
+
+msgid "menu.unexpire"
+msgstr "Ignora l'expiració i continua carregant"
+
+msgid "menu.sidebar"
+msgstr "Alterna la barra lateral"
+
+msgid "menu.sidebar.left"
+msgstr "Alterna la barra lateral esquerra"
+
+msgid "menu.sidebar.right"
+msgstr "Alterna la barra lateral dreta"
+
+msgid "menu.view.split"
+msgstr "Parteix la visualització…"
+
+msgid "menu.bookmarks.list"
+msgstr "Llista tots els marcadors"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Llista-ho tot"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Llista per etiqueta"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Llista els marcadors per data de creació"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Llista per data de creació"
+
+msgid "menu.feeds.entrylist"
+msgstr "Visualitza les entrades de subscripció"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Configuració"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Visualitza les subscripcions"
+
+msgid "menu.select.clear"
+msgstr "Neteja la selecció"
+
+msgid "menu.page.subscribe"
+msgstr "Subscriu-te a la pàgina…"
+
+msgid "menu.parent"
+msgstr "Ves al node pare"
+
+msgid "menu.root"
+msgstr "Ves al node arrel"
+
+msgid "menu.aboutpages"
+msgstr "Quant a les pàgines"
+
+msgid "menu.import.links"
+msgstr "Importa tots els enllaços de la pàgina…"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Refresca els marcadors remots"
+
+msgid "menu.feeds.refresh"
+msgstr "Refresca les subcripcions"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Estableix acció:"
+
+msgid "sidebar.feeds"
+msgstr "Subscripcions"
+
+msgid "sidebar.action.history.clear"
+msgstr "Neteja"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Sense llegir"
+msgstr[1] "Sense llegir"
+
+msgid "status.query"
+msgstr "Consulta de la cerca"
+
+msgid "status.query.tight"
+msgstr "Consulta"
+
+msgid "status.feeds"
+msgstr "Actualitzant subscripcions"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%u byte"
+msgstr[1] "% bytes"
+
+# strftime() formatted. Should be split evenly on two lines with a newline character.
+msgid "page.timestamp"
+msgstr ""
+"Rebut a les %l:%M %p\n"
+"el %d %b %Y"
+
+# strftime() formatted
+msgid "sidebar.date.thisyear"
+msgstr "%d. %b"
+
+# strftime() formatted
+msgid "sidebar.date.otheryear"
+msgstr "%d.%b, %Y"
+
+msgid "feeds.entry.bookmark"
+msgstr "Afegeix marcador…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Obre pàgina de subcripcions"
+
+msgid "feeds.unsubscribe"
+msgstr "Elimina subscripció…"
+
+msgid "feeds.edit"
+msgstr "Edita subscripció…"
+
+msgid "feeds.markallread"
+msgstr "Marca tot com a llegit"
+
+msgid "feeds.refresh"
+msgstr "Refresca subscripcions"
+
+msgid "menu.opentab"
+msgstr "Obre a una nova pestanya"
+
+msgid "menu.opentab.background"
+msgstr "Obre a una pestanya de fons"
+
+msgid "menu.openfile"
+msgstr "Obre fitxer…"
+
+msgid "menu.edit"
+msgstr "Edita…"
+
+msgid "menu.dup"
+msgstr "Duplica…"
+
+msgid "menu.forgeturl"
+msgstr "Oblida l'URL"
+
+msgid "menu.copyurl"
+msgstr "Copia l'URL"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "Esborra marcadors"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Esborra marcador"
+msgstr[1] "Esborra %u marcadors"
+
+msgid "history.clear"
+msgstr "Neteja l'historial…"
+
+msgid "heading.history.clear"
+msgstr "Neteja l'historial"
+
+msgid "dlg.history.clear"
+msgstr "Neteja l'historial"
+
+msgid "bookmark.tag.sub"
+msgstr "Subcriure's-hi"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Obre enllaços al costat"
+
+msgid "bookmark.untag.home"
+msgstr "Lleva la pàgina d'inici"
+
+msgid "bookmark.untag.sub"
+msgstr "Elimina la subcripció"
+
+msgid "bookmark.untag.remote"
+msgstr "Lleva la font del marcador"
+
+msgid "bookmarks.reload"
+msgstr "Refresca les fonts remotes"
+
+msgid "ident.using"
+msgstr "Usant-lo en aquesta pàgina"
+
+msgid "ident.notused"
+msgstr "No usat"
+
+msgid "ident.temporary"
+msgstr "Temporal"
+
+# strftime() formatted
+msgid "ident.expiry"
+msgstr "Expira el %d %b %Y"
+
+msgid "ident.use"
+msgstr "Usa'l en aquesta pàgina"
+
+msgid "ident.stopuse.all"
+msgstr "Deixa d'usar-lo per tot"
+
+msgid "ident.export"
+msgstr "Exporta"
+
+msgid "heading.ident.use"
+msgstr "Ús d'identitats"
+
+msgid "menu.edit.notes"
+msgstr "Edita les notes…"
+
+msgid "heading.ident.notes"
+msgstr "Notes sobre identitats"
+
+msgid "ident.fingerprint"
+msgstr "Copia emprempta digital"
+
+msgid "ident.delete"
+msgstr "Esborra identitat…"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"De veres que voleu esborrar la identitat %s\"%s\"%s inclosos els seus "
+"fitxers de certificat i de clau privada?"
+
+msgid "heading.unsub"
+msgstr "Elimina subcripció"
+
+msgid "dlg.unsub"
+msgstr "Elimina subscripció"
+
+msgid "error.server.msg"
+msgstr "El servidor ha respost amb el missatge:"
+
+msgid "pageinfo.header.cached"
+msgstr "(contingut en la memòria cau)"
+
+msgid "pageinfo.cert.status"
+msgstr "Estat del certificat:"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "No verificat per CA"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "No expirat"
+
+msgid "pageinfo.cert.expired"
+msgstr "Expirat"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Confiable"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Si us plau, escriviu l'entrada per a %s:"
+
+msgid "keys.input.precedingline"
+msgstr "Indicador d'entrada: enganxa la línia precedent"
+
+msgid "sitespec.palette"
+msgstr "Llavor per a la paleta del tema"
+
+msgid "dlg.save.incomplete"
+msgstr "Els continguts de la pàgina ja s'estant descarregant."
+
+msgid "heading.save.error"
+msgstr "Error desant el fitxer"
+
+msgid "link.bookmark"
+msgstr "Desa l'enllaç a marcadors…"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Mostra en el Finder"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Mostra en l'administrador d'arxius"
+
+msgid "prefs.cachesize"
+msgstr "Mida de la memòria cau:"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Llista els marcadors per etiqueta"
+
+msgid "feeds.atom.translated"
+msgstr ""
+"Aquest document XML d'Atom ha estat automàticament traduit al format Gemini "
+"per permetre subscriure's-hi."
+
+msgid "menu.openwindow"
+msgstr "Obre a una nova finestra"
+
+msgid "dlg.confirm.history.clear"
+msgstr "De veres que voleu borrar la història de totes les pàgines visitades?"
+
+#, c-format
+msgid "dlg.confirm.bookmarks.delete"
+msgid_plural "dlg.confirm.bookmarks.delete.n"
+msgstr[0] "De veres que voleu esborrar el marcador en aquesta carpeta?"
+msgstr[1] "De veres que voleu esborrar tots els %u marcadors en aquesta carpeta?"
+
+msgid "bookmark.tag.home"
+msgstr "Usa com a pàgina d'inici"
+
+msgid "bookmark.tag.remote"
+msgstr "Usa com a una font de marcador"
+
+msgid "bookmark.delete"
+msgstr "Esborra el marcador"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Usat a %u URL"
+msgstr[1] "Usat a %u URL"
+
+msgid "ident.stopuse"
+msgstr "Deixa d'usar-lo en aquesta pàgina"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Usa %s"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notes sobre %s:"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Visualitza %sAjuda%s per més informació sobre els certificats de client de "
+"TLS."
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "De veres voleu eliminar la subcripció \"%s\"?"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Podeu desar-lo com un fitxer al directori Baixades: premeu %s o seleccineu \""
+"%s\" des del menú."
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Verificat per CA"
+
+msgid "dlg.certwarn.title"
+msgstr "Incidència de seguretat"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "El certificat rebut ha expirat el %s."

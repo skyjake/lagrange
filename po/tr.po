@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-03-02 06:32+0000\n"
+"PO-Revision-Date: 2022-03-04 12:50+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -425,7 +425,7 @@ msgid "bookmarks.reload"
 msgstr "Uzak konum kaynaklarını yenile"
 
 msgid "ident.using"
-msgstr "Bu sayfada kullan"
+msgstr "Bu sayfada kullanılıyor"
 
 msgid "ident.notused"
 msgstr "Kullanılmıyor"
@@ -442,10 +442,10 @@ msgstr "Geçici"
 # strftime() formatted
 #, c-format
 msgid "ident.expiry"
-msgstr "%b %d, %Y tarihinde süresi doluyor"
+msgstr "%b %d, %Y tarihinde süresi dolacak"
 
 msgid "ident.use"
-msgstr "Bu sayfada kullanılıyor"
+msgstr "Bu sayfada kullan"
 
 msgid "ident.stopuse.all"
 msgstr "Her yerde kullanmayı bırak"
