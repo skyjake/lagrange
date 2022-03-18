@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.11.2
+* Added binding for focusing the URL field.
+* Updated UI translations.
+
 ## 1.11.1
 * Fixed opening bookmarks in a new window.
 * Fixed use of a cached TLS session after deactivating a client certificate.
