@@ -1,5 +1,5 @@
 # Lagrange - A Beautiful Gemini Client
-# Copyright: 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright: 2020-2022 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # Notes:
 # - Required dependencies: SDL 2, OpenSSL 1.1.1, libpcre,
@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.11.1
+    VERSION 1.11.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2022)
 if (IOS)
-    set (PROJECT_VERSION 1.10)
-    set (IOS_BUNDLE_VERSION 12)
-    set (IOS_BUILD_DATE "2022-01-28")
+    set (PROJECT_VERSION 1.11)
+    set (IOS_BUNDLE_VERSION 1)
+    set (IOS_BUILD_DATE "2022-03-03")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 1.10)
-    set (ANDROID_BUILD_VERSION a5)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-01-24")
+    set (PROJECT_VERSION 1.11)
+    set (ANDROID_BUILD_VERSION a6)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-03-04")
 endif ()
 
 # Defaults that depend on environment.

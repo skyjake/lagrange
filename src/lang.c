@@ -170,14 +170,33 @@ void setCurrent_Lang(const char *language) {
 
 static iBool find_Lang_(iRangecc msgId, iRangecc *str_out) {
     const iLang *d = &lang_;
-    size_t pos;
+    iBool convertLowercase = iFalse;
+    if (size_Range(&msgId) > 3 && startsWith_CStr(msgId.start, "LC:")) {
+        msgId.start += 3;
+        convertLowercase = iTrue;
+    }
+    size_t pos;    
     const iMsgStr key = { .id = msgId };
     if (locate_SortedArray(d->messages, &key, &pos)) {
         *str_out = ((const iMsgStr *) at_SortedArray(d->messages, pos))->str;
+        if (convertLowercase) {
+            iString msg;
+            initRange_String(&msg, *str_out);
+            iString *conv = collectNew_String();
+            iBool isFirst = iTrue;
+            iConstForEach(String, c, &msg) {
+                if (c.value == 0x2026 /* ellipsis */) {
+                    continue;
+                }
+                appendChar_String(conv, isFirst ? c.value : lower_Char(c.value));
+                isFirst = iFalse;
+            }
+            deinit_String(&msg);
+            *str_out = range_String(conv);
+        }
         return iTrue;
     }
     fprintf(stderr, "[Lang] missing: %s\n", cstr_Rangecc(msgId)); fflush(stderr);
-    //    iAssert(iFalse);
     *str_out = msgId;
     return iFalse;
 }

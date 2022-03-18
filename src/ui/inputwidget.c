@@ -1126,9 +1126,11 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
 
 void setTextUndoable_InputWidget(iInputWidget *d, const iString *text, iBool isUndoable) {
     if (!d) return;
+#if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
     if (isUndoable) {
         pushUndo_InputWidget_(d);
     }
+#endif
     if (d->inFlags & isUrl_InputWidgetFlag) {
         if (prefs_App()->decodeUserVisibleURLs) {
             iString *enc = collect_String(copy_String(text));
@@ -1208,8 +1210,12 @@ void selectAll_InputWidget(iInputWidget *d) {
 }
 
 void deselect_InputWidget(iInputWidget *d) {
+#if LAGRANGE_USE_SYSTEM_TEXT_INPUT
+    /* TODO? */
+#else
     iZap(d->mark);
     refresh_Widget(as_Widget(d));
+#endif
 }
 
 void validate_InputWidget(iInputWidget *d) {

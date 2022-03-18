@@ -88,7 +88,7 @@ void init_ListWidget(iListWidget *d) {
     d->dragItem = iInvalidPos;
     d->dragOrigin = zero_I2();
     d->dragHandleWidth = 0;
-    init_Click(&d->click, d, SDL_BUTTON_LEFT);
+    initButtons_Click(&d->click, d, SDL_BUTTON_LMASK | SDL_BUTTON_MMASK);
     init_IntSet(&d->invalidItems);
     d->visBuf = new_VisBuf();
 }
@@ -496,7 +496,6 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             redrawHoverItem_ListWidget_(d);
             return iTrue;
         case aborted_ClickResult:
-//            endDrag_ListWidget_(d, pos_Click(&d->click));
             if (d->dragItem != iInvalidPos) {
                 stop_Anim(&d->scrollY.pos);
                 invalidateItem_ListWidget(d, d->dragItem);
@@ -505,6 +504,9 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             redrawHoverItem_ListWidget_(d);
             break;
         case drag_ClickResult:
+            if (d->click.clickButton != SDL_BUTTON_LEFT) {
+                return iFalse;
+            }
             if (d->dragItem == iInvalidPos && length_I2(delta_Click(&d->click)) > gap_UI) {
                 const size_t over = itemIndex_ListWidget(d, d->click.startPos);
                 if (over != iInvalidPos &&
@@ -525,8 +527,10 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                                             zero_I2(), init_I2(-d->dragHandleWidth, 0)),
                               pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidPos) {
-                postCommand_Widget(w, "list.clicked arg:%zu item:%p",
-                                   d->hoverItem, constHoverItem_ListWidget(d));
+                postCommand_Widget(w, "list.clicked arg:%zu button:%d item:%p",
+                                   d->hoverItem,
+                                   d->click.clickButton,
+                                   constHoverItem_ListWidget(d));
             }
             return iTrue;
         default:

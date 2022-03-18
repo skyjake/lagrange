@@ -983,7 +983,13 @@ static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
     return NULL;
 }
 
-static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, size_t itemIndex) {
+static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, size_t itemIndex,
+                                       int mouseButton) {
+    const int mouseTabMode =
+        mouseButton == SDL_BUTTON_MIDDLE
+            ? (keyMods_Sym(modState_Keys()) & KMOD_SHIFT ? new_OpenTabFlag
+                                                         : newBackground_OpenTabFlag)
+            : 0;
     setFocus_Widget(NULL);
     switch (d->mode) {
         case documentOutline_SidebarMode: {
@@ -996,8 +1002,10 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             break;
         }
         case feeds_SidebarMode: {
-            postCommandString_Root(get_Root(),
-                feedEntryOpenCommand_String(&item->url, openTabMode_Sym(modState_Keys()), 0));
+            postCommandString_Root(
+                get_Root(),
+                feedEntryOpenCommand_String(
+                    &item->url, mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()), 0));
             break;
         }
         case bookmarks_SidebarMode:
@@ -1022,9 +1030,10 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             /* fall through */
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {
-                postCommandf_Root(get_Root(), "open fromsidebar:1 newtab:%d url:%s",
-                                 openTabMode_Sym(modState_Keys()),
-                                 cstr_String(&item->url));
+                postCommandf_Root(get_Root(),
+                                  "open fromsidebar:1 newtab:%d url:%s",
+                                  mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()),
+                                  cstr_String(&item->url));
             }
             break;
         }
@@ -1453,8 +1462,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "list.clicked")) {
-            itemClicked_SidebarWidget_(
-                d, pointerLabel_Command(cmd, "item"), argU32Label_Command(cmd, "arg"));
+            itemClicked_SidebarWidget_(d,
+                                       pointerLabel_Command(cmd, "item"),
+                                       argU32Label_Command(cmd, "arg"),
+                                       argLabel_Command(cmd, "button"));
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "list.dragged")) {

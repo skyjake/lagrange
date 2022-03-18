@@ -169,8 +169,9 @@ enum iClickResult {
 };
 
 struct Impl_Click {
+    int      buttons; /* all recognized buttons */
+    int      clickButton; /* currently active click */
     iBool    isActive;
-    int      button;
     int      count;
     iWidget *bounds;
     int      minHeight;
@@ -179,6 +180,7 @@ struct Impl_Click {
 };
 
 void                init_Click          (iClick *, iAnyObject *widget, int button);
+void                initButtons_Click   (iClick *, iAnyObject *widget, int buttonMask);
 enum iClickResult   processEvent_Click  (iClick *, const SDL_Event *event);
 void                cancel_Click        (iClick *);
 

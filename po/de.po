@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-28 11:53+0000\n"
-"Last-Translator: Florian Viehweger <openbsd@out-of-creativity.de>\n"
+"PO-Revision-Date: 2022-03-04 12:50+0000\n"
+"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -2311,3 +2311,6 @@ msgstr "Werkzeugleisten-Aktionen"
 
 msgid "prefs.urlsize"
 msgstr "Maximale URL Länge:"
+
+msgid "menu.paste.go"
+msgstr "Einfügen und Los"

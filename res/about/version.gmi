@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.11.2
+* Added a keybinding for focusing the URL field.
+* Sidebar items (bookmarks, feed entries, history) can be middle-clicked to open in a new tab. Holding Shift will open the tab in the foreground.
+* Flags can be used as link icons. Note that additional fonts and HarfBuzz are required for all the flag symbols to be visible.
+* Updated UI translations.
+
 ## 1.11.1
 * Fixed opening bookmarks in a new window.
 * Fixed use of a cached TLS session after deactivating a client certificate.

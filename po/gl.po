@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-26 06:21+0000\n"
+"PO-Revision-Date: 2022-03-18 04:36+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -2316,3 +2316,15 @@ msgstr "Axustes específicos dun Sitio"
 
 msgid "sitespec.ansi"
 msgstr "Avisos de escape ANSI:"
+
+msgid "prefs.tabwidth"
+msgstr "Ancho da lapela:"
+
+msgid "keys.input.precedingline"
+msgstr "Axuda: Pegar a liña precedente"
+
+msgid "menu.paste.go"
+msgstr "Pegar e Ir"
+
+msgid "prefs.retaintabs"
+msgstr "Restablecer lapelas ao inicio:"

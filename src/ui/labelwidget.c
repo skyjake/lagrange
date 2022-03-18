@@ -204,7 +204,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     const iBool    isPress     = (flags & pressed_WidgetFlag) != 0;
     const iBool    isSel       = (flags & selected_WidgetFlag) != 0;
     const iBool    isFrameless = (flags & frameless_WidgetFlag) != 0;
-    const iBool    isButton    = d->click.button != 0;
+    const iBool    isButton    = d->click.buttons != 0;
     const iBool    isMenuItem  = !cmp_String(id_Widget(parent_Widget(d)), "menu");
     const iBool    isKeyRoot   = (w->root == get_Window()->keyRoot);
     const iBool    isDarkTheme = isDark_ColorTheme(colorTheme_App());
@@ -338,7 +338,7 @@ static iRect contentBounds_LabelWidget_(const iLabelWidget *d) {
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     drawBackground_Widget(w);
-    const iBool   isButton = d->click.button != 0;
+    const iBool   isButton = d->click.buttons != 0;
     const int64_t flags    = flags_Widget(w);
     const iRect   bounds   = bounds_Widget(w);
     iRect         rect     = bounds;
@@ -562,7 +562,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->key   = 0;
     d->kmods = 0;
     init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
-    setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, d->click.button != 0);
+    setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, d->click.buttons != 0);
     updateSize_LabelWidget(d);
     updateKey_LabelWidget_(d); /* could be bound to another key */
 }
