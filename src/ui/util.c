@@ -2543,7 +2543,7 @@ iWidget *makePreferences_Widget(void) {
             { "toggle id:prefs.ostheme" },
 #endif
             { "radio id:prefs.theme", 0, 0, (const void *) themeItems },
-            { "radio id:prefs.accent", 0, 0, (const void *) accentItems },
+            { "radio horizontal:1 rowlen:3 id:prefs.accent", 0, 0, (const void *) accentItems },
             { "heading id:heading.prefs.pagecontent" },
             { "dropdown id:prefs.doctheme.dark", 0, 0, (const void *) docThemes[0] },
             { "dropdown id:prefs.doctheme.light", 0, 0, (const void *) docThemes[1] },

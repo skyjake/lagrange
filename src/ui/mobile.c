@@ -573,25 +573,36 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     else if (equal_Command(spec, "radio") || equal_Command(spec, "buttons")) {
         const iBool isRadio = equal_Command(spec, "radio");
         const iBool isHorizontal = argLabel_Command(spec, "horizontal");
+        const int rowLen = argLabel_Command(spec, "rowlen");
         addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
         iLabelWidget *head = makeHeading_Widget(label);
         setAllCaps_LabelWidget(head, iTrue);
         setRemoveTrailingColon_LabelWidget(head, iTrue);
         addChild_Widget(panel, iClob(head));
         widget = new_Widget();
+        iWidget *subDiv = widget;
         setBackgroundColor_Widget(widget, uiBackgroundSidebar_ColorId);
         const int hPad = (isHorizontal ? 0 : 1);
         setPadding_Widget(widget, hPad * gap_UI, 2 * gap_UI, hPad * gap_UI, 2 * gap_UI);
         setFlags_Widget(widget,
                         borderTop_WidgetFlag |
                             borderBottom_WidgetFlag |
-                            (isHorizontal ? arrangeHorizontal_WidgetFlag : arrangeVertical_WidgetFlag) |
+                            (isHorizontal && !rowLen ? arrangeHorizontal_WidgetFlag : arrangeVertical_WidgetFlag) |
                             arrangeHeight_WidgetFlag |
                             resizeToParentWidth_WidgetFlag |
                             resizeWidthOfChildren_WidgetFlag,
                         iTrue);
+        if (rowLen) {
+            subDiv = new_Widget();
+            addChildFlags_Widget(widget, iClob(subDiv),
+                                 arrangeHorizontal_WidgetFlag |
+                                 arrangeHeight_WidgetFlag |
+                                 resizeToParentWidth_WidgetFlag |
+                                 resizeWidthOfChildren_WidgetFlag);
+        }
         setId_Widget(widget, id);
         iBool isFirst = iTrue;
+        int numCols = 0;
         for (const iMenuItem *radioItem = item->data; radioItem->label; radioItem++) {
             if (!isHorizontal && !isFirst) {
                 /* The separator is padded from the left so we need two. */
@@ -606,7 +617,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
             }
             isFirst = iFalse;
             const char *  radId = cstr_Command(radioItem->label, "id");
-            int64_t       flags = noBackground_WidgetFlag | frameless_WidgetFlag;
+            int64_t       flags = noBackground_WidgetFlag| frameless_WidgetFlag;
             if (!isHorizontal) {
                 flags |= alignLeft_WidgetFlag;
             }
@@ -632,7 +643,16 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
             setPadding_Widget(as_Widget(button), gap_UI, 1 * gap_UI, 0, 1 * gap_UI);
             updateSize_LabelWidget(button);
             setPadding_Widget(widget, 0, 0, 0, 0);
-            addChildFlags_Widget(widget, iClob(button), flags);
+            addChildFlags_Widget(subDiv, iClob(button), flags);
+            if (rowLen && ++numCols == rowLen) {
+                numCols = 0;
+                subDiv = new_Widget();
+                addChildFlags_Widget(widget, iClob(subDiv),
+                                     arrangeHorizontal_WidgetFlag |
+                                     arrangeHeight_WidgetFlag |
+                                     resizeToParentWidth_WidgetFlag |
+                                     resizeWidthOfChildren_WidgetFlag);
+            }
         }
     }
     else if (equal_Command(spec, "input")) {
