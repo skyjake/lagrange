@@ -3862,7 +3862,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         /* Alt/Option key may be involved in window size changes. */
         setLinkNumberMode_DocumentWidget_(d, iFalse);
-        d->phoneToolbar = findWidget_App("toolbar");
+        d->phoneToolbar = findWidget_App("bottombar");
         const iBool keepCenter = equal_Command(cmd, "font.changed");
         updateDocumentWidthRetainingScrollPosition_DocumentView_(&d->view, keepCenter);
         d->view.drawBufs->flags |= updateSideBuf_DrawBufsFlag;
@@ -5636,7 +5636,8 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         /* A subtle separator between UI and content. */
         drawHLine_Paint(&p, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
     }
-    if (isPortraitPhone_App() && prefs_App()->bottomNavBar) {
+    if ((deviceType_App() == tablet_AppDeviceType && prefs_App()->bottomNavBar &&
+         prefs_App()->bottomTabBar) || (isPortraitPhone_App() && prefs_App()->bottomNavBar)) {
         /* Fill the top safe area. */
         if (topSafeInset_Mobile() > 0) {
             const iRect docBounds = documentBounds_DocumentView_(&d->view);
@@ -5750,7 +5751,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     }
     init_PersistentDocumentState(&d->mod);
     d->flags           = 0;
-    d->phoneToolbar    = findWidget_App("toolbar");
+    d->phoneToolbar    = findWidget_App("bottombar");
     d->footerButtons   = NULL;
     iZap(d->certExpiry);
     d->certFingerprint  = new_Block(0);
