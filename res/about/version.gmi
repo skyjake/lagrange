@@ -8,6 +8,7 @@
 
 ## 1.11.2
 * Added binding for focusing the URL field.
+* Flags can be used as link icons. Note that additional fonts and HarfBuzz are required for all the flag symbols to be visible.
 * Updated UI translations.
 
 ## 1.11.1
