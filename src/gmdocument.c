@@ -307,11 +307,16 @@ static void setScheme_GmLink_(iGmLink *d, enum iGmLinkScheme scheme) {
     d->flags |= scheme;
 }
 
+static iBool isRegionalIndicatorLetter_Char_(iChar c) {
+    return c >= 0x1f1e6 && c <= 0x1f1ff;
+}
+
 static iBool isAllowedLinkIcon_Char_(iChar icon) {
     if (isFitzpatrickType_Char(icon)) {
         return iFalse;
     }
     return isPictograph_Char(icon) || isEmoji_Char(icon) ||
+           isRegionalIndicatorLetter_Char_(icon) ||
            /* TODO: Add range(s) of 0x2nnn symbols. */
            icon == 0x2022 /* bullet */ || 
            icon == 0x2139 /* info */ ||
@@ -437,6 +442,13 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                     if (desc.start + len < desc.end &&
                         ((scheme != mailto_GmLinkScheme && isAllowedLinkIcon_Char_(icon)) ||
                          (scheme == mailto_GmLinkScheme && icon == 0x1f4e7 /* envelope */))) {
+                        if (isRegionalIndicatorLetter_Char_(icon)) {
+                            iChar combo;
+                            int len2 = decodeBytes_MultibyteChar(desc.start + len, desc.end, &combo);
+                            if (isRegionalIndicatorLetter_Char_(combo)) {
+                                len += len2;
+                            }
+                        }
                         link->flags |= iconFromLabel_GmLinkFlag;
                         link->labelIcon = (iRangecc){ desc.start, desc.start + len };
                         line.start += len;
