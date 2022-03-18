@@ -1,5 +1,5 @@
 # Lagrange - A Beautiful Gemini Client
-# Copyright: 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright: 2020-2022 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # Notes:
 # - Required dependencies: SDL 2, OpenSSL 1.1.1, libpcre,
@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.11.1
+    VERSION 1.11.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
