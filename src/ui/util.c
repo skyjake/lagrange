@@ -391,12 +391,17 @@ float value_Anim(const iAnim *d) {
 /*-----------------------------------------------------------------------------------------------*/
 
 void init_Click(iClick *d, iAnyObject *widget, int button) {
-    d->isActive = iFalse;
-    d->button   = button;
-    d->bounds   = as_Widget(widget);
-    d->minHeight = 0;
-    d->startPos = zero_I2();
-    d->pos      = zero_I2();
+    initButtons_Click(d, widget, button ? SDL_BUTTON(button) : 0);
+}
+
+void initButtons_Click(iClick *d, iAnyObject *widget, int buttonMask) {
+    d->isActive    = iFalse;
+    d->buttons     = buttonMask;
+    d->clickButton = 0;
+    d->bounds      = as_Widget(widget);
+    d->minHeight   = 0;
+    d->startPos    = zero_I2();
+    d->pos         = zero_I2();
 }
 
 iBool contains_Click(const iClick *d, iInt2 coord) {
@@ -420,17 +425,18 @@ enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
         return none_ClickResult;
     }
     const SDL_MouseButtonEvent *mb = &event->button;
-    if (mb->button != d->button) {
+    if (!(SDL_BUTTON(mb->button) & d->buttons)) {
         return none_ClickResult;
     }
     const iInt2 pos = init_I2(mb->x, mb->y);
-    if (event->type == SDL_MOUSEBUTTONDOWN) {
+    if (event->type == SDL_MOUSEBUTTONDOWN && (!d->isActive || d->clickButton == mb->button)) {
         d->count = mb->clicks;
     }
     if (!d->isActive) {
         if (mb->state == SDL_PRESSED) {
             if (contains_Click(d, pos)) {
                 d->isActive = iTrue;
+                d->clickButton = mb->button;
                 d->startPos = d->pos = pos;
                 setMouseGrab_Widget(d->bounds);
                 return started_ClickResult;
@@ -438,7 +444,7 @@ enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
         }
     }
     else { /* Active. */
-        if (mb->state == SDL_RELEASED) {
+        if (mb->state == SDL_RELEASED && mb->button == d->clickButton) {
             enum iClickResult result = contains_Click(d, pos)
                                            ? finished_ClickResult
                                            : aborted_ClickResult;
