@@ -1794,9 +1794,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                               wrapAttrib,
                               origin,
                               iRound(wrapAdvance))) {
-            numWrapLines++;
             willAbortDueToWrap = iTrue;
         }
+        numWrapLines++;
         if (wrap && wrap->maxLines && numWrapLines == wrap->maxLines) {
             willAbortDueToWrap = iTrue;
         }

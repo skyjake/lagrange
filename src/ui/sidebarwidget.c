@@ -1823,7 +1823,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 updateMouseHover_ListWidget(d->list);
             }
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
-                d->contextItem  = hoverItem_ListWidget(d->list);
+                d->contextItem = hoverItem_ListWidget(d->list);
                 /* Context is drawn in hover state. */
                 if (d->contextIndex != iInvalidPos) {
                     invalidateItem_ListWidget(d->list, d->contextIndex);
