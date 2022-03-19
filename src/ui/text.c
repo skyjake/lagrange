@@ -1567,9 +1567,11 @@ iLocalDef float justificationWeight_(iChar c) {
     if (c == '.' || c == '!' || c == '?' ||c == ';') {
         return 2.0f;
     }
+    /*
     if (c == ',' || c == ':') {
         return 1.0f;
     }
+    */
     return 1.0f;
 }
 
@@ -1594,7 +1596,6 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers,
     if (logPos >= wrapPosRange.end) break
     /* Find out if there are spaces to expand. */
     for (iGlyphBuffer *buf = begin; buf != end; buf++) {
-        if (buf->script) continue;
         for (size_t i = 0; i < buf->glyphCount; i++) {
             hb_glyph_info_t     *info   = &buf->glyphInfo[i];
             hb_glyph_position_t *pos    = &buf->glyphPos[i];
@@ -1614,7 +1615,6 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers,
         outerSpace = iMin(outerSpace, *wrapAdvance * maxSpaceExpansion);
         float adv = 0.0f;
         for (iGlyphBuffer *buf = begin; buf != end; buf++) {
-            if (buf->script) continue;
             const float xScale = buf->font->xScale;
             for (size_t i = 0; i < buf->glyphCount; i++) {
                 hb_glyph_info_t     *info   = &buf->glyphInfo[i];
