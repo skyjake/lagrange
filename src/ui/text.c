@@ -1866,11 +1866,11 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
                     if (bgClr.a) {
                         SDL_SetRenderDrawColor(activeText_->render, bgClr.r, bgClr.g, bgClr.b, 255);
                         const SDL_Rect bgRect = {
-                                                  origin_Paint.x + d->orig.x + d->xCursor,
-                                                  origin_Paint.y + d->orig.y + d->yCursor,
-                                                  xAdvance,
-                                                  d->font->height,
-                                                  };
+                            origin_Paint.x + d->orig.x + d->xCursor,
+                            origin_Paint.y + d->orig.y + d->yCursor,
+                            (int) ceilf(subpixel + xAdvance),
+                            d->font->height,
+                        };
                         SDL_RenderFillRect(activeText_->render, &bgRect);
                     }
                     else if (d->mode & fillBackground_RunMode) {
