@@ -1743,7 +1743,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 1.0f, isDarkUI ? 0.5f : -0.5f));
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0.1f, isDarkUI ? 0.3f : -0.5f));
 //            setHsl_Color(tmBannerSideTitle_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
-            setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, -0.3f, isDarkUI ? 0.5f : -0.6f));
+            setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, -0.3f, isDarkUI ? (0.5f + lum * 0.1f) : -0.6f));
             setHsl_Color(tmPreformatted_ColorId, preBase); //addSatLum_HSLColor(preBase, 0.4f, isDarkUI ? 0.4f : -0.2f));
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
             setHsl_Color(tmLinkText_ColorId,
