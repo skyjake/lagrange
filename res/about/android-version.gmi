@@ -6,6 +6,22 @@
 ```
 # Release notes
 
+## 1.12 (Alpha 7)
+* Roboto is the new default content/UI font.
+* Added option to move the URL field and/or the tab bar at the bottom.
+* Toggles use symbols instead of YES/NO.
+* UI uses only one accent color at a time.
+* Added new UI accent colors: Red, Green, Blue, Gray.
+* Added new content theme "Oceanic" with support for both dark and light modes.
+* Adjusted generated palettes of Colorful Dark/Light.
+* Improved the Sepia theme, and added a dark mode variant.
+* Added style option to justify long paragraphs.
+* Text renderer uses additional subpixel offsets with lower-density displays.
+* Text rendering optimizations: avoid repeated shaping of the same text.
+* Fixed occasional small gaps between glyph backgrounds.
+* Fixed problems with marking feed entries as read/unread.
+* Fixed issues with focused input fields.
+
 ## 1.11 (Alpha 6)
 ⚠️ Downgrading back to v1.10 causes all site-specific themes to be forgotten.
 
