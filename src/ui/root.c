@@ -704,6 +704,10 @@ void updateToolbarColors_Root(iRoot *d) {
             setTextColor_LabelWidget(i.object, useThemeColors ? tmBannerIcon_ColorId : uiTextDim_ColorId);
             setBackgroundColor_Widget(i.object, bg); /* using noBackground, but ident has outline */
         }
+        if (!useThemeColors) {
+            /* Menu uses accent color. */
+            setTextColor_LabelWidget(findChild_Widget(toolBar, "toolbar.navmenu"), uiTextAction_ColorId);
+        }
         setTextColor_LabelWidget(findChild_Widget(toolBar, "toolbar.name"),
                                  useThemeColors ? tmBannerIcon_ColorId : uiTextDim_ColorId);
     }
