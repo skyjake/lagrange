@@ -1320,9 +1320,6 @@ void updateMetrics_Root(iRoot *d) {
         setFixedSize_Widget(as_Widget(idName),
                             init_I2(-1, 2 * gap_UI + lineHeight_Text(uiLabelTiny_FontId)));
     }
-    if (bottomBar) {
-        updateBottomBarPosition_(bottomBar, iFalse);
-    }
     postRefresh_App();
 }
 

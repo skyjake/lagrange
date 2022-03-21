@@ -668,16 +668,6 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
         }
         arrange_Widget(d->blank);
     }
-#if 0
-    if (deviceType_App() != desktop_AppDeviceType) {
-        /* Touch-friendly action buttons. */
-        iForEach(ObjectList, i, children_Widget(d->actions)) {
-            if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                setPadding_Widget(i.object, 0, gap_UI, 0, gap_UI);
-            }
-        }
-    }
-#endif
     arrange_Widget(d->actions);
     arrange_Widget(as_Widget(d));
     updateMouseHover_ListWidget(list_SidebarWidget_(d));
@@ -1365,18 +1355,33 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                             isPortrait_App());
             setBackgroundColor_Widget(w, isPortrait_App() ? uiBackgroundSidebar_ColorId : none_ColorId);
         }
-        if (isPortrait_App()) {
-            /* In sliding sheet mode, sidebar is resized to fit in the safe area. */
+        /* Padding under the action bar depends on whether there are other UI elements next
+           to the bottom of the window. This is surprisingly convoluted; perhaps there is a
+           better way to handle this? (Some sort of intelligent padding widget at the bottom
+           of the sidebar? Root should just use safe insets as the padding? In that case,
+           individual widgets still need to be able to extend into the safe area.) */
+        if (deviceType_App() == desktop_AppDeviceType) {
             setPadding_Widget(d->actions, 0, 0, 0, 0);
         }
-        else if (isLandscape_App() && !prefs_App()->bottomTabBar && !prefs_App()->bottomNavBar) {
-            setPadding_Widget(d->actions, 0, 0, 0, bottomSafeInset_Mobile());
-        }
-        else {
+        else if (deviceType_App() == tablet_AppDeviceType) {
             setPadding_Widget(d->actions, 0, 0, 0,
-                              (prefs_App()->bottomNavBar && !prefs_App()->hideToolbarOnScroll ?
-                                 height_Widget(findChild_Widget(root_Widget(w), "navbar")) : 0) +
-                               bottomSafeInset_Mobile());
+                              prefs_App()->bottomNavBar ? 0 : bottomSafeInset_Mobile());
+        }
+        else if (deviceType_App() == phone_AppDeviceType) {
+            if (isPortrait_App()) {
+                /* In sliding sheet mode, sidebar is resized to fit in the safe area. */
+                setPadding_Widget(d->actions, 0, 0, 0, 0);
+            }
+            else if (!prefs_App()->bottomNavBar) {
+                setPadding_Widget(d->actions, 0, 0, 0, bottomSafeInset_Mobile());
+            }
+            else {
+                setPadding_Widget(d->actions, 0, 0, 0,
+                                  (prefs_App()->bottomNavBar && !prefs_App()->hideToolbarOnScroll
+                                       ? height_Widget(findChild_Widget(root_Widget(w), "navbar"))
+                                       : 0) +
+                                      bottomSafeInset_Mobile());
+            }
         }
         return iFalse;
     }
