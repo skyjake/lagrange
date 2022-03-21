@@ -4796,7 +4796,7 @@ static void interactingWithLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id
     while (loc.start > start && *loc.start != '\n') {
         loc.start--;
     }
-    if (*loc.start == '\n') {
+    if (*loc.start == '\n' && !isEmpty_Range(&loc)) {
         loc.start++; /* Start of the preceding line. */
     }
     setRange_String(&d->linePrecedingLink, loc);
