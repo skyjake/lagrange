@@ -1342,7 +1342,9 @@ void draw_MainWindow(iMainWindow *d) {
         return;
     }
     isDrawing_ = iTrue;
-    checkPixelRatioChange_Window_(&d->base);
+    if (deviceType_App() == desktop_AppDeviceType) {
+        checkPixelRatioChange_Window_(&d->base);
+    }
     setCurrent_Text(d->base.text);
     /* Check if root needs resizing. */ {
         const iBool wasPortrait = isPortrait_App();
