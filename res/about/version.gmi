@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.11.3
+* Fixed a possible crash when clicking on the first link of a page with the monospace body text option enabled.
+
 ## 1.11.2
 * Added a keybinding for focusing the URL field.
 * Sidebar items (bookmarks, feed entries, history) can be middle-clicked to open in a new tab. Holding Shift will open the tab in the foreground.
