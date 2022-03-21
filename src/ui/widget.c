@@ -1508,10 +1508,10 @@ void drawLayerEffects_Widget(const iWidget *d) {
                 right = rootSize.x - right_Rect(rect);
             }
         }
+        if (top_Rect(rect) > center.y * 3 / 2) {
+            bottom = rootSize.y - bottom_Rect(rect);
+        }
         if (d->flags & drawBackgroundToVerticalSafeArea_WidgetFlag) {
-            if (top_Rect(rect) > center.y * 3 / 2) {
-                bottom = rootSize.y - bottom_Rect(rect);
-            }
             if (bottom_Rect(rect) < center.y / 2) {
                 top = -top_Rect(rect);
             }
@@ -1522,11 +1522,11 @@ void drawLayerEffects_Widget(const iWidget *d) {
         }
         if (left < 0) {
             fillRect_Paint(&p, (iRect){ init_I2(0, top_Rect(rect)),
-                                        init_I2(left_Rect(rect), rootSize.y) }, d->bgColor);
+                                        init_I2(left_Rect(rect), height_Rect(rect) + bottom) }, d->bgColor);
         }
         if (right > 0) {
             fillRect_Paint(&p, (iRect){ init_I2(right_Rect(rect), top_Rect(rect)),
-                                        init_I2(right, rootSize.y) }, d->bgColor);
+                                        init_I2(right, height_Rect(rect) + bottom) }, d->bgColor);
         }
     }
 #endif

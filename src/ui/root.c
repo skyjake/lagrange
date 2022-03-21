@@ -241,7 +241,8 @@ static int       loadAnimIndex_      = 0;
 static iRoot *   activeRoot_         = NULL;
 
 static void     setupMovableElements_Root_  (iRoot *);
-static void     setBottomBarPosition_       (iWidget *bottomBar, iBool show, iBool animate);
+static void     updateNavBarSize_           (iWidget *navBar);
+static void     updateBottomBarPosition_    (iWidget *bottomBar, iBool animate);
 
 iDefineTypeConstruction(Root)
 iDefineAudienceGetter(Root, visualOffsetsChanged)
@@ -535,7 +536,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
             setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));
         }
-        showToolbar_Root(root->root, isPortrait_App() || prefs_App()->bottomNavBar);
+        postCommandf_Root(root->root, "toolbar.show arg:%d", isPortrait_App() || prefs_App()->bottomNavBar);
         return iFalse;
     }
     else if (equal_Command(cmd, "root.arrange")) {
@@ -543,6 +544,9 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         if (prefs) {
             updatePreferencesLayout_Widget(prefs);
         }
+//        if (deviceType_App() == phone_AppDeviceType) {
+//            updateBottomBarPosition_(findWidget_Root("bottombar"), iFalse);
+//        }
         root->root->pendingArrange = iFalse;
         return iTrue;
     }
@@ -552,7 +556,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         iWidget *bottomBar = findChild_Widget(root, "bottombar");
         if (bottomBar) {
             /* Update bottom bar height and position. */
-            setBottomBarPosition_(bottomBar, isVisible_Widget(bottomBar), iFalse);
+            updateBottomBarPosition_(bottomBar, iFalse);
             updateToolbarColors_Root(root->root);
         }
         return iFalse; /* all roots must handle this */
@@ -891,6 +895,8 @@ static void updateNavBarActions_(iWidget *navBar) {
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "metrics.changed")) {
         updateNavBarSize_(navBar);
+        //arrange_Widget(root_Widget(navBar));
+        //updateBottomBarPosition_(findWidget_Root("bottombar"), iFalse);
         return iFalse;
     }
     else if (equal_Command(cmd, "window.reload.update")) {
@@ -1197,6 +1203,10 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         openMenu_Widget(menu, innerToWindow_Widget(menu, init_I2(0, -height_Widget(menu))));
         return iTrue;
     }
+    else if (equal_Command(cmd, "toolbar.show")) {
+        showToolbar_Root(toolBar->root, arg_Command(cmd));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "toolbar.showview")) {
         if (arg_Command(cmd) >= 0) {
             postCommandf_App("sidebar.mode arg:%d show:1", arg_Command(cmd));
@@ -1309,6 +1319,9 @@ void updateMetrics_Root(iRoot *d) {
     if (idName) {
         setFixedSize_Widget(as_Widget(idName),
                             init_I2(-1, 2 * gap_UI + lineHeight_Text(uiLabelTiny_FontId)));
+    }
+    if (bottomBar) {
+        updateBottomBarPosition_(bottomBar, iFalse);
     }
     postRefresh_App();
 }
@@ -1833,10 +1846,10 @@ void createUserInterface_Root(iRoot *d) {
     }
     updateMetrics_Root(d);
     updateNavBarSize_(navBar);
-    if (deviceType_App() == phone_AppDeviceType) {
+    if (isLandscapePhone_App()) {
         const float sidebarWidth = width_Widget(root) / (float) gap_UI;
         setWidth_SidebarWidget(findChild_Widget(root, "sidebar"), sidebarWidth);
-        setWidth_SidebarWidget(findChild_Widget(root, "sidebar2"), sidebarWidth);
+        //setWidth_SidebarWidget(findChild_Widget(root, "sidebar2"), sidebarWidth);
     }
 }
 
@@ -1897,19 +1910,22 @@ static void setupMovableElements_Root_(iRoot *d) {
     postCommand_App("window.resized"); /* not really, but some widgets will update their layout */
 }
 
-static void setBottomBarPosition_(iWidget *bottomBar, iBool show, iBool animate) {
+static void updateBottomBarPosition_(iWidget *bottomBar, iBool animate) {
     if (deviceType_App() != phone_AppDeviceType) {
         return;
     }
-    const iPrefs *prefs = prefs_App();
-    float bottomSafe = 0.0f;
-    iWidget *tabBar = NULL;
-    iRoot *root = bottomBar->root;
-    iWidget *docTabs = findChild_Widget(root->widget, "doctabs");
-    iWidget *toolBar = findChild_Widget(bottomBar, "toolbar");
-    iWidget *navBar = findChild_Widget(root->widget, "navbar");
-    size_t numPages = 0;
-    iBool bottomTabBar = prefs->bottomTabBar;
+    if (focus_Widget() && isInstance_Object(focus_Widget(), &Class_InputWidget)) {
+        return;
+    }
+    const iPrefs *prefs        = prefs_App();
+    float         bottomSafe   = 0.0f;
+    iWidget      *tabBar       = NULL;
+    iRoot        *root         = bottomBar->root;
+    iWidget      *docTabs      = findChild_Widget(root->widget, "doctabs");
+    iWidget      *toolBar      = findChild_Widget(bottomBar, "toolbar");
+    iWidget      *navBar       = findChild_Widget(root->widget, "navbar");
+    size_t        numPages     = 0;
+    iBool         bottomTabBar = prefs->bottomTabBar;
     if (prefs->bottomTabBar || prefs->bottomNavBar) {
         tabBar = findChild_Widget(docTabs, "tabs.buttons");
         numPages = tabCount_Widget(docTabs);
@@ -1925,17 +1941,14 @@ static void setBottomBarPosition_(iWidget *bottomBar, iBool show, iBool animate)
         }
     }
 #endif
-    showCollapsed_Widget(toolBar, isPortrait_App());
-    const int height = height_Widget(bottomBar);
-    if (show) {
-        if (flags_Widget(bottomBar) & hidden_WidgetFlag) {
-            setFlags_Widget(bottomBar, hidden_WidgetFlag, iFalse);
-            setVisualOffset_Widget(bottomBar, 0, 200 * animate, easeOut_AnimFlag);
-            if (isPortraitPhone_App()) {
-                setVisualOffset_Widget(toolBar, 0, 200 * animate, 0);
-            }
-            setVisualOffset_Widget(navBar, 0, 200 * animate, 0);
+    const int   height = height_Widget(bottomBar);
+    const iBool shown  = ~flags_Widget(bottomBar) & hidden_WidgetFlag;
+    if (shown) {
+        setVisualOffset_Widget(bottomBar, 0, 200 * animate, easeOut_AnimFlag);
+        if (isPortraitPhone_App()) {
+            setVisualOffset_Widget(toolBar, 0, 200 * animate, 0);
         }
+        setVisualOffset_Widget(navBar, 0, 200 * animate, 0);
         if (bottomTabBar) {
             /* Tab bar needs to stay visible, too. */
             if (prefs->bottomNavBar || isPortrait_App()) {
@@ -1944,17 +1957,11 @@ static void setBottomBarPosition_(iWidget *bottomBar, iBool show, iBool animate)
             else {
                 setVisualOffset_Widget(tabBar, -bottomSafe, 200 * animate, easeOut_AnimFlag);
             }
-            //tabBar->flags2 |= permanentVisualOffset_WidgetFlag2;
         }
     }
     else {
-        if (~flags_Widget(bottomBar) & hidden_WidgetFlag) {
-            setFlags_Widget(bottomBar, hidden_WidgetFlag, iTrue);
-            /* Close any menus that open via the toolbar. */
-            closeMenu_Widget(findChild_Widget(findWidget_App("toolbar.navmenu"), "menu"));
-            closeMenu_Widget(findChild_Widget(bottomBar, "toolbar.menu"));
-            setVisualOffset_Widget(bottomBar, height - bottomSafe, 200 * animate, easeOut_AnimFlag);
-        }
+        /* Close any menus that open via the toolbar. */
+        setVisualOffset_Widget(bottomBar, height - bottomSafe, 200 * animate, easeOut_AnimFlag);
         if (bottomTabBar) {
             if (isPortraitPhone_App()) {
                 setVisualOffset_Widget(toolBar, bottomSafe, 200 * animate, 0);
@@ -1963,7 +1970,6 @@ static void setBottomBarPosition_(iWidget *bottomBar, iBool show, iBool animate)
                 setVisualOffset_Widget(navBar, bottomSafe, 200 * animate, 0);
             }
             setVisualOffset_Widget(tabBar, -bottomSafe, 200 * animate, easeOut_AnimFlag);
-            //tabBar->flags2 |= hiddenWithVisualOffset_WidgetFlag2;
         }
     }
 }
@@ -1971,17 +1977,22 @@ static void setBottomBarPosition_(iWidget *bottomBar, iBool show, iBool animate)
 void showToolbar_Root(iRoot *d, iBool show) {
     iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
     if (!bottomBar) return;
+    if (focus_Widget() && isInstance_Object(focus_Widget(), &Class_InputWidget)) {
+        /* Don't move anything while text input is active. */
+        return;
+    }
     const iPrefs *prefs = prefs_App();
     /* The toolbar is only used in the portrait phone layout, but the bottom bar may have other
        elements regardless. The toolbar is needed for clearing the bottom safe area when there
        is a bottom tab bar, even if the URL is at the top. Note that the entire bottom bar may
        be hidden, but the tab bar remains always visible if there are tabs open. */
     if (isLandscape_App() && !prefs->bottomTabBar && !prefs->bottomNavBar) {
-        //setFlags_Widget(bottomBar, hidden_WidgetFlag, iTrue);
-        setBottomBarPosition_(bottomBar, iFalse, iTrue);
-        return;
+//        setFlags_Widget(bottomBar, hidden_WidgetFlag, iTrue);
+        show = iFalse;
+//        setBottomBarPosition_(bottomBar, iFalse, iTrue);
+//        return;
     }
-//    iWidget *toolBar = findChild_Widget(bottomBar, "toolbar");
+    iWidget *toolBar = findChild_Widget(bottomBar, "toolbar");
 //    iWidget *navBar = findChild_Widget(d->widget, "navbar");
 //    const int height = size_Root(d).y - top_Rect(boundsWithoutVisualOffset_Widget(bottomBar));
 //    float bottomSafe = 0;
@@ -1999,7 +2010,19 @@ void showToolbar_Root(iRoot *d, iBool show) {
 //        }
 //    }
 //#endif
-    setBottomBarPosition_(bottomBar, show, iTrue);
+    if (show) {
+        setFlags_Widget(bottomBar, hidden_WidgetFlag, iFalse);
+    }
+    else {
+        if (~flags_Widget(bottomBar) & hidden_WidgetFlag) {
+            closeMenu_Widget(findChild_Widget(findWidget_App("toolbar.navmenu"), "menu"));
+            closeMenu_Widget(findChild_Widget(bottomBar, "toolbar.menu"));
+        }
+        setFlags_Widget(bottomBar, hidden_WidgetFlag, iTrue);
+    }
+    /* The toolbar is only shown when in portrait mode, otherwise buttons are in the navbar. */
+    showCollapsed_Widget(toolBar, isPortrait_App());
+    updateBottomBarPosition_(bottomBar, iTrue);
     
 #if 0
     if (show && (!isVisible_Widget(bottomBar) || (isBottomTabBar && ~flags_Widget(tabBar) & dragged_WidgetFlag))) {
