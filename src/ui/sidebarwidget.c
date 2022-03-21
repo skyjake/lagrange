@@ -1365,12 +1365,18 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                             isPortrait_App());
             setBackgroundColor_Widget(w, isPortrait_App() ? uiBackgroundSidebar_ColorId : none_ColorId);
         }
-        if (!isPortraitPhone_App() && !prefs_App()->bottomTabBar && !prefs_App()->bottomNavBar) {
+        if (isPortrait_App()) {
             /* In sliding sheet mode, sidebar is resized to fit in the safe area. */
+            setPadding_Widget(d->actions, 0, 0, 0, 0);
+        }
+        else if (isLandscape_App() && !prefs_App()->bottomTabBar && !prefs_App()->bottomNavBar) {
             setPadding_Widget(d->actions, 0, 0, 0, bottomSafeInset_Mobile());
         }
         else {
-            setPadding_Widget(d->actions, 0, 0, 0, 0);
+            setPadding_Widget(d->actions, 0, 0, 0,
+                              (prefs_App()->bottomNavBar && !prefs_App()->hideToolbarOnScroll ?
+                                 height_Widget(findChild_Widget(root_Widget(w), "navbar")) : 0) +
+                               bottomSafeInset_Mobile());
         }
         return iFalse;
     }

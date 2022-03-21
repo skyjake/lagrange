@@ -523,7 +523,6 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);            
             setWidth_SidebarWidget(sidebar, 73.0f);
             setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag | fixedPosition_WidgetFlag, iFalse);
-            showToolbar_Root(root->root, iFalse);
         }
         else {
             addChild_Widget(root, iClob(sidebar));
@@ -535,8 +534,8 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             setMidHeight_SidebarWidget(sidebar, midHeight);
             setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
             setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));
-            showToolbar_Root(root->root, iTrue);
         }
+        showToolbar_Root(root->root, isPortrait_App() || prefs_App()->bottomNavBar);
         return iFalse;
     }
     else if (equal_Command(cmd, "root.arrange")) {
@@ -849,8 +848,8 @@ static void updateNavBarSize_(iWidget *navBar) {
         static const char *buttons[] = { "navbar.action1", "navbar.action2", "navbar.action3",
                                          "navbar.action4", "navbar.ident",   "navbar.menu" };
         iWidget *toolBar = findWidget_Root("toolbar");
-        setVisualOffset_Widget(toolBar, 0, 0, 0);
-        setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
+//        setVisualOffset_Widget(toolBar, 0, 0, 0);
+//        setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
         iForIndices(i, buttons) {
             iLabelWidget *btn = findChild_Widget(navBar, buttons[i]);
             setFlags_Widget(as_Widget(btn), hidden_WidgetFlag, isPortrait_App());
@@ -1685,6 +1684,7 @@ void createUserInterface_Root(iRoot *d) {
                              moveToParentBottomEdge_WidgetFlag |
                                  parentCannotResizeHeight_WidgetFlag | arrangeVertical_WidgetFlag |
                                  arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                                 drawBackgroundToHorizontalSafeArea_WidgetFlag |
                                  drawBackgroundToBottom_WidgetFlag);
         iWidget *toolBar = new_Widget();
         addChild_Widget(bottomBar, iClob(toolBar));
@@ -1908,7 +1908,6 @@ static void setBottomBarPosition_(iWidget *bottomBar, iBool show, iBool animate)
     iWidget *docTabs = findChild_Widget(root->widget, "doctabs");
     iWidget *toolBar = findChild_Widget(bottomBar, "toolbar");
     iWidget *navBar = findChild_Widget(root->widget, "navbar");
-    const int height = height_Widget(bottomBar);
     size_t numPages = 0;
     iBool bottomTabBar = prefs->bottomTabBar;
     if (prefs->bottomTabBar || prefs->bottomNavBar) {
@@ -1927,6 +1926,7 @@ static void setBottomBarPosition_(iWidget *bottomBar, iBool show, iBool animate)
     }
 #endif
     showCollapsed_Widget(toolBar, isPortrait_App());
+    const int height = height_Widget(bottomBar);
     if (show) {
         if (flags_Widget(bottomBar) & hidden_WidgetFlag) {
             setFlags_Widget(bottomBar, hidden_WidgetFlag, iFalse);
@@ -1938,7 +1938,12 @@ static void setBottomBarPosition_(iWidget *bottomBar, iBool show, iBool animate)
         }
         if (bottomTabBar) {
             /* Tab bar needs to stay visible, too. */
-            setVisualOffset_Widget(tabBar, -bottomBar->rect.size.y, 200 * animate, easeOut_AnimFlag);
+            if (prefs->bottomNavBar || isPortrait_App()) {
+                setVisualOffset_Widget(tabBar, -height, 200 * animate, easeOut_AnimFlag);
+            }
+            else {
+                setVisualOffset_Widget(tabBar, -bottomSafe, 200 * animate, easeOut_AnimFlag);
+            }
             //tabBar->flags2 |= permanentVisualOffset_WidgetFlag2;
         }
     }

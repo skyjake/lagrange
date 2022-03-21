@@ -1518,18 +1518,16 @@ void drawLayerEffects_Widget(const iWidget *d) {
         }
         if (top < 0) {
             fillRect_Paint(&p, (iRect){ init_I2(left_Rect(rect), 0),
-                                        init_I2(width_Rect(rect), top_Rect(rect)) },
-                           d->bgColor);
+                                        init_I2(width_Rect(rect), top_Rect(rect)) }, d->bgColor);
         }
         if (left < 0) {
             fillRect_Paint(&p, (iRect){ init_I2(0, top_Rect(rect)),
-                init_I2(left_Rect(rect), height_Rect(rect)) }, d->bgColor);
+                                        init_I2(left_Rect(rect), rootSize.y) }, d->bgColor);
         }
         if (right > 0) {
             fillRect_Paint(&p, (iRect){ init_I2(right_Rect(rect), top_Rect(rect)),
-                init_I2(right, height_Rect(rect)) }, d->bgColor);
+                                        init_I2(right, rootSize.y) }, d->bgColor);
         }
-//        adjustEdges_Rect(&rect, iMin(0, top), iMax(0, right), iMax(0, bottom), iMin(0, left));
     }
 #endif
 }
@@ -1545,38 +1543,11 @@ void drawBackground_Widget(const iWidget *d) {
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         iRect rect = bounds_Widget(d);
         if (d->flags & drawBackgroundToBottom_WidgetFlag) {
-            rect.size.y += size_Root(d->root).y; // = iMax(rect.size.y, size_Root(d->root).y - top_Rect(rect));
+            rect.size.y += size_Root(d->root).y;
         }
         iPaint p;
         init_Paint(&p);
         if (d->bgColor >= 0) {
-#if 0 && defined (iPlatformAppleMobile)
-            /* TODO: This is part of the unbuffered draw (layer effects). */
-            if (d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
-                            drawBackgroundToVerticalSafeArea_WidgetFlag)) {
-                const iInt2 rootSize = size_Root(d->root);
-                const iInt2 center = divi_I2(rootSize, 2);
-                int top = 0, right = 0, bottom = 0, left = 0;
-                if (d->flags & drawBackgroundToHorizontalSafeArea_WidgetFlag) {
-                    const iBool isWide = width_Rect(rect) > rootSize.x * 9 / 10;
-                    if (isWide || mid_Rect(rect).x < center.x) {
-                        left = -left_Rect(rect);
-                    }
-                    if (isWide || mid_Rect(rect).x > center.x) {
-                        right = rootSize.x - right_Rect(rect);
-                    }
-                }
-                if (d->flags & drawBackgroundToVerticalSafeArea_WidgetFlag) {
-                    if (top_Rect(rect) > center.y) {
-                        bottom = rootSize.y - bottom_Rect(rect);
-                    }
-                    if (bottom_Rect(rect) < center.y) {
-                        top = -top_Rect(rect);
-                    }
-                }
-                adjustEdges_Rect(&rect, iMin(0, top), iMax(0, right), iMax(0, bottom), iMin(0, left));
-            }
-#endif
             fillRect_Paint(&p, rect, d->bgColor);
         }
         if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {
@@ -1625,7 +1596,7 @@ static void addToPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs, iR
     if (isDrawn_Widget_(d)) {
         iRect bounds = bounds_Widget(d);
         if (d->flags & drawBackgroundToBottom_WidgetFlag) {
-            bounds.size.y += size_Root(d->root).y; // iMax(bounds.size.y, size_Root(d->root).y - top_Rect(bounds));
+            bounds.size.y += size_Root(d->root).y;
         }
         if (isFullyContainedByOther_Rect(bounds, *fullyMasked)) {
             return; /* can't be seen */
