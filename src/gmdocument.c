@@ -1562,7 +1562,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             { 5, 7 },  /*  3: yellow */
             { 6, 2 },  /*  4: greenish yellow */
             { 1, 3 },  /*  5: green */
-            { 2, 9 },  /*  6: bluish green */
+            { 2, 8 },  /*  6: bluish green */
             { 2, 5 },  /*  7: cyan */
             { 6, 10 }, /*  8: sky blue */
             { 3, 11 }, /*  9: blue */
