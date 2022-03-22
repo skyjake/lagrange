@@ -43,8 +43,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/labelwidget.h"
 #include "ui/root.h"
 #include "ui/sidebarwidget.h"
-#include "ui/uploadwidget.h"
+#include "ui/touch.h"
 #include "ui/text.h"
+#include "ui/uploadwidget.h"
 #include "ui/util.h"
 #include "ui/window.h"
 #include "visited.h"
@@ -1376,6 +1377,9 @@ void trimMemory_App(void) {
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
+//    if (deviceType_App() != desktop_AppDeviceType && numFingers_Touch() > 0) {
+//        return iFalse;
+//    }
     if (d->warmupFrames > 0) {
         return iFalse;
     }
