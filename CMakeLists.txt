@@ -278,6 +278,10 @@ endif ()
 if (ANDROID)
     set (MOBILE 1)
     add_definitions (-DiPlatformAndroidMobile=1)
+    list (APPEND SOURCES
+        src/android.c
+        src/android.h
+    )
 endif ()
 if (IOS)
     set (MOBILE 1)

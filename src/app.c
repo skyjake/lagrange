@@ -75,7 +75,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "ios.h"
 #endif
 #if defined (iPlatformAndroidMobile)
-#include <SDL_log.h>
+#   include "android.h"
+#   include <SDL_log.h>
 #endif
 #if defined (iPlatformMsys)
 #   include "win32.h"
@@ -1642,6 +1643,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #if defined (iPlatformAppleDesktop)
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
+#if defined (iPlatformAndroidMobile)
+                    handleCommand_Android(command_UserEvent(&ev));
+#endif
 #if defined (iPlatformMsys)
                     handleCommand_Win32(command_UserEvent(&ev));
 #endif
@@ -2077,6 +2081,10 @@ enum iAppDeviceType deviceType_App(void) {
 
 iBool isRunningUnderWindowSystem_App(void) {
     return app_.isRunningUnderWindowSystem;
+}
+
+const iCommandLine *commandLine_App(void) {
+    return &app_.args;
 }
 
 iGmCerts *certs_App(void) {
@@ -3877,23 +3885,3 @@ void closePopups_App(iBool doForce) {
         }
     }
 }
-
-#if defined (iPlatformAndroidMobile)
-
-float displayDensity_Android(void) {
-    iApp *d = &app_;
-    return toFloat_String(at_CommandLine(&d->args, 1));
-}
-
-#include <jni.h>
-
-JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_postAppCommand(
-        JNIEnv* env, jclass jcls,
-        jstring command)
-{
-    const char *cmd = (*env)->GetStringUTFChars(env, command, NULL);
-    postCommand_Root(NULL, cmd);
-    (*env)->ReleaseStringUTFChars(env, command, cmd);
-}
-
-#endif

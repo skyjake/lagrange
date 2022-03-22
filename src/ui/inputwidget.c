@@ -44,8 +44,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "macos.h"
 #endif
 
-#if defined (iPlatformAppleMobile)
-#   include "ios.h"
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
+#   include "mobile.h"
 #   define LAGRANGE_USE_SYSTEM_TEXT_INPUT 1 /* System-provided UI control almost handles everything. */
 #else
 #   define LAGRANGE_USE_SYSTEM_TEXT_INPUT 0

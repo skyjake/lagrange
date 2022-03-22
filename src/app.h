@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(Bookmarks)
 iDeclareType(DocumentWidget)
+iDeclareType(CommandLine)
 iDeclareType(GmCerts)
 iDeclareType(MainWindow)
 iDeclareType(MimeHooks)
@@ -91,6 +92,7 @@ iLocalDef iBool     isPortraitPhone_App (void) { return isPortrait_App() && devi
 iLocalDef iBool     isLandscapePhone_App(void) { return isLandscape_App() && deviceType_App() == phone_AppDeviceType; }
 iBool               isRunningUnderWindowSystem_App  (void);
 
+const iCommandLine *commandLine_App     (void);
 iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);
 iBookmarks *        bookmarks_App       (void);
