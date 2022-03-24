@@ -24,6 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/string.h>
 
+void        setupApplication_Android(void);
+
 float       displayDensity_Android  (void);
 void        javaCommand_Android     (const char *format, ...);
 iBool       handleCommand_Android   (const char *cmd);

@@ -1074,7 +1074,9 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                  */
                 const int top    = argLabel_Command(cmd, "top");
                 const int bottom = argLabel_Command(cmd, "bottom");
-                if (!SDL_IsScreenKeyboardShown(mw->base.win)) {
+                const int full   = argLabel_Command(cmd, "fullheight");
+                //if (!SDL_IsScreenKeyboardShown(mw->base.win)) {
+                if (bottom == full) {
                     mw->maxDrawableHeight = bottom - top;
                 }
                 setKeyboardHeight_MainWindow(mw, top + mw->maxDrawableHeight - bottom);

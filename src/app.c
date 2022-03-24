@@ -1026,6 +1026,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #if defined (iPlatformAppleMobile)
     setupApplication_iOS();
 #endif
+#if defined (iPlatformAndroidMobile)
+    setupApplication_Android();
+#endif
     init_Keys();
     init_Fonts(dataDir_App_());
     loadPalette_Color(dataDir_App_());

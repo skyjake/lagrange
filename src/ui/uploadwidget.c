@@ -103,7 +103,8 @@ static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
     const int avail = bottom_Rect(visibleRect_Root(w->root)) - footerHeight - inputPos.y;
     /* On desktop, retain the previously set minLines value. */
     int minLines = isUsingPanelLayout_Mobile() ? 1 : minLines_InputWidget(d->input);
-    int maxLines = iMaxi(minLines, avail / lineHeight_Text(font_InputWidget(d->input)));
+    const int lineHeight = lineHeight_Text(font_InputWidget(d->input));
+    int maxLines = iMaxi(minLines, ((avail - gap_UI) / lineHeight));
     /* On mobile, the height is fixed to the available space. */
     setLineLimits_InputWidget(d->input, isUsingPanelLayout_Mobile() ? maxLines : minLines, maxLines);
 }

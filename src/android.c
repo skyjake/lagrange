@@ -22,20 +22,43 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "android.h"
 #include "app.h"
+#include "resources.h"
 #include "ui/command.h"
 #include "ui/metrics.h"
 #include "ui/mobile.h"
 
+#include <the_Foundation/archive.h>
 #include <the_Foundation/commandline.h>
+#include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
+#include <the_Foundation/path.h>
 #include <jni.h>
 #include <SDL.h>
 
 JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_postAppCommand(
         JNIEnv* env, jclass jcls, jstring command)
 {
+    iUnused(jcls);
     const char *cmd = (*env)->GetStringUTFChars(env, command, NULL);
     postCommand_Root(NULL, cmd);
     (*env)->ReleaseStringUTFChars(env, command, cmd);
+}
+
+static const char *monospaceFontPath_(void) {
+    return concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "IosevkaTerm-Extended.ttf");
+}
+
+void setupApplication_Android(void) {
+    /* Cache the monospace font into a file where it can be loaded directly by the Java code. */
+    const char *path = monospaceFontPath_();
+    const iBlock *iosevka = dataCStr_Archive(archive_Resources(), "fonts/IosevkaTerm-Extended.ttf");
+    if (!fileExistsCStr_FileInfo(path) || fileSizeCStr_FileInfo(path) != size_Block(iosevka)) {
+        iFile *f = newCStr_File(path);
+        if (open_File(f, writeOnly_FileMode)) {
+            write_File(f, iosevka);
+        }
+        iRelease(f);
+    }
 }
 
 float displayDensity_Android(void) {
@@ -153,7 +176,11 @@ void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool all
 
 void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
     d->font = fontId;
-    javaCommand_Android("input.setfont size:%d", lineHeight_Text(fontId));
+    const char *ttfPath = "";
+    if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
+        ttfPath = monospaceFontPath_();
+    }
+    javaCommand_Android("input.setfont size:%d ttfpath:%s", lineHeight_Text(fontId), ttfPath);
 }
 
 void setTextChangedFunc_SystemTextInput
@@ -205,6 +232,16 @@ iBool handleCommand_Android(const char *cmd) {
         ev.type = SDL_KEYUP;
         ev.key.state = SDL_RELEASED;
         SDL_PushEvent(&ev);
+    }
+    else if (equal_Command(cmd, "theme.changed") || equal_Command(cmd, "tab.changed") ||
+             equal_Command(cmd, "document.changed") || equal_Command(cmd, "prefs.dismiss")) {
+        const iPrefs *prefs = prefs_App();
+        const iColor top = get_Color(prefs->bottomNavBar && prefs->bottomTabBar ?
+                    tmBackground_ColorId : uiBackground_ColorId);
+        const iColor btm = get_Color(uiBackground_ColorId);
+        javaCommand_Android("status.color top:%d bottom:%d",
+                            0xff000000 | (top.r << 16) | (top.g << 8) | top.b,
+                            0xff000000 | (btm.r << 16) | (btm.g << 8) | btm.b);
     }
     return iFalse;
 }

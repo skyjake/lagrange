@@ -769,12 +769,7 @@ static int contentHeight_InputWidget_(const iInputWidget *d) {
     const int minHeight = d->minWrapLines * lineHeight;
     const int maxHeight = d->maxWrapLines * lineHeight;
     if (d->sysCtrl) {
-        const int systemPreferred = preferredHeight_SystemTextInput(d->sysCtrl);
-        if (systemPreferred == 0) {
-            /* Keep current height. */
-            return d->widget.rect.size.y - 3 * padding_().y;
-        }
-        const int preferred = (systemPreferred + 2 * gap_UI) / lineHeight;
+        const int preferred = (preferredHeight_SystemTextInput(d->sysCtrl) + 2 * gap_UI) / lineHeight;
         return iClamp(preferred * lineHeight, minHeight, maxHeight);
     }
     if (d->buffered && ~d->inFlags & needUpdateBuffer_InputWidgetFlag) {
@@ -800,8 +795,14 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     iWidget *w = as_Widget(d);
     updateSizeForFixedLength_InputWidget_(d);
     /* Caller must arrange the width, but the height is set here. */
+#if LAGRANGE_USE_SYSTEM_TEXT_INPUT
+    if (d->sysCtrl && preferredHeight_SystemTextInput(d->sysCtrl) == 0) {
+        /* Nothing to update, the native control doesn't know the appropriate height yet. */
+        return;
+    }
+#endif
     const int oldHeight = height_Rect(w->rect);
-    w->rect.size.y = contentHeight_InputWidget_(d) + 3.0f * padding_().y; /* TODO: Why 3x? */
+    w->rect.size.y = contentHeight_InputWidget_(d) + 3 * padding_().y; /* TODO: Why 3x? */
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
         w->rect.size.y += extraPaddingHeight_InputWidget_(d);
     }
