@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/command.h"
 #include "ui/metrics.h"
 #include "ui/mobile.h"
+#include "ui/window.h"
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/commandline.h>
@@ -242,6 +243,13 @@ iBool handleCommand_Android(const char *cmd) {
         javaCommand_Android("status.color top:%d bottom:%d",
                             0xff000000 | (top.r << 16) | (top.g << 8) | top.b,
                             0xff000000 | (btm.r << 16) | (btm.g << 8) | btm.b);
+    }
+    else if (equal_Command(cmd, "android.keyboard.changed")) {
+        iMainWindow *mw = get_MainWindow();
+        if (mw) {
+            setKeyboardHeight_MainWindow(mw, arg_Command(cmd));
+        }
+        return iTrue;
     }
     return iFalse;
 }

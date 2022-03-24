@@ -271,6 +271,29 @@ static uint32_t gestureSpan_Touch_(const iTouch *d) {
     return d->posTime[0] - d->posTime[lastIndex];
 }
 
+static void postPendingScroll_TouchState_(iTouchState *d, iTouch *touch) {
+    if (touch->numPendingScroll > touch->pendingScrollThreshold) {
+        const iInt2 pixels = touch->pendingScroll[0];
+//            printf("%u :: (%d/%d) pending scroll %d,%d\n", nowTime, touch->numPendingScroll, touch->pendingScrollThreshold, pixels.x, pixels.y);
+        memmove(touch->pendingScroll, touch->pendingScroll + 1,
+                sizeof(touch->pendingScroll[0]) * (iElemCount(touch->pendingScroll) - 1));
+        touch->numPendingScroll--;
+        dispatchMotion_Touch_(touch->startPos, 0);
+        setCurrent_Root(touch->affinity->root);
+        dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
+                .type = SDL_MOUSEWHEEL,
+                .which = SDL_TOUCH_MOUSEID,
+                .windowID = id_Window(window_Widget(touch->affinity)),
+                .timestamp = SDL_GetTicks(),
+                .x = pixels.x,
+                .y = pixels.y,
+                .direction = perPixel_MouseWheelFlag,
+        });
+        /* TODO: Keep increasing movement if the direction is the same. */
+        clearWidgetMomentum_TouchState_(d, touch->affinity);
+    }
+}
+
 static void update_TouchState_(void *ptr) {
     iWindow *win = get_Window();
     const iWidget *oldHover = win->hover;
@@ -279,27 +302,7 @@ static void update_TouchState_(void *ptr) {
     const uint32_t nowTime = SDL_GetTicks();
     iForEach(Array, i, d->touches) {
         iTouch *touch = i.value;
-        /* Post the next pending scroll. */
-        if (touch->numPendingScroll > touch->pendingScrollThreshold) {
-            const iInt2 pixels = touch->pendingScroll[0];
-//            printf("%u :: (%d/%d) pending scroll %d,%d\n", nowTime, touch->numPendingScroll, touch->pendingScrollThreshold, pixels.x, pixels.y);
-            memmove(touch->pendingScroll, touch->pendingScroll + 1,
-                    sizeof(touch->pendingScroll[0]) * (iElemCount(touch->pendingScroll) - 1));
-            touch->numPendingScroll--;
-            dispatchMotion_Touch_(touch->startPos, 0);
-            setCurrent_Root(touch->affinity->root);
-            dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
-                .type = SDL_MOUSEWHEEL,
-                .which = SDL_TOUCH_MOUSEID,
-                .windowID = id_Window(window_Widget(touch->affinity)),
-                .timestamp = SDL_GetTicks(),
-                .x = pixels.x,
-                .y = pixels.y,
-                .direction = perPixel_MouseWheelFlag,
-            });
-            /* TODO: Keep increasing movement if the direction is the same. */
-            clearWidgetMomentum_TouchState_(d, touch->affinity);
-        }
+        postPendingScroll_TouchState_(d, touch);
         if (touch->pinchId || touch->isTouchDrag) {
             continue;
         }
@@ -691,6 +694,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     touch->pendingScrollThreshold = 0;
 #endif
                     touch->numPendingScroll++;
+#if defined (iPlatformAndroidMobile)
+                    /* No need to wait. */
+                    postPendingScroll_TouchState_(d, touch);
+#endif
                 }
             }
         }

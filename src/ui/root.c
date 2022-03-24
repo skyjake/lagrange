@@ -1244,14 +1244,15 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         const int showSpan = 400;
         const int hideSpan = 350;
         const int animFlag = easeOut_AnimFlag | softer_AnimFlag;
+        int landscapeOffset = 5 * gap_UI; /* TODO: Why this amount? Something's funny here. */
 #else
-        const int showSpan = 100;
-        const int hideSpan = 200;
+        const int showSpan = 80;
+        const int hideSpan = 250;
         const int animFlag = easeOut_AnimFlag;
+        int landscapeOffset = 0;
 #endif
         if (focus_Widget() == findChild_Widget(navBar, "url") && height > 0) {
-            int inputHeight = 5 * gap_UI; /* TODO: Why this amount? Something's funny here. */
-            int keyboardPad = height - (isPortrait_App() ? height_Widget(toolBar) : inputHeight);
+            int keyboardPad = height - (isPortrait_App() ? height_Widget(toolBar) : landscapeOffset);
             bottomBar->padding[3] = keyboardPad;
             arrange_Widget(bottomBar);
             arrange_Widget(bottomBar);
