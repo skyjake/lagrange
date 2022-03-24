@@ -1704,7 +1704,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         return iTrue;
                     }
                     if (isCommand_Widget(w, ev, "feed.entry.edit")) {
-                        makeFeedSettings_Widget(id_Bookmark(feedBookmark));
+                        iWidget *dlg = makeFeedSettings_Widget(id_Bookmark(feedBookmark));
                         return iTrue;
                     }
                     if (isCommand_Widget(w, ev, "feed.entry.unsubscribe")) {

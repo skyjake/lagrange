@@ -81,6 +81,13 @@ static enum iFontId labelBoldFont_(void) {
     return deviceType_App() == phone_AppDeviceType ? uiLabelBigBold_FontId : uiLabelMediumBold_FontId;
 }
 
+static iBool isFullSizePanel_(const iWidget *panels) {
+    /* TODO: Set panel type as a creation parameter. */
+    const char *id = cstr_String(id_Widget(panels));
+    return !iCmpStr(id, "prefs") || startsWith_CStr(id, "bmed") || startsWith_CStr(id, "sitespec ")
+        || !iCmpStr(id, "upload") || !iCmpStr(id, "certimport") || !iCmpStr(id, "ident");
+}
+
 static void updatePanelSheetMetrics_(iWidget *sheet) {
     iWidget *navi       = findChild_Widget(sheet, "panel.navi");
     int      naviHeight = lineHeight_Text(labelFont_()) + 4 * gap_UI;
@@ -140,12 +147,19 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         const iBool  isPortrait   = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
         const iRect  safeRoot     = safeRect_Root(mainDetailSplit->root);
         iWidget *    sheet        = parent_Widget(mainDetailSplit);
+        const iBool  isFullSize   = isFullSizePanel_(sheet);
         iWidget *    navi         = findChild_Widget(sheet, "panel.navi");
         iWidget *    detailStack  = findChild_Widget(mainDetailSplit, "detailstack");
         const size_t numPanels    = childCount_Widget(detailStack);
         const iBool  isSideBySide = isSideBySideLayout_() && numPanels > 0;
-        setPos_Widget(mainDetailSplit, topLeft_Rect(safeRoot));
-        setFixedSize_Widget(mainDetailSplit, safeRoot.size);
+        if (isFullSize) {
+            setPos_Widget(mainDetailSplit, topLeft_Rect(safeRoot));
+            setFixedSize_Widget(mainDetailSplit, safeRoot.size);
+        }
+        else {
+//            setPos_Widget(mainDetailSplit, addY_I2(bottomLeft_Rect(safeRoot),
+//                                                   height_Widget(mainDetailSplit)));
+        }
         setFlags_Widget(mainDetailSplit, arrangeHorizontal_WidgetFlag, isSideBySide);
         setFlags_Widget(detailStack, expand_WidgetFlag, isSideBySide);
         setFlags_Widget(detailStack, hidden_WidgetFlag, numPanels == 0);
@@ -159,15 +173,6 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         }
         if (deviceType_App() == tablet_AppDeviceType) {
             setPadding_Widget(topPanel, pad, 0, pad, pad);
-#if 0
-            if (numPanels == 0) {
-                setFlags_Widget(sheet, centerHorizontal_WidgetFlag, iTrue);
-                const int sheetWidth = iMin(safeRoot.size.x, safeRoot.size.y);
-                mainDetailSplit->rect.size.x = sheetWidth;
-                setFixedSize_Widget(sheet, init_I2(sheetWidth, -1));
-                setFixedSize_Widget(navi, init_I2(sheetWidth, -1));
-            }
-#endif
         }
         iWidget *detailTitle = findChild_Widget(navi, "detailtitle"); {
             setPos_Widget(detailTitle, init_I2(width_Widget(topPanel), 0));
@@ -216,7 +221,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
     const iBool isPortrait = !isSideBySideLayout_();
     if (equal_Command(cmd, "panel.open")) {
         /* This command is sent by the button that opens the panel. */
-        iWidget *button = pointer_Command(cmd);        
+        iWidget *button = pointer_Command(cmd);
         iWidget *panel = userData_Object(button);
         unselectAllPanelButtons_(topPanel);
         int panelIndex = -1;
@@ -246,6 +251,8 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         postCommand_App("panel.close");
         return iTrue;
     }
+    // sheet > mdsplit > panel.top
+    iWidget *sheet = parent_Widget(parent_Widget(topPanel));
     if (equal_Command(cmd, "panel.close")) {
         iBool wasClosed = iFalse;
         if (isPortrait) {
@@ -287,13 +294,17 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         }
         return iTrue;
     }
-    if (equal_Command(cmd, "document.changed")) {
+    else if (equal_Command(cmd, "document.changed")) {
         postCommand_App("prefs.dismiss");
         return iFalse;
     }
-    if (equal_Command(cmd, "window.resized")) {
-        // sheet > mdsplit > panel.top
-        updatePanelSheetMetrics_(parent_Widget(parent_Widget(topPanel)));
+    else if (equal_Command(cmd, "window.resized")) {
+        updatePanelSheetMetrics_(sheet);
+    }
+    else if (equalWidget_Command(cmd, sheet, "input.resized")) {
+        arrange_Widget(sheet);
+        refresh_Widget(pointer_Command(cmd)); /* may be on a buffered panel */
+        return iTrue;
     }
     return iFalse;
 }
@@ -430,7 +441,6 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
     setPadding_Widget(div, gap_UI, gap_UI, 4 * gap_UI, gap_UI);
     addChildFlags_Widget(div, iClob(heading), 0);
     setPadding1_Widget(as_Widget(heading), 0);
-    //setFixedSize_Widget(as_Widget(heading), init_I2(-1, height_Widget(value)));
     setFont_LabelWidget(heading, labelFont_());
     setTextColor_LabelWidget(heading, uiTextStrong_ColorId);
     if (isInput && ~value->flags & fixedWidth_WidgetFlag) {
@@ -771,25 +781,35 @@ iWidget *makePanelsParent_Mobile(iWidget *parentWidget,
     return panels;
 }
 
-void initPanels_Mobile(iWidget *panels, iWidget *parentWidget, 
+void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
                        const iMenuItem *itemsNullTerminated,
                        const iMenuItem *actions, size_t numActions) {
     /* A multipanel widget has a top panel and one or more detail panels. In a horizontal layout,
        the detail panels slide in from the right and cover the top panel. In a landscape layout,
        the detail panels are always visible on the side. */
     setBackgroundColor_Widget(panels, uiBackground_ColorId);
+    const iBool isFullHeight = isFullSizePanel_(panels);
     setFlags_Widget(panels,
-                    resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
-                        frameless_WidgetFlag | focusRoot_WidgetFlag | commandOnClick_WidgetFlag |
-                        horizontalOffset_WidgetFlag |
-                        /*overflowScrollable_WidgetFlag |*/ leftEdgeDraggable_WidgetFlag,
+                    resizeToParentWidth_WidgetFlag |
+                        (isFullHeight ? resizeToParentHeight_WidgetFlag |
+                            leftEdgeDraggable_WidgetFlag | horizontalOffset_WidgetFlag :
+                         (arrangeHeight_WidgetFlag | moveToParentBottomEdge_WidgetFlag)) |
+                        frameless_WidgetFlag | focusRoot_WidgetFlag | commandOnClick_WidgetFlag
+                        /*overflowScrollable_WidgetFlag |*/,
                     iTrue);
+    if (!isFullHeight) {
+        panels->minSize.y = 40 * gap_UI;
+    }
     panels->flags2 |= fadeBackground_WidgetFlag2;
     setFlags_Widget(panels, overflowScrollable_WidgetFlag, iFalse);
     /* The top-level split between main and detail panels. */
     iWidget *mainDetailSplit = makeHDiv_Widget(); {
         setCommandHandler_Widget(mainDetailSplit, mainDetailSplitHandler_);
         setFlags_Widget(mainDetailSplit, resizeHeightOfChildren_WidgetFlag, iFalse);
+        if (!isFullHeight) {
+            setFlags_Widget(mainDetailSplit, resizeToParentWidth_WidgetFlag |
+                arrangeHeight_WidgetFlag, iTrue);
+        }
         setId_Widget(mainDetailSplit, "mdsplit");
         addChild_Widget(panels, iClob(mainDetailSplit));
     }
@@ -829,12 +849,16 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
         naviBack = addChildFlags_Widget(
             navi,
             iClob(newKeyMods_LabelWidget(
-                leftAngle_Icon " ${panel.back}", SDLK_ESCAPE, 0, "panel.close")),
+                isFullHeight ? leftAngle_Icon " ${panel.back}" : "${close}",
+                SDLK_ESCAPE, 0, "panel.close")),
             noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
                 extraPadding_WidgetFlag);
         checkIcon_LabelWidget(naviBack);
         setId_Widget(as_Widget(naviBack), "panel.back");
         setFont_LabelWidget(naviBack, labelFont_());
+        if (!isFullHeight) {
+            setTextColor_LabelWidget(naviBack, uiTextAction_ColorId);
+        }
         addChildFlags_Widget(panels, iClob(navi),
                              drawBackgroundToVerticalSafeArea_WidgetFlag |
                                  arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
@@ -933,6 +957,9 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
     mainDetailSplitHandler_(mainDetailSplit, "window.resized"); /* make it resize the split */
     updatePanelSheetMetrics_(panels);
     arrange_Widget(panels);
+    if (!isFullHeight) {
+        arrange_Widget(panels);
+    }
     postCommand_App("widget.overflow"); /* with the correct dimensions */    
 //    printTree_Widget(panels);
 }

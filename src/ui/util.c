@@ -665,6 +665,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "document.request.updated") ||
            equal_Command(cmd, "document.request.finished") ||
            equal_Command(cmd, "document.changed") ||
+           equal_Command(cmd, "android.keyboard.changed") ||
            equal_Command(cmd, "scrollbar.fade") ||
            equal_Command(cmd, "visited.changed") ||
            (deviceType_App() == desktop_AppDeviceType && equal_Command(cmd, "window.resized")) ||
@@ -1177,7 +1178,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     arrange_Widget(d);
     if (!isSlidePanel) {
         /* LAYOUT BUG: Height of wrapped menu items is incorrect with a single arrange! */
-    arrange_Widget(d);
+        arrange_Widget(d);
     }
     if (deviceType_App() == phone_AppDeviceType) {
         if (isSlidePanel) {
@@ -1756,9 +1757,24 @@ static void updateValueInputSizing_(iWidget *dlg) {
     iInputWidget *input = findChild_Widget(dlg, "input");
     setLineLimits_InputWidget(input,
                               1,
-                              (bottom_Rect(visibleRect_Root(dlg->root)) - footer -
-                               top_Rect(boundsWithoutVisualOffset_Widget(as_Widget(input)))) /
-                                  lineHeight_Text(font_InputWidget(input)));
+                              (height_Rect(visibleRect_Root(dlg->root)) - footer -
+                                height_Widget(buttons) - height_Widget(prompt))
+                                  //(bottom_Rect(visibleRect_Root(dlg->root)) - footer -
+                                  // top_Rect(boundsWithoutVisualOffset_Widget(as_Widget(input)))) /
+                                  / lineHeight_Text(font_InputWidget(input)));
+}
+
+static void animateToRootVisibleBottom_(iWidget *widget, uint32_t span) {
+    /* Move bottom to visible area's bottom. */
+    int curY = bounds_Widget(widget).pos.y;
+    int dstY = bottom_Rect(visibleRect_Root(widget->root)) - height_Widget(widget);
+    widget->rect.pos.y = windowToLocal_Widget(widget, init_I2(0, dstY)).y;
+    setVisualOffset_Widget(widget, curY - dstY, 0, 0);
+    setVisualOffset_Widget(widget, 0, span, easeOut_AnimFlag);
+}
+
+int dialogTransitionDir_Widget(void) {
+    return deviceType_App() == desktop_AppDeviceType ? top_TransitionDir : bottom_TransitionDir;
 }
 
 iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
@@ -1767,6 +1783,9 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         if (isVisible_Widget(dlg)) {
             updateValueInputSizing_(dlg);
             arrange_Widget(dlg);
+            if (deviceType_App() != desktop_AppDeviceType) {
+                animateToRootVisibleBottom_(dlg, 200);
+            }
         }
         return iFalse;
     }
@@ -1774,6 +1793,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         /* BUG: A single arrange here is not sufficient, leaving a big gap between prompt and input. Why? */
         arrange_Widget(dlg);
         arrange_Widget(dlg);
+        animateToRootVisibleBottom_(dlg, 100);
         return iTrue;
     }
     if (equal_Command(cmd, "input.ended")) {
@@ -1785,7 +1805,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
                 postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
                 setId_Widget(dlg, ""); /* no further commands to emit */
             }
-            setupSheetTransition_Mobile(dlg, top_TransitionDir);
+            setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget());
             destroy_Widget(dlg);
             return iTrue;
         }
@@ -1796,18 +1816,21 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         setTextUndoableCStr_InputWidget(input, suffixPtr_Command(cmd, "text"), iTrue);
         deselect_InputWidget(input);
         validate_InputWidget(input);
+        updateValueInputSizing_(dlg);
+        arrange_Widget(dlg);
+        animateToRootVisibleBottom_(dlg, 100);
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancel")) {
         postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
         setId_Widget(dlg, ""); /* no further commands to emit */
-        setupSheetTransition_Mobile(dlg, top_TransitionDir);
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget());
         destroy_Widget(dlg);
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.accept")) {
         acceptValueInput_(dlg);
-        setupSheetTransition_Mobile(dlg, top_TransitionDir);        
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget());
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -1943,14 +1966,11 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     }
     /* Check that the top is in the safe area. */
     if (deviceType_App() != desktop_AppDeviceType) {
-        int top = top_Rect(boundsWithoutVisualOffset_Widget(dlg));
-        int delta = top - top_Rect(safeRect_Root(dlg->root));
-        if (delta < 0) {
-            dlg->rect.pos.y -= delta;
-        }
+        dlg->rect.pos.y = windowToLocal_Widget(dlg, init_I2(0, bottom_Rect(visibleRect_Root(dlg->root)) -
+            dlg->rect.size.y)).y;
     }
     updateValueInputSizing_(dlg);
-    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | top_TransitionDir);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget());
     return dlg;
 }
 
@@ -1992,7 +2012,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "theme.changed") ||
           startsWith_CStr(cmd, "feeds.update.") ||
           startsWith_CStr(cmd, "window."))) {
-        setupSheetTransition_Mobile(msg, iFalse);
+        setupSheetTransition_Mobile(msg, dialogTransitionDir_Widget());
         destroy_Widget(msg);
     }
     else if (equal_Command(cmd, "window.resized")) {
@@ -2038,7 +2058,7 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
         }
         iWidget *dlg = makePanels_Mobile("", data_Array(panelItems), items, numItems);
         setCommandHandler_Widget(dlg, messageHandler_);
-        setupSheetTransition_Mobile(dlg, iTrue);
+        setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget());
         return dlg;
     }
     iWidget *dlg = makeSheet_Widget("");
@@ -3046,6 +3066,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
             { "toggle id:bmed.tag.home text:${bookmark.tag.home}" },
             { "toggle id:bmed.tag.remote text:${bookmark.tag.remote}" },
             { "toggle id:bmed.tag.linksplit text:${bookmark.tag.linksplit}" },
+            { "padding" },
             { NULL }
         };
         dlg = makePanels_Mobile("bmed", items, actions, iElemCount(actions));
@@ -3164,7 +3185,7 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
 
 static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
     if (equal_Command(cmd, "cancel")) {
-        setupSheetTransition_Mobile(dlg, 0);
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget());
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -3199,7 +3220,7 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         iChangeFlags(bm->flags, headings_BookmarkFlag, headings);
         iChangeFlags(bm->flags, ignoreWeb_BookmarkFlag, ignoreWeb);
         postCommand_App("bookmarks.changed");
-        setupSheetTransition_Mobile(dlg, iFalse);
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget());
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -3227,6 +3248,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
             { "radio id:dlg.feed.entrytype", 0, 0, (const void *) typeItems },
             { "padding" },
             { "toggle id:feedcfg.ignoreweb text:${dlg.feed.ignoreweb}" },
+            { "padding" },
             { NULL }
         }, actions, iElemCount(actions));
     }
@@ -3251,7 +3273,6 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         arrange_Widget(dlg);
         as_Widget(input)->rect.size.x = 100 * gap_UI - headings->rect.size.x;
         addChild_Widget(get_Root()->widget, iClob(dlg));
-//        finalizeSheet_Mobile(dlg);
     }
     /* Initialize. */ {
         const iBookmark *bm  = bookmarkId ? get_Bookmarks(bookmarks_App(), bookmarkId) : NULL;
@@ -3267,7 +3288,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
                          bm && bm->flags & ignoreWeb_BookmarkFlag);
         setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
     }
-    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget());
     return dlg;
 }
 
@@ -3340,7 +3361,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
     const char *sheetId = format_CStr("sitespec site:%s", cstr_Rangecc(urlRoot_String(url)));
     const iMenuItem actions[] = {
         { "${cancel}" },
-        { "${sitespec.accept}", SDLK_RETURN, KMOD_PRIMARY, "sitespec.accept" }
+        { uiTextAction_ColorEscape "${sitespec.accept}", SDLK_RETURN, KMOD_PRIMARY, "sitespec.accept" }
     };
     if (isUsingPanelLayout_Mobile()) {
         dlg = makePanels_Mobile(sheetId, (iMenuItem[]){
@@ -3562,8 +3583,11 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
             { "title id:heading.translate" },
             { "dropdown id:xlt.from text:${dlg.translate.from}", 0, 0, (const void *) languages },
             { "dropdown id:xlt.to text:${dlg.translate.to}",     0, 0, (const void *) languages },
+            { "padding arg:3" },
             { NULL }                              
         }, actions, iElemCount(actions));
+        setFlags_Widget(dlg, keepOnTop_WidgetFlag, iTrue);
+        arrange_Widget(dlg);
     }
     else {
         dlg = makeSheet_Widget("xlt");
@@ -3610,7 +3634,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.to"),
                                         languages[prefs_App()->langTo].command);
     setCommandHandler_Widget(dlg, translationHandler_);
-    setupSheetTransition_Mobile(dlg, iTrue);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget());
     return dlg;
 }
 
