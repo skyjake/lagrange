@@ -106,8 +106,6 @@ static const iMenuItem tabletNavMenuItems_[] = {
     //{ "${menu.downloads}", 0, 0, "downloads.open" },
     { "---" },
     { gear_Icon " ${menu.settings}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
-    { "${menu.help}", SDLK_F1, 0, "!open url:about:help" },
-    { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
 };
 
 /* Phone menu. */
