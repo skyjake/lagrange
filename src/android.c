@@ -79,7 +79,9 @@ void javaCommand_Android(const char *format, ...) {
 
 struct Impl_SystemTextInput {
     int flags;
+    int font;
     iString text;
+    int numLines;
     void (*textChangedFunc)(iSystemTextInput *, void *);
     void * textChangedContext;
 };
@@ -93,28 +95,38 @@ static iRect nativeRect_SystemTextInput_(const iSystemTextInput *d, iRect rect) 
 
 void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     d->flags = flags;
+    d->font = uiInput_FontId;
     init_String(&d->text);
     d->textChangedFunc = NULL;
     d->textChangedContext = NULL;
+    d->numLines = 0;
     rect = nativeRect_SystemTextInput_(d, rect);
     const iColor fg = get_Color(uiInputTextFocused_ColorId);
     const iColor bg = get_Color(uiInputBackgroundFocused_ColorId);
     const iColor hl = get_Color(uiInputCursor_ColorId);
-    javaCommand_Android("input.init ptr:%p x:%d y:%d w:%d h:%d "
+    javaCommand_Android("input.init ptr:%p "
+                        "x:%d y:%d w:%d h:%d "
                         "gap:%d fontsize:%d "
+                        "newlines:%d "
                         "correct:%d "
                         "autocap:%d "
                         "sendkey:%d "
                         "gokey:%d "
+                        "multi:%d "
+                        "alignright:%d "
                         "fg0:%d fg1:%d fg2:%d "
                         "bg0:%d bg1:%d bg2:%d "
                         "hl0:%d hl1:%d hl2:%d",
-                        d, rect.pos.x, rect.pos.y, rect.size.x, rect.size.y,
+                        d,
+                        rect.pos.x, rect.pos.y, rect.size.x, rect.size.y,
                         gap_UI, lineHeight_Text(default_FontId),
+                        (flags & insertNewlines_SystemTextInputFlag) != 0,
                         (flags & disableAutocorrect_SystemTextInputFlag) == 0,
                         (flags & disableAutocapitalize_SystemTextInputFlag) == 0,
                         (flags & returnSend_SystemTextInputFlags) != 0,
                         (flags & returnGo_SystemTextInputFlags) != 0,
+                        (flags & multiLine_SystemTextInputFlags) != 0,
+                        (flags & alignRight_SystemTextInputFlag) != 0,
                         fg.r, fg.g, fg.b,
                         bg.r, bg.g, bg.b,
                         hl.r, hl.g, hl.b);
@@ -140,6 +152,7 @@ void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool all
 }
 
 void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
+    d->font = fontId;
     javaCommand_Android("input.setfont size:%d", lineHeight_Text(fontId));
 }
 
@@ -158,22 +171,40 @@ const iString *text_SystemTextInput(const iSystemTextInput *d) {
 }
 
 int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
-    //iString *res = javaCommand_Android("input.preferredheight");
-//    int pref = toInt_String(res);
-//    delete_String(res);
-    return lineHeight_Text(default_FontId);
+    return d->numLines * lineHeight_Text(d->font);
 }
 
 iBool handleCommand_Android(const char *cmd) {
     if (equal_Command(cmd, "android.input.changed")) {
-        iSystemTextInput *sys = pointer_Command(cmd);
-        const char *newText = suffixPtr_Command(cmd, "text");
-        if (cmp_String(&sys->text, newText)) {
-            setCStr_String(&sys->text, newText);
-            if (sys->textChangedFunc) {
-                sys->textChangedFunc(sys, sys->textChangedContext);
+        iSystemTextInput *sys = pointerLabel_Command(cmd, "sys");
+        iBool wasChanged = iFalse;
+        if (hasLabel_Command(cmd, "text")) {
+            const char *newText = suffixPtr_Command(cmd, "text");
+            if (cmp_String(&sys->text, newText)) {
+                setCStr_String(&sys->text, newText);
+                wasChanged = iTrue;
             }
         }
+        const int numLines = argLabel_Command(cmd, "lines");
+        if (numLines) {
+            if (sys->numLines != numLines) {
+                sys->numLines = numLines;
+                wasChanged = iTrue;
+            }
+        }
+        if (wasChanged && sys->textChangedFunc) {
+            sys->textChangedFunc(sys, sys->textChangedContext);
+        }
+    }
+    else if (equal_Command(cmd, "android.input.enter")) {
+        SDL_Event ev = { .type = SDL_KEYDOWN };
+        ev.key.timestamp = SDL_GetTicks();
+        ev.key.keysym.sym = SDLK_RETURN;
+        ev.key.state = SDL_PRESSED;
+        SDL_PushEvent(&ev);
+        ev.type = SDL_KEYUP;
+        ev.key.state = SDL_RELEASED;
+        SDL_PushEvent(&ev);
     }
     return iFalse;
 }
