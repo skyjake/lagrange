@@ -3087,7 +3087,8 @@ iWidget *makeBookmarkEditor_Widget(void) {
             { "heading text:${heading.bookmark.tags}" },
             { "toggle id:bmed.tag.home text:${bookmark.tag.home}" },
             { "toggle id:bmed.tag.remote text:${bookmark.tag.remote}" },
-            { "toggle id:bmed.tag.linksplit text:${bookmark.tag.linksplit}" },
+            { "toggle device:0 id:bmed.tag.linksplit text:${bookmark.tag.linksplit}" },
+            { "toggle device:1 id:bmed.tag.linksplit text:${bookmark.tag.linksplit}" },
             { "padding" },
             { NULL }
         };
