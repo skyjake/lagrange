@@ -3480,7 +3480,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
         if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
-            iWidget *idPanel = panel_Mobile(dlg, 2);
+            iWidget *idPanel = panel_Mobile(dlg, 3);
             iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
             postCommand_Widget(button, "panel.open");
     }

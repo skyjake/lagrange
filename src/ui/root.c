@@ -569,16 +569,18 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 static void updateNavBarIdentity_(iWidget *navBar) {
     const iGmIdentity *ident =
         identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
-    iWidget *button = findChild_Widget(navBar, "navbar.ident");
-    iWidget *menu   = findChild_Widget(button, "menu");
-    setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
     /* Update menu. */
     const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
-    const char *   idLabel     = subjectName
+    if (navBar) {
+        iWidget *button = findChild_Widget(navBar, "navbar.ident");
+        iWidget *menu   = findChild_Widget(button, "menu");
+        setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
+        const char *   idLabel     = subjectName
                                      ? cstr_String(subjectName)
                                      : "${menu.identity.notactive}";
-    setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
-    setMenuItemDisabledByIndex_Widget(menu, 0, !ident);
+        setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
+        setMenuItemDisabledByIndex_Widget(menu, 0, !ident);
+    }
     iLabelWidget *toolButton = findWidget_App("toolbar.ident");
     iLabelWidget *toolName = findWidget_App("toolbar.name");
     if (toolName) {
@@ -587,7 +589,10 @@ static void updateNavBarIdentity_(iWidget *navBar) {
             setTextColor_LabelWidget(toolButton, uiTextAction_ColorId);
             setTextColor_LabelWidget(toolName, uiTextAction_ColorId);
         }
-        /* Fit the name in the widget. */ 
+        else {
+            setTextColor_LabelWidget(toolButton, textColor_LabelWidget(child_Widget(parent_Widget(toolButton), 0)));
+        }
+        /* Fit the name in the widget. */
         if (subjectName) {
             const char *endPos;
             tryAdvanceNoWrap_Text(
@@ -705,8 +710,7 @@ void updateToolbarColors_Root(iRoot *d) {
             /* Menu uses accent color. */
             setTextColor_LabelWidget(findChild_Widget(toolBar, "toolbar.navmenu"), uiTextAction_ColorId);
         }
-        setTextColor_LabelWidget(findChild_Widget(toolBar, "toolbar.name"),
-                                 useThemeColors ? tmBannerIcon_ColorId : uiTextDim_ColorId);
+        updateNavBarIdentity_(NULL); /* updates the identity button */
     }
 #else
     iUnused(d);
@@ -2107,6 +2111,9 @@ iRect visibleRect_Root(const iRoot *d) {
         visRect = intersect_Rect(visRect, init_Rect(usable.x, usable.y, usable.w, usable.h));        
     }
 #endif
-    adjustEdges_Rect(&visRect, 0, 0, -get_MainWindow()->keyboardHeight + bottom, 0);
+    const int keyboardHeight = get_MainWindow()->keyboardHeight;
+    if (keyboardHeight > bottom) {
+        adjustEdges_Rect(&visRect, 0, 0, -keyboardHeight + bottom, 0);
+    }
     return visRect;
 }

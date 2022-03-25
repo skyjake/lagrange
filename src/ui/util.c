@@ -2180,7 +2180,7 @@ iLabelWidget *dialogAcceptButton_Widget(const iWidget *d) {
     iWidget *buttonParent = findChild_Widget(d, "dialogbuttons");
     if (!buttonParent) {
         iAssert(isUsingPanelLayout_Mobile());
-        buttonParent = findChild_Widget(d, "panel.back");
+        buttonParent = findChild_Widget(d, "navi.actions");
     }
     return (iLabelWidget *) lastChild_Widget(buttonParent);
 }
@@ -2679,14 +2679,14 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.settings" },
             { "padding arg:0.167" },
             { "panel text:" gear_Icon " ${heading.prefs.general}", 0, 0, (const void *) generalPanelItems },
+            { "panel icon:0x1f4f1 id:heading.prefs.interface", 0, 0, (const void *) uiPanelItems },
             { "panel icon:0x1f5a7 id:heading.prefs.network", 0, 0, (const void *) networkPanelItems },
             { "panel noscroll:1 text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
             { "padding" },
-            { "panel icon:0x1f4f1 id:heading.prefs.interface", 0, 0, (const void *) uiPanelItems },
             { "panel icon:0x1f3a8 id:heading.prefs.colors", 0, 0, (const void *) colorPanelItems },
             { "panel icon:0x1f5da id:heading.prefs.fonts", 0, 0, (const void *) fontPanelItems },
             { "panel icon:0x1f660 id:heading.prefs.style", 0, 0, (const void *) stylePanelItems },
-            { "padding" },
+            { "heading id:heading.prefs.support" },
             { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
             { "panel text:" planet_Icon " ${menu.about}", 0, 0, (const void *) aboutPanelItems },
             { NULL }

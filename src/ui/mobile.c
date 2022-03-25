@@ -305,8 +305,15 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         updateNaviActionVisibility_(sheet, topPanel);
         unselectAllPanelButtons_(topPanel);
         if (!wasClosed) {
+            iWidget *widget = NULL;
             /* TODO: Should come up with a more general-purpose approach here. */
-            if (findWidget_App("prefs")) {
+            if (findWidget_App("ident")) {
+                postCommand_App("ident.cancel");
+            }
+            else if ((widget = findWidget_App("certimport")) != NULL) {
+                postCommand_Widget(widget, "cancel");
+            }
+            else if (findWidget_App("prefs")) {
                 postCommand_App("prefs.dismiss");
             }
             else if (findWidget_App("upload")) {
@@ -1108,10 +1115,6 @@ void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
         }
         return;
     }
-//    if (isSideBySideLayout_()) {
-        /* TODO: Landscape transitions? */
-//        return;
-//    }
     setFlags_Widget(sheet,
                     horizontalOffset_WidgetFlag,
                     dir == right_TransitionDir || dir == left_TransitionDir);
@@ -1131,7 +1134,7 @@ void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
                 setVisualOffset_Widget(sheet, height_Widget(sheet), 0, 0);
                 break;
         }
-        setVisualOffset_Widget(sheet, 0, deviceType_App() == tablet_AppDeviceType ? 350 : 200,
+        setVisualOffset_Widget(sheet, 0, deviceType_App() == tablet_AppDeviceType ? 350 : 275,
                                easeOut_AnimFlag | softer_AnimFlag);
     }        
     else {

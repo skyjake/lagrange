@@ -1276,6 +1276,7 @@ void begin_InputWidget(iInputWidget *d) {
     iConnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
     updateTextInputRect_InputWidget_(d);
     updateMetrics_InputWidget_(d);
+    refresh_Widget(d); /* ensure buffered panels hide the static text */
 #else
     mergeLines_(&d->lines, &d->oldText);
     if (d->mode == overwrite_InputMode) {

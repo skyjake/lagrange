@@ -595,20 +595,20 @@ void setTextColor_LabelWidget(iLabelWidget *d, int color) {
 
 void setText_LabelWidget(iLabelWidget *d, const iString *text) {
     if (d) {
-    updateText_LabelWidget(d, text);
-    updateSize_LabelWidget(d);
-    if (isWrapped_LabelWidget(d)) {
-        sizeChanged_LabelWidget_(d);
-}
+        updateText_LabelWidget(d, text);
+        updateSize_LabelWidget(d);
+        if (isWrapped_LabelWidget(d)) {
+            sizeChanged_LabelWidget_(d);
+        }
     }
 }
 
 void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
     if (d) {
-    updateTextCStr_LabelWidget(d, text);
-    updateSize_LabelWidget(d);
-    if (isWrapped_LabelWidget(d)) {
-        sizeChanged_LabelWidget_(d);
+        updateTextCStr_LabelWidget(d, text);
+        updateSize_LabelWidget(d);
+        if (isWrapped_LabelWidget(d)) {
+            sizeChanged_LabelWidget_(d);
         }
     }
 }
@@ -704,6 +704,10 @@ iBool checkIcon_LabelWidget(iLabelWidget *d) {
     }
     d->icon = removeIconPrefix_String(&d->label);
     return d->icon != 0;
+}
+
+int textColor_LabelWidget(const iLabelWidget *d) {
+    return d->forceFg;
 }
 
 iChar icon_LabelWidget(const iLabelWidget *d) {

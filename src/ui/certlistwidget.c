@@ -207,7 +207,8 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
                 makeValueInput_Widget(get_Root()->widget,
                                       &ident->notes,
                                       uiHeading_ColorEscape "${heading.ident.notes}",
-                                      format_CStr(cstr_Lang("dlg.ident.notes"), cstr_String(name_GmIdentity(ident))),
+                                      format_CStr(cstr_Lang("dlg.ident.notes"),
+                                                  cstr_String(name_GmIdentity(ident))),
                                       uiTextAction_ColorEscape "${dlg.default}",
                                       format_CStr("!ident.setnotes ident:%p ptr:%p", ident, d));
             }

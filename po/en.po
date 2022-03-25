@@ -1386,6 +1386,9 @@ msgstr "Settings"
 msgid "heading.prefs.certs"
 msgstr "Certificates"
 
+msgid "heading.prefs.support"
+msgstr "Support"
+
 # tab button
 msgid "heading.prefs.colors"
 msgstr "Colors"

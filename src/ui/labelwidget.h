@@ -58,6 +58,7 @@ int             font_LabelWidget        (const iLabelWidget *);
 const iString * text_LabelWidget        (const iLabelWidget *);
 const iString * sourceText_LabelWidget  (const iLabelWidget *); /* untranslated */
 const iString * command_LabelWidget     (const iLabelWidget *);
+int             textColor_LabelWidget   (const iLabelWidget *);
 iChar           icon_LabelWidget        (const iLabelWidget *);
 iBool           isWrapped_LabelWidget   (const iLabelWidget *);
 
