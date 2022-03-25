@@ -5655,12 +5655,14 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         iRect indRect = initCentered_Rect(init_I2(mid_Rect(bounds).x,
                                                   top_Rect(bounds) - 5 * gap_UI -
                                                   pos_SmoothScroll(&d->view.scrollY)),
-                                          init_I2(20 * gap_UI, 2 * gap_UI));
+                                          init_I2(20 * gap_UI, gap_UI / 2));
         setClip_Paint(&p, clipBounds);
         int color = pullPos < 1.0f ? tmBannerItemFrame_ColorId : tmBannerItemText_ColorId;
-        drawRect_Paint(&p, indRect, color);
+        //drawRect_Paint(&p, indRect, color);
+        fillRect_Paint(&p, indRect, color);
+        indRect.pos.y += gap_UI / 2;
         if (pullPos > 0) {
-            shrink_Rect(&indRect, divi_I2(gap2_UI, 2));
+            //shrink_Rect(&indRect, divi_I2(gap2_UI, 2));
             indRect.size.x *= pullPos;
             fillRect_Paint(&p, indRect, color);
         }
