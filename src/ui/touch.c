@@ -131,6 +131,9 @@ static iTouchState *touchState_(void) {
         d->stepDurationMs = 1000.0 / (double) displayRefreshRate_iOS();
 #endif
         d->momFrictionPerStep = pow(0.985, 120.0 / (1000.0 / d->stepDurationMs));
+#if defined (iPlatformAndroidMobile)
+        d->momFrictionPerStep = 10 * gap_UI;
+#endif
     }
     return d;
 }
@@ -383,7 +386,24 @@ static void update_TouchState_(void *ptr) {
                 continue;
             }
             for (int step = 0; step < numSteps; step++) {
+#if defined (iPlatformAndroidMobile)
+                float vel[3];
+                store_F3(mom->velocity, vel);
+                if (iAbs(vel[0]) < d->momFrictionPerStep) {
+                    setX_F3(&mom->velocity, 0.0f);
+                }
+                else {
+                    setX_F3(&mom->velocity, vel[0] + (vel[0] > 0 ? -1 : 1) * d->momFrictionPerStep);
+                }
+                if (iAbs(vel[1]) < d->momFrictionPerStep) {
+                    setY_F3(&mom->velocity, 0.0f);
+                }
+                else {
+                    setY_F3(&mom->velocity, vel[1] + (vel[1] > 0 ? -1 : 1) * d->momFrictionPerStep);
+                }
+#else
                 mulvf_F3(&mom->velocity, d->momFrictionPerStep);
+#endif
                 addv_F3(&mom->accum, mulf_F3(mom->velocity, d->stepDurationMs / 1000.0f));
             }
             const iInt2 pixels = initF3_I2(mom->accum);

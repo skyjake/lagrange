@@ -157,7 +157,7 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
 }
 
 void deinit_SystemTextInput(iSystemTextInput *d) {
-    javaCommand_Android("input.deinit");
+    javaCommand_Android("input.deinit ptr:%p", d);
     deinit_String(&d->text);
 }
 
