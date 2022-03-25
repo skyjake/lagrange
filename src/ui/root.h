@@ -16,7 +16,7 @@ struct Impl_Root {
     iWindow *  window;
     iPtrArray *onTop; /* order is important; last one is topmost */
     iPtrSet *  pendingDestruction;
-    iBool      pendingArrange;
+    int        pendingArrange; /* incremented counter */
     int        loadAnimTimer;
     iBool      didAnimateVisualOffsets;
     iBool      didChangeArrangement;

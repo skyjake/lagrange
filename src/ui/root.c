@@ -542,7 +542,6 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         if (prefs) {
             updatePreferencesLayout_Widget(prefs);
         }
-        root->root->pendingArrange = iFalse;
         return iTrue;
     }
     else if (equal_Command(cmd, "root.movable")) {

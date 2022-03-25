@@ -2273,8 +2273,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         }
     }
     else if (equalWidget_Command(cmd, d, "input.resized")) {
-        if (!d->root->pendingArrange) {
-            d->root->pendingArrange = iTrue;
+        if (d->root->pendingArrange < arg_Command(cmd)) {
+            d->root->pendingArrange = arg_Command(cmd);
             postCommand_Root(d->root, "root.arrange");
         }
         return iTrue;

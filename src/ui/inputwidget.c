@@ -808,7 +808,7 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     }
     invalidateBuffered_InputWidget_(d);
     if (height_Rect(w->rect) != oldHeight) {
-        postCommand_Widget(d, "input.resized");
+        postCommand_Widget(d, "input.resized arg:%d", w->root->pendingArrange + 1);
         updateTextInputRect_InputWidget_(d);
     }
 }

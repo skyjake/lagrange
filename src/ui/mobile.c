@@ -336,8 +336,12 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         updatePanelSheetMetrics_(sheet);
     }
     else if (equalWidget_Command(cmd, sheet, "input.resized")) {
-        arrange_Widget(sheet);
-        refresh_Widget(pointer_Command(cmd)); /* may be on a buffered panel */
+        const int rev = arg_Command(cmd);
+        if (sheet->root->pendingArrange < rev) {
+            sheet->root->pendingArrange = rev;
+            arrange_Widget(sheet);
+            refresh_Widget(pointer_Command(cmd)); /* may be on a buffered panel */
+        }
         return iTrue;
     }
     return iFalse;
