@@ -5661,6 +5661,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         //drawRect_Paint(&p, indRect, color);
         fillRect_Paint(&p, indRect, color);
         indRect.pos.y += gap_UI / 2;
+        indRect.size.y *= 2;
         if (pullPos > 0) {
             //shrink_Rect(&indRect, divi_I2(gap2_UI, 2));
             indRect.size.x *= pullPos;

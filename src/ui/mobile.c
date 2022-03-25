@@ -920,7 +920,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
                 resizeToParentHeight_WidgetFlag | moveToParentLeftEdge_WidgetFlag);
         setId_Widget(as_Widget(naviTitle), "navi.title");
         setFont_LabelWidget(naviTitle, labelBoldFont_());
-        setTextColor_LabelWidget(naviTitle, uiTextStrong_ColorId);
+//        setTextColor_LabelWidget(naviTitle, uiTextStrong_ColorId);
         naviBack = addChildFlags_Widget(
             navi,
             iClob(newKeyMods_LabelWidget(
