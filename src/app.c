@@ -1381,9 +1381,6 @@ void trimMemory_App(void) {
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
-//    if (deviceType_App() != desktop_AppDeviceType && numFingers_Touch() > 0) {
-//        return iFalse;
-//    }
     if (d->warmupFrames > 0) {
         return iFalse;
     }
@@ -2474,7 +2471,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
             postCommandf_App("sidebar.mode arg:%d show:1", identities_SidebarMode);
             postCommand_App("idents.changed");
         }
-        setupSheetTransition_Mobile(dlg, iFalse);
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -3630,9 +3627,9 @@ iBool handleCommand_App(const char *cmd) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
         addChild_Widget(get_Root()->widget, iClob(imp));
-//        finalizeSheet_Mobile(as_Widget(imp));
         arrange_Widget(as_Widget(imp));
-        setupSheetTransition_Mobile(as_Widget(imp), iTrue);
+        setupSheetTransition_Mobile(as_Widget(imp), incoming_TransitionFlag |
+                                    dialogTransitionDir_Widget(as_Widget(imp)));
         postRefresh_App();
         return iTrue;
     }

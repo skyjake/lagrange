@@ -542,9 +542,6 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         if (prefs) {
             updatePreferencesLayout_Widget(prefs);
         }
-//        if (deviceType_App() == phone_AppDeviceType) {
-//            updateBottomBarPosition_(findWidget_Root("bottombar"), iFalse);
-//        }
         root->root->pendingArrange = iFalse;
         return iTrue;
     }

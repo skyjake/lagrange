@@ -262,7 +262,7 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         return iTrue;
     }
     if (isCommand_Widget(w, ev, "cancel")) {
-        setupSheetTransition_Mobile(w, iFalse);
+        setupSheetTransition_Mobile(w, dialogTransitionDir_Widget(w));
         destroy_Widget(w);
         return iTrue;
     }
@@ -270,7 +270,7 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         if (d->cert && !isEmpty_TlsCertificate(d->cert) && hasPrivateKey_TlsCertificate(d->cert)) {
             importIdentity_GmCerts(certs_App(), d->cert, text_InputWidget(d->notes));
             d->cert = NULL; /* taken */
-            setupSheetTransition_Mobile(w, iFalse);
+            setupSheetTransition_Mobile(w, dialogTransitionDir_Widget(w));
             destroy_Widget(w);
             postCommand_App("idents.changed");
         }

@@ -276,6 +276,7 @@ void            setNativeMenuItems_Widget       (iWidget *menu, const iMenuItem 
 iWidget *       findUserData_Widget             (iWidget *, void *userData);
 
 int             checkContextMenu_Widget         (iWidget *, const SDL_Event *ev); /* see macro below */
+void            animateToRootVisibleTop_Widget  (iWidget *, uint32_t span);
 
 #define processContextMenuEvent_Widget(menu, sdlEvent, stmtEaten) \
     for (const int result = checkContextMenu_Widget((menu), (sdlEvent));;) { \
@@ -317,7 +318,7 @@ iWidget *   makeDialogButtons_Widget    (const iMenuItem *actions, size_t numAct
 iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
 
 iLabelWidget *dialogAcceptButton_Widget (const iWidget *);
-int           dialogTransitionDir_Widget(void);
+int           dialogTransitionDir_Widget(const iWidget *);
 iLabelWidget *addDialogTitle_Widget     (iWidget *, const char *text, const char *idOrNull);
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,

@@ -1743,10 +1743,16 @@ static void updateValueInputSizing_(iWidget *dlg) {
     if (deviceType_App() == phone_AppDeviceType) {
         dlg->rect.size.x = rootSize.x;
     }
+    else if (deviceType_App() == tablet_AppDeviceType) {
+        dlg->rect.size.x = iMin(rootSize.x, rootSize.y);
+    }
     else {
         dlg->rect.size.x =
             iMin(rootSize.x, iMaxi(iMaxi(100 * gap_UI, title ? title->rect.size.x : 0),
                                    prompt->rect.size.x));
+    }
+    if (deviceType_App() != desktop_AppDeviceType) {
+        dlg->minSize.y = get_MainWindow()->keyboardHeight == 0 ? 60 * gap_UI : 0;
     }
     /* Adjust the maximum number of visible lines. */
     int footer = 6 * gap_UI;
@@ -1758,10 +1764,8 @@ static void updateValueInputSizing_(iWidget *dlg) {
     setLineLimits_InputWidget(input,
                               1,
                               (height_Rect(visibleRect_Root(dlg->root)) - footer -
-                                height_Widget(buttons) - height_Widget(prompt))
-                                  //(bottom_Rect(visibleRect_Root(dlg->root)) - footer -
-                                  // top_Rect(boundsWithoutVisualOffset_Widget(as_Widget(input)))) /
-                                  / lineHeight_Text(font_InputWidget(input)));
+                               height_Widget(buttons) - height_Widget(prompt)) /
+                                  lineHeight_Text(font_InputWidget(input)));
 }
 
 static void animateToRootVisibleBottom_(iWidget *widget, uint32_t span) {
@@ -1770,11 +1774,22 @@ static void animateToRootVisibleBottom_(iWidget *widget, uint32_t span) {
     int dstY = bottom_Rect(visibleRect_Root(widget->root)) - height_Widget(widget);
     widget->rect.pos.y = windowToLocal_Widget(widget, init_I2(0, dstY)).y;
     setVisualOffset_Widget(widget, curY - dstY, 0, 0);
-    setVisualOffset_Widget(widget, 0, span, easeOut_AnimFlag);
+    setVisualOffset_Widget(widget, 0, span, easeOut_AnimFlag | softer_AnimFlag);
 }
 
-int dialogTransitionDir_Widget(void) {
-    return deviceType_App() == desktop_AppDeviceType ? top_TransitionDir : bottom_TransitionDir;
+void animateToRootVisibleTop_Widget(iWidget *widget, uint32_t span) {
+    int curY = bounds_Widget(widget).pos.y;
+    int dstY = top_Rect(visibleRect_Root(widget->root));
+    widget->rect.pos.y = windowToLocal_Widget(widget, init_I2(0, dstY)).y;
+    setVisualOffset_Widget(widget, curY - dstY, 0, 0);
+    setVisualOffset_Widget(widget, 0, span, easeOut_AnimFlag | softer_AnimFlag);
+}
+
+int dialogTransitionDir_Widget(const iWidget *dlg) {
+    if (deviceType_App() == desktop_AppDeviceType) {
+        return top_TransitionDir;
+    }
+    return isFullSizePanel_Mobile(dlg) ? right_TransitionDir : bottom_TransitionDir;
 }
 
 iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
@@ -1784,7 +1799,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
             updateValueInputSizing_(dlg);
             arrange_Widget(dlg);
             if (deviceType_App() != desktop_AppDeviceType) {
-                animateToRootVisibleBottom_(dlg, 200);
+                animateToRootVisibleBottom_(dlg, keyboardShowSpan_Mobile);
             }
         }
         return iFalse;
@@ -1805,7 +1820,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
                 postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
                 setId_Widget(dlg, ""); /* no further commands to emit */
             }
-            setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget());
+            setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
             destroy_Widget(dlg);
             return iTrue;
         }
@@ -1824,13 +1839,13 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     else if (equal_Command(cmd, "valueinput.cancel")) {
         postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
         setId_Widget(dlg, ""); /* no further commands to emit */
-        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget());
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
         destroy_Widget(dlg);
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.accept")) {
         acceptValueInput_(dlg);
-        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget());
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -1968,9 +1983,10 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     if (deviceType_App() != desktop_AppDeviceType) {
         dlg->rect.pos.y = windowToLocal_Widget(dlg, init_I2(0, bottom_Rect(visibleRect_Root(dlg->root)) -
             dlg->rect.size.y)).y;
+        setFlags_Widget(dlg, drawBackgroundToBottom_WidgetFlag, iTrue);
     }
     updateValueInputSizing_(dlg);
-    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget());
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;
 }
 
@@ -2012,7 +2028,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "theme.changed") ||
           startsWith_CStr(cmd, "feeds.update.") ||
           startsWith_CStr(cmd, "window."))) {
-        setupSheetTransition_Mobile(msg, dialogTransitionDir_Widget());
+        setupSheetTransition_Mobile(msg, dialogTransitionDir_Widget(msg));
         destroy_Widget(msg);
     }
     else if (equal_Command(cmd, "window.resized")) {
@@ -2058,7 +2074,7 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
         }
         iWidget *dlg = makePanels_Mobile("", data_Array(panelItems), items, numItems);
         setCommandHandler_Widget(dlg, messageHandler_);
-        setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget());
+        setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
         return dlg;
     }
     iWidget *dlg = makeSheet_Widget("");
@@ -2546,6 +2562,7 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem uiPanelItems[] = {
             { "title id:heading.prefs.interface" },
+            { "padding arg:0.667" },
             { "dropdown device:0 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
             { "toggle id:prefs.bottomnavbar" },
@@ -2559,6 +2576,7 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem colorPanelItems[] = {
             { "title id:heading.prefs.colors" },
+            { "padding arg:0.667" },
 #if !defined (iPlatformAndroidMobile)
             { "toggle id:prefs.ostheme" },
 #endif
@@ -2574,6 +2592,7 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem fontPanelItems[] = {
             { "title id:heading.prefs.fonts" },
+            { "padding arg:0.667" },
             { "dropdown id:prefs.font.heading", 0, 0, (const void *) constData_Array(makeFontItems_("heading")) },
             { "dropdown id:prefs.font.body", 0, 0, (const void *) constData_Array(makeFontItems_("body")) },
             { "dropdown id:prefs.font.mono", 0, 0, (const void *) constData_Array(makeFontItems_("mono")) },
@@ -2612,6 +2631,7 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem networkPanelItems[] = {
             { "title id:heading.prefs.network" },
+            { "padding arg:0.667" },
             { "toggle id:prefs.decodeurls" },
             { "input id:prefs.urlsize maxlen:10 selectall:1" },
             { "padding" },
@@ -2628,6 +2648,8 @@ iWidget *makePreferences_Widget(void) {
         const iMenuItem identityPanelItems[] = {
             { "title id:sidebar.identities" },
             { "certlist" },
+            { "navi.action id:prefs.ident.import text:" inbox_Icon, 0, 0, "ident.import" },
+            { "navi.action id:prefs.ident.new text:" add_Icon, 0, 0, "ident.new" },
             { NULL }  
         };
         iString *aboutText = collectNew_String(); {
@@ -2653,7 +2675,9 @@ iWidget *makePreferences_Widget(void) {
             { NULL }
         };
         iWidget *dlg = makePanels_Mobile("prefs", (iMenuItem[]){
+            { "padding arg:0.5" },
             { "title id:heading.settings" },
+            { "padding arg:0.5" },
             { "panel text:" gear_Icon " ${heading.prefs.general}", 0, 0, (const void *) generalPanelItems },
             { "panel icon:0x1f5a7 id:heading.prefs.network", 0, 0, (const void *) networkPanelItems },
             { "panel noscroll:1 text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
@@ -2664,7 +2688,6 @@ iWidget *makePreferences_Widget(void) {
             { "panel icon:0x1f660 id:heading.prefs.style", 0, 0, (const void *) stylePanelItems },
             { "padding" },
             { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
-            { "padding" },
             { "panel text:" planet_Icon " ${menu.about}", 0, 0, (const void *) aboutPanelItems },
             { NULL }
         }, NULL, 0);
@@ -3054,11 +3077,10 @@ iWidget *makeBookmarkEditor_Widget(void) {
         const iArray *folderItems = makeBookmarkFolderItems_(iTrue);
         const iMenuItem items[] = {
             { "title id:bmed.heading text:${heading.bookmark.edit}" },
-            { "heading id:dlg.bookmark.url" },
-            { "input id:bmed.url url:1 noheading:1" },
-            { "padding" },
             { "input id:bmed.title text:${dlg.bookmark.title}" },
             { "dropdown id:bmed.folder text:${dlg.bookmark.folder}", 0, 0, (const void *) constData_Array(folderItems) },
+            { "heading id:dlg.bookmark.url" },
+            { "input id:bmed.url url:1 noheading:1" },
             { "padding" },
             { "input id:bmed.icon maxlen:1 text:${dlg.bookmark.icon}" },
             { "input id:bmed.tags text:${dlg.bookmark.tags}" },
@@ -3070,7 +3092,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
             { NULL }
         };
         dlg = makePanels_Mobile("bmed", items, actions, iElemCount(actions));
-        setupSheetTransition_Mobile(dlg, iTrue);
+        setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     }
     else {
         dlg = makeSheet_Widget("bmed");
@@ -3156,7 +3178,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             setRecentFolder_Bookmarks(bookmarks_App(), bm->parentId);
             postCommandf_App("bookmarks.changed added:%zu", id);
         }
-        setupSheetTransition_Mobile(editor, iFalse);
+        setupSheetTransition_Mobile(editor, dialogTransitionDir_Widget(editor));
         destroy_Widget(editor);
         return iTrue;
     }
@@ -3185,7 +3207,7 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
 
 static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
     if (equal_Command(cmd, "cancel")) {
-        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget());
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -3220,7 +3242,7 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         iChangeFlags(bm->flags, headings_BookmarkFlag, headings);
         iChangeFlags(bm->flags, ignoreWeb_BookmarkFlag, ignoreWeb);
         postCommand_App("bookmarks.changed");
-        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget());
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -3288,7 +3310,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
                          bm && bm->flags & ignoreWeb_BookmarkFlag);
         setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
     }
-    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget());
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;
 }
 
@@ -3316,7 +3338,7 @@ static void updateSiteSpecificTheme_(iInputWidget *palSeed, void *context) {
 }
 
 static void closeSiteSpecific_(iWidget *dlg) {
-    setupSheetTransition_Mobile(dlg, 0);
+    setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
     delete_String(userData_Object(dlg)); /* saved original palette seed */
     destroy_Widget(dlg);
 }
@@ -3370,6 +3392,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
             { "padding" },
             { "toggle id:sitespec.ansi" },
             { "toggle id:sitespec.tlscache" },
+            { "padding" },
             { NULL }
         }, actions, iElemCount(actions));
     }
@@ -3405,7 +3428,7 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
         }        
     }
     setCommandHandler_Widget(dlg, siteSpecificSettingsHandler_);
-    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     setFocus_Widget(findChild_Widget(dlg, "sitespec.palette"));
     return dlg;
 }
@@ -3514,7 +3537,7 @@ iWidget *makeIdentityCreation_Widget(void) {
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));
     }
-    setupSheetTransition_Mobile(dlg, iTrue);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;
 }
 
@@ -3634,7 +3657,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.to"),
                                         languages[prefs_App()->langTo].command);
     setCommandHandler_Widget(dlg, translationHandler_);
-    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget());
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;
 }
 

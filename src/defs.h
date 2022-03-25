@@ -181,7 +181,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define globe_Icon          "\U0001f310"
 #define envelope_Icon       "\U0001f4e7"
 #define magnifyingGlass_Icon "\U0001f50d"
-#define midEllipsis_Icon    "\u00b7\u00b7\u00b7"
+#define midEllipsis_Icon    "\u2022\u2022\u2022" // "\u00b7 \u00b7 \u00b7"
 #define return_Icon         "\u23ce"
 #define undo_Icon           "\u23ea"
 #define select_Icon         "\u2b1a"

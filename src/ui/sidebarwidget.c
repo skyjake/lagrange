@@ -1121,7 +1121,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
             }
             postCommand_App("bookmarks.changed");
         }
-        setupSheetTransition_Mobile(editor, iFalse);
+        setupSheetTransition_Mobile(editor, dialogTransitionDir_Widget(editor));
         destroy_Widget(editor);
         return iTrue;
     }

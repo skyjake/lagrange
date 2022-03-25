@@ -576,8 +576,12 @@ static void arrange_Widget_(iWidget *d) {
         TRACE(d, "move to parent right edge: %d", d->rect.pos.x);
     }
     else if (d->flags & moveToParentBottomEdge_WidgetFlag) {
-        d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
-        TRACE(d, "move to parent bottom edge: %d", d->rect.pos.y);
+        if (d->parent) {
+            d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
+            const int minY = (d->parent->parent ? 0 : topSafeInset_Mobile());
+            d->rect.pos.y = iMax(minY, d->rect.pos.y);
+            TRACE(d, "move to parent bottom edge: %d", d->rect.pos.y);
+        }
     }
     else if (d->flags & centerHorizontal_WidgetFlag) {
         centerHorizontal_Widget_(d);
@@ -1911,6 +1915,15 @@ const iPtrArray *findChildren_Widget(const iWidget *d, const char *id) {
     iPtrArray *found = new_PtrArray();
     addMatchingToArray_Widget_(d, id, found);
     return collect_PtrArray(found);
+}
+
+iAny *findParent_Widget(const iWidget *d, const char *id) {
+    if (!d) return NULL;
+    iWidget *i = (iWidget *) d;
+    while (i && cmp_String(&i->id, id)) {
+        i = i->parent;
+    }
+    return i;
 }
 
 iAny *findParentClass_Widget(const iWidget *d, const iAnyClass *class) {

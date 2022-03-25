@@ -2170,7 +2170,7 @@ static void clampWheelAccum_InputWidget_(iInputWidget *d, int wheel) {
 static void overflowScrollToKeepVisible_InputWidget_(iAny *widget) {
     iInputWidget *d = widget;
     iWidget *w = as_Widget(d);
-    if (!isFocused_Widget(w) || isAffectedByVisualOffset_Widget(w)) {
+    if (!isFocused_Widget(w)) { //} || isAffectedByVisualOffset_Widget(w)) {
         return;
     }
     iRect rect    = boundsWithoutVisualOffset_Widget(w);
@@ -2306,6 +2306,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             else {
                 setFocus_Widget(NULL); /* stop editing */
             }
+        }
+        return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "input.overflow")) {
+        if (isFocused_Widget(d)) {
+            d->lastOverflowScrollTime = SDL_GetTicks();
+            overflowScrollToKeepVisible_InputWidget_(d);
         }
         return iFalse;
     }

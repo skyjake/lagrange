@@ -467,7 +467,7 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
     if (equalWidget_Command(cmd, w, "translation.finished")) {
         if (!isFinished_Translation(d)) {
             if (processResult_Translation_(d)) {
-                setupSheetTransition_Mobile(d->dlg, dialogTransitionDir_Widget());
+                setupSheetTransition_Mobile(d->dlg, dialogTransitionDir_Widget(d->dlg));
                 destroy_Widget(d->dlg);
                 d->dlg = NULL;
             }
@@ -484,7 +484,7 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
             cancel_TlsRequest(d->request);
         }
         else {
-            setupSheetTransition_Mobile(d->dlg, dialogTransitionDir_Widget());
+            setupSheetTransition_Mobile(d->dlg, dialogTransitionDir_Widget(d->dlg));
             destroy_Widget(d->dlg);
             d->dlg = NULL;
         }

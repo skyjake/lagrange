@@ -174,6 +174,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
         const char *cmd = command_UserEvent(ev);
         if (equal_Command(cmd, "idents.changed")) {
             updateItems_CertListWidget(d);
+            invalidate_ListWidget(&d->list);
         }
         else if (isCommand_Widget(w, ev, "list.clicked")) {
             itemClicked_CertListWidget_(

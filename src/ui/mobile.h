@@ -25,6 +25,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include <the_Foundation/rect.h>
 
+#if defined (iPlatformAppleMobile)
+#   define keyboardShowSpan_Mobile  450
+#else
+#   define keyboardShowSpan_Mobile  200
+#endif
+
 iDeclareType(ToolbarActionSpec)
     
 struct Impl_ToolbarActionSpec {
@@ -52,6 +58,7 @@ void        initPanels_Mobile           (iWidget *panels, iWidget *parentWidget,
 
 iWidget *   panel_Mobile                (const iWidget *panels, size_t index);
 size_t      currentPanelIndex_Mobile    (const iWidget *panels);
+iBool       isFullSizePanel_Mobile      (const iWidget *panels);
 
 enum iTransitionFlags {
     incoming_TransitionFlag = iBit(1),
