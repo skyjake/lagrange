@@ -2675,9 +2675,9 @@ iWidget *makePreferences_Widget(void) {
             { NULL }
         };
         iWidget *dlg = makePanels_Mobile("prefs", (iMenuItem[]){
-            { "padding arg:0.5" },
+            { "padding arg:0.333" },
             { "title id:heading.settings" },
-            { "padding arg:0.5" },
+            { "padding arg:0.167" },
             { "panel text:" gear_Icon " ${heading.prefs.general}", 0, 0, (const void *) generalPanelItems },
             { "panel icon:0x1f5a7 id:heading.prefs.network", 0, 0, (const void *) networkPanelItems },
             { "panel noscroll:1 text:" person_Icon " ${sidebar.identities}", 0, 0, (const void *) identityPanelItems },
