@@ -117,6 +117,8 @@ static iRect nativeRect_SystemTextInput_(const iSystemTextInput *d, iRect rect) 
     return moved_Rect(rect, init_I2(0, -0.75f * gap_UI));
 }
 
+static iBool inputOngoing_;
+
 void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     d->flags = flags;
     d->font = uiInput_FontId;
@@ -154,9 +156,11 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
                         fg.r, fg.g, fg.b,
                         bg.r, bg.g, bg.b,
                         hl.r, hl.g, hl.b);
+    inputOngoing_ = iTrue;
 }
 
 void deinit_SystemTextInput(iSystemTextInput *d) {
+    inputOngoing_ = iFalse;
     javaCommand_Android("input.deinit ptr:%p", d);
     deinit_String(&d->text);
 }
@@ -204,6 +208,9 @@ int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
 
 iBool handleCommand_Android(const char *cmd) {
     if (equal_Command(cmd, "android.input.changed")) {
+        if (!inputOngoing_) {
+            return iTrue;
+        }
         iSystemTextInput *sys = pointerLabel_Command(cmd, "sys");
         iBool wasChanged = iFalse;
         if (hasLabel_Command(cmd, "text")) {
@@ -223,8 +230,12 @@ iBool handleCommand_Android(const char *cmd) {
         if (wasChanged && sys->textChangedFunc) {
             sys->textChangedFunc(sys, sys->textChangedContext);
         }
+        return iTrue;
     }
     else if (equal_Command(cmd, "android.input.enter")) {
+        if (!inputOngoing_) {
+            return iTrue;
+        }
         SDL_Event ev = { .type = SDL_KEYDOWN };
         ev.key.timestamp = SDL_GetTicks();
         ev.key.keysym.sym = SDLK_RETURN;
@@ -233,9 +244,13 @@ iBool handleCommand_Android(const char *cmd) {
         ev.type = SDL_KEYUP;
         ev.key.state = SDL_RELEASED;
         SDL_PushEvent(&ev);
+        return iTrue;
     }
     else if (equal_Command(cmd, "theme.changed") || equal_Command(cmd, "tab.changed") ||
              equal_Command(cmd, "document.changed") || equal_Command(cmd, "prefs.dismiss")) {
+        if (!inputOngoing_) {
+            return iFalse;
+        }
         const iPrefs *prefs = prefs_App();
         const iColor top = get_Color(prefs->bottomNavBar && prefs->bottomTabBar ?
                     tmBackground_ColorId : uiBackground_ColorId);
