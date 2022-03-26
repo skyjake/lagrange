@@ -930,8 +930,8 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             noBackground_WidgetFlag | frameless_WidgetFlag | resizeToParentWidth_WidgetFlag |
                 resizeToParentHeight_WidgetFlag | moveToParentLeftEdge_WidgetFlag);
         setId_Widget(as_Widget(naviTitle), "navi.title");
-        setFont_LabelWidget(naviTitle, labelBoldFont_());
-//        setTextColor_LabelWidget(naviTitle, uiTextStrong_ColorId);
+        setFont_LabelWidget(naviTitle, labelFont_());
+        //setTextColor_LabelWidget(naviTitle, uiTextStrong_ColorId);
         naviBack = addChildFlags_Widget(
             navi,
             iClob(newKeyMods_LabelWidget(
@@ -942,9 +942,9 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
         checkIcon_LabelWidget(naviBack);
         setId_Widget(as_Widget(naviBack), "panel.back");
         setFont_LabelWidget(naviBack, labelFont_());
-        if (!isFullHeight) {
+        //if (!isFullHeight) {
             setTextColor_LabelWidget(naviBack, uiTextAction_ColorId);
-        }
+        //}
         naviActions = addChildFlags_Widget(
             navi,
             iClob(new_Widget()),

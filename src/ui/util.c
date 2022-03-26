@@ -2558,6 +2558,7 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
             { "toggle id:prefs.time.24h" },
+            { "padding" },
             { NULL }
         };
         const iMenuItem uiPanelItems[] = {
@@ -2572,6 +2573,7 @@ iWidget *makePreferences_Widget(void) {
             { "dropdown device:2 id:prefs.toolbaraction2", 0, 0, (const void *) toolbarActionItems[1] },
             { "heading id:heading.prefs.sizing" },
             { "input id:prefs.uiscale maxlen:8" },
+            { "padding" },
             { NULL }
         };
         const iMenuItem colorPanelItems[] = {
@@ -2588,7 +2590,8 @@ iWidget *makePreferences_Widget(void) {
             { "radio horizontal:1 id:prefs.saturation", 0, 0, (const void *) satItems },
             { "padding" },
             { "dropdown id:prefs.imagestyle", 0, 0, (const void *) imgStyles },
-            { NULL }  
+            { "padding" },
+            { NULL }
         };
         const iMenuItem fontPanelItems[] = {
             { "title id:heading.prefs.fonts" },
@@ -2609,7 +2612,8 @@ iWidget *makePreferences_Widget(void) {
 //            { "dropdown android:1 id:prefs.font.ui", 0, 0, (const void *) constData_Array(makeFontItems_("ui")) },
             { "padding" },
             { "button text:" fontpack_Icon " " uiTextAction_ColorEscape "${menu.fonts}", 0, 0, "!open url:about:fonts" },
-            { NULL }  
+            { "padding" },
+            { NULL }
         };
         const iMenuItem stylePanelItems[] = {
             { "title id:heading.prefs.style" },
@@ -2627,7 +2631,8 @@ iWidget *makePreferences_Widget(void) {
             { "toggle id:prefs.sideicon" },
             { "toggle id:prefs.centershort" },
             { "toggle id:prefs.collapsepreonload" },
-            { NULL }    
+            { "padding" },
+            { NULL }
         };
         const iMenuItem networkPanelItems[] = {
             { "title id:heading.prefs.network" },
@@ -2643,6 +2648,7 @@ iWidget *makePreferences_Widget(void) {
             { "input id:prefs.proxy.gopher noheading:1" },
             { "heading text:${prefs.proxy.http}" },
             { "input id:prefs.proxy.http noheading:1" },
+            { "padding" },
             { NULL }
         };
         const iMenuItem identityPanelItems[] = {
