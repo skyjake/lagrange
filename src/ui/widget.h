@@ -218,6 +218,7 @@ size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);
 void    drawLayerEffects_Widget         (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
+void    drawBorders_Widget              (const iWidget *); /* called by `drawBackground` */
 void    drawChildren_Widget             (const iWidget *);
 void    drawRoot_Widget                 (const iWidget *); /* root only */
 void    setDrawBufferEnabled_Widget     (iWidget *, iBool enable);

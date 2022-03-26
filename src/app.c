@@ -140,6 +140,7 @@ struct Impl_App {
     iBool        isSuspended;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
+    unsigned int idleSleepDelayMs;
     uint32_t     lastEventTime;
     int          sleepTimer;
 #endif
@@ -1098,9 +1099,20 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
     postCommand_Root(NULL, "document.autoreload");
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
-    d->isIdling      = iFalse;
-    d->lastEventTime = 0;
-    d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
+    /* Initialize idle sleep. */ {
+        d->isIdling      = iFalse;
+        d->lastEventTime = 0;
+        d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
+        SDL_DisplayMode dispMode;
+        SDL_GetWindowDisplayMode(d->window->base.win, &dispMode);
+        if (dispMode.refresh_rate) {
+            d->idleSleepDelayMs = 1000 / dispMode.refresh_rate;
+        }
+        else {
+            d->idleSleepDelayMs = 1000 / 60;
+        }
+        d->idleSleepDelayMs *= 0.9f;
+    }
 #endif
     d->isFinishedLaunching = iTrue;
     /* Run any commands that were pending completion of launch. */ {
@@ -1686,10 +1698,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
     deinit_PtrArray(&windows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->isIdling && !gotEvents) {
-        /* This is where we spend most of our time when idle. 30 Hz still quite a lot but we
-           can't wait too long after the user tries to interact again with the app. In any
-           case, on iOS SDL_WaitEvent() seems to use 10x more CPU time than sleeping (2.0.18). */
-        SDL_Delay(1000 / 30);
+        /* This is where we spend most of our time when idle. The sleep delay depends on the
+           display refresh rate. iOS SDL_WaitEvent() seems to use 10x more CPU time compared to
+           just sleeping (2.0.18). */
+        SDL_Delay(d->idleSleepDelayMs);
     }
 #endif
 backToMainLoop:;

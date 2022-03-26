@@ -749,6 +749,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         iListWidget *list = (iListWidget *) certList;
         setBackgroundColor_Widget(as_Widget(list), uiBackgroundSidebar_ColorId);
         widget = as_Widget(certList);
+        setFlags_Widget(widget, borderTop_WidgetFlag | borderBottom_WidgetFlag, iTrue);
         updateItems_CertListWidget(certList);
         invalidate_ListWidget(list);
     }

@@ -184,6 +184,7 @@ void init_UploadWidget(iUploadWidget *d) {
         const iMenuItem fileItems[] = {
             { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
             { "title id:heading.upload.file" },
+            { "padding arg:0.667" },
             { "button text:" uiTextAction_ColorEscape "${dlg.upload.pickfile}", 0, 0, "upload.pickfile" },            
             { "heading id:upload.file.name" },
             { "label id:upload.filepathlabel text:\u2014" },
@@ -196,16 +197,16 @@ void init_UploadWidget(iUploadWidget *d) {
         };
         initPanels_Mobile(w, NULL, (iMenuItem[]){                                                  
             { "title id:heading.upload" },
+            { "heading id:upload.content" },
+            { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
+            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
+            { "heading text:${heading.upload.id}" },
+            { "dropdown id:upload.id icon:0x1f464 text:", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
+            { "input id:upload.token hint:hint.upload.token.long icon:0x1f516 text:" },
             { "heading id:upload.url" },
             { format_CStr("label id:upload.info font:%d",
                           deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId : uiLabelMedium_FontId) },
             { "input id:upload.path hint:hint.upload.path noheading:1 url:1 text:" },
-            { "heading text:${heading.upload.id}" },
-            { "dropdown id:upload.id icon:0x1f464 text:", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
-            { "input id:upload.token hint:hint.upload.token.long icon:0x1f516 text:" },
-            { "heading id:upload.content" },
-            { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
-            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
             { NULL }
         }, actions, iElemCount(actions) - 1 /* no Accept button on main panel */);
         d->info          = findChild_Widget(w, "upload.info");

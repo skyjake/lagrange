@@ -168,6 +168,7 @@ API_AVAILABLE(ios(13.0))
     iString *fileBeingSaved;
     iString *pickFileCommand;
     iSystemTextInput *sysCtrl;
+    float sysCtrlLineSpacing;
 }
 @property (nonatomic, assign) BOOL isHapticsAvailable;
 @property (nonatomic, strong) NSObject *haptic;
@@ -183,21 +184,8 @@ static UIScrollView *statusBarTapper_; /* dummy scroll view just for getting not
     fileBeingSaved = NULL;
     pickFileCommand = NULL;
     sysCtrl = NULL;
+    sysCtrlLineSpacing = 0.0f;
     return self;
-}
-
--(void)setSystemTextInput:(iSystemTextInput *)sys {
-    sysCtrl = sys;
-}
-
--(iSystemTextInput *)systemTextInput {
-    return sysCtrl;
-}
-
-- (CGFloat)layoutManager:(NSLayoutManager *)layoutManager
-        lineSpacingAfterGlyphAtIndex:(NSUInteger)glyphIndex
-        withProposedLineFragmentRect:(CGRect)rect {
-    return lineHeight_Text(default_FontId) / get_MainWindow()->base.pixelRatio * 0.3f;
 }
 
 -(void)setPickFileCommand:(const char *)command {
@@ -262,6 +250,11 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     }
 }
 
+- (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView {
+    postCommand_App("scroll.top smooth:1");
+    return NO;
+}
+
 -(void)keyboardOnScreen:(NSNotification *)notification {
     NSDictionary *info   = notification.userInfo;
     NSValue      *value  = info[UIKeyboardFrameEndUserInfoKey];
@@ -295,6 +288,24 @@ static void sendReturnKeyPress_(void) {
     return NO;
 }
 
+-(void)setSystemTextInput:(iSystemTextInput *)sys {
+    sysCtrl = sys;
+}
+
+-(void)setSystemTextLineSpacing:(float)height {
+    sysCtrlLineSpacing = height;
+}
+
+-(iSystemTextInput *)systemTextInput {
+    return sysCtrl;
+}
+
+- (CGFloat)layoutManager:(NSLayoutManager *)layoutManager
+        lineSpacingAfterGlyphAtIndex:(NSUInteger)glyphIndex
+        withProposedLineFragmentRect:(CGRect)rect {
+    return sysCtrlLineSpacing / get_MainWindow()->base.pixelRatio;
+}
+
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range
 replacementString:(NSString *)string {
     iSystemTextInput *sysCtrl = [appState_ systemTextInput];
@@ -316,11 +327,6 @@ replacementString:(NSString *)string {
 - (void)textViewDidChange:(UITextView *)textView {
     iSystemTextInput *sysCtrl = [appState_ systemTextInput];
     notifyChange_SystemTextInput_(sysCtrl);
-}
-
-- (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView {
-    postCommand_App("scroll.top smooth:1");
-    return NO;
 }
 
 @end
@@ -751,17 +757,17 @@ static CGRect convertToCGRect_(const iRect *rect, iBool expanded) {
     CGRect frame;
     // TODO: Convert coordinates properly!
     frame.origin.x = rect->pos.x / win->pixelRatio;
-    frame.origin.y = (rect->pos.y - gap_UI + 1) / win->pixelRatio;
+    frame.origin.y = (rect->pos.y - gap_UI * 0.875f) / win->pixelRatio;
     frame.size.width = rect->size.x / win->pixelRatio;
     frame.size.height = rect->size.y / win->pixelRatio;
     /* Some padding to account for insets. If we just zero out the insets, the insertion point
        may be clipped at the edges. */
+    const float inset = gap_UI / get_Window()->pixelRatio;
     if (expanded) {
-        const float inset = gap_UI / get_Window()->pixelRatio;
-        frame.origin.x -= inset + 1;
-        frame.origin.y -= inset / 2;
-        frame.size.width += 2 * inset + 3;
-        frame.size.height += inset + 1 + inset;
+        frame.origin.x -= 2 * inset;
+        frame.origin.y -= inset;
+        frame.size.width += 4 * inset;
+        frame.size.height += 2.5f * inset;
     }
     return frame;
 }
@@ -812,14 +818,16 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
             [REF_d_view setTextAlignment:NSTextAlignmentRight];
         }
     }
-    UIColor *textColor = makeUIColor_(uiInputTextFocused_ColorId);
+    UIColor *textColor       = makeUIColor_(uiInputTextFocused_ColorId);
     UIColor *backgroundColor = makeUIColor_(uiInputBackgroundFocused_ColorId);
-    UIColor *tintColor = makeUIColor_(uiInputCursor_ColorId);
+    UIColor *tintColor       = makeUIColor_(uiInputCursor_ColorId);
     [appState_ setSystemTextInput:d];
+    const float inset = gap_UI / get_Window()->pixelRatio;
     if (d->field) {
         UITextField *field = REF_d_field;
         [field setTextColor:textColor];
         [field setTintColor:tintColor];
+//        [field setBackgroundColor:[UIColor colorWithRed:1.0f green:0.0f blue:0.0f alpha:0.5f]];
         [field setDelegate:appState_];
         [field becomeFirstResponder];
     }
@@ -827,10 +835,14 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
         UITextView *view = REF_d_view;
         [[view layoutManager] setDelegate:appState_];
         [view setBackgroundColor:[UIColor colorWithWhite:1.0f alpha:0.0f]];
+//        [view setBackgroundColor:[UIColor colorWithRed:1.0f green:0.0f blue:0.0f alpha:0.5f]];
         [view setTextColor:textColor];
         [view setTintColor:tintColor];
         if (flags & extraPadding_SystemTextInputFlag) {
-            [view setContentInset:(UIEdgeInsets){ 0, 0, 3 * gap_UI / get_Window()->pixelRatio, 0}];
+            [view setContentInset:(UIEdgeInsets){ -inset * 0.125f, inset * 0.875f, 3 * inset, 0}];
+        }
+        else {
+            [view setContentInset:(UIEdgeInsets){ inset / 2, inset * 0.875f, -inset / 2, inset / 2 }];
         }
         [view setEditable:YES];
         [view setDelegate:appState_];
@@ -912,9 +924,11 @@ void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
 //            printf("fontname: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
 //        }
         font = [UIFont fontWithName:@"Iosevka-Term-Extended" size:height * 0.82f];
+        [appState_ setSystemTextLineSpacing:0.0f];
     }
     else {
         font = [UIFont fontWithName:@"Roboto-Regular" size:height * 0.66f];
+        [appState_ setSystemTextLineSpacing:height * 0.66f];
     }
     if (d->field) {
         [REF_d_field setFont:font];

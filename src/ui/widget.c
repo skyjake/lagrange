@@ -1536,6 +1536,26 @@ void drawLayerEffects_Widget(const iWidget *d) {
 #endif
 }
 
+void drawBorders_Widget(const iWidget *d) {
+    if (d->flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag)) {
+        const iRect rect = bounds_Widget(d);
+        iPaint p;
+        init_Paint(&p);
+        const int hgt = gap_UI / 4;
+        const int borderColor = uiSeparator_ColorId; /* TODO: Add a property to customize? */
+        if (d->flags & borderTop_WidgetFlag) {
+            fillRect_Paint(&p, (iRect){ topLeft_Rect(rect),
+                                        init_I2(width_Rect(rect), hgt) },
+                            borderColor);
+        }
+        if (d->flags & borderBottom_WidgetFlag) {
+            fillRect_Paint(&p, (iRect) { addY_I2(bottomLeft_Rect(rect), -hgt),
+                                         init_I2(width_Rect(rect), hgt) },
+                            borderColor);
+        }
+    }
+}
+
 void drawBackground_Widget(const iWidget *d) {
     if (d->flags & noBackground_WidgetFlag) {
         return;
@@ -1559,23 +1579,7 @@ void drawBackground_Widget(const iWidget *d) {
                                     gap_UI / 4, d->frameColor);
         }
     }
-    if (d->flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag)) {
-        const iRect rect = bounds_Widget(d);
-        iPaint p;
-        init_Paint(&p);
-        const int hgt = gap_UI / 4;
-        const int borderColor = uiSeparator_ColorId; /* TODO: Add a property to customize? */
-        if (d->flags & borderTop_WidgetFlag) {
-            fillRect_Paint(&p, (iRect){ topLeft_Rect(rect),
-                                        init_I2(width_Rect(rect), hgt) },
-                            borderColor);
-        }
-        if (d->flags & borderBottom_WidgetFlag) {
-            fillRect_Paint(&p, (iRect) { addY_I2(bottomLeft_Rect(rect), -hgt),
-                                         init_I2(width_Rect(rect), hgt) },
-                            borderColor);
-        }
-    }
+    drawBorders_Widget(d);
 }
 
 int drawCount_;

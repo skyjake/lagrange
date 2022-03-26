@@ -664,6 +664,7 @@ static void draw_ListWidget_(const iListWidget *d) {
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     unsetClip_Paint(&p);
+    drawBorders_Widget(w); /* background overdraws the normal borders */
     drawChildren_Widget(w);
 }
 
