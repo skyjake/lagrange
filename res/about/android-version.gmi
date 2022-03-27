@@ -6,6 +6,18 @@
 ```
 # Release notes
 
+## 1.12 (Beta 1)
+* Input fields use the operating system's native text editors.
+* Colors of the status bar and the device navigation bar change depending on UI/theme colors.
+* Adjusted scrolling behavior to be more like regular Android scrolling.
+* Changed appearance of many dialogs to use a card layout instead of fullscreen.
+* Input prompts appear next to the keyboard, putting action buttons more within reach.
+* Added Import and Create actions on the Identities page in Settings.
+* Adjusted UI layout of Settings. The title of the current page appears in the top bar, together with any relevant actions.
+* Changed appearance of the pull down indicator.
+* Fixed glitches with showing and hiding lookup results.
+* Fixed incorrect document width after changing orientation from landscape to portrait.
+
 ## 1.12 (Alpha 7)
 * Roboto is the new default content/UI font.
 * Added option to move the URL field and/or the tab bar at the bottom.
