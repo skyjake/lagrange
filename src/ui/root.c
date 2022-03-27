@@ -996,7 +996,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         if (isEmpty_String(text_InputWidget(url))) {
             /* User entered nothing; restore the current URL. */
             setText_InputWidget(url, url_DocumentWidget(document_App()));
-            return iTrue;
+            return iFalse;
         }
         if (arg_Command(cmd) && argLabel_Command(cmd, "enter") &&
             !isFocused_Widget(findWidget_App("lookup"))) {
@@ -1010,7 +1010,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                     "open url:%s",
                     cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
             }
-            return iTrue;
+            return iFalse;
         }
     }
     else if (startsWith_CStr(cmd, "document.")) {

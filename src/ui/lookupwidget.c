@@ -516,27 +516,29 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
             const iGmIdentity *ident = findIdentity_GmCerts(certs_App(), finger);
             /* Sign in/out. */ {
                 const iBool isUsed = isUsedOn_GmIdentity(ident, docUrl);
-                iLookupItem *item  = new_LookupItem(res);
-                item->fg           = uiText_ColorId;
-                item->font         = uiContent_FontId;
+                iLookupItem *item = new_LookupItem(res);
+                item->fg = uiText_ColorId;
+                item->font = uiContent_FontId;
                 format_String(&item->text,
                               "%s \u2014 " uiTextStrong_ColorEscape "%s",
                               cstr_String(&res->label),
                               cstr_Lang(isUsed ? "ident.stopuse" : "ident.use"));
                 format_String(&item->command, "ident.sign%s ident:%s url:%s",
-                              isUsed ? "out arg:0" : "in", cstr_String(&res->meta), cstr_String(docUrl));
+                              isUsed ? "out arg:0" : "in", cstr_String(&res->meta),
+                              cstr_String(docUrl));
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
             if (isUsed_GmIdentity(ident)) {
-                iLookupItem *item  = new_LookupItem(res);
-                item->fg           = uiText_ColorId;
-                item->font         = uiContent_FontId;
+                iLookupItem *item = new_LookupItem(res);
+                item->fg = uiText_ColorId;
+                item->font = uiContent_FontId;
                 format_String(&item->text,
                               "%s \u2014 " uiTextStrong_ColorEscape "%s",
                               cstr_String(&res->label),
                               cstr_Lang("ident.stopuse.all"));
-                format_String(&item->command, "ident.signout arg:1 ident:%s", cstr_String(&res->meta));
+                format_String(&item->command, "ident.signout arg:1 ident:%s",
+                              cstr_String(&res->meta));
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
@@ -605,7 +607,9 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
     scrollOffset_ListWidget(d->list, 0);
     updateVisible_ListWidget(d->list);
     invalidate_ListWidget(d->list);
-    showCollapsed_Widget(as_Widget(d), numItems_ListWidget(d->list) != 0);
+    const iBool allowShow = isVisible_Widget(d) ||
+            (focus_Widget() && !cmp_String(id_Widget(focus_Widget()), "url"));
+    showCollapsed_Widget(as_Widget(d), allowShow && numItems_ListWidget(d->list) != 0);
 }
 
 static iLookupItem *item_LookupWidget_(iLookupWidget *d, size_t index) {
@@ -706,8 +710,8 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         updateVisible_ListWidget(d->list);
         invalidate_ListWidget(d->list);
     }
-    if (equal_Command(cmd, "input.ended") && equal_Rangecc(range_Command(cmd, "id"), "url") &&
-        !isFocused_Widget(w)) {
+    if (startsWith_CStr(cmd, "input.ended id:url ") &&
+        (deviceType_App() != desktop_AppDeviceType || !isFocused_Widget(w))) {
         showCollapsed_Widget(w, iFalse);
     }
     if (isCommand_Widget(w, ev, "focus.lost")) {

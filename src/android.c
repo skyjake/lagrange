@@ -248,9 +248,6 @@ iBool handleCommand_Android(const char *cmd) {
     }
     else if (equal_Command(cmd, "theme.changed") || equal_Command(cmd, "tab.changed") ||
              equal_Command(cmd, "document.changed") || equal_Command(cmd, "prefs.dismiss")) {
-        if (!inputOngoing_) {
-            return iFalse;
-        }
         const iPrefs *prefs = prefs_App();
         const iColor top = get_Color(prefs->bottomNavBar && prefs->bottomTabBar ?
                     tmBackground_ColorId : uiBackground_ColorId);
