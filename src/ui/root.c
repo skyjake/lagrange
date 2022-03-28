@@ -1263,6 +1263,7 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
             bottomBar->padding[3] = 0;
             arrange_Widget(bottomBar);
             arrange_Widget(bottomBar);
+            updateBottomBarPosition_(bottomBar, iTrue);
         }
         return iFalse;
     }
