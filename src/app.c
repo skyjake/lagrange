@@ -270,6 +270,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         appendFormat_String(str, "navbar.action.set arg:%d button:%d\n", d->prefs.navbarActions[i], i);
     }
 #if defined (iPlatformMobile)
+    appendFormat_String(str, "hidetoolbarscroll arg:%d\n", d->prefs.hideToolbarOnScroll);
     appendFormat_String(str, "toolbar.action.set arg:%d button:0\n", d->prefs.toolbarActions[0]);
     appendFormat_String(str, "toolbar.action.set arg:%d button:1\n", d->prefs.toolbarActions[1]);
 #endif
