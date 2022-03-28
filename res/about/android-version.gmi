@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.13 (Beta 3)
+* Fixed incorrect tab bar position after dismissing the onscreen keyboard.
+
 ## 1.12 (Beta 2)
 * Fixed entered text being ignored on some devices/Android releases.
 * Fixed an issue with input prompts. If the prompt was reopened quickly, the entered text would be ignored.
