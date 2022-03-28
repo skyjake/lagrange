@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.12 (Beta 2)
+* Fixed entered text being ignored on some devices/Android releases.
+* Fixed an issue with input prompts. If the prompt was reopened quickly, the entered text would be ignored.
+
 ## 1.12 (Beta 1)
 * Input fields use the operating system's native text editors.
 * Colors of the status bar and the device navigation bar change depending on UI/theme colors.

@@ -101,7 +101,11 @@ void javaCommand_Android(const char *format, ...) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static int               inputIdGen_; /* unique IDs for SystemTextInputs */
+static iSystemTextInput *currentInput_;
+
 struct Impl_SystemTextInput {
+    int id;
     int flags;
     int font;
     iString text;
@@ -117,9 +121,9 @@ static iRect nativeRect_SystemTextInput_(const iSystemTextInput *d, iRect rect) 
     return moved_Rect(rect, init_I2(0, -0.75f * gap_UI));
 }
 
-static iBool inputOngoing_;
-
 void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
+    currentInput_ = d;
+    d->id = ++inputIdGen_;
     d->flags = flags;
     d->font = uiInput_FontId;
     init_String(&d->text);
@@ -130,7 +134,7 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
     const iColor fg = get_Color(uiInputTextFocused_ColorId);
     const iColor bg = get_Color(uiInputBackgroundFocused_ColorId);
     const iColor hl = get_Color(uiInputCursor_ColorId);
-    javaCommand_Android("input.init ptr:%p "
+    javaCommand_Android("input.init id:%d "
                         "x:%d y:%d w:%d h:%d "
                         "gap:%d fontsize:%d "
                         "newlines:%d "
@@ -143,7 +147,7 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
                         "fg0:%d fg1:%d fg2:%d "
                         "bg0:%d bg1:%d bg2:%d "
                         "hl0:%d hl1:%d hl2:%d",
-                        d,
+                        d->id,
                         rect.pos.x, rect.pos.y, rect.size.x, rect.size.y,
                         gap_UI, lineHeight_Text(default_FontId),
                         (flags & insertNewlines_SystemTextInputFlag) != 0,
@@ -156,26 +160,27 @@ void init_SystemTextInput(iSystemTextInput *d, iRect rect, int flags) {
                         fg.r, fg.g, fg.b,
                         bg.r, bg.g, bg.b,
                         hl.r, hl.g, hl.b);
-    inputOngoing_ = iTrue;
 }
 
 void deinit_SystemTextInput(iSystemTextInput *d) {
-    inputOngoing_ = iFalse;
-    javaCommand_Android("input.deinit ptr:%p", d);
+    javaCommand_Android("input.deinit id:%d", d->id);
     deinit_String(&d->text);
+    if (inputIdGen_ == d->id) { /* no new inputs started already? */
+        currentInput_ = NULL;
+    }
 }
 
 void setRect_SystemTextInput(iSystemTextInput *d, iRect rect) {
     rect = nativeRect_SystemTextInput_(d, rect);
-    javaCommand_Android("input.setrect x:%d y:%d w:%d h:%d",
-                        rect.pos.x, rect.pos.y, rect.size.x, rect.size.y);
+    javaCommand_Android("input.setrect id:%d x:%d y:%d w:%d h:%d",
+                        d->id, rect.pos.x, rect.pos.y, rect.size.x, rect.size.y);
 }
 
 void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool allowUndo) {
     set_String(&d->text, text);
-    javaCommand_Android("input.set text:%s", cstr_String(text));
+    javaCommand_Android("input.set id:%d text:%s", d->id, cstr_String(text));
     if (d->flags & selectAll_SystemTextInputFlags) {
-        javaCommand_Android("input.selectall");
+        javaCommand_Android("input.selectall id:%d", d->id);
     }
 }
 
@@ -185,7 +190,7 @@ void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
     if (fontId / maxVariants_Fonts * maxVariants_Fonts == monospace_FontId) {
         ttfPath = monospaceFontPath_();
     }
-    javaCommand_Android("input.setfont size:%d ttfpath:%s", lineHeight_Text(fontId), ttfPath);
+    javaCommand_Android("input.setfont id:%d size:%d ttfpath:%s", d->id, lineHeight_Text(fontId), ttfPath);
 }
 
 void setTextChangedFunc_SystemTextInput
@@ -195,7 +200,7 @@ void setTextChangedFunc_SystemTextInput
 }
 
 void selectAll_SystemTextInput(iSystemTextInput *d) {
-    javaCommand_Android("input.selectall");
+    javaCommand_Android("input.selectall id:%d", d->id);
 }
 
 const iString *text_SystemTextInput(const iSystemTextInput *d) {
@@ -208,33 +213,34 @@ int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
 
 iBool handleCommand_Android(const char *cmd) {
     if (equal_Command(cmd, "android.input.changed")) {
-        if (!inputOngoing_) {
-            return iTrue;
+        const int id = argLabel_Command(cmd, "id");
+        if (!currentInput_ || currentInput_->id != id) {
+            return iTrue; /* obsolete notification */
         }
-        iSystemTextInput *sys = pointerLabel_Command(cmd, "sys");
         iBool wasChanged = iFalse;
         if (hasLabel_Command(cmd, "text")) {
             const char *newText = suffixPtr_Command(cmd, "text");
-            if (cmp_String(&sys->text, newText)) {
-                setCStr_String(&sys->text, newText);
+            if (cmp_String(&currentInput_->text, newText)) {
+                setCStr_String(&currentInput_->text, newText);
                 wasChanged = iTrue;
             }
         }
         const int numLines = argLabel_Command(cmd, "lines");
         if (numLines) {
-            if (sys->numLines != numLines) {
-                sys->numLines = numLines;
+            if (currentInput_->numLines != numLines) {
+                currentInput_->numLines = numLines;
                 wasChanged = iTrue;
             }
         }
-        if (wasChanged && sys->textChangedFunc) {
-            sys->textChangedFunc(sys, sys->textChangedContext);
+        if (wasChanged && currentInput_->textChangedFunc) {
+            currentInput_->textChangedFunc(currentInput_, currentInput_->textChangedContext);
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "android.input.enter")) {
-        if (!inputOngoing_) {
-            return iTrue;
+        const int id = argLabel_Command(cmd, "id");
+        if (!currentInput_ || currentInput_->id != id) {
+            return iTrue; /* obsolete notification */
         }
         SDL_Event ev = { .type = SDL_KEYDOWN };
         ev.key.timestamp = SDL_GetTicks();
