@@ -519,10 +519,10 @@ static size_t numArrangedChildren_Widget_(const iWidget *d) {
 }
 
 static void centerHorizontal_Widget_(iWidget *d) {
-    d->rect.pos.x = ((d->parent ? width_Rect(innerRect_Widget_(d->parent))
-                                : size_Root(d->root).x) -
-                     width_Rect(d->rect)) /
-                    2;
+    const int width          = width_Rect(d->rect);
+    const int containerWidth = d->parent ? width_Rect(innerRect_Widget_(d->parent))
+                                         : size_Root(d->root).x;
+    d->rect.pos.x = (containerWidth - width) / 2;
     TRACE(d, "center horizontally: %d", d->rect.pos.x);
 }
 
@@ -922,6 +922,28 @@ static void notifySizeChanged_Widget_(iWidget *d) {
     }
 }
 
+static void clampCenteredInRoot_Widget_(iWidget *d) {
+    /* When arranging, we don't yet know if centered widgets will end up outside the root
+       area, because the parent sizes and positions may change. */
+    if (d->flags & centerHorizontal_WidgetFlag) {
+        iRect rootRect = safeRect_Root(d->root);
+        iRect bounds = boundsWithoutVisualOffset_Widget(d);
+        if (width_Rect(bounds) <= width_Rect(rootRect)) {
+            int excess = left_Rect(rootRect) - left_Rect(bounds);
+            if (excess > 0) {
+                d->rect.pos.x += excess;
+            }
+            excess = right_Rect(bounds) - right_Rect(rootRect);
+            if (excess > 0) {
+                d->rect.pos.x -= excess;
+            }
+        }
+    }
+    iForEach(ObjectList, i, d->children) {
+        clampCenteredInRoot_Widget_(i.object);
+    }
+}
+
 void arrange_Widget(iWidget *d) {
     if (d) {
 #if !defined (NDEBUG)
@@ -931,6 +953,7 @@ void arrange_Widget(iWidget *d) {
 #endif
         resetArrangement_Widget_(d); /* back to initial default sizes */
         arrange_Widget_(d);
+        clampCenteredInRoot_Widget_(d);
         notifySizeChanged_Widget_(d);
         d->root->didChangeArrangement = iTrue;
     }

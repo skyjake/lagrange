@@ -1120,7 +1120,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     }
     else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "keyboard.changed")) {
         const int keyboardHeight = arg_Command(cmd);
-        if (focus_Widget() == findChild_Widget(navBar, "url")) {
+        if (focus_Widget() == findChild_Widget(navBar, "url") && prefs_App()->bottomNavBar) {
             setVisualOffset_Widget(navBar, -keyboardHeight + bottomSafeInset_Mobile(),
                                    400, easeOut_AnimFlag | softer_AnimFlag);
         }

@@ -2302,7 +2302,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     else if (isCommand_UserEvent(ev, "keyboard.changed")) {
         const iBool isKeyboardVisible = (arg_Command(command_UserEvent(ev)) != 0);
         /* Scroll to keep widget visible when keyboard appears. */
-        if (isFocused_Widget(d)) {
+        if (isFocused_Widget(d) && findOverflowScrollable_Widget(parent_Widget(d))) {
             if (isKeyboardVisible) {
                 d->lastOverflowScrollTime = SDL_GetTicks();
                 overflowScrollToKeepVisible_InputWidget_(d);
