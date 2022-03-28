@@ -1808,7 +1808,9 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         /* BUG: A single arrange here is not sufficient, leaving a big gap between prompt and input. Why? */
         arrange_Widget(dlg);
         arrange_Widget(dlg);
-        animateToRootVisibleBottom_(dlg, 100);
+        if (deviceType_App() != desktop_AppDeviceType) {
+            animateToRootVisibleBottom_(dlg, 100);
+        }
         return iTrue;
     }
     if (equal_Command(cmd, "input.ended")) {
@@ -1833,7 +1835,9 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         validate_InputWidget(input);
         updateValueInputSizing_(dlg);
         arrange_Widget(dlg);
-        animateToRootVisibleBottom_(dlg, 100);
+        if (deviceType_App() != desktop_AppDeviceType) {
+            animateToRootVisibleBottom_(dlg, 100);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancel")) {
