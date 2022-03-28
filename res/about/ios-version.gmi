@@ -6,6 +6,16 @@
 ```
 # Release notes
 
+## 1.12 (2)
+* Changed appearance of many dialogs to use a card layout instead of fullscreen.
+* Input prompts appear next to the keyboard, putting action buttons more within reach.
+* Added Import and Create actions on the Identities page in Settings.
+* Adjusted UI layout of Settings. The title of the current page appears in the top bar, together with any relevant actions.
+* Changed appearance of the pull down indicator.
+* Fixed glitches with showing and hiding lookup results.
+* Fixed incorrect document width after changing orientation from landscape to portrait.
+* iPad: Fixed positioning of input prompts when the sidebar is visible.
+
 ## 1.12 (1)
 * Roboto is the new default content/UI font.
 * Added option to move the URL field and/or the tab bar at the bottom.
