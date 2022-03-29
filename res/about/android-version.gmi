@@ -6,8 +6,9 @@
 ```
 # Release notes
 
-## 1.13 (Beta 3)
+## 1.12 (Beta 3)
 * Fixed incorrect tab bar position after dismissing the onscreen keyboard.
+* Fixed possible crash when opening Settings or focusing the URL field.
 
 ## 1.12 (Beta 2)
 * Fixed entered text being ignored on some devices/Android releases.
