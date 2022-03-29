@@ -7,8 +7,10 @@
 # Release notes
 
 ## 1.12 (Beta 3)
-* Fixed incorrect tab bar position after dismissing the onscreen keyboard.
 * Fixed possible crash when opening Settings or focusing the URL field.
+* Fixed incorrect tab bar position after dismissing the onscreen keyboard.
+* Fixed pasting URLs: percent-encoded reserved characters should not be decoded.
+* Fixed saving of the "Hide toolbar on scroll" setting.
 
 ## 1.12 (Beta 2)
 * Fixed entered text being ignored on some devices/Android releases.
