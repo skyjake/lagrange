@@ -111,6 +111,10 @@ void init_CertImportWidget(iCertImportWidget *d) {
     const iMenuItem actions[] = {
 #if defined (iPlatformAppleMobile)
         { "${dlg.certimport.pickfile}", 0, 0, "certimport.pickfile" },
+        { "${dlg.certimport.paste}", 0, 0, "certimport.paste" },
+        { "---" },
+#elif defined (iPlatformMobile)
+        { "${dlg.certimport.paste}", 0, 0, "certimport.paste" },
         { "---" },
 #endif
         { "${cancel}" },
