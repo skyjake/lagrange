@@ -2199,7 +2199,18 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
             postCommandf_Root(((const iWidget *) d)->root, "cancel popup:1 ptr:%p", d);
             d = userData_Object(root_Widget(d));
         }
-        appendFormat_String(&str, " ptr:%p", d);
+        iString ptrStr;
+        init_String(&ptrStr);
+        /* Insert the widget pointer as the first argument so possible suffixes are unaffected. */
+        format_String(&ptrStr, " ptr:%p", d);
+        const size_t insertPos = indexOf_String(&str, ' ');
+        if (insertPos == iInvalidPos) {
+            append_String(&str, &ptrStr);
+        }
+        else {
+            insertData_Block(&str.chars, insertPos, cstr_String(&ptrStr), size_String(&ptrStr));
+        }
+        deinit_String(&ptrStr);
     }
     postCommandString_Root(((const iWidget *) d)->root, &str);
     deinit_String(&str);
