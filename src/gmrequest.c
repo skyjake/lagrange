@@ -711,7 +711,7 @@ void submit_GmRequest(iGmRequest *d) {
             iString *page = collectNew_String();
             iString *parentDir = collectNewRange_String(dirName_Path(path));
 #if !defined (iPlatformMobile)
-            appendFormat_String(page, "=> %s " upArrow_Icon " %s" iPathSeparator "\n\n",
+            appendFormat_String(page, "=> %s " keyUpArrow_Icon " %s" iPathSeparator "\n\n",
                                 cstrCollect_String(makeFileUrl_String(parentDir)),
                                 cstr_String(parentDir));
 #endif
@@ -792,14 +792,14 @@ void submit_GmRequest(iGmRequest *d) {
                             if (!equal_Rangecc(parentDir, ".")) {
                                 /* A subdirectory. */
                                 appendFormat_String(page,
-                                                    "=> ../ " upArrow_Icon " %s" iPathSeparator
+                                                    "=> ../ " keyUpArrow_Icon " %s" iPathSeparator
                                                     "\n",
                                                     cstr_Rangecc(parentDir));
                             }
                             else {
                                 /* Top-level directory. */
                                 appendFormat_String(page,
-                                                    "=> %s/ " upArrow_Icon " Root\n",
+                                                    "=> %s/ " keyUpArrow_Icon " Root\n",
                                                     cstr_String(containerUrl));
                             }
                             appendFormat_String(page, "# %s\n\n", cstr_Rangecc(baseName_Path(collectNewRange_String(curDir))));

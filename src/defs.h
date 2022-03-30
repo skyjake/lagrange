@@ -31,6 +31,12 @@ enum iSourceFormat {
     markdown_SourceFormat,
 };
 
+enum iImportMethod {
+    none_ImportMethod = 0,
+    ifMissing_ImportMethod,
+    all_ImportMethod,
+};
+
 enum iFileVersion {
     initial_FileVersion                 = 0,
     addedResponseTimestamps_FileVersion = 1,
@@ -127,7 +133,8 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define backArrow_Icon      "\U0001f870"
 #define forwardArrow_Icon   "\U0001f872"
 #define upArrow_Icon        "\U0001f871"
-#define upArrowBar_Icon     "\u2912"
+#define upArrowBar_Icon     "\u2b71"
+#define keyUpArrow_Icon     "\u2191"
 #define downArrowBar_Icon   "\u2913"
 #define rightArrowWhite_Icon "\u21e8"
 #define rightArrow_Icon     "\u279e"
@@ -152,7 +159,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define check_Icon          "\u2714"
 #define ballotChecked_Icon  "\u2611"
 #define ballotUnchecked_Icon "\u2610"
-#define inbox_Icon          "\U0001f4e5"
+#define import_Icon          "\U0001f4e5"
 #define book_Icon           "\U0001f56e"
 #define bookmark_Icon       "\U0001f516"
 #define folder_Icon         "\U0001f4c1"

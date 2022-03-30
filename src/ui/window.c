@@ -87,6 +87,7 @@ static const iMenuItem fileMenuItems_[] = {
     { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---", 0, 0, NULL },
     { "${menu.downloads}", 0, 0, "downloads.open" },
+    { "${menu.export}", 0, 0, "export" },
 };
 
 static const iMenuItem editMenuItems_[] = {

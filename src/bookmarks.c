@@ -277,21 +277,43 @@ static void loadOldFormat_Bookmarks(iBookmarks *d, const char *dirPath) {
 iDeclareType(BookmarkLoader)
     
 struct Impl_BookmarkLoader {
-    iTomlParser *toml;
-    iBookmarks * bookmarks;
-    iBookmark *  bm;
+    iTomlParser       *toml;
+    iBookmarks        *bookmarks;
+    iBookmark         *bm;
+    uint32_t           loadId;
+    enum iImportMethod method;
+    uint32_t           baseId;
+    uint32_t           dupFolderId;
+    iBool              didImportDuplicates;
 };
 
 static void handleTable_BookmarkLoader_(void *context, const iString *table, iBool isStart) {
     iBookmarkLoader *d = context;
     if (isStart) {
         iAssert(!d->bm);
+        iAssert(d->method != none_ImportMethod);
         d->bm = new_Bookmark();
-        const int id = toInt_String(table);
-        d->bookmarks->idEnum = iMax(d->bookmarks->idEnum, id);
-        insertId_Bookmarks_(d->bookmarks, d->bm, id);
+        d->loadId = toInt_String(table) + d->baseId;
     }
-    else {
+    else if (d->bm) {
+        /* Check if import rules. */
+        if (d->baseId && !isFolder_Bookmark(d->bm)) {
+            const uint32_t existing = findUrl_Bookmarks(d->bookmarks, &d->bm->url);
+            if (existing) {
+                if (d->method == ifMissing_ImportMethod) {
+                    /* Already have this one. */
+                    delete_Bookmark(d->bm);
+                    d->bm = NULL;
+                    return;
+                }
+                else {
+                    d->bm->parentId = d->dupFolderId;
+                    d->didImportDuplicates = iTrue;
+                }
+            }
+        }
+        d->bookmarks->idEnum = iMax(d->bookmarks->idEnum, d->loadId);
+        insertId_Bookmarks_(d->bookmarks, d->bm, d->loadId);
         d->bm = NULL;
     }
 }
@@ -319,7 +341,7 @@ static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, 
             initSeconds_Time(&bm->when, tv->value.int64);
         }
         else if (!cmp_String(key, "parent") && tv->type == int64_TomlType) {
-            bm->parentId = tv->value.int64;
+            bm->parentId = tv->value.int64 + d->baseId;
         }
         else if (!cmp_String(key, "order") && tv->type == int64_TomlType) {
             bm->order = tv->value.int64;
@@ -335,16 +357,29 @@ static void init_BookmarkLoader(iBookmarkLoader *d, iBookmarks *bookmarks) {
     setHandlers_TomlParser(d->toml, handleTable_BookmarkLoader_, handleKeyValue_BookmarkLoader_, d);
     d->bookmarks = bookmarks;
     d->bm = NULL;
+    d->loadId = 0;
+    d->method = all_ImportMethod;
+    d->baseId = bookmarks->idEnum; /* allows importing bookmarks without ID conflicts */
+    d->dupFolderId = 0;
+    d->didImportDuplicates = iFalse;
 }
 
 static void deinit_BookmarkLoader(iBookmarkLoader *d) {
     delete_TomlParser(d->toml);
 }
 
-static void load_BookmarkLoader(iBookmarkLoader *d, iFile *file) {
-    if (!parse_TomlParser(d->toml, collect_String(readString_File(file)))) {
-        fprintf(stderr, "[Bookmarks] syntax error(s) in %s\n", cstr_String(path_File(file)));
-    }    
+static void load_BookmarkLoader(iBookmarkLoader *d, iStream *stream) {
+    if (d->baseId && d->method == all_ImportMethod) {
+        /* Make a folder for possible duplicate bookmarks. */
+        d->dupFolderId =
+            add_Bookmarks(d->bookmarks, NULL, string_Lang("import.userdata.dupfolder"), NULL, 0);
+    }
+    if (!parse_TomlParser(d->toml, collect_String(readString_Stream(stream)))) {
+        fprintf(stderr, "[Bookmarks] syntax error in bookmarks.ini\n");
+    }
+    if (d->dupFolderId && !d->didImportDuplicates) {
+        remove_Bookmarks(d->bookmarks, d->dupFolderId);
+    }
 }
 
 iDefineTypeConstructionArgs(BookmarkLoader, (iBookmarks *b), b)
@@ -364,6 +399,46 @@ void sort_Bookmarks(iBookmarks *d, uint32_t parentId, iBookmarksCompareFunc cmp)
     unlock_Mutex(d->mtx);
 }
 
+static void mergeFolders_BookmarkLoader(iBookmarkLoader *d) {
+    if (!d->baseId) {
+        /* Only merge after importing. */
+        return;
+    }
+    iHash *hash = &d->bookmarks->bookmarks;
+    iForEach(Hash, i, hash) {
+        iBookmark *imported = (iBookmark *) i.value;
+        if (isFolder_Bookmark(imported) && id_Bookmark(imported) >= d->baseId) {
+            /* If there already is a folder with a matching name, merge this one into it. */
+            iForEach(Hash, j, hash) {
+                iBookmark *old = (iBookmark *) j.value;
+                if (isFolder_Bookmark(old) && id_Bookmark(old) < d->baseId &&
+                    equal_String(&imported->title, &old->title)) {
+                    iForEach(Hash, k, hash) {
+                        iBookmark *bm = (iBookmark *) k.value;
+                        if (bm->parentId == id_Bookmark(imported)) {
+                            bm->parentId = id_Bookmark(old);
+                        }
+                    }
+                    remove_HashIterator(&i);
+                    delete_Bookmark(imported);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void deserialize_Bookmarks(iBookmarks *d, iStream *ins, enum iImportMethod method) {
+    lock_Mutex(d->mtx);
+    iBookmarkLoader loader;
+    init_BookmarkLoader(&loader, d);
+    loader.method = method;
+    load_BookmarkLoader(&loader, ins);
+    mergeFolders_BookmarkLoader(&loader);
+    deinit_BookmarkLoader(&loader);
+    unlock_Mutex(d->mtx);
+}
+
 void load_Bookmarks(iBookmarks *d, const char *dirPath) {
     clear_Bookmarks(d);
     /* Load new .ini bookmarks, if present. */
@@ -377,49 +452,53 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
     }
     iBookmarkLoader loader;
     init_BookmarkLoader(&loader, d);
-    load_BookmarkLoader(&loader, f);
+    load_BookmarkLoader(&loader, stream_File(f));
     deinit_BookmarkLoader(&loader);
+}
+
+void serialize_Bookmarks(const iBookmarks *d, iStream *out) {
+    iString *str = collectNew_String();
+    format_String(str, "recentfolder = %u\n\n", d->recentFolderId);
+    writeData_Stream(out, cstr_String(str), size_String(str));
+    iConstForEach(Hash, i, &d->bookmarks) {
+        const iBookmark *bm = (const iBookmark *) i.value;
+        if (bm->flags & remote_BookmarkFlag) {
+            /* Remote bookmarks are not saved. */
+            continue;
+        }
+        iBeginCollect();
+        const iString *packedTags = collect_String(packedDotTags_Bookmark_(bm));
+        format_String(str,
+                      "[%d]\n"
+                      "url = \"%s\"\n"
+                      "title = \"%s\"\n"
+                      "tags = \"%s\"\n"
+                      "icon = 0x%x\n"
+                      "created = %.0f  # %s\n",
+                      id_Bookmark(bm),
+                      cstrCollect_String(quote_String(&bm->url, iFalse)),
+                      cstrCollect_String(quote_String(&bm->title, iFalse)),
+                      cstrCollect_String(quote_String(packedTags, iFalse)),
+                      bm->icon,
+                      seconds_Time(&bm->when),
+                      cstrCollect_String(format_Time(&bm->when, "%Y-%m-%d")));
+        if (bm->parentId) {
+            appendFormat_String(str, "parent = %d\n", bm->parentId);
+        }
+        if (bm->order) {
+            appendFormat_String(str, "order = %d\n", bm->order);
+        }
+        appendCStr_String(str, "\n");
+        writeData_Stream(out, cstr_String(str), size_String(str));
+        iEndCollect();
+    }
 }
 
 void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     lock_Mutex(d->mtx);
     iFile *f = newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_));
-    if (open_File(f, writeOnly_FileMode | text_FileMode)) {        
-        iString *str = collectNew_String();
-        format_String(str, "recentfolder = %u\n\n", d->recentFolderId);
-        writeData_File(f, cstr_String(str), size_String(str));
-        iConstForEach(Hash, i, &d->bookmarks) {
-            const iBookmark *bm = (const iBookmark *) i.value;
-            if (bm->flags & remote_BookmarkFlag) {
-                /* Remote bookmarks are not saved. */
-                continue;
-            }
-            iBeginCollect();
-            const iString *packedTags = collect_String(packedDotTags_Bookmark_(bm));
-            format_String(str,
-                          "[%d]\n"
-                          "url = \"%s\"\n"
-                          "title = \"%s\"\n"
-                          "tags = \"%s\"\n"
-                          "icon = 0x%x\n"
-                          "created = %.0f  # %s\n",
-                          id_Bookmark(bm),
-                          cstrCollect_String(quote_String(&bm->url, iFalse)),
-                          cstrCollect_String(quote_String(&bm->title, iFalse)),
-                          cstrCollect_String(quote_String(packedTags, iFalse)),
-                          bm->icon,
-                          seconds_Time(&bm->when),
-                          cstrCollect_String(format_Time(&bm->when, "%Y-%m-%d")));
-            if (bm->parentId) {
-                appendFormat_String(str, "parent = %d\n", bm->parentId);
-            }
-            if (bm->order) {
-                appendFormat_String(str, "order = %d\n", bm->order);
-            }
-            appendCStr_String(str, "\n");
-            writeData_File(f, cstr_String(str), size_String(str));
-            iEndCollect();
-        }        
+    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
+        serialize_Bookmarks(d, stream_File(f));
     }
     iRelease(f);
     unlock_Mutex(d->mtx);

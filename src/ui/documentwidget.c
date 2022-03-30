@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "command.h"
 #include "defs.h"
+#include "export.h"
 #include "gempub.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
@@ -2415,6 +2416,9 @@ static const char *zipPageHeading_(const iRangecc mime) {
     else if (equalCase_Rangecc(mime, mimeType_FontPack)) {
         return fontpack_Icon " Fontpack";
     }
+    else if (equalCase_Rangecc(mime, mimeType_Export)) {
+        return package_Icon " ${heading.archive.userdata}";
+    }
     iRangecc type = iNullRange;
     nextSplit_Rangecc(mime, "/", &type); /* skip the part before the slash */
     nextSplit_Rangecc(mime, "/", &type);
@@ -2701,13 +2705,15 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                          (equal_Rangecc(param, "application/zip") ||
                          (startsWith_Rangecc(param, "application/") &&
                           endsWithCase_Rangecc(param, "+zip")))) {
+                    iArray *footerItems = collectNew_Array(sizeof(iMenuItem));
                     clear_String(&str);
                     docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
+                    iArchive *zip = new_Archive();
+                    openData_Archive(zip, &response->body);
                     if (equal_Rangecc(param, mimeType_FontPack)) {
                         /* Show some information about fontpacks, and set up footer actions. */
-                        iArchive *zip = iClob(new_Archive());
-                        if (openData_Archive(zip, &response->body)) {
+                        if (isOpen_Archive(zip)) {
                             iFontPack *fp = new_FontPack();
                             setUrl_FontPack(fp, d->mod.url);
                             setStandalone_FontPack(fp, iTrue);
@@ -2726,28 +2732,54 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                         }
                     }
                     else {
-                        format_String(&str, "# %s\n", zipPageHeading_(param));
+                        if (detect_Export(zip)) {
+                            setCStr_String(&d->sourceMime, mimeType_Export);
+                            pushBack_Array(footerItems,
+                                           &(iMenuItem){ openExt_Icon " ${menu.open.external}",
+                                                         SDLK_RETURN,
+                                                         KMOD_PRIMARY,
+                                                         "document.save extview:1" });
+                        }
+                        format_String(&str, "# %s\n", zipPageHeading_(range_String(&d->sourceMime)));
                         appendFormat_String(&str,
                                             cstr_Lang("doc.archive"),
                                             cstr_Rangecc(baseName_Path(d->mod.url)));
                         appendCStr_String(&str, "\n");
                     }
+                    iRelease(zip);
                     appendCStr_String(&str, "\n");
                     iString *localPath = localFilePathFromUrl_String(d->mod.url);
-                    if (!localPath) {
+                    if (!localPath || !fileExists_FileInfo(localPath)) {
                         iString *key = collectNew_String();
                         toString_Sym(SDLK_s, KMOD_PRIMARY, key);
                         appendFormat_String(&str, "%s\n\n",
                                             format_CStr(cstr_Lang("error.unsupported.suggestsave"),
                                                         cstr_String(key),
                                                         saveToDownloads_Label));
+                        pushBack_Array(footerItems,
+                                       &(iMenuItem){ translateCStr_Lang(download_Icon
+                                                                        " " saveToDownloads_Label),
+                                                     0,
+                                                     0,
+                                                     "document.save" });
                     }
-                    delete_String(localPath);
-                    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
-                        appendFormat_String(&str, "=> %s/ " folder_Icon " ${doc.archive.view}\n",
+                    if (localPath && fileExists_FileInfo(localPath)) {
+                        if (!cmp_String(&d->sourceMime, mimeType_Export)) {
+                            pushFront_Array(footerItems,
+                                            &(iMenuItem){ import_Icon " ${menu.import}",
+                                                          SDLK_RETURN,
+                                                          0,
+                                                          format_CStr("!import path:%s",
+                                                                      cstr_String(localPath)) });
+                        }
+                        appendFormat_String(&str,
+                                            "=> %s/ " folder_Icon " ${doc.archive.view}\n",
                                             cstr_String(withSpacesEncoded_String(d->mod.url)));
                     }
+                    delete_String(localPath);
                     translate_Lang(&str);
+                    makeFooterButtons_DocumentWidget_(
+                        d, constData_Array(footerItems), size_Array(footerItems));
                 }
                 else if (startsWith_Rangecc(param, "image/") ||
                          startsWith_Rangecc(param, "audio/")) {
@@ -4287,7 +4319,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         else if (!isEmpty_Block(&d->sourceContent)) {
             if (argLabel_Command(cmd, "extview")) {
-                if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
+                if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file") &&
+                    fileExists_FileInfo(collect_String(localFilePathFromUrl_String(d->mod.url)))) {
                     /* Already a file so just open it directly. */
                     postCommandf_Root(w->root, "!open default:1 url:%s", cstr_String(d->mod.url));
                 }

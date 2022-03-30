@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "defs.h"
 #include <the_Foundation/stringarray.h>
 
 iDeclareType(SiteSpec)
@@ -37,6 +38,9 @@ enum iSiteSpecKey {
 
 void    init_SiteSpec       (const char *saveDir);
 void    deinit_SiteSpec     (void);
+
+void    serialize_SiteSpec      (iStream *);
+iBool   deserialize_SiteSpec    (iStream *, enum iImportMethod);
 
 /* changes saved immediately */
 void    setValue_SiteSpec       (const iString *site, enum iSiteSpecKey key, int value); 

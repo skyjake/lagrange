@@ -75,6 +75,7 @@ struct Impl_SiteSpec {
     iString     saveDir;
     iStringHash sites;
     iSiteParams *loadParams;
+    enum iImportMethod loadMethod;
 };
 
 static iSiteSpec   siteSpec_;
@@ -127,7 +128,10 @@ static void handleIniTable_SiteSpec_(void *context, const iString *table, iBool 
     }
     else {
         iAssert(d->loadParams != NULL);
-        insert_StringHash(&d->sites, table, d->loadParams);
+        if (d->loadMethod == all_ImportMethod ||
+            (d->loadMethod == ifMissing_ImportMethod && !contains_StringHash(&d->sites, table))) {
+            insert_StringHash(&d->sites, table, d->loadParams);
+        }
         iReleasePtr(&d->loadParams);
     }
 }
@@ -163,62 +167,74 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
 }
 
 static iBool load_SiteSpec_(iSiteSpec *d) {
-    iBool ok = iFalse;
+    iBool ok = iFalse;   
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, fileName_SiteSpec_)));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
-        iTomlParser *toml = new_TomlParser();
-        setHandlers_TomlParser(toml, handleIniTable_SiteSpec_, handleIniKeyValue_SiteSpec_, d);
-        ok = parse_TomlParser(toml, collect_String(readString_File(f)));
-        delete_TomlParser(toml);
+        ok = deserialize_SiteSpec(stream_File(f), all_ImportMethod);
     }
     iRelease(f);
     iAssert(d->loadParams == NULL);
     return ok;
 }
 
+iBool deserialize_SiteSpec(iStream *ins, enum iImportMethod loadMethod) {
+    iSiteSpec *d = &siteSpec_;
+    d->loadMethod = loadMethod;
+    iTomlParser *toml = new_TomlParser();
+    setHandlers_TomlParser(toml, handleIniTable_SiteSpec_, handleIniKeyValue_SiteSpec_, d);
+    iBool ok = parse_TomlParser(toml, collect_String(readString_Stream(ins)));
+    delete_TomlParser(toml);
+    return ok;
+}
+
+void serialize_SiteSpec(iStream *out) {
+    iSiteSpec *d = &siteSpec_;
+    iString *buf = new_String();
+    iConstForEach(StringHash, i, &d->sites) {
+        iBeginCollect();
+        const iBlock *     key    = &i.value->keyBlock;
+        const iSiteParams *params = i.value->object;
+        clear_String(buf);
+        if (params->titanPort) {
+            appendFormat_String(buf, "titanPort = %u\n", params->titanPort);
+        }
+        if (!isEmpty_String(&params->titanIdentity)) {
+            appendFormat_String(
+                buf, "titanIdentity = \"%s\"\n", cstr_String(&params->titanIdentity));
+        }
+        if (params->dismissWarnings) {
+            appendFormat_String(buf, "dismissWarnings = 0x%x\n", params->dismissWarnings);
+        }
+        if (!isEmpty_StringArray(&params->usedIdentities)) {
+            appendFormat_String(
+                buf,
+                "usedIdentities = \"%s\"\n",
+                cstrCollect_String(joinCStr_StringArray(&params->usedIdentities, " ")));
+        }
+        if (!isEmpty_String(&params->paletteSeed)) {
+            appendCStr_String(buf, "paletteSeed = \"");
+            append_String(buf, collect_String(quote_String(&params->paletteSeed, iFalse)));
+            appendCStr_String(buf, "\"\n");
+        }
+        if (!params->tlsSessionCache) {
+            appendCStr_String(buf, "tlsSessionCache = false\n");
+        }
+        if (!isEmpty_String(buf)) {
+            writeData_Stream(out, "[", 1);
+            writeData_Stream(out, constData_Block(key), size_Block(key));
+            writeData_Stream(out, "]\n", 2);
+            appendCStr_String(buf, "\n");
+            write_Stream(out, utf8_String(buf));
+        }
+        iEndCollect();
+    }
+    delete_String(buf);    
+}
+
 static void save_SiteSpec_(iSiteSpec *d) {
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, fileName_SiteSpec_)));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        iString *buf = new_String();
-        iConstForEach(StringHash, i, &d->sites) {
-            iBeginCollect();
-            const iBlock *     key    = &i.value->keyBlock;
-            const iSiteParams *params = i.value->object;
-            clear_String(buf);
-            if (params->titanPort) {
-                appendFormat_String(buf, "titanPort = %u\n", params->titanPort);
-            }
-            if (!isEmpty_String(&params->titanIdentity)) {
-                appendFormat_String(
-                    buf, "titanIdentity = \"%s\"\n", cstr_String(&params->titanIdentity));
-            }
-            if (params->dismissWarnings) {
-                appendFormat_String(buf, "dismissWarnings = 0x%x\n", params->dismissWarnings);
-            }
-            if (!isEmpty_StringArray(&params->usedIdentities)) {
-                appendFormat_String(
-                    buf,
-                    "usedIdentities = \"%s\"\n",
-                    cstrCollect_String(joinCStr_StringArray(&params->usedIdentities, " ")));
-            }
-            if (!isEmpty_String(&params->paletteSeed)) {
-                appendCStr_String(buf, "paletteSeed = \"");
-                append_String(buf, collect_String(quote_String(&params->paletteSeed, iFalse)));
-                appendCStr_String(buf, "\"\n");
-            }
-            if (!params->tlsSessionCache) {
-                appendCStr_String(buf, "tlsSessionCache = false\n");
-            }
-            if (!isEmpty_String(buf)) {
-                writeData_File(f, "[", 1);
-                writeData_File(f, constData_Block(key), size_Block(key));
-                writeData_File(f, "]\n", 2);
-                appendCStr_String(buf, "\n");
-                write_File(f, utf8_String(buf));
-            }
-            iEndCollect();
-        }
-        delete_String(buf);
+        serialize_SiteSpec(stream_File(f));
     }
     iRelease(f);
 }

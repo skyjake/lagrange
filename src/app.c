@@ -23,17 +23,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "bookmarks.h"
 #include "defs.h"
-#include "resources.h"
+#include "export.h"
 #include "feeds.h"
-#include "mimehooks.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
 #include "gmutil.h"
 #include "history.h"
 #include "ipc.h"
+#include "mimehooks.h"
 #include "periodic.h"
+#include "resources.h"
 #include "sitespec.h"
-#include "updater.h"
 #include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
@@ -43,13 +43,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/labelwidget.h"
 #include "ui/root.h"
 #include "ui/sidebarwidget.h"
-#include "ui/touch.h"
 #include "ui/text.h"
+#include "ui/touch.h"
 #include "ui/uploadwidget.h"
 #include "ui/util.h"
 #include "ui/window.h"
+#include "updater.h"
 #include "visited.h"
 
+#include <the_Foundation/buffer.h>
 #include <the_Foundation/commandline.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -3741,6 +3743,53 @@ iBool handleCommand_App(const char *cmd) {
                                                  cstr_String(packId)) } },
                     2);
             }
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "export")) {
+        iExport *export = new_Export();
+        iBuffer *zip    = new_Buffer();
+        generate_Export(export);
+        openEmpty_Buffer(zip);
+        serialize_Archive(archive_Export(export), stream_Buffer(zip));
+        iDocumentWidget *expTab = newTab_App(NULL, iTrue);
+        iDate now;
+        initCurrent_Date(&now);
+        setUrlAndSource_DocumentWidget(
+            expTab,
+            collect_String(format_Date(&now, "file:Lagrange_User_Data_%Y-%m-%d_%H%M%S.zip")),
+            collectNewCStr_String("application/zip"),
+            data_Buffer(zip));
+        iRelease(zip);
+        delete_Export(export);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "import")) {
+        const iString *path = collect_String(suffix_Command(cmd, "path"));
+        iArchive *zip = iClob(new_Archive());
+        if (openFile_Archive(zip, path)) {
+            if (!arg_Command(cmd)) {
+                makeUserDataImporter_Dialog(path);
+                return iTrue;
+            }
+            const int bookmarks = argLabel_Command(cmd, "bookmarks");
+            const int trusted   = argLabel_Command(cmd, "trusted");
+            const int idents    = argLabel_Command(cmd, "idents");
+            const int visited   = argLabel_Command(cmd, "visited");
+            const int siteSpec  = argLabel_Command(cmd, "sitespec");
+            iExport *export = new_Export();
+            if (load_Export(export, zip)) {
+                import_Export(export, bookmarks, idents, trusted, visited, siteSpec);
+            }
+            else {
+                makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.import.userdata.error}",
+                                         format_Lang("${import.userdata.error}", cstr_String(path)));                    
+            }
+            delete_Export(export);
+        }
+        else {
+            makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.import.userdata.error}",
+                                     format_Lang("${import.userdata.error}", cstr_String(path)));
         }
         return iTrue;
     }

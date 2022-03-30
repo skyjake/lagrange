@@ -150,6 +150,8 @@ set (SOURCES
     src/bookmarks.c
     src/bookmarks.h
     src/defs.h
+    src/export.c
+    src/export.h
     src/feeds.c
     src/feeds.h
     src/fontpack.c

@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "defs.h"
 #include "documentwidget.h"
+#include "export.h"
 #include "feeds.h"
 #include "gmutil.h"
 #include "inputwidget.h"
@@ -2658,7 +2659,7 @@ iWidget *makePreferences_Widget(void) {
         const iMenuItem identityPanelItems[] = {
             { "title id:sidebar.identities" },
             { "certlist" },
-            { "navi.action id:prefs.ident.import text:" inbox_Icon, 0, 0, "ident.import" },
+            { "navi.action id:prefs.ident.import text:" import_Icon, 0, 0, "ident.import" },
             { "navi.action id:prefs.ident.new text:" add_Icon, 0, 0, "ident.new" },
             { NULL }  
         };
@@ -3715,6 +3716,118 @@ iWidget *makeGlyphFinder_Widget(void) {
     deinit_Array(&items);
     deinit_String(&command);
     deinit_String(&msg);
+    return dlg;
+}
+
+static enum iImportMethod checkImportMethod_(const iWidget *dlg, const char *id) {
+    return isSelected_Widget(findChild_Widget(dlg, format_CStr("%s.0", id))) ? none_ImportMethod
+           : isSelected_Widget(findChild_Widget(dlg, format_CStr("%s.1", id)))
+               ? ifMissing_ImportMethod
+               : all_ImportMethod;
+}
+
+static iBool handleUserDataImporterCommands_(iWidget *dlg, const char *cmd) {
+    if (equalWidget_Command(cmd, dlg, "importer.cancel") ||
+        equalWidget_Command(cmd, dlg, "importer.accept")) {
+        if (equal_Command(cmd, "importer.accept")) {
+            /* Compose the final import command. */
+            enum iImportMethod bookmarkMethod = checkImportMethod_(dlg, "importer.bookmark");
+            enum iImportMethod identMethod    = checkImportMethod_(dlg, "importer.idents");
+            enum iImportMethod trustedMethod  = checkImportMethod_(dlg, "importer.trusted");
+            enum iImportMethod sitespecMethod = checkImportMethod_(dlg, "importer.sitespec");
+            enum iImportMethod visitedMethod =
+                isSelected_Widget(findChild_Widget(dlg, "importer.history")) ? all_ImportMethod
+                                                                             : none_ImportMethod;
+            postCommandf_App(
+                "import arg:1 bookmarks:%d idents:%d trusted:%d visited:%d sitespec:%d path:%s",
+                bookmarkMethod,
+                identMethod,
+                trustedMethod,
+                visitedMethod,
+                sitespecMethod,
+                suffixPtr_Command(cmd, "path"));
+        }
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, dlg, "importer.selectall")) {
+        postCommand_Widget(findChild_Widget(dlg, "importer.bookmark.1"), "trigger");
+        postCommand_Widget(findChild_Widget(dlg, "importer.trusted.1"), "trigger");
+        postCommand_Widget(findChild_Widget(dlg, "importer.idents.1"), "trigger");
+        postCommand_Widget(findChild_Widget(dlg, "importer.sitespec.1"), "trigger");
+        setToggle_Widget(findChild_Widget(dlg, "importer.history"), iTrue);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iWidget *makeUserDataImporter_Dialog(const iString *archivePath) {
+    iWidget *dlg;
+    const iMenuItem actions[] = {
+        { "${menu.selectall}", 0, 0, "importer.selectall" },
+        { "---" },
+        { "${cancel}", SDLK_ESCAPE, 0, "importer.cancel" },
+        { uiTextAction_ColorEscape "${import.userdata}",
+          SDLK_RETURN, KMOD_PRIMARY,
+          format_CStr("importer.accept path:%s", cstr_String(archivePath)) },
+    };
+    if (isUsingPanelLayout_Mobile()) {
+        dlg = makePanels_Mobile("importer", (iMenuItem[]){
+                                                           { NULL }
+                                            }, actions, iElemCount(actions));
+    }
+    else {
+        dlg = makeSheet_Widget("importer");
+        addDialogTitle_(dlg, "${heading.import.userdata}", NULL);
+        iWidget *headings, *values;
+        addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        /* Bookmarks. */
+        addChild_Widget(headings, iClob(makeHeading_Widget("${import.userdata.bookmarks}")));
+        iWidget *radio = new_Widget(); {
+            addRadioButton_(radio, "importer.bookmark.0", "${dlg.userdata.no}", ".");
+            addRadioButton_(radio, "importer.bookmark.1", "${dlg.userdata.missing}", ".");
+            addRadioButton_(radio, "importer.bookmark.2", "${dlg.userdata.alldup}", ".");
+        }
+        addChildFlags_Widget(values, iClob(radio), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        /* Site-specific. */
+        addChild_Widget(headings, iClob(makeHeading_Widget("${import.userdata.sitespec}")));
+        radio = new_Widget(); {
+            addRadioButton_(radio, "importer.sitespec.0", "${dlg.userdata.no}", ".");
+            addRadioButton_(radio, "importer.sitespec.1", "${dlg.userdata.missing}", ".");
+            addRadioButton_(radio, "importer.sitespec.2", "${dlg.userdata.all}", ".");
+        }
+        addChildFlags_Widget(values, iClob(radio), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        /* Trusted certs. */
+        addChild_Widget(headings, iClob(makeHeading_Widget("${import.userdata.trusted}")));
+        radio = new_Widget(); {
+            addRadioButton_(radio, "importer.trusted.0", "${dlg.userdata.no}", ".");
+            addRadioButton_(radio, "importer.trusted.1", "${dlg.userdata.missing}", ".");
+            addRadioButton_(radio, "importer.trusted.2", "${dlg.userdata.all}", ".");
+        }
+        addChildFlags_Widget(values, iClob(radio), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        /* Identities. */
+        addChild_Widget(headings, iClob(makeHeading_Widget("${import.userdata.idents}")));
+        radio = new_Widget(); {
+            addRadioButton_(radio, "importer.idents.0", "${dlg.userdata.no}", ".");
+            addRadioButton_(radio, "importer.idents.1", "${dlg.userdata.missing}", ".");
+            addRadioButton_(radio, "importer.idents.2", "${dlg.userdata.all}", ".");
+        }
+        addChildFlags_Widget(values, iClob(radio), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addDialogToggle_(headings, values, "${import.userdata.history}", "importer.history");
+        addDialogPadding_(headings, values);
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(dlg->root->widget, iClob(dlg));
+        arrange_Widget(dlg);
+        arrange_Widget(dlg);
+        setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
+    }
+    /* Initialize. */
+    setToggle_Widget(findChild_Widget(dlg, "importer.bookmark.0"), iTrue);
+    setToggle_Widget(findChild_Widget(dlg, "importer.idents.0"), iTrue);
+    setToggle_Widget(findChild_Widget(dlg, "importer.sitespec.0"), iTrue);
+    setToggle_Widget(findChild_Widget(dlg, "importer.trusted.0"), iTrue);
+    setCommandHandler_Widget(dlg, handleUserDataImporterCommands_);
     return dlg;
 }
 

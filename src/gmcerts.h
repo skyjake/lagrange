@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "defs.h"
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/tlsrequest.h>
@@ -87,6 +88,9 @@ void                importIdentity_GmCerts  (iGmCerts *, iTlsCertificate *cert,
                                              const iString *notes); /* takes ownership */
 void                deleteIdentity_GmCerts  (iGmCerts *, iGmIdentity *identity);
 void                saveIdentities_GmCerts  (const iGmCerts *);
+void                serialize_GmCerts       (const iGmCerts *, iStream *trusted, iStream *identsMeta);
+void                deserializeTrusted_GmCerts      (iGmCerts *, iStream *ins, enum iImportMethod method);
+iBool               deserializeIdentities_GmCerts   (iGmCerts *, iStream *ins, enum iImportMethod method);
 
 const iString *     certificatePath_GmCerts (const iGmCerts *, const iGmIdentity *identity);
 

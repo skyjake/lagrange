@@ -9,6 +9,9 @@ msgstr "Loading"
 msgid "doc.archive"
 msgstr "%s is a compressed archive."
 
+msgid "heading.archive.userdata"
+msgstr "User Data Archive"
+
 msgid "doc.archive.view"
 msgstr "View archive contents"
 
@@ -180,6 +183,12 @@ msgstr "Open Location…"
 
 msgid "menu.downloads"
 msgstr "Show Downloads"
+
+msgid "menu.export"
+msgstr "Export User Data"
+
+msgid "menu.import"
+msgstr "Import User Data…"
 
 msgid "menu.pageinfo"
 msgstr "Show Page Information"
@@ -971,6 +980,9 @@ msgstr "Import Certificate/Key File"
 msgid "dlg.certimport.import"
 msgstr "Import"
 
+msgid "dlg.certimport.paste"
+msgstr "Paste from Clipboard"
+
 msgid "dlg.certimport.notes"
 msgstr "Notes:"
 
@@ -988,6 +1000,48 @@ msgstr "Audio"
 
 msgid "link.hint.image"
 msgstr "Image"
+
+msgid "heading.import.userdata"
+msgstr "Import User Data"
+
+msgid "heading.import.userdata.error"
+msgstr "Import Failed"
+
+msgid "import.userdata.bookmarks"
+msgstr "Bookmarks:"
+
+msgid "import.userdata.idents"
+msgstr "Identities:"
+
+msgid "import.userdata.history"
+msgstr "History:"
+
+msgid "import.userdata.trusted"
+msgstr "Trusted certificates:"
+
+msgid "import.userdata.sitespec"
+msgstr "Site settings:"
+
+msgid "dlg.userdata.no"
+msgstr "None"
+
+msgid "dlg.userdata.missing"
+msgstr "If Missing"
+
+msgid "dlg.userdata.all"
+msgstr "All"
+
+msgid "dlg.userdata.alldup"
+msgstr "All (Keep Duplicates)"
+
+msgid "import.userdata"
+msgstr "Import Selected Data"
+
+msgid "import.userdata.dupfolder"
+msgstr "Imported Duplicates"
+
+msgid "import.userdata.error"
+msgstr "%s is not a valid Lagrange export archive."
 
 msgid "bookmark.title.blank"
 msgstr "Blank Page"
