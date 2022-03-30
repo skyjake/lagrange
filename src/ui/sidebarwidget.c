@@ -627,16 +627,18 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
         if (d->mode == feeds_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
             setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
-            arrange_Widget(d->actions);
-//            setPadding_Widget(div, 0, 0, 0, height_Widget(d->actions));
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             if (d->feedsMode == all_FeedsMode) {
                 addChild_Widget(div, iClob(new_LabelWidget("${menu.feeds.refresh}", "feeds.refresh")));
             }
             else {
-                iLabelWidget *msg = addChildFlags_Widget(div, iClob(new_LabelWidget("${sidebar.empty.unread}", NULL)),
-                                                         frameless_WidgetFlag);
+                iLabelWidget *msg =
+                    addChildFlags_Widget(div,
+                                         iClob(new_LabelWidget("${sidebar.empty.unread}", NULL)),
+                                         frameless_WidgetFlag);
                 setFont_LabelWidget(msg, uiLabelLarge_FontId);
+                arrange_Widget(d->actions);
+                div->padding[3] = height_Widget(d->actions);
             }
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             addChild_Widget(d->blank, iClob(div));
