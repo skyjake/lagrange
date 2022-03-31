@@ -1029,7 +1029,7 @@ msgid "dlg.userdata.missing"
 msgstr "If Missing"
 
 msgid "dlg.userdata.all"
-msgstr "All"
+msgstr "All (Overwrite)"
 
 msgid "dlg.userdata.alldup"
 msgstr "All (Keep Duplicates)"

@@ -3732,7 +3732,9 @@ static iBool handleUserDataImporterCommands_(iWidget *dlg, const char *cmd) {
         if (equal_Command(cmd, "importer.accept")) {
             /* Compose the final import command. */
             enum iImportMethod bookmarkMethod = checkImportMethod_(dlg, "importer.bookmark");
-            enum iImportMethod identMethod    = checkImportMethod_(dlg, "importer.idents");
+            enum iImportMethod identMethod =
+                isSelected_Widget(findChild_Widget(dlg, "importer.idents")) ? ifMissing_ImportMethod
+                                                                            : none_ImportMethod;
             enum iImportMethod trustedMethod  = checkImportMethod_(dlg, "importer.trusted");
             enum iImportMethod sitespecMethod = checkImportMethod_(dlg, "importer.sitespec");
             enum iImportMethod visitedMethod =
@@ -3754,9 +3756,9 @@ static iBool handleUserDataImporterCommands_(iWidget *dlg, const char *cmd) {
     else if (equalWidget_Command(cmd, dlg, "importer.selectall")) {
         postCommand_Widget(findChild_Widget(dlg, "importer.bookmark.1"), "trigger");
         postCommand_Widget(findChild_Widget(dlg, "importer.trusted.1"), "trigger");
-        postCommand_Widget(findChild_Widget(dlg, "importer.idents.1"), "trigger");
         postCommand_Widget(findChild_Widget(dlg, "importer.sitespec.1"), "trigger");
         setToggle_Widget(findChild_Widget(dlg, "importer.history"), iTrue);
+        setToggle_Widget(findChild_Widget(dlg, "importer.idents"), iTrue);
         return iTrue;
     }
     return iFalse;
@@ -3807,13 +3809,14 @@ iWidget *makeUserDataImporter_Dialog(const iString *archivePath) {
         }
         addChildFlags_Widget(values, iClob(radio), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         /* Identities. */
-        addChild_Widget(headings, iClob(makeHeading_Widget("${import.userdata.idents}")));
-        radio = new_Widget(); {
-            addRadioButton_(radio, "importer.idents.0", "${dlg.userdata.no}", ".");
-            addRadioButton_(radio, "importer.idents.1", "${dlg.userdata.missing}", ".");
-            addRadioButton_(radio, "importer.idents.2", "${dlg.userdata.all}", ".");
-        }
-        addChildFlags_Widget(values, iClob(radio), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        //addChild_Widget(headings, iClob(makeHeading_Widget("${import.userdata.idents}")));
+//        radio = new_Widget(); {
+//            addRadioButton_(radio, "importer.idents.0", "${dlg.userdata.no}", ".");
+//            addRadioButton_(radio, "importer.idents.1", "${dlg.userdata.missing}", ".");
+//            addRadioButton_(radio, "importer.idents.2", "${dlg.userdata.all}", ".");
+//        }
+//        addChildFlags_Widget(values, iClob(radio), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addDialogToggle_(headings, values, "${import.userdata.idents}", "importer.idents");
         addDialogToggle_(headings, values, "${import.userdata.history}", "importer.history");
         addDialogPadding_(headings, values);
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
