@@ -1199,6 +1199,7 @@ const iString *downloadDir_App(void) {
 
 const iString *fileNameForUrl_App(const iString *url, const iString *mime) {
     /* Figure out a file name from the URL. */
+    url = collect_String(urlDecodeExclude_String(url, "\\/:;"));
     iUrl parts;
     init_Url(&parts, url);
     while (startsWith_Rangecc(parts.path, "/")) {
@@ -3757,7 +3758,7 @@ iBool handleCommand_App(const char *cmd) {
         initCurrent_Date(&now);
         setUrlAndSource_DocumentWidget(
             expTab,
-            collect_String(format_Date(&now, "file:Lagrange_User_Data_%Y-%m-%d_%H%M%S.zip")),
+            collect_String(format_Date(&now, "file:Lagrange User Data %Y-%m-%d %H%M%S.zip")),
             collectNewCStr_String("application/zip"),
             data_Buffer(zip));
         iRelease(zip);

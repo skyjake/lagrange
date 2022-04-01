@@ -2743,7 +2743,8 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                         format_String(&str, "# %s\n", zipPageHeading_(range_String(&d->sourceMime)));
                         appendFormat_String(&str,
                                             cstr_Lang("doc.archive"),
-                                            cstr_Rangecc(baseName_Path(d->mod.url)));
+                                            cstr_Rangecc(baseName_Path(collect_String(
+                                                localFilePathFromUrl_String(d->mod.url)))));
                         appendCStr_String(&str, "\n");
                         if (!cmp_String(&d->sourceMime, mimeType_Export)) {
                             appendFormat_String(&str, "\n%s\n", cstr_Lang("userdata.help"));                            
