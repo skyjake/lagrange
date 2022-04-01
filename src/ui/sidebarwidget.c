@@ -1086,7 +1086,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
 
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
     if (equal_Command(cmd, "dlg.bookmark.setfolder")) {
-        setBookmarkEditorFolder_Widget(editor, arg_Command(cmd));
+        setBookmarkEditorParentFolder_Widget(editor, arg_Command(cmd));
         return iTrue;
     }
     if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "bmed.cancel")) {
@@ -1509,17 +1509,17 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "bookmark.edit")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
-                iWidget *dlg = makeBookmarkEditor_Widget();
-                setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                iWidget *dlg = makeBookmarkEditor_Widget(isFolder_Bookmark(bm));
+                setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
                 setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &bm->title);
-                iInputWidget *urlInput        = findChild_Widget(dlg, "bmed.url");
-                iInputWidget *tagsInput       = findChild_Widget(dlg, "bmed.tags");
-                iInputWidget *iconInput       = findChild_Widget(dlg, "bmed.icon");
-                iWidget *     homeTag         = findChild_Widget(dlg, "bmed.tag.home");
-                iWidget *     remoteSourceTag = findChild_Widget(dlg, "bmed.tag.remote");
-                iWidget *     linkSplitTag    = findChild_Widget(dlg, "bmed.tag.linksplit");
                 if (!isFolder_Bookmark(bm)) {
+                    iInputWidget *urlInput        = findChild_Widget(dlg, "bmed.url");
+                    iInputWidget *tagsInput       = findChild_Widget(dlg, "bmed.tags");
+                    iInputWidget *iconInput       = findChild_Widget(dlg, "bmed.icon");
+                    iWidget *     homeTag         = findChild_Widget(dlg, "bmed.tag.home");
+                    iWidget *     remoteSourceTag = findChild_Widget(dlg, "bmed.tag.remote");
+                    iWidget *     linkSplitTag    = findChild_Widget(dlg, "bmed.tag.linksplit");
                     setText_InputWidget(urlInput, &bm->url);
                     setText_InputWidget(tagsInput, &bm->tags);
                     if (bm->flags & userIcon_BookmarkFlag) {
@@ -1530,16 +1530,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setToggle_Widget(remoteSourceTag, bm->flags & remoteSource_BookmarkFlag);
                     setToggle_Widget(linkSplitTag, bm->flags & linkSplit_BookmarkFlag);
                 }
-                else {
-                    setFlags_Widget(findChild_Widget(dlg, "bmed.special"),
-                                    hidden_WidgetFlag | disabled_WidgetFlag,
-                                    iTrue);
-                    iAnyObject *notNeeded[] = { urlInput, tagsInput, iconInput, NULL };
-                    iForIndices(i, notNeeded) {
-                        setFlags_Widget(notNeeded[i], disabled_WidgetFlag, iTrue);
-                    }
-                }
-                setBookmarkEditorFolder_Widget(dlg, bm ? bm->parentId : 0);
+                setBookmarkEditorParentFolder_Widget(dlg, bm ? bm->parentId : 0);
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
                 setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
             }
