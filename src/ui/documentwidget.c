@@ -2745,6 +2745,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                                             cstr_Lang("doc.archive"),
                                             cstr_Rangecc(baseName_Path(d->mod.url)));
                         appendCStr_String(&str, "\n");
+                        if (!cmp_String(&d->sourceMime, mimeType_Export)) {
+                            appendFormat_String(&str, "\n%s\n", cstr_Lang("userdata.help"));                            
+                        }
                     }
                     iRelease(zip);
                     appendCStr_String(&str, "\n");

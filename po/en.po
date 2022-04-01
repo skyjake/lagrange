@@ -12,6 +12,9 @@ msgstr "%s is a compressed archive."
 msgid "heading.archive.userdata"
 msgstr "User Data Archive"
 
+msgid "userdata.help"
+msgstr "User data archives contain exported browsing history, identities, bookmarks, site-specific settings, and fingerprints of trusted server certificates. You can import some or all of this data."
+
 msgid "doc.archive.view"
 msgstr "View archive contents"
 
@@ -1397,6 +1400,9 @@ msgstr "Add Bookmark"
 msgid "heading.bookmark.edit"
 msgstr "Edit Bookmark"
 
+msgid "heading.bookmark.editfolder"
+msgstr "Edit Folder"
+
 msgid "dlg.bookmark.save"
 msgstr "Save Bookmark"
 
@@ -1408,6 +1414,9 @@ msgstr "URL:"
 
 msgid "dlg.bookmark.folder"
 msgstr "Folder:"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Parent folder:"
 
 msgid "dlg.bookmark.tags"
 msgstr "Tags:"
