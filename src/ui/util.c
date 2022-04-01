@@ -2697,6 +2697,8 @@ iWidget *makePreferences_Widget(void) {
             { "panel icon:0x1f3a8 id:heading.prefs.colors", 0, 0, (const void *) colorPanelItems },
             { "panel icon:0x1f5da id:heading.prefs.fonts", 0, 0, (const void *) fontPanelItems },
             { "panel icon:0x1f660 id:heading.prefs.style", 0, 0, (const void *) stylePanelItems },
+            { "padding" },
+            { "button text:" export_Icon " " uiTextAction_ColorEscape "${menu.export}", 0, 0, "export " },
             { "heading id:heading.prefs.support" },
             { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
             { "panel text:" planet_Icon " ${menu.about}", 0, 0, (const void *) aboutPanelItems },
