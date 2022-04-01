@@ -534,12 +534,7 @@ static iWidget *addChildPanel_(iWidget *parent, iLabelWidget *panelButton,
     return panel;
 }
 
-//void finalizeSheet_Mobile(iWidget *sheet) {
-//    arrange_Widget(sheet);
-//    postRefresh_App();
-//}
-
-static size_t countItems_(const iMenuItem *itemsNullTerminated) {
+size_t count_MenuItem(const iMenuItem *itemsNullTerminated) {
     size_t num = 0;
     for (; itemsNullTerminated->label; num++, itemsNullTerminated++) {}
     return num;
@@ -616,7 +611,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
     else if (equal_Command(spec, "dropdown")) {
         const iMenuItem *dropItems = item->data;
         iLabelWidget *drop = makeMenuButton_LabelWidget(dropItems[0].label,
-                                                        dropItems, countItems_(dropItems));
+                                                        dropItems, count_MenuItem(dropItems));
         value = as_Widget(drop);
         setFont_LabelWidget(drop, labelFont_());
         setFlags_Widget(as_Widget(drop),

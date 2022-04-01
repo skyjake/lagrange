@@ -128,6 +128,7 @@ enum iWidgetFlag2 {
     fadeBackground_WidgetFlag2              = iBit(2),
     visibleOnParentSelected_WidgetFlag2     = iBit(3),
     permanentVisualOffset_WidgetFlag2       = iBit(4), /* usually visual offset overrides hiding */
+    commandOnHover_WidgetFlag2              = iBit(5), /* only dispatched to the hovered widget */
 };
 
 enum iWidgetAddPos {

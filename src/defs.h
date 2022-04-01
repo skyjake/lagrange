@@ -210,10 +210,12 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #endif
 
 #if defined (iPlatformAppleDesktop)
-#   define iHaveNativeMenus /* main menu */
+#   define LAGRANGE_MAC_MENUBAR /* main menu */
 #   if defined (LAGRANGE_ENABLE_MAC_MENUS)
-#       define iHaveNativeContextMenus
+#       define LAGRANGE_MAC_CONTEXTMENU
 #   endif
+#elif defined (iPlatformDesktop)
+#   define LAGRANGE_MENUBAR
 #endif
 
 /* UI labels that depend on the platform */

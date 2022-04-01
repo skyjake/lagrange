@@ -6,8 +6,9 @@
 #include <the_Foundation/ptrset.h>
 #include <the_Foundation/vec2.h>
 
-iDeclareType(Root)
+iDeclareType(DocumentWidget)
 
+iDeclareType(Root)   
 iDeclareNotifyFunc(Root, VisualOffsetsChanged)
 iDeclareAudienceGetter(Root, visualOffsetsChanged)
 
@@ -34,6 +35,7 @@ void        setCurrent_Root                     (iRoot *);
 iRoot *     current_Root                        (void);
 iRoot *     get_Root                            (void); /* assert != NULL */
 iAnyObject *findWidget_Root                     (const char *id); /* under current Root */
+iDocumentWidget *findDocument_Root              (const iRoot *, const iString *url);
 
 iPtrArray * onTop_Root                          (iRoot *);
 void        destroyPending_Root                 (iRoot *);

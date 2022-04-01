@@ -49,6 +49,7 @@ struct Impl_LabelWidget {
         uint16_t noAutoMinHeight     : 1; /* minimum height is not set automatically */
         uint16_t drawAsOutline       : 1; /* draw as outline, filled with background color */
         uint16_t noTopFrame          : 1;
+        uint16_t noBottomFrame       : 1;
         uint16_t wrap                : 1;
         uint16_t allCaps             : 1;
         uint16_t removeTrailingColon : 1;
@@ -255,8 +256,8 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             *fg = tmParagraph_ColorId;
         }
         if (isButton) {
-            *frame1 = d->flags.noTopFrame ? uiEmboss1_ColorId : uiEmbossSelected1_ColorId;
-            *frame2 = uiEmbossSelected2_ColorId;
+            *frame1 = d->flags.noTopFrame    ? uiEmboss1_ColorId : uiEmbossSelected1_ColorId;
+            *frame2 = d->flags.noBottomFrame ? uiEmboss2_ColorId : uiEmbossSelected2_ColorId;
             if (!isKeyRoot) {
                 *frame1 = *bg;
             }
@@ -385,11 +386,17 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                 points[3].x--;    
             }
 #endif
-            drawLines_Paint(&p, points + 2, 3, frame2);
-            drawLines_Paint(&p,
-                            points,
-                            isFocused_Widget(w) ? 3 : (!isHover && d->flags.noTopFrame ? 2 : 3),
-                            frame);
+            if (d->flags.noBottomFrame && !isFocused_Widget(w) && !isHover) {
+                drawLines_Paint(&p, points + 2, 2, frame2);
+                drawLines_Paint(&p, points, 3, frame);
+            }
+            else {
+                drawLines_Paint(&p, points + 2, 3, frame2);
+                drawLines_Paint(&p,
+                                points,
+                                (d->flags.noTopFrame && !isFocused_Widget(w) && !isHover ? 2 : 3),
+                                frame);
+            }
         }
     }
     setClip_Paint(&p, rect);
@@ -627,6 +634,10 @@ void setNoAutoMinHeight_LabelWidget(iLabelWidget *d, iBool noAutoMinHeight) {
 
 void setNoTopFrame_LabelWidget(iLabelWidget *d, iBool noTopFrame) {
     d->flags.noTopFrame = noTopFrame;
+}
+
+void setNoBottomFrame_LabelWidget(iLabelWidget *d, iBool noBottomFrame) {
+    d->flags.noBottomFrame = noBottomFrame;
 }
 
 void setChevron_LabelWidget(iLabelWidget *d, iBool chevron) {

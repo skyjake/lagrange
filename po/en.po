@@ -374,8 +374,13 @@ msgstr "Subscribe to Page…"
 msgid "menu.aboutpages"
 msgstr "About Pages"
 
+# Used on the mobile Settings page.
 msgid "menu.about"
 msgstr "About"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "About Lagrange"
 
 msgid "menu.fonts"
 msgstr "Manage Fonts…"

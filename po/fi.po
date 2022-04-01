@@ -205,6 +205,9 @@ msgstr "About-sivut"
 msgid "menu.about"
 msgstr "Tietoja: Lagrange"
 
+msgid "menu.aboutapp"
+msgstr "Tietoja: Lagrange"
+
 msgid "panel.back"
 msgstr "Takaisin"
 

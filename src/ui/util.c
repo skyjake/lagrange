@@ -863,7 +863,7 @@ static void deleteMenuItems_(iArray *items) {
 }
 
 void releaseNativeMenu_Widget(iWidget *d) {
-#if defined (iHaveNativeContextMenus)
+#if defined (LAGRANGE_MAC_CONTEXTMENU)
     iArray *items = userData_Object(d);
     if (items) {
         iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
@@ -877,7 +877,7 @@ void releaseNativeMenu_Widget(iWidget *d) {
 }
 
 void setNativeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
-#if defined (iHaveNativeContextMenus)
+#if defined (LAGRANGE_MAC_CONTEXTMENU)
     iAssert(flags_Widget(menu) & nativeMenu_WidgetFlag);
     releaseNativeMenu_Widget(menu);
     setUserData_Object(menu, deepCopyMenuItems_(menu, items, n));
@@ -895,7 +895,7 @@ void setNativeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) 
 
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
-#if defined (iHaveNativeContextMenus)
+#if defined (LAGRANGE_MAC_CONTEXTMENU)
     setFlags_Widget(menu, hidden_WidgetFlag | nativeMenu_WidgetFlag, iTrue);
     addChild_Widget(parent, menu);
     iRelease(menu); /* owned by parent now */
@@ -1067,7 +1067,7 @@ iLocalDef iBool isUsingMenuPopupWindows_(void) {
 
 void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     const iBool postCommands = (menuOpenFlags & postCommands_MenuOpenFlags) != 0;
-#if defined (iHaveNativeContextMenus)
+#if defined (LAGRANGE_MAC_CONTEXTMENU)
     const iArray *items = userData_Object(d);
     iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
     iAssert(items);
@@ -1258,6 +1258,10 @@ void closeMenu_Widget(iWidget *d) {
     }
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
+    iLabelWidget *button = parentMenuButton_(d);
+    if (button) {
+        setFlags_Widget(as_Widget(button), selected_WidgetFlag, iFalse);
+    }
     postRefresh_App();
     postCommand_Widget(d, "menu.closed");
     setupMenuTransition_Mobile(d, iFalse);
@@ -1420,6 +1424,52 @@ const char *selectedDropdownCommand_LabelWidget(const iLabelWidget *dropButton) 
 
 /*-----------------------------------------------------------------------------------------------*/
 
+static iWidget *topLevelOpenMenu_(const iWidget *menuBar) {
+    iForEach(ObjectList, i, menuBar->children) {
+        iWidget *menu = findChild_Widget(i.object, "menu");
+        if (isVisible_Widget(menu)) {
+            return i.object;
+        }
+    }
+    return NULL;
+}
+
+static iBool topLevelMenuBarHandler_(iWidget *menuButton, const char *cmd) {
+    if (equal_Command(cmd, "mouse.hovered")) {
+        /* Only dispatched to the flagged widget. */
+        iWidget *menuBar = parent_Widget(menuButton);
+        iWidget *openSubmenu = topLevelOpenMenu_(menuBar);
+        if (openSubmenu && openSubmenu != menuButton) {
+            postCommand_Widget(menuButton, "menu.open under:1 bar:1");
+        }
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iWidget *makeMenuBar_Widget(const iMenuItem *topLevelMenus, size_t num) {
+    iWidget *bar = new_Widget();
+    setFlags_Widget(bar, arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag, iTrue);
+    setBackgroundColor_Widget(bar, uiBackground_ColorId);
+    iString *submenuCmd = collectNewCStr_String("menu.open under:1 bar:1");
+    for (size_t i = 0; i < num; i++) {
+        const iMenuItem *item     = &topLevelMenus[i];
+        const iMenuItem *subItems = item->data;
+        iLabelWidget    *submenu  =
+            makeMenuButton_LabelWidget(item->label, subItems, count_MenuItem(subItems));
+        setCommand_LabelWidget(submenu, submenuCmd);
+        setFrameColor_Widget(findChild_Widget(as_Widget(submenu), "menu"), uiSeparator_ColorId);
+        as_Widget(submenu)->padding[0] = gap_UI;
+        setCommandHandler_Widget(as_Widget(submenu), topLevelMenuBarHandler_);
+        updateSize_LabelWidget(submenu);
+        as_Widget(submenu)->flags2 |= commandOnHover_WidgetFlag2;
+        addChildFlags_Widget(bar, iClob(submenu), frameless_WidgetFlag);
+    }
+    return bar;
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
 static iBool isTabPage_Widget_(const iWidget *tabs, const iWidget *page) {
     return page && page->parent == findChild_Widget(tabs, "tabs.pages");
 }
@@ -1521,7 +1571,12 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         addPos);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
     setFlags_Widget(button, commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
-    setNoTopFrame_LabelWidget((iLabelWidget *) button, iTrue);
+    if (prefs_App()->bottomTabBar) {
+        setNoBottomFrame_LabelWidget((iLabelWidget *) button, iTrue);
+    }
+    else {
+        setNoTopFrame_LabelWidget((iLabelWidget *) button, iTrue);
+    }
     addChildPos_Widget(pages, page, addPos);
     if (tabCount_Widget(tabs) > 1) {
         setFlags_Widget(buttons, hidden_WidgetFlag, iFalse);
@@ -1628,7 +1683,7 @@ void addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *co
     updateSize_LabelWidget(close);
 }
 
-void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
+void showTabPage_Widget(iWidget *tabs, const iAnyObject *page) {
     if (!page) {
         return;
     }
@@ -1651,7 +1706,9 @@ void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
     }
     /* Notify. */
     if (!isEmpty_String(id_Widget(page))) {
-        postCommandf_Root(page->root, "tabs.changed id:%s", cstr_String(id_Widget(page)));
+        postCommandf_Root(constAs_Widget(page)->root,
+                          "tabs.changed id:%s",
+                          cstr_String(id_Widget(constAs_Widget(page))));
     }
 }
 
@@ -2374,6 +2431,15 @@ size_t findWidestLabel_MenuItem(const iMenuItem *items, size_t num) {
     return widestPos;
 }
 
+size_t findCommand_MenuItem(const iMenuItem *items, size_t num, const char *command) {
+    for (size_t i = 0; i < num && items[i].label; i++) {
+        if (!iCmpStr(items[i].command, command)) {
+            return i;
+        }
+    }
+    return iInvalidPos;
+}
+
 const char *widestLabel_MenuItemArray(const iArray *items) {
     size_t index = findWidestLabel_MenuItem(constData_Array(items), size_Array(items));
     if (index == iInvalidPos) {
@@ -2929,12 +2995,6 @@ iWidget *makePreferences_Widget(void) {
             addDialogPadding_(headings, values);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
             addFontButtons_(values, "ui");
-            //            addDialogPadding_(headings, values);
-//            /* Custom font. */ {
-//                iInputWidget *customFont = new_InputWidget(0);
-//                setHint_InputWidget(customFont, "${hint.prefs.userfont}");
-//                addPrefsInputWithHeading_(headings, values, "prefs.userfont", iClob(customFont));
-//            }
         }        
     }
     /* Style. */ {

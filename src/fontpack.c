@@ -911,7 +911,7 @@ const iArray *actions_FontPack(const iFontPack *d, iBool showInstalled) {
         pushBack_Array(
             items,
             &(iMenuItem){
-                fontpack_Icon " ${fontpack.open.aboutfonts}", 0, 0, "!open url:about:fonts" });
+                fontpack_Icon " ${fontpack.open.aboutfonts}", 0, 0, "!open switch:1 url:about:fonts" });
     }
     return collect_Array(items);
 }

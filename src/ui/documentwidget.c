@@ -2725,9 +2725,13 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                             appendCStr_String(&str, "\n");
                             appendCStr_String(&str, cstr_Lang("fontpack.help"));
                             appendCStr_String(&str, "\n");
-                            const iArray *actions = actions_FontPack(fp, iTrue);
-                            makeFooterButtons_DocumentWidget_(d, constData_Array(actions),
-                                                              size_Array(actions));
+//                            footerItems = actions_FontPack(fp, iTrue);
+//                            const iArray *actions =;
+                            iConstForEach(Array, a, actions_FontPack(fp, iTrue)) {
+                                pushBack_Array(footerItems, a.value);
+                            }
+//                            makeFooterButtons_DocumentWidget_(d, constData_Array(actions),
+//                                                              size_Array(actions));
                             delete_FontPack(fp);
                         }
                     }
@@ -2760,12 +2764,17 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                                             format_CStr(cstr_Lang("error.unsupported.suggestsave"),
                                                         cstr_String(key),
                                                         saveToDownloads_Label));
-                        pushBack_Array(footerItems,
-                                       &(iMenuItem){ translateCStr_Lang(download_Icon
-                                                                        " " saveToDownloads_Label),
-                                                     0,
-                                                     0,
-                                                     "document.save" });
+                        if (findCommand_MenuItem(data_Array(footerItems),
+                                                 size_Array(footerItems),
+                                                 "document.save") == iInvalidPos) {
+                            pushBack_Array(
+                                footerItems,
+                                &(iMenuItem){
+                                    translateCStr_Lang(download_Icon " " saveToDownloads_Label),
+                                    0,
+                                    0,
+                                    "document.save" });
+                        }
                     }
                     if (localPath && fileExists_FileInfo(localPath)) {
                         if (!cmp_String(&d->sourceMime, mimeType_Export)) {
@@ -4682,7 +4691,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (argLabel_Command(cmd, "ttf")) {
             iAssert(!cmp_String(&d->sourceMime, "font/ttf"));
             installFontFile_Fonts(collect_String(suffix_Command(cmd, "name")), &d->sourceContent);
-            postCommand_App("open url:about:fonts");
+            postCommand_App("open switch:1 url:about:fonts");
         }
         else {
             const iString *id = idFromUrl_FontPack(d->mod.url);

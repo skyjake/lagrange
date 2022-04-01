@@ -53,8 +53,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_timer.h>
 
-#if defined (iPlatformPcDesktop)
-/* TODO: Submenus wouldn't hurt here. */
+#if 0 //defined (iPlatformPcDesktop)
 static const iMenuItem navMenuItems_[] = {
     { openWindow_Icon " ${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
     { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
@@ -277,6 +276,15 @@ iAnyObject *findWidget_Root(const char *id) {
     return NULL;
 }
 
+iDocumentWidget *findDocument_Root(const iRoot *d, const iString *url) {
+    iForEach(ObjectList, i, iClob(listDocuments_App(d))) {
+        if (equalCase_String(url, url_DocumentWidget(i.object))) {
+            return i.object;
+        }
+    }
+    return NULL;
+}
+
 void destroyPending_Root(iRoot *d) {
     iRoot *oldRoot = current_Root();
     setCurrent_Root(d);
@@ -327,8 +335,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             return iTrue;
         }
         const iBool isPlacedUnder = argLabel_Command(cmd, "under");
+        const iBool isMenuBar = argLabel_Command(cmd, "bar");
         iAssert(menu);
         if (!isVisible_Widget(menu)) {
+            if (isMenuBar) {
+                setFlags_Widget(button, selected_WidgetFlag, iTrue);
+            }
             openMenu_Widget(menu,
                             isPlacedUnder ? bottomLeft_Rect(bounds_Widget(button))
                                           : topLeft_Rect(bounds_Widget(button)));
@@ -1393,6 +1405,23 @@ void createUserInterface_Root(iRoot *d) {
         setBackgroundColor_Widget(winBar, uiBackground_ColorId);
     }
 #endif
+#if defined (LAGRANGE_MENUBAR) && !defined (iPlatformMobile)
+    /* Application menus. */ {
+        iWidget *menuBar = addChildFlags_Widget(
+            div,
+            iClob(makeMenuBar_Widget(topLevelMenus_Window, iElemCount(topLevelMenus_Window))),
+            0);
+        iUnused(menuBar);
+#  if 0
+        addChildFlags_Widget(menuBar, iClob(new_Widget()), expand_WidgetFlag);
+        /* It's nice to use this space for something, but it should be more valuable than 
+           just the app version... */
+        iLabelWidget *ver = addChildFlags_Widget(menuBar, iClob(new_LabelWidget(LAGRANGE_APP_VERSION, NULL)),
+                                                 frameless_WidgetFlag);
+        setTextColor_LabelWidget(ver, uiAnnotation_ColorId);
+#  endif
+    }
+#endif        
     iWidget *navBar;
     /* Navigation bar. */ {
         navBar = new_Widget();
@@ -1577,17 +1606,11 @@ void createUserInterface_Root(iRoot *d) {
                                           collapse_WidgetFlag),
                      "navbar.action4");
 #if defined (iPlatformMobile)
+        /* Hamburger menu. */
         const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
-#endif
-#if !defined (iHaveNativeMenus) || defined (iPlatformMobile)
-#   if defined (iPlatformMobile)
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget(menu_Icon, isPhone ? phoneNavMenuItems_ : tabletNavMenuItems_,
                                        isPhone ? iElemCount(phoneNavMenuItems_) : iElemCount(tabletNavMenuItems_));
-#   else
-        iLabelWidget *navMenu =
-            makeMenuButton_LabelWidget(menu_Icon, navMenuItems_, iElemCount(navMenuItems_));
-#   endif
         setFrameColor_Widget(findChild_Widget(as_Widget(navMenu), "menu"),
                              uiSeparator_ColorId);
         setCommand_LabelWidget(navMenu, collectNewCStr_String("menu.open under:1"));
@@ -1886,14 +1909,25 @@ static void setupMovableElements_Root_(iRoot *d) {
         removeChild_Widget(navBar->parent, navBar);
         if (winBar) {
             iAssert(indexOfChild_Widget(div, winBar) == 0);
-            insertChildAfter_Widget(div, navBar, 0);
+            insertChildAfter_Widget(div, navBar, 1);
         }
         else {
+#if defined (LAGRANGE_MENUBAR)
+            insertChildAfter_Widget(div, navBar, 0);
+#else
             addChildPos_Widget(div, navBar, front_WidgetAddPos);
+#endif
         }
         iRelease(navBar);
     }
     iChangeFlags(tabBar->flags2, permanentVisualOffset_WidgetFlag2, prefs->bottomTabBar);
+    /* Tab button frames. */
+    iForEach(ObjectList, i, children_Widget(tabBar)) {
+        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+            setNoTopFrame_LabelWidget(i.object, !prefs->bottomTabBar);
+            setNoBottomFrame_LabelWidget(i.object, prefs->bottomTabBar);
+        }
+    }
     /* Adjust safe area paddings. */
     if (deviceType_App() == tablet_AppDeviceType && prefs->bottomTabBar && !prefs->bottomNavBar) {
         tabBar->padding[3] = bottomSafeInset_Mobile();

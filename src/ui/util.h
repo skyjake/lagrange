@@ -261,7 +261,9 @@ void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, i
 void            closeMenu_Widget                (iWidget *);
 void            releaseNativeMenu_Widget        (iWidget *);
 
+size_t          count_MenuItem                  (const iMenuItem *itemsNullTerminated);
 size_t          findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);
+size_t          findCommand_MenuItem            (const iMenuItem *items, size_t num, const char *command);
 void            setSelected_NativeMenuItem      (iMenuItem *item, iBool isSelected);
 
 iChar           removeIconPrefix_String         (iString *);
@@ -290,6 +292,10 @@ const char *    selectedDropdownCommand_LabelWidget (const iLabelWidget *dropBut
 
 /*-----------------------------------------------------------------------------------------------*/
 
+iWidget *       makeMenuBar_Widget      (const iMenuItem *topLevelMenus, size_t num);
+
+/*-----------------------------------------------------------------------------------------------*/
+
 iWidget *       makeTabs_Widget         (iWidget *parent);
 void            setTabBarPosition_Widget(iWidget *tabs, iBool atBottom);
 void            appendTabPage_Widget    (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
@@ -299,7 +305,7 @@ iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, 
 void            prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 iWidget *       removeTabPage_Widget    (iWidget *tabs, size_t index); /* returns the page */
 void            resizeToLargestPage_Widget  (iWidget *tabs);
-void            showTabPage_Widget      (iWidget *tabs, const iWidget *page);
+void            showTabPage_Widget      (iWidget *tabs, const iAnyObject *page);
 void            addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *command);
 void            setTabPageLabel_Widget  (iWidget *tabs, const iAnyObject *page, const iString *label);
 iWidget *       tabPage_Widget          (iWidget *tabs, size_t index);

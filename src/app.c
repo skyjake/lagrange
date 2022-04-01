@@ -3140,6 +3140,13 @@ iBool handleCommand_App(const char *cmd) {
         if (!urlArg) {
             return iTrue; /* invalid command */
         }
+        if (argLabel_Command(cmd, "switch")) {
+            iDocumentWidget *doc = findDocument_Root(get_Root(), collectNewCStr_String(urlArg));
+            if (doc) {
+                showTabPage_Widget(findWidget_Root("doctabs"), doc);
+                return iTrue;
+            }
+        }
         if (findWidget_App("prefs")) {
             postCommand_App("prefs.dismiss");
         }

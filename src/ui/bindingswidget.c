@@ -143,7 +143,7 @@ static void setActiveItem_BindingsWidget_(iBindingsWidget *d, size_t pos) {
         item->isWaitingForEvent = iTrue;
         invalidateItem_ListWidget(d->list, d->activePos);
     }
-#if defined (iPlatformAppleDesktop) && defined (iHaveNativeContextMenus)
+#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_MAC_CONTEXTMENU)
     /* Native menus must be disabled while grabbing keys so the shortcuts don't trigger. */
     const iBool enableNativeMenus = (d->activePos == iInvalidPos);
     enableMenu_MacOS("${menu.title.file}", enableNativeMenus);

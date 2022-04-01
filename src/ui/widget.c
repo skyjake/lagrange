@@ -1221,7 +1221,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 return iTrue;
             }
         }
-        iAssert(get_Root() == d->root);
+        //iAssert(get_Root() == d->root);
         if (class_Widget(d)->processEvent(d, ev)) {
             //iAssert(get_Root() == d->root);
             return iTrue;
