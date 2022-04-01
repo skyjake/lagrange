@@ -329,6 +329,7 @@ static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, 
         }
         else if (!cmp_String(key, "title") && tv->type == string_TomlType) {
             set_String(&bm->title, tv->value.string);
+            trim_String(&bm->title);
         }
         else if (!cmp_String(key, "tags") && tv->type == string_TomlType) {
             set_String(&bm->tags, tv->value.string);
@@ -348,7 +349,7 @@ static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, 
         }
     }
     else if (!cmp_String(key, "recentfolder") && tv->type == int64_TomlType) {
-        d->bookmarks->recentFolderId = tv->value.int64;
+        d->bookmarks->recentFolderId = tv->value.int64 + d->baseId;
     }
 }
 
@@ -399,6 +400,15 @@ void sort_Bookmarks(iBookmarks *d, uint32_t parentId, iBookmarksCompareFunc cmp)
     unlock_Mutex(d->mtx);
 }
 
+static void replaceParentFolder_Bookmarks_(iBookmarks *d, uint32_t old, uint32_t new) {
+    iForEach(Hash, i, &d->bookmarks) {
+        iBookmark *bm = (iBookmark *) i.value;
+        if (bm->parentId == old) {
+            bm->parentId = new;
+        }
+    }
+}
+
 static void mergeFolders_BookmarkLoader(iBookmarkLoader *d) {
     if (!d->baseId) {
         /* Only merge after importing. */
@@ -407,18 +417,13 @@ static void mergeFolders_BookmarkLoader(iBookmarkLoader *d) {
     iHash *hash = &d->bookmarks->bookmarks;
     iForEach(Hash, i, hash) {
         iBookmark *imported = (iBookmark *) i.value;
-        if (isFolder_Bookmark(imported) && id_Bookmark(imported) >= d->baseId) {
+        if (isFolder_Bookmark(imported) && id_Bookmark(imported) > d->baseId) {
             /* If there already is a folder with a matching name, merge this one into it. */
             iForEach(Hash, j, hash) {
                 iBookmark *old = (iBookmark *) j.value;
-                if (isFolder_Bookmark(old) && id_Bookmark(old) < d->baseId &&
+                if (isFolder_Bookmark(old) && id_Bookmark(old) <= d->baseId &&
                     equal_String(&imported->title, &old->title)) {
-                    iForEach(Hash, k, hash) {
-                        iBookmark *bm = (iBookmark *) k.value;
-                        if (bm->parentId == id_Bookmark(imported)) {
-                            bm->parentId = id_Bookmark(old);
-                        }
-                    }
+                    replaceParentFolder_Bookmarks_(d->bookmarks, id_Bookmark(imported), id_Bookmark(old));
                     remove_HashIterator(&i);
                     delete_Bookmark(imported);
                     break;
@@ -477,7 +482,7 @@ void serialize_Bookmarks(const iBookmarks *d, iStream *out) {
                       "created = %.0f  # %s\n",
                       id_Bookmark(bm),
                       cstrCollect_String(quote_String(&bm->url, iFalse)),
-                      cstrCollect_String(quote_String(&bm->title, iFalse)),
+                      cstrCollect_String(quote_String(collect_String(trimmed_String(&bm->title)), iFalse)),
                       cstrCollect_String(quote_String(packedTags, iFalse)),
                       bm->icon,
                       seconds_Time(&bm->when),
