@@ -61,6 +61,12 @@ iBool equal_Command(const char *cmdWithArgs, const char *cmd) {
     return equal_CStr(cmdWithArgs, cmd);
 }
 
+iBool equalArg_Command(const char *commandWithArgs, const char *command, const char *label,
+                       const char *value) {
+    return equal_Command(commandWithArgs, command) &&
+           equal_Rangecc(range_Command(commandWithArgs, label), value);
+}
+
 int argLabel_Command(const char *cmd, const char *label) {
     iToken tok;
     init_Token(&tok, label);

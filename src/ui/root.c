@@ -990,7 +990,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             return iTrue;
         }
     }
-    else if (startsWith_CStr(cmd, "input.ended id:url ")) {
+    else if (equalArg_Command(cmd, "input.ended", "id", "url")) {
         iInputWidget *url = findChild_Widget(navBar, "url");
         showSearchQueryIndicator_(iFalse);
         if (isEmpty_String(text_InputWidget(url))) {
@@ -1133,8 +1133,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
 }
 
 static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
-    if (equal_Command(cmd, "input.ended") &&
-        equal_Rangecc(range_Command(cmd, "id"), "find.input")) {
+    if (equalArg_Command(cmd, "input.ended", "id", "find.input")) {
         iInputWidget *input = findChild_Widget(searchBar, "find.input");
         if (arg_Command(cmd) && argLabel_Command(cmd, "enter") && isVisible_Widget(input)) {
             postCommand_Root(searchBar->root, "find.next");

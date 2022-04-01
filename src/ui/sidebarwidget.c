@@ -1393,7 +1393,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
         const char *cmd = command_UserEvent(ev);
-        if (startsWith_CStr(cmd, "tabs.changed id:doc") || equal_Command(cmd, "document.changed")) {
+        if (equalArg_Command(cmd, "tabs.changed", "id", "doc") ||
+            equal_Command(cmd, "document.changed")) {
             updateItems_SidebarWidget_(d);
             scrollOffset_ListWidget(d->list, 0);
         }

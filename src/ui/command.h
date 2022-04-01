@@ -27,6 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/vec2.h>
 
 iBool       equal_Command           (const char *commandWithArgs, const char *command);
+iBool       equalArg_Command        (const char *commandWithArgs, const char *command,
+                                     const char *label, const char *value);
 
 int         arg_Command             (const char *); /* arg: */
 float       argf_Command            (const char *); /* arg: */

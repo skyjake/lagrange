@@ -710,7 +710,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         updateVisible_ListWidget(d->list);
         invalidate_ListWidget(d->list);
     }
-    if (startsWith_CStr(cmd, "input.ended id:url ") &&
+    if (equalArg_Command(cmd, "input.ended", "id", "url") &&
         (deviceType_App() != desktop_AppDeviceType || !isFocused_Widget(w))) {
         showCollapsed_Widget(w, iFalse);
     }

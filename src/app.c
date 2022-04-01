@@ -2272,7 +2272,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         updateFontButton_(findChild_Widget(d, "prefs.font.monodoc"), string_Command(cmd, "monodoc"));
         return iFalse;
     }
-    else if (startsWith_CStr(cmd, "input.ended id:prefs.linespacing")) {
+    else if (equalArg_Command(cmd, "input.ended", "id", "prefs.linespacing")) {
         /* Apply line spacing changes immediately. */
         const iInputWidget *lineSpacing = findWidget_App("prefs.linespacing");
         postCommandf_App("linespacing.set arg:%f", toFloat_String(text_InputWidget(lineSpacing)));
