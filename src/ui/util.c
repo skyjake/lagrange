@@ -1456,15 +1456,16 @@ iWidget *makeMenuBar_Widget(const iMenuItem *topLevelMenus, size_t num) {
     for (size_t i = 0; i < num; i++) {
         const iMenuItem *item     = &topLevelMenus[i];
         const iMenuItem *subItems = item->data;
-        iLabelWidget    *submenu  =
+        iLabelWidget    *submenuButton  =
             makeMenuButton_LabelWidget(item->label, subItems, count_MenuItem(subItems));
-        setCommand_LabelWidget(submenu, submenuCmd);
-        setFrameColor_Widget(findChild_Widget(as_Widget(submenu), "menu"), uiSeparator_ColorId);
-        as_Widget(submenu)->padding[0] = gap_UI;
-        setCommandHandler_Widget(as_Widget(submenu), topLevelMenuBarHandler_);
-        updateSize_LabelWidget(submenu);
-        as_Widget(submenu)->flags2 |= commandOnHover_WidgetFlag2;
-        addChildFlags_Widget(bar, iClob(submenu), frameless_WidgetFlag);
+        setCommand_LabelWidget(submenuButton, submenuCmd);
+        iWidget *submenu = findChild_Widget(as_Widget(submenuButton), "menu");
+        setFrameColor_Widget(submenu, uiSeparator_ColorId);
+        as_Widget(submenuButton)->padding[0] = gap_UI;
+        setCommandHandler_Widget(as_Widget(submenuButton), topLevelMenuBarHandler_);
+        updateSize_LabelWidget(submenuButton);
+        as_Widget(submenuButton)->flags2 |= commandOnHover_WidgetFlag2;
+        addChildFlags_Widget(bar, iClob(submenuButton), frameless_WidgetFlag);
     }
     return bar;
 }
