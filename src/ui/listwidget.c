@@ -71,6 +71,17 @@ static void scrollBegan_ListWidget_(iAnyObject *any, int offset, uint32_t span) 
     refreshWhileScrolling_ListWidget_(d);
 }
 
+static void visBufferInvalidated_ListWidget_(iVisBuf *d, size_t index) {
+    /* Clear a texture to background color when invalidated. */
+    iVisBufTexture *vbuf = &d->buffers[index];
+    const iListWidget *list = vbuf->user;
+    iPaint p;
+    init_Paint(&p);
+    beginTarget_Paint(&p, vbuf->texture);
+    fillRect_Paint(&p, (iRect){ zero_I2(), d->texSize }, list->widget.bgColor);
+    endTarget_Paint(&p);
+}
+
 void init_ListWidget(iListWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -91,7 +102,10 @@ void init_ListWidget(iListWidget *d) {
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_IntSet(&d->invalidItems);
     d->visBuf = new_VisBuf();
-    d->needRepaint = iFalse;
+    iForIndices(i, d->visBuf->buffers) {
+        d->visBuf->buffers[i].user = d;
+    }
+    d->visBuf->bufferInvalidated = visBufferInvalidated_ListWidget_;
 }
 
 void deinit_ListWidget(iListWidget *d) {
@@ -104,7 +118,6 @@ void deinit_ListWidget(iListWidget *d) {
 void invalidate_ListWidget(iListWidget *d) {
     invalidate_VisBuf(d->visBuf);
     clear_IntSet(&d->invalidItems); /* all will be drawn */
-    d->needRepaint = iTrue;
     refresh_Widget(as_Widget(d));
 }
 
@@ -555,15 +568,7 @@ static void draw_ListWidget_(const iListWidget *d) {
     init_Paint(&p);
     drawLayerEffects_Widget(w);
     drawBackground_Widget(w);
-    if (alloc_VisBuf(d->visBuf, bounds.size, d->itemHeight) ||
-        d->needRepaint) {
-        iForIndices(i, d->visBuf->buffers) {
-            beginTarget_Paint(&p, d->visBuf->buffers[i].texture);
-            fillRect_Paint(&p, (iRect){ zero_I2(), d->visBuf->texSize }, w->bgColor);
-            endTarget_Paint(&p);
-        }
-        iConstCast(iListWidget *, d)->needRepaint = iFalse;
-    }
+    alloc_VisBuf(d->visBuf, bounds.size, d->itemHeight);
     /* Update invalid regions/items. */ {
         /* TODO: This seems to draw two items per each shift of the visible region, even though
            one should be enough. Probably an off-by-one error in the calculation of the
@@ -577,7 +582,7 @@ static void draw_ListWidget_(const iListWidget *d) {
         const int bottom = numItems_ListWidget(d) * d->itemHeight;
         const iRangei vis = { scrollY / d->itemHeight * d->itemHeight,
                              ((scrollY + bounds.size.y) / d->itemHeight + 1) * d->itemHeight };
-        const iBool visChanged = reposition_VisBuf(d->visBuf, vis);
+        reposition_VisBuf(d->visBuf, vis);
         /* Check which parts are invalid. */
         iRangei invalidRange[iElemCount(d->visBuf->buffers)];
         invalidRanges_VisBuf(d->visBuf, (iRangei){ 0, bottom }, invalidRange);

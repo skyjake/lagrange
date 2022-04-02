@@ -33,7 +33,7 @@ struct Impl_VisBufTexture {
     SDL_Texture *texture;
     int origin;
     iRangei validRange;
-    void *user;
+    void *user; /* user provided data pointer for additional per-buffer data */
 };
 
 #define numBuffers_VisBuf   ((size_t) 4)
