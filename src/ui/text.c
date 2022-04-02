@@ -2065,7 +2065,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     iAssert(xAdvance >= 0);
                     if (wrapMode == word_WrapTextMode) {
                         /* When word wrapping, only consider certain places breakable. */
-                        if ((prevCh == '-' || prevCh == '/' || prevCh == '\\') && !isPunct_Char(ch)) {
+                        if ((prevCh == '-' || prevCh == '/' || prevCh == '\\' || prevCh == '?' ||
+                             prevCh == '!' || prevCh == '&' || prevCh == '+' || prevCh == '_') &&
+                            !isPunct_Char(ch)) {
                             safeBreakPos = logPos;
                             breakAdvance = wrapAdvance;
                             breakRunIndex = runIndex;
