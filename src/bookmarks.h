@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "defs.h"
 #include <the_Foundation/hash.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
@@ -97,6 +98,8 @@ typedef int   (*iBookmarksCompareFunc)  (const iBookmark **, const iBookmark **)
 void        clear_Bookmarks             (iBookmarks *);
 void        load_Bookmarks              (iBookmarks *, const char *dirPath);
 void        save_Bookmarks              (const iBookmarks *, const char *dirPath);
+void        serialize_Bookmarks         (const iBookmarks *, iStream *outs);
+void        deserialize_Bookmarks       (iBookmarks *, iStream *ins, enum iImportMethod);
 
 uint32_t    add_Bookmarks               (iBookmarks *, const iString *url, const iString *title,
                                          const iString *tags, iChar icon);

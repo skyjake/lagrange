@@ -79,6 +79,10 @@ struct Impl_Touch {
     iFloat3 pos[numHistory_Touch_];
     size_t posCount;
     iFloat3 accum;
+    iInt2 pendingScroll[3]; /* SDL_FINGERMOTION sometimes arrives in clumps on iOS;
+                               buffer the scrolls to post more evenly */
+    int numPendingScroll;
+    int pendingScrollThreshold;
 };
 
 iLocalDef void pushPos_Touch_(iTouch *d, const iFloat3 pos, uint32_t time) {
@@ -127,6 +131,9 @@ static iTouchState *touchState_(void) {
         d->stepDurationMs = 1000.0 / (double) displayRefreshRate_iOS();
 #endif
         d->momFrictionPerStep = pow(0.985, 120.0 / (1000.0 / d->stepDurationMs));
+#if defined (iPlatformAndroidMobile)
+        d->momFrictionPerStep = 10 * gap_UI;
+#endif
     }
     return d;
 }
@@ -267,6 +274,29 @@ static uint32_t gestureSpan_Touch_(const iTouch *d) {
     return d->posTime[0] - d->posTime[lastIndex];
 }
 
+static void postPendingScroll_TouchState_(iTouchState *d, iTouch *touch) {
+    if (touch->numPendingScroll > touch->pendingScrollThreshold) {
+        const iInt2 pixels = touch->pendingScroll[0];
+//            printf("%u :: (%d/%d) pending scroll %d,%d\n", nowTime, touch->numPendingScroll, touch->pendingScrollThreshold, pixels.x, pixels.y);
+        memmove(touch->pendingScroll, touch->pendingScroll + 1,
+                sizeof(touch->pendingScroll[0]) * (iElemCount(touch->pendingScroll) - 1));
+        touch->numPendingScroll--;
+        dispatchMotion_Touch_(touch->startPos, 0);
+        setCurrent_Root(touch->affinity->root);
+        dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
+                .type = SDL_MOUSEWHEEL,
+                .which = SDL_TOUCH_MOUSEID,
+                .windowID = id_Window(window_Widget(touch->affinity)),
+                .timestamp = SDL_GetTicks(),
+                .x = pixels.x,
+                .y = pixels.y,
+                .direction = perPixel_MouseWheelFlag,
+        });
+        /* TODO: Keep increasing movement if the direction is the same. */
+        clearWidgetMomentum_TouchState_(d, touch->affinity);
+    }
+}
+
 static void update_TouchState_(void *ptr) {
     iWindow *win = get_Window();
     const iWidget *oldHover = win->hover;
@@ -275,6 +305,7 @@ static void update_TouchState_(void *ptr) {
     const uint32_t nowTime = SDL_GetTicks();
     iForEach(Array, i, d->touches) {
         iTouch *touch = i.value;
+        postPendingScroll_TouchState_(d, touch);
         if (touch->pinchId || touch->isTouchDrag) {
             continue;
         }
@@ -355,7 +386,24 @@ static void update_TouchState_(void *ptr) {
                 continue;
             }
             for (int step = 0; step < numSteps; step++) {
+#if defined (iPlatformAndroidMobile)
+                float vel[3];
+                store_F3(mom->velocity, vel);
+                if (iAbs(vel[0]) < d->momFrictionPerStep) {
+                    setX_F3(&mom->velocity, 0.0f);
+                }
+                else {
+                    setX_F3(&mom->velocity, vel[0] + (vel[0] > 0 ? -1 : 1) * d->momFrictionPerStep);
+                }
+                if (iAbs(vel[1]) < d->momFrictionPerStep) {
+                    setY_F3(&mom->velocity, 0.0f);
+                }
+                else {
+                    setY_F3(&mom->velocity, vel[1] + (vel[1] > 0 ? -1 : 1) * d->momFrictionPerStep);
+                }
+#else
                 mulvf_F3(&mom->velocity, d->momFrictionPerStep);
+#endif
                 addv_F3(&mom->accum, mulf_F3(mom->velocity, d->stepDurationMs / 1000.0f));
             }
             const iInt2 pixels = initF3_I2(mom->accum);
@@ -640,8 +688,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             }
 #if 0
             static uint32_t lastTime = 0;
-            printf("%u :: %p (%s) py: %i wy: %f acc: %f edge: %d\n",
+            printf("%u [%u] :: %p (%s) py: %i wy: %f acc: %f edge: %d\n",
                    nowTime - lastTime,
+                   ev->common.timestamp,
                    touch->affinity,
                    class_Widget(touch->affinity)->name,
                    pixels.y, y_F3(amount), y_F3(touch->accum),
@@ -649,20 +698,27 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             lastTime = nowTime;
 #endif
             if (pixels.x || pixels.y) {
-                //setFocus_Widget(NULL);
-                dispatchMotion_Touch_(touch->startPos /*pos[0]*/, 0);
-                setCurrent_Root(touch->affinity->root);
-                dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
-                    .type = SDL_MOUSEWHEEL,
-                    .which = SDL_TOUCH_MOUSEID,
-                    .windowID = id_Window(window_Widget(touch->affinity)),
-                    .timestamp = SDL_GetTicks(),
-                    .x = pixels.x,
-                    .y = pixels.y,
-                    .direction = perPixel_MouseWheelFlag,
-                });
-                /* TODO: Keep increasing movement if the direction is the same. */
-                clearWidgetMomentum_TouchState_(d, touch->affinity);
+                /* Finger events may not arrive at regular intervals (particularly with the SDL on
+                   iOS, it seems!), so we won't post the scroll event immediately but instead
+                   wait until next ticker iteration. This allows us to buffer events if too many
+                   arrive at once. */
+                const int maxPending = iElemCount(touch->pendingScroll);
+                if (touch->numPendingScroll == maxPending) {
+                    addv_I2(&touch->pendingScroll[maxPending - 1], pixels);
+                }
+                else {
+                    touch->pendingScroll[touch->numPendingScroll] = pixels;
+#if defined (iPlatformAppleMobile)
+                    touch->pendingScrollThreshold = iMin(touch->numPendingScroll, 1);
+#else
+                    touch->pendingScrollThreshold = 0;
+#endif
+                    touch->numPendingScroll++;
+#if defined (iPlatformAndroidMobile)
+                    /* No need to wait. */
+                    postPendingScroll_TouchState_(d, touch);
+#endif
+                }
             }
         }
     }
@@ -676,11 +732,6 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 endPinch_TouchState_(d, touch->pinchId);
                 break;
             }
-#if 0
-            if (touch->edgeDragging) {
-                setFlags_Widget(touch->edgeDragging, dragged_WidgetFlag, iFalse);
-            }
-#endif
             if (touch->edge && !isStationary_Touch_(touch)) {
                 const iFloat3 gesture = gestureVector_Touch_(touch);
                 const uint32_t duration = gestureSpan_Touch_(touch);

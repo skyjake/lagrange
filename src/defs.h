@@ -31,6 +31,12 @@ enum iSourceFormat {
     markdown_SourceFormat,
 };
 
+enum iImportMethod {
+    none_ImportMethod = 0,
+    ifMissing_ImportMethod,
+    all_ImportMethod,
+};
+
 enum iFileVersion {
     initial_FileVersion                 = 0,
     addedResponseTimestamps_FileVersion = 1,
@@ -127,7 +133,9 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define backArrow_Icon      "\U0001f870"
 #define forwardArrow_Icon   "\U0001f872"
 #define upArrow_Icon        "\U0001f871"
-#define upArrowBar_Icon     "\u2912"
+#define upArrowBar_Icon     "\u2b71"
+#define keyUpArrow_Icon     "\u2191"
+#define downArrow_Icon      "\U0001f873"
 #define downArrowBar_Icon   "\u2913"
 #define rightArrowWhite_Icon "\u21e8"
 #define rightArrow_Icon     "\u279e"
@@ -152,7 +160,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define check_Icon          "\u2714"
 #define ballotChecked_Icon  "\u2611"
 #define ballotUnchecked_Icon "\u2610"
-#define inbox_Icon          "\U0001f4e5"
+#define import_Icon          "\U0001f4e5"
 #define book_Icon           "\U0001f56e"
 #define bookmark_Icon       "\U0001f516"
 #define folder_Icon         "\U0001f4c1"
@@ -181,7 +189,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define globe_Icon          "\U0001f310"
 #define envelope_Icon       "\U0001f4e7"
 #define magnifyingGlass_Icon "\U0001f50d"
-#define midEllipsis_Icon    "\u00b7\u00b7\u00b7"
+#define midEllipsis_Icon    "\u2022\u2022\u2022"
 #define return_Icon         "\u23ce"
 #define undo_Icon           "\u23ea"
 #define select_Icon         "\u2b1a"
@@ -190,6 +198,9 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define fontpack_Icon       "\U0001f520"
 #define package_Icon        "\U0001f4e6"
 #define paperclip_Icon      "\U0001f4ce"
+#define bullet_Icon         "\u2022"
+#define toggleYes_Icon      check_Icon
+#define toggleNo_Icon       bullet_Icon
 
 #if defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"
@@ -199,11 +210,11 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define shiftReturn_Icon shift_Icon " " return_Icon
 #endif
 
-#if defined (iPlatformAppleDesktop)
-#   define iHaveNativeMenus /* main menu */
-#   if defined (LAGRANGE_ENABLE_MAC_MENUS)
-#       define iHaveNativeContextMenus
-#   endif
+#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_ENABLE_MAC_MENUS)
+#   define LAGRANGE_MAC_MENUBAR
+#   define LAGRANGE_MAC_CONTEXTMENU
+#elif defined (iPlatformDesktop)
+#   define LAGRANGE_MENUBAR
 #endif
 
 /* UI labels that depend on the platform */

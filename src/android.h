@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2022 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -22,38 +22,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/range.h>
-#include <the_Foundation/vec2.h>
-#include <SDL_render.h>
+#include <the_Foundation/string.h>
 
-iDeclareType(VisBuf)
-iDeclareType(VisBufTexture)
+void        setupApplication_Android(void);
 
-struct Impl_VisBufTexture {
-    SDL_Texture *texture;
-    int origin;
-    iRangei validRange;
-    void *user; /* user provided data pointer for additional per-buffer data */
-};
-
-#define numBuffers_VisBuf   ((size_t) 4)
-
-struct Impl_VisBuf {
-    iInt2 texSize;
-    iRangei vis;
-    iVisBufTexture buffers[numBuffers_VisBuf];
-    void (*bufferInvalidated)(iVisBuf *, size_t index);
-};
-
-iDeclareTypeConstruction(VisBuf)
-
-void    invalidate_VisBuf       (iVisBuf *);
-iBool   alloc_VisBuf            (iVisBuf *, const iInt2 size, int granularity);
-void    dealloc_VisBuf          (iVisBuf *);
-iBool   reposition_VisBuf       (iVisBuf *, const iRangei vis); /* returns true if `vis` changes */
-void    validate_VisBuf         (iVisBuf *);
-
-iRangei allocRange_VisBuf       (const iVisBuf *);
-iRangei bufferRange_VisBuf      (const iVisBuf *, size_t index);
-void    invalidRanges_VisBuf    (const iVisBuf *, const iRangei full, iRangei *out_invalidRanges);
-void    draw_VisBuf             (const iVisBuf *, iInt2 topLeft, iRangei yClipBounds);
+float       displayDensity_Android  (void);
+void        javaCommand_Android     (const char *format, ...);
+iBool       handleCommand_Android   (const char *cmd);

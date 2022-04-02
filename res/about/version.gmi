@@ -6,8 +6,36 @@
 ```
 # Release notes
 
-## 1.11.3
+## 1.12
+New features:
+* Export and import user data as a ZIP archive, including identities, bookmarks, site-specific settings, trusted certificate fingerprints, and browsing history.
+* UI layout options: the navigation/tab bars can be moved to the bottom of the window, and one can have a traditional menu bar instead of the hamburger menu. On macOS, the normal menu bar is used as before.
+* Added style option to justify paragraphs that are at least three lines long.
+* Added new content theme "Oceanic" with support for both dark and light modes.
+* Added new UI accent colors: Red, Green, Blue, Gray.
+* Feeds: Added "Mark Below as Read" context menu item.
+* macOS: A set of system fonts is available for use in content/UI. In practice, these are .ttc files loaded from /System/Library/Fonts/, rendered using Lagrange's own text renderer.
+* Site-specific setting for TLS session resumption (enabled by default).
+
+Changes and enhancements:
+* Roboto is the new default content/UI font, except on Windows where Segoe UI is the default font.
+* Toggles use symbols instead of YES/NO.
+* UI uses only one accent color at a time.
+* Theme palette tuning: adjusted generated palettes of Colorful Dark/Light, improved the Sepia theme, and added a dark mode Sepia variant.
+* Certain pages like Help open in a new tab. If the page is already open in a tab, that tab is activated instead of opening a new one.
+* Improved word wrapping with more breaking punctuation.
+* Text renderer uses additional subpixel offsets with lower-density displays.
+* Text rendering optimizations: avoid repeated shaping of the same text.
+* UI rendering optimizations.
+
+Fixes:
 * Fixed a possible crash when clicking on the first link of a page with the monospace body text option enabled.
+* Fixed occasional small gaps between glyph backgrounds.
+* Fixed problems with marking feed entries as read/unread.
+* The bookmark dialog doesn't show irrelevant fields when editing a bookmark folder.
+* Spurious spaces are removed from ends of bookmark titles.
+* Pasting text into an input field should not decode reserved URL characters.
+* Percent-encoded spaces (%20) in a file name were not decoded when saving a file.
 
 ## 1.11.2
 * Added a keybinding for focusing the URL field.

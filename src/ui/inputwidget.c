@@ -44,8 +44,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "macos.h"
 #endif
 
-#if defined (iPlatformAppleMobile)
-#   include "ios.h"
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
+#   include "mobile.h"
 #   define LAGRANGE_USE_SYSTEM_TEXT_INPUT 1 /* System-provided UI control almost handles everything. */
 #else
 #   define LAGRANGE_USE_SYSTEM_TEXT_INPUT 0
@@ -769,7 +769,7 @@ static int contentHeight_InputWidget_(const iInputWidget *d) {
     const int minHeight = d->minWrapLines * lineHeight;
     const int maxHeight = d->maxWrapLines * lineHeight;
     if (d->sysCtrl) {
-        const int preferred = (preferredHeight_SystemTextInput(d->sysCtrl) + gap_UI) / lineHeight;
+        const int preferred = (preferredHeight_SystemTextInput(d->sysCtrl) + 2 * gap_UI) / lineHeight;
         return iClamp(preferred * lineHeight, minHeight, maxHeight);
     }
     if (d->buffered && ~d->inFlags & needUpdateBuffer_InputWidgetFlag) {
@@ -785,7 +785,7 @@ static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
         setRect_SystemTextInput(d->sysCtrl, contentBounds_InputWidget_(d));
     }
 #endif
-#if !defined (iPlatformAppleMobile)
+#if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile)
     const iRect bounds = bounds_Widget(constAs_Widget(d));
     SDL_SetTextInputRect(&(SDL_Rect){ bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y });
 #endif
@@ -795,14 +795,20 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     iWidget *w = as_Widget(d);
     updateSizeForFixedLength_InputWidget_(d);
     /* Caller must arrange the width, but the height is set here. */
+#if LAGRANGE_USE_SYSTEM_TEXT_INPUT
+    if (d->sysCtrl && preferredHeight_SystemTextInput(d->sysCtrl) == 0) {
+        /* Nothing to update, the native control doesn't know the appropriate height yet. */
+        return;
+    }
+#endif
     const int oldHeight = height_Rect(w->rect);
-    w->rect.size.y = contentHeight_InputWidget_(d) + 3.0f * padding_().y; /* TODO: Why 3x? */
+    w->rect.size.y = contentHeight_InputWidget_(d) + 3 * padding_().y; /* TODO: Why 3x? */
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
         w->rect.size.y += extraPaddingHeight_InputWidget_(d);
     }
     invalidateBuffered_InputWidget_(d);
     if (height_Rect(w->rect) != oldHeight) {
-        postCommand_Widget(d, "input.resized");
+        postCommand_Widget(d, "input.resized arg:%d", w->root->pendingArrange + 1);
         updateTextInputRect_InputWidget_(d);
     }
 }
@@ -1233,9 +1239,12 @@ static void contentsWereChanged_InputWidget_(iInputWidget *);
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
 void systemInputChanged_InputWidget_(iSystemTextInput *sysCtrl, void *widget) {
     iInputWidget *d = widget;
-    set_String(&d->text, text_SystemTextInput(sysCtrl));
-    restartBackupTimer_InputWidget_(d);
-    contentsWereChanged_InputWidget_(d);
+    const iString *sysText = text_SystemTextInput(sysCtrl);
+    if (!equal_String(&d->text, sysText)) {
+        set_String(&d->text, sysText);
+        restartBackupTimer_InputWidget_(d);
+        contentsWereChanged_InputWidget_(d);
+    }
     updateMetrics_InputWidget_(d);
 }
 #endif
@@ -1270,6 +1279,7 @@ void begin_InputWidget(iInputWidget *d) {
     iConnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
     updateTextInputRect_InputWidget_(d);
     updateMetrics_InputWidget_(d);
+    refresh_Widget(d); /* ensure buffered panels hide the static text */
 #else
     mergeLines_(&d->lines, &d->oldText);
     if (d->mode == overwrite_InputMode) {
@@ -1655,7 +1665,7 @@ static void paste_InputWidget_(iInputWidget *d) {
         /* Url decoding. */
         if (d->inFlags & isUrl_InputWidgetFlag) {
             if (prefs_App()->decodeUserVisibleURLs) {
-                paste = collect_String(urlDecode_String(paste));
+                paste = collect_String(urlDecodeExclude_String(paste, URL_RESERVED_CHARS));
                 replace_String(paste, "\n", "%0A");
                 replace_String(paste, "\t", "%09");
             }
@@ -2164,7 +2174,7 @@ static void clampWheelAccum_InputWidget_(iInputWidget *d, int wheel) {
 static void overflowScrollToKeepVisible_InputWidget_(iAny *widget) {
     iInputWidget *d = widget;
     iWidget *w = as_Widget(d);
-    if (!isFocused_Widget(w) || isAffectedByVisualOffset_Widget(w)) {
+    if (!isFocused_Widget(w)) { //} || isAffectedByVisualOffset_Widget(w)) {
         return;
     }
     iRect rect    = boundsWithoutVisualOffset_Widget(w);
@@ -2292,7 +2302,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     else if (isCommand_UserEvent(ev, "keyboard.changed")) {
         const iBool isKeyboardVisible = (arg_Command(command_UserEvent(ev)) != 0);
         /* Scroll to keep widget visible when keyboard appears. */
-        if (isFocused_Widget(d)) {
+        if (isFocused_Widget(d) && findOverflowScrollable_Widget(parent_Widget(d))) {
             if (isKeyboardVisible) {
                 d->lastOverflowScrollTime = SDL_GetTicks();
                 overflowScrollToKeepVisible_InputWidget_(d);
@@ -2300,6 +2310,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             else {
                 setFocus_Widget(NULL); /* stop editing */
             }
+        }
+        return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "input.overflow")) {
+        if (isFocused_Widget(d)) {
+            d->lastOverflowScrollTime = SDL_GetTicks();
+            overflowScrollToKeepVisible_InputWidget_(d);
         }
         return iFalse;
     }
@@ -2728,13 +2745,13 @@ static void draw_InputWidget_(const iInputWidget *d) {
         if (flags_Widget(w) & alignRight_WidgetFlag) {
             drawAlign_Text(d->font,
                            init_I2(right_Rect(contentBounds), drawPos.y),
-                           uiAnnotation_ColorId,
+                           uiInputCursor_ColorId,
                            right_Alignment,
                            "%s",
                            cstr_String(&d->hint));
         }
         else {
-            drawRange_Text(d->font, drawPos, uiAnnotation_ColorId, range_String(&d->hint));
+            drawRange_Text(d->font, drawPos, uiInputCursor_ColorId, range_String(&d->hint));
         }
     }
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT

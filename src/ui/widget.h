@@ -127,6 +127,8 @@ enum iWidgetFlag2 {
     slidingSheetDraggable_WidgetFlag2       = iBit(1),
     fadeBackground_WidgetFlag2              = iBit(2),
     visibleOnParentSelected_WidgetFlag2     = iBit(3),
+    permanentVisualOffset_WidgetFlag2       = iBit(4), /* usually visual offset overrides hiding */
+    commandOnHover_WidgetFlag2              = iBit(5), /* only dispatched to the hovered widget */
 };
 
 enum iWidgetAddPos {
@@ -209,6 +211,7 @@ iBool   containsExpanded_Widget         (const iWidget *, iInt2 windowCoord, int
 iAny *  hitChild_Widget                 (const iWidget *, iInt2 windowCoord);
 iAny *  findChild_Widget                (const iWidget *, const char *id);
 const iPtrArray *findChildren_Widget    (const iWidget *, const char *id);
+iAny *  findParent_Widget               (const iWidget *, const char *id);
 iAny *  findParentClass_Widget          (const iWidget *, const iAnyClass *class);
 iAny *  findFocusable_Widget            (const iWidget *startFrom, enum iWidgetFocusDir focusDir);
 iAny *  findOverflowScrollable_Widget   (iWidget *);
@@ -216,6 +219,7 @@ size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);
 void    drawLayerEffects_Widget         (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
+void    drawBorders_Widget              (const iWidget *); /* called by `drawBackground` */
 void    drawChildren_Widget             (const iWidget *);
 void    drawRoot_Widget                 (const iWidget *); /* root only */
 void    setDrawBufferEnabled_Widget     (iWidget *, iBool enable);

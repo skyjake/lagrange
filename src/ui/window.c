@@ -75,28 +75,37 @@ iDefineTypeConstructionArgs(Window,
                             type, rect, flags)
 iDefineTypeConstructionArgs(MainWindow, (iRect rect), rect)
 
-/* TODO: Define menus per platform. */
-
-#if defined (iHaveNativeMenus)
-/* Using native menus. */
 static const iMenuItem fileMenuItems_[] = {
     { "${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
     { "${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
-    { "---", 0, 0, NULL },
+    { "---" },
     { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
-    { "---", 0, 0, NULL },
+    { "---" },
     { "${menu.downloads}", 0, 0, "downloads.open" },
+    { "${menu.export}", 0, 0, "export" },
+#if defined (iPlatformPcDesktop)
+    { "---" },
+    { "${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "${menu.fonts}", 0, 0, "open newtab:1 switch:1 url:about:fonts" },
+#if defined (LAGRANGE_ENABLE_WINSPARKLE)
+    { "${menu.update}", 0, 0, "updater.check" },
+#endif
+    { "---" },
+    { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" },
+#endif
+    { NULL }
 };
 
 static const iMenuItem editMenuItems_[] = {
     { "${menu.cut}", SDLK_x, KMOD_PRIMARY, "input.copy cut:1" },
     { "${menu.copy}", SDLK_c, KMOD_PRIMARY, "copy" },
     { "${menu.paste}", SDLK_v, KMOD_PRIMARY, "input.paste" },
-    { "---", 0, 0, NULL },
+    { "---" },
     { "${menu.copy.pagelink}", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
-    { "---", 0, 0, NULL },
+    { "---" },
     { "${macos.menu.find}", SDLK_f, KMOD_PRIMARY, "focus.set id:find.input" },
+    { NULL }
 };
 
 static const iMenuItem viewMenuItems_[] = {
@@ -105,52 +114,82 @@ static const iMenuItem viewMenuItems_[] = {
     { "${menu.show.history}", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
     { "${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
     { "${menu.show.outline}", '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1" },
+    { "---" },
     { "${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
-    { "---", 0, 0, NULL },
+    { "---" },
     { "${menu.back}", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
     { "${menu.forward}", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
     { "${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
     { "${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
     { "${menu.reload}", reload_KeyShortcut, "navigate.reload" },
-    { "---", 0, 0, NULL },
+    { "---" },
     { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "---" },
     { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
+    { NULL }
 };
 
 static iMenuItem bookmarksMenuItems_[] = {
     { "${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
     { "${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
-    { "---", 0, 0, NULL },
+    { "---" },
     { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
     { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
-    { "---", 0, 0, NULL },
+    { "---" },
     { "${macos.menu.bookmarks.list}", 0, 0, "open url:about:bookmarks" },
     { "${macos.menu.bookmarks.bytag}", 0, 0, "open url:about:bookmarks?tags" },
     { "${macos.menu.bookmarks.bytime}", 0, 0, "open url:about:bookmarks?created" },
     { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
-    { "---", 0, 0, NULL },
-    { "---", 0, 0, NULL },
+    { "---" },
     { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
     { "${menu.feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
+    { NULL }
 };
 
 static const iMenuItem identityMenuItems_[] = {
     { "${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
-    { "---", 0, 0, NULL },
+    { "---" },
     { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { NULL }
 };
 
+//static const iMenuItem windowMenuItems_[] = {
+//    { "${menu.closewindow}", 0, 0, "window.close" },
+//    { NULL }
+//};
+
 static const iMenuItem helpMenuItems_[] = {
-    { "${menu.help}", 0, 0, "!open url:about:help" },
-    { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
-    { "---", 0, 0, NULL },
-    { "${menu.aboutpages}", 0, 0, "!open url:about:about" },
-    { "${menu.debug}", 0, 0, "!open url:about:debug" },
+#if defined (iPlatformPcDesktop)
+    { "${menu.help}", SDLK_F1, 0, "!open newtab:1 switch:1 url:about:help" },
+#else
+    { "${menu.help}", 0, 0, "!open newtab:1 switch:1 url:about:help" },
+#endif
+    { "${menu.releasenotes}", 0, 0, "!open newtab:1 switch:1 url:about:version" },
+    { "---" },
+    { "${menu.aboutpages}", 0, 0, "!open newtab:1 switch:1 url:about:about" },
+    { "${menu.debug}", 0, 0, "!open newtab:1 switch:1 url:about:debug" },
+#if defined (iPlatformPcDesktop)
+    { "---" },
+    { "${menu.aboutapp}", 0, 0, "!open newtab:1 switch:1 url:about:lagrange" },
+#endif
+    { NULL }
 };
+
+const iMenuItem topLevelMenus_Window[6] = {
+    { "${menu.title.file}", 0, 0, (const void *) fileMenuItems_ },
+    { "${menu.title.edit}", 0, 0, (const void *) editMenuItems_ },
+    { "${menu.title.view}", 0, 0, (const void *) viewMenuItems_ },
+    { "${menu.title.bookmarks}", 0, 0, (const void *) bookmarksMenuItems_ },
+    { "${menu.title.identity}", 0, 0, (const void *) identityMenuItems_ },
+//    { "${menu.title.window}", 0, 0, (const void *) windowMenuItems_ },
+    { "${menu.title.help}", 0, 0, (const void *) helpMenuItems_ },
+};
+
+#if defined (LAGRANGE_MAC_MENUBAR)
 
 static void insertMacMenus_(void) {
     insertMenuItems_MacOS("${menu.title.file}", 1, fileMenuItems_, iElemCount(fileMenuItems_));
@@ -169,7 +208,8 @@ static void removeMacMenus_(void) {
     removeMenu_MacOS(2);
     removeMenu_MacOS(1);
 }
-#endif
+
+#endif /* LAGRANGE_MAC_MENUBAR */
 
 int numRoots_Window(const iWindow *d) {
     int num = 0;
@@ -210,7 +250,7 @@ static void windowSizeChanged_MainWindow_(iMainWindow *d) {
 }
 
 static void setupUserInterface_MainWindow(iMainWindow *d) {
-#if defined (iHaveNativeMenus)
+#if defined (LAGRANGE_MAC_MENUBAR)
     if (numWindows_App() == 0) {
         insertMacMenus_(); /* TODO: Shouldn't this be in the App? */
     }
@@ -1058,6 +1098,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 postCommand_App("media.player.update"); /* in case a player needs updating */
                 return iFalse; /* unfreeze all frozen windows */
             }
+#if 0
             if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.sysframe") && mw) {
                 /* This command is sent on Android to update the keyboard height. */
                 const char *cmd = command_UserEvent(ev);
@@ -1074,12 +1115,15 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                  */
                 const int top    = argLabel_Command(cmd, "top");
                 const int bottom = argLabel_Command(cmd, "bottom");
-                if (!SDL_IsScreenKeyboardShown(mw->base.win)) {
+                const int full   = argLabel_Command(cmd, "fullheight");
+                //if (!SDL_IsScreenKeyboardShown(mw->base.win)) {
+                if (bottom == full) {
                     mw->maxDrawableHeight = bottom - top;
                 }
                 setKeyboardHeight_MainWindow(mw, top + mw->maxDrawableHeight - bottom);
                 return iTrue;
             }
+#endif
             if (processEvent_Touch(&event)) {
                 return iTrue;
             }
@@ -1162,7 +1206,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 }
             }
             if (isCommand_UserEvent(&event, "lang.changed") && mw) {
-#if defined (iHaveNativeMenus)
+#if defined (LAGRANGE_MAC_MENUBAR)
                 /* Retranslate the menus. */
                 removeMacMenus_();
                 insertMacMenus_();
@@ -1267,6 +1311,14 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
     }
     if (d->hover != oldHover) {
         refresh_Widget(d->hover); /* Note: oldHover may have been deleted */
+        if (d->hover && d->hover->flags2 & commandOnHover_WidgetFlag2) {
+            SDL_UserEvent notif = { .type      = SDL_USEREVENT,
+                                    .timestamp = SDL_GetTicks(),
+                                    .code      = command_UserEventCode,
+                                    .data1     = (void *) format_CStr("mouse.hovered ptr:%p arg:1",
+                                                                  d->hover) };
+            dispatchEvent_Widget(d->hover, (SDL_Event *) &notif);
+        }
     }
     return wasUsed;
 }
@@ -1342,7 +1394,9 @@ void draw_MainWindow(iMainWindow *d) {
         return;
     }
     isDrawing_ = iTrue;
-    checkPixelRatioChange_Window_(&d->base);
+    if (deviceType_App() == desktop_AppDeviceType) {
+        checkPixelRatioChange_Window_(&d->base);
+    }
     setCurrent_Text(d->base.text);
     /* Check if root needs resizing. */ {
         const iBool wasPortrait = isPortrait_App();

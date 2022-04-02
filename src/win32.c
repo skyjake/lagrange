@@ -239,6 +239,12 @@ float desktopDPI_Win32(void) {
     return ratio;
 }
 
+iString *windowsDirectory_Win32(void) {
+    WCHAR winDir[MAX_PATH];
+    GetWindowsDirectoryW(winDir, MAX_PATH);
+    return newUtf16_String(winDir);
+}
+
 void useExecutableIconResource_SDLWindow(SDL_Window *win) {
     HINSTANCE handle = GetModuleHandle(NULL);
     HICON icon = LoadIcon(handle, "IDI_ICON1");

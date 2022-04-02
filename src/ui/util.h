@@ -263,7 +263,9 @@ void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, i
 void            closeMenu_Widget                (iWidget *);
 void            releaseNativeMenu_Widget        (iWidget *);
 
+size_t          count_MenuItem                  (const iMenuItem *itemsNullTerminated);
 size_t          findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);
+size_t          findCommand_MenuItem            (const iMenuItem *items, size_t num, const char *command);
 void            setSelected_NativeMenuItem      (iMenuItem *item, iBool isSelected);
 
 iChar           removeIconPrefix_String         (iString *);
@@ -278,6 +280,7 @@ void            setNativeMenuItems_Widget       (iWidget *menu, const iMenuItem 
 iWidget *       findUserData_Widget             (iWidget *, void *userData);
 
 int             checkContextMenu_Widget         (iWidget *, const SDL_Event *ev); /* see macro below */
+void            animateToRootVisibleTop_Widget  (iWidget *, uint32_t span);
 
 #define processContextMenuEvent_Widget(menu, sdlEvent, stmtEaten) \
     for (const int result = checkContextMenu_Widget((menu), (sdlEvent));;) { \
@@ -291,7 +294,12 @@ const char *    selectedDropdownCommand_LabelWidget (const iLabelWidget *dropBut
 
 /*-----------------------------------------------------------------------------------------------*/
 
+iWidget *       makeMenuBar_Widget      (const iMenuItem *topLevelMenus, size_t num);
+
+/*-----------------------------------------------------------------------------------------------*/
+
 iWidget *       makeTabs_Widget         (iWidget *parent);
+void            setTabBarPosition_Widget(iWidget *tabs, iBool atBottom);
 void            appendTabPage_Widget    (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 void            appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int shortcut, int kmods);
 iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
@@ -299,7 +307,7 @@ iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, 
 void            prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 iWidget *       removeTabPage_Widget    (iWidget *tabs, size_t index); /* returns the page */
 void            resizeToLargestPage_Widget  (iWidget *tabs);
-void            showTabPage_Widget      (iWidget *tabs, const iWidget *page);
+void            showTabPage_Widget      (iWidget *tabs, const iAnyObject *page);
 void            addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *command);
 void            setTabPageLabel_Widget  (iWidget *tabs, const iAnyObject *page, const iString *label);
 iWidget *       tabPage_Widget          (iWidget *tabs, size_t index);
@@ -318,7 +326,7 @@ iWidget *   makeDialogButtons_Widget    (const iMenuItem *actions, size_t numAct
 iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
 
 iLabelWidget *dialogAcceptButton_Widget (const iWidget *);
-
+int           dialogTransitionDir_Widget(const iWidget *);
 iLabelWidget *addDialogTitle_Widget     (iWidget *, const char *text, const char *idOrNull);
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,
@@ -338,14 +346,15 @@ iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
 iWidget *   makePreferences_Widget          (void);
 void        updatePreferencesLayout_Widget  (iWidget *prefs);
 
-iWidget *   makeBookmarkEditor_Widget       (void);
-void        setBookmarkEditorFolder_Widget  (iWidget *editor, uint32_t folderId);
+iWidget *   makeBookmarkEditor_Widget       (iBool isFolder);
+void        setBookmarkEditorParentFolder_Widget(iWidget *editor, uint32_t folderId);
 iWidget *   makeBookmarkCreation_Widget     (const iString *url, const iString *title, iChar icon);
 iWidget *   makeIdentityCreation_Widget     (void);
 iWidget *   makeFeedSettings_Widget         (uint32_t bookmarkId);
 iWidget *   makeSiteSpecificSettings_Widget (const iString *url);
 iWidget *   makeTranslation_Widget          (iWidget *parent);
 iWidget *   makeGlyphFinder_Widget          (void);
+iWidget *   makeUserDataImporter_Dialog     (const iString *archivePath);
 
 const char *    languageId_String   (const iString *menuItemLabel);
 int             languageIndex_CStr  (const char *langId);

@@ -59,6 +59,7 @@ enum iGmDocumentTheme {
     white_GmDocumentTheme,
     sepia_GmDocumentTheme,
     highContrast_GmDocumentTheme,
+    oceanic_GmDocumentTheme,
     max_GmDocumentTheme
 };
 
@@ -117,13 +118,14 @@ struct Impl_GmPreMeta {
 };
 
 enum iGmRunFlags {
-    decoration_GmRunFlag  = iBit(1), /* not part of the source */
-    startOfLine_GmRunFlag = iBit(2),
-    endOfLine_GmRunFlag   = iBit(3),
-    quoteBorder_GmRunFlag = iBit(5),
-    wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
-    caption_GmRunFlag     = iBit(7),
-    altText_GmRunFlag     = iBit(8),
+    decoration_GmRunFlag   = iBit(1), /* not part of the source */
+    startOfLine_GmRunFlag  = iBit(2),
+    endOfLine_GmRunFlag    = iBit(3),
+    notJustified_GmRunFlag = iBit(4),
+    quoteBorder_GmRunFlag  = iBit(5),
+    wide_GmRunFlag         = iBit(6), /* horizontally scrollable */
+    caption_GmRunFlag      = iBit(7),
+    altText_GmRunFlag      = iBit(8),
 };
 
 /* This structure is tightly packed because GmDocuments are mostly composed of
@@ -166,6 +168,8 @@ iLocalDef uint32_t preId_GmRun(const iGmRun *d) {
     return d->mediaType == max_MediaType ? d->mediaId : 0;
 }
 
+iBool       isJustified_GmRun       (const iGmRun *);
+int         drawBoundWidth_GmRun    (const iGmRun *);
 iRangecc    findLoc_GmRun           (const iGmRun *, iInt2 pos);
 
 iDeclareClass(GmDocument)
@@ -230,8 +234,8 @@ enum iGmLinkPart {
     icon_GmLinkPart,
     text_GmLinkPart,
     textHover_GmLinkPart,
-    domain_GmLinkPart,
-    visited_GmLinkPart,
+//    domain_GmLinkPart,
+//    visited_GmLinkPart,
 };
 
 const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);

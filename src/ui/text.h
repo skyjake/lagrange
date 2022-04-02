@@ -87,22 +87,6 @@ enum iFontId {
 
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)
 
-#if 0
-/* TODO: get rid of this; configure using font ID strings, check RTL from FontFile flags */
-enum iTextFont {
-    undefined_TextFont = -1,
-    nunito_TextFont = 0,
-    firaSans_TextFont,
-    literata_TextFont,
-    tinos_TextFont,
-    sourceSans3_TextFont,
-    iosevka_TextFont,
-    /* families: */
-    arabic_TextFont,
-    emojiAndSymbols_TextFont,
-};
-#endif
-
 extern int gap_Text; /* affected by content font size */
 
 iDeclareType(Text)
@@ -176,7 +160,7 @@ void    drawString_Text         (int fontId, iInt2 pos, int color, const iString
 void    drawRange_Text          (int fontId, iInt2 pos, int color, iRangecc text);
 void    drawRangeN_Text         (int fontId, iInt2 pos, int color, iRangecc text, size_t maxLen);
 void    drawOutline_Text        (int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text);
-void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, int color, iRangecc text); /* bound does not wrap */
+void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, iBool justify, int color, iRangecc text); /* bound does not wrap */
 int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
 
 iDeclareType(WrapText)
@@ -210,6 +194,7 @@ struct Impl_WrapText {
     int         maxWidth;
     size_t      maxLines; /* 0: unlimited */
     enum iWrapTextMode mode;
+    iBool       justify;
     iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, iTextAttrib attrib, int origin,
                           int advance);
     void *      context;

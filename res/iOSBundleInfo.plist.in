@@ -52,7 +52,7 @@
 		<key>UIAppFonts</key>
 		<array>
 			<string>IosevkaTerm-Extended.ttf</string>
-			<string>SourceSans3-Regular.ttf</string>
+			<string>Roboto-Regular.ttf</string>
 		</array>
 		<key>UIBackgroundModes</key>
 		<array>

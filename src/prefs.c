@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2020-2022 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "prefs.h"
+#include "app.h"
 
 #include <the_Foundation/fileinfo.h>
 #include <assert.h>
@@ -58,6 +59,15 @@ void init_Prefs(iPrefs *d) {
     d->sideIcon          = iTrue;
     d->hideToolbarOnScroll = iTrue;
     d->blinkingCursor    = iTrue;
+    if (deviceType_App() == phone_AppDeviceType) {
+        d->bottomNavBar  = iTrue;
+        d->bottomTabBar  = iTrue;
+    }
+    else {
+        d->bottomNavBar  = iFalse;
+        d->bottomTabBar  = iFalse;        
+    }
+    d->menuBar           = (deviceType_App() == desktop_AppDeviceType);
     d->pinSplit          = 1;
     d->time24h           = iTrue;
     d->returnKey         = default_ReturnKeyBehavior;
@@ -93,6 +103,7 @@ void init_Prefs(iPrefs *d) {
     d->lineSpacing       = 1.0f;
     d->tabWidth          = 8;
     d->bigFirstParagraph = iTrue;
+    d->justifyParagraph  = iFalse;
     d->quoteIcon         = iTrue;
     d->centerShortDocs   = iTrue;
     d->plainTextWrap     = iTrue;

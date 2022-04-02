@@ -28,6 +28,7 @@ void            init_Lang       (void);
 void            deinit_Lang     (void);
 
 void            setCurrent_Lang (const char *language);
+const char *    code_Lang       (void); /* ISO 639 */
 iRangecc        range_Lang      (iRangecc msgId);
 
 const char *    cstr_Lang       (const char *msgId);

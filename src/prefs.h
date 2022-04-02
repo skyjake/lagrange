@@ -66,6 +66,9 @@ enum iPrefsBool {
     hideToolbarOnScroll_PrefsBool,
     
     blinkingCursor_PrefsBool,
+    bottomNavBar_PrefsBool,
+    bottomTabBar_PrefsBool,
+    menuBar_PrefsBool,
     
     /* Document presentation */
     sideIcon_PrefsBool,
@@ -77,9 +80,9 @@ enum iPrefsBool {
     smoothScrolling_PrefsBool,
     loadImageInsteadOfScrolling_PrefsBool,
     openDataUrlImagesOnLoad_PrefsBool,
+    
     collapsePreOnLoad_PrefsBool,
     openArchiveIndexPages_PrefsBool,
-    
     addBookmarksToBottom_PrefsBool,
     warnAboutMissingGlyphs_PrefsBool,
     
@@ -95,8 +98,10 @@ enum iPrefsBool {
     
     fontSmoothing_PrefsBool,
     bigFirstParagraph_PrefsBool,
+    justifyParagraph_PrefsBool,
     quoteIcon_PrefsBool,
     centerShortDocs_PrefsBool,
+    
     plainTextWrap_PrefsBool,
     
     /* Meta */
@@ -121,6 +126,9 @@ struct Impl_Prefs {
             iBool hideToolbarOnScroll;
             
             iBool blinkingCursor;
+            iBool bottomNavBar;
+            iBool bottomTabBar;
+            iBool menuBar;
             
             /* Document presentation */
             iBool sideIcon;
@@ -132,9 +140,9 @@ struct Impl_Prefs {
             iBool smoothScrolling;
             iBool loadImageInsteadOfScrolling;
             iBool openDataUrlImagesOnLoad;
-            iBool collapsePreOnLoad;
-            iBool openArchiveIndexPages;
             
+            iBool collapsePreOnLoad;
+            iBool openArchiveIndexPages;            
             iBool addBookmarksToBottom;
             iBool warnAboutMissingGlyphs;
             
@@ -150,8 +158,10 @@ struct Impl_Prefs {
             
             iBool fontSmoothing;
             iBool bigFirstParagraph;
+            iBool justifyParagraph;
             iBool quoteIcon;
             iBool centerShortDocs;
+            
             iBool plainTextWrap;
         };
     };

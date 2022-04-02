@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2022 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -22,38 +22,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/range.h>
-#include <the_Foundation/vec2.h>
-#include <SDL_render.h>
+#include "defs.h"
+#include <the_Foundation/archive.h>
 
-iDeclareType(VisBuf)
-iDeclareType(VisBufTexture)
+extern const char *mimeType_Export;
 
-struct Impl_VisBufTexture {
-    SDL_Texture *texture;
-    int origin;
-    iRangei validRange;
-    void *user; /* user provided data pointer for additional per-buffer data */
-};
+iDeclareType(Export)
+iDeclareTypeConstruction(Export)    
+    
+void    generate_Export (iExport *);
+iBool   load_Export     (iExport *, const iArchive *archive);
+void    import_Export   (const iExport *,
+                         enum iImportMethod bookmarks,
+                         enum iImportMethod identities,
+                         enum iImportMethod trusted,
+                         enum iImportMethod visited,
+                         enum iImportMethod siteSpec);
 
-#define numBuffers_VisBuf   ((size_t) 4)
+iBool   detect_Export   (const iArchive *);
 
-struct Impl_VisBuf {
-    iInt2 texSize;
-    iRangei vis;
-    iVisBufTexture buffers[numBuffers_VisBuf];
-    void (*bufferInvalidated)(iVisBuf *, size_t index);
-};
-
-iDeclareTypeConstruction(VisBuf)
-
-void    invalidate_VisBuf       (iVisBuf *);
-iBool   alloc_VisBuf            (iVisBuf *, const iInt2 size, int granularity);
-void    dealloc_VisBuf          (iVisBuf *);
-iBool   reposition_VisBuf       (iVisBuf *, const iRangei vis); /* returns true if `vis` changes */
-void    validate_VisBuf         (iVisBuf *);
-
-iRangei allocRange_VisBuf       (const iVisBuf *);
-iRangei bufferRange_VisBuf      (const iVisBuf *, size_t index);
-void    invalidRanges_VisBuf    (const iVisBuf *, const iRangei full, iRangei *out_invalidRanges);
-void    draw_VisBuf             (const iVisBuf *, iInt2 topLeft, iRangei yClipBounds);
+const iArchive *    archive_Export  (const iExport *);

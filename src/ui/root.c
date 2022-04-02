@@ -53,9 +53,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_timer.h>
 
-#if defined (iPlatformPcDesktop)
-/* TODO: Submenus wouldn't hurt here. */
-static const iMenuItem navMenuItems_[] = {
+static const iMenuItem desktopNavMenuItems_[] = {
     { openWindow_Icon " ${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
     { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { close_Icon " ${menu.closetab}", SDLK_w, KMOD_PRIMARY, "tabs.close" },
@@ -71,11 +69,9 @@ static const iMenuItem navMenuItems_[] = {
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---" },
-    { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
-    { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
-//    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
     { "${menu.downloads}", 0, 0, "downloads.open" },
+    { export_Icon " ${menu.export}", 0, 0, "export" },
     { "---" },
     { gear_Icon " ${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
  #if defined (LAGRANGE_ENABLE_WINSPARKLE)
@@ -84,48 +80,40 @@ static const iMenuItem navMenuItems_[] = {
     { "${menu.help}", SDLK_F1, 0, "!open url:about:help" },
     { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
     { "---" },
-    { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" }
+    { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" },
+    { NULL }
 };
-#endif
 
-#if defined (iPlatformMobile)
-/* Tablet menu. */
 static const iMenuItem tabletNavMenuItems_[] = {
     { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
-//    { leftHalf_Icon " ${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { rightHalf_Icon " ${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
     { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
     { "---" },
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
-    //{ "${menu.downloads}", 0, 0, "downloads.open" },
     { "---" },
     { gear_Icon " ${menu.settings}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
-    { "${menu.help}", SDLK_F1, 0, "!open url:about:help" },
-    { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
+    { NULL }
 };
 
-/* Phone menu. */
 static const iMenuItem phoneNavMenuItems_[] = {
     { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
-//    { leftHalf_Icon " ${menu.sidebar}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "---" },
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
-    //{ "${menu.downloads}", 0, 0, "downloads.open" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     { "---" },
     { gear_Icon " ${menu.settings}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { NULL }
 };
-#endif /* Mobile */
 
 #if defined (iPlatformMobile)
 static const iMenuItem identityButtonMenuItems_[] = {
@@ -159,10 +147,10 @@ static const char *pageMenuCStr_ = midEllipsis_Icon;
 /* TODO: A preference for these, maybe? */
 static const char *stopSeqCStr_[] = {
     /* Corners */
-    uiTextCaution_ColorEscape "\U0000231c",
-    uiTextCaution_ColorEscape "\U0000231d",
-    uiTextCaution_ColorEscape "\U0000231f",
-    uiTextCaution_ColorEscape "\U0000231e",
+    uiTextAction_ColorEscape "\U0000231c",
+    uiTextAction_ColorEscape "\U0000231d",
+    uiTextAction_ColorEscape "\U0000231f",
+    uiTextAction_ColorEscape "\U0000231e",
 #if 0
     /* Rotating arrow */
     uiTextCaution_ColorEscape "\U00002b62",
@@ -238,8 +226,11 @@ static const char *stopSeqCStr_[] = {
 
 static const int loadAnimIntervalMs_ = 133;
 static int       loadAnimIndex_      = 0;
+static iRoot *   activeRoot_         = NULL;
 
-static iRoot *   activeRoot_     = NULL;
+static void     setupMovableElements_Root_  (iRoot *);
+static void     updateNavBarSize_           (iWidget *navBar);
+static void     updateBottomBarPosition_    (iWidget *bottomBar, iBool animate);
 
 iDefineTypeConstruction(Root)
 iDefineAudienceGetter(Root, visualOffsetsChanged)
@@ -271,6 +262,15 @@ iRoot *get_Root(void) {
 iAnyObject *findWidget_Root(const char *id) {
     if (activeRoot_) {
         return findChild_Widget(activeRoot_->widget, id);
+    }
+    return NULL;
+}
+
+iDocumentWidget *findDocument_Root(const iRoot *d, const iString *url) {
+    iForEach(ObjectList, i, iClob(listDocuments_App(d))) {
+        if (equalCase_String(url, url_DocumentWidget(i.object))) {
+            return i.object;
+        }
     }
     return NULL;
 }
@@ -325,8 +325,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             return iTrue;
         }
         const iBool isPlacedUnder = argLabel_Command(cmd, "under");
+        const iBool isMenuBar = argLabel_Command(cmd, "bar");
         iAssert(menu);
         if (!isVisible_Widget(menu)) {
+            if (isMenuBar) {
+                setFlags_Widget(button, selected_WidgetFlag, iTrue);
+            }
             openMenu_Widget(menu,
                             isPlacedUnder ? bottomLeft_Rect(bounds_Widget(button))
                                           : topLeft_Rect(bounds_Widget(button)));
@@ -533,25 +537,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
             setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));
         }
-#if 0
-        iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
-        iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
-        setFlags_Widget(findChild_Widget(as_Widget(sidebar), "buttons"),
-                        borderTop_WidgetFlag,
-                        isPortrait_App());
-        if (isLandscape_App()) {
-            addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
-            setWidth_SidebarWidget(sidebar, 73.0f);
-            if (isVisible_Widget(findWidget_App("sidebar2"))) {
-                postCommand_App("sidebar2.toggle");
-            }
-        }
-        else {
-            addChildPos_Widget(findChild_Widget(root, "stack"), iClob(sidebar), back_WidgetAddPos);
-            setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
-            setWidth_SidebarWidget(sidebar2, (float) width_Widget(root) / (float) gap_UI);
-        }
-#endif
+        postCommandf_Root(root->root, "toolbar.show arg:%d", isPortrait_App() || prefs_App()->bottomNavBar);
         return iFalse;
     }
     else if (equal_Command(cmd, "root.arrange")) {
@@ -559,8 +545,18 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         if (prefs) {
             updatePreferencesLayout_Widget(prefs);
         }
-        root->root->pendingArrange = iFalse;
         return iTrue;
+    }
+    else if (equal_Command(cmd, "root.movable")) {
+        setupMovableElements_Root_(root->root);
+        arrange_Widget(root);
+        iWidget *bottomBar = findChild_Widget(root, "bottombar");
+        if (bottomBar) {
+            /* Update bottom bar height and position. */
+            updateBottomBarPosition_(bottomBar, iFalse);
+            updateToolbarColors_Root(root->root);
+        }
+        return iFalse; /* all roots must handle this */
     }
     else if (equal_Command(cmd, "theme.changed")) {
         /* The phone toolbar is draw-buffered so it needs refreshing. */
@@ -576,25 +572,34 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 static void updateNavBarIdentity_(iWidget *navBar) {
     const iGmIdentity *ident =
         identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
-    iWidget *button = findChild_Widget(navBar, "navbar.ident");
-    iWidget *menu   = findChild_Widget(button, "menu");
-    setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
     /* Update menu. */
     const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
-    const char *   idLabel     = subjectName
-                                     ? format_CStr(uiTextAction_ColorEscape "%s", cstr_String(subjectName))
+    if (navBar) {
+        iWidget *button = findChild_Widget(navBar, "navbar.ident");
+        iWidget *menu   = findChild_Widget(button, "menu");
+        setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
+        const char *   idLabel     = subjectName
+                                     ? cstr_String(subjectName)
                                      : "${menu.identity.notactive}";
-    setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
-    setMenuItemDisabledByIndex_Widget(menu, 0, !ident);
+        setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
+        setMenuItemDisabledByIndex_Widget(menu, 0, !ident);
+    }
     iLabelWidget *toolButton = findWidget_App("toolbar.ident");
     iLabelWidget *toolName = findWidget_App("toolbar.name");
     if (toolName) {
         setOutline_LabelWidget(toolButton, ident == NULL);
-        /* Fit the name in the widget. */ 
+        if (ident) {
+            setTextColor_LabelWidget(toolButton, uiTextAction_ColorId);
+            setTextColor_LabelWidget(toolName, uiTextAction_ColorId);
+        }
+        else {
+            setTextColor_LabelWidget(toolButton, textColor_LabelWidget(child_Widget(parent_Widget(toolButton), 0)));
+        }
+        /* Fit the name in the widget. */
         if (subjectName) {
             const char *endPos;
-            tryAdvanceNoWrap_Text(uiLabelTiny_FontId, range_String(subjectName), width_Widget(toolName),
-                &endPos);
+            tryAdvanceNoWrap_Text(
+                uiLabelTiny_FontId, range_String(subjectName), width_Widget(toolName), &endPos);
             updateText_LabelWidget(
                 toolName,
                 collectNewRange_String((iRangecc){ constBegin_String(subjectName), endPos }));
@@ -651,7 +656,7 @@ static uint32_t updateReloadAnimation_Root_(uint32_t interval, void *root) {
 }
 
 static void setReloadLabel_Root_(iRoot *d, iBool animating) {
-    const iBool isMobile = deviceType_App() != desktop_AppDeviceType;
+//    const iBool isMobile = deviceType_App() != desktop_AppDeviceType;
     iLabelWidget *label = findChild_Widget(d->widget, "reload");
     updateTextCStr_LabelWidget(
         label, animating ? loadAnimationCStr_() : (/*isMobile ? pageMenuCStr_ :*/ reloadCStr_));
@@ -691,22 +696,24 @@ void updatePadding_Root(iRoot *d) {
 
 void updateToolbarColors_Root(iRoot *d) {
 #if defined (iPlatformMobile)
-    iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
-    if (toolBar) {
-        const iBool isSidebarVisible =
-            isVisible_Widget(findChild_Widget(d->widget, "sidebar")) ||
-            isVisible_Widget(findChild_Widget(d->widget, "sidebar2"));
-        const int bg = isSidebarVisible ? uiBackgroundSidebar_ColorId :
-                                          tmBannerBackground_ColorId;
-        setBackgroundColor_Widget(toolBar, bg);
+    iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
+    if (bottomBar) {
+        iWidget *toolBar = findChild_Widget(bottomBar, "toolbar");
+        const iWidget *tabs = findChild_Widget(d->widget, "doctabs");
+        const size_t numPages = childCount_Widget(findChild_Widget(tabs, "tabs.pages"));
+        const iBool useThemeColors = !prefs_App()->bottomNavBar &&
+                                     !(prefs_App()->bottomTabBar && numPages > 1);
+        const int bg = useThemeColors ? tmBannerBackground_ColorId : uiBackground_ColorId;
+        setBackgroundColor_Widget(bottomBar, bg);
         iForEach(ObjectList, i, children_Widget(toolBar)) {
-//            iLabelWidget *btn = i.object;
-            setTextColor_LabelWidget(i.object, isSidebarVisible ? uiTextDim_ColorId :
-                                     tmBannerIcon_ColorId);
+            setTextColor_LabelWidget(i.object, useThemeColors ? tmBannerIcon_ColorId : uiTextDim_ColorId);
             setBackgroundColor_Widget(i.object, bg); /* using noBackground, but ident has outline */
         }
-        setTextColor_LabelWidget(findChild_Widget(toolBar, "toolbar.name"),
-                                 isSidebarVisible ? uiTextDim_ColorId : tmBannerIcon_ColorId);
+        if (!useThemeColors) {
+            /* Menu uses accent color. */
+            setTextColor_LabelWidget(findChild_Widget(toolBar, "toolbar.navmenu"), uiTextAction_ColorId);
+        }
+        updateNavBarIdentity_(NULL); /* updates the identity button */
     }
 #else
     iUnused(d);
@@ -736,17 +743,19 @@ void notifyVisualOffsetChange_Root(iRoot *d) {
 void dismissPortraitPhoneSidebars_Root(iRoot *d) {
     if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
         iWidget *sidebar = findChild_Widget(d->widget, "sidebar");
-        iWidget *sidebar2 = findChild_Widget(d->widget, "sidebar2");
+//        iWidget *sidebar2 = findChild_Widget(d->widget, "sidebar2");
         if (isVisible_Widget(sidebar)) {
             postCommand_App("sidebar.toggle");
             setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
         }
+#if 0
         if (isVisible_Widget(sidebar2)) {
             postCommand_App("sidebar2.toggle");
             setVisualOffset_Widget(sidebar2, height_Widget(sidebar2), 250, easeIn_AnimFlag);
         }
         //        setFlags_Widget(findWidget_App("toolbar.ident"), noBackground_WidgetFlag, iTrue);
         //        setFlags_Widget(findWidget_App("toolbar.view"), noBackground_WidgetFlag, iTrue);
+#endif
     }
 }
 
@@ -800,13 +809,22 @@ iBool isNarrow_Root(const iRoot *d) {
 }
 
 static void updateNavBarSize_(iWidget *navBar) {
-    const iBool isPhone = deviceType_App() == phone_AppDeviceType;
+    const iBool isPhone  = deviceType_App() == phone_AppDeviceType;
     const iBool isNarrow = !isPhone && isNarrow_Root(navBar->root);
     /* Adjust navbar padding. */ {
-        int hPad = isPortraitPhone_App() ? 0 : isPhone || isNarrow ? gap_UI / 2 : (gap_UI * 3 / 2);
+        int hPad   = isPortraitPhone_App() ? 0 : isPhone || isNarrow ? gap_UI / 2 : (gap_UI * 3 / 2);
         int vPad   = gap_UI * 3 / 2;
+        int botPad = vPad / 2;
         int topPad = !findWidget_Root("winbar") ? gap_UI / 2 : 0;
-        setPadding_Widget(navBar, hPad, vPad / 3 + topPad, hPad, vPad / 2);
+        if (prefs_App()->bottomNavBar &&
+            ((isPhone && isLandscape_App()) || deviceType_App() == tablet_AppDeviceType)) {
+            botPad += bottomSafeInset_Mobile();
+            hPad += leftSafeInset_Mobile();
+        }
+        if (!isPhone && prefs_App()->bottomNavBar) {
+            topPad = vPad / 2 - vPad / 3;
+        }
+        setPadding_Widget(navBar, hPad, vPad / 3 + topPad, hPad, botPad);
     }
     /* Button sizing. */
     if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
@@ -835,8 +853,8 @@ static void updateNavBarSize_(iWidget *navBar) {
         static const char *buttons[] = { "navbar.action1", "navbar.action2", "navbar.action3",
                                          "navbar.action4", "navbar.ident",   "navbar.menu" };
         iWidget *toolBar = findWidget_Root("toolbar");
-        setVisualOffset_Widget(toolBar, 0, 0, 0);
-        setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
+//        setVisualOffset_Widget(toolBar, 0, 0, 0);
+//        setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
         iForIndices(i, buttons) {
             iLabelWidget *btn = findChild_Widget(navBar, buttons[i]);
             setFlags_Widget(as_Widget(btn), hidden_WidgetFlag, isPortrait_App());
@@ -878,6 +896,8 @@ static void updateNavBarActions_(iWidget *navBar) {
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "metrics.changed")) {
         updateNavBarSize_(navBar);
+        //arrange_Widget(root_Widget(navBar));
+        //updateBottomBarPosition_(findWidget_Root("bottombar"), iFalse);
         return iFalse;
     }
     else if (equal_Command(cmd, "window.reload.update")) {
@@ -973,13 +993,13 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             return iTrue;
         }
     }
-    else if (startsWith_CStr(cmd, "input.ended id:url ")) {
+    else if (equalArg_Command(cmd, "input.ended", "id", "url")) {
         iInputWidget *url = findChild_Widget(navBar, "url");
         showSearchQueryIndicator_(iFalse);
         if (isEmpty_String(text_InputWidget(url))) {
             /* User entered nothing; restore the current URL. */
             setText_InputWidget(url, url_DocumentWidget(document_App()));
-            return iTrue;
+            return iFalse;
         }
         if (arg_Command(cmd) && argLabel_Command(cmd, "enter") &&
             !isFocused_Widget(findWidget_App("lookup"))) {
@@ -993,7 +1013,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                     "open url:%s",
                     cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
             }
-            return iTrue;
+            return iFalse;
         }
     }
     else if (startsWith_CStr(cmd, "document.")) {
@@ -1063,9 +1083,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     else if (equal_Command(cmd, "tabs.changed")) {
         /* Update navbar according to the current tab. */
         iDocumentWidget *doc = document_App();
+        iAssert(doc);
         if (doc) {
             setText_InputWidget(findChild_Widget(navBar, "url"), url_DocumentWidget(doc));
             checkLoadAnimation_Root_(get_Root());
+            updateToolbarColors_Root(as_Widget(doc)->root);
             updateNavBarIdentity_(navBar);
         }
         setFocus_Widget(NULL);
@@ -1099,12 +1121,22 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         }
         return iTrue;
     }
+    else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "keyboard.changed")) {
+        const int keyboardHeight = arg_Command(cmd);
+        if (focus_Widget() == findChild_Widget(navBar, "url") && prefs_App()->bottomNavBar) {
+            setVisualOffset_Widget(navBar, -keyboardHeight + bottomSafeInset_Mobile(),
+                                   400, easeOut_AnimFlag | softer_AnimFlag);
+        }
+        else {
+            setVisualOffset_Widget(navBar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+        }
+        return iFalse;
+    }
     return iFalse;
 }
 
 static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
-    if (equal_Command(cmd, "input.ended") &&
-        equal_Rangecc(range_Command(cmd, "id"), "find.input")) {
+    if (equalArg_Command(cmd, "input.ended", "id", "find.input")) {
         iInputWidget *input = findChild_Widget(searchBar, "find.input");
         if (arg_Command(cmd) && argLabel_Command(cmd, "enter") && isVisible_Widget(input)) {
             postCommand_Root(searchBar->root, "find.next");
@@ -1171,6 +1203,10 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         openMenu_Widget(menu, innerToWindow_Widget(menu, init_I2(0, -height_Widget(menu))));
         return iTrue;
     }
+    else if (equal_Command(cmd, "toolbar.show")) {
+        showToolbar_Root(toolBar->root, arg_Command(cmd));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "toolbar.showview")) {
         if (arg_Command(cmd) >= 0) {
             postCommandf_App("sidebar.mode arg:%d show:1", arg_Command(cmd));
@@ -1196,6 +1232,42 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
     else if (equal_Command(cmd, "toolbar.actions.changed")) {
         updateToolBarActions_(toolBar);
         return iFalse;        
+    }
+    else if (equal_Command(cmd, "keyboard.changed") && prefs_App()->bottomNavBar) {
+        int height = arg_Command(cmd);
+        iWidget *bottomBar = findChild_Widget(root_Widget(toolBar), "bottombar");
+        if (!bottomBar) {
+            return iFalse;
+        }
+        iWidget *navBar = findChild_Widget(root_Widget(toolBar), "navbar");
+#if defined (iPlatformAppleMobile)
+        const int showSpan = 400;
+        const int hideSpan = 350;
+        const int animFlag = easeOut_AnimFlag | softer_AnimFlag;
+        int landscapeOffset = 5 * gap_UI; /* TODO: Why this amount? Something's funny here. */
+#else
+        const int showSpan = 80;
+        const int hideSpan = 250;
+        const int animFlag = easeOut_AnimFlag;
+        int landscapeOffset = 0;
+#endif
+        if (focus_Widget() == findChild_Widget(navBar, "url") && height > 0) {
+            int keyboardPad = height - (isPortrait_App() ? height_Widget(toolBar) : landscapeOffset);
+            bottomBar->padding[3] = keyboardPad;
+            arrange_Widget(bottomBar);
+            arrange_Widget(bottomBar);
+            setVisualOffset_Widget(bottomBar, keyboardPad, 0, 0);
+            setVisualOffset_Widget(bottomBar, 0, showSpan, animFlag);
+        }
+        if (height == 0) {
+            setVisualOffset_Widget(bottomBar, -bottomBar->padding[3], 0, 0);
+            setVisualOffset_Widget(bottomBar, 0, hideSpan, animFlag);
+            bottomBar->padding[3] = 0;
+            arrange_Widget(bottomBar);
+            arrange_Widget(bottomBar);
+            updateBottomBarPosition_(bottomBar, iTrue);
+        }
+        return iFalse;
     }
     return iFalse;
 }
@@ -1323,6 +1395,23 @@ void createUserInterface_Root(iRoot *d) {
         setBackgroundColor_Widget(winBar, uiBackground_ColorId);
     }
 #endif
+#if defined (LAGRANGE_MENUBAR) && !defined (iPlatformMobile)
+    /* Application menus. */ {
+        iWidget *menuBar = addChildFlags_Widget(
+            div,
+            iClob(makeMenuBar_Widget(topLevelMenus_Window, iElemCount(topLevelMenus_Window))),
+            collapse_WidgetFlag);
+        setId_Widget(menuBar, "menubar");
+#  if 0
+        addChildFlags_Widget(menuBar, iClob(new_Widget()), expand_WidgetFlag);
+        /* It's nice to use this space for something, but it should be more valuable than 
+           just the app version... */
+        iLabelWidget *ver = addChildFlags_Widget(menuBar, iClob(new_LabelWidget(LAGRANGE_APP_VERSION, NULL)),
+                                                 frameless_WidgetFlag);
+        setTextColor_LabelWidget(ver, uiAnnotation_ColorId);
+#  endif
+    }
+#endif        
     iWidget *navBar;
     /* Navigation bar. */ {
         navBar = new_Widget();
@@ -1506,23 +1595,19 @@ void createUserInterface_Root(iRoot *d) {
                                               home_Icon, 0, 0, "navigate.home")),
                                           collapse_WidgetFlag),
                      "navbar.action4");
-#if defined (iPlatformMobile)
-        const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
-#endif
-#if !defined (iHaveNativeMenus) || defined (iPlatformMobile)
-#   if defined (iPlatformMobile)
-        iLabelWidget *navMenu =
-            makeMenuButton_LabelWidget(menu_Icon, isPhone ? phoneNavMenuItems_ : tabletNavMenuItems_,
-                                       isPhone ? iElemCount(phoneNavMenuItems_) : iElemCount(tabletNavMenuItems_));
-#   else
-        iLabelWidget *navMenu =
-            makeMenuButton_LabelWidget(menu_Icon, navMenuItems_, iElemCount(navMenuItems_));
-#   endif
-        setFrameColor_Widget(findChild_Widget(as_Widget(navMenu), "menu"),
-                             uiSeparator_ColorId);
-        setCommand_LabelWidget(navMenu, collectNewCStr_String("menu.open under:1"));
-        setAlignVisually_LabelWidget(navMenu, iTrue);
-        setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
+#if !defined (LAGRANGE_MAC_MENUBAR)
+        /* Hamburger menu. */ {
+            iLabelWidget *navMenu = makeMenuButton_LabelWidget(
+                menu_Icon,
+                deviceType_App() == desktop_AppDeviceType  ? desktopNavMenuItems_
+                : deviceType_App() == tablet_AppDeviceType ? tabletNavMenuItems_
+                                                           : phoneNavMenuItems_,
+                iInvalidSize);
+            setFrameColor_Widget(findChild_Widget(as_Widget(navMenu), "menu"), uiSeparator_ColorId);
+            setCommand_LabelWidget(navMenu, collectNewCStr_String("menu.open under:1"));
+            setAlignVisually_LabelWidget(navMenu, iTrue);
+            setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
+        }
 #endif
 #if !defined (iPlatformApple)
         /* On PC platforms, the close buttons are generally on the top right. */
@@ -1547,6 +1632,7 @@ void createUserInterface_Root(iRoot *d) {
         iWidget *docTabs = makeTabs_Widget(mainStack);
         setId_Widget(docTabs, "doctabs");
         setBackgroundColor_Widget(docTabs, uiBackground_ColorId);
+//        setTabBarPosition_Widget(docTabs, prefs_App()->bottomTabBar);
         iDocumentWidget *doc;
         appendTabPage_Widget(docTabs, iClob(doc = new_DocumentWidget()), "Document", 0, 0);
         addTabCloseButton_Widget(docTabs, as_Widget(doc), "tabs.close");
@@ -1616,17 +1702,25 @@ void createUserInterface_Root(iRoot *d) {
 #if defined (iPlatformMobile)
     /* Bottom toolbar. */
     if (deviceType_App() == phone_AppDeviceType) {
+        iWidget *bottomBar = new_Widget();
+        setId_Widget(bottomBar, "bottombar");
+        addChildFlags_Widget(root,
+                             iClob(bottomBar),
+                             moveToParentBottomEdge_WidgetFlag |
+                                 parentCannotResizeHeight_WidgetFlag | arrangeVertical_WidgetFlag |
+                                 arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                                 drawBackgroundToHorizontalSafeArea_WidgetFlag |
+                                 drawBackgroundToBottom_WidgetFlag);
         iWidget *toolBar = new_Widget();
-        addChild_Widget(root, iClob(toolBar));
+        addChild_Widget(bottomBar, iClob(toolBar));
         setId_Widget(toolBar, "toolbar");
         setDrawBufferEnabled_Widget(toolBar, iTrue);
         setCommandHandler_Widget(toolBar, handleToolBarCommands_);
-        setFlags_Widget(toolBar, moveToParentBottomEdge_WidgetFlag |
-                                     parentCannotResizeHeight_WidgetFlag |
-                                     resizeWidthOfChildren_WidgetFlag |
-                                     arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag |
-                                     commandOnClick_WidgetFlag |
-                                     drawBackgroundToBottom_WidgetFlag, iTrue);
+        setFlags_Widget(toolBar,
+                        //moveToParentBottomEdge_WidgetFlag | parentCannotResizeHeight_WidgetFlag |
+                            resizeWidthOfChildren_WidgetFlag | arrangeHeight_WidgetFlag |
+                            arrangeHorizontal_WidgetFlag | commandOnClick_WidgetFlag | collapse_WidgetFlag,
+                        iTrue);
         setId_Widget(addChildFlags_Widget(toolBar,
                                           iClob(newLargeIcon_LabelWidget("", "...")),
                                           frameless_WidgetFlag),
@@ -1641,21 +1735,18 @@ void createUserInterface_Root(iRoot *d) {
                          iClob(newLargeIcon_LabelWidget("\U0001f464", "identmenu.open")),
                          frameless_WidgetFlag | fixedHeight_WidgetFlag),
                      "toolbar.ident");
-        setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(newLargeIcon_LabelWidget(book_Icon, "toolbar.showview arg:-1")),
-                                          frameless_WidgetFlag | commandOnClick_WidgetFlag),
+        setId_Widget(addChildFlags_Widget(
+                         toolBar,
+                         iClob(newLargeIcon_LabelWidget(book_Icon, "toolbar.showview arg:-1")),
+                         frameless_WidgetFlag | commandOnClick_WidgetFlag),
                      "toolbar.view");
-                     iLabelWidget *idName;
+        iLabelWidget *idName;
         setId_Widget(addChildFlags_Widget(identButton,
                                           iClob(idName = new_LabelWidget("", NULL)),
                                           frameless_WidgetFlag |
-                                          noBackground_WidgetFlag |
-                                          moveToParentBottomEdge_WidgetFlag |
-                                          resizeToParentWidth_WidgetFlag
-                                          /*fixedPosition_WidgetFlag |
-                                          fixedSize_WidgetFlag |
-                                          ignoreForParentWidth_WidgetFlag |
-                                          ignoreForParentHeight_WidgetFlag*/),
+                                              noBackground_WidgetFlag |
+                                              moveToParentBottomEdge_WidgetFlag |
+                                              resizeToParentWidth_WidgetFlag),
                      "toolbar.name");
         setFont_LabelWidget(idName, uiLabelTiny_FontId);
         iLabelWidget *menuButton = makeMenuButton_LabelWidget(menu_Icon, phoneNavMenuItems_,
@@ -1679,6 +1770,7 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(menu, "toolbar.menu"); /* view menu */
     }
 #endif
+    setupMovableElements_Root_(d);
     updateNavBarActions_(navBar);
     updatePadding_Root(d);
     /* Global context menus. */ {
@@ -1766,30 +1858,230 @@ void createUserInterface_Root(iRoot *d) {
     }
     updateMetrics_Root(d);
     updateNavBarSize_(navBar);
-    if (deviceType_App() == phone_AppDeviceType) {
+    if (isLandscapePhone_App()) {
         const float sidebarWidth = width_Widget(root) / (float) gap_UI;
         setWidth_SidebarWidget(findChild_Widget(root, "sidebar"), sidebarWidth);
-        setWidth_SidebarWidget(findChild_Widget(root, "sidebar2"), sidebarWidth);
+        //setWidth_SidebarWidget(findChild_Widget(root, "sidebar2"), sidebarWidth);
+    }
+}
+
+static void setupMovableElements_Root_(iRoot *d) {
+    /* The navbar and the tab bar may be move depending on preferences. */
+    const iPrefs *prefs = prefs_App();
+    iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
+//    iWidget *toolBar   = findChild_Widget(bottomBar, "toolbar");
+    iWidget *navBar    = findChild_Widget(d->widget, "navbar");
+    iWidget *winBar    = findChild_Widget(d->widget, "winbar"); /* optional: custom window frame */
+    iWidget *div       = findChild_Widget(d->widget, "navdiv");
+    iWidget *docTabs   = findChild_Widget(d->widget, "doctabs");
+    iWidget *tabBar    = findChild_Widget(docTabs, "tabs.buttons");
+    iWidget *menuBar   = findChild_Widget(d->widget, "menubar");
+    iWidget *navMenu   = findChild_Widget(d->widget, "navbar.menu");
+    setFlags_Widget(menuBar, hidden_WidgetFlag, !prefs->menuBar);
+    setFlags_Widget(navMenu, hidden_WidgetFlag, prefs->menuBar);
+    iChangeFlags(navBar->flags2, permanentVisualOffset_WidgetFlag2, iFalse);
+    if (prefs->bottomNavBar) {
+        if (deviceType_App() == phone_AppDeviceType) {
+            /* When at the bottom, the navbar is at the top of the bottombar, and gets fully hidden
+               when the toolbar is hidden. */
+            if (parent_Widget(navBar) != bottomBar) {
+                removeChild_Widget(navBar->parent, navBar);
+                addChildPos_Widget(bottomBar, navBar, front_WidgetAddPos);
+                iRelease(navBar);
+            }
+        }
+        else {
+            /* On desktop/tablet, a bottom navbar is at the bottom of the main layout. */
+            removeChild_Widget(navBar->parent, navBar);
+            addChildPos_Widget(div, navBar, back_WidgetAddPos);
+            iRelease(navBar);
+            /* We'll need to be able to move the input field from under the keyboard. */
+            iChangeFlags(navBar->flags2, permanentVisualOffset_WidgetFlag2,
+                         deviceType_App() == tablet_AppDeviceType);
+        }
+    }
+    else {
+        /* In the top navbar layout, the navbar is always the first (or second) child. */
+        removeChild_Widget(navBar->parent, navBar);
+        if (winBar) {
+            iAssert(indexOfChild_Widget(div, winBar) == 0);
+            insertChildAfter_Widget(div, navBar, 1);
+        }
+        else {
+#if defined (LAGRANGE_MENUBAR)
+            insertChildAfter_Widget(div, navBar, 0);
+#else
+            addChildPos_Widget(div, navBar, front_WidgetAddPos);
+#endif
+        }
+        iRelease(navBar);
+    }
+    iChangeFlags(tabBar->flags2, permanentVisualOffset_WidgetFlag2, prefs->bottomTabBar);
+    /* Tab button frames. */
+    iForEach(ObjectList, i, children_Widget(tabBar)) {
+        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+            setNoTopFrame_LabelWidget(i.object, !prefs->bottomTabBar);
+            setNoBottomFrame_LabelWidget(i.object, prefs->bottomTabBar);
+        }
+    }
+    /* Adjust safe area paddings. */
+    if (deviceType_App() == tablet_AppDeviceType && prefs->bottomTabBar && !prefs->bottomNavBar) {
+        tabBar->padding[3] = bottomSafeInset_Mobile();
+    }
+    else {
+        tabBar->padding[3] = 0;
+    }
+    setTabBarPosition_Widget(docTabs, prefs->bottomTabBar);
+    arrange_Widget(d->widget);
+    postRefresh_App();
+    postCommand_App("window.resized"); /* not really, but some widgets will update their layout */
+}
+
+static void updateBottomBarPosition_(iWidget *bottomBar, iBool animate) {
+    if (deviceType_App() != phone_AppDeviceType) {
+        return;
+    }
+    if (focus_Widget() && isInstance_Object(focus_Widget(), &Class_InputWidget)) {
+        return;
+    }
+    const iPrefs *prefs        = prefs_App();
+    float         bottomSafe   = 0.0f;
+    iWidget      *tabBar       = NULL;
+    iRoot        *root         = bottomBar->root;
+    iWidget      *docTabs      = findChild_Widget(root->widget, "doctabs");
+    iWidget      *toolBar      = findChild_Widget(bottomBar, "toolbar");
+    iWidget      *navBar       = findChild_Widget(root->widget, "navbar");
+    size_t        numPages     = 0;
+    iBool         bottomTabBar = prefs->bottomTabBar;
+    if (prefs->bottomTabBar || prefs->bottomNavBar) {
+        tabBar = findChild_Widget(docTabs, "tabs.buttons");
+        numPages = tabCount_Widget(docTabs);
+        if (numPages == 1) {
+            bottomTabBar = iFalse; /* it's not visible */
+        }
+    }
+#if defined (iPlatformAppleMobile)
+    if (bottomTabBar) {
+        safeAreaInsets_iOS(NULL, NULL, NULL, &bottomSafe);
+        if (bottomSafe >= gap_UI) {
+            bottomSafe -= gap_UI; /* kludge: something's leaving a gap between the tabs and the bottombar */
+        }
+    }
+#endif
+    const int   height = height_Widget(bottomBar);
+    const iBool shown  = ~flags_Widget(bottomBar) & hidden_WidgetFlag;
+    if (shown) {
+        setVisualOffset_Widget(bottomBar, 0, 200 * animate, easeOut_AnimFlag);
+        if (isPortraitPhone_App()) {
+            setVisualOffset_Widget(toolBar, 0, 200 * animate, 0);
+        }
+        setVisualOffset_Widget(navBar, 0, 200 * animate, 0);
+        if (bottomTabBar) {
+            /* Tab bar needs to stay visible, too. */
+            if (prefs->bottomNavBar || isPortrait_App()) {
+                setVisualOffset_Widget(tabBar, -height, 200 * animate, easeOut_AnimFlag);
+            }
+            else {
+                setVisualOffset_Widget(tabBar, -bottomSafe, 200 * animate, easeOut_AnimFlag);
+            }
+        }
+    }
+    else {
+        /* Close any menus that open via the toolbar. */
+        setVisualOffset_Widget(bottomBar, height - bottomSafe, 200 * animate, easeOut_AnimFlag);
+        if (bottomTabBar) {
+            if (isPortraitPhone_App()) {
+                setVisualOffset_Widget(toolBar, bottomSafe, 200 * animate, 0);
+            }
+            if (prefs->bottomNavBar) {
+                setVisualOffset_Widget(navBar, bottomSafe, 200 * animate, 0);
+            }
+            setVisualOffset_Widget(tabBar, -bottomSafe, 200 * animate, easeOut_AnimFlag);
+        }
     }
 }
 
 void showToolbar_Root(iRoot *d, iBool show) {
-    /* The toolbar is only used on phone portrait layout. */
-    if (isLandscape_App()) return;
-    iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
-    if (!toolBar) return;
-    const int height = size_Root(d).y - top_Rect(boundsWithoutVisualOffset_Widget(toolBar));
-    if (show && !isVisible_Widget(toolBar)) {
-        setFlags_Widget(toolBar, hidden_WidgetFlag, iFalse);
-        setVisualOffset_Widget(toolBar, 0, 200, easeOut_AnimFlag);
+    iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
+    if (!bottomBar) return;
+    if (focus_Widget() && isInstance_Object(focus_Widget(), &Class_InputWidget)) {
+        /* Don't move anything while text input is active. */
+        return;
     }
-    else if (!show && isVisible_Widget(toolBar)) {
+    const iPrefs *prefs = prefs_App();
+    /* The toolbar is only used in the portrait phone layout, but the bottom bar may have other
+       elements regardless. The toolbar is needed for clearing the bottom safe area when there
+       is a bottom tab bar, even if the URL is at the top. Note that the entire bottom bar may
+       be hidden, but the tab bar remains always visible if there are tabs open. */
+    if (isLandscape_App() && !prefs->bottomTabBar && !prefs->bottomNavBar) {
+//        setFlags_Widget(bottomBar, hidden_WidgetFlag, iTrue);
+        show = iFalse;
+//        setBottomBarPosition_(bottomBar, iFalse, iTrue);
+//        return;
+    }
+    iWidget *toolBar = findChild_Widget(bottomBar, "toolbar");
+//    iWidget *navBar = findChild_Widget(d->widget, "navbar");
+//    const int height = size_Root(d).y - top_Rect(boundsWithoutVisualOffset_Widget(bottomBar));
+//    float bottomSafe = 0;
+//    const iBool isBottomTabBar = prefs_App()->bottomTabBar;
+//    iWidget *tabBar = NULL;
+//    if (isBottomTabBar) {
+//        tabBar = findChild_Widget(findChild_Widget(d->widget, "doctabs"), "tabs.buttons");
+//        const size_t numPages = childCount_Widget(findChild_Widget(tabs, "tabs.pages"));
+//    }
+//#if defined (iPlatformAppleMobile)
+//    if (isBottomTabBar) {
+//        safeAreaInsets_iOS(NULL, NULL, NULL, &bottomSafe);
+//        if (bottomSafe >= gap_UI) {
+//            bottomSafe -= gap_UI;
+//        }
+//    }
+//#endif
+    if (show) {
+        setFlags_Widget(bottomBar, hidden_WidgetFlag, iFalse);
+    }
+    else {
+        if (~flags_Widget(bottomBar) & hidden_WidgetFlag) {
+            closeMenu_Widget(findChild_Widget(findWidget_App("toolbar.navmenu"), "menu"));
+            closeMenu_Widget(findChild_Widget(bottomBar, "toolbar.menu"));
+        }
+        setFlags_Widget(bottomBar, hidden_WidgetFlag, iTrue);
+    }
+    /* The toolbar is only shown when in portrait mode, otherwise buttons are in the navbar. */
+    showCollapsed_Widget(toolBar, isPortrait_App());
+    updateBottomBarPosition_(bottomBar, iTrue);
+    
+#if 0
+    if (show && (!isVisible_Widget(bottomBar) || (isBottomTabBar && ~flags_Widget(tabBar) & dragged_WidgetFlag))) {
+        setFlags_Widget(bottomBar, hidden_WidgetFlag, iFalse);
+        setVisualOffset_Widget(bottomBar, 0, 200, easeOut_AnimFlag);
+        setVisualOffset_Widget(toolBar, 0, 200, 0);
+        if (prefs_App()->bottomNavBar) {
+            setVisualOffset_Widget(navBar, 0, 200, 0);
+        }
+        if (isBottomTabBar) {
+            /* Tab bar needs to stay visible, too. */
+            setVisualOffset_Widget(tabBar, -bottomBar->rect.size.y, 200, easeOut_AnimFlag);
+            setFlags_Widget(tabBar, dragged_WidgetFlag, iTrue);
+                /* force it to be visible; `dragged` applies the offset even after the animation */
+        }
+    }
+    else if (!show && isVisible_Widget(bottomBar)) {
         /* Close any menus that open via the toolbar. */
         closeMenu_Widget(findChild_Widget(findWidget_App("toolbar.navmenu"), "menu"));
-        closeMenu_Widget(findChild_Widget(toolBar, "toolbar.menu"));
-        setFlags_Widget(toolBar, hidden_WidgetFlag, iTrue);
-        setVisualOffset_Widget(toolBar, height, 200, easeOut_AnimFlag);
+        closeMenu_Widget(findChild_Widget(bottomBar, "toolbar.menu"));
+        setFlags_Widget(bottomBar, hidden_WidgetFlag, iTrue);
+        setVisualOffset_Widget(bottomBar, height - bottomSafe, 200, easeOut_AnimFlag);
+        setVisualOffset_Widget(toolBar, bottomSafe, 200, 0);
+        if (prefs_App()->bottomNavBar) {
+            setVisualOffset_Widget(navBar, bottomSafe, 200, 0);
+        }
+        if (isBottomTabBar) {
+            setVisualOffset_Widget(tabBar, -bottomSafe, 200, easeOut_AnimFlag);
+            tabBar->flags2 |= hiddenWithVisualOffset_WidgetFlag2;
+        }
     }
+#endif
 }
 
 size_t windowIndex_Root(const iRoot *d) {
@@ -1850,6 +2142,9 @@ iRect visibleRect_Root(const iRoot *d) {
         visRect = intersect_Rect(visRect, init_Rect(usable.x, usable.y, usable.w, usable.h));        
     }
 #endif
-    adjustEdges_Rect(&visRect, 0, 0, -get_MainWindow()->keyboardHeight + bottom, 0);
+    const int keyboardHeight = get_MainWindow()->keyboardHeight;
+    if (keyboardHeight > bottom) {
+        adjustEdges_Rect(&visRect, 0, 0, -keyboardHeight + bottom, 0);
+    }
     return visRect;
 }

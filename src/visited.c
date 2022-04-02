@@ -72,53 +72,71 @@ void deinit_Visited(iVisited *d) {
     delete_Mutex(d->mtx);
 }
 
-void save_Visited(const iVisited *d, const char *dirPath) {
+void serialize_Visited(const iVisited *d, iStream *out) {
     iString *line = new_String();
+    lock_Mutex(d->mtx);
+    iConstForEach(Array, i, &d->visited.values) {
+        const iVisitedUrl *item = i.value;
+        format_String(line,
+                      "%llu %04x %s\n",
+                      (unsigned long long) integralSeconds_Time(&item->when),
+                      item->flags,
+                      cstr_String(&item->url));
+        writeData_Stream(out, cstr_String(line), size_String(line));
+    }
+    unlock_Mutex(d->mtx);
+    delete_String(line);
+}
+
+void save_Visited(const iVisited *d, const char *dirPath) {
     iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.2.txt"));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        lock_Mutex(d->mtx);
-        iConstForEach(Array, i, &d->visited.values) {
-            const iVisitedUrl *item = i.value;
-            format_String(line,
-                          "%llu %04x %s\n",
-                          (unsigned long long) integralSeconds_Time(&item->when),
-                          item->flags,
-                          cstr_String(&item->url));
-            writeData_File(f, cstr_String(line), size_String(line));
-        }
-        unlock_Mutex(d->mtx);
+        serialize_Visited(d, stream_File(f));
     }
     iRelease(f);
-    delete_String(line);
+}
+
+void deserialize_Visited(iVisited *d, iStream *ins, iBool mergeKeepingLatest) {
+    const iRangecc src  = range_Block(collect_Block(readAll_Stream(ins)));
+    iRangecc       line = iNullRange;
+    iTime          now;
+    initCurrent_Time(&now);
+    lock_Mutex(d->mtx);
+    while (nextSplit_Rangecc(src, "\n", &line)) {
+        if (size_Range(&line) < 8) continue;
+        char *endp = NULL;
+        const unsigned long long ts = strtoull(line.start, &endp, 10);
+        if (ts == 0) break;
+        const uint32_t flags = (uint32_t) strtoul(skipSpace_CStr(endp), &endp, 16);
+        const char *urlStart = skipSpace_CStr(endp);
+        iVisitedUrl item;
+        item.when.ts = (struct timespec){ .tv_sec = ts };
+        if (~flags & kept_VisitedUrlFlag &&
+            secondsSince_Time(&now, &item.when) > maxAge_Visited) {
+            continue; /* Too old. */
+        }
+        item.flags = flags;
+        initRange_String(&item.url, (iRangecc){ urlStart, line.end });
+        set_String(&item.url, &item.url);
+        if (mergeKeepingLatest) {
+            /* Check if we already have this. */
+            size_t existingPos;
+            if (locate_SortedArray(&d->visited, &item, &existingPos)) {
+                iVisitedUrl *existing = at_SortedArray(&d->visited, existingPos);
+                max_Time(&existing->when, &item.when);
+                existing->flags = item.flags;
+                continue;
+            }
+        }
+        insert_SortedArray(&d->visited, &item);
+    }
+    unlock_Mutex(d->mtx);
 }
 
 void load_Visited(iVisited *d, const char *dirPath) {
     iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.2.txt"));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
-        lock_Mutex(d->mtx);
-        const iRangecc src  = range_Block(collect_Block(readAll_File(f)));
-        iRangecc       line = iNullRange;
-        iTime          now;
-        initCurrent_Time(&now);
-        while (nextSplit_Rangecc(src, "\n", &line)) {
-            if (size_Range(&line) < 8) continue;
-            char *endp = NULL;
-            const unsigned long long ts = strtoull(line.start, &endp, 10);
-            if (ts == 0) break;
-            const uint32_t flags = (uint32_t) strtoul(skipSpace_CStr(endp), &endp, 16);
-            const char *urlStart = skipSpace_CStr(endp);
-            iVisitedUrl item;
-            item.when.ts = (struct timespec){ .tv_sec = ts };
-            if (~flags & kept_VisitedUrlFlag &&
-                secondsSince_Time(&now, &item.when) > maxAge_Visited) {
-                continue; /* Too old. */
-            }
-            item.flags = flags;
-            initRange_String(&item.url, (iRangecc){ urlStart, line.end });
-            set_String(&item.url, &item.url);
-            insert_SortedArray(&d->visited, &item);
-        }
-        unlock_Mutex(d->mtx);
+        deserialize_Visited(d, stream_File(f), iFalse /* no merge */);
     }
     iRelease(f);
 }
@@ -145,10 +163,17 @@ static size_t find_Visited_(const iVisited *d, const iString *url) {
 }
 
 void visitUrl_Visited(iVisited *d, const iString *url, uint16_t visitFlags) {
+    iTime when;
+    initCurrent_Time(&when);
+    visitUrlTime_Visited(d, url, visitFlags, when);
+}
+
+void visitUrlTime_Visited(iVisited *d, const iString *url, uint16_t visitFlags, iTime when) {
     if (isEmpty_String(url)) return;
     url = canonicalUrl_String(url);
     iVisitedUrl visit;
     init_VisitedUrl(&visit);
+    visit.when = when;
     visit.flags = visitFlags;
     set_String(&visit.url, url);
     size_t pos;

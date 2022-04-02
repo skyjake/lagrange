@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <ctype.h>
 
 iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
-    if (d == gray_GmDocumentTheme) {
+    if (d == gray_GmDocumentTheme || d == oceanic_GmDocumentTheme || d == sepia_GmDocumentTheme) {
         return isDark_ColorTheme(colorTheme_App());
     }
     return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme;
@@ -696,6 +696,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
     const iBool      isNormalized  = isNormalized_GmDocument_(d);
+    const iBool      isJustified   = prefs->justifyParagraph;
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = text_GmLineType;
     iBool            followsBlank  = iFalse;
@@ -968,6 +969,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         iAssert(!isEmpty_Range(&line)); /* must have something at this point */
         size_t numRunsAdded = 0;
+        const iBool isTextType =
+            (type == text_GmLineType || type == bullet_GmLineType || type == quote_GmLineType ||
+             type == link_GmLineType);
+        const iBool isParagraphJustified = isJustified && isTextType;
         /* Typeset the paragraph. */ {
             iRunTypesetter rts;
             init_RunTypesetter_(&rts);
@@ -981,12 +986,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             rts.indent        = indent * gap_Text;
             /* The right margin is used for balancing lines horizontally. */
             if (isVeryNarrow || isFullWidthImages) {
-                rts.rightMargin = 0;
+                rts.rightMargin =
+                    gap_Text * (!isExtremelyNarrow && isParagraphJustified && isTextType ? 1 : 0);
             }
             else {
-                rts.rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
-                                           type == quote_GmLineType
-                                       ? 4 : 0) * gap_Text;
+                rts.rightMargin = gap_Text * (isTextType ? 4 : 0);
             }
             if (!isMono) {
 #if 0
@@ -1009,6 +1013,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             for (;;) { /* need to retry if the font needs changing */
                 rts.run.flags |= startOfLine_GmRunFlag;
+                if (!isParagraphJustified) {
+                    rts.run.flags |= notJustified_GmRunFlag;
+                }
                 rts.baseFont  = rts.run.font;
                 rts.baseColor = rts.run.color;
                 iWrapText wrapText = { .text     = line,
@@ -1060,6 +1067,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             continue;
         }
         iGmRun *lastRun = back_Array(&d->layout);
+        if (numRunsAdded == 2) {
+            /* The last line isn't justified in any case, and justifying just the first line may
+               look inappropriate if there isn't other justified paragraphs next to it. */
+            lastRun[ 0].flags |= notJustified_GmRunFlag;
+            lastRun[-1].flags |= notJustified_GmRunFlag;
+        }
         lastRun->flags |= endOfLine_GmRunFlag;
         if (lastRun->linkId && lastRun->flags & startOfLine_GmRunFlag) {
             /* Single-run link: the icon should also be marked endOfLine. */
@@ -1334,20 +1347,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmLinkIcon_ColorId, get_Color(cyan_ColorId));
             set_Color(tmLinkTextHover_ColorId, get_Color(cyan_ColorId));
             set_Color(tmLinkIconVisited_ColorId, get_Color(teal_ColorId));
-            set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
-            set_Color(tmLinkLastVisitDate_ColorId, get_Color(cyan_ColorId));
+//            set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
+//            set_Color(tmLinkLastVisitDate_ColorId, get_Color(cyan_ColorId));
             set_Color(tmHypertextLinkText_ColorId, get_Color(white_ColorId));
             set_Color(tmHypertextLinkIcon_ColorId, get_Color(orange_ColorId));
             set_Color(tmHypertextLinkTextHover_ColorId, get_Color(orange_ColorId));
             set_Color(tmHypertextLinkIconVisited_ColorId, get_Color(brown_ColorId));
-            set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
-            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(orange_ColorId));
+//            set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
+//            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(orange_ColorId));
             set_Color(tmGopherLinkText_ColorId, get_Color(white_ColorId));
-            set_Color(tmGopherLinkIcon_ColorId, get_Color(magenta_ColorId));
-            set_Color(tmGopherLinkTextHover_ColorId, get_Color(blue_ColorId));
-            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(blue_ColorId));
-            set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
-            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkIcon_ColorId, get_Color(green_ColorId));
+            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(darkGreen_ColorId));
+            set_Color(tmGopherLinkTextHover_ColorId, get_Color(green_ColorId));
+            //set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
+//            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
         else {
             set_Color(tmInlineContentMetadata_ColorId, get_Color(brown_ColorId));
@@ -1355,20 +1368,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmLinkIcon_ColorId, get_Color(teal_ColorId));
             set_Color(tmLinkTextHover_ColorId, get_Color(teal_ColorId));
             set_Color(tmLinkIconVisited_ColorId, get_Color(cyan_ColorId));
-            set_Color(tmLinkDomain_ColorId, get_Color(cyan_ColorId));
-            set_Color(tmLinkLastVisitDate_ColorId, get_Color(teal_ColorId));
+//            set_Color(tmLinkDomain_ColorId, get_Color(cyan_ColorId));
+//            set_Color(tmLinkLastVisitDate_ColorId, get_Color(teal_ColorId));
             set_Color(tmHypertextLinkText_ColorId, get_Color(black_ColorId));
-            set_Color(tmHypertextLinkIcon_ColorId, get_Color(brown_ColorId));
             set_Color(tmHypertextLinkTextHover_ColorId, get_Color(brown_ColorId));
+            set_Color(tmHypertextLinkIcon_ColorId, get_Color(brown_ColorId));
             set_Color(tmHypertextLinkIconVisited_ColorId, get_Color(orange_ColorId));
-            set_Color(tmHypertextLinkDomain_ColorId, get_Color(orange_ColorId));
-            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(brown_ColorId));
+//            set_Color(tmHypertextLinkDomain_ColorId, get_Color(orange_ColorId));
+//            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(brown_ColorId));
             set_Color(tmGopherLinkText_ColorId, get_Color(black_ColorId));
-            set_Color(tmGopherLinkIcon_ColorId, get_Color(magenta_ColorId));
-            set_Color(tmGopherLinkTextHover_ColorId, get_Color(blue_ColorId));
-            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(blue_ColorId));
-            set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
-            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkTextHover_ColorId, get_Color(darkGreen_ColorId));
+            set_Color(tmGopherLinkIcon_ColorId, get_Color(darkGreen_ColorId));
+            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(green_ColorId));
+//            set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
+//            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
         /* Set the non-link default colors. Note that some/most of these are overwritten later
            if a theme seed if available. */
@@ -1401,10 +1414,10 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.4f));
             setHsl_Color(tmLinkIcon_ColorId, addSatLum_HSLColor(get_HSLColor(teal_ColorId), 0, 0));
             set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(teal_ColorId), 0.35f));
-            set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
+//            set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
             setHsl_Color(tmHypertextLinkIcon_ColorId, get_HSLColor(white_ColorId));
             set_Color(tmHypertextLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(white_ColorId), 0.5f));
-            set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
+//            set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
             setHsl_Color(tmGopherLinkIcon_ColorId, addSatLum_HSLColor(get_HSLColor(tmGopherLinkIcon_ColorId), 0, -0.25f));
             setHsl_Color(tmGopherLinkTextHover_ColorId, addSatLum_HSLColor(get_HSLColor(tmGopherLinkTextHover_ColorId), 0, -0.3f));
         }
@@ -1448,47 +1461,48 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                 set_Color(tmBannerTitle_ColorId, get_Color(teal_ColorId));
                 set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
                 set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(black_ColorId), 0.20f));
-                set_Color(tmLinkDomain_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(black_ColorId), 0.33f));
+//                set_Color(tmLinkDomain_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(black_ColorId), 0.33f));
                 set_Color(tmHypertextLinkIconVisited_ColorId, mix_Color(get_Color(orange_ColorId), get_Color(black_ColorId), 0.33f));
-                set_Color(tmHypertextLinkDomain_ColorId, mix_Color(get_Color(orange_ColorId), get_Color(black_ColorId), 0.33f));
+//                set_Color(tmHypertextLinkDomain_ColorId, mix_Color(get_Color(orange_ColorId), get_Color(black_ColorId), 0.33f));
             }
         }
         else if (theme == sepia_GmDocumentTheme) {
-            iHSLColor base = { 40, 0.6f, 0.9f, 1.0f };
-            if (0 && isDarkUI) { /* TODO */
+            iHSLColor base = { 40, 0.30f, 0.9f, 1.0f };
+            if (isDarkUI) {
                 base.lum = 0.15f;
-                base.sat = 0.15f;
+                base.sat = 0.05f;
+                iHSLColor textBase = addSatLum_HSLColor(base, 0.6f, 0.60f);
                 setHsl_Color(tmBackground_ColorId, base);
-                set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
-                set_Color(tmFirstParagraph_ColorId, get_Color(white_ColorId));
-                set_Color(tmQuote_ColorId, get_Color(brown_ColorId));
-                set_Color(tmPreformatted_ColorId, get_Color(brown_ColorId));
-                set_Color(tmHeading1_ColorId, get_Color(brown_ColorId));
-                set_Color(tmHeading2_ColorId, mix_Color(get_Color(brown_ColorId), get_Color(black_ColorId), 0.5f));
-                set_Color(tmHeading3_ColorId, get_Color(black_ColorId));
-                set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(brown_ColorId), 0.15f));
-                set_Color(tmBannerTitle_ColorId, get_Color(brown_ColorId));
-                set_Color(tmBannerIcon_ColorId, get_Color(brown_ColorId));
+                setHsl_Color(tmParagraph_ColorId, textBase);
+                setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(textBase, 0.0, 0.07f));
+                setHsl_Color(tmQuote_ColorId, addSatLum_HSLColor(textBase, 0.7f, -0.05f));
+                set_Color(tmPreformatted_ColorId, get_Color(tmQuote_ColorId));
+                setHsl_Color(tmHeading1_ColorId, addSatLum_HSLColor(textBase, 1.0f, 0.2f));
+                set_Color(tmHeading2_ColorId, getMixed_Color(tmHeading1_ColorId, tmParagraph_ColorId, 0.25f));
+                set_Color(tmHeading3_ColorId, getMixed_Color(tmHeading1_ColorId, tmParagraph_ColorId, 0.75f));
+                setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0.1f, 0.25f));
+                setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0.1f, 0.35f));
                 set_Color(tmLinkText_ColorId, get_Color(tmHeading2_ColorId));
                 set_Color(tmHypertextLinkText_ColorId, get_Color(tmHeading2_ColorId));
                 set_Color(tmGopherLinkText_ColorId, get_Color(tmHeading2_ColorId));
             }
             else {
+                iHSLColor textBase = addSatLum_HSLColor(base, 0.3f, -0.725f);
                 setHsl_Color(tmBackground_ColorId, base);
-                set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
-                set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
-                set_Color(tmQuote_ColorId, get_Color(brown_ColorId));
-                set_Color(tmPreformatted_ColorId, get_Color(brown_ColorId));
-                set_Color(tmHeading1_ColorId, get_Color(brown_ColorId));
-                set_Color(tmHeading2_ColorId, mix_Color(get_Color(brown_ColorId), get_Color(black_ColorId), 0.5f));
-                set_Color(tmHeading3_ColorId, get_Color(black_ColorId));
-                set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(brown_ColorId), 0.15f));
-                set_Color(tmBannerTitle_ColorId, get_Color(brown_ColorId));
-                set_Color(tmBannerIcon_ColorId, get_Color(brown_ColorId));
+                setHsl_Color(tmParagraph_ColorId, textBase);
+                setHsl_Color(tmFirstParagraph_ColorId, textBase);
+                setHsl_Color(tmQuote_ColorId, addSatLum_HSLColor(textBase, 0.4f, 0.05f));
+                set_Color(tmPreformatted_ColorId, get_Color(tmQuote_ColorId));
+                setHsl_Color(tmHeading1_ColorId, addSatLum_HSLColor(textBase, 0.2f, 0.0f));
+                set_Color(tmHeading2_ColorId, get_Color(tmHeading1_ColorId));
+                set_Color(tmHeading3_ColorId, get_Color(tmParagraph_ColorId));
+                setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0.0f, -0.35f));
+                setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0.1f, -0.45f));
                 set_Color(tmLinkText_ColorId, get_Color(tmHeading2_ColorId));
                 set_Color(tmHypertextLinkText_ColorId, get_Color(tmHeading2_ColorId));
                 set_Color(tmGopherLinkText_ColorId, get_Color(tmHeading2_ColorId));
             }
+            setHsl_Color(tmBannerBackground_ColorId, setLum_HSLColor(base, base.lum * 0.93f));
         }
         else if (theme == white_GmDocumentTheme) {
             const iHSLColor base = { 40, 0, 1.0f, 1.0f };
@@ -1533,7 +1547,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         d->themeSeed = 0;
     }
     /* Set up colors. */
-    if (d->themeSeed) {
+    if (d->themeSeed || theme == oceanic_GmDocumentTheme) {
         enum iHue {
             red_Hue,
             reddishOrange_Hue,
@@ -1548,37 +1562,41 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             violet_Hue,
             pink_Hue
         };
-        float hues[] = { 5, 25, 40, 56, 80 + 15, 120, 160, 180, 208, 231, 270, 324 + 10 };
+        float hues[] = { 5, 25, 40, 56, 95, 120, 160, 180, 208, 231, 270, 334 };
         static const struct {
             int index[2];
         } altHues[iElemCount(hues)] = {
-            { 2, 4 },  /* red */
-            { 8, 3 },  /* reddish orange */
-            { 7, 9 },  /* yellowish orange */
-            { 5, 7 },  /* yellow */
-            { 6, 2 },  /* greenish yellow */
-            { 1, 3 },  /* green */
-            { 2, 4 },  /* bluish green */
-            { 2, 11 }, /* cyan */
-            { 6, 10 }, /* sky blue */
-            { 3, 11 }, /* blue */
-            { 8, 9 },  /* violet */
-            { 7, 8 },  /* pink */
+            { 2, 3 },  /*  0: red */
+            { 8, 3 },  /*  1: reddish orange */
+            { 0, 7 },  /*  2: yellowish orange */
+            { 5, 7 },  /*  3: yellow */
+            { 6, 2 },  /*  4: greenish yellow */
+            { 1, 3 },  /*  5: green */
+            { 2, 8 },  /*  6: bluish green */
+            { 2, 5 },  /*  7: cyan */
+            { 6, 10 }, /*  8: sky blue */
+            { 3, 11 }, /*  9: blue */
+            { 8, 9 },  /* 10: violet */
+            { 7, 8 },  /* 11: pink */
         };
         if (d->themeSeed & 0xc00000) {
             /* Hue shift for more variability. */
             iForIndices(i, hues) {
                 hues[i] += (d->themeSeed & 0x200000 ? 10 : -10);
             }
-        }
-//        printf("HUE SHIFT: %d\n", (int) hues[0] - 5); fflush(stdout);
-        const size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
-
-        const int   altIndex[2] = { (d->themeSeed & 0x4) != 0, (d->themeSeed & 0x40) != 0 };
-        const float altHue      = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
-        const float altHue2     = hues[d->themeSeed ? altHues[primIndex].index[altIndex[1]] : 8];
+        }        
+        size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
         
-        const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;        
+        if (d->themeSeed && primIndex == 11 && d->themeSeed & 0x4000000) {
+            /* De-pink some sites. */
+            primIndex = (primIndex + d->themeSeed & 0xf) % 12;
+        }        
+        
+        const int   altIndex[2] = { (d->themeSeed & 0x4) != 0, (d->themeSeed & 0x40) != 0 };
+        float       altHue      = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
+        float       altHue2     = hues[d->themeSeed ? altHues[primIndex].index[altIndex[1]] : 8];
+
+        const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0 || !isDarkUI;
         const iBool isDarkBgSat =
             (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
 
@@ -1603,7 +1621,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
 //                   primIndex,
 //                   altHues[primIndex].index[altIndex[0]],
 //                   altHues[primIndex].index[altIndex[1]],
-//                   isDarkBgSat);
+//                   isDarkBgSat); fflush(stdout);
             
             const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
             setHsl_Color(tmHeading1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
@@ -1699,8 +1717,65 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             setHsl_Color(tmBannerTitle_ColorId, primDim);
             setHsl_Color(tmBannerIcon_ColorId, primDim);
         }
+        else if (theme == oceanic_GmDocumentTheme) {
+            const float hues[3] = {
+                195, 210, 30    
+            };
+            const int bgIndex  = primIndex % 2;
+            const int altIndex = (d->themeSeed >> 7) & 1 ? 2 : bgIndex;            
+            const float lum    = ((d->themeSeed >> 19) & 0xff) / (float) 255.0f;
+            const float lum2   = ((d->themeSeed >> 25) & 0xff) / (float) 255.0f;
+            const float sat    = ((d->themeSeed >> 8) & 0xff) / (float) 255.0f;;
+            iHSLColor base     = { hues[bgIndex],
+                                   0.5f + sat * 0.5f,
+                                   isDarkUI ? 0.05f + lum * 0.15f : (0.75f + lum * 0.3f),
+                                   1.0f };
+            iHSLColor altBase  = { hues[altIndex],
+                                  0.75f + sat * 0.25f,
+                                  isDarkUI ? 0.5f + lum * 0.5f : (0.35f + lum * 0.2f),
+                                   1.0f };
+            iHSLColor preBase  = { hues[d->themeSeed & 0x100 ? bgIndex : altIndex],
+                                   0.75f + sat * 0.25f,
+                                   isDarkUI ? 0.5f + lum2 * 0.5f : (0.25f + lum2 * 0.2f),
+                                   1.0f };
+            if (!isDarkUI) {
+                base.sat *= 0.66f;
+                if (altIndex == 2) {
+//                    altBase.sat = 0.5f;
+                    altBase.sat *= 0.8f;
+                    altBase.lum += 0.1f;
+                    altBase.hue -= 40;
+                }
+            }
+            setHsl_Color(tmBackground_ColorId, base);
+            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, isDarkUI ? 0.04f * (isBannerLighter ? 1 : -1) : 0.05f));
+//            set_Color(tmBannerBackground_ColorId, getMixed_Color(tmBackground_ColorId, uiBackground_ColorId, 0.5f));
+            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 1.0f, isDarkUI ? 0.5f : -0.5f));
+            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0.1f, isDarkUI ? 0.3f : -0.5f));
+//            setHsl_Color(tmBannerSideTitle_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
+            setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, -0.3f, isDarkUI ? (0.5f + lum * 0.1f) : -0.6f));
+            setHsl_Color(tmPreformatted_ColorId, preBase); //addSatLum_HSLColor(preBase, 0.4f, isDarkUI ? 0.4f : -0.2f));
+            set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
+            setHsl_Color(tmLinkText_ColorId,
+                         addSatLum_HSLColor(get_HSLColor(tmParagraph_ColorId), 0, isDarkUI ? 0.2f : -0.2f));
+            if (!isDarkUI) {
+                setHsl_Color(tmLinkIconVisited_ColorId,
+                             addSatLum_HSLColor(get_HSLColor(tmLinkIconVisited_ColorId), 0.0f, -0.25f * (1-lum)));
+            }
+            setHsl_Color(tmHypertextLinkText_ColorId,
+                         addSatLum_HSLColor(get_HSLColor(tmHypertextLinkIcon_ColorId), 0, lum * (isDarkUI ? 0.2f : -0.2f)));
+            set_Color(tmHypertextLinkText_ColorId,
+                      getMixed_Color(tmHypertextLinkText_ColorId, tmParagraph_ColorId, 0.66f));
+            set_Color(tmGopherLinkText_ColorId, getMixed_Color(tmLinkText_ColorId, tmGopherLinkTextHover_ColorId, 0.2f));
+            setHsl_Color(tmHeading1_ColorId, altBase);
+            set_Color(tmHeading2_ColorId, get_Color(tmHeading1_ColorId));
+            set_Color(tmHeading3_ColorId, get_Color(tmParagraph_ColorId));
+            setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(get_HSLColor(tmParagraph_ColorId), 0.0f, isDarkUI ? 0.1f : -0.2f));
+            set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
+        }
         /* Tone down the link colors a bit because bold white is quite strong to look at. */
-        if (isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) {
+        if ((isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) &&
+            theme != oceanic_GmDocumentTheme && theme != sepia_GmDocumentTheme) {
             iHSLColor base = { hues[primIndex], 1.0f, normLum[primIndex], 1.0f };
             if (theme == gray_GmDocumentTheme) {
                 setHsl_Color(tmLinkText_ColorId,
@@ -2500,6 +2575,7 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                    : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkTextHover_ColorId
                                                       : tmLinkTextHover_ColorId;
         }
+        /*
         if (part == domain_GmLinkPart) {
             if (isUnsupported) {
                 return tmBadLink_ColorId;
@@ -2513,6 +2589,7 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                    : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkLastVisitDate_ColorId
                                                       : tmLinkLastVisitDate_ColorId;
         }
+        */
     }
     return tmLinkText_ColorId;
 }
@@ -2557,6 +2634,15 @@ void runBaseAttributes_GmDocument(const iGmDocument *d, const iGmRun *run, int *
     }
 }
 
+iBool isJustified_GmRun(const iGmRun *d) {
+    return prefs_App()->justifyParagraph &&
+           (d->flags & (notJustified_GmRunFlag | endOfLine_GmRunFlag)) == 0;
+}
+
+int drawBoundWidth_GmRun(const iGmRun *d) {
+    return (d->isRTL ? -1 : 1) * width_Rect(isJustified_GmRun(d) ? d->bounds : d->visBounds);
+}
+
 iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
     if (pos.y < top_Rect(d->bounds)) {
         return (iRangecc){ d->text.start, d->text.start };
@@ -2572,8 +2658,12 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
         return (iRangecc){ d->text.end, d->text.end };
     }
     iRangecc loc;
-    tryAdvanceNoWrap_Text(d->font, d->text, x, &loc.start);
-    loc.end = loc.start;
+    iWrapText wt = { .text     = d->text,
+                     .maxWidth = drawBoundWidth_GmRun(d),
+                     .justify  = isJustified_GmRun(d),
+                     .hitPoint = init_I2(x, 0) };
+    measure_WrapText(&wt, d->font);
+    loc.start = loc.end = wt.hitChar_out;
     if (!contains_Range(&d->text, loc.start) && loc.start != d->text.end) {
         return iNullRange; /* it's some other text */
     }
