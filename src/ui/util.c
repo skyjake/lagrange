@@ -2880,7 +2880,8 @@ iWidget *makePreferences_Widget(void) {
                                 iClob(makeHeading_Widget(type == mouse_ScrollType
                                                              ? "${prefs.scrollspeed.mouse}"
                                                              : "${prefs.scrollspeed.keyboard}")));
-                iWidget *scrollSpeed = new_Widget();
+                /* TODO: Make a SliderWidget. */
+                iWidget *scrollSpeed = new_Widget();                
                 addRadioButton_(scrollSpeed, format_CStr("prefs.scrollspeed.%s.7",  typeStr), "0", format_CStr("scrollspeed arg:7  type:%d", type));
                 addRadioButton_(scrollSpeed, format_CStr("prefs.scrollspeed.%s.10", typeStr), "1", format_CStr("scrollspeed arg:10 type:%d", type));
                 addRadioButton_(scrollSpeed, format_CStr("prefs.scrollspeed.%s.13", typeStr), "2", format_CStr("scrollspeed arg:13 type:%d", type));
