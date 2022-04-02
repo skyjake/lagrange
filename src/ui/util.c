@@ -848,6 +848,7 @@ static iArray *deepCopyMenuItems_(iWidget *menu, const iMenuItem *items, size_t 
             item->kmods,
             itemCommand ? iDupStr(itemCommand) : NULL /* NOTE: Only works with string commands. */
         });
+        if (!item->label) break;
     }
     deinit_String(&cmd);
     return array;
@@ -2415,6 +2416,22 @@ static void addDialogToggle_(iWidget *headings, iWidget *values,
     addChild_Widget(values, iClob(makeToggle_Widget(toggleId)));
 }
 
+static void addDialogToggleGroup_(iWidget *headings, iWidget *values, const char *title,
+                                  const char *toggleIds[], size_t n) {
+    addChild_Widget(headings, iClob(makeHeading_Widget(title)));
+    iWidget *group = new_Widget();
+    for (size_t i = 0; i < n && toggleIds[i]; i++) {
+        iWidget *tog;
+        setTextCStr_LabelWidget(
+            addChild_Widget(group, tog = iClob(makeToggle_Widget(toggleIds[i]))),
+            format_CStr("${%s}", toggleIds[i]));
+        setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+        updateSize_LabelWidget((iLabelWidget *) tog);
+    }
+    addChildFlags_Widget(
+        values, iClob(group), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+}
+
 size_t findWidestLabel_MenuItem(const iMenuItem *items, size_t num) {
     int widest = 0;
     size_t widestPos = iInvalidPos;
@@ -2643,7 +2660,7 @@ iWidget *makePreferences_Widget(void) {
             { "dropdown device:2 id:prefs.toolbaraction1", 0, 0, (const void *) toolbarActionItems[0] },
             { "dropdown device:2 id:prefs.toolbaraction2", 0, 0, (const void *) toolbarActionItems[1] },
             { "heading id:heading.prefs.sizing" },
-            { "input id:prefs.uiscale maxlen:8" },
+            { "input id:prefs.uiscale maxlen:5" },
             { "padding" },
             { NULL }
         };
@@ -2826,8 +2843,18 @@ iWidget *makePreferences_Widget(void) {
                      "prefs.page.ui");
         addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
         addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
-        addDialogToggle_(headings, values, "${prefs.bottomnavbar}", "prefs.bottomnavbar");
-        addDialogToggle_(headings, values, "${prefs.bottomtabbar}", "prefs.bottomtabbar");
+        addDialogToggleGroup_(
+            headings,
+            values,
+            "${prefs.uilayout}",
+            (const char *[]) {
+#if defined (LAGRANGE_MAC_MENUBAR)
+                "prefs.bottomnavbar", "prefs.bottomtabbar"
+#else
+                "prefs.bottomnavbar", "prefs.bottomtabbar", "prefs.menubar"
+#endif
+            },
+            iInvalidSize);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
         /* Return key behaviors. */ {
             iLabelWidget *returnKey = makeMenuButton_LabelWidget(
@@ -2870,7 +2897,7 @@ iWidget *makePreferences_Widget(void) {
             addDialogToggle_(headings, values, "${prefs.hidetoolbarscroll}", "prefs.hidetoolbarscroll");
         }
         makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
-        addPrefsInputWithHeading_(headings, values, "prefs.uiscale", iClob(new_InputWidget(8)));
+        addPrefsInputWithHeading_(headings, values, "prefs.uiscale", iClob(new_InputWidget(5)));
         if (deviceType_App() == desktop_AppDeviceType) {
             addDialogToggle_(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
         }
@@ -2900,7 +2927,8 @@ iWidget *makePreferences_Widget(void) {
             setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.blue}", "accent.set arg:4"))), "prefs.accent.4");
             setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.gray}", "accent.set arg:5"))), "prefs.accent.5");
 #if defined (iPlatformApple)
-            /* TODO: Needs some tweaking. */
+            /* TODO: Re-enable this! Accent colors should now be applied in a way that suits 
+               the system accents, as long as there are light and dark variants. */
 //            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.system}", "accent.set arg:2"))), "prefs.accent.2");
 #endif
         }
@@ -2915,8 +2943,6 @@ iWidget *makePreferences_Widget(void) {
                 docThemes[i][findWidestLabel_MenuItem(docThemes[i], max_GmDocumentTheme)].label,
                 docThemes[i],
                 max_GmDocumentTheme);
-            //            setFrameColor_Widget(findChild_Widget(as_Widget(button), "menu"),
-            //                                 uiBackgroundSelected_ColorId);
             setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
             setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
                          format_CStr("prefs.doctheme.%s", mode));
@@ -2952,44 +2978,21 @@ iWidget *makePreferences_Widget(void) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.mono}")));
             addFontButtons_(values, "mono");
             addDialogPadding_(headings, values);
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.mono}")));
-            iWidget *mono = new_Widget(); {
-                iWidget *tog;
-                setTextCStr_LabelWidget(
-                    addChild_Widget(mono, tog = iClob(makeToggle_Widget("prefs.mono.gemini"))),
-                    "${prefs.mono.gemini}");
-                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget((iLabelWidget *) tog);
-                setTextCStr_LabelWidget(
-                    addChild_Widget(mono, tog = iClob(makeToggle_Widget("prefs.mono.gopher"))),
-                    "${prefs.mono.gopher}");
-                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget((iLabelWidget *) tog);
-            }
-            addChildFlags_Widget(values, iClob(mono), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addDialogToggleGroup_(headings,
+                                  values,
+                                  "${prefs.mono}",
+                                  (const char *[]){ "prefs.mono.gemini", "prefs.mono.gopher" },
+                                  2);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.monodoc}")));
             addFontButtons_(values, "monodoc");
-            addDialogPadding_(headings, values);
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.gemtext.ansi}")));
-            iWidget *ansi = new_Widget(); {
-                iWidget *tog;
-                setTextCStr_LabelWidget(
-                    addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.fg"))),
-                    "${prefs.gemtext.ansi.fg}");
-                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget((iLabelWidget *) tog);
-                setTextCStr_LabelWidget(
-                    addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.bg"))),
-                    "${prefs.gemtext.ansi.bg}");
-                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget((iLabelWidget *) tog);
-                setTextCStr_LabelWidget(
-                    addChild_Widget(ansi, tog = iClob(makeToggle_Widget("prefs.gemtext.ansi.fontstyle"))),
-                    "${prefs.gemtext.ansi.fontstyle}");
-                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-                updateSize_LabelWidget((iLabelWidget *) tog);
-            }
-            addChildFlags_Widget(values, iClob(ansi), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addDialogPadding_(headings, values);            
+            addDialogToggleGroup_(headings,
+                                  values,
+                                  "${prefs.gemtext.ansi}",
+                                  (const char *[]){ "prefs.gemtext.ansi.fg",
+                                                    "prefs.gemtext.ansi.bg",
+                                                    "prefs.gemtext.ansi.fontstyle" },
+                                  3);
             addDialogToggle_(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
             addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");                
             addDialogPadding_(headings, values);
@@ -3027,27 +3030,13 @@ iWidget *makePreferences_Widget(void) {
             addRadioButton_(quote, "prefs.quoteicon.0", "${prefs.quoteicon.line}", "quoteicon.set arg:0");
         }
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.boldlink}")));
-        iWidget *boldLink = new_Widget(); {
-            /* TODO: Add a utility function for this type of toggles? (also for above) */
-            iWidget *tog;
-            setTextCStr_LabelWidget(
-                addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.visited"))),
-                "${prefs.boldlink.visited}");
-            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-            updateSize_LabelWidget((iLabelWidget *) tog);
-            setTextCStr_LabelWidget(
-                addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.dark"))),
-                "${prefs.boldlink.dark}");
-            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-            updateSize_LabelWidget((iLabelWidget *) tog);
-            setTextCStr_LabelWidget(
-                addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.light"))),
-                "${prefs.boldlink.light}");
-            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-            updateSize_LabelWidget((iLabelWidget *) tog);
-        }
-        addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addDialogToggleGroup_(headings,
+                              values,
+                              "${prefs.boldlink}",
+                              (const char *[]){ "prefs.boldlink.visited",
+                                                "prefs.boldlink.dark",
+                                                "prefs.boldlink.light" },
+                              3);
         addDialogPadding_(headings, values);
         addDialogToggle_(headings, values, "${prefs.sideicon}", "prefs.sideicon");
         addDialogToggle_(headings, values, "${prefs.centershort}", "prefs.centershort");

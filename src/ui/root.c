@@ -53,8 +53,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_timer.h>
 
-#if 0 //defined (iPlatformPcDesktop)
-static const iMenuItem navMenuItems_[] = {
+static const iMenuItem desktopNavMenuItems_[] = {
     { openWindow_Icon " ${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
     { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { close_Icon " ${menu.closetab}", SDLK_w, KMOD_PRIMARY, "tabs.close" },
@@ -70,9 +69,6 @@ static const iMenuItem navMenuItems_[] = {
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---" },
-//    { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
-//    { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
-//    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     { "${menu.downloads}", 0, 0, "downloads.open" },
     { export_Icon " ${menu.export}", 0, 0, "export" },
@@ -84,46 +80,40 @@ static const iMenuItem navMenuItems_[] = {
     { "${menu.help}", SDLK_F1, 0, "!open url:about:help" },
     { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
     { "---" },
-    { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" }
+    { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" },
+    { NULL }
 };
-#endif
 
-#if defined (iPlatformMobile)
-/* Tablet menu. */
 static const iMenuItem tabletNavMenuItems_[] = {
     { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
-//    { leftHalf_Icon " ${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { rightHalf_Icon " ${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
     { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
     { "---" },
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
-    //{ "${menu.downloads}", 0, 0, "downloads.open" },
     { "---" },
     { gear_Icon " ${menu.settings}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { NULL }
 };
 
-/* Phone menu. */
 static const iMenuItem phoneNavMenuItems_[] = {
     { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
-//    { leftHalf_Icon " ${menu.sidebar}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "---" },
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
-    //{ "${menu.downloads}", 0, 0, "downloads.open" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     { "---" },
     { gear_Icon " ${menu.settings}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { NULL }
 };
-#endif /* Mobile */
 
 #if defined (iPlatformMobile)
 static const iMenuItem identityButtonMenuItems_[] = {
@@ -1410,8 +1400,8 @@ void createUserInterface_Root(iRoot *d) {
         iWidget *menuBar = addChildFlags_Widget(
             div,
             iClob(makeMenuBar_Widget(topLevelMenus_Window, iElemCount(topLevelMenus_Window))),
-            0);
-        iUnused(menuBar);
+            collapse_WidgetFlag);
+        setId_Widget(menuBar, "menubar");
 #  if 0
         addChildFlags_Widget(menuBar, iClob(new_Widget()), expand_WidgetFlag);
         /* It's nice to use this space for something, but it should be more valuable than 
@@ -1605,17 +1595,19 @@ void createUserInterface_Root(iRoot *d) {
                                               home_Icon, 0, 0, "navigate.home")),
                                           collapse_WidgetFlag),
                      "navbar.action4");
-#if defined (iPlatformMobile)
-        /* Hamburger menu. */
-        const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
-        iLabelWidget *navMenu =
-            makeMenuButton_LabelWidget(menu_Icon, isPhone ? phoneNavMenuItems_ : tabletNavMenuItems_,
-                                       isPhone ? iElemCount(phoneNavMenuItems_) : iElemCount(tabletNavMenuItems_));
-        setFrameColor_Widget(findChild_Widget(as_Widget(navMenu), "menu"),
-                             uiSeparator_ColorId);
-        setCommand_LabelWidget(navMenu, collectNewCStr_String("menu.open under:1"));
-        setAlignVisually_LabelWidget(navMenu, iTrue);
-        setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
+#if !defined (LAGRANGE_MAC_MENUBAR)
+        /* Hamburger menu. */ {
+            iLabelWidget *navMenu = makeMenuButton_LabelWidget(
+                menu_Icon,
+                deviceType_App() == desktop_AppDeviceType  ? desktopNavMenuItems_
+                : deviceType_App() == tablet_AppDeviceType ? tabletNavMenuItems_
+                                                           : phoneNavMenuItems_,
+                iInvalidSize);
+            setFrameColor_Widget(findChild_Widget(as_Widget(navMenu), "menu"), uiSeparator_ColorId);
+            setCommand_LabelWidget(navMenu, collectNewCStr_String("menu.open under:1"));
+            setAlignVisually_LabelWidget(navMenu, iTrue);
+            setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
+        }
 #endif
 #if !defined (iPlatformApple)
         /* On PC platforms, the close buttons are generally on the top right. */
@@ -1877,12 +1869,16 @@ static void setupMovableElements_Root_(iRoot *d) {
     /* The navbar and the tab bar may be move depending on preferences. */
     const iPrefs *prefs = prefs_App();
     iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
-    iWidget *toolBar   = findChild_Widget(bottomBar, "toolbar");
+//    iWidget *toolBar   = findChild_Widget(bottomBar, "toolbar");
     iWidget *navBar    = findChild_Widget(d->widget, "navbar");
     iWidget *winBar    = findChild_Widget(d->widget, "winbar"); /* optional: custom window frame */
     iWidget *div       = findChild_Widget(d->widget, "navdiv");
     iWidget *docTabs   = findChild_Widget(d->widget, "doctabs");
     iWidget *tabBar    = findChild_Widget(docTabs, "tabs.buttons");
+    iWidget *menuBar   = findChild_Widget(d->widget, "menubar");
+    iWidget *navMenu   = findChild_Widget(d->widget, "navbar.menu");
+    setFlags_Widget(menuBar, hidden_WidgetFlag, !prefs->menuBar);
+    setFlags_Widget(navMenu, hidden_WidgetFlag, prefs->menuBar);
     iChangeFlags(navBar->flags2, permanentVisualOffset_WidgetFlag2, iFalse);
     if (prefs->bottomNavBar) {
         if (deviceType_App() == phone_AppDeviceType) {

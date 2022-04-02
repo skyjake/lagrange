@@ -188,7 +188,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define globe_Icon          "\U0001f310"
 #define envelope_Icon       "\U0001f4e7"
 #define magnifyingGlass_Icon "\U0001f50d"
-#define midEllipsis_Icon    "\u2022\u2022\u2022" // "\u00b7 \u00b7 \u00b7"
+#define midEllipsis_Icon    "\u2022\u2022\u2022"
 #define return_Icon         "\u23ce"
 #define undo_Icon           "\u23ea"
 #define select_Icon         "\u2b1a"
@@ -199,7 +199,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define paperclip_Icon      "\U0001f4ce"
 #define bullet_Icon         "\u2022"
 #define toggleYes_Icon      check_Icon
-#define toggleNo_Icon       bullet_Icon //"\u00b7" /* en dash */
+#define toggleNo_Icon       bullet_Icon
 
 #if defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"
@@ -209,11 +209,9 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define shiftReturn_Icon shift_Icon " " return_Icon
 #endif
 
-#if defined (iPlatformAppleDesktop)
-#   define LAGRANGE_MAC_MENUBAR /* main menu */
-#   if defined (LAGRANGE_ENABLE_MAC_MENUS)
-#       define LAGRANGE_MAC_CONTEXTMENU
-#   endif
+#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_ENABLE_MAC_MENUS)
+#   define LAGRANGE_MAC_MENUBAR
+#   define LAGRANGE_MAC_CONTEXTMENU
 #elif defined (iPlatformDesktop)
 #   define LAGRANGE_MENUBAR
 #endif

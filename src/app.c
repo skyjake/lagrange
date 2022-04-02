@@ -291,6 +291,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.blink", &d->prefs.blinkingCursor },
         { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
         { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
+        { "prefs.menubar", &d->prefs.menuBar },
         { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
         { "prefs.boldlink.light", &d->prefs.boldLinkLight },
         { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
@@ -446,6 +447,9 @@ static void loadPrefs_App_(iApp *d) {
                    the right ones. */
                 handleCommand_App(cmd);
             }
+            else if (equal_Command(cmd, "prefs.menubar.changed")) {
+                handleCommand_App(cmd);    
+            }
 #if defined (iPlatformAndroidMobile)
             else if (equal_Command(cmd, "returnkey.set")) {
                 /* Hardcoded to avoid accidental presses of the virtual Return key. */
@@ -478,18 +482,23 @@ static void loadPrefs_App_(iApp *d) {
     /* Upgrade checks. */
 #if 0 /* disabled in v1.11 (font library search) */
     if (cmp_Version(&upgradedFromAppVersion, &(iVersion){ 1, 8, 0 }) < 0) {
-#if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile)
         /* When upgrading to v1.8.0, the old hardcoded font library is gone and that means
            UI strings may not have the right fonts available for the UI to remain
            usable. */
         postCommandf_App("uilang id:en");
         postCommand_App("~fontpack.suggest.classic");
-#endif
     }
 #endif
+    /* Some settings have fixed values depending on the platform/config. */
 #if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;
 #endif
+#if defined (LAGRANGE_MAC_MENUBAR)
+    d->prefs.menuBar = iFalse;
+#endif
+    if (deviceType_App() != desktop_AppDeviceType) {
+        d->prefs.menuBar = iFalse; /* not optional on mobile */
+    }
     d->isLoadingPrefs = iFalse;
 }
 
@@ -2605,6 +2614,13 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.menubar.changed")) {
+        d->prefs.menuBar = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            postCommand_App("~root.movable");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "translation.languages")) {
         d->prefs.langFrom = argLabel_Command(cmd, "from");
         d->prefs.langTo   = argLabel_Command(cmd, "to");
@@ -3417,6 +3433,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
         setToggle_Widget(findChild_Widget(dlg, "prefs.bottomnavbar"), d->prefs.bottomNavBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.bottomtabbar"), d->prefs.bottomTabBar);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.menubar"), d->prefs.menuBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.blink"), d->prefs.blinkingCursor);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
