@@ -261,6 +261,12 @@ static void setMobileEditMode_SidebarWidget_(iSidebarWidget *d, iBool editing) {
     }
 }
 
+static const iPtrArray *listFeedEntries_SidebarWidget_(const iSidebarWidget *d) {
+    iUnused(d);
+    /* TODO: Sort order setting? */
+    return listEntries_Feeds();
+}
+
 static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iBool isMobile = (deviceType_App() != desktop_AppDeviceType);
     clear_ListWidget(d->list);
@@ -286,7 +292,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             iZap(on);
             size_t numItems = 0;
             isEmpty = iTrue;
-            const iPtrArray *feedEntries = listEntries_Feeds();
+            const iPtrArray *feedEntries = listFeedEntries_SidebarWidget_(d);
             iConstForEach(PtrArray, i, feedEntries) {
                 const iFeedEntry *entry = i.ptr;
                 if (isHidden_FeedEntry(entry)) {
@@ -420,6 +426,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
 #endif
                 { "---", 0, 0, NULL },
                 { circle_Icon " ${feeds.entry.markread}", 0, 0, "feed.entry.toggleread" },
+                { downArrow_Icon " ${feeds.entry.markbelowread}", 0, 0, "feed.entry.markread below:1" },
                 { bookmark_Icon " ${feeds.entry.bookmark}", 0, 0, "feed.entry.bookmark" },
                 { "${menu.copyurl}", 0, 0, "feed.entry.copy" },
                 { "---", 0, 0, NULL },
@@ -1649,14 +1656,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 openMenu_Widget(menu, topLeft_Rect(bounds_Widget(d->actions)));
                 return iTrue;
             }
-            iConstForEach(PtrArray, i, listEntries_Feeds()) {
+            iConstForEach(PtrArray, i, listFeedEntries_SidebarWidget_(d)) {
                 const iFeedEntry *entry = i.ptr;
-                const iString *url = url_FeedEntry(entry);
                 markEntryAsRead_Feeds(entry->bookmarkId, &entry->url, iTrue);
-//                if (!containsUrl_Visited(visited_App(), url)) {
-//                    visitUrl_Visited(visited_App(), url,
-//                                     transient_VisitedUrlFlag | kept_VisitedUrlFlag);
-//                }
             }
             postCommand_App("visited.changed");
             return iTrue;
@@ -1682,6 +1684,24 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     markEntryAsRead_Feeds(
                         item->id, &item->url, isUnreadEntry_Feeds(item->id, &item->url));
                     postCommand_App("visited.changed");
+                    return iTrue;
+                }
+                else if (isCommand_Widget(w, ev, "feed.entry.markread")) {
+                    iBool isBelow = iFalse;
+                    const iBool markingBelow = argLabel_Command(command_UserEvent(ev), "below") != 0;
+                    iConstForEach(PtrArray, i, listFeedEntries_SidebarWidget_(d)) {
+                        const iFeedEntry *entry = i.ptr;
+                        if (isBelow) {
+                            markEntryAsRead_Feeds(entry->bookmarkId, &entry->url, iTrue);
+                        }
+                        else {
+                            if (equal_String(&entry->url, &item->url) &&
+                                entry->bookmarkId == item->id) {
+                                isBelow = iTrue;
+                            }
+                        }
+                    }
+                    postCommand_App("visited.changed");                    
                     return iTrue;
                 }
                 else if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {
@@ -1844,15 +1864,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     }
                 }
                 else if (d->mode == feeds_SidebarMode && d->contextItem) {
-                    const iBool   isRead   = d->contextItem->indent == 0;
+                    const iBool isRead = d->contextItem->indent == 0;
                     setMenuItemLabel_Widget(d->menu,
                                             "feed.entry.toggleread",
                                             isRead ? circle_Icon " ${feeds.entry.markunread}"
                                                    : circleWhite_Icon " ${feeds.entry.markread}");
                 }
-                            }
-                        }
-                    }
+            }
+        }
+    }
     if (ev->type == SDL_KEYDOWN) {
         const int key   = ev->key.keysym.sym;
         const int kmods = keyMods_Sym(ev->key.keysym.mod);

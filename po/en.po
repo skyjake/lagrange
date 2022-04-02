@@ -542,6 +542,9 @@ msgstr "Mark as Read"
 msgid "feeds.entry.markunread"
 msgstr "Mark as Unread"
 
+msgid "feeds.entry.markbelowread"
+msgstr "Mark Below as Read"
+
 msgid "sidebar.entry.bookmark"
 msgstr "Add Bookmark…"
 
