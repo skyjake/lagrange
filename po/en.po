@@ -13,7 +13,7 @@ msgid "heading.archive.userdata"
 msgstr "User Data Archive"
 
 msgid "userdata.help"
-msgstr "User data archives contain exported browsing history, identities, bookmarks, site-specific settings, and fingerprints of trusted server certificates. You can import some or all of this data."
+msgstr "User data archives contain exported browsing history, identities, bookmarks, site-specific settings, and fingerprints of trusted server certificates. They can be stored as backups and used for transferring data between devices."
 
 msgid "doc.archive.view"
 msgstr "View archive contents"
