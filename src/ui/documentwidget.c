@@ -2738,11 +2738,14 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     else {
                         if (detect_Export(zip)) {
                             setCStr_String(&d->sourceMime, mimeType_Export);
+#if !defined (iPlatformMobile)
                             pushBack_Array(footerItems,
                                            &(iMenuItem){ openExt_Icon " ${menu.open.external}",
                                                          SDLK_RETURN,
                                                          KMOD_PRIMARY,
-                                                         "document.save extview:1" });
+                                        "document.save extview:1"
+                                });
+#endif
                         }
                         format_String(&str, "# %s\n", zipPageHeading_(range_String(&d->sourceMime)));
                         appendFormat_String(&str,
@@ -2750,9 +2753,6 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                                             cstr_Rangecc(baseName_Path(collect_String(
                                                 localFilePathFromUrl_String(d->mod.url)))));
                         appendCStr_String(&str, "\n");
-                        if (!cmp_String(&d->sourceMime, mimeType_Export)) {
-                            appendFormat_String(&str, "\n%s\n", cstr_Lang("userdata.help"));                            
-                        }
                     }
                     iRelease(zip);
                     appendCStr_String(&str, "\n");
@@ -2775,6 +2775,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                                     0,
                                     "document.save" });
                         }
+                    }
+                    if (!cmp_String(&d->sourceMime, mimeType_Export)) {
+                        appendFormat_String(&str, "%s\n", cstr_Lang("userdata.help"));
                     }
                     if (localPath && fileExists_FileInfo(localPath)) {
                         if (!cmp_String(&d->sourceMime, mimeType_Export)) {

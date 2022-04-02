@@ -3787,6 +3787,10 @@ iBool handleCommand_App(const char *cmd) {
             data_Buffer(zip));
         iRelease(zip);
         delete_Export(export);
+#if defined (iPlatformAppleMobile)
+        /* Straight to the save sheet. */
+        postCommand_App("document.save");
+#endif
         return iTrue;
     }
     else if (equal_Command(cmd, "import")) {
