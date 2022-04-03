@@ -61,12 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 static iWindow *    theWindow_;
 static iMainWindow *theMainWindow_;
 
-#if defined (iPlatformApple) || defined (iPlatformLinux) || defined (iPlatformOther)
 static float initialUiScale_ = 1.0f;
-#else
-static float initialUiScale_ = 1.1f;
-#endif
-
 static iBool isOpenGLRenderer_;
 static iBool isDrawing_;
 

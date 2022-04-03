@@ -214,16 +214,23 @@ static iString *serializePrefs_App_(const iApp *d) {
             y = win->place.normalRect.pos.y;
             w = win->place.normalRect.size.x;
             h = win->place.normalRect.size.y;
+#if defined (iPlatformApple) || defined (iPlatformMobile)
+            /* On macOS, maximization should be applied at creation time or the window will take
+               a moment to animate to its maximized size. */
+            const int winSnap = 0;
+#else
+            const int winSnap = snap_MainWindow(win);
+#endif
             appendFormat_String(str,
-                                "window.setrect index:%zu width:%d height:%d coord:%d %d\n",
+                                "window.setrect index:%zu width:%d height:%d coord:%d %d snap:%d\n",
                                 winIndex,
                                 w,
                                 h,
                                 x,
-                                y);
-            /* On macOS, maximization should be applied at creation time or the window will take
-               a moment to animate to its maximized size. */
-#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
+                                y,
+                                winSnap);
+#if 0
+#i f defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
             if (snap_MainWindow(win)) {
                 if (snap_MainWindow(win) == maximized_WindowSnap) {
                     appendFormat_String(str, "~window.maximize index:%zu\n", winIndex);
@@ -238,10 +245,10 @@ static iString *serializePrefs_App_(const iApp *d) {
                         winIndex, snap_MainWindow(d->window), w, h, x, y);
                 }
             }
-#elif !defined (iPlatformApple)
-            if (snap_MainWindow(win) == maximized_WindowSnap) {
-                appendFormat_String(str, "~window.maximize index:%zu\n", winIndex);
-            }
+//#elif !defined (iPlatformApple)
+//            if (snap_MainWindow(win) == maximized_WindowSnap) {
+//                appendFormat_String(str, "~window.maximize index:%zu\n", winIndex);
+//            }
 #endif
         }
     }
