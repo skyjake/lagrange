@@ -2856,9 +2856,9 @@ iWidget *makePreferences_Widget(void) {
             "${prefs.uilayout}",
             (const char *[]) {
 #if defined (LAGRANGE_MAC_MENUBAR)
-                "prefs.bottomnavbar", "prefs.bottomtabbar"
+                "prefs.bottomnavbar", "prefs.bottomtabbar", NULL
 #else
-                "prefs.bottomnavbar", "prefs.bottomtabbar", "prefs.menubar"
+                "prefs.bottomnavbar", "prefs.bottomtabbar", "prefs.menubar", NULL
 #endif
             },
             iInvalidSize);
