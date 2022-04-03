@@ -36,6 +36,7 @@ Fixes:
 * Spurious spaces are removed from ends of bookmark titles.
 * Pasting text into an input field should not decode reserved URL characters.
 * Percent-encoded spaces (%20) in a file name were not decoded when saving a file.
+* Windows: Fixed issues with restoring window placement in maximized mode.
 
 ## 1.11.2
 * Added a keybinding for focusing the URL field.
