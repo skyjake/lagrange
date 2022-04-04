@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-03-04 12:50+0000\n"
+"PO-Revision-Date: 2022-04-04 18:19+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -309,7 +309,7 @@ msgid "status.query"
 msgstr "Arama sorgusu"
 
 msgid "status.query.tight"
-msgstr "Sorgu"
+msgstr "Arama"
 
 msgid "status.feeds"
 msgstr "Beslemeler güncelleniyor"
@@ -2277,3 +2277,113 @@ msgstr "Yapıştır ve git"
 
 msgid "prefs.retaintabs"
 msgstr "Başlangıçta sekmeleri geri yükle:"
+
+msgid "heading.archive.userdata"
+msgstr "Kullanıcı Veri Arşivi"
+
+msgid "userdata.help"
+msgstr ""
+"Kullanıcı veri arşivleri, dışa aktarılmış tarama geçmişi, kimlikler, yer "
+"imleri, siteye özel ayarlar ve güvenilen sunucu sertifikalarının parmak "
+"izlerini içerir. Yedek olarak depolanabilirler ve aygıtlar arası veri "
+"aktarımında kullanılabilirler."
+
+msgid "menu.export"
+msgstr "Kullanıcı verisini dışa aktar"
+
+msgid "menu.import"
+msgstr "Kullanıcı verisini içe aktar…"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Lagrange Hakkında"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Aşağıdakini okundu olarak imle"
+
+msgid "sitespec.tlscache"
+msgstr "TLS oturumunu sürdür:"
+
+msgid "dlg.certimport.paste"
+msgstr "Panodan yapıştır"
+
+msgid "heading.import.userdata"
+msgstr "Kullanıcı verisini içe aktar"
+
+msgid "heading.import.userdata.error"
+msgstr "İçe aktarma başarısız"
+
+msgid "import.userdata.bookmarks"
+msgstr "Yer imleri:"
+
+msgid "import.userdata.idents"
+msgstr "Kimlikler:"
+
+msgid "import.userdata.history"
+msgstr "Geçmiş:"
+
+msgid "import.userdata.trusted"
+msgstr "Güvenilen sertifikalar:"
+
+msgid "import.userdata.sitespec"
+msgstr "Site ayarları:"
+
+msgid "dlg.userdata.no"
+msgstr "Hiçbiri"
+
+msgid "dlg.userdata.missing"
+msgstr "Eksikse"
+
+msgid "dlg.userdata.all"
+msgstr "Tümü (Üzerine yaz)"
+
+msgid "dlg.userdata.alldup"
+msgstr "Tümü (Yinelenmişleri tut)"
+
+msgid "import.userdata"
+msgstr "Seçili veriyi içe aktar"
+
+msgid "import.userdata.dupfolder"
+msgstr "İçe aktarılan yinelenmişler"
+
+msgid "import.userdata.error"
+msgstr "%s, geçerli bir dışa aktarılmış Lagrange arşivi değil."
+
+msgid "heading.bookmark.editfolder"
+msgstr "Klasörü düzenle"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Üst klasör:"
+
+msgid "heading.prefs.support"
+msgstr "Destek"
+
+msgid "prefs.uilayout"
+msgstr "Yerleşim:"
+
+msgid "prefs.bottomnavbar"
+msgstr "Alt dolaşım çubuğu"
+
+msgid "prefs.bottomtabbar"
+msgstr "Alt sekmeler"
+
+msgid "prefs.menubar"
+msgstr "Menü çubuğu"
+
+msgid "prefs.accent.red"
+msgstr "Kırmızı"
+
+msgid "prefs.accent.green"
+msgstr "Yeşil"
+
+msgid "prefs.accent.blue"
+msgstr "Mavi"
+
+msgid "prefs.accent.gray"
+msgstr "Gri"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Okyanus"
+
+msgid "prefs.justify"
+msgstr "İki yana yasla:"
