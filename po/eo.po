@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-05 04:50+0000\n"
+"PO-Revision-Date: 2022-03-26 23:51+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -720,7 +720,7 @@ msgstr "flosanto"
 
 # Used in about:feeds.
 msgid "feeds.list.title"
-msgstr "Donalistaj eniroj"
+msgstr "Donalista eniro"
 
 # Inline download status message.
 msgid "media.download.complete"
@@ -816,3 +816,22 @@ msgstr "Sentitola libro"
 #, c-format
 msgid "fontpack.install"
 msgstr "Instali \"%s\""
+
+#, c-format
+msgid "fontpack.upgrade"
+msgstr "Ĝisdatigi \"%s\" al versio %d"
+
+msgid "error.cgi"
+msgstr "CGI-eraro"
+
+msgid "error.gone"
+msgstr "Forigita"
+
+msgid "dlg.fontpack.delete"
+msgstr "Forigi tiparpakaĵon"
+
+msgid "heading.fontpack.delete"
+msgstr "Forigi tiparpakaĵon"
+
+msgid "fontpack.meta.notinstalled"
+msgstr "Ne instalita"

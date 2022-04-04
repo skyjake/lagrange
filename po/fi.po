@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2022-02-28 11:57+0000\n"
+"PO-Revision-Date: 2022-04-04 04:51+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1651,7 +1651,7 @@ msgid "menu.pageinfo"
 msgstr "Näytä sivun tiedot"
 
 msgid "status.query.tight"
-msgstr "Kysely"
+msgstr "Etsi"
 
 msgid "menu.openfile"
 msgstr "Avaa tiedosto…"
@@ -2325,3 +2325,109 @@ msgstr "Liimaa ja mene"
 
 msgid "prefs.retaintabs"
 msgstr "Palauta välilehdet:"
+
+msgid "heading.archive.userdata"
+msgstr "Arkistoidut käyttäjän tiedot"
+
+msgid "userdata.help"
+msgstr ""
+"Arkistoidut käyttäjät tiedot sisältävät käyttäjän selaushistorian, "
+"identiteetit, kirjanmerkit, palvelinkohtaiset asetukset, ja luotettujen "
+"sertifikaattien sormenjäljet. Tämän avulla voit varmuuskopioida nämä tiedot "
+"tai siirtää ne laitteesta toiseen."
+
+msgid "sitespec.tlscache"
+msgstr "Tallenna ja jatka TLS-istuntoja:"
+
+msgid "dlg.certimport.paste"
+msgstr "Liimaa leikkauspöydältä"
+
+msgid "import.userdata.sitespec"
+msgstr "Palvelinkohtaiset asetukset:"
+
+msgid "import.userdata.error"
+msgstr "%s on virheellinen Lagrange-vientiarkisto."
+
+msgid "heading.bookmark.editfolder"
+msgstr "Muokkaa kansiota"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Merellinen"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Merkitse alla olevat luetuksi"
+
+msgid "menu.export"
+msgstr "Vie käyttäjän tiedot"
+
+msgid "menu.import"
+msgstr "Tuo käyttäjän tiedot…"
+
+msgid "heading.import.userdata"
+msgstr "Tuo käyttäjän tiedot"
+
+msgid "heading.import.userdata.error"
+msgstr "Tuonti epäonnistui"
+
+msgid "import.userdata.bookmarks"
+msgstr "Kirjanmerkit:"
+
+msgid "import.userdata.idents"
+msgstr "Identiteetit:"
+
+msgid "import.userdata.history"
+msgstr "Historia:"
+
+msgid "import.userdata.trusted"
+msgstr "Luotetut sertifikaatit:"
+
+msgid "dlg.userdata.no"
+msgstr "Ei"
+
+msgid "dlg.userdata.missing"
+msgstr "Jos puuttuu"
+
+msgid "dlg.userdata.all"
+msgstr "Kaikki (ylikirjoita)"
+
+msgid "dlg.userdata.alldup"
+msgstr "Kaikki (pidä kaksoiskappaleet)"
+
+msgid "import.userdata"
+msgstr "Tuo valitut tiedot"
+
+msgid "import.userdata.dupfolder"
+msgstr "Tuodut kaksoiskappaleet"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Yläkansio:"
+
+msgid "heading.prefs.support"
+msgstr "Tuki"
+
+msgid "prefs.uilayout"
+msgstr "Asettelu:"
+
+msgid "prefs.bottomnavbar"
+msgstr "Nav.palkki alhaalla"
+
+msgid "prefs.bottomtabbar"
+msgstr "Välisivut alhaalla"
+
+msgid "prefs.menubar"
+msgstr "Valikkorivi"
+
+msgid "prefs.accent.red"
+msgstr "Punainen"
+
+msgid "prefs.accent.green"
+msgstr "Vihreä"
+
+msgid "prefs.accent.blue"
+msgstr "Sininen"
+
+msgid "prefs.accent.gray"
+msgstr "Harmaa"
+
+msgid "prefs.justify"
+msgstr "Tasoita:"

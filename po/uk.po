@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-03-02 06:32+0000\n"
+"PO-Revision-Date: 2022-04-03 02:51+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -553,7 +553,7 @@ msgid "link.side"
 msgstr "Відкрити посилання у половині спільного вікна"
 
 msgid "link.browser"
-msgstr "Відкрити посилання у основному переглядачі"
+msgstr "Відкрити посилання у типовому переглядачі"
 
 msgid "heading.file.delete"
 msgstr "Видалити файл"
@@ -818,7 +818,7 @@ msgstr "Відкрити посилання"
 #, c-format
 msgid "dlg.openlink.confirm"
 msgstr ""
-"Відкрити це посилання у основному переглядачі?\n"
+"Відкрити це посилання у типовому переглядачі?\n"
 "%s%s"
 
 msgid "dlg.openlink"
