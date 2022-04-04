@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-03-02 06:32+0000\n"
+"PO-Revision-Date: 2022-04-05 03:28+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -403,7 +403,7 @@ msgid "dlg.certimport.notfound.page"
 msgstr "Ниједан сертификат нити кључ није пронађен на текућој страници."
 
 msgid "heading.certimport.pasted"
-msgstr "Налепљено из клипборда"
+msgstr "Налепљено са клипборда"
 
 msgid "heading.certimport.dropped"
 msgstr "Превучена датотека"
@@ -1687,7 +1687,7 @@ msgid "menu.pageinfo"
 msgstr "Прикажи податке о страници"
 
 msgid "status.query.tight"
-msgstr "Упит"
+msgstr "Тражи"
 
 msgid "menu.openfile"
 msgstr "Отвори датотеку…"
@@ -2370,3 +2370,113 @@ msgstr "Налепи и иди"
 
 msgid "prefs.retaintabs"
 msgstr "Враћање картица при покретању:"
+
+msgid "heading.archive.userdata"
+msgstr "Архива корисничких података"
+
+msgid "userdata.help"
+msgstr ""
+"Архиве корисничких података садрже извезену историју прегледања, идентитете, "
+"обележиваче, подешавања сајта и отиске серверских сертификата са поверењем. "
+"Оне се могу сачувати као резервне копије и искористити за пренос података са "
+"једног уређаја на други."
+
+msgid "menu.export"
+msgstr "Извези корисничке податке"
+
+msgid "menu.import"
+msgstr "Увези корисничке податке…"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "О Lagrange-у"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Означи доње као прочитане"
+
+msgid "sitespec.tlscache"
+msgstr "Наставак TLS сесије:"
+
+msgid "dlg.certimport.paste"
+msgstr "Налепи са клипборда"
+
+msgid "heading.import.userdata"
+msgstr "Увоз корисничких података"
+
+msgid "heading.import.userdata.error"
+msgstr "Увоз није успео"
+
+msgid "import.userdata.bookmarks"
+msgstr "Обележивачи:"
+
+msgid "import.userdata.idents"
+msgstr "Идентитети:"
+
+msgid "import.userdata.history"
+msgstr "Историја:"
+
+msgid "import.userdata.trusted"
+msgstr "Сертификати са поверењем:"
+
+msgid "import.userdata.sitespec"
+msgstr "Подешавања сајта:"
+
+msgid "dlg.userdata.no"
+msgstr "Ништа"
+
+msgid "dlg.userdata.missing"
+msgstr "Ако недостаје"
+
+msgid "dlg.userdata.all"
+msgstr "Све (преписати)"
+
+msgid "dlg.userdata.alldup"
+msgstr "Све (сачувати дупликате)"
+
+msgid "import.userdata"
+msgstr "Увези изабране податке"
+
+msgid "import.userdata.dupfolder"
+msgstr "Увезени дупликати"
+
+msgid "import.userdata.error"
+msgstr "%s није исправна Lagrange-ова архива извоза."
+
+msgid "heading.bookmark.editfolder"
+msgstr "Уређивање фасцикле"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Надређена фасцикла:"
+
+msgid "heading.prefs.support"
+msgstr "Подршка"
+
+msgid "prefs.uilayout"
+msgstr "Распоред:"
+
+msgid "prefs.bottomnavbar"
+msgstr "Нав. панел на дну"
+
+msgid "prefs.bottomtabbar"
+msgstr "Језичци на дну"
+
+msgid "prefs.menubar"
+msgstr "Мени"
+
+msgid "prefs.accent.green"
+msgstr "Зелена"
+
+msgid "prefs.accent.red"
+msgstr "Црвена"
+
+msgid "prefs.accent.blue"
+msgstr "Плава"
+
+msgid "prefs.accent.gray"
+msgstr "Сива"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Океанска"
+
+msgid "prefs.justify"
+msgstr "Обострано уравнање:"
