@@ -516,27 +516,29 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
             const iGmIdentity *ident = findIdentity_GmCerts(certs_App(), finger);
             /* Sign in/out. */ {
                 const iBool isUsed = isUsedOn_GmIdentity(ident, docUrl);
-                iLookupItem *item  = new_LookupItem(res);
-                item->fg           = uiText_ColorId;
-                item->font         = uiContent_FontId;
+                iLookupItem *item = new_LookupItem(res);
+                item->fg = uiText_ColorId;
+                item->font = uiContent_FontId;
                 format_String(&item->text,
                               "%s \u2014 " uiTextStrong_ColorEscape "%s",
                               cstr_String(&res->label),
                               cstr_Lang(isUsed ? "ident.stopuse" : "ident.use"));
                 format_String(&item->command, "ident.sign%s ident:%s url:%s",
-                              isUsed ? "out arg:0" : "in", cstr_String(&res->meta), cstr_String(docUrl));
+                              isUsed ? "out arg:0" : "in", cstr_String(&res->meta),
+                              cstr_String(docUrl));
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
             if (isUsed_GmIdentity(ident)) {
-                iLookupItem *item  = new_LookupItem(res);
-                item->fg           = uiText_ColorId;
-                item->font         = uiContent_FontId;
+                iLookupItem *item = new_LookupItem(res);
+                item->fg = uiText_ColorId;
+                item->font = uiContent_FontId;
                 format_String(&item->text,
                               "%s \u2014 " uiTextStrong_ColorEscape "%s",
                               cstr_String(&res->label),
                               cstr_Lang("ident.stopuse.all"));
-                format_String(&item->command, "ident.signout arg:1 ident:%s", cstr_String(&res->meta));
+                format_String(&item->command, "ident.signout arg:1 ident:%s",
+                              cstr_String(&res->meta));
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
@@ -605,7 +607,9 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
     scrollOffset_ListWidget(d->list, 0);
     updateVisible_ListWidget(d->list);
     invalidate_ListWidget(d->list);
-    showCollapsed_Widget(as_Widget(d), numItems_ListWidget(d->list) != 0);
+    const iBool allowShow = isVisible_Widget(d) ||
+            (focus_Widget() && !cmp_String(id_Widget(focus_Widget()), "url"));
+    showCollapsed_Widget(as_Widget(d), allowShow && numItems_ListWidget(d->list) != 0);
 }
 
 static iLookupItem *item_LookupWidget_(iLookupWidget *d, size_t index) {
@@ -657,7 +661,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
     else if (isResize_UserEvent(ev) || equal_Command(cmd, "keyboard.changed") ||
              (equal_Command(cmd, "layout.changed") &&
               equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
-        /* Position the lookup popup under the URL bar. */ {
+        /* Position the lookup popup in relation to the URL bar. */ {
             iRoot    *root       = w->root;
             iWidget  *url        = findChild_Widget(root->widget, "url");
             const int minWidth   = iMin(120 * gap_UI, width_Rect(safeRect_Root(root)));
@@ -667,21 +671,31 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                 extraWidth = minWidth - urlWidth;
             }
             const iRect navBarBounds = bounds_Widget(findChild_Widget(root->widget, "navbar"));
+            const iBool atBottom = prefs_App()->bottomNavBar;
             setFixedSize_Widget(
                 w,
                 init_I2(width_Widget(url) + extraWidth,
-                        (bottom_Rect(rect_Root(root)) - bottom_Rect(navBarBounds)) / 2));
-            setPos_Widget(w,
-                          windowToLocal_Widget(w,
-                                               max_I2(zero_I2(),
-                                                      addX_I2(bottomLeft_Rect(bounds_Widget(url)),
-                                                              -extraWidth / 2))));
+                        (atBottom ? top_Rect(navBarBounds)
+                                  : (bottom_Rect(rect_Root(root)) - bottom_Rect(navBarBounds))) /
+                            2));
+            const iInt2 topLeft = atBottom
+                                      ? addY_I2(topLeft_Rect(bounds_Widget(url)), -w->rect.size.y)
+                                      : bottomLeft_Rect(bounds_Widget(url));
+            setPos_Widget(
+                w, windowToLocal_Widget(w, max_I2(zero_I2(), addX_I2(topLeft, -extraWidth / 2))));
 #if defined(iPlatformMobile)
             /* TODO: Check this again. */
             /* Adjust height based on keyboard size. */ {
-                w->rect.size.y = bottom_Rect(visibleRect_Root(root)) - top_Rect(bounds_Widget(w));
+                if (!atBottom) {
+                    w->rect.size.y = bottom_Rect(visibleRect_Root(root)) - top_Rect(bounds_Widget(w));
+                }
+                else {
+                    w->rect.pos = windowToLocal_Widget(w, visibleRect_Root(root).pos);
+                    w->rect.size.y = height_Rect(visibleRect_Root(root)) - height_Rect(navBarBounds) +
+                        (!isPortraitPhone_App() ? bottomSafeInset_Mobile() : 0);
+                }
 #   if defined (iPlatformAppleMobile)
-                if (deviceType_App() == phone_AppDeviceType) {
+                if (deviceType_App() != desktop_AppDeviceType) {
                     float l = 0.0f, r = 0.0f;
                     safeAreaInsets_iOS(&l, NULL, &r, NULL);
                     w->rect.size.x = size_Root(root).x - l - r;
@@ -696,8 +710,8 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         updateVisible_ListWidget(d->list);
         invalidate_ListWidget(d->list);
     }
-    if (equal_Command(cmd, "input.ended") && equal_Rangecc(range_Command(cmd, "id"), "url") &&
-        !isFocused_Widget(w)) {
+    if (equalArg_Command(cmd, "input.ended", "id", "url") &&
+        (deviceType_App() != desktop_AppDeviceType || !isFocused_Widget(w))) {
         showCollapsed_Widget(w, iFalse);
     }
     if (isCommand_Widget(w, ev, "focus.lost")) {
@@ -738,7 +752,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                     setFocus_Widget(url);
                     return iTrue;
                 case SDLK_UP:
-                    if (!moveCursor_LookupWidget_(d, -1)) {
+                    if (!moveCursor_LookupWidget_(d, -1) && !prefs_App()->bottomNavBar) {
                         setCursor_LookupWidget_(d, iInvalidPos);
                         setFocus_Widget(url);
                     }
@@ -767,9 +781,10 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         }
         /* Focus switching between URL bar and lookup results. */
         if (isVisible_Widget(w)) {
-            if (((key == SDLK_DOWN && !mods) || key == SDLK_TAB) &&
-                focus_Widget() == findWidget_App("url") &&
-                numItems_ListWidget(d->list)) {
+            if (((!mods && ((key == SDLK_DOWN && !prefs_App()->bottomNavBar) ||
+                            (key == SDLK_UP && prefs_App()->bottomNavBar))) ||
+                 key == SDLK_TAB) &&
+                focus_Widget() == findWidget_App("url") && numItems_ListWidget(d->list)) {
                 setCursor_LookupWidget_(d, 1); /* item 0 is always the first heading */
                 setFocus_Widget(w);
                 return iTrue;

@@ -36,7 +36,10 @@ enum iColorTheme {
 enum iColorAccent {
     cyan_ColorAccent,
     orange_ColorAccent,
-    system_ColorAccent,
+    red_ColorAccent,
+    green_ColorAccent,
+    blue_ColorAccent,
+    gray_ColorAccent,
     max_ColorAccent
 };
 
@@ -59,11 +62,12 @@ enum iColorId {
     orange_ColorId,
     teal_ColorId,
     cyan_ColorId,
-    yellow_ColorId,
+    maroon_ColorId,
     red_ColorId,
-    magenta_ColorId,
-    blue_ColorId,
+    darkGreen_ColorId,
     green_ColorId,
+    indigo_ColorId,
+    blue_ColorId,
 
     /* user interface colors for semantic use */
     uiFirst_ColorId,
@@ -131,7 +135,7 @@ enum iColorId {
     tmBannerBackground_ColorId,
     tmBannerTitle_ColorId,
     tmBannerIcon_ColorId,
-    tmBannerSideTitle_ColorId,
+    tmBannerSideTitle_ColorId,       /* derived from other theme colors */
     tmInlineContentMetadata_ColorId,
     tmBackgroundAltText_ColorId,     /* derived from other theme colors */
     tmFrameAltText_ColorId,          /* derived from other theme colors */
@@ -144,22 +148,22 @@ enum iColorId {
     tmLinkIconVisited_ColorId,
     tmLinkText_ColorId,
     tmLinkTextHover_ColorId,
-    tmLinkDomain_ColorId,
-    tmLinkLastVisitDate_ColorId,
+    tmLinkDomain_ColorId_OBSOLETE,
+    tmLinkLastVisitDate_ColorId_OBSOLETE,
 
     tmHypertextLinkIcon_ColorId,
     tmHypertextLinkIconVisited_ColorId,
     tmHypertextLinkText_ColorId,
     tmHypertextLinkTextHover_ColorId,
-    tmHypertextLinkDomain_ColorId,
-    tmHypertextLinkLastVisitDate_ColorId,
+    tmHypertextLinkDomain_ColorId_OBSOLETE,
+    tmHypertextLinkLastVisitDate_ColorId_OBSOLETE,
 
     tmGopherLinkIcon_ColorId,
     tmGopherLinkIconVisited_ColorId,
     tmGopherLinkText_ColorId,
     tmGopherLinkTextHover_ColorId,
-    tmGopherLinkDomain_ColorId,
-    tmGopherLinkLastVisitDate_ColorId,
+    tmGopherLinkDomain_ColorId_OBSOLETE,
+    tmGopherLinkLastVisitDate_ColorId_OBSOLETE,
     
     tmBannerItemBackground_ColorId,
     tmBannerItemFrame_ColorId,
@@ -205,16 +209,17 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define orange_ColorEscape          "\v'"
 #define teal_ColorEscape            "\v("
 #define cyan_ColorEscape            "\v)"
-#define yellow_ColorEscape          "\v*"
+#define maroon_ColorEscape          "\v*"
 #define red_ColorEscape             "\v+"
-#define magenta_ColorEscape         "\v,"
-#define blue_ColorEscape            "\v-"
-#define green_ColorEscape           "\v."
-#define uiText_ColorEscape          "\v4"
-#define uiTextAction_ColorEscape    "\v<"
-#define uiTextCaution_ColorEscape   "\v="
-#define uiTextStrong_ColorEscape    "\v:"
-#define uiHeading_ColorEscape       "\vR"
+#define darkGreen_ColorEscape       "\v,"
+#define green_ColorEscape           "\v-"
+#define indigo_ColorEscape          "\v."
+#define blue_ColorEscape            "\v/"
+#define uiText_ColorEscape          "\v5"
+#define uiTextAction_ColorEscape    "\v="
+#define uiTextCaution_ColorEscape   "\v>"
+#define uiTextStrong_ColorEscape    "\v;"
+#define uiHeading_ColorEscape       "\vS"
 
 iDeclareType(Color)
 iDeclareType(HSLColor)
@@ -246,6 +251,7 @@ int             darker_Color    (int color);
 int             lighter_Color   (int color);
 void            set_Color       (int color, iColor rgba);
 iColor          mix_Color       (iColor c1, iColor c2, float t);
+iColor          getMixed_Color  (int color1, int color2, float t);
 int             delta_Color     (iColor c1, iColor c2);
 
 iLocalDef iHSLColor get_HSLColor(int color) {
@@ -263,4 +269,5 @@ void            ansiColors_Color        (iRangecc escapeSequence, int fgDefault,
 const char *    escape_Color            (int color);
 enum iColorId   parseEscape_Color       (const char *cstr, const char **endp);
 
+int             accent_Color            (iBool isBright);
 iColor          systemAccent_Color      (void); /* platform-specific impl */

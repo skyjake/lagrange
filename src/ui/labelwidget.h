@@ -32,6 +32,7 @@ iDeclareObjectConstructionArgs(LabelWidget, const char *label, const char *comma
 void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 void    setNoAutoMinHeight_LabelWidget  (iLabelWidget *, iBool noAutoMinHeight);
 void    setNoTopFrame_LabelWidget   (iLabelWidget *, iBool noTopFrame);
+void    setNoBottomFrame_LabelWidget(iLabelWidget *, iBool noBottomFrame);
 void    setChevron_LabelWidget      (iLabelWidget *, iBool chevron);
 void    setCheckMark_LabelWidget    (iLabelWidget *, iBool checkMark);
 void    setWrap_LabelWidget         (iLabelWidget *, iBool wrap);
@@ -58,6 +59,7 @@ int             font_LabelWidget        (const iLabelWidget *);
 const iString * text_LabelWidget        (const iLabelWidget *);
 const iString * sourceText_LabelWidget  (const iLabelWidget *); /* untranslated */
 const iString * command_LabelWidget     (const iLabelWidget *);
+int             textColor_LabelWidget   (const iLabelWidget *);
 iChar           icon_LabelWidget        (const iLabelWidget *);
 iBool           isWrapped_LabelWidget   (const iLabelWidget *);
 

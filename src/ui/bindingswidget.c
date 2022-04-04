@@ -143,7 +143,7 @@ static void setActiveItem_BindingsWidget_(iBindingsWidget *d, size_t pos) {
         item->isWaitingForEvent = iTrue;
         invalidateItem_ListWidget(d->list, d->activePos);
     }
-#if defined (iPlatformAppleDesktop) && defined (iHaveNativeContextMenus)
+#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_MAC_CONTEXTMENU)
     /* Native menus must be disabled while grabbing keys so the shortcuts don't trigger. */
     const iBool enableNativeMenus = (d->activePos == iInvalidPos);
     enableMenu_MacOS("${menu.title.file}", enableNativeMenus);
@@ -183,7 +183,7 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
         postCommand_App("bindings.changed");
         return iTrue;
     }
-    else if (startsWith_CStr(cmd, "tabs.changed id:bindings")) {
+    else if (equalArg_Command(cmd, "tabs.changed", "id", "bindings")) {
         /* Force the scrollbar to unfade. The list is created hidden so the scrollbar is not
            shown by default.*/
         updateVisible_ListWidget(d->list);

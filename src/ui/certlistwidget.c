@@ -174,6 +174,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
         const char *cmd = command_UserEvent(ev);
         if (equal_Command(cmd, "idents.changed")) {
             updateItems_CertListWidget(d);
+            invalidate_ListWidget(&d->list);
         }
         else if (isCommand_Widget(w, ev, "list.clicked")) {
             itemClicked_CertListWidget_(
@@ -206,7 +207,8 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
                 makeValueInput_Widget(get_Root()->widget,
                                       &ident->notes,
                                       uiHeading_ColorEscape "${heading.ident.notes}",
-                                      format_CStr(cstr_Lang("dlg.ident.notes"), cstr_String(name_GmIdentity(ident))),
+                                      format_CStr(cstr_Lang("dlg.ident.notes"),
+                                                  cstr_String(name_GmIdentity(ident))),
                                       uiTextAction_ColorEscape "${dlg.default}",
                                       format_CStr("!ident.setnotes ident:%p ptr:%p", ident, d));
             }
@@ -266,7 +268,7 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
                                 cstr_String(&item->label),
                                 uiText_ColorEscape),
                     (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
-                                   { uiTextCaution_ColorEscape "${dlg.ident.delete}",
+                                   { uiTextAction_ColorEscape "${dlg.ident.delete}",
                                      0,
                                      0,
                                      format_CStr("!ident.delete confirm:0 ptr:%p", d) } },

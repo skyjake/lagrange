@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.11.2
+    VERSION 1.12.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2022)
 if (IOS)
-    set (PROJECT_VERSION 1.11)
-    set (IOS_BUNDLE_VERSION 1)
-    set (IOS_BUILD_DATE "2022-03-03")
+    set (PROJECT_VERSION 1.12)
+    set (IOS_BUNDLE_VERSION 2)
+    set (IOS_BUILD_DATE "2022-03-28")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 1.11)
-    set (ANDROID_BUILD_VERSION a6)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-03-04")
+    set (PROJECT_VERSION 1.12)
+    set (ANDROID_BUILD_VERSION b3)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-03-29")
 endif ()
 
 # Defaults that depend on environment.
@@ -103,6 +103,7 @@ set (RESOURCES
     res/lang/zh_Hant.bin
     res/shadow.png
     res/fontpack.ini
+    res/macos-system-fonts.ini
 )
 file (GLOB FONTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} res/fonts/*)
 list (APPEND RESOURCES ${FONTS})
@@ -133,7 +134,7 @@ make_resources (${EMB_BIN} ${RESOURCES})
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 if (IOS)
     set (EMB_FONTS
-        res/fonts/SourceSans3-Regular.ttf
+        res/fonts/Roboto-Regular.ttf
         res/fonts/IosevkaTerm-Extended.ttf
     )
     set_source_files_properties (${EMB_FONTS}
@@ -149,6 +150,8 @@ set (SOURCES
     src/bookmarks.c
     src/bookmarks.h
     src/defs.h
+    src/export.c
+    src/export.h
     src/feeds.c
     src/feeds.h
     src/fontpack.c
@@ -277,6 +280,10 @@ endif ()
 if (ANDROID)
     set (MOBILE 1)
     add_definitions (-DiPlatformAndroidMobile=1)
+    list (APPEND SOURCES
+        src/android.c
+        src/android.h
+    )
 endif ()
 if (IOS)
     set (MOBILE 1)
@@ -305,7 +312,7 @@ if (MSYS)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
     list (APPEND SOURCES src/win32.c src/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
 endif ()
-if (MSYS OR (APPLE AND NOT MOBILE) OR (UNIX AND NOT MOBILE))
+if (MSYS OR (UNIX AND NOT MOBILE AND NOT APPLE))
     add_definitions (-DiPlatformPcDesktop=1)
 endif ()
 if (MOBILE)

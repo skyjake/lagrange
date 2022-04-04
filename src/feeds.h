@@ -51,6 +51,8 @@ void    init_Feeds              (const char *saveDir);
 void    deinit_Feeds            (void);
 void    refresh_Feeds           (void);
 void    removeEntries_Feeds     (uint32_t feedBookmarkId);
+void    markEntryAsRead_Feeds   (uint32_t feedBookmarkId, const iString *entryUrl, iBool isRead);
+iBool   isUnreadEntry_Feeds     (uint32_t feedBookmarkId, const iString *entryUrl);
 
 void    refreshFinished_Feeds   (void); /* called on "feeds.update.finished" */
 

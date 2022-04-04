@@ -55,6 +55,7 @@ enum iPluralType {
 struct Impl_Lang {
     iSortedArray *messages;
     enum iPluralType pluralType;
+    iString langCode;
 };
 
 static iLang lang_;
@@ -148,10 +149,17 @@ static void load_Lang_(iLang *d, const char *id) {
 //        printf("ID:%s\n", msg.id.start);
         pushBack_Array(&d->messages->values, &msg);
     }
+    /* ISO 639 language code. */
+    setCStr_String(&d->langCode, id);
+    size_t upos = indexOf_String(&d->langCode, '_');
+    if (upos != iInvalidPos) {
+        truncate_Block(&d->langCode.chars, upos);
+    }
 }
 
 void init_Lang(void) {
     iLang *d = &lang_;
+    init_String(&d->langCode);
     d->messages = new_SortedArray(sizeof(iMsgStr), cmp_MsgStr_);
     setCurrent_Lang("en");
 }
@@ -160,12 +168,17 @@ void deinit_Lang(void) {
     iLang *d = &lang_;
     clear_Lang_(d);
     delete_SortedArray(d->messages);
+    deinit_String(&d->langCode);
 }
 
 void setCurrent_Lang(const char *language) {
     iLang *d = &lang_;
     clear_Lang_(d);
     load_Lang_(d, language);
+}
+
+const char *code_Lang(void) {
+    return cstr_String(&lang_.langCode);
 }
 
 static iBool find_Lang_(iRangecc msgId, iRangecc *str_out) {

@@ -48,7 +48,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 # Work in progress!
 
 This documentation is a work in progress. You may find it useful to alse see the desktop Help page:
-=> gemini://git.skyjake.fi:1968/lagrange/release/res/about/help.gmi  Help page (desktop version, latest release)
+=> gemini://git.skyjake.fi/lagrange/release/res/about/help.gmi  Help page (desktop version, latest release)
 
 # 1 User interface
 

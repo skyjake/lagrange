@@ -49,6 +49,7 @@ struct Impl_LabelWidget {
         uint16_t noAutoMinHeight     : 1; /* minimum height is not set automatically */
         uint16_t drawAsOutline       : 1; /* draw as outline, filled with background color */
         uint16_t noTopFrame          : 1;
+        uint16_t noBottomFrame       : 1;
         uint16_t wrap                : 1;
         uint16_t allCaps             : 1;
         uint16_t removeTrailingColon : 1;
@@ -255,8 +256,8 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             *fg = tmParagraph_ColorId;
         }
         if (isButton) {
-            *frame1 = uiEmbossSelected1_ColorId;
-            *frame2 = uiEmbossSelected2_ColorId;
+            *frame1 = d->flags.noTopFrame    ? uiEmboss1_ColorId : uiEmbossSelected1_ColorId;
+            *frame2 = d->flags.noBottomFrame ? uiEmboss2_ColorId : uiEmbossSelected2_ColorId;
             if (!isKeyRoot) {
                 *frame1 = *bg;
             }
@@ -274,14 +275,19 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     }
     if (isHover) {
         if (isFrameless) {
-            *bg = uiBackgroundFramelessHover_ColorId;
+            if (prefs_App()->accent == gray_ColorAccent && prefs_App()->theme >= light_ColorTheme) {
+                *bg = gray75_ColorId;
+            }
+            else {
+                *bg = uiBackgroundFramelessHover_ColorId;
+            }
             *fg = uiTextFramelessHover_ColorId;
         }
         else {
             /* Frames matching color escaped text. */
             if (colorEscape == uiTextCaution_ColorId) {
                 *frame1 = colorEscape;
-                *frame2 = isDarkTheme ? darker_Color(*frame1) : lighter_Color(*frame1);
+                *frame2 = isDarkTheme ? black_ColorId : white_ColorId;
             }
             else if (isSel) {
                 *frame1 = uiEmbossSelectedHover1_ColorId;
@@ -292,9 +298,12 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 *frame2 = uiEmbossHover2_ColorId;
             }
         }
+        if (colorEscape > 0) {
+            *frame1 = accent_Color(isDarkTheme);
+        }
         if (colorEscape == uiTextCaution_ColorId) {
-            *icon = *meta = *fg = colorEscape;
-            *bg = isDarkTheme ? darker_Color(colorEscape) : lighter_Color(colorEscape);
+            *icon = *meta = *fg = permanent_ColorId | (isDarkTheme ? black_ColorId : white_ColorId);
+            *bg = accent_Color(isDarkTheme);
         }
     }
     if (d->forceFg >= 0) {
@@ -377,11 +386,17 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                 points[3].x--;    
             }
 #endif
-            drawLines_Paint(&p, points + 2, 3, frame2);
-            drawLines_Paint(&p,
-                            points,
-                            isFocused_Widget(w) ? 3 : (!isHover && d->flags.noTopFrame ? 2 : 3),
-                            frame);
+            if (d->flags.noBottomFrame && !isFocused_Widget(w) && !isHover) {
+                drawLines_Paint(&p, points + 2, 2, frame2);
+                drawLines_Paint(&p, points, 3, frame);
+            }
+            else {
+                drawLines_Paint(&p, points + 2, 3, frame2);
+                drawLines_Paint(&p,
+                                points,
+                                (d->flags.noTopFrame && !isFocused_Widget(w) && !isHover ? 2 : 3),
+                                frame);
+            }
         }
     }
     setClip_Paint(&p, rect);
@@ -534,7 +549,7 @@ void updateSize_LabelWidget(iLabelWidget *d) {
 static void replaceVariables_LabelWidget_(iLabelWidget *d) {
     translate_Lang(&d->label);
     if (d->flags.allCaps) {
-        set_String(&d->label, collect_String(upper_String(&d->label)));
+        set_String(&d->label, collect_String(upperLang_String(&d->label, code_Lang())));
     }
     if (d->flags.removeTrailingColon && endsWith_String(&d->label, ":")) {
         removeEnd_String(&d->label, 1);
@@ -587,20 +602,20 @@ void setTextColor_LabelWidget(iLabelWidget *d, int color) {
 
 void setText_LabelWidget(iLabelWidget *d, const iString *text) {
     if (d) {
-    updateText_LabelWidget(d, text);
-    updateSize_LabelWidget(d);
-    if (isWrapped_LabelWidget(d)) {
-        sizeChanged_LabelWidget_(d);
-}
+        updateText_LabelWidget(d, text);
+        updateSize_LabelWidget(d);
+        if (isWrapped_LabelWidget(d)) {
+            sizeChanged_LabelWidget_(d);
+        }
     }
 }
 
 void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
     if (d) {
-    updateTextCStr_LabelWidget(d, text);
-    updateSize_LabelWidget(d);
-    if (isWrapped_LabelWidget(d)) {
-        sizeChanged_LabelWidget_(d);
+        updateTextCStr_LabelWidget(d, text);
+        updateSize_LabelWidget(d);
+        if (isWrapped_LabelWidget(d)) {
+            sizeChanged_LabelWidget_(d);
         }
     }
 }
@@ -619,6 +634,10 @@ void setNoAutoMinHeight_LabelWidget(iLabelWidget *d, iBool noAutoMinHeight) {
 
 void setNoTopFrame_LabelWidget(iLabelWidget *d, iBool noTopFrame) {
     d->flags.noTopFrame = noTopFrame;
+}
+
+void setNoBottomFrame_LabelWidget(iLabelWidget *d, iBool noBottomFrame) {
+    d->flags.noBottomFrame = noBottomFrame;
 }
 
 void setChevron_LabelWidget(iLabelWidget *d, iBool chevron) {
@@ -696,6 +715,10 @@ iBool checkIcon_LabelWidget(iLabelWidget *d) {
     }
     d->icon = removeIconPrefix_String(&d->label);
     return d->icon != 0;
+}
+
+int textColor_LabelWidget(const iLabelWidget *d) {
+    return d->forceFg;
 }
 
 iChar icon_LabelWidget(const iLabelWidget *d) {

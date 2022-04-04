@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "ui/text.h"
 #include "resources.h"
+#include "sitespec.h"
 #include "defs.h"
 
 #include <the_Foundation/archive.h>
@@ -535,23 +536,23 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
 /*----------------------------------------------------------------------------------------------*/
 
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
-    d->mtx   = new_Mutex();
-    d->id    = add_Atomic(&idGen_, 1) + 1;
-    d->identity = NULL;
-    d->resp  = new_GmResponse();
+    d->mtx             = new_Mutex();
+    d->id              = add_Atomic(&idGen_, 1) + 1;
+    d->identity        = NULL;
+    d->resp            = new_GmResponse();
     d->isFilterEnabled = iTrue;
     d->isRespLocked    = iFalse;
     d->isRespFiltered  = iFalse;
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
-    d->titan    = NULL;
-    d->certs    = certs;
-    d->req      = NULL;
-    d->updated  = NULL;
-    d->finished = NULL;
+    d->titan        = NULL;
+    d->certs        = certs;
+    d->req          = NULL;
+    d->updated      = NULL;
+    d->finished     = NULL;
     d->sendProgress = NULL;
-    d->state    = initialized_GmRequestState;
+    d->state        = initialized_GmRequestState;
 }
 
 void deinit_GmRequest(iGmRequest *d) {
@@ -710,7 +711,7 @@ void submit_GmRequest(iGmRequest *d) {
             iString *page = collectNew_String();
             iString *parentDir = collectNewRange_String(dirName_Path(path));
 #if !defined (iPlatformMobile)
-            appendFormat_String(page, "=> %s " upArrow_Icon " %s" iPathSeparator "\n\n",
+            appendFormat_String(page, "=> %s " keyUpArrow_Icon " %s" iPathSeparator "\n\n",
                                 cstrCollect_String(makeFileUrl_String(parentDir)),
                                 cstr_String(parentDir));
 #endif
@@ -791,14 +792,14 @@ void submit_GmRequest(iGmRequest *d) {
                             if (!equal_Rangecc(parentDir, ".")) {
                                 /* A subdirectory. */
                                 appendFormat_String(page,
-                                                    "=> ../ " upArrow_Icon " %s" iPathSeparator
+                                                    "=> ../ " keyUpArrow_Icon " %s" iPathSeparator
                                                     "\n",
                                                     cstr_Rangecc(parentDir));
                             }
                             else {
                                 /* Top-level directory. */
                                 appendFormat_String(page,
-                                                    "=> %s/ " upArrow_Icon " Root\n",
+                                                    "=> %s/ " keyUpArrow_Icon " Root\n",
                                                     cstr_String(containerUrl));
                             }
                             appendFormat_String(page, "# %s\n\n", cstr_Rangecc(baseName_Path(collectNewRange_String(curDir))));
@@ -936,6 +937,13 @@ void submit_GmRequest(iGmRequest *d) {
     d->req = new_TlsRequest();
     if (d->identity) {
         setCertificate_TlsRequest(d->req, d->identity->cert);
+    }
+    /* Site-specific settings. */ {
+        iString siteRoot;
+        initRange_String(&siteRoot, urlRoot_String(&d->url));
+        setSessionCacheEnabled_TlsRequest(
+            d->req, value_SiteSpec(&siteRoot, tlsSessionCache_SiteSpeckey) != 0);
+        deinit_String(&siteRoot);
     }
     iConnect(TlsRequest, d->req, readyRead, d, readIncoming_GmRequest_);
     iConnect(TlsRequest, d->req, sent, d, bytesSent_GmRequest_);

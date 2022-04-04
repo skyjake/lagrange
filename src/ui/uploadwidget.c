@@ -103,7 +103,8 @@ static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
     const int avail = bottom_Rect(visibleRect_Root(w->root)) - footerHeight - inputPos.y;
     /* On desktop, retain the previously set minLines value. */
     int minLines = isUsingPanelLayout_Mobile() ? 1 : minLines_InputWidget(d->input);
-    int maxLines = iMaxi(minLines, avail / lineHeight_Text(font_InputWidget(d->input)));
+    const int lineHeight = lineHeight_Text(font_InputWidget(d->input));
+    int maxLines = iMaxi(minLines, ((avail - gap_UI) / lineHeight));
     /* On mobile, the height is fixed to the available space. */
     setLineLimits_InputWidget(d->input, isUsingPanelLayout_Mobile() ? maxLines : minLines, maxLines);
 }
@@ -174,12 +175,16 @@ void init_UploadWidget(iUploadWidget *d) {
     };
     if (isUsingPanelLayout_Mobile()) {
         const iMenuItem textItems[] = {
+            { "navi.action text:" midEllipsis_Icon, 0, 0, "upload.editmenu.open" },
+            { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
             { "title id:heading.upload.text" },
             { "input id:upload.text noheading:1" },
             { NULL }        
         };
         const iMenuItem fileItems[] = {
+            { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
             { "title id:heading.upload.file" },
+            { "padding arg:0.667" },
             { "button text:" uiTextAction_ColorEscape "${dlg.upload.pickfile}", 0, 0, "upload.pickfile" },            
             { "heading id:upload.file.name" },
             { "label id:upload.filepathlabel text:\u2014" },
@@ -190,20 +195,20 @@ void init_UploadWidget(iUploadWidget *d) {
             { "label id:upload.counter text:" },
             { NULL }        
         };
-        initPanels_Mobile(w, NULL, (iMenuItem[]){
+        initPanels_Mobile(w, NULL, (iMenuItem[]){                                                  
             { "title id:heading.upload" },
+            { "heading id:upload.content" },
+            { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
+            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
+            { "heading text:${heading.upload.id}" },
+            { "dropdown id:upload.id icon:0x1f464 text:", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
+            { "input id:upload.token hint:hint.upload.token.long icon:0x1f516 text:" },
             { "heading id:upload.url" },
             { format_CStr("label id:upload.info font:%d",
                           deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId : uiLabelMedium_FontId) },
             { "input id:upload.path hint:hint.upload.path noheading:1 url:1 text:" },
-            { "heading text:${heading.upload.id}" },
-            { "dropdown id:upload.id icon:0x1f464 text:", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
-            { "input id:upload.token hint:hint.upload.token.long icon:0x1f516 text:" },
-            { "heading id:upload.content" },
-            { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
-            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
             { NULL }
-        }, actions, iElemCount(actions));
+        }, actions, iElemCount(actions) - 1 /* no Accept button on main panel */);
         d->info          = findChild_Widget(w, "upload.info");
         d->path          = findChild_Widget(w, "upload.path");
         d->input         = findChild_Widget(w, "upload.text");
@@ -215,11 +220,11 @@ void init_UploadWidget(iUploadWidget *d) {
         if (isPortraitPhone_App()) {
             enableUploadButton_UploadWidget_(d, iFalse);
         }
-        iWidget *title = findChild_Widget(w, "heading.upload.text");
-        iLabelWidget *menu = new_LabelWidget(midEllipsis_Icon, "upload.editmenu.open");
-        setTextColor_LabelWidget(menu, uiTextAction_ColorId);
-        setFont_LabelWidget(menu, uiLabelBigBold_FontId);
-        addChildFlags_Widget(title, iClob(menu), frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag);
+//        iWidget *title = findChild_Widget(w, "heading.upload.text");
+//        iLabelWidget *menu = new_LabelWidget(midEllipsis_Icon, "upload.editmenu.open");
+//        setTextColor_LabelWidget(menu, uiTextAction_ColorId);
+//        setFont_LabelWidget(menu, uiLabelBigBold_FontId);
+//        addChildFlags_Widget(title, iClob(menu), frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag);
     }
     else {
         useSheetStyle_Widget(w);
@@ -441,12 +446,12 @@ static void updateFileInfo_UploadWidget_(iUploadWidget *d) {
     setTextCStr_InputWidget(d->mime, mediaType_Path(&d->filePath));
 }
 
-static void showOrHideUploadButton_UploadWidget_(iUploadWidget *d) {
-    if (isUsingPanelLayout_Mobile()) {
-        enableUploadButton_UploadWidget_(
-            d, currentPanelIndex_Mobile(as_Widget(d)) != iInvalidPos || !isPortraitPhone_App());
-    }
-}
+//static void showOrHideUploadButton_UploadWidget_(iUploadWidget *d) {
+//    if (isUsingPanelLayout_Mobile()) {
+//        enableUploadButton_UploadWidget_(
+//            d, currentPanelIndex_Mobile(as_Widget(d)) != iInvalidPos || !isPortraitPhone_App());
+//    }
+//}
 
 static const iString *requestUrl_UploadWidget_(const iUploadWidget *d) {
     const iRangecc siteRoot = urlRoot_String(&d->url);
@@ -465,10 +470,10 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     const char *cmd = command_UserEvent(ev);
     if (isResize_UserEvent(ev) || equal_Command(cmd, "keyboard.changed")) {
         updateInputMaxHeight_UploadWidget_(d);
-        showOrHideUploadButton_UploadWidget_(d);
+//        showOrHideUploadButton_UploadWidget_(d);
     }
     else if (equal_Command(cmd, "panel.changed")) {
-        showOrHideUploadButton_UploadWidget_(d);
+//        showOrHideUploadButton_UploadWidget_(d);
         if (currentPanelIndex_Mobile(w) == 0) {
             setFocus_Widget(as_Widget(d->input));
         }
@@ -529,7 +534,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             { select_Icon " ${menu.selectall}", 0, 0, "upload.text.selectall" },
             { export_Icon " ${menu.upload.export}", 0, 0, "upload.text.export" },
             { "---" },
-            { delete_Icon " " uiTextCaution_ColorEscape "${menu.upload.delete}", 0, 0, "upload.text.delete" }
+            { delete_Icon " " uiTextAction_ColorEscape "${menu.upload.delete}", 0, 0, "upload.text.delete" }
         }, 4);
         openMenu_Widget(editMenu, topLeft_Rect(bounds_Widget(as_Widget(d->input))));
         return iTrue;

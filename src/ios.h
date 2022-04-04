@@ -63,30 +63,3 @@ iBool   isPaused_AVFAudioPlayer     (const iAVFAudioPlayer *);
 
 void    clearNowPlayingInfo_iOS     (void);
 void    updateNowPlayingInfo_iOS    (void);
-
-/*----------------------------------------------------------------------------------------------*/
-
-enum iSystemTextInputFlags {
-    selectAll_SystemTextInputFlags         = iBit(1),
-    multiLine_SystemTextInputFlags         = iBit(2),
-    returnGo_SystemTextInputFlags          = iBit(3),
-    returnSend_SystemTextInputFlags        = iBit(4),
-    disableAutocorrect_SystemTextInputFlag = iBit(5),
-    disableAutocapitalize_SystemTextInputFlag = iBit(6),
-    alignRight_SystemTextInputFlag         = iBit(7),
-    insertNewlines_SystemTextInputFlag     = iBit(8),
-    extraPadding_SystemTextInputFlag       = iBit(9),
-};
-
-iDeclareType(SystemTextInput)
-iDeclareTypeConstructionArgs(SystemTextInput, iRect rect, int flags)
-
-void    setRect_SystemTextInput  (iSystemTextInput *, iRect rect);
-void    setText_SystemTextInput  (iSystemTextInput *, const iString *text, iBool allowUndo);
-void    setFont_SystemTextInput  (iSystemTextInput *, int fontId);
-void    setTextChangedFunc_SystemTextInput
-                                 (iSystemTextInput *, void (*textChangedFunc)(iSystemTextInput *, void *), void *);
-void    selectAll_SystemTextInput(iSystemTextInput *);
-
-const iString * text_SystemTextInput    (const iSystemTextInput *);
-int     preferredHeight_SystemTextInput (const iSystemTextInput *);

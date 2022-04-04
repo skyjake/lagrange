@@ -50,7 +50,7 @@ void invalidate_VisBuf(iVisBuf *d) {
     }
 }
 
-void alloc_VisBuf(iVisBuf *d, const iInt2 size, int granularity) {
+iBool alloc_VisBuf(iVisBuf *d, const iInt2 size, int granularity) {
     const iInt2 texSize = init_I2(size.x, (size.y / 2 / granularity + 1) * granularity);
     if (!d->buffers[0].texture || !isEqual_I2(texSize, d->texSize)) {
         d->texSize = texSize;
@@ -69,7 +69,9 @@ void alloc_VisBuf(iVisBuf *d, const iInt2 size, int granularity) {
             SDL_SetTextureBlendMode(tex->texture, SDL_BLENDMODE_NONE);
         }
         invalidate_VisBuf(d);
+        return iTrue;
     }
+    return iFalse;
 }
 
 void dealloc_VisBuf(iVisBuf *d) {

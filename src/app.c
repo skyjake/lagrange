@@ -23,17 +23,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "bookmarks.h"
 #include "defs.h"
-#include "resources.h"
+#include "export.h"
 #include "feeds.h"
-#include "mimehooks.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
 #include "gmutil.h"
 #include "history.h"
 #include "ipc.h"
+#include "mimehooks.h"
 #include "periodic.h"
+#include "resources.h"
 #include "sitespec.h"
-#include "updater.h"
 #include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
@@ -43,12 +43,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/labelwidget.h"
 #include "ui/root.h"
 #include "ui/sidebarwidget.h"
-#include "ui/uploadwidget.h"
 #include "ui/text.h"
+#include "ui/touch.h"
+#include "ui/uploadwidget.h"
 #include "ui/util.h"
 #include "ui/window.h"
+#include "updater.h"
 #include "visited.h"
 
+#include <the_Foundation/buffer.h>
 #include <the_Foundation/commandline.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -74,7 +77,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "ios.h"
 #endif
 #if defined (iPlatformAndroidMobile)
-#include <SDL_log.h>
+#   include "android.h"
+#   include <SDL_log.h>
 #endif
 #if defined (iPlatformMsys)
 #   include "win32.h"
@@ -138,6 +142,7 @@ struct Impl_App {
     iBool        isSuspended;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
+    unsigned int idleSleepDelayMs;
     uint32_t     lastEventTime;
     int          sleepTimer;
 #endif
@@ -209,16 +214,23 @@ static iString *serializePrefs_App_(const iApp *d) {
             y = win->place.normalRect.pos.y;
             w = win->place.normalRect.size.x;
             h = win->place.normalRect.size.y;
+#if defined (iPlatformApple) || defined (iPlatformMobile)
+            /* On macOS, maximization should be applied at creation time or the window will take
+               a moment to animate to its maximized size. */
+            const int winSnap = 0;
+#else
+            const int winSnap = snap_MainWindow(win);
+#endif
             appendFormat_String(str,
-                                "window.setrect index:%zu width:%d height:%d coord:%d %d\n",
+                                "window.setrect index:%zu width:%d height:%d coord:%d %d snap:%d\n",
                                 winIndex,
                                 w,
                                 h,
                                 x,
-                                y);
-            /* On macOS, maximization should be applied at creation time or the window will take
-               a moment to animate to its maximized size. */
-#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
+                                y,
+                                winSnap);
+#if 0
+#i f defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
             if (snap_MainWindow(win)) {
                 if (snap_MainWindow(win) == maximized_WindowSnap) {
                     appendFormat_String(str, "~window.maximize index:%zu\n", winIndex);
@@ -233,10 +245,10 @@ static iString *serializePrefs_App_(const iApp *d) {
                         winIndex, snap_MainWindow(d->window), w, h, x, y);
                 }
             }
-#elif !defined (iPlatformApple)
-            if (snap_MainWindow(win) == maximized_WindowSnap) {
-                appendFormat_String(str, "~window.maximize index:%zu\n", winIndex);
-            }
+//#elif !defined (iPlatformApple)
+//            if (snap_MainWindow(win) == maximized_WindowSnap) {
+//                appendFormat_String(str, "~window.maximize index:%zu\n", winIndex);
+//            }
 #endif
         }
     }
@@ -267,6 +279,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         appendFormat_String(str, "navbar.action.set arg:%d button:%d\n", d->prefs.navbarActions[i], i);
     }
 #if defined (iPlatformMobile)
+    appendFormat_String(str, "hidetoolbarscroll arg:%d\n", d->prefs.hideToolbarOnScroll);
     appendFormat_String(str, "toolbar.action.set arg:%d button:0\n", d->prefs.toolbarActions[0]);
     appendFormat_String(str, "toolbar.action.set arg:%d button:1\n", d->prefs.toolbarActions[1]);
 #endif
@@ -283,6 +296,9 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
         { "prefs.biglede", &d->prefs.bigFirstParagraph },
         { "prefs.blink", &d->prefs.blinkingCursor },
+        { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
+        { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
+        { "prefs.menubar", &d->prefs.menuBar },
         { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
         { "prefs.boldlink.light", &d->prefs.boldLinkLight },
         { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
@@ -293,6 +309,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
         { "prefs.hoverlink", &d->prefs.hoverLink },
+        { "prefs.justify", &d->prefs.justifyParagraph },
         { "prefs.mono.gemini", &d->prefs.monospaceGemini },
         { "prefs.mono.gopher", &d->prefs.monospaceGopher },
         { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
@@ -437,6 +454,9 @@ static void loadPrefs_App_(iApp *d) {
                    the right ones. */
                 handleCommand_App(cmd);
             }
+            else if (equal_Command(cmd, "prefs.menubar.changed")) {
+                handleCommand_App(cmd);    
+            }
 #if defined (iPlatformAndroidMobile)
             else if (equal_Command(cmd, "returnkey.set")) {
                 /* Hardcoded to avoid accidental presses of the virtual Return key. */
@@ -469,18 +489,23 @@ static void loadPrefs_App_(iApp *d) {
     /* Upgrade checks. */
 #if 0 /* disabled in v1.11 (font library search) */
     if (cmp_Version(&upgradedFromAppVersion, &(iVersion){ 1, 8, 0 }) < 0) {
-#if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile)
         /* When upgrading to v1.8.0, the old hardcoded font library is gone and that means
            UI strings may not have the right fonts available for the UI to remain
            usable. */
         postCommandf_App("uilang id:en");
         postCommand_App("~fontpack.suggest.classic");
-#endif
     }
 #endif
+    /* Some settings have fixed values depending on the platform/config. */
 #if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;
 #endif
+#if defined (LAGRANGE_MAC_MENUBAR)
+    d->prefs.menuBar = iFalse;
+#endif
+    if (deviceType_App() != desktop_AppDeviceType) {
+        d->prefs.menuBar = iFalse; /* not optional on mobile */
+    }
     d->isLoadingPrefs = iFalse;
 }
 
@@ -1021,6 +1046,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #if defined (iPlatformAppleMobile)
     setupApplication_iOS();
 #endif
+#if defined (iPlatformAndroidMobile)
+    setupApplication_Android();
+#endif
     init_Keys();
     init_Fonts(dataDir_App_());
     loadPalette_Color(dataDir_App_());
@@ -1084,14 +1112,26 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
     postCommand_App("~navbar.actions.changed");
     postCommand_App("~toolbar.actions.changed");
+    postCommand_App("~root.movable");
     postCommand_App("~window.unfreeze");
     postCommand_App("font.reset");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
     postCommand_Root(NULL, "document.autoreload");
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
-    d->isIdling      = iFalse;
-    d->lastEventTime = 0;
-    d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
+    /* Initialize idle sleep. */ {
+        d->isIdling      = iFalse;
+        d->lastEventTime = 0;
+        d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
+        SDL_DisplayMode dispMode;
+        SDL_GetWindowDisplayMode(d->window->base.win, &dispMode);
+        if (dispMode.refresh_rate) {
+            d->idleSleepDelayMs = 1000 / dispMode.refresh_rate;
+        }
+        else {
+            d->idleSleepDelayMs = 1000 / 60;
+        }
+        d->idleSleepDelayMs *= 0.9f;
+    }
 #endif
     d->isFinishedLaunching = iTrue;
     /* Run any commands that were pending completion of launch. */ {
@@ -1175,6 +1215,7 @@ const iString *downloadDir_App(void) {
 
 const iString *fileNameForUrl_App(const iString *url, const iString *mime) {
     /* Figure out a file name from the URL. */
+    url = collect_String(urlDecodeExclude_String(url, "\\/:;"));
     iUrl parts;
     init_Url(&parts, url);
     while (startsWith_Rangecc(parts.path, "/")) {
@@ -1301,8 +1342,9 @@ static void clearCache_App_(void) {
 }
 
 iObjectList *listAllDocuments_App(void) {
-    iWindow *oldWindow = get_Window();
-    iObjectList *allDocs = new_ObjectList();
+    iWindow     *oldWindow = get_Window();
+    iRoot       *oldRoot   = current_Root();
+    iObjectList *allDocs   = new_ObjectList();
     iConstForEach(PtrArray, window, mainWindows_App()) {
         setCurrent_Window(window.ptr);
         iObjectList *docs = listDocuments_App(NULL);
@@ -1312,6 +1354,7 @@ iObjectList *listAllDocuments_App(void) {
         iRelease(docs);
     }
     setCurrent_Window(oldWindow);
+    setCurrent_Root(oldRoot);
     return allDocs;
 }
 
@@ -1632,6 +1675,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #if defined (iPlatformAppleDesktop)
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
+#if defined (iPlatformAndroidMobile)
+                    handleCommand_Android(command_UserEvent(&ev));
+#endif
 #if defined (iPlatformMsys)
                     handleCommand_Win32(command_UserEvent(&ev));
 #endif
@@ -1672,10 +1718,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
     deinit_PtrArray(&windows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->isIdling && !gotEvents) {
-        /* This is where we spend most of our time when idle. 30 Hz still quite a lot but we
-           can't wait too long after the user tries to interact again with the app. In any
-           case, on iOS SDL_WaitEvent() seems to use 10x more CPU time than sleeping (2.0.18). */
-        SDL_Delay(1000 / 30);
+        /* This is where we spend most of our time when idle. The sleep delay depends on the
+           display refresh rate. iOS SDL_WaitEvent() seems to use 10x more CPU time compared to
+           just sleeping (2.0.18). */
+        SDL_Delay(d->idleSleepDelayMs);
     }
 #endif
 backToMainLoop:;
@@ -2069,6 +2115,10 @@ iBool isRunningUnderWindowSystem_App(void) {
     return app_.isRunningUnderWindowSystem;
 }
 
+const iCommandLine *commandLine_App(void) {
+    return &app_.args;
+}
+
 iGmCerts *certs_App(void) {
     return app_.certs;
 }
@@ -2239,7 +2289,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         updateFontButton_(findChild_Widget(d, "prefs.font.monodoc"), string_Command(cmd, "monodoc"));
         return iFalse;
     }
-    else if (startsWith_CStr(cmd, "input.ended id:prefs.linespacing")) {
+    else if (equalArg_Command(cmd, "input.ended", "id", "prefs.linespacing")) {
         /* Apply line spacing changes immediately. */
         const iInputWidget *lineSpacing = findWidget_App("prefs.linespacing");
         postCommandf_App("linespacing.set arg:%f", toFloat_String(text_InputWidget(lineSpacing)));
@@ -2255,8 +2305,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         }
     }
     else if (equalWidget_Command(cmd, d, "input.resized")) {
-        if (!d->root->pendingArrange) {
-            d->root->pendingArrange = iTrue;
+        if (d->root->pendingArrange < arg_Command(cmd)) {
+            d->root->pendingArrange = arg_Command(cmd);
             postCommand_Root(d->root, "root.arrange");
         }
         return iTrue;
@@ -2453,7 +2503,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
             postCommandf_App("sidebar.mode arg:%d show:1", identities_SidebarMode);
             postCommand_App("idents.changed");
         }
-        setupSheetTransition_Mobile(dlg, iFalse);
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -2556,6 +2606,27 @@ iBool handleCommand_App(const char *cmd) {
             postCommand_App("~toolbar.actions.changed");
         }
         return iTrue;        
+    }
+    else if (equal_Command(cmd, "prefs.bottomnavbar.changed")) {
+        d->prefs.bottomNavBar = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            postCommand_App("~root.movable");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.bottomtabbar.changed")) {
+        d->prefs.bottomTabBar = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            postCommand_App("~root.movable");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.menubar.changed")) {
+        d->prefs.menuBar = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            postCommand_App("~root.movable");
+        }
+        return iTrue;
     }
     else if (equal_Command(cmd, "translation.languages")) {
         d->prefs.langFrom = argLabel_Command(cmd, "from");
@@ -2915,6 +2986,13 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.justify.changed")) {
+        d->prefs.justifyParagraph = arg_Command(cmd) != 0;
+        if (!d->isLoadingPrefs) {
+            postCommand_App("document.layout.changed");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.plaintext.wrap.changed")) {
         d->prefs.plainTextWrap = arg_Command(cmd) != 0;
         if (!d->isLoadingPrefs) {
@@ -3084,6 +3162,13 @@ iBool handleCommand_App(const char *cmd) {
         const char *urlArg = suffixPtr_Command(cmd, "url");
         if (!urlArg) {
             return iTrue; /* invalid command */
+        }
+        if (argLabel_Command(cmd, "switch")) {
+            iDocumentWidget *doc = findDocument_Root(get_Root(), collectNewCStr_String(urlArg));
+            if (doc) {
+                showTabPage_Widget(findWidget_Root("doctabs"), doc);
+                return iTrue;
+            }
         }
         if (findWidget_App("prefs")) {
             postCommand_App("prefs.dismiss");
@@ -3259,7 +3344,7 @@ iBool handleCommand_App(const char *cmd) {
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
         newTab_App(isDuplicate ? document_App() : NULL, iTrue);
         if (!isDuplicate) {
-            postCommand_App("navigate.home focus:1");
+            postCommandf_App("navigate.home focus:%d", deviceType_App() == desktop_AppDeviceType);
         }
         return iTrue;
     }
@@ -3353,6 +3438,9 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.bottomnavbar"), d->prefs.bottomNavBar);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.bottomtabbar"), d->prefs.bottomTabBar);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.menubar"), d->prefs.menuBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.blink"), d->prefs.blinkingCursor);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
@@ -3402,6 +3490,7 @@ iBool handleCommand_App(const char *cmd) {
             selected_WidgetFlag,
             iTrue);
         setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.justify"), d->prefs.justifyParagraph);
         setToggle_Widget(findChild_Widget(dlg, "prefs.plaintext.wrap"), d->prefs.plainTextWrap);
         setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
         setToggle_Widget(findChild_Widget(dlg, "prefs.centershort"), d->prefs.centerShortDocs);
@@ -3438,7 +3527,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
         if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
-            iWidget *idPanel = panel_Mobile(dlg, 2);
+            iWidget *idPanel = panel_Mobile(dlg, 3);
             iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
             postCommand_Widget(button, "panel.open");
     }
@@ -3585,9 +3674,9 @@ iBool handleCommand_App(const char *cmd) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
         addChild_Widget(get_Root()->widget, iClob(imp));
-//        finalizeSheet_Mobile(as_Widget(imp));
         arrange_Widget(as_Widget(imp));
-        setupSheetTransition_Mobile(as_Widget(imp), iTrue);
+        setupSheetTransition_Mobile(as_Widget(imp), incoming_TransitionFlag |
+                                    dialogTransitionDir_Widget(as_Widget(imp)));
         postRefresh_App();
         return iTrue;
     }
@@ -3679,13 +3768,64 @@ iBool handleCommand_App(const char *cmd) {
                     format_Lang("${dlg.fontpack.delete.confirm}",
                                 cstr_String(packId)),
                     (iMenuItem[]){ { "${cancel}" },
-                                   { uiTextCaution_ColorEscape " ${dlg.fontpack.delete}",
+                                   { uiTextAction_ColorEscape " ${dlg.fontpack.delete}",
                                      0,
                                      0,
                                      format_CStr("!fontpack.delete confirmed:1 id:%s",
                                                  cstr_String(packId)) } },
                     2);
             }
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "export")) {
+        iExport *export = new_Export();
+        iBuffer *zip    = new_Buffer();
+        generate_Export(export);
+        openEmpty_Buffer(zip);
+        serialize_Archive(archive_Export(export), stream_Buffer(zip));
+        iDocumentWidget *expTab = newTab_App(NULL, iTrue);
+        iDate now;
+        initCurrent_Date(&now);
+        setUrlAndSource_DocumentWidget(
+            expTab,
+            collect_String(format_Date(&now, "file:Lagrange User Data %Y-%m-%d %H%M%S.zip")),
+            collectNewCStr_String("application/zip"),
+            data_Buffer(zip));
+        iRelease(zip);
+        delete_Export(export);
+#if defined (iPlatformAppleMobile)
+        /* Straight to the save sheet. */
+        postCommand_App("document.save");
+#endif
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "import")) {
+        const iString *path = collect_String(suffix_Command(cmd, "path"));
+        iArchive *zip = iClob(new_Archive());
+        if (openFile_Archive(zip, path)) {
+            if (!arg_Command(cmd)) {
+                makeUserDataImporter_Dialog(path);
+                return iTrue;
+            }
+            const int bookmarks = argLabel_Command(cmd, "bookmarks");
+            const int trusted   = argLabel_Command(cmd, "trusted");
+            const int idents    = argLabel_Command(cmd, "idents");
+            const int visited   = argLabel_Command(cmd, "visited");
+            const int siteSpec  = argLabel_Command(cmd, "sitespec");
+            iExport *export = new_Export();
+            if (load_Export(export, zip)) {
+                import_Export(export, bookmarks, idents, trusted, visited, siteSpec);
+            }
+            else {
+                makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.import.userdata.error}",
+                                         format_Lang("${import.userdata.error}", cstr_String(path)));                    
+            }
+            delete_Export(export);
+        }
+        else {
+            makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.import.userdata.error}",
+                                     format_Lang("${import.userdata.error}", cstr_String(path)));
         }
         return iTrue;
     }
@@ -3843,23 +3983,3 @@ void closePopups_App(iBool doForce) {
         }
     }
 }
-
-#if defined (iPlatformAndroidMobile)
-
-float displayDensity_Android(void) {
-    iApp *d = &app_;
-    return toFloat_String(at_CommandLine(&d->args, 1));
-}
-
-#include <jni.h>
-
-JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_postAppCommand(
-        JNIEnv* env, jclass jcls,
-        jstring command)
-{
-    const char *cmd = (*env)->GetStringUTFChars(env, command, NULL);
-    postCommand_Root(NULL, cmd);
-    (*env)->ReleaseStringUTFChars(env, command, cmd);
-}
-
-#endif

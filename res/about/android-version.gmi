@@ -6,6 +6,44 @@
 ```
 # Release notes
 
+## 1.12 (Beta 3)
+* Fixed possible crash when opening Settings or focusing the URL field.
+* Fixed incorrect tab bar position after dismissing the onscreen keyboard.
+* Fixed pasting URLs: percent-encoded reserved characters should not be decoded.
+* Fixed saving of the "Hide toolbar on scroll" setting.
+
+## 1.12 (Beta 2)
+* Fixed entered text being ignored on some devices/Android releases.
+* Fixed an issue with input prompts. If the prompt was reopened quickly, the entered text would be ignored.
+
+## 1.12 (Beta 1)
+* Input fields use the operating system's native text editors.
+* Colors of the status bar and the device navigation bar change depending on UI/theme colors.
+* Adjusted scrolling behavior to be more like regular Android scrolling.
+* Changed appearance of many dialogs to use a card layout instead of fullscreen.
+* Input prompts appear next to the keyboard, putting action buttons more within reach.
+* Added Import and Create actions on the Identities page in Settings.
+* Adjusted UI layout of Settings. The title of the current page appears in the top bar, together with any relevant actions.
+* Changed appearance of the pull down indicator.
+* Fixed glitches with showing and hiding lookup results.
+* Fixed incorrect document width after changing orientation from landscape to portrait.
+
+## 1.12 (Alpha 7)
+* Roboto is the new default content/UI font.
+* Added option to move the URL field and/or the tab bar at the bottom.
+* Toggles use symbols instead of YES/NO.
+* UI uses only one accent color at a time.
+* Added new UI accent colors: Red, Green, Blue, Gray.
+* Added new content theme "Oceanic" with support for both dark and light modes.
+* Adjusted generated palettes of Colorful Dark/Light.
+* Improved the Sepia theme, and added a dark mode variant.
+* Added style option to justify long paragraphs.
+* Text renderer uses additional subpixel offsets with lower-density displays.
+* Text rendering optimizations: avoid repeated shaping of the same text.
+* Fixed occasional small gaps between glyph backgrounds.
+* Fixed problems with marking feed entries as read/unread.
+* Fixed issues with focused input fields.
+
 ## 1.11 (Alpha 6)
 ⚠️ Downgrading back to v1.10 causes all site-specific themes to be forgotten.
 

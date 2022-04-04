@@ -71,6 +71,17 @@ static void scrollBegan_ListWidget_(iAnyObject *any, int offset, uint32_t span) 
     refreshWhileScrolling_ListWidget_(d);
 }
 
+static void visBufferInvalidated_ListWidget_(iVisBuf *d, size_t index) {
+    /* Clear a texture to background color when invalidated. */
+    iVisBufTexture *vbuf = &d->buffers[index];
+    const iListWidget *list = vbuf->user;
+    iPaint p;
+    init_Paint(&p);
+    beginTarget_Paint(&p, vbuf->texture);
+    fillRect_Paint(&p, (iRect){ zero_I2(), d->texSize }, list->widget.bgColor);
+    endTarget_Paint(&p);
+}
+
 void init_ListWidget(iListWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -91,6 +102,10 @@ void init_ListWidget(iListWidget *d) {
     initButtons_Click(&d->click, d, SDL_BUTTON_LMASK | SDL_BUTTON_MMASK);
     init_IntSet(&d->invalidItems);
     d->visBuf = new_VisBuf();
+    iForIndices(i, d->visBuf->buffers) {
+        d->visBuf->buffers[i].user = d;
+    }
+    d->visBuf->bufferInvalidated = visBufferInvalidated_ListWidget_;
 }
 
 void deinit_ListWidget(iListWidget *d) {
@@ -459,7 +474,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                 if (contains_Widget(w, wpos) &&
                     wpos.x >= right_Rect(boundsWithoutVisualOffset_Widget(w)) - d->dragHandleWidth) {
                     setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
-                    printf("[%p] touch drag started\n", d);
+//                    printf("[%p] touch drag started\n", d);
                     return iTrue;
                 }
             }
@@ -566,7 +581,7 @@ static void draw_ListWidget_(const iListWidget *d) {
             iAssert(d->visBuf->buffers[i].texture);
         }
         const int bg[iElemCount(d->visBuf->buffers)] = {
-            w->bgColor, w->bgColor, w->bgColor, w->bgColor
+            w->bgColor, w->bgColor, w->bgColor, w->bgColor /* Debug: Separate BG color for buffers. */
         };
         const int bottom = numItems_ListWidget(d) * d->itemHeight;
         const iRangei vis = { scrollY / d->itemHeight * d->itemHeight,
@@ -579,10 +594,12 @@ static void draw_ListWidget_(const iListWidget *d) {
             iVisBufTexture *buf = &d->visBuf->buffers[i];
             iRanges drawItems = { iMax(0, buf->origin) / d->itemHeight,
                                   iMax(0, buf->origin + d->visBuf->texSize.y) / d->itemHeight };
+#if 0
             if (isEmpty_Rangei(buf->validRange)) {
                 beginTarget_Paint(&p, buf->texture);
                 fillRect_Paint(&p, (iRect){ zero_I2(), d->visBuf->texSize }, bg[i]);
             }
+#endif
 #if defined (iPlatformApple)
             const int blankWidth = 0; /* scrollbars fade away */
 #else
@@ -656,6 +673,7 @@ static void draw_ListWidget_(const iListWidget *d) {
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     unsetClip_Paint(&p);
+    drawBorders_Widget(w); /* background overdraws the normal borders */
     drawChildren_Widget(w);
 }
 

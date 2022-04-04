@@ -26,6 +26,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmrequest.h"
 #include "app.h"
 
+#if defined (iPlatformMsys)
+#   include "win32.h"
+#endif
+
 #include <the_Foundation/archive.h>
 #include <the_Foundation/array.h>
 #include <the_Foundation/file.h>
@@ -594,6 +598,54 @@ void init_Fonts(const char *userDir) {
         setReadOnly_FontPack(pack, iTrue);
         loadArchive_FontPack(pack, archive_Resources()); /* should never fail if we've made it this far */
         pushBack_PtrArray(&d->packs, pack);
+#if defined (iPlatformMsys)
+        /* The system UI font is used as the default font. */
+        iString *winPath = collect_String(windowsDirectory_Win32());
+        iString *segoePath = collect_String(concatCStr_Path(winPath, "Fonts\\segoeui.ttf"));
+        if (fileExists_FileInfo(segoePath)) {
+            iForEach(PtrArray, i, &pack->fonts) {
+                iFontSpec *spec = i.ptr;
+                if (!cmp_String(&spec->id, "default")) {
+                    setCStr_String(&spec->id, "default-lgr"); /* being replaced */
+                    break;
+                }
+            }
+            iString *ini = collectNew_String();
+            format_String(ini, 
+                "[default]\n"
+                "name    = \"Segoe UI\"\n"
+                "regular = \"segoeui.ttf\"\n"
+                "italic  = \"segoeuii.ttf\"\n"
+                "bold    = \"segoeuib.ttf\"\n"
+                "light   = \"segoeuil.ttf\"\n"
+                "glyphscale = 0.9\n");
+            iFontPack *sys = new_FontPack();
+            sys->loadPath = concatCStr_Path(winPath, "Fonts");
+            setCStr_String(&sys->id, "windows-system-fonts");
+            setReadOnly_FontPack(sys, iTrue);            
+            if (load_FontPack_(sys, ini)) {
+                pushBack_PtrArray(&d->packs, sys);
+            }
+            else {
+                delete_FontPack(sys);
+            }
+        }
+#endif
+#if defined (iPlatformAppleDesktop)
+        pack = new_FontPack();
+        setReadOnly_FontPack(pack, iTrue);
+        pack->loadPath = newCStr_String("/System/Library/Fonts/");
+        setCStr_String(&pack->id, "macos-system-fonts");
+        iString ini;
+        initBlock_String(&ini, &blobMacosSystemFontsIni_Resources);
+        if (load_FontPack_(pack, &ini)) {
+            pushBack_PtrArray(&d->packs, pack);
+        }
+        else {
+            delete_FontPack(pack);
+        }
+        deinit_String(&ini);
+#endif
     }
     /* Find and load .fontpack files in known locations. */ {
         const char *locations[] = {
@@ -825,14 +877,17 @@ const iArray *actions_FontPack(const iFontPack *d, iBool showInstalled) {
                               0,
                               "fontpack.install" });
         }
-        pushBack_Array(
-            items,
-            &(iMenuItem){ format_Lang(isEnabled ? close_Icon " ${fontpack.disable}"
-                                                : "${fontpack.enable}",
-                                      fpId),
-                          0,
-                          0,
-                          format_CStr("fontpack.enable arg:%d id:%s", !isEnabled, fpId) });
+        if (iCmpStr(fpId, "windows-system-fonts") &&
+            iCmpStr(fpId, "macos-system-fonts")) { /* system fonts can't be disabled */
+            pushBack_Array(
+                items,
+                &(iMenuItem){ format_Lang(isEnabled ? close_Icon " ${fontpack.disable}"
+                                                    : "${fontpack.enable}",
+                                          fpId),
+                              0,
+                              0,
+                              format_CStr("fontpack.enable arg:%d id:%s", !isEnabled, fpId) });
+        }
         if (!d->isReadOnly && !d->isStandalone && installed->loadPath && d->loadPath &&
             !cmpString_String(installed->loadPath, d->loadPath)) {
             pushBack_Array(items,
@@ -856,7 +911,7 @@ const iArray *actions_FontPack(const iFontPack *d, iBool showInstalled) {
         pushBack_Array(
             items,
             &(iMenuItem){
-                fontpack_Icon " ${fontpack.open.aboutfonts}", 0, 0, "!open url:about:fonts" });
+                fontpack_Icon " ${fontpack.open.aboutfonts}", 0, 0, "!open switch:1 url:about:fonts" });
     }
     return collect_Array(items);
 }

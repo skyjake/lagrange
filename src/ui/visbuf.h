@@ -33,7 +33,7 @@ struct Impl_VisBufTexture {
     SDL_Texture *texture;
     int origin;
     iRangei validRange;
-    void *user;
+    void *user; /* user provided data pointer for additional per-buffer data */
 };
 
 #define numBuffers_VisBuf   ((size_t) 4)
@@ -48,7 +48,7 @@ struct Impl_VisBuf {
 iDeclareTypeConstruction(VisBuf)
 
 void    invalidate_VisBuf       (iVisBuf *);
-void    alloc_VisBuf            (iVisBuf *, const iInt2 size, int granularity);
+iBool   alloc_VisBuf            (iVisBuf *, const iInt2 size, int granularity);
 void    dealloc_VisBuf          (iVisBuf *);
 iBool   reposition_VisBuf       (iVisBuf *, const iRangei vis); /* returns true if `vis` changes */
 void    validate_VisBuf         (iVisBuf *);

@@ -168,8 +168,10 @@ void deinit_Widget(iWidget *d) {
 //    printf("deinit_Widget %p (%s):\ttreesize=%d\td_obj=%d\n", d, class_Widget(d)->name, nt, totalCount_Object() - no);
     delete_WidgetDrawBuffer(d->drawBuf);
 #if 0 && !defined (NDEBUG)
-    printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
-           d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+    if (cmp_String(&d->id, "")) {
+        printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
+               d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+    }
 #endif
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
@@ -517,10 +519,10 @@ static size_t numArrangedChildren_Widget_(const iWidget *d) {
 }
 
 static void centerHorizontal_Widget_(iWidget *d) {
-    d->rect.pos.x = ((d->parent ? width_Rect(innerRect_Widget_(d->parent))
-                                : size_Root(d->root).x) -
-                     width_Rect(d->rect)) /
-                    2;
+    const int width          = width_Rect(d->rect);
+    const int containerWidth = d->parent ? width_Rect(innerRect_Widget_(d->parent))
+                                         : size_Root(d->root).x;
+    d->rect.pos.x = (containerWidth - width) / 2;
     TRACE(d, "center horizontally: %d", d->rect.pos.x);
 }
 
@@ -574,8 +576,12 @@ static void arrange_Widget_(iWidget *d) {
         TRACE(d, "move to parent right edge: %d", d->rect.pos.x);
     }
     else if (d->flags & moveToParentBottomEdge_WidgetFlag) {
-        d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
-        TRACE(d, "move to parent bottom edge: %d", d->rect.pos.y);
+        if (d->parent) {
+            d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
+            const int minY = (d->parent->parent ? 0 : topSafeInset_Mobile());
+            d->rect.pos.y = iMax(minY, d->rect.pos.y);
+            TRACE(d, "move to parent bottom edge: %d", d->rect.pos.y);
+        }
     }
     else if (d->flags & centerHorizontal_WidgetFlag) {
         centerHorizontal_Widget_(d);
@@ -916,6 +922,28 @@ static void notifySizeChanged_Widget_(iWidget *d) {
     }
 }
 
+static void clampCenteredInRoot_Widget_(iWidget *d) {
+    /* When arranging, we don't yet know if centered widgets will end up outside the root
+       area, because the parent sizes and positions may change. */
+    if (d->flags & centerHorizontal_WidgetFlag) {
+        iRect rootRect = safeRect_Root(d->root);
+        iRect bounds = boundsWithoutVisualOffset_Widget(d);
+        if (width_Rect(bounds) <= width_Rect(rootRect)) {
+            int excess = left_Rect(rootRect) - left_Rect(bounds);
+            if (excess > 0) {
+                d->rect.pos.x += excess;
+            }
+            excess = right_Rect(bounds) - right_Rect(rootRect);
+            if (excess > 0) {
+                d->rect.pos.x -= excess;
+            }
+        }
+    }
+    iForEach(ObjectList, i, d->children) {
+        clampCenteredInRoot_Widget_(i.object);
+    }
+}
+
 void arrange_Widget(iWidget *d) {
     if (d) {
 #if !defined (NDEBUG)
@@ -925,6 +953,7 @@ void arrange_Widget(iWidget *d) {
 #endif
         resetArrangement_Widget_(d); /* back to initial default sizes */
         arrange_Widget_(d);
+        clampCenteredInRoot_Widget_(d);
         notifySizeChanged_Widget_(d);
         d->root->didChangeArrangement = iTrue;
     }
@@ -960,7 +989,8 @@ int visualOffsetByReference_Widget(const iWidget *d) {
 }
 
 static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
-    if (d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
+    if (d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag) ||
+        (d->flags2 & permanentVisualOffset_WidgetFlag2)) {
         const int off = iRound(value_Anim(&d->visualOffset));
         if (d->flags & horizontalOffset_WidgetFlag) {
             pos->x += off;
@@ -1009,7 +1039,9 @@ iRect boundsWithoutVisualOffset_Widget(const iWidget *d) {
 
 iInt2 innerToWindow_Widget(const iWidget *d, iInt2 innerCoord) {
     for (const iWidget *w = d; w; w = w->parent) {
-        addv_I2(&innerCoord, w->rect.pos);
+        iInt2 pos = w->rect.pos;
+        applyVisualOffset_Widget_(w, &pos);
+        addv_I2(&innerCoord, pos);
     }
     return innerCoord;
 }
@@ -1026,13 +1058,13 @@ iBool contains_Widget(const iWidget *d, iInt2 windowCoord) {
 }
 
 iBool containsExpanded_Widget(const iWidget *d, iInt2 windowCoord, int expand) {
-    const iRect bounds = {
-        zero_I2(),
+    iRect bounds = {
+        innerToWindow_Widget(d, zero_I2()),
         addY_I2(d->rect.size,
                 d->flags & drawBackgroundToBottom_WidgetFlag ? size_Root(d->root).y : 0)
     };
     return contains_Rect(expand ? expanded_Rect(bounds, init1_I2(expand)) : bounds,
-                         windowToInner_Widget(d, windowCoord));
+                         windowCoord);
 }
 
 iLocalDef iBool isKeyboardEvent_(const SDL_Event *ev) {
@@ -1056,7 +1088,8 @@ iLocalDef iBool isHidden_Widget_(const iWidget *d) {
 }
 
 iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
-    return !isHidden_Widget_(d) || d->flags & visualOffset_WidgetFlag;
+    return !isHidden_Widget_(d) || (d->flags & visualOffset_WidgetFlag &&
+                                    ~d->flags2 & permanentVisualOffset_WidgetFlag2);
 }
 
 static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
@@ -1104,6 +1137,14 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 }
 #endif
 #if 0
+                if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                    printf("[%p] %s:'%s' (on top) ate the button\n",
+                           widget, class_Widget(widget)->name,
+                           cstr_String(id_Widget(widget)));
+                    fflush(stdout);
+                }
+#endif
+#if 0
                 if (ev->type == SDL_MOUSEMOTION) {
                     printf("[%p] %s:'%s' (on top) ate the motion\n",
                            widget, class_Widget(widget)->name,
@@ -1135,12 +1176,12 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
            handle the events first. */
         iReverseForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
-            //iAssert(child->root == d->root);
+            iAssert(child->root == d->root);
             if (child == window_Widget(d)->focus && isKeyboardEvent_(ev)) {
                 continue; /* Already dispatched. */
             }
             if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
-            /* Already dispatched. */
+                /* Already dispatched. */
                 continue;
             }
             if (dispatchEvent_Widget(child, ev)) {
@@ -1180,6 +1221,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 return iTrue;
             }
         }
+        //iAssert(get_Root() == d->root);
         if (class_Widget(d)->processEvent(d, ev)) {
             //iAssert(get_Root() == d->root);
             return iTrue;
@@ -1387,6 +1429,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                             d, argLabel_Command(cmd, "side") == 1 ? "swipe.back" : "swipe.forward");
                     }
                     setFlags_Widget(d, dragged_WidgetFlag, iFalse);
+                    return iTrue;
                 }
                 if (d->commandHandler && d->commandHandler(d, ev->user.data1)) {
                     return iTrue;
@@ -1492,82 +1535,31 @@ void drawLayerEffects_Widget(const iWidget *d) {
                 right = rootSize.x - right_Rect(rect);
             }
         }
+        if (top_Rect(rect) > center.y * 3 / 2) {
+            bottom = rootSize.y - bottom_Rect(rect);
+        }
         if (d->flags & drawBackgroundToVerticalSafeArea_WidgetFlag) {
-            if (top_Rect(rect) > center.y) {
-                bottom = rootSize.y - bottom_Rect(rect);
-            }
-            if (bottom_Rect(rect) < center.y) {
+            if (bottom_Rect(rect) < center.y / 2) {
                 top = -top_Rect(rect);
             }
         }
         if (top < 0) {
             fillRect_Paint(&p, (iRect){ init_I2(left_Rect(rect), 0),
-                                        init_I2(width_Rect(rect), top_Rect(rect)) },
-                           d->bgColor);
+                                        init_I2(width_Rect(rect), top_Rect(rect)) }, d->bgColor);
         }
         if (left < 0) {
             fillRect_Paint(&p, (iRect){ init_I2(0, top_Rect(rect)),
-                init_I2(left_Rect(rect), height_Rect(rect)) }, d->bgColor);
+                                        init_I2(left_Rect(rect), height_Rect(rect) + bottom) }, d->bgColor);
         }
         if (right > 0) {
             fillRect_Paint(&p, (iRect){ init_I2(right_Rect(rect), top_Rect(rect)),
-                init_I2(right, height_Rect(rect)) }, d->bgColor);
+                                        init_I2(right, height_Rect(rect) + bottom) }, d->bgColor);
         }
-//        adjustEdges_Rect(&rect, iMin(0, top), iMax(0, right), iMax(0, bottom), iMin(0, left));
     }
 #endif
 }
 
-void drawBackground_Widget(const iWidget *d) {
-    if (d->flags & noBackground_WidgetFlag) {
-        return;
-    }
-    if (!isDrawn_Widget_(d)) {
-        return;
-    }
-    /* Popup menus have a shadowed border. */
-    if (d->bgColor >= 0 || d->frameColor >= 0) {
-        iRect rect = bounds_Widget(d);
-        if (d->flags & drawBackgroundToBottom_WidgetFlag) {
-            rect.size.y += size_Root(d->root).y; // = iMax(rect.size.y, size_Root(d->root).y - top_Rect(rect));
-        }
-        iPaint p;
-        init_Paint(&p);
-        if (d->bgColor >= 0) {
-#if 0 && defined (iPlatformAppleMobile)
-            /* TODO: This is part of the unbuffered draw (layer effects). */
-            if (d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
-                            drawBackgroundToVerticalSafeArea_WidgetFlag)) {
-                const iInt2 rootSize = size_Root(d->root);
-                const iInt2 center = divi_I2(rootSize, 2);
-                int top = 0, right = 0, bottom = 0, left = 0;
-                if (d->flags & drawBackgroundToHorizontalSafeArea_WidgetFlag) {
-                    const iBool isWide = width_Rect(rect) > rootSize.x * 9 / 10;
-                    if (isWide || mid_Rect(rect).x < center.x) {
-                        left = -left_Rect(rect);
-                    }
-                    if (isWide || mid_Rect(rect).x > center.x) {
-                        right = rootSize.x - right_Rect(rect);
-                    }
-                }
-                if (d->flags & drawBackgroundToVerticalSafeArea_WidgetFlag) {
-                    if (top_Rect(rect) > center.y) {
-                        bottom = rootSize.y - bottom_Rect(rect);
-                    }
-                    if (bottom_Rect(rect) < center.y) {
-                        top = -top_Rect(rect);
-                    }
-                }
-                adjustEdges_Rect(&rect, iMin(0, top), iMax(0, right), iMax(0, bottom), iMin(0, left));
-            }
-#endif
-            fillRect_Paint(&p, rect, d->bgColor);
-        }
-        if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {
-            drawRectThickness_Paint(&p, adjusted_Rect(rect, zero_I2(), neg_I2(one_I2())),
-                                    gap_UI / 4, d->frameColor);
-        }
-    }
+void drawBorders_Widget(const iWidget *d) {
     if (d->flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag)) {
         const iRect rect = bounds_Widget(d);
         iPaint p;
@@ -1585,6 +1577,32 @@ void drawBackground_Widget(const iWidget *d) {
                             borderColor);
         }
     }
+}
+
+void drawBackground_Widget(const iWidget *d) {
+    if (d->flags & noBackground_WidgetFlag) {
+        return;
+    }
+    if (!isDrawn_Widget_(d)) {
+        return;
+    }
+    /* Popup menus have a shadowed border. */
+    if (d->bgColor >= 0 || d->frameColor >= 0) {
+        iRect rect = bounds_Widget(d);
+        if (d->flags & drawBackgroundToBottom_WidgetFlag) {
+            rect.size.y += size_Root(d->root).y;
+        }
+        iPaint p;
+        init_Paint(&p);
+        if (d->bgColor >= 0) {
+            fillRect_Paint(&p, rect, d->bgColor);
+        }
+        if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {
+            drawRectThickness_Paint(&p, adjusted_Rect(rect, zero_I2(), neg_I2(one_I2())),
+                                    gap_UI / 4, d->frameColor);
+        }
+    }
+    drawBorders_Widget(d);
 }
 
 int drawCount_;
@@ -1609,7 +1627,7 @@ static void addToPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs, iR
     if (isDrawn_Widget_(d)) {
         iRect bounds = bounds_Widget(d);
         if (d->flags & drawBackgroundToBottom_WidgetFlag) {
-            bounds.size.y += size_Root(d->root).y; // iMax(bounds.size.y, size_Root(d->root).y - top_Rect(bounds));
+            bounds.size.y += size_Root(d->root).y;
         }
         if (isFullyContainedByOther_Rect(bounds, *fullyMasked)) {
             return; /* can't be seen */
@@ -1926,6 +1944,15 @@ const iPtrArray *findChildren_Widget(const iWidget *d, const char *id) {
     return collect_PtrArray(found);
 }
 
+iAny *findParent_Widget(const iWidget *d, const char *id) {
+    if (!d) return NULL;
+    iWidget *i = (iWidget *) d;
+    while (i && cmp_String(&i->id, id)) {
+        i = i->parent;
+    }
+    return i;
+}
+
 iAny *findParentClass_Widget(const iWidget *d, const iAnyClass *class) {
     if (!d) return NULL;
     iWidget *i = d->parent;
@@ -2172,7 +2199,18 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
             postCommandf_Root(((const iWidget *) d)->root, "cancel popup:1 ptr:%p", d);
             d = userData_Object(root_Widget(d));
         }
-        appendFormat_String(&str, " ptr:%p", d);
+        iString ptrStr;
+        init_String(&ptrStr);
+        /* Insert the widget pointer as the first argument so possible suffixes are unaffected. */
+        format_String(&ptrStr, " ptr:%p", d);
+        const size_t insertPos = indexOf_String(&str, ' ');
+        if (insertPos == iInvalidPos) {
+            append_String(&str, &ptrStr);
+        }
+        else {
+            insertData_Block(&str.chars, insertPos, cstr_String(&ptrStr), size_String(&ptrStr));
+        }
+        deinit_String(&ptrStr);
     }
     postCommandString_Root(((const iWidget *) d)->root, &str);
     deinit_String(&str);

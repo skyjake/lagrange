@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_render.h>
 #include <SDL_video.h>
 
+extern const iMenuItem topLevelMenus_Window[6];
+
 enum iWindowType {
     main_WindowType,
     popup_WindowType,
