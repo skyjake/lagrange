@@ -2782,7 +2782,8 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     if (localPath && fileExists_FileInfo(localPath)) {
                         if (!cmp_String(&d->sourceMime, mimeType_Export)) {
                             pushFront_Array(footerItems,
-                                            &(iMenuItem){ import_Icon " ${menu.import}",
+                                            &(iMenuItem){ import_Icon " " uiTextAction_ColorEscape
+                                                                      "\x1b[1m${menu.import}",
                                                           SDLK_RETURN,
                                                           0,
                                                           format_CStr("!import path:%s",
