@@ -45,6 +45,39 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.12" date="2022-04-04">
+            <description>
+                <p>Changes in v1.12:</p>
+                <ul>
+                    <li>Export and import user data as a ZIP archive, including identities, bookmarks, site-specific settings, trusted certificate fingerprints, and browsing history.</li>
+                    <li>UI layout options: the navigation/tab bars can be moved to the bottom of the window, and one can have a traditional menu bar instead of the hamburger menu. On macOS, the normal menu bar is used as before.</li>
+                    <li>Added style option to justify paragraphs that are at least three lines long.</li>
+                    <li>Added new content theme "Oceanic" with support for both dark and light modes.</li>
+                    <li>Added new UI accent colors: Red, Green, Blue, Gray.</li>
+                    <li>Feeds: Added "Mark Below as Read" context menu item.</li>
+                    <li>Site-specific setting for TLS session resumption (enabled by default).</li>
+                    <li>Roboto is the new default content/UI font, except on Windows where Segoe UI is the default font.</li>
+                    <li>Toggles use symbols instead of YES/NO.</li>
+                    <li>UI uses only one accent color at a time.</li>
+                    <li>Theme palette tuning: adjusted generated palettes of Colorful Dark/Light, improved the Sepia theme, and added a dark mode Sepia variant.</li>
+                    <li>Certain pages like Help open in a new tab. If the page is already open in a tab, that tab is activated instead of opening a new one.</li>
+                    <li>Improved word wrapping with more breaking punctuation.</li>
+                    <li>Text renderer uses additional subpixel offsets with lower-density displays.</li>
+                    <li>Text rendering optimizations: avoid repeated shaping of the same text.</li>
+                    <li>UI rendering optimizations.</li>
+                    <li>Fixed a possible crash when clicking on the first link of a page with the monospace body text option enabled.</li>
+                    <li>Fixed occasional small gaps between glyph backgrounds.</li>
+                    <li>Fixed problems with marking feed entries as read/unread.</li>
+                    <li>The bookmark dialog doesn't show irrelevant fields when editing a bookmark folder.</li>
+                    <li>Spurious spaces are removed from ends of bookmark titles.</li>
+                    <li>Pasting text into an input field should not decode reserved URL characters.</li>
+                    <li>Percent-encoded spaces (%20) in a file name were not decoded when saving a file.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.12.0</url>
+        </release>
         <release version="1.11.2" date="2022-03-18">
             <description>
                 <p>Changes in v1.11.2:</p>
