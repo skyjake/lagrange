@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.12 (Beta 4)
+* Importing exported user data archives.
+* Settings: Added "Export User Data".
+* Feeds: Added "Mark Below as Read".
+* No more extra fields in bookmark dialog when editing a folder.
+* Fixed invalid contents appearing in the overscroll areas of lists.
+
 ## 1.12 (Beta 3)
 * Fixed possible crash when opening Settings or focusing the URL field.
 * Fixed incorrect tab bar position after dismissing the onscreen keyboard.
