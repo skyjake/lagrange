@@ -7,6 +7,9 @@
 # Release notes
 
 ## 1.12 (Beta 4)
+* Use system-provided file pickers for opening/saving files.
+* Selecting a file for importing a client certificate.
+* Selecting a file for uploading.
 * Importing exported user data archives.
 * Settings: Added "Export User Data".
 * Feeds: Added "Mark Below as Read".
