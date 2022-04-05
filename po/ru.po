@@ -4,7 +4,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
 "PO-Revision-Date: 2022-04-06 03:13+0000\n"
-"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -2409,3 +2409,28 @@ msgstr "Серый"
 
 msgid "prefs.doctheme.name.oceanic"
 msgstr "Морской"
+
+msgid "import.userdata.error"
+msgstr "%s не является допустимым архивом пользовательских данных Lagrange."
+
+msgid "userdata.help"
+msgstr ""
+"Архивы пользовательских данных содержат историю, настройки сайтов, закладки, "
+"клиентские сертификаты и отпечатки доверенных серверных сертификатов. Их "
+"можно хранить в качестве резервных копий и использовать для переноса данных "
+"с устройства на устройство."
+
+msgid "prefs.uilayout"
+msgstr "Раскладка:"
+
+msgid "prefs.bottomnavbar"
+msgstr "Навигационная панель снизу"
+
+msgid "prefs.bottomtabbar"
+msgstr "Вкладки снизу"
+
+msgid "prefs.menubar"
+msgstr "Строка меню"
+
+msgid "prefs.justify"
+msgstr "Выровнять:"
