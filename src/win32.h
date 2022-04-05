@@ -35,6 +35,7 @@ void  useExecutableIconResource_SDLWindow(SDL_Window *);
 void  enableDarkMode_SDLWindow(SDL_Window *);
 void  handleCommand_Win32(const char *cmd);
 iString *windowsDirectory_Win32(void);
+iString *tempDirectory_Win32(void);
 
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 iInt2 cursor_Win32(void);
