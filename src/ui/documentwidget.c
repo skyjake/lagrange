@@ -64,6 +64,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAppleMobile)
 #   include "ios.h"
 #endif
+#if defined (iPlatformAndroidMobile)
+#   include "android.h"
+#endif
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
@@ -3555,6 +3558,8 @@ static iBool saveToFile_(const iString *savePath, const iBlock *content, iBool s
             const iBool  isMega = size >= 1000000;
 #if defined (iPlatformAppleMobile)
             exportDownloadedFile_iOS(savePath);
+#elif defined (iPlatformAndroidMobile)
+            exportDownloadedFile_Android(savePath);
 #else
             if (showDialog) {
                 const iMenuItem items[2] = {

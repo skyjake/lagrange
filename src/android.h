@@ -24,7 +24,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/string.h>
 
-void        setupApplication_Android(void);
+void        setupApplication_Android    (void);
+void        pickFile_Android            (const char *cmd);
+void        exportDownloadedFile_Android(const iString *localPath);
 
 float       displayDensity_Android  (void);
 void        javaCommand_Android     (const char *format, ...);

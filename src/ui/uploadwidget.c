@@ -35,6 +35,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #if defined (iPlatformAppleMobile)
 #   include "ios.h"
+#   define pickFile_Mobile pickFile_iOS
+#endif
+
+#if defined (iPlatformAndroidMobile)
+#   include "android.h"
+#   define pickFile_Mobile pickFile_Android
 #endif
 
 #include <the_Foundation/file.h>
@@ -72,7 +78,7 @@ struct Impl_UploadWidget {
 };
 
 static void releaseFile_UploadWidget_(iUploadWidget *d) {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
     if (!isEmpty_String(&d->filePath)) {
         /* Delete the temporary file that was copied for uploading. */
         remove(cstr_String(&d->filePath));
@@ -174,6 +180,8 @@ void init_UploadWidget(iUploadWidget *d) {
         { uiTextAction_ColorEscape "${dlg.upload.send}", SDLK_RETURN, KMOD_PRIMARY, "upload.accept" }
     };
     if (isUsingPanelLayout_Mobile()) {
+        const int infoFont = (deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId
+                                                                      : uiLabelMedium_FontId);
         const iMenuItem textItems[] = {
             { "navi.action text:" midEllipsis_Icon, 0, 0, "upload.editmenu.open" },
             { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
@@ -187,9 +195,9 @@ void init_UploadWidget(iUploadWidget *d) {
             { "padding arg:0.667" },
             { "button text:" uiTextAction_ColorEscape "${dlg.upload.pickfile}", 0, 0, "upload.pickfile" },            
             { "heading id:upload.file.name" },
-            { "label id:upload.filepathlabel text:\u2014" },
+            { format_CStr("label id:upload.filepathlabel font:%d text:\u2014", infoFont) },
             { "heading id:upload.file.size" },
-            { "label id:upload.filesizelabel text:\u2014" },
+            { format_CStr("label id:upload.filesizelabel font:%d text:\u2014", infoFont) },
             { "padding" },
             { "input id:upload.mime" },
             { "label id:upload.counter text:" },
@@ -204,8 +212,7 @@ void init_UploadWidget(iUploadWidget *d) {
             { "dropdown id:upload.id icon:0x1f464 text:", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
             { "input id:upload.token hint:hint.upload.token.long icon:0x1f516 text:" },
             { "heading id:upload.url" },
-            { format_CStr("label id:upload.info font:%d",
-                          deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId : uiLabelMedium_FontId) },
+            { format_CStr("label id:upload.info font:%d", infoFont) },
             { "input id:upload.path hint:hint.upload.path noheading:1 url:1 text:" },
             { NULL }
         }, actions, iElemCount(actions) - 1 /* no Accept button on main panel */);
@@ -483,7 +490,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         refresh_Widget(d->input);
         return iFalse;
     }
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
     else if (deviceType_App() != desktop_AppDeviceType && equal_Command(cmd, "menu.opened")) {
         setFocus_Widget(NULL); /* overlaid text fields! */
         refresh_Widget(d->input);
@@ -671,14 +678,14 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         }
     }
     else if (isCommand_Widget(w, ev, "upload.pickfile")) {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
         if (hasLabel_Command(cmd, "path")) {
             releaseFile_UploadWidget_(d);
             set_String(&d->filePath, collect_String(suffix_Command(cmd, "path")));
             updateFileInfo_UploadWidget_(d);
         }
         else {
-            pickFile_iOS(format_CStr("upload.pickfile ptr:%p", d));
+            pickFile_Mobile(format_CStr("upload.pickfile ptr:%p", d));
         }
 #endif
         return iTrue;

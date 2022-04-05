@@ -49,6 +49,16 @@ static const char *monospaceFontPath_(void) {
     return concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "IosevkaTerm-Extended.ttf");
 }
 
+static const char *cachePath_(void) {
+    return concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "Cache");
+}
+
+static void clearCachedFiles_(void) {
+    iForEach(DirFileInfo, dir, iClob(newCStr_DirFileInfo(cachePath_()))) {
+        remove(cstr_String(path_FileInfo(dir.value)));
+    }
+}
+
 void setupApplication_Android(void) {
     /* Cache the monospace font into a file where it can be loaded directly by the Java code. */
     const char *path = monospaceFontPath_();
@@ -60,6 +70,21 @@ void setupApplication_Android(void) {
         }
         iRelease(f);
     }
+    /* Tell the Java code where we expect cached file contents to be stored. */
+    const iString *cachePath = collectNewCStr_String(cachePath_());
+    if (!fileExists_FileInfo(cachePath)) {
+        makeDirs_Path(cachePath);
+    }
+    clearCachedFiles_(); /* old stuff is not needed any more */
+    javaCommand_Android("cache.set path:%s/", cstr_String(cachePath));
+}
+
+void pickFile_Android(const char *cmd) {
+    javaCommand_Android("file.open cmd:%s", cmd);
+}
+
+void exportDownloadedFile_Android(const iString *localPath) {
+    javaCommand_Android("file.save path:%s", cstr_String(localPath));
 }
 
 float displayDensity_Android(void) {
@@ -83,20 +108,9 @@ void javaCommand_Android(const char *format, ...) {
                                               "(Ljava/lang/String;)V");
     jobject   cmdStr    = (*env)->NewStringUTF(env, constData_Block(utf8_String(&cmd)));
     (*env)->CallVoidMethod(env, activity, methodId, cmdStr);
-    /* Convert the return value string. */
-//    iString *result = NULL;
-//    const char *chars = (*env)->GetStringUTFChars(env, retVal, NULL);
-//    result = newCStr_String(chars);
-//    (*env)->ReleaseStringUTFChars(env, retVal, chars);
     (*env)->DeleteLocalRef(env, cmdStr);
     (*env)->DeleteLocalRef(env, activity);
     (*env)->DeleteLocalRef(env, class);
-//    deinit_String(&cmd);
-//    if (isEmpty_String(result)) {
-//        delete_String(result);
-//        result = NULL;
-//    }
-//    return result;
 }
 
 /*----------------------------------------------------------------------------------------------*/

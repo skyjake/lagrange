@@ -3917,7 +3917,6 @@ iWidget *makeUserDataImporter_Dialog(const iString *archivePath) {
         addChild_Widget(dlg->root->widget, iClob(dlg));
         arrange_Widget(dlg);
         arrange_Widget(dlg);
-        setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     }
     /* Initialize. */
     setToggle_Widget(findChild_Widget(dlg, "importer.bookmark.0"), iTrue);
@@ -3925,6 +3924,7 @@ iWidget *makeUserDataImporter_Dialog(const iString *archivePath) {
     setToggle_Widget(findChild_Widget(dlg, "importer.sitespec.0"), iTrue);
     setToggle_Widget(findChild_Widget(dlg, "importer.trusted.0"), iTrue);
     setCommandHandler_Widget(dlg, handleUserDataImporterCommands_);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;
 }
 
