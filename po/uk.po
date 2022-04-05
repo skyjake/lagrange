@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-03 02:51+0000\n"
-"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
+"PO-Revision-Date: 2022-04-05 19:08+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
 "Language: uk\n"
@@ -296,7 +296,7 @@ msgid "status.query"
 msgstr "Пошуковий запит"
 
 msgid "status.query.tight"
-msgstr "Запит"
+msgstr "Пошук"
 
 msgid "status.feeds"
 msgstr "Оновлюю стрічки"
@@ -2350,3 +2350,31 @@ msgstr "Нове вікно"
 
 msgid "menu.openwindow"
 msgstr "Відкрити у новому вікні"
+
+msgid "import.userdata.bookmarks"
+msgstr "Закладки:"
+
+msgid "import.userdata.trusted"
+msgstr "Довірені сертифікати:"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Про програму"
+
+msgid "prefs.accent.red"
+msgstr "Червоний"
+
+msgid "prefs.accent.green"
+msgstr "Зелений"
+
+msgid "prefs.accent.blue"
+msgstr "Синій"
+
+msgid "prefs.accent.gray"
+msgstr "Сірий"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Морський"
+
+msgid "import.userdata.history"
+msgstr "Історія:"
