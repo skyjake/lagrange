@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.12 (3)
+* Importing exported user data archives.
+* Setting: Added "Export User Data".
+* Feeds: Added "Mark Below as Read".
+* No more extra fields in bookmark dialog when editing a folder.
+* Fixed invalid contents appearing in the overscroll areas of lists.
+
 ## 1.12 (2)
 * Changed appearance of many dialogs to use a card layout instead of fullscreen.
 * Input prompts appear next to the keyboard, putting action buttons more within reach.
