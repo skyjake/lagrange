@@ -30,8 +30,8 @@ if (IOS)
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.12)
-    set (ANDROID_BUILD_VERSION b3)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-03-29")
+    set (ANDROID_BUILD_VERSION b4)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-04-05")
 endif ()
 
 # Defaults that depend on environment.
