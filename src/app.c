@@ -3293,7 +3293,7 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
 #if defined (iPlatformAppleMobile)
-        pickFileForOpening_iOS();
+        pickFile_iOS("file.open");
 #endif
         return iTrue;
     }
