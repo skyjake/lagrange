@@ -5,20 +5,20 @@ Lagrange was created by Jaakko Keränen (<jaakko.keranen@iki.fi>) in July 2020. 
 Legend: `C` code, `T` translation
 
 ```
-C  3198  Jaakko Keränen <jaakko.keranen@iki.fi>
- T   50  Alyssa Liddell <e-liss@tuta.io>
-CT   47  Nikolay Korotkiy <sikmir@gmail.com>
+C  3363  Jaakko Keränen <jaakko.keranen@iki.fi>
+ T   55  Alyssa Liddell <e-liss@tuta.io>
+CT   51  Nikolay Korotkiy <sikmir@gmail.com>
  T   43  Olga Smirnova <mistresssilvara@hotmail.com>
- T   33  Страхиња Радић <contact@strahinja.org>
+ T   34  Страхиња Радић <contact@strahinja.org>
  T   31  Anna “CyberTailor” <cyber@sysrq.in>
  T   26  Omar Polo <weblate@omarpolo.com>
  T   26  Shibo Lyu <github@of.sb>
- T   23  Wally Hackenslacker <mastor89@protonmail.com>
+ T   24  Wally Hackenslacker <mastor89@protonmail.com>
  T   20  Giosuè Iaccarino <iaccagio9@outlook.it>
  T   19  MCMic <come@chilliet.eu>
- T   17  Xosé M <correoxm@disroot.org>
+ T   18  Xosé M <correoxm@disroot.org>
+ T   14  Emir SARI <emir_sari@icloud.com>
  T   14  Tadeáš Erban <tadysekerbosek@gmail.com>
- T   11  Emir SARI <emir_sari@icloud.com>
  T    9  Aaron Fischer <mail@aaron-fischer.net>
  T    8  El Mau <public@correolibre.net>
  T    7  Waterrail <maksymiliankrol03@gmail.com>
@@ -33,6 +33,7 @@ C     2  Br0000k <77938600+Br0000k@users.noreply.github.com>
  T    2  Gabriel de Oliveira Ferreira Machado <goliv04053@tutanota.com>
  T    2  Jop Vernooy <jop@jopv.net>
 C     2  Manos Pitsidianakis <el13635@mail.ntua.gr>
+ T    2  Xavier <dxpublica@posteo.net>
  T    2  dalz <weblate@alsd.eu>
  T    2  methbkts <methbkts@gmail.com>
  T    2  tbodt <tblodt@icloud.com>

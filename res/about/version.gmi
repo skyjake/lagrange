@@ -7,8 +7,9 @@
 # Release notes
 
 ## 1.12.1
-* Updated Help: export/import, user data archives, paragraph justification.
 * Windows: Fixed importing identities (path separator confusion).
+* Updated Help: export/import, user data archives, paragraph justification.
+* Updated UI translations.
 
 ## 1.12
 New features:
