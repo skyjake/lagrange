@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-03 02:51+0000\n"
+"PO-Revision-Date: 2022-04-06 03:13+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -296,7 +296,7 @@ msgid "status.query"
 msgstr "Пошуковий запит"
 
 msgid "status.query.tight"
-msgstr "Запит"
+msgstr "Пошук"
 
 msgid "status.feeds"
 msgstr "Оновлюю стрічки"
@@ -1992,7 +1992,7 @@ msgid "menu.website"
 msgstr "Вебсайт проєкту…"
 
 msgid "menu.fonts"
-msgstr "Керування шрифтами…"
+msgstr "Керувати шрифтами…"
 
 msgid "num.files"
 msgid_plural "num.files.n"
@@ -2350,3 +2350,113 @@ msgstr "Нове вікно"
 
 msgid "menu.openwindow"
 msgstr "Відкрити у новому вікні"
+
+msgid "import.userdata.bookmarks"
+msgstr "Закладки:"
+
+msgid "import.userdata.trusted"
+msgstr "Довірені сертифікати:"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Про Lagrange"
+
+msgid "prefs.accent.red"
+msgstr "Червоний"
+
+msgid "prefs.accent.green"
+msgstr "Зелений"
+
+msgid "prefs.accent.blue"
+msgstr "Синій"
+
+msgid "prefs.accent.gray"
+msgstr "Сірий"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Лазуровий"
+
+msgid "import.userdata.history"
+msgstr "Історія:"
+
+msgid "heading.archive.userdata"
+msgstr "Архівування даних користувача"
+
+msgid "userdata.help"
+msgstr ""
+"Архіви даних користувача містять експортовану історію перегляду, "
+"ідентичності, закладки, налаштування для сайтів та відбитки довірених "
+"сертифікатів сервера. Їх можна зберігати, як резервні копії та "
+"використовувати для перенесення даних між пристроями."
+
+msgid "feeds.entry.markbelowread"
+msgstr "Прочитати записи нижче"
+
+msgid "heading.import.userdata.error"
+msgstr "Імпортування зазнало невдачі"
+
+msgid "import.userdata"
+msgstr "Імпортувати обрані дані"
+
+msgid "sitespec.tlscache"
+msgstr "Поновити сеанс TLS:"
+
+msgid "heading.bookmark.editfolder"
+msgstr "Редагувати теку"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Материнська тека:"
+
+msgid "heading.prefs.support"
+msgstr "Підтримка"
+
+msgid "prefs.uilayout"
+msgstr "Компонування:"
+
+msgid "prefs.bottomnavbar"
+msgstr "Навігаційний рядок внизу"
+
+msgid "prefs.bottomtabbar"
+msgstr "Вкладки внизу"
+
+msgid "prefs.menubar"
+msgstr "Панель меню"
+
+msgid "prefs.justify"
+msgstr "Вирівняти:"
+
+msgid "menu.export"
+msgstr "Експортувати дані користувача"
+
+msgid "menu.import"
+msgstr "Імпортувати дані користувача…"
+
+msgid "dlg.certimport.paste"
+msgstr "Вставити з буферу"
+
+msgid "import.userdata.idents"
+msgstr "Ідентичності:"
+
+msgid "heading.import.userdata"
+msgstr "Імпортування даних користувача"
+
+msgid "import.userdata.sitespec"
+msgstr "Налаштування сайтів:"
+
+msgid "dlg.userdata.no"
+msgstr "Жодних"
+
+msgid "dlg.userdata.missing"
+msgstr "За відсутності"
+
+msgid "dlg.userdata.all"
+msgstr "Всі (перезаписати)"
+
+msgid "dlg.userdata.alldup"
+msgstr "Всі (зберігати копії)"
+
+msgid "import.userdata.dupfolder"
+msgstr "Імпортовані копії"
+
+msgid "import.userdata.error"
+msgstr "%s не є дійсним експортним архівом Lagrange."

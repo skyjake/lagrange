@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-03-26 23:51+0000\n"
+"PO-Revision-Date: 2022-04-06 03:13+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -835,3 +835,182 @@ msgstr "Forigi tiparpakaĵon"
 
 msgid "fontpack.meta.notinstalled"
 msgstr "Ne instalita"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Pri Lagrange"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "Nova dosierujo"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "Agordoj"
+
+msgid "prefs.linewidth"
+msgstr "Linia larĝo:"
+
+msgid "heading.bookmark.edit"
+msgstr "Redakti legosignon"
+
+msgid "heading.file.delete"
+msgstr "Forigi dosieron"
+
+msgid "dlg.file.delete"
+msgstr "Forigi"
+
+msgid "heading.bookmark.add"
+msgstr "Aldoni legosignon"
+
+msgid "bookmark.untag.home"
+msgstr "Forigi hejmpaĝon"
+
+msgid "reload.onceperday"
+msgstr "Unufoje tage"
+
+msgid "heading.upload.file"
+msgstr "Dosiero"
+
+msgid "heading.upload.id"
+msgstr "Rajtigo"
+
+msgid "dlg.upload.id.default"
+msgstr "Defaŭlto"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Alŝuti dosieron"
+
+msgid "upload.file.name"
+msgstr "Dosiernomo:"
+
+msgid "dlg.bookmark.folder"
+msgstr "Dosierujo:"
+
+msgid "prefs.toolbaraction1"
+msgstr "Butono 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "Butono 2"
+
+msgid "prefs.doctheme.dark"
+msgstr "Malhela temo:"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Sepio"
+
+msgid "heading.addfolder"
+msgstr "Aldoni dosierujon"
+
+msgid "prefs.imagestyle.text"
+msgstr "Teksta koloro"
+
+msgid "bookmark.export.title.folder"
+msgstr "Legosignoj"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Elekti dosieron"
+
+msgid "dlg.newident.more"
+msgstr "Pli…"
+
+msgid "dlg.feed.save"
+msgstr "Konservi agordojn"
+
+msgid "menu.newwindow"
+msgstr "Nova fenestro"
+
+msgid "status.query.tight"
+msgstr "Serĉi"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "Forigi legosignojn"
+
+msgid "pageinfo.settings"
+msgstr "Agordoj"
+
+msgid "sitespec.accept"
+msgstr "Konservi agordojn"
+
+msgid "link.file.delete"
+msgstr "Forigi dosieron"
+
+msgid "import.userdata.bookmarks"
+msgstr "Legosignoj:"
+
+msgid "import.userdata.history"
+msgstr "Historio:"
+
+msgid "heading.upload.text"
+msgstr "Teksto"
+
+msgid "upload.mime"
+msgstr "MIME-tipo:"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Enhavo"
+
+msgid "dlg.upload.send"
+msgstr "Alŝuti"
+
+msgid "heading.translate"
+msgstr "Traduki paĝon"
+
+msgid "dlg.addfolder"
+msgstr "Aldoni dosierujon"
+
+msgid "prefs.uilayout"
+msgstr "Aranĝo:"
+
+msgid "prefs.accent.red"
+msgstr "Ruĝa"
+
+msgid "prefs.accent.green"
+msgstr "Verda"
+
+msgid "prefs.accent.blue"
+msgstr "Blua"
+
+msgid "prefs.accent.gray"
+msgstr "Griza"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Linisalto"
+
+msgid "prefs.animate"
+msgstr "Movbildoj:"
+
+msgid "prefs.doctheme.light"
+msgstr "Hela temo:"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Grizoskalo"
+
+msgid "prefs.font.heading"
+msgstr "Titoloj:"
+
+msgid "prefs.font.mono"
+msgstr "Antaŭformatita:"
+
+# Color of the text foreground, i.e., the characters.
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Teksta koloro"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "Fona koloro"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Tipara fasono"
+
+msgid "prefs.font.smooth"
+msgstr "Glatigo:"
+
+msgid "prefs.ca.file"
+msgstr "CA-dosiero:"

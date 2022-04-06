@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-03-02 06:32+0000\n"
+"PO-Revision-Date: 2022-04-06 03:13+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1764,7 +1764,7 @@ msgid "menu.pageinfo"
 msgstr "Mostrar Información de la Página"
 
 msgid "status.query.tight"
-msgstr "Consulta"
+msgstr "Búsqueda"
 
 msgid "menu.openfile"
 msgstr "Abrir Archivo…"
@@ -2338,3 +2338,114 @@ msgstr "Tamaño máximo de los URL:"
 
 msgid "menu.newwindow"
 msgstr "Nueva Ventana"
+
+msgid "menu.export"
+msgstr "Exportar Datos de Usuario"
+
+msgid "heading.archive.userdata"
+msgstr "Archivo de Datos de Usuario"
+
+msgid "userdata.help"
+msgstr ""
+"Los archivos de datos de usuario contienen el historial de navegación, "
+"identidades, marcadores, configuraciones específicas del sitio y huellas "
+"dactilares de los certificados de servidor confiables. Pueden ser "
+"almacenados como respaldo y usados para transferir los datos entre "
+"dispositivos."
+
+msgid "menu.import"
+msgstr "Importar Datos de Usuario…"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Sobre Lagrange"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Marcar Inferior como Leído"
+
+msgid "sitespec.tlscache"
+msgstr "Resumir sesión de TLS:"
+
+msgid "dlg.certimport.paste"
+msgstr "Pegar desde el Portapapeles"
+
+msgid "heading.import.userdata"
+msgstr "Importar Datos de Usuario"
+
+msgid "heading.import.userdata.error"
+msgstr "Falló la Importación"
+
+msgid "import.userdata.bookmarks"
+msgstr "Marcadores:"
+
+msgid "import.userdata.idents"
+msgstr "Identidades:"
+
+msgid "import.userdata.history"
+msgstr "Historial:"
+
+msgid "import.userdata.trusted"
+msgstr "Certificados confiables:"
+
+msgid "import.userdata.sitespec"
+msgstr "Configuración del sitio:"
+
+msgid "dlg.userdata.no"
+msgstr "Ninguno"
+
+msgid "dlg.userdata.missing"
+msgstr "Si Falta"
+
+msgid "dlg.userdata.all"
+msgstr "Todo (Sobreescribir)"
+
+msgid "dlg.userdata.alldup"
+msgstr "Todo (Mantener Duplicados)"
+
+msgid "import.userdata"
+msgstr "Importar Datos Seleccionados"
+
+msgid "import.userdata.dupfolder"
+msgstr "Duplicados Importados"
+
+msgid "import.userdata.error"
+msgstr "%s no es un archivo de importación de Lagrange válido."
+
+msgid "heading.bookmark.editfolder"
+msgstr "Editar Carpeta"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Carpeta padre:"
+
+msgid "heading.prefs.support"
+msgstr "Soporte"
+
+msgid "prefs.uilayout"
+msgstr "Disposición:"
+
+msgid "prefs.bottomnavbar"
+msgstr "Barra de Navegación Inferior"
+
+msgid "prefs.bottomtabbar"
+msgstr "Pestañas Inferiores"
+
+msgid "prefs.menubar"
+msgstr "Barra de Menús"
+
+msgid "prefs.accent.red"
+msgstr "Rojo"
+
+msgid "prefs.accent.green"
+msgstr "Verde"
+
+msgid "prefs.accent.blue"
+msgstr "Azul"
+
+msgid "prefs.accent.gray"
+msgstr "Gris"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Oceánico"
+
+msgid "prefs.justify"
+msgstr "Justificar:"
