@@ -33,6 +33,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #if defined (iPlatformAppleMobile)
 #   include "ios.h"
+#   define pickFile_Mobile pickFile_iOS
+#endif
+
+#if defined (iPlatformAndroidMobile)
+#   include "android.h"
+#   define pickFile_Mobile pickFile_Android
 #endif
 
 #include <the_Foundation/file.h>
@@ -109,7 +115,7 @@ static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *dat
 void init_CertImportWidget(iCertImportWidget *d) {
     iWidget *w = as_Widget(d);
     const iMenuItem actions[] = {
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
         { "${dlg.certimport.pickfile}", 0, 0, "certimport.pickfile" },
         { "${dlg.certimport.paste}", 0, 0, "certimport.paste" },
         { "---" },
@@ -280,7 +286,7 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         }
         return iTrue;
     }
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
     if (isCommand_UserEvent(ev, "certimport.pickfile")) {
         const char *cmd = command_UserEvent(ev);
         if (hasLabel_Command(cmd, "path")) {
@@ -289,7 +295,7 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
             remove(cstr_String(path)); /* it is a temporary copy */
         }
         else {
-            pickFile_iOS("certimport.pickfile");
+            pickFile_Mobile("certimport.pickfile");
         }
         return iTrue;
     }

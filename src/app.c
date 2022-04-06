@@ -3293,7 +3293,10 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
 #if defined (iPlatformAppleMobile)
-        pickFileForOpening_iOS();
+        pickFile_iOS("file.open");
+#endif
+#if defined (iPlatformAndroidMobile)
+        pickFile_Android("file.open");
 #endif
         return iTrue;
     }
@@ -3797,7 +3800,7 @@ iBool handleCommand_App(const char *cmd) {
             data_Buffer(zip));
         iRelease(zip);
         delete_Export(export);
-#if defined (iPlatformAppleMobile)
+#if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
         /* Straight to the save sheet. */
         postCommand_App("document.save");
 #endif

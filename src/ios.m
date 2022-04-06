@@ -566,10 +566,6 @@ void exportDownloadedFile_iOS(const iString *path) {
     [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
 }
 
-void pickFileForOpening_iOS(void) {
-    pickFile_iOS("file.open");
-}
-
 void pickFile_iOS(const char *command) {
     [appState_ setPickFileCommand:command];
     UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]

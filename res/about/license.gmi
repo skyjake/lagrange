@@ -108,3 +108,4 @@ This application uses fonts licensed under the Open Font License.
 Additional fonts:
 
 => https://github.com/googlefonts/noto-emoji/blob/master/LICENSE  Noto Emoji (Apache License 2.0)
+=> https://github.com/googlefonts/roboto  Roboto (Apache License 2.0)

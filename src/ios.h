@@ -36,7 +36,6 @@ void    setupWindow_iOS         (iWindow *window);
 iBool   processEvent_iOS        (const SDL_Event *);
 void    playHapticEffect_iOS    (enum iHapticEffect effect);
 void    exportDownloadedFile_iOS(const iString *path);
-void    pickFileForOpening_iOS  (void);
 void    pickFile_iOS            (const char *command); /* ` path:%s` will be appended */
 void    openTextActivityView_iOS(const iString *text);
 void    openFileActivityView_iOS(const iString *path);

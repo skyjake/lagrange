@@ -41,9 +41,9 @@ struct Impl_Export {
 };
 
 iDefineTypeConstruction(Export)
-    
+
 static const char *metadataEntryName_Export_ = "lagrange-export.ini";
-    
+
 void init_Export(iExport *d) {
     d->arch = new_Archive();
 }
@@ -109,7 +109,7 @@ void generate_Export(iExport *d) {
         serialize_Visited(visited_App(), stream_Buffer(buf));
         setDataCStr_Archive(d->arch, "visited.txt", data_Buffer(buf));
         close_Buffer(buf);
-    }    
+    }
     /* Export metadata. */
     setDataCStr_Archive(d->arch, metadataEntryName_Export_, utf8_String(meta));
     delete_String(meta);
@@ -158,11 +158,15 @@ void import_Export(const iExport *d, enum iImportMethod bookmarks, enum iImportM
         const iString *identsDir = collect_String(concatCStr_Path(dataDir_App(), "idents"));
         iConstForEach(StringSet, i,
                       iClob(listDirectory_Archive(d->arch, collectNewCStr_String("idents/")))) {
-            iString *dataPath = concatCStr_Path(identsDir, cstr_Rangecc(baseName_Path(i.value)));
+            iString *dataPath = concatCStr_Path(identsDir,
+                                                cstr_Rangecc(baseNameSep_Path(i.value, "/")));
             if (identities == all_ImportMethod || !fileExists_FileInfo(dataPath)) {
                 iFile *f = new_File(dataPath);
                 if (open_File(f, writeOnly_FileMode)) {
                     write_File(f, data_Archive(d->arch, i.value));
+                }
+                else {
+                    fprintf(stderr, "failed to write: %s\n", cstr_String(dataPath));
                 }
                 iRelease(f);
             }

@@ -352,6 +352,18 @@ Gempub is an e-book/archival format that is essentially a set of Gemtext files s
 
 Lagrange can be used as a Gempub reader. When a .gpub file has been saved locally, you can open it in the application to see the book cover page. On the cover page you will find a link that opens the contents of the book. When clicked, split view mode is automatically enabled and both the book index page and the first chapter are shown (unless split view pinning has been disabled).
 
+## 1.12 Export/import user data
+
+The export/import feature added in Lagrange v1.12 allows one to manually export and import identities, bookmarks, browsing history, and site-specific information via a ZIP archive.
+
+The "Export User Data" menu item can be found in the File menu or the hamburger menu. In practice, this creates a compressed archive that you can then save to the Downloads folder or open in an external application. From there, you can transfer the archive manually onto another device, or just put in a safe place for backup.
+
+Opening the exported archive works similar to fontpacks (cf. section 2.4): when viewing the ZIP in the app, there is a button in the bottom of the window to import the contained data. Fine-grained controls are provided to choose which data gets imported and how, so you don't have to overwrite all the existing data.
+
+Note that browsing history also contains the read status of feed entries, because those are tracked based on whether entry URLs have been visited. This means a transfer of user data includes the up-to-date status of each subscription as well.
+
+There is no automatic sync service to share user data between multiple devices.
+
 # 2 Customization
 
 You can find a number of settings in Preferences to customize the user interface and page contents.
@@ -360,9 +372,9 @@ You can find a number of settings in Preferences to customize the user interface
 
 One important characteristic of Gemini is that you remain in control of what gets loaded and when. The browser will not suddenly fetch a ton of images, autoplay videos, or make surreptitious connections to any tracking servers — each network request is purposeful and manually triggered. With this in mind, the "Load image on scroll" option is provided to assist keyboard-only browsing and to facilitate a focused reading experience. When enabled, if there is an image link visible on the page and you press Space or ↓, it will be loaded and shown inline _instead_ of the view scrolling down. This allows you to read and see all the content of the page while only tapping on a single key on the keyboard.
 
-The "Show images in Data URLs" option determines if image data embedded into links using data URLs is automatically shown after the page has finished loading. This only applies to a handful of common image media types: JPEG, PNG, GIF, and WebP. Note that the maximum size of an URL has a limit, so these embedded images have to fit under the configured limit to be recognized as valid links. Image from data URLs are displayed as links' inline content, just like with any other URL scheme.
-
 The "Open archive indices" option controls whether index.gmi pages are automatically opened while browsing the contents of a ZIP archive. The purpose is to simulate the behavior of a Gemini server where opening a directory will by default show its index page. Enabling this option makes navigating an archived copy of a capsule a more streamlined experience.
+
+The "Open images in Data URLs" option determines if image data embedded into links using data URLs is automatically shown after the page has finished loading. This only applies to a handful of common image media types: JPEG, PNG, GIF, and WebP. Note that the maximum size of an URL has a limit, so these embedded images have to fit under the configured limit to be recognized as valid links. Image from data URLs are displayed as links' inline content, just like with any other URL scheme.
 
 "Split view pinning" controls which tab links will be opened on when browsing in split view mode. The default mode is "Left Tab", which means that the page in the left tab is pinned (remains unchanged) when clicking on a link. For more information, see section 1.9.
 
@@ -393,6 +405,7 @@ Page content color themes are selected on the "Colors" tab of Preferences. The "
 * Gray: Slightly brighter version of Black, i.e., gray body text and colored headings on a gray background.
 * White: Colored headings on a white background.
 * Sepia: Light sepia background with black text. Does not change depending on domain; use this for readability if you prefer a sepia reading experience.
+* Oceanic: Mostly teal/blue theme with a few orange/red accents. Brightness and saturation vary randomly based on domain.
 * High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
 
 ### 2.3.1 Site-specific theme
@@ -416,9 +429,10 @@ To be precise, on this tab you can select which _typefaces_ to use for certain e
 
 The fonts for document headings, body text, preformatted blocks, and the user interface can be chosen separately. There is also a separate font for monospaced body text, used when the protocol-specific "Monospace body" option is enabled.
 
-There are two built-in fonts available:
+There are three built-in fonts available:
 
-* "Source Sans" is the default UI font that is also used for page content.
+* "Roboto" is the default UI font that is also used for page content.
+* "Source Sans" is the previous default font. It has more personality than Roboto, but rarely matches the system fonts.
 * "Iosevka" is the monospaced font.
 
 There is also an "Iosevka (compact)" variant that actually uses the font's original line spacing. It is the default for preformatted blocks to avoid gaps between lines of ASCII art, but not for body text for better legibility.
@@ -499,11 +513,19 @@ regular = "NotoSansCJK-Regular.ttc:2"
 
 The "Style" tab of the Preferences dialog lets you customize the appearance and layout of page content.
 
-Other style options:
+Paragraph style options:
 
 * Line width: This setting determines the maximum width for text lines. "Window" disables the maximum limit and fits text lines to the full width of the window. Shorter lines are generally easier to read.
-* Quote indicator: Quoted text is shown in an italic font. Additionally, you can select between a quotation mark icon and the traditional vertical line along the left edge of the quote.
+* Justify: Paragraphs are justified when they at least three lines long. Spaces on each line are expanded to equalize line widths.
 * Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font.
+
+Other style options:
+
+* Tab width: Number of spaces to use for tab stops.
+* Quote indicator: Quoted text is shown in an italic font. Additionally, you can select between a quotation mark icon and the traditional vertical line along the left edge of the quote.
+* Bold links: Use a bold font for links. Enabling "Visited" means that the bold font is used also for visited links, not just unvisited ones. "On Dark/Light" enable bold links on a dark/light background. For readability, using bold fonts on a light background is advisable because differences in text color are less noticeable.
+* Capsule icon: When the window is wide enough, show the capsule icon on the left side of the page at a fixed position together with the current level 1 heading.
+* Collapse preformatted: After loading a page, immediately collapse all preformatted blocks, showing only the alt texts.
 
 ## 2.6 Proxies
 
@@ -909,6 +931,20 @@ When the path refers to a TrueType Collection (.ttc), the font index to use must
 regular = "NotoSansCJK-Regular.ttc:2"
 ```
  
+# 6 User data archives
+
+Lagrange user data archives are compressed ZIP archives that contain browsing history, identities, bookmarks, site-specific settings, and/or trusted server certificate fingerprints.
+
+An export archive largely mirrors the contents of the runtime directory (section 3.5). However, the "lagrange-export.ini" metadata file must also be present:
+
+```lagrange-export.ini
+# Lagrange user data exported on 2022-04-01 13:34
+version = "1.12.0"
+timestamp = 1648809264
+```
+* `version` (string): Version of the app that generated the archive.
+* `timestamp` (integer): Time of generation as a UNIX timestamp.
+
 # Open source licenses
 
 => about:license
