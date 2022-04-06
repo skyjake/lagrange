@@ -38,3 +38,7 @@ set (FRIBIDI_INCLUDE_DIRS ${ANDROID_DIR}/fribidi-android/${ANDROID_ABI}/include)
 set (HARFBUZZ_FOUND YES)
 set (HARFBUZZ_LIBRARIES ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/lib/libharfbuzz.a)
 set (HARFBUZZ_INCLUDE_DIRS ${ANDROID_DIR}/harfbuzz-android/${ANDROID_ABI}/include/harfbuzz)
+
+set (WEBP_FOUND YES)
+set (WEBP_LIBRARIES ${ANDROID_DIR}/libwebp-android/${ANDROID_ABI}/lib/libwebpdecoder.a)
+set (WEBP_INCLUDE_DIRS ${ANDROID_DIR}/libwebp-android/${ANDROID_ABI}/include/)
