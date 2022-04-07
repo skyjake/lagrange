@@ -2386,6 +2386,11 @@ void closeWindow_App(iMainWindow *win) {
             }
         }
     }
+    if (isEmpty_PtrArray(&d->mainWindows)) {
+        d->window = NULL;
+        setActiveWindow_App(NULL);
+        setCurrent_Window(NULL);
+    }
 }
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {

@@ -210,7 +210,6 @@ static void ignoreImmediateKeyDownEvents_(void) {
     enum iTouchBarVariant touchBarVariant;
     NSString *currentAppearanceName;
     NSObject<NSApplicationDelegate> *sdlDelegate;
-    //NSMutableDictionary<NSString *, NSString*> *menuCommands;
     MenuCommands *menuCommands;
 }
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl;
@@ -219,6 +218,8 @@ static void ignoreImmediateKeyDownEvents_(void) {
 - (void)application:(NSApplication *)app openFiles:(NSArray<NSString *> *)filenames;
 - (void)application:(NSApplication *)app openURLs:(NSArray<NSURL *> *)urls;
 - (void)applicationDidFinishLaunching:(NSNotification *)notifications;
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender;
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
 @end
 
 @implementation MyDelegate
@@ -288,6 +289,19 @@ static void appearanceChanged_MacOS_(NSString *name) {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     [sdlDelegate applicationDidFinishLaunching:notification];
+}
+
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
+    return NO;
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+//    if (SDL_GetEventState(SDL_QUIT) == SDL_ENABLE) {
+//        SDL_Event event;
+//        event.type = SDL_QUIT;
+//        SDL_PushEvent(&event);
+//    }    
+    return NSTerminateCancel;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
@@ -532,7 +546,8 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     return iTrue;        
 }
 
-void setupApplication_MacOS(void) {    
+void setupApplication_MacOS(void) {
+    SDL_EventState(SDL_QUIT, SDL_FALSE); /* handle app quit manually */
     NSApplication *app = [NSApplication sharedApplication];
     [app setActivationPolicy:NSApplicationActivationPolicyRegular];
     [app activateIgnoringOtherApps:YES];

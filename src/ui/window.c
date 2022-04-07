@@ -1032,9 +1032,9 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_CLOSE:
-            if (numWindows_App() > 1) {
+//            if (numWindows_App() > 1) {
                 closeWindow_App(d);
-            }
+//            }
             return iTrue;
         default:
             break;
