@@ -45,6 +45,7 @@ if (IOS)
 endif ()
 
 # Build configuration.
+option (ENABLE_TUI              "Enable the Curses TUI instead of GUI" OFF)
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
 option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional text" ON)
@@ -194,12 +195,6 @@ set (SOURCES
     src/updater.h
     src/visited.c
     src/visited.h
-    # Audio playback:
-    src/audio/buf.c
-    src/audio/buf.h
-    src/audio/player.c
-    src/audio/player.h
-    src/audio/stb_vorbis.c
     # User interface:
     src/ui/banner.c
     src/ui/banner.h
@@ -269,7 +264,18 @@ set (SOURCES
     res/about/version.gmi
     ${EMB_BIN}
 )
-if (IOS OR NOT APPLE) # macos.m has Sparkle updater
+if (NOT ENABLE_TUI)
+    add_definitions (-DLAGRANGE_ENABLE_AUDIO=1)
+    # Audio playback
+    list (APPEND SOURCES
+        src/audio/buf.c
+        src/audio/buf.h
+        src/audio/player.c
+        src/audio/player.h
+        src/audio/stb_vorbis.c
+    )
+endif ()
+if (IOS OR ENABLE_TUI OR NOT APPLE) # macos.m has Sparkle updater
     list (APPEND SOURCES src/updater.c)
 endif ()
 if (ENABLE_IPC)
@@ -301,11 +307,15 @@ if (IOS)
     PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources
     )
-elseif (APPLE)
+elseif (APPLE AND NOT ENABLE_TUI)
     add_definitions (-DiPlatformAppleDesktop=1)
     list (APPEND SOURCES src/macos.m src/macos.h)
     list (APPEND RESOURCES "res/Lagrange.icns")
     set_source_files_properties ("res/Lagrange.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+endif ()
+if (ENABLE_TUI)
+    add_definitions (-DiPlatformTerminal=1)
+    list (REMOVE_ITEM SOURCES src/ui/text.c)
 endif ()
 if (MSYS)
     set (WINRC_FILE_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0)
@@ -313,7 +323,7 @@ if (MSYS)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
     list (APPEND SOURCES src/win32.c src/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
 endif ()
-if (MSYS OR (UNIX AND NOT MOBILE AND NOT APPLE))
+if (MSYS OR ENABLE_TUI OR (UNIX AND NOT MOBILE AND NOT APPLE))
     add_definitions (-DiPlatformPcDesktop=1)
 endif ()
 if (MOBILE)

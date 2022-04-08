@@ -2037,11 +2037,13 @@ static uint32_t mediaUpdateInterval_DocumentWidget_(const iDocumentWidget *d) {
     iConstForEach(PtrArray, i, &d->view.visibleMedia) {
         const iGmRun *run = i.ptr;
         if (run->mediaType == audio_MediaType) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
             iPlayer *plr = audioPlayer_Media(media_GmDocument(d->view.doc), mediaId_GmRun(run));
             if (flags_Player(plr) & adjustingVolume_PlayerFlag ||
                 (isStarted_Player(plr) && !isPaused_Player(plr))) {
                 interval = iMin(interval, 1000 / 15);
             }
+#endif
         }
         else if (run->mediaType == download_MediaType) {
             interval = iMin(interval, 1000);
@@ -2063,11 +2065,13 @@ static void updateMedia_DocumentWidget_(iDocumentWidget *d) {
         iConstForEach(PtrArray, i, &d->view.visibleMedia) {
             const iGmRun *run = i.ptr;
             if (run->mediaType == audio_MediaType) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
                 iPlayer *plr = audioPlayer_Media(media_GmDocument(d->view.doc), mediaId_GmRun(run));
                 if (idleTimeMs_Player(plr) > 3000 && ~flags_Player(plr) & volumeGrabbed_PlayerFlag &&
                     flags_Player(plr) & adjustingVolume_PlayerFlag) {
                     setFlags_Player(plr, adjustingVolume_PlayerFlag, iFalse);
                 }
+#endif
             }
         }
     }
@@ -4305,6 +4309,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
+#if defined (LAGRANGE_ENABLE_AUDIO)
     else if (equal_Command(cmd, "media.player.started")) {
         /* When one media player starts, pause the others that may be playing. */
         const iPlayer *startedPlr = pointerLabel_Command(cmd, "player");
@@ -4317,6 +4322,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
     }
+#endif
     else if (equal_Command(cmd, "media.player.update")) {
         updateMedia_DocumentWidget_(d);
         return iFalse;
@@ -4713,6 +4719,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
 }
 
 static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *run) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
     if (run && run->mediaType == audio_MediaType) {
         iPlayer *plr = audioPlayer_Media(media_GmDocument(d->view.doc), mediaId_GmRun(run));
         setFlags_Player(plr, volumeGrabbed_PlayerFlag, iTrue);
@@ -4731,6 +4738,7 @@ static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *r
     else {
         iAssert(iFalse);
     }
+#endif    
 }
 
 static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
@@ -4757,6 +4765,7 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
         if (run->mediaType != audio_MediaType) {
             continue;
         }
+#if defined (LAGRANGE_ENABLE_AUDIO)        
         if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) {
             if (ev->button.button != SDL_BUTTON_LEFT) {
                 return iFalse;
@@ -4825,6 +4834,7 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
                 return iTrue;
             }
         }
+#endif /* LAGRANGE_ENABLE_AUDIO */
     }
     return iFalse;
 }
@@ -5400,6 +5410,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             return iTrue;
         case drag_ClickResult: {
+#if defined (LAGRANGE_ENABLE_AUDIO)
             if (d->grabbedPlayer) {
                 iPlayer *plr =
                     audioPlayer_Media(media_GmDocument(view->doc), mediaId_GmRun(d->grabbedPlayer));
@@ -5410,6 +5421,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 refresh_Widget(w);
                 return iTrue;
             }
+#endif /* LAGRANGE_ENABLE_AUDIO */
             /* Fold/unfold a preformatted block. */
             if (~d->flags & selecting_DocumentWidgetFlag && view->hoverPre &&
                 preIsFolded_GmDocument(view->doc, preId_GmRun(view->hoverPre))) {

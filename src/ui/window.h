@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/rect.h>
 #include <SDL_events.h>
 #include <SDL_render.h>
+#include <SDL_mouse.h>
 #include <SDL_video.h>
 
 extern const iMenuItem topLevelMenus_Window[6];
