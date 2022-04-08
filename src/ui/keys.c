@@ -451,7 +451,7 @@ void setLabel_Keys(int id, const char *label) {
 
 iBool processEvent_Keys(const SDL_Event *ev) {
     iKeys *d = &keys_;
-    iRoot *root = get_Window()->keyRoot;
+    iRoot *root = get_Window() ? get_Window()->keyRoot : NULL;
     if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
         const iBinding *bind = find_Keys_(d, ev->key.keysym.sym, keyMods_Sym(ev->key.keysym.mod));
         if (bind) {

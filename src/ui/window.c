@@ -186,22 +186,32 @@ const iMenuItem topLevelMenus_Window[6] = {
 
 #if defined (LAGRANGE_MAC_MENUBAR)
 
+static iBool macMenusInserted_;
+
 static void insertMacMenus_(void) {
+    if (macMenusInserted_) {
+        return;
+    }
     insertMenuItems_MacOS("${menu.title.file}", 1, fileMenuItems_, iElemCount(fileMenuItems_));
     insertMenuItems_MacOS("${menu.title.edit}", 2, editMenuItems_, iElemCount(editMenuItems_));
     insertMenuItems_MacOS("${menu.title.view}", 3, viewMenuItems_, iElemCount(viewMenuItems_));
     insertMenuItems_MacOS("${menu.title.bookmarks}", 4, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
     insertMenuItems_MacOS("${menu.title.identity}", 5, identityMenuItems_, iElemCount(identityMenuItems_));
     insertMenuItems_MacOS("${menu.title.help}", 7, helpMenuItems_, iElemCount(helpMenuItems_));
+    macMenusInserted_ = iTrue;
 }
 
 static void removeMacMenus_(void) {
+    if (!macMenusInserted_) {
+        return;
+    }
     removeMenu_MacOS(7);
     removeMenu_MacOS(5);
     removeMenu_MacOS(4);
     removeMenu_MacOS(3);
     removeMenu_MacOS(2);
     removeMenu_MacOS(1);
+    macMenusInserted_ = iFalse;
 }
 
 #endif /* LAGRANGE_MAC_MENUBAR */
@@ -246,9 +256,7 @@ static void windowSizeChanged_MainWindow_(iMainWindow *d) {
 
 static void setupUserInterface_MainWindow(iMainWindow *d) {
 #if defined (LAGRANGE_MAC_MENUBAR)
-    if (numWindows_App() == 0) {
-        insertMacMenus_(); /* TODO: Shouldn't this be in the App? */
-    }
+    insertMacMenus_(); /* TODO: Shouldn't this be in the App? */
 #endif
     /* One root is created by default. */
     d->base.roots[0] = new_Root();
@@ -1652,6 +1660,9 @@ void setKeyboardHeight_MainWindow(iMainWindow *d, int height) {
 
 iObjectList *listDocuments_MainWindow(iMainWindow *d, const iRoot *rootOrNull) {
     iObjectList *docs = new_ObjectList();
+    if (!d) {
+        return docs;
+    }
     iForIndices(i, d->base.roots) {
         iRoot *root = d->base.roots[i];
         if (!root) continue;

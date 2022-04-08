@@ -2154,6 +2154,9 @@ static const iWidget *findFocusRoot_Widget_(const iWidget *d) {
 }
 
 iAny *findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir) {
+    if (!get_Window()) {
+        return NULL;
+    }
     iRoot *uiRoot = (startFrom ? startFrom->root : get_Window()->keyRoot);
     const iWidget *focusRoot = findFocusRoot_Widget_(uiRoot->widget);
     iAssert(focusRoot != NULL);
