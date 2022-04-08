@@ -400,24 +400,6 @@ static const iBlock *replaceVariables_(const iBlock *block) {
             if (equal_Rangecc(name, "APP_VERSION")) {
                 repl = range_CStr(LAGRANGE_APP_VERSION);
             }
-#if 0
-            else if (startsWith_Rangecc(name, "BT:")) { /* block text */
-                repl = range_String(collect_String(renderBlockChars_Text(
-                    &fontFiraSansRegular_Resources,
-                    11, /* should be larger if shaded */
-                    quadrants_TextBlockMode,
-                    &(iString){ iBlockLiteral(
-                        name.start + 3, size_Range(&name) - 3, size_Range(&name) - 3) })));
-            }
-            else if (startsWith_Rangecc(name, "ST:")) { /* shaded text */
-                repl = range_String(collect_String(renderBlockChars_Text(
-                    &fontSmolEmojiRegular_Resources,
-                    20,
-                    shading_TextBlockMode,
-                    &(iString){ iBlockLiteral(
-                        name.start + 3, size_Range(&name) - 3, size_Range(&name) - 3) })));
-            }
-#endif
             else if (equal_Rangecc(name, "ALT")) {
 #if defined (iPlatformApple)
                 repl = range_CStr("\u2325");

@@ -218,11 +218,6 @@ void            resetMissing_Text   (iText *);
 iBool           checkMissing_Text   (void); /* returns the flag, and clears it */
 SDL_Texture *   glyphCache_Text     (void);
 
-enum iTextBlockMode { quadrants_TextBlockMode, shading_TextBlockMode };
-
-iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iTextBlockMode,
-                                     const iString *text);
-
 iRegExp *   makeAnsiEscapePattern_Text  (iBool includeEscChar);
 
 /*-----------------------------------------------------------------------------------------------*/
