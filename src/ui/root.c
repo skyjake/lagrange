@@ -1498,13 +1498,13 @@ void createUserInterface_Root(iRoot *d) {
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *fprog = new_LabelWidget("", NULL);
                 setId_Widget(as_Widget(fprog), "feeds.progress");
-                setTextColor_LabelWidget(fprog, uiTextCaution_ColorId);
+                setTextColor_LabelWidget(fprog, uiTextAction_ColorId);
                 setFont_LabelWidget(fprog, uiLabelSmall_FontId);
                 setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
 //                setAlignVisually_LabelWidget(fprog, iTrue);
                 setNoAutoMinHeight_LabelWidget(fprog, iTrue);
                 iWidget *progBar = new_Widget();
-                setBackgroundColor_Widget(progBar, uiTextCaution_ColorId);
+                setBackgroundColor_Widget(progBar, uiTextAction_ColorId);
                 setFixedSize_Widget(progBar, init_I2(0, gap_UI / 4));
                 setId_Widget(addChildFlags_Widget(as_Widget(fprog), iClob(progBar),
                                                   moveToParentBottomEdge_WidgetFlag),
