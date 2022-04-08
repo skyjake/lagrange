@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-03-02 06:32+0000\n"
+"PO-Revision-Date: 2022-04-10 08:51+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -2268,3 +2268,104 @@ msgstr "Riapri le schede all'avvio:"
 
 msgid "menu.paste.go"
 msgstr "Incolla e Vai"
+
+msgid "heading.archive.userdata"
+msgstr "Archivio Dati dell'Utente"
+
+msgid "userdata.help"
+msgstr ""
+"Gli archivi dei dati dell'utente contengono lo storico di navigazione, le "
+"identità, i segnalibri, le impostazioni per-sito e i fingerprint dei "
+"certificati dei server fidati. Possono essere salvati come backup ed essere "
+"usati per trasferire dati tra i dispositivi."
+
+msgid "menu.export"
+msgstr "Esporta Dati Utente"
+
+msgid "menu.import"
+msgstr "Importa Dati Utente…"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Riguardo Lagrange"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Segna quelli sotto come Letti"
+
+msgid "sitespec.tlscache"
+msgstr "Riesumare sessione TLS:"
+
+msgid "dlg.certimport.paste"
+msgstr "Incolla dalla Clipboard"
+
+msgid "heading.import.userdata"
+msgstr "Importa Dati Utenti"
+
+msgid "heading.import.userdata.error"
+msgstr "Importazione Fallita"
+
+msgid "import.userdata.bookmarks"
+msgstr "Segnalibri:"
+
+msgid "import.userdata.idents"
+msgstr "Identità:"
+
+msgid "import.userdata.history"
+msgstr "Storico:"
+
+msgid "import.userdata.trusted"
+msgstr "Certificati Fidati:"
+
+msgid "import.userdata.sitespec"
+msgstr "Impostazione dei siti:"
+
+msgid "dlg.userdata.no"
+msgstr "Nessuno"
+
+msgid "dlg.userdata.missing"
+msgstr "Se Mancante"
+
+msgid "dlg.userdata.all"
+msgstr "Tutto (Sovrascrivi)"
+
+msgid "dlg.userdata.alldup"
+msgstr "Tutto (Mantieni Duplicati)"
+
+msgid "import.userdata"
+msgstr "Importa Dati Selezionati"
+
+msgid "import.userdata.dupfolder"
+msgstr "Duplicati Importati"
+
+msgid "import.userdata.error"
+msgstr "%s non è un valido archivio esportato da Lagrange."
+
+msgid "heading.bookmark.editfolder"
+msgstr "Modifica Cartella"
+
+msgid "heading.prefs.support"
+msgstr "Supporto"
+
+msgid "prefs.uilayout"
+msgstr "Disposizione:"
+
+msgid "prefs.menubar"
+msgstr "Barra dei Menu"
+
+msgid "prefs.accent.red"
+msgstr "Rosso"
+
+msgid "prefs.accent.green"
+msgstr "Verde"
+
+msgid "prefs.accent.blue"
+msgstr "Blu"
+
+msgid "prefs.accent.gray"
+msgstr "Grigio"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Oceanico"
+
+msgid "prefs.justify"
+msgstr "Giustificare:"
