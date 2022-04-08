@@ -196,6 +196,14 @@ static void keyStr_LabelWidget_(const iLabelWidget *d, iString *str) {
     toString_Sym(d->key, d->kmods, str);
 }
 
+static iBool areTabButtonsThemeColored_(void) {
+    const enum iGmDocumentTheme docTheme = docTheme_Prefs(prefs_App());
+    const iBool isDarkUI = isDark_ColorTheme(colorTheme_App());
+    return (docTheme == colorfulLight_GmDocumentTheme ||
+            docTheme == sepia_GmDocumentTheme ||
+            (docTheme == oceanic_GmDocumentTheme && !isDarkUI));
+}
+
 static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2,
                                    int *icon, int *meta) {
     const iWidget *w           = constAs_Widget(d);
@@ -234,7 +242,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             }
             else {
                 const enum iGmDocumentTheme docTheme = docTheme_Prefs(prefs_App());
-                if ((docTheme == colorfulLight_GmDocumentTheme || docTheme == sepia_GmDocumentTheme) &&
+                if (areTabButtonsThemeColored_() &&
                     !cmp_String(&d->widget.parent->id, "tabs.buttons")) {
                     *bg = (docTheme == sepia_GmDocumentTheme &&
                                    colorTheme_App() == pureWhite_ColorTheme
