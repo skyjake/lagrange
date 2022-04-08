@@ -154,6 +154,12 @@ void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
         &d->stbInfo, glyphIndex, xScale, yScale, xShift, 0.0f, x0, y0, x1, y1);
 }
 
+int glyphAdvance_FontFile(const iFontFile *d, uint32_t glyphIndex) {
+    int adv = 0;
+    stbtt_GetGlyphHMetrics(&d->stbInfo, glyphIndex, &adv, NULL);
+    return adv;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDefineTypeConstruction(FontSpec)

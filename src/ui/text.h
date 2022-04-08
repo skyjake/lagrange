@@ -81,10 +81,6 @@ enum iFontId {
     plainText_FontId          = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentRegular_FontSize),
 };
 
-//iLocalDef iBool isJapanese_FontId(enum iFontId id) {
-//    return id >= japanese_FontId && id < japanese_FontId + max_FontSize;
-//}
-
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)
 
 extern int gap_Text; /* affected by content font size */

@@ -49,9 +49,6 @@ Optimization notes:
 #include "paint.h"
 #include "app.h"
 
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "../stb_truetype.h"
-
 #include <the_Foundation/array.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -218,29 +215,6 @@ static void init_Font(iFont *d, const iFontSpec *fontSpec, const iFontFile *font
     const int scaleType = scaleType_FontSpec(sizeId);
     d->fontSpec = fontSpec;
     d->fontFile = fontFile;
-    /* TODO: Nunito kerning fixes need to be a font parameter of its own. */
-#if 0
-    d->data = NULL;
-    d->family = undefined_TextFont;
-    /* Note: We only use `family` currently for applying a kerning fix to Nunito. */
-    if (data == &fontNunitoRegular_Resources ||
-        data == &fontNunitoBold_Resources ||
-        data == &fontNunitoExtraBold_Resources ||
-        //data == &fontNunitoLightItalic_Resources ||
-        data == &fontNunitoExtraLight_Resources) {
-        d->family = nunito_TextFont;
-    }
-    else if (//data == &fontScheherazadeNewRegular_Resources) {
-             data == &fontNotoSansArabicUIRegular_Resources) {
-        d->family = arabic_TextFont;
-    }
-    else if (data == &fontNotoSansSymbolsRegular_Resources ||
-             data == &fontNotoSansSymbols2Regular_Resources ||
-             data == &fontNotoEmojiRegular_Resources ||
-             data == &fontSmolEmojiRegular_Resources) {
-        d->family = emojiAndSymbols_TextFont;
-    }
-#endif
     d->height = (int) (height * fontSpec->heightScale[scaleType]);
     const float glyphScale = fontSpec->glyphScale[scaleType];
     d->xScale = d->yScale = scaleForPixelHeight_FontFile(fontFile, d->height) * glyphScale;
@@ -637,10 +611,8 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
     glRect->pos    = assignCachePos_Text_(activeText_, glRect->size);
     glyph->d[hoff] = init_I2(x0, y0);
     glyph->d[hoff].y += d->vertOffset;
-    if (hoff == 0) { /* hoff==1 uses same metrics as `glyph` */
-        int adv;
-        stbtt_GetGlyphHMetrics(&d->fontFile->stbInfo, index_Glyph_(glyph), &adv, NULL);
-        glyph->advance = d->xScale * adv;
+    if (hoff == 0) { /* hoff>=1 uses same metrics as `glyph` */
+        glyph->advance = d->xScale * glyphAdvance_FontFile(d->fontFile, index_Glyph_(glyph));
     }
 }
 

@@ -239,6 +239,7 @@ set (SOURCES
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
     src/ui/sidebarwidget.h
+    src/ui/stbtext.c
     src/ui/text.c
     src/ui/text.h
     src/ui/touch.c

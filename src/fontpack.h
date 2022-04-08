@@ -91,17 +91,18 @@ struct Impl_FontFile {
     int ascent, descent, emAdvance;
 };
 
-float   scaleForPixelHeight_FontFile    (const iFontFile *, int pixelHeight);
-
 iLocalDef uint32_t findGlyphIndex_FontFile(const iFontFile *d, iChar ch) {
     return stbtt_FindGlyphIndex(&d->stbInfo, ch);
 }
 
-uint8_t *   rasterizeGlyph_FontFile(const iFontFile *, float xScale, float yScale, float xShift,
-                                    uint32_t glyphIndex, int *w, int *h); /* caller must free() the returned bitmap */
-void        measureGlyph_FontFile  (const iFontFile *, uint32_t glyphIndex,
-                                    float xScale, float yScale, float xShift,
-                                    int *x0, int *y0, int *x1, int *y1);
+float       scaleForPixelHeight_FontFile(const iFontFile *, int pixelHeight);
+int         glyphAdvance_FontFile       (const iFontFile *, uint32_t glyphIndex);
+void        measureGlyph_FontFile       (const iFontFile *, uint32_t glyphIndex,
+                                         float xScale, float yScale, float xShift,
+                                         int *x0, int *y0, int *x1, int *y1);
+uint8_t *   rasterizeGlyph_FontFile     (const iFontFile *, float xScale,
+                                         float yScale, float xShift, uint32_t glyphIndex,
+                                         int *w, int *h); /* caller must free() the returned bitmap */
 
 /*----------------------------------------------------------------------------------------------*/
 
