@@ -212,6 +212,8 @@ set (SOURCES
     src/ui/documentwidget.h
     src/ui/indicatorwidget.c
     src/ui/indicatorwidget.h
+    src/ui/font.c
+    src/ui/font.h
     src/ui/linkinfo.c
     src/ui/linkinfo.h
     src/ui/listwidget.c
@@ -234,7 +236,6 @@ set (SOURCES
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
     src/ui/sidebarwidget.h
-    src/ui/stbtext.c
     src/ui/text.c
     src/ui/text.h
     src/ui/touch.c
@@ -264,7 +265,15 @@ set (SOURCES
     res/about/version.gmi
     ${EMB_BIN}
 )
-if (NOT ENABLE_TUI)
+if (ENABLE_TUI)
+    # Terminal text rendering
+    list (APPEND SOURCES
+        src/ui/text_terminal.c
+    )    
+else ()
+    list (APPEND SOURCES
+        src/ui/text_stb.c
+    )
     add_definitions (-DLAGRANGE_ENABLE_AUDIO=1)
     # Audio playback
     list (APPEND SOURCES

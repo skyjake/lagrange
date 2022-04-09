@@ -1,4 +1,4 @@
-/* Copyright 2020-2022 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2022 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -20,5 +20,5 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "../stb_truetype.h"
+#include "text.h"
+
