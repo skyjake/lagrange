@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-06 03:13+0000\n"
+"PO-Revision-Date: 2022-04-10 08:51+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -239,7 +239,7 @@ msgid "menu.reload"
 msgstr "Оновити сторінку"
 
 msgid "menu.page.bookmark"
-msgstr "Додати сторінку до закладок…"
+msgstr "Закласти сторінку…"
 
 msgid "menu.page.subscribe"
 msgstr "Підписатися на сторінку…"
