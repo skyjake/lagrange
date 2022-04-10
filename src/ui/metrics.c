@@ -25,8 +25,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/math.h>
 
-#define defaultFontSize_Metrics     18
-#define defaultGap_Metrics          4
+#if defined (iPlatformTerminal)
+#   define defaultFontSize_Metrics     1
+#   define defaultGap_Metrics          1
+#else
+#   define defaultFontSize_Metrics     18
+#   define defaultGap_Metrics          4
+#endif
 
 int   gap_UI      = defaultGap_Metrics;
 iInt2 gap2_UI     = { defaultGap_Metrics, defaultGap_Metrics };

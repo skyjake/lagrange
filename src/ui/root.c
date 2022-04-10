@@ -62,7 +62,7 @@ static const iMenuItem desktopNavMenuItems_[] = {
     { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
     { "${menu.page.copysource}", SDLK_c, KMOD_PRIMARY, "copy" },
     { "---" },
-    { leftHalf_Icon " ${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { leftHalf_Icon " ${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
     { rightHalf_Icon " ${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
     { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
     { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
@@ -73,7 +73,7 @@ static const iMenuItem desktopNavMenuItems_[] = {
     { "${menu.downloads}", 0, 0, "downloads.open" },
     { export_Icon " ${menu.export}", 0, 0, "export" },
     { "---" },
-    { gear_Icon " ${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { gear_Icon " ${menu.preferences}", preferences_KeyShortcut, "preferences" },
  #if defined (LAGRANGE_ENABLE_WINSPARKLE)
     { "${menu.update}", 0, 0, "updater.check" },
  #endif
@@ -97,7 +97,7 @@ static const iMenuItem tabletNavMenuItems_[] = {
     { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     { "---" },
-    { gear_Icon " ${menu.settings}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
 };
 
@@ -111,7 +111,7 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     { "---" },
-    { gear_Icon " ${menu.settings}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
 };
 
@@ -1555,7 +1555,7 @@ void createUserInterface_Root(iRoot *d) {
                         { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
                         { "---" },
                         { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-                        { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                        { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
                         { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                         { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                         { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
@@ -1844,16 +1844,16 @@ void createUserInterface_Root(iRoot *d) {
         addAction_Widget(root, SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home");
         addAction_Widget(root, 'l', KMOD_PRIMARY, "navigate.focus");
         addAction_Widget(root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
-        addAction_Widget(root, '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1");
-        addAction_Widget(root, '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1");
-        addAction_Widget(root, '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1");
-        addAction_Widget(root, '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1");
-        addAction_Widget(root, '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1");
-        addAction_Widget(root, '1', rightSidebar_KeyModifier, "sidebar2.mode arg:0 toggle:1");
-        addAction_Widget(root, '2', rightSidebar_KeyModifier, "sidebar2.mode arg:1 toggle:1");
-        addAction_Widget(root, '3', rightSidebar_KeyModifier, "sidebar2.mode arg:2 toggle:1");
-        addAction_Widget(root, '4', rightSidebar_KeyModifier, "sidebar2.mode arg:3 toggle:1");
-        addAction_Widget(root, '5', rightSidebar_KeyModifier, "sidebar2.mode arg:4 toggle:1");
+        addAction_Widget(root, '1', leftSidebarTab_KeyModifier, "sidebar.mode arg:0 toggle:1");
+        addAction_Widget(root, '2', leftSidebarTab_KeyModifier, "sidebar.mode arg:1 toggle:1");
+        addAction_Widget(root, '3', leftSidebarTab_KeyModifier, "sidebar.mode arg:2 toggle:1");
+        addAction_Widget(root, '4', leftSidebarTab_KeyModifier, "sidebar.mode arg:3 toggle:1");
+        addAction_Widget(root, '5', leftSidebarTab_KeyModifier, "sidebar.mode arg:4 toggle:1");
+        addAction_Widget(root, '1', rightSidebarTab_KeyModifier, "sidebar2.mode arg:0 toggle:1");
+        addAction_Widget(root, '2', rightSidebarTab_KeyModifier, "sidebar2.mode arg:1 toggle:1");
+        addAction_Widget(root, '3', rightSidebarTab_KeyModifier, "sidebar2.mode arg:2 toggle:1");
+        addAction_Widget(root, '4', rightSidebarTab_KeyModifier, "sidebar2.mode arg:3 toggle:1");
+        addAction_Widget(root, '5', rightSidebarTab_KeyModifier, "sidebar2.mode arg:4 toggle:1");
         addAction_Widget(root, SDLK_j, KMOD_PRIMARY, "splitmenu.open");
     }
     updateMetrics_Root(d);

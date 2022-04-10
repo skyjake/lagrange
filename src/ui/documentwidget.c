@@ -551,8 +551,12 @@ static int documentWidth_DocumentView_(const iDocumentView *d) {
     const float    adjust   = iClamp((float) bounds.size.x / gap_UI / 11 - 12,
                                 -1.0f, 10.0f); /* adapt to width */
     //printf("%f\n", adjust); fflush(stdout);
+    int prefsWidth = prefs->lineWidth;
+#if defined (iPlatformTerminal)
+    prefsWidth *= 2.5f;
+#endif
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
-                 fontSize_UI * prefs->lineWidth * prefs->zoomPercent / 100);
+                 fontSize_UI * prefsWidth * prefs->zoomPercent / 100);
 }
 
 static int documentTopPad_DocumentView_(const iDocumentView *d) {
@@ -5325,7 +5329,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
                             { "---" },
                             { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-                            { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                            { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
                             { "---" },
                             { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
@@ -5867,7 +5871,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
     addAction_Widget(w, closeTab_KeyShortcut, "tabs.close");
     addAction_Widget(w, SDLK_d, KMOD_PRIMARY, "bookmark.add");
-    addAction_Widget(w, subscribeToPage_KeyModifier, "feeds.subscribe");
+    addAction_Widget(w, subscribeToPage_KeyShortcut, "feeds.subscribe");
 #endif
     addAction_Widget(w, navigateBack_KeyShortcut, "navigate.back");
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");

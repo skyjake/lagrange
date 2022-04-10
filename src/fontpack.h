@@ -24,7 +24,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/ptrarray.h>
-#include "stb_truetype.h"
+
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+#   include "stb_truetype.h"
+#endif
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 #   include <hb.h>
@@ -81,7 +84,9 @@ struct Impl_FontFile {
     int             colIndex;
     enum iFontStyle style;
     iBlock          sourceData;
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
     stbtt_fontinfo  stbInfo;
+#endif
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
     hb_blob_t *hbBlob;
     hb_face_t *hbFace;
@@ -91,9 +96,11 @@ struct Impl_FontFile {
     int ascent, descent, emAdvance;
 };
 
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
 iLocalDef uint32_t findGlyphIndex_FontFile(const iFontFile *d, iChar ch) {
     return stbtt_FindGlyphIndex(&d->stbInfo, ch);
 }
+#endif
 
 float       scaleForPixelHeight_FontFile(const iFontFile *, int pixelHeight);
 int         glyphAdvance_FontFile       (const iFontFile *, uint32_t glyphIndex);

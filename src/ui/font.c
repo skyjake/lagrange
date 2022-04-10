@@ -443,3 +443,73 @@ void deinit_AttributedText(iAttributedText *d) {
     deinit_Array(&d->logical);
     deinit_Array(&d->runs);
 }
+
+iTextMetrics measure_WrapText(iWrapText *d, int fontId) {
+    iTextMetrics tm;
+    tm.bounds = run_Font(font_Text(fontId),
+                         &(iRunArgs){ .mode        = measure_RunMode | runFlags_FontId(fontId),
+                                      .text        = d->text,
+                                      .wrap        = d,
+                                      .justify     = d->justify,
+                                      .layoutBound = d->justify ? d->maxWidth : 0,
+                                      .cursorAdvance_out = &tm.advance });
+    return tm;
+}
+
+iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
+    iTextMetrics tm;
+#if !defined (LAGRANGE_ENABLE_HARFBUZZ)
+    /* In simple mode, each line must be wrapped first so we can break at the right points
+       and do wrap notifications before drawing. */
+    iRangecc text = d->text;
+    iZap(tm);
+    d->wrapRange_ = (iRangecc){ d->text.start, d->text.start };
+    const iInt2 orig = pos;
+    while (!isEmpty_Range(&text)) {
+        const char *endPos;
+        const int width = d->mode == word_WrapTextMode
+                              ? tryAdvance_Text(fontId, text, d->maxWidth, &endPos).x
+                              : tryAdvanceNoWrap_Text(fontId, text, d->maxWidth, &endPos).x;
+        notify_WrapText(d, endPos, (iTextAttrib){ .fgColorId = color }, 0, width);
+        drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endPos });
+        text.start = endPos;
+        pos.y += lineHeight_Text(fontId);
+        tm.bounds.size.x = iMax(tm.bounds.size.x, width);
+        tm.bounds.size.y = pos.y - orig.y;
+    }
+    tm.advance = sub_I2(pos, orig);
+#else
+    tm.bounds = run_Font(font_Text(fontId),
+              &(iRunArgs){ .mode  = draw_RunMode | runFlags_FontId(fontId) |
+                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
+                                    (color & fillBackground_ColorId ? fillBackground_RunMode : 0),
+                           .text  = d->text,
+                           .pos   = pos,
+                           .wrap  = d,
+                           .justify = d->justify,
+                           .layoutBound = d->justify ? d->maxWidth : 0,
+                           .color = color & mask_ColorId,
+                           .cursorAdvance_out = &tm.advance,
+    });
+#endif
+    return tm;
+}
+
+iBool notify_WrapText(iWrapText *d, const char *ending, iTextAttrib attrib, int origin,
+                      int advance) {
+    if (d && d->wrapFunc && d->wrapRange_.start) {
+        /* `wrapRange_` uses logical indices. */
+        const char *end   = ending ? ending : d->wrapRange_.end;
+        iRangecc    range = { d->wrapRange_.start, end };
+        iAssert(range.start <= range.end);
+        const iBool result = d->wrapFunc(d, range, attrib, origin, advance);
+        if (result) {
+            d->wrapRange_.start = end;
+        }
+        else {
+            d->wrapRange_ = iNullRange;
+        }
+        return result;
+    }
+    return iTrue;
+}

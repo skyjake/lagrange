@@ -91,6 +91,10 @@ struct Impl_BaseFont {
 
 typedef void iAnyFont;
 
+iLocalDef iBool isMonospaced_Font(const iAnyFont *d) {
+    return (((const iBaseFont *) d)->spec->flags & monospace_FontSpecFlag) != 0;
+}
+
 iBaseFont *     font_Text       (enum iFontId id);
 enum iFontId    fontId_Text     (const iAnyFont *font);
 
@@ -215,6 +219,8 @@ iLocalDef int maxWidth_TextMetrics(const iTextMetrics d) {
 
 iTextMetrics    measure_WrapText    (iWrapText *, int fontId);
 iTextMetrics    draw_WrapText       (iWrapText *, int fontId, iInt2 pos, int color);
+
+iBool           notify_WrapText     (iWrapText *, const char *ending, iTextAttrib attrib, int origin, int advance);
 
 /*----------------------------------------------------------------------------------------------*/
 

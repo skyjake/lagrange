@@ -75,7 +75,7 @@ iLocalDef iBool isScrollFinished_MouseWheelEvent(const SDL_MouseWheelEvent *ev) 
 
 iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 
-#if defined (iPlatformApple)
+#if defined (iPlatformApple) && !defined (iPlatformTerminal)
 #   define KMOD_PRIMARY     KMOD_GUI
 #   define KMOD_SECONDARY   KMOD_CTRL
 #else

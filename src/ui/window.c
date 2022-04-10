@@ -81,7 +81,7 @@ static const iMenuItem fileMenuItems_[] = {
     { "${menu.export}", 0, 0, "export" },
 #if defined (iPlatformPcDesktop)
     { "---" },
-    { "${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "${menu.preferences}", preferences_KeyShortcut, "preferences" },
     { "${menu.fonts}", 0, 0, "open newtab:1 switch:1 url:about:fonts" },
 #if defined (LAGRANGE_ENABLE_WINSPARKLE)
     { "${menu.update}", 0, 0, "updater.check" },
@@ -104,13 +104,13 @@ static const iMenuItem editMenuItems_[] = {
 };
 
 static const iMenuItem viewMenuItems_[] = {
-    { "${menu.show.bookmarks}", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
-    { "${menu.show.feeds}", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
-    { "${menu.show.history}", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
-    { "${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
-    { "${menu.show.outline}", '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1" },
+    { "${menu.show.bookmarks}", '1', leftSidebarTab_KeyModifier, "sidebar.mode arg:0 toggle:1" },
+    { "${menu.show.feeds}", '2', leftSidebarTab_KeyModifier, "sidebar.mode arg:1 toggle:1" },
+    { "${menu.show.history}", '3', leftSidebarTab_KeyModifier, "sidebar.mode arg:2 toggle:1" },
+    { "${menu.show.identities}", '4', leftSidebarTab_KeyModifier, "sidebar.mode arg:3 toggle:1" },
+    { "${menu.show.outline}", '5', leftSidebarTab_KeyModifier, "sidebar.mode arg:4 toggle:1" },
     { "---" },
-    { "${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { "${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
     { "${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
     { "---" },
     { "${menu.back}", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
@@ -129,7 +129,7 @@ static const iMenuItem viewMenuItems_[] = {
 
 static iMenuItem bookmarksMenuItems_[] = {
     { "${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-    { "${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+    { "${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
     { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
     { "---" },
     { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },

@@ -60,6 +60,15 @@ iText *current_Text(void) {
     return current_Text_;
 }
 
+void setDocumentFontSize_Text(iText *d, float fontSizeFactor) {
+    fontSizeFactor *= contentScale_Text;
+    iAssert(fontSizeFactor > 0);
+    if (iAbs(d->contentFontSize - fontSizeFactor) > 0.001f) {
+        d->contentFontSize = fontSizeFactor;
+        resetFonts_Text(d);
+    }
+}
+
 void setBaseAttributes_Text(int fontId, int fgColorId) {
     iText *d = current_Text_;
     d->baseFontId    = fontId;
@@ -81,7 +90,6 @@ iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar) {
     }
     return new_RegExp(pattern, 0);
 }
-
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -168,10 +176,6 @@ iTextMetrics measureN_Text(int fontId, const char *text, size_t n) {
 
 static void drawBoundedN_Text_(int fontId, iInt2 pos, int boundWidth, iBool justify,
                                int color, iRangecc text, size_t maxLen) {
-//    iText       *d    = current_Text();
-    /* TODO: Why was the text color set here? Should be done in text_stb.c's run_Font_ */
-//    const iColor clr  = get_Color(color & mask_ColorId);
-//    SDL_SetTextureColorMod(d->cache, clr.r, clr.g, clr.b);
     run_Font(font_Text(fontId),
               &(iRunArgs){ .mode = draw_RunMode |
                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |

@@ -204,10 +204,6 @@ struct Impl_Font {
     iGlyphTable *table;
 };
 
-iLocalDef iBool isMonospaced_Font(const iFont *d) {
-    return (d->font.spec->flags & monospace_FontSpecFlag) != 0;
-}
-
 static void init_Font(iFont *d, const iFontSpec *fontSpec, const iFontFile *fontFile,
                       enum iFontSize sizeId, float height) {
     const int scaleType = scaleType_FontSpec(sizeId);
@@ -280,11 +276,9 @@ iDeclareTypeConstructionArgs(StbText, SDL_Renderer *render)
 
 struct Impl_StbText {
     iText          base;
-//    float          contentFontSize;
     iArray         fonts; /* fonts currently selected for use (incl. all styles/sizes) */
     int            overrideFontId; /* always checked for glyphs first, regardless of which font is used */    
     iArray         fontPriorityOrder;
-//    SDL_Renderer * render;
     SDL_Texture *  cache;
     iInt2          cacheSize;
     int            cacheRowAllocStep;
@@ -292,13 +286,9 @@ struct Impl_StbText {
     iArray         cacheRows;
     SDL_Palette *  grayscale;
     SDL_Palette *  blackAndWhite; /* unsmoothed glyph palette */
-//    iRegExp *      ansiEscape;
-//    int            ansiFlags;
-//    int            baseFontId; /* base attributes (for restoring via escapes) */
-//    int            baseFgColorId;
     iBool          missingGlyphs;  /* true if a glyph couldn't be found */
     iChar          missingChars[20]; /* rotating buffer of the latest missing characters */
-    iFontRun *     cachedFontRuns[16];
+    iFontRun *     cachedFontRuns[16]; /* recently generated HarfBuzz glyph buffers */
 };
 
 iLocalDef iStbText *current_StbText_(void) {
@@ -477,9 +467,11 @@ void init_StbText(iStbText *d, SDL_Renderer *render) {
 }
 
 void deinit_StbText(iStbText *d) {
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
     iForIndices(i, d->cachedFontRuns) {
         delete_FontRun(d->cachedFontRuns[i]);
     }
+#endif
     SDL_FreePalette(d->blackAndWhite);
     SDL_FreePalette(d->grayscale);
     deinitFonts_StbText_(d);
@@ -502,15 +494,6 @@ void delete_Text(iText *d) {
 
 void setOpacity_Text(float opacity) {
     SDL_SetTextureAlphaMod(current_StbText_()->cache, iClamp(opacity, 0.0f, 1.0f) * 255 + 0.5f);
-}
-
-void setDocumentFontSize_Text(iText *d, float fontSizeFactor) {
-    fontSizeFactor *= contentScale_Text;
-    iAssert(fontSizeFactor > 0);
-    if (iAbs(d->contentFontSize - fontSizeFactor) > 0.001f) {
-        d->contentFontSize = fontSizeFactor;
-        resetFonts_Text(d);
-    }
 }
 
 static void resetCache_StbText_(iStbText *d) {
@@ -891,25 +874,6 @@ static void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
 
 void cache_Text(int fontId, iRangecc text) {
     cacheTextGlyphs_Font_(font_Text_(fontId), text);
-}
-
-static iBool notify_WrapText_(iWrapText *d, const char *ending, iTextAttrib attrib,
-                              int origin, int advance) {
-    if (d && d->wrapFunc && d->wrapRange_.start) {
-        /* `wrapRange_` uses logical indices. */
-        const char *end   = ending ? ending : d->wrapRange_.end;
-        iRangecc    range = { d->wrapRange_.start, end };
-        iAssert(range.start <= range.end);
-        const iBool result = d->wrapFunc(d, range, attrib, origin, advance);
-        if (result) {
-            d->wrapRange_.start = end;
-        }
-        else {
-            d->wrapRange_ = iNullRange;
-        }
-        return result;
-    }
-    return iTrue;
 }
 
 float horizKern_Font_(iFont *d, uint32_t glyph1, uint32_t glyph2) {
@@ -1752,11 +1716,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
         /* Make a callback for each wrapped line. */
         if (wrap && wrap->wrapFunc &&
-            !notify_WrapText_(args->wrap,
-                              sourcePtr_AttributedText(attrText, wrapResumePos),
-                              wrapAttrib,
+            !notify_WrapText(args->wrap,
+                             sourcePtr_AttributedText(attrText, wrapResumePos),
+                             wrapAttrib,
                               origin,
-                              iRound(wrapAdvance))) {
+                             iRound(wrapAdvance))) {
             willAbortDueToWrap = iTrue;
         }
         numWrapLines++;
@@ -1829,57 +1793,6 @@ iRect run_Font(iBaseFont *font, const iRunArgs *args) {
 }
 
 /*----------------------------------------------------------------------------------------------*/
-
-iTextMetrics measure_WrapText(iWrapText *d, int fontId) {
-    iTextMetrics tm;
-    tm.bounds = run_Font_(font_Text_(fontId),
-                          &(iRunArgs){ .mode = measure_RunMode | runFlags_FontId(fontId),
-                                       .text = d->text,
-                                       .wrap = d,
-                                       .justify = d->justify,
-                                       .layoutBound = d->justify ? d->maxWidth : 0,
-                                       .cursorAdvance_out = &tm.advance });
-    return tm;
-}
-
-iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
-    iTextMetrics tm;
-#if !defined (LAGRANGE_ENABLE_HARFBUZZ)
-    /* In simple mode, each line must be wrapped first so we can break at the right points
-       and do wrap notifications before drawing. */
-    iRangecc text = d->text;
-    iZap(tm);
-    d->wrapRange_ = (iRangecc){ d->text.start, d->text.start };
-    const iInt2 orig = pos;
-    while (!isEmpty_Range(&text)) {
-        const char *endPos;
-        const int width = d->mode == word_WrapTextMode
-                              ? tryAdvance_Text(fontId, text, d->maxWidth, &endPos).x
-                              : tryAdvanceNoWrap_Text(fontId, text, d->maxWidth, &endPos).x;
-        notify_WrapText_(d, endPos, (iTextAttrib){ .fgColorId = color }, 0, width);
-        drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endPos });
-        text.start = endPos;
-        pos.y += lineHeight_Text(fontId);
-        tm.bounds.size.x = iMax(tm.bounds.size.x, width);
-        tm.bounds.size.y = pos.y - orig.y;
-    }
-    tm.advance = sub_I2(pos, orig);
-#else
-    tm.bounds = run_Font_(font_Text_(fontId),
-              &(iRunArgs){ .mode  = draw_RunMode | runFlags_FontId(fontId) |
-                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
-                                    (color & fillBackground_ColorId ? fillBackground_RunMode : 0),
-                           .text  = d->text,
-                           .pos   = pos,
-                           .wrap  = d,
-                           .justify = d->justify,
-                           .layoutBound = d->justify ? d->maxWidth : 0,
-                           .color = color & mask_ColorId,
-                           .cursorAdvance_out = &tm.advance,
-    });
-#endif
-    return tm;
-}
 
 iBool checkMissing_Text(void) {
     iStbText *d = current_StbText_();
