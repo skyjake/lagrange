@@ -102,6 +102,9 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
 #if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
         SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
 #endif
+#if defined (SDL_SEAL_CURSES)
+        SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
+#endif
     }
     if (args->mode & fillBackground_RunMode) {
         const iColor initial = get_Color(args->color);
@@ -136,6 +139,9 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                                      none_ColorId, &clr, NULL);
 #if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
                     SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
+#endif
+#if defined (SDL_SEAL_CURSES)
+                    SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
 #endif
                     if (args->mode & fillBackground_RunMode) {
                         SDL_SetRenderDrawColor(render, clr.r, clr.g, clr.b, 0);

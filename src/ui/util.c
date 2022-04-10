@@ -2407,7 +2407,7 @@ iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *va
 }
 
 static void addDialogPadding_(iWidget *headings, iWidget *values) {
-    const int bigGap = lineHeight_Text(uiLabel_FontId) * 3 / 4;
+    const int bigGap = iMaxi(1, lineHeight_Text(uiLabel_FontId) * 3 / 4);
     addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
     addChild_Widget(values,   iClob(makePadding_Widget(bigGap)));    
 }

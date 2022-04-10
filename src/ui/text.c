@@ -264,10 +264,17 @@ void drawBoundRange_Text(int fontId, iInt2 pos, int boundWidth, iBool justify, i
 }
 
 int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {
+    /* TODO: Use WrapText here, too */
     const char *endp;
     while (!isEmpty_Range(&text)) {
-        const iInt2 adv = tryAdvance_Text(fontId, text, maxWidth, &endp);
+        iInt2 adv = tryAdvance_Text(fontId, text, maxWidth, &endp);
         drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endp });
+        if (text.start == endp) {
+            adv = tryAdvanceNoWrap_Text(fontId, text, maxWidth, &endp);
+            if (text.start == endp) {
+                break; /* let's not get stuck */
+            }
+        }
         text.start = endp;
         pos.y += iMax(adv.y, lineHeight_Text(fontId));
     }

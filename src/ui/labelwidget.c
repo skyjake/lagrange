@@ -81,7 +81,7 @@ static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
 #else
     return add_I2(widgetPad,
                   init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI),
-                          gap_UI));
+                          gap_UI * aspect_UI));
 #endif
 }
 

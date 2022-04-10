@@ -303,9 +303,9 @@ void setMinSize_Widget(iWidget *d, iInt2 minSize) {
 void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
     if (d) {
         d->padding[0] = left;
-        d->padding[1] = top;
+        d->padding[1] = top * aspect_UI;
         d->padding[2] = right;
-        d->padding[3] = bottom;
+        d->padding[3] = bottom * aspect_UI;
     }
 }
 
@@ -1690,6 +1690,7 @@ void drawRoot_Widget(const iWidget *d) {
 }
 
 void setDrawBufferEnabled_Widget(iWidget *d, iBool enable) {
+#if !defined (iPlatformTerminal) /* FIXME: a SEAL problem */
     if (enable && !d->drawBuf) {
         d->drawBuf = new_WidgetDrawBuffer();        
     }
@@ -1697,6 +1698,7 @@ void setDrawBufferEnabled_Widget(iWidget *d, iBool enable) {
         delete_WidgetDrawBuffer(d->drawBuf);
         d->drawBuf = NULL;
     }
+#endif
 }
 
 static void beginBufferDraw_Widget_(const iWidget *d) {

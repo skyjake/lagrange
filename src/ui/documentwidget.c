@@ -553,7 +553,7 @@ static int documentWidth_DocumentView_(const iDocumentView *d) {
     //printf("%f\n", adjust); fflush(stdout);
     int prefsWidth = prefs->lineWidth;
 #if defined (iPlatformTerminal)
-    prefsWidth *= 2.5f;
+    prefsWidth /= aspect_UI * 0.8f;
 #endif
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
                  fontSize_UI * prefsWidth * prefs->zoomPercent / 100);
@@ -1519,8 +1519,12 @@ static int sideElementAvailWidth_DocumentView_(const iDocumentView *d) {
            left_Rect(bounds_Widget(constAs_Widget(d->owner))) - 2 * d->pageMargin * gap_UI;
 }
 
+iLocalDef int minBannerSize_(void) {
+    return iMaxi(lineHeight_Text(banner_FontId) * 2, 6);
+}
+
 static iBool isSideHeadingVisible_DocumentView_(const iDocumentView *d) {
-    return sideElementAvailWidth_DocumentView_(d) >= lineHeight_Text(banner_FontId) * 4.5f;
+    return sideElementAvailWidth_DocumentView_(d) >= minBannerSize_() * 2.25f;
 }
 
 static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
@@ -1538,7 +1542,7 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
         return;
     }
     const int   margin           = gap_UI * d->pageMargin;
-    const int   minBannerSize    = lineHeight_Text(banner_FontId) * 2;
+    const int   minBannerSize    = minBannerSize_();
     const iChar icon             = siteIcon_GmDocument(d->doc);
     const int   avail            = sideElementAvailWidth_DocumentView_(d) - margin;
     iBool       isHeadingVisible = isSideHeadingVisible_DocumentView_(d);

@@ -47,7 +47,15 @@ struct Impl_Font {
 };
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
-    return &d->glyphs[1];   
+    int w = width_Char(ch);
+    w = iMin(2, w);
+//    if (ch == 0x200b) { /* zero-width code points */
+//        w = 0; 
+//    }
+//    else if (isEmoji_Char(ch) || ch == 0x2014 /* em dash */) {
+//        w = 2;
+//    }
+    return &d->glyphs[w];   
 }
 
 static uint32_t index_Glyph_(const iGlyph *d) {
@@ -111,6 +119,7 @@ iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
 static void init_TuiText(iTuiText *d, SDL_Renderer *render) {
     init_Text(&d->base, render);
     init_Font(&d->font);
+    gap_Text = gap_UI;
 }
 
 static void deinit_TuiText(iTuiText *d) {
