@@ -103,7 +103,12 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
         SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
 #endif
 #if defined (SDL_SEAL_CURSES)
+        const enum iFontStyle style = style_FontId(fontId_Text(d));
         SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
+        SDL_SetRenderTextAttributes(
+            render,
+            (style == bold_FontStyle || style == semiBold_FontStyle ? SDL_TEXT_ATTRIBUTE_BOLD : 0) |
+                (style == italic_FontStyle ? SDL_TEXT_ATTRIBUTE_ITALIC : 0));
 #endif
     }
     if (args->mode & fillBackground_RunMode) {

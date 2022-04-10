@@ -96,7 +96,7 @@ iDeclareType(TuiText)
 
 struct Impl_TuiText {
     iText  base;
-    iFont  font; /* TODO: Bold/italic? */
+    iFont  fonts[3]; /* regular, bold, italic */
 };
 
 iLocalDef iTuiText *current_TuiText_(void) {
@@ -104,10 +104,20 @@ iLocalDef iTuiText *current_TuiText_(void) {
 }
 
 iBaseFont *font_Text(enum iFontId id) {
-    return &current_TuiText_()->font.font;
+    const enum iFontStyle style = style_FontId(id);    
+    size_t index = (style == bold_FontStyle || style == semiBold_FontStyle ? 1 :
+                        style == italic_FontStyle ? 2 : 0);
+    return &current_TuiText_()->fonts[index].font;
 }
 
 enum iFontId fontId_Text(const iAnyFont *font) {
+    const iTuiText *d = current_TuiText_();
+    if (font == &d->fonts[2]) {
+        return FONT_ID(default_FontId, italic_FontStyle, 0);
+    }
+    if (font == &d->fonts[1]) {
+        return FONT_ID(default_FontId, bold_FontStyle, 0);
+    }
     return default_FontId;
 }
 
@@ -118,12 +128,16 @@ iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
 
 static void init_TuiText(iTuiText *d, SDL_Renderer *render) {
     init_Text(&d->base, render);
-    init_Font(&d->font);
+    iForIndices(i, d->fonts) {
+        init_Font(d->fonts + i);
+    }
     gap_Text = gap_UI;
 }
 
 static void deinit_TuiText(iTuiText *d) {
-    deinit_Font(&d->font);
+    iForIndices(i, d->fonts) {
+        deinit_Font(d->fonts + i);
+    }
     deinit_Text(&d->base);
 }
 

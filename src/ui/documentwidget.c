@@ -553,7 +553,7 @@ static int documentWidth_DocumentView_(const iDocumentView *d) {
     //printf("%f\n", adjust); fflush(stdout);
     int prefsWidth = prefs->lineWidth;
 #if defined (iPlatformTerminal)
-    prefsWidth /= aspect_UI * 0.8f;
+    prefsWidth /= aspect_UI;
 #endif
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
                  fontSize_UI * prefsWidth * prefs->zoomPercent / 100);

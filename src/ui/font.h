@@ -79,6 +79,10 @@ enum iFontId {
     plainText_FontId          = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentRegular_FontSize),
 };
 
+iLocalDef enum iFontStyle style_FontId(enum iFontId id) {
+    return (id / max_FontSize) % max_FontStyle;
+}
+
 iLocalDef iBool isControl_Char(iChar c) {
     return isDefaultIgnorable_Char(c) || isVariationSelector_Char(c) || isFitzpatrickType_Char(c);
 }

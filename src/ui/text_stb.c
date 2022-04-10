@@ -344,7 +344,7 @@ iLocalDef enum iFontSize sizeId_Text_(const iFont *d) {
 }
 
 iLocalDef enum iFontStyle styleId_Text_(const iFont *d) {
-    return (fontId_Text_(d) / max_FontSize) % max_FontStyle;
+    return style_FontId(fontId_Text_(d));
 }
 
 static const iFontSpec *tryFindSpec_(enum iPrefsString ps, const char *fallback) {

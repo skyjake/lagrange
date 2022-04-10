@@ -1690,7 +1690,6 @@ void drawRoot_Widget(const iWidget *d) {
 }
 
 void setDrawBufferEnabled_Widget(iWidget *d, iBool enable) {
-#if !defined (iPlatformTerminal) /* FIXME: a SEAL problem */
     if (enable && !d->drawBuf) {
         d->drawBuf = new_WidgetDrawBuffer();        
     }
@@ -1698,7 +1697,6 @@ void setDrawBufferEnabled_Widget(iWidget *d, iBool enable) {
         delete_WidgetDrawBuffer(d->drawBuf);
         d->drawBuf = NULL;
     }
-#endif
 }
 
 static void beginBufferDraw_Widget_(const iWidget *d) {
