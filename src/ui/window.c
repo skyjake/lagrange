@@ -111,7 +111,7 @@ static const iMenuItem viewMenuItems_[] = {
     { "${menu.show.outline}", '5', leftSidebarTab_KeyModifier, "sidebar.mode arg:4 toggle:1" },
     { "---" },
     { "${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
-    { "${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { "${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
     { "---" },
     { "${menu.back}", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
     { "${menu.forward}", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
@@ -1788,6 +1788,12 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             }
             setCurrent_Root(NULL);
         }
+        /* Add some room for the active root indicator. */
+        for (int i = 0; i < 2; i++) {
+            if (w->roots[i]) {
+                w->roots[i]->widget->padding[1] = (splitMode ? 1 : 0);
+            }
+        }        
         d->splitMode = splitMode;
         postCommand_App("window.resized");
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)

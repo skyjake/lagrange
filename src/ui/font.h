@@ -83,6 +83,10 @@ iLocalDef enum iFontStyle style_FontId(enum iFontId id) {
     return (id / max_FontSize) % max_FontStyle;
 }
 
+iLocalDef enum iFontSize size_FontId(enum iFontId id) {
+    return id % max_FontSize;
+}
+
 iLocalDef iBool isControl_Char(iChar c) {
     return isDefaultIgnorable_Char(c) || isVariationSelector_Char(c) || isFitzpatrickType_Char(c);
 }
@@ -240,6 +244,7 @@ enum iRunMode {
     permanentColorFlag_RunMode      = iBit(11),
     alwaysVariableWidthFlag_RunMode = iBit(12),
     fillBackground_RunMode          = iBit(13),
+    underline_RunMode               = iBit(14),
 };
 
 int     runFlags_FontId (enum iFontId fontId);

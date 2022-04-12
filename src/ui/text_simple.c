@@ -108,12 +108,16 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
         SDL_SetRenderTextAttributes(
             render,
             (style == bold_FontStyle || style == semiBold_FontStyle ? SDL_TEXT_ATTRIBUTE_BOLD : 0) |
-                (style == italic_FontStyle ? SDL_TEXT_ATTRIBUTE_ITALIC : 0));
+                (style == italic_FontStyle ? SDL_TEXT_ATTRIBUTE_ITALIC : 0) |
+                (mode & underline_RunMode ? SDL_TEXT_ATTRIBUTE_BOLD | SDL_TEXT_ATTRIBUTE_UNDERLINE : 0));
 #endif
-    }
-    if (args->mode & fillBackground_RunMode) {
-        const iColor initial = get_Color(args->color);
-        SDL_SetRenderDrawColor(render, initial.r, initial.g, initial.b, 0);
+        if (args->mode & fillBackground_RunMode) {
+            const iColor initial = get_Color(args->color);
+            SDL_SetRenderDrawColor(render, initial.r, initial.g, initial.b, 0);
+//#if defined (SDL_SEAL_CURSES)
+//            SDL_SetRenderTextFillColor(render, initial.r, initial.g, initial.b, 255);
+//#endif
+        }
     }
     /* Text rendering is not very straightforward! Let's dive in... */
     iChar       prevCh = 0;
@@ -409,6 +413,11 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
     if (args->runAdvance_out) {
         *args->runAdvance_out = xposMax - orig.x;
     }
+#if defined (SDL_SEAL_CURSES)
+    if (mode & draw_RunMode) {
+        SDL_SetRenderTextFillColor(render, 0, 0, 0, 0);
+    }
+#endif
     return bounds;
 }
 

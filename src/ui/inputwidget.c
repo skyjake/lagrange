@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
+#include <SDL_version.h>
 
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
@@ -732,8 +733,16 @@ static uint32_t cursorTimer_(uint32_t interval, void *w) {
     return interval;
 }
 
+iLocalDef iBool isBlinkingCursor_(void) {
+#if defined (iPlatformTerminal)
+    return iFalse; /* terminal will do it */
+#else
+    return prefs_App()->blinkingCursor;
+#endif
+}
+
 static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, int doStart) {
-    if (!prefs_App()->blinkingCursor && doStart == 1) {
+    if (!isBlinkingCursor_() && doStart == 1) {
         doStart = iFalse;
     }
     if (doStart && !d->timer) {
@@ -785,7 +794,7 @@ static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
         setRect_SystemTextInput(d->sysCtrl, contentBounds_InputWidget_(d));
     }
 #endif
-#if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile)
+#if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile) && !defined (SDL_SEAL_CURSES)
     const iRect bounds = bounds_Widget(constAs_Widget(d));
     SDL_SetTextInputRect(&(SDL_Rect){ bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y });
 #endif
@@ -2696,11 +2705,13 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* `lines` is already up to date and ready for drawing. */
     fillRect_Paint(
         &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
+#if !defined (iPlatformTerminal)
     drawRectThickness_Paint(&p,
                             adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
                             isFocused ? gap_UI / 4 : 1,
                             isFocused ? uiInputFrameFocused_ColorId
-                                      : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
+                            : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
+#endif
     if (d->sysCtrl) {
         /* The system-provided control is drawing the text. */
         drawChildren_Widget(w);
@@ -2779,7 +2790,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         wrapText.context  = NULL;
     }
     /* Draw the insertion point. */
-    if (isFocused && (d->cursorVis || !prefs_App()->blinkingCursor) &&
+    if (isFocused && (d->cursorVis || !isBlinkingCursor_()) &&
         contains_Range(&visLines, d->cursor.y) &&
         (deviceType_App() == desktop_AppDeviceType || isEmpty_Range(&d->mark))) {
         iInt2    curSize;
@@ -2818,6 +2829,10 @@ static void draw_InputWidget_(const iInputWidget *d) {
                                     addX_I2(advance,
                                             (d->mode == insert_InputMode ? -curSize.x / 2 : 0)));
         const iRect curRect  = { curPos, curSize };
+#if defined (SDL_SEAL_CURSES)
+        /* Tell where to place the terminal cursor. */
+        SDL_SetTextInputRect((const SDL_Rect *) &curRect);  
+#endif
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
         if (d->mode == overwrite_InputMode) {
             /* The `gap_UI` offset below is a hack. They are used because for some reason the

@@ -125,6 +125,11 @@ void drawRect_Paint(const iPaint *d, iRect rect, int color) {
 }
 
 void drawRectThickness_Paint(const iPaint *d, iRect rect, int thickness, int color) {
+#if defined (iPlatformTerminal)
+    if (thickness == 0) {
+        addv_I2(&rect.size, one_I2());
+    }
+#endif
     thickness = iClamp(thickness, 1, 4);
     while (thickness--) {
         drawRect_Paint(d, rect, color);

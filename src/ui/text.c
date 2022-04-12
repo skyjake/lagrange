@@ -180,6 +180,7 @@ static void drawBoundedN_Text_(int fontId, iInt2 pos, int boundWidth, iBool just
               &(iRunArgs){ .mode = draw_RunMode |
                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
                                    (color & fillBackground_ColorId ? fillBackground_RunMode : 0) |
+                                   (color & underline_ColorId ? underline_RunMode : 0) |
                                    runFlags_FontId(fontId),
                            .text        = text,
                            .maxLen      = maxLen,
@@ -241,6 +242,7 @@ void drawRangeN_Text(int fontId, iInt2 pos, int color, iRangecc text, size_t max
 }
 
 void drawOutline_Text(int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text) {
+#if !defined (iPlatformTerminal)
     for (int off = 0; off < 4; ++off) {
         drawRange_Text(fontId,
                        add_I2(pos, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
@@ -250,6 +252,9 @@ void drawOutline_Text(int fontId, iInt2 pos, int outlineColor, int fillColor, iR
     if (fillColor != none_ColorId) {
         drawRange_Text(fontId, pos, fillColor, text);
     }
+#else
+    drawRange_Text(fontId, pos, fillColor | fillBackground_ColorId, text);
+#endif    
 }
 
 iTextMetrics measureWrapRange_Text(int fontId, int maxWidth, iRangecc text) {

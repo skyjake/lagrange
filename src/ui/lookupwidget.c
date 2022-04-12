@@ -397,6 +397,9 @@ void init_LookupWidget(iLookupWidget *d) {
     d->list = addChildFlags_Widget(w, iClob(new_ListWidget()),
                                    resizeToParentWidth_WidgetFlag |
                                    resizeToParentHeight_WidgetFlag);
+#if defined (iPlatformTerminal)
+    setPadding_Widget(as_Widget(d->list), 2, 2, 2, 2);
+#endif
     d->cursor = iInvalidPos;
     d->work = new_Thread(worker_LookupWidget_);
     setUserData_Thread(d->work, d);
@@ -683,7 +686,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                                       : bottomLeft_Rect(bounds_Widget(url));
             setPos_Widget(
                 w, windowToLocal_Widget(w, max_I2(zero_I2(), addX_I2(topLeft, -extraWidth / 2))));
-#if defined(iPlatformMobile)
+#if defined (iPlatformMobile)
             /* TODO: Check this again. */
             /* Adjust height based on keyboard size. */ {
                 if (!atBottom) {

@@ -49,12 +49,6 @@ struct Impl_Font {
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
     int w = width_Char(ch);
     w = iMin(2, w);
-//    if (ch == 0x200b) { /* zero-width code points */
-//        w = 0; 
-//    }
-//    else if (isEmoji_Char(ch) || ch == 0x2014 /* em dash */) {
-//        w = 2;
-//    }
     return &d->glyphs[w];   
 }
 
@@ -67,19 +61,19 @@ static iBool isRasterized_Glyph_(const iGlyph *d, int hoff) {
     return iTrue;
 }
 
-static void init_Font(iFont *d) {
+static void init_Font(iFont *d, int height) {
     d->spec = new_FontSpec();    
     d->font.file = NULL;
     d->font.spec = d->spec;
-    d->font.height = 1;
+    d->font.height = height;
     d->baseline = 0;
     for (int i = 0; i < 3; i++) {
         iGlyph *glyph = &d->glyphs[i];
         glyph->font = d;
         glyph->advance = i;
         for (size_t j = 0; j < iElemCount(glyph->d); j++) {
-            glyph->d[j]    = zero_I2();
-            glyph->rect[j] = init_Rect(0, 0, i, 1);
+            glyph->d[j]    = init_I2(0, height / 2);
+            glyph->rect[j] = init_Rect(0, 0, i, height);
         }
     }
 }
@@ -96,7 +90,7 @@ iDeclareType(TuiText)
 
 struct Impl_TuiText {
     iText  base;
-    iFont  fonts[3]; /* regular, bold, italic */
+    iFont  fonts[2][3]; /* height / regular, bold, italic  */
 };
 
 iLocalDef iTuiText *current_TuiText_(void) {
@@ -104,19 +98,28 @@ iLocalDef iTuiText *current_TuiText_(void) {
 }
 
 iBaseFont *font_Text(enum iFontId id) {
-    const enum iFontStyle style = style_FontId(id);    
-    size_t index = (style == bold_FontStyle || style == semiBold_FontStyle ? 1 :
-                        style == italic_FontStyle ? 2 : 0);
-    return &current_TuiText_()->fonts[index].font;
+    const enum iFontStyle style = style_FontId(id);
+    const enum iFontSize  size  = size_FontId(id);    
+    size_t sizeIndex = (size == contentHuge_FontSize ? 1 : 0);
+    size_t index     = (style == bold_FontStyle || style == semiBold_FontStyle ? 1
+                        : style == italic_FontStyle                            ? 2
+                                                                               : 0);
+    return &current_TuiText_()->fonts[sizeIndex][index].font;
 }
 
 enum iFontId fontId_Text(const iAnyFont *font) {
-    const iTuiText *d = current_TuiText_();
-    if (font == &d->fonts[2]) {
-        return FONT_ID(default_FontId, italic_FontStyle, 0);
-    }
-    if (font == &d->fonts[1]) {
-        return FONT_ID(default_FontId, bold_FontStyle, 0);
+    for (size_t sizeIndex = 0; sizeIndex < 2; sizeIndex++) {
+        const iTuiText *d = current_TuiText_();
+        const enum iFontSize size = (sizeIndex == 1 ? contentHuge_FontSize : 0);
+        if (font == &d->fonts[sizeIndex][2]) {
+            return FONT_ID(default_FontId, italic_FontStyle, size);
+        }
+        if (font == &d->fonts[sizeIndex][1]) {
+            return FONT_ID(default_FontId, bold_FontStyle, size);
+        }
+        if (font == &d->fonts[sizeIndex][0]) {
+            return FONT_ID(default_FontId, regular_FontStyle, size);
+        }
     }
     return default_FontId;
 }
@@ -128,15 +131,19 @@ iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
 
 static void init_TuiText(iTuiText *d, SDL_Renderer *render) {
     init_Text(&d->base, render);
-    iForIndices(i, d->fonts) {
-        init_Font(d->fonts + i);
+    iForIndices(s, d->fonts) {
+        iForIndices(i, d->fonts[s]) {
+            init_Font(d->fonts[s] + i, s == 1 ? 2 : 1);
+        }        
     }
     gap_Text = gap_UI;
 }
 
 static void deinit_TuiText(iTuiText *d) {
-    iForIndices(i, d->fonts) {
-        deinit_Font(d->fonts + i);
+    iForIndices(s, d->fonts) {
+        iForIndices(i, d->fonts[s]) {
+            deinit_Font(d->fonts[s] + i);
+        }
     }
     deinit_Text(&d->base);
 }

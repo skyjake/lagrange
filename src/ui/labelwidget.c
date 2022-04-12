@@ -368,6 +368,12 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     init_Paint(&p);
     int bg, fg, frame, frame2, iconColor, metaColor;
     getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2, &iconColor, &metaColor);
+#if defined (iPlatformTerminal)
+    /* Indicate focused label with an underline attribute. */
+    if (isFocused_Widget(w)) {
+        fg |= underline_ColorId;
+    }
+#endif
     setBaseAttributes_Text(d->font, fg);
     const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
     const iBool isCaution = (colorEscape == uiTextCaution_ColorId);
@@ -376,7 +382,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     if (isFocused_Widget(w)) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
-        drawRectThickness_Paint(&p, frameRect, gap_UI / 4, frame);        
+        drawRectThickness_Paint(&p, frameRect, gap_UI / 4, uiTextAction_ColorId /*frame*/);        
     }
     else if (~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));

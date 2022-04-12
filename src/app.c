@@ -61,6 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/time.h>
+#include <the_Foundation/thread.h>
 #include <the_Foundation/version.h>
 #include <SDL.h>
 
@@ -1646,8 +1647,46 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
 #endif
                 iBool wasUsed = iFalse;
+                /* Focus navigation events take prioritity. */
+                if (!wasUsed) {
+                    /* Keyboard focus navigation with arrow keys. */
+                    iWidget *menubar = NULL;
+                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.mod == 0 && focus_Widget() &&
+                        !cmp_String(id_Widget(parent_Widget(focus_Widget())), "menu")) {
+                        setCurrent_Window(window_Widget(focus_Widget()));
+                        const int key = ev.key.keysym.sym;
+                        if (key == SDLK_DOWN || key == SDLK_UP) {
+                            iWidget *nextFocus = findFocusable_Widget(focus_Widget(),
+                                                                      key == SDLK_UP
+                                                                          ? backward_WidgetFocusDir
+                                                                          : forward_WidgetFocusDir);
+                            if (nextFocus && parent_Widget(nextFocus) == parent_Widget(focus_Widget())) {
+                                setFocus_Widget(nextFocus);
+                            }
+                            wasUsed = iTrue;
+                        }
+                        else if ((key == SDLK_LEFT || key == SDLK_RIGHT) &&
+                                 (menubar = findParent_Widget(focus_Widget(), "menubar")) != NULL) {
+                            iWidget *button = parent_Widget(parent_Widget(focus_Widget()));
+                            size_t index = indexOfChild_Widget(menubar, button);
+                            const size_t curIndex = index;
+                            //printf("index:%zu\n", index); SDL_Delay(1000);
+                            if (key == SDLK_LEFT && index > 0) {
+                                index--;
+                            }
+                            else if (key == SDLK_RIGHT && index < childCount_Widget(menubar) - 1) {
+                                index++;
+                            }
+                            if (curIndex != index) {
+                                setFocus_Widget(child_Widget(menubar, index));                                
+                                postCommand_Widget(child_Widget(menubar, index), "trigger");
+                            }
+                            wasUsed = iTrue;
+                        }
+                    }
+                }
                 /* Per-window processing. */
-                if (!isEmpty_PtrArray(&d->mainWindows)) {
+                if (!wasUsed && !isEmpty_PtrArray(&d->mainWindows)) {
                     listWindows_App_(d, &windows);
                     iConstForEach(PtrArray, iter, &windows) {
                         iWindow *window = iter.ptr;
@@ -1861,6 +1900,9 @@ void refresh_App(void) {
                     break;
             }
             win->frameCount++;
+#if defined (iPlatformTerminal)
+            sleep_Thread(1.0 / 60.0);
+#endif
         }
     }
     if (d->warmupFrames > 0) {

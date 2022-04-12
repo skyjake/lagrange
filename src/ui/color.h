@@ -195,6 +195,7 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define permanent_ColorId           0x80  /* cannot be changed via escapes */
 #define fillBackground_ColorId      0x100 /* fill background with same color, but alpha 0 */
 #define opaque_ColorId              0x200
+#define underline_ColorId           0x400
 
 #define asciiBase_ColorEscape       33
 #define asciiExtended_ColorEscape   (128 - asciiBase_ColorEscape)

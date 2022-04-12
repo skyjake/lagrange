@@ -698,7 +698,12 @@ static size_t findItem_SidebarWidget_(const iSidebarWidget *d, int id) {
 }
 
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
-    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
+    /* Note: identity item height is defined by CertListWidget */
+#if !defined (iPlatformTerminal)
+    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 0, 1.2f };
+#else
+    const float heights[max_SidebarMode] = { 1, 3, 1, 0, 1 };
+#endif
     if (d->list) {
         setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(d->itemFonts[0]));
     }
@@ -2050,7 +2055,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : (tmHeading1_ColorId + d->indent / (4 * gap_UI));
         drawRange_Text(font,
-                       init_I2(pos.x + 3 * gap_UI + d->indent,
+                       init_I2(pos.x + (3 * gap_UI + d->indent) * aspect_UI,
                                mid_Rect(itemRect).y - lineHeight_Text(font) / 2),
                        fg,
                        range_String(&d->label));
@@ -2069,7 +2074,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             drawRange_Text(
                 uiLabelLargeBold_FontId,
                 add_I2(pos,
-                       init_I2(3 * gap_UI,
+                       init_I2(3 * gap_UI * aspect_UI,
                                itemHeight - lineHeight_Text(uiLabelLargeBold_FontId) - 1 * gap_UI)),
                 uiIcon_ColorId,
                 range_String(&d->meta));
@@ -2079,14 +2084,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             const int titleFont = sidebar->itemFonts[isUnread ? 1 : 0];
             const int h1 = lineHeight_Text(uiLabel_FontId);
             const int h2 = lineHeight_Text(titleFont);
-            iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
-            /*
-            if (isUnread) {
-                fillRect_Paint(
-                    p,
-                    (iRect){ topLeft_Rect(iconArea), init_I2(gap_UI / 2, height_Rect(iconArea)) },
-                    iconColor);
-            }*/
+            iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad * aspect_UI, itemHeight) };
             /* Icon. */ {
                 /* TODO: Use the primary hue from the theme of this site. */
                 iString str;
@@ -2111,7 +2109,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             int         metaFg    = isPressing ? fg : uiSubheading_ColorId;
             iInt2       titleSize = measureRange_Text(titleFont, range_String(&d->label)).bounds.size;
             const iInt2 metaSize  = measureRange_Text(uiLabel_FontId, range_String(&d->meta)).bounds.size;
-            pos.x += iconPad;
+            pos.x += iconPad * aspect_UI;
             const int avail = width_Rect(itemRect) - iconPad - 3 * gap_UI;
             const int labelFg = isPressing ? fg : (isUnread ? uiTextStrong_ColorId : uiText_ColorId);
             if (titleSize.x > avail && metaSize.x < avail * 0.75f) {
@@ -2150,7 +2148,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         appendChar_String(&str, d->icon ? d->icon : 0x1f588);
         const int leftIndent = d->indent * gap_UI * 4;
         const iRect iconArea = { addX_I2(pos, gap_UI + leftIndent),
-                                 init_I2(1.75f * lineHeight_Text(font), itemHeight) };
+                                 init_I2(1.75f * lineHeight_Text(font) / aspect_UI, itemHeight) };
         drawCentered_Text(font,
                           iconArea,
                           iTrue,
@@ -2217,7 +2215,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 drawRange_Text(
                     uiLabelLargeBold_FontId,
                     add_I2(drawPos,
-                           init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(uiLabelLargeBold_FontId)) / 2)),
+                           init_I2(3 * gap_UI * aspect_UI,
+                                   (itemHeight - lineHeight_Text(uiLabelLargeBold_FontId)) / 2)),
                     uiIcon_ColorId,
                     range_String(&d->meta));
             }

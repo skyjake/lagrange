@@ -640,10 +640,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iPrefs *prefs             = prefs_App();
     const iBool   isMono            = isForcedMonospace_GmDocument_(d);
     const iBool   isGopher          = isGopher_GmDocument_(d);
-    const iBool   isNarrow          = d->size.x < 90 * gap_Text;
-    const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text;
-    const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text;
-    const iBool   isFullWidthImages = (d->outsideMargin < 5 * gap_UI);
+    const iBool   isNarrow          = d->size.x < 90 * gap_Text * aspect_UI;
+    const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text * aspect_UI;
+    const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text * aspect_UI;
+    const iBool   isFullWidthImages = (d->outsideMargin < 5 * gap_UI * aspect_UI);
     
     initTheme_GmDocument_(d);
     d->isLayoutInvalidated = iFalse;
@@ -873,15 +873,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == bullet_GmLineType) {
             /* TODO: Literata bullet is broken? */
             iGmRun bulRun = run;
-#if 0
-            if (prefs->font == literata_TextFont) {
-                /* Something wrong this the glyph in Literata, looks cropped. */
-                bulRun.font = FONT_ID(default_FontId, regular_FontStyle,
-                                                 contentRegular_FontSize);
-            }
-#endif
             bulRun.color = tmQuote_ColorId;
+#if defined (iPlatformTerminal)
+            bulRun.visBounds.pos = addX_I2(pos, indents[text_GmLineType] * gap_Text);
+#else
             bulRun.visBounds.pos = addX_I2(pos, (indents[text_GmLineType] - 0.55f) * gap_Text);
+#endif
             bulRun.visBounds.size =
                 init_I2((indents[bullet_GmLineType] - indents[text_GmLineType]) * gap_Text,
                         lineHeight_Text(bulRun.font));
@@ -903,8 +900,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             quoteRun.visBounds.size = measure_Text(quoteRun.font, quote).bounds.size;
             quoteRun.visBounds.pos =
                 add_I2(pos,
-                       init_I2((indents[quote_GmLineType] - 5) * gap_Text,
-                               lineHeight_Text(quote_FontId) / 2 - bottom_Rect(vis)));
+                       init_I2((indents[quote_GmLineType] - 5 * aspect_UI) * gap_Text,
+                               (lineHeight_Text(quote_FontId) / 2 - bottom_Rect(vis)) * aspect_UI));
             quoteRun.bounds = zero_Rect(); /* just visual */
             quoteRun.flags |= decoration_GmRunFlag;
             pushBack_Array(&d->layout, &quoteRun);

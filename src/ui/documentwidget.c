@@ -547,13 +547,13 @@ static int documentWidth_DocumentView_(const iDocumentView *d) {
     const iWidget *w        = constAs_Widget(d->owner);
     const iRect    bounds   = bounds_Widget(w);
     const iPrefs * prefs    = prefs_App();
-    const int      minWidth = 50 * gap_UI; /* lines must fit a word at least */
+    const int      minWidth = 50 * gap_UI * aspect_UI; /* lines must fit a word at least */
     const float    adjust   = iClamp((float) bounds.size.x / gap_UI / 11 - 12,
                                 -1.0f, 10.0f); /* adapt to width */
     //printf("%f\n", adjust); fflush(stdout);
     int prefsWidth = prefs->lineWidth;
 #if defined (iPlatformTerminal)
-    prefsWidth /= aspect_UI;
+    prefsWidth /= aspect_UI * 0.8f;
 #endif
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
                  fontSize_UI * prefsWidth * prefs->zoomPercent / 100);
@@ -1919,7 +1919,7 @@ static void draw_DocumentView_(const iDocumentView *d) {
                                     init_I2(bounds.size.x, documentTopPad_DocumentView_(d)) },
                            docBgColor);
             setPos_Banner(banner, addY_I2(topLeft_Rect(docBounds),
-                                          -pos_SmoothScroll(&d->scrollY)));
+                                          floorf(-pos_SmoothScroll(&d->scrollY))));
             draw_Banner(banner);
         }
         const int yBottom = yTop + size_GmDocument(d->doc).y;

@@ -64,15 +64,6 @@ enum iScrollType {
     max_ScrollType
 };
 
-enum iReturnKeyFlag {
-    return_ReturnKeyFlag        = 0,
-    shiftReturn_ReturnKeyFlag   = 1,
-    controlReturn_ReturnKeyFlag = 2,
-    guiReturn_ReturnKeyFlag     = 3,
-    mask_ReturnKeyFlag          = 0xf,
-    accept_ReturnKeyFlag        = 4, /* shift */
-};
-
 enum iToolbarAction {
     back_ToolbarAction        = 0,
     forward_ToolbarAction     = 1,
@@ -91,23 +82,37 @@ enum iToolbarAction {
     max_ToolbarAction
 };
 
+enum iReturnKeyFlag {
+    noMod_ReturnKeyFlag   = 0,
+    shift_ReturnKeyFlag   = 1,
+    control_ReturnKeyFlag = 2,
+    gui_ReturnKeyFlag     = 3,
+    mask_ReturnKeyFlag    = 0xf,
+    accept_ReturnKeyFlag  = 4, /* shift */
+};
+
+#define RETURN_KEY_BEHAVIOR(newlineFlag, acceptFlag) \
+    ((newlineFlag) & 3 | ((acceptFlag) << accept_ReturnKeyFlag))
+
 /* Return key behavior is not handled via normal bindings because only certain combinations
    are valid. */
 enum iReturnKeyBehavior {
-    acceptWithoutMod_ReturnKeyBehavior =
-        shiftReturn_ReturnKeyFlag | (return_ReturnKeyFlag << accept_ReturnKeyFlag),
-    acceptWithShift_ReturnKeyBehavior =
-        return_ReturnKeyFlag | (shiftReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
+//    acceptWithoutMod_ReturnKeyBehavior =
+//        shiftReturn_ReturnKeyFlag | (return_ReturnKeyFlag << accept_ReturnKeyFlag),    
+//    acceptWithShift_ReturnKeyBehavior =
+//        return_ReturnKeyFlag | (shiftReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
     acceptWithPrimaryMod_ReturnKeyBehavior =
 #if defined (iPlatformApple)
-        return_ReturnKeyFlag | (guiReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
+        RETURN_KEY_BEHAVIOR(0, gui_ReturnKeyFlag),
 #else
-        return_ReturnKeyFlag | (controlReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
+        RETURN_KEY_BEHAVIOR(control_ReturnKeyFlag, 0),
 #endif
-#if defined (iPlatformAndroidMobile)
-    default_ReturnKeyBehavior = acceptWithShift_ReturnKeyBehavior,
+#if defined (iPlatformTerminal)
+    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(0, gui_ReturnKeyFlag),
+#elif defined (iPlatformAndroidMobile)
+    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(0, shift_ReturnKeyFlag),
 #else
-    default_ReturnKeyBehavior = acceptWithoutMod_ReturnKeyBehavior,
+    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(shift_ReturnKeyFlag, 0),
 #endif
 };
 
@@ -202,7 +207,10 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define toggleYes_Icon      check_Icon
 #define toggleNo_Icon       bullet_Icon
 
-#if defined (iPlatformApple)
+#if defined (iPlatformTerminal)
+#   define shift_Icon       "Sh"
+#   define shiftReturn_Icon "Sh-" return_Icon
+#elif defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"
 #   define shiftReturn_Icon shift_Icon return_Icon
 #else

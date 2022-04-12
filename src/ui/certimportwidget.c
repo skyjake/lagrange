@@ -125,7 +125,7 @@ void init_CertImportWidget(iCertImportWidget *d) {
 #endif
         { "${cancel}" },
         { uiTextAction_ColorEscape "${dlg.certimport.import}",
-          SDLK_RETURN, KMOD_PRIMARY,
+          SDLK_RETURN, KMOD_ACCEPT,
           "certimport.accept" }
     };
     init_Widget(w);

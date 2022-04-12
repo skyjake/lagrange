@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformTerminal)
 #   define defaultFontSize_Metrics     1
 #   define defaultGap_Metrics          1
-const float aspect_UI = 0.4f;
+const float aspect_UI = 0.5f;
 #else
 #   define defaultFontSize_Metrics     18
 #   define defaultGap_Metrics          4

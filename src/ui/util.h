@@ -75,12 +75,18 @@ iLocalDef iBool isScrollFinished_MouseWheelEvent(const SDL_MouseWheelEvent *ev) 
 
 iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 
-#if defined (iPlatformApple) && !defined (iPlatformTerminal)
+#if defined (iPlatformTerminal)
+#   define KMOD_PRIMARY     KMOD_CTRL
+#   define KMOD_SECONDARY   KMOD_SHIFT
+#   define KMOD_ACCEPT      KMOD_GUI
+#elif defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI
 #   define KMOD_SECONDARY   KMOD_CTRL
+#   define KMOD_ACCEPT      KMOD_PRIMARY
 #else
 #   define KMOD_PRIMARY     KMOD_CTRL
 #   define KMOD_SECONDARY   KMOD_GUI
+#   define KMOD_ACCEPT      KMOD_PRIMARY
 #endif
 
 enum iOpenTabFlag {

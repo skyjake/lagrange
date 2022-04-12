@@ -177,7 +177,7 @@ void init_UploadWidget(iUploadWidget *d) {
         { "${upload.port}", 0, 0, "upload.setport" },
         { "---" },
         { "${close}", SDLK_ESCAPE, 0, "upload.cancel" },
-        { uiTextAction_ColorEscape "${dlg.upload.send}", SDLK_RETURN, KMOD_PRIMARY, "upload.accept" }
+        { uiTextAction_ColorEscape "${dlg.upload.send}", SDLK_RETURN, KMOD_ACCEPT, "upload.accept" }
     };
     if (isUsingPanelLayout_Mobile()) {
         const int infoFont = (deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId

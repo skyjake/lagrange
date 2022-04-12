@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define preferences_KeyShortcut      SDLK_COMMA,         0
 #   define reload_KeyShortcut           SDLK_r,             0
 #   define newTab_KeyShortcut           SDLK_t,             0
-#   define closeTab_KeyShortcut         SDLK_w,             KMOD_SHIFT
+#   define closeTab_KeyShortcut         SDLK_w,             KMOD_PRIMARY
 #   define prevTab_KeyShortcut          SDLK_LEFTBRACKET,   0
 #   define nextTab_KeyShortcut          SDLK_RIGHTBRACKET,  0
 #   define navigateBack_KeyShortcut     SDLK_LEFT,          0
@@ -42,10 +42,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define navigateRoot_KeyShortcut     SDLK_r,             KMOD_PRIMARY
 #   define subscribeToPage_KeyShortcut  SDLK_d,             0
 #   define leftSidebar_KeyShortcut      SDLK_l,             KMOD_SHIFT
+#   define rightSidebar_KeyShortcut     SDLK_p,             KMOD_SHIFT
 #   define leftSidebarTab_KeyModifier   0
 #   define byWord_KeyModifier           KMOD_ALT
 #   define byLine_KeyModifier           KMOD_PRIMARY
-#   define rightSidebarTab_KeyModifier  KMOD_CTRL
+#   define rightSidebarTab_KeyModifier  KMOD_ALT
 #elif defined (iPlatformApple)
 #   define pageInfo_KeyShortcut         SDLK_i, KMOD_PRIMARY
 #   define preferences_KeyShortcut      SDLK_COMMA,         KMOD_PRIMARY
@@ -60,6 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define navigateRoot_KeyShortcut     SDLK_UP,            KMOD_SHIFT | KMOD_PRIMARY
 #   define subscribeToPage_KeyShortcut  SDLK_d,             KMOD_SHIFT | KMOD_PRIMARY
 #   define leftSidebar_KeyShortcut      SDLK_l,             KMOD_PRIMARY | KMOD_SHIFT
+#   define rightSidebar_KeyShortcut     SDLK_p,             KMOD_PRIMARY | KMOD_SHIFT
 #   define leftSidebarTab_KeyModifier   KMOD_PRIMARY
 #   define byWord_KeyModifier           KMOD_ALT
 #   define byLine_KeyModifier           KMOD_PRIMARY
@@ -78,6 +80,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define navigateRoot_KeyShortcut     SDLK_UP,            KMOD_SHIFT | KMOD_ALT
 #   define subscribeToPage_KeyShortcut  SDLK_d,             KMOD_SHIFT | KMOD_PRIMARY
 #   define leftSidebar_KeyShortcut      SDLK_l,             KMOD_PRIMARY | KMOD_SHIFT
+#   define rightSidebar_KeyShortcut     SDLK_p,             KMOD_PRIMARY | KMOD_SHIFT
 #   define leftSidebarTab_KeyModifier   KMOD_PRIMARY
 #   define byWord_KeyModifier           KMOD_CTRL
 #   define byLine_KeyModifier           0
