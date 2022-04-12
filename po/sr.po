@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-05 03:28+0000\n"
+"PO-Revision-Date: 2022-04-15 03:07+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -979,7 +979,7 @@ msgstr "Фински"
 
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
-msgstr "Сачувај у фолдеру за преузимања"
+msgstr "Сачувај у фасцикли за преузимања"
 
 msgid "lang.it"
 msgstr "Италијански"
@@ -1255,7 +1255,7 @@ msgstr "Претплата на страницу"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Можете га сачувати као датотеку у вашој фасцикли „Преузимања“: притисните %s "
+"Можете је сачувати као датотеку у вашој фасцикли „Преузимања“: притисните %s "
 "или изаберите „%s“ из менија."
 
 msgid "dlg.certwarn.domain"
@@ -1678,7 +1678,7 @@ msgid "keys.split.item"
 msgstr "Мени раздвојеног погледа:"
 
 msgid "menu.save.downloads.open"
-msgstr "Сачувај у фолдеру за преузимања и отвори"
+msgstr "Сачувај у фасцикли за преузимања и отвори"
 
 msgid "hint.prefs.userfont"
 msgstr "путања TrueType фонта"
