@@ -115,10 +115,15 @@ static const char *defaultDataDir_App_ = "~/.config/lagrange";
 static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
 #endif
 #define EMB_BIN_EXEC "../resources.lgr" /* fallback from build/executable dir */
+#if defined (iPlatformTerminal)
+#   define STATE_NAME "cstate" /* separate for console since it's a different environment */
+#else
+#   define STATE_NAME "state"
+#endif
 static const char *prefsFileName_App_      = "prefs.cfg";
-static const char *oldStateFileName_App_   = "state.binary";
-static const char *stateFileName_App_      = "state.lgr";
-static const char *tempStateFileName_App_  = "state.lgr.tmp";
+static const char *oldStateFileName_App_   = STATE_NAME ".binary";
+static const char *stateFileName_App_      = STATE_NAME ".lgr";
+static const char *tempStateFileName_App_  = STATE_NAME ".lgr.tmp";
 static const char *defaultDownloadDir_App_ = "~/Downloads";
 
 static const int idleThreshold_App_ = 1000; /* ms */
