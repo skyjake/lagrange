@@ -423,7 +423,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             (iRect){
                 /* The icon position is fine-tuned; c.f. high baseline of Source Sans Pro. */
                 add_I2(add_I2(bounds.pos, padding_LabelWidget_(d, 0)),
-                       init_I2((flags & extraPadding_WidgetFlag ? -2 : -1.20f) * gap_UI +
+                       init_I2((flags & extraPadding_WidgetFlag ? -2 : -1.20f) * gap_UI / aspect_UI +
                                (deviceType_App() == tablet_AppDeviceType ? -gap_UI : 0),
                                -gap_UI / 8)),
                 init_I2(iconPad, lineHeight_Text(d->font)) },

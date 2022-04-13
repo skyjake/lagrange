@@ -120,7 +120,7 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---" },
     { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-    { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
     { "---" },
     { person_Icon " ${menu.show.identities}", 0, 0, "toolbar.showident" },
 };
@@ -130,7 +130,7 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "---" },
 # if !defined (iPlatformAppleDesktop)
     { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-    { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
     { "---" },
     { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
 # else
@@ -352,6 +352,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "identmenu.open")) {
+        const iBool setFocus = argLabel_Command(cmd, "focus");
         iWidget *toolBar = findWidget_Root("toolbar");
         iWidget *button = findWidget_Root(toolBar && isPortraitPhone_App() ? "toolbar.ident" : "navbar.ident");
         iArray items;
@@ -411,7 +412,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             &items,
             (iMenuItem[]){
                 { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-                { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+                { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
                 { "---" } }, 3);
         if (deviceType_App() == desktop_AppDeviceType) {
             pushBack_Array(&items,
@@ -429,7 +430,8 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         }
         iWidget *menu =
             makeMenu_Widget(button, constData_Array(&items), size_Array(&items));
-        openMenu_Widget(menu, bottomLeft_Rect(bounds_Widget(button)));
+        openMenuFlags_Widget(menu, bottomLeft_Rect(bounds_Widget(button)),
+                             postCommands_MenuOpenFlags | (setFocus ? setFocus_MenuOpenFlags : 0));
         deinit_Array(&items);
         return iTrue;
     }
@@ -457,6 +459,14 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         setFocus_Widget(findWidget_App(cstr_Command(cmd, "id")));
         return iTrue;
     }
+    else if (equal_Command(cmd, "menubar.focus")) {
+        iWidget *menubar = findWidget_App("menubar");
+        if (menubar) {
+            setFocus_Widget(child_Widget(menubar, 0));
+            postCommand_Widget(focus_Widget(), "trigger");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "input.resized")) {
         /* No parent handled this, so do a full rearrangement. */
         /* TODO: Defer this and do a single rearrangement later. */
@@ -465,9 +475,6 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
-//#if !defined (iPlatformMobile) /* apps don't share input focus on mobile */
-//        setFocus_Widget(NULL);
-//#endif
         setTextColor_LabelWidget(findWidget_App("winbar.app"), uiAnnotation_ColorId);
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiAnnotation_ColorId);
         return iFalse;
@@ -1855,6 +1862,7 @@ void createUserInterface_Root(iRoot *d) {
         addAction_Widget(root, '4', rightSidebarTab_KeyModifier, "sidebar2.mode arg:3 toggle:1");
         addAction_Widget(root, '5', rightSidebarTab_KeyModifier, "sidebar2.mode arg:4 toggle:1");
         addAction_Widget(root, SDLK_j, KMOD_PRIMARY, "splitmenu.open");
+        addAction_Widget(root, SDLK_F10, 0, "menubar.focus");
     }
     updateMetrics_Root(d);
     updateNavBarSize_(navBar);

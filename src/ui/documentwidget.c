@@ -1363,6 +1363,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, contentRegular_FontSize);
                     iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
                                      init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
+#if defined (iPlatformTerminal)
+                    nbArea.pos.x += 1;
+#endif
                     drawRange_Text(
                         circleFont, topLeft_Rect(nbArea), tmQuote_ColorId, range_CStr(circle));
                     iRect circleArea = visualBounds_Text(circleFont, range_CStr(circle));
@@ -4720,6 +4723,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             install_Fonts(id, &d->sourceContent);
             postCommandf_App("open gotoheading:%s url:about:fonts", cstr_String(id));
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "contextkey") && document_App() == d) {
+        emulateMouseClick_Widget(w, SDL_BUTTON_RIGHT);
         return iTrue;
     }
     return iFalse;

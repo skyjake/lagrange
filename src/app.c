@@ -595,6 +595,10 @@ static iBool loadState_App_(iApp *d) {
                 const int   keyRoot   = (winState & 1);
                 const iBool isCurrent = (winState & current_WindowStateFlag) != 0;
 //                printf("[State] '%.4s' split:%d state:%x\n", magic, splitMode, winState);
+#if defined (iPlatformTerminal)
+                /* Terminal only supports one window. */
+                win = d->window;
+#else
                 if (numWins == 1) {
                     win = d->window;
                 }
@@ -602,6 +606,7 @@ static iBool loadState_App_(iApp *d) {
                     win = new_MainWindow(initialWindowRect_App_(d, numWins - 1));
                     addWindow_App(win);
                 }
+#endif
                 pushBack_Array(currentTabs, &(iCurrentTabs){ { NULL, NULL } });
                 isFirstTab[0] = isFirstTab[1] = iTrue;
                 if (isCurrent) {
@@ -1652,7 +1657,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     /* Keyboard focus navigation with arrow keys. */
                     iWidget *menubar = NULL;
                     if (ev.type == SDL_KEYDOWN && ev.key.keysym.mod == 0 && focus_Widget() &&
-                        !cmp_String(id_Widget(parent_Widget(focus_Widget())), "menu")) {
+                        parentMenu_Widget(focus_Widget())) {
                         setCurrent_Window(window_Widget(focus_Widget()));
                         const int key = ev.key.keysym.sym;
                         if (key == SDLK_DOWN || key == SDLK_UP) {
@@ -1665,21 +1670,24 @@ void processEvents_App(enum iAppEventMode eventMode) {
                             }
                             wasUsed = iTrue;
                         }
-                        else if ((key == SDLK_LEFT || key == SDLK_RIGHT) &&
-                                 (menubar = findParent_Widget(focus_Widget(), "menubar")) != NULL) {
-                            iWidget *button = parent_Widget(parent_Widget(focus_Widget()));
-                            size_t index = indexOfChild_Widget(menubar, button);
-                            const size_t curIndex = index;
-                            //printf("index:%zu\n", index); SDL_Delay(1000);
-                            if (key == SDLK_LEFT && index > 0) {
-                                index--;
+                        else if ((key == SDLK_LEFT || key == SDLK_RIGHT)) {
+                            if ((menubar = findParent_Widget(focus_Widget(), "menubar")) != NULL) {
+                                iWidget *button = parent_Widget(parent_Widget(focus_Widget()));
+                                size_t index = indexOfChild_Widget(menubar, button);
+                                const size_t curIndex = index;
+                                if (key == SDLK_LEFT && index > 0) {
+                                    index--;
+                                }
+                                else if (key == SDLK_RIGHT && index < childCount_Widget(menubar) - 1) {
+                                    index++;
+                                }
+                                if (curIndex != index) {
+                                    setFocus_Widget(child_Widget(menubar, index));                                
+                                    postCommand_Widget(child_Widget(menubar, index), "trigger");
+                                }
                             }
-                            else if (key == SDLK_RIGHT && index < childCount_Widget(menubar) - 1) {
-                                index++;
-                            }
-                            if (curIndex != index) {
-                                setFocus_Widget(child_Widget(menubar, index));                                
-                                postCommand_Widget(child_Widget(menubar, index), "trigger");
+                            else {
+                                postCommand_Widget(focus_Widget(), "cancel");
                             }
                             wasUsed = iTrue;
                         }
@@ -3021,6 +3029,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.new")) {
+#if !defined (iPlatformTerminal)
         iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
         addWindow_App(newWin); /* takes ownership */
         SDL_ShowWindow(newWin->base.win);
@@ -3032,6 +3041,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
             postCommand_Root(newWin->base.roots[0], "~navigate.home");
         }
         postCommand_Root(newWin->base.roots[0], "~window.unfreeze");
+#endif
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmarks.changed")) {

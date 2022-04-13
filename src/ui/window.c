@@ -146,9 +146,9 @@ static iMenuItem bookmarksMenuItems_[] = {
 };
 
 static const iMenuItem identityMenuItems_[] = {
-    { "${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
     { "---" },
-    { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
     { NULL }
 };
 

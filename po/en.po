@@ -804,6 +804,9 @@ msgstr "Show page information"
 msgid "keys.sitespec"
 msgstr "Show site-specific settings"
 
+msgid "keys.menubar.focus"
+msgstr "Focus the menu bar"
+
 #, c-format
 msgid "dlg.input.prompt"
 msgstr "Please enter input for %s:"

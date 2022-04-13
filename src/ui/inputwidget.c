@@ -2620,7 +2620,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
 #endif
         }
-        if (mods & (KMOD_PRIMARY | KMOD_SECONDARY)) {
+        if (mods & (KMOD_GUI | KMOD_CTRL)) {
             return iFalse;
         }
         return iTrue;

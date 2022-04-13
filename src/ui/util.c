@@ -70,6 +70,23 @@ const char *command_UserEvent(const SDL_Event *d) {
     return "";
 }
 
+void emulateMouseClick_Widget(const iWidget *d, int button) {
+    const iInt2 clickPos = sub_I2(bottomRight_Rect(bounds_Widget(d)), muli_I2(gap2_UI, 2));
+    SDL_MouseButtonEvent ev = { .type      = SDL_MOUSEBUTTONDOWN,
+                                .timestamp = SDL_GetTicks(),
+                                .which     = 1024,
+                                .button    = button,
+                                .state     = SDL_PRESSED,
+                                1,
+                                clickPos.x,
+                                clickPos.y };
+    SDL_PushEvent((SDL_Event *) &ev);
+    ev.type = SDL_MOUSEBUTTONUP;
+    ev.state = SDL_RELEASED;
+    ev.timestamp++;
+    SDL_PushEvent((SDL_Event *) &ev);
+}
+
 iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
     return mouseCoord_Window(get_Window(), ev->which);
 }
@@ -936,6 +953,17 @@ void setNativeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) 
 #endif    
 }
 
+iWidget *parentMenu_Widget(iWidget *menuItem) {
+    if (parent_Widget(menuItem)) {
+        return !cmp_String(
+                   id_Widget(as_Widget(back_ObjectList(children_Widget(parent_Widget(menuItem))))),
+                   "menu.cancel")
+                   ? menuItem->parent
+                   : NULL;
+    }
+    return NULL;
+}
+
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
 #if defined (LAGRANGE_MAC_CONTEXTMENU)
@@ -1113,7 +1141,8 @@ iLocalDef iBool isUsingMenuPopupWindows_(void) {
 
 void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     const iBool postCommands  = (menuOpenFlags & postCommands_MenuOpenFlags) != 0;
-    const iBool isMenuFocused = (focus_Widget() == parent_Widget(d));
+    const iBool isMenuFocused = ((menuOpenFlags & setFocus_MenuOpenFlags) ||
+                                 focus_Widget() == parent_Widget(d));
 #if defined (LAGRANGE_MAC_CONTEXTMENU)
     const iArray *items = userData_Object(d);
     iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
@@ -1284,7 +1313,12 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     setupMenuTransition_Mobile(d, iTrue);
 #endif
     if (isMenuFocused) {
-        setFocus_Widget(child_Widget(d, 0));
+        iForEach(ObjectList, i, children_Widget(d)) {
+            if (flags_Widget(i.object) & focusable_WidgetFlag) {
+                setFocus_Widget(i.object);
+                break;
+            }
+        }
     }
 }
 
@@ -1372,6 +1406,10 @@ int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
         const iInt2 mousePos = init_I2(ev->button.x, ev->button.y);
         if (contains_Widget(menu->parent, mousePos)) {
             openMenu_Widget(menu, mousePos);
+            if (isEmulatedMouseDevice_UserEvent(ev)) {
+                /* Move input focus to the menu since we're using the keyboard. */
+                setFocus_Widget(child_Widget(menu, 0));
+            }
             return 0x2;
         }
     }

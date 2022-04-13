@@ -26,7 +26,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <SDL_events.h>
 
-#define newIdentity_KeyShortcut         SDLK_n,             KMOD_PRIMARY | KMOD_SHIFT
+/* These are defaults for bindings that are different depending on the platform. */
+
+#define newIdentity_KeyShortcut         SDLK_n,             KMOD_SECONDARY
+#define identityMenu_KeyShortcut        SDLK_i,             KMOD_SECONDARY
 
 #if defined (iPlatformTerminal)
 #   define pageInfo_KeyShortcut         SDLK_i,             0

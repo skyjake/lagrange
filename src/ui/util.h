@@ -46,6 +46,13 @@ iLocalDef iBool isMetricsChange_UserEvent(const SDL_Event *d) {
     return isCommand_UserEvent(d, "metrics.changed");
 }
 
+iLocalDef iBool isEmulatedMouseDevice_UserEvent (const SDL_Event *d) {
+    return (d->type == SDL_MOUSEBUTTONDOWN || d->type == SDL_MOUSEBUTTONUP) &&
+           d->button.which & 1024;
+}
+
+void    emulateMouseClick_Widget    (const iWidget *, int button);
+
 enum iMouseWheelFlag {
     /* Note: A future version of SDL may support per-pixel scrolling, but 2.0.x doesn't. */
     perPixel_MouseWheelFlag       = iBit(9), /* e.g., trackpad or finger scroll; applied to `direction` */
@@ -77,15 +84,15 @@ iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 
 #if defined (iPlatformTerminal)
 #   define KMOD_PRIMARY     KMOD_CTRL
-#   define KMOD_SECONDARY   KMOD_SHIFT
-#   define KMOD_ACCEPT      KMOD_GUI
+#   define KMOD_SECONDARY   KMOD_ALT
+#   define KMOD_ACCEPT      KMOD_ALT
 #elif defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI
-#   define KMOD_SECONDARY   KMOD_CTRL
+#   define KMOD_SECONDARY   KMOD_GUI | KMOD_SHIFT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
 #else
 #   define KMOD_PRIMARY     KMOD_CTRL
-#   define KMOD_SECONDARY   KMOD_GUI
+#   define KMOD_SECONDARY   KMOD_CTRL | KMOD_SHIFT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
 #endif
 
@@ -260,6 +267,7 @@ struct Impl_MenuItem {
 enum iMenuOpenFlags {
     postCommands_MenuOpenFlags = iBit(1),
     center_MenuOpenFlags       = iBit(2),
+    setFocus_MenuOpenFlags     = iBit(3),
 };
 
 iWidget *       makeMenu_Widget                 (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
@@ -284,6 +292,7 @@ void            setMenuItemLabel_Widget         (iWidget *menu, const char *comm
 void            setMenuItemLabelByIndex_Widget  (iWidget *menu, size_t index, const char *newLabel);
 void            setNativeMenuItems_Widget       (iWidget *menu, const iMenuItem *items, size_t n);
 iWidget *       findUserData_Widget             (iWidget *, void *userData);
+iWidget *       parentMenu_Widget               (iWidget *menuItem);
 
 int             checkContextMenu_Widget         (iWidget *, const SDL_Event *ev); /* see macro below */
 void            animateToRootVisibleTop_Widget  (iWidget *, uint32_t span);

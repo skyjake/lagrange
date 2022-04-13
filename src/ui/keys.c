@@ -247,6 +247,9 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 125,{ "${keys.pageinfo}",             pageInfo_KeyShortcut,           "document.info"                     }, 0 },
     { 126,{ "${keys.sitespec}",             ',', KMOD_PRIMARY | KMOD_SHIFT, "document.sitespec"                 }, 0 },
     { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_PRIMARY | KMOD_SHIFT, "input.precedingline"            }, 0 },
+    { 140,{ "${keys.identmenu}",            identityMenu_KeyShortcut,       "identmenu.open focus:1"            }, 0 },          
+    { 200,{ "${keys.menubar.focus}",        SDLK_F10, 0,                    "menubar.focus"                     }, 0 },
+    { 205,{ "${keys.contextmenu}",          '/', 0,                         "contextkey"                        }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)
     { 1002, { NULL, SDLK_LEFTBRACKET,  KMOD_PRIMARY,             "navigate.back"        }, 0 },
