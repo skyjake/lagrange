@@ -544,7 +544,7 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
     /* Must scale by UI scaling factor. */
     mulfv_I2(&rect.size, desktopDPI_Win32());
 #endif
-#if defined (iPlatformLinux) && !defined (iPlatformAndroid)
+#if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
     /* Scale by the primary (?) monitor DPI. */
     if (isRunningUnderWindowSystem_App()) {
         float vdpi;
@@ -891,7 +891,7 @@ static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
 }
 
 static void init_App_(iApp *d, int argc, char **argv) {
-#if defined (iPlatformLinux) && !defined (iPlatformAndroid)
+#if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
     d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
                                     !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
 #else

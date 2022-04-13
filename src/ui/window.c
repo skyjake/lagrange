@@ -332,7 +332,7 @@ static float displayScale_Window_(const iWindow *d) {
          LAGRANGE_OVERRIDE_DPI with the empty string. */
         setenv("LAGRANGE_OVERRIDE_DPI", "", 1);
     }
-#if defined (iPlatformApple)
+#if defined (iPlatformApple) || defined (iPlatformTerminal)
     iUnused(d);
     /* Apple UI sizes are fixed and only scaled by pixel ratio. */
     /* TODO: iOS text size setting? */
@@ -656,7 +656,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     useExecutableIconResource_SDLWindow(d->base.win);
     enableDarkMode_SDLWindow(d->base.win);
 #endif
-#if defined (iPlatformLinux)
+#if defined (iPlatformLinux) && !defined (iPlatformTerminal)
     SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
     /* Load the window icon. */ {
         SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, 0);
@@ -885,7 +885,7 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
         SDL_GetWindowPosition(d->base.win, &newPos.x, &newPos.y);
         d->place.normalRect.pos = newPos;
         iInt2 border = zero_I2();
-#if !defined(iPlatformApple)
+#if !defined(iPlatformApple) && !defined (iPlatformTerminal)
         SDL_GetWindowBordersSize(d->base.win, &border.y, &border.x, NULL, NULL);
         iAssert(~SDL_GetWindowFlags(d->base.win) & SDL_WINDOW_MAXIMIZED);
 #endif
