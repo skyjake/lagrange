@@ -693,7 +693,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
     }
 #endif
-#if defined (iPlatformDesktop)
+#if defined (iPlatformDesktop) && !defined (iPlatformTerminal)
     SDL_HideWindow(d->base.win);
 #else
     SDL_ShowWindow(d->base.win);
