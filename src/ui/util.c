@@ -955,6 +955,9 @@ void setNativeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) 
 
 iWidget *parentMenu_Widget(iWidget *menuItem) {
     if (parent_Widget(menuItem)) {
+        if (!cmp_String(id_Widget(parent_Widget(menuItem)), "menu")) {
+            return parent_Widget(menuItem);
+        }
         return !cmp_String(
                    id_Widget(as_Widget(back_ObjectList(children_Widget(parent_Widget(menuItem))))),
                    "menu.cancel")

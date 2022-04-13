@@ -227,7 +227,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
 #endif
     { 76, { "${keys.tab.new}",              newTab_KeyShortcut,             "tabs.new"                          }, 0 },
     { 77, { "${keys.tab.close}",            closeTab_KeyShortcut,           "tabs.close"                        }, 0 },
-    { 78, { "${keys.tab.close.other}",      SDLK_w, KMOD_PRIMARY | KMOD_SHIFT, "tabs.close toleft:1 toright:1"  }, 0 },
+    { 78, { "${keys.tab.close.other}",      SDLK_w, KMOD_SECONDARY, "tabs.close toleft:1 toright:1"  }, 0 },
     { 80, { "${keys.tab.prev}",             prevTab_KeyShortcut,            "tabs.prev"                         }, 0 },
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
     { 90, { "${keys.split.menu}",           SDLK_j, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
@@ -245,8 +245,8 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 120,{ "${keys.upload}",               SDLK_u, KMOD_PRIMARY,           "document.upload"                   }, 0 },
     { 121,{ "${keys.upload.edit}",          SDLK_e, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
     { 125,{ "${keys.pageinfo}",             pageInfo_KeyShortcut,           "document.info"                     }, 0 },
-    { 126,{ "${keys.sitespec}",             ',', KMOD_PRIMARY | KMOD_SHIFT, "document.sitespec"                 }, 0 },
-    { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_PRIMARY | KMOD_SHIFT, "input.precedingline"            }, 0 },
+    { 126,{ "${keys.sitespec}",             ',', KMOD_SECONDARY, "document.sitespec"                 }, 0 },
+    { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_SECONDARY, "input.precedingline"            }, 0 },
     { 140,{ "${keys.identmenu}",            identityMenu_KeyShortcut,       "identmenu.open focus:1"            }, 0 },          
     { 200,{ "${keys.menubar.focus}",        SDLK_F10, 0,                    "menubar.focus"                     }, 0 },
     { 205,{ "${keys.contextmenu}",          '/', 0,                         "contextkey"                        }, 0 },
@@ -356,7 +356,11 @@ void reset_Binding(int id) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+#if defined (iPlatformTerminal)
+static const char *filename_Keys_ = "cbindings.txt";
+#else
 static const char *filename_Keys_ = "bindings.txt";
+#endif
 
 void init_Keys(void) {
     iKeys *d = &keys_;
