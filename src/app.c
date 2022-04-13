@@ -117,10 +117,12 @@ static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
 #define EMB_BIN_EXEC "../resources.lgr" /* fallback from build/executable dir */
 #if defined (iPlatformTerminal)
 #   define STATE_NAME "cstate" /* separate for console since it's a different environment */
+#   define PREFS_NAME "cprefs"
 #else
 #   define STATE_NAME "state"
+#   define PREFS_NAME "prefs"
 #endif
-static const char *prefsFileName_App_      = "prefs.cfg";
+static const char *prefsFileName_App_      = PREFS_NAME ".cfg";
 static const char *oldStateFileName_App_   = STATE_NAME ".binary";
 static const char *stateFileName_App_      = STATE_NAME ".lgr";
 static const char *tempStateFileName_App_  = STATE_NAME ".lgr.tmp";
