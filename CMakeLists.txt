@@ -361,7 +361,11 @@ set_property (TARGET app PROPERTY C_STANDARD 11)
 if (TARGET ext-deps)
     add_dependencies (app ext-deps)
 endif ()
-set_target_properties (app PROPERTIES OUTPUT_NAME lagrange)
+if (ENABLE_TUI)
+    set_target_properties (app PROPERTIES OUTPUT_NAME clagrange)
+else ()
+    set_target_properties (app PROPERTIES OUTPUT_NAME lagrange)
+endif ()
 target_include_directories (app PUBLIC
     src
     ${CMAKE_CURRENT_BINARY_DIR}
