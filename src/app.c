@@ -134,6 +134,7 @@ struct Impl_App {
     iCommandLine args;
     iString *    execPath;
     iStringSet * tempFilesPendingDeletion;
+    iStringList *recentlyClosedTabUrls; /* for reopening, like an undo stack */
     iMimeHooks * mimehooks;
     iGmCerts *   certs;
     iVisited *   visited;
@@ -168,7 +169,6 @@ struct Impl_App {
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
-    //iRect        initialWindowRect;
     iArray       initialWindowRects; /* one per window */
     iPrefs       prefs;
 };
@@ -907,7 +907,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     d->isSuspended = iFalse;
     d->tempFilesPendingDeletion = new_StringSet();
-    init_Array(&d->initialWindowRects, sizeof(iRect));
+    d->recentlyClosedTabUrls = new_StringList();
+    init_Array(&d->initialWindowRects, sizeof(iRect));    
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone
        cannot be relied on (behavior differs depending on OS). */ {
@@ -1211,6 +1212,7 @@ static void deinit_App(iApp *d) {
         remove(cstr_String(tmp.value));
     }
     deinit_Array(&d->initialWindowRects);
+    iRelease(d->recentlyClosedTabUrls);
     iRelease(d->tempFilesPendingDeletion);
 }
 
@@ -2616,6 +2618,20 @@ static void invalidateCachedDocuments_App_(void) {
     }
 }
 
+static void pushClosedTabUrl_App_(iApp *d, const iString *url) {
+    pushBack_StringList(d->recentlyClosedTabUrls, url);
+    if (size_StringList(d->recentlyClosedTabUrls) > 50) { /* not an infinite number */
+        popFront_StringList(d->recentlyClosedTabUrls);
+    }
+}
+
+static const iString *popClosedTabUrl_App_(iApp *d) {
+    if (isEmpty_StringList(d->recentlyClosedTabUrls)) {
+        return NULL;
+    }
+    return collect_String(takeLast_StringList(d->recentlyClosedTabUrls));    
+}
+
 static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     const iBool isFrozen = !d->window || d->window->isDrawFrozen;
     /* Commands related to preferences. */
@@ -3524,8 +3540,16 @@ iBool handleCommand_App(const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "tabs.new")) {
+        if (argLabel_Command(cmd, "reopen")) {
+            const iString *reopenUrl = popClosedTabUrl_App_(d);
+            if (reopenUrl) {
+                newTab_App(NULL, iTrue);
+                postCommandf_App("open url:%s", cstr_String(reopenUrl));
+            }
+            return iTrue;
+        }
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
-        newTab_App(isDuplicate ? document_App() : NULL, iTrue);
+        newTab_App(isDuplicate ? document_App() : NULL, iTrue);        
         if (!isDuplicate) {
             postCommandf_App("navigate.home focus:%d", deviceType_App() == desktop_AppDeviceType);
         }
@@ -3549,13 +3573,19 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("document.openurls.changed");
         if (argLabel_Command(cmd, "toright")) {
             while (tabCount_Widget(tabs) > index + 1) {
-                destroy_Widget(removeTabPage_Widget(tabs, index + 1));
+                iDocumentWidget *closed = (iDocumentWidget *) removeTabPage_Widget(tabs, index + 1);
+                pushClosedTabUrl_App_(d, url_DocumentWidget(closed));
+                cancelAllRequests_DocumentWidget(closed);
+                destroy_Widget(as_Widget(closed));
             }
             wasClosed = iTrue;
         }
         if (argLabel_Command(cmd, "toleft")) {
             while (index-- > 0) {
-                destroy_Widget(removeTabPage_Widget(tabs, 0));
+                iDocumentWidget *closed = (iDocumentWidget *) removeTabPage_Widget(tabs, 0);
+                pushClosedTabUrl_App_(d, url_DocumentWidget(closed));
+                cancelAllRequests_DocumentWidget(closed);
+                destroy_Widget(as_Widget(closed));
             }
             postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, 0));
             wasClosed = iTrue;
@@ -3566,9 +3596,10 @@ iBool handleCommand_App(const char *cmd) {
         }
         const iBool isSplit = numRoots_Window(get_Window()) > 1;
         if (tabCount_Widget(tabs) > 1 || isSplit) {
-            iWidget *closed = removeTabPage_Widget(tabs, index);
-            cancelAllRequests_DocumentWidget((iDocumentWidget *) closed);
-            destroy_Widget(closed); /* released later */
+            iDocumentWidget *closed = (iDocumentWidget *) removeTabPage_Widget(tabs, index);
+            pushClosedTabUrl_App_(d, url_DocumentWidget(closed));
+            cancelAllRequests_DocumentWidget(closed);
+            destroy_Widget(as_Widget(closed)); /* released later */
             if (index == tabCount_Widget(tabs)) {
                 index--;
             }
