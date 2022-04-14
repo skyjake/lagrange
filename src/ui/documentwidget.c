@@ -5339,7 +5339,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
                             { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
                             { "---" },
-                            { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+                            { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
                             { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
                             { "---" },
                             { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
@@ -5881,7 +5881,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
 #if !defined (iPlatformAppleDesktop) /* in system menu */
     addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
     addAction_Widget(w, closeTab_KeyShortcut, "tabs.close");
-    addAction_Widget(w, SDLK_d, KMOD_PRIMARY, "bookmark.add");
+    addAction_Widget(w, bookmarkPage_KeyShortcut, "bookmark.add");
     addAction_Widget(w, subscribeToPage_KeyShortcut, "feeds.subscribe");
 #endif
     addAction_Widget(w, navigateBack_KeyShortcut, "navigate.back");

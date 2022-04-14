@@ -213,7 +213,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 45, { "${keys.link.homerow.newtab}",  'f', KMOD_SHIFT,                "document.linkkeys arg:1 newtab:1"  }, 0 },
     { 46, { "${keys.link.homerow.hover}",   'h', 0,                         "document.linkkeys arg:1 hover:1"   }, 0 },
     { 47, { "${keys.link.homerow.next}",    '.', 0,                         "document.linkkeys more:1"          }, 0 },
-    { 50, { "${keys.bookmark.add}",         'd', KMOD_PRIMARY,              "bookmark.add"                      }, 0 },
+    { 50, { "${keys.bookmark.add}",         bookmarkPage_KeyShortcut,       "bookmark.add"                      }, 0 },
     { 51, { "${keys.bookmark.addfolder}",   'n', KMOD_SHIFT,                "bookmarks.addfolder"               }, 0 },
     { 55, { "${keys.subscribe}",            subscribeToPage_KeyShortcut,    "feeds.subscribe"                   }, 0 },
     { 56, { "${keys.feeds.showall}",        SDLK_u, KMOD_SHIFT,             "feeds.mode arg:0"                  }, 0 },
@@ -246,10 +246,10 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 120,{ "${keys.upload}",               SDLK_u, KMOD_PRIMARY,           "document.upload"                   }, 0 },
     { 121,{ "${keys.upload.edit}",          SDLK_e, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
     { 125,{ "${keys.pageinfo}",             pageInfo_KeyShortcut,           "document.info"                     }, 0 },
-    { 126,{ "${keys.sitespec}",             ',', KMOD_SECONDARY, "document.sitespec"                 }, 0 },
-    { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_SECONDARY, "input.precedingline"            }, 0 },
+    { 126,{ "${keys.sitespec}",             ',', KMOD_SECONDARY,            "document.sitespec"                 }, 0 },
+    { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_SECONDARY,         "input.precedingline"               }, 0 },
     { 140,{ "${keys.identmenu}",            identityMenu_KeyShortcut,       "identmenu.open focus:1"            }, 0 },          
-    { 200,{ "${keys.menubar.focus}",        SDLK_F10, 0,                    "menubar.focus"                     }, 0 },
+    { 200,{ "${keys.menubar.focus}",        menuBar_KeyShortcut,            "menubar.focus"                     }, 0 },
     { 205,{ "${keys.contextmenu}",          '/', 0,                         "contextkey"                        }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)

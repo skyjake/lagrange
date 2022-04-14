@@ -1470,8 +1470,14 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) 
         return iFalse;
     }
     iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
-    wt.hitPoint = addY_I2(relCoord, 1); /* never (0, 0) because that disables the hit test */
-    measure_WrapText(&wt, d->font);
+    if (isEqual_I2(relCoord, zero_I2())) {
+        /* This is simple enough to figure out. */
+        wt.hitChar_out = wt.text.start;        
+    }
+    else {
+        wt.hitPoint = addY_I2(relCoord, 1 * aspect_UI); /* never (0, 0) because that disables the hit test */
+        measure_WrapText(&wt, d->font);
+    }
     if (wt.hitChar_out) {
         d->cursor.x = wt.hitChar_out - wt.text.start;
     }
@@ -2551,6 +2557,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_a:
+#if !defined (iPlatformTerminal) /* Emacs-style ^A/^E in the terminal */
                 if (mods == KMOD_PRIMARY) {
                     selectAll_InputWidget(d);
                     d->mark.start = 0;
@@ -2560,6 +2567,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     refresh_Widget(w);
                     return iTrue;
                 }
+#endif
 # if defined (iPlatformApple)
                 /* fall through for Emacs-style Home/End */
             case SDLK_e:

@@ -129,7 +129,7 @@ static const iMenuItem viewMenuItems_[] = {
 };
 
 static iMenuItem bookmarksMenuItems_[] = {
-    { "${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
     { "${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
     { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
     { "---" },
@@ -142,7 +142,7 @@ static iMenuItem bookmarksMenuItems_[] = {
     { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
     { "---" },
     { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
-    { "${menu.feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
+    { "${menu.feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" },
     { NULL }
 };
 

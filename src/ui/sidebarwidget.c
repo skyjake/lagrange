@@ -435,14 +435,14 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 { whiteStar_Icon " " uiTextCaution_ColorEscape "${feeds.unsubscribe}", 0, 0, "feed.entry.unsubscribe" },
                 { "---", 0, 0, NULL },
                 { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
-                { reload_Icon " ${feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" }
+                { reload_Icon " ${feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" }
             };
             d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             d->modeMenu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]){
                     { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
-                    { reload_Icon " ${feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
+                    { reload_Icon " ${feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" } },
                 2);
             break;
         }
@@ -947,7 +947,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     setBackgroundColor_Widget(d->resizer, none_ColorId);
     d->menu     = NULL;
     d->modeMenu = NULL;
-    addAction_Widget(w, SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh");
+    addAction_Widget(w, refreshFeeds_KeyShortcut, "feeds.refresh");
     updateMetrics_SidebarWidget_(d);
     if (side == left_SidebarSide) {
         postCommand_App("~sidebar.update"); /* unread count */

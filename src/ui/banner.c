@@ -228,12 +228,12 @@ void draw_Banner(const iBanner *d) {
     /* Draw the site name. */
     if (!isEmpty_String(&d->site)) {
         drawRange_Text(banner_FontId, pos, tmBannerTitle_ColorId, range_String(&d->site));
-        pos.y += lineHeight_Text(banner_FontId) * 3 / 2;
+        pos.y += (int) ceilf(lineHeight_Text(banner_FontId) * 3.0f / 2.0f);
     }
     else {
         pos.y = top_Rect(bounds);
     }
-    const int innerPad = gap_UI;
+//    const int innerPad = gap_UI;
     pos.x = left_Rect(bounds);
     iConstForEach(Array, i, &d->items) {
         const iBannerItem *item = i.value;
