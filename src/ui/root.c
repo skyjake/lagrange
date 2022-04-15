@@ -1097,7 +1097,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             updateToolbarColors_Root(as_Widget(doc)->root);
             updateNavBarIdentity_(navBar);
         }
-        setFocus_Widget(NULL);
+        //setFocus_Widget(NULL);
         makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         refresh_Widget(findWidget_Root("doctabs"));
     }

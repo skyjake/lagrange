@@ -749,8 +749,8 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
 
 void setClosedFolders_SidebarWidget(iSidebarWidget *d, const iIntSet *closedFolders) {
     if (d) {
-    delete_IntSet(d->closedFolders);
-    d->closedFolders = copy_IntSet(closedFolders);
+        delete_IntSet(d->closedFolders);
+        d->closedFolders = copy_IntSet(closedFolders);
     }
 }
 
@@ -772,6 +772,10 @@ float width_SidebarWidget(const iSidebarWidget *d) {
 
 const iIntSet *closedFolders_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->closedFolders : collect_IntSet(new_IntSet());
+}
+
+iListWidget *list_SidebarWidget(iSidebarWidget *d) {
+    return list_SidebarWidget_(d);
 }
 
 const char *icon_SidebarMode(enum iSidebarMode mode) {
@@ -900,7 +904,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     setFlags_Widget(listArea, resizeChildren_WidgetFlag, iTrue);
     d->list = new_ListWidget();
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
-    addChild_Widget(listArea, iClob(d->list));
+    addChildFlags_Widget(listArea, iClob(d->list), focusable_WidgetFlag);
     if (!isPhone) {
         d->certList = new_CertListWidget();
         setPadding_Widget(as_Widget(d->certList), 0, gap_UI, 0, gap_UI);
@@ -1198,6 +1202,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         scrollOffset_ListWidget(d->list, 0);
         if (wasChanged) {
             postCommandf_App("%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
+#if defined (iPlatformTerminal)
+            setFocus_Widget(as_Widget(list_SidebarWidget(d)));
+#endif
         }
         refresh_Widget(findChild_Widget(w, "buttons"));
         return iTrue;
@@ -1205,7 +1212,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
     else if (equal_Command(cmd, "toggle")) {
         if (arg_Command(cmd) && isVisible_Widget(w)) {
             return iTrue;
-        }
+        }        
         const iBool isAnimated = prefs_App()->uiAnimations &&
                                  argLabel_Command(cmd, "noanim") == 0 &&
                                  (d->side == left_SidebarSide || deviceType_App() != phone_AppDeviceType);
@@ -1216,6 +1223,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
 //            visY = top_Rect(bounds_Widget(w)) - top_Rect(w->root->widget->rect);
         }
         const iBool isHiding = isVisible_Widget(w);
+        if (!isHiding) {
+            setFocus_Widget(as_Widget(list_SidebarWidget(d)));
+        }
         setFlags_Widget(w, hidden_WidgetFlag, isHiding);
         /* Safe area inset for mobile. */
         const int safePad =
@@ -1455,6 +1465,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (handleSidebarCommand_SidebarWidget_(d, cmd + size_String(&d->cmdPrefix))) {
                 return iTrue;
             }
+        }
+        else if (equal_Command(cmd, "menu.closed") && d->menu == pointer_Command(cmd)) {
+            setFocus_Widget(as_Widget(d->list));
+            return iFalse;
         }
         else if (isCommand_Widget(w, ev, "mouse.clicked")) {
             if (argLabel_Command(cmd, "button") == SDL_BUTTON_LEFT) {
@@ -1847,7 +1861,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         if (ev->button.button == SDL_BUTTON_RIGHT) {
             d->contextItem = NULL;
-            if (!isVisible_Widget(d->menu)) {
+            if (!isVisible_Widget(d->menu) && !isEmulatedMouseDevice_UserEvent(ev)) {
                 updateMouseHover_ListWidget(d->list);
             }
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
@@ -2021,6 +2035,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             isHover_Widget(constAs_Widget(list)) &&
             constHoverItem_ListWidget(list) == d) ||
             (isMenuVisible && sidebar->contextItem == d) ||
+            (isFocused_Widget(list) && constCursorItem_ListWidget(list) == d) ||
             isDragging;
     const int scrollBarWidth = scrollBarWidth_ListWidget(list);
 #if defined (iPlatformApple)
@@ -2216,7 +2231,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                     uiLabelLargeBold_FontId,
                     add_I2(drawPos,
                            init_I2(3 * gap_UI * aspect_UI,
-                                   (itemHeight - lineHeight_Text(uiLabelLargeBold_FontId)) / 2)),
+                                   1 + (itemHeight - lineHeight_Text(uiLabelLargeBold_FontId)) / 2.0f)),
                     uiIcon_ColorId,
                     range_String(&d->meta));
             }

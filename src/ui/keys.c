@@ -474,7 +474,7 @@ iBool processEvent_Keys(const SDL_Event *ev) {
                 postCommandf_Root(root, "%s repeat:1", cstr_String(&bind->command));
             }
             else {
-                postCommandString_Root(root, &bind->command);
+                postCommandf_Root(root, "%s keydown:1", cstr_String(&bind->command));
             }
             return iTrue;
         }

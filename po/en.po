@@ -810,6 +810,12 @@ msgstr "Show site-specific settings"
 msgid "keys.menubar.focus"
 msgstr "Focus the menu bar"
 
+msgid "keys.identmenu"
+msgstr "Open Identity menu"
+
+msgid "keys.contextmenu"
+msgstr "Open context menu"
+
 #, c-format
 msgid "dlg.input.prompt"
 msgstr "Please enter input for %s:"

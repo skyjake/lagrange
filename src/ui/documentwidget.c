@@ -4726,6 +4726,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "contextkey") && document_App() == d) {
+        d->view.hoverLink = NULL;
         emulateMouseClick_Widget(w, SDL_BUTTON_RIGHT);
         return iTrue;
     }

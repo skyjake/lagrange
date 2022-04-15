@@ -1680,7 +1680,7 @@ iObjectList *listDocuments_MainWindow(iMainWindow *d, const iRoot *rootOrNull) {
 }
 
 void checkPendingSplit_MainWindow(iMainWindow *d) {
-    if (d->splitMode != d->pendingSplitMode) {
+    if (d && d->splitMode != d->pendingSplitMode) {
         setSplitMode_MainWindow(d, d->pendingSplitMode);
     }
 }

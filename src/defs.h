@@ -97,10 +97,6 @@ enum iReturnKeyFlag {
 /* Return key behavior is not handled via normal bindings because only certain combinations
    are valid. */
 enum iReturnKeyBehavior {
-//    acceptWithoutMod_ReturnKeyBehavior =
-//        shiftReturn_ReturnKeyFlag | (return_ReturnKeyFlag << accept_ReturnKeyFlag),    
-//    acceptWithShift_ReturnKeyBehavior =
-//        return_ReturnKeyFlag | (shiftReturn_ReturnKeyFlag << accept_ReturnKeyFlag),
     acceptWithPrimaryMod_ReturnKeyBehavior =
 #if defined (iPlatformApple)
         RETURN_KEY_BEHAVIOR(0, gui_ReturnKeyFlag),
@@ -108,7 +104,7 @@ enum iReturnKeyBehavior {
         RETURN_KEY_BEHAVIOR(control_ReturnKeyFlag, 0),
 #endif
 #if defined (iPlatformTerminal)
-    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(0, gui_ReturnKeyFlag),
+    default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(gui_ReturnKeyFlag, 0),
 #elif defined (iPlatformAndroidMobile)
     default_ReturnKeyBehavior = RETURN_KEY_BEHAVIOR(0, shift_ReturnKeyFlag),
 #else

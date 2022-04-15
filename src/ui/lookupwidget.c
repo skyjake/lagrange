@@ -397,6 +397,8 @@ void init_LookupWidget(iLookupWidget *d) {
     d->list = addChildFlags_Widget(w, iClob(new_ListWidget()),
                                    resizeToParentWidth_WidgetFlag |
                                    resizeToParentHeight_WidgetFlag);
+    /* We will handle focus and cursor manually. */
+    setFlags_Widget(as_Widget(d->list), focusable_WidgetFlag, iFalse);
 #if defined (iPlatformTerminal)
     setPadding_Widget(as_Widget(d->list), 2, 2, 2, 2);
 #endif

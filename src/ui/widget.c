@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "window.h"
 
 #include "labelwidget.h"
+#include "inputwidget.h"
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/ptrset.h>
@@ -1118,7 +1119,8 @@ void unhover_Widget(void) {
 
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (!d->parent) {
-        if (window_Widget(d)->focus && window_Widget(d)->focus->root == d->root && isKeyboardEvent_(ev)) {
+        if (window_Widget(d)->focus && window_Widget(d)->focus->root == d->root &&
+            (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
             /* Root dispatches keyboard events directly to the focused widget. */
             if (dispatchEvent_Widget(window_Widget(d)->focus, ev)) {
                 return iTrue;
@@ -1177,7 +1179,8 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         iReverseForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
             iAssert(child->root == d->root);
-            if (child == window_Widget(d)->focus && isKeyboardEvent_(ev)) {
+            if (child == window_Widget(d)->focus &&
+                (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
                 continue; /* Already dispatched. */
             }
             if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
@@ -2128,9 +2131,11 @@ static const iWidget *findFocusable_Widget_(const iWidget *d, const iWidget *sta
     }
     if ((d->flags & focusable_WidgetFlag) && isVisible_Widget(d) && !isDisabled_Widget(d) &&
         *getNext) {
-        return d;
+        if ((~focusDir & notInput_WidgetFocusFlag) || !isInstance_Object(d, &Class_InputWidget)) {
+            return d;
+        }
     }
-    if (focusDir == forward_WidgetFocusDir) {
+    if ((focusDir & dirMask_WidgetFocusFlag) == forward_WidgetFocusDir) {
         iConstForEach(ObjectList, i, d->children) {
             const iWidget *found =
                 findFocusable_Widget_(constAs_Widget(i.object), startFrom, getNext, focusDir);

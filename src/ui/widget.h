@@ -139,6 +139,9 @@ enum iWidgetAddPos {
 enum iWidgetFocusDir {
     forward_WidgetFocusDir,
     backward_WidgetFocusDir,
+    /* flags: */
+    dirMask_WidgetFocusFlag = 0x1,
+    notInput_WidgetFocusFlag = 0x100,
 };
 
 iDeclareType(WidgetDrawBuffer)

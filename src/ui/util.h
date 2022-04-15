@@ -52,6 +52,7 @@ iLocalDef iBool isEmulatedMouseDevice_UserEvent (const SDL_Event *d) {
 }
 
 void    emulateMouseClick_Widget    (const iWidget *, int button);
+void    emulateMouseClickPos_Widget (const iWidget *, int button, iInt2 clickPos);
 
 enum iMouseWheelFlag {
     /* Note: A future version of SDL may support per-pixel scrolling, but 2.0.x doesn't. */
@@ -244,6 +245,7 @@ iWidget *       makeHDiv_Widget     (void);
 iWidget *       makeVDiv_Widget     (void);
 iWidget *       addAction_Widget    (iWidget *parent, int key, int kmods, const char *command);
 iBool           isAction_Widget     (const iWidget *);
+iBool           isButton_Widget     (const iAnyObject *);
 
 /*-----------------------------------------------------------------------------------------------*/
 

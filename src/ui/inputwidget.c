@@ -1659,6 +1659,9 @@ static iBool copy_InputWidget_(iInputWidget *d, iBool doCut) {
         const iRanges m   = mark_InputWidget_(d);
         iString *     str = collectNew_String();
         mergeLinesRange_(&d->lines, m, str);
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            restoreDefaultScheme_(str);
+        }
         SDL_SetClipboardText(
             cstr_String(d->inFlags & isUrl_InputWidgetFlag ? canonicalUrl_String(str) : str));
         if (doCut) {
@@ -2405,7 +2408,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         const int key  = ev->key.keysym.sym;
         const int mods = keyMods_Sym(ev->key.keysym.mod);
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
+#  if !defined (iPlatformTerminal)
         if (mods == KMOD_PRIMARY) {
+#  else
+        if (mods == KMOD_SECONDARY) {
+#  endif
             switch (key) {
                 case 'c':
                 case 'x':
@@ -2559,6 +2566,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_a:
 #if !defined (iPlatformTerminal) /* Emacs-style ^A/^E in the terminal */
                 if (mods == KMOD_PRIMARY) {
+#else
+                if (mods == KMOD_ALT /* meta */) {
+#endif
                     selectAll_InputWidget(d);
                     d->mark.start = 0;
                     d->mark.end   = cursorToIndex_InputWidget_(d, curMax);
@@ -2567,7 +2577,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     refresh_Widget(w);
                     return iTrue;
                 }
-#endif
 # if defined (iPlatformApple)
                 /* fall through for Emacs-style Home/End */
             case SDLK_e:

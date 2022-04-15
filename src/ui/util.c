@@ -70,10 +70,12 @@ const char *command_UserEvent(const SDL_Event *d) {
     return "";
 }
 
-void emulateMouseClick_Widget(const iWidget *d, int button) {
-    const iInt2 clickPos = sub_I2(bottomRight_Rect(bounds_Widget(d)), muli_I2(gap2_UI, 2));
+void emulateMouseClickPos_Widget(const iWidget *d, int button, iInt2 clickPos) {
+    iMainWindow *wnd = get_MainWindow();
+    divfv_I2(&clickPos, wnd->base.pixelRatio); /* ratio is multiplied when processing events */
     SDL_MouseButtonEvent ev = { .type      = SDL_MOUSEBUTTONDOWN,
                                 .timestamp = SDL_GetTicks(),
+                                .windowID  = id_Window(as_Window(wnd)),
                                 .which     = 1024,
                                 .button    = button,
                                 .state     = SDL_PRESSED,
@@ -85,6 +87,11 @@ void emulateMouseClick_Widget(const iWidget *d, int button) {
     ev.state = SDL_RELEASED;
     ev.timestamp++;
     SDL_PushEvent((SDL_Event *) &ev);
+}
+
+void emulateMouseClick_Widget(const iWidget *d, int button) {
+    return emulateMouseClickPos_Widget(
+        d, button, sub_I2(bottomRight_Rect(bounds_Widget(d)), muli_I2(gap2_UI, 2)));
 }
 
 iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
@@ -702,6 +709,10 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
 
 iBool isAction_Widget(const iWidget *d) {
     return isInstance_Object(d, &Class_LabelWidget) && isEqual_I2(d->rect.size, zero_I2());
+}
+
+iBool isButton_Widget(const iAnyObject *d) {
+    return isInstance_Object(d, &Class_LabelWidget) && !isEmpty_String(command_LabelWidget(d));
 }
 
 /*-----------------------------------------------------------------------------------------------*/
@@ -1574,6 +1585,17 @@ static void unfocusFocusInsideTabPage_(const iWidget *page) {
     }
 }
 
+static void setFocusInsideTabPage_(iWidget *page) {
+    iWidget *focus =
+        flags_Widget(page) & focusable_WidgetFlag
+            ? page
+            : findFocusable_Widget(child_Widget(page, 0),
+                                   forward_WidgetFocusDir | notInput_WidgetFocusFlag);
+    if (focus == page || hasParent_Widget(focus, page)) {
+        setFocus_Widget(focus);
+    }
+}
+
 static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
     if (equal_Command(cmd, "tabs.switch")) {
         iWidget *target = pointerLabel_Command(cmd, "page");
@@ -1619,6 +1641,9 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
         }
         else {
             showTabPage_Widget(tabs, child_Widget(pages, tabIndex + dir));
+        }
+        if (argLabel_Command(cmd, "keydown")) {
+            setFocusInsideTabPage_((iWidget *) currentTabPage_Widget(tabs));
         }
         refresh_Widget(tabs);
         return iTrue;
@@ -3182,10 +3207,8 @@ iWidget *makePreferences_Widget(void) {
         addPrefsInputWithHeading_(headings, values, "prefs.proxy.http", iClob(new_InputWidget(0)));
     }
     /* Keybindings. */
-    if (deviceType_App() == desktop_AppDeviceType) {
-        iBindingsWidget *bind = new_BindingsWidget();
-        appendFramelessTabPage_Widget(tabs, iClob(bind), "${heading.prefs.keys}", '7', KMOD_PRIMARY);
-    }
+    iBindingsWidget *bind = new_BindingsWidget();
+    appendFramelessTabPage_Widget(tabs, iClob(bind), "${heading.prefs.keys}", '7', KMOD_PRIMARY);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     updatePreferencesLayout_Widget(dlg);
     iWidget *buttons = addChild_Widget(dlg,
@@ -3196,7 +3219,7 @@ iWidget *makePreferences_Widget(void) {
                         3)));
     setId_Widget(child_Widget(buttons, 0), "prefs.aboutfonts");
     setFlags_Widget(findChild_Widget(dlg, "prefs.aboutfonts"), hidden_WidgetFlag, iTrue);
-    addChild_Widget(dlg->root->widget, iClob(dlg));
+    addChild_Widget(dlg->root->widget, iClob(dlg));    
     setupSheetTransition_Mobile(dlg, iTrue);
     return dlg;
 }

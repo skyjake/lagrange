@@ -1725,10 +1725,22 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 if (!wasUsed) {
                     /* Focus cycling. */
                     if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB) {
-                        setFocus_Widget(findFocusable_Widget(focus_Widget(),
-                                                             ev.key.keysym.mod & KMOD_SHIFT
-                                                                 ? backward_WidgetFocusDir
-                                                                 : forward_WidgetFocusDir));
+                        iWidget *startFrom = focus_Widget();
+                        /* Go to a sidebar if one is visible. */
+                        if (!startFrom && isVisible_Widget(findWidget_App("sidebar"))) {
+                            setFocus_Widget(as_Widget(
+                                list_SidebarWidget((iSidebarWidget *) findWidget_App("sidebar"))));
+                        }
+                        else if (!startFrom && isVisible_Widget(findWidget_App("sidebar2"))) {
+                            setFocus_Widget(as_Widget(
+                                list_SidebarWidget((iSidebarWidget *) findWidget_App("sidebar2"))));
+                        }
+                        else {
+                            setFocus_Widget(findFocusable_Widget(startFrom,
+                                                                 ev.key.keysym.mod & KMOD_SHIFT
+                                                                     ? backward_WidgetFocusDir
+                                                                     : forward_WidgetFocusDir));
+                        }
                         wasUsed = iTrue;
                     }
                 }
