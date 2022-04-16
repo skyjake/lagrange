@@ -219,9 +219,9 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 56, { "${keys.feeds.showall}",        SDLK_u, KMOD_SHIFT,             "feeds.mode arg:0"                  }, 0 },
     { 57, { "${keys.feeds.showunread}",     SDLK_u, 0,                      "feeds.mode arg:1"                  }, 0 },
     { 60, { "${keys.findtext}",             'f', KMOD_PRIMARY,              "focus.set id:find.input"           }, 0 },
-    { 70, { "${keys.zoom.in}",              SDLK_EQUALS, KMOD_PRIMARY,      "zoom.delta arg:10"                 }, 0 },
-    { 71, { "${keys.zoom.out}",             SDLK_MINUS, KMOD_PRIMARY,       "zoom.delta arg:-10"                }, 0 },
-    { 72, { "${keys.zoom.reset}",           SDLK_0, KMOD_PRIMARY,           "zoom.set arg:100"                  }, 0 },
+    { 70, { "${keys.zoom.in}",              SDLK_EQUALS, KMOD_ZOOM,         "zoom.delta arg:10"                 }, 0 },
+    { 71, { "${keys.zoom.out}",             SDLK_MINUS, KMOD_ZOOM,          "zoom.delta arg:-10"                }, 0 },
+    { 72, { "${keys.zoom.reset}",           SDLK_0, KMOD_ZOOM,              "zoom.set arg:100"                  }, 0 },
 #if !defined (iPlatformApple) /* Ctrl-Cmd-F on macOS */
     { 73, { "${keys.fullscreen}",           SDLK_F11, 0,                    "window.fullscreen"                 }, 0 },
 #endif

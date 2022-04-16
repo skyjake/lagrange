@@ -874,11 +874,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             /* TODO: Literata bullet is broken? */
             iGmRun bulRun = run;
             bulRun.color = tmQuote_ColorId;
-#if defined (iPlatformTerminal)
-            bulRun.visBounds.pos = addX_I2(pos, indents[text_GmLineType] * gap_Text);
-#else
-            bulRun.visBounds.pos = addX_I2(pos, (indents[text_GmLineType] - 0.55f) * gap_Text);
-#endif
+            bulRun.visBounds.pos = addX_I2(
+                pos, (indents[text_GmLineType] - (isTerminal_App() ? 0.0f : 0.55f)) * gap_Text);
             bulRun.visBounds.size =
                 init_I2((indents[bullet_GmLineType] - indents[text_GmLineType]) * gap_Text,
                         lineHeight_Text(bulRun.font));

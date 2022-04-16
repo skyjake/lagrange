@@ -663,14 +663,11 @@ static uint32_t updateReloadAnimation_Root_(uint32_t interval, void *root) {
 }
 
 static void setReloadLabel_Root_(iRoot *d, iBool animating) {
-//    const iBool isMobile = deviceType_App() != desktop_AppDeviceType;
     iLabelWidget *label = findChild_Widget(d->widget, "reload");
-    updateTextCStr_LabelWidget(
-        label, animating ? loadAnimationCStr_() : (/*isMobile ? pageMenuCStr_ :*/ reloadCStr_));
-//    if (isMobile) {
-//        setCommand_LabelWidget(label,
-//                               collectNewCStr_String(animating ? "navigate.reload" : "menu.open"));
-//    }
+    updateTextCStr_LabelWidget(label, animating ? loadAnimationCStr_() : reloadCStr_);
+    if (isTerminal_App()) {
+        showCollapsed_Widget(as_Widget(label), animating);
+    }
 }
 
 static void checkLoadAnimation_Root_(iRoot *d) {
@@ -812,7 +809,7 @@ static int navBarAvailableSpace_(iWidget *navBar) {
 }
 
 iBool isNarrow_Root(const iRoot *d) {
-    return width_Rect(safeRect_Root(d)) / gap_UI < 140;
+    return width_Rect(safeRect_Root(d)) / gap_UI < (isTerminal_App() ? 81 : 140);
 }
 
 static void updateNavBarSize_(iWidget *navBar) {

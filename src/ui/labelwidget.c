@@ -132,6 +132,21 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
     }
     else if (isCommand_Widget(w, ev, "focus.gained") ||
              isCommand_Widget(w, ev, "focus.lost")) {
+        iWidget *scr = findOverflowScrollable_Widget(w);
+        if (scr) {
+            const iRect root   = visibleRect_Root(w->root);
+            const iRect bounds = boundsWithoutVisualOffset_Widget(w);
+            int delta = top_Rect(root) - top_Rect(bounds);
+            if (delta > 0) {
+                scrollOverflow_Widget(scr, delta);
+            }
+            else {
+                delta = bottom_Rect(bounds) - bottom_Rect(root);
+                if (delta > 0) {
+                    scrollOverflow_Widget(scr, -delta);
+                }
+            }
+        }
         refresh_Widget(d);
         return iFalse;
     }
@@ -368,12 +383,10 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     init_Paint(&p);
     int bg, fg, frame, frame2, iconColor, metaColor;
     getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2, &iconColor, &metaColor);
-#if defined (iPlatformTerminal)
     /* Indicate focused label with an underline attribute. */
-    if (isFocused_Widget(w)) {
+    if (isTerminal_App() && isFocused_Widget(w)) {
         fg |= underline_ColorId;
     }
-#endif
     setBaseAttributes_Text(d->font, fg);
     const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
     const iBool isCaution = (colorEscape == uiTextCaution_ColorId);

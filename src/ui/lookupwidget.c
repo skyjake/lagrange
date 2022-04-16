@@ -399,9 +399,9 @@ void init_LookupWidget(iLookupWidget *d) {
                                    resizeToParentHeight_WidgetFlag);
     /* We will handle focus and cursor manually. */
     setFlags_Widget(as_Widget(d->list), focusable_WidgetFlag, iFalse);
-#if defined (iPlatformTerminal)
-    setPadding_Widget(as_Widget(d->list), 2, 2, 2, 2);
-#endif
+    if (isTerminal_App()) {
+        setPadding_Widget(as_Widget(d->list), 2, 2, 2, 2);
+    }
     d->cursor = iInvalidPos;
     d->work = new_Thread(worker_LookupWidget_);
     setUserData_Thread(d->work, d);

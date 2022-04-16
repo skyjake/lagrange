@@ -991,15 +991,15 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     setDrawBufferEnabled_Widget(menu, iTrue);
     setFrameColor_Widget(menu, uiSeparator_ColorId);
     setBackgroundColor_Widget(menu, uiBackgroundMenu_ColorId);
-    if (deviceType_App() != desktop_AppDeviceType) {
+    if (isTerminal_App()) {
+        setPadding1_Widget(menu, 3);
+    }
+    else if (deviceType_App() != desktop_AppDeviceType) {
         setPadding1_Widget(menu, 2 * gap_UI);
     }
     else {
         setPadding1_Widget(menu, gap_UI / 2);
     }
-#if defined (iPlatformTerminal)
-    setPadding1_Widget(menu, 3);
-#endif
     setFlags_Widget(menu,
                     keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
                         arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |

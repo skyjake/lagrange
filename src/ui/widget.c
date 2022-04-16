@@ -1598,13 +1598,11 @@ void drawBackground_Widget(const iWidget *d) {
         iPaint p;
         init_Paint(&p);
         if (d->bgColor >= 0) {
-#if defined (iPlatformTerminal)
-            if (d->bgColor == uiSeparator_ColorId && rect.size.y == 1) {
+            if (isTerminal_App() && d->bgColor == uiSeparator_ColorId && rect.size.y == 1) {
                 fillRect_Paint(&p, adjusted_Rect(rect, zero_I2(), init_I2(0, -1)),
                                d->bgColor);
                 return;
             }
-#endif
             fillRect_Paint(&p, rect, d->bgColor);
         }
         if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {

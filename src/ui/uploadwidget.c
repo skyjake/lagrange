@@ -265,7 +265,7 @@ void init_UploadWidget(iUploadWidget *d) {
             setFlags_Widget(page, arrangeSize_WidgetFlag, iTrue);
             d->input = new_InputWidget(0);
             setId_Widget(as_Widget(d->input), "upload.text");
-            setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI, -1));
+            setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI * aspect_UI, -1));
             addChild_Widget(page, iClob(d->input));
             appendFramelessTabPage_Widget(tabs, iClob(page), "${heading.upload.text}", '1', 0);
         }
@@ -277,7 +277,7 @@ void init_UploadWidget(iUploadWidget *d) {
             addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)), frameless_WidgetFlag);
             d->fileSizeLabel = addChildFlags_Widget(values, iClob(new_LabelWidget("\u2014", NULL)), frameless_WidgetFlag);
             d->mime = new_InputWidget(0);
-            setFixedSize_Widget(as_Widget(d->mime), init_I2(70 * gap_UI, -1));
+            setFixedSize_Widget(as_Widget(d->mime), init_I2(70 * gap_UI * aspect_UI, -1));
             addTwoColumnDialogInputField_Widget(headings, values, "${upload.mime}", "upload.mime", iClob(d->mime));
         }
         /* Identity and Token. */ {
@@ -290,13 +290,15 @@ void init_UploadWidget(iUploadWidget *d) {
             d->ident                    = makeMenuButton_LabelWidget("${upload.id}", items, numItems);
             setTextCStr_LabelWidget(d->ident, items[findWidestLabel_MenuItem(items, numItems)].label);
             //setFixedSize_Widget(as_Widget(d->ident), init_I2(50 * gap_UI, ));
-            addChild_Widget(headings, iClob(makeHeading_Widget("${upload.id}")));
+            setBackgroundColor_Widget(as_Widget(d->ident), red_ColorId);
+            iWidget *identHeading = addChild_Widget(headings, iClob(makeHeading_Widget("${upload.id}")));
+            identHeading->sizeRef = as_Widget(d->ident);
             setId_Widget(addChildFlags_Widget(values, iClob(d->ident), alignLeft_WidgetFlag), "upload.id");
             /* Token. */
             d->token = addTwoColumnDialogInputField_Widget(
                 headings, values, "${upload.token}", "upload.token", iClob(new_InputWidget(0)));
             setHint_InputWidget(d->token, "${hint.upload.token}");
-            setFixedSize_Widget(as_Widget(d->token), init_I2(50 * gap_UI, -1));            
+            setFixedSize_Widget(as_Widget(d->token), init_I2(50 * gap_UI * aspect_UI, -1));
             addChild_Widget(w, iClob(page));
         }
         /* Buttons. */ {

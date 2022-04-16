@@ -87,14 +87,17 @@ iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 #   define KMOD_PRIMARY     KMOD_CTRL
 #   define KMOD_SECONDARY   KMOD_ALT
 #   define KMOD_ACCEPT      KMOD_ALT
+#   define KMOD_ZOOM        0
 #elif defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI
 #   define KMOD_SECONDARY   KMOD_GUI | KMOD_SHIFT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
+#   define KMOD_ZOOM        KMOD_PRIMARY
 #else
 #   define KMOD_PRIMARY     KMOD_CTRL
 #   define KMOD_SECONDARY   KMOD_CTRL | KMOD_SHIFT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
+#   define KMOD_ZOOM        KMOD_PRIMARY
 #endif
 
 enum iOpenTabFlag {

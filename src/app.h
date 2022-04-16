@@ -85,6 +85,14 @@ iBool       isRefreshPending_App        (void);
 iBool       isFinishedLaunching_App     (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 
+iLocalDef iBool isTerminal_App(void) {
+#if defined (iPlatformTerminal)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 iBool               isLandscape_App     (void);
 iLocalDef iBool     isPortrait_App      (void) { return !isLandscape_App(); }
 enum iAppDeviceType deviceType_App      (void);

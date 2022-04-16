@@ -841,6 +841,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         d->itemFonts[1] = uiLabelBigBold_FontId;
     }
     d->widthAsGaps = 73.0f;
+#elif defined (iPlatformTerminal)
+    d->widthAsGaps = 35.0f;
 #else
     d->widthAsGaps = 60.0f;
 #endif
@@ -998,7 +1000,6 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             ? (keyMods_Sym(modState_Keys()) & KMOD_SHIFT ? new_OpenTabFlag
                                                          : newBackground_OpenTabFlag)
             : 0;
-    setFocus_Widget(NULL);
     switch (d->mode) {
         case documentOutline_SidebarMode: {
             const iGmDocument *doc = document_DocumentWidget(document_App());
@@ -1006,6 +1007,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
                 postCommandf_App("document.goto loc:%p", head->text.start);
                 dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
+                setFocus_Widget(NULL);
             }
             break;
         }
@@ -1014,6 +1016,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 get_Root(),
                 feedEntryOpenCommand_String(
                     &item->url, mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()), 0));
+            setFocus_Widget(NULL);
             break;
         }
         case bookmarks_SidebarMode:
@@ -1032,6 +1035,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             if (d->isEditing) {
                 d->contextItem = item;
                 d->contextIndex = itemIndex;
+                setFocus_Widget(NULL);
                 postCommand_Widget(d, "bookmark.edit");
                 break;
             }
@@ -1042,6 +1046,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                                   "open fromsidebar:1 newtab:%d url:%s",
                                   mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()),
                                   cstr_String(&item->url));
+                setFocus_Widget(NULL);
             }
             break;
         }
@@ -1100,7 +1105,9 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
         /* Even less space if the other sidebar is visible, too. */
         const iWidget *other = findWidget_App(d->side == left_SidebarSide ? "sidebar2" : "sidebar");
         const int otherWidth = isVisible_Widget(other) ? width_Widget(other) : 0;
-        width = iClamp(width, 30 * gap_UI, size_Root(w->root).x - 50 * gap_UI - otherWidth);
+        width = iClamp(width,
+                       30 * gap_UI * aspect_UI,
+                       size_Root(w->root).x - 50 * gap_UI * aspect_UI - otherWidth);
     }
     d->widthAsGaps = (float) width / (float) gap_UI;
     w->rect.size.x = width;
@@ -1202,9 +1209,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         scrollOffset_ListWidget(d->list, 0);
         if (wasChanged) {
             postCommandf_App("%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
-#if defined (iPlatformTerminal)
-            setFocus_Widget(as_Widget(list_SidebarWidget(d)));
-#endif
+            if (isTerminal_App()) {
+                setFocus_Widget(as_Widget(list_SidebarWidget(d)));
+            }
         }
         refresh_Widget(findChild_Widget(w, "buttons"));
         return iTrue;
@@ -1422,7 +1429,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         arrange_Widget(w);
         checkModeButtonLayout_SidebarWidget_(d);
     }
-    else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+    else if (isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
         if (equalArg_Command(cmd, "tabs.changed", "id", "doc") ||
             equal_Command(cmd, "document.changed")) {
@@ -1769,10 +1776,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                       0,
                                       format_CStr("!feed.entry.unsubscribe arg:1 ptr:%p", d) } },
                                 2);
-            }
-            return iTrue;
-        }
-            }
+                        }
+                        return iTrue;
+                    }
+                }
             }
         }
         else if (isCommand_Widget(w, ev, "history.delete")) {
@@ -1830,6 +1837,19 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+#if defined (iPlatformTerminal)
+        else if (equal_Command(cmd, "zoom.set") && isVisible_Widget(w)) {
+            setWidth_SidebarWidget(d, 35.0f * arg_Command(cmd) / 100.0f);
+            invalidate_ListWidget(list_SidebarWidget_(d));
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "zoom.delta") && isVisible_Widget(w)) {
+            setWidth_SidebarWidget(d, d->widthAsGaps + arg_Command(cmd) * 2 / 10);
+//            invalidate_ListWidget(list_SidebarWidget_(d));
+            refresh_Widget(d);
+            return iTrue;
+        }
+#endif        
     }
     if (ev->type == SDL_MOUSEMOTION &&
         (!isVisible_Widget(d->menu) && !isVisible_Widget(d->modeMenu))) {

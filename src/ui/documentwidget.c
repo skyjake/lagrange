@@ -552,9 +552,9 @@ static int documentWidth_DocumentView_(const iDocumentView *d) {
                                 -1.0f, 10.0f); /* adapt to width */
     //printf("%f\n", adjust); fflush(stdout);
     int prefsWidth = prefs->lineWidth;
-#if defined (iPlatformTerminal)
-    prefsWidth /= aspect_UI * 0.8f;
-#endif
+    if (isTerminal_App()) {
+        prefsWidth /= aspect_UI * 0.8f;
+    }
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
                  fontSize_UI * prefsWidth * prefs->zoomPercent / 100);
 }
@@ -1363,9 +1363,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, contentRegular_FontSize);
                     iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
                                      init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
-#if defined (iPlatformTerminal)
-                    nbArea.pos.x += 1;
-#endif
+                    if (isTerminal_App()) {
+                        nbArea.pos.x += 1;
+                    }
                     drawRange_Text(
                         circleFont, topLeft_Rect(nbArea), tmQuote_ColorId, range_CStr(circle));
                     iRect circleArea = visualBounds_Text(circleFont, range_CStr(circle));

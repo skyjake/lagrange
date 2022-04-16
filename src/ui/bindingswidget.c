@@ -187,9 +187,9 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
         /* Force the scrollbar to unfade. The list is created hidden so the scrollbar is not
            shown by default.*/
         updateVisible_ListWidget(d->list);
-#if defined (iPlatformTerminal)
-        setFocus_Widget(as_Widget(d->list));
-#endif
+        if (isTerminal_App()) {
+            setFocus_Widget(as_Widget(d->list));
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "lang.changed")) {

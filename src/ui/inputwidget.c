@@ -734,11 +734,8 @@ static uint32_t cursorTimer_(uint32_t interval, void *w) {
 }
 
 iLocalDef iBool isBlinkingCursor_(void) {
-#if defined (iPlatformTerminal)
-    return iFalse; /* terminal will do it */
-#else
-    return prefs_App()->blinkingCursor;
-#endif
+    /* Terminal will blink if appropriate. */
+    return prefs_App()->blinkingCursor && !isTerminal_App();
 }
 
 static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, int doStart) {
@@ -1139,6 +1136,10 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     setTextUndoable_InputWidget(d, text, iFalse);
 }
 
+static iBool isNarrow_InputWidget_(const iInputWidget *d) {
+    return width_Rect(contentBounds_InputWidget_(d)) < 100 * gap_UI * aspect_UI;
+}
+
 void setTextUndoable_InputWidget(iInputWidget *d, const iString *text, iBool isUndoable) {
     if (!d) return;
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
@@ -1162,7 +1163,7 @@ void setTextUndoable_InputWidget(iInputWidget *d, const iString *text, iBool isU
             text = enc;
         }
         /* Omit the default (Gemini) scheme if there isn't much space. */
-        if (isNarrow_Root(as_Widget(d)->root)) {
+        if (isNarrow_InputWidget_(d)) {
             text = omitDefaultScheme_(collect_String(copy_String(text)));
         }
     }
@@ -2722,13 +2723,13 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* `lines` is already up to date and ready for drawing. */
     fillRect_Paint(
         &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
-#if !defined (iPlatformTerminal)
-    drawRectThickness_Paint(&p,
-                            adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
-                            isFocused ? gap_UI / 4 : 1,
-                            isFocused ? uiInputFrameFocused_ColorId
-                            : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
-#endif
+    if (!isTerminal_App()) {
+        drawRectThickness_Paint(&p,
+                                adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
+                                isFocused ? gap_UI / 4 : 1,
+                                isFocused ? uiInputFrameFocused_ColorId
+                                : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
+    }
     if (d->sysCtrl) {
         /* The system-provided control is drawing the text. */
         drawChildren_Widget(w);

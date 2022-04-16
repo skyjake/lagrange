@@ -1929,9 +1929,9 @@ void refresh_App(void) {
                     break;
             }
             win->frameCount++;
-#if defined (iPlatformTerminal)
-            sleep_Thread(1.0 / 60.0);
-#endif
+            if (isTerminal_App()) {
+                sleep_Thread(1.0 / 60.0);
+            }
         }
     }
     if (d->warmupFrames > 0) {

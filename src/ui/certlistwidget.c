@@ -371,10 +371,7 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
     iString icon;
     initUnicodeN_String(&icon, &d->icon, 1);
     iInt2 cPos = topLeft_Rect(itemRect);
-    int indent = 1.4f * lineHeight_Text(font);
-#if defined (iPlatformTerminal)
-    indent += 2 * gap_UI;
-#endif
+    int indent = 1.4f * lineHeight_Text(font) + (isTerminal_App() ? 2 * gap_UI : 0);
     addv_I2(&cPos,
             init_I2(3 * gap_UI * aspect_UI,
                     (itemHeight - lineHeight_Text(uiLabel_FontId) * 2 - lineHeight_Text(font)) /
@@ -423,11 +420,7 @@ void init_CertListWidget(iCertListWidget *d) {
 }
 
 void updateItemHeight_CertListWidget(iCertListWidget *d) {
-#if !defined (iPlatformTerminal)
-    const float height = 3.5f;
-#else
-    const int height = 4;
-#endif 
+    const float height = isTerminal_App() ? 4.0f : 3.5f;
     setItemHeight_ListWidget(&d->list, height * lineHeight_Text(d->itemFonts[0]));
 }
 

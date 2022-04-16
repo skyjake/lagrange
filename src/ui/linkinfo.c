@@ -130,11 +130,7 @@ iBool update_LinkInfo(iLinkInfo *d, const iGmDocument *doc, iGmLinkId linkId, in
     if (!d) {
         return iFalse;
     }
-#if defined (iPlatformTerminal)
-    const iBool isAnimated = iFalse;
-#else
-    const iBool isAnimated = prefs_App()->uiAnimations;
-#endif
+    const iBool isAnimated = prefs_App()->uiAnimations && !isTerminal_App();
     if (d->linkId != linkId || d->maxWidth != maxWidth) {
         d->linkId   = linkId;
         d->maxWidth = maxWidth;
