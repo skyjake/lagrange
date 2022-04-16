@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-17 14:50+0000\n"
+"PO-Revision-Date: 2022-04-17 05:51+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -937,7 +937,7 @@ msgid "dlg.import.notnew"
 msgstr "Omni ligamentes sur li págine ja es adjuntet."
 
 msgid "heading.autoreload"
-msgstr "AUTO-RECARGAR"
+msgstr "Auto-recargar"
 
 msgid "dlg.autoreload"
 msgstr "Selecter li intervalle de auto-recarga por ti carte."
@@ -1481,7 +1481,7 @@ msgid "dlg.newindent.missing.commonname"
 msgstr "Li «comun nómine» deve esser providet."
 
 msgid "heading.newident.date.bad"
-msgstr "ÍNVALID DATE"
+msgstr "Ínvalid Date"
 
 msgid "dlg.newident.date.past"
 msgstr "Date de expiration deve esser in li futur."
@@ -2212,3 +2212,137 @@ msgstr "Rute"
 
 msgid "keys.input.precedingline"
 msgstr "Intrada: Collar li precedent linea"
+
+msgid "prefs.uilayout"
+msgstr "Arangeament:"
+
+msgid "prefs.bottomtabbar"
+msgstr "Cartes ad infra"
+
+msgid "prefs.menubar"
+msgstr "Panel del menú"
+
+msgid "prefs.accent.red"
+msgstr "Rubi"
+
+msgid "prefs.accent.green"
+msgstr "Verdi"
+
+msgid "prefs.accent.blue"
+msgstr "Blu"
+
+msgid "prefs.accent.gray"
+msgstr "Gris"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Oceanic"
+
+msgid "menu.newwindow"
+msgstr "Nov fenestre"
+
+msgid "menu.openwindow"
+msgstr "Aperter in un nov fenestre"
+
+msgid "pageinfo.settings"
+msgstr "Parametres"
+
+msgid "sitespec.palette"
+msgstr "Parametre del palette de tema:"
+
+msgid "heading.glyphfinder.results"
+msgstr "Resultates de sercha"
+
+msgid "prefs.retaintabs"
+msgstr "Restituer cartes al inicie:"
+
+msgid "heading.archive.userdata"
+msgstr "Archive del data de usator"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Pri Lagrange"
+
+msgid "sitespec.accept"
+msgstr "Gardar li parametres"
+
+msgid "keys.pageinfo"
+msgstr "Monstrar information pri li págine"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Li secuent caracteres ne posse esser monstrat:"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Aperter images in adresses de data:"
+
+msgid "prefs.tabwidth"
+msgstr "Largore del tabulator:"
+
+msgid "menu.export"
+msgstr "Exportar li data de usator"
+
+msgid "menu.import"
+msgstr "Importar li data de usator…"
+
+msgid "menu.paste.go"
+msgstr "Collar e ear"
+
+msgid "link.newwindow"
+msgstr "Aperter li ligament in un nov fenestre"
+
+msgid "dlg.certimport.paste"
+msgstr "Collar ex li Paperiere"
+
+msgid "heading.import.userdata"
+msgstr "Importar li data de usator"
+
+msgid "heading.import.userdata.error"
+msgstr "Importation ne successat"
+
+msgid "import.userdata.bookmarks"
+msgstr "Marca-págines:"
+
+msgid "import.userdata.idents"
+msgstr "Identitás:"
+
+msgid "import.userdata.history"
+msgstr "Diarium:"
+
+msgid "import.userdata.trusted"
+msgstr "Fidet certificates:"
+
+msgid "dlg.userdata.no"
+msgstr "Null"
+
+msgid "dlg.userdata.missing"
+msgstr "Si es mancant"
+
+msgid "dlg.userdata.all"
+msgstr "Omni (superscrir)"
+
+msgid "dlg.userdata.alldup"
+msgstr "Omni (retener duplicates)"
+
+msgid "import.userdata"
+msgstr "Importar li selectet data"
+
+msgid "import.userdata.dupfolder"
+msgstr "Importat duplicates"
+
+msgid "import.userdata.error"
+msgstr "%s ne es un valid exportat archive de Lagrange."
+
+msgid "heading.glyphfinder"
+msgstr "Mancant glifes"
+
+msgid "heading.bookmark.editfolder"
+msgstr "Modificar li fólder"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Fólder superiori:"
+
+msgid "heading.prefs.support"
+msgstr "Supporte"
+
+msgid "sitespec.tlscache"
+msgstr "Reprender li session TLS:"
