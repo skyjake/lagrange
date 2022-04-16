@@ -261,7 +261,9 @@ static iString *serializePrefs_App_(const iApp *d) {
         }
     }
     appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
-    appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
+    if (d->window) {
+        appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
+    }
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str,
                         "font.set ui:%s heading:%s body:%s mono:%s monodoc:%s\n",
@@ -2087,8 +2089,13 @@ void postCommandf_App(const char *command, ...) {
 
 void rootOrder_App(iRoot *roots[2]) {
     const iWindow *win = get_Window();
-    roots[0] = win->keyRoot;
-    roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
+    if (win) {
+        roots[0] = win->keyRoot;
+        roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
+    }
+    else {
+        roots[0] = roots[1] = NULL;
+    }
 }
 
 iAny *findWidget_App(const char *id) {
