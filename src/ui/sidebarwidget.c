@@ -1233,6 +1233,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (!isHiding) {
             setFocus_Widget(as_Widget(list_SidebarWidget(d)));
         }
+        else {
+            setFocus_Widget(NULL);
+        }
         setFlags_Widget(w, hidden_WidgetFlag, isHiding);
         /* Safe area inset for mobile. */
         const int safePad =
