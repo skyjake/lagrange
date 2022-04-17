@@ -50,8 +50,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define rightSidebar_KeyShortcut     SDLK_p,             KMOD_SHIFT
 #   define menuBar_KeyShortcut          '?',                0
 #   define leftSidebarTab_KeyModifier   0
-#   define byWord_KeyModifier           KMOD_ALT
-#   define byLine_KeyModifier           KMOD_PRIMARY
+#   define byWord_KeyModifier           KMOD_CTRL
+#   define byLine_KeyModifier           KMOD_ALT
 #   define rightSidebarTab_KeyModifier  KMOD_ALT
 #elif defined (iPlatformApple)
 #   define pageInfo_KeyShortcut         SDLK_i, KMOD_PRIMARY

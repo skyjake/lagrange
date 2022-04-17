@@ -234,6 +234,7 @@ void init_UploadWidget(iUploadWidget *d) {
 //        addChildFlags_Widget(title, iClob(menu), frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag);
     }
     else {
+        const float aspect = isTerminal_App() ? 0.6f : 1.0f;
         useSheetStyle_Widget(w);
         setFlags_Widget(w, overflowScrollable_WidgetFlag, iFalse);
         addDialogTitle_Widget(w, "${heading.upload}", NULL);
@@ -265,7 +266,7 @@ void init_UploadWidget(iUploadWidget *d) {
             setFlags_Widget(page, arrangeSize_WidgetFlag, iTrue);
             d->input = new_InputWidget(0);
             setId_Widget(as_Widget(d->input), "upload.text");
-            setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI * aspect_UI, -1));
+            setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI * aspect, -1));
             addChild_Widget(page, iClob(d->input));
             appendFramelessTabPage_Widget(tabs, iClob(page), "${heading.upload.text}", '1', 0);
         }
@@ -277,7 +278,7 @@ void init_UploadWidget(iUploadWidget *d) {
             addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)), frameless_WidgetFlag);
             d->fileSizeLabel = addChildFlags_Widget(values, iClob(new_LabelWidget("\u2014", NULL)), frameless_WidgetFlag);
             d->mime = new_InputWidget(0);
-            setFixedSize_Widget(as_Widget(d->mime), init_I2(70 * gap_UI * aspect_UI, -1));
+            setFixedSize_Widget(as_Widget(d->mime), init_I2(70 * gap_UI * aspect, -1));
             addTwoColumnDialogInputField_Widget(headings, values, "${upload.mime}", "upload.mime", iClob(d->mime));
         }
         /* Identity and Token. */ {
@@ -297,7 +298,7 @@ void init_UploadWidget(iUploadWidget *d) {
             d->token = addTwoColumnDialogInputField_Widget(
                 headings, values, "${upload.token}", "upload.token", iClob(new_InputWidget(0)));
             setHint_InputWidget(d->token, "${hint.upload.token}");
-            setFixedSize_Widget(as_Widget(d->token), init_I2(50 * gap_UI * aspect_UI, -1));
+            setFixedSize_Widget(as_Widget(d->token), init_I2(50 * gap_UI * aspect, -1));
             addChild_Widget(w, iClob(page));
         }
         /* Buttons. */ {
