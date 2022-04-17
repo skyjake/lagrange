@@ -2208,7 +2208,7 @@ static void convertMarkdownToGemtext_GmDocument_(iGmDocument *d) {
     }
     /* Replace Markdown syntax with equivalent Gemtext, where possible. */
     replaceRegExp_String(&d->source, iClob(new_RegExp("(\\s*\n){2,}", 0)), "\n\n", NULL, NULL); /* normalize paragraph breaks */
-    printf("Converted:\n%s", cstr_String(&d->source));
+//    printf("Converted:\n%s", cstr_String(&d->source));
     d->format = gemini_SourceFormat;
 }
 

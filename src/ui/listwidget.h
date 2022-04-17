@@ -100,6 +100,7 @@ void    scrollOffsetSpan_ListWidget (iListWidget *, int offset, uint32_t span);
 void    updateVisible_ListWidget    (iListWidget *);
 void    updateMouseHover_ListWidget (iListWidget *);
 void    setHoverItem_ListWidget     (iListWidget *, size_t index);
+void    setCursorItem_ListWidget    (iListWidget *, size_t index);
 
 void                sort_ListWidget             (iListWidget *, int (*cmp)(const iListItem **item1, const iListItem **item2));
 

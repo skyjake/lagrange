@@ -1146,7 +1146,7 @@ void unselectAllNativeMenuItems_Widget(iWidget *menu) {
 }
 
 iLocalDef iBool isUsingMenuPopupWindows_(void) {
-#if defined (LAGRANGE_ENABLE_POPUP_MENUS)
+#if defined (LAGRANGE_ENABLE_POPUP_MENUS) && !defined (iPlatformTerminal)
     return deviceType_App() == desktop_AppDeviceType;
 #else
     return iFalse;

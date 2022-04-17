@@ -314,6 +314,37 @@ void setHoverItem_ListWidget(iListWidget *d, size_t index) {
     }
 }
 
+static void moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) {
+    const size_t oldCursor = d->cursorItem;
+    if (isEmpty_ListWidget(d)) {
+        d->cursorItem = iInvalidPos;
+    }
+    else {
+        const int maxItem = numItems_ListWidget(d) - 1;
+        if (d->cursorItem == iInvalidPos) {
+            d->cursorItem = 0;
+        }
+        d->cursorItem = iClamp((int) d->cursorItem + dir, 0, maxItem);
+        while (((const iListItem *) constItem_ListWidget(d, d->cursorItem))->isSeparator &&
+               ((d->cursorItem < maxItem && dir >= 0) || (d->cursorItem > 0 && dir < 0))) {
+            d->cursorItem += (dir >= 0 ? 1 : -1); /* Skip separators. */
+        }
+    }    
+    if (oldCursor != d->cursorItem) {
+        invalidateItem_ListWidget(d, oldCursor);
+        invalidateItem_ListWidget(d, d->cursorItem);
+    }
+    if (d->cursorItem != iInvalidPos) {
+        scrollToItem_ListWidget(d, d->cursorItem, prefs_App()->uiAnimations ? animSpan : 0);
+    }
+}
+
+void setCursorItem_ListWidget(iListWidget *d, size_t index) {
+    invalidateItem_ListWidget(d, d->cursorItem);
+    d->cursorItem = 0;
+    moveCursor_ListWidget_(d, 0, 0);
+}
+
 void updateMouseHover_ListWidget(iListWidget *d) {
     const iInt2 mouse = mouseCoord_Window(
         get_Window(), deviceType_App() == desktop_AppDeviceType ? 0 : SDL_TOUCH_MOUSEID);
@@ -416,29 +447,6 @@ static iBool isScrollDisabled_ListWidget_(const iListWidget *d, const SDL_Event 
             break;
     }
     return iFalse;
-}
-
-static void moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) {
-    const size_t oldCursor = d->cursorItem;
-    if (isEmpty_ListWidget(d)) {
-        d->cursorItem = iInvalidPos;
-    }
-    else {
-        const int maxItem = numItems_ListWidget(d) - 1;
-        if (d->cursorItem == iInvalidPos) {
-            d->cursorItem = 0;
-        }
-        int cursor = (int) d->cursorItem + dir;
-        d->cursorItem = iClamp(cursor, 0, maxItem);
-        /* TODO: skip separator items */
-    }    
-    if (oldCursor != d->cursorItem) {
-        invalidateItem_ListWidget(d, oldCursor);
-        invalidateItem_ListWidget(d, d->cursorItem);
-    }
-    if (d->cursorItem != iInvalidPos) {
-        scrollToItem_ListWidget(d, d->cursorItem, prefs_App()->uiAnimations ? animSpan : 0);
-    }
 }
 
 static int cursorKeyStep_ListWidget_(const iListWidget *d, int sym) {

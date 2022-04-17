@@ -841,10 +841,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         d->itemFonts[1] = uiLabelBigBold_FontId;
     }
     d->widthAsGaps = 73.0f;
-#elif defined (iPlatformTerminal)
-    d->widthAsGaps = 35.0f;
 #else
-    d->widthAsGaps = 60.0f;
+    d->widthAsGaps = isTerminal_App() ? 35.0f : 60.0f;
 #endif
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     iWidget *vdiv = makeVDiv_Widget();
@@ -1211,6 +1209,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             postCommandf_App("%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
             if (isTerminal_App()) {
                 setFocus_Widget(as_Widget(list_SidebarWidget(d)));
+                if (wasChanged) {
+                    setCursorItem_ListWidget(list_SidebarWidget(d), 0);
+                }
             }
         }
         refresh_Widget(findChild_Widget(w, "buttons"));
@@ -1850,6 +1851,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             setWidth_SidebarWidget(d, d->widthAsGaps + arg_Command(cmd) * 2 / 10);
 //            invalidate_ListWidget(list_SidebarWidget_(d));
             refresh_Widget(d);
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "zoom.delta") && !isVisible_Widget(w) &&
+                 d->side == left_SidebarSide) {
+            postCommand_Widget(w, "sidebar.toggle");
             return iTrue;
         }
 #endif        

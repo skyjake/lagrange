@@ -290,7 +290,6 @@ void init_UploadWidget(iUploadWidget *d) {
             d->ident                    = makeMenuButton_LabelWidget("${upload.id}", items, numItems);
             setTextCStr_LabelWidget(d->ident, items[findWidestLabel_MenuItem(items, numItems)].label);
             //setFixedSize_Widget(as_Widget(d->ident), init_I2(50 * gap_UI, ));
-            setBackgroundColor_Widget(as_Widget(d->ident), red_ColorId);
             iWidget *identHeading = addChild_Widget(headings, iClob(makeHeading_Widget("${upload.id}")));
             identHeading->sizeRef = as_Widget(d->ident);
             setId_Widget(addChildFlags_Widget(values, iClob(d->ident), alignLeft_WidgetFlag), "upload.id");
