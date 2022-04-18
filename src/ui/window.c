@@ -529,21 +529,8 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     iZap(d->roots);
     iZap(d->cursors);
     create_Window_(d, rect, flags);
-    /* No luck, maybe software only? This should always work as long as there is a display. */
-    //    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
-//        flags &= ~SDL_WINDOW_OPENGL;
-//        start_PerfTimer(create_Window_);
-//        if (!create_Window_(d, rect, flags)) {
-//            exit(-2);
-//        }
-//        stop_PerfTimer(create_Window_);
-//    }
-//    start_PerfTimer(setPos);
-//    if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
-//        SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
-//    }
-//    stop_PerfTimer(setPos);
     SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);
+#if !defined (iPlatformTerminal)
     /* Renderer info. */ {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->render, &info);
@@ -551,11 +538,11 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
                info.name,
                info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
     }
+#endif
     drawBlank_Window_(d);
     d->pixelRatio   = pixelRatio_Window_(d); /* point/pixel conversion */
     d->displayScale = displayScale_Window_(d);
     d->uiScale      = initialUiScale_;
-    /* TODO: Ratios, scales, and metrics must be window-specific, not global. */
     if (d->type == main_WindowType) {
         updateMetrics_Window_(d);
     }
@@ -642,7 +629,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->base.render, &info);
         isOpenGLRenderer_ = !iCmpStr(info.name, "opengl");
-#if !defined(NDEBUG)
+#if !defined(NDEBUG) && !defined (iPlatformTerminal)
         printf("[window] max texture size: %d x %d\n",
                info.max_texture_width,
                info.max_texture_height);
