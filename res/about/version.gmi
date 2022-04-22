@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.12.2
+* Fixed positioning of the language translation dialog's progress animation.
+* Fixed hovering on links via the keyboard (default binding: H).
+* Tab buttons use theme background color with light Oceanic to avoid a color clash.
+* Feed refresh indicator uses the accent color.
+* Updated UI translations.
+
 ## 1.12.1
 * Windows: Fixed importing identities (path separator confusion).
 * Updated Help: export/import, user data archives, paragraph justification.

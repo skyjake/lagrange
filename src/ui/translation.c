@@ -448,9 +448,11 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
             if (isUsingPanelLayout_Mobile()) {
                 setPos_Widget(as_Widget(prog), init_I2(0, 22 * gap_UI)); /* TODO: No fixed offets... */
             }
-//            setPos_Widget(as_Widget(prog), zero_I2()) ;// langs->rect.pos);
-            setFixedSize_Widget(as_Widget(prog), init_I2(width_Rect(innerBounds_Widget(d->dlg)),
-                                                         langs->rect.size.y));
+            else {
+                setPos_Widget(as_Widget(prog), langs->rect.pos);
+                setFixedSize_Widget(as_Widget(prog), init_I2(width_Rect(innerBounds_Widget(d->dlg)),
+                                                             langs->rect.size.y));
+            }
             addChildFlags_Widget(d->dlg, iClob(prog), 0);
             submit_Translation(d);
         }

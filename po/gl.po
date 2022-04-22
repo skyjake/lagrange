@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-03-18 04:36+0000\n"
+"PO-Revision-Date: 2022-04-15 14:20+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -2328,3 +2328,113 @@ msgstr "Pegar e Ir"
 
 msgid "prefs.retaintabs"
 msgstr "Restablecer lapelas ao inicio:"
+
+msgid "heading.archive.userdata"
+msgstr "Arquivo con Datos da usuaria"
+
+msgid "userdata.help"
+msgstr ""
+"Os arquivos con datos da usuaria conteñen o historial de navegación, "
+"identidades, marcadores, axustes específicos das webs, impresións dixitais "
+"ou certificados de confianza dos servidores. Pódense gardar como copias de "
+"apoio ou usalos para transferir os datos entre dispositivos."
+
+msgid "sitespec.tlscache"
+msgstr "Retomar sesión TLS:"
+
+msgid "import.userdata.idents"
+msgstr "Identidades:"
+
+msgid "dlg.userdata.alldup"
+msgstr "Todo (manter duplicados)"
+
+msgid "import.userdata.error"
+msgstr "%s non é un ficheiro válido de exportación Lagrange."
+
+msgid "heading.bookmark.editfolder"
+msgstr "Editar Cartafol"
+
+msgid "prefs.bottomtabbar"
+msgstr "Lapelas abaixo"
+
+msgid "prefs.justify"
+msgstr "Xustificar:"
+
+msgid "menu.export"
+msgstr "Exportar Datos de usuaria"
+
+msgid "menu.import"
+msgstr "Importar Datos de usuaria…"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Acerca de Lagrange"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Marcar o inferior como Lido"
+
+msgid "dlg.certimport.paste"
+msgstr "Pegar desde Portapapeis"
+
+msgid "heading.import.userdata"
+msgstr "Importar Datos de usuaria"
+
+msgid "heading.import.userdata.error"
+msgstr "Fallou a importación"
+
+msgid "import.userdata.bookmarks"
+msgstr "Marcadores:"
+
+msgid "import.userdata.history"
+msgstr "Historial:"
+
+msgid "import.userdata.trusted"
+msgstr "Certificados de confianza:"
+
+msgid "import.userdata.sitespec"
+msgstr "Axustes dos sitios:"
+
+msgid "dlg.userdata.no"
+msgstr "Nada"
+
+msgid "dlg.userdata.missing"
+msgstr "Se falta"
+
+msgid "dlg.userdata.all"
+msgstr "Todo (sobrescribir)"
+
+msgid "import.userdata"
+msgstr "Importar datos seleccionados"
+
+msgid "import.userdata.dupfolder"
+msgstr "Duplicados importados"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Cartafol Nai:"
+
+msgid "heading.prefs.support"
+msgstr "Soporte"
+
+msgid "prefs.uilayout"
+msgstr "Disposición:"
+
+msgid "prefs.bottomnavbar"
+msgstr "Barra Nav. Abaixo"
+
+msgid "prefs.menubar"
+msgstr "Barra do menú"
+
+msgid "prefs.accent.red"
+msgstr "Vermello"
+
+msgid "prefs.accent.green"
+msgstr "Verde"
+
+msgid "prefs.accent.blue"
+msgstr "Azul"
+
+msgid "prefs.accent.gray"
+msgstr "Gris"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Oceánico"

@@ -1,0 +1,276 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2022-04-15 14:20+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"Language-Team: Swedish <http://weblate.skyjake.fi/projects/lagrange/ui/sv/>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "media.untitled.image"
+msgstr "Bild"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genre"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Datum"
+
+msgid "cancel"
+msgstr "Avbryt"
+
+msgid "menu.title.file"
+msgstr "Fil"
+
+msgid "menu.title.edit"
+msgstr "Redigera"
+
+msgid "menu.title.help"
+msgstr "Hjälp"
+
+msgid "menu.title.bookmarks"
+msgstr "Bokmärken"
+
+msgid "menu.cut"
+msgstr "Klipp ut"
+
+msgid "menu.paste"
+msgstr "Klistra in"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Ta bort"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Ångra"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Om Lagrange"
+
+msgid "sidebar.action.show"
+msgstr "Visa:"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+msgid "menu.edit"
+msgstr "Redigera…"
+
+msgid "bookmark.export.title.folder"
+msgstr "Bokmärken"
+
+msgid "heading.upload.text"
+msgstr "Text"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "Kinesiska"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "Engelska"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "Franska"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "Japanska"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "Portugisiska"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "Ryska"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "Spanska"
+
+msgid "dlg.newident.email"
+msgstr "E-post:"
+
+msgid "dlg.newident.domain"
+msgstr "Domän:"
+
+msgid "dlg.bookmark.folder"
+msgstr "Katalog:"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Nätverk"
+
+msgid "prefs.accent.red"
+msgstr "Röd"
+
+msgid "prefs.accent.green"
+msgstr "Grön"
+
+msgid "prefs.accent.blue"
+msgstr "Blå"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Vit"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titel"
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "close"
+msgstr "Stäng"
+
+msgid "menu.title.view"
+msgstr "Visa"
+
+msgid "macos.menu.find"
+msgstr "Sök"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Inställningar"
+
+msgid "menu.help"
+msgstr "Hjälp"
+
+# Used on the mobile Settings page.
+msgid "menu.about"
+msgstr "Om Lagrange"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Redigera"
+
+msgid "sidebar.action.ident.new"
+msgstr "Ny…"
+
+msgid "menu.openfile"
+msgstr "Öppna fil…"
+
+msgid "menu.page.translate"
+msgstr "Översätt…"
+
+msgid "sidebar.bookmarks"
+msgstr "Bokmärken"
+
+msgid "pageinfo.settings"
+msgstr "Inställningar"
+
+msgid "dlg.save.size"
+msgstr "Storlek:"
+
+msgid "dlg.file.delete"
+msgstr "Ta bort"
+
+msgid "hint.certimport.description"
+msgstr "beskrivning"
+
+msgid "link.hint.image"
+msgstr "Bild"
+
+msgid "import.userdata.bookmarks"
+msgstr "Bokmärken:"
+
+msgid "heading.upload.file"
+msgstr "Fil"
+
+msgid "dlg.translate"
+msgstr "Översätt"
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "Arabiska"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "Tyska"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "Italienska"
+
+msgid "dlg.newident.country"
+msgstr "Land:"
+
+msgid "dlg.feed.title"
+msgstr "Titel:"
+
+msgid "dlg.bookmark.title"
+msgstr "Titel:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "Inställningar"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Färger"
+
+msgid "prefs.theme.black"
+msgstr "Svart"
+
+msgid "prefs.theme.white"
+msgstr "Vit"
+
+msgid "prefs.uilang"
+msgstr "Språk:"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Svart"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "gempub.meta.version"
+msgstr "Version"
+
+msgid "gempub.meta.lang"
+msgstr "Språk"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artist"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+msgid "menu.copy"
+msgstr "Kopiera"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "BOKMÄRKEN"
+
+msgid "heading.upload.id"
+msgstr "Behörighet"

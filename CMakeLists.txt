@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.12.1
+    VERSION 1.12.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -30,8 +30,8 @@ if (IOS)
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.12)
-    set (ANDROID_BUILD_VERSION b4)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-04-05")
+    set (ANDROID_BUILD_VERSION b5)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-04-XX")
 endif ()
 
 # Defaults that depend on environment.
@@ -387,7 +387,12 @@ if (ENABLE_RESIZE_DRAW)
 endif ()
 if (ENABLE_WEBP AND WEBP_FOUND)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WEBP=1)
-    target_link_libraries (app PUBLIC PkgConfig::WEBP)
+    if (TARGET PkgConfig::WEBP)
+        target_link_libraries (app PUBLIC PkgConfig::WEBP)
+    else ()
+        target_link_libraries (app PUBLIC ${WEBP_LIBRARIES})
+        target_include_directories (app PUBLIC ${WEBP_INCLUDE_DIRS})
+    endif ()
 endif ()
 if (ENABLE_WINDOWPOS_FIX)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)

@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.12 (Beta 5)
+* Added WebP image decoding.
+
 ## 1.12 (Beta 4)
 * Use system-provided file pickers for opening/saving files.
 * Selecting a file for importing a client certificate.
