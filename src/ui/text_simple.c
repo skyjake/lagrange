@@ -282,6 +282,9 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                 wrapPos = skipSpace_CStr(lastWordEnd); /* go back */
                 wrapPos = iMin(wrapPos, args->text.end);
                 advance = wrapAdvance;
+                if (checkHitPoint && wrap->hitChar_out > lastWordEnd - 1) {
+                    wrap->hitChar_out = iMax(args->text.start, lastWordEnd - 1);
+                }
             }
             if (!notify_WrapText(wrap, wrapPos, attrib, 0, advance)) {
                 break;
