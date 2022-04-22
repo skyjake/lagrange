@@ -244,11 +244,17 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 const enum iGmDocumentTheme docTheme = docTheme_Prefs(prefs_App());
                 if (areTabButtonsThemeColored_() &&
                     !cmp_String(&d->widget.parent->id, "tabs.buttons")) {
-                    *bg = (docTheme == sepia_GmDocumentTheme &&
-                                   colorTheme_App() == pureWhite_ColorTheme
+                    *bg = (docTheme == oceanic_GmDocumentTheme ||
+                                   (docTheme == sepia_GmDocumentTheme &&
+                                    colorTheme_App() == pureWhite_ColorTheme)
                                ? tmBackground_ColorId
                                : tmBannerBackground_ColorId);
                     isThemeBackground = iTrue;
+                    /* Ensure visibility in case the background matches UI background. */
+                    if (delta_Color(get_Color(*bg), get_Color(uiBackground_ColorId)) < 30) {
+                        *bg = uiBackgroundSelected_ColorId;
+                        isThemeBackground = iFalse;
+                    }
                 }
                 else {
                     *bg = uiBackgroundSelected_ColorId;

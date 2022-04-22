@@ -727,6 +727,15 @@ static void invalidateWideRunsWithNonzeroOffset_DocumentView_(iDocumentView *d) 
     }
 }
 
+static void updateHoverLinkInfo_DocumentView_(iDocumentView *d) {
+    if (update_LinkInfo(d->owner->linkInfo,
+                        d->doc,
+                        d->hoverLink ? d->hoverLink->linkId : 0,
+                        width_Widget(constAs_Widget(d->owner)))) {
+        animate_DocumentWidget_(d->owner);
+    }    
+}
+
 static void updateHover_DocumentView_(iDocumentView *d, iInt2 mouse) {
     const iWidget *w            = constAs_Widget(d->owner);
     const iRect    docBounds    = documentBounds_DocumentView_(d);
@@ -752,12 +761,7 @@ static void updateHover_DocumentView_(iDocumentView *d, iInt2 mouse) {
         if (d->hoverLink) {
             invalidateLink_DocumentView_(d, d->hoverLink->linkId);
         }
-        if (update_LinkInfo(d->owner->linkInfo,
-                            d->doc,
-                            d->hoverLink ? d->hoverLink->linkId : 0,
-                            width_Widget(w))) {
-            animate_DocumentWidget_(d->owner);
-        }
+        updateHoverLinkInfo_DocumentView_(d);
         refresh_Widget(w);
     }
     /* Hovering over preformatted blocks. */
@@ -4981,6 +4985,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     visibleLinkOrdinal_DocumentView_(view, run->linkId) == ord) {
                     if (d->flags & setHoverViaKeys_DocumentWidgetFlag) {
                         view->hoverLink = run;
+                        updateHoverLinkInfo_DocumentView_(view);
                     }
                     else {
                         postCommandf_Root(
