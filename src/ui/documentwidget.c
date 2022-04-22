@@ -1523,7 +1523,7 @@ static int sideElementAvailWidth_DocumentView_(const iDocumentView *d) {
 }
 
 iLocalDef int minBannerSize_(void) {
-    return iMaxi(lineHeight_Text(banner_FontId) * 2, 6);
+    return iMaxi(lineHeight_Text(banner_FontId) * 2, 5);
 }
 
 static iBool isSideHeadingVisible_DocumentView_(const iDocumentView *d) {
@@ -1574,7 +1574,7 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
     const iColor back = get_Color(tmBannerSideTitle_ColorId);
     SDL_SetRenderDrawColor(render, back.r, back.g, back.b, 0); /* better blending of the edge */
     SDL_RenderClear(render);
-    const iRect iconRect = { zero_I2(), init1_I2(minBannerSize) };
+    const iRect iconRect = { zero_I2(), init_I2(minBannerSize / aspect_UI, minBannerSize) };
     int fg = drawSideRect_(&p, iconRect);
     iString str;
     initUnicodeN_String(&str, &icon, 1);
