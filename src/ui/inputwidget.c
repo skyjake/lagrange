@@ -2427,11 +2427,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         const int key  = ev->key.keysym.sym;
         const int mods = keyMods_Sym(ev->key.keysym.mod);
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
-#  if !defined (iPlatformTerminal)
-        if (mods == KMOD_PRIMARY) {
-#  else
-        if (mods == KMOD_SECONDARY) {
-#  endif
+        if (mods == KMOD_UNDO) {
             switch (key) {
                 case 'c':
                 case 'x':
