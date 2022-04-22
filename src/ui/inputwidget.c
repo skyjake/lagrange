@@ -24,6 +24,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
    The primary source of complexity is the handling of wrapped text content
    in the custom text editor. */
 
+/* TODO: Refactor this so that the native text input widget has a common base
+   class with the fully-custom input widget. Currently this implementation is
+   too convoluted, with both variants intermingled. */
+
 #include "inputwidget.h"
 #include "command.h"
 #include "paint.h"
@@ -1472,11 +1476,11 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) 
     }
     iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
     if (isEqual_I2(relCoord, zero_I2())) {
-        /* This is simple enough to figure out. */
+        /* (0, 0) disables the hit test, but this is trivial to figure out. */
         wt.hitChar_out = wt.text.start;        
     }
     else {
-        wt.hitPoint = addY_I2(relCoord, 1 * aspect_UI); /* never (0, 0) because that disables the hit test */
+        wt.hitPoint = addY_I2(relCoord, 1 * aspect_UI); 
         measure_WrapText(&wt, d->font);
     }
     if (wt.hitChar_out) {
@@ -2214,6 +2218,20 @@ static void overflowScrollToKeepVisible_InputWidget_(iAny *widget) {
     }
 }
 
+static iBool isSelectAllEvent_InputWidget_(const SDL_KeyboardEvent *ev) {
+    /* Note: If this were a binding, it would have to conditional on an InputWidget being focused. */
+    if (ev->state != SDL_PRESSED) {
+        return iFalse;
+    }
+    const int key  = ev->keysym.sym;
+    const int mods = keyMods_Sym(ev->keysym.mod);
+#if defined (iPlatformTerminal)
+    return key == SDLK_a && mods == KMOD_ALT;
+#else
+    return key == SDLK_a && mods == KMOD_PRIMARY;
+#endif    
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Resize according to width immediately. */
@@ -2442,7 +2460,16 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
 #  endif
         d->prevCursor = d->cursor;
-#endif
+        if (isSelectAllEvent_InputWidget_(&ev->key)) {
+            selectAll_InputWidget(d);
+            d->mark.start = 0;
+            d->mark.end   = cursorToIndex_InputWidget_(d, curMax);
+            d->cursor     = curMax;
+            showCursor_InputWidget_(d);
+            refresh_Widget(w);
+            return iTrue;            
+        }
+#endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
         switch (key) {
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
@@ -2565,28 +2592,21 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_a:
-#if !defined (iPlatformTerminal) /* Emacs-style ^A/^E in the terminal */
-                if (mods == KMOD_PRIMARY) {
-#else
-                if (mods == KMOD_ALT /* meta */) {
-#endif
-                    selectAll_InputWidget(d);
-                    d->mark.start = 0;
-                    d->mark.end   = cursorToIndex_InputWidget_(d, curMax);
-                    d->cursor     = curMax;
-                    showCursor_InputWidget_(d);
-                    refresh_Widget(w);
-                    return iTrue;
-                }
-# if defined (iPlatformApple)
-                /* fall through for Emacs-style Home/End */
             case SDLK_e:
                 if (mods == KMOD_CTRL || mods == (KMOD_CTRL | KMOD_SHIFT)) {
+#  if defined (iPlatformTerminal)
+                    /* Move to the start/end of the current wrapped line. */
+                    moveCursorByLine_InputWidget_(d, 0, key == 'a' ? -1 : +1);
+                    refresh_Widget(w);
+                    return iTrue;
+#  endif
+#  if defined (iPlatformApple)
+                    /* Move to the start/end of the current paragraph. */
                     setCursor_InputWidget(d, key == 'a' ? lineFirst : lineLast);
                     refresh_Widget(w);
                     return iTrue;
+#  endif
                 }
-# endif
                 break;
             case SDLK_LEFT:
             case SDLK_RIGHT: {
@@ -2636,7 +2656,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 }
                 refresh_Widget(d);
                 return iTrue;
-#endif
+#endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
         }
         if (mods & (KMOD_GUI | KMOD_CTRL)) {
             return iFalse;
