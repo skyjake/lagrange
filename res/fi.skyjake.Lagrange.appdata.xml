@@ -45,6 +45,21 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.12.2" date="2022-04-22">
+            <description>
+                <p>Changes in v1.12.2:</p>
+                <ul>
+                    <li>Fixed positioning of the language translation dialog's progress animation.</li>
+                    <li>Fixed hovering on links via the keyboard (default binding: H).</li>
+                    <li>Tab buttons use theme background color with light Oceanic to avoid a color clash.</li>
+                    <li>Feed refresh indicator uses the accent color.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.12.2</url>
+        </release>
         <release version="1.12.1" date="2022-04-06">
             <description>
                 <p>Changes in v1.12.1:</p>
