@@ -1527,7 +1527,7 @@ iLocalDef int minBannerSize_(void) {
 }
 
 static iBool isSideHeadingVisible_DocumentView_(const iDocumentView *d) {
-    return sideElementAvailWidth_DocumentView_(d) >= minBannerSize_() * 2.25f;
+    return sideElementAvailWidth_DocumentView_(d) >= minBannerSize_() * 2.25f / aspect_UI;
 }
 
 static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
@@ -1550,7 +1550,7 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
     const int   avail            = sideElementAvailWidth_DocumentView_(d) - margin;
     iBool       isHeadingVisible = isSideHeadingVisible_DocumentView_(d);
     /* Determine the required size. */
-    iInt2 bufSize = init1_I2(minBannerSize);
+    iInt2 bufSize = init_I2(minBannerSize / aspect_UI, minBannerSize);
     const int sideHeadingFont = FONT_ID(documentHeading_FontId, regular_FontStyle, contentBig_FontSize);
     if (isHeadingVisible) {
         const iInt2 headingSize = measureWrapRange_Text(sideHeadingFont, avail,
@@ -4726,7 +4726,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "contextkey") && document_App() == d) {
-        d->view.hoverLink = NULL;
+        if (!isTerminal_App()) {
+            d->view.hoverLink = NULL;
+        }
         emulateMouseClick_Widget(w, SDL_BUTTON_RIGHT);
         return iTrue;
     }
