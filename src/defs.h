@@ -206,6 +206,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define bullet_Icon         "\u2022"
 #define toggleYes_Icon      check_Icon
 #define toggleNo_Icon       bullet_Icon
+#define spartan_Icon        "\U0001f4aa"
 
 #if defined (iPlatformTerminal)
 #   define shift_Icon       "Sh"

@@ -2666,6 +2666,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     if (detect_FontPack(&response->body)) {
                         param = range_CStr(mimeType_FontPack);
                     }
+                    else if (isUtf8_Rangecc(range_Block(&response->body))) {
+                        param = range_CStr("text/plain");
+                    }
                 }
                 if (equal_Rangecc(param, "text/gemini")) {
                     docFormat = gemini_SourceFormat;
@@ -4890,6 +4893,15 @@ static void interactingWithLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id
     setRange_String(&d->linePrecedingLink, loc);
 }
 
+static iBool isSpartanQueryLink_DocumentWidget_(const iDocumentWidget *d, iGmLinkId id) {
+    const int linkFlags = linkFlags_GmDocument(d->view.doc, id);
+    return equalCase_Rangecc(urlScheme_String(d->mod.url), "spartan") &&
+                   (linkFlags & query_GmLinkFlag) &&
+                   scheme_GmLinkFlag(linkFlags) == spartan_GmLinkScheme
+               ? 1
+               : 0;
+}
+
 iLocalDef int wheelSwipeSide_DocumentWidget_(const iDocumentWidget *d) {
     return (d->flags & rightWheelSwipe_DocumentWidgetFlag  ? 2
             : d->flags & leftWheelSwipe_DocumentWidgetFlag ? 1
@@ -5012,7 +5024,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     else {
                         postCommandf_Root(
                             w->root,
-                            "open newtab:%d url:%s",
+                            "open query:%d newtab:%d url:%s",
+                            isSpartanQueryLink_DocumentWidget_(d, run->linkId),
                             (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) ^
                                 (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode
                                      ? openTabMode_Sym(modState_Keys())
@@ -5147,7 +5160,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && view->hoverLink) {
             interactingWithLink_DocumentWidget_(d, view->hoverLink->linkId);
-            postCommandf_Root(w->root, "open newtab:%d url:%s",
+            postCommandf_Root(w->root, "open query:%d newtab:%d url:%s",
+                              isSpartanQueryLink_DocumentWidget_(d, view->hoverLink->linkId),
                               (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
                               (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag),
                               cstr_String(linkUrl_GmDocument(view->doc, view->hoverLink->linkId)));
@@ -5167,6 +5181,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
                     /* Construct the link context menu, depending on what kind of link was clicked. */
+                    const int spartanQuery = isSpartanQueryLink_DocumentWidget_(d, d->contextLink->linkId);
                     interactingWithLink_DocumentWidget_(d, d->contextLink->linkId); /* perhaps will be triggered */
                     const iString *linkUrl  = linkUrl_GmDocument(view->doc, d->contextLink->linkId);
                     const iRangecc scheme   = urlScheme_String(linkUrl);
@@ -5185,7 +5200,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         equalCase_Rangecc(scheme, "data") ||
                         equalCase_Rangecc(scheme, "file") ||
                         equalCase_Rangecc(scheme, "finger") ||
-                        equalCase_Rangecc(scheme, "gopher")) {
+                        equalCase_Rangecc(scheme, "gopher") ||
+                        equalCase_Rangecc(scheme, "spartan")) {
                         isNative = iTrue;
                         /* Regular links that we can open. */
                         pushBackN_Array(&items,
@@ -5193,31 +5209,36 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                             { openTab_Icon " ${link.newtab}",
                                               0,
                                               0,
-                                              format_CStr("!open newtab:1 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:1 origin:%s url:%s",
+                                                          spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           cstr_String(linkUrl)) },
                                             { openTabBg_Icon " ${link.newtab.background}",
                                               0,
                                               0,
-                                              format_CStr("!open newtab:2 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:2 origin:%s url:%s",
+                                                          spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           cstr_String(linkUrl)) },
                                             { openWindow_Icon " ${link.newwindow}",
                                               0,
                                               0,
-                                              format_CStr("!open newwindow:1 origin:%s url:%s",
+                                              format_CStr("!open query:%d newwindow:1 origin:%s url:%s",
+                                                          spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           cstr_String(linkUrl)) },
                                             { "${link.side}",
                                               0,
                                               0,
-                                              format_CStr("!open newtab:4 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:4 origin:%s url:%s",
+                                                          spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           cstr_String(linkUrl)) },
                                             { "${link.side.newtab}",
                                               0,
                                               0,
-                                              format_CStr("!open newtab:5 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:5 origin:%s url:%s",
+                                                          spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           cstr_String(linkUrl)) },
                                         },
@@ -5629,10 +5650,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             tabMode ^= otherRoot_OpenTabFlag;
                         }
                         interactingWithLink_DocumentWidget_(d, linkId);
-                        postCommandf_Root(w->root, "open newtab:%d url:%s",
-                                         tabMode,
-                                         cstr_String(absoluteUrl_String(
-                                             d->mod.url, linkUrl_GmDocument(view->doc, linkId))));
+                        postCommandf_Root(w->root,
+                                          "open query:%d newtab:%d url:%s",
+                                          isSpartanQueryLink_DocumentWidget_(d, linkId),
+                                          tabMode,
+                                          cstr_String(absoluteUrl_String(
+                                              d->mod.url, linkUrl_GmDocument(view->doc, linkId))));
                     }
                     else {
                         const iString *url = absoluteUrl_String(

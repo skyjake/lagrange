@@ -1134,6 +1134,9 @@ msgstr "Upload with Titan…"
 msgid "menu.page.upload.edit"
 msgstr "Edit Page with Titan…"
 
+msgid "spartan.input"
+msgstr "Enter text to send:"
+
 msgid "heading.upload"
 msgstr "Upload with Titan"
 

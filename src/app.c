@@ -3414,10 +3414,39 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "spartan.input")) {
+        const char *value = suffixPtr_Command(cmd, "value");
+        iRangecc url = range_Command(cmd, "urlesc");
+        postCommand_Widget(
+            document_Command(cmd),
+            "open newtab:%d newwindow:%d url:%s?%s",
+            argLabel_Command(cmd, "newtab"),
+            argLabel_Command(cmd, "newwindow"),
+            cstr_Rangecc(url),
+            cstr_String(collect_String(urlEncode_String(collectNewCStr_String(value)))));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "open")) {
         const char *urlArg = suffixPtr_Command(cmd, "url");
         if (!urlArg) {
             return iTrue; /* invalid command */
+        }
+        if (argLabel_Command(cmd, "query")) {
+            const iString *url = collectNewCStr_String(urlArg);
+            iString *spartanCmd = collectNewFormat_String(
+                "spartan.input newtab:%d newwindow:%d urlesc:%s",
+                argLabel_Command(cmd, "newtab"),
+                argLabel_Command(cmd, "newwindow"),
+                cstr_String(withSpacesEncoded_String(url)));
+            iUrl parts;
+            init_Url(&parts, url);
+            makeValueInput_Widget(as_Widget(document_Command(cmd)),
+                                  NULL,
+                                  cstr_Rangecc((iRangecc){ parts.host.start, parts.path.end }),
+                                  "${spartan.input}",
+                                  "${dlg.input.send}",
+                                  cstr_String(spartanCmd));
+            return iTrue;
         }
         if (argLabel_Command(cmd, "switch")) {
             iDocumentWidget *doc = findDocument_Root(get_Root(), collectNewCStr_String(urlArg));

@@ -618,10 +618,10 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         }
         if (isText) {
             /* Uploading text. */
-            setTitanData_GmRequest(d->request,
-                                   collectNewCStr_String("text/plain"),
-                                   utf8_String(text_InputWidget(d->input)),
-                                   text_InputWidget(d->token));
+            setUploadData_GmRequest(d->request,
+                                    collectNewCStr_String("text/plain"),
+                                    utf8_String(text_InputWidget(d->input)),
+                                    text_InputWidget(d->token));
         }
         else {
             /* Uploading a file. */
@@ -633,10 +633,10 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
                 iReleasePtr(&d->request);
                 return iTrue;
             }
-            setTitanData_GmRequest(d->request,
-                                   text_InputWidget(d->mime),
-                                   collect_Block(readAll_File(f)),
-                                   text_InputWidget(d->token));
+            setUploadData_GmRequest(d->request,
+                                    text_InputWidget(d->mime),
+                                    collect_Block(readAll_File(f)),
+                                    text_InputWidget(d->token));
             close_File(f);
         }
 //        iConnect(GmRequest, d->request, updated,  d, requestUpdated_UploadWidget_);

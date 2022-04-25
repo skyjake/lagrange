@@ -162,6 +162,7 @@ struct Impl_GmDocument {
     iInt2     size;
     int       outsideMargin;
     iBool     enableCommandLinks; /* `about:command?` only allowed on selected pages */
+    iBool     isSpartan;
     iBool     isLayoutInvalidated;
     iArray    layout; /* contents of source, laid out in document space */
     iStringArray auxText; /* generated text that appears on the page but is not part of the source */
@@ -229,6 +230,9 @@ static void initTheme_GmDocument_(iGmDocument *d) {
 static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc line) {
     if (d->format == plainText_SourceFormat) {
         return text_GmLineType;
+    }
+    if (d->isSpartan && startsWith_Rangecc(line, "=:")) {
+        return link_GmLineType;
     }
     return lineType_Rangecc(line);
 }
@@ -328,13 +332,29 @@ static iBool isAllowedLinkIcon_Char_(iChar icon) {
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
     /* Returns the human-readable label of the link. */
     static iRegExp *pattern_;
+    static iRegExp *spartanQueryPattern_;
     if (!pattern_) {
         pattern_ = newGemtextLink_RegExp();
     }
+    if (d->isSpartan && !spartanQueryPattern_) {
+        spartanQueryPattern_ = new_RegExp("=:\\s*([^\\s]+)(\\s.*)?", 0);
+    }
+    iGmLink *link = NULL;
     iRegExpMatch m;
     init_RegExpMatch(&m);
-    if (matchRange_RegExp(pattern_, line, &m)) {
-        iGmLink *link = new_GmLink();
+    if (d->isSpartan && matchRange_RegExp(spartanQueryPattern_, line, &m)) {
+        link = new_GmLink();
+        link->urlRange = capturedRange_RegExpMatch(&m, 1);
+        link->flags = query_GmLinkFlag;
+        setScheme_GmLink_(link, spartan_GmLinkScheme);
+        setRange_String(&link->url, link->urlRange);
+        set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
+    }
+    if (!link) {
+        init_RegExpMatch(&m);
+    }
+    if (!link && matchRange_RegExp(pattern_, line, &m)) {
+        link = new_GmLink();
         link->urlRange = capturedRange_RegExpMatch(&m, 1);
         setRange_String(&link->url, link->urlRange);
         set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
@@ -370,6 +390,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
             else if (equalCase_Rangecc(parts.scheme, "finger")) {
                 setScheme_GmLink_(link, finger_GmLinkScheme);
+            }
+            else if (equalCase_Rangecc(parts.scheme, "spartan")) {
+                setScheme_GmLink_(link, spartan_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "file")) {
                 setScheme_GmLink_(link, file_GmLinkScheme);                
@@ -411,15 +434,17 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 }
                 delete_String(path);
             }
-            /* Check if visited. */
-            if (cmpString_String(&link->url, &d->url)) {
-                link->when = urlVisitTime_Visited(visited_App(), &link->url);
-                if (isValid_Time(&link->when)) {
-                    link->flags |= visited_GmLinkFlag;
-                }
-                if (contains_StringSet(d->openURLs, &link->url)) {
-                    link->flags |= isOpen_GmLinkFlag;
-                }
+        }
+    }        
+    if (link) {
+        /* Check if visited. */
+        if (cmpString_String(&link->url, &d->url)) {
+            link->when = urlVisitTime_Visited(visited_App(), &link->url);
+            if (isValid_Time(&link->when)) {
+                link->flags |= visited_GmLinkFlag;
+            }
+            if (contains_StringSet(d->openURLs, &link->url)) {
+                link->flags |= isOpen_GmLinkFlag;
             }
         }
         pushBack_PtrArray(&d->links, link);
@@ -914,9 +939,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             icon.bounds         = zero_Rect(); /* just visual */
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
             const enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
-            icon.text           = range_CStr(link->flags & query_GmLinkFlag    ? magnifyingGlass
+            icon.text           = range_CStr(link->flags & query_GmLinkFlag    ? (d->isSpartan ? upload_Icon : magnifyingGlass)
                                              : scheme == titan_GmLinkScheme    ? uploadArrow
                                              : scheme == finger_GmLinkScheme   ? pointingFinger
+                                             : (scheme == spartan_GmLinkScheme && !d->isSpartan)
+                                                                               ? spartan_Icon 
                                              : scheme == mailto_GmLinkScheme   ? envelope
                                              : scheme == data_GmLinkScheme     ? paperclip_Icon
                                              : link->flags & remote_GmLinkFlag ? globe
@@ -1215,6 +1242,7 @@ void init_GmDocument(iGmDocument *d) {
     d->outsideMargin = 0;
     d->size = zero_I2();
     d->enableCommandLinks = iFalse;
+    d->isSpartan = iFalse;
     d->isLayoutInvalidated = iFalse;
     init_Array(&d->layout, sizeof(iGmRun));
     init_StringArray(&d->auxText);
@@ -2048,6 +2076,7 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     setThemeSeed_GmDocument(d, urlPaletteSeed_String(url), urlThemeSeed_String(url));
     iUrl parts;
     init_Url(&parts, url);
+    d->isSpartan = equalCase_Rangecc(parts.scheme, "spartan");
     setRange_String(&d->localHost, parts.host);
     updateIconBasedOnUrl_GmDocument_(d);
     if (!cmp_String(url, "about:fonts")) {
@@ -2592,7 +2621,7 @@ iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     const iString *dstUrl = absoluteUrl_String(&d->url, linkUrl_GmDocument(d, linkId));
     const iRangecc scheme = urlScheme_String(dstUrl);
     if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "gopher") ||
-        equalCase_Rangecc(scheme, "finger") ||
+        equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "finger") ||
         equalCase_Rangecc(scheme, "file") || willUseProxy_App(scheme)) {
         return (linkFlags_GmDocument(d, linkId) &
                 (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag)) != 0;

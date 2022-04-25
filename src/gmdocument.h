@@ -77,6 +77,7 @@ enum iGmLinkScheme {
     data_GmLinkScheme,
     about_GmLinkScheme,
     mailto_GmLinkScheme,
+    spartan_GmLinkScheme,
 };
 
 enum iGmLinkFlag {
@@ -88,7 +89,7 @@ enum iGmLinkFlag {
     content_GmLinkFlag            = iBit(11), /* content visible below */
     visited_GmLinkFlag            = iBit(12), /* in the history */
     permanent_GmLinkFlag          = iBit(13), /* content cannot be dismissed; media link */
-    query_GmLinkFlag              = iBit(14), /* Gopher query link */
+    query_GmLinkFlag              = iBit(14), /* Gopher/Spartan query link */
     iconFromLabel_GmLinkFlag      = iBit(15), /* use an Emoji/special character from label */
     isOpen_GmLinkFlag             = iBit(16), /* currently open in a tab */
     fontpackFileExtension_GmLinkFlag = iBit(17),
