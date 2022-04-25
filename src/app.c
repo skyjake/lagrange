@@ -410,6 +410,34 @@ static const iString *prefsFileName_(void) {
     return collectNewCStr_String(concatPath_CStr(dataDir_App_(), prefsFileName_App_));
 }
 
+void updateCACertificates_App(void) {
+    iApp *d = &app_;
+    if (isEmpty_String(&d->prefs.strings[caFile_PrefsString]) &&
+        isEmpty_String(&d->prefs.strings[caPath_PrefsString]) &&
+        !isEmpty_Block(&blobCacertPem_Resources)) {
+        /* Use the bundled CA root cert store. */
+        iFile *f = new_File(collect_String(concatCStr_Path(dataDir_App(), "cacert.pem")));
+        iBool load = iFalse;
+        if (fileExists_FileInfo(path_File(f)) &&
+            fileSize_FileInfo(path_File(f)) == size_Block(&blobCacertPem_Resources)) {
+            load = iTrue;
+        }
+        else if (open_File(f, writeOnly_FileMode)) {
+            write_File(f, &blobCacertPem_Resources);
+            close_File(f);
+            load = iTrue;
+        }
+        if (load) {
+            setCACertificates_TlsRequest(path_File(f), NULL);
+        }
+        iRelease(f);
+    }
+    else {
+        setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString],
+                                     &d->prefs.strings[caPath_PrefsString]);
+    }    
+}
+
 static void loadPrefs_App_(iApp *d) {
     iUnused(d);
     iBool haveCA = iFalse;
@@ -491,9 +519,8 @@ static void loadPrefs_App_(iApp *d) {
         delete_String(str);
     }
     if (!haveCA) {
-        /* Default CA setup. */
-        setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString],
-                                     &d->prefs.strings[caPath_PrefsString]);
+        /* Preferences file did not include CA settings at all. */
+        updateCACertificates_App();
     }
     iRelease(f);
     /* Upgrade checks. */
@@ -3032,14 +3059,14 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     else if (equal_Command(cmd, "ca.file")) {
         setCStr_String(&d->prefs.strings[caFile_PrefsString], suffixPtr_Command(cmd, "path"));
         if (!argLabel_Command(cmd, "noset")) {
-            setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString], &d->prefs.strings[caPath_PrefsString]);
+            updateCACertificates_App();
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "ca.path")) {
         setCStr_String(&d->prefs.strings[caPath_PrefsString], suffixPtr_Command(cmd, "path"));
         if (!argLabel_Command(cmd, "noset")) {
-            setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString], &d->prefs.strings[caPath_PrefsString]);
+            updateCACertificates_App();
         }
         return iTrue;
     }

@@ -45,7 +45,6 @@ if (IOS)
 endif ()
 
 # Build configuration.
-option (ENABLE_TUI              "Enable the Curses TUI instead of GUI" OFF)
 option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
 option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional text" ON)
@@ -63,11 +62,12 @@ option (ENABLE_POPUP_MENUS      "Use popup windows for context menus (if OFF, me
 option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
 option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAULT_RESIZE_DRAW})
 option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
-# option (ENABLE_STB_TRUETYPE     "Use stb_truetype for rendering text" ON)
+option (ENABLE_TUI              "Enable the Curses TUI instead of GUI" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
+set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to include as a built-in resource")
 
 include (BuildType.cmake)
 include (Resources.cmake)
@@ -107,6 +107,10 @@ set (RESOURCES
     res/fontpack.ini
     res/macos-system-fonts.ini
 )
+if (EXISTS ${CACERT_PEM_PATH})
+    message (STATUS "  ${CACERT_PEM_PATH}")
+    list (APPEND RESOURCES ${CACERT_PEM_PATH})
+endif ()
 file (GLOB FONTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} res/fonts/*)
 list (APPEND RESOURCES ${FONTS})
 if (IOS)

@@ -66,6 +66,7 @@ iBlock blobZh_Hant_Resources;
 iBlock imageShadow_Resources;
 iBlock imageLagrange64_Resources;
 iBlock blobMacosSystemFontsIni_Resources;
+iBlock blobCacertPem_Resources;
 
 static struct {
     iBlock *data;
@@ -114,6 +115,7 @@ static struct {
     { &imageShadow_Resources, "shadow.png" },
     { &imageLagrange64_Resources, "lagrange-64.png" },
     { &blobMacosSystemFontsIni_Resources, "macos-system-fonts.ini" },
+    { &blobCacertPem_Resources, "cacert.pem" },
 };
 
 iBool init_Resources(const char *path) {
