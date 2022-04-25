@@ -1374,6 +1374,15 @@ void draw_Window(iWindow *d) {
     isDrawing_ = iFalse;
 }
 
+void drawQuick_MainWindow(iMainWindow *d) {
+    /* Just present what was drawn previously. */
+    if (d->backBuf) {
+        SDL_Renderer *render = d->base.render;
+        SDL_RenderCopy(render, d->backBuf, NULL, NULL);
+        SDL_RenderPresent(render);
+    }
+}
+
 void draw_MainWindow(iMainWindow *d) {
     if (isDrawing_) {
         /* Already drawing! */

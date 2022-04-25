@@ -200,6 +200,7 @@ void        resize_MainWindow               (iMainWindow *, int w, int h);
 
 //iBool       processEvent_MainWindow         (iMainWindow *, const SDL_Event *);
 void        draw_MainWindow                 (iMainWindow *);
+void        drawQuick_MainWindow            (iMainWindow *);
 void        drawWhileResizing_MainWindow    (iMainWindow *, int w, int h); /* workaround for SDL bug */
 
 int         snap_MainWindow                 (const iMainWindow *);

@@ -151,9 +151,9 @@ struct Impl_App {
     iBool        isSuspended;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
-    unsigned int idleSleepDelayMs;
     uint32_t     lastEventTime;
     int          sleepTimer;
+    unsigned int idleSleepDelayMs;
 #endif
     iAtomicInt   pendingRefresh;
     iBool        isLoadingPrefs;
@@ -1962,6 +1962,22 @@ void refresh_App(void) {
                 sleep_Thread(1.0 / 60.0);
             }
         }
+    }
+    else {
+#if defined (iPlatformApple)
+        /* Nothing needs redrawing, however we may have to keep blitting the latest contents.
+           The Metal renderer can get stuttery otherwise. */ 
+        iConstForEach(PtrArray, j, &windows) {
+            iWindow *win = j.ptr;
+            switch (win->type) {
+                case main_WindowType: 
+                    drawQuick_MainWindow(as_MainWindow(win));
+                    break;
+                default:
+                    break;
+            }
+        }
+#endif
     }
     if (d->warmupFrames > 0) {
         d->warmupFrames--;
