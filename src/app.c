@@ -3690,7 +3690,9 @@ iBool handleCommand_App(const char *cmd) {
             }
         }
 #if defined (iPlatformAppleDesktop)
-        closeWindow_App(d->window);
+        else {
+            closeWindow_App(d->window);
+        }
 #else
         else if (numWindows_App() > 1) {
             closeWindow_App(d->window);
