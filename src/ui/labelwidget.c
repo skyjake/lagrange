@@ -182,6 +182,7 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
                 setFlags_Widget(w, pressed_WidgetFlag, iFalse);
                 trigger_LabelWidget_(d);
                 refresh_Widget(w);
+                setFocus_Widget(NULL);
                 return iTrue;
             default:
                 break;
