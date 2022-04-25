@@ -3148,7 +3148,9 @@ iWidget *makePreferences_Widget(void) {
         }
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addPrefsInputWithHeading_(headings, values, "prefs.linespacing", iClob(new_InputWidget(5)));
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
         addDialogToggle_(headings, values, "${prefs.justify}", "prefs.justify");
+#endif
         addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
         addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
         addDialogPadding_(headings, values);
