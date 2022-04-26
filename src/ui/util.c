@@ -3260,7 +3260,7 @@ static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator) {
 
 iWidget *makeBookmarkEditor_Widget(iBool isFolder) {
     const iMenuItem actions[] = {
-        { "${cancel}", 0, 0, "bmed.cancel" },
+        { "${cancel}", SDLK_ESCAPE, 0, "bmed.cancel" },
         { uiTextAction_ColorEscape "${dlg.bookmark.save}", SDLK_RETURN, KMOD_ACCEPT, "bmed.accept" }
     };
     iWidget *dlg = NULL;
