@@ -24,8 +24,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "widget.h"
 
+enum iUploadProtocol {
+    titan_UploadProtocol,
+    spartan_UploadProtocol,
+};
+
 iDeclareWidgetClass(UploadWidget)
-iDeclareObjectConstruction(UploadWidget)
+iDeclareObjectConstructionArgs(UploadWidget, enum iUploadProtocol)
     
 iDeclareType(DocumentWidget)
     

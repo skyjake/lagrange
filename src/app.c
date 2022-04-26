@@ -3456,12 +3456,18 @@ iBool handleCommand_App(const char *cmd) {
                 cstr_String(withSpacesEncoded_String(url)));
             iUrl parts;
             init_Url(&parts, url);
-            makeValueInput_Widget(as_Widget(document_Command(cmd)),
-                                  NULL,
-                                  cstr_Rangecc((iRangecc){ parts.host.start, parts.path.end }),
-                                  "${spartan.input}",
-                                  "${dlg.input.send}",
-                                  cstr_String(spartanCmd));
+            iWidget *dlg = makeValueInputWithAdditionalActions_Widget(
+                as_Widget(document_Command(cmd)),
+                NULL,
+                cstr_Rangecc((iRangecc){ parts.host.start, parts.path.end }),
+                "${spartan.input}",
+                "${dlg.input.send}",
+                cstr_String(spartanCmd),
+                (iMenuItem[]){
+                    { "${dlg.spartan.upload}", SDLK_u, KMOD_PRIMARY,
+                      format_CStr("valueinput.upload url:%s", cstr_String(url)) } },
+                1);
+            setBackupFileName_InputWidget(findChild_Widget(dlg, "input"), "spartanbackup");
             return iTrue;
         }
         if (argLabel_Command(cmd, "switch")) {
@@ -3502,7 +3508,7 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
         if (equalCase_Rangecc(parts.scheme, "titan")) {
-            iUploadWidget *upload = new_UploadWidget();
+            iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
             setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, document_App());
             addChild_Widget(get_Root()->widget, iClob(upload));

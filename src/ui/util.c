@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "sitespec.h"
 #include "text.h"
 #include "touch.h"
+#include "uploadwidget.h"
 #include "widget.h"
 #include "window.h"
 
@@ -2015,6 +2016,22 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "valueinput.upload")) {
+        setFocus_Widget(NULL);
+        iInputWidget *input = findChild_Widget(dlg, "input");
+        /* Contents of the editor are transferred via the backup file. */
+        postCommand_Widget(input, "input.backup");
+        processEvents_App(postedEventsOnly_AppEventMode); /* unfocus, save backup */
+        const iString *url = collect_String(suffix_Command(cmd, "url"));
+        iAssert(equalCase_Rangecc(urlScheme_String(url), "spartan"));
+        iUploadWidget *upload = new_UploadWidget(spartan_UploadProtocol);
+        setUrl_UploadWidget(upload, url);
+        setResponseViewer_UploadWidget(upload, document_Command(cmd));
+        addChild_Widget(get_Root()->widget, iClob(upload));
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+        destroy_Widget(dlg);        
+        return iTrue;
+    }
     else if (equal_Command(cmd, "valueinput.cancel")) {
         postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
         setId_Widget(dlg, ""); /* no further commands to emit */
@@ -2095,6 +2112,9 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
             setId_Widget(as_Widget(button), "default");
         }
         setFlags_Widget(as_Widget(button), alignLeft_WidgetFlag | drawKey_WidgetFlag, isDefault);
+        if (key && key != SDLK_ESCAPE && deviceType_App() == desktop_AppDeviceType) {
+            setFlags_Widget(as_Widget(button), alignLeft_WidgetFlag | drawKey_WidgetFlag, iTrue);
+        }
         if (deviceType_App() != desktop_AppDeviceType) {
             setFlags_Widget(as_Widget(button), frameless_WidgetFlag | noBackground_WidgetFlag, iTrue);
             setTextColor_LabelWidget(button, uiTextAction_ColorId);
@@ -2105,7 +2125,17 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
 }
 
 iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, const char *title,
-                               const char *prompt, const char *acceptLabel, const char *command) {
+                               const char *prompt, const char *acceptLabel,
+                               const char *command){
+    return makeValueInputWithAdditionalActions_Widget(
+        parent, initialValue, title, prompt, acceptLabel, command, NULL, 0);
+}
+
+iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iString *initialValue,
+                                                    const char *title, const char *prompt,
+                                                    const char *acceptLabel, const char *command,
+                                                    const iMenuItem *additionalActions,
+                                                    size_t           numAdditionalActions) {
     if (parent) {
         setFocus_Widget(NULL);
     }
@@ -2139,6 +2169,12 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     /* On mobile, the actions are laid out a bit differently: buttons on top, on opposite edges. */
     iArray actions;
     init_Array(&actions, sizeof(iMenuItem));
+    for (size_t i = 0; i < numAdditionalActions; i++) {
+        pushBack_Array(&actions, &additionalActions[i]);
+    }
+    if (numAdditionalActions) {
+        pushBack_Array(&actions, &(iMenuItem){ "---" });
+    }
     pushBack_Array(&actions, &(iMenuItem){ "${cancel}", SDLK_ESCAPE, 0, "valueinput.cancel" });
     if (deviceType_App() != desktop_AppDeviceType) {
         pushBack_Array(&actions, &(iMenuItem){ "---" });

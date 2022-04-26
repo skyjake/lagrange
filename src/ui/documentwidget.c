@@ -4302,10 +4302,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (findChild_Widget(root_Widget(w), "upload")) {
             return iTrue; /* already open */
         }
-        const iBool isGemini = equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini");
-        if (isGemini || equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
-            iUploadWidget *upload = new_UploadWidget();
-            setUrl_UploadWidget(upload, d->mod.url);
+        const iString *url = d->mod.url;
+        if (hasLabel_Command(cmd, "url")) {
+            url = collect_String(suffix_Command(cmd, "url"));
+        }
+        const iRangecc scheme = urlScheme_String(url);
+        if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "titan") ||
+            equalCase_Rangecc(scheme, "spartan")) {
+            iUploadWidget *upload =
+                new_UploadWidget(equalCase_Rangecc(scheme, "spartan") ? spartan_UploadProtocol
+                                                                      : titan_UploadProtocol);
+            setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, d);
             addChild_Widget(get_Root()->widget, iClob(upload));
             setupSheetTransition_Mobile(as_Widget(upload), iTrue);
