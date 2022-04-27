@@ -1157,6 +1157,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     postCommand_App("~toolbar.actions.changed");
     postCommand_App("~root.movable");
     postCommand_App("~window.unfreeze");
+    postCommand_App("~focus.set id:"); /* clear focus */
     postCommand_App("font.reset");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
     postCommand_Root(NULL, "document.autoreload");
