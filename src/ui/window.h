@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/rect.h>
 #include <SDL_events.h>
 #include <SDL_render.h>
+#include <SDL_mouse.h>
 #include <SDL_video.h>
 
 extern const iMenuItem topLevelMenus_Window[6];
@@ -199,6 +200,7 @@ void        resize_MainWindow               (iMainWindow *, int w, int h);
 
 //iBool       processEvent_MainWindow         (iMainWindow *, const SDL_Event *);
 void        draw_MainWindow                 (iMainWindow *);
+void        drawQuick_MainWindow            (iMainWindow *);
 void        drawWhileResizing_MainWindow    (iMainWindow *, int w, int h); /* workaround for SDL bug */
 
 int         snap_MainWindow                 (const iMainWindow *);

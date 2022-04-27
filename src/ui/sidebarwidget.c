@@ -435,14 +435,14 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 { whiteStar_Icon " " uiTextCaution_ColorEscape "${feeds.unsubscribe}", 0, 0, "feed.entry.unsubscribe" },
                 { "---", 0, 0, NULL },
                 { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
-                { reload_Icon " ${feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" }
+                { reload_Icon " ${feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" }
             };
             d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             d->modeMenu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]){
                     { check_Icon " ${feeds.markallread}", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
-                    { reload_Icon " ${feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
+                    { reload_Icon " ${feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" } },
                 2);
             break;
         }
@@ -698,7 +698,12 @@ static size_t findItem_SidebarWidget_(const iSidebarWidget *d, int id) {
 }
 
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
-    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
+    /* Note: identity item height is defined by CertListWidget */
+#if !defined (iPlatformTerminal)
+    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 0, 1.2f };
+#else
+    const float heights[max_SidebarMode] = { 1, 3, 1, 0, 1 };
+#endif
     if (d->list) {
         setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(d->itemFonts[0]));
     }
@@ -744,8 +749,8 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
 
 void setClosedFolders_SidebarWidget(iSidebarWidget *d, const iIntSet *closedFolders) {
     if (d) {
-    delete_IntSet(d->closedFolders);
-    d->closedFolders = copy_IntSet(closedFolders);
+        delete_IntSet(d->closedFolders);
+        d->closedFolders = copy_IntSet(closedFolders);
     }
 }
 
@@ -767,6 +772,10 @@ float width_SidebarWidget(const iSidebarWidget *d) {
 
 const iIntSet *closedFolders_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->closedFolders : collect_IntSet(new_IntSet());
+}
+
+iListWidget *list_SidebarWidget(iSidebarWidget *d) {
+    return list_SidebarWidget_(d);
 }
 
 const char *icon_SidebarMode(enum iSidebarMode mode) {
@@ -833,7 +842,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     }
     d->widthAsGaps = 73.0f;
 #else
-    d->widthAsGaps = 60.0f;
+    d->widthAsGaps = isTerminal_App() ? 35.0f : 60.0f;
 #endif
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     iWidget *vdiv = makeVDiv_Widget();
@@ -895,7 +904,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     setFlags_Widget(listArea, resizeChildren_WidgetFlag, iTrue);
     d->list = new_ListWidget();
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
-    addChild_Widget(listArea, iClob(d->list));
+    addChildFlags_Widget(listArea, iClob(d->list), focusable_WidgetFlag);
     if (!isPhone) {
         d->certList = new_CertListWidget();
         setPadding_Widget(as_Widget(d->certList), 0, gap_UI, 0, gap_UI);
@@ -942,7 +951,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     setBackgroundColor_Widget(d->resizer, none_ColorId);
     d->menu     = NULL;
     d->modeMenu = NULL;
-    addAction_Widget(w, SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh");
+    addAction_Widget(w, refreshFeeds_KeyShortcut, "feeds.refresh");
     updateMetrics_SidebarWidget_(d);
     if (side == left_SidebarSide) {
         postCommand_App("~sidebar.update"); /* unread count */
@@ -989,7 +998,6 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             ? (keyMods_Sym(modState_Keys()) & KMOD_SHIFT ? new_OpenTabFlag
                                                          : newBackground_OpenTabFlag)
             : 0;
-    setFocus_Widget(NULL);
     switch (d->mode) {
         case documentOutline_SidebarMode: {
             const iGmDocument *doc = document_DocumentWidget(document_App());
@@ -997,6 +1005,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
                 postCommandf_App("document.goto loc:%p", head->text.start);
                 dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
+                setFocus_Widget(NULL);
             }
             break;
         }
@@ -1005,6 +1014,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 get_Root(),
                 feedEntryOpenCommand_String(
                     &item->url, mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()), 0));
+            setFocus_Widget(NULL);
             break;
         }
         case bookmarks_SidebarMode:
@@ -1023,6 +1033,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             if (d->isEditing) {
                 d->contextItem = item;
                 d->contextIndex = itemIndex;
+                setFocus_Widget(NULL);
                 postCommand_Widget(d, "bookmark.edit");
                 break;
             }
@@ -1033,6 +1044,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                                   "open fromsidebar:1 newtab:%d url:%s",
                                   mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()),
                                   cstr_String(&item->url));
+                setFocus_Widget(NULL);
             }
             break;
         }
@@ -1091,7 +1103,9 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
         /* Even less space if the other sidebar is visible, too. */
         const iWidget *other = findWidget_App(d->side == left_SidebarSide ? "sidebar2" : "sidebar");
         const int otherWidth = isVisible_Widget(other) ? width_Widget(other) : 0;
-        width = iClamp(width, 30 * gap_UI, size_Root(w->root).x - 50 * gap_UI - otherWidth);
+        width = iClamp(width,
+                       30 * gap_UI * aspect_UI,
+                       size_Root(w->root).x - 50 * gap_UI * aspect_UI - otherWidth);
     }
     d->widthAsGaps = (float) width / (float) gap_UI;
     w->rect.size.x = width;
@@ -1193,6 +1207,12 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         scrollOffset_ListWidget(d->list, 0);
         if (wasChanged) {
             postCommandf_App("%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
+            if (isTerminal_App()) {
+                setFocus_Widget(as_Widget(list_SidebarWidget(d)));
+                if (wasChanged) {
+                    setCursorItem_ListWidget(list_SidebarWidget(d), 0);
+                }
+            }
         }
         refresh_Widget(findChild_Widget(w, "buttons"));
         return iTrue;
@@ -1200,7 +1220,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
     else if (equal_Command(cmd, "toggle")) {
         if (arg_Command(cmd) && isVisible_Widget(w)) {
             return iTrue;
-        }
+        }        
         const iBool isAnimated = prefs_App()->uiAnimations &&
                                  argLabel_Command(cmd, "noanim") == 0 &&
                                  (d->side == left_SidebarSide || deviceType_App() != phone_AppDeviceType);
@@ -1211,6 +1231,12 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
 //            visY = top_Rect(bounds_Widget(w)) - top_Rect(w->root->widget->rect);
         }
         const iBool isHiding = isVisible_Widget(w);
+        if (!isHiding) {
+            setFocus_Widget(as_Widget(list_SidebarWidget(d)));
+        }
+        else {
+            setFocus_Widget(NULL);
+        }
         setFlags_Widget(w, hidden_WidgetFlag, isHiding);
         /* Safe area inset for mobile. */
         const int safePad =
@@ -1407,9 +1433,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         arrange_Widget(w);
         checkModeButtonLayout_SidebarWidget_(d);
     }
-    else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+    else if (isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
-        if (equalArg_Command(cmd, "tabs.changed", "id", "doc") ||
+        if ((equal_Command(cmd, "tabs.changed") &&
+             startsWith_Rangecc(range_Command(cmd, "id"), "doc")) ||
             equal_Command(cmd, "document.changed")) {
             updateItems_SidebarWidget_(d);
             scrollOffset_ListWidget(d->list, 0);
@@ -1450,6 +1477,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (handleSidebarCommand_SidebarWidget_(d, cmd + size_String(&d->cmdPrefix))) {
                 return iTrue;
             }
+        }
+        else if (equal_Command(cmd, "menu.closed") && d->menu == pointer_Command(cmd)) {
+            setFocus_Widget(as_Widget(d->list));
+            return iFalse;
         }
         else if (isCommand_Widget(w, ev, "mouse.clicked")) {
             if (argLabel_Command(cmd, "button") == SDL_BUTTON_LEFT) {
@@ -1750,10 +1781,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                       0,
                                       format_CStr("!feed.entry.unsubscribe arg:1 ptr:%p", d) } },
                                 2);
-            }
-            return iTrue;
-        }
-            }
+                        }
+                        return iTrue;
+                    }
+                }
             }
         }
         else if (isCommand_Widget(w, ev, "history.delete")) {
@@ -1811,6 +1842,24 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+#if defined (iPlatformTerminal)
+        else if (equal_Command(cmd, "zoom.set") && isVisible_Widget(w)) {
+            setWidth_SidebarWidget(d, 35.0f * arg_Command(cmd) / 100.0f);
+            invalidate_ListWidget(list_SidebarWidget_(d));
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "zoom.delta") && isVisible_Widget(w)) {
+            setWidth_SidebarWidget(d, d->widthAsGaps + arg_Command(cmd) * 2 / 10);
+//            invalidate_ListWidget(list_SidebarWidget_(d));
+            refresh_Widget(d);
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "zoom.delta") && !isVisible_Widget(w) &&
+                 d->side == left_SidebarSide) {
+            postCommand_Widget(w, "sidebar.toggle");
+            return iTrue;
+        }
+#endif        
     }
     if (ev->type == SDL_MOUSEMOTION &&
         (!isVisible_Widget(d->menu) && !isVisible_Widget(d->modeMenu))) {
@@ -1842,7 +1891,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         if (ev->button.button == SDL_BUTTON_RIGHT) {
             d->contextItem = NULL;
-            if (!isVisible_Widget(d->menu)) {
+            if (!isVisible_Widget(d->menu) && !isEmulatedMouseDevice_UserEvent(ev)) {
                 updateMouseHover_ListWidget(d->list);
             }
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
@@ -2016,6 +2065,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             isHover_Widget(constAs_Widget(list)) &&
             constHoverItem_ListWidget(list) == d) ||
             (isMenuVisible && sidebar->contextItem == d) ||
+            (isFocused_Widget(list) && constCursorItem_ListWidget(list) == d) ||
             isDragging;
     const int scrollBarWidth = scrollBarWidth_ListWidget(list);
 #if defined (iPlatformApple)
@@ -2050,7 +2100,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : (tmHeading1_ColorId + d->indent / (4 * gap_UI));
         drawRange_Text(font,
-                       init_I2(pos.x + 3 * gap_UI + d->indent,
+                       init_I2(pos.x + (3 * gap_UI + d->indent) * aspect_UI,
                                mid_Rect(itemRect).y - lineHeight_Text(font) / 2),
                        fg,
                        range_String(&d->label));
@@ -2069,7 +2119,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             drawRange_Text(
                 uiLabelLargeBold_FontId,
                 add_I2(pos,
-                       init_I2(3 * gap_UI,
+                       init_I2(3 * gap_UI * aspect_UI,
                                itemHeight - lineHeight_Text(uiLabelLargeBold_FontId) - 1 * gap_UI)),
                 uiIcon_ColorId,
                 range_String(&d->meta));
@@ -2079,14 +2129,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             const int titleFont = sidebar->itemFonts[isUnread ? 1 : 0];
             const int h1 = lineHeight_Text(uiLabel_FontId);
             const int h2 = lineHeight_Text(titleFont);
-            iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
-            /*
-            if (isUnread) {
-                fillRect_Paint(
-                    p,
-                    (iRect){ topLeft_Rect(iconArea), init_I2(gap_UI / 2, height_Rect(iconArea)) },
-                    iconColor);
-            }*/
+            iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad * aspect_UI, itemHeight) };
             /* Icon. */ {
                 /* TODO: Use the primary hue from the theme of this site. */
                 iString str;
@@ -2111,7 +2154,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             int         metaFg    = isPressing ? fg : uiSubheading_ColorId;
             iInt2       titleSize = measureRange_Text(titleFont, range_String(&d->label)).bounds.size;
             const iInt2 metaSize  = measureRange_Text(uiLabel_FontId, range_String(&d->meta)).bounds.size;
-            pos.x += iconPad;
+            pos.x += iconPad * aspect_UI;
             const int avail = width_Rect(itemRect) - iconPad - 3 * gap_UI;
             const int labelFg = isPressing ? fg : (isUnread ? uiTextStrong_ColorId : uiText_ColorId);
             if (titleSize.x > avail && metaSize.x < avail * 0.75f) {
@@ -2150,7 +2193,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         appendChar_String(&str, d->icon ? d->icon : 0x1f588);
         const int leftIndent = d->indent * gap_UI * 4;
         const iRect iconArea = { addX_I2(pos, gap_UI + leftIndent),
-                                 init_I2(1.75f * lineHeight_Text(font), itemHeight) };
+                                 init_I2(1.75f * lineHeight_Text(font) / aspect_UI, itemHeight) };
         drawCentered_Text(font,
                           iconArea,
                           iTrue,
@@ -2217,7 +2260,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 drawRange_Text(
                     uiLabelLargeBold_FontId,
                     add_I2(drawPos,
-                           init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(uiLabelLargeBold_FontId)) / 2)),
+                           init_I2(3 * gap_UI * aspect_UI,
+                                   1 + (itemHeight - lineHeight_Text(uiLabelLargeBold_FontId)) / 2.0f)),
                     uiIcon_ColorId,
                     range_String(&d->meta));
             }

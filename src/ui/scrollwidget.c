@@ -30,6 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDefineObjectConstruction(ScrollWidget)
 
+#if defined (iPlatformTerminal)
+const int fadeTime_ScrollWidget_   = 10;
+const int unfadeTime_ScrollWidget_ = 10;
+#else
+const int fadeTime_ScrollWidget_   = 200;
+const int unfadeTime_ScrollWidget_ = 66;
+#endif
+
 static float minOpacity_(void) {
 #if !defined (iPlatformApple)
     if (deviceType_App() == desktop_AppDeviceType) {
@@ -125,7 +133,7 @@ static iRect thumbRect_ScrollWidget_(const iScrollWidget *d) {
 static void unfade_ScrollWidget_(iScrollWidget *d, float opacity) {
     d->fadeStart = SDL_GetTicks() + 1000;
     if (targetValue_Anim(&d->opacity) < opacity) {
-        setValue_Anim(&d->opacity, opacity, 66);
+        setValue_Anim(&d->opacity, opacity, unfadeTime_ScrollWidget_);
         addTickerRoot_App(animateOpacity_ScrollWidget_, as_Widget(d)->root, d);
     }
     if (!d->willCheckFade && d->fadeEnabled) {
@@ -180,7 +188,7 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
     }
     if (isCommand_UserEvent(ev, "scrollbar.fade")) {
         if (d->fadeEnabled && d->willCheckFade && SDL_GetTicks() > d->fadeStart) {
-            setValue_Anim(&d->opacity, minOpacity_(), 200);
+            setValue_Anim(&d->opacity, minOpacity_(), fadeTime_ScrollWidget_);
             remove_Periodic(periodic_App(), d);
             d->willCheckFade = iFalse;
             if (!isFinished_Anim(&d->opacity)) {

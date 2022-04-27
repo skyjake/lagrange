@@ -64,6 +64,7 @@ struct Impl_ListWidget {
     iSmoothScroll  scrollY;
     int            itemHeight;
     iPtrArray      items;
+    size_t         cursorItem; /* when has focus */
     size_t         hoverItem;
     size_t         dragItem;
     iInt2          dragOrigin; /* offset from mouse to drag item's top-left corner */
@@ -99,6 +100,7 @@ void    scrollOffsetSpan_ListWidget (iListWidget *, int offset, uint32_t span);
 void    updateVisible_ListWidget    (iListWidget *);
 void    updateMouseHover_ListWidget (iListWidget *);
 void    setHoverItem_ListWidget     (iListWidget *, size_t index);
+void    setCursorItem_ListWidget    (iListWidget *, size_t index);
 
 void                sort_ListWidget             (iListWidget *, int (*cmp)(const iListItem **item1, const iListItem **item2));
 
@@ -113,6 +115,7 @@ const iAnyObject *  constItem_ListWidget        (const iListWidget *, size_t ind
 const iAnyObject *  constDragItem_ListWidget    (const iListWidget *);
 const iAnyObject *  constHoverItem_ListWidget   (const iListWidget *);
 size_t              hoverItemIndex_ListWidget   (const iListWidget *);
+const iAnyObject *  constCursorItem_ListWidget  (const iListWidget *);
 
 iLocalDef iBool isEmpty_ListWidget(const iListWidget *d) { return numItems_ListWidget(d) == 0; }
 

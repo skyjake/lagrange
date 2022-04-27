@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "window.h"
 
 #include "labelwidget.h"
+#include "inputwidget.h"
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/ptrset.h>
@@ -302,10 +303,10 @@ void setMinSize_Widget(iWidget *d, iInt2 minSize) {
 
 void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
     if (d) {
-        d->padding[0] = left;
-        d->padding[1] = top;
-        d->padding[2] = right;
-        d->padding[3] = bottom;
+        d->padding[0] = left * aspect_UI;
+        d->padding[1] = top * aspect_UI;
+        d->padding[2] = right * aspect_UI;
+        d->padding[3] = bottom * aspect_UI;
     }
 }
 
@@ -1118,7 +1119,8 @@ void unhover_Widget(void) {
 
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (!d->parent) {
-        if (window_Widget(d)->focus && window_Widget(d)->focus->root == d->root && isKeyboardEvent_(ev)) {
+        if (window_Widget(d)->focus && window_Widget(d)->focus->root == d->root &&
+            (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
             /* Root dispatches keyboard events directly to the focused widget. */
             if (dispatchEvent_Widget(window_Widget(d)->focus, ev)) {
                 return iTrue;
@@ -1177,7 +1179,8 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         iReverseForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
             iAssert(child->root == d->root);
-            if (child == window_Widget(d)->focus && isKeyboardEvent_(ev)) {
+            if (child == window_Widget(d)->focus &&
+                (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
                 continue; /* Already dispatched. */
             }
             if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
@@ -1595,6 +1598,11 @@ void drawBackground_Widget(const iWidget *d) {
         iPaint p;
         init_Paint(&p);
         if (d->bgColor >= 0) {
+            if (isTerminal_App() && d->bgColor == uiSeparator_ColorId && rect.size.y == 1) {
+                fillRect_Paint(&p, adjusted_Rect(rect, zero_I2(), init_I2(0, -1)),
+                               d->bgColor);
+                return;
+            }
             fillRect_Paint(&p, rect, d->bgColor);
         }
         if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {
@@ -2121,9 +2129,11 @@ static const iWidget *findFocusable_Widget_(const iWidget *d, const iWidget *sta
     }
     if ((d->flags & focusable_WidgetFlag) && isVisible_Widget(d) && !isDisabled_Widget(d) &&
         *getNext) {
-        return d;
+        if ((~focusDir & notInput_WidgetFocusFlag) || !isInstance_Object(d, &Class_InputWidget)) {
+            return d;
+        }
     }
-    if (focusDir == forward_WidgetFocusDir) {
+    if ((focusDir & dirMask_WidgetFocusFlag) == forward_WidgetFocusDir) {
         iConstForEach(ObjectList, i, d->children) {
             const iWidget *found =
                 findFocusable_Widget_(constAs_Widget(i.object), startFrom, getNext, focusDir);
@@ -2154,6 +2164,9 @@ static const iWidget *findFocusRoot_Widget_(const iWidget *d) {
 }
 
 iAny *findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir) {
+    if (!get_Window()) {
+        return NULL;
+    }
     iRoot *uiRoot = (startFrom ? startFrom->root : get_Window()->keyRoot);
     const iWidget *focusRoot = findFocusRoot_Widget_(uiRoot->widget);
     iAssert(focusRoot != NULL);

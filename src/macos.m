@@ -210,7 +210,6 @@ static void ignoreImmediateKeyDownEvents_(void) {
     enum iTouchBarVariant touchBarVariant;
     NSString *currentAppearanceName;
     NSObject<NSApplicationDelegate> *sdlDelegate;
-    //NSMutableDictionary<NSString *, NSString*> *menuCommands;
     MenuCommands *menuCommands;
 }
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl;
@@ -219,6 +218,9 @@ static void ignoreImmediateKeyDownEvents_(void) {
 - (void)application:(NSApplication *)app openFiles:(NSArray<NSString *> *)filenames;
 - (void)application:(NSApplication *)app openURLs:(NSArray<NSURL *> *)urls;
 - (void)applicationDidFinishLaunching:(NSNotification *)notifications;
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender;
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag;
 @end
 
 @implementation MyDelegate
@@ -290,6 +292,34 @@ static void appearanceChanged_MacOS_(NSString *name) {
     [sdlDelegate applicationDidFinishLaunching:notification];
 }
 
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
+    return NO;
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+//    if (SDL_GetEventState(SDL_QUIT) == SDL_ENABLE) {
+//        SDL_Event event;
+//        event.type = SDL_QUIT;
+//        SDL_PushEvent(&event);
+//    }
+    postCommand_App("quit");
+    return NSTerminateCancel;
+}
+
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
+    if (!flag) {
+        if (numWindows_App() == 0) {
+            postCommand_App("window.new");
+        }
+        else {
+            iConstForEach(PtrArray, i, mainWindows_App()) {
+                SDL_RaiseWindow(((const iMainWindow *) i.ptr)->base.win);
+            }
+        }
+    }
+    return YES;
+}
+
 - (void)observeValueForKeyPath:(NSString *)keyPath
                       ofObject:(id)object
                         change:(NSDictionary *)change
@@ -326,6 +356,10 @@ static void appearanceChanged_MacOS_(NSString *name) {
 - (void)closeTab {
     postCommand_App("tabs.close");
     ignoreImmediateKeyDownEvents_();
+}
+
+- (void)postQuit {
+    postCommand_App("quit");
 }
 
 - (void)sidebarModePressed:(id)sender {
@@ -532,7 +566,8 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     return iTrue;        
 }
 
-void setupApplication_MacOS(void) {    
+void setupApplication_MacOS(void) {
+    SDL_EventState(SDL_QUIT, SDL_FALSE); /* handle app quit manually */
     NSApplication *app = [NSApplication sharedApplication];
     [app setActivationPolicy:NSApplicationActivationPolicyRegular];
     [app activateIgnoringOtherApps:YES];
@@ -546,13 +581,17 @@ void setupApplication_MacOS(void) {
     app.delegate = myDel;
     NSMenu *appMenu = [[[NSApp mainMenu] itemAtIndex:0] submenu];
     NSMenuItem *prefsItem = [appMenu itemWithTitle:@"Preferences…"];
+    NSMenuItem *quitItem = [appMenu itemAtIndex:[appMenu numberOfItems] - 1];
     prefsItem.target = myDel;
     prefsItem.action = @selector(showPreferences);
+    quitItem.target = myDel;
+    quitItem.action = @selector(postQuit);
     /* Get rid of the default window close item */
     NSMenu *windowMenu = [[[NSApp mainMenu] itemWithTitle:@"Window"] submenu];
     NSMenuItem *windowCloseItem = [windowMenu itemWithTitle:@"Close"];
     windowCloseItem.target = myDel;
     windowCloseItem.action = @selector(closeTab);
+    
     [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskScrollWheel
                                           handler:^NSEvent*(NSEvent *event){
                                             if (event.type == NSEventTypeScrollWheel &&

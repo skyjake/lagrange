@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/intset.h>
 
+iDeclareType(ListWidget)
+
 enum iSidebarMode {
     bookmarks_SidebarMode,
     feeds_SidebarMode,
@@ -60,3 +62,5 @@ enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
 enum iFeedsMode     feedsMode_SidebarWidget     (const iSidebarWidget *);
 float               width_SidebarWidget         (const iSidebarWidget *);
 const iIntSet *     closedFolders_SidebarWidget (const iSidebarWidget *);
+
+iListWidget *       list_SidebarWidget          (iSidebarWidget *);

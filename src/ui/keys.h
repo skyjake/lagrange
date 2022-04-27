@@ -26,23 +26,58 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <SDL_events.h>
 
-#define newIdentity_KeyShortcut         SDLK_n,             KMOD_PRIMARY | KMOD_SHIFT
+/* These are defaults for bindings that are different depending on the platform. */
 
-#if defined (iPlatformApple)
+#define newIdentity_KeyShortcut         SDLK_n,             KMOD_SECONDARY
+#define identityMenu_KeyShortcut        SDLK_i,             KMOD_SECONDARY
+
+#if defined (iPlatformTerminal)
+#   define pageInfo_KeyShortcut         SDLK_i,             0
+#   define preferences_KeyShortcut      SDLK_COMMA,         0
+#   define reload_KeyShortcut           SDLK_r,             0
+#   define newTab_KeyShortcut           SDLK_t,             0
+#   define closeTab_KeyShortcut         SDLK_w,             KMOD_PRIMARY
+#   define prevTab_KeyShortcut          SDLK_LEFTBRACKET,   0
+#   define nextTab_KeyShortcut          SDLK_RIGHTBRACKET,  0
+#   define navigateBack_KeyShortcut     SDLK_LEFT,          0
+#   define navigateForward_KeyShortcut  SDLK_RIGHT,         0
+#   define navigateParent_KeyShortcut   SDLK_r,             KMOD_SHIFT
+#   define navigateRoot_KeyShortcut     SDLK_r,             KMOD_PRIMARY
+#   define bookmarkPage_KeyShortcut     SDLK_d,             0
+#   define subscribeToPage_KeyShortcut  SDLK_d,             KMOD_SHIFT
+#   define refreshFeeds_KeyShortcut     SDLK_r,             KMOD_ALT
+#   define leftSidebar_KeyShortcut      SDLK_l,             KMOD_SHIFT
+#   define rightSidebar_KeyShortcut     SDLK_p,             KMOD_SHIFT
+#   define menuBar_KeyShortcut          '?',                0
+#   define leftSidebarTab_KeyModifier   0
+#   define byWord_KeyModifier           KMOD_CTRL
+#   define byLine_KeyModifier           KMOD_ALT
+#   define rightSidebarTab_KeyModifier  KMOD_ALT
+#elif defined (iPlatformApple)
+#   define pageInfo_KeyShortcut         SDLK_i, KMOD_PRIMARY
+#   define preferences_KeyShortcut      SDLK_COMMA,         KMOD_PRIMARY
 #   define reload_KeyShortcut           SDLK_r,             KMOD_PRIMARY
 #   define newTab_KeyShortcut           SDLK_t,             KMOD_PRIMARY
 #   define closeTab_KeyShortcut         SDLK_w,             KMOD_PRIMARY
-#   define prevTab_KeyShortcut          SDLK_LEFTBRACKET,   KMOD_SHIFT | KMOD_PRIMARY
-#   define nextTab_KeyShortcut          SDLK_RIGHTBRACKET,  KMOD_SHIFT | KMOD_PRIMARY
+#   define prevTab_KeyShortcut          SDLK_LEFTBRACKET,   KMOD_SECONDARY
+#   define nextTab_KeyShortcut          SDLK_RIGHTBRACKET,  KMOD_SECONDARY
 #   define navigateBack_KeyShortcut     SDLK_LEFT,          KMOD_PRIMARY
 #   define navigateForward_KeyShortcut  SDLK_RIGHT,         KMOD_PRIMARY
 #   define navigateParent_KeyShortcut   SDLK_UP,            KMOD_PRIMARY
-#   define navigateRoot_KeyShortcut     SDLK_UP,            KMOD_SHIFT | KMOD_PRIMARY
+#   define navigateRoot_KeyShortcut     SDLK_UP,            KMOD_SECONDARY
+#   define bookmarkPage_KeyShortcut     SDLK_d,             KMOD_PRIMARY
+#   define subscribeToPage_KeyShortcut  SDLK_d,             KMOD_SECONDARY
+#   define refreshFeeds_KeyShortcut     SDLK_r,             KMOD_SECONDARY
+#   define leftSidebar_KeyShortcut      SDLK_l,             KMOD_SECONDARY
+#   define rightSidebar_KeyShortcut     SDLK_p,             KMOD_SECONDARY
+#   define menuBar_KeyShortcut          SDLK_F10,           0
+#   define leftSidebarTab_KeyModifier   KMOD_PRIMARY
 #   define byWord_KeyModifier           KMOD_ALT
 #   define byLine_KeyModifier           KMOD_PRIMARY
-#   define rightSidebar_KeyModifier     KMOD_CTRL
-#   define subscribeToPage_KeyModifier  SDLK_d,             KMOD_SHIFT | KMOD_PRIMARY
+#   define rightSidebarTab_KeyModifier  KMOD_CTRL
 #else
+#   define pageInfo_KeyShortcut         SDLK_i, KMOD_PRIMARY
+#   define preferences_KeyShortcut      SDLK_COMMA,         KMOD_PRIMARY
 #   define reload_KeyShortcut           SDLK_r,             KMOD_PRIMARY
 #   define newTab_KeyShortcut           SDLK_t,             KMOD_PRIMARY
 #   define closeTab_KeyShortcut         SDLK_w,             KMOD_PRIMARY
@@ -52,10 +87,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define navigateForward_KeyShortcut  SDLK_RIGHT,         KMOD_ALT
 #   define navigateParent_KeyShortcut   SDLK_UP,            KMOD_ALT
 #   define navigateRoot_KeyShortcut     SDLK_UP,            KMOD_SHIFT | KMOD_ALT
+#   define bookmarkPage_KeyShortcut     SDLK_d,             KMOD_PRIMARY
+#   define subscribeToPage_KeyShortcut  SDLK_d,             KMOD_SECONDARY
+#   define refreshFeeds_KeyShortcut     SDLK_r,             KMOD_SECONDARY
+#   define leftSidebar_KeyShortcut      SDLK_l,             KMOD_SECONDARY
+#   define rightSidebar_KeyShortcut     SDLK_p,             KMOD_SECONDARY
+#   define menuBar_KeyShortcut          SDLK_F10,           0
+#   define leftSidebarTab_KeyModifier   KMOD_PRIMARY
 #   define byWord_KeyModifier           KMOD_CTRL
 #   define byLine_KeyModifier           0
-#   define rightSidebar_KeyModifier     KMOD_SHIFT | KMOD_CTRL
-#   define subscribeToPage_KeyModifier  SDLK_d,             KMOD_SHIFT | KMOD_PRIMARY
+#   define rightSidebarTab_KeyModifier  KMOD_SHIFT | KMOD_CTRL
 #endif
 
 #define builtIn_BindingId   1000    /* not user-configurable */

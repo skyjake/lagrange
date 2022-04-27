@@ -62,8 +62,8 @@ static const iMenuItem desktopNavMenuItems_[] = {
     { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
     { "${menu.page.copysource}", SDLK_c, KMOD_PRIMARY, "copy" },
     { "---" },
-    { leftHalf_Icon " ${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
-    { rightHalf_Icon " ${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { leftHalf_Icon " ${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
+    { rightHalf_Icon " ${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
     { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
     { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
@@ -73,7 +73,7 @@ static const iMenuItem desktopNavMenuItems_[] = {
     { "${menu.downloads}", 0, 0, "downloads.open" },
     { export_Icon " ${menu.export}", 0, 0, "export" },
     { "---" },
-    { gear_Icon " ${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { gear_Icon " ${menu.preferences}", preferences_KeyShortcut, "preferences" },
  #if defined (LAGRANGE_ENABLE_WINSPARKLE)
     { "${menu.update}", 0, 0, "updater.check" },
  #endif
@@ -90,14 +90,14 @@ static const iMenuItem tabletNavMenuItems_[] = {
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
-    { rightHalf_Icon " ${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { rightHalf_Icon " ${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
     { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
     { "---" },
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     { "---" },
-    { gear_Icon " ${menu.settings}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
 };
 
@@ -111,7 +111,7 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     { "---" },
-    { gear_Icon " ${menu.settings}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
 };
 
@@ -120,7 +120,7 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---" },
     { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-    { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
     { "---" },
     { person_Icon " ${menu.show.identities}", 0, 0, "toolbar.showident" },
 };
@@ -130,7 +130,7 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "---" },
 # if !defined (iPlatformAppleDesktop)
     { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-    { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
     { "---" },
     { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
 # else
@@ -352,6 +352,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "identmenu.open")) {
+        const iBool setFocus = argLabel_Command(cmd, "focus");
         iWidget *toolBar = findWidget_Root("toolbar");
         iWidget *button = findWidget_Root(toolBar && isPortraitPhone_App() ? "toolbar.ident" : "navbar.ident");
         iArray items;
@@ -411,7 +412,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             &items,
             (iMenuItem[]){
                 { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-                { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+                { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
                 { "---" } }, 3);
         if (deviceType_App() == desktop_AppDeviceType) {
             pushBack_Array(&items,
@@ -429,7 +430,8 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         }
         iWidget *menu =
             makeMenu_Widget(button, constData_Array(&items), size_Array(&items));
-        openMenu_Widget(menu, bottomLeft_Rect(bounds_Widget(button)));
+        openMenuFlags_Widget(menu, bottomLeft_Rect(bounds_Widget(button)),
+                             postCommands_MenuOpenFlags | (setFocus ? setFocus_MenuOpenFlags : 0));
         deinit_Array(&items);
         return iTrue;
     }
@@ -457,6 +459,14 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         setFocus_Widget(findWidget_App(cstr_Command(cmd, "id")));
         return iTrue;
     }
+    else if (equal_Command(cmd, "menubar.focus")) {
+        iWidget *menubar = findWidget_App("menubar");
+        if (menubar) {
+            setFocus_Widget(child_Widget(menubar, 0));
+            postCommand_Widget(focus_Widget(), "trigger");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "input.resized")) {
         /* No parent handled this, so do a full rearrangement. */
         /* TODO: Defer this and do a single rearrangement later. */
@@ -465,9 +475,6 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
-//#if !defined (iPlatformMobile) /* apps don't share input focus on mobile */
-//        setFocus_Widget(NULL);
-//#endif
         setTextColor_LabelWidget(findWidget_App("winbar.app"), uiAnnotation_ColorId);
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiAnnotation_ColorId);
         return iFalse;
@@ -656,14 +663,11 @@ static uint32_t updateReloadAnimation_Root_(uint32_t interval, void *root) {
 }
 
 static void setReloadLabel_Root_(iRoot *d, iBool animating) {
-//    const iBool isMobile = deviceType_App() != desktop_AppDeviceType;
     iLabelWidget *label = findChild_Widget(d->widget, "reload");
-    updateTextCStr_LabelWidget(
-        label, animating ? loadAnimationCStr_() : (/*isMobile ? pageMenuCStr_ :*/ reloadCStr_));
-//    if (isMobile) {
-//        setCommand_LabelWidget(label,
-//                               collectNewCStr_String(animating ? "navigate.reload" : "menu.open"));
-//    }
+    updateTextCStr_LabelWidget(label, animating ? loadAnimationCStr_() : reloadCStr_);
+    if (isTerminal_App()) {
+        showCollapsed_Widget(as_Widget(label), animating);
+    }
 }
 
 static void checkLoadAnimation_Root_(iRoot *d) {
@@ -805,7 +809,7 @@ static int navBarAvailableSpace_(iWidget *navBar) {
 }
 
 iBool isNarrow_Root(const iRoot *d) {
-    return width_Rect(safeRect_Root(d)) / gap_UI < 140;
+    return width_Rect(safeRect_Root(d)) / gap_UI < (isTerminal_App() ? 81 : 140);
 }
 
 static void updateNavBarSize_(iWidget *navBar) {
@@ -1090,7 +1094,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             updateToolbarColors_Root(as_Widget(doc)->root);
             updateNavBarIdentity_(navBar);
         }
-        setFocus_Widget(NULL);
+        //setFocus_Widget(NULL);
         makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         refresh_Widget(findWidget_Root("doctabs"));
     }
@@ -1554,8 +1558,8 @@ void createUserInterface_Root(iRoot *d) {
                         { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
                         { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
                         { "---" },
-                        { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-                        { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                        { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
+                        { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
                         { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                         { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                         { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
@@ -1844,17 +1848,18 @@ void createUserInterface_Root(iRoot *d) {
         addAction_Widget(root, SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home");
         addAction_Widget(root, 'l', KMOD_PRIMARY, "navigate.focus");
         addAction_Widget(root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
-        addAction_Widget(root, '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1");
-        addAction_Widget(root, '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1");
-        addAction_Widget(root, '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1");
-        addAction_Widget(root, '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1");
-        addAction_Widget(root, '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1");
-        addAction_Widget(root, '1', rightSidebar_KeyModifier, "sidebar2.mode arg:0 toggle:1");
-        addAction_Widget(root, '2', rightSidebar_KeyModifier, "sidebar2.mode arg:1 toggle:1");
-        addAction_Widget(root, '3', rightSidebar_KeyModifier, "sidebar2.mode arg:2 toggle:1");
-        addAction_Widget(root, '4', rightSidebar_KeyModifier, "sidebar2.mode arg:3 toggle:1");
-        addAction_Widget(root, '5', rightSidebar_KeyModifier, "sidebar2.mode arg:4 toggle:1");
+        addAction_Widget(root, '1', leftSidebarTab_KeyModifier, "sidebar.mode arg:0 toggle:1");
+        addAction_Widget(root, '2', leftSidebarTab_KeyModifier, "sidebar.mode arg:1 toggle:1");
+        addAction_Widget(root, '3', leftSidebarTab_KeyModifier, "sidebar.mode arg:2 toggle:1");
+        addAction_Widget(root, '4', leftSidebarTab_KeyModifier, "sidebar.mode arg:3 toggle:1");
+        addAction_Widget(root, '5', leftSidebarTab_KeyModifier, "sidebar.mode arg:4 toggle:1");
+        addAction_Widget(root, '1', rightSidebarTab_KeyModifier, "sidebar2.mode arg:0 toggle:1");
+        addAction_Widget(root, '2', rightSidebarTab_KeyModifier, "sidebar2.mode arg:1 toggle:1");
+        addAction_Widget(root, '3', rightSidebarTab_KeyModifier, "sidebar2.mode arg:2 toggle:1");
+        addAction_Widget(root, '4', rightSidebarTab_KeyModifier, "sidebar2.mode arg:3 toggle:1");
+        addAction_Widget(root, '5', rightSidebarTab_KeyModifier, "sidebar2.mode arg:4 toggle:1");
         addAction_Widget(root, SDLK_j, KMOD_PRIMARY, "splitmenu.open");
+        addAction_Widget(root, SDLK_F10, 0, "menubar.focus");
     }
     updateMetrics_Root(d);
     updateNavBarSize_(navBar);

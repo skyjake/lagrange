@@ -109,19 +109,8 @@ int accent_Color(iBool isBright) {
 void setThemePalette_Color(enum iColorTheme theme) {
     const iPrefs *prefs = prefs_App();
     memcpy(uiPalette_, isDark_ColorTheme(theme) ? darkPalette_ : lightPalette_, sizeof(darkPalette_));
-#if 0
-    if (prefs->accent == system_ColorAccent) {
-        iColor systemColor = systemAccent_Color();
-        memcpy(&uiPalette_[cyan_ColorId], &systemColor, sizeof(iColor));
-        memcpy(&uiPalette_[orange_ColorId], &systemColor, sizeof(iColor));
-    }
-#endif
     const int accentHi = accentColor_(prefs->accent, 1);
     const int accentLo = accentColor_(prefs->accent, 0);
-//    const int altAccentHi = accentColor_(orange_ColorAccent, 1); //(prefs->accent == cyan_ColorAccent ? orange_ColorId : cyan_ColorId);
-//    const int altAccentLo = accentColor_(orange_ColorAccent, 0); // (prefs->accent == cyan_ColorAccent ? brown_ColorId : teal_ColorId);
-    //const iColor accentMid    = mix_Color(get_Color(accentHi), get_Color(accentLo), 0.5f);
-    //const iColor altAccentMid = mix_Color(get_Color(altAccentHi), get_Color(altAccentLo), 0.5f);
     switch (theme) {
         case pureBlack_ColorTheme: {
             copy_(uiBackground_ColorId, black_ColorId);

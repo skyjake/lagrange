@@ -35,6 +35,26 @@ mpg123 is a fast console MPEG audio player and decoder library. It is licensed u
 => https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html GNU LGPL version 2.1
 => https://mpg123.org/ mpg123
 
+## Fonts
+
+This application uses fonts licensed under the Open Font License.
+
+=> https://typeof.net/Iosevka/  Iosevka
+=> https://github.com/googlefonts/noto-fonts  Noto Sans Symbols, Noto Sans Symbols 2
+=> https://github.com/skyjake/lagrange/blob/dev/res/fonts/LICENSE_SmolEmoji.txt  Smol Emoji
+=> https://github.com/adobe-fonts/source-sans/blob/release/LICENSE.md  Source Sans 3
+
+Additional fonts:
+
+=> https://github.com/googlefonts/noto-emoji/blob/master/LICENSE  Noto Emoji (Apache License 2.0)
+=> https://github.com/googlefonts/roboto  Roboto (Apache License 2.0)
+
+## Root certificates
+
+This application may include a bundled copy of the Mozilla root CA certificate store (cacert.pem). It is distributed under the MPL-2.0:
+
+=> https://www.mozilla.org/en-US/MPL/2.0/  Mozilla Public License 2.0
+
 ## the_Foundation
 
 the_Foundation is an opinionated C11 library by Jaakko Keränen. It is under the BSD 2-clause license. Note that the rest of the libraries in this section are used by the_Foundation, and not directly by Lagrange.
@@ -95,17 +115,3 @@ SSLeay license:
 
 The libunistring library is covered by the GNU Lesser General Public License (LGPL):
 => https://www.gnu.org/software/libunistring/manual/libunistring.html#GNU-LGPL GNU LGPL
-
-## Fonts
-
-This application uses fonts licensed under the Open Font License.
-
-=> https://typeof.net/Iosevka/  Iosevka
-=> https://github.com/googlefonts/noto-fonts  Noto Sans Symbols, Noto Sans Symbols 2
-=> https://github.com/skyjake/lagrange/blob/dev/res/fonts/LICENSE_SmolEmoji.txt  Smol Emoji
-=> https://github.com/adobe-fonts/source-sans/blob/release/LICENSE.md  Source Sans 3
-
-Additional fonts:
-
-=> https://github.com/googlefonts/noto-emoji/blob/master/LICENSE  Noto Emoji (Apache License 2.0)
-=> https://github.com/googlefonts/roboto  Roboto (Apache License 2.0)

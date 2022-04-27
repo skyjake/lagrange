@@ -67,6 +67,9 @@ void init_Prefs(iPrefs *d) {
         d->bottomNavBar  = iFalse;
         d->bottomTabBar  = iFalse;        
     }
+    if (isTerminal_App()) {
+        d->bottomNavBar  = iTrue;
+    }
     d->menuBar           = (deviceType_App() == desktop_AppDeviceType);
     d->pinSplit          = 1;
     d->time24h           = iTrue;

@@ -71,7 +71,7 @@ typedef void (*iGmRequestProgressFunc)(iGmRequest *, size_t current, size_t tota
 void                enableFilters_GmRequest     (iGmRequest *, iBool enable);
 void                setUrl_GmRequest            (iGmRequest *, const iString *url);
 void                setIdentity_GmRequest       (iGmRequest *, const iGmIdentity *id);
-void                setTitanData_GmRequest      (iGmRequest *, const iString *mime,
+void                setUploadData_GmRequest     (iGmRequest *, const iString *mime,
                                                  const iBlock *payload, const iString *token);
 void                setSendProgressFunc_GmRequest(iGmRequest *, iGmRequestProgressFunc func);
 void                submit_GmRequest            (iGmRequest *);

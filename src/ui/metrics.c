@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2020-2022 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,8 +25,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/math.h>
 
-#define defaultFontSize_Metrics     18
-#define defaultGap_Metrics          4
+#if defined (iPlatformTerminal)
+#   define defaultFontSize_Metrics     1
+#   define defaultGap_Metrics          1
+const float aspect_UI = 0.5f;
+#else
+#   define defaultFontSize_Metrics     18
+#   define defaultGap_Metrics          4
+const float aspect_UI = 1.0f;
+#endif
 
 int   gap_UI      = defaultGap_Metrics;
 iInt2 gap2_UI     = { defaultGap_Metrics, defaultGap_Metrics };

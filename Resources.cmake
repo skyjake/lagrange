@@ -6,11 +6,15 @@ endif ()
 function (make_resources dst)
     list (REMOVE_AT ARGV 0)
     set (files)
+    set (absfiles)
     foreach (arg ${ARGV})
         get_filename_component (name ${arg} NAME)
         if (NOT "${name}" MATCHES "^\\..*")
-            string (SUBSTRING ${arg} 4 -1 rel)
-            list (APPEND files ${rel})
+            if ("${arg}" MATCHES "^res/(.*)")
+                list (APPEND files ${CMAKE_MATCH_1})
+            else ()
+                set (absfiles ${arg})
+            endif ()
         endif ()
     endforeach (arg)
     file (REMOVE ${dst})
@@ -20,6 +24,11 @@ function (make_resources dst)
     file (WRITE ${versionTempPath} ${PROJECT_VERSION})
     execute_process (
         COMMAND ${ZIP_EXECUTABLE} -1 ${dst} VERSION ${files}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/res
+        OUTPUT_QUIET
+    )
+    execute_process (
+        COMMAND ${ZIP_EXECUTABLE} -1 -j ${dst} ${absfiles}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/res
         OUTPUT_QUIET
     )

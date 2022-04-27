@@ -20,7 +20,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* this file is included from text.c, so it doesn't use includes of its own */
+#include "text.h"
+#include <SDL_version.h>
+
+iDeclareType(Font)
+
+/* TODO: Include this in text_stb.c as an runtime option. */
 
 iLocalDef iBool isWrapPunct_(iChar c) {
     /* Punctuation that participates in word-wrapping. */
@@ -62,7 +67,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
        being in a pre-composed form). This algorithm is used if HarfBuzz is not available. */
     const iInt2 orig        = args->pos;
     iTextAttrib attrib      = { .fgColorId = args->color };
-    iRect       bounds      = { orig, init_I2(0, d->height) };
+    iRect       bounds      = { orig, init_I2(0, d->font.height) };
     float       xpos        = orig.x;
     float       xposMax     = xpos;
     float       monoAdvance = 0;
@@ -74,7 +79,10 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
     const int   xposLimit   = (wrap && wrap->maxWidth ? orig.x + wrap->maxWidth : 0);
     const enum iRunMode mode        = args->mode;
     const char *        lastWordEnd = args->text.start;
-    //iAssert(xposLimit == 0 || isMeasuring_(mode));
+    SDL_Renderer *render = current_Text()->render;
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+    SDL_Texture *cache = current_StbText_()->cache;
+#endif
     iAssert(args->text.end >= args->text.start);
     if (wrap) {
         wrap->wrapRange_        = args->text;
@@ -82,18 +90,34 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
         wrap->hitChar_out       = NULL;
         wrap->hitGlyphNormX_out = 0.0f;
     }
-//    if (args->continueFrom_out) {
-//        *args->continueFrom_out = args->text.end;
-//    }
     const iBool checkHitPoint = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
     const iBool checkHitChar  = wrap && wrap->hitChar;
     const iBool isMonospaced  = isMonospaced_Font(d) && !(mode & alwaysVariableWidthFlag_RunMode);
     if (isMonospaced) {
         monoAdvance = glyph_Font_(d, 'M')->advance;
     }
-    if (args->mode & fillBackground_RunMode) {
-        const iColor initial = get_Color(args->color);
-        SDL_SetRenderDrawColor(activeText_->render, initial.r, initial.g, initial.b, 0);
+    /* The default text foreground color. */
+    if (mode & draw_RunMode) {
+        const iColor clr = get_Color(args->color);
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+        SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
+#endif
+#if defined (SDL_SEAL_CURSES)
+        const enum iFontStyle style = style_FontId(fontId_Text(d));
+        SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
+        SDL_SetRenderTextAttributes(
+            render,
+            (style == bold_FontStyle || style == semiBold_FontStyle ? SDL_TEXT_ATTRIBUTE_BOLD : 0) |
+                (style == italic_FontStyle ? SDL_TEXT_ATTRIBUTE_ITALIC : 0) |
+                (mode & underline_RunMode ? SDL_TEXT_ATTRIBUTE_BOLD | SDL_TEXT_ATTRIBUTE_UNDERLINE : 0));
+#endif
+        if (args->mode & fillBackground_RunMode) {
+            const iColor initial = get_Color(args->color);
+            SDL_SetRenderDrawColor(render, initial.r, initial.g, initial.b, 0);
+//#if defined (SDL_SEAL_CURSES)
+//            SDL_SetRenderTextFillColor(render, initial.r, initial.g, initial.b, 255);
+//#endif
+        }
     }
     /* Text rendering is not very straightforward! Let's dive in... */
     iChar       prevCh = 0;
@@ -102,7 +126,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
         iAssert(chPos < args->text.end);
         const char *currentPos = chPos;
         const iBool isHitPointOnThisLine = (checkHitPoint && wrap->hitPoint.y >= ypos &&
-                                            wrap->hitPoint.y < ypos + d->height);
+                                            wrap->hitPoint.y < ypos + d->font.height);
         if (checkHitChar && currentPos == wrap->hitChar) {
             wrap->hitAdvance_out = sub_I2(init_I2(xpos, ypos), orig);
         }
@@ -115,16 +139,21 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             chPos++;
             iRegExpMatch m;
             init_RegExpMatch(&m);
-            if (match_RegExp(activeText_->ansiEscape, chPos, args->text.end - chPos, &m)) {
+            if (match_RegExp(current_Text()->ansiEscape, chPos, args->text.end - chPos, &m)) {
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     /* Change the color. */
                     iColor clr = get_Color(args->color);
                     ansiColors_Color(capturedRange_RegExpMatch(&m, 1),
-                                     activeText_->baseFgColorId,
+                                     current_Text()->baseFgColorId,
                                      none_ColorId, &clr, NULL);
-                    SDL_SetTextureColorMod(activeText_->cache, clr.r, clr.g, clr.b);
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+                    SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
+#endif
+#if defined (SDL_SEAL_CURSES)
+                    SDL_SetRenderTextColor(render, clr.r, clr.g, clr.b);
+#endif
                     if (args->mode & fillBackground_RunMode) {
-                        SDL_SetRenderDrawColor(activeText_->render, clr.r, clr.g, clr.b, 0);
+                        SDL_SetRenderDrawColor(render, clr.r, clr.g, clr.b, 0);
                     }
                 }
                 chPos = end_RegExpMatch(&m);
@@ -169,12 +198,12 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             /* TODO: Check out if `uc_wordbreak_property()` from libunistring can be used here. */
             if (ch == '\n') {
                 /* Notify about the wrap. */
-                if (!notify_WrapText_(wrap, chPos, attrib, 0, iMax(xpos, xposExtend) - orig.x)) {
+                if (!notify_WrapText(wrap, chPos, attrib, 0, iMax(xpos, xposExtend) - orig.x)) {
                     break;
                 }
                 lastWordEnd = NULL;
                 xpos = xposExtend = orig.x;
-                ypos += d->height;
+                ypos += d->font.height;
                 prevCh = ch;
                 continue;
             }
@@ -211,9 +240,11 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                 }
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     const iColor clr = get_Color(colorNum);
-                    SDL_SetTextureColorMod(activeText_->cache, clr.r, clr.g, clr.b);
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+                    SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
+#endif
                     if (args->mode & fillBackground_RunMode) {
-                        SDL_SetRenderDrawColor(activeText_->render, clr.r, clr.g, clr.b, 0);
+                        SDL_SetRenderDrawColor(render, clr.r, clr.g, clr.b, 0);
                     }
                 }
                 prevCh = 0;
@@ -251,26 +282,29 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
                 wrapPos = skipSpace_CStr(lastWordEnd); /* go back */
                 wrapPos = iMin(wrapPos, args->text.end);
                 advance = wrapAdvance;
+                if (checkHitPoint && wrap->hitChar_out > lastWordEnd - 1) {
+                    wrap->hitChar_out = iMax(args->text.start, lastWordEnd - 1);
+                }
             }
-            if (!notify_WrapText_(wrap, wrapPos, attrib, 0, advance)) {
+            if (!notify_WrapText(wrap, wrapPos, attrib, 0, advance)) {
                 break;
             }
             lastWordEnd = NULL;
             xpos = xposExtend = orig.x;
-            ypos += d->height;
+            ypos += d->font.height;
             prevCh = 0;
             chPos = wrapPos;
             continue;
         }
-        const int yLineMax = ypos + d->height;
+        const int yLineMax = ypos + d->font.height;
         SDL_Rect dst = { x1 + glyph->d[hoff].x,
                          ypos + glyph->font->baseline + glyph->d[hoff].y,
                          glyph->rect[hoff].size.x,
                          glyph->rect[hoff].size.y };
         if (glyph->font != d) {
-            if (glyph->font->height > d->height) {
+            if (glyph->font->font.height > d->font.height) {
                 /* Center-align vertically so the baseline isn't totally offset. */
-                dst.y -= (glyph->font->height - d->height) / 2;
+                dst.y -= (glyph->font->font.height - d->font.height) / 2;
             }
         }
         /* Update the bounding box. */
@@ -284,7 +318,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
         }
         else {
             bounds.size.x = iMax(bounds.size.x, x2 - orig.x);
-            bounds.size.y = iMax(bounds.size.y, ypos + glyph->font->height - orig.y);
+            bounds.size.y = iMax(bounds.size.y, ypos + glyph->font->font.height - orig.y);
         }
         /* Symbols and emojis are NOT monospaced, so must conform when the primary font
            is monospaced. Except with Japanese script, that's larger than the normal monospace. */
@@ -316,15 +350,20 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             if (args->mode & fillBackground_RunMode) {
                 /* Alpha blending looks much better if the RGB components don't change in
                    the partially transparent pixels. */
-                SDL_RenderFillRect(activeText_->render, &dst);
+                SDL_RenderFillRect(render, &dst);
             }
-            SDL_RenderCopy(activeText_->render, activeText_->cache, &src, &dst);
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+            SDL_RenderCopy(render, cache, &src, &dst);
+#endif
+#if defined (SDL_SEAL_CURSES)
+            SDL_RenderDrawUnicode(render, dst.x, dst.y, ch);
+#endif
         }
         xpos += advance;
         if (!isSpace_Char(ch)) {
             xposExtend += isEmoji ? glyph->advance : advance;
         }
-#if defined (LAGRANGE_ENABLE_KERNING)
+#if defined (LAGRANGE_ENABLE_KERNING) && defined (LAGRANGE_ENABLE_STB_TRUETYPE)
         /* Check the next character. */
         if (!isMonospaced && glyph->font == d) {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
@@ -333,9 +372,9 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             if (enableKerning_Text && next) {
                 const uint32_t nextGlyphIndex = glyphIndex_Font_(glyph->font, next);
                 int kern = stbtt_GetGlyphKernAdvance(
-                    &glyph->font->fontFile->stbInfo, index_Glyph_(glyph), nextGlyphIndex);
+                    &glyph->font->font.file->stbInfo, index_Glyph_(glyph), nextGlyphIndex);
                 /* Nunito needs some kerning fixes. */
-                if (glyph->font->fontSpec->flags & fixNunitoKerning_FontSpecFlag) {
+                if (glyph->font->font.spec->flags & fixNunitoKerning_FontSpecFlag) {
                     if (ch == 'W' && (next == 'i' || next == 'h')) {
                         kern = -30;
                     }
@@ -367,7 +406,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             break;
         }
     }
-    notify_WrapText_(wrap, chPos, attrib, 0, xpos - orig.x);
+    notify_WrapText(wrap, chPos, attrib, 0, xpos - orig.x);
     if (checkHitChar && wrap->hitChar == args->text.end) {
         wrap->hitAdvance_out = sub_I2(init_I2(xpos, ypos), orig);
     }
@@ -377,7 +416,11 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
     if (args->runAdvance_out) {
         *args->runAdvance_out = xposMax - orig.x;
     }
-//    fflush(stdout);
+#if defined (SDL_SEAL_CURSES)
+    if (mode & draw_RunMode) {
+        SDL_SetRenderTextFillColor(render, 0, 0, 0, 0);
+    }
+#endif
     return bounds;
 }
 

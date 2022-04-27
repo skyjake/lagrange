@@ -27,97 +27,65 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/vec2.h>
 #include <SDL_render.h>
 
-#include "fontpack.h"
+#include "font.h"
 
 iDeclareType(RegExp)
-
-/* Content sizes: regular (1x) -> medium (1.2x) -> big (1.33x) -> large (1.67x) -> huge (2x) */
-
-#define FONT_ID(name, style, size)    ((name) + ((style) * max_FontSize) + (size))
-
-enum iFontId {
-    default_FontId           = 0,                     /* default is always the first font */
-    monospace_FontId         = maxVariants_Fonts,     /* 2nd font is always the monospace font */
-    documentHeading_FontId   = maxVariants_Fonts * 2, /* heading font */
-    documentBody_FontId      = maxVariants_Fonts * 3, /* body font */
-    documentMonospace_FontId = maxVariants_Fonts * 4,
-    auxiliary_FontId         = maxVariants_Fonts * 5, /* the first auxiliary font (e.g., symbols) */
-
-    /* Meta: */
-    mask_FontId               = 0x0000ffff, /* font IDs are 16-bit; see GmRun's packing */
-    alwaysVariableFlag_FontId = 0x00010000,
-
-    /* UI fonts: */
-    uiLabelTiny_FontId        = FONT_ID(default_FontId,   semiBold_FontStyle, uiTiny_FontSize),
-    uiLabelSmall_FontId       = FONT_ID(default_FontId,   regular_FontStyle,  uiSmall_FontSize),
-    uiLabel_FontId            = FONT_ID(default_FontId,   regular_FontStyle,  uiNormal_FontSize),
-    uiLabelMedium_FontId      = FONT_ID(default_FontId,   regular_FontStyle,  uiMedium_FontSize),
-    uiLabelMediumBold_FontId  = FONT_ID(default_FontId,   bold_FontStyle,     uiMedium_FontSize),
-    uiLabelBig_FontId         = FONT_ID(default_FontId,   regular_FontStyle,  uiBig_FontSize),
-    uiLabelBold_FontId        = FONT_ID(default_FontId,   bold_FontStyle,     uiNormal_FontSize),
-    uiLabelBigBold_FontId     = FONT_ID(default_FontId,   bold_FontStyle,     uiBig_FontSize),
-    uiLabelLarge_FontId       = FONT_ID(default_FontId,   regular_FontStyle,  uiLarge_FontSize),
-    uiLabelLargeBold_FontId   = FONT_ID(default_FontId,   bold_FontStyle,     uiLarge_FontSize),
-    uiLabelSymbols_FontId     = FONT_ID(auxiliary_FontId, regular_FontStyle,  uiNormal_FontSize),
-    uiShortcuts_FontId        = FONT_ID(default_FontId,   regular_FontStyle,  uiNormal_FontSize),
-    uiInput_FontId            = FONT_ID(default_FontId,   regular_FontStyle,  uiMedium_FontSize),
-    uiContent_FontId          = FONT_ID(default_FontId,   regular_FontStyle,  uiMedium_FontSize),
-    uiContentBold_FontId      = FONT_ID(default_FontId,   bold_FontStyle,     uiMedium_FontSize),
-    uiContentSymbols_FontId   = FONT_ID(auxiliary_FontId, regular_FontStyle,  uiMedium_FontSize),
-    
-    /* Document fonts: */     
-    paragraph_FontId          = FONT_ID(documentBody_FontId,      regular_FontStyle,  contentRegular_FontSize),
-    bold_FontId               = FONT_ID(documentBody_FontId,      semiBold_FontStyle, contentRegular_FontSize),
-    firstParagraph_FontId     = FONT_ID(documentBody_FontId,      regular_FontStyle,  contentMedium_FontSize),
-    preformatted_FontId       = FONT_ID(monospace_FontId,         regular_FontStyle,  contentSmall_FontSize),
-    preformattedSmall_FontId  = FONT_ID(monospace_FontId,         regular_FontStyle,  contentTiny_FontSize),
-    quote_FontId              = FONT_ID(documentBody_FontId,      italic_FontStyle,   contentRegular_FontSize),
-    heading1_FontId           = FONT_ID(documentHeading_FontId,   bold_FontStyle,     contentHuge_FontSize),
-    heading2_FontId           = FONT_ID(documentHeading_FontId,   regular_FontStyle,  contentLarge_FontSize),
-    heading3_FontId           = FONT_ID(documentHeading_FontId,   bold_FontStyle,     contentBig_FontSize),
-    banner_FontId             = FONT_ID(documentHeading_FontId,   light_FontStyle,    contentLarge_FontSize),
-    monospaceParagraph_FontId = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentRegular_FontSize),
-    monospaceBold_FontId      = FONT_ID(documentMonospace_FontId, semiBold_FontStyle, contentRegular_FontSize),
-    plainText_FontId          = FONT_ID(documentMonospace_FontId, regular_FontStyle,  contentRegular_FontSize),
-};
-
-//iLocalDef iBool isJapanese_FontId(enum iFontId id) {
-//    return id >= japanese_FontId && id < japanese_FontId + max_FontSize;
-//}
 
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)
 
 extern int gap_Text; /* affected by content font size */
+static const float contentScale_Text = 1.3f;
 
 iDeclareType(Text)
-iDeclareTypeConstructionArgs(Text, SDL_Renderer *)
+
+struct Impl_Text {
+    SDL_Renderer *render;
+    float         contentFontSize;
+    iRegExp      *ansiEscape;
+    int           ansiFlags;
+    int           baseFontId; /* base attributes (for restoring via escapes) */
+    int           baseFgColorId;
+};
+
+iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar);
+
+iText * new_Text                (SDL_Renderer *render);
+void    delete_Text             (iText *);
 
 void    init_Text               (iText *, SDL_Renderer *);
 void    deinit_Text             (iText *);
 
 void    setCurrent_Text         (iText *);
+iText * current_Text            (void);
 
 void    setDocumentFontSize_Text(iText *, float fontSizeFactor); /* affects all except `default*` fonts */
 void    resetFonts_Text         (iText *);
 void    resetFontCache_Text     (iText *);
 
+enum iAnsiFlag {
+    allowFg_AnsiFlag        = iBit(1),
+    allowBg_AnsiFlag        = iBit(2),
+    allowFontStyle_AnsiFlag = iBit(3),
+    allowAll_AnsiFlag       = 0x7,
+};
+
+void    setOpacity_Text         (float opacity);
+void    setBaseAttributes_Text  (int fontId, int fgColorId); /* current "normal" text attributes */
+void    setAnsiFlags_Text       (int ansiFlags);
+int     ansiFlags_Text          (void);
+
+iChar   missing_Text            (size_t index);
+void    resetMissing_Text       (iText *);
+iBool   checkMissing_Text       (void); /* returns the flag, and clears it */
+SDL_Texture *glyphCache_Text    (void);
+
+/*----------------------------------------------------------------------------------------------*/
+
 int     lineHeight_Text         (int fontId);
-float   emRatio_Text            (int fontId); /* em advance to line height ratio */
 iRect   visualBounds_Text       (int fontId, iRangecc text);
 int     fontWithSize_Text       (int fontId, enum iFontSize sizeId);
 int     fontWithStyle_Text      (int fontId, enum iFontStyle styleId);
 int     fontWithFamily_Text     (int fontId, enum iFontId familyId);
-
-iDeclareType(TextMetrics)
-
-struct Impl_TextMetrics {
-    iRect bounds;  /* logical bounds: multiples of line height, horiz. advance */
-    iInt2 advance; /* cursor offset */
-};
-
-iLocalDef int maxWidth_TextMetrics(const iTextMetrics d) {
-    return iMax(width_Rect(d.bounds), d.advance.x);
-}
 
 iTextMetrics    measureRange_Text       (int fontId, iRangecc text);
 iTextMetrics    measureWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
@@ -136,18 +104,6 @@ enum iAlignment {
     right_Alignment,
 };
 
-enum iAnsiFlag {
-    allowFg_AnsiFlag        = iBit(1),
-    allowBg_AnsiFlag        = iBit(2),
-    allowFontStyle_AnsiFlag = iBit(3),
-    allowAll_AnsiFlag       = 0x7,
-};
-
-void    setOpacity_Text         (float opacity);
-void    setBaseAttributes_Text  (int fontId, int fgColorId); /* current "normal" text attributes */
-void    setAnsiFlags_Text       (int ansiFlags);
-int     ansiFlags_Text          (void);
-
 void    cache_Text              (int fontId, iRangecc text); /* pre-render glyphs */
 
 void    draw_Text               (int fontId, iInt2 pos, int color, const char *text, ...);
@@ -162,68 +118,6 @@ void    drawRangeN_Text         (int fontId, iInt2 pos, int color, iRangecc text
 void    drawOutline_Text        (int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text);
 void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, iBool justify, int color, iRangecc text); /* bound does not wrap */
 int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
-
-iDeclareType(WrapText)
-
-enum iWrapTextMode {
-    anyCharacter_WrapTextMode,
-    word_WrapTextMode,
-};
-
-iDeclareType(TextAttrib)
-    
-/* Initial attributes at the start of a text string. These may be modified by control
-   sequences inside a text run. */
-struct Impl_TextAttrib {
-    int16_t fgColorId;
-    int16_t bgColorId;
-    struct {
-        uint16_t regular   : 1;
-        uint16_t bold      : 1;
-        uint16_t light     : 1;
-        uint16_t italic    : 1;
-        uint16_t monospace : 1;
-        uint16_t isBaseRTL : 1;
-        uint16_t isRTL     : 1;
-    }; 
-};
-
-struct Impl_WrapText {
-    /* arguments */
-    iRangecc    text;
-    int         maxWidth;
-    size_t      maxLines; /* 0: unlimited */
-    enum iWrapTextMode mode;
-    iBool       justify;
-    iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, iTextAttrib attrib, int origin,
-                          int advance);
-    void *      context;
-    iChar       overrideChar; /* use this for all characters instead of the real ones */
-    int         baseDir; /* set to +1 for LTR, -1 for RTL */
-    iInt2       hitPoint; /* sets hitChar_out */
-    const char *hitChar; /* sets hitAdvance_out */
-    /* output */
-    const char *hitChar_out;
-    iInt2       hitAdvance_out;
-    float       hitGlyphNormX_out; /* normalized X inside the glyph */
-    /* internal */
-    iRangecc    wrapRange_;
-};
-
-iTextMetrics    measure_WrapText    (iWrapText *, int fontId);
-iTextMetrics    draw_WrapText       (iWrapText *, int fontId, iInt2 pos, int color);
-
-iChar           missing_Text        (size_t index);
-void            resetMissing_Text   (iText *);
-iBool           checkMissing_Text   (void); /* returns the flag, and clears it */
-SDL_Texture *   glyphCache_Text     (void);
-
-enum iTextBlockMode { quadrants_TextBlockMode, shading_TextBlockMode };
-
-iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iTextBlockMode,
-                                     const iString *text);
-
-iRegExp *   makeAnsiEscapePattern_Text  (iBool includeEscChar);
 
 /*-----------------------------------------------------------------------------------------------*/
 
