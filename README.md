@@ -25,7 +25,7 @@ On macOS you can install and upgrade via Homebrew:
 
     brew install --cask lagrange
 
-Please check [MacPorts](https://www.macports.org) if you are using macOS 10.12 or older.
+Please check [MacPorts](https://ports.macports.org/port/lagrange/) if you are using macOS 10.12 or older.
 
 On Fedora and any RHEL/CentOS Stream 8 and 9 derivatives (RHEL, CentOS Stream, Alma, Rocky) that have the EPEL repos enabled:
 
@@ -81,7 +81,6 @@ Note that the `install` target also deploys an XDG .desktop file for launching t
 
 | CMake Option | Description |
 | ------------ | ----------- |
-| `ENABLE_BINCAT_SH` | Merge resource files (fonts, etc.) together using a Bash shell script. By default this is **OFF**, so _res/bincat.c_ is compiled as a native executable for this purpose. However, when cross-compiling, native binaries built during the CMake run may be targeted for the wrong architecture. Set this to **ON** if you are having problems with bincat while running CMake. |
 | `ENABLE_CUSTOM_FRAME` | Draw a custom window frame. (Only on Microsoft Windows.) The custom frame is more in line with the visual style of the rest of the UI, but does not implement all of the native window behaviors (e.g., snapping, system menu). |
 | `ENABLE_DOWNLOAD_EDIT` | Allow changing the Downloads directory via the Preferences dialog. This should be set to **OFF** in sandboxed environments where  downloaded files must be saved into a specific place. |
 | `ENABLE_IDLE_SLEEP` | Sleep in the main thread instead of waiting for events. On some platforms, when using SDL 2.0.16 or earlier, `SDL_WaitEvent()` may have a relatively high CPU usage. Setting this to **ON** polls for events periodically but otherwise keeps the main thread sleeping, reducing CPU usage. The drawback is that there is a slightly increased latency reacting to new events after idle mode ends. |
@@ -94,6 +93,7 @@ Note that the `install` target also deploys an XDG .desktop file for launching t
 | `ENABLE_MPG123` | Use the mpg123 library for decoding MPEG audio files. |
 | `ENABLE_RELATIVE_EMBED` | Locate resources only in relation to the executable. Useful when any system/predefined directories are not supposed to be accessed, e.g., in the Windows portable build. |
 | `ENABLE_RESOURCE_EMBED` | Embed all resource files into the Lagrange executable instead of keeping them in a separate file that gets loaded at launch. Setting this **ON** makes it much slower to run CMake and to compile Lagrange. |
+| `ENABLE_TUI` | Build the TUI version (`clagrange`). The SEALCurses library is required: it is used instead of SDL. |
 | `ENABLE_WEBP` | Use libwebp to decode .webp images, if `pkg-config` can find the library. |
 | `ENABLE_WINDOWPOS_FIX` | Set correct window position after the window has already been shown. This may be necessary on some platforms to prevent the window from being restored to the wrong position. |
 | `ENABLE_X11_SWRENDER` | Default to software rendering when running under X11. By default Lagrange attempts to use the GPU for rendering the user interface. You can also use the `--sw` option at launch to force software rendering. |
