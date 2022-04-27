@@ -1581,7 +1581,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
                 setBookmarkEditorParentFolder_Widget(dlg, bm ? bm->parentId : 0);
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
-                setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
+                postCommand_Root(dlg->root, "focus.set id:bmed.title");
             }
             return iTrue;
         }
