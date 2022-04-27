@@ -236,6 +236,7 @@ enum iDocumentWidgetFlag {
     rightWheelSwipe_DocumentWidgetFlag       = iBit(19),
     eitherWheelSwipe_DocumentWidgetFlag      = leftWheelSwipe_DocumentWidgetFlag |
                                                rightWheelSwipe_DocumentWidgetFlag,
+    viewSource_DocumentWidgetFlag            = iBit(20),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -1380,14 +1381,20 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 }
             }
         }
-        if (run->flags & quoteBorder_GmRunFlag) {
-            drawVLine_Paint(&d->paint,
-                            addX_I2(visPos,
-                                    !run->isRTL
-                                        ? -gap_Text * 5 / 2
-                                        : (width_Rect(run->visBounds) + gap_Text * 5 / 2)),
-                            height_Rect(run->visBounds),
-                            tmQuoteIcon_ColorId);
+        if (run->flags & ruler_GmRunFlag) {
+            if (height_Rect(run->visBounds) > 1) {
+                /* This is used for block quotes. */
+                drawVLine_Paint(&d->paint,
+                                addX_I2(visPos,
+                                        !run->isRTL
+                                            ? -gap_Text * 5 / 2
+                                            : (width_Rect(run->visBounds) + gap_Text * 5 / 2)),
+                                height_Rect(run->visBounds),
+                                tmQuoteIcon_ColorId);
+            }
+            else {
+                drawHLine_Paint(&d->paint, visPos, width_Rect(run->visBounds), tmQuoteIcon_ColorId);
+            }
         }
         /* Base attributes. */ {
             int f, c;
@@ -2661,13 +2668,30 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
             while (nextSplit_Rangecc(mime, ";", &seg)) {
                 iRangecc param = seg;
                 trim_Rangecc(&param);
-                /* Detect fontpacks even if the server doesn't use the right media type. */
-                if (isRequestFinished && equal_Rangecc(param, "application/octet-stream")) {
-                    if (detect_FontPack(&response->body)) {
-                        param = range_CStr(mimeType_FontPack);
+                if (isRequestFinished) {
+                    /* Format autodetection. */
+                    if (equal_Rangecc(param, "application/octet-stream")) {
+                        /* Detect fontpacks even if the server doesn't use the right media type. */
+                        if (detect_FontPack(&response->body)) {
+                            param = range_CStr(mimeType_FontPack);
+                        }
+                        else if (isUtf8_Rangecc(range_Block(&response->body))) {
+                            param = range_CStr("text/plain");
+                        }
                     }
-                    else if (isUtf8_Rangecc(range_Block(&response->body))) {
-                        param = range_CStr("text/plain");
+                    if (equal_Rangecc(param, "text/plain")) {
+                        iUrl parts;
+                        init_Url(&parts, d->mod.url);
+                        const iRangecc fileName = baseNameSep_Path(collectNewRange_String(parts.path), "/");
+                        if (endsWithCase_Rangecc(fileName, ".md") ||
+                            endsWithCase_Rangecc(fileName, ".mdown") ||
+                            endsWithCase_Rangecc(fileName, ".markdown")) {
+                            param = range_CStr("text/markdown");
+                        }
+                        else if (endsWithCase_Rangecc(fileName, ".gmi") ||
+                                 endsWithCase_Rangecc(fileName, ".gemini")) {
+                            param = range_CStr("text/gemini");
+                        }
                     }
                 }
                 if (equal_Rangecc(param, "text/gemini")) {
@@ -4722,6 +4746,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "document.viewformat") && document_App() == d) {
+        const iBool gemtext = (d->flags & viewSource_DocumentWidgetFlag) != 0;
+        iChangeFlags(d->flags, viewSource_DocumentWidgetFlag, !gemtext);
+        if (setViewFormat_GmDocument(
+                d->view.doc, gemtext ? gemini_SourceFormat : plainText_SourceFormat)) {
+            updateWidthAndRedoLayout_DocumentView_(&d->view);
+            updateSize_DocumentWidget(d);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "fontpack.install") && document_App() == d) {
         if (argLabel_Command(cmd, "ttf")) {
             iAssert(!cmp_String(&d->sourceMime, "font/ttf"));
@@ -5377,9 +5411,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                             { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                             { "${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
+                            { d->flags & viewSource_DocumentWidgetFlag ? "${menu.viewformat.gemini}"
+                                                                       : "${menu.viewformat.plain}",
+                              0, 0, "document.viewformat" },
                             { "---" },
-                            { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
-                        17);
+                            { "${menu.page.copyurl}", 0, 0, "document.copylink" }, },
+                        18);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,

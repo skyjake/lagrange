@@ -47,7 +47,7 @@ enum iMediaFlags {
     partialData_MediaFlag = iBit(2),
 };
 
-enum iMediaType { /* Note: There is a limited number of bits for these; see GmRun below. */
+enum iMediaType { /* Note: There is a limited number of bits for these; see GmRun. */
     none_MediaType,
     image_MediaType,
     //animatedImage_MediaType, /* TODO */

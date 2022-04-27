@@ -409,6 +409,12 @@ msgstr "Copy Page URL"
 msgid "menu.page.copysource"
 msgstr "Copy Page Source"
 
+msgid "menu.viewformat.plain"
+msgstr "View as Plain Text"
+
+msgid "menu.viewformat.gemini"
+msgstr "View as Gemtext"
+
 msgid "menu.bookmarks.refresh"
 msgstr "Refresh Remote Bookmarks"
 
