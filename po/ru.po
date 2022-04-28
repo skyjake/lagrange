@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2022-04-06 03:13+0000\n"
+"PO-Revision-Date: 2022-04-29 18:07+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -2434,3 +2434,30 @@ msgstr "Строка меню"
 
 msgid "prefs.justify"
 msgstr "Выровнять:"
+
+msgid "keys.contextmenu"
+msgstr "Открыть контекстное меню"
+
+msgid "spartan.input"
+msgstr "Введите отправляемый текст:"
+
+msgid "menu.viewformat.gemini"
+msgstr "Просмотреть как Gemtext"
+
+msgid "keys.menubar.focus"
+msgstr "Передать фокус панели меню"
+
+msgid "menu.viewformat.plain"
+msgstr "Просмотреть как обычный текст"
+
+msgid "keys.identmenu"
+msgstr "Открыть меню клиентских сертификатов"
+
+msgid "menu.reopentab"
+msgstr "Открыть последнюю закрытую вкладку"
+
+msgid "dlg.spartan.upload"
+msgstr "Открыть редактор…"
+
+msgid "heading.upload.spartan"
+msgstr "Загрузить (Spartan)"
