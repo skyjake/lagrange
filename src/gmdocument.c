@@ -1909,6 +1909,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         if (equal_CStr(cstr_Block(iconSeed), "gemini.circumlunar.space")) {
             d->siteIcon = 0x264a; /* gemini symbol */
         }
+        else if (equal_CStr(cstr_Block(iconSeed), "spartan.mozz.us")) {
+            d->siteIcon = 0x1f4aa; /* arm flex */
+        }
         updateIconBasedOnUrl_GmDocument_(d);
     }
 #if 0

@@ -4082,41 +4082,42 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     msg, "%s\n", formatCStrs_Lang("num.bytes.n", size_Block(&d->sourceContent)));
             }
         }
-        /* TODO: On mobile, omit the CA status. */
-        appendFormat_String(
-            msg,
-            "\n%s${pageinfo.cert.status}\n"
-            "%s%s  %s\n"
-            "%s%s  %s%s\n"
-            "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
-            "%s%s  %s",
-            uiHeading_ColorEscape,
-            d->certFlags & authorityVerified_GmCertFlag ? checked
-                                                        : uiText_ColorEscape "\u2610",
-            uiText_ColorEscape,
-            d->certFlags & authorityVerified_GmCertFlag ? "${pageinfo.cert.ca.verified}"
-                                                        : "${pageinfo.cert.ca.unverified}",
-            d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
-            uiText_ColorEscape,
-            d->certFlags & domainVerified_GmCertFlag ? "${pageinfo.domain.match}"
-                                                     : "${pageinfo.domain.mismatch}",
-            ~d->certFlags & domainVerified_GmCertFlag
-                ? format_CStr(" (%s)", cstr_String(d->certSubject))
-                : "",
-            d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
-            uiText_ColorEscape,
-            d->certFlags & timeVerified_GmCertFlag ? "${pageinfo.cert.notexpired}"
-                                                   : "${pageinfo.cert.expired}",
-            d->certExpiry.year,
-            d->certExpiry.month,
-            d->certExpiry.day,
-            d->certExpiry.hour,
-            d->certExpiry.minute,
-            d->certExpiry.second,
-            d->certFlags & trusted_GmCertFlag ? checked : unchecked,
-            uiText_ColorEscape,
-            d->certFlags & trusted_GmCertFlag ? "${pageinfo.cert.trusted}"
-                                              : "${pageinfo.cert.untrusted}");
+        if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini")) {
+            appendFormat_String(
+                msg,
+                "\n%s${pageinfo.cert.status}\n"
+                "%s%s  %s\n"
+                "%s%s  %s%s\n"
+                "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
+                "%s%s  %s",
+                uiHeading_ColorEscape,
+                d->certFlags & authorityVerified_GmCertFlag ? checked
+                                                            : uiText_ColorEscape "\u2610",
+                uiText_ColorEscape,
+                d->certFlags & authorityVerified_GmCertFlag ? "${pageinfo.cert.ca.verified}"
+                                                            : "${pageinfo.cert.ca.unverified}",
+                d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
+                uiText_ColorEscape,
+                d->certFlags & domainVerified_GmCertFlag ? "${pageinfo.domain.match}"
+                                                         : "${pageinfo.domain.mismatch}",
+                ~d->certFlags & domainVerified_GmCertFlag
+                    ? format_CStr(" (%s)", cstr_String(d->certSubject))
+                    : "",
+                d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
+                uiText_ColorEscape,
+                d->certFlags & timeVerified_GmCertFlag ? "${pageinfo.cert.notexpired}"
+                                                       : "${pageinfo.cert.expired}",
+                d->certExpiry.year,
+                d->certExpiry.month,
+                d->certExpiry.day,
+                d->certExpiry.hour,
+                d->certExpiry.minute,
+                d->certExpiry.second,
+                d->certFlags & trusted_GmCertFlag ? checked : unchecked,
+                uiText_ColorEscape,
+                d->certFlags & trusted_GmCertFlag ? "${pageinfo.cert.trusted}"
+                                                  : "${pageinfo.cert.untrusted}");
+        }
         setFocus_Widget(NULL);
         iArray *items = new_Array(sizeof(iMenuItem));
         if (canTrust) {

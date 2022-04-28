@@ -171,11 +171,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define openTabBg_Icon      "\u2750" //"\u2b1a"
 #define openExt_Icon        "\u27a0"
 #define add_Icon            "\u2795"
-#if defined (iPlatformTerminal)
-#  define page_Icon         "\u2237"
-#else
-#  define page_Icon           "\U00010117"
-#endif
+#define page_Icon           "\U00010117"
 #define circle_Icon         "\u25cf"
 #define circleWhite_Icon    "\u25cb"
 #define gear_Icon           "\u2699"
@@ -209,6 +205,10 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define spartan_Icon        "\U0001f4aa"
 
 #if defined (iPlatformTerminal)
+#   undef page_Icon
+#   undef upload_Icon
+#   define page_Icon        "\u2237"
+#   define upload_Icon      upArrow_Icon
 #   define shift_Icon       "Sh"
 #   define shiftReturn_Icon "Sh-" return_Icon
 #elif defined (iPlatformApple)
