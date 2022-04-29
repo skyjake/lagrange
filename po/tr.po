@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-04 18:19+0000\n"
+"PO-Revision-Date: 2022-04-29 18:07+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -2387,3 +2387,30 @@ msgstr "Okyanus"
 
 msgid "prefs.justify"
 msgstr "İki yana yasla:"
+
+msgid "menu.reopentab"
+msgstr "Son kapatılan sekmeyi yeniden aç"
+
+msgid "menu.viewformat.plain"
+msgstr "Düz metin olarak görüntüle"
+
+msgid "menu.viewformat.gemini"
+msgstr "Gemtext olarak görüntüle"
+
+msgid "keys.menubar.focus"
+msgstr "Menü çubuğuna odaklan"
+
+msgid "keys.identmenu"
+msgstr "Kimlik menüsünü aç"
+
+msgid "keys.contextmenu"
+msgstr "Bağlam menüsünü aç"
+
+msgid "spartan.input"
+msgstr "Gönderilecek metni girin:"
+
+msgid "dlg.spartan.upload"
+msgstr "Düzenleyiciyi aç…"
+
+msgid "heading.upload.spartan"
+msgstr "Spartan ile gönder"
