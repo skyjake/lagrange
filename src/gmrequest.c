@@ -402,46 +402,22 @@ static const iBlock *replaceVariables_(const iBlock *block) {
                 repl = range_CStr(LAGRANGE_APP_VERSION);
             }
             else if (equal_Rangecc(name, "ALT")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u2325");
-#else
-                repl = range_CStr("Alt");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u2325" : "Alt");
             }
             else if (equal_Rangecc(name, "ALT+")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u2325");
-#else
-                repl = range_CStr("Alt+");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u2325" : "Alt+");
             }
             else if (equal_Rangecc(name, "CTRL")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u2318");
-#else
-                repl = range_CStr("Ctrl");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u2318" : "Ctrl");
             }
             else if (equal_Rangecc(name, "CTRL+")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u2318");
-#else
-                repl = range_CStr("Ctrl+");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u2318" : "Ctrl+");
             }
             else if (equal_Rangecc(name, "SHIFT")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u21e7");
-#else
-                repl = range_CStr("Shift");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u21e7" : "Shift");
             }
             else if (equal_Rangecc(name, "SHIFT+")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u21e7");
-#else
-                repl = range_CStr("Shift+");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u21e7" : "Shift+");
             }
             else {
                 /* Translated string. */

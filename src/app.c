@@ -94,26 +94,32 @@ iDeclareType(App)
 #define EMB_BIN "../../Resources/resources.lgr"
 static const char *defaultDataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
 #endif
+
 #if defined (iPlatformAppleMobile)
 #define EMB_BIN "../../Resources/resources.lgr"
 static const char *defaultDataDir_App_ = "~/Library/Application Support";
 #endif
+
 #if defined (iPlatformMsys)
 #define EMB_BIN "../resources.lgr"
 static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
+
 #if defined (iPlatformAndroidMobile)
 #define EMB_BIN "resources.lgr" /* loaded from assets with SDL_rwops */
 static const char *defaultDataDir_App_ = NULL; /* will ask SDL */
+
 #elif defined (iPlatformLinux) || defined (iPlatformTerminal) || defined (iPlatformOther)
 #define EMB_BIN  "../../share/lagrange/resources.lgr"
 #define EMB_BIN2  "../../../share/lagrange/resources.lgr"
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
+
 #if defined (iPlatformHaiku)
 #define EMB_BIN "./resources.lgr"
 static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
 #endif
+
 #define EMB_BIN_EXEC "../resources.lgr" /* fallback from build/executable dir */
 #if defined (iPlatformTerminal)
 #   define STATE_NAME "cstate" /* separate for console since it's a different environment */
@@ -122,6 +128,7 @@ static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
 #   define STATE_NAME "state"
 #   define PREFS_NAME "prefs"
 #endif
+
 static const char *prefsFileName_App_      = PREFS_NAME ".cfg";
 static const char *oldStateFileName_App_   = STATE_NAME ".binary";
 static const char *stateFileName_App_      = STATE_NAME ".lgr";

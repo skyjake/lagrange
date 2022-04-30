@@ -107,67 +107,69 @@ static void removePlus_(iString *str) {
 }
 
 void toString_Sym(int key, int kmods, iString *str) {
-#if defined (iPlatformTerminal)
-    if (kmods & KMOD_CTRL) {
-        appendCStr_String(str, "^");
+    if (isTerminal_Platform()) {
+        if (kmods & KMOD_CTRL) {
+            appendCStr_String(str, "^");
+        }
+        if (kmods & (KMOD_ALT | KMOD_GUI)) {
+            appendCStr_String(str, "M-");
+        }
+        if (kmods & KMOD_SHIFT) {
+            appendCStr_String(str, "Sh-");
+        }
+        if (key == SDLK_BACKSPACE) {
+            removePlus_(str);
+            appendCStr_String(str, "BSP"); /* Erase to the Left */
+            return;
+        }
+        else if (key == 0x20) {
+            appendCStr_String(str, "SPC");
+            return;
+        }
+        else if (key == SDLK_ESCAPE) {
+            removePlus_(str);
+            appendCStr_String(str, "ESC"); /* Erase to the Right */
+            return;
+        }
+        else if (key == SDLK_DELETE) {
+            removePlus_(str);
+            appendCStr_String(str, "DEL"); /* Erase to the Right */
+            return;
+        }
+        else if (key == SDLK_RETURN) {
+            removePlus_(str);
+            appendCStr_String(str, "RET"); /* Leftwards arrow with a hook */
+            return;
+        }
     }
-    if (kmods & (KMOD_ALT | KMOD_GUI)) {
-        appendCStr_String(str, "M-");
+    else if (isApple_Platform()) {
+        if (kmods & KMOD_CTRL) {
+            appendChar_String(str, 0x2303);
+        }
+        if (kmods & KMOD_ALT) {
+            appendChar_String(str, 0x2325);
+        }
+        if (kmods & KMOD_SHIFT) {
+            appendCStr_String(str, shift_Icon);
+        }
+        if (kmods & KMOD_GUI) {
+            appendChar_String(str, 0x2318);
+        }
     }
-    if (kmods & KMOD_SHIFT) {
-        appendCStr_String(str, "Sh-");
+    else {
+        if (kmods & KMOD_CTRL) {
+            appendCStr_String(str, "Ctrl+");
+        }
+        if (kmods & KMOD_ALT) {
+            appendCStr_String(str, "Alt+");
+        }
+        if (kmods & KMOD_SHIFT) {
+            appendCStr_String(str, shift_Icon "+");
+        }
+        if (kmods & KMOD_GUI) {
+            appendCStr_String(str, "Meta+");
+        }
     }
-    if (key == SDLK_BACKSPACE) {
-        removePlus_(str);
-        appendCStr_String(str, "BSP"); /* Erase to the Left */
-        return;
-    }
-    else if (key == 0x20) {
-        appendCStr_String(str, "SPC");
-        return;
-    }
-    else if (key == SDLK_ESCAPE) {
-        removePlus_(str);
-        appendCStr_String(str, "ESC"); /* Erase to the Right */
-        return;
-    }
-    else if (key == SDLK_DELETE) {
-        removePlus_(str);
-        appendCStr_String(str, "DEL"); /* Erase to the Right */
-        return;
-    }
-    else if (key == SDLK_RETURN) {
-        removePlus_(str);
-        appendCStr_String(str, "RET"); /* Leftwards arrow with a hook */
-        return;
-    }
-#elif defined (iPlatformApple)
-    if (kmods & KMOD_CTRL) {
-        appendChar_String(str, 0x2303);
-    }
-    if (kmods & KMOD_ALT) {
-        appendChar_String(str, 0x2325);
-    }
-    if (kmods & KMOD_SHIFT) {
-        appendCStr_String(str, shift_Icon);
-    }
-    if (kmods & KMOD_GUI) {
-        appendChar_String(str, 0x2318);
-    }
-#else
-    if (kmods & KMOD_CTRL) {
-        appendCStr_String(str, "Ctrl+");
-    }
-    if (kmods & KMOD_ALT) {
-        appendCStr_String(str, "Alt+");
-    }
-    if (kmods & KMOD_SHIFT) {
-        appendCStr_String(str, shift_Icon "+");
-    }
-    if (kmods & KMOD_GUI) {
-        appendCStr_String(str, "Meta+");
-    }
-#endif
     if (kmods & KMOD_CAPS) {
         appendCStr_String(str, "Caps+");
     }
