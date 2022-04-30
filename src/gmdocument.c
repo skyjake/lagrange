@@ -933,7 +933,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             iGmRun bulRun = run;
             bulRun.color = tmQuote_ColorId;
             bulRun.visBounds.pos = addX_I2(
-                pos, (indents[text_GmLineType] - (isTerminal_App() ? 0.0f : 0.55f)) * gap_Text);
+                pos, (indents[text_GmLineType] - (isTerminal_Platform() ? 0.0f : 0.55f)) * gap_Text);
             bulRun.visBounds.size =
                 init_I2((indents[bullet_GmLineType] - indents[text_GmLineType]) * gap_Text,
                         lineHeight_Text(bulRun.font));

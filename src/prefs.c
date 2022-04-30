@@ -67,7 +67,7 @@ void init_Prefs(iPrefs *d) {
         d->bottomNavBar  = iFalse;
         d->bottomTabBar  = iFalse;        
     }
-    if (isTerminal_App()) {
+    if (isTerminal_Platform()) {
         d->bottomNavBar  = iTrue;
     }
     d->menuBar           = (deviceType_App() == desktop_AppDeviceType);

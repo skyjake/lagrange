@@ -98,33 +98,23 @@ iLocalDef iBool isFullSizePanel_(const iWidget *panels) {
 static void updatePanelSheetMetrics_(iWidget *sheet) {
     iWidget *navi       = findChild_Widget(sheet, "panel.navi");
     int      naviHeight = lineHeight_Text(labelFont_()) + 4 * gap_UI;
-#if defined (iPlatformMobile)
-    float left = 0.0f, right = 0.0f, top = 0.0f, bottom = 0.0f;
-#if defined (iPlatformAppleMobile)
-    safeAreaInsets_iOS(&left, &top, &right, &bottom);
+    if (isMobile_Platform()) {
+        float left = 0.0f, right = 0.0f, top = 0.0f, bottom = 0.0f;
+#if defined(iPlatformAppleMobile)
+        safeAreaInsets_iOS(&left, &top, &right, &bottom);
 #endif
-    if (isFullSizePanel_(sheet)) {
-        setPadding_Widget(sheet, left, 0, right, 0);
-        navi->rect.pos = init_I2(left, top);
+        if (isFullSizePanel_(sheet)) {
+            setPadding_Widget(sheet, left, 0, right, 0);
+            navi->rect.pos = init_I2(left, top);
+        }
+        else {
+            setPadding_Widget(sheet, 0, top, 0, bottom);
+        }
+        iConstForEach(PtrArray, i, findChildren_Widget(sheet, "panel.toppad")) {
+            iWidget *pad = *i.value;
+            setFixedSize_Widget(pad, init1_I2(naviHeight));
+        }
     }
-    else {
-        setPadding_Widget(sheet, 0, top, 0, bottom);
-//        if (deviceType_App() == tablet_AppDeviceType) {
-//            const iRect visRect = visibleRect_Root(sheet->root);
-//            sheet->rect.pos.y = windowToLocal_Widget(sheet,
-//                                                     init_I2(0, iMaxi(top_Rect(visRect), bottom_Rect(visRect) -
-//                                                             sheet->rect.size.y))).y;
-//            const int excess = bottom_Rect(bounds_Widget(sheet)) - bottom_Rect(visRect);
-//            if (excess > 0) {
-//                sheet->rect.size.y -= excess;
-//            }
-//        }
-    }
-    iConstForEach(PtrArray, i, findChildren_Widget(sheet, "panel.toppad")) {
-        iWidget *pad = *i.value;
-        setFixedSize_Widget(pad, init1_I2(naviHeight));
-    }
-#endif
     setFixedSize_Widget(navi, init_I2(-1, naviHeight));
 }
 
@@ -1162,6 +1152,16 @@ int leftSafeInset_Mobile(void) {
     float left;
     safeAreaInsets_iOS(&left, NULL, NULL, NULL);
     return iRound(left);
+#else
+    return 0;
+#endif
+}
+
+int rightSafeInset_Mobile(void) {
+#if defined (iPlatformAppleMobile)
+    float right;
+    safeAreaInsets_iOS(NULL, NULL, &right, NULL);
+    return iRound(right);
 #else
     return 0;
 #endif

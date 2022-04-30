@@ -371,7 +371,7 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
     iString icon;
     initUnicodeN_String(&icon, &d->icon, 1);
     iInt2 cPos = topLeft_Rect(itemRect);
-    int indent = 1.4f * lineHeight_Text(font) + (isTerminal_App() ? 2 * gap_UI : 0);
+    int indent = 1.4f * lineHeight_Text(font) + (isTerminal_Platform() ? 2 * gap_UI : 0);
     addv_I2(&cPos,
             init_I2(3 * gap_UI * aspect_UI,
                     (itemHeight - lineHeight_Text(uiLabel_FontId) * 2 - lineHeight_Text(font)) /
@@ -407,12 +407,10 @@ void init_CertListWidget(iCertListWidget *d) {
     setBackgroundColor_Widget(w, none_ColorId);
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
-#if defined (iPlatformMobile)
     if (deviceType_App() == phone_AppDeviceType) {
         d->itemFonts[0] = uiLabelBig_FontId;
         d->itemFonts[1] = uiLabelBigBold_FontId;
     }
-#endif
     updateItemHeight_CertListWidget(d);
     d->menu = NULL;
     d->contextItem = NULL;
@@ -420,7 +418,7 @@ void init_CertListWidget(iCertListWidget *d) {
 }
 
 void updateItemHeight_CertListWidget(iCertListWidget *d) {
-    const float height = isTerminal_App() ? 4.0f : 3.5f;
+    const float height = isTerminal_Platform() ? 4.0f : 3.5f;
     setItemHeight_ListWidget(&d->list, height * lineHeight_Text(d->itemFonts[0]));
 }
 

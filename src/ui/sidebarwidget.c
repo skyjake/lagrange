@@ -835,15 +835,16 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->buttonFont = uiLabel_FontId; /* wiil be changed later */
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
-#if defined (iPlatformMobile)
-    if (deviceType_App() == phone_AppDeviceType) {
-        d->itemFonts[0] = uiLabelBig_FontId;
-        d->itemFonts[1] = uiLabelBigBold_FontId;
+    if (isMobile_Platform()) {
+        if (deviceType_App() == phone_AppDeviceType) {
+            d->itemFonts[0] = uiLabelBig_FontId;
+            d->itemFonts[1] = uiLabelBigBold_FontId;
+        }
+        d->widthAsGaps = 73.0f;
     }
-    d->widthAsGaps = 73.0f;
-#else
-    d->widthAsGaps = isTerminal_App() ? 35.0f : 60.0f;
-#endif
+    else {
+        d->widthAsGaps = isTerminal_Platform() ? 35.0f : 60.0f;
+    }
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     iWidget *vdiv = makeVDiv_Widget();
     addChildFlags_Widget(w, iClob(vdiv), resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
@@ -1207,7 +1208,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         scrollOffset_ListWidget(d->list, 0);
         if (wasChanged) {
             postCommandf_App("%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
-            if (isTerminal_App()) {
+            if (isTerminal_Platform()) {
                 setFocus_Widget(as_Widget(list_SidebarWidget(d)));
                 if (wasChanged) {
                     setCursorItem_ListWidget(list_SidebarWidget(d), 0);

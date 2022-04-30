@@ -739,7 +739,7 @@ static uint32_t cursorTimer_(uint32_t interval, void *w) {
 
 iLocalDef iBool isBlinkingCursor_(void) {
     /* Terminal will blink if appropriate. */
-    return prefs_App()->blinkingCursor && !isTerminal_App();
+    return prefs_App()->blinkingCursor && !isTerminal_Platform();
 }
 
 static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, int doStart) {
@@ -829,9 +829,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->validator = NULL;
     d->validatorContext = NULL;
     setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, iTrue);
-#if defined (iPlatformMobile)
-    setFlags_Widget(w, extraPadding_WidgetFlag, iTrue);
-#endif
+    setFlags_Widget(w, extraPadding_WidgetFlag, isMobile_Platform());
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
     init_String(&d->text);
 #else
@@ -2739,7 +2737,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* `lines` is already up to date and ready for drawing. */
     fillRect_Paint(
         &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
-    if (!isTerminal_App()) {
+    if (!isTerminal_Platform()) {
         drawRectThickness_Paint(&p,
                                 adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
                                 isFocused ? gap_UI / 4 : 1,

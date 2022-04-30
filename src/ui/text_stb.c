@@ -301,14 +301,8 @@ iLocalDef iFont *font_Text_(enum iFontId id) {
 }
 
 static void setupFontVariants_StbText_(iStbText *d, const iFontSpec *spec, int baseId) {
-#if defined (iPlatformMobile)
-    const float uiSize = fontSize_UI * 1.1f;
-#else
-    const float uiSize = fontSize_UI;
-#endif
+    const float uiSize   = fontSize_UI * (isMobile_Platform() ? 1.1f : 1.0f);
     const float textSize = fontSize_UI * d->base.contentFontSize;
-//    const float monoSize      = textSize * 0.71f;
-//    const float smallMonoSize = monoSize * 0.8f;
     if (spec->flags & override_FontSpecFlag && d->overrideFontId < 0) {
         /* This is the highest priority override font. */
         d->overrideFontId = baseId;

@@ -76,6 +76,7 @@ void        setupMenuTransition_Mobile  (iWidget *menu,  iBool isIncoming);
 void        setupSheetTransition_Mobile (iWidget *sheet, int flags);
 
 int         leftSafeInset_Mobile        (void);
+int         rightSafeInset_Mobile       (void);
 int         topSafeInset_Mobile         (void);
 int         bottomSafeInset_Mobile      (void);
 

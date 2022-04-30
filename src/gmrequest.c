@@ -824,24 +824,24 @@ void submit_GmRequest(iGmRequest *d) {
             setCStr_String(&resp->meta, "text/gemini");
             iString *page = collectNew_String();
             iString *parentDir = collectNewRange_String(dirName_Path(path));
-#if !defined (iPlatformMobile)
-            appendFormat_String(page, "=> %s " keyUpArrow_Icon " %s" iPathSeparator "\n\n",
-                                cstrCollect_String(makeFileUrl_String(parentDir)),
-                                cstr_String(parentDir));
-#endif
+            if (!isMobile_Platform()) {
+                appendFormat_String(page, "=> %s " keyUpArrow_Icon " %s" iPathSeparator "\n\n",
+                                    cstrCollect_String(makeFileUrl_String(parentDir)),
+                                    cstr_String(parentDir));
+            }
             appendFormat_String(page, "# %s\n", cstr_Rangecc(baseName_Path(path)));
             /* Make a directory index page. */
             iPtrArray *sortedInfo = collectNew_PtrArray();
             iForEach(DirFileInfo, entry,
                      iClob(directoryContents_FileInfo(iClob(new_FileInfo(path))))) {
                 /* Ignore some files. */
-#if defined (iPlatformApple)
-                const iRangecc name = baseName_Path(path_FileInfo(entry.value));
-                if (equal_Rangecc(name, ".DS_Store") ||
-                    equal_Rangecc(name, ".localized")) {
-                    continue;
+                if (isApple_Platform()) {
+                    const iRangecc name = baseName_Path(path_FileInfo(entry.value));
+                    if (equal_Rangecc(name, ".DS_Store") ||
+                        equal_Rangecc(name, ".localized")) {
+                        continue;
+                    }
                 }
-#endif
                 pushBack_PtrArray(sortedInfo, ref_Object(entry.value));
             }
             sort_Array(sortedInfo, (int (*)(const void *, const void *)) cmp_FileInfoPtr_);

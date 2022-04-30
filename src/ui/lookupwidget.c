@@ -37,10 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "visited.h"
 
-#if defined (iPlatformAppleMobile)
-#   include "../ios.h"
-#endif
-
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/thread.h>
 #include <the_Foundation/regexp.h>
@@ -391,15 +387,13 @@ void init_LookupWidget(iLookupWidget *d) {
     init_Widget(w);
     setId_Widget(w, "lookup");
     setFlags_Widget(w, focusable_WidgetFlag, iTrue);
-#if defined (iPlatformMobile)
-    setFlags_Widget(w, unhittable_WidgetFlag, iTrue);
-#endif
+    setFlags_Widget(w, unhittable_WidgetFlag, isMobile_Platform());
     d->list = addChildFlags_Widget(w, iClob(new_ListWidget()),
                                    resizeToParentWidth_WidgetFlag |
                                    resizeToParentHeight_WidgetFlag);
     /* We will handle focus and cursor manually. */
     setFlags_Widget(as_Widget(d->list), focusable_WidgetFlag, iFalse);
-    if (isTerminal_App()) {
+    if (isTerminal_Platform()) {
         setPadding_Widget(as_Widget(d->list), 2, 2, 2, 2);
     }
     d->cursor = iInvalidPos;
@@ -688,9 +682,9 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                                       : bottomLeft_Rect(bounds_Widget(url));
             setPos_Widget(
                 w, windowToLocal_Widget(w, max_I2(zero_I2(), addX_I2(topLeft, -extraWidth / 2))));
-#if defined (iPlatformMobile)
-            /* TODO: Check this again. */
-            /* Adjust height based on keyboard size. */ {
+            if (isMobile_Platform()) {
+                /* Adjust height based on keyboard size. */
+                /* TODO: Check this again. */
                 if (!atBottom) {
                     w->rect.size.y = bottom_Rect(visibleRect_Root(root)) - top_Rect(bounds_Widget(w));
                 }
@@ -699,17 +693,15 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                     w->rect.size.y = height_Rect(visibleRect_Root(root)) - height_Rect(navBarBounds) +
                         (!isPortraitPhone_App() ? bottomSafeInset_Mobile() : 0);
                 }
-#   if defined (iPlatformAppleMobile)
-                if (deviceType_App() != desktop_AppDeviceType) {
-                    float l = 0.0f, r = 0.0f;
-                    safeAreaInsets_iOS(&l, NULL, &r, NULL);
+                if (isApple_Platform() && deviceType_App() != desktop_AppDeviceType) {
+                    int l = leftSafeInset_Mobile();
+                    int r = rightSafeInset_Mobile();
+                    //safeAreaInsets_iOS(&l, NULL, &r, NULL);
                     w->rect.size.x = size_Root(root).x - l - r;
                     w->rect.pos.x  = l;
                     /* TODO: Need to use windowToLocal_Widget? */
                 }
-#   endif
             }
-#endif
             arrange_Widget(w);
         }
         updateVisible_ListWidget(d->list);

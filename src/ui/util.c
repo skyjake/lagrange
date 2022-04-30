@@ -612,11 +612,9 @@ static void checkPullAction_SmoothScroll_(iSmoothScroll *d) {
 }
 
 void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
-#if !defined (iPlatformMobile)
-    if (!prefs_App()->smoothScrolling) {
+    if (!isMobile_Platform() && !prefs_App()->smoothScrolling) {
         span = 0; /* always instant */
     }
-#endif
     int destY = targetValue_Anim(&d->pos) + offset;
     if (d->flags & pullDownAction_SmoothScrollFlag && destY < -pullActionThreshold_SmoothScroll_(d)) {
         if (d->pullActionTriggered == 0) {
@@ -992,7 +990,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     setDrawBufferEnabled_Widget(menu, iTrue);
     setFrameColor_Widget(menu, uiSeparator_ColorId);
     setBackgroundColor_Widget(menu, uiBackgroundMenu_ColorId);
-    if (isTerminal_App()) {
+    if (isTerminal_Platform()) {
         setPadding1_Widget(menu, 3);
     }
     else if (deviceType_App() != desktop_AppDeviceType) {
@@ -2527,11 +2525,11 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
 static void addDialogInputWithHeadingAndFlags_(iWidget *headings, iWidget *values, const char *labelText,
                                                const char *inputId, iInputWidget *input, int64_t flags) {
     iLabelWidget *head = addChild_Widget(headings, iClob(makeHeading_Widget(labelText)));
-#if defined (iPlatformMobile)
-    /* On mobile, inputs have 2 gaps of extra padding. */
-    setFixedSize_Widget(as_Widget(head), init_I2(-1, height_Widget(input)));
-    setPadding_Widget(as_Widget(head), 0, gap_UI, 0, 0);
-#endif
+    if (isMobile_Platform()) {
+        /* On mobile, inputs have 2 gaps of extra padding. */
+        setFixedSize_Widget(as_Widget(head), init_I2(-1, height_Widget(input)));
+        setPadding_Widget(as_Widget(head), 0, gap_UI, 0, 0);
+    }
     setId_Widget(addChild_Widget(values, input), inputId);
     if (deviceType_App() != phone_AppDeviceType) {
         /* Ensure that the label has the same height as the input widget. */

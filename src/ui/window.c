@@ -618,11 +618,9 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     d->place.snap             = 0;
     d->keyboardHeight         = 0;
     d->backBuf                = NULL;
-#if defined(iPlatformMobile)
-    const iInt2 minSize = zero_I2(); /* windows aren't independently resizable */
-#else
-    const iInt2 minSize = init_I2(425, 325);
-#endif
+    const iInt2 minSize =
+        (isMobile_Platform() ? zero_I2() /* windows aren't independently resizable */
+                             : init_I2(425, 325));
     SDL_SetWindowMinimumSize(d->base.win, minSize.x, minSize.y);
     SDL_SetWindowTitle(d->base.win, "Lagrange");
     /* Some info. */ {
@@ -1438,18 +1436,20 @@ void draw_MainWindow(iMainWindow *d) {
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
         setCurrent_Root(w->roots[0]);
-#if defined (iPlatformMobile)
-        iColor back = get_Color(uiBackground_ColorId);
-        if (deviceType_App() == phone_AppDeviceType) {
-            /* Page background extends to safe area, so fill it completely. */
-            back = get_Color(tmBackground_ColorId);
+        iColor back;
+        if (isMobile_Platform()) {
+            back = get_Color(uiBackground_ColorId);
+            if (deviceType_App() == phone_AppDeviceType) {
+                /* Page background extends to safe area, so fill it completely. */
+                back = get_Color(tmBackground_ColorId);
+            }
         }
-#else
-        const iColor back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
-                                              ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
-                                          ? uiAnnotation_ColorId
-                                          : uiSeparator_ColorId);
-#endif
+        else {
+            back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
+                                     ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
+                                 ? uiAnnotation_ColorId
+                                 : uiSeparator_ColorId);
+        }
         unsetClip_Paint(&p); /* update clip to full window */
         SDL_SetRenderDrawColor(w->render, back.r, back.g, back.b, 255);
         SDL_RenderClear(w->render);

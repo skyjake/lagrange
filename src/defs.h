@@ -24,6 +24,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lang.h"
 
+iLocalDef iBool isTerminal_Platform(void) {
+#if defined (iPlatformTerminal)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isApple_Platform(void) {
+#if defined (iPlatformApple)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isMobile_Platform(void) {
+#if defined (iPlatformMobile) /* defined on iOS and Android */
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 enum iSourceFormat {
     undefined_SourceFormat = -1,
     gemini_SourceFormat    = 0,

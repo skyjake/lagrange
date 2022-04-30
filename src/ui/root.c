@@ -665,7 +665,7 @@ static uint32_t updateReloadAnimation_Root_(uint32_t interval, void *root) {
 static void setReloadLabel_Root_(iRoot *d, iBool animating) {
     iLabelWidget *label = findChild_Widget(d->widget, "reload");
     updateTextCStr_LabelWidget(label, animating ? loadAnimationCStr_() : reloadCStr_);
-    if (isTerminal_App()) {
+    if (isTerminal_Platform()) {
         showCollapsed_Widget(as_Widget(label), animating);
     }
 }
@@ -686,8 +686,7 @@ void updatePadding_Root(iRoot *d) {
     if (!d) return;
 #if defined (iPlatformAppleMobile)
     iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
-    float left, top, right;
-    float bottom = 0.0f;
+    float left, top, right, bottom;
     safeAreaInsets_iOS(&left, &top, &right, &bottom);
     /* Respect the safe area insets. */ {
         setPadding_Widget(findChild_Widget(d->widget, "navdiv"), left, top, right, 0);
@@ -699,7 +698,9 @@ void updatePadding_Root(iRoot *d) {
 }
 
 void updateToolbarColors_Root(iRoot *d) {
-#if defined (iPlatformMobile)
+    if (!isMobile_Platform()) {
+        return;
+    }
     iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
     if (bottomBar) {
         iWidget *toolBar = findChild_Widget(bottomBar, "toolbar");
@@ -719,9 +720,6 @@ void updateToolbarColors_Root(iRoot *d) {
         }
         updateNavBarIdentity_(NULL); /* updates the identity button */
     }
-#else
-    iUnused(d);
-#endif
 }
 
 void showOrHideNewTabButton_Root(iRoot *d) {
@@ -809,7 +807,7 @@ static int navBarAvailableSpace_(iWidget *navBar) {
 }
 
 iBool isNarrow_Root(const iRoot *d) {
-    return width_Rect(safeRect_Root(d)) / gap_UI < (isTerminal_App() ? 81 : 140);
+    return width_Rect(safeRect_Root(d)) / gap_UI < (isTerminal_Platform() ? 81 : 140);
 }
 
 static void updateNavBarSize_(iWidget *navBar) {

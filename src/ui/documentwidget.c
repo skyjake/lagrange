@@ -553,7 +553,7 @@ static int documentWidth_DocumentView_(const iDocumentView *d) {
                                 -1.0f, 10.0f); /* adapt to width */
     //printf("%f\n", adjust); fflush(stdout);
     int prefsWidth = prefs->lineWidth;
-    if (isTerminal_App()) {
+    if (isTerminal_Platform()) {
         prefsWidth /= aspect_UI * 0.8f;
     }
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
@@ -1368,7 +1368,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, contentRegular_FontSize);
                     iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
                                      init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
-                    if (isTerminal_App()) {
+                    if (isTerminal_Platform()) {
                         nbArea.pos.x += 1;
                     }
                     drawRange_Text(
@@ -2786,14 +2786,13 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     else {
                         if (detect_Export(zip)) {
                             setCStr_String(&d->sourceMime, mimeType_Export);
-#if !defined (iPlatformMobile)
-                            pushBack_Array(footerItems,
-                                           &(iMenuItem){ openExt_Icon " ${menu.open.external}",
-                                                         SDLK_RETURN,
-                                                         KMOD_PRIMARY,
-                                        "document.save extview:1"
-                                });
-#endif
+                            if (!isMobile_Platform()) {
+                                pushBack_Array(footerItems,
+                                               &(iMenuItem){ openExt_Icon " ${menu.open.external}",
+                                                             SDLK_RETURN,
+                                                             KMOD_PRIMARY,
+                                                             "document.save extview:1" });
+                            }
                         }
                         format_String(&str, "# %s\n", zipPageHeading_(range_String(&d->sourceMime)));
                         appendFormat_String(&str,
@@ -4775,7 +4774,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "contextkey") && document_App() == d) {
-        if (!isTerminal_App()) {
+        if (!isTerminal_Platform()) {
             d->view.hoverLink = NULL;
         }
         emulateMouseClick_Widget(w, SDL_BUTTON_RIGHT);

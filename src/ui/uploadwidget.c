@@ -236,7 +236,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         }
     }
     else {
-        const float aspectRatio = isTerminal_App() ? 0.6f : 1.0f;
+        const float aspectRatio = isTerminal_Platform() ? 0.6f : 1.0f;
         useSheetStyle_Widget(w);
         setFlags_Widget(w, overflowScrollable_WidgetFlag, iFalse);
         addDialogTitle_Widget(w,
@@ -474,11 +474,12 @@ static void updateFileInfo_UploadWidget_(iUploadWidget *d) {
         return;
     }
     d->fileSize = size_FileInfo(info);
-#if defined (iPlatformMobile)
-    setTextCStr_LabelWidget(d->filePathLabel, cstr_Rangecc(baseName_Path(&d->filePath)));
-#else
-    setText_LabelWidget(d->filePathLabel, &d->filePath);
-#endif
+    if (isMobile_Platform()) {
+        setTextCStr_LabelWidget(d->filePathLabel, cstr_Rangecc(baseName_Path(&d->filePath)));
+    }
+    else {
+        setText_LabelWidget(d->filePathLabel, &d->filePath);
+    }
     setTextCStr_LabelWidget(d->fileSizeLabel, formatCStrs_Lang("num.bytes.n", d->fileSize));
     setTextCStr_InputWidget(d->mime, mediaType_Path(&d->filePath));
 }

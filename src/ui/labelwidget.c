@@ -59,11 +59,9 @@ struct Impl_LabelWidget {
 };
 
 static iBool isHover_LabelWidget_(const iLabelWidget *d) {
-#if defined (iPlatformMobile)
-    if (!isHovering_Touch()) {
+    if (isMobile_Platform() && !isHovering_Touch()) {
         return iFalse;
     }
-#endif
     return isHover_Widget(d);
 }
 
@@ -74,15 +72,14 @@ static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
                              : corner == 1 ? init_I2(w->padding[2], w->padding[1])
                              : corner == 2 ? init_I2(w->padding[2], w->padding[3])
                              : init_I2(w->padding[0], w->padding[3]));
-#if defined (iPlatformMobile)
-    return add_I2(widgetPad,
-                  init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
-                          (flags & extraPadding_WidgetFlag ? 1.5f : 1.0f) * 3 * gap_UI / 2));
-#else
+    if (isMobile_Platform()) {
+        return add_I2(widgetPad,
+                      init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
+                              (flags & extraPadding_WidgetFlag ? 1.5f : 1.0f) * 3 * gap_UI / 2));
+    }
     return add_I2(widgetPad,
                   init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI),
                           gap_UI * aspect_UI));
-#endif
 }
 
 iDefineObjectConstructionArgs(LabelWidget,
@@ -391,7 +388,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     int bg, fg, frame, frame2, iconColor, metaColor;
     getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2, &iconColor, &metaColor);
     /* Indicate focused label with an underline attribute. */
-    if (isTerminal_App() && isFocused_Widget(w)) {
+    if (isTerminal_Platform() && isFocused_Widget(w)) {
         fg |= underline_ColorId;
     }
     setBaseAttributes_Text(d->font, fg);

@@ -222,13 +222,9 @@ static iString *serializePrefs_App_(const iApp *d) {
             y = win->place.normalRect.pos.y;
             w = win->place.normalRect.size.x;
             h = win->place.normalRect.size.y;
-#if defined (iPlatformApple) || defined (iPlatformMobile)
             /* On macOS, maximization should be applied at creation time or the window will take
                a moment to animate to its maximized size. */
-            const int winSnap = 0;
-#else
-            const int winSnap = snap_MainWindow(win);
-#endif
+            const int winSnap = (isApple_Platform() || isMobile_Platform() ? 0 : snap_MainWindow(win));
             appendFormat_String(str,
                                 "window.setrect index:%zu width:%d height:%d coord:%d %d snap:%d\n",
                                 winIndex,
@@ -288,11 +284,11 @@ static iString *serializePrefs_App_(const iApp *d) {
     for (size_t i = 0; i < iElemCount(d->prefs.navbarActions); i++) {
         appendFormat_String(str, "navbar.action.set arg:%d button:%d\n", d->prefs.navbarActions[i], i);
     }
-#if defined (iPlatformMobile)
-    appendFormat_String(str, "hidetoolbarscroll arg:%d\n", d->prefs.hideToolbarOnScroll);
-    appendFormat_String(str, "toolbar.action.set arg:%d button:0\n", d->prefs.toolbarActions[0]);
-    appendFormat_String(str, "toolbar.action.set arg:%d button:1\n", d->prefs.toolbarActions[1]);
-#endif
+    if (isMobile_Platform()) {
+        appendFormat_String(str, "hidetoolbarscroll arg:%d\n", d->prefs.hideToolbarOnScroll);
+        appendFormat_String(str, "toolbar.action.set arg:%d button:0\n", d->prefs.toolbarActions[0]);
+        appendFormat_String(str, "toolbar.action.set arg:%d button:1\n", d->prefs.toolbarActions[1]);
+    }
     iConstForEach(StringSet, fp, d->prefs.disabledFontPacks) {
         appendFormat_String(str, "fontpack.disable id:%s\n", cstr_String(fp.value));
     }
@@ -1959,7 +1955,7 @@ void refresh_App(void) {
                     break;
             }
             win->frameCount++;
-            if (isTerminal_App()) {
+            if (isTerminal_Platform()) {
                 sleep_Thread(1.0 / 60.0);
             }
         }
@@ -3655,13 +3651,11 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "tabs.close")) {
         iWidget *tabs = findWidget_App("doctabs");
-#if defined (iPlatformMobile)
         /* Can't close the last tab on mobile. */
-        if (tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
+        if (isMobile_Platform() && tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
             postCommand_App("navigate.home");
             return iTrue;
         }
-#endif
         const iRangecc tabId = range_Command(cmd, "id");
         iWidget *      doc   = !isEmpty_Range(&tabId) ? findWidget_App(cstr_Rangecc(tabId))
                                                       : document_App();
