@@ -3472,6 +3472,12 @@ iBool handleCommand_App(const char *cmd) {
                       format_CStr("valueinput.upload url:%s", cstr_String(url)) } },
                 1);
             setBackupFileName_InputWidget(findChild_Widget(dlg, "input"), "spartanbackup");
+            if (!isEmpty_Range(&parts.query)) {
+                postCommand_Widget(dlg,
+                                   "valueinput.set text:%s",
+                                   cstrCollect_String(urlDecode_String(collectNewRange_String(
+                                       (iRangecc){ parts.query.start + 1, parts.query.end }))));
+            }
             return iTrue;
         }
         if (argLabel_Command(cmd, "switch")) {
