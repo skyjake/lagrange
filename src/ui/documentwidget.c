@@ -5983,12 +5983,11 @@ void cancelAllRequests_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
-    //    printf("\n* * * * * * * *\nDEINIT DOCUMENT: %s\n* * * * * * * *\n\n",
-    //           cstr_String(&d->widget.id)); fflush(stdout);
     cancelAllRequests_DocumentWidget(d);
     pauseAllPlayers_Media(media_GmDocument(d->view.doc), iTrue);
     removeTicker_App(animate_DocumentWidget_, d);
     removeTicker_App(prerender_DocumentWidget_, d);
+    removeTicker_App(refreshWhileScrolling_DocumentWidget_, d);
     remove_Periodic(periodic_App(), d);
     delete_Translation(d->translation);
     deinit_DocumentView(&d->view);
