@@ -2654,6 +2654,9 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
 }
 
 iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    if (isTerminal_Platform()) {
+        return iFalse; /* can't show/play media (TODO: image rendering?) */
+    }
     const iString *dstUrl = absoluteUrl_String(&d->url, linkUrl_GmDocument(d, linkId));
     const iRangecc scheme = urlScheme_String(dstUrl);
     if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "gopher") ||

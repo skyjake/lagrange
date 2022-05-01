@@ -2848,8 +2848,8 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     makeFooterButtons_DocumentWidget_(
                         d, constData_Array(footerItems), size_Array(footerItems));
                 }
-                else if (startsWith_Rangecc(param, "image/") ||
-                         startsWith_Rangecc(param, "audio/")) {
+                else if (!isTerminal_Platform() && (startsWith_Rangecc(param, "image/") ||
+                                                    startsWith_Rangecc(param, "audio/"))) {
                     const iBool isAudio = startsWith_Rangecc(param, "audio/");
                     /* Make a simple document with an image or audio player. */
                     clear_String(&str);
@@ -3268,7 +3268,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     iGmResponse *resp = lockResponse_GmRequest(d->request);
     if (d->state == fetching_RequestState) {
         /* Under certain conditions, inline any image response into the current document. */
-        if (d->requestLinkId &&
+        if (!isTerminal_Platform() &&
+            d->requestLinkId &&
             isSuccess_GmStatusCode(d->sourceStatus) &&
             startsWithCase_String(&d->sourceMime, "text/gemini") &&
             isSuccess_GmStatusCode(statusCode) &&
