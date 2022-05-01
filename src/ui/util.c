@@ -3294,11 +3294,14 @@ static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator) {
     return collect_Array(folders); 
 }
 
-iWidget *makeBookmarkEditor_Widget(iBool isFolder) {
-    const iMenuItem actions[] = {
+iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
+    const iMenuItem dupActions[] = {
+        { "${menu.dup}", 0, 0, "bmed.dup" },
+        { "---" },
         { "${cancel}", SDLK_ESCAPE, 0, "bmed.cancel" },
         { uiTextAction_ColorEscape "${dlg.bookmark.save}", SDLK_RETURN, KMOD_ACCEPT, "bmed.accept" }
     };
+    const iMenuItem actions[] = { dupActions[2], dupActions[3] };
     iWidget *dlg = NULL;
     if (isUsingPanelLayout_Mobile()) {
         const iArray *parentFolderItems = makeBookmarkFolderItems_(iTrue);
@@ -3328,7 +3331,10 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder) {
             { "padding" },
             { NULL }
         };
-        dlg = makePanels_Mobile("bmed", isFolder ? folderItems : items, actions, iElemCount(actions));
+        dlg = makePanels_Mobile("bmed",
+                                isFolder ? folderItems : items,
+                                withDup ? dupActions : actions,
+                                withDup ? iElemCount(dupActions) : iElemCount(actions));
         setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     }
     else {
@@ -3375,7 +3381,10 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder) {
             }
         }
         addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(dlg,
+                        iClob(makeDialogButtons_Widget(withDup ? dupActions : actions,
+                                                       withDup ? iElemCount(dupActions)
+                                                               : iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));
         setupSheetTransition_Mobile(dlg, iTrue);
     }
@@ -3431,7 +3440,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
 }
 
 iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, iChar icon) {
-    iWidget *dlg = makeBookmarkEditor_Widget(iFalse);
+    iWidget *dlg = makeBookmarkEditor_Widget(iFalse, iFalse);
     setId_Widget(dlg, "bmed.create");
     setTextCStr_LabelWidget(findChild_Widget(dlg, "bmed.heading"),
                             uiHeading_ColorEscape "${heading.bookmark.add}");
@@ -3440,12 +3449,10 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
     setTextCStr_InputWidget(findChild_Widget(dlg, "bmed.title"),
                             title ? cstr_String(title) : cstr_Rangecc(parts.host));
     setText_InputWidget(findChild_Widget(dlg, "bmed.url"), url);
-    setId_Widget(
-        addChildFlags_Widget(
-            dlg,
-            iClob(new_LabelWidget(cstrCollect_String(newUnicodeN_String(&icon, 1)), NULL)),
-            collapse_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag),
-        "bmed.icon");
+    if (icon) {
+        setText_InputWidget(findChild_Widget(dlg, "bmed.icon"),
+                            collect_String(newUnicodeN_String(&icon, 1)));
+    }
     setCommandHandler_Widget(dlg, handleBookmarkCreationCommands_SidebarWidget_);
     return dlg;
 }

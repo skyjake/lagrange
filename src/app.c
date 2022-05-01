@@ -3875,18 +3875,27 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "bookmark.add")) {
         iDocumentWidget *doc = document_App();
+        const iString *url;
+        const iString *title;
+        iChar icon = 0;
         if (suffixPtr_Command(cmd, "url")) {
-            iString *title = collect_String(newRange_String(range_Command(cmd, "title")));
-            replace_String(title, "%20", " ");
-            makeBookmarkCreation_Widget(collect_String(suffix_Command(cmd, "url")),
-                                        title,
-                                        0x1f588 /* pin */);
+            url          = collect_String(suffix_Command(cmd, "url"));
+            iString *str = newRange_String(range_Command(cmd, "title"));
+            replace_String(str, "%20", " ");
+            title = collect_String(str);
         }
         else {
-            makeBookmarkCreation_Widget(url_DocumentWidget(doc),
-                                        bookmarkTitle_DocumentWidget(doc),
-                                        siteIcon_GmDocument(document_DocumentWidget(doc)));
+            url   = url_DocumentWidget(doc);
+            title = bookmarkTitle_DocumentWidget(doc);
+//            icon  = 0; //siteIcon_GmDocument(document_DocumentWidget(doc));
         }
+        const uint32_t existing = findUrl_Bookmarks(bookmarks_App(), url);
+        if (existing) {
+            /* Editing bookmarks is a sidebar command. */
+            postCommand_Widget(findWidget_App("sidebar"), "bookmark.edit id:%u", existing);
+            return iTrue;
+        }
+        makeBookmarkCreation_Widget(url, title, icon);
         if (deviceType_App() == desktop_AppDeviceType) {
             postCommand_App("focus.set id:bmed.title");
         }

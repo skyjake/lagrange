@@ -1524,17 +1524,29 @@ void createUserInterface_Root(iRoot *d) {
                 addChildFlags_Widget(
                     rightEmbed, iClob(progress), collapse_WidgetFlag | hidden_WidgetFlag);
             }
-            /* Pinning indicator. */ {
-                iLabelWidget *pin = new_LabelWidget(uiTextAction_ColorEscape leftHalf_Icon, NULL);
-                setId_Widget(as_Widget(pin), "document.pinned");
+            /* Bookmark indicator. */ {
+                iLabelWidget *pin = new_LabelWidget(uiTextAction_ColorEscape pin_Icon, NULL);
+                setId_Widget(as_Widget(pin), "document.bookmarked");
                 setBackgroundColor_Widget(as_Widget(pin), uiBackground_ColorId);
                 setAlignVisually_LabelWidget(pin, iTrue);
                 setNoAutoMinHeight_LabelWidget(pin, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(pin),
                                      collapse_WidgetFlag | hidden_WidgetFlag | tight_WidgetFlag |
+                                         frameless_WidgetFlag);
+                updateSize_LabelWidget(pin);                
+            }
+            /* Pinning indicator. */ {
+                iLabelWidget *indicator = new_LabelWidget(uiTextAction_ColorEscape leftHalf_Icon, NULL);
+                setId_Widget(as_Widget(indicator), "document.pinned");
+                setBackgroundColor_Widget(as_Widget(indicator), uiBackground_ColorId);
+                setAlignVisually_LabelWidget(indicator, iTrue);
+                setNoAutoMinHeight_LabelWidget(indicator, iTrue);
+                addChildFlags_Widget(rightEmbed,
+                                     iClob(indicator),
+                                     collapse_WidgetFlag | hidden_WidgetFlag | tight_WidgetFlag |
                                      frameless_WidgetFlag);
-                updateSize_LabelWidget(pin);
+                updateSize_LabelWidget(indicator);
             }
             iWidget *urlButtons = new_Widget();
             setId_Widget(urlButtons, "url.buttons");

@@ -2238,10 +2238,13 @@ static iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
            (prefs->pinSplit == 2 && w->root == win->roots[1]);
 }
 
-static void showOrHidePinningIndicator_DocumentWidget_(iDocumentWidget *d) {
+static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
-    showCollapsed_Widget(findChild_Widget(root_Widget(w), "document.pinned"),
+    iWidget *navBar = findChild_Widget(root_Widget(w), "navbar");
+    showCollapsed_Widget(findChild_Widget(navBar, "document.pinned"),
                          isPinned_DocumentWidget_(d));
+    showCollapsed_Widget(findChild_Widget(navBar, "document.bookmarked"),
+                         findUrl_Bookmarks(bookmarks_App(), d->mod.url));
 }
 
 static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
@@ -2269,7 +2272,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
             d->flags |= otherRootByDefault_DocumentWidgetFlag;
         }
     }
-    showOrHidePinningIndicator_DocumentWidget_(d);
+    showOrHideIndicators_DocumentWidget_(d);
     if (~d->flags & fromCache_DocumentWidgetFlag) {
         setCachedDocument_History(d->mod.history, d->view.doc /* keeps a ref */);
     }
@@ -3968,7 +3971,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         invalidate_DocumentWidget_(d);
         dealloc_VisBuf(d->view.visBuf);
         updateWindowTitle_DocumentWidget_(d);
-        showOrHidePinningIndicator_DocumentWidget_(d);
+        showOrHideIndicators_DocumentWidget_(d);
         refresh_Widget(w);
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
@@ -4005,7 +4008,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "document.update.pin")) {
-        showOrHidePinningIndicator_DocumentWidget_(d);
+        showOrHideIndicators_DocumentWidget_(d);
         return iFalse;
     }
     else if (equal_Command(cmd, "tabs.changed")) {
@@ -4015,7 +4018,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateTheme_DocumentWidget_(d);
             updateTrust_DocumentWidget_(d, NULL);
             updateSize_DocumentWidget(d);
-            showOrHidePinningIndicator_DocumentWidget_(d);
+            showOrHideIndicators_DocumentWidget_(d);
             updateFetchProgress_DocumentWidget_(d);
             updateHover_Window(window_Widget(w));
         }
@@ -4697,6 +4700,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "menu.closed")) {
         updateHover_DocumentView_(&d->view, mouseCoord_Window(get_Window(), 0));
+    }
+    else if (equal_Command(cmd, "bookmarks.changed")) {
+        showOrHideIndicators_DocumentWidget_(d);
     }
     else if (equal_Command(cmd, "document.autoreload")) {
         if (d->mod.reloadInterval) {

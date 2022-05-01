@@ -1115,23 +1115,37 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     updateItemHeight_SidebarWidget_(d);
 }
 
+static uint32_t bookmarkEditorId_(const iWidget *editor) {
+    iAssert(startsWith_String(id_Widget(editor), "bmed."));
+    uint32_t bmId = strtoul(cstr_String(id_Widget(editor)) + 5, NULL, 10);
+    iAssert(bmId != 0);
+    return bmId;    
+}
+
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
     if (equal_Command(cmd, "dlg.bookmark.setfolder")) {
         setBookmarkEditorParentFolder_Widget(editor, arg_Command(cmd));
         return iTrue;
     }
-    if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "bmed.cancel")) {
-        iAssert(startsWith_String(id_Widget(editor), "bmed."));
-        iSidebarWidget *d = findWidget_App(cstr_String(id_Widget(editor)) + 5); /* bmed.sidebar */
+    else if (equal_Command(cmd, "bmed.dup")) {
+        const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
+        const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
+        const iString *icon  = collect_String(trimmed_String(
+            text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
+        makeBookmarkCreation_Widget(url, title, isEmpty_String(icon) ? 0 : first_String(icon));
+        setupSheetTransition_Mobile(editor, dialogTransitionDir_Widget(editor));
+        destroy_Widget(editor);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "bmed.cancel")) {
+        const uint32_t bmId = bookmarkEditorId_(editor);
         if (equal_Command(cmd, "bmed.accept")) {
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
             const iString *icon  = collect_String(trimmed_String(
                                         text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
-            const iSidebarItem *item = d->contextItem;
-            iAssert(item); /* hover item cannot have been changed */
-            iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+            iBookmark *bm = get_Bookmarks(bookmarks_App(), bmId);
             set_String(&bm->title, title);
             if (!isFolder_Bookmark(bm)) {
                 set_String(&bm->url, url);
@@ -1558,10 +1572,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (isCommand_Widget(w, ev, "bookmark.edit")) {
             const iSidebarItem *item = d->contextItem;
-            if (d->mode == bookmarks_SidebarMode && item) {
-                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
-                iWidget *dlg = makeBookmarkEditor_Widget(isFolder_Bookmark(bm));
-                setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
+            const int argId = argLabel_Command(cmd, "id");
+            if ((d->mode == bookmarks_SidebarMode && item) || argId) {
+                iBookmark *bm  = get_Bookmarks(bookmarks_App(), argId ? argId : item->id);
+                iWidget   *dlg = makeBookmarkEditor_Widget(isFolder_Bookmark(bm), iTrue);
+                setId_Widget(dlg, format_CStr("bmed.%u", id_Bookmark(bm)));
                 setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &bm->title);
                 if (!isFolder_Bookmark(bm)) {
                     iInputWidget *urlInput        = findChild_Widget(dlg, "bmed.url");
