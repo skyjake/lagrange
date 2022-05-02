@@ -1525,7 +1525,7 @@ void createUserInterface_Root(iRoot *d) {
                     rightEmbed, iClob(progress), collapse_WidgetFlag | hidden_WidgetFlag);
             }
             /* Bookmark indicator. */ {
-                iLabelWidget *pin = new_LabelWidget(uiTextAction_ColorEscape pin_Icon, NULL);
+                iLabelWidget *pin = new_LabelWidget(uiTextAction_ColorEscape pin_Icon, "bookmark.add");
                 setId_Widget(as_Widget(pin), "document.bookmarked");
                 setBackgroundColor_Widget(as_Widget(pin), uiBackground_ColorId);
                 setAlignVisually_LabelWidget(pin, iTrue);
