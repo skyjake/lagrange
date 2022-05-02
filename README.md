@@ -43,9 +43,9 @@ Using GNU Guix:
 
 You need a POSIX-compatible environment to compile Lagrange.
 
-The required tools are a C11 compiler (e.g., Clang or GCC), CMake, `pkg-config`, and `zip`. Additional tools are required for the optional compilation of HarfBuzz and GNU FriBidi (see next section for details).
+The required tools are a C11 compiler (e.g., Clang or GCC), CMake, `pkg-config`, and `zip`. Additional tools are required if HarfBuzz and GNU FriBidi are also compiled as part of the build (see next section for details).
 
-1. Download and extract a source tarball from [Releases][rel]. Please note that the GitHub/Gitea-generated tarballs do not contain HarfBuzz, GNU FriBidi, or [the_Foundation](https://git.skyjake.fi/skyjake/the_Foundation) submodules; check which tarball you are getting. Alternatively, you may also clone the repository and its submodules: `git clone --recursive --branch release https://git.skyjake.fi/gemini/lagrange`
+1. Download and extract a source tarball from [Releases][rel]. Please note that the GitHub/Gitea-generated tarballs do not contain HarfBuzz, GNU FriBidi, or [the_Foundation](https://git.skyjake.fi/skyjake/the_Foundation) submodules; check which tarball you are downloading. Alternatively, you may also clone the repository and its submodules: `git clone --recursive --branch release https://git.skyjake.fi/gemini/lagrange`
 2. Check that you have the recommended build tools and dependencies installed: SDL 2, OpenSSL 1.1.1, libpcre, libunistring, GNU FriBidi, and zlib. For example, on macOS this would do the trick (using Homebrew): ```brew install cmake sdl2 openssl@1.1 pcre libunistring fribidi``` Or on Ubuntu: ```sudo apt install cmake zip libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libfribidi-dev```
 3. Optionally, install the mpg123 decoder library for MPEG audio support. For example, the macOS Homebrew package is `mpg123` and on Ubuntu it is `libmpg123-dev`.
 4. Create a build directory.
@@ -97,6 +97,14 @@ Note that the `install` target also deploys an XDG .desktop file for launching t
 | `ENABLE_WEBP` | Use libwebp to decode .webp images, if `pkg-config` can find the library. |
 | `ENABLE_WINDOWPOS_FIX` | Set correct window position after the window has already been shown. This may be necessary on some platforms to prevent the window from being restored to the wrong position. |
 | `ENABLE_X11_SWRENDER` | Default to software rendering when running under X11. By default Lagrange attempts to use the GPU for rendering the user interface. You can also use the `--sw` option at launch to force software rendering. |
+
+### Compiling the TUI version
+
+Lagrange has an optional text-mode interface that enables running the app in the terminal. This is disabled by the default build settings. Setting the `ENABLE_TUI` option to `YES` will replace the SDL dependency with a library called [SEALCurses](https://git.skyjake.fi/skyjake/sealcurses.git) that implements the required parts of the SDL API on top of Curses. The resulting executable is called `clagrange`.
+
+The requirements for building the TUI version are the same as with the GUI, except [ncurses](https://invisible-island.net/ncurses/) is required instead of SDL. HarfBuzz and all the image and audio dependencies are excluded from the TUI build.
+
+The `build-tui.sh` helper script is provided for building the TUI version. All command line arguments given to the script are passed to CMake for further configuring the build. However, note that the install prefix should be set by editing the `INSTALL_PREFIX` variable in the beginning of `build-tui.sh`. Trying to modify `CMAKE_INSTALL_PREFIX` directly may cause the build to fail.
 
 ### Compiling on macOS
 
