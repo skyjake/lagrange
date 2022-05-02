@@ -323,6 +323,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
         { "prefs.hoverlink", &d->prefs.hoverLink },
         { "prefs.justify", &d->prefs.justifyParagraph },
+        { "prefs.markdown.viewsource", &d->prefs.markdownAsSource },
         { "prefs.mono.gemini", &d->prefs.monospaceGemini },
         { "prefs.mono.gopher", &d->prefs.monospaceGopher },
         { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
@@ -2797,6 +2798,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFontStyle_AnsiFlag, arg_Command(cmd));
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.markdown.viewsource.changed")) {
+        d->prefs.markdownAsSource = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
              equal_Command(cmd, "prefs.mono.gopher.changed")) {
         const iBool isSet = (arg_Command(cmd) != 0);
@@ -3755,6 +3760,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.font.warnmissing"), d->prefs.warnAboutMissingGlyphs);
         setToggle_Widget(findChild_Widget(dlg, "prefs.dataurl.openimages"), d->prefs.openDataUrlImagesOnLoad);
         setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.markdown.viewsource"), d->prefs.markdownAsSource);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);

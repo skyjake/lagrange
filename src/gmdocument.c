@@ -2404,6 +2404,10 @@ const iGmRun *renderProgressive_GmDocument(const iGmDocument *d, const iGmRun *f
     return isValidRun_GmDocument_(d, run) ? run : NULL;
 }
 
+enum iSourceFormat format_GmDocument(const iGmDocument *d) {
+    return d->origFormat;
+}
+
 iInt2 size_GmDocument(const iGmDocument *d) {
     return d->size;
 }

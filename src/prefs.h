@@ -85,6 +85,7 @@ enum iPrefsBool {
     openArchiveIndexPages_PrefsBool,
     addBookmarksToBottom_PrefsBool,
     warnAboutMissingGlyphs_PrefsBool,
+    markdownAsSource_PrefsBool,
     
     /* Network */
     decodeUserVisibleURLs_PrefsBool,
@@ -145,6 +146,7 @@ struct Impl_Prefs {
             iBool openArchiveIndexPages;            
             iBool addBookmarksToBottom;
             iBool warnAboutMissingGlyphs;
+            iBool markdownAsSource;
             
             /* Network */
             iBool decodeUserVisibleURLs;

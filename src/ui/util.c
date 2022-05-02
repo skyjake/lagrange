@@ -2806,6 +2806,7 @@ iWidget *makePreferences_Widget(void) {
             { "toggle id:prefs.bookmarks.addbottom" },
             { "toggle id:prefs.dataurl.openimages" },
             { "toggle id:prefs.archive.openindex" },
+            { "toggle id:prefs.markdown.viewsource" },
             { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
             { "padding" },
             { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
@@ -2982,6 +2983,7 @@ iWidget *makePreferences_Widget(void) {
             }
             addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
+        addDialogToggle_(headings, values, "${prefs.markdown.viewsource}", "prefs.markdown.viewsource");
         addDialogToggle_(headings, values, "${prefs.bookmarks.addbottom}", "prefs.bookmarks.addbottom");
         addDialogToggle_(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
         addDialogToggle_(headings, values, "${prefs.dataurl.openimages}", "prefs.dataurl.openimages");

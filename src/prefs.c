@@ -85,6 +85,7 @@ void init_Prefs(iPrefs *d) {
     d->openArchiveIndexPages   = iTrue;
     d->addBookmarksToBottom    = iTrue;
     d->warnAboutMissingGlyphs  = iTrue;
+    d->markdownAsSource        = iTrue;
     d->decodeUserVisibleURLs   = iTrue;
     d->maxCacheSize      = 10;
     d->maxMemorySize     = 200;

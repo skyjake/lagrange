@@ -217,6 +217,7 @@ const iGmRun *  renderProgressive_GmDocument(const iGmDocument *d, const iGmRun 
                                              size_t maxCount,
                                              iRangei visRangeY, iGmDocumentRenderFunc render,
                                              void *context);
+enum iSourceFormat format_GmDocument        (const iGmDocument *);
 iInt2           size_GmDocument             (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);

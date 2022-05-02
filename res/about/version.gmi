@@ -16,12 +16,12 @@ New features:
 * Support for the Spartan protocol. Prompt lines will open an input dialog for submitting text. This can be expanded to the full upload dialog using which a file can be uploaded, too.
 * Reopening the last closed tab. The default binding is Shift+Ctrl+T (⇧⌘T).
 * Page context menu item "View as Plain Text": show the page source as plain text.
+* Option to view Markdown as source or as a Gemtext conversion (default: as source).
 
 Changes and enhancements:
 * Updated Noto Emoji font with support for Unicode 14. There should be no more missing Emoji glyphs.
 * Improved UI keyboard navigation. The sidebar and all widgets in dialogs are accessible via Tab cycling, and new shortcuts have been added for opening menus. Menu items and lists are cursor-navigable. Opening the sidebar automatically gives it keyboard focus.
 * When bookmarking a page, show the Edit Bookmark dialog if there's already a bookmark for the URL. The Edit Bookmark dialog has a new Duplicate button for actually making a duplicate bookmark.
-* Markdown can be viewed as plain text or as a Gemtext conversion.
 * Markdown documents support horizontal rules.
 * TUI: Zoom controls resize the open sidebar (left sidebar if both visible).
 * macOS: Keep app running even after all windows are closed. Clicking on the dock icon opens a new window.

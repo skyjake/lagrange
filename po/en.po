@@ -1565,6 +1565,9 @@ msgstr "Open images in Data URLs:"
 msgid "prefs.archive.openindex"
 msgstr "Open archive indices:"
 
+msgid "prefs.markdown.viewsource"
+msgstr "View Markdown as source:"
+
 msgid "prefs.pinsplit"
 msgstr "Split view pinning:"
 

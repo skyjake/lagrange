@@ -2708,6 +2708,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                 else if (equal_Rangecc(param, "text/markdown")) {
                     docFormat = markdown_SourceFormat;
                     setRange_String(&d->sourceMime, param);
+                    postCommand_Widget(d, "document.viewformat arg:%d", !prefs_App()->markdownAsSource);
                 }
                 else if (startsWith_Rangecc(param, "text/") ||
                          equal_Rangecc(param, "application/json") ||
@@ -4758,7 +4759,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.viewformat") && document_App() == d) {
-        const iBool gemtext = (d->flags & viewSource_DocumentWidgetFlag) != 0;
+        const iBool gemtext = hasLabel_Command(cmd, "arg")
+                                  ? arg_Command(cmd) != 0 /* set to value */
+                                  : (d->flags & viewSource_DocumentWidgetFlag) != 0; /* toggle */
         iChangeFlags(d->flags, viewSource_DocumentWidgetFlag, !gemtext);
         if (setViewFormat_GmDocument(
                 d->view.doc, gemtext ? gemini_SourceFormat : plainText_SourceFormat)) {
