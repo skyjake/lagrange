@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-06 03:13+0000\n"
+"PO-Revision-Date: 2022-05-03 02:54+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -2449,3 +2449,30 @@ msgstr "Oceánico"
 
 msgid "prefs.justify"
 msgstr "Justificar:"
+
+msgid "menu.reopentab"
+msgstr "Reabrir Última Pestaña Cerrada"
+
+msgid "menu.viewformat.plain"
+msgstr "Ver como Texto Plano"
+
+msgid "menu.viewformat.gemini"
+msgstr "Ver como Gemtext"
+
+msgid "keys.menubar.focus"
+msgstr "Enfocar la barra de menús"
+
+msgid "keys.identmenu"
+msgstr "Abrir menú de Identidades"
+
+msgid "keys.contextmenu"
+msgstr "Abrir menú contextual"
+
+msgid "spartan.input"
+msgstr "Añadir texto a enviar:"
+
+msgid "dlg.spartan.upload"
+msgstr "Abrir Editor…"
+
+msgid "heading.upload.spartan"
+msgstr "Cargar con Spartan"
