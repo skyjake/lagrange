@@ -45,6 +45,33 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.13" date="2022-05-03">
+            <description>
+                <p>Changes in v1.13:</p>
+                <ul>
+                    <li>Curses-based `clagrange` for running the app in the terminal. This is a complete TUI port of the original GUI version including, e.g., UI animations, smooth scrolling, and split view mode. `clagrange` has separate preferences, UI state, and key bindings but the rest of the runtime files are shared with the GUI version.</li>
+                    <li>Build option `ENABLE_TUI`: build a text mode version of the app so it can be run in the terminal. Enabling this produces an executable called `clagrange` that is not linked with SDL.</li>
+                    <li>URL field indicator 📌 that shows if there's a bookmark for the current page. Clicking on the indicator opens the Add/Edit Bookmark dialog.</li>
+                    <li>Checking server certificates using a bundled root CA file.</li>
+                    <li>Build option `CACERT_PEM_PATH`: path of a cacert.pem file that contains trusted root CA certificates. This file is included in resources.lgr.</li>
+                    <li>Support for the Spartan protocol. Prompt lines will open an input dialog for submitting text. This can be expanded to the full upload dialog using which a file can be uploaded, too.</li>
+                    <li>Reopening the last closed tab. The default binding is Shift+Ctrl+T (⇧⌘T).</li>
+                    <li>Page context menu item "View as Plain Text": show the page source as plain text.</li>
+                    <li>Option to view Markdown as source or as a Gemtext conversion (default: as source).</li>
+                    <li>Updated Noto Emoji font with support for Unicode 14. There should be no more missing Emoji glyphs.</li>
+                    <li>Improved UI keyboard navigation. The sidebar and all widgets in dialogs are accessible via Tab cycling, and new shortcuts have been added for opening menus. Menu items and lists are cursor-navigable. Opening the sidebar automatically gives it keyboard focus.</li>
+                    <li>When bookmarking a page, show the Edit Bookmark dialog if there's already a bookmark for the URL. The Edit Bookmark dialog has a new Duplicate button for actually making a duplicate bookmark.</li>
+                    <li>Markdown documents support horizontal rules.</li>
+                    <li>TUI: Zoom controls resize the open sidebar (left sidebar if both visible).</li>
+                    <li>Sidebar page outline not updated when the current tab changes.</li>
+                    <li>The Escape key closes the bookmark editor dialog as intended.</li>
+                    <li>Preferences: "Justify" option must be hidden if HarfBuzz is not used.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.13.0</url>
+        </release>
         <release version="1.12.2" date="2022-04-22">
             <description>
                 <p>Changes in v1.12.2:</p>
