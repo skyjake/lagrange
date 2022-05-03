@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-29 18:07+0000\n"
+"PO-Revision-Date: 2022-05-03 13:46+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -2286,7 +2286,7 @@ msgstr ""
 
 # User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
 msgid "prefs.dataurl.openimages"
-msgstr "Показувати зображення, вбудовані в Data URL:"
+msgstr "Показувати зображення у Data URL:"
 
 msgid "prefs.tabwidth"
 msgstr "Ширина відступу Tab у пробілах:"
@@ -2487,3 +2487,6 @@ msgstr "Введіть текст для надсилання:"
 
 msgid "dlg.spartan.upload"
 msgstr "Відкрити редактор…"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Переглядати Markdown як код:"
