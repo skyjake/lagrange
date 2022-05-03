@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.13.2
+* Fixed failure to restore the selected fonts at launch.
+
 ## 1.13.1
 * Fixed crash when opening Preferences. The text renderer had problems with font lookup.
 
