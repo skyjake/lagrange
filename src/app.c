@@ -2770,6 +2770,43 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         d->prefs.customFrame = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "font.set")) {
+        if (!isFrozen && get_MainWindow()) {
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
+        }
+        struct {
+            const char *label;
+            enum iPrefsString ps;
+            int fontId;
+            } params[] = {
+                       { "ui",      uiFont_PrefsString,                default_FontId },
+                       { "mono",    monospaceFont_PrefsString,         monospace_FontId },
+                       { "heading", headingFont_PrefsString,           documentHeading_FontId },
+                       { "body",    bodyFont_PrefsString,              documentBody_FontId },
+                       { "monodoc", monospaceDocumentFont_PrefsString, documentMonospace_FontId },
+                       };
+        iBool wasChanged = iFalse;
+        iForIndices(i, params) {
+            if (hasLabel_Command(cmd, params[i].label)) {
+                iString *ps = &d->prefs.strings[params[i].ps];
+                const iString *newFont = string_Command(cmd, params[i].label);
+                if (!equal_String(ps, newFont)) {
+                    set_String(ps, newFont);
+                    wasChanged = iTrue;
+                }
+            }
+        }
+        if (wasChanged) {
+            if (isFinishedLaunching_App() && get_MainWindow()) { /* there's a reset when launch is finished */
+                resetFonts_Text(text_Window(get_MainWindow()));
+            }
+            postCommand_App("font.changed");
+        }
+        if (!isFrozen) {
+            postCommand_App("window.unfreeze");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.retaintabs.changed")) {
         d->prefs.retainTabs = arg_Command(cmd);
         return iTrue;
@@ -3361,43 +3398,6 @@ iBool handleCommand_App(const char *cmd) {
                                        collectNewCStr_String(""),
                                        collectNewCStr_String("text/gemini"),
                                        utf8_String(src));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "font.set")) {
-        if (!isFrozen) {
-            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
-        }
-        struct {
-            const char *label;
-            enum iPrefsString ps;
-            int fontId;
-        } params[] = {
-            { "ui",      uiFont_PrefsString,                default_FontId },
-            { "mono",    monospaceFont_PrefsString,         monospace_FontId },
-            { "heading", headingFont_PrefsString,           documentHeading_FontId },
-            { "body",    bodyFont_PrefsString,              documentBody_FontId },
-            { "monodoc", monospaceDocumentFont_PrefsString, documentMonospace_FontId },
-        };
-        iBool wasChanged = iFalse;
-        iForIndices(i, params) {
-            if (hasLabel_Command(cmd, params[i].label)) {
-                iString *ps = &d->prefs.strings[params[i].ps];
-                const iString *newFont = string_Command(cmd, params[i].label);
-                if (!equal_String(ps, newFont)) {
-                    set_String(ps, newFont);
-                    wasChanged = iTrue;
-                }
-            }
-        }
-        if (wasChanged) {
-            if (isFinishedLaunching_App()) { /* there's a reset when launch is finished */
-                resetFonts_Text(text_Window(get_MainWindow()));
-            }
-            postCommand_App("font.changed");
-        }
-        if (!isFrozen) {
-            postCommand_App("window.unfreeze");
-        }
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {
