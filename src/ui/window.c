@@ -1026,9 +1026,16 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_CLOSE:
-//            if (numWindows_App() > 1) {
-                closeWindow_App(d);
-//            }
+#if defined (iPlatformAppleDesktop)
+            closeWindow_App(d);
+#else
+            if (numWindows_App() == 1) {
+                postCommand_App("quit");
+            }
+            else {
+                closeWindow_App(d);   
+            }
+#endif            
             return iTrue;
         default:
             break;
