@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-03-04 12:50+0000\n"
+"PO-Revision-Date: 2022-05-03 13:46+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
@@ -1639,7 +1639,7 @@ msgid "sidebar.action.feeds.showall"
 msgstr "Alles"
 
 msgid "status.query.tight"
-msgstr "Abfrage"
+msgstr "Suche"
 
 msgid "keys.scroll.down"
 msgstr "Runterblättern"
@@ -2314,3 +2314,42 @@ msgstr "Maximale URL Länge:"
 
 msgid "menu.paste.go"
 msgstr "Einfügen und Los"
+
+msgid "prefs.accent.red"
+msgstr "Rot"
+
+msgid "prefs.accent.green"
+msgstr "Grün"
+
+msgid "prefs.accent.blue"
+msgstr "Blau"
+
+msgid "prefs.accent.gray"
+msgstr "Grau"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Ozeanisch"
+
+msgid "import.userdata.bookmarks"
+msgstr "Lesezeichen:"
+
+msgid "import.userdata.idents"
+msgstr "Identitäten:"
+
+msgid "import.userdata.history"
+msgstr "Verlauf:"
+
+msgid "import.userdata.sitespec"
+msgstr "Seiteneinstellungen:"
+
+msgid "dlg.userdata.no"
+msgstr "Keiner"
+
+msgid "dlg.spartan.upload"
+msgstr "Editor öffnen…"
+
+msgid "heading.upload.spartan"
+msgstr "Seite mit Spartan hochladen"
+
+msgid "heading.bookmark.editfolder"
+msgstr "Ordner bearbeiten"
