@@ -8,6 +8,7 @@
 
 ## 1.13.2
 * Fixed failure to restore the selected fonts at launch.
+* Fixed window state being reset when quitting the app by closing the last window. (No such problem was occurring when quitting via menu or Ctrl+Q.)
 
 ## 1.13.1
 * Fixed crash when opening Preferences. The text renderer had problems with font lookup.
