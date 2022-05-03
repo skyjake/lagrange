@@ -45,6 +45,17 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.13.1" date="2022-05-03">
+            <description>
+                <p>Changes in v1.13.1:</p>
+                <ul>
+                    <li>Fixed crash when opening Preferences. The text renderer had problems with font lookup.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.13.1</url>
+        </release>
         <release version="1.13" date="2022-05-03">
             <description>
                 <p>Changes in v1.13:</p>
