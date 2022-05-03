@@ -143,6 +143,7 @@ static void setActiveItem_BindingsWidget_(iBindingsWidget *d, size_t pos) {
         item->isWaitingForEvent = iTrue;
         invalidateItem_ListWidget(d->list, d->activePos);
     }
+    setScrollMode_ListWidget(d->list, d->activePos != iInvalidPos);
 #if defined (iPlatformAppleDesktop) && defined (LAGRANGE_MAC_CONTEXTMENU)
     /* Native menus must be disabled while grabbing keys so the shortcuts don't trigger. */
     const iBool enableNativeMenus = (d->activePos == iInvalidPos);

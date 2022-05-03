@@ -518,9 +518,12 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                 case SDLK_PAGEDOWN:
                 case SDLK_HOME:
                 case SDLK_END: {
-                    const int step = cursorKeyStep_ListWidget_(d, key);
-                    moveCursor_ListWidget_(d, step, iAbs(step) == 1 ? 0 : 150);
-                    return iTrue;
+                    if (d->scrollMode == normal_ScrollMode) {
+                        const int step = cursorKeyStep_ListWidget_(d, key);
+                        moveCursor_ListWidget_(d, step, iAbs(step) == 1 ? 0 : 150);
+                        return iTrue;
+                    }
+                    return iFalse;
                 }
                 case SDLK_RETURN:
                 case SDLK_KP_ENTER:
