@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.13.1
+* Fixed crash when opening Preferences. The text renderer had problems with font lookup.
+
 ## 1.13
 New features:
 * Curses-based `clagrange` for running the app in the terminal. This is a complete TUI port of the original GUI version including, e.g., UI animations, smooth scrolling, and split view mode. `clagrange` has separate preferences, UI state, and key bindings but the rest of the runtime files are shared with the GUI version.
