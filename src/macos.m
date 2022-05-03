@@ -35,6 +35,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #import <AppKit/AppKit.h>
 
+#if defined (LAGRANGE_ENABLE_SPARKLE)
+#   import <Sparkle/Sparkle.h>
+#endif
+
 static NSTouchBarItemIdentifier goBack_TouchId_      = @"fi.skyjake.Lagrange.back";
 static NSTouchBarItemIdentifier goForward_TouchId_   = @"fi.skyjake.Lagrange.forward";
 static NSTouchBarItemIdentifier find_TouchId_        = @"fi.skyjake.Lagrange.find";
@@ -206,7 +210,11 @@ static void ignoreImmediateKeyDownEvents_(void) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-@interface MyDelegate : NSResponder<NSApplicationDelegate, NSTouchBarDelegate> {
+@interface MyDelegate : NSResponder<NSApplicationDelegate, NSTouchBarDelegate
+#if defined (LAGRANGE_ENABLE_SPARKLE)
+        , SUUpdaterDelegate
+#endif                                    
+        > {
     enum iTouchBarVariant touchBarVariant;
     NSString *currentAppearanceName;
     NSObject<NSApplicationDelegate> *sdlDelegate;
@@ -221,6 +229,10 @@ static void ignoreImmediateKeyDownEvents_(void) {
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender;
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag;
+
+#if defined (LAGRANGE_ENABLE_SPARKLE)
+- (void)updaterWillRelaunchApplication:(SUUpdater *)updater;
+#endif
 @end
 
 @implementation MyDelegate
@@ -292,16 +304,18 @@ static void appearanceChanged_MacOS_(NSString *name) {
     [sdlDelegate applicationDidFinishLaunching:notification];
 }
 
+#if defined (LAGRANGE_ENABLE_SPARKLE)
+- (void)updaterWillRelaunchApplication:(SUUpdater *)updater {
+    /* Do allow the app to close now. */
+    postCommand_App("quit");
+}
+#endif
+
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
     return NO;
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
-//    if (SDL_GetEventState(SDL_QUIT) == SDL_ENABLE) {
-//        SDL_Event event;
-//        event.type = SDL_QUIT;
-//        SDL_PushEvent(&event);
-//    }
     postCommand_App("quit");
     return NSTerminateCancel;
 }
@@ -600,6 +614,9 @@ void setupApplication_MacOS(void) {
                                             }
                                             return event;
                                           }];
+#if defined (LAGRANGE_ENABLE_SPARKLE)
+    [[SUUpdater sharedUpdater] setDelegate:myDel];
+#endif
 }
 
 void hideTitleBar_MacOS(iWindow *window) {
@@ -963,7 +980,6 @@ iColor systemAccent_Color(void) {
 }
 
 #if defined (LAGRANGE_ENABLE_SPARKLE)
-#import <Sparkle/Sparkle.h>
 
 void init_Updater(void) {
     SUUpdater *updater = [SUUpdater sharedUpdater];
