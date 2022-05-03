@@ -2243,8 +2243,10 @@ static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     iWidget *navBar = findChild_Widget(root_Widget(w), "navbar");
     showCollapsed_Widget(findChild_Widget(navBar, "document.pinned"),
                          isPinned_DocumentWidget_(d));
-    showCollapsed_Widget(findChild_Widget(navBar, "document.bookmarked"),
-                         findUrl_Bookmarks(bookmarks_App(), d->mod.url));
+    const iBool isBookmarked = findUrl_Bookmarks(bookmarks_App(), d->mod.url) != 0;
+    iLabelWidget *bmPin = findChild_Widget(navBar, "document.bookmarked");
+    setOutline_LabelWidget(bmPin, !isBookmarked);
+    setBackgroundColor_Widget(as_Widget(bmPin), isBookmarked ? uiBackground_ColorId : uiInputBackground_ColorId);
 }
 
 static void updateBanner_DocumentWidget_(iDocumentWidget *d) {

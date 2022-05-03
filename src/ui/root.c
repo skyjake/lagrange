@@ -832,6 +832,7 @@ static void updateNavBarSize_(iWidget *navBar) {
     if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
         setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
         showCollapsed_Widget(findChild_Widget(navBar, "navbar.action3"), !isNarrow);
+        showCollapsed_Widget(findChild_Widget(navBar, "document.bookmarked"), !isNarrow);
         iObjectList *lists[] = {
             children_Widget(navBar),
             children_Widget(findChild_Widget(navBar, "url")),
@@ -1524,18 +1525,6 @@ void createUserInterface_Root(iRoot *d) {
                 addChildFlags_Widget(
                     rightEmbed, iClob(progress), collapse_WidgetFlag | hidden_WidgetFlag);
             }
-            /* Bookmark indicator. */ {
-                iLabelWidget *pin = new_LabelWidget(uiTextAction_ColorEscape pin_Icon, "bookmark.add");
-                setId_Widget(as_Widget(pin), "document.bookmarked");
-                setBackgroundColor_Widget(as_Widget(pin), uiBackground_ColorId);
-                setAlignVisually_LabelWidget(pin, iTrue);
-                setNoAutoMinHeight_LabelWidget(pin, iTrue);
-                addChildFlags_Widget(rightEmbed,
-                                     iClob(pin),
-                                     collapse_WidgetFlag | hidden_WidgetFlag | tight_WidgetFlag |
-                                         frameless_WidgetFlag);
-                updateSize_LabelWidget(pin);                
-            }
             /* Pinning indicator. */ {
                 iLabelWidget *indicator = new_LabelWidget(uiTextAction_ColorEscape leftHalf_Icon, NULL);
                 setId_Widget(as_Widget(indicator), "document.pinned");
@@ -1547,6 +1536,18 @@ void createUserInterface_Root(iRoot *d) {
                                      collapse_WidgetFlag | hidden_WidgetFlag | tight_WidgetFlag |
                                      frameless_WidgetFlag);
                 updateSize_LabelWidget(indicator);
+            }
+            /* Bookmark indicator. */ {
+                iLabelWidget *pin = new_LabelWidget(pin_Icon, "bookmark.add");
+                setId_Widget(as_Widget(pin), "document.bookmarked");
+                setTextColor_LabelWidget(pin, uiTextAction_ColorId);
+                setBackgroundColor_Widget(as_Widget(pin), uiBackground_ColorId);
+                setAlignVisually_LabelWidget(pin, iTrue);
+                setNoAutoMinHeight_LabelWidget(pin, iTrue);
+                addChildFlags_Widget(rightEmbed,
+                                     iClob(pin),
+                                     collapse_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag);
+                updateSize_LabelWidget(pin);                
             }
             iWidget *urlButtons = new_Widget();
             setId_Widget(urlButtons, "url.buttons");
