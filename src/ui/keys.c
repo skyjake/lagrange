@@ -213,21 +213,23 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 45, { "${keys.link.homerow.newtab}",  'f', KMOD_SHIFT,                "document.linkkeys arg:1 newtab:1"  }, 0 },
     { 46, { "${keys.link.homerow.hover}",   'h', 0,                         "document.linkkeys arg:1 hover:1"   }, 0 },
     { 47, { "${keys.link.homerow.next}",    '.', 0,                         "document.linkkeys more:1"          }, 0 },
-    { 50, { "${keys.bookmark.add}",         'd', KMOD_PRIMARY,              "bookmark.add"                      }, 0 },
+    { 50, { "${keys.bookmark.add}",         bookmarkPage_KeyShortcut,       "bookmark.add"                      }, 0 },
     { 51, { "${keys.bookmark.addfolder}",   'n', KMOD_SHIFT,                "bookmarks.addfolder"               }, 0 },
-    { 55, { "${keys.subscribe}",            subscribeToPage_KeyModifier,    "feeds.subscribe"                   }, 0 },
+    { 55, { "${keys.subscribe}",            subscribeToPage_KeyShortcut,    "feeds.subscribe"                   }, 0 },
     { 56, { "${keys.feeds.showall}",        SDLK_u, KMOD_SHIFT,             "feeds.mode arg:0"                  }, 0 },
     { 57, { "${keys.feeds.showunread}",     SDLK_u, 0,                      "feeds.mode arg:1"                  }, 0 },
     { 60, { "${keys.findtext}",             'f', KMOD_PRIMARY,              "focus.set id:find.input"           }, 0 },
-    { 70, { "${keys.zoom.in}",              SDLK_EQUALS, KMOD_PRIMARY,      "zoom.delta arg:10"                 }, 0 },
-    { 71, { "${keys.zoom.out}",             SDLK_MINUS, KMOD_PRIMARY,       "zoom.delta arg:-10"                }, 0 },
-    { 72, { "${keys.zoom.reset}",           SDLK_0, KMOD_PRIMARY,           "zoom.set arg:100"                  }, 0 },
+    { 65, { "${LC:menu.viewformat.plain}",  SDLK_y, KMOD_PRIMARY,           "document.viewformat"               }, 0 },
+    { 70, { "${keys.zoom.in}",              SDLK_EQUALS, KMOD_ZOOM,         "zoom.delta arg:10"                 }, 0 },
+    { 71, { "${keys.zoom.out}",             SDLK_MINUS, KMOD_ZOOM,          "zoom.delta arg:-10"                }, 0 },
+    { 72, { "${keys.zoom.reset}",           SDLK_0, KMOD_ZOOM,              "zoom.set arg:100"                  }, 0 },
 #if !defined (iPlatformApple) /* Ctrl-Cmd-F on macOS */
     { 73, { "${keys.fullscreen}",           SDLK_F11, 0,                    "window.fullscreen"                 }, 0 },
 #endif
     { 76, { "${keys.tab.new}",              newTab_KeyShortcut,             "tabs.new"                          }, 0 },
     { 77, { "${keys.tab.close}",            closeTab_KeyShortcut,           "tabs.close"                        }, 0 },
-    { 78, { "${keys.tab.close.other}",      SDLK_w, KMOD_PRIMARY | KMOD_SHIFT, "tabs.close toleft:1 toright:1"  }, 0 },
+    { 78, { "${keys.tab.close.other}",      SDLK_w, KMOD_SECONDARY,         "tabs.close toleft:1 toright:1"     }, 0 },
+    { 79, { "${LC:menu.reopentab}",         SDLK_t, KMOD_SECONDARY,         "tabs.new reopen:1"                 }, 0 },        
     { 80, { "${keys.tab.prev}",             prevTab_KeyShortcut,            "tabs.prev"                         }, 0 },
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
     { 90, { "${keys.split.menu}",           SDLK_j, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
@@ -244,9 +246,12 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 110,{ "${menu.save.downloads}",       SDLK_s, KMOD_PRIMARY,           "document.save"                     }, 0 },
     { 120,{ "${keys.upload}",               SDLK_u, KMOD_PRIMARY,           "document.upload"                   }, 0 },
     { 121,{ "${keys.upload.edit}",          SDLK_e, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
-    { 125,{ "${keys.pageinfo}",             SDLK_i, KMOD_PRIMARY,           "document.info"                     }, 0 },
-    { 126,{ "${keys.sitespec}",             ',', KMOD_PRIMARY | KMOD_SHIFT, "document.sitespec"                 }, 0 },
-    { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_PRIMARY | KMOD_SHIFT, "input.precedingline"            }, 0 },
+    { 125,{ "${keys.pageinfo}",             pageInfo_KeyShortcut,           "document.info"                     }, 0 },
+    { 126,{ "${keys.sitespec}",             ',', KMOD_SECONDARY,            "document.sitespec"                 }, 0 },
+    { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_SECONDARY,         "input.precedingline"               }, 0 },
+    { 140,{ "${keys.identmenu}",            identityMenu_KeyShortcut,       "identmenu.open focus:1"            }, 0 },          
+    { 200,{ "${keys.menubar.focus}",        menuBar_KeyShortcut,            "menubar.focus"                     }, 0 },
+    { 205,{ "${keys.contextmenu}",          '/', 0,                         "contextkey"                        }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)
     { 1002, { NULL, SDLK_LEFTBRACKET,  KMOD_PRIMARY,             "navigate.back"        }, 0 },
@@ -353,7 +358,11 @@ void reset_Binding(int id) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+#if defined (iPlatformTerminal)
+static const char *filename_Keys_ = "cbindings.txt";
+#else
 static const char *filename_Keys_ = "bindings.txt";
+#endif
 
 void init_Keys(void) {
     iKeys *d = &keys_;
@@ -451,7 +460,7 @@ void setLabel_Keys(int id, const char *label) {
 
 iBool processEvent_Keys(const SDL_Event *ev) {
     iKeys *d = &keys_;
-    iRoot *root = get_Window()->keyRoot;
+    iRoot *root = get_Window() ? get_Window()->keyRoot : NULL;
     if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
         const iBinding *bind = find_Keys_(d, ev->key.keysym.sym, keyMods_Sym(ev->key.keysym.mod));
         if (bind) {
@@ -466,7 +475,7 @@ iBool processEvent_Keys(const SDL_Event *ev) {
                 postCommandf_Root(root, "%s repeat:1", cstr_String(&bind->command));
             }
             else {
-                postCommandString_Root(root, &bind->command);
+                postCommandf_Root(root, "%s keydown:1", cstr_String(&bind->command));
             }
             return iTrue;
         }

@@ -61,6 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/time.h>
+#include <the_Foundation/thread.h>
 #include <the_Foundation/version.h>
 #include <SDL.h>
 
@@ -93,31 +94,45 @@ iDeclareType(App)
 #define EMB_BIN "../../Resources/resources.lgr"
 static const char *defaultDataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
 #endif
+
 #if defined (iPlatformAppleMobile)
 #define EMB_BIN "../../Resources/resources.lgr"
 static const char *defaultDataDir_App_ = "~/Library/Application Support";
 #endif
+
 #if defined (iPlatformMsys)
 #define EMB_BIN "../resources.lgr"
 static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
+
 #if defined (iPlatformAndroidMobile)
 #define EMB_BIN "resources.lgr" /* loaded from assets with SDL_rwops */
 static const char *defaultDataDir_App_ = NULL; /* will ask SDL */
-#elif defined (iPlatformLinux) || defined (iPlatformOther)
+
+#elif defined (iPlatformLinux) || defined (iPlatformTerminal) || defined (iPlatformOther)
 #define EMB_BIN  "../../share/lagrange/resources.lgr"
 #define EMB_BIN2  "../../../share/lagrange/resources.lgr"
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
+
 #if defined (iPlatformHaiku)
 #define EMB_BIN "./resources.lgr"
 static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
 #endif
+
 #define EMB_BIN_EXEC "../resources.lgr" /* fallback from build/executable dir */
-static const char *prefsFileName_App_      = "prefs.cfg";
-static const char *oldStateFileName_App_   = "state.binary";
-static const char *stateFileName_App_      = "state.lgr";
-static const char *tempStateFileName_App_  = "state.lgr.tmp";
+#if defined (iPlatformTerminal)
+#   define STATE_NAME "cstate" /* separate for console since it's a different environment */
+#   define PREFS_NAME "cprefs"
+#else
+#   define STATE_NAME "state"
+#   define PREFS_NAME "prefs"
+#endif
+
+static const char *prefsFileName_App_      = PREFS_NAME ".cfg";
+static const char *oldStateFileName_App_   = STATE_NAME ".binary";
+static const char *stateFileName_App_      = STATE_NAME ".lgr";
+static const char *tempStateFileName_App_  = STATE_NAME ".lgr.tmp";
 static const char *defaultDownloadDir_App_ = "~/Downloads";
 
 static const int idleThreshold_App_ = 1000; /* ms */
@@ -126,6 +141,7 @@ struct Impl_App {
     iCommandLine args;
     iString *    execPath;
     iStringSet * tempFilesPendingDeletion;
+    iStringList *recentlyClosedTabUrls; /* for reopening, like an undo stack */
     iMimeHooks * mimehooks;
     iGmCerts *   certs;
     iVisited *   visited;
@@ -142,9 +158,9 @@ struct Impl_App {
     iBool        isSuspended;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
-    unsigned int idleSleepDelayMs;
     uint32_t     lastEventTime;
     int          sleepTimer;
+    unsigned int idleSleepDelayMs;
 #endif
     iAtomicInt   pendingRefresh;
     iBool        isLoadingPrefs;
@@ -160,7 +176,6 @@ struct Impl_App {
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
-    //iRect        initialWindowRect;
     iArray       initialWindowRects; /* one per window */
     iPrefs       prefs;
 };
@@ -214,13 +229,9 @@ static iString *serializePrefs_App_(const iApp *d) {
             y = win->place.normalRect.pos.y;
             w = win->place.normalRect.size.x;
             h = win->place.normalRect.size.y;
-#if defined (iPlatformApple) || defined (iPlatformMobile)
             /* On macOS, maximization should be applied at creation time or the window will take
                a moment to animate to its maximized size. */
-            const int winSnap = 0;
-#else
-            const int winSnap = snap_MainWindow(win);
-#endif
+            const int winSnap = (isApple_Platform() || isMobile_Platform() ? 0 : snap_MainWindow(win));
             appendFormat_String(str,
                                 "window.setrect index:%zu width:%d height:%d coord:%d %d snap:%d\n",
                                 winIndex,
@@ -253,7 +264,9 @@ static iString *serializePrefs_App_(const iApp *d) {
         }
     }
     appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
-    appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
+    if (d->window) {
+        appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(as_Window(d->window)));
+    }
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str,
                         "font.set ui:%s heading:%s body:%s mono:%s monodoc:%s\n",
@@ -278,11 +291,11 @@ static iString *serializePrefs_App_(const iApp *d) {
     for (size_t i = 0; i < iElemCount(d->prefs.navbarActions); i++) {
         appendFormat_String(str, "navbar.action.set arg:%d button:%d\n", d->prefs.navbarActions[i], i);
     }
-#if defined (iPlatformMobile)
-    appendFormat_String(str, "hidetoolbarscroll arg:%d\n", d->prefs.hideToolbarOnScroll);
-    appendFormat_String(str, "toolbar.action.set arg:%d button:0\n", d->prefs.toolbarActions[0]);
-    appendFormat_String(str, "toolbar.action.set arg:%d button:1\n", d->prefs.toolbarActions[1]);
-#endif
+    if (isMobile_Platform()) {
+        appendFormat_String(str, "hidetoolbarscroll arg:%d\n", d->prefs.hideToolbarOnScroll);
+        appendFormat_String(str, "toolbar.action.set arg:%d button:0\n", d->prefs.toolbarActions[0]);
+        appendFormat_String(str, "toolbar.action.set arg:%d button:1\n", d->prefs.toolbarActions[1]);
+    }
     iConstForEach(StringSet, fp, d->prefs.disabledFontPacks) {
         appendFormat_String(str, "fontpack.disable id:%s\n", cstr_String(fp.value));
     }
@@ -310,6 +323,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
         { "prefs.hoverlink", &d->prefs.hoverLink },
         { "prefs.justify", &d->prefs.justifyParagraph },
+        { "prefs.markdown.viewsource", &d->prefs.markdownAsSource },
         { "prefs.mono.gemini", &d->prefs.monospaceGemini },
         { "prefs.mono.gopher", &d->prefs.monospaceGopher },
         { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
@@ -400,6 +414,34 @@ static const iString *prefsFileName_(void) {
     return collectNewCStr_String(concatPath_CStr(dataDir_App_(), prefsFileName_App_));
 }
 
+void updateCACertificates_App(void) {
+    iApp *d = &app_;
+    if (isEmpty_String(&d->prefs.strings[caFile_PrefsString]) &&
+        isEmpty_String(&d->prefs.strings[caPath_PrefsString]) &&
+        !isEmpty_Block(&blobCacertPem_Resources)) {
+        /* Use the bundled CA root cert store. */
+        iFile *f = new_File(collect_String(concatCStr_Path(dataDir_App(), "cacert.pem")));
+        iBool load = iFalse;
+        if (fileExists_FileInfo(path_File(f)) &&
+            fileSize_FileInfo(path_File(f)) == size_Block(&blobCacertPem_Resources)) {
+            load = iTrue;
+        }
+        else if (open_File(f, writeOnly_FileMode)) {
+            write_File(f, &blobCacertPem_Resources);
+            close_File(f);
+            load = iTrue;
+        }
+        if (load) {
+            setCACertificates_TlsRequest(path_File(f), NULL);
+        }
+        iRelease(f);
+    }
+    else {
+        setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString],
+                                     &d->prefs.strings[caPath_PrefsString]);
+    }    
+}
+
 static void loadPrefs_App_(iApp *d) {
     iUnused(d);
     iBool haveCA = iFalse;
@@ -481,9 +523,8 @@ static void loadPrefs_App_(iApp *d) {
         delete_String(str);
     }
     if (!haveCA) {
-        /* Default CA setup. */
-        setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString],
-                                     &d->prefs.strings[caPath_PrefsString]);
+        /* Preferences file did not include CA settings at all. */
+        updateCACertificates_App();
     }
     iRelease(f);
     /* Upgrade checks. */
@@ -543,7 +584,7 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
     /* Must scale by UI scaling factor. */
     mulfv_I2(&rect.size, desktopDPI_Win32());
 #endif
-#if defined (iPlatformLinux) && !defined (iPlatformAndroid)
+#if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
     /* Scale by the primary (?) monitor DPI. */
     if (isRunningUnderWindowSystem_App()) {
         float vdpi;
@@ -594,6 +635,10 @@ static iBool loadState_App_(iApp *d) {
                 const int   keyRoot   = (winState & 1);
                 const iBool isCurrent = (winState & current_WindowStateFlag) != 0;
 //                printf("[State] '%.4s' split:%d state:%x\n", magic, splitMode, winState);
+#if defined (iPlatformTerminal)
+                /* Terminal only supports one window. */
+                win = d->window;
+#else
                 if (numWins == 1) {
                     win = d->window;
                 }
@@ -601,6 +646,7 @@ static iBool loadState_App_(iApp *d) {
                     win = new_MainWindow(initialWindowRect_App_(d, numWins - 1));
                     addWindow_App(win);
                 }
+#endif
                 pushBack_Array(currentTabs, &(iCurrentTabs){ { NULL, NULL } });
                 isFirstTab[0] = isFirstTab[1] = iTrue;
                 if (isCurrent) {
@@ -885,7 +931,7 @@ static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
 }
 
 static void init_App_(iApp *d, int argc, char **argv) {
-#if defined (iPlatformLinux) && !defined (iPlatformAndroid)
+#if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
     d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
                                     !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
 #else
@@ -894,7 +940,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     d->isSuspended = iFalse;
     d->tempFilesPendingDeletion = new_StringSet();
-    init_Array(&d->initialWindowRects, sizeof(iRect));
+    d->recentlyClosedTabUrls = new_StringList();
+    init_Array(&d->initialWindowRects, sizeof(iRect));    
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone
        cannot be relied on (behavior differs depending on OS). */ {
@@ -1114,6 +1161,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     postCommand_App("~toolbar.actions.changed");
     postCommand_App("~root.movable");
     postCommand_App("~window.unfreeze");
+    postCommand_App("~focus.set id:"); /* clear focus */
     postCommand_App("font.reset");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
     postCommand_Root(NULL, "document.autoreload");
@@ -1198,6 +1246,7 @@ static void deinit_App(iApp *d) {
         remove(cstr_String(tmp.value));
     }
     deinit_Array(&d->initialWindowRects);
+    iRelease(d->recentlyClosedTabUrls);
     iRelease(d->tempFilesPendingDeletion);
 }
 
@@ -1645,19 +1694,62 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                 }
 #endif
-                /* Per-window processing. */
                 iBool wasUsed = iFalse;
-                listWindows_App_(d, &windows);
-                iConstForEach(PtrArray, iter, &windows) {
-                    iWindow *window = iter.ptr;
-                    setCurrent_Window(window);
-                    window->lastHover = window->hover;
-                    wasUsed = processEvent_Window(window, &ev);
-                    if (ev.type == SDL_MOUSEMOTION) {
-                        /* Only offered to the frontmost window. */
-                        break;
+                /* Focus navigation events take prioritity. */
+                if (!wasUsed) {
+                    /* Keyboard focus navigation with arrow keys. */
+                    iWidget *menubar = NULL;
+                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.mod == 0 && focus_Widget() &&
+                        parentMenu_Widget(focus_Widget())) {
+                        setCurrent_Window(window_Widget(focus_Widget()));
+                        const int key = ev.key.keysym.sym;
+                        if (key == SDLK_DOWN || key == SDLK_UP) {
+                            iWidget *nextFocus = findFocusable_Widget(focus_Widget(),
+                                                                      key == SDLK_UP
+                                                                          ? backward_WidgetFocusDir
+                                                                          : forward_WidgetFocusDir);
+                            if (nextFocus && parent_Widget(nextFocus) == parent_Widget(focus_Widget())) {
+                                setFocus_Widget(nextFocus);
+                            }
+                            wasUsed = iTrue;
+                        }
+                        else if ((key == SDLK_LEFT || key == SDLK_RIGHT)) {
+                            if ((menubar = findParent_Widget(focus_Widget(), "menubar")) != NULL) {
+                                iWidget *button = parent_Widget(parent_Widget(focus_Widget()));
+                                size_t index = indexOfChild_Widget(menubar, button);
+                                const size_t curIndex = index;
+                                if (key == SDLK_LEFT && index > 0) {
+                                    index--;
+                                }
+                                else if (key == SDLK_RIGHT && index < childCount_Widget(menubar) - 1) {
+                                    index++;
+                                }
+                                if (curIndex != index) {
+                                    setFocus_Widget(child_Widget(menubar, index));                                
+                                    postCommand_Widget(child_Widget(menubar, index), "trigger");
+                                }
+                            }
+                            else {
+                                postCommand_Widget(focus_Widget(), "cancel");
+                            }
+                            wasUsed = iTrue;
+                        }
                     }
-                    if (wasUsed) break;
+                }
+                /* Per-window processing. */
+                if (!wasUsed && !isEmpty_PtrArray(&d->mainWindows)) {
+                    listWindows_App_(d, &windows);
+                    iConstForEach(PtrArray, iter, &windows) {
+                        iWindow *window = iter.ptr;
+                        setCurrent_Window(window);
+                        window->lastHover = window->hover;
+                        wasUsed = processEvent_Window(window, &ev);
+                        if (ev.type == SDL_MOUSEMOTION) {
+                            /* Only offered to the frontmost window. */
+                            break;
+                        }
+                        if (wasUsed) break;
+                    }
                 }
                 setCurrent_Window(d->window);
                 if (!wasUsed) {
@@ -1667,10 +1759,22 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 if (!wasUsed) {
                     /* Focus cycling. */
                     if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB) {
-                        setFocus_Widget(findFocusable_Widget(focus_Widget(),
-                                                             ev.key.keysym.mod & KMOD_SHIFT
-                                                                 ? backward_WidgetFocusDir
-                                                                 : forward_WidgetFocusDir));
+                        iWidget *startFrom = focus_Widget();
+                        /* Go to a sidebar if one is visible. */
+                        if (!startFrom && isVisible_Widget(findWidget_App("sidebar"))) {
+                            setFocus_Widget(as_Widget(
+                                list_SidebarWidget((iSidebarWidget *) findWidget_App("sidebar"))));
+                        }
+                        else if (!startFrom && isVisible_Widget(findWidget_App("sidebar2"))) {
+                            setFocus_Widget(as_Widget(
+                                list_SidebarWidget((iSidebarWidget *) findWidget_App("sidebar2"))));
+                        }
+                        else {
+                            setFocus_Widget(findFocusable_Widget(startFrom,
+                                                                 ev.key.keysym.mod & KMOD_SHIFT
+                                                                     ? backward_WidgetFocusDir
+                                                                     : forward_WidgetFocusDir));
+                        }
                         wasUsed = iTrue;
                     }
                 }
@@ -1778,7 +1882,14 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
             dispatchEvent_Window(as_Window(d->window), &u);
         }
 #endif
-        drawWhileResizing_MainWindow(d->window, winev->data1, winev->data2);
+        /* Find the window that is being resized and redraw it immediately. */
+        iConstForEach(PtrArray, i, &d->mainWindows) {
+            const iMainWindow *win = i.ptr;
+            if (SDL_GetWindowID(win->base.win) == winev->windowID) {
+                drawWhileResizing_MainWindow(d->window, winev->data1, winev->data2);
+                break;
+            }
+        }
     }
     return 0;
 }
@@ -1852,7 +1963,26 @@ void refresh_App(void) {
                     break;
             }
             win->frameCount++;
+            if (isTerminal_Platform()) {
+                sleep_Thread(1.0 / 60.0);
+            }
         }
+    }
+    else {
+#if defined (iPlatformApple)
+        /* Nothing needs redrawing, however we may have to keep blitting the latest contents.
+           The Metal renderer can get stuttery otherwise. */ 
+        iConstForEach(PtrArray, j, &windows) {
+            iWindow *win = j.ptr;
+            switch (win->type) {
+                case main_WindowType: 
+                    drawQuick_MainWindow(as_MainWindow(win));
+                    break;
+                default:
+                    break;
+            }
+        }
+#endif
     }
     if (d->warmupFrames > 0) {
         d->warmupFrames--;
@@ -2007,8 +2137,13 @@ void postCommandf_App(const char *command, ...) {
 
 void rootOrder_App(iRoot *roots[2]) {
     const iWindow *win = get_Window();
-    roots[0] = win->keyRoot;
-    roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
+    if (win) {
+        roots[0] = win->keyRoot;
+        roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
+    }
+    else {
+        roots[0] = roots[1] = NULL;
+    }
 }
 
 iAny *findWidget_App(const char *id) {
@@ -2051,6 +2186,9 @@ void addWindow_App(iMainWindow *win) {
 void removeWindow_App(iMainWindow *win) {
     iApp *d = &app_;
     removeOne_PtrArray(&d->mainWindows, win);
+    if (isEmpty_PtrArray(&d->mainWindows)) {
+        d->window = NULL;
+    }
 }
 
 size_t numWindows_App(void) {
@@ -2547,36 +2685,24 @@ static void invalidateCachedDocuments_App_(void) {
     }
 }
 
-iBool handleCommand_App(const char *cmd) {
-    iApp *d = &app_;
+static void pushClosedTabUrl_App_(iApp *d, const iString *url) {
+    pushBack_StringList(d->recentlyClosedTabUrls, url);
+    if (size_StringList(d->recentlyClosedTabUrls) > 50) { /* not an infinite number */
+        popFront_StringList(d->recentlyClosedTabUrls);
+    }
+}
+
+static const iString *popClosedTabUrl_App_(iApp *d) {
+    if (isEmpty_StringList(d->recentlyClosedTabUrls)) {
+        return NULL;
+    }
+    return collect_String(takeLast_StringList(d->recentlyClosedTabUrls));    
+}
+
+static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     const iBool isFrozen = !d->window || d->window->isDrawFrozen;
-    /* TODO: Maybe break this up a little bit? There's a very long list of ifs here. */
-    if (equal_Command(cmd, "config.error")) {
-        makeSimpleMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
-                                 format_CStr("Error in config file: %s\n"
-                                             "See \"about:debug\" for details.",
-                                             suffixPtr_Command(cmd, "where")));
-        return iTrue;
-    }
-#if 0 /* disabled in v1.11 */
-    else if (equal_Command(cmd, "fontpack.suggest.classic")) {
-        /* TODO: Don't use this when system fonts are accessible. */
-        if (!isInstalled_Fonts("classic-set") && !isInstalled_Fonts("cjk")) {
-            makeQuestion_Widget(
-                uiHeading_ColorEscape "${heading.fontpack.classic}",
-                "${dlg.fontpack.classic.msg}",
-                (iMenuItem[]){
-                    { "${cancel}" },
-                    { uiTextAction_ColorEscape "${dlg.fontpack.classic}",
-                      0,
-                      0,
-                      "!open newtab:1 url:gemini://skyjake.fi/fonts/classic-set.fontpack" } },
-                2);
-        }
-        return iTrue;
-    }
-#endif
-    else if (equal_Command(cmd, "prefs.changed")) {
+    /* Commands related to preferences. */
+    if (equal_Command(cmd, "prefs.changed")) {
         savePrefs_App_(d);
         return iTrue;
     }
@@ -2636,6 +2762,514 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.langTo   = argLabel_Command(cmd, "to");
         return iTrue;
     }
+    else if (equal_Command(cmd, "window.retain")) {
+        d->prefs.retainWindowSize = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "customframe")) {
+        d->prefs.customFrame = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.retaintabs.changed")) {
+        d->prefs.retainTabs = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.font.smooth.changed")) {
+        if (!isFrozen) {
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
+        }
+        d->prefs.fontSmoothing = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            resetFontCache_Text(text_Window(get_MainWindow())); /* clear the glyph cache */
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.gemtext.ansi.fg.changed")) {
+        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFg_AnsiFlag, arg_Command(cmd));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.gemtext.ansi.bg.changed")) {
+        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowBg_AnsiFlag, arg_Command(cmd));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.gemtext.ansi.fontstyle.changed")) {
+        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFontStyle_AnsiFlag, arg_Command(cmd));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.markdown.viewsource.changed")) {
+        d->prefs.markdownAsSource = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
+             equal_Command(cmd, "prefs.mono.gopher.changed")) {
+        const iBool isSet = (arg_Command(cmd) != 0);
+        if (!isFrozen) {
+            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
+        }
+        if (startsWith_CStr(cmd, "prefs.mono.gemini")) {
+            d->prefs.monospaceGemini = isSet;
+        }
+        else {
+            d->prefs.monospaceGopher = isSet;
+        }
+        if (!isFrozen) {
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.boldlink.dark.changed") ||
+             equal_Command(cmd, "prefs.boldlink.light.changed") ||
+             equal_Command(cmd, "prefs.boldlink.visited.changed")) {
+        const iBool isSet = (arg_Command(cmd) != 0);
+        if (startsWith_CStr(cmd, "prefs.boldlink.visited")) {
+            d->prefs.boldLinkVisited = isSet;
+        }
+        else if (startsWith_CStr(cmd, "prefs.boldlink.dark")) {
+            d->prefs.boldLinkDark = isSet;
+        }
+        else {
+            d->prefs.boldLinkLight = isSet;
+        }
+        if (!d->isLoadingPrefs) {
+            postCommand_App("font.changed");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.biglede.changed")) {
+        d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
+        if (!d->isLoadingPrefs) {
+            postCommand_App("document.layout.changed");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.justify.changed")) {
+        d->prefs.justifyParagraph = arg_Command(cmd) != 0;
+        if (!d->isLoadingPrefs) {
+            postCommand_App("document.layout.changed");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.plaintext.wrap.changed")) {
+        d->prefs.plainTextWrap = arg_Command(cmd) != 0;
+        if (!d->isLoadingPrefs) {
+            postCommand_App("document.layout.changed");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.sideicon.changed")) {
+        d->prefs.sideIcon = arg_Command(cmd) != 0;
+        postRefresh_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.centershort.changed")) {
+        d->prefs.centerShortDocs = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.collapsepreonload.changed")) {
+        d->prefs.collapsePreOnLoad = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.hoverlink.changed")) {
+        d->prefs.hoverLink = arg_Command(cmd) != 0;
+        postRefresh_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.hoverlink.toggle")) {
+        d->prefs.hoverLink = !d->prefs.hoverLink;
+        postRefresh_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.dataurl.openimages.changed")) {
+        d->prefs.openDataUrlImagesOnLoad = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.archive.openindex.changed")) {
+        d->prefs.openArchiveIndexPages = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.bookmarks.addbottom.changed")) {
+        d->prefs.addBookmarksToBottom = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.font.warnmissing.changed")) {
+        d->prefs.warnAboutMissingGlyphs = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.animate.changed")) {
+        d->prefs.uiAnimations = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.blink.changed")) {
+        d->prefs.blinkingCursor = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.time.24h.changed")) {
+        d->prefs.time24h = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "smoothscroll")) {
+        d->prefs.smoothScrolling = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "scrollspeed")) {
+        const int type = argLabel_Command(cmd, "type");
+        if (type == keyboard_ScrollType || type == mouse_ScrollType) {
+            d->prefs.smoothScrollSpeed[type] = iClamp(arg_Command(cmd), 1, 40);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "decodeurls")) {
+        d->prefs.decodeUserVisibleURLs = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "imageloadscroll")) {
+        d->prefs.loadImageInsteadOfScrolling = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "returnkey.set")) {
+        d->prefs.returnKey = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "pinsplit.set")) {
+        d->prefs.pinSplit = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "theme.set")) {
+        const int isAuto = argLabel_Command(cmd, "auto");
+        d->prefs.theme = arg_Command(cmd);
+        if (!isAuto) {
+            if (isDark_ColorTheme(d->prefs.theme) && d->isDarkSystemTheme) {
+                d->prefs.systemPreferredColorTheme[0] = d->prefs.theme;
+            }
+            else if (!isDark_ColorTheme(d->prefs.theme) && !d->isDarkSystemTheme) {
+                d->prefs.systemPreferredColorTheme[1] = d->prefs.theme;
+            }
+            else {
+                postCommand_App("ostheme arg:0");
+            }
+        }
+        setThemePalette_Color(d->prefs.theme);
+        postCommandf_App("theme.changed auto:%d", isAuto);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "accent.set")) {
+        d->prefs.accent = arg_Command(cmd);
+        setThemePalette_Color(d->prefs.theme);
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ostheme")) {
+        d->prefs.useSystemTheme = arg_Command(cmd);
+        if (hasLabel_Command(cmd, "preferdark")) {
+            d->prefs.systemPreferredColorTheme[0] = argLabel_Command(cmd, "preferdark");
+        }
+        if (hasLabel_Command(cmd, "preferlight")) {
+            d->prefs.systemPreferredColorTheme[1] = argLabel_Command(cmd, "preferlight");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "doctheme.dark.set")) {
+        d->prefs.docThemeDark = arg_Command(cmd);
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "doctheme.light.set")) {
+        d->prefs.docThemeLight = arg_Command(cmd);
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "imagestyle.set")) {
+        d->prefs.imageStyle = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "linewidth.set")) {
+        d->prefs.lineWidth = iMax(20, arg_Command(cmd));
+        postCommand_App("document.layout.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "linespacing.set")) {
+        d->prefs.lineSpacing = iMax(0.5f, argf_Command(cmd));
+        postCommand_App("document.layout.changed redo:1");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "tabwidth.set")) {
+        d->prefs.tabWidth = iMax(1, arg_Command(cmd));
+        postCommand_App("document.layout.changed redo:1"); /* spaces need renormalizing */
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "quoteicon.set")) {
+        d->prefs.quoteIcon = arg_Command(cmd) != 0;
+        postCommand_App("document.layout.changed redo:1");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ansiescape")) {
+        d->prefs.gemtextAnsiEscapes = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "saturation.set")) {
+        d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "cachesize.set")) {
+        d->prefs.maxCacheSize = arg_Command(cmd);
+        if (d->prefs.maxCacheSize <= 0) {
+            d->prefs.maxCacheSize = 0;
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "memorysize.set")) {
+        d->prefs.maxMemorySize = arg_Command(cmd);
+        if (d->prefs.maxMemorySize <= 0) {
+            d->prefs.maxMemorySize = 0;
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "urlsize.set")) {
+        d->prefs.maxUrlSize = arg_Command(cmd);
+        if (d->prefs.maxUrlSize < 1024) {
+            d->prefs.maxUrlSize = 1024; /* Gemini protocol requirement */
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "searchurl")) {
+        iString *url = &d->prefs.strings[searchUrl_PrefsString];
+        setCStr_String(url, suffixPtr_Command(cmd, "address"));
+        if (startsWith_String(url, "//")) {
+            prependCStr_String(url, "gemini:");
+        }
+        if (!isEmpty_String(url) && !startsWithCase_String(url, "gemini://")) {
+            prependCStr_String(url, "gemini://");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "proxy.gemini")) {
+        setCStr_String(&d->prefs.strings[geminiProxy_PrefsString], suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "proxy.gopher")) {
+        setCStr_String(&d->prefs.strings[gopherProxy_PrefsString], suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "proxy.http")) {
+        setCStr_String(&d->prefs.strings[httpProxy_PrefsString], suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }
+#if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
+    else if (equal_Command(cmd, "downloads")) {
+        setCStr_String(&d->prefs.strings[downloadDir_PrefsString], suffixPtr_Command(cmd, "path"));
+        return iTrue;
+    }
+#endif
+    else if (equal_Command(cmd, "downloads.open")) {
+        postCommandf_App("open newtab:%d url:%s",
+                         argLabel_Command(cmd, "newtab"),
+                         cstrCollect_String(makeFileUrl_String(downloadDir_App())));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ca.file")) {
+        setCStr_String(&d->prefs.strings[caFile_PrefsString], suffixPtr_Command(cmd, "path"));
+        if (!argLabel_Command(cmd, "noset")) {
+            updateCACertificates_App();
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ca.path")) {
+        setCStr_String(&d->prefs.strings[caPath_PrefsString], suffixPtr_Command(cmd, "path"));
+        if (!argLabel_Command(cmd, "noset")) {
+            updateCACertificates_App();
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "search")) {
+        const int newTab = argLabel_Command(cmd, "newtab");
+        const iString *query = collect_String(suffix_Command(cmd, "query"));
+        if (!isLikelyUrl_String(query)) {
+            const iString *url = searchQueryUrl_App(query);
+            if (!isEmpty_String(url)) {
+                postCommandf_App("open newtab:%d url:%s", newTab, cstr_String(url));
+            }
+        }
+        else {
+            postCommandf_App("open newtab:%d url:%s", newTab, cstr_String(query));
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "reveal")) {
+        const iString *path = NULL;
+        if (hasLabel_Command(cmd, "path")) {
+            path = suffix_Command(cmd, "path");
+        }
+        else if (hasLabel_Command(cmd, "url")) {
+            path = collect_String(localFilePathFromUrl_String(suffix_Command(cmd, "url")));
+        }
+        if (path) {
+            revealPath_App(path);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "window.new")) {
+#if !defined (iPlatformTerminal)
+        iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
+        addWindow_App(newWin); /* takes ownership */
+        SDL_ShowWindow(newWin->base.win);
+        setCurrent_Window(newWin);
+        if (hasLabel_Command(cmd, "url")) {
+            postCommandf_Root(newWin->base.roots[0], "~open %s", cmd + 11 /* all arguments passed on */);
+        }
+        else {
+            postCommand_Root(newWin->base.roots[0], "~navigate.home");
+        }
+        postCommand_Root(newWin->base.roots[0], "~window.unfreeze");
+#endif
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.changed")) {
+        save_Bookmarks(d->bookmarks, dataDir_App_());
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "bookmarks.sort")) {
+        sort_Bookmarks(d->bookmarks, arg_Command(cmd), cmpTitleAscending_Bookmark);
+        postCommand_App("bookmarks.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.reload.remote")) {
+        fetchRemote_Bookmarks(bookmarks_App());
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.request.finished")) {
+        requestFinished_Bookmarks(bookmarks_App(), pointerLabel_Command(cmd, "req"));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "feeds.refresh")) {
+        refresh_Feeds();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "visited.changed")) {
+        save_Visited(d->visited, dataDir_App_());
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "idents.changed")) {
+        saveIdentities_GmCerts(d->certs);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "ident.signin")) {
+        const iString *url = collect_String(suffix_Command(cmd, "url"));
+        signIn_GmCerts(
+            d->certs,
+            findIdentity_GmCerts(d->certs, collect_Block(hexDecode_Rangecc(range_Command(cmd, "ident")))),
+            url);
+        postCommand_App("navigate.reload");
+        postCommand_App("idents.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ident.signout")) {
+        iGmIdentity *ident = findIdentity_GmCerts(
+            d->certs, collect_Block(hexDecode_Rangecc(range_Command(cmd, "ident"))));
+        if (arg_Command(cmd)) {
+            clearUse_GmIdentity(ident);
+        }
+        else {
+            setUse_GmIdentity(ident, collect_String(suffix_Command(cmd, "url")), iFalse);
+        }
+        postCommand_App("navigate.reload");
+        postCommand_App("idents.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "os.theme.changed")) {
+        const int dark = argLabel_Command(cmd, "dark");
+        d->isDarkSystemTheme = dark;
+        if (d->prefs.useSystemTheme) {
+            const int contrast  = argLabel_Command(cmd, "contrast");
+            const int preferred = d->prefs.systemPreferredColorTheme[dark ^ 1];
+            postCommandf_App("theme.set arg:%d auto:1",
+                             preferred >= 0 ? preferred
+                             : dark ? (contrast ? pureBlack_ColorTheme : dark_ColorTheme)
+                                            : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
+        }
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "updater.check")) {
+        checkNow_Updater();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "fontpack.enable")) {
+        const iString *packId = collect_String(suffix_Command(cmd, "id"));
+        enablePack_Fonts(packId, arg_Command(cmd));
+        postCommand_App("navigate.reload");
+        return iTrue;
+    }
+#if defined (LAGRANGE_ENABLE_IPC)
+    else if (equal_Command(cmd, "ipc.list.urls")) {
+        iProcessId pid = argLabel_Command(cmd, "pid");
+        if (pid) {
+            iString *urls = collectNew_String();
+            iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
+                append_String(urls, url_DocumentWidget(i.object));
+                appendCStr_String(urls, "\n");
+            }
+            write_Ipc(pid, urls, response_IpcWrite);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ipc.active.url")) {
+        write_Ipc(argLabel_Command(cmd, "pid"),
+                  collectNewFormat_String(
+                      "%s\n", d->window ? cstr_String(url_DocumentWidget(document_App())) : ""),
+                  response_IpcWrite);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ipc.signal")) {
+        if (argLabel_Command(cmd, "raise")) {
+            if (d->window && d->window->base.win) {
+                SDL_RaiseWindow(d->window->base.win);
+            }
+        }
+        signal_Ipc(arg_Command(cmd));
+        return iTrue;
+    }
+#endif /* defined (LAGRANGE_ENABLE_IPC) */
+    else if (equal_Command(cmd, "quit")) {
+        SDL_Event ev;
+        ev.type = SDL_QUIT;
+        SDL_PushEvent(&ev);
+    }
+    return iFalse;
+}
+
+iBool handleCommand_App(const char *cmd) {
+    iApp *d = &app_;
+    const iBool isFrozen   = !d->window || d->window->isDrawFrozen;
+    const iBool isHeadless = numWindows_App() == 0;
+    if (handleNonWindowRelatedCommand_App_(d, cmd)) {
+        return iTrue;
+    }
+    if (isHeadless) {
+        /* All the subsequent commands assume that a window exists. */
+        return iFalse;
+    }
+    /* TODO: Maybe break this up a little bit? There's a very long list of ifs here. */
+    if (equal_Command(cmd, "config.error")) {
+        makeSimpleMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
+                                 format_CStr("Error in config file: %s\n"
+                                             "See \"about:debug\" for details.",
+                                             suffixPtr_Command(cmd, "where")));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "ui.split")) {
         if (argLabel_Command(cmd, "swap")) {
             swapRoots_MainWindow(d->window);
@@ -2658,14 +3292,6 @@ iBool handleCommand_App(const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
-    else if (equal_Command(cmd, "window.retain")) {
-        d->prefs.retainWindowSize = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "customframe")) {
-        d->prefs.customFrame = arg_Command(cmd);
-        return iTrue;
-    }
     else if (equal_Command(cmd, "window.maximize")) {
         const size_t winIndex = argU32Label_Command(cmd, "index");
         if (winIndex < size_PtrArray(&d->mainWindows)) {
@@ -2684,10 +3310,6 @@ iBool handleCommand_App(const char *cmd) {
         const iBool wasFull = snap_MainWindow(d->window) == fullscreen_WindowSnap;
         setSnap_MainWindow(d->window, wasFull ? 0 : fullscreen_WindowSnap);
         postCommandf_App("window.fullscreen.changed arg:%d", !wasFull);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.retaintabs.changed")) {
-        d->prefs.retainTabs = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "font.reset")) {
@@ -2810,25 +3432,6 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "smoothscroll")) {
-        d->prefs.smoothScrolling = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "scrollspeed")) {
-        const int type = argLabel_Command(cmd, "type");
-        if (type == keyboard_ScrollType || type == mouse_ScrollType) {
-            d->prefs.smoothScrollSpeed[type] = iClamp(arg_Command(cmd), 1, 40);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "decodeurls")) {
-        d->prefs.decodeUserVisibleURLs = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "imageloadscroll")) {
-        d->prefs.loadImageInsteadOfScrolling = arg_Command(cmd);
-        return iTrue;
-    }
     else if (equal_Command(cmd, "hidetoolbarscroll")) {
         d->prefs.hideToolbarOnScroll = arg_Command(cmd);
         if (!d->prefs.hideToolbarOnScroll) {
@@ -2836,335 +3439,51 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "returnkey.set")) {
-        d->prefs.returnKey = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "pinsplit.set")) {
-        d->prefs.pinSplit = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "theme.set")) {
-        const int isAuto = argLabel_Command(cmd, "auto");
-        d->prefs.theme = arg_Command(cmd);
-        if (!isAuto) {
-            if (isDark_ColorTheme(d->prefs.theme) && d->isDarkSystemTheme) {
-                d->prefs.systemPreferredColorTheme[0] = d->prefs.theme;
-            }
-            else if (!isDark_ColorTheme(d->prefs.theme) && !d->isDarkSystemTheme) {
-                d->prefs.systemPreferredColorTheme[1] = d->prefs.theme;
-            }
-            else {
-                postCommand_App("ostheme arg:0");
-            }
-        }
-        setThemePalette_Color(d->prefs.theme);
-        postCommandf_App("theme.changed auto:%d", isAuto);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "accent.set")) {
-        d->prefs.accent = arg_Command(cmd);
-        setThemePalette_Color(d->prefs.theme);
-        if (!isFrozen) {
-            invalidate_Window(d->window);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ostheme")) {
-        d->prefs.useSystemTheme = arg_Command(cmd);
-        if (hasLabel_Command(cmd, "preferdark")) {
-            d->prefs.systemPreferredColorTheme[0] = argLabel_Command(cmd, "preferdark");
-        }
-        if (hasLabel_Command(cmd, "preferlight")) {
-            d->prefs.systemPreferredColorTheme[1] = argLabel_Command(cmd, "preferlight");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "doctheme.dark.set")) {
-        d->prefs.docThemeDark = arg_Command(cmd);
-        if (!isFrozen) {
-            invalidate_Window(d->window);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "doctheme.light.set")) {
-        d->prefs.docThemeLight = arg_Command(cmd);
-        if (!isFrozen) {
-            invalidate_Window(d->window);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "imagestyle.set")) {
-        d->prefs.imageStyle = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "linewidth.set")) {
-        d->prefs.lineWidth = iMax(20, arg_Command(cmd));
-        postCommand_App("document.layout.changed");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "linespacing.set")) {
-        d->prefs.lineSpacing = iMax(0.5f, argf_Command(cmd));
-        postCommand_App("document.layout.changed redo:1");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "tabwidth.set")) {
-        d->prefs.tabWidth = iMax(1, arg_Command(cmd));
-        postCommand_App("document.layout.changed redo:1"); /* spaces need renormalizing */
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "quoteicon.set")) {
-        d->prefs.quoteIcon = arg_Command(cmd) != 0;
-        postCommand_App("document.layout.changed redo:1");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.font.smooth.changed")) {
-        if (!isFrozen) {
-            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
-        }
-        d->prefs.fontSmoothing = arg_Command(cmd) != 0;
-        if (!isFrozen) {
-            resetFontCache_Text(text_Window(get_MainWindow())); /* clear the glyph cache */
-            postCommand_App("font.changed");
-            postCommand_App("window.unfreeze");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ansiescape")) {
-        d->prefs.gemtextAnsiEscapes = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.gemtext.ansi.fg.changed")) {
-        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFg_AnsiFlag, arg_Command(cmd));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.gemtext.ansi.bg.changed")) {
-        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowBg_AnsiFlag, arg_Command(cmd));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.gemtext.ansi.fontstyle.changed")) {
-        iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFontStyle_AnsiFlag, arg_Command(cmd));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
-             equal_Command(cmd, "prefs.mono.gopher.changed")) {
-        const iBool isSet = (arg_Command(cmd) != 0);
-        if (!isFrozen) {
-            setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
-        }
-        if (startsWith_CStr(cmd, "prefs.mono.gemini")) {
-            d->prefs.monospaceGemini = isSet;
-        }
-        else {
-            d->prefs.monospaceGopher = isSet;
-        }
-        if (!isFrozen) {
-            postCommand_App("font.changed");
-            postCommand_App("window.unfreeze");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.boldlink.dark.changed") ||
-             equal_Command(cmd, "prefs.boldlink.light.changed") ||
-             equal_Command(cmd, "prefs.boldlink.visited.changed")) {
-        const iBool isSet = (arg_Command(cmd) != 0);
-        if (startsWith_CStr(cmd, "prefs.boldlink.visited")) {
-            d->prefs.boldLinkVisited = isSet;
-        }
-        else if (startsWith_CStr(cmd, "prefs.boldlink.dark")) {
-            d->prefs.boldLinkDark = isSet;
-        }
-        else {
-            d->prefs.boldLinkLight = isSet;
-        }
-        if (!d->isLoadingPrefs) {
-            postCommand_App("font.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.biglede.changed")) {
-        d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
-        if (!d->isLoadingPrefs) {
-            postCommand_App("document.layout.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.justify.changed")) {
-        d->prefs.justifyParagraph = arg_Command(cmd) != 0;
-        if (!d->isLoadingPrefs) {
-            postCommand_App("document.layout.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.plaintext.wrap.changed")) {
-        d->prefs.plainTextWrap = arg_Command(cmd) != 0;
-        if (!d->isLoadingPrefs) {
-            postCommand_App("document.layout.changed");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.sideicon.changed")) {
-        d->prefs.sideIcon = arg_Command(cmd) != 0;
-        postRefresh_App();
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.centershort.changed")) {
-        d->prefs.centerShortDocs = arg_Command(cmd) != 0;
-        if (!isFrozen) {
-            invalidate_Window(d->window);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.collapsepreonload.changed")) {
-        d->prefs.collapsePreOnLoad = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.hoverlink.changed")) {
-        d->prefs.hoverLink = arg_Command(cmd) != 0;
-        postRefresh_App();
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.hoverlink.toggle")) {
-        d->prefs.hoverLink = !d->prefs.hoverLink;
-        postRefresh_App();
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.dataurl.openimages.changed")) {
-        d->prefs.openDataUrlImagesOnLoad = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.archive.openindex.changed")) {
-        d->prefs.openArchiveIndexPages = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.bookmarks.addbottom.changed")) {
-        d->prefs.addBookmarksToBottom = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.font.warnmissing.changed")) {
-        d->prefs.warnAboutMissingGlyphs = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.animate.changed")) {
-        d->prefs.uiAnimations = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.blink.changed")) {
-        d->prefs.blinkingCursor = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "prefs.time.24h.changed")) {
-        d->prefs.time24h = arg_Command(cmd) != 0;
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "saturation.set")) {
-        d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
-        if (!isFrozen) {
-            invalidate_Window(d->window);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "cachesize.set")) {
-        d->prefs.maxCacheSize = arg_Command(cmd);
-        if (d->prefs.maxCacheSize <= 0) {
-            d->prefs.maxCacheSize = 0;
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "memorysize.set")) {
-        d->prefs.maxMemorySize = arg_Command(cmd);
-        if (d->prefs.maxMemorySize <= 0) {
-            d->prefs.maxMemorySize = 0;
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "urlsize.set")) {
-        d->prefs.maxUrlSize = arg_Command(cmd);
-        if (d->prefs.maxUrlSize < 1024) {
-            d->prefs.maxUrlSize = 1024; /* Gemini protocol requirement */
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "searchurl")) {
-        iString *url = &d->prefs.strings[searchUrl_PrefsString];
-        setCStr_String(url, suffixPtr_Command(cmd, "address"));
-        if (startsWith_String(url, "//")) {
-            prependCStr_String(url, "gemini:");
-        }
-        if (!isEmpty_String(url) && !startsWithCase_String(url, "gemini://")) {
-            prependCStr_String(url, "gemini://");
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "proxy.gemini")) {
-        setCStr_String(&d->prefs.strings[geminiProxy_PrefsString], suffixPtr_Command(cmd, "address"));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "proxy.gopher")) {
-        setCStr_String(&d->prefs.strings[gopherProxy_PrefsString], suffixPtr_Command(cmd, "address"));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "proxy.http")) {
-        setCStr_String(&d->prefs.strings[httpProxy_PrefsString], suffixPtr_Command(cmd, "address"));
-        return iTrue;
-    }
-#if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
-    else if (equal_Command(cmd, "downloads")) {
-        setCStr_String(&d->prefs.strings[downloadDir_PrefsString], suffixPtr_Command(cmd, "path"));
-        return iTrue;
-    }
-#endif
-    else if (equal_Command(cmd, "downloads.open")) {
-        postCommandf_App("open newtab:%d url:%s",
-                         argLabel_Command(cmd, "newtab"),
-                         cstrCollect_String(makeFileUrl_String(downloadDir_App())));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ca.file")) {
-        setCStr_String(&d->prefs.strings[caFile_PrefsString], suffixPtr_Command(cmd, "path"));
-        if (!argLabel_Command(cmd, "noset")) {
-            setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString], &d->prefs.strings[caPath_PrefsString]);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ca.path")) {
-        setCStr_String(&d->prefs.strings[caPath_PrefsString], suffixPtr_Command(cmd, "path"));
-        if (!argLabel_Command(cmd, "noset")) {
-            setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString], &d->prefs.strings[caPath_PrefsString]);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "search")) {
-        const int newTab = argLabel_Command(cmd, "newtab");
-        const iString *query = collect_String(suffix_Command(cmd, "query"));
-        if (!isLikelyUrl_String(query)) {
-            const iString *url = searchQueryUrl_App(query);
-            if (!isEmpty_String(url)) {
-                postCommandf_App("open newtab:%d url:%s", newTab, cstr_String(url));
-            }
-        }
-        else {
-            postCommandf_App("open newtab:%d url:%s", newTab, cstr_String(query));
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "reveal")) {
-        const iString *path = NULL;
-        if (hasLabel_Command(cmd, "path")) {
-            path = suffix_Command(cmd, "path");
-        }
-        else if (hasLabel_Command(cmd, "url")) {
-            path = collect_String(localFilePathFromUrl_String(suffix_Command(cmd, "url")));
-        }
-        if (path) {
-            revealPath_App(path);
-        }
+    else if (equal_Command(cmd, "spartan.input")) {
+        const char *value = suffixPtr_Command(cmd, "value");
+        iRangecc url = range_Command(cmd, "urlesc");
+        postCommand_Widget(
+            document_Command(cmd),
+            "open newtab:%d newwindow:%d url:%s?%s",
+            argLabel_Command(cmd, "newtab"),
+            argLabel_Command(cmd, "newwindow"),
+            cstr_Rangecc(url),
+            cstr_String(collect_String(urlEncode_String(collectNewCStr_String(value)))));
         return iTrue;
     }
     else if (equal_Command(cmd, "open")) {
         const char *urlArg = suffixPtr_Command(cmd, "url");
         if (!urlArg) {
             return iTrue; /* invalid command */
+        }
+        if (argLabel_Command(cmd, "query")) {
+            const iString *url = collectNewCStr_String(urlArg);
+            iString *spartanCmd = collectNewFormat_String(
+                "spartan.input newtab:%d newwindow:%d urlesc:%s",
+                argLabel_Command(cmd, "newtab"),
+                argLabel_Command(cmd, "newwindow"),
+                cstr_String(withSpacesEncoded_String(url)));
+            iUrl parts;
+            init_Url(&parts, url);
+            iWidget *dlg = makeValueInputWithAdditionalActions_Widget(
+                as_Widget(document_Command(cmd)),
+                NULL,
+                cstr_Rangecc((iRangecc){ parts.host.start, parts.path.end }),
+                "${spartan.input}",
+                "${dlg.input.send}",
+                cstr_String(spartanCmd),
+                (iMenuItem[]){
+                    { "${dlg.spartan.upload}", SDLK_u, KMOD_PRIMARY,
+                      format_CStr("valueinput.upload url:%s", cstr_String(url)) } },
+                1);
+            setBackupFileName_InputWidget(findChild_Widget(dlg, "input"), "spartanbackup");
+            if (!isEmpty_Range(&parts.query)) {
+                postCommand_Widget(dlg,
+                                   "valueinput.set text:%s",
+                                   cstrCollect_String(urlDecode_String(collectNewRange_String(
+                                       (iRangecc){ parts.query.start + 1, parts.query.end }))));
+            }
+            return iTrue;
         }
         if (argLabel_Command(cmd, "switch")) {
             iDocumentWidget *doc = findDocument_Root(get_Root(), collectNewCStr_String(urlArg));
@@ -3204,7 +3523,7 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
         if (equalCase_Rangecc(parts.scheme, "titan")) {
-            iUploadWidget *upload = new_UploadWidget();
+            iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
             setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, document_App());
             addChild_Widget(get_Root()->widget, iClob(upload));
@@ -3332,23 +3651,17 @@ iBool handleCommand_App(const char *cmd) {
 #endif
         return iFalse;
     }
-    else if (equal_Command(cmd, "window.new")) {
-        iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
-        addWindow_App(newWin); /* takes ownership */
-        SDL_ShowWindow(newWin->base.win);
-        setCurrent_Window(newWin);
-        if (hasLabel_Command(cmd, "url")) {
-            postCommandf_Root(newWin->base.roots[0], "~open %s", cmd + 11 /* all arguments passed on */);
-        }
-        else {
-            postCommand_Root(newWin->base.roots[0], "~navigate.home");
-        }
-        postCommand_Root(newWin->base.roots[0], "~window.unfreeze");
-        return iTrue;
-    }
     else if (equal_Command(cmd, "tabs.new")) {
+        if (argLabel_Command(cmd, "reopen")) {
+            const iString *reopenUrl = popClosedTabUrl_App_(d);
+            if (reopenUrl) {
+                newTab_App(NULL, iTrue);
+                postCommandf_App("open url:%s", cstr_String(reopenUrl));
+            }
+            return iTrue;
+        }
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
-        newTab_App(isDuplicate ? document_App() : NULL, iTrue);
+        newTab_App(isDuplicate ? document_App() : NULL, iTrue);        
         if (!isDuplicate) {
             postCommandf_App("navigate.home focus:%d", deviceType_App() == desktop_AppDeviceType);
         }
@@ -3356,13 +3669,11 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "tabs.close")) {
         iWidget *tabs = findWidget_App("doctabs");
-#if defined (iPlatformMobile)
         /* Can't close the last tab on mobile. */
-        if (tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
+        if (isMobile_Platform() && tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
             postCommand_App("navigate.home");
             return iTrue;
         }
-#endif
         const iRangecc tabId = range_Command(cmd, "id");
         iWidget *      doc   = !isEmpty_Range(&tabId) ? findWidget_App(cstr_Rangecc(tabId))
                                                       : document_App();
@@ -3372,13 +3683,19 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("document.openurls.changed");
         if (argLabel_Command(cmd, "toright")) {
             while (tabCount_Widget(tabs) > index + 1) {
-                destroy_Widget(removeTabPage_Widget(tabs, index + 1));
+                iDocumentWidget *closed = (iDocumentWidget *) removeTabPage_Widget(tabs, index + 1);
+                pushClosedTabUrl_App_(d, url_DocumentWidget(closed));
+                cancelAllRequests_DocumentWidget(closed);
+                destroy_Widget(as_Widget(closed));
             }
             wasClosed = iTrue;
         }
         if (argLabel_Command(cmd, "toleft")) {
             while (index-- > 0) {
-                destroy_Widget(removeTabPage_Widget(tabs, 0));
+                iDocumentWidget *closed = (iDocumentWidget *) removeTabPage_Widget(tabs, 0);
+                pushClosedTabUrl_App_(d, url_DocumentWidget(closed));
+                cancelAllRequests_DocumentWidget(closed);
+                destroy_Widget(as_Widget(closed));
             }
             postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, 0));
             wasClosed = iTrue;
@@ -3389,9 +3706,10 @@ iBool handleCommand_App(const char *cmd) {
         }
         const iBool isSplit = numRoots_Window(get_Window()) > 1;
         if (tabCount_Widget(tabs) > 1 || isSplit) {
-            iWidget *closed = removeTabPage_Widget(tabs, index);
-            cancelAllRequests_DocumentWidget((iDocumentWidget *) closed);
-            destroy_Widget(closed); /* released later */
+            iDocumentWidget *closed = (iDocumentWidget *) removeTabPage_Widget(tabs, index);
+            pushClosedTabUrl_App_(d, url_DocumentWidget(closed));
+            cancelAllRequests_DocumentWidget(closed);
+            destroy_Widget(as_Widget(closed)); /* released later */
             if (index == tabCount_Widget(tabs)) {
                 index--;
             }
@@ -3406,12 +3724,18 @@ iBool handleCommand_App(const char *cmd) {
                 }
             }
         }
+#if defined (iPlatformAppleDesktop)
+        else {
+            closeWindow_App(d->window);
+        }
+#else
         else if (numWindows_App() > 1) {
             closeWindow_App(d->window);
         }
         else {
             postCommand_App("quit");
         }
+#endif
         return iTrue;
     }
     else if (equal_Command(cmd, "keyroot.next")) {
@@ -3420,11 +3744,6 @@ iBool handleCommand_App(const char *cmd) {
             setFocus_Widget(NULL);
         }
         return iTrue;
-    }
-    else if (equal_Command(cmd, "quit")) {
-        SDL_Event ev;
-        ev.type = SDL_QUIT;
-        SDL_PushEvent(&ev);
     }
     else if (equal_Command(cmd, "preferences")) {
         iWidget *dlg = makePreferences_Widget();
@@ -3441,6 +3760,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.font.warnmissing"), d->prefs.warnAboutMissingGlyphs);
         setToggle_Widget(findChild_Widget(dlg, "prefs.dataurl.openimages"), d->prefs.openDataUrlImagesOnLoad);
         setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.markdown.viewsource"), d->prefs.markdownAsSource);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
@@ -3567,18 +3887,27 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "bookmark.add")) {
         iDocumentWidget *doc = document_App();
+        const iString *url;
+        const iString *title;
+        iChar icon = 0;
         if (suffixPtr_Command(cmd, "url")) {
-            iString *title = collect_String(newRange_String(range_Command(cmd, "title")));
-            replace_String(title, "%20", " ");
-            makeBookmarkCreation_Widget(collect_String(suffix_Command(cmd, "url")),
-                                        title,
-                                        0x1f588 /* pin */);
+            url          = collect_String(suffix_Command(cmd, "url"));
+            iString *str = newRange_String(range_Command(cmd, "title"));
+            replace_String(str, "%20", " ");
+            title = collect_String(str);
         }
         else {
-            makeBookmarkCreation_Widget(url_DocumentWidget(doc),
-                                        bookmarkTitle_DocumentWidget(doc),
-                                        siteIcon_GmDocument(document_DocumentWidget(doc)));
+            url   = url_DocumentWidget(doc);
+            title = bookmarkTitle_DocumentWidget(doc);
+//            icon  = 0; //siteIcon_GmDocument(document_DocumentWidget(doc));
         }
+        const uint32_t existing = findUrl_Bookmarks(bookmarks_App(), url);
+        if (existing) {
+            /* Editing bookmarks is a sidebar command. */
+            postCommand_Widget(findWidget_App("sidebar"), "bookmark.edit id:%u", existing);
+            return iTrue;
+        }
+        makeBookmarkCreation_Widget(url, title, icon);
         if (deviceType_App() == desktop_AppDeviceType) {
             postCommand_App("focus.set id:bmed.title");
         }
@@ -3613,27 +3942,6 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "bookmarks.sort")) {
-        sort_Bookmarks(d->bookmarks, arg_Command(cmd), cmpTitleAscending_Bookmark);
-        postCommand_App("bookmarks.changed");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "bookmarks.reload.remote")) {
-        fetchRemote_Bookmarks(bookmarks_App());
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "bookmarks.request.finished")) {
-        requestFinished_Bookmarks(bookmarks_App(), pointerLabel_Command(cmd, "req"));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "bookmarks.changed")) {
-        save_Bookmarks(d->bookmarks, dataDir_App_());
-        return iFalse;
-    }
-    else if (equal_Command(cmd, "feeds.refresh")) {
-        refresh_Feeds();
-        return iTrue;
-    }
     else if (startsWith_CStr(cmd, "feeds.update.")) {
         const iWidget *navBar = findChild_Widget(get_Window()->roots[0]->widget, "navbar");
         iAnyObject *prog = findChild_Widget(navBar, "feeds.progress");
@@ -3656,10 +3964,6 @@ iBool handleCommand_App(const char *cmd) {
             refresh_Widget(findWidget_App("url"));
             return iFalse;
         }
-        return iFalse;
-    }
-    else if (equal_Command(cmd, "visited.changed")) {
-        save_Visited(d->visited, dataDir_App_());
         return iFalse;
     }
     else if (equal_Command(cmd, "document.changed")) {
@@ -3686,29 +3990,6 @@ iBool handleCommand_App(const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
-    else if (equal_Command(cmd, "ident.signin")) {
-        const iString *url = collect_String(suffix_Command(cmd, "url"));
-        signIn_GmCerts(
-            d->certs,
-            findIdentity_GmCerts(d->certs, collect_Block(hexDecode_Rangecc(range_Command(cmd, "ident")))),
-            url);
-        postCommand_App("navigate.reload");
-        postCommand_App("idents.changed");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ident.signout")) {
-        iGmIdentity *ident = findIdentity_GmCerts(
-            d->certs, collect_Block(hexDecode_Rangecc(range_Command(cmd, "ident"))));
-        if (arg_Command(cmd)) {
-            clearUse_GmIdentity(ident);
-        }
-        else {
-            setUse_GmIdentity(ident, collect_String(suffix_Command(cmd, "url")), iFalse);
-        }
-        postCommand_App("navigate.reload");
-        postCommand_App("idents.changed");
-        return iTrue;
-    }
     else if (equal_Command(cmd, "ident.switch")) {
         /* This is different than "ident.signin" in that the currently used identity's activation
            URL is used instead of the current one. */
@@ -3726,33 +4007,6 @@ iBool handleCommand_App(const char *cmd) {
             postCommand_App("navigate.reload");
             delete_String(useUrl);
         }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "idents.changed")) {
-        saveIdentities_GmCerts(d->certs);
-        return iFalse;
-    }
-    else if (equal_Command(cmd, "os.theme.changed")) {
-        const int dark = argLabel_Command(cmd, "dark");
-        d->isDarkSystemTheme = dark;
-        if (d->prefs.useSystemTheme) {
-            const int contrast  = argLabel_Command(cmd, "contrast");
-            const int preferred = d->prefs.systemPreferredColorTheme[dark ^ 1];
-            postCommandf_App("theme.set arg:%d auto:1",
-                             preferred >= 0 ? preferred
-                             : dark ? (contrast ? pureBlack_ColorTheme : dark_ColorTheme)
-                                    : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
-        }
-        return iFalse;
-    }
-    else if (equal_Command(cmd, "updater.check")) {
-        checkNow_Updater();
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "fontpack.enable")) {
-        const iString *packId = collect_String(suffix_Command(cmd, "id"));
-        enablePack_Fonts(packId, arg_Command(cmd));
-        postCommand_App("navigate.reload");
         return iTrue;
     }
     else if (equal_Command(cmd, "fontpack.delete")) {
@@ -3835,35 +4089,6 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-#if defined (LAGRANGE_ENABLE_IPC)
-    else if (equal_Command(cmd, "ipc.list.urls")) {
-        iProcessId pid = argLabel_Command(cmd, "pid");
-        if (pid) {
-            iString *urls = collectNew_String();
-            iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
-                append_String(urls, url_DocumentWidget(i.object));
-                appendCStr_String(urls, "\n");
-            }
-            write_Ipc(pid, urls, response_IpcWrite);
-        }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ipc.active.url")) {
-        write_Ipc(argLabel_Command(cmd, "pid"),
-                  collectNewFormat_String("%s\n", cstr_String(url_DocumentWidget(document_App()))),
-                  response_IpcWrite);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ipc.signal")) {
-        if (argLabel_Command(cmd, "raise")) {
-            if (d->window && d->window->base.win) {
-                SDL_RaiseWindow(d->window->base.win);
-            }
-        }
-        signal_Ipc(arg_Command(cmd));
-        return iTrue;
-    }
-#endif /* defined (LAGRANGE_ENABLE_IPC) */
     else {
         return iFalse;
     }

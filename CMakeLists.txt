@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.12.2
+    VERSION 1.13.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -62,10 +62,12 @@ option (ENABLE_POPUP_MENUS      "Use popup windows for context menus (if OFF, me
 option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
 option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAULT_RESIZE_DRAW})
 option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
+option (ENABLE_TUI              "Enable the Curses TUI instead of GUI" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
+set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to include as a built-in resource")
 
 include (BuildType.cmake)
 include (Resources.cmake)
@@ -105,6 +107,10 @@ set (RESOURCES
     res/fontpack.ini
     res/macos-system-fonts.ini
 )
+if (EXISTS ${CACERT_PEM_PATH})
+    message (STATUS "  ${CACERT_PEM_PATH}")
+    list (APPEND RESOURCES ${CACERT_PEM_PATH})
+endif ()
 file (GLOB FONTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} res/fonts/*)
 list (APPEND RESOURCES ${FONTS})
 if (IOS)
@@ -194,12 +200,6 @@ set (SOURCES
     src/updater.h
     src/visited.c
     src/visited.h
-    # Audio playback:
-    src/audio/buf.c
-    src/audio/buf.h
-    src/audio/player.c
-    src/audio/player.h
-    src/audio/stb_vorbis.c
     # User interface:
     src/ui/banner.c
     src/ui/banner.h
@@ -217,6 +217,8 @@ set (SOURCES
     src/ui/documentwidget.h
     src/ui/indicatorwidget.c
     src/ui/indicatorwidget.h
+    src/ui/font.c
+    src/ui/font.h
     src/ui/linkinfo.c
     src/ui/linkinfo.h
     src/ui/listwidget.c
@@ -268,7 +270,28 @@ set (SOURCES
     res/about/version.gmi
     ${EMB_BIN}
 )
-if (IOS OR NOT APPLE) # macos.m has Sparkle updater
+if (ENABLE_TUI)
+    set (ENABLE_STB_TRUETYPE NO)
+    add_definitions (-DiPlatformTerminal=1)
+    list (APPEND SOURCES
+        src/ui/text_terminal.c
+    )    
+else ()
+    set (ENABLE_STB_TRUETYPE YES)
+    list (APPEND SOURCES
+        src/ui/text_stb.c
+    )
+    # Audio playback
+    add_definitions (-DLAGRANGE_ENABLE_AUDIO=1)
+    list (APPEND SOURCES
+        src/audio/buf.c
+        src/audio/buf.h
+        src/audio/player.c
+        src/audio/player.h
+        src/audio/stb_vorbis.c
+    )
+endif ()
+if (IOS OR ENABLE_TUI OR NOT APPLE) # macos.m has Sparkle updater
     list (APPEND SOURCES src/updater.c)
 endif ()
 if (ENABLE_IPC)
@@ -300,7 +323,7 @@ if (IOS)
     PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources
     )
-elseif (APPLE)
+elseif (APPLE AND NOT ENABLE_TUI)
     add_definitions (-DiPlatformAppleDesktop=1)
     list (APPEND SOURCES src/macos.m src/macos.h)
     list (APPEND RESOURCES "res/Lagrange.icns")
@@ -312,7 +335,7 @@ if (MSYS)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
     list (APPEND SOURCES src/win32.c src/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
 endif ()
-if (MSYS OR (UNIX AND NOT MOBILE AND NOT APPLE))
+if (MSYS OR ENABLE_TUI OR (UNIX AND NOT MOBILE AND NOT APPLE))
     add_definitions (-DiPlatformPcDesktop=1)
 endif ()
 if (MOBILE)
@@ -342,7 +365,11 @@ set_property (TARGET app PROPERTY C_STANDARD 11)
 if (TARGET ext-deps)
     add_dependencies (app ext-deps)
 endif ()
-set_target_properties (app PROPERTIES OUTPUT_NAME lagrange)
+if (ENABLE_TUI)
+    set_target_properties (app PROPERTIES OUTPUT_NAME clagrange)
+else ()
+    set_target_properties (app PROPERTIES OUTPUT_NAME lagrange)
+endif ()
 target_include_directories (app PUBLIC
     src
     ${CMAKE_CURRENT_BINARY_DIR}
@@ -385,6 +412,9 @@ endif ()
 if (ENABLE_RESIZE_DRAW)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_RESIZE_DRAW=1)
 endif ()
+if (ENABLE_STB_TRUETYPE)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_STB_TRUETYPE=1)
+endif ()
 if (ENABLE_WEBP AND WEBP_FOUND)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WEBP=1)
     if (TARGET PkgConfig::WEBP)
@@ -402,7 +432,7 @@ if (ENABLE_X11_SWRENDER)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
-if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND)
+if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND AND NOT ENABLE_TUI)
     if (TARGET harfbuzz-lib)
         target_link_libraries (app PUBLIC harfbuzz-lib)
     else ()
@@ -420,7 +450,13 @@ if (ENABLE_FRIBIDI AND FRIBIDI_FOUND)
     endif ()
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_FRIBIDI=1)
 endif ()
-if (APPLE)
+if (APPLE AND NOT IOS)
+    if (CMAKE_OSX_DEPLOYMENT_TARGET)
+        target_compile_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
+        target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
+    endif ()
+endif ()
+if (APPLE AND NOT ENABLE_TUI)
     if (IOS)
         target_link_libraries (app PUBLIC "-framework UIKit")
     else ()
@@ -428,10 +464,6 @@ if (APPLE)
     endif ()
     if (ENABLE_SPARKLE)
         target_link_libraries (app PUBLIC sparkle)
-    endif ()
-    if (CMAKE_OSX_DEPLOYMENT_TARGET AND NOT IOS)
-        target_compile_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
-        target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
     endif ()
     if (SDL2_LIBRARY_DIRS)
         set_property (TARGET app PROPERTY BUILD_RPATH ${SDL2_LIBRARY_DIRS})
@@ -511,6 +543,14 @@ elseif (HAIKU)
     install (FILES ${EMB_BIN} DESTINATION .)
 elseif (ANDROID)
     file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../src/main/assets)
+elseif (ENABLE_TUI AND (UNIX OR MSYS))
+    install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install (FILES res/lagrange.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+    if (NOT ENABLE_RELATIVE_EMBED)
+        target_compile_definitions (app PUBLIC
+                LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
+    endif ()
+    install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange)    
 elseif (UNIX AND NOT APPLE)
     include (GNUInstallDirs)
     set_target_properties (app PROPERTIES

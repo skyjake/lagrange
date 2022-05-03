@@ -126,6 +126,7 @@ iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (iTickerFunc ticker, iAny *context);
 void        addTickerRoot_App   (iTickerFunc ticker, iRoot *root, iAny *context);
 void        removeTicker_App    (iTickerFunc ticker, iAny *context);
+
 void        addWindow_App       (iMainWindow *win);
 void        removeWindow_App    (iMainWindow *win);
 void        setActiveWindow_App (iMainWindow *win);
@@ -134,8 +135,11 @@ size_t      numWindows_App      (void);
 size_t      windowIndex_App     (const iMainWindow *win);
 iMainWindow *newMainWindow_App  (void);
 const iPtrArray *mainWindows_App(void);
+iMainWindow *    mainWindow_App (void); /* currently active main window */
 void        addPopup_App        (iWindow *popup);
 void        removePopup_App     (iWindow *popup);
+void        closePopups_App     (iBool doForce);
+
 void        postRefresh_App     (void);
 void        postCommand_Root    (iRoot *, const char *command);
 void        postCommandf_Root   (iRoot *, const char *command, ...);
@@ -154,8 +158,6 @@ iDocumentWidget *   document_Command    (const char *cmd);
 
 void            openInDefaultBrowser_App(const iString *url);
 void            revealPath_App          (const iString *path);
+void            updateCACertificates_App(void);
 void            resetFonts_App          (void);
 void            availableFontsChanged_App(void);
-
-iMainWindow *   mainWindow_App  (void);
-void            closePopups_App (iBool doForce);

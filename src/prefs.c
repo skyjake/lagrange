@@ -67,6 +67,9 @@ void init_Prefs(iPrefs *d) {
         d->bottomNavBar  = iFalse;
         d->bottomTabBar  = iFalse;        
     }
+    if (isTerminal_Platform()) {
+        d->bottomNavBar  = iTrue;
+    }
     d->menuBar           = (deviceType_App() == desktop_AppDeviceType);
     d->pinSplit          = 1;
     d->time24h           = iTrue;
@@ -82,6 +85,7 @@ void init_Prefs(iPrefs *d) {
     d->openArchiveIndexPages   = iTrue;
     d->addBookmarksToBottom    = iTrue;
     d->warnAboutMissingGlyphs  = iTrue;
+    d->markdownAsSource        = iTrue;
     d->decodeUserVisibleURLs   = iTrue;
     d->maxCacheSize      = 10;
     d->maxMemorySize     = 200;

@@ -209,11 +209,15 @@ struct Impl_GmAudio {
 
 void init_GmAudio(iGmAudio *d) {
     init_GmMediaProps_(&d->props);
+#if defined (LAGRANGE_ENABLE_AUDIO)    
     d->player = new_Player();
+#endif
 }
 
 void deinit_GmAudio(iGmAudio *d) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
     delete_Player(d->player);
+#endif
     deinit_GmMediaProps_(&d->props);
 }
 
@@ -335,12 +339,14 @@ size_t memorySize_Media(const iMedia *d) {
             memSize += size_Block(&img->partialData);
         }
     }
+#if defined (LAGRANGE_ENABLE_AUDIO)
     iConstForEach(PtrArray, a, &d->items[audio_MediaType]) {
         const iGmAudio *audio = a.ptr;
         if (audio->player) {
             memSize += sourceDataSize_Player(audio->player);
         }
     }
+#endif
     iConstForEach(PtrArray, n, &d->items[download_MediaType]) {
         const iGmDownload *down = n.ptr;
         memSize += down->numBytes;
@@ -395,6 +401,7 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
         }
     }
     else if (existing.type == audio_MediaType) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
         iGmAudio *audio;
         if (isDeleting) {
             take_PtrArray(&d->items[audio_MediaType], existingIndex, (void **) &audio);
@@ -412,6 +419,7 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
                 start_Player(audio->player);
             }
         }
+#endif
     }
     else if (existing.type == download_MediaType) {
         iGmDownload *dl;
@@ -447,6 +455,7 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             isNew = iTrue;
         }
         else if (startsWith_String(mime, "audio/")) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
             iGmAudio *audio = new_GmAudio();
             audio->props.linkId = linkId; /* TODO: use a hash? */
             audio->props.isPermanent = !allowHide;
@@ -460,6 +469,7 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             start_Player(audio->player);
             postCommandf_App("media.player.started player:%p", audio->player);
             isNew = iTrue;
+#endif /* LAGRANGE_ENABLE_AUDIO */
         }
     }
     return isNew;
@@ -574,12 +584,14 @@ iPlayer *audioPlayer_Media(const iMedia *d, iMediaId audioId) {
 }
 
 void pauseAllPlayers_Media(const iMedia *d, iBool setPaused) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
     for (size_t i = 0; i < size_PtrArray(&d->items[audio_MediaType]); ++i) {
         const iGmAudio *audio = constAt_PtrArray(&d->items[audio_MediaType], i);
         if (audio->player) {
             setPaused_Player(audio->player, setPaused);
         }
     }
+#endif
 }
 
 void downloadStats_Media(const iMedia *d, iMediaId downloadId, const iString **path_out,

@@ -73,6 +73,7 @@ iDefineTypeConstructionArgs(MainWindow, (iRect rect), rect)
 static const iMenuItem fileMenuItems_[] = {
     { "${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
     { "${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
+    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---" },
     { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
@@ -81,7 +82,7 @@ static const iMenuItem fileMenuItems_[] = {
     { "${menu.export}", 0, 0, "export" },
 #if defined (iPlatformPcDesktop)
     { "---" },
-    { "${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "${menu.preferences}", preferences_KeyShortcut, "preferences" },
     { "${menu.fonts}", 0, 0, "open newtab:1 switch:1 url:about:fonts" },
 #if defined (LAGRANGE_ENABLE_WINSPARKLE)
     { "${menu.update}", 0, 0, "updater.check" },
@@ -104,14 +105,14 @@ static const iMenuItem editMenuItems_[] = {
 };
 
 static const iMenuItem viewMenuItems_[] = {
-    { "${menu.show.bookmarks}", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
-    { "${menu.show.feeds}", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
-    { "${menu.show.history}", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
-    { "${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
-    { "${menu.show.outline}", '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1" },
+    { "${menu.show.bookmarks}", '1', leftSidebarTab_KeyModifier, "sidebar.mode arg:0 toggle:1" },
+    { "${menu.show.feeds}", '2', leftSidebarTab_KeyModifier, "sidebar.mode arg:1 toggle:1" },
+    { "${menu.show.history}", '3', leftSidebarTab_KeyModifier, "sidebar.mode arg:2 toggle:1" },
+    { "${menu.show.identities}", '4', leftSidebarTab_KeyModifier, "sidebar.mode arg:3 toggle:1" },
+    { "${menu.show.outline}", '5', leftSidebarTab_KeyModifier, "sidebar.mode arg:4 toggle:1" },
     { "---" },
-    { "${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
-    { "${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { "${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
+    { "${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
     { "---" },
     { "${menu.back}", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
     { "${menu.forward}", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
@@ -128,8 +129,8 @@ static const iMenuItem viewMenuItems_[] = {
 };
 
 static iMenuItem bookmarksMenuItems_[] = {
-    { "${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-    { "${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+    { "${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
+    { "${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
     { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
     { "---" },
     { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
@@ -141,14 +142,14 @@ static iMenuItem bookmarksMenuItems_[] = {
     { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
     { "---" },
     { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
-    { "${menu.feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
+    { "${menu.feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" },
     { NULL }
 };
 
 static const iMenuItem identityMenuItems_[] = {
-    { "${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
     { "---" },
-    { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
     { NULL }
 };
 
@@ -186,22 +187,32 @@ const iMenuItem topLevelMenus_Window[6] = {
 
 #if defined (LAGRANGE_MAC_MENUBAR)
 
+static iBool macMenusInserted_;
+
 static void insertMacMenus_(void) {
+    if (macMenusInserted_) {
+        return;
+    }
     insertMenuItems_MacOS("${menu.title.file}", 1, fileMenuItems_, iElemCount(fileMenuItems_));
     insertMenuItems_MacOS("${menu.title.edit}", 2, editMenuItems_, iElemCount(editMenuItems_));
     insertMenuItems_MacOS("${menu.title.view}", 3, viewMenuItems_, iElemCount(viewMenuItems_));
     insertMenuItems_MacOS("${menu.title.bookmarks}", 4, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
     insertMenuItems_MacOS("${menu.title.identity}", 5, identityMenuItems_, iElemCount(identityMenuItems_));
     insertMenuItems_MacOS("${menu.title.help}", 7, helpMenuItems_, iElemCount(helpMenuItems_));
+    macMenusInserted_ = iTrue;
 }
 
 static void removeMacMenus_(void) {
+    if (!macMenusInserted_) {
+        return;
+    }
     removeMenu_MacOS(7);
     removeMenu_MacOS(5);
     removeMenu_MacOS(4);
     removeMenu_MacOS(3);
     removeMenu_MacOS(2);
     removeMenu_MacOS(1);
+    macMenusInserted_ = iFalse;
 }
 
 #endif /* LAGRANGE_MAC_MENUBAR */
@@ -246,9 +257,7 @@ static void windowSizeChanged_MainWindow_(iMainWindow *d) {
 
 static void setupUserInterface_MainWindow(iMainWindow *d) {
 #if defined (LAGRANGE_MAC_MENUBAR)
-    if (numWindows_App() == 0) {
-        insertMacMenus_(); /* TODO: Shouldn't this be in the App? */
-    }
+    insertMacMenus_(); /* TODO: Shouldn't this be in the App? */
 #endif
     /* One root is created by default. */
     d->base.roots[0] = new_Root();
@@ -324,7 +333,7 @@ static float displayScale_Window_(const iWindow *d) {
          LAGRANGE_OVERRIDE_DPI with the empty string. */
         setenv("LAGRANGE_OVERRIDE_DPI", "", 1);
     }
-#if defined (iPlatformApple)
+#if defined (iPlatformApple) || defined (iPlatformTerminal)
     iUnused(d);
     /* Apple UI sizes are fixed and only scaled by pixel ratio. */
     /* TODO: iOS text size setting? */
@@ -520,21 +529,8 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     iZap(d->roots);
     iZap(d->cursors);
     create_Window_(d, rect, flags);
-    /* No luck, maybe software only? This should always work as long as there is a display. */
-    //    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
-//        flags &= ~SDL_WINDOW_OPENGL;
-//        start_PerfTimer(create_Window_);
-//        if (!create_Window_(d, rect, flags)) {
-//            exit(-2);
-//        }
-//        stop_PerfTimer(create_Window_);
-//    }
-//    start_PerfTimer(setPos);
-//    if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
-//        SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
-//    }
-//    stop_PerfTimer(setPos);
     SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);
+#if !defined (iPlatformTerminal)
     /* Renderer info. */ {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->render, &info);
@@ -542,11 +538,11 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
                info.name,
                info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
     }
+#endif
     drawBlank_Window_(d);
     d->pixelRatio   = pixelRatio_Window_(d); /* point/pixel conversion */
     d->displayScale = displayScale_Window_(d);
     d->uiScale      = initialUiScale_;
-    /* TODO: Ratios, scales, and metrics must be window-specific, not global. */
     if (d->type == main_WindowType) {
         updateMetrics_Window_(d);
     }
@@ -622,18 +618,16 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     d->place.snap             = 0;
     d->keyboardHeight         = 0;
     d->backBuf                = NULL;
-#if defined(iPlatformMobile)
-    const iInt2 minSize = zero_I2(); /* windows aren't independently resizable */
-#else
-    const iInt2 minSize = init_I2(425, 325);
-#endif
+    const iInt2 minSize =
+        (isMobile_Platform() ? zero_I2() /* windows aren't independently resizable */
+                             : init_I2(425, 325));
     SDL_SetWindowMinimumSize(d->base.win, minSize.x, minSize.y);
     SDL_SetWindowTitle(d->base.win, "Lagrange");
     /* Some info. */ {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->base.render, &info);
         isOpenGLRenderer_ = !iCmpStr(info.name, "opengl");
-#if !defined(NDEBUG)
+#if !defined(NDEBUG) && !defined (iPlatformTerminal)
         printf("[window] max texture size: %d x %d\n",
                info.max_texture_width,
                info.max_texture_height);
@@ -648,7 +642,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     useExecutableIconResource_SDLWindow(d->base.win);
     enableDarkMode_SDLWindow(d->base.win);
 #endif
-#if defined (iPlatformLinux)
+#if defined (iPlatformLinux) && !defined (iPlatformTerminal)
     SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
     /* Load the window icon. */ {
         SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, 0);
@@ -685,7 +679,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
     }
 #endif
-#if defined (iPlatformDesktop)
+#if defined (iPlatformDesktop) && !defined (iPlatformTerminal)
     SDL_HideWindow(d->base.win);
 #else
     SDL_ShowWindow(d->base.win);
@@ -877,7 +871,7 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
         SDL_GetWindowPosition(d->base.win, &newPos.x, &newPos.y);
         d->place.normalRect.pos = newPos;
         iInt2 border = zero_I2();
-#if !defined(iPlatformApple)
+#if !defined(iPlatformApple) && !defined (iPlatformTerminal)
         SDL_GetWindowBordersSize(d->base.win, &border.y, &border.x, NULL, NULL);
         iAssert(~SDL_GetWindowFlags(d->base.win) & SDL_WINDOW_MAXIMIZED);
 #endif
@@ -1032,9 +1026,9 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_CLOSE:
-            if (numWindows_App() > 1) {
+//            if (numWindows_App() > 1) {
                 closeWindow_App(d);
-            }
+//            }
             return iTrue;
         default:
             break;
@@ -1378,6 +1372,15 @@ void draw_Window(iWindow *d) {
     isDrawing_ = iFalse;
 }
 
+void drawQuick_MainWindow(iMainWindow *d) {
+    /* Just present what was drawn previously. */
+    if (d->backBuf) {
+        SDL_Renderer *render = d->base.render;
+        SDL_RenderCopy(render, d->backBuf, NULL, NULL);
+        SDL_RenderPresent(render);
+    }
+}
+
 void draw_MainWindow(iMainWindow *d) {
     if (isDrawing_) {
         /* Already drawing! */
@@ -1433,18 +1436,20 @@ void draw_MainWindow(iMainWindow *d) {
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
         setCurrent_Root(w->roots[0]);
-#if defined (iPlatformMobile)
-        iColor back = get_Color(uiBackground_ColorId);
-        if (deviceType_App() == phone_AppDeviceType) {
-            /* Page background extends to safe area, so fill it completely. */
-            back = get_Color(tmBackground_ColorId);
+        iColor back;
+        if (isMobile_Platform()) {
+            back = get_Color(uiBackground_ColorId);
+            if (deviceType_App() == phone_AppDeviceType) {
+                /* Page background extends to safe area, so fill it completely. */
+                back = get_Color(tmBackground_ColorId);
+            }
         }
-#else
-        const iColor back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
-                                              ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
-                                          ? uiAnnotation_ColorId
-                                          : uiSeparator_ColorId);
-#endif
+        else {
+            back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
+                                     ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
+                                 ? uiAnnotation_ColorId
+                                 : uiSeparator_ColorId);
+        }
         unsetClip_Paint(&p); /* update clip to full window */
         SDL_SetRenderDrawColor(w->render, back.r, back.g, back.b, 255);
         SDL_RenderClear(w->render);
@@ -1652,6 +1657,9 @@ void setKeyboardHeight_MainWindow(iMainWindow *d, int height) {
 
 iObjectList *listDocuments_MainWindow(iMainWindow *d, const iRoot *rootOrNull) {
     iObjectList *docs = new_ObjectList();
+    if (!d) {
+        return docs;
+    }
     iForIndices(i, d->base.roots) {
         iRoot *root = d->base.roots[i];
         if (!root) continue;
@@ -1668,7 +1676,7 @@ iObjectList *listDocuments_MainWindow(iMainWindow *d, const iRoot *rootOrNull) {
 }
 
 void checkPendingSplit_MainWindow(iMainWindow *d) {
-    if (d->splitMode != d->pendingSplitMode) {
+    if (d && d->splitMode != d->pendingSplitMode) {
         setSplitMode_MainWindow(d, d->pendingSplitMode);
     }
 }
@@ -1777,6 +1785,12 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             }
             setCurrent_Root(NULL);
         }
+        /* Add some room for the active root indicator. */
+        for (int i = 0; i < 2; i++) {
+            if (w->roots[i]) {
+                w->roots[i]->widget->padding[1] = (splitMode ? 1 : 0);
+            }
+        }        
         d->splitMode = splitMode;
         postCommand_App("window.resized");
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)

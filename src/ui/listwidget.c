@@ -87,7 +87,7 @@ void init_ListWidget(iListWidget *d) {
     init_Widget(w);
     setId_Widget(w, "list");
     setBackgroundColor_Widget(w, uiBackground_ColorId); /* needed for filling visbuffer */
-    setFlags_Widget(w, hover_WidgetFlag, iTrue);
+    setFlags_Widget(w, hover_WidgetFlag | focusable_WidgetFlag, iTrue);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumb_ScrollWidget(d->scroll, 0, 0);
     init_SmoothScroll(&d->scrollY, w, scrollBegan_ListWidget_);
@@ -95,6 +95,7 @@ void init_ListWidget(iListWidget *d) {
     d->scrollMode = normal_ScrollMode;
     d->noHoverWhileScrolling = iFalse;
     init_PtrArray(&d->items);
+    d->cursorItem = iInvalidPos;
     d->hoverItem = iInvalidPos;
     d->dragItem = iInvalidPos;
     d->dragOrigin = zero_I2();
@@ -279,6 +280,10 @@ const iAnyObject *constHoverItem_ListWidget(const iListWidget *d) {
     return constItem_ListWidget(d, d->hoverItem);
 }
 
+const iAnyObject *constCursorItem_ListWidget(const iListWidget *d) {
+    return constItem_ListWidget(d, d->cursorItem);
+}
+
 iAnyObject *item_ListWidget(iListWidget *d, size_t index) {
     if (index < size_PtrArray(&d->items)) {
         return at_PtrArray(&d->items, index);
@@ -307,6 +312,37 @@ void setHoverItem_ListWidget(iListWidget *d, size_t index) {
         d->hoverItem = index;
         refresh_Widget(as_Widget(d));
     }
+}
+
+static void moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) {
+    const size_t oldCursor = d->cursorItem;
+    if (isEmpty_ListWidget(d)) {
+        d->cursorItem = iInvalidPos;
+    }
+    else {
+        const int maxItem = numItems_ListWidget(d) - 1;
+        if (d->cursorItem == iInvalidPos) {
+            d->cursorItem = 0;
+        }
+        d->cursorItem = iClamp((int) d->cursorItem + dir, 0, maxItem);
+        while (((const iListItem *) constItem_ListWidget(d, d->cursorItem))->isSeparator &&
+               ((d->cursorItem < maxItem && dir >= 0) || (d->cursorItem > 0 && dir < 0))) {
+            d->cursorItem += (dir >= 0 ? 1 : -1); /* Skip separators. */
+        }
+    }    
+    if (oldCursor != d->cursorItem) {
+        invalidateItem_ListWidget(d, oldCursor);
+        invalidateItem_ListWidget(d, d->cursorItem);
+    }
+    if (d->cursorItem != iInvalidPos) {
+        scrollToItem_ListWidget(d, d->cursorItem, prefs_App()->uiAnimations ? animSpan : 0);
+    }
+}
+
+void setCursorItem_ListWidget(iListWidget *d, size_t index) {
+    invalidateItem_ListWidget(d, d->cursorItem);
+    d->cursorItem = 0;
+    moveCursor_ListWidget_(d, 0, 0);
 }
 
 void updateMouseHover_ListWidget(iListWidget *d) {
@@ -413,13 +449,32 @@ static iBool isScrollDisabled_ListWidget_(const iListWidget *d, const SDL_Event 
     return iFalse;
 }
 
+static int cursorKeyStep_ListWidget_(const iListWidget *d, int sym) {
+    const iWidget *w = constAs_Widget(d);
+    const int dir = (sym == SDLK_UP || sym == SDLK_PAGEUP || sym == SDLK_HOME ? -1 : 1);
+    switch (sym) {
+        case SDLK_UP:
+        case SDLK_DOWN:
+            return dir;
+        case SDLK_PAGEUP:
+        case SDLK_PAGEDOWN:
+            if (d->itemHeight) {
+                return dir * (height_Rect(innerBounds_Widget(w)) / d->itemHeight - 1);
+            }
+            return dir;
+        case SDLK_HOME:
+        case SDLK_END:
+            return dir * numItems_ListWidget(d);
+    }
+    return 0;
+}
+
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
         invalidate_ListWidget(d);
     }
-    else if (!isScrollDisabled_ListWidget_(d, ev) &&
-             processEvent_SmoothScroll(&d->scrollY, ev)) {
+    else if (!isScrollDisabled_ListWidget_(d, ev) && processEvent_SmoothScroll(&d->scrollY, ev)) {
         return iTrue;
     }
     else if (isCommand_SDLEvent(ev)) {
@@ -431,10 +486,59 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             setScrollPos_ListWidget(d, arg_Command(cmd));
             return iTrue;
         }
+        else if (equal_Command(cmd, "contextkey") && isFocused_Widget(w) &&
+                 d->cursorItem != iInvalidPos) {
+            emulateMouseClickPos_Widget(
+                w, SDL_BUTTON_RIGHT, mid_Rect(itemRect_ListWidget(d, d->cursorItem)));
+            setHoverItem_ListWidget(d, d->cursorItem);
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "focus.gained")) {
+            moveCursor_ListWidget_(d, 0, 0); /* clamp */
+            invalidateItem_ListWidget(d, d->cursorItem);
+            refresh_Widget(d);
+            return iFalse;
+        }
+        else if (isCommand_Widget(w, ev, "focus.lost")) {
+            invalidateItem_ListWidget(d, d->cursorItem);
+            refresh_Widget(d);
+            return iFalse;
+        }
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) {
         d->noHoverWhileScrolling = iFalse;
     }
+    if (ev->type == SDL_KEYDOWN && isFocused_Widget(w)) {
+        if (ev->key.keysym.mod == 0) {
+            const int key = ev->key.keysym.sym;
+            switch (key) {
+                case SDLK_UP:
+                case SDLK_DOWN:
+                case SDLK_PAGEUP:
+                case SDLK_PAGEDOWN:
+                case SDLK_HOME:
+                case SDLK_END: {
+                    if (d->scrollMode == normal_ScrollMode) {
+                        const int step = cursorKeyStep_ListWidget_(d, key);
+                        moveCursor_ListWidget_(d, step, iAbs(step) == 1 ? 0 : 150);
+                        return iTrue;
+                    }
+                    return iFalse;
+                }
+                case SDLK_RETURN:
+                case SDLK_KP_ENTER:
+                case SDLK_SPACE:
+                    if (d->cursorItem != iInvalidPos) {
+                        postCommand_Widget(w,
+                                           "list.clicked arg:%zu item:%p button:%d",
+                                           d->cursorItem,
+                                           constCursorItem_ListWidget(d),
+                                           SDL_BUTTON_LEFT);
+                    }
+                    return iTrue;
+            }
+        }
+    }    
     if (ev->type == SDL_MOUSEMOTION) {
         const iInt2 mousePos = init_I2(ev->motion.x, ev->motion.y);
         if (ev->motion.state == 0 /* not dragging */) {

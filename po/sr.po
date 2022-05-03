@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-15 03:07+0000\n"
+"PO-Revision-Date: 2022-04-29 19:45+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2480,3 +2480,30 @@ msgstr "Океанска"
 
 msgid "prefs.justify"
 msgstr "Обострано уравнање:"
+
+msgid "menu.reopentab"
+msgstr "Поново отвори последњу затворену картицу"
+
+msgid "menu.viewformat.plain"
+msgstr "Прикажи као чист текст"
+
+msgid "menu.viewformat.gemini"
+msgstr "Прикажи као Џемтекст"
+
+msgid "keys.menubar.focus"
+msgstr "Фокусирање траке менија"
+
+msgid "keys.identmenu"
+msgstr "Отварање менија Идентитет"
+
+msgid "keys.contextmenu"
+msgstr "Отварање контексног менија"
+
+msgid "spartan.input"
+msgstr "Унесите текст за слање:"
+
+msgid "dlg.spartan.upload"
+msgstr "Отвори уређивач…"
+
+msgid "heading.upload.spartan"
+msgstr "Слање преко Спартана"

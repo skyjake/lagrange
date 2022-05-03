@@ -119,24 +119,24 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-iDeclareType(TitanData)
-iDeclareTypeConstruction(TitanData)
+iDeclareType(UploadData)
+iDeclareTypeConstruction(UploadData)
     
-struct Impl_TitanData {
+struct Impl_UploadData {
     iBlock  data;
     iString mime;
     iString token;
 };
 
-iDefineTypeConstruction(TitanData)
+iDefineTypeConstruction(UploadData)
 
-void init_TitanData(iTitanData *d) {
+void init_UploadData(iUploadData *d) {
     init_Block(&d->data, 0);
     init_String(&d->mime);
     init_String(&d->token);
 }
 
-void deinit_TitanData(iTitanData *d) {
+void deinit_UploadData(iUploadData *d) {
     deinit_String(&d->token);
     deinit_String(&d->mime);
     deinit_Block(&d->data);
@@ -162,9 +162,10 @@ struct Impl_GmRequest {
     const iGmIdentity *  identity;
     enum iGmRequestState state;
     iString              url;
-    iTitanData *         titan;
+    iUploadData *        upload;
     iTlsRequest *        req;
     iGopher              gopher;
+    iSocket *            spartan;
     iGmResponse *        resp;
     iBool                isFilterEnabled;
     iBool                isRespLocked;
@@ -400,65 +401,23 @@ static const iBlock *replaceVariables_(const iBlock *block) {
             if (equal_Rangecc(name, "APP_VERSION")) {
                 repl = range_CStr(LAGRANGE_APP_VERSION);
             }
-#if 0
-            else if (startsWith_Rangecc(name, "BT:")) { /* block text */
-                repl = range_String(collect_String(renderBlockChars_Text(
-                    &fontFiraSansRegular_Resources,
-                    11, /* should be larger if shaded */
-                    quadrants_TextBlockMode,
-                    &(iString){ iBlockLiteral(
-                        name.start + 3, size_Range(&name) - 3, size_Range(&name) - 3) })));
-            }
-            else if (startsWith_Rangecc(name, "ST:")) { /* shaded text */
-                repl = range_String(collect_String(renderBlockChars_Text(
-                    &fontSmolEmojiRegular_Resources,
-                    20,
-                    shading_TextBlockMode,
-                    &(iString){ iBlockLiteral(
-                        name.start + 3, size_Range(&name) - 3, size_Range(&name) - 3) })));
-            }
-#endif
             else if (equal_Rangecc(name, "ALT")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u2325");
-#else
-                repl = range_CStr("Alt");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u2325" : "Alt");
             }
             else if (equal_Rangecc(name, "ALT+")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u2325");
-#else
-                repl = range_CStr("Alt+");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u2325" : "Alt+");
             }
             else if (equal_Rangecc(name, "CTRL")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u2318");
-#else
-                repl = range_CStr("Ctrl");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u2318" : "Ctrl");
             }
             else if (equal_Rangecc(name, "CTRL+")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u2318");
-#else
-                repl = range_CStr("Ctrl+");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u2318" : "Ctrl+");
             }
             else if (equal_Rangecc(name, "SHIFT")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u21e7");
-#else
-                repl = range_CStr("Shift");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u21e7" : "Shift");
             }
             else if (equal_Rangecc(name, "SHIFT+")) {
-#if defined (iPlatformApple)
-                repl = range_CStr("\u21e7");
-#else
-                repl = range_CStr("Shift+");
-#endif
+                repl = range_CStr(isApple_Platform() ? "\u21e7" : "Shift+");
             }
             else {
                 /* Translated string. */
@@ -533,6 +492,135 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
     }
 }
 
+static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
+    iBool notifyUpdate = iFalse;
+    iBool notifyDone   = iFalse;
+    lock_Mutex(d->mtx);
+    iBlock *data = readAll_Socket(socket);
+    if (!isEmpty_Block(data)) {
+        if (d->state == receivingHeader_GmRequestState) {
+            append_Block(&d->resp->meta.chars, data);
+            size_t crlf = indexOfCStr_String(&d->resp->meta, "\r\n");
+            if (crlf != iInvalidPos) {
+                setData_Block(&d->resp->body, constBegin_String(&d->resp->meta) + crlf + 2,
+                              size_Block(&d->resp->meta.chars) - crlf - 2);
+                if (!isEmpty_Block(&d->resp->body)) {
+                    notifyUpdate = iTrue;
+                }
+                truncate_Block(&d->resp->meta.chars, crlf);
+                d->state = receivingBody_GmRequestState;
+                iRegExp *metaPattern = new_RegExp("^([0-9]) (.*)", 0);
+                iRegExpMatch m;
+                init_RegExpMatch(&m);
+                if (matchString_RegExp(metaPattern, &d->resp->meta, &m)) {
+                    switch (toInt_String(collect_String(captured_RegExpMatch(&m, 1)))) {
+                        case 2:
+                            d->resp->statusCode = success_GmStatusCode;
+                            set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                            break;
+                        case 3:
+                            d->resp->statusCode = redirectTemporary_GmStatusCode;
+                            d->state = finished_GmRequestState;
+                            set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                            notifyDone = iTrue;
+                            break;
+                        case 4:
+                            d->resp->statusCode = badRequest_GmStatusCode;
+                            d->state = finished_GmRequestState;
+                            set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                            notifyDone = iTrue;
+                            break;
+                        case 5:
+                            d->resp->statusCode = permanentFailure_GmStatusCode;
+                            d->state = finished_GmRequestState;
+                            set_String(&d->resp->meta, collect_String(captured_RegExpMatch(&m, 2)));
+                            notifyDone = iTrue;
+                            break;
+                        default:
+                            d->resp->statusCode = invalidHeader_GmStatusCode;
+                            d->state            = finished_GmRequestState;
+                            notifyDone          = iTrue;                            
+                            break;
+                    } 
+                }
+                else {
+                    d->resp->statusCode = invalidHeader_GmStatusCode;
+                    d->state            = finished_GmRequestState;
+                    notifyDone          = iTrue;
+                }
+                iRelease(metaPattern);
+            }
+        }
+        else if (d->state == receivingBody_GmRequestState) {
+            append_Block(&d->resp->body, data);
+            notifyUpdate = iTrue;
+        }
+    }
+    delete_Block(data);    
+    unlock_Mutex(d->mtx);
+    if (notifyUpdate) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    if (notifyDone) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
+static void spartanDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
+    iUnused(socket);
+    iBool notify = iFalse;
+    lock_Mutex(d->mtx);
+    if (d->state != failure_GmRequestState) {
+        d->state = finished_GmRequestState;
+        notify = iTrue;
+    }
+    unlock_Mutex(d->mtx);
+    if (notify) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
+static void spartanError_GmRequest_(iGmRequest *d, iSocket *socket, int error, const char *msg) {
+    iUnused(socket);
+    lock_Mutex(d->mtx);
+    d->state = failure_GmRequestState;
+    d->resp->statusCode = tlsFailure_GmStatusCode;
+    format_String(&d->resp->meta, "%s (errno %d)", msg, error);
+    clear_Block(&d->resp->body);
+    unlock_Mutex(d->mtx);
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static void beginSpartanConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+    d->state = receivingHeader_GmRequestState;
+    d->spartan = new_Socket(cstr_String(host), port);
+    iConnect(Socket, d->spartan, readyRead,    d, spartanRead_GmRequest_);
+    iConnect(Socket, d->spartan, disconnected, d, spartanDisconnected_GmRequest_);
+    iConnect(Socket, d->spartan, error,        d, spartanError_GmRequest_);
+    open_Socket(d->spartan);
+    iUrl url;
+    init_Url(&url, &d->url);
+    iBlock *message = new_Block(0);
+    iBlock *data    = new_Block(0);
+    if (!isEmpty_Range(&url.query)) {
+        set_Block(data,
+                  utf8_String(collect_String(urlDecode_String(
+                      collectNewRange_String((iRangecc){ url.query.start + 1, url.query.end })))));
+    }
+    if (d->upload) {
+        set_Block(data, &d->upload->data);    
+    }
+    printf_Block(message,
+                 "%s %s %zu\r\n",
+                 cstr_Rangecc(url.host),
+                 cstr_Rangecc(url.path),
+                 size_Block(data));
+    write_Socket(d->spartan, message);
+    write_Socket(d->spartan, data);
+    delete_Block(data);
+    delete_Block(message);
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
@@ -546,7 +634,8 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
-    d->titan        = NULL;
+    d->spartan      = NULL;
+    d->upload       = NULL;
     d->certs        = certs;
     d->req          = NULL;
     d->updated      = NULL;
@@ -571,8 +660,9 @@ void deinit_GmRequest(iGmRequest *d) {
         unlock_Mutex(d->mtx);
     }
     iReleasePtr(&d->req);
-    delete_TitanData(d->titan);
+    delete_UploadData(d->upload);
     deinit_Gopher(&d->gopher);
+    iRelease(d->spartan);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
     delete_GmResponse(d->resp);
@@ -616,14 +706,14 @@ static iBool isTitan_GmRequest_(const iGmRequest *d) {
     return equalCase_Rangecc(urlScheme_String(&d->url), "titan");
 }
 
-void setTitanData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *payload,
-                            const iString *token) {
-    if (!d->titan) {
-        d->titan = new_TitanData();   
+void setUploadData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *payload,
+                             const iString *token) {
+    if (!d->upload) {
+        d->upload = new_UploadData();   
     }
-    set_Block(&d->titan->data, payload);
-    set_String(&d->titan->mime, mime);
-    set_String(&d->titan->token, token);
+    set_Block(&d->upload->data, payload);
+    set_String(&d->upload->mime, mime);
+    set_String(&d->upload->token, token);
 }
 
 void setSendProgressFunc_GmRequest(iGmRequest *d, iGmRequestProgressFunc func) {
@@ -670,7 +760,7 @@ void submit_GmRequest(iGmRequest *d) {
     set_Atomic(&d->allowUpdate, iTrue);
     iGmResponse *resp = d->resp;
     clear_GmResponse(resp);
-#if !defined (NDEBUG)
+#if !defined (NDEBUG) && !defined (iPlatformTerminal)
     printf("[GmRequest] URL: %s\n", cstr_String(&d->url)); fflush(stdout);
 #endif
     iUrl url;
@@ -710,24 +800,24 @@ void submit_GmRequest(iGmRequest *d) {
             setCStr_String(&resp->meta, "text/gemini");
             iString *page = collectNew_String();
             iString *parentDir = collectNewRange_String(dirName_Path(path));
-#if !defined (iPlatformMobile)
-            appendFormat_String(page, "=> %s " keyUpArrow_Icon " %s" iPathSeparator "\n\n",
-                                cstrCollect_String(makeFileUrl_String(parentDir)),
-                                cstr_String(parentDir));
-#endif
+            if (!isMobile_Platform()) {
+                appendFormat_String(page, "=> %s " keyUpArrow_Icon " %s" iPathSeparator "\n\n",
+                                    cstrCollect_String(makeFileUrl_String(parentDir)),
+                                    cstr_String(parentDir));
+            }
             appendFormat_String(page, "# %s\n", cstr_Rangecc(baseName_Path(path)));
             /* Make a directory index page. */
             iPtrArray *sortedInfo = collectNew_PtrArray();
             iForEach(DirFileInfo, entry,
                      iClob(directoryContents_FileInfo(iClob(new_FileInfo(path))))) {
                 /* Ignore some files. */
-#if defined (iPlatformApple)
-                const iRangecc name = baseName_Path(path_FileInfo(entry.value));
-                if (equal_Rangecc(name, ".DS_Store") ||
-                    equal_Rangecc(name, ".localized")) {
-                    continue;
+                if (isApple_Platform()) {
+                    const iRangecc name = baseName_Path(path_FileInfo(entry.value));
+                    if (equal_Rangecc(name, ".DS_Store") ||
+                        equal_Rangecc(name, ".localized")) {
+                        continue;
+                    }
                 }
-#endif
                 pushBack_PtrArray(sortedInfo, ref_Object(entry.value));
             }
             sort_Array(sortedInfo, (int (*)(const void *, const void *)) cmp_FileInfoPtr_);
@@ -926,6 +1016,10 @@ void submit_GmRequest(iGmRequest *d) {
         beginGopherConnection_GmRequest_(d, host, port ? port : 79);
         return;
     }
+    else if (equalCase_Rangecc(url.scheme, "spartan")) {
+        beginSpartanConnection_GmRequest_(d, host, port ? port : 300);
+        return;
+    }
     else if (!equalCase_Rangecc(url.scheme, "gemini") &&
              !equalCase_Rangecc(url.scheme, "titan")) {
         resp->statusCode = unsupportedProtocol_GmStatusCode;
@@ -956,19 +1050,19 @@ void submit_GmRequest(iGmRequest *d) {
     if (isTitan_GmRequest_(d)) {
         iBlock content;
         init_Block(&content, 0);
-        if (d->titan) {
+        if (d->upload) {
             printf_Block(&content,
                          "%s;mime=%s;size=%zu",
                          cstr_String(&d->url),
-                         cstr_String(&d->titan->mime),
-                         size_Block(&d->titan->data));
-            if (!isEmpty_String(&d->titan->token)) {
+                         cstr_String(&d->upload->mime),
+                         size_Block(&d->upload->data));
+            if (!isEmpty_String(&d->upload->token)) {
                 appendCStr_Block(&content, ";token=");
                 append_Block(&content,
-                             utf8_String(collect_String(urlEncode_String(&d->titan->token))));
+                             utf8_String(collect_String(urlEncode_String(&d->upload->token))));
             }
             appendCStr_Block(&content, "\r\n");
-            append_Block(&content, &d->titan->data);
+            append_Block(&content, &d->upload->data);
         }
         else {
             /* Empty data. */

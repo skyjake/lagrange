@@ -46,6 +46,14 @@ iLocalDef iBool isMetricsChange_UserEvent(const SDL_Event *d) {
     return isCommand_UserEvent(d, "metrics.changed");
 }
 
+iLocalDef iBool isEmulatedMouseDevice_UserEvent (const SDL_Event *d) {
+    return (d->type == SDL_MOUSEBUTTONDOWN || d->type == SDL_MOUSEBUTTONUP) &&
+           d->button.which & 1024;
+}
+
+void    emulateMouseClick_Widget    (const iWidget *, int button);
+void    emulateMouseClickPos_Widget (const iWidget *, int button, iInt2 clickPos);
+
 enum iMouseWheelFlag {
     /* Note: A future version of SDL may support per-pixel scrolling, but 2.0.x doesn't. */
     perPixel_MouseWheelFlag       = iBit(9), /* e.g., trackpad or finger scroll; applied to `direction` */
@@ -75,12 +83,24 @@ iLocalDef iBool isScrollFinished_MouseWheelEvent(const SDL_MouseWheelEvent *ev) 
 
 iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 
-#if defined (iPlatformApple)
+#if defined (iPlatformTerminal)
+#   define KMOD_PRIMARY     KMOD_CTRL
+#   define KMOD_SECONDARY   KMOD_ALT
+#   define KMOD_ACCEPT      KMOD_ALT
+#   define KMOD_UNDO        KMOD_ALT
+#   define KMOD_ZOOM        0
+#elif defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI
-#   define KMOD_SECONDARY   KMOD_CTRL
+#   define KMOD_SECONDARY   KMOD_GUI | KMOD_SHIFT
+#   define KMOD_ACCEPT      KMOD_PRIMARY
+#   define KMOD_UNDO        KMOD_PRIMARY
+#   define KMOD_ZOOM        KMOD_PRIMARY
 #else
 #   define KMOD_PRIMARY     KMOD_CTRL
-#   define KMOD_SECONDARY   KMOD_GUI
+#   define KMOD_SECONDARY   KMOD_CTRL | KMOD_SHIFT
+#   define KMOD_ACCEPT      KMOD_PRIMARY
+#   define KMOD_UNDO        KMOD_PRIMARY
+#   define KMOD_ZOOM        KMOD_PRIMARY
 #endif
 
 enum iOpenTabFlag {
@@ -231,6 +251,7 @@ iWidget *       makeHDiv_Widget     (void);
 iWidget *       makeVDiv_Widget     (void);
 iWidget *       addAction_Widget    (iWidget *parent, int key, int kmods, const char *command);
 iBool           isAction_Widget     (const iWidget *);
+iBool           isButton_Widget     (const iAnyObject *);
 
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -254,6 +275,7 @@ struct Impl_MenuItem {
 enum iMenuOpenFlags {
     postCommands_MenuOpenFlags = iBit(1),
     center_MenuOpenFlags       = iBit(2),
+    setFocus_MenuOpenFlags     = iBit(3),
 };
 
 iWidget *       makeMenu_Widget                 (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
@@ -278,6 +300,7 @@ void            setMenuItemLabel_Widget         (iWidget *menu, const char *comm
 void            setMenuItemLabelByIndex_Widget  (iWidget *menu, size_t index, const char *newLabel);
 void            setNativeMenuItems_Widget       (iWidget *menu, const iMenuItem *items, size_t n);
 iWidget *       findUserData_Widget             (iWidget *, void *userData);
+iWidget *       parentMenu_Widget               (iWidget *menuItem);
 
 int             checkContextMenu_Widget         (iWidget *, const SDL_Event *ev); /* see macro below */
 void            animateToRootVisibleTop_Widget  (iWidget *, uint32_t span);
@@ -336,6 +359,10 @@ void        makeFilePath_Widget     (iWidget *parent, const iString *initialPath
                                      const char *acceptLabel, const char *command);
 iWidget *   makeValueInput_Widget   (iWidget *parent, const iString *initialValue, const char *title,
                                      const char *prompt, const char *acceptLabel, const char *command);
+iWidget *   makeValueInputWithAdditionalActions_Widget
+                                    (iWidget *parent, const iString *initialValue, const char *title,
+                                     const char *prompt, const char *acceptLabel, const char *command,
+                                     const iMenuItem *additionalActions, size_t numAdditionalActions);
 void        updateValueInput_Widget (iWidget *, const char *title, const char *prompt);
 iWidget *   makeSimpleMessage_Widget(const char *title, const char *msg);
 iWidget *   makeMessage_Widget      (const char *title, const char *msg,
@@ -346,7 +373,7 @@ iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
 iWidget *   makePreferences_Widget          (void);
 void        updatePreferencesLayout_Widget  (iWidget *prefs);
 
-iWidget *   makeBookmarkEditor_Widget       (iBool isFolder);
+iWidget *   makeBookmarkEditor_Widget       (iBool isFolder, iBool withDup);
 void        setBookmarkEditorParentFolder_Widget(iWidget *editor, uint32_t folderId);
 iWidget *   makeBookmarkCreation_Widget     (const iString *url, const iString *title, iChar icon);
 iWidget *   makeIdentityCreation_Widget     (void);

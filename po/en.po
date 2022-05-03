@@ -154,6 +154,9 @@ msgstr "New Window"
 msgid "menu.newtab"
 msgstr "New Tab"
 
+msgid "menu.reopentab"
+msgstr "Reopen Last Closed Tab"
+
 msgid "menu.closetab"
 msgstr "Close Tab"
 
@@ -405,6 +408,12 @@ msgstr "Copy Page URL"
 
 msgid "menu.page.copysource"
 msgstr "Copy Page Source"
+
+msgid "menu.viewformat.plain"
+msgstr "View as Plain Text"
+
+msgid "menu.viewformat.gemini"
+msgstr "View as Gemtext"
 
 msgid "menu.bookmarks.refresh"
 msgstr "Refresh Remote Bookmarks"
@@ -804,6 +813,15 @@ msgstr "Show page information"
 msgid "keys.sitespec"
 msgstr "Show site-specific settings"
 
+msgid "keys.menubar.focus"
+msgstr "Focus the menu bar"
+
+msgid "keys.identmenu"
+msgstr "Open Identity menu"
+
+msgid "keys.contextmenu"
+msgstr "Open context menu"
+
 #, c-format
 msgid "dlg.input.prompt"
 msgstr "Please enter input for %s:"
@@ -1122,8 +1140,17 @@ msgstr "Upload with Titan…"
 msgid "menu.page.upload.edit"
 msgstr "Edit Page with Titan…"
 
+msgid "spartan.input"
+msgstr "Enter text to send:"
+
+msgid "dlg.spartan.upload"
+msgstr "Open Editor…"
+
 msgid "heading.upload"
 msgstr "Upload with Titan"
+
+msgid "heading.upload.spartan"
+msgstr "Upload with Spartan"
 
 msgid "upload.id"
 msgstr "Identity:"
@@ -1537,6 +1564,9 @@ msgstr "Open images in Data URLs:"
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
 msgstr "Open archive indices:"
+
+msgid "prefs.markdown.viewsource"
+msgstr "View Markdown as source:"
 
 msgid "prefs.pinsplit"
 msgstr "Split view pinning:"

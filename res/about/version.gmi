@@ -6,6 +6,32 @@
 ```
 # Release notes
 
+## 1.13
+New features:
+* Curses-based `clagrange` for running the app in the terminal. This is a complete TUI port of the original GUI version including, e.g., UI animations, smooth scrolling, and split view mode. `clagrange` has separate preferences, UI state, and key bindings but the rest of the runtime files are shared with the GUI version.
+* Build option `ENABLE_TUI`: build a text mode version of the app so it can be run in the terminal. Enabling this produces an executable called `clagrange` that is not linked with SDL.
+* URL field indicator 📌 that shows if there's a bookmark for the current page. Clicking on the indicator opens the Add/Edit Bookmark dialog.
+* Checking server certificates using a bundled root CA file.
+* Build option `CACERT_PEM_PATH`: path of a cacert.pem file that contains trusted root CA certificates. This file is included in resources.lgr.
+* Support for the Spartan protocol. Prompt lines will open an input dialog for submitting text. This can be expanded to the full upload dialog using which a file can be uploaded, too.
+* Reopening the last closed tab. The default binding is Shift+Ctrl+T (⇧⌘T).
+* Page context menu item "View as Plain Text": show the page source as plain text.
+* Option to view Markdown as source or as a Gemtext conversion (default: as source).
+
+Changes and enhancements:
+* Updated Noto Emoji font with support for Unicode 14. There should be no more missing Emoji glyphs.
+* Improved UI keyboard navigation. The sidebar and all widgets in dialogs are accessible via Tab cycling, and new shortcuts have been added for opening menus. Menu items and lists are cursor-navigable. Opening the sidebar automatically gives it keyboard focus.
+* When bookmarking a page, show the Edit Bookmark dialog if there's already a bookmark for the URL. The Edit Bookmark dialog has a new Duplicate button for actually making a duplicate bookmark.
+* Markdown documents support horizontal rules.
+* TUI: Zoom controls resize the open sidebar (left sidebar if both visible).
+* macOS: Keep app running even after all windows are closed. Clicking on the dock icon opens a new window.
+
+Fixes:
+* Sidebar page outline not updated when the current tab changes.
+* The Escape key closes the bookmark editor dialog as intended.
+* Preferences: "Justify" option must be hidden if HarfBuzz is not used.
+* macOS: Window refresh tweaks to avoid stutters (Metal renderer).
+
 ## 1.12.2
 * Fixed positioning of the language translation dialog's progress animation.
 * Fixed hovering on links via the keyboard (default binding: H).

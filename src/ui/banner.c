@@ -63,15 +63,22 @@ struct Impl_Banner {
 
 iDefineTypeConstruction(Banner)
 
-#define itemGap_Banner_     (3 * gap_UI)
-#define itemVPad_Banner_    (2 * gap_UI)
-#define itemHPad_Banner_    (3 * gap_UI)
-#define bottomPad_Banner_   (4 * gap_UI)
+#if defined (iPlatformTerminal)
+#   define itemGap_Banner_     (1 * gap_UI)
+#   define itemVPad_Banner_    (1 * gap_UI)
+#   define itemHPad_Banner_    (2 * gap_UI)
+#   define bottomPad_Banner_   (1 * gap_UI)
+#else
+#   define itemGap_Banner_     (3 * gap_UI)
+#   define itemVPad_Banner_    (2 * gap_UI)
+#   define itemHPad_Banner_    (3 * gap_UI)
+#   define bottomPad_Banner_   (4 * gap_UI)
+#endif
 
 static void updateHeight_Banner_(iBanner *d) {
     d->rect.size.y = 0;
     if (!isEmpty_String(&d->site)) {
-        d->siteHeight = lineHeight_Text(banner_FontId) * 2;
+        d->siteHeight = iMax(3, lineHeight_Text(banner_FontId) * 2);
         d->rect.size.y += d->siteHeight;
     }
     const size_t numItems = size_Array(&d->items);
@@ -204,7 +211,7 @@ void draw_Banner(const iBanner *d) {
     }
     iRect  bounds = d->rect;
     /* TODO: use d->siteHeight */
-    iInt2  pos    = addY_I2(topLeft_Rect(bounds), lineHeight_Text(banner_FontId) / 2);
+    iInt2  pos    = addY_I2(topLeft_Rect(bounds), iMax(1, lineHeight_Text(banner_FontId) / 2));
     iPaint p;
     init_Paint(&p);
 //    drawRect_Paint(&p, bounds, red_ColorId);
@@ -221,12 +228,12 @@ void draw_Banner(const iBanner *d) {
     /* Draw the site name. */
     if (!isEmpty_String(&d->site)) {
         drawRange_Text(banner_FontId, pos, tmBannerTitle_ColorId, range_String(&d->site));
-        pos.y += lineHeight_Text(banner_FontId) * 3 / 2;
+        pos.y += (int) ceilf(lineHeight_Text(banner_FontId) * 3.0f / 2.0f);
     }
     else {
         pos.y = top_Rect(bounds);
     }
-    const int innerPad = gap_UI;
+//    const int innerPad = gap_UI;
     pos.x = left_Rect(bounds);
     iConstForEach(Array, i, &d->items) {
         const iBannerItem *item = i.value;

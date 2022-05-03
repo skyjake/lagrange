@@ -236,6 +236,7 @@ enum iDocumentWidgetFlag {
     rightWheelSwipe_DocumentWidgetFlag       = iBit(19),
     eitherWheelSwipe_DocumentWidgetFlag      = leftWheelSwipe_DocumentWidgetFlag |
                                                rightWheelSwipe_DocumentWidgetFlag,
+    viewSource_DocumentWidgetFlag            = iBit(20),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -547,13 +548,16 @@ static int documentWidth_DocumentView_(const iDocumentView *d) {
     const iWidget *w        = constAs_Widget(d->owner);
     const iRect    bounds   = bounds_Widget(w);
     const iPrefs * prefs    = prefs_App();
-    const int      minWidth = 50 * gap_UI; /* lines must fit a word at least */
+    const int      minWidth = 50 * gap_UI * aspect_UI; /* lines must fit a word at least */
     const float    adjust   = iClamp((float) bounds.size.x / gap_UI / 11 - 12,
                                 -1.0f, 10.0f); /* adapt to width */
     //printf("%f\n", adjust); fflush(stdout);
+    int prefsWidth = prefs->lineWidth;
+    if (isTerminal_Platform()) {
+        prefsWidth /= aspect_UI * 0.8f;
+    }
     return iMini(iMax(minWidth, bounds.size.x - gap_UI * (d->pageMargin + adjust) * 2),
-                 fontSize_UI * //emRatio_Text(paragraph_FontId) * /* dependent on avg. glyph width */
-                     prefs->lineWidth * prefs->zoomPercent / 100);
+                 fontSize_UI * prefsWidth * prefs->zoomPercent / 100);
 }
 
 static int documentTopPad_DocumentView_(const iDocumentView *d) {
@@ -1364,6 +1368,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, contentRegular_FontSize);
                     iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
                                      init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
+                    if (isTerminal_Platform()) {
+                        nbArea.pos.x += 1;
+                    }
                     drawRange_Text(
                         circleFont, topLeft_Rect(nbArea), tmQuote_ColorId, range_CStr(circle));
                     iRect circleArea = visualBounds_Text(circleFont, range_CStr(circle));
@@ -1378,14 +1385,20 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 }
             }
         }
-        if (run->flags & quoteBorder_GmRunFlag) {
-            drawVLine_Paint(&d->paint,
-                            addX_I2(visPos,
-                                    !run->isRTL
-                                        ? -gap_Text * 5 / 2
-                                        : (width_Rect(run->visBounds) + gap_Text * 5 / 2)),
-                            height_Rect(run->visBounds),
-                            tmQuoteIcon_ColorId);
+        if (run->flags & ruler_GmRunFlag) {
+            if (height_Rect(run->visBounds) > 1) {
+                /* This is used for block quotes. */
+                drawVLine_Paint(&d->paint,
+                                addX_I2(visPos,
+                                        !run->isRTL
+                                            ? -gap_Text * 5 / 2
+                                            : (width_Rect(run->visBounds) + gap_Text * 5 / 2)),
+                                height_Rect(run->visBounds),
+                                tmQuoteIcon_ColorId);
+            }
+            else {
+                drawHLine_Paint(&d->paint, visPos, width_Rect(run->visBounds), tmQuoteIcon_ColorId);
+            }
         }
         /* Base attributes. */ {
             int f, c;
@@ -1520,8 +1533,12 @@ static int sideElementAvailWidth_DocumentView_(const iDocumentView *d) {
            left_Rect(bounds_Widget(constAs_Widget(d->owner))) - 2 * d->pageMargin * gap_UI;
 }
 
+iLocalDef int minBannerSize_(void) {
+    return iMaxi(lineHeight_Text(banner_FontId) * 2, 5);
+}
+
 static iBool isSideHeadingVisible_DocumentView_(const iDocumentView *d) {
-    return sideElementAvailWidth_DocumentView_(d) >= lineHeight_Text(banner_FontId) * 4.5f;
+    return sideElementAvailWidth_DocumentView_(d) >= minBannerSize_() * 2.25f / aspect_UI;
 }
 
 static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
@@ -1539,12 +1556,12 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
         return;
     }
     const int   margin           = gap_UI * d->pageMargin;
-    const int   minBannerSize    = lineHeight_Text(banner_FontId) * 2;
+    const int   minBannerSize    = minBannerSize_();
     const iChar icon             = siteIcon_GmDocument(d->doc);
     const int   avail            = sideElementAvailWidth_DocumentView_(d) - margin;
     iBool       isHeadingVisible = isSideHeadingVisible_DocumentView_(d);
     /* Determine the required size. */
-    iInt2 bufSize = init1_I2(minBannerSize);
+    iInt2 bufSize = init_I2(minBannerSize / aspect_UI, minBannerSize);
     const int sideHeadingFont = FONT_ID(documentHeading_FontId, regular_FontStyle, contentBig_FontSize);
     if (isHeadingVisible) {
         const iInt2 headingSize = measureWrapRange_Text(sideHeadingFont, avail,
@@ -1568,7 +1585,7 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
     const iColor back = get_Color(tmBannerSideTitle_ColorId);
     SDL_SetRenderDrawColor(render, back.r, back.g, back.b, 0); /* better blending of the edge */
     SDL_RenderClear(render);
-    const iRect iconRect = { zero_I2(), init1_I2(minBannerSize) };
+    const iRect iconRect = { zero_I2(), init_I2(minBannerSize / aspect_UI, minBannerSize) };
     int fg = drawSideRect_(&p, iconRect);
     iString str;
     initUnicodeN_String(&str, &icon, 1);
@@ -1916,7 +1933,7 @@ static void draw_DocumentView_(const iDocumentView *d) {
                                     init_I2(bounds.size.x, documentTopPad_DocumentView_(d)) },
                            docBgColor);
             setPos_Banner(banner, addY_I2(topLeft_Rect(docBounds),
-                                          -pos_SmoothScroll(&d->scrollY)));
+                                          floorf(-pos_SmoothScroll(&d->scrollY))));
             draw_Banner(banner);
         }
         const int yBottom = yTop + size_GmDocument(d->doc).y;
@@ -2041,11 +2058,13 @@ static uint32_t mediaUpdateInterval_DocumentWidget_(const iDocumentWidget *d) {
     iConstForEach(PtrArray, i, &d->view.visibleMedia) {
         const iGmRun *run = i.ptr;
         if (run->mediaType == audio_MediaType) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
             iPlayer *plr = audioPlayer_Media(media_GmDocument(d->view.doc), mediaId_GmRun(run));
             if (flags_Player(plr) & adjustingVolume_PlayerFlag ||
                 (isStarted_Player(plr) && !isPaused_Player(plr))) {
                 interval = iMin(interval, 1000 / 15);
             }
+#endif
         }
         else if (run->mediaType == download_MediaType) {
             interval = iMin(interval, 1000);
@@ -2067,11 +2086,13 @@ static void updateMedia_DocumentWidget_(iDocumentWidget *d) {
         iConstForEach(PtrArray, i, &d->view.visibleMedia) {
             const iGmRun *run = i.ptr;
             if (run->mediaType == audio_MediaType) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
                 iPlayer *plr = audioPlayer_Media(media_GmDocument(d->view.doc), mediaId_GmRun(run));
                 if (idleTimeMs_Player(plr) > 3000 && ~flags_Player(plr) & volumeGrabbed_PlayerFlag &&
                     flags_Player(plr) & adjustingVolume_PlayerFlag) {
                     setFlags_Player(plr, adjustingVolume_PlayerFlag, iFalse);
                 }
+#endif
             }
         }
     }
@@ -2217,10 +2238,15 @@ static iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
            (prefs->pinSplit == 2 && w->root == win->roots[1]);
 }
 
-static void showOrHidePinningIndicator_DocumentWidget_(iDocumentWidget *d) {
+static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
-    showCollapsed_Widget(findChild_Widget(root_Widget(w), "document.pinned"),
+    iWidget *navBar = findChild_Widget(root_Widget(w), "navbar");
+    showCollapsed_Widget(findChild_Widget(navBar, "document.pinned"),
                          isPinned_DocumentWidget_(d));
+    const iBool isBookmarked = findUrl_Bookmarks(bookmarks_App(), d->mod.url) != 0;
+    iLabelWidget *bmPin = findChild_Widget(navBar, "document.bookmarked");
+    setOutline_LabelWidget(bmPin, !isBookmarked);
+    setBackgroundColor_Widget(as_Widget(bmPin), isBookmarked ? uiBackground_ColorId : uiInputBackground_ColorId);
 }
 
 static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
@@ -2248,7 +2274,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
             d->flags |= otherRootByDefault_DocumentWidgetFlag;
         }
     }
-    showOrHidePinningIndicator_DocumentWidget_(d);
+    showOrHideIndicators_DocumentWidget_(d);
     if (~d->flags & fromCache_DocumentWidgetFlag) {
         setCachedDocument_History(d->mod.history, d->view.doc /* keeps a ref */);
     }
@@ -2651,10 +2677,30 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
             while (nextSplit_Rangecc(mime, ";", &seg)) {
                 iRangecc param = seg;
                 trim_Rangecc(&param);
-                /* Detect fontpacks even if the server doesn't use the right media type. */
-                if (isRequestFinished && equal_Rangecc(param, "application/octet-stream")) {
-                    if (detect_FontPack(&response->body)) {
-                        param = range_CStr(mimeType_FontPack);
+                if (isRequestFinished) {
+                    /* Format autodetection. */
+                    if (equal_Rangecc(param, "application/octet-stream")) {
+                        /* Detect fontpacks even if the server doesn't use the right media type. */
+                        if (detect_FontPack(&response->body)) {
+                            param = range_CStr(mimeType_FontPack);
+                        }
+                        else if (isUtf8_Rangecc(range_Block(&response->body))) {
+                            param = range_CStr("text/plain");
+                        }
+                    }
+                    if (equal_Rangecc(param, "text/plain")) {
+                        iUrl parts;
+                        init_Url(&parts, d->mod.url);
+                        const iRangecc fileName = baseNameSep_Path(collectNewRange_String(parts.path), "/");
+                        if (endsWithCase_Rangecc(fileName, ".md") ||
+                            endsWithCase_Rangecc(fileName, ".mdown") ||
+                            endsWithCase_Rangecc(fileName, ".markdown")) {
+                            param = range_CStr("text/markdown");
+                        }
+                        else if (endsWithCase_Rangecc(fileName, ".gmi") ||
+                                 endsWithCase_Rangecc(fileName, ".gemini")) {
+                            param = range_CStr("text/gemini");
+                        }
                     }
                 }
                 if (equal_Rangecc(param, "text/gemini")) {
@@ -2664,6 +2710,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                 else if (equal_Rangecc(param, "text/markdown")) {
                     docFormat = markdown_SourceFormat;
                     setRange_String(&d->sourceMime, param);
+                    postCommand_Widget(d, "document.viewformat arg:%d", !prefs_App()->markdownAsSource);
                 }
                 else if (startsWith_Rangecc(param, "text/") ||
                          equal_Rangecc(param, "application/json") ||
@@ -2745,14 +2792,13 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     else {
                         if (detect_Export(zip)) {
                             setCStr_String(&d->sourceMime, mimeType_Export);
-#if !defined (iPlatformMobile)
-                            pushBack_Array(footerItems,
-                                           &(iMenuItem){ openExt_Icon " ${menu.open.external}",
-                                                         SDLK_RETURN,
-                                                         KMOD_PRIMARY,
-                                        "document.save extview:1"
-                                });
-#endif
+                            if (!isMobile_Platform()) {
+                                pushBack_Array(footerItems,
+                                               &(iMenuItem){ openExt_Icon " ${menu.open.external}",
+                                                             SDLK_RETURN,
+                                                             KMOD_PRIMARY,
+                                                             "document.save extview:1" });
+                            }
                         }
                         format_String(&str, "# %s\n", zipPageHeading_(range_String(&d->sourceMime)));
                         appendFormat_String(&str,
@@ -2805,8 +2851,8 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     makeFooterButtons_DocumentWidget_(
                         d, constData_Array(footerItems), size_Array(footerItems));
                 }
-                else if (startsWith_Rangecc(param, "image/") ||
-                         startsWith_Rangecc(param, "audio/")) {
+                else if (!isTerminal_Platform() && (startsWith_Rangecc(param, "image/") ||
+                                                    startsWith_Rangecc(param, "audio/"))) {
                     const iBool isAudio = startsWith_Rangecc(param, "audio/");
                     /* Make a simple document with an image or audio player. */
                     clear_String(&str);
@@ -3225,7 +3271,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     iGmResponse *resp = lockResponse_GmRequest(d->request);
     if (d->state == fetching_RequestState) {
         /* Under certain conditions, inline any image response into the current document. */
-        if (d->requestLinkId &&
+        if (!isTerminal_Platform() &&
+            d->requestLinkId &&
             isSuccess_GmStatusCode(d->sourceStatus) &&
             startsWithCase_String(&d->sourceMime, "text/gemini") &&
             isSuccess_GmStatusCode(statusCode) &&
@@ -3928,7 +3975,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         invalidate_DocumentWidget_(d);
         dealloc_VisBuf(d->view.visBuf);
         updateWindowTitle_DocumentWidget_(d);
-        showOrHidePinningIndicator_DocumentWidget_(d);
+        showOrHideIndicators_DocumentWidget_(d);
         refresh_Widget(w);
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
@@ -3965,7 +4012,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "document.update.pin")) {
-        showOrHidePinningIndicator_DocumentWidget_(d);
+        showOrHideIndicators_DocumentWidget_(d);
         return iFalse;
     }
     else if (equal_Command(cmd, "tabs.changed")) {
@@ -3975,7 +4022,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateTheme_DocumentWidget_(d);
             updateTrust_DocumentWidget_(d, NULL);
             updateSize_DocumentWidget(d);
-            showOrHidePinningIndicator_DocumentWidget_(d);
+            showOrHideIndicators_DocumentWidget_(d);
             updateFetchProgress_DocumentWidget_(d);
             updateHover_Window(window_Widget(w));
         }
@@ -4041,41 +4088,42 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     msg, "%s\n", formatCStrs_Lang("num.bytes.n", size_Block(&d->sourceContent)));
             }
         }
-        /* TODO: On mobile, omit the CA status. */
-        appendFormat_String(
-            msg,
-            "\n%s${pageinfo.cert.status}\n"
-            "%s%s  %s\n"
-            "%s%s  %s%s\n"
-            "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
-            "%s%s  %s",
-            uiHeading_ColorEscape,
-            d->certFlags & authorityVerified_GmCertFlag ? checked
-                                                        : uiText_ColorEscape "\u2610",
-            uiText_ColorEscape,
-            d->certFlags & authorityVerified_GmCertFlag ? "${pageinfo.cert.ca.verified}"
-                                                        : "${pageinfo.cert.ca.unverified}",
-            d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
-            uiText_ColorEscape,
-            d->certFlags & domainVerified_GmCertFlag ? "${pageinfo.domain.match}"
-                                                     : "${pageinfo.domain.mismatch}",
-            ~d->certFlags & domainVerified_GmCertFlag
-                ? format_CStr(" (%s)", cstr_String(d->certSubject))
-                : "",
-            d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
-            uiText_ColorEscape,
-            d->certFlags & timeVerified_GmCertFlag ? "${pageinfo.cert.notexpired}"
-                                                   : "${pageinfo.cert.expired}",
-            d->certExpiry.year,
-            d->certExpiry.month,
-            d->certExpiry.day,
-            d->certExpiry.hour,
-            d->certExpiry.minute,
-            d->certExpiry.second,
-            d->certFlags & trusted_GmCertFlag ? checked : unchecked,
-            uiText_ColorEscape,
-            d->certFlags & trusted_GmCertFlag ? "${pageinfo.cert.trusted}"
-                                              : "${pageinfo.cert.untrusted}");
+        if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini")) {
+            appendFormat_String(
+                msg,
+                "\n%s${pageinfo.cert.status}\n"
+                "%s%s  %s\n"
+                "%s%s  %s%s\n"
+                "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
+                "%s%s  %s",
+                uiHeading_ColorEscape,
+                d->certFlags & authorityVerified_GmCertFlag ? checked
+                                                            : uiText_ColorEscape "\u2610",
+                uiText_ColorEscape,
+                d->certFlags & authorityVerified_GmCertFlag ? "${pageinfo.cert.ca.verified}"
+                                                            : "${pageinfo.cert.ca.unverified}",
+                d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
+                uiText_ColorEscape,
+                d->certFlags & domainVerified_GmCertFlag ? "${pageinfo.domain.match}"
+                                                         : "${pageinfo.domain.mismatch}",
+                ~d->certFlags & domainVerified_GmCertFlag
+                    ? format_CStr(" (%s)", cstr_String(d->certSubject))
+                    : "",
+                d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
+                uiText_ColorEscape,
+                d->certFlags & timeVerified_GmCertFlag ? "${pageinfo.cert.notexpired}"
+                                                       : "${pageinfo.cert.expired}",
+                d->certExpiry.year,
+                d->certExpiry.month,
+                d->certExpiry.day,
+                d->certExpiry.hour,
+                d->certExpiry.minute,
+                d->certExpiry.second,
+                d->certFlags & trusted_GmCertFlag ? checked : unchecked,
+                uiText_ColorEscape,
+                d->certFlags & trusted_GmCertFlag ? "${pageinfo.cert.trusted}"
+                                                  : "${pageinfo.cert.untrusted}");
+        }
         setFocus_Widget(NULL);
         iArray *items = new_Array(sizeof(iMenuItem));
         if (canTrust) {
@@ -4289,10 +4337,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (findChild_Widget(root_Widget(w), "upload")) {
             return iTrue; /* already open */
         }
-        const iBool isGemini = equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini");
-        if (isGemini || equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
-            iUploadWidget *upload = new_UploadWidget();
-            setUrl_UploadWidget(upload, d->mod.url);
+        const iString *url = d->mod.url;
+        if (hasLabel_Command(cmd, "url")) {
+            url = collect_String(suffix_Command(cmd, "url"));
+        }
+        const iRangecc scheme = urlScheme_String(url);
+        if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "titan") ||
+            equalCase_Rangecc(scheme, "spartan")) {
+            iUploadWidget *upload =
+                new_UploadWidget(equalCase_Rangecc(scheme, "spartan") ? spartan_UploadProtocol
+                                                                      : titan_UploadProtocol);
+            setUrl_UploadWidget(upload, url);
             setResponseViewer_UploadWidget(upload, d);
             addChild_Widget(get_Root()->widget, iClob(upload));
             setupSheetTransition_Mobile(as_Widget(upload), iTrue);
@@ -4309,6 +4364,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
+#if defined (LAGRANGE_ENABLE_AUDIO)
     else if (equal_Command(cmd, "media.player.started")) {
         /* When one media player starts, pause the others that may be playing. */
         const iPlayer *startedPlr = pointerLabel_Command(cmd, "player");
@@ -4321,6 +4377,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
     }
+#endif
     else if (equal_Command(cmd, "media.player.update")) {
         updateMedia_DocumentWidget_(d);
         return iFalse;
@@ -4648,6 +4705,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "menu.closed")) {
         updateHover_DocumentView_(&d->view, mouseCoord_Window(get_Window(), 0));
     }
+    else if (equal_Command(cmd, "bookmarks.changed")) {
+        showOrHideIndicators_DocumentWidget_(d);
+    }
     else if (equal_Command(cmd, "document.autoreload")) {
         if (d->mod.reloadInterval) {
             if (!isValid_Time(&d->sourceTime) || elapsedSeconds_Time(&d->sourceTime) >=
@@ -4700,6 +4760,18 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "document.viewformat") && document_App() == d) {
+        const iBool gemtext = hasLabel_Command(cmd, "arg")
+                                  ? arg_Command(cmd) != 0 /* set to value */
+                                  : (d->flags & viewSource_DocumentWidgetFlag) != 0; /* toggle */
+        iChangeFlags(d->flags, viewSource_DocumentWidgetFlag, !gemtext);
+        if (setViewFormat_GmDocument(
+                d->view.doc, gemtext ? gemini_SourceFormat : plainText_SourceFormat)) {
+            updateWidthAndRedoLayout_DocumentView_(&d->view);
+            updateSize_DocumentWidget(d);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "fontpack.install") && document_App() == d) {
         if (argLabel_Command(cmd, "ttf")) {
             iAssert(!cmp_String(&d->sourceMime, "font/ttf"));
@@ -4713,10 +4785,18 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "contextkey") && document_App() == d) {
+        if (!isTerminal_Platform()) {
+            d->view.hoverLink = NULL;
+        }
+        emulateMouseClick_Widget(w, SDL_BUTTON_RIGHT);
+        return iTrue;
+    }
     return iFalse;
 }
 
 static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *run) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
     if (run && run->mediaType == audio_MediaType) {
         iPlayer *plr = audioPlayer_Media(media_GmDocument(d->view.doc), mediaId_GmRun(run));
         setFlags_Player(plr, volumeGrabbed_PlayerFlag, iTrue);
@@ -4735,6 +4815,7 @@ static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *r
     else {
         iAssert(iFalse);
     }
+#endif    
 }
 
 static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
@@ -4761,6 +4842,7 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
         if (run->mediaType != audio_MediaType) {
             continue;
         }
+#if defined (LAGRANGE_ENABLE_AUDIO)        
         if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) {
             if (ev->button.button != SDL_BUTTON_LEFT) {
                 return iFalse;
@@ -4829,6 +4911,7 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
                 return iTrue;
             }
         }
+#endif /* LAGRANGE_ENABLE_AUDIO */
     }
     return iFalse;
 }
@@ -4865,6 +4948,15 @@ static void interactingWithLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id
         loc.start++; /* Start of the preceding line. */
     }
     setRange_String(&d->linePrecedingLink, loc);
+}
+
+static iBool isSpartanQueryLink_DocumentWidget_(const iDocumentWidget *d, iGmLinkId id) {
+    const int linkFlags = linkFlags_GmDocument(d->view.doc, id);
+    return equalCase_Rangecc(urlScheme_String(d->mod.url), "spartan") &&
+                   (linkFlags & query_GmLinkFlag) &&
+                   scheme_GmLinkFlag(linkFlags) == spartan_GmLinkScheme
+               ? 1
+               : 0;
 }
 
 iLocalDef int wheelSwipeSide_DocumentWidget_(const iDocumentWidget *d) {
@@ -4990,7 +5082,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     else {
                         postCommandf_Root(
                             w->root,
-                            "open newtab:%d url:%s",
+                            "open query:%d newtab:%d url:%s",
+                            isSpartanQueryLink_DocumentWidget_(d, run->linkId),
                             (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) ^
                                 (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode
                                      ? openTabMode_Sym(modState_Keys())
@@ -5125,7 +5218,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && view->hoverLink) {
             interactingWithLink_DocumentWidget_(d, view->hoverLink->linkId);
-            postCommandf_Root(w->root, "open newtab:%d url:%s",
+            postCommandf_Root(w->root, "open query:%d newtab:%d url:%s",
+                              isSpartanQueryLink_DocumentWidget_(d, view->hoverLink->linkId),
                               (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
                               (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag),
                               cstr_String(linkUrl_GmDocument(view->doc, view->hoverLink->linkId)));
@@ -5145,6 +5239,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
                     /* Construct the link context menu, depending on what kind of link was clicked. */
+                    const int spartanQuery = isSpartanQueryLink_DocumentWidget_(d, d->contextLink->linkId);
                     interactingWithLink_DocumentWidget_(d, d->contextLink->linkId); /* perhaps will be triggered */
                     const iString *linkUrl  = linkUrl_GmDocument(view->doc, d->contextLink->linkId);
                     const iRangecc scheme   = urlScheme_String(linkUrl);
@@ -5163,7 +5258,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         equalCase_Rangecc(scheme, "data") ||
                         equalCase_Rangecc(scheme, "file") ||
                         equalCase_Rangecc(scheme, "finger") ||
-                        equalCase_Rangecc(scheme, "gopher")) {
+                        equalCase_Rangecc(scheme, "gopher") ||
+                        equalCase_Rangecc(scheme, "spartan")) {
                         isNative = iTrue;
                         /* Regular links that we can open. */
                         pushBackN_Array(&items,
@@ -5171,31 +5267,36 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                             { openTab_Icon " ${link.newtab}",
                                               0,
                                               0,
-                                              format_CStr("!open newtab:1 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:1 origin:%s url:%s",
+                                                          spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           cstr_String(linkUrl)) },
                                             { openTabBg_Icon " ${link.newtab.background}",
                                               0,
                                               0,
-                                              format_CStr("!open newtab:2 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:2 origin:%s url:%s",
+                                                          spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           cstr_String(linkUrl)) },
                                             { openWindow_Icon " ${link.newwindow}",
                                               0,
                                               0,
-                                              format_CStr("!open newwindow:1 origin:%s url:%s",
+                                              format_CStr("!open query:%d newwindow:1 origin:%s url:%s",
+                                                          spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           cstr_String(linkUrl)) },
                                             { "${link.side}",
                                               0,
                                               0,
-                                              format_CStr("!open newtab:4 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:4 origin:%s url:%s",
+                                                          spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           cstr_String(linkUrl)) },
                                             { "${link.side.newtab}",
                                               0,
                                               0,
-                                              format_CStr("!open newtab:5 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:5 origin:%s url:%s",
+                                                          spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           cstr_String(linkUrl)) },
                                         },
@@ -5320,16 +5421,19 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
                             { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
                             { "---" },
-                            { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-                            { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                            { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
+                            { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
                             { "---" },
                             { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                             { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                             { "${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
+                            { d->flags & viewSource_DocumentWidgetFlag ? "${menu.viewformat.gemini}"
+                                                                       : "${menu.viewformat.plain}",
+                              0, 0, "document.viewformat" },
                             { "---" },
-                            { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
-                        17);
+                            { "${menu.page.copyurl}", 0, 0, "document.copylink" }, },
+                        18);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
@@ -5405,6 +5509,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             return iTrue;
         case drag_ClickResult: {
+#if defined (LAGRANGE_ENABLE_AUDIO)
             if (d->grabbedPlayer) {
                 iPlayer *plr =
                     audioPlayer_Media(media_GmDocument(view->doc), mediaId_GmRun(d->grabbedPlayer));
@@ -5415,6 +5520,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 refresh_Widget(w);
                 return iTrue;
             }
+#endif /* LAGRANGE_ENABLE_AUDIO */
             /* Fold/unfold a preformatted block. */
             if (~d->flags & selecting_DocumentWidgetFlag && view->hoverPre &&
                 preIsFolded_GmDocument(view->doc, preId_GmRun(view->hoverPre))) {
@@ -5605,10 +5711,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             tabMode ^= otherRoot_OpenTabFlag;
                         }
                         interactingWithLink_DocumentWidget_(d, linkId);
-                        postCommandf_Root(w->root, "open newtab:%d url:%s",
-                                         tabMode,
-                                         cstr_String(absoluteUrl_String(
-                                             d->mod.url, linkUrl_GmDocument(view->doc, linkId))));
+                        postCommandf_Root(w->root,
+                                          "open query:%d newtab:%d url:%s",
+                                          isSpartanQueryLink_DocumentWidget_(d, linkId),
+                                          tabMode,
+                                          cstr_String(absoluteUrl_String(
+                                              d->mod.url, linkUrl_GmDocument(view->doc, linkId))));
                     }
                     else {
                         const iString *url = absoluteUrl_String(
@@ -5860,8 +5968,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
 #if !defined (iPlatformAppleDesktop) /* in system menu */
     addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
     addAction_Widget(w, closeTab_KeyShortcut, "tabs.close");
-    addAction_Widget(w, SDLK_d, KMOD_PRIMARY, "bookmark.add");
-    addAction_Widget(w, subscribeToPage_KeyModifier, "feeds.subscribe");
+    addAction_Widget(w, bookmarkPage_KeyShortcut, "bookmark.add");
+    addAction_Widget(w, subscribeToPage_KeyShortcut, "feeds.subscribe");
 #endif
     addAction_Widget(w, navigateBack_KeyShortcut, "navigate.back");
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
@@ -5880,12 +5988,11 @@ void cancelAllRequests_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
-    //    printf("\n* * * * * * * *\nDEINIT DOCUMENT: %s\n* * * * * * * *\n\n",
-    //           cstr_String(&d->widget.id)); fflush(stdout);
     cancelAllRequests_DocumentWidget(d);
     pauseAllPlayers_Media(media_GmDocument(d->view.doc), iTrue);
     removeTicker_App(animate_DocumentWidget_, d);
     removeTicker_App(prerender_DocumentWidget_, d);
+    removeTicker_App(refreshWhileScrolling_DocumentWidget_, d);
     remove_Periodic(periodic_App(), d);
     delete_Translation(d->translation);
     deinit_DocumentView(&d->view);

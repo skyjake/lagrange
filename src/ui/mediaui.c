@@ -47,6 +47,7 @@ static const char *volumeChar_(float volume) {
 }
 
 void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
     d->player = player;
     d->bounds = bounds;
     const int height = height_Rect(bounds);
@@ -61,6 +62,7 @@ void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
         d->volumeSlider = shrunk_Rect(d->volumeAdjustRect, init_I2(gap_UI / 2, gap_UI));
         adjustEdges_Rect(&d->volumeSlider, 0, -width_Rect(d->volumeRect) - 2 * gap_UI, 0, 5 * gap_UI);
     }
+#endif /* LAGRANGE_ENABLE_AUDIO */
 }
 
 static void drawInlineButton_(iPaint *p, iRect rect, const char *label, int font) {
@@ -110,6 +112,7 @@ static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) {
 }
 
 void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
+#if defined (LAGRANGE_ENABLE_AUDIO)
     const int   playerBackground_ColorId = uiBackground_ColorId;
     const int   playerFrame_ColorId      = uiSeparator_ColorId;
     const iBool isAdjusting = (flags_Player(d->player) & adjustingVolume_PlayerFlag) != 0;
@@ -194,6 +197,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
                   volColor,
                   dot);
     }
+#endif /* LAGRANGE_ENABLE_AUDIO */
 }
 
 /*----------------------------------------------------------------------------------------------*/

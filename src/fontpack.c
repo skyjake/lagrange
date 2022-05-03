@@ -71,10 +71,15 @@ iDefineObjectConstruction(FontFile)
 
 void init_FontFile(iFontFile *d) {
     init_String(&d->id);
-    d->colIndex = 0;
-    d->style = regular_FontStyle;
+    d->colIndex  = 0;
+    d->style     = regular_FontStyle;
+    d->emAdvance = 0;
+    d->ascent    = 0;
+    d->descent   = 0;
     init_Block(&d->sourceData, 0);
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
     iZap(d->stbInfo);
+#endif
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
     d->hbBlob = NULL;
     d->hbFace = NULL;
@@ -83,6 +88,7 @@ void init_FontFile(iFontFile *d) {
 }
 
 static void load_FontFile_(iFontFile *d, const iBlock *data) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
     set_Block(&d->sourceData, data);
 #if 0
     /* Count the number of available fonts. */
@@ -99,6 +105,7 @@ static void load_FontFile_(iFontFile *d, const iBlock *data) {
     /* Basic metrics. */
     stbtt_GetFontVMetrics(&d->stbInfo, &d->ascent, &d->descent, NULL);
     stbtt_GetCodepointHMetrics(&d->stbInfo, 'M', &d->emAdvance, NULL);
+#endif
 #if defined(LAGRANGE_ENABLE_HARFBUZZ)
     /* HarfBuzz will read the font data. */
     d->hbBlob = hb_blob_create(constData_Block(data), size_Block(&d->sourceData),
@@ -109,11 +116,15 @@ static void load_FontFile_(iFontFile *d, const iBlock *data) {
 }
 
 static iBool detectMonospace_FontFile_(const iFontFile *d) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
     int em, i, period;
     stbtt_GetCodepointHMetrics(&d->stbInfo, 'M', &em, NULL);
     stbtt_GetCodepointHMetrics(&d->stbInfo, 'i', &i, NULL);
     stbtt_GetCodepointHMetrics(&d->stbInfo, '.', &period, NULL);
     return em == i && em == period;
+#else
+    return iFalse;
+#endif
 }
 
 static void unload_FontFile_(iFontFile *d) {
@@ -126,8 +137,10 @@ static void unload_FontFile_(iFontFile *d) {
     d->hbFace = NULL;
     d->hbBlob = NULL;
 #endif
-    clear_Block(&d->sourceData);
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
     iZap(d->stbInfo);
+#endif
+    clear_Block(&d->sourceData);
 }
 
 void deinit_FontFile(iFontFile *d) {
@@ -138,20 +151,40 @@ void deinit_FontFile(iFontFile *d) {
 }
 
 float scaleForPixelHeight_FontFile(const iFontFile *d, int pixelHeight) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
     return stbtt_ScaleForPixelHeight(&d->stbInfo, pixelHeight);
+#else
+    return 1.0f;
+#endif    
 }
 
 uint8_t *rasterizeGlyph_FontFile(const iFontFile *d, float xScale, float yScale, float xShift,
                                  uint32_t glyphIndex, int *w, int *h) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
     return stbtt_GetGlyphBitmapSubpixel(
         &d->stbInfo, xScale, yScale, xShift, 0.0f, glyphIndex, w, h, 0, 0);
+#else
+    return NULL;
+#endif
 }
 
 void measureGlyph_FontFile(const iFontFile *d, uint32_t glyphIndex,
                            float xScale, float yScale, float xShift,
                            int *x0, int *y0, int *x1, int *y1) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
     stbtt_GetGlyphBitmapBoxSubpixel(
         &d->stbInfo, glyphIndex, xScale, yScale, xShift, 0.0f, x0, y0, x1, y1);
+#endif
+}
+
+int glyphAdvance_FontFile(const iFontFile *d, uint32_t glyphIndex) {
+#if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
+    int adv = 0;
+    stbtt_GetGlyphHMetrics(&d->stbInfo, glyphIndex, &adv, NULL);
+    return adv;
+#else
+    return 1;
+#endif
 }
 
 /*----------------------------------------------------------------------------------------------*/

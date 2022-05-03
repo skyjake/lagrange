@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2020-2022 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "paint.h"
+#include "app.h"
 
 #include <SDL_version.h>
 
@@ -125,6 +126,9 @@ void drawRect_Paint(const iPaint *d, iRect rect, int color) {
 }
 
 void drawRectThickness_Paint(const iPaint *d, iRect rect, int thickness, int color) {
+    if (isTerminal_Platform() && thickness == 0) {
+        addv_I2(&rect.size, one_I2());
+    }
     thickness = iClamp(thickness, 1, 4);
     while (thickness--) {
         drawRect_Paint(d, rect, color);

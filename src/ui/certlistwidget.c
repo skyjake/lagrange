@@ -42,7 +42,6 @@ struct Impl_CertItem {
     iBool     isBold;
     iString   label;
     iString   meta;
-//    iString   url;
 };
 
 void init_CertItem(iCertItem *d) {
@@ -53,11 +52,9 @@ void init_CertItem(iCertItem *d) {
     d->isBold = iFalse;
     init_String(&d->label);
     init_String(&d->meta);
-//    init_String(&d->url);
 }
 
 void deinit_CertItem(iCertItem *d) {
-//    deinit_String(&d->url);
     deinit_String(&d->meta);
     deinit_String(&d->label);
 }
@@ -159,11 +156,12 @@ static void itemClicked_CertListWidget_(iCertListWidget *d, iCertItem *item, siz
     if (itemIndex < numItems_ListWidget(&d->list)) {
         updateContextMenu_CertListWidget_(d);
         arrange_Widget(d->menu);
-        openMenu_Widget(d->menu,
-                        bounds_Widget(w).pos.x < mid_Rect(rect_Root(w->root)).x
-                            ? topRight_Rect(itemRect_ListWidget(&d->list, itemIndex))
-                            : addX_I2(topLeft_Rect(itemRect_ListWidget(&d->list, itemIndex)),
-                                      -width_Widget(d->menu)));
+        openMenuFlags_Widget(d->menu,
+                             bounds_Widget(w).pos.x < mid_Rect(rect_Root(w->root)).x
+                                 ? topRight_Rect(itemRect_ListWidget(&d->list, itemIndex))
+                                 : addX_I2(topLeft_Rect(itemRect_ListWidget(&d->list, itemIndex)),
+                                           -width_Widget(d->menu)),
+                             postCommands_MenuOpenFlags | setFocus_MenuOpenFlags);
     }
 }
 
@@ -349,6 +347,7 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
             isHover_Widget(constAs_Widget(list)) &&
             constHoverItem_ListWidget(list) == d) ||
             (isMenuVisible && certList->contextItem == d) ||
+            (isFocused_Widget(list) && constCursorItem_ListWidget(list) == d) ||
             isDragging;
     const int itemHeight     = height_Rect(itemRect);
     const int iconColor      = isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
@@ -372,9 +371,9 @@ static void draw_CertItem_(const iCertItem *d, iPaint *p, iRect itemRect,
     iString icon;
     initUnicodeN_String(&icon, &d->icon, 1);
     iInt2 cPos = topLeft_Rect(itemRect);
-    const int indent = 1.4f * lineHeight_Text(font);
+    int indent = 1.4f * lineHeight_Text(font) + (isTerminal_Platform() ? 2 * gap_UI : 0);
     addv_I2(&cPos,
-            init_I2(3 * gap_UI,
+            init_I2(3 * gap_UI * aspect_UI,
                     (itemHeight - lineHeight_Text(uiLabel_FontId) * 2 - lineHeight_Text(font)) /
                         2));
     const int metaFg = isHover ? permanent_ColorId | (isPressing ? uiTextPressed_ColorId
@@ -404,15 +403,14 @@ void init_CertListWidget(iCertListWidget *d) {
     iWidget *w = as_Widget(d);
     init_ListWidget(&d->list);
     setId_Widget(w, "certlist");
+    setFlags_Widget(w, focusable_WidgetFlag, iTrue);
     setBackgroundColor_Widget(w, none_ColorId);
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
-#if defined (iPlatformMobile)
     if (deviceType_App() == phone_AppDeviceType) {
         d->itemFonts[0] = uiLabelBig_FontId;
         d->itemFonts[1] = uiLabelBigBold_FontId;
     }
-#endif
     updateItemHeight_CertListWidget(d);
     d->menu = NULL;
     d->contextItem = NULL;
@@ -420,7 +418,8 @@ void init_CertListWidget(iCertListWidget *d) {
 }
 
 void updateItemHeight_CertListWidget(iCertListWidget *d) {
-    setItemHeight_ListWidget(&d->list, 3.5f * lineHeight_Text(d->itemFonts[0]));
+    const float height = isTerminal_Platform() ? 4.0f : 3.5f;
+    setItemHeight_ListWidget(&d->list, height * lineHeight_Text(d->itemFonts[0]));
 }
 
 iBool updateItems_CertListWidget(iCertListWidget *d) {

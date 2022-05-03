@@ -24,6 +24,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
    The primary source of complexity is the handling of wrapped text content
    in the custom text editor. */
 
+/* TODO: Refactor this so that the native text input widget has a common base
+   class with the fully-custom input widget. Currently this implementation is
+   too convoluted, with both variants intermingled. */
+
 #include "inputwidget.h"
 #include "command.h"
 #include "paint.h"
@@ -39,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
+#include <SDL_version.h>
 
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
@@ -732,8 +737,13 @@ static uint32_t cursorTimer_(uint32_t interval, void *w) {
     return interval;
 }
 
+iLocalDef iBool isBlinkingCursor_(void) {
+    /* Terminal will blink if appropriate. */
+    return prefs_App()->blinkingCursor && !isTerminal_Platform();
+}
+
 static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, int doStart) {
-    if (!prefs_App()->blinkingCursor && doStart == 1) {
+    if (!isBlinkingCursor_() && doStart == 1) {
         doStart = iFalse;
     }
     if (doStart && !d->timer) {
@@ -785,7 +795,7 @@ static void updateTextInputRect_InputWidget_(const iInputWidget *d) {
         setRect_SystemTextInput(d->sysCtrl, contentBounds_InputWidget_(d));
     }
 #endif
-#if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile)
+#if !defined (iPlatformAppleMobile) && !defined (iPlatformAndroidMobile) && !defined (SDL_SEAL_CURSES)
     const iRect bounds = bounds_Widget(constAs_Widget(d));
     SDL_SetTextInputRect(&(SDL_Rect){ bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y });
 #endif
@@ -819,9 +829,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->validator = NULL;
     d->validatorContext = NULL;
     setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, iTrue);
-#if defined (iPlatformMobile)
-    setFlags_Widget(w, extraPadding_WidgetFlag, iTrue);
-#endif
+    setFlags_Widget(w, extraPadding_WidgetFlag, isMobile_Platform());
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
     init_String(&d->text);
 #else
@@ -1130,6 +1138,10 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     setTextUndoable_InputWidget(d, text, iFalse);
 }
 
+static iBool isNarrow_InputWidget_(const iInputWidget *d) {
+    return width_Rect(contentBounds_InputWidget_(d)) < 100 * gap_UI * aspect_UI;
+}
+
 void setTextUndoable_InputWidget(iInputWidget *d, const iString *text, iBool isUndoable) {
     if (!d) return;
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
@@ -1153,7 +1165,7 @@ void setTextUndoable_InputWidget(iInputWidget *d, const iString *text, iBool isU
             text = enc;
         }
         /* Omit the default (Gemini) scheme if there isn't much space. */
-        if (isNarrow_Root(as_Widget(d)->root)) {
+        if (isNarrow_InputWidget_(d)) {
             text = omitDefaultScheme_(collect_String(copy_String(text)));
         }
     }
@@ -1461,8 +1473,14 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) 
         return iFalse;
     }
     iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
-    wt.hitPoint = addY_I2(relCoord, 1); /* never (0, 0) because that disables the hit test */
-    measure_WrapText(&wt, d->font);
+    if (isEqual_I2(relCoord, zero_I2())) {
+        /* (0, 0) disables the hit test, but this is trivial to figure out. */
+        wt.hitChar_out = wt.text.start;        
+    }
+    else {
+        wt.hitPoint = addY_I2(relCoord, 1 * aspect_UI); 
+        measure_WrapText(&wt, d->font);
+    }
     if (wt.hitChar_out) {
         d->cursor.x = wt.hitChar_out - wt.text.start;
     }
@@ -1644,6 +1662,9 @@ static iBool copy_InputWidget_(iInputWidget *d, iBool doCut) {
         const iRanges m   = mark_InputWidget_(d);
         iString *     str = collectNew_String();
         mergeLinesRange_(&d->lines, m, str);
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            restoreDefaultScheme_(str);
+        }
         SDL_SetClipboardText(
             cstr_String(d->inFlags & isUrl_InputWidgetFlag ? canonicalUrl_String(str) : str));
         if (doCut) {
@@ -2195,6 +2216,20 @@ static void overflowScrollToKeepVisible_InputWidget_(iAny *widget) {
     }
 }
 
+static iBool isSelectAllEvent_InputWidget_(const SDL_KeyboardEvent *ev) {
+    /* Note: If this were a binding, it would have to conditional on an InputWidget being focused. */
+    if (ev->state != SDL_PRESSED) {
+        return iFalse;
+    }
+    const int key  = ev->keysym.sym;
+    const int mods = keyMods_Sym(ev->keysym.mod);
+#if defined (iPlatformTerminal)
+    return key == SDLK_a && mods == KMOD_ALT;
+#else
+    return key == SDLK_a && mods == KMOD_PRIMARY;
+#endif    
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Resize according to width immediately. */
@@ -2390,7 +2425,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         const int key  = ev->key.keysym.sym;
         const int mods = keyMods_Sym(ev->key.keysym.mod);
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
-        if (mods == KMOD_PRIMARY) {
+        if (mods == KMOD_UNDO) {
             switch (key) {
                 case 'c':
                 case 'x':
@@ -2419,7 +2454,16 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
 #  endif
         d->prevCursor = d->cursor;
-#endif
+        if (isSelectAllEvent_InputWidget_(&ev->key)) {
+            selectAll_InputWidget(d);
+            d->mark.start = 0;
+            d->mark.end   = cursorToIndex_InputWidget_(d, curMax);
+            d->cursor     = curMax;
+            showCursor_InputWidget_(d);
+            refresh_Widget(w);
+            return iTrue;            
+        }
+#endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
         switch (key) {
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
@@ -2542,24 +2586,21 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_a:
-                if (mods == KMOD_PRIMARY) {
-                    selectAll_InputWidget(d);
-                    d->mark.start = 0;
-                    d->mark.end   = cursorToIndex_InputWidget_(d, curMax);
-                    d->cursor     = curMax;
-                    showCursor_InputWidget_(d);
-                    refresh_Widget(w);
-                    return iTrue;
-                }
-# if defined (iPlatformApple)
-                /* fall through for Emacs-style Home/End */
             case SDLK_e:
                 if (mods == KMOD_CTRL || mods == (KMOD_CTRL | KMOD_SHIFT)) {
+#  if defined (iPlatformTerminal)
+                    /* Move to the start/end of the current wrapped line. */
+                    moveCursorByLine_InputWidget_(d, 0, key == 'a' ? -1 : +1);
+                    refresh_Widget(w);
+                    return iTrue;
+#  endif
+#  if defined (iPlatformApple)
+                    /* Move to the start/end of the current paragraph. */
                     setCursor_InputWidget(d, key == 'a' ? lineFirst : lineLast);
                     refresh_Widget(w);
                     return iTrue;
+#  endif
                 }
-# endif
                 break;
             case SDLK_LEFT:
             case SDLK_RIGHT: {
@@ -2609,9 +2650,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 }
                 refresh_Widget(d);
                 return iTrue;
-#endif
+#endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
         }
-        if (mods & (KMOD_PRIMARY | KMOD_SECONDARY)) {
+        if (mods & (KMOD_GUI | KMOD_CTRL)) {
             return iFalse;
         }
         return iTrue;
@@ -2696,11 +2737,13 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* `lines` is already up to date and ready for drawing. */
     fillRect_Paint(
         &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
-    drawRectThickness_Paint(&p,
-                            adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
-                            isFocused ? gap_UI / 4 : 1,
-                            isFocused ? uiInputFrameFocused_ColorId
-                                      : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
+    if (!isTerminal_Platform()) {
+        drawRectThickness_Paint(&p,
+                                adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
+                                isFocused ? gap_UI / 4 : 1,
+                                isFocused ? uiInputFrameFocused_ColorId
+                                : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
+    }
     if (d->sysCtrl) {
         /* The system-provided control is drawing the text. */
         drawChildren_Widget(w);
@@ -2779,7 +2822,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         wrapText.context  = NULL;
     }
     /* Draw the insertion point. */
-    if (isFocused && (d->cursorVis || !prefs_App()->blinkingCursor) &&
+    if (isFocused && (d->cursorVis || !isBlinkingCursor_()) &&
         contains_Range(&visLines, d->cursor.y) &&
         (deviceType_App() == desktop_AppDeviceType || isEmpty_Range(&d->mark))) {
         iInt2    curSize;
@@ -2818,6 +2861,10 @@ static void draw_InputWidget_(const iInputWidget *d) {
                                     addX_I2(advance,
                                             (d->mode == insert_InputMode ? -curSize.x / 2 : 0)));
         const iRect curRect  = { curPos, curSize };
+#if defined (SDL_SEAL_CURSES)
+        /* Tell where to place the terminal cursor. */
+        SDL_SetTextInputRect((const SDL_Rect *) &curRect);  
+#endif
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
         if (d->mode == overwrite_InputMode) {
             /* The `gap_UI` offset below is a hack. They are used because for some reason the

@@ -59,11 +59,9 @@ struct Impl_LabelWidget {
 };
 
 static iBool isHover_LabelWidget_(const iLabelWidget *d) {
-#if defined (iPlatformMobile)
-    if (!isHovering_Touch()) {
+    if (isMobile_Platform() && !isHovering_Touch()) {
         return iFalse;
     }
-#endif
     return isHover_Widget(d);
 }
 
@@ -74,15 +72,14 @@ static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
                              : corner == 1 ? init_I2(w->padding[2], w->padding[1])
                              : corner == 2 ? init_I2(w->padding[2], w->padding[3])
                              : init_I2(w->padding[0], w->padding[3]));
-#if defined (iPlatformMobile)
-    return add_I2(widgetPad,
-                  init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
-                          (flags & extraPadding_WidgetFlag ? 1.5f : 1.0f) * 3 * gap_UI / 2));
-#else
+    if (isMobile_Platform()) {
+        return add_I2(widgetPad,
+                      init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
+                              (flags & extraPadding_WidgetFlag ? 1.5f : 1.0f) * 3 * gap_UI / 2));
+    }
     return add_I2(widgetPad,
                   init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI),
-                          gap_UI));
-#endif
+                          gap_UI * aspect_UI));
 }
 
 iDefineObjectConstructionArgs(LabelWidget,
@@ -132,6 +129,21 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
     }
     else if (isCommand_Widget(w, ev, "focus.gained") ||
              isCommand_Widget(w, ev, "focus.lost")) {
+        iWidget *scr = findOverflowScrollable_Widget(w);
+        if (scr) {
+            const iRect root   = visibleRect_Root(w->root);
+            const iRect bounds = boundsWithoutVisualOffset_Widget(w);
+            int delta = top_Rect(root) - top_Rect(bounds);
+            if (delta > 0) {
+                scrollOverflow_Widget(scr, delta);
+            }
+            else {
+                delta = bottom_Rect(bounds) - bottom_Rect(root);
+                if (delta > 0) {
+                    scrollOverflow_Widget(scr, -delta);
+                }
+            }
+        }
         refresh_Widget(d);
         return iFalse;
     }
@@ -167,6 +179,7 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
                 setFlags_Widget(w, pressed_WidgetFlag, iFalse);
                 trigger_LabelWidget_(d);
                 refresh_Widget(w);
+                setFocus_Widget(NULL);
                 return iTrue;
             default:
                 break;
@@ -374,6 +387,10 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     init_Paint(&p);
     int bg, fg, frame, frame2, iconColor, metaColor;
     getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2, &iconColor, &metaColor);
+    /* Indicate focused label with an underline attribute. */
+    if (isTerminal_Platform() && isFocused_Widget(w)) {
+        fg |= underline_ColorId;
+    }
     setBaseAttributes_Text(d->font, fg);
     const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
     const iBool isCaution = (colorEscape == uiTextCaution_ColorId);
@@ -382,7 +399,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     if (isFocused_Widget(w)) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
-        drawRectThickness_Paint(&p, frameRect, gap_UI / 4, frame);        
+        drawRectThickness_Paint(&p, frameRect, gap_UI / 4, uiTextAction_ColorId /*frame*/);        
     }
     else if (~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
@@ -423,7 +440,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             (iRect){
                 /* The icon position is fine-tuned; c.f. high baseline of Source Sans Pro. */
                 add_I2(add_I2(bounds.pos, padding_LabelWidget_(d, 0)),
-                       init_I2((flags & extraPadding_WidgetFlag ? -2 : -1.20f) * gap_UI +
+                       init_I2((flags & extraPadding_WidgetFlag ? -2 : -1.20f) * gap_UI / aspect_UI +
                                (deviceType_App() == tablet_AppDeviceType ? -gap_UI : 0),
                                -gap_UI / 8)),
                 init_I2(iconPad, lineHeight_Text(d->font)) },

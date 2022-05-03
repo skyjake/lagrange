@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-10 08:51+0000\n"
+"PO-Revision-Date: 2022-04-29 18:07+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -2414,7 +2414,7 @@ msgid "prefs.uilayout"
 msgstr "Компонування:"
 
 msgid "prefs.bottomnavbar"
-msgstr "Навігаційний рядок внизу"
+msgstr "Панель навігації внизу"
 
 msgid "prefs.bottomtabbar"
 msgstr "Вкладки внизу"
@@ -2460,3 +2460,30 @@ msgstr "Імпортовані копії"
 
 msgid "import.userdata.error"
 msgstr "%s не є дійсним експортним архівом Lagrange."
+
+msgid "heading.upload.spartan"
+msgstr "Передати за допомогою Spartan"
+
+msgid "menu.reopentab"
+msgstr "Відновити останню закриту вкладку"
+
+msgid "menu.viewformat.plain"
+msgstr "Переглянути як звичайний текст"
+
+msgid "menu.viewformat.gemini"
+msgstr "Переглянути як Gemtext"
+
+msgid "keys.identmenu"
+msgstr "Відкрити меню ідентичності"
+
+msgid "keys.menubar.focus"
+msgstr "Надати фокус панелі меню"
+
+msgid "keys.contextmenu"
+msgstr "Відкрити контекстне меню"
+
+msgid "spartan.input"
+msgstr "Введіть текст для надсилання:"
+
+msgid "dlg.spartan.upload"
+msgstr "Відкрити редактор…"

@@ -143,6 +143,7 @@ static void setActiveItem_BindingsWidget_(iBindingsWidget *d, size_t pos) {
         item->isWaitingForEvent = iTrue;
         invalidateItem_ListWidget(d->list, d->activePos);
     }
+    setScrollMode_ListWidget(d->list, d->activePos != iInvalidPos);
 #if defined (iPlatformAppleDesktop) && defined (LAGRANGE_MAC_CONTEXTMENU)
     /* Native menus must be disabled while grabbing keys so the shortcuts don't trigger. */
     const iBool enableNativeMenus = (d->activePos == iInvalidPos);
@@ -187,6 +188,9 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
         /* Force the scrollbar to unfade. The list is created hidden so the scrollbar is not
            shown by default.*/
         updateVisible_ListWidget(d->list);
+        if (isTerminal_Platform()) {
+            setFocus_Widget(as_Widget(d->list));
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "lang.changed")) {
@@ -241,7 +245,8 @@ static void draw_BindingItem_(const iBindingItem *d, iPaint *p, iRect itemRect,
     const iBool isHover = ((!isMenuOpen && isHover_Widget(constAs_Widget(list)) &&
                             constHoverItem_ListWidget(list) == d) ||
                            (isMenuOpen && constItem_ListWidget(list, parent->contextPos) == d));
-    if (isHover || isPressing) {
+    const iBool isCursor = isFocused_Widget(list) && constCursorItem_ListWidget(list) == d;
+    if (isHover || isPressing || isCursor) {
         fg = isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId;
         fillRect_Paint(p,
                        itemRect,

@@ -22,6 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#if defined (LAGRANGE_ENABLE_AUDIO)
+
 #include "the_Foundation/block.h"
 #include "the_Foundation/mutex.h"
 
@@ -72,3 +74,5 @@ iLocalDef void *ptr_SampleBuf_(iSampleBuf *d, size_t pos) {
 
 void    write_SampleBuf     (iSampleBuf *, const void *samples, const size_t n);
 void    read_SampleBuf      (iSampleBuf *, const size_t n, void *samples_out);
+
+#endif /* LAGRANGE_ENABLE_AUDIO */

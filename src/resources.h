@@ -67,3 +67,4 @@ extern iBlock imageShadow_Resources;
 extern iBlock fontpackDefault_Resources;
 extern iBlock imageLagrange64_Resources;
 extern iBlock blobMacosSystemFontsIni_Resources;
+extern iBlock blobCacertPem_Resources;
