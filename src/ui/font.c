@@ -337,6 +337,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         if (isControl_Char(ch)) {
             continue;
         }
+        iAssert(run.font != NULL);
         if (ch == 0x20) {
             if (run.font->spec->flags & auxiliary_FontSpecFlag &&
                 ~run.font->spec->flags & allowSpacePunct_FontSpecFlag) {
@@ -353,7 +354,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
         }
         iBaseFont *chFont = characterFont_BaseFont(currentFont, ch);
 //        const iGlyph *glyph = glyph_Font_(currentFont, ch);
-        if (chFont != run.font) {
+        if (chFont && chFont != run.font) {
             /* A different font is being used for this character. */
             finishRun_AttributedText_(d, &run, pos);
             run.font = chFont;
