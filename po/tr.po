@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-03 02:54+0000\n"
+"PO-Revision-Date: 2022-05-05 03:36+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -1200,7 +1200,7 @@ msgstr ""
 "İstenen dosya mevcut değil veya erişilemiyor. Lütfen dosya yolunu denetleyin."
 
 msgid "error.badresource"
-msgstr "Geçersiz Kaynak"
+msgstr "Geçersiz Özkaynak"
 
 msgid "error.openfile"
 msgstr "Dosya Açılamadı"
@@ -1209,7 +1209,7 @@ msgid "error.badstatus"
 msgstr "Bilinmeyen Durum Kodu"
 
 msgid "error.badresource.msg"
-msgstr "İstenen kaynak mevcut değil."
+msgstr "İstenen özkaynak mevcut değil."
 
 msgid "error.unsupported.media.msg"
 msgstr "Alınan içerik bu uygulama ile görüntülenemiyor."
@@ -1286,13 +1286,13 @@ msgid "error.notfound"
 msgstr "Bulunamadı"
 
 msgid "error.notfound.msg"
-msgstr "İstenen kaynak şu anda bulunamıyor."
+msgstr "İstenen özkaynak şu anda bulunamıyor."
 
 msgid "error.gone"
 msgstr "Yok"
 
 msgid "error.gone.msg"
-msgstr "İstenen kaynak artık kullanılabilir değil."
+msgstr "İstenen özkaynak artık kullanılabilir değil."
 
 msgid "error.proxyrefusal"
 msgstr "Vekil İsteği Reddedildi"
@@ -1308,7 +1308,7 @@ msgstr "Sertifika Gerekiyor"
 
 msgid "error.cert.needed.msg"
 msgstr ""
-"İstenen kaynağa erişim bir istemci sertifikası yoluyla kimlik tanımlaması "
+"İstenen özkaynağa erişim bir istemci sertifikası yoluyla kimlik tanımlaması "
 "gerektiriyor."
 
 msgid "error.cert.auth"
@@ -2036,12 +2036,12 @@ msgstr "Sunucu tarafı istekleri sınırlıyor. Lütfen bekleyin…"
 
 msgid "error.proxyrefusal.msg"
 msgstr ""
-"Bu istek sunucu tarafından sunulmayan bir alan adındaki kaynak içindi ve "
+"Bu istek sunucu tarafından sunulmayan bir alan adındaki özkaynak içindi ve "
 "sunucu vekil isteklerini kabul etmiyor."
 
 msgid "error.cert.auth.msg"
 msgstr ""
-"Sağlanan istemci sertifikası geçerli; ancak istenen kaynağa erişim için "
+"Sağlanan istemci sertifikası geçerli; ancak istenen özkaynağa erişim için "
 "yetkili değil."
 
 msgid "error.ansi.msg"
@@ -2414,3 +2414,6 @@ msgstr "Düzenleyiciyi aç…"
 
 msgid "heading.upload.spartan"
 msgstr "Spartan ile gönder"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Markdown kaynağını görüntüle:"
