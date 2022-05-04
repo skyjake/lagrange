@@ -2240,13 +2240,16 @@ static iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
 
 static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
+    if (d != document_Root(w->root)) {
+        return;
+    }
     iWidget *navBar = findChild_Widget(root_Widget(w), "navbar");
     showCollapsed_Widget(findChild_Widget(navBar, "document.pinned"),
                          isPinned_DocumentWidget_(d));
     const iBool isBookmarked = findUrl_Bookmarks(bookmarks_App(), d->mod.url) != 0;
     iLabelWidget *bmPin = findChild_Widget(navBar, "document.bookmarked");
     setOutline_LabelWidget(bmPin, !isBookmarked);
-    setBackgroundColor_Widget(as_Widget(bmPin), isBookmarked ? uiBackground_ColorId : uiInputBackground_ColorId);
+    setTextColor_LabelWidget(bmPin, isBookmarked ? uiTextAction_ColorId : uiText_ColorId);
 }
 
 static void updateBanner_DocumentWidget_(iDocumentWidget *d) {

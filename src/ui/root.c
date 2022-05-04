@@ -1553,18 +1553,6 @@ void createUserInterface_Root(iRoot *d) {
                                      frameless_WidgetFlag);
                 updateSize_LabelWidget(indicator);
             }
-            /* Bookmark indicator. */ {
-                iLabelWidget *pin = new_LabelWidget(bookmark_Icon, "bookmark.add");
-                setId_Widget(as_Widget(pin), "document.bookmarked");
-                setTextColor_LabelWidget(pin, uiTextAction_ColorId);
-                setBackgroundColor_Widget(as_Widget(pin), uiBackground_ColorId);
-                setAlignVisually_LabelWidget(pin, iTrue);
-                setNoAutoMinHeight_LabelWidget(pin, iTrue);
-                addChildFlags_Widget(rightEmbed,
-                                     iClob(pin),
-                                     collapse_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag);
-                updateSize_LabelWidget(pin);                
-            }
             iWidget *urlButtons = new_Widget();
             setId_Widget(urlButtons, "url.buttons");
             setFlags_Widget(urlButtons, embedFlags | arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
@@ -1605,6 +1593,17 @@ void createUserInterface_Root(iRoot *d) {
                                      embedFlags | tight_WidgetFlag | collapse_WidgetFlag |
                                      resizeToParentHeight_WidgetFlag);
                 updateSize_LabelWidget(pageMenuButton);
+            }
+            /* Bookmark indicator. */ {
+                iLabelWidget *pin = new_LabelWidget(bookmark_Icon, "bookmark.add");
+                setId_Widget(as_Widget(pin), "document.bookmarked");
+                setTextColor_LabelWidget(pin, uiTextAction_ColorId);
+                setBackgroundColor_Widget(as_Widget(pin), uiInputBackground_ColorId);
+                setAlignVisually_LabelWidget(pin, iTrue);
+                addChildFlags_Widget(urlButtons,
+                                     iClob(pin),
+                                     embedFlags | collapse_WidgetFlag | tight_WidgetFlag | resizeToParentHeight_WidgetFlag);
+                updateSize_LabelWidget(pin);                
             }
             /* Reload button. */ {
                 iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
