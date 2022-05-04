@@ -1602,8 +1602,9 @@ void createUserInterface_Root(iRoot *d) {
                 setAlignVisually_LabelWidget(pin, iTrue);
                 addChildFlags_Widget(urlButtons,
                                      iClob(pin),
-                                     embedFlags | collapse_WidgetFlag | tight_WidgetFlag | resizeToParentHeight_WidgetFlag);
-                updateSize_LabelWidget(pin);                
+                                     embedFlags | collapse_WidgetFlag | tight_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+                updateSize_LabelWidget(pin);        
             }
             /* Reload button. */ {
                 iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
