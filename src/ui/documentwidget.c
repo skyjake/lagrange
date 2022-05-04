@@ -6048,6 +6048,10 @@ int documentWidth_DocumentWidget(const iDocumentWidget *d) {
     return documentWidth_DocumentView_(&d->view);
 }
 
+iBool isSourceTextView_DocumentWidget(const iDocumentWidget *d) {
+    return (d->flags & viewSource_DocumentWidgetFlag) != 0;
+}
+
 const iString *feedTitle_DocumentWidget(const iDocumentWidget *d) {
     if (!isEmpty_String(title_GmDocument(d->view.doc))) {
         return title_GmDocument(d->view.doc);
