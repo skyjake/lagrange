@@ -21,7 +21,7 @@
 New features:
 * Curses-based `clagrange` for running the app in the terminal. This is a complete TUI port of the original GUI version including, e.g., UI animations, smooth scrolling, and split view mode. `clagrange` has separate preferences, UI state, and key bindings but the rest of the runtime files are shared with the GUI version.
 * Build option `ENABLE_TUI`: build a text mode version of the app so it can be run in the terminal. Enabling this produces an executable called `clagrange` that is not linked with SDL.
-* URL field indicator 📌 that shows if there's a bookmark for the current page. Clicking on the indicator opens the Add/Edit Bookmark dialog.
+* URL field indicator 🔖 that shows if there's a bookmark for the current page. Clicking on the indicator opens the Add/Edit Bookmark dialog.
 * Checking server certificates using a bundled root CA file.
 * Build option `CACERT_PEM_PATH`: path of a cacert.pem file that contains trusted root CA certificates. This file is included in resources.lgr.
 * Support for the Spartan protocol. Prompt lines will open an input dialog for submitting text. This can be expanded to the full upload dialog using which a file can be uploaded, too.
