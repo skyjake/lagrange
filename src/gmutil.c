@@ -832,6 +832,10 @@ static const struct {
       { 0x1f61e, /* disappointed */
         "${error.unsupported.protocol}",
         "${error.unsupported.protocol.msg}" } },
+    { incompleteHeader_GmStatusCode,
+      { 0x1f615, /* confused */
+        "${error.incompleteheader}",
+        "${error.incompleteheader.msg}" } },
     { invalidHeader_GmStatusCode,
       { 0x1f4a9, /* pile of poo */
         "${error.badheader}",

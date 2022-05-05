@@ -2042,6 +2042,12 @@ msgstr "Invalid Header"
 msgid "error.badheader.msg"
 msgstr "The received header does not conform to the Gemini protocol specification. Perhaps the server is malfunctioning, or you tried to contact a non-Gemini server."
 
+msgid "error.incompleteheader"
+msgstr "Incomplete Header"
+
+msgid "error.incompleteheader.msg"
+msgstr "The server's response did not contain a complete header. Perhaps the server is malfunctioning, or you tried to contact a non-Gemini server."
+
 msgid "error.badredirect"
 msgstr "Invalid Redirect"
 

@@ -318,8 +318,8 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     }
     if (d->state == receivingHeader_GmRequestState) {
         d->state = failure_GmRequestState;
-        d->resp->statusCode = invalidHeader_GmStatusCode;
-        setCStr_String(&d->resp->meta, "Did not receive a valid header");
+        d->resp->statusCode = incompleteHeader_GmStatusCode;
+        setCStr_String(&d->resp->meta, "");
     }
     else {
         d->state = (status_TlsRequest(req) == error_TlsRequestStatus ? failure_GmRequestState
