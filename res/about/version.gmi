@@ -14,6 +14,7 @@
 * Spartan: .desktop file includes Spartan scheme handling.
 * macOS: Register app as Spartan URL scheme handler.
 * macOS: Fixed relaunching the app after installing an update via Sparkle.
+* Windows: Register Gopher and Spartan URL handlers.
 * TUI: Fixed `build-tui.sh` so it doesn't expect the_Foundation to be preinstalled.
 
 ## 1.13.2
