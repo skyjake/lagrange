@@ -316,7 +316,8 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
         delete_Block(data);
         initCurrent_Time(&d->resp->when);
     }
-    if (d->state == receivingHeader_GmRequestState) {
+    if (d->state == receivingHeader_GmRequestState &&
+        status_TlsRequest(req) != error_TlsRequestStatus) {
         d->state = failure_GmRequestState;
         d->resp->statusCode = incompleteHeader_GmStatusCode;
         setCStr_String(&d->resp->meta, "");
