@@ -1246,7 +1246,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
 //            visY = top_Rect(bounds_Widget(w)) - top_Rect(w->root->widget->rect);
         }
         const iBool isHiding = isVisible_Widget(w);
-        if (!isHiding) {
+        if (!isHiding && !isMobile_Platform()) {
             setFocus_Widget(as_Widget(list_SidebarWidget(d)));
         }
         else {
@@ -1926,17 +1926,20 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                                 "bookmark.tag tag:homepage",
                                                 bm->flags & homepage_BookmarkFlag
                                                     ? home_Icon " ${bookmark.untag.home}"
-                                                    : home_Icon " ${bookmark.tag.home}");
+                                                    : home_Icon " ${bookmark.tag.home}",
+                                                0);
                         setMenuItemLabel_Widget(d->menu,
                                                 "bookmark.tag tag:subscribed",
                                                 bm->flags & subscribed_BookmarkFlag
                                                     ? star_Icon " ${bookmark.untag.sub}"
-                                                    : star_Icon " ${bookmark.tag.sub}");
+                                                    : star_Icon " ${bookmark.tag.sub}",
+                                                0);
                         setMenuItemLabel_Widget(d->menu,
                                                 "bookmark.tag tag:remotesource",
                                                 bm->flags & remoteSource_BookmarkFlag
                                                     ? downArrowBar_Icon " ${bookmark.untag.remote}"
-                                                    : downArrowBar_Icon " ${bookmark.tag.remote}");
+                                                    : downArrowBar_Icon " ${bookmark.tag.remote}",
+                                                0);
                     }
                 }
                 else if (d->mode == feeds_SidebarMode && d->contextItem) {
@@ -1944,7 +1947,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setMenuItemLabel_Widget(d->menu,
                                             "feed.entry.toggleread",
                                             isRead ? circle_Icon " ${feeds.entry.markunread}"
-                                                   : circleWhite_Icon " ${feeds.entry.markread}");
+                                                   : circleWhite_Icon " ${feeds.entry.markread}",
+                                            0);
                 }
             }
         }

@@ -6,6 +6,24 @@
 ```
 # Release notes
 
+## 1.13 (1)
+New features:
+* URL field indicator 🔖 that shows if there's a bookmark for the current page. Clicking on the indicator opens the Add/Edit Bookmark dialog. It is always shown on iPads and on landscape mode on smaller devices.
+* Support for the Spartan protocol. Prompt lines will open an input dialog for submitting text. This can be expanded to the full upload dialog using which a file can be uploaded, too.
+* Reopening the last closed tab.
+* Page context menu item "View as Plain Text".
+* Option to view Markdown as source or as a Gemtext conversion (default: as source).
+* Checking server certificates using a bundled root CA file, for instance when the server is using a Let's Encrypt certificate.
+
+Changes and enhancements:
+* Updated Noto Emoji font with support for Unicode 14. There should be no more missing Emoji glyphs.
+* When bookmarking a page, show the Edit Bookmark dialog if there's already a bookmark for the URL. The Edit Bookmark dialog has a new Duplicate button for actually making a duplicate bookmark.
+* Markdown documents support horizontal rules.
+
+Fixes:
+* Show a proper error page if server closes the connection before a header is fully received.
+* Sidebar page outline not updated when the current tab changes.
+
 ## 1.12 (3)
 * Importing exported user data archives.
 * Settings: Added "Export User Data".

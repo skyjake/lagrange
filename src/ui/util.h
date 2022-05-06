@@ -283,6 +283,7 @@ void            makeMenuItems_Widget            (iWidget *menu, const iMenuItem 
 void            openMenu_Widget                 (iWidget *, iInt2 windowCoord);
 void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, int flags);
 void            closeMenu_Widget                (iWidget *);
+iBool           handleMenuCommand_Widget        (iWidget *menu, const char *cmd); /* used as the command handler */
 void            releaseNativeMenu_Widget        (iWidget *);
 
 size_t          count_MenuItem                  (const iMenuItem *itemsNullTerminated);
@@ -296,7 +297,7 @@ iLabelWidget *  findMenuItem_Widget             (iWidget *menu, const char *comm
 iMenuItem *     findNativeMenuItem_Widget       (iWidget *menu, const char *commandSuffix);
 void            setMenuItemDisabled_Widget      (iWidget *menu, const char *command, iBool disable);
 void            setMenuItemDisabledByIndex_Widget(iWidget *menu, size_t index, iBool disable);
-void            setMenuItemLabel_Widget         (iWidget *menu, const char *command, const char *newLabel);
+void            setMenuItemLabel_Widget         (iWidget *menu, const char *command, const char *newLabel, iChar icon);
 void            setMenuItemLabelByIndex_Widget  (iWidget *menu, size_t index, const char *newLabel);
 void            setNativeMenuItems_Widget       (iWidget *menu, const iMenuItem *items, size_t n);
 iWidget *       findUserData_Widget             (iWidget *, void *userData);

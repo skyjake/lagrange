@@ -107,6 +107,9 @@ uint16_t port_Url(const iUrl *d) {
     else if (equalCase_Rangecc(d->scheme, "http")) {
         port = 80;
     }
+    else if (equalCase_Rangecc(d->scheme, "spartan")) {
+        port = 300;
+    }
     else if (equalCase_Rangecc(d->scheme, "https")) {
         port = 443;
     }
@@ -391,7 +394,8 @@ iBool isKnownScheme_Rangecc(iRangecc scheme) {
 }
 
 iBool isKnownUrlScheme_Rangecc(iRangecc scheme) {
-    static const char *schemes[] = { "gemini", "gopher", "finger", "http", "https", "file" };
+    static const char *schemes[] = { "gemini", "gopher", "finger", "spartan",
+                                     "http",   "https",  "file" };
     iForIndices(i, schemes) {
         if (equalCase_Rangecc(scheme, schemes[i])) {
             return iTrue;
@@ -832,6 +836,10 @@ static const struct {
       { 0x1f61e, /* disappointed */
         "${error.unsupported.protocol}",
         "${error.unsupported.protocol.msg}" } },
+    { incompleteHeader_GmStatusCode,
+      { 0x1f615, /* confused */
+        "${error.incompleteheader}",
+        "${error.incompleteheader.msg}" } },
     { invalidHeader_GmStatusCode,
       { 0x1f4a9, /* pile of poo */
         "${error.badheader}",

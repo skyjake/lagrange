@@ -309,8 +309,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             else if (findWidget_App("upload")) {
                 postCommand_App("upload.cancel");
             }
-            else if (findWidget_App("bmed.sidebar") || findWidget_App("bmed.create") ||
-                     findWidget_App("bmed")) {
+            else if (findWidget_App("bmed.title")) {
                 postCommand_App("bmed.cancel");
             }
             else if (findWidget_App("ident")) {
@@ -803,12 +802,19 @@ void makePanelItems_Mobile(iWidget *panel, const iMenuItem *itemsNullTerminated)
     }
 }
 
+static iBool isCancelAction_(const iMenuItem *item) {
+    return !iCmpStr(item->label, "${cancel}") || !iCmpStr(item->label, "${close}");
+}
+
 static const iMenuItem *findDialogCancelAction_(const iMenuItem *items, size_t n) {
-    if (n <= 1) {
+    if (n == 0) {
         return NULL;
     }
+//    if (n == 1) {
+//        return isCancelAction_(&items[0]) ? &items[0] : NULL;
+//    }
     for (size_t i = 0; i < n; i++) {
-        if (!iCmpStr(items[i].label, "${cancel}") || !iCmpStr(items[i].label, "${close}")) {
+        if (isCancelAction_(&items[i])) {
             return &items[i];
         }
     }
@@ -928,9 +934,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
         checkIcon_LabelWidget(naviBack);
         setId_Widget(as_Widget(naviBack), "panel.back");
         setFont_LabelWidget(naviBack, labelFont_());
-        //if (!isFullHeight) {
-            setTextColor_LabelWidget(naviBack, uiTextAction_ColorId);
-        //}
+        setTextColor_LabelWidget(naviBack, uiTextAction_ColorId);
         naviActions = addChildFlags_Widget(
             navi,
             iClob(new_Widget()),

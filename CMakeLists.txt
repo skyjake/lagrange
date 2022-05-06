@@ -24,14 +24,14 @@ project (Lagrange
 )
 set (COPYRIGHT_YEAR 2022)
 if (IOS)
-    set (PROJECT_VERSION 1.12)
-    set (IOS_BUNDLE_VERSION 3)
-    set (IOS_BUILD_DATE "2022-04-05")
+    set (PROJECT_VERSION 1.13)
+    set (IOS_BUNDLE_VERSION 1)
+    set (IOS_BUILD_DATE "2022-05-05")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 1.12)
-    set (ANDROID_BUILD_VERSION b5)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-04-XX")
+    set (PROJECT_VERSION 1.13)
+    set (ANDROID_BUILD_VERSION b6)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-05-05")
 endif ()
 
 # Defaults that depend on environment.
@@ -566,7 +566,7 @@ Terminal=false
 Type=Application
 StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
-MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/spartan;
 ")
     install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR})
     install (FILES ${desktop} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)

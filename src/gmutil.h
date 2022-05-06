@@ -37,6 +37,7 @@ enum iGmStatusCode {
     invalidRedirect_GmStatusCode,
     schemeChangeRedirect_GmStatusCode,
     tooManyRedirects_GmStatusCode,
+    incompleteHeader_GmStatusCode,
     invalidHeader_GmStatusCode,
     unsupportedMimeType_GmStatusCode,
     unsupportedProtocol_GmStatusCode,

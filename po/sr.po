@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-29 19:45+0000\n"
+"PO-Revision-Date: 2022-05-05 03:36+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2507,3 +2507,6 @@ msgstr "Отвори уређивач…"
 
 msgid "heading.upload.spartan"
 msgstr "Слање преко Спартана"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Приказ Markdown-а као кода:"

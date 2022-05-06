@@ -761,7 +761,7 @@ static iLabelWidget *parentMenuButton_(const iWidget *menu) {
     return NULL;
 }
 
-static iBool menuHandler_(iWidget *menu, const char *cmd) {
+iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
     if (isVisible_Widget(menu)) {
         if (equalWidget_Command(cmd, menu, "menu.opened")) {
             return iFalse;
@@ -855,7 +855,7 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 drawKey_WidgetFlag | itemFlags);
             setWrap_LabelWidget(label, isInfo);
             if (!isInfo) {
-            haveIcons |= checkIcon_LabelWidget(label);
+                haveIcons |= checkIcon_LabelWidget(label);
             }
             setFlags_Widget(as_Widget(label), disabled_WidgetFlag, isDisabled);
             if (isInfo) {
@@ -1009,7 +1009,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     makeMenuItems_Widget(menu, items, n);
     addChild_Widget(parent, menu);
     iRelease(menu); /* owned by parent now */
-    setCommandHandler_Widget(menu, menuHandler_);
+    setCommandHandler_Widget(menu, handleMenuCommand_Widget);
     iWidget *cancel = addAction_Widget(menu, SDLK_ESCAPE, 0, "cancel");
     setId_Widget(cancel, "menu.cancel");
     setFlags_Widget(cancel, disabled_WidgetFlag, iTrue);
@@ -1099,7 +1099,7 @@ void setLabel_NativeMenuItem(iMenuItem *item, const char *label) {
     item->label = iDupStr(label);
 }
 
-void setMenuItemLabel_Widget(iWidget *menu, const char *command, const char *newLabel) {
+void setMenuItemLabel_Widget(iWidget *menu, const char *command, const char *newLabel, iChar icon) {
     if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
         iArray *items = userData_Object(menu);
         iAssert(items);
@@ -1114,8 +1114,12 @@ void setMenuItemLabel_Widget(iWidget *menu, const char *command, const char *new
     else {
         iLabelWidget *menuItem = findMenuItem_Widget(menu, command);
         if (menuItem) {
-            setTextCStr_LabelWidget(menuItem, newLabel);
+            updateTextCStr_LabelWidget(menuItem, newLabel);
             checkIcon_LabelWidget(menuItem);
+            if (icon) {
+                setIcon_LabelWidget(menuItem, icon);
+                arrange_Widget(menu);
+            }
         }
     }
 }
@@ -2013,6 +2017,9 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         arrange_Widget(dlg);
         if (deviceType_App() != desktop_AppDeviceType) {
             animateToRootVisibleBottom_(dlg, 100);
+        }
+        if (argLabel_Command(cmd, "select")) {
+            selectAll_InputWidget(input);
         }
         return iTrue;
     }

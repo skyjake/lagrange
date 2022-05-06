@@ -316,22 +316,30 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
         delete_Block(data);
         initCurrent_Time(&d->resp->when);
     }
-    d->state = (status_TlsRequest(req) == error_TlsRequestStatus ? failure_GmRequestState
-                                                                 : finished_GmRequestState);
-    if (d->state == failure_GmRequestState) {
-        if (!isVerified_TlsRequest(req)) {
-            if (isExpired_TlsCertificate(serverCertificate_TlsRequest(req))) {
-                d->resp->statusCode = tlsServerCertificateExpired_GmStatusCode;
-                setCStr_String(&d->resp->meta, "Server certificate has expired");
+    if (d->state == receivingHeader_GmRequestState &&
+        status_TlsRequest(req) != error_TlsRequestStatus) {
+        d->state = failure_GmRequestState;
+        d->resp->statusCode = incompleteHeader_GmStatusCode;
+        setCStr_String(&d->resp->meta, "");
+    }
+    else {
+        d->state = (status_TlsRequest(req) == error_TlsRequestStatus ? failure_GmRequestState
+                                                                     : finished_GmRequestState);
+        if (d->state == failure_GmRequestState) {
+            if (!isVerified_TlsRequest(req)) {
+                if (isExpired_TlsCertificate(serverCertificate_TlsRequest(req))) {
+                    d->resp->statusCode = tlsServerCertificateExpired_GmStatusCode;
+                    setCStr_String(&d->resp->meta, "Server certificate has expired");
+                }
+                else {
+                    d->resp->statusCode = tlsServerCertificateNotVerified_GmStatusCode;
+                    setCStr_String(&d->resp->meta, "Server certificate could not be verified");
+                }
             }
             else {
-                d->resp->statusCode = tlsServerCertificateNotVerified_GmStatusCode;
-                setCStr_String(&d->resp->meta, "Server certificate could not be verified");
+                d->resp->statusCode = tlsFailure_GmStatusCode;
+                set_String(&d->resp->meta, errorMessage_TlsRequest(req));
             }
-        }
-        else {
-            d->resp->statusCode = tlsFailure_GmStatusCode;
-            set_String(&d->resp->meta, errorMessage_TlsRequest(req));
         }
     }
     checkServerCertificate_GmRequest_(d);

@@ -86,7 +86,8 @@ static const iMenuItem desktopNavMenuItems_[] = {
 
 static const iMenuItem tabletNavMenuItems_[] = {
     { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
-    { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
+    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
+    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
@@ -103,7 +104,8 @@ static const iMenuItem tabletNavMenuItems_[] = {
 
 static const iMenuItem phoneNavMenuItems_[] = {
     { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
-    { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
+    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
+    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
@@ -854,7 +856,8 @@ static void updateNavBarSize_(iWidget *navBar) {
     }
     if (isPhone) {
         static const char *buttons[] = { "navbar.action1", "navbar.action2", "navbar.action3",
-                                         "navbar.action4", "navbar.ident",   "navbar.menu" };
+                                         "navbar.action4", "navbar.ident",   "navbar.menu",
+                                         "document.bookmarked" };
         iWidget *toolBar = findWidget_Root("toolbar");
 //        setVisualOffset_Widget(toolBar, 0, 0, 0);
 //        setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
@@ -1338,6 +1341,19 @@ static void addUnsplitButton_(iWidget *navBar) {
     updateSize_LabelWidget(unsplit);
 }
 
+static iBool updateMobilePageMenuItems_(iWidget *menu, const char *cmd) {
+    if (equalWidget_Command(cmd, menu, "menu.opened")) {
+        /* Update the items. */
+        setMenuItemLabel_Widget(menu,
+                                "document.viewformat",
+                                isSourceTextView_DocumentWidget(document_App())
+                                    ? "${menu.viewformat.gemini}"
+                                    : "${menu.viewformat.plain}",
+                                ' ');
+    }
+    return handleMenuCommand_Widget(menu, cmd);
+}
+
 void createUserInterface_Root(iRoot *d) {
     iWidget *root = d->widget = new_Widget();
     root->rect.size = get_Window()->size;
@@ -1537,18 +1553,6 @@ void createUserInterface_Root(iRoot *d) {
                                      frameless_WidgetFlag);
                 updateSize_LabelWidget(indicator);
             }
-            /* Bookmark indicator. */ {
-                iLabelWidget *pin = new_LabelWidget(pin_Icon, "bookmark.add");
-                setId_Widget(as_Widget(pin), "document.bookmarked");
-                setTextColor_LabelWidget(pin, uiTextAction_ColorId);
-                setBackgroundColor_Widget(as_Widget(pin), uiBackground_ColorId);
-                setAlignVisually_LabelWidget(pin, iTrue);
-                setNoAutoMinHeight_LabelWidget(pin, iTrue);
-                addChildFlags_Widget(rightEmbed,
-                                     iClob(pin),
-                                     collapse_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag);
-                updateSize_LabelWidget(pin);                
-            }
             iWidget *urlButtons = new_Widget();
             setId_Widget(urlButtons, "url.buttons");
             setFlags_Widget(urlButtons, embedFlags | arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
@@ -1576,10 +1580,12 @@ void createUserInterface_Root(iRoot *d) {
                         { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                         { "${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
                         { "---" },
-                        { "${menu.page.copyurl}", 0, 0, "document.copylink" },
+                        { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
                         { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
-                        { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
+                        { "${menu.viewformat.plain}", 0, 0, "document.viewformat" } },
                     14);
+                setCommandHandler_Widget(findChild_Widget(as_Widget(pageMenuButton), "menu"),
+                                         updateMobilePageMenuItems_);
                 setId_Widget(as_Widget(pageMenuButton), "pagemenubutton");
                 setFont_LabelWidget(pageMenuButton, uiContentBold_FontId);
                 setAlignVisually_LabelWidget(pageMenuButton, iTrue);
@@ -1587,6 +1593,18 @@ void createUserInterface_Root(iRoot *d) {
                                      embedFlags | tight_WidgetFlag | collapse_WidgetFlag |
                                      resizeToParentHeight_WidgetFlag);
                 updateSize_LabelWidget(pageMenuButton);
+            }
+            /* Bookmark indicator. */ {
+                iLabelWidget *pin = new_LabelWidget(bookmark_Icon, "bookmark.add");
+                setId_Widget(as_Widget(pin), "document.bookmarked");
+                setTextColor_LabelWidget(pin, uiTextAction_ColorId);
+                setBackgroundColor_Widget(as_Widget(pin), uiInputBackground_ColorId);
+                setAlignVisually_LabelWidget(pin, iTrue);
+                addChildFlags_Widget(urlButtons,
+                                     iClob(pin),
+                                     embedFlags | collapse_WidgetFlag | tight_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+                updateSize_LabelWidget(pin);        
             }
             /* Reload button. */ {
                 iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");

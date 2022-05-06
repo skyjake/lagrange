@@ -16,7 +16,8 @@ find_program (NINJA_EXECUTABLE ninja DOC "Ninja build tool")
 include (ExternalProject)
 set (_dependsToBuild)
 
-if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
+if (DEFINED the_Foundation_DIR OR
+    NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
     set (INSTALL_THE_FOUNDATION YES)
     find_package (the_Foundation 1.4.0 REQUIRED)
 else ()

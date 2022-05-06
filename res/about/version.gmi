@@ -7,7 +7,16 @@
 # Release notes
 
 ## 1.13.3
+* Changed URL field bookmark indicator for better consistency.
+* Show a proper error page if server closes the connection before a header is fully received.
+* Spartan: Prefilled prompt input from URL query string is selected by default.
+* Spartan: Fixed composing request content out of the query string.
+* Spartan: Allow opening URLs from command line.
+* Spartan: .desktop file includes Spartan scheme handling.
+* macOS: Register app as Spartan URL scheme handler.
 * macOS: Fixed relaunching the app after installing an update via Sparkle.
+* Windows: Register Gopher and Spartan URL handlers.
+* TUI: Fixed `build-tui.sh` so it doesn't expect the_Foundation to be preinstalled.
 
 ## 1.13.2
 * Fixed failure to restore the selected fonts at launch.
@@ -20,7 +29,7 @@
 New features:
 * Curses-based `clagrange` for running the app in the terminal. This is a complete TUI port of the original GUI version including, e.g., UI animations, smooth scrolling, and split view mode. `clagrange` has separate preferences, UI state, and key bindings but the rest of the runtime files are shared with the GUI version.
 * Build option `ENABLE_TUI`: build a text mode version of the app so it can be run in the terminal. Enabling this produces an executable called `clagrange` that is not linked with SDL.
-* URL field indicator 📌 that shows if there's a bookmark for the current page. Clicking on the indicator opens the Add/Edit Bookmark dialog.
+* URL field indicator that shows if there's a bookmark for the current page. Clicking on the indicator opens the Add/Edit Bookmark dialog.
 * Checking server certificates using a bundled root CA file.
 * Build option `CACERT_PEM_PATH`: path of a cacert.pem file that contains trusted root CA certificates. This file is included in resources.lgr.
 * Support for the Spartan protocol. Prompt lines will open an input dialog for submitting text. This can be expanded to the full upload dialog using which a file can be uploaded, too.

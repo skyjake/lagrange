@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-03 13:46+0000\n"
+"PO-Revision-Date: 2022-05-05 13:54+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -2490,3 +2490,11 @@ msgstr "Відкрити редактор…"
 
 msgid "prefs.markdown.viewsource"
 msgstr "Переглядати Markdown як код:"
+
+msgid "error.incompleteheader.msg"
+msgstr ""
+"Сервер відповів без повного заголовка. Мабуть, йому стало зле, або ви "
+"намагаєтеся зв'язатися з сервером іншої природи."
+
+msgid "error.incompleteheader"
+msgstr "Неповний заголовок"

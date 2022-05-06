@@ -185,6 +185,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         { "${close}", SDLK_ESCAPE, 0, "upload.cancel" },
         { uiTextAction_ColorEscape "${dlg.upload.send}", SDLK_RETURN, KMOD_ACCEPT, "upload.accept" }
     };
+    const size_t actionOffset = (d->protocol == titan_UploadProtocol ? 0 : 2);
     if (isUsingPanelLayout_Mobile()) {
         /* TODO: Spartan mode. */
         const int infoFont = (deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId
@@ -196,7 +197,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             { "input id:upload.text noheading:1" },
             { NULL }        
         };
-        const iMenuItem fileItems[] = {
+        const iMenuItem titanFileItems[] = {
             { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
             { "title id:heading.upload.file" },
             { "padding arg:0.667" },
@@ -210,11 +211,11 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             { "label id:upload.counter text:" },
             { NULL }        
         };
-        initPanels_Mobile(w, NULL, (iMenuItem[]){                                                  
+        const iMenuItem titanItems[] = {
             { "title id:heading.upload" },
-            { "heading id:upload.content" },
+            //{ "heading id:upload.content" },
             { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
-            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) fileItems },
+            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) titanFileItems },
             { "heading text:${heading.upload.id}" },
             { "dropdown id:upload.id icon:0x1f464 text:", 0, 0, constData_Array(makeIdentityItems_UploadWidget_(d)) },
             { "input id:upload.token hint:hint.upload.token.long icon:0x1f516 text:" },
@@ -222,7 +223,33 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             { format_CStr("label id:upload.info font:%d", infoFont) },
             { "input id:upload.path hint:hint.upload.path noheading:1 url:1 text:" },
             { NULL }
-        }, actions, iElemCount(actions) - 1 /* no Accept button on main panel */);
+        };
+        const iMenuItem spartanFileItems[] = {
+            { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
+            { "title id:heading.upload.file" },
+            { "padding arg:0.667" },
+            { "button text:" uiTextAction_ColorEscape "${dlg.upload.pickfile}", 0, 0, "upload.pickfile" },
+            { "heading id:upload.file.name" },
+            { format_CStr("label id:upload.filepathlabel font:%d text:\u2014", infoFont) },
+            { "heading id:upload.file.size" },
+            { format_CStr("label id:upload.filesizelabel font:%d text:\u2014", infoFont) },
+            { "label id:upload.counter text:" },
+            { NULL }
+        };
+        const iMenuItem spartanItems[] = {
+            { "title id:heading.upload.spartan" },
+            //{ "heading id:upload.content" },
+            { "panel id:dlg.upload.text icon:0x1f5b9 noscroll:1", 0, 0, (const void *) textItems },
+            { "panel id:dlg.upload.file icon:0x1f4c1", 0, 0, (const void *) spartanFileItems },
+            { "heading id:upload.url" },
+            { format_CStr("label id:upload.info font:%d", infoFont) },
+            { NULL }
+        };
+        initPanels_Mobile(w,
+                          NULL,
+                          d->protocol == titan_UploadProtocol ? titanItems : spartanItems,
+                          actions + actionOffset,
+                          iElemCount(actions) - actionOffset - 1 /* no Accept button on main panel */);
         d->info          = findChild_Widget(w, "upload.info");
         d->path          = findChild_Widget(w, "upload.path");
         d->input         = findChild_Widget(w, "upload.text");
@@ -318,8 +345,8 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         }
         /* Buttons. */ {
             addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
-            size_t actOff = (d->protocol == titan_UploadProtocol ? 0 : 2);
-            iWidget *buttons = makeDialogButtons_Widget(actions + actOff, iElemCount(actions) - actOff);
+            iWidget *buttons = makeDialogButtons_Widget(actions + actionOffset,
+                                                        iElemCount(actions) - actionOffset);
             setId_Widget(insertChildAfterFlags_Widget(buttons,
                                                       iClob(d->counter = new_LabelWidget("", NULL)),
                                                       0,

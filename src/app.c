@@ -920,7 +920,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 
 static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
     static const char *schemes[] = {
-        "gemini:", "gopher:", "finger:", "file:", "data:", "about:"
+        "gemini:", "gopher:", "finger:", "spartan:", "file:", "data:", "about:"
     };
     iForIndices(i, schemes) {
         if (startsWithCase_Rangecc(uri, schemes[i])) {
@@ -3447,7 +3447,7 @@ iBool handleCommand_App(const char *cmd) {
             "open newtab:%d newwindow:%d url:%s?%s",
             argLabel_Command(cmd, "newtab"),
             argLabel_Command(cmd, "newwindow"),
-            cstr_Rangecc(url),
+            cstr_String(urlQueryStripped_String(collectNewRange_String(url))),
             cstr_String(collect_String(urlEncode_String(collectNewCStr_String(value)))));
         return iTrue;
     }
@@ -3472,14 +3472,16 @@ iBool handleCommand_App(const char *cmd) {
                 "${spartan.input}",
                 "${dlg.input.send}",
                 cstr_String(spartanCmd),
-                (iMenuItem[]){
-                    { "${dlg.spartan.upload}", SDLK_u, KMOD_PRIMARY,
-                      format_CStr("valueinput.upload url:%s", cstr_String(url)) } },
+                (iMenuItem[]){ { "${dlg.spartan.upload}",
+                                 SDLK_u,
+                                 KMOD_PRIMARY,
+                                 format_CStr("valueinput.upload url:%s",
+                                             cstr_String(urlQueryStripped_String(url))) } },
                 1);
             setBackupFileName_InputWidget(findChild_Widget(dlg, "input"), "spartanbackup");
             if (!isEmpty_Range(&parts.query)) {
                 postCommand_Widget(dlg,
-                                   "valueinput.set text:%s",
+                                   "valueinput.set select:1 text:%s",
                                    cstrCollect_String(urlDecode_String(collectNewRange_String(
                                        (iRangecc){ parts.query.start + 1, parts.query.end }))));
             }
