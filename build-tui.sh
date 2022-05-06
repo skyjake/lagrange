@@ -6,9 +6,9 @@
 # linked to clagrange instead of SDL.
 #
 # When not using a source tarball, you can get SEALCurses from:
-# https://git.skyjake.fi/skyjake/sealcurses.git 
+# https://git.skyjake.fi/skyjake/sealcurses.git
 #
-# All command line arguments given to this script are passed to CMake 
+# All command line arguments given to this script are passed to CMake
 # for configuring the build. However, do not set CMAKE_INSTALL_PREFIX,
 # because that would interfere with the SEALCurses build.
 #
@@ -31,16 +31,30 @@ fi
 mkdir build-tui
 cd build-tui
 
+BUILD_DIR=`pwd`
+
+mkdir build-tfdn
+cd build-tfdn
+
+cmake ../../lib/the_Foundation -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+    -DTFDN_STATIC_LIBRARY=YES \
+    -DTFDN_ENABLE_TESTS=NO \
+    -DCMAKE_INSTALL_PREFIX="${BUILD_DIR}" $*
+cmake --build . || exit 1
+cmake --install .
+cd ..
+
 mkdir build-sealcurses
 cd build-sealcurses
 
 cmake ../../lib/sealcurses -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DENABLE_SHARED=NO \
-    -DCMAKE_INSTALL_PREFIX="`pwd`/.." $*
-cmake --build .
+    -Dthe_Foundation_DIR="${BUILD_DIR}/lib/cmake/the_Foundation" \
+    -DCMAKE_INSTALL_PREFIX="${BUILD_DIR}" $*
+cmake --build . || exit 1
 cmake --install .
 
 cd ..
-export PKG_CONFIG_PATH="`pwd`/lib/pkgconfig":${PKG_CONFIG_PATH}
+export PKG_CONFIG_PATH="${BUILD_DIR}/lib/pkgconfig":${PKG_CONFIG_PATH}
 cmake .. \
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
     -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
@@ -51,13 +65,14 @@ cmake .. \
     -DENABLE_HARFBUZZ=NO \
     -DENABLE_POPUP_MENUS=NO \
     -DENABLE_IDLE_SLEEP=NO \
+    -Dthe_Foundation_DIR="${BUILD_DIR}/lib/cmake/the_Foundation" \
     $*
-cmake --build .
+cmake --build . || exit 1
 
 echo "-----"
 echo "clagrange and resources.lgr can be found in 'build-tui'."
 read -p "Do you want to install them to ${INSTALL_PREFIX}? [yN] " CONFIRMED
-if [ "${CONFIRMED}" == "y" ]; then
+if [ "${CONFIRMED}" = "y" ]; then
     cmake --install .
     exit
 fi
