@@ -136,6 +136,14 @@
 					<string>gopher</string>
 				</array>
 			</dict>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>Spartan</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>spartan</string>
+				</array>
+			</dict>
 		</array>
 		<key>UTExportedTypeDeclarations</key>
 		<array>
