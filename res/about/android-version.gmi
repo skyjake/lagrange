@@ -7,6 +7,9 @@
 # Release notes
 
 ## 1.13 (Beta 6)
+* Enabled audio output. WAV and Ogg Vorbis decoding is supported in this build.
+
+## 1.13 (Beta 5)
 New features:
 * URL field indicator 🔖 that shows if there's a bookmark for the current page. Clicking on the indicator opens the Add/Edit Bookmark dialog. The indicator is shown in landscape mode.
 * Support for the Spartan protocol. Prompt lines will open an input dialog for submitting text. This can be expanded to the full upload dialog using which a file can be uploaded, too.
@@ -14,6 +17,7 @@ New features:
 * Page context menu item "View as Plain Text".
 * Option to view Markdown as source or as a Gemtext conversion (default: as source).
 * Checking server certificates using a bundled root CA file, for instance when the server is using a Let's Encrypt certificate.
+* WebP image decoding.
 
 Changes and enhancements:
 * Updated Noto Emoji font with support for Unicode 14. There should be no more missing Emoji glyphs.
@@ -23,9 +27,6 @@ Changes and enhancements:
 Fixes:
 * Show a proper error page if server closes the connection before a header is fully received.
 * Sidebar page outline not updated when the current tab changes.
-
-## 1.12 (Beta 5)
-* Added WebP image decoding.
 
 ## 1.12 (Beta 4)
 * Use system-provided file pickers for opening/saving files.
