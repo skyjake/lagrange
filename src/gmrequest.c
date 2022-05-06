@@ -621,7 +621,7 @@ static void beginSpartanConnection_GmRequest_(iGmRequest *d, const iString *host
     printf_Block(message,
                  "%s %s %zu\r\n",
                  cstr_Rangecc(url.host),
-                 cstr_Rangecc(url.path),
+                 !isEmpty_Range(&url.path) ? cstr_Rangecc(url.path) : "/",
                  size_Block(data));
     write_Socket(d->spartan, message);
     write_Socket(d->spartan, data);
