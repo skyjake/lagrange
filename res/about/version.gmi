@@ -9,6 +9,7 @@
 ## 1.13.3
 * Show a proper error page if server closes the connection before a header is fully received.
 * macOS: Fixed relaunching the app after installing an update via Sparkle.
+* TUI: Fixed `build-tui.sh` so it doesn't expect the_Foundation to be preinstalled.
 
 ## 1.13.2
 * Fixed failure to restore the selected fonts at launch.
