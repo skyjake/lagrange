@@ -45,6 +45,23 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.13.3" date="2022-05-06">
+            <description>
+                <p>Changes in v1.13.3:</p>
+                <ul>
+                    <li>Changed URL field bookmark indicator for better consistency.</li>
+                    <li>Show a proper error page if server closes the connection before a header is fully received.</li>
+                    <li>Spartan: Prefilled prompt input from URL query string is selected by default.</li>
+                    <li>Spartan: Fixed composing request content out of the query string.</li>
+                    <li>Spartan: Fixed handling of empty path in a request.</li>
+                    <li>Spartan: Allow opening URLs from command line.</li>
+                    <li>Spartan: .desktop file includes Spartan scheme handling.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.13.3</url>
+        </release>
         <release version="1.13.2" date="2022-05-03">
             <description>
                 <p>Changes in v1.13.2:</p>
