@@ -11,8 +11,9 @@
 * Spartan: Prefilled prompt input from URL query string is selected by default.
 * Spartan: Fixed composing request content out of the query string.
 * Spartan: Allow opening URLs from command line.
-* macOS: Fixed relaunching the app after installing an update via Sparkle.
+* Spartan: .desktop file includes Spartan scheme handling.
 * macOS: Register app as Spartan URL scheme handler.
+* macOS: Fixed relaunching the app after installing an update via Sparkle.
 * TUI: Fixed `build-tui.sh` so it doesn't expect the_Foundation to be preinstalled.
 
 ## 1.13.2
