@@ -2018,6 +2018,9 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         if (deviceType_App() != desktop_AppDeviceType) {
             animateToRootVisibleBottom_(dlg, 100);
         }
+        if (argLabel_Command(cmd, "select")) {
+            selectAll_InputWidget(input);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.upload")) {
