@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-05 03:36+0000\n"
+"PO-Revision-Date: 2022-05-08 04:12+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2510,3 +2510,11 @@ msgstr "Слање преко Спартана"
 
 msgid "prefs.markdown.viewsource"
 msgstr "Приказ Markdown-а као кода:"
+
+msgid "error.incompleteheader"
+msgstr "Непотпуно заглавље"
+
+msgid "error.incompleteheader.msg"
+msgstr ""
+"Одговор сервера није садржао потпуно заглавље. Вероватно је сервер у квару, "
+"или сте покушали да приступите не-Џемини серверу."
