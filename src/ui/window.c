@@ -316,6 +316,7 @@ float displayDensity_Android(void);
 #endif
 
 static float displayScale_Window_(const iWindow *d) {
+#if !defined (iPlatformTerminal)
     /* The environment variable LAGRANGE_OVERRIDE_DPI can be used to override the automatic
        display DPI detection. If not set, or is an empty string, ignore it.
        Note: the same value used for all displays. */
@@ -333,6 +334,7 @@ static float displayScale_Window_(const iWindow *d) {
          LAGRANGE_OVERRIDE_DPI with the empty string. */
         setenv("LAGRANGE_OVERRIDE_DPI", "", 1);
     }
+#endif
 #if defined (iPlatformApple) || defined (iPlatformTerminal)
     iUnused(d);
     /* Apple UI sizes are fixed and only scaled by pixel ratio. */

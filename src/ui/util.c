@@ -1197,7 +1197,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
             }
         }
     }
-#if defined (LAGRANGE_ENABLE_POPUP_MENUS)
+#if defined (LAGRANGE_ENABLE_POPUP_MENUS) && !defined (iPlatformTerminal)
     /* Determine total display bounds where the popup may appear. */
     iRect displayRect = zero_Rect(); 
     for (int i = 0; i < SDL_GetNumVideoDisplays(); i++) {
