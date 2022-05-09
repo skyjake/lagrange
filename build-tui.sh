@@ -15,7 +15,7 @@
 # You can customize the install directory prefix here and build type here:
 
 INSTALL_PREFIX="/usr/local"
-CMAKE_BUILD_TYPE="Release"
+CMAKE_BUILD_TYPE="Debug"
 
 #-----------------------------------------------------------------------------
 
