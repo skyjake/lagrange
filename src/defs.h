@@ -48,6 +48,14 @@ iLocalDef iBool isAppleDesktop_Platform(void) {
 #endif
 }
 
+iLocalDef iBool isAndroid_Platform(void) {
+#if defined (iPlatformAndroid)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 iLocalDef iBool isMobile_Platform(void) {
 #if defined (iPlatformMobile) /* defined on iOS and Android */
     return iTrue;
