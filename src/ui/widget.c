@@ -2091,9 +2091,11 @@ void setFocus_Widget(iWidget *d) {
             iAssert(!contains_PtrSet(win->focus->root->pendingDestruction, win->focus));
             postCommand_Widget(win->focus, "focus.lost");
         }
+        if (~flags_Widget(d) & focusable_WidgetFlag) {
+            d = NULL; /* focusing this is not allowed */
+        }
         win->focus = d;
         if (d) {
-            iAssert(flags_Widget(d) & focusable_WidgetFlag);
             setKeyRoot_Window(get_Window(), d->root);
             postCommand_Widget(d, "focus.gained");
         }

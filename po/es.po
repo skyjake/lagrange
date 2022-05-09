@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-03 02:54+0000\n"
+"PO-Revision-Date: 2022-05-09 04:28+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -2476,3 +2476,15 @@ msgstr "Abrir Editor…"
 
 msgid "heading.upload.spartan"
 msgstr "Cargar con Spartan"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Ver código fuente en Markdown:"
+
+msgid "error.incompleteheader"
+msgstr "Cabecera Incompleta"
+
+msgid "error.incompleteheader.msg"
+msgstr ""
+"La respuesta del servidor no contiene una cabecera completa. Tal vez el "
+"servidor tenga una falla, o intentó contactar un servidor que no es de "
+"Gemini."
