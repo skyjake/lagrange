@@ -8,6 +8,9 @@
 
 ## 1.13 (Beta 6)
 * Enabled audio output. WAV and Ogg Vorbis decoding is supported in this build.
+* Fixed showing error page for an empty server response.
+* Fixes for Spartan: query strings, input prompt default content, empty paths.
+* Added Spartan URL handler.
 
 ## 1.13 (Beta 5)
 New features:

@@ -31,7 +31,7 @@ endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.13)
     set (ANDROID_BUILD_VERSION b6)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-05-12")
+    set (ANDROID_BUILD_DATE "2022-05-09")
 endif ()
 
 # Defaults that depend on environment.
