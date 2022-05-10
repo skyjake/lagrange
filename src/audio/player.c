@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "player.h"
+#include "defs.h"
 #include "buf.h"
 #include "lang.h"
 
@@ -620,7 +621,7 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
     iAssert(content.inputFormat == content.output.format ||
             (content.inputFormat == AUDIO_S24LSB && content.output.format == AUDIO_S16) ||
             (content.inputFormat == AUDIO_F64LSB && content.output.format == AUDIO_F32));
-    content.output.samples = 8192;
+    content.output.samples = isAndroid_Platform() ? content.output.freq / 2 : 8192;
     return content;
 }
 
@@ -742,14 +743,14 @@ size_t sourceDataSize_Player(const iPlayer *d) {
 
 static iBool setupSDLAudio_(iBool init) {
     static iBool isAudioInited_ = iFalse;
-    if (init) {
+    if (init && !isAudioInited_) {
         if (SDL_InitSubSystem(SDL_INIT_AUDIO)) {
             fprintf(stderr, "[SDL] audio init failed: %s\n", SDL_GetError());
             return iFalse;
         }
         isAudioInited_ = iTrue;
     }
-    else if (isAudioInited_) {
+    else if (!init && isAudioInited_ && !isAndroid_Platform()) {
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
         isAudioInited_ = iFalse;
     }

@@ -47,7 +47,9 @@ cd ..
 mkdir build-sealcurses
 cd build-sealcurses
 
-cmake ../../lib/sealcurses -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DENABLE_SHARED=NO \
+cmake ../../lib/sealcurses -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+    -DCMAKE_C_FLAGS_RELEASE=-O1 \
+    -DENABLE_SHARED=NO \
     -Dthe_Foundation_DIR="${BUILD_DIR}/lib/cmake/the_Foundation" \
     -DCMAKE_INSTALL_PREFIX="${BUILD_DIR}" $*
 cmake --build . || exit 1

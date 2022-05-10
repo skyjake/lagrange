@@ -1926,12 +1926,14 @@ static void draw_DocumentView_(const iDocumentView *d) {
         /* Banner. */
         if (!isDocEmpty || numItems_Banner(banner) > 0) {
             /* Fill the part between the banner and the top of the document. */
-            fillRect_Paint(&ctx.paint,
-                           (iRect){ init_I2(left_Rect(bounds),
-                                            top_Rect(docBounds) + viewPos_DocumentView_(d) -
-                                                documentTopPad_DocumentView_(d)),
-                                    init_I2(bounds.size.x, documentTopPad_DocumentView_(d)) },
-                           docBgColor);
+            if (documentTopPad_DocumentView_(d) > 0) {
+                fillRect_Paint(&ctx.paint,
+                               (iRect){ init_I2(left_Rect(bounds),
+                                                top_Rect(docBounds) + viewPos_DocumentView_(d) -
+                                                    documentTopPad_DocumentView_(d)),
+                                        init_I2(bounds.size.x, documentTopPad_DocumentView_(d)) },
+                               docBgColor);
+            }
             setPos_Banner(banner, addY_I2(topLeft_Rect(docBounds),
                                           floorf(-pos_SmoothScroll(&d->scrollY))));
             draw_Banner(banner);

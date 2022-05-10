@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-05 03:36+0000\n"
+"PO-Revision-Date: 2022-05-07 09:51+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -1215,7 +1215,7 @@ msgid "error.unsupported.media.msg"
 msgstr "Alınan içerik bu uygulama ile görüntülenemiyor."
 
 msgid "error.badheader"
-msgstr "Geçersiz Başlık"
+msgstr "Geçersiz üstbilgi"
 
 msgid "error.unsupported.protocol"
 msgstr "Desteklenmeyen Protokol"
@@ -1225,8 +1225,8 @@ msgstr "Desteklenmeyen İçerik Türü"
 
 msgid "error.badheader.msg"
 msgstr ""
-"Alınan başlık Gemin protokol belirtimine uymuyor. Belki sunucu hata veriyor "
-"olabilir veya Gemini olmayan bir sunucuya bağlanmaya çalışıyor olabilirsiniz."
+"Alınan üstbilgi Gemin protokol belirtimine uymuyor. Sunucu hata veriyor "
+"olabilir veya Gemini olmayan bir sunucuya bağlanmaya çalışmış olabilirsiniz."
 
 msgid "error.badredirect"
 msgstr "Geçersiz Yeniden Yönlendirme"
@@ -2417,3 +2417,11 @@ msgstr "Spartan ile gönder"
 
 msgid "prefs.markdown.viewsource"
 msgstr "Markdown kaynağını görüntüle:"
+
+msgid "error.incompleteheader"
+msgstr "Eksik üstbilgi"
+
+msgid "error.incompleteheader.msg"
+msgstr ""
+"Sunucunun yanıtı tam bir üstbilgi içermedi. Sunucu hata veriyor olabilir "
+"veya Gemini olmayan bir sunucuya bağlanmaya çalışmış olabilirsiniz."
