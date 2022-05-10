@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.13.4
+* TUI: Improved detection of supported color modes. The preferred mode is a modifiable palette with 256+ colors. As a fallback, use a fixed VGA palette, or basic monochrome if the terminal doesn't support colors.
+* TUI: Tuned build flags in `build-tui.sh` as a Linux workaround (set `-O1` on SEALCurses).
+* TUI: Ignore the LAGRANGE_OVERRIDE_DPI environment variable.
+* Spartan: Fixed opening URLs in other apps via operating system handlers.
+* Updated language strings.
+
 ## 1.13.3
 * Changed URL field bookmark indicator for better consistency.
 * Show a proper error page if server closes the connection before a header is fully received.
