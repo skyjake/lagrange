@@ -45,6 +45,18 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.13.4" date="2022-05-10">
+            <description>
+                <p>Changes in v1.13.4:</p>
+                <ul>
+                    <li>Spartan: Fixed opening URLs in other apps via operating system handlers.</li>
+                    <li>Updated language strings.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.13.4</url>
+        </release>
         <release version="1.13.3" date="2022-05-06">
             <description>
                 <p>Changes in v1.13.3:</p>
