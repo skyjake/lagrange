@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-05 13:54+0000\n"
+"PO-Revision-Date: 2022-05-14 14:51+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -2374,7 +2374,7 @@ msgid "prefs.accent.gray"
 msgstr "Сірий"
 
 msgid "prefs.doctheme.name.oceanic"
-msgstr "Лазуровий"
+msgstr "Лазурова"
 
 msgid "import.userdata.history"
 msgstr "Історія:"
