@@ -2806,10 +2806,12 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                             }
                         }
                         format_String(&str, "# %s\n", zipPageHeading_(range_String(&d->sourceMime)));
-                        appendFormat_String(&str,
-                                            cstr_Lang("doc.archive"),
-                                            cstr_Rangecc(baseName_Path(collect_String(
-                                                localFilePathFromUrl_String(d->mod.url)))));
+                        appendFormat_String(
+                            &str,
+                            cstr_Lang("doc.archive"),
+                            cstr_Rangecc(baseNameSep_Path(collect_String(urlDecode_String(
+                                                              urlQueryStripped_String(d->mod.url))),
+                                                          "/")));
                         appendCStr_String(&str, "\n");
                     }
                     iRelease(zip);
