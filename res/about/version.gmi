@@ -7,6 +7,8 @@
 # Release notes
 
 ## 1.13.5
+* Fixed crash when determining the name of a ZIP file from a URL.
+* TUI: `build-tui.sh` now has interactive build config.
 
 ## 1.13.4
 * TUI: Improved detection of supported color modes. The preferred mode is a modifiable palette with 256+ colors. As a fallback, use a fixed VGA palette, or basic monochrome if the terminal doesn't support colors.
