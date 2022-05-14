@@ -8,6 +8,7 @@
 
 ## 1.13.5
 * Fixed crash when determining the name of a ZIP file from a URL.
+* Fixed misparsing of URL to form the name of a downloaded file (`%23` decoded too early).
 * TUI: `build-tui.sh` now has interactive build config.
 
 ## 1.13.4
