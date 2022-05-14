@@ -1264,26 +1264,28 @@ const iString *downloadDir_App(void) {
 
 const iString *fileNameForUrl_App(const iString *url, const iString *mime) {
     /* Figure out a file name from the URL. */
-    url = collect_String(urlDecodeExclude_String(url, "\\/:;"));
     iUrl parts;
     init_Url(&parts, url);
-    while (startsWith_Rangecc(parts.path, "/")) {
-        parts.path.start++;
+    iString *urlPath =
+        collect_String(urlDecodeExclude_String(collectNewRange_String(parts.path), "\\/:;"));
+    iRangecc path = range_String(urlPath);
+    while (startsWith_Rangecc(path, "/")) {
+        path.start++;
     }
-    while (endsWith_Rangecc(parts.path, "/")) {
-        parts.path.end--;
+    while (endsWith_Rangecc(path, "/")) {
+        path.end--;
     }
     iString *name = collectNewCStr_String("pagecontent");
-    if (isEmpty_Range(&parts.path)) {
+    if (isEmpty_Range(&path)) {
         if (!isEmpty_Range(&parts.host)) {
             setRange_String(name, parts.host);
             replace_Block(&name->chars, '.', '_');
         }
     }
     else {
-        const size_t slashPos = lastIndexOfCStr_Rangecc(parts.path, "/");
-        iRangecc fn = { parts.path.start + (slashPos != iInvalidPos ? slashPos + 1 : 0),
-                        parts.path.end };
+        const size_t slashPos = lastIndexOfCStr_Rangecc(path, "/");
+        iRangecc fn = { path.start + (slashPos != iInvalidPos ? slashPos + 1 : 0),
+                        path.end };
         if (!isEmpty_Range(&fn)) {
             setRange_String(name, fn);
         }
