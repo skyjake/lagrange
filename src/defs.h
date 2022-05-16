@@ -247,8 +247,10 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #if defined (iPlatformTerminal)
 #   undef page_Icon
 #   undef upload_Icon
+#   undef midEllipsis_Icon
 #   define page_Icon        "\u2237"
 #   define upload_Icon      upArrow_Icon
+#   define midEllipsis_Icon "..."
 #   define shift_Icon       "Sh"
 #   define shiftReturn_Icon "Sh-" return_Icon
 #elif defined (iPlatformApple)

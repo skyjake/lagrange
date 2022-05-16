@@ -2427,7 +2427,16 @@ iWidget *appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int sho
     return page;
 }
 
+static void addDialogPadding_(iWidget *headings, iWidget *values) {
+    const int bigGap = iMaxi(1, lineHeight_Text(uiLabel_FontId) * 3 / 4);
+    addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
+    addChild_Widget(values,   iClob(makePadding_Widget(bigGap)));    
+}
+
 static void makeTwoColumnHeading_(const char *title, iWidget *headings, iWidget *values) {
+    if (isTerminal_Platform()) {
+        addDialogPadding_(headings, values);
+    }
     setFont_LabelWidget(addChildFlags_Widget(headings,
                                              iClob(makeHeading_Widget(
                                                  format_CStr(uiHeading_ColorEscape "%s", title))),
@@ -2558,12 +2567,6 @@ iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *va
                                                   iInputWidget *input) {
     addDialogInputWithHeading_(headings, values, labelText, inputId, input);
     return input;
-}
-
-static void addDialogPadding_(iWidget *headings, iWidget *values) {
-    const int bigGap = iMaxi(1, lineHeight_Text(uiLabel_FontId) * 3 / 4);
-    addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
-    addChild_Widget(values,   iClob(makePadding_Widget(bigGap)));    
 }
 
 static void addPrefsInputWithHeading_(iWidget *headings, iWidget *values,
@@ -3015,7 +3018,9 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.interface}", '2', &headings, &values),
                      "prefs.page.ui");
         addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
-        addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
+        if (!isTerminal_Platform()) {
+            addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
+        }
         addDialogToggleGroup_(
             headings,
             values,
@@ -3066,21 +3071,25 @@ iWidget *makePreferences_Widget(void) {
                     values, iClob(scrollSpeed), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             }
         }
-        addDialogToggle_(headings, values, "${prefs.imageloadscroll}", "prefs.imageloadscroll");
+        if (!isTerminal_Platform()) {
+            addDialogToggle_(headings, values, "${prefs.imageloadscroll}", "prefs.imageloadscroll");
+        }
         if (deviceType_App() == phone_AppDeviceType) {
             addDialogToggle_(headings, values, "${prefs.hidetoolbarscroll}", "prefs.hidetoolbarscroll");
         }
-        makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
-        addPrefsInputWithHeading_(headings, values, "prefs.uiscale", iClob(new_InputWidget(5)));
-        if (deviceType_App() == desktop_AppDeviceType) {
-            addDialogToggle_(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
+        if (!isTerminal_Platform()) {
+            makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
+            addPrefsInputWithHeading_(headings, values, "prefs.uiscale", iClob(new_InputWidget(5)));
+            if (deviceType_App() == desktop_AppDeviceType) {
+                addDialogToggle_(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
+            }
         }
     }
     /* Colors. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.colors}", '3', &headings, &values),
                      "prefs.page.color");
         makeTwoColumnHeading_("${heading.prefs.uitheme}", headings, values);
-#if defined (iPlatformApple) || defined (iPlatformMSys)
+#if (defined (iPlatformApple) || defined (iPlatformMSys)) && !defined (iPlatformTerminal)
         addDialogToggle_(headings, values, "${prefs.ostheme}", "prefs.ostheme");
 #endif
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.theme}")));
@@ -3144,7 +3153,8 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Fonts. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.fonts}", '4', &headings, &values), "prefs.page.fonts");
-        /* Fonts. */ {
+        /* Fonts. */
+        if (!isTerminal_Platform()) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.heading}")));
             addFontButtons_(values, "heading");
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.body}")));
@@ -3159,7 +3169,7 @@ iWidget *makePreferences_Widget(void) {
                                   2);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.monodoc}")));
             addFontButtons_(values, "monodoc");
-            addDialogPadding_(headings, values);            
+            addDialogPadding_(headings, values);
             addDialogToggleGroup_(headings,
                                   values,
                                   "${prefs.gemtext.ansi}",
@@ -3172,7 +3182,11 @@ iWidget *makePreferences_Widget(void) {
             addDialogPadding_(headings, values);
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
             addFontButtons_(values, "ui");
-        }        
+        }
+        else {
+            /* Terminal font settings. */
+            addDialogToggle_(headings, values, "${prefs.tui.simple}", "prefs.tui.simple");
+        }
     }
     /* Style. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.style}", '5', &headings, &values), "prefs.page.style");
@@ -3258,12 +3272,12 @@ iWidget *makePreferences_Widget(void) {
     appendFramelessTabPage_Widget(tabs, iClob(bind), "${heading.prefs.keys}", '7', KMOD_PRIMARY);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     updatePreferencesLayout_Widget(dlg);
-    iWidget *buttons = addChild_Widget(dlg,
-                    iClob(makeDialogButtons_Widget(
-                        (iMenuItem[]){ { "${menu.fonts}", 0, 0, "!open url:about:fonts" },
-                                       { "---" },
-                                       { "${close}", SDLK_ESCAPE, 0, "prefs.dismiss" } },
-                        3)));
+    const iMenuItem actions[] = { { "${menu.fonts}", 0, 0, "!open url:about:fonts" },
+                                { "---" },
+                                { "${close}", SDLK_ESCAPE, 0, "prefs.dismiss" } };
+    const size_t actOffset = (isTerminal_Platform() ? 2 : 0);
+    iWidget *buttons = addChild_Widget(
+        dlg, iClob(makeDialogButtons_Widget(actions + actOffset, iElemCount(actions) - actOffset)));
     setId_Widget(child_Widget(buttons, 0), "prefs.aboutfonts");
     setFlags_Widget(findChild_Widget(dlg, "prefs.aboutfonts"), hidden_WidgetFlag, iTrue);
     addChild_Widget(dlg->root->widget, iClob(dlg));    

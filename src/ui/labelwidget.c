@@ -745,6 +745,9 @@ iBool checkIcon_LabelWidget(iLabelWidget *d) {
         return iFalse;
     }
     d->icon = removeIconPrefix_String(&d->label);
+    if (isTerminal_Platform() && prefs_App()->simpleChars) {
+        d->icon = 0; /* ASCII icons may get confused with key shortcuts */
+    }
     return d->icon != 0;
 }
 

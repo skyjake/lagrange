@@ -2974,21 +2974,24 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     iLabelWidget *lock = findChild_Widget(root_Widget(as_Widget(d)), "navbar.lock");
     if (~d->certFlags & available_GmCertFlag) {
         setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
-        updateTextCStr_LabelWidget(lock, gray50_ColorEscape openLock_Icon);
+        updateTextCStr_LabelWidget(lock, openLock_Icon);
+        setTextColor_LabelWidget(lock, gray50_ColorId);
         return;
     }
     setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
     const iBool isDarkMode = isDark_ColorTheme(colorTheme_App());
     if (~d->certFlags & domainVerified_GmCertFlag ||
         ~d->certFlags & trusted_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, red_ColorEscape warning_Icon);
+        updateTextCStr_LabelWidget(lock, warning_Icon);
+        setTextColor_LabelWidget(lock, red_ColorId);
     }
     else if (~d->certFlags & timeVerified_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape warning_Icon
-                                                    : black_ColorEscape warning_Icon);
+        updateTextCStr_LabelWidget(lock, warning_Icon);
+        setTextColor_LabelWidget(lock, isDarkMode ? orange_ColorId : black_ColorId);
     }
     else {
-        updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_Icon);
+        updateTextCStr_LabelWidget(lock, closedLock_Icon);
+        setTextColor_LabelWidget(lock, green_ColorId);
     }
 }
 

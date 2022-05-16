@@ -1743,6 +1743,9 @@ msgstr "Text Color"
 msgid "prefs.imagestyle.preformat"
 msgstr "Preformatted Color"
 
+msgid "prefs.tui.simple"
+msgstr "Simple characters:"
+
 msgid "prefs.font.ui"
 msgstr "UI:"
 

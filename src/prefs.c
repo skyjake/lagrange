@@ -71,6 +71,7 @@ void init_Prefs(iPrefs *d) {
         d->bottomNavBar  = iTrue;
     }
     d->menuBar           = (deviceType_App() == desktop_AppDeviceType);
+    d->simpleChars       = iFalse;
     d->pinSplit          = 1;
     d->time24h           = iTrue;
     d->returnKey         = default_ReturnKeyBehavior;
