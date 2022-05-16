@@ -335,6 +335,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     iForIndices(i, boolPrefs) {
         appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
     }
+    appendFormat_String(str, "parentnavskipindex arg:%d\n", d->prefs.skipIndexPageOnParentNavigation);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
@@ -2767,6 +2768,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         SDL_SetHint(SDL_HINT_VIDEO_CURSES_SIMPLE_CHARACTERS, d->prefs.simpleChars ? "1" : "0");
         invalidate_Window(d->window);
 #endif
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "parentnavskipindex")) {
+        d->prefs.skipIndexPageOnParentNavigation = arg_Command(cmd) != 0;
         return iTrue;
     }
     else if (equal_Command(cmd, "translation.languages")) {

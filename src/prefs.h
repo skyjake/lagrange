@@ -88,6 +88,8 @@ enum iPrefsBool {
     warnAboutMissingGlyphs_PrefsBool,
     markdownAsSource_PrefsBool,
     
+    skipIndexPageOnParentNavigation_PrefsBool,
+    
     /* Network */
     decodeUserVisibleURLs_PrefsBool,
     
@@ -149,6 +151,8 @@ struct Impl_Prefs {
             iBool addBookmarksToBottom;
             iBool warnAboutMissingGlyphs;
             iBool markdownAsSource;
+            
+            iBool skipIndexPageOnParentNavigation;
             
             /* Network */
             iBool decodeUserVisibleURLs;
