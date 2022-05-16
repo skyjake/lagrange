@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h" /* origin_Paint */
 #include "app.h"
 
+#include <SDL_render.h>
 #include <the_Foundation/regexp.h>
 
 iDeclareType(Font)
@@ -47,7 +48,7 @@ struct Impl_Font {
 };
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
-    int w = width_Char(ch);
+    int w = SDL_UnicodeWidth(get_Window()->render, ch);
     w = iMin(2, w);
     return &d->glyphs[w];   
 }
