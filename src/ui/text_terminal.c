@@ -44,12 +44,12 @@ struct Impl_Font {
     iBaseFont font;
     iFontSpec *spec;
     int baseline;
-    iGlyph glyphs[3]; /* Glyphs with advance of 0..2. */
+    iGlyph glyphs[4]; /* Glyphs with advance of 0..3. */
 };
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
     int w = SDL_UnicodeWidth(get_Window()->render, ch);
-    w = iMin(2, w);
+    w = iMin(3, w);
     return &d->glyphs[w];   
 }
 
@@ -68,7 +68,7 @@ static void init_Font(iFont *d, int height) {
     d->font.spec = d->spec;
     d->font.height = height;
     d->baseline = 0;
-    for (int i = 0; i < 3; i++) {
+    for (unsigned i = 0; i < iElemCount(d->glyphs); i++) {
         iGlyph *glyph = &d->glyphs[i];
         glyph->font = d;
         glyph->advance = i;

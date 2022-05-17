@@ -2213,7 +2213,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         appendChar_String(&str, d->icon ? d->icon : 0x1f588);
         const int leftIndent = d->indent * gap_UI * 4;
         const iRect iconArea = { addX_I2(pos, gap_UI + leftIndent),
-                                 init_I2(1.75f * lineHeight_Text(font) / aspect_UI, itemHeight) };
+                                 init_I2(!isTerminal_Platform() ? 1.75f * lineHeight_Text(font) : 5, itemHeight) };
         drawCentered_Text(font,
                           iconArea,
                           iTrue,
