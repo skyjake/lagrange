@@ -73,7 +73,7 @@ static void init_Font(iFont *d, int height) {
         glyph->font = d;
         glyph->advance = i;
         for (size_t j = 0; j < iElemCount(glyph->d); j++) {
-            glyph->d[j]    = init_I2(0, height / 2);
+            glyph->d[j]    = init_I2(0, 0); //height / 2);
             glyph->rect[j] = init_Rect(0, 0, i, height);
         }
     }
