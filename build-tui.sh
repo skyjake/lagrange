@@ -17,17 +17,27 @@
 INSTALL_PREFIX="/usr/local"
 CMAKE_BUILD_TYPE="Release"
 
-echo "\nThis script will build clagrange with statically linked the_Foundation"
-echo "and SEALCurses. First, let's configure the build.\n"
+echo "\nThis script will build and optionally install clagrange with"
+echo "statically linked the_Foundation and SEALCurses. First, let's configure"
+echo "the build.\n"
 
-read -p "Build type? [Release] " INPUT
+read -p "Build type? [${CMAKE_BUILD_TYPE}] " INPUT
 if [ "${INPUT}." != "." ]; then
     CMAKE_BUILD_TYPE=${INPUT}
 fi
 
-read -p "Install prefix? [/usr/local] " INPUT
+read -p "Install prefix? [${INSTALL_PREFIX}] " INPUT
 if [ "${INPUT}." != "." ]; then
     INSTALL_PREFIX=${INPUT}
+fi
+
+if [ ! -d lib/sealcurses ]; then
+    read -p "'lib/sealcurses' not found. Clone with Git? [Yn] " INPUT
+    if [ "${INPUT}." = "n." ]; then
+        echo "Build aborted."
+        exit
+    fi
+    git clone https://git.skyjake.fi/skyjake/sealcurses.git lib/sealcurses || exit 1
 fi
 
 #-----------------------------------------------------------------------------
