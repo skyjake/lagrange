@@ -618,6 +618,9 @@ static const iString *userFontsDirectory_Fonts_(const iFonts *d) {
 
 void init_Fonts(const char *userDir) {
     iFonts *d = &fonts_;
+    if (isTerminal_Platform()) {
+        return; /* fonts not needed */
+    }
     d->indexPattern = new_RegExp(":([0-9]+)$", 0);    
     initCStr_String(&d->userDir, userDir);
     const iString *userFontsDir = userFontsDirectory_Fonts_(d);
