@@ -10,7 +10,9 @@
 * Parent navigation assumes directory URL is equivalent to index page URL (e.g., "/path/" == "/path/index.gmi"): this now only applies to Gemini URLs, and checks for "index.gemini", too, as per Gemini Best Practices. 
 * Fixed crash when determining the name of a ZIP file from a URL.
 * Fixed misparsing of URL to form the name of a downloaded file (`%23` decoded too early).
-* TUI: Added "Simple characters" setting (in Preferences > Fonts) that replaces most non-ASCII symbols with ASCII approximations.
+* TUI: Added "Simple characters" setting (in Preferences > Fonts) that replaces selected Unicode symbols with ASCII approximations.
+* TUI: Level 1 headings are two lines tall and underlined.
+* TUI: Don't load any fontpacks.
 * TUI: `build-tui.sh` now has interactive build config.
 
 ## 1.13.4
