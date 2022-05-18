@@ -797,6 +797,9 @@ void init_Fonts(const char *userDir) {
 
 void deinit_Fonts(void) {
     iFonts *d = &fonts_;
+    if (isTerminal_Platform()) {
+        return; /* fonts are not used */
+    }
     unloadFonts_Fonts_(d);
     iAssert(isEmpty_ObjectList(d->files));
     deinit_PtrArray(&d->specOrder);
