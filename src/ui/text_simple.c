@@ -362,7 +362,8 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             if (src.h == 2) {
                 /* "Big" font, used for titles: underline it. */
                 for (int ux = 0; ux < dst.w; ux++) {
-                    SDL_RenderDrawUnicode(render, dst.x + ux, dst.y + 1, '-');
+                    SDL_RenderDrawUnicode(render, dst.x + ux, dst.y + 1,
+                                          0x2500 /* box drawings light horizontal */);
                 }
             }
 #endif

@@ -956,9 +956,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             quoteRun.visBounds.pos =
                 add_I2(pos,
                        init_I2((indents[quote_GmLineType] - 5 * aspect_UI) * gap_Text,
-                               (lineHeight_Text(quote_FontId) / 2 - bottom_Rect(vis)) * aspect_UI));
+                               !isTerminal_Platform()
+                                   ? (lineHeight_Text(quote_FontId) / 2 - bottom_Rect(vis))
+                                   : 0));
             quoteRun.bounds = zero_Rect(); /* just visual */
             quoteRun.flags |= decoration_GmRunFlag;
+            if (isTerminal_Platform()) {
+                quoteRun.font = paragraph_FontId;
+            }
             pushBack_Array(&d->layout, &quoteRun);
         }
         else if (type != quote_GmLineType) {
