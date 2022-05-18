@@ -176,7 +176,7 @@ struct Impl_App {
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
-    iArray       initialWindowRects; /* one per window */
+    iArray       initialWindowRects;  /* one per window */
     iPrefs       prefs;
 };
 
@@ -764,7 +764,9 @@ static iBool loadState_App_(iApp *d) {
 }
 
 static void saveState_App_(const iApp *d) {
-    iUnused(d);
+    if (isAppleDesktop_Platform() && isEmpty_PtrArray(&d->mainWindows)) {
+        return; /* nothing to save; keep what was saved earlier */
+    }
     trimCache_App();
     /* UI state is saved in binary because it is quite complex (e.g.,
        navigation history, cached content) and depends closely on the widget
@@ -2518,6 +2520,12 @@ void closeWindow_App(iMainWindow *win) {
     }
     collect_Garbage(win, (iDeleteFunc) delete_MainWindow);
     postRefresh_App();
+    if (isAppleDesktop_Platform() && size_PtrArray(&d->mainWindows) == 1) {
+        /* The one and only window is being closed. On macOS, the app will keep running, which
+           means we must save the state of the window now or otherwise it will be lost. A newly
+           opened window will use this saved state if it's the only window of the app. */
+        saveState_App_(d);        
+    }
     if (d->window == win) {
         /* Activate another window. */
         iForEach(PtrArray, i, &d->mainWindows) {
@@ -3181,7 +3189,13 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
         addWindow_App(newWin); /* takes ownership */
         SDL_ShowWindow(newWin->base.win);
-        setCurrent_Window(newWin);
+        setCurrent_Window(newWin);        
+        if (isAppleDesktop_Platform() && size_PtrArray(mainWindows_App()) == 1) {
+            /* Restore the window state as it was before (sidebars, navigation history) when
+               opening a window again after all windows have been closed. */
+            setActiveWindow_App(newWin);
+            loadState_App_(d);
+        }
         if (hasLabel_Command(cmd, "url")) {
             postCommandf_Root(newWin->base.roots[0], "~open %s", cmd + 11 /* all arguments passed on */);
         }

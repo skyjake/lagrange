@@ -2110,7 +2110,8 @@ void setKeyboardGrab_Widget(iWidget *d) {
 }
 
 iWidget *focus_Widget(void) {
-    return get_Window()->focus;
+    iWindow *win = get_Window();
+    return win ? win->focus : NULL;
 }
 
 void setHover_Widget(iWidget *d) {
