@@ -732,7 +732,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iRangecc   content       = range_String(&d->source);
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
-    iBool            isFirstText   = prefs->bigFirstParagraph;
+    iBool            isFirstText   = prefs->bigFirstParagraph && !isTerminal_Platform();
     iBool            addQuoteIcon  = prefs->quoteIcon;
     iBool            isPreformat   = iFalse;
     int              preFont       = preformatted_FontId;
