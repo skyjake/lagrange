@@ -15,6 +15,7 @@
 * TUI: Level 1 headings are two lines tall and underlined.
 * TUI: Don't load any fontpacks.
 * TUI: `build-tui.sh` now has interactive build config.
+* Updated UI translations.
 
 ## 1.13.4
 * TUI: Improved detection of supported color modes. The preferred mode is a modifiable palette with 256+ colors. As a fallback, use a fixed VGA palette, or basic monochrome if the terminal doesn't support colors.
