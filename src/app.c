@@ -1765,9 +1765,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
                 if (!wasUsed) {
                     /* Focus cycling. */
-                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB) {
+                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB && current_Root()) {
                         iWidget *startFrom = focus_Widget();
-                        const iBool isLimitedFocus = focusRoot_Widget(startFrom) != root_Widget(startFrom);
+                        const iBool isLimitedFocus = focusRoot_Widget(startFrom) != get_Root()->widget;
                         /* Go to a sidebar if one is visible. */
                         if (!startFrom && !isLimitedFocus && 
                             isVisible_Widget(findWidget_App("sidebar"))) {
