@@ -45,6 +45,20 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.13.5" date="2022-05-19">
+            <description>
+                <p>Changes in v1.13.5:</p>
+                <ul>
+                    <li>Parent navigation assumes directory URL is equivalent to index page URL (e.g., "/path/" == "/path/index.gmi"): this now only applies to Gemini URLs, and checks for "index.gemini", too, as per Gemini Best Practices.</li>
+                    <li>Fixed crash when determining the name of a ZIP file from a URL.</li>
+                    <li>Fixed misparsing of URL to form the name of a downloaded file (`%23` decoded too early).</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.13.5</url>
+        </release>
         <release version="1.13.4" date="2022-05-10">
             <description>
                 <p>Changes in v1.13.4:</p>
