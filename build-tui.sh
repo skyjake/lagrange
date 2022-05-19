@@ -17,11 +17,34 @@
 INSTALL_PREFIX="/usr/local"
 CMAKE_BUILD_TYPE="Release"
 
+echo "\nThis script will build and optionally install clagrange with"
+echo "statically linked the_Foundation and SEALCurses. First, let's configure"
+echo "the build.\n"
+
+read -p "Build type? [${CMAKE_BUILD_TYPE}] " INPUT
+if [ "${INPUT}." != "." ]; then
+    CMAKE_BUILD_TYPE=${INPUT}
+fi
+
+read -p "Install prefix? [${INSTALL_PREFIX}] " INPUT
+if [ "${INPUT}." != "." ]; then
+    INSTALL_PREFIX=${INPUT}
+fi
+
+if [ ! -d lib/sealcurses ]; then
+    read -p "'lib/sealcurses' not found. Clone with Git? [Yn] " INPUT
+    if [ "${INPUT}." = "n." ]; then
+        echo "Build aborted."
+        exit
+    fi
+    git clone https://git.skyjake.fi/skyjake/sealcurses.git lib/sealcurses || exit 1
+fi
+
 #-----------------------------------------------------------------------------
 
 if [ -d build-tui ]; then
-    read -p "'build-tui' already exists. Delete it? [Yn] " CONFIRMED
-    if [ "${CONFIRMED}" != "y" ] && [ "${CONFIRMED}" != "Y" ]; then
+    read -p "'build-tui' already exists. Delete it? [yN] " CONFIRMED
+    if [ "${CONFIRMED}." != "y." ] && [ "${CONFIRMED}." != "Y." ]; then
         echo "Build aborted."
         exit
     fi
@@ -38,6 +61,7 @@ cd build-tfdn
 
 cmake ../../lib/the_Foundation -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
     -DTFDN_STATIC_LIBRARY=YES \
+    -DTFDN_ENABLE_WEBREQUEST=NO \
     -DTFDN_ENABLE_TESTS=NO \
     -DCMAKE_INSTALL_PREFIX="${BUILD_DIR}" $*
 cmake --build . || exit 1
@@ -73,8 +97,8 @@ cmake --build . || exit 1
 
 echo "-----"
 echo "clagrange and resources.lgr can be found in 'build-tui'."
-read -p "Do you want to install them to ${INSTALL_PREFIX}? [yN] " CONFIRMED
+read -p "Do you want to install them to ${INSTALL_PREFIX}? (sudo) [yN] " CONFIRMED
 if [ "${CONFIRMED}" = "y" ]; then
-    cmake --install .
+    sudo cmake --install .
     exit
 fi

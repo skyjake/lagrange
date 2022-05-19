@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "text.h"
+#include "defs.h"
 #include <SDL_version.h>
 
 iDeclareType(Font)
@@ -324,7 +325,8 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
            is monospaced. Except with Japanese script, that's larger than the normal monospace. */
         const iBool useMonoAdvance = monoAdvance > 0; // && !isJapanese_FontId(fontId_Text_(glyph->font));
         const float advance = (useMonoAdvance && glyph->advance > 0 ? monoAdvance : glyph->advance);
-        if (!isMeasuring_(mode) && ch != 0x20 /* don't bother rendering spaces */) {
+        if (!isMeasuring_(mode) &&
+            (ch != 0x20 /* don't bother rendering spaces */ || (isTerminal_Platform() && dst.h == 2))) {
             if (useMonoAdvance && dst.w > advance && glyph->font != d && !isEmoji) {
                 /* Glyphs from a different font may need recentering to look better. */
                 dst.x -= (dst.w - advance) / 2;
@@ -357,6 +359,13 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
 #endif
 #if defined (SDL_SEAL_CURSES)
             SDL_RenderDrawUnicode(render, dst.x, dst.y, ch);
+            if (src.h == 2) {
+                /* "Big" font, used for titles: underline it. */
+                for (int ux = 0; ux < dst.w; ux++) {
+                    SDL_RenderDrawUnicode(render, dst.x + ux, dst.y + 1,
+                                          0x2500 /* box drawings light horizontal */);
+                }
+            }
 #endif
         }
         xpos += advance;

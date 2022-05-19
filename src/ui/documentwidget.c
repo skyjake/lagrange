@@ -1386,7 +1386,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
         if (run->flags & ruler_GmRunFlag) {
-            if (height_Rect(run->visBounds) > 1) {
+            if (height_Rect(run->visBounds) > 0 &&
+                height_Rect(run->visBounds) <= width_Rect(run->visBounds)) {
                 /* This is used for block quotes. */
                 drawVLine_Paint(&d->paint,
                                 addX_I2(visPos,
@@ -2806,10 +2807,12 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                             }
                         }
                         format_String(&str, "# %s\n", zipPageHeading_(range_String(&d->sourceMime)));
-                        appendFormat_String(&str,
-                                            cstr_Lang("doc.archive"),
-                                            cstr_Rangecc(baseName_Path(collect_String(
-                                                localFilePathFromUrl_String(d->mod.url)))));
+                        appendFormat_String(
+                            &str,
+                            cstr_Lang("doc.archive"),
+                            cstr_Rangecc(baseNameSep_Path(collect_String(urlDecode_String(
+                                                              urlQueryStripped_String(d->mod.url))),
+                                                          "/")));
                         appendCStr_String(&str, "\n");
                     }
                     iRelease(zip);
@@ -2972,21 +2975,24 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     iLabelWidget *lock = findChild_Widget(root_Widget(as_Widget(d)), "navbar.lock");
     if (~d->certFlags & available_GmCertFlag) {
         setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
-        updateTextCStr_LabelWidget(lock, gray50_ColorEscape openLock_Icon);
+        updateTextCStr_LabelWidget(lock, openLock_Icon);
+        setTextColor_LabelWidget(lock, gray50_ColorId);
         return;
     }
     setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
     const iBool isDarkMode = isDark_ColorTheme(colorTheme_App());
     if (~d->certFlags & domainVerified_GmCertFlag ||
         ~d->certFlags & trusted_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, red_ColorEscape warning_Icon);
+        updateTextCStr_LabelWidget(lock, warning_Icon);
+        setTextColor_LabelWidget(lock, red_ColorId);
     }
     else if (~d->certFlags & timeVerified_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape warning_Icon
-                                                    : black_ColorEscape warning_Icon);
+        updateTextCStr_LabelWidget(lock, warning_Icon);
+        setTextColor_LabelWidget(lock, isDarkMode ? orange_ColorId : black_ColorId);
     }
     else {
-        updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_Icon);
+        updateTextCStr_LabelWidget(lock, closedLock_Icon);
+        setTextColor_LabelWidget(lock, green_ColorId);
     }
 }
 
@@ -4497,8 +4503,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "navigate.parent") && document_App() == d) {
         iUrl parts;
         init_Url(&parts, d->mod.url);
-        if (endsWith_Rangecc(parts.path, "/index.gmi")) {
-            parts.path.end -= 9; /* This is the default index page. */
+        if (equalCase_Rangecc(parts.scheme, "gemini")) {
+            /* Check for default index pages according to Gemini Best Practices ("Filenames"):
+               gemini://gemini.circumlunar.space/docs/best-practices.gmi */
+            if (endsWith_Rangecc(parts.path, "/index.gmi")) {
+                parts.path.end -= 9; 
+            }
+            else if (endsWith_Rangecc(parts.path, "/index.gemini")) {
+                parts.path.end -= 12;
+            }
         }
         /* Remove the last path segment. */
         if (size_Range(&parts.path) > 1) {

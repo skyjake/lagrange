@@ -69,6 +69,7 @@ enum iPrefsBool {
     bottomNavBar_PrefsBool,
     bottomTabBar_PrefsBool,
     menuBar_PrefsBool,
+    simpleChars_PrefsBool,
     
     /* Document presentation */
     sideIcon_PrefsBool,
@@ -86,6 +87,8 @@ enum iPrefsBool {
     addBookmarksToBottom_PrefsBool,
     warnAboutMissingGlyphs_PrefsBool,
     markdownAsSource_PrefsBool,
+    
+    skipIndexPageOnParentNavigation_PrefsBool,
     
     /* Network */
     decodeUserVisibleURLs_PrefsBool,
@@ -130,6 +133,7 @@ struct Impl_Prefs {
             iBool bottomNavBar;
             iBool bottomTabBar;
             iBool menuBar;
+            iBool simpleChars;
             
             /* Document presentation */
             iBool sideIcon;
@@ -147,6 +151,8 @@ struct Impl_Prefs {
             iBool addBookmarksToBottom;
             iBool warnAboutMissingGlyphs;
             iBool markdownAsSource;
+            
+            iBool skipIndexPageOnParentNavigation;
             
             /* Network */
             iBool decodeUserVisibleURLs;

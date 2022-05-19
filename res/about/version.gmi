@@ -6,6 +6,17 @@
 ```
 # Release notes
 
+## 1.13.5
+* Parent navigation assumes directory URL is equivalent to index page URL (e.g., "/path/" == "/path/index.gmi"): this now only applies to Gemini URLs, and checks for "index.gemini", too, as per Gemini Best Practices. 
+* Fixed crash when determining the name of a ZIP file from a URL.
+* Fixed misparsing of URL to form the name of a downloaded file (`%23` decoded too early).
+* macOS: Fixed window state being forgotten when all windows are closed. Normally state is saved when quitting, but on macOS the app will keep running without any windows.
+* TUI: Added "Simple characters" setting (in Preferences > Fonts) that replaces selected Unicode symbols with ASCII approximations.
+* TUI: Level 1 headings are two lines tall and underlined.
+* TUI: Don't load any fontpacks.
+* TUI: `build-tui.sh` now has interactive build config.
+* Updated UI translations.
+
 ## 1.13.4
 * TUI: Improved detection of supported color modes. The preferred mode is a modifiable palette with 256+ colors. As a fallback, use a fixed VGA palette, or basic monochrome if the terminal doesn't support colors.
 * TUI: Tuned build flags in `build-tui.sh` as a Linux workaround (set `-O1` on SEALCurses).

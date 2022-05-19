@@ -176,7 +176,7 @@ struct Impl_App {
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
-    iArray       initialWindowRects; /* one per window */
+    iArray       initialWindowRects;  /* one per window */
     iPrefs       prefs;
 };
 
@@ -330,10 +330,12 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.retaintabs", &d->prefs.retainTabs },
         { "prefs.sideicon", &d->prefs.sideIcon },
         { "prefs.time.24h", &d->prefs.time24h },
+        { "prefs.tui.simple", &d->prefs.simpleChars },
     };
     iForIndices(i, boolPrefs) {
         appendFormat_String(str, "%s.changed arg:%d\n", boolPrefs[i].id, *boolPrefs[i].value);
     }
+    appendFormat_String(str, "parentnavskipindex arg:%d\n", d->prefs.skipIndexPageOnParentNavigation);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
@@ -762,7 +764,9 @@ static iBool loadState_App_(iApp *d) {
 }
 
 static void saveState_App_(const iApp *d) {
-    iUnused(d);
+    if (isAppleDesktop_Platform() && isEmpty_PtrArray(&d->mainWindows)) {
+        return; /* nothing to save; keep what was saved earlier */
+    }
     trimCache_App();
     /* UI state is saved in binary because it is quite complex (e.g.,
        navigation history, cached content) and depends closely on the widget
@@ -1264,26 +1268,28 @@ const iString *downloadDir_App(void) {
 
 const iString *fileNameForUrl_App(const iString *url, const iString *mime) {
     /* Figure out a file name from the URL. */
-    url = collect_String(urlDecodeExclude_String(url, "\\/:;"));
     iUrl parts;
     init_Url(&parts, url);
-    while (startsWith_Rangecc(parts.path, "/")) {
-        parts.path.start++;
+    iString *urlPath =
+        collect_String(urlDecodeExclude_String(collectNewRange_String(parts.path), "\\/:;"));
+    iRangecc path = range_String(urlPath);
+    while (startsWith_Rangecc(path, "/")) {
+        path.start++;
     }
-    while (endsWith_Rangecc(parts.path, "/")) {
-        parts.path.end--;
+    while (endsWith_Rangecc(path, "/")) {
+        path.end--;
     }
     iString *name = collectNewCStr_String("pagecontent");
-    if (isEmpty_Range(&parts.path)) {
+    if (isEmpty_Range(&path)) {
         if (!isEmpty_Range(&parts.host)) {
             setRange_String(name, parts.host);
             replace_Block(&name->chars, '.', '_');
         }
     }
     else {
-        const size_t slashPos = lastIndexOfCStr_Rangecc(parts.path, "/");
-        iRangecc fn = { parts.path.start + (slashPos != iInvalidPos ? slashPos + 1 : 0),
-                        parts.path.end };
+        const size_t slashPos = lastIndexOfCStr_Rangecc(path, "/");
+        iRangecc fn = { path.start + (slashPos != iInvalidPos ? slashPos + 1 : 0),
+                        path.end };
         if (!isEmpty_Range(&fn)) {
             setRange_String(name, fn);
         }
@@ -1759,14 +1765,17 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
                 if (!wasUsed) {
                     /* Focus cycling. */
-                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB) {
+                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB && current_Root()) {
                         iWidget *startFrom = focus_Widget();
+                        const iBool isLimitedFocus = focusRoot_Widget(startFrom) != get_Root()->widget;
                         /* Go to a sidebar if one is visible. */
-                        if (!startFrom && isVisible_Widget(findWidget_App("sidebar"))) {
+                        if (!startFrom && !isLimitedFocus && 
+                            isVisible_Widget(findWidget_App("sidebar"))) {
                             setFocus_Widget(as_Widget(
                                 list_SidebarWidget((iSidebarWidget *) findWidget_App("sidebar"))));
                         }
-                        else if (!startFrom && isVisible_Widget(findWidget_App("sidebar2"))) {
+                        else if (!startFrom && !isLimitedFocus && 
+                            isVisible_Widget(findWidget_App("sidebar2"))) {
                             setFocus_Widget(as_Widget(
                                 list_SidebarWidget((iSidebarWidget *) findWidget_App("sidebar2"))));
                         }
@@ -1776,6 +1785,21 @@ void processEvents_App(enum iAppEventMode eventMode) {
                                                                      ? backward_WidgetFocusDir
                                                                      : forward_WidgetFocusDir));
                         }
+                        wasUsed = iTrue;
+                    }
+                }
+                if (!wasUsed) {
+                    /* ^G is an alternative for Escape. */
+                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == 'g' &&
+                        keyMods_Sym(ev.key.keysym.mod) == KMOD_CTRL) {
+                        SDL_KeyboardEvent esc = ev.key;
+                        esc.keysym.sym = SDLK_ESCAPE;
+                        esc.keysym.mod = 0;
+                        SDL_PushEvent((SDL_Event *) &esc);
+                        esc.state = SDL_RELEASED;
+                        esc.type  = SDL_KEYUP;
+                        esc.timestamp++;
+                        SDL_PushEvent((SDL_Event *) &esc);
                         wasUsed = iTrue;
                     }
                 }
@@ -2514,6 +2538,12 @@ void closeWindow_App(iMainWindow *win) {
     }
     collect_Garbage(win, (iDeleteFunc) delete_MainWindow);
     postRefresh_App();
+    if (isAppleDesktop_Platform() && size_PtrArray(&d->mainWindows) == 1) {
+        /* The one and only window is being closed. On macOS, the app will keep running, which
+           means we must save the state of the window now or otherwise it will be lost. A newly
+           opened window will use this saved state if it's the only window of the app. */
+        saveState_App_(d);        
+    }
     if (d->window == win) {
         /* Activate another window. */
         iForEach(PtrArray, i, &d->mainWindows) {
@@ -2756,6 +2786,18 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         if (!isFrozen) {
             postCommand_App("~root.movable");
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.tui.simple.changed")) {
+        d->prefs.simpleChars = arg_Command(cmd) != 0;
+#if defined (iPlatformTerminal)
+        SDL_SetHint(SDL_HINT_VIDEO_CURSES_SIMPLE_CHARACTERS, d->prefs.simpleChars ? "1" : "0");
+        invalidate_Window(d->window);
+#endif
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "parentnavskipindex")) {
+        d->prefs.skipIndexPageOnParentNavigation = arg_Command(cmd) != 0;
         return iTrue;
     }
     else if (equal_Command(cmd, "translation.languages")) {
@@ -3165,7 +3207,13 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
         addWindow_App(newWin); /* takes ownership */
         SDL_ShowWindow(newWin->base.win);
-        setCurrent_Window(newWin);
+        setCurrent_Window(newWin);        
+        if (isAppleDesktop_Platform() && size_PtrArray(mainWindows_App()) == 1) {
+            /* Restore the window state as it was before (sidebars, navigation history) when
+               opening a window again after all windows have been closed. */
+            setActiveWindow_App(newWin);
+            loadState_App_(d);
+        }
         if (hasLabel_Command(cmd, "url")) {
             postCommandf_Root(newWin->base.roots[0], "~open %s", cmd + 11 /* all arguments passed on */);
         }
@@ -3806,6 +3854,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fontstyle"),
                          d->prefs.gemtextAnsiEscapes & allowFontStyle_AnsiFlag);
         setToggle_Widget(findChild_Widget(dlg, "prefs.font.smooth"), d->prefs.fontSmoothing);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.tui.simple"), d->prefs.simpleChars);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,
@@ -3859,7 +3908,7 @@ iBool handleCommand_App(const char *cmd) {
             iWidget *idPanel = panel_Mobile(dlg, 3);
             iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
             postCommand_Widget(button, "panel.open");
-    }
+        }
     }
     else if (equal_Command(cmd, "navigate.home")) {
         /* Look for bookmarks tagged "homepage". */

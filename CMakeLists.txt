@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.13.4
+    VERSION 1.13.5
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -72,6 +72,9 @@ set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to in
 include (BuildType.cmake)
 include (Resources.cmake)
 include (Depends.cmake)
+include (CheckCCompilerFlag)
+
+check_c_compiler_flag (-Werror=incompatible-pointer-types CFLAG_INCOMPATIBLE_POINTER_TYPES)
 
 # Package resources.
 message (STATUS "Preparing resources...")
@@ -377,12 +380,14 @@ target_include_directories (app PUBLIC
 )
 target_compile_options (app PUBLIC
     -Werror=implicit-function-declaration
-    -Werror=incompatible-pointer-types
     -Wno-deprecated-declarations
     ${SDL2_CFLAGS}
     -DSTB_VORBIS_NO_STDIO=1
     -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
 )
+if (CFLAG_INCOMPATIBLE_POINTER_TYPES)
+    target_compile_options (app PUBLIC -Werror=incompatible-pointer-types)
+endif ()
 target_compile_definitions (app PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
 if (ENABLE_CUSTOM_FRAME AND MSYS)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)

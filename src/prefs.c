@@ -71,6 +71,7 @@ void init_Prefs(iPrefs *d) {
         d->bottomNavBar  = iTrue;
     }
     d->menuBar           = (deviceType_App() == desktop_AppDeviceType);
+    d->simpleChars       = iTrue; /* only in terminal */
     d->pinSplit          = 1;
     d->time24h           = iTrue;
     d->returnKey         = default_ReturnKeyBehavior;
@@ -86,6 +87,7 @@ void init_Prefs(iPrefs *d) {
     d->addBookmarksToBottom    = iTrue;
     d->warnAboutMissingGlyphs  = iTrue;
     d->markdownAsSource        = iTrue;
+    d->skipIndexPageOnParentNavigation = iTrue;
     d->decodeUserVisibleURLs   = iTrue;
     d->maxCacheSize      = 10;
     d->maxMemorySize     = 200;
