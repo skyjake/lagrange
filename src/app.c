@@ -1767,12 +1767,15 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     /* Focus cycling. */
                     if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB) {
                         iWidget *startFrom = focus_Widget();
+                        const iBool isLimitedFocus = focusRoot_Widget(startFrom) != root_Widget(startFrom);
                         /* Go to a sidebar if one is visible. */
-                        if (!startFrom && isVisible_Widget(findWidget_App("sidebar"))) {
+                        if (!startFrom && !isLimitedFocus && 
+                            isVisible_Widget(findWidget_App("sidebar"))) {
                             setFocus_Widget(as_Widget(
                                 list_SidebarWidget((iSidebarWidget *) findWidget_App("sidebar"))));
                         }
-                        else if (!startFrom && isVisible_Widget(findWidget_App("sidebar2"))) {
+                        else if (!startFrom && !isLimitedFocus && 
+                            isVisible_Widget(findWidget_App("sidebar2"))) {
                             setFocus_Widget(as_Widget(
                                 list_SidebarWidget((iSidebarWidget *) findWidget_App("sidebar2"))));
                         }
@@ -1782,6 +1785,21 @@ void processEvents_App(enum iAppEventMode eventMode) {
                                                                      ? backward_WidgetFocusDir
                                                                      : forward_WidgetFocusDir));
                         }
+                        wasUsed = iTrue;
+                    }
+                }
+                if (!wasUsed) {
+                    /* ^G is an alternative for Escape. */
+                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == 'g' &&
+                        keyMods_Sym(ev.key.keysym.mod) == KMOD_CTRL) {
+                        SDL_KeyboardEvent esc = ev.key;
+                        esc.keysym.sym = SDLK_ESCAPE;
+                        esc.keysym.mod = 0;
+                        SDL_PushEvent((SDL_Event *) &esc);
+                        esc.state = SDL_RELEASED;
+                        esc.type  = SDL_KEYUP;
+                        esc.timestamp++;
+                        SDL_PushEvent((SDL_Event *) &esc);
                         wasUsed = iTrue;
                     }
                 }
@@ -3890,7 +3908,7 @@ iBool handleCommand_App(const char *cmd) {
             iWidget *idPanel = panel_Mobile(dlg, 3);
             iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
             postCommand_Widget(button, "panel.open");
-    }
+        }
     }
     else if (equal_Command(cmd, "navigate.home")) {
         /* Look for bookmarks tagged "homepage". */

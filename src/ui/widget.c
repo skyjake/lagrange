@@ -2166,21 +2166,27 @@ static const iWidget *findFocusRoot_Widget_(const iWidget *d) {
     return NULL;
 }
 
+const iWidget *focusRoot_Widget(const iWidget *d) {
+    iRoot *uiRoot = (d ? d->root : get_Window()->keyRoot);
+    return findFocusRoot_Widget_(uiRoot->widget);
+}
+
 iAny *findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir) {
     if (!get_Window()) {
         return NULL;
     }
-    iRoot *uiRoot = (startFrom ? startFrom->root : get_Window()->keyRoot);
-    const iWidget *focusRoot = findFocusRoot_Widget_(uiRoot->widget);
+    const iWidget *focusRoot = focusRoot_Widget(startFrom);
     iAssert(focusRoot != NULL);
     iBool getNext = (startFrom ? iFalse : iTrue);
     const iWidget *found = findFocusable_Widget_(focusRoot, startFrom, &getNext, focusDir);
     if (!found && startFrom) {
         getNext = iTrue;
         /* Switch to the next root, if available. */
-        found = findFocusable_Widget_(findFocusRoot_Widget_(otherRoot_Window(get_Window(),
-                                                                             uiRoot)->widget),
-                                      NULL, &getNext, focusDir);
+        found = findFocusable_Widget_(
+            findFocusRoot_Widget_(otherRoot_Window(get_Window(), focusRoot->root)->widget),
+            NULL,
+            &getNext,
+            focusDir);
     }
     return iConstCast(iWidget *, found);
 }
