@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-23 21:50+0000\n"
+"PO-Revision-Date: 2022-05-21 14:51+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -2246,3 +2246,230 @@ msgstr "Partager"
 
 msgid "menu.upload.delete.confirm"
 msgstr "Vraiment tout supprimer (pas d’annulation)"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "À propos de Lagrange"
+
+msgid "menu.viewformat.gemini"
+msgstr "Afficher en tant que Gemtext"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Marquer comme lu à partir d’ici"
+
+msgid "heading.import.userdata"
+msgstr "Importer des données utilisateur"
+
+msgid "menu.export"
+msgstr "Exporter les données utilisateur"
+
+msgid "import.userdata.bookmarks"
+msgstr "Signets :"
+
+msgid "import.userdata.idents"
+msgstr "Identités :"
+
+msgid "import.userdata.error"
+msgstr "%s n’est pas une archive d’export Lagrange valide."
+
+msgid "heading.glyphfinder"
+msgstr "Glyphes manquants"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Les caractères suivants n’ont pas pu être affichés :"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Vous pouvez essayer de chercher dans la bibliothèque de polices de "
+"skyjake.fi des polices susceptibles de fournir les glyphes pour ces "
+"caractères, ou installer manuellement de nouvelles polices TrueType."
+
+msgid "error.incompleteheader.msg"
+msgstr ""
+"La réponse du serveur ne contient pas un entête complet. Le serveur "
+"fonctionne peut-être mal, ou vous essayez de contacter un serveur non-Gemini."
+
+msgid "prefs.tabwidth"
+msgstr "Largeur de tabulation :"
+
+msgid "menu.newwindow"
+msgstr "Nouvelle fenêtre"
+
+msgid "pageinfo.settings"
+msgstr "Paramètres"
+
+msgid "sitespec.accept"
+msgstr "Enregistrer les paramètres"
+
+msgid "keys.pageinfo"
+msgstr "Afficher les informations de la page"
+
+msgid "keys.sitespec"
+msgstr "Afficher les paramètres spécifiques au site"
+
+msgid "link.newwindow"
+msgstr "Ouvrir le lien dans une nouvelle fenêtre"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Désactiver les avertissements"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Chercher dans la bibliothèque de polices"
+
+msgid "heading.glyphfinder.results"
+msgstr "Résultats de recherche"
+
+msgid "glyphfinder.results"
+msgstr ""
+"Les packs de polices suivants fournissent un ou plusieurs des glyphes "
+"manquants :"
+
+msgid "glyphfinder.results.empty"
+msgstr "Désolé, aucun pack de polices correspondant n’a été trouvé."
+
+msgid "prefs.markdown.viewsource"
+msgstr "Afficher en tant que source Markdown :"
+
+msgid "prefs.uilayout"
+msgstr "Disposition :"
+
+msgid "prefs.bottomnavbar"
+msgstr "Barre de navigation en bas"
+
+msgid "prefs.bottomtabbar"
+msgstr "Onglets en bas"
+
+msgid "prefs.menubar"
+msgstr "Barre de menu"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Océanique"
+
+msgid "prefs.tui.simple"
+msgstr "Caractères simples :"
+
+msgid "prefs.justify"
+msgstr "Justifier :"
+
+msgid "prefs.urlsize"
+msgstr "Taille maximale d’URL :"
+
+msgid "menu.reopentab"
+msgstr "Rouvrir le dernier onglet fermé"
+
+msgid "menu.viewformat.plain"
+msgstr "Afficher en tant que texte brut"
+
+msgid "menu.openwindow"
+msgstr "Ouvrir dans une nouvelle fenêtre"
+
+msgid "heading.sitespec"
+msgstr "Paramètres spécifiques au site"
+
+msgid "sitespec.ansi"
+msgstr "Avertissements échappement ANSI :"
+
+msgid "keys.identmenu"
+msgstr "Ouvrir le menu Identité"
+
+msgid "keys.contextmenu"
+msgstr "Ouvrir le menu contextuel"
+
+msgid "keys.menubar.focus"
+msgstr "Activer la barre de menu"
+
+msgid "sitespec.palette"
+msgstr "Graine de la palette du thème :"
+
+msgid "menu.paste.go"
+msgstr "Coller et aller"
+
+msgid "dlg.certimport.paste"
+msgstr "Coller depuis le presse-papiers"
+
+msgid "heading.import.userdata.error"
+msgstr "L'import a échoué"
+
+msgid "import.userdata.history"
+msgstr "Historique :"
+
+msgid "import.userdata.trusted"
+msgstr "Certificats de confiance :"
+
+msgid "import.userdata.sitespec"
+msgstr "Paramètres des sites :"
+
+msgid "dlg.userdata.no"
+msgstr "Aucun"
+
+msgid "dlg.userdata.missing"
+msgstr "Si manquant"
+
+msgid "dlg.userdata.all"
+msgstr "Tout (Écraser)"
+
+msgid "dlg.userdata.alldup"
+msgstr "Tout (Conserver les doublons)"
+
+msgid "import.userdata"
+msgstr "Importer les données sélectionnées"
+
+msgid "import.userdata.dupfolder"
+msgstr "Doublons importés"
+
+msgid "spartan.input"
+msgstr "Entrez le texte à envoyer :"
+
+msgid "dlg.spartan.upload"
+msgstr "Ouvrir l’éditeur…"
+
+msgid "heading.upload.spartan"
+msgstr "Téléverser avec Spartan"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "Veuillez recharger la page pour revérifier les glyphes manquants."
+
+msgid "heading.bookmark.editfolder"
+msgstr "Modifier le dossier"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Dossier parent :"
+
+msgid "heading.prefs.support"
+msgstr "Support"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Ouvrir les images contenues dans des URL de données :"
+
+msgid "prefs.accent.red"
+msgstr "Rouge"
+
+msgid "prefs.accent.green"
+msgstr "Vert"
+
+msgid "prefs.accent.blue"
+msgstr "Bleu"
+
+msgid "prefs.accent.gray"
+msgstr "Gris"
+
+msgid "prefs.retaintabs"
+msgstr "Restaurer les onglets au démarrage :"
+
+msgid "error.incompleteheader"
+msgstr "Entête incomplet"
+
+msgid "menu.import"
+msgstr "Importer les données utilisateur…"
+
+msgid "heading.archive.userdata"
+msgstr "Archive des données utilisateur"
+
+msgid "userdata.help"
+msgstr ""
+"Les archives de données utilisateur contiennent l’export de l’historique de "
+"navigation, les identités, les signets, les paramètres spécifiques de sites "
+"et les empreintes des certificats des serveurs de confiance. Elles peuvent "
+"être enregistrées comme sauvegardes et utilisées pour transférer les données "
+"entre appareils."
