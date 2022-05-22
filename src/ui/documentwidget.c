@@ -2144,10 +2144,24 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         else if (!isEmpty_Range(&parts.host)) {
             pushBackRange_StringArray(title, parts.host);
         }
+        else if (!isEmpty_Range(&parts.path)) {
+            iRangecc name = baseNameSep_Path(collectNewRange_String(parts.path), "/");
+            if (!isEmpty_Range(&name)) {
+                pushBack_StringArray(
+                    title, collect_String(urlDecode_String(collectNewRange_String(name))));
+            }
+        }
     }
     if (isEmpty_StringArray(title)) {
         pushBackCStr_StringArray(title, "Lagrange");
     }
+    /* Remove redundant parts. */ {
+        for (size_t i = 0; i < size_StringArray(title) - 1; i++) {
+            if (equal_String(at_StringArray(title, i), at_StringArray(title, i + 1))) {
+                remove_StringArray(title, i + 1);
+            }
+        }   
+    }    
     /* Take away parts if it doesn't fit. */
     const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 7 * gap_UI;
     iBool     setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
@@ -2997,7 +3011,14 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
 }
 
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
-    setRange_String(d->titleUser, urlUser_String(d->mod.url));
+    const iRangecc scheme = urlScheme_String(d->mod.url);
+    if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "titan") ||
+        equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "gopher")) {
+        setRange_String(d->titleUser, urlUser_String(d->mod.url));
+    }
+    else {
+        clear_String(d->titleUser);
+    }
 }
 
 static void cacheRunGlyphs_(void *data, const iGmRun *run) {

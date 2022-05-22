@@ -7,6 +7,8 @@
 # Release notes
 
 ## 1.13.6
+* Use file name as the tab/window title if the content has no headings.
+* Avoid redundancy in tab/window titles ("Cosmos — Cosmos" → "Cosmos").
 
 ## 1.13.5
 * Parent navigation assumes directory URL is equivalent to index page URL (e.g., "/path/" == "/path/index.gmi"): this now only applies to Gemini URLs, and checks for "index.gemini", too, as per Gemini Best Practices. 
