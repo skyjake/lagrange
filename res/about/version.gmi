@@ -6,6 +6,8 @@
 ```
 # Release notes
 
+## 1.13.6
+
 ## 1.13.5
 * Parent navigation assumes directory URL is equivalent to index page URL (e.g., "/path/" == "/path/index.gmi"): this now only applies to Gemini URLs, and checks for "index.gemini", too, as per Gemini Best Practices. 
 * Fixed crash when determining the name of a ZIP file from a URL.
