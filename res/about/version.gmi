@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.13.6
+* Percent-encode backslashes in URLs opened externally in the default browser, for improved compatibility.
 * Use file name as the tab/window title if the content has no headings.
 * Avoid redundancy in tab/window titles ("Cosmos — Cosmos" → "Cosmos").
 
