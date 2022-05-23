@@ -104,7 +104,7 @@ Lagrange has an optional text-mode interface that enables running the app in the
 
 The requirements for building the TUI version are the same as with the GUI, except [ncurses](https://invisible-island.net/ncurses/) is required instead of SDL. HarfBuzz and all the image and audio dependencies are excluded from the TUI build.
 
-The `build-tui.sh` helper script is provided for building the TUI version. All command line arguments given to the script are passed to CMake for further configuring the build. However, note that the install prefix should be set by editing the `INSTALL_PREFIX` variable in the beginning of `build-tui.sh`. Trying to modify `CMAKE_INSTALL_PREFIX` directly may cause the build to fail.
+The `build-tui.sh` helper script is provided for building the TUI version. All command line arguments given to the script are passed to CMake for further configuring the build. Note that the CMake install prefix variable (`CMAKE_INSTALL_PREFIX`) should not be set via an argument. Instead, the script will prompt for the install directory when run.
 
 ### Compiling on macOS
 
