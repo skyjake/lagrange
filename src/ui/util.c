@@ -3033,6 +3033,7 @@ iWidget *makePreferences_Widget(void) {
 #endif
             },
             iInvalidSize);
+        addDialogToggle_(headings, values, "${prefs.evensplit}", "prefs.evensplit");
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
         /* Return key behaviors. */ {
             iLabelWidget *returnKey = makeMenuButton_LabelWidget(

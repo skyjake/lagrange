@@ -311,6 +311,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.blink", &d->prefs.blinkingCursor },
         { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
         { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
+        { "prefs.evensplit", &d->prefs.evenSplit },
         { "prefs.menubar", &d->prefs.menuBar },
         { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
         { "prefs.boldlink.light", &d->prefs.boldLinkLight },
@@ -2788,6 +2789,15 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.evensplit.changed")) {
+        d->prefs.evenSplit = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            iForEach(PtrArray, i, &d->mainWindows) {
+                resizeSplits_MainWindow(i.ptr, iTrue);
+            }
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.tui.simple.changed")) {
         d->prefs.simpleChars = arg_Command(cmd) != 0;
 #if defined (iPlatformTerminal)
@@ -3819,6 +3829,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.bottomtabbar"), d->prefs.bottomTabBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.menubar"), d->prefs.menuBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.blink"), d->prefs.blinkingCursor);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.evensplit"), d->prefs.evenSplit);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);

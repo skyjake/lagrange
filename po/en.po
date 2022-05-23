@@ -1604,6 +1604,9 @@ msgstr "Bottom Tabs"
 msgid "prefs.menubar"
 msgstr "Menu Bar"
 
+msgid "prefs.evensplit"
+msgstr "Split tabs evenly:"
+
 msgid "prefs.hidetoolbarscroll"
 msgstr "Hide toolbar on scroll:"
 

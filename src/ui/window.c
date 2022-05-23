@@ -228,10 +228,35 @@ int numRoots_Window(const iWindow *d) {
 static void windowSizeChanged_MainWindow_(iMainWindow *d) {
     const int numRoots = numRoots_Window(as_Window(d));
     const iInt2 rootSize = d->base.size;
-    const int weights[2] = {
+    int weights[2] = {
         d->base.roots[0] ? (d->splitMode & twoToOne_WindowSplit ? 2 : 1) : 0,
         d->base.roots[1] ? (d->splitMode & oneToTwo_WindowSplit ? 2 : 1) : 0,
     };
+#if defined (iPlatformDesktop)
+    if (prefs_App()->evenSplit && numRoots > 1 && !(d->splitMode & vertical_WindowSplit)) {
+        /* Include sidebars in the weights. */
+        iWidget *sidebars[2][2];
+        iZap(sidebars);
+        int avail = rootSize.x;
+        iForIndices(r, d->base.roots) {
+            if (d->base.roots[r]) {
+                iForIndices(sb, sidebars[r]) {
+                    iWidget *bar = findChild_Widget(d->base.roots[r]->widget,
+                                                    sb == 0 ? "sidebar" : "sidebar2");
+                    if (isVisible_Widget(bar)) {
+                        avail -= width_Widget(bar);
+                    }
+                    else {
+                        bar = NULL;
+                    }
+                    sidebars[r][sb] = bar;
+                }
+            }
+        }
+        weights[0] = avail / 2 + width_Widget(sidebars[0][0]) + width_Widget(sidebars[0][1]);
+        weights[1] = avail / 2 + width_Widget(sidebars[1][0]) + width_Widget(sidebars[1][1]);;
+    }
+#endif
     const int totalWeight = weights[0] + weights[1];
     int w = 0;
     iForIndices(i, d->base.roots) {
@@ -251,6 +276,18 @@ static void windowSizeChanged_MainWindow_(iMainWindow *d) {
             root->widget->minSize = rect->size;
             updatePadding_Root(root);
             arrange_Widget(root->widget);
+        }
+    }
+}
+
+void resizeSplits_MainWindow(iMainWindow *d, iBool updateDocumentSize) {
+    windowSizeChanged_MainWindow_(d);
+    if (updateDocumentSize) {
+        iForIndices(i, d->base.roots) {
+            iRoot *root = d->base.roots[i];
+            if (root) {
+                updateSize_DocumentWidget(document_Root(root));
+            }
         }
     }
 }

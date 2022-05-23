@@ -32,6 +32,22 @@ iLocalDef iBool isTerminal_Platform(void) {
 #endif
 }
 
+iLocalDef iBool isDesktop_Platform(void) {
+#if defined (iPlatformDesktop)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
+iLocalDef iBool isMobile_Platform(void) {
+#if defined (iPlatformMobile) /* defined on iOS and Android */
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 iLocalDef iBool isApple_Platform(void) {
 #if defined (iPlatformApple)
     return iTrue;
@@ -50,14 +66,6 @@ iLocalDef iBool isAppleDesktop_Platform(void) {
 
 iLocalDef iBool isAndroid_Platform(void) {
 #if defined (iPlatformAndroid)
-    return iTrue;
-#else
-    return iFalse;
-#endif
-}
-
-iLocalDef iBool isMobile_Platform(void) {
-#if defined (iPlatformMobile) /* defined on iOS and Android */
     return iTrue;
 #else
     return iFalse;

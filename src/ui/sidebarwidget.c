@@ -1316,6 +1316,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             updateItems_SidebarWidget_(d);
             scrollOffset_ListWidget(d->list, 0);
         }
+        if (isDesktop_Platform() && prefs_App()->evenSplit) {
+            resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
+        }
         refresh_Widget(w->parent);
         return iTrue;
     }
@@ -1511,6 +1514,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setMouseGrab_Widget(NULL);
                     /* Final size update in case it was resized. */
                     updateSize_DocumentWidget(document_App());
+                    resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
                     refresh_Widget(d->resizer);
                 }
             }
@@ -1526,6 +1530,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                          ? inner.x
                           : (right_Rect(rect_Root(w->root)) - coord_Command(cmd).x)) +
                      resMid) / (float) gap_UI);
+                resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iFalse);
             }
             return iTrue;
         }

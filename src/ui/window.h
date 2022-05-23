@@ -197,7 +197,7 @@ void        checkPendingSplit_MainWindow    (iMainWindow *);
 void        swapRoots_MainWindow            (iMainWindow *);
 //void        showToolbars_MainWindow         (iMainWindow *, iBool show);
 void        resize_MainWindow               (iMainWindow *, int w, int h);
-
+void        resizeSplits_MainWindow         (iMainWindow *, iBool updateDocumentSize);
 //iBool       processEvent_MainWindow         (iMainWindow *, const SDL_Event *);
 void        draw_MainWindow                 (iMainWindow *);
 void        drawQuick_MainWindow            (iMainWindow *);
