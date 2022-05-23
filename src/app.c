@@ -4148,6 +4148,11 @@ iBool handleCommand_App(const char *cmd) {
 }
 
 void openInDefaultBrowser_App(const iString *url) {
+    /* URL cleanup: at least Firefox seems to want backslashes to be encoded. */ {
+        iString *copy = copy_String(url);
+        replace_String(copy, "\\", "%5C");
+        url = collect_String(copy);
+    }
 #if SDL_VERSION_ATLEAST(2, 0, 14)
     if (SDL_OpenURL(cstr_String(url)) == 0) {
         return;
