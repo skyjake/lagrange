@@ -8,6 +8,7 @@
 
 ## 1.13.6
 * Percent-encode backslashes in URLs opened externally in the default browser, for improved compatibility.
+* Custom link icons are allowed with unsupported/unrecognized protocols (i.e., Emoji at the start of link label).
 * Use file name as the tab/window title if the content has no headings.
 * Avoid redundancy in tab/window titles ("Cosmos — Cosmos" → "Cosmos").
 
