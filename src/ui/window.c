@@ -253,8 +253,16 @@ static void windowSizeChanged_MainWindow_(iMainWindow *d) {
                 }
             }
         }
-        weights[0] = avail / 2 + width_Widget(sidebars[0][0]) + width_Widget(sidebars[0][1]);
-        weights[1] = avail / 2 + width_Widget(sidebars[1][0]) + width_Widget(sidebars[1][1]);;
+        float balance[2] = {
+            (d->splitMode & equal_WindowSplit) == equal_WindowSplit ? 0.5f
+            : d->splitMode & twoToOne_WindowSplit                   ? 0.667f
+                                                                    : 0.333f,
+            (d->splitMode & equal_WindowSplit) == equal_WindowSplit ? 0.5f
+            : d->splitMode & twoToOne_WindowSplit                   ? 0.333f
+                                                                    : 0.667f,
+        };
+        weights[0] = balance[0] * avail + width_Widget(sidebars[0][0]) + width_Widget(sidebars[0][1]);
+        weights[1] = balance[1] * avail + width_Widget(sidebars[1][0]) + width_Widget(sidebars[1][1]);
     }
 #endif
     const int totalWeight = weights[0] + weights[1];
