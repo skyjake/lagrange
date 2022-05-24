@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.13.6
+* Fixed crash when switching view to plain text.
 * Fixed manually entered image URLs inadvertently opening inline.
 * Added option to split tabs evenly, excluding sidebar widths (default: no).
 * Percent-encode backslashes in URLs opened externally in the default browser, for improved compatibility.

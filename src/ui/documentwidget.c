@@ -4809,6 +4809,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iChangeFlags(d->flags, viewSource_DocumentWidgetFlag, !gemtext);
         if (setViewFormat_GmDocument(
                 d->view.doc, gemtext ? gemini_SourceFormat : plainText_SourceFormat)) {
+            documentRunsInvalidated_DocumentWidget_(d);
             updateWidthAndRedoLayout_DocumentView_(&d->view);
             updateSize_DocumentWidget(d);
         }
