@@ -1016,7 +1016,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             }
             else {
                 postCommandf_Root(navBar->root,
-                    "open url:%s",
+                    "open notinline:1 url:%s",
                     cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
             }
             return iFalse;

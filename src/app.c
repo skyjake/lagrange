@@ -3648,8 +3648,12 @@ iBool handleCommand_App(const char *cmd) {
         setRedirectCount_DocumentWidget(doc, redirectCount);
         setOrigin_DocumentWidget(doc, origin);
         showCollapsed_Widget(findWidget_App("document.progress"), iFalse);
-        setUrlFlags_DocumentWidget(doc, url,
-           isHistory ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0);
+        setUrlFlags_DocumentWidget(
+            doc,
+            url,
+            (isHistory ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
+                (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag
+                                                    : 0));
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */
         const iRangecc gotoHeading = range_Command(cmd, "gotoheading");

@@ -237,6 +237,7 @@ enum iDocumentWidgetFlag {
     eitherWheelSwipe_DocumentWidgetFlag      = leftWheelSwipe_DocumentWidgetFlag |
                                                rightWheelSwipe_DocumentWidgetFlag,
     viewSource_DocumentWidgetFlag            = iBit(20),
+    preventInlining_DocumentWidgetFlag       = iBit(21),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -3304,6 +3305,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (d->state == fetching_RequestState) {
         /* Under certain conditions, inline any image response into the current document. */
         if (!isTerminal_Platform() &&
+            ~d->flags & preventInlining_DocumentWidgetFlag &&
             d->requestLinkId &&
             isSuccess_GmStatusCode(d->sourceStatus) &&
             startsWithCase_String(&d->sourceMime, "text/gemini") &&
@@ -4298,7 +4300,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
-        d->flags &= ~fromCache_DocumentWidgetFlag;
+        iChangeFlags(d->flags, fromCache_DocumentWidgetFlag | preventInlining_DocumentWidgetFlag,
+                     iFalse);;
         set_Block(&d->sourceContent, body_GmRequest(d->request));
         if (!isSuccess_GmStatusCode(status_GmRequest(d->request))) {
             /* TODO: Why is this here? Can it be removed? */
@@ -6139,6 +6142,8 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags) {
     const iBool allowCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
+    iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
+                 setUrlFlags & preventInlining_DocumentWidgetSetUrlFlag);
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
     /* See if there a username in the URL. */
@@ -6151,6 +6156,7 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
 void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, const iString *mime,
                                     const iBlock *source) {
     setLinkNumberMode_DocumentWidget_(d, iFalse);
+    d->flags |= preventInlining_DocumentWidgetFlag;
     setUrl_DocumentWidget_(d, url);
     parseUser_DocumentWidget_(d);
     iGmResponse *resp = new_GmResponse();
