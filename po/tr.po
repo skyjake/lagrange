@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-17 12:15+0000\n"
+"PO-Revision-Date: 2022-05-25 15:51+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -2428,3 +2428,6 @@ msgstr ""
 
 msgid "prefs.tui.simple"
 msgstr "Yalın karakterler:"
+
+msgid "prefs.evensplit"
+msgstr "Sekmeleri eşitçe böl:"
