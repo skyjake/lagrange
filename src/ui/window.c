@@ -282,6 +282,7 @@ static void windowSizeChanged_MainWindow_(iMainWindow *d) {
             }
             w += weights[i];
             root->widget->minSize = rect->size;
+            setCurrent_Root(root);
             updatePadding_Root(root);
             arrange_Widget(root->widget);
         }
