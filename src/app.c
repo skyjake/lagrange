@@ -3960,6 +3960,9 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmark.add")) {
+        if (findWidget_Root("bmed.create")) {
+            return iTrue;
+        }
         iDocumentWidget *doc = document_App();
         const iString *url;
         const iString *title;

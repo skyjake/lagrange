@@ -1580,8 +1580,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             const int argId = argLabel_Command(cmd, "id");
             if ((d->mode == bookmarks_SidebarMode && item) || argId) {
                 iBookmark *bm  = get_Bookmarks(bookmarks_App(), argId ? argId : item->id);
-                iWidget   *dlg = makeBookmarkEditor_Widget(isFolder_Bookmark(bm), iTrue);
-                setId_Widget(dlg, format_CStr("bmed.%u", id_Bookmark(bm)));
+                const char *dlgId = format_CStr("bmed.%u", id_Bookmark(bm));
+                if (findWidget_Root(dlgId)) {
+                    return iTrue;
+                }
+                iWidget *dlg = makeBookmarkEditor_Widget(isFolder_Bookmark(bm), iTrue);
+                setId_Widget(dlg, dlgId);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &bm->title);
                 if (!isFolder_Bookmark(bm)) {
                     iInputWidget *urlInput        = findChild_Widget(dlg, "bmed.url");
