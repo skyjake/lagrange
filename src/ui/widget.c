@@ -1289,7 +1289,7 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     if (!isOverflowScrollPossible_Widget_(d, delta)) {
         return iFalse;
     }
-    iRect       bounds        = boundsWithoutVisualOffset_Widget(d);
+    iRect       bounds        = boundsWithoutVisualOffset_Widget(d);  
     const iRect winRect       = visibleRect_Root(d->root);
     /* TODO: This needs some fixing on mobile, probably. */
 //    const int   yTop          = iMaxi(0, top_Rect(winRect));
@@ -1393,7 +1393,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 //SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(win->win),
                 //                           &usable);
                 const int bottomLimit =
-                /*iMin(*/ bottom_Rect(rect_Root(d->root)) /*, usable.h * win->pixelRatio) */
+                /*iMin(*/ bottom_Rect(visibleRect_Root(d->root)) /*, usable.h * win->pixelRatio) */
                     - hoverScrollLimit;
                 if (ev->motion.y > bottomLimit) {
                     speed = -(ev->motion.y - bottomLimit) / (float) hoverScrollLimit;
