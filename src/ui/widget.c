@@ -1236,6 +1236,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
 
 void scrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
     iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
+    iRect       visBounds = bounds_Widget(d);
     const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
                                         zero_I2(),
                                         init_I2(0, -get_MainWindow()->keyboardHeight));
@@ -1252,6 +1253,16 @@ void scrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
         info->normScroll  = iClamp(info->normScroll, 0.0f, 1.0f);
         info->thumbHeight = iMin(info->avail / 2, info->avail * info->avail / info->height);
         info->thumbY      = top_Rect(winRect) + (info->avail - info->thumbHeight) * info->normScroll;
+        /* Clamp it. */
+        const iRangei ySpan = ySpan_Rect(visBounds);
+        if (info->thumbY < ySpan.start) {
+            info->thumbHeight += info->thumbY - ySpan.start;
+            info->thumbY = ySpan.start;
+            info->thumbHeight = iMax(7 * gap_UI, info->thumbHeight);
+        }
+        else if (info->thumbY + info->thumbHeight > ySpan.end) {
+            info->thumbHeight = ySpan.end - info->thumbY;
+        }
     }
 }
 
