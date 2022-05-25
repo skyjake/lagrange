@@ -1254,7 +1254,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
                 menuPos = sub_I2(add_I2(winPos, divi_I2(winSize, 2)), divi_I2(menuSize, 2));
             }
             menuPos.x = iMin(menuPos.x, right_Rect(displayRect) - menuSize.x);
-            menuPos.y = iMin(menuPos.y, iMax(0, bottom_Rect(displayRect) - menuSize.y));
+            menuPos.y = iMax(0, iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y));
         }
         iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
         SDL_SetWindowTitle(win->win, "Menu");
