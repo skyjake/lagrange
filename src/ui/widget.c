@@ -1763,9 +1763,13 @@ void draw_Widget(const iWidget *d) {
     if (d->drawBuf) {
         //iAssert(d->drawBuf->isValid);
         const iRect bounds = bounds_Widget(d);
+        iPaint p;
+        init_Paint(&p);
+        setClip_Paint(&p, rect_Root(d->root));
         SDL_RenderCopy(renderer_Window(get_Window()), d->drawBuf->texture, NULL,
                        &(SDL_Rect){ bounds.pos.x, bounds.pos.y,
                                     d->drawBuf->size.x, d->drawBuf->size.y });
+        unsetClip_Paint(&p);
     }
     if (d->flags & overflowScrollable_WidgetFlag) {
         iWidgetScrollInfo info;
