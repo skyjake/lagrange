@@ -1487,6 +1487,13 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
     if (eventMode == waitForNewEvents_AppEventMode && isWaitingAllowed_App_(d)) {
         /* We may be allowed to block here until an event comes in. */
         if (isWaitingAllowed_App_(d)) {
+            if (isAppleDesktop_Platform() && d->window && d->window->enableBackBuf) {
+                /* SDL Metal workaround: if we block here for too long, there will be a longer
+                   ~100ms stutter later on after refresh resumes, when the render pipeline does
+                   some kind of an update (?). */
+                return SDL_WaitEventTimeout(event, 250);
+            }
+            /* Wait indefinitely. */
             return SDL_WaitEvent(event);
         }
     }
@@ -2001,7 +2008,7 @@ void refresh_App(void) {
         iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             switch (win->type) {
-                case main_WindowType: 
+                case main_WindowType:
                     drawQuick_MainWindow(as_MainWindow(win));
                     break;
                 default:
