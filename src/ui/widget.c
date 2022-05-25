@@ -1368,12 +1368,12 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
             else {
                 const iWindow *win = window_Widget(d);
-                SDL_Rect usable;
-                SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(win->win),
-                                           &usable);
+                //SDL_Rect usable;
+                //SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(win->win),
+                //                           &usable);
                 const int bottomLimit =
-                    iMin(bottom_Rect(rect_Root(d->root)), usable.h * win->pixelRatio) -
-                    hoverScrollLimit;
+                /*iMin(*/ bottom_Rect(rect_Root(d->root)) /*, usable.h * win->pixelRatio) */
+                    - hoverScrollLimit;
                 if (ev->motion.y > bottomLimit) {
                     speed = -(ev->motion.y - bottomLimit) / (float) hoverScrollLimit;
                 }

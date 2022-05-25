@@ -11,6 +11,7 @@
 * Fixed crash when switching view to plain text.
 * Fixed manually entered image URLs inadvertently opening inline.
 * Fixed mouse event handling in split view mode when a dialog is open on one side. The other side would not receive wheel events unless input focus was first switched over.
+* Possible workaround for an issue with mouse hover autoscrolling on an external displays.
 * Don't open an endless number of bookmark creation/edit dialogs when holding down the keyboard shortcut (Ctrl+D/⌘D).
 * Percent-encode backslashes in externally opened URLs, for improved compatibility.
 * Custom link icons are allowed with unsupported/unrecognized protocols (i.e., Emoji at the start of link label).
