@@ -81,6 +81,7 @@ iLocalDef iBool isScrollFinished_MouseWheelEvent(const SDL_MouseWheelEvent *ev) 
     return (ev->direction & scrollFinished_MouseWheelFlag) != 0;
 }
 
+iInt2   mouseCoord_SDLEvent     (const SDL_Event *);
 iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 
 #if defined (iPlatformTerminal)

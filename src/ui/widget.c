@@ -1451,7 +1451,8 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                            ev->button.y);
         return iTrue;
     }
-    if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev)) {
+    if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev) &&
+        contains_Rect(rect_Root(d->root), mouseCoord_SDLEvent(ev))) {
         if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
             d->flags & commandOnClick_WidgetFlag) {
             postCommand_Widget(d,

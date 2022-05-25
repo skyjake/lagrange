@@ -99,6 +99,19 @@ iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
     return mouseCoord_Window(get_Window(), ev->which);
 }
 
+iInt2 mouseCoord_SDLEvent(const SDL_Event *ev) {
+    switch (ev->type) {
+        case SDL_MOUSEMOTION:
+            return init_I2(ev->motion.x, ev->motion.y);
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+            return init_I2(ev->button.x, ev->button.y);
+        case SDL_MOUSEWHEEL:
+            return coord_MouseWheelEvent(&ev->wheel);
+    }
+    return zero_I2();
+}
+
 static void removePlus_(iString *str) {
     if (endsWith_String(str, "+")) {
         removeEnd_String(str, 1);
