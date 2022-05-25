@@ -1261,7 +1261,7 @@ static iBool isOverflowScrollPossible_Widget_(const iWidget *d, int delta) {
     }
     iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
     const iRect winRect = visibleRect_Root(d->root);
-    const int   yTop    = top_Rect(winRect);
+    const int   yTop    = iMaxi(0, top_Rect(winRect));
     const int   yBottom = bottom_Rect(winRect);
     if (delta == 0) {
         if (top_Rect(bounds) >= yTop && bottom_Rect(bounds) <= yBottom) {
@@ -1280,7 +1280,8 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     }
     iRect       bounds        = boundsWithoutVisualOffset_Widget(d);
     const iRect winRect       = visibleRect_Root(d->root);
-    iRangei     validPosRange = { bottom_Rect(winRect) - height_Rect(bounds), top_Rect(winRect) };
+    iRangei     validPosRange = { bottom_Rect(winRect) - height_Rect(bounds),
+                                  iMaxi(0, top_Rect(winRect)) };
     if (validPosRange.start > validPosRange.end) {
         validPosRange.start = validPosRange.end; /* no room to scroll */
     }
@@ -1291,6 +1292,7 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
         if (delta > 0 && bounds.pos.y > validPosRange.end) {
             delta = 0;
         }
+        //printf("delta:%d  validPosRange:%d...%d\n", delta, validPosRange.start, validPosRange.end); fflush(stdout);
         bounds.pos.y += delta;
         if (delta < 0) {
             bounds.pos.y = iMax(bounds.pos.y, validPosRange.start);
@@ -1298,7 +1300,6 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
         else if (delta > 0) {
             bounds.pos.y = iMin(bounds.pos.y, validPosRange.end);
         }
-//    printf("range: %d ... %d\n", range.start, range.end);
         if (delta) {
             d->root->didChangeArrangement = iTrue; /* ensure that widgets update if needed */
         }

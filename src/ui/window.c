@@ -1993,10 +1993,10 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
     SDL_Rect usableRect;
     SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(get_MainWindow()->base.win),
                                &usableRect);
-    iRect winRect = (iRect){ screenPos,
-                             min_I2(divf_I2(rootWidget->rect.size, get_Window()->pixelRatio),
-                                    init_I2(usableRect.w, usableRect.h)) };
     const float pixelRatio = get_Window()->pixelRatio;
+    iRect winRect = (iRect){ screenPos,
+                             min_I2(divf_I2(rootWidget->rect.size, pixelRatio),
+                                    init_I2(usableRect.w, usableRect.h)) };
     iWindow *win = new_Window(popup_WindowType,
                               winRect,
                               SDL_WINDOW_ALWAYS_ON_TOP |
