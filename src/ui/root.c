@@ -2160,7 +2160,10 @@ iRect visibleRect_Root(const iRoot *d) {
 #endif
 #if defined (iPlatformDesktop)
     /* Apply the usable bounds of the display. */
-    SDL_Rect usable; {
+    SDL_Rect usable;
+    /* TODO: Needs some investigation. With multiple monitors, at least on macOS, the bounds
+       returned here seem incorrect sometimes (infrequently). */
+    if (iFalse) {
         const float ratio = d->window->pixelRatio;
         SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->window->win), &usable);
         iInt2 winPos;

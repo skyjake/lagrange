@@ -1291,19 +1291,25 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     }
     iRect       bounds        = boundsWithoutVisualOffset_Widget(d);
     const iRect winRect       = visibleRect_Root(d->root);
+    /* TODO: This needs some fixing on mobile, probably. */
+//    const int   yTop          = iMaxi(0, top_Rect(winRect));
+//    const int   yBottom       = bottom_Rect(winRect);
     iRangei     validPosRange = { bottom_Rect(winRect) - height_Rect(bounds),
                                   iMaxi(0, top_Rect(winRect)) };
-    if (validPosRange.start > validPosRange.end) {
-        validPosRange.start = validPosRange.end; /* no room to scroll */
-    }
+//    if (validPosRange.end < validPosRange.start) {
+//        validPosRange.end = validPosRange.start; /* no room to scroll */
+//    }
+//    if ((!isTopOver && delta < 0) || (!isBottomOver && delta > 0)) {
+//        delta = 0;
+//    }
     if (delta) {
-        if (delta < 0 && bounds.pos.y < validPosRange.start) {
-            delta = 0;
-        }
-        if (delta > 0 && bounds.pos.y > validPosRange.end) {
-            delta = 0;
-        }
-        //printf("delta:%d  validPosRange:%d...%d\n", delta, validPosRange.start, validPosRange.end); fflush(stdout);
+//        if (delta < 0 && bounds.pos.y < validPosRange.start) {
+//            delta = 0;
+//        }
+//        if (delta > 0 && bounds.pos.y > validPosRange.end) {
+//            delta = 0;
+//        }
+//        printf("delta:%d  validPosRange:%d...%d\n", delta, validPosRange.start, validPosRange.end); fflush(stdout);
         bounds.pos.y += delta;
         if (delta < 0) {
             bounds.pos.y = iMax(bounds.pos.y, validPosRange.start);
@@ -1316,7 +1322,10 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
         }
     }
     else {
-        bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
+        /* TODO: This is used on mobile. */
+        
+//        printf("clamping validPosRange:%d...%d\n", validPosRange.start, validPosRange.end); fflush(stdout);
+//        bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
     }
     const iInt2 newPos = windowToInner_Widget(d->parent, bounds.pos);
     if (!isEqual_I2(newPos, d->rect.pos)) {
