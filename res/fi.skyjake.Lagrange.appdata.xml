@@ -45,6 +45,29 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.13.6" date="2022-05-26">
+            <description>
+                <p>Changes in v1.13.6:</p>
+                <ul>
+                    <li>Added option to split tabs evenly, excluding sidebar widths (default: no).</li>
+                    <li>Fixed crash when switching view to plain text.</li>
+                    <li>Fixed manually entered image URLs inadvertently opening inline.</li>
+                    <li>Fixed mouse event handling in split view mode when a dialog is open on one side. The other side would not receive wheel events unless input focus was first switched over.</li>
+                    <li>Fixed issues with popup menu positioning.</li>
+                    <li>Fixed drawing of the widget scroll indicator when a widget doesn't fit vertically in the window.</li>
+                    <li>Possible workaround for an issue with mouse hover autoscrolling on an external displays.</li>
+                    <li>Don't open an endless number of bookmark creation/edit dialogs when holding down the keyboard shortcut (Ctrl+D/⌘D).</li>
+                    <li>Percent-encode backslashes in externally opened URLs, for improved compatibility.</li>
+                    <li>Custom link icons are allowed with unsupported/unrecognized protocols (i.e., Emoji at the start of link label).</li>
+                    <li>Use file name as the tab/window title if the content has no headings.</li>
+                    <li>Avoid redundancy in tab/window titles ("Cosmos — Cosmos" → "Cosmos").</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.13.6</url>
+        </release>
         <release version="1.13.5" date="2022-05-19">
             <description>
                 <p>Changes in v1.13.5:</p>
