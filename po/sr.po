@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-17 12:15+0000\n"
+"PO-Revision-Date: 2022-05-25 15:51+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2521,3 +2521,6 @@ msgstr ""
 
 msgid "prefs.tui.simple"
 msgstr "Једноставни знаци:"
+
+msgid "prefs.evensplit"
+msgstr "Равномерно раздвајање картице:"

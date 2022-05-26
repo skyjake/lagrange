@@ -237,6 +237,7 @@ enum iDocumentWidgetFlag {
     eitherWheelSwipe_DocumentWidgetFlag      = leftWheelSwipe_DocumentWidgetFlag |
                                                rightWheelSwipe_DocumentWidgetFlag,
     viewSource_DocumentWidgetFlag            = iBit(20),
+    preventInlining_DocumentWidgetFlag       = iBit(21),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -2144,10 +2145,24 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         else if (!isEmpty_Range(&parts.host)) {
             pushBackRange_StringArray(title, parts.host);
         }
+        else if (!isEmpty_Range(&parts.path)) {
+            iRangecc name = baseNameSep_Path(collectNewRange_String(parts.path), "/");
+            if (!isEmpty_Range(&name)) {
+                pushBack_StringArray(
+                    title, collect_String(urlDecode_String(collectNewRange_String(name))));
+            }
+        }
     }
     if (isEmpty_StringArray(title)) {
         pushBackCStr_StringArray(title, "Lagrange");
     }
+    /* Remove redundant parts. */ {
+        for (size_t i = 0; i < size_StringArray(title) - 1; i++) {
+            if (equal_String(at_StringArray(title, i), at_StringArray(title, i + 1))) {
+                remove_StringArray(title, i + 1);
+            }
+        }   
+    }    
     /* Take away parts if it doesn't fit. */
     const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 7 * gap_UI;
     iBool     setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
@@ -2997,7 +3012,14 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
 }
 
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
-    setRange_String(d->titleUser, urlUser_String(d->mod.url));
+    const iRangecc scheme = urlScheme_String(d->mod.url);
+    if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "titan") ||
+        equalCase_Rangecc(scheme, "spartan") || equalCase_Rangecc(scheme, "gopher")) {
+        setRange_String(d->titleUser, urlUser_String(d->mod.url));
+    }
+    else {
+        clear_String(d->titleUser);
+    }
 }
 
 static void cacheRunGlyphs_(void *data, const iGmRun *run) {
@@ -3283,6 +3305,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (d->state == fetching_RequestState) {
         /* Under certain conditions, inline any image response into the current document. */
         if (!isTerminal_Platform() &&
+            ~d->flags & preventInlining_DocumentWidgetFlag &&
             d->requestLinkId &&
             isSuccess_GmStatusCode(d->sourceStatus) &&
             startsWithCase_String(&d->sourceMime, "text/gemini") &&
@@ -4277,7 +4300,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
-        d->flags &= ~fromCache_DocumentWidgetFlag;
+        iChangeFlags(d->flags, fromCache_DocumentWidgetFlag | preventInlining_DocumentWidgetFlag,
+                     iFalse);;
         set_Block(&d->sourceContent, body_GmRequest(d->request));
         if (!isSuccess_GmStatusCode(status_GmRequest(d->request))) {
             /* TODO: Why is this here? Can it be removed? */
@@ -4785,6 +4809,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iChangeFlags(d->flags, viewSource_DocumentWidgetFlag, !gemtext);
         if (setViewFormat_GmDocument(
                 d->view.doc, gemtext ? gemini_SourceFormat : plainText_SourceFormat)) {
+            documentRunsInvalidated_DocumentWidget_(d);
             updateWidthAndRedoLayout_DocumentView_(&d->view);
             updateSize_DocumentWidget(d);
         }
@@ -6118,6 +6143,8 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags) {
     const iBool allowCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
+    iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
+                 setUrlFlags & preventInlining_DocumentWidgetSetUrlFlag);
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
     /* See if there a username in the URL. */
@@ -6130,6 +6157,7 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
 void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, const iString *mime,
                                     const iBlock *source) {
     setLinkNumberMode_DocumentWidget_(d, iFalse);
+    d->flags |= preventInlining_DocumentWidgetFlag;
     setUrl_DocumentWidget_(d, url);
     parseUser_DocumentWidget_(d);
     iGmResponse *resp = new_GmResponse();

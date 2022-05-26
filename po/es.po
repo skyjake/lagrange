@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-09 04:28+0000\n"
+"PO-Revision-Date: 2022-05-24 04:21+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -2488,3 +2488,9 @@ msgstr ""
 "La respuesta del servidor no contiene una cabecera completa. Tal vez el "
 "servidor tenga una falla, o intentó contactar un servidor que no es de "
 "Gemini."
+
+msgid "prefs.tui.simple"
+msgstr "Caracteres simples:"
+
+msgid "prefs.evensplit"
+msgstr "Dividir pestañas equitativamente:"

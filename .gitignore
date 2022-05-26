@@ -7,3 +7,6 @@ build-*/
 /app
 *~
 /*.sublime-*
+
+# TODO: Maybe a submodule at some point?
+lib/sealcurses

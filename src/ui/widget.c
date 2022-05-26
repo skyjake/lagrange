@@ -1236,6 +1236,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
 
 void scrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
     iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
+    iRect       visBounds = bounds_Widget(d);
     const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
                                         zero_I2(),
                                         init_I2(0, -get_MainWindow()->keyboardHeight));
@@ -1252,6 +1253,16 @@ void scrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
         info->normScroll  = iClamp(info->normScroll, 0.0f, 1.0f);
         info->thumbHeight = iMin(info->avail / 2, info->avail * info->avail / info->height);
         info->thumbY      = top_Rect(winRect) + (info->avail - info->thumbHeight) * info->normScroll;
+        /* Clamp it. */
+        const iRangei ySpan = ySpan_Rect(visBounds);
+        if (info->thumbY < ySpan.start) {
+            info->thumbHeight += info->thumbY - ySpan.start;
+            info->thumbY = ySpan.start;
+            info->thumbHeight = iMax(7 * gap_UI, info->thumbHeight);
+        }
+        else if (info->thumbY + info->thumbHeight > ySpan.end) {
+            info->thumbHeight = ySpan.end - info->thumbY;
+        }
     }
 }
 
@@ -1261,7 +1272,7 @@ static iBool isOverflowScrollPossible_Widget_(const iWidget *d, int delta) {
     }
     iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
     const iRect winRect = visibleRect_Root(d->root);
-    const int   yTop    = top_Rect(winRect);
+    const int   yTop    = iMaxi(0, top_Rect(winRect));
     const int   yBottom = bottom_Rect(winRect);
     if (delta == 0) {
         if (top_Rect(bounds) >= yTop && bottom_Rect(bounds) <= yBottom) {
@@ -1278,19 +1289,27 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     if (!isOverflowScrollPossible_Widget_(d, delta)) {
         return iFalse;
     }
-    iRect       bounds        = boundsWithoutVisualOffset_Widget(d);
+    iRect       bounds        = boundsWithoutVisualOffset_Widget(d);  
     const iRect winRect       = visibleRect_Root(d->root);
-    iRangei     validPosRange = { bottom_Rect(winRect) - height_Rect(bounds), top_Rect(winRect) };
-    if (validPosRange.start > validPosRange.end) {
-        validPosRange.start = validPosRange.end; /* no room to scroll */
-    }
+    /* TODO: This needs some fixing on mobile, probably. */
+//    const int   yTop          = iMaxi(0, top_Rect(winRect));
+//    const int   yBottom       = bottom_Rect(winRect);
+    iRangei     validPosRange = { bottom_Rect(winRect) - height_Rect(bounds),
+                                  iMaxi(0, top_Rect(winRect)) };
+//    if (validPosRange.end < validPosRange.start) {
+//        validPosRange.end = validPosRange.start; /* no room to scroll */
+//    }
+//    if ((!isTopOver && delta < 0) || (!isBottomOver && delta > 0)) {
+//        delta = 0;
+//    }
     if (delta) {
-        if (delta < 0 && bounds.pos.y < validPosRange.start) {
-            delta = 0;
-        }
-        if (delta > 0 && bounds.pos.y > validPosRange.end) {
-            delta = 0;
-        }
+//        if (delta < 0 && bounds.pos.y < validPosRange.start) {
+//            delta = 0;
+//        }
+//        if (delta > 0 && bounds.pos.y > validPosRange.end) {
+//            delta = 0;
+//        }
+//        printf("delta:%d  validPosRange:%d...%d\n", delta, validPosRange.start, validPosRange.end); fflush(stdout);
         bounds.pos.y += delta;
         if (delta < 0) {
             bounds.pos.y = iMax(bounds.pos.y, validPosRange.start);
@@ -1298,13 +1317,15 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
         else if (delta > 0) {
             bounds.pos.y = iMin(bounds.pos.y, validPosRange.end);
         }
-//    printf("range: %d ... %d\n", range.start, range.end);
         if (delta) {
             d->root->didChangeArrangement = iTrue; /* ensure that widgets update if needed */
         }
     }
     else {
-        bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
+        /* TODO: This is used on mobile. */
+        
+//        printf("clamping validPosRange:%d...%d\n", validPosRange.start, validPosRange.end); fflush(stdout);
+//        bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
     }
     const iInt2 newPos = windowToInner_Widget(d->parent, bounds.pos);
     if (!isEqual_I2(newPos, d->rect.pos)) {
@@ -1368,12 +1389,12 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
             else {
                 const iWindow *win = window_Widget(d);
-                SDL_Rect usable;
-                SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(win->win),
-                                           &usable);
+                //SDL_Rect usable;
+                //SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(win->win),
+                //                           &usable);
                 const int bottomLimit =
-                    iMin(bottom_Rect(rect_Root(d->root)), usable.h * win->pixelRatio) -
-                    hoverScrollLimit;
+                /*iMin(*/ bottom_Rect(visibleRect_Root(d->root)) /*, usable.h * win->pixelRatio) */
+                    - hoverScrollLimit;
                 if (ev->motion.y > bottomLimit) {
                     speed = -(ev->motion.y - bottomLimit) / (float) hoverScrollLimit;
                 }
@@ -1451,7 +1472,8 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                            ev->button.y);
         return iTrue;
     }
-    if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev)) {
+    if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev) &&
+        contains_Rect(rect_Root(d->root), mouseCoord_SDLEvent(ev))) {
         if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
             d->flags & commandOnClick_WidgetFlag) {
             postCommand_Widget(d,
@@ -1761,9 +1783,13 @@ void draw_Widget(const iWidget *d) {
     if (d->drawBuf) {
         //iAssert(d->drawBuf->isValid);
         const iRect bounds = bounds_Widget(d);
+        iPaint p;
+        init_Paint(&p);
+        setClip_Paint(&p, rect_Root(d->root));
         SDL_RenderCopy(renderer_Window(get_Window()), d->drawBuf->texture, NULL,
                        &(SDL_Rect){ bounds.pos.x, bounds.pos.y,
                                     d->drawBuf->size.x, d->drawBuf->size.y });
+        unsetClip_Paint(&p);
     }
     if (d->flags & overflowScrollable_WidgetFlag) {
         iWidgetScrollInfo info;

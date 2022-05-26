@@ -51,6 +51,7 @@ iBool               isSourceTextView_DocumentWidget (const iDocumentWidget *);
 
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),
+    preventInlining_DocumentWidgetSetUrlFlag             = iBit(2),
 };
 
 void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other);

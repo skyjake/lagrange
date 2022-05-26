@@ -1016,7 +1016,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             }
             else {
                 postCommandf_Root(navBar->root,
-                    "open url:%s",
+                    "open notinline:1 url:%s",
                     cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
             }
             return iFalse;
@@ -2159,8 +2159,13 @@ iRect visibleRect_Root(const iRoot *d) {
     visRect.size.y -= (int) (top + bottom);
 #endif
 #if defined (iPlatformDesktop)
+    /* Clamp to the actual window size. */
+    visRect = intersect_Rect(visRect, (iRect){ zero_I2(), d->window->size });
     /* Apply the usable bounds of the display. */
-    SDL_Rect usable; {
+    SDL_Rect usable;
+    /* TODO: Needs some investigation. With multiple monitors, at least on macOS, the bounds
+       returned here seem incorrect sometimes (infrequently). */    
+    if (iFalse) {
         const float ratio = d->window->pixelRatio;
         SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->window->win), &usable);
         iInt2 winPos;

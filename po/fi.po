@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2022-05-06 05:02+0000\n"
+"PO-Revision-Date: 2022-05-24 11:55+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -2470,3 +2470,9 @@ msgstr ""
 
 msgid "error.incompleteheader"
 msgstr "Keskeneräinen otsaketieto"
+
+msgid "prefs.tui.simple"
+msgstr "Yksinkertainen merkistö:"
+
+msgid "prefs.evensplit"
+msgstr "Tasaleveä jaettu näkymä:"

@@ -330,7 +330,8 @@ static iBool isAllowedLinkIcon_Char_(iChar icon) {
            icon == 0x2139 /* info */ ||
            (icon >= 0x2190 && icon <= 0x21ff /* arrows */) ||
            icon == 0x2a2f /* close X */ ||
-           (icon >= 0x2b00 && icon <= 0x2bff);
+           (icon >= 0x2b00 && icon <= 0x2bff) ||
+           icon == 0x20bf /* bitcoin */;
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
@@ -464,7 +465,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
             if ((scheme == gemini_GmLinkScheme && ~link->flags & remote_GmLinkFlag) ||
                 scheme == about_GmLinkScheme || scheme == file_GmLinkScheme ||
-                scheme == mailto_GmLinkScheme) {
+                scheme == mailto_GmLinkScheme || scheme == 0 /* unsupported */) {
                 iChar icon = 0;
                 int len = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {

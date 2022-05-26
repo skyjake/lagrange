@@ -99,6 +99,19 @@ iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
     return mouseCoord_Window(get_Window(), ev->which);
 }
 
+iInt2 mouseCoord_SDLEvent(const SDL_Event *ev) {
+    switch (ev->type) {
+        case SDL_MOUSEMOTION:
+            return init_I2(ev->motion.x, ev->motion.y);
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+            return init_I2(ev->button.x, ev->button.y);
+        case SDL_MOUSEWHEEL:
+            return coord_MouseWheelEvent(&ev->wheel);
+    }
+    return zero_I2();
+}
+
 static void removePlus_(iString *str) {
     if (endsWith_String(str, "+")) {
         removeEnd_String(str, 1);
@@ -1241,7 +1254,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
                 menuPos = sub_I2(add_I2(winPos, divi_I2(winSize, 2)), divi_I2(menuSize, 2));
             }
             menuPos.x = iMin(menuPos.x, right_Rect(displayRect) - menuSize.x);
-            menuPos.y = iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y);
+            menuPos.y = iMax(0, iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y));
         }
         iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
         SDL_SetWindowTitle(win->win, "Menu");
@@ -3033,6 +3046,7 @@ iWidget *makePreferences_Widget(void) {
 #endif
             },
             iInvalidSize);
+        addDialogToggle_(headings, values, "${prefs.evensplit}", "prefs.evensplit");
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
         /* Return key behaviors. */ {
             iLabelWidget *returnKey = makeMenuButton_LabelWidget(

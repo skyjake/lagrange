@@ -71,6 +71,8 @@ enum iPrefsBool {
     menuBar_PrefsBool,
     simpleChars_PrefsBool,
     
+    evenSplit_PrefsBool,
+    
     /* Document presentation */
     sideIcon_PrefsBool,
     time24h_PrefsBool,
@@ -134,6 +136,8 @@ struct Impl_Prefs {
             iBool bottomTabBar;
             iBool menuBar;
             iBool simpleChars;
+            
+            iBool evenSplit;
             
             /* Document presentation */
             iBool sideIcon;

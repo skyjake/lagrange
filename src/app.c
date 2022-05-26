@@ -311,6 +311,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.blink", &d->prefs.blinkingCursor },
         { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
         { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
+        { "prefs.evensplit", &d->prefs.evenSplit },
         { "prefs.menubar", &d->prefs.menuBar },
         { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
         { "prefs.boldlink.light", &d->prefs.boldLinkLight },
@@ -1486,6 +1487,13 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
     if (eventMode == waitForNewEvents_AppEventMode && isWaitingAllowed_App_(d)) {
         /* We may be allowed to block here until an event comes in. */
         if (isWaitingAllowed_App_(d)) {
+            if (isAppleDesktop_Platform() && d->window && d->window->enableBackBuf) {
+                /* SDL Metal workaround: if we block here for too long, there will be a longer
+                   ~100ms stutter later on after refresh resumes, when the render pipeline does
+                   some kind of an update (?). */
+                return SDL_WaitEventTimeout(event, 250);
+            }
+            /* Wait indefinitely. */
             return SDL_WaitEvent(event);
         }
     }
@@ -2000,7 +2008,7 @@ void refresh_App(void) {
         iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             switch (win->type) {
-                case main_WindowType: 
+                case main_WindowType:
                     drawQuick_MainWindow(as_MainWindow(win));
                     break;
                 default:
@@ -2785,6 +2793,15 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         d->prefs.menuBar = arg_Command(cmd) != 0;
         if (!isFrozen) {
             postCommand_App("~root.movable");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.evensplit.changed")) {
+        d->prefs.evenSplit = arg_Command(cmd) != 0;
+        if (!isFrozen) {
+            iForEach(PtrArray, i, &d->mainWindows) {
+                resizeSplits_MainWindow(i.ptr, iTrue);
+            }
         }
         return iTrue;
     }
@@ -3638,8 +3655,12 @@ iBool handleCommand_App(const char *cmd) {
         setRedirectCount_DocumentWidget(doc, redirectCount);
         setOrigin_DocumentWidget(doc, origin);
         showCollapsed_Widget(findWidget_App("document.progress"), iFalse);
-        setUrlFlags_DocumentWidget(doc, url,
-           isHistory ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0);
+        setUrlFlags_DocumentWidget(
+            doc,
+            url,
+            (isHistory ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
+                (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag
+                                                    : 0));
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */
         const iRangecc gotoHeading = range_Command(cmd, "gotoheading");
@@ -3819,6 +3840,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.bottomtabbar"), d->prefs.bottomTabBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.menubar"), d->prefs.menuBar);
         setToggle_Widget(findChild_Widget(dlg, "prefs.blink"), d->prefs.blinkingCursor);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.evensplit"), d->prefs.evenSplit);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
@@ -3938,6 +3960,9 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmark.add")) {
+        if (findWidget_Root("bmed.create")) {
+            return iTrue;
+        }
         iDocumentWidget *doc = document_App();
         const iString *url;
         const iString *title;
@@ -4148,6 +4173,11 @@ iBool handleCommand_App(const char *cmd) {
 }
 
 void openInDefaultBrowser_App(const iString *url) {
+    /* URL cleanup: at least Firefox seems to want backslashes to be encoded. */ {
+        iString *copy = copy_String(url);
+        replace_String(copy, "\\", "%5C");
+        url = collect_String(copy);
+    }
 #if SDL_VERSION_ATLEAST(2, 0, 14)
     if (SDL_OpenURL(cstr_String(url)) == 0) {
         return;

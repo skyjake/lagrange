@@ -1316,6 +1316,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             updateItems_SidebarWidget_(d);
             scrollOffset_ListWidget(d->list, 0);
         }
+        if (isDesktop_Platform() && prefs_App()->evenSplit) {
+            resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
+        }
         refresh_Widget(w->parent);
         return iTrue;
     }
@@ -1511,6 +1514,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setMouseGrab_Widget(NULL);
                     /* Final size update in case it was resized. */
                     updateSize_DocumentWidget(document_App());
+                    resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iTrue);
                     refresh_Widget(d->resizer);
                 }
             }
@@ -1526,6 +1530,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                          ? inner.x
                           : (right_Rect(rect_Root(w->root)) - coord_Command(cmd).x)) +
                      resMid) / (float) gap_UI);
+                resizeSplits_MainWindow(as_MainWindow(window_Widget(d)), iFalse);
             }
             return iTrue;
         }
@@ -1575,8 +1580,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             const int argId = argLabel_Command(cmd, "id");
             if ((d->mode == bookmarks_SidebarMode && item) || argId) {
                 iBookmark *bm  = get_Bookmarks(bookmarks_App(), argId ? argId : item->id);
-                iWidget   *dlg = makeBookmarkEditor_Widget(isFolder_Bookmark(bm), iTrue);
-                setId_Widget(dlg, format_CStr("bmed.%u", id_Bookmark(bm)));
+                const char *dlgId = format_CStr("bmed.%u", id_Bookmark(bm));
+                if (findWidget_Root(dlgId)) {
+                    return iTrue;
+                }
+                iWidget *dlg = makeBookmarkEditor_Widget(isFolder_Bookmark(bm), iTrue);
+                setId_Widget(dlg, dlgId);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &bm->title);
                 if (!isFolder_Bookmark(bm)) {
                     iInputWidget *urlInput        = findChild_Widget(dlg, "bmed.url");
