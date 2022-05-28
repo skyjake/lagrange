@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-24 04:21+0000\n"
+"PO-Revision-Date: 2022-05-31 05:51+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -2504,3 +2504,21 @@ msgstr "Прості символи:"
 
 msgid "prefs.evensplit"
 msgstr "Розділяти вкладки рівномірно:"
+
+msgid "error.proxyverify"
+msgstr "Недовірений проксі"
+
+msgid "error.proxyexpired"
+msgstr "Протермінований сертифікат проксі"
+
+msgid "error.proxyexpired.msg"
+msgstr ""
+"З'єднання було скасовано через протермінування TLS сертифікату проксі "
+"сервера."
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"З'єднання було скасовано через невідповідність TLS сертифікату проксі "
+"сервера тому, якому ми довіряємо.\n"
+"\n"
+"Сертифікат проксі сервера можна зробити довіреним у Інформації про сторінку."
