@@ -114,6 +114,7 @@ iBool               forceSoftwareRender_App(void);
 void                setForceSoftwareRender_App(iBool sw);
 enum iColorTheme    colorTheme_App      (void);
 const iString *     schemeProxy_App     (iRangecc scheme);
+iBool               schemeProxyHostAndPort_App(iRangecc scheme, const iString **host, uint16_t *port);
 iBool               willUseProxy_App    (const iRangecc scheme);
 const iString *     searchQueryUrl_App  (const iString *queryStringUnescaped);
 const iString *     fileNameForUrl_App  (const iString *url, const iString *mime);

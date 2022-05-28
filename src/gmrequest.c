@@ -167,6 +167,7 @@ struct Impl_GmRequest {
     iGopher              gopher;
     iSocket *            spartan;
     iGmResponse *        resp;
+    iBool                isProxy;
     iBool                isFilterEnabled;
     iBool                isRespLocked;
     iBool                isRespFiltered;
@@ -190,6 +191,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     resp->certFlags = 0;
     if (cert) {
         const iRangecc domain = range_String(hostName_Address(address_TlsRequest(d->req)));
+        const uint16_t port   = port_Address(address_TlsRequest(d->req));
         resp->certFlags |= available_GmCertFlag;
         set_Block(&resp->certFingerprint, collect_Block(publicKeyFingerprint_TlsCertificate(cert)));
         resp->certFlags |= haveFingerprint_GmCertFlag;
@@ -199,7 +201,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         if (verifyDomain_GmCerts(cert, domain)) {
             resp->certFlags |= domainVerified_GmCertFlag;
         }
-        if (checkTrust_GmCerts(d->certs, domain, port_GmRequest_(d), cert)) {
+        if (checkTrust_GmCerts(d->certs, domain, port, cert)) {
             resp->certFlags |= trusted_GmCertFlag;
         }
         if (verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus) {
@@ -328,12 +330,14 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
         if (d->state == failure_GmRequestState) {
             if (!isVerified_TlsRequest(req)) {
                 if (isExpired_TlsCertificate(serverCertificate_TlsRequest(req))) {
-                    d->resp->statusCode = tlsServerCertificateExpired_GmStatusCode;
-                    setCStr_String(&d->resp->meta, "Server certificate has expired");
+                    d->resp->statusCode = d->isProxy ? proxyCertificateExpired_GmStatusCode
+                                                     : tlsServerCertificateExpired_GmStatusCode;
+                    setCStr_String(&d->resp->meta, get_GmError(d->resp->statusCode)->title);
                 }
                 else {
-                    d->resp->statusCode = tlsServerCertificateNotVerified_GmStatusCode;
-                    setCStr_String(&d->resp->meta, "Server certificate could not be verified");
+                    d->resp->statusCode = d->isProxy ? proxyCertificateNotVerified_GmStatusCode
+                                                     : tlsServerCertificateNotVerified_GmStatusCode;
+                    setCStr_String(&d->resp->meta, get_GmError(d->resp->statusCode)->title);
                 }
             }
             else {
@@ -636,6 +640,7 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     d->id              = add_Atomic(&idGen_, 1) + 1;
     d->identity        = NULL;
     d->resp            = new_GmResponse();
+    d->isProxy         = iFalse;
     d->isFilterEnabled = iTrue;
     d->isRespLocked    = iFalse;
     d->isRespFiltered  = iFalse;
@@ -1005,16 +1010,8 @@ void submit_GmRequest(iGmRequest *d) {
     }
     else if (schemeProxy_App(url.scheme)) {
         /* User has configured a proxy server for this scheme. */
-        const iString *proxy = schemeProxy_App(url.scheme);
-        if (contains_String(proxy, ':')) {
-            const size_t cpos = indexOf_String(proxy, ':');
-            port = atoi(cstr_String(proxy) + cpos + 1);
-            host = collect_String(newCStrN_String(cstr_String(proxy), cpos));
-        }
-        else {
-            host = proxy;
-            port = 0;
-        }
+        schemeProxyHostAndPort_App(url.scheme, &host, &port);
+        d->isProxy = iTrue;
     }
     else if (equalCase_Rangecc(url.scheme, "gopher")) {
         beginGopherConnection_GmRequest_(d, host, port ? port : 70);
@@ -1152,6 +1149,14 @@ size_t bodySize_GmRequest(const iGmRequest *d) {
 
 const iString *url_GmRequest(const iGmRequest *d) {
     return &d->url;
+}
+
+iBool isProxy_GmRequest(const iGmRequest *d) {
+    return d->isProxy;
+}
+
+const iAddress *address_GmRequest(const iGmRequest *d) {
+    return d && d->req ? address_TlsRequest(d->req) : NULL;
 }
 
 int certFlags_GmRequest(const iGmRequest *d) {

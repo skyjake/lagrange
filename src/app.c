@@ -2075,6 +2075,23 @@ const iString *schemeProxy_App(iRangecc scheme) {
     return isEmpty_String(proxy) ? NULL : proxy;
 }
 
+iBool schemeProxyHostAndPort_App(iRangecc scheme, const iString **host, uint16_t *port) {
+    const iString *proxy = schemeProxy_App(scheme);
+    if (!proxy) {
+        return iFalse;
+    }
+    if (contains_String(proxy, ':')) {
+        const size_t cpos = indexOf_String(proxy, ':');
+        *port = atoi(cstr_String(proxy) + cpos + 1);
+        *host = collect_String(newCStrN_String(cstr_String(proxy), cpos));
+    }
+    else {
+        *host = proxy;
+        *port = 0;
+    }
+    return iTrue;
+}
+
 int run_App(int argc, char **argv) {
     init_App_(&app_, argc, argv);
     const int rc = run_App_(&app_);

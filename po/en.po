@@ -2084,11 +2084,23 @@ msgstr "Expired Certificate"
 msgid "error.certexpired.msg"
 msgstr "Connection to the server was cancelled because its TLS certificate has expired."
 
+msgid "error.proxyexpired"
+msgstr "Expired Proxy Certificate"
+
+msgid "error.proxyexpired.msg"
+msgstr "The connection was cancelled because the proxy server's TLS certificate has expired."
+
 msgid "error.certverify"
 msgstr "Untrusted Server"
 
 msgid "error.certverify.msg"
 msgstr "Connection to the server was cancelled because its TLS certificate does not match the one we trust. Please check if the server has announced a certificate change. If not, it is possible that a malicious third party is masquerading as the server you tried to reach.\n\nThe certificate can be marked as trusted in Page Information."
+
+msgid "error.proxyverify"
+msgstr "Untrusted Proxy"
+
+msgid "error.proxyverify.msg"
+msgstr "Connection was cancelled because the proxy server's TLS certificate does not match the one we trust.\n\nThe proxy server's certificate can be marked as trusted in Page Information."
 
 msgid "error.temporary"
 msgstr "Temporary Failure"

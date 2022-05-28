@@ -7,6 +7,8 @@
 # Release notes
 
 ## 1.13.7
+* Fixed reporting of errors related to a proxy server certificate.
+* An untrusted proxy server certificate can be trusted via Page Information.
 
 ## 1.13.6
 * Added option to split tabs evenly, excluding sidebar widths (default: no).
