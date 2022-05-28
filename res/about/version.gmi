@@ -6,6 +6,8 @@
 ```
 # Release notes
 
+## 1.13.7
+
 ## 1.13.6
 * Added option to split tabs evenly, excluding sidebar widths (default: no).
 * Fixed crash when switching view to plain text.
