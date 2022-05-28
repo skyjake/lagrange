@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-25 15:51+0000\n"
+"PO-Revision-Date: 2022-05-31 05:51+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2524,3 +2524,19 @@ msgstr "Једноставни знаци:"
 
 msgid "prefs.evensplit"
 msgstr "Равномерно раздвајање картице:"
+
+msgid "error.proxyverify"
+msgstr "Прокси без поверења"
+
+msgid "error.proxyexpired"
+msgstr "Сертификат проксија је истекао"
+
+msgid "error.proxyexpired.msg"
+msgstr "Повезивање је поништено јер је TLS сертификат прокси сервера истекао."
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"Повезивање је поништено јер се TLS сертификат прокси сервера не поклапа са "
+"оним коме је указано поверење.\n"
+"\n"
+"Сертификату прокси сервера са може указати поверење у Подацима о страници."
