@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-24 04:21+0000\n"
+"PO-Revision-Date: 2022-05-31 05:51+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -2494,3 +2494,22 @@ msgstr "Caracteres simples:"
 
 msgid "prefs.evensplit"
 msgstr "Dividir pestañas equitativamente:"
+
+msgid "error.proxyexpired"
+msgstr "Certificado Proxy Vencido"
+
+msgid "error.proxyexpired.msg"
+msgstr ""
+"La conexión fue cancelada porque el certificado TLS del servidor está "
+"vencido."
+
+msgid "error.proxyverify"
+msgstr "Proxy No Confiable"
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"La conexión fue cancelada porque el certificado TLS del servidor no coincide "
+"con el certificado confiable correspondiente.\n"
+"\n"
+"El certificado del servidor proxy puede marcarse como confiable en la "
+"Información de la Página."
