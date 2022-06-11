@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-15 14:20+0000\n"
+"PO-Revision-Date: 2022-06-12 05:51+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -2438,3 +2438,65 @@ msgstr "Gris"
 
 msgid "prefs.doctheme.name.oceanic"
 msgstr "Oceánico"
+
+msgid "error.proxyexpired"
+msgstr "Caducou o certificado do Proxy"
+
+msgid "error.proxyverify"
+msgstr "Proxy sen confianza"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Ver Markdown como fonte:"
+
+msgid "prefs.tui.simple"
+msgstr "Caracteres simples:"
+
+msgid "keys.menubar.focus"
+msgstr "Destacar barra de menú"
+
+msgid "keys.contextmenu"
+msgstr "Abrir menú contextual"
+
+msgid "error.incompleteheader"
+msgstr "Cabeceira incompleta"
+
+msgid "error.incompleteheader.msg"
+msgstr ""
+"A resposta do servidor non ten unha cabeceira completa. Pode que o servidor "
+"non funcione ben ou que non sexa un servidor Gemini."
+
+msgid "error.proxyexpired.msg"
+msgstr ""
+"Detívose a conexion porque o certificado TLS do servidor proxy está caducado."
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"Detívose a conexión porque o certificado TLS do servidor proxy non coincide "
+"co que temos depositada a confianza.\n"
+"\n"
+"Pódese marcar como confiable o certificado do servidor proxy na Páxina de "
+"Información."
+
+msgid "prefs.evensplit"
+msgstr "Separar lapelas equitativamente:"
+
+msgid "menu.reopentab"
+msgstr "Volver abrir última lapela pechada"
+
+msgid "menu.viewformat.plain"
+msgstr "Ver como Texto plano"
+
+msgid "menu.viewformat.gemini"
+msgstr "Ver como Gemtext"
+
+msgid "keys.identmenu"
+msgstr "Abrir menú de Identidades"
+
+msgid "spartan.input"
+msgstr "Escribe o texto a enviar:"
+
+msgid "dlg.spartan.upload"
+msgstr "Abrir Editor…"
+
+msgid "heading.upload.spartan"
+msgstr "Subir con Spartan"
