@@ -1,4 +1,4 @@
-lagrange (0.0.1-1) unstable; urgency=low
+lagrange (1.13.6-1) unstable; urgency=low
 
   * Setting up automatic builds via GitHub CI.
 
