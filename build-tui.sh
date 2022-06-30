@@ -21,18 +21,21 @@ echo "\nThis script will build and optionally install clagrange with"
 echo "statically linked the_Foundation and SEALCurses. First, let's configure"
 echo "the build.\n"
 
-read -p "Build type? [${CMAKE_BUILD_TYPE}] " INPUT
+echo "Build type? [${CMAKE_BUILD_TYPE}]"
+read INPUT
 if [ "${INPUT}." != "." ]; then
     CMAKE_BUILD_TYPE=${INPUT}
 fi
 
-read -p "Install prefix? [${INSTALL_PREFIX}] " INPUT
+echo "Install prefix? [${INSTALL_PREFIX}]"
+read INPUT
 if [ "${INPUT}." != "." ]; then
     INSTALL_PREFIX=${INPUT}
 fi
 
 if [ ! -d lib/sealcurses ]; then
-    read -p "'lib/sealcurses' not found. Clone with Git? [Yn] " INPUT
+    echo "'lib/sealcurses' not found. Clone with Git? [Yn]"
+    read INPUT
     if [ "${INPUT}." = "n." ]; then
         echo "Build aborted."
         exit
@@ -43,7 +46,8 @@ fi
 #-----------------------------------------------------------------------------
 
 if [ -d build-tui ]; then
-    read -p "'build-tui' already exists. Delete it? [yN] " CONFIRMED
+    echo "'build-tui' already exists. Delete it? [yN]"
+    read CONFIRMED
     if [ "${CONFIRMED}." != "y." ] && [ "${CONFIRMED}." != "Y." ]; then
         echo "Build aborted."
         exit
@@ -97,7 +101,8 @@ cmake --build . || exit 1
 
 echo "-----"
 echo "clagrange and resources.lgr can be found in 'build-tui'."
-read -p "Do you want to install them to ${INSTALL_PREFIX}? (sudo) [yN] " CONFIRMED
+echo "Do you want to install them to ${INSTALL_PREFIX}? (sudo) [yN]"
+read CONFIRMED
 if [ "${CONFIRMED}" = "y" ]; then
     sudo cmake --install .
     exit
