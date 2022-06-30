@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.13.7" date="2022-06-30">
+            <description>
+                <p>Changes in v1.13.7:</p>
+                <ul>
+                    <li>Fixed reporting of errors related to a proxy server certificate.</li>
+                    <li>An untrusted proxy server certificate can be trusted via Page Information.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.13.7</url>
+        </release>
         <release version="1.13.6" date="2022-05-26">
             <description>
                 <p>Changes in v1.13.6:</p>
