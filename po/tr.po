@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-25 15:51+0000\n"
+"PO-Revision-Date: 2022-06-10 14:51+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -922,7 +922,7 @@ msgstr "Arayüz"
 
 # tab button
 msgid "heading.prefs.keys"
-msgstr "Anahtarlar"
+msgstr "Düğmeler"
 
 # tab button
 msgid "heading.prefs.network"
@@ -945,7 +945,7 @@ msgstr "Boyutlandırma"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Stil"
+msgstr "Biçem"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -1015,7 +1015,7 @@ msgid "prefs.returnkey.linebreak"
 msgstr "Satır sonu"
 
 msgid "prefs.animate"
-msgstr "Animasyonlar:"
+msgstr "Canlandırmalar:"
 
 msgid "prefs.sideicon"
 msgstr "Kapsül simgesi:"
@@ -1045,7 +1045,7 @@ msgid "prefs.doctheme.name.highcontrast"
 msgstr "Yüksek karşıtlık"
 
 msgid "prefs.saturation"
-msgstr "Kaynaşma:"
+msgstr "Doygunluk:"
 
 msgid "prefs.imagestyle.original"
 msgstr "Yok"
@@ -1082,7 +1082,7 @@ msgid "prefs.gemtext.ansi"
 msgstr "ANSI kaçışları:"
 
 msgid "prefs.gemtext.ansi.fontstyle"
-msgstr "Yazıtipi stili"
+msgstr "Yazıtipi biçemi"
 
 msgid "prefs.font.warnmissing"
 msgstr "Glif uyarıları:"
@@ -1925,7 +1925,7 @@ msgid "prefs.biglede"
 msgstr "Birinci büyük paragraf:"
 
 msgid "prefs.decodeurls"
-msgstr "URL kodunu çözme:"
+msgstr "URL'lerin kodunu çöz:"
 
 msgid "prefs.ca.path"
 msgstr "CA yolu:"
@@ -2019,7 +2019,7 @@ msgstr ""
 "çıkarmadığına bakın. Değilse kötü niyetli bir üçüncü kişi erişmeye "
 "çalıştığınız sunucu şeklinde gizleniyor olabilir.\n"
 "\n"
-"Sayfa bilgisi bölümünde bu sertifika güvenilir olarak imlenebilir."
+"Bu sertifika, \"Sayfa bilgisi\" bölümünde güvenilir olarak imlenebilir."
 
 msgid "error.unavail.msg"
 msgstr ""
@@ -2046,7 +2046,7 @@ msgstr ""
 
 msgid "error.ansi.msg"
 msgstr ""
-"Bu sayfa düzgünce görüntülenemeyebilir. Metin stilleri için tam olarak "
+"Bu sayfa düzgünce görüntülenemeyebilir. Metin biçemleri için tam olarak "
 "desteklenmeyen ANSI kaçış dizileri kullanıyor. Görüntülemek için bir uçbirim "
 "öykünücüsü kullanabilirsiniz."
 
@@ -2431,3 +2431,22 @@ msgstr "Yalın karakterler:"
 
 msgid "prefs.evensplit"
 msgstr "Sekmeleri eşitçe böl:"
+
+msgid "error.proxyexpired.msg"
+msgstr ""
+"Bağlantı iptal edildi; çünkü vekil sunucunun TLS sertifikasının süresi "
+"dolmuş."
+
+msgid "error.proxyverify"
+msgstr "Güvenilmeyen vekil"
+
+msgid "error.proxyexpired"
+msgstr "Süresi dolmuş vekil sertifikası"
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"Bağlantı iptal edildi; çünkü vekil sunucunun TLS sertifikası, bizim "
+"güvendiğimizle eşleşmiyor.\n"
+"\n"
+"Vekil sunucunun sertifikası, \"Sayfa bilgisi\" bölümünde güvenilir olarak "
+"imlenebilir."

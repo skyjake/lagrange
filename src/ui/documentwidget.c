@@ -238,6 +238,7 @@ enum iDocumentWidgetFlag {
                                                rightWheelSwipe_DocumentWidgetFlag,
     viewSource_DocumentWidgetFlag            = iBit(20),
     preventInlining_DocumentWidgetFlag       = iBit(21),
+    proxyRequest_DocumentWidgetFlag          = iBit(22),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -2372,6 +2373,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                     2);
                 break;
             case tlsServerCertificateNotVerified_GmStatusCode:
+            case proxyCertificateNotVerified_GmStatusCode:
                 makeFooterButtons_DocumentWidget_(
                     d,
                     (iMenuItem[]){ { info_Icon " ${menu.pageinfo}",
@@ -4211,8 +4213,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "server.trustcert") && document_App() == d) {
-        const iRangecc host = urlHost_String(d->mod.url);
-        const uint16_t port = urlPort_String(d->mod.url);
+        const iRangecc scheme = urlScheme_String(d->mod.url);
+        iRangecc host = urlHost_String(d->mod.url);
+        uint16_t port = urlPort_String(d->mod.url);
+        if (d->flags & proxyRequest_DocumentWidgetFlag &&
+            schemeProxy_App(scheme)) {
+            const iString *proxyHost;
+            schemeProxyHostAndPort_App(scheme, &proxyHost, &port);
+            host = range_String(proxyHost);
+        }
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
             setTrusted_GmCerts(certs_App(), host, port, d->certFingerprint, &d->certExpiry);
             postCommand_Widget(w, "navigate.reload");
@@ -4301,7 +4310,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
         iChangeFlags(d->flags, fromCache_DocumentWidgetFlag | preventInlining_DocumentWidgetFlag,
-                     iFalse);;
+                     iFalse);
+        iChangeFlags(d->flags, proxyRequest_DocumentWidgetFlag, isProxy_GmRequest(d->request));
         set_Block(&d->sourceContent, body_GmRequest(d->request));
         if (!isSuccess_GmStatusCode(status_GmRequest(d->request))) {
             /* TODO: Why is this here? Can it be removed? */

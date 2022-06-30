@@ -868,6 +868,14 @@ static const struct {
       { 0x1f645, /* no good */
         "${error.certverify}",
         "${error.certverify.msg}" } },
+    { proxyCertificateExpired_GmStatusCode,
+      { 0x1f4C6, /* calendar */
+        "${error.proxyexpired}",
+        "${error.proxyexpired.msg}" } },
+    { proxyCertificateNotVerified_GmStatusCode,
+      { 0x1f645, /* no good */
+        "${error.proxyverify}",
+        "${error.proxyverify.msg}" } },
     { ansiEscapes_GmStatusCode,
       { 0x1f5b3, /* old computer */
         "${error.ansi}",

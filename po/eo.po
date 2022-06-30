@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-05 03:36+0000\n"
+"PO-Revision-Date: 2022-06-24 12:52+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -1023,3 +1023,190 @@ msgstr "Identeco:"
 
 msgid "dlg.spartan.upload"
 msgstr "Malfermi redaktilon…"
+
+msgid "menu.aboutpages"
+msgstr "Pri-paĝoj"
+
+msgid "menu.debug"
+msgstr "Sencimigaj informoj"
+
+msgid "sidebar.close"
+msgstr "Farita"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importi…"
+
+msgid "sidebar.action.history.clear"
+msgstr "Nuligi"
+
+msgid "toolbar.outline"
+msgstr "Paĝa skemo"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Uzi %s"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Fidinda"
+
+msgid "menu.share"
+msgstr "Konigi"
+
+msgid "dlg.certwarn.title"
+msgstr "Sekureca problemo"
+
+msgid "import.userdata.idents"
+msgstr "Identecoj:"
+
+msgid "dlg.userdata.no"
+msgstr "Neniu"
+
+msgid "dlg.userdata.alldup"
+msgstr "Ĉiuj (konservi duplikatojn)"
+
+msgid "upload.port"
+msgstr "Pordo…"
+
+msgid "dlg.feed.type.gemini"
+msgstr "JJJJ-MM-TT ligiloj"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Klavoj"
+
+msgid "heading.prefs.pagecontent"
+msgstr "Paĝaj koloroj"
+
+msgid "prefs.pinsplit.left"
+msgstr "Maldekstra langeto"
+
+msgid "prefs.font.body"
+msgstr "Korpo:"
+
+msgid "prefs.linewidth.fill"
+msgstr "Plenigi"
+
+msgid "menu.forgeturl"
+msgstr "Forgesi URL"
+
+msgid "prefs.pinsplit.right"
+msgstr "Dekstra langeto"
+
+msgid "prefs.returnkey.accept"
+msgstr "Akcepti"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Oceana"
+
+msgid "prefs.justify"
+msgstr "Ĝisrandigi:"
+
+msgid "prefs.memorysize"
+msgstr "Memorkapacito:"
+
+msgid "prefs.cachesize"
+msgstr "Kaŝmemorgrando:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Nuna domajno"
+
+msgid "dlg.upload.id.none"
+msgstr "Neniu"
+
+msgid "prefs.imagestyle.original"
+msgstr "Neniu"
+
+msgid "prefs.font"
+msgstr "Korpa tiparo:"
+
+msgid "upload.file.size"
+msgstr "Dosiergrando:"
+
+msgid "prefs.font.ui"
+msgstr "Fasado:"
+
+msgid "prefs.boldlink.visited"
+msgstr "Vizitita"
+
+msgid "prefs.boldlink"
+msgstr "Grasaj ligiloj:"
+
+msgid "prefs.linespacing"
+msgstr "Interlinia distanco:"
+
+msgid "dlg.newident.scope.page"
+msgstr "Nuna paĝo"
+
+msgid "dir.empty"
+msgstr "Ĉi tiu dosierujo estas malplena."
+
+msgid "heading.prefs.sizing"
+msgstr "Grando"
+
+msgid "keys.tab.close.other"
+msgstr "Fermi aliajn langetojn"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Alta kontrasto"
+
+msgid "error.proxy"
+msgstr "Prokura eraro"
+
+msgid "prefs.pinsplit.none"
+msgstr "Neniu"
+
+msgid "menu.openwindow"
+msgstr "Malfermi en nova fenestro"
+
+msgid "ident.notused"
+msgstr "Ne uzata"
+
+msgid "dlg.input.linebreak"
+msgstr "Linisalto"
+
+msgid "menu.website"
+msgstr "Projekta retejo…"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "PAĜA ENHAVO"
+
+msgid "menu.upload.delete"
+msgstr "Forigi ĉiujn"
+
+msgid "heading.glyphfinder.results"
+msgstr "Serĉrezultoj"
+
+msgid "hint.newident.date"
+msgstr "JJJJ aŭ JJJJ-MM-TT"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Forigi legosignon"
+msgstr[1] "Forigi %u legosignojn"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "%u tiparo"
+msgstr[1] "%u tiparoj"
+
+#, c-format
+msgid "fontpack.delete"
+msgstr "Forigi porĉiame \"%s\""
+
+msgid "menu.select.clear"
+msgstr "Malelekti"
+
+msgid "upload.token"
+msgstr "Ĵetono:"
+
+msgid "heading.prefs.support"
+msgstr "Subteno"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Patra dosierujo:"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Malatenti HTTP(S) ligilojn:"

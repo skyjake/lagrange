@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.13.6
+    VERSION 1.13.7
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -549,6 +549,7 @@ elseif (HAIKU)
 elseif (ANDROID)
     file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../src/main/assets)
 elseif (ENABLE_TUI AND (UNIX OR MSYS))
+    include (GNUInstallDirs)
     install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR})
     install (FILES res/lagrange.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
     if (NOT ENABLE_RELATIVE_EMBED)
