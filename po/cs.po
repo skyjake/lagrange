@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-20 04:05+0000\n"
+"PO-Revision-Date: 2022-07-06 17:52+0000\n"
 "Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
@@ -440,7 +440,7 @@ msgid "hint.findtext"
 msgstr "Najít text na stránce"
 
 msgid "status.query.tight"
-msgstr "Dotaz"
+msgstr "Vyhledat"
 
 # megabytes, used as the unit after a number
 msgid "mb"
@@ -2248,3 +2248,49 @@ msgstr "Nastavit akci:"
 # Shows where a local file is using the File Manager.
 msgid "menu.reveal.filemgr"
 msgstr "Otevřít v průzkumníku souborů"
+
+msgid "menu.newwindow"
+msgstr "Nové okno"
+
+msgid "heading.archive.userdata"
+msgstr "Archiv uživatelských dat"
+
+msgid "userdata.help"
+msgstr ""
+"Archivy uživatelských dat obsahují exportovanou historii prohlížení, "
+"totožnosti, záložky, nastavení stránek a otisky důvěryhodných serverových "
+"certifikátů. Ty pak mohou být uloženy za účelem zálohování a výměny dat mezi "
+"zařízeními."
+
+msgid "menu.openwindow"
+msgstr "Otevřít v novém okně"
+
+msgid "menu.reopentab"
+msgstr "Otevřít poslední zavřenou kartu"
+
+msgid "menu.export"
+msgstr "Exportovat uživatelská data"
+
+msgid "menu.import"
+msgstr "Importovat uživatelská data…"
+
+msgid "menu.viewformat.plain"
+msgstr "Zobrazit jako prostý text"
+
+msgid "menu.viewformat.gemini"
+msgstr "Zobrazit jako gemtext"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Označit vše níže jako přečtené"
+
+msgid "pageinfo.settings"
+msgstr "Nastavení"
+
+msgid "heading.sitespec"
+msgstr "Nastavení stránky"
+
+msgid "sitespec.ansi"
+msgstr "Upozornění na ANSI uvození:"
+
+msgid "dlg.spartan.upload"
+msgstr "Otevřít editor…"
