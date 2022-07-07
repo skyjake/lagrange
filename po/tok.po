@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2022-07-08 21:52+0000\n"
-"Last-Translator: jan Anja <cyber@sysrq.in>\n"
+"Last-Translator: Seiji Delph <george@quotennial.co.uk>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
 "Language: tok\n"
@@ -2326,3 +2326,7 @@ msgstr "telo suli"
 
 msgid "prefs.tui.simple"
 msgstr "sitelen pona:"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "lipu"
