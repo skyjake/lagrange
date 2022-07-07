@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-02-07 14:50+0000\n"
+"PO-Revision-Date: 2022-07-08 21:52+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -2154,3 +2154,175 @@ msgstr "lipu ale li lukin"
 # Paste the line preceding the clicked link into the input prompt.
 msgid "menu.input.precedingline"
 msgstr "o pana e linja pini"
+
+msgid "prefs.accent.red"
+msgstr "loje"
+
+msgid "error.glyphs"
+msgstr "sitelen li lon ala"
+
+msgid "prefs.urlsize"
+msgstr "suli pi nimi URL:"
+
+msgid "prefs.markdown.viewsource"
+msgstr "lukin e lipu Markdown la, o lukin e sitelen pi namako ala:"
+
+msgid "prefs.bottomtabbar"
+msgstr "poki lon anpa"
+
+msgid "prefs.accent.green"
+msgstr "laso"
+
+msgid "error.proxyverify"
+msgstr "lupa li pona ala"
+
+msgid "menu.viewformat.plain"
+msgstr "o lukin e lipu pi namako ala"
+
+msgid "menu.viewformat.gemini"
+msgstr "o lukin e lipu Kemini"
+
+msgid "link.newwindow"
+msgstr "o open e nimi tawa lon poki poki sin"
+
+msgid "heading.import.userdata"
+msgstr "o kama jo e ijo mute pi ilo Lakelan"
+
+msgid "import.userdata.bookmarks"
+msgstr "lipu awen:"
+
+msgid "import.userdata.idents"
+msgstr "nimi:"
+
+msgid "import.userdata.history"
+msgstr "sona pini:"
+
+msgid "import.userdata.sitespec"
+msgstr "ijo ante lipu:"
+
+msgid "dlg.userdata.missing"
+msgstr "lon ala la"
+
+msgid "dlg.userdata.all"
+msgstr "ale (o weka)"
+
+msgid "spartan.input"
+msgstr "o pana e sitelen:"
+
+msgid "heading.upload.spartan"
+msgstr "o pana kepeken kon Sapatan"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "o lukin ala e sitelen moli"
+
+msgid "dlg.glyphfinder.search"
+msgstr "o lukin e sitelen mute"
+
+msgid "heading.glyphfinder.results"
+msgstr "lipu lukin"
+
+msgid "heading.bookmark.editfolder"
+msgstr "o ante e poki"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "poki mama:"
+
+msgid "prefs.accent.blue"
+msgstr "laso"
+
+msgid "prefs.accent.gray"
+msgstr "pimeja walo"
+
+msgid "prefs.font.warnmissing"
+msgstr "sitelen moli tawa sitelen:"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "sona pi ilo Lakelan"
+
+msgid "sitespec.tlscache"
+msgstr "o awen e kon TLS:"
+
+msgid "keys.pageinfo"
+msgstr "o lukin e sona lipu"
+
+msgid "dlg.certimport.paste"
+msgstr "o pana tan sona"
+
+msgid "heading.import.userdata.error"
+msgstr "kama jo li pakala"
+
+msgid "import.userdata.trusted"
+msgstr "sitelen len pona:"
+
+msgid "dlg.userdata.alldup"
+msgstr "ale (o awen e ijo pi nanpa tu)"
+
+msgid "dlg.spartan.upload"
+msgstr "o open e ilo ante…"
+
+msgid "menu.reopentab"
+msgstr "pini li weka la, o open e ni"
+
+msgid "heading.dismiss.warning"
+msgstr "o lukin ala lukin e sitelen moli?"
+
+msgid "dlg.dismiss.warning"
+msgstr "o lukin ala e sitelen moli"
+
+msgid "keys.input.precedingline"
+msgstr "o pana e linja pini"
+
+msgid "menu.paste.go"
+msgstr "o pana tan sona li kama"
+
+msgid "pageinfo.settings"
+msgstr "ijo ante"
+
+msgid "heading.sitespec"
+msgstr "ijo ante lipu"
+
+msgid "sitespec.palette"
+msgstr "ijo ante kule:"
+
+msgid "sitespec.accept"
+msgstr "o awen"
+
+msgid "sitespec.ansi"
+msgstr "sitelen moli tawa namako ANSI:"
+
+msgid "heading.archive.userdata"
+msgstr "ijo mute pi ilo Lakelan"
+
+msgid "menu.export"
+msgstr "o pana e ijo mute"
+
+msgid "menu.import"
+msgstr "o kama jo e ijo mute…"
+
+msgid "feeds.entry.markbelowread"
+msgstr "mi wile ala lukin e lipu anpa"
+
+msgid "menu.openwindow"
+msgstr "o open lon poki poki sin"
+
+msgid "keys.sitespec"
+msgstr "o lukin e ijo ante lipu"
+
+msgid "dlg.userdata.no"
+msgstr "ala"
+
+msgid "import.userdata.error"
+msgstr "%s li ijo mute pi ilo Lakelan li pakala."
+
+msgid "menu.newwindow"
+msgstr "o pali e poki poki sin"
+
+msgid "heading.prefs.support"
+msgstr "o jo e pona"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "telo suli"
+
+msgid "prefs.tui.simple"
+msgstr "sitelen pona:"
