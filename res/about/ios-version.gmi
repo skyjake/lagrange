@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.13 (3)
+* Fixed reporting of errors related to a proxy server certificate.
+* An untrusted proxy server certificate can be trusted via Page Information.
+* Updated UI translations.
+
 ## 1.13 (2)
 * Fixed showing error page for an empty server response.
 * Fixes for Spartan: query strings, input prompt default content, empty paths.
