@@ -182,6 +182,8 @@ struct Impl_App {
 
 static iApp app_;
 
+static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd);
+    
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(Ticker)
@@ -1578,11 +1580,18 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isSuspended = iTrue;
                 break;
             case SDL_APP_TERMINATING:
-                setFreezeDraw_MainWindow(d->window, iTrue);
+                if (d->window) {
+                    setFreezeDraw_MainWindow(d->window, iTrue);
+                }
                 savePrefs_App_(d);
                 saveState_App_(d);
                 break;
             case SDL_DROPFILE: {
+                if (!d->window) {
+                    /* Need to open an empty window now. */
+                    handleNonWindowRelatedCommand_App_(d, "window.new url:");
+                    iAssert(d->window);
+                }
                 iBool wasUsed = processEvent_Window(as_Window(d->window), &ev);
                 if (!wasUsed) {
                     iBool newTab = iFalse;
@@ -2249,12 +2258,14 @@ size_t windowIndex_App(const iMainWindow *win) {
     return indexOf_PtrArray(&app_.mainWindows, win); 
 }
 
+#if 0
 iMainWindow *newMainWindow_App(void) {
     iApp *d = &app_;
     iMainWindow *win = new_MainWindow(initialWindowRect_App_(d, size_PtrArray(&d->mainWindows)));
     addWindow_App(win);
     return win;
 }
+#endif
 
 const iPtrArray *mainWindows_App(void) {
     return &app_.mainWindows;
@@ -3249,7 +3260,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
             loadState_App_(d);
         }
         if (hasLabel_Command(cmd, "url")) {
-            postCommandf_Root(newWin->base.roots[0], "~open %s", cmd + 11 /* all arguments passed on */);
+            const char *urlAndArgs = cmd + 11; /* all arguments to "window.new" passed on */
+            if (strlen(suffixPtr_Command(cmd, "url")) /* not empty URL */) {
+                postCommandf_Root(newWin->base.roots[0], "~open %s", urlAndArgs);
+            }
         }
         else {
             postCommand_Root(newWin->base.roots[0], "~navigate.home");
