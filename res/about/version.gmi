@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.13.8
+* macOS: Fixed crash when opening URLs via system handler when no windows open.
+
 ## 1.13.7
 * Fixed reporting of errors related to a proxy server certificate.
 * An untrusted proxy server certificate can be trusted via Page Information.
