@@ -587,6 +587,9 @@ msgstr "Open in Background Tab"
 msgid "menu.openwindow"
 msgstr "Open in New Window"
 
+msgid "menu.folder.opentab"
+msgstr "Open in New Tabs"
+
 msgid "menu.openfile"
 msgstr "Open File…"
 
@@ -652,6 +655,9 @@ msgstr "Remove Bookmark Source"
 
 msgid "bookmark.delete"
 msgstr "Delete Bookmark"
+
+msgid "bookmark.folder.delete"
+msgstr "Delete Bookmark Folder"
 
 msgid "bookmarks.reload"
 msgstr "Refresh Remote Sources"
