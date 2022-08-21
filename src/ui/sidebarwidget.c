@@ -1585,10 +1585,41 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "bookmark.open")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
-                postCommandf_App("open newtab:%d newwindow:%d url:%s",
-                                 argLabel_Command(cmd, "newtab"),
-                                 argLabel_Command(cmd, "newwindow"),
-                                 cstr_String(&item->url));
+                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                if (bm) {
+                    if (isFolder_Bookmark(bm)) {
+                        iRoot *openingInRoot = get_Root();
+                        iBool isNewWindow = iFalse;
+                        if (argLabel_Command(cmd, "newwindow")) {
+                            /* First open a new window. */
+                            iMainWindow *newWin = newMainWindow_App();
+                            openingInRoot = newWin->base.roots[0];
+                            isNewWindow = iTrue;
+                        }
+                        iConstForEach(PtrArray,
+                                      i,
+                                      list_Bookmarks(bookmarks_App(),
+                                                     cmpTree_Bookmark,
+                                                     filterInsideFolder_Bookmark,
+                                                     bm)) {
+                            const iBookmark *contained = i.ptr;
+                            if (!isFolder_Bookmark(contained)) {
+                                postCommandf_Root(openingInRoot,
+                                                  "open newtab:%d url:%s",
+                                                  !isNewWindow ? 1 : (index_PtrArrayConstIterator(&i) > 0)
+                                                    /* first one is not in a new tab */,
+                                                  cstr_String(&contained->url));
+                            }
+                        }
+                        postCommandf_Root(openingInRoot, "window.unfreeze");
+                    }
+                    else {
+                        postCommandf_App("open newtab:%d newwindow:%d url:%s",
+                                         argLabel_Command(cmd, "newtab"),
+                                         argLabel_Command(cmd, "newwindow"),
+                                         cstr_String(&item->url));
+                    }
+                }
             }
             return iTrue;
         }

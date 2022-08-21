@@ -2258,14 +2258,20 @@ size_t windowIndex_App(const iMainWindow *win) {
     return indexOf_PtrArray(&app_.mainWindows, win); 
 }
 
-#if 0
 iMainWindow *newMainWindow_App(void) {
     iApp *d = &app_;
-    iMainWindow *win = new_MainWindow(initialWindowRect_App_(d, size_PtrArray(&d->mainWindows)));
-    addWindow_App(win);
-    return win;
+    iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
+    addWindow_App(newWin); /* App takes ownership */
+    SDL_ShowWindow(newWin->base.win);
+    setCurrent_Window(newWin);        
+    if (isAppleDesktop_Platform() && size_PtrArray(mainWindows_App()) == 1) {
+        /* Restore the window state as it was before (sidebars, navigation history) when
+           opening a window again after all windows have been closed. */
+        setActiveWindow_App(newWin);
+        loadState_App_(d);
+    }
+    return newWin;
 }
-#endif
 
 const iPtrArray *mainWindows_App(void) {
     return &app_.mainWindows;
@@ -3249,16 +3255,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "window.new")) {
 #if !defined (iPlatformTerminal)
-        iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
-        addWindow_App(newWin); /* takes ownership */
-        SDL_ShowWindow(newWin->base.win);
-        setCurrent_Window(newWin);        
-        if (isAppleDesktop_Platform() && size_PtrArray(mainWindows_App()) == 1) {
-            /* Restore the window state as it was before (sidebars, navigation history) when
-               opening a window again after all windows have been closed. */
-            setActiveWindow_App(newWin);
-            loadState_App_(d);
-        }
+        iMainWindow *newWin = newMainWindow_App();
         if (hasLabel_Command(cmd, "url")) {
             const char *urlAndArgs = cmd + 11; /* all arguments to "window.new" passed on */
             if (strlen(suffixPtr_Command(cmd, "url")) /* not empty URL */) {
