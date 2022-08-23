@@ -361,7 +361,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         init_Array(&items, sizeof(iMenuItem));
         /* Current identity. */
         const iString     *docUrl = url_DocumentWidget(document_App());
-        const iGmIdentity *ident  = identityForUrl_GmCerts(certs_App(), docUrl);
+        const iGmIdentity *ident  = identity_DocumentWidget(document_App());
         const iString     *fp     = ident ? collect_String(hexEncode_Block(&ident->fingerprint)) : NULL;
         iString           *str    = NULL;
         if (ident) {
@@ -579,22 +579,24 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 }
 
 static void updateNavBarIdentity_(iWidget *navBar) {
-    const iGmIdentity *ident =
-        identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
+    iDocumentWidget *doc = document_App();
+    const iGmIdentity *ident = identity_DocumentWidget(doc);
     /* Update menu. */
     const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
     if (navBar) {
         iWidget *button = findChild_Widget(navBar, "navbar.ident");
         iWidget *menu   = findChild_Widget(button, "menu");
         setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
-        const char *   idLabel     = subjectName
-                                     ? cstr_String(subjectName)
-                                     : "${menu.identity.notactive}";
+        const char *idLabel = subjectName ? cstr_String(subjectName) : "${menu.identity.notactive}";
         setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
         setMenuItemDisabledByIndex_Widget(menu, 0, !ident);
+        /* Visualize an identity override. */
+        setOutline_LabelWidget((iLabelWidget *) button, isIdentityOverridden_DocumentWidget(doc));
+        setBackgroundColor_Widget(
+            button, isIdentityOverridden_DocumentWidget(doc) ? uiBackground_ColorId : none_ColorId);
     }
     iLabelWidget *toolButton = findWidget_App("toolbar.ident");
-    iLabelWidget *toolName = findWidget_App("toolbar.name");
+    iLabelWidget *toolName   = findWidget_App("toolbar.name");
     if (toolName) {
         setOutline_LabelWidget(toolButton, ident == NULL);
         if (ident) {
@@ -602,7 +604,8 @@ static void updateNavBarIdentity_(iWidget *navBar) {
             setTextColor_LabelWidget(toolName, uiTextAction_ColorId);
         }
         else {
-            setTextColor_LabelWidget(toolButton, textColor_LabelWidget(child_Widget(parent_Widget(toolButton), 0)));
+            setTextColor_LabelWidget(
+                toolButton, textColor_LabelWidget(child_Widget(parent_Widget(toolButton), 0)));
         }
         /* Fit the name in the widget. */
         if (subjectName) {
@@ -618,7 +621,7 @@ static void updateNavBarIdentity_(iWidget *navBar) {
         }
         setFont_LabelWidget(toolButton, subjectName ? uiLabelMedium_FontId : uiLabelLarge_FontId);
         setTextOffset_LabelWidget(toolButton, init_I2(0, subjectName ? -1.5f * gap_UI : 0));
-        arrange_Widget(parent_Widget(toolButton));        
+        arrange_Widget(parent_Widget(toolButton));
     }
 }
 

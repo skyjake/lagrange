@@ -1462,11 +1462,23 @@ msgstr "Parent folder:"
 msgid "dlg.bookmark.tags"
 msgstr "Tags:"
 
+msgid "hint.dlg.bookmark.tags"
+msgstr "space-separated terms"
+
+msgid "dlg.bookmark.notes"
+msgstr "Notes:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "free-form private notes"
+
+msgid "dlg.bookmark.identity"
+msgstr "Set identity:"
+
 msgid "dlg.bookmark.icon"
 msgstr "Icon:"
 
 msgid "heading.bookmark.tags"
-msgstr "Special Tags"
+msgstr "Properties"
 
 msgid "heading.addfolder"
 msgstr "Add Folder"

@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stream.h>
 
 iDeclareType(GmDocument)
+iDeclareType(GmIdentity)
 iDeclareType(GmRequest)
 iDeclareType(History)
 
@@ -48,6 +49,8 @@ const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
 iBool               isSourceTextView_DocumentWidget (const iDocumentWidget *);
+const iGmIdentity * identity_DocumentWidget         (const iDocumentWidget *);
+iBool               isIdentityOverridden_DocumentWidget(const iDocumentWidget *);
 
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),
@@ -55,8 +58,10 @@ enum iDocumentWidgetSetUrlFlags {
 };
 
 void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other);
+void    setIdentityOverride_DocumentWidget  (iDocumentWidget *, const iBlock *fingerprint);
 void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);
-void    setUrlFlags_DocumentWidget      (iDocumentWidget *, const iString *url, int setUrlFlags);
+void    setUrlFlags_DocumentWidget      (iDocumentWidget *, const iString *url, int setUrlFlags,
+                                         const iBlock *identityOverrideFingerprint);
 void    setUrlAndSource_DocumentWidget  (iDocumentWidget *, const iString *url, const iString *mime, const iBlock *source);
 void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); /* set after content received */
 void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);

@@ -3550,6 +3550,11 @@ iBool handleCommand_App(const char *cmd) {
         if (!urlArg) {
             return iTrue; /* invalid command */
         }
+        iString *setIdentArg = collectNew_String();
+        if (hasLabel_Command(cmd, "setident")) {
+            setCStr_String(setIdentArg, " setident:");
+            appendRange_String(setIdentArg, range_Command(cmd, "setident"));
+        }
         if (argLabel_Command(cmd, "query")) {
             const iString *url = collectNewCStr_String(urlArg);
             iString *spartanCmd = collectNewFormat_String(
@@ -3594,7 +3599,8 @@ iBool handleCommand_App(const char *cmd) {
         if (argLabel_Command(cmd, "newwindow")) {
             const iRangecc gotoheading = range_Command(cmd, "gotoheading");
             const iRangecc gotourlheading = range_Command(cmd, "gotourlheading");
-            postCommandf_Root(get_Root(), "window.new%s%s%s%s url:%s",
+            postCommandf_Root(get_Root(), "window.new%s%s%s%s%s url:%s",
+                              cstr_String(setIdentArg),
                               isEmpty_Range(&gotoheading) ? "" : " gotoheading:",
                               isEmpty_Range(&gotoheading) ? "" : cstr_Rangecc(gotoheading),
                               isEmpty_Range(&gotourlheading) ? "" : " gotourlheading:",
@@ -3686,9 +3692,9 @@ iBool handleCommand_App(const char *cmd) {
         setUrlFlags_DocumentWidget(
             doc,
             url,
-            (isHistory ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
-                (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag
-                                                    : 0));
+            (isHistory && !setIdentArg ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
+                (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag : 0),
+            setIdentArg ? collect_Block(hexDecode_Rangecc(range_Command(cmd, "setident"))) : NULL);
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */
         const iRangecc gotoHeading = range_Command(cmd, "gotoheading");
@@ -4097,9 +4103,9 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "ident.switch")) {
         /* This is different than "ident.signin" in that the currently used identity's activation
-           URL is used instead of the current one. */
+           URL is used instead of the current one. */        
         const iString     *docUrl = url_DocumentWidget(document_App());
-        const iGmIdentity *cur    = identityForUrl_GmCerts(d->certs, docUrl);
+        const iGmIdentity *cur    = identity_DocumentWidget(document_App());
         iGmIdentity       *dst    = findIdentity_GmCerts(
             d->certs, collect_Block(hexDecode_Rangecc(range_Command(cmd, "fp"))));
         if (dst && cur != dst) {
@@ -4107,6 +4113,7 @@ iBool handleCommand_App(const char *cmd) {
             if (isEmpty_String(useUrl)) {
                 useUrl = copy_String(docUrl);
             }
+            setIdentityOverride_DocumentWidget(document_App(), NULL);
             signIn_GmCerts(d->certs, dst, useUrl);
             postCommand_App("idents.changed");
             postCommand_App("navigate.reload");

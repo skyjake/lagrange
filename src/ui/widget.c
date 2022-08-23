@@ -138,6 +138,7 @@ void init_Widget(iWidget *d) {
     d->parent         = NULL;
     d->commandHandler = NULL;
     d->drawBuf        = NULL;
+    init_String(&d->data);
     iZap(d->padding);
 }
 
@@ -174,6 +175,7 @@ void deinit_Widget(iWidget *d) {
                d->flags & keepOnTop_WidgetFlag ? 1 : 0);
     }
 #endif
+    deinit_String(&d->data);
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_Root(d->root), d);

@@ -1023,6 +1023,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             ? (keyMods_Sym(modState_Keys()) & KMOD_SHIFT ? new_OpenTabFlag
                                                          : newBackground_OpenTabFlag)
             : 0;
+    iString *setIdentArg = NULL;
     switch (d->mode) {
         case documentOutline_SidebarMode: {
             const iGmDocument *doc = document_DocumentWidget(document_App());
@@ -1043,7 +1044,8 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             break;
         }
         case bookmarks_SidebarMode:
-            if (isEmpty_String(&item->url)) /* a folder */ {
+            /* Bookmark folder folding is toggled when clicking. */
+            if (isEmpty_String(&item->url) /* is a folder */) {
                 if (contains_IntSet(d->closedFolders, item->id)) {
                     remove_IntSet(d->closedFolders, item->id);
                     setRecentFolder_Bookmarks(bookmarks_App(), item->id);
@@ -1054,6 +1056,14 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 }
                 updateItems_SidebarWidget_(d);
                 break;
+            }
+            else {
+                /* Check if the bookmark changes the active identity on the URL. */
+                const iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                if (bm && !isEmpty_String(&bm->identity)) {
+                    setIdentArg = collect_String(copy_String(&bm->identity));
+                    prependCStr_String(setIdentArg, " setident:");
+                }
             }
             if (d->isEditing) {
                 d->contextItem = item;
@@ -1066,7 +1076,8 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {
                 postCommandf_Root(get_Root(),
-                                  "open fromsidebar:1 newtab:%d url:%s",
+                                  "open fromsidebar:1%s newtab:%d url:%s",
+                                  setIdentArg ? cstr_String(setIdentArg) : "",
                                   mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()),
                                   cstr_String(&item->url));
                 setFocus_Widget(NULL);
@@ -1161,12 +1172,23 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
         destroy_Widget(editor);
         return iTrue;
     }
+    else if (equal_Command(cmd, "bmed.setident")) {
+        const uint32_t bmId = bookmarkEditorId_(editor);
+        iBookmark *bm = get_Bookmarks(bookmarks_App(), bmId);
+        if (bm) {
+            set_String(&bm->identity, string_Command(cmd, "fp"));
+            updateDropdownSelection_LabelWidget(findChild_Widget(editor, "bmed.setident"),
+                                                cstr_String(&bm->identity));
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "bmed.cancel")) {
         const uint32_t bmId = bookmarkEditorId_(editor);
         if (equal_Command(cmd, "bmed.accept")) {
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
+            const iString *notes = text_InputWidget(findChild_Widget(editor, "bmed.notes"));
             const iString *icon  = collect_String(trimmed_String(
                                         text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
             iBookmark *bm = get_Bookmarks(bookmarks_App(), bmId);
@@ -1174,6 +1196,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
             if (!isFolder_Bookmark(bm)) {
                 set_String(&bm->url, url);
                 set_String(&bm->tags, tags);
+                set_String(&bm->notes, notes);
                 if (isEmpty_String(icon)) {
                     bm->flags &= ~userIcon_BookmarkFlag;
                     bm->icon = 0;
@@ -1603,21 +1626,30 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                                      filterInsideFolder_Bookmark,
                                                      bm)) {
                             const iBookmark *contained = i.ptr;
-                            if (!isFolder_Bookmark(contained)) {
-                                postCommandf_Root(openingInRoot,
-                                                  "open newtab:%d url:%s",
-                                                  !isNewWindow ? 1 : (index_PtrArrayConstIterator(&i) > 0)
-                                                    /* first one is not in a new tab */,
-                                                  cstr_String(&contained->url));
+                            if (!isFolder_Bookmark(contained)) {                                
+                                postCommandf_Root(
+                                    openingInRoot,
+                                    "open newtab:%d%s url:%s",
+                                    !isNewWindow ? 1 : (index_PtrArrayConstIterator(&i) > 0)
+                                    /* first one is not in a new tab */,
+                                    !isEmpty_String(&contained->identity)
+                                        ? format_CStr(" setident:%s",
+                                                      cstr_String(&contained->identity))
+                                        : "",
+                                    cstr_String(&contained->url));
                             }
                         }
                         postCommandf_Root(openingInRoot, "window.unfreeze");
                     }
                     else {
-                        postCommandf_App("open newtab:%d newwindow:%d url:%s",
-                                         argLabel_Command(cmd, "newtab"),
-                                         argLabel_Command(cmd, "newwindow"),
-                                         cstr_String(&item->url));
+                        postCommandf_App(
+                            "open newtab:%d newwindow:%d%s url:%s",
+                            argLabel_Command(cmd, "newtab"),
+                            argLabel_Command(cmd, "newwindow"),
+                            isEmpty_String(&bm->identity)
+                                ? format_CStr(" setident:%s", cstr_String(&bm->identity))
+                                : "",
+                            cstr_String(&item->url));
                     }
                 }
             }
@@ -1645,12 +1677,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 if (!isFolder_Bookmark(bm)) {
                     iInputWidget *urlInput        = findChild_Widget(dlg, "bmed.url");
                     iInputWidget *tagsInput       = findChild_Widget(dlg, "bmed.tags");
+                    iInputWidget *notesInput      = findChild_Widget(dlg, "bmed.notes");
                     iInputWidget *iconInput       = findChild_Widget(dlg, "bmed.icon");
                     iWidget *     homeTag         = findChild_Widget(dlg, "bmed.tag.home");
                     iWidget *     remoteSourceTag = findChild_Widget(dlg, "bmed.tag.remote");
                     iWidget *     linkSplitTag    = findChild_Widget(dlg, "bmed.tag.linksplit");
                     setText_InputWidget(urlInput, &bm->url);
                     setText_InputWidget(tagsInput, &bm->tags);
+                    setText_InputWidget(notesInput, &bm->notes);
                     if (bm->flags & userIcon_BookmarkFlag) {
                         setText_InputWidget(iconInput,
                                             collect_String(newUnicodeN_String(&bm->icon, 1)));
@@ -1658,6 +1692,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setToggle_Widget(homeTag, bm->flags & homepage_BookmarkFlag);
                     setToggle_Widget(remoteSourceTag, bm->flags & remoteSource_BookmarkFlag);
                     setToggle_Widget(linkSplitTag, bm->flags & linkSplit_BookmarkFlag);
+                    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "bmed.setident"),
+                                                        format_CStr("bmed.setident fp:%s",
+                                                                    cstr_String(&bm->identity)));
                 }
                 setBookmarkEditorParentFolder_Widget(dlg, bm ? bm->parentId : 0);
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);

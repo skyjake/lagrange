@@ -307,6 +307,7 @@ struct Impl_DocumentWidget {
 
     /* Network request: */
     enum iRequestState state;
+    iBlock *       requestIdentityFingerprint; /* identity to use for request, overriding default one */
     iGmRequest *   request;
     iGmLinkId      requestLinkId; /* ID of the link that initiated the current request */
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
@@ -2977,6 +2978,13 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, d->mod.url);
+    /* Overriding identity. */
+    if (isIdentityOverridden_DocumentWidget(d)) {
+        const iGmIdentity *ident = identity_DocumentWidget(d);
+        if (ident) {
+            setIdentity_GmRequest(d->request, ident);
+        }        
+    }
     iConnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
     iConnect(GmRequest, d->request, finished, d, requestFinished_DocumentWidget_);
     submit_GmRequest(d->request);
@@ -3156,7 +3164,8 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
-    if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url)) {
+    if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url) &&
+        isEmpty_Block(d->requestIdentityFingerprint)) {
         updateFromCachedResponse_DocumentWidget_(
             d, recent->normScrollY, recent->cachedResponse, recent->cachedDoc);
         if (!recent->cachedDoc) {
@@ -3290,6 +3299,9 @@ static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     if (!equal_String(d->mod.url, url)) {
         d->flags |= urlChanged_DocumentWidgetFlag;
         set_String(d->mod.url, url);
+        /* The overriding identity is cleared when the URL changes. */
+        delete_Block(d->requestIdentityFingerprint);
+        d->requestIdentityFingerprint = NULL;
         return iTrue;
     }
     return iFalse;
@@ -3479,8 +3491,18 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                              (equalCase_Rangecc(srcScheme, "gemini") &&
                               equalCase_Rangecc(dstScheme, "titan"))) {
                         visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
+                        const char *setIdentArg = "";
+                        if (isIdentityOverridden_DocumentWidget(d)) {
+                            setIdentArg = format_CStr(
+                                " setident:%s",
+                                cstrCollect_String(hexEncode_Block(d->requestIdentityFingerprint)));
+                        }
                         postCommandf_Root(as_Widget(d)->root,
-                            "open doc:%p redirect:%d url:%s", d, d->redirectCount + 1, cstr_String(dstUrl));
+                                          "open doc:%p redirect:%d%s url:%s",
+                                          d,
+                                          d->redirectCount + 1,
+                                          setIdentArg,
+                                          cstr_String(dstUrl));
                     }
                     else {
                         /* Scheme changes must be manually approved. */
@@ -5983,6 +6005,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->certSubject      = new_String();
     d->state            = blank_RequestState;
     d->titleUser        = new_String();
+    d->requestIdentityFingerprint = NULL;
     d->request          = NULL;
     d->requestLinkId    = 0;
     d->isRequestUpdated = iFalse;
@@ -6065,6 +6088,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_Block(d->certFingerprint);
     delete_String(d->certSubject);
     delete_String(d->titleUser);
+    delete_Block(d->requestIdentityFingerprint);
     deinit_PersistentDocumentState(&d->mod);
 }
 
@@ -6103,6 +6127,19 @@ int documentWidth_DocumentWidget(const iDocumentWidget *d) {
 
 iBool isSourceTextView_DocumentWidget(const iDocumentWidget *d) {
     return (d->flags & viewSource_DocumentWidgetFlag) != 0;
+}
+
+const iGmIdentity *identity_DocumentWidget(const iDocumentWidget *d) {
+    /* The document may override the default identity. */
+    const iGmIdentity *ident = findIdentity_GmCerts(certs_App(), d->requestIdentityFingerprint);
+    if (ident) {
+        return ident;
+    }
+    return identityForUrl_GmCerts(certs_App(), url_DocumentWidget(d));
+}
+
+iBool isIdentityOverridden_DocumentWidget(const iDocumentWidget *d) {
+    return !isEmpty_Block(d->requestIdentityFingerprint);
 }
 
 const iString *feedTitle_DocumentWidget(const iDocumentWidget *d) {
@@ -6151,12 +6188,14 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
     }
 }
 
-void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags) {
+void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags,
+                                const iBlock *identityOverrideFingerprint) {
     const iBool allowCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
                  setUrlFlags & preventInlining_DocumentWidgetSetUrlFlag);
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
+    setIdentityOverride_DocumentWidget(d, identityOverrideFingerprint);
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
     if (!allowCache || !updateFromHistory_DocumentWidget_(d)) {
@@ -6185,7 +6224,9 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     delete_History(d->mod.history);
     d->initNormScrollY = normScrollPos_DocumentView_(&d->view);
     d->mod.history = copy_History(orig->mod.history);
-    setUrlFlags_DocumentWidget(d, orig->mod.url, useCachedContentIfAvailable_DocumentWidgetSetUrlFlag);
+    setUrlFlags_DocumentWidget(
+        d, orig->mod.url, useCachedContentIfAvailable_DocumentWidgetSetUrlFlag,
+        d->requestIdentityFingerprint);
     return d;
 }
 
@@ -6196,8 +6237,22 @@ void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other) 
     }
 }
 
+void setIdentityOverride_DocumentWidget(iDocumentWidget *d, const iBlock *fingerprint) {
+    if (!fingerprint) {
+        delete_Block(d->requestIdentityFingerprint);
+        d->requestIdentityFingerprint = NULL;
+        return;
+    }
+    if (!d->requestIdentityFingerprint) {
+        d->requestIdentityFingerprint = copy_Block(fingerprint);
+    }
+    else {
+        set_Block(d->requestIdentityFingerprint, fingerprint);
+    }
+}
+
 void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
-    setUrlFlags_DocumentWidget(d, url, 0);
+    setUrlFlags_DocumentWidget(d, url, 0, NULL);
 }
 
 void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {

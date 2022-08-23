@@ -165,6 +165,7 @@ struct Impl_Widget {
     iBool      (*commandHandler)(iWidget *, const char *);
     iRoot *      root;
     iWidgetDrawBuffer *drawBuf;
+    iString      data; /* custom user data */
 };
 
 iDeclareObjectConstruction(Widget)
