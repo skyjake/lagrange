@@ -51,6 +51,9 @@ struct Impl_Bookmark {
     iString   url;
     iString   title;
     iString   tags;
+    iString   notes;    /* free-form comments */
+    iString   identity; /* if not empty, the identity (fingerprint) to activate when
+                           opening the bookmark */
     uint32_t  flags;
     iChar     icon;
     iTime     when;
@@ -63,24 +66,6 @@ iLocalDef iBool     isFolder_Bookmark   (const iBookmark *d) { return isEmpty_St
 
 iBool   hasParent_Bookmark  (const iBookmark *, uint32_t parentId);
 int     depth_Bookmark      (const iBookmark *);
-
-//iBool   hasTag_Bookmark     (const iBookmark *, const char *tag);
-//void    addTag_Bookmark     (iBookmark *, const char *tag);
-//void    removeTag_Bookmark  (iBookmark *, const char *tag);
-
-//iLocalDef void addTagIfMissing_Bookmark(iBookmark *d, const char *tag) {
-//    if (!hasTag_Bookmark(d, tag)) {
-//        addTag_Bookmark(d, tag);
-//    }
-//}
-//iLocalDef void addOrRemoveTag_Bookmark(iBookmark *d, const char *tag, iBool add) {
-//    if (add) {
-//        addTagIfMissing_Bookmark(d, tag);
-//    }
-//    else {
-//        removeTag_Bookmark(d, tag);
-//    }
-//}
 
 int     cmpTitleAscending_Bookmark      (const iBookmark **, const iBookmark **);
 int     cmpTree_Bookmark                (const iBookmark **, const iBookmark **);

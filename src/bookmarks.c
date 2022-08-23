@@ -21,7 +21,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "bookmarks.h"
-#include "visited.h"
 #include "gmrequest.h"
 #include "app.h"
 
@@ -37,6 +36,8 @@ void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
     init_String(&d->title);
     init_String(&d->tags);
+    init_String(&d->notes);
+    init_String(&d->identity);
     iZap(d->flags);
     iZap(d->when);
     d->parentId = 0;
@@ -44,37 +45,12 @@ void init_Bookmark(iBookmark *d) {
 }
 
 void deinit_Bookmark(iBookmark *d) {
+    deinit_String(&d->identity);
+    deinit_String(&d->notes);
     deinit_String(&d->tags);
     deinit_String(&d->title);
     deinit_String(&d->url);
 }
-
-#if 0
-iBool hasTag_Bookmark(const iBookmark *d, const char *tag) {
-    if (!d) return iFalse;
-    iRegExp *pattern = new_RegExp(format_CStr("\\b%s\\b", tag), caseSensitive_RegExpOption);
-    iRegExpMatch m;
-    init_RegExpMatch(&m);
-    const iBool found = matchString_RegExp(pattern, &d->tags, &m);
-    iRelease(pattern);
-    return found;
-}
-
-void addTag_Bookmark(iBookmark *d, const char *tag) {
-    if (!isEmpty_String(&d->tags)) {
-        appendCStr_String(&d->tags, " ");
-    }
-    appendCStr_String(&d->tags, tag);
-}
-
-void removeTag_Bookmark(iBookmark *d, const char *tag) {
-    const size_t pos = indexOfCStr_String(&d->tags, tag);
-    if (pos != iInvalidPos) {
-        remove_Block(&d->tags.chars, pos, strlen(tag));
-        trim_String(&d->tags);
-    }
-}
-#endif
 
 static struct {
     uint32_t    bit;
@@ -335,6 +311,12 @@ static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, 
             set_String(&bm->tags, tv->value.string);
             unpackDotTags_Bookmark_(bm);
         }
+        else if (!cmp_String(key, "notes") && tv->type == string_TomlType) {
+            set_String(&bm->notes, tv->value.string);
+        }
+        else if (!cmp_String(key, "identity") && tv->type == string_TomlType) {
+            set_String(&bm->identity, tv->value.string);
+        }
         else if (!cmp_String(key, "icon") && tv->type == int64_TomlType) {
             bm->icon = (iChar) tv->value.int64;
         }
@@ -487,6 +469,14 @@ void serialize_Bookmarks(const iBookmarks *d, iStream *out) {
                       bm->icon,
                       seconds_Time(&bm->when),
                       cstrCollect_String(format_Time(&bm->when, "%Y-%m-%d")));
+        if (!isEmpty_String(&bm->notes)) {
+            appendFormat_String(str, "notes = \"%s\"\n",
+                                cstrCollect_String(quote_String(&bm->notes, iFalse)));
+        }
+        if (!isEmpty_String(&bm->identity)) {
+            appendFormat_String(str, "identity = \"%s\"\n",
+                                cstrCollect_String(quote_String(&bm->identity, iFalse)));
+        }
         if (bm->parentId) {
             appendFormat_String(str, "parent = %d\n", bm->parentId);
         }
