@@ -6,7 +6,8 @@
 ```
 # Release notes
 
-## 1.13.8
+## 1.14.0
+* A bookmark folder can be opened in new tabs, in the same or a new window, one tab per contained bookmark.
 * macOS: Fixed crash when opening URLs via system handler when no windows open.
 
 ## 1.13.7
