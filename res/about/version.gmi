@@ -9,6 +9,7 @@
 ## 1.14.0
 * Added a new bookmark property "Set identity": use a specific identity when opening the bookmark, but don't apply it persistently on the bookmarked URL.
 * A bookmark folder can be opened in new tabs, in the same or a new window, one tab per contained bookmark.
+* Fixed issues with text selection and range visualization.
 * macOS: Fixed crash when opening URLs via system handler when no windows open.
 
 ## 1.13.7
