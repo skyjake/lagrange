@@ -1168,8 +1168,8 @@ struct Impl_DrawContext {
 
 static int measureAdvanceToLoc_(const iGmRun *run, const char *end) {
     iWrapText wt = { .text     = run->text,
-                     .mode     = word_WrapTextMode,
-                     .maxWidth = iAbsi(drawBoundWidth_GmRun(run)),
+                     .mode     = anyCharacter_WrapTextMode,
+                     .maxWidth = isJustified_GmRun(run) ? iAbsi(drawBoundWidth_GmRun(run)) : 0,
                      .justify  = isJustified_GmRun(run),
                      .hitChar  = end };
     measure_WrapText(&wt, run->font);
