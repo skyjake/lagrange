@@ -2731,7 +2731,8 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
     }
     iRangecc loc;
     iWrapText wt = { .text     = d->text,
-                     .maxWidth = drawBoundWidth_GmRun(d),
+                     .mode     = anyCharacter_WrapTextMode,
+                     .maxWidth = isJustified_GmRun(d) ? drawBoundWidth_GmRun(d) : 0,
                      .justify  = isJustified_GmRun(d),
                      .hitPoint = init_I2(x, 0) };
     measure_WrapText(&wt, d->font);
