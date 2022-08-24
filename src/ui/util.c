@@ -3420,8 +3420,8 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
             setFlags_Widget(special, collapse_WidgetFlag, iTrue);
             setId_Widget(special, "bmed.special");
             makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
-            addDialogToggle_(headings, values, "${bookmark.tag.home}:", "bmed.tag.home");
-            addDialogToggle_(headings, values, "${bookmark.tag.remote}:", "bmed.tag.remote");
+            addDialogToggle_(headings, values, "${LC:bookmark.tag.home}:", "bmed.tag.home");
+            addDialogToggle_(headings, values, "${LC:bookmark.tag.remote}:", "bmed.tag.remote");
             addDialogToggle_(headings, values, "${bookmark.tag.linksplit}:", "bmed.tag.linksplit");
             makeIdentityDropdown_LabelWidget(
                 headings, values, identItems, "${dlg.bookmark.identity}", "bmed.setident");
