@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-06-10 14:51+0000\n"
+"PO-Revision-Date: 2022-08-26 09:52+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -888,7 +888,7 @@ msgid "dlg.bookmark.icon"
 msgstr "Simge:"
 
 msgid "heading.bookmark.tags"
-msgstr "Özel etiketler"
+msgstr "Özellikler"
 
 msgid "heading.addfolder"
 msgstr "Klasör ekle"
@@ -2450,3 +2450,21 @@ msgstr ""
 "\n"
 "Vekil sunucunun sertifikası, \"Sayfa bilgisi\" bölümünde güvenilir olarak "
 "imlenebilir."
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "boşlukla ayrılmış terimler"
+
+msgid "menu.folder.opentab"
+msgstr "Yeni sekmelerde aç"
+
+msgid "bookmark.folder.delete"
+msgstr "Yer imleri klasörünü sil"
+
+msgid "dlg.bookmark.notes"
+msgstr "Notlar:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "serbest biçimli özel notlar"
+
+msgid "dlg.bookmark.identity"
+msgstr "Kimlik ayarla:"
