@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-31 05:51+0000\n"
+"PO-Revision-Date: 2022-08-31 17:52+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1849,7 +1849,7 @@ msgid "dlg.upload.id.none"
 msgstr "Ninguno"
 
 msgid "heading.bookmark.tags"
-msgstr "Etiquetas Especiales"
+msgstr "Propiedades"
 
 msgid "dlg.addfolder.prompt"
 msgstr "Nombre de la nueva carpeta:"
@@ -2513,3 +2513,21 @@ msgstr ""
 "\n"
 "El certificado del servidor proxy puede marcarse como confiable en la "
 "Información de la Página."
+
+msgid "menu.folder.opentab"
+msgstr "Abrir en Pestañas Nuevas"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "términos separados por espacios"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "notas privadas de forma libre"
+
+msgid "bookmark.folder.delete"
+msgstr "Borrar Carpeta de Marcadores"
+
+msgid "dlg.bookmark.notes"
+msgstr "Notas:"
+
+msgid "dlg.bookmark.identity"
+msgstr "Establecer identidad:"
