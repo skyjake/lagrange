@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-08-15 12:49+0000\n"
+"PO-Revision-Date: 2022-08-31 17:52+0000\n"
 "Last-Translator: Waterrail <maksymiliankrol03@gmail.com>\n"
 "Language-Team: Polish <http://weblate.skyjake.fi/projects/lagrange/ui/pl/>\n"
 "Language: pl\n"
@@ -1847,3 +1847,238 @@ msgstr "Prześlij stronę (Titan)"
 
 msgid "error.certexpired"
 msgstr "Wygasły certyfikat"
+
+msgid "prefs.tabwidth"
+msgstr "Szerokość karty:"
+
+msgid "prefs.justify"
+msgstr "Justowanie:"
+
+msgid "error.ansi"
+msgstr "Emulacja terminala"
+
+msgid "menu.paste.go"
+msgstr "Wklej i przejdź"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Wyłącz ostrzeżenia"
+
+msgid "heading.glyphfinder.results"
+msgstr "Wyniki wyszukiwania"
+
+msgid "prefs.urlsize"
+msgstr "Maksymalny rozmiar adresu URL:"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr "Czy chcesz na stałe przestać ostrzegać o emulacji terminala na %s?"
+
+msgid "error.proxyverify"
+msgstr "Niezaufany serwer proxy"
+
+msgid "error.proxyexpired.msg"
+msgstr ""
+"Połączenie zostało anulowane, ponieważ certyfikat TLS serwera proxy wygasł."
+
+msgid "error.proxyexpired"
+msgstr "Wygasły certyfikat serwera proxy"
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"Połączenie zostało przerwane, ponieważ certyfikat TLS serwera proxy nie jest "
+"zgodny z zaufanym przez nas certyfikatem.\n"
+"\n"
+"Certyfikat serwera proxy można oznaczyć jako zaufany w sekcji „Informacje o "
+"stronie”."
+
+msgid "error.ansi.msg"
+msgstr ""
+"Ta strona może nie być wyświetlana poprawnie. Używa ona tylko częściowo "
+"obsługiwanej sekwencji ucieczki ANSI do stylizacji tekstu. Możesz spróbować "
+"użyć emulatora terminala, by ją wyświetlić."
+
+msgid "userdata.help"
+msgstr ""
+"Archiwa danych użytkownika zawierają wyeksportowaną historię przeglądania, "
+"tożsamości, zakładki, ustawienia poszczególnych witryn oraz odciski palców "
+"zaufanych certyfikatów serwera. Można je przechowywać jako kopie zapasowe i "
+"używać do przenoszenia danych między urządzeniami."
+
+msgid "heading.archive.userdata"
+msgstr "Archiwum danych użytkownika"
+
+msgid "menu.import"
+msgstr "Importuj dane użytkownika…"
+
+msgid "menu.export"
+msgstr "Eksportuj dane użytkownika"
+
+msgid "heading.import.userdata.error"
+msgstr "Importowanie nie powiodło się"
+
+msgid "dlg.userdata.all"
+msgstr "Wszystkie (nadpisz)"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Przeszukaj bibliotekę czcionek"
+
+msgid "menu.folder.opentab"
+msgstr "Otwórz w nowych kartach"
+
+msgid "bookmark.folder.delete"
+msgstr "Usuń folder zakładek"
+
+msgid "keys.identmenu"
+msgstr "Otwórz menu tożsamości"
+
+msgid "keys.menubar.focus"
+msgstr "Ustaw fokus na pasek menu"
+
+msgid "sitespec.tlscache"
+msgstr "Wznów sesję TLS:"
+
+msgid "keys.contextmenu"
+msgstr "Otwórz menu kontekstowe"
+
+msgid "dlg.certimport.paste"
+msgstr "Wklej ze schowka"
+
+msgid "import.userdata.history"
+msgstr "Historia:"
+
+msgid "import.userdata.idents"
+msgstr "Tożsamości:"
+
+msgid "import.userdata.bookmarks"
+msgstr "Zakładki:"
+
+msgid "heading.import.userdata"
+msgstr "Importuj dane użytkownika"
+
+msgid "dlg.userdata.alldup"
+msgstr "Wszystkie (zachowaj duplikaty)"
+
+msgid "dlg.userdata.missing"
+msgstr "Brakujące"
+
+msgid "dlg.userdata.no"
+msgstr "Żadne"
+
+msgid "import.userdata.sitespec"
+msgstr "Ustawienia strony:"
+
+msgid "import.userdata.trusted"
+msgstr "Zaufane certyfikaty:"
+
+msgid "import.userdata.error"
+msgstr "%s nie jest prawidłowym archiwum eksportu Lagrange."
+
+msgid "import.userdata.dupfolder"
+msgstr "Importowane duplikaty"
+
+msgid "import.userdata"
+msgstr "Importuj zaznaczone dane"
+
+msgid "heading.upload.spartan"
+msgstr "Prześlij (Spartan)"
+
+msgid "dlg.spartan.upload"
+msgstr "Otwórz edytor…"
+
+msgid "spartan.input"
+msgstr "Wprowadź tekst, który chcesz wysłać:"
+
+msgid "glyphfinder.results.empty"
+msgstr "Niestety nie udało się znaleźć pasujących zestawów czcionek."
+
+msgid "glyphfinder.results"
+msgstr ""
+"Następujące zestawy czcionek oferują jeden lub więcej brakujących znaków:"
+
+msgid "heading.bookmark.editfolder"
+msgstr "Edytuj folder"
+
+msgid "dlg.bookmark.identity"
+msgstr "Ustaw tożsamość:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "prywatne notatki w dowolnej formie"
+
+msgid "dlg.bookmark.notes"
+msgstr "Notatki:"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "terminy oddzielone spacją"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Folder nadrzędny:"
+
+msgid "heading.prefs.support"
+msgstr "Wsparcie"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Otwieraj obrazy za pomocą adresów URL Data:"
+
+msgid "prefs.accent.gray"
+msgstr "Szary"
+
+msgid "prefs.menubar"
+msgstr "Pasek menu"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Ocean"
+
+msgid "prefs.retaintabs"
+msgstr "Przywracaj karty przy uruchomieniu:"
+
+msgid "prefs.tui.simple"
+msgstr "Prosty zestaw znaków:"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Markdown — wyświetlanie jako kodu:"
+
+msgid "prefs.accent.green"
+msgstr "Zielony"
+
+msgid "prefs.accent.red"
+msgstr "Czerwony"
+
+msgid "prefs.bottomtabbar"
+msgstr "Karty na dole"
+
+msgid "prefs.bottomnavbar"
+msgstr "Pasek nawigacyjny na dole"
+
+msgid "prefs.uilayout"
+msgstr "Układ:"
+
+msgid "prefs.evensplit"
+msgstr "Dziel karty po równo:"
+
+msgid "prefs.accent.blue"
+msgstr "Granatowy"
+
+msgid "error.incompleteheader"
+msgstr "Niepełny nagłówek"
+
+msgid "error.incompleteheader.msg"
+msgstr ""
+"Odpowiedź serwera nie zawierała kompletnego nagłówka. Być może serwer działa "
+"nieprawidłowo lub próbujesz nawiązać kontakt z serwerem innym niż Gemini."
+
+msgid "menu.viewformat.gemini"
+msgstr "Wyświetl jako Gemtext"
+
+msgid "menu.viewformat.plain"
+msgstr "Wyświetl jako zwykły tekst"
+
+msgid "menu.reopentab"
+msgstr "Przywróć zamkniętą kartę"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Oznacz poniższe jako przeczytane"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "O programie"
