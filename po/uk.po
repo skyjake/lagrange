@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-31 05:51+0000\n"
+"PO-Revision-Date: 2022-08-31 17:52+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1293,7 +1293,7 @@ msgid "dlg.bookmark.icon"
 msgstr "Значок:"
 
 msgid "heading.bookmark.tags"
-msgstr "Особливі мітки"
+msgstr "Властивості"
 
 msgid "heading.addfolder"
 msgstr "Додати теку"
@@ -2522,3 +2522,21 @@ msgstr ""
 "сервера тому, якому ми довіряємо.\n"
 "\n"
 "Сертифікат проксі сервера можна зробити довіреним у Інформації про сторінку."
+
+msgid "menu.folder.opentab"
+msgstr "Відкрити у нових вкладках"
+
+msgid "dlg.bookmark.notes"
+msgstr "Примітки:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "Нотатки у вільному форматі"
+
+msgid "bookmark.folder.delete"
+msgstr "Видалити теку з закладками"
+
+msgid "dlg.bookmark.identity"
+msgstr "Призначити ідентичність:"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "слова, розділені проміжком"
