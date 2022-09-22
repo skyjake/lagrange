@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-17 05:51+0000\n"
+"PO-Revision-Date: 2022-09-23 15:52+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -596,7 +596,7 @@ msgid "dlg.certimport.notfound.page"
 msgstr "Null certificat o clave esset trovat in li actual págine."
 
 msgid "heading.certimport.dropped"
-msgstr "CADET FILE"
+msgstr "Cadet file"
 
 msgid "dlg.certimport.import"
 msgstr "Importar"
@@ -772,7 +772,7 @@ msgid "lang.es"
 msgstr "Hispan"
 
 msgid "heading.newident"
-msgstr "NOV IDENTITÁ"
+msgstr "Nov identitá"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Creante un self-signat certificat RSA de 2048 bits."
@@ -946,13 +946,13 @@ msgid "link.bookmark"
 msgstr "Adjunter al marca-págines…"
 
 msgid "heading.openlink"
-msgstr "APERTER LI LIGAMENT"
+msgstr "Aperter li ligament"
 
 msgid "heading.certimport.pasted"
-msgstr "COLLAT EX LI PAPERIERE"
+msgstr "Collat ex li Paperiere"
 
 msgid "heading.translate"
-msgstr "TRADUCTER LI PÁGINE"
+msgstr "Traducter li págine"
 
 msgid "error.unsupported.media"
 msgstr "Ínsuportat tip de contenete"
@@ -1059,28 +1059,28 @@ msgid "dlg.newident.notsaved"
 msgstr "ne gardat sur li disco"
 
 msgid "heading.feedcfg"
-msgstr "PARAMETRES DEL FEED"
+msgstr "Parametres del feed"
 
 msgid "heading.subscribe"
-msgstr "ABONNAR LI PÁGINE"
+msgstr "Abonnar li págine"
 
 msgid "heading.bookmark.add"
-msgstr "ADJUNTER UN MARCA-PÁGINE"
+msgstr "Adjunter un marca-págine"
 
 msgid "heading.bookmark.edit"
-msgstr "REDACTER LI MARCA-PÁGINE"
+msgstr "Redacter li márca-pagine"
 
 msgid "dlg.bookmark.save"
 msgstr "Gardar li marca-págines"
 
 msgid "heading.prefs.pagecontent"
-msgstr "COLORES DE PÁGINE"
+msgstr "Colores de págine"
 
 msgid "heading.prefs.sizing"
 msgstr "Dimension"
 
 msgid "heading.prefs.widelayout"
-msgstr "LARG ARANGEMENT"
+msgstr "Larg arangeament"
 
 msgid "prefs.hoverlink"
 msgstr "Monstrar li URL sub li apuntator:"
@@ -1475,7 +1475,7 @@ msgid "lang.ia"
 msgstr "Interlingua"
 
 msgid "heading.newident.missing"
-msgstr "MANCANT INFORMATION"
+msgstr "Mancant information"
 
 msgid "dlg.newindent.missing.commonname"
 msgstr "Li «comun nómine» deve esser providet."
@@ -1662,7 +1662,7 @@ msgid "link.file.delete"
 msgstr "Remover li file"
 
 msgid "heading.file.delete"
-msgstr "REMOVER LI FILE"
+msgstr "Remover li file"
 
 msgid "dlg.file.delete.confirm"
 msgstr "Esque vu vole remover ti-ci file?"
@@ -1701,7 +1701,7 @@ msgid "upload.port"
 msgstr "Portu…"
 
 msgid "heading.uploadport"
-msgstr "PORTU DE CARGA DE TITAN"
+msgstr "Portu de carga de Titan"
 
 msgid "dlg.uploadport.set"
 msgstr "Assignar li portu"
@@ -1835,10 +1835,10 @@ msgid "dlg.upload.id.none"
 msgstr "Null"
 
 msgid "heading.bookmark.tags"
-msgstr "SPECIAL ETIQUETTES"
+msgstr "Proprietás"
 
 msgid "heading.addfolder"
-msgstr "ADJUNTER UN FÓLDER"
+msgstr "Adjunter un fólder"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Nov fólder"
@@ -2042,7 +2042,7 @@ msgid "lang.uk"
 msgstr "Ukrainan"
 
 msgid "heading.fontpack.delete"
-msgstr "REMOVER LI FONDPAC"
+msgstr "Remover li Fondpac"
 
 #, c-format
 msgid "dlg.fontpack.delete.confirm"
@@ -2346,3 +2346,93 @@ msgstr "Supporte"
 
 msgid "sitespec.tlscache"
 msgstr "Reprender li session TLS:"
+
+msgid "prefs.bottomnavbar"
+msgstr "Navigation ad-infra"
+
+msgid "prefs.justify"
+msgstr "Alignament:"
+
+msgid "prefs.urlsize"
+msgstr "Max longore de adresse:"
+
+msgid "keys.sitespec"
+msgstr "Monstrar parametres del site"
+
+msgid "dlg.glyphfinder.search"
+msgstr "Serchar li biblioteca de fondes"
+
+msgid "error.proxyverify"
+msgstr "Ínfidet proxy"
+
+msgid "error.proxyexpired"
+msgstr "Li certificate del proxy ha expirat"
+
+msgid "menu.folder.opentab"
+msgstr "Aperter in nov cartes"
+
+msgid "bookmark.folder.delete"
+msgstr "Remover li fólder de marca-págines"
+
+msgid "keys.identmenu"
+msgstr "Aperter li menú de identitás"
+
+msgid "keys.contextmenu"
+msgstr "Aperter li menú contextual"
+
+msgid "keys.menubar.focus"
+msgstr "Ear al menú"
+
+msgid "import.userdata.sitespec"
+msgstr "Parametres del site:"
+
+msgid "dlg.spartan.upload"
+msgstr "Aperter li redactor…"
+
+msgid "heading.upload.spartan"
+msgstr "Cargar med Spartan"
+
+msgid "spartan.input"
+msgstr "Textu a inviar:"
+
+msgid "glyphfinder.results.empty"
+msgstr "Null correspondent Fondpacs esset trovat."
+
+msgid "glyphfinder.results"
+msgstr "Li sequent Fondpacs provide adminim ún mancant glif:"
+
+msgid "dlg.bookmark.notes"
+msgstr "Notes:"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "separat con spacie"
+
+msgid "dlg.bookmark.identity"
+msgstr "Assignar un identitá:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "particulari notes"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Viser Markdown quam li fonte:"
+
+msgid "prefs.tui.simple"
+msgstr "Simplic caracteres:"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Marcar elementes ad-infra quam leet"
+
+msgid "userdata.help"
+msgstr ""
+"Archives del data de usator contene li diarium de navigation, identitás, "
+"marca-págines, parametres de sites e fingre-printes de fidet certificates. "
+"On posse usar les por preservation e por transferter data inter aparates."
+
+msgid "menu.viewformat.gemini"
+msgstr "Viser quam Gemtext"
+
+msgid "menu.reopentab"
+msgstr "Re-aperter li ultim carte cludet"
+
+msgid "menu.viewformat.plain"
+msgstr "Viser quam simplic textu"
