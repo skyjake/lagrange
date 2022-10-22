@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-07-12 12:52+0000\n"
+"PO-Revision-Date: 2022-10-23 20:52+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -1550,7 +1550,7 @@ msgid "dlg.bookmark.folder"
 msgstr "Cartella:"
 
 msgid "heading.bookmark.tags"
-msgstr "Etichetta Speciale"
+msgstr "Proprietà"
 
 msgid "heading.addfolder"
 msgstr "Aggiungi Cartella"
@@ -2441,3 +2441,21 @@ msgstr "Cartella Padre:"
 
 msgid "keys.menubar.focus"
 msgstr "Dai focus alla barra del menu"
+
+msgid "menu.folder.opentab"
+msgstr "Apri in Nuovi Tab"
+
+msgid "bookmark.folder.delete"
+msgstr "Cancella Cartella Segnalibri"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "termini separati da spazi"
+
+msgid "dlg.bookmark.notes"
+msgstr "Note:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "note private in forma libera"
+
+msgid "dlg.bookmark.identity"
+msgstr "Imposta l'identità:"
