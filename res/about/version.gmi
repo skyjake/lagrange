@@ -11,6 +11,7 @@
 * A bookmark folder can be opened in new tabs, in the same or a new window, one tab per contained bookmark.
 * Fixed issues with text selection and range visualization.
 * macOS: Fixed crash when opening URLs via system handler when no windows open.
+* The regular expression library PCRE2 is preferred over PCRE1, if available.
 
 ## 1.13.7
 * Fixed reporting of errors related to a proxy server certificate.
