@@ -439,7 +439,7 @@ void enableMomentumScroll_MacOS(void) {
     NSString *url = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
     iString *str = newCStr_String([url cStringUsingEncoding:NSUTF8StringEncoding]);
     str = urlDecodeExclude_String(collect_String(str), "/#?:");
-    postCommandf_App("~open url:%s", cstr_String(str));
+    postCommandf_App("~open newtab:1 url:%s", cstr_String(str));
     delete_String(str);
 }
 @end
