@@ -6,12 +6,21 @@
 ```
 # Release notes
 
-## 1.14.0
-* Added a new bookmark property "Set identity": use a specific identity when opening the bookmark, but don't apply it persistently on the bookmarked URL.
+## 1.14
+New features:
 * A bookmark folder can be opened in new tabs, in the same or a new window, one tab per contained bookmark.
+* New bookmark property "Set identity": use a specific identity when opening the bookmark, but don't apply it persistently on the bookmarked URL.
+
+Changes and enhancements:
+* URLs opened via system-level handlers always open a new tab, like URLs opened via the command line.
+* The regular expression library PCRE2 is preferred over PCRE, if available. The older library is in maintenance mode.
+
+Fixes:
+
+## 1.13.8
 * Fixed issues with text selection and range visualization.
 * macOS: Fixed crash when opening URLs via system handler when no windows open.
-* The regular expression library PCRE2 is preferred over PCRE1, if available.
+* TUI: Improved POSIX compliance in build-tui script.
 
 ## 1.13.7
 * Fixed reporting of errors related to a proxy server certificate.
