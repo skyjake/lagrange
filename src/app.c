@@ -937,6 +937,22 @@ static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
     return iFalse;
 }
 
+static const iString *openableCommandLineArgUriValue_(const iString *arg) {
+    /* URLs and file paths are accepted. */
+    /* NOTE: Invalid contents in arg will cause a fatal error, terminating the app. */
+    if (hasCommandLineOpenableScheme_(range_String(arg))) {
+        return urlDecodeExclude_String(arg, "/?#:");
+    }
+    else if (fileExists_FileInfo(arg)) {
+        return makeFileUrl_String(arg);
+    }
+    else {
+        fprintf(stderr, "Invalid URL/file: %s\n", cstr_String(arg));
+        terminate_App_(1);
+        return NULL; /* unreachable */
+    }
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
 #if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
     d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
@@ -1001,6 +1017,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, windowWidth_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, windowHeight_CommandLineOption, 1);
         defineValuesN_CommandLine(&d->args, "new-tab", 0, 1);
+        defineValues_CommandLine(&d->args, replaceTab_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, "tab-url", 0);
         defineValues_CommandLine(&d->args, "sw", 0);
         defineValues_CommandLine(&d->args, "version;V", 0);
@@ -1019,20 +1036,20 @@ static void init_App_(iApp *d, int argc, char **argv) {
             const iRangecc arg = i.entry;
             if (i.argType == value_CommandLineArgType) {
                 /* URLs and file paths accepted. */
-                const iBool isOpenable = hasCommandLineOpenableScheme_(arg);
-                if (isOpenable || fileExistsCStr_FileInfo(cstr_Rangecc(arg))) {
-                    iString *decUrl =
-                        isOpenable ? urlDecodeExclude_String(collectNewRange_String(arg), "/?#:")
-                                   : makeFileUrl_String(collectNewRange_String(arg));
-                    pushBack_StringList(openCmds,
-                                        collectNewFormat_String(
-                                            "open newtab:1 url:%s", cstr_String(decUrl)));
-                    delete_String(decUrl);
-                }
-                else {
-                    fprintf(stderr, "Invalid URL/file: %s\n", cstr_Rangecc(arg));
-                    terminate_App_(1);
-                }
+                pushBack_StringList(
+                    openCmds,
+                    collectNewFormat_String(
+                        "open newtab:1 url:%s",
+                        cstr_String(openableCommandLineArgUriValue_(collectNewRange_String(arg)))));
+            }
+            else if (equal_CommandLineConstIterator(&i, replaceTab_CommandLineOption)) {
+                /* Replace the current tab's URL. */
+                const iCommandLineArg *arg = iClob(argument_CommandLineConstIterator(&i));
+                const iString *input = value_CommandLineArg(arg, 0);
+                pushBack_StringList(
+                    openCmds,
+                    collectNewFormat_String("open url:%s",
+                                            cstr_String(openableCommandLineArgUriValue_(input))));
             }
             else if (equal_CommandLineConstIterator(&i, openUrlOrSearch_CommandLineOption)) {
                 const iCommandLineArg *arg = iClob(argument_CommandLineConstIterator(&i));

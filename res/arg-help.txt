@@ -8,6 +8,7 @@ General options:
   -E, --echo            Print all internal app events to stdout.
   -h, --height N        Set initial window height to N pixels.          
       --help            Print these instructions.
+      --replace-tab URL Open a URL replacing contents of the active tab.
       --sw              Disable hardware accelerated rendering.
   -u, --url-or-search URL | text
                         Open a URL, or make a search query with given text.
