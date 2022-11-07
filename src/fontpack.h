@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <hb.h>
 #endif
 
-extern const char *mimeType_FontPack;
+#define mimeType_FontPack "application/lagrange-fontpack+zip"
 
 /* Fontpacks are ZIP archives that contain a configuration file and one of more font
 files. The fontpack format is used instead of plain TTF/OTF because the text renderer
