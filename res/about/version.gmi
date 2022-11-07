@@ -14,6 +14,7 @@ New features:
 
 Changes and enhancements:
 * URLs opened via system-level handlers always open a new tab, like URLs opened via the command line.
+* MIME types of many new file extensions are recognized (courtesy of John Cowan).
 * The regular expression library PCRE2 is preferred over PCRE, if available. The older library is in maintenance mode.
 
 Fixes:
