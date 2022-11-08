@@ -19,6 +19,7 @@ Changes and enhancements:
 
 Fixes:
 * Schemeless relative URLs no longer assume "gemini" as the scheme, instead using the current page's scheme as default.
+* Opening a feed entry in a background tab will mark is as read, like opening in the foreground does.
 
 ## 1.13.8
 * Fixed issues with text selection and range visualization.

@@ -1827,6 +1827,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (item) {
                 if (isCommand_Widget(w, ev, "feed.entry.open")) {
                     const char *cmd = command_UserEvent(ev);
+                    /* Opening an entry will always mark it as read. */
+                    markEntryAsRead_Feeds(item->id, &item->url, iTrue);
                     postCommandString_Root(
                         get_Root(),
                         feedEntryOpenCommand_String(&item->url,
