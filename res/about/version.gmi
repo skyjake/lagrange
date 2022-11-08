@@ -18,6 +18,7 @@ Changes and enhancements:
 * The regular expression library PCRE2 is preferred over PCRE, if available. The older library is in maintenance mode.
 
 Fixes:
+* Schemeless relative URLs no longer assume "gemini" as the scheme, instead using the current page's scheme as default.
 
 ## 1.13.8
 * Fixed issues with text selection and range visualization.

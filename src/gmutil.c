@@ -415,7 +415,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         return urlMaybeRelative;
     }
     const iBool isRelative = !isDef_(rel.host);
-    iRangecc scheme = range_CStr("gemini");
+    iRangecc scheme = isDef_(orig.scheme) ? orig.scheme : range_CStr("gemini");
     if (isDef_(rel.scheme)) {
         scheme = rel.scheme;
     }
