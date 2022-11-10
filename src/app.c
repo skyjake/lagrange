@@ -3703,9 +3703,13 @@ iBool handleCommand_App(const char *cmd) {
         setUrlFlags_DocumentWidget(
             doc,
             url,
-            (isHistory && !setIdentArg ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
+            (isHistory && isEmpty_String(setIdentArg)
+                 ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag
+                 : 0) |
                 (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag : 0),
-            setIdentArg ? collect_Block(hexDecode_Rangecc(range_Command(cmd, "setident"))) : NULL);
+            !isEmpty_String(setIdentArg)
+                ? collect_Block(hexDecode_Rangecc(range_Command(cmd, "setident")))
+                : NULL);
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */
         const iRangecc gotoHeading = range_Command(cmd, "gotoheading");

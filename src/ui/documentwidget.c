@@ -1871,12 +1871,11 @@ static void draw_DocumentView_(const iDocumentView *d) {
     }
     const iRect   docBounds = documentBounds_DocumentView_(d);
     const iRangei vis       = visibleRange_DocumentView_(d);
-    iDrawContext  ctx       = {
-                                .view            = d,
+    iDrawContext  ctx       = { .view            = d,
                                 .docBounds       = docBounds,
                                 .vis             = vis,
                                 .showLinkNumbers = (d->owner->flags & showLinkNumbers_DocumentWidgetFlag) != 0,
-                         };
+                              };
     init_Paint(&ctx.paint);
     render_DocumentView_(d, &ctx, iFalse /* just the mandatory parts */);
     iBanner    *banner           = d->owner->banner;
@@ -4543,6 +4542,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
+        iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
         if (d->request) {
             postCommandf_Root(w->root,
                 "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
