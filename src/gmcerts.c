@@ -413,8 +413,9 @@ void deserializeTrusted_GmCerts(iGmCerts *d, iStream *ins, enum iImportMethod me
             const iRangecc key   = capturedRange_RegExpMatch(&m, 1);
             const iRangecc until = capturedRange_RegExpMatch(&m, 2);
             const iRangecc fp    = capturedRange_RegExpMatch(&m, 3);
-            time_t sec;
-            sscanf(until.start, "%ld", &sec);
+            long long lsec;
+            sscanf(until.start, "%lld", &lsec);
+            time_t sec = lsec;
             iDate untilDate;
             initSinceEpoch_Date(&untilDate, sec);
             /* TODO: import method? */
