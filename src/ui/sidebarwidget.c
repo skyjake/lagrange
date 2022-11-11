@@ -509,6 +509,9 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                     if (bm->flags & linkSplit_BookmarkFlag) {
                         appendChar_String(&item->meta, 0x25e7);
                     }
+                    if (!isEmpty_String(&bm->identity)) {
+                        appendCStr_String(&item->meta, person_Icon);
+                    }
                 }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
