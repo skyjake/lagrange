@@ -450,9 +450,10 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
             }
             else {
                 setPos_Widget(as_Widget(prog), langs->rect.pos);
-                setFixedSize_Widget(as_Widget(prog), init_I2(width_Rect(innerBounds_Widget(d->dlg)),
-                                                             langs->rect.size.y));
+                
             }
+            setFixedSize_Widget(as_Widget(prog), init_I2(width_Rect(innerBounds_Widget(d->dlg)),
+                                                         langs->rect.size.y));
             addChildFlags_Widget(d->dlg, iClob(prog), 0);
             submit_Translation(d);
         }
