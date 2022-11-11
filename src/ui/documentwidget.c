@@ -239,6 +239,9 @@ enum iDocumentWidgetFlag {
     viewSource_DocumentWidgetFlag            = iBit(20),
     preventInlining_DocumentWidgetFlag       = iBit(21),
     proxyRequest_DocumentWidgetFlag          = iBit(22),
+    waitForIdle_DocumentWidgetFlag           = iBit(23), /* sequential loading; wait for previous
+                                                            tabs to finished their requests */
+    pendingRedirect_DocumentWidgetFlag       = iBit(24), /* a redirect has been issued */
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -2128,6 +2131,10 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         /* Not part of the UI at the moment. */
         return;
     }
+    if (d->flags & waitForIdle_DocumentWidgetFlag) {
+        updateTextCStr_LabelWidget(tabButton, midEllipsis_Icon);
+        return;
+    }
     iStringArray *title = iClob(new_StringArray());
     if (!isEmpty_String(title_GmDocument(d->view.doc))) {
         pushBack_StringArray(title, title_GmDocument(d->view.doc));
@@ -2960,8 +2967,16 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
     }
 }
 
-static void fetch_DocumentWidget_(iDocumentWidget *d) {
+static iBool fetch_DocumentWidget_(iDocumentWidget *d) {
     iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
+    /* We may be instructed to wait before fetching to avoid congestion. */
+    if (d->flags & waitForIdle_DocumentWidgetFlag) {
+        /* Check all documents in the window. */
+        if (isAnyDocumentRequestOngoing_MainWindow(get_MainWindow())) {
+            return iFalse; /* have to try again later */
+        }
+        d->flags &= ~waitForIdle_DocumentWidgetFlag;
+    }
     /* Forget the previous request. */
     if (d->request) {
         iRelease(d->request);
@@ -2973,6 +2988,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
                       cstr_String(d->mod.url));
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
+    d->flags &= ~pendingRedirect_DocumentWidgetFlag;
     d->state = fetching_RequestState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
@@ -2987,6 +3003,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     iConnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
     iConnect(GmRequest, d->request, finished, d, requestFinished_DocumentWidget_);
     submit_GmRequest(d->request);
+    return iTrue;
 }
 
 static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
@@ -3130,6 +3147,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     iRelease(d->view.doc);
     d->view.doc = new_GmDocument();
     d->state = fetching_RequestState;
+    d->flags &= ~pendingRedirect_DocumentWidgetFlag;
     d->flags |= fromCache_DocumentWidgetFlag;
     /* Do the fetch. */ {
         d->initNormScrollY = normScrollY;
@@ -3502,6 +3520,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                                           d->redirectCount + 1,
                                           setIdentArg,
                                           cstr_String(dstUrl));
+                        d->flags |= pendingRedirect_DocumentWidgetFlag;
                     }
                     else {
                         /* Scheme changes must be manually approved. */
@@ -3967,6 +3986,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
 }
 
 static iBool cancelRequest_DocumentWidget_(iDocumentWidget *d, iBool postBack) {
+    d->flags &= ~pendingRedirect_DocumentWidgetFlag;
     if (d->request) {
         iWidget *w = as_Widget(d);
         postCommandf_Root(w->root,
@@ -3986,6 +4006,15 @@ static iBool cancelRequest_DocumentWidget_(iDocumentWidget *d, iBool postBack) {
 
 static const int smoothDuration_DocumentWidget_(enum iScrollType type) {
     return 600 /* milliseconds */ * scrollSpeedFactor_Prefs(prefs_App(), type);
+}
+
+static iBool tryWaitingFetch_DocumentWidget_(iDocumentWidget *d) {
+    if (d->flags & waitForIdle_DocumentWidgetFlag) {
+        if (fetch_DocumentWidget_(d)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
 }
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -4378,6 +4407,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             clear_String(&d->pendingGotoHeading);
         }
         cacheDocumentGlyphs_DocumentWidget_(d);
+        /* A redirect response will be considered an ongoing request. */
+        if (~d->flags & pendingRedirect_DocumentWidgetFlag) {
+            /* Maybe there are other documents waiting to start their requests. */
+            if (!isAnyDocumentRequestOngoing_MainWindow(as_MainWindow(window_Widget(w)))) {
+                iForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
+                    if (tryWaitingFetch_DocumentWidget_(i.object)) {
+                        break;
+                    }
+                }
+            }            
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "document.translate") && d == document_App()) {
@@ -6193,6 +6233,8 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
     const iBool allowCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
                  setUrlFlags & preventInlining_DocumentWidgetSetUrlFlag);
+    iChangeFlags(d->flags, waitForIdle_DocumentWidgetFlag,
+                 setUrlFlags & waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag);
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
     setIdentityOverride_DocumentWidget(d, identityOverrideFingerprint);
@@ -6264,7 +6306,7 @@ void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
-    return d->request != NULL;
+    return d->request != NULL || d->flags & pendingRedirect_DocumentWidgetFlag;
 }
 
 void takeRequest_DocumentWidget(iDocumentWidget *d, iGmRequest *finishedRequest) {

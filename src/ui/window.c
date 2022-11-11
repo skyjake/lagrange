@@ -1710,6 +1710,22 @@ void setKeyboardHeight_MainWindow(iMainWindow *d, int height) {
     }
 }
 
+iBool isAnyDocumentRequestOngoing_MainWindow(iMainWindow *d) {
+    iForIndices(i, d->base.roots) {
+        iRoot *root = d->base.roots[i];
+        if (!root) continue;
+        const iWidget *tabs = findChild_Widget(root->widget, "doctabs");
+        iForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
+            if (isInstance_Object(i.object, &Class_DocumentWidget)) {
+                if (isRequestOngoing_DocumentWidget(i.object)) {
+                    return iTrue;
+                }
+            }
+        }
+    }
+    return iFalse;
+}
+
 iObjectList *listDocuments_MainWindow(iMainWindow *d, const iRoot *rootOrNull) {
     iObjectList *docs = new_ObjectList();
     if (!d) {

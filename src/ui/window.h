@@ -192,13 +192,12 @@ void        setSnap_MainWindow              (iMainWindow *, int snapMode);
 void        setFreezeDraw_MainWindow        (iMainWindow *, iBool freezeDraw);
 void        setKeyboardHeight_MainWindow    (iMainWindow *, int height);
 iObjectList *listDocuments_MainWindow       (iMainWindow *, const iRoot *rootOrNull);
+iBool       isAnyDocumentRequestOngoing_MainWindow   (iMainWindow *);
 void        setSplitMode_MainWindow         (iMainWindow *, int splitMode);
 void        checkPendingSplit_MainWindow    (iMainWindow *);
 void        swapRoots_MainWindow            (iMainWindow *);
-//void        showToolbars_MainWindow         (iMainWindow *, iBool show);
 void        resize_MainWindow               (iMainWindow *, int w, int h);
 void        resizeSplits_MainWindow         (iMainWindow *, iBool updateDocumentSize);
-//iBool       processEvent_MainWindow         (iMainWindow *, const SDL_Event *);
 void        draw_MainWindow                 (iMainWindow *);
 void        drawQuick_MainWindow            (iMainWindow *);
 void        drawWhileResizing_MainWindow    (iMainWindow *, int w, int h); /* workaround for SDL bug */

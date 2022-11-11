@@ -55,6 +55,7 @@ iBool               isIdentityOverridden_DocumentWidget(const iDocumentWidget *)
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),
     preventInlining_DocumentWidgetSetUrlFlag             = iBit(2),
+    waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag  = iBit(3),
 };
 
 void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other);

@@ -1622,6 +1622,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                             openingInRoot = newWin->base.roots[0];
                             isNewWindow = iTrue;
                         }
+                        iBool isFirst = iTrue;
                         iConstForEach(PtrArray,
                                       i,
                                       list_Bookmarks(bookmarks_App(),
@@ -1629,17 +1630,22 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                                      filterInsideFolder_Bookmark,
                                                      bm)) {
                             const iBookmark *contained = i.ptr;
-                            if (!isFolder_Bookmark(contained)) {                                
+                            if (!isFolder_Bookmark(contained)) {
+                                /* When opening multiple bookmarks at once, ensure that previous
+                                   ones are idle before continuing. */
                                 postCommandf_Root(
                                     openingInRoot,
-                                    "open newtab:%d%s url:%s",
-                                    !isNewWindow ? 1 : (index_PtrArrayConstIterator(&i) > 0)
-                                    /* first one is not in a new tab */,
+                                    "open idle:%d newtab:%d%s url:%s",
+                                    !isFirst,
+                                    (isNewWindow && isFirst ? 0
+                                     : isFirst              ? new_OpenTabFlag
+                                                            : newBackground_OpenTabFlag),
                                     !isEmpty_String(&contained->identity)
                                         ? format_CStr(" setident:%s",
                                                       cstr_String(&contained->identity))
                                         : "",
                                     cstr_String(&contained->url));
+                                isFirst = iFalse;
                             }
                         }
                         postCommandf_Root(openingInRoot, "window.unfreeze");

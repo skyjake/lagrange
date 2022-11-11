@@ -3561,6 +3561,7 @@ iBool handleCommand_App(const char *cmd) {
         if (!urlArg) {
             return iTrue; /* invalid command */
         }
+        /* TODO: "idle" should be passed to 'open' reinvocations */
         iString *setIdentArg = collectNew_String();
         if (hasLabel_Command(cmd, "setident")) {
             setCStr_String(setIdentArg, " setident:");
@@ -3686,6 +3687,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         iHistory   *history       = history_DocumentWidget(doc);
         const iBool isHistory     = argLabel_Command(cmd, "history") != 0;
+        const iBool waitForIdle   = argLabel_Command(cmd, "idle") != 0;
         int         redirectCount = argLabel_Command(cmd, "redirect");
         if (!isHistory) {
             /* TODO: Shouldn't DocumentWidget manage history on its own? */
@@ -3704,9 +3706,9 @@ iBool handleCommand_App(const char *cmd) {
             doc,
             url,
             (isHistory && isEmpty_String(setIdentArg)
-                 ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag
-                 : 0) |
-                (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag : 0),
+                 ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
+                (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag : 0) |
+                (waitForIdle ? waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag : 0),
             !isEmpty_String(setIdentArg)
                 ? collect_Block(hexDecode_Rangecc(range_Command(cmd, "setident")))
                 : NULL);
