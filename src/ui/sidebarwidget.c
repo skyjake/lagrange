@@ -559,6 +559,9 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                           0, 0, "bookmark.delete" },
                         { "---" } },
                     7);
+                if (isMobile_Platform()) {
+                    remove_Array(items, 1); /* just one window */
+                }
                 pushBackN_Array(items, bookmarkModeMenuItems_, iElemCount(bookmarkModeMenuItems_));
                 d->folderMenu = makeMenu_Widget(as_Widget(d), constData_Array(items), size_Array(items));
                 delete_Array(items);
