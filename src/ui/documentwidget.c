@@ -1000,7 +1000,7 @@ static void scrollToHeading_DocumentView_(iDocumentView *d, const char *heading)
 
 static iBool scrollWideBlock_DocumentView_(iDocumentView *d, iInt2 mousePos, int delta,
                                            int duration) {
-    if (delta == 0 || d->owner->flags & eitherWheelSwipe_DocumentWidgetFlag) {
+    if (delta == 0 || d->owner->wheelSwipeState == none_WheelSwipeState) { //} d->owner->flags & eitherWheelSwipe_DocumentWidgetFlag) {
         return iFalse;
     }
     const iInt2 docPos = documentPos_DocumentView_(d, mousePos);
@@ -3822,6 +3822,19 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
        swipe direction, the DocumentWidget `d` may wait until the finger is released to actually
        perform the navigation action. */
     if (equal_Command(cmd, "edgeswipe.moved")) {
+        if ((deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App()) &&
+            argLabel_Command(cmd, "edge")) {
+            /* This is an actual swipe from the edge of the device, we should let the sidebars
+               handle it. */
+            if (argLabel_Command(cmd, "edge") == 1) {
+                transferAffinity_Touch(w, findWidget_App("sidebar"));
+                return iTrue;
+            }
+            else if (argLabel_Command(cmd, "edge") == 2 && deviceType_App() == tablet_AppDeviceType) {
+                transferAffinity_Touch(w, findWidget_App("sidebar2"));
+                return iTrue;
+            }
+        }
         //printf("[%p] responds to edgeswipe.moved\n", d);
         as_Widget(d)->offsetRef = NULL;
         const int side = argLabel_Command(cmd, "side");
@@ -5080,24 +5093,26 @@ iLocalDef int wheelSwipeSide_DocumentWidget_(const iDocumentWidget *d) {
                                                            : 0);
 }
 
-static void finishWheelSwipe_DocumentWidget_(iDocumentWidget *d) {
-    if (d->flags & eitherWheelSwipe_DocumentWidgetFlag &&
+static void finishWheelSwipe_DocumentWidget_(iDocumentWidget *d, iBool aborted) {
+    if (//d->flags & eitherWheelSwipe_DocumentWidgetFlag &&
         d->wheelSwipeState == direct_WheelSwipeState) {
         const int side = wheelSwipeSide_DocumentWidget_(d);
-        int abort = ((side == 1 && d->swipeSpeed < 0) || (side == 2 && d->swipeSpeed > 0));
-        if (iAbs(d->wheelSwipeDistance) < width_Widget(d) / 4 && iAbs(d->swipeSpeed) < 4 * gap_UI) {
+        int abort = aborted || ((side == 1 && d->swipeSpeed < 0) || (side == 2 && d->swipeSpeed > 0));
+        if (iAbs(d->wheelSwipeDistance) < 4 * gap_UI) {
+            //printf("ABORTING: dist:%d speed:%f\n", d->wheelSwipeDistance, d->swipeSpeed);
             abort = 1;
         }
         postCommand_Widget(d, "edgeswipe.ended side:%d abort:%d", side, abort);
         d->flags &= ~eitherWheelSwipe_DocumentWidgetFlag;
+        d->wheelSwipeState = none_WheelSwipeState;
     }
 }
 
 static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_MouseWheelEvent *ev) {
     iWidget *w = as_Widget(d);
-    if (deviceType_App() != desktop_AppDeviceType) {
+    /*if (deviceType_App() != desktop_AppDeviceType) {
         return iFalse;
-    }
+    }*/
     if (~flags_Widget(w) & horizontalOffset_WidgetFlag) {
         return iFalse;
     }
@@ -5124,11 +5139,10 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
             break;
         case direct_WheelSwipeState:
             if (isInertia_MouseWheelEvent(ev) || isScrollFinished_MouseWheelEvent(ev)) {
-                finishWheelSwipe_DocumentWidget_(d);
-                d->wheelSwipeState = none_WheelSwipeState;
+                finishWheelSwipe_DocumentWidget_(d, iFalse);
             }
             else {
-                int step = ev->x * 2;
+                int step = ev->x * (isMobile_Platform() ? 1 : 2);
                 d->wheelSwipeDistance += step;
                 /* Remember the maximum speed. */
                 if (d->swipeSpeed < 0 && step < 0) {
@@ -5141,6 +5155,10 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
                     d->swipeSpeed = step;
                 }
                 switch (wheelSwipeSide_DocumentWidget_(d)) {
+                    case 0:
+                        d->wheelSwipeDistance = iClamp(d->wheelSwipeDistance,
+                                                       -width_Widget(d), width_Widget(d));
+                        break;
                     case 1:
                         d->wheelSwipeDistance = iMax(0, d->wheelSwipeDistance);
                         d->wheelSwipeDistance = iMin(width_Widget(d), d->wheelSwipeDistance);
@@ -5150,7 +5168,7 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
                         d->wheelSwipeDistance = iMax(-width_Widget(d), d->wheelSwipeDistance);
                         break;
                 }
-                /* TODO: calculate speed, rememeber direction */
+                /* TODO: calculate speed, remember direction */
                 //printf("swipe moved to %d, side %d\n", d->wheelSwipeDistance, side);
                 postCommand_Widget(d, "edgeswipe.moved arg:%d side:%d", d->wheelSwipeDistance,
                                    wheelSwipeSide_DocumentWidget_(d));
@@ -5163,6 +5181,11 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = &d->view;
+    /* Check if a swipe interaction has ended without inertia. */
+    if (isMobile_Platform() && d->wheelSwipeState == direct_WheelSwipeState &&
+        ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+        finishWheelSwipe_DocumentWidget_(d, iFalse);
+    }
     if (isMetricsChange_UserEvent(ev)) {
         updateSize_DocumentWidget(d);
     }
@@ -5260,17 +5283,19 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 #endif
         }
     }
-#if defined (iPlatformAppleDesktop)
-    else if (ev->type == SDL_MOUSEWHEEL &&
+    else if ((isAppleDesktop_Platform() || isMobile_Platform()) &&
+             ev->type == SDL_MOUSEWHEEL &&
              ev->wheel.y == 0 &&
              d->wheelSwipeState == direct_WheelSwipeState &&
              handleWheelSwipe_DocumentWidget_(d, &ev->wheel)) {
         return iTrue;
     }
-#endif
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
         const iInt2 mouseCoord = coord_MouseWheelEvent(&ev->wheel);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
+            if (d->wheelSwipeState != none_WheelSwipeState) {
+                finishWheelSwipe_DocumentWidget_(d, iTrue);
+            }
             const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
             stop_Anim(&d->view.scrollY.pos);
             immediateScroll_DocumentView_(view, -wheel.y);

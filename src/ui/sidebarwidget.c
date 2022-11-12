@@ -249,6 +249,10 @@ static iBool isSlidingSheet_SidebarWidget_(const iSidebarWidget *d) {
     return isPortraitPhone_App();
 }
 
+static iBool isEdgeSwipable_SidebarWidget_(const iSidebarWidget *d) {
+    return deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App();
+}
+
 static void setMobileEditMode_SidebarWidget_(iSidebarWidget *d, iBool editing) {
     iWidget *w = as_Widget(d);
     d->isEditing = editing;
@@ -1970,6 +1974,29 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+        else if (isEdgeSwipable_SidebarWidget_(d) && equal_Command(cmd, "edgeswipe.moved") &&
+                 argLabel_Command(cmd, "edge") && !isVisible_Widget(w)) {
+            const int side = argLabel_Command(cmd, "side");
+            const int delta = arg_Command(cmd);
+            if (d->side == left_SidebarSide && delta > 0) {
+                postCommand_Widget(w, "sidebar.toggle");
+            }
+            else if (d->side == right_SidebarSide && delta < 0) {
+                postCommand_Widget(w, "sidebar2.toggle");
+            }
+            return iFalse;
+        }
+        else if (isEdgeSwipable_SidebarWidget_(d) && equal_Command(cmd, "listswipe.moved") &&
+                 isVisible_Widget(w) && contains_Widget(w, coord_Command(cmd))) {
+            const int delta = arg_Command(cmd);
+            if (d->side == left_SidebarSide && delta < 0) {
+                postCommand_Widget(w, "sidebar.toggle");
+            }
+            else if (d->side == right_SidebarSide && delta > 0) {
+                postCommand_Widget(w, "sidebar2.toggle");
+            }
+            return iTrue;
+        }
 #if defined (iPlatformTerminal)
         else if (equal_Command(cmd, "zoom.set") && isVisible_Widget(w)) {
             setWidth_SidebarWidget(d, 35.0f * arg_Command(cmd) / 100.0f);
@@ -2074,7 +2101,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
     }
-    if (isSlidingSheet_SidebarWidget_(d)) {
+    if (isEdgeSwipable_SidebarWidget_(d)) {
+        if (ev->type == SDL_MOUSEWHEEL && isPerPixel_MouseWheelEvent(&ev->wheel)) {
+            if (d->side == left_SidebarSide && ev->wheel.x < 0 && isVisible_Widget(w)) {
+                postCommand_Widget(w, "sidebar.toggle");
+                return iTrue;
+            }
+        }
+    }
+    else if (isSlidingSheet_SidebarWidget_(d)) {
         if (ev->type == SDL_MOUSEWHEEL) {
             enum iWidgetTouchMode touchMode = widgetMode_Touch(w);
             if (touchMode == momentum_WidgetTouchMode) {

@@ -1370,7 +1370,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     else if (d->flags & overflowScrollable_WidgetFlag && ~d->flags & visualOffset_WidgetFlag) {
-        if (ev->type == SDL_MOUSEWHEEL) {
+        if (ev->type == SDL_MOUSEWHEEL && !ev->wheel.x) {
             int step = ev->wheel.y;
             if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
                 step *= lineHeight_Text(uiLabel_FontId);

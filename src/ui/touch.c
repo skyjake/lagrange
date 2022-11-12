@@ -320,7 +320,8 @@ static void update_TouchState_(void *ptr) {
 //                                     touch->edge == left_TouchEdge  && swipeDir > 0 ? SDL_BUTTON_X1 :
 //                                     touch->edge == right_TouchEdge && swipeDir < 0 ? SDL_BUTTON_X2 : 0);
 //                setHover_Widget(NULL);
-                postCommandf_App("edgeswipe.ended abort:1 side:%d id:%llu", touch->edge, touch->id);
+                postCommandf_App("edgeswipe.ended abort:1 side:%d edge:%d id:%llu",
+                                 touch->edge, touch->edge, touch->id);
                 touch->edge = none_TouchEdge;
                 /* May be a regular drag along the edge so don't remove. */
                 //remove_ArrayIterator(&i);
@@ -419,7 +420,8 @@ static void update_TouchState_(void *ptr) {
                                                         .timestamp = nowTime,
                                                         .x = pixels.x,
                                                         .y = pixels.y,
-                                                        .direction = perPixel_MouseWheelFlag
+                                                        .direction = perPixel_MouseWheelFlag |
+                                                            inertia_MouseWheelFlag
                                                     });
             }
             if (length_F3(mom->velocity) < minSpeed) {
@@ -466,7 +468,8 @@ static void checkNewPinch_TouchState_(iTouchState *d, iTouch *newTouch) {
         newTouch->pinchId = other->pinchId = pinch.id;
         clearWidgetMomentum_TouchState_(d, affinity);
         if (other->edge && other->didPostEdgeMove) {
-            postCommandf_App("edgeswipe.ended abort:1 side:%d id:%llu", other->edge, other->id);
+            postCommandf_App("edgeswipe.ended abort:1 side:%d edge:%d id:%llu",
+                             other->edge, other->edge, other->id);
             other->didPostEdgeMove = iFalse;
         }
         other->edge = none_TouchEdge;
@@ -594,10 +597,26 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         if (touch && touch->edge) {
             clear_Array(d->moms);
             pushPos_Touch_(touch, pos, nowTime);
-            postCommandf_App("edgeswipe.moved arg:%d side:%d id:%llu",
-                             (int) (x_F3(pos) - x_F3(touch->startPos)),
-                             touch->edge,
-                             touch->id);
+            const char *cmd = format_CStr("edgeswipe.moved arg:%d side:%d edge:%d id:%llu",
+                                          (int) (x_F3(pos) - x_F3(touch->startPos)),
+                                          touch->edge,
+                                          touch->edge,
+                                          touch->id);
+            iBool wasHandled = iFalse;
+            if (touch->affinity) {
+                /* First try dispatching directly to the affinity widget. */
+                SDL_UserEvent user = {
+                    .type = SDL_USEREVENT,
+                    .code = command_UserEventCode,
+                    .data1 = strdup(cmd),
+                    .data2 = touch->affinity->root,
+                    .windowID = id_Window(window_Widget(touch->affinity))
+                };
+                wasHandled = dispatchEvent_Widget(touch->affinity, (SDL_Event *) &user);
+            }
+            if (!wasHandled) {
+                postCommand_App(cmd);
+            }
             touch->didPostEdgeMove = iTrue;
             return iTrue;
         }
@@ -683,17 +702,20 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             if (touch->axis == x_TouchAxis) {
                 pixels.y = 0;
             }
-            if (touch->axis == y_TouchAxis) {
+            else { //if (touch->axis == y_TouchAxis) {
                 pixels.x = 0;
             }
 #if 0
             static uint32_t lastTime = 0;
-            printf("%u [%u] :: %p (%s) py: %i wy: %f acc: %f edge: %d\n",
+            printf("%u [%u] :: %p (%s) axis: %d px: %d py: %d wy: %f acc: %f edge: %d\n",
                    nowTime - lastTime,
                    ev->common.timestamp,
                    touch->affinity,
                    class_Widget(touch->affinity)->name,
-                   pixels.y, y_F3(amount), y_F3(touch->accum),
+                   touch->axis,
+                   pixels.x,
+                   pixels.y,
+                   y_F3(amount), y_F3(touch->accum),
                    touch->edge);
             lastTime = nowTime;
 #endif
@@ -739,8 +761,8 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 const int moveDir = x_F3(gesture) < -pixel ? -1 : x_F3(gesture) > pixel ? +1 : 0;
                 const int didAbort = (touch->edge == left_TouchEdge  && moveDir < 0) ||
                                      (touch->edge == right_TouchEdge && moveDir > 0);
-                postCommandf_App("edgeswipe.ended abort:%d side:%d id:%llu speed:%d", didAbort,
-                                 touch->edge, touch->id,
+                postCommandf_App("edgeswipe.ended abort:%d side:%d edge:%d id:%llu speed:%d", didAbort,
+                                 touch->edge, touch->edge, touch->id,
                                  (int) (duration > 0 ? length_F3(gesture) / (duration / 1000.0f) : 0));
                 remove_ArrayIterator(&i);
                 continue;
@@ -817,6 +839,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 }
                 else {
                     if (touch->affinity) {
+                        printf("WIDGET TOUCH ENDS\n");
                         dispatchNotification_Touch_(touch, widgetTouchEnds_UserEventCode);
                     }
                     dispatchButtonUp_Touch_(pos);
