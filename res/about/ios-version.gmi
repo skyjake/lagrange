@@ -6,6 +6,23 @@
 ```
 # Release notes
 
+## 1.14 (1)
+New features:
+* A bookmark folder can be opened in new tabs, one tab per contained bookmark.
+* New bookmark property "Set identity": use a specific identity when opening the bookmark, but don't apply it persistently on the bookmarked URL.
+
+Changes and enhancements:
+* Revised swipe gestures: back/forward swipe can be started anywhere on the page. Swiping from the left/right edge brings up the corresponding sidebar on iPad and landscape iPhone. The sidebar can be swiped away.
+* MIME types of many new file extensions are recognized (courtesy of John Cowan).
+* Updated UI translations.
+
+Fixes:
+* Schemeless relative URLs no longer assume "gemini" as the scheme, instead using the current page's scheme as default.
+* Opening a feed entry in a background tab will mark is as read, like opening in the foreground does.
+* ANSI escapes 39 and 49 (reset FG/BG color to default) were not working.
+* Fixed a layout issue in the translation dialog.
+* Cleaned up a few UI labels.
+
 ## 1.13 (3)
 * Fixed reporting of errors related to a proxy server certificate.
 * An untrusted proxy server certificate can be trusted via Page Information.
