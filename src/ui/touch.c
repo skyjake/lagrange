@@ -614,9 +614,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 };
                 wasHandled = dispatchEvent_Widget(touch->affinity, (SDL_Event *) &user);
             }
-            if (!wasHandled) {
-                postCommand_App(cmd);
-            }
+            //if (!wasHandled) {
+            postCommand_App(cmd);
+            //}
             touch->didPostEdgeMove = iTrue;
             return iTrue;
         }
@@ -908,7 +908,7 @@ void transferAffinity_Touch(iWidget *src, iWidget *dst) {
     iTouchState *d = touchState_();
     iForEach(Array, i, d->touches) {
         iTouch *touch = i.value;
-        if (touch->affinity == src) {
+        if (touch->affinity == src || src == NULL) {
             touch->affinity = dst;
         }
     }

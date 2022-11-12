@@ -1000,7 +1000,7 @@ static void scrollToHeading_DocumentView_(iDocumentView *d, const char *heading)
 
 static iBool scrollWideBlock_DocumentView_(iDocumentView *d, iInt2 mousePos, int delta,
                                            int duration) {
-    if (delta == 0 || d->owner->wheelSwipeState == none_WheelSwipeState) { //} d->owner->flags & eitherWheelSwipe_DocumentWidgetFlag) {
+    if (delta == 0 || d->owner->wheelSwipeState == direct_WheelSwipeState) { //} d->owner->flags & eitherWheelSwipe_DocumentWidgetFlag) {
         return iFalse;
     }
     const iInt2 docPos = documentPos_DocumentView_(d, mousePos);
@@ -1028,21 +1028,22 @@ static iBool scrollWideBlock_DocumentView_(iDocumentView *d, iInt2 mousePos, int
                 refresh_Widget(d->owner);
                 d->owner->selectMark = iNullRange;
                 d->owner->foundMark  = iNullRange;
-            }
-            if (duration) {
-                if (d->animWideRunId != preId_GmRun(run) || isFinished_Anim(&d->animWideRunOffset)) {
-                    d->animWideRunId = preId_GmRun(run);
-                    init_Anim(&d->animWideRunOffset, oldOffset);
+                if (duration) {
+                    if (d->animWideRunId != preId_GmRun(run) || isFinished_Anim(&d->animWideRunOffset)) {
+                        d->animWideRunId = preId_GmRun(run);
+                        init_Anim(&d->animWideRunOffset, oldOffset);
+                    }
+                    setValueEased_Anim(&d->animWideRunOffset, *offset, duration);
+                    d->animWideRunRange = range;
+                    addTicker_App(refreshWhileScrolling_DocumentWidget_, d->owner);
                 }
-                setValueEased_Anim(&d->animWideRunOffset, *offset, duration);
-                d->animWideRunRange = range;
-                addTicker_App(refreshWhileScrolling_DocumentWidget_, d->owner);
+                else {
+                    d->animWideRunId = 0;
+                    init_Anim(&d->animWideRunOffset, 0);
+                }
+                return iTrue;
             }
-            else {
-                d->animWideRunId = 0;
-                init_Anim(&d->animWideRunOffset, 0);
-            }
-            return iTrue;
+            return iFalse;
         }
     }
     return iFalse;
@@ -3827,7 +3828,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             /* This is an actual swipe from the edge of the device, we should let the sidebars
                handle it. */
             if (argLabel_Command(cmd, "edge") == 1) {
-                transferAffinity_Touch(w, findWidget_App("sidebar"));
+                transferAffinity_Touch(NULL, findWidget_App("sidebar"));
                 return iTrue;
             }
             else if (argLabel_Command(cmd, "edge") == 2 && deviceType_App() == tablet_AppDeviceType) {
@@ -5293,9 +5294,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
         const iInt2 mouseCoord = coord_MouseWheelEvent(&ev->wheel);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
-            if (d->wheelSwipeState != none_WheelSwipeState) {
+            /*if (d->wheelSwipeState != none_WheelSwipeState) {
                 finishWheelSwipe_DocumentWidget_(d, iTrue);
-            }
+            }*/
             const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
             stop_Anim(&d->view.scrollY.pos);
             immediateScroll_DocumentView_(view, -wheel.y);
