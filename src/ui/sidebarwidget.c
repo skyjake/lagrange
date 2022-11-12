@@ -1346,7 +1346,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         }
         else {
             /* Portrait phone sidebar works differently: it slides up from the bottom. */
-            setFlags_Widget(w, horizontalOffset_WidgetFlag, iFalse);
+            setFlags_Widget(w, horizontalOffset_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
             if (!isHiding) {
                 invalidate_ListWidget(d->list);
                 w->rect.pos.y = height_Rect(safeRect_Root(w->root)) - d->midHeight;
