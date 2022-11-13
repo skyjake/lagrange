@@ -6,6 +6,23 @@
 ```
 # Release notes
 
+## 1.14 (Beta 7)
+New features:
+* A bookmark folder can be opened in new tabs, one tab per contained bookmark.
+* New bookmark property "Set identity": use a specific identity when opening the bookmark, but don't apply it persistently on the bookmarked URL.
+
+Changes and enhancements:
+* Revised swipe gestures: back/forward swipe can be started anywhere on the page. Swiping from the left edge brings up the sidebar when in landscape orientation. The sidebar can also be swiped away.
+* MIME types of many new file extensions are recognized (courtesy of John Cowan).
+* Updated UI translations.
+
+Fixes:
+* Schemeless relative URLs no longer assume "gemini" as the scheme, instead using the current page's scheme as default.
+* Opening a feed entry in a background tab will mark is as read, like opening in the foreground does.
+* ANSI escapes 39 and 49 (reset FG/BG color to default) were not working.
+* Fixed a layout issue in the translation dialog.
+* Cleaned up a few UI labels.
+
 ## 1.13 (Beta 6)
 * Enabled audio output. WAV and Ogg Vorbis decoding is supported in this build. NOTE: At the moment, playback is not supported when app is in the background, or when the screen is locked. Also, playback may not start if there is already an active player on the page.
 * Fixed showing error page for an empty server response.
