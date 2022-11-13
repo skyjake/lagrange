@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-07-08 21:52+0000\n"
-"Last-Translator: Seiji Delph <george@quotennial.co.uk>\n"
+"PO-Revision-Date: 2022-11-15 05:52+0000\n"
+"Last-Translator: tbodt <tblodt@icloud.com>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
 "Language: tok\n"
@@ -14,18 +14,18 @@ msgstr ""
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.artist"
-msgstr "jan pi kalama musi"
+msgstr "jan kalama"
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.genre"
-msgstr "kon pi kalama musi"
+msgstr "nasin kalama"
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.date"
 msgstr "tenpo"
 
 msgid "doc.pre.nocaption"
-msgstr "sitelen namako li jo ala e sitelen pona"
+msgstr "toki ni li jo ala e nimi"
 
 # Link download progress message.
 msgid "doc.fetching"
@@ -33,18 +33,18 @@ msgstr "lipu li kama"
 
 # Inline download status message.
 msgid "media.download.complete"
-msgstr "ijo li awen."
+msgstr "ijo li lon ilo sina."
 
 # used as adjective, n is 8, 16, 24, 32, or 64
 #, c-format
 msgid "n.bit"
-msgstr "tu %d la"
+msgstr "%d-bit la"
 
 msgid "numbertype.integer"
-msgstr "nanpa kiwen la"
+msgstr "nanpa Int la"
 
 msgid "numbertype.float"
-msgstr "nanpa telo la"
+msgstr "nanpa Float la"
 
 # Hertz, unit for frequency values
 #, fuzzy
@@ -54,13 +54,13 @@ msgstr "Hz"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "lipu %u"
+msgstr[0] "lipu %u li lon"
 
 msgid "feeds.list.refreshtime.now"
-msgstr "tenpo pini lili la lipu lukin li sin."
+msgstr "tenpo pini lili la ilo li lukin sin e lipu."
 
 msgid "about.tagline"
-msgstr "ilo Kemini pi pona lukin"
+msgstr "ilo pona pi nasin Kemini"
 
 msgid "about.version"
 msgstr "nanpa"
@@ -68,7 +68,7 @@ msgstr "nanpa"
 #, c-format
 msgid "hours.ago"
 msgid_plural "hours.ago.n"
-msgstr[0] "suno anpa %d"
+msgstr[0] "tenpo ilo %d pini"
 
 #, c-format
 msgid "days.ago"
@@ -77,7 +77,7 @@ msgstr[0] "tenpo suno %d pini"
 
 #, c-format
 msgid "feeds.list.refreshtime"
-msgstr "tenpo %s pini la lipu lukin li sin."
+msgstr "%s la ilo li lukin sin e lipu."
 
 msgid "cancel"
 msgstr "o pini"
@@ -95,7 +95,7 @@ msgid "menu.title.file"
 msgstr "ijo"
 
 msgid "menu.title.edit"
-msgstr "o ante"
+msgstr "ante"
 
 msgid "dlg.default"
 msgstr " pona "
@@ -113,38 +113,38 @@ msgid "menu.title.help"
 msgstr "sona"
 
 msgid "menu.newtab"
-msgstr "o pali e poki sin"
+msgstr "o open e poki lukin sin"
 
 msgid "menu.closetab.other"
-msgstr "o pini e poki ante"
+msgstr "o pini e poki ante ale"
 
 msgid "menu.closetab.right"
-msgstr "o pini e poki lon sinpin"
+msgstr "o pini e poki ante ale lon poka pini"
 
 msgid "menu.duptab"
-msgstr "o pali e poki sama"
+msgstr "o open e poki kepeken lipu sama"
 
 msgid "menu.openlocation"
-msgstr "o open e nimi…"
+msgstr "o tawa lipu kepeken nimi…"
 
 msgid "menu.find"
-msgstr "o lukin e nimi lon lipu ni"
+msgstr "o alasa lon lipu ni"
 
 msgid "menu.downloads"
-msgstr "o lukin e poki tawa ijo awen"
+msgstr "o lukin e poki awen lipu pi ilo sina"
 
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
-msgstr "o awen e lipu tawa ilo sona"
+msgstr "o pana awen e lipu tawa ilo sina"
 
 msgid "menu.sidebar"
-msgstr "o len ala len e poki poka?"
+msgstr "o len ala len e poki ilo lon poka"
 
 msgid "menu.sidebar.left"
-msgstr "o len ala len e poki poka wan?"
+msgstr "o len ala len e poki ilo lon poka open"
 
 msgid "menu.sidebar.right"
-msgstr "o len ala len e poki poka tu?"
+msgstr "o len ala len e poki ilo lon poka pini"
 
 msgid "menu.zoom.in"
 msgstr "o suli"
@@ -153,62 +153,62 @@ msgid "menu.zoom.out"
 msgstr "o lili"
 
 msgid "menu.zoom.reset"
-msgstr "suli pi nasa ala"
+msgstr "o suli ala o lili ala"
 
 msgid "menu.preferences"
-msgstr "ijo ante…"
+msgstr "wile sina ilo…"
 
 msgid "menu.bookmarks.list"
-msgstr "lipu awen ali"
+msgstr "lipu awen ale"
 
 msgid "menu.bookmarks.bytag"
-msgstr "o lukin e nimi lili pi lipu awen"
+msgstr "lipu awen ale la o lukin kepeken nimi lili"
 
 msgid "macos.menu.bookmarks.bytag"
-msgstr "o lukin e nimi lili pi lipu awen"
+msgstr "lipu awen ale la o lukin kepeken nimi lili"
 
 msgid "menu.bookmarks.bytime"
-msgstr "o lukin e tenpo pi lipu awen"
+msgstr "lipu awen ale la o lukin kepeken tenpo"
 
 msgid "macos.menu.bookmarks.bytime"
-msgstr "o lukin e tenpo pi lipu awen"
+msgstr "lipu awen ale la o lukin kepeken tenpo"
 
 msgid "menu.feeds.entrylist"
-msgstr "o lukin e lipu lukin"
+msgstr "o lukin e lipu pi sin mute"
 
 msgid "menu.copy"
-msgstr "o kama sona"
+msgstr "poki sona o jo"
 
 msgid "menu.help"
 msgstr "sona"
 
 msgid "menu.releasenotes"
-msgstr "sona pi sin nanpa"
+msgstr "sona pi sin ilo"
 
 msgid "menu.cut"
-msgstr "o kama sona li weka"
+msgstr "poki sona o moku"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.bookmarks"
 msgstr "o lukin e lipu awen"
 
 msgid "menu.select.clear"
-msgstr "o pini e nimi open"
+msgstr "o weka e jo kule"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.history"
-msgstr "o lukin e sona pi tenpo pini"
+msgstr "o lukin e tenpo pini"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.identities"
-msgstr "o lukin e nimi mute"
+msgstr "o lukin e lipu nimi"
 
 msgid "menu.forward"
-msgstr "o tawa sinpin"
+msgstr "o tawa lipu kama"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.outline"
-msgstr "o lukin e toki ale lili"
+msgstr "o lukin e kipisi lipu"
 
 msgid "menu.parent"
 msgstr "o tawa lipu mama"
@@ -217,55 +217,55 @@ msgid "menu.reload"
 msgstr "o sin e lipu"
 
 msgid "menu.autoreload"
-msgstr "tenpo mute pi tenpo suno la o sin e lipu ni…"
+msgstr "ilo o sin e lipu lon tenpo…"
 
 msgid "menu.aboutpages"
-msgstr "lipu About"
+msgstr "lipu \"about:\""
 
 msgid "menu.about"
-msgstr "sona pi ilo Lakelan"
+msgstr "sona pi ilo Lakan"
 
 msgid "panel.back"
-msgstr "o tawa monsi"
+msgstr "o tawa pini"
 
 msgid "menu.debug"
-msgstr "sona pi alasa pipi"
+msgstr "sona alasa pi pakala ilo"
 
 msgid "menu.root"
 msgstr "o tawa lipu noka"
 
 msgid "sidebar.feeds"
-msgstr "lipu lukin"
+msgstr "lipu pi sin mute"
 
 msgid "sidebar.history"
-msgstr "sona pi tenpo pini"
+msgstr "tenpo pini"
 
 msgid "sidebar.identities"
-msgstr "nimi mute"
+msgstr "lipu nimi sina"
 
 msgid "menu.import.links"
-msgstr "o awen e nimi tawa ale lon lipu ni…"
+msgstr "o awen sona e lipu ale ni: nasin li lon lipu ni tawa ona…"
 
 msgid "menu.page.import"
-msgstr "o awen e nimi tawa ale lon lipu ni…"
+msgstr "o awen sona e lipu ale ni: nasin li lon lipu ni tawa ona…"
 
 msgid "menu.page.translate"
-msgstr "o toki ante…"
+msgstr "o toki ante e lipu…"
 
 msgid "menu.page.copysource"
-msgstr "o kama sona e lipu"
+msgstr "poki sona o jo e toki lipu"
 
 msgid "menu.feeds.refresh"
-msgstr "o sin e lipu lukin"
+msgstr "o lukin e sin lon lipu pi sin mute"
 
 msgid "menu.identity.new"
-msgstr "o pali e nimi…"
+msgstr "o pali e lipu nimi…"
 
 msgid "menu.identity.import"
-msgstr "o kama jo…"
+msgstr "o pana e lipu nimi tan ilo ante…"
 
 msgid "menu.identity.notactive"
-msgstr "nimi ala li open"
+msgstr "sina kepeken lipu nimi ala"
 
 msgid "sidebar.action.feeds.showunread"
 msgstr "lukin ala"
@@ -274,35 +274,34 @@ msgid "sidebar.action.ident.new"
 msgstr "o pali…"
 
 msgid "sidebar.action.ident.import"
-msgstr "o kama jo…"
+msgstr "o pana…"
 
 msgid "toolbar.outline"
-msgstr "toki ale lili"
+msgstr "kipisi lipu"
 
 msgid "status.query"
-msgstr "o lukin e nimi"
+msgstr "sina kama kepeken ilo alasa"
 
 msgid "status.feeds"
-msgstr "lipu lukin li kama sin"
+msgstr "ilo li kama lukin e sin lipu"
 
 msgid "hint.findtext"
-msgstr "o lukin e nimi lon lipu ni"
+msgstr "o alasa lon lipu ni"
 
-#, fuzzy
 msgid "mb.per.sec"
 msgstr "MB/s"
 
 msgid "num.bytes"
 msgid_plural "num.bytes.n"
-msgstr[0] "tu suli %u"
+msgstr[0] "suli %u"
 
 # megabytes, used as the unit after a number
 msgid "mb"
-msgstr "tu suli Meka"
+msgstr "MB"
 
 # kilobytes, used as the unit after a number
 msgid "kb"
-msgstr "tu suli Kilo"
+msgstr "KB"
 
 # strftime() formatted
 #, c-format
@@ -318,7 +317,7 @@ msgid "feeds.today"
 msgstr "tenpo suno ni"
 
 msgid "sidebar.entry.bookmark"
-msgstr "o awen e lipu…"
+msgstr "o awen sona e lipu…"
 
 # strftime() formatted, split on two lines
 #, c-format
@@ -329,17 +328,18 @@ msgid "feeds.entry.newtab"
 msgstr "o open e lipu lon poki sin"
 
 msgid "feeds.entry.markread"
-msgstr "mi wile ala lukin e lipu"
+msgstr "mi lukin e ni"
 
 msgid "feeds.entry.markunread"
-msgstr "mi wile lukin e lipu"
+msgstr "mi wile lukin e ni"
 
 msgid "menu.opentab.background"
-msgstr "o open lon poki lape"
+msgstr "o tawa ni lon poki lukin sin o lukin ala e poki sin"
 
 msgid "menu.edit"
 msgstr "o ante…"
 
+#, fuzzy
 msgid "menu.copyurl"
 msgstr "o kama sona e nimi tawa"
 
@@ -365,23 +365,24 @@ msgid "bookmarks.reload"
 msgstr "o sin e lipu awen tan ona"
 
 msgid "feeds.refresh"
-msgstr "o sin e lipu lukin"
+msgstr "o lukin sin e lipu"
 
 msgid "feeds.entry.bookmark"
-msgstr "o awen e lipu…"
+msgstr "o awen sona e lipu ni…"
 
 msgid "feeds.entry.openfeed"
-msgstr "o open e lipu mama"
+msgstr "o tawa lipu pana pi lipu ni"
 
 msgid "feeds.edit"
-msgstr "o ante e lipu lukin…"
+msgstr "o ante e nasin pi sona sin…"
 
 msgid "feeds.unsubscribe"
-msgstr "o pini lukin e lipu…"
+msgstr "o lukin ala e sin pi lipu ni…"
 
 msgid "feeds.markallread"
-msgstr "o lukin ala e lipu ale"
+msgstr "mi lukin e lipu ale"
 
+#, fuzzy
 msgid "menu.dup"
 msgstr "o pali e ijo sama…"
 
@@ -1102,28 +1103,30 @@ msgstr "nimi"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "sitelen namako suli li toki e ni: nimi Lagrange"
+msgstr ""
+"sitelen suli li toki e nimi Lagrange. sitelen suli li tan sitelen toki lili "
+"mute."
 
 msgid "about.powered"
-msgstr "kepeken e ilo SDL 2 e ilo OpenSSL e ☕️"
+msgstr "kepeken ilo SDL 2, kepeken ilo OpenSSL, kepeken telo wawa ☕️"
 
 msgid "menu.title.bookmarks"
 msgstr "lipu awen"
 
 msgid "menu.quit"
-msgstr "o pini e ilo Lakelan"
+msgstr "o pini e ilo Lakan"
 
 msgid "menu.back"
-msgstr "o tawa monsi"
+msgstr "o tawa lipu pini"
 
 msgid "menu.page.bookmark"
-msgstr "o awen e lipu…"
+msgstr "o awen sona e lipu ni…"
 
 msgid "sidebar.bookmarks"
 msgstr "lipu awen"
 
 msgid "sidebar.outline"
-msgstr "toki ale lili"
+msgstr "kipisi lipu"
 
 msgid "sidebar.action.feeds.showall"
 msgstr "ale"
@@ -1131,10 +1134,10 @@ msgstr "ale"
 # Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
 msgid "sidebar.unread"
 msgid_plural "sidebar.unread.n"
-msgstr[0] "lukin ala"
+msgstr[0] "li mute pi lipu sin"
 
 msgid "menu.opentab"
-msgstr "o open lon poki sin"
+msgstr "o tawa ni lon poki lukin sin"
 
 msgid "bookmark.tag.remote"
 msgstr "o pali e lipu awen tan ona"
@@ -1193,29 +1196,29 @@ msgstr "lupa tawa kon Kemini:"
 
 # Inline download status message.
 msgid "media.download.warnclose"
-msgstr "poki ni li pini la ijo li awen ala."
+msgstr "poki ni li pini la ijo li kama ala lon ilo sina."
 
 # Used in about:feeds.
 msgid "feeds.list.title"
-msgstr "lipu lukin ali"
+msgstr "lipu ale pi sin mute"
 
 #, c-format
 msgid "minutes.ago"
 msgid_plural "minutes.ago.n"
-msgstr[0] "suno anpa anpa %d"
+msgstr[0] "tenpo ilo lili %d pini"
 
 msgid "dlg.message.ok"
 msgstr "o awen pali"
 
 msgid "menu.closetab.left"
-msgstr "o pini e poki lon monsi"
+msgstr "o pini e poki ante ale lon poka open"
 
 msgid "macos.menu.find"
-msgstr "o lukin e nimi"
+msgstr "o alasa lon lipu"
 
 # Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
 msgid "menu.save.files"
-msgstr "o awen e lipu tawa ilo Files"
+msgstr "o pana awen e lipu tawa ilo sina"
 
 msgid "dlg.history.clear"
 msgstr "o weka e sona pi tenpo pini"
@@ -1231,33 +1234,35 @@ msgstr[0] "nimi tawa sin %d li lon lipu ni."
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "lipu lukin %u li lon. ona ale li jo e %%s.\n"
+msgstr[0] "lipu %u la sina lukin e lipu sin ona. ale la %%s.\n"
 
 msgid "macos.menu.bookmarks.list"
-msgstr "lipu awen ali"
+msgstr "lipu awen ale"
 
 msgid "menu.paste"
-msgstr "o pana tan sona"
+msgstr "poki sona o pana"
 
 # Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
 msgid "menu.copy.pagelink"
-msgstr "o kama sona e nimi tawa pi lipu ni"
+msgstr "poki sona o jo e nasin tawa pi lipu ni"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+#, fuzzy
 msgid "menu.show.feeds"
-msgstr "o lukin e lipu lukin"
+msgstr "o lukin e lipu pi sin mute"
 
 msgid "menu.page.copyurl"
-msgstr "o kama sona e nimi tawa pi lipu ni"
+msgstr "poki sona o jo e nasin tawa pi lipu ni"
 
 msgid "menu.page.subscribe"
-msgstr "o lukin e ijo sin lon lipu ni…"
+msgstr "o lukin e sin ale pi lipu ni…"
 
 msgid "keys.forward"
 msgstr "o tawa sinpin"
 
+#, fuzzy
 msgid "menu.bookmarks.refresh"
-msgstr "o sin e lipu awen tan ona"
+msgstr "o jo sin e lipu awen tan ilo ante"
 
 msgid "error.proxy"
 msgstr "lupa li pakala"
@@ -1268,6 +1273,7 @@ msgstr "lupa li weka e toki"
 msgid "keys.findtext"
 msgstr "o lukin e nimi lon lipu ni"
 
+#, fuzzy
 msgid "menu.forgeturl"
 msgstr "o weka e ona tan sona pi tenpo pini"
 
@@ -1436,13 +1442,13 @@ msgid "gempub.meta.license"
 msgstr "nasin pana"
 
 msgid "menu.view.split"
-msgstr "o tu e poki…"
+msgstr "o tu e poki lukin…"
 
 msgid "menu.split.vertical"
 msgstr "sewi en anpa"
 
 msgid "menu.split.merge"
-msgstr "o wan e poki"
+msgstr "poki tu o wan"
 
 msgid "dlg.save.opendownload"
 msgstr "o open e ijo"
@@ -1460,7 +1466,7 @@ msgid "gempub.cover.viewlocal"
 msgstr "sina awen e lipu tawa ilo sona la sina ken lukin e lipu Kempu."
 
 msgid "menu.split.horizontal"
-msgstr "poka"
+msgstr "poka tu"
 
 msgid "dlg.newident.date.example"
 msgstr ""
@@ -1470,7 +1476,7 @@ msgstr ""
 "• 2021-12-31 23:59:59"
 
 msgid "menu.split.swap"
-msgstr "o esun e poki"
+msgstr "poki tu o esun"
 
 msgid "lang.ia"
 msgstr "toki Intelinwa"
@@ -1526,10 +1532,10 @@ msgstr "tenpo sike"
 
 #, c-format
 msgid "doc.archive"
-msgstr "ijo mute li lon ijo lili %s."
+msgstr "lipu %s li poki li jo e lipu mute."
 
 msgid "doc.archive.view"
-msgstr "o lukin e ijo mute insa ijo ni"
+msgstr "o lukin e insa"
 
 msgid "bookmark.tag.linksplit"
 msgstr "nimi tawa lon poki ante"
@@ -1552,7 +1558,7 @@ msgid_plural "archive.summary.n"
 msgstr[0] "ijo %u li lon ijo ni (tu suli Meka %.1f)."
 
 msgid "archive.exit"
-msgstr "o pini e ijo"
+msgstr "o weka tan ijo lili"
 
 msgid "prefs.pinsplit"
 msgstr "o open e nimi tawa lon:"
@@ -1587,7 +1593,7 @@ msgid "prefs.animate"
 msgstr "tawa namako:"
 
 msgid "menu.save.downloads.open"
-msgstr "o awen li open e lipu"
+msgstr "o awen lon ilo sina o kama lukin"
 
 msgid "keys.split.item"
 msgstr "ijo kipisi:"
@@ -1617,10 +1623,10 @@ msgid "menu.pageinfo"
 msgstr "o lukin e sona lipu"
 
 msgid "menu.openfile"
-msgstr "o open e ijo…"
+msgstr "o lukin e lipu pi ilo sina…"
 
 msgid "status.query.tight"
-msgstr "nimi lukin"
+msgstr "sina alasa"
 
 msgid "hint.prefs.userfont"
 msgstr "nasin tawa ijo sitelen TrueType"
@@ -1812,18 +1818,18 @@ msgid "media.untitled.image"
 msgstr "sitelen"
 
 msgid "media.untitled.audio"
-msgstr "kalama musi"
+msgstr "kalama"
 
 msgid "menu.newfolder"
-msgstr "poki sina…"
+msgstr "o pali e poki sin…"
 
 # used for Preferences on mobile
 msgid "menu.settings"
-msgstr "ijo ante"
+msgstr "wile sina ilo"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.selectall"
-msgstr "o open e ale"
+msgstr "o jo kule e toki ale"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.delete"
@@ -1831,7 +1837,7 @@ msgstr "o weka"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.undo"
-msgstr "o ante monsi"
+msgstr "o weka e ante pini"
 
 msgid "heading.confirm.bookmarks.delete"
 msgstr "o weka e lipu awen"
@@ -1846,9 +1852,11 @@ msgid "dlg.bookmarks.delete"
 msgid_plural "dlg.bookmarks.delete.n"
 msgstr[0] "o weka e lipu awen %u"
 
+#, fuzzy
 msgid "feeds.atom.translated"
 msgstr ""
-"lipu sin Kemini li pali tan lipu Atom XML tan ni: jan li ken lukin e ni."
+"mi ante e lipu pi nasin Atom XML tawa lipu pi nasin Kemeni la sina ken lukin "
+"e sin lipu."
 
 msgid "dlg.fontpack.classic"
 msgstr "o kama jo e kulupu sitelen (tu suli meka 25)"
@@ -1877,18 +1885,18 @@ msgstr ""
 "sina ken ante e sitelen."
 
 msgid "menu.website"
-msgstr "lipu tomo WWW pi ilo Lakelan…"
+msgstr "lipu WWW pi ilo Lakan…"
 
 msgid "menu.fonts"
-msgstr "o ante e sitelen…"
+msgstr "o ante e nasin sitelen toki…"
 
 msgid "num.files"
 msgid_plural "num.files.n"
-msgstr[0] "ijo %u"
+msgstr[0] "lipu %u"
 
 msgid "num.fonts"
 msgid_plural "num.fonts.n"
-msgstr[0] "sitelen %u"
+msgstr[0] "nasin sitelen %u"
 
 msgid "dlg.certwarn.title"
 msgstr "pakala len suli"
@@ -2054,42 +2062,42 @@ msgstr "tenpo 24"
 
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
-msgstr "o lukin ala"
+msgstr "mi lukin e ale"
 
 # Color of text background.
 msgid "prefs.gemtext.ansi.bg"
 msgstr "lipu kule"
 
 msgid "menu.update"
-msgstr "o sin e ilo Lakelan…"
+msgstr "o sin e ilo Lakan…"
 
 msgid "dlg.bookmark.folder"
 msgstr "poki:"
 
 msgid "sidebar.action.show"
-msgstr "o len ala:"
+msgstr "o lukin e"
 
 msgid "menu.open.external"
-msgstr "o open kepeken ilo ante"
+msgstr "o lukin e ni kepeken ilo ante"
 
 msgid "sidebar.action.history.clear"
-msgstr "o weka"
+msgstr "o weka e ale"
 
 msgid "keys.upload.edit"
 msgstr "o ante e lipu kepeken kon Tetan"
 
 # Active identity toolbar menu.
 msgid "menu.hide.identities"
-msgstr "o len e nimi"
+msgstr "o lukin ala e lipu nimi"
 
 msgid "menu.home"
-msgstr "o tawa lipu tomo"
+msgstr "o tawa lipu open sina"
 
 msgid "menu.identities"
-msgstr "o ante e nimi"
+msgstr "o ante e lipu nimi"
 
 msgid "sidebar.close"
-msgstr "awen"
+msgstr "mi pini"
 
 msgid "sidebar.action.bookmarks.newfolder"
 msgstr "poki sin"
@@ -2116,7 +2124,7 @@ msgid "menu.upload.delete"
 msgstr "o weka e ijo ale"
 
 msgid "menu.upload.delete.confirm"
-msgstr "sina wile ala wile weka e ijo ale? sina ken ala ante monsi"
+msgstr "sina wile ala wile weka e ijo ale? sina ken ala kama sin e ona"
 
 # Mobile subheading in the Upload dialog.
 msgid "upload.url"
@@ -2130,7 +2138,7 @@ msgstr "nena pi nanpa tu"
 
 # Menu heading shown when customizing navbar button actions.
 msgid "menu.toolbar.setaction"
-msgstr "o ante e pali:"
+msgstr "nena ni o seme?"
 
 # Shows where a local file is using the File Manager.
 msgid "menu.reveal.filemgr"
@@ -2177,10 +2185,10 @@ msgid "error.proxyverify"
 msgstr "lupa li pona ala"
 
 msgid "menu.viewformat.plain"
-msgstr "o lukin e lipu pi namako ala"
+msgstr "o lukin e lipu kepeken nasin Kemeni ala"
 
 msgid "menu.viewformat.gemini"
-msgstr "o lukin e lipu Kemini"
+msgstr "o lukin e lipu kepeken nasin Kemeni"
 
 msgid "link.newwindow"
 msgstr "o open e nimi tawa lon poki poki sin"
@@ -2238,7 +2246,7 @@ msgstr "sitelen moli tawa sitelen:"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
-msgstr "sona pi ilo Lakelan"
+msgstr "sona pi ilo Lakan"
 
 msgid "sitespec.tlscache"
 msgstr "o awen e kon TLS:"
@@ -2274,7 +2282,7 @@ msgid "keys.input.precedingline"
 msgstr "o pana e linja pini"
 
 msgid "menu.paste.go"
-msgstr "o pana tan sona li kama"
+msgstr "poki sona la o pana o tawa lipu"
 
 msgid "pageinfo.settings"
 msgstr "ijo ante"
@@ -2292,19 +2300,19 @@ msgid "sitespec.ansi"
 msgstr "sitelen moli tawa namako ANSI:"
 
 msgid "heading.archive.userdata"
-msgstr "ijo mute pi ilo Lakelan"
+msgstr "ale sina pi ilo Lakan"
 
 msgid "menu.export"
-msgstr "o pana e ijo mute"
+msgstr "o pana e ale sina pi ilo Lakan tawa lipu"
 
 msgid "menu.import"
-msgstr "o kama jo e ijo mute…"
+msgstr "o pana e ale tan lipu ni tawa ilo Lakan…"
 
 msgid "feeds.entry.markbelowread"
-msgstr "mi wile ala lukin e lipu anpa"
+msgstr "mi lukin e lipu anpa ale"
 
 msgid "menu.openwindow"
-msgstr "o open lon poki poki sin"
+msgstr "o tawa ni lon poki lukin suli sin"
 
 msgid "keys.sitespec"
 msgstr "o lukin e ijo ante lipu"
@@ -2316,7 +2324,7 @@ msgid "import.userdata.error"
 msgstr "%s li ijo mute pi ilo Lakelan li pakala."
 
 msgid "menu.newwindow"
-msgstr "o pali e poki poki sin"
+msgstr "o open e poki lukin suli sin"
 
 msgid "heading.prefs.support"
 msgstr "o jo e pona"
@@ -2330,3 +2338,6 @@ msgstr "sitelen pona:"
 # Mobile subheading: buttons for entering uploaded data.
 msgid "upload.content"
 msgstr "lipu"
+
+msgid "menu.folder.opentab"
+msgstr "o tawa ni ale lon poki lukin sin mute"
