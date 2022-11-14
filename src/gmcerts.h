@@ -96,6 +96,7 @@ const iString *     certificatePath_GmCerts (const iGmCerts *, const iGmIdentity
 
 iGmIdentity *       identity_GmCerts        (iGmCerts *, unsigned int id);
 iGmIdentity *       findIdentity_GmCerts    (iGmCerts *, const iBlock *fingerprint);
+iGmIdentity *       findIdentityFuzzy_GmCerts(iGmCerts *, const iString *fuzzy);
 const iGmIdentity * constIdentity_GmCerts   (const iGmCerts *, unsigned int id);
 const iGmIdentity * identityForUrl_GmCerts  (const iGmCerts *, const iString *url);
 const iPtrArray *   identities_GmCerts      (const iGmCerts *);

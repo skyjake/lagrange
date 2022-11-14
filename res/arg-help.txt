@@ -5,6 +5,10 @@ separate tabs.
 
 General options:
 
+  -d, --dump            Print contents of URLs/paths to stdout and quit.
+  -I, --dump-identity ARG
+                        Use identity ARG with --dump. ARG can be a complete or
+                        partial client certificate fingerprint or common name.
   -E, --echo            Print all internal app events to stdout.
   -h, --height N        Set initial window height to N pixels.          
       --help            Print these instructions.

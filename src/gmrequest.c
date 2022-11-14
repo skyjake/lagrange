@@ -774,7 +774,7 @@ void submit_GmRequest(iGmRequest *d) {
     iGmResponse *resp = d->resp;
     clear_GmResponse(resp);
 #if !defined (NDEBUG) && !defined (iPlatformTerminal)
-    printf("[GmRequest] URL: %s\n", cstr_String(&d->url)); fflush(stdout);
+    fprintf(stderr, "[GmRequest] URL: %s\n", cstr_String(&d->url)); fflush(stderr);
 #endif
     iUrl url;
     init_Url(&url, &d->url);

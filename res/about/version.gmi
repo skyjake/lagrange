@@ -10,8 +10,10 @@
 New features:
 * A bookmark folder can be opened in new tabs, in the same or a new window, one tab per contained bookmark.
 * New bookmark property "Set identity": use a specific identity when opening the bookmark, but don't apply it persistently on the bookmarked URL.
-* Option `--user DIR` (`-U`) to set the directory where user data is stored.
+* Option `--dump` (`-d`) to print contents of URLs/paths to stdout. Metadata is printed to stderr.
+* Option `--dump-identity` (`-I`) selects the identity to use with `--dump`.
 * Option `--replace-tab URL` opens a URL, replacing contents of the active tab.
+* Option `--user DIR` (`-U`) to set the directory where user data is stored.
 
 Changes and enhancements:
 * URLs opened via system-level handlers always open a new tab, like URLs opened via the command line.

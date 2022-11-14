@@ -19,6 +19,12 @@ It offers modern conveniences familiar from web browsers, such as smooth scrolli
 
 When multiple URLs and/or local files are specified, they are opened in separate tabs.
 
+**-d**, **\--dump**
+:   Print contents of URLs/paths to stdout and quit.
+
+**-I**, **\--dump-identity** _ARG_
+:   Use identity ARG with **\--dump**. ARG can be a complete or partial client certificate fingerprint or common name.
+
 **-E**, **\--echo**
 :   Print all internal application events to stdout. Useful for debugging.
 

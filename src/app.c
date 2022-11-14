@@ -969,6 +969,27 @@ static const iString *openableCommandLineArgUriValue_(const iString *arg) {
     }
 }
 
+static iMutex *dumpMutex_;
+static iCondition *dumpFinishedCondition_;
+static int dumpCount_;
+
+static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
+    iUnused(obj);
+    lock_Mutex(dumpMutex_);
+    const iBlock *body = body_GmRequest(req);
+    fprintf(stderr,
+            "URL: %s\nLength: %zu\nHeader: %d %s\n",
+            cstr_String(url_GmRequest(req)),
+            size_Block(body),
+            status_GmRequest(req),
+            cstr_String(meta_GmRequest(req)));
+    fwrite(constData_Block(body), size_Block(body), 1, stdout);
+    if (--dumpCount_ == 0) {
+        signal_Condition(dumpFinishedCondition_);
+    }    
+    unlock_Mutex(dumpMutex_);
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
 #if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
     d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
@@ -1027,6 +1048,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #if !defined (iPlatformAndroidMobile)
     /* Configure the valid command line options. */ {
         defineValues_CommandLine(&d->args, "close-tab", 0);
+        defineValues_CommandLine(&d->args, dump_CommandLineOption, 0);
+        defineValues_CommandLine(&d->args, dumpIdentity_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, "echo;E", 0);
         defineValues_CommandLine(&d->args, "go-home", 0);
         defineValues_CommandLine(&d->args, "help", 0);
@@ -1041,6 +1064,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, windowHeight_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, windowWidth_CommandLineOption, 1);
     }
+    const iBool doDump = checkArgument_CommandLine(&d->args, dump_CommandLineOption);
     /* Handle command line options. */ {
         if (contains_CommandLine(&d->args, "help")) {
             puts(cstr_Block(&blobArghelp_Resources));
@@ -1092,7 +1116,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
 #if defined (LAGRANGE_ENABLE_IPC)
     /* Only one instance is allowed to run at a time; the runtime files (bookmarks, etc.)
-       are not shareable. */ {
+       are not shareable. */
+    if (!doDump) {
         init_Ipc(dataDir_App_());
         const iProcessId instance = check_Ipc();
         if (instance) {
@@ -1106,7 +1131,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         listen_Ipc(); /* We'll respond to commands from other instances. */
     }
 #endif
-    puts("Lagrange: A Beautiful Gemini Client");
+    if (!doDump) {
+        puts("Lagrange: A Beautiful Gemini Client");
+    }
     const iBool isFirstRun =
         !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
     d->isFinishedLaunching = iFalse;
@@ -1129,6 +1156,41 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->certs     = new_GmCerts(dataDir_App_());
     d->visited   = new_Visited();
     d->bookmarks = new_Bookmarks();
+    /* Option for dumping request contents. */
+    if (doDump) {
+        const iCommandLineArg *arg =
+            iClob(checkArgumentValues_CommandLine(&d->args, dumpIdentity_CommandLineOption, 1));
+        const iGmIdentity *ident = NULL;
+        if (arg) {
+            ident = findIdentityFuzzy_GmCerts(d->certs, value_CommandLineArg(arg, 0));
+            if (ident) {
+                fprintf(stderr, "Identity: %s\n", cstr_String(name_GmIdentity(ident)));
+            }
+        }
+        dumpMutex_ = new_Mutex();
+        dumpFinishedCondition_ = new_Condition();
+        dumpCount_ = size_StringList(openCmds);
+        if (dumpCount_ == 0) {
+            deinit_Foundation();
+            exit(0);
+        }
+        iForEach(StringList, i, openCmds) {
+            iGmRequest *req = iClob(new_GmRequest(d->certs));
+            setUrl_GmRequest(req, collect_String(suffix_Command(cstr_String(i.value), "url")));
+            setIdentity_GmRequest(req, ident);
+            enableFilters_GmRequest(req, iFalse);
+            iConnect(GmRequest, req, finished, req, dumpRequestFinished_App_);
+            submit_GmRequest(req);
+        }
+        /* Wait for requests to finish. */
+        iGuardMutex(dumpMutex_, {
+            if (dumpCount_ > 0) {
+                wait_Condition(dumpFinishedCondition_, dumpMutex_);
+            }
+        });
+        deinit_Foundation();
+        exit(0);               
+    }   
     init_Periodic(&d->periodic);
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();

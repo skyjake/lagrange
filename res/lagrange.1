@@ -14,7 +14,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "LAGRANGE" "1" "January 2022" "" ""
+.TH "LAGRANGE" "1" "November 2022" "" ""
 .hy
 .SH NAME
 .PP
@@ -34,6 +34,14 @@ fonts, and bookmarks.
 .PP
 When multiple URLs and/or local files are specified, they are opened in
 separate tabs.
+.TP
+\f[B]-d\f[R], \f[B]--dump\f[R]
+Print contents of URLs/paths to stdout and quit.
+.TP
+\f[B]-I\f[R], \f[B]--dump-identity\f[R] \f[I]ARG\f[R]
+Use identity ARG with \f[B]--dump\f[R].
+ARG can be a complete or partial client certificate fingerprint or
+common name.
 .TP
 \f[B]-E\f[R], \f[B]--echo\f[R]
 Print all internal application events to stdout.

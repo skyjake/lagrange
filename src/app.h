@@ -42,6 +42,8 @@ iDeclareType(Visited)
 iDeclareType(Window)
 
 /* Command line options strings. */
+#define dump_CommandLineOption              "dump;d"
+#define dumpIdentity_CommandLineOption      "dump-identity;I"
 #define userDataDir_CommandLineOption       "user;U"
 #define listTabUrls_CommandLineOption       "list-tab-urls;L"
 #define openUrlOrSearch_CommandLineOption   "url-or-search;u"
