@@ -969,9 +969,9 @@ static const iString *openableCommandLineArgUriValue_(const iString *arg) {
     }
 }
 
-static iMutex *dumpMutex_;
+static iMutex     *dumpMutex_;
 static iCondition *dumpFinishedCondition_;
-static int dumpCount_;
+static int         dumpCount_;
 
 static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
     iUnused(obj);
@@ -1156,11 +1156,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->certs     = new_GmCerts(dataDir_App_());
     d->visited   = new_Visited();
     d->bookmarks = new_Bookmarks();
-    /* Option for dumping request contents. */
+    /* Dumping requested pages. */
     if (doDump) {
+        const iGmIdentity *ident = NULL;
         const iCommandLineArg *arg =
             iClob(checkArgumentValues_CommandLine(&d->args, dumpIdentity_CommandLineOption, 1));
-        const iGmIdentity *ident = NULL;
         if (arg) {
             ident = findIdentityFuzzy_GmCerts(d->certs, value_CommandLineArg(arg, 0));
             if (ident) {
