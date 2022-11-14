@@ -139,6 +139,8 @@ static const int idleThreshold_App_ = 1000; /* ms */
 
 struct Impl_App {
     iCommandLine args;
+    iString *    overrideDataPath;
+    iBool        didCheckDataPathOption;
     iString *    execPath;
     iStringSet * tempFilesPendingDeletion;
     iStringList *recentlyClosedTabUrls; /* for reopening, like an undo stack */
@@ -364,6 +366,20 @@ static iString *serializePrefs_App_(const iApp *d) {
 }
 
 static const char *dataDir_App_(void) {
+    iApp *d = &app_;
+    if (!d->didCheckDataPathOption) {
+        d->didCheckDataPathOption = iTrue;
+        const iCommandLineArg *arg;
+        if ((arg = iClob(checkArgumentValues_CommandLine(
+                 &d->args, userDataDir_CommandLineOption, 1))) != NULL) {
+            iString *execDir = concatCStr_Path(d->execPath, "..");
+            d->overrideDataPath = concat_Path(execDir, value_CommandLineArg(arg, 0));
+            delete_String(execDir);            
+        }
+    }
+    if (d->overrideDataPath) {
+        return cstr_String(d->overrideDataPath);
+    }
 #if defined (iPlatformLinux) || defined (iPlatformOther)
     const char *configHome = getenv("XDG_CONFIG_HOME");
     if (configHome) {
@@ -964,6 +980,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->isSuspended = iFalse;
     d->tempFilesPendingDeletion = new_StringSet();
     d->recentlyClosedTabUrls = new_StringList();
+    d->overrideDataPath = NULL;
+    d->didCheckDataPathOption = iFalse;
     init_Array(&d->initialWindowRects, sizeof(iRect));    
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone
@@ -1013,14 +1031,15 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, "go-home", 0);
         defineValues_CommandLine(&d->args, "help", 0);
         defineValues_CommandLine(&d->args, listTabUrls_CommandLineOption, 0);
-        defineValues_CommandLine(&d->args, openUrlOrSearch_CommandLineOption, 1);
-        defineValues_CommandLine(&d->args, windowWidth_CommandLineOption, 1);
-        defineValues_CommandLine(&d->args, windowHeight_CommandLineOption, 1);
         defineValuesN_CommandLine(&d->args, "new-tab", 0, 1);
+        defineValues_CommandLine(&d->args, openUrlOrSearch_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, replaceTab_CommandLineOption, 1);
-        defineValues_CommandLine(&d->args, "tab-url", 0);
         defineValues_CommandLine(&d->args, "sw", 0);
+        defineValues_CommandLine(&d->args, "tab-url", 0);
+        defineValues_CommandLine(&d->args, userDataDir_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, "version;V", 0);
+        defineValues_CommandLine(&d->args, windowHeight_CommandLineOption, 1);
+        defineValues_CommandLine(&d->args, windowWidth_CommandLineOption, 1);
     }
     /* Handle command line options. */ {
         if (contains_CommandLine(&d->args, "help")) {

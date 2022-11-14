@@ -42,6 +42,7 @@ iDeclareType(Visited)
 iDeclareType(Window)
 
 /* Command line options strings. */
+#define userDataDir_CommandLineOption       "user;U"
 #define listTabUrls_CommandLineOption       "list-tab-urls;L"
 #define openUrlOrSearch_CommandLineOption   "url-or-search;u"
 #define replaceTab_CommandLineOption        "replace-tab"
