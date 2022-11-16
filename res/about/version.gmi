@@ -22,6 +22,7 @@ Changes and enhancements:
 * Updated UI translations.
 
 Fixes:
+* Accidental backwards navigation when quickly refreshing the page twice.
 * Schemeless relative URLs no longer assume "gemini" as the scheme, instead using the current page's scheme as default.
 * Opening a feed entry in a background tab will mark is as read, like opening in the foreground does.
 * ANSI escapes 39 and 49 (reset FG/BG color to default) were not working.

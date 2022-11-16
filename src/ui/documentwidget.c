@@ -242,6 +242,7 @@ enum iDocumentWidgetFlag {
     waitForIdle_DocumentWidgetFlag           = iBit(23), /* sequential loading; wait for previous
                                                             tabs to finished their requests */
     pendingRedirect_DocumentWidgetFlag       = iBit(24), /* a redirect has been issued */
+    goBackOnStop_DocumentWidgetFlag          = iBit(25),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -4503,7 +4504,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
-        if (cancelRequest_DocumentWidget_(d, iTrue /* navigate back */)) {
+        if (cancelRequest_DocumentWidget_(d, (d->flags & goBackOnStop_DocumentWidgetFlag) != 0)) {
             return iTrue;
         }
     }
@@ -4554,6 +4555,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             postCommandf_App("open url:%s", cstr_String(d->mod.url));
             return iTrue;
         }
+        d->flags &= ~goBackOnStop_DocumentWidgetFlag;
         fetch_DocumentWidget_(d);
         return iTrue;
     }
@@ -6261,6 +6263,7 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
                  setUrlFlags & preventInlining_DocumentWidgetSetUrlFlag);
     iChangeFlags(d->flags, waitForIdle_DocumentWidgetFlag,
                  setUrlFlags & waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag);
+    d->flags |= goBackOnStop_DocumentWidgetFlag;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
     setIdentityOverride_DocumentWidget(d, identityOverrideFingerprint);

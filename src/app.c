@@ -3787,9 +3787,9 @@ iBool handleCommand_App(const char *cmd) {
             doc,
             url,
             (isHistory && isEmpty_String(setIdentArg)
-                 ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
-                (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag : 0) |
-                (waitForIdle ? waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag : 0),
+                     ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
+            (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag : 0) |
+            (waitForIdle ? waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag : 0),
             !isEmpty_String(setIdentArg)
                 ? collect_Block(hexDecode_Rangecc(range_Command(cmd, "setident")))
                 : NULL);
