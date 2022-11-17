@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2022-06-24 12:52+0000\n"
-"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"PO-Revision-Date: 2022-11-18 11:52+0000\n"
+"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
@@ -1865,7 +1865,7 @@ msgid "dlg.upload.pickfile"
 msgstr "Valitse tiedosto"
 
 msgid "heading.bookmark.tags"
-msgstr "Erikoisavainsanat"
+msgstr "Ominaisuudet"
 
 msgid "heading.addfolder"
 msgstr "Lisää kansio"
@@ -2486,3 +2486,28 @@ msgstr "Epäluotettava välityspalvelin"
 msgid "error.proxyexpired.msg"
 msgstr ""
 "Yhteys katkaistiin, koska välityspalvelimen TLS-varmenne on vanhentunut."
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"Yhteys katkaistiin, koska välityspalvelimen TLS-sertifikaatti ei ole "
+"luotettu.\n"
+"\n"
+"Sertifikaatti voidaan merkitä luotetuksi Sivun tiedon -paneelissa."
+
+msgid "menu.folder.opentab"
+msgstr "Avaa uusissa välilehdissä"
+
+msgid "bookmark.folder.delete"
+msgstr "Tuhoa kirjanmerkkikansio"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "välilyönnein eroteltuja sanoja"
+
+msgid "dlg.bookmark.notes"
+msgstr "Muistiinpanot:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "vapaamuotoiset muistiinpanot"
+
+msgid "dlg.bookmark.identity"
+msgstr "Aseta identiteetti:"
