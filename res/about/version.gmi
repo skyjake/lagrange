@@ -10,12 +10,14 @@
 New features:
 * A bookmark folder can be opened in new tabs, in the same window or a new one, one tab per bookmark.
 * Pinned bookmark identities. A simpler way to use identities. When the "Pinned identity" property is set on a bookmark, opening the bookmark causes the selected identity to be "pinned" to the tab: while you stay on the same site, the identity remains in use when opening links. However, when opening a link to another site, a new tab gets opened. (The old way of per-URL identities is still available, too.)
+* New identities can be created for use in the current directory (as opposed to domain or page).
 * Option `--dump` (`-d`) to print contents of URLs/paths to stdout. Metadata is printed to stderr.
 * Option `--dump-identity` (`-I`) selects the identity to use with `--dump`.
 * Option `--replace-tab URL` opens a URL, replacing contents of the active tab.
 * Option `--user DIR` (`-U`) to set the directory where user data is stored.
 
 Changes and enhancements:
+* When creating new identities, make it clearer what the scope of usage will be. The UI actions explicitly say "New Identity for Domain" when the default usage will be the entire domain.
 * URLs opened via system-level handlers always open a new tab, like URLs opened via the command line.
 * MIME types of many new file extensions are recognized (courtesy of John Cowan).
 * The regular expression library PCRE2 is preferred over PCRE, if available. The older library is in maintenance mode.
