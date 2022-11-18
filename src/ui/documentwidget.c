@@ -281,6 +281,7 @@ struct Impl_DocumentView {
     iGmDocument *  doc;
     int            pageMargin;
     iSmoothScroll  scrollY;
+    iBool          userHasScrolled;
     iAnim          sideOpacity;
     iAnim          altTextOpacity;
     iGmRunRange    visibleRuns;
@@ -538,6 +539,7 @@ void init_DocumentView(iDocumentView *d) {
     init_PtrArray(&d->visibleWideRuns);
     init_Array(&d->wideRunOffsets, sizeof(int));
     init_PtrArray(&d->visibleMedia);
+    d->userHasScrolled = iFalse;
 }
 
 void deinit_DocumentView(iDocumentView *d) {
@@ -555,6 +557,7 @@ void deinit_DocumentView(iDocumentView *d) {
 
 static void setOwner_DocumentView_(iDocumentView *d, iDocumentWidget *doc) {
     d->owner = doc;
+    d->userHasScrolled = iFalse;
     init_SmoothScroll(&d->scrollY, as_Widget(doc), scrollBegan_DocumentWidget_);
     if (deviceType_App() != desktop_AppDeviceType) {
         d->scrollY.flags |= pullDownAction_SmoothScrollFlag; /* pull to refresh */
@@ -968,6 +971,7 @@ static void documentRunsInvalidated_DocumentView_(iDocumentView *d) {
 
 static void resetScroll_DocumentView_(iDocumentView *d) {
     reset_SmoothScroll(&d->scrollY);
+    d->userHasScrolled = iFalse;
     init_Anim(&d->sideOpacity, 0);
     init_Anim(&d->altTextOpacity, 0);
     resetWideRuns_DocumentView_(d);
@@ -987,10 +991,12 @@ static void clampScroll_DocumentView_(iDocumentView *d) {
 
 static void immediateScroll_DocumentView_(iDocumentView *d, int offset) {
     move_SmoothScroll(&d->scrollY, offset);
+    d->userHasScrolled = iTrue;
 }
 
 static void smoothScroll_DocumentView_(iDocumentView *d, int offset, int duration) {
     moveSpan_SmoothScroll(&d->scrollY, offset, duration);
+    d->userHasScrolled = iTrue;
 }
 
 static void scrollTo_DocumentView_(iDocumentView *d, int documentY, iBool centered) {
@@ -4410,9 +4416,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);
-        if (category_GmStatusCode(status_GmRequest(d->request)) == categorySuccess_GmStatusCode) {
+        if (category_GmStatusCode(status_GmRequest(d->request)) == categorySuccess_GmStatusCode &&
+            !d->view.userHasScrolled) {
             init_Anim(&d->view.scrollY.pos, d->initNormScrollY * pageHeight_DocumentView_(&d->view));
-            /* TODO: unless user already scrolled! */
         }
         addBannerWarnings_DocumentWidget_(d);
         iChangeFlags(d->flags,
