@@ -50,7 +50,8 @@ const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
 iBool               isSourceTextView_DocumentWidget (const iDocumentWidget *);
 const iGmIdentity * identity_DocumentWidget         (const iDocumentWidget *);
-iBool               isIdentityOverridden_DocumentWidget(const iDocumentWidget *);
+iBool               isIdentityPinned_DocumentWidget    (const iDocumentWidget *);
+iBool               isSetIdentityRetained_DocumentWidget(const iDocumentWidget *, const iString *dstUrl);
 
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),
@@ -59,10 +60,10 @@ enum iDocumentWidgetSetUrlFlags {
 };
 
 void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other);
-void    setIdentityOverride_DocumentWidget  (iDocumentWidget *, const iBlock *fingerprint);
+void    setIdentity_DocumentWidget      (iDocumentWidget *, const iBlock *setIdent); /* overrides normal sign-in */
 void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);
 void    setUrlFlags_DocumentWidget      (iDocumentWidget *, const iString *url, int setUrlFlags,
-                                         const iBlock *identityOverrideFingerprint);
+                                         const iBlock *setIdent);
 void    setUrlAndSource_DocumentWidget  (iDocumentWidget *, const iString *url, const iString *mime, const iBlock *source);
 void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); /* set after content received */
 void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);

@@ -108,6 +108,7 @@ iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 enum iOpenTabFlag {
     new_OpenTabFlag           = iBit(1),
     newBackground_OpenTabFlag = iBit(2),
+    newTabMask_OpenTabFlag    = new_OpenTabFlag | newBackground_OpenTabFlag,
     otherRoot_OpenTabFlag     = iBit(3),
 };
 

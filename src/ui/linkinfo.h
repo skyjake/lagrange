@@ -25,11 +25,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "text.h"
 #include "util.h"
 #include "../gmdocument.h"
+#include "../ui/documentwidget.h"
 
 iDeclareType(LinkInfo)
 iDeclareTypeConstruction(LinkInfo)
     
 struct Impl_LinkInfo {
+    const iDocumentWidget *doc;
     iGmLinkId linkId;
     int       maxWidth;
     iTextBuf *buf;
@@ -37,11 +39,10 @@ struct Impl_LinkInfo {
     iBool     isAltPos;
 };
 
-iBool   update_LinkInfo     (iLinkInfo *, const iGmDocument *doc, iGmLinkId linkId,
+iBool   update_LinkInfo     (iLinkInfo *, const iDocumentWidget *doc, iGmLinkId linkId,
                              int maxWidth); /* returns true if changed */
 void    invalidate_LinkInfo (iLinkInfo *);
-
-void    infoText_LinkInfo   (const iGmDocument *doc, iGmLinkId linkId, iString *text_out);
-
 iInt2   size_LinkInfo       (const iLinkInfo *);
 void    draw_LinkInfo       (const iLinkInfo *, iInt2 topLeft);
+
+void    infoText_LinkInfo   (const iDocumentWidget *doc, iGmLinkId linkId, iString *text_out);

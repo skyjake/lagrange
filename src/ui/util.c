@@ -3369,12 +3369,12 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
             { "input id:bmed.tags hint:hint.dlg.bookmark.tags text:${dlg.bookmark.tags}" },
             { "input id:bmed.notes hint:hint.dlg.bookmark.notes text:${dlg.bookmark.notes}" },
             { "heading text:${heading.bookmark.tags}" },
+            { "dropdown id:bmed.setident text:${LC:dlg.bookmark.identity}", 0, 0,
+              (const void *) constData_Array(identItems) },
             { "toggle id:bmed.tag.home text:${LC:bookmark.tag.home}" },
             { "toggle id:bmed.tag.remote text:${LC:bookmark.tag.remote}" },
             { "toggle device:0 id:bmed.tag.linksplit text:${LC:bookmark.tag.linksplit}" },
             { "toggle device:1 id:bmed.tag.linksplit text:${LC:bookmark.tag.linksplit}" },
-            { "dropdown id:bmed.setident text:${LC:dlg.bookmark.identity}", 0, 0,
-                (const void *) constData_Array(identItems) },
             { "padding" },
             { NULL }
         };
@@ -3422,11 +3422,11 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
             setFlags_Widget(special, collapse_WidgetFlag, iTrue);
             setId_Widget(special, "bmed.special");
             makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
+            makeIdentityDropdown_LabelWidget(
+                headings, values, identItems, "${dlg.bookmark.identity}", "bmed.setident");
             addDialogToggle_(headings, values, "${LC:bookmark.tag.home}:", "bmed.tag.home");
             addDialogToggle_(headings, values, "${LC:bookmark.tag.remote}:", "bmed.tag.remote");
             addDialogToggle_(headings, values, "${bookmark.tag.linksplit}:", "bmed.tag.linksplit");
-            makeIdentityDropdown_LabelWidget(
-                headings, values, identItems, "${dlg.bookmark.identity}", "bmed.setident");
         }
         arrange_Widget(dlg);
         for (int i = 0; i < 4; ++i) {

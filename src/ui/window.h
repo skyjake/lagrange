@@ -119,6 +119,7 @@ struct Impl_MainWindow {
     int           pendingSplitMode;
     iString *     pendingSplitUrl; /* URL to open in a newly opened split */
     iString *     pendingSplitOrigin; /* tab from where split was initiated, if any */
+    iString *     pendingSplitSetIdent;
     SDL_Texture * appIcon;
     int           keyboardHeight; /* mobile software keyboards */
     int           maxDrawableHeight;

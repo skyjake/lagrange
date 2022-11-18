@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "linkinfo.h"
 #include "metrics.h"
 #include "paint.h"
+#include "documentwidget.h"
 #include "../gmcerts.h"
 #include "../app.h"
 
@@ -51,7 +52,9 @@ iInt2 size_LinkInfo(const iLinkInfo *d) {
     return add_I2(d->buf->size, init_I2(2 * hPad_LinkInfo_, 2 * vPad_LinkInfo_));
 }
 
-void infoText_LinkInfo(const iGmDocument *doc, iGmLinkId linkId, iString *text_out) {
+void infoText_LinkInfo(const iDocumentWidget *widget, iGmLinkId linkId,
+                       iString *text_out) {
+    const iGmDocument *doc = document_DocumentWidget(widget);
     const iString *url = linkUrl_GmDocument(doc, linkId);
     iUrl parts;
     init_Url(&parts, url);
@@ -60,10 +63,12 @@ void infoText_LinkInfo(const iGmDocument *doc, iGmLinkId linkId, iString *text_o
     const iBool              isImage = (flags & imageFileExtension_GmLinkFlag) != 0;
     const iBool              isAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
     /* Most important info first: the identity that will be used. */
-    const iGmIdentity *ident = identityForUrl_GmCerts(certs_App(), url);
+    const iGmIdentity *ident =
+        isIdentityPinned_DocumentWidget(widget) && isSetIdentityRetained_DocumentWidget(widget, url)
+            ? identity_DocumentWidget(widget)
+            : identityForUrl_GmCerts(certs_App(), url);
     if (ident) {
         appendFormat_String(text_out, person_Icon " %s",
-                                                     //escape_Color(tmBannerItemTitle_ColorId),
                             cstr_String(name_GmIdentity(ident)));
     }
     /* Possibly inlined content. */
@@ -126,7 +131,7 @@ void infoText_LinkInfo(const iGmDocument *doc, iGmLinkId linkId, iString *text_o
     }
 }
 
-iBool update_LinkInfo(iLinkInfo *d, const iGmDocument *doc, iGmLinkId linkId, int maxWidth) {    
+iBool update_LinkInfo(iLinkInfo *d, const iDocumentWidget *doc, iGmLinkId linkId, int maxWidth) {    
     if (!d) {
         return iFalse;
     }

@@ -99,6 +99,7 @@ void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
 
 iChar       siteIcon_Bookmarks          (const iBookmarks *, const iString *url);
 uint32_t    findUrl_Bookmarks           (const iBookmarks *, const iString *url); /* O(n) */
+uint32_t    findUrlIdent_Bookmarks      (const iBookmarks *, const iString *url, const iString *identFp); /* O(n) */
 uint32_t    recentFolder_Bookmarks      (const iBookmarks *);
 
 //iBool   filterTagsRegExp_Bookmarks      (void *regExp, const iBookmark *);

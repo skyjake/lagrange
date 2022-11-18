@@ -660,6 +660,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     d->pendingSplitMode       = 0;
     d->pendingSplitUrl        = new_String();
     d->pendingSplitOrigin     = new_String();
+    d->pendingSplitSetIdent   = new_String();
     d->place.initialPos       = rect.pos;
     d->place.normalRect       = rect;
     d->place.lastNotifiedSize = zero_I2();
@@ -746,6 +747,7 @@ void deinit_MainWindow(iMainWindow *d) {
     if (theMainWindow_ == d) {
         theMainWindow_ = NULL;
     }
+    delete_String(d->pendingSplitSetIdent);
     delete_String(d->pendingSplitOrigin);
     delete_String(d->pendingSplitUrl);
     deinit_Window(&d->base);
@@ -1826,11 +1828,17 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                 }
             }
             if (!isEmpty_String(d->pendingSplitUrl)) {
-                postCommandf_Root(w->roots[newRootIndex], "open origin:%s url:%s",
-                                  cstr_String(d->pendingSplitOrigin),
-                                  cstr_String(d->pendingSplitUrl));
+                postCommandf_Root(
+                    w->roots[newRootIndex],
+                    "open origin:%s%s url:%s",
+                    cstr_String(d->pendingSplitOrigin),
+                    isEmpty_String(d->pendingSplitSetIdent)
+                        ? ""
+                        : format_CStr(" setident:%s", cstr_String(d->pendingSplitSetIdent)),
+                    cstr_String(d->pendingSplitUrl));
                 clear_String(d->pendingSplitUrl);
                 clear_String(d->pendingSplitOrigin);
+                clear_String(d->pendingSplitSetIdent);
             }
             else if (~splitFlags & noEvents_WindowSplit) {
                 iWidget *docTabs0 = findChild_Widget(w->roots[newRootIndex ^ 1]->widget, "doctabs");

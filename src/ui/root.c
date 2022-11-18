@@ -360,10 +360,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         iArray items;
         init_Array(&items, sizeof(iMenuItem));
         /* Current identity. */
-        const iString     *docUrl = url_DocumentWidget(document_App());
-        const iGmIdentity *ident  = identity_DocumentWidget(document_App());
-        const iString     *fp     = ident ? collect_String(hexEncode_Block(&ident->fingerprint)) : NULL;
-        iString           *str    = NULL;
+        const iDocumentWidget *doc        = document_App();
+        const iString         *docUrl     = url_DocumentWidget(doc);
+        const iGmIdentity     *ident      = identity_DocumentWidget(doc);
+        const iBool            isSetIdent = isIdentityPinned_DocumentWidget(doc);
+        const iString *fp  = ident ? collect_String(hexEncode_Block(&ident->fingerprint)) : NULL;
+        iString       *str = NULL;
         if (ident) {
             str = copy_String(name_GmIdentity(ident));
             if (!isEmpty_String(&ident->notes)) {
@@ -374,7 +376,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             &items,
             &(iMenuItem){ format_CStr("```" uiHeading_ColorEscape "\x1b[1m%s",
                                       str ? cstr_String(str) : "${menu.identity.notactive}") });
-        if (ident && isUsedOn_GmIdentity(ident, docUrl)) {
+        if (isSetIdent) {
+            pushBack_Array(&items,
+                           &(iMenuItem){ close_Icon " ${ident.unset}",
+                                         0, 0, "document.unsetident" });
+        }
+        else if (ident && isUsedOn_GmIdentity(ident, docUrl)) {
             pushBack_Array(&items,
                            &(iMenuItem){ close_Icon " ${ident.stopuse}",
                                          0,
@@ -591,9 +598,9 @@ static void updateNavBarIdentity_(iWidget *navBar) {
         setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
         setMenuItemDisabledByIndex_Widget(menu, 0, !ident);
         /* Visualize an identity override. */
-        setOutline_LabelWidget((iLabelWidget *) button, isIdentityOverridden_DocumentWidget(doc));
+        setOutline_LabelWidget((iLabelWidget *) button, isIdentityPinned_DocumentWidget(doc));
         setBackgroundColor_Widget(
-            button, isIdentityOverridden_DocumentWidget(doc) ? uiBackground_ColorId : none_ColorId);
+            button, isIdentityPinned_DocumentWidget(doc) ? uiBackground_ColorId : none_ColorId);
     }
     iLabelWidget *toolButton = findWidget_App("toolbar.ident");
     iLabelWidget *toolName   = findWidget_App("toolbar.name");

@@ -126,16 +126,19 @@ static const char *label_ReloadInterval_(enum iReloadInterval d) {
 struct Impl_PersistentDocumentState {
     iHistory *history;
     iString * url;
+    iBlock *setIdentity; /* identity (fingerprint) to use for requests, overriding default one */
     enum iReloadInterval reloadInterval;
 };
 
 void init_PersistentDocumentState(iPersistentDocumentState *d) {
     d->history        = new_History();
     d->url            = new_String();
+    d->setIdentity    = NULL;
     d->reloadInterval = 0;
 }
 
 void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
+    delete_Block(d->setIdentity);
     delete_String(d->url);
     delete_History(d->history);
 }
@@ -144,6 +147,12 @@ void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStrea
     serialize_String(d->url, outs);
     uint16_t params = d->reloadInterval & 7;
     writeU16_Stream(outs, params);
+    /* Identity override. */ {
+        iBlock empty;
+        init_Block(&empty, 0);
+        serialize_Block(d->setIdentity ? d->setIdentity : &empty, outs);
+        deinit_Block(&empty);
+    }
     serialize_History(d->history, outs);
 }
 
@@ -155,6 +164,15 @@ void deserialize_PersistentDocumentState(iPersistentDocumentState *d, iStream *i
     }
     const uint16_t params = readU16_Stream(ins);
     d->reloadInterval = params & 7;
+    if (version_Stream(ins) >= documentSetIdentity_FileVersion) {
+        iBlock fp;
+        init_Block(&fp, 0);
+        deserialize_Block(&fp, ins);
+        if (!isEmpty_Block(&fp)) {
+            d->setIdentity = copy_Block(&fp);
+        }
+        deinit_Block(&fp);
+    }
     deserialize_History(d->history, ins);
 }
 
@@ -311,7 +329,6 @@ struct Impl_DocumentWidget {
 
     /* Network request: */
     enum iRequestState state;
-    iBlock *       requestIdentityFingerprint; /* identity to use for request, overriding default one */
     iGmRequest *   request;
     iGmLinkId      requestLinkId; /* ID of the link that initiated the current request */
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
@@ -740,7 +757,7 @@ static void invalidateWideRunsWithNonzeroOffset_DocumentView_(iDocumentView *d) 
 
 static void updateHoverLinkInfo_DocumentView_(iDocumentView *d) {
     if (update_LinkInfo(d->owner->linkInfo,
-                        d->doc,
+                        d->owner,
                         d->hoverLink ? d->hoverLink->linkId : 0,
                         width_Widget(constAs_Widget(d->owner)))) {
         animate_DocumentWidget_(d->owner);
@@ -2266,6 +2283,13 @@ static iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
            (prefs->pinSplit == 2 && w->root == win->roots[1]);
 }
 
+static uint32_t findBookmarkId_DocumentWidget_(const iDocumentWidget *d) {
+    return findUrlIdent_Bookmarks(
+        bookmarks_App(),
+        d->mod.url,
+        d->mod.setIdentity ? collect_String(hexEncode_Block(d->mod.setIdentity)) : NULL);
+}
+
 static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     if (d != document_Root(w->root)) {
@@ -2274,7 +2298,7 @@ static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     iWidget *navBar = findChild_Widget(root_Widget(w), "navbar");
     showCollapsed_Widget(findChild_Widget(navBar, "document.pinned"),
                          isPinned_DocumentWidget_(d));
-    const iBool isBookmarked = findUrl_Bookmarks(bookmarks_App(), d->mod.url) != 0;
+    const iBool isBookmarked = findBookmarkId_DocumentWidget_(d) != 0;
     iLabelWidget *bmPin = findChild_Widget(navBar, "document.bookmarked");
     setOutline_LabelWidget(bmPin, !isBookmarked);
     setTextColor_LabelWidget(bmPin, isBookmarked ? uiTextAction_ColorId : uiText_ColorId);
@@ -2298,7 +2322,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     refresh_Widget(as_Widget(d));
     /* Check for special bookmark tags. */
     d->flags &= ~otherRootByDefault_DocumentWidgetFlag;
-    const uint16_t bmid = findUrl_Bookmarks(bookmarks_App(), d->mod.url);
+    const uint16_t bmid = findBookmarkId_DocumentWidget_(d);
     if (bmid) {
         const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
         if (bm->flags & linkSplit_BookmarkFlag) {
@@ -2996,7 +3020,7 @@ static iBool fetch_DocumentWidget_(iDocumentWidget *d) {
     d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, d->mod.url);
     /* Overriding identity. */
-    if (isIdentityOverridden_DocumentWidget(d)) {
+    if (isIdentityPinned_DocumentWidget(d)) {
         const iGmIdentity *ident = identity_DocumentWidget(d);
         if (ident) {
             setIdentity_GmRequest(d->request, ident);
@@ -3183,8 +3207,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
-    if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url) &&
-        isEmpty_Block(d->requestIdentityFingerprint)) {
+    if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url)) {
         updateFromCachedResponse_DocumentWidget_(
             d, recent->normScrollY, recent->cachedResponse, recent->cachedDoc);
         if (!recent->cachedDoc) {
@@ -3313,14 +3336,20 @@ static const char *humanReadableStatusCode_(enum iGmStatusCode code) {
     return format_CStr("%d ", code);
 }
 
+iBool isSetIdentityRetained_DocumentWidget(const iDocumentWidget *d, const iString *dstUrl) {
+    /* The overriding tab identity is implicitly affecting the entire URL root. */
+    return equalRangeCase_Rangecc(urlRoot_String(d->mod.url), urlRoot_String(dstUrl));
+}
+
 static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     url = canonicalUrl_String(url);
     if (!equal_String(d->mod.url, url)) {
+        if (d->mod.setIdentity) {
+            /* With a set identity, the URL root is not allowed to change. */
+            iAssert(isSetIdentityRetained_DocumentWidget(d, url));
+        }
         d->flags |= urlChanged_DocumentWidgetFlag;
         set_String(d->mod.url, url);
-        /* The overriding identity is cleared when the URL changes. */
-        delete_Block(d->requestIdentityFingerprint);
-        d->requestIdentityFingerprint = NULL;
         return iTrue;
     }
     return iFalse;
@@ -3510,17 +3539,10 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                              (equalCase_Rangecc(srcScheme, "gemini") &&
                               equalCase_Rangecc(dstScheme, "titan"))) {
                         visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
-                        const char *setIdentArg = "";
-                        if (isIdentityOverridden_DocumentWidget(d)) {
-                            setIdentArg = format_CStr(
-                                " setident:%s",
-                                cstrCollect_String(hexEncode_Block(d->requestIdentityFingerprint)));
-                        }
                         postCommandf_Root(as_Widget(d)->root,
-                                          "open doc:%p redirect:%d%s url:%s",
+                                          "open doc:%p redirect:%d url:%s",
                                           d,
                                           d->redirectCount + 1,
-                                          setIdentArg,
                                           cstr_String(dstUrl));
                         d->flags |= pendingRedirect_DocumentWidgetFlag;
                     }
@@ -4903,6 +4925,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "document.unsetident") && document_App() == d) {
+        setIdentity_DocumentWidget(d, NULL);
+        postCommand_Widget(w, "document.reload");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "fontpack.install") && document_App() == d) {
         if (argLabel_Command(cmd, "ttf")) {
             iAssert(!cmp_String(&d->sourceMime, "font/ttf"));
@@ -5181,6 +5208,27 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
     return iFalse;
 }
 
+static const char *setIdentArg_DocumentWidget_(const iDocumentWidget *d, const iString *dstUrl) {
+    if (isIdentityPinned_DocumentWidget(d) &&
+        isSetIdentityRetained_DocumentWidget(d, dstUrl)) {
+        return format_CStr(
+            " setident:%s",
+            cstrCollect_String(hexEncode_Block(d->mod.setIdentity)));
+    }
+    return "";
+}
+
+static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, int tabMode) {
+    const iString *linkUrl = absoluteUrl_String(d->mod.url,
+                                                linkUrl_GmDocument(d->view.doc, linkId));
+    postCommandf_Root(d->widget.root, "open query:%d newtab:%d%s url:%s",
+                      isSpartanQueryLink_DocumentWidget_(d, linkId),
+                      tabMode,
+                      setIdentArg_DocumentWidget_(d, linkUrl),
+                      cstr_String(linkUrl));
+    interactingWithLink_DocumentWidget_(d, linkId);
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = &d->view;
@@ -5221,17 +5269,27 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         updateHoverLinkInfo_DocumentView_(view);
                     }
                     else {
+                        /*const iString *linkUrl = linkUrl_GmDocument(view->doc, run->linkId);*/
+                        postOpenLinkCommand_DocumentWidget_(
+                            d,
+                            run->linkId,
+                            (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) ^
+                                (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode
+                                     ? openTabMode_Sym(modState_Keys())
+                                     : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0)));
+                        /*
                         postCommandf_Root(
                             w->root,
-                            "open query:%d newtab:%d url:%s",
+                            "open query:%d newtab:%d%s url:%s",
                             isSpartanQueryLink_DocumentWidget_(d, run->linkId),
                             (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) ^
                                 (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode
                                      ? openTabMode_Sym(modState_Keys())
                                      : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0)),
-                            cstr_String(absoluteUrl_String(
-                                d->mod.url, linkUrl_GmDocument(view->doc, run->linkId))));
+                            setIdentArg_DocumentWidget_(d, linkUrl),
+                            cstr_String(absoluteUrl_String(d->mod.url, linkUrl)));
                         interactingWithLink_DocumentWidget_(d, run->linkId);
+                        */
                     }
                     setLinkNumberMode_DocumentWidget_(d, iFalse);
                     invalidateVisibleLinks_DocumentView_(view);
@@ -5360,12 +5418,19 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && view->hoverLink) {
-            interactingWithLink_DocumentWidget_(d, view->hoverLink->linkId);
-            postCommandf_Root(w->root, "open query:%d newtab:%d url:%s",
+            //interactingWithLink_DocumentWidget_(d, view->hoverLink->linkId);
+            //const iString *linkUrl = linkUrl_GmDocument(view->doc, view->hoverLink->linkId);
+            postOpenLinkCommand_DocumentWidget_(
+                d,
+                view->hoverLink->linkId,
+                (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
+                    (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag));
+            /*postCommandf_Root(w->root, "open query:%d newtab:%d%s url:%s",
                               isSpartanQueryLink_DocumentWidget_(d, view->hoverLink->linkId),
                               (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
-                              (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag),
-                              cstr_String(linkUrl_GmDocument(view->doc, view->hoverLink->linkId)));
+                              (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag :
+               newBackground_OpenTabFlag), setIdentArg_DocumentWidget_(d, linkUrl),
+                              cstr_String(linkUrl));*/
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_RIGHT &&
@@ -5391,7 +5456,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     if (deviceType_App() != desktop_AppDeviceType) {
                         /* Show the link as the first, non-interactive item. */
                         iString *infoText = collectNew_String();
-                        infoText_LinkInfo(d->view.doc, d->contextLink->linkId, infoText);
+                        infoText_LinkInfo(d, d->contextLink->linkId, infoText);
                         pushBack_Array(&items, &(iMenuItem){
                             format_CStr("```%s", cstr_String(infoText)),
                             0, 0, NULL });
@@ -5410,37 +5475,42 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                             { openTab_Icon " ${link.newtab}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newtab:1 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:1 origin:%s%s url:%s",
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
+                                                          setIdentArg_DocumentWidget_(d, linkUrl),
                                                           cstr_String(linkUrl)) },
                                             { openTabBg_Icon " ${link.newtab.background}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newtab:2 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:2 origin:%s%s url:%s",
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
+                                                          setIdentArg_DocumentWidget_(d, linkUrl),
                                                           cstr_String(linkUrl)) },
                                             { openWindow_Icon " ${link.newwindow}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newwindow:1 origin:%s url:%s",
+                                              format_CStr("!open query:%d newwindow:1 origin:%s%s url:%s",
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
+                                                          setIdentArg_DocumentWidget_(d, linkUrl),
                                                           cstr_String(linkUrl)) },
                                             { "${link.side}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newtab:4 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:4 origin:%s%s url:%s",
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
+                                                          setIdentArg_DocumentWidget_(d, linkUrl),
                                                           cstr_String(linkUrl)) },
                                             { "${link.side.newtab}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newtab:5 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:5 origin:%s%s url:%s",                                                          
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
+                                                          setIdentArg_DocumentWidget_(d, linkUrl),
                                                           cstr_String(linkUrl)) },
                                         },
                                         5);
@@ -5853,13 +5923,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         if (isPinned_DocumentWidget_(d)) {
                             tabMode ^= otherRoot_OpenTabFlag;
                         }
-                        interactingWithLink_DocumentWidget_(d, linkId);
+                        //interactingWithLink_DocumentWidget_(d, linkId);
+                        /*
                         postCommandf_Root(w->root,
                                           "open query:%d newtab:%d url:%s",
                                           isSpartanQueryLink_DocumentWidget_(d, linkId),
                                           tabMode,
                                           cstr_String(absoluteUrl_String(
-                                              d->mod.url, linkUrl_GmDocument(view->doc, linkId))));
+                                              d->mod.url, linkUrl_GmDocument(view->doc, linkId))));*/
+                        postOpenLinkCommand_DocumentWidget_(d, linkId, tabMode);
                     }
                     else {
                         const iString *url = absoluteUrl_String(
@@ -5986,7 +6058,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (deviceType_App() == desktop_AppDeviceType && prefs_App()->hoverLink && d->linkInfo) {
         const int pad = 0; /*gap_UI;*/
         update_LinkInfo(d->linkInfo,
-                        d->view.doc,
+                        d,
                         d->view.hoverLink ? d->view.hoverLink->linkId : 0,
                         width_Rect(bounds) - 2 * pad);
         const iInt2 infoSize = size_LinkInfo(d->linkInfo);
@@ -6073,7 +6145,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->certSubject      = new_String();
     d->state            = blank_RequestState;
     d->titleUser        = new_String();
-    d->requestIdentityFingerprint = NULL;
     d->request          = NULL;
     d->requestLinkId    = 0;
     d->isRequestUpdated = iFalse;
@@ -6156,7 +6227,6 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_Block(d->certFingerprint);
     delete_String(d->certSubject);
     delete_String(d->titleUser);
-    delete_Block(d->requestIdentityFingerprint);
     deinit_PersistentDocumentState(&d->mod);
 }
 
@@ -6199,15 +6269,15 @@ iBool isSourceTextView_DocumentWidget(const iDocumentWidget *d) {
 
 const iGmIdentity *identity_DocumentWidget(const iDocumentWidget *d) {
     /* The document may override the default identity. */
-    const iGmIdentity *ident = findIdentity_GmCerts(certs_App(), d->requestIdentityFingerprint);
+    const iGmIdentity *ident = findIdentity_GmCerts(certs_App(), d->mod.setIdentity);
     if (ident) {
         return ident;
     }
     return identityForUrl_GmCerts(certs_App(), url_DocumentWidget(d));
 }
 
-iBool isIdentityOverridden_DocumentWidget(const iDocumentWidget *d) {
-    return !isEmpty_Block(d->requestIdentityFingerprint);
+iBool isIdentityPinned_DocumentWidget(const iDocumentWidget *d) {
+    return !isEmpty_Block(d->mod.setIdentity);
 }
 
 const iString *feedTitle_DocumentWidget(const iDocumentWidget *d) {
@@ -6257,7 +6327,7 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 }
 
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags,
-                                const iBlock *identityOverrideFingerprint) {
+                                const iBlock *setIdent) {
     const iBool allowCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
                  setUrlFlags & preventInlining_DocumentWidgetSetUrlFlag);
@@ -6266,7 +6336,9 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
     d->flags |= goBackOnStop_DocumentWidgetFlag;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
-    setIdentityOverride_DocumentWidget(d, identityOverrideFingerprint);
+    if (setIdent) {
+        setIdentity_DocumentWidget(d, setIdent);
+    }
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
     if (!allowCache || !updateFromHistory_DocumentWidget_(d)) {
@@ -6297,7 +6369,7 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     d->mod.history = copy_History(orig->mod.history);
     setUrlFlags_DocumentWidget(
         d, orig->mod.url, useCachedContentIfAvailable_DocumentWidgetSetUrlFlag,
-        d->requestIdentityFingerprint);
+        d->mod.setIdentity);
     return d;
 }
 
@@ -6308,17 +6380,17 @@ void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other) 
     }
 }
 
-void setIdentityOverride_DocumentWidget(iDocumentWidget *d, const iBlock *fingerprint) {
-    if (!fingerprint) {
-        delete_Block(d->requestIdentityFingerprint);
-        d->requestIdentityFingerprint = NULL;
+void setIdentity_DocumentWidget(iDocumentWidget *d, const iBlock *setIdent) {
+    if (!setIdent) {
+        delete_Block(d->mod.setIdentity);
+        d->mod.setIdentity = NULL;
         return;
     }
-    if (!d->requestIdentityFingerprint) {
-        d->requestIdentityFingerprint = copy_Block(fingerprint);
+    if (!d->mod.setIdentity) {
+        d->mod.setIdentity = copy_Block(setIdent);
     }
     else {
-        set_Block(d->requestIdentityFingerprint, fingerprint);
+        set_Block(d->mod.setIdentity, setIdent);
     }
 }
 

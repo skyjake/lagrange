@@ -690,6 +690,9 @@ msgstr "Stop Using on This Page"
 msgid "ident.stopuse.all"
 msgstr "Stop Using Everywhere"
 
+msgid "ident.unset"
+msgstr "Unpin"
+
 msgid "ident.export"
 msgstr "Export"
 
@@ -1472,7 +1475,7 @@ msgid "hint.dlg.bookmark.notes"
 msgstr "free-form private notes"
 
 msgid "dlg.bookmark.identity"
-msgstr "Set identity:"
+msgstr "Pinned identity:"
 
 msgid "dlg.bookmark.icon"
 msgstr "Icon:"

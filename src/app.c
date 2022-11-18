@@ -3474,6 +3474,187 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     return iFalse;
 }
 
+static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
+    iAssert(equal_Command(cmd, "open"));
+    const char *urlArg = suffixPtr_Command(cmd, "url");
+    if (!urlArg) {
+        return iTrue; /* invalid command */
+    }
+    /* TODO: "idle" should be passed to 'open' reinvocations */
+    iString *setIdentArg = collectNew_String();
+    iBool hasSetIdent = iFalse;
+    if (hasLabel_Command(cmd, "setident")) {
+        hasSetIdent = iTrue;
+        setCStr_String(setIdentArg, " setident:");
+        appendRange_String(setIdentArg, range_Command(cmd, "setident"));
+    }
+    if (argLabel_Command(cmd, "query")) {
+        const iString *url = collectNewCStr_String(urlArg);
+        iString *spartanCmd = collectNewFormat_String(
+            "spartan.input newtab:%d newwindow:%d urlesc:%s",
+            argLabel_Command(cmd, "newtab"),
+            argLabel_Command(cmd, "newwindow"),
+            cstr_String(withSpacesEncoded_String(url)));
+        iUrl parts;
+        init_Url(&parts, url);
+        iWidget *dlg = makeValueInputWithAdditionalActions_Widget(
+            as_Widget(document_Command(cmd)),
+            NULL,
+            cstr_Rangecc((iRangecc){ parts.host.start, parts.path.end }),
+            "${spartan.input}",
+            "${dlg.input.send}",
+            cstr_String(spartanCmd),
+            (iMenuItem[]){ { "${dlg.spartan.upload}",
+                             SDLK_u,
+                             KMOD_PRIMARY,
+                             format_CStr("valueinput.upload url:%s",
+                                         cstr_String(urlQueryStripped_String(url))) } },
+            1);
+        setBackupFileName_InputWidget(findChild_Widget(dlg, "input"), "spartanbackup");
+        if (!isEmpty_Range(&parts.query)) {
+            postCommand_Widget(dlg,
+                               "valueinput.set select:1 text:%s",
+                               cstrCollect_String(urlDecode_String(collectNewRange_String(
+                                   (iRangecc){ parts.query.start + 1, parts.query.end }))));
+        }
+        return iTrue;
+    }
+    if (argLabel_Command(cmd, "switch")) {
+        iDocumentWidget *doc = findDocument_Root(get_Root(), collectNewCStr_String(urlArg));
+        if (doc) {
+            showTabPage_Widget(findWidget_Root("doctabs"), doc);
+            return iTrue;
+        }
+    }
+    if (findWidget_App("prefs")) {
+        postCommand_App("prefs.dismiss");
+    }
+    if (argLabel_Command(cmd, "newwindow")) {
+        const iRangecc gotoheading = range_Command(cmd, "gotoheading");
+        const iRangecc gotourlheading = range_Command(cmd, "gotourlheading");
+        postCommandf_Root(get_Root(), "window.new%s%s%s%s%s url:%s",
+                          cstr_String(setIdentArg),
+                          isEmpty_Range(&gotoheading) ? "" : " gotoheading:",
+                          isEmpty_Range(&gotoheading) ? "" : cstr_Rangecc(gotoheading),
+                          isEmpty_Range(&gotourlheading) ? "" : " gotourlheading:",
+                          isEmpty_Range(&gotourlheading) ? "" : cstr_Rangecc(gotourlheading),
+                          urlArg);
+        return iTrue;
+    }
+    iString    *url     = collectNewCStr_String(urlArg);
+    const iBool noProxy = argLabel_Command(cmd, "noproxy") != 0;
+    iUrl parts;
+    init_Url(&parts, url);
+    if (equal_Rangecc(parts.scheme, "about") && equal_Rangecc(parts.path, "command") &&
+        !isEmpty_Range(&parts.query)) {
+        /* NOTE: Careful here! `about:command` allows issuing UI events via links on the page.
+           There is a special set of pages where these are allowed (e.g., "about:fonts").
+           On every other page, `about:command` links will not be clickable. */
+        iString *query = collectNewRange_String((iRangecc){
+            parts.query.start + 1, parts.query.end
+        });
+        replace_String(query, "%20", " ");
+        postCommandString_Root(NULL, query);
+        return iTrue;
+    }
+    if (equalCase_Rangecc(parts.scheme, "titan")) {
+        iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
+        setUrl_UploadWidget(upload, url);
+        setResponseViewer_UploadWidget(upload, document_App());
+        addChild_Widget(get_Root()->widget, iClob(upload));
+        setupSheetTransition_Mobile(as_Widget(upload), iTrue);
+        postRefresh_App();
+        return iTrue;
+    }
+    if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
+        ((noProxy || isEmpty_String(&d->prefs.strings[httpProxy_PrefsString])) &&
+         (equalCase_Rangecc(parts.scheme, "http") ||
+          equalCase_Rangecc(parts.scheme, "https")))) {
+        openInDefaultBrowser_App(url);
+        return iTrue;
+    }
+    iDocumentWidget *doc = document_Command(cmd);
+    iAssert(doc);
+    iDocumentWidget *origin = doc;
+    if (hasLabel_Command(cmd, "origin")) {
+        iDocumentWidget *cmdOrig = findWidget_App(cstr_Command(cmd, "origin"));
+        if (cmdOrig) {
+            origin = cmdOrig;
+        }
+    }
+    int newTab = argLabel_Command(cmd, "newtab");
+    if (newTab & otherRoot_OpenTabFlag && numRoots_Window(get_Window()) == 1) {
+        /* Need to split first. */
+        const iInt2 winSize = get_Window()->size;
+        const int splitMode = argLabel_Command(cmd, "splitmode");
+        postCommandf_App("ui.split arg:%d axis:%d origin:%s newtab:%d%s url:%s",
+                         splitMode ? splitMode : 3,
+                         (float) winSize.x / (float) winSize.y < 0.7f ? 1 : 0,
+                         cstr_String(id_Widget(as_Widget(origin))),
+                         newTab & ~otherRoot_OpenTabFlag,
+                         cstr_String(setIdentArg),
+                         cstr_String(url));
+        return iTrue;
+    }
+    iRoot *root = get_Root();
+    iRoot *oldRoot = root;
+    if (newTab & otherRoot_OpenTabFlag) {
+        root = otherRoot_Window(as_Window(d->window), root);
+        setKeyRoot_Window(as_Window(d->window), root);
+        setCurrent_Root(root); /* need to change for widget creation */
+        doc = document_Command(cmd); /* may be different */
+    }
+    /* If not opening in a new tab, we must not domains/roots accidentally. */
+    if (isIdentityPinned_DocumentWidget(doc) &&
+        (newTab & newTabMask_OpenTabFlag) == 0 &&        
+        !isSetIdentityRetained_DocumentWidget(doc, url)) {
+        /* Ensure a new tab is opened where there is no set identity. */
+        newTab = new_OpenTabFlag;
+    }
+    if (newTab & newTabMask_OpenTabFlag) {
+        doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0); /* `newtab:2` to open in background */
+    }
+    iHistory   *history       = history_DocumentWidget(doc);
+    const iBool isHistory     = argLabel_Command(cmd, "history") != 0;
+    const iBool waitForIdle   = argLabel_Command(cmd, "idle") != 0;
+    int         redirectCount = argLabel_Command(cmd, "redirect");
+    if (!isHistory) {
+        /* TODO: Shouldn't DocumentWidget manage history on its own? */
+        if (redirectCount) {
+            replace_History(history, url);
+        }
+        else {
+            add_History(history, url);
+        }
+    }
+    setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
+    setRedirectCount_DocumentWidget(doc, redirectCount);
+    setOrigin_DocumentWidget(doc, origin);
+    showCollapsed_Widget(findWidget_App("document.progress"), iFalse);    
+    /* Do the fetch or load page from cache. */
+    setUrlFlags_DocumentWidget(
+        doc,
+        url,
+        (isHistory ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
+            (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag : 0) |
+            (waitForIdle ? waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag : 0),
+        hasSetIdent ? collect_Block(hexDecode_Rangecc(range_Command(cmd, "setident"))) : NULL);   
+    /* Optionally, jump to a text in the document. This will only work if the document
+       is already available, e.g., it's from "about:" or restored from cache. */
+    const iRangecc gotoHeading = range_Command(cmd, "gotoheading");
+    if (gotoHeading.start) {
+        postCommandf_Root(root, "document.goto heading:%s", cstr_Rangecc(gotoHeading));
+    }
+    const iRangecc gotoUrlHeading = range_Command(cmd, "gotourlheading");
+    if (gotoUrlHeading.start) {
+        postCommandf_Root(root, "document.goto heading:%s",
+                          cstrCollect_String(urlDecode_String(
+                              collect_String(newRange_String(gotoUrlHeading)))));
+    }
+    setCurrent_Root(oldRoot);
+    return iTrue;
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     const iBool isFrozen   = !d->window || d->window->isDrawFrozen;
@@ -3509,6 +3690,7 @@ iBool handleCommand_App(const char *cmd) {
             (argLabel_Command(cmd, "axis") ? vertical_WindowSplit : 0) | (arg_Command(cmd) << 1);
         const char *url = suffixPtr_Command(cmd, "url");
         setCStr_String(d->window->pendingSplitUrl, url ? url : "");
+        setRange_String(d->window->pendingSplitSetIdent, range_Command(cmd, "setident"));
         if (hasLabel_Command(cmd, "origin")) {
             set_String(d->window->pendingSplitOrigin, string_Command(cmd, "origin"));
         }
@@ -3638,174 +3820,7 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "open")) {
-        const char *urlArg = suffixPtr_Command(cmd, "url");
-        if (!urlArg) {
-            return iTrue; /* invalid command */
-        }
-        /* TODO: "idle" should be passed to 'open' reinvocations */
-        iString *setIdentArg = collectNew_String();
-        if (hasLabel_Command(cmd, "setident")) {
-            setCStr_String(setIdentArg, " setident:");
-            appendRange_String(setIdentArg, range_Command(cmd, "setident"));
-        }
-        if (argLabel_Command(cmd, "query")) {
-            const iString *url = collectNewCStr_String(urlArg);
-            iString *spartanCmd = collectNewFormat_String(
-                "spartan.input newtab:%d newwindow:%d urlesc:%s",
-                argLabel_Command(cmd, "newtab"),
-                argLabel_Command(cmd, "newwindow"),
-                cstr_String(withSpacesEncoded_String(url)));
-            iUrl parts;
-            init_Url(&parts, url);
-            iWidget *dlg = makeValueInputWithAdditionalActions_Widget(
-                as_Widget(document_Command(cmd)),
-                NULL,
-                cstr_Rangecc((iRangecc){ parts.host.start, parts.path.end }),
-                "${spartan.input}",
-                "${dlg.input.send}",
-                cstr_String(spartanCmd),
-                (iMenuItem[]){ { "${dlg.spartan.upload}",
-                                 SDLK_u,
-                                 KMOD_PRIMARY,
-                                 format_CStr("valueinput.upload url:%s",
-                                             cstr_String(urlQueryStripped_String(url))) } },
-                1);
-            setBackupFileName_InputWidget(findChild_Widget(dlg, "input"), "spartanbackup");
-            if (!isEmpty_Range(&parts.query)) {
-                postCommand_Widget(dlg,
-                                   "valueinput.set select:1 text:%s",
-                                   cstrCollect_String(urlDecode_String(collectNewRange_String(
-                                       (iRangecc){ parts.query.start + 1, parts.query.end }))));
-            }
-            return iTrue;
-        }
-        if (argLabel_Command(cmd, "switch")) {
-            iDocumentWidget *doc = findDocument_Root(get_Root(), collectNewCStr_String(urlArg));
-            if (doc) {
-                showTabPage_Widget(findWidget_Root("doctabs"), doc);
-                return iTrue;
-            }
-        }
-        if (findWidget_App("prefs")) {
-            postCommand_App("prefs.dismiss");
-        }
-        if (argLabel_Command(cmd, "newwindow")) {
-            const iRangecc gotoheading = range_Command(cmd, "gotoheading");
-            const iRangecc gotourlheading = range_Command(cmd, "gotourlheading");
-            postCommandf_Root(get_Root(), "window.new%s%s%s%s%s url:%s",
-                              cstr_String(setIdentArg),
-                              isEmpty_Range(&gotoheading) ? "" : " gotoheading:",
-                              isEmpty_Range(&gotoheading) ? "" : cstr_Rangecc(gotoheading),
-                              isEmpty_Range(&gotourlheading) ? "" : " gotourlheading:",
-                              isEmpty_Range(&gotourlheading) ? "" : cstr_Rangecc(gotourlheading),
-                              urlArg);
-            return iTrue;
-        }
-        iString    *url     = collectNewCStr_String(urlArg);
-        const iBool noProxy = argLabel_Command(cmd, "noproxy") != 0;
-        iUrl parts;
-        init_Url(&parts, url);
-        if (equal_Rangecc(parts.scheme, "about") && equal_Rangecc(parts.path, "command") &&
-            !isEmpty_Range(&parts.query)) {
-            /* NOTE: Careful here! `about:command` allows issuing UI events via links on the page.
-               There is a special set of pages where these are allowed (e.g., "about:fonts").
-               On every other page, `about:command` links will not be clickable. */
-            iString *query = collectNewRange_String((iRangecc){
-                parts.query.start + 1, parts.query.end
-            });
-            replace_String(query, "%20", " ");
-            postCommandString_Root(NULL, query);
-            return iTrue;
-        }
-        if (equalCase_Rangecc(parts.scheme, "titan")) {
-            iUploadWidget *upload = new_UploadWidget(titan_UploadProtocol);
-            setUrl_UploadWidget(upload, url);
-            setResponseViewer_UploadWidget(upload, document_App());
-            addChild_Widget(get_Root()->widget, iClob(upload));
-            setupSheetTransition_Mobile(as_Widget(upload), iTrue);
-            postRefresh_App();
-            return iTrue;
-        }
-        if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
-            ((noProxy || isEmpty_String(&d->prefs.strings[httpProxy_PrefsString])) &&
-             (equalCase_Rangecc(parts.scheme, "http") ||
-              equalCase_Rangecc(parts.scheme, "https")))) {
-            openInDefaultBrowser_App(url);
-            return iTrue;
-        }
-        iDocumentWidget *doc = document_Command(cmd);
-        iAssert(doc);
-        iDocumentWidget *origin = doc;
-        if (hasLabel_Command(cmd, "origin")) {
-            iDocumentWidget *cmdOrig = findWidget_App(cstr_Command(cmd, "origin"));
-            if (cmdOrig) {
-                origin = cmdOrig;
-            }
-        }
-        const int newTab = argLabel_Command(cmd, "newtab");
-        if (newTab & otherRoot_OpenTabFlag && numRoots_Window(get_Window()) == 1) {
-            /* Need to split first. */
-            const iInt2 winSize = get_Window()->size;
-            const int splitMode = argLabel_Command(cmd, "splitmode");
-            postCommandf_App("ui.split arg:%d axis:%d origin:%s newtab:%d url:%s",
-                             splitMode ? splitMode : 3,
-                             (float) winSize.x / (float) winSize.y < 0.7f ? 1 : 0,
-                             cstr_String(id_Widget(as_Widget(origin))),
-                             newTab & ~otherRoot_OpenTabFlag,
-                             cstr_String(url));
-            return iTrue;
-        }
-        iRoot *root = get_Root();
-        iRoot *oldRoot = root;
-        if (newTab & otherRoot_OpenTabFlag) {
-            root = otherRoot_Window(as_Window(d->window), root);
-            setKeyRoot_Window(as_Window(d->window), root);
-            setCurrent_Root(root); /* need to change for widget creation */
-            doc = document_Command(cmd); /* may be different */
-        }
-        if (newTab & (new_OpenTabFlag | newBackground_OpenTabFlag)) {
-            doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0); /* `newtab:2` to open in background */
-        }
-        iHistory   *history       = history_DocumentWidget(doc);
-        const iBool isHistory     = argLabel_Command(cmd, "history") != 0;
-        const iBool waitForIdle   = argLabel_Command(cmd, "idle") != 0;
-        int         redirectCount = argLabel_Command(cmd, "redirect");
-        if (!isHistory) {
-            /* TODO: Shouldn't DocumentWidget manage history on its own? */
-            if (redirectCount) {
-                replace_History(history, url);
-            }
-            else {
-                add_History(history, url);
-            }
-        }
-        setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
-        setRedirectCount_DocumentWidget(doc, redirectCount);
-        setOrigin_DocumentWidget(doc, origin);
-        showCollapsed_Widget(findWidget_App("document.progress"), iFalse);
-        setUrlFlags_DocumentWidget(
-            doc,
-            url,
-            (isHistory && isEmpty_String(setIdentArg)
-                     ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
-            (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag : 0) |
-            (waitForIdle ? waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag : 0),
-            !isEmpty_String(setIdentArg)
-                ? collect_Block(hexDecode_Rangecc(range_Command(cmd, "setident")))
-                : NULL);
-        /* Optionally, jump to a text in the document. This will only work if the document
-           is already available, e.g., it's from "about:" or restored from cache. */
-        const iRangecc gotoHeading = range_Command(cmd, "gotoheading");
-        if (gotoHeading.start) {
-            postCommandf_Root(root, "document.goto heading:%s", cstr_Rangecc(gotoHeading));
-        }
-        const iRangecc gotoUrlHeading = range_Command(cmd, "gotourlheading");
-        if (gotoUrlHeading.start) {
-            postCommandf_Root(root, "document.goto heading:%s",
-                             cstrCollect_String(urlDecode_String(
-                                 collect_String(newRange_String(gotoUrlHeading)))));
-        }
-        setCurrent_Root(oldRoot);
+        return handleOpenCommand_App_(d, cmd);
     }
     else if (equal_Command(cmd, "file.open")) {
         const char *path = suffixPtr_Command(cmd, "path");
@@ -3953,7 +3968,7 @@ iBool handleCommand_App(const char *cmd) {
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.strings[downloadDir_PrefsString]);
-        /* TODO: Use a common table in Prefs to do this more conviently.
+        /* TODO: Use a common table in Prefs to do this more conveniently.
            Also see `serializePrefs_App_()`. */
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoverlink"), d->prefs.hoverLink);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retaintabs"), d->prefs.retainTabs);
@@ -4098,6 +4113,8 @@ iBool handleCommand_App(const char *cmd) {
         iDocumentWidget *doc = document_App();
         const iString *url;
         const iString *title;
+        const iBlock *ident = isIdentityPinned_DocumentWidget(doc) ?
+            &identity_DocumentWidget(doc)->fingerprint : NULL;
         iChar icon = 0;
         if (suffixPtr_Command(cmd, "url")) {
             url          = collect_String(suffix_Command(cmd, "url"));
@@ -4108,9 +4125,9 @@ iBool handleCommand_App(const char *cmd) {
         else {
             url   = url_DocumentWidget(doc);
             title = bookmarkTitle_DocumentWidget(doc);
-//            icon  = 0; //siteIcon_GmDocument(document_DocumentWidget(doc));
         }
-        const uint32_t existing = findUrl_Bookmarks(bookmarks_App(), url);
+        const uint32_t existing = findUrlIdent_Bookmarks(
+            bookmarks_App(), url, ident ? collect_String(hexEncode_Block(ident)) : NULL);
         if (existing) {
             /* Editing bookmarks is a sidebar command. */
             postCommand_Widget(findWidget_App("sidebar"), "bookmark.edit id:%u", existing);
@@ -4211,7 +4228,7 @@ iBool handleCommand_App(const char *cmd) {
             if (isEmpty_String(useUrl)) {
                 useUrl = copy_String(docUrl);
             }
-            setIdentityOverride_DocumentWidget(document_App(), NULL);
+            setIdentity_DocumentWidget(document_App(), NULL); /* no longer overridden */
             signIn_GmCerts(d->certs, dst, useUrl);
             postCommand_App("idents.changed");
             postCommand_App("navigate.reload");
