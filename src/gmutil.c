@@ -232,6 +232,18 @@ iRangecc urlHost_String(const iString *d) {
     return url.host;
 }
 
+iRangecc urlDirectory_String(const iString *d) {
+    iUrl parts;
+    init_Url(&parts, d);
+    if (size_Range(&parts.path) > 0 && !endsWith_Rangecc(parts.path, "/")) {
+        /* Remove the last path segment. */
+        while (parts.path.end > parts.path.start && parts.path.end[-1] != '/') {
+            parts.path.end--;
+        }
+    }
+    return parts.path;    
+}
+
 uint16_t urlPort_String(const iString *d) {
     iUrl url;
     init_Url(&url, d);

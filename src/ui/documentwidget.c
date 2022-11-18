@@ -2461,13 +2461,14 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
         makeFooterButtons_DocumentWidget_(
             d,
             (iMenuItem[]){
+                { person_Icon " ${menu.identity.newdomain}", SDLK_n, 0, "ident.new scope:1" },
+                { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
                 { leftHalf_Icon " ${menu.show.identities}",
                   '4',
                   KMOD_PRIMARY,
                   deviceType_App() == desktop_AppDeviceType ? "sidebar.mode arg:3 show:1"
-                                                            : "preferences idents:1" },
-                { person_Icon " ${menu.identity.new}", SDLK_n, 0, "ident.new scope:1" } },
-            2);
+                                                            : "preferences idents:1" } },
+            3);
     }
     /* Make a new document for the error page.*/
     iGmDocument *errorDoc = new_GmDocument();

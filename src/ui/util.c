@@ -3761,12 +3761,14 @@ iWidget *makeIdentityCreation_Widget(void) {
                                     SDLK_RETURN,
                                     KMOD_ACCEPT,
                                     "ident.accept" } };
+    const iString *docUrl = url_DocumentWidget(document_App());
     iUrl url;
-    init_Url(&url, url_DocumentWidget(document_App()));
+    init_Url(&url, docUrl);
     const iMenuItem scopeItems[] = {
         { "${dlg.newident.scope.none}", 0, 0, "ident.scope arg:0" },
         { format_CStr("${dlg.newident.scope.domain}:\n%s", cstr_Rangecc(url.host)), 0, 0, "ident.scope arg:1" },
-        { format_CStr("${dlg.newident.scope.page}:\n%s", cstr_Rangecc(url.path)), 0, 0, "ident.scope arg:2" },
+        { format_CStr("${dlg.newident.scope.dir}:\n%s", cstr_Rangecc(urlDirectory_String(docUrl))), 0, 0, "ident.scope arg:2" },
+        { format_CStr("${dlg.newident.scope.page}:\n%s", cstr_Rangecc(url.path)), 0, 0, "ident.scope arg:3" },
         { NULL }
     };
     iWidget *dlg;

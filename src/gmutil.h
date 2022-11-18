@@ -119,6 +119,7 @@ uint16_t        port_Url                (const iUrl *);
 
 iRangecc        urlScheme_String        (const iString *);
 iRangecc        urlHost_String          (const iString *);
+iRangecc        urlDirectory_String     (const iString *); /* without a file name; ends with slash */
 uint16_t        urlPort_String          (const iString *);
 iRangecc        urlUser_String          (const iString *);
 iRangecc        urlRoot_String          (const iString *);

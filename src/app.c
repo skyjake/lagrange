@@ -2797,7 +2797,13 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                         useUrl = collectNewFormat_String("gemini://%s",
                                                          cstr_Rangecc(urlHost_String(docUrl)));
                         break;
-                    case 2: /* current page */
+                    case 2: { /* current directory */
+                        useUrl = collectNewFormat_String("gemini://%s%s",
+                                                         cstr_Rangecc(urlHost_String(docUrl)),
+                                                         cstr_Rangecc(urlDirectory_String(docUrl)));
+                        break;
+                    }
+                    case 3: /* current page */
                         useUrl = collect_String(copy_String(docUrl));
                         break;
                 }

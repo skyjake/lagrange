@@ -1372,6 +1372,9 @@ msgstr "Use on:"
 msgid "dlg.newident.scope.domain"
 msgstr "Current Domain"
 
+msgid "dlg.newident.scope.dir"
+msgstr "Current Directory"
+
 msgid "dlg.newident.scope.page"
 msgstr "Current Page"
 
