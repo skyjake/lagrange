@@ -9,7 +9,7 @@
 ## 1.14
 New features:
 * A bookmark folder can be opened in new tabs, in the same or a new window, one tab per contained bookmark.
-* New bookmark property "Set identity": use a specific identity when opening the bookmark, but don't apply it persistently on the bookmarked URL.
+* Pinned bookmark identities. A simpler way to use identities. When the "Pinned identity" property is set on a bookmark, opening the bookmark causes the selected identity to be "pinned" to the tab: while you stay on the same site, the identity remains in use when opening links. However, when opening a link to another site, a new tab gets opened. The old way of per-URL identity use is still available, too.
 * Option `--dump` (`-d`) to print contents of URLs/paths to stdout. Metadata is printed to stderr.
 * Option `--dump-identity` (`-I`) selects the identity to use with `--dump`.
 * Option `--replace-tab URL` opens a URL, replacing contents of the active tab.
