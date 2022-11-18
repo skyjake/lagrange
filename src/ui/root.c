@@ -117,6 +117,7 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { NULL }
 };
 
+#if 0
 #if defined (iPlatformMobile)
 static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
@@ -131,16 +132,17 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---" },
 # if !defined (iPlatformAppleDesktop)
-    { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
+    { add_Icon " ${menu.identity.newdomain}", newIdentity_KeyShortcut, "ident.new" },
     { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
     { "---" },
     { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
 # else
-    { add_Icon " ${menu.identity.new}", 0, 0, "ident.new" },
+    { add_Icon " ${menu.identity.newdomain}", 0, 0, "ident.new" },
     { "---" },
     { person_Icon " ${menu.show.identities}", 0, 0, "sidebar.mode arg:3 toggle:1" },
 # endif
 };
+#endif
 #endif
 
 static const char *reloadCStr_   = reload_Icon;
@@ -420,7 +422,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         pushBackN_Array(
             &items,
             (iMenuItem[]){
-                { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
+                { add_Icon " ${menu.identity.newdomain}", 0, 0, "ident.new scope:1" },
                 { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
                 { "---" } }, 3);
         if (deviceType_App() == desktop_AppDeviceType) {

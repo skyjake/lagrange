@@ -3764,9 +3764,9 @@ iWidget *makeIdentityCreation_Widget(void) {
     iUrl url;
     init_Url(&url, url_DocumentWidget(document_App()));
     const iMenuItem scopeItems[] = {
-        { format_CStr("${dlg.newident.scope.domain}:\n%s", cstr_Rangecc(url.host)), 0, 0, "ident.scope arg:0" },
-        { format_CStr("${dlg.newident.scope.page}:\n%s", cstr_Rangecc(url.path)), 0, 0, "ident.scope arg:1" },
-        { "${dlg.newident.scope.none}", 0, 0, "ident.scope arg:2" },
+        { "${dlg.newident.scope.none}", 0, 0, "ident.scope arg:0" },
+        { format_CStr("${dlg.newident.scope.domain}:\n%s", cstr_Rangecc(url.host)), 0, 0, "ident.scope arg:1" },
+        { format_CStr("${dlg.newident.scope.page}:\n%s", cstr_Rangecc(url.path)), 0, 0, "ident.scope arg:2" },
         { NULL }
     };
     iWidget *dlg;

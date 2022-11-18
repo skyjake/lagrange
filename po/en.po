@@ -424,6 +424,9 @@ msgstr "Refresh Feeds"
 msgid "menu.identity.new"
 msgstr "New Identity…"
 
+msgid "menu.identity.newdomain"
+msgstr "New Identity for Domain…"
+
 msgid "menu.identity.import"
 msgstr "Import…"
 
@@ -1481,7 +1484,7 @@ msgid "dlg.bookmark.icon"
 msgstr "Icon:"
 
 msgid "heading.bookmark.tags"
-msgstr "Properties"
+msgstr "Behavior"
 
 msgid "heading.addfolder"
 msgstr "Add Folder"

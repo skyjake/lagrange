@@ -148,6 +148,7 @@ static iMenuItem bookmarksMenuItems_[] = {
 
 static const iMenuItem identityMenuItems_[] = {
     { "${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
+    { "${menu.identity.newdomain}", 0, 0, "ident.new scope:1" },
     { "---" },
     { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
     { NULL }

@@ -2791,14 +2791,14 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 const iString *docUrl = url_DocumentWidget(document_Root(dlg->root));
                 iString *useUrl = NULL;
                 switch (selScope) {
-                    case 0: /* current domain */
+                    default: /* not used */
+                        break;
+                    case 1: /* current domain */
                         useUrl = collectNewFormat_String("gemini://%s",
                                                          cstr_Rangecc(urlHost_String(docUrl)));
                         break;
-                    case 1: /* current page */
+                    case 2: /* current page */
                         useUrl = collect_String(copy_String(docUrl));
-                        break;
-                    default: /* not used */
                         break;
                 }
                 if (useUrl) {
@@ -4204,6 +4204,13 @@ iBool handleCommand_App(const char *cmd) {
         iWidget *dlg = makeIdentityCreation_Widget();
         setFocus_Widget(findChild_Widget(dlg, "ident.until"));
         setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
+        iLabelWidget *scope = findChild_Widget(dlg, "ident.scope");
+        if (argLabel_Command(cmd, "scope")) {
+            updateDropdownSelection_LabelWidget(
+                scope, format_CStr("arg:%d", argLabel_Command(cmd, "scope")));
+        }
+        updateSize_LabelWidget(scope);
+        arrange_Widget(dlg);
         return iTrue;
     }
     else if (equal_Command(cmd, "ident.import")) {

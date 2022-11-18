@@ -2466,7 +2466,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                   KMOD_PRIMARY,
                   deviceType_App() == desktop_AppDeviceType ? "sidebar.mode arg:3 show:1"
                                                             : "preferences idents:1" },
-                { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" } },
+                { person_Icon " ${menu.identity.new}", SDLK_n, 0, "ident.new scope:1" } },
             2);
     }
     /* Make a new document for the error page.*/
