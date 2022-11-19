@@ -288,7 +288,10 @@ iBool processEvent_DownloadUI(iDownloadUI *d, const SDL_Event *ev) {
                 return iTrue;
             }
             else if (ev->button.button == SDL_BUTTON_LEFT && ev->type == SDL_MOUSEBUTTONUP) {
-                postCommandf_App("open default:1 url:%s", cstrCollect_String(makeFileUrl_String(path)));
+                iGmMediaInfo mediaInfo;
+                info_Media(d->media, (iMediaId){ download_MediaType, d->mediaId }, &mediaInfo);
+                postCommandf_App("open default:1 mime:%s url:%s", mediaInfo.type,
+                                 cstrCollect_String(makeFileUrl_String(path)));
             }
         }
     }

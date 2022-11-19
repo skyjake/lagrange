@@ -3705,10 +3705,12 @@ static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
     return iFalse;
 }
 
-static iBool saveToFile_(const iString *savePath, const iBlock *content, iBool showDialog) {
+static iBool saveToFile_(const iString *savePath, const iBlock *content, const iString *mime,
+                         iBool showDialog) {
     iBool ok = iFalse;
     /* Write the file. */ {
         iFile *f = new_File(savePath);
+        postCommandf_App("debug show:%d msg:%s", showDialog, cstr_String(savePath));
         if (open_File(f, writeOnly_FileMode)) {
             write_File(f, content);
             close_File(f);
@@ -3717,7 +3719,9 @@ static iBool saveToFile_(const iString *savePath, const iBlock *content, iBool s
 #if defined (iPlatformAppleMobile)
             exportDownloadedFile_iOS(savePath);
 #elif defined (iPlatformAndroidMobile)
-            exportDownloadedFile_Android(savePath);
+            if (showDialog) {
+                exportDownloadedFile_Android(savePath, mime);
+            }
 #else
             if (showDialog) {
                 const iMenuItem items[2] = {
@@ -3748,7 +3752,7 @@ static iBool saveToFile_(const iString *savePath, const iBlock *content, iBool s
 static const iString *saveToDownloads_(const iString *url, const iString *mime, const iBlock *content,
                                        iBool showDialog) {
     const iString *savePath = downloadPathForUrl_App(url, mime);
-    if (!saveToFile_(savePath, content, showDialog)) {
+    if (!saveToFile_(savePath, content, mime, showDialog)) {
         return collectNew_String();
     }
     return savePath;
@@ -4559,8 +4563,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 }
                 else {
                     const iString *tmpPath = temporaryPathForUrl_App(d->mod.url, &d->sourceMime);
-                    if (saveToFile_(tmpPath, &d->sourceContent, iFalse)) {
-                        postCommandf_Root(w->root, "!open default:1 url:%s",
+                    if (saveToFile_(tmpPath, &d->sourceContent, &d->sourceMime, iFalse)) {
+                        postCommandf_Root(w->root, "!open default:1 mime:%s url:%s",
+                                          cstr_String(&d->sourceMime),
                                           cstrCollect_String(makeFileUrl_String(tmpPath)));
                     }
                 }

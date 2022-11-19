@@ -161,7 +161,7 @@ iLocalDef void postCommand_App(const char *command) {
 
 iDocumentWidget *   document_Command    (const char *cmd);
 
-void            openInDefaultBrowser_App(const iString *url);
+void            openInDefaultBrowser_App(const iString *url, const iString *mime);
 void            revealPath_App          (const iString *path);
 void            updateCACertificates_App(void);
 void            resetFonts_App          (void);

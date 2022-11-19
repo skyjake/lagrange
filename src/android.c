@@ -83,8 +83,8 @@ void pickFile_Android(const char *cmd) {
     javaCommand_Android("file.open cmd:%s", cmd);
 }
 
-void exportDownloadedFile_Android(const iString *localPath) {
-    javaCommand_Android("file.save path:%s", cstr_String(localPath));
+void exportDownloadedFile_Android(const iString *localPath, const iString *mime) {
+    javaCommand_Android("file.save mime:%s path:%s", cstr_String(mime), cstr_String(localPath));
 }
 
 float displayDensity_Android(void) {

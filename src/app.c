@@ -1114,6 +1114,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
     }
 #endif
+#if defined (iPlatformMobile)
+    /* No dumping on mobile. */
+    const iBool doDump = iFalse;
+#endif
 #if defined (LAGRANGE_ENABLE_IPC)
     /* Only one instance is allowed to run at a time; the runtime files (bookmarks, etc.)
        are not shareable. */
@@ -1436,6 +1440,11 @@ const iString *temporaryPathForUrl_App(const iString *url, const iString *mime) 
 #if defined (iPlatformMsys)
     iString *      tmpPath = collectNew_String();
     const iRangecc tmpDir  = range_String(collect_String(tempDirectory_Win32()));
+#elif defined (iPlatformAndroid)
+    iString *      tmpPath  = collectNew_String();
+    const char *   extCache = concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "Cache");
+    const iRangecc tmpDir   = range_CStr(extCache);
+    makeDirs_Path(collectNewCStr_String(extCache));
 #elif defined (P_tmpdir)
     iString *      tmpPath = collectNew_String();
     const iRangecc tmpDir  = range_CStr(P_tmpdir);
@@ -1445,7 +1454,8 @@ const iString *temporaryPathForUrl_App(const iString *url, const iString *mime) 
 #endif
     set_String(
         tmpPath,
-        collect_String(concat_Path(collectNewRange_String(tmpDir), fileNameForUrl_App(url, mime))));
+        collect_String(concat_Path(collectNewRange_String(tmpDir),
+                                   fileNameForUrl_App(url, mime))));
     insert_StringSet(d->tempFilesPendingDeletion, tmpPath); /* deleted in `deinit_App` */
     return tmpPath;
 }
@@ -3576,7 +3586,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         ((noProxy || isEmpty_String(&d->prefs.strings[httpProxy_PrefsString])) &&
          (equalCase_Rangecc(parts.scheme, "http") ||
           equalCase_Rangecc(parts.scheme, "https")))) {
-        openInDefaultBrowser_App(url);
+        openInDefaultBrowser_App(url, string_Command(cmd, "mime"));
         return iTrue;
     }
     iDocumentWidget *doc = document_Command(cmd);
@@ -4335,7 +4345,7 @@ iBool handleCommand_App(const char *cmd) {
     return iTrue;
 }
 
-void openInDefaultBrowser_App(const iString *url) {
+void openInDefaultBrowser_App(const iString *url, const iString *mime) {
     /* URL cleanup: at least Firefox seems to want backslashes to be encoded. */ {
         iString *copy = copy_String(url);
         replace_String(copy, "\\", "%5C");
@@ -4345,6 +4355,10 @@ void openInDefaultBrowser_App(const iString *url) {
     if (SDL_OpenURL(cstr_String(url)) == 0) {
         return;
     }
+#endif
+#if defined (iPlatformAndroid)
+    javaCommand_Android("file.view mime:%s url:%s", cstr_String(mime), cstr_String(url));
+    return;
 #endif
 #if defined (iPlatformAppleMobile)
     if (equalCase_Rangecc(urlScheme_String(url), "file")) {
