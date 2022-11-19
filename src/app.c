@@ -991,6 +991,7 @@ static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
 }
 
 static void init_App_(iApp *d, int argc, char **argv) {
+    iBool doDump = iFalse;
 #if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
     d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
                                     !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
@@ -1064,7 +1065,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, windowHeight_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, windowWidth_CommandLineOption, 1);
     }
-    const iBool doDump = checkArgument_CommandLine(&d->args, dump_CommandLineOption);
+    doDump = checkArgument_CommandLine(&d->args, dump_CommandLineOption);
     /* Handle command line options. */ {
         if (contains_CommandLine(&d->args, "help")) {
             puts(cstr_Block(&blobArghelp_Resources));
@@ -1113,10 +1114,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
             }
         }
     }
-#endif
-#if defined (iPlatformMobile)
-    /* No dumping on mobile. */
-    const iBool doDump = iFalse;
 #endif
 #if defined (LAGRANGE_ENABLE_IPC)
     /* Only one instance is allowed to run at a time; the runtime files (bookmarks, etc.)
@@ -2717,7 +2714,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 setFlags_Widget(j.object, hidden_WidgetFlag, iFalse);
             }
         }
-        setFlags_Widget(pointer_Command(cmd), disabled_WidgetFlag, iTrue);
+        setFlags_Widget(pointer_Command(cmd), isUsingPanelLayout_Mobile() ? hidden_WidgetFlag : disabled_WidgetFlag, iTrue);
         arrange_Widget(dlg);
         refresh_Widget(dlg);
         return iTrue;
