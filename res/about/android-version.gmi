@@ -11,7 +11,9 @@
 * When creating new identities, make it clearer what the scope of usage will be. The UI actions explicitly say "New Identity for Domain" when the default usage will be the entire domain.
 * Page scroll position is kept when loading finishes, if the user already scrolled during loading.
 * Fixed accidental backwards navigation when quickly refreshing the page twice.
+* Fixed "More..." button staying visible in identity creation dialog.
 * Fixed opening downloaded files in another app.
+* Adjusted input field margins.
 
 ## 1.14 (Beta 7)
 New features:
