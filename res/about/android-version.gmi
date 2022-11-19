@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.14 (Beta 8)
+* Pinned bookmark identities.
+* When creating new identities, make it clearer what the scope of usage will be. The UI actions explicitly say "New Identity for Domain" when the default usage will be the entire domain.
+* Page scroll position is kept when loading finishes, if the user already scrolled during loading.
+* Fixed accidental backwards navigation when quickly refreshing the page twice.
+* Fixed opening downloaded files in another app.
+
 ## 1.14 (Beta 7)
 New features:
 * A bookmark folder can be opened in new tabs, one tab per contained bookmark.
