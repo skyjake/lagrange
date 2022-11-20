@@ -165,6 +165,7 @@ struct Impl_Widget {
     iBool      (*commandHandler)(iWidget *, const char *);
     iRoot *      root;
     iWidgetDrawBuffer *drawBuf;
+    iAnim        overflowScrollOpacity; /* scrollbar fading */
     iString      data; /* custom user data */
 };
 

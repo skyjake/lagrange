@@ -839,7 +839,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 }
                 else {
                     if (touch->affinity) {
-                        printf("WIDGET TOUCH ENDS\n");
+                        //printf("WIDGET TOUCH ENDS\n");
                         dispatchNotification_Touch_(touch, widgetTouchEnds_UserEventCode);
                     }
                     dispatchButtonUp_Touch_(pos);

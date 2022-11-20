@@ -85,7 +85,6 @@ static const iMenuItem desktopNavMenuItems_[] = {
 };
 
 static const iMenuItem tabletNavMenuItems_[] = {
-    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
@@ -94,24 +93,19 @@ static const iMenuItem tabletNavMenuItems_[] = {
     { rightHalf_Icon " ${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
     { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
     { "---" },
-    { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
-    { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
-    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { "---" },
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
 };
 
 static const iMenuItem phoneNavMenuItems_[] = {
-    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
-    { "---" },
-    { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
-    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { "---" },
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }

@@ -1514,6 +1514,9 @@ msgstr "Certificates"
 msgid "heading.prefs.support"
 msgstr "Support"
 
+msgid "heading.prefs.user"
+msgstr "User Data"
+
 # tab button
 msgid "heading.prefs.colors"
 msgstr "Colors"

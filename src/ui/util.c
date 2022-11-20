@@ -2945,6 +2945,21 @@ iWidget *makePreferences_Widget(void) {
                                 escape_Color(uiTextDim_ColorId));
 #endif
         }
+        const iMenuItem userPanelItems[] = {
+            { "title id:heading.prefs.user" },
+            { "padding arg:0.667" },
+            { "button text:" export_Icon " " uiTextAction_ColorEscape "${menu.export}", 0, 0, "export" },
+            { "button text:" import_Icon " " uiTextAction_ColorEscape "${menu.import}", 0, 0, "file.open" },
+            { "padding" },
+            { "button text:" book_Icon " " uiTextAction_ColorEscape "${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
+            { "button text:" bookmark_Icon " " uiTextAction_ColorEscape "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
+            { "button text:" clock_Icon " " uiTextAction_ColorEscape "${macos.menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
+            { "padding" },
+            { "button text:" star_Icon " " uiTextAction_ColorEscape "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+            { "padding" },
+            { "button text:" download_Icon " " uiTextAction_ColorEscape "${menu.downloads}", 0, 0, "downloads.open" },
+            { NULL }
+        };
         const iMenuItem aboutPanelItems[] = {
             { format_CStr("heading text:%s", cstr_String(aboutText)) },
             { "button text:" clock_Icon " ${menu.releasenotes}", 0, 0, "!open url:about:version" },
@@ -2969,8 +2984,7 @@ iWidget *makePreferences_Widget(void) {
             { "panel icon:0x1f5da id:heading.prefs.fonts", 0, 0, (const void *) fontPanelItems },
             { "panel icon:0x1f660 id:heading.prefs.style", 0, 0, (const void *) stylePanelItems },
             { "padding" },
-            { "button text:" export_Icon " " uiTextAction_ColorEscape "${menu.export}", 0, 0, "export" },
-            { "button text:" import_Icon " " uiTextAction_ColorEscape "${menu.import}", 0, 0, "file.open" },
+            { "panel icon:0x1f4e6 id:heading.prefs.user", 0, 0, (const void *) userPanelItems },
             { "heading id:heading.prefs.support" },
             { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
             { "panel text:" planet_Icon " ${menu.about}", 0, 0, (const void *) aboutPanelItems },
