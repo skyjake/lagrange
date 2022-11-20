@@ -7,9 +7,12 @@
 # Release notes
 
 ## 1.14 (Beta 8)
+* Settings: Added a "User Data" section for export/import and listing bookmarks, feeds, and downloads.
 * Improved behavior of pinned bookmark identities.
+* Indicate a pinned identity with an outline icon in the toolbar.
 * When creating new identities, make it clearer what the scope of usage will be. The UI actions explicitly say "New Identity for Domain" when the default usage will be the entire domain.
 * Page scroll position is kept when loading finishes, if the user already scrolled during loading.
+* Scroll indicators fade away in Settings are other dialogs as expected.
 * Fixed accidental backwards navigation when quickly refreshing the page twice.
 * Fixed "More..." button staying visible in identity creation dialog.
 * Fixed opening downloaded files in another app.
