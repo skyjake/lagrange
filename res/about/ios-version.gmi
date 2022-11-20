@@ -6,7 +6,7 @@
 ```
 # Release notes
 
-## 1.14 (2)
+## 1.14 (3)
 * Settings: Added a "User Data" section for export/import and listing bookmarks, feeds, and downloads.
 * Improved behavior of pinned bookmark identities.
 * Indicate a pinned identity with an outline icon in the toolbar.
@@ -19,7 +19,7 @@
 * Fixed opening downloaded files in another app.
 * Adjusted input field margins.
 
-## 1.14 (1)
+## 1.14 (2)
 New features:
 * A bookmark folder can be opened in new tabs, one tab per contained bookmark.
 * New bookmark property "Set identity": use a specific identity when opening the bookmark, but don't apply it persistently on the bookmarked URL.
