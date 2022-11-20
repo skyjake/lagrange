@@ -572,7 +572,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
                 addActionButton_SidebarWidget_(d,
                     d->isEditing ? "${sidebar.close}" : "${sidebar.action.bookmarks.edit}",
-                    "sidebar.bookmarks.edit", 0);
+                    format_CStr("%s.bookmarks.edit", cstr_String(&d->widget.id)), 0);
             }
             break;
         }
