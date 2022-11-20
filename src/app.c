@@ -1437,6 +1437,11 @@ const iString *temporaryPathForUrl_App(const iString *url, const iString *mime) 
 #if defined (iPlatformMsys)
     iString *      tmpPath = collectNew_String();
     const iRangecc tmpDir  = range_String(collect_String(tempDirectory_Win32()));
+#elif defined (iPlatformAppleMobile)
+    iString *      tmpPath  = collectNew_String();
+    const char *   cache    = cleanedPath_CStr("~/Library/Caches/Files");
+    const iRangecc tmpDir   = range_CStr(cache);
+    makeDirs_Path(collectNewCStr_String(cache));
 #elif defined (iPlatformAndroid)
     iString *      tmpPath  = collectNew_String();
     const char *   extCache = concatPath_CStr(SDL_AndroidGetExternalStoragePath(), "Cache");

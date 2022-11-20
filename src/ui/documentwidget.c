@@ -3717,7 +3717,9 @@ static iBool saveToFile_(const iString *savePath, const iBlock *content, const i
             const size_t size   = size_Block(content);
             const iBool  isMega = size >= 1000000;
 #if defined (iPlatformAppleMobile)
-            exportDownloadedFile_iOS(savePath);
+            if (showDialog) {
+                exportDownloadedFile_iOS(savePath);
+            }
 #elif defined (iPlatformAndroidMobile)
             if (showDialog) {
                 exportDownloadedFile_Android(savePath, mime);
