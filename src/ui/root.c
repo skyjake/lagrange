@@ -606,7 +606,7 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     iLabelWidget *toolButton = findWidget_App("toolbar.ident");
     iLabelWidget *toolName   = findWidget_App("toolbar.name");
     if (toolName) {
-        setOutline_LabelWidget(toolButton, ident == NULL);
+        setOutline_LabelWidget(toolButton, ident == NULL || isIdentityPinned_DocumentWidget(doc));
         if (ident) {
             setTextColor_LabelWidget(toolButton, uiTextAction_ColorId);
             setTextColor_LabelWidget(toolName, uiTextAction_ColorId);
