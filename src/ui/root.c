@@ -419,10 +419,15 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             pushBack_Array(&items, &(iMenuItem){ "---" });
         }
         iSidebarWidget *sidebar = findWidget_App("sidebar");
+        const iBool isGemini = equalCase_Rangecc(urlScheme_String(docUrl), "gemini");
         pushBackN_Array(
             &items,
             (iMenuItem[]){
-                { add_Icon " ${menu.identity.newdomain}", 0, 0, "ident.new scope:1" },
+                { isGemini ? add_Icon " ${menu.identity.newdomain}"
+                           : add_Icon " ${menu.identity.new}",
+                  0, 0,
+                  isGemini ? "ident.new scope:1"
+                           : "ident.new" },
                 { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
                 { "---" } }, 3);
         if (deviceType_App() == desktop_AppDeviceType) {
