@@ -38,12 +38,14 @@ void init_RecentUrl(iRecentUrl *d) {
     d->cachedResponse = NULL;
     d->cachedDoc      = NULL;
     d->flags          = 0;
+    init_Block(&d->setIdentity, 0);
 }
 
 void deinit_RecentUrl(iRecentUrl *d) {
     iRelease(d->cachedDoc);
     deinit_String(&d->url);
     delete_GmResponse(d->cachedResponse);
+    deinit_Block(&d->setIdentity);
 }
 
 iDefineTypeConstruction(RecentUrl)
@@ -55,6 +57,7 @@ iRecentUrl *copy_RecentUrl(const iRecentUrl *d) {
     copy->cachedResponse = d->cachedResponse ? copy_GmResponse(d->cachedResponse) : NULL;
     copy->cachedDoc      = ref_Object(d->cachedDoc);
     copy->flags          = d->flags;
+    set_Block(&copy->setIdentity, &d->setIdentity);
     return copy;
 }
 
@@ -189,6 +192,7 @@ void serialize_History(const iHistory *d, iStream *outs) {
         else {
             write8_Stream(outs, 0);
         }
+        serialize_Block(&item->setIdentity, outs);
     }
     unlock_Mutex(d->mtx);
 }
@@ -210,6 +214,9 @@ void deserialize_History(iHistory *d, iStream *ins) {
         if (read8_Stream(ins)) {
             item.cachedResponse = new_GmResponse();
             deserialize_GmResponse(item.cachedResponse, ins);
+        }
+        if (version_Stream(ins) >= recentUrlSetIdentity_FileVersion) {
+            deserialize_Block(&item.setIdentity, ins);
         }
         pushBack_Array(&d->recent, &item);
     }
@@ -373,10 +380,11 @@ iBool goForward_History(iHistory *d) {
     lock_Mutex(d->mtx);
     if (d->recentPos > 0) {
         d->recentPos--;
+        const iRecentUrl *recent = constMostRecentUrl_History(d);
         postCommandf_Root(get_Root(),
                           "open history:1 scroll:%f url:%s",
-                          mostRecentUrl_History(d)->normScrollY,
-                          cstr_String(url_History(d, d->recentPos)));
+                          recent->normScrollY,
+                          cstr_String(&recent->url));
         unlock_Mutex(d->mtx);
         return iTrue;
     }
@@ -400,6 +408,20 @@ iBool atOldest_History(const iHistory *d) {
 const iGmResponse *cachedResponse_History(const iHistory *d) {
     const iRecentUrl *item = constMostRecentUrl_History(d);
     return item ? item->cachedResponse : NULL;
+}
+
+void setIdentity_History(iHistory *d, const iBlock *identityFingerprint) {
+    lock_Mutex(d->mtx);
+    iRecentUrl *item = mostRecentUrl_History(d);
+    if (item) {
+        if (!isEmpty_Block(identityFingerprint)) {
+            set_Block(&item->setIdentity, identityFingerprint);
+        }
+        else {
+            clear_Block(&item->setIdentity);
+        }
+    }
+    unlock_Mutex(d->mtx);    
 }
 
 void setCachedResponse_History(iHistory *d, const iGmResponse *response) {

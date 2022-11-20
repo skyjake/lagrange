@@ -33,12 +33,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(RecentUrl)
 iDeclareTypeConstruction(RecentUrl)
-
+    
 struct Impl_RecentUrl {
     iString      url;
     float        normScrollY;    /* normalized to document height */
     iGmResponse *cachedResponse; /* kept in memory for quicker back navigation */
     iGmDocument *cachedDoc;      /* cached copy of the presentation: layout and media (not serialized) */
+    iBlock       setIdentity;    /* fingerprint of identity that was pinned*/
     uint16_t     flags;
 };
 
@@ -63,6 +64,7 @@ void        clear_History               (iHistory *);
 void        add_History                 (iHistory *, const iString *url);
 void        undo_History                (iHistory *); /* removes the most recent URL */
 void        replace_History             (iHistory *, const iString *url);
+void        setIdentity_History         (iHistory *, const iBlock *identityFingerprint);
 void        setCachedResponse_History   (iHistory *, const iGmResponse *response);
 void        setCachedDocument_History   (iHistory *, iGmDocument *doc);
 iBool       goBack_History              (iHistory *);

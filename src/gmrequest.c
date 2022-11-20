@@ -55,6 +55,7 @@ void init_GmResponse(iGmResponse *d) {
     iZap(d->certValidUntil);
     init_String(&d->certSubject);
     iZap(d->when);
+    init_Block(&d->identityFingerprint, 0);
 }
 
 void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
@@ -66,6 +67,7 @@ void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
     d->certValidUntil = other->certValidUntil;
     initCopy_String(&d->certSubject, &other->certSubject);
     d->when = other->when;
+    initCopy_Block(&d->identityFingerprint, &other->identityFingerprint);
 }
 
 void deinit_GmResponse(iGmResponse *d) {
@@ -73,6 +75,7 @@ void deinit_GmResponse(iGmResponse *d) {
     deinit_Block(&d->body);
     deinit_Block(&d->certFingerprint);
     deinit_String(&d->meta);
+    deinit_Block(&d->identityFingerprint);
 }
 
 void clear_GmResponse(iGmResponse *d) {
@@ -84,6 +87,7 @@ void clear_GmResponse(iGmResponse *d) {
     iZap(d->certValidUntil);
     clear_String(&d->certSubject);
     iZap(d->when);
+    clear_Block(&d->identityFingerprint);
 }
 
 iGmResponse *copy_GmResponse(const iGmResponse *d) {
@@ -101,6 +105,7 @@ void serialize_GmResponse(const iGmResponse *d, iStream *outs) {
     serialize_Date(&d->certValidUntil, outs);
     serialize_String(&d->certSubject, outs);
     writeU64_Stream(outs, d->when.ts.tv_sec);
+    serialize_Block(&d->identityFingerprint, outs);
 }
 
 void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
@@ -114,6 +119,9 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
     clear_Block(&d->certFingerprint);
     if (version_Stream(ins) >= addedResponseTimestamps_FileVersion) {
         d->when.ts.tv_sec = readU64_Stream(ins);
+    }
+    if (version_Stream(ins) >= responseIdentity_FileVersion) {
+        deserialize_Block(&d->identityFingerprint, ins);
     }
 }
 
@@ -1036,6 +1044,7 @@ void submit_GmRequest(iGmRequest *d) {
     d->req = new_TlsRequest();
     if (d->identity) {
         setCertificate_TlsRequest(d->req, d->identity->cert);
+        set_Block(&resp->identityFingerprint, &d->identity->fingerprint);
     }
     /* Site-specific settings. */ {
         iString siteRoot;

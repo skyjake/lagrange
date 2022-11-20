@@ -1711,6 +1711,9 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
     const iRangei full          = { 0, size_GmDocument(d->doc).y };
     const iRangei vis           = ctx->vis;
     iVisBuf      *visBuf        = d->visBuf; /* will be updated now */
+    if (isEmpty_Range(&full)) {
+        return didDraw;
+    }
     d->drawBufs->lastRenderTime = SDL_GetTicks();
     /* Swap buffers around to have room available both before and after the visible region. */
     allocVisBuffer_DocumentView_(d);
@@ -3184,7 +3187,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     d->flags |= fromCache_DocumentWidgetFlag;
     /* Do the fetch. */ {
         d->initNormScrollY = normScrollY;
-        /* Use the cached response data. */
+        /* Use the cached response data. */        
         updateTrust_DocumentWidget_(d, resp);
         d->sourceTime   = resp->when;
         d->sourceStatus = success_GmStatusCode;
@@ -3214,6 +3217,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
+    setIdentity_DocumentWidget(d, recent ? &recent->setIdentity : NULL);
     if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url)) {
         updateFromCachedResponse_DocumentWidget_(
             d, recent->normScrollY, recent->cachedResponse, recent->cachedDoc);
@@ -3351,10 +3355,6 @@ iBool isSetIdentityRetained_DocumentWidget(const iDocumentWidget *d, const iStri
 static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     url = canonicalUrl_String(url);
     if (!equal_String(d->mod.url, url)) {
-        if (d->mod.setIdentity) {
-            /* With a set identity, the URL root is not allowed to change. */
-            iAssert(isSetIdentityRetained_DocumentWidget(d, url));
-        }
         d->flags |= urlChanged_DocumentWidgetFlag;
         set_String(d->mod.url, url);
         return iTrue;
@@ -6342,6 +6342,7 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags,
                                 const iBlock *setIdent) {
+    iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
     const iBool allowCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
                  setUrlFlags & preventInlining_DocumentWidgetSetUrlFlag);
@@ -6357,7 +6358,10 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
     parseUser_DocumentWidget_(d);
     if (!allowCache || !updateFromHistory_DocumentWidget_(d)) {
         fetch_DocumentWidget_(d);
-    }
+        if (setIdent) {
+            setIdentity_History(d->mod.history, setIdent);
+        }
+    }    
 }
 
 void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, const iString *mime,
@@ -6395,7 +6399,7 @@ void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other) 
 }
 
 void setIdentity_DocumentWidget(iDocumentWidget *d, const iBlock *setIdent) {
-    if (!setIdent) {
+    if (!setIdent || isEmpty_Block(setIdent)) {
         delete_Block(d->mod.setIdentity);
         d->mod.setIdentity = NULL;
         return;

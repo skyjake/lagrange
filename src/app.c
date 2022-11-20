@@ -3622,8 +3622,10 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         setCurrent_Root(root); /* need to change for widget creation */
         doc = document_Command(cmd); /* may be different */
     }
+    const iBool isHistory = argLabel_Command(cmd, "history") != 0;
     /* If not opening in a new tab, we must not domains/roots accidentally. */
-    if (isIdentityPinned_DocumentWidget(doc) &&
+    if (!isHistory &&
+        isIdentityPinned_DocumentWidget(doc) &&        
         (newTab & newTabMask_OpenTabFlag) == 0 &&        
         !isSetIdentityRetained_DocumentWidget(doc, url)) {
         /* Ensure a new tab is opened where there is no set identity. */
@@ -3633,7 +3635,6 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0); /* `newtab:2` to open in background */
     }
     iHistory   *history       = history_DocumentWidget(doc);
-    const iBool isHistory     = argLabel_Command(cmd, "history") != 0;
     const iBool waitForIdle   = argLabel_Command(cmd, "idle") != 0;
     int         redirectCount = argLabel_Command(cmd, "redirect");
     if (!isHistory) {
@@ -3656,7 +3657,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         (isHistory ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
             (argLabel_Command(cmd, "notinline") ? preventInlining_DocumentWidgetSetUrlFlag : 0) |
             (waitForIdle ? waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag : 0),
-        hasSetIdent ? collect_Block(hexDecode_Rangecc(range_Command(cmd, "setident"))) : NULL);   
+        hasSetIdent ? collect_Block(hexDecode_Rangecc(range_Command(cmd, "setident"))) : NULL);
     /* Optionally, jump to a text in the document. This will only work if the document
        is already available, e.g., it's from "about:" or restored from cache. */
     const iRangecc gotoHeading = range_Command(cmd, "gotoheading");
