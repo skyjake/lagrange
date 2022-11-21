@@ -16,6 +16,7 @@
 * Fixed accidental backwards navigation when quickly refreshing the page twice.
 * Fixed "More..." button staying visible in identity creation dialog.
 * Fixed opening downloaded files in another app.
+* Fixed opening Gemini URIs when another app opens Lagrange.
 * Adjusted input field margins.
 
 ## 1.14 (Beta 7)
