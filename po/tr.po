@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-11-19 16:28+0000\n"
+"PO-Revision-Date: 2022-11-21 06:14+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -2477,3 +2477,9 @@ msgstr "Geçerli dizin"
 
 msgid "ident.unset"
 msgstr "Sabitlemeyi kaldır"
+
+msgid "heading.prefs.user"
+msgstr "Kullanıcı verisi"
+
+msgid "menu.email"
+msgstr "E-posta gönder"
