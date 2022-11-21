@@ -4067,6 +4067,16 @@ static iBool tryWaitingFetch_DocumentWidget_(iDocumentWidget *d) {
     return iFalse;
 }
 
+static const char *setIdentArg_DocumentWidget_(const iDocumentWidget *d, const iString *dstUrl) {
+    if (isIdentityPinned_DocumentWidget(d) &&
+        isSetIdentityRetained_DocumentWidget(d, dstUrl)) {
+        return format_CStr(
+            " setident:%s",
+            cstrCollect_String(hexEncode_Block(d->mod.setIdentity)));
+    }
+    return "";
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "document.openurls.changed")) {
@@ -4684,7 +4694,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             if (!cmpCase_String(parentUrl, "about:")) {
                 setCStr_String(parentUrl, "about:about");
             }
-            postCommandf_Root(w->root, "open url:%s", cstr_String(parentUrl));
+            postCommandf_Root(w->root,
+                              "open%s url:%s",
+                              setIdentArg_DocumentWidget_(d, parentUrl),
+                              cstr_String(parentUrl));
         }
         return iTrue;
     }
@@ -4705,7 +4718,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         else {
             appendCStr_String(rootUrl, "/");
         }
-        postCommandf_Root(w->root, "open url:%s", cstr_String(rootUrl));
+        postCommandf_Root(w->root, "open%s url:%s",
+                          setIdentArg_DocumentWidget_(d, rootUrl),
+                          cstr_String(rootUrl));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
@@ -5220,16 +5235,6 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
             return iTrue;
     }
     return iFalse;
-}
-
-static const char *setIdentArg_DocumentWidget_(const iDocumentWidget *d, const iString *dstUrl) {
-    if (isIdentityPinned_DocumentWidget(d) &&
-        isSetIdentityRetained_DocumentWidget(d, dstUrl)) {
-        return format_CStr(
-            " setident:%s",
-            cstrCollect_String(hexEncode_Block(d->mod.setIdentity)));
-    }
-    return "";
 }
 
 static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, int tabMode) {
