@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-08-31 17:52+0000\n"
+"PO-Revision-Date: 2022-11-21 06:14+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1849,7 +1849,7 @@ msgid "dlg.upload.id.none"
 msgstr "Ninguno"
 
 msgid "heading.bookmark.tags"
-msgstr "Propiedades"
+msgstr "Comportamiento"
 
 msgid "dlg.addfolder.prompt"
 msgstr "Nombre de la nueva carpeta:"
@@ -2530,4 +2530,19 @@ msgid "dlg.bookmark.notes"
 msgstr "Notas:"
 
 msgid "dlg.bookmark.identity"
-msgstr "Establecer identidad:"
+msgstr "Identidad fijada:"
+
+msgid "heading.prefs.user"
+msgstr "Datos de Usuario"
+
+msgid "ident.unset"
+msgstr "No fijar"
+
+msgid "menu.email"
+msgstr "Contactar por Email"
+
+msgid "menu.identity.newdomain"
+msgstr "Nueva Identidad para el Dominio…"
+
+msgid "dlg.newident.scope.dir"
+msgstr "Directorio Actual"
