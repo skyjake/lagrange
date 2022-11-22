@@ -6,6 +6,14 @@
 ```
 # Release notes
 
+## 1.14 (4)
+* Fixed pinned identity being forgotten when navigating to parent/root.
+* Improved layout of the bookmark editor dialog.
+* Avoid over-saturating green text in the Colorful Dark theme.
+* Updated UI translations.
+* iPad: Fixed New Identity dialog jumping around when pressing "More...".
+* iPad: Adjusted threshold for tight navbar layout.
+
 ## 1.14 (3)
 * Settings: Added a "User Data" section for export/import and listing bookmarks, feeds, and downloads.
 * Improved behavior of pinned bookmark identities.
