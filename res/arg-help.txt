@@ -18,6 +18,7 @@ General options:
                         Open a URL, or make a search query with given text.
                         This only works if the search query URL has been
                         configured.
+  -U, --user DIR        Set directory where user data files are stored.
   -V, --version         Print the application version.
   -w, --width N         Set initial window width to N pixels.
 

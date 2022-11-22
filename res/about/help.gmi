@@ -19,9 +19,9 @@ Lagrange is a GUI client for browsing Geminispace. It offers modern conveniences
 
 Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a small number of essential libraries. It is written in C and uses SDL for hardware-accelerated graphics. OpenSSL is used for secure communications.
 
-=> about:lagrange           About Lagrange
-=> https://www.libsdl.org   SDL: Simple DirectMedia Layer
-=> https://www.openssl.org  OpenSSL: Cryptography and SSL/TLS Toolkit
+=> about:lagrange            About Lagrange
+=> https://www.libsdl.org/   SDL: Simple DirectMedia Layer
+=> https://www.openssl.org/  OpenSSL: Cryptography and SSL/TLS Toolkit
 
 ### Features
 
@@ -41,17 +41,17 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Select and copy text with the mouse
 * Find text on the page
 * Open image and audio links inline on the same page
-* Instant back/forward navigation
-* Smart suggestions when typing an URL — search bookmarks, history, identities
+* Instant back/forward navigation (on macOS supports swipes on trackpad)
+* Subscribe to Gemini and Atom feeds
+* Smart suggestions when typing an URL — search bookmarks, history, feeds, identities
 * Search engine integration
 * Identity management — create and use TLS client certificates
-* Subscribe to Gemini and Atom feeds
 * Use Gemini pages as a source of bookmarks
 * Audio playback: MP3, Ogg Vorbis, WAV
 * Read Gempub books and view ZIP archive contents
-* Built-in support for Gopher
+* Built-in support for Gopher and Finger
 * Built-in support for uploading data using the Titan protocol
-* Use proxy servers for HTTP, Gopher, or Gemini content
+* Use proxy servers for Gemini, HTTP, and Gopher content
 
 ## Why not just use a web browser
 
@@ -69,8 +69,8 @@ Lagrange's user interface is modeled after web browsers:
 
 * There is a navigation bar at the top with Back and Forward buttons.
 * There is a tab bar for switching tabs. The tab bar is hidden if there is only one tab open.
-* There is a sidebar for managing bookmarks, subscribed feeds, and TLS identities, and viewing history and the page outline. Sidebars are hidden by default.
-* There is a search bar that appears at the bottom when searching text on the page.
+* There are sidebars for managing bookmarks, subscribed feeds, and TLS identities, and viewing history and the page outline. Sidebars are hidden by default.
+* There is a search bar that appears at the bottom when searching text on a page.
 
 Tip: Try pressing ${CTRL+}5 now to see the page outline.
 
@@ -87,7 +87,7 @@ The user interface has been designed for both mouse and keyboard based use. When
 
 The URL input field can be found in the traditional location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L. You can then type or paste an URL and press Enter to load the page.
 
-As you enter text in the URL input field, Lagrange starts looking for matches in bookmarks, history, identities, and content of cached pages. This provides an easy way to return to a page you've been on recently. Press Tab or ↓ to switch input focus to the results.
+As you enter text in the URL input field, Lagrange starts looking for matches in bookmarks, subscribed feeds, history, identities, and content of cached pages. This provides an easy way to return to a page you've been on recently. Press Tab or ↓ to switch input focus to the results.
 
 Search within cached pages is limited to the (small) set of pages that Lagrange keeps in memory for back navigation. Search terms are case insensitive, and if many words are entered, they are all required to appear in the specified order in any matched content.
 
@@ -100,11 +100,11 @@ You can also make online search queries via the URL input field. When a search U
 The type and destination of a link are indicated by the link's icon and color: ➤ links to the same domain, and 🌐 to a different domain. The colors are:
 
 * Blue for Gemini
-* Purple for Gopher
+* Green for Gopher
 * Orange for HTTP(S)
 * Red for other/unknown/invalid (cannot be opened)
 
-Link colors remain the same regardless of which color theme is being used for page content. (Color themes are discussed in the Customization section.)
+Links colors may change depending on the page color theme. (See section 2.3 "Color themes".)
 
 The "Show URL on hover" option can be enabled in Preferences to show additional information when you move the mouse cursor over a link: the destination domain, URL scheme for non-Gemini links, date of the last visit to the URL, and the identity that will be used when opening the link.
 
@@ -117,7 +117,7 @@ The "Network" tab of Preferences has a few settings that affect the presentation
 
 ### 1.1.3 Page caching
 
-When navigating to a new page, the old page is cached in memory. If you navigate back, the cached copy of the page is restored. Think of it as rewinding time — you return to a past time as if nothing had happened. The same applies to forward navigation; cached pages are loaded if available. This allows back and forward navigation to happen instantly, without any network requests.
+When navigating to a new page, the old page is cached in memory. If you navigate back, the cached copy of the old page is restored. Think of it as rewinding time — you return to a past time as if nothing had happened. The same applies to forward navigation; cached pages are loaded if available. This allows back and forward navigation to happen instantly, without any network requests.
 
 The page cache is saved to a file when Lagrange is shut down so it can be restored on the next launch.
 
@@ -187,20 +187,22 @@ Press ${SHIFT+}N to create a new bookmark folder. Newly added folders appear in 
 
 You can drag and drop bookmarks in and out of folders. Folders can also be nested inside each other. Clicking on a folder heading will toggle its fold state, either hiding or showing its contents. The fold state is remembered across sessions.
 
-### 1.4.2 Exporting and importing
+You can open all the bookmarks inside a folder in new tabs using the sidebar context menu (right-click on a folder). A new tab is instantly created for each bookmark, including ones in nested subfolders. However, the bookmarked pages will load sequentially to avoid excessive network traffic.
 
-=> about:bookmarks  The special page "about:bookmarks" is used for exporting bookmarks out of Lagrange.
+### 1.4.2 Sharing and batch importing
+
+=> about:bookmarks  The special page "about:bookmarks" is used for listing bookmarks in various ways.
 It has three different modes that can be opened via menus:
 
 * listing bookmarks alphabetically
 * listing bookmarks grouped by tag
 * listing bookmarks as a feed with creation dates
 
-The generated page can be saved to Downloads or you can copy all or parts of it to the clipboard.
+The generated page can be saved to Downloads or you can copy all or parts of it to the clipboard. For example, you can then use these listings to share public bookmarks on your capsule.
 
 To import all links on a page as bookmarks, use the page context menu to select "Import Links as Bookmarks...". You can also right-click on individual links and select "Bookmark Link...".
 
-Importing links on a page will not cause any folders to be (re)created. To fully transfer your bookmarks, tags, custom icons, and folders, consider copying the entire "bookmarks.ini" file (see section 3.5).
+Importing links on a page will not cause any folders to be (re)created. To fully export and import your bookmarks, tags, custom icons, and folders, see section 1.12. 
 
 ### 1.4.3 Remote bookmarks
 
@@ -212,30 +214,33 @@ All links found in the remote sources become remote bookmarks and are included i
 
 Note that remote bookmarks are read-only: they cannot be edited or tagged. This means you cannot subscribe to a remote bookmark without first making a local duplicate of it. If you want to make local copies of all the links in the remote source, open the remote source page and use the "Import Links as Bookmarks..." context menu item on it. After refreshing remote sources, the remote copies of the bookmarks will not be shown any more.
 
-### 1.4.4 Special tags
+### 1.4.4 Behavioral tags
 
-* Set a "homepage" tag on a bookmark to make it one of the pages that will be opened when pressing the 🏠 button. If multiple bookmarks are tagged as homepages, a random one is selected.
-* A "subscribed" tag means that Lagrange will periodically fetch the bookmarked page and look for Gemini feed links. All the found links that match the required style ("YYYY-MM-DD Entry title") will appear in the Feeds sidebar tab.
-* "headings" can be used together with "subscribed" to subscribe to new headings instead of Gemini feed links.
-* The "remotesource" tag marks the bookmark as a source of remote bookmarks. All links on the source pages are shown as remote bookmarks in the Bookmarks list.
-* The "remote" tag is used for remote bookmarks. These bookmarks cannot be edited or tagged, but you can make a local duplicate to turn it into a regular bookmark.
-* The "usericon" tag prevents a random icon to be selected for the bookmark. This tag is automatically applied when an icon character is entered in the bookmark editor.
-* The "linksplit" tag causes all links on the bookmarked page to open to the side, automatically enabling split view mode.
+Bookmarks may use a number of special tags that control their behavior. In practice, these are stored in the bookmarks.ini "tags" entries, but are hidden from the Tags field in the app UI.
+
+* A ".homepage" tag makes a bookmark one of the pages that will be opened when pressing the 🏠 button. If multiple bookmarks are tagged as homepages, a random one is selected.
+* A ".subscribed" tag means that Lagrange will periodically fetch the bookmarked page and look for Gemini feed links. All the found links that match the required style ("YYYY-MM-DD Entry title") will appear in the Feeds sidebar tab.
+* ".headings" can be used together with ".subscribed" to subscribe to new headings instead of Gemini feed links.
+* ".ignoreweb" modifies a feed subscription to ignore all HTTP(S) URLs. This is useful if a feed contains both Gemini and web links, but you're only interested in the Gemini ones.
+* The ".remotesource" tag marks the bookmark as a source of remote bookmarks. All links on the source pages are shown as remote bookmarks in the Bookmarks list.
+* The ".remote" tag is used for remote bookmarks. These bookmarks cannot be edited or tagged, but you can make a local duplicate to turn it into a regular bookmark.
+* The ".usericon" tag prevents a random icon to be selected for the bookmark. This tag is automatically applied when an icon character is entered in the bookmark editor.
+* The ".linksplit" tag causes all links on the bookmarked page to open to the side, automatically enabling split view mode.
 
 ## 1.5 Subscribing to feeds
 
 You may be familiar with XML-based RSS and Atom feeds from the web. The Gemini equivalent of these is Gemini feeds. A Gemini feed is simply a regular 'text/gemini' page that contains one or more links whose labels are formatted in a particular way. This makes it very easy to write pages that clients can subscribe to.
 => gemini://gemini.circumlunar.space/docs/companion/subscription.gmi  See "Subscribing to Gemini pages" for more information.
 
-Lagrange supports Gemini and Atom feed subscriptions. Atom feeds are  automatically translated to the Gemini feed format so they can be viewed and subscribed to like a normal 'text/gemini' page. RSS feeds are not supported.
+Lagrange supports Gemini and Atom feed subscriptions. Atom feeds are automatically translated to the Gemini feed format so they can be viewed and subscribed to like a normal 'text/gemini' page. RSS feeds are not supported.
 
-Subscriptions are managed via bookmarks. When you subscribe to a feed page, a bookmark is created and the special "subscribed" tag is applied on it. In the Bookmarks list, this is indicated by a ★ icon. There is no other difference between normal bookmarks and feed subscriptions — you may tag any bookmark as "subscribed" and Lagrange will look through it for feed-style links. The bookmark title is used as the feed title. This defaults to the top heading of the feed index page, but you can edit it to suit your needs.
+Subscriptions are managed via bookmarks. When you subscribe to a feed page, a bookmark is created and the special ".subscribed" tag is applied on it. In the Bookmarks list, this is indicated by a ★ icon. There is no other difference between normal bookmarks and feed subscriptions — you may tag any bookmark as a subscription and Lagrange will look through it for feed-style links. The bookmark title is used as the feed title. This defaults to the top heading of the feed index page, but you can edit it to suit your needs.
 
 Feeds are refreshed periodically while Lagrange is running, and also immediately after launching if it has been a while since the previous refresh. You may also manually refresh all feeds via the menus or by pressing ${SHIFT+}${CTRL+}R.
 
 The Feeds sidebar tab displays recent feed entries. From there you can open entries and mark them as read/unread.
 
-To see all entries from all feeds, open the "Feed entries" page. This page also shows how long has it been since the previous feed refresh.
+To see a list of all entries from all feeds, open the "Feed entries" page. This page also shows how long has it been since the previous feed refresh.
 => about:feeds
 
 ## 1.6 Identities (client certificates)
@@ -246,7 +251,7 @@ The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+
 
 ### 1.6.1 Creating a new identity
 
-Click on the 👤 button in the navigation bar and select "New Identity...". The shortcut for this is ${SHIFT+}${CTRL+}N.
+Click on the 👤 button in the navigation bar and select "New Identity..." or "New Identity for Domain...". The shortcut for this is ${SHIFT+}${CTRL+}N.
 
 Consider any information you enter in the certificate as public — only the Common Name is required to be non-empty. The generated certificate will use the Common Name as the issuer and subject of the certificate, making it clear that the certificate is self-signed. The other required field is the expiration date in "Valid until". Entering a year is sufficient, and means that the certificate is valid until the end of that year.
 
@@ -262,6 +267,8 @@ Clicking on an identity in the sidebar shows a menu where you can control usage 
 
 As the sidebar is not keyboard-navigable, note that identities can also be accessed via lookup results. Identities matching the search terms are shown as the last category in the lookup results list. From there, one can toggle an identity for the current page, or stop using it on all pages.
 
+Identities may also be used by pinning one to a bookmark. Whenever the bookmark is then opened, the associated identity is taken into use. The identity also gets permanently "pinned" to the opened tab. This means that the tab keeps using the identity for all subsequent requests, but can only switch to URLs inside the same capsule. If a link leads elsewhere, that link gets opened in a new tab with no identity pinned. This way, one can navigate freely inside the capsule while keeping the identity in use, while not accidentally sending it to any other capsule, for example if you forget you are using an identity and manually enter some other capsule's URL. To end use of the identity, it has to be manually unpinned from the tab (via the Identity button in the navbar), or the tab has to be closed. Keeping the pinned identity tab-specific is also useful because then the same URL can be simultaneously opened with several different identities, in separate tabs.
+
 ### 1.6.3 Importing existing certificates
 
 To import an existing X.509 certificate as an identity, press ${SHIFT+}${CTRL+}I or click on 👤 and select "Import..." (macOS: Identity menu → Import...).
@@ -272,6 +279,8 @@ Alternatively, you can manually copy the certificate files so Lagrange can find 
 * mycert.crt
 * mycert.key
 Lagrange will add a note to the imported identities to mark them as "Imported".
+
+Note that you can find the certificates of any exported identities inside a user data ZIP archive. See sections 1.12 and 6 for details.
 
 ## 1.7 Downloads
 
@@ -289,7 +298,7 @@ Titan is a sister protocol to Gemini that enables sending arbitrary amounts of d
 
 => gemini://transjovian.org/titan  Titan Protocol (by Alex Schroeder)
 
-While Titan and Gemini are related, Titan is a separate protocol and regular Gemini servers are not expected to support it. Whether it makes sense to allow clients to upload large amounts of data is a service-specific question. For example, a server that hosts a gemlog could enable Titan uploads for submitting new posts, or editing existing posts by uploading a revised version.
+While Titan and Gemini are related, Titan is a separate protocol and regular Gemini servers are not expected to support it. Whether it makes sense to allow clients to upload large amounts of data depends on the service. For example, a server that hosts a gemlog could enable Titan uploads for submitting new posts, or editing existing posts by uploading a revised version.
 
 As far as Lagrange is concerned, Titan is just one of the supported URL schemes. Whenever you try to open a "titan://" URL, no matter if it is manually entered into the URL field, or by clicking on a link, opening a bookmark, feed entry, or via a redirect, a dialog will open where you can specify the data to upload.
 
@@ -358,7 +367,7 @@ The export/import feature added in Lagrange v1.12 allows one to manually export 
 
 The "Export User Data" menu item can be found in the File menu or the hamburger menu. In practice, this creates a compressed archive that you can then save to the Downloads folder or open in an external application. From there, you can transfer the archive manually onto another device, or just put in a safe place for backup.
 
-Opening the exported archive works similar to fontpacks (cf. section 2.4): when viewing the ZIP in the app, there is a button in the bottom of the window to import the contained data. Fine-grained controls are provided to choose which data gets imported and how, so you don't have to overwrite all the existing data.
+Opening the exported archive works similar to fontpacks (see section 2.4): when viewing the ZIP in the app, there is a button in the bottom of the window to import the contained data. Fine-grained controls are provided to choose which data gets imported and how, so you don't have to overwrite all the existing data.
 
 Note that browsing history also contains the read status of feed entries, because those are tracked based on whether entry URLs have been visited. This means a transfer of user data includes the up-to-date status of each subscription as well.
 
@@ -379,8 +388,6 @@ The "Open images in Data URLs" option determines if image data embedded into lin
 "Split view pinning" controls which tab links will be opened on when browsing in split view mode. The default mode is "Left Tab", which means that the page in the left tab is pinned (remains unchanged) when clicking on a link. For more information, see section 1.9.
 
 ## 2.2 Window and UI options
-
-Lagrange supports configuring dark and light UI modes separately.
 
 There are four different color schemes for the UI: two for dark mode, and two for light mode. These can be selected on the "Window" tab of the Preferences dialog:
 
@@ -466,11 +473,11 @@ If you serve content via Gemini, please be aware that ANSI escapes may not be su
 
 The "Glyph warnings" option controls whether a warning will be shown when a page is missing one or more characters. This is typically due to the page being in a language that is not covered by any of the installed fonts. Clicking on the glyph warning banner opens the font management page.
 
-"Smoothing" enables or disables glyph antialiasing. In this version, it is recommended that smoothing is always enabled. This is because the text renderer does not support hinting of any kind, which means that without smoothing, glyph shapes will be severely distorted. You may still want to try disabling this option if antialiasing causes eye strain for you.
+"Smoothing" enables or disables glyph antialiasing. In this version, it is recommended that smoothing is always enabled. This is because the text renderer does not support hinting of any kind, which means that without smoothing, glyph shapes will be severely distorted. You may still want to try disabling this option if antialiasing causes eye strain for you, or you are using a special font that is designed to not be smoothed.
 
 ### 2.4.4 Managing fonts
 
-Open "about:fonts" to see all the installed fonts, and enable, disable or uninstall individual fontpacks. At the top of the page, there is a link to the skyjake.fi Font Library: a curated collection of fontpacks that can be freely distributed. From there you can conveniently install more fonts specifically tuned for Lagrange.
+Open "about:fonts" to see all the installed fonts, and enable, disable or uninstall individual fontpacks. At the top of the page, there is a link to the skyjake.fi Font Library that contains a curated collection of fontpacks that can be freely distributed. From there you can conveniently install more fonts specifically tuned for Lagrange.
 
 The rest of the page is divided to two sections: enabled and disabled fontpacks. Individual packs can be disabled, so they remain installed but not in use. (Tip: Use the Outline sidebar to see a list of all packs, if there are many.) 
 
@@ -557,11 +564,16 @@ To reset all bindings to their defaults, quit Lagrange and delete the "bindings.
 
 ## 3.1 Command line options
 
-### URLs
-URLs on the command line are opened after Lagrange has launched. If more than one URL is given, multiple tabs will be opened. For example:
+Here are some of the commonly needed command line options. Check the "lagrange.1" manual page or the output of --help for a more complete listing.
+
+### URLs/paths
+URLs and file paths on the command line are opened after Lagrange has launched. If more than one URL is given, multiple tabs will be opened. For example:
 ```
 $ lagrange gemini://geminispace.info/
 ```
+
+### --dump
+Instead of opening the GUI, fetch each of the URLs/paths specified on the command line and print them to stdout. Metadata about the response will be printed to stderr.
 
 ### -E, --echo
 Debugging utility: internal events are printed to stdout.
@@ -577,7 +589,7 @@ Print the application version.
 
 ## 3.2 Opening Gemini links
 
-On macOS and Windows, Lagrange registers itself as a "gemini:" URL scheme handler, so you can click on Gemini links in any application to open Lagrange with that URL.
+On macOS and Windows, Lagrange registers itself as a "gemini" URL scheme handler, so you can click on Gemini links in any application to open Lagrange with that URL.
 
 Likewise (on macOS), .gmi/.gemini file extensions are registered as file formats that Lagrange can view so Finder will know how to open those automatically using Lagrange.
 
@@ -593,7 +605,7 @@ If there already is a running instance you can still use the command line to int
 
 ## 3.5 Runtime files
 
-Lagrange stores user-specific persistent files in one of the following locations (depending on the operating system):
+The location of user data files can be changed with the --user option. By default, Lagrange stores user-specific persistent files in one of the following locations (depending on the operating system):
 
 ```Location of user-specific files on different operating systems (table)
    Windows : C:\Users\Name\AppData\Roaming\fi.skyjake.Lagrange
