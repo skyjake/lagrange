@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2022-11-18 11:52+0000\n"
+"PO-Revision-Date: 2022-11-22 12:35+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -2510,4 +2510,19 @@ msgid "hint.dlg.bookmark.notes"
 msgstr "vapaamuotoiset muistiinpanot"
 
 msgid "dlg.bookmark.identity"
-msgstr "Aseta identiteetti:"
+msgstr "Kiinnitetty identiteetti:"
+
+msgid "heading.prefs.user"
+msgstr "Käyttäjän tiedot"
+
+msgid "ident.unset"
+msgstr "Irrota"
+
+msgid "menu.email"
+msgstr "Ota yhteyttä sähköpostilla"
+
+msgid "menu.identity.newdomain"
+msgstr "Uusi identiteetti verkkotunnukselle…"
+
+msgid "dlg.newident.scope.dir"
+msgstr "Tämä hakemisto"
