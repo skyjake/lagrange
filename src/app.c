@@ -2720,8 +2720,10 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
             }
         }
         setFlags_Widget(pointer_Command(cmd), isUsingPanelLayout_Mobile() ? hidden_WidgetFlag : disabled_WidgetFlag, iTrue);
+        const int oldY = dlg->rect.pos.y;
         arrange_Widget(dlg);
         refresh_Widget(dlg);
+        dlg->rect.pos.y = oldY;
         return iTrue;
     }
     if (equal_Command(cmd, "ident.scope")) {
