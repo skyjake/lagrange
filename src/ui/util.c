@@ -3448,11 +3448,13 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
             addDialogToggle_(headings, values, "${bookmark.tag.linksplit}:", "bmed.tag.linksplit");
         }
         arrange_Widget(dlg);
+        const int inputWidth = 100 * gap_UI - headings->rect.size.x;
         for (int i = 0; i < 4; ++i) {
             if (inputs[i]) {
-                as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
+                as_Widget(inputs[i])->rect.size.x = inputWidth;
             }
         }
+        ((iWidget *) findChild_Widget(dlg, "bmed.setident"))->rect.size.x = inputWidth;
         addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
         addChild_Widget(dlg,
                         iClob(makeDialogButtons_Widget(withDup ? dupActions : actions,
