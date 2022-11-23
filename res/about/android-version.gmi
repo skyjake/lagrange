@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.14 (Beta 9)
+* Fixed pinned identity being forgotten when navigating to parent/root.
+* Improved layout of the bookmark editor dialog.
+* Avoid over-saturating green text in the Colorful Dark theme.
+* Updated UI translations.
+
 ## 1.14 (Beta 8)
 * Settings: Added a "User Data" section for export/import and listing bookmarks, feeds, and downloads.
 * Improved behavior of pinned bookmark identities.
