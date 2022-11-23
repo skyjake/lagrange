@@ -55,6 +55,7 @@ struct Impl_LabelWidget {
         uint16_t removeTrailingColon : 1;
         uint16_t chevron             : 1;        
         uint16_t checkMark           : 1;
+        uint16_t truncateToFit       : 1;
     } flags;
 };
 
@@ -460,8 +461,19 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         draw_WrapText(&wt, d->font, topLeft_Rect(cont), fg);
     }
     else if (flags & alignLeft_WidgetFlag) {
-        draw_Text(d->font, add_I2(bounds.pos, addX_I2(padding_LabelWidget_(d, 0), iconPad)),
-                  fg, "%s", cstr_String(&d->label));
+        const iInt2 topLeft = add_I2(bounds.pos, addX_I2(padding_LabelWidget_(d, 0), iconPad));
+        if (d->flags.truncateToFit) {
+            const char *endPos;
+            tryAdvanceNoWrap_Text(d->font,
+                                  range_String(&d->label),
+                                  width_Rect(rect) - padding_LabelWidget_(d, 0).x -
+                                      padding_LabelWidget_(d, 1).x - iconPad,
+                                  &endPos);
+            drawRange_Text(d->font, topLeft, fg, (iRangecc){ constBegin_String(&d->label), endPos });
+        }
+        else {
+            draw_Text(d->font, topLeft, fg, "%s", cstr_String(&d->label));
+        }
         if ((flags & drawKey_WidgetFlag) && d->key) {
             iString str;
             init_String(&str);
@@ -470,11 +482,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                            add_I2(topRight_Rect(bounds),
                                   addX_I2(negX_I2(padding_LabelWidget_(d, 1)),
                                           deviceType_App() == tablet_AppDeviceType ? gap_UI : 0)),
-                           metaColor,/*
-                           isHover || flags & pressed_WidgetFlag ? fg
-//                           : isCaution                ? uiTextCaution_ColorId
-                           : colorEscape != none_ColorId ? colorEscape
-                                                      : uiTextShortcut_ColorId,*/
+                           metaColor,
                            right_Alignment,
                            "%s",
                            cstr_String(&str));
@@ -681,6 +689,10 @@ void setCheckMark_LabelWidget(iLabelWidget *d, iBool checkMark) {
 
 void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {
     d->flags.wrap = wrap;
+}
+
+void setTruncateToFit_LabelWidget (iLabelWidget *d, iBool truncateToFit) {
+    d->flags.truncateToFit = truncateToFit;
 }
 
 void setOutline_LabelWidget(iLabelWidget *d, iBool drawAsOutline) {

@@ -177,6 +177,7 @@ iLabelWidget *makeIdentityDropdown_LabelWidget(iWidget *headings, iWidget *value
     iLabelWidget    *ident    = makeMenuButton_LabelWidget(label, items, numItems);
     setFixedSize_Widget(as_Widget(ident), init_I2(-1, lineHeight_Text(uiLabel_FontId) + 2 * gap_UI));
     setTextCStr_LabelWidget(ident, items[findWidestLabel_MenuItem(items, numItems)].label);
+    setTruncateToFit_LabelWidget(ident, iTrue);
     iWidget *identHeading = addChild_Widget(headings, iClob(makeHeading_Widget(label)));
     identHeading->sizeRef = as_Widget(ident);
     setId_Widget(addChildFlags_Widget(values, iClob(ident), alignLeft_WidgetFlag), id);

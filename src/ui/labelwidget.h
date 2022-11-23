@@ -36,6 +36,7 @@ void    setNoBottomFrame_LabelWidget(iLabelWidget *, iBool noBottomFrame);
 void    setChevron_LabelWidget      (iLabelWidget *, iBool chevron);
 void    setCheckMark_LabelWidget    (iLabelWidget *, iBool checkMark);
 void    setWrap_LabelWidget         (iLabelWidget *, iBool wrap);
+void    setTruncateToFit_LabelWidget(iLabelWidget *, iBool truncateToFit);
 void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);
 void    setAllCaps_LabelWidget      (iLabelWidget *, iBool allCaps);
 void    setRemoveTrailingColon_LabelWidget  (iLabelWidget *, iBool removeTrailingColon);
