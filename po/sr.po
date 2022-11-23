@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-08-31 17:52+0000\n"
+"PO-Revision-Date: 2022-11-24 15:52+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1934,7 +1934,7 @@ msgid "dlg.upload.pickfile"
 msgstr "Изабери датотеку"
 
 msgid "heading.bookmark.tags"
-msgstr "Особине"
+msgstr "Понашање"
 
 msgid "heading.addfolder"
 msgstr "Додавање фасцикле"
@@ -2557,4 +2557,19 @@ msgid "hint.dlg.bookmark.notes"
 msgstr "произвољне приватне белешке"
 
 msgid "dlg.bookmark.identity"
-msgstr "Поставити идентитет:"
+msgstr "Закачени идентитет:"
+
+msgid "menu.email"
+msgstr "Контакт преко мејла"
+
+msgid "heading.prefs.user"
+msgstr "Кориснички подаци"
+
+msgid "menu.identity.newdomain"
+msgstr "Нов идентитет домена…"
+
+msgid "dlg.newident.scope.dir"
+msgstr "Текући директоријум"
+
+msgid "ident.unset"
+msgstr "Откачи"
