@@ -2362,7 +2362,6 @@ size_t windowIndex_App(const iMainWindow *win) {
     return indexOf_PtrArray(&app_.mainWindows, win); 
 }
 
-#if 0
 iMainWindow *newMainWindow_App(void) {
     iApp *d = &app_;
     iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
@@ -2377,7 +2376,6 @@ iMainWindow *newMainWindow_App(void) {
     }
     return newWin;
 }
-#endif
 
 const iPtrArray *mainWindows_App(void) {
     return &app_.mainWindows;
