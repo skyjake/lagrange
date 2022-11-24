@@ -388,7 +388,6 @@ static const char *dataDir_App_(void) {
 #endif
 #if defined (iPlatformMsys)
     /* Check for a portable userdata directory. */
-    iApp *d = &app_;
     const char *userDir = concatPath_CStr(cstr_String(d->execPath), "..\\userdata");
     if (fileExistsCStr_FileInfo(userDir)) {
         return userDir;
