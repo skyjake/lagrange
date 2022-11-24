@@ -85,8 +85,10 @@ cmake --install .
 
 cd ..
 export PKG_CONFIG_PATH="${BUILD_DIR}/lib/pkgconfig":${PKG_CONFIG_PATH}
+LDFLAGS="`pkg-config --static --libs the_Foundation`"
 cmake .. \
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+    -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}" \
     -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
     -DENABLE_TUI=YES \
     -DENABLE_MPG123=NO \

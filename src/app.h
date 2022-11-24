@@ -42,10 +42,14 @@ iDeclareType(Visited)
 iDeclareType(Window)
 
 /* Command line options strings. */
+#define dump_CommandLineOption              "dump;d"
+#define dumpIdentity_CommandLineOption      "dump-identity;I"
+#define userDataDir_CommandLineOption       "user;U"
 #define listTabUrls_CommandLineOption       "list-tab-urls;L"
 #define openUrlOrSearch_CommandLineOption   "url-or-search;u"
+#define replaceTab_CommandLineOption        "replace-tab"
 #define windowWidth_CommandLineOption       "width;w"
-#define windowHeight_CommandLineOption      "height;h"
+#define windowHeight_CommandLineOption      "height;h"   
 
 enum iAppDeviceType {
     desktop_AppDeviceType,
@@ -157,7 +161,7 @@ iLocalDef void postCommand_App(const char *command) {
 
 iDocumentWidget *   document_Command    (const char *cmd);
 
-void            openInDefaultBrowser_App(const iString *url);
+void            openInDefaultBrowser_App(const iString *url, const iString *mime);
 void            revealPath_App          (const iString *path);
 void            updateCACertificates_App(void);
 void            resetFonts_App          (void);

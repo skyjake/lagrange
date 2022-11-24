@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-06-10 14:51+0000\n"
+"PO-Revision-Date: 2022-11-21 06:14+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -888,7 +888,7 @@ msgid "dlg.bookmark.icon"
 msgstr "Simge:"
 
 msgid "heading.bookmark.tags"
-msgstr "Özel etiketler"
+msgstr "Davranış"
 
 msgid "heading.addfolder"
 msgstr "Klasör ekle"
@@ -961,7 +961,7 @@ msgid "prefs.centershort"
 msgstr "Dikey ortalama:"
 
 msgid "prefs.pinsplit"
-msgstr "Bölünmüş görünüm iğnelemesi:"
+msgstr "Bölünmüş görünüm sabitlemesi:"
 
 msgid "prefs.pinsplit.none"
 msgstr "Yok"
@@ -1172,7 +1172,7 @@ msgid "keys.zoom.reset"
 msgstr "Yakınlaştırmayı sıfırla"
 
 msgid "keys.fullscreen"
-msgstr "Tam ekran kipini aç/kapa"
+msgstr "Tam ekran kipini aç/kapat"
 
 msgid "keys.tab.new"
 msgstr "Yeni sekme"
@@ -1301,7 +1301,7 @@ msgid "error.badrequest"
 msgstr "Hatalı İstek"
 
 msgid "error.badrequest.msg"
-msgstr "Sunucu isteğinizi anlamadı."
+msgstr "Sunucu, isteğinizi anlamadı."
 
 msgid "error.cert.needed"
 msgstr "Sertifika Gerekiyor"
@@ -1985,7 +1985,7 @@ msgid "keys.split.item"
 msgstr "Bölünmüş görünüm menüsü:"
 
 msgid "keys.hoverurl"
-msgstr "Üzerine geldiğinde URL'yi göster aç/kapa"
+msgstr "Üzerine geldiğinde URL'yi göster aç/kapat"
 
 msgid "error.badstatus.msg"
 msgstr ""
@@ -2450,3 +2450,36 @@ msgstr ""
 "\n"
 "Vekil sunucunun sertifikası, \"Sayfa bilgisi\" bölümünde güvenilir olarak "
 "imlenebilir."
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "boşlukla ayrılmış terimler"
+
+msgid "menu.folder.opentab"
+msgstr "Yeni sekmelerde aç"
+
+msgid "bookmark.folder.delete"
+msgstr "Yer imleri klasörünü sil"
+
+msgid "dlg.bookmark.notes"
+msgstr "Notlar:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "serbest biçimli özel notlar"
+
+msgid "dlg.bookmark.identity"
+msgstr "Sabitlenmiş kimlik:"
+
+msgid "menu.identity.newdomain"
+msgstr "Alan adı için yeni kimlik…"
+
+msgid "dlg.newident.scope.dir"
+msgstr "Geçerli dizin"
+
+msgid "ident.unset"
+msgstr "Sabitlemeyi kaldır"
+
+msgid "heading.prefs.user"
+msgstr "Kullanıcı verisi"
+
+msgid "menu.email"
+msgstr "E-posta gönder"

@@ -126,16 +126,19 @@ static const char *label_ReloadInterval_(enum iReloadInterval d) {
 struct Impl_PersistentDocumentState {
     iHistory *history;
     iString * url;
+    iBlock *setIdentity; /* identity (fingerprint) to use for requests, overriding default one */
     enum iReloadInterval reloadInterval;
 };
 
 void init_PersistentDocumentState(iPersistentDocumentState *d) {
     d->history        = new_History();
     d->url            = new_String();
+    d->setIdentity    = NULL;
     d->reloadInterval = 0;
 }
 
 void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
+    delete_Block(d->setIdentity);
     delete_String(d->url);
     delete_History(d->history);
 }
@@ -144,6 +147,12 @@ void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStrea
     serialize_String(d->url, outs);
     uint16_t params = d->reloadInterval & 7;
     writeU16_Stream(outs, params);
+    /* Identity override. */ {
+        iBlock empty;
+        init_Block(&empty, 0);
+        serialize_Block(d->setIdentity ? d->setIdentity : &empty, outs);
+        deinit_Block(&empty);
+    }
     serialize_History(d->history, outs);
 }
 
@@ -155,6 +164,15 @@ void deserialize_PersistentDocumentState(iPersistentDocumentState *d, iStream *i
     }
     const uint16_t params = readU16_Stream(ins);
     d->reloadInterval = params & 7;
+    if (version_Stream(ins) >= documentSetIdentity_FileVersion) {
+        iBlock fp;
+        init_Block(&fp, 0);
+        deserialize_Block(&fp, ins);
+        if (!isEmpty_Block(&fp)) {
+            d->setIdentity = copy_Block(&fp);
+        }
+        deinit_Block(&fp);
+    }
     deserialize_History(d->history, ins);
 }
 
@@ -239,6 +257,10 @@ enum iDocumentWidgetFlag {
     viewSource_DocumentWidgetFlag            = iBit(20),
     preventInlining_DocumentWidgetFlag       = iBit(21),
     proxyRequest_DocumentWidgetFlag          = iBit(22),
+    waitForIdle_DocumentWidgetFlag           = iBit(23), /* sequential loading; wait for previous
+                                                            tabs to finished their requests */
+    pendingRedirect_DocumentWidgetFlag       = iBit(24), /* a redirect has been issued */
+    goBackOnStop_DocumentWidgetFlag          = iBit(25),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -259,6 +281,7 @@ struct Impl_DocumentView {
     iGmDocument *  doc;
     int            pageMargin;
     iSmoothScroll  scrollY;
+    iBool          userHasScrolled;
     iAnim          sideOpacity;
     iAnim          altTextOpacity;
     iGmRunRange    visibleRuns;
@@ -516,6 +539,7 @@ void init_DocumentView(iDocumentView *d) {
     init_PtrArray(&d->visibleWideRuns);
     init_Array(&d->wideRunOffsets, sizeof(int));
     init_PtrArray(&d->visibleMedia);
+    d->userHasScrolled = iFalse;
 }
 
 void deinit_DocumentView(iDocumentView *d) {
@@ -533,6 +557,7 @@ void deinit_DocumentView(iDocumentView *d) {
 
 static void setOwner_DocumentView_(iDocumentView *d, iDocumentWidget *doc) {
     d->owner = doc;
+    d->userHasScrolled = iFalse;
     init_SmoothScroll(&d->scrollY, as_Widget(doc), scrollBegan_DocumentWidget_);
     if (deviceType_App() != desktop_AppDeviceType) {
         d->scrollY.flags |= pullDownAction_SmoothScrollFlag; /* pull to refresh */
@@ -735,7 +760,7 @@ static void invalidateWideRunsWithNonzeroOffset_DocumentView_(iDocumentView *d) 
 
 static void updateHoverLinkInfo_DocumentView_(iDocumentView *d) {
     if (update_LinkInfo(d->owner->linkInfo,
-                        d->doc,
+                        d->owner,
                         d->hoverLink ? d->hoverLink->linkId : 0,
                         width_Widget(constAs_Widget(d->owner)))) {
         animate_DocumentWidget_(d->owner);
@@ -946,6 +971,7 @@ static void documentRunsInvalidated_DocumentView_(iDocumentView *d) {
 
 static void resetScroll_DocumentView_(iDocumentView *d) {
     reset_SmoothScroll(&d->scrollY);
+    d->userHasScrolled = iFalse;
     init_Anim(&d->sideOpacity, 0);
     init_Anim(&d->altTextOpacity, 0);
     resetWideRuns_DocumentView_(d);
@@ -965,10 +991,12 @@ static void clampScroll_DocumentView_(iDocumentView *d) {
 
 static void immediateScroll_DocumentView_(iDocumentView *d, int offset) {
     move_SmoothScroll(&d->scrollY, offset);
+    d->userHasScrolled = iTrue;
 }
 
 static void smoothScroll_DocumentView_(iDocumentView *d, int offset, int duration) {
     moveSpan_SmoothScroll(&d->scrollY, offset, duration);
+    d->userHasScrolled = iTrue;
 }
 
 static void scrollTo_DocumentView_(iDocumentView *d, int documentY, iBool centered) {
@@ -996,7 +1024,7 @@ static void scrollToHeading_DocumentView_(iDocumentView *d, const char *heading)
 
 static iBool scrollWideBlock_DocumentView_(iDocumentView *d, iInt2 mousePos, int delta,
                                            int duration) {
-    if (delta == 0 || d->owner->flags & eitherWheelSwipe_DocumentWidgetFlag) {
+    if (delta == 0 || d->owner->wheelSwipeState == direct_WheelSwipeState) { //} d->owner->flags & eitherWheelSwipe_DocumentWidgetFlag) {
         return iFalse;
     }
     const iInt2 docPos = documentPos_DocumentView_(d, mousePos);
@@ -1024,21 +1052,22 @@ static iBool scrollWideBlock_DocumentView_(iDocumentView *d, iInt2 mousePos, int
                 refresh_Widget(d->owner);
                 d->owner->selectMark = iNullRange;
                 d->owner->foundMark  = iNullRange;
-            }
-            if (duration) {
-                if (d->animWideRunId != preId_GmRun(run) || isFinished_Anim(&d->animWideRunOffset)) {
-                    d->animWideRunId = preId_GmRun(run);
-                    init_Anim(&d->animWideRunOffset, oldOffset);
+                if (duration) {
+                    if (d->animWideRunId != preId_GmRun(run) || isFinished_Anim(&d->animWideRunOffset)) {
+                        d->animWideRunId = preId_GmRun(run);
+                        init_Anim(&d->animWideRunOffset, oldOffset);
+                    }
+                    setValueEased_Anim(&d->animWideRunOffset, *offset, duration);
+                    d->animWideRunRange = range;
+                    addTicker_App(refreshWhileScrolling_DocumentWidget_, d->owner);
                 }
-                setValueEased_Anim(&d->animWideRunOffset, *offset, duration);
-                d->animWideRunRange = range;
-                addTicker_App(refreshWhileScrolling_DocumentWidget_, d->owner);
+                else {
+                    d->animWideRunId = 0;
+                    init_Anim(&d->animWideRunOffset, 0);
+                }
+                return iTrue;
             }
-            else {
-                d->animWideRunId = 0;
-                init_Anim(&d->animWideRunOffset, 0);
-            }
-            return iTrue;
+            return iFalse;
         }
     }
     return iFalse;
@@ -1682,6 +1711,9 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
     const iRangei full          = { 0, size_GmDocument(d->doc).y };
     const iRangei vis           = ctx->vis;
     iVisBuf      *visBuf        = d->visBuf; /* will be updated now */
+    if (isEmpty_Range(&full)) {
+        return didDraw;
+    }
     d->drawBufs->lastRenderTime = SDL_GetTicks();
     /* Swap buffers around to have room available both before and after the visible region. */
     allocVisBuffer_DocumentView_(d);
@@ -1870,12 +1902,11 @@ static void draw_DocumentView_(const iDocumentView *d) {
     }
     const iRect   docBounds = documentBounds_DocumentView_(d);
     const iRangei vis       = visibleRange_DocumentView_(d);
-    iDrawContext  ctx       = {
-                                .view            = d,
+    iDrawContext  ctx       = { .view            = d,
                                 .docBounds       = docBounds,
                                 .vis             = vis,
                                 .showLinkNumbers = (d->owner->flags & showLinkNumbers_DocumentWidgetFlag) != 0,
-                         };
+                              };
     init_Paint(&ctx.paint);
     render_DocumentView_(d, &ctx, iFalse /* just the mandatory parts */);
     iBanner    *banner           = d->owner->banner;
@@ -2128,6 +2159,10 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         /* Not part of the UI at the moment. */
         return;
     }
+    if (d->flags & waitForIdle_DocumentWidgetFlag) {
+        updateTextCStr_LabelWidget(tabButton, midEllipsis_Icon);
+        return;
+    }
     iStringArray *title = iClob(new_StringArray());
     if (!isEmpty_String(title_GmDocument(d->view.doc))) {
         pushBack_StringArray(title, title_GmDocument(d->view.doc));
@@ -2257,6 +2292,13 @@ static iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
            (prefs->pinSplit == 2 && w->root == win->roots[1]);
 }
 
+static uint32_t findBookmarkId_DocumentWidget_(const iDocumentWidget *d) {
+    return findUrlIdent_Bookmarks(
+        bookmarks_App(),
+        d->mod.url,
+        d->mod.setIdentity ? collect_String(hexEncode_Block(d->mod.setIdentity)) : NULL);
+}
+
 static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     if (d != document_Root(w->root)) {
@@ -2265,7 +2307,7 @@ static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     iWidget *navBar = findChild_Widget(root_Widget(w), "navbar");
     showCollapsed_Widget(findChild_Widget(navBar, "document.pinned"),
                          isPinned_DocumentWidget_(d));
-    const iBool isBookmarked = findUrl_Bookmarks(bookmarks_App(), d->mod.url) != 0;
+    const iBool isBookmarked = findBookmarkId_DocumentWidget_(d) != 0;
     iLabelWidget *bmPin = findChild_Widget(navBar, "document.bookmarked");
     setOutline_LabelWidget(bmPin, !isBookmarked);
     setTextColor_LabelWidget(bmPin, isBookmarked ? uiTextAction_ColorId : uiText_ColorId);
@@ -2289,7 +2331,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     refresh_Widget(as_Widget(d));
     /* Check for special bookmark tags. */
     d->flags &= ~otherRootByDefault_DocumentWidgetFlag;
-    const uint16_t bmid = findUrl_Bookmarks(bookmarks_App(), d->mod.url);
+    const uint16_t bmid = findBookmarkId_DocumentWidget_(d);
     if (bmid) {
         const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
         if (bm->flags & linkSplit_BookmarkFlag) {
@@ -2428,13 +2470,14 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
         makeFooterButtons_DocumentWidget_(
             d,
             (iMenuItem[]){
+                { person_Icon " ${menu.identity.newdomain}", SDLK_n, 0, "ident.new scope:1" },
+                { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
                 { leftHalf_Icon " ${menu.show.identities}",
                   '4',
                   KMOD_PRIMARY,
                   deviceType_App() == desktop_AppDeviceType ? "sidebar.mode arg:3 show:1"
-                                                            : "preferences idents:1" },
-                { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" } },
-            2);
+                                                            : "preferences idents:1" } },
+            3);
     }
     /* Make a new document for the error page.*/
     iGmDocument *errorDoc = new_GmDocument();
@@ -2960,8 +3003,16 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
     }
 }
 
-static void fetch_DocumentWidget_(iDocumentWidget *d) {
+static iBool fetch_DocumentWidget_(iDocumentWidget *d) {
     iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
+    /* We may be instructed to wait before fetching to avoid congestion. */
+    if (d->flags & waitForIdle_DocumentWidgetFlag) {
+        /* Check all documents in the window. */
+        if (isAnyDocumentRequestOngoing_MainWindow(get_MainWindow())) {
+            return iFalse; /* have to try again later */
+        }
+        d->flags &= ~waitForIdle_DocumentWidgetFlag;
+    }
     /* Forget the previous request. */
     if (d->request) {
         iRelease(d->request);
@@ -2973,13 +3024,22 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
                       cstr_String(d->mod.url));
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
+    d->flags &= ~pendingRedirect_DocumentWidgetFlag;
     d->state = fetching_RequestState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, d->mod.url);
+    /* Overriding identity. */
+    if (isIdentityPinned_DocumentWidget(d)) {
+        const iGmIdentity *ident = identity_DocumentWidget(d);
+        if (ident) {
+            setIdentity_GmRequest(d->request, ident);
+        }        
+    }
     iConnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
     iConnect(GmRequest, d->request, finished, d, requestFinished_DocumentWidget_);
     submit_GmRequest(d->request);
+    return iTrue;
 }
 
 static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
@@ -3123,10 +3183,11 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     iRelease(d->view.doc);
     d->view.doc = new_GmDocument();
     d->state = fetching_RequestState;
+    d->flags &= ~pendingRedirect_DocumentWidgetFlag;
     d->flags |= fromCache_DocumentWidgetFlag;
     /* Do the fetch. */ {
         d->initNormScrollY = normScrollY;
-        /* Use the cached response data. */
+        /* Use the cached response data. */        
         updateTrust_DocumentWidget_(d, resp);
         d->sourceTime   = resp->when;
         d->sourceStatus = success_GmStatusCode;
@@ -3156,6 +3217,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
+    setIdentity_DocumentWidget(d, recent ? &recent->setIdentity : NULL);
     if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url)) {
         updateFromCachedResponse_DocumentWidget_(
             d, recent->normScrollY, recent->cachedResponse, recent->cachedDoc);
@@ -3283,6 +3345,11 @@ static const char *humanReadableStatusCode_(enum iGmStatusCode code) {
         return "";
     }
     return format_CStr("%d ", code);
+}
+
+iBool isSetIdentityRetained_DocumentWidget(const iDocumentWidget *d, const iString *dstUrl) {
+    /* The overriding tab identity is implicitly affecting the entire URL root. */
+    return equalRangeCase_Rangecc(urlRoot_String(d->mod.url), urlRoot_String(dstUrl));
 }
 
 static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
@@ -3480,7 +3547,11 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                               equalCase_Rangecc(dstScheme, "titan"))) {
                         visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
                         postCommandf_Root(as_Widget(d)->root,
-                            "open doc:%p redirect:%d url:%s", d, d->redirectCount + 1, cstr_String(dstUrl));
+                                          "open doc:%p redirect:%d url:%s",
+                                          d,
+                                          d->redirectCount + 1,
+                                          cstr_String(dstUrl));
+                        d->flags |= pendingRedirect_DocumentWidgetFlag;
                     }
                     else {
                         /* Scheme changes must be manually approved. */
@@ -3634,19 +3705,25 @@ static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
     return iFalse;
 }
 
-static iBool saveToFile_(const iString *savePath, const iBlock *content, iBool showDialog) {
+static iBool saveToFile_(const iString *savePath, const iBlock *content, const iString *mime,
+                         iBool showDialog) {
     iBool ok = iFalse;
     /* Write the file. */ {
         iFile *f = new_File(savePath);
+        postCommandf_App("debug show:%d msg:%s", showDialog, cstr_String(savePath));
         if (open_File(f, writeOnly_FileMode)) {
             write_File(f, content);
             close_File(f);
             const size_t size   = size_Block(content);
             const iBool  isMega = size >= 1000000;
 #if defined (iPlatformAppleMobile)
-            exportDownloadedFile_iOS(savePath);
+            if (showDialog) {
+                exportDownloadedFile_iOS(savePath);
+            }
 #elif defined (iPlatformAndroidMobile)
-            exportDownloadedFile_Android(savePath);
+            if (showDialog) {
+                exportDownloadedFile_Android(savePath, mime);
+            }
 #else
             if (showDialog) {
                 const iMenuItem items[2] = {
@@ -3677,7 +3754,7 @@ static iBool saveToFile_(const iString *savePath, const iBlock *content, iBool s
 static const iString *saveToDownloads_(const iString *url, const iString *mime, const iBlock *content,
                                        iBool showDialog) {
     const iString *savePath = downloadPathForUrl_App(url, mime);
-    if (!saveToFile_(savePath, content, showDialog)) {
+    if (!saveToFile_(savePath, content, mime, showDialog)) {
         return collectNew_String();
     }
     return savePath;
@@ -3782,6 +3859,19 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
        swipe direction, the DocumentWidget `d` may wait until the finger is released to actually
        perform the navigation action. */
     if (equal_Command(cmd, "edgeswipe.moved")) {
+        if ((deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App()) &&
+            argLabel_Command(cmd, "edge")) {
+            /* This is an actual swipe from the edge of the device, we should let the sidebars
+               handle it. */
+            if (argLabel_Command(cmd, "edge") == 1) {
+                transferAffinity_Touch(NULL, findWidget_App("sidebar"));
+                return iTrue;
+            }
+            else if (argLabel_Command(cmd, "edge") == 2 && deviceType_App() == tablet_AppDeviceType) {
+                transferAffinity_Touch(w, findWidget_App("sidebar2"));
+                return iTrue;
+            }
+        }
         //printf("[%p] responds to edgeswipe.moved\n", d);
         as_Widget(d)->offsetRef = NULL;
         const int side = argLabel_Command(cmd, "side");
@@ -3946,6 +4036,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
 }
 
 static iBool cancelRequest_DocumentWidget_(iDocumentWidget *d, iBool postBack) {
+    d->flags &= ~pendingRedirect_DocumentWidgetFlag;
     if (d->request) {
         iWidget *w = as_Widget(d);
         postCommandf_Root(w->root,
@@ -3965,6 +4056,25 @@ static iBool cancelRequest_DocumentWidget_(iDocumentWidget *d, iBool postBack) {
 
 static const int smoothDuration_DocumentWidget_(enum iScrollType type) {
     return 600 /* milliseconds */ * scrollSpeedFactor_Prefs(prefs_App(), type);
+}
+
+static iBool tryWaitingFetch_DocumentWidget_(iDocumentWidget *d) {
+    if (d->flags & waitForIdle_DocumentWidgetFlag) {
+        if (fetch_DocumentWidget_(d)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+static const char *setIdentArg_DocumentWidget_(const iDocumentWidget *d, const iString *dstUrl) {
+    if (isIdentityPinned_DocumentWidget(d) &&
+        isSetIdentityRetained_DocumentWidget(d, dstUrl)) {
+        return format_CStr(
+            " setident:%s",
+            cstrCollect_String(hexEncode_Block(d->mod.setIdentity)));
+    }
+    return "";
 }
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -4322,9 +4432,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);
-        if (category_GmStatusCode(status_GmRequest(d->request)) == categorySuccess_GmStatusCode) {
+        if (category_GmStatusCode(status_GmRequest(d->request)) == categorySuccess_GmStatusCode &&
+            !d->view.userHasScrolled) {
             init_Anim(&d->view.scrollY.pos, d->initNormScrollY * pageHeight_DocumentView_(&d->view));
-            /* TODO: unless user already scrolled! */
         }
         addBannerWarnings_DocumentWidget_(d);
         iChangeFlags(d->flags,
@@ -4357,6 +4467,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             clear_String(&d->pendingGotoHeading);
         }
         cacheDocumentGlyphs_DocumentWidget_(d);
+        /* A redirect response will be considered an ongoing request. */
+        if (~d->flags & pendingRedirect_DocumentWidgetFlag) {
+            /* Maybe there are other documents waiting to start their requests. */
+            if (!isAnyDocumentRequestOngoing_MainWindow(as_MainWindow(window_Widget(w)))) {
+                iForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
+                    if (tryWaitingFetch_DocumentWidget_(i.object)) {
+                        break;
+                    }
+                }
+            }            
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "document.translate") && d == document_App()) {
@@ -4428,7 +4549,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
-        if (cancelRequest_DocumentWidget_(d, iTrue /* navigate back */)) {
+        if (cancelRequest_DocumentWidget_(d, (d->flags & goBackOnStop_DocumentWidgetFlag) != 0)) {
             return iTrue;
         }
     }
@@ -4454,8 +4575,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 }
                 else {
                     const iString *tmpPath = temporaryPathForUrl_App(d->mod.url, &d->sourceMime);
-                    if (saveToFile_(tmpPath, &d->sourceContent, iFalse)) {
-                        postCommandf_Root(w->root, "!open default:1 url:%s",
+                    if (saveToFile_(tmpPath, &d->sourceContent, &d->sourceMime, iFalse)) {
+                        postCommandf_Root(w->root, "!open default:1 mime:%s url:%s",
+                                          cstr_String(&d->sourceMime),
                                           cstrCollect_String(makeFileUrl_String(tmpPath)));
                     }
                 }
@@ -4479,6 +4601,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             postCommandf_App("open url:%s", cstr_String(d->mod.url));
             return iTrue;
         }
+        d->flags &= ~goBackOnStop_DocumentWidgetFlag;
         fetch_DocumentWidget_(d);
         return iTrue;
     }
@@ -4521,6 +4644,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
+        iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
         if (d->request) {
             postCommandf_Root(w->root,
                 "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
@@ -4570,7 +4694,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             if (!cmpCase_String(parentUrl, "about:")) {
                 setCStr_String(parentUrl, "about:about");
             }
-            postCommandf_Root(w->root, "open url:%s", cstr_String(parentUrl));
+            postCommandf_Root(w->root,
+                              "open%s url:%s",
+                              setIdentArg_DocumentWidget_(d, parentUrl),
+                              cstr_String(parentUrl));
         }
         return iTrue;
     }
@@ -4591,7 +4718,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         else {
             appendCStr_String(rootUrl, "/");
         }
-        postCommandf_Root(w->root, "open url:%s", cstr_String(rootUrl));
+        postCommandf_Root(w->root, "open%s url:%s",
+                          setIdentArg_DocumentWidget_(d, rootUrl),
+                          cstr_String(rootUrl));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
@@ -4825,6 +4954,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "document.unsetident") && document_App() == d) {
+        setIdentity_DocumentWidget(d, NULL);
+        postCommand_Widget(w, "document.reload");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "fontpack.install") && document_App() == d) {
         if (argLabel_Command(cmd, "ttf")) {
             iAssert(!cmp_String(&d->sourceMime, "font/ttf"));
@@ -5018,24 +5152,26 @@ iLocalDef int wheelSwipeSide_DocumentWidget_(const iDocumentWidget *d) {
                                                            : 0);
 }
 
-static void finishWheelSwipe_DocumentWidget_(iDocumentWidget *d) {
-    if (d->flags & eitherWheelSwipe_DocumentWidgetFlag &&
+static void finishWheelSwipe_DocumentWidget_(iDocumentWidget *d, iBool aborted) {
+    if (//d->flags & eitherWheelSwipe_DocumentWidgetFlag &&
         d->wheelSwipeState == direct_WheelSwipeState) {
         const int side = wheelSwipeSide_DocumentWidget_(d);
-        int abort = ((side == 1 && d->swipeSpeed < 0) || (side == 2 && d->swipeSpeed > 0));
-        if (iAbs(d->wheelSwipeDistance) < width_Widget(d) / 4 && iAbs(d->swipeSpeed) < 4 * gap_UI) {
+        int abort = aborted || ((side == 1 && d->swipeSpeed < 0) || (side == 2 && d->swipeSpeed > 0));
+        if (iAbs(d->wheelSwipeDistance) < 4 * gap_UI) {
+            //printf("ABORTING: dist:%d speed:%f\n", d->wheelSwipeDistance, d->swipeSpeed);
             abort = 1;
         }
         postCommand_Widget(d, "edgeswipe.ended side:%d abort:%d", side, abort);
         d->flags &= ~eitherWheelSwipe_DocumentWidgetFlag;
+        d->wheelSwipeState = none_WheelSwipeState;
     }
 }
 
 static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_MouseWheelEvent *ev) {
     iWidget *w = as_Widget(d);
-    if (deviceType_App() != desktop_AppDeviceType) {
+    /*if (deviceType_App() != desktop_AppDeviceType) {
         return iFalse;
-    }
+    }*/
     if (~flags_Widget(w) & horizontalOffset_WidgetFlag) {
         return iFalse;
     }
@@ -5062,11 +5198,10 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
             break;
         case direct_WheelSwipeState:
             if (isInertia_MouseWheelEvent(ev) || isScrollFinished_MouseWheelEvent(ev)) {
-                finishWheelSwipe_DocumentWidget_(d);
-                d->wheelSwipeState = none_WheelSwipeState;
+                finishWheelSwipe_DocumentWidget_(d, iFalse);
             }
             else {
-                int step = ev->x * 2;
+                int step = ev->x * (isMobile_Platform() ? 1 : 2);
                 d->wheelSwipeDistance += step;
                 /* Remember the maximum speed. */
                 if (d->swipeSpeed < 0 && step < 0) {
@@ -5079,6 +5214,10 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
                     d->swipeSpeed = step;
                 }
                 switch (wheelSwipeSide_DocumentWidget_(d)) {
+                    case 0:
+                        d->wheelSwipeDistance = iClamp(d->wheelSwipeDistance,
+                                                       -width_Widget(d), width_Widget(d));
+                        break;
                     case 1:
                         d->wheelSwipeDistance = iMax(0, d->wheelSwipeDistance);
                         d->wheelSwipeDistance = iMin(width_Widget(d), d->wheelSwipeDistance);
@@ -5088,7 +5227,7 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
                         d->wheelSwipeDistance = iMax(-width_Widget(d), d->wheelSwipeDistance);
                         break;
                 }
-                /* TODO: calculate speed, rememeber direction */
+                /* TODO: calculate speed, remember direction */
                 //printf("swipe moved to %d, side %d\n", d->wheelSwipeDistance, side);
                 postCommand_Widget(d, "edgeswipe.moved arg:%d side:%d", d->wheelSwipeDistance,
                                    wheelSwipeSide_DocumentWidget_(d));
@@ -5098,9 +5237,25 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
     return iFalse;
 }
 
+static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, int tabMode) {
+    const iString *linkUrl = absoluteUrl_String(d->mod.url,
+                                                linkUrl_GmDocument(d->view.doc, linkId));
+    postCommandf_Root(d->widget.root, "open query:%d newtab:%d%s url:%s",
+                      isSpartanQueryLink_DocumentWidget_(d, linkId),
+                      tabMode,
+                      setIdentArg_DocumentWidget_(d, linkUrl),
+                      cstr_String(linkUrl));
+    interactingWithLink_DocumentWidget_(d, linkId);
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = &d->view;
+    /* Check if a swipe interaction has ended without inertia. */
+    if (isMobile_Platform() && d->wheelSwipeState == direct_WheelSwipeState &&
+        ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+        finishWheelSwipe_DocumentWidget_(d, iFalse);
+    }
     if (isMetricsChange_UserEvent(ev)) {
         updateSize_DocumentWidget(d);
     }
@@ -5133,17 +5288,27 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         updateHoverLinkInfo_DocumentView_(view);
                     }
                     else {
+                        /*const iString *linkUrl = linkUrl_GmDocument(view->doc, run->linkId);*/
+                        postOpenLinkCommand_DocumentWidget_(
+                            d,
+                            run->linkId,
+                            (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) ^
+                                (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode
+                                     ? openTabMode_Sym(modState_Keys())
+                                     : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0)));
+                        /*
                         postCommandf_Root(
                             w->root,
-                            "open query:%d newtab:%d url:%s",
+                            "open query:%d newtab:%d%s url:%s",
                             isSpartanQueryLink_DocumentWidget_(d, run->linkId),
                             (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) ^
                                 (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode
                                      ? openTabMode_Sym(modState_Keys())
                                      : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0)),
-                            cstr_String(absoluteUrl_String(
-                                d->mod.url, linkUrl_GmDocument(view->doc, run->linkId))));
+                            setIdentArg_DocumentWidget_(d, linkUrl),
+                            cstr_String(absoluteUrl_String(d->mod.url, linkUrl)));
                         interactingWithLink_DocumentWidget_(d, run->linkId);
+                        */
                     }
                     setLinkNumberMode_DocumentWidget_(d, iFalse);
                     invalidateVisibleLinks_DocumentView_(view);
@@ -5198,17 +5363,19 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 #endif
         }
     }
-#if defined (iPlatformAppleDesktop)
-    else if (ev->type == SDL_MOUSEWHEEL &&
+    else if ((isAppleDesktop_Platform() || isMobile_Platform()) &&
+             ev->type == SDL_MOUSEWHEEL &&
              ev->wheel.y == 0 &&
              d->wheelSwipeState == direct_WheelSwipeState &&
              handleWheelSwipe_DocumentWidget_(d, &ev->wheel)) {
         return iTrue;
     }
-#endif
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
         const iInt2 mouseCoord = coord_MouseWheelEvent(&ev->wheel);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
+            /*if (d->wheelSwipeState != none_WheelSwipeState) {
+                finishWheelSwipe_DocumentWidget_(d, iTrue);
+            }*/
             const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
             stop_Anim(&d->view.scrollY.pos);
             immediateScroll_DocumentView_(view, -wheel.y);
@@ -5270,12 +5437,19 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && view->hoverLink) {
-            interactingWithLink_DocumentWidget_(d, view->hoverLink->linkId);
-            postCommandf_Root(w->root, "open query:%d newtab:%d url:%s",
+            //interactingWithLink_DocumentWidget_(d, view->hoverLink->linkId);
+            //const iString *linkUrl = linkUrl_GmDocument(view->doc, view->hoverLink->linkId);
+            postOpenLinkCommand_DocumentWidget_(
+                d,
+                view->hoverLink->linkId,
+                (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
+                    (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag));
+            /*postCommandf_Root(w->root, "open query:%d newtab:%d%s url:%s",
                               isSpartanQueryLink_DocumentWidget_(d, view->hoverLink->linkId),
                               (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
-                              (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag),
-                              cstr_String(linkUrl_GmDocument(view->doc, view->hoverLink->linkId)));
+                              (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag :
+               newBackground_OpenTabFlag), setIdentArg_DocumentWidget_(d, linkUrl),
+                              cstr_String(linkUrl));*/
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_RIGHT &&
@@ -5301,7 +5475,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     if (deviceType_App() != desktop_AppDeviceType) {
                         /* Show the link as the first, non-interactive item. */
                         iString *infoText = collectNew_String();
-                        infoText_LinkInfo(d->view.doc, d->contextLink->linkId, infoText);
+                        infoText_LinkInfo(d, d->contextLink->linkId, infoText);
                         pushBack_Array(&items, &(iMenuItem){
                             format_CStr("```%s", cstr_String(infoText)),
                             0, 0, NULL });
@@ -5320,37 +5494,42 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                             { openTab_Icon " ${link.newtab}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newtab:1 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:1 origin:%s%s url:%s",
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
+                                                          setIdentArg_DocumentWidget_(d, linkUrl),
                                                           cstr_String(linkUrl)) },
                                             { openTabBg_Icon " ${link.newtab.background}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newtab:2 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:2 origin:%s%s url:%s",
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
+                                                          setIdentArg_DocumentWidget_(d, linkUrl),
                                                           cstr_String(linkUrl)) },
                                             { openWindow_Icon " ${link.newwindow}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newwindow:1 origin:%s url:%s",
+                                              format_CStr("!open query:%d newwindow:1 origin:%s%s url:%s",
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
+                                                          setIdentArg_DocumentWidget_(d, linkUrl),
                                                           cstr_String(linkUrl)) },
                                             { "${link.side}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newtab:4 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:4 origin:%s%s url:%s",
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
+                                                          setIdentArg_DocumentWidget_(d, linkUrl),
                                                           cstr_String(linkUrl)) },
                                             { "${link.side.newtab}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newtab:5 origin:%s url:%s",
+                                              format_CStr("!open query:%d newtab:5 origin:%s%s url:%s",                                                          
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
+                                                          setIdentArg_DocumentWidget_(d, linkUrl),
                                                           cstr_String(linkUrl)) },
                                         },
                                         5);
@@ -5763,13 +5942,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         if (isPinned_DocumentWidget_(d)) {
                             tabMode ^= otherRoot_OpenTabFlag;
                         }
-                        interactingWithLink_DocumentWidget_(d, linkId);
+                        //interactingWithLink_DocumentWidget_(d, linkId);
+                        /*
                         postCommandf_Root(w->root,
                                           "open query:%d newtab:%d url:%s",
                                           isSpartanQueryLink_DocumentWidget_(d, linkId),
                                           tabMode,
                                           cstr_String(absoluteUrl_String(
-                                              d->mod.url, linkUrl_GmDocument(view->doc, linkId))));
+                                              d->mod.url, linkUrl_GmDocument(view->doc, linkId))));*/
+                        postOpenLinkCommand_DocumentWidget_(d, linkId, tabMode);
                     }
                     else {
                         const iString *url = absoluteUrl_String(
@@ -5896,7 +6077,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (deviceType_App() == desktop_AppDeviceType && prefs_App()->hoverLink && d->linkInfo) {
         const int pad = 0; /*gap_UI;*/
         update_LinkInfo(d->linkInfo,
-                        d->view.doc,
+                        d,
                         d->view.hoverLink ? d->view.hoverLink->linkId : 0,
                         width_Rect(bounds) - 2 * pad);
         const iInt2 infoSize = size_LinkInfo(d->linkInfo);
@@ -6105,6 +6286,19 @@ iBool isSourceTextView_DocumentWidget(const iDocumentWidget *d) {
     return (d->flags & viewSource_DocumentWidgetFlag) != 0;
 }
 
+const iGmIdentity *identity_DocumentWidget(const iDocumentWidget *d) {
+    /* The document may override the default identity. */
+    const iGmIdentity *ident = findIdentity_GmCerts(certs_App(), d->mod.setIdentity);
+    if (ident) {
+        return ident;
+    }
+    return identityForUrl_GmCerts(certs_App(), url_DocumentWidget(d));
+}
+
+iBool isIdentityPinned_DocumentWidget(const iDocumentWidget *d) {
+    return !isEmpty_Block(d->mod.setIdentity);
+}
+
 const iString *feedTitle_DocumentWidget(const iDocumentWidget *d) {
     if (!isEmpty_String(title_GmDocument(d->view.doc))) {
         return title_GmDocument(d->view.doc);
@@ -6151,17 +6345,28 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
     }
 }
 
-void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags) {
+void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags,
+                                const iBlock *setIdent) {
+    iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
     const iBool allowCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
                  setUrlFlags & preventInlining_DocumentWidgetSetUrlFlag);
+    iChangeFlags(d->flags, waitForIdle_DocumentWidgetFlag,
+                 setUrlFlags & waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag);
+    d->flags |= goBackOnStop_DocumentWidgetFlag;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
+    if (setIdent) {
+        setIdentity_DocumentWidget(d, setIdent);
+    }
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
     if (!allowCache || !updateFromHistory_DocumentWidget_(d)) {
         fetch_DocumentWidget_(d);
-    }
+        if (setIdent) {
+            setIdentity_History(d->mod.history, setIdent);
+        }
+    }    
 }
 
 void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, const iString *mime,
@@ -6185,7 +6390,9 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     delete_History(d->mod.history);
     d->initNormScrollY = normScrollPos_DocumentView_(&d->view);
     d->mod.history = copy_History(orig->mod.history);
-    setUrlFlags_DocumentWidget(d, orig->mod.url, useCachedContentIfAvailable_DocumentWidgetSetUrlFlag);
+    setUrlFlags_DocumentWidget(
+        d, orig->mod.url, useCachedContentIfAvailable_DocumentWidgetSetUrlFlag,
+        d->mod.setIdentity);
     return d;
 }
 
@@ -6196,8 +6403,22 @@ void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other) 
     }
 }
 
+void setIdentity_DocumentWidget(iDocumentWidget *d, const iBlock *setIdent) {
+    if (!setIdent || isEmpty_Block(setIdent)) {
+        delete_Block(d->mod.setIdentity);
+        d->mod.setIdentity = NULL;
+        return;
+    }
+    if (!d->mod.setIdentity) {
+        d->mod.setIdentity = copy_Block(setIdent);
+    }
+    else {
+        set_Block(d->mod.setIdentity, setIdent);
+    }
+}
+
 void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
-    setUrlFlags_DocumentWidget(d, url, 0);
+    setUrlFlags_DocumentWidget(d, url, 0, NULL);
 }
 
 void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
@@ -6209,7 +6430,7 @@ void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
-    return d->request != NULL;
+    return d->request != NULL || d->flags & pendingRedirect_DocumentWidgetFlag;
 }
 
 void takeRequest_DocumentWidget(iDocumentWidget *d, iGmRequest *finishedRequest) {

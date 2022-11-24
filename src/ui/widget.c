@@ -138,6 +138,8 @@ void init_Widget(iWidget *d) {
     d->parent         = NULL;
     d->commandHandler = NULL;
     d->drawBuf        = NULL;
+    init_Anim(&d->overflowScrollOpacity, 0.0f);
+    init_String(&d->data);
     iZap(d->padding);
 }
 
@@ -152,6 +154,14 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
     }
     else {
         d->flags &= ~visualOffset_WidgetFlag;
+    }
+}
+
+static void animateOverflowScrollOpacity_Widget_(void *ptr) {
+    iWidget *d = ptr;
+    postRefresh_App();
+    if (!isFinished_Anim(&d->overflowScrollOpacity)) {
+        addTickerRoot_App(animateOverflowScrollOpacity_Widget_, d->root, ptr);
     }
 }
 
@@ -174,12 +184,17 @@ void deinit_Widget(iWidget *d) {
                d->flags & keepOnTop_WidgetFlag ? 1 : 0);
     }
 #endif
+    deinit_String(&d->data);
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_Root(d->root), d);
     }
     if (d->flags & visualOffset_WidgetFlag) {
         removeTicker_App(visualOffsetAnimation_Widget_, d);
+    }
+    if (d->flags & overflowScrollable_WidgetFlag) {
+        removeTicker_App(animateOverflowScrollOpacity_Widget_, d);
+        remove_Periodic(periodic_App(), d);
     }
     iWindow *win = d->root->window;
     iAssert(win);
@@ -1350,6 +1365,13 @@ static void overflowHoverAnimation_(iAny *widget) {
     SDL_PushEvent((SDL_Event *) &ev);
 }
 
+static void unfadeOverflowScrollIndicator_Widget_(iWidget *d) {
+    remove_Periodic(periodic_App(), d);
+    add_Periodic(periodic_App(), d, format_CStr("overflow.fade time:%u ptr:%p", SDL_GetTicks(), d));
+    setValue_Anim(&d->overflowScrollOpacity, 1.0f, 70);
+    animateOverflowScrollOpacity_Widget_(d);    
+}
+
 iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (d->flags & commandOnClick_WidgetFlag &&
              (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
@@ -1368,12 +1390,13 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     else if (d->flags & overflowScrollable_WidgetFlag && ~d->flags & visualOffset_WidgetFlag) {
-        if (ev->type == SDL_MOUSEWHEEL) {
+        if (ev->type == SDL_MOUSEWHEEL && !ev->wheel.x) {
             int step = ev->wheel.y;
             if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
                 step *= lineHeight_Text(uiLabel_FontId);
             }
             if (scrollOverflow_Widget(d, step)) {
+                unfadeOverflowScrollIndicator_Widget_(d);
                 return iTrue;
             }
         }
@@ -1411,6 +1434,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 if (step != 0) { 
                     lastHoverOverflowMotionTime_ = nowTime;
                     scrollOverflow_Widget(d, step);
+                    unfadeOverflowScrollIndicator_Widget_(d);
                 }
                 addTicker_App(overflowHoverAnimation_, d);
             }
@@ -1427,6 +1451,14 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 const char *cmd = command_UserEvent(ev);
                 if (d->drawBuf && equal_Command(cmd, "theme.changed")) {
                     d->drawBuf->isValid = iFalse;
+                }
+                else if (equalWidget_Command(cmd, d, "overflow.fade")) {
+                    if (SDL_GetTicks() - argLabel_Command(cmd, "time") > 750) {
+                        remove_Periodic(periodic_App(), d);
+                        setValue_Anim(&d->overflowScrollOpacity, 0, 200);
+                        animateOverflowScrollOpacity_Widget_(d);
+                    }
+                    return iTrue;
                 }
                 if (d->flags & (leftEdgeDraggable_WidgetFlag | rightEdgeDraggable_WidgetFlag) &&
                     isVisible_Widget(d) && ~d->flags & disabled_WidgetFlag &&
@@ -1794,7 +1826,8 @@ void draw_Widget(const iWidget *d) {
     if (d->flags & overflowScrollable_WidgetFlag) {
         iWidgetScrollInfo info;
         scrollInfo_Widget(d, &info);
-        if (info.thumbHeight > 0) {
+        const float opacity = value_Anim(&d->overflowScrollOpacity);
+        if (info.thumbHeight > 0 && opacity > 0) {
             iPaint p;
             init_Paint(&p);
             const int scrollWidth = gap_UI / 2;
@@ -1803,7 +1836,12 @@ void draw_Widget(const iWidget *d) {
             bounds.size.x         = scrollWidth;
             bounds.pos.y          = info.thumbY;
             bounds.size.y         = info.thumbHeight;
+            /* Draw the scroll bar with some transparency. */
+            SDL_Renderer *rend = renderer_Window(get_Window());
+            SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
+            p.alpha = (int) (0.5f * opacity * 255 + 0.5f);
             fillRect_Paint(&p, bounds, tmQuote_ColorId);
+            SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_NONE);
         }
     }   
 }

@@ -232,6 +232,18 @@ iRangecc urlHost_String(const iString *d) {
     return url.host;
 }
 
+iRangecc urlDirectory_String(const iString *d) {
+    iUrl parts;
+    init_Url(&parts, d);
+    if (size_Range(&parts.path) > 0 && !endsWith_Rangecc(parts.path, "/")) {
+        /* Remove the last path segment. */
+        while (parts.path.end > parts.path.start && parts.path.end[-1] != '/') {
+            parts.path.end--;
+        }
+    }
+    return parts.path;    
+}
+
 uint16_t urlPort_String(const iString *d) {
     iUrl url;
     init_Url(&url, d);
@@ -415,7 +427,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         return urlMaybeRelative;
     }
     const iBool isRelative = !isDef_(rel.host);
-    iRangecc scheme = range_CStr("gemini");
+    iRangecc scheme = isDef_(orig.scheme) ? orig.scheme : range_CStr("gemini");
     if (isDef_(rel.scheme)) {
         scheme = rel.scheme;
     }
@@ -593,68 +605,27 @@ const iString *findContainerArchive_Path(const iString *path) {
     return NULL;
 }
 
+const char *mimetypes[] = {
+    ".gmi", "text/gemini",
+    ".gemini", "text/gemini",
+    ".pem", "application/x-pem-file",
+    ".gpub", "application/gpub+zip",
+    ".wav", "audio/wave", /* overrides mimetypes.i entry */
+    ".fontpack", mimeType_FontPack,
+    ".md", "text/markdown",
+    ".mdown", "text/markdown",
+    ".markdn", "text/markdown",
+    ".markdown", "text/markdown",
+#include "mimetypes.i"
+#include "plaintext.i"
+    NULL, NULL
+};
+
 const char *mediaTypeFromFileExtension_String(const iString *d) {
-    if (endsWithCase_String(d, ".gmi") || endsWithCase_String(d, ".gemini")) {
-        return "text/gemini; charset=utf-8";
-    }
-    else if (endsWithCase_String(d, ".pem")) {
-        return "application/x-pem-file";
-    }
-    else if (endsWithCase_String(d, ".zip")) {
-        return "application/zip";
-    }
-    else if (endsWithCase_String(d, ".gpub")) {
-        return "application/gpub+zip";
-    }
-    else if (endsWithCase_String(d, ".fontpack")) {
-        return mimeType_FontPack;
-    }
-    else if (endsWithCase_String(d, ".ttf")) {
-        return "font/ttf";
-    }
-    else if (endsWithCase_String(d, ".xml")) {
-        return "text/xml";
-    }
-    else if (endsWithCase_String(d, ".png")) {
-        return "image/png";
-    }
-    else if (endsWithCase_String(d, ".webp")) {
-        return "image/webp";
-    }
-    else if (endsWithCase_String(d, ".jpg") || endsWithCase_String(d, ".jpeg")) {
-        return "image/jpeg";
-    }
-    else if (endsWithCase_String(d, ".gif")) {
-        return "image/gif";
-    }
-    else if (endsWithCase_String(d, ".wav")) {
-        return "audio/wave";
-    }
-    else if (endsWithCase_String(d, ".ogg")) {
-        return "audio/ogg";
-    }
-    else if (endsWithCase_String(d, ".mp3")) {
-        return "audio/mpeg";
-    }
-    else if (endsWithCase_String(d, ".mid")) {
-        return "audio/midi";
-    }
-    else if (endsWithCase_String(d, ".md") ||
-             endsWithCase_String(d, ".markdown") ||
-             endsWithCase_String(d, ".mdown") ||
-             endsWithCase_String(d, ".markdn")) {
-        return "text/markdown";
-    }
-    else if (endsWithCase_String(d, ".txt") ||
-             endsWithCase_String(d, ".ini") ||
-             endsWithCase_String(d, ".md") ||
-             endsWithCase_String(d, ".c") ||
-             endsWithCase_String(d, ".h") ||
-             endsWithCase_String(d, ".cc") ||
-             endsWithCase_String(d, ".hh") ||
-             endsWithCase_String(d, ".cpp") ||
-             endsWithCase_String(d, ".hpp")) {
-        return "text/plain";
+    for (int i = 0; mimetypes[i]; i += 2) {
+        if (endsWithCase_String(d, mimetypes[i])) {
+            return mimetypes[i + 1];
+        }
     }
     return "application/octet-stream";
 }

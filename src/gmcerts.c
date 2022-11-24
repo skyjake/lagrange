@@ -400,6 +400,32 @@ iGmIdentity *findIdentity_GmCerts(iGmCerts *d, const iBlock *fingerprint) {
     return NULL;
 }
 
+iGmIdentity *findIdentityFuzzy_GmCerts(iGmCerts *d, const iString *fuzzy) {
+    if (isEmpty_String(fuzzy)) {
+        return NULL;
+    }
+    iGmIdentity *found = NULL;
+    iForEach(PtrArray, i, &d->idents) {
+        iBeginCollect();
+        iGmIdentity *ident = i.ptr;
+        if (indexOfCStrSc_String(collect_String(hexEncode_Block(&ident->fingerprint)),
+                                 cstr_String(fuzzy), &iCaseInsensitive) != iInvalidPos) {
+            found = ident;
+        }
+        if (!found) {
+            const iString *name = name_GmIdentity(ident);
+            if (indexOfCStrSc_String(name, cstr_String(fuzzy), &iCaseInsensitive) != iInvalidPos) {
+                found = ident;
+            }
+        }
+        iEndCollect();
+        if (found) {
+            break;
+        }
+    }    
+    return found;
+}
+
 void deserializeTrusted_GmCerts(iGmCerts *d, iStream *ins, enum iImportMethod method) {
     iRegExp *      pattern = new_RegExp("([^\\s]+) ([0-9]+) ([a-z0-9]+)", 0);
     const iRangecc src     = range_Block(collect_Block(readAll_Stream(ins)));
@@ -413,8 +439,9 @@ void deserializeTrusted_GmCerts(iGmCerts *d, iStream *ins, enum iImportMethod me
             const iRangecc key   = capturedRange_RegExpMatch(&m, 1);
             const iRangecc until = capturedRange_RegExpMatch(&m, 2);
             const iRangecc fp    = capturedRange_RegExpMatch(&m, 3);
-            time_t sec;
-            sscanf(until.start, "%ld", &sec);
+            long long lsec;
+            sscanf(until.start, "%lld", &lsec);
+            time_t sec = lsec;
             iDate untilDate;
             initSinceEpoch_Date(&untilDate, sec);
             /* TODO: import method? */

@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "mobile.h"
 
+#include <the_Foundation/array.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/vec2.h>
@@ -107,6 +108,7 @@ iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 enum iOpenTabFlag {
     new_OpenTabFlag           = iBit(1),
     newBackground_OpenTabFlag = iBit(2),
+    newTabMask_OpenTabFlag    = new_OpenTabFlag | newBackground_OpenTabFlag,
     otherRoot_OpenTabFlag     = iBit(3),
 };
 
@@ -291,6 +293,7 @@ size_t          count_MenuItem                  (const iMenuItem *itemsNullTermi
 size_t          findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);
 size_t          findCommand_MenuItem            (const iMenuItem *items, size_t num, const char *command);
 void            setSelected_NativeMenuItem      (iMenuItem *item, iBool isSelected);
+void            appendIdentities_MenuItem       (iArray *menuItems, const char *command);
 
 iChar           removeIconPrefix_String         (iString *);
 
@@ -316,7 +319,9 @@ void            animateToRootVisibleTop_Widget  (iWidget *, uint32_t span);
 iLabelWidget *  makeMenuButton_LabelWidget          (const char *label, const iMenuItem *items, size_t n);
 void            updateDropdownSelection_LabelWidget (iLabelWidget *dropButton, const char *selectedCommand);
 const char *    selectedDropdownCommand_LabelWidget (const iLabelWidget *dropButton);
-
+iLabelWidget *  makeIdentityDropdown_LabelWidget    (iWidget *headings, iWidget *values,
+                                                     const iArray *identItems, const char *label,
+                                                     const char *id);
 /*-----------------------------------------------------------------------------------------------*/
 
 iWidget *       makeMenuBar_Widget      (const iMenuItem *topLevelMenus, size_t num);

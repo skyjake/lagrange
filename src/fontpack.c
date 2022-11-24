@@ -41,8 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stringlist.h>
 #include <the_Foundation/toml.h>
 
-const char *mimeType_FontPack = "application/lagrange-fontpack+zip";
-
 float scale_FontSize(enum iFontSize size) {
     static const float sizes[max_FontSize] = {
         1.000, /* UI sizes */

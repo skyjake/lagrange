@@ -1,6 +1,6 @@
 % LAGRANGE(1)
 % Jaakko Keränen (jaakko.keranen@iki.fi)
-% January 2022
+% November 2022
 
 # NAME
 
@@ -19,14 +19,26 @@ It offers modern conveniences familiar from web browsers, such as smooth scrolli
 
 When multiple URLs and/or local files are specified, they are opened in separate tabs.
 
+**-d**, **\--dump**
+:   Print contents of URLs/paths to stdout and quit.
+
+**-I**, **\--dump-identity** _ARG_
+:   Use identity ARG with **\--dump**. ARG can be a complete or partial client certificate fingerprint or common name.
+
 **-E**, **\--echo**
 :   Print all internal application events to stdout. Useful for debugging.
 
 **\--help**
 :   List the available command line options.
 
+**\--replace-tab** URL
+:   Open a URL, replacing contents of the active tab. Without this option, any URLs on the command line are opened in new tabs.
+
 **-u**, **\--url-or-search** _URL_ | _TEXT_
 :   Open a URL, or make a search query with given text. This only works if the search query URL has been configured.
+
+**-U**, **\--user** _DIR_
+:   Store user data in the directory DIR instead of the default location.
 
 **-V**, **\--version**
 :   Output the version number.
@@ -70,6 +82,8 @@ User-specific files such as bookmarks and navigation history are stored in the f
 - Windows: "C:\\Users\\Name\\AppData\\Roaming\\fi.skyjake.Lagrange"
 - macOS: "~/Library/Application Support/fi.skyjake.Lagrange"
 - Other: "~/.config/lagrange" 
+
+Use the **\--user** option to store user data in a custom location.
 
 The directory contains:
 

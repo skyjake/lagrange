@@ -289,6 +289,9 @@ msgstr "Release Notes"
 msgid "menu.website"
 msgstr "Project Website…"
 
+msgid "menu.email"
+msgstr "Contact via Email"
+
 msgid "menu.quit"
 msgstr "Quit Lagrange"
 
@@ -423,6 +426,9 @@ msgstr "Refresh Feeds"
 
 msgid "menu.identity.new"
 msgstr "New Identity…"
+
+msgid "menu.identity.newdomain"
+msgstr "New Identity for Domain…"
 
 msgid "menu.identity.import"
 msgstr "Import…"
@@ -587,6 +593,9 @@ msgstr "Open in Background Tab"
 msgid "menu.openwindow"
 msgstr "Open in New Window"
 
+msgid "menu.folder.opentab"
+msgstr "Open in New Tabs"
+
 msgid "menu.openfile"
 msgstr "Open File…"
 
@@ -653,6 +662,9 @@ msgstr "Remove Bookmark Source"
 msgid "bookmark.delete"
 msgstr "Delete Bookmark"
 
+msgid "bookmark.folder.delete"
+msgstr "Delete Bookmark Folder"
+
 msgid "bookmarks.reload"
 msgstr "Refresh Remote Sources"
 
@@ -683,6 +695,9 @@ msgstr "Stop Using on This Page"
 
 msgid "ident.stopuse.all"
 msgstr "Stop Using Everywhere"
+
+msgid "ident.unset"
+msgstr "Unpin"
 
 msgid "ident.export"
 msgstr "Export"
@@ -1360,6 +1375,9 @@ msgstr "Use on:"
 msgid "dlg.newident.scope.domain"
 msgstr "Current Domain"
 
+msgid "dlg.newident.scope.dir"
+msgstr "Current Directory"
+
 msgid "dlg.newident.scope.page"
 msgstr "Current Page"
 
@@ -1456,11 +1474,23 @@ msgstr "Parent folder:"
 msgid "dlg.bookmark.tags"
 msgstr "Tags:"
 
+msgid "hint.dlg.bookmark.tags"
+msgstr "space-separated terms"
+
+msgid "dlg.bookmark.notes"
+msgstr "Notes:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "free-form private notes"
+
+msgid "dlg.bookmark.identity"
+msgstr "Pinned identity:"
+
 msgid "dlg.bookmark.icon"
 msgstr "Icon:"
 
 msgid "heading.bookmark.tags"
-msgstr "Special Tags"
+msgstr "Behavior"
 
 msgid "heading.addfolder"
 msgstr "Add Folder"
@@ -1486,6 +1516,9 @@ msgstr "Certificates"
 
 msgid "heading.prefs.support"
 msgstr "Support"
+
+msgid "heading.prefs.user"
+msgstr "User Data"
 
 # tab button
 msgid "heading.prefs.colors"

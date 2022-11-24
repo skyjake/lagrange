@@ -85,7 +85,6 @@ static const iMenuItem desktopNavMenuItems_[] = {
 };
 
 static const iMenuItem tabletNavMenuItems_[] = {
-    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
@@ -94,29 +93,25 @@ static const iMenuItem tabletNavMenuItems_[] = {
     { rightHalf_Icon " ${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
     { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
     { "---" },
-    { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
-    { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
-    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { "---" },
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
 };
 
 static const iMenuItem phoneNavMenuItems_[] = {
-    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
-    { "---" },
-    { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
-    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { "---" },
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
 };
 
+#if 0
 #if defined (iPlatformMobile)
 static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
@@ -131,16 +126,17 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---" },
 # if !defined (iPlatformAppleDesktop)
-    { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
+    { add_Icon " ${menu.identity.newdomain}", newIdentity_KeyShortcut, "ident.new" },
     { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
     { "---" },
     { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
 # else
-    { add_Icon " ${menu.identity.new}", 0, 0, "ident.new" },
+    { add_Icon " ${menu.identity.newdomain}", 0, 0, "ident.new" },
     { "---" },
     { person_Icon " ${menu.show.identities}", 0, 0, "sidebar.mode arg:3 toggle:1" },
 # endif
 };
+#endif
 #endif
 
 static const char *reloadCStr_   = reload_Icon;
@@ -360,10 +356,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         iArray items;
         init_Array(&items, sizeof(iMenuItem));
         /* Current identity. */
-        const iString     *docUrl = url_DocumentWidget(document_App());
-        const iGmIdentity *ident  = identityForUrl_GmCerts(certs_App(), docUrl);
-        const iString     *fp     = ident ? collect_String(hexEncode_Block(&ident->fingerprint)) : NULL;
-        iString           *str    = NULL;
+        const iDocumentWidget *doc        = document_App();
+        const iString         *docUrl     = url_DocumentWidget(doc);
+        const iGmIdentity     *ident      = identity_DocumentWidget(doc);
+        const iBool            isSetIdent = isIdentityPinned_DocumentWidget(doc);
+        const iString *fp  = ident ? collect_String(hexEncode_Block(&ident->fingerprint)) : NULL;
+        iString       *str = NULL;
         if (ident) {
             str = copy_String(name_GmIdentity(ident));
             if (!isEmpty_String(&ident->notes)) {
@@ -374,7 +372,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             &items,
             &(iMenuItem){ format_CStr("```" uiHeading_ColorEscape "\x1b[1m%s",
                                       str ? cstr_String(str) : "${menu.identity.notactive}") });
-        if (ident && isUsedOn_GmIdentity(ident, docUrl)) {
+        if (isSetIdent) {
+            pushBack_Array(&items,
+                           &(iMenuItem){ close_Icon " ${ident.unset}",
+                                         0, 0, "document.unsetident" });
+        }
+        else if (ident && isUsedOn_GmIdentity(ident, docUrl)) {
             pushBack_Array(&items,
                            &(iMenuItem){ close_Icon " ${ident.stopuse}",
                                          0,
@@ -410,10 +413,15 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
             pushBack_Array(&items, &(iMenuItem){ "---" });
         }
         iSidebarWidget *sidebar = findWidget_App("sidebar");
+        const iBool isGemini = equalCase_Rangecc(urlScheme_String(docUrl), "gemini");
         pushBackN_Array(
             &items,
             (iMenuItem[]){
-                { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
+                { isGemini ? add_Icon " ${menu.identity.newdomain}"
+                           : add_Icon " ${menu.identity.new}",
+                  0, 0,
+                  isGemini ? "ident.new scope:1"
+                           : "ident.new" },
                 { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
                 { "---" } }, 3);
         if (deviceType_App() == desktop_AppDeviceType) {
@@ -579,30 +587,33 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 }
 
 static void updateNavBarIdentity_(iWidget *navBar) {
-    const iGmIdentity *ident =
-        identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
+    iDocumentWidget *doc = document_App();
+    const iGmIdentity *ident = identity_DocumentWidget(doc);
     /* Update menu. */
     const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
     if (navBar) {
         iWidget *button = findChild_Widget(navBar, "navbar.ident");
         iWidget *menu   = findChild_Widget(button, "menu");
         setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
-        const char *   idLabel     = subjectName
-                                     ? cstr_String(subjectName)
-                                     : "${menu.identity.notactive}";
+        const char *idLabel = subjectName ? cstr_String(subjectName) : "${menu.identity.notactive}";
         setMenuItemLabelByIndex_Widget(menu, 0, idLabel);
         setMenuItemDisabledByIndex_Widget(menu, 0, !ident);
+        /* Visualize an identity override. */
+        setOutline_LabelWidget((iLabelWidget *) button, isIdentityPinned_DocumentWidget(doc));
+        setBackgroundColor_Widget(
+            button, isIdentityPinned_DocumentWidget(doc) ? uiBackground_ColorId : none_ColorId);
     }
     iLabelWidget *toolButton = findWidget_App("toolbar.ident");
-    iLabelWidget *toolName = findWidget_App("toolbar.name");
+    iLabelWidget *toolName   = findWidget_App("toolbar.name");
     if (toolName) {
-        setOutline_LabelWidget(toolButton, ident == NULL);
+        setOutline_LabelWidget(toolButton, ident == NULL || isIdentityPinned_DocumentWidget(doc));
         if (ident) {
             setTextColor_LabelWidget(toolButton, uiTextAction_ColorId);
             setTextColor_LabelWidget(toolName, uiTextAction_ColorId);
         }
         else {
-            setTextColor_LabelWidget(toolButton, textColor_LabelWidget(child_Widget(parent_Widget(toolButton), 0)));
+            setTextColor_LabelWidget(
+                toolButton, textColor_LabelWidget(child_Widget(parent_Widget(toolButton), 0)));
         }
         /* Fit the name in the widget. */
         if (subjectName) {
@@ -618,7 +629,7 @@ static void updateNavBarIdentity_(iWidget *navBar) {
         }
         setFont_LabelWidget(toolButton, subjectName ? uiLabelMedium_FontId : uiLabelLarge_FontId);
         setTextOffset_LabelWidget(toolButton, init_I2(0, subjectName ? -1.5f * gap_UI : 0));
-        arrange_Widget(parent_Widget(toolButton));        
+        arrange_Widget(parent_Widget(toolButton));
     }
 }
 
@@ -809,7 +820,8 @@ static int navBarAvailableSpace_(iWidget *navBar) {
 }
 
 iBool isNarrow_Root(const iRoot *d) {
-    return width_Rect(safeRect_Root(d)) / gap_UI < (isTerminal_Platform() ? 81 : 140);
+    return width_Rect(safeRect_Root(d)) / gap_UI <
+        (isTerminal_Platform() ? 81 : deviceType_App() == tablet_AppDeviceType ? 160 : 140);
 }
 
 static void updateNavBarSize_(iWidget *navBar) {

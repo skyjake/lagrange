@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-04-10 08:51+0000\n"
+"PO-Revision-Date: 2022-10-23 20:52+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -1550,7 +1550,7 @@ msgid "dlg.bookmark.folder"
 msgstr "Cartella:"
 
 msgid "heading.bookmark.tags"
-msgstr "Etichetta Speciale"
+msgstr "Proprietà"
 
 msgid "heading.addfolder"
 msgstr "Aggiungi Cartella"
@@ -2369,3 +2369,93 @@ msgstr "Oceanico"
 
 msgid "prefs.justify"
 msgstr "Giustificare:"
+
+msgid "error.proxyexpired"
+msgstr "Certificato del Proxy Scaduto"
+
+msgid "error.proxyverify"
+msgstr "Proxy non fidato"
+
+msgid "keys.identmenu"
+msgstr "Apri menu Identità"
+
+msgid "keys.contextmenu"
+msgstr "Apri menu contestuale"
+
+msgid "error.proxyexpired.msg"
+msgstr ""
+"La connessione è stata cancellata perché il certificato TLS del proxy è "
+"scaduto."
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"La connessione è stata interrotta perchè il certificato TLS del proxy non "
+"coincide con quello fidato.\n"
+"\n"
+"Il certificato del server proxy può essere segnato come fidato nelle "
+"Informazioni della Pagina."
+
+msgid "prefs.bottomnavbar"
+msgstr "Barra di Navigazione Inferiore"
+
+msgid "prefs.bottomtabbar"
+msgstr "Tab in fondo"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Vedi Markdown come sorgente:"
+
+msgid "prefs.tui.simple"
+msgstr "Caratteri semplici:"
+
+msgid "prefs.evensplit"
+msgstr "Dividi i tab in modo uniforme:"
+
+msgid "error.incompleteheader.msg"
+msgstr ""
+"La risposta del server non contiene un header completo. Forse il serve ha un "
+"malfunzionamento, oppure hai provato a contattare un server non Gemini."
+
+msgid "error.incompleteheader"
+msgstr "Header incompleto"
+
+msgid "menu.reopentab"
+msgstr "Riapri l'ultimo Tab Chiuso"
+
+msgid "menu.viewformat.plain"
+msgstr "Vedi come Testo Semplice"
+
+msgid "menu.viewformat.gemini"
+msgstr "Vedi come Gemtext"
+
+msgid "spartan.input"
+msgstr "Inserisci il testo da inviare:"
+
+msgid "dlg.spartan.upload"
+msgstr "Apri l'Editor…"
+
+msgid "heading.upload.spartan"
+msgstr "Carica con Spartan"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Cartella Padre:"
+
+msgid "keys.menubar.focus"
+msgstr "Dai focus alla barra del menu"
+
+msgid "menu.folder.opentab"
+msgstr "Apri in Nuovi Tab"
+
+msgid "bookmark.folder.delete"
+msgstr "Cancella Cartella Segnalibri"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "termini separati da spazi"
+
+msgid "dlg.bookmark.notes"
+msgstr "Note:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "note private in forma libera"
+
+msgid "dlg.bookmark.identity"
+msgstr "Imposta l'identità:"

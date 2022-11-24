@@ -571,7 +571,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             }
         }
     }
-    if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
+    if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w) && ev->wheel.x == 0) {
         if (d->dragHandleWidth) {
             if (d->dragItem == iInvalidPos) {
                 const iInt2 wpos = coord_MouseWheelEvent(&ev->wheel);
@@ -606,6 +606,12 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             moveSpan_SmoothScroll(
                 &d->scrollY, amount, 600 * scrollSpeedFactor_Prefs(prefs_App(), mouse_ScrollType));
         }
+        return iTrue;
+    }
+    if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w) && ev->wheel.y == 0 &&
+        isPerPixel_MouseWheelEvent(&ev->wheel) && !isInertia_MouseWheelEvent(&ev->wheel)) {
+        iInt2 coord = mouseCoord_SDLEvent(ev);
+        postCommand_Widget(w, "listswipe.moved arg:%d coord:%d %d", ev->wheel.x, coord.x, coord.y);
         return iTrue;
     }
     switch (processEvent_Click(&d->click, ev)) {

@@ -129,6 +129,7 @@ struct Impl_SidebarWidget {
     iWidget *         resizer;
     iWidget *         menu; /* context menu for an item */
     iWidget *         modeMenu; /* context menu for the sidebar mode (no item) */
+    iWidget *         folderMenu; /* context menu for bookmark folders */
     iSidebarItem *    contextItem;  /* list item accessed in the context menu */
     size_t            contextIndex; /* index of list item accessed in the context menu */
     iIntSet *         closedFolders; /* otherwise open */
@@ -248,6 +249,10 @@ static iBool isSlidingSheet_SidebarWidget_(const iSidebarWidget *d) {
     return isPortraitPhone_App();
 }
 
+static iBool isEdgeSwipable_SidebarWidget_(const iSidebarWidget *d) {
+    return deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App();
+}
+
 static void setMobileEditMode_SidebarWidget_(iSidebarWidget *d, iBool editing) {
     iWidget *w = as_Widget(d);
     d->isEditing = editing;
@@ -267,6 +272,15 @@ static const iPtrArray *listFeedEntries_SidebarWidget_(const iSidebarWidget *d) 
     return listEntries_Feeds();
 }
 
+static const iMenuItem bookmarkModeMenuItems_[] = {
+    { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "---" },
+    { add_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
+    { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
+    { "---" },
+    { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" }
+};
+
 static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepActions) {
     const iBool isMobile = (deviceType_App() != desktop_AppDeviceType);
     clear_ListWidget(d->list);
@@ -277,8 +291,10 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
     d->actions->rect.size.y = 0;
     destroy_Widget(d->menu);
     destroy_Widget(d->modeMenu);
+    destroy_Widget(d->folderMenu);
     d->menu       = NULL;
     d->modeMenu   = NULL;
+    d->folderMenu = NULL;
     iBool isEmpty = iFalse; /* show blank? */
     switch (d->mode) {
         case feeds_SidebarMode: {
@@ -497,6 +513,9 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                     if (bm->flags & linkSplit_BookmarkFlag) {
                         appendChar_String(&item->meta, 0x25e7);
                     }
+                    if (!isEmpty_String(&bm->identity)) {
+                        appendCStr_String(&item->meta, person_Icon);
+                    }
                 }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
@@ -525,21 +544,35 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             };
             d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             d->modeMenu = makeMenu_Widget(
-                as_Widget(d),
-                (iMenuItem[]){ { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-                               { add_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
-                               { "---", 0, 0, NULL },                               
-                               { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
-                               { "---", 0, 0, NULL },
-                               { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" } },               
-                6);
+                as_Widget(d), bookmarkModeMenuItems_, iElemCount(bookmarkModeMenuItems_));
+            /* Menu for a bookmark folder. */ {
+                iArray *items = new_Array(sizeof(iMenuItem));
+                pushBackN_Array(
+                    items,
+                    (iMenuItem[]){
+                        { openTab_Icon " ${menu.folder.opentab}", 0, 0, "bookmark.open newtab:1" },
+                        { openWindow_Icon " ${menu.openwindow}", 0, 0, "bookmark.open newwindow:1" },
+                        { "---" },
+                        { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
+                        { "---" },
+                        { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.folder.delete}",
+                          0, 0, "bookmark.delete" },
+                        { "---" } },
+                    7);
+                if (isMobile_Platform()) {
+                    remove_Array(items, 1); /* just one window */
+                }
+                pushBackN_Array(items, bookmarkModeMenuItems_, iElemCount(bookmarkModeMenuItems_));
+                d->folderMenu = makeMenu_Widget(as_Widget(d), constData_Array(items), size_Array(items));
+                delete_Array(items);
+            }
             if (isMobile) {
                 addActionButton_SidebarWidget_(d, "${sidebar.action.bookmarks.newfolder}",
                                                "bookmarks.addfolder", !d->isEditing ? hidden_WidgetFlag : 0);
                 addChildFlags_Widget(d->actions, iClob(new_Widget()), expand_WidgetFlag);
                 addActionButton_SidebarWidget_(d,
                     d->isEditing ? "${sidebar.close}" : "${sidebar.action.bookmarks.edit}",
-                    "sidebar.bookmarks.edit", 0);
+                    format_CStr("%s.bookmarks.edit", cstr_String(&d->widget.id)), 0);
             }
             break;
         }
@@ -950,8 +983,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     }
     setId_Widget(d->resizer, side == left_SidebarSide ? "sidebar.grab" : "sidebar2.grab");
     setBackgroundColor_Widget(d->resizer, none_ColorId);
-    d->menu     = NULL;
-    d->modeMenu = NULL;
+    d->menu       = NULL;
+    d->modeMenu   = NULL;
+    d->folderMenu = NULL;
     addAction_Widget(w, refreshFeeds_KeyShortcut, "feeds.refresh");
     updateMetrics_SidebarWidget_(d);
     if (side == left_SidebarSide) {
@@ -999,6 +1033,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             ? (keyMods_Sym(modState_Keys()) & KMOD_SHIFT ? new_OpenTabFlag
                                                          : newBackground_OpenTabFlag)
             : 0;
+    iString *setIdentArg = NULL;
     switch (d->mode) {
         case documentOutline_SidebarMode: {
             const iGmDocument *doc = document_DocumentWidget(document_App());
@@ -1019,7 +1054,8 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             break;
         }
         case bookmarks_SidebarMode:
-            if (isEmpty_String(&item->url)) /* a folder */ {
+            /* Bookmark folder folding is toggled when clicking. */
+            if (isEmpty_String(&item->url) /* is a folder */) {
                 if (contains_IntSet(d->closedFolders, item->id)) {
                     remove_IntSet(d->closedFolders, item->id);
                     setRecentFolder_Bookmarks(bookmarks_App(), item->id);
@@ -1030,6 +1066,14 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 }
                 updateItems_SidebarWidget_(d);
                 break;
+            }
+            else {
+                /* Check if the bookmark changes the active identity on the URL. */
+                const iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                if (bm && !isEmpty_String(&bm->identity)) {
+                    setIdentArg = collect_String(copy_String(&bm->identity));
+                    prependCStr_String(setIdentArg, " setident:");
+                }
             }
             if (d->isEditing) {
                 d->contextItem = item;
@@ -1042,7 +1086,8 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {
                 postCommandf_Root(get_Root(),
-                                  "open fromsidebar:1 newtab:%d url:%s",
+                                  "open fromsidebar:1%s newtab:%d url:%s",
+                                  setIdentArg ? cstr_String(setIdentArg) : "",
                                   mouseTabMode ? mouseTabMode : openTabMode_Sym(modState_Keys()),
                                   cstr_String(&item->url));
                 setFocus_Widget(NULL);
@@ -1137,12 +1182,23 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
         destroy_Widget(editor);
         return iTrue;
     }
+    else if (equal_Command(cmd, "bmed.setident")) {
+        const uint32_t bmId = bookmarkEditorId_(editor);
+        iBookmark *bm = get_Bookmarks(bookmarks_App(), bmId);
+        if (bm) {
+            set_String(&bm->identity, string_Command(cmd, "fp"));
+            updateDropdownSelection_LabelWidget(findChild_Widget(editor, "bmed.setident"),
+                                                cstr_String(&bm->identity));
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "bmed.cancel")) {
         const uint32_t bmId = bookmarkEditorId_(editor);
         if (equal_Command(cmd, "bmed.accept")) {
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
+            const iString *notes = text_InputWidget(findChild_Widget(editor, "bmed.notes"));
             const iString *icon  = collect_String(trimmed_String(
                                         text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
             iBookmark *bm = get_Bookmarks(bookmarks_App(), bmId);
@@ -1150,6 +1206,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
             if (!isFolder_Bookmark(bm)) {
                 set_String(&bm->url, url);
                 set_String(&bm->tags, tags);
+                set_String(&bm->notes, notes);
                 if (isEmpty_String(icon)) {
                     bm->flags &= ~userIcon_BookmarkFlag;
                     bm->icon = 0;
@@ -1289,7 +1346,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         }
         else {
             /* Portrait phone sidebar works differently: it slides up from the bottom. */
-            setFlags_Widget(w, horizontalOffset_WidgetFlag, iFalse);
+            setFlags_Widget(w, horizontalOffset_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
             if (!isHiding) {
                 invalidate_ListWidget(d->list);
                 w->rect.pos.y = height_Rect(safeRect_Root(w->root)) - d->midHeight;
@@ -1561,10 +1618,56 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "bookmark.open")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
-                postCommandf_App("open newtab:%d newwindow:%d url:%s",
-                                 argLabel_Command(cmd, "newtab"),
-                                 argLabel_Command(cmd, "newwindow"),
-                                 cstr_String(&item->url));
+                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                if (bm) {
+                    if (isFolder_Bookmark(bm)) {
+                        iRoot *openingInRoot = get_Root();
+                        iBool isNewWindow = iFalse;
+                        if (argLabel_Command(cmd, "newwindow")) {
+                            /* First open a new window. */
+                            iMainWindow *newWin = newMainWindow_App();
+                            openingInRoot = newWin->base.roots[0];
+                            isNewWindow = iTrue;
+                        }
+                        iBool isFirst = iTrue;
+                        iConstForEach(PtrArray,
+                                      i,
+                                      list_Bookmarks(bookmarks_App(),
+                                                     cmpTree_Bookmark,
+                                                     filterInsideFolder_Bookmark,
+                                                     bm)) {
+                            const iBookmark *contained = i.ptr;
+                            if (!isFolder_Bookmark(contained)) {
+                                /* When opening multiple bookmarks at once, ensure that previous
+                                   ones are idle before continuing. */
+                                postCommandf_Root(
+                                    openingInRoot,
+                                    "open idle:%d newtab:%d%s url:%s",
+                                    !isFirst,
+                                    (isNewWindow && isFirst ? 0
+                                     : isFirst              ? new_OpenTabFlag
+                                                            : newBackground_OpenTabFlag),
+                                    !isEmpty_String(&contained->identity)
+                                        ? format_CStr(" setident:%s",
+                                                      cstr_String(&contained->identity))
+                                        : "",
+                                    cstr_String(&contained->url));
+                                isFirst = iFalse;
+                            }
+                        }
+                        postCommandf_Root(openingInRoot, "window.unfreeze");
+                    }
+                    else {
+                        postCommandf_App(
+                            "open newtab:%d newwindow:%d%s url:%s",
+                            argLabel_Command(cmd, "newtab"),
+                            argLabel_Command(cmd, "newwindow"),
+                            isEmpty_String(&bm->identity)
+                                ? format_CStr(" setident:%s", cstr_String(&bm->identity))
+                                : "",
+                            cstr_String(&item->url));
+                    }
+                }
             }
             return iTrue;
         }
@@ -1590,12 +1693,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 if (!isFolder_Bookmark(bm)) {
                     iInputWidget *urlInput        = findChild_Widget(dlg, "bmed.url");
                     iInputWidget *tagsInput       = findChild_Widget(dlg, "bmed.tags");
+                    iInputWidget *notesInput      = findChild_Widget(dlg, "bmed.notes");
                     iInputWidget *iconInput       = findChild_Widget(dlg, "bmed.icon");
                     iWidget *     homeTag         = findChild_Widget(dlg, "bmed.tag.home");
                     iWidget *     remoteSourceTag = findChild_Widget(dlg, "bmed.tag.remote");
                     iWidget *     linkSplitTag    = findChild_Widget(dlg, "bmed.tag.linksplit");
                     setText_InputWidget(urlInput, &bm->url);
                     setText_InputWidget(tagsInput, &bm->tags);
+                    setText_InputWidget(notesInput, &bm->notes);
                     if (bm->flags & userIcon_BookmarkFlag) {
                         setText_InputWidget(iconInput,
                                             collect_String(newUnicodeN_String(&bm->icon, 1)));
@@ -1603,6 +1708,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setToggle_Widget(homeTag, bm->flags & homepage_BookmarkFlag);
                     setToggle_Widget(remoteSourceTag, bm->flags & remoteSource_BookmarkFlag);
                     setToggle_Widget(linkSplitTag, bm->flags & linkSplit_BookmarkFlag);
+                    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "bmed.setident"),
+                                                        format_CStr("bmed.setident fp:%s",
+                                                                    cstr_String(&bm->identity)));
                 }
                 setBookmarkEditorParentFolder_Widget(dlg, bm ? bm->parentId : 0);
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
@@ -1735,6 +1843,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (item) {
                 if (isCommand_Widget(w, ev, "feed.entry.open")) {
                     const char *cmd = command_UserEvent(ev);
+                    /* Opening an entry will always mark it as read. */
+                    markEntryAsRead_Feeds(item->id, &item->url, iTrue);
                     postCommandString_Root(
                         get_Root(),
                         feedEntryOpenCommand_String(&item->url,
@@ -1867,6 +1977,29 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+        else if (isEdgeSwipable_SidebarWidget_(d) && equal_Command(cmd, "edgeswipe.moved") &&
+                 argLabel_Command(cmd, "edge") && !isVisible_Widget(w)) {
+            const int side = argLabel_Command(cmd, "side");
+            const int delta = arg_Command(cmd);
+            if (d->side == left_SidebarSide && delta > 0) {
+                postCommand_Widget(w, "sidebar.toggle");
+            }
+            else if (d->side == right_SidebarSide && delta < 0) {
+                postCommand_Widget(w, "sidebar2.toggle");
+            }
+            return iFalse;
+        }
+        else if (isEdgeSwipable_SidebarWidget_(d) && equal_Command(cmd, "listswipe.moved") &&
+                 isVisible_Widget(w) && contains_Widget(w, coord_Command(cmd))) {
+            const int delta = arg_Command(cmd);
+            if (d->side == left_SidebarSide && delta < 0) {
+                postCommand_Widget(w, "sidebar.toggle");
+            }
+            else if (d->side == right_SidebarSide && delta > 0) {
+                postCommand_Widget(w, "sidebar2.toggle");
+            }
+            return iTrue;
+        }
 #if defined (iPlatformTerminal)
         else if (equal_Command(cmd, "zoom.set") && isVisible_Widget(w)) {
             setWidth_SidebarWidget(d, 35.0f * arg_Command(cmd) / 100.0f);
@@ -1971,7 +2104,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
     }
-    if (isSlidingSheet_SidebarWidget_(d)) {
+    if (isEdgeSwipable_SidebarWidget_(d)) {
+        if (ev->type == SDL_MOUSEWHEEL && isPerPixel_MouseWheelEvent(&ev->wheel)) {
+            if (d->side == left_SidebarSide && ev->wheel.x < 0 && isVisible_Widget(w)) {
+                postCommand_Widget(w, "sidebar.toggle");
+                return iTrue;
+            }
+        }
+    }
+    else if (isSlidingSheet_SidebarWidget_(d)) {
         if (ev->type == SDL_MOUSEWHEEL) {
             enum iWidgetTouchMode touchMode = widgetMode_Touch(w);
             if (touchMode == momentum_WidgetTouchMode) {
@@ -2028,29 +2169,37 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     }
     if (ev->type == SDL_MOUSEBUTTONDOWN &&
         contains_Widget(as_Widget(d->list), init_I2(ev->button.x, ev->button.y))) {
-        if (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
+        if (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu) ||
+            isVisible_Widget(d->folderMenu)) {
+            iWidget *contextMenu = d->menu;
             /* Update the menu before opening. */
             /* TODO: This kind of updating is already done above, and in `updateContextMenu_`... */
-            if (d->mode == bookmarks_SidebarMode && !isVisible_Widget(d->menu)) {
+            if (d->mode == bookmarks_SidebarMode) {
                 /* Remote bookmarks have limitations. */
                 const iSidebarItem *hoverItem = hoverItem_ListWidget(d->list);
                 iAssert(hoverItem);
-                const iBookmark *  bm              = get_Bookmarks(bookmarks_App(), hoverItem->id);
-                const iBool        isRemote        = (bm->flags & remote_BookmarkFlag) != 0;
-                static const char *localOnlyCmds[] = { "bookmark.edit",
-                                                       "bookmark.delete",
-                                                       "bookmark.tag tag:subscribed",
-                                                       "bookmark.tag tag:homepage",
-                                                       "bookmark.tag tag:remotesource" };
-                iForIndices(i, localOnlyCmds) {
-                    setFlags_Widget(as_Widget(findMenuItem_Widget(d->menu, localOnlyCmds[i])),
-                                    disabled_WidgetFlag,
-                                    isRemote);
+                const iBookmark *bm = get_Bookmarks(bookmarks_App(), hoverItem->id);
+                if (isFolder_Bookmark(bm)) {
+                    contextMenu = d->folderMenu;                    
+                }
+                else if (!isVisible_Widget(d->menu)) {
+                    const iBool        isRemote        = (bm->flags & remote_BookmarkFlag) != 0;
+                    static const char *localOnlyCmds[] = { "bookmark.edit",
+                                                           "bookmark.delete",
+                                                           "bookmark.tag tag:subscribed",
+                                                           "bookmark.tag tag:homepage",
+                                                           "bookmark.tag tag:remotesource" };
+                    iForIndices(i, localOnlyCmds) {
+                        setFlags_Widget(as_Widget(findMenuItem_Widget(contextMenu, localOnlyCmds[i])),
+                                        disabled_WidgetFlag,
+                                        isRemote);
+                    }
                 }
             }
-            processContextMenuEvent_Widget(d->menu, ev, {});
+            processContextMenuEvent_Widget(contextMenu, ev, {});
         }
         else if (!constHoverItem_ListWidget(d->list) || isVisible_Widget(d->modeMenu)) {
+            /* Show a more generic context menu that is unrelated to any particular item. */
             processContextMenuEvent_Widget(d->modeMenu, ev, {});
         }
     }

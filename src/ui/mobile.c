@@ -450,7 +450,7 @@ static iWidget *makeValuePadding_(iWidget *value) {
     iInputWidget *input = isInstance_Object(value, &Class_InputWidget) ? (iInputWidget *) value : NULL;
     if (input) {
         setFont_InputWidget(input, labelFont_());
-        setContentPadding_InputWidget(input, 3 * gap_UI, 3 * gap_UI);
+        setContentPadding_InputWidget(input, 2 * gap_UI, 3 * gap_UI);
     }
     iWidget *pad = new_Widget();
     setBackgroundColor_Widget(pad, uiBackgroundSidebar_ColorId);
@@ -472,7 +472,7 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
                     resizeWidthOfChildren_WidgetFlag |
                     arrangeHorizontal_WidgetFlag, iTrue);
     setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId);
-    setPadding_Widget(div, gap_UI, gap_UI, 4 * gap_UI, gap_UI);
+    setPadding_Widget(div, gap_UI, gap_UI, !isInput ? 4 * gap_UI : (2 * gap_UI), gap_UI);
     addChildFlags_Widget(div, iClob(heading), 0);
     setPadding1_Widget(as_Widget(heading), 0);
     setFont_LabelWidget(heading, labelFont_());
@@ -704,7 +704,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         }
         setId_Widget(as_Widget(input), id);
         setUrlContent_InputWidget(input, argLabel_Command(spec, "url"));
-        setSelectAllOnFocus_InputWidget(input, argLabel_Command(spec, "selectall"));        
+        setSelectAllOnFocus_InputWidget(input, argLabel_Command(spec, "selectall"));
         setFont_InputWidget(input, labelFont_());
         if (argLabel_Command(spec, "noheading")) {
             widget = makeValuePadding_(as_Widget(input));
@@ -712,7 +712,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         }
         else {
             setFlags_Widget(as_Widget(input), alignRight_WidgetFlag, iTrue);
-            setContentPadding_InputWidget(input, 3 * gap_UI, 0);
+            setContentPadding_InputWidget(input, 0 * gap_UI, 0);
             if (hasLabel_Command(spec, "unit")) {
                 iWidget *unit = addChildFlags_Widget(
                     as_Widget(input),

@@ -248,6 +248,9 @@ static void draw_ScrollWidget_(const iScrollWidget *d) {
         init_Paint(&p);
         /* Blend if opacity is not at maximum. */
         p.alpha = 255 * value_Anim(&d->opacity);
+#if defined (iPlatformMobile)
+        p.alpha /= 2;
+#endif
         if (p.alpha > 0) {
             SDL_Renderer *render = renderer_Window(get_Window());
             if (p.alpha < 255) {

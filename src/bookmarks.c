@@ -21,7 +21,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "bookmarks.h"
-#include "visited.h"
 #include "gmrequest.h"
 #include "app.h"
 
@@ -37,6 +36,8 @@ void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
     init_String(&d->title);
     init_String(&d->tags);
+    init_String(&d->notes);
+    init_String(&d->identity);
     iZap(d->flags);
     iZap(d->when);
     d->parentId = 0;
@@ -44,37 +45,12 @@ void init_Bookmark(iBookmark *d) {
 }
 
 void deinit_Bookmark(iBookmark *d) {
+    deinit_String(&d->identity);
+    deinit_String(&d->notes);
     deinit_String(&d->tags);
     deinit_String(&d->title);
     deinit_String(&d->url);
 }
-
-#if 0
-iBool hasTag_Bookmark(const iBookmark *d, const char *tag) {
-    if (!d) return iFalse;
-    iRegExp *pattern = new_RegExp(format_CStr("\\b%s\\b", tag), caseSensitive_RegExpOption);
-    iRegExpMatch m;
-    init_RegExpMatch(&m);
-    const iBool found = matchString_RegExp(pattern, &d->tags, &m);
-    iRelease(pattern);
-    return found;
-}
-
-void addTag_Bookmark(iBookmark *d, const char *tag) {
-    if (!isEmpty_String(&d->tags)) {
-        appendCStr_String(&d->tags, " ");
-    }
-    appendCStr_String(&d->tags, tag);
-}
-
-void removeTag_Bookmark(iBookmark *d, const char *tag) {
-    const size_t pos = indexOfCStr_String(&d->tags, tag);
-    if (pos != iInvalidPos) {
-        remove_Block(&d->tags.chars, pos, strlen(tag));
-        trim_String(&d->tags);
-    }
-}
-#endif
 
 static struct {
     uint32_t    bit;
@@ -298,7 +274,8 @@ static void handleTable_BookmarkLoader_(void *context, const iString *table, iBo
     else if (d->bm) {
         /* Check if import rules. */
         if (d->baseId && !isFolder_Bookmark(d->bm)) {
-            const uint32_t existing = findUrl_Bookmarks(d->bookmarks, &d->bm->url);
+            const uint32_t existing = findUrlIdent_Bookmarks(d->bookmarks, &d->bm->url,
+                                                             &d->bm->identity);
             if (existing) {
                 if (d->method == ifMissing_ImportMethod) {
                     /* Already have this one. */
@@ -334,6 +311,12 @@ static void handleKeyValue_BookmarkLoader_(void *context, const iString *table, 
         else if (!cmp_String(key, "tags") && tv->type == string_TomlType) {
             set_String(&bm->tags, tv->value.string);
             unpackDotTags_Bookmark_(bm);
+        }
+        else if (!cmp_String(key, "notes") && tv->type == string_TomlType) {
+            set_String(&bm->notes, tv->value.string);
+        }
+        else if (!cmp_String(key, "identity") && tv->type == string_TomlType) {
+            set_String(&bm->identity, tv->value.string);
         }
         else if (!cmp_String(key, "icon") && tv->type == int64_TomlType) {
             bm->icon = (iChar) tv->value.int64;
@@ -487,6 +470,14 @@ void serialize_Bookmarks(const iBookmarks *d, iStream *out) {
                       bm->icon,
                       seconds_Time(&bm->when),
                       cstrCollect_String(format_Time(&bm->when, "%Y-%m-%d")));
+        if (!isEmpty_String(&bm->notes)) {
+            appendFormat_String(str, "notes = \"%s\"\n",
+                                cstrCollect_String(quote_String(&bm->notes, iFalse)));
+        }
+        if (!isEmpty_String(&bm->identity)) {
+            appendFormat_String(str, "identity = \"%s\"\n",
+                                cstrCollect_String(quote_String(&bm->identity, iFalse)));
+        }
         if (bm->parentId) {
             appendFormat_String(str, "parent = %d\n", bm->parentId);
         }
@@ -567,11 +558,10 @@ iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
 iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon) {
     iBool changed = iFalse;
     lock_Mutex(d->mtx);
-    const uint32_t id = findUrl_Bookmarks(d, url);
-    if (id) {
-        iBookmark *bm = get_Bookmarks(d, id);
+    iForEach(Hash, i, &d->bookmarks) {
+        iBookmark *bm = (iBookmark *) i.value;    
         if (~bm->flags & remote_BookmarkFlag && ~bm->flags & userIcon_BookmarkFlag) {
-            if (icon != bm->icon) {
+            if (equalCase_String(&bm->url, url) && icon != bm->icon) {
                 bm->icon = icon;
                 changed = iTrue;
             }
@@ -634,28 +624,46 @@ void reorder_Bookmarks(iBookmarks *d, uint32_t id, int newOrder) {
     unlock_Mutex(d->mtx);
 }
 
-//iBool filterTagsRegExp_Bookmarks(void *regExp, const iBookmark *bm) {
-//    iRegExpMatch m;
-//    init_RegExpMatch(&m);
-//    return matchString_RegExp(regExp, &bm->tags, &m);
-//}
-
 iBool filterHomepage_Bookmark(void *d, const iBookmark *bm) {
     iUnused(d);
     return (bm->flags & homepage_BookmarkFlag) != 0;
 }
 
-static iBool matchUrl_(void *url, const iBookmark *bm) {
-    return equalCase_String(url, &bm->url);
+uint32_t findUrl_Bookmarks(const iBookmarks *d, const iString *url) {
+    return findUrlIdent_Bookmarks(d, url, NULL);
 }
 
-uint32_t findUrl_Bookmarks(const iBookmarks *d, const iString *url) {
-    /* TODO: O(n), boo */
-    url = canonicalUrl_String(url);
-    const iPtrArray *found = list_Bookmarks(d, NULL, matchUrl_, (void *) url);
-    if (isEmpty_PtrArray(found)) return 0;
-    return id_Bookmark(constFront_PtrArray(found));
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(MatchUrlArgs)
+    
+struct Impl_MatchUrlArgs {
+    const iString *url;
+    const iString *identityFp;    
+};
+
+static iBool matchUrlAndIdent_(iMatchUrlArgs *args, const iBookmark *bm) {
+    if (equalCase_String(args->url, &bm->url)) {
+        if ((args->identityFp == NULL && isEmpty_String(&bm->identity)) ||
+            (args->identityFp && equal_String(args->identityFp, &bm->identity))) {
+            return iTrue;
+        }
+    }
+    return iFalse;
 }
+
+uint32_t findUrlIdent_Bookmarks(const iBookmarks *d, const iString *url, const iString *identFp) {
+    iMatchUrlArgs args = { .url = canonicalUrl_String(url), .identityFp = identFp };
+    /* TODO: O(n), boo */
+    const iPtrArray *found =
+        list_Bookmarks(d, NULL, (iBookmarksFilterFunc) matchUrlAndIdent_, &args);
+    if (isEmpty_PtrArray(found)) {
+        return 0;
+    }
+    return id_Bookmark(constFront_PtrArray(found));    
+}
+
+/*----------------------------------------------------------------------------------------------*/
 
 uint32_t recentFolder_Bookmarks(const iBookmarks *d) {
     return d->recentFolderId;

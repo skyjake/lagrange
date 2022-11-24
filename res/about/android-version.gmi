@@ -6,6 +6,42 @@
 ```
 # Release notes
 
+## 1.14 (Beta 9)
+* Fixed pinned identity being forgotten when navigating to parent/root.
+* Improved layout of the bookmark editor dialog.
+* Avoid over-saturating green text in the Colorful Dark theme.
+* Updated UI translations.
+
+## 1.14 (Beta 8)
+* Settings: Added a "User Data" section for export/import and listing bookmarks, feeds, and downloads.
+* Improved behavior of pinned bookmark identities.
+* Indicate a pinned identity with an outline icon in the toolbar.
+* When creating new identities, make it clearer what the scope of usage will be. The UI actions explicitly say "New Identity for Domain" when the default usage will be the entire domain.
+* Page scroll position is kept when loading finishes, if the user already scrolled during loading.
+* Scroll indicators fade away in Settings are other dialogs as expected.
+* Fixed accidental backwards navigation when quickly refreshing the page twice.
+* Fixed "More..." button staying visible in identity creation dialog.
+* Fixed opening downloaded files in another app.
+* Fixed opening Gemini URIs when another app opens Lagrange.
+* Adjusted input field margins.
+
+## 1.14 (Beta 7)
+New features:
+* A bookmark folder can be opened in new tabs, one tab per contained bookmark.
+* New bookmark property "Set identity": use a specific identity when opening the bookmark, but don't apply it persistently on the bookmarked URL.
+
+Changes and enhancements:
+* Revised swipe gestures: back/forward swipe can be started anywhere on the page. Swiping from the left edge brings up the sidebar when in landscape orientation. The sidebar can also be swiped away.
+* MIME types of many new file extensions are recognized (courtesy of John Cowan).
+* Updated UI translations.
+
+Fixes:
+* Schemeless relative URLs no longer assume "gemini" as the scheme, instead using the current page's scheme as default.
+* Opening a feed entry in a background tab will mark is as read, like opening in the foreground does.
+* ANSI escapes 39 and 49 (reset FG/BG color to default) were not working.
+* Fixed a layout issue in the translation dialog.
+* Cleaned up a few UI labels.
+
 ## 1.13 (Beta 6)
 * Enabled audio output. WAV and Ogg Vorbis decoding is supported in this build. NOTE: At the moment, playback is not supported when app is in the background, or when the screen is locked. Also, playback may not start if there is already an active player on the page.
 * Fixed showing error page for an empty server response.

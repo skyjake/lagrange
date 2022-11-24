@@ -2842,8 +2842,8 @@ iWidget *makePreferences_Widget(void) {
             { "padding arg:0.667" },
             { "dropdown device:0 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
-            { "toggle id:prefs.bottomnavbar" },
-            { "toggle id:prefs.bottomtabbar" },
+            { "toggle id:prefs.bottomnavbar text:${LC:prefs.bottomnavbar}" },
+            { "toggle id:prefs.bottomtabbar text:${LC:prefs.bottomtabbar}" },
             { "heading device:2 id:heading.prefs.toolbaractions" },
             { "dropdown device:2 id:prefs.toolbaraction1", 0, 0, (const void *) toolbarActionItems[0] },
             { "dropdown device:2 id:prefs.toolbaraction2", 0, 0, (const void *) toolbarActionItems[1] },
@@ -2914,7 +2914,7 @@ iWidget *makePreferences_Widget(void) {
             { "title id:heading.prefs.network" },
             { "padding arg:0.667" },
             { "toggle id:prefs.decodeurls" },
-            { "input id:prefs.urlsize maxlen:10 selectall:1" },
+            { "input id:prefs.urlsize maxlen:7 selectall:1" },
             { "padding" },
             { "input id:prefs.cachesize maxlen:4 selectall:1 unit:mb" },
             { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
@@ -2945,12 +2945,28 @@ iWidget *makePreferences_Widget(void) {
                                 escape_Color(uiTextDim_ColorId));
 #endif
         }
+        const iMenuItem userPanelItems[] = {
+            { "title id:heading.prefs.user" },
+            { "padding arg:0.667" },
+            { "button text:" export_Icon " " uiTextAction_ColorEscape "${menu.export}", 0, 0, "export" },
+            { "button text:" import_Icon " " uiTextAction_ColorEscape "${menu.import}", 0, 0, "file.open" },
+            { "padding" },
+            { "button text:" book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
+            { "button text:" bookmark_Icon " ${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
+            { "button text:" clock_Icon " ${macos.menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
+            { "padding" },
+            { "button text:" star_Icon " ${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+            { "padding" },
+            { "button text:" download_Icon " ${menu.downloads}", 0, 0, "downloads.open" },
+            { NULL }
+        };
         const iMenuItem aboutPanelItems[] = {
             { format_CStr("heading text:%s", cstr_String(aboutText)) },
             { "button text:" clock_Icon " ${menu.releasenotes}", 0, 0, "!open url:about:version" },
             { "padding" },
-            { "button text:" globe_Icon " ${menu.website}", 0, 0, "!open url:https://gmi.skyjake.fi/lagrange" },
-            { "button text:" envelope_Icon " @jk@skyjake.fi", 0, 0, "!open url:https://skyjake.fi/@jk" },
+            { "button text:" globe_Icon " " uiTextAction_ColorEscape "${menu.website}", 0, 0, "!open url:https://gmi.skyjake.fi/lagrange" },
+            { "button text:" person_Icon " " uiTextAction_ColorEscape "@jk@skyjake.fi", 0, 0, "!open default:1 url:https://skyjake.fi/@jk" },
+            { "button text:" envelope_Icon " " uiTextAction_ColorEscape "${menu.email}", 0, 0, "!open default:1 url:mailto:jaakko.keranen@iki.fi" },
             { "padding" },
             { "button text:" info_Icon " ${menu.aboutpages}", 0, 0, "!open url:about:about" },
             { "button text:" bug_Icon " ${menu.debug}", 0, 0, "!open url:about:debug" },
@@ -2969,7 +2985,7 @@ iWidget *makePreferences_Widget(void) {
             { "panel icon:0x1f5da id:heading.prefs.fonts", 0, 0, (const void *) fontPanelItems },
             { "panel icon:0x1f660 id:heading.prefs.style", 0, 0, (const void *) stylePanelItems },
             { "padding" },
-            { "button text:" export_Icon " " uiTextAction_ColorEscape "${menu.export}", 0, 0, "export " },
+            { "panel icon:0x1f4e6 id:heading.prefs.user", 0, 0, (const void *) userPanelItems },
             { "heading id:heading.prefs.support" },
             { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
             { "panel text:" planet_Icon " ${menu.about}", 0, 0, (const void *) aboutPanelItems },
@@ -3339,6 +3355,13 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
         { uiTextAction_ColorEscape "${dlg.bookmark.save}", SDLK_RETURN, KMOD_ACCEPT, "bmed.accept" }
     };
     const iMenuItem actions[] = { dupActions[2], dupActions[3] };
+    /* List of identities, if changing identity is necessary for opening the bookmark. */
+    iArray *identItems = collectNew_Array(sizeof(iMenuItem)); {
+        pushBack_Array(identItems, &(iMenuItem){ "\u2014", 0, 0, "bmed.setident fp:" });
+        pushBack_Array(identItems, &(iMenuItem){ "---" });
+        appendIdentities_MenuItem(identItems, "bmed.setident");
+        pushBack_Array(identItems, &(iMenuItem){ NULL });
+    }
     iWidget *dlg = NULL;
     if (isUsingPanelLayout_Mobile()) {
         const iArray *parentFolderItems = makeBookmarkFolderItems_(iTrue);
@@ -3352,19 +3375,25 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
         };
         const iMenuItem items[] = {
             { "title id:bmed.heading text:${heading.bookmark.edit}" },
-            { "input id:bmed.title text:${dlg.bookmark.title}" },
-            { "dropdown id:bmed.folder text:${dlg.bookmark.folder}", 0, 0,
-              (const void *) constData_Array(parentFolderItems) },
-            { "heading id:dlg.bookmark.url" },
-            { "input id:bmed.url url:1 noheading:1" },
+            { "input id:bmed.title noheading:1 hint:dlg.bookmark.title" },
+            { "input id:bmed.url url:1 noheading:1 hint:dlg.bookmark.url" },
             { "padding" },
+            { "dropdown id:bmed.folder text:"
+              uiTextAction_ColorEscape folder_Icon uiTextStrong_ColorEscape
+              " ${dlg.bookmark.folder}", 0, 0,
+              (const void *) constData_Array(parentFolderItems) },
+            { "padding" },
+            { "dropdown id:bmed.setident text:${LC:dlg.bookmark.identity}", 0, 0,
+              (const void *) constData_Array(identItems) },
+            { "padding" },
+            { "input id:bmed.tags hint:hint.dlg.bookmark.tags text:${dlg.bookmark.tags}" },
+            { "input id:bmed.notes hint:hint.dlg.bookmark.notes text:${dlg.bookmark.notes}" },
             { "input id:bmed.icon maxlen:1 text:${dlg.bookmark.icon}" },
-            { "input id:bmed.tags text:${dlg.bookmark.tags}" },
             { "heading text:${heading.bookmark.tags}" },
-            { "toggle id:bmed.tag.home text:${bookmark.tag.home}" },
-            { "toggle id:bmed.tag.remote text:${bookmark.tag.remote}" },
-            { "toggle device:0 id:bmed.tag.linksplit text:${bookmark.tag.linksplit}" },
-            { "toggle device:1 id:bmed.tag.linksplit text:${bookmark.tag.linksplit}" },
+            { "toggle id:bmed.tag.home text:${LC:bookmark.tag.home}" },
+            { "toggle id:bmed.tag.remote text:${LC:bookmark.tag.remote}" },
+            { "toggle device:0 id:bmed.tag.linksplit text:${LC:bookmark.tag.linksplit}" },
+            { "toggle device:1 id:bmed.tag.linksplit text:${LC:bookmark.tag.linksplit}" },
             { "padding" },
             { NULL }
         };
@@ -3381,7 +3410,8 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
                         "bmed.heading");
         iWidget *headings, *values;
         addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
-        iInputWidget *inputs[4] = { NULL, NULL, NULL, NULL };        
+        iInputWidget *inputs[5];
+        iZap(inputs);
         /* Folder to add to. */ {
             addChild_Widget(headings,
                             iClob(makeHeading_Widget(isFolder ? "${dlg.bookmark.parentfolder}"
@@ -3399,24 +3429,32 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
         if (!isFolder) {
             addDialogInputWithHeading_(headings, values, "${dlg.bookmark.url}",   "bmed.url",   iClob(inputs[1] = new_InputWidget(0)));
             setUrlContent_InputWidget(inputs[1], iTrue);
+            addDialogPadding_(headings, values);
+            makeIdentityDropdown_LabelWidget(
+                headings, values, identItems, "${dlg.bookmark.identity}", "bmed.setident");
             addDialogInputWithHeading_(headings, values, "${dlg.bookmark.tags}",  "bmed.tags",  iClob(inputs[2] = new_InputWidget(0)));
-            addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));
+            addDialogInputWithHeading_(headings, values, "${dlg.bookmark.notes}",  "bmed.notes",  iClob(inputs[3] = new_InputWidget(0)));
+            setHint_InputWidget(inputs[2], "${hint.dlg.bookmark.tags}");
+            setHint_InputWidget(inputs[3], "${hint.dlg.bookmark.notes}");
+            addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[4] = new_InputWidget(1)));            
             /* Buttons for special tags. */
             addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
             iWidget *special = addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
             setFlags_Widget(special, collapse_WidgetFlag, iTrue);
             setId_Widget(special, "bmed.special");
             makeTwoColumnHeading_("${heading.bookmark.tags}", headings, values);
-            addDialogToggle_(headings, values, "${bookmark.tag.home}", "bmed.tag.home");
-            addDialogToggle_(headings, values, "${bookmark.tag.remote}", "bmed.tag.remote");
-            addDialogToggle_(headings, values, "${bookmark.tag.linksplit}", "bmed.tag.linksplit");
+            addDialogToggle_(headings, values, "${LC:bookmark.tag.home}:", "bmed.tag.home");
+            addDialogToggle_(headings, values, "${LC:bookmark.tag.remote}:", "bmed.tag.remote");
+            addDialogToggle_(headings, values, "${bookmark.tag.linksplit}:", "bmed.tag.linksplit");
         }
         arrange_Widget(dlg);
-        for (int i = 0; i < 3; ++i) {
+        const int inputWidth = 100 * gap_UI - headings->rect.size.x;
+        for (int i = 0; i < 4; ++i) {
             if (inputs[i]) {
-                as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
+                as_Widget(inputs[i])->rect.size.x = inputWidth;
             }
         }
+        ((iWidget *) findChild_Widget(dlg, "bmed.setident"))->rect.size.x = inputWidth;
         addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
         addChild_Widget(dlg,
                         iClob(makeDialogButtons_Widget(withDup ? dupActions : actions,
@@ -3430,13 +3468,14 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
     iLabelWidget *folderDrop = findChild_Widget(dlg, "bmed.folder");
     updateDropdownSelection_LabelWidget(folderDrop, format_CStr(" arg:%u", recentFolderId));
     setUserData_Object(folderDrop, get_Bookmarks(bookmarks_App(), recentFolderId));
+    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "bmed.setident"), "bmed.setident fp:");
     return dlg;
 }
 
 void setBookmarkEditorParentFolder_Widget(iWidget *editor, uint32_t folderId) {
     iLabelWidget *button = findChild_Widget(editor, "bmed.folder");
     updateDropdownSelection_LabelWidget(button, format_CStr(" arg:%u", folderId));
-    setUserData_Object(button, get_Bookmarks(bookmarks_App(), folderId));    
+    setUserData_Object(button, get_Bookmarks(bookmarks_App(), folderId));
 }
 
 static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
@@ -3444,15 +3483,26 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
         setBookmarkEditorParentFolder_Widget(editor, arg_Command(cmd));
         return iTrue;
     }
+    else if (equalWidget_Command(cmd, editor, "bmed.setident")) {
+        const iString *fp = string_Command(cmd, "fp");
+        iLabelWidget *setident = findChild_Widget(editor, "bmed.setident");
+        set_String(&as_Widget(setident)->data, fp);
+        updateDropdownSelection_LabelWidget(setident, cstr_String(fp));        
+        return iTrue;
+    }
     if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "bmed.cancel")) {
         if (equal_Command(cmd, "bmed.accept")) {
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
+            const iString *notes = text_InputWidget(findChild_Widget(editor, "bmed.notes"));
+            const iString *ident = &as_Widget(findChild_Widget(editor, "bmed.setident"))->data;
             const iBookmark *folder = userData_Object(findChild_Widget(editor, "bmed.folder"));
             const iString *icon  = collect_String(trimmed_String(text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
             const uint32_t id    = add_Bookmarks(bookmarks_App(), url, title, tags, first_String(icon));
             iBookmark *    bm    = get_Bookmarks(bookmarks_App(), id);
+            set_String(&bm->notes, notes);
+            set_String(&bm->identity, ident);                       
             if (!isEmpty_String(icon)) {
                 bm->flags |= userIcon_BookmarkFlag;
             }
@@ -3732,12 +3782,14 @@ iWidget *makeIdentityCreation_Widget(void) {
                                     SDLK_RETURN,
                                     KMOD_ACCEPT,
                                     "ident.accept" } };
+    const iString *docUrl = url_DocumentWidget(document_App());
     iUrl url;
-    init_Url(&url, url_DocumentWidget(document_App()));
+    init_Url(&url, docUrl);
     const iMenuItem scopeItems[] = {
-        { format_CStr("${dlg.newident.scope.domain}:\n%s", cstr_Rangecc(url.host)), 0, 0, "ident.scope arg:0" },
-        { format_CStr("${dlg.newident.scope.page}:\n%s", cstr_Rangecc(url.path)), 0, 0, "ident.scope arg:1" },
-        { "${dlg.newident.scope.none}", 0, 0, "ident.scope arg:2" },
+        { "${dlg.newident.scope.none}", 0, 0, "ident.scope arg:0" },
+        { format_CStr("${dlg.newident.scope.domain}:\n%s", cstr_Rangecc(url.host)), 0, 0, "ident.scope arg:1" },
+        { format_CStr("${dlg.newident.scope.dir}:\n%s", cstr_Rangecc(urlDirectory_String(docUrl))), 0, 0, "ident.scope arg:2" },
+        { format_CStr("${dlg.newident.scope.page}:\n%s", cstr_Rangecc(url.path)), 0, 0, "ident.scope arg:3" },
         { NULL }
     };
     iWidget *dlg;
@@ -3747,7 +3799,7 @@ iWidget *makeIdentityCreation_Widget(void) {
             { "label text:${dlg.newident.rsa.selfsign}" },
             { "dropdown id:ident.scope text:${dlg.newident.scope}", 0, 0,
               (const void *) scopeItems },
-            { "input id:ident.until hint:hint.newident.date maxlen:19 text:${dlg.newident.until}" },
+            { "input id:ident.until hint:hint.newident.date maxlen:10 text:${dlg.newident.until}" },
             //{ "padding" },
             //{ "toggle id:ident.temp text:${dlg.newident.temp}" },
             //{ "label text:${help.ident.temp}" },

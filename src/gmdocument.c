@@ -1631,10 +1631,10 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         } altHues[iElemCount(hues)] = {
             { 2, 3 },  /*  0: red */
             { 8, 3 },  /*  1: reddish orange */
-            { 0, 7 },  /*  2: yellowish orange */
+            { 0, 6 },  /*  2: yellowish orange */
             { 5, 7 },  /*  3: yellow */
             { 6, 2 },  /*  4: greenish yellow */
-            { 1, 3 },  /*  5: green */
+            { 2, 3 },  /*  5: green */
             { 2, 8 },  /*  6: bluish green */
             { 2, 5 },  /*  7: cyan */
             { 6, 10 }, /*  8: sky blue */
@@ -1653,7 +1653,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         if (d->themeSeed && primIndex == 11 && d->themeSeed & 0x4000000) {
             /* De-pink some sites. */
             primIndex = (primIndex + d->themeSeed & 0xf) % 12;
-        }        
+        }
         
         const int   altIndex[2] = { (d->themeSeed & 0x4) != 0, (d->themeSeed & 0x40) != 0 };
         float       altHue      = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
@@ -1673,7 +1673,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                                   0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
                                   1.0f };
             iHSLColor altBase = { altHue, base.sat, base.lum, 1 };
-
+            
             setHsl_Color(tmBackground_ColorId, base);
 
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
@@ -1893,6 +1893,11 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                             if (primIndex == greenishYellow_Hue || primIndex == green_Hue) {
                                 color.sat *= 0.333f;
                             }
+                        }
+                        else if (i == tmParagraph_ColorId && (primIndex == green_Hue ||
+                                                              primIndex == greenishYellow_Hue)) {
+                            color.sat *= 0.4f;
+                            color.lum += 0.1f;
                         }
                         else if (isText_ColorId(i)) {
                             color.sat = (color.sat + 2) / 3;

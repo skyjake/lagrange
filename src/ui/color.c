@@ -873,6 +873,9 @@ void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
             }
             case 39:
                 fg = get_Color(fgDefault);
+                if (fg_out) {
+                    *fg_out = fg;
+                }
                 break;
             case 40:
             case 41:
@@ -886,6 +889,9 @@ void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
                 break;
             case 49:
                 bg = get_Color(bgDefault);
+                if (bg_out) {
+                    *bg_out = bg;
+                }
                 break;
             case 90:
             case 91:

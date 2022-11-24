@@ -93,8 +93,11 @@ enum iFileVersion {
     addedRecentUrlFlags_FileVersion     = 4,
     bookmarkFolderState_FileVersion     = 5,
     multipleWindows_FileVersion         = 6,
+    documentSetIdentity_FileVersion     = 7,
+    responseIdentity_FileVersion        = 8,
+    recentUrlSetIdentity_FileVersion    = 9,
     /* meta */
-    latest_FileVersion = 6, /* used by state.lgr */
+    latest_FileVersion = 9, /* used by state.lgr */
     idents_FileVersion = 1, /* used by GmCerts/idents.lgr */
 };
 

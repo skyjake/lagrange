@@ -49,6 +49,7 @@ struct Impl_GmResponse {
     iDate              certValidUntil;
     iString            certSubject;
     iTime              when;
+    iBlock             identityFingerprint;
 };
 
 iDeclareTypeConstruction(GmResponse)

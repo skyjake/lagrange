@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-20 04:05+0000\n"
+"PO-Revision-Date: 2022-11-18 11:52+0000\n"
 "Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
 "Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
 "Language: cs\n"
@@ -200,7 +200,7 @@ msgstr "Vybrat vše"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.delete"
-msgstr "Smazat"
+msgstr "Odstranit"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.undo"
@@ -440,7 +440,7 @@ msgid "hint.findtext"
 msgstr "Najít text na stránce"
 
 msgid "status.query.tight"
-msgstr "Dotaz"
+msgstr "Vyhledat"
 
 # megabytes, used as the unit after a number
 msgid "mb"
@@ -949,7 +949,7 @@ msgstr[1] "%d minuty"
 msgstr[2] "%d minut"
 
 msgid "link.newtab"
-msgstr "Otevřít odkaz v nové kartě"
+msgstr "Otevřít odkaz na nové kartě"
 
 msgid "link.newtab.background"
 msgstr "Otevřít odkaz v kartě na pozadí"
@@ -958,7 +958,7 @@ msgid "link.side"
 msgstr "Otevřít odkaz na vedlejší straně"
 
 msgid "link.side.newtab"
-msgstr "Otevřít odkaz v nové kartě na vedlejší straně"
+msgstr "Otevřít odkaz na nové kartě na vedlejší straně"
 
 msgid "link.browser"
 msgstr "Otevřít odkaz ve výchozím prohlížeči"
@@ -1320,7 +1320,7 @@ msgid "keys.link.modkey"
 msgstr "Otevřít odkaz pomocí modifikační klávesy"
 
 msgid "keys.link.homerow.newtab"
-msgstr "Otevírat odkazy v nové kartě pomocí kláves na kterých spočívají prsty"
+msgstr "Otevírat odkazy na nové kartě pomocí kláves na kterých spočívají prsty"
 
 msgid "keys.link.homerow.hover"
 msgstr "Najet na odkaz pomocí kláves na kterých spočívají prsty"
@@ -2248,3 +2248,62 @@ msgstr "Nastavit akci:"
 # Shows where a local file is using the File Manager.
 msgid "menu.reveal.filemgr"
 msgstr "Otevřít v průzkumníku souborů"
+
+msgid "menu.newwindow"
+msgstr "Nové okno"
+
+msgid "heading.archive.userdata"
+msgstr "Archiv uživatelských dat"
+
+msgid "userdata.help"
+msgstr ""
+"Archivy uživatelských dat obsahují exportovanou historii prohlížení, "
+"totožnosti, záložky, nastavení stránek a otisky důvěryhodných serverových "
+"certifikátů. Ty pak mohou být uloženy za účelem zálohování a výměny dat mezi "
+"zařízeními."
+
+msgid "menu.openwindow"
+msgstr "Otevřít v novém okně"
+
+msgid "menu.reopentab"
+msgstr "Otevřít poslední zavřenou kartu"
+
+msgid "menu.export"
+msgstr "Exportovat uživatelská data"
+
+msgid "menu.import"
+msgstr "Importovat uživatelská data…"
+
+msgid "menu.viewformat.plain"
+msgstr "Zobrazit jako prostý text"
+
+msgid "menu.viewformat.gemini"
+msgstr "Zobrazit jako gemtext"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Označit vše níže jako přečtené"
+
+msgid "pageinfo.settings"
+msgstr "Nastavení"
+
+msgid "heading.sitespec"
+msgstr "Nastavení stránky"
+
+msgid "sitespec.ansi"
+msgstr "Upozornění na ANSI uvození:"
+
+msgid "dlg.spartan.upload"
+msgstr "Otevřít editor…"
+
+msgid "menu.paste.go"
+msgstr "Vložit a otevřít"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "O Lagrange"
+
+msgid "menu.folder.opentab"
+msgstr "Otevřít na nových kartách"
+
+msgid "bookmark.folder.delete"
+msgstr "Odstranit složku"

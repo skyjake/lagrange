@@ -226,6 +226,7 @@ static void searchBookmarks_LookupJob_(iLookupJob *d) {
         res->icon            = bm->icon;
         set_String(&res->label, &bm->title);
         set_String(&res->url, &bm->url);
+        set_String(&res->meta, &bm->identity);
         pushBack_PtrArray(&d->results, res);
     }
 }
@@ -554,11 +555,23 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
                 item->fg = uiTextStrong_ColorId;
                 item->font = uiContent_FontId;
                 format_String(&item->text,
-                              "%s %s\u2014 %s",
+                              "%s %s",
                               cstr_String(&res->label),
-                              uiText_ColorEscape,
-                              url);
-                format_String(&item->command, "open url:%s", cstr_String(&res->url));
+                              uiText_ColorEscape);
+                setCStr_String(&item->command, "open");
+                if (!isEmpty_String(&res->meta)) {
+                    appendCStr_String(&item->command, " setident:");
+                    append_String(&item->command, &res->meta);
+                    /* Also include in the visible label. */
+                    const iGmIdentity *ident = findIdentity_GmCerts(
+                        certs_App(), collect_Block(hexDecode_Rangecc(range_String(&res->meta))));
+                    if (ident) {
+                        appendFormat_String(&item->text, " \u2014 " person_Icon " %s",
+                                            cstr_String(name_GmIdentity(ident)));
+                    }
+                }
+                appendFormat_String(&item->text, " \u2014 %s", url);
+                appendFormat_String(&item->command, " url:%s", cstr_String(&res->url));
                 break;
             }
             case feedEntry_LookupResultType: {
