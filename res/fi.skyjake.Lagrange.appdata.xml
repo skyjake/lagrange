@@ -45,6 +45,33 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.14" date="2022-11-24">
+            <description>
+                <p>Changes in v1.14:</p>
+                <ul>
+                    <li>A bookmark folder can be opened in new tabs, in the same window or a new one, one tab per bookmark.</li>
+                    <li>Pinned bookmark identities. A simpler way to use identities. When the "Pinned identity" property is set on a bookmark, opening the bookmark causes the selected identity to be "pinned" to the tab: while you stay on the same site, the identity remains in use when opening links. However, when opening a link to another site, a new tab gets opened. (The old way of per-URL identities is still available, too.)</li>
+                    <li>New identities can be created for use in the current directory (as opposed to domain or page).</li>
+                    <li>Option `--dump` (`-d`) to print contents of URLs/paths to stdout. Metadata is printed to stderr.</li>
+                    <li>Option `--dump-identity` (`-I`) selects the identity to use with `--dump`.</li>
+                    <li>Option `--replace-tab URL` opens a URL, replacing contents of the active tab.</li>
+                    <li>Option `--user DIR` (`-U`) to set the directory where user data is stored.</li>
+                    <li>When creating new identities, make it clearer what the scope of usage will be. The UI actions explicitly say "New Identity for Domain" when the default usage will be the entire domain.</li>
+                    <li>URLs opened via system-level handlers always open a new tab, like URLs opened via the command line.</li>
+                    <li>MIME types of many new file extensions are recognized (courtesy of John Cowan).</li>
+                    <li>The regular expression library PCRE2 is preferred over PCRE, if available. The older library is in maintenance mode.</li>
+                    <li>Updated UI translations.</li>
+                    <li>Accidental backwards navigation when quickly refreshing the page twice.</li>
+                    <li>Page scroll position is kept when loading finishes, if the user already scrolled during loading.</li>
+                    <li>Schemeless relative URLs no longer assume "gemini" as the scheme, instead using the current page's scheme as default.</li>
+                    <li>Opening a feed entry in a background tab will mark is as read, like opening in the foreground does.</li>
+                    <li>ANSI escapes 39 and 49 (reset FG/BG color to default) were not working.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.14.0</url>
+        </release>
         <release version="1.13.8" date="2022-11-03">
             <description>
                 <p>Changes in v1.13.8:</p>
