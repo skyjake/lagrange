@@ -8,6 +8,7 @@
 
 ## 1.14.1
 * Fixed possible crash when closing a tab with the outline sidebar visible.
+* Fixed hang when setting a folder's parent to itself in the Edit Folder dialog.
 
 ## 1.14
 New features:

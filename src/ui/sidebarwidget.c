@@ -1687,7 +1687,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 if (findWidget_Root(dlgId)) {
                     return iTrue;
                 }
-                iWidget *dlg = makeBookmarkEditor_Widget(isFolder_Bookmark(bm), iTrue);
+                iWidget *dlg = makeBookmarkEditor_Widget(isFolder_Bookmark(bm)
+                                                         ? id_Bookmark(bm) : 0, iTrue);
                 setId_Widget(dlg, dlgId);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &bm->title);
                 if (!isFolder_Bookmark(bm)) {
