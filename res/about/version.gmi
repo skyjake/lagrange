@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.14.1
+* Fixed possible crash when closing a tab with the outline sidebar visible.
+
 ## 1.14
 New features:
 * A bookmark folder can be opened in new tabs, in the same window or a new one, one tab per bookmark.
