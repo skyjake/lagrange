@@ -3348,6 +3348,9 @@ static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator) {
 }
 
 iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
+    if (isFolder) {
+        withDup = iFalse;
+    }
     const iMenuItem dupActions[] = {
         { "${menu.dup}", 0, 0, "bmed.dup" },
         { "---" },
@@ -3454,7 +3457,10 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
                 as_Widget(inputs[i])->rect.size.x = inputWidth;
             }
         }
-        ((iWidget *) findChild_Widget(dlg, "bmed.setident"))->rect.size.x = inputWidth;
+        iWidget *setIdent = findChild_Widget(dlg, "bmed.setident");
+        if (setIdent) {
+            setIdent->rect.size.x = inputWidth;
+        }
         addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
         addChild_Widget(dlg,
                         iClob(makeDialogButtons_Widget(withDup ? dupActions : actions,
