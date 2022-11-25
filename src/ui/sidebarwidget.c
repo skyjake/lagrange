@@ -2212,7 +2212,10 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     iPaint p;
     init_Paint(&p);
     if (d->mode == documentOutline_SidebarMode) {
-        makePaletteGlobal_GmDocument(document_DocumentWidget(document_App()));
+        iDocumentWidget *doc = document_App();
+        if (doc) {
+            makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
+        }
     }
     if (!isPortraitPhone_App()) { /* this would erase page contents during transition on the phone */
         if (flags_Widget(w) & visualOffset_WidgetFlag &&
