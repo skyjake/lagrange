@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.14 (Beta 10)
+* Fixed tab with pinned identity not closing if it's the last tab that's being closed.
+
 ## 1.14 (Beta 9)
 * Fixed pinned identity being forgotten when navigating to parent/root.
 * Improved layout of the bookmark editor dialog.
