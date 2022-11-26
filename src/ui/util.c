@@ -3328,7 +3328,7 @@ static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator, uint32_t
         i,
         list_Bookmarks(bookmarks_App(), cmpTree_Bookmark, isBookmarkFolder_, NULL)) {
         const iBookmark *bm = i.ptr;
-        if (id_Bookmark(bm) == omitFolderId) {
+        if (id_Bookmark(bm) == omitFolderId || hasParent_Bookmark(bm, omitFolderId)) {
             continue;
         }
         iString *title = collect_String(copy_String(&bm->title));
