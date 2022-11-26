@@ -3320,7 +3320,7 @@ static iBool isBookmarkFolder_(void *context, const iBookmark *bm) {
     return isFolder_Bookmark(bm);
 }
 
-static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator) {
+static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator, uint32_t omitFolderId) {
     iArray *folders = new_Array(sizeof(iMenuItem));
     pushBack_Array(folders, &(iMenuItem){ "\u2014", 0, 0, "dlg.bookmark.setfolder arg:0" });
     iConstForEach(
@@ -3328,6 +3328,9 @@ static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator) {
         i,
         list_Bookmarks(bookmarks_App(), cmpTree_Bookmark, isBookmarkFolder_, NULL)) {
         const iBookmark *bm = i.ptr;
+        if (id_Bookmark(bm) == omitFolderId) {
+            continue;
+        }
         iString *title = collect_String(copy_String(&bm->title));
         for (const iBookmark *j = bm; j && j->parentId; ) {
             j = get_Bookmarks(bookmarks_App(), j->parentId);
@@ -3347,7 +3350,8 @@ static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator) {
     return collect_Array(folders); 
 }
 
-iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
+iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
+    const iBool isFolder = (folderId != 0);
     if (isFolder) {
         withDup = iFalse;
     }
@@ -3367,7 +3371,7 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
     }
     iWidget *dlg = NULL;
     if (isUsingPanelLayout_Mobile()) {
-        const iArray *parentFolderItems = makeBookmarkFolderItems_(iTrue);
+        const iArray *parentFolderItems = makeBookmarkFolderItems_(iTrue, folderId);
         const iMenuItem folderItems[] = {
             { "title id:bmed.heading text:${heading.bookmark.editfolder}" },
             { "input id:bmed.title text:${dlg.bookmark.title}" },
@@ -3419,7 +3423,7 @@ iWidget *makeBookmarkEditor_Widget(iBool isFolder, iBool withDup) {
             addChild_Widget(headings,
                             iClob(makeHeading_Widget(isFolder ? "${dlg.bookmark.parentfolder}"
                                                               : "${dlg.bookmark.folder}")));
-            const iArray *folderItems = makeBookmarkFolderItems_(iFalse);
+            const iArray *folderItems = makeBookmarkFolderItems_(iFalse, folderId);
             iLabelWidget *folderButton;
             setId_Widget(addChildFlags_Widget(values,
                                          iClob(folderButton = makeMenuButton_LabelWidget(
@@ -3533,7 +3537,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
 }
 
 iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, iChar icon) {
-    iWidget *dlg = makeBookmarkEditor_Widget(iFalse, iFalse);
+    iWidget *dlg = makeBookmarkEditor_Widget(0, iFalse);
     setId_Widget(dlg, "bmed.create");
     setTextCStr_LabelWidget(findChild_Widget(dlg, "bmed.heading"),
                             uiHeading_ColorEscape "${heading.bookmark.add}");

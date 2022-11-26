@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-10-23 20:52+0000\n"
+"PO-Revision-Date: 2022-11-25 12:44+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -1550,7 +1550,7 @@ msgid "dlg.bookmark.folder"
 msgstr "Cartella:"
 
 msgid "heading.bookmark.tags"
-msgstr "Proprietà"
+msgstr "Comportamento"
 
 msgid "heading.addfolder"
 msgstr "Aggiungi Cartella"
@@ -2458,4 +2458,19 @@ msgid "hint.dlg.bookmark.notes"
 msgstr "note private in forma libera"
 
 msgid "dlg.bookmark.identity"
-msgstr "Imposta l'identità:"
+msgstr "Fissa l'identità:"
+
+msgid "menu.identity.newdomain"
+msgstr "Nuova Identità per il Dominio…"
+
+msgid "dlg.newident.scope.dir"
+msgstr "Directory Corrente"
+
+msgid "heading.prefs.user"
+msgstr "Dati Utente"
+
+msgid "ident.unset"
+msgstr "Rimuovi"
+
+msgid "menu.email"
+msgstr "Contatta via Email"

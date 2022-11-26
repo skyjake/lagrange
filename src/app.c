@@ -3910,6 +3910,7 @@ iBool handleCommand_App(const char *cmd) {
         iWidget *tabs = findWidget_App("doctabs");
         /* Can't close the last tab on mobile. */
         if (isMobile_Platform() && tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
+            postCommand_App("document.unsetident"); /* implicit unpinning since a tab is closing */
             postCommand_App("navigate.home");
             return iTrue;
         }

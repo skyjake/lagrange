@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.14.1
+* Fixed possible crash when closing a tab with the outline sidebar visible.
+* Fixed hang when setting a folder's parent to itself in the Edit Folder dialog.
+* macOS: "Settings" menu item was disabled on Ventura.
+* Updated UI translations.
+
 ## 1.14
 New features:
 * A bookmark folder can be opened in new tabs, in the same window or a new one, one tab per bookmark.

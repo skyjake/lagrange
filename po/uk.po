@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-08-31 17:52+0000\n"
+"PO-Revision-Date: 2022-11-25 12:44+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -1293,7 +1293,7 @@ msgid "dlg.bookmark.icon"
 msgstr "Значок:"
 
 msgid "heading.bookmark.tags"
-msgstr "Властивості"
+msgstr "Поведінка"
 
 msgid "heading.addfolder"
 msgstr "Додати теку"
@@ -2536,7 +2536,22 @@ msgid "bookmark.folder.delete"
 msgstr "Видалити теку з закладками"
 
 msgid "dlg.bookmark.identity"
-msgstr "Призначити ідентичність:"
+msgstr "Закріплена ідентичність:"
 
 msgid "hint.dlg.bookmark.tags"
 msgstr "слова, розділені проміжком"
+
+msgid "heading.prefs.user"
+msgstr "Користувацькі дані"
+
+msgid "ident.unset"
+msgstr "Відкріпити"
+
+msgid "menu.email"
+msgstr "Написати листа"
+
+msgid "menu.identity.newdomain"
+msgstr "Нова ідентичність для домену…"
+
+msgid "dlg.newident.scope.dir"
+msgstr "Поточний каталог"

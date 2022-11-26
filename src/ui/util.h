@@ -380,7 +380,7 @@ iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
 iWidget *   makePreferences_Widget          (void);
 void        updatePreferencesLayout_Widget  (iWidget *prefs);
 
-iWidget *   makeBookmarkEditor_Widget       (iBool isFolder, iBool withDup);
+iWidget *   makeBookmarkEditor_Widget       (uint32_t folderId, iBool withDup);
 void        setBookmarkEditorParentFolder_Widget(iWidget *editor, uint32_t folderId);
 iWidget *   makeBookmarkCreation_Widget     (const iString *url, const iString *title, iChar icon);
 iWidget *   makeIdentityCreation_Widget     (void);

@@ -594,7 +594,7 @@ void setupApplication_MacOS(void) {
              context:myDel];
     app.delegate = myDel;
     NSMenu *appMenu = [[[NSApp mainMenu] itemAtIndex:0] submenu];
-    NSMenuItem *prefsItem = [appMenu itemWithTitle:@"Preferences…"];
+    NSMenuItem *prefsItem = [appMenu itemAtIndex:2];
     NSMenuItem *quitItem = [appMenu itemAtIndex:[appMenu numberOfItems] - 1];
     prefsItem.target = myDel;
     prefsItem.action = @selector(showPreferences);
