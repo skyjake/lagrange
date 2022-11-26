@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.14.1" date="2022-11-26">
+            <description>
+                <p>Changes in v1.14.1:</p>
+                <ul>
+                    <li>Fixed possible crash when closing a tab with the outline sidebar visible.</li>
+                    <li>Fixed hang when setting a folder's parent to itself in the Edit Folder dialog.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.14.1</url>
+        </release>
         <release version="1.14" date="2022-11-24">
             <description>
                 <p>Changes in v1.14:</p>
