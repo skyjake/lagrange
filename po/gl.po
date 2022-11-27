@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-06-12 05:51+0000\n"
+"PO-Revision-Date: 2022-11-28 06:52+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -1400,7 +1400,7 @@ msgstr[1] "fai %d horas"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "Arte ASCII: a palabra \"Lagrange\" utilizando unha tipografía enorme"
+msgstr "Arte ASCII: a palabra \"Lagrange\" utilizando letras moi grandes"
 
 msgid "menu.title.identity"
 msgstr "Identidade"
@@ -1840,7 +1840,7 @@ msgid "dlg.upload.id.none"
 msgstr "Ningunha"
 
 msgid "heading.bookmark.tags"
-msgstr "Etiquetas especiais"
+msgstr "Comportamento"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Novo cartafol"
@@ -2500,3 +2500,36 @@ msgstr "Abrir Editor…"
 
 msgid "heading.upload.spartan"
 msgstr "Subir con Spartan"
+
+msgid "heading.prefs.user"
+msgstr "Datos da usuaria"
+
+msgid "menu.folder.opentab"
+msgstr "Abrir en Nova lapela"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "termos separados por espazos"
+
+msgid "dlg.bookmark.identity"
+msgstr "Identidade fixada:"
+
+msgid "ident.unset"
+msgstr "Desafixar"
+
+msgid "dlg.bookmark.notes"
+msgstr "Notas:"
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "notas privadas libres"
+
+msgid "menu.email"
+msgstr "Contactar por Email"
+
+msgid "menu.identity.newdomain"
+msgstr "Nova Identidade para o dominio…"
+
+msgid "bookmark.folder.delete"
+msgstr "Eliminar Cartafol do marcador"
+
+msgid "dlg.newident.scope.dir"
+msgstr "Directorio actual"
