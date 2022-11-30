@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.15
+New features:
+
+Changes and enhancements:
+
+Fixes:
+
 ## 1.14.1
 * Fixed possible crash when closing a tab with the outline sidebar visible.
 * Fixed hang when setting a folder's parent to itself in the Edit Folder dialog.
