@@ -259,10 +259,7 @@ struct Impl_RunArgs {
     iBool         justify;    
     int           color;
     int           baseDir;
-    /* TODO: Cleanup using TextMetrics
-       Use TextMetrics output pointer instead of return value & cursorAdvance_out. */
-    iInt2 *       cursorAdvance_out;
-    int *         runAdvance_out;
+    iTextMetrics *metrics_out;
 };
 
-iRect   run_Font        (iBaseFont *d, const iRunArgs *args);
+void    run_Font        (iBaseFont *d, const iRunArgs *args);
