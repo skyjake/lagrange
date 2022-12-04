@@ -371,10 +371,10 @@ static const char *dataDir_App_(void) {
         d->didCheckDataPathOption = iTrue;
         const iCommandLineArg *arg;
         if ((arg = iClob(checkArgumentValues_CommandLine(
-                 &d->args, userDataDir_CommandLineOption, 1))) != NULL) {
+                &d->args, userDataDir_CommandLineOption, 1))) != NULL) {
             iString *execDir = concatCStr_Path(d->execPath, "..");
             d->overrideDataPath = concat_Path(execDir, value_CommandLineArg(arg, 0));
-            delete_String(execDir);            
+            delete_String(execDir);
         }
     }
     if (d->overrideDataPath) {
@@ -393,11 +393,69 @@ static const char *dataDir_App_(void) {
         return userDir;
     }
 #endif
+#if defined (iPlatformAndroid)
+    if (SDL_AndroidGetExternalStorageState() & SDL_ANDROID_EXTERNAL_STORAGE_WRITE) {
+        return SDL_AndroidGetExternalStoragePath();
+    }
+#endif
     if (defaultDataDir_App_) {
         return defaultDataDir_App_;
     }
     return SDL_GetPrefPath("Jaakko Keränen", "fi.skyjake.lagrange");
 }
+
+#if defined (iPlatformAndroid)
+static void copyFile_(const char *srcPath, const char *dstPath) {
+    if (fileExistsCStr_FileInfo(srcPath)) {
+        iFile *src = newCStr_File(srcPath);
+        iFile *dst = newCStr_File(dstPath);
+        if (open_File(src, readOnly_FileMode) && open_File(dst, writeOnly_FileMode)) {
+            iBlock *data = readAll_File(src);
+            write_File(dst, data);
+            delete_Block(data);
+        }
+        iRelease(dst);
+        iRelease(src);
+    }
+}
+
+static void migrateInternalUserDirToExternalStorage_App_(iApp *d) {
+    if (!(SDL_AndroidGetExternalStorageState() & SDL_ANDROID_EXTERNAL_STORAGE_WRITE)) {
+        /* As a fallback, user data will be stored in internal storage instead. */
+        return;
+    }
+    /* This is the app-specific "files" directory in internal storage. */
+    const char *intDataDir = SDL_GetPrefPath("Jaakko Keränen", "fi.skyjake.lagrange");
+    const char *extDataDir = SDL_AndroidGetExternalStoragePath();
+    const char *names[] = {
+        "bookmarks.ini",
+        "prefs.cfg",
+        "state.lgr",
+        "idents.lgr",
+        "trusted.2.txt",
+        "visited.2.txt",
+    };
+    makeDirs_Path(collectNewCStr_String(extDataDir));
+    iForIndices(i, names) {
+        const char *src = concatPath_CStr(intDataDir, names[i]);
+        copyFile_(src, concatPath_CStr(extDataDir, names[i]));
+        remove(src);
+    }
+    /* Copy identities as well. */
+    const char *srcIdents = concatPath_CStr(intDataDir, "idents");
+    if (fileExistsCStr_FileInfo(srcIdents)) {
+        const char *dstIdents = concatPath_CStr(extDataDir, "idents");
+        makeDirs_Path(collectNewCStr_String(dstIdents));
+        iForEach(DirFileInfo, entry, iClob(newCStr_DirFileInfo(srcIdents))) {
+            const iRangecc name = baseName_Path(path_FileInfo(entry.value));
+            const char *src = cstr_String(path_FileInfo(entry.value));
+            copyFile_(src, concatPath_CStr(dstIdents, cstr_Rangecc(name)));
+            remove(src);
+        }
+        rmdir_Path(collectNewCStr_String(srcIdents));
+    }
+}
+#endif
 
 static const char *downloadDir_App_(void) {
 #if defined (iPlatformAndroidMobile)
@@ -997,6 +1055,10 @@ static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
 
 static void init_App_(iApp *d, int argc, char **argv) {
     iBool doDump = iFalse;
+#if defined (iPlatformAndroid)
+    /* Internal storage may be limited in size. */
+    migrateInternalUserDirToExternalStorage_App_(d);
+#endif
 #if defined (iPlatformLinux) && !defined (iPlatformAndroid) && !defined (iPlatformTerminal)
     d->isRunningUnderWindowSystem = !iCmpStr(SDL_GetCurrentVideoDriver(), "x11") ||
                                     !iCmpStr(SDL_GetCurrentVideoDriver(), "wayland");
@@ -1309,6 +1371,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         /* HACK: Force a resize so widgets update their state. */
         resize_MainWindow(d->window, -1, -1);
     }
+#if defined (iPlatformAndroid)
+    /* See if there is something to import from backup. */
+    javaCommand_Android("backup.load");
+#endif
 }
 
 static void deinit_App(iApp *d) {
@@ -1688,6 +1754,11 @@ void processEvents_App(enum iAppEventMode eventMode) {
             case SDL_APP_WILLENTERBACKGROUND:
 #if defined (iPlatformAppleMobile)
                 updateNowPlayingInfo_iOS();
+#endif
+#if defined (iPlatformAndroidMobile)
+                postCommand_App("backup.now"); /* ensure there's a copy of user data */
+                saveIdentities_GmCerts(certs_App());
+                save_Bookmarks(d->bookmarks, dataDir_App_());
 #endif
                 setFreezeDraw_MainWindow(d->window, iTrue);
                 savePrefs_App_(d);
@@ -2260,10 +2331,12 @@ void postCommand_Root(iRoot *d, const char *command) {
     SDL_PushEvent(&ev);
     iWindow *win = d ? d->window : NULL;
 #if defined (iPlatformAndroid)
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s[command] {%d} %s",
-                app_.isLoadingPrefs ? "[Prefs] " : "",
-                (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
-                command);
+    if (!startsWith_CStr(command, "backup.")) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s[command] {%d} %s",
+                    app_.isLoadingPrefs ? "[Prefs] " : "",
+                    (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
+                    command);
+    }
 #else
     if (app_.commandEcho) {
         const int windowIndex =
