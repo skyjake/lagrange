@@ -166,3 +166,4 @@ void            revealPath_App          (const iString *path);
 void            updateCACertificates_App(void);
 void            resetFonts_App          (void);
 void            availableFontsChanged_App(void);
+void            commitFile_App          (const char *path, const char *tempPathWithNewContents); /* latter will be removed */

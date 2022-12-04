@@ -846,10 +846,16 @@ static void saveState_App_(const iApp *d) {
     }
     /* Copy it over to the real file. This avoids truncation if the app for any reason crashes
        before the state file is fully written. */
-    const char *tempName = concatPath_CStr(dataDir_App_(), tempStateFileName_App_);
-    const char *finalName = concatPath_CStr(dataDir_App_(), stateFileName_App_);
-    remove(finalName);
-    rename(tempName, finalName);
+    commitFile_App(concatPath_CStr(dataDir_App_(), stateFileName_App_),
+                   concatPath_CStr(dataDir_App_(), tempStateFileName_App_));
+}
+
+void commitFile_App(const char *path, const char *tempPathWithNewContents) {
+    iString *oldPath = collectNewCStr_String(path);
+    appendCStr_String(oldPath, ".old");
+    rename(path, cstr_String(oldPath));
+    rename(tempPathWithNewContents, path);
+    remove(cstr_String(oldPath));
 }
 
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
