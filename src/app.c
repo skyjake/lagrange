@@ -405,7 +405,8 @@ static const char *dataDir_App_(void) {
 }
 
 #if defined (iPlatformAndroid)
-static void copyFile_(const char *srcPath, const char *dstPath) {
+static iBool copyFile_(const char *srcPath, const char *dstPath) {
+    iBool ok = iFalse;
     if (fileExistsCStr_FileInfo(srcPath)) {
         iFile *src = newCStr_File(srcPath);
         iFile *dst = newCStr_File(dstPath);
@@ -413,10 +414,12 @@ static void copyFile_(const char *srcPath, const char *dstPath) {
             iBlock *data = readAll_File(src);
             write_File(dst, data);
             delete_Block(data);
+            ok = iTrue;
         }
         iRelease(dst);
         iRelease(src);
     }
+    return ok;
 }
 
 static void migrateInternalUserDirToExternalStorage_App_(iApp *d) {
@@ -438,8 +441,9 @@ static void migrateInternalUserDirToExternalStorage_App_(iApp *d) {
     makeDirs_Path(collectNewCStr_String(extDataDir));
     iForIndices(i, names) {
         const char *src = concatPath_CStr(intDataDir, names[i]);
-        copyFile_(src, concatPath_CStr(extDataDir, names[i]));
-        remove(src);
+        if (copyFile_(src, concatPath_CStr(extDataDir, names[i]))) {
+            remove(src);
+        }
     }
     /* Copy identities as well. */
     const char *srcIdents = concatPath_CStr(intDataDir, "idents");
@@ -449,8 +453,9 @@ static void migrateInternalUserDirToExternalStorage_App_(iApp *d) {
         iForEach(DirFileInfo, entry, iClob(newCStr_DirFileInfo(srcIdents))) {
             const iRangecc name = baseName_Path(path_FileInfo(entry.value));
             const char *src = cstr_String(path_FileInfo(entry.value));
-            copyFile_(src, concatPath_CStr(dstIdents, cstr_Rangecc(name)));
-            remove(src);
+            if (copyFile_(src, concatPath_CStr(dstIdents, cstr_Rangecc(name)))) {
+                remove(src);
+            }
         }
         rmdir_Path(collectNewCStr_String(srcIdents));
     }
