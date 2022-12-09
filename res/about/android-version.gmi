@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.14 (Beta 11)
+* Try to keep user data safe in unusual situations. Bookmarks and identities are saved via a system API, while also ensuring that data written to storage is not truncated. NOTE: Uninstalling the app will still delete everything, because user data is only stored locally.
+* User data files are now stored in external storage, if available.
+* Fixed determining actual name of files opened via the system file picker. This was sometimes preventing importing archived user data, for instance.
+
 ## 1.14 (Beta 10)
 * Fixed tab with pinned identity not closing if it's the last tab that's being closed.
 * Fixed hang when setting a folder's parent to itself in the Edit Folder dialog.

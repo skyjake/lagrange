@@ -154,8 +154,9 @@ iBool filterInsideFolder_Bookmark(void *context, const iBookmark *bm) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const char *oldFileName_Bookmarks_ = "bookmarks.txt";
-static const char *fileName_Bookmarks_    = "bookmarks.ini"; /* since v1.7 (TOML subset) */
+static const char *oldFileName_Bookmarks_  = "bookmarks.txt";
+static const char *fileName_Bookmarks_     = "bookmarks.ini"; /* since v1.7 (TOML subset) */
+static const char *tempFileName_Bookmarks_ = "bookmarks.ini.tmp";
 
 struct Impl_Bookmarks {
     iMutex *  mtx;
@@ -491,13 +492,16 @@ void serialize_Bookmarks(const iBookmarks *d, iStream *out) {
 }
 
 void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
+    const char *tempPath = concatPath_CStr(dirPath, tempFileName_Bookmarks_);
+    const char *finalPath = concatPath_CStr(dirPath, fileName_Bookmarks_);
     lock_Mutex(d->mtx);
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_));
+    iFile *f = newCStr_File(tempPath);
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         serialize_Bookmarks(d, stream_File(f));
     }
     iRelease(f);
     unlock_Mutex(d->mtx);
+    commitFile_App(finalPath, tempPath);
 }
 
 static iRangei orderRange_Bookmarks_(const iBookmarks *d) {

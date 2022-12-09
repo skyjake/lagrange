@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "android.h"
 #include "app.h"
+#include "export.h"
 #include "resources.h"
 #include "ui/command.h"
 #include "ui/metrics.h"
@@ -29,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/window.h"
 
 #include <the_Foundation/archive.h>
+#include <the_Foundation/buffer.h>
 #include <the_Foundation/commandline.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -225,6 +227,27 @@ int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
     return d->numLines * lineHeight_Text(d->font);
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
+static int userBackupTimer_;
+
+static uint32_t backupUserData_Android_(uint32_t interval, void *data) {
+    userBackupTimer_ = 0;
+    iUnused(interval, data);
+    /* This runs in a background thread. We don't want to block the UI thread for saving. */
+    iExport *backup = new_Export();
+    generatePartial_Export(backup, bookmarks_ExportFlag | identitiesAndTrust_ExportFlag);
+    iBuffer *buf = new_Buffer();
+    openEmpty_Buffer(buf);
+    serialize_Archive(archive_Export(backup), stream_Buffer(buf));
+    delete_Export(backup);
+    iString *enc = base64Encode_Block(data_Buffer(buf));
+    iRelease(buf);
+    javaCommand_Android("backup.save data:%s", cstr_String(enc));
+    delete_String(enc);
+    return 0;
+}
+
 iBool handleCommand_Android(const char *cmd) {
     if (equal_Command(cmd, "android.input.changed")) {
         const int id = argLabel_Command(cmd, "id");
@@ -281,6 +304,30 @@ iBool handleCommand_Android(const char *cmd) {
         if (mw) {
             setKeyboardHeight_MainWindow(mw, arg_Command(cmd));
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.changed") ||
+             equal_Command(cmd, "idents.changed") ||
+             equal_Command(cmd, "backup.now")) {
+        SDL_RemoveTimer(userBackupTimer_);
+        userBackupTimer_ = SDL_AddTimer(1000, backupUserData_Android_, NULL);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "backup.found")) {
+        iString *data = suffix_Command(cmd, "data");
+        iBlock *decoded = base64Decode_Block(utf8_String(data));
+        delete_String(data);
+        iArchive *archive = new_Archive();
+        if (openData_Archive(archive, decoded)) {
+            iExport *backup = new_Export();
+            if (load_Export(backup, archive)) {
+                import_Export(backup, ifMissing_ImportMethod, all_ImportMethod,
+                              none_ImportMethod, none_ImportMethod, none_ImportMethod);
+            }
+            delete_Export(backup);
+        }
+        iRelease(archive);
+        delete_Block(decoded);
         return iTrue;
     }
     return iFalse;

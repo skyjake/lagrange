@@ -28,9 +28,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 extern const char *mimeType_Export;
 
 iDeclareType(Export)
-iDeclareTypeConstruction(Export)    
+iDeclareTypeConstruction(Export)
+
+enum iExportFlags {
+    bookmarks_ExportFlag          = iBit(1),
+    identitiesAndTrust_ExportFlag = iBit(2),
+    visited_ExportFlag            = iBit(3),
+    siteSpec_ExportFlag           = iBit(4),
+    everything_ExportFlag         = 0xff,
+};
     
-void    generate_Export (iExport *);
+void    generate_Export         (iExport *);
+void    generatePartial_Export  (iExport *, int dataFlags);
+
 iBool   load_Export     (iExport *, const iArchive *archive);
 void    import_Export   (const iExport *,
                          enum iImportMethod bookmarks,
