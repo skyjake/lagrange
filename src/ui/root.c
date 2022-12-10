@@ -677,16 +677,22 @@ static uint32_t updateReloadAnimation_Root_(uint32_t interval, void *root) {
     return interval;
 }
 
-static void setReloadLabel_Root_(iRoot *d, iBool animating) {
-    iLabelWidget *label = findChild_Widget(d->widget, "reload");
-    updateTextCStr_LabelWidget(label, animating ? loadAnimationCStr_() : reloadCStr_);
+static void setReloadLabel_Root_(iRoot *d, const iDocumentWidget *doc) {
+    const iBool   isOngoing = isRequestOngoing_DocumentWidget(doc);
+    const iBool   isAuto    = isAutoReloading_DocumentWidget(doc) && !isOngoing;
+    iLabelWidget *label     = findChild_Widget(d->widget, "reload");
+    updateTextCStr_LabelWidget(label, isOngoing ? loadAnimationCStr_() : reloadCStr_);
+    setBackgroundColor_Widget(as_Widget(label), isAuto ? uiBackground_ColorId : none_ColorId);
+    setTextColor_LabelWidget(label, isAuto ? uiTextAction_ColorId : uiText_ColorId);    
+    setOutline_LabelWidget(label, isAuto);
     if (isTerminal_Platform()) {
-        showCollapsed_Widget(as_Widget(label), animating);
+        showCollapsed_Widget(as_Widget(label), isOngoing);
     }
 }
 
 static void checkLoadAnimation_Root_(iRoot *d) {
-    const iBool isOngoing = isRequestOngoing_DocumentWidget(document_Root(d));
+    const iDocumentWidget *doc       = document_Root(d);
+    const iBool            isOngoing = isRequestOngoing_DocumentWidget(doc);
     if (isOngoing && !d->loadAnimTimer) {
         d->loadAnimTimer = SDL_AddTimer(loadAnimIntervalMs_, updateReloadAnimation_Root_, d);
     }
@@ -694,7 +700,7 @@ static void checkLoadAnimation_Root_(iRoot *d) {
         SDL_RemoveTimer(d->loadAnimTimer);
         d->loadAnimTimer = 0;
     }
-    setReloadLabel_Root_(d, isOngoing);
+    setReloadLabel_Root_(d, doc);
 }
 
 void updatePadding_Root(iRoot *d) {

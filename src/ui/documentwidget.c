@@ -3352,6 +3352,10 @@ iBool isSetIdentityRetained_DocumentWidget(const iDocumentWidget *d, const iStri
     return equalRangeCase_Rangecc(urlRoot_String(d->mod.url), urlRoot_String(dstUrl));
 }
 
+iBool isAutoReloading_DocumentWidget(const iDocumentWidget *d) {
+    return d->mod.reloadInterval != never_RelodPeriod;
+}
+
 static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     url = canonicalUrl_String(url);
     if (!equal_String(d->mod.url, url)) {
@@ -4915,6 +4919,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.autoreload.set") && document_App() == d) {
         d->mod.reloadInterval = arg_Command(cmd);
+        /* Ensure that the indicator gets updated. */
+        postCommandf_Root(get_Root(), "window.reload.update root:%p", get_Root());
     }
     else if (equalWidget_Command(cmd, w, "document.dismiss")) {
         const iString *site = collectNewRange_String(urlRoot_String(d->mod.url));

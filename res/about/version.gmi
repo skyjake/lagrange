@@ -8,6 +8,7 @@
 
 ## 1.15
 New features:
+* Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
 
 Changes and enhancements:
 
