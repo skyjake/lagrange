@@ -4030,10 +4030,14 @@ iBool handleCommand_App(const char *cmd) {
         }
         const iBool isSplit = numRoots_Window(get_Window()) > 1;
         if (tabCount_Widget(tabs) > 1 || isSplit) {
-            iDocumentWidget *closed = (iDocumentWidget *) removeTabPage_Widget(tabs, index);
-            pushClosedTabUrl_App_(d, url_DocumentWidget(closed));
-            cancelAllRequests_DocumentWidget(closed);
-            destroy_Widget(as_Widget(closed)); /* released later */
+            if (index != iInvalidPos) {
+                iAssert(doc);
+                iDocumentWidget *closed = (iDocumentWidget *) removeTabPage_Widget(tabs, index);
+                iAssert(closed);
+                pushClosedTabUrl_App_(d, url_DocumentWidget(closed));
+                cancelAllRequests_DocumentWidget(closed);
+                destroy_Widget(as_Widget(closed)); /* released later */
+            }
             if (index == tabCount_Widget(tabs)) {
                 index--;
             }
