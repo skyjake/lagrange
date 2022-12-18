@@ -3858,6 +3858,10 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
        is moved to the bottom, when swiping back.
     */
     iWidget *w = as_Widget(d);
+    if (!prefs_App()->edgeSwipe &&
+        startsWith_CStr(cmd, "edgeswipe.") && argLabel_Command(cmd, "edge")) {
+        return iFalse;
+    }
     /* The swipe animation is implemented in a rather complex way. It utilizes both cached
        GmDocument content and temporary underlay/overlay DocumentWidgets. Depending on the
        swipe direction, the DocumentWidget `d` may wait until the finger is released to actually
@@ -5175,10 +5179,10 @@ static void finishWheelSwipe_DocumentWidget_(iDocumentWidget *d, iBool aborted) 
 
 static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_MouseWheelEvent *ev) {
     iWidget *w = as_Widget(d);
-    /*if (deviceType_App() != desktop_AppDeviceType) {
-        return iFalse;
-    }*/
     if (~flags_Widget(w) & horizontalOffset_WidgetFlag) {
+        return iFalse;
+    }
+    if (!prefs_App()->pageSwipe) {
         return iFalse;
     }
     iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);

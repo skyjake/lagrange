@@ -1463,6 +1463,9 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 if (d->flags & (leftEdgeDraggable_WidgetFlag | rightEdgeDraggable_WidgetFlag) &&
                     isVisible_Widget(d) && ~d->flags & disabled_WidgetFlag &&
                     equal_Command(cmd, "edgeswipe.moved")) {
+                    if (!prefs_App()->edgeSwipe && argLabel_Command(cmd, "edge")) {
+                        return iTrue; /* edge swiping should be ignored */
+                    }
                     /* Check the side. */
                     const int side = argLabel_Command(cmd, "side");
                     if ((side == 1 && d->flags & leftEdgeDraggable_WidgetFlag) ||

@@ -91,6 +91,8 @@ enum iPrefsBool {
     markdownAsSource_PrefsBool,
     
     skipIndexPageOnParentNavigation_PrefsBool,
+    edgeSwipe_PrefsBool,
+    pageSwipe_PrefsBool,
     
     /* Network */
     decodeUserVisibleURLs_PrefsBool,
@@ -157,6 +159,8 @@ struct Impl_Prefs {
             iBool markdownAsSource;
             
             iBool skipIndexPageOnParentNavigation;
+            iBool edgeSwipe; /* mobile: one can swipe from edges to navigate */
+            iBool pageSwipe; /* mobile: one can swipe over the page to navigate */
             
             /* Network */
             iBool decodeUserVisibleURLs;

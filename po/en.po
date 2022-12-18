@@ -1640,6 +1640,12 @@ msgstr "Menu Bar"
 msgid "prefs.evensplit"
 msgstr "Split tabs evenly:"
 
+msgid "prefs.swipe.edge"
+msgstr "Swiping from edge:"
+
+msgid "prefs.swipe.page"
+msgstr "Swiping on page:"
+
 msgid "prefs.hidetoolbarscroll"
 msgstr "Hide toolbar on scroll:"
 
