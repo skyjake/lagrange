@@ -255,7 +255,7 @@ void serialize_GmCerts(const iGmCerts *d, iStream *trusted, iStream *identsMeta)
         iConstForEach(StringHash, i, d->trusted) {
             const iTrustEntry *trust = value_StringHashNode(i.value);
             format_String(&line,
-                          "%s %ld %s\n",
+                          "%s %lld %s\n",
                           cstr_String(key_StringHashConstIterator(&i)),
                           integralSeconds_Time(&trust->validUntil),
                           cstrCollect_String(hexEncode_Block(&trust->fingerprint)));
