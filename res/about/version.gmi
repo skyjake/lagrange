@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.14.2
+* Fixed inconsistent spacing after level 1 headings.
+
 ## 1.14.1
 * Fixed possible crash when closing a tab with the outline sidebar visible.
 * Fixed hang when setting a folder's parent to itself in the Edit Folder dialog.
