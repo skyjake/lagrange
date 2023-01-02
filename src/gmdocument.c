@@ -707,7 +707,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         0.0f, 0.25f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.25f, 1.0f, 0.5f, 1.5f, 0.5f, 0.25f, 0.25f
+        0.0f, 0.25f, 1.0f, 0.5f, 1.0f, 0.5f, 0.25f, 0.25f
     };
     static const char *arrow           = rightArrowhead_Icon;
     static const char *envelope        = envelope_Icon;
