@@ -11,6 +11,7 @@ New features:
 * Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
 
 Changes and enhancements:
+* GTK: Request dark window theme if the app UI color theme is dark.
 
 Fixes:
 

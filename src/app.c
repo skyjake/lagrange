@@ -84,6 +84,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformMsys)
 #   include "win32.h"
 #endif
+#if defined (LAGRANGE_ENABLE_X11_XLIB)
+#   include "x11.h"
+#endif
 #if SDL_VERSION_ATLEAST(2, 0, 14)
 #   include <SDL_misc.h>
 #endif
@@ -2016,6 +2019,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #endif
 #if defined (iPlatformMsys)
                     handleCommand_Win32(command_UserEvent(&ev));
+#endif
+#if defined (LAGRANGE_ENABLE_X11_XLIB)
+                    handleCommand_X11(command_UserEvent(&ev));
 #endif
                     if (isMetricsChange_UserEvent(&ev)) {
                         listWindows_App_(d, &windows);
