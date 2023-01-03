@@ -8,6 +8,7 @@
 
 ## 1.14.2
 * Fixed inconsistent spacing after level 1 headings.
+* Fixed a potential crash when using musl libc.
 
 ## 1.14.1
 * Fixed possible crash when closing a tab with the outline sidebar visible.
