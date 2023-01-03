@@ -36,10 +36,11 @@ void setDarkWindowTheme_SDLWindow(SDL_Window *d, iBool setDark) {
     if (SDL_GetWindowWMInfo(d, &wmInfo)) {
         Display *   dpy   = wmInfo.info.x11.display;
         Window      wnd   = wmInfo.info.x11.window;
-        Atom        prop  = XInternAtom(dpy, "_GTK_THEME_VARIANT", False);        
+        Atom        prop  = XInternAtom(dpy, "_GTK_THEME_VARIANT", False);
+        Atom        u8    = XInternAtom(dpy, "UTF8_STRING", False);
         const char *value = setDark ? "dark" : "light";
-        XChangeProperty(dpy, wnd, prop, XA_STRING, 8, PropModeReplace,
-                        (unsigned char *) value, strlen(value));
+        XChangeProperty(dpy, wnd, prop, u8, 8, PropModeReplace,
+                        (unsigned char *) value, strlen(value));        
     }
 }
 
