@@ -1788,7 +1788,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
                 setRoot_Widget(i.object, w->roots[0]);
             }
             setFocus_Widget(NULL);
-            delete_Root(w->roots[1]);
+            iRoot *rootBeingDeleted = w->roots[1];
             w->roots[1] = NULL;
             w->keyRoot = w->roots[0];
             /* Move the deleted root's tabs to the first root. */
@@ -1803,6 +1803,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             setFlags_Widget(findWidget_Root("navbar.unsplit"), hidden_WidgetFlag, iTrue);
             postCommandf_App("tabs.switch id:%s", cstr_String(id_Widget(constAs_Widget(curPage))));
             iRelease(tabs);
+            delete_Root(rootBeingDeleted);
         }
         else if (oldCount == 1 && splitMode) {
             /* Add a second root. */
