@@ -1816,6 +1816,9 @@ msgstr "Gemini"
 msgid "prefs.mono.gopher"
 msgstr "Gopher"
 
+msgid "prefs.gopher.gemstyle"
+msgstr "Styling on Gopher:"
+
 msgid "prefs.boldlink"
 msgstr "Bold links:"
 

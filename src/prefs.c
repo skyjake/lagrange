@@ -116,6 +116,7 @@ void init_Prefs(iPrefs *d) {
     d->quoteIcon         = iTrue;
     d->centerShortDocs   = iTrue;
     d->plainTextWrap     = iTrue;
+    d->geminiStyledGopher = iTrue;
     d->imageStyle        = original_ImageStyle;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;

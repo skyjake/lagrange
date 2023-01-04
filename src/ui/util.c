@@ -2899,8 +2899,9 @@ iWidget *makePreferences_Widget(void) {
             { "radio horizontal:1 id:prefs.linewidth", 0, 0, (const void *) lineWidthItems },
             { "padding" },
             { "toggle id:prefs.justify" },
-            { "toggle id:prefs.plaintext.wrap" },
             { "toggle id:prefs.biglede" },
+            { "toggle id:prefs.plaintext.wrap" },
+            { "toggle id:prefs.gopher.gemstyle" },
             { "padding" },
             { "input id:prefs.linespacing maxlen:5" },
             { "input id:prefs.tabwidth maxlen:3" },
@@ -3243,8 +3244,9 @@ iWidget *makePreferences_Widget(void) {
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
         addDialogToggle_(headings, values, "${prefs.justify}", "prefs.justify");
 #endif
-        addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
         addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
+        addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
+        addDialogToggle_(headings, values, "${prefs.gopher.gemstyle}", "prefs.gopher.gemstyle");
         addDialogPadding_(headings, values);
         addPrefsInputWithHeading_(headings, values, "prefs.tabwidth", iClob(new_InputWidget(5)));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.quoteicon}")));

@@ -329,6 +329,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.dataurl.openimages", &d->prefs.openDataUrlImagesOnLoad },
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
+        { "prefs.gopher.gemstyle", &d->prefs.geminiStyledGopher },
         { "prefs.hoverlink", &d->prefs.hoverLink },
         { "prefs.justify", &d->prefs.justifyParagraph },
         { "prefs.markdown.viewsource", &d->prefs.markdownAsSource },
@@ -3144,6 +3145,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         d->prefs.markdownAsSource = arg_Command(cmd) != 0;
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.gopher.gemstyle.changed")) {
+        d->prefs.geminiStyledGopher = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
              equal_Command(cmd, "prefs.mono.gopher.changed")) {
         const iBool isSet = (arg_Command(cmd) != 0);
@@ -4115,6 +4120,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.evensplit"), d->prefs.evenSplit);
         setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.edge"), d->prefs.edgeSwipe);
         setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.page"), d->prefs.pageSwipe);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.gopher.gemstyle"), d->prefs.geminiStyledGopher);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);

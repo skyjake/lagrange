@@ -111,6 +111,7 @@ enum iPrefsBool {
     centerShortDocs_PrefsBool,
     
     plainTextWrap_PrefsBool,
+    geminiStyledGopher_PrefsBool,
     
     /* Meta */
     max_PrefsBool
@@ -179,6 +180,7 @@ struct Impl_Prefs {
             iBool centerShortDocs;
             
             iBool plainTextWrap;
+            iBool geminiStyledGopher;
         };
     };
     /* UI state (belongs to state.lgr...) */
