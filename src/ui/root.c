@@ -244,6 +244,10 @@ void deinit_Root(iRoot *d) {
     delete_PtrArray(d->onTop);
     delete_PtrSet(d->pendingDestruction);
     delete_Audience(d->visualOffsetsChanged);
+    if (d->loadAnimTimer) {
+        SDL_RemoveTimer(d->loadAnimTimer);
+        d->loadAnimTimer = 0;
+    }
 }
 
 void setCurrent_Root(iRoot *root) {
