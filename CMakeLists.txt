@@ -304,7 +304,7 @@ if (ENABLE_IPC)
         src/ipc.h
     )
 endif ()
-if (ENABLE_X11_XLIB AND XLIB_FOUND)
+if (ENABLE_X11_XLIB AND XLIB_FOUND AND NOT APPLE AND NOT MSYS)
     list (APPEND SOURCES
         src/x11.c
         src/x11.h

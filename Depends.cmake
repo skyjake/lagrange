@@ -191,7 +191,7 @@ if (ENABLE_WINSPARKLE)
     message (STATUS "Using WinSparkle: ${WINSPARKLE_DLL}")
 endif ()
 
-if (ENABLE_X11_XLIB AND NOT ENABLE_TUI)
+if (ENABLE_X11_XLIB AND NOT ENABLE_TUI AND NOT APPLE AND NOT MSYS)
     find_package (X11)
     if (X11_FOUND)
         set (XLIB_FOUND YES)
