@@ -77,13 +77,14 @@ void draw_IndicatorWidget_(const iIndicatorWidget *d) {
         if (isLight_ColorTheme(colorTheme_App())) {
             colors[0] = black_ColorId;
         }
-        fillRect_Paint(&p,
-                       (iRect){ addY_I2(topLeft_Rect(rect),
-                                        /* Active root indicator is also a line at the top, 
-                                           so need a little offset if in split view. */
-                                        numRoots_Window(window_Widget(d)) > 1 ? gap_UI / 2 : 0),
-                                init_I2(pos * width_Rect(rect), gap_UI / 3) },
-                       colors[isCompleted_IndicatorWidget_(d) ? 1 : 0]);
+        fillRect_Paint(
+            &p,
+            (iRect){ addY_I2(topLeft_Rect(rect),
+                             /* Active root indicator is also a line at the top,
+                                so need a little offset if in split view. */
+                             numRoots_Window(window_Widget(d)) > 1 ? gap_UI / 2 : (gap_UI / 4)),
+                     init_I2(pos * width_Rect(rect), gap_UI / 3) },
+            colors[isCompleted_IndicatorWidget_(d) ? 1 : 0]);
     }
 }
 
