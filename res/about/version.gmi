@@ -15,6 +15,7 @@ Changes and enhancements:
 * GTK: Request dark window theme if the app UI color theme is dark.
 
 Fixes:
+* Page load progress indicator was being obscured by active split marker in split view.
 
 ## 1.14.1
 * Fixed possible crash when closing a tab with the outline sidebar visible.
