@@ -34,6 +34,9 @@ if (ANDROID)
     set (ANDROID_BUILD_DATE "2022-12-05")
 endif ()
 
+# Load modules from the source tree
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 # Defaults that depend on environment.
 set (DEFAULT_RESIZE_DRAW ON)
 if (HAIKU OR ANDROID)
@@ -71,9 +74,9 @@ option (ENABLE_SPARKLE          "Use Sparkle for automatic updates (macOS)" OFF)
 option (ENABLE_WEBP             "Use libwebp to decode .webp images (via pkg-config)" ON)
 option (ENABLE_WINSPARKLE       "Use WinSparkle for automatic updates (Windows)" OFF)
 
-include (BuildType.cmake)
-include (Resources.cmake)
-include (Depends.cmake)
+include (BuildType)
+include (Resources)
+include (Depends)
 include (CheckCCompilerFlag)
 
 check_c_compiler_flag (-Werror=incompatible-pointer-types CFLAG_INCOMPATIBLE_POINTER_TYPES)

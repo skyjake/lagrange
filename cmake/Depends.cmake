@@ -1,12 +1,12 @@
 find_package (PkgConfig)
 
 if (IOS)
-    include (Depends-iOS.cmake)
+    include (Depends-iOS)
     return ()
 endif ()
 
 if (ANDROID)
-    include (Depends-Android.cmake)
+    include (Depends-Android)
     return ()
 endif ()
 
