@@ -42,6 +42,7 @@ struct Impl_LabelWidget {
     int     kmods;
     iChar   icon;
     int     forceFg;
+    int     iconColor;
     iString command;
     iClick  click;
     struct {
@@ -300,6 +301,13 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     }
     if (colorEscape == uiTextCaution_ColorId) {
         *icon = *meta = colorEscape;
+    }
+    if (d->iconColor != none_ColorId) {
+        *icon = d->iconColor;
+        if ((*icon >= brown_ColorId && *icon <= blue_ColorId) && !isDarkTheme) {
+            /* Auto-adjust absolute color IDs to suit the UI theme. */
+            (*icon)--; /* make it darker */
+        }
     }
     if (isHover) {
         if (isFrameless) {
@@ -601,6 +609,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     iZap(d->flags);
     d->font = uiLabel_FontId;
     d->forceFg = none_ColorId;
+    d->iconColor = none_ColorId;
     d->icon = 0;
     d->labelOffset = zero_I2();
     initCStr_String(&d->srcLabel, label);
@@ -749,6 +758,10 @@ void setIcon_LabelWidget(iLabelWidget *d, iChar icon) {
         d->icon = icon;
         updateSize_LabelWidget(d);
     }
+}
+
+void setIconColor_LabelWidget(iLabelWidget *d, int color) {
+    d->iconColor = color;
 }
 
 iBool checkIcon_LabelWidget(iLabelWidget *d) {

@@ -330,10 +330,11 @@ iWidget *       makeMenuBar_Widget      (const iMenuItem *topLevelMenus, size_t 
 
 iWidget *       makeTabs_Widget         (iWidget *parent);
 void            setTabBarPosition_Widget(iWidget *tabs, iBool atBottom);
+void            setVerticalTabBar_Widget(iWidget *tabs);
 void            appendTabPage_Widget    (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
-void            appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int shortcut, int kmods);
-iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
-                                              iWidget **values);
+void            appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int iconColor, int shortcut, int kmods);
+iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int iconColor, int shortcut,
+                                              iWidget **headings, iWidget **values);
 void            prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 iWidget *       removeTabPage_Widget    (iWidget *tabs, size_t index); /* returns the page */
 void            resizeToLargestPage_Widget  (iWidget *tabs);
@@ -342,6 +343,7 @@ void            addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, con
 void            setTabPageLabel_Widget  (iWidget *tabs, const iAnyObject *page, const iString *label);
 iWidget *       tabPage_Widget          (iWidget *tabs, size_t index);
 iLabelWidget *  tabPageButton_Widget    (iWidget *tabs, const iAnyObject *page);
+iBool           isVerticalTabBar_Widget (const iWidget *tabs);
 iBool           isTabButton_Widget      (const iWidget *);
 void            moveTabButtonToEnd_Widget(iWidget *tabButton);
 size_t          tabPageIndex_Widget     (const iWidget *tabs, const iAnyObject *page);

@@ -329,10 +329,10 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             setId_Widget(as_Widget(d->input), "upload.text");
             setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI * aspectRatio, -1));
             addChild_Widget(page, iClob(d->input));
-            appendFramelessTabPage_Widget(tabs, iClob(page), "${heading.upload.text}", '1', 0);
+            appendFramelessTabPage_Widget(tabs, iClob(page), "${heading.upload.text}", none_ColorId, '1', 0);
         }
         /* File content. */ {
-            iWidget *page = appendTwoColumnTabPage_Widget(tabs, "${heading.upload.file}", '2', &headings, &values);
+            iWidget *page = appendTwoColumnTabPage_Widget(tabs, "${heading.upload.file}", none_ColorId, '2', &headings, &values);
             setBackgroundColor_Widget(page, uiBackgroundSidebar_ColorId);
             addChildFlags_Widget(headings, iClob(new_LabelWidget("${upload.file.name}", NULL)), frameless_WidgetFlag);
             d->filePathLabel = addChildFlags_Widget(values, iClob(new_LabelWidget(uiTextAction_ColorEscape "${upload.file.drophere}", NULL)), frameless_WidgetFlag);

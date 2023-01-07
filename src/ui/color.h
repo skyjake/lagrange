@@ -272,3 +272,5 @@ enum iColorId   parseEscape_Color       (const char *cstr, const char **endp);
 
 int             accent_Color            (iBool isBright);
 iColor          systemAccent_Color      (void); /* platform-specific impl */
+
+int             color_ColorAccent       (enum iColorAccent, iBool isBright);

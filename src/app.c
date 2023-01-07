@@ -2546,6 +2546,8 @@ static void updatePrefsThemeButtons_(iWidget *d) {
                         selected_WidgetFlag,
                         prefs_App()->accent == i);
     }
+    updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.accent"),
+                                        format_CStr(" arg:%u", prefs_App()->accent));
 }
 
 static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
@@ -2640,11 +2642,14 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommand_App("prefs.changed");
         return iTrue;
     }
+    /*
     else if (equal_Command(cmd, "tabs.changed")) {
         setFlags_Widget(findChild_Widget(d, "prefs.aboutfonts"), hidden_WidgetFlag,
-                        !equal_Rangecc(range_Command(cmd, "id"), "prefs.page.fonts"));
+                        !equal_Rangecc(range_Command(cmd, "id"), "prefs.page.style") &&
+                        !equal_Rangecc(range_Command(cmd, "id"), "prefs.page.appearance"));
         return iFalse;
     }
+    */
     else if (equal_Command(cmd, "uilang")) {
         updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.uilang"),
                                             cstr_String(string_Command(cmd, "id")));

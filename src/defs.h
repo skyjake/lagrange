@@ -254,6 +254,12 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define toggleYes_Icon      check_Icon
 #define toggleNo_Icon       bullet_Icon
 #define spartan_Icon        "\U0001f4aa"
+#define keyboard_Icon       "\u2328"
+#define network_Icon        "\U0001f5a7"
+#define computer_Icon       "\U0001f5b3"
+#define palette_Icon        "\U0001f3a8"
+#define pageLayout_Icon     page_Icon //"\u21b9" //"\U0001F5B9"
+#define fonts_Icon          "\U0001f5da"
 
 #if defined (iPlatformTerminal)
 #   undef page_Icon
