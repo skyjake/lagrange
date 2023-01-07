@@ -129,6 +129,7 @@ enum iWidgetFlag2 {
     visibleOnParentSelected_WidgetFlag2     = iBit(3),
     permanentVisualOffset_WidgetFlag2       = iBit(4), /* usually visual offset overrides hiding */
     commandOnHover_WidgetFlag2              = iBit(5), /* only dispatched to the hovered widget */
+    centerChildrenVertical_WidgetFlag2      = iBit(6), /* pad top and bottom to center children in the middle */
 };
 
 enum iWidgetAddPos {

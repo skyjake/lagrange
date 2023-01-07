@@ -425,9 +425,18 @@ static int widestChild_Widget_(const iWidget *d) {
 }
 
 static void arrange_Widget_(iWidget *);
-static const iBool tracing_ = 0;
+static const iBool tracing_ = iFalse;
 
-#define TRACE(d, ...)   if (tracing_) { printf_Widget_(d, __VA_ARGS__); }
+iLocalDef iBool inTraceScope_(const iWidget *d) {
+    /*for (const iWidget *w = d; w; w = w->parent) {
+        if (!cmp_String(&w->id, "prefs")) {
+            return iTrue;
+        }
+    }*/
+    return iFalse;
+}
+
+#define TRACE(d, ...)   if (tracing_ && inTraceScope_(d)) { printf_Widget_(d, __VA_ARGS__); }
 
 static int depth_Widget_(const iWidget *d) {
     int depth = 0;
@@ -838,6 +847,22 @@ static void arrange_Widget_(iWidget *d) {
         else if (d->flags & resizeWidthOfChildren_WidgetFlag) {
             child->rect.pos.x = pos.x;
             TRACE(d, "child %p set X to %d (not sequential, children being resized)", child, pos.x);
+        }
+    }
+    /* Center children vertically inside a known parent height. */
+    if (childCount &&
+        d->flags2 & centerChildrenVertical_WidgetFlag2 &&
+        ~d->flags & arrangeHeight_WidgetFlag) {
+        /* Move children down to be in the center. */
+        const int top    = d->padding[1];
+        const int bottom = pos.y;
+        const int extra  = bottom_Rect(innerRect_Widget_(d)) - bottom - top;
+        iForEach(ObjectList, i, d->children) {
+            iWidget *child = as_Widget(i.object);
+            if (isCollapsed_Widget_(child) || !isArrangedPos_Widget_(child)) {
+                continue;
+            }
+            child->rect.pos.y += extra / 2;
         }
     }
     TRACE(d, "...done positioning children");
