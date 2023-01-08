@@ -231,8 +231,13 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
     }
 }
 
+iLocalDef iBool isRoot_Widget_(const iWidget *d) {
+    return d && d->root && d->root->widget == d;
+}
+
 void destroy_Widget(iWidget *d) {
     if (d) {
+        iAssert(!isRoot_Widget_(d));
         if (isVisible_Widget(d)) {
             postRefresh_App();
         }
@@ -263,7 +268,7 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
             flags &= ~drawKey_WidgetFlag;
         }
         iChangeFlags(d->flags, flags, set);
-        if (flags & keepOnTop_WidgetFlag) {
+        if (flags & keepOnTop_WidgetFlag && !isRoot_Widget_(d)) {
             iPtrArray *onTop = onTop_Root(d->root);
             if (set) {
                 iAssert(indexOf_PtrArray(onTop, d) == iInvalidPos);
@@ -274,11 +279,13 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
                 iAssert(indexOf_PtrArray(onTop, d) == iInvalidPos);
             }
         }
+#if !defined (NDEBUG)
         if (d->flags & arrangeWidth_WidgetFlag &&
             d->flags & resizeToParentWidth_WidgetFlag) {
             printf("[Widget] Conflicting flags for ");
             identify_Widget(d);
         }
+#endif
     }
 }
 
@@ -334,6 +341,7 @@ iWindow *window_Widget(const iAnyObject *d) {
 }
 
 void showCollapsed_Widget(iWidget *d, iBool show) {
+    if (!d) return;
     const iBool isVisible = !(d->flags & hidden_WidgetFlag);
     if ((isVisible && !show) || (!isVisible && show)) {
         setFlags_Widget(d, hidden_WidgetFlag, !show);
@@ -377,8 +385,10 @@ void setRoot_Widget(iWidget *d, iRoot *root) {
         iAssert(indexOf_PtrArray(onTop_Root(root), d) == iInvalidPos);
         /* Move it over the new root's onTop list. */
         removeOne_PtrArray(onTop_Root(d->root), d);
-        iAssert(indexOf_PtrArray(onTop_Root(d->root), d) == iInvalidPos);
-        pushBack_PtrArray(onTop_Root(root), d);
+        if (d != root->widget) {
+            iAssert(indexOf_PtrArray(onTop_Root(d->root), d) == iInvalidPos);
+            pushBack_PtrArray(onTop_Root(root), d);
+        }
     }
     d->root = root;
     iForEach(ObjectList, i, d->children) {
@@ -997,6 +1007,15 @@ void arrange_Widget(iWidget *d) {
         clampCenteredInRoot_Widget_(d);
         notifySizeChanged_Widget_(d);
         d->root->didChangeArrangement = iTrue;
+        if (type_Window(window_Widget(d)) == extra_WindowType &&
+            (d == root_Widget(d) || d->parent == root_Widget(d))) {
+            /* Size of extra windows will change depending on the contents. */
+            iWindow *win = window_Widget(d);
+            SDL_SetWindowSize(win->win,
+                              width_Widget(d) / win->pixelRatio,
+                              height_Widget(d) / win->pixelRatio);
+            win->size = d->rect.size;
+        }
     }
 }
 
@@ -1157,19 +1176,26 @@ void unhover_Widget(void) {
     *hover = NULL;
 }
 
+iLocalDef iBool redispatchEvent_Widget_(iWidget *d, iWidget *dst, const SDL_Event *ev) {
+    if (d != dst) {
+        return dispatchEvent_Widget(dst, ev);
+    }
+    return iFalse;
+}
+
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (!d->parent) {
         if (window_Widget(d)->focus && window_Widget(d)->focus->root == d->root &&
             (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
             /* Root dispatches keyboard events directly to the focused widget. */
-            if (dispatchEvent_Widget(window_Widget(d)->focus, ev)) {
+            if (redispatchEvent_Widget_(d, window_Widget(d)->focus, ev)) {
                 return iTrue;
             }
         }
         /* Root offers events first to widgets on top. */
         iReverseForEach(PtrArray, i, d->root->onTop) {
             iWidget *widget = *i.value;
-            if (isVisible_Widget(widget) && dispatchEvent_Widget(widget, ev)) {
+            if (isVisible_Widget(widget) && redispatchEvent_Widget_(d, widget, ev)) {
 #if 0
                 if (ev->type == SDL_KEYDOWN) {
                     printf("[%p] %s:'%s' (on top) ate the key\n",
@@ -1218,6 +1244,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
            handle the events first. */
         iReverseForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
+            iAssert(child != d); /* cannot be child of self */
             iAssert(child->root == d->root);
             if (child == window_Widget(d)->focus &&
                 (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
@@ -1696,10 +1723,6 @@ void drawBackground_Widget(const iWidget *d) {
 }
 
 int drawCount_;
-
-static iBool isRoot_Widget_(const iWidget *d) {
-    return d == d->root->widget;
-}
 
 iLocalDef iBool isFullyContainedByOther_Rect(const iRect d, const iRect other) {
     if (isEmpty_Rect(other)) {
@@ -2350,7 +2373,7 @@ void refresh_Widget(const iAnyObject *d) {
 
 void raise_Widget(iWidget *d) {
     iPtrArray *onTop = onTop_Root(d->root);
-    if (d->flags & keepOnTop_WidgetFlag) {
+    if (d->flags & keepOnTop_WidgetFlag && !isRoot_Widget_(d)) {
         iAssert(indexOf_PtrArray(onTop, d) != iInvalidPos);
         removeOne_PtrArray(onTop, d);
         pushBack_PtrArray(onTop, d);

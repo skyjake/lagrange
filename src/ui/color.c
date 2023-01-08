@@ -358,6 +358,13 @@ iColor get_Color(int color) {
     return *rgba;
 }
 
+iColor default_Color(int color) {
+    if (color >= 0 && color < iElemCount(darkPalette_)) {
+        return (isDark_ColorTheme(prefs_App()->theme) ? darkPalette_ : lightPalette_)[color];
+    }
+    return (iColor){ 0, 0, 0, 0 };
+}
+
 iColor getMixed_Color(int color1, int color2, float t) {
     return mix_Color(get_Color(color1), get_Color(color2), t);
 }

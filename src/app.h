@@ -41,6 +41,8 @@ iDeclareType(Root)
 iDeclareType(Visited)
 iDeclareType(Window)
 
+typedef void iAnyWindow;
+
 /* Command line options strings. */
 #define dump_CommandLineOption              "dump;d"
 #define dumpIdentity_CommandLineOption      "dump-identity;I"
@@ -134,13 +136,17 @@ void        removeTicker_App    (iTickerFunc ticker, iAny *context);
 
 void        addWindow_App       (iMainWindow *win);
 void        removeWindow_App    (iMainWindow *win);
-void        setActiveWindow_App (iMainWindow *win);
-void        closeWindow_App     (iMainWindow *win);
+void        setActiveWindow_App (iAnyWindow *mainOrExtraWin);
+iWindow *   activeWindow_App    (void);
+void        closeWindow_App     (iWindow *win); /* main or extra window */
 size_t      numWindows_App      (void);
 size_t      windowIndex_App     (const iMainWindow *win);
 iMainWindow *newMainWindow_App  (void);
 const iPtrArray *mainWindows_App(void);
 iMainWindow *    mainWindow_App (void); /* currently active main window */
+
+void        addExtraWindow_App  (iWindow *extra);
+void        removeExtraWindow_App(iWindow *extra);
 void        addPopup_App        (iWindow *popup);
 void        removePopup_App     (iWindow *popup);
 void        closePopups_App     (iBool doForce);

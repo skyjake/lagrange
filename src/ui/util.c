@@ -1383,6 +1383,46 @@ void closeMenu_Widget(iWidget *d) {
     setupMenuTransition_Mobile(d, iFalse);
 }
 
+iWindow *promoteDialogToWindow_Widget(iWidget *dlg) {
+    arrange_Widget(dlg);
+    removeChild_Widget(parent_Widget(dlg), dlg);
+    setVisualOffset_Widget(dlg, 0, 0, 0);
+    setFlags_Widget(dlg, horizontalOffset_WidgetFlag | visualOffset_WidgetFlag |
+                    centerHorizontal_WidgetFlag | overflowScrollable_WidgetFlag, iFalse);
+    /* Check for a dialog heading. */
+    printTree_Widget(dlg);
+    iWidget *child = child_Widget(dlg, 0);
+    iWindow *x = newExtra_Window(dlg);
+    if (isInstance_Object(child, &Class_LabelWidget)) {
+        iLabelWidget *heading = (iLabelWidget *) child;
+        iString *title = copy_String(sourceText_LabelWidget(heading));
+        translate_Lang(title);
+        setTitle_Window(x, title);
+        delete_String(title);
+        iRelease(removeChild_Widget(dlg, heading));
+        arrange_Widget(dlg);
+    }
+    addExtraWindow_App(x);
+    SDL_ShowWindow(x->win);
+    SDL_RaiseWindow(x->win);
+    setActiveWindow_App(x);
+    return x;
+}
+
+iBool isPromoted_Widget(iWidget *dlg) {
+    return type_Window(window_Widget(dlg)) == extra_WindowType;
+}
+
+void destroyDialog_Widget(iWidget *dlg) {
+    if (isPromoted_Widget(dlg)) {
+        /* Promoted dialog. */
+        closeWindow_App(window_Widget(dlg));
+    }
+    else {
+        destroy_Widget(dlg);
+    }
+}
+
 iLabelWidget *findMenuItem_Widget(iWidget *menu, const char *command) {
     iForEach(ObjectList, i, children_Widget(menu)) {
         if (isInstance_Object(i.object, &Class_LabelWidget)) {
@@ -1653,9 +1693,11 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
             iWidget *nextTabs = findChild_Widget(otherRoot_Window(get_Window(), tabs->root)->widget,
                                                  "doctabs");
             iWidget *nextPages = findChild_Widget(nextTabs, "tabs.pages");
-            tabIndex = (int) (dir < 0 ? childCount_Widget(nextPages) - 1 : 0);
-            showTabPage_Widget(nextTabs, child_Widget(nextPages, tabIndex));
-            postCommand_App("keyroot.next");
+            if (nextPages) {
+                tabIndex = (int) (dir < 0 ? childCount_Widget(nextPages) - 1 : 0);
+                showTabPage_Widget(nextTabs, child_Widget(nextPages, tabIndex));
+                postCommand_App("keyroot.next");
+            }
         }
         else {
             showTabPage_Widget(tabs, child_Widget(pages, tabIndex + dir));
@@ -1689,10 +1731,12 @@ iWidget *makeTabs_Widget(iWidget *parent) {
 }
 
 void setTabBarPosition_Widget(iWidget *tabs, iBool atBottom) {
-    iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
-    removeChild_Widget(tabs, buttons);
-    addChildPos_Widget(tabs, buttons, atBottom ? back_WidgetAddPos : front_WidgetAddPos);
-    iRelease(buttons);
+    if (tabs) {
+        iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+        removeChild_Widget(tabs, buttons);
+        addChildPos_Widget(tabs, buttons, atBottom ? back_WidgetAddPos : front_WidgetAddPos);
+        iRelease(buttons);
+    }
 }
 
 void setVerticalTabBar_Widget(iWidget *tabs) {
@@ -1891,10 +1935,12 @@ size_t tabPageIndex_Widget(const iWidget *tabs, const iAnyObject *page) {
 }
 
 const iWidget *currentTabPage_Widget(const iWidget *tabs) {
-    iWidget *pages = findChild_Widget(tabs, "tabs.pages");
-    iConstForEach(ObjectList, i, pages->children) {
-        if (isVisible_Widget(i.object)) {
-            return constAs_Widget(i.object);
+    if (tabs) {
+        iWidget *pages = findChild_Widget(tabs, "tabs.pages");
+        iConstForEach(ObjectList, i, pages->children) {
+            if (isVisible_Widget(i.object)) {
+                return constAs_Widget(i.object);
+            }
         }
     }
     return NULL;

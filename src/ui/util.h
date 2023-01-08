@@ -35,7 +35,8 @@ iDeclareType(Click)
 iDeclareType(Widget)
 iDeclareType(LabelWidget)
 iDeclareType(InputWidget)
-
+iDeclareType(Window)
+    
 iBool           isCommand_SDLEvent  (const SDL_Event *d);
 iBool           isCommand_UserEvent (const SDL_Event *, const char *cmd);
 const char *    command_UserEvent   (const SDL_Event *);
@@ -394,6 +395,10 @@ iWidget *   makeUserDataImporter_Dialog     (const iString *archivePath);
 
 const char *    languageId_String   (const iString *menuItemLabel);
 int             languageIndex_CStr  (const char *langId);
+
+iWindow *   promoteDialogToWindow_Widget    (iWidget *);
+iBool       isPromoted_Widget               (iWidget *);
+void        destroyDialog_Widget            (iWidget *);
 
 /*-----------------------------------------------------------------------------------------------*/
 

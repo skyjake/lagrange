@@ -140,6 +140,8 @@ static const char *defaultDownloadDir_App_ = "~/Downloads";
 
 static const int idleThreshold_App_ = 1000; /* ms */
 
+typedef iWindow iMainOrExtraWindow;
+
 struct Impl_App {
     iCommandLine args;
     iString *    overrideDataPath;
@@ -151,8 +153,9 @@ struct Impl_App {
     iGmCerts *   certs;
     iVisited *   visited;
     iBookmarks * bookmarks;
-    iMainWindow *window; /* currently active MainWindow */
+    iMainOrExtraWindow *window; /* currently active MainWindow or extra Window */
     iPtrArray    mainWindows;
+    iPtrArray    extraWindows;
     iPtrArray    popupWindows;
     iSortedArray tickers; /* per-frame callbacks, used for animations */
     uint32_t     lastTickerTime;
@@ -711,7 +714,7 @@ static iBool loadState_App_(iApp *d) {
         };
         int              numWins       = 0;
         iMainWindow *    win           = NULL;
-        iMainWindow *    currentWin    = d->window;
+        iMainWindow *    currentWin    = as_MainWindow(d->window);
         iArray *         currentTabs; /* two per window (per root per window) */
         iBool            isFirstTab[2];
         currentTabs = collectNew_Array(sizeof(iCurrentTabs));
@@ -729,7 +732,7 @@ static iBool loadState_App_(iApp *d) {
                 win = d->window;
 #else
                 if (numWins == 1) {
-                    win = d->window;
+                    win = as_MainWindow(d->window);
                 }
                 else {
                     win = new_MainWindow(initialWindowRect_App_(d, numWins - 1));
@@ -870,7 +873,7 @@ static void saveState_App_(const iApp *d) {
                 writeData_File(f, magicWindow_App_, 4);
                 writeU32_File(f, win->splitMode);
                 writeU32_File(f, (win->base.keyRoot == win->base.roots[0] ? 0 : 1) |
-                                 (win == d->window ? current_WindowStateFlag : 0));
+                                 (constAs_Window(win) == d->window ? current_WindowStateFlag : 0));
             }
             /* State of UI elements. */ {
                 iForIndices(i, win->base.roots) {
@@ -1305,9 +1308,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
     }
     init_PtrArray(&d->mainWindows);
+    init_PtrArray(&d->extraWindows);
     init_PtrArray(&d->popupWindows);
-    d->window = new_MainWindow(*winRect0); /* first window is always created */
-    addWindow_App(d->window);
+    d->window = (iWindow *) new_MainWindow(*winRect0); /* first window is always created */
+    addWindow_App(as_MainWindow(d->window));
     load_Visited(d->visited, dataDir_App_());
     load_Bookmarks(d->bookmarks, dataDir_App_());
     load_MimeHooks(d->mimehooks, dataDir_App_());
@@ -1378,9 +1382,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         iRelease(openCmds);
     }
     fetchRemote_Bookmarks(d->bookmarks);
-    if (deviceType_App() != desktop_AppDeviceType) {
+    if (deviceType_App() != desktop_AppDeviceType && d->window == main_WindowType) {
         /* HACK: Force a resize so widgets update their state. */
-        resize_MainWindow(d->window, -1, -1);
+        resize_MainWindow(as_MainWindow(d->window), -1, -1);
     }
 #if defined (iPlatformAndroid)
     /* See if there is something to import from backup. */
@@ -1394,6 +1398,11 @@ static void deinit_App(iApp *d) {
     }
     iAssert(isEmpty_PtrArray(&d->popupWindows));
     deinit_PtrArray(&d->popupWindows);
+    iReverseForEach(PtrArray, k, &d->extraWindows) {
+        delete_Window(k.ptr);
+    }
+    iAssert(isEmpty_PtrArray(&d->extraWindows));
+    deinit_PtrArray(&d->extraWindows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     SDL_RemoveTimer(d->sleepTimer);
 #endif
@@ -1681,7 +1690,8 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
     if (eventMode == waitForNewEvents_AppEventMode && isWaitingAllowed_App_(d)) {
         /* We may be allowed to block here until an event comes in. */
         if (isWaitingAllowed_App_(d)) {
-            if (isAppleDesktop_Platform() && d->window && d->window->enableBackBuf) {
+            if (isAppleDesktop_Platform() && d->window && d->window->type == main_WindowType &&
+                as_MainWindow(d->window)->enableBackBuf) {
                 /* SDL Metal workaround: if we block here for too long, there will be a longer
                    ~100ms stutter later on after refresh resumes, when the render pipeline does
                    some kind of an update (?). */
@@ -1703,15 +1713,27 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
 
 static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
     clear_PtrArray(windows);
-    iReverseConstForEach(PtrArray, i, &d->popupWindows) {
-        pushBack_PtrArray(windows, i.ptr);
+    /* Popups. */ {
+        iReverseConstForEach(PtrArray, i, &d->popupWindows) {
+            pushBack_PtrArray(windows, i.ptr);
+        }
     }
+    /* Current active main window. */
     if (d->window) {
         pushBack_PtrArray(windows, d->window);
     }
-    iConstForEach(PtrArray, j, &d->mainWindows) {
-        if (j.ptr != d->window) {
-            pushBack_PtrArray(windows, j.ptr);
+    /* Other extra windows. */ {
+        iReverseConstForEach(PtrArray, i, &d->extraWindows) {
+            if (i.ptr != d->window) {
+                pushBack_PtrArray(windows, i.ptr);
+            }
+        }
+    }
+    /* Other main windows. */ {
+        iConstForEach(PtrArray, i, &d->mainWindows) {
+            if (i.ptr != d->window) {
+                pushBack_PtrArray(windows, i.ptr);
+            }
         }
     }
     return windows;
@@ -1762,7 +1784,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #endif
                 postRefresh_App();
                 break;
-            case SDL_APP_WILLENTERBACKGROUND:
+            case SDL_APP_WILLENTERBACKGROUND: {
 #if defined (iPlatformAppleMobile)
                 updateNowPlayingInfo_iOS();
 #endif
@@ -1771,18 +1793,22 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 saveIdentities_GmCerts(certs_App());
                 save_Bookmarks(d->bookmarks, dataDir_App_());
 #endif
-                setFreezeDraw_MainWindow(d->window, iTrue);
+                iForEach(PtrArray, i, &d->mainWindows) {
+                    setFreezeDraw_MainWindow(*i.value, iTrue);
+                }
                 savePrefs_App_(d);
                 saveState_App_(d);
                 d->isSuspended = iTrue;
                 break;
-            case SDL_APP_TERMINATING:
-                if (d->window) {
-                    setFreezeDraw_MainWindow(d->window, iTrue);
+            }
+            case SDL_APP_TERMINATING: {
+                iForEach(PtrArray, i, &d->mainWindows) {
+                    setFreezeDraw_MainWindow(*i.value, iTrue);
                 }
                 savePrefs_App_(d);
                 saveState_App_(d);
                 break;
+            }
             case SDL_DROPFILE: {
                 if (!d->window) {
                     /* Need to open an empty window now. */
@@ -1952,7 +1978,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                 }
                 /* Per-window processing. */
-                if (!wasUsed && !isEmpty_PtrArray(&d->mainWindows)) {
+                if (!wasUsed && (!isEmpty_PtrArray(&d->mainWindows) ||
+                                 !isEmpty_PtrArray(&d->extraWindows))) {
                     listWindows_App_(d, &windows);
                     iConstForEach(PtrArray, iter, &windows) {
                         iWindow *window = iter.ptr;
@@ -2079,11 +2106,18 @@ static void runTickers_App_(iApp *d) {
         d->lastTickerTime = 0;
         return;
     }
-    iForIndices(i, d->window->base.roots) {
-        iRoot *root = d->window->base.roots[i];
-        if (root) {
-            root->didAnimateVisualOffsets = iFalse;
+    /* Update window state. */ {
+        iPtrArray *winList = listWindows_App();
+        iForEach(PtrArray, i, winList) {
+            iWindow *win = *i.value;
+            iForIndices(i, win->roots) {
+                iRoot *root = win->roots[i];
+                if (root) {
+                    root->didAnimateVisualOffsets = iFalse;
+                }
+            }
         }
+        delete_PtrArray(winList);
     }
     /* Tickers may add themselves again, so we'll run off a copy. */
     iSortedArray *pending = copy_SortedArray(&d->tickers);
@@ -2119,10 +2153,10 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
         }
 #endif
         /* Find the window that is being resized and redraw it immediately. */
-        iConstForEach(PtrArray, i, &d->mainWindows) {
-            const iMainWindow *win = i.ptr;
+        iForEach(PtrArray, i, &d->mainWindows) {
+            iMainWindow *win = i.ptr;
             if (SDL_GetWindowID(win->base.win) == winev->windowID) {
-                drawWhileResizing_MainWindow(d->window, winev->data1, winev->data2);
+                drawWhileResizing_MainWindow(win, winev->data1, winev->data2);
                 break;
             }
         }
@@ -2132,9 +2166,9 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
 
 static int run_App_(iApp *d) {
     /* Initial arrangement. */
-    iForIndices(i, d->window->base.roots) {
-        if (d->window->base.roots[i]) {
-            arrange_Widget(d->window->base.roots[i]->widget);
+    iForIndices(i, d->window->roots) {
+        if (d->window->roots[i]) {
+            arrange_Widget(d->window->roots[i]->widget);
         }
     }
     d->isRunning = iTrue;
@@ -2147,7 +2181,9 @@ static int run_App_(iApp *d) {
         runTickers_App_(d);
         refresh_App();
         /* Change the widget tree while we are not iterating through it. */
-        checkPendingSplit_MainWindow(d->window);
+        if (d->window && d->window->type == main_WindowType) {
+            checkPendingSplit_MainWindow(as_MainWindow(d->window));
+        }
         recycle_Garbage();
     }
     SDL_DelEventWatch(resizeWatcher_, d);
@@ -2175,6 +2211,7 @@ void refresh_App(void) {
                 }
             }
         }
+        listWindows_App_(d, &windows); /* maybe some windows were deleted, too */
     }
     /* TODO: `pendingRefresh` should be window-specific. */
     if (d->warmupFrames || exchange_Atomic(&d->pendingRefresh, iFalse)) {
@@ -2473,9 +2510,16 @@ const iPtrArray *mainWindows_App(void) {
     return &app_.mainWindows;
 }
 
-void setActiveWindow_App(iMainWindow *win) {
+void setActiveWindow_App(iAnyWindow *mainOrExtraWin) {
     iApp *d = &app_;
-    d->window = win;
+    d->window = mainOrExtraWin;
+    if (d->window) {
+        iAssert(d->window->type == main_WindowType || d->window->type == extra_WindowType);
+    }
+}
+
+iWindow *activeWindow_App(void) {
+    return app_.window;
 }
 
 void addPopup_App(iWindow *popup) {
@@ -2486,6 +2530,16 @@ void addPopup_App(iWindow *popup) {
 void removePopup_App(iWindow *popup) {
     iApp *d = &app_;
     removeOne_PtrArray(&d->popupWindows, popup);
+}
+
+void addExtraWindow_App(iWindow *extra) {
+    iApp *d = &app_;
+    pushBack_PtrArray(&d->extraWindows, extra);
+}
+
+void removeExtraWindow_App(iWindow *extra) {
+    iApp *d = &app_;
+    removeOne_PtrArray(&d->extraWindows, extra);
 }
 
 iMimeHooks *mimeHooks_App(void) {
@@ -2638,7 +2692,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
             postCommandf_App("prefs.dialogtab arg:%u",
                              tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
         }
-        destroy_Widget(d);
+        destroyDialog_Widget(d);
         postCommand_App("prefs.changed");
         return iTrue;
     }
@@ -2728,7 +2782,23 @@ iDocumentWidget *document_Root(iRoot *d) {
 }
 
 iDocumentWidget *document_App(void) {
-    return document_Root(get_Root());
+    iDocumentWidget *doc = document_Root(get_Root());
+    if (doc) {
+        return doc;
+    }
+    /* Try another window. */
+    iConstForEach(PtrArray, i, mainWindows_App()) {
+        iWindow *win = *i.value;
+        iForIndices(j, win->roots) {
+            if (win->roots[j]) {
+                doc = document_Root(win->roots[j]);
+                if (doc) {
+                    return doc;
+                }
+            }
+        }
+    }
+    return NULL;
 }
 
 iDocumentWidget *document_Command(const char *cmd) {
@@ -2772,30 +2842,42 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     return doc;
 }
 
-void closeWindow_App(iMainWindow *win) {
+void closeWindow_App(iWindow *win) {
     iApp *d = &app_;
-    iForIndices(r, win->base.roots) {
-        if (win->base.roots[r]) {
-            setTreeFlags_Widget(win->base.roots[r]->widget, destroyPending_WidgetFlag, iTrue);
+    iAssert(win->type == main_WindowType || win->type == extra_WindowType);
+    const iBool isMain = (win->type == main_WindowType);
+    iWindow *activeWindow = d->window;
+    iForIndices(r, win->roots) {
+        if (win->roots[r]) {
+            setTreeFlags_Widget(win->roots[r]->widget, destroyPending_WidgetFlag, iTrue);
         }
     }
-    collect_Garbage(win, (iDeleteFunc) delete_MainWindow);
+    collect_Garbage(win, isMain ? (iDeleteFunc) delete_MainWindow
+                                : (iDeleteFunc) delete_Window);
     postRefresh_App();
-    if (isAppleDesktop_Platform() && size_PtrArray(&d->mainWindows) == 1) {
+    if (isAppleDesktop_Platform() && isMain && size_PtrArray(&d->mainWindows) == 1) {
         /* The one and only window is being closed. On macOS, the app will keep running, which
            means we must save the state of the window now or otherwise it will be lost. A newly
            opened window will use this saved state if it's the only window of the app. */
         saveState_App_(d);        
     }
-    if (d->window == win) {
+    if (activeWindow == win) {
+        d->window = NULL;
         /* Activate another window. */
         iForEach(PtrArray, i, &d->mainWindows) {
-            if (i.ptr != d->window) {
+            if (i.ptr != activeWindow) {
                 SDL_RaiseWindow(i.ptr);
                 setActiveWindow_App(i.ptr);
                 setCurrent_Window(i.ptr);
-                break;
             }
+        }
+    }
+    if (!d->window) {
+        iForEach(PtrArray, j, &d->extraWindows) {
+            iWindow *win = j.ptr;
+            SDL_RaiseWindow(win->win);
+            setActiveWindow_App(win);
+            setCurrent_Window(win);
         }
     }
 }
@@ -2982,7 +3064,8 @@ static const iString *popClosedTabUrl_App_(iApp *d) {
 }
 
 static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
-    const iBool isFrozen = !d->window || d->window->isDrawFrozen;
+    const iBool isFrozen = !d->window ||
+        (d->window->type == main_WindowType && as_MainWindow(d->window)->isDrawFrozen);
     /* Commands related to preferences. */
     if (equal_Command(cmd, "prefs.changed")) {
         savePrefs_App_(d);
@@ -3587,8 +3670,8 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "ipc.signal")) {
         if (argLabel_Command(cmd, "raise")) {
-            if (d->window && d->window->base.win) {
-                SDL_RaiseWindow(d->window->base.win);
+            if (d->window && d->window->win) {
+                SDL_RaiseWindow(d->window->win);
             }
         }
         signal_Ipc(arg_Command(cmd));
@@ -3787,8 +3870,9 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    const iBool isFrozen   = !d->window || d->window->isDrawFrozen;
+    const iBool isFrozen   = isDrawFrozen_Window(d->window);
     const iBool isHeadless = numWindows_App() == 0;
+    const iBool isMainWin  = d->window && d->window->type == main_WindowType;
     if (handleNonWindowRelatedCommand_App_(d, cmd)) {
         return iTrue;
     }
@@ -3804,25 +3888,26 @@ iBool handleCommand_App(const char *cmd) {
                                              suffixPtr_Command(cmd, "where")));
         return iTrue;
     }
-    else if (equal_Command(cmd, "ui.split")) {
+    else if (equal_Command(cmd, "ui.split") && isMainWin) {
         if (argLabel_Command(cmd, "swap")) {
-            swapRoots_MainWindow(d->window);
+            swapRoots_MainWindow(as_MainWindow(d->window));
             return iTrue;
         }
         if (argLabel_Command(cmd, "focusother")) {
-            iWindow *baseWin = &d->window->base;
+            iWindow *baseWin = d->window;
             if (baseWin->roots[1]) {
                 baseWin->keyRoot =
                     (baseWin->keyRoot == baseWin->roots[1] ? baseWin->roots[0] : baseWin->roots[1]);
             }
         }
-        d->window->pendingSplitMode =
+        iMainWindow *mw = as_MainWindow(d->window);
+        mw->pendingSplitMode =
             (argLabel_Command(cmd, "axis") ? vertical_WindowSplit : 0) | (arg_Command(cmd) << 1);
         const char *url = suffixPtr_Command(cmd, "url");
-        setCStr_String(d->window->pendingSplitUrl, url ? url : "");
-        setRange_String(d->window->pendingSplitSetIdent, range_Command(cmd, "setident"));
+        setCStr_String(mw->pendingSplitUrl, url ? url : "");
+        setRange_String(mw->pendingSplitSetIdent, range_Command(cmd, "setident"));
         if (hasLabel_Command(cmd, "origin")) {
-            set_String(d->window->pendingSplitOrigin, string_Command(cmd, "origin"));
+            set_String(mw->pendingSplitOrigin, string_Command(cmd, "origin"));
         }
         postRefresh_App();
         return iTrue;
@@ -3841,9 +3926,9 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "window.fullscreen")) {
-        const iBool wasFull = snap_MainWindow(d->window) == fullscreen_WindowSnap;
-        setSnap_MainWindow(d->window, wasFull ? 0 : fullscreen_WindowSnap);
+    else if (equal_Command(cmd, "window.fullscreen") && isMainWin) {
+        const iBool wasFull = snap_MainWindow(as_MainWindow(d->window)) == fullscreen_WindowSnap;
+        setSnap_MainWindow(as_MainWindow(d->window), wasFull ? 0 : fullscreen_WindowSnap);
         postCommandf_App("window.fullscreen.changed arg:%d", !wasFull);
         return iTrue;
     }
@@ -4094,7 +4179,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "keyroot.next")) {
         if (setKeyRoot_Window(as_Window(d->window),
-                              otherRoot_Window(as_Window(d->window), d->window->base.keyRoot))) {
+                              otherRoot_Window(as_Window(d->window), d->window->keyRoot))) {
             setFocus_Widget(NULL);
         }
         return iTrue;
@@ -4216,6 +4301,10 @@ iBool handleCommand_App(const char *cmd) {
             iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
             postCommand_Widget(button, "panel.open");
         }
+        if (deviceType_App() == desktop_AppDeviceType) {
+            /* Detach into a window if it doesn't fit otherwise. */
+            promoteDialogToWindow_Widget(dlg);
+        }
     }
     else if (equal_Command(cmd, "navigate.home")) {
         /* Look for bookmarks tagged "homepage". */
@@ -4309,6 +4398,9 @@ iBool handleCommand_App(const char *cmd) {
     else if (startsWith_CStr(cmd, "feeds.update.")) {
         const iWidget *navBar = findChild_Widget(get_Window()->roots[0]->widget, "navbar");
         iAnyObject *prog = findChild_Widget(navBar, "feeds.progress");
+        if (!navBar || !prog) {
+            return iFalse;
+        }
         if (equal_Command(cmd, "feeds.update.started") ||
             equal_Command(cmd, "feeds.update.progress")) {
             const int num   = arg_Command(cmd);
@@ -4334,7 +4426,7 @@ iBool handleCommand_App(const char *cmd) {
         /* Set of open tabs has changed. */
         postCommand_App("document.openurls.changed");
         if (deviceType_App() == phone_AppDeviceType) {
-            showToolbar_Root(d->window->base.roots[0], iTrue);
+            showToolbar_Root(d->window->roots[0], iTrue);
         }
         return iFalse;
     }
@@ -4578,20 +4670,21 @@ iStringSet *listOpenURLs_App(void) {
 }
 
 iMainWindow *mainWindow_App(void) {
-    return app_.window;
+    iApp *d = &app_;
+    if (d->window && d->window->type == main_WindowType) {
+        return as_MainWindow(d->window);
+    }
+    return NULL;
 }
 
 void closePopups_App(iBool doForce) {
+    iUnused(doForce); /* not needed any more? */
     iApp *d = &app_;
     const uint32_t now = SDL_GetTicks();
     iForEach(PtrArray, i, &d->popupWindows) {
         iWindow *win = i.ptr;
-//        if (doForce) {
-//            collect_Garbage(win, (iDeleteFunc) delete_Window);
-//        }
-//        else
-            if (now - win->focusGainedAt > 200) {
-            postCommand_Root(((const iWindow *) i.ptr)->roots[0], "cancel");
+        if (now - win->focusGainedAt > 200) {
+            postCommand_Root(win->roots[0], "cancel");
         }
     }
 }

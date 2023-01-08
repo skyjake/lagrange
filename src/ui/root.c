@@ -318,7 +318,7 @@ iPtrArray *onTop_Root(iRoot *d) {
     return d->onTop;
 }
 
-static iBool handleRootCommands_(iWidget *root, const char *cmd) {
+iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     iUnused(root);
     if (equal_Command(cmd, "menu.open")) {
         iWidget *button = pointer_Command(cmd);
@@ -1386,7 +1386,7 @@ void createUserInterface_Root(iRoot *d) {
     /* Children of root cover the entire window. */
     setFlags_Widget(
         root, resizeChildren_WidgetFlag | fixedSize_WidgetFlag | focusRoot_WidgetFlag, iTrue);
-    setCommandHandler_Widget(root, handleRootCommands_);
+    setCommandHandler_Widget(root, handleRootCommands_Widget);
     iWidget *div = makeVDiv_Widget();
     setId_Widget(div, "navdiv");
     addChild_Widget(root, iClob(div));
@@ -1937,7 +1937,9 @@ static void setupMovableElements_Root_(iRoot *d) {
     iWidget *navMenu   = findChild_Widget(d->widget, "navbar.menu");
     setFlags_Widget(menuBar, hidden_WidgetFlag, !prefs->menuBar);
     setFlags_Widget(navMenu, hidden_WidgetFlag, prefs->menuBar);
-    iChangeFlags(navBar->flags2, permanentVisualOffset_WidgetFlag2, iFalse);
+    if (navBar) {
+        iChangeFlags(navBar->flags2, permanentVisualOffset_WidgetFlag2, iFalse);
+    }
     if (prefs->bottomNavBar) {
         if (deviceType_App() == phone_AppDeviceType) {
             /* When at the bottom, the navbar is at the top of the bottombar, and gets fully hidden
@@ -1948,7 +1950,7 @@ static void setupMovableElements_Root_(iRoot *d) {
                 iRelease(navBar);
             }
         }
-        else {
+        else if (navBar) {
             /* On desktop/tablet, a bottom navbar is at the bottom of the main layout. */
             removeChild_Widget(navBar->parent, navBar);
             addChildPos_Widget(div, navBar, back_WidgetAddPos);
@@ -1958,7 +1960,7 @@ static void setupMovableElements_Root_(iRoot *d) {
                          deviceType_App() == tablet_AppDeviceType);
         }
     }
-    else {
+    else if (navBar) {
         /* In the top navbar layout, the navbar is always the first (or second) child. */
         removeChild_Widget(navBar->parent, navBar);
         if (winBar) {
@@ -1974,20 +1976,22 @@ static void setupMovableElements_Root_(iRoot *d) {
         }
         iRelease(navBar);
     }
-    iChangeFlags(tabBar->flags2, permanentVisualOffset_WidgetFlag2, prefs->bottomTabBar);
-    /* Tab button frames. */
-    iForEach(ObjectList, i, children_Widget(tabBar)) {
-        if (isInstance_Object(i.object, &Class_LabelWidget)) {
-            setNoTopFrame_LabelWidget(i.object, !prefs->bottomTabBar);
-            setNoBottomFrame_LabelWidget(i.object, prefs->bottomTabBar);
+    if (tabBar) {
+        iChangeFlags(tabBar->flags2, permanentVisualOffset_WidgetFlag2, prefs->bottomTabBar);
+        /* Tab button frames. */
+        iForEach(ObjectList, i, children_Widget(tabBar)) {
+            if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                setNoTopFrame_LabelWidget(i.object, !prefs->bottomTabBar);
+                setNoBottomFrame_LabelWidget(i.object, prefs->bottomTabBar);
+            }
         }
-    }
-    /* Adjust safe area paddings. */
-    if (deviceType_App() == tablet_AppDeviceType && prefs->bottomTabBar && !prefs->bottomNavBar) {
-        tabBar->padding[3] = bottomSafeInset_Mobile();
-    }
-    else {
-        tabBar->padding[3] = 0;
+        /* Adjust safe area paddings. */
+        if (deviceType_App() == tablet_AppDeviceType && prefs->bottomTabBar && !prefs->bottomNavBar) {
+            tabBar->padding[3] = bottomSafeInset_Mobile();
+        }
+        else {
+            tabBar->padding[3] = 0;
+        }
     }
     setTabBarPosition_Widget(docTabs, prefs->bottomTabBar);
     arrange_Widget(d->widget);
@@ -2205,9 +2209,11 @@ iRect visibleRect_Root(const iRoot *d) {
         visRect = intersect_Rect(visRect, init_Rect(usable.x, usable.y, usable.w, usable.h));        
     }
 #endif
-    const int keyboardHeight = get_MainWindow()->keyboardHeight;
-    if (keyboardHeight > bottom) {
-        adjustEdges_Rect(&visRect, 0, 0, -keyboardHeight + bottom, 0);
+    if (get_MainWindow()) {
+        const int keyboardHeight = get_MainWindow()->keyboardHeight;
+        if (keyboardHeight > bottom) {
+            adjustEdges_Rect(&visRect, 0, 0, -keyboardHeight + bottom, 0);
+        }
     }
     return visRect;
 }
