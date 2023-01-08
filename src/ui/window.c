@@ -928,7 +928,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 /* Returned to foreground, may have lost buffered content. */
                 invalidate_Window(d);
                 postCommand_App("window.unfreeze");
-#endif
+#endif                
             }
             return iFalse;
         case SDL_WINDOWEVENT_TAKE_FOCUS:
@@ -1135,7 +1135,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
                 postCommand_App("quit");
             }
             else {
-                closeWindow_App(d);   
+                closeWindow_App(as_Window(d));   
             }
 #endif            
             return iTrue;
@@ -1557,10 +1557,14 @@ void draw_MainWindow(iMainWindow *d) {
             }
         }
         else {
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
             back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
                                      ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
                                  ? uiAnnotation_ColorId
                                  : uiSeparator_ColorId);
+#else
+            back = get_Color(uiBackground_ColorId);
+#endif
         }
         unsetClip_Paint(&p); /* update clip to full window */
         SDL_SetRenderDrawColor(w->render, back.r, back.g, back.b, 255);

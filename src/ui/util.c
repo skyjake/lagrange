@@ -1390,7 +1390,6 @@ iWindow *promoteDialogToWindow_Widget(iWidget *dlg) {
     setFlags_Widget(dlg, horizontalOffset_WidgetFlag | visualOffset_WidgetFlag |
                     centerHorizontal_WidgetFlag | overflowScrollable_WidgetFlag, iFalse);
     /* Check for a dialog heading. */
-    printTree_Widget(dlg);
     iWidget *child = child_Widget(dlg, 0);
     iWindow *x = newExtra_Window(dlg);
     if (isInstance_Object(child, &Class_LabelWidget)) {
