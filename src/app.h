@@ -143,6 +143,7 @@ size_t      numWindows_App      (void);
 size_t      windowIndex_App     (const iMainWindow *win);
 iMainWindow *newMainWindow_App  (void);
 const iPtrArray *mainWindows_App(void);
+const iPtrArray *regularWindows_App(void);
 iMainWindow *    mainWindow_App (void); /* currently active main window */
 
 void        addExtraWindow_App  (iWindow *extra);

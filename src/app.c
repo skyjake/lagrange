@@ -1359,7 +1359,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         d->lastEventTime = 0;
         d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
         SDL_DisplayMode dispMode;
-        SDL_GetWindowDisplayMode(d->window->base.win, &dispMode);
+        SDL_GetWindowDisplayMode(d->window->win, &dispMode);
         if (dispMode.refresh_rate) {
             d->idleSleepDelayMs = 1000 / dispMode.refresh_rate;
         }
@@ -2508,6 +2508,15 @@ iMainWindow *newMainWindow_App(void) {
 
 const iPtrArray *mainWindows_App(void) {
     return &app_.mainWindows;
+}
+
+const iPtrArray *regularWindows_App(void) {
+    iApp *d = &app_;
+    iPtrArray *wins = copy_Array(mainWindows_App());
+    iConstForEach(PtrArray, i, &d->extraWindows) {
+        pushBack_PtrArray(wins, i.ptr);
+    }
+    return collect_PtrArray(wins);
 }
 
 void setActiveWindow_App(iAnyWindow *mainOrExtraWin) {
