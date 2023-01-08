@@ -587,6 +587,11 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
                info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
     }
 #endif
+#if defined (iPlatformMsys)
+    if (type == extra_WindowType) {
+        enableDarkMode_SDLWindow(d->win);
+    }
+#endif
     drawBlank_Window_(d);
     d->pixelRatio   = pixelRatio_Window_(d); /* point/pixel conversion */
     d->displayScale = displayScale_Window_(d);
@@ -689,7 +694,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         }
 #endif
     }
-#if defined(iPlatformMsys)
+#if defined (iPlatformMsys)
     SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.displayScale, minSize.y * d->base.displayScale);
     useExecutableIconResource_SDLWindow(d->base.win);
     enableDarkMode_SDLWindow(d->base.win);
