@@ -8,6 +8,8 @@
 
 ## 1.15
 New features:
+* Redesigned Preferences dialog with vertical tabs and a new organization of the settings. "Fonts" and "Colors" are removed, and there is a new "Content" tab.
+* Preferences dialog opens as a separate window.
 * Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
 * Gopher: Option to disable Gemini styling on Gopher menu pages. When disabled, whitespace is not normalized and all non-link lines are presented as regular paragraph text.
 
