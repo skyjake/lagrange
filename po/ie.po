@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-09-23 15:52+0000\n"
+"PO-Revision-Date: 2022-11-29 22:52+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1835,7 +1835,7 @@ msgid "dlg.upload.id.none"
 msgstr "Null"
 
 msgid "heading.bookmark.tags"
-msgstr "Proprietás"
+msgstr "Conduida"
 
 msgid "heading.addfolder"
 msgstr "Adjunter un fólder"
@@ -2408,7 +2408,7 @@ msgid "hint.dlg.bookmark.tags"
 msgstr "separat con spacie"
 
 msgid "dlg.bookmark.identity"
-msgstr "Assignar un identitá:"
+msgstr "Fixat identitá:"
 
 msgid "hint.dlg.bookmark.notes"
 msgstr "particulari notes"
@@ -2436,3 +2436,27 @@ msgstr "Re-aperter li ultim carte cludet"
 
 msgid "menu.viewformat.plain"
 msgstr "Viser quam simplic textu"
+
+msgid "dlg.newident.scope.dir"
+msgstr "Actual fólder"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "Ples recargar li págine por controlar mancant glifes denov."
+
+msgid "heading.prefs.user"
+msgstr "Data del usator"
+
+msgid "error.incompleteheader"
+msgstr "Íncomplet cap-linea"
+
+msgid "menu.identity.newdomain"
+msgstr "Nov identitá por un dominia…"
+
+msgid "ident.unset"
+msgstr "Defixar"
+
+msgid "menu.email"
+msgstr "Contacter per e-post"
+
+msgid "heading.sitespec"
+msgstr "Parametres del site"
