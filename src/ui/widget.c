@@ -269,12 +269,17 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
             /* TODO: Tablets should detect if a hardware keyboard is available. */
             flags &= ~drawKey_WidgetFlag;
         }
+        const int64_t oldFlags = d->flags;  
         iChangeFlags(d->flags, flags, set);
         if (flags & keepOnTop_WidgetFlag && !isRoot_Widget_(d)) {
             iPtrArray *onTop = onTop_Root(d->root);
             if (set) {
-                iAssert(indexOf_PtrArray(onTop, d) == iInvalidPos);
-                pushBack_PtrArray(onTop, d);
+                if (oldFlags & keepOnTop_WidgetFlag) {
+                    raise_Widget(d);
+                }
+                else {
+                    pushBack_PtrArray(onTop, d);
+                }
             }
             else {
                 removeOne_PtrArray(onTop, d);

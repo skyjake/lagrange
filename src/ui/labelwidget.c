@@ -112,6 +112,22 @@ static void updateKey_LabelWidget_(iLabelWidget *d) {
     }
 }
 
+static void endSiblingOrderDrag_LabelWidget_(iLabelWidget *d) {
+    iWidget *w = as_Widget(d);
+    if ((w->flags2 & siblingOrderDraggable_WidgetFlag2) && (flags_Widget(w) & dragged_WidgetFlag)) {
+        float dragAmount = (float) w->visualOffset.to / (float) width_Widget(w);
+        if (dragAmount > -0.5f && dragAmount < -0.1f) {
+            dragAmount = -0.5f;
+        }
+        else if (dragAmount < 0.5f && dragAmount > 0.1f) {
+            dragAmount = 0.5f;
+        }
+        postCommand_Widget(w, "tabs.move arg:%d dragged:1", iRound(dragAmount));
+        setVisualOffset_Widget(w, 0, 0, 0);
+        setFlags_Widget(w, dragged_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
+    }
+}
+
 static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
     iWidget *w = &d->widget;
     if (isMetricsChange_UserEvent(ev)) {
@@ -172,13 +188,23 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
                 setFlags_Widget(w, pressed_WidgetFlag, iTrue);
                 refresh_Widget(w);
                 return iTrue;
+            case drag_ClickResult:
+                if (w->flags2 & siblingOrderDraggable_WidgetFlag2) {
+                    setFlags_Widget(w, dragged_WidgetFlag | keepOnTop_WidgetFlag, iTrue);
+                    setVisualOffset_Widget(w, delta_Click(&d->click).x, 0, 0);
+                    refresh_Widget(w);
+                    return iTrue;
+                }
+                break;
             case aborted_ClickResult:
                 setFlags_Widget(w, pressed_WidgetFlag, iFalse);
+                endSiblingOrderDrag_LabelWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
 //            case double_ClickResult:
             case finished_ClickResult:
                 setFlags_Widget(w, pressed_WidgetFlag, iFalse);
+                endSiblingOrderDrag_LabelWidget_(d);
                 trigger_LabelWidget_(d);
                 refresh_Widget(w);
                 setFocus_Widget(NULL);
@@ -404,7 +430,14 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     const enum iColorId colorEscape = parseEscape_Color(cstr_String(&d->label), NULL);
     const iBool isCaution = (colorEscape == uiTextCaution_ColorId);
     if (bg >= 0) {
+        if (flags & dragged_WidgetFlag) {
+            p.alpha = 0x70;
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+        }
         fillRect_Paint(&p, rect, bg);
+        if (flags & dragged_WidgetFlag) {
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+        }
     }
     if (isFocused_Widget(w)) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));

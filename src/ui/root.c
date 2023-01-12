@@ -1687,7 +1687,7 @@ void createUserInterface_Root(iRoot *d) {
         addChildFlags_Widget(div, iClob(mainStack), resizeChildren_WidgetFlag | expand_WidgetFlag |
                                                         unhittable_WidgetFlag);
         iWidget *docTabs = makeTabs_Widget(mainStack);
-        setId_Widget(docTabs, "doctabs");
+        setId_Widget(docTabs, "doctabs");        
         setBackgroundColor_Widget(docTabs, uiBackground_ColorId);
 //        setTabBarPosition_Widget(docTabs, prefs_App()->bottomTabBar);
         iDocumentWidget *doc;
@@ -2079,29 +2079,9 @@ void showToolbar_Root(iRoot *d, iBool show) {
        is a bottom tab bar, even if the URL is at the top. Note that the entire bottom bar may
        be hidden, but the tab bar remains always visible if there are tabs open. */
     if (isLandscape_App() && !prefs->bottomTabBar && !prefs->bottomNavBar) {
-//        setFlags_Widget(bottomBar, hidden_WidgetFlag, iTrue);
         show = iFalse;
-//        setBottomBarPosition_(bottomBar, iFalse, iTrue);
-//        return;
     }
     iWidget *toolBar = findChild_Widget(bottomBar, "toolbar");
-//    iWidget *navBar = findChild_Widget(d->widget, "navbar");
-//    const int height = size_Root(d).y - top_Rect(boundsWithoutVisualOffset_Widget(bottomBar));
-//    float bottomSafe = 0;
-//    const iBool isBottomTabBar = prefs_App()->bottomTabBar;
-//    iWidget *tabBar = NULL;
-//    if (isBottomTabBar) {
-//        tabBar = findChild_Widget(findChild_Widget(d->widget, "doctabs"), "tabs.buttons");
-//        const size_t numPages = childCount_Widget(findChild_Widget(tabs, "tabs.pages"));
-//    }
-//#if defined (iPlatformAppleMobile)
-//    if (isBottomTabBar) {
-//        safeAreaInsets_iOS(NULL, NULL, NULL, &bottomSafe);
-//        if (bottomSafe >= gap_UI) {
-//            bottomSafe -= gap_UI;
-//        }
-//    }
-//#endif
     if (show) {
         setFlags_Widget(bottomBar, hidden_WidgetFlag, iFalse);
     }
@@ -2115,38 +2095,6 @@ void showToolbar_Root(iRoot *d, iBool show) {
     /* The toolbar is only shown when in portrait mode, otherwise buttons are in the navbar. */
     showCollapsed_Widget(toolBar, isPortrait_App());
     updateBottomBarPosition_(bottomBar, iTrue);
-    
-#if 0
-    if (show && (!isVisible_Widget(bottomBar) || (isBottomTabBar && ~flags_Widget(tabBar) & dragged_WidgetFlag))) {
-        setFlags_Widget(bottomBar, hidden_WidgetFlag, iFalse);
-        setVisualOffset_Widget(bottomBar, 0, 200, easeOut_AnimFlag);
-        setVisualOffset_Widget(toolBar, 0, 200, 0);
-        if (prefs_App()->bottomNavBar) {
-            setVisualOffset_Widget(navBar, 0, 200, 0);
-        }
-        if (isBottomTabBar) {
-            /* Tab bar needs to stay visible, too. */
-            setVisualOffset_Widget(tabBar, -bottomBar->rect.size.y, 200, easeOut_AnimFlag);
-            setFlags_Widget(tabBar, dragged_WidgetFlag, iTrue);
-                /* force it to be visible; `dragged` applies the offset even after the animation */
-        }
-    }
-    else if (!show && isVisible_Widget(bottomBar)) {
-        /* Close any menus that open via the toolbar. */
-        closeMenu_Widget(findChild_Widget(findWidget_App("toolbar.navmenu"), "menu"));
-        closeMenu_Widget(findChild_Widget(bottomBar, "toolbar.menu"));
-        setFlags_Widget(bottomBar, hidden_WidgetFlag, iTrue);
-        setVisualOffset_Widget(bottomBar, height - bottomSafe, 200, easeOut_AnimFlag);
-        setVisualOffset_Widget(toolBar, bottomSafe, 200, 0);
-        if (prefs_App()->bottomNavBar) {
-            setVisualOffset_Widget(navBar, bottomSafe, 200, 0);
-        }
-        if (isBottomTabBar) {
-            setVisualOffset_Widget(tabBar, -bottomSafe, 200, easeOut_AnimFlag);
-            tabBar->flags2 |= hiddenWithVisualOffset_WidgetFlag2;
-        }
-    }
-#endif
 }
 
 size_t windowIndex_Root(const iRoot *d) {

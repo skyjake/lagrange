@@ -10,7 +10,7 @@
 New features:
 * Redesigned Preferences dialog with vertical tabs and a new organization of the settings. "Fonts" and "Colors" are removed, and there is a new "Content" tab.
 * Preferences dialog opens as a separate window.
-* Changing order of tabs: added tab context menu items and keyboard shortcuts to move a tab one step left/right.
+* Changing order of tabs: tab buttons can be dragged with the mouse, and tabs can be moved left/right using tab context menu items or keyboard shortcuts.
 * Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
 * Gopher: Option to disable Gemini styling on Gopher menu pages. When disabled, whitespace is not normalized and all non-link lines are presented as regular paragraph text.
 

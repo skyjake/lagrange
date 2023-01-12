@@ -131,6 +131,7 @@ enum iWidgetFlag2 {
     commandOnHover_WidgetFlag2              = iBit(5), /* only dispatched to the hovered widget */
     centerChildrenVertical_WidgetFlag2      = iBit(6), /* pad top and bottom to center children in the middle */
     usedAsPeriodicContext_WidgetFlag2       = iBit(7), /* add_Periodic() called on the widget */
+    siblingOrderDraggable_WidgetFlag2       = iBit(8),
 };
 
 enum iWidgetAddPos {

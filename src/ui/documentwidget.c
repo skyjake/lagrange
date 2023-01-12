@@ -4190,15 +4190,21 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         removeTicker_App(prerender_DocumentWidget_, d);
         return iFalse;
     }
-    else if (equal_Command(cmd, "tabs.move") && d == document_App()) {
-        int dir = iSign(arg_Command(cmd));
-        if (dir) {
-            iWidget *tabs = findWidget_App("doctabs");
-            size_t tabPos = tabPageIndex_Widget(tabs, d);
-            moveTabPage_Widget(tabs, tabPos, tabPos + dir);
-            refresh_Widget(tabs);
+    else if (equal_Command(cmd, "tabs.move")) {
+        const iBool dragged = argLabel_Command(cmd, "dragged") != 0;
+        if ((!dragged && d == document_App()) ||
+            (dragged && /* must be dragging the tab button of this document */
+             pointer_Command(cmd) == tabPageButton_Widget(findParent_Widget(w, "doctabs"), d))) {
+            int steps = arg_Command(cmd);
+            if (steps) {
+                iWidget *tabs = findWidget_App("doctabs");
+                int tabPos = (int) tabPageIndex_Widget(tabs, d);
+                moveTabPage_Widget(tabs, tabPos, iMaxi(0, tabPos + steps));
+                refresh_Widget(tabs);
+            }
+            return iTrue;
         }
-        return iTrue;
+        return iFalse;
     }
     else if (equal_Command(cmd, "tab.created")) {
         /* Space for tab buttons has changed. */

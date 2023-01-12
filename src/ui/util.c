@@ -1768,8 +1768,16 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         addPos);
     checkIcon_LabelWidget((iLabelWidget *) button);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
-    setFlags_Widget(button, commandOnClick_WidgetFlag |
-                                (isVerticalTabs ? alignLeft_WidgetFlag : expand_WidgetFlag), iTrue);
+    setFlags_Widget(button,
+                    commandOnClick_WidgetFlag |
+                        (!isVerticalTabs ? horizontalOffset_WidgetFlag : 0) |
+                        (isVerticalTabs ? alignLeft_WidgetFlag : expand_WidgetFlag),
+                    iTrue);
+    if (!cmp_String(id_Widget(tabs), "doctabs")) {
+        /* Document tabs can be reordered.
+           TODO: Maybe not hardcode the parent ID here? Could check a flag on `tabs`. */
+        button->flags2 |= siblingOrderDraggable_WidgetFlag2;
+    }
     if (prefs_App()->bottomTabBar) {
         setNoBottomFrame_LabelWidget((iLabelWidget *) button, iTrue);
     }
@@ -1820,7 +1828,8 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
 
 void moveTabPage_Widget(iWidget *tabs, size_t index, size_t newIndex) {
     const size_t count = tabCount_Widget(tabs);
-    if (index == newIndex || newIndex >= count) {
+    newIndex = iMin(newIndex, count - 1);
+    if (index == newIndex) {
         return;
     }
     iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
