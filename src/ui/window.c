@@ -1231,7 +1231,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (processEvent_Touch(&event)) {
                 return iTrue;
             }
-            if (event.type == SDL_KEYDOWN && SDL_GetTicks() - d->focusGainedAt < 10) {
+            if (event.type == SDL_KEYDOWN && SDL_GetTicks() - d->focusGainedAt < 100) {
                 /* Suspiciously close to when input focus was received. For example under openbox,
                    closing xterm with Ctrl+D will cause the keydown event to "spill" over to us.
                    As a workaround, ignore these events. */
