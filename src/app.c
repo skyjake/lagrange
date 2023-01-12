@@ -2655,8 +2655,13 @@ static void updateImageStyleButton_(iLabelWidget *button, int style) {
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setupSheetTransition_Mobile(d, iFalse);
-        setUiScale_Window(get_Window(),
-                          toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
+        /* Apply the new UI scaling factor to all non-popup windows. */ {
+            const float uiScale =
+                toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale")));
+            iConstForEach(PtrArray, i, regularWindows_App()) {
+                setUiScale_Window(i.ptr, uiScale);
+            }
+        }
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
         postCommandf_App("downloads path:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.downloads"))));

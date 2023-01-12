@@ -1691,9 +1691,7 @@ void setUiScale_Window(iWindow *d, float uiScale) {
             notifyMetricsChange_Window_(d);
         }
     }
-    else {
-        initialUiScale_ = uiScale;
-    }
+    initialUiScale_ = uiScale; /* used for new windows */
 }
 
 void setFreezeDraw_MainWindow(iMainWindow *d, iBool freezeDraw) {
