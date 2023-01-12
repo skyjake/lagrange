@@ -4196,6 +4196,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             iWidget *tabs = findWidget_App("doctabs");
             size_t tabPos = tabPageIndex_Widget(tabs, d);
             moveTabPage_Widget(tabs, tabPos, tabPos + dir);
+            refresh_Widget(tabs);
         }
         return iTrue;
     }
