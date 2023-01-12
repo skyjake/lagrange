@@ -173,6 +173,9 @@ static int treeSize_Widget_(const iWidget *d, int n) {
 }
 
 void deinit_Widget(iWidget *d) {
+    if (d->flags2 & usedAsPeriodicContext_WidgetFlag2) {
+        remove_Periodic(periodic_App(), d); /* periodic context being deleted */
+    }
 //    const int nt = treeSize_Widget_(d, 0);
 //    const int no = totalCount_Object();
     releaseChildren_Widget(d);
@@ -194,7 +197,6 @@ void deinit_Widget(iWidget *d) {
     }
     if (d->flags & overflowScrollable_WidgetFlag) {
         removeTicker_App(animateOverflowScrollOpacity_Widget_, d);
-        remove_Periodic(periodic_App(), d);
     }
     iWindow *win = d->root->window;
     iAssert(win);
@@ -965,6 +967,9 @@ static void resetArrangement_Widget_(iWidget *d) {
 }
 
 static void notifySizeChanged_Widget_(iWidget *d) {
+    if (d->flags & destroyPending_WidgetFlag) {
+        return;
+    }
     if (class_Widget(d)->sizeChanged && !isEqual_I2(d->rect.size, d->oldSize)) {
         class_Widget(d)->sizeChanged(d);
     }
