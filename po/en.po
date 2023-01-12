@@ -172,6 +172,12 @@ msgstr "Close Tabs To Right"
 msgid "menu.duptab"
 msgstr "Duplicate Tab"
 
+msgid "menu.movetab.left"
+msgstr "Move Tab Left"
+
+msgid "menu.movetab.right"
+msgstr "Move Tab Right"
+
 msgid "menu.split.merge"
 msgstr "Unsplit"
 

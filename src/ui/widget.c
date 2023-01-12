@@ -2014,6 +2014,29 @@ size_t indexOfChild_Widget(const iWidget *d, const iAnyObject *child) {
     return iInvalidPos;
 }
 
+void changeChildIndex_Widget(iWidget *d, iAnyObject *child, size_t newIndex) {
+    size_t oldIndex = 0;
+    iForEach(ObjectList, i, d->children) {
+        if (i.object == child) {
+            ref_Object(child); /* we keep a reference */
+            remove_ObjectListIterator(&i);
+            break;
+        }
+        oldIndex++;
+    }
+    iAssert(oldIndex <= size_ObjectList(d->children));
+    if (isEmpty_ObjectList(d->children) || newIndex == 0) {
+        pushFront_ObjectList(d->children, child);
+    }
+    else {
+        iObjectListIterator iter;
+        init_ObjectListIterator(&iter, d->children);
+        for (size_t i = 1; i < newIndex; i++, next_ObjectListIterator(&iter)) {}
+        insertAfter_ObjectList(d->children, iter.value, child);
+    }
+    deref_Object(child); /* ObjectList has taken a reference */
+}
+
 iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
     if (isHidden_Widget_(d)) {
         return NULL;

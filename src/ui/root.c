@@ -1840,8 +1840,11 @@ void createUserInterface_Root(iRoot *d) {
                 { "${menu.closetab.other}", 0, 0, "tabs.close toleft:1 toright:1" },
                 { barLeftArrow_Icon " ${menu.closetab.left}", 0, 0, "tabs.close toleft:1" },
                 { barRightArrow_Icon " ${menu.closetab.right}", 0, 0, "tabs.close toright:1" },
+                { "---" },
+                { leftAngle_Icon " ${menu.movetab.left}", 0, 0, "tabs.move arg:-1" },
+                { rightAngle_Icon " ${menu.movetab.right}", 0, 0, "tabs.move arg:1" },
             },
-            6);
+            9);
         iWidget *barMenu =
             makeMenu_Widget(root,
                             (iMenuItem[]){

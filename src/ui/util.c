@@ -1818,6 +1818,20 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
     return page;
 }
 
+void moveTabPage_Widget(iWidget *tabs, size_t index, size_t newIndex) {
+    const size_t count = tabCount_Widget(tabs);
+    if (index == newIndex || newIndex >= count) {
+        return;
+    }
+    iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+    iWidget *pages   = findChild_Widget(tabs, "tabs.pages");
+    iWidget *button  = child_Widget(buttons, index);
+    iWidget *page    = child_Widget(pages, index);
+    changeChildIndex_Widget(buttons, button, newIndex);
+    changeChildIndex_Widget(pages, page, newIndex);
+    arrange_Widget(tabs);
+}
+
 void resizeToLargestPage_Widget(iWidget *tabs) {
     if (!tabs) return;
 //    puts("RESIZE TO LARGEST PAGE ...");

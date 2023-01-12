@@ -89,18 +89,21 @@ iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 #if defined (iPlatformTerminal)
 #   define KMOD_PRIMARY     KMOD_CTRL
 #   define KMOD_SECONDARY   KMOD_ALT
+#   define KMOD_TERTIARY    KMOD_CTRL | KMOD_ALT  /* TODO: does this work? */
 #   define KMOD_ACCEPT      KMOD_ALT
 #   define KMOD_UNDO        KMOD_ALT
 #   define KMOD_ZOOM        0
 #elif defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI
 #   define KMOD_SECONDARY   KMOD_GUI | KMOD_SHIFT
+#   define KMOD_TERTIARY    KMOD_GUI | KMOD_SHIFT | KMOD_ALT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
 #   define KMOD_UNDO        KMOD_PRIMARY
 #   define KMOD_ZOOM        KMOD_PRIMARY
 #else
 #   define KMOD_PRIMARY     KMOD_CTRL
 #   define KMOD_SECONDARY   KMOD_CTRL | KMOD_SHIFT
+#   define KMOD_TERTIARY    KMOD_CTRL | KMOD_SHIFT | KMOD_ALT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
 #   define KMOD_UNDO        KMOD_PRIMARY
 #   define KMOD_ZOOM        KMOD_PRIMARY
@@ -338,6 +341,7 @@ iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, 
                                               iWidget **headings, iWidget **values);
 void            prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 iWidget *       removeTabPage_Widget    (iWidget *tabs, size_t index); /* returns the page */
+void            moveTabPage_Widget      (iWidget *tabs, size_t index, size_t newIndex);
 void            resizeToLargestPage_Widget  (iWidget *tabs);
 void            showTabPage_Widget      (iWidget *tabs, const iAnyObject *page);
 void            addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *command);

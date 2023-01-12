@@ -317,6 +317,7 @@ iAny *  insertChildAfterFlags_Widget(iWidget *, iAnyObject *child, size_t afterI
 iAny *  removeChild_Widget          (iWidget *, iAnyObject *child); /* returns a ref */
 iAny *  child_Widget                (iWidget *, size_t index); /* O(n) */
 size_t  indexOfChild_Widget         (const iWidget *, const iAnyObject *child); /* O(n) */
+void    changeChildIndex_Widget     (iWidget *, iAnyObject *child, size_t newIndex); /* O(n) */
 void    arrange_Widget              (iWidget *);
 iBool   scrollOverflow_Widget       (iWidget *, int delta); /* moves the widget */
 iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);

@@ -4190,6 +4190,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         removeTicker_App(prerender_DocumentWidget_, d);
         return iFalse;
     }
+    else if (equal_Command(cmd, "tabs.move") && d == document_App()) {
+        int dir = iSign(arg_Command(cmd));
+        if (dir) {
+            iWidget *tabs = findWidget_App("doctabs");
+            size_t tabPos = tabPageIndex_Widget(tabs, d);
+            moveTabPage_Widget(tabs, tabPos, tabPos + dir);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "tab.created")) {
         /* Space for tab buttons has changed. */
         updateWindowTitle_DocumentWidget_(d);

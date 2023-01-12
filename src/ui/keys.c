@@ -232,6 +232,8 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 79, { "${LC:menu.reopentab}",         SDLK_t, KMOD_SECONDARY,         "tabs.new reopen:1"                 }, 0 },        
     { 80, { "${keys.tab.prev}",             prevTab_KeyShortcut,            "tabs.prev"                         }, 0 },
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
+    { 84, { "${LC:menu.movetab.left}",      moveTabLeft_KeyShortcut,        "tabs.move arg:-1"                  }, 0 },
+    { 85, { "${LC:menu.movetab.right}",     moveTabRight_KeyShortcut,       "tabs.move arg:1"                   }, 0 },
     { 90, { "${keys.split.menu}",           SDLK_j, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
     { 91, { "${keys.split.next}",           SDLK_TAB, KMOD_CTRL,            "keyroot.next",                     }, 0 },
     { 92, { "${keys.split.item} ${menu.split.merge}",           '1', 0,     "ui.split arg:0",                   }, noDirectTrigger_BindFlag },
