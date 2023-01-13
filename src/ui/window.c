@@ -1852,6 +1852,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             iForEach(ObjectList, i, tabs) {
                 setRoot_Widget(i.object, w->roots[0]);
             }
+            iRelease(findChild_Widget(w->roots[1]->widget, "doctabs"));
             setFocus_Widget(NULL);
             iRoot *rootBeingDeleted = w->roots[1];
             w->roots[1] = NULL;
@@ -1860,6 +1861,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             setCurrent_Root(w->roots[0]);
             iWidget *docTabs = findWidget_Root("doctabs");
             iForEach(ObjectList, j, tabs) {
+                iAssert(parent_Widget(j.object) == NULL); /* old doctabs was already deleted */
                 appendTabPage_Widget(docTabs, j.object, "", 0, 0);
                 addTabCloseButton_Widget(docTabs, j.object, "tabs.close");
             }
