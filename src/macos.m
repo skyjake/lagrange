@@ -488,7 +488,7 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     const iWindow *win     = NULL; //&get_MainWindow()->base;
     /* If this event belongs to one of the MainWindows, handle it and mark it for that window. 
        If it's for an auxiliary window, let the system handle it. */
-    iConstForEach(PtrArray, i, mainWindows_App()) {
+    iConstForEach(PtrArray, i, regularWindows_App()) {
         if (event.window == nsWindow_(as_Window(i.ptr)->win)) {
             win = i.ptr;
             break;
