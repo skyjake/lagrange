@@ -626,7 +626,7 @@ static iRect documentBounds_DocumentView_(const iDocumentView *d) {
         else if (docSize < rect.size.y - footerHeight_DocumentWidget_(d->owner)) {
             /* TODO: Phone toolbar? */
             /* Center vertically when the document is short. */
-            const int relMidY   = (height_Rect(bounds) - footerHeight_DocumentWidget_(d->owner)) / 2;
+            const int relMidY   = (height_Rect(bounds) - height_Widget(d->owner->footerButtons)) / 2;
             const int visHeight = size_GmDocument(d->doc).y;
             const int offset    = -height_Banner(d->owner->banner) - documentTopPad_DocumentView_(d);
             rect.pos.y  = top_Rect(bounds) + iMaxi(0, relMidY - visHeight / 2 + offset);
@@ -1544,6 +1544,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
     }
+    /* Debug. */
     if (0) {
         drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
         drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
