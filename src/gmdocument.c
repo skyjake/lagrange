@@ -1243,15 +1243,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         prevNonBlankType = type;
         followsBlank = iFalse;
     }
-#if 0
-    /* Footer. */
-    if (siteBanner_GmDocument(d)) {
-        iGmRun footer = { .flags = decoration_GmRunFlag | footer_GmRunFlag };
-        footer.visBounds = (iRect){ pos, init_I2(d->size.x, lineHeight_Text(banner_FontId) * 2) };
-        pushBack_Array(&d->layout, &footer);
-        pos.y += footer.visBounds.size.y;
-    }
-#endif
     d->size.y = pos.y;
     if (checkMissing_Text()) {
         d->warnings |= missingGlyphs_GmDocumentWarning;
