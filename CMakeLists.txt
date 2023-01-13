@@ -64,7 +64,7 @@ option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround f
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to include as a built-in resource")
 
-# Optional dependencies
+# Optional dependencies.
 option (ENABLE_FRIBIDI          "Use the GNU FriBidi library for bidirectional text" ON)
 option (ENABLE_FRIBIDI_BUILD    "Build the GNU FriBidi library (if OFF, try pkg-config)" OFF)
 option (ENABLE_HARFBUZZ         "Use the HarfBuzz library to shape text" ON)
