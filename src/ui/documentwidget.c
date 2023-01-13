@@ -410,10 +410,11 @@ static int phoneToolbarHeight_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int footerHeight_DocumentWidget_(const iDocumentWidget *d) {
-    int hgt = height_Widget(d->footerButtons);
+    int hgt = iMaxi(height_Widget(d->footerButtons), height_Banner(d->banner));
     if (isPortraitPhone_App()) {
         hgt += phoneToolbarHeight_DocumentWidget_(d);
     }
+    /* FIXME: Landscape phone also needs some extra space at the bottom: tab/nav bars. */
     return hgt;
 }
 
