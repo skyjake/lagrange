@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2022-11-22 12:35+0000\n"
+"PO-Revision-Date: 2023-01-14 12:44+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -796,7 +796,7 @@ msgid "heading.prefs.widelayout"
 msgstr "Leveä ulkoasu"
 
 msgid "heading.prefs.style"
-msgstr "Tyyli"
+msgstr "Sivun tyyli"
 
 msgid "heading.prefs.userinterface"
 msgstr "Käyttöliittymä"
@@ -817,7 +817,7 @@ msgid "prefs.smoothscroll"
 msgstr "Pehmeä vieritys:"
 
 msgid "prefs.imageloadscroll"
-msgstr "Lataa kuva vieritettäessä:"
+msgstr "Lataa seuraava kuva vieritettäessä:"
 
 msgid "prefs.hidetoolbarscroll"
 msgstr "Piilota alapalkki vieritettäessä:"
@@ -826,7 +826,7 @@ msgid "prefs.ostheme"
 msgstr "Käytä järjestelmän teemaa:"
 
 msgid "prefs.theme"
-msgstr "Teema:"
+msgstr "Käyttöliittymän teema:"
 
 msgid "prefs.theme.black"
 msgstr "Musta"
@@ -856,10 +856,10 @@ msgid "prefs.customframe"
 msgstr "Mukautetut reunukset:"
 
 msgid "prefs.retainwindow"
-msgstr "Säilytä sijainti:"
+msgstr "Säilytä ikkunan sijainti:"
 
 msgid "prefs.sideicon"
-msgstr "Kapselin ikoni:"
+msgstr "Kapselin ikoni vasemmalla:"
 
 msgid "prefs.doctheme.dark"
 msgstr "Tumma teema:"
@@ -928,7 +928,7 @@ msgid "prefs.biglede"
 msgstr "Suuri 1. kappale:"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Rivitä selväteksti:"
+msgstr "Rivitä pitkä selväteksti:"
 
 msgid "prefs.decodeurls"
 msgstr "Pura URL-koodaus:"
@@ -1547,7 +1547,7 @@ msgstr "Tämä hakemisto on tyhjä."
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Avaa arkistojen index-sivut:"
+msgstr "Avaa ZIP-arkistojen index.gmi-sivut:"
 
 #, c-format
 msgid "dir.summary"
@@ -1919,10 +1919,10 @@ msgid "dlg.feed.ignoreweb"
 msgstr "Sivuuta HTTP(S)-linkit:"
 
 msgid "prefs.gemtext.ansi"
-msgstr "ANSI-koodit:"
+msgstr "ANSI-koodit gemtext:ssä:"
 
 msgid "prefs.font.smooth"
-msgstr "Pehmennys:"
+msgstr "Tekstin pehmennys:"
 
 msgid "error.ansi.msg"
 msgstr ""
@@ -1956,7 +1956,7 @@ msgstr ""
 "tulee sivuuttaa."
 
 msgid "prefs.font.ui"
-msgstr "Käyttöliittymä:"
+msgstr "Käyttöliittymän kirjasinlaji:"
 
 msgid "prefs.font.heading"
 msgstr "Otsikot:"
@@ -2017,7 +2017,7 @@ msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Kirjasinlaji"
 
 msgid "prefs.font.warnmissing"
-msgstr "Varoita puuttuvista:"
+msgstr "Varoita puuttuvista merkeistä:"
 
 msgid "error.ansi"
 msgstr "Pääte-emulointi"
@@ -2138,7 +2138,7 @@ msgid "menu.update"
 msgstr "Tarkista päivitykset…"
 
 msgid "prefs.time.24h"
-msgstr "24 tunnin kellonajat"
+msgstr "24 tunnin kellonajat:"
 
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
@@ -2526,3 +2526,27 @@ msgstr "Uusi identiteetti verkkotunnukselle…"
 
 msgid "dlg.newident.scope.dir"
 msgstr "Tämä hakemisto"
+
+msgid "menu.movetab.left"
+msgstr "Siirrä välilehti vasemmalle"
+
+msgid "menu.movetab.right"
+msgstr "Siirrä välilehti oikealle"
+
+msgid "heading.prefs.appearance"
+msgstr "Ulkonäkö"
+
+msgid "heading.prefs.layout"
+msgstr "Sivun asettelu"
+
+msgid "heading.prefs.content"
+msgstr "Sisältö"
+
+msgid "prefs.swipe.edge"
+msgstr "Pyyhkäisy reunasta:"
+
+msgid "prefs.swipe.page"
+msgstr "Pyyhkäisy sivun päällä:"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "Tunnista tyylit Gopher-valikoissa:"
