@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.15 (1)
+* Added auto-reload indicator (reload button shown as outline).
+* Added UI settings to toggle edge/on-page navigation swipe gestures.
+* Fixed a possible crash when closing tabs in split view mode.
+
 ## 1.14 (5)
 * Fixed tab with pinned identity not closing if it's the last tab that's being closed.
 * Fixed hang when setting a folder's parent to itself in the Edit Folder dialog.

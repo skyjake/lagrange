@@ -21,6 +21,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gopher.h"
+#include "prefs.h"
+#include "app.h"
 
 #include <ctype.h>
 
@@ -47,6 +49,9 @@ static iBool isPreformatted_(iRangecc text) {
     int  numSpace  = 0;
     int  numRepeat = 0;
     char chPrev    = 0;
+    if (!prefs_App()->geminiStyledGopher) {
+        return iFalse; /* just regular text */
+    }
     for (const char *ch = text.start; ch != text.end; ch++) {
         if (*ch < 0) {
             iChar uc;

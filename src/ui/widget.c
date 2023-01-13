@@ -173,6 +173,9 @@ static int treeSize_Widget_(const iWidget *d, int n) {
 }
 
 void deinit_Widget(iWidget *d) {
+    if (d->flags2 & usedAsPeriodicContext_WidgetFlag2) {
+        remove_Periodic(periodic_App(), d); /* periodic context being deleted */
+    }
 //    const int nt = treeSize_Widget_(d, 0);
 //    const int no = totalCount_Object();
     releaseChildren_Widget(d);
@@ -194,7 +197,6 @@ void deinit_Widget(iWidget *d) {
     }
     if (d->flags & overflowScrollable_WidgetFlag) {
         removeTicker_App(animateOverflowScrollOpacity_Widget_, d);
-        remove_Periodic(periodic_App(), d);
     }
     iWindow *win = d->root->window;
     iAssert(win);
@@ -231,8 +233,13 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
     }
 }
 
+iLocalDef iBool isRoot_Widget_(const iWidget *d) {
+    return d && d->root && d->root->widget == d;
+}
+
 void destroy_Widget(iWidget *d) {
     if (d) {
+        iAssert(!isRoot_Widget_(d));
         if (isVisible_Widget(d)) {
             postRefresh_App();
         }
@@ -262,23 +269,30 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
             /* TODO: Tablets should detect if a hardware keyboard is available. */
             flags &= ~drawKey_WidgetFlag;
         }
+        const int64_t oldFlags = d->flags;  
         iChangeFlags(d->flags, flags, set);
-        if (flags & keepOnTop_WidgetFlag) {
+        if (flags & keepOnTop_WidgetFlag && !isRoot_Widget_(d)) {
             iPtrArray *onTop = onTop_Root(d->root);
             if (set) {
-                iAssert(indexOf_PtrArray(onTop, d) == iInvalidPos);
-                pushBack_PtrArray(onTop, d);
+                if (oldFlags & keepOnTop_WidgetFlag) {
+                    raise_Widget(d);
+                }
+                else {
+                    pushBack_PtrArray(onTop, d);
+                }
             }
             else {
                 removeOne_PtrArray(onTop, d);
                 iAssert(indexOf_PtrArray(onTop, d) == iInvalidPos);
             }
         }
+#if !defined (NDEBUG)
         if (d->flags & arrangeWidth_WidgetFlag &&
             d->flags & resizeToParentWidth_WidgetFlag) {
             printf("[Widget] Conflicting flags for ");
             identify_Widget(d);
         }
+#endif
     }
 }
 
@@ -334,6 +348,7 @@ iWindow *window_Widget(const iAnyObject *d) {
 }
 
 void showCollapsed_Widget(iWidget *d, iBool show) {
+    if (!d) return;
     const iBool isVisible = !(d->flags & hidden_WidgetFlag);
     if ((isVisible && !show) || (!isVisible && show)) {
         setFlags_Widget(d, hidden_WidgetFlag, !show);
@@ -377,8 +392,10 @@ void setRoot_Widget(iWidget *d, iRoot *root) {
         iAssert(indexOf_PtrArray(onTop_Root(root), d) == iInvalidPos);
         /* Move it over the new root's onTop list. */
         removeOne_PtrArray(onTop_Root(d->root), d);
-        iAssert(indexOf_PtrArray(onTop_Root(d->root), d) == iInvalidPos);
-        pushBack_PtrArray(onTop_Root(root), d);
+        if (d != root->widget) {
+            iAssert(indexOf_PtrArray(onTop_Root(d->root), d) == iInvalidPos);
+            pushBack_PtrArray(onTop_Root(root), d);
+        }
     }
     d->root = root;
     iForEach(ObjectList, i, d->children) {
@@ -425,9 +442,18 @@ static int widestChild_Widget_(const iWidget *d) {
 }
 
 static void arrange_Widget_(iWidget *);
-static const iBool tracing_ = 0;
+static const iBool tracing_ = iFalse;
 
-#define TRACE(d, ...)   if (tracing_) { printf_Widget_(d, __VA_ARGS__); }
+iLocalDef iBool inTraceScope_(const iWidget *d) {
+    /*for (const iWidget *w = d; w; w = w->parent) {
+        if (!cmp_String(&w->id, "prefs")) {
+            return iTrue;
+        }
+    }*/
+    return iFalse;
+}
+
+#define TRACE(d, ...)   if (tracing_ && inTraceScope_(d)) { printf_Widget_(d, __VA_ARGS__); }
 
 static int depth_Widget_(const iWidget *d) {
     int depth = 0;
@@ -840,6 +866,22 @@ static void arrange_Widget_(iWidget *d) {
             TRACE(d, "child %p set X to %d (not sequential, children being resized)", child, pos.x);
         }
     }
+    /* Center children vertically inside a known parent height. */
+    if (childCount &&
+        d->flags2 & centerChildrenVertical_WidgetFlag2 &&
+        ~d->flags & arrangeHeight_WidgetFlag) {
+        /* Move children down to be in the center. */
+        const int top    = d->padding[1];
+        const int bottom = pos.y;
+        const int extra  = bottom_Rect(innerRect_Widget_(d)) - bottom - top;
+        iForEach(ObjectList, i, d->children) {
+            iWidget *child = as_Widget(i.object);
+            if (isCollapsed_Widget_(child) || !isArrangedPos_Widget_(child)) {
+                continue;
+            }
+            child->rect.pos.y += extra / 2;
+        }
+    }
     TRACE(d, "...done positioning children");
     /* Update the size of the widget according to the arrangement. */
     if (d->flags & arrangeSize_WidgetFlag) {
@@ -930,6 +972,9 @@ static void resetArrangement_Widget_(iWidget *d) {
 }
 
 static void notifySizeChanged_Widget_(iWidget *d) {
+    if (d->flags & destroyPending_WidgetFlag) {
+        return;
+    }
     if (class_Widget(d)->sizeChanged && !isEqual_I2(d->rect.size, d->oldSize)) {
         class_Widget(d)->sizeChanged(d);
     }
@@ -972,6 +1017,15 @@ void arrange_Widget(iWidget *d) {
         clampCenteredInRoot_Widget_(d);
         notifySizeChanged_Widget_(d);
         d->root->didChangeArrangement = iTrue;
+        if (type_Window(window_Widget(d)) == extra_WindowType &&
+            (d == root_Widget(d) || d->parent == root_Widget(d))) {
+            /* Size of extra windows will change depending on the contents. */
+            iWindow *win = window_Widget(d);
+            SDL_SetWindowSize(win->win,
+                              width_Widget(d) / win->pixelRatio,
+                              height_Widget(d) / win->pixelRatio);
+            win->size = d->rect.size;
+        }
     }
 }
 
@@ -1132,19 +1186,26 @@ void unhover_Widget(void) {
     *hover = NULL;
 }
 
+iLocalDef iBool redispatchEvent_Widget_(iWidget *d, iWidget *dst, const SDL_Event *ev) {
+    if (d != dst) {
+        return dispatchEvent_Widget(dst, ev);
+    }
+    return iFalse;
+}
+
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (!d->parent) {
         if (window_Widget(d)->focus && window_Widget(d)->focus->root == d->root &&
             (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
             /* Root dispatches keyboard events directly to the focused widget. */
-            if (dispatchEvent_Widget(window_Widget(d)->focus, ev)) {
+            if (redispatchEvent_Widget_(d, window_Widget(d)->focus, ev)) {
                 return iTrue;
             }
         }
         /* Root offers events first to widgets on top. */
         iReverseForEach(PtrArray, i, d->root->onTop) {
             iWidget *widget = *i.value;
-            if (isVisible_Widget(widget) && dispatchEvent_Widget(widget, ev)) {
+            if (isVisible_Widget(widget) && redispatchEvent_Widget_(d, widget, ev)) {
 #if 0
                 if (ev->type == SDL_KEYDOWN) {
                     printf("[%p] %s:'%s' (on top) ate the key\n",
@@ -1193,6 +1254,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
            handle the events first. */
         iReverseForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
+            iAssert(child != d); /* cannot be child of self */
             iAssert(child->root == d->root);
             if (child == window_Widget(d)->focus &&
                 (isKeyboardEvent_(ev) || ev->type == SDL_USEREVENT)) {
@@ -1463,6 +1525,9 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 if (d->flags & (leftEdgeDraggable_WidgetFlag | rightEdgeDraggable_WidgetFlag) &&
                     isVisible_Widget(d) && ~d->flags & disabled_WidgetFlag &&
                     equal_Command(cmd, "edgeswipe.moved")) {
+                    if (!prefs_App()->edgeSwipe && argLabel_Command(cmd, "edge")) {
+                        return iTrue; /* edge swiping should be ignored */
+                    }
                     /* Check the side. */
                     const int side = argLabel_Command(cmd, "side");
                     if ((side == 1 && d->flags & leftEdgeDraggable_WidgetFlag) ||
@@ -1668,10 +1733,6 @@ void drawBackground_Widget(const iWidget *d) {
 }
 
 int drawCount_;
-
-static iBool isRoot_Widget_(const iWidget *d) {
-    return d == d->root->widget;
-}
 
 iLocalDef iBool isFullyContainedByOther_Rect(const iRect d, const iRect other) {
     if (isEmpty_Rect(other)) {
@@ -1956,6 +2017,29 @@ size_t indexOfChild_Widget(const iWidget *d, const iAnyObject *child) {
         index++;
     }
     return iInvalidPos;
+}
+
+void changeChildIndex_Widget(iWidget *d, iAnyObject *child, size_t newIndex) {
+    size_t oldIndex = 0;
+    iForEach(ObjectList, i, d->children) {
+        if (i.object == child) {
+            ref_Object(child); /* we keep a reference */
+            remove_ObjectListIterator(&i);
+            break;
+        }
+        oldIndex++;
+    }
+    iAssert(oldIndex <= size_ObjectList(d->children));
+    if (isEmpty_ObjectList(d->children) || newIndex == 0) {
+        pushFront_ObjectList(d->children, child);
+    }
+    else {
+        iObjectListIterator iter;
+        init_ObjectListIterator(&iter, d->children);
+        for (size_t i = 1; i < newIndex; i++, next_ObjectListIterator(&iter)) {}
+        insertAfter_ObjectList(d->children, iter.value, child);
+    }
+    deref_Object(child); /* ObjectList has taken a reference */
 }
 
 iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
@@ -2322,7 +2406,7 @@ void refresh_Widget(const iAnyObject *d) {
 
 void raise_Widget(iWidget *d) {
     iPtrArray *onTop = onTop_Root(d->root);
-    if (d->flags & keepOnTop_WidgetFlag) {
+    if (d->flags & keepOnTop_WidgetFlag && !isRoot_Widget_(d)) {
         iAssert(indexOf_PtrArray(onTop, d) != iInvalidPos);
         removeOne_PtrArray(onTop, d);
         pushBack_PtrArray(onTop, d);

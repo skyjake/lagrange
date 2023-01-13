@@ -191,8 +191,7 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     if (equalCase_Rangecc(scheme, "gemini")) {
         return prefs_App()->monospaceGemini;
     }
-    if (equalCase_Rangecc(scheme, "gopher") ||
-        equalCase_Rangecc(scheme, "finger")) {
+    if (equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "finger")) {
         return prefs_App()->monospaceGopher;
     }
     return iFalse;
@@ -526,7 +525,8 @@ static iBool shouldBeNormalized_GmDocument_(const iGmDocument *d) {
     if (startsWithCase_String(&d->url, "gemini:") && prefs->monospaceGemini) {
         return iFalse;
     }
-    if (startsWithCase_String(&d->url, "gopher:") && prefs->monospaceGopher) {
+    if (startsWithCase_String(&d->url, "gopher:") && (prefs->monospaceGopher ||
+                                                      !prefs->geminiStyledGopher)) {
         return iFalse;
     }
     return iTrue;
@@ -744,6 +744,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = text_GmLineType;
     iBool            followsBlank  = iFalse;
+    if (isGopher && !prefs->geminiStyledGopher) {
+        isFirstText = iFalse;
+    }
     if (d->format == plainText_SourceFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
@@ -1240,15 +1243,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         prevNonBlankType = type;
         followsBlank = iFalse;
     }
-#if 0
-    /* Footer. */
-    if (siteBanner_GmDocument(d)) {
-        iGmRun footer = { .flags = decoration_GmRunFlag | footer_GmRunFlag };
-        footer.visBounds = (iRect){ pos, init_I2(d->size.x, lineHeight_Text(banner_FontId) * 2) };
-        pushBack_Array(&d->layout, &footer);
-        pos.y += footer.visBounds.size.y;
-    }
-#endif
     d->size.y = pos.y;
     if (checkMissing_Text()) {
         d->warnings |= missingGlyphs_GmDocumentWarning;
@@ -2649,21 +2643,6 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                    : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkTextHover_ColorId
                                                       : tmLinkTextHover_ColorId;
         }
-        /*
-        if (part == domain_GmLinkPart) {
-            if (isUnsupported) {
-                return tmBadLink_ColorId;
-            }
-            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkDomain_ColorId
-                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkDomain_ColorId
-                                                      : tmLinkDomain_ColorId;
-        }
-        if (part == visited_GmLinkPart) {
-            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkLastVisitDate_ColorId
-                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkLastVisitDate_ColorId
-                                                      : tmLinkLastVisitDate_ColorId;
-        }
-        */
     }
     return tmLinkText_ColorId;
 }

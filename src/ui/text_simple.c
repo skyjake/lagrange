@@ -62,7 +62,7 @@ iLocalDef iBool isMeasuring_(enum iRunMode mode) {
     return (mode & modeMask_RunMode) == measure_RunMode;
 }
 
-static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
+static void runSimple_Font_(iFont *d, const iRunArgs *args) {
     /* This function shapes text using a simplified, incomplete algorithm. It works for English 
        and other non-complex LTR scripts. Composed glyphs are not supported (must rely on text
        being in a pre-composed form). This algorithm is used if HarfBuzz is not available. */
@@ -419,17 +419,17 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
     if (checkHitChar && wrap->hitChar == args->text.end) {
         wrap->hitAdvance_out = sub_I2(init_I2(xpos, ypos), orig);
     }
-    if (args->cursorAdvance_out) {
-        *args->cursorAdvance_out = sub_I2(init_I2(xpos, ypos), orig);
+    if (args->metrics_out) {
+        args->metrics_out->advance = sub_I2(init_I2(xpos, ypos), orig);
+        args->metrics_out->bounds = bounds;
     }
-    if (args->runAdvance_out) {
-        *args->runAdvance_out = xposMax - orig.x;
-    }
+//    if (args->runAdvance_out) {
+//        *args->runAdvance_out = xposMax - orig.x;
+//    }
 #if defined (SDL_SEAL_CURSES)
     if (mode & draw_RunMode) {
         SDL_SetRenderTextFillColor(render, 0, 0, 0, 0);
     }
 #endif
-    return bounds;
 }
 

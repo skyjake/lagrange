@@ -6,6 +6,20 @@
 ```
 # Release notes
 
+## 1.15
+New features:
+* Redesigned Preferences dialog with vertical tabs and a new organization of the settings. "Fonts" and "Colors" are removed, and there is a new "Content" tab.
+* Preferences dialog opens as a separate window.
+* Changing order of tabs: tab buttons can be dragged with the mouse, and tabs can be moved left/right using tab context menu items or keyboard shortcuts.
+* Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
+* Gopher: Option to disable Gemini styling on Gopher menu pages. When disabled, whitespace is not normalized and all non-link lines are presented as regular paragraph text.
+
+Changes and enhancements:
+* GTK: Request dark window theme if the app UI color theme is dark.
+
+Fixes:
+* Changing the UI scaling factor will now affect all existing and newly created windows.
+
 ## 1.14.2
 * Fixed a potential crash when using musl libc.
 * Fixed a potential crash when closing tabs in split view mode.

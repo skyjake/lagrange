@@ -34,6 +34,7 @@ extern const iMenuItem topLevelMenus_Window[6];
 
 enum iWindowType {
     main_WindowType,
+    extra_WindowType,
     popup_WindowType,
 };
 
@@ -147,6 +148,7 @@ int             numRoots_Window         (const iWindow *);
 //iRoot *         findRoot_Window         (const iWindow *, const iWidget *widget);
 iRoot *         otherRoot_Window        (const iWindow *, iRoot *root);
 
+void        setTitle_Window         (iWindow *, const iString *title);
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
 iBool       dispatchEvent_Window    (iWindow *, const SDL_Event *);
 void        invalidate_Window       (iAnyWindow *); /* discard all cached graphics */
@@ -167,13 +169,22 @@ iLocalDef iBool isExposed_Window(const iWindow *d) {
     return d->isExposed;
 }
 
+iLocalDef iBool isDrawFrozen_Window(const iWindow *d) {
+    if (d && d->type == main_WindowType) {
+        return ((const iMainWindow *) d)->isDrawFrozen;
+    }
+    return iFalse;
+}
+
 iLocalDef iWindow *as_Window(iAnyWindow *d) {
-    iAssert(type_Window(d) == main_WindowType || type_Window(d) == popup_WindowType);
+    iAssert(type_Window(d) == main_WindowType || type_Window(d) == extra_WindowType ||
+            type_Window(d) == popup_WindowType);
     return (iWindow *) d;
 }
 
 iLocalDef const iWindow *constAs_Window(const iAnyWindow *d) {
-    iAssert(type_Window(d) == main_WindowType || type_Window(d) == popup_WindowType);
+    iAssert(type_Window(d) == main_WindowType || type_Window(d) == extra_WindowType ||
+            type_Window(d) == popup_WindowType);
     return (const iWindow *) d;
 }
 
@@ -188,7 +199,6 @@ iLocalDef iWindow *asWindow_MainWindow(iMainWindow *d) {
     return &d->base;
 }
 
-void        setTitle_MainWindow             (iMainWindow *, const iString *title);
 void        setSnap_MainWindow              (iMainWindow *, int snapMode);
 void        setFreezeDraw_MainWindow        (iMainWindow *, iBool freezeDraw);
 void        setKeyboardHeight_MainWindow    (iMainWindow *, int height);
@@ -224,4 +234,5 @@ iLocalDef const iMainWindow *constAs_MainWindow(const iAnyWindow *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-iWindow *   newPopup_Window    (iInt2 screenPos, iWidget *rootWidget);
+iWindow *   newPopup_Window     (iInt2 screenPos, iWidget *rootWidget);
+iWindow *   newExtra_Window     (iWidget *rootWidget);

@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.14.2
+    VERSION 1.15.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2022)
 if (IOS)
-    set (PROJECT_VERSION 1.14)
-    set (IOS_BUNDLE_VERSION 5)
-    set (IOS_BUILD_DATE "2022-11-26")
+    set (PROJECT_VERSION 1.15)
+    set (IOS_BUNDLE_VERSION 1)
+    set (IOS_BUILD_DATE "2022-12-19")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 1.14)
-    set (ANDROID_BUILD_VERSION b11)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-12-05")
+    set (PROJECT_VERSION 1.15)
+    set (ANDROID_BUILD_VERSION b12)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2022-12-19")
 endif ()
 
 # Load modules from the source tree
@@ -62,6 +62,7 @@ option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAU
 option (ENABLE_TUI              "Enable the Curses TUI instead of GUI" OFF)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
+option (ENABLE_X11_XLIB         "Use Xlib directly, if available (X11)" ON)
 set    (CACERT_PEM_PATH         "" CACHE FILEPATH "Root CA cacert.pem file to include as a built-in resource")
 
 # Optional dependencies.
@@ -308,6 +309,12 @@ if (ENABLE_IPC)
         src/ipc.h
     )
 endif ()
+if (ENABLE_X11_XLIB AND XLIB_FOUND AND NOT APPLE AND NOT MSYS)
+    list (APPEND SOURCES
+        src/x11.c
+        src/x11.h
+    )
+endif ()
 if (ANDROID)
     set (MOBILE 1)
     add_definitions (-DiPlatformAndroidMobile=1)
@@ -436,6 +443,9 @@ if (ENABLE_WEBP AND WEBP_FOUND)
 endif ()
 if (ENABLE_WINDOWPOS_FIX)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)
+endif ()
+if (TARGET x11-lib)
+    target_link_libraries (app PUBLIC x11-lib)
 endif ()
 if (ENABLE_X11_SWRENDER)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)

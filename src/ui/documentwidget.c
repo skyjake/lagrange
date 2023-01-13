@@ -410,10 +410,11 @@ static int phoneToolbarHeight_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int footerHeight_DocumentWidget_(const iDocumentWidget *d) {
-    int hgt = height_Widget(d->footerButtons);
+    int hgt = iMaxi(height_Widget(d->footerButtons), height_Banner(d->banner));
     if (isPortraitPhone_App()) {
         hgt += phoneToolbarHeight_DocumentWidget_(d);
     }
+    /* FIXME: Landscape phone also needs some extra space at the bottom: tab/nav bars. */
     return hgt;
 }
 
@@ -2207,7 +2208,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         iString *text = collect_String(joinCStr_StringArray(title, " \u2014 "));
         if (setWindow) {
             /* Longest version for the window title, and omit the icon. */
-            setTitle_MainWindow(get_MainWindow(), text);
+            setTitle_Window(as_Window(get_MainWindow()), text);
             setWindow = iFalse;
         }
         const iChar siteIcon = siteIcon_GmDocument(d->view.doc);
@@ -3352,6 +3353,10 @@ iBool isSetIdentityRetained_DocumentWidget(const iDocumentWidget *d, const iStri
     return equalRangeCase_Rangecc(urlRoot_String(d->mod.url), urlRoot_String(dstUrl));
 }
 
+iBool isAutoReloading_DocumentWidget(const iDocumentWidget *d) {
+    return d->mod.reloadInterval != never_RelodPeriod;
+}
+
 static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     url = canonicalUrl_String(url);
     if (!equal_String(d->mod.url, url)) {
@@ -3854,6 +3859,10 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
        is moved to the bottom, when swiping back.
     */
     iWidget *w = as_Widget(d);
+    if (!prefs_App()->edgeSwipe &&
+        startsWith_CStr(cmd, "edgeswipe.") && argLabel_Command(cmd, "edge")) {
+        return iFalse;
+    }
     /* The swipe animation is implemented in a rather complex way. It utilizes both cached
        GmDocument content and temporary underlay/overlay DocumentWidgets. Depending on the
        swipe direction, the DocumentWidget `d` may wait until the finger is released to actually
@@ -4180,6 +4189,22 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         animateMedia_DocumentWidget_(d);
         remove_Periodic(periodic_App(), d);
         removeTicker_App(prerender_DocumentWidget_, d);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "tabs.move")) {
+        const iBool dragged = argLabel_Command(cmd, "dragged") != 0;
+        if ((!dragged && d == document_App()) ||
+            (dragged && /* must be dragging the tab button of this document */
+             pointer_Command(cmd) == tabPageButton_Widget(findParent_Widget(w, "doctabs"), d))) {
+            int steps = arg_Command(cmd);
+            if (steps) {
+                iWidget *tabs = findWidget_App("doctabs");
+                int tabPos = (int) tabPageIndex_Widget(tabs, d);
+                moveTabPage_Widget(tabs, tabPos, iMaxi(0, tabPos + steps));
+                refresh_Widget(tabs);
+            }
+            return iTrue;
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "tab.created")) {
@@ -4915,6 +4940,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.autoreload.set") && document_App() == d) {
         d->mod.reloadInterval = arg_Command(cmd);
+        /* Ensure that the indicator gets updated. */
+        postCommandf_Root(get_Root(), "window.reload.update root:%p", get_Root());
     }
     else if (equalWidget_Command(cmd, w, "document.dismiss")) {
         const iString *site = collectNewRange_String(urlRoot_String(d->mod.url));
@@ -5169,10 +5196,10 @@ static void finishWheelSwipe_DocumentWidget_(iDocumentWidget *d, iBool aborted) 
 
 static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_MouseWheelEvent *ev) {
     iWidget *w = as_Widget(d);
-    /*if (deviceType_App() != desktop_AppDeviceType) {
-        return iFalse;
-    }*/
     if (~flags_Widget(w) & horizontalOffset_WidgetFlag) {
+        return iFalse;
+    }
+    if (!prefs_App()->pageSwipe) {
         return iFalse;
     }
     iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);

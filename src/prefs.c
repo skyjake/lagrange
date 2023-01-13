@@ -89,7 +89,9 @@ void init_Prefs(iPrefs *d) {
     d->warnAboutMissingGlyphs  = iTrue;
     d->markdownAsSource        = iTrue;
     d->skipIndexPageOnParentNavigation = iTrue;
-    d->decodeUserVisibleURLs   = iTrue;
+    d->edgeSwipe = iTrue;
+    d->pageSwipe = iTrue;
+    d->decodeUserVisibleURLs = iTrue;
     d->maxCacheSize      = 10;
     d->maxMemorySize     = 200;
     d->maxUrlSize        = 8192;
@@ -114,6 +116,7 @@ void init_Prefs(iPrefs *d) {
     d->quoteIcon         = iTrue;
     d->centerShortDocs   = iTrue;
     d->plainTextWrap     = iTrue;
+    d->geminiStyledGopher = iTrue;
     d->imageStyle        = original_ImageStyle;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;

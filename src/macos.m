@@ -930,7 +930,7 @@ void log_MacOS(const char *msg) {
 void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *items, size_t n) {
     NSMenu *      menu         = [[NSMenu alloc] init];
     MenuCommands *menuCommands = [[MenuCommands alloc] init];
-    iWindow *     window       = as_Window(mainWindow_App());
+    iWindow *     window       = activeWindow_App();
     NSWindow *    nsWindow     = nsWindow_(window->win);
     /* View coordinates are flipped. */
     iBool isCentered = iFalse;

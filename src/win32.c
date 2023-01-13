@@ -280,13 +280,15 @@ void enableDarkMode_SDLWindow(SDL_Window *win) {
 
 void handleCommand_Win32(const char *cmd) {
     if (equal_Command(cmd, "theme.changed")) {        
-        iConstForEach(PtrArray, iter, mainWindows_App()) {
-            iMainWindow *mw = iter.ptr;
-            SDL_Window *win = mw->base.win;
+        iConstForEach(PtrArray, iter, regularWindows_App()) {
+            iWindow *w = iter.ptr;
+            SDL_Window *win = w->win;
             if (refreshTitleBarThemeColor_(windowHandle_(win)) &&
-                !isFullscreen_MainWindow(mw) &&
+                (type_Window(w) != main_WindowType || 
+                 !isFullscreen_MainWindow(as_MainWindow(w))) &&
                 !argLabel_Command(cmd, "auto")) {
-                /* Silly hack, but this will ensure that the non-client area is repainted. */
+                /* Silly hack, but this will ensure that the non-client
+                   area is repainted. */
                 SDL_MinimizeWindow(win);
                 SDL_RestoreWindow(win);
             }
