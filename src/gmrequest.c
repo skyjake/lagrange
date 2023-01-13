@@ -797,6 +797,17 @@ void submit_GmRequest(iGmRequest *d) {
             resp->statusCode = success_GmStatusCode;
             setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
             set_Block(&resp->body, replaceVariables_(src));
+            if (equalCase_Rangecc(url.path, "lagrange")) {
+                /* The "Powered by" line needs dynamic updates depending on the build. */
+                iString body;
+                initBlock_String(&body, &resp->body);
+                replace_String(&body, "OpenSSL", libraryName_TlsRequest());
+#if defined (iPlatformTerminal)
+                replace_String(&body, "SDL 2", "ncurses");
+#endif
+                set_Block(&resp->body, utf8_String(&body));
+                deinit_String(&body);
+            }
             d->state = receivingBody_GmRequestState;
             iNotifyAudience(d, updated, GmRequestUpdated);
         }
