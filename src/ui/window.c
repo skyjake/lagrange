@@ -1852,7 +1852,10 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             iForEach(ObjectList, i, tabs) {
                 setRoot_Widget(i.object, w->roots[0]);
             }
-            iRelease(findChild_Widget(w->roots[1]->widget, "doctabs"));
+            /* We will delete the old tabs immediately, but we're also holding references
+               to the pages in `tabs`, so they'll be kept until added to the remaining split. */
+            iWidget *deletedDocTabs = findChild_Widget(w->roots[1]->widget, "doctabs");
+            iRelease(removeChild_Widget(parent_Widget(deletedDocTabs), deletedDocTabs));
             setFocus_Widget(NULL);
             iRoot *rootBeingDeleted = w->roots[1];
             w->roots[1] = NULL;
