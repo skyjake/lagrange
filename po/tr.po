@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-11-21 06:14+0000\n"
+"PO-Revision-Date: 2023-01-14 12:44+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -938,14 +938,14 @@ msgid "heading.prefs.proxies"
 msgstr "Vekiller"
 
 msgid "heading.prefs.scrolling"
-msgstr "Kaydırma"
+msgstr "Sarma"
 
 msgid "heading.prefs.sizing"
 msgstr "Boyutlandırma"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Biçem"
+msgstr "Sayfa biçemi"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -976,13 +976,13 @@ msgid "prefs.scrollspeed.mouse"
 msgstr "Fare hızı:"
 
 msgid "prefs.imageloadscroll"
-msgstr "Kaydırırken görseli yükle:"
+msgstr "Sarma düğmesinde sonraki görseli yükle:"
 
 msgid "prefs.hidetoolbarscroll"
-msgstr "Kaydırırken araç çubuğunu gizle:"
+msgstr "Sararken araç çubuğunu gizle:"
 
 msgid "prefs.theme"
-msgstr "Tema:"
+msgstr "Arayüz teması:"
 
 msgid "prefs.theme.black"
 msgstr "Siyah"
@@ -1018,7 +1018,7 @@ msgid "prefs.animate"
 msgstr "Canlandırmalar:"
 
 msgid "prefs.sideicon"
-msgstr "Kapsül simgesi:"
+msgstr "Kapsül simgesi sol tarafta:"
 
 msgid "prefs.doctheme.dark"
 msgstr "Koyu tema:"
@@ -1057,7 +1057,7 @@ msgid "prefs.imagestyle.text"
 msgstr "Metin rengi"
 
 msgid "prefs.font.ui"
-msgstr "Kullanıcı arabirimi:"
+msgstr "Arayüz yazıtipi:"
 
 msgid "prefs.font.heading"
 msgstr "Başlıklar:"
@@ -1079,16 +1079,16 @@ msgid "prefs.boldlink.dark"
 msgstr "Koyu temada"
 
 msgid "prefs.gemtext.ansi"
-msgstr "ANSI kaçışları:"
+msgstr "Gemtext ANSI kaçışları:"
 
 msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Yazıtipi biçemi"
 
 msgid "prefs.font.warnmissing"
-msgstr "Glif uyarıları:"
+msgstr "Yazıtipi glif uyarıları:"
 
 msgid "prefs.font.smooth"
-msgstr "Düzleştirme:"
+msgstr "Yazıtipi düzleştirme:"
 
 msgid "prefs.linewidth.normal"
 msgstr "Normal"
@@ -1100,7 +1100,7 @@ msgid "prefs.linespacing"
 msgstr "Satır aralığı:"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Düz metni kaydır:"
+msgstr "Uzun düz metin satırları kaydır:"
 
 msgid "prefs.cachesize"
 msgstr "Arabellek boyutu:"
@@ -1130,13 +1130,13 @@ msgid "keys.bottom"
 msgstr "Alta atla"
 
 msgid "keys.scroll.down"
-msgstr "Aşağı kaydır"
+msgstr "Aşağı sar"
 
 msgid "keys.scroll.halfpage.up"
-msgstr "Yarım sayfa yukarı kaydır"
+msgstr "Yarım sayfa yukarı sar"
 
 msgid "keys.scroll.page.up"
-msgstr "Bir sayfa yukarı kaydır"
+msgstr "Bir sayfa yukarı sar"
 
 msgid "keys.back"
 msgstr "Geri git"
@@ -1850,13 +1850,13 @@ msgstr "Yer imlerini alta ekle:"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Arşiv belirticisini aç:"
+msgstr "index.gmi’yi ZIP arşivlerinde aç:"
 
 msgid "prefs.pinsplit.right"
 msgstr "Sağ sekme"
 
 msgid "prefs.smoothscroll"
-msgstr "Pürüzsüz kaydırma:"
+msgstr "Pürüzsüz sarma:"
 
 msgid "prefs.ostheme"
 msgstr "Sistem temasını kullan:"
@@ -1871,7 +1871,7 @@ msgid "prefs.returnkey.accept"
 msgstr "Kabul et"
 
 msgid "prefs.retainwindow"
-msgstr "Konumlandırmayı koru:"
+msgstr "Pencere konumlandırmasını kaydet:"
 
 msgid "prefs.doctheme.name.colorfuldark"
 msgstr "Renkli koyu"
@@ -1952,13 +1952,13 @@ msgstr[0] "Bu dizin %u öge içeriyor."
 msgstr[1] "Bu dizin %u öge içeriyor."
 
 msgid "keys.scroll.up"
-msgstr "Yukarı kaydır"
+msgstr "Yukarı sar"
 
 msgid "keys.scroll.halfpage.down"
-msgstr "Yarım sayfa aşağı kaydır"
+msgstr "Yarım sayfa aşağı sar"
 
 msgid "keys.scroll.page.down"
-msgstr "Bir sayfa aşağı kaydır"
+msgstr "Bir sayfa aşağı sar"
 
 msgid "keys.parent"
 msgstr "Üst dizine git"
@@ -2089,7 +2089,7 @@ msgid "sidebar.action.show"
 msgstr "Göster:"
 
 msgid "prefs.time.24h"
-msgstr "24 saat biçimi"
+msgstr "24 saat biçimi:"
 
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
@@ -2483,3 +2483,27 @@ msgstr "Kullanıcı verisi"
 
 msgid "menu.email"
 msgstr "E-posta gönder"
+
+msgid "menu.movetab.left"
+msgstr "Sekmeyi sola taşı"
+
+msgid "menu.movetab.right"
+msgstr "Sekmeyi sağa taşı"
+
+msgid "heading.prefs.appearance"
+msgstr "Görünüş"
+
+msgid "heading.prefs.layout"
+msgstr "Sayfa yerleşimi"
+
+msgid "heading.prefs.content"
+msgstr "İçerik"
+
+msgid "prefs.swipe.edge"
+msgstr "Kenardan kaydırma:"
+
+msgid "prefs.swipe.page"
+msgstr "Sayfada kaydırma:"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "Gopher menü biçemini otomatik algıla:"
