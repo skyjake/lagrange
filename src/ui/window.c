@@ -1200,7 +1200,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
         default: {
             SDL_Event event = *ev;
-            if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze") && mw) {
+            if (isCommand_UserEvent(ev, "window.unfreeze") && mw) {
                 if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
                     mw->isDrawFrozen = iTrue; /* don't trigger a redraw now */
                     SDL_ShowWindow(d->win);

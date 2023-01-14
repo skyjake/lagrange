@@ -1723,7 +1723,7 @@ static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
         pushBack_PtrArray(windows, d->window);
     }
     /* Other extra windows. */ {
-        iReverseConstForEach(PtrArray, i, &d->extraWindows) {
+        iConstForEach(PtrArray, i, &d->extraWindows) {
             if (i.ptr != d->window) {
                 pushBack_PtrArray(windows, i.ptr);
             }
@@ -2522,8 +2522,12 @@ const iPtrArray *regularWindows_App(void) {
 void setActiveWindow_App(iAnyWindow *mainOrExtraWin) {
     iApp *d = &app_;
     d->window = mainOrExtraWin;
+    /* Move the corresponding window to the front of the list so it gets to process events first. */
     if (d->window) {
         iAssert(d->window->type == main_WindowType || d->window->type == extra_WindowType);
+        iPtrArray *list = (d->window->type == main_WindowType ? &d->mainWindows : &d->extraWindows);
+        removeOne_PtrArray(list, d->window);
+        pushFront_PtrArray(list, d->window);
     }
 }
 
