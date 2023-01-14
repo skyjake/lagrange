@@ -194,12 +194,12 @@ static void insertMacMenus_(void) {
     if (macMenusInserted_) {
         return;
     }
-    insertMenuItems_MacOS("${menu.title.file}", 1, fileMenuItems_, iElemCount(fileMenuItems_));
-    insertMenuItems_MacOS("${menu.title.edit}", 2, editMenuItems_, iElemCount(editMenuItems_));
-    insertMenuItems_MacOS("${menu.title.view}", 3, viewMenuItems_, iElemCount(viewMenuItems_));
-    insertMenuItems_MacOS("${menu.title.bookmarks}", 4, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
-    insertMenuItems_MacOS("${menu.title.identity}", 5, identityMenuItems_, iElemCount(identityMenuItems_));
-    insertMenuItems_MacOS("${menu.title.help}", 7, helpMenuItems_, iElemCount(helpMenuItems_));
+    insertMenuItems_MacOS("${menu.title.file}", 1, 0, fileMenuItems_, iElemCount(fileMenuItems_));
+    insertMenuItems_MacOS("${menu.title.edit}", 2, 0, editMenuItems_, iElemCount(editMenuItems_));
+    insertMenuItems_MacOS("${menu.title.view}", 3, 0, viewMenuItems_, iElemCount(viewMenuItems_));
+    insertMenuItems_MacOS("${menu.title.bookmarks}", 4, 0, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
+    insertMenuItems_MacOS("${menu.title.identity}", 5, 0, identityMenuItems_, iElemCount(identityMenuItems_));
+    insertMenuItems_MacOS("${menu.title.help}", 7, 0, helpMenuItems_, iElemCount(helpMenuItems_));
     macMenusInserted_ = iTrue;
 }
 
