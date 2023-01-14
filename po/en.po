@@ -178,6 +178,12 @@ msgstr "Move Tab Left"
 msgid "menu.movetab.right"
 msgstr "Move Tab Right"
 
+msgid "menu.movetab.split"
+msgstr "Move Tab to Other Side"
+
+msgid "menu.movetab.newwindow"
+msgstr "Move Tab to New Window"
+
 msgid "menu.split.merge"
 msgstr "Unsplit"
 

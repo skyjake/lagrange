@@ -4217,6 +4217,49 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iFalse;
     }
+    else if (equal_Command(cmd, "tabs.swap") && d == document_App()) {
+        if (!argLabel_Command(cmd, "newwindow") && numRoots_Window(get_Window()) == 1) {
+            /* Duplicate this tab and activate split mode to move the duplicated tab to the
+               new split. */
+            postCommandf_App("ui.split arg:3 axis:%d",
+                             defaultSplitAxis_MainWindow(get_MainWindow()));
+            return iTrue;
+        }        
+        iRoot       *oldRoot   = get_Root();
+        iMainWindow *oldWin    = get_MainWindow();
+        iRoot       *otherRoot = otherRoot_Window(get_Window(), oldRoot);
+        iWidget     *docTabs   = findParent_Widget(w, "doctabs");
+        size_t       tabIndex  = tabPageIndex_Widget(docTabs, d);
+        iMainWindow *newWin    = NULL;
+        if (argLabel_Command(cmd, "newwindow")) {
+            newWin = newMainWindow_App();
+            otherRoot = newWin->base.roots[0];
+        }
+        iWidget *oldTab = removeTabPage_Widget(docTabs, tabIndex); /* old tab is deleted later */
+        iAssert(tabCount_Widget(docTabs) > 0); /* doctabs.menu is not visible with one tab */
+        iDocumentWidget *nextTab = (iDocumentWidget *) tabPage_Widget(
+            docTabs, iMin(tabIndex, tabCount_Widget(docTabs) - 1));
+        showTabPage_Widget(docTabs, nextTab);
+        /* Switch to the destination root temporarily so we can create a new tab there. */
+        setCurrent_Root(otherRoot);
+        if (newWin) {
+            setCurrent_Window(newWin);            
+        }
+        newTab_App(d, iTrue); /* makes a duplicate */
+        setCurrent_Root(oldRoot);
+        if (newWin) {
+            /* Get rid of the default blank tab. */
+            postCommandf_Root(otherRoot,
+                              "tabs.close id:%s",
+                              cstr_String(id_Widget(tabPage_Widget(
+                                  findChild_Widget(otherRoot->widget, "doctabs"), 0))));
+            postCommand_Root(otherRoot, "window.unfreeze");
+            setCurrent_Window(oldWin);
+        }
+        arrange_Widget(docTabs);
+        destroy_Widget(oldTab);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "tab.created")) {
         /* Space for tab buttons has changed. */
         updateWindowTitle_DocumentWidget_(d);

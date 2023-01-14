@@ -1843,8 +1843,11 @@ void createUserInterface_Root(iRoot *d) {
                 { "---" },
                 { leftAngle_Icon " ${menu.movetab.left}", 0, 0, "tabs.move arg:-1" },
                 { rightAngle_Icon " ${menu.movetab.right}", 0, 0, "tabs.move arg:1" },
+                { "${menu.movetab.split}", 0, 0, "tabs.swap" },
+                { "${menu.movetab.newwindow}", 0, 0, "tabs.swap newwindow:1" },
             },
-            9);
+            11);
+        /* TODO: .newwindow is only for desktop; .split is not for phone */
         iWidget *barMenu =
             makeMenu_Widget(root,
                             (iMenuItem[]){
