@@ -454,29 +454,14 @@ void registerURLHandler_MacOS(void) {
     [handler release];
 }
 
-#if 0
-static iBool isTracking_;
-
-static void trackSwipe_(NSEvent *event) {
-    if (isTracking_) {
-        return;
+static iBool processKeyDownEvent_(NSEvent *event) {
+    if ((event.modifierFlags & NSEventModifierFlagFunction) && (event.keyCode == 0xe)) {
+        /* Globe-E shows the sysetm Character Viewer in recent versions of macOS. */
+        postCommand_App("emojipicker");
+        return iTrue;
     }
-    isTracking_ = iTrue;
-    [event trackSwipeEventWithOptions:NSEventSwipeTrackingLockDirection
-             dampenAmountThresholdMin:-1.0
-                                  max:1.0
-                         usingHandler:^(CGFloat gestureAmount, NSEventPhase phase,
-                                        BOOL isComplete, BOOL *stop) {
-                        printf("TRACK: amount:%f phase:%lu complete:%d\n",
-                               gestureAmount, (unsigned long) phase, isComplete);
-                        fflush(stdout);
-                        if (isComplete) {
-                            isTracking_ = iFalse;
-                        }
-                      }
-    ];
+    return iFalse;
 }
-#endif
 
 static int swipeDir_ = 0;
 static int preventTapGlitch_ = 0;
@@ -613,6 +598,14 @@ void setupApplication_MacOS(void) {
                                                 return nil; /* was eaten */                                                
                                             }
                                             return event;
+                                          }];
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown
+                                          handler:^NSEvent*(NSEvent *event){
+                                              if (event.type == NSEventTypeKeyDown &&
+                                                  processKeyDownEvent_(event)) {
+                                                  return nil; /* was eaten */                                                
+                                              }
+                                              return event;
                                           }];
 #if defined (LAGRANGE_ENABLE_SPARKLE)
     [[SUUpdater sharedUpdater] setDelegate:myDel];

@@ -10,9 +10,12 @@
 New features:
 * Redesigned Preferences dialog with vertical tabs and a new organization of the settings. "Fonts" and "Colors" are removed, and there is a new "Content" tab.
 * Preferences dialog opens as a separate window.
-* Changing order of tabs: tab buttons can be dragged with the mouse, and tabs can be moved left/right using tab context menu items or keyboard shortcuts.
+* Reordering tabs: tab buttons can be dragged with the mouse, and tabs can be moved left/right using tab context menu items or keyboard shortcuts.
+* Move a tab to the other side of a split view (tab context menu).
+* Move a tab to a new window (tab context menu).
 * Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
 * Gopher: Option to disable Gemini styling on Gopher menu pages. When disabled, whitespace is not normalized and all non-link lines are presented as regular paragraph text.
+* macOS: 🌐E opens the native Character Viewer. 
 
 Changes and enhancements:
 * GTK: Request dark window theme if the app UI color theme is dark.
