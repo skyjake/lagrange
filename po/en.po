@@ -172,6 +172,12 @@ msgstr "Close Tabs To Right"
 msgid "menu.duptab"
 msgstr "Duplicate Tab"
 
+msgid "menu.tab.next"
+msgstr "Show Next Tab"
+
+msgid "menu.tab.prev"
+msgstr "Show Previous Tab"
+
 msgid "menu.movetab.left"
 msgstr "Move Tab Left"
 

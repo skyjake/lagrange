@@ -208,6 +208,9 @@ static void ignoreImmediateKeyDownEvents_(void) {
 
 @end
 
+static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIndex,
+                                  const iMenuItem *items, size_t n);
+
 /*----------------------------------------------------------------------------------------------*/
 
 @interface MyDelegate : NSResponder<NSApplicationDelegate, NSTouchBarDelegate
@@ -591,6 +594,16 @@ void setupApplication_MacOS(void) {
     windowCloseItem.target = myDel;
     windowCloseItem.action = @selector(closeTab);
     
+    /* TODO: translate these on lang.changed */
+    static const iMenuItem macWindowMenuItems_[] = {
+        { "---" },
+        { "${menu.tab.next}", 0, 0, "tabs.next" },
+        { "${menu.tab.prev}", 0, 0, "tabs.prev" },
+        { "${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
+        { "---" },
+    };
+    makeMenuItems_(windowMenu, [myDel menuCommands], 4, macWindowMenuItems_, iElemCount(macWindowMenuItems_));    
+    
     [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskScrollWheel
                                           handler:^NSEvent*(NSEvent *event){
                                             if (event.type == NSEventTypeScrollWheel &&
@@ -813,6 +826,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
     if (atIndex == 0) {
         atIndex = menu.numberOfItems;
     }
+    atIndex = iMin(atIndex, menu.numberOfItems);
     NSMenuItem *selectedItem = nil;
     for (size_t i = 0; i < n && items[i].label; ++i) {
         const char *label = translateCStr_Lang(items[i].label);
@@ -891,7 +905,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, int firstItemInde
     }
     else {
         mainItem = [appMenu itemAtIndex:atIndex];
-        menu = mainItem.menu;
+        menu = mainItem.submenu;
     }
     [menu setAutoenablesItems:NO];
     makeMenuItems_(menu, [myDel menuCommands], firstItemIndex, items, count);
