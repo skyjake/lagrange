@@ -145,6 +145,9 @@ msgstr "Bookmarks"
 msgid "menu.title.identity"
 msgstr "Identity"
 
+msgid "menu.title.window"
+msgstr "Window"
+
 msgid "menu.title.help"
 msgstr "Help"
 
@@ -189,6 +192,15 @@ msgstr "Move Tab to Other Side"
 
 msgid "menu.movetab.newwindow"
 msgstr "Move Tab to New Window"
+
+msgid "menu.window.min"
+msgstr "Minimize"
+
+msgid "menu.window.max"
+msgstr "Maximize"
+
+msgid "menu.window.full"
+msgstr "Toggle Full Screen"
 
 msgid "menu.split.merge"
 msgstr "Unsplit"

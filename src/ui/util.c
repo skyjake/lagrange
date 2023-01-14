@@ -1593,7 +1593,7 @@ static iWidget *topLevelOpenMenu_(const iWidget *menuBar) {
     return NULL;
 }
 
-static iBool topLevelMenuBarHandler_(iWidget *menuButton, const char *cmd) {
+iBool handleTopLevelMenuBarCommand_Widget(iWidget *menuButton, const char *cmd) {
     if (equal_Command(cmd, "mouse.hovered")) {
         /* Only dispatched to the flagged widget. */
         iWidget *menuBar = parent_Widget(menuButton);
@@ -1620,7 +1620,7 @@ iWidget *makeMenuBar_Widget(const iMenuItem *topLevelMenus, size_t num) {
         iWidget *submenu = findChild_Widget(as_Widget(submenuButton), "menu");
         setFrameColor_Widget(submenu, uiSeparator_ColorId);
         as_Widget(submenuButton)->padding[0] = gap_UI;
-        setCommandHandler_Widget(as_Widget(submenuButton), topLevelMenuBarHandler_);
+        setCommandHandler_Widget(as_Widget(submenuButton), handleTopLevelMenuBarCommand_Widget);
         updateSize_LabelWidget(submenuButton);
         as_Widget(submenuButton)->flags2 |= commandOnHover_WidgetFlag2;
         addChildFlags_Widget(bar, iClob(submenuButton), frameless_WidgetFlag);

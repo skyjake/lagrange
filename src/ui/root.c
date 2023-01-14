@@ -490,6 +490,12 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
+    else if (equal_Command(cmd, "window.activate")) {
+        iWindow *window = pointer_Command(cmd);
+        SDL_RaiseWindow(window->win);
+        SDL_SetWindowInputFocus(window->win);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "window.focus.lost")) {
         setTextColor_LabelWidget(findWidget_App("winbar.app"), uiAnnotation_ColorId);
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiAnnotation_ColorId);
@@ -1365,6 +1371,39 @@ static void addUnsplitButton_(iWidget *navBar) {
     updateSize_LabelWidget(unsplit);
 }
 
+static iBool updateWindowMenu_(iWidget *menuBarItem, const char *cmd) {
+    /* Note: This only works with non-native menus. */
+    if (equalWidget_Command(cmd, menuBarItem, "menu.opened")) {
+        /* Get rid of the old window list. See `windowMenuItems_` in window.c for the fixed list. */
+        iWidget *menu = findChild_Widget(menuBarItem, "menu");
+        while (childCount_Widget(menu) > 9) {
+            destroy_Widget(removeChild_Widget(menu, child_Widget(menu, 9)));
+        }
+        iArray winItems;
+        init_Array(&winItems, sizeof(iMenuItem));
+        iConstForEach(PtrArray, i, mainWindows_App()) {
+            const iWindow *win = i.ptr;
+            iDocumentWidget *doc = document_Root(win->roots[0]);
+            pushBack_Array(&winItems,
+                           &(iMenuItem){ .label = cstr_String(bookmarkTitle_DocumentWidget(doc)),
+                                         0,
+                                         0,
+                                         format_CStr("!window.activate ptr:%p", win) });
+        }
+        makeMenuItems_Widget(menu, constData_Array(&winItems), size_Array(&winItems));
+        iLabelWidget *curWinItem =
+            findMenuItem_Widget(menu, format_CStr("!window.activate ptr:%p", get_MainWindow()));
+        if (curWinItem) {
+            setFlags_Widget(as_Widget(curWinItem), noBackground_WidgetFlag, iFalse);
+            setBackgroundColor_Widget(as_Widget(curWinItem), uiBackgroundUnfocusedSelection_ColorId);
+            setTextColor_LabelWidget(curWinItem, uiTextStrong_ColorId);
+        }
+        deinit_Array(&winItems);
+        arrange_Widget(menu);
+    }
+    return handleTopLevelMenuBarCommand_Widget(menuBarItem, cmd);
+}
+
 static iBool updateMobilePageMenuItems_(iWidget *menu, const char *cmd) {
     if (equalWidget_Command(cmd, menu, "menu.opened")) {
         /* Update the items. */
@@ -1444,6 +1483,8 @@ void createUserInterface_Root(iRoot *d) {
             div,
             iClob(makeMenuBar_Widget(topLevelMenus_Window, iElemCount(topLevelMenus_Window))),
             collapse_WidgetFlag);
+        /* The window menu needs to be dynamically updated with the list of open windows. */
+        setCommandHandler_Widget(child_Widget(menuBar, 5), updateWindowMenu_);
         setId_Widget(menuBar, "menubar");
 #  if 0
         addChildFlags_Widget(menuBar, iClob(new_Widget()), expand_WidgetFlag);

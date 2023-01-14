@@ -15,6 +15,8 @@ New features:
 * Move a tab to a new window (tab context menu).
 * Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
 * Gopher: Option to disable Gemini styling on Gopher menu pages. When disabled, whitespace is not normalized and all non-link lines are presented as regular paragraph text.
+* Added a "Window" menu to the menu bar that has actions for manipulating and switching the active window, and duplicating and switching tabs. (On macOS, this menu has already been available.)
+* macOS: "Window" menu has new actions for duplicating and switching tabs.
 * macOS: 🌐E opens the native Character Viewer. 
 
 Changes and enhancements:

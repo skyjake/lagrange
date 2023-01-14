@@ -154,10 +154,18 @@ static const iMenuItem identityMenuItems_[] = {
     { NULL }
 };
 
-//static const iMenuItem windowMenuItems_[] = {
-//    { "${menu.closewindow}", 0, 0, "window.close" },
-//    { NULL }
-//};
+static const iMenuItem windowMenuItems_[] = {
+    { "${menu.closetab}", 0, 0, "tabs.close" },
+    { "${menu.tab.next}", 0, 0, "tabs.next" },
+    { "${menu.tab.prev}", 0, 0, "tabs.prev" },
+    { "${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
+    { "---" },
+    { "${menu.window.min}", 0, 0, "window.minimize" },
+    { "${menu.window.max}", 0, 0, "window.maximize" },
+    { "${menu.window.full}", 0, 0, "window.fullscreen" },
+    { "---" },
+    { NULL }
+};
 
 static const iMenuItem helpMenuItems_[] = {
 #if defined (iPlatformPcDesktop)
@@ -176,13 +184,13 @@ static const iMenuItem helpMenuItems_[] = {
     { NULL }
 };
 
-const iMenuItem topLevelMenus_Window[6] = {
+const iMenuItem topLevelMenus_Window[7] = {
     { "${menu.title.file}", 0, 0, (const void *) fileMenuItems_ },
     { "${menu.title.edit}", 0, 0, (const void *) editMenuItems_ },
     { "${menu.title.view}", 0, 0, (const void *) viewMenuItems_ },
     { "${menu.title.bookmarks}", 0, 0, (const void *) bookmarksMenuItems_ },
     { "${menu.title.identity}", 0, 0, (const void *) identityMenuItems_ },
-//    { "${menu.title.window}", 0, 0, (const void *) windowMenuItems_ },
+    { "${menu.title.window}", 0, 0, (const void *) windowMenuItems_ },
     { "${menu.title.help}", 0, 0, (const void *) helpMenuItems_ },
 };
 
@@ -1312,6 +1320,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (isCommand_UserEvent(&event, "lang.changed") && (mw || extraw)) {
 #if defined (LAGRANGE_MAC_MENUBAR)
                 /* Retranslate the menus. */
+                /* TODO: Instead of removing, just update the labels. */
                 removeMacMenus_();
                 insertMacMenus_();
 #endif

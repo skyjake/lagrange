@@ -328,7 +328,8 @@ iLabelWidget *  makeIdentityDropdown_LabelWidget    (iWidget *headings, iWidget 
                                                      const char *id);
 /*-----------------------------------------------------------------------------------------------*/
 
-iWidget *       makeMenuBar_Widget      (const iMenuItem *topLevelMenus, size_t num);
+iWidget *       makeMenuBar_Widget                  (const iMenuItem *topLevelMenus, size_t num);
+iBool           handleTopLevelMenuBarCommand_Widget (iWidget *menuButton, const char *cmd);
 
 /*-----------------------------------------------------------------------------------------------*/
 

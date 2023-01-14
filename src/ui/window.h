@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_mouse.h>
 #include <SDL_video.h>
 
-extern const iMenuItem topLevelMenus_Window[6];
+extern const iMenuItem topLevelMenus_Window[7];
 
 enum iWindowType {
     main_WindowType,
