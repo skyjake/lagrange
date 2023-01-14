@@ -216,6 +216,10 @@ void        drawWhileResizing_MainWindow    (iMainWindow *, int w, int h); /* wo
 int         snap_MainWindow                 (const iMainWindow *);
 iBool       isFullscreen_MainWindow         (const iMainWindow *);
 
+iLocalDef int defaultSplitAxis_MainWindow(const iMainWindow *d) {
+    return (float) d->base.size.x / (float) d->base.size.y < 0.7f ? 1 : 0;
+}
+
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 SDL_HitTestResult hitTest_MainWindow(const iMainWindow *d, iInt2 pos);
 #endif

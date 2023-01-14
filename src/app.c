@@ -3811,11 +3811,10 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
     int newTab = argLabel_Command(cmd, "newtab");
     if (newTab & otherRoot_OpenTabFlag && numRoots_Window(get_Window()) == 1) {
         /* Need to split first. */
-        const iInt2 winSize = get_Window()->size;
         const int splitMode = argLabel_Command(cmd, "splitmode");
         postCommandf_App("ui.split arg:%d axis:%d origin:%s newtab:%d%s url:%s",
-                         splitMode ? splitMode : 3,
-                         (float) winSize.x / (float) winSize.y < 0.7f ? 1 : 0,
+                         splitMode ? splitMode : 3 /* equal weights */,
+                         defaultSplitAxis_MainWindow(get_MainWindow()),
                          cstr_String(id_Widget(as_Widget(origin))),
                          newTab & ~otherRoot_OpenTabFlag,
                          cstr_String(setIdentArg),
