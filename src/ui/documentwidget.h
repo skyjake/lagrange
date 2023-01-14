@@ -59,6 +59,7 @@ enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),
     preventInlining_DocumentWidgetSetUrlFlag             = iBit(2),
     waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag  = iBit(3),
+    disallowCachedDocument_DocumentWidgetSetUrlFlag      = iBit(4),
 };
 
 void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other);

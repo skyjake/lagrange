@@ -978,12 +978,17 @@ static void resetScroll_DocumentView_(iDocumentView *d) {
     resetWideRuns_DocumentView_(d);
 }
 
-static void updateWidth_DocumentView_(iDocumentView *d) {
-    updateWidth_GmDocument(d->doc, documentWidth_DocumentView_(d), width_Widget(d->owner));
+static iBool updateWidth_DocumentView_(iDocumentView *d) {
+    if (updateWidth_GmDocument(d->doc, documentWidth_DocumentView_(d), width_Widget(d->owner))) {
+        documentRunsInvalidated_DocumentView_(d); /* GmRuns reallocated */
+        return iTrue;
+    }
+    return iFalse;
 }
 
 static void updateWidthAndRedoLayout_DocumentView_(iDocumentView *d) {
     setWidth_GmDocument(d->doc, documentWidth_DocumentView_(d), width_Widget(d->owner));
+    documentRunsInvalidated_DocumentView_(d); /* GmRuns reallocated */
 }
 
 static void clampScroll_DocumentView_(iDocumentView *d) {
@@ -1155,6 +1160,7 @@ static iBool updateDocumentWidthRetainingScrollPosition_DocumentView_(iDocumentV
         /* TODO: First *fully* visible run? */
         voffset = visibleRange_DocumentView_(d).start - top_Rect(run->visBounds);
     }
+    run = NULL;
     setWidth_GmDocument(d->doc, newWidth, width_Widget(d->owner));
     setWidth_Banner(d->owner->banner, newWidth);
     documentRunsInvalidated_DocumentWidget_(d->owner);
@@ -2996,7 +3002,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
         }
         if (cachedDoc) {
             replaceDocument_DocumentWidget_(d, cachedDoc);
-            updateWidth_DocumentView_(&d->view);
+            if (updateWidth_DocumentView_(&d->view)) {
+                documentRunsInvalidated_DocumentWidget_(d); /* GmRuns reallocated */
+            }
         }
         else if (setSource) {
             setSource_DocumentWidget(d, &str);
@@ -3217,14 +3225,15 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         as_Widget(d)->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
 }
 
-static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
+static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d, iBool useCachedDoc) {
     const iRecentUrl *recent = constMostRecentUrl_History(d->mod.history);
     setIdentity_DocumentWidget(d, recent ? &recent->setIdentity : NULL);
     if (recent && recent->cachedResponse && equalCase_String(&recent->url, d->mod.url)) {
+        iGmDocument *cachedDoc = (useCachedDoc ? recent->cachedDoc : NULL);
         updateFromCachedResponse_DocumentWidget_(
-            d, recent->normScrollY, recent->cachedResponse, recent->cachedDoc);
-        if (!recent->cachedDoc) {
-            /* We have a cached copy now. */
+            d, recent->normScrollY, recent->cachedResponse, cachedDoc);
+        if (!cachedDoc) {
+            /* We now have a cached document. */
             setCachedDocument_History(d->mod.history, d->view.doc);
         }
         return iTrue;
@@ -6363,7 +6372,7 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
     if (d) {
         deserialize_PersistentDocumentState(&d->mod, ins);
         parseUser_DocumentWidget_(d);
-        updateFromHistory_DocumentWidget_(d);
+        updateFromHistory_DocumentWidget_(d, iTrue);
     }
     else {
         /* Read and throw away the data. */
@@ -6376,7 +6385,8 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags,
                                 const iBlock *setIdent) {
     iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
-    const iBool allowCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
+    const iBool allowCache     = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
+    const iBool allowCachedDoc = (setUrlFlags & disallowCachedDocument_DocumentWidgetSetUrlFlag) == 0;
     iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
                  setUrlFlags & preventInlining_DocumentWidgetSetUrlFlag);
     iChangeFlags(d->flags, waitForIdle_DocumentWidgetFlag,
@@ -6389,7 +6399,7 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
     }
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
-    if (!allowCache || !updateFromHistory_DocumentWidget_(d)) {
+    if (!allowCache || !updateFromHistory_DocumentWidget_(d, allowCachedDoc)) {
         fetch_DocumentWidget_(d);
         if (setIdent) {
             setIdentity_History(d->mod.history, setIdent);
@@ -6419,7 +6429,10 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     d->initNormScrollY = normScrollPos_DocumentView_(&d->view);
     d->mod.history = copy_History(orig->mod.history);
     setUrlFlags_DocumentWidget(
-        d, orig->mod.url, useCachedContentIfAvailable_DocumentWidgetSetUrlFlag,
+        d, orig->mod.url, useCachedContentIfAvailable_DocumentWidgetSetUrlFlag |
+                               /* don't share GmDocument between tabs; width may differ,
+                                  and runs may be invalidated by one while others won't notice */
+                               disallowCachedDocument_DocumentWidgetSetUrlFlag,
         d->mod.setIdentity);
     return d;
 }
