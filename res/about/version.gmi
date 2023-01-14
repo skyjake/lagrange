@@ -22,6 +22,7 @@ Changes and enhancements:
 
 Fixes:
 * Changing the UI scaling factor will now affect all existing and newly created windows.
+* Possible crash when duplicating a tab.
 
 ## 1.14.2
 * Fixed a potential crash when using musl libc.
