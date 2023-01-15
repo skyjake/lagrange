@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2023-01-14 12:44+0000\n"
+"PO-Revision-Date: 2023-01-15 06:09+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -2507,3 +2507,27 @@ msgstr "Sayfada kaydırma:"
 
 msgid "prefs.gopher.gemstyle"
 msgstr "Gopher menü biçemini otomatik algıla:"
+
+msgid "menu.title.window"
+msgstr "Pencere"
+
+msgid "menu.window.min"
+msgstr "Küçült"
+
+msgid "menu.window.max"
+msgstr "Büyüt"
+
+msgid "menu.window.full"
+msgstr "Tam ekranı aç/kapat"
+
+msgid "menu.tab.next"
+msgstr "Sonraki sekmeyi göster"
+
+msgid "menu.tab.prev"
+msgstr "Önceki sekmeyi göster"
+
+msgid "menu.movetab.split"
+msgstr "Sekmeyi diğer yana taşı"
+
+msgid "menu.movetab.newwindow"
+msgstr "Sekmeyi yeni pencereye taşı"
