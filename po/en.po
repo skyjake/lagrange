@@ -115,6 +115,8 @@ msgstr "A Beautiful Gemini Client"
 msgid "about.version"
 msgstr "Version"
 
+# The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
+# if the build config uses different libraries (e.g., ncurses, LibreSSL).
 msgid "about.powered"
 msgstr "Powered by SDL 2, OpenSSL, and ☕️"
 
