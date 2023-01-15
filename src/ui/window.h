@@ -85,6 +85,7 @@ enum iWindowSplit {
 
 struct Impl_Window {
     enum iWindowType type;
+    uint32_t      serial; /* incrementing serial number; creation order */
     SDL_Window *  win;
     iBool         isExposed;
     iBool         isMinimized;

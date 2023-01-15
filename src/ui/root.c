@@ -492,6 +492,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "window.activate")) {
         iWindow *window = pointer_Command(cmd);
+        SDL_RestoreWindow(window->win);
         SDL_RaiseWindow(window->win);
         SDL_SetWindowInputFocus(window->win);
         return iTrue;
@@ -1371,6 +1372,11 @@ static void addUnsplitButton_(iWidget *navBar) {
     updateSize_LabelWidget(unsplit);
 }
 
+static int sortByWindowPtrSerial_(const void *e1, const void *e2) {
+    const iWindow * const *w[2] = { e1, e2 };
+    return iCmp((*w[0])->serial, (*w[1])->serial);
+}
+
 static iBool updateWindowMenu_(iWidget *menuBarItem, const char *cmd) {
     /* Note: This only works with non-native menus. */
     if (equalWidget_Command(cmd, menuBarItem, "menu.opened")) {
@@ -1381,7 +1387,9 @@ static iBool updateWindowMenu_(iWidget *menuBarItem, const char *cmd) {
         }
         iArray winItems;
         init_Array(&winItems, sizeof(iMenuItem));
-        iConstForEach(PtrArray, i, mainWindows_App()) {
+        iPtrArray *sortedWindows = collect_PtrArray(copy_PtrArray(mainWindows_App()));
+        sort_Array(sortedWindows, sortByWindowPtrSerial_);
+        iForEach(PtrArray, i, sortedWindows) {
             const iWindow *win = i.ptr;
             iDocumentWidget *doc = document_Root(win->roots[0]);
             pushBack_Array(&winItems,

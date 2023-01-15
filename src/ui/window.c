@@ -562,8 +562,11 @@ static void updateMetrics_Window_(const iWindow *d) {
     setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
 }
 
+static iAtomicInt windowSerialNumber_;
+
 void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) {
     d->type          = type;
+    d->serial        = add_Atomic(&windowSerialNumber_, 1);
     d->win           = NULL;
     d->size          = zero_I2(); /* will be updated below */
     d->hover         = NULL;
