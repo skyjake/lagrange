@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2023-01-14 12:44+0000\n"
+"PO-Revision-Date: 2023-01-15 10:22+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -2550,3 +2550,27 @@ msgstr "Pyyhkäisy sivun päällä:"
 
 msgid "prefs.gopher.gemstyle"
 msgstr "Tunnista tyylit Gopher-valikoissa:"
+
+msgid "menu.tab.next"
+msgstr "Näytä seuraava välilehti"
+
+msgid "menu.tab.prev"
+msgstr "Näytä edellinen välilehti"
+
+msgid "menu.movetab.split"
+msgstr "Siirrä välilehti toiselle puolelle"
+
+msgid "menu.movetab.newwindow"
+msgstr "Siirrä välilehti uuteen ikkunaan"
+
+msgid "menu.title.window"
+msgstr "Ikkuna"
+
+msgid "menu.window.full"
+msgstr "Koko näytön tila"
+
+msgid "menu.window.min"
+msgstr "Pienennä ikkuna"
+
+msgid "menu.window.max"
+msgstr "Suurenna ikkuna"
