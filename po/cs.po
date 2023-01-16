@@ -1,16 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-11-18 11:52+0000\n"
-"Last-Translator: Tadeáš Erban <tadysekerbosek@gmail.com>\n"
-"Language-Team: Czech <http://weblate.skyjake.fi/projects/lagrange/ui/cs/>\n"
-"Language: cs\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 # Link download progress message.
 msgid "doc.fetching"
 msgstr "Načítání"
@@ -83,9 +70,6 @@ msgstr "Pokračovat"
 
 msgid "dlg.default"
 msgstr " OK "
-
-msgid "toggle.no"
-msgstr "NE"
 
 msgid "menu.title.file"
 msgstr "Soubor"
@@ -326,9 +310,6 @@ msgstr[2] "před %d dny"
 msgid "about.logo"
 msgstr "ASCII umění: slovo \"Lagrange\" vykresleno velkým písmem"
 
-msgid "toggle.yes"
-msgstr "ANO"
-
 msgid "menu.title.bookmarks"
 msgstr "Záložky"
 
@@ -546,9 +527,6 @@ msgstr ""
 msgid "sidebar.date.thisyear"
 msgstr "%d. %b."
 
-msgid "feeds.entry.newtab"
-msgstr "Otevřít položku na nové kartě"
-
 msgid "feeds.entry.markunread"
 msgstr "Označit jako nepřečtené"
 
@@ -707,9 +685,6 @@ msgstr ""
 "Nastavte port pro používání s Titanem pro tuto URL. Bude uložen v "
 "konfiguraci pro tuto stránku."
 
-msgid "lang.zh.hans"
-msgstr "Čínština (Zjednodušená)"
-
 msgid "lang.pt"
 msgstr "Portugalština"
 
@@ -777,20 +752,11 @@ msgstr "Nastavit port"
 msgid "dlg.translate.to"
 msgstr "Pro:"
 
-msgid "lang.ia"
-msgstr "Interlingua"
-
 msgid "lang.ie"
 msgstr "Interlingva"
 
-msgid "lang.es.mx"
-msgstr "Španělština (Mexická)"
-
 msgid "heading.newident"
 msgstr "Nová totožnost"
-
-msgid "lang.uk"
-msgstr "Ukrajinština"
 
 msgid "lang.sr"
 msgstr "Srbština"
@@ -1147,23 +1113,14 @@ msgstr "Arabština"
 msgid "lang.zh"
 msgstr "Čínština"
 
-msgid "lang.zh.hant"
-msgstr "Čínština (Tradiční)"
-
 msgid "lang.de"
 msgstr "Němčina"
 
 msgid "lang.en"
 msgstr "Angličtina"
 
-msgid "lang.fi"
-msgstr "Finština"
-
 msgid "lang.fr"
 msgstr "Francouzština"
-
-msgid "lang.gl"
-msgstr "Galicijština"
 
 msgid "lang.hi"
 msgstr "Hindština"
@@ -1174,20 +1131,11 @@ msgstr "Italština"
 msgid "lang.ja"
 msgstr "Japonština"
 
-msgid "lang.pl"
-msgstr "Polština"
-
 msgid "lang.ru"
 msgstr "Ruština"
 
-msgid "lang.eo"
-msgstr "Esperanto"
-
 msgid "lang.es"
 msgstr "Španělština"
-
-msgid "lang.sk"
-msgstr "Slovenština"
 
 msgid "keys.upload"
 msgstr "Nahrát pomocí Titanu"
@@ -1324,9 +1272,6 @@ msgstr "Otevírat odkazy na nové kartě pomocí kláves na kterých spočívaj�
 
 msgid "keys.link.homerow.hover"
 msgstr "Najet na odkaz pomocí kláves na kterých spočívají prsty"
-
-msgid "lang.isv"
-msgstr "Interslavic"
 
 msgid "lang.tok"
 msgstr "Toki Pona"
@@ -1944,9 +1889,6 @@ msgstr "Příliš mnoho přesměrování"
 msgid "error.certexpired"
 msgstr "Certifikát s vypršenou platností"
 
-msgid "lang.cs"
-msgstr "Čeština"
-
 msgid "error.glyphs"
 msgstr "Chybějící znaky"
 
@@ -2039,16 +1981,10 @@ msgstr "Trvale přestat zobrazovat varování o emulaci terminálu na %s?"
 msgid "dlg.dismiss.warning"
 msgstr "Přestat ukazovat varování"
 
-msgid "heading.fontpack.classic"
-msgstr "Stáhnout písmový balíček"
-
 msgid "dlg.fontpack.classic.msg"
 msgstr ""
 "Písma, které byly dříve přibaleny s aplikací jsou nyní dostupné odděleně. "
 "Chtěli byste nyní stáhnout písmový balíček \"Klasická sada\"?"
-
-msgid "dlg.fontpack.classic"
-msgstr "Stáhnout písmový balíček (25MB)"
 
 msgid "error.badrequest.msg"
 msgstr "Server nepochopil váš požadavek."
@@ -2126,9 +2062,6 @@ msgstr "Ukázat instalovaná písma"
 
 msgid "truetype.help.installed"
 msgstr "Toto písmo je nainstalováno ve složce uživatelských písem."
-
-msgid "lang.hu"
-msgstr "Maďarština"
 
 msgid "gempub.cover.aboutbook"
 msgstr "O této knize"

@@ -1,16 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2023-01-16 07:36+0000\n"
-"Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
-"Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
-"Language: es\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "lang.es"
 msgstr "Español"
 
@@ -119,9 +106,6 @@ msgstr "Negro"
 msgid "prefs.theme.dark"
 msgstr "Oscuro"
 
-msgid "lang.zh.hans"
-msgstr "Chino (Simplificado)"
-
 msgid "lang.it"
 msgstr "Italiano"
 
@@ -192,17 +176,11 @@ msgstr "Hecho con SDL 2, OpenSSL y ☕️"
 msgid "cancel"
 msgstr "Cancelar"
 
-msgid "dismiss"
-msgstr "Descartar"
-
 msgid "dlg.message.ok"
 msgstr "Continuar"
 
 msgid "dlg.default"
 msgstr " OK "
-
-msgid "toggle.yes"
-msgstr "SI"
 
 msgid "toggle.no"
 msgstr "NO"
@@ -245,9 +223,6 @@ msgstr "Buscar en la Página"
 
 msgid "macos.menu.find"
 msgstr "Buscar"
-
-msgid "menu.copy.source"
-msgstr "Copiar Texto Fuente"
 
 msgid "menu.sidebar"
 msgstr "Alternar Barra Lateral"
@@ -433,9 +408,6 @@ msgstr "%d.%b, %Y"
 msgid "feeds.today"
 msgstr "Hoy"
 
-msgid "feeds.entry.newtab"
-msgstr "Abrir Entrada en Nueva Pestaña"
-
 msgid "feeds.entry.markunread"
 msgstr "Marcar como no Leído"
 
@@ -527,9 +499,6 @@ msgstr "Dejar de Usar en Esta Página"
 
 msgid "ident.stopuse.all"
 msgstr "Dejar de Usar en Todas Partes"
-
-msgid "ident.showuse"
-msgstr "Mostrar Uso"
 
 msgid "menu.edit.notes"
 msgstr "Editar Notas…"
@@ -696,9 +665,6 @@ msgstr "Chino"
 msgid "lang.en"
 msgstr "Inglés"
 
-msgid "lang.fi"
-msgstr "Finlandés"
-
 msgid "lang.fr"
 msgstr "Francés"
 
@@ -707,9 +673,6 @@ msgstr "Alemán"
 
 msgid "lang.hi"
 msgstr "Hindi"
-
-msgid "heading.certwarn"
-msgstr "CERTIFICADO NO CONFIABLE"
 
 #, c-format
 msgid "dlg.certwarn.expired"
@@ -1027,9 +990,6 @@ msgstr "Tema oscuro:"
 msgid "prefs.saturation"
 msgstr "Saturación:"
 
-msgid "prefs.headingfont"
-msgstr "Fuente para Titulares:"
-
 msgid "prefs.font"
 msgstr "Fuente para el Cuerpo:"
 
@@ -1333,9 +1293,6 @@ msgid_plural "num.hours.n"
 msgstr[0] "%d hora"
 msgstr[1] "%d horas"
 
-msgid "lang.zh.hant"
-msgstr "Chino (Tradicional)"
-
 msgid "prefs.collapsepreonload"
 msgstr "Colapsar pre-formateado:"
 
@@ -1440,9 +1397,6 @@ msgid_plural "days.ago.n"
 msgstr[0] "%d día"
 msgstr[1] "%d días"
 
-msgid "lang.ie"
-msgstr "Interlingue"
-
 msgid "lang.sr"
 msgstr "Serbio"
 
@@ -1487,9 +1441,6 @@ msgstr "Abrir Enlace al Lado"
 
 msgid "link.side.newtab"
 msgstr "Abrir Enlace en Nueva Pestaña a un Lado"
-
-msgid "lang.ia"
-msgstr "Interlingua"
 
 msgid "heading.newident.missing"
 msgstr "Información Faltante"
@@ -1558,9 +1509,6 @@ msgstr "Idioma"
 msgid "gempub.meta.license"
 msgstr "Licencia"
 
-msgid "lang.pl"
-msgstr "Polaco"
-
 #, c-format
 msgid "doc.archive"
 msgstr "%s es un archivo comprimido."
@@ -1570,9 +1518,6 @@ msgstr "Ver el contenido del archivo"
 
 msgid "bookmark.tag.linksplit"
 msgstr "Abrir enlaces a un lado"
-
-msgid "lang.tok"
-msgstr "Toki Pona"
 
 msgid "archive.exit"
 msgstr "Salir del archivo"
@@ -1625,9 +1570,6 @@ msgstr "Salto de linea"
 msgid "dlg.newident.scope"
 msgstr "Usar en:"
 
-msgid "prefs.userfont"
-msgstr "Fuente simbólica:"
-
 msgid "keys.split.item"
 msgstr "Menú de vista dividida:"
 
@@ -1670,9 +1612,6 @@ msgstr ""
 
 msgid "dlg.uploadport.set"
 msgstr "Configurar Puerto"
-
-msgid "hint.prefs.userfont"
-msgstr "ruta a una fuente TrueType"
 
 msgid "prefs.linespacing"
 msgstr "Espaciado de linea:"
@@ -1929,26 +1868,14 @@ msgstr "Color del Texto"
 msgid "prefs.imagestyle.preformat"
 msgstr "Color Pre-formateado"
 
-msgid "lang.gl"
-msgstr "Gallego"
-
 msgid "lang.eo"
 msgstr "Esperanto"
-
-msgid "lang.es.mx"
-msgstr "Español (México)"
 
 msgid "lang.sk"
 msgstr "Eslovaco"
 
-msgid "lang.isv"
-msgstr "Intereslavo"
-
 msgid "dlg.feed.ignoreweb"
 msgstr "Ignorar enlaces HTTP(S):"
-
-msgid "dlg.fontpack.classic"
-msgstr "Descargar Paquete de Fuentes (25MB)"
 
 msgid "error.ansi"
 msgstr "Emulación de Terminal"
@@ -1964,9 +1891,6 @@ msgstr "Agregar marcadores al final:"
 
 msgid "fontpack.export"
 msgstr "Ver plantilla fontpack.ini"
-
-msgid "heading.fontpack.classic"
-msgstr "Descargar Paquete de Fuentes"
 
 msgid "dlg.fontpack.classic.msg"
 msgstr ""
@@ -2127,14 +2051,8 @@ msgstr "Borrar \"%s\" permanentemente"
 msgid "heading.fontpack.delete"
 msgstr "Borrar Paquete de Fuentes"
 
-msgid "lang.uk"
-msgstr "Ucraniano"
-
 msgid "lang.cs"
 msgstr "Checo"
-
-msgid "lang.hu"
-msgstr "Húngaro"
 
 msgid "sidebar.action.show"
 msgstr "Mostrar:"

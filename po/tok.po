@@ -1,17 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-11-15 05:52+0000\n"
-"Last-Translator: tbodt <tblodt@icloud.com>\n"
-"Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
-">\n"
-"Language: tok\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 # Used in inline audio player metadata popup.
 msgid "audio.meta.artist"
 msgstr "jan kalama"
@@ -82,14 +68,8 @@ msgstr "%s la ilo li lukin sin e lipu."
 msgid "cancel"
 msgstr "o pini"
 
-msgid "dismiss"
-msgstr "o awen"
-
 msgid "toggle.yes"
 msgstr "LON"
-
-msgid "toggle.no"
-msgstr "ALA"
 
 msgid "menu.title.file"
 msgstr "ijo"
@@ -324,9 +304,6 @@ msgstr "o awen sona e lipu…"
 msgid "page.timestamp"
 msgstr "tenpo %c la mi kama jo e lipu ni"
 
-msgid "feeds.entry.newtab"
-msgstr "o open e lipu lon poki sin"
-
 msgid "feeds.entry.markread"
 msgstr "mi lukin e ni"
 
@@ -416,9 +393,6 @@ msgstr "o kepeken e ona lon lipu ni"
 
 msgid "ident.stopuse.all"
 msgstr "o kepeken ala e ona lon lipu ale"
-
-msgid "ident.showuse"
-msgstr "lipu li kepeken e ona la o lukin e lipu ni"
 
 msgid "sidebar.empty.idents"
 msgstr "nimi li lon ala"
@@ -565,9 +539,6 @@ msgstr "o awen e ijo pi nimi tawa"
 msgid "dlg.openlink"
 msgstr "o open e nimi tawa"
 
-msgid "heading.certwarn"
-msgstr "SITELEN LEN LI IKE LUKIN"
-
 #, c-format
 msgid "dlg.certwarn.expired"
 msgstr "tenpo pini %s la sitelen len li tawa weka."
@@ -653,17 +624,11 @@ msgstr "toki Alapi"
 msgid "lang.zh"
 msgstr "toki Sonko"
 
-msgid "lang.zh.hant"
-msgstr "toki Sonko suli"
-
 msgid "lang.de"
 msgstr "toki Tosi"
 
 msgid "lang.en"
 msgstr "toki Inli"
-
-msgid "lang.ie"
-msgstr "toki Intelinwe"
 
 msgid "lang.fi"
 msgstr "toki Sumi"
@@ -685,9 +650,6 @@ msgstr "toki Losi"
 
 msgid "lang.es"
 msgstr "toki Epanja"
-
-msgid "lang.sr"
-msgstr "toki Sopisi Kilili"
 
 msgid "dlg.newident.until"
 msgstr "tenpo ni la ona li wile tawa weka:"
@@ -873,9 +835,6 @@ msgstr "walo yelo"
 
 msgid "prefs.saturation"
 msgstr "kule:"
-
-msgid "prefs.headingfont"
-msgstr "nasin lukin tawa sitelen suli:"
 
 msgid "prefs.font"
 msgstr "nasin lukin tawa sitelen:"
@@ -1347,9 +1306,6 @@ msgstr "TAN SONA PI TENPO PINI"
 msgid "dlg.translate.unavail"
 msgstr "ilo li lape"
 
-msgid "lang.zh.hans"
-msgstr "toki Sonko pona"
-
 msgid "lang.hi"
 msgstr "toki Insi"
 
@@ -1478,9 +1434,6 @@ msgstr ""
 msgid "menu.split.swap"
 msgstr "poki tu o esun"
 
-msgid "lang.ia"
-msgstr "toki Intelinwa"
-
 msgid "heading.newident.missing"
 msgstr "nimi li lon ala"
 
@@ -1540,9 +1493,6 @@ msgstr "o lukin e insa"
 msgid "bookmark.tag.linksplit"
 msgstr "nimi tawa lon poki ante"
 
-msgid "lang.tok"
-msgstr "toki pona"
-
 msgid "dir.empty"
 msgstr "ala li lon poki ni."
 
@@ -1573,9 +1523,6 @@ msgstr[0] "ijo %u li lon poki ni."
 
 msgid "keys.tab.close.other"
 msgstr "o pini e poki ante"
-
-msgid "lang.pl"
-msgstr "toki Posuka"
 
 msgid "prefs.userfont"
 msgstr "sitelen ante:"
@@ -1627,9 +1574,6 @@ msgstr "o lukin e lipu pi ilo sina…"
 
 msgid "status.query.tight"
 msgstr "sina alasa"
-
-msgid "hint.prefs.userfont"
-msgstr "nasin tawa ijo sitelen TrueType"
 
 msgid "upload.port"
 msgstr "nanpa kon…"
@@ -1858,20 +1802,12 @@ msgstr ""
 "mi ante e lipu pi nasin Atom XML tawa lipu pi nasin Kemeni la sina ken lukin "
 "e sin lipu."
 
-msgid "dlg.fontpack.classic"
-msgstr "o kama jo e kulupu sitelen (tu suli meka 25)"
-
 msgid "heading.fontpack.classic"
 msgstr "o kama jo e kulupu sitelen"
 
 #, c-format
 msgid "fontpack.install"
 msgstr "o pali e kulupu sitelen \"%s\""
-
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"tenpo pini la sitelen mute lon insa ilo ni. tenpo ni la sitelen ni lon insa "
-"ijo ante. sina wile ala wile kama jo e kulupu sitelen \"Classic set\"?"
 
 #, c-format
 msgid "fontpack.enable"
@@ -2004,21 +1940,11 @@ msgstr "ilo Lakelan li wile open e ijo TrueType ale lon poki sitelen."
 msgid "truetype.help.installed"
 msgstr "sitelen ni lon poki sitelen."
 
-msgid "lang.eo"
-msgstr "toki Epelanto"
-
 msgid "lang.gl"
 msgstr "toki Kaleko"
 
-msgid "lang.es.mx"
-msgstr "toki Epanja Mesiko"
-
 msgid "lang.sk"
 msgstr "toki Lowenski"
-
-#, fuzzy
-msgid "lang.isv"
-msgstr "toki Metulowanski"
 
 msgid "menu.sort.alpha"
 msgstr "o pali kepeken nasin nimi"
@@ -2033,9 +1959,6 @@ msgstr "sitelen suli pi nanpa 2/3 li sama poki."
 
 msgid "bookmark.export.format.tags"
 msgstr "sitelen suli pi nanpa 2 li sama nimi lili."
-
-msgid "lang.cs"
-msgstr "toki Seki"
 
 msgid "lang.uk"
 msgstr "toki Ukawina"
@@ -2053,9 +1976,6 @@ msgstr ""
 "ante la jan ike li ken lukin sama ilo pana.\n"
 "\n"
 "sina wile lukin e lipu kepeken len ni la o open e ijo \"sona lipu\"."
-
-msgid "lang.hu"
-msgstr "toki Mosijo"
 
 msgid "prefs.time.24h"
 msgstr "tenpo 24"

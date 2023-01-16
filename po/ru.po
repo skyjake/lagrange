@@ -1,19 +1,3 @@
-msgid ""
-msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2022-11-29 22:52+0000\n"
-"Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
-"Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
-"Language: ru\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "about.logo"
 msgstr "ASCII-графика: слово «Lagrange» крупным шрифтом"
 
@@ -29,17 +13,11 @@ msgstr "На базе SDL 2, OpenSSL, и ☕️"
 msgid "cancel"
 msgstr "Отмена"
 
-msgid "dismiss"
-msgstr "Закрыть"
-
 msgid "dlg.message.ok"
 msgstr "Продолжить"
 
 msgid "dlg.default"
 msgstr " OK "
-
-msgid "toggle.yes"
-msgstr "Да"
 
 msgid "toggle.no"
 msgstr "Нет"
@@ -94,9 +72,6 @@ msgstr "Сохранить в файл"
 
 msgid "menu.save.downloads"
 msgstr "Сохранить в папку загрузки"
-
-msgid "menu.copy.source"
-msgstr "Скопировать исходный текст"
 
 msgid "menu.sidebar"
 msgstr "Показать/скрыть боковую панель"
@@ -281,9 +256,6 @@ msgstr "МБ"
 msgid "kb"
 msgstr "КБ"
 
-msgid "bytes"
-msgstr "байт"
-
 msgid "page.timestamp"
 msgstr ""
 "Получено в %H:%M\n"
@@ -297,9 +269,6 @@ msgstr "%b %d, %Y"
 
 msgid "feeds.today"
 msgstr "Сегодня"
-
-msgid "feeds.entry.newtab"
-msgstr "Открыть статью в новой вкладке"
 
 msgid "feeds.entry.markread"
 msgstr "Отметить как прочитанное"
@@ -408,9 +377,6 @@ msgstr "Прекратить использование на этой стран
 
 msgid "ident.stopuse.all"
 msgstr "Прекратить использование везде"
-
-msgid "ident.showuse"
-msgstr "Показать использование"
 
 msgid "heading.ident.use"
 msgstr "Использование клиентского сертификата"
@@ -578,9 +544,6 @@ msgstr ""
 
 msgid "dlg.openlink"
 msgstr "Открыть ссылку"
-
-msgid "heading.certwarn"
-msgstr "НЕДОВЕРЕННЫЙ СЕРТИФИКАТ"
 
 msgid "dlg.certwarn.mayberenewed"
 msgid_plural "dlg.certwarn.mayberenewed.n"
@@ -900,9 +863,6 @@ msgstr "Высокий контраст"
 msgid "prefs.saturation"
 msgstr "Насыщенность:"
 
-msgid "prefs.headingfont"
-msgstr "Шрифт заголовков:"
-
 msgid "prefs.font"
 msgstr "Шрифт основного текста:"
 
@@ -1070,9 +1030,6 @@ msgstr "описание"
 
 msgid "dlg.certimport.nocert"
 msgstr "Нет сертификата"
-
-msgid "lang.fi"
-msgstr "Финский"
 
 msgid "heading.certimport.pasted"
 msgstr "Вставлено из буфера обмена"
@@ -1264,9 +1221,6 @@ msgstr ""
 "Запрос к ресурсу в домене, не обслуживаемом сервером, и сервер не принимает "
 "запросы прокси."
 
-msgid "lang.zh.hans"
-msgstr "Китайский (упрощённый)"
-
 # Interpret as "Results from bookmarks..."
 msgid "heading.lookup.bookmarks"
 msgstr "ЗАКЛАДКИ"
@@ -1323,14 +1277,8 @@ msgstr "Преформатированый текст без описания"
 msgid "prefs.collapsepreonload"
 msgstr "Сворачивать преформатированый текст:"
 
-msgid "lang.zh.hant"
-msgstr "Китайский (традиционный)"
-
 msgid "lang.ie"
 msgstr "Интерлингве"
-
-msgid "lang.sr"
-msgstr "Сербский (кир.)"
 
 #, c-format
 msgid "minutes.ago"
@@ -1453,9 +1401,6 @@ msgstr "Импорт…"
 msgid "menu.downloads"
 msgstr "Показать все загрузки"
 
-msgid "lang.ia"
-msgstr "Интерлингва"
-
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
 msgstr "Открывать архивы:"
@@ -1555,9 +1500,6 @@ msgstr "%s является сжатым архивом."
 msgid "bookmark.tag.linksplit"
 msgstr "Открытые в отделённом окне ссылки"
 
-msgid "lang.tok"
-msgstr "Токипона"
-
 msgid "prefs.pinsplit.left"
 msgstr "В окне слева"
 
@@ -1593,9 +1535,6 @@ msgstr[2] "Каталог содержит %u элементов."
 msgid "keys.tab.close.other"
 msgstr "Закрыть другие владки"
 
-msgid "lang.pl"
-msgstr "Польский"
-
 msgid "ident.export"
 msgstr "Экспорт"
 
@@ -1616,9 +1555,6 @@ msgstr "Анимации:"
 
 msgid "keys.split.item"
 msgstr "Меню действий с окном:"
-
-msgid "prefs.userfont"
-msgstr "Шрифт TrueType:"
 
 msgid "dlg.newident.scope"
 msgstr "Область использования:"
@@ -1664,9 +1600,6 @@ msgstr "Скорость клавиатуры:"
 
 msgid "prefs.scrollspeed.mouse"
 msgstr "Скорость мыши:"
-
-msgid "hint.prefs.userfont"
-msgstr "путь к файлу шрифта TrueType"
 
 msgid "prefs.linespacing"
 msgstr "Интерлиньяж:"
@@ -1829,20 +1762,11 @@ msgstr[0] "Удалить %u закладку"
 msgstr[1] "Удалить %u закладки"
 msgstr[2] "Удалить %u закладок"
 
-msgid "lang.gl"
-msgstr "Галисийский"
-
 msgid "lang.eo"
 msgstr "Эсперанто"
 
-msgid "lang.es.mx"
-msgstr "Испанский (Мексика)"
-
 msgid "lang.sk"
 msgstr "Словацкий"
-
-msgid "lang.isv"
-msgstr "Междуславянский"
 
 msgid "heading.bookmark.tags"
 msgstr "Поведение"
@@ -1925,9 +1849,6 @@ msgstr "Выбрать файл"
 msgid "upload.id"
 msgstr "Клиентский сертификат:"
 
-msgid "dlg.fontpack.classic"
-msgstr "Загрузить пакет шрифтов (25 МБ)"
-
 msgid "num.files"
 msgid_plural "num.files.n"
 msgstr[0] "%u файл"
@@ -1939,9 +1860,6 @@ msgid_plural "num.fonts.n"
 msgstr[0] "%u шрифт"
 msgstr[1] "%u шрифта"
 msgstr[2] "%u шрифтов"
-
-msgid "heading.fontpack.classic"
-msgstr "Загрузить пакет шрифтов"
 
 msgid "dlg.fontpack.classic.msg"
 msgstr ""
@@ -2114,14 +2032,8 @@ msgstr "Скрыть предупреждение"
 msgid "dlg.dismiss.ansi"
 msgstr "Навсегда скрыть предупреждение об эмуляции терминала на %s?"
 
-msgid "lang.uk"
-msgstr "Украинский"
-
 msgid "lang.hu"
 msgstr "Венгерский"
-
-msgid "lang.cs"
-msgstr "Чешский"
 
 msgid "menu.update"
 msgstr "Проверить наличие обновлений…"

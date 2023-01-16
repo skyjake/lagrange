@@ -1,22 +1,5 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-06-24 12:52+0000\n"
-"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
-"Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
-"\n"
-"Language: eo\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "toggle.yes"
 msgstr "Jes"
-
-msgid "toggle.no"
-msgstr "Ne"
 
 msgid "menu.title.file"
 msgstr "Dosiero"
@@ -47,9 +30,6 @@ msgstr "Bela Gemini-retumilo"
 
 msgid "cancel"
 msgstr "Rezigni"
-
-msgid "dismiss"
-msgstr "Fermi"
 
 msgid "dlg.message.ok"
 msgstr "Daŭrigi"
@@ -125,9 +105,6 @@ msgstr "Listigi ĉiujn legosignojn"
 
 msgid "menu.back"
 msgstr "Malantaŭen"
-
-msgid "menu.copy.source"
-msgstr "Kopii fontotekston"
 
 msgid "menu.quit"
 msgstr "Forlasi"
@@ -216,9 +193,6 @@ msgstr "Reŝargi abonfluojn"
 
 msgid "bookmark.tag.home"
 msgstr "Uzi kiel hejmpaĝo"
-
-msgid "ident.showuse"
-msgstr "Montri uzadon"
 
 msgid "feeds.entry.markread"
 msgstr "Marki legita"
@@ -340,17 +314,11 @@ msgstr "Araba"
 msgid "lang.zh"
 msgstr "Ĉina"
 
-msgid "lang.zh.hans"
-msgstr "Ĉina (simpligita)"
-
 msgid "lang.zh.hant"
 msgstr "Ĉina (tradicia)"
 
 msgid "lang.en"
 msgstr "Angla"
-
-msgid "lang.fi"
-msgstr "Finna"
 
 msgid "lang.fr"
 msgstr "Franca"
@@ -582,9 +550,6 @@ msgstr "Baskuligi plenekranan reĝimon"
 msgid "heading.import.bookmarks"
 msgstr "Importi legosignojn"
 
-msgid "lang.sr"
-msgstr "Serba"
-
 msgid "lang.ie"
 msgstr "Okcidentalo"
 
@@ -646,9 +611,6 @@ msgstr "Turkisa"
 msgid "dlg.translate.from"
 msgstr "De:"
 
-msgid "lang.ia"
-msgstr "Interlingvao"
-
 msgid "hint.newident.optional"
 msgstr "nedeviga"
 
@@ -695,9 +657,6 @@ msgstr "Eldonita"
 
 msgid "gempub.meta.version"
 msgstr "Versio"
-
-msgid "lang.pl"
-msgstr "Pola"
 
 msgid "close"
 msgstr "Fermi"

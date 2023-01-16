@@ -1,16 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2023-01-15 06:09+0000\n"
-"Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
-"Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
-"Language: tr\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 # Link download progress message.
 msgid "doc.fetching"
 msgstr "Yükleniyor"
@@ -91,9 +78,6 @@ msgstr "Kapat"
 
 msgid "dlg.default"
 msgstr " Tamam "
-
-msgid "toggle.yes"
-msgstr "EVET"
 
 msgid "toggle.no"
 msgstr "HAYIR"
@@ -348,9 +332,6 @@ msgstr "%b. %d, %Y"
 
 msgid "feeds.today"
 msgstr "Bugün"
-
-msgid "feeds.entry.newtab"
-msgstr "Girdiyi yeni sekmede aç"
 
 msgid "sidebar.entry.bookmark"
 msgstr "Yer imi ekle…"
@@ -1444,9 +1425,6 @@ msgstr "%s üzerinde uçbirim öykünmesi ile ilgili uyarıyı kalıcı olarak a
 msgid "dlg.dismiss.warning"
 msgstr "Uyarıyı atla"
 
-msgid "heading.fontpack.classic"
-msgstr "Yazıtipi paketini indir"
-
 msgid "dlg.fontpack.classic"
 msgstr "Yazıtipi paketini indir (25 MB)"
 
@@ -2065,12 +2043,6 @@ msgstr ""
 "parametrelerini içeren ZIP arşivleridir. Yüklendikten sonra yazıtipleri, "
 "belge içeriği ve kullanıcı arabirimi için kullanılabilir. Etkin "
 "yazıtiplerini Tercihler > Yazıtipleri bölümünden seçebilirsiniz."
-
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"Daha önceden uygulamayla birlikte gelen yazıtipleri artık ayrı olarak "
-"indirilebilir. \"Classic set\" yazıtipi paketini şimdi indirmek istiyor "
-"musunuz?"
 
 msgid "prefs.hoverlink"
 msgstr "Üzerine gelince URL'yi göster:"
