@@ -1674,43 +1674,6 @@ void trimMemory_App(void) {
     iRelease(docs);
 }
 
-iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
-    if (d->warmupFrames > 0) {
-        return iFalse;
-    }
-#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
-    if (d->isIdling) {
-        return iFalse;
-    }
-#endif
-    return !isRefreshPending_App();
-}
-
-static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *event) {
-    if (eventMode == waitForNewEvents_AppEventMode && isWaitingAllowed_App_(d)) {
-        /* We may be allowed to block here until an event comes in. */
-        if (isWaitingAllowed_App_(d)) {
-            if (isAppleDesktop_Platform() && d->window && d->window->type == main_WindowType &&
-                as_MainWindow(d->window)->enableBackBuf) {
-                /* SDL Metal workaround: if we block here for too long, there will be a longer
-                   ~100ms stutter later on after refresh resumes, when the render pipeline does
-                   some kind of an update (?). */
-                return SDL_WaitEventTimeout(event, 250);
-            }
-            /* Wait indefinitely. */
-            return SDL_WaitEvent(event);
-        }
-    }
-    /* SDL regression circa 2.0.18? SDL_PollEvent() doesn't always return 
-       events posted immediately beforehand. Waiting with a very short timeout
-       seems to work better. */
-#if defined (iPlatformLinux) && SDL_VERSION_ATLEAST(2, 0, 18)
-    return SDL_WaitEventTimeout(event, 1);
-#else
-    return SDL_PollEvent(event);
-#endif
-}
-
 static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
     clear_PtrArray(windows);
     /* Popups. */ {
@@ -1745,14 +1708,82 @@ iPtrArray *listWindows_App(void) {
     return wins;
 }
 
+iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
+    if (d->warmupFrames > 0) {
+        return iFalse;
+    }
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
+    if (d->isIdling) {
+        return iFalse;
+    }
+#endif
+    return !isRefreshPending_App();
+}
+
+static uint32_t             eventProcessingStartTime_;
+static uint32_t             numPendingMotionEvents_;
+static iBool                pendingMotionPosted_;
+static SDL_MouseMotionEvent pendingMotion_;
+
+static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *event) {
+#if !defined (iPlatformApple)
+    /* If there is accumulated mouse motion, don't spend too long processing events. 
+        We want to refresh the UI ASAP, if necessary. */
+    if (eventProcessingStartTime_ == 0) {
+        eventProcessingStartTime_ = SDL_GetTicks();
+    }
+    else if (SDL_GetTicks() - eventProcessingStartTime_ > 16 /* ms; 60 Hz */ &&
+             numPendingMotionEvents_ > 0) {
+        /* Time to submit the pending motion, if there has been some. */
+        if (!pendingMotionPosted_) {
+            memcpy(event, &pendingMotion_, sizeof(pendingMotion_));
+            iZap(pendingMotion_);
+            pendingMotionPosted_ = iTrue;
+            return iTrue;
+        }
+        return iFalse; /* spending too much time processing events, check back later */
+    }
+#endif /* iPlatformApple */
+    if (eventMode == waitForNewEvents_AppEventMode && isWaitingAllowed_App_(d)) {
+        /* We may be allowed to block here until an event comes in. */
+        if (isWaitingAllowed_App_(d)) {
+            if (isAppleDesktop_Platform() && d->window && d->window->type == main_WindowType &&
+                as_MainWindow(d->window)->enableBackBuf) {
+                /* SDL Metal workaround: if we block here for too long, there will be a longer
+                   ~100ms stutter later on after refresh resumes, when the render pipeline does
+                   some kind of an update (?). */
+                return SDL_WaitEventTimeout(event, 250);
+            }
+            /* Wait indefinitely. */
+            return SDL_WaitEvent(event);
+        }
+    }
+    /* SDL regression circa 2.0.18? SDL_PollEvent() doesn't always return 
+       events posted immediately beforehand. Waiting with a very short timeout
+       seems to work better. */
+#if defined (iPlatformLinux) && SDL_VERSION_ATLEAST(2, 0, 18)
+    return SDL_WaitEventTimeout(event, 1);
+#else
+    return SDL_PollEvent(event);
+#endif
+}
+
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     iRoot *oldCurrentRoot = current_Root(); /* restored afterwards */
     SDL_Event ev;
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool gotEvents = iFalse;
+#endif
     iBool gotRefresh = iFalse;
     iPtrArray windows;
     init_PtrArray(&windows);
+    /* A bit of global state, alas, but we need to protect against a flood of mouse 
+       motion events that get us stuck here in the event processing loop for too long. */
+    eventProcessingStartTime_ = 0;
+    numPendingMotionEvents_ = 0;
+    pendingMotionPosted_ = iFalse;
+    iZap(pendingMotion_);
     while (nextEvent_App_(d, gotRefresh ? postedEventsOnly_AppEventMode : eventMode, &ev)) {
 #if defined (iPlatformAppleMobile)
         if (processEvent_iOS(&ev)) {
@@ -1862,7 +1893,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
                 d->isIdling = iFalse;
                 gotEvents = iTrue;
-#endif
+#endif /* LAGRANGE_ENABLE_IDLE_SLEEP */
                 /* Keyboard modifier mapping. */
                 if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
                     /* Track Caps Lock state as a modifier. */
@@ -1889,13 +1920,33 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     ev.type == SDL_MOUSEWHEEL) {
                     continue;
                 }
-#endif
+#endif /* iPlatformAndroidMobile */
+#if defined (iPlatformMsys)
                 /* Scroll events may be per-pixel or mouse wheel steps. */
                 if (ev.type == SDL_MOUSEWHEEL) {
-#if defined (iPlatformMsys)
                     ev.wheel.x = -ev.wheel.x;
-#endif
                 }
+#endif /* iPlatformMsys */
+#if !defined (iPlatformApple)
+                /* High-precision mice may emit way too many motion events. We'll just
+                   accumulate the extra ones here. If too much time passes, we'll break the
+                   processing loop to check if refresh is needed, after posting an
+                   accumulated motion event. */
+                if (ev.type == SDL_MOUSEMOTION && !pendingMotionPosted_) {
+                    if (numPendingMotionEvents_++ > 0) {
+                        pendingMotion_.type      = SDL_MOUSEMOTION;
+                        pendingMotion_.timestamp = SDL_GetTicks();
+                        pendingMotion_.state     = ev.motion.state;
+                        pendingMotion_.which     = ev.motion.which;
+                        pendingMotion_.windowID  = ev.motion.windowID;
+                        pendingMotion_.x         = ev.motion.x;
+                        pendingMotion_.y         = ev.motion.y;
+                        pendingMotion_.xrel     += ev.motion.xrel;
+                        pendingMotion_.yrel     += ev.motion.yrel;
+                        continue;
+                    }
+                }
+#endif /* iPlatformApple */
 #if defined (LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION)
                 /* Convert mouse events to finger events to test the touch handling. */ {
                     static float xPrev = 0.0f;
@@ -1934,7 +1985,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         ev.tfinger.touchId = SDL_TOUCH_MOUSEID;
                     }
                 }
-#endif
+#endif /* LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION */
                 iBool wasUsed = iFalse;
                 /* Focus navigation events take prioritity. */
                 if (!wasUsed) {
@@ -2084,6 +2135,12 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 break;
             }
         }
+    }
+    if (pendingMotion_.type != 0 && !pendingMotionPosted_) {
+        /* We didn't get to post the pending motion yet. Must do it now or the events are lost. */
+        SDL_Event ev;
+        memcpy(&ev, &pendingMotion_, sizeof(pendingMotion_));
+        SDL_PushEvent(&ev);
     }
     deinit_PtrArray(&windows);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)

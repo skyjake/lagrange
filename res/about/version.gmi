@@ -21,6 +21,7 @@ Changes and enhancements:
 * Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
 * macOS: "Window" menu has new actions for duplicating and switching tabs.
 * GTK: Request dark window theme if the app UI color theme is dark.
+* Prevent high-resolution mice from flooding event processing with too many motion events and delaying UI refresh.
 * Updated UI translations.
 
 Fixes:
