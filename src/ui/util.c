@@ -192,6 +192,12 @@ void toString_Sym(int key, int kmods, iString *str) {
     else if (key == SDLK_ESCAPE) {
         appendCStr_String(str, "Esc");
     }
+    else if (key == SDLK_PAGEUP) {
+        appendCStr_String(str, "PgUp");
+    }
+    else if (key == SDLK_PAGEDOWN) {
+        appendCStr_String(str, "PgDn");
+    }
     else if (key == SDLK_LEFT) {
         removePlus_(str);
         appendChar_String(str, 0x2190);
