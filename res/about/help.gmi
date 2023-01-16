@@ -49,7 +49,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Use Gemini pages as a source of bookmarks
 * Audio playback: MP3, Ogg Vorbis, WAV
 * Read Gempub books and view ZIP archive contents
-* Built-in support for Gopher and Finger
+* Built-in support for Gopher, Finger, and Spartan
 * Built-in support for uploading data using the Titan protocol
 * Use proxy servers for Gemini, HTTP, and Gopher content
 
