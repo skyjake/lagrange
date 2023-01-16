@@ -3271,6 +3271,7 @@ iWidget *makePreferences_Widget(void) {
             setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
                          format_CStr("prefs.doctheme.%s", mode));
         }
+        addDialogPadding_(headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.saturation}")));
         iWidget *sats = new_Widget();
         /* Saturation levels. */ {
@@ -3280,14 +3281,6 @@ iWidget *makePreferences_Widget(void) {
             addRadioButton_(sats, "prefs.saturation.0", "0 %", "saturation.set arg:0");
         }
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addDialogPadding_(headings, values);
-        addDialogToggleGroup_(headings,
-                              values,
-                              "${prefs.boldlink}",
-                              (const char *[]){ "prefs.boldlink.visited",
-                                                "prefs.boldlink.dark",
-                                                "prefs.boldlink.light" },
-                              3);
         /* Colorize images. */ {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imagestyle}")));
             iLabelWidget *button = makeMenuButton_LabelWidget(
@@ -3322,6 +3315,14 @@ iWidget *makePreferences_Widget(void) {
             /* Terminal font settings. */
             addDialogToggle_(headings, values, "${prefs.tui.simple}", "prefs.tui.simple");
         }
+        addDialogPadding_(headings, values);
+        addDialogToggleGroup_(headings,
+                              values,
+                              "${prefs.boldlink}",
+                              (const char *[]){ "prefs.boldlink.visited",
+                                                "prefs.boldlink.dark",
+                                                "prefs.boldlink.light" },
+                              3);
     }
     /* Page layout. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,

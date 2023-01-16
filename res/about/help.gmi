@@ -104,7 +104,7 @@ The type and destination of a link are indicated by the link's icon and color: �
 * Orange for HTTP(S)
 * Red for other/unknown/invalid (cannot be opened)
 
-Links colors may change depending on the page color theme. (See section 2.3 "Color themes".)
+Links colors may change depending on the page color theme. (See section 2.3.1 "Color themes".)
 
 The "Show URL on hover" option can be enabled in Preferences to show additional information when you move the mouse cursor over a link: the destination domain, URL scheme for non-Gemini links, date of the last visit to the URL, and the identity that will be used when opening the link.
 
@@ -379,32 +379,32 @@ You can find a number of settings in Preferences to customize the user interface
 
 ## 2.1 Browsing behavior
 
-One important characteristic of Gemini is that you remain in control of what gets loaded and when. The browser will not suddenly fetch a ton of images, autoplay videos, or make surreptitious connections to any tracking servers — each network request is purposeful and manually triggered. With this in mind, the "Load image on scroll" option is provided to assist keyboard-only browsing and to facilitate a focused reading experience. When enabled, if there is an image link visible on the page and you press Space or ↓, it will be loaded and shown inline _instead_ of the view scrolling down. This allows you to read and see all the content of the page while only tapping on a single key on the keyboard.
+On the "General" tab, "Split view pinning" controls which tab links will be opened on when browsing in split view mode. The default mode is "Left Tab", which means that the page in the left tab is pinned (remains unchanged) when clicking on a link. For more information, see section 1.9.
 
-The "Open archive indices" option controls whether index.gmi pages are automatically opened while browsing the contents of a ZIP archive. The purpose is to simulate the behavior of a Gemini server where opening a directory will by default show its index page. Enabling this option makes navigating an archived copy of a capsule a more streamlined experience.
+On the "Content" tab, the "Open images in Data URLs" option determines if image data embedded into links using data URLs is automatically shown after the page has finished loading. This only applies to a handful of common image media types: JPEG, PNG, GIF, and WebP. Note that the maximum size of an URL has a limit, so these embedded images have to fit under the configured limit to be recognized as valid links. Image from data URLs are displayed as links' inline content, just like with any other URL scheme.
 
-The "Open images in Data URLs" option determines if image data embedded into links using data URLs is automatically shown after the page has finished loading. This only applies to a handful of common image media types: JPEG, PNG, GIF, and WebP. Note that the maximum size of an URL has a limit, so these embedded images have to fit under the configured limit to be recognized as valid links. Image from data URLs are displayed as links' inline content, just like with any other URL scheme.
+The "Open index.gmi in ZIP archives" option controls whether index.gmi pages are automatically opened while browsing the contents of a ZIP archive. The purpose is to simulate the behavior of a Gemini server where opening a directory will by default show its index page. Enabling this option makes navigating an archived copy of a capsule a more streamlined experience.
 
-"Split view pinning" controls which tab links will be opened on when browsing in split view mode. The default mode is "Left Tab", which means that the page in the left tab is pinned (remains unchanged) when clicking on a link. For more information, see section 1.9.
+One important characteristic of Gemini is that you remain in control of what gets loaded and when. The browser will not suddenly fetch a ton of images, autoplay videos, or make surreptitious connections to any tracking servers — each network request is purposeful and manually triggered. With this in mind, the "Load next image on scroll key" option on the "UI" tab is provided to assist keyboard-only browsing and to facilitate a focused reading experience. When enabled, if there is an image link visible on the page and you press Space or ↓ (or whichever keys are bound to the scroll actions), it will be loaded and shown inline _instead_ of the view scrolling down. This allows you to read and see all the content of the page while only tapping on a single key on the keyboard.
 
-## 2.2 Window and UI options
+## 2.2 UI appearance
 
 There are four different color schemes for the UI: two for dark mode, and two for light mode. These can be selected on the "Window" tab of the Preferences dialog:
 
-* Dark mode: "Pure Black" and "Dark" have a fully black or dark gray UI.
-* Light mode: "Pure White" and "Light" have completety white or light gray UI.
+* Dark mode: "Black" and "Dark" have a fully black or dark gray UI.
+* Light mode: "White" and "Light" have completety white or light gray UI.
 
 On macOS, Lagrange will automatically switch between dark and light modes if the "Use system theme" setting is enabled. On other platforms you'll need to switch manually.
 
 On Windows, an option is provided to use a custom window frame. This provides a more consistent visual style for the application. However, the custom frame overrides default behaviors of the window, so if you are a Windows power user expect it to not support all the special interactions. For example, when pressing the Windows+Left/Right key, the window is resized to take over one half of the screen. Normally, Windows would then prompt to select another window to fill the rest of the screen, but this does not happen with the custom window frame.
 
-Options for wide window sizes:
+## 2.3 Page style and layout
 
-* Site icon: If there is room on the left side of the page text, the site icon appears there along with the top level heading. This allows one to keep better track of the current reading position in long documents.
+The "Page Style" and "Page Layout" tabs of the Preferences dialog let you customize the appearance and arrangement of page contents.
 
-## 2.3 Color themes
+### 2.3.1 Color themes
 
-Page content color themes are selected on the "Colors" tab of Preferences. The "Dark theme" is active in dark UI mode, and the "Light theme" is active in light UI mode.
+Page content color themes are selected on the "Page Style" tab of Preferences. The "Dark theme" is active in dark UI mode, and the "Light theme" is active in light UI mode.
 
 * Colorful Dark: All elements of the page are colored; the background is dark and text is light. This mode provides the best visual distinction between different domains because more color combinations are available.
 * Colorful Light: A single, bright background color with black text. This is the most colorful light theme. Note that colored backgrounds may reduce readability.
@@ -415,7 +415,9 @@ Page content color themes are selected on the "Colors" tab of Preferences. The "
 * Oceanic: Mostly teal/blue theme with a few orange/red accents. Brightness and saturation vary randomly based on domain.
 * High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
 
-### 2.3.1 Site-specific theme
+The "Saturation" setting can be used to tone down the theme colors for a more neutral appearance.
+
+### 2.3.2 Site-specific colors
 
 You can manually customize the color theme of a site. Open "Page Information" and click on "Settings" to open the Site-Specific Settings dialog. The default keyboard shortcut for this is ${SHIFT+}${CTRL+}Comma.
 
@@ -426,15 +428,35 @@ You can enter any text as the palette seed. By default, the seed is the site's h
 * Enter a word or phrase, or just random characters, to find a theme that you like.
 * To copy the theme of another site, enter the hostname of that site as the seed.
 
+### 2.3.3 Text styling
+
+The fonts for document headings, body text, and preformatted blocks can be chosen separately. There is also a separate font for monospaced body text that is used when the Gemini/Gopher-specific "Monospace body" option is enabled. See section 2.4 for more details about using fonts.
+
+The "Bold links" option determines whether links use a bold font. Enabling "Visited" means that the bold font is used also for visited links, not just unvisited ones. "On Dark" and "On Light" enable bold links on a dark/light background. For readability, using bold fonts on a light background is recommended because differences in text color and link icon color are less noticeable.
+
+### 2.3.4 Layout options
+
+Paragraph layout options:
+
+* Line width: This setting determines the maximum width for text lines. "Window" disables the maximum limit and fits text lines to the full width of the window. Shorter lines are generally easier to read.
+* Line spacing: Adjust spacing between text lines. A value of 1.1 would add 10% more space, while 2.0 would mean there is a full-height empty line between all text lines. For the best results, keep this pretty close to 1.0. (Values smaller than 1.0 may lead to visual artifacts as lines become overlapped.)
+* Tab width: Number of spaces to use for tab stops.
+* Justify: Paragraphs are justified when they at least three lines long. Spaces on each line are expanded to equalize line widths.
+* Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font. (The leading paragraph is autodetected by Lagrange, so it is not guaranteed to always be appropriately chosen.)
+
+Other layout options:
+
+* Quote indicator: Quoted text is shown in an italic font. Additionally, you can select between a quotation mark icon and the traditional vertical line along the left edge of the quote.
+* Capsule icon on left side: When the window is wide enough, show the capsule icon on the left side of the page at a fixed position together with the current level 1 heading.
+* Collapse preformatted: After loading a page, immediately hide all preformatted blocks, showing only the alt texts.
+
 ## 2.4 Fonts
 
 This version of Lagrange supports TrueType fonts. To use a new font, simply view a .ttf file in the app and a page footer action is available for performing the installation. For example, try drag-and-dropping a .ttf file on the window. Alternatively, you can manually copy the font to the "fonts" subdirectory of the user-specific configuration directory (see section 3.5). 
 
-The "Fonts" tab of the Preferences dialog contains options that affect the appearance of text in page content, the user interface, and text rendering in general.
+The "Page Style" tab of the Preferences dialog contains options that affect the appearance of text in page content. The user interface font can be changed in the "Appearance" tab, along with other text renderer settings.
 
-To be precise, on this tab you can select which _typefaces_ to use for certain elements of the page and the UI; picking a particular font (including its size, weight, style, etc.) for specific elements is not possible. Lagrange controls the size and styling of text by choosing fonts according to your theme and typeface preferences. The term "font" is often used to mean "typeface" in this document and in the app UI.
-
-The fonts for document headings, body text, preformatted blocks, and the user interface can be chosen separately. There is also a separate font for monospaced body text, used when the protocol-specific "Monospace body" option is enabled.
+To be precise, on the "Page Style" tab you can select which _typefaces_ to use for certain elements of the page; picking a particular font (including its size, weight, style, etc.) for specific elements is not possible. Lagrange controls the size and styling of text by choosing fonts according to your theme and typeface preferences. The term "font" is often used to mean "typeface" in this document and in the app UI.
 
 There are three built-in fonts available:
 
@@ -471,9 +493,9 @@ If you serve content via Gemini, please be aware that ANSI escapes may not be su
 
 ### 2.4.3 Other font options
 
-The "Glyph warnings" option controls whether a warning will be shown when a page is missing one or more characters. This is typically due to the page being in a language that is not covered by any of the installed fonts. Clicking on the glyph warning banner opens the font management page.
+On the "Content" tab, the "Font glyph warnings" option controls whether a warning will be shown when a page is missing one or more characters. This is typically due to the page being in a language that is not covered by any of the installed fonts. Clicking on the glyph warning banner opens the font management page.
 
-"Smoothing" enables or disables glyph antialiasing. In this version, it is recommended that smoothing is always enabled. This is because the text renderer does not support hinting of any kind, which means that without smoothing, glyph shapes will be severely distorted. You may still want to try disabling this option if antialiasing causes eye strain for you, or you are using a special font that is designed to not be smoothed.
+On the "Appearance" tab, "Font smoothing" enables or disables glyph antialiasing. In this version, it is recommended that smoothing is always enabled. This is because the text renderer does not support hinting of any kind, which means that without smoothing, glyph shapes will be severely distorted. You may still want to try disabling this option if antialiasing causes eye strain for you, or you are using a special font that is designed to not be smoothed.
 
 ### 2.4.4 Managing fonts
 
@@ -516,31 +538,13 @@ TrueType Collections (.ttc) can be used, with the restriction that each declared
 regular = "NotoSansCJK-Regular.ttc:2"
 ```
 
-## 2.5 Page style
-
-The "Style" tab of the Preferences dialog lets you customize the appearance and layout of page content.
-
-Paragraph style options:
-
-* Line width: This setting determines the maximum width for text lines. "Window" disables the maximum limit and fits text lines to the full width of the window. Shorter lines are generally easier to read.
-* Justify: Paragraphs are justified when they at least three lines long. Spaces on each line are expanded to equalize line widths.
-* Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font.
-
-Other style options:
-
-* Tab width: Number of spaces to use for tab stops.
-* Quote indicator: Quoted text is shown in an italic font. Additionally, you can select between a quotation mark icon and the traditional vertical line along the left edge of the quote.
-* Bold links: Use a bold font for links. Enabling "Visited" means that the bold font is used also for visited links, not just unvisited ones. "On Dark/Light" enable bold links on a dark/light background. For readability, using bold fonts on a light background is advisable because differences in text color are less noticeable.
-* Capsule icon: When the window is wide enough, show the capsule icon on the left side of the page at a fixed position together with the current level 1 heading.
-* Collapse preformatted: After loading a page, immediately collapse all preformatted blocks, showing only the alt texts.
-
-## 2.6 Proxies
+## 2.5 Proxies
 
 Gemini allows relaying requests via a proxy server. On the "Network" tab, you can configure proxy servers for Gemini, Gopher, and HTTP/HTTPS requests.
 
 When an HTTP proxy server is configured, HTTP/HTTPS links will no longer open in the system's default web browser but will be loaded via the proxy, expecting it to serve a 'text/gemini' version of the link contents.
 
-## 2.7 URL handling
+## 2.6 URL handling
 
 The "Network" tab of Preferences has a few options related to handling URLs.
 
@@ -552,13 +556,21 @@ Having a length limit is necessary due the special case of Data URLs:
 => https://datatracker.ietf.org/doc/html/rfc2397  RFC 2397: The "data" URL scheme
 With Data URLs, one is able to embed arbitrary data into a Gemtext file using link lines. This makes it possible to circumvent the intentional limitations of Gemini and override the clients' ability to choose which linked resources should be loaded and when. Without a limit, a server could for example send an arbitrarily large image attachment as part of the page, with no regard to the user's or client's preferences or abilities to view images. Also note that like any non-Gemini scheme, "data" is not expected to be supported by Gemini clients.
 
-## 2.8 Keybindings
+## 2.7 Keybindings
 
 The "Keys" tab lets you change which keys are bound to UI commands. Click on an item with the mouse and then press the new key combination that you want bound to it. Right-click on a binding to erase it or reset it to the default.
 
 Erasing a binding can be useful to disable certain features. For example, if you have no use for keyboard navigation of links via a modifier key, that binding can be erased and use of the modifier key for other purposes will no longer distract you by showing the link shortcuts.
 
 To reset all bindings to their defaults, quit Lagrange and delete the "bindings.txt" file in Lagrange's runtime directory. This is a platform-dependent location; see below for more information (under "Runtime files").
+
+## 2.8 Gopher
+
+Lagrange converts Gopher menus to Gemtext for presentation. There are a couple of settings that control the conversion.
+
+On the "Content" tab, the "Autodetect Gopher menu styling" option controls whether Gopher menus should use autodetected Gemtext styling. By default, the app's Gopher experience mimics that of Gemini, where preformatted ASCII art is in separate blocks and paragraph text has its own (variable-width) font. However, the autodetection does not always get it right. Menus with meticulously crafted ASCII may sometimes be misinterpreted. Disabling the style autodetection makes all text lines equal in appearance. 
+
+Enabling monospace body text for Gopher (in the "Page Style" tab) will faithfully present the Gopher source text, with original whitespaces intact, while also using the chosen monospace font for all text.
 
 # 3 OS integration
 
