@@ -20,9 +20,6 @@ msgstr "Continuar"
 msgid "dlg.default"
 msgstr " Aceptar "
 
-msgid "toggle.no"
-msgstr "No"
-
 msgid "menu.title.file"
 msgstr "Archivo"
 
@@ -1046,9 +1043,6 @@ msgstr "Importar…"
 
 msgid "dlg.input.linebreak"
 msgstr "Salto de linea"
-
-msgid "lang.tok"
-msgstr "Toki Pona"
 
 msgid "dlg.newident.country"
 msgstr "País:"

@@ -752,14 +752,8 @@ msgstr "Nastavit port"
 msgid "dlg.translate.to"
 msgstr "Pro:"
 
-msgid "lang.ie"
-msgstr "Interlingva"
-
 msgid "heading.newident"
 msgstr "Nová totožnost"
-
-msgid "lang.sr"
-msgstr "Srbština"
 
 msgid "dlg.newident.create"
 msgstr "VYTVOŘIT TOTOŽNOST"
@@ -1272,9 +1266,6 @@ msgstr "Otevírat odkazy na nové kartě pomocí kláves na kterých spočívaj�
 
 msgid "keys.link.homerow.hover"
 msgstr "Najet na odkaz pomocí kláves na kterých spočívají prsty"
-
-msgid "lang.tok"
-msgstr "Toki Pona"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Vytváří se vlastně podepsaný 2048-bitový RSA certifikát."
@@ -1980,11 +1971,6 @@ msgstr "Trvale přestat zobrazovat varování o emulaci terminálu na %s?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Přestat ukazovat varování"
-
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"Písma, které byly dříve přibaleny s aplikací jsou nyní dostupné odděleně. "
-"Chtěli byste nyní stáhnout písmový balíček \"Klasická sada\"?"
 
 msgid "error.badrequest.msg"
 msgstr "Server nepochopil váš požadavek."

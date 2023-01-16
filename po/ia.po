@@ -1,9 +1,6 @@
 msgid "about.version"
 msgstr "Version"
 
-msgid "toggle.no"
-msgstr "NO"
-
 msgid "menu.title.file"
 msgstr "Dossier"
 
@@ -1165,9 +1162,6 @@ msgstr ""
 "Vole tu vermente deler le identitate %s«%s»%s con su certificato e clave "
 "private?"
 
-msgid "lang.sr"
-msgstr "Serbian"
-
 msgid "prefs.collapsepreonload"
 msgstr "Contraher le preformattate:"
 
@@ -1418,9 +1412,6 @@ msgstr "Aperir le ligamine al latere"
 
 msgid "link.side.newtab"
 msgstr "Aperir le ligamine in un nove scheda al latere"
-
-msgid "lang.tok"
-msgstr "Toki Pona"
 
 msgid "heading.newident.missing"
 msgstr "INFORMATION ABSENTE"

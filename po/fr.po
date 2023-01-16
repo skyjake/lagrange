@@ -42,9 +42,6 @@ msgstr "Version"
 msgid "cancel"
 msgstr "Annuler"
 
-msgid "toggle.no"
-msgstr "NON"
-
 msgid "menu.title.file"
 msgstr "Fichier"
 
@@ -1213,9 +1210,6 @@ msgstr "Grand 1er paragraphe :"
 msgid "dlg.newident.until"
 msgstr "Valide jusqu’au :"
 
-msgid "lang.fi"
-msgstr "Finnois"
-
 msgid "dlg.newident.commonname"
 msgstr "Nom commun :"
 
@@ -1264,9 +1258,6 @@ msgstr "Traduire la page"
 
 msgid "lang.zh"
 msgstr "Chinois"
-
-msgid "lang.zh.hant"
-msgstr "Chinois (traditionnel)"
 
 msgid "heading.bookmark.add"
 msgstr "Ajouter un signet"
@@ -2059,9 +2050,6 @@ msgstr "Installer une police TrueType"
 
 msgid "fontpack.open.fontsdir"
 msgstr "Ouvrir le répertoire des polices utilisateur"
-
-msgid "heading.fontpack.classic"
-msgstr "Télécharger le pack de polices"
 
 msgid "num.files"
 msgid_plural "num.files.n"

@@ -182,9 +182,6 @@ msgstr "Continuar"
 msgid "dlg.default"
 msgstr " OK "
 
-msgid "toggle.no"
-msgstr "NO"
-
 msgid "menu.title.file"
 msgstr "Archivo"
 
@@ -1397,9 +1394,6 @@ msgid_plural "days.ago.n"
 msgstr[0] "%d día"
 msgstr[1] "%d días"
 
-msgid "lang.sr"
-msgstr "Serbio"
-
 msgid "menu.downloads"
 msgstr "Mostrar Descargas"
 
@@ -1868,9 +1862,6 @@ msgstr "Color del Texto"
 msgid "prefs.imagestyle.preformat"
 msgstr "Color Pre-formateado"
 
-msgid "lang.eo"
-msgstr "Esperanto"
-
 msgid "lang.sk"
 msgstr "Eslovaco"
 
@@ -1891,12 +1882,6 @@ msgstr "Agregar marcadores al final:"
 
 msgid "fontpack.export"
 msgstr "Ver plantilla fontpack.ini"
-
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"Las fuentes previamente embebidas en esta aplicación ahora están disponibles "
-"como una descarga separada. Le gustaría descargar el paquete de fuentes "
-"\"Conjunto Clásico\" ahora?"
 
 msgid "prefs.font.ui"
 msgstr "Fuente de la IU:"
@@ -2050,9 +2035,6 @@ msgstr "Borrar \"%s\" permanentemente"
 
 msgid "heading.fontpack.delete"
 msgstr "Borrar Paquete de Fuentes"
-
-msgid "lang.cs"
-msgstr "Checo"
 
 msgid "sidebar.action.show"
 msgstr "Mostrar:"

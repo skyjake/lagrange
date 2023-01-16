@@ -13,9 +13,6 @@ msgstr "Continuar"
 msgid "dlg.default"
 msgstr " OK "
 
-msgid "toggle.no"
-msgstr "NO"
-
 msgid "menu.page.subscribe"
 msgstr "Abonnar li págine…"
 
@@ -1288,9 +1285,6 @@ msgstr "Aperter un ligament per tastes in li hem-range"
 msgid "doc.pre.nocaption"
 msgstr "Un formatat textu sin un rubrica"
 
-msgid "lang.sr"
-msgstr "Serbian"
-
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
@@ -1533,9 +1527,6 @@ msgstr "Cluder li altri cartes"
 msgid "keys.split.menu"
 msgstr "Selecter li mode de fension"
 
-msgid "keys.split.menu.horiz21"
-msgstr "Fendet vise: horizontalmen 2:1"
-
 msgid "close"
 msgstr "Cluder"
 
@@ -1563,14 +1554,8 @@ msgstr "Li actual págine"
 msgid "dlg.newident.scope.none"
 msgstr "Ne usat"
 
-msgid "keys.split.menu.vert12"
-msgstr "Fendet vise: verticalmen 1:2"
-
 msgid "keys.split.menu.merge"
 msgstr "Fendet vise: unir cartes"
-
-msgid "keys.split.menu.horiz12"
-msgstr "Fendet vise: horizontalmen 1:2"
 
 msgid "prefs.animate"
 msgstr "Animationes:"
@@ -1742,9 +1727,6 @@ msgstr "Selecter un file"
 msgid "bookmark.export.format.tags"
 msgstr "Etiquettes es format per rubricas de nivelle 2."
 
-msgid "lang.eo"
-msgstr "Esperanto"
-
 msgid "lang.sk"
 msgstr "Slovac"
 
@@ -1840,9 +1822,6 @@ msgstr "Ignorar ligamentes HTTP(s):"
 
 msgid "truetype.help.installed"
 msgstr "Ti-ci fonde es installat in li fólder de personal fondes."
-
-msgid "lang.hu"
-msgstr "Hungarian"
 
 msgid "prefs.bookmarks.addbottom"
 msgstr "Adjunter marca-págines a bass:"
@@ -1946,9 +1925,6 @@ msgstr "Aperter li fólder de personal fondes"
 
 msgid "fontpack.open.aboutfonts"
 msgstr "Monstrar installat fondes"
-
-msgid "lang.uk"
-msgstr "Ukrainan"
 
 msgid "heading.fontpack.delete"
 msgstr "Remover li Fondpac"

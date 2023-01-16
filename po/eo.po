@@ -314,9 +314,6 @@ msgstr "Araba"
 msgid "lang.zh"
 msgstr "Ĉina"
 
-msgid "lang.zh.hant"
-msgstr "Ĉina (tradicia)"
-
 msgid "lang.en"
 msgstr "Angla"
 
@@ -549,9 +546,6 @@ msgstr "Baskuligi plenekranan reĝimon"
 
 msgid "heading.import.bookmarks"
 msgstr "Importi legosignojn"
-
-msgid "lang.ie"
-msgstr "Okcidentalo"
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.title"

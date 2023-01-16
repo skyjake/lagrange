@@ -93,9 +93,6 @@ msgstr "Continua"
 msgid "dlg.default"
 msgstr " D'acord "
 
-msgid "toggle.no"
-msgstr "NO"
-
 msgid "about.powered"
 msgstr "Fet amb SDL2, OpenSSL i ☕️"
 

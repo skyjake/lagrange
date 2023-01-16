@@ -1246,9 +1246,6 @@ msgstr "無說明的預格式文字"
 msgid "prefs.collapsepreonload"
 msgstr "收起預格式文字："
 
-msgid "lang.ie"
-msgstr "西方國際語"
-
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
@@ -1395,9 +1392,6 @@ msgstr "在側邊打開連結"
 
 msgid "link.side.newtab"
 msgstr "在側邊新標籤頁中打開連結"
-
-msgid "lang.tok"
-msgstr "道本語"
 
 msgid "heading.newident.missing"
 msgstr "資料缺失"

@@ -79,9 +79,6 @@ msgstr "Kapat"
 msgid "dlg.default"
 msgstr " Tamam "
 
-msgid "toggle.no"
-msgstr "HAYIR"
-
 msgid "menu.title.file"
 msgstr "Dosya"
 
@@ -1424,9 +1421,6 @@ msgstr "%s üzerinde uçbirim öykünmesi ile ilgili uyarıyı kalıcı olarak a
 
 msgid "dlg.dismiss.warning"
 msgstr "Uyarıyı atla"
-
-msgid "dlg.fontpack.classic"
-msgstr "Yazıtipi paketini indir (25 MB)"
 
 msgid "doc.pre.nocaption"
 msgstr "Altyazısız önceden biçimlendirilmiş metin"

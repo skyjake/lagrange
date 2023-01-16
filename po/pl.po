@@ -103,9 +103,6 @@ msgstr "Kontynuuj"
 msgid "dlg.default"
 msgstr " OK "
 
-msgid "toggle.no"
-msgstr "NIE"
-
 msgid "menu.newtab"
 msgstr "Nowa karta"
 
@@ -677,9 +674,6 @@ msgstr "niemiecki"
 msgid "lang.en"
 msgstr "angielski"
 
-msgid "lang.ie"
-msgstr "interlingue"
-
 msgid "lang.fr"
 msgstr "francuski"
 
@@ -697,9 +691,6 @@ msgstr "rosyjski"
 
 msgid "lang.es"
 msgstr "hiszpański"
-
-msgid "lang.tok"
-msgstr "toki pona"
 
 msgid "heading.newident"
 msgstr "NOWA TOŻSAMOŚĆ"

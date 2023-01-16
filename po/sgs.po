@@ -80,9 +80,6 @@ msgstr "Tė̄stė"
 msgid "dlg.default"
 msgstr " Gerā "
 
-msgid "toggle.no"
-msgstr "Nē"
-
 msgid "menu.title.file"
 msgstr "Fails"
 

@@ -234,9 +234,6 @@ msgstr "Continuar"
 msgid "dlg.default"
 msgstr " OK "
 
-msgid "toggle.no"
-msgstr "NON"
-
 msgid "menu.title.file"
 msgstr "Ficheiro"
 
@@ -954,17 +951,11 @@ msgstr "Árabe"
 msgid "lang.zh"
 msgstr "Chinés"
 
-msgid "lang.zh.hant"
-msgstr "Chinés (tradicional)"
-
 msgid "lang.de"
 msgstr "Alemán"
 
 msgid "lang.en"
 msgstr "Inglés"
-
-msgid "lang.ie"
-msgstr "Interlingua"
 
 msgid "lang.fr"
 msgstr "Francés"
@@ -983,9 +974,6 @@ msgstr "Ruso"
 
 msgid "lang.es"
 msgstr "Español"
-
-msgid "lang.tok"
-msgstr "Toki Pona"
 
 msgid "heading.newident"
 msgstr "Nova Identidade"
@@ -1873,9 +1861,6 @@ msgstr "Cor do preformatado"
 msgid "keys.bookmark.addfolder"
 msgstr "Engadir cartafol de marcadores"
 
-msgid "lang.es.mx"
-msgstr "Castelán (México)"
-
 msgid "lang.isv"
 msgstr "Intereslávico"
 
@@ -1888,9 +1873,6 @@ msgid "num.fonts"
 msgid_plural "num.fonts.n"
 msgstr[0] "%u tipografía"
 msgstr[1] "%u tipografías"
-
-msgid "dlg.fontpack.classic"
-msgstr "Descargar Paquete de tipografía (25 MB)"
 
 msgid "prefs.font.heading"
 msgstr "Titulares:"
@@ -2051,9 +2033,6 @@ msgstr ""
 
 msgid "dlg.dismiss.warning"
 msgstr "Desbotar aviso"
-
-msgid "lang.cs"
-msgstr "Checo"
 
 msgid "sidebar.action.show"
 msgstr "Mostrar:"

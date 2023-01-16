@@ -13,9 +13,6 @@ msgstr "Fortsetzen"
 msgid "dlg.default"
 msgstr " Ok "
 
-msgid "toggle.no"
-msgstr "Nein"
-
 msgid "menu.title.file"
 msgstr "Datei"
 
@@ -958,9 +955,6 @@ msgstr "Andere"
 msgid "dlg.translate.unavail"
 msgstr "Dienst nicht verfügbar"
 
-msgid "lang.fi"
-msgstr "Finnisch"
-
 msgid "lang.hi"
 msgstr "Hindi"
 
@@ -1331,9 +1325,6 @@ msgstr "Nicht verwendet"
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
 msgstr "Indexdateien in Archiven öffnen:"
-
-msgid "hint.prefs.userfont"
-msgstr "Pfad für eine TrueType Schriftart"
 
 msgid "prefs.linespacing"
 msgstr "Zeilenabstand:"
@@ -1848,9 +1839,6 @@ msgstr "Die Warnung zur Terminalemulation für %s zukünftig ignorieren?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Warnung ignorieren"
-
-msgid "dlg.fontpack.classic"
-msgstr "Schriftartenpaket runterladen (25 MB)"
 
 msgid "heading.dismiss.warning"
 msgstr "Warnung ignorieren?"

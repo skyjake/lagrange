@@ -19,9 +19,6 @@ msgstr "Продолжить"
 msgid "dlg.default"
 msgstr " OK "
 
-msgid "toggle.no"
-msgstr "Нет"
-
 msgid "menu.title.file"
 msgstr "Файл"
 
@@ -1277,9 +1274,6 @@ msgstr "Преформатированый текст без описания"
 msgid "prefs.collapsepreonload"
 msgstr "Сворачивать преформатированый текст:"
 
-msgid "lang.ie"
-msgstr "Интерлингве"
-
 #, c-format
 msgid "minutes.ago"
 msgid_plural "minutes.ago.n"
@@ -1762,9 +1756,6 @@ msgstr[0] "Удалить %u закладку"
 msgstr[1] "Удалить %u закладки"
 msgstr[2] "Удалить %u закладок"
 
-msgid "lang.eo"
-msgstr "Эсперанто"
-
 msgid "lang.sk"
 msgstr "Словацкий"
 
@@ -1860,11 +1851,6 @@ msgid_plural "num.fonts.n"
 msgstr[0] "%u шрифт"
 msgstr[1] "%u шрифта"
 msgstr[2] "%u шрифтов"
-
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"Шрифты, ранее поставляемые вместе с приложением, теперь распространяются "
-"отдельно. Хотите ли вы скачать пакет шрифтов \"Классический\" сейчас?"
 
 msgid "fontpack.help"
 msgstr ""
@@ -2031,9 +2017,6 @@ msgstr "Скрыть предупреждение"
 #, c-format
 msgid "dlg.dismiss.ansi"
 msgstr "Навсегда скрыть предупреждение об эмуляции терминала на %s?"
-
-msgid "lang.hu"
-msgstr "Венгерский"
 
 msgid "menu.update"
 msgstr "Проверить наличие обновлений…"

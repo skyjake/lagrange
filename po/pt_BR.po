@@ -13,9 +13,6 @@ msgstr "Ajuda"
 msgid "menu.title.edit"
 msgstr "Editar"
 
-msgid "toggle.no"
-msgstr "Não"
-
 msgid "menu.title.view"
 msgstr "Exibir"
 

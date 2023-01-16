@@ -7,9 +7,6 @@ msgstr "Поништи"
 msgid "dlg.default"
 msgstr " ОК "
 
-msgid "toggle.no"
-msgstr "НЕ"
-
 msgid "menu.title.edit"
 msgstr "Уређивање"
 
@@ -1303,9 +1300,6 @@ msgstr[2] ""
 msgid "error.schemeredirect"
 msgstr "Преусмеравање уз промену шеме"
 
-msgid "lang.ie"
-msgstr "Интерлингве"
-
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
@@ -1570,14 +1564,8 @@ msgstr "Текућој страници"
 msgid "dlg.newident.scope.none"
 msgstr "Не користити"
 
-msgid "keys.split.menu.swap"
-msgstr "Мени раздвојеног погледа: Замени стране"
-
 msgid "keys.split.menu.horiz12"
 msgstr "Мени раздвојеног погледа: Хоризонтално 1:2"
-
-msgid "keys.split.menu.vert"
-msgstr "Мени раздвојеног погледа: Вертикално"
 
 msgid "keys.split.menu.vert21"
 msgstr "Мени раздвојеног погледа: Вертикално 2:1"
@@ -1890,14 +1878,8 @@ msgstr "Преформатирана боја"
 msgid "keys.bookmark.addfolder"
 msgstr "Додавање фасцикле са обележивачима"
 
-msgid "lang.eo"
-msgstr "Есперанто"
-
 msgid "lang.sk"
 msgstr "Словачки"
-
-msgid "heading.fontpack.classic"
-msgstr "Преузимање пакета фонтова"
 
 msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Стил фонта"
@@ -2069,9 +2051,6 @@ msgstr ""
 #, c-format
 msgid "dlg.dismiss.ansi"
 msgstr "Трајно отклонити упозорење о емулацији терминала на %s?"
-
-msgid "lang.cs"
-msgstr "Чешки"
 
 msgid "menu.update"
 msgstr "Провери ажурирања…"

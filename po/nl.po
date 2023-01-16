@@ -76,9 +76,6 @@ msgstr "Sluiten"
 msgid "dlg.default"
 msgstr " Oké "
 
-msgid "toggle.no"
-msgstr "NEE"
-
 msgid "menu.title.edit"
 msgstr "Bewerken"
 
@@ -1671,9 +1668,6 @@ msgstr "NEGEER WAARSCHUWING?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Negeer waarschuwing"
-
-msgid "dlg.fontpack.classic"
-msgstr "Download lettertypepakket (25 MB)"
 
 msgid "dlg.uploadport.msg"
 msgstr ""

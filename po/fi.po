@@ -19,9 +19,6 @@ msgstr "Jatketaan"
 msgid "dlg.default"
 msgstr " OK "
 
-msgid "toggle.no"
-msgstr "Ei"
-
 msgid "menu.title.file"
 msgstr "Tiedosto"
 
@@ -1264,9 +1261,6 @@ msgstr "Esimuotoiltua tekstiä ilman kuvausta"
 msgid "prefs.collapsepreonload"
 msgstr "Piilota esimuotoillut:"
 
-msgid "lang.ie"
-msgstr "Interlingue"
-
 # Used in about:feeds.
 msgid "feeds.list.title"
 msgstr "Syötteiden artikkelit"
@@ -1533,9 +1527,6 @@ msgstr "Käytössä:"
 msgid "dlg.newident.more"
 msgstr "Lisää…"
 
-msgid "keys.split.menu.vert21"
-msgstr "Jaetun näkymän valikko: pysty 2:1"
-
 msgid "dlg.newident.scope.domain"
 msgstr "Tämä verkkotunnus"
 
@@ -1545,14 +1536,8 @@ msgstr "Tämä sivu"
 msgid "dlg.newident.scope.none"
 msgstr "Ei käytetä"
 
-msgid "keys.split.menu.swap"
-msgstr "Jaetun näkymän valikko: vaihda puolia"
-
 msgid "keys.split.menu.horiz12"
 msgstr "Jaetun näkymän valikko: vaaka 1:2"
-
-msgid "keys.split.menu.vert"
-msgstr "Jaetun näkymän valikko: pysty"
 
 msgid "prefs.animate"
 msgstr "Animaatiot:"
@@ -1816,9 +1801,6 @@ msgstr "Esimuotoillun tekstin väri"
 msgid "keys.bookmark.addfolder"
 msgstr "Lisää kirjanmerkkikansio"
 
-msgid "lang.es.mx"
-msgstr "Espanja (Meksiko)"
-
 msgid "lang.gl"
 msgstr "Galicia"
 
@@ -2017,14 +1999,8 @@ msgstr "Poista pääte-emulaatiovaroitus sivustolla %s?"
 msgid "dlg.dismiss.warning"
 msgstr "Poista varoitus"
 
-msgid "heading.fontpack.classic"
-msgstr "Lataa fonttipaketti"
-
 msgid "lang.uk"
 msgstr "Ukraina"
-
-msgid "lang.cs"
-msgstr "Tšekki"
 
 msgid "sidebar.action.show"
 msgstr "Näytä:"

@@ -38,9 +38,6 @@ msgstr "继续"
 msgid "dlg.default"
 msgstr " 好 "
 
-msgid "toggle.no"
-msgstr "已关闭"
-
 msgid "menu.title.file"
 msgstr "文件"
 
@@ -1246,9 +1243,6 @@ msgstr "无说明的预格式化文本"
 
 msgid "prefs.collapsepreonload"
 msgstr "收起预格式化文本："
-
-msgid "lang.ie"
-msgstr "西方国际语"
 
 msgid "prefs.boldlink"
 msgstr "加粗显示链接："

@@ -84,9 +84,6 @@ msgstr "Закрити"
 msgid "dlg.default"
 msgstr " ОК "
 
-msgid "toggle.no"
-msgstr "НІ"
-
 msgid "menu.title.edit"
 msgstr "Редагувати"
 
@@ -1084,14 +1081,8 @@ msgstr "Перекласти"
 msgid "lang.zh"
 msgstr "Китайська"
 
-msgid "lang.zh.hant"
-msgstr "Китайська (традиційна)"
-
 msgid "lang.en"
 msgstr "Англійська"
-
-msgid "lang.fi"
-msgstr "Фінська"
 
 msgid "lang.fr"
 msgstr "Французька"
@@ -1108,9 +1099,6 @@ msgstr "Московитська"
 msgid "lang.es"
 msgstr "Іспанська"
 
-msgid "lang.sr"
-msgstr "Сербська"
-
 msgid "lang.gl"
 msgstr "Галісійська"
 
@@ -1119,9 +1107,6 @@ msgstr "Гінді"
 
 msgid "lang.ja"
 msgstr "Японська"
-
-msgid "lang.tok"
-msgstr "Токі-пона"
 
 msgid "heading.newident"
 msgstr "Нова ідентичність"
@@ -2074,14 +2059,8 @@ msgstr "Усунути попередження"
 msgid "heading.dismiss.warning"
 msgstr "Усунути попередження?"
 
-msgid "heading.fontpack.classic"
-msgstr "Завантажити пакет шрифтів"
-
 msgid "lang.uk"
 msgstr "Українська"
-
-msgid "lang.hu"
-msgstr "Угорська"
 
 msgid "dlg.bookmark.folder"
 msgstr "Тека:"

@@ -68,9 +68,6 @@ msgstr "%s la ilo li lukin sin e lipu."
 msgid "cancel"
 msgstr "o pini"
 
-msgid "toggle.yes"
-msgstr "LON"
-
 msgid "menu.title.file"
 msgstr "ijo"
 
@@ -629,9 +626,6 @@ msgstr "toki Tosi"
 
 msgid "lang.en"
 msgstr "toki Inli"
-
-msgid "lang.fi"
-msgstr "toki Sumi"
 
 msgid "lang.fr"
 msgstr "toki Kanse"
@@ -1524,9 +1518,6 @@ msgstr[0] "ijo %u li lon poki ni."
 msgid "keys.tab.close.other"
 msgstr "o pini e poki ante"
 
-msgid "prefs.userfont"
-msgstr "sitelen ante:"
-
 msgid "dlg.newident.scope.page"
 msgstr "lipu ni"
 
@@ -1802,9 +1793,6 @@ msgstr ""
 "mi ante e lipu pi nasin Atom XML tawa lipu pi nasin Kemeni la sina ken lukin "
 "e sin lipu."
 
-msgid "heading.fontpack.classic"
-msgstr "o kama jo e kulupu sitelen"
-
 #, c-format
 msgid "fontpack.install"
 msgstr "o pali e kulupu sitelen \"%s\""
@@ -1940,9 +1928,6 @@ msgstr "ilo Lakelan li wile open e ijo TrueType ale lon poki sitelen."
 msgid "truetype.help.installed"
 msgstr "sitelen ni lon poki sitelen."
 
-msgid "lang.gl"
-msgstr "toki Kaleko"
-
 msgid "lang.sk"
 msgstr "toki Lowenski"
 
@@ -1959,9 +1944,6 @@ msgstr "sitelen suli pi nanpa 2/3 li sama poki."
 
 msgid "bookmark.export.format.tags"
 msgstr "sitelen suli pi nanpa 2 li sama nimi lili."
-
-msgid "lang.uk"
-msgstr "toki Ukawina"
 
 msgid "bookmark.export.format.otherlines"
 msgstr ""

@@ -30,12 +30,6 @@ msgstr ""
 "Véglegesen figyelmen kívül hagyja a terminálemulációval kapcsolatos "
 "figyelmeztetést a(z) %s oldalon?"
 
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"A korábban az alkalmazás részeként elérhető betűtípusok most külön "
-"letöltésként érhetők el. Szeretné letölteni a \"Classic set\" "
-"betűtípuskészletet?"
-
 msgid "heading.fontpack.meta.enabled"
 msgstr "Engedélyezett betűtípuskészletek"
 
@@ -144,9 +138,6 @@ msgstr "Bezárás"
 
 msgid "dlg.default"
 msgstr " OK "
-
-msgid "toggle.no"
-msgstr "NEM"
 
 msgid "menu.title.view"
 msgstr "Nézet"
@@ -810,14 +801,8 @@ msgstr "Célnyelv:"
 msgid "lang.zh"
 msgstr "Kínai"
 
-msgid "lang.zh.hant"
-msgstr "Kínai (hagyományos)"
-
 msgid "lang.de"
 msgstr "Német"
-
-msgid "lang.ie"
-msgstr "Interlingue"
 
 msgid "lang.fr"
 msgstr "Francia"
@@ -834,14 +819,8 @@ msgstr "Japán"
 msgid "lang.ru"
 msgstr "Orosz"
 
-msgid "lang.eo"
-msgstr "Eszperantó"
-
 msgid "lang.es"
 msgstr "Spanyol"
-
-msgid "lang.isv"
-msgstr "Interszláv"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Önaláírt 2048-bites RSA tanúsítvány létrehozása."
@@ -1819,9 +1798,6 @@ msgstr "Angol"
 msgid "lang.pt"
 msgstr "Portugál"
 
-msgid "lang.sk"
-msgstr "Szlovák"
-
 msgid "heading.newident"
 msgstr "ÚJ IDENTITÁS"
 
@@ -2056,6 +2032,3 @@ msgstr "Gempub tartalom megtekintése"
 
 msgid "gempub.meta.author"
 msgstr "Szerző"
-
-msgid "lang.cs"
-msgstr "Cseh"

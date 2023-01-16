@@ -90,9 +90,6 @@ msgstr "Tęsti"
 msgid "dlg.default"
 msgstr " OK "
 
-msgid "toggle.no"
-msgstr "Ne"
-
 msgid "menu.title.file"
 msgstr "Failas"
 
