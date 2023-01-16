@@ -389,7 +389,7 @@ One important characteristic of Gemini is that you remain in control of what get
 
 ## 2.2 UI appearance
 
-There are four different color schemes for the UI: two for dark mode, and two for light mode. These can be selected on the "Window" tab of the Preferences dialog:
+There are four different color schemes for the UI: two for dark mode, and two for light mode. These can be selected on the "Appearance" tab of the Preferences dialog:
 
 * Dark mode: "Black" and "Dark" have a fully black or dark gray UI.
 * Light mode: "White" and "Light" have completety white or light gray UI.
@@ -438,7 +438,7 @@ The "Bold links" option determines whether links use a bold font. Enabling "Visi
 
 Paragraph layout options:
 
-* Line width: This setting determines the maximum width for text lines. "Window" disables the maximum limit and fits text lines to the full width of the window. Shorter lines are generally easier to read.
+* Line width: This setting determines the maximum width for text lines. "Fill" disables the maximum limit and fits text lines to the full width of the window. (Shorter lines are generally easier to read.)
 * Line spacing: Adjust spacing between text lines. A value of 1.1 would add 10% more space, while 2.0 would mean there is a full-height empty line between all text lines. For the best results, keep this pretty close to 1.0. (Values smaller than 1.0 may lead to visual artifacts as lines become overlapped.)
 * Tab width: Number of spaces to use for tab stops.
 * Justify: Paragraphs are justified when they at least three lines long. Spaces on each line are expanded to equalize line widths.
