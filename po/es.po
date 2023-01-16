@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-11-21 06:14+0000\n"
+"PO-Revision-Date: 2023-01-16 07:36+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -102,7 +102,7 @@ msgstr ""
 "acceder al recurso solicitado."
 
 msgid "prefs.imageloadscroll"
-msgstr "Cargar imágenes al desplazar:"
+msgstr "Cargar imagen siguiente al desplazar con teclado:"
 
 msgid "prefs.hidetoolbarscroll"
 msgstr "Ocultar barra de herramientas al desplazar:"
@@ -111,7 +111,7 @@ msgid "prefs.ostheme"
 msgstr "Usar tema del sistema:"
 
 msgid "prefs.theme"
-msgstr "Tema:"
+msgstr "Tema de la IU:"
 
 msgid "prefs.theme.black"
 msgstr "Negro"
@@ -162,7 +162,7 @@ msgstr "Red"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Estilo"
+msgstr "Estilo de la Página"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -989,7 +989,7 @@ msgid "heading.prefs.pagecontent"
 msgstr "Colores de la Página"
 
 msgid "heading.prefs.proxies"
-msgstr "Proxies"
+msgstr "Proxys"
 
 msgid "heading.prefs.scrolling"
 msgstr "Desplazamiento"
@@ -1016,10 +1016,10 @@ msgid "prefs.customframe"
 msgstr "Marco de ventana personalizado:"
 
 msgid "prefs.retainwindow"
-msgstr "Conservar posicionamiento:"
+msgstr "Guardar posicionamiento de la ventana:"
 
 msgid "prefs.sideicon"
-msgstr "Ícono de cápsula:"
+msgstr "Ícono de cápsula al lado izquierdo:"
 
 msgid "prefs.doctheme.dark"
 msgstr "Tema oscuro:"
@@ -1058,7 +1058,7 @@ msgid "prefs.quoteicon.line"
 msgstr "Linea"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Ajustar texto plano:"
+msgstr "Ajustar lineas de texto largas:"
 
 msgid "prefs.decodeurls"
 msgstr "Decodificar URLs:"
@@ -1512,7 +1512,7 @@ msgstr ""
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Abrir índice de archivo:"
+msgstr "Abrir index.gmi en archivos ZIP:"
 
 msgid "keys.split.menu"
 msgstr "Establecer modo de vista dividida"
@@ -1780,8 +1780,8 @@ msgstr "Audio"
 
 msgid "feeds.atom.translated"
 msgstr ""
-"Este documento XML Atom ha sido traducido al formato de Gemini para permitir "
-"suscribirse a el."
+"Este documento Atom XML ha sido traducido automáticamente a un feed Gemini "
+"para permitir la suscripción."
 
 msgid "bookmark.export.title.folder"
 msgstr "Marcadores"
@@ -1798,33 +1798,33 @@ msgstr[0] "Tienes %d marcador."
 msgstr[1] "Tienes %d marcadores."
 
 msgid "bookmark.export.saving"
-msgstr "Guarde esta página para exportarlos, o puede copiarlos al portapapeles."
+msgstr "Guardar esta página para exportar, o puede copiar al portapapeles."
 
 msgid "bookmark.export.taginfo"
 msgstr ""
-"En esta lista cada cabecera representa una etiqueta de marcador. Solo se "
-"muestran los marcadores etiquetados. Los marcadores con múltiples etiquetas "
-"se repiten bajo cada etiqueta."
+"En esta lista, cada encabezado representa una etiqueta de marcadores. Solo "
+"se muestran los marcadores etiquetados. Los marcadores con varias etiquetas "
+"se repiten en cada categoría."
 
 msgid "bookmark.export.format.sub"
 msgstr ""
-"Esta página esta formateada según la especificación adicional de \"Como "
-"suscribirse a páginas de Gemini\"."
+"Esta página está formateada según la especificación adicional \" Suscribirse "
+"a páginas de Gemini\"."
 
 msgid "bookmark.export.format.linklines"
 msgstr "Cada enlace representa un marcador."
 
 msgid "bookmark.export.format.otherlines"
 msgstr ""
-"Las lineas con viñetas y comillas están reservadas para la información "
-"adicional sobre el marcador precedente. Las lineas de texto y los textos pre-"
-"formateados son considerados comentarios y son ignorados."
+"Las lineas con viñetas o entrecomilladas están reservadas para información "
+"adicional sobre el marcador precedente. Las líneas de texto y el texto "
+"preformateado son considerados comentarios y deberían ser ignorados."
 
 msgid "bookmark.export.format.folders"
-msgstr "La estructura de carpetas está definida por cabeceras de nivel 2/3."
+msgstr "La estructura de carpetas está definida por encabezados de nivel 2/3."
 
 msgid "bookmark.export.format.tags"
-msgstr "Las etiquetas están definidas por cabeceras de nivel 2."
+msgstr "Las etiquetas están definidas por encabezados de nivel 2."
 
 msgid "menu.newfolder"
 msgstr "Nueva Carpeta…"
@@ -1975,7 +1975,7 @@ msgstr ""
 "\"Conjunto Clásico\" ahora?"
 
 msgid "prefs.font.ui"
-msgstr "IU:"
+msgstr "Fuente de la IU:"
 
 msgid "prefs.font.heading"
 msgstr "Titulares:"
@@ -1994,7 +1994,7 @@ msgid "prefs.boldlink.visited"
 msgstr "Visitado"
 
 msgid "prefs.gemtext.ansi"
-msgstr "Escapes ANSI:"
+msgstr "Escapes ANSI en texto Gem:"
 
 msgid "prefs.gemtext.ansi.fg"
 msgstr "Color de Frente"
@@ -2003,10 +2003,10 @@ msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Estilo de Fuente"
 
 msgid "prefs.font.warnmissing"
-msgstr "Advertencias por glifos:"
+msgstr "Advertencias por glifos faltantes:"
 
 msgid "prefs.font.smooth"
-msgstr "Suavizado:"
+msgstr "Suavizado de fuentes:"
 
 #, c-format
 msgid "dlg.fontpack.delete.confirm"
@@ -2150,7 +2150,7 @@ msgid "menu.update"
 msgstr "Buscar Actualizaciones…"
 
 msgid "prefs.time.24h"
-msgstr "Hora de 24 Horas"
+msgstr "Formato de 24 horas:"
 
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
@@ -2546,3 +2546,51 @@ msgstr "Nueva Identidad para el Dominio…"
 
 msgid "dlg.newident.scope.dir"
 msgstr "Directorio Actual"
+
+msgid "menu.movetab.left"
+msgstr "Mover Pestañas a la Izquierda"
+
+msgid "menu.movetab.right"
+msgstr "Mover Pestañas a la Derecha"
+
+msgid "heading.prefs.appearance"
+msgstr "Apariencia"
+
+msgid "menu.tab.next"
+msgstr "Mostrar Nueva Pestaña"
+
+msgid "menu.tab.prev"
+msgstr "Mostrar Pestaña Anterior"
+
+msgid "menu.title.window"
+msgstr "Ventana"
+
+msgid "menu.movetab.split"
+msgstr "Mover Pestaña a Otro Lado"
+
+msgid "menu.movetab.newwindow"
+msgstr "Mover Pestaña a Nueva Ventana"
+
+msgid "menu.window.min"
+msgstr "Minimizar"
+
+msgid "menu.window.max"
+msgstr "Maximizar"
+
+msgid "menu.window.full"
+msgstr "Cambiar Pantalla Completa"
+
+msgid "heading.prefs.layout"
+msgstr "Disposición de la Página"
+
+msgid "heading.prefs.content"
+msgstr "Contenido"
+
+msgid "prefs.swipe.edge"
+msgstr "Deslizar desde el borde:"
+
+msgid "prefs.swipe.page"
+msgstr "Deslizar en la página:"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "Auto-detectar estilo de menús para Gopher:"
