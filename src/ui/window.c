@@ -73,8 +73,11 @@ iDefineTypeConstructionArgs(MainWindow, (iRect rect), rect)
 static const iMenuItem fileMenuItems_[] = {
     { "${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
     { "${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
-    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
+    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
+    { "---" },
+    { "${menu.closetab}", 0, 0, "tabs.close" },
+    { "${menu.closetab.other}", 0, 0, "tabs.close toleft:1 toright:1" },
     { "---" },
     { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---" },
@@ -133,16 +136,16 @@ static iMenuItem bookmarksMenuItems_[] = {
     { "${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
     { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
     { "---" },
-    { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
-    { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
-    { "---" },
     { "${macos.menu.bookmarks.list}", 0, 0, "open url:about:bookmarks" },
     { "${macos.menu.bookmarks.bytag}", 0, 0, "open url:about:bookmarks?tags" },
     { "${macos.menu.bookmarks.bytime}", 0, 0, "open url:about:bookmarks?created" },
-    { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
     { "---" },
+    { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
+    { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
     { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
+    { "---" },
     { "${menu.feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" },
+    { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
     { NULL }
 };
 
@@ -155,7 +158,6 @@ static const iMenuItem identityMenuItems_[] = {
 };
 
 static const iMenuItem windowMenuItems_[] = {
-    { "${menu.closetab}", 0, 0, "tabs.close" },
     { "${menu.tab.next}", 0, 0, "tabs.next" },
     { "${menu.tab.prev}", 0, 0, "tabs.prev" },
     { "${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
