@@ -5722,13 +5722,29 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                        { "---", 0, 0, NULL } },
                                         2);
                     }
+#if defined (LAGRANGE_ENABLE_MAC_MENUS)
+                    pushBackN_Array(
+                        &items,
+                        (iMenuItem[]){
+                            { backArrow_Icon " ${menu.back}", navigateBack_KeyShortcut, "navigate.back" },
+                            { forwardArrow_Icon " ${menu.forward}", navigateForward_KeyShortcut, "navigate.forward" },
+                            { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
+                            { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" }
+                        }, 4);
+#else
+                    /* Compact navigation actions. */
                     pushBackN_Array(
                         &items,
                         (iMenuItem[]){
                             { ">>>" backArrow_Icon, navigateBack_KeyShortcut, "navigate.back" },
+                            { ">>>" forwardArrow_Icon, navigateForward_KeyShortcut, "navigate.forward" }
                             { ">>>" upArrow_Icon, navigateParent_KeyShortcut, "navigate.parent" },
                             { ">>>" upArrowBar_Icon, navigateRoot_KeyShortcut, "navigate.root" },
-                            { ">>>" forwardArrow_Icon, navigateForward_KeyShortcut, "navigate.forward" },
+                        }, 4);                    
+#endif
+                    pushBackN_Array(
+                        &items,
+                        (iMenuItem[]){
                             { "---" },
                             { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
                             { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
@@ -5745,7 +5761,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                               0, 0, "document.viewformat" },
                             { "---" },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" }, },
-                        18);
+                        14);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
