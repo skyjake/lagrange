@@ -867,14 +867,25 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 labelText += 3;
                 isDisabled = iTrue;
             }
+            iString labelStr;
+            initCStr_String(&labelStr, labelText);
+            const iBool isIcon = length_String(&labelStr) == 1;
             iLabelWidget *label = addChildFlags_Widget(
                 horizGroup ? horizGroup : menu,
-                iClob(newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
-                noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
-                drawKey_WidgetFlag | itemFlags);
+                iClob(isIcon
+                    ? newIcon_LabelWidget(labelText, item->key, item->kmods, item->command) 
+                    : newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
+                noBackground_WidgetFlag | frameless_WidgetFlag | 
+                    (!isIcon ? alignLeft_WidgetFlag | drawKey_WidgetFlag : 0) | 
+                    itemFlags);                                        
+            deinit_String(&labelStr);
             setWrap_LabelWidget(label, isInfo);
             if (!isInfo) {
                 haveIcons |= checkIcon_LabelWidget(label);
+            }
+            if (isIcon) {
+                setTextColor_LabelWidget(label, uiIcon_ColorId);
+                setFont_LabelWidget(label, uiLabelMedium_FontId);
             }
             setFlags_Widget(as_Widget(label), disabled_WidgetFlag, isDisabled);
             if (isInfo) {
@@ -1053,7 +1064,9 @@ static void updateMenuItemFonts_Widget_(iWidget *d) {
             }
             switch (deviceType_App()) {
                 case desktop_AppDeviceType:
-                setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
+                    if (font_LabelWidget(label) != uiLabelMedium_FontId) { /* don't touch large icons */
+                        setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
+                    }
                     break;
                 case tablet_AppDeviceType:
                     setFont_LabelWidget(label, isCaution ? uiLabelMediumBold_FontId : uiLabelMedium_FontId);
