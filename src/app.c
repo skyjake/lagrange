@@ -2202,6 +2202,7 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
         const SDL_WindowEvent *winev = &event->window;
 #if defined (iPlatformMsys)
         /* TODO: Investigate if this is still necessary. */
+        setCurrent_Window(d->window);
         resetFontCache_Text(text_Window(d->window)); {
             SDL_Event u = { .type = SDL_USEREVENT };
             u.user.code = command_UserEventCode;

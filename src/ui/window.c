@@ -612,6 +612,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     if (d->type == main_WindowType) {
         updateMetrics_Window_(d);
     }
+    setCurrent_Window(d); /* Text assumes global state is up-to-date */
     d->text = new_Text(d->render);
 }
 
@@ -2141,6 +2142,7 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
 }
 
 iWindow *newExtra_Window(iWidget *rootWidget) {
+    iWindow *   oldWin     = get_Window();
     const float pixelRatio = get_Window()->pixelRatio;
     iRect       winRect    = (iRect){ init1_I2(-1), divf_I2(rootWidget->rect.size, pixelRatio) };
     iWindow    *win        = new_Window(extra_WindowType, winRect, 0);
@@ -2149,17 +2151,19 @@ iWindow *newExtra_Window(iWidget *rootWidget) {
     win->roots[0]          = root;
     win->keyRoot           = root;
     /* Make a simple root widget that sizes itself according to the actual root. */
+    setCurrent_Window(win);
     iWidget *frameRoot = new_Widget();
     setFlags_Widget(frameRoot, arrangeSize_WidgetFlag | focusRoot_WidgetFlag, iTrue);
     setCommandHandler_Widget(frameRoot, handleRootCommands_Widget);
+    setRoot_Widget(rootWidget, root);
     addChild_Widget(frameRoot, rootWidget);
     iRelease(rootWidget);
     arrange_Widget(frameRoot);
     root->widget         = frameRoot;
     root->window         = win;
     rootWidget->rect.pos = zero_I2();
-    setRoot_Widget(frameRoot, root);
     setDrawBufferEnabled_Widget(frameRoot, iFalse);
     setDrawBufferEnabled_Widget(rootWidget, iFalse);
+    setCurrent_Window(oldWin);
     return win;     
 }

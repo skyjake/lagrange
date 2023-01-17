@@ -535,7 +535,12 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.close")) {
-        SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
+        if (!isAppleDesktop_Platform() && size_PtrArray(mainWindows_App()) == 1) {
+            SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
+        }
+        else {
+            closeWindow_App(get_Window());
+        }
         return iTrue;
     }
     else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "window.resized")) {
