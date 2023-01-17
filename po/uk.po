@@ -1099,9 +1099,6 @@ msgstr "Московитська"
 msgid "lang.es"
 msgstr "Іспанська"
 
-msgid "lang.gl"
-msgstr "Галісійська"
-
 msgid "lang.hi"
 msgstr "Гінді"
 
@@ -2058,9 +2055,6 @@ msgstr "Усунути попередження"
 
 msgid "heading.dismiss.warning"
 msgstr "Усунути попередження?"
-
-msgid "lang.uk"
-msgstr "Українська"
 
 msgid "dlg.bookmark.folder"
 msgstr "Тека:"

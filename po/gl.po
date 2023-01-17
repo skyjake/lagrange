@@ -1861,9 +1861,6 @@ msgstr "Cor do preformatado"
 msgid "keys.bookmark.addfolder"
 msgstr "Engadir cartafol de marcadores"
 
-msgid "lang.isv"
-msgstr "Intereslávico"
-
 msgid "num.files"
 msgid_plural "num.files.n"
 msgstr[0] "%u ficheiro"

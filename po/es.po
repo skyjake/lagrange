@@ -1862,9 +1862,6 @@ msgstr "Color del Texto"
 msgid "prefs.imagestyle.preformat"
 msgstr "Color Pre-formateado"
 
-msgid "lang.sk"
-msgstr "Eslovaco"
-
 msgid "dlg.feed.ignoreweb"
 msgstr "Ignorar enlaces HTTP(S):"
 

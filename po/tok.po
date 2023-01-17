@@ -1928,9 +1928,6 @@ msgstr "ilo Lakelan li wile open e ijo TrueType ale lon poki sitelen."
 msgid "truetype.help.installed"
 msgstr "sitelen ni lon poki sitelen."
 
-msgid "lang.sk"
-msgstr "toki Lowenski"
-
 msgid "menu.sort.alpha"
 msgstr "o pali kepeken nasin nimi"
 

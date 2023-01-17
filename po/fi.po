@@ -1536,9 +1536,6 @@ msgstr "Tämä sivu"
 msgid "dlg.newident.scope.none"
 msgstr "Ei käytetä"
 
-msgid "keys.split.menu.horiz12"
-msgstr "Jaetun näkymän valikko: vaaka 1:2"
-
 msgid "prefs.animate"
 msgstr "Animaatiot:"
 
@@ -1801,9 +1798,6 @@ msgstr "Esimuotoillun tekstin väri"
 msgid "keys.bookmark.addfolder"
 msgstr "Lisää kirjanmerkkikansio"
 
-msgid "lang.gl"
-msgstr "Galicia"
-
 msgid "menu.website"
 msgstr "Projektin verkkosivut…"
 
@@ -1998,9 +1992,6 @@ msgstr "Poista pääte-emulaatiovaroitus sivustolla %s?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Poista varoitus"
-
-msgid "lang.uk"
-msgstr "Ukraina"
 
 msgid "sidebar.action.show"
 msgstr "Näytä:"

@@ -1564,9 +1564,6 @@ msgstr "Текућој страници"
 msgid "dlg.newident.scope.none"
 msgstr "Не користити"
 
-msgid "keys.split.menu.horiz12"
-msgstr "Мени раздвојеног погледа: Хоризонтално 1:2"
-
 msgid "keys.split.menu.vert21"
 msgstr "Мени раздвојеног погледа: Вертикално 2:1"
 
@@ -1877,9 +1874,6 @@ msgstr "Преформатирана боја"
 
 msgid "keys.bookmark.addfolder"
 msgstr "Додавање фасцикле са обележивачима"
-
-msgid "lang.sk"
-msgstr "Словачки"
 
 msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Стил фонта"

@@ -1554,9 +1554,6 @@ msgstr "Li actual págine"
 msgid "dlg.newident.scope.none"
 msgstr "Ne usat"
 
-msgid "keys.split.menu.merge"
-msgstr "Fendet vise: unir cartes"
-
 msgid "prefs.animate"
 msgstr "Animationes:"
 
@@ -1726,9 +1723,6 @@ msgstr "Selecter un file"
 
 msgid "bookmark.export.format.tags"
 msgstr "Etiquettes es format per rubricas de nivelle 2."
-
-msgid "lang.sk"
-msgstr "Slovac"
 
 msgid "bookmark.export.format.folders"
 msgstr "Li structura de fólderes es providet per rubricas de nivelle 2 e 3."
