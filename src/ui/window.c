@@ -439,6 +439,7 @@ static SDL_HitTestResult hitTest_MainWindow_(SDL_Window *win, const SDL_Point *p
     const int snap = snap_MainWindow(d);
     int w, h;
     SDL_GetWindowSize(win, &w, &h);
+    setCurrent_Window(as_Window(d));
     /* TODO: Check if inside the caption label widget. */
     const iBool isLeft   = pos->x < gap_UI;
     const iBool isRight  = pos->x >= w - gap_UI;
@@ -448,6 +449,7 @@ static SDL_HitTestResult hitTest_MainWindow_(SDL_Window *win, const SDL_Point *p
     const int   rightEdge     = left_Rect(bounds_Widget(findChild_Widget(
                                     rootAt_Window_(as_Window(d), init_I2(pos->x, pos->y))->widget,
                                     "winbar.min")));
+    setCurrent_Window(NULL);                                    
     d->place.lastHit = SDL_HITTEST_NORMAL;
     if (snap != maximized_WindowSnap) {
         if (isLeft) {
@@ -615,7 +617,6 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
 
 static void deinitRoots_Window_(iWindow *d) {
     iRecycle();
-    setCurrent_Window(d);
     iForIndices(i, d->roots) {
         if (d->roots[i]) {
             setCurrent_Root(d->roots[i]);
@@ -624,10 +625,10 @@ static void deinitRoots_Window_(iWindow *d) {
         }
     }
     setCurrent_Root(NULL);
-    setCurrent_Window(NULL);
 }
 
 void deinit_Window(iWindow *d) {
+    setCurrent_Window(d);
     if (d->type == popup_WindowType) {
         removePopup_App(d);
     }
@@ -643,6 +644,7 @@ void deinit_Window(iWindow *d) {
             SDL_FreeCursor(d->cursors[i]);
         }
     }
+    setCurrent_Window(NULL);
 }
 
 void init_MainWindow(iMainWindow *d, iRect rect) {
@@ -755,6 +757,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 }
 
 void deinit_MainWindow(iMainWindow *d) {
+    setCurrent_Window(as_Window(d));
     removeWindow_App(d);
     if (d->backBuf) {
         SDL_DestroyTexture(d->backBuf);
@@ -770,6 +773,7 @@ void deinit_MainWindow(iMainWindow *d) {
     delete_String(d->pendingSplitOrigin);
     delete_String(d->pendingSplitUrl);
     deinit_Window(&d->base);
+    setCurrent_Window(NULL);
 }
 
 SDL_Renderer *renderer_Window(const iWindow *d) {
