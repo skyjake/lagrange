@@ -2919,6 +2919,17 @@ void closeWindow_App(iWindow *win) {
     iAssert(win->type == main_WindowType || win->type == extra_WindowType);
     const iBool isMain = (win->type == main_WindowType);
     iWindow *activeWindow = d->window;
+    /* Preferences needs to be dismissed properly. */ 
+    /* TODO: This needs a more generic dialog dismissal command system. Also needed for mobile! */
+    if (win->type == extra_WindowType) {
+        iWidget *prefs = findChild_Widget(win->roots[0]->widget, "prefs");
+        /* The "prefs.dismiss" command normally will destroy the dialog, but since we are
+           about to do it here, inform the handler of our intentions. */
+        if (prefs && ~prefs->flags & destroyPending_WidgetFlag) {
+            setFlags_Widget(prefs, destroyPending_WidgetFlag, iTrue);
+            prefs->commandHandler(prefs, "prefs.dismiss");
+        }
+    }
     iForIndices(r, win->roots) {
         if (win->roots[r]) {
             setTreeFlags_Widget(win->roots[r]->widget, destroyPending_WidgetFlag, iTrue);

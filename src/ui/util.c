@@ -1436,8 +1436,12 @@ iBool isPromoted_Widget(iWidget *dlg) {
 
 void destroyDialog_Widget(iWidget *dlg) {
     if (isPromoted_Widget(dlg)) {
-        /* Promoted dialog. */
-        closeWindow_App(window_Widget(dlg));
+        if (~dlg->flags & destroyPending_WidgetFlag) {
+            /* Let the dialog know that the end is nigh. Otherwise, its dismissal command
+               will be automatically posted. */
+            setFlags_Widget(dlg, destroyPending_WidgetFlag, iTrue);
+            closeWindow_App(window_Widget(dlg));
+        }
     }
     else {
         destroy_Widget(dlg);
