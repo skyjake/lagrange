@@ -5722,7 +5722,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                        { "---", 0, 0, NULL } },
                                         2);
                     }
-#if defined (LAGRANGE_ENABLE_MAC_MENUS)
+#if defined (iPlatformApple) && defined (LAGRANGE_ENABLE_MAC_MENUS)
                     pushBackN_Array(
                         &items,
                         (iMenuItem[]){
@@ -5737,7 +5737,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         &items,
                         (iMenuItem[]){
                             { ">>>" backArrow_Icon, navigateBack_KeyShortcut, "navigate.back" },
-                            { ">>>" forwardArrow_Icon, navigateForward_KeyShortcut, "navigate.forward" }
+                            { ">>>" forwardArrow_Icon, navigateForward_KeyShortcut, "navigate.forward" },
                             { ">>>" upArrow_Icon, navigateParent_KeyShortcut, "navigate.parent" },
                             { ">>>" upArrowBar_Icon, navigateRoot_KeyShortcut, "navigate.root" },
                         }, 4);                    
