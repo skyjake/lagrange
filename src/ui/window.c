@@ -680,6 +680,11 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
     init_Window(&d->base, main_WindowType, rect, flags);
     d->isDrawFrozen           = iTrue;
+#if defined (iPlatformMsys)
+    /* It is less glitchy to allow drawing as early as possible, to avoid white
+       flashes when windows are created. */
+    d->isDrawFrozen           = iFalse;
+#endif
     d->splitMode              = 0;
     d->pendingSplitMode       = 0;
     d->pendingSplitUrl        = new_String();
