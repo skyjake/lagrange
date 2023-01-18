@@ -2772,14 +2772,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommand_App("prefs.changed");
         return iTrue;
     }
-    /*
     else if (equal_Command(cmd, "tabs.changed")) {
-        setFlags_Widget(findChild_Widget(d, "prefs.aboutfonts"), hidden_WidgetFlag,
-                        !equal_Rangecc(range_Command(cmd, "id"), "prefs.page.style") &&
-                        !equal_Rangecc(range_Command(cmd, "id"), "prefs.page.appearance"));
+        refresh_Widget(d);
         return iFalse;
     }
-    */
     else if (equal_Command(cmd, "uilang")) {
         updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.uilang"),
                                             cstr_String(string_Command(cmd, "id")));
