@@ -330,6 +330,11 @@ void setThemePalette_Color(enum iColorTheme theme) {
               mix_Color(get_Color(uiBackground_ColorId),
                         get_Color(uiBackgroundSelected_ColorId),
                         theme == pureBlack_ColorTheme ? 0.5f : isDark_ColorTheme(theme) ? 0.25f : 0.66f));
+    set_Color(uiBackgroundFramelessHover_ColorId,
+              mix_Color(get_Color(uiBackground_ColorId),
+                        get_Color(uiBackgroundSelected_ColorId),
+                        isDark_ColorTheme(theme) ? 0.66f : 0.5f)); /*
+                        theme == pureBlack_ColorTheme ? 0.5f : isDark_ColorTheme(theme) ? 0.25f : 0.66f));*/
     setHsl_Color(uiBackgroundFolder_ColorId,
                  addSatLum_HSLColor(get_HSLColor(uiBackgroundSidebar_ColorId),
                                     0,

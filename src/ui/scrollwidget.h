@@ -28,7 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareWidgetClass(ScrollWidget)
 iDeclareObjectConstruction(ScrollWidget)
 
-void    setRange_ScrollWidget   (iScrollWidget *, iRangei range);
-void    setThumb_ScrollWidget   (iScrollWidget *, int thumb, int thumbSize);
+void    setRange_ScrollWidget       (iScrollWidget *, iRangei range);
+void    setThumbColor_ScrollWidget  (iScrollWidget *, int thumbColor);
+void    setThumb_ScrollWidget       (iScrollWidget *, int thumb, int thumbSize);
 
 void    setFadeEnabled_ScrollWidget (iScrollWidget *, iBool fadeEnabled);

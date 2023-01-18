@@ -6288,6 +6288,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_DocumentView(&d->view);
     setOwner_DocumentView_(&d->view, d);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
+    setThumbColor_ScrollWidget(d->scroll, tmQuote_ColorId);
     d->menu         = NULL; /* created when clicking */
     d->playerMenu   = NULL;
     d->copyMenu     = NULL;
