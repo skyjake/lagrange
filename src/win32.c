@@ -20,6 +20,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <windowsx.h>
+#include <dwmapi.h>
+#include <d2d1.h>
+
 #include "win32.h"
 #include "ui/window.h"
 #include "ui/command.h"
@@ -29,12 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <the_Foundation/sortedarray.h>
 #include <SDL_syswm.h>
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <windowsx.h>
-#include <dwmapi.h>
-#include <d2d1.h>
 
 static HWND windowHandle_(SDL_Window *win) {
     SDL_SysWMinfo wmInfo;
@@ -220,7 +220,10 @@ static void enableDarkMode_Win32(void) {
 }
 
 void init_Win32(void) {
+#if !SDL_VERSION_ATLEAST(2, 24, 0)
+    /* New SDL versions configure DPI awareness for us. */
     SetProcessDPIAware();
+#endif
     enableDarkMode_Win32();
 }
 
