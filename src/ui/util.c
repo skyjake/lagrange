@@ -767,6 +767,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "input.ended") ||
            equal_Command(cmd, "focus.gained") ||
            equal_Command(cmd, "focus.lost") ||
+           equal_Command(cmd, "menu.closed") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
 
@@ -811,6 +812,7 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
             return iFalse;
         }
         if (!isCommandIgnoredByMenus_(cmd)) {
+            //printf("closemenu being called on %p due to cmd: %s\n", menu, cmd);
             closeMenu_Widget(menu);
         }
     }
