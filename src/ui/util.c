@@ -1278,6 +1278,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
             menuPos.y = iMax(0, iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y));
         }
         iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
+        setCurrent_Window(win);
         SDL_SetWindowTitle(win->win, "Menu");
         arrange_Widget(d);
         addPopup_App(win);
