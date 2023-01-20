@@ -18,6 +18,7 @@ New features:
 Changes and enhancements:
 * Redesigned Preferences dialog with vertical tabs and a new organization of the settings. "Fonts" and "Colors" are removed, and there is a new "Content" tab.
 * Preferences dialog opens as a separate window.
+* Mouse cursor turns into the I-beam only over selectable text.
 * Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
 * macOS: "Window" menu has new actions for duplicating and switching tabs.
 * GTK: Request dark window theme if the app UI color theme is dark.

@@ -776,7 +776,16 @@ static void updateHover_DocumentView_(iDocumentView *d, iInt2 mouse) {
     d->hoverLink         = NULL;
     const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)),
                                    -viewPos_DocumentView_(d));
+    const iGmRun *selectableRun = NULL;
     if (isHoverAllowed_DocumentWidget_(d->owner)) {
+        /* Look for any selectable text run. */
+        for (const iGmRun *v = d->visibleRuns.start; v && v != d->visibleRuns.end; v++) {
+            if (~v->flags & decoration_GmRunFlag && !isEmpty_Range(&v->text) &&
+                contains_Rect(v->bounds, hoverPos)) {
+                selectableRun = v;
+                break;
+            }
+        }
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
             /* Click targets are slightly expanded so there are no gaps between links. */
@@ -824,7 +833,8 @@ static void updateHover_DocumentView_(iDocumentView *d, iInt2 mouse) {
     if (isHover_Widget(w) && !contains_Widget(constAs_Widget(d->owner->scroll), mouse)) {
         setCursor_Window(get_Window(),
                          d->hoverLink || d->hoverPre ? SDL_SYSTEM_CURSOR_HAND
-                                                     : SDL_SYSTEM_CURSOR_IBEAM);
+                         : selectableRun             ? SDL_SYSTEM_CURSOR_IBEAM
+                                                     : SDL_SYSTEM_CURSOR_ARROW);
         if (d->hoverLink &&
             linkFlags_GmDocument(d->doc, d->hoverLink->linkId) & permanent_GmLinkFlag) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW); /* not dismissable */
