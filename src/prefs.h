@@ -72,6 +72,7 @@ enum iPrefsBool {
     simpleChars_PrefsBool,
     
     evenSplit_PrefsBool,
+    detachedPrefs_PrefsBool,
     
     /* Document presentation */
     sideIcon_PrefsBool,
@@ -141,6 +142,7 @@ struct Impl_Prefs {
             iBool simpleChars;
             
             iBool evenSplit;
+            iBool detachedPrefs;
             
             /* Document presentation */
             iBool sideIcon;

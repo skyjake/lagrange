@@ -1138,6 +1138,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, listTabUrls_CommandLineOption, 0);
         defineValuesN_CommandLine(&d->args, "new-tab", 0, 1);
         defineValues_CommandLine(&d->args, openUrlOrSearch_CommandLineOption, 1);
+        defineValues_CommandLine(&d->args, "prefs-sheet", 0);
         defineValues_CommandLine(&d->args, replaceTab_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, "sw", 0);
         defineValues_CommandLine(&d->args, "tab-url", 0);
@@ -1226,9 +1227,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
     d->lastTickerTime         = SDL_GetTicks();
     d->elapsedSinceLastTicker = 0;
-    d->commandEcho            = iClob(checkArgument_CommandLine(&d->args, "echo;E")) != NULL;
-    d->forceSoftwareRender    = iClob(checkArgument_CommandLine(&d->args, "sw")) != NULL;
+    d->commandEcho            = contains_CommandLine(&d->args, "echo;E");
+    d->forceSoftwareRender    = contains_CommandLine(&d->args, "sw");
     init_Prefs(&d->prefs);
+    d->prefs.detachedPrefs = !contains_CommandLine(&d->args, "prefs-sheet");
     init_SiteSpec(dataDir_App_());
     setCStr_String(&d->prefs.strings[downloadDir_PrefsString], downloadDir_App_());
     set_Atomic(&d->pendingRefresh, iFalse);
@@ -4383,7 +4385,7 @@ iBool handleCommand_App(const char *cmd) {
             iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
             postCommand_Widget(button, "panel.open");
         }
-        if (deviceType_App() == desktop_AppDeviceType) {
+        if (prefs_App()->detachedPrefs && deviceType_App() == desktop_AppDeviceType) {
             /* Detach into a window if it doesn't fit otherwise. */
             promoteDialogToWindow_Widget(dlg);
         }

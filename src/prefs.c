@@ -73,6 +73,7 @@ void init_Prefs(iPrefs *d) {
     d->menuBar           = (deviceType_App() == desktop_AppDeviceType);
     d->simpleChars       = iTrue; /* only in terminal */
     d->evenSplit         = iFalse; /* split mode tabs have even width */
+    d->detachedPrefs     = iTrue;
     d->pinSplit          = 1;
     d->time24h           = iTrue;
     d->returnKey         = default_ReturnKeyBehavior;

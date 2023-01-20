@@ -8,6 +8,8 @@
 
 ## 1.15
 New features:
+* Preferences dialog opens as a separate window.
+* Option `--prefs-sheet`: open Preferences as a sheet like in previous releases.
 * Reordering tabs: tab buttons can be dragged with the mouse, and tabs can be moved left/right using tab context menu items or keyboard shortcuts.
 * Move a tab to the other side of a split view (tab context menu).
 * Move a tab to a new window (tab context menu).
@@ -17,7 +19,6 @@ New features:
 
 Changes and enhancements:
 * Redesigned Preferences dialog with vertical tabs and a new organization of the settings. "Fonts" and "Colors" are removed, and there is a new "Content" tab.
-* Preferences dialog opens as a separate window.
 * Mouse cursor turns into the I-beam only over selectable text.
 * Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
 * macOS: "Window" menu has new actions for duplicating and switching tabs.
