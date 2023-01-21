@@ -18,6 +18,7 @@ BUILD_LANGS = [ 'en', # base strings
     'ie',
     'isv',
     'it',
+    'ja',
     'nl',
     'pl',
     'ru',

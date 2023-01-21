@@ -2837,6 +2837,7 @@ iWidget *makePreferences_Widget(void) {
                                     { u8"Interlingue - ie", 0, 0, "uilang id:ie" },
                                     { u8"Interslavic - isv", 0, 0, "uilang id:isv" },
                                     { u8"Italiano - it", 0, 0, "uilang id:it" },
+                                    { u8"日本語 - ja", 0, 0, "uilang id:ja" },
                                     { u8"Nederlands - nl", 0, 0, "uilang id:nl" },
                                     { u8"Polski - pl", 0, 0, "uilang id:pl" },
                                     { u8"Русский - ru", 0, 0, "uilang id:ru" },
