@@ -5,14 +5,14 @@ Lagrange was created by Jaakko Keränen (<jaakko.keranen@iki.fi>) in July 2020. 
 Legend: `C` code, `T` translation
 
 ```
-C  3727  Jaakko Keränen <jaakko.keranen@iki.fi>
+C  3759  Jaakko Keränen <jaakko.keranen@iki.fi>
  T   72  Alyssa Liddell <e-liss@tuta.io>
 CT   55  Nikolay Korotkiy <sikmir@gmail.com>
  T   48  Olga Smirnova <mistresssilvara@hotmail.com>
- T   43  Страхиња Радић <contact@strahinja.org>
+ T   44  Страхиња Радић <contact@strahinja.org>
  T   35  Anna (cybertailor) Vyalkova <cyber@sysrq.in>
+ T   31  Wally Hackenslacker <mastor89@protonmail.com>
  T   30  Omar Polo <weblate@omarpolo.com>
- T   30  Wally Hackenslacker <mastor89@protonmail.com>
  T   27  Emir SARI <emir_sari@icloud.com>
  T   26  Shibo Lyu <github@of.sb>
  T   21  Xosé M <correoxm@disroot.org>
@@ -26,6 +26,7 @@ CT   55  Nikolay Korotkiy <sikmir@gmail.com>
  T    5  roy niang <roy@royniang.com>
  T    3  Alex Schroeder <alex@alexschroeder.ch>
  T    3  Botond Balázs <balazsbotond@gmail.com>
+ T    3  Seiji Delph <george@quotennial.co.uk>
  T    3  tbodt <tblodt@icloud.com>
 C     2  Alyssa Rosenzweig <alyssa@rosenzweig.io>
  T    2  Andrij Mizyk <andmizyk@gmail.com>
@@ -43,10 +44,10 @@ C     1  Dario Vladovic <d.vladimyr@gmail.com>
 C     1  David Gillies <dave.gillies@gmail.com>
  T    1  Eric <spice2wolf@gmail.com>
  T    1  Florian Viehweger <openbsd@out-of-creativity.de>
+ T    1  Griffen Schwiesow <griffen@zipmail.ch>
  T    1  Marek Ľach <mareklachbc@tutanota.com>
 C     1  Raph M <raph@raphm.com>
 C     1  Sam Bossley <bossley.samuel@gmail.com>
- T    1  Seiji Delph <george@quotennial.co.uk>
 C     1  SolidHal <hal@halemmerich.com>
 C     1  Thomas Adam <thomas.adam@smoothwall.net>
  T    1  Timothée Goguely <timothee@goguely.com>
