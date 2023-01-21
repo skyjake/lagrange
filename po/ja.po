@@ -4,7 +4,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-21 09:41+0000\n"
 "PO-Revision-Date: 2023-01-21 09:41+0000\n"
-"Last-Translator: Seiji Delph <george@quotennial.co.uk>\n"
+"Last-Translator: Griffen Schwiesow <griffen@zipmail.ch>\n"
 "Language-Team: Japanese <http://weblate.skyjake.fi/projects/lagrange/ui/ja/>"
 "\n"
 "Language: ja\n"
@@ -341,3 +341,10 @@ msgstr "一部の文字が欠落しているため、このページを正しく
 # A language choice in the Translation dialog.
 msgid "lang.ja"
 msgstr "日本語"
+
+msgid "menu.title.view"
+msgstr "表示"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "ダウンロードに保存"
