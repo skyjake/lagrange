@@ -4,7 +4,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-21 09:41+0000\n"
 "PO-Revision-Date: 2023-01-21 09:41+0000\n"
-"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"Last-Translator: Seiji Delph <george@quotennial.co.uk>\n"
 "Language-Team: Japanese <http://weblate.skyjake.fi/projects/lagrange/ui/ja/>"
 "\n"
 "Language: ja\n"
@@ -255,3 +255,89 @@ msgstr "ヘルプ"
 # Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
 msgid "menu.copy.pagelink"
 msgstr "ページのリンクをコピー"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%sは、圧縮されたアーカイブです。"
+
+msgid "doc.archive.view"
+msgstr "アーカイブの内容を見る"
+
+msgid "error.slowdown.msg"
+msgstr "サーバーがリクエスト率を制限している。 お待ちください…"
+
+# A language choice in the Translation dialog.
+msgid "lang.hi"
+msgstr "ヒンディー語"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "イタリア語"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "中国語"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "英語"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "仏語"
+
+msgid "dlg.translate"
+msgstr "翻訳する"
+
+msgid "dlg.translate.from"
+msgstr "翻訳元："
+
+msgid "dlg.translate.to"
+msgstr "翻訳対象："
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "アラビア語"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "ドイツ語"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "読み込み中"
+
+msgid "error.gone.msg"
+msgstr "要求されたリソースはもう利用できません"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "ポルトガル語"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "ロシア語"
+
+msgid "media.untitled.image"
+msgstr "画像"
+
+msgid "media.untitled.audio"
+msgstr "音声"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "プレーンテキストのアップロード"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "スペイン語"
+
+msgid "error.cert.needed.msg"
+msgstr "このリソースにアクセスするには、本人確認（TLSクライアント証明書による）が必要です。"
+
+msgid "error.glyphs.msg"
+msgstr "一部の文字が欠落しているため、このページを正しく表示することができませんでした。修正するには、追加のフォントをインストールすることができます。"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "日本語"
