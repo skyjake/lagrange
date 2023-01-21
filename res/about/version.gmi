@@ -16,6 +16,7 @@ New features:
 * Added a "Window" menu to the menu bar that has actions for manipulating and switching the active window, and duplicating and switching tabs. (On macOS, this menu has already been available.)
 * macOS: 🌐E opens the native Character Viewer. 
 * Gopher: Option to disable Gemini styling on Gopher menu pages. When disabled, whitespace is not normalized and all non-link lines are presented as regular paragraph text.
+* Japanese UI translation (13% complete).
 
 Changes and enhancements:
 * Redesigned Preferences dialog with vertical tabs and a new organization of the settings. "Fonts" and "Colors" are removed, and there is a new "Content" tab.
