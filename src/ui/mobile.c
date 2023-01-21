@@ -1090,6 +1090,10 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
 }
 
 void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
+    if (isPromoted_Widget(sheet)) {
+        /* This has been promoted to a window, shouldn't animate it. */
+        return;
+    }
     const iBool isIncoming = (flags & incoming_TransitionFlag) != 0;
     const int   dir        = flags & dirMask_TransitionFlag;
     if (!isUsingPanelLayout_Mobile()) {

@@ -1,16 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-11-21 06:14+0000\n"
-"Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
-"Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
-"Language: es\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "lang.es"
 msgstr "Español"
 
@@ -102,7 +89,7 @@ msgstr ""
 "acceder al recurso solicitado."
 
 msgid "prefs.imageloadscroll"
-msgstr "Cargar imágenes al desplazar:"
+msgstr "Cargar imagen siguiente al desplazar con teclado:"
 
 msgid "prefs.hidetoolbarscroll"
 msgstr "Ocultar barra de herramientas al desplazar:"
@@ -111,16 +98,13 @@ msgid "prefs.ostheme"
 msgstr "Usar tema del sistema:"
 
 msgid "prefs.theme"
-msgstr "Tema:"
+msgstr "Tema de la IU:"
 
 msgid "prefs.theme.black"
 msgstr "Negro"
 
 msgid "prefs.theme.dark"
 msgstr "Oscuro"
-
-msgid "lang.zh.hans"
-msgstr "Chino (Simplificado)"
 
 msgid "lang.it"
 msgstr "Italiano"
@@ -162,7 +146,7 @@ msgstr "Red"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Estilo"
+msgstr "Estilo de la Página"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -192,20 +176,11 @@ msgstr "Hecho con SDL 2, OpenSSL y ☕️"
 msgid "cancel"
 msgstr "Cancelar"
 
-msgid "dismiss"
-msgstr "Descartar"
-
 msgid "dlg.message.ok"
 msgstr "Continuar"
 
 msgid "dlg.default"
 msgstr " OK "
-
-msgid "toggle.yes"
-msgstr "SI"
-
-msgid "toggle.no"
-msgstr "NO"
 
 msgid "menu.title.file"
 msgstr "Archivo"
@@ -245,9 +220,6 @@ msgstr "Buscar en la Página"
 
 msgid "macos.menu.find"
 msgstr "Buscar"
-
-msgid "menu.copy.source"
-msgstr "Copiar Texto Fuente"
 
 msgid "menu.sidebar"
 msgstr "Alternar Barra Lateral"
@@ -433,9 +405,6 @@ msgstr "%d.%b, %Y"
 msgid "feeds.today"
 msgstr "Hoy"
 
-msgid "feeds.entry.newtab"
-msgstr "Abrir Entrada en Nueva Pestaña"
-
 msgid "feeds.entry.markunread"
 msgstr "Marcar como no Leído"
 
@@ -527,9 +496,6 @@ msgstr "Dejar de Usar en Esta Página"
 
 msgid "ident.stopuse.all"
 msgstr "Dejar de Usar en Todas Partes"
-
-msgid "ident.showuse"
-msgstr "Mostrar Uso"
 
 msgid "menu.edit.notes"
 msgstr "Editar Notas…"
@@ -696,9 +662,6 @@ msgstr "Chino"
 msgid "lang.en"
 msgstr "Inglés"
 
-msgid "lang.fi"
-msgstr "Finlandés"
-
 msgid "lang.fr"
 msgstr "Francés"
 
@@ -707,9 +670,6 @@ msgstr "Alemán"
 
 msgid "lang.hi"
 msgstr "Hindi"
-
-msgid "heading.certwarn"
-msgstr "CERTIFICADO NO CONFIABLE"
 
 #, c-format
 msgid "dlg.certwarn.expired"
@@ -989,7 +949,7 @@ msgid "heading.prefs.pagecontent"
 msgstr "Colores de la Página"
 
 msgid "heading.prefs.proxies"
-msgstr "Proxies"
+msgstr "Proxys"
 
 msgid "heading.prefs.scrolling"
 msgstr "Desplazamiento"
@@ -1016,19 +976,16 @@ msgid "prefs.customframe"
 msgstr "Marco de ventana personalizado:"
 
 msgid "prefs.retainwindow"
-msgstr "Conservar posicionamiento:"
+msgstr "Guardar posicionamiento de la ventana:"
 
 msgid "prefs.sideicon"
-msgstr "Ícono de cápsula:"
+msgstr "Ícono de cápsula al lado izquierdo:"
 
 msgid "prefs.doctheme.dark"
 msgstr "Tema oscuro:"
 
 msgid "prefs.saturation"
 msgstr "Saturación:"
-
-msgid "prefs.headingfont"
-msgstr "Fuente para Titulares:"
 
 msgid "prefs.font"
 msgstr "Fuente para el Cuerpo:"
@@ -1058,7 +1015,7 @@ msgid "prefs.quoteicon.line"
 msgstr "Linea"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Ajustar texto plano:"
+msgstr "Ajustar lineas de texto largas:"
 
 msgid "prefs.decodeurls"
 msgstr "Decodificar URLs:"
@@ -1333,9 +1290,6 @@ msgid_plural "num.hours.n"
 msgstr[0] "%d hora"
 msgstr[1] "%d horas"
 
-msgid "lang.zh.hant"
-msgstr "Chino (Tradicional)"
-
 msgid "prefs.collapsepreonload"
 msgstr "Colapsar pre-formateado:"
 
@@ -1440,12 +1394,6 @@ msgid_plural "days.ago.n"
 msgstr[0] "%d día"
 msgstr[1] "%d días"
 
-msgid "lang.ie"
-msgstr "Interlingue"
-
-msgid "lang.sr"
-msgstr "Serbio"
-
 msgid "menu.downloads"
 msgstr "Mostrar Descargas"
 
@@ -1488,9 +1436,6 @@ msgstr "Abrir Enlace al Lado"
 msgid "link.side.newtab"
 msgstr "Abrir Enlace en Nueva Pestaña a un Lado"
 
-msgid "lang.ia"
-msgstr "Interlingua"
-
 msgid "heading.newident.missing"
 msgstr "Información Faltante"
 
@@ -1512,7 +1457,7 @@ msgstr ""
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Abrir índice de archivo:"
+msgstr "Abrir index.gmi en archivos ZIP:"
 
 msgid "keys.split.menu"
 msgstr "Establecer modo de vista dividida"
@@ -1558,9 +1503,6 @@ msgstr "Idioma"
 msgid "gempub.meta.license"
 msgstr "Licencia"
 
-msgid "lang.pl"
-msgstr "Polaco"
-
 #, c-format
 msgid "doc.archive"
 msgstr "%s es un archivo comprimido."
@@ -1570,9 +1512,6 @@ msgstr "Ver el contenido del archivo"
 
 msgid "bookmark.tag.linksplit"
 msgstr "Abrir enlaces a un lado"
-
-msgid "lang.tok"
-msgstr "Toki Pona"
 
 msgid "archive.exit"
 msgstr "Salir del archivo"
@@ -1625,9 +1564,6 @@ msgstr "Salto de linea"
 msgid "dlg.newident.scope"
 msgstr "Usar en:"
 
-msgid "prefs.userfont"
-msgstr "Fuente simbólica:"
-
 msgid "keys.split.item"
 msgstr "Menú de vista dividida:"
 
@@ -1670,9 +1606,6 @@ msgstr ""
 
 msgid "dlg.uploadport.set"
 msgstr "Configurar Puerto"
-
-msgid "hint.prefs.userfont"
-msgstr "ruta a una fuente TrueType"
 
 msgid "prefs.linespacing"
 msgstr "Espaciado de linea:"
@@ -1780,8 +1713,8 @@ msgstr "Audio"
 
 msgid "feeds.atom.translated"
 msgstr ""
-"Este documento XML Atom ha sido traducido al formato de Gemini para permitir "
-"suscribirse a el."
+"Este documento Atom XML ha sido traducido automáticamente a un feed Gemini "
+"para permitir la suscripción."
 
 msgid "bookmark.export.title.folder"
 msgstr "Marcadores"
@@ -1798,33 +1731,33 @@ msgstr[0] "Tienes %d marcador."
 msgstr[1] "Tienes %d marcadores."
 
 msgid "bookmark.export.saving"
-msgstr "Guarde esta página para exportarlos, o puede copiarlos al portapapeles."
+msgstr "Guardar esta página para exportar, o puede copiar al portapapeles."
 
 msgid "bookmark.export.taginfo"
 msgstr ""
-"En esta lista cada cabecera representa una etiqueta de marcador. Solo se "
-"muestran los marcadores etiquetados. Los marcadores con múltiples etiquetas "
-"se repiten bajo cada etiqueta."
+"En esta lista, cada encabezado representa una etiqueta de marcadores. Solo "
+"se muestran los marcadores etiquetados. Los marcadores con varias etiquetas "
+"se repiten en cada categoría."
 
 msgid "bookmark.export.format.sub"
 msgstr ""
-"Esta página esta formateada según la especificación adicional de \"Como "
-"suscribirse a páginas de Gemini\"."
+"Esta página está formateada según la especificación adicional \" Suscribirse "
+"a páginas de Gemini\"."
 
 msgid "bookmark.export.format.linklines"
 msgstr "Cada enlace representa un marcador."
 
 msgid "bookmark.export.format.otherlines"
 msgstr ""
-"Las lineas con viñetas y comillas están reservadas para la información "
-"adicional sobre el marcador precedente. Las lineas de texto y los textos pre-"
-"formateados son considerados comentarios y son ignorados."
+"Las lineas con viñetas o entrecomilladas están reservadas para información "
+"adicional sobre el marcador precedente. Las líneas de texto y el texto "
+"preformateado son considerados comentarios y deberían ser ignorados."
 
 msgid "bookmark.export.format.folders"
-msgstr "La estructura de carpetas está definida por cabeceras de nivel 2/3."
+msgstr "La estructura de carpetas está definida por encabezados de nivel 2/3."
 
 msgid "bookmark.export.format.tags"
-msgstr "Las etiquetas están definidas por cabeceras de nivel 2."
+msgstr "Las etiquetas están definidas por encabezados de nivel 2."
 
 msgid "menu.newfolder"
 msgstr "Nueva Carpeta…"
@@ -1929,26 +1862,8 @@ msgstr "Color del Texto"
 msgid "prefs.imagestyle.preformat"
 msgstr "Color Pre-formateado"
 
-msgid "lang.gl"
-msgstr "Gallego"
-
-msgid "lang.eo"
-msgstr "Esperanto"
-
-msgid "lang.es.mx"
-msgstr "Español (México)"
-
-msgid "lang.sk"
-msgstr "Eslovaco"
-
-msgid "lang.isv"
-msgstr "Intereslavo"
-
 msgid "dlg.feed.ignoreweb"
 msgstr "Ignorar enlaces HTTP(S):"
-
-msgid "dlg.fontpack.classic"
-msgstr "Descargar Paquete de Fuentes (25MB)"
 
 msgid "error.ansi"
 msgstr "Emulación de Terminal"
@@ -1965,17 +1880,8 @@ msgstr "Agregar marcadores al final:"
 msgid "fontpack.export"
 msgstr "Ver plantilla fontpack.ini"
 
-msgid "heading.fontpack.classic"
-msgstr "Descargar Paquete de Fuentes"
-
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"Las fuentes previamente embebidas en esta aplicación ahora están disponibles "
-"como una descarga separada. Le gustaría descargar el paquete de fuentes "
-"\"Conjunto Clásico\" ahora?"
-
 msgid "prefs.font.ui"
-msgstr "IU:"
+msgstr "Fuente de la IU:"
 
 msgid "prefs.font.heading"
 msgstr "Titulares:"
@@ -1994,7 +1900,7 @@ msgid "prefs.boldlink.visited"
 msgstr "Visitado"
 
 msgid "prefs.gemtext.ansi"
-msgstr "Escapes ANSI:"
+msgstr "Escapes ANSI en texto Gem:"
 
 msgid "prefs.gemtext.ansi.fg"
 msgstr "Color de Frente"
@@ -2003,10 +1909,10 @@ msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Estilo de Fuente"
 
 msgid "prefs.font.warnmissing"
-msgstr "Advertencias por glifos:"
+msgstr "Advertencias por glifos faltantes:"
 
 msgid "prefs.font.smooth"
-msgstr "Suavizado:"
+msgstr "Suavizado de fuentes:"
 
 #, c-format
 msgid "dlg.fontpack.delete.confirm"
@@ -2127,15 +2033,6 @@ msgstr "Borrar \"%s\" permanentemente"
 msgid "heading.fontpack.delete"
 msgstr "Borrar Paquete de Fuentes"
 
-msgid "lang.uk"
-msgstr "Ucraniano"
-
-msgid "lang.cs"
-msgstr "Checo"
-
-msgid "lang.hu"
-msgstr "Húngaro"
-
 msgid "sidebar.action.show"
 msgstr "Mostrar:"
 
@@ -2150,7 +2047,7 @@ msgid "menu.update"
 msgstr "Buscar Actualizaciones…"
 
 msgid "prefs.time.24h"
-msgstr "Hora de 24 Horas"
+msgstr "Formato de 24 horas:"
 
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
@@ -2546,3 +2443,51 @@ msgstr "Nueva Identidad para el Dominio…"
 
 msgid "dlg.newident.scope.dir"
 msgstr "Directorio Actual"
+
+msgid "menu.movetab.left"
+msgstr "Mover Pestañas a la Izquierda"
+
+msgid "menu.movetab.right"
+msgstr "Mover Pestañas a la Derecha"
+
+msgid "heading.prefs.appearance"
+msgstr "Apariencia"
+
+msgid "menu.tab.next"
+msgstr "Mostrar Nueva Pestaña"
+
+msgid "menu.tab.prev"
+msgstr "Mostrar Pestaña Anterior"
+
+msgid "menu.title.window"
+msgstr "Ventana"
+
+msgid "menu.movetab.split"
+msgstr "Mover Pestaña a Otro Lado"
+
+msgid "menu.movetab.newwindow"
+msgstr "Mover Pestaña a Nueva Ventana"
+
+msgid "menu.window.min"
+msgstr "Minimizar"
+
+msgid "menu.window.max"
+msgstr "Maximizar"
+
+msgid "menu.window.full"
+msgstr "Cambiar Pantalla Completa"
+
+msgid "heading.prefs.layout"
+msgstr "Disposición de la Página"
+
+msgid "heading.prefs.content"
+msgstr "Contenido"
+
+msgid "prefs.swipe.edge"
+msgstr "Deslizar desde el borde:"
+
+msgid "prefs.swipe.page"
+msgstr "Deslizar en la página:"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "Auto-detectar estilo de menús para Gopher:"

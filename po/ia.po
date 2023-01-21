@@ -1,25 +1,5 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-01-02 15:50+0000\n"
-"Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
-"Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
-"ia/>\n"
-"Language: ia\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "about.version"
 msgstr "Version"
-
-msgid "toggle.yes"
-msgstr "SI"
-
-msgid "toggle.no"
-msgstr "NO"
 
 msgid "menu.title.file"
 msgstr "Dossier"
@@ -59,9 +39,6 @@ msgstr "Trovar in le pagina"
 
 msgid "macos.menu.find"
 msgstr "Trovar"
-
-msgid "menu.copy.source"
-msgstr "Copiar le texto fonte"
 
 msgid "menu.sidebar"
 msgstr "Monstrar/celar le barra lateral"
@@ -145,9 +122,6 @@ msgstr "MB"
 # kilobytes, used as the unit after a number
 msgid "kb"
 msgstr "KB"
-
-msgid "bytes"
-msgstr "bytes"
 
 msgid "feeds.entry.markread"
 msgstr "Marcar como legite"
@@ -234,9 +208,6 @@ msgstr "PAGINA INCOMPLETE"
 msgid "dlg.save.size"
 msgstr "Dimension:"
 
-msgid "feeds.entry.newtab"
-msgstr "Aperir le elemento in un nove scheda"
-
 msgid "heading.import.bookmarks"
 msgstr "IMPORTAR MARCAPAGINAS"
 
@@ -270,9 +241,6 @@ msgstr ""
 msgid "dlg.openlink"
 msgstr "Aperir le ligamine"
 
-msgid "heading.certwarn"
-msgstr "CERTIFICATO NON DIGNE DE FIDE"
-
 msgid "dlg.translate.from"
 msgstr "De:"
 
@@ -288,9 +256,6 @@ msgstr "Un cliente belle de Gemini"
 
 msgid "cancel"
 msgstr "Annullar"
-
-msgid "dismiss"
-msgstr "Dimitter"
 
 msgid "dlg.message.ok"
 msgstr "Continuar"
@@ -366,9 +331,6 @@ msgstr "Syndicationes"
 
 msgid "sidebar.history"
 msgstr "Chronologia"
-
-msgid "lang.fi"
-msgstr "Finnese"
 
 msgid "lang.fr"
 msgstr "Francese"
@@ -700,9 +662,6 @@ msgstr "Le demanda es fallite"
 msgid "dlg.translate"
 msgstr "Traducer"
 
-msgid "ident.showuse"
-msgstr "Monstrar le uso"
-
 msgid "heading.ident.use"
 msgstr "USO DEL IDENTITATE"
 
@@ -968,9 +927,6 @@ msgstr "Trovar texto in le pagina"
 msgid "error.openfile"
 msgstr "Falta al aperir un file"
 
-msgid "lang.zh.hans"
-msgstr "Chinese (simplificate)"
-
 msgid "dlg.feed.type.headings"
 msgstr "Nov capites"
 
@@ -979,9 +935,6 @@ msgstr "Dossier de discargamentos:"
 
 msgid "prefs.searchurl"
 msgstr "URL de recerca:"
-
-msgid "prefs.headingfont"
-msgstr "Typo de titulo:"
 
 msgid "keys.scroll.page.up"
 msgstr "Rolar le pagina a alto"
@@ -1050,9 +1003,6 @@ msgstr "Requesta de cerca"
 
 msgid "menu.aboutpages"
 msgstr "Paginas “A proposito”"
-
-msgid "lang.zh.hant"
-msgstr "Chinese (traditional)"
 
 msgid "heading.bookmark.add"
 msgstr "ADDER MARCAPAGINA"
@@ -1211,12 +1161,6 @@ msgid "dlg.confirm.ident.delete"
 msgstr ""
 "Vole tu vermente deler le identitate %s«%s»%s con su certificato e clave "
 "private?"
-
-msgid "lang.ie"
-msgstr "Interlingue"
-
-msgid "lang.sr"
-msgstr "Serbian"
 
 msgid "prefs.collapsepreonload"
 msgstr "Contraher le preformattate:"
@@ -1469,12 +1413,6 @@ msgstr "Aperir le ligamine al latere"
 msgid "link.side.newtab"
 msgstr "Aperir le ligamine in un nove scheda al latere"
 
-msgid "lang.ia"
-msgstr "Interlingua"
-
-msgid "lang.tok"
-msgstr "Toki Pona"
-
 msgid "heading.newident.missing"
 msgstr "INFORMATION ABSENTE"
 
@@ -1546,9 +1484,6 @@ msgstr "Editor"
 msgid "gempub.meta.pubdate"
 msgstr "Data de publication"
 
-msgid "lang.pl"
-msgstr "Polonese"
-
 msgid "gempub.cover.viewlocal"
 msgstr "On pote vider iste libro Gempub post que lo es salvate localmente."
 
@@ -1593,9 +1528,6 @@ msgstr "Velocitate del mus:"
 
 msgid "dlg.newident.more"
 msgstr "Plus…"
-
-msgid "dlg.fontpack.classic"
-msgstr "Discargar le fontpack (25 MB)"
 
 msgid "prefs.returnkey.linebreak"
 msgstr "Ruptura de linea"
@@ -1889,9 +1821,6 @@ msgstr "Installar un typo de litteras TrueType"
 
 msgid "dlg.dismiss.warning"
 msgstr "Dimitter le advertimento"
-
-msgid "heading.fontpack.classic"
-msgstr "DISCARGAR UN FONTPACK"
 
 msgid "prefs.imagestyle.preformat"
 msgstr "Color de preformattate"

@@ -1388,7 +1388,7 @@ static iFontRun *makeOrFindCachedFontRun_StbText_(iStbText *d, const iFontRunArg
     return d->cachedFontRuns[0];
 }
 
-static iRect run_Font_(iFont *d, const iRunArgs *args) {
+static void run_Font_(iFont *d, const iRunArgs *args) {
     const int   mode         = args->mode;
     const iInt2 orig         = args->pos;
     iRect       bounds       = { orig, init_I2(0, d->font.height) };
@@ -1714,7 +1714,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             !notify_WrapText(args->wrap,
                              sourcePtr_AttributedText(attrText, wrapResumePos),
                              wrapAttrib,
-                              origin,
+                             origin,
                              iRound(wrapAdvance))) {
             willAbortDueToWrap = iTrue;
         }
@@ -1766,13 +1766,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         xCursor = 0;
         yCursor += d->font.height;
     }
-    if (args->cursorAdvance_out) {
-        *args->cursorAdvance_out = init_I2(xCursor, yCursor);
+    if (args->metrics_out) {
+        args->metrics_out->advance = init_I2(xCursor, yCursor);
+        args->metrics_out->bounds = bounds;
     }
-    if (args->runAdvance_out) {
-        *args->runAdvance_out = xCursorMax;
-    }
-    return bounds;
 }
 
 #else /* !defined (LAGRANGE_ENABLE_HARFBUZZ) */
@@ -1783,7 +1780,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
 
 #endif /* defined (LAGRANGE_ENABLE_HARFBUZZ) */
 
-iRect run_Font(iBaseFont *font, const iRunArgs *args) {
+void run_Font(iBaseFont *font, const iRunArgs *args) {
     return run_Font_((iFont *) font, args);
 }
 

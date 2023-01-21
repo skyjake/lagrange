@@ -20,6 +20,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <windowsx.h>
+#include <dwmapi.h>
+#include <d2d1.h>
+
 #include "win32.h"
 #include "ui/window.h"
 #include "ui/command.h"
@@ -29,12 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <the_Foundation/sortedarray.h>
 #include <SDL_syswm.h>
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <windowsx.h>
-#include <dwmapi.h>
-#include <d2d1.h>
 
 static HWND windowHandle_(SDL_Window *win) {
     SDL_SysWMinfo wmInfo;
@@ -220,7 +220,10 @@ static void enableDarkMode_Win32(void) {
 }
 
 void init_Win32(void) {
+#if !SDL_VERSION_ATLEAST(2, 24, 0)
+    /* New SDL versions configure DPI awareness for us. */
     SetProcessDPIAware();
+#endif
     enableDarkMode_Win32();
 }
 
@@ -280,13 +283,15 @@ void enableDarkMode_SDLWindow(SDL_Window *win) {
 
 void handleCommand_Win32(const char *cmd) {
     if (equal_Command(cmd, "theme.changed")) {        
-        iConstForEach(PtrArray, iter, mainWindows_App()) {
-            iMainWindow *mw = iter.ptr;
-            SDL_Window *win = mw->base.win;
+        iConstForEach(PtrArray, iter, regularWindows_App()) {
+            iWindow *w = iter.ptr;
+            SDL_Window *win = w->win;
             if (refreshTitleBarThemeColor_(windowHandle_(win)) &&
-                !isFullscreen_MainWindow(mw) &&
+                (type_Window(w) != main_WindowType || 
+                 !isFullscreen_MainWindow(as_MainWindow(w))) &&
                 !argLabel_Command(cmd, "auto")) {
-                /* Silly hack, but this will ensure that the non-client area is repainted. */
+                /* Silly hack, but this will ensure that the non-client
+                   area is repainted. */
                 SDL_MinimizeWindow(win);
                 SDL_RestoreWindow(win);
             }

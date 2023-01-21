@@ -56,3 +56,5 @@ iRect       safeRect_Root                       (const iRoot *);
 iRect       visibleRect_Root                    (const iRoot *); /* may be obstructed by software keyboard */
 iBool       isNarrow_Root                       (const iRoot *);
 int         appIconSize_Root                    (void);
+
+iBool       handleRootCommands_Widget           (iWidget *, const char *cmd);

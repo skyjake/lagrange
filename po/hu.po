@@ -1,17 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-11-11 16:50+0000\n"
-"Last-Translator: Botond Balázs <balazsbotond@gmail.com>\n"
-"Language-Team: Hungarian <http://weblate.skyjake.fi/projects/lagrange/ui/hu/>"
-"\n"
-"Language: hu\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "heading.fontpack.meta"
 msgstr "Betűtípusok"
 
@@ -43,15 +29,6 @@ msgid "dlg.dismiss.ansi"
 msgstr ""
 "Véglegesen figyelmen kívül hagyja a terminálemulációval kapcsolatos "
 "figyelmeztetést a(z) %s oldalon?"
-
-msgid "heading.fontpack.classic"
-msgstr "BETŰTÍPUSKÉSZLET LETÖLTÉSE"
-
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"A korábban az alkalmazás részeként elérhető betűtípusok most külön "
-"letöltésként érhetők el. Szeretné letölteni a \"Classic set\" "
-"betűtípuskészletet?"
 
 msgid "heading.fontpack.meta.enabled"
 msgstr "Engedélyezett betűtípuskészletek"
@@ -161,12 +138,6 @@ msgstr "Bezárás"
 
 msgid "dlg.default"
 msgstr " OK "
-
-msgid "toggle.yes"
-msgstr "IGEN"
-
-msgid "toggle.no"
-msgstr "NEM"
 
 msgid "menu.title.view"
 msgstr "Nézet"
@@ -440,9 +411,6 @@ msgstr "%b. %d. %Y"
 
 msgid "feeds.today"
 msgstr "Ma"
-
-msgid "feeds.entry.newtab"
-msgstr "Bejegyzés megnyitása új lapon"
 
 msgid "feeds.entry.markread"
 msgstr "Megjelölés olvasottként"
@@ -833,29 +801,11 @@ msgstr "Célnyelv:"
 msgid "lang.zh"
 msgstr "Kínai"
 
-msgid "lang.zh.hans"
-msgstr "Kínai (egyszerűsített)"
-
-msgid "lang.zh.hant"
-msgstr "Kínai (hagyományos)"
-
 msgid "lang.de"
 msgstr "Német"
 
-msgid "lang.ia"
-msgstr "Interlingua"
-
-msgid "lang.ie"
-msgstr "Interlingue"
-
-msgid "lang.fi"
-msgstr "Finn"
-
 msgid "lang.fr"
 msgstr "Francia"
-
-msgid "lang.gl"
-msgstr "Galíciai"
 
 msgid "lang.hi"
 msgstr "Hindi"
@@ -866,29 +816,11 @@ msgstr "Olasz"
 msgid "lang.ja"
 msgstr "Japán"
 
-msgid "lang.pl"
-msgstr "Lengyel"
-
 msgid "lang.ru"
 msgstr "Orosz"
 
-msgid "lang.uk"
-msgstr "Ukrán"
-
-msgid "lang.eo"
-msgstr "Eszperantó"
-
 msgid "lang.es"
 msgstr "Spanyol"
-
-msgid "lang.sr"
-msgstr "Szerb"
-
-msgid "lang.isv"
-msgstr "Interszláv"
-
-msgid "lang.tok"
-msgstr "Toki Pona"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr "Önaláírt 2048-bites RSA tanúsítvány létrehozása."
@@ -1536,9 +1468,6 @@ msgstr "FIGYELMEZTETÉS ELVETÉSE?"
 msgid "dlg.dismiss.warning"
 msgstr "Figyelmeztetés elvetése"
 
-msgid "dlg.fontpack.classic"
-msgstr "Betűtípuskészlet letöltése (25 MB)"
-
 msgid "doc.pre.nocaption"
 msgstr "Leírás nélküli előreformázott szöveg"
 
@@ -1869,12 +1798,6 @@ msgstr "Angol"
 msgid "lang.pt"
 msgstr "Portugál"
 
-msgid "lang.es.mx"
-msgstr "Spanyol (mexikói)"
-
-msgid "lang.sk"
-msgstr "Szlovák"
-
 msgid "heading.newident"
 msgstr "ÚJ IDENTITÁS"
 
@@ -2109,9 +2032,3 @@ msgstr "Gempub tartalom megtekintése"
 
 msgid "gempub.meta.author"
 msgstr "Szerző"
-
-msgid "lang.hu"
-msgstr "Magyar"
-
-msgid "lang.cs"
-msgstr "Cseh"

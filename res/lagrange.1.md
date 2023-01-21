@@ -48,6 +48,9 @@ When multiple URLs and/or local files are specified, they are opened in separate
 **-h**, **\--height** _N_
 :   Set initial window height to _N_ pixels.
 
+**\--prefs-sheet**
+:   Open Preferences as a sheet inside the active window.
+
 **\--sw**
 :   Disable hardware-accelerated rendering.
 

@@ -66,6 +66,9 @@ int main(int argc, char **argv) {
                           "ECDHE-RSA-CHACHA20-POLY1305:"
                           "ECDHE-RSA-AES128-GCM-SHA256:"
                           "DHE-RSA-AES256-GCM-SHA384");
+#if SDL_VERSION_ATLEAST(2, 24, 0)
+    SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitor");
+#endif
     SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
     SDL_EnableScreenSaver();
     SDL_SetHint(SDL_HINT_MAC_BACKGROUND_APP, "1");

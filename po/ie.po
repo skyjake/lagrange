@@ -1,17 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-11-29 22:52+0000\n"
-"Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
-"Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
-">\n"
-"Language: ie\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "about.version"
 msgstr "Version"
 
@@ -21,20 +7,11 @@ msgstr "Un bel cliente por Gemini"
 msgid "cancel"
 msgstr "Anullar"
 
-msgid "dismiss"
-msgstr "Demisser"
-
 msgid "dlg.message.ok"
 msgstr "Continuar"
 
 msgid "dlg.default"
 msgstr " OK "
-
-msgid "toggle.yes"
-msgstr "YES"
-
-msgid "toggle.no"
-msgstr "NO"
 
 msgid "menu.page.subscribe"
 msgstr "Abonnar li págine…"
@@ -441,9 +418,6 @@ msgstr "%d %B %Y"
 msgid "feeds.today"
 msgstr "Hodie"
 
-msgid "feeds.entry.newtab"
-msgstr "Aperter in un nov carte"
-
 msgid "feeds.entry.markunread"
 msgstr "Marcar quam ínleet"
 
@@ -738,14 +712,8 @@ msgstr "Arabic"
 msgid "lang.zh"
 msgstr "Chinesi"
 
-msgid "lang.zh.hans"
-msgstr "Chinesi (simplificat)"
-
 msgid "lang.en"
 msgstr "Anglesi"
-
-msgid "lang.fi"
-msgstr "Finlandesi"
 
 msgid "lang.fr"
 msgstr "Francesi"
@@ -811,9 +779,6 @@ msgstr "Paragraf"
 msgid "prefs.saturation"
 msgstr "Saturation:"
 
-msgid "prefs.headingfont"
-msgstr "Fonde de rubricas:"
-
 msgid "prefs.font"
 msgstr "Fonde de textu:"
 
@@ -850,9 +815,6 @@ msgstr "Dessine ASCII: li parol «Lagrange» in un grand fonde"
 
 msgid "about.powered"
 msgstr "Functiona med SDL 2, OpenSSL e ☕️"
-
-msgid "menu.copy.source"
-msgstr "Copiar li textu del fonte"
 
 msgid "menu.bookmarks.list"
 msgstr "Monstrar omni marca-págines"
@@ -1007,9 +969,6 @@ msgstr "Cessar usar por ti págine"
 msgid "ident.stopuse.all"
 msgstr "Cessar usar partú"
 
-msgid "ident.showuse"
-msgstr "Monstrar li usage"
-
 msgid "heading.ident.use"
 msgstr "Usage del identitá"
 
@@ -1043,9 +1002,6 @@ msgstr ""
 
 msgid "pageinfo.cert.ca.unverified"
 msgstr "Ne verificat de CA"
-
-msgid "heading.certwarn"
-msgstr "ÍNFIDET CERTIFICATE"
 
 msgid "dlg.certwarn.different"
 msgstr "Li recivet certificate es valid ma ne es li quel es fidet."
@@ -1301,9 +1257,6 @@ msgstr "Refriscar lontan marca-págines"
 msgid "bookmarks.reload"
 msgstr "Refriscar lontan fontes"
 
-msgid "lang.zh.hant"
-msgstr "Chinesi (traditional)"
-
 msgid "error.proxyrefusal.msg"
 msgstr ""
 "Li demanda esset por un ressurse quel ne existe sur li servitor e li "
@@ -1331,12 +1284,6 @@ msgstr "Aperter un ligament per tastes in li hem-range"
 
 msgid "doc.pre.nocaption"
 msgstr "Un formatat textu sin un rubrica"
-
-msgid "lang.ie"
-msgstr "Interlingue"
-
-msgid "lang.sr"
-msgstr "Serbian"
 
 #, c-format
 msgid "feeds.list.counts"
@@ -1471,9 +1418,6 @@ msgstr ""
 msgid "prefs.archive.openindex"
 msgstr "Aperter li index de archive:"
 
-msgid "lang.ia"
-msgstr "Interlingua"
-
 msgid "heading.newident.missing"
 msgstr "Mancant information"
 
@@ -1562,9 +1506,6 @@ msgstr "Vider li contenete del archive"
 msgid "bookmark.tag.linksplit"
 msgstr "Ligamentes apertet láteralmen"
 
-msgid "lang.tok"
-msgstr "Toki Pona"
-
 msgid "prefs.pinsplit.none"
 msgstr "Null"
 
@@ -1586,12 +1527,6 @@ msgstr "Cluder li altri cartes"
 msgid "keys.split.menu"
 msgstr "Selecter li mode de fension"
 
-msgid "lang.pl"
-msgstr "Polonesi"
-
-msgid "keys.split.menu.horiz21"
-msgstr "Fendet vise: horizontalmen 2:1"
-
 msgid "close"
 msgstr "Cluder"
 
@@ -1610,9 +1545,6 @@ msgstr "Usar sur:"
 msgid "dlg.newident.more"
 msgstr "Plu…"
 
-msgid "prefs.userfont"
-msgstr "Fonde simbolic:"
-
 msgid "dlg.newident.scope.domain"
 msgstr "Li actual dominia"
 
@@ -1621,24 +1553,6 @@ msgstr "Li actual págine"
 
 msgid "dlg.newident.scope.none"
 msgstr "Ne usat"
-
-msgid "keys.split.menu.vert"
-msgstr "Fendet vise: verticalmen"
-
-msgid "keys.split.menu.vert12"
-msgstr "Fendet vise: verticalmen 1:2"
-
-msgid "keys.split.menu.vert21"
-msgstr "Fendet vise: verticalmen 2:1"
-
-msgid "keys.split.menu.merge"
-msgstr "Fendet vise: unir cartes"
-
-msgid "keys.split.menu.horiz"
-msgstr "Fendet vise: horizontalmen"
-
-msgid "keys.split.menu.horiz12"
-msgstr "Fendet vise: horizontalmen 1:2"
 
 msgid "prefs.animate"
 msgstr "Animationes:"
@@ -1678,9 +1592,6 @@ msgstr "Rapiditá del tastatura:"
 
 msgid "prefs.scrollspeed.mouse"
 msgstr "Velocitá del mus:"
-
-msgid "hint.prefs.userfont"
-msgstr "rute de un fonde TrueType"
 
 msgid "prefs.linespacing"
 msgstr "Interspacie:"
@@ -1813,21 +1724,6 @@ msgstr "Selecter un file"
 msgid "bookmark.export.format.tags"
 msgstr "Etiquettes es format per rubricas de nivelle 2."
 
-msgid "lang.gl"
-msgstr "Galician"
-
-msgid "lang.eo"
-msgstr "Esperanto"
-
-msgid "lang.es.mx"
-msgstr "Hispan (Mexico)"
-
-msgid "lang.sk"
-msgstr "Slovac"
-
-msgid "lang.isv"
-msgstr "Interslavic"
-
 msgid "bookmark.export.format.folders"
 msgstr "Li structura de fólderes es providet per rubricas de nivelle 2 e 3."
 
@@ -1921,14 +1817,6 @@ msgstr "Ignorar ligamentes HTTP(s):"
 msgid "truetype.help.installed"
 msgstr "Ti-ci fonde es installat in li fólder de personal fondes."
 
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"Li fondes quel esser includet in li app es nu disponibil quam un separat "
-"discarga. Esque vu vole descargar li «classic» collection ho-témpor?"
-
-msgid "lang.hu"
-msgstr "Hungarian"
-
 msgid "prefs.bookmarks.addbottom"
 msgstr "Adjunter marca-págines a bass:"
 
@@ -1968,9 +1856,6 @@ msgid "num.fonts"
 msgid_plural "num.fonts.n"
 msgstr[0] "%u fonde"
 msgstr[1] "%u fondes"
-
-msgid "heading.fontpack.classic"
-msgstr "DESCARGAR UN FONDPAC"
 
 msgid "error.ansi"
 msgstr "Emulation del terminal"
@@ -2035,12 +1920,6 @@ msgstr "Aperter li fólder de personal fondes"
 msgid "fontpack.open.aboutfonts"
 msgstr "Monstrar installat fondes"
 
-msgid "dlg.fontpack.classic"
-msgstr "Descargar li fondpac (25 Mo)"
-
-msgid "lang.uk"
-msgstr "Ukrainan"
-
 msgid "heading.fontpack.delete"
 msgstr "Remover li Fondpac"
 
@@ -2060,9 +1939,6 @@ msgstr "Website del projecte…"
 #, c-format
 msgid "fontpack.enable"
 msgstr "Activar «%s»"
-
-msgid "lang.cs"
-msgstr "Tchec"
 
 msgid "prefs.font.smooth"
 msgstr "Glattar:"

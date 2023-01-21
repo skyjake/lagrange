@@ -53,6 +53,7 @@ struct Impl_ScrollWidget {
     iRangei range;
     int thumb;
     int thumbSize;
+    int thumbColor;
     iClick click;
     int startThumb;
     iAnim opacity;
@@ -87,6 +88,7 @@ void init_ScrollWidget(iScrollWidget *d) {
     init_Anim(&d->opacity, minOpacity_());
     d->willCheckFade = iFalse;
     d->fadeEnabled = iTrue;
+    d->thumbColor = uiBackgroundPressed_ColorId;
 }
 
 void deinit_ScrollWidget(iScrollWidget *d) {
@@ -156,6 +158,10 @@ void setRange_ScrollWidget(iScrollWidget *d, iRangei range) {
     range.end = iMax(range.start, range.end);
     d->range  = range;
     checkVisible_ScrollWidget_(d);
+}
+
+void setThumbColor_ScrollWidget(iScrollWidget *d, int thumbColor) {
+    d->thumbColor = thumbColor;
 }
 
 void setThumb_ScrollWidget(iScrollWidget *d, int thumb, int thumbSize) {
@@ -258,7 +264,7 @@ static void draw_ScrollWidget_(const iScrollWidget *d) {
             }
             const iRect thumbRect = shrunk_Rect(
                 thumbRect_ScrollWidget_(d), init_I2(isPressed ? gap_UI : (gap_UI * 4 / 3), gap_UI / 2));
-            fillRect_Paint(&p, thumbRect, isPressed ? uiBackgroundPressed_ColorId : tmQuote_ColorId);
+            fillRect_Paint(&p, thumbRect, isPressed ? uiBackgroundPressed_ColorId : d->thumbColor);
             if (p.alpha < 255) {
                 SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
             }

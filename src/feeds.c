@@ -208,7 +208,8 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                        "([^0-9].*)",
                        0);
         iString src;
-        initBlock_String(&src, body_GmRequest(d->request));
+        initBlock_String(&src, &lockResponse_GmRequest(d->request)->body);
+        unlockResponse_GmRequest(d->request);
         iRangecc srcLine = iNullRange;
         while (nextSplit_Rangecc(range_String(&src), "\n", &srcLine)) {
             iRangecc line = srcLine;

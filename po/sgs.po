@@ -1,19 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-06-10 13:06+0000\n"
-"Last-Translator: Arns Udovič <zordsdavini@arns.lt>\n"
-"Language-Team: Samogitian <http://weblate.skyjake.fi/projects/lagrange/ui/"
-"sgs/>\n"
-"Language: sgs\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : (n % "
-"10 == 2 && n % 100 != 12) ? 1 : (n % 10 >= 3 && n % 10 <= 9 && (n % 100 < 11 "
-"|| n % 100 > 19)) ? 2 : 3;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "doc.archive.view"
 msgstr "Veizietė arkīva vėdo"
 
@@ -95,12 +79,6 @@ msgstr "Tė̄stė"
 
 msgid "dlg.default"
 msgstr " Gerā "
-
-msgid "toggle.yes"
-msgstr "Tǡp"
-
-msgid "toggle.no"
-msgstr "Nē"
 
 msgid "menu.title.file"
 msgstr "Fails"

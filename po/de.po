@@ -1,42 +1,17 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-03 13:46+0000\n"
-"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
-"Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
-"Language: de\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "menu.opentab"
 msgstr "In neuem Reiter öffnen"
 
 msgid "menu.feeds.entrylist"
 msgstr "Feed-Einträge anzeigen"
 
-msgid "feeds.entry.newtab"
-msgstr "Eintrag in neuem Reiter öffnen"
-
 msgid "cancel"
 msgstr "Abbrechen"
-
-msgid "dismiss"
-msgstr "Verwerfen"
 
 msgid "dlg.message.ok"
 msgstr "Fortsetzen"
 
 msgid "dlg.default"
 msgstr " Ok "
-
-msgid "toggle.yes"
-msgstr "Ja"
-
-msgid "toggle.no"
-msgstr "Nein"
 
 msgid "menu.title.file"
 msgstr "Datei"
@@ -118,9 +93,6 @@ msgstr "In Dateien speichern"
 
 msgid "menu.save.downloads"
 msgstr "Unter Downloads speichern"
-
-msgid "menu.copy.source"
-msgstr "Quelltext kopieren"
 
 msgid "menu.sidebar"
 msgstr "Seitenleiste ein-/ausblenden"
@@ -219,9 +191,6 @@ msgid "sidebar.unread"
 msgid_plural "sidebar.unread.n"
 msgstr[0] "Ungelesener"
 msgstr[1] "Ungelesen"
-
-msgid "bytes"
-msgstr "Bytes"
 
 msgid "panel.back"
 msgstr "Zurück"
@@ -797,9 +766,6 @@ msgstr "Identitätsverwendung"
 msgid "heading.ident.notes"
 msgstr "Identitätsanmerkungen"
 
-msgid "ident.showuse"
-msgstr "Verwendung anzeigen"
-
 msgid "dlg.ident.delete"
 msgstr "Identität und Dateien löschen"
 
@@ -838,9 +804,6 @@ msgstr "Bei Dunkelheit"
 # Interpretation: (Bold links) on light (background).
 msgid "prefs.boldlink.light"
 msgstr "Bei Tag"
-
-msgid "lang.zh.hant"
-msgstr "Chinesisch (traditionell)"
 
 msgid "heading.newident"
 msgstr "Neue Identität"
@@ -992,12 +955,6 @@ msgstr "Andere"
 msgid "dlg.translate.unavail"
 msgstr "Dienst nicht verfügbar"
 
-msgid "lang.zh.hans"
-msgstr "Chinesisch (vereinfacht)"
-
-msgid "lang.fi"
-msgstr "Finnisch"
-
 msgid "lang.hi"
 msgstr "Hindi"
 
@@ -1088,9 +1045,6 @@ msgstr "Farbenfroh Hell"
 msgid "prefs.doctheme.name.sepia"
 msgstr "Sepia"
 
-msgid "prefs.headingfont"
-msgstr "Schriftart der Überschrift:"
-
 msgid "prefs.font"
 msgstr "Schriftart des Körpers:"
 
@@ -1148,9 +1102,6 @@ msgstr ""
 "Diesen Link im Standardbrowser öffnen?\n"
 "%s%s"
 
-msgid "heading.certwarn"
-msgstr "NICHT VERTRAUENSWÜRDIGES ZERTIFIKAT"
-
 msgid "heading.certimport.pasted"
 msgstr "Aus der Zwischenablage eingefügt"
 
@@ -1182,9 +1133,6 @@ msgstr "Suche URL:"
 msgid "lang.pt"
 msgstr "Portugiesisch"
 
-msgid "lang.sr"
-msgstr "Serbisch"
-
 msgid "dlg.newident.create"
 msgstr "Identität erstellen"
 
@@ -1209,9 +1157,6 @@ msgstr "Proxies"
 
 msgid "gempub.meta.lang"
 msgstr "Sprache"
-
-msgid "lang.pl"
-msgstr "Polnisch"
 
 msgid "error.notfound"
 msgstr "Nicht gefunden"
@@ -1381,12 +1326,6 @@ msgstr "Nicht verwendet"
 msgid "prefs.archive.openindex"
 msgstr "Indexdateien in Archiven öffnen:"
 
-msgid "prefs.userfont"
-msgstr "Symbolschriftart:"
-
-msgid "hint.prefs.userfont"
-msgstr "Pfad für eine TrueType Schriftart"
-
 msgid "prefs.linespacing"
 msgstr "Zeilenabstand:"
 
@@ -1457,9 +1396,6 @@ msgstr ""
 "Das Dokument im Atom XML Format wurde automatisch zu einem Gemini Feed "
 "konvertiert, damit man diesen abonnieren kann."
 
-msgid "lang.ie"
-msgstr "Interlingue"
-
 msgid "bookmark.export.title.time"
 msgstr "Lesezeichen angelegt"
 
@@ -1504,9 +1440,6 @@ msgstr "Hochladen"
 
 msgid "heading.uploadport"
 msgstr "Titan Port"
-
-msgid "lang.ia"
-msgstr "Interlingua"
 
 msgid "dlg.newident.scope.page"
 msgstr "Aktuelle Seite"
@@ -1746,9 +1679,6 @@ msgstr ""
 "Setzt den Port des Titanservers für diese URL. Der Port wird in der "
 "Konfiguration für diesen Seiten gespeichert."
 
-msgid "lang.tok"
-msgstr "Toki Pona"
-
 msgid "dlg.newident.scope"
 msgstr "Verwenden für:"
 
@@ -1910,19 +1840,8 @@ msgstr "Die Warnung zur Terminalemulation für %s zukünftig ignorieren?"
 msgid "dlg.dismiss.warning"
 msgstr "Warnung ignorieren"
 
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"Die Schriftarten, welche bisher mit der Applikation verteilt wurden, gibt es "
-"nun als separates Download. Wollen Sie das \"Klassik\" Set runterladen?"
-
-msgid "dlg.fontpack.classic"
-msgstr "Schriftartenpaket runterladen (25 MB)"
-
 msgid "heading.dismiss.warning"
 msgstr "Warnung ignorieren?"
-
-msgid "heading.fontpack.classic"
-msgstr "Schriftartenpaket runterladen"
 
 msgid "truetype.help"
 msgstr ""
@@ -1931,9 +1850,6 @@ msgstr ""
 
 msgid "truetype.help.installed"
 msgstr "Diese Schriftart ist im Benutzerschriftartenordner installiert."
-
-msgid "lang.gl"
-msgstr "Galizisch"
 
 msgid "dlg.feed.ignoreweb"
 msgstr "HTTP(S) Links ignorieren:"

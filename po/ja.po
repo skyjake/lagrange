@@ -1,2 +1,354 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2023-01-21 09:41+0000\n"
+"PO-Revision-Date: 2023-01-21 09:45+0000\n"
+"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"Language-Team: Japanese <http://weblate.skyjake.fi/projects/lagrange/ui/ja/>"
+"\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "menu.forward"
+msgstr "進む"
+
+msgid "menu.parent"
+msgstr "親ページへ移動"
+
+msgid "dlg.message.ok"
+msgstr "続行"
+
+msgid "menu.title.file"
+msgstr "ファイル"
+
+msgid "menu.title.edit"
+msgstr "編集"
+
+msgid "menu.title.bookmarks"
+msgstr "ブックマーク"
+
+msgid "menu.title.help"
+msgstr "ヘルプ"
+
+msgid "menu.find"
+msgstr "ページ内検索"
+
+msgid "menu.view.split"
+msgstr "分割表示"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "追加順のリスト"
+
+msgid "menu.feeds.entrylist"
+msgstr "フィード一覧を表示"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "アスキーアート: 大きいフォントを用いた「Lagrange」の単語"
+
+msgid "cancel"
+msgstr "キャンセル"
+
+msgid "menu.root"
+msgstr "ルートページへ移動"
+
+msgid "menu.debug"
+msgstr "デバッグ情報"
+
+msgid "menu.sidebar.left"
+msgstr "左サイドバーを切り替え"
+
+msgid "menu.sidebar.right"
+msgstr "右サイドバーを切り替え"
+
+msgid "menu.zoom.out"
+msgstr "縮小"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d分前"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d時間前"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d日前"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "履歴を表示"
+
+msgid "menu.reload"
+msgstr "ページを更新"
+
+msgid "menu.autoreload"
+msgstr "自動更新を設定"
+
+msgid "about.tagline"
+msgstr "美しいGeminiクライアント"
+
+msgid "about.version"
+msgstr "バージョン"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "タブを閉じるとダウンロードは中止されます。"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "ダウンロード完了"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "タイトル"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "アーティスト"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "ジャンル"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "日付"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%dビット"
+
+msgid "numbertype.integer"
+msgstr "整数"
+
+msgid "numbertype.float"
+msgstr "浮動小数点"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+msgid "menu.closetab.left"
+msgstr "左のタブを閉じる"
+
+msgid "menu.closetab.right"
+msgstr "右のタブを閉じる"
+
+msgid "menu.split.swap"
+msgstr "左右を入れ替え"
+
+msgid "menu.downloads"
+msgstr "ダウンロードを表示"
+
+msgid "macos.menu.find"
+msgstr "検索"
+
+msgid "menu.preferences"
+msgstr "設定"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "ブックマークを表示"
+
+msgid "menu.page.bookmark"
+msgstr "ページをブックマーク"
+
+msgid "menu.page.subscribe"
+msgstr "ページを購読"
+
+msgid "panel.back"
+msgstr "戻る"
+
+# strftime() formatted. Should be split evenly on two lines with a newline character.
+msgid "page.timestamp"
+msgstr ""
+"%Y/%m/%d\n"
+"%I:%M %pに取得"
+
+msgid "menu.sidebar"
+msgstr "サイドバーを切り替え"
+
+msgid "menu.zoom.in"
+msgstr "拡大"
+
+msgid "menu.zoom.reset"
+msgstr "ズームをリセット"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "全てのリスト"
+
+msgid "menu.bookmarks.bytag"
+msgstr "タグ別のブックマーク"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "タグ別のリスト"
+
+msgid "menu.bookmarks.bytime"
+msgstr "追加順のブックマーク"
+
+msgid "menu.releasenotes"
+msgstr "リリースノート"
+
+msgid "menu.quit"
+msgstr "Lagrangeを終了"
+
+msgid "menu.cut"
+msgstr "切り取り"
+
+msgid "menu.select.clear"
+msgstr "選択をクリア"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "フィードを表示"
+
+msgid "menu.import.links"
+msgstr "全てのリンクをインポート"
+
+msgid "menu.newtab"
+msgstr "新しいタブ"
+
+msgid "menu.closetab"
+msgstr "タブを閉じる"
+
+msgid "menu.closetab.other"
+msgstr "他のタブを閉じる"
+
+msgid "menu.duptab"
+msgstr "タブを複製"
+
+msgid "keys.tab.new"
+msgstr "新しいタブ"
+
+msgid "gempub.meta.lang"
+msgstr "言語"
+
+msgid "gempub.meta.license"
+msgstr "ライセンス"
+
+msgid "menu.copy"
+msgstr "コピー"
+
+msgid "menu.paste"
+msgstr "貼り付け"
+
+msgid "menu.bookmarks.list"
+msgstr "全てのブックマーク"
+
+msgid "menu.back"
+msgstr "戻る"
+
+msgid "menu.help"
+msgstr "ヘルプ"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "ページのリンクをコピー"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%sは圧縮されたアーカイブです。"
+
+msgid "doc.archive.view"
+msgstr "アーカイブの内容を表示"
+
+msgid "error.slowdown.msg"
+msgstr "サーバーがリクエスト率を制限している。 お待ちください…"
+
+# A language choice in the Translation dialog.
+msgid "lang.hi"
+msgstr "ヒンディー語"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "イタリア語"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "中国語"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "英語"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "仏語"
+
+msgid "dlg.translate"
+msgstr "翻訳する"
+
+msgid "dlg.translate.from"
+msgstr "翻訳元："
+
+msgid "dlg.translate.to"
+msgstr "翻訳対象："
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "アラビア語"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "ドイツ語"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "読み込み中"
+
+msgid "error.gone.msg"
+msgstr "要求されたリソースはもう利用できません"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "ポルトガル語"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "ロシア語"
+
+msgid "media.untitled.image"
+msgstr "画像"
+
+msgid "media.untitled.audio"
+msgstr "音声"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "プレーンテキストのアップロード"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "スペイン語"
+
+msgid "error.cert.needed.msg"
+msgstr "このリソースにアクセスするには、本人確認（TLSクライアント証明書による）が必要です。"
+
+msgid "error.glyphs.msg"
+msgstr "一部の文字が欠落しているため、このページを正しく表示することができませんでした。修正するには、追加のフォントをインストールすることができます。"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "日本語"
+
+msgid "menu.title.view"
+msgstr "表示"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "ダウンロードに保存"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "ファイルに保存"

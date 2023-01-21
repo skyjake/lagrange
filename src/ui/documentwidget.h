@@ -42,21 +42,24 @@ iDocumentWidget *   duplicate_DocumentWidget        (const iDocumentWidget *);
 iHistory *          history_DocumentWidget          (iDocumentWidget *);
 
 const iString *     url_DocumentWidget              (const iDocumentWidget *);
-iBool               isRequestOngoing_DocumentWidget (const iDocumentWidget *);
 const iBlock *      sourceContent_DocumentWidget    (const iDocumentWidget *);
 const iGmDocument * document_DocumentWidget         (const iDocumentWidget *);
 const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
-iBool               isSourceTextView_DocumentWidget (const iDocumentWidget *);
 const iGmIdentity * identity_DocumentWidget         (const iDocumentWidget *);
+
+iBool               isRequestOngoing_DocumentWidget (const iDocumentWidget *);
+iBool               isSourceTextView_DocumentWidget (const iDocumentWidget *);
 iBool               isIdentityPinned_DocumentWidget    (const iDocumentWidget *);
 iBool               isSetIdentityRetained_DocumentWidget(const iDocumentWidget *, const iString *dstUrl);
+iBool               isAutoReloading_DocumentWidget  (const iDocumentWidget *);
 
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),
     preventInlining_DocumentWidgetSetUrlFlag             = iBit(2),
     waitForOtherDocumentsToIdle_DocumentWidgetSetUrlFag  = iBit(3),
+    disallowCachedDocument_DocumentWidgetSetUrlFlag      = iBit(4),
 };
 
 void    setOrigin_DocumentWidget        (iDocumentWidget *, const iDocumentWidget *other);

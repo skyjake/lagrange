@@ -80,7 +80,7 @@ iLocalDef void copy_(enum iColorId dst, enum iColorId src) {
     set_Color(dst, get_Color(src));
 }
 
-static int accentColor_(enum iColorAccent accent, int brightness) {
+int color_ColorAccent(enum iColorAccent accent, iBool isBright) {
     const iBool isMedium = prefs_App()->theme == dark_ColorTheme ||
                            prefs_App()->theme == light_ColorTheme;
     const int brightColors[max_ColorAccent] = {
@@ -99,18 +99,18 @@ static int accentColor_(enum iColorAccent accent, int brightness) {
         indigo_ColorId,
         isMedium ? black_ColorId : gray25_ColorId,
     };
-    return brightness ? brightColors[accent] : darkColors[accent];
+    return isBright ? brightColors[accent] : darkColors[accent];
 }
 
 int accent_Color(iBool isBright) {
-    return accentColor_(prefs_App()->accent, isBright ? 1 : 0);
+    return color_ColorAccent(prefs_App()->accent, isBright);
 }
 
 void setThemePalette_Color(enum iColorTheme theme) {
     const iPrefs *prefs = prefs_App();
     memcpy(uiPalette_, isDark_ColorTheme(theme) ? darkPalette_ : lightPalette_, sizeof(darkPalette_));
-    const int accentHi = accentColor_(prefs->accent, 1);
-    const int accentLo = accentColor_(prefs->accent, 0);
+    const int accentHi = color_ColorAccent(prefs->accent, 1);
+    const int accentLo = color_ColorAccent(prefs->accent, 0);
     switch (theme) {
         case pureBlack_ColorTheme: {
             copy_(uiBackground_ColorId, black_ColorId);
@@ -330,6 +330,11 @@ void setThemePalette_Color(enum iColorTheme theme) {
               mix_Color(get_Color(uiBackground_ColorId),
                         get_Color(uiBackgroundSelected_ColorId),
                         theme == pureBlack_ColorTheme ? 0.5f : isDark_ColorTheme(theme) ? 0.25f : 0.66f));
+    set_Color(uiBackgroundFramelessHover_ColorId,
+              mix_Color(get_Color(uiBackground_ColorId),
+                        get_Color(uiBackgroundSelected_ColorId),
+                        isDark_ColorTheme(theme) ? 0.66f : 0.5f)); /*
+                        theme == pureBlack_ColorTheme ? 0.5f : isDark_ColorTheme(theme) ? 0.25f : 0.66f));*/
     setHsl_Color(uiBackgroundFolder_ColorId,
                  addSatLum_HSLColor(get_HSLColor(uiBackgroundSidebar_ColorId),
                                     0,
@@ -356,6 +361,13 @@ iColor get_Color(int color) {
         rgba = paletteColor_(color);
     }
     return *rgba;
+}
+
+iColor default_Color(int color) {
+    if (color >= 0 && color < iElemCount(darkPalette_)) {
+        return (isDark_ColorTheme(prefs_App()->theme) ? darkPalette_ : lightPalette_)[color];
+    }
+    return (iColor){ 0, 0, 0, 0 };
 }
 
 iColor getMixed_Color(int color1, int color2, float t) {

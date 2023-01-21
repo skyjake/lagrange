@@ -1,3 +1,11 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: lagrange dev\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit"
+
 msgid "doc.pre.nocaption"
 msgstr "Preformatted text without a caption"
 
@@ -115,6 +123,8 @@ msgstr "A Beautiful Gemini Client"
 msgid "about.version"
 msgstr "Version"
 
+# The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
+# if the build config uses different libraries (e.g., ncurses, LibreSSL).
 msgid "about.powered"
 msgstr "Powered by SDL 2, OpenSSL, and ☕️"
 
@@ -145,6 +155,9 @@ msgstr "Bookmarks"
 msgid "menu.title.identity"
 msgstr "Identity"
 
+msgid "menu.title.window"
+msgstr "Window"
+
 msgid "menu.title.help"
 msgstr "Help"
 
@@ -171,6 +184,33 @@ msgstr "Close Tabs To Right"
 
 msgid "menu.duptab"
 msgstr "Duplicate Tab"
+
+msgid "menu.tab.next"
+msgstr "Show Next Tab"
+
+msgid "menu.tab.prev"
+msgstr "Show Previous Tab"
+
+msgid "menu.movetab.left"
+msgstr "Move Tab Left"
+
+msgid "menu.movetab.right"
+msgstr "Move Tab Right"
+
+msgid "menu.movetab.split"
+msgstr "Move Tab to Other Side"
+
+msgid "menu.movetab.newwindow"
+msgstr "Move Tab to New Window"
+
+msgid "menu.window.min"
+msgstr "Minimize"
+
+msgid "menu.window.max"
+msgstr "Maximize"
+
+msgid "menu.window.full"
+msgstr "Toggle Full Screen"
 
 msgid "menu.split.merge"
 msgstr "Unsplit"
@@ -1531,6 +1571,9 @@ msgstr "Fonts"
 msgid "heading.prefs.general"
 msgstr "General"
 
+msgid "heading.prefs.appearance"
+msgstr "Appearance"
+
 # tab button
 msgid "heading.prefs.interface"
 msgstr "UI"
@@ -1538,6 +1581,12 @@ msgstr "UI"
 # tab button
 msgid "heading.prefs.keys"
 msgstr "Keys"
+
+msgid "heading.prefs.layout"
+msgstr "Page Layout"
+
+msgid "heading.prefs.content"
+msgstr "Content"
 
 # tab button
 msgid "heading.prefs.network"
@@ -1566,7 +1615,7 @@ msgstr "Wide Layout"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Style"
+msgstr "Page Style"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -1596,7 +1645,7 @@ msgstr "Open images in Data URLs:"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Open archive indices:"
+msgstr "Open index.gmi in ZIP archives:"
 
 msgid "prefs.markdown.viewsource"
 msgstr "View Markdown as source:"
@@ -1623,7 +1672,7 @@ msgid "prefs.scrollspeed.mouse"
 msgstr "Mouse speed:"
 
 msgid "prefs.imageloadscroll"
-msgstr "Load image on scroll:"
+msgstr "Load next image on scroll key:"
 
 msgid "prefs.uilayout"
 msgstr "Layout:"
@@ -1639,6 +1688,12 @@ msgstr "Menu Bar"
 
 msgid "prefs.evensplit"
 msgstr "Split tabs evenly:"
+
+msgid "prefs.swipe.edge"
+msgstr "Swiping from edge:"
+
+msgid "prefs.swipe.page"
+msgstr "Swiping on page:"
 
 msgid "prefs.hidetoolbarscroll"
 msgstr "Hide toolbar on scroll:"
@@ -1656,7 +1711,7 @@ msgid "prefs.ostheme"
 msgstr "Use system theme:"
 
 msgid "prefs.theme"
-msgstr "Theme:"
+msgstr "UI theme:"
 
 msgid "prefs.theme.black"
 msgstr "Black"
@@ -1695,7 +1750,7 @@ msgid "prefs.uilang"
 msgstr "Language:"
 
 msgid "prefs.time.24h"
-msgstr "24-Hour Time"
+msgstr "24-hour time:"
 
 msgid "prefs.retaintabs"
 msgstr "Restore tabs at launch:"
@@ -1722,10 +1777,10 @@ msgid "prefs.animate"
 msgstr "Animations:"
 
 msgid "prefs.retainwindow"
-msgstr "Retain placement:"
+msgstr "Save window placement:"
 
 msgid "prefs.sideicon"
-msgstr "Capsule icon:"
+msgstr "Capsule icon on left side:"
 
 msgid "prefs.doctheme.dark"
 msgstr "Dark theme:"
@@ -1783,7 +1838,7 @@ msgid "prefs.tui.simple"
 msgstr "Simple characters:"
 
 msgid "prefs.font.ui"
-msgstr "UI:"
+msgstr "UI font:"
 
 msgid "prefs.font.heading"
 msgstr "Headings:"
@@ -1810,6 +1865,9 @@ msgstr "Gemini"
 msgid "prefs.mono.gopher"
 msgstr "Gopher"
 
+msgid "prefs.gopher.gemstyle"
+msgstr "Autodetect Gopher menu styling:"
+
 msgid "prefs.boldlink"
 msgstr "Bold links:"
 
@@ -1825,7 +1883,7 @@ msgid "prefs.boldlink.light"
 msgstr "On Light"
 
 msgid "prefs.gemtext.ansi"
-msgstr "ANSI escapes:"
+msgstr "Gemtext ANSI escapes:"
 
 # Color of the text foreground, i.e., the characters.
 msgid "prefs.gemtext.ansi.fg"
@@ -1839,10 +1897,10 @@ msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Font Style"
 
 msgid "prefs.font.warnmissing"
-msgstr "Glyph warnings:"
+msgstr "Font glyph warnings:"
 
 msgid "prefs.font.smooth"
-msgstr "Smoothing:"
+msgstr "Font smoothing:"
 
 msgid "prefs.linewidth"
 msgstr "Line width:"
@@ -1875,7 +1933,7 @@ msgid "prefs.justify"
 msgstr "Justify:"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Wrap plain text:"
+msgstr "Wrap long plaintext lines:"
 
 msgid "prefs.decodeurls"
 msgstr "Decode URLs:"

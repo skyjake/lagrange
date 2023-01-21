@@ -6,6 +6,33 @@
 ```
 # Release notes
 
+## 1.15
+New features:
+* Preferences dialog opens as a separate window.
+* Option `--prefs-sheet`: open Preferences as a sheet like in previous releases.
+* Reordering tabs: tab buttons can be dragged with the mouse, and tabs can be moved left/right using tab context menu items or keyboard shortcuts.
+* Move a tab to the other side of a split view (tab context menu).
+* Move a tab to a new window (tab context menu).
+* Added a "Window" menu to the menu bar that has actions for manipulating and switching the active window, and duplicating and switching tabs. (On macOS, this menu has already been available.)
+* macOS: 🌐E opens the native Character Viewer. 
+* Gopher: Option to disable Gemini styling on Gopher menu pages. When disabled, whitespace is not normalized and all non-link lines are presented as regular paragraph text.
+* Japanese UI translation (13% complete).
+
+Changes and enhancements:
+* Redesigned Preferences dialog with vertical tabs and a new organization of the settings. "Fonts" and "Colors" are removed, and there is a new "Content" tab.
+* Mouse cursor turns into the I-beam only over selectable text.
+* Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.
+* macOS: "Window" menu has new actions for duplicating and switching tabs.
+* GTK: Request dark window theme if the app UI color theme is dark.
+* Prevent high-resolution mice from flooding event processing with too many motion events and delaying UI refresh.
+* Updated UI translations.
+
+Fixes:
+* Changing the UI scaling factor will now affect all existing and newly created windows.
+* Possible crash when duplicating a tab.
+* Issues with event processing when multiple windows are open.
+* Workaround for a hang when running many parallel requests with MIME filter hooks.
+
 ## 1.14.2
 * Fixed a potential crash when using musl libc.
 * Fixed a potential crash when closing tabs in split view mode.

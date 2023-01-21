@@ -447,13 +447,13 @@ void deinit_AttributedText(iAttributedText *d) {
 
 iTextMetrics measure_WrapText(iWrapText *d, int fontId) {
     iTextMetrics tm;
-    tm.bounds = run_Font(font_Text(fontId),
-                         &(iRunArgs){ .mode        = measure_RunMode | runFlags_FontId(fontId),
-                                      .text        = d->text,
-                                      .wrap        = d,
-                                      .justify     = d->justify,
-                                      .layoutBound = d->justify ? d->maxWidth : 0,
-                                      .cursorAdvance_out = &tm.advance });
+    run_Font(font_Text(fontId),
+             &(iRunArgs){ .mode        = measure_RunMode | runFlags_FontId(fontId),
+                          .text        = d->text,
+                          .wrap        = d,
+                          .justify     = d->justify,
+                          .layoutBound = d->justify ? d->maxWidth : 0,
+                          .metrics_out = &tm });
     return tm;
 }
 
@@ -480,18 +480,19 @@ iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
     }
     tm.advance = sub_I2(pos, orig);
 #else
-    tm.bounds = run_Font(font_Text(fontId),
-              &(iRunArgs){ .mode  = draw_RunMode | runFlags_FontId(fontId) |
-                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
-                                    (color & fillBackground_ColorId ? fillBackground_RunMode : 0),
-                           .text  = d->text,
-                           .pos   = pos,
-                           .wrap  = d,
-                           .justify = d->justify,
-                           .layoutBound = d->justify ? d->maxWidth : 0,
-                           .color = color & mask_ColorId,
-                           .cursorAdvance_out = &tm.advance,
-    });
+    run_Font(font_Text(fontId),
+             &(iRunArgs){
+                 .mode = draw_RunMode | runFlags_FontId(fontId) |
+                         (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
+                         (color & fillBackground_ColorId ? fillBackground_RunMode : 0),
+                 .text = d->text,
+                 .pos = pos,
+                 .wrap = d,
+                 .justify = d->justify,
+                 .layoutBound = d->justify ? d->maxWidth : 0,
+                 .color = color & mask_ColorId,
+                 .metrics_out = &tm,
+             });
 #endif
     return tm;
 }

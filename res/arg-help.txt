@@ -10,16 +10,20 @@ General options:
                         Use identity ARG with --dump. ARG can be a complete or
                         partial client certificate fingerprint or common name.
   -E, --echo            Print all internal app events to stdout.
-  -h, --height N        Set initial window height to N pixels.          
       --help            Print these instructions.
       --replace-tab URL Open a URL replacing contents of the active tab.
-      --sw              Disable hardware accelerated rendering.
   -u, --url-or-search URL | text
                         Open a URL, or make a search query with given text.
                         This only works if the search query URL has been
                         configured.
   -U, --user DIR        Set directory where user data files are stored.
   -V, --version         Print the application version.
+  
+Window options:
+
+  -h, --height N        Set initial window height to N pixels.          
+      --prefs-sheet     Open Preferences as a sheet inside the active window.
+      --sw              Disable hardware accelerated rendering.
   -w, --width N         Set initial window width to N pixels.
 
 Options that control a running instance of Lagrange:

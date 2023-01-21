@@ -1,17 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-09-06 10:49+0000\n"
-"Last-Translator: Eric <spice2wolf@gmail.com>\n"
-"Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
-"lagrange/ui/zh_Hans/>\n"
-"Language: zh_Hans\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "sidebar.feeds"
 msgstr "订阅项"
 
@@ -46,20 +32,11 @@ msgstr "由 SDL 2、OpenSSL 和☕️驱动"
 msgid "cancel"
 msgstr "取消"
 
-msgid "dismiss"
-msgstr "关闭"
-
 msgid "dlg.message.ok"
 msgstr "继续"
 
 msgid "dlg.default"
 msgstr " 好 "
-
-msgid "toggle.yes"
-msgstr "已启用"
-
-msgid "toggle.no"
-msgstr "已关闭"
 
 msgid "menu.title.file"
 msgstr "文件"
@@ -105,9 +82,6 @@ msgstr "保存至文档"
 
 msgid "menu.save.downloads"
 msgstr "保存至下载"
-
-msgid "menu.copy.source"
-msgstr "拷贝原始文本"
 
 msgid "menu.sidebar"
 msgstr "开关边栏"
@@ -279,9 +253,6 @@ msgstr "MB"
 msgid "kb"
 msgstr "KB"
 
-msgid "bytes"
-msgstr "字节"
-
 # strftime() formatted
 #, c-format
 msgid "sidebar.date.thisyear"
@@ -294,9 +265,6 @@ msgstr "%Y年 %m 月 %d日"
 
 msgid "feeds.today"
 msgstr "今天"
-
-msgid "feeds.entry.newtab"
-msgstr "在新标签页中打开"
 
 msgid "feeds.entry.markread"
 msgstr "标记为已读"
@@ -397,9 +365,6 @@ msgstr "停止在本页使用"
 
 msgid "ident.stopuse.all"
 msgstr "停止在所有页面上使用"
-
-msgid "ident.showuse"
-msgstr "显示使用情况"
 
 msgid "heading.ident.use"
 msgstr "身份使用情况"
@@ -573,9 +538,6 @@ msgstr ""
 
 msgid "dlg.openlink"
 msgstr "打开链接"
-
-msgid "heading.certwarn"
-msgstr "不受信任的证书"
 
 #, c-format
 msgid "dlg.certwarn.mayberenewed"
@@ -841,9 +803,6 @@ msgstr "中文"
 
 msgid "lang.en"
 msgstr "英语"
-
-msgid "lang.fi"
-msgstr "芬兰语"
 
 msgid "lang.fr"
 msgstr "法语"
@@ -1112,9 +1071,6 @@ msgstr "棕色"
 msgid "prefs.saturation"
 msgstr "色彩饱和度："
 
-msgid "prefs.headingfont"
-msgstr "标题字体："
-
 msgid "prefs.font"
 msgstr "正文字体："
 
@@ -1238,9 +1194,6 @@ msgstr "提供的证书过期或无效。"
 msgid "keys.subscribe"
 msgstr "订阅页面更新"
 
-msgid "lang.zh.hans"
-msgstr "简体中文"
-
 # Interpret as "Results from bookmarks..."
 msgid "heading.lookup.bookmarks"
 msgstr "书签"
@@ -1290,15 +1243,6 @@ msgstr "无说明的预格式化文本"
 
 msgid "prefs.collapsepreonload"
 msgstr "收起预格式化文本："
-
-msgid "lang.zh.hant"
-msgstr "繁體/正體中文"
-
-msgid "lang.ie"
-msgstr "西方国际语"
-
-msgid "lang.sr"
-msgstr "塞尔维亚语"
 
 msgid "prefs.boldlink"
 msgstr "加粗显示链接："

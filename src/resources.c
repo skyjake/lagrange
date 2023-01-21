@@ -53,6 +53,7 @@ iBlock blobIa_Resources;
 iBlock blobIe_Resources;
 iBlock blobIsv_Resources;
 iBlock blobIt_Resources;
+iBlock blobJa_Resources;
 iBlock blobNl_Resources;
 iBlock blobPl_Resources;
 iBlock blobRu_Resources;
@@ -102,6 +103,7 @@ static struct {
     { &blobIe_Resources, "lang/ie.bin" },
     { &blobIsv_Resources, "lang/isv.bin" },
     { &blobIt_Resources, "lang/it.bin" },
+    { &blobJa_Resources, "lang/ja.bin" },
     { &blobNl_Resources, "lang/nl.bin" },
     { &blobPl_Resources, "lang/pl.bin" },
     { &blobRu_Resources, "lang/ru.bin" },

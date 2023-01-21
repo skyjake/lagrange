@@ -61,7 +61,17 @@ void setCommand_FilterHook(iFilterHook *d, const iString *command) {
 
 iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock *body,
                         const iString *requestUrl) {
-    iProcess *   proc = new_Process();
+    static iMutex *mtx_;
+    if (!mtx_) {
+        /* Currently we are starting child processes from multiple background threads.
+           This is apparently not a great idea when the processes are created as forks.
+           What we _should_ probably be doing is using a single dedicated thread to
+           launch the child processes, via a queue of some sort, and wait for the output
+           to be returned via a Condition. For now, we will avoid concurrency problems
+           (mostly related to I/O pipe fds getting confused) by only running a single
+           filter process at a time. */
+        mtx_ = new_Mutex();
+    }
     iStringList *args = new_StringList();
     iRangecc     seg  = iNullRange;
     while (nextSplit_Rangecc(range_String(&d->command), ";", &seg)) {
@@ -70,26 +80,33 @@ iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock 
     seg = iNullRange;
     while (nextSplit_Rangecc(range_String(mime), ";", &seg)) {
         pushBackRange_StringList(args, seg);
-    }
-    setArguments_Process(proc, args);
-    iRelease(args);
-    if (!isEmpty_String(requestUrl)) {
-        setEnvironment_Process(
-            proc,
-            iClob(newStrings_StringList(
-                collectNewFormat_String("REQUEST_URL=%s", cstr_String(requestUrl)), NULL)));
-    }
+    }    
+    lock_Mutex(mtx_);
     iBlock *output = NULL;
-    if (start_Process(proc)) {
-        writeInput_Process(proc, body);
-        output = readOutputUntilClosed_Process(proc);
-        if (!startsWith_Rangecc(range_Block(output), "20")) {
-            /* Didn't produce valid output. */
-            delete_Block(output);
-            output = NULL;
+    for (int attempts = 0; attempts < 3; attempts++) {
+        iProcess *proc = new_Process();
+        setArguments_Process(proc, args);
+        if (!isEmpty_String(requestUrl)) {
+            setEnvironment_Process(
+                proc,
+                iClob(newStrings_StringList(
+                    collectNewFormat_String("REQUEST_URL=%s", cstr_String(requestUrl)), NULL)));
         }
+        if (start_Process(proc)) {
+            writeInput_Process(proc, body);
+            output = readOutputUntilClosed_Process(proc);
+            if (!startsWith_Rangecc(range_Block(output), "20")) {
+                /* Didn't produce valid output. */
+                delete_Block(output);
+                output = NULL;
+            }
+            iRelease(proc);
+            break;
+        }
+        iRelease(proc);
     }
-    iRelease(proc);
+    unlock_Mutex(mtx_);
+    iRelease(args);
     return output;
 }
 

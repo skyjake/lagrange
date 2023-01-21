@@ -35,7 +35,8 @@ iDeclareType(Click)
 iDeclareType(Widget)
 iDeclareType(LabelWidget)
 iDeclareType(InputWidget)
-
+iDeclareType(Window)
+    
 iBool           isCommand_SDLEvent  (const SDL_Event *d);
 iBool           isCommand_UserEvent (const SDL_Event *, const char *cmd);
 const char *    command_UserEvent   (const SDL_Event *);
@@ -88,18 +89,21 @@ iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
 #if defined (iPlatformTerminal)
 #   define KMOD_PRIMARY     KMOD_CTRL
 #   define KMOD_SECONDARY   KMOD_ALT
+#   define KMOD_TERTIARY    KMOD_CTRL | KMOD_ALT  /* TODO: does this work? */
 #   define KMOD_ACCEPT      KMOD_ALT
 #   define KMOD_UNDO        KMOD_ALT
 #   define KMOD_ZOOM        0
 #elif defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI
 #   define KMOD_SECONDARY   KMOD_GUI | KMOD_SHIFT
+#   define KMOD_TERTIARY    KMOD_GUI | KMOD_SHIFT | KMOD_ALT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
 #   define KMOD_UNDO        KMOD_PRIMARY
 #   define KMOD_ZOOM        KMOD_PRIMARY
 #else
 #   define KMOD_PRIMARY     KMOD_CTRL
 #   define KMOD_SECONDARY   KMOD_CTRL | KMOD_SHIFT
+#   define KMOD_TERTIARY    KMOD_CTRL | KMOD_SHIFT | KMOD_ALT
 #   define KMOD_ACCEPT      KMOD_PRIMARY
 #   define KMOD_UNDO        KMOD_PRIMARY
 #   define KMOD_ZOOM        KMOD_PRIMARY
@@ -324,24 +328,28 @@ iLabelWidget *  makeIdentityDropdown_LabelWidget    (iWidget *headings, iWidget 
                                                      const char *id);
 /*-----------------------------------------------------------------------------------------------*/
 
-iWidget *       makeMenuBar_Widget      (const iMenuItem *topLevelMenus, size_t num);
+iWidget *       makeMenuBar_Widget                  (const iMenuItem *topLevelMenus, size_t num);
+iBool           handleTopLevelMenuBarCommand_Widget (iWidget *menuButton, const char *cmd);
 
 /*-----------------------------------------------------------------------------------------------*/
 
 iWidget *       makeTabs_Widget         (iWidget *parent);
 void            setTabBarPosition_Widget(iWidget *tabs, iBool atBottom);
+void            setVerticalTabBar_Widget(iWidget *tabs);
 void            appendTabPage_Widget    (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
-void            appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int shortcut, int kmods);
-iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
-                                              iWidget **values);
+void            appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int iconColor, int shortcut, int kmods);
+iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int iconColor, int shortcut,
+                                              iWidget **headings, iWidget **values);
 void            prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 iWidget *       removeTabPage_Widget    (iWidget *tabs, size_t index); /* returns the page */
+void            moveTabPage_Widget      (iWidget *tabs, size_t index, size_t newIndex);
 void            resizeToLargestPage_Widget  (iWidget *tabs);
 void            showTabPage_Widget      (iWidget *tabs, const iAnyObject *page);
 void            addTabCloseButton_Widget(iWidget *tabs, const iWidget *page, const char *command);
 void            setTabPageLabel_Widget  (iWidget *tabs, const iAnyObject *page, const iString *label);
 iWidget *       tabPage_Widget          (iWidget *tabs, size_t index);
 iLabelWidget *  tabPageButton_Widget    (iWidget *tabs, const iAnyObject *page);
+iBool           isVerticalTabBar_Widget (const iWidget *tabs);
 iBool           isTabButton_Widget      (const iWidget *);
 void            moveTabButtonToEnd_Widget(iWidget *tabButton);
 size_t          tabPageIndex_Widget     (const iWidget *tabs, const iAnyObject *page);
@@ -392,6 +400,10 @@ iWidget *   makeUserDataImporter_Dialog     (const iString *archivePath);
 
 const char *    languageId_String   (const iString *menuItemLabel);
 int             languageIndex_CStr  (const char *langId);
+
+iWindow *   promoteDialogToWindow_Widget    (iWidget *);
+iBool       isPromoted_Widget               (iWidget *);
+void        destroyDialog_Widget            (iWidget *);
 
 /*-----------------------------------------------------------------------------------------------*/
 

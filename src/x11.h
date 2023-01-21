@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2023 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -22,14 +22,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "widget.h"
-#include <the_Foundation/range.h>
+#include <the_Foundation/defs.h>
+#include <SDL_video.h>
 
-iDeclareWidgetClass(ScrollWidget)
-iDeclareObjectConstruction(ScrollWidget)
+void    setDarkWindowTheme_SDLWindow    (SDL_Window *, iBool setDark);
+void    handleCommand_X11               (const char *cmd);
 
-void    setRange_ScrollWidget       (iScrollWidget *, iRangei range);
-void    setThumbColor_ScrollWidget  (iScrollWidget *, int thumbColor);
-void    setThumb_ScrollWidget       (iScrollWidget *, int thumb, int thumbSize);
-
-void    setFadeEnabled_ScrollWidget (iScrollWidget *, iBool fadeEnabled);

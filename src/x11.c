@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2023 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -20,16 +20,37 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#pragma once
+#include "x11.h"
+#include "ui/command.h"
+#include "ui/window.h"
+#include "prefs.h"
+#include "app.h"
 
-#include "widget.h"
-#include <the_Foundation/range.h>
+#include <SDL_syswm.h>
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
 
-iDeclareWidgetClass(ScrollWidget)
-iDeclareObjectConstruction(ScrollWidget)
+void setDarkWindowTheme_SDLWindow(SDL_Window *d, iBool setDark) {
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    if (SDL_GetWindowWMInfo(d, &wmInfo)) {
+        Display *   dpy   = wmInfo.info.x11.display;
+        Window      wnd   = wmInfo.info.x11.window;
+        Atom        prop  = XInternAtom(dpy, "_GTK_THEME_VARIANT", False);
+        Atom        u8    = XInternAtom(dpy, "UTF8_STRING", False);
+        const char *value = setDark ? "dark" : "light";
+        XChangeProperty(dpy, wnd, prop, u8, 8, PropModeReplace,
+                        (unsigned char *) value, strlen(value));        
+    }
+}
 
-void    setRange_ScrollWidget       (iScrollWidget *, iRangei range);
-void    setThumbColor_ScrollWidget  (iScrollWidget *, int thumbColor);
-void    setThumb_ScrollWidget       (iScrollWidget *, int thumb, int thumbSize);
+void handleCommand_X11(const char *cmd) {
+    if (equal_Command(cmd, "theme.changed")) {        
+        iConstForEach(PtrArray, iter, mainWindows_App()) {
+            iMainWindow *mw = iter.ptr;
+            setDarkWindowTheme_SDLWindow(
+                mw->base.win, isDark_ColorTheme(prefs_App()->theme));
+        }
+    }
+}
 
-void    setFadeEnabled_ScrollWidget (iScrollWidget *, iBool fadeEnabled);

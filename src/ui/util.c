@@ -192,6 +192,12 @@ void toString_Sym(int key, int kmods, iString *str) {
     else if (key == SDLK_ESCAPE) {
         appendCStr_String(str, "Esc");
     }
+    else if (key == SDLK_PAGEUP) {
+        appendCStr_String(str, "PgUp");
+    }
+    else if (key == SDLK_PAGEDOWN) {
+        appendCStr_String(str, "PgDn");
+    }
     else if (key == SDLK_LEFT) {
         removePlus_(str);
         appendChar_String(str, 0x2190);
@@ -761,6 +767,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "input.ended") ||
            equal_Command(cmd, "focus.gained") ||
            equal_Command(cmd, "focus.lost") ||
+           equal_Command(cmd, "menu.closed") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
 
@@ -805,6 +812,7 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
             return iFalse;
         }
         if (!isCommandIgnoredByMenus_(cmd)) {
+            //printf("closemenu being called on %p due to cmd: %s\n", menu, cmd);
             closeMenu_Widget(menu);
         }
     }
@@ -861,14 +869,25 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 labelText += 3;
                 isDisabled = iTrue;
             }
+            iString labelStr;
+            initCStr_String(&labelStr, labelText);
+            const iBool isIcon = length_String(&labelStr) == 1;
             iLabelWidget *label = addChildFlags_Widget(
                 horizGroup ? horizGroup : menu,
-                iClob(newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
-                noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
-                drawKey_WidgetFlag | itemFlags);
+                iClob(isIcon
+                    ? newIcon_LabelWidget(labelText, item->key, item->kmods, item->command) 
+                    : newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
+                noBackground_WidgetFlag | frameless_WidgetFlag | 
+                    (!isIcon ? alignLeft_WidgetFlag | drawKey_WidgetFlag : 0) | 
+                    itemFlags);                                        
+            deinit_String(&labelStr);
             setWrap_LabelWidget(label, isInfo);
             if (!isInfo) {
                 haveIcons |= checkIcon_LabelWidget(label);
+            }
+            if (isIcon) {
+                setTextColor_LabelWidget(label, uiIcon_ColorId);
+                setFont_LabelWidget(label, uiLabelMedium_FontId);
             }
             setFlags_Widget(as_Widget(label), disabled_WidgetFlag, isDisabled);
             if (isInfo) {
@@ -1047,7 +1066,9 @@ static void updateMenuItemFonts_Widget_(iWidget *d) {
             }
             switch (deviceType_App()) {
                 case desktop_AppDeviceType:
-                setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
+                    if (font_LabelWidget(label) != uiLabelMedium_FontId) { /* don't touch large icons */
+                        setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
+                    }
                     break;
                 case tablet_AppDeviceType:
                     setFont_LabelWidget(label, isCaution ? uiLabelMediumBold_FontId : uiLabelMedium_FontId);
@@ -1257,6 +1278,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
             menuPos.y = iMax(0, iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y));
         }
         iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
+        setCurrent_Window(win);
         SDL_SetWindowTitle(win->win, "Menu");
         arrange_Widget(d);
         addPopup_App(win);
@@ -1381,6 +1403,49 @@ void closeMenu_Widget(iWidget *d) {
     postRefresh_App();
     postCommand_Widget(d, "menu.closed");
     setupMenuTransition_Mobile(d, iFalse);
+}
+
+iWindow *promoteDialogToWindow_Widget(iWidget *dlg) {
+    arrange_Widget(dlg);
+    removeChild_Widget(parent_Widget(dlg), dlg);
+    setVisualOffset_Widget(dlg, 0, 0, 0);
+    setFlags_Widget(dlg, horizontalOffset_WidgetFlag | visualOffset_WidgetFlag |
+                    centerHorizontal_WidgetFlag | overflowScrollable_WidgetFlag, iFalse);
+    /* Check for a dialog heading. */
+    iWidget *child = child_Widget(dlg, 0);
+    iWindow *x = newExtra_Window(dlg);
+    if (isInstance_Object(child, &Class_LabelWidget)) {
+        iLabelWidget *heading = (iLabelWidget *) child;
+        iString *title = copy_String(sourceText_LabelWidget(heading));
+        translate_Lang(title);
+        setTitle_Window(x, title);
+        delete_String(title);
+        iRelease(removeChild_Widget(dlg, heading));
+        arrange_Widget(dlg);
+    }
+    addExtraWindow_App(x);
+    SDL_ShowWindow(x->win);
+    SDL_RaiseWindow(x->win);
+    setActiveWindow_App(x);
+    return x;
+}
+
+iBool isPromoted_Widget(iWidget *dlg) {
+    return type_Window(window_Widget(dlg)) == extra_WindowType;
+}
+
+void destroyDialog_Widget(iWidget *dlg) {
+    if (isPromoted_Widget(dlg)) {
+        if (~dlg->flags & destroyPending_WidgetFlag) {
+            /* Let the dialog know that the end is nigh. Otherwise, its dismissal command
+               will be automatically posted. */
+            setFlags_Widget(dlg, destroyPending_WidgetFlag, iTrue);
+            closeWindow_App(window_Widget(dlg));
+        }
+    }
+    else {
+        destroy_Widget(dlg);
+    }
 }
 
 iLabelWidget *findMenuItem_Widget(iWidget *menu, const char *command) {
@@ -1554,7 +1619,7 @@ static iWidget *topLevelOpenMenu_(const iWidget *menuBar) {
     return NULL;
 }
 
-static iBool topLevelMenuBarHandler_(iWidget *menuButton, const char *cmd) {
+iBool handleTopLevelMenuBarCommand_Widget(iWidget *menuButton, const char *cmd) {
     if (equal_Command(cmd, "mouse.hovered")) {
         /* Only dispatched to the flagged widget. */
         iWidget *menuBar = parent_Widget(menuButton);
@@ -1581,7 +1646,7 @@ iWidget *makeMenuBar_Widget(const iMenuItem *topLevelMenus, size_t num) {
         iWidget *submenu = findChild_Widget(as_Widget(submenuButton), "menu");
         setFrameColor_Widget(submenu, uiSeparator_ColorId);
         as_Widget(submenuButton)->padding[0] = gap_UI;
-        setCommandHandler_Widget(as_Widget(submenuButton), topLevelMenuBarHandler_);
+        setCommandHandler_Widget(as_Widget(submenuButton), handleTopLevelMenuBarCommand_Widget);
         updateSize_LabelWidget(submenuButton);
         as_Widget(submenuButton)->flags2 |= commandOnHover_WidgetFlag2;
         addChildFlags_Widget(bar, iClob(submenuButton), frameless_WidgetFlag);
@@ -1653,9 +1718,11 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
             iWidget *nextTabs = findChild_Widget(otherRoot_Window(get_Window(), tabs->root)->widget,
                                                  "doctabs");
             iWidget *nextPages = findChild_Widget(nextTabs, "tabs.pages");
-            tabIndex = (int) (dir < 0 ? childCount_Widget(nextPages) - 1 : 0);
-            showTabPage_Widget(nextTabs, child_Widget(nextPages, tabIndex));
-            postCommand_App("keyroot.next");
+            if (nextPages) {
+                tabIndex = (int) (dir < 0 ? childCount_Widget(nextPages) - 1 : 0);
+                showTabPage_Widget(nextTabs, child_Widget(nextPages, tabIndex));
+                postCommand_App("keyroot.next");
+            }
         }
         else {
             showTabPage_Widget(tabs, child_Widget(pages, tabIndex + dir));
@@ -1689,14 +1756,35 @@ iWidget *makeTabs_Widget(iWidget *parent) {
 }
 
 void setTabBarPosition_Widget(iWidget *tabs, iBool atBottom) {
+    if (tabs) {
+        iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+        removeChild_Widget(tabs, buttons);
+        addChildPos_Widget(tabs, buttons, atBottom ? back_WidgetAddPos : front_WidgetAddPos);
+        iRelease(buttons);
+    }
+}
+
+void setVerticalTabBar_Widget(iWidget *tabs) {
     iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
-    removeChild_Widget(tabs, buttons);
-    addChildPos_Widget(tabs, buttons, atBottom ? back_WidgetAddPos : front_WidgetAddPos);
-    iRelease(buttons);
+    iWidget *content = findChild_Widget(tabs, "tabs.content");
+    setFlags_Widget(tabs, arrangeVertical_WidgetFlag, iFalse);
+    setFlags_Widget(tabs, arrangeHorizontal_WidgetFlag, iTrue);
+    setFlags_Widget(buttons, arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
+                             resizeWidthOfChildren_WidgetFlag, iFalse);
+    setFlags_Widget(buttons, arrangeVertical_WidgetFlag | arrangeWidth_WidgetFlag |
+                    resizeChildrenToWidestChild_WidgetFlag, iTrue);
+    buttons->flags2 |= centerChildrenVertical_WidgetFlag2;
+    setFlags_Widget(content, arrangeHorizontal_WidgetFlag, iFalse);
+    setFlags_Widget(content, arrangeVertical_WidgetFlag, iTrue);
+}
+
+iBool isVerticalTabBar_Widget(const iWidget *tabs) {
+    return (tabs->flags & arrangeVertical_WidgetFlag) == 0;
 }
 
 static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget *page,
                                const char *label, int key, int kmods) {
+    const iBool isVerticalTabs = isVerticalTabBar_Widget(tabs);
     iWidget *   pages   = findChild_Widget(tabs, "tabs.pages");
     const iBool isSel   = childCount_Widget(pages) == 0;
     iWidget *   buttons = findChild_Widget(tabs, "tabs.buttons");
@@ -1704,8 +1792,18 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         buttons,
         iClob(newKeyMods_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
+    checkIcon_LabelWidget((iLabelWidget *) button);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
-    setFlags_Widget(button, commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
+    setFlags_Widget(button,
+                    commandOnClick_WidgetFlag |
+                        (!isVerticalTabs ? horizontalOffset_WidgetFlag : 0) |
+                        (isVerticalTabs ? alignLeft_WidgetFlag : expand_WidgetFlag),
+                    iTrue);
+    if (!cmp_String(id_Widget(tabs), "doctabs")) {
+        /* Document tabs can be reordered.
+           TODO: Maybe not hardcode the parent ID here? Could check a flag on `tabs`. */
+        button->flags2 |= siblingOrderDraggable_WidgetFlag2;
+    }
     if (prefs_App()->bottomTabBar) {
         setNoBottomFrame_LabelWidget((iLabelWidget *) button, iTrue);
     }
@@ -1754,6 +1852,21 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
     return page;
 }
 
+void moveTabPage_Widget(iWidget *tabs, size_t index, size_t newIndex) {
+    const size_t count = tabCount_Widget(tabs);
+    newIndex = iMin(newIndex, count - 1);
+    if (index == newIndex) {
+        return;
+    }
+    iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+    iWidget *pages   = findChild_Widget(tabs, "tabs.pages");
+    iWidget *button  = child_Widget(buttons, index);
+    iWidget *page    = child_Widget(pages, index);
+    changeChildIndex_Widget(buttons, button, newIndex);
+    changeChildIndex_Widget(pages, page, newIndex);
+    arrange_Widget(tabs);
+}
+
 void resizeToLargestPage_Widget(iWidget *tabs) {
     if (!tabs) return;
 //    puts("RESIZE TO LARGEST PAGE ...");
@@ -1772,7 +1885,10 @@ void resizeToLargestPage_Widget(iWidget *tabs) {
     iForEach(ObjectList, k, children_Widget(pages)) {
         setMinSize_Widget(k.object, largest);
     }
-    setFixedSize_Widget(tabs, addY_I2(largest, height_Widget(findChild_Widget(tabs, "tabs.buttons"))));
+    const iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+    setFixedSize_Widget(tabs,
+                        isVerticalTabBar_Widget(tabs) ? addX_I2(largest, width_Widget(buttons))
+                                                      : addY_I2(largest, height_Widget(buttons)));
 //    puts("... DONE WITH RESIZE TO LARGEST PAGE");
 }
 
@@ -1867,10 +1983,12 @@ size_t tabPageIndex_Widget(const iWidget *tabs, const iAnyObject *page) {
 }
 
 const iWidget *currentTabPage_Widget(const iWidget *tabs) {
-    iWidget *pages = findChild_Widget(tabs, "tabs.pages");
-    iConstForEach(ObjectList, i, pages->children) {
-        if (isVisible_Widget(i.object)) {
-            return constAs_Widget(i.object);
+    if (tabs) {
+        iWidget *pages = findChild_Widget(tabs, "tabs.pages");
+        iConstForEach(ObjectList, i, pages->children) {
+            if (isVisible_Widget(i.object)) {
+                return constAs_Widget(i.object);
+            }
         }
     }
     return NULL;
@@ -2394,13 +2512,16 @@ iWidget *makeToggle_Widget(const char *id) {
     return toggle;
 }
 
-void appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int shortcut,
-                                   int kmods) {
+void appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int iconColor,
+                                   int shortcut, int kmods) {
     appendTabPage_Widget(tabs, page, title, shortcut, kmods);
     setFlags_Widget(
         (iWidget *) back_ObjectList(children_Widget(findChild_Widget(tabs, "tabs.buttons"))),
         frameless_WidgetFlag | noBackground_WidgetFlag,
         iTrue);
+    if (iconColor != none_ColorId) {
+        setIconColor_LabelWidget(tabPageButton_Widget(tabs, page), iconColor);
+    }
 }
 
 iWidget *makeTwoColumns_Widget(iWidget **headings, iWidget **values) {
@@ -2422,8 +2543,8 @@ iLabelWidget *dialogAcceptButton_Widget(const iWidget *d) {
     return (iLabelWidget *) lastChild_Widget(buttonParent);
 }
 
-iWidget *appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
-                                       iWidget **values) {
+iWidget *appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int iconColor,
+                                       int shortcut, iWidget **headings, iWidget **values) {
     /* TODO: Use `makeTwoColumnWidget_()`, see above. */
     iWidget *page = new_Widget();
     setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
@@ -2436,19 +2557,25 @@ iWidget *appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int sho
     *values = addChildFlags_Widget(
         columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
-    appendFramelessTabPage_Widget(tabs, iClob(page), title, shortcut, shortcut ? KMOD_PRIMARY : 0);
+    appendFramelessTabPage_Widget(tabs, iClob(page), title, iconColor, shortcut, shortcut ? KMOD_PRIMARY : 0);
     return page;
 }
 
+static void addDialogPaddingSize_(iWidget *headings, iWidget *values, int size) {
+    addChild_Widget(headings, iClob(makePadding_Widget(size)));
+    addChild_Widget(values,   iClob(makePadding_Widget(size)));    
+}
+
 static void addDialogPadding_(iWidget *headings, iWidget *values) {
-    const int bigGap = iMaxi(1, lineHeight_Text(uiLabel_FontId) * 3 / 4);
-    addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
-    addChild_Widget(values,   iClob(makePadding_Widget(bigGap)));    
+    addDialogPaddingSize_(headings, values, iMaxi(1, lineHeight_Text(uiLabel_FontId) * 3 / 4));
 }
 
 static void makeTwoColumnHeading_(const char *title, iWidget *headings, iWidget *values) {
     if (isTerminal_Platform()) {
         addDialogPadding_(headings, values);
+    }
+    else {
+        addDialogPaddingSize_(headings, values, 2 * gap_UI);
     }
     setFont_LabelWidget(addChildFlags_Widget(headings,
                                              iClob(makeHeading_Widget(
@@ -2534,6 +2661,7 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
         "prefs.proxy.http"
     };
     iWidget *tabs = findChild_Widget(prefs, "prefs.tabs");
+    tabs->rect.size = zero_I2();
     /* Input fields expand to the right edge. */
     /* TODO: Add an arrangement flag for this. */
     iForIndices(i, inputIds) {
@@ -2607,6 +2735,17 @@ static void addDialogToggleGroup_(iWidget *headings, iWidget *values, const char
     }
     addChildFlags_Widget(
         values, iClob(group), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+}
+
+static iLabelWidget *addDialogDropMenu_(iWidget *headings, iWidget *values, const char *title,
+                                        const iMenuItem *items, size_t numItems, const char *id) {
+    addChild_Widget(headings, iClob(makeHeading_Widget(title)));
+    iLabelWidget *button = makeMenuButton_LabelWidget(
+        items[findWidestLabel_MenuItem(items, numItems)].label, items, numItems);
+    setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
+                              uiBackgroundMenu_ColorId);
+    setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag), id);
+    return button;
 }
 
 size_t findWidestLabel_MenuItem(const iMenuItem *items, size_t num) {
@@ -2698,6 +2837,7 @@ iWidget *makePreferences_Widget(void) {
                                     { u8"Interlingue - ie", 0, 0, "uilang id:ie" },
                                     { u8"Interslavic - isv", 0, 0, "uilang id:isv" },
                                     { u8"Italiano - it", 0, 0, "uilang id:it" },
+                                    { u8"日本語 - ja", 0, 0, "uilang id:ja" },
                                     { u8"Nederlands - nl", 0, 0, "uilang id:nl" },
                                     { u8"Polski - pl", 0, 0, "uilang id:pl" },
                                     { u8"Русский - ru", 0, 0, "uilang id:ru" },
@@ -2757,6 +2897,14 @@ iWidget *makePreferences_Widget(void) {
         };
         memcpy(docThemes[i], items, sizeof(items));
     }
+    const iMenuItem accentItems[max_ColorAccent] = {
+        { circle_Icon " ${prefs.accent.teal}", 0, 0, "accent.set arg:0" },
+        { circle_Icon " ${prefs.accent.orange}", 0, 0, "accent.set arg:1" },
+        { circle_Icon " ${prefs.accent.red}", 0, 0, "accent.set arg:2" },
+        { circle_Icon " ${prefs.accent.green}", 0, 0, "accent.set arg:3" },
+        { circle_Icon " ${prefs.accent.blue}", 0, 0, "accent.set arg:4" },
+        { circle_Icon " ${prefs.accent.gray}", 0, 0, "accent.set arg:5" }
+    };
     const iMenuItem imgStyles[] = {
         { "${prefs.imagestyle.original}",  0, 0, format_CStr("imagestyle.set arg:%d", original_ImageStyle) },
         { "${prefs.imagestyle.grayscale}", 0, 0, format_CStr("imagestyle.set arg:%d", grayscale_ImageStyle) },
@@ -2844,6 +2992,9 @@ iWidget *makePreferences_Widget(void) {
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
             { "toggle id:prefs.bottomnavbar text:${LC:prefs.bottomnavbar}" },
             { "toggle id:prefs.bottomtabbar text:${LC:prefs.bottomtabbar}" },
+            { "padding" },
+            { "toggle id:prefs.swipe.edge" },
+            { "toggle id:prefs.swipe.page" },
             { "heading device:2 id:heading.prefs.toolbaractions" },
             { "dropdown device:2 id:prefs.toolbaraction1", 0, 0, (const void *) toolbarActionItems[0] },
             { "dropdown device:2 id:prefs.toolbaraction2", 0, 0, (const void *) toolbarActionItems[1] },
@@ -2896,8 +3047,9 @@ iWidget *makePreferences_Widget(void) {
             { "radio horizontal:1 id:prefs.linewidth", 0, 0, (const void *) lineWidthItems },
             { "padding" },
             { "toggle id:prefs.justify" },
-            { "toggle id:prefs.plaintext.wrap" },
             { "toggle id:prefs.biglede" },
+            { "toggle id:prefs.plaintext.wrap" },
+            { "toggle id:prefs.gopher.gemstyle" },
             { "padding" },
             { "input id:prefs.linespacing maxlen:5" },
             { "input id:prefs.tabwidth maxlen:3" },
@@ -2997,11 +3149,17 @@ iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
     addDialogTitle_(dlg, "${heading.prefs}", NULL);
     iWidget *tabs = makeTabs_Widget(dlg);
+    setVerticalTabBar_Widget(tabs);
     setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
     setId_Widget(tabs, "prefs.tabs");
     iWidget *headings, *values;
-    /* General preferences. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.general}", '1', &headings, &values),
+    /* General settings. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
+                                                   gear_Icon " ${heading.prefs.general}",
+                                                   uiIcon_ColorId,
+                                                   '1',
+                                                   &headings,
+                                                   &values),
                      "prefs.page.general");
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
         addPrefsInputWithHeading_(headings, values, "prefs.downloads", iClob(new_InputWidget(0)));
@@ -3010,7 +3168,6 @@ iWidget *makePreferences_Widget(void) {
         addPrefsInputWithHeading_(headings, values, "prefs.searchurl", iClob(searchUrl = new_InputWidget(0)));
         setUrlContent_InputWidget(searchUrl, iTrue);
         addDialogPadding_(headings, values);
-        addDialogToggle_(headings, values, "${prefs.hoverlink}", "prefs.hoverlink");
         addDialogToggle_(headings, values, "${prefs.retaintabs}", "prefs.retaintabs");
         if (deviceType_App() != phone_AppDeviceType) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pinsplit}")));
@@ -3022,15 +3179,12 @@ iWidget *makePreferences_Widget(void) {
             }
             addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
-        addDialogToggle_(headings, values, "${prefs.markdown.viewsource}", "prefs.markdown.viewsource");
-        addDialogToggle_(headings, values, "${prefs.bookmarks.addbottom}", "prefs.bookmarks.addbottom");
-        addDialogToggle_(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");
-        addDialogToggle_(headings, values, "${prefs.dataurl.openimages}", "prefs.dataurl.openimages");
         addDialogPadding_(headings, values);
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
             pushBackN_Array(uiLangs, langItems, iElemCount(langItems) - 1);
             /* TODO: Add an arrange flag for resizing parent to widest child. */
+            /*
             size_t widestPos = findWidestLabel_MenuItem(data_Array(uiLangs), size_Array(uiLangs));
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.uilang}")));
             setId_Widget(addChildFlags_Widget(values,
@@ -3038,18 +3192,66 @@ iWidget *makePreferences_Widget(void) {
                                                   value_Array(uiLangs, widestPos, iMenuItem).label,
                                                   data_Array(uiLangs),
                                                   size_Array(uiLangs))),
-                                              alignLeft_WidgetFlag),
-                         "prefs.uilang");
+                                              algnLeft_WidgetFlag),
+                         "prefs.uilang");*/
+            addDialogDropMenu_(headings, values, "${prefs.uilang}",
+                               constData_Array(uiLangs), size_Array(uiLangs),
+                               "prefs.uilang");
         }
-        addDialogToggle_(headings, values, "${prefs.time.24h}", "prefs.time.24h");
     }
-    /* User Interface. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.interface}", '2', &headings, &values),
-                     "prefs.page.ui");
-        addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
-        if (!isTerminal_Platform()) {
-            addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
+    /* Appearance. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, palette_Icon " ${heading.prefs.appearance}", red_ColorId, '2', &headings, &values),
+                     "prefs.page.appearance");
+//        makeTwoColumnHeading_("${heading.prefs.uitheme}", headings, values);
+#if (defined (iPlatformApple) || defined (iPlatformMSys)) && !defined (iPlatformTerminal)
+        addDialogToggle_(headings, values, "${prefs.ostheme}", "prefs.ostheme");
+#endif
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.theme}")));
+        iWidget *themes = new_Widget();
+        /* Themes. */ {
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.black}", "theme.set arg:0"))), "prefs.theme.0");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.dark}", "theme.set arg:1"))), "prefs.theme.1");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.light}", "theme.set arg:2"))), "prefs.theme.2");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.white}", "theme.set arg:3"))), "prefs.theme.3");
         }
+        addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        /* Accents. */ {
+            iLabelWidget *accentMenu = addDialogDropMenu_(headings,
+                                                          values,
+                                                          "${prefs.accent}",
+                                                          accentItems,
+                                                          iElemCount(accentItems),
+                                                          "prefs.accent");
+            int accentId = 0;
+            iForEach(ObjectList,
+                     i,
+                     children_Widget(findChild_Widget(constAs_Widget(accentMenu), "menu"))) {
+                if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                    setIconColor_LabelWidget(i.object, color_ColorAccent(accentId++, iTrue));
+                }
+            }
+        }
+#if 0
+        iWidget *accent = new_Widget(); {
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.teal}", "accent.set arg:0"))), "prefs.accent.0");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.orange}", "accent.set arg:1"))), "prefs.accent.1");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.red}", "accent.set arg:2"))), "prefs.accent.2");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.green}", "accent.set arg:3"))), "prefs.accent.3");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.blue}", "accent.set arg:4"))), "prefs.accent.4");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.gray}", "accent.set arg:5"))), "prefs.accent.5");
+#  if defined (iPlatformApple)
+            /* TODO: Re-enable this! Accent colors should now be applied in a way that suits 
+               the system accents, as long as there are light and dark variants. */
+//            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.system}", "accent.set arg:2"))), "prefs.accent.2");
+#  endif
+        }
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.accent}")));
+        addChildFlags_Widget(values, iClob(accent), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+#endif
+        addDialogPadding_(headings, values);
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
+        addDialogToggle_(headings, values, "${prefs.customframe}", "prefs.customframe");
+#endif
         addDialogToggleGroup_(
             headings,
             values,
@@ -3062,12 +3264,162 @@ iWidget *makePreferences_Widget(void) {
 #endif
             },
             iInvalidSize);
-        addDialogToggle_(headings, values, "${prefs.evensplit}", "prefs.evensplit");
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
+        addDialogToggle_(headings, values, "${prefs.evensplit}", "prefs.evensplit");        
+        if (!isTerminal_Platform()) {
+            addDialogPadding_(headings, values);
+//            makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
+            addPrefsInputWithHeading_(headings, values, "prefs.uiscale", iClob(new_InputWidget(5)));
+            addDialogToggle_(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
+            addDialogPadding_(headings, values);
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
+            addFontButtons_(values, "ui");
+            addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");                
+        }
+    }
+    /* Page style. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
+                                                   fonts_Icon " ${heading.prefs.style}",
+                                                   orange_ColorId,
+                                                   '3',
+                                                   &headings,
+                                                   &values),
+                     "prefs.page.style");
+        //        makeTwoColumnHeading_("${heading.prefs.paragraph}", headings, values);
+        //        makeTwoColumnHeading_("${heading.prefs.pagecontent}", headings, values);
+        for (int i = 0; i < 2; ++i) {
+            const iBool isDark = (i == 0);
+            const char *mode = isDark ? "dark" : "light";
+            addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "${prefs.doctheme.dark}" : "${prefs.doctheme.light}")));
+            iLabelWidget *button = makeMenuButton_LabelWidget(
+                docThemes[i][findWidestLabel_MenuItem(docThemes[i], max_GmDocumentTheme)].label,
+                docThemes[i],
+                max_GmDocumentTheme);
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
+            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
+                         format_CStr("prefs.doctheme.%s", mode));
+        }
+        addDialogPadding_(headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.saturation}")));
+        iWidget *sats = new_Widget();
+        /* Saturation levels. */ {
+            addRadioButton_(sats, "prefs.saturation.3", "100 %", "saturation.set arg:100");
+            addRadioButton_(sats, "prefs.saturation.2", "66 %", "saturation.set arg:66");
+            addRadioButton_(sats, "prefs.saturation.1", "33 %", "saturation.set arg:33");
+            addRadioButton_(sats, "prefs.saturation.0", "0 %", "saturation.set arg:0");
+        }
+        addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        /* Colorize images. */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imagestyle}")));
+            iLabelWidget *button = makeMenuButton_LabelWidget(
+                imgStyles[findWidestLabel_MenuItem(imgStyles, iElemCount(imgStyles) - 1)].label,
+                imgStyles,
+                iElemCount(imgStyles) - 1);
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
+                                      uiBackgroundMenu_ColorId);
+            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
+                         "prefs.imagestyle");
+        }
+//        addDialogPadding_(headings, values);
+        /* Text settings. */
+        if (!isTerminal_Platform()) {
+            makeTwoColumnHeading_("${heading.prefs.fonts}", headings, values);
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.heading}")));
+            addFontButtons_(values, "heading");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.body}")));
+            addFontButtons_(values, "body");
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.mono}")));
+            addFontButtons_(values, "mono");
+            addDialogPadding_(headings, values);
+            addDialogToggleGroup_(headings,
+                                  values,
+                                  "${prefs.mono}",
+                                  (const char *[]){ "prefs.mono.gemini", "prefs.mono.gopher" },
+                                  2);
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.monodoc}")));
+            addFontButtons_(values, "monodoc");
+        }
+        else {
+            /* Terminal font settings. */
+            addDialogToggle_(headings, values, "${prefs.tui.simple}", "prefs.tui.simple");
+        }
+        addDialogPadding_(headings, values);
+        addDialogToggleGroup_(headings,
+                              values,
+                              "${prefs.boldlink}",
+                              (const char *[]){ "prefs.boldlink.visited",
+                                                "prefs.boldlink.dark",
+                                                "prefs.boldlink.light" },
+                              3);
+    }
+    /* Page layout. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
+                                                   pageLayout_Icon " ${heading.prefs.layout}",
+                                                   orange_ColorId,
+                                                   '4',
+                                                   &headings,
+                                                   &values),
+                     "prefs.page.layout");
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.linewidth}")));
+        iWidget *widths = new_Widget();
+        /* Line widths. */ {
+            /* TODO: Make this a utility function to build radio buttons from items. */
+            for (size_t i = 0; lineWidthItems[i].label; i++) {
+                const iMenuItem *lw = &lineWidthItems[i];
+                addRadioButton_(widths,
+                                cstr_Command(lw->label, "id"),
+                                hasLabel_Command(lw->label, "label")
+                                    ? cstr_Lang(cstr_Command(lw->label, "label"))
+                                    : cstr_Command(lw->label, "text"),
+                                lw->command);
+            }
+        }
+        addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addPrefsInputWithHeading_(headings, values, "prefs.linespacing", iClob(new_InputWidget(5)));
+        addPrefsInputWithHeading_(headings, values, "prefs.tabwidth", iClob(new_InputWidget(5)));
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
+        addDialogToggle_(headings, values, "${prefs.justify}", "prefs.justify");
+#endif
+        addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
+        addDialogPadding_(headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.quoteicon}")));
+        iWidget *quote = new_Widget(); {
+            addRadioButton_(quote, "prefs.quoteicon.1", "${prefs.quoteicon.icon}", "quoteicon.set arg:1");
+            addRadioButton_(quote, "prefs.quoteicon.0", "${prefs.quoteicon.line}", "quoteicon.set arg:0");
+        }
+        addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
+        addDialogPadding_(headings, values);
+        addDialogToggle_(headings, values, "${prefs.centershort}", "prefs.centershort");
+        addDialogToggle_(headings, values, "${prefs.sideicon}", "prefs.sideicon");
+        addDialogToggle_(headings, values, "${prefs.collapsepreonload}", "prefs.collapsepreonload");
+    }
+    /* Content. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}", green_ColorId, '5', &headings, &values), "prefs.page.content");
+        addDialogToggleGroup_(headings,
+                              values,
+                              "${prefs.gemtext.ansi}",
+                              (const char *[]){ "prefs.gemtext.ansi.fg",
+                                                "prefs.gemtext.ansi.bg",
+                                                "prefs.gemtext.ansi.fontstyle" },
+                              3);
+        addDialogToggle_(headings, values, "${prefs.gopher.gemstyle}", "prefs.gopher.gemstyle");
+        addDialogToggle_(headings, values, "${prefs.markdown.viewsource}", "prefs.markdown.viewsource");
+        addDialogPadding_(headings, values);
+        addDialogToggle_(headings, values, "${prefs.dataurl.openimages}", "prefs.dataurl.openimages");
+        addDialogToggle_(headings, values, "${prefs.archive.openindex}", "prefs.archive.openindex");        
+        addDialogPadding_(headings, values);
+        addDialogToggle_(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
+    }
+    /* User Interface. */ {
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, computer_Icon " ${heading.prefs.interface}", cyan_ColorId, '6', &headings, &values),
+                     "prefs.page.ui");
+        addDialogToggle_(headings, values, "${prefs.hoverlink}", "prefs.hoverlink");
+        addDialogToggle_(headings, values, "${prefs.bookmarks.addbottom}", "prefs.bookmarks.addbottom");
         /* Return key behaviors. */ {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
             iLabelWidget *returnKey = makeMenuButton_LabelWidget(
                 returnKeyBehaviors[findWidestLabel_MenuItem(returnKeyBehaviors,
-                                                        iElemCount(returnKeyBehaviors) - 1)]
+                                                            iElemCount(returnKeyBehaviors) - 1)]
                     .label,
                 returnKeyBehaviors,
                 iElemCount(returnKeyBehaviors) - 1);
@@ -3076,10 +3428,16 @@ iWidget *makePreferences_Widget(void) {
             setId_Widget(addChildFlags_Widget(values, iClob(returnKey), alignLeft_WidgetFlag),
                          "prefs.returnkey");
         }
-#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-        addDialogToggle_(headings, values, "${prefs.customframe}", "prefs.customframe");
-#endif
-        makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
+        if (!isTerminal_Platform()) {
+            addDialogToggle_(headings, values, "${prefs.imageloadscroll}", "prefs.imageloadscroll");
+        }
+        addDialogToggle_(headings, values, "${prefs.time.24h}", "prefs.time.24h");
+        addDialogPadding_(headings, values);
+        addDialogToggle_(headings, values, "${prefs.animate}", "prefs.animate");
+        if (!isTerminal_Platform()) {
+            addDialogToggle_(headings, values, "${prefs.blink}", "prefs.blink");
+        }
+//        makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
         addDialogToggle_(headings, values, "${prefs.smoothscroll}", "prefs.smoothscroll");
         /* Scroll speeds. */ {
             for (int type = 0; type < max_ScrollType; type++) {
@@ -3101,172 +3459,26 @@ iWidget *makePreferences_Widget(void) {
                     values, iClob(scrollSpeed), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             }
         }
-        if (!isTerminal_Platform()) {
-            addDialogToggle_(headings, values, "${prefs.imageloadscroll}", "prefs.imageloadscroll");
-        }
-        if (deviceType_App() == phone_AppDeviceType) {
-            addDialogToggle_(headings, values, "${prefs.hidetoolbarscroll}", "prefs.hidetoolbarscroll");
-        }
-        if (!isTerminal_Platform()) {
-            makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
-            addPrefsInputWithHeading_(headings, values, "prefs.uiscale", iClob(new_InputWidget(5)));
-            if (deviceType_App() == desktop_AppDeviceType) {
-                addDialogToggle_(headings, values, "${prefs.retainwindow}", "prefs.retainwindow");
-            }
-        }
+//        if (deviceType_App() == phone_AppDeviceType) {
+//            addDialogToggle_(headings, values, "${prefs.hidetoolbarscroll}", "prefs.hidetoolbarscroll");
+//        }
     }
-    /* Colors. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.colors}", '3', &headings, &values),
-                     "prefs.page.color");
-        makeTwoColumnHeading_("${heading.prefs.uitheme}", headings, values);
-#if (defined (iPlatformApple) || defined (iPlatformMSys)) && !defined (iPlatformTerminal)
-        addDialogToggle_(headings, values, "${prefs.ostheme}", "prefs.ostheme");
-#endif
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.theme}")));
-        iWidget *themes = new_Widget();
-        /* Themes. */ {
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.black}", "theme.set arg:0"))), "prefs.theme.0");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.dark}", "theme.set arg:1"))), "prefs.theme.1");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.light}", "theme.set arg:2"))), "prefs.theme.2");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.white}", "theme.set arg:3"))), "prefs.theme.3");
-        }
-        addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        /* Accents. */
-        iWidget *accent = new_Widget(); {
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.teal}", "accent.set arg:0"))), "prefs.accent.0");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.orange}", "accent.set arg:1"))), "prefs.accent.1");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.red}", "accent.set arg:2"))), "prefs.accent.2");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.green}", "accent.set arg:3"))), "prefs.accent.3");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.blue}", "accent.set arg:4"))), "prefs.accent.4");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.gray}", "accent.set arg:5"))), "prefs.accent.5");
-#if defined (iPlatformApple)
-            /* TODO: Re-enable this! Accent colors should now be applied in a way that suits 
-               the system accents, as long as there are light and dark variants. */
-//            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.system}", "accent.set arg:2"))), "prefs.accent.2");
-#endif
-        }
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.accent}")));
-        addChildFlags_Widget(values, iClob(accent), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        makeTwoColumnHeading_("${heading.prefs.pagecontent}", headings, values);
-        for (int i = 0; i < 2; ++i) {
-            const iBool isDark = (i == 0);
-            const char *mode = isDark ? "dark" : "light";
-            addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "${prefs.doctheme.dark}" : "${prefs.doctheme.light}")));
-            iLabelWidget *button = makeMenuButton_LabelWidget(
-                docThemes[i][findWidestLabel_MenuItem(docThemes[i], max_GmDocumentTheme)].label,
-                docThemes[i],
-                max_GmDocumentTheme);
-            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
-            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
-                         format_CStr("prefs.doctheme.%s", mode));
-        }
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.saturation}")));
-        iWidget *sats = new_Widget();
-        /* Saturation levels. */ {
-            addRadioButton_(sats, "prefs.saturation.3", "100 %", "saturation.set arg:100");
-            addRadioButton_(sats, "prefs.saturation.2", "66 %", "saturation.set arg:66");
-            addRadioButton_(sats, "prefs.saturation.1", "33 %", "saturation.set arg:33");
-            addRadioButton_(sats, "prefs.saturation.0", "0 %", "saturation.set arg:0");
-        }
-        addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        /* Colorize images. */ {
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imagestyle}")));
-            iLabelWidget *button = makeMenuButton_LabelWidget(
-                imgStyles[findWidestLabel_MenuItem(imgStyles, iElemCount(imgStyles) - 1)].label,
-                imgStyles,
-                iElemCount(imgStyles) - 1);
-            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
-                                      uiBackgroundMenu_ColorId);
-            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
-                         "prefs.imagestyle");
-        }
-    }
-    /* Fonts. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.fonts}", '4', &headings, &values), "prefs.page.fonts");
-        /* Fonts. */
-        if (!isTerminal_Platform()) {
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.heading}")));
-            addFontButtons_(values, "heading");
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.body}")));
-            addFontButtons_(values, "body");
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.mono}")));
-            addFontButtons_(values, "mono");
-            addDialogPadding_(headings, values);
-            addDialogToggleGroup_(headings,
-                                  values,
-                                  "${prefs.mono}",
-                                  (const char *[]){ "prefs.mono.gemini", "prefs.mono.gopher" },
-                                  2);
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.monodoc}")));
-            addFontButtons_(values, "monodoc");
-            addDialogPadding_(headings, values);
-            addDialogToggleGroup_(headings,
-                                  values,
-                                  "${prefs.gemtext.ansi}",
-                                  (const char *[]){ "prefs.gemtext.ansi.fg",
-                                                    "prefs.gemtext.ansi.bg",
-                                                    "prefs.gemtext.ansi.fontstyle" },
-                                  3);
-            addDialogToggle_(headings, values, "${prefs.font.warnmissing}", "prefs.font.warnmissing");
-            addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");                
-            addDialogPadding_(headings, values);
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
-            addFontButtons_(values, "ui");
-        }
-        else {
-            /* Terminal font settings. */
-            addDialogToggle_(headings, values, "${prefs.tui.simple}", "prefs.tui.simple");
-        }
-    }
-    /* Style. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.style}", '5', &headings, &values), "prefs.page.style");
-//        makeTwoColumnHeading_("${heading.prefs.paragraph}", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.linewidth}")));
-        iWidget *widths = new_Widget();
-        /* Line widths. */ {
-            /* TODO: Make this a utility function to build radio buttons from items. */
-            for (size_t i = 0; lineWidthItems[i].label; i++) {
-                const iMenuItem *lw = &lineWidthItems[i];
-                addRadioButton_(widths,
-                                cstr_Command(lw->label, "id"),
-                                hasLabel_Command(lw->label, "label")
-                                    ? cstr_Lang(cstr_Command(lw->label, "label"))
-                                    : cstr_Command(lw->label, "text"),
-                                lw->command);
-            }
-        }
-        addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addPrefsInputWithHeading_(headings, values, "prefs.linespacing", iClob(new_InputWidget(5)));
-#if defined (LAGRANGE_ENABLE_HARFBUZZ)
-        addDialogToggle_(headings, values, "${prefs.justify}", "prefs.justify");
-#endif
-        addDialogToggle_(headings, values, "${prefs.plaintext.wrap}", "prefs.plaintext.wrap");
-        addDialogToggle_(headings, values, "${prefs.biglede}", "prefs.biglede");
-        addDialogPadding_(headings, values);
-        addPrefsInputWithHeading_(headings, values, "prefs.tabwidth", iClob(new_InputWidget(5)));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.quoteicon}")));
-        iWidget *quote = new_Widget(); {
-            addRadioButton_(quote, "prefs.quoteicon.1", "${prefs.quoteicon.icon}", "quoteicon.set arg:1");
-            addRadioButton_(quote, "prefs.quoteicon.0", "${prefs.quoteicon.line}", "quoteicon.set arg:0");
-        }
-        addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addDialogToggleGroup_(headings,
-                              values,
-                              "${prefs.boldlink}",
-                              (const char *[]){ "prefs.boldlink.visited",
-                                                "prefs.boldlink.dark",
-                                                "prefs.boldlink.light" },
-                              3);
-        addDialogPadding_(headings, values);
-        addDialogToggle_(headings, values, "${prefs.sideicon}", "prefs.sideicon");
-        addDialogToggle_(headings, values, "${prefs.centershort}", "prefs.centershort");
-        addDialogToggle_(headings, values, "${prefs.collapsepreonload}", "prefs.collapsepreonload");
+    /* Keybindings. */ {
+        iBindingsWidget *bind = new_BindingsWidget();
+        appendFramelessTabPage_Widget(tabs, iClob(bind), keyboard_Icon " ${heading.prefs.keys}", cyan_ColorId, '7', KMOD_PRIMARY);
     }
     /* Network. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, "${heading.prefs.network}", '6', &headings, &values), "prefs.page.network");
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs,
+                                                   network_Icon " ${heading.prefs.network}",
+                                                   blue_ColorId,
+                                                   '8',
+                                                   &headings,
+                                                   &values),
+                     "prefs.page.network");
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.decodeurls}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
         addPrefsInputWithHeading_(headings, values, "prefs.urlsize", iClob(new_InputWidget(10)));
+        addDialogPadding_(headings, values);
         /* Cache size. */ {
             iInputWidget *cache = new_InputWidget(4);
             setSelectAllOnFocus_InputWidget(cache, iTrue);
@@ -3289,17 +3501,14 @@ iWidget *makePreferences_Widget(void) {
                                          resizeToParentHeight_WidgetFlag);
             setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
         }
-        makeTwoColumnHeading_("${heading.prefs.certs}", headings, values);
-        addPrefsInputWithHeading_(headings, values, "prefs.ca.file", iClob(new_InputWidget(0)));
-        addPrefsInputWithHeading_(headings, values, "prefs.ca.path", iClob(new_InputWidget(0)));
         makeTwoColumnHeading_("${heading.prefs.proxies}", headings, values);
         addPrefsInputWithHeading_(headings, values, "prefs.proxy.gemini", iClob(new_InputWidget(0)));
         addPrefsInputWithHeading_(headings, values, "prefs.proxy.gopher", iClob(new_InputWidget(0)));
         addPrefsInputWithHeading_(headings, values, "prefs.proxy.http", iClob(new_InputWidget(0)));
+        makeTwoColumnHeading_("${heading.prefs.certs}", headings, values);
+        addPrefsInputWithHeading_(headings, values, "prefs.ca.file", iClob(new_InputWidget(0)));
+        addPrefsInputWithHeading_(headings, values, "prefs.ca.path", iClob(new_InputWidget(0)));
     }
-    /* Keybindings. */
-    iBindingsWidget *bind = new_BindingsWidget();
-    appendFramelessTabPage_Widget(tabs, iClob(bind), "${heading.prefs.keys}", '7', KMOD_PRIMARY);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     updatePreferencesLayout_Widget(dlg);
     const iMenuItem actions[] = { { "${menu.fonts}", 0, 0, "!open url:about:fonts" },
@@ -3309,7 +3518,7 @@ iWidget *makePreferences_Widget(void) {
     iWidget *buttons = addChild_Widget(
         dlg, iClob(makeDialogButtons_Widget(actions + actOffset, iElemCount(actions) - actOffset)));
     setId_Widget(child_Widget(buttons, 0), "prefs.aboutfonts");
-    setFlags_Widget(findChild_Widget(dlg, "prefs.aboutfonts"), hidden_WidgetFlag, iTrue);
+//    setFlags_Widget(findChild_Widget(dlg, "prefs.aboutfonts"), hidden_WidgetFlag, iTrue);
     addChild_Widget(dlg->root->widget, iClob(dlg));    
     setupSheetTransition_Mobile(dlg, iTrue);
     return dlg;
@@ -3445,7 +3654,7 @@ iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
             setHint_InputWidget(inputs[3], "${hint.dlg.bookmark.notes}");
             addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[4] = new_InputWidget(1)));            
             /* Buttons for special tags. */
-            addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+//            addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
             iWidget *special = addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
             setFlags_Widget(special, collapse_WidgetFlag, iTrue);
             setId_Widget(special, "bmed.special");

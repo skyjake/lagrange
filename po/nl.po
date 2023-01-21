@@ -1,16 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-12-23 11:10+0000\n"
-"Last-Translator: Jop Vernooy <jop@jopv.net>\n"
-"Language-Team: Dutch <http://weblate.skyjake.fi/projects/lagrange/ui/nl/>\n"
-"Language: nl\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 # Link download progress message.
 msgid "doc.fetching"
 msgstr "Ophalen"
@@ -88,12 +75,6 @@ msgstr "Sluiten"
 
 msgid "dlg.default"
 msgstr " Oké "
-
-msgid "toggle.yes"
-msgstr "JA"
-
-msgid "toggle.no"
-msgstr "NEE"
 
 msgid "menu.title.edit"
 msgstr "Bewerken"
@@ -329,9 +310,6 @@ msgstr "%d %b %Y"
 
 msgid "feeds.today"
 msgstr "Vandaag"
-
-msgid "feeds.entry.newtab"
-msgstr "Open artikel in nieuw tabblad"
 
 msgid "feeds.entry.markread"
 msgstr "Markeer als gelezen"
@@ -1691,12 +1669,6 @@ msgstr "NEGEER WAARSCHUWING?"
 msgid "dlg.dismiss.warning"
 msgstr "Negeer waarschuwing"
 
-msgid "heading.fontpack.classic"
-msgstr "DOWNLOAD LETTERTYPEPAKKET"
-
-msgid "dlg.fontpack.classic"
-msgstr "Download lettertypepakket (25 MB)"
-
 msgid "dlg.uploadport.msg"
 msgstr ""
 "Stel de Titan-serverpoort in om te gebruiken voor deze URL. De poort wordt "
@@ -2099,9 +2071,3 @@ msgstr "Dit lettertype is geïnstalleerd in de gebruikerslettertypemap."
 #, c-format
 msgid "dlg.dismiss.ansi"
 msgstr "Wil je permanent de waarschuwing over terminal-emulatie negeren op %s?"
-
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"De lettertypes die vroeger bij de app inbegrepen waren, zijn nu als aparte "
-"download beschikbaar. Wil je nu het \"Classic set\"-lettertypepakket "
-"downloaden?"

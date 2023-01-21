@@ -1,16 +1,3 @@
-msgid ""
-msgstr ""
-"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2022-05-21 14:51+0000\n"
-"Last-Translator: MCMic <come@chilliet.eu>\n"
-"Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
-"Language: fr\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 4.5.1\n"
-
 msgid "menu.quit"
 msgstr "Quitter Lagrange"
 
@@ -54,12 +41,6 @@ msgstr "Version"
 
 msgid "cancel"
 msgstr "Annuler"
-
-msgid "toggle.yes"
-msgstr "OUI"
-
-msgid "toggle.no"
-msgstr "NON"
 
 msgid "menu.title.file"
 msgstr "Fichier"
@@ -194,9 +175,6 @@ msgstr "Propulsé par SDL 2, OpenSSL et ☕️"
 
 msgid "dlg.default"
 msgstr " OK "
-
-msgid "dismiss"
-msgstr "Fermer"
 
 msgid "dlg.message.ok"
 msgstr "Continuer"
@@ -570,9 +548,6 @@ msgstr "Recherche"
 msgid "dlg.feed.entrytype"
 msgstr "Type d’entrée :"
 
-msgid "feeds.entry.newtab"
-msgstr "Ouvrir l'entrée dans un nouvel onglet"
-
 msgid "feeds.entry.openfeed"
 msgstr "Ouvrir la page du flux"
 
@@ -912,9 +887,6 @@ msgstr "Thème clair :"
 msgid "prefs.doctheme.name.gray"
 msgstr "Gris"
 
-msgid "prefs.headingfont"
-msgstr "Police des titres :"
-
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
 
@@ -955,9 +927,6 @@ msgstr "Aucun certificat ni clé privée n'a été trouvé."
 
 msgid "dlg.certimport.notfound.page"
 msgstr "Certificat/clé introuvable sur la page actuelle."
-
-msgid "ident.showuse"
-msgstr "Afficher les utilisations"
 
 msgid "heading.ident.use"
 msgstr "Utilisations de l'identité"
@@ -1241,15 +1210,6 @@ msgstr "Grand 1er paragraphe :"
 msgid "dlg.newident.until"
 msgstr "Valide jusqu’au :"
 
-msgid "lang.ie"
-msgstr "Occidental"
-
-msgid "lang.fi"
-msgstr "Finnois"
-
-msgid "lang.sr"
-msgstr "Serbe"
-
 msgid "dlg.newident.commonname"
 msgstr "Nom commun :"
 
@@ -1284,9 +1244,6 @@ msgstr "Vérifié par une AC"
 msgid "dlg.input.prompt"
 msgstr "Veuillez saisir une entrée pour %s :"
 
-msgid "heading.certwarn"
-msgstr "CERTIFICAT INCONNU"
-
 msgid "dlg.certwarn.different"
 msgstr ""
 "Le certificat reçu est valide mais différent de celui dans lequel nous avons "
@@ -1301,12 +1258,6 @@ msgstr "Traduire la page"
 
 msgid "lang.zh"
 msgstr "Chinois"
-
-msgid "lang.zh.hans"
-msgstr "Chinois (simplifié)"
-
-msgid "lang.zh.hant"
-msgstr "Chinois (traditionnel)"
 
 msgid "heading.bookmark.add"
 msgstr "Ajouter un signet"
@@ -1491,9 +1442,6 @@ msgstr "Diviser la vue…"
 msgid "dlg.save.opendownload"
 msgstr "Ouvrir le fichier téléchargé"
 
-msgid "lang.ia"
-msgstr "Interlingua"
-
 msgid "heading.newident.missing"
 msgstr "Information manquante"
 
@@ -1545,9 +1493,6 @@ msgstr "Licence"
 msgid "gempub.cover.view"
 msgstr "Voir le contenu du Gempub"
 
-msgid "lang.pl"
-msgstr "Polonais"
-
 msgid "link.side.newtab"
 msgstr "Ouvrir le lien dans un nouvel onglet sur le côté"
 
@@ -1566,9 +1511,6 @@ msgstr "Ouverture des liens sur le côté"
 
 msgid "link.side"
 msgstr "Ouvrir le lien sur le côté"
-
-msgid "lang.tok"
-msgstr "Toki Pona"
 
 msgid "prefs.pinsplit"
 msgstr "Épingler un des côtés :"
@@ -1671,9 +1613,6 @@ msgstr "Définir le port"
 msgid "heading.prefs.uitheme"
 msgstr "Interface"
 
-msgid "prefs.userfont"
-msgstr "Police des symboles :"
-
 msgid "keys.split.item"
 msgstr "Menu Diviser la vue :"
 
@@ -1688,9 +1627,6 @@ msgstr "Côté gauche"
 
 msgid "prefs.pinsplit.right"
 msgstr "Coté droit"
-
-msgid "hint.prefs.userfont"
-msgstr "chemin d’une police TrueType"
 
 msgid "prefs.linespacing"
 msgstr "Interligne :"
@@ -1995,12 +1931,6 @@ msgstr "Installer « %s »"
 msgid "fontpack.upgrade"
 msgstr "Mettre à jour « %s » vers la version %d"
 
-msgid "dlg.fontpack.classic.msg"
-msgstr ""
-"Les polices qui étaient auparavant fournies avec l'application sont à "
-"présent disponibles en tant que téléchargement séparé. Souhaitez-vous "
-"télécharger le pack de polices « Classic set » maintenant ?"
-
 msgid "error.glyphs.msg"
 msgstr ""
 "Cette page ne peut pas être affichée en totalité car certains caractères "
@@ -2120,12 +2050,6 @@ msgstr "Installer une police TrueType"
 
 msgid "fontpack.open.fontsdir"
 msgstr "Ouvrir le répertoire des polices utilisateur"
-
-msgid "dlg.fontpack.classic"
-msgstr "Télécharger le pack de polices (25 Mo)"
-
-msgid "heading.fontpack.classic"
-msgstr "Télécharger le pack de polices"
 
 msgid "num.files"
 msgid_plural "num.files.n"

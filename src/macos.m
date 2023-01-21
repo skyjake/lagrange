@@ -208,6 +208,9 @@ static void ignoreImmediateKeyDownEvents_(void) {
 
 @end
 
+static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIndex,
+                                  const iMenuItem *items, size_t n);
+
 /*----------------------------------------------------------------------------------------------*/
 
 @interface MyDelegate : NSResponder<NSApplicationDelegate, NSTouchBarDelegate
@@ -454,29 +457,14 @@ void registerURLHandler_MacOS(void) {
     [handler release];
 }
 
-#if 0
-static iBool isTracking_;
-
-static void trackSwipe_(NSEvent *event) {
-    if (isTracking_) {
-        return;
+static iBool processKeyDownEvent_(NSEvent *event) {
+    if ((event.modifierFlags & NSEventModifierFlagFunction) && (event.keyCode == 0xe)) {
+        /* Globe-E shows the sysetm Character Viewer in recent versions of macOS. */
+        postCommand_App("emojipicker");
+        return iTrue;
     }
-    isTracking_ = iTrue;
-    [event trackSwipeEventWithOptions:NSEventSwipeTrackingLockDirection
-             dampenAmountThresholdMin:-1.0
-                                  max:1.0
-                         usingHandler:^(CGFloat gestureAmount, NSEventPhase phase,
-                                        BOOL isComplete, BOOL *stop) {
-                        printf("TRACK: amount:%f phase:%lu complete:%d\n",
-                               gestureAmount, (unsigned long) phase, isComplete);
-                        fflush(stdout);
-                        if (isComplete) {
-                            isTracking_ = iFalse;
-                        }
-                      }
-    ];
+    return iFalse;
 }
-#endif
 
 static int swipeDir_ = 0;
 static int preventTapGlitch_ = 0;
@@ -488,7 +476,7 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
     const iWindow *win     = NULL; //&get_MainWindow()->base;
     /* If this event belongs to one of the MainWindows, handle it and mark it for that window. 
        If it's for an auxiliary window, let the system handle it. */
-    iConstForEach(PtrArray, i, mainWindows_App()) {
+    iConstForEach(PtrArray, i, regularWindows_App()) {
         if (event.window == nsWindow_(as_Window(i.ptr)->win)) {
             win = i.ptr;
             break;
@@ -606,6 +594,16 @@ void setupApplication_MacOS(void) {
     windowCloseItem.target = myDel;
     windowCloseItem.action = @selector(closeTab);
     
+    /* TODO: translate these on lang.changed */
+    static const iMenuItem macWindowMenuItems_[] = {
+        { "---" },
+        { "${menu.tab.next}", 0, 0, "tabs.next" },
+        { "${menu.tab.prev}", 0, 0, "tabs.prev" },
+        { "${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
+        { "---" },
+    };
+    makeMenuItems_(windowMenu, [myDel menuCommands], 4, macWindowMenuItems_, iElemCount(macWindowMenuItems_));    
+    
     [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskScrollWheel
                                           handler:^NSEvent*(NSEvent *event){
                                             if (event.type == NSEventTypeScrollWheel &&
@@ -613,6 +611,14 @@ void setupApplication_MacOS(void) {
                                                 return nil; /* was eaten */                                                
                                             }
                                             return event;
+                                          }];
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown
+                                          handler:^NSEvent*(NSEvent *event){
+                                              if (event.type == NSEventTypeKeyDown &&
+                                                  processKeyDownEvent_(event)) {
+                                                  return nil; /* was eaten */                                                
+                                              }
+                                              return event;
                                           }];
 #if defined (LAGRANGE_ENABLE_SPARKLE)
     [[SUUpdater sharedUpdater] setDelegate:myDel];
@@ -769,6 +775,14 @@ void removeMenu_MacOS(int atIndex) {
     [appMenu removeItemAtIndex:atIndex];
 }
 
+void removeMenuItems_MacOS(int atIndex, int firstItem, int numItems) {
+    NSApplication *app = [NSApplication sharedApplication];
+    NSMenu *menu = [[app mainMenu] itemAtIndex:atIndex].menu;
+    for (int i = 0; i < numItems; i++) {
+        [menu removeItemAtIndex:firstItem];
+    }        
+}
+
 enum iColorId removeColorEscapes_String(iString *d) {
     enum iColorId color = none_ColorId;
     for (;;) {
@@ -807,12 +821,17 @@ static NSAttributedString *makeAttributedString_(const iString *ansiEscapedText)
 #endif
 
 /* returns the selected item, if any */
-static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iMenuItem *items, size_t n) {
+static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIndex,
+                                  const iMenuItem *items, size_t n) {
+    if (atIndex == 0) {
+        atIndex = menu.numberOfItems;
+    }
+    atIndex = iMin(atIndex, menu.numberOfItems);
     NSMenuItem *selectedItem = nil;
     for (size_t i = 0; i < n && items[i].label; ++i) {
         const char *label = translateCStr_Lang(items[i].label);
         if (equal_CStr(label, "---")) {
-            [menu addItem:[NSMenuItem separatorItem]];
+            [menu insertItem:[NSMenuItem separatorItem] atIndex:atIndex++];
         }
         else {
             const iBool hasCommand = (items[i].command && items[i].command[0]);
@@ -838,7 +857,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iM
             item.attributedTitle = title;
             [title release];
             item.action = (hasCommand ? @selector(postMenuItemCommand:) : nil);
-            [menu addItem:item];
+            [menu insertItem:item atIndex:atIndex++];
             deinit_String(&itemTitle);
             [item setTarget:commands];
             if (isChecked) {
@@ -868,20 +887,31 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, const iM
     return selectedItem;
 }
 
-void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
+void insertMenuItems_MacOS(const char *menuLabel, int atIndex, int firstItemIndex,
+                           const iMenuItem *items, size_t count) {
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;
     NSMenu *appMenu = [app mainMenu];
     menuLabel = translateCStr_Lang(menuLabel);
-    NSMenuItem *mainItem = [appMenu insertItemWithTitle:[NSString stringWithUTF8String:menuLabel]
-                                                 action:nil
-                                          keyEquivalent:@""
-                                                atIndex:atIndex];
-    NSMenu *menu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:menuLabel]];
+    NSMenuItem *mainItem;
+    NSMenu *menu;
+    if (firstItemIndex == 0) {
+        mainItem = [appMenu insertItemWithTitle:[NSString stringWithUTF8String:menuLabel]
+                                         action:nil
+                                  keyEquivalent:@""
+                                        atIndex:atIndex];
+        menu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:menuLabel]];
+        [mainItem setSubmenu:menu];
+    }
+    else {
+        mainItem = [appMenu itemAtIndex:atIndex];
+        menu = mainItem.submenu;
+    }
     [menu setAutoenablesItems:NO];
-    makeMenuItems_(menu, [myDel menuCommands], items, count);
-    [mainItem setSubmenu:menu];
-    [menu release];
+    makeMenuItems_(menu, [myDel menuCommands], firstItemIndex, items, count);
+    if (firstItemIndex == 0) {
+        [menu release];
+    }
 }
 
 void handleCommand_MacOS(const char *cmd) {
@@ -930,7 +960,7 @@ void log_MacOS(const char *msg) {
 void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *items, size_t n) {
     NSMenu *      menu         = [[NSMenu alloc] init];
     MenuCommands *menuCommands = [[MenuCommands alloc] init];
-    iWindow *     window       = as_Window(mainWindow_App());
+    iWindow *     window       = activeWindow_App();
     NSWindow *    nsWindow     = nsWindow_(window->win);
     /* View coordinates are flipped. */
     iBool isCentered = iFalse;
@@ -942,7 +972,7 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
     windowCoord = divf_I2(windowCoord, window->pixelRatio);
     NSPoint screenPoint = [nsWindow convertRectToScreen:(CGRect){ { windowCoord.x, windowCoord.y }, 
 								  { 0, 0 } }].origin;
-    NSMenuItem *selectedItem = makeMenuItems_(menu, menuCommands, items, n);
+    NSMenuItem *selectedItem = makeMenuItems_(menu, menuCommands, 0, items, n);
     [menuCommands setSource:source];
     if (isCentered) {
         NSSize menuSize = [menu size];

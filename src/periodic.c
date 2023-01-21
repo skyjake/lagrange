@@ -107,7 +107,7 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
     iConstForEach(Array, i, &d->commands.values) {
         const iPeriodicCommand *pc = i.value;
         iAssert(isInstance_Object(pc->context, &Class_Widget));
-        iAssert(~flags_Widget(constAs_Widget(pc->context)) & destroyPending_WidgetFlag);
+//        iAssert(~flags_Widget(constAs_Widget(pc->context)) & destroyPending_WidgetFlag);
         iAssert(!contains_PtrSet(&d->pendingRemoval, pc->context));
         iRoot *root = constAs_Widget(pc->context)->root;
         if (root) {
@@ -150,8 +150,9 @@ void deinit_Periodic(iPeriodic *d) {
 }
 
 void add_Periodic(iPeriodic *d, iAny *context, const char *command) {
-    iAssert(isInstance_Object(context, &Class_Widget));
-    iAssert(~flags_Widget(constAs_Widget(context)) & destroyPending_WidgetFlag);
+    iWidget *contextWidget = as_Widget(context);
+    iAssert(~flags_Widget(contextWidget) & destroyPending_WidgetFlag);
+    contextWidget->flags2 |= usedAsPeriodicContext_WidgetFlag2;
     lock_Mutex(d->mutex);
     size_t pos;
     iPeriodicCommand key = { .context = context };

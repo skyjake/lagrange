@@ -47,6 +47,7 @@ void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* re
 void    setTextCStr_LabelWidget     (iLabelWidget *, const char *text);
 void    setCommand_LabelWidget      (iLabelWidget *, const iString *command);
 void    setIcon_LabelWidget         (iLabelWidget *, iChar icon);
+void    setIconColor_LabelWidget    (iLabelWidget *, int color);
 
 iBool   checkIcon_LabelWidget       (iLabelWidget *);
 void    updateSize_LabelWidget      (iLabelWidget *);
