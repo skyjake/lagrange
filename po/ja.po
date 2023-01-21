@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-21 09:41+0000\n"
-"PO-Revision-Date: 2023-01-21 09:41+0000\n"
-"Last-Translator: Griffen Schwiesow <griffen@zipmail.ch>\n"
+"PO-Revision-Date: 2023-01-21 09:45+0000\n"
+"Last-Translator: Seiji Delph <george@quotennial.co.uk>\n"
 "Language-Team: Japanese <http://weblate.skyjake.fi/projects/lagrange/ui/ja/>"
 "\n"
 "Language: ja\n"
@@ -106,7 +106,7 @@ msgstr "タブを閉じるとダウンロードは中止されます。"
 
 # Inline download status message.
 msgid "media.download.complete"
-msgstr "ダウンロードが完了しました。"
+msgstr "ダウンロード完了"
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.title"
