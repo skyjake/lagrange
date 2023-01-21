@@ -45,6 +45,34 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.15" date="2023-01-21">
+            <description>
+                <p>Changes in v1.15:</p>
+                <ul>
+                    <li>Preferences dialog opens as a separate window.</li>
+                    <li>Option `--prefs-sheet`: open Preferences as a sheet like in previous releases.</li>
+                    <li>Reordering tabs: tab buttons can be dragged with the mouse, and tabs can be moved left/right using tab context menu items or keyboard shortcuts.</li>
+                    <li>Move a tab to the other side of a split view (tab context menu).</li>
+                    <li>Move a tab to a new window (tab context menu).</li>
+                    <li>Added a "Window" menu to the menu bar that has actions for manipulating and switching the active window, and duplicating and switching tabs. (On macOS, this menu has already been available.)</li>
+                    <li>Gopher: Option to disable Gemini styling on Gopher menu pages. When disabled, whitespace is not normalized and all non-link lines are presented as regular paragraph text.</li>
+                    <li>Redesigned Preferences dialog with vertical tabs and a new organization of the settings. "Fonts" and "Colors" are removed, and there is a new "Content" tab.</li>
+                    <li>Mouse cursor turns into the I-beam only over selectable text.</li>
+                    <li>Indicate that tab autoreloading is enabled by changing the appearance of the navbar reload button.</li>
+                    <li>GTK: Request dark window theme if the app UI color theme is dark.</li>
+                    <li>Prevent high-resolution mice from flooding event processing with too many motion events and delaying UI refresh.</li>
+                    <li>Updated UI translations.</li>
+                    <li>New Japanese UI translation (13% complete).</li>
+                    <li>Changing the UI scaling factor will now affect all existing and newly created windows.</li>
+                    <li>Possible crash when duplicating a tab.</li>
+                    <li>Issues with event processing when multiple windows are open.</li>
+                    <li>Workaround for a hang when running many parallel requests with MIME filter hooks.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.15.0</url>
+        </release>
         <release version="1.14.2" date="2023-01-11">
             <description>
                 <p>Changes in v1.14.2:</p>
