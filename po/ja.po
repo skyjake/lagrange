@@ -4,7 +4,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-21 09:41+0000\n"
 "PO-Revision-Date: 2023-01-21 09:45+0000\n"
-"Last-Translator: Seiji Delph <george@quotennial.co.uk>\n"
+"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Japanese <http://weblate.skyjake.fi/projects/lagrange/ui/ja/>"
 "\n"
 "Language: ja\n"
@@ -258,10 +258,10 @@ msgstr "ページのリンクをコピー"
 
 #, c-format
 msgid "doc.archive"
-msgstr "%sは、圧縮されたアーカイブです。"
+msgstr "%sは圧縮されたアーカイブです。"
 
 msgid "doc.archive.view"
-msgstr "アーカイブの内容を見る"
+msgstr "アーカイブの内容を表示"
 
 msgid "error.slowdown.msg"
 msgstr "サーバーがリクエスト率を制限している。 お待ちください…"
@@ -348,3 +348,7 @@ msgstr "表示"
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
 msgstr "ダウンロードに保存"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "ファイルに保存"
