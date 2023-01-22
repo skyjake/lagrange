@@ -1,3 +1,19 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2023-01-22 13:09+0000\n"
+"PO-Revision-Date: 2023-01-22 13:09+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
 msgid "about.logo"
 msgstr "ASCII-графика: слово «Lagrange» крупным шрифтом"
 
@@ -765,7 +781,7 @@ msgid "heading.prefs.widelayout"
 msgstr "Широкий макет"
 
 msgid "heading.prefs.style"
-msgstr "Стиль"
+msgstr "Стиль страницы"
 
 msgid "heading.prefs.userinterface"
 msgstr "Пользовательский интерфейс"
@@ -786,7 +802,7 @@ msgid "prefs.smoothscroll"
 msgstr "Плавная прокрутка:"
 
 msgid "prefs.imageloadscroll"
-msgstr "Загрузка изображений при прокрутке:"
+msgstr "Загружать следующее изображение при прокрутке:"
 
 msgid "prefs.hidetoolbarscroll"
 msgstr "Скрыть панель инструментов при прокрутке:"
@@ -795,7 +811,7 @@ msgid "prefs.ostheme"
 msgstr "Использовать системную тему:"
 
 msgid "prefs.theme"
-msgstr "Тема:"
+msgstr "Тема пользовательского интерфейса:"
 
 msgid "prefs.theme.black"
 msgstr "Чёрная"
@@ -825,10 +841,10 @@ msgid "prefs.customframe"
 msgstr "Пользовательские рамки окна:"
 
 msgid "prefs.retainwindow"
-msgstr "Сохранять местоположение:"
+msgstr "Сохранять местоположение окна:"
 
 msgid "prefs.sideicon"
-msgstr "Иконка капсулы:"
+msgstr "Иконка капсулы слева:"
 
 msgid "prefs.doctheme.dark"
 msgstr "Тёмная тема:"
@@ -894,7 +910,7 @@ msgid "prefs.biglede"
 msgstr "Большой 1-й абзац:"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Переносить обычный текст:"
+msgstr "Переносить длинные строки обычного текста:"
 
 msgid "prefs.decodeurls"
 msgstr "Декодировать URL:"
@@ -1397,7 +1413,7 @@ msgstr "Показать все загрузки"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Открывать архивы:"
+msgstr "Открывать index.gmi в ZIP архивах:"
 
 msgid "gempub.meta.revdate"
 msgstr "Дата последней ревизии"
@@ -1867,7 +1883,7 @@ msgid "dlg.feed.ignoreweb"
 msgstr "Игнорировать HTTP(S)-ссылки:"
 
 msgid "prefs.font.ui"
-msgstr "Интерфейс:"
+msgstr "Шрифт пользовательского интерфейса:"
 
 msgid "prefs.font.heading"
 msgstr "Заголовки:"
@@ -1918,10 +1934,10 @@ msgid "prefs.boldlink.visited"
 msgstr "Посещённые адреса"
 
 msgid "prefs.gemtext.ansi"
-msgstr "Последовательности ANSI:"
+msgstr "Последовательности ANSI в Gemtext:"
 
 msgid "prefs.font.smooth"
-msgstr "Сглаживание:"
+msgstr "Сглаживание шрифта:"
 
 msgid "prefs.gemtext.ansi.fg"
 msgstr "Цвет текста"
@@ -1930,7 +1946,7 @@ msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Начертание шрифта"
 
 msgid "prefs.font.warnmissing"
-msgstr "Предупреждения о символах:"
+msgstr "Предупреждать об отсутствующих символах:"
 
 msgid "fontpack.install.ttf"
 msgstr "Установить шрифт TrueType"
@@ -2029,7 +2045,7 @@ msgid "prefs.gemtext.ansi.bg"
 msgstr "Цвет фона"
 
 msgid "prefs.time.24h"
-msgstr "24-часовой формат времени"
+msgstr "24-часовой формат времени:"
 
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
@@ -2420,3 +2436,51 @@ msgstr "Текущий каталог"
 
 msgid "ident.unset"
 msgstr "Убрать привязку"
+
+msgid "menu.title.window"
+msgstr "Окно"
+
+msgid "menu.window.min"
+msgstr "Свернуть окно"
+
+msgid "menu.window.max"
+msgstr "Развернуть окно"
+
+msgid "menu.window.full"
+msgstr "Полноэкранный режим"
+
+msgid "prefs.swipe.edge"
+msgstr "Свайп от края:"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "Автоопределение стилей меню Gopher:"
+
+msgid "menu.tab.next"
+msgstr "Показать следующую вкладку"
+
+msgid "menu.tab.prev"
+msgstr "Показать предыдущую вкладку"
+
+msgid "menu.movetab.split"
+msgstr "Переместить вкладку на другую сторону"
+
+msgid "menu.movetab.newwindow"
+msgstr "Переместить вкладку в новое окно"
+
+msgid "heading.prefs.appearance"
+msgstr "Внешний вид"
+
+msgid "heading.prefs.layout"
+msgstr "Макет страницы"
+
+msgid "heading.prefs.content"
+msgstr "Содержание"
+
+msgid "menu.movetab.left"
+msgstr "Передвинуть вкладку влево"
+
+msgid "menu.movetab.right"
+msgstr "Передвинуть вкладку вправо"
+
+msgid "prefs.swipe.page"
+msgstr "Свайп на странице:"
