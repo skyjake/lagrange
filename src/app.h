@@ -83,7 +83,6 @@ const iString *downloadDir_App  (void);
 const iString *debugInfo_App    (void);
 
 int         run_App                     (int argc, char **argv);
-void        rootOrder_App               (iRoot *roots[2]); /* TODO: max roots? */
 void        processEvents_App           (enum iAppEventMode mode);
 iBool       handleCommand_App           (const char *cmd);
 void        refresh_App                 (void);
@@ -145,12 +144,12 @@ iMainWindow *newMainWindow_App  (void);
 const iPtrArray *mainWindows_App(void);
 const iPtrArray *regularWindows_App(void);
 iMainWindow *    mainWindow_App (void); /* currently active main window */
-
 void        addExtraWindow_App  (iWindow *extra);
 void        removeExtraWindow_App(iWindow *extra);
 void        addPopup_App        (iWindow *popup);
 void        removePopup_App     (iWindow *popup);
 void        closePopups_App     (iBool doForce);
+iWindow *   findWindow_App      (int windowType, const char *widgetId);
 
 void        postRefresh_App     (void);
 void        postCommand_Root    (iRoot *, const char *command);

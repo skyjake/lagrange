@@ -2487,26 +2487,17 @@ void postCommandf_App(const char *command, ...) {
     deinit_Block(&chars);
 }
 
-void rootOrder_App(iRoot *roots[2]) {
-    const iWindow *win = get_Window();
-    if (win) {
-        roots[0] = win->keyRoot;
-        roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
-    }
-    else {
-        roots[0] = roots[1] = NULL;
-    }
-}
-
 iAny *findWidget_App(const char *id) {
     if (!*id) return NULL;
-    iRoot *order[2];
-    rootOrder_App(order);
-    iForIndices(i, order) {
-        if (order[i]) {
-            iAny *found = findChild_Widget(order[i]->widget, id);
-            if (found) {
-                return found;
+    iConstForEach(PtrArray, w, regularWindows_App()) {
+        iRoot *order[2];
+        rootOrder_Window(w.ptr, order);
+        iForIndices(i, order) {
+            if (order[i]) {
+                iAny *found = findChild_Widget(order[i]->widget, id);
+                if (found) {
+                    return found;
+                }
             }
         }
     }
@@ -2613,6 +2604,24 @@ void addExtraWindow_App(iWindow *extra) {
 void removeExtraWindow_App(iWindow *extra) {
     iApp *d = &app_;
     removeOne_PtrArray(&d->extraWindows, extra);
+}
+
+iWindow *findWindow_App(int type, const char *widgetId) {
+    iApp *d = &app_;
+    iConstForEach(PtrArray,
+                  i,
+                  type == popup_WindowType   ? &d->popupWindows
+                  : type == extra_WindowType ? &d->extraWindows
+                                             : &d->mainWindows) {
+        iWindow *win = i.ptr;
+        iForIndices(r, win->roots) {
+            iRoot *root = win->roots[r];
+            if (root && findChild_Widget(root->widget, widgetId)) {
+                return win;
+            }
+        }
+    }
+    return NULL;
 }
 
 iMimeHooks *mimeHooks_App(void) {
@@ -4268,7 +4277,15 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "preferences")) {
+    else if (equal_Command(cmd, "preferences")) {        
+        /* Preferences may already be open. */ {
+            iWindow *win = findWindow_App(extra_WindowType, "prefs");
+            if (win) {
+                SDL_ShowWindow(win->win);
+                SDL_RaiseWindow(win->win);
+                return iTrue;
+            }
+        }
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.strings[downloadDir_PrefsString]);

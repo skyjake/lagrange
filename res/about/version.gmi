@@ -7,6 +7,8 @@
 # Release notes
 
 ## 1.15.1
+* Fixed opening multiple Preferences windows at the same time.
+* Fixed the Preferences window missing a window icon.
 
 ## 1.15
 New features:

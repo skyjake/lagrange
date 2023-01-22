@@ -824,6 +824,16 @@ iRoot *otherRoot_Window(const iWindow *d, iRoot *root) {
     return root == d->roots[0] && d->roots[1] ? d->roots[1] : d->roots[0];
 }
 
+void rootOrder_Window(const iWindow *d, iRoot *roots[2]) {
+    if (d) {
+        roots[0] = d->keyRoot;
+        roots[1] = (roots[0] == d->roots[0] ? d->roots[1] : d->roots[0]);
+    }
+    else {
+        roots[0] = roots[1] = NULL;
+    }
+}
+
 static void invalidate_Window_(iAnyWindow *d, iBool forced) {
     iWindow *w = as_Window(d);
     if (w && (!w->isInvalidated || forced)) {
@@ -1413,7 +1423,7 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
     }
     iBool wasUsed = iFalse;
     iRoot *order[2];
-    rootOrder_App(order);
+    rootOrder_Window(d, order);
     iForIndices(i, order) {
         iRoot *root = order[i];
         if (root) {
