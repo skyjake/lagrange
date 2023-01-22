@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-19 04:46+0000\n"
-"PO-Revision-Date: 2023-01-22 13:09+0000\n"
+"PO-Revision-Date: 2023-01-22 15:32+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -263,8 +263,8 @@ msgstr "Fidi"
 #, c-format
 msgid "dlg.import.add"
 msgid_plural "dlg.import.add.n"
-msgstr[0] "%Aldoni legosignon"
-msgstr[1] "%Aldoni %d legosignojn"
+msgstr[0] "%sAldoni legosignon"
+msgstr[1] "%sAldoni %d legosignojn"
 
 msgid "pageinfo.cert.status"
 msgstr "Stato de atestilo:"
@@ -1179,3 +1179,21 @@ msgstr "Malatenti HTTP(S) ligilojn:"
 
 msgid "menu.title.window"
 msgstr "Fenestro"
+
+msgid "dlg.bookmark.notes"
+msgstr "Notoj:"
+
+msgid "keys.scroll.down"
+msgstr "Rulumi malsupren"
+
+msgid "heading.prefs.appearance"
+msgstr "Aspekto"
+
+msgid "heading.prefs.content"
+msgstr "Enhavo"
+
+msgid "heading.bookmark.tags"
+msgstr "Konduto"
+
+msgid "keys.scroll.up"
+msgstr "Rulumi supren"
