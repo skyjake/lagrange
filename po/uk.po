@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 10:53+0000\n"
-"PO-Revision-Date: 2023-01-22 10:53+0000\n"
-"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"PO-Revision-Date: 2023-01-22 13:09+0000\n"
+"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
 "Language: uk\n"
@@ -1415,7 +1415,7 @@ msgid "prefs.retainwindow"
 msgstr "Зберігати розташування вікна:"
 
 msgid "prefs.sideicon"
-msgstr "Значок капсули зліва:"
+msgstr "Значок капсули ліворуч:"
 
 msgid "prefs.doctheme.light"
 msgstr "Світла тема:"
@@ -1631,7 +1631,7 @@ msgid "prefs.biglede"
 msgstr "Великий 1-й абзац:"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Переносити простий текст:"
+msgstr "Переносити довгі рядки простого тексту:"
 
 msgid "prefs.decodeurls"
 msgstr "Декодувати URL:"
@@ -1977,7 +1977,7 @@ msgid "prefs.boldlink.visited"
 msgstr "Відвідані"
 
 msgid "prefs.gemtext.ansi"
-msgstr "Керівні символи ANSI:"
+msgstr "Керівні символи ANSI в Gemtext:"
 
 msgid "prefs.gemtext.ansi.fg"
 msgstr "Колір тексту"
@@ -2488,10 +2488,34 @@ msgid "heading.prefs.appearance"
 msgstr "Зовнішній вигляд"
 
 msgid "heading.prefs.content"
-msgstr "Зміст"
+msgstr "Вміст"
 
 msgid "menu.tab.next"
 msgstr "Показати наступну вкладку"
 
 msgid "menu.tab.prev"
 msgstr "Показати попередню вкладку"
+
+msgid "menu.window.min"
+msgstr "Згорнути"
+
+msgid "menu.window.max"
+msgstr "Розгорнути"
+
+msgid "heading.prefs.layout"
+msgstr "Макет сторінки"
+
+msgid "menu.movetab.left"
+msgstr "Зрушити вкладку ліворуч"
+
+msgid "menu.movetab.right"
+msgstr "Зрушити вкладку праворуч"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "Автовизначення стилю меню Gopher:"
+
+msgid "menu.movetab.split"
+msgstr "Зрушити вкладку на інший бік"
+
+msgid "menu.movetab.newwindow"
+msgstr "Зрушити вкладку до нового вікна"
