@@ -86,15 +86,16 @@ static const iMenuItem desktopNavMenuItems_[] = {
 
 static const iMenuItem tabletNavMenuItems_[] = {
     { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
-    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
+    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
+    { "---" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "${menu.closetab.other}", 0, 0, "tabs.close toleft:1 toright:1" },
+    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
+    { leftHalf_Icon " ${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
     { rightHalf_Icon " ${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
     { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
-    { "---" },
-    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { "---" },
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
@@ -102,12 +103,13 @@ static const iMenuItem tabletNavMenuItems_[] = {
 
 static const iMenuItem phoneNavMenuItems_[] = {
     { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
-    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
+    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
+    { "---" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "${menu.closetab.other}", 0, 0, "tabs.close toleft:1 toright:1" },
+    { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { "---" },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
-    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { "---" },
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
@@ -1741,7 +1743,7 @@ void createUserInterface_Root(iRoot *d) {
         addChildFlags_Widget(div, iClob(mainStack), resizeChildren_WidgetFlag | expand_WidgetFlag |
                                                         unhittable_WidgetFlag);
         iWidget *docTabs = makeTabs_Widget(mainStack);
-        setId_Widget(docTabs, "doctabs");        
+        setId_Widget(docTabs, "doctabs");
         setBackgroundColor_Widget(docTabs, uiBackground_ColorId);
 //        setTabBarPosition_Widget(docTabs, prefs_App()->bottomTabBar);
         iDocumentWidget *doc;
