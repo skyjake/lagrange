@@ -6184,12 +6184,12 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         iWindow * win    = get_Window();
         const int gap    = 4 * win->pixelRatio; /* not dependent on UI scaling; cf. Home indicator */
         const int indGap = 6 * gap;
-        const int indMar = 5 * gap / 3;
+        const int indMar = 6 * gap / 3;
         const int indHgt = sidebarSwipeAreaHeight_DocumentWidget_(d) - 2 * indGap;
         const int indPos = prefs_App()->bottomNavBar
                                 ? (bottom_Rect(bounds) - indHgt - indGap)
                                 : (top_Rect(bounds) + indGap);
-        const int indThick = gap_UI;
+        const int indThick = 5 * gap / 3;
         iRect indRect = (iRect){ init_I2(left_Rect(bounds) + indMar, indPos),
                                  init_I2(indThick, indHgt) };
         iRoot *leftSideRoot  = win->roots[0];
@@ -6199,6 +6199,8 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             findChild_Widget(leftSideRoot->widget, "sidebar"),
             findChild_Widget(rightSideRoot->widget, "sidebar2")
         };
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+        p.alpha = isDark_ColorTheme(prefs_App()->theme) ? 0x60 : 0x80;
         if (w->root == leftSideRoot && !isVisible_Widget(sbar[0])) {
             fillRect_Paint(&p, indRect, tmQuoteIcon_ColorId);
         }
@@ -6206,6 +6208,8 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             indRect.pos.x = right_Rect(bounds) - indMar - indThick;
             fillRect_Paint(&p, indRect, tmQuoteIcon_ColorId);
         }
+        p.alpha = 0xff;
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     /* Pull action indicator. */
     if (deviceType_App() != desktop_AppDeviceType) {
