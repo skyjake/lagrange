@@ -250,7 +250,8 @@ static iBool isSlidingSheet_SidebarWidget_(const iSidebarWidget *d) {
 }
 
 static iBool isEdgeSwipable_SidebarWidget_(const iSidebarWidget *d) {
-    return deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App();
+    return prefs_App()->edgeSwipe &&
+        (deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App());
 }
 
 static void setMobileEditMode_SidebarWidget_(iSidebarWidget *d, iBool editing) {
@@ -1978,17 +1979,18 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (isEdgeSwipable_SidebarWidget_(d) && equal_Command(cmd, "edgeswipe.moved") &&
+        else if (isEdgeSwipable_SidebarWidget_(d) && hasAffinity_Touch(w) &&
+                 equal_Command(cmd, "edgeswipe.moved") &&
                  argLabel_Command(cmd, "edge") && !isVisible_Widget(w)) {
             const int side = argLabel_Command(cmd, "side");
             const int delta = arg_Command(cmd);
-            if (d->side == left_SidebarSide && delta > 0) {
+            if (d->side == left_SidebarSide && side == 1 && delta > 0) {
                 postCommand_Widget(w, "sidebar.toggle");
             }
-            else if (d->side == right_SidebarSide && delta < 0) {
+            else if (d->side == right_SidebarSide && side == 2 && delta < 0) {
                 postCommand_Widget(w, "sidebar2.toggle");
             }
-            return iFalse;
+            return iTrue;
         }
         else if (isEdgeSwipable_SidebarWidget_(d) && equal_Command(cmd, "listswipe.moved") &&
                  isVisible_Widget(w) && contains_Widget(w, coord_Command(cmd))) {

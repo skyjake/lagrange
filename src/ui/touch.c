@@ -597,8 +597,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         if (touch && touch->edge) {
             clear_Array(d->moms);
             pushPos_Touch_(touch, pos, nowTime);
-            const char *cmd = format_CStr("edgeswipe.moved arg:%d side:%d edge:%d id:%llu",
+            const char *cmd = format_CStr("edgeswipe.moved arg:%d y:%d side:%d edge:%d id:%llu",
                                           (int) (x_F3(pos) - x_F3(touch->startPos)),
+                                          (int) y_F3(pos),
                                           touch->edge,
                                           touch->edge,
                                           touch->id);
@@ -912,6 +913,17 @@ void transferAffinity_Touch(iWidget *src, iWidget *dst) {
             touch->affinity = dst;
         }
     }
+}
+
+iBool hasAffinity_Touch(const iWidget *widget) {
+    iTouchState *d = touchState_();
+    iConstForEach(Array, i, d->touches) {
+        const iTouch *touch = i.value;
+        if (touch->affinity == widget) {
+            return iTrue;
+        }
+    }
+    return iFalse;
 }
 
 iInt2 latestPosition_Touch(void) {
