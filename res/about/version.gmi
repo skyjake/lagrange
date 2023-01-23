@@ -9,6 +9,7 @@
 ## 1.15.1
 * Fixed opening multiple Preferences windows at the same time.
 * Fixed the Preferences window missing a window icon.
+* Footer information moved out of the margin area and under the page content.
 
 ## 1.15
 New features:
