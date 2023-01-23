@@ -6181,7 +6181,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     /* Sidebar swipe indicator. */
     if (deviceType_App() == tablet_AppDeviceType && prefs_App()->edgeSwipe &&
         !isAffectedByVisualOffset_Widget(w) && ~flags_Widget(w) & dragged_WidgetFlag) {
-        iWindow *win = get_Window();
+        iWindow * win    = get_Window();
         const int gap    = 4 * win->pixelRatio; /* not dependent on UI scaling; cf. Home indicator */
         const int indGap = 6 * gap;
         const int indMar = 5 * gap / 3;
