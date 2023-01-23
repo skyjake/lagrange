@@ -1887,8 +1887,8 @@ void createUserInterface_Root(iRoot *d) {
     updateNavBarActions_(navBar);
     updatePadding_Root(d);
     /* Global context menus. */ {
-        iWidget *tabsMenu = makeMenu_Widget(
-            root,
+        iArray *tabsItems = collectNew_Array(sizeof(iMenuItem));
+        pushBackN_Array(tabsItems,
             (iMenuItem[]){
                 { close_Icon " ${menu.closetab}", 0, 0, "tabs.close" },
                 { copy_Icon " ${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
@@ -1898,11 +1898,15 @@ void createUserInterface_Root(iRoot *d) {
                 { barRightArrow_Icon " ${menu.closetab.right}", 0, 0, "tabs.close toright:1" },
                 { "---" },
                 { leftAngle_Icon " ${menu.movetab.left}", 0, 0, "tabs.move arg:-1" },
-                { rightAngle_Icon " ${menu.movetab.right}", 0, 0, "tabs.move arg:1" },
-                { "${menu.movetab.split}", 0, 0, "tabs.swap" },
-                { "${menu.movetab.newwindow}", 0, 0, "tabs.swap newwindow:1" },
-            },
-            11);
+                { rightAngle_Icon " ${menu.movetab.right}", 0, 0, "tabs.move arg:1" } },
+        9);
+        if (deviceType_App() != phone_AppDeviceType) {
+            pushBack_Array(tabsItems, &(iMenuItem){ "${menu.movetab.split}", 0, 0, "tabs.swap" });
+        }
+        if (deviceType_App() == desktop_AppDeviceType) {
+            pushBack_Array(tabsItems, &(iMenuItem){ "${menu.movetab.newwindow}", 0, 0, "tabs.swap newwindow:1" });
+        }
+        iWidget *tabsMenu = makeMenu_Widget(root, data_Array(tabsItems), size_Array(tabsItems));
         /* TODO: .newwindow is only for desktop; .split is not for phone */
         iWidget *barMenu =
             makeMenu_Widget(root,
