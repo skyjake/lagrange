@@ -1803,6 +1803,9 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         /* Document tabs can be reordered.
            TODO: Maybe not hardcode the parent ID here? Could check a flag on `tabs`. */
         button->flags2 |= siblingOrderDraggable_WidgetFlag2;
+        if (isMobile_Platform()) {
+            button->flags |= touchDrag_WidgetFlag;
+        }
     }
     if (prefs_App()->bottomTabBar) {
         setNoBottomFrame_LabelWidget((iLabelWidget *) button, iTrue);
