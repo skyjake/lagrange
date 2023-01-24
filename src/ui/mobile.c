@@ -1194,3 +1194,51 @@ int bottomSafeInset_Mobile(void) {
     return 0;
 #endif
 }
+
+#if !defined (iPlatformAppleMobile)
+iBool isSupported_SystemMenu(void) {
+    return iFalse;
+}
+
+iBool makePopup_SystemMenu(iWidget *owner) {
+    iUnused(owner);
+    return iFalse;
+}
+
+void setRect_SystemMenu(iWidget *owner, iRect anchorRect) {
+    iUnused(owner, anchorRect);
+}
+
+void setHidden_SystemMenu(iWidget *owner, iBool hide) {
+    iUnused(owner, hide);
+}
+
+void updateItems_SystemMenu(iWidget *owner, const iMenuItem *items, size_t n) {
+    iUnused(owner);
+}
+
+void releasePopup_SystemMenu(iWidget *owner) {
+    iUnused(owner);
+}
+#endif /* !iPlatformAppleMobile */
+
+void updateAfterBoundsChange_SystemMenu(iWidget *owner) {
+    iAssert(isSupported_SystemMenu());
+    //printf("updating bounds of sysmenu owner %p\n", owner);
+    iAssert(flags_Widget(owner) & nativeMenu_WidgetFlag);
+    iWidget *parent = parent_Widget(owner);
+    if (isInstance_Object(parent, &Class_LabelWidget)) {
+        if (!isVisible_Widget(parent) || isDisabled_Widget(parent) ||
+            /* other focus root blocks the parent? */
+            focusRoot_Widget(parent) != focusRoot_Widget(root_Widget(parent))) {
+            /* TODO: is this too much tree-walking to occur after every change to the bounds? */
+            setHidden_SystemMenu(owner, iTrue);
+        }
+        else {
+            setRect_SystemMenu(owner, bounds_Widget(parent));
+        }
+    }
+    else {
+        printf(" --- non-label parent for sysmenu %p !!\n", owner);
+    }
+}

@@ -783,20 +783,6 @@ void removeMenuItems_MacOS(int atIndex, int firstItem, int numItems) {
     }        
 }
 
-enum iColorId removeColorEscapes_String(iString *d) {
-    enum iColorId color = none_ColorId;
-    for (;;) {
-        const char *esc = strchr(cstr_String(d), '\v');
-        if (esc) {
-            const char *endp;
-            color = parseEscape_Color(esc, &endp);
-            remove_Block(&d->chars, esc - cstr_String(d), endp - esc);
-        }
-        else break;
-    }
-    return color;
-}
-
 static NSString *cleanString_(const iString *ansiEscapedText) {
     iString mod;
     initCopy_String(&mod, ansiEscapedText);

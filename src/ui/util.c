@@ -967,34 +967,50 @@ static void deleteMenuItems_(iArray *items) {
 }
 
 void releaseNativeMenu_Widget(iWidget *d) {
-#if defined (LAGRANGE_MAC_CONTEXTMENU)
-    iArray *items = userData_Object(d);
-    if (items) {
-        iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
-        iAssert(items);
-        deleteMenuItems_(items);
-        setUserData_Object(d, NULL);
+    if (flags_Widget(d) & nativeMenu_WidgetFlag) {
+        iArray *items = userData_Object(d);
+        if (items) {
+            iAssert(items);
+            releasePopup_SystemMenu(d);
+            deleteMenuItems_(items);
+            setUserData_Object(d, NULL);
+        }
     }
-#else
-    iUnused(d);
+}
+
+void updateSystemMenuFromNativeItems_Widget(iWidget *dropButtonOrMenu) {
+# if defined (iPlatformAppleMobile)
+    iWidget *menu = dropButtonOrMenu;
+    if (~flags_Widget(dropButtonOrMenu) & nativeMenu_WidgetFlag) {
+        menu = findChild_Widget(dropButtonOrMenu, "menu");
+        if (!menu) {
+            return;
+        }
+    }
+    iAssert(menu);
+    const iArray *items = userData_Object(menu);
+    iAssert(flags_Widget(menu) & nativeMenu_WidgetFlag);
+    iAssert(items);
+    updateItems_SystemMenu(menu, constData_Array(items), size_Array(items));
 #endif
 }
 
 void setNativeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
-#if defined (LAGRANGE_MAC_CONTEXTMENU)
+#if defined (LAGRANGE_NATIVE_MENU)
     iAssert(flags_Widget(menu) & nativeMenu_WidgetFlag);
     releaseNativeMenu_Widget(menu);
     setUserData_Object(menu, deepCopyMenuItems_(menu, items, n));
     /* Keyboard shortcuts still need to triggerable via the menu, although the items don't exist. */ {
         releaseChildren_Widget(menu);
-        for (size_t i = 0; i < n; i++) {
+        for (size_t i = 0; i < n && items[i].label; i++) {
             const iMenuItem *item = &items[i];
             if (item->key) {
                 addAction_Widget(menu, item->key, item->kmods, item->command);
             }
         }
     }
-#endif    
+    updateSystemMenuFromNativeItems_Widget(menu);
+#endif
 }
 
 iWidget *parentMenu_Widget(iWidget *menuItem) {
@@ -1012,14 +1028,24 @@ iWidget *parentMenu_Widget(iWidget *menuItem) {
 }
 
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
+    return makeMenuFlags_Widget(parent, items, n, iFalse);
+}
+
+iWidget *makeMenuFlags_Widget(iWidget *parent, const iMenuItem *items, size_t n, iBool allowNative) {
     iWidget *menu = new_Widget();
-#if defined (LAGRANGE_MAC_CONTEXTMENU)
-    setFlags_Widget(menu, hidden_WidgetFlag | nativeMenu_WidgetFlag, iTrue);
-    addChild_Widget(parent, menu);
-    iRelease(menu); /* owned by parent now */
-    setUserData_Object(menu, NULL);
-    setNativeMenuItems_Widget(menu, items, n);
-#else
+#if defined (LAGRANGE_NATIVE_MENU)
+    if (isDesktop_Platform() || (allowNative && isSupported_SystemMenu())) {
+        setFlags_Widget(menu, hidden_WidgetFlag | nativeMenu_WidgetFlag, iTrue);
+        addChild_Widget(parent, menu);
+        iRelease(menu); /* owned by parent now */
+        setUserData_Object(menu, NULL);
+        setNativeMenuItems_Widget(menu, items, n);
+        if (isAppleMobile_Platform() && makePopup_SystemMenu(menu)) {
+            updateItems_SystemMenu(menu, items, n);
+        }
+        return menu;
+    }
+#endif
     /* Non-native custom popup menu. This may still be displayed inside a separate window. */
     setDrawBufferEnabled_Widget(menu, iTrue);
     setFrameColor_Widget(menu, uiSeparator_ColorId);
@@ -1045,7 +1071,6 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *cancel = addAction_Widget(menu, SDLK_ESCAPE, 0, "cancel");
     setId_Widget(cancel, "menu.cancel");
     setFlags_Widget(cancel, disabled_WidgetFlag, iTrue);
-#endif
     return menu;
 }
 
@@ -1144,6 +1169,7 @@ void setMenuItemLabel_Widget(iWidget *menu, const char *command, const char *new
                 break;
             }
         }
+        updateSystemMenuFromNativeItems_Widget(menu);
     }
     else {
         iLabelWidget *menuItem = findMenuItem_Widget(menu, command);
@@ -1167,6 +1193,7 @@ void setMenuItemLabelByIndex_Widget(iWidget *menu, size_t index, const char *new
         iAssert(items);
         iAssert(index < size_Array(items));
         setLabel_NativeMenuItem(at_Array(items, index), newLabel);
+        updateSystemMenuFromNativeItems_Widget(menu);
     }
     else {
         iLabelWidget *menuItem = child_Widget(menu, index);
@@ -1196,12 +1223,15 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     const iBool postCommands  = (menuOpenFlags & postCommands_MenuOpenFlags) != 0;
     const iBool isMenuFocused = ((menuOpenFlags & setFocus_MenuOpenFlags) ||
                                  focus_Widget() == parent_Widget(d));
-#if defined (LAGRANGE_MAC_CONTEXTMENU)
-    const iArray *items = userData_Object(d);
-    iAssert(flags_Widget(d) & nativeMenu_WidgetFlag);
-    iAssert(items);
-    showPopupMenu_MacOS(d, windowCoord, constData_Array(items), size_Array(items));
-#else
+#if defined (iPlatformAppleDesktop)
+    if (flags_Widget(d) & nativeMenu_WidgetFlag) {
+        /* Open a native macOS menu. */
+        const iArray *items = userData_Object(d);
+        iAssert(items);
+        showPopupMenu_MacOS(d, windowCoord, constData_Array(items), size_Array(items));
+        return;
+    }
+#endif
     const iRect rootRect        = rect_Root(d->root);
     const iInt2 rootSize        = rootRect.size;
     const iBool isPhone         = (deviceType_App() == phone_AppDeviceType);
@@ -1365,7 +1395,6 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         postCommand_Widget(d, "menu.opened");
     }
     setupMenuTransition_Mobile(d, iTrue);
-#endif
     if (isMenuFocused) {
         iForEach(ObjectList, i, children_Widget(d)) {
             if (flags_Widget(i.object) & focusable_WidgetFlag) {
@@ -1472,6 +1501,7 @@ iWidget *findUserData_Widget(iWidget *d, void *userData) {
 void setMenuItemDisabled_Widget(iWidget *menu, const char *command, iBool disable) {
     if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
         setDisabled_NativeMenuItem(findNativeMenuItem_Widget(menu, command), disable);
+        updateSystemMenuFromNativeItems_Widget(menu);
     }
     else {
         iLabelWidget *item = findMenuItem_Widget(menu, command);
@@ -1488,6 +1518,7 @@ void setMenuItemDisabledByIndex_Widget(iWidget *menu, size_t index, iBool disabl
     }
     if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
         setDisabled_NativeMenuItem(at_Array(userData_Object(menu), index), disable);
+        updateSystemMenuFromNativeItems_Widget(menu);
     }
     else {
         setFlags_Widget(child_Widget(menu, index), disabled_WidgetFlag, disable);
@@ -1515,7 +1546,7 @@ int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
 
 iLabelWidget *makeMenuButton_LabelWidget(const char *label, const iMenuItem *items, size_t n) {
     iLabelWidget *button = new_LabelWidget(label, "menu.open");
-    iWidget *menu = makeMenu_Widget(as_Widget(button), items, n);
+    iWidget *menu = makeMenuFlags_Widget(as_Widget(button), items, n, iTrue /* allow native */);
     setFrameColor_Widget(menu, uiBackgroundSelected_ColorId);
     setId_Widget(menu, "menu");
     return button;
@@ -1562,6 +1593,7 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
                                        collectNewCStr_String(item->label))));
             checkIcon_LabelWidget(dropButton);
         }
+        updateSystemMenuFromNativeItems_Widget(menu);
         return;
     }
     iForEach(ObjectList, i, children_Widget(menu)) {
@@ -2797,6 +2829,20 @@ iChar removeIconPrefix_String(iString *d) {
         return icon;
     }
     return 0;
+}
+
+enum iColorId removeColorEscapes_String(iString *d) {
+    enum iColorId color = none_ColorId;
+    for (;;) {
+        const char *esc = strchr(cstr_String(d), '\v');
+        if (esc) {
+            const char *endp;
+            color = parseEscape_Color(esc, &endp);
+            remove_Block(&d->chars, esc - cstr_String(d), endp - esc);
+        }
+        else break;
+    }
+    return color;
 }
 
 iWidget *makeDialog_Widget(const char *id,

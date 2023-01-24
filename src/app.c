@@ -2728,6 +2728,7 @@ static void updateImageStyleButton_(iLabelWidget *button, int style) {
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setupSheetTransition_Mobile(d, iFalse);
+        enableToolbar_Root(get_Root(), iTrue);
         /* Apply the new UI scaling factor to all non-popup windows. */ {
             const float uiScale =
                 toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale")));
@@ -4285,6 +4286,9 @@ iBool handleCommand_App(const char *cmd) {
                 SDL_RaiseWindow(win->win);
                 return iTrue;
             }
+        }
+        if (isMobile_Platform()) {
+            enableToolbar_Root(get_Root(), iFalse); /* toolbars disabled while Settings is shown */
         }
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);

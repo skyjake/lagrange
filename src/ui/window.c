@@ -1629,6 +1629,9 @@ void draw_MainWindow(iMainWindow *d) {
                 SDL_SetWindowSize(x->win, x->size.x / x->pixelRatio, x->size.y / x->pixelRatio);
             }
             notifyVisualOffsetChange_Root(root);
+            if (root->didChangeArrangement) {
+                iNotifyAudience(root, arrangementChanged, RootArrangementChanged)
+            }
             root->didChangeArrangement = iFalse;
         }
     }

@@ -286,6 +286,7 @@ enum iMenuOpenFlags {
 };
 
 iWidget *       makeMenu_Widget                 (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
+iWidget *       makeMenuFlags_Widget            (iWidget *parent, const iMenuItem *items, size_t n, iBool allowNative);
 void            makeMenuItems_Widget            (iWidget *menu, const iMenuItem *items, size_t n);
 void            openMenu_Widget                 (iWidget *, iInt2 windowCoord);
 void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, int flags);
@@ -300,6 +301,7 @@ void            setSelected_NativeMenuItem      (iMenuItem *item, iBool isSelect
 void            appendIdentities_MenuItem       (iArray *menuItems, const char *command);
 
 iChar           removeIconPrefix_String         (iString *);
+enum iColorId   removeColorEscapes_String       (iString *);
 
 iLabelWidget *  findMenuItem_Widget             (iWidget *menu, const char *command);
 iMenuItem *     findNativeMenuItem_Widget       (iWidget *menu, const char *commandSuffix);

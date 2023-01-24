@@ -235,6 +235,7 @@ static void     updateNavBarSize_           (iWidget *navBar);
 static void     updateBottomBarPosition_    (iWidget *bottomBar, iBool animate);
 
 iDefineTypeConstruction(Root)
+iDefineAudienceGetter(Root, arrangementChanged)
 iDefineAudienceGetter(Root, visualOffsetsChanged)
 
 void init_Root(iRoot *d) {
@@ -246,6 +247,7 @@ void deinit_Root(iRoot *d) {
     delete_PtrArray(d->onTop);
     delete_PtrSet(d->pendingDestruction);
     delete_Audience(d->visualOffsetsChanged);
+    delete_Audience(d->arrangementChanged);
     if (d->loadAnimTimer) {
         SDL_RemoveTimer(d->loadAnimTimer);
         d->loadAnimTimer = 0;
@@ -320,6 +322,97 @@ iPtrArray *onTop_Root(iRoot *d) {
     return d->onTop;
 }
 
+static iWidget *makeIdentityMenu_(iWidget *parent) {
+    iArray items;
+    init_Array(&items, sizeof(iMenuItem));
+    /* Current identity. */
+    const iDocumentWidget *doc        = document_App();
+    const iString         *docUrl     = url_DocumentWidget(doc);
+    const iGmIdentity     *ident      = identity_DocumentWidget(doc);
+    const iBool            isSetIdent = isIdentityPinned_DocumentWidget(doc);
+    const iString *fp  = ident ? collect_String(hexEncode_Block(&ident->fingerprint)) : NULL;
+    iString       *str = NULL;
+    if (ident) {
+        str = copy_String(name_GmIdentity(ident));
+        if (!isEmpty_String(&ident->notes)) {
+            appendFormat_String(str, "\n\x1b[0m" uiHeading_ColorEscape "%s", cstr_String(&ident->notes));
+        }
+    }
+    pushBack_Array(
+        &items,
+        &(iMenuItem){ format_CStr("```" uiHeading_ColorEscape "\x1b[1m%s",
+                                  str ? cstr_String(str) : "${menu.identity.notactive}") });
+    if (isSetIdent) {
+        pushBack_Array(&items,
+                       &(iMenuItem){ close_Icon " ${ident.unset}",
+                                     0, 0, "document.unsetident" });
+    }
+    else if (ident && isUsedOn_GmIdentity(ident, docUrl)) {
+        pushBack_Array(&items,
+                       &(iMenuItem){ close_Icon " ${ident.stopuse}",
+                                     0,
+                                     0,
+                                     format_CStr("ident.signout ident:%s url:%s",
+                                                 cstr_String(fp),
+                                                 cstr_String(docUrl)) });
+    }
+    pushBack_Array(&items, &(iMenuItem){ "---" });
+    delete_String(str);
+    /* Alternate identities. */
+    const iString *site = collectNewRange_String(urlRoot_String(docUrl));
+    iBool haveAlts = iFalse;
+    iConstForEach(StringArray, i, strings_SiteSpec(site, usedIdentities_SiteSpecKey)) {
+        if (!fp || !equal_String(i.value, fp)) {
+            const iBlock *otherFp = collect_Block(hexDecode_Rangecc(range_String(i.value)));
+            const iGmIdentity *other = findIdentity_GmCerts(certs_App(), otherFp);
+            if (other && other != ident) {
+                pushBack_Array(
+                    &items,
+                    &(iMenuItem){
+                        format_CStr(translateCStr_Lang("\U0001f816 ${ident.switch}"),
+                                    format_CStr("\x1b[1m%s",
+                                                cstr_String(name_GmIdentity(other)))),
+                        0,
+                        0,
+                        format_CStr("ident.switch fp:%s", cstr_String(i.value)) });
+                haveAlts = iTrue;
+            }
+        }
+    }
+    if (haveAlts) {
+        pushBack_Array(&items, &(iMenuItem){ "---" });
+    }
+    iSidebarWidget *sidebar = findWidget_App("sidebar");
+    const iBool isGemini = equalCase_Rangecc(urlScheme_String(docUrl), "gemini");
+    pushBackN_Array(
+        &items,
+        (iMenuItem[]){
+            { isGemini ? add_Icon " ${menu.identity.newdomain}"
+                       : add_Icon " ${menu.identity.new}",
+              0, 0,
+              isGemini ? "ident.new scope:1"
+                       : "ident.new" },
+            { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
+            { "---" } }, 3);
+    if (deviceType_App() == desktop_AppDeviceType) {
+        pushBack_Array(&items,
+                       &(iMenuItem){ isVisible_Widget(sidebar) && mode_SidebarWidget(sidebar) ==
+                                                                      identities_SidebarMode
+                                         ? leftHalf_Icon " ${menu.hide.identities}"
+                                         : leftHalf_Icon " ${menu.show.identities}",
+                                     0,
+                                     0,
+                                     "sidebar.mode arg:3 toggle:1" });
+    }
+    else {
+        pushBack_Array(&items, &(iMenuItem){ gear_Icon " ${menu.identities}", 0, 0,
+                                             "toolbar.showident"});
+    }
+    iWidget *menu = makeMenu_Widget(parent, constData_Array(&items), size_Array(&items));
+    deinit_Array(&items);
+    return menu;
+}
+
 iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     iUnused(root);
     if (equal_Command(cmd, "menu.open")) {
@@ -361,96 +454,9 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         const iBool setFocus = argLabel_Command(cmd, "focus");
         iWidget *toolBar = findWidget_Root("toolbar");
         iWidget *button = findWidget_Root(toolBar && isPortraitPhone_App() ? "toolbar.ident" : "navbar.ident");
-        iArray items;
-        init_Array(&items, sizeof(iMenuItem));
-        /* Current identity. */
-        const iDocumentWidget *doc        = document_App();
-        const iString         *docUrl     = url_DocumentWidget(doc);
-        const iGmIdentity     *ident      = identity_DocumentWidget(doc);
-        const iBool            isSetIdent = isIdentityPinned_DocumentWidget(doc);
-        const iString *fp  = ident ? collect_String(hexEncode_Block(&ident->fingerprint)) : NULL;
-        iString       *str = NULL;
-        if (ident) {
-            str = copy_String(name_GmIdentity(ident));
-            if (!isEmpty_String(&ident->notes)) {
-                appendFormat_String(str, "\n\x1b[0m" uiHeading_ColorEscape "%s", cstr_String(&ident->notes));
-            }
-        }
-        pushBack_Array(
-            &items,
-            &(iMenuItem){ format_CStr("```" uiHeading_ColorEscape "\x1b[1m%s",
-                                      str ? cstr_String(str) : "${menu.identity.notactive}") });
-        if (isSetIdent) {
-            pushBack_Array(&items,
-                           &(iMenuItem){ close_Icon " ${ident.unset}",
-                                         0, 0, "document.unsetident" });
-        }
-        else if (ident && isUsedOn_GmIdentity(ident, docUrl)) {
-            pushBack_Array(&items,
-                           &(iMenuItem){ close_Icon " ${ident.stopuse}",
-                                         0,
-                                         0,
-                                         format_CStr("ident.signout ident:%s url:%s",
-                                                     cstr_String(fp),
-                                                     cstr_String(docUrl)) });
-        }
-        pushBack_Array(&items, &(iMenuItem){ "---" });
-        delete_String(str);
-        /* Alternate identities. */
-        const iString *site = collectNewRange_String(urlRoot_String(docUrl));
-        iBool haveAlts = iFalse;
-        iConstForEach(StringArray, i, strings_SiteSpec(site, usedIdentities_SiteSpecKey)) {
-            if (!fp || !equal_String(i.value, fp)) {
-                const iBlock *otherFp = collect_Block(hexDecode_Rangecc(range_String(i.value)));
-                const iGmIdentity *other = findIdentity_GmCerts(certs_App(), otherFp);
-                if (other && other != ident) {
-                    pushBack_Array(
-                        &items,
-                        &(iMenuItem){
-                            format_CStr(translateCStr_Lang("\U0001f816 ${ident.switch}"),
-                                        format_CStr("\x1b[1m%s",
-                                                    cstr_String(name_GmIdentity(other)))),
-                            0,
-                            0,
-                            format_CStr("ident.switch fp:%s", cstr_String(i.value)) });
-                    haveAlts = iTrue;
-                }
-            }
-        }
-        if (haveAlts) {
-            pushBack_Array(&items, &(iMenuItem){ "---" });
-        }
-        iSidebarWidget *sidebar = findWidget_App("sidebar");
-        const iBool isGemini = equalCase_Rangecc(urlScheme_String(docUrl), "gemini");
-        pushBackN_Array(
-            &items,
-            (iMenuItem[]){
-                { isGemini ? add_Icon " ${menu.identity.newdomain}"
-                           : add_Icon " ${menu.identity.new}",
-                  0, 0,
-                  isGemini ? "ident.new scope:1"
-                           : "ident.new" },
-                { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
-                { "---" } }, 3);
-        if (deviceType_App() == desktop_AppDeviceType) {
-            pushBack_Array(&items,
-                           &(iMenuItem){ isVisible_Widget(sidebar) && mode_SidebarWidget(sidebar) ==
-                                                                          identities_SidebarMode
-                                             ? leftHalf_Icon " ${menu.hide.identities}"
-                                             : leftHalf_Icon " ${menu.show.identities}",
-                                         0,
-                                         0,
-                                         "sidebar.mode arg:3 toggle:1" });
-        }
-        else {
-            pushBack_Array(&items, &(iMenuItem){ gear_Icon " ${menu.identities}", 0, 0,
-                                                 "toolbar.showident"});
-        }
-        iWidget *menu =
-            makeMenu_Widget(button, constData_Array(&items), size_Array(&items));
+        iWidget *menu = makeIdentityMenu_(button);
         openMenuFlags_Widget(menu, bottomLeft_Rect(bounds_Widget(button)),
                              postCommands_MenuOpenFlags | (setFocus ? setFocus_MenuOpenFlags : 0));
-        deinit_Array(&items);
         return iTrue;
     }
     else if (equal_Command(cmd, "contextclick")) {
@@ -650,6 +656,10 @@ static void updateNavBarIdentity_(iWidget *navBar) {
         setFont_LabelWidget(toolButton, subjectName ? uiLabelMedium_FontId : uiLabelLarge_FontId);
         setTextOffset_LabelWidget(toolButton, init_I2(0, subjectName ? -1.5f * gap_UI : 0));
         arrange_Widget(parent_Widget(toolButton));
+#if defined (iPlatformAppleMobile)
+        iRelease(findChild_Widget(as_Widget(toolButton), "menu"));
+        makeIdentityMenu_(as_Widget(toolButton));
+#endif
     }
 }
 
@@ -2127,6 +2137,13 @@ static void updateBottomBarPosition_(iWidget *bottomBar, iBool animate) {
             setVisualOffset_Widget(tabBar, -bottomSafe, 200 * animate, easeOut_AnimFlag);
         }
     }
+}
+
+void enableToolbar_Root(iRoot *d, iBool enable) {
+    iWidget *bottomBar = findChild_Widget(d->widget, "bottombar");
+    iWidget *navBar = findChild_Widget(d->widget, "navbar");
+    setFlags_Widget(bottomBar, disabled_WidgetFlag, !enable);
+    setFlags_Widget(navBar, disabled_WidgetFlag, !enable);
 }
 
 void showToolbar_Root(iRoot *d, iBool show) {
