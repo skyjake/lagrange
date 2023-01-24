@@ -402,18 +402,32 @@ static iRangecc selectMark_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int phoneToolbarHeight_DocumentWidget_(const iDocumentWidget *d) {
-    if (!d->phoneToolbar) {
+    if (!d->phoneToolbar || !isPortraitPhone_App()) {
         return 0;
     }
     const iWidget *w = constAs_Widget(d);
     return bottom_Rect(rect_Root(w->root)) - top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
 }
 
+static int phoneBottomNavbarHeight_DocumentWidget_(const iDocumentWidget *d) {
+    int height = 0;
+    if (isLandscapePhone_App()) {
+        const iWidget *w = constAs_Widget(d);
+        if (prefs_App()->bottomNavBar) {
+            height += height_Widget(findChild_Widget(root_Widget(w), "navbar"));
+        }
+        else if (prefs_App()->bottomTabBar) {
+            height += height_Widget(findChild_Widget(findChild_Widget(root_Widget(w), "doctabs"),
+                                                     "tabs.buttons"));
+        }
+    }
+    return height;
+}
+
 static int footerHeight_DocumentWidget_(const iDocumentWidget *d) {
     int hgt = iMaxi(height_Widget(d->footerButtons), height_Banner(d->banner));
-    if (isPortraitPhone_App()) {
-        hgt += phoneToolbarHeight_DocumentWidget_(d);
-    }
+    hgt += phoneToolbarHeight_DocumentWidget_(d);
+    hgt += phoneBottomNavbarHeight_DocumentWidget_(d);
     /* FIXME: Landscape phone also needs some extra space at the bottom: tab/nav bars. */
     return hgt;
 }
@@ -1687,7 +1701,9 @@ static void drawSideElements_DocumentView_(const iDocumentView *d) {
                 init_I2(left_Rect(docBounds), bottom_Rect(bounds)),
                 init_I2(0,
                         -margin + -dbuf->timestampBuf->size.y +
-                            iMax(0, d->scrollY.max - pos_SmoothScroll(&d->scrollY)))),
+                        -phoneToolbarHeight_DocumentWidget_(d->owner) +
+                        -phoneBottomNavbarHeight_DocumentWidget_(d->owner) +
+                        iMax(0, d->scrollY.max - pos_SmoothScroll(&d->scrollY)))),
             tmQuoteIcon_ColorId);
     }
     unsetClip_Paint(&p);
