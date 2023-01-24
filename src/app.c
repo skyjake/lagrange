@@ -1910,8 +1910,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     SDL_UserEvent panelBackCmd = { .type = SDL_USEREVENT,
                                                    .code = command_UserEventCode,
                                                    .data1 = iDupStr("panel.close"),
-                                                   .data2 = d->window->base.keyRoot };
-                    if (dispatchEvent_Window(&d->window->base, (SDL_Event *) &panelBackCmd)) {
+                                                   .data2 = d->window->keyRoot };
+                    if (dispatchEvent_Window(d->window, (SDL_Event *) &panelBackCmd)) {
                         continue; /* Was handled by someone. */
                     }
                 }
