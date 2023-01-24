@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.15 (Beta 13)
+* Tab reordering: tab buttons are draggable.
+* Improved item grouping in the navbar menu.
+* Footer information moved under the page content, out of the margin area. This information has not been visible on the phone before.
+
 ## 1.15 (Beta 12)
 * Added auto-reload indicator (reload button shown as outline).
 * Added UI settings to toggle edge/on-page navigation swipe gestures.
