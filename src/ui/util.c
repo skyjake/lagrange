@@ -1009,7 +1009,11 @@ void setNativeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) 
             }
         }
     }
-    updateSystemMenuFromNativeItems_Widget(menu);
+    if (isSupported_SystemMenu()) {
+        /* The previous popup was released, so we need a new one. */
+        makePopup_SystemMenu(menu);
+        updateSystemMenuFromNativeItems_Widget(menu);
+    }
 #endif
 }
 

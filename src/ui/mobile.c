@@ -1228,10 +1228,13 @@ void updateAfterBoundsChange_SystemMenu(iWidget *owner) {
     iAssert(flags_Widget(owner) & nativeMenu_WidgetFlag);
     iWidget *parent = parent_Widget(owner);
     if (isInstance_Object(parent, &Class_LabelWidget)) {
+        /* TODO: is this too much tree-walking to occur after every change to the bounds? */
+        const iWidget *menuFocusRoot   = focusRoot_Widget(parent);
+        const iWidget *activeFocusRoot = focusRoot_Widget(root_Widget(parent));
         if (!isVisible_Widget(parent) || isDisabled_Widget(parent) ||
             /* other focus root blocks the parent? */
-            focusRoot_Widget(parent) != focusRoot_Widget(root_Widget(parent))) {
-            /* TODO: is this too much tree-walking to occur after every change to the bounds? */
+            (menuFocusRoot != activeFocusRoot &&
+             !hasParent_Widget(menuFocusRoot, activeFocusRoot))) {
             setHidden_SystemMenu(owner, iTrue);
         }
         else {
