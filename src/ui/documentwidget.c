@@ -402,18 +402,32 @@ static iRangecc selectMark_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int phoneToolbarHeight_DocumentWidget_(const iDocumentWidget *d) {
-    if (!d->phoneToolbar) {
+    if (!d->phoneToolbar || !isPortraitPhone_App()) {
         return 0;
     }
     const iWidget *w = constAs_Widget(d);
     return bottom_Rect(rect_Root(w->root)) - top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
 }
 
+static int phoneBottomNavbarHeight_DocumentWidget_(const iDocumentWidget *d) {
+    int height = 0;
+    if (isLandscapePhone_App()) {
+        const iWidget *w = constAs_Widget(d);
+        if (prefs_App()->bottomNavBar) {
+            height += height_Widget(findChild_Widget(root_Widget(w), "navbar"));
+        }
+        else if (prefs_App()->bottomTabBar) {
+            height += height_Widget(findChild_Widget(findChild_Widget(root_Widget(w), "doctabs"),
+                                                     "tabs.buttons"));
+        }
+    }
+    return height;
+}
+
 static int footerHeight_DocumentWidget_(const iDocumentWidget *d) {
     int hgt = iMaxi(height_Widget(d->footerButtons), height_Banner(d->banner));
-    if (isPortraitPhone_App()) {
-        hgt += phoneToolbarHeight_DocumentWidget_(d);
-    }
+    hgt += phoneToolbarHeight_DocumentWidget_(d);
+    hgt += phoneBottomNavbarHeight_DocumentWidget_(d);
     /* FIXME: Landscape phone also needs some extra space at the bottom: tab/nav bars. */
     return hgt;
 }
@@ -957,6 +971,7 @@ static void updateTimestampBuf_DocumentView_(const iDocumentView *d) {
     }
     if (isValid_Time(&d->owner->sourceTime)) {
         iString *fmt = timeFormatHourPreference_Lang("page.timestamp");
+        replace_String(fmt, "\n", " "); /* TODO: update original lang strings */
         d->drawBufs->timestampBuf = newRange_TextBuf(
             uiLabel_FontId,
             white_ColorId,
@@ -1040,7 +1055,7 @@ static void scrollToHeading_DocumentView_(iDocumentView *d, const char *heading)
 
 static iBool scrollWideBlock_DocumentView_(iDocumentView *d, iInt2 mousePos, int delta,
                                            int duration) {
-    if (delta == 0 || d->owner->wheelSwipeState == direct_WheelSwipeState) { //} d->owner->flags & eitherWheelSwipe_DocumentWidgetFlag) {
+    if (delta == 0 || d->owner->wheelSwipeState == direct_WheelSwipeState) {
         return iFalse;
     }
     const iInt2 docPos = documentPos_DocumentView_(d, mousePos);
@@ -1679,14 +1694,16 @@ static void drawSideElements_DocumentView_(const iDocumentView *d) {
         }
     }
     /* Reception timestamp. */
-    if (dbuf->timestampBuf && dbuf->timestampBuf->size.x <= avail) {
+    if (dbuf->timestampBuf) { //} && dbuf->timestampBuf->size.x <= avail) {
         draw_TextBuf(
             dbuf->timestampBuf,
             add_I2(
-                bottomLeft_Rect(bounds),
-                init_I2(margin,
+                init_I2(left_Rect(docBounds), bottom_Rect(bounds)),
+                init_I2(0,
                         -margin + -dbuf->timestampBuf->size.y +
-                            iMax(0, d->scrollY.max - pos_SmoothScroll(&d->scrollY)))),
+                        -phoneToolbarHeight_DocumentWidget_(d->owner) +
+                        -phoneBottomNavbarHeight_DocumentWidget_(d->owner) +
+                        iMax(0, d->scrollY.max - pos_SmoothScroll(&d->scrollY)))),
             tmQuoteIcon_ColorId);
     }
     unsetClip_Paint(&p);
@@ -3866,6 +3883,26 @@ static void setupSwipeOverlay_DocumentWidget_(iDocumentWidget *d, iWidget *overl
     setVisualOffset_Widget(w, 0, 0, 0);
 }
 
+static int sidebarSwipeAreaHeight_DocumentWidget_(const iDocumentWidget *d) {
+    const iWindow *win = get_Window();
+    return iMin(win->size.x, win->size.y) / 4;
+}
+
+static iBool checkTabletSwipeVerticalPosition_DocumentWidget_(const iDocumentWidget *d, int swipeY) {
+    /* Returns True if the the vertical position is valid for swiping the sidebar. */
+    if (deviceType_App() != tablet_AppDeviceType) {
+        return iFalse;
+    }
+    const iWidget *w = constAs_Widget(d);
+    const int sidebarSwipeHgt = sidebarSwipeAreaHeight_DocumentWidget_(d);
+    if (prefs_App()->bottomNavBar) {
+        return swipeY > bottom_Rect(bounds_Widget(w)) - sidebarSwipeHgt;
+    }
+    else {
+        return swipeY < top_Rect(bounds_Widget(w)) + sidebarSwipeHgt;
+    }
+}
+
 static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     /* TODO: Cleanup
      
@@ -3883,13 +3920,11 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         startsWith_CStr(cmd, "edgeswipe.") && argLabel_Command(cmd, "edge")) {
         return iFalse;
     }
-    /* The swipe animation is implemented in a rather complex way. It utilizes both cached
-       GmDocument content and temporary underlay/overlay DocumentWidgets. Depending on the
-       swipe direction, the DocumentWidget `d` may wait until the finger is released to actually
-       perform the navigation action. */
     if (equal_Command(cmd, "edgeswipe.moved")) {
+        /* Edge swipes can also be used to show the sidebars. */
         if ((deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App()) &&
-            argLabel_Command(cmd, "edge")) {
+            argLabel_Command(cmd, "edge") &&
+            checkTabletSwipeVerticalPosition_DocumentWidget_(d, argLabel_Command(cmd, "y"))) {
             /* This is an actual swipe from the edge of the device, we should let the sidebars
                handle it. */
             if (argLabel_Command(cmd, "edge") == 1) {
@@ -3897,10 +3932,14 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 return iTrue;
             }
             else if (argLabel_Command(cmd, "edge") == 2 && deviceType_App() == tablet_AppDeviceType) {
-                transferAffinity_Touch(w, findWidget_App("sidebar2"));
+                transferAffinity_Touch(NULL, findWidget_App("sidebar2"));
                 return iTrue;
             }
         }
+        /* The swipe animation is implemented in a rather complex way. It utilizes both cached
+           GmDocument content and temporary underlay/overlay DocumentWidgets. Depending on the
+           swipe direction, the DocumentWidget `d` may wait until the finger is released to actually
+           perform the navigation action. */
         //printf("[%p] responds to edgeswipe.moved\n", d);
         as_Widget(d)->offsetRef = NULL;
         const int side = argLabel_Command(cmd, "side");
@@ -6154,6 +6193,39 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                                 documentTopPad_DocumentView_(&d->view) > bounds.pos.y ?
                                 tmBannerBackground_ColorId : tmBackground_ColorId);
         }
+    }
+    /* Sidebar swipe indicator. */
+    if (deviceType_App() == tablet_AppDeviceType && prefs_App()->edgeSwipe &&
+        !isAffectedByVisualOffset_Widget(w) && ~flags_Widget(w) & dragged_WidgetFlag) {
+        iWindow * win    = get_Window();
+        const int gap    = 4 * win->pixelRatio; /* not dependent on UI scaling; cf. Home indicator */
+        const int indGap = 6 * gap;
+        const int indMar = 6 * gap / 3;
+        const int indHgt = sidebarSwipeAreaHeight_DocumentWidget_(d) - 2 * indGap;
+        const int indPos = prefs_App()->bottomNavBar
+                                ? (bottom_Rect(bounds) - indHgt - indGap)
+                                : (top_Rect(bounds) + indGap);
+        const int indThick = 5 * gap / 3;
+        iRect indRect = (iRect){ init_I2(left_Rect(bounds) + indMar, indPos),
+                                 init_I2(indThick, indHgt) };
+        iRoot *leftSideRoot  = win->roots[0];
+        iRoot *rightSideRoot = (win->roots[1] ? win->roots[1] : win->roots[0]);
+        /* TODO: Could look up and save these pointers ahead of time, they don't change. */
+        iWidget *sbar[2] = {
+            findChild_Widget(leftSideRoot->widget, "sidebar"),
+            findChild_Widget(rightSideRoot->widget, "sidebar2")
+        };
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+        p.alpha = isDark_ColorTheme(prefs_App()->theme) ? 0x60 : 0x80;
+        if (w->root == leftSideRoot && !isVisible_Widget(sbar[0])) {
+            fillRect_Paint(&p, indRect, tmQuoteIcon_ColorId);
+        }
+        if (w->root == rightSideRoot && !isVisible_Widget(sbar[1])) {
+            indRect.pos.x = right_Rect(bounds) - indMar - indThick;
+            fillRect_Paint(&p, indRect, tmQuoteIcon_ColorId);
+        }
+        p.alpha = 0xff;
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     /* Pull action indicator. */
     if (deviceType_App() != desktop_AppDeviceType) {

@@ -597,11 +597,13 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     /* Renderer info. */ {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->render, &info);
+#if !defined (NDEBUG)
         printf("[window] renderer: %s%s\n",
                info.name,
                info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
-    }
 #endif
+    }
+#endif /* !iPlatformTerminal */
 #if defined (iPlatformMsys)
     if (type == extra_WindowType) {
         enableDarkMode_SDLWindow(d->win);
@@ -648,6 +650,19 @@ void deinit_Window(iWindow *d) {
         }
     }
     setCurrent_Window(NULL);
+}
+
+static void setWindowIcon_Window_(iWindow *d) {
+#if defined (iPlatformMsys)
+    useExecutableIconResource_SDLWindow(d-win);
+#endif
+#if defined (iPlatformLinux) && !defined (iPlatformTerminal)
+    SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, 0);
+    SDL_SetWindowIcon(d->win, surf);
+    free(surf->pixels);
+    SDL_FreeSurface(surf);
+#endif
+    iUnused(d); /* other platforms */
 }
 
 void init_MainWindow(iMainWindow *d, iRect rect) {
@@ -717,21 +732,15 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     }
 #if defined (iPlatformMsys)
     SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.displayScale, minSize.y * d->base.displayScale);
-    useExecutableIconResource_SDLWindow(d->base.win);
     enableDarkMode_SDLWindow(d->base.win);
 #endif
 #if defined (iPlatformLinux) && !defined (iPlatformTerminal)
     SDL_SetWindowMinimumSize(d->base.win, minSize.x * d->base.pixelRatio, minSize.y * d->base.pixelRatio);
-    /* Load the window icon. */ {
-        SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, 0);
-        SDL_SetWindowIcon(d->base.win, surf);
-        free(surf->pixels);
-        SDL_FreeSurface(surf);
-    }
 #endif
 #if defined (iPlatformAppleMobile)
     setupWindow_iOS(as_Window(d));
 #endif
+    setWindowIcon_Window_(as_Window(d));
     setCurrent_Text(d->base.text);
     SDL_GetRendererOutputSize(d->base.render, &d->base.size.x, &d->base.size.y);
     d->maxDrawableHeight = d->base.size.y;
@@ -813,6 +822,16 @@ iRoot *findRoot_Window(const iWindow *d, const iWidget *widget) {
 
 iRoot *otherRoot_Window(const iWindow *d, iRoot *root) {
     return root == d->roots[0] && d->roots[1] ? d->roots[1] : d->roots[0];
+}
+
+void rootOrder_Window(const iWindow *d, iRoot *roots[2]) {
+    if (d) {
+        roots[0] = d->keyRoot;
+        roots[1] = (roots[0] == d->roots[0] ? d->roots[1] : d->roots[0]);
+    }
+    else {
+        roots[0] = roots[1] = NULL;
+    }
 }
 
 static void invalidate_Window_(iAnyWindow *d, iBool forced) {
@@ -1404,7 +1423,7 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
     }
     iBool wasUsed = iFalse;
     iRoot *order[2];
-    rootOrder_App(order);
+    rootOrder_Window(d, order);
     iForIndices(i, order) {
         iRoot *root = order[i];
         if (root) {
@@ -1610,6 +1629,9 @@ void draw_MainWindow(iMainWindow *d) {
                 SDL_SetWindowSize(x->win, x->size.x / x->pixelRatio, x->size.y / x->pixelRatio);
             }
             notifyVisualOffsetChange_Root(root);
+            if (root->didChangeArrangement) {
+                iNotifyAudience(root, arrangementChanged, RootArrangementChanged)
+            }
             root->didChangeArrangement = iFalse;
         }
     }
@@ -2158,6 +2180,7 @@ iWindow *newExtra_Window(iWidget *rootWidget) {
     win->roots[0]          = root;
     win->keyRoot           = root;
     /* Make a simple root widget that sizes itself according to the actual root. */
+    setWindowIcon_Window_(win);
     setCurrent_Window(win);
     iWidget *frameRoot = new_Widget();
     setFlags_Widget(frameRoot, arrangeSize_WidgetFlag | focusRoot_WidgetFlag, iTrue);

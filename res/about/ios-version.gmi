@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.15 (2)
+* Tab reordering: tab buttons are draggable.
+* Native popups for basic context menus: navbar menu, page menu, various dropdowns in Settings (e.g., UI language, theme colors), identity selection. Requires iOS 14 or newer. Complex/long-press popup menus remain non-native.
+* Improved item grouping in the navbar menu.
+* Footer information moved under the page content, out of the margin area. This information is now visible on the phone as well.
+* iPad: Swiping from edge either shows the sidebar or navigates back/forward. There is a new indicator near the navbar showing the area where sidebar showing will happen.
+
 ## 1.15 (1)
 * Added auto-reload indicator (reload button shown as outline).
 * Added UI settings to toggle edge/on-page navigation swipe gestures.

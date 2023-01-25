@@ -971,7 +971,7 @@ static void resetArrangement_Widget_(iWidget *d) {
     }
 }
 
-static void notifySizeChanged_Widget_(iWidget *d) {
+static void notifyArrangement_Widget_(iWidget *d) {
     if (d->flags & destroyPending_WidgetFlag) {
         return;
     }
@@ -979,7 +979,7 @@ static void notifySizeChanged_Widget_(iWidget *d) {
         class_Widget(d)->sizeChanged(d);
     }
     iForEach(ObjectList, child, d->children) {
-        notifySizeChanged_Widget_(child.object);
+        notifyArrangement_Widget_(child.object);
     }
 }
 
@@ -1015,7 +1015,7 @@ void arrange_Widget(iWidget *d) {
         resetArrangement_Widget_(d); /* back to initial default sizes */
         arrange_Widget_(d);
         clampCenteredInRoot_Widget_(d);
-        notifySizeChanged_Widget_(d);
+        notifyArrangement_Widget_(d);
         d->root->didChangeArrangement = iTrue;
         if (type_Window(window_Widget(d)) == extra_WindowType &&
             (d == root_Widget(d) || d->parent == root_Widget(d))) {
@@ -1977,7 +1977,9 @@ iAny *addChildFlags_Widget(iWidget *d, iAnyObject *child, int64_t childFlags) {
 }
 
 iAny *removeChild_Widget(iWidget *d, iAnyObject *child) {
-    iAssert(child);
+    if (!d || !child) {
+        return NULL;
+    }
     ref_Object(child); /* we take a reference, parent releases its */
     iBool found = iFalse;
     iForEach(ObjectList, i, d->children) {
@@ -2301,9 +2303,13 @@ static const iWidget *findFocusable_Widget_(const iWidget *d, const iWidget *sta
     return NULL;
 }
 
-static const iWidget *findFocusRoot_Widget_(const iWidget *d) {
-    iForEach(ObjectList, i, d->children) {
-        const iWidget *root = findFocusRoot_Widget_(constAs_Widget(i.object));
+const iWidget *findTopmostFocusRoot_Widget_(const iWidget *d) {
+    if (d->flags & (hidden_WidgetFlag | disabled_WidgetFlag)) {
+        return NULL;
+    }
+    iReverseConstForEach(ObjectList, i, d->children) {
+        const iWidget *child = constAs_Widget(i.object);
+        const iWidget *root = findTopmostFocusRoot_Widget_(child);
         if (root) {
             return root;
         }
@@ -2315,8 +2321,24 @@ static const iWidget *findFocusRoot_Widget_(const iWidget *d) {
 }
 
 const iWidget *focusRoot_Widget(const iWidget *d) {
-    iRoot *uiRoot = (d ? d->root : get_Window()->keyRoot);
-    return findFocusRoot_Widget_(uiRoot->widget);
+    if (d == NULL || isRoot_Widget_(d)) {
+        iAssert(get_Window());
+        iRoot *root = d ? d->root : get_Window()->keyRoot;
+        iReverseConstForEach(PtrArray, i, onTop_Root(root)) {
+            const iWidget *root = findTopmostFocusRoot_Widget_(constAs_Widget(i.ptr));
+            if (root) {
+                return root;
+            }
+        }
+        return findTopmostFocusRoot_Widget_(root->widget);
+    }
+    /* Focus root of this particular widget `d`. */
+    for (const iWidget *w = d; w; w = w->parent) {
+        if (flags_Widget(w) & focusRoot_WidgetFlag) {
+            return w;
+        }
+    }
+    return root_Widget(d);
 }
 
 iAny *findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir) {
@@ -2331,7 +2353,7 @@ iAny *findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusD
         getNext = iTrue;
         /* Switch to the next root, if available. */
         found = findFocusable_Widget_(
-            findFocusRoot_Widget_(otherRoot_Window(get_Window(), focusRoot->root)->widget),
+            findTopmostFocusRoot_Widget_(otherRoot_Window(get_Window(), focusRoot->root)->widget),
             NULL,
             &getNext,
             focusDir);

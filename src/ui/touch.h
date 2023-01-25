@@ -40,6 +40,7 @@ float                   stopWidgetMomentum_Touch    (const iWidget *widget); /* 
 enum iWidgetTouchMode   widgetMode_Touch            (const iWidget *widget);
 void                    widgetDestroyed_Touch       (iWidget *widget);
 void                    transferAffinity_Touch      (iWidget *src, iWidget *dst);
+iBool                   hasAffinity_Touch           (const iWidget *);
 
 iInt2   latestPosition_Touch    (void); /* valid during processing of current event */
 iInt2   latestTapPosition_Touch (void);

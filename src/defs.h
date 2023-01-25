@@ -64,6 +64,14 @@ iLocalDef iBool isAppleDesktop_Platform(void) {
 #endif
 }
 
+iLocalDef iBool isAppleMobile_Platform(void) {
+#if defined (iPlatformAppleMobile)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 iLocalDef iBool isAndroid_Platform(void) {
 #if defined (iPlatformAndroid)
     return iTrue;
@@ -278,7 +286,10 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #   define shiftReturn_Icon shift_Icon " " return_Icon
 #endif
 
-#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_ENABLE_MAC_MENUS)
+#if defined (iPlatformAppleMobile)
+#   define LAGRANGE_NATIVE_MENU
+#elif defined (iPlatformAppleDesktop) && defined (LAGRANGE_ENABLE_MAC_MENUS)
+#   define LAGRANGE_NATIVE_MENU
 #   define LAGRANGE_MAC_MENUBAR
 #   define LAGRANGE_MAC_CONTEXTMENU
 #elif defined (iPlatformDesktop)

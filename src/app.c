@@ -1910,8 +1910,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     SDL_UserEvent panelBackCmd = { .type = SDL_USEREVENT,
                                                    .code = command_UserEventCode,
                                                    .data1 = iDupStr("panel.close"),
-                                                   .data2 = d->window->base.keyRoot };
-                    if (dispatchEvent_Window(&d->window->base, (SDL_Event *) &panelBackCmd)) {
+                                                   .data2 = d->window->keyRoot };
+                    if (dispatchEvent_Window(d->window, (SDL_Event *) &panelBackCmd)) {
                         continue; /* Was handled by someone. */
                     }
                 }
@@ -2487,26 +2487,17 @@ void postCommandf_App(const char *command, ...) {
     deinit_Block(&chars);
 }
 
-void rootOrder_App(iRoot *roots[2]) {
-    const iWindow *win = get_Window();
-    if (win) {
-        roots[0] = win->keyRoot;
-        roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
-    }
-    else {
-        roots[0] = roots[1] = NULL;
-    }
-}
-
 iAny *findWidget_App(const char *id) {
     if (!*id) return NULL;
-    iRoot *order[2];
-    rootOrder_App(order);
-    iForIndices(i, order) {
-        if (order[i]) {
-            iAny *found = findChild_Widget(order[i]->widget, id);
-            if (found) {
-                return found;
+    iConstForEach(PtrArray, w, regularWindows_App()) {
+        iRoot *order[2];
+        rootOrder_Window(w.ptr, order);
+        iForIndices(i, order) {
+            if (order[i]) {
+                iAny *found = findChild_Widget(order[i]->widget, id);
+                if (found) {
+                    return found;
+                }
             }
         }
     }
@@ -2615,6 +2606,24 @@ void removeExtraWindow_App(iWindow *extra) {
     removeOne_PtrArray(&d->extraWindows, extra);
 }
 
+iWindow *findWindow_App(int type, const char *widgetId) {
+    iApp *d = &app_;
+    iConstForEach(PtrArray,
+                  i,
+                  type == popup_WindowType   ? &d->popupWindows
+                  : type == extra_WindowType ? &d->extraWindows
+                                             : &d->mainWindows) {
+        iWindow *win = i.ptr;
+        iForIndices(r, win->roots) {
+            iRoot *root = win->roots[r];
+            if (root && findChild_Widget(root->widget, widgetId)) {
+                return win;
+            }
+        }
+    }
+    return NULL;
+}
+
 iMimeHooks *mimeHooks_App(void) {
     return app_.mimehooks;
 }
@@ -2719,6 +2728,7 @@ static void updateImageStyleButton_(iLabelWidget *button, int style) {
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setupSheetTransition_Mobile(d, iFalse);
+        enableToolbar_Root(get_Root(), iTrue);
         /* Apply the new UI scaling factor to all non-popup windows. */ {
             const float uiScale =
                 toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale")));
@@ -4268,7 +4278,18 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "preferences")) {
+    else if (equal_Command(cmd, "preferences")) {        
+        /* Preferences may already be open. */ {
+            iWindow *win = findWindow_App(extra_WindowType, "prefs");
+            if (win) {
+                SDL_ShowWindow(win->win);
+                SDL_RaiseWindow(win->win);
+                return iTrue;
+            }
+        }
+        if (isMobile_Platform()) {
+            enableToolbar_Root(get_Root(), iFalse); /* toolbars disabled while Settings is shown */
+        }
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.strings[downloadDir_PrefsString]);

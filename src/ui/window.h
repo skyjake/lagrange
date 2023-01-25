@@ -148,6 +148,7 @@ SDL_Renderer *  renderer_Window         (const iWindow *);
 int             numRoots_Window         (const iWindow *);
 //iRoot *         findRoot_Window         (const iWindow *, const iWidget *widget);
 iRoot *         otherRoot_Window        (const iWindow *, iRoot *root);
+void            rootOrder_Window        (const iWindow *, iRoot *roots[2]);
 
 void        setTitle_Window         (iWindow *, const iString *title);
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);

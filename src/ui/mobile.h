@@ -106,3 +106,13 @@ void    selectAll_SystemTextInput(iSystemTextInput *);
 
 const iString * text_SystemTextInput    (const iSystemTextInput *);
 int     preferredHeight_SystemTextInput (const iSystemTextInput *);
+
+/*----------------------------------------------------------------------------------------------*/
+
+iBool   isSupported_SystemMenu  (void);
+iBool   makePopup_SystemMenu    (iWidget *owner);
+void    setRect_SystemMenu      (iWidget *owner, iRect anchorRect);
+void    setHidden_SystemMenu    (iWidget *owner, iBool hide);
+void    updateAfterBoundsChange_SystemMenu (iWidget *owner);
+void    updateItems_SystemMenu  (iWidget *owner, const iMenuItem *items, size_t n);
+void    releasePopup_SystemMenu (iWidget *owner);
