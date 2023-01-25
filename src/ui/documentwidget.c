@@ -425,7 +425,8 @@ static int phoneBottomNavbarHeight_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int footerHeight_DocumentWidget_(const iDocumentWidget *d) {
-    int hgt = iMaxi(height_Widget(d->footerButtons), height_Banner(d->banner));
+    int hgt = iMaxi(height_Widget(d->footerButtons),
+                    size_GmDocument(d->view.doc).y > 0 ? 2 * lineHeight_Text(banner_FontId) : 0);
     hgt += phoneToolbarHeight_DocumentWidget_(d);
     hgt += phoneBottomNavbarHeight_DocumentWidget_(d);
     /* FIXME: Landscape phone also needs some extra space at the bottom: tab/nav bars. */
@@ -1667,6 +1668,9 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
 }
 
 static void drawSideElements_DocumentView_(const iDocumentView *d) {
+    if (size_GmDocument(d->doc).y == 0) {
+        return;
+    }
     const iWidget *w         = constAs_Widget(d->owner);
     const iRect    bounds    = bounds_Widget(w);
     const iRect    docBounds = documentBounds_DocumentView_(d);
