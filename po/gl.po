@@ -1,3 +1,19 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2023-01-25 09:20+0000\n"
+"PO-Revision-Date: 2023-01-25 09:20+0000\n"
+"Last-Translator: Xosé M. <correoxm@disroot.org>\n"
+"Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
+"\n"
+"Language: gl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
 msgid "ident.stopuse"
 msgstr "Deixar de usar nesta páxina"
 
@@ -121,7 +137,7 @@ msgstr "Pregar texto preformatado:"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Abrir índices do arquivo:"
+msgstr "Abrir index.gmi en arquivos ZIP:"
 
 msgid "prefs.doctheme.dark"
 msgstr "Decorado escuro:"
@@ -1123,7 +1139,7 @@ msgstr "Desprazamento"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Estilo"
+msgstr "Estilo da páxina"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -1217,7 +1233,7 @@ msgid "prefs.animate"
 msgstr "Animacións:"
 
 msgid "prefs.sideicon"
-msgstr "Icona da cápsula:"
+msgstr "Icona da cápsula no lado esquerdo:"
 
 msgid "prefs.doctheme.light"
 msgstr "Decorado claro:"
@@ -1285,7 +1301,7 @@ msgid "prefs.biglede"
 msgstr "1º parágrafo en grande:"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Pregar texto plano:"
+msgstr "Pregar liñas texto plano longo:"
 
 msgid "prefs.decodeurls"
 msgstr "Decodificar URLs:"
@@ -1468,7 +1484,7 @@ msgid "menu.parent"
 msgstr "Nivel superior"
 
 msgid "prefs.retainwindow"
-msgstr "Reter situación:"
+msgstr "Gardar posición da ventá:"
 
 #, c-format
 msgid "archive.summary"
@@ -1884,7 +1900,7 @@ msgid "prefs.bookmarks.addbottom"
 msgstr "Engadir marcadores ao final:"
 
 msgid "prefs.gemtext.ansi"
-msgstr "Escapes ANSI:"
+msgstr "Gemtext ANSI escapes:"
 
 msgid "error.ansi.msg"
 msgstr ""
@@ -1929,7 +1945,7 @@ msgid "menu.fonts"
 msgstr "Xestionar Letra…"
 
 msgid "prefs.font.ui"
-msgstr "IU:"
+msgstr "Tipografía:"
 
 msgid "prefs.gemtext.ansi.fg"
 msgstr "Cor FG"
@@ -1938,10 +1954,10 @@ msgid "prefs.gemtext.ansi.fontstyle"
 msgstr "Estilo de letra"
 
 msgid "prefs.font.warnmissing"
-msgstr "Avisos Glyph:"
+msgstr "Avisos caracteres Glyph:"
 
 msgid "prefs.font.smooth"
-msgstr "Suavizado:"
+msgstr "Suavizado tipografía:"
 
 msgid "error.ansi"
 msgstr "Emulación do terminal"
@@ -2042,7 +2058,7 @@ msgid "prefs.gemtext.ansi.bg"
 msgstr "Cor BG"
 
 msgid "prefs.time.24h"
-msgstr "Formato 24-Horas"
+msgstr "Formato 24 horas:"
 
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
@@ -2438,3 +2454,51 @@ msgstr "Eliminar Cartafol do marcador"
 
 msgid "dlg.newident.scope.dir"
 msgstr "Directorio actual"
+
+msgid "menu.tab.next"
+msgstr "Mostrar Lapela seguinte"
+
+msgid "menu.tab.prev"
+msgstr "Mostrar Lapela anterior"
+
+msgid "menu.movetab.left"
+msgstr "Mover Lapela á esquerda"
+
+msgid "heading.prefs.appearance"
+msgstr "Aparencia"
+
+msgid "heading.prefs.layout"
+msgstr "Disposición da páxina"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "Detección Aut. do estilo do menú Gopher:"
+
+msgid "menu.title.window"
+msgstr "Ventá"
+
+msgid "menu.movetab.right"
+msgstr "Mover Lapela á dereita"
+
+msgid "menu.movetab.split"
+msgstr "Mover Lapela ao outro lado"
+
+msgid "menu.movetab.newwindow"
+msgstr "Mover Lapela a unha Nova ventá"
+
+msgid "menu.window.min"
+msgstr "Minimizar"
+
+msgid "menu.window.max"
+msgstr "Maximizar"
+
+msgid "menu.window.full"
+msgstr "Activar Pantalla completa"
+
+msgid "heading.prefs.content"
+msgstr "Contido"
+
+msgid "prefs.swipe.edge"
+msgstr "Desprazar desde a beira:"
+
+msgid "prefs.swipe.page"
+msgstr "Desprazamento na páxina:"
