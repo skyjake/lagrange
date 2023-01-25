@@ -654,7 +654,7 @@ void deinit_Window(iWindow *d) {
 
 static void setWindowIcon_Window_(iWindow *d) {
 #if defined (iPlatformMsys)
-    useExecutableIconResource_SDLWindow(d-win);
+    useExecutableIconResource_SDLWindow(d->win);
 #endif
 #if defined (iPlatformLinux) && !defined (iPlatformTerminal)
     SDL_Surface *surf = loadImage_(&imageLagrange64_Resources, 0);
