@@ -775,6 +775,9 @@ void showOrHideNewTabButton_Root(iRoot *d) {
     iWidget *tabs = findChild_Widget(d->widget, "doctabs");
     iWidget *newTabButton = findChild_Widget(tabs, "newtab");
     iBool hide = iFalse;
+    if (isPortraitPhone_App()) {
+        hide = iTrue; /* no room for it */
+    }
     iForIndices(i, prefs_App()->navbarActions) {
         if (prefs_App()->navbarActions[i] == newTab_ToolbarAction) {
             hide = iTrue;
@@ -918,6 +921,7 @@ static void updateNavBarSize_(iWidget *navBar) {
                 updateSize_LabelWidget(btn);
             }
         }
+        showOrHideNewTabButton_Root(navBar->root);
         arrange_Widget(navBar->root->widget);
     }
     /* Resize the URL input field. */ {
