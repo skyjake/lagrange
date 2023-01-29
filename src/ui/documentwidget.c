@@ -424,12 +424,22 @@ static int phoneBottomNavbarHeight_DocumentWidget_(const iDocumentWidget *d) {
     return height;
 }
 
+#if 0
+static int pageInfoHeight_DocumentWidget_(const iDocumentWidget *d) {
+    if (d->view.drawBufs && d->view.drawBufs->timestampBuf) {
+        return lineHeight_Text(uiLabel_FontId) * 2;
+    }
+    return 0;
+}
+#endif
+
 static int footerHeight_DocumentWidget_(const iDocumentWidget *d) {
     int hgt = iMaxi(height_Widget(d->footerButtons),
-                    size_GmDocument(d->view.doc).y > 0 ? 2 * lineHeight_Text(banner_FontId) : 0);
-    hgt += phoneToolbarHeight_DocumentWidget_(d);
-    hgt += phoneBottomNavbarHeight_DocumentWidget_(d);
-    /* FIXME: Landscape phone also needs some extra space at the bottom: tab/nav bars. */
+                    /* page footer area (matches top banner, if present) */
+                    !isEmpty_Banner(d->banner) && size_GmDocument(d->view.doc).y > 0
+                        ? 2 * lineHeight_Text(banner_FontId) : 0);
+    hgt += phoneToolbarHeight_DocumentWidget_(d); /* in portrait only */
+    hgt += phoneBottomNavbarHeight_DocumentWidget_(d); /* in landscape only */
     return hgt;
 }
 
@@ -629,8 +639,7 @@ static iRect documentBounds_DocumentView_(const iDocumentView *d) {
     /* TODO: Further separation of View and Widget: configure header and footer heights
        without involving the widget here. */
     if (d->owner->flags & centerVertically_DocumentWidgetFlag) {
-        const int docSize = size_GmDocument(d->doc).y +
-                            documentTopMargin_DocumentView_(d);
+        const int docSize = documentTopMargin_DocumentView_(d) + size_GmDocument(d->doc).y;
         if (size_GmDocument(d->doc).y == 0) {
             /* Document is empty; maybe just showing an error banner. */
             rect.pos.y = top_Rect(bounds) + height_Rect(bounds) / 2 -
@@ -638,12 +647,16 @@ static iRect documentBounds_DocumentView_(const iDocumentView *d) {
             rect.size.y = 0;
             wasCentered = iTrue;
         }
-        else if (docSize < rect.size.y - footerHeight_DocumentWidget_(d->owner)) {
-            /* TODO: Phone toolbar? */
+        else if (docSize + height_Widget(d->owner->footerButtons) < rect.size.y) {
             /* Center vertically when the document is short. */
-            const int relMidY   = (height_Rect(bounds) - height_Widget(d->owner->footerButtons)) / 2;
-            const int visHeight = size_GmDocument(d->doc).y;
-            const int offset    = -height_Banner(d->owner->banner) - documentTopPad_DocumentView_(d);
+            const int relMidY   = (height_Rect(bounds) -
+                                  height_Widget(d->owner->footerButtons) -
+                                  phoneToolbarHeight_DocumentWidget_(d->owner)) / 2;
+            const int visHeight = size_GmDocument(d->doc).y +
+                                  height_Widget(d->owner->footerButtons);
+            const int offset    = -height_Banner(d->owner->banner) -
+                                  documentTopPad_DocumentView_(d) +
+                                  height_Widget(d->owner->footerButtons);
             rect.pos.y  = top_Rect(bounds) + iMaxi(0, relMidY - visHeight / 2 + offset);
             rect.size.y = size_GmDocument(d->doc).y + documentTopMargin_DocumentView_(d);
             wasCentered = iTrue;
@@ -1697,17 +1710,19 @@ static void drawSideElements_DocumentView_(const iDocumentView *d) {
                            &(SDL_Rect){ pos.x, pos.y, texSize.x, texSize.y });
         }
     }
-    /* Reception timestamp. */
-    if (dbuf->timestampBuf) { //} && dbuf->timestampBuf->size.x <= avail) {
+    /* Reception timestamp. On mobile, it's below the footer in the overscroll area. */
+    if (dbuf->timestampBuf) { 
         draw_TextBuf(
             dbuf->timestampBuf,
             add_I2(
-                init_I2(left_Rect(docBounds), bottom_Rect(bounds)),
+                init_I2(mid_Rect(docBounds).x - dbuf->timestampBuf->size.x / 2,
+                        bottom_Rect(bounds)),
                 init_I2(0,
-                        -margin + -dbuf->timestampBuf->size.y +
+                        (deviceType_App() != phone_AppDeviceType
+                            ? -margin + -dbuf->timestampBuf->size.y : 0) +
                         -phoneToolbarHeight_DocumentWidget_(d->owner) +
                         -phoneBottomNavbarHeight_DocumentWidget_(d->owner) +
-                        iMax(0, d->scrollY.max - pos_SmoothScroll(&d->scrollY)))),
+                        d->scrollY.max - pos_SmoothScroll(&d->scrollY))),
             tmQuoteIcon_ColorId);
     }
     unsetClip_Paint(&p);
