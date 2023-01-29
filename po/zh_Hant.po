@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 11:19+0000\n"
-"PO-Revision-Date: 2023-01-29 11:19+0000\n"
+"PO-Revision-Date: 2023-01-31 03:55+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hant/>\n"
@@ -1605,7 +1605,7 @@ msgid "media.untitled.audio"
 msgstr "聲音"
 
 msgid "status.query.tight"
-msgstr "查詢"
+msgstr "搜尋"
 
 msgid "link.file.delete"
 msgstr "刪除檔案"
@@ -1869,3 +1869,162 @@ msgstr "設定"
 
 msgid "heading.archive.userdata"
 msgstr "使用者資料歸檔"
+
+msgid "menu.open.external"
+msgstr "在另一app中打開"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "隱藏身份"
+
+msgid "menu.home"
+msgstr "回到起始頁"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "新增檔案夾"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "編輯"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "使用%s"
+
+msgid "menu.tab.next"
+msgstr "顯示下一個標籤頁"
+
+msgid "menu.tab.prev"
+msgstr "顯示上一個標籤頁"
+
+msgid "menu.movetab.split"
+msgstr "向另一側移動標籤頁"
+
+msgid "menu.movetab.newwindow"
+msgstr "移動標籤頁至新視窗"
+
+msgid "sidebar.close"
+msgstr "完成"
+
+msgid "sidebar.empty.unread"
+msgstr "無未讀項"
+
+msgid "sitespec.ansi"
+msgstr "ANSI跳脫警告："
+
+msgid "keys.pageinfo"
+msgstr "顯示頁面資訊"
+
+msgid "keys.sitespec"
+msgstr "顯示針對該站臺的設定"
+
+msgid "keys.menubar.focus"
+msgstr "聚焦到選單列"
+
+msgid "keys.contextmenu"
+msgstr "打開上下文選單"
+
+msgid "link.newwindow"
+msgstr "在新視窗中打開連結"
+
+msgid "pageinfo.settings"
+msgstr "設定"
+
+msgid "heading.sitespec"
+msgstr "針對特定站臺的設定"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "設定動作："
+
+msgid "sidebar.action.history.clear"
+msgstr "清除"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "貼上上一行"
+
+msgid "ident.unset"
+msgstr "取消釘選"
+
+msgid "menu.email"
+msgstr "電郵聯絡"
+
+msgid "menu.identities"
+msgstr "管理身分"
+
+msgid "menu.folder.opentab"
+msgstr "在新標籤頁中打開"
+
+msgid "bookmark.folder.delete"
+msgstr "刪除書籤檔案夾"
+
+msgid "menu.reopentab"
+msgstr "打開最近關閉的標籤頁"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "關於Lagrange"
+
+msgid "menu.viewformat.plain"
+msgstr "以純文字形式檢視"
+
+msgid "sitespec.tlscache"
+msgstr "回復TLS作業階段："
+
+msgid "sitespec.accept"
+msgstr "儲存設定"
+
+msgid "keys.input.precedingline"
+msgstr "輸入提示：貼上上一行"
+
+msgid "menu.title.window"
+msgstr "視窗"
+
+msgid "menu.window.min"
+msgstr "縮到最小"
+
+msgid "menu.window.max"
+msgstr "放到最大"
+
+msgid "menu.window.full"
+msgstr "開關全熒幕模式"
+
+msgid "menu.paste.go"
+msgstr "貼上並前往"
+
+msgid "menu.viewformat.gemini"
+msgstr "以Gemtext檢視"
+
+msgid "sitespec.palette"
+msgstr "主題色板種子："
+
+msgid "keys.identmenu"
+msgstr "打開身分選單"
+
+msgid "menu.newwindow"
+msgstr "新視窗"
+
+msgid "userdata.help"
+msgstr "使用者資料包含匯出的瀏覽記錄、身份、書籤、對特定站臺的設定以及受信任的伺服器憑證指紋。可以另存備份，也可以在裝置間移轉資料。"
+
+msgid "menu.export"
+msgstr "匯出使用者資料"
+
+msgid "menu.import"
+msgstr "匯入使用者資料…"
+
+msgid "menu.identity.newdomain"
+msgstr "為此網域建立新身分…"
+
+msgid "feeds.entry.markbelowread"
+msgstr "將下方項目標為已讀"
+
+msgid "menu.openwindow"
+msgstr "在新視窗中打開"
+
+msgid "menu.movetab.left"
+msgstr "向左移動標籤頁"
+
+msgid "menu.movetab.right"
+msgstr "向右移動標籤頁"
