@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.15.2
+* Fixed moving input focus to the next window when closing a window.
+* Centered footer info text for better balance.
+
 ## 1.15.1
 * Fixed opening multiple Preferences windows at the same time.
 * Fixed the Preferences window missing a window icon.

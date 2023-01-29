@@ -2961,9 +2961,11 @@ void closeWindow_App(iWindow *win) {
         /* Activate another window. */
         iForEach(PtrArray, i, &d->mainWindows) {
             if (i.ptr != activeWindow) {
-                SDL_RaiseWindow(i.ptr);
-                setActiveWindow_App(i.ptr);
-                setCurrent_Window(i.ptr);
+                iWindow *win = i.ptr;
+                SDL_RaiseWindow(win->win);
+                setActiveWindow_App(win); /* sets d->window */
+                setCurrent_Window(win);
+                break;
             }
         }
     }
@@ -2973,6 +2975,7 @@ void closeWindow_App(iWindow *win) {
             SDL_RaiseWindow(win->win);
             setActiveWindow_App(win);
             setCurrent_Window(win);
+            break;
         }
     }
 }
