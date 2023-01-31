@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 11:19+0000\n"
-"PO-Revision-Date: 2023-01-31 03:55+0000\n"
+"PO-Revision-Date: 2023-02-02 05:55+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hant/>\n"
@@ -718,7 +718,7 @@ msgid "dlg.certimport.nokey"
 msgstr "無私鑰"
 
 msgid "link.hint.image"
-msgstr "顯示圖片"
+msgstr "圖片"
 
 msgid "bookmark.title.blank"
 msgstr "空頁面"
@@ -1574,7 +1574,7 @@ msgid "upload.port"
 msgstr "埠號…"
 
 msgid "heading.uploadport"
-msgstr "TITAN 上載埠號"
+msgstr "Titan上載埠號"
 
 msgid "dlg.uploadport.msg"
 msgstr "為此 URL 設定 Titan 伺服器埠號。埠號設定分站點儲存。"
@@ -1641,10 +1641,10 @@ msgid "bookmark.export.format.tags"
 msgstr "標籤以二級標題呈現。"
 
 msgid "menu.page.upload"
-msgstr "透過 Titan 上載頁面…"
+msgstr "透過 Titan 上載…"
 
 msgid "heading.upload"
-msgstr "透過 TITAN 上載"
+msgstr "透過Titan上載"
 
 msgid "heading.upload.text"
 msgstr "文字"
@@ -2028,3 +2028,136 @@ msgstr "向左移動標籤頁"
 
 msgid "menu.movetab.right"
 msgstr "向右移動標籤頁"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "在Finder中顯示"
+
+msgid "menu.share"
+msgstr "分享"
+
+msgid "menu.upload.delete.confirm"
+msgstr "確認刪除全部（無法還原）"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+msgid "dlg.userdata.missing"
+msgstr "不存在的部分"
+
+msgid "hint.upload.token.long"
+msgstr "令牌—參見伺服器的指引"
+
+msgid "glyphfinder.results"
+msgstr "以下的字體包提供一個或多個缺失的字形："
+
+msgid "import.userdata"
+msgstr "匯入選中的資料"
+
+msgid "import.userdata.dupfolder"
+msgstr "匯入的重複項"
+
+msgid "import.userdata.error"
+msgstr "%s不是一個Lagrange匯出檔。"
+
+msgid "import.userdata.history"
+msgstr "歷史："
+
+msgid "heading.glyphfinder.results"
+msgstr "搜尋結果"
+
+msgid "glyphfinder.results.empty"
+msgstr "抱歉，未找到符合條件的字體包。"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "上級檔案夾："
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "空格分隔的關鍵詞"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "在檔案管理員中顯示"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "內容"
+
+msgid "heading.upload.spartan"
+msgstr "透過Spartan上載"
+
+msgid "menu.upload.delete"
+msgstr "刪除全部"
+
+msgid "heading.glyphfinder"
+msgstr "丟失字形"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "無法顯示下列字形："
+
+msgid "dlg.glyphfinder.help"
+msgstr "您可以嘗試在skyjack.fi字體資源庫中搜尋能夠提供這些字形的字體，或者自行安裝新的TruType字體。"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "請重新整理此頁面來檢查丟失字形。"
+
+msgid "heading.upload.id"
+msgstr "授權"
+
+msgid "import.userdata.trusted"
+msgstr "受信任的憑證："
+
+msgid "import.userdata.sitespec"
+msgstr "站臺設定："
+
+msgid "dlg.userdata.no"
+msgstr "無"
+
+msgid "dlg.userdata.all"
+msgstr "全部（覆蓋）"
+
+msgid "dlg.userdata.alldup"
+msgstr "全部（保留重複）"
+
+msgid "menu.page.upload.edit"
+msgstr "透過Titan編輯頁面…"
+
+msgid "spartan.input"
+msgstr "鍵入要傳送的文字："
+
+msgid "dlg.spartan.upload"
+msgstr "打開編輯器…"
+
+msgid "menu.upload.export"
+msgstr "匯出文字"
+
+msgid "hint.upload.path"
+msgstr "URL路徑"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "關閉警告"
+
+msgid "dlg.glyphfinder.search"
+msgstr "搜尋字體資源庫"
+
+msgid "heading.bookmark.editfolder"
+msgstr "編輯檔案夾"
+
+msgid "dlg.newident.scope.dir"
+msgstr "當前目錄"
+
+msgid "dlg.certimport.paste"
+msgstr "自剪貼板貼上"
+
+msgid "heading.import.userdata"
+msgstr "匯入使用者資料"
+
+msgid "heading.import.userdata.error"
+msgstr "匯入失敗"
+
+msgid "import.userdata.bookmarks"
+msgstr "書籤："
+
+msgid "import.userdata.idents"
+msgstr "身分："
