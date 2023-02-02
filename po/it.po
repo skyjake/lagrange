@@ -1,3 +1,18 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2023-01-29 07:54+0000\n"
+"PO-Revision-Date: 2023-01-29 07:54+0000\n"
+"Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
+"Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
 #, c-format
 msgid "doc.archive"
 msgstr "%s è un archivio compresso."
@@ -881,7 +896,7 @@ msgstr "Link YYY-MM-DD"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Stile"
+msgstr "Stile della Pagina"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -1255,7 +1270,7 @@ msgid "prefs.scrollspeed.mouse"
 msgstr "Velocità del mouse:"
 
 msgid "prefs.imageloadscroll"
-msgstr "Carica immagini allo scroll:"
+msgstr "Scarica l'immagine successiva quando si scorre con la tastiera:"
 
 msgid "prefs.theme.white"
 msgstr "Bianco"
@@ -1568,13 +1583,13 @@ msgid "prefs.uilang"
 msgstr "Lingua:"
 
 msgid "prefs.time.24h"
-msgstr "Formato tempo 24 Ore"
+msgstr "Formato 24 Ore"
 
 msgid "prefs.returnkey.linebreak"
 msgstr "Fine riga"
 
 msgid "prefs.retainwindow"
-msgstr "Ricorda Posizionamento:"
+msgstr "Ricorda Posizionamento Finestra:"
 
 msgid "prefs.doctheme.light"
 msgstr "Tema chiaro:"
@@ -1633,7 +1648,7 @@ msgid "prefs.imagestyle.preformat"
 msgstr "Colore preformattato"
 
 msgid "prefs.font.ui"
-msgstr "UI:"
+msgstr "Font UI:"
 
 # Font to use for headings and body when Monospace body is enabled.
 msgid "prefs.font.monodoc"
@@ -1782,7 +1797,7 @@ msgid "error.unsupported.protocol"
 msgstr "Protocollo non supportato"
 
 msgid "prefs.font.warnmissing"
-msgstr "Avviso Glifi:"
+msgstr "Avvertenza per i glifi mancanti:"
 
 msgid "error.proxy"
 msgstr "Errore del Proxy"
@@ -1959,13 +1974,13 @@ msgid "prefs.ostheme"
 msgstr "Usa il tema del sistema:"
 
 msgid "prefs.theme"
-msgstr "tema:"
+msgstr "Tema dell'UI:"
 
 msgid "prefs.theme.black"
 msgstr "Nero"
 
 msgid "prefs.gemtext.ansi"
-msgstr "codici ANSI:"
+msgstr "Codici ANSI nel Gemtext:"
 
 msgid "error.badredirect"
 msgstr "Redirect Invalido"
@@ -2036,7 +2051,7 @@ msgstr "Apri in un'altra App"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Apri indice dell'archivio:"
+msgstr "Apri index.gmi negli archivi ZIP:"
 
 msgid "prefs.pinsplit.none"
 msgstr "Nessuno"
@@ -2069,7 +2084,7 @@ msgid "prefs.toolbaraction2"
 msgstr "Pulsante 2"
 
 msgid "prefs.sideicon"
-msgstr "Icona della capsula:"
+msgstr "Icona della capsula sul lato sinistro:"
 
 msgid "keys.subscribe"
 msgstr "Iscriviti alla pagina"
@@ -2160,7 +2175,7 @@ msgid "keys.hoverurl"
 msgstr "Alterna il mostrare l'URL al passaggio del mouse"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Formatta il testo semplice:"
+msgstr "Formatta righe lunge nel testo semplice:"
 
 msgid "keys.upload.edit"
 msgstr "Modifica la Pagina con Titan"
@@ -2455,3 +2470,51 @@ msgstr "Rimuovi"
 
 msgid "menu.email"
 msgstr "Contatta via Email"
+
+msgid "menu.movetab.left"
+msgstr "Sposta il Tab a Sinistra"
+
+msgid "menu.movetab.right"
+msgstr "Sposta il Tab a Destra"
+
+msgid "heading.prefs.appearance"
+msgstr "Aspetto"
+
+msgid "heading.prefs.layout"
+msgstr "Disposizione della Pagina"
+
+msgid "heading.prefs.content"
+msgstr "Contenuto"
+
+msgid "prefs.swipe.edge"
+msgstr "Strisciare dal bordo:"
+
+msgid "prefs.swipe.page"
+msgstr "Strisciare sulla pagina:"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "Rileva lo stile dei menu Gopher automaticamente:"
+
+msgid "menu.tab.next"
+msgstr "Mostra Prossimo Tab"
+
+msgid "menu.tab.prev"
+msgstr "Mostra Tab Precedente"
+
+msgid "menu.movetab.split"
+msgstr "Sposta il Tab dall'altro lato"
+
+msgid "menu.movetab.newwindow"
+msgstr "Sposta Tab in una nuova Finestra"
+
+msgid "menu.title.window"
+msgstr "Finestra"
+
+msgid "menu.window.min"
+msgstr "Minimizza"
+
+msgid "menu.window.max"
+msgstr "Massimizza"
+
+msgid "menu.window.full"
+msgstr "Attiva/disattiva Schermo Intero"

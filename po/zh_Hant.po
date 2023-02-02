@@ -1,3 +1,19 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2023-01-29 11:19+0000\n"
+"PO-Revision-Date: 2023-02-02 05:55+0000\n"
+"Last-Translator: Shibo Lyu <github@of.sb>\n"
+"Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
+"lagrange/ui/zh_Hant/>\n"
+"Language: zh_Hant\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.5.1\n"
+
 # Alt-text of the preformatted logo.
 msgid "about.logo"
 msgstr "ASCII 藝術：大字體的單字「Lagrange」"
@@ -702,7 +718,7 @@ msgid "dlg.certimport.nokey"
 msgstr "無私鑰"
 
 msgid "link.hint.image"
-msgstr "顯示圖片"
+msgstr "圖片"
 
 msgid "bookmark.title.blank"
 msgstr "空頁面"
@@ -1269,7 +1285,7 @@ msgstr "在淺色下"
 
 # Link download progress message.
 msgid "doc.fetching"
-msgstr "獲取中"
+msgstr "載入中"
 
 # Inline download status message.
 msgid "media.download.warnclose"
@@ -1558,7 +1574,7 @@ msgid "upload.port"
 msgstr "埠號…"
 
 msgid "heading.uploadport"
-msgstr "TITAN 上載埠號"
+msgstr "Titan上載埠號"
 
 msgid "dlg.uploadport.msg"
 msgstr "為此 URL 設定 Titan 伺服器埠號。埠號設定分站點儲存。"
@@ -1589,7 +1605,7 @@ msgid "media.untitled.audio"
 msgstr "聲音"
 
 msgid "status.query.tight"
-msgstr "查詢"
+msgstr "搜尋"
 
 msgid "link.file.delete"
 msgstr "刪除檔案"
@@ -1625,10 +1641,10 @@ msgid "bookmark.export.format.tags"
 msgstr "標籤以二級標題呈現。"
 
 msgid "menu.page.upload"
-msgstr "透過 Titan 上載頁面…"
+msgstr "透過 Titan 上載…"
 
 msgid "heading.upload"
-msgstr "透過 TITAN 上載"
+msgstr "透過Titan上載"
 
 msgid "heading.upload.text"
 msgstr "文字"
@@ -1850,3 +1866,298 @@ msgstr "創建檔案夾"
 # used on mobile
 msgid "heading.settings"
 msgstr "設定"
+
+msgid "heading.archive.userdata"
+msgstr "使用者資料歸檔"
+
+msgid "menu.open.external"
+msgstr "在另一app中打開"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "隱藏身份"
+
+msgid "menu.home"
+msgstr "回到起始頁"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "新增檔案夾"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "編輯"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "使用%s"
+
+msgid "menu.tab.next"
+msgstr "顯示下一個標籤頁"
+
+msgid "menu.tab.prev"
+msgstr "顯示上一個標籤頁"
+
+msgid "menu.movetab.split"
+msgstr "向另一側移動標籤頁"
+
+msgid "menu.movetab.newwindow"
+msgstr "移動標籤頁至新視窗"
+
+msgid "sidebar.close"
+msgstr "完成"
+
+msgid "sidebar.empty.unread"
+msgstr "無未讀項"
+
+msgid "sitespec.ansi"
+msgstr "ANSI跳脫警告："
+
+msgid "keys.pageinfo"
+msgstr "顯示頁面資訊"
+
+msgid "keys.sitespec"
+msgstr "顯示針對該站臺的設定"
+
+msgid "keys.menubar.focus"
+msgstr "聚焦到選單列"
+
+msgid "keys.contextmenu"
+msgstr "打開上下文選單"
+
+msgid "link.newwindow"
+msgstr "在新視窗中打開連結"
+
+msgid "pageinfo.settings"
+msgstr "設定"
+
+msgid "heading.sitespec"
+msgstr "針對特定站臺的設定"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "設定動作："
+
+msgid "sidebar.action.history.clear"
+msgstr "清除"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "貼上上一行"
+
+msgid "ident.unset"
+msgstr "取消釘選"
+
+msgid "menu.email"
+msgstr "電郵聯絡"
+
+msgid "menu.identities"
+msgstr "管理身分"
+
+msgid "menu.folder.opentab"
+msgstr "在新標籤頁中打開"
+
+msgid "bookmark.folder.delete"
+msgstr "刪除書籤檔案夾"
+
+msgid "menu.reopentab"
+msgstr "打開最近關閉的標籤頁"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "關於Lagrange"
+
+msgid "menu.viewformat.plain"
+msgstr "以純文字形式檢視"
+
+msgid "sitespec.tlscache"
+msgstr "回復TLS作業階段："
+
+msgid "sitespec.accept"
+msgstr "儲存設定"
+
+msgid "keys.input.precedingline"
+msgstr "輸入提示：貼上上一行"
+
+msgid "menu.title.window"
+msgstr "視窗"
+
+msgid "menu.window.min"
+msgstr "縮到最小"
+
+msgid "menu.window.max"
+msgstr "放到最大"
+
+msgid "menu.window.full"
+msgstr "開關全熒幕模式"
+
+msgid "menu.paste.go"
+msgstr "貼上並前往"
+
+msgid "menu.viewformat.gemini"
+msgstr "以Gemtext檢視"
+
+msgid "sitespec.palette"
+msgstr "主題色板種子："
+
+msgid "keys.identmenu"
+msgstr "打開身分選單"
+
+msgid "menu.newwindow"
+msgstr "新視窗"
+
+msgid "userdata.help"
+msgstr "使用者資料包含匯出的瀏覽記錄、身份、書籤、對特定站臺的設定以及受信任的伺服器憑證指紋。可以另存備份，也可以在裝置間移轉資料。"
+
+msgid "menu.export"
+msgstr "匯出使用者資料"
+
+msgid "menu.import"
+msgstr "匯入使用者資料…"
+
+msgid "menu.identity.newdomain"
+msgstr "為此網域建立新身分…"
+
+msgid "feeds.entry.markbelowread"
+msgstr "將下方項目標為已讀"
+
+msgid "menu.openwindow"
+msgstr "在新視窗中打開"
+
+msgid "menu.movetab.left"
+msgstr "向左移動標籤頁"
+
+msgid "menu.movetab.right"
+msgstr "向右移動標籤頁"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "在Finder中顯示"
+
+msgid "menu.share"
+msgstr "分享"
+
+msgid "menu.upload.delete.confirm"
+msgstr "確認刪除全部（無法還原）"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+msgid "dlg.userdata.missing"
+msgstr "不存在的部分"
+
+msgid "hint.upload.token.long"
+msgstr "令牌—參見伺服器的指引"
+
+msgid "glyphfinder.results"
+msgstr "以下的字體包提供一個或多個缺失的字形："
+
+msgid "import.userdata"
+msgstr "匯入選中的資料"
+
+msgid "import.userdata.dupfolder"
+msgstr "匯入的重複項"
+
+msgid "import.userdata.error"
+msgstr "%s不是一個Lagrange匯出檔。"
+
+msgid "import.userdata.history"
+msgstr "歷史："
+
+msgid "heading.glyphfinder.results"
+msgstr "搜尋結果"
+
+msgid "glyphfinder.results.empty"
+msgstr "抱歉，未找到符合條件的字體包。"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "上級檔案夾："
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "空格分隔的關鍵詞"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "在檔案管理員中顯示"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "內容"
+
+msgid "heading.upload.spartan"
+msgstr "透過Spartan上載"
+
+msgid "menu.upload.delete"
+msgstr "刪除全部"
+
+msgid "heading.glyphfinder"
+msgstr "丟失字形"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "無法顯示下列字形："
+
+msgid "dlg.glyphfinder.help"
+msgstr "您可以嘗試在skyjack.fi字體資源庫中搜尋能夠提供這些字形的字體，或者自行安裝新的TruType字體。"
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "請重新整理此頁面來檢查丟失字形。"
+
+msgid "heading.upload.id"
+msgstr "授權"
+
+msgid "import.userdata.trusted"
+msgstr "受信任的憑證："
+
+msgid "import.userdata.sitespec"
+msgstr "站臺設定："
+
+msgid "dlg.userdata.no"
+msgstr "無"
+
+msgid "dlg.userdata.all"
+msgstr "全部（覆蓋）"
+
+msgid "dlg.userdata.alldup"
+msgstr "全部（保留重複）"
+
+msgid "menu.page.upload.edit"
+msgstr "透過Titan編輯頁面…"
+
+msgid "spartan.input"
+msgstr "鍵入要傳送的文字："
+
+msgid "dlg.spartan.upload"
+msgstr "打開編輯器…"
+
+msgid "menu.upload.export"
+msgstr "匯出文字"
+
+msgid "hint.upload.path"
+msgstr "URL路徑"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "關閉警告"
+
+msgid "dlg.glyphfinder.search"
+msgstr "搜尋字體資源庫"
+
+msgid "heading.bookmark.editfolder"
+msgstr "編輯檔案夾"
+
+msgid "dlg.newident.scope.dir"
+msgstr "當前目錄"
+
+msgid "dlg.certimport.paste"
+msgstr "自剪貼板貼上"
+
+msgid "heading.import.userdata"
+msgstr "匯入使用者資料"
+
+msgid "heading.import.userdata.error"
+msgstr "匯入失敗"
+
+msgid "import.userdata.bookmarks"
+msgstr "書籤："
+
+msgid "import.userdata.idents"
+msgstr "身分："
