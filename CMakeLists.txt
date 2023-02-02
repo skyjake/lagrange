@@ -389,12 +389,10 @@ endif ()
 target_include_directories (app PUBLIC
     src
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${SDL2_INCLUDE_DIRS}
 )
 target_compile_options (app PUBLIC
     -Werror=implicit-function-declaration
     -Wno-deprecated-declarations
-    ${SDL2_CFLAGS}
     -DSTB_VORBIS_NO_STDIO=1
     -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
 )
@@ -452,6 +450,8 @@ if (ENABLE_X11_SWRENDER)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
+target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
+target_compile_options (app PUBLIC ${SDL2_CFLAGS})
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
 if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND AND NOT ENABLE_TUI)
     if (TARGET harfbuzz-lib)
