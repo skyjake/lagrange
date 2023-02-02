@@ -22,16 +22,16 @@ project (Lagrange
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
-set (COPYRIGHT_YEAR 2022)
+set (COPYRIGHT_YEAR 2023)
 if (IOS)
     set (PROJECT_VERSION 1.15)
-    set (IOS_BUNDLE_VERSION 2)
-    set (IOS_BUILD_DATE "2022-01-24")
+    set (IOS_BUNDLE_VERSION 3)
+    set (IOS_BUILD_DATE "2023-02-02")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.15)
     set (ANDROID_BUILD_VERSION b13)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-01-24")
+    set (ANDROID_BUILD_DATE "2023-01-24")
 endif ()
 
 # Load modules from the source tree
