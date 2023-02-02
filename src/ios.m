@@ -573,6 +573,28 @@ void playHapticEffect_iOS(enum iHapticEffect effect) {
     }
 }
 
+static void callVoidMethod(id target, NSString *selectorName) {
+    SEL sel = NSSelectorFromString(selectorName);
+    if ([target respondsToSelector:sel]) {
+        NSInvocation *call = [NSInvocation invocationWithMethodSignature:
+                              [NSMethodSignature signatureWithObjCTypes:"v@:"]];
+        [call setSelector:sel];
+        [call invokeWithTarget:target];
+    }
+}
+
+static void callVoidMethodWithIntArgument(id target, NSString *selectorName, int argValue) {
+    SEL sel = NSSelectorFromString(selectorName);
+    if ([target respondsToSelector:sel]) {
+        NSInvocation *call = [NSInvocation invocationWithMethodSignature:
+                              [NSMethodSignature signatureWithObjCTypes:"v@:i"]];
+        [call setSelector:sel];
+        int style = argValue;
+        [call setArgument:&style atIndex:2];
+        [call invokeWithTarget:target];
+    }
+}
+
 iBool processEvent_iOS(const SDL_Event *ev) {
     if (ev->type == SDL_DISPLAYEVENT) {
         if (deviceType_App() == phone_AppDeviceType) {
@@ -593,7 +615,11 @@ iBool processEvent_iOS(const SDL_Event *ev) {
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
         const char *cmd = command_UserEvent(ev);
-        if (equal_Command(cmd, "ostheme")) {
+        if (equal_Command(cmd, "window.unfreeze")) {
+            id<UIApplicationDelegate> dlg = [UIApplication sharedApplication].delegate;
+            callVoidMethod([UIApplication sharedApplication].delegate, @"hideLaunchScreen");
+        }
+        else if (equal_Command(cmd, "ostheme")) {
             if (arg_Command(cmd)) {
                 postCommandf_App("os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
             }
@@ -603,17 +629,11 @@ iBool processEvent_iOS(const SDL_Event *ev) {
                 /* SDL doesn't expose this as a setting, so we'll rely on a hack.
                    Adding an SDL hint for this would be a cleaner solution than calling
                    a private method. */
-                UIViewController *vc = viewController_(get_Window());
-                SEL sel = NSSelectorFromString(@"setStatusStyle:"); /* custom method */
-                if ([vc respondsToSelector:sel]) {
-                    NSInvocation *call = [NSInvocation invocationWithMethodSignature:
-                                          [NSMethodSignature signatureWithObjCTypes:"v@:i"]];
-                    [call setSelector:sel];
-                    int style = isDark_ColorTheme(colorTheme_App()) ?
-                        UIStatusBarStyleLightContent : UIStatusBarStyleDarkContent;
-                    [call setArgument:&style atIndex:2];
-                    [call invokeWithTarget:vc];
-                }
+                callVoidMethodWithIntArgument(viewController_(get_Window()),
+                                              @"setStatusStyle:",
+                                              isDark_ColorTheme(colorTheme_App())
+                                                ? UIStatusBarStyleLightContent
+                                                : UIStatusBarStyleDarkContent);
             }
         }
     }
