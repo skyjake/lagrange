@@ -89,6 +89,7 @@ void        refresh_App                 (void);
 iBool       isRefreshPending_App        (void);
 iBool       isFinishedLaunching_App     (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
+void        disableRefresh_App          (iBool);
 
 iBool               isLandscape_App     (void);
 iLocalDef iBool     isPortrait_App      (void) { return !isLandscape_App(); }

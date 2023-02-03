@@ -67,7 +67,8 @@ void    setIdentity_DocumentWidget      (iDocumentWidget *, const iBlock *setIde
 void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);
 void    setUrlFlags_DocumentWidget      (iDocumentWidget *, const iString *url, int setUrlFlags,
                                          const iBlock *setIdent);
-void    setUrlAndSource_DocumentWidget  (iDocumentWidget *, const iString *url, const iString *mime, const iBlock *source);
+void    setUrlAndSource_DocumentWidget  (iDocumentWidget *, const iString *url, const iString *mime,
+                                         const iBlock *source, float normScrollY);
 void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); /* set after content received */
 void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);
 void    setSource_DocumentWidget        (iDocumentWidget *, const iString *sourceText);

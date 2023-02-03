@@ -147,8 +147,10 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
     iWidget *d = ptr;
     postRefresh_App();
     d->root->didAnimateVisualOffsets = iTrue;
-//    printf("'%s' visoffanim: fin:%d val:%f\n", cstr_String(&d->id),
-//           isFinished_Anim(&d->visualOffset), value_Anim(&d->visualOffset)); fflush(stdout);
+#if 0
+    printf("'%s' visoffanim: fin:%d val:%f\n", cstr_String(&d->id),
+           isFinished_Anim(&d->visualOffset), value_Anim(&d->visualOffset)); fflush(stdout);
+#endif
     if (!isFinished_Anim(&d->visualOffset)) {
         addTickerRoot_App(visualOffsetAnimation_Widget_, d->root, ptr);
     }

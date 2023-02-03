@@ -171,6 +171,7 @@ struct Impl_App {
     unsigned int idleSleepDelayMs;
 #endif
     iAtomicInt   pendingRefresh;
+    iBool        disableRefresh;
     iBool        isLoadingPrefs;
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
@@ -1067,6 +1068,10 @@ static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
     unlock_Mutex(dumpMutex_);
 }
 
+void disableRefresh_App(iBool dis) {
+    app_.disableRefresh = dis;
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
     iBool doDump = iFalse;
 #if defined (iPlatformAndroid)
@@ -1081,6 +1086,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     d->isSuspended = iFalse;
+    d->disableRefresh = iFalse;
     d->tempFilesPendingDeletion = new_StringSet();
     d->recentlyClosedTabUrls = new_StringList();
     d->overrideDataPath = NULL;
@@ -2252,6 +2258,9 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
+    if (d->disableRefresh) {
+        return;
+    }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->warmupFrames == 0 && d->isIdling) {
         return;
@@ -4077,7 +4086,8 @@ iBool handleCommand_App(const char *cmd) {
         setUrlAndSource_DocumentWidget(page,
                                        collectNewCStr_String(""),
                                        collectNewCStr_String("text/gemini"),
-                                       utf8_String(src));
+                                       utf8_String(src),
+                                       0);
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {
@@ -4623,7 +4633,8 @@ iBool handleCommand_App(const char *cmd) {
             expTab,
             collect_String(format_Date(&now, "file:Lagrange User Data %Y-%m-%d %H%M%S.zip")),
             collectNewCStr_String("application/zip"),
-            data_Buffer(zip));
+            data_Buffer(zip),
+            0);
         iRelease(zip);
         delete_Export(export);
 #if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
