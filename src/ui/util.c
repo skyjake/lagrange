@@ -767,6 +767,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "input.ended") ||
            equal_Command(cmd, "focus.gained") ||
            equal_Command(cmd, "focus.lost") ||
+           equal_Command(cmd, "tabs.changed") ||
            equal_Command(cmd, "menu.closed") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
