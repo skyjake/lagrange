@@ -1548,6 +1548,11 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                     else {
                         postCommand_Widget(
                             d, argLabel_Command(cmd, "side") == 1 ? "swipe.back" : "swipe.forward");
+                        /* Something will happen soon as a result of the finished swipe, so
+                           don't deactivate the offset like normally would happen after the
+                           animation ends. (A 10 ms animation was started above.) */
+                        removeTicker_App(visualOffsetAnimation_Widget_, d);
+                        d->flags |= visualOffset_WidgetFlag;
                     }
                     setFlags_Widget(d, dragged_WidgetFlag, iFalse);
                     return iTrue;
