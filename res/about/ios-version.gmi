@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.15 (4)
+* Fixed animation glitch when swiping away Settings and other dialogs.
+* Fixed animation issue during swipe navigation. There was a premature refresh occurring during the transition.
+* Fixed issues with retaining scroll position during swipe navigation.
+* Fixed tab context menu closing instantly when long-pressing a tab button.
+* Fixed tab bar background not extending into the safe area in landscape phone layout.
+
 ## 1.15 (3)
 * Added a basic launch screen transition for a cleaner startup.
 * Removed the [+] button from the tab bar in portrait phone layout to conserve space. (New tabs can be created via the navbar menu or via customized toolbar buttons.)
