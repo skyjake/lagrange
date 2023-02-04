@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.15 (4)
+* Settings: Long labels are wrapped to fit in view.
 * Fixed animation glitch when swiping away Settings and other dialogs.
 * Fixed animation issue during swipe navigation. There was a premature refresh occurring during the transition.
 * Fixed issues with retaining scroll position during swipe navigation.
