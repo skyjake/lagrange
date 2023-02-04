@@ -1722,8 +1722,9 @@ static void drawSideElements_DocumentView_(const iDocumentView *d) {
                 init_I2(0,
                         (deviceType_App() != phone_AppDeviceType
                             ? -margin + -dbuf->timestampBuf->size.y : 0) +
-                        -phoneToolbarHeight_DocumentWidget_(d->owner) +
-                        -phoneBottomNavbarHeight_DocumentWidget_(d->owner) +
+                        -(!prefs_App()->hideToolbarOnScroll
+                            ? phoneToolbarHeight_DocumentWidget_(d->owner) +
+                              phoneBottomNavbarHeight_DocumentWidget_(d->owner) : 0) +
                         d->scrollY.max - pos_SmoothScroll(&d->scrollY))),
             tmQuoteIcon_ColorId);
     }
