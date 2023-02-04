@@ -490,7 +490,10 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
 //                                           value));
     }
     else {
-        addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
+        setFlags_Widget(as_Widget(heading),
+                        fixedHeight_WidgetFlag /* for automatic wrap height */ |
+                        expand_WidgetFlag, iTrue);
+        setWrap_LabelWidget(heading, iTrue);
         addChild_Widget(div, iClob(value));
     }
 //    printTree_Widget(div);
