@@ -1656,7 +1656,7 @@ void drawLayerEffects_Widget(const iWidget *d) {
         const iInt2 center   = divi_I2(rootSize, 2);
         int top = 0, right = 0, bottom = 0, left = 0;
         if (d->flags & drawBackgroundToHorizontalSafeArea_WidgetFlag) {
-            const iBool isWide = width_Rect(rect) > rootSize.x * 9 / 10;
+            const iBool isWide = width_Rect(rect) > rootSize.x * 8 / 10;
             if (isWide || mid_Rect(rect).x < center.x) {
                 left = -left_Rect(rect);
             }
