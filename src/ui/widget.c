@@ -147,8 +147,10 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
     iWidget *d = ptr;
     postRefresh_App();
     d->root->didAnimateVisualOffsets = iTrue;
-//    printf("'%s' visoffanim: fin:%d val:%f\n", cstr_String(&d->id),
-//           isFinished_Anim(&d->visualOffset), value_Anim(&d->visualOffset)); fflush(stdout);
+#if 0
+    printf("'%s' visoffanim: fin:%d val:%f\n", cstr_String(&d->id),
+           isFinished_Anim(&d->visualOffset), value_Anim(&d->visualOffset)); fflush(stdout);
+#endif
     if (!isFinished_Anim(&d->visualOffset)) {
         addTickerRoot_App(visualOffsetAnimation_Widget_, d->root, ptr);
     }
@@ -1548,6 +1550,11 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                     else {
                         postCommand_Widget(
                             d, argLabel_Command(cmd, "side") == 1 ? "swipe.back" : "swipe.forward");
+                        /* Something will happen soon as a result of the finished swipe, so
+                           don't deactivate the offset like normally would happen after the
+                           animation ends. (A 10 ms animation was started above.) */
+                        removeTicker_App(visualOffsetAnimation_Widget_, d);
+                        d->flags |= visualOffset_WidgetFlag;
                     }
                     setFlags_Widget(d, dragged_WidgetFlag, iFalse);
                     return iTrue;
@@ -1649,7 +1656,7 @@ void drawLayerEffects_Widget(const iWidget *d) {
         const iInt2 center   = divi_I2(rootSize, 2);
         int top = 0, right = 0, bottom = 0, left = 0;
         if (d->flags & drawBackgroundToHorizontalSafeArea_WidgetFlag) {
-            const iBool isWide = width_Rect(rect) > rootSize.x * 9 / 10;
+            const iBool isWide = width_Rect(rect) > rootSize.x * 8 / 10;
             if (isWide || mid_Rect(rect).x < center.x) {
                 left = -left_Rect(rect);
             }

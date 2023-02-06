@@ -171,6 +171,7 @@ struct Impl_App {
     unsigned int idleSleepDelayMs;
 #endif
     iAtomicInt   pendingRefresh;
+    iBool        disableRefresh;
     iBool        isLoadingPrefs;
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
@@ -729,7 +730,7 @@ static iBool loadState_App_(iApp *d) {
 //                printf("[State] '%.4s' split:%d state:%x\n", magic, splitMode, winState);
 #if defined (iPlatformTerminal)
                 /* Terminal only supports one window. */
-                win = d->window;
+                win = as_MainWindow(d->window);
 #else
                 if (numWins == 1) {
                     win = as_MainWindow(d->window);
@@ -1067,6 +1068,10 @@ static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
     unlock_Mutex(dumpMutex_);
 }
 
+void disableRefresh_App(iBool dis) {
+    app_.disableRefresh = dis;
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
     iBool doDump = iFalse;
 #if defined (iPlatformAndroid)
@@ -1081,6 +1086,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     d->isSuspended = iFalse;
+    d->disableRefresh = iFalse;
     d->tempFilesPendingDeletion = new_StringSet();
     d->recentlyClosedTabUrls = new_StringList();
     d->overrideDataPath = NULL;
@@ -2252,6 +2258,9 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
+    if (d->disableRefresh) {
+        return;
+    }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->warmupFrames == 0 && d->isIdling) {
         return;
@@ -2961,9 +2970,11 @@ void closeWindow_App(iWindow *win) {
         /* Activate another window. */
         iForEach(PtrArray, i, &d->mainWindows) {
             if (i.ptr != activeWindow) {
-                SDL_RaiseWindow(i.ptr);
-                setActiveWindow_App(i.ptr);
-                setCurrent_Window(i.ptr);
+                iWindow *win = i.ptr;
+                SDL_RaiseWindow(win->win);
+                setActiveWindow_App(win); /* sets d->window */
+                setCurrent_Window(win);
+                break;
             }
         }
     }
@@ -2973,6 +2984,7 @@ void closeWindow_App(iWindow *win) {
             SDL_RaiseWindow(win->win);
             setActiveWindow_App(win);
             setCurrent_Window(win);
+            break;
         }
     }
 }
@@ -4074,7 +4086,8 @@ iBool handleCommand_App(const char *cmd) {
         setUrlAndSource_DocumentWidget(page,
                                        collectNewCStr_String(""),
                                        collectNewCStr_String("text/gemini"),
-                                       utf8_String(src));
+                                       utf8_String(src),
+                                       0);
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {
@@ -4406,7 +4419,8 @@ iBool handleCommand_App(const char *cmd) {
             iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
             postCommand_Widget(button, "panel.open");
         }
-        if (prefs_App()->detachedPrefs && deviceType_App() == desktop_AppDeviceType) {
+        if (prefs_App()->detachedPrefs && deviceType_App() == desktop_AppDeviceType &&
+            !isTerminal_Platform()) {
             /* Detach into a window if it doesn't fit otherwise. */
             promoteDialogToWindow_Widget(dlg);
         }
@@ -4620,7 +4634,8 @@ iBool handleCommand_App(const char *cmd) {
             expTab,
             collect_String(format_Date(&now, "file:Lagrange User Data %Y-%m-%d %H%M%S.zip")),
             collectNewCStr_String("application/zip"),
-            data_Buffer(zip));
+            data_Buffer(zip),
+            0);
         iRelease(zip);
         delete_Export(export);
 #if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)

@@ -424,12 +424,22 @@ static int phoneBottomNavbarHeight_DocumentWidget_(const iDocumentWidget *d) {
     return height;
 }
 
+#if 0
+static int pageInfoHeight_DocumentWidget_(const iDocumentWidget *d) {
+    if (d->view.drawBufs && d->view.drawBufs->timestampBuf) {
+        return lineHeight_Text(uiLabel_FontId) * 2;
+    }
+    return 0;
+}
+#endif
+
 static int footerHeight_DocumentWidget_(const iDocumentWidget *d) {
     int hgt = iMaxi(height_Widget(d->footerButtons),
-                    size_GmDocument(d->view.doc).y > 0 ? 2 * lineHeight_Text(banner_FontId) : 0);
-    hgt += phoneToolbarHeight_DocumentWidget_(d);
-    hgt += phoneBottomNavbarHeight_DocumentWidget_(d);
-    /* FIXME: Landscape phone also needs some extra space at the bottom: tab/nav bars. */
+                    /* page footer area (matches top banner, if present) */
+                    !isEmpty_Banner(d->banner) && size_GmDocument(d->view.doc).y > 0
+                        ? 2 * lineHeight_Text(banner_FontId) : 0);
+    hgt += phoneToolbarHeight_DocumentWidget_(d); /* in portrait only */
+    hgt += phoneBottomNavbarHeight_DocumentWidget_(d); /* in landscape only */
     return hgt;
 }
 
@@ -528,11 +538,11 @@ static iChar linkOrdinalChar_DocumentWidget_(const iDocumentWidget *d, size_t or
 /*----------------------------------------------------------------------------------------------*/
 
 void init_DocumentView(iDocumentView *d) {
-    d->owner            = NULL;
-    d->doc              = new_GmDocument();
-    d->invalidRuns      = new_PtrSet();
-    d->drawBufs         = new_DrawBufs();
-    d->pageMargin       = 5;
+    d->owner         = NULL;
+    d->doc           = new_GmDocument();
+    d->invalidRuns   = new_PtrSet();
+    d->drawBufs      = new_DrawBufs();
+    d->pageMargin    = 5;
     d->hoverPre      = NULL;
     d->hoverAltPre   = NULL;
     d->hoverLink     = NULL;
@@ -629,8 +639,7 @@ static iRect documentBounds_DocumentView_(const iDocumentView *d) {
     /* TODO: Further separation of View and Widget: configure header and footer heights
        without involving the widget here. */
     if (d->owner->flags & centerVertically_DocumentWidgetFlag) {
-        const int docSize = size_GmDocument(d->doc).y +
-                            documentTopMargin_DocumentView_(d);
+        const int docSize = documentTopMargin_DocumentView_(d) + size_GmDocument(d->doc).y;
         if (size_GmDocument(d->doc).y == 0) {
             /* Document is empty; maybe just showing an error banner. */
             rect.pos.y = top_Rect(bounds) + height_Rect(bounds) / 2 -
@@ -638,12 +647,16 @@ static iRect documentBounds_DocumentView_(const iDocumentView *d) {
             rect.size.y = 0;
             wasCentered = iTrue;
         }
-        else if (docSize < rect.size.y - footerHeight_DocumentWidget_(d->owner)) {
-            /* TODO: Phone toolbar? */
+        else if (docSize + height_Widget(d->owner->footerButtons) < rect.size.y) {
             /* Center vertically when the document is short. */
-            const int relMidY   = (height_Rect(bounds) - height_Widget(d->owner->footerButtons)) / 2;
-            const int visHeight = size_GmDocument(d->doc).y;
-            const int offset    = -height_Banner(d->owner->banner) - documentTopPad_DocumentView_(d);
+            const int relMidY   = (height_Rect(bounds) -
+                                  height_Widget(d->owner->footerButtons) -
+                                  phoneToolbarHeight_DocumentWidget_(d->owner)) / 2;
+            const int visHeight = size_GmDocument(d->doc).y +
+                                  height_Widget(d->owner->footerButtons);
+            const int offset    = -height_Banner(d->owner->banner) -
+                                  documentTopPad_DocumentView_(d) +
+                                  height_Widget(d->owner->footerButtons);
             rect.pos.y  = top_Rect(bounds) + iMaxi(0, relMidY - visHeight / 2 + offset);
             rect.size.y = size_GmDocument(d->doc).y + documentTopMargin_DocumentView_(d);
             wasCentered = iTrue;
@@ -715,21 +728,21 @@ static const iGmRun *lastVisibleLink_DocumentView_(const iDocumentView *d) {
     return NULL;
 }
 
-static float normScrollPos_DocumentView_(const iDocumentView *d) {
-    const int docSize = pageHeight_DocumentView_(d);
-    if (docSize) {
-        float pos = pos_SmoothScroll(&d->scrollY) / (float) docSize;
-        return iMax(pos, 0.0f);
-    }
-    return 0;
-}
-
 static int scrollMax_DocumentView_(const iDocumentView *d) {
     const iWidget *w = constAs_Widget(d->owner);
     int sm = pageHeight_DocumentView_(d) +
              (isEmpty_Banner(d->owner->banner) ? 2 : 1) * d->pageMargin * gap_UI + /* top and bottom margins */
              footerHeight_DocumentWidget_(d->owner) - height_Rect(bounds_Widget(w));
     return sm;
+}
+
+static float normScrollPos_DocumentView_(const iDocumentView *d) {
+    const int height = pageHeight_DocumentView_(d);
+    if (height > 0) {
+        float pos = pos_SmoothScroll(&d->scrollY) / (float) height;
+        return iMax(pos, 0.0f);
+    }
+    return 0;
 }
 
 static void invalidateLink_DocumentView_(iDocumentView *d, iGmLinkId id) {
@@ -936,9 +949,11 @@ static void updateVisible_DocumentView_(iDocumentView *d) {
     updateHover_DocumentView_(d, mouseCoord_Window(get_Window(), 0));
     updateSideOpacity_DocumentView_(d, iTrue);
     animateMedia_DocumentWidget_(d->owner);
-    /* Remember scroll positions of recently visited pages. */ {
+    /* Remember scroll positions of recently visited pages. */
+    if (~d->owner->flags & animationPlaceholder_DocumentWidgetFlag) {
+        iAssert(~d->owner->widget.flags & destroyPending_WidgetFlag);
         iRecentUrl *recent = mostRecentUrl_History(d->owner->mod.history);
-        if (recent && docSize && d->owner->state == ready_RequestState &&
+        if (recent && size_GmDocument(d->doc).y > 0 && d->owner->state == ready_RequestState &&
             equal_String(&recent->url, d->owner->mod.url)) {
             recent->normScrollY = normScrollPos_DocumentView_(d);
         }
@@ -1697,17 +1712,20 @@ static void drawSideElements_DocumentView_(const iDocumentView *d) {
                            &(SDL_Rect){ pos.x, pos.y, texSize.x, texSize.y });
         }
     }
-    /* Reception timestamp. */
-    if (dbuf->timestampBuf) { //} && dbuf->timestampBuf->size.x <= avail) {
+    /* Reception timestamp. On mobile, it's below the footer in the overscroll area. */
+    if (dbuf->timestampBuf) { 
         draw_TextBuf(
             dbuf->timestampBuf,
             add_I2(
-                init_I2(left_Rect(docBounds), bottom_Rect(bounds)),
+                init_I2(mid_Rect(docBounds).x - dbuf->timestampBuf->size.x / 2,
+                        bottom_Rect(bounds)),
                 init_I2(0,
-                        -margin + -dbuf->timestampBuf->size.y +
-                        -phoneToolbarHeight_DocumentWidget_(d->owner) +
-                        -phoneBottomNavbarHeight_DocumentWidget_(d->owner) +
-                        iMax(0, d->scrollY.max - pos_SmoothScroll(&d->scrollY)))),
+                        (deviceType_App() != phone_AppDeviceType
+                            ? -margin + -dbuf->timestampBuf->size.y : 0) +
+                        -(!prefs_App()->hideToolbarOnScroll
+                            ? phoneToolbarHeight_DocumentWidget_(d->owner) +
+                              phoneBottomNavbarHeight_DocumentWidget_(d->owner) : 0) +
+                        d->scrollY.max - pos_SmoothScroll(&d->scrollY))),
             tmQuoteIcon_ColorId);
     }
     unsetClip_Paint(&p);
@@ -3918,6 +3936,10 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
        
        2022-03-16: Yeah, something did break, again. "swipeout" is not found if the tab bar
        is moved to the bottom, when swiping back.
+
+       2023-02-03: There is a visual glitch because a refresh occurs during the switchover
+       of the document and its swipe placeholder. Solution is to forcibly prevent refresh from
+       occuring during the switch operation.
     */
     iWidget *w = as_Widget(d);
     if (!prefs_App()->edgeSwipe &&
@@ -3982,9 +4004,11 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                         updateBanner_DocumentWidget_(swipeIn);
                     }
                     else {
-                        setUrlAndSource_DocumentWidget(swipeIn, &recent->url,
+                        setUrlAndSource_DocumentWidget(swipeIn,
+                                                       &recent->url,
                                                        collectNewCStr_String("text/gemini"),
-                                                       collect_Block(new_Block(0)));
+                                                       collect_Block(new_Block(0)),
+                                                       recent->normScrollY);
                     }
                     unlock_History(d->mod.history);
                 }
@@ -4023,7 +4047,8 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     setUrlAndSource_DocumentWidget(d,
                                                    collectNewCStr_String("about:blank"),
                                                    collectNewCStr_String("text/gemini"),
-                                                   collect_Block(new_Block(0)));
+                                                   collect_Block(new_Block(0)),
+                                                   0);
                 }
                 if (flags_Widget(w) & dragged_WidgetFlag) {
                     setVisualOffset_Widget(w, width_Widget(w) +
@@ -4060,13 +4085,21 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
         setFlags_Widget(w, dragged_WidgetFlag, iFalse);
         setVisualOffset_Widget(w, 0, 250, easeOut_AnimFlag | softer_AnimFlag);
+        stopWidgetMomentum_Touch(w);
         return iTrue;
     }
     if (equal_Command(cmd, "edgeswipe.ended") && argLabel_Command(cmd, "side") == 1) {
+        if (!argLabel_Command(cmd, "abort") && flags_Widget(w) & dragged_WidgetFlag) {
+            /* Hacky fix for animation glitches during swipe navigation, where the widgets get
+               refreshed in between the switch from swipeout/in and the real DocumentWidget.
+               GET RID OF THIS when the swipe animation is implemented in a more elegant way
+               (using DocumentViews). */
+            disableRefresh_App(iTrue);
+        }
         iWidget *swipeParent = swipeParent_DocumentWidget_(d);
         iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
         d->swipeSpeed = argLabel_Command(cmd, "speed") / gap_UI;
-        /* "swipe.back" will soon follow. The `d` document will do the actual back navigation,
+        /* "swipe.back" may soon follow. The `d` document will do the actual back navigation,
             switching immediately to a cached page. However, if one is not available, we'll need
             to show a blank page for a while. */
         if (swipeIn) {
@@ -4083,11 +4116,13 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 setUrlAndSource_DocumentWidget(d,
                                                swipeIn->mod.url,
                                                collectNewCStr_String("text/gemini"),
-                                               collect_Block(new_Block(0)));
+                                               collect_Block(new_Block(0)),
+                                               0);
                 as_Widget(swipeIn)->offsetRef = NULL;
             }
             destroy_Widget(as_Widget(swipeIn));
         }
+        stopWidgetMomentum_Touch(w);
     }
     if (equal_Command(cmd, "swipe.back")) {
         iWidget *swipeParent = swipeParent_DocumentWidget_(d);
@@ -4097,6 +4132,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             if (target) {
                 destroy_Widget(as_Widget(target)); /* didn't need it after all */
             }
+            disableRefresh_App(iFalse);
             return iTrue;
         }
         setupSwipeOverlay_DocumentWidget_(d, as_Widget(target));
@@ -5069,8 +5105,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.setmediatype") && document_App() == d) {
         if (!isRequestOngoing_DocumentWidget(d)) {
-            setUrlAndSource_DocumentWidget(d, d->mod.url, string_Command(cmd, "mime"),
-                                           &d->sourceContent);
+            setUrlAndSource_DocumentWidget(d,
+                                           d->mod.url,
+                                           string_Command(cmd, "mime"),
+                                           &d->sourceContent,
+                                           normScrollPos_DocumentView_(&d->view));
         }
         return iTrue;
     }
@@ -6531,6 +6570,10 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags,
                                 const iBlock *setIdent) {
     iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
+    /* Hacky fix for animation glitches during swipe navigation, where the widgets get refreshed
+       in between the switch from swipeout/in and the real DocumentWidget. GET RID OF THIS when
+       the swipe animation is implemented in a more elegant way (using DocumentViews). */
+    disableRefresh_App(iFalse);
     const iBool allowCache     = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     const iBool allowCachedDoc = (setUrlFlags & disallowCachedDocument_DocumentWidgetSetUrlFlag) == 0;
     iChangeFlags(d->flags, preventInlining_DocumentWidgetFlag,
@@ -6554,7 +6597,7 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
 }
 
 void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, const iString *mime,
-                                    const iBlock *source) {
+                                    const iBlock *source, float normScrollY) {
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     d->flags |= preventInlining_DocumentWidgetFlag;
     setUrl_DocumentWidget_(d, url);
@@ -6564,7 +6607,7 @@ void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, cons
     initCurrent_Time(&resp->when);
     set_String(&resp->meta, mime);
     set_Block(&resp->body, source);
-    updateFromCachedResponse_DocumentWidget_(d, 0, resp, NULL);
+    updateFromCachedResponse_DocumentWidget_(d, normScrollY, resp, NULL);
     updateBanner_DocumentWidget_(d);
     delete_GmResponse(resp);
 }

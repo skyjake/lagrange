@@ -206,6 +206,6 @@ static float nextTabStop_Font_(const iFont *d, float x) {
 
 #include "text_simple.c"
 
-iRect run_Font(iBaseFont *font, const iRunArgs *args) {
-    return runSimple_Font_((iFont *) font, args);
+void run_Font(iBaseFont *font, const iRunArgs *args) {
+    runSimple_Font_((iFont *) font, args);
 }

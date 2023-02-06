@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.15.1
+    VERSION 1.15.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
-set (COPYRIGHT_YEAR 2022)
+set (COPYRIGHT_YEAR 2023)
 if (IOS)
     set (PROJECT_VERSION 1.15)
-    set (IOS_BUNDLE_VERSION 2)
-    set (IOS_BUILD_DATE "2022-01-24")
+    set (IOS_BUNDLE_VERSION 4)
+    set (IOS_BUILD_DATE "2023-02-04")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.15)
-    set (ANDROID_BUILD_VERSION b13)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2022-01-24")
+    set (ANDROID_BUILD_VERSION b14)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2023-02-04")
 endif ()
 
 # Load modules from the source tree
@@ -389,12 +389,10 @@ endif ()
 target_include_directories (app PUBLIC
     src
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${SDL2_INCLUDE_DIRS}
 )
 target_compile_options (app PUBLIC
     -Werror=implicit-function-declaration
     -Wno-deprecated-declarations
-    ${SDL2_CFLAGS}
     -DSTB_VORBIS_NO_STDIO=1
     -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
 )
@@ -452,6 +450,8 @@ if (ENABLE_X11_SWRENDER)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
+target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
+target_compile_options (app PUBLIC ${SDL2_CFLAGS})
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
 if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND AND NOT ENABLE_TUI)
     if (TARGET harfbuzz-lib)

@@ -231,7 +231,8 @@ static iBool processEvent_CertListWidget_(iCertListWidget *d, const SDL_Event *e
                     expTab,
                     collectNewFormat_String("file:%s.pem", cstr_String(name_GmIdentity(ident))),
                     collectNewCStr_String("text/plain"),
-                    utf8_String(pem));
+                    utf8_String(pem),
+                    0);
             }
             return iTrue;
         }

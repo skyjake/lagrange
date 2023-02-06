@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.15 (Beta 14)
+* Settings: Long labels are wrapped to fit in view.
+* Removed the [+] button from the tab bar in portrait phone layout to conserve space. (New tabs can be created via the navbar menu or via customized toolbar buttons.)
+* Centered footer info text for better balance, and now it's hidden below the page in the overscroll area.
+* Fixed possible animation and scroll position issues related to swiping.
+
 ## 1.15 (Beta 13)
 * Tab reordering: tab buttons are draggable.
 * Improved item grouping in the navbar menu.
