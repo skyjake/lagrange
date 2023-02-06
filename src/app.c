@@ -730,7 +730,7 @@ static iBool loadState_App_(iApp *d) {
 //                printf("[State] '%.4s' split:%d state:%x\n", magic, splitMode, winState);
 #if defined (iPlatformTerminal)
                 /* Terminal only supports one window. */
-                win = d->window;
+                win = as_MainWindow(d->window);
 #else
                 if (numWins == 1) {
                     win = as_MainWindow(d->window);
@@ -4419,7 +4419,8 @@ iBool handleCommand_App(const char *cmd) {
             iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
             postCommand_Widget(button, "panel.open");
         }
-        if (prefs_App()->detachedPrefs && deviceType_App() == desktop_AppDeviceType) {
+        if (prefs_App()->detachedPrefs && deviceType_App() == desktop_AppDeviceType &&
+            !isTerminal_Platform()) {
             /* Detach into a window if it doesn't fit otherwise. */
             promoteDialogToWindow_Widget(dlg);
         }
