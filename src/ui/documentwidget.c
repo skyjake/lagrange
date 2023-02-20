@@ -3739,6 +3739,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
                 updateVisible_DocumentView_(&d->view);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(as_Widget(d));
+                d->redirectCount = 0;
             }
         }
         else if (category_GmStatusCode(code) == categoryRedirect_GmStatusCode) {
