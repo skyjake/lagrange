@@ -83,6 +83,7 @@ void                unlockResponse_GmRequest    (iGmRequest *);
 
 uint32_t            id_GmRequest                (const iGmRequest *); /* unique ID */
 iBool               isFinished_GmRequest        (const iGmRequest *);
+iBool               filtersEnabled_GmRequest    (const iGmRequest *);
 enum iGmStatusCode  status_GmRequest            (const iGmRequest *);
 const iString *     meta_GmRequest              (const iGmRequest *);
 const iBlock  *     body_GmRequest              (const iGmRequest *);

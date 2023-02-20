@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.15.3
+* Fixed handling of redirects in the inline media player and file downloader.
+
 ## 1.15.2
 * Fixed moving input focus to the next window when closing a window.
 * Centered footer info text for better balance.
