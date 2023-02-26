@@ -1142,6 +1142,10 @@ iBool isFinished_GmRequest(const iGmRequest *d) {
     return iTrue;
 }
 
+iBool filtersEnabled_GmRequest(const iGmRequest *d) {
+    return d->isFilterEnabled;
+}
+
 enum iGmStatusCode status_GmRequest(const iGmRequest *d) {
     if (d) {
         enum iGmStatusCode code;

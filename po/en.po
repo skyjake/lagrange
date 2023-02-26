@@ -2107,7 +2107,7 @@ msgid "error.badstatus"
 msgstr "Unknown Status Code"
 
 msgid "error.badstatus.msg"
-msgstr "The server responded with a status code that is not in the Gemini protocol specification. Maybe the server is from the future? Or just malfunctioning."
+msgstr "The server responded with a status code that is not in the Gemini protocol specification. Maybe the server is malfunctioning."
 
 msgid "error.openfile"
 msgstr "Failed to Open File"

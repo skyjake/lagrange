@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 11:19+0000\n"
-"PO-Revision-Date: 2023-02-02 05:55+0000\n"
+"PO-Revision-Date: 2023-02-13 12:55+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hant/>\n"
@@ -126,7 +126,7 @@ msgid "prefs.ostheme"
 msgstr "使用系統主題："
 
 msgid "prefs.theme"
-msgstr "主題："
+msgstr "介面主題："
 
 msgid "prefs.theme.black"
 msgstr "黑"
@@ -162,7 +162,7 @@ msgid "prefs.doctheme.dark"
 msgstr "深色主題："
 
 msgid "prefs.sideicon"
-msgstr "站點圖示："
+msgstr "左側站點圖示："
 
 msgid "prefs.retainwindow"
 msgstr "記住視窗位置："
@@ -808,7 +808,7 @@ msgstr "尺寸"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "樣式"
+msgstr "頁面樣式"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -824,7 +824,7 @@ msgid "prefs.smoothscroll"
 msgstr "平滑捲動："
 
 msgid "prefs.imageloadscroll"
-msgstr "捲動時載入圖片："
+msgstr "捲動時載入下一張圖片："
 
 msgid "prefs.doctheme.light"
 msgstr "淺色主題："
@@ -866,7 +866,7 @@ msgid "prefs.quoteicon.line"
 msgstr "線條"
 
 msgid "prefs.plaintext.wrap"
-msgstr "純文字折行："
+msgstr "對長純文字行折行："
 
 msgid "menu.binding.reset"
 msgstr "重置為預設值"
@@ -929,7 +929,7 @@ msgid "error.tls"
 msgstr "網路或 TLS 錯誤"
 
 msgid "error.tls.msg"
-msgstr "與伺服器通訊失敗。以下是錯誤資訊："
+msgstr "與伺服器通訊失敗。"
 
 msgid "error.temporary"
 msgstr "暫時性錯誤"
@@ -1373,7 +1373,7 @@ msgstr "匯入…"
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "該檔案夾內含 %zu 項。"
+msgstr[0] "該檔案夾內含 %u 項。"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
@@ -1382,7 +1382,7 @@ msgstr "檢視存檔內檔案夾時使用 index.gmi："
 #, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
-msgstr[0] "該存檔內含 %zu 項，壓縮後共 %.1f MB。"
+msgstr[0] "該存檔內含 %u 項，壓縮後共 %.1f MB。"
 
 msgid "keys.split.menu"
 msgstr "設定分屏模式"
@@ -1568,7 +1568,7 @@ msgid "prefs.returnkey"
 msgstr "Return 鍵行為："
 
 msgid "keys.upload"
-msgstr "透過 Titan 上載頁面"
+msgstr "透過 Titan 上載"
 
 msgid "upload.port"
 msgstr "埠號…"
@@ -1763,7 +1763,7 @@ msgid "prefs.bookmarks.addbottom"
 msgstr "在底部添加書籤："
 
 msgid "prefs.time.24h"
-msgstr "24小時制"
+msgstr "24小時制："
 
 msgid "prefs.imagestyle"
 msgstr "影像著色："
@@ -1779,7 +1779,7 @@ msgid "prefs.imagestyle.bgfg"
 msgstr "背景至前景"
 
 msgid "prefs.font.ui"
-msgstr "UI："
+msgstr "介面字體："
 
 msgid "prefs.font.heading"
 msgstr "標題："
@@ -1829,7 +1829,7 @@ msgid "dlg.upload.text"
 msgstr "上載純文本"
 
 msgid "prefs.gemtext.ansi"
-msgstr "ANSI 跳脫："
+msgstr "Gemtext ANSI 跳脫："
 
 # Color of the text foreground, i.e., the characters.
 msgid "prefs.gemtext.ansi.fg"
@@ -1855,7 +1855,7 @@ msgid "heading.confirm.bookmarks.delete"
 msgstr "移除書籤"
 
 msgid "heading.bookmark.tags"
-msgstr "特殊標籤"
+msgstr "行為"
 
 msgid "heading.addfolder"
 msgstr "新增檔案夾"
@@ -2161,3 +2161,142 @@ msgstr "書籤："
 
 msgid "import.userdata.idents"
 msgstr "身分："
+
+msgid "prefs.evensplit"
+msgstr "均勻分割標籤頁："
+
+msgid "prefs.tabwidth"
+msgstr "Tab寬度："
+
+msgid "heading.prefs.user"
+msgstr "使用者資料"
+
+msgid "prefs.font.warnmissing"
+msgstr "字體缺失："
+
+msgid "keys.bookmark.addfolder"
+msgstr "新增書籤檔案夾"
+
+msgid "heading.prefs.appearance"
+msgstr "外觀"
+
+msgid "heading.prefs.layout"
+msgstr "頁面佈局"
+
+msgid "heading.prefs.content"
+msgstr "內容"
+
+msgid "prefs.bottomnavbar"
+msgstr "底部導航條"
+
+msgid "prefs.swipe.edge"
+msgstr "邊緣滑動："
+
+msgid "prefs.swipe.page"
+msgstr "頁面滑動："
+
+msgid "heading.prefs.toolbaractions"
+msgstr "工具列動作"
+
+msgid "prefs.accent.blue"
+msgstr "藍色"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "自動檢測Gopher選單樣式："
+
+msgid "error.proxyverify"
+msgstr "未受信任的代理"
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"因代理伺服器的TLA憑證與已在頁面資訊信任的憑證不符，連線已被取消。\n"
+"\n"
+"可以在頁面資訊中將代理的憑證標記為受信任的。"
+
+msgid "error.proxyexpired"
+msgstr "代理憑據過期"
+
+msgid "error.proxyexpired.msg"
+msgstr "因應代理伺服器的TLS憑證過期，連線已經取消。"
+
+msgid "heading.prefs.support"
+msgstr "支援"
+
+msgid "prefs.markdown.viewsource"
+msgstr "以原始碼形態檢視Markdown："
+
+msgid "prefs.bottomtabbar"
+msgstr "底部標籤頁"
+
+msgid "prefs.retaintabs"
+msgstr "下次啟動時還原標籤頁："
+
+msgid "prefs.blink"
+msgstr "游標閃爍："
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "海洋"
+
+msgid "prefs.toolbaraction1"
+msgstr "按鈕1"
+
+msgid "prefs.accent.gray"
+msgstr "灰色"
+
+msgid "keys.upload.edit"
+msgstr "透過Titan編輯頁面"
+
+msgid "error.ansi"
+msgstr "終端模擬"
+
+msgid "dlg.bookmark.notes"
+msgstr "註解："
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "任意格式的註解"
+
+msgid "dlg.bookmark.identity"
+msgstr "釘選的身分："
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "顯示data URL中的圖片："
+
+msgid "prefs.uilayout"
+msgstr "佈局："
+
+msgid "prefs.menubar"
+msgstr "選單列"
+
+msgid "prefs.accent.red"
+msgstr "紅色"
+
+msgid "prefs.toolbaraction2"
+msgstr "按鈕2"
+
+msgid "prefs.accent.green"
+msgstr "綠色"
+
+msgid "prefs.font.smooth"
+msgstr "平滑字體："
+
+msgid "prefs.justify"
+msgstr "對齊："
+
+msgid "prefs.urlsize"
+msgstr "最大URL長度："
+
+msgid "error.incompleteheader"
+msgstr "回應頭不完整"
+
+msgid "prefs.tui.simple"
+msgstr "簡單字元："
+
+msgid "keys.feeds.showall"
+msgstr "側欄：展示全部訂閱項"
+
+msgid "keys.feeds.showunread"
+msgstr "側欄：顯示未讀訂閱項"
+
+msgid "error.incompleteheader.msg"
+msgstr "伺服器的回應頭不完整。可能是該伺服器未正常工作，亦可能是您嘗試連入非Gemini伺服器。"

@@ -641,6 +641,19 @@ void deinit_MediaRequest(iMediaRequest *d) {
     iRelease(d->req);
 }
 
+void resubmitWithUrl_MediaRequest(iMediaRequest *d, const iString *url) {
+    iAssert(d->req);
+    iAssert(isFinished_GmRequest(d->req));
+    const iBool enableFilters = filtersEnabled_GmRequest(d->req);
+    deinit_MediaRequest(d); /* release request, disconnect audiences */
+    d->req = new_GmRequest(certs_App());
+    setUrl_GmRequest(d->req, url);
+    enableFilters_GmRequest(d->req, enableFilters);
+    iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
+    iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
+    submit_GmRequest(d->req);
+}
+
 iMediaRequest *newReused_MediaRequest(iDocumentWidget *doc, unsigned int linkId,
                                       iGmRequest *request) {
     iMediaRequest *d = new_Object(&Class_MediaRequest);

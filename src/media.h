@@ -124,5 +124,7 @@ struct Impl_MediaRequest {
 iDeclareObjectConstructionArgs(MediaRequest, iDocumentWidget *doc, unsigned int linkId,
                                const iString *url, iBool enableFilters)
     
+void    resubmitWithUrl_MediaRequest    (iMediaRequest *, const iString *url);
+    
 iMediaRequest * newReused_MediaRequest  (iDocumentWidget *doc, unsigned int linkId,
                                          iGmRequest *request);

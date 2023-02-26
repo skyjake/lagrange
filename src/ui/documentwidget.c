@@ -3739,6 +3739,20 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
                 updateVisible_DocumentView_(&d->view);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(as_Widget(d));
+                d->redirectCount = 0;
+            }
+        }
+        else if (category_GmStatusCode(code) == categoryRedirect_GmStatusCode) {
+            if (d->redirectCount++ < 5) {
+                /* Redo the request. */
+                iString *url = copy_String(meta_GmRequest(req->req));
+                resubmitWithUrl_MediaRequest(req, url);
+                delete_String(url);
+            }
+            else {
+                const iGmError *err = get_GmError(tooManyRedirects_GmStatusCode);
+                makeSimpleMessage_Widget(format_CStr(uiTextCaution_ColorEscape "%s", err->title), err->info);
+                removeMediaRequest_DocumentWidget_(d, req->linkId);
             }
         }
         else {
