@@ -3538,23 +3538,35 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "linewidth.set")) {
-        d->prefs.lineWidth = iMax(20, arg_Command(cmd));
-        postCommand_App("document.layout.changed");
+        const int lineWidth = iMax(20, arg_Command(cmd));
+        if (lineWidth != d->prefs.lineWidth) {
+            d->prefs.lineWidth = lineWidth;
+            postCommand_App("document.layout.changed redo:1");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "linespacing.set")) {
-        d->prefs.lineSpacing = iMax(0.5f, argf_Command(cmd));
-        postCommand_App("document.layout.changed redo:1");
+        const float spacing = iMax(0.5f, argf_Command(cmd));
+        if (spacing != d->prefs.lineSpacing) {
+            d->prefs.lineSpacing = spacing;
+            postCommand_App("document.layout.changed redo:1");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "tabwidth.set")) {
-        d->prefs.tabWidth = iMax(1, arg_Command(cmd));
-        postCommand_App("document.layout.changed redo:1"); /* spaces need renormalizing */
+        const int tabWidth = iMax(1, arg_Command(cmd));;
+        if (tabWidth != d->prefs.tabWidth) {
+            d->prefs.tabWidth = tabWidth;
+            postCommand_App("document.layout.changed redo:1"); /* spaces need renormalizing */
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "quoteicon.set")) {
-        d->prefs.quoteIcon = arg_Command(cmd) != 0;
-        postCommand_App("document.layout.changed redo:1");
+        const iBool quoteIcon = arg_Command(cmd) != 0;
+        if (quoteIcon != d->prefs.quoteIcon) {
+            d->prefs.quoteIcon = quoteIcon;
+            postCommand_App("document.layout.changed redo:1");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "ansiescape")) {
