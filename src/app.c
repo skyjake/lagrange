@@ -2735,7 +2735,8 @@ static void updateImageStyleButton_(iLabelWidget *button, int style) {
 }
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
-    if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
+    if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences") ||
+        equal_Command(cmd, "tabs.close")) {
         setupSheetTransition_Mobile(d, iFalse);
         enableToolbar_Root(get_Root(), iTrue);
         /* Apply the new UI scaling factor to all non-popup windows. */ {
@@ -4192,7 +4193,7 @@ iBool handleCommand_App(const char *cmd) {
 #endif
         return iFalse;
     }
-    else if (equal_Command(cmd, "tabs.new")) {
+    else if (equal_Command(cmd, "tabs.new") && isMainWin) {
         if (argLabel_Command(cmd, "reopen")) {
             const iString *reopenUrl = popClosedTabUrl_App_(d);
             if (reopenUrl) {
@@ -4208,7 +4209,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "tabs.close")) {
+    else if (equal_Command(cmd, "tabs.close") && isMainWin) {
         iWidget *tabs = findWidget_App("doctabs");
         /* Can't close the last tab on mobile. */
         if (isMobile_Platform() && tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
@@ -4284,7 +4285,7 @@ iBool handleCommand_App(const char *cmd) {
 #endif
         return iTrue;
     }
-    else if (equal_Command(cmd, "keyroot.next")) {
+    else if (equal_Command(cmd, "keyroot.next") && isMainWin) {
         if (setKeyRoot_Window(as_Window(d->window),
                               otherRoot_Window(as_Window(d->window), d->window->keyRoot))) {
             setFocus_Widget(NULL);
@@ -4425,7 +4426,7 @@ iBool handleCommand_App(const char *cmd) {
             promoteDialogToWindow_Widget(dlg);
         }
     }
-    else if (equal_Command(cmd, "navigate.home")) {
+    else if (equal_Command(cmd, "navigate.home") && isMainWin) {
         /* Look for bookmarks tagged "homepage". */
         const iPtrArray *homepages =
             list_Bookmarks(d->bookmarks, NULL, filterHomepage_Bookmark, NULL);
@@ -4452,7 +4453,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "bookmark.add")) {
+    else if (equal_Command(cmd, "bookmark.add") && isMainWin) {
         if (findWidget_Root("bmed.create")) {
             return iTrue;
         }
@@ -4485,7 +4486,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "feeds.subscribe")) {
+    else if (equal_Command(cmd, "feeds.subscribe") && isMainWin) {
         const iString *url = url_DocumentWidget(document_App());
         if (isEmpty_String(url)) {
             return iTrue;
@@ -4549,7 +4550,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iFalse;
     }
-    else if (equal_Command(cmd, "ident.new")) {
+    else if (equal_Command(cmd, "ident.new") && isMainWin) {
         iWidget *dlg = makeIdentityCreation_Widget();
         setFocus_Widget(findChild_Widget(dlg, "ident.until"));
         setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
@@ -4562,7 +4563,7 @@ iBool handleCommand_App(const char *cmd) {
         arrange_Widget(dlg);
         return iTrue;
     }
-    else if (equal_Command(cmd, "ident.import")) {
+    else if (equal_Command(cmd, "ident.import") && isMainWin) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
         addChild_Widget(get_Root()->widget, iClob(imp));

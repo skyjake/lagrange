@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.15.4
+* Fixed crash when trying to open a tab, New Identity dialog, or the Identity menu when the Preferences window is focused.
+* Fixed closing the Preferences window with Ctrl+W or ⌘W.
+
 ## 1.15.3
 * Fixed handling of redirects in the inline media player and file downloader.
 * Updated UI translations.
