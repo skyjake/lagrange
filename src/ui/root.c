@@ -454,9 +454,11 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         const iBool setFocus = argLabel_Command(cmd, "focus");
         iWidget *toolBar = findWidget_Root("toolbar");
         iWidget *button = findWidget_Root(toolBar && isPortraitPhone_App() ? "toolbar.ident" : "navbar.ident");
-        iWidget *menu = makeIdentityMenu_(button);
-        openMenuFlags_Widget(menu, bottomLeft_Rect(bounds_Widget(button)),
-                             postCommands_MenuOpenFlags | (setFocus ? setFocus_MenuOpenFlags : 0));
+        if (button) {
+            iWidget *menu = makeIdentityMenu_(button);
+            openMenuFlags_Widget(menu, bottomLeft_Rect(bounds_Widget(button)),
+                                 postCommands_MenuOpenFlags | (setFocus ? setFocus_MenuOpenFlags : 0));
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "contextclick")) {

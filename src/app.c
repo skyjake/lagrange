@@ -2735,7 +2735,8 @@ static void updateImageStyleButton_(iLabelWidget *button, int style) {
 }
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
-    if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
+    if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences") ||
+        equal_Command(cmd, "tabs.close")) {
         setupSheetTransition_Mobile(d, iFalse);
         enableToolbar_Root(get_Root(), iTrue);
         /* Apply the new UI scaling factor to all non-popup windows. */ {
@@ -3537,23 +3538,35 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "linewidth.set")) {
-        d->prefs.lineWidth = iMax(20, arg_Command(cmd));
-        postCommand_App("document.layout.changed");
+        const int lineWidth = iMax(20, arg_Command(cmd));
+        if (lineWidth != d->prefs.lineWidth) {
+            d->prefs.lineWidth = lineWidth;
+            postCommand_App("document.layout.changed redo:1");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "linespacing.set")) {
-        d->prefs.lineSpacing = iMax(0.5f, argf_Command(cmd));
-        postCommand_App("document.layout.changed redo:1");
+        const float spacing = iMax(0.5f, argf_Command(cmd));
+        if (spacing != d->prefs.lineSpacing) {
+            d->prefs.lineSpacing = spacing;
+            postCommand_App("document.layout.changed redo:1");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "tabwidth.set")) {
-        d->prefs.tabWidth = iMax(1, arg_Command(cmd));
-        postCommand_App("document.layout.changed redo:1"); /* spaces need renormalizing */
+        const int tabWidth = iMax(1, arg_Command(cmd));;
+        if (tabWidth != d->prefs.tabWidth) {
+            d->prefs.tabWidth = tabWidth;
+            postCommand_App("document.layout.changed redo:1"); /* spaces need renormalizing */
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "quoteicon.set")) {
-        d->prefs.quoteIcon = arg_Command(cmd) != 0;
-        postCommand_App("document.layout.changed redo:1");
+        const iBool quoteIcon = arg_Command(cmd) != 0;
+        if (quoteIcon != d->prefs.quoteIcon) {
+            d->prefs.quoteIcon = quoteIcon;
+            postCommand_App("document.layout.changed redo:1");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "ansiescape")) {
@@ -4192,7 +4205,7 @@ iBool handleCommand_App(const char *cmd) {
 #endif
         return iFalse;
     }
-    else if (equal_Command(cmd, "tabs.new")) {
+    else if (equal_Command(cmd, "tabs.new") && isMainWin) {
         if (argLabel_Command(cmd, "reopen")) {
             const iString *reopenUrl = popClosedTabUrl_App_(d);
             if (reopenUrl) {
@@ -4208,7 +4221,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "tabs.close")) {
+    else if (equal_Command(cmd, "tabs.close") && isMainWin) {
         iWidget *tabs = findWidget_App("doctabs");
         /* Can't close the last tab on mobile. */
         if (isMobile_Platform() && tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
@@ -4284,7 +4297,7 @@ iBool handleCommand_App(const char *cmd) {
 #endif
         return iTrue;
     }
-    else if (equal_Command(cmd, "keyroot.next")) {
+    else if (equal_Command(cmd, "keyroot.next") && isMainWin) {
         if (setKeyRoot_Window(as_Window(d->window),
                               otherRoot_Window(as_Window(d->window), d->window->keyRoot))) {
             setFocus_Widget(NULL);
@@ -4425,7 +4438,7 @@ iBool handleCommand_App(const char *cmd) {
             promoteDialogToWindow_Widget(dlg);
         }
     }
-    else if (equal_Command(cmd, "navigate.home")) {
+    else if (equal_Command(cmd, "navigate.home") && isMainWin) {
         /* Look for bookmarks tagged "homepage". */
         const iPtrArray *homepages =
             list_Bookmarks(d->bookmarks, NULL, filterHomepage_Bookmark, NULL);
@@ -4452,7 +4465,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "bookmark.add")) {
+    else if (equal_Command(cmd, "bookmark.add") && isMainWin) {
         if (findWidget_Root("bmed.create")) {
             return iTrue;
         }
@@ -4485,7 +4498,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "feeds.subscribe")) {
+    else if (equal_Command(cmd, "feeds.subscribe") && isMainWin) {
         const iString *url = url_DocumentWidget(document_App());
         if (isEmpty_String(url)) {
             return iTrue;
@@ -4549,7 +4562,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iFalse;
     }
-    else if (equal_Command(cmd, "ident.new")) {
+    else if (equal_Command(cmd, "ident.new") && isMainWin) {
         iWidget *dlg = makeIdentityCreation_Widget();
         setFocus_Widget(findChild_Widget(dlg, "ident.until"));
         setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
@@ -4562,7 +4575,7 @@ iBool handleCommand_App(const char *cmd) {
         arrange_Widget(dlg);
         return iTrue;
     }
-    else if (equal_Command(cmd, "ident.import")) {
+    else if (equal_Command(cmd, "ident.import") && isMainWin) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
         addChild_Widget(get_Root()->widget, iClob(imp));

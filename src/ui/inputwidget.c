@@ -891,8 +891,13 @@ void deinit_InputWidget(iInputWidget *d) {
     startOrStopCursorTimer_InputWidget_(d, iFalse);
     clearInputLines_(&d->lines);
     if (isSelected_Widget(d)) {
-        SDL_StopTextInput();
-        enableEditorKeysInMenus_(iTrue);
+        /* If another input widget has focus, we shouldn't end SDL's text input mode now
+           or the other widget will stop receiving input. */
+        if (!focus_Widget() || focus_Widget() == as_Widget(d) ||
+            !isInstance_Object(focus_Widget(), &Class_InputWidget)) {
+            SDL_StopTextInput();
+            enableEditorKeysInMenus_(iTrue);
+        }
     }
     clearUndo_InputWidget_(d);
     deinit_Array(&d->undoStack);

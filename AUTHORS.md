@@ -5,17 +5,17 @@ Lagrange was created by Jaakko Keränen (<jaakko.keranen@iki.fi>) in July 2020. 
 Legend: `C` code, `T` translation
 
 ```
-C  3759  Jaakko Keränen <jaakko.keranen@iki.fi>
- T   72  Alyssa Liddell <e-liss@tuta.io>
-CT   55  Nikolay Korotkiy <sikmir@gmail.com>
- T   48  Olga Smirnova <mistresssilvara@hotmail.com>
- T   44  Страхиња Радић <contact@strahinja.org>
+C  3813  Jaakko Keränen <jaakko.keranen@iki.fi>
+ T   76  Alyssa Liddell <e-liss@tuta.io>
+CT   59  Nikolay Korotkiy <sikmir@gmail.com>
+ T   51  Olga Smirnova <mistresssilvara@hotmail.com>
+ T   45  Страхиња Радић <contact@strahinja.org>
  T   35  Anna (cybertailor) Vyalkova <cyber@sysrq.in>
- T   31  Wally Hackenslacker <mastor89@protonmail.com>
- T   30  Omar Polo <weblate@omarpolo.com>
- T   27  Emir SARI <emir_sari@icloud.com>
- T   26  Shibo Lyu <github@of.sb>
- T   21  Xosé M <correoxm@disroot.org>
+ T   32  Wally Hackenslacker <mastor89@protonmail.com>
+ T   31  Omar Polo <weblate@omarpolo.com>
+ T   30  Shibo Lyu <github@of.sb>
+ T   28  Emir SARI <emir_sari@icloud.com>
+ T   22  Xosé M <correoxm@disroot.org>
  T   20  Giosuè Iaccarino <iaccagio9@outlook.it>
  T   20  MCMic <come@chilliet.eu>
  T   16  Tadeáš Erban <tadysekerbosek@gmail.com>
@@ -23,6 +23,7 @@ CT   55  Nikolay Korotkiy <sikmir@gmail.com>
  T    8  El Mau <public@correolibre.net>
  T    8  Waterrail <maksymiliankrol03@gmail.com>
  T    6  Marco Andronaco <andronacomarco@gmail.com>
+C     5  Weblate <noreply@weblate.org>
  T    5  roy niang <roy@royniang.com>
  T    3  Alex Schroeder <alex@alexschroeder.ch>
  T    3  Botond Balázs <balazsbotond@gmail.com>
