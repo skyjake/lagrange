@@ -8,7 +8,11 @@
 
 ## 1.15.4
 * Fixed crash when trying to open a tab, New Identity dialog, or the Identity menu when the Preferences window is focused.
+* Fixed potential crash if switching focus to a widget being dismissed (e.g., popup going away).
+* Fixed text input becoming unresponsive when focus switches from a popup being dismissed to a new popup.
 * Fixed closing the Preferences window with Ctrl+W or ⌘W.
+* Fixed unnecessary page layout update when closing Preferences.
+* Updated UI translations.
 
 ## 1.15.3
 * Fixed handling of redirects in the inline media player and file downloader.
