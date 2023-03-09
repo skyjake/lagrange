@@ -45,6 +45,22 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.15.4" date="2023-03-09">
+            <description>
+                <p>Changes in v1.15.4:</p>
+                <ul>
+                    <li>Fixed crash when trying to open a tab, New Identity dialog, or the Identity menu when the Preferences window is focused.</li>
+                    <li>Fixed potential crash if switching focus to a widget being dismissed (e.g., popup going away).</li>
+                    <li>Fixed text input becoming unresponsive when focus switches from a popup being dismissed to a new popup.</li>
+                    <li>Fixed closing the Preferences window with Ctrl+W or ⌘W.</li>
+                    <li>Fixed unnecessary page layout update when closing Preferences.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.15.4</url>
+        </release>
         <release version="1.15.3" date="2023-02-26">
             <description>
                 <p>Changes in v1.15.3:</p>
