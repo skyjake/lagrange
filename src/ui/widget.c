@@ -218,10 +218,6 @@ void deinit_Widget(iWidget *d) {
 
 static void aboutToBeDestroyed_Widget_(iWidget *d) {
     d->flags |= destroyPending_WidgetFlag;
-    if (isFocused_Widget(d)) {
-        setFocus_Widget(NULL);
-        //return; /* TODO: Why?! */
-    }
     remove_Periodic(periodic_App(), d);
     iWindow *win = get_Window();
     if (isHover_Widget(d)) {
@@ -250,6 +246,9 @@ void destroy_Widget(iWidget *d) {
             d->root->pendingDestruction = new_PtrSet();
         }
         insert_PtrSet(d->root->pendingDestruction, d);
+        if (focus_Widget() && (focus_Widget() == d || hasParent_Widget(focus_Widget(), d))) {
+            setFocus_Widget(NULL);
+        }
     }
 }
 
@@ -1166,8 +1165,9 @@ iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
 
 static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
     if (d->flags & destroyPending_WidgetFlag) {
-        return iFalse; /* no more events handled */
-    }
+        /* Only allow cleanup while waiting for destruction. */
+        return isCommand_UserEvent(ev, "focus.lost");
+    }   
     const iBool isKey   = isKeyboardEvent_(ev);
     const iBool isMouse = isMouseEvent_(ev);
     if ((d->flags & disabled_WidgetFlag) || (isHidden_Widget_(d) &&
@@ -1208,6 +1208,14 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         iReverseForEach(PtrArray, i, d->root->onTop) {
             iWidget *widget = *i.value;
             if (isVisible_Widget(widget) && redispatchEvent_Widget_(d, widget, ev)) {
+#if 0
+                if (ev->type == SDL_TEXTINPUT) {
+                    printf("[%p] %s:'%s' (on top) ate text input\n",
+                           widget, class_Widget(widget)->name,
+                           cstr_String(id_Widget(widget)));
+                    fflush(stdout);
+                }
+#endif
 #if 0
                 if (ev->type == SDL_KEYDOWN) {
                     printf("[%p] %s:'%s' (on top) ate the key\n",
@@ -1267,6 +1275,14 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 continue;
             }
             if (dispatchEvent_Widget(child, ev)) {
+#if 0
+                if (ev->type == SDL_TEXTINPUT) {
+                    printf("[%p] %s:'%s' ate text input\n",
+                           child, class_Widget(child)->name,
+                           cstr_String(id_Widget(child)));
+                    fflush(stdout);
+                }
+#endif
 #if 0
                 if (ev->type == SDL_KEYDOWN) {
                     printf("[%p] %s:'%s' ate the key\n",
@@ -2288,7 +2304,7 @@ static const iWidget *findFocusable_Widget_(const iWidget *d, const iWidget *sta
         return NULL;
     }
     if ((d->flags & focusable_WidgetFlag) && isVisible_Widget(d) && !isDisabled_Widget(d) &&
-        *getNext) {
+        ~d->flags & destroyPending_WidgetFlag && *getNext) {
         if ((~focusDir & notInput_WidgetFocusFlag) || !isInstance_Object(d, &Class_InputWidget)) {
             return d;
         }
