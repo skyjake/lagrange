@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.15.5
+* Fixed saving the "Split view pinning" setting so it doesn't reset when relaunching the app.
+
 ## 1.15.4
 * Fixed crash when trying to open a tab, New Identity dialog, or the Identity menu when the Preferences window is focused.
 * Fixed potential crash if switching focus to a widget being dismissed (e.g., popup going away).
