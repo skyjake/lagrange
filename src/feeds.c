@@ -201,10 +201,8 @@ static iBool parseResult_FeedJob_(iFeedJob *d) {
     if (category_GmStatusCode(status_GmRequest(d->request)) == categoryRedirect_GmStatusCode) {
         /* Set up a new request. */
         if (++d->numRedirect < 5) {
-            iString *newUrl = copy_String(meta_GmRequest(d->request));
-//            printf("Feeds: %s => %s\n", cstr_String(&d->url), cstr_String(newUrl)); fflush(stdout);
+            set_String(&d->url, meta_GmRequest(d->request));
             iRelease(d->request);
-            set_String(&d->url, newUrl);
             submit_FeedJob_(d);
             return iFalse;
         }
