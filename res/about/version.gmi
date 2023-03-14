@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.15.5
+* Fixed handling of redirects when fetching subscribed feed pages.
 * Fixed saving the "Split view pinning" setting so it doesn't reset when relaunching the app.
 
 ## 1.15.4

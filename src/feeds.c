@@ -89,6 +89,7 @@ struct Impl_FeedJob {
     iBool       checkHeadings;
     iBool       ignoreWeb;
     iGmRequest *request;
+    int         numRedirect;
     iPtrArray   results;
 };
 
@@ -96,6 +97,7 @@ static void init_FeedJob(iFeedJob *d, const iBookmark *bookmark) {
     initCopy_String(&d->url, &bookmark->url);
     d->bookmarkId = id_Bookmark(bookmark);
     d->request = NULL;
+    d->numRedirect = 0;
     init_PtrArray(&d->results);
     iZap(d->startTime);
     d->isFirstUpdate = iFalse;
@@ -194,8 +196,21 @@ static iBool isUrlIgnored_FeedJob_(const iFeedJob *d, iRangecc url) {
     return iFalse;
 }
 
-static void parseResult_FeedJob_(iFeedJob *d) {
-    /* TODO: Should tell the user if the request failed. */
+static iBool parseResult_FeedJob_(iFeedJob *d) {
+    /* Returns true if the job is done and can be released. False means the job continues. */
+    if (category_GmStatusCode(status_GmRequest(d->request)) == categoryRedirect_GmStatusCode) {
+        /* Set up a new request. */
+        if (++d->numRedirect < 5) {
+            iString *newUrl = copy_String(meta_GmRequest(d->request));
+//            printf("Feeds: %s => %s\n", cstr_String(&d->url), cstr_String(newUrl)); fflush(stdout);
+            iRelease(d->request);
+            set_String(&d->url, newUrl);
+            submit_FeedJob_(d);
+            return iFalse;
+        }
+        return iTrue;
+    }
+    /* TODO: Should tell the user if the request failed. */       
     if (isSuccess_GmStatusCode(status_GmRequest(d->request))) {
         iBeginCollect();
         iTime now;
@@ -269,6 +284,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
         iRelease(linkPattern);
         iEndCollect();
     }
+    return iTrue;
 }
 
 static void save_Feeds_(iFeeds *d) {
@@ -457,14 +473,17 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
         iForIndices(i, work) {
             if (work[i]) {
                 if (isFinished_GmRequest(work[i]->request)) {
-                    /* TODO: Handle redirects. Need to resubmit the job with new URL. */
-                    parseResult_FeedJob_(work[i]);
-                    gotNew |= updateEntries_Feeds_(
-                        d, work[i]->checkHeadings, work[i]->bookmarkId, &work[i]->results);
-                    delete_FeedJob(work[i]);
-                    work[i] = NULL;
-                    numFinishedJobs++;
-                    doNotify = iTrue;
+                    if (parseResult_FeedJob_(work[i])) {
+                        gotNew |= updateEntries_Feeds_(
+                            d, work[i]->checkHeadings, work[i]->bookmarkId, &work[i]->results);
+                        delete_FeedJob(work[i]);
+                        work[i] = NULL;
+                        numFinishedJobs++;
+                        doNotify = iTrue;
+                    }
+                    else {
+                        ongoing++;
+                    }
                 }
                 else if (isTimedOut_FeedJob_(work[i])) {
                     /* Maybe we'll get it next time! */
