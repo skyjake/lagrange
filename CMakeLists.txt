@@ -138,6 +138,7 @@ else ()
         res/about/help.gmi
         res/about/version-0.13.gmi
         res/about/version-1.5.gmi
+        res/about/version-1.10.gmi
         res/about/version.gmi
         res/arg-help.txt
     )

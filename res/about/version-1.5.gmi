@@ -1,6 +1,6 @@
 # Release notes
 
-=> about:version  Newer versions
+=> about:version-1.10  Newer versions
 
 ## 1.5.2
 * Fixed pasting a PEM-formatted certificate and/or private key via clipboard in Import Identity.
