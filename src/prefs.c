@@ -36,6 +36,7 @@ void init_Prefs(iPrefs *d) {
     d->dialogTab         = 0;
     d->langFrom          = 3; /* fr */
     d->langTo            = 2; /* en */
+    d->translationIgnorePre = iTrue;
     d->useSystemTheme    = iTrue;
     d->systemPreferredColorTheme[0] = d->systemPreferredColorTheme[1] = -1;
     d->theme             = dark_ColorTheme;

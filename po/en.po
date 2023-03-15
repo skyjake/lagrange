@@ -1314,6 +1314,9 @@ msgstr "From:"
 msgid "dlg.translate.to"
 msgstr "To:"
 
+msgid "dlg.translate.pre"
+msgstr "Skip preformatted:"
+
 # A language choice in the Translation dialog.
 msgid "lang.ar"
 msgstr "Arabic"

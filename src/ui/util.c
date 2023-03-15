@@ -4220,6 +4220,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
             { "title id:heading.translate" },
             { "dropdown id:xlt.from text:${dlg.translate.from}", 0, 0, (const void *) languages },
             { "dropdown id:xlt.to text:${dlg.translate.to}",     0, 0, (const void *) languages },
+            { "toggle id:xlt.preskip" },
             { "padding arg:3" },
             { NULL }                              
         }, actions, iElemCount(actions));
@@ -4259,6 +4260,11 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
             setBackgroundColor_Widget(findChild_Widget(as_Widget(toLang), "menu"),
                                       uiBackgroundMenu_ColorId);
         }
+        /* Options. */ {
+            //addChild_Widget(dlg, iClob(page = makeTwoColumns_Widget(&headings, &values)));
+            addDialogPadding_(headings, values);
+            addDialogToggle_(headings, values, "${dlg.translate.pre}", "xlt.preskip");
+        }
         addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(parent, iClob(dlg));
@@ -4266,6 +4272,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
         arrange_Widget(dlg); /* TODO: Augh, another layout bug: two arranges required. */
     }
     /* Update choices. */
+    setToggle_Widget(findChild_Widget(dlg, "xlt.preskip"), prefs_App()->translationIgnorePre);
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.from"),
                                         languages[prefs_App()->langFrom].command);
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.to"),

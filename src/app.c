@@ -3253,8 +3253,9 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "translation.languages")) {
-        d->prefs.langFrom = argLabel_Command(cmd, "from");
-        d->prefs.langTo   = argLabel_Command(cmd, "to");
+        d->prefs.langFrom             = argLabel_Command(cmd, "from");
+        d->prefs.langTo               = argLabel_Command(cmd, "to");
+        d->prefs.translationIgnorePre = argLabel_Command(cmd, "pre") == 0;
         return iTrue;
     }
     else if (equal_Command(cmd, "window.retain")) {

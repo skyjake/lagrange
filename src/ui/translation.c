@@ -277,7 +277,8 @@ void init_Translation(iTranslation *d, iDocumentWidget *doc) {
     d->doc       = doc; /* owner */
     d->request   = new_TlsRequest();
     d->timer     = 0;
-    init_Array(&d->lineTypes, sizeof(int));
+    d->includingPreformatted = iFalse;
+    d->linePrefixes = new_StringArray();
     setUserData_Object(d->request, d->doc);
     setHost_TlsRequest(d->request,
                        collectNewCStr_String(translationServiceHost),
@@ -292,7 +293,7 @@ void deinit_Translation(iTranslation *d) {
     cancel_TlsRequest(d->request);
     iRelease(d->request);
     destroy_Widget(d->dlg);
-    deinit_Array(&d->lineTypes);
+    iRelease(d->linePrefixes);
 }
 
 static uint32_t animate_Translation_(uint32_t interval, iAny *ptr) {
@@ -306,30 +307,81 @@ void submit_Translation(iTranslation *d) {
     const char *idFrom = languageId_String(text_LabelWidget(findChild_Widget(d->dlg, "xlt.from")));
     const char *idTo   = languageId_String(text_LabelWidget(findChild_Widget(d->dlg, "xlt.to")));
     /* Remember these in Preferences. */
-    postCommandf_App("translation.languages from:%d to:%d",
+    postCommandf_App("translation.languages from:%d to:%d pre:%d",
                      languageIndex_CStr(idFrom),
-                     languageIndex_CStr(idTo));
+                     languageIndex_CStr(idTo),
+                     d->includingPreformatted);
     iBlock * json   = collect_Block(new_Block(0));
     iString *docSrc = collectNew_String();
+    iRegExp *linkPattern = iClob(new_RegExp("^=>\\s*([^\\s]+)(\\s+(.*))?", 0));
+    clear_StringArray(d->linePrefixes);
     /* The translation engine doesn't preserve Gemtext markup so we'll strip all of it and
        remember each line's type. These are reapplied when reading the response. Newlines seem
        to be preserved pretty well. */ {
+        iBool inPreformatted = iFalse;
         iRangecc line = iNullRange;
         while (nextSplit_Rangecc(
             range_String(source_GmDocument(document_DocumentWidget(d->doc))), "\n", &line)) {
             iRangecc cleanLine = trimmed_Rangecc(line);
+            iRangecc prefixPart = iNullRange;
+            iRangecc translatedPart = iNullRange;
             const int lineType = lineType_Rangecc(cleanLine);
-            pushBack_Array(&d->lineTypes, &lineType);
-            if (lineType == link_GmLineType) {
-                cleanLine.start += 2; /* skip over the => */
+            if (inPreformatted) {
+                if (lineType == preformatted_GmLineType) {
+                    inPreformatted = iFalse;
+                    prefixPart = cleanLine;
+                }
+                else if (d->includingPreformatted) {
+                    translatedPart = cleanLine;
+                }
+                else {
+                    prefixPart = line; /* preserve original whitespace */
+                }
             }
-            else {
-                trimLine_Rangecc(&cleanLine, lineType, iTrue); /* removes the prefix */
+            else switch (lineType) {
+                case link_GmLineType: {
+                    iRegExpMatch m;
+                    init_RegExpMatch(&m);
+                    matchRange_RegExp(linkPattern, cleanLine, &m);
+                    const char *prefixEnd = capturedRange_RegExpMatch(&m, 3).start;
+                    prefixPart = (iRangecc){ cleanLine.start, prefixEnd };
+                    translatedPart = capturedRange_RegExpMatch(&m, 3);
+                    break;
+                }
+                case preformatted_GmLineType:
+                    if (!inPreformatted) {
+                        prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 3 };
+                        translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
+                        inPreformatted = iTrue;
+                    }
+                    else {
+                        inPreformatted = iFalse;
+                        prefixPart = cleanLine;
+                    }
+                    break;
+                case heading1_GmLineType:
+                case quote_GmLineType:
+                    prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 1 };
+                    translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
+                    break;
+                case heading2_GmLineType:
+                case bullet_GmLineType:
+                    prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 2 };
+                    translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
+                    break;
+                case heading3_GmLineType:
+                    prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 3 };
+                    translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
+                    break;                    
+                default:
+                    translatedPart = cleanLine;
+                    break;
             }
+            pushBackRange_StringArray(d->linePrefixes, prefixPart);
             if (!isEmpty_String(docSrc)) {
                 appendCStr_String(docSrc, "\n");
             }
-            appendRange_String(docSrc, cleanLine);
+            appendRange_String(docSrc, translatedPart);
         }
     }
     printf_Block(json,
@@ -383,32 +435,8 @@ static iBool processResult_Translation_(iTranslation *d) {
             if (!isEmpty_String(marked)) {
                 appendCStr_String(marked, "\n");
             }
-            if (lineIndex < size_Array(&d->lineTypes)) {
-                switch (value_Array(&d->lineTypes, lineIndex, int)) {
-                    case bullet_GmLineType:
-                        appendCStr_String(marked, "* ");
-                        break;
-                    case link_GmLineType:
-                        appendCStr_String(marked, "=> ");
-                        break;
-                    case quote_GmLineType:
-                        appendCStr_String(marked, "> ");
-                        break;
-                    case preformatted_GmLineType:
-                        appendCStr_String(marked, "```");
-                        break;
-                    case heading1_GmLineType:
-                        appendCStr_String(marked, "# ");
-                        break;
-                    case heading2_GmLineType:
-                        appendCStr_String(marked, "## ");
-                        break;
-                    case heading3_GmLineType:
-                        appendCStr_String(marked, "### ");
-                        break;
-                    default:
-                        break;
-                }
+            if (lineIndex < size_StringArray(d->linePrefixes)) { /* translator messed up the lines? */
+                append_String(marked, at_StringArray(d->linePrefixes, lineIndex));
             }
             appendRange_String(marked, cleanLine);
             lineIndex++;
@@ -432,6 +460,7 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
     iWidget *w = as_Widget(d->doc);
     if (equalWidget_Command(cmd, w, "translation.submit")) {
         if (status_TlsRequest(d->request) == initialized_TlsRequestStatus) {
+            d->includingPreformatted = !isSelected_Widget(findChild_Widget(d->dlg, "xlt.preskip"));
             iWidget *langs = findChild_Widget(d->dlg, "xlt.langs");
             if (langs) {
                 setFlags_Widget(langs, hidden_WidgetFlag, iTrue);

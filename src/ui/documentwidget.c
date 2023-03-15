@@ -5858,10 +5858,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
                             { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
                             { "---" },
-                            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                             { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                             { "${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
+                            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                             { d->flags & viewSource_DocumentWidgetFlag ? "${menu.viewformat.gemini}"
                                                                        : "${menu.viewformat.plain}",
                               0, 0, "document.viewformat" },

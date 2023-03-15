@@ -7,6 +7,8 @@
 # Release notes
 
 ## 1.15.5
+* Added option to skip preformatted blocks when translating a page.
+* Fixed translation of link lines. Only the link label is now translated.
 * Fixed handling of redirects when fetching subscribed feed pages.
 * Fixed saving the "Split view pinning" setting so it doesn't reset when relaunching the app.
 
