@@ -25,7 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "defs.h"
 #include "gmdocument.h"
-#include "ui/command.h"
 #include "ui/documentwidget.h"
 #include "ui/labelwidget.h"
 #include "ui/paint.h"
@@ -313,7 +312,7 @@ void submit_Translation(iTranslation *d) {
                      d->includingPreformatted);
     iBlock * json   = collect_Block(new_Block(0));
     iString *docSrc = collectNew_String();
-    iRegExp *linkPattern = iClob(new_RegExp("^=>\\s*([^\\s]+)(\\s+(.*))?", 0));
+    iRegExp *linkPattern = iClob(new_RegExp("^=>\\s*([^\\s]+)(\\s+(.*))?$", 0));
     clear_StringArray(d->linePrefixes);
     /* The translation engine doesn't preserve Gemtext markup so we'll strip all of it and
        remember each line's type. These are reapplied when reading the response. Newlines seem
@@ -343,9 +342,14 @@ void submit_Translation(iTranslation *d) {
                     iRegExpMatch m;
                     init_RegExpMatch(&m);
                     matchRange_RegExp(linkPattern, cleanLine, &m);
-                    const char *prefixEnd = capturedRange_RegExpMatch(&m, 3).start;
-                    prefixPart = (iRangecc){ cleanLine.start, prefixEnd };
-                    translatedPart = capturedRange_RegExpMatch(&m, 3);
+                    const iRangecc label = capturedRange_RegExpMatch(&m, 3);
+                    if (!isEmpty_Range(&label)) {
+                        prefixPart = (iRangecc){ cleanLine.start, label.start };
+                        translatedPart = label;
+                    }
+                    else {
+                        prefixPart = cleanLine;
+                    }
                     break;
                 }
                 case preformatted_GmLineType:
