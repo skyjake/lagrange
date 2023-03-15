@@ -5898,7 +5898,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     d->menu,
                     "document.upload",
                     !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
-                    !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
+                        !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
                 setMenuItemDisabled_Widget(
                     d->menu,
                     "document.upload copy:1",
