@@ -7,10 +7,13 @@
 # Release notes
 
 ## 1.15.5
+* Added several new translation languages: Azerbaijani, Catalan, Czech, Danish, Dutch, Esperanto, Finnish, Greek, Hebrew, Hungarian, Indonesian, Irish, Korean, Persian, Polish, Slovak, Swedish, Turkish, and Ukrainian. (LibreTranslate server was upgraded to v1.3.10.)
+* Added "Auto-detect" as the default source language for translation.
 * Added option to skip preformatted blocks when translating a page.
 * Fixed translation of link lines. Only the link label is now translated.
 * Fixed handling of redirects when fetching subscribed feed pages.
 * Fixed saving the "Split view pinning" setting so it doesn't reset when relaunching the app.
+* Updated UI translations.
 
 ## 1.15.4
 * Fixed crash when trying to open a tab, New Identity dialog, or the Identity menu when the Preferences window is focused.

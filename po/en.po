@@ -1318,8 +1318,48 @@ msgid "dlg.translate.pre"
 msgstr "Skip preformatted:"
 
 # A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Auto-detect"
+
+# A language choice in the Translation dialog.
 msgid "lang.ar"
 msgstr "Arabic"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azerbaijani"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Catalan"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Czech"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Danish"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Dutch"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Finnish"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Greek"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Hebrew"
 
 # A language choice in the Translation dialog.
 msgid "lang.zh"
@@ -1342,6 +1382,22 @@ msgid "lang.hi"
 msgstr "Hindi"
 
 # A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Hungarian"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonesian"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonesian"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Irish"
+
+# A language choice in the Translation dialog.
 msgid "lang.it"
 msgstr "Italian"
 
@@ -1350,12 +1406,40 @@ msgid "lang.ja"
 msgstr "Japanese"
 
 # A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Korean"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persian"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Polish"
+
+# A language choice in the Translation dialog.
 msgid "lang.pt"
 msgstr "Portuguese"
 
 # A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Slovak"
+
+# A language choice in the Translation dialog.
 msgid "lang.ru"
 msgstr "Russian"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Swedish"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turkish"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ukrainian"
 
 # A language choice in the Translation dialog.
 msgid "lang.es"
