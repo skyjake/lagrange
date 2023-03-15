@@ -246,6 +246,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 99, { "${keys.split.item} ${menu.split.vertical} 2:1",    SDLK_r, 0,  "ui.split arg:2 axis:1",            }, noDirectTrigger_BindFlag },
     { 100,{ "${keys.hoverurl}",             '/', KMOD_PRIMARY,              "prefs.hoverlink.toggle"            }, 0 },
     { 110,{ "${menu.save.downloads}",       SDLK_s, KMOD_PRIMARY,           "document.save"                     }, 0 },
+    { 115,{ "${LC:menu.page.translate}",    SDLK_x, KMOD_PRIMARY | KMOD_SHIFT, "document.translate"             }, 0 },
     { 120,{ "${keys.upload}",               SDLK_u, KMOD_PRIMARY,           "document.upload"                   }, 0 },
     { 121,{ "${keys.upload.edit}",          SDLK_e, KMOD_PRIMARY,           "document.upload copy:1"            }, 0 },
     { 125,{ "${keys.pageinfo}",             pageInfo_KeyShortcut,           "document.info"                     }, 0 },
