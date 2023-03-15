@@ -7,7 +7,7 @@
 # Release notes
 
 ## 1.15.5
-* Added several new translation languages: Azerbaijani, Catalan, Czech, Danish, Dutch, Esperanto, Finnish, Greek, Hebrew, Hungarian, Indonesian, Irish, Korean, Persian, Polish, Slovak, Swedish, Turkish, and Ukrainian. (LibreTranslate server was upgraded to v1.3.10.)
+* Added several new translated languages: Azerbaijani, Catalan, Czech, Danish, Dutch, Esperanto, Finnish, Greek, Hebrew, Hungarian, Indonesian, Irish, Korean, Persian, Polish, Slovak, Swedish, Turkish, and Ukrainian. (LibreTranslate server was upgraded to v1.3.10.)
 * Added "Auto-detect" as the default source language for translation.
 * Added option to skip preformatted blocks when translating a page.
 * Fixed translation of link lines. Only the link label is now translated.
