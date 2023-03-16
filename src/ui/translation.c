@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/util.h"
 
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/stringlist.h>
 #include <SDL_timer.h>
 #include <math.h>
 
@@ -319,6 +320,7 @@ void submit_Translation(iTranslation *d) {
        to be preserved pretty well. */ {
         iBool inPreformatted = iFalse;
         iRangecc line = iNullRange;
+        size_t xlatIndex = 0;
         while (nextSplit_Rangecc(
             range_String(source_GmDocument(document_DocumentWidget(d->doc))), "\n", &line)) {
             iRangecc cleanLine = trimmed_Rangecc(line);
@@ -353,15 +355,9 @@ void submit_Translation(iTranslation *d) {
                     break;
                 }
                 case preformatted_GmLineType:
-                    if (!inPreformatted) {
-                        prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 3 };
-                        translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
-                        inPreformatted = iTrue;
-                    }
-                    else {
-                        inPreformatted = iFalse;
-                        prefixPart = cleanLine;
-                    }
+                    prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 3 };
+                    translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
+                    inPreformatted = iTrue;
                     break;
                 case heading1_GmLineType:
                 case quote_GmLineType:
@@ -381,13 +377,23 @@ void submit_Translation(iTranslation *d) {
                     translatedPart = cleanLine;
                     break;
             }
-            pushBackRange_StringArray(d->linePrefixes, prefixPart);
-            if (!isEmpty_String(docSrc)) {
-                appendCStr_String(docSrc, "\n");
+            if (!isEmpty_Range(&translatedPart)) {
+                if (!isEmpty_String(docSrc)) {
+                    appendCStr_String(docSrc, "\n");
+                    xlatIndex++;
+                }
+                appendRange_String(docSrc, translatedPart);
             }
-            appendRange_String(docSrc, translatedPart);
+            iString templ;
+            initRange_String(&templ, prefixPart);
+            if (!isEmpty_Range(&translatedPart)) {
+                appendFormat_String(&templ, " ${%u:xlatIndex}", xlatIndex);
+            }
+            pushBack_StringArray(d->linePrefixes, &templ);
+            deinit_String(&templ);
         }
     }
+//    printf("\n---\n%s\n---\n", cstr_String(docSrc));
     printf_Block(json,
                  "{\"q\":\"%s\",\"source\":\"%s\",\"target\":\"%s\"}",
                  cstrCollect_String(quote_String_(docSrc)),
@@ -425,15 +431,39 @@ static iBool processResult_Translation_(iTranslation *d) {
     }
     iBlock *resultData = collect_Block(readAll_TlsRequest(d->request));
 //    printf("result(%zu):\n%s\n", size_Block(resultData), cstr_Block(resultData));
-//    fflush(stdout);
+//    fflush(stdout);    
     iRegExp *pattern = iClob(new_RegExp(".*translatedText\":\"(.*)\"\\}", caseSensitive_RegExpOption));
     iRegExpMatch m;
     init_RegExpMatch(&m);
     if (matchRange_RegExp(pattern, range_Block(resultData), &m)) {
         iString *translation = unquote_String_(collect_String(captured_RegExpMatch(&m, 1)));
-        iString *marked = collectNew_String();
-        iRangecc line = iNullRange;
+        iString *result = collectNew_String();
         size_t lineIndex = 0;
+        iStringList *xlatLines = iClob(split_String(translation, "\n"));
+        iConstForEach(StringArray, i, d->linePrefixes) {
+            if (endsWith_String(i.value, ":xlatIndex}")) {
+                iRangecc idRange;
+                idRange.start = idRange.end = constEnd_String(i.value) - 11;
+                while (idRange.start > constBegin_String(i.value) &&
+                       isNumeric_Char(idRange.start[-1])) {
+                    idRange.start--;
+                }
+                iString idStr;
+                initRange_String(&idStr, idRange);
+                const size_t xlatIndex = toInt_String(&idStr);
+                deinit_String(&idStr);
+                appendRange_String(result, (iRangecc){ constBegin_String(i.value),
+                                                       idRange.start - 2 });
+                if (xlatIndex < size_StringList(xlatLines)) {
+                    append_String(result, at_StringList(xlatLines, xlatIndex));
+                }
+            }
+            else {
+                append_String(result, i.value);
+            }
+            appendCStr_String(result, "\n");
+        }
+#if 0
         while (nextSplit_Rangecc(range_String(translation), "\n", &line)) {
             iRangecc cleanLine = trimmed_Rangecc(line);
             if (!isEmpty_String(marked)) {
@@ -445,7 +475,8 @@ static iBool processResult_Translation_(iTranslation *d) {
             appendRange_String(marked, cleanLine);
             lineIndex++;
         }
-        setSource_DocumentWidget(d->doc, marked);
+#endif
+        setSource_DocumentWidget(d->doc, result);
         postCommand_App("sidebar.update");
         delete_String(translation);
     }
