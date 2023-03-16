@@ -34,8 +34,8 @@ void init_Prefs(iPrefs *d) {
         init_String(&d->strings[i]);
     }
     d->dialogTab         = 0;
-    d->langFrom          = 3; /* fr */
-    d->langTo            = 2; /* en */
+    d->langFrom          = 0; /* auto-detect */
+    d->langTo            = 8; /* en */
     d->translationIgnorePre = iTrue;
     d->useSystemTheme    = iTrue;
     d->systemPreferredColorTheme[0] = d->systemPreferredColorTheme[1] = -1;

@@ -633,7 +633,7 @@ static void loadPrefs_App_(iApp *d) {
 #endif
     if (cmp_Version(&upgradedFromAppVersion, &(iVersion){ 1, 15, 5 }) < 0) {
         /* LibreTranslate updated with new language models, now defaulting to Auto-Detect. */
-        d->prefs.langFrom = 0;
+        postCommand_App("~translation.languages from:0 to:8");
     }
     /* Some settings have fixed values depending on the platform/config. */
 #if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
