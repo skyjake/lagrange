@@ -418,7 +418,7 @@ void submit_Translation(iTranslation *d) {
 static void setFailed_Translation_(iTranslation *d, const char *msg) {
     iTranslationProgressWidget *prog = findChild_Widget(d->dlg, "xlt.progress");
     if (prog && isEmpty_String(&prog->message)) {
-        setCStr_String(&prog->message, msg);
+        setCStr_String(&prog->message, translateCStr_Lang(msg));
     }
 }
 
