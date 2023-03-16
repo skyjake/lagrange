@@ -25,13 +25,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "defs.h"
 #include "gmdocument.h"
-#include "ui/command.h"
 #include "ui/documentwidget.h"
 #include "ui/labelwidget.h"
 #include "ui/paint.h"
 #include "ui/util.h"
 
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/stringlist.h>
 #include <SDL_timer.h>
 #include <math.h>
 
@@ -277,7 +277,8 @@ void init_Translation(iTranslation *d, iDocumentWidget *doc) {
     d->doc       = doc; /* owner */
     d->request   = new_TlsRequest();
     d->timer     = 0;
-    init_Array(&d->lineTypes, sizeof(int));
+    d->includingPreformatted = iFalse;
+    d->linePrefixes = new_StringArray();
     setUserData_Object(d->request, d->doc);
     setHost_TlsRequest(d->request,
                        collectNewCStr_String(translationServiceHost),
@@ -292,7 +293,7 @@ void deinit_Translation(iTranslation *d) {
     cancel_TlsRequest(d->request);
     iRelease(d->request);
     destroy_Widget(d->dlg);
-    deinit_Array(&d->lineTypes);
+    iRelease(d->linePrefixes);
 }
 
 static uint32_t animate_Translation_(uint32_t interval, iAny *ptr) {
@@ -306,32 +307,93 @@ void submit_Translation(iTranslation *d) {
     const char *idFrom = languageId_String(text_LabelWidget(findChild_Widget(d->dlg, "xlt.from")));
     const char *idTo   = languageId_String(text_LabelWidget(findChild_Widget(d->dlg, "xlt.to")));
     /* Remember these in Preferences. */
-    postCommandf_App("translation.languages from:%d to:%d",
+    postCommandf_App("translation.languages from:%d to:%d pre:%d",
                      languageIndex_CStr(idFrom),
-                     languageIndex_CStr(idTo));
+                     languageIndex_CStr(idTo),
+                     d->includingPreformatted);
     iBlock * json   = collect_Block(new_Block(0));
     iString *docSrc = collectNew_String();
+    iRegExp *linkPattern = iClob(new_RegExp("^=>\\s*([^\\s]+)(\\s+(.*))?$", 0));
+    clear_StringArray(d->linePrefixes);
     /* The translation engine doesn't preserve Gemtext markup so we'll strip all of it and
        remember each line's type. These are reapplied when reading the response. Newlines seem
        to be preserved pretty well. */ {
+        iBool inPreformatted = iFalse;
         iRangecc line = iNullRange;
+        size_t xlatIndex = 0;
         while (nextSplit_Rangecc(
             range_String(source_GmDocument(document_DocumentWidget(d->doc))), "\n", &line)) {
             iRangecc cleanLine = trimmed_Rangecc(line);
+            iRangecc prefixPart = iNullRange;
+            iRangecc translatedPart = iNullRange;
             const int lineType = lineType_Rangecc(cleanLine);
-            pushBack_Array(&d->lineTypes, &lineType);
-            if (lineType == link_GmLineType) {
-                cleanLine.start += 2; /* skip over the => */
+            if (inPreformatted) {
+                if (lineType == preformatted_GmLineType) {
+                    inPreformatted = iFalse;
+                    prefixPart = cleanLine;
+                }
+                else if (d->includingPreformatted) {
+                    translatedPart = cleanLine;
+                }
+                else {
+                    prefixPart = line; /* preserve original whitespace */
+                }
             }
-            else {
-                trimLine_Rangecc(&cleanLine, lineType, iTrue); /* removes the prefix */
+            else switch (lineType) {
+                case link_GmLineType: {
+                    iRegExpMatch m;
+                    init_RegExpMatch(&m);
+                    matchRange_RegExp(linkPattern, cleanLine, &m);
+                    const iRangecc label = capturedRange_RegExpMatch(&m, 3);
+                    if (!isEmpty_Range(&label)) {
+                        prefixPart = (iRangecc){ cleanLine.start, label.start };
+                        translatedPart = label;
+                    }
+                    else {
+                        prefixPart = cleanLine;
+                    }
+                    break;
+                }
+                case preformatted_GmLineType:
+                    prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 3 };
+                    translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
+                    inPreformatted = iTrue;
+                    break;
+                case heading1_GmLineType:
+                case quote_GmLineType:
+                    prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 1 };
+                    translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
+                    break;
+                case heading2_GmLineType:
+                case bullet_GmLineType:
+                    prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 2 };
+                    translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
+                    break;
+                case heading3_GmLineType:
+                    prefixPart = (iRangecc){ cleanLine.start, cleanLine.start + 3 };
+                    translatedPart = (iRangecc){ prefixPart.end, cleanLine.end };
+                    break;                    
+                default:
+                    translatedPart = cleanLine;
+                    break;
             }
-            if (!isEmpty_String(docSrc)) {
-                appendCStr_String(docSrc, "\n");
+            if (!isEmpty_Range(&translatedPart)) {
+                if (!isEmpty_String(docSrc)) {
+                    appendCStr_String(docSrc, "\n");
+                    xlatIndex++;
+                }
+                appendRange_String(docSrc, translatedPart);
             }
-            appendRange_String(docSrc, cleanLine);
+            iString templ;
+            initRange_String(&templ, prefixPart);
+            if (!isEmpty_Range(&translatedPart)) {
+                appendFormat_String(&templ, " ${%u:xlatIndex}", xlatIndex);
+            }
+            pushBack_StringArray(d->linePrefixes, &templ);
+            deinit_String(&templ);
         }
     }
+//    printf("\n---\n%s\n---\n", cstr_String(docSrc));
     printf_Block(json,
                  "{\"q\":\"%s\",\"source\":\"%s\",\"target\":\"%s\"}",
                  cstrCollect_String(quote_String_(docSrc)),
@@ -369,51 +431,52 @@ static iBool processResult_Translation_(iTranslation *d) {
     }
     iBlock *resultData = collect_Block(readAll_TlsRequest(d->request));
 //    printf("result(%zu):\n%s\n", size_Block(resultData), cstr_Block(resultData));
-//    fflush(stdout);
+//    fflush(stdout);    
     iRegExp *pattern = iClob(new_RegExp(".*translatedText\":\"(.*)\"\\}", caseSensitive_RegExpOption));
     iRegExpMatch m;
     init_RegExpMatch(&m);
     if (matchRange_RegExp(pattern, range_Block(resultData), &m)) {
         iString *translation = unquote_String_(collect_String(captured_RegExpMatch(&m, 1)));
-        iString *marked = collectNew_String();
-        iRangecc line = iNullRange;
+        iString *result = collectNew_String();
         size_t lineIndex = 0;
+        iStringList *xlatLines = iClob(split_String(translation, "\n"));
+        iConstForEach(StringArray, i, d->linePrefixes) {
+            if (endsWith_String(i.value, ":xlatIndex}")) {
+                iRangecc idRange;
+                idRange.start = idRange.end = constEnd_String(i.value) - 11;
+                while (idRange.start > constBegin_String(i.value) &&
+                       isNumeric_Char(idRange.start[-1])) {
+                    idRange.start--;
+                }
+                iString idStr;
+                initRange_String(&idStr, idRange);
+                const size_t xlatIndex = toInt_String(&idStr);
+                deinit_String(&idStr);
+                appendRange_String(result, (iRangecc){ constBegin_String(i.value),
+                                                       idRange.start - 2 });
+                if (xlatIndex < size_StringList(xlatLines)) {
+                    append_String(result, at_StringList(xlatLines, xlatIndex));
+                }
+            }
+            else {
+                append_String(result, i.value);
+            }
+            appendCStr_String(result, "\n");
+        }
+#if 0
         while (nextSplit_Rangecc(range_String(translation), "\n", &line)) {
             iRangecc cleanLine = trimmed_Rangecc(line);
             if (!isEmpty_String(marked)) {
                 appendCStr_String(marked, "\n");
             }
-            if (lineIndex < size_Array(&d->lineTypes)) {
-                switch (value_Array(&d->lineTypes, lineIndex, int)) {
-                    case bullet_GmLineType:
-                        appendCStr_String(marked, "* ");
-                        break;
-                    case link_GmLineType:
-                        appendCStr_String(marked, "=> ");
-                        break;
-                    case quote_GmLineType:
-                        appendCStr_String(marked, "> ");
-                        break;
-                    case preformatted_GmLineType:
-                        appendCStr_String(marked, "```");
-                        break;
-                    case heading1_GmLineType:
-                        appendCStr_String(marked, "# ");
-                        break;
-                    case heading2_GmLineType:
-                        appendCStr_String(marked, "## ");
-                        break;
-                    case heading3_GmLineType:
-                        appendCStr_String(marked, "### ");
-                        break;
-                    default:
-                        break;
-                }
+            if (lineIndex < size_StringArray(d->linePrefixes)) { /* translator messed up the lines? */
+                append_String(marked, at_StringArray(d->linePrefixes, lineIndex));
             }
             appendRange_String(marked, cleanLine);
             lineIndex++;
         }
-        setSource_DocumentWidget(d->doc, marked);
+#endif
+        setSource_DocumentWidget(d->doc, result);
         postCommand_App("sidebar.update");
         delete_String(translation);
     }
@@ -432,6 +495,7 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
     iWidget *w = as_Widget(d->doc);
     if (equalWidget_Command(cmd, w, "translation.submit")) {
         if (status_TlsRequest(d->request) == initialized_TlsRequestStatus) {
+            d->includingPreformatted = !isSelected_Widget(findChild_Widget(d->dlg, "xlt.preskip"));
             iWidget *langs = findChild_Widget(d->dlg, "xlt.langs");
             if (langs) {
                 setFlags_Widget(langs, hidden_WidgetFlag, iTrue);

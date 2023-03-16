@@ -4156,17 +4156,37 @@ iWidget *makeIdentityCreation_Widget(void) {
 }
 
 static const iMenuItem languages[] = {
-    { "${lang.ar}", 0, 0, "xlt.lang id:ar" },
-    { "${lang.zh}", 0, 0, "xlt.lang id:zh" },
-    { "${lang.en}", 0, 0, "xlt.lang id:en" },
-    { "${lang.fr}", 0, 0, "xlt.lang id:fr" },
-    { "${lang.de}", 0, 0, "xlt.lang id:de" },
-    { "${lang.hi}", 0, 0, "xlt.lang id:hi" },
-    { "${lang.it}", 0, 0, "xlt.lang id:it" },
-    { "${lang.ja}", 0, 0, "xlt.lang id:ja" },
-    { "${lang.pt}", 0, 0, "xlt.lang id:pt" },
-    { "${lang.ru}", 0, 0, "xlt.lang id:ru" },
-    { "${lang.es}", 0, 0, "xlt.lang id:es" },
+    { "${lang.auto}", 0, 0, "xlt.lang id:auto" },
+    { "${lang.ar} - ar", 0, 0, "xlt.lang id:ar" },
+    { "${lang.az} - az", 0, 0, "xlt.lang id:az" },
+    { "${lang.ca} - ca", 0, 0, "xlt.lang id:ca" },
+    { "${lang.cs} - cs", 0, 0, "xlt.lang id:cs" },
+    { "${lang.da} - da", 0, 0, "xlt.lang id:da" },
+    { "${lang.de} - de", 0, 0, "xlt.lang id:de" },
+    { "${lang.el} - el", 0, 0, "xlt.lang id:el" },
+    { "${lang.en} - en", 0, 0, "xlt.lang id:en" },
+    { "${lang.eo} - eo", 0, 0, "xlt.lang id:eo" },
+    { "${lang.es} - es", 0, 0, "xlt.lang id:es" },
+    { "${lang.fa} - fa", 0, 0, "xlt.lang id:fa" },
+    { "${lang.fi} - fi", 0, 0, "xlt.lang id:fi" },
+    { "${lang.fr} - fr", 0, 0, "xlt.lang id:fr" },
+    { "${lang.ga} - ga", 0, 0, "xlt.lang id:ga" },
+    { "${lang.he} - he", 0, 0, "xlt.lang id:he" },
+    { "${lang.hi} - hi", 0, 0, "xlt.lang id:hi" },
+    { "${lang.hu} - hu", 0, 0, "xlt.lang id:hu" },
+    { "${lang.id} - id", 0, 0, "xlt.lang id:id" },
+    { "${lang.it} - it", 0, 0, "xlt.lang id:it" },
+    { "${lang.ja} - ja", 0, 0, "xlt.lang id:ja" },
+    { "${lang.ko} - ko", 0, 0, "xlt.lang id:ko" },
+    { "${lang.nl} - nl", 0, 0, "xlt.lang id:nl" },
+    { "${lang.pl} - pl", 0, 0, "xlt.lang id:pl" },
+    { "${lang.pt} - pt", 0, 0, "xlt.lang id:pt" },
+    { "${lang.ru} - ru", 0, 0, "xlt.lang id:ru" },
+    { "${lang.sk} - sk", 0, 0, "xlt.lang id:sk" },
+    { "${lang.sv} - sv", 0, 0, "xlt.lang id:sv" },
+    { "${lang.tr} - tr", 0, 0, "xlt.lang id:tr" },
+    { "${lang.uk} - uk", 0, 0, "xlt.lang id:uk" },
+    { "${lang.zh} - zh", 0, 0, "xlt.lang id:zh" },
     { NULL }
 };
 
@@ -4220,6 +4240,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
             { "title id:heading.translate" },
             { "dropdown id:xlt.from text:${dlg.translate.from}", 0, 0, (const void *) languages },
             { "dropdown id:xlt.to text:${dlg.translate.to}",     0, 0, (const void *) languages },
+            { "toggle id:xlt.preskip" },
             { "padding arg:3" },
             { NULL }                              
         }, actions, iElemCount(actions));
@@ -4259,6 +4280,11 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
             setBackgroundColor_Widget(findChild_Widget(as_Widget(toLang), "menu"),
                                       uiBackgroundMenu_ColorId);
         }
+        /* Options. */ {
+            //addChild_Widget(dlg, iClob(page = makeTwoColumns_Widget(&headings, &values)));
+            addDialogPadding_(headings, values);
+            addDialogToggle_(headings, values, "${dlg.translate.pre}", "xlt.preskip");
+        }
         addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(parent, iClob(dlg));
@@ -4266,6 +4292,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
         arrange_Widget(dlg); /* TODO: Augh, another layout bug: two arranges required. */
     }
     /* Update choices. */
+    setToggle_Widget(findChild_Widget(dlg, "xlt.preskip"), prefs_App()->translationIgnorePre);
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.from"),
                                         languages[prefs_App()->langFrom].command);
     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "xlt.to"),

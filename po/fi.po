@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2023-03-09 05:32+0000\n"
-"Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2023-03-16 03:52+0000\n"
+"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
@@ -2458,3 +2458,86 @@ msgstr "Pienennä ikkuna"
 
 msgid "menu.window.max"
 msgstr "Suurenna ikkuna"
+
+msgid "dlg.translate.pre"
+msgstr "Ohita esimuotoillut:"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Ruotsi"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Tunnista"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azeri"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Katalaani"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Tšekki"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Tanska"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Hollanti"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Suomi"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Kreikka"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Heprea"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Unkari"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonesia"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Iiri"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Korea"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persia"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Puola"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Slovakki"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turkki"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ukraina"

@@ -287,6 +287,7 @@ static iString *serializePrefs_App_(const iApp *d) {
                         cstr_String(&d->prefs.strings[monospaceFont_PrefsString]),
                         cstr_String(&d->prefs.strings[monospaceDocumentFont_PrefsString]));
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
+    appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[mouse_ScrollType], mouse_ScrollType);
@@ -630,6 +631,10 @@ static void loadPrefs_App_(iApp *d) {
         postCommand_App("~fontpack.suggest.classic");
     }
 #endif
+    if (cmp_Version(&upgradedFromAppVersion, &(iVersion){ 1, 15, 5 }) < 0) {
+        /* LibreTranslate updated with new language models, now defaulting to Auto-Detect. */
+        d->prefs.langFrom = 0;
+    }
     /* Some settings have fixed values depending on the platform/config. */
 #if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;
@@ -3252,8 +3257,9 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "translation.languages")) {
-        d->prefs.langFrom = argLabel_Command(cmd, "from");
-        d->prefs.langTo   = argLabel_Command(cmd, "to");
+        d->prefs.langFrom             = argLabel_Command(cmd, "from");
+        d->prefs.langTo               = argLabel_Command(cmd, "to");
+        d->prefs.translationIgnorePre = argLabel_Command(cmd, "pre") == 0;
         return iTrue;
     }
     else if (equal_Command(cmd, "window.retain")) {

@@ -364,27 +364,20 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
 }
 
 static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
-    const iBlock *src = NULL;
-    if (equalCase_Rangecc(path, "about")) {
-        return &blobAbout_Resources;
-    }
-    if (equalCase_Rangecc(path, "lagrange")) {
-        return &blobLagrange_Resources;
-    }
-    if (equalCase_Rangecc(path, "help")) {
-        return &blobHelp_Resources;
-    }
-    if (equalCase_Rangecc(path, "license")) {
-        return &blobLicense_Resources;
-    }
-    if (equalCase_Rangecc(path, "version")) {
-        return &blobVersion_Resources;
-    }
-    if (equalCase_Rangecc(path, "version-1.5")) {
-        return &blobVersion_1_5_Resources;
-    }
-    if (equalCase_Rangecc(path, "version-0.13")) {
-        return &blobVersion_0_13_Resources;
+    const struct { const char *name; const iBlock *data; } staticPages[] = {
+        { "about",          &blobAbout_Resources },
+        { "lagrange",       &blobLagrange_Resources },
+        { "help",           &blobHelp_Resources },
+        { "license",        &blobLicense_Resources },
+        { "version",        &blobVersion_Resources },
+        { "version-1.10",   &blobVersion_1_10_Resources },
+        { "version-1.5",    &blobVersion_1_5_Resources },
+        { "version-0.13",   &blobVersion_0_13_Resources },
+    };
+    iForIndices(i, staticPages) {
+        if (equalCase_Rangecc(path, staticPages[i].name)) {
+            return staticPages[i].data;
+        }
     }
     if (equalCase_Rangecc(path, "debug")) {
         return utf8_String(debugInfo_App());
@@ -405,7 +398,7 @@ static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
     if (equalCase_Rangecc(path, "blank")) {
         return utf8_String(collectNewCStr_String("\n"));
     }
-    return src;
+    return NULL;
 }
 
 static const iBlock *replaceVariables_(const iBlock *block) {

@@ -1,0 +1,388 @@
+# Release notes
+
+=> about:version  Newer versions
+
+## 1.10.6
+* Added bindings for switching Feeds list to Unread/All mode.
+* Fixed normalization of empty Gemini URL paths to `/` as per the November 2021 spec update.
+* Updated UI translations.
+
+## 1.10.5
+* Added a keybinding for "Paste Preceding Line" (in input prompt menu).
+* The "Miscellaneous Symbols and Arrows" Unicode block (U+2B00...U+2BFF) is accepted as custom link icons.
+* When mixing Emoji into preformatted text (glyphs are from different fonts), lay out the Emoji as double-wide characters to avoid overlapping.
+* Faster hover-scrolling of long popup menus.
+* Fixed sidebars not getting updated after identity addition/deletion.
+* Fixed "Paste Preceding Line" not being undoable.
+* Fixed lookup of missing glyphs. Fontpack priorities are now applied as documented.
+* Fixed animation issue with sidebars in the right side of split view.
+* Fixed a refresh issue that caused the first line of the page to be redrawn continuously, spiking CPU usage.
+* Fixed link numbers showing up next to image captions.
+* Fixed how the link hover popup handles extremely long URLs.
+* macOS: Handling regular mouse wheel events. Each step of the wheel should cause a single scroll event.
+* macOS: Fixed a sidebar clipping issue with Metal.
+* macOS: Possible workaround for a window refresh glitch when using SDL's Metal renderer. (Sometimes animated elements like the URL hover info would stop at being partially transparent and not complete the fade.)
+* Updated UI translations.
+
+## 1.10.4
+* Added missing ANSI background color codes 100-107 (high-intensity VGA).
+* Fixed how the ANSI FG color is adjusted to keep text legible on dark or bright backgrounds when BG color is unset.
+* Fixed possible crash when there are ANSI escapes in the alt text of a preformatted block.
+* Fixed tab/window titles containing ANSI escapes (escapes are removed).
+* macOS: Use Metal for drawing graphics if display refresh rate is higher than 60 Hz.
+* macOS: Handling scroll events meant for other windows.
+
+## 1.10.3
+* Unix: Added a lagrange(1) manual page.
+* Hide the [+] button on the tab button row if the navbar has a New Tab button.
+* "/index.gmi" is considered equal to "/" when navigating to parent directory.
+* Site icon ❑ replaced with ⌘ ("place of interest") for a more distinct appearance and to avoid similarity with the ❐ "Open in New Tab" icon.
+* Navigating to parent or root from "about:" pages goes to "about:about" to see overview of all the About pages.
+* Gopher: Fixed navigating to root, e.g., when clicking on the page top banner. Set item type to 1 to show a gophermap and not the plain source.
+* Titan: When navigating to parent/root, switch URL scheme to "gemini". This action occurs on a Titan response page, so initiating a new upload with the parent/root URL is probably not appropriate.
+* Fixed crash when a media player is active and a new download is started.
+* Fixed crash when a line contains nothing but an ANSI escape sequence.
+* Fixed a possible crash when saving state of subscribed feeds.
+* Fixed the right-hand sidebar handling the U and Shift+U key events if it was showing the Feeds tab, even though the sidebar was hidden.
+* Fixed line wrapping at backslashes. They are now considered word-breaking characters.
+
+## 1.10.2
+* Fixed cancelling an input query. Now pressing Cancel will navigate back to the previous page as intended.
+* Gopher: Fixed navigating to parent. Set item type to 1 to show a gophermap and not the plain source.
+* macOS: Workaround for a crash when launching. Prevent event processing from being triggered while the app window is becoming visible for the first time.
+* Fixed a build issue on Haiku OS.
+* Updated Smol Emoji: added the rest of Unicode 8 Emoji glyphs.
+
+## 1.10.1
+* Fixed bottom actions of the Feeds sidebar getting hidden when all entries are read. This prevented switching between Unread/All filter modes.
+* Fixed potential crash when downloading a large file (e.g., a fontpack).
+* Linux: SDL event handling workaround adjusted to only apply to 2.0.18+.
+* Updated UI translations.
+
+## 1.10
+New features:
+* macOS: Trackpad swipe navigation.
+* Customizable navbar actions. Right-click on a button to change its action. (Identity and hamburger buttons cannot be changed.)
+* Identity toolbar menu can be used to switch between alternate identities. If you have used multiple identities on one site, this makes it more convenient to switch between them.
+* Added "Edit Page with Titan": opens the upload dialog with current page's content prefilled.
+* Added "Paste Preceding Line" in the input prompt dialog. Potential use cases include user-editable sections on a page and suggested/example input values.
+* Added footer action to open file in another app when the media type is unsupported.
+* Added option to disable cursor blinking in input fields.
+* Added ANSI SGR codes for light and regular font weights (2, 10).
+* macOS: Added "Show in Finder" in the Identities sidebar.
+
+Changes and enhancements:
+* Improved image inlining: all responses with an image media type can get inlined, regardless of the file extension in the URL.
+* Inline image metadata goes under the image instead of possibly overlapping the label text.
+* Inline downloads have a context menu for relevant actions, and clicking on the download opens the file.
+* Improved highlighting of open pages. The highlight no longer goes under the side elements on the page.
+* Entry dates in feed links are de-emphasized for improved readability.
+* Revised link hover popup. None of the information appears on the same line any more (which was problematic if there wasn't enough space). Instead, everything is shown in a popup at the bottom/top of the view, including the identity that will be used when opening the link and the date of last visit.
+* Revised layout of the Upload dialog. There is a new edit field that lets you modify the file path of the URL. Identity names are in bold.
+* Optimized UI layout procedure and memory use during UI event processing.
+* Audio subsystem is only initialized when actually needed.
+* Prevent state file corruption if the app happens to get killed while state is being saved.
+* Gempub: Open books in 1:2 split mode instead of 1:1.
+* Minor improvements in page caching.
+* Detect when text is Bengali, Devanagari, Oriya, or Tamil.
+
+Fixes:
+* Fixed a history caching issue: if there were multiple instances of the same URL in history, only the latest one's content would be used when navigating back/forward.
+* Fixed handling of reserved characters in URLs (cf. RFC 3986, section 2.2).
+* Fixed the copy/paste context menu not showing in input fields.
+* Fixed duplicated warnings showing in the page banner.
+* Fixed very narrow input fields causing the app to hang.
+* Fixed initial scroll position in multiline input fields.
+* Fixed layout issues in the sidebar on empty Feeds and Identities tabs.
+* Fixed lookup results list becoming too narrow.
+* Fixed glitches when a widget has multiple simultanous animations.
+* Fixed mixed-language CJK word wrapping.
+* Fixed parsing Atom feed dates with leading whitespace.
+* Windows: Fixed installing individual TrueType fonts via drag and drop.
+* macOS: Fixed high CPU usage during audio playback and UI animations.
+* macOS: Line breaks inside menu items (e.g., info about current identity).
+
+## 1.9.5
+* Fixed misshapen button borders (SDL 2.0.16 line drawing workaround).
+* Fixed actions being triggered when navigating via home row keys.
+* macOS: Fixed native menu items being triggered when navigating via home row keys.
+* macOS: Fixed native menu items triggering when changing key bindings.
+
+## 1.9.4
+* Fixed crash when a link is missing both URL and label (just a `=>`).
+* Fixed handling of foreground color escapes in the simple text renderer.
+* Updated UI translations.
+* Upgraded SDL to 2.0.18.
+
+## 1.9.3
+* Added UI language for Dutch.
+* Updated UI translations.
+* Fixed the simple text renderer (build error, hanging).
+* Fixed time zone of the "valid from" time in created client certificates.
+* macOS: Fixed selecting scope for a newly created identity.
+
+## 1.9.2
+* Windows: Use the correct version number for update checks.
+* Fixed possible crash when switching Feeds sidebar filter mode via the popup menu.
+* Shorter label for "Mark All as Read" in Feeds sidebar actions.
+* In popup menus, differentiate between selected item and hover item.
+* Updated UI translations.
+
+## 1.9.1
+* Added "24-Hour Time" preference. Currently it only affects the page timestamp in the bottom left corner.
+* Heading level 3 is indented like regular text lines, making the difference to level 2 evident.
+* Fixed crash when creating a top-level bookmark.
+* Fixed drawing the page timestamp.
+* Fixed layout of tab buttons and other resizing widgets so all available space is used.
+* Fixed tab close buttons preventing activation of very short tab buttons. The close buttons only appear if there is room for them.
+* Fixed very short tab labels not getting truncated.
+* Fixed the New Tab button not staying at the right edge of the window, depending on how many tabs are open.
+
+## 1.9
+New features:
+* Added a toolbar button for toggling the left sidebar.
+* Added an unsplit button in the toolbar when in split view mode.
+* Choose parent folder when creating or editing a bookmark.
+* Support for 24-bit RGB ANSI color sequences.
+* Support for ANSI background color escapes (disabled by default).
+* macOS: Automatic updates using the Sparkle framework.
+* Windows: Automatic updates using the WinSparkle library.
+* UI language for Turkish.
+
+Changes and enhancements:
+* Adjusted font styles of heading levels 2 and 3.
+* Sidebar context menus also appear when clicking over the sidebar background. In this case the menu contains general functions not related to any item.
+* Feeds tab in the sidebar has a redesigned action toolbar with "Mark All as Read", and dropdown menu and keyboard shortcuts for changing the filter mode.
+* Feeds tab remembers the unread/all filter mode persistently.
+* ANSI foreground colors are modified to match colored theme backgrounds (e.g., Sepia).
+* Navigating back and forward in history will skip input query prompts (status 1x), showing only the query results.
+* Ctrl+A now selects all text in input fields (except on macOS, where it remains the Emacs-style jump to start/end of line).
+* The resource bundle (resources.lgr) is now a regular ZIP archive. This allows it to do double duty as a fontpack containing the built-in fonts. The archive contains a version number to avoid use of obsolete resources.
+
+Fixes:
+* Fixed layout issues related to footer action buttons. Sometimes the buttons would overlap page content.
+* Fixed handling duplicate feed entries: if multiple entries in a feed have the same URL, only use the first one.
+
+## 1.8.3
+* Fixed clicking on UI elements that are over the page top banner. The banner would always get clicked instead.
+* Titan upload identity is remembered as a site-specific setting. It is no longer affected by selections in the Identities sidebar.
+* macOS: Fixed updating items in native menus, e.g., upload identity selection.
+
+## 1.8.2
+* Fixed encoding of `+` characters in URLs as per RFC 3986.
+* Fixed crash when fontpack.ini specifies a file that cannot be found.
+* Fixed incorrect title of some error messages (was showing response meta info).
+* Fixed ambiguous font dropdown menu items if some fonts have the same name. Now the unique font ID will be included in these cases.
+* Made it possible to manually trust a certificate whose subject doesn't match domain name.
+* Updated UI translations.
+
+## 1.8.1
+* Added UI translations: Hungarian, Czech.
+* Added the `zip` utility as a build requirement. It is used for making fontpacks.
+* Fixed build failure with the simple text renderer, i.e., when HarfBuzz is disabled.
+* Fixed issues scrolling tall popup menus (e.g., UI language selection).
+* Fixed a line spacing artifact in long headings. With some fonts, the lines were clipping each other so the spacing was restored to normal.
+* Fixed a socket I/O issue that caused received data to be ignored when the peer closed the connection prematurely.
+* macOS: Tab close buttons are on the left side (platform UI convention).
+* Gopher: Recognize both LF and CRLF line endings in page content.
+
+## 1.8
+⚠️ Font settings will be reset to defaults. Only a minimal set of fonts is bundled with the app. If additional fonts are needed, one can use custom TrueType fonts or download some from the Font Library:
+=> gemini://skyjake.fi/fonts/
+
+New features:
+* Added a customizable font library. Open "about:fonts" to view and manage the installed fonts.
+* Added TrueType fonts as a recognized content type. When one is viewed in the app (e.g., via a drag-and-drop), there is an option to install it as a user font.
+* Added fontpacks: ZIP archives containing one or more TrueType fonts and parameters about how they should be used.
+* Added support for TrueType collections (.ttc).
+* Added new font options: separate preformatted and monospace body fonts, UI font, smoothing.
+* Added style option to show all links as bold regardless of visited status.
+* Added warning message about missing font glyphs.
+* Added warning message about terminal emulation. Lagrange supports a small subset of ANSI escape sequences, so page appearance may be incorrect when these are used in content.
+* Added tab close buttons.
+* Added a feed subscription option to exclude web links (HTTP/HTTPS), since those are not viewable in the app by default.
+* Added an automatic conversion of Markdown to Gemtext when viewing local files. (Not all Markdown features are supported.)
+* Added UI language for Ukrainian (uk).
+
+Changes and enhancements:
+* Removed all alternative built-in content fonts.
+* The default content font is Source Sans, same as the UI font.
+* Redesigned error/warning messages. These now show up as part of the page top banner, and their appearance can no longer be replicated via Gemtext.
+* Warning messages are interactive. Click on them to perform relevant actions.
+* Per-pixel scrolling in input fields (e.g., when using a trackpad on macOS).
+* "file://" pages are always unthemed.
+* Show a byte counter during large downloads instead of instantly jumping to a content view. Content may not viewable correctly until the download has finished.
+* Site-specific settings (sitespec.txt) converted to .ini format. These are currently used for the Titan upload port and remembering which warnings have been dismissed.
+* macOS: One can choose between Black/Dark and Light/White UI palette when system color theme is enabled. Previously the system theme always switched to either Dark or Light.
+
+Fixes:
+* Fixed an issue where the page is unscrollable until the mouse cursor is moved (wrong hover state).
+* Fixed wrapping of long input prompts and dialog messages.
+* Titan upload token is remembered when the dialog is closed.
+* Fixed various layout issues with page footer buttons.
+* Fixed theme change glitches when an input prompt appears.
+* macOS: Fixed forced unhiding of the dock when the app is launched.
+
+## 1.7.3
+* Fixed a memory leak in the text renderer.
+* Added option to place new bookmarks to the top of the bookmarks list.
+* Updated UI translations.
+
+## 1.7.2
+* Fixed regressions in text selection, for example when marking text leftwards from the start position or when starting from outside any text run.
+* Fixed a crash when clicking on Outline sidebar items before a page has finished loading.
+* Gopher: Handle the `p` line type (PNG image).
+
+## 1.7.1
+* Fixed feed entries forgetting their (un)read status after several months.
+* Fixed feed entries being discarded before they are removed from their source feed, causing them to reappear on the next refresh.
+* Fixed failure to parse Atom feed entry timestamps that use space as the date/time separator.
+* Fixed dropdown labels staying visible in the translation dialog.
+* Fixed showing/hiding of the feed update indicator in split view.
+* Fixed a crash when selecting text.
+* Added a small progress bar to the feed update indicator.
+* When adding a bookmark/folder, the bookmarks list scrolls to show the new item.
+* Improved reordering bookmarks in a folder: an item inside a folder can be moved to be the last item in the folder, or out of the folder depending on which side of the boundary marker the mouse cursor is.
+
+## 1.7
+⚠️ Bookmarks file format has changed. Your existing bookmarks will be imported to the new format. The old bookmarks.txt file can be found in the config directory and is writable only by v1.6 and earlier versions.
+⚠️ Saved UI state format has changed. Downgrading will reset window state, close all tabs, and clear the navigation cache.
+
+New features:
+* Added bookmark folders. Folders can be nested inside each other, and the fold state of each folder is remembered persistently (per sidebar).
+* The Bookmarks export/list page uses subheadings (level 2 and 3) to represent folders.
+* Added menu item to sort (a folder of) bookmarks alphabetically.
+* Added identity selection in the Upload dialog.
+* Added image colorization setting. Images can be viewed in grayscale or using the page's theme colors.
+* Added UI focus cycling to all buttons with Tab and Shift+Tab. This includes dialog buttons and the navigation bar.
+* Added a footer action to view `application/octet-stream` content depending on recognized file extensions.
+* Added support for viewing WebP images. The libwebp library is an optional dependency and will be included in the build if found via pkg-config.
+* Added command line options -w, -h for setting window size at launch.
+* Added new UI languages: Esperanto, Spanish (Mexico), Galician, Interslavic, and Slovak. Note that some of these are still works in progress.
+
+Changes and enhancements:
+* Bookmarks are now ordered manually. You can drag and drop bookmarks in the list to change the order.
+* The internal bookmarks file format is now a TOML subset instead of just being three text lines per bookmark, making it more robust and human-readable.
+* Context menus and other popup menus that do not fit inside the window are split off into independent windows.
+* macOS: Use native UI controls for context/popup menus. Note that this required making a couple of small changes to SDL (see the updated patch in the repository).
+* Dropdown button menus position themselves on the currently selected item.
+* Dialogs that don't fit inside the window have a scroll bar. Note that such dialogs can only be scrolled via mouse wheel/trackpad, not by dragging the bar.
+* Adjusted mouse wheel smooth scrolling speed for better consistency. The default scrolling speeds were increased to level 2.
+* Visited URLs are remembered for six months. This affects the unread status of feed entries and the visited status of links.
+* Adjusted the UI color palette so that the alternative accent color is used more rarely. For example, input fields now use the primary accent color.
+* Adjusted button hover/press colors for better consistency, particularly when the button label uses a non-standard color.
+* Image links (as determined by file extension) automatically use a "photo" link icon if the URL is on the current site. This makes it clearer which links will likely show up as an inline image.
+* Alt+Shift+Tab inserts a tab character in input fields.
+* UI rendering optimizations. Some UI controls (e.g., navbar, menus) will buffer their contents so they can be drawn efficiently during animations.
+
+Fixes:
+* Fixed issues with subscribed feed entry tracking. Heading entries are not discarded until they are removed from the source.
+* Fixed the sidebar unread entry count showing the wrong number after subscribing to a Headings feed.
+* Fixed handling of tab characters in the Upload text editor (when using HarfBuzz).
+* Fixed hang when wrapping a very long word (with HarfBuzz disabled).
+* Fixed regressions in retaining window state, position, and size.
+* Fixed URL encoding of the % character.
+* Fixed ambiguous handling of colons in URI paths.
+* Fixed issues with cursor positioning in multi-line input fields.
+* Fixed issues with touch swipe events.
+* X11: Ask SDL not to bypass the window compositor. This should avoid issues on KDE, for example.
+* macOS: Fixed a flash of blank background color when launching the app.
+* Windows: The main window title bar (when not using a custom frame) uses dark mode colors according to the UI color theme setting. Previously it was always stuck on light mode.
+
+## 1.6.5
+* Audio init errors are no longer fatal. SDL's error message will still be printed.
+* Fixed appearance of tab buttons (should have no top frame).
+* Fixed a cursor position regression in input fields related to handling of variation selectors (codepoint clusters). Moving the cursor to the start of a wrapped line segment put the cursor in the wrong place.
+* Fixed right-clicking on sidebar tab buttons. It was showing the wrong context menu when the list had been scrolled down.
+* Fixed crash when using the SDL2 KMSDRM video driver.
+* Fixed minor visual artifacts in preformatted blocks and near the bottom of the page.
+
+## 1.6.4
+* Local files containing UTF-8 text can be viewed regardless of their file extension.
+* Fixed input field cursor positioning and insertion problems around Emoji variation selectors.
+* Fixed "Unknown Status Code" shown in Page Information for valid status codes.
+* Fixed an issue with network requests that would make it appear the server was not responding, but the request would not time out.
+* Fixed a potential invalid memory access when clicking on sidebar items.
+* OpenBSD: Fixed a freeze after a network request is cancelled.
+* Fixed page contents not reflowing during a window resize.
+* Added build option ENABLE_RESIZE_DRAW. SDL doesn't redraw window contents on all platforms during resizing, so this can be used to force it.
+
+## 1.6.3
+* Select all text in an input field using Shift+Ctrl+A (macOS: ⌘A).
+* Input fields do not lose focus when the window becomes inactive, making it easier to resume input afterwards.
+* Fixed delay after switching to split view mode.
+* Fixed what gets drawn in an empty tab, before a document is available for rendering (e.g., after switching to split view mode).
+* Fixed highlighting the domain name in URL input fields.
+* Fixed hiding the Gemini URL scheme in input fields when the window is narrow.
+* Fixed the line break key modifier inadvertently affecting URL input fields, where line breaks are not allowed.
+* Fixed the line break key modifier affecting the upload dialog's text field.
+* Fixed a potential hang when closing a socket before the connection is fully opened.
+* Updated translations.
+
+## 1.6.2
+* Added `--tab-url` to print currently active tab's URL.
+* Upload dialog expands to full window height when the entered text is long.
+* Home/End keys in an input field move to start/end of the wrapped line segment.
+* Scroll with mouse wheel in input fields.
+* Slower cursor blink rate in input fields.
+* Adjusted dark mode colors for focused input fields.
+* Fixed incorrect behavior in input fields when typing or deleting text while holding down the Shift key.
+* Fixed crash in Upload dialog if server responds with a redirect.
+* Fixed buffered graphics (UI, fonts) getting lost under rare circumstances.
+* Fixed drawing of wrapped text when the app is compiled without HarfBuzz.
+* macOS: Fixed UI not updating when system dark mode is toggled while the window is hidden.
+
+## 1.6.1
+* Fixed potential crash when inserting a line break in an input field.
+* Fixed cursor positioning in fixed-length input fields.
+* Fixed copying text in input fields (the wrong region was copied).
+* Fixed URL input field contents not being selected after opening a new tab.
+* Fixed Upload dialog not showing when reloading a Titan URL.
+* Updated translations.
+
+## 1.6
+⚠️ A new TOFU trust store will be created. The old one is kept around but ignored.
+⚠️ App state serialization format has been updated. Downgrading to a previous release will cause app state to be reset (e.g., tabs closed, navigation history cleared).
+⚠️ New build dependencies: HarfBuzz and GNU FriBidi (see README).
+
+New features:
+* Added support for bidirectional text and complex scripts. العالم متنوع
+* Right-to-left paragraphs are aligned to the right. Link icons and list/quote symbols are moved to the right margin.
+* Added support for Titan uploads. The data to upload can be entered via a text field or by dropping a file on the window.
+* Added a keybinding for opening the current page URL in the upload dialog (Ctrl+U/⌘U). This simply switches the page's URL scheme from `gemini` to `titan`.
+* Added a configuration file for defining the UI color palette (see Help, section 3.5).
+* Added settings for keyboard and mouse scrolling speeds.
+* Added setting for changing Return key behavior in input fields (line break vs. accept).
+* Added setting for adjusting line spacing.
+* Added link context menu item for deleting local files (e.g., downloads).
+
+Changes and enhancements:
+* Improved TOFU: if the server certificate is not trusted, the connection is aborted at the TLS handshake stage. Previously, only a warning was shown and the page contents were fetched regardless.
+* Server certificate fingerprints are generated based on public keys, which allows servers to renew their certificates without losing trusted status.
+* Improved handling of expired server certificates. An error page is shown and the connection is aborted at the TLS handshake stage. The user can give a temporary exception to load the page.
+* Page contents are cached in presentation form for quicker restoring during back/forward navigation.
+* Inline images/audio will not get discarded during back/forward navigation. The Network > Memory Size setting determines the maximum memory usage for media. Setting the Memory Size to zero is equivalent to the previous behavior of discarding everything when the page changes.
+* Debug information includes RAM use in addition to cache size. This includes document layout and media stored in memory (e.g., raw pixel data of images).
+* Text input fields support larger amounts of content and expand vertically only up to a limit, after which they start scrolling.
+* Preferences have been reorganized. There is a new Fonts tab, and some General settings have been moved to the Style tab. All color-related settings are on the Colors tab, including UI theme colors.
+* Links opened on a page are updated to reflect visited status even when opening into a background tab or to the side.
+* Unicode Byte Order Mark is ignored in the beginning of a page.
+* Updated Smol Emoji with new characters.
+* Query/Feeds indicators have a smaller appearance in a narrow window to leave room for the URL.
+
+Fixes:
+* Large lede paragraph font is not applied if the paragraph has too many lines.
+* Fixed minor kerning issues when using Nunito.
+* Fixed sizing of characters in the Noto Symbols fonts.
+* Improved internal handling of URLs. For example, some URLs were not being recognized as visited because of percent-encoding differences.
+* Fixed URL in the generated page for viewing a single image (spaces weren't encoded).
+* Input dialog is not dismissed unless the Cancel button is clicked or Escape is pressed.
+* Workaround for a potential hang during the closing of a socket.
+* TLS client certificates generated by the app have identical issuer and subject fields, including all the provided information and not just the Common Name.
+* Gopher: Improved detection of ASCII art.
+* Gopher: Show contents of unrecognized line types.
+* Gopher: Don't collapse preformatted blocks since everything is preformatted in the source.
+* Gopher: All preformatted blocks are unindented to avoid misaligned ASCII art.
+* macOS: ^⌘Space shows the system-provided symbols and Emoji character palette.
+
+=> about:version-1.5  Older versions

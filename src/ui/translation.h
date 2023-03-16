@@ -22,8 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/array.h>
-#include <the_Foundation/string.h>
+#include <the_Foundation/stringarray.h>
 #include <the_Foundation/tlsrequest.h>
 
 iDeclareType(Translation)
@@ -36,10 +35,13 @@ struct Impl_Translation {
     uint32_t         startTime;
     iDocumentWidget *doc;
     int              timer;
-    iArray           lineTypes;
+    iBool            includingPreformatted;
+    iStringArray *   linePrefixes;
 };
 
 iDeclareTypeConstructionArgs(Translation, iDocumentWidget *)
+    
+void    setIncludingPreformatted    (iTranslation *, iBool includingPreformatted);
 
 void    submit_Translation          (iTranslation *);
 iBool   handleCommand_Translation   (iTranslation *, const char *cmd);

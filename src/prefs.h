@@ -189,6 +189,7 @@ struct Impl_Prefs {
     int              dialogTab;
     int              langFrom;
     int              langTo;
+    iBool            translationIgnorePre;
     /* Colors */
     enum iColorTheme systemPreferredColorTheme[2]; /* dark, light */
     enum iColorTheme theme;    
