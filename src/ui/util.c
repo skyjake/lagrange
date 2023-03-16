@@ -4196,11 +4196,24 @@ static iBool translationHandler_(iWidget *dlg, const char *cmd) {
         const iMenuItem *langItem = &languages[languageIndex_CStr(cstr_Command(cmd, "id"))];
         iWidget *widget = pointer_Command(cmd);
         iLabelWidget *drop;
+        /* TODO: Add a utility to find the menu button of a dropdown. */
+        /* This is a bit convoluted because finding the menu button of a particular menu item
+           depends on whether the menu is native or not, and if it was shown in a popup window
+           or in the same window. */
         if (flags_Widget(widget) & nativeMenu_WidgetFlag) {
             drop = (iLabelWidget *) parent_Widget(widget);
         }
+        else if (isInstance_Object(widget, &Class_LabelWidget) &&
+                 !cmp_String(command_LabelWidget((iLabelWidget *) widget), "menu.open")) {
+            /* When a selection is made via a detached popup menu, the command is re-sent
+               as if it was from the menu button itself, so it gets handled in the
+               correct root.  */
+            drop = (iLabelWidget *) widget;
+        }
         else {
-            drop = (iLabelWidget *) parent_Widget(parent_Widget(widget));
+            iWidget *menu = parent_Widget(widget);
+            iAssert(!cmp_String(id_Widget(menu), "menu"));
+            drop = (iLabelWidget *) parent_Widget(menu);
         }
         iAssert(isInstance_Object(drop, &Class_LabelWidget));
         updateDropdownSelection_LabelWidget(drop, langItem->command);
