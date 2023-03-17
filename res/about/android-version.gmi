@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.15 (Beta 15)
+* Added 19 new translated languages, "Auto-detect" source language, and an option to skip preformatted blocks when translating.
+* Fixed several bugs in processing page contents for translation.
+* Fixed handling of redirects when fetching subscribed feed pages.
+* Fixed handling of redirects in the inline media player and file downloader.
+* Fixed scroll position being sometimes slightly off when relaunching the app.
+
 ## 1.15 (Beta 14)
 * Settings: Long labels are wrapped to fit in view.
 * Removed the [+] button from the tab bar in portrait phone layout to conserve space. (New tabs can be created via the navbar menu or via customized toolbar buttons.)
