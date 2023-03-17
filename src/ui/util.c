@@ -4253,8 +4253,9 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
             { "title id:heading.translate" },
             { "dropdown id:xlt.from text:${dlg.translate.from}", 0, 0, (const void *) languages },
             { "dropdown id:xlt.to text:${dlg.translate.to}",     0, 0, (const void *) languages },
-            { "toggle id:xlt.preskip" },
-            { "padding arg:3" },
+            { "padding" },
+            { "toggle id:xlt.preskip text:${dlg.translate.pre}" },
+            //{ "padding arg:3" },
             { NULL }                              
         }, actions, iElemCount(actions));
         setFlags_Widget(dlg, keepOnTop_WidgetFlag, iTrue);

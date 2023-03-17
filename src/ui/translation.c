@@ -497,11 +497,13 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
         if (status_TlsRequest(d->request) == initialized_TlsRequestStatus) {
             d->includingPreformatted = !isSelected_Widget(findChild_Widget(d->dlg, "xlt.preskip"));
             iWidget *langs = findChild_Widget(d->dlg, "xlt.langs");
-            if (langs) {
-                setFlags_Widget(langs, hidden_WidgetFlag, iTrue);
+            setFlags_Widget(langs, hidden_WidgetFlag, iTrue);
+            setFlags_Widget(findChild_Widget(d->dlg, "xlt.from"),  hidden_WidgetFlag, iTrue);
+            setFlags_Widget(findChild_Widget(d->dlg, "xlt.to"),    hidden_WidgetFlag, iTrue);
+            if (isUsingPanelLayout_Mobile()) {
+                setFlags_Widget(findChild_Widget(d->dlg, "panel.top"), hidden_WidgetFlag, iTrue);
+                refresh_Widget(findChild_Widget(d->dlg, "panel.top"));
             }
-            setFlags_Widget(findChild_Widget(d->dlg, "xlt.from"), hidden_WidgetFlag, iTrue);
-            setFlags_Widget(findChild_Widget(d->dlg, "xlt.to"),   hidden_WidgetFlag, iTrue);
             if (!langs) {
                 langs = d->dlg;
             }
@@ -510,7 +512,7 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
             setFlags_Widget(as_Widget(acceptButton), disabled_WidgetFlag, iTrue);
             iTranslationProgressWidget *prog = new_TranslationProgressWidget();
             if (isUsingPanelLayout_Mobile()) {
-                setPos_Widget(as_Widget(prog), init_I2(0, 22 * gap_UI)); /* TODO: No fixed offets... */
+                setPos_Widget(as_Widget(prog), init_I2(0, 3 * gap_UI)); /* TODO: No fixed offsets... */
             }
             else {
                 setPos_Widget(as_Widget(prog), langs->rect.pos);
