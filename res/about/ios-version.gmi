@@ -13,6 +13,7 @@
 * Fixed handling of redirects when fetching subscribed feed pages.
 * Fixed handling of redirects in the inline media player and file downloader.
 * Fixed saving the "Split view pinning" setting so it doesn't reset when relaunching the app.
+* Fixed scroll position being sometimes slightly off when relaunching the app.
 
 ## 1.15 (4)
 * Settings: Long labels are wrapped to fit in view.
