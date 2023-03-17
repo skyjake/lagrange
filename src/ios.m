@@ -1196,6 +1196,7 @@ void updateItems_SystemMenu(iWidget *owner, const iMenuItem *items, size_t n) {
                 { 0x1f310,  "globe" },
                 { 0x2ba5,   "paperplane" },
                 { 0x2ba7,   "square.and.arrow.down" },
+                { 0x270e,   "pencil" },
             };
             iForIndices(i, sysIcons) {
                 if (sysIcons[i].c == icon) {
