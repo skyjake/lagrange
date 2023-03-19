@@ -4149,8 +4149,10 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             disableRefresh_App(iFalse);
             return iTrue;
         }
-        setupSwipeOverlay_DocumentWidget_(d, as_Widget(target));
-        destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
+        if (target) { /* we should usually have it...? */
+            setupSwipeOverlay_DocumentWidget_(d, as_Widget(target));
+            destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
+        }
         postCommand_Widget(d, "navigate.back");
         return iTrue;
     }
