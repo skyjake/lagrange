@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2023-03-10 18:35+0000\n"
+"PO-Revision-Date: 2023-03-21 05:51+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -210,7 +210,7 @@ msgid "menu.view.split"
 msgstr "Vista Divisa…"
 
 msgid "menu.save.downloads.open"
-msgstr "Salva nei Download e apri il file"
+msgstr "Salva negli Scaricati e apri il file"
 
 msgid "menu.sidebar.left"
 msgstr "Visualizza/Nascondi barra laterale sinistra"
@@ -380,7 +380,7 @@ msgid "dlg.input.send"
 msgstr "Invia"
 
 msgid "heading.save"
-msgstr "FILE SALVATO"
+msgstr "File Salvato"
 
 msgid "pageinfo.domain.mismatch"
 msgstr "Il nome del dominio non coincide"
@@ -1583,7 +1583,7 @@ msgid "prefs.uilang"
 msgstr "Lingua:"
 
 msgid "prefs.time.24h"
-msgstr "Formato 24 Ore"
+msgstr "Formato 24 Ore:"
 
 msgid "prefs.returnkey.linebreak"
 msgstr "Fine riga"
@@ -2518,3 +2518,86 @@ msgstr "Massimizza"
 
 msgid "menu.window.full"
 msgstr "Attiva/disattiva Schermo Intero"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azera"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Catalano"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Rileva Automaticamente"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Ceco"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Danese"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Olandese"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Finlandese"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Greco"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Ebreo"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Ungherese"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonesiano"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Irlandese"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Svedese"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turco"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ucraino"
+
+msgid "dlg.translate.pre"
+msgstr "Salta il preformattato:"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Coreano"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persiano"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Polacco"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Slovacco"
