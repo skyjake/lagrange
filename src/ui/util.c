@@ -244,7 +244,7 @@ iBool isMod_Sym(int key) {
 int normalizedMod_Sym(int key) {
     if (key == SDLK_RSHIFT) key = SDLK_LSHIFT;
     if (key == SDLK_RCTRL) key = SDLK_LCTRL;
-    if (key == SDLK_RALT) key = SDLK_LALT;
+    if (key == SDLK_RALT && !SDL_IsTextInputActive()) key = SDLK_LALT;
     if (key == SDLK_RGUI) key = SDLK_LGUI;
     return key;
 }
@@ -253,9 +253,11 @@ int keyMods_Sym(int kmods) {
     kmods &= (KMOD_SHIFT | KMOD_ALT | KMOD_CTRL | KMOD_GUI | KMOD_CAPS);
     /* Don't treat left/right modifiers differently. */
     if (kmods & KMOD_SHIFT) kmods |= KMOD_SHIFT;
-    if (kmods & KMOD_ALT)   kmods |= KMOD_ALT;
     if (kmods & KMOD_CTRL)  kmods |= KMOD_CTRL;
     if (kmods & KMOD_GUI)   kmods |= KMOD_GUI;
+    if (!SDL_IsTextInputActive()) {
+        if (kmods & KMOD_ALT) kmods |= KMOD_ALT;       
+    }
     return kmods;
 }
 

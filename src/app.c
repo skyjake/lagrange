@@ -1913,7 +1913,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     if (ev.key.keysym.sym == SDLK_CAPSLOCK) {
                         setCapsLockDown_Keys(ev.key.state == SDL_PRESSED);
                     }
-                    ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
+                    if (!SDL_IsTextInputActive()) {
+                        ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
+                    }
                 }
 #if defined (iPlatformAndroidMobile)
                 /* Use the system Back button to close panels, if they're open. */
