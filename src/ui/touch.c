@@ -552,11 +552,16 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         iWidget *dragging = NULL;
         if (x < edgeWidth) {
             edge = left_TouchEdge;
+            setKeyRoot_Window(window, window->roots[0]);
         }
         else if (x > rootSize.x - edgeWidth) {
             edge = right_TouchEdge;
+            setKeyRoot_Window(window, window->roots[numRoots_Window(window) > 1 ? 1 : 0]);
         }
         iWidget *aff = hitChild_Window(window, init_I2(iRound(x), iRound(y_F3(pos))));
+        if (aff) {
+            setKeyRoot_Window(window, aff->root);
+        }
 #if 0
         if (edge == left_TouchEdge) {
             dragging = findSlidePanel_Widget_(aff);

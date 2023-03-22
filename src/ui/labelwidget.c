@@ -238,6 +238,10 @@ static void keyStr_LabelWidget_(const iLabelWidget *d, iString *str) {
 }
 
 static iBool areTabButtonsThemeColored_(void) {
+    if (type_Window(get_Window()) != main_WindowType) {
+        /* Only the main window has themes available, since it has DocumentWidgets. */
+        return iFalse;
+    }
     const enum iGmDocumentTheme docTheme = docTheme_Prefs(prefs_App());
     const iBool isDarkUI = isDark_ColorTheme(colorTheme_App());
     return (docTheme == colorfulLight_GmDocumentTheme ||

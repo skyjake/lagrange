@@ -761,8 +761,8 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
     setBackgroundColor_Widget(as_Widget(list_SidebarWidget_(d)),
-                              d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
-                                                                     : uiBackgroundSidebar_ColorId);
+                              //d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
+                                                                      uiBackgroundSidebar_ColorId);
     updateItemHeight_SidebarWidget_(d);
     if (deviceType_App() != desktop_AppDeviceType && mode != bookmarks_SidebarMode) {
         setMobileEditMode_SidebarWidget_(d, iFalse);
@@ -2214,12 +2214,14 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const iRect    bounds = bounds_Widget(w);
     iPaint p;
     init_Paint(&p);
+    /*
     if (d->mode == documentOutline_SidebarMode) {
         iDocumentWidget *doc = document_App();
         if (doc) {
             makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         }
     }
+*/
     if (!isPortraitPhone_App()) { /* this would erase page contents during transition on the phone */
         if (flags_Widget(w) & visualOffset_WidgetFlag &&
             flags_Widget(w) & horizontalOffset_WidgetFlag && isVisible_Widget(w)) {
@@ -2281,8 +2283,12 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     }
     iInt2 pos = itemRect.pos;
     if (sidebar->mode == documentOutline_SidebarMode) {
+        const int level = d->indent / (5 * gap_UI);
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-                               : (tmHeading1_ColorId + d->indent / (4 * gap_UI));
+                               : (level == 0   ? uiTextStrong_ColorId
+                                  : level == 1 ? uiTextStrong_ColorId
+                                  : level == 2 ? uiText_ColorId
+                                               : uiTextDim_ColorId);
         drawRange_Text(font,
                        init_I2(pos.x + (3 * gap_UI + d->indent) * aspect_UI,
                                mid_Rect(itemRect).y - lineHeight_Text(font) / 2),

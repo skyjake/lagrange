@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-28 02:15+0000\n"
-"PO-Revision-Date: 2023-02-28 02:15+0000\n"
+"PO-Revision-Date: 2023-03-21 05:51+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -2505,3 +2505,86 @@ msgstr "Deslizar en la página:"
 
 msgid "prefs.gopher.gemstyle"
 msgstr "Auto-detectar estilo de menús para Gopher:"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Polaco"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Eslovaco"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Sueco"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turco"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ucraniano"
+
+msgid "dlg.translate.pre"
+msgstr "Saltar pre-formateado:"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Detectar automáticamente"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azerí"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Catalán"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Checo"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Danés"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Holandés"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Finés"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Griego"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Hebreo"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Húngaro"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonesio"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Irlandés"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Coreano"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persa"

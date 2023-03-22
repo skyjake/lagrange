@@ -1913,7 +1913,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     if (ev.key.keysym.sym == SDLK_CAPSLOCK) {
                         setCapsLockDown_Keys(ev.key.state == SDL_PRESSED);
                     }
-                    ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
+                    if (!SDL_IsTextInputActive()) {
+                        ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
+                    }
                 }
 #if defined (iPlatformAndroidMobile)
                 /* Use the system Back button to close panels, if they're open. */
@@ -3278,13 +3280,13 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
             const char *label;
             enum iPrefsString ps;
             int fontId;
-            } params[] = {
-                       { "ui",      uiFont_PrefsString,                default_FontId },
-                       { "mono",    monospaceFont_PrefsString,         monospace_FontId },
-                       { "heading", headingFont_PrefsString,           documentHeading_FontId },
-                       { "body",    bodyFont_PrefsString,              documentBody_FontId },
-                       { "monodoc", monospaceDocumentFont_PrefsString, documentMonospace_FontId },
-                       };
+        } params[] = {
+            { "ui",      uiFont_PrefsString,                default_FontId },
+            { "mono",    monospaceFont_PrefsString,         monospace_FontId },
+            { "heading", headingFont_PrefsString,           documentHeading_FontId },
+            { "body",    bodyFont_PrefsString,              documentBody_FontId },
+            { "monodoc", monospaceDocumentFont_PrefsString, documentMonospace_FontId },
+        };
         iBool wasChanged = iFalse;
         iForIndices(i, params) {
             if (hasLabel_Command(cmd, params[i].label)) {
@@ -3299,8 +3301,8 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         if (wasChanged) {
             if (isFinishedLaunching_App() && get_MainWindow()) { /* there's a reset when launch is finished */
                 resetFonts_Text(text_Window(get_MainWindow()));
+                postCommand_App("font.changed");
             }
-            postCommand_App("font.changed");
         }
         if (!isFrozen) {
             postCommand_App("window.unfreeze");
@@ -3323,11 +3325,14 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         if (!isFrozen) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
-        d->prefs.fontSmoothing = arg_Command(cmd) != 0;
-        if (!isFrozen) {
-            resetFontCache_Text(text_Window(get_MainWindow())); /* clear the glyph cache */
-            postCommand_App("font.changed");
-            postCommand_App("window.unfreeze");
+        const iBool isSet = (arg_Command(cmd) != 0);
+        if (d->prefs.fontSmoothing != isSet) {
+            d->prefs.fontSmoothing = isSet;
+            if (!isFrozen) {
+                resetFontCache_Text(text_Window(get_MainWindow())); /* clear the glyph cache */
+                postCommand_App("font.changed");
+                postCommand_App("window.unfreeze");
+            }
         }
         return iTrue;
     }
@@ -3357,13 +3362,20 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         if (!isFrozen) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue);
         }
+        iBool didChange = iFalse;
         if (startsWith_CStr(cmd, "prefs.mono.gemini")) {
-            d->prefs.monospaceGemini = isSet;
+            if (d->prefs.monospaceGemini != isSet) {
+                d->prefs.monospaceGemini = isSet;
+                didChange = iTrue;
+            }
         }
         else {
-            d->prefs.monospaceGopher = isSet;
+            if (d->prefs.monospaceGopher != isSet) {
+                d->prefs.monospaceGopher = isSet;
+                didChange = iTrue;
+            }
         }
-        if (!isFrozen) {
+        if (!isFrozen && didChange) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
         }
@@ -3382,7 +3394,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         else {
             d->prefs.boldLinkLight = isSet;
         }
-        if (!d->isLoadingPrefs) {
+        if (!d->isLoadingPrefs && isFinishedLaunching_App()) {
             postCommand_App("font.changed");
         }
         return iTrue;
@@ -4113,12 +4125,14 @@ iBool handleCommand_App(const char *cmd) {
         if (!isFrozen) {
             setFreezeDraw_MainWindow(get_MainWindow(), iTrue); /* no intermediate draws before docs updated */
         }
+        iBool didChange = iFalse;
         if (arg_Command(cmd) != d->prefs.zoomPercent) {
             d->prefs.zoomPercent = arg_Command(cmd);
             invalidateCachedDocuments_App_();
+            didChange = iTrue;
         }
         setDocumentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
-        if (!isFrozen) {
+        if (!isFrozen && didChange) {
             postCommand_App("font.changed");
             postCommand_App("window.unfreeze");
         }

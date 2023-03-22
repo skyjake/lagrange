@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.15.6
+* The Outline tab in the sidebar now uses regular UI colors, like other sidebar tabs.
+* Fixed handling of the AltGr key during text input.
+* Fixed incorrect background colors for Preferences tab buttons with certain themes (e.g., Colorful Light).
+* Updated UI translations.
+
 ## 1.15.5
 * Added several new translated languages: Azerbaijani, Catalan, Czech, Danish, Dutch, Esperanto, Finnish, Greek, Hebrew, Hungarian, Indonesian, Irish, Korean, Persian, Polish, Slovak, Swedish, Turkish, and Ukrainian. (LibreTranslate server was upgraded to v1.3.10.)
 * Added "Auto-detect" as the default source language for translation.

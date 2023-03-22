@@ -733,7 +733,7 @@ static int scrollMax_DocumentView_(const iDocumentView *d) {
     int sm = pageHeight_DocumentView_(d) +
              (isEmpty_Banner(d->owner->banner) ? 2 : 1) * d->pageMargin * gap_UI + /* top and bottom margins */
              footerHeight_DocumentWidget_(d->owner) - height_Rect(bounds_Widget(w));
-    return sm;
+    return iMax(0, sm);
 }
 
 static float normScrollPos_DocumentView_(const iDocumentView *d) {
@@ -3265,7 +3265,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     resetScroll_DocumentView_(&d->view);
     init_Anim(&d->view.scrollY.pos, d->initNormScrollY * pageHeight_DocumentView_(&d->view));
     updateVisible_DocumentView_(&d->view);
-    moveSpan_SmoothScroll(&d->view.scrollY, 0, 0); /* clamp position to new max */
+    clampScroll_DocumentView_(&d->view);
     updateSideOpacity_DocumentView_(&d->view, iFalse);
     cacheDocumentGlyphs_DocumentWidget_(d);
     d->view.drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
@@ -4149,8 +4149,10 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             disableRefresh_App(iFalse);
             return iTrue;
         }
-        setupSwipeOverlay_DocumentWidget_(d, as_Widget(target));
-        destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
+        if (target) { /* we should usually have it...? */
+            setupSwipeOverlay_DocumentWidget_(d, as_Widget(target));
+            destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
+        }
         postCommand_Widget(d, "navigate.back");
         return iTrue;
     }

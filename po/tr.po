@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2023-02-22 20:15+0000\n"
+"PO-Revision-Date: 2023-03-17 11:15+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -694,7 +694,7 @@ msgid "heading.lookup.other"
 msgstr "DİĞER"
 
 msgid "heading.upload"
-msgstr "Titan ile gönder"
+msgstr "Titan ile karşıya yükle"
 
 msgid "upload.id"
 msgstr "Kimlik:"
@@ -724,24 +724,24 @@ msgid "upload.token"
 msgstr "Jeton:"
 
 msgid "dlg.upload.send"
-msgstr "Gönder"
+msgstr "Karşıya yükle"
 
 msgid "upload.port"
 msgstr "Kapı…"
 
 msgid "heading.uploadport"
-msgstr "Titan gönderim kapısı"
+msgstr "Titan karşıya yükleme kapısı"
 
 msgid "dlg.uploadport.set"
 msgstr "Kapı ayarla"
 
 # used on mobile
 msgid "dlg.upload.text"
-msgstr "Düz metin gönder"
+msgstr "Düz metin karşıya yükle"
 
 # used on mobile
 msgid "dlg.upload.file"
-msgstr "Dosya göndre"
+msgstr "Dosya karşıya yükle"
 
 # used on mobile
 msgid "dlg.upload.pickfile"
@@ -1186,7 +1186,7 @@ msgid "keys.split.next"
 msgstr "Odağı bir sonraki bölüntüye taşı"
 
 msgid "keys.upload"
-msgstr "Titan ile gönder"
+msgstr "Titan ile karşıya yükle"
 
 msgid "error.openfile.msg"
 msgstr ""
@@ -1747,10 +1747,10 @@ msgid "heading.lookup.pagecontent"
 msgstr "SAYFA İÇERİĞİ"
 
 msgid "menu.page.upload"
-msgstr "Titan ile gönder…"
+msgstr "Titan ile karşıya yükle…"
 
 msgid "hint.upload.text"
-msgstr "gönderilecek metni girin"
+msgstr "karşıya yüklenecek metni girin"
 
 msgid "upload.file.drophere"
 msgstr "(pencereye bir dosyayı sürükleyip bırakın)"
@@ -2394,7 +2394,7 @@ msgid "dlg.spartan.upload"
 msgstr "Düzenleyiciyi aç…"
 
 msgid "heading.upload.spartan"
-msgstr "Spartan ile gönder"
+msgstr "Spartan ile karşıya yükle"
 
 msgid "prefs.markdown.viewsource"
 msgstr "Markdown kaynağını görüntüle:"
@@ -2512,3 +2512,86 @@ msgstr "Sekmeyi diğer yana taşı"
 
 msgid "menu.movetab.newwindow"
 msgstr "Sekmeyi yeni pencereye taşı"
+
+msgid "dlg.translate.pre"
+msgstr "Önceden biçimlendirilmişi atla:"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Otomatik algıla"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azerbaycanca"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Katalanca"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Çekçe"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Danca"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Hollandaca"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Fince"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Yunanca"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "İbranice"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Macarca"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Endonezce"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "İrlandaca"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Korece"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Farsça"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Lehçe"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Slovakça"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "İsveççe"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Türkçe"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ukraynaca"
