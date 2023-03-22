@@ -2285,7 +2285,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     if (sidebar->mode == documentOutline_SidebarMode) {
         const int level = d->indent / (5 * gap_UI);
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-                                  : (level <= 1   ? uiTextStrong_ColorId
+                               : (level == 0   ? uiTextStrong_ColorId
+                                  : level == 1 ? uiTextStrong_ColorId
                                   : level == 2 ? uiText_ColorId
                                                : uiTextDim_ColorId);
         drawRange_Text(font,
