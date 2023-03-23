@@ -4132,8 +4132,10 @@ iBool handleCommand_App(const char *cmd) {
             didChange = iTrue;
         }
         setDocumentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
-        if (!isFrozen && didChange) {
-            postCommand_App("font.changed");
+        if (!isFrozen) {
+            if (didChange) {
+                postCommand_App("font.changed");
+            }
             postCommand_App("window.unfreeze");
         }
         return iTrue;

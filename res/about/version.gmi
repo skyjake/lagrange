@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.15.7
+* Fixed window contents getting frozen after Reset Zoom when zoom level is already at 100%.
+
 ## 1.15.6
 * The Outline tab in the sidebar now uses regular UI colors, like other sidebar tabs.
 * Fixed handling of the AltGr key during text input.
