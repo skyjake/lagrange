@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2023-01-25 09:20+0000\n"
+"PO-Revision-Date: 2023-03-28 07:15+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -1179,7 +1179,7 @@ msgid "prefs.scrollspeed.mouse"
 msgstr "Velocidade do punteiro:"
 
 msgid "prefs.imageloadscroll"
-msgstr "Cargar imaxe ao desprazar:"
+msgstr "Cargar imaxe seguinte ao desprazar:"
 
 msgid "prefs.hidetoolbarscroll"
 msgstr "Agochar barra ferramentas ao desprazar:"
@@ -1442,8 +1442,7 @@ msgstr "Subir con Titan"
 msgid "error.badstatus.msg"
 msgstr ""
 "O servidor respondeu cun código de estado que non está na especificación do "
-"código Gemini. Igoal este servidor está no futuro? Ou simplemente funciona "
-"mal."
+"código Gemini. Pode que o servidor non funcione ben."
 
 msgid "error.unsupported.protocol.msg"
 msgstr "O protocolo solicitado non ten soporte nesta aplicación."
@@ -2502,3 +2501,83 @@ msgstr "Desprazar desde a beira:"
 
 msgid "prefs.swipe.page"
 msgstr "Desprazamento na páxina:"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Hebreo"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Auto-detectar"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azerbaixano"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Catalán"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Checo"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Dinamarqués"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Neerlandés"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Finés"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Grego"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Húngaro"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonesio"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Irlandés"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Coreano"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Farsi"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Polonés"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Eslovaco"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Sueco"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turco"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ucraíno"
