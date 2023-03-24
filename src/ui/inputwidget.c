@@ -895,7 +895,7 @@ void deinit_InputWidget(iInputWidget *d) {
            or the other widget will stop receiving input. */
         if (!focus_Widget() || focus_Widget() == as_Widget(d) ||
             !isInstance_Object(focus_Widget(), &Class_InputWidget)) {
-            SDL_StopTextInput();
+            setTextInputActive_App(iFalse);
             enableEditorKeysInMenus_(iTrue);
         }
     }
@@ -1306,7 +1306,7 @@ void begin_InputWidget(iInputWidget *d) {
         d->cursor.y = iMin(d->cursor.y, size_Array(&d->lines) - 1);
         d->cursor.x = iMin(d->cursor.x, cursorLine_InputWidget_(d)->range.end);
     }
-    SDL_StartTextInput();
+    setTextInputActive_App(iTrue);
     showCursor_InputWidget_(d);
     refresh_Widget(w);
     startOrStopCursorTimer_InputWidget_(d, iTrue);
@@ -1346,7 +1346,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         /* Overwrite the edited lines. */
         splitToLines_(&d->oldText, &d->lines);
     }
-    SDL_StopTextInput();
+    setTextInputActive_App(iFalse);
     enableEditorKeysInMenus_(iTrue);
     d->inFlags &= ~isMarking_InputWidgetFlag;
     startOrStopCursorTimer_InputWidget_(d, iFalse);

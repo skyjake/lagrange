@@ -162,6 +162,7 @@ struct Impl_App {
     uint32_t     elapsedSinceLastTicker;
     iBool        isRunning;
     iBool        isRunningUnderWindowSystem;
+    iBool        isTextInputActive;
     iBool        isDarkSystemTheme;
     iBool        isSuspended;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
@@ -1089,6 +1090,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #else
     d->isRunningUnderWindowSystem = iTrue;
 #endif
+    d->isTextInputActive = iFalse;
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     d->isSuspended = iFalse;
     d->disableRefresh = iFalse;
@@ -1913,7 +1915,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     if (ev.key.keysym.sym == SDLK_CAPSLOCK) {
                         setCapsLockDown_Keys(ev.key.state == SDL_PRESSED);
                     }
-                    if (!SDL_IsTextInputActive()) {
+                    if (!isTextInputActive_App()) {
                         ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
                     }
                 }
@@ -2669,6 +2671,20 @@ enum iAppDeviceType deviceType_App(void) {
 
 iBool isRunningUnderWindowSystem_App(void) {
     return app_.isRunningUnderWindowSystem;
+}
+
+void setTextInputActive_App(iBool active) {
+    app_.isTextInputActive = active;
+    if (active) {
+        SDL_StartTextInput();        
+    }
+    else {
+        SDL_StopTextInput();
+    }
+}
+
+iBool isTextInputActive_App(void) {
+    return app_.isTextInputActive;
 }
 
 const iCommandLine *commandLine_App(void) {
