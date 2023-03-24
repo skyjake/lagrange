@@ -1,3 +1,19 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2023-03-28 07:15+0000\n"
+"PO-Revision-Date: 2023-03-28 07:15+0000\n"
+"Last-Translator: jan Anja <cyber@sysrq.in>\n"
+"Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
+">\n"
+"Language: tok\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.5.1\n"
+
 # Used in inline audio player metadata popup.
 msgid "audio.meta.artist"
 msgstr "jan kalama"
@@ -313,7 +329,6 @@ msgstr "o tawa ni lon poki lukin sin o lukin ala e poki sin"
 msgid "menu.edit"
 msgstr "o ante…"
 
-#, fuzzy
 msgid "menu.copyurl"
 msgstr "o kama sona e nimi tawa"
 
@@ -807,7 +822,7 @@ msgid "prefs.accent.teal"
 msgstr "laso"
 
 msgid "prefs.sideicon"
-msgstr "sitelen tawa mun:"
+msgstr "sitelen mun:"
 
 msgid "prefs.doctheme.dark"
 msgstr "nasin lukin pi tenpo pimeja:"
@@ -1356,7 +1371,7 @@ msgstr "kon li nasa lukin"
 msgid "error.badstatus.msg"
 msgstr ""
 "ilo pana li toki e nanpa. nanpa ni li lon ala pu Kemini. ken la ilo pana li "
-"lon tenpo kama. ken la ilo pana li pakala."
+"pakala."
 
 msgid "error.badheader.msg"
 msgstr ""
@@ -1445,7 +1460,7 @@ msgstr "o tu/wan e poki"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "o open e ijo mute insa ijo wan:"
+msgstr "o open e lipu \"index.gmi\" insa ijo wan:"
 
 msgid "gempub.meta.lang"
 msgstr "toki"
@@ -1957,7 +1972,7 @@ msgstr ""
 "sina wile lukin e lipu kepeken len ni la o open e ijo \"sona lipu\"."
 
 msgid "prefs.time.24h"
-msgstr "tenpo 24"
+msgstr "tenpo 24:"
 
 # This label should be fairly short so it fits in a button in the sidebar.
 msgid "sidebar.action.feeds.markallread"
@@ -2141,7 +2156,7 @@ msgid "prefs.accent.gray"
 msgstr "pimeja walo"
 
 msgid "prefs.font.warnmissing"
-msgstr "sitelen moli tawa sitelen:"
+msgstr "sitelen moli sitelen:"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
@@ -2240,3 +2255,79 @@ msgstr "lipu"
 
 msgid "menu.folder.opentab"
 msgstr "o tawa ni ale lon poki lukin sin mute"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "toki Intonesija"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "toki Epelanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "toki Asapajan"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "toki Katala"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "toki Seki"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "toki Tansi"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "toki Netelan"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "toki Sumi"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "toki Elena"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "toki Iwisi"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "toki Mosijo"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "toki Alan"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "toki Anku"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "toki Ilan"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "toki Posuka"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "toki Lowenki"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "toki Wensa"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "toki Tuki"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "toki Ukawina"
