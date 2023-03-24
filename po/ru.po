@@ -4,7 +4,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
 "PO-Revision-Date: 2023-03-28 07:15+0000\n"
-"Last-Translator: jan Anja <cyber@sysrq.in>\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -2560,3 +2560,7 @@ msgstr "Турецкий"
 # A language choice in the Translation dialog.
 msgid "lang.uk"
 msgstr "Украинский"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Автоматически"
