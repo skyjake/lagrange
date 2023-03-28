@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2023-02-26 11:35+0000\n"
+"PO-Revision-Date: 2023-03-28 07:15+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2510,3 +2510,86 @@ msgstr "Превлачење са ивице:"
 
 msgid "prefs.swipe.page"
 msgstr "Превлачење на страни:"
+
+msgid "dlg.translate.pre"
+msgstr "Прескочити преформатирано:"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Аутоматска детекција"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Азербајџански"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Каталонски"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Чешки"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Дански"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Холандски"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Есперанто"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Фински"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Грчки"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Хебрејски"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Мађарски"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Индонежански"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Ирски"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Корејски"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Персијски"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Пољски"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Словачки"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Шведски"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Турски"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Украјински"

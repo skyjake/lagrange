@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
-"PO-Revision-Date: 2023-03-02 05:15+0000\n"
-"Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
+"PO-Revision-Date: 2023-03-28 07:15+0000\n"
+"Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -2484,3 +2484,86 @@ msgstr "Передвинуть вкладку вправо"
 
 msgid "prefs.swipe.page"
 msgstr "Свайп на странице:"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Словацкий"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Шведский"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Азербайджанский"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Каталанский"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Чешский"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Датский"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Нидерландский"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Эсперанто"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Финский"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Греческий"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Иврит"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Венгерский"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Индонезийский"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Ирландский"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Корейский"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Персидский"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Польский"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Турецкий"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Украинский"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Автоматически"
+
+msgid "dlg.translate.pre"
+msgstr "Пропустить преформатирование:"

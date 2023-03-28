@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-19 04:46+0000\n"
-"PO-Revision-Date: 2023-01-22 15:32+0000\n"
+"PO-Revision-Date: 2023-03-28 07:15+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -1197,3 +1197,9 @@ msgstr "Konduto"
 
 msgid "keys.scroll.up"
 msgstr "Rulumi supren"
+
+msgid "menu.tab.next"
+msgstr "Montri sekvan langeton"
+
+msgid "menu.tab.prev"
+msgstr "Montri antaŭan langeton"
