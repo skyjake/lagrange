@@ -3672,7 +3672,13 @@ static void removeMediaRequest_DocumentWidget_(iDocumentWidget *d, iGmLinkId lin
 static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, iBool enableFilters) {
     if (!findMediaRequest_DocumentWidget_(d, linkId)) {
         const iString *mediaUrl = absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->view.doc, linkId));
-        pushBack_ObjectList(d->media, iClob(new_MediaRequest(d, linkId, mediaUrl, enableFilters)));
+        pushBack_ObjectList(
+            d->media,
+            iClob(new_MediaRequest(d,
+                                   linkId,
+                                   mediaUrl,
+                                   enableFilters,
+                                   d->mod.setIdentity ? identity_DocumentWidget(d) : NULL)));
         invalidate_DocumentWidget_(d);
         return iTrue;
     }
