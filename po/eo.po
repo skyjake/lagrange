@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-19 04:46+0000\n"
-"PO-Revision-Date: 2023-03-28 07:15+0000\n"
+"PO-Revision-Date: 2023-03-30 18:15+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -1203,3 +1203,116 @@ msgstr "Montri sekvan langeton"
 
 msgid "menu.tab.prev"
 msgstr "Montri antaŭan langeton"
+
+msgid "dlg.userdata.all"
+msgstr "Ĉiuj (anstataŭigi)"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Ŝargante"
+
+msgid "dlg.translate.unavail"
+msgstr "Servo nedisponebla"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s estas kompaktigita arkivo."
+
+msgid "ident.unset"
+msgstr "Malfiksi"
+
+msgid "menu.window.max"
+msgstr "Maksimumigi"
+
+msgid "menu.window.min"
+msgstr "Minimumigi"
+
+msgid "menu.window.full"
+msgstr "Baskuligi plenekranan reĝimon"
+
+msgid "dlg.translate.fail"
+msgstr "Peto malsukcesis"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Legi ĉion"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Aŭtomate"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azerbajĝana"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Kataluna"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Ĉeĥa"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Dana"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Nederlanda"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Finna"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Greka"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Hebrea"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Hungara"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonezia"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Irlanda"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Korea"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persa"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Pola"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Slovaka"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Sveda"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turka"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ukraina"
