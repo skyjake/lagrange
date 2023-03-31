@@ -47,6 +47,7 @@ iBeginDeclareClass(Widget)
     iBool (*processEvent)   (iWidget *, const SDL_Event *);
     void  (*draw)           (const iWidget *);
     void  (*sizeChanged)    (iWidget *); /* optional, defaults to NULL */
+    void  (*rootChanged)    (iWidget *); /* optional, defaults to NULL */
 iEndDeclareClass(Widget)
 
 enum iWidgetFlag {

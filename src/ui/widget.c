@@ -398,7 +398,12 @@ void setRoot_Widget(iWidget *d, iRoot *root) {
             pushBack_PtrArray(onTop_Root(root), d);
         }
     }
-    d->root = root;
+    if (d->root != root) {
+        d->root = root;
+        if (class_Widget(d)->rootChanged) {
+            class_Widget(d)->rootChanged(d);
+        }
+    }
     iForEach(ObjectList, i, d->children) {
         setRoot_Widget(i.object, root);
     }

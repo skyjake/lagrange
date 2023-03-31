@@ -8,6 +8,7 @@
 
 ## 1.15.8
 * Fixed activation of a pinned identity in inline media requests.
+* Fixed potential crash when changing split view mode during a UI animation.
 
 ## 1.15.7
 * Fixed window contents getting frozen after Reset Zoom when zoom level is already at 100%.
