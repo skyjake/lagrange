@@ -1,3 +1,19 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2023-04-02 14:15+0000\n"
+"PO-Revision-Date: 2023-04-02 14:15+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"Language-Team: Interslavic <http://weblate.skyjake.fi/projects/lagrange/ui/"
+"isv/>\n"
+"Language: isv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n==1? 0 : n==2 ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
 msgid "doc.pre.nocaption"
 msgstr "Vvodno sformatovany napis bez opisa"
 
@@ -8,9 +24,9 @@ msgstr "Dostava bude odrěčeny pri zamknutju tutoj karticy."
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "Jeste podpisyvani na %zu tasmě sodrživajučej %%s.\n"
-msgstr[1] "Jeste podpisyvani na %zu tasmu sodrživajuču %%s.\n"
-msgstr[2] "Jeste podpisyvani na %zu tasmah sodrživajučih %%s.\n"
+msgstr[0] "Jeste podpisyvani na %u tasmě sodrživajučej %%s.\n"
+msgstr[1] "Jeste podpisyvani na %u tasmu sodrživajuču %%s.\n"
+msgstr[2] "Jeste podpisyvani na %u tasmah sodrživajučih %%s.\n"
 
 # Link download progress message.
 msgid "doc.fetching"
@@ -76,9 +92,9 @@ msgstr "Toj katalog je pusty."
 #, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
-msgstr[0] "Toj katalog sodrživa %zu element."
-msgstr[1] "Toj katalog sodrživa %zu elementa."
-msgstr[2] "Toj katalog sodrživa %zu elementy."
+msgstr[0] "Toj katalog sodrživa %u element."
+msgstr[1] "Toj katalog sodrživa %u elementa."
+msgstr[2] "Toj katalog sodrživa %u elementy."
 
 msgid "dlg.autoreload"
 msgstr "Izberite interval automatičnogo ponovnogo nakladanja toj karticy."
@@ -174,3 +190,271 @@ msgstr "Etikety:"
 
 msgid "dlg.bookmark.url"
 msgstr "URL:"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "HISTORIJA"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "Kitajsky"
+
+msgid "upload.mime"
+msgstr "MIME tip:"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Vse"
+
+msgid "media.untitled.image"
+msgstr "Izobraženje"
+
+msgid "dlg.userdata.no"
+msgstr "Ne"
+
+msgid "prefs.toolbaraction1"
+msgstr "Knopka 1"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Sěry"
+
+msgid "prefs.ca.file"
+msgstr "CA fajl:"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Katalansky"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Češsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Dansky"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Holandsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperantsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Finsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Grečsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Hebrejsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Madjarsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonezsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Irlandsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Korejsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persijsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Poljsky"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "dlg.newident.org"
+msgstr "Organizacija:"
+
+msgid "dlg.save.size"
+msgstr "Razměr:"
+
+msgid "feeds.today"
+msgstr "Sego dnja"
+
+msgid "prefs.theme.white"
+msgstr "Běla"
+
+msgid "prefs.accent.red"
+msgstr "Črveny"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "Portugalsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "Němečsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "Japonsky"
+
+msgid "reload.never"
+msgstr "Nikogda"
+
+msgid "heading.upload.file"
+msgstr "Fajl"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "Anglijsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "Francuzsky"
+
+msgid "sidebar.history"
+msgstr "Historija"
+
+msgid "dlg.input.send"
+msgstr "Poslati"
+
+msgid "sidebar.action.ident.new"
+msgstr "Novy…"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+msgid "prefs.uilang"
+msgstr "Jezyk:"
+
+msgid "hint.certimport.description"
+msgstr "opis"
+
+msgid "link.hint.image"
+msgstr "Izobraženje"
+
+msgid "menu.title.file"
+msgstr "Fajl"
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "Arabsky"
+
+msgid "hint.newident.date"
+msgstr "RRRR abo RRRR-MM-DD"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Běly"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "Italijansky"
+
+msgid "gempub.meta.lang"
+msgstr "Jezyk"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "Russky"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Slovačsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Švedsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turečsky"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "Išpansky"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ukrajinsky"
+
+msgid "dlg.newident.country"
+msgstr "Kraj:"
+
+msgid "dlg.feed.title"
+msgstr "Nazva:"
+
+msgid "dlg.bookmark.notes"
+msgstr "Zapisky:"
+
+msgid "prefs.theme.black"
+msgstr "Črna"
+
+msgid "prefs.theme.dark"
+msgstr "Temna"
+
+msgid "prefs.toolbaraction2"
+msgstr "Knopka 2"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Črny"
+
+msgid "prefs.doctheme.dark"
+msgstr "Temna tema:"
+
+msgid "gempub.meta.author"
+msgstr "Avtor"
+
+msgid "gempub.meta.version"
+msgstr "Versija"
+
+#, c-format
+msgid "fontpack.meta.version"
+msgstr "Versija %d"
+
+msgid "prefs.accent.blue"
+msgstr "Sinji"
+
+msgid "prefs.accent.gray"
+msgstr "Sěry"
+
+msgid "prefs.accent.orange"
+msgstr "Oranževy"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.accent.green"
+msgstr "Zeleny"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "heading.prefs.content"
+msgstr "Sodržanje"
+
+msgid "menu.title.window"
+msgstr "Okno"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+msgid "import.userdata.history"
+msgstr "Historija:"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Sět"
