@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.15.8" date="2023-04-07">
+            <description>
+                <p>Changes in v1.15.8:</p>
+                <ul>
+                    <li>Fixed activation of a pinned identity in inline media requests.</li>
+                    <li>Fixed potential crash when changing split view mode during a UI animation.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.15.8</url>
+        </release>
         <release version="1.15.7" date="2023-03-28">
             <description>
                 <p>Changes in v1.15.7:</p>
