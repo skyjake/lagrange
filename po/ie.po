@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2023-03-02 05:15+0000\n"
+"PO-Revision-Date: 2023-04-07 11:35+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -2463,3 +2463,86 @@ msgstr "Depermisser li avise?"
 
 msgid "hint.upload.token.long"
 msgstr "secret code — vi li instructiones del servitor"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Catalan"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azerbaijanian"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Danese"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Hollandese"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Automaticmen"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Finn"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Grec"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Hebreic"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Tchec"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Hungarian"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonesian"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Irlandese"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Korean"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persian"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Polonese"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Slovac"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Svedese"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turcese"
+
+msgid "dlg.translate.pre"
+msgstr "Omisser formatat textu:"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ucrainan"

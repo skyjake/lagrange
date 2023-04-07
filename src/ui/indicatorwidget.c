@@ -49,6 +49,12 @@ static void animate_IndicatorWidget_(void *ptr) {
 
 static void setActive_IndicatorWidget_(iIndicatorWidget *d, iBool set) {
     setFlags_Widget(as_Widget(d), selected_WidgetFlag, set);
+    setValue_Anim(&d->pos, 0.0f, 0);
+}
+
+static void rootChanged_IndicatorWidget_(iIndicatorWidget *d) {
+    removeTicker_App(animate_IndicatorWidget_, d);
+    setActive_IndicatorWidget_(d, iFalse);
 }
 
 void init_IndicatorWidget(iIndicatorWidget *d) {
@@ -127,4 +133,5 @@ iBool processEvent_IndicatorWidget_(iIndicatorWidget *d, const SDL_Event *ev) {
 iBeginDefineSubclass(IndicatorWidget, Widget)
     .draw         = (iAny *) draw_IndicatorWidget_,
     .processEvent = (iAny *) processEvent_IndicatorWidget_,
+    .rootChanged  = (iAny *) rootChanged_IndicatorWidget_,
 iEndDefineSubclass(IndicatorWidget)

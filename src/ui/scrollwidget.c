@@ -154,6 +154,11 @@ static void checkVisible_ScrollWidget_(iScrollWidget *d) {
     }
 }
 
+static void rootChanged_ScrollWidget_(iScrollWidget *d) {
+    removeTicker_App(animateOpacity_ScrollWidget_, d);
+    setValue_Anim(&d->opacity, 0.0f, 0);
+}
+
 void setRange_ScrollWidget(iScrollWidget *d, iRangei range) {
     range.end = iMax(range.start, range.end);
     d->range  = range;
@@ -275,4 +280,5 @@ static void draw_ScrollWidget_(const iScrollWidget *d) {
 iBeginDefineSubclass(ScrollWidget, Widget)
     .processEvent = (iAny *) processEvent_ScrollWidget_,
     .draw         = (iAny *) draw_ScrollWidget_,
+    .rootChanged  = (iAny *) rootChanged_ScrollWidget_,
 iEndDefineSubclass(ScrollWidget)

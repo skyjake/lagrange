@@ -110,6 +110,7 @@ void            downloadStats_Media     (const iMedia *, iMediaId downloadId, co
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(GmRequest)
+iDeclareType(GmIdentity)
 iDeclareType(DocumentWidget)
 
 iDeclareClass(MediaRequest)
@@ -122,7 +123,8 @@ struct Impl_MediaRequest {
 };
 
 iDeclareObjectConstructionArgs(MediaRequest, iDocumentWidget *doc, unsigned int linkId,
-                               const iString *url, iBool enableFilters)
+                               const iString *url, iBool enableFilters,
+                               const iGmIdentity *overrideDefaultIdentity)
     
 void    resubmitWithUrl_MediaRequest    (iMediaRequest *, const iString *url);
     

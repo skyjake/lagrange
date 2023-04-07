@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.15.8
+* Fixed activation of a pinned identity in inline media requests.
+* Fixed potential crash when changing split view mode during a UI animation.
+* Updated UI translations.
+
 ## 1.15.7
 * Fixed window contents getting frozen after Reset Zoom when zoom level is already at 100%.
 * Fixed key modifiers not being recognized before a text field has been activated. (Affects some versions of SDL.)
