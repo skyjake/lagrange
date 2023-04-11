@@ -1174,11 +1174,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                         run.bounds.pos.x  -= d->outsideMargin;
                     }
                     run.visBounds = run.bounds;
+                    /// XXX: Don't use window pixel ratio, use the UI scaling factor on Window.s
                     const iInt2 maxSize = mulf_I2(
                         imgSize,
-                        get_Window()->pixelRatio * iMax(1.0f, (prefs_App()->zoomPercent / 100.0f)));
+                        gap_UI / 2 * prefs_App()->zoomPercent / 100.0f);
                     if (width_Rect(run.visBounds) > maxSize.x) {
-                        /* Don't scale the image up. */
+                        /* Don't scale the image up too much. */
                         run.visBounds.size.y =
                             run.visBounds.size.y * maxSize.x / width_Rect(run.visBounds);
                         run.visBounds.size.x = maxSize.x;

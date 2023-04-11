@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.15.9
+* Allow scaling up small images up to 2x size.
+
 ## 1.15.8
 * Fixed activation of a pinned identity in inline media requests.
 * Fixed potential crash when changing split view mode during a UI animation.
