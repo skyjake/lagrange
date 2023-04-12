@@ -1,2 +1,962 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2023-04-14 15:02+0000\n"
+"Last-Translator: xabi <xabi.rn@gmail.com>\n"
+"Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
+"Language: eu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Kargatzen"
+
+# Used in inline audio player metadata popup.
+#, fuzzy
+msgid "audio.meta.title"
+msgstr "Izenburua"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Generoa"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Data"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bit"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "duela ordu %d"
+msgstr[1] "duela %d ordu"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "duela egun %d"
+msgstr[1] "duela %d egun"
+
+msgid "about.tagline"
+msgstr "Gemini bezero eder bat"
+
+msgid "about.version"
+msgstr "Bertsioa"
+
+msgid "cancel"
+msgstr "Utzi"
+
+msgid "close"
+msgstr "Itxi"
+
+msgid "dlg.message.ok"
+msgstr "Jarraitu"
+
+msgid "menu.title.file"
+msgstr "Fitxategia"
+
+msgid "menu.title.edit"
+msgstr "Editatu"
+
+#, fuzzy
+msgid "menu.title.view"
+msgstr "Ikusi"
+
+msgid "menu.title.window"
+msgstr "Leihoa"
+
+msgid "menu.title.help"
+msgstr "Laguntza"
+
+msgid "menu.reopentab"
+msgstr "Ireki berriro itxitako azken fitxa"
+
+msgid "menu.closetab"
+msgstr "Itxi fitxa"
+
+msgid "menu.closetab.left"
+msgstr "Itxi ezkerrean dauden fitxak"
+
+#, fuzzy
+msgid "menu.duptab"
+msgstr "Duplikatu fitxa"
+
+msgid "menu.tab.next"
+msgstr "Erakutsi hurrengo fitxa"
+
+msgid "menu.movetab.left"
+msgstr "Mugitu fitxa ezkerrera"
+
+msgid "menu.movetab.split"
+msgstr "Mugitu fitxa beste aldera"
+
+msgid "menu.movetab.newwindow"
+msgstr "Mugitu fitxa leiho berrira"
+
+msgid "menu.split.merge"
+msgstr "Utzi banatzeari"
+
+#, fuzzy
+msgid "menu.split.swap"
+msgstr "Banatu aldeak"
+
+msgid "menu.split.vertical"
+msgstr "Bertikalki"
+
+msgid "menu.downloads"
+msgstr "Erakutsi Deskargak"
+
+msgid "menu.export"
+msgstr "Esportatu erabiltzaile-datuak"
+
+msgid "menu.pageinfo"
+msgstr "Erakutsi orriaren informazioa"
+
+msgid "menu.find"
+msgstr "Aurkitu orrialdean"
+
+msgid "macos.menu.find"
+msgstr "Aurkitu"
+
+msgid "menu.open.external"
+msgstr "Ireki beste aplikazio batean"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Gorde Deskargetan"
+
+msgid "menu.save.downloads.open"
+msgstr "Gorde Deskargetan eta ireki fitxategia"
+
+msgid "menu.sidebar"
+msgstr "Alboko barra bai/ez"
+
+msgid "menu.sidebar.right"
+msgstr "Eskumako alboko barra bai/ez"
+
+msgid "menu.zoom.in"
+msgstr "Handitu"
+
+msgid "menu.zoom.out"
+msgstr "Txikitu"
+
+msgid "menu.zoom.reset"
+msgstr "Berrezarri ikuspuntua"
+
+#, fuzzy
+msgid "menu.view.split"
+msgstr "Banatu ikuspuntua…"
+
+msgid "menu.bookmarks.list"
+msgstr "Zerrendatu laster-marka guztiak"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Zerrendatu laster-markak etiketaren arabera"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Zerrendatu etiketaren arabera"
+
+msgid "menu.preferences"
+msgstr "Hobespenak…"
+
+msgid "menu.help"
+msgstr "Laguntza"
+
+msgid "menu.email"
+msgstr "ePosta bidezko harremana"
+
+msgid "menu.cut"
+msgstr "Moztu"
+
+msgid "menu.copy"
+msgstr "Kopiatu"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "Ezabatu"
+
+msgid "menu.select.clear"
+msgstr "Garbitu hautaketa"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Erakutsi historia"
+
+msgid "menu.root"
+msgstr "Joan errora"
+
+msgid "menu.autoreload"
+msgstr "Ezarri birkargatze automatikoa…"
+
+msgid "menu.page.bookmark"
+msgstr "Jarri laster-marka…"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "Lagrangeri buruz"
+
+msgid "menu.fonts"
+msgstr "Kudeatu letra-tipoak…"
+
+msgid "panel.back"
+msgstr "Atzera"
+
+msgid "menu.debug"
+msgstr "Arazketa informazioa"
+
+msgid "menu.page.import"
+msgstr "Inportatu estekak laster-marka gisa…"
+
+msgid "menu.page.translate"
+msgstr "Itzuli…"
+
+msgid "menu.page.copyurl"
+msgstr "Kopiatu orriaren URLa"
+
+#, fuzzy
+msgid "menu.viewformat.plain"
+msgstr "Ikusi testu soil gisa"
+
+#, fuzzy
+msgid "menu.bookmarks.refresh"
+msgstr "Freskatu urrutiko laster-markak"
+
+msgid "menu.feeds.refresh"
+msgstr "Freskatu jarioak"
+
+msgid "menu.identity.import"
+msgstr "Inportatu…"
+
+msgid "menu.identities"
+msgstr "Kudeatu identitateak"
+
+msgid "sidebar.close"
+msgstr "Eginda"
+
+msgid "sidebar.feeds"
+msgstr "Jarioak"
+
+msgid "sidebar.identities"
+msgstr "Identitateak"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Editatu"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Guztia"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Irakurri-gabea"
+
+msgid "sidebar.action.history.clear"
+msgstr "Garbitu"
+
+msgid "status.query.tight"
+msgstr "Bilatu"
+
+msgid "status.feeds"
+msgstr "Jarioak eguneratzen"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "byte %u"
+msgstr[1] "%u byte"
+
+msgid "num.fonts"
+msgid_plural "num.fonts.n"
+msgstr[0] "Letra-tipo %u"
+msgstr[1] "%u letra-tipo"
+
+msgid "feeds.entry.markunread"
+msgstr "Markatu irakurri gabe gisa"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Gehitu laster-marka…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Gehitu laster-marka…"
+
+msgid "feeds.edit"
+msgstr "Editatu jarioa…"
+
+msgid "feeds.unsubscribe"
+msgstr "Utzi harpidetza…"
+
+msgid "feeds.refresh"
+msgstr "Freskatu jarioak"
+
+msgid "menu.opentab.background"
+msgstr "Ireki atzeko fitxan"
+
+msgid "menu.folder.opentab"
+msgstr "Ireki fitxa berrietan"
+
+msgid "menu.openfile"
+msgstr "Ireki fitxategia…"
+
+msgid "menu.edit"
+msgstr "Editatu…"
+
+msgid "menu.dup"
+msgstr "Bikoiztu…"
+
+msgid "menu.forgeturl"
+msgstr "Ahaztu URLa"
+
+msgid "heading.history.clear"
+msgstr "Garbitu historia"
+
+msgid "dlg.history.clear"
+msgstr "Garbitu historia"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "Ezabatu laster-markak"
+
+msgid "bookmark.tag.home"
+msgstr "Erabili hasiera gisa"
+
+msgid "bookmark.tag.sub"
+msgstr "Harpidetu jariora"
+
+msgid "bookmark.delete"
+msgstr "Ezabatu laster-marka"
+
+msgid "ident.using"
+msgstr "Orri honetan erabiltzen"
+
+msgid "ident.notused"
+msgstr "Ez da erabiltzen"
+
+msgid "ident.use"
+msgstr "Erabili orri honetan"
+
+msgid "ident.stopuse"
+msgstr "Utzi orri honetan erabiltzeari"
+
+msgid "ident.stopuse.all"
+msgstr "Utzi toki guztietan erabiltzeari"
+
+msgid "ident.export"
+msgstr "Esportatu"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Erabili %s"
+
+msgid "menu.edit.notes"
+msgstr "Editatu oharrak…"
+
+msgid "heading.ident.notes"
+msgstr "Identitatearen oharrak"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "%s(r)i buruzko oharrak:"
+
+msgid "ident.fingerprint"
+msgstr "Kopiatu hatzmarka"
+
+msgid "heading.ident.delete"
+msgstr "Ezabatu identitatea"
+
+msgid "sidebar.empty.idents"
+msgstr "Ez dago identitaterik"
+
+msgid "sidebar.empty.unread"
+msgstr "Ez dago irakurri gabeko sarrerarik"
+
+msgid "heading.unsub"
+msgstr "Utzi harpidetza"
+
+msgid "dlg.unsub"
+msgstr "Utzi harpidetza"
+
+msgid "heading.pageinfo"
+msgstr "Orriaren informazioa"
+
+msgid "pageinfo.header.cached"
+msgstr "(katxeko edukia)"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "CA-k egiaztatu gabea"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Iraungi gabea"
+
+msgid "pageinfo.domain.match"
+msgstr "Domeinu izena bat dator"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Domeinu izena ez dator bat"
+
+msgid "dlg.cert.trust"
+msgstr "Fidatu"
+
+msgid "pageinfo.settings"
+msgstr "Ezarpenak"
+
+msgid "sitespec.accept"
+msgstr "Gorde ezarpenak"
+
+msgid "keys.menubar.focus"
+msgstr "Fokatu menu barra"
+
+msgid "heading.save"
+msgstr "Fitxategia gorde da"
+
+msgid "dlg.save.incomplete"
+msgstr "Orriaren edukiak deskargatzen ari dira oraindik."
+
+msgid "dlg.save.size"
+msgstr "Tamaina:"
+
+msgid "dlg.save.opendownload"
+msgstr "Ireki deskargatutako fitxategia"
+
+msgid "heading.save.error"
+msgstr "Errorea fitxategia gordetzean"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sJarri laster-marka"
+msgstr[1] "%sJarri %d laster-marka"
+
+msgid "heading.autoreload"
+msgstr "Birkargatu automatikoki"
+
+msgid "dlg.autoreload"
+msgstr "Hautatu fitxa hau automatikoki birkargatzeko tartea."
+
+msgid "reload.never"
+msgstr "Inoiz ez"
+
+msgid "reload.onceperday"
+msgstr "Egunean behin"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "Ordubete"
+msgstr[1] "%d ordu"
+
+msgid "link.newtab"
+msgstr "Ireki esteka fitxa berrian"
+
+msgid "link.newtab.background"
+msgstr "Ireki esteka atzeko fitxan"
+
+msgid "link.browser"
+msgstr "Ireki esteka defektuzko nabigatzailean"
+
+msgid "link.copy"
+msgstr "Kopiatu esteka"
+
+msgid "link.download"
+msgstr "Deskargatu estekatutako fitxategia"
+
+msgid "menu.share"
+msgstr "Partekatu"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Ziur fitxategia ezabatu nahi duzula?"
+
+msgid "dlg.file.delete"
+msgstr "Ezabatu"
+
+msgid "heading.openlink"
+msgstr "Ireki esteka"
+
+msgid "dlg.openlink"
+msgstr "Ireki esteka"
+
+msgid "dlg.certwarn.title"
+msgstr "Segurtasun arazoa"
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "Jaso zen ziurtagiria iraungita dago ETA domeinu okerrerako da."
+
+msgid "heading.certimport"
+msgstr "Inportatu identitatea"
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Ez da ziurtagirik/gakorik aurkitu oraingo orrian."
+
+msgid "dlg.certimport.import"
+msgstr "Inportatu"
+
+msgid "dlg.certimport.nocert"
+msgstr "Ez dago ziurtagirik"
+
+msgid "link.hint.audio"
+msgstr "Audioa"
+
+msgid "link.hint.image"
+msgstr "Irudia"
+
+msgid "heading.import.userdata"
+msgstr "Inportatu erabiltzaile-datuak"
+
+msgid "import.userdata.bookmarks"
+msgstr "Laster-markak:"
+
+msgid "import.userdata.history"
+msgstr "Historia:"
+
+msgid "import.userdata.trusted"
+msgstr "Fidagarritzat dituzun ziurtagiriak:"
+
+msgid "dlg.userdata.no"
+msgstr "Bat ere ez"
+
+msgid "dlg.userdata.missing"
+msgstr "Ez badago"
+
+msgid "dlg.userdata.all"
+msgstr "Guztia (gainean idatzi)"
+
+msgid "import.userdata"
+msgstr "Inportatu hautatutako datuak"
+
+#, fuzzy
+msgid "import.userdata.dupfolder"
+msgstr "Inportatutako bikoiztuak"
+
+msgid "bookmark.title.blank"
+msgstr "Orri zuria"
+
+msgid "bookmark.export.title.folder"
+msgstr "Laster-markak"
+
+#, c-format, fuzzy
+msgid "doc.archive"
+msgstr "%s konprimitutako fitxategia da."
+
+msgid "media.untitled.image"
+msgstr "Irudia"
+
+msgid "media.untitled.audio"
+msgstr "Audioa"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Deskarga bertan behera utziko da fitxa hau itxiz gero."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Deskarga amaitu da."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artista"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "%u sarrera guztira"
+msgstr[1] "%u sarrera guztira"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "duela minutu %d"
+msgstr[1] "duela %d minutu"
+
+# The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
+# if the build config uses different libraries (e.g., ncurses, LibreSSL).
+#, fuzzy
+msgid "about.powered"
+msgstr "SDL 2, OpenSSL, eta ☕️-ri esker egina"
+
+msgid "dlg.default"
+msgstr " Ados "
+
+msgid "menu.title.bookmarks"
+msgstr "Laster-markak"
+
+msgid "menu.title.identity"
+msgstr "Identitatea"
+
+msgid "menu.newwindow"
+msgstr "Leiho berria"
+
+msgid "menu.newtab"
+msgstr "Fitxa berria"
+
+msgid "menu.closetab.other"
+msgstr "Itxi beste fitxak"
+
+#, fuzzy
+msgid "menu.closetab.right"
+msgstr "Itxi eskuman dauden fitxak"
+
+msgid "menu.tab.prev"
+msgstr "Erakutsi aurreko fitxa"
+
+msgid "menu.movetab.right"
+msgstr "Mugitu fitxa eskumara"
+
+msgid "menu.window.full"
+msgstr "Pantaila osoa bai/ez"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontalki"
+
+msgid "menu.import"
+msgstr "Inportatu erabiltzaile-datuak…"
+
+msgid "menu.unexpire"
+msgstr "Muzin egin iraungitzeari eta jarraitu kargatzen"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Gorde fitxategia"
+
+msgid "menu.sidebar.left"
+msgstr "Ezkerreko alboko barra bai/ez"
+
+msgid "menu.sort.alpha"
+msgstr "Ordenatu alfabetikoki"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Zerrendatu guztia"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Zerrendatu laster-markak sorrera-dataren arabera"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Zerrendatu sorrera-dataren arabera"
+
+#, fuzzy
+msgid "menu.feeds.entrylist"
+msgstr "Erakutsi jarioaren sarrerak"
+
+msgid "menu.update"
+msgstr "Bilatu eguneraketak…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "Ezarpenak"
+
+#, fuzzy
+msgid "menu.releasenotes"
+msgstr "Oharrak"
+
+msgid "menu.website"
+msgstr "Proiektuaren webgunea…"
+
+msgid "menu.quit"
+msgstr "Itxi Lagrange"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "Hautatu guztia"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "Desegin"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Kopiatu orriaren esteka"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Erakutsi laster-markak"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Erakutsi jarioak"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Erakutsi identitateak"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Ezkutatu identitateak"
+
+msgid "menu.back"
+msgstr "Joan atzera"
+
+msgid "menu.forward"
+msgstr "Joan aurrera"
+
+msgid "menu.home"
+msgstr "Joan hasierara"
+
+msgid "menu.reload"
+msgstr "Birkargatu orria"
+
+msgid "menu.page.subscribe"
+msgstr "Harpidetu orrira…"
+
+# Used on the mobile Settings page.
+msgid "menu.about"
+msgstr "Honi buruz"
+
+msgid "menu.import.links"
+msgstr "Inportatu orrialdeko esteka guztiak…"
+
+#, fuzzy
+msgid "menu.page.copysource"
+msgstr "Kopiatu orriaren iturburua"
+
+msgid "menu.viewformat.gemini"
+msgstr "Ikusi Gemtext gisa"
+
+msgid "menu.identity.new"
+msgstr "Identitate berria…"
+
+msgid "menu.identity.newdomain"
+msgstr "Identitate berria domeinurako…"
+
+msgid "menu.identity.notactive"
+msgstr "Ez dago identitaterik aktibo"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Ezarri ekintza:"
+
+msgid "sidebar.bookmarks"
+msgstr "Laster-markak"
+
+msgid "sidebar.history"
+msgstr "Historia"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "Irakurri guztia"
+
+msgid "sidebar.action.show"
+msgstr "Erakutsi:"
+
+msgid "sidebar.action.ident.import"
+msgstr "Inportatu…"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Irakurri gabe"
+msgstr[1] "Irakurri gabe"
+
+msgid "hint.findtext"
+msgstr "Aurkitu testua orrian"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "num.files"
+msgid_plural "num.files.n"
+msgstr[0] "Fitxategi %u"
+msgstr[1] "%u fitxategi"
+
+msgid "feeds.today"
+msgstr "Gaur"
+
+msgid "feeds.entry.markread"
+msgstr "Markatu irakurrita gisa"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Markatu beheragokoak irakurrita gisa"
+
+msgid "feeds.entry.openfeed"
+msgstr "Ireki jarioaren orria"
+
+msgid "feeds.markallread"
+msgstr "Markatu guztia irakurri gisa"
+
+msgid "menu.opentab"
+msgstr "Ireki fitxa berrian"
+
+msgid "menu.openwindow"
+msgstr "Ireki leiho berrian"
+
+msgid "menu.copyurl"
+msgstr "Kopiatu URLa"
+
+msgid "history.clear"
+msgstr "Garbitu historia…"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Ziur bisitatu dituzun orrialde guztien historia garbitu nahi duzula?"
+
+#, c-format
+msgid "dlg.bookmarks.delete"
+msgid_plural "dlg.bookmarks.delete.n"
+msgstr[0] "Ezabatu laster-marka"
+msgstr[1] "Ezabatu %u laster-marka"
+
+msgid "bookmark.untag.home"
+msgstr "Kendu hasiera orria"
+
+#, fuzzy
+msgid "bookmark.folder.delete"
+msgstr "Ezabatu laster-marka karpeta"
+
+msgid "ident.temporary"
+msgstr "Behin-behinean"
+
+# strftime() formatted
+msgid "ident.expiry"
+msgstr "Iraungitze-data: %Y/%b/%d"
+
+msgid "ident.unset"
+msgstr "Utzi finkatzeari"
+
+msgid "heading.ident.use"
+msgstr "Identitatearen erabilera"
+
+msgid "ident.delete"
+msgstr "Ezabatu identitatea…"
+
+msgid "dlg.ident.delete"
+msgstr "Ezabatu identitatea eta fitxategiak"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Ikus %sLaguntza%s TLS bezero ziurtagiriei buruzko informazio gehiagorako."
+
+msgid "error.server.msg"
+msgstr "Zerbitzariak honako erantzuna eman du:"
+
+msgid "pageinfo.cert.status"
+msgstr "Ziurtagiriaren egoera:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "CA-k egiaztatua"
+
+msgid "pageinfo.cert.expired"
+msgstr "Iraungia"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Kopiatu hatzmarka"
+
+msgid "sitespec.tlscache"
+msgstr "Berrekin TLS saioari:"
+
+msgid "keys.pageinfo"
+msgstr "Erakutsi orriaren informazioa"
+
+msgid "keys.identmenu"
+msgstr "Ireki identitate menua"
+
+msgid "dlg.input.send"
+msgstr "Bidali"
+
+msgid "heading.import.bookmarks"
+msgstr "Inportatu laster-markak"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Esteka berri bat aurkitu da orrian."
+msgstr[1] "%d esteka berri aurkitu dira orrian."
+
+msgid "dlg.import.notnew"
+msgstr "Orri honetako esteka guztiek laster-marka jarria dute honezkero."
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "Minutu %d"
+msgstr[1] "%d minutu"
+
+msgid "link.newwindow"
+msgstr "Ireki esteka leiho berrian"
+
+msgid "link.noproxy"
+msgstr "Ireki Proxyrik gabe"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Erakutsi Finderren"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Erakutsi fitxateki-kudeatzailean"
+
+msgid "link.file.delete"
+msgstr "Ezabatu fitxategia"
+
+msgid "heading.file.delete"
+msgstr "Ezabatu fitxategia"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Defektuzko nabigatzailean ireki nahi duzu esteka?\n"
+"%s%s"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Jaso den ziurtagiria %s(a)n iraungi da."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Jaso den ziurtagiria domeinu okerrerako da (%s). Litekeena da zerbitzariaren "
+"ezarpen arazoa izatea."
+
+msgid "dlg.certimport.notfound"
+msgstr "Ez da ziurtagirik edo gako pribaturik aurkitu."
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "Inportatu ziurtagiri/gako -fitxategia"
+
+msgid "dlg.certimport.notes"
+msgstr "Oharrak:"
+
+msgid "hint.certimport.description"
+msgstr "deskribapena"
+
+msgid "dlg.certimport.nokey"
+msgstr "Ez dago gako pribaturik"
+
+msgid "heading.import.userdata.error"
+msgstr "Inportatzeak huts egin du"
+
+msgid "import.userdata.idents"
+msgstr "Identitateak:"
+
+msgid "import.userdata.sitespec"
+msgstr "Gunearen ezarpenak:"
+
+msgid "dlg.userdata.alldup"
+msgstr "Guztia (mantendu bikoiztutakoak)"
+
+#, fuzzy
+msgid "import.userdata.error"
+msgstr "&s ez da Lagrangeren esportazio-fitxategi baliagarria."
+
+msgid "bookmark.export.title.time"
+msgstr "Sortutako laster-markak"
+
+msgid "bookmark.export.count"
+msgid_plural "bookmark.export.count.n"
+msgstr[0] "Laster-marka bat duzu."
+msgstr[1] "%d laster-marka dituzu."
