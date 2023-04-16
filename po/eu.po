@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2023-04-14 15:02+0000\n"
+"PO-Revision-Date: 2023-04-17 14:02+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -960,3 +960,586 @@ msgid "bookmark.export.count"
 msgid_plural "bookmark.export.count.n"
 msgstr[0] "Laster-marka bat duzu."
 msgstr[1] "%d laster-marka dituzu."
+
+msgid "bookmark.tag.linksplit"
+msgstr "Estekak alboan irekiko dira"
+
+msgid "bookmark.untag.sub"
+msgstr "Utzi jarioaren harpidetza"
+
+msgid "bookmark.untag.remote"
+msgstr "Kendu laster-markaren iturria"
+
+msgid "bookmarks.reload"
+msgstr "Freskatu urrutiko iturriak"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "Ziur \"%s\" jarioaren harpidetza utzi nahi duzula?"
+
+#, fuzzy
+msgid "heading.save.incomplete"
+msgstr "Orrialdea ez da osorik kargatu"
+
+msgid "link.side"
+msgstr "Ireki esteka alboan"
+
+msgid "link.bookmark"
+msgstr "Jarri laster-marka estekari…"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "JARIOAK"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "HISTORIA"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTITATEAK"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "BESTE BATZUK"
+
+msgid "menu.page.upload"
+msgstr "Igo Titanekin…"
+
+msgid "menu.page.upload.edit"
+msgstr "Editatu orria Titanekin…"
+
+msgid "dlg.spartan.upload"
+msgstr "Ireki editorea…"
+
+msgid "heading.upload"
+msgstr "Igo Titanekin"
+
+msgid "heading.upload.spartan"
+msgstr "Igo Spartanekin"
+
+msgid "dlg.upload.id.none"
+msgstr "Bat ere ez"
+
+msgid "dlg.upload.id.default"
+msgstr "Defektuzkoa"
+
+msgid "menu.upload.delete"
+msgstr "Ezabatu guztia"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Bai, ezabatu dena (ezin da desegin)"
+
+msgid "heading.upload.file"
+msgstr "Fitxategia"
+
+msgid "upload.file.name"
+msgstr "Fitxategiaren izena:"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URLa"
+
+msgid "hint.upload.path"
+msgstr "URLaren bidea"
+
+msgid "hint.upload.token"
+msgstr "ikusi zerbitzariaren oharrak"
+
+msgid "upload.port"
+msgstr "Ataka…"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "Hautatu fitxategia"
+
+msgid "heading.translate"
+msgstr "Itzuli orria"
+
+msgid "dlg.translate"
+msgstr "Itzuli"
+
+msgid "dlg.translate.to"
+msgstr "Hartzailea:"
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "Arabiarra"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Finlandiera"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Greziera"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "Alemaniera"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "Frantsesa"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Poloniera"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Suediera"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ukrainera"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "Gaztelera"
+
+msgid "hint.newident.date"
+msgstr "UUUU edo UUUU-HH-EE"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Uneko domeinua"
+
+msgid "dlg.newident.email"
+msgstr "ePosta:"
+
+msgid "dlg.newident.userid"
+msgstr "Erabiltzaile IDa:"
+
+msgid "dlg.newident.domain"
+msgstr "Domeinua:"
+
+msgid "dlg.newident.country"
+msgstr "Herrialdea:"
+
+msgid "dlg.newident.create"
+msgstr "Sortu identitatea"
+
+msgid "dlg.feed.title"
+msgstr "Izenburua:"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "Muzin egin HTTP(S) estekei:"
+
+msgid "dlg.feed.sub"
+msgstr "Harpidetu"
+
+msgid "heading.bookmark.add"
+msgstr "Gehitu laster-marka"
+
+msgid "dlg.bookmark.icon"
+msgstr "Ikurra:"
+
+msgid "heading.prefs.certs"
+msgstr "Ziurtagiriak"
+
+msgid "heading.prefs.user"
+msgstr "Erabiltzailearen datuak"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Koloreak"
+
+msgid "heading.prefs.fonts"
+msgstr "Letra-tipoak"
+
+msgid "heading.prefs.appearance"
+msgstr "Itxura"
+
+#, fuzzy
+msgid "heading.prefs.layout"
+msgstr "Orriaren egitura"
+
+msgid "heading.prefs.content"
+msgstr "Edukia"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Sarea"
+
+msgid "heading.prefs.pagecontent"
+msgstr "Orriaren koloreak"
+
+msgid "heading.prefs.proxies"
+msgstr "Proxyak"
+
+msgid "heading.prefs.scrolling"
+msgstr "Korritzea"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "Gehitu laster-markak amaieran:"
+
+msgid "prefs.pinsplit.left"
+msgstr "Ezkerreko fitxa"
+
+msgid "prefs.pinsplit.right"
+msgstr "Eskumako fitxa"
+
+msgid "prefs.smoothscroll"
+msgstr "Korritze leuna:"
+
+#, fuzzy
+msgid "prefs.scrollspeed.mouse"
+msgstr "Xaguaren abiadura:"
+
+msgid "prefs.uilayout"
+msgstr "Egitura:"
+
+msgid "prefs.ostheme"
+msgstr "Erabili gailuak darabilena:"
+
+msgid "prefs.theme.black"
+msgstr "Beltza"
+
+msgid "prefs.theme.dark"
+msgstr "Iluna"
+
+msgid "prefs.theme.white"
+msgstr "Zuria"
+
+msgid "prefs.accent"
+msgstr "Kolore nagusia:"
+
+msgid "prefs.accent.orange"
+msgstr "Laranja"
+
+msgid "prefs.accent.red"
+msgstr "Gorria"
+
+msgid "prefs.accent.green"
+msgstr "Berdea"
+
+msgid "prefs.accent.blue"
+msgstr "Urdina"
+
+msgid "prefs.uilang"
+msgstr "Hizkuntza:"
+
+msgid "prefs.returnkey.accept"
+msgstr "Onartu"
+
+msgid "prefs.retainwindow"
+msgstr "Gorde leihoaren kokapena:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Gai iluna:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Ilun koloretsua"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Argi koloretsua"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Beltza"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Grisa"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Kontraste handikoa"
+
+msgid "prefs.imagestyle.original"
+msgstr "Bat ere ez"
+
+msgid "prefs.imagestyle.grayscale"
+msgstr "Zuri-beltza"
+
+msgid "prefs.font.heading"
+msgstr "Goiburuak:"
+
+msgid "prefs.font.body"
+msgstr "Corpusa:"
+
+msgid "prefs.font"
+msgstr "Corpuseko letra-tipoa:"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.boldlink.visited"
+msgstr "Ikusitakoak"
+
+msgid "prefs.linewidth.normal"
+msgstr "Arrunta"
+
+msgid "prefs.linewidth.fill"
+msgstr "Bete"
+
+msgid "prefs.cachesize"
+msgstr "Katxearen tamaina:"
+
+msgid "menu.binding.reset"
+msgstr "Berrezarri defektuzkoa"
+
+msgid "menu.binding.clear"
+msgstr "Kendu"
+
+msgid "bookmark.tag.remote"
+msgstr "Erabili laster-marka iturri gisa"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "LASTER-MARKAK"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "ORRIAREN EDUKIA"
+
+msgid "spartan.input"
+msgstr "Sartu bidaltzeko testua:"
+
+msgid "upload.id"
+msgstr "Identitatea:"
+
+msgid "heading.upload.id"
+msgstr "Baimena"
+
+msgid "heading.upload.text"
+msgstr "Testua"
+
+msgid "menu.upload.export"
+msgstr "Esportatu testua"
+
+msgid "hint.upload.text"
+msgstr "sartu igotzeko testua"
+
+msgid "upload.file.size"
+msgstr "Fitxategiaren tamaina:"
+
+msgid "upload.mime"
+msgstr "MIME mota:"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Edukia"
+
+msgid "dlg.upload.send"
+msgstr "Igo"
+
+msgid "dlg.uploadport.set"
+msgstr "Ezarri ataka"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "Igo testu soila"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "Igo fitxategia"
+
+msgid "dlg.translate.unavail"
+msgstr "Zerbitzua ez dago erabilgarri"
+
+msgid "dlg.translate.fail"
+msgstr "Eskaerak huts egin du"
+
+msgid "dlg.translate.from"
+msgstr "Igorlea:"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Detektatu automatikoki"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Katalana"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Daniera"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Nederlandera"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "Txinera"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "Ingelera"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "Italiera"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "Japoniera"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "Portugesa"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "Errusiera"
+
+#, fuzzy
+msgid "dlg.glyphfinder.missing"
+msgstr "Ondorengo karaktereak ezin izan dira erakutsi:"
+
+msgid "heading.glyphfinder.results"
+msgstr "Bilaketaren emaitzak"
+
+msgid "heading.newident"
+msgstr "Identitate berria"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Norberak sinatutako 2048-bit RSA ziurtagiria sortzen."
+
+msgid "hint.newident.optional"
+msgstr "aukerakoa"
+
+msgid "dlg.newident.temp"
+msgstr "Behin-behinean:"
+
+msgid "dlg.newident.notsaved"
+msgstr "ez da diskoan gorde"
+
+msgid "dlg.newident.scope.page"
+msgstr "Uneko orria"
+
+msgid "dlg.newident.scope.none"
+msgstr "Ez da erabiltzen"
+
+msgid "dlg.newident.org"
+msgstr "Erakundea:"
+
+msgid "dlg.newident.more"
+msgstr "Gehiago…"
+
+msgid "heading.newident.missing"
+msgstr "Falta den informazioa"
+
+msgid "heading.newident.date.bad"
+msgstr "Data baliogabea"
+
+msgid "dlg.newident.date.past"
+msgstr "Iraungitze data etorkizunekoa izan behar da."
+
+msgid "heading.feedcfg"
+msgstr "Jarioaren ezarpenak"
+
+msgid "dlg.feed.entrytype"
+msgstr "Sarrera mota:"
+
+#, fuzzy
+msgid "dlg.feed.type.headings"
+msgstr "Goiburu berriak"
+
+msgid "dlg.feed.save"
+msgstr "Gorde ezarpenak"
+
+msgid "heading.bookmark.edit"
+msgstr "Editatu laster-marka"
+
+msgid "dlg.bookmark.save"
+msgstr "Gorde laster-marka"
+
+msgid "dlg.bookmark.title"
+msgstr "Izenburua:"
+
+msgid "dlg.bookmark.url"
+msgstr "URLa:"
+
+msgid "dlg.bookmark.notes"
+msgstr "Oharrak:"
+
+msgid "dlg.bookmark.identity"
+msgstr "Finkatutako identitatea:"
+
+msgid "heading.prefs"
+msgstr "Hobespenak"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "Ezarpenak"
+
+msgid "heading.prefs.support"
+msgstr "Laguntza"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Orokorra"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Teklak"
+
+msgid "heading.prefs.paragraph"
+msgstr "Paragrafoa"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Orriaren estiloa"
+
+#, fuzzy
+msgid "prefs.hoverlink"
+msgstr "Erakutsi URLa gainetik pasatzean:"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Ikusi Markdown iturburu gisa:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Bat ere ez"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Teklatuaren abiadura:"
+
+msgid "prefs.menubar"
+msgstr "Menu barra"
+
+#, fuzzy
+msgid "prefs.hidetoolbarscroll"
+msgstr "Ezkutatu tresna barra korritzean:"
+
+msgid "prefs.theme.light"
+msgstr "Argia"
+
+msgid "prefs.accent.gray"
+msgstr "Grisa"
+
+msgid "prefs.returnkey"
+msgstr "Intro teklaren portaera:"
+
+msgid "prefs.animate"
+msgstr "Animazioak:"
+
+msgid "prefs.doctheme.light"
+msgstr "Gai argia:"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Zuria"
+
+msgid "prefs.imagestyle"
+msgstr "Koloreztatu irudiak:"
+
+msgid "prefs.imagestyle.text"
+msgstr "Testuaren kolorea"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+#, fuzzy
+msgid "prefs.boldlink"
+msgstr "Esteka lodiak:"
+
+msgid "prefs.linewidth"
+msgstr "Lerroen zabalera:"
+
+msgid "prefs.quoteicon.line"
+msgstr "Lerroa"
+
+msgid "prefs.biglede"
+msgstr "Lehenengo paragrafo handia:"
+
+#, fuzzy
+msgid "prefs.urlsize"
+msgstr "URLaren gehienezko neurria:"
