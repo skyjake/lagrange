@@ -2884,6 +2884,7 @@ iWidget *makePreferences_Widget(void) {
                                     { u8"English - en", 0, 0, "uilang id:en" },
                                     { u8"Español - es", 0, 0, "uilang id:es" },
                                     { u8"Español (México) - es", 0, 0, "uilang id:es_MX" },
+                                    { u8"Euskara - eu", 0, 0, "uilang id:eu" },
                                     { u8"Esperanto - eo", 0, 0, "uilang id:eo" },
                                     { u8"Suomi - fi", 0, 0, "uilang id:fi" },
                                     { u8"Français - fr", 0, 0, "uilang id:fr" },

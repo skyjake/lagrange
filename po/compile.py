@@ -10,6 +10,7 @@ BUILD_LANGS = [ 'en', # base strings
     'eo',
     'es',
     'es_MX',
+    'eu',
     'fi',
     'fr',
     'gl',

@@ -94,6 +94,7 @@ set (RESOURCES
     res/lang/eo.bin
     res/lang/es.bin
     res/lang/es_MX.bin
+    res/lang/eu.bin
     res/lang/fi.bin
     res/lang/fr.bin
     res/lang/gl.bin

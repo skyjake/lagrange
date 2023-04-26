@@ -7,7 +7,9 @@
 # Release notes
 
 ## 1.15.9
+* Added new UI translation: Basque (euskara).
 * Allow scaling up small images up to 2x size.
+* Updated UI translations.
 
 ## 1.15.8
 * Fixed activation of a pinned identity in inline media requests.

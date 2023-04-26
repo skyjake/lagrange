@@ -46,6 +46,7 @@ iBlock blobEn_Resources;
 iBlock blobEo_Resources;
 iBlock blobEs_Resources;
 iBlock blobEs_MX_Resources;
+iBlock blobEu_Resources;
 iBlock blobFi_Resources;
 iBlock blobFr_Resources;
 iBlock blobGl_Resources;
@@ -97,6 +98,7 @@ static struct {
     { &blobEo_Resources, "lang/eo.bin" },
     { &blobEs_Resources, "lang/es.bin" },
     { &blobEs_MX_Resources, "lang/es_MX.bin" },
+    { &blobEu_Resources, "lang/eu.bin" },
     { &blobFi_Resources, "lang/fi.bin" },
     { &blobFr_Resources, "lang/fr.bin" },
     { &blobGl_Resources, "lang/gl.bin" },
