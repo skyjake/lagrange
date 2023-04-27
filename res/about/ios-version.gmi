@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.15 (6)
+* Added new UI translation: Basque (euskara).
+* Allow scaling up small images up to 2x size.
+* Fixed opening URLs via other apps when Lagrange is not running and has to be launched.
+* Fixed possible crash when closing tabs.
+* Updated UI translations.
+
 ## 1.15 (5)
 * Added 19 new translated languages, "Auto-detect" source language, and an option to skip preformatted blocks when translating.
 * Fixed several bugs in processing page contents for translation.
