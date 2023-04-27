@@ -1856,12 +1856,15 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 break;
             }
             case SDL_DROPFILE: {
-                if (!d->window) {
+                if (isDesktop_Platform() && !d->window) {
                     /* Need to open an empty window now. */
                     handleNonWindowRelatedCommand_App_(d, "window.new url:");
-                    iAssert(d->window);
+                    iAssert(d->window != NULL);
                 }
-                iBool wasUsed = processEvent_Window(as_Window(d->window), &ev);
+                iBool wasUsed = iFalse;
+                if (d->window) {
+                    wasUsed = processEvent_Window(as_Window(d->window), &ev);
+                }
                 if (!wasUsed) {
                     if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
                         startsWithCase_CStr(ev.drop.file, "gopher:") ||
@@ -1874,6 +1877,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                             "~open newtab:1 url:%s", makeFileUrl_CStr(ev.drop.file));
                     }
                 }
+                SDL_free(ev.drop.file);
                 break;
             }
             default: {

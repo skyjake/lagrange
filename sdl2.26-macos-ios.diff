@@ -1,0 +1,226 @@
+diff --git a/src/events/SDL_mouse.c b/src/events/SDL_mouse.c
+index 994b6a6db..b332e1332 100644
+--- a/src/events/SDL_mouse.c
++++ b/src/events/SDL_mouse.c
+@@ -887,8 +887,8 @@ SDL_SendMouseWheel(SDL_Window * window, SDL_MouseID mouseID, float x, float y, S
+         event.type = SDL_MOUSEWHEEL;
+         event.wheel.windowID = mouse->focus ? mouse->focus->id : 0;
+         event.wheel.which = mouseID;
+-        event.wheel.x = integral_x;
+-        event.wheel.y = integral_y;
++        event.wheel.x = x; //integral_x;
++        event.wheel.y = y; //integral_y;
+         event.wheel.preciseX = x;
+         event.wheel.preciseY = y;
+         event.wheel.direction = (Uint32)direction;
+diff --git a/src/video/android/SDL_androidevents.c b/src/video/android/SDL_androidevents.c
+index 3424a8254..08ae827dc 100644
+--- a/src/video/android/SDL_androidevents.c
++++ b/src/video/android/SDL_androidevents.c
+@@ -176,10 +176,12 @@ Android_PumpEvents_Blocking(_THIS)
+         }
+     }
+ 
++    /* Doesn't actually seem to work ??
+     if ( aaudio_DetectBrokenPlayState() ) {
+         aaudio_PauseDevices();
+         aaudio_ResumeDevices();
+     }
++     */
+ }
+ 
+ void
+diff --git a/src/video/cocoa/SDL_cocoamouse.m b/src/video/cocoa/SDL_cocoamouse.m
+index da5ffac69..49ab6fe14 100644
+--- a/src/video/cocoa/SDL_cocoamouse.m
++++ b/src/video/cocoa/SDL_cocoamouse.m
+@@ -519,11 +519,22 @@ + (NSCursor *)invisibleCursor
+         return;
+     }
+ 
++    SDL_MouseID mouseID = mouse->mouseID;
++    CGFloat x = -[event scrollingDeltaX];
++    CGFloat y = [event scrollingDeltaY];
++    SDL_MouseWheelDirection direction = SDL_MOUSEWHEEL_NORMAL;
++
+     mouseID = mouse->mouseID;
+     x = -[event deltaX];
+     y = [event deltaY];
+     direction = SDL_MOUSEWHEEL_NORMAL;
+ 
++    /* HACK: Make a distinction between precise and imprecise scrolling.
++       Trackpad seems to be mouseID 0. */
++    if (![event hasPreciseScrollingDeltas]) {
++        mouseID = 1;
++    }
++
+     if ([event isDirectionInvertedFromDevice] == YES) {
+         direction = SDL_MOUSEWHEEL_FLIPPED;
+     }
+diff --git a/src/video/cocoa/SDL_cocoawindow.h b/src/video/cocoa/SDL_cocoawindow.h
+index 18f7d8587..1329a90ab 100644
+--- a/src/video/cocoa/SDL_cocoawindow.h
++++ b/src/video/cocoa/SDL_cocoawindow.h
+@@ -115,6 +115,8 @@ typedef enum
+ /* Touch event handling */
+ -(void) handleTouches:(NSTouchPhase) phase withEvent:(NSEvent*) theEvent;
+ 
++-(void) syncMouseButtonAndKeyboardModifierState;
++
+ @end
+ /* *INDENT-ON* */
+ 
+diff --git a/src/video/cocoa/SDL_cocoawindow.m b/src/video/cocoa/SDL_cocoawindow.m
+index c73827656..786f288a2 100644
+--- a/src/video/cocoa/SDL_cocoawindow.m
++++ b/src/video/cocoa/SDL_cocoawindow.m
+@@ -1273,6 +1273,25 @@ - (void)otherMouseDown:(NSEvent *)theEvent
+     [self mouseDown:theEvent];
+ }
+ 
++- (void)syncMouseButtonAndKeyboardModifierState {
++    SDL_Mouse *mouse = SDL_GetMouse();
++    if (mouse) {
++        for (int i = 0; i < mouse->num_sources; i++) {
++            if (mouse->sources[i].mouseID == mouse->mouseID) {
++                mouse->sources[i].buttonstate = 0;
++            }
++        }
++    }
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LGUI);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RGUI);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LSHIFT);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RSHIFT);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LCTRL);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RCTRL);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_LALT);
++    SDL_SendKeyboardKey(SDL_RELEASED, SDL_SCANCODE_RALT);
++}
++
+ - (void)mouseUp:(NSEvent *)theEvent
+ {
+     SDL_Mouse *mouse = SDL_GetMouse();
+diff --git a/src/video/uikit/SDL_uikitappdelegate.h b/src/video/uikit/SDL_uikitappdelegate.h
+index ee2b5b6a8..8a7f81f62 100644
+--- a/src/video/uikit/SDL_uikitappdelegate.h
++++ b/src/video/uikit/SDL_uikitappdelegate.h
+@@ -34,6 +34,7 @@
+ + (id)sharedAppDelegate;
+ + (NSString *)getAppDelegateClassName;
+ 
++- (NSString *)getLaunchOptionsURL;
+ - (void)hideLaunchScreen;
+ 
+ /* This property is marked as optional, and is only intended to be used when
+diff --git a/src/video/uikit/SDL_uikitappdelegate.m b/src/video/uikit/SDL_uikitappdelegate.m
+index 3186cc6e8..dfa6c9307 100644
+--- a/src/video/uikit/SDL_uikitappdelegate.m
++++ b/src/video/uikit/SDL_uikitappdelegate.m
+@@ -25,6 +25,7 @@
+ #include "../SDL_sysvideo.h"
+ #include "SDL_hints.h"
+ #include "SDL_system.h"
++#include "SDL_timer.h"
+ #include "SDL_main.h"
+ 
+ #import "SDL_uikitappdelegate.h"
+@@ -181,6 +182,8 @@ - (NSUInteger)supportedInterfaceOrientations;
+ 
+ @end
+ 
++static NSString *launchOptionsURL;
++
+ @implementation SDLLaunchScreenController
+ 
+ - (instancetype)init
+@@ -364,6 +367,11 @@ + (NSString *)getAppDelegateClassName
+     return @"SDLUIKitDelegate";
+ }
+ 
++- (NSString *)getLaunchOptionsURL
++{
++    return launchOptionsURL;
++}
++
+ - (void)hideLaunchScreen
+ {
+     UIWindow *window = launchWindow;
+@@ -387,7 +395,7 @@ - (void)postFinishLaunch
+ {
+     /* Hide the launch screen the next time the run loop is run. SDL apps will
+      * have a chance to load resources while the launch screen is still up. */
+-    [self performSelector:@selector(hideLaunchScreen) withObject:nil afterDelay:0.0];
++    //[self performSelector:@selector(hideLaunchScreen) withObject:nil afterDelay:0.0];
+ 
+     /* run the user's application, passing argc and argv */
+     SDL_iPhoneSetEventPump(SDL_TRUE);
+@@ -421,6 +429,12 @@ - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(
+ 
+     /* tvOS only uses a plain launch image. */
+ #if !TARGET_OS_TV
++
++    NSURL *url = [launchOptions objectForKey:UIApplicationLaunchOptionsURLKey];
++    if (url != nil) {
++        launchOptionsURL = [url absoluteString];
++    }
++    
+     screenname = [bundle objectForInfoDictionaryKey:@"UILaunchStoryboardName"];
+ 
+     if (screenname) {
+@@ -428,7 +442,7 @@ - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(
+             /* The launch storyboard is actually a nib in some older versions of
+              * Xcode. We'll try to load it as a storyboard first, as it's more
+              * modern. */
+-            UIStoryboard *storyboard = [UIStoryboard storyboardWithName:screenname bundle:bundle];
++            UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"LaunchScreen" bundle:bundle];
+             __auto_type storyboardVc = [storyboard instantiateInitialViewController];
+             vc = [[SDLLaunchStoryboardViewController alloc] initWithStoryboardViewController:storyboardVc];
+         }
+diff --git a/src/video/uikit/SDL_uikitviewcontroller.h b/src/video/uikit/SDL_uikitviewcontroller.h
+index 2e64a5279..256be3073 100644
+--- a/src/video/uikit/SDL_uikitviewcontroller.h
++++ b/src/video/uikit/SDL_uikitviewcontroller.h
+@@ -58,10 +58,13 @@
+ #if !TARGET_OS_TV
+ - (NSUInteger)supportedInterfaceOrientations;
+ - (BOOL)prefersStatusBarHidden;
++- (void)setStatusStyle:(UIStatusBarStyle)style;
++- (UIStatusBarStyle)preferredStatusBarStyle;
+ - (BOOL)prefersHomeIndicatorAutoHidden;
+ - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures;
+ 
+ @property (nonatomic, assign) int homeIndicatorHidden;
++@property (nonatomic, assign) UIStatusBarStyle statusBarStyle;
+ #endif
+ 
+ #if SDL_IPHONE_KEYBOARD
+diff --git a/src/video/uikit/SDL_uikitviewcontroller.m b/src/video/uikit/SDL_uikitviewcontroller.m
+index ee7ee83b0..f3cda52c8 100644
+--- a/src/video/uikit/SDL_uikitviewcontroller.m
++++ b/src/video/uikit/SDL_uikitviewcontroller.m
+@@ -101,6 +101,7 @@ - (instancetype)initWithSDLWindow:(SDL_Window *)_window
+ #endif
+ 
+ #if !TARGET_OS_TV
++        self.statusBarStyle = UIStatusBarStyleDefault;
+         SDL_AddHintCallback(SDL_HINT_IOS_HIDE_HOME_INDICATOR,
+                             SDL_HideHomeIndicatorHintChanged,
+                             (__bridge void *) self);
+@@ -219,6 +220,17 @@ - (BOOL)prefersHomeIndicatorAutoHidden
+     return hidden;
+ }
+ 
++- (void)setStatusStyle:(UIStatusBarStyle)style
++{
++    self.statusBarStyle = style;
++    [self setNeedsStatusBarAppearanceUpdate];
++}
++
++- (UIStatusBarStyle)preferredStatusBarStyle
++{
++    return self.statusBarStyle;
++}
++
+ - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures
+ {
+     if (self.homeIndicatorHidden >= 0) {

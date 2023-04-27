@@ -583,6 +583,20 @@ static void callVoidMethod(id target, NSString *selectorName) {
     }
 }
 
+static NSString *callStringMethod(id target, NSString *selectorName) {
+    SEL sel = NSSelectorFromString(selectorName);
+    if ([target respondsToSelector:sel]) {
+        NSInvocation *call = [NSInvocation invocationWithMethodSignature:
+                              [NSMethodSignature signatureWithObjCTypes:"@@:"]];
+        [call setSelector:sel];
+        [call invokeWithTarget:target];
+        NSString *retVal;
+        [call getReturnValue:&retVal];
+        return retVal;
+    }
+    return NULL;
+}
+
 static void callVoidMethodWithIntArgument(id target, NSString *selectorName, int argValue) {
     SEL sel = NSSelectorFromString(selectorName);
     if ([target respondsToSelector:sel]) {
@@ -615,9 +629,21 @@ iBool processEvent_iOS(const SDL_Event *ev) {
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
         const char *cmd = command_UserEvent(ev);
+        //NSLog(@"%s", cmd);
         if (equal_Command(cmd, "window.unfreeze")) {
             id<UIApplicationDelegate> dlg = [UIApplication sharedApplication].delegate;
-            callVoidMethod([UIApplication sharedApplication].delegate, @"hideLaunchScreen");
+            callVoidMethod(dlg, @"hideLaunchScreen");
+            /* When the application is launching, it is too early to post a SDL_DROPFILE
+               event. The customized SDL application delegate saves the launch URL, so
+               we can use it now to */
+            static iBool didCheckLaunchURL = iFalse;
+            if (!didCheckLaunchURL) {
+                didCheckLaunchURL = iTrue;
+                NSString *launchURL = callStringMethod(dlg, @"getLaunchOptionsURL");
+                if (launchURL) {
+                    postCommandf_App("open newtab:1 url:%s", [launchURL UTF8String]);
+                }
+            }
         }
         else if (equal_Command(cmd, "ostheme")) {
             if (arg_Command(cmd)) {
