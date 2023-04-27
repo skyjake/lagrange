@@ -2283,6 +2283,7 @@ void refresh_App(void) {
     init_PtrArray(&windows);
     listWindows_App_(d, &windows);
     /* Destroy pending widgets. */ {
+        clearRecentlyDeleted_Widget();
         iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             setCurrent_Window(win);

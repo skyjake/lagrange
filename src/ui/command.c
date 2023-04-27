@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "command.h"
+#include "widget.h"
 #include "app.h"
 
 #include <the_Foundation/string.h>
@@ -122,7 +123,12 @@ void *pointerLabel_Command(const char *cmd, const char *label) {
 }
 
 void *pointer_Command(const char *cmd) {
-    return pointerLabel_Command(cmd, "ptr");
+    void *ptr = pointerLabel_Command(cmd, "ptr");
+    if (isRecentlyDeleted_Widget(ptr)) {
+        /* This widget has been marked as deleted, so we cannot reference it any more. */
+        return NULL;
+    }
+    return ptr;
 }
 
 const char *suffixPtr_Command(const char *cmd, const char *label) {

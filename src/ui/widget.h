@@ -357,3 +357,8 @@ iBool       hasVisibleChildOnTop_Widget
                                     (const iWidget *parent);
 void        printTree_Widget        (const iWidget *);
 void        identify_Widget         (const iWidget *); /* prints to stdout */
+
+void        addRecentlyDeleted_Widget   (iAnyObject *obj);
+iBool       isRecentlyDeleted_Widget    (const iAnyObject *obj);
+void        clearRecentlyDeleted_Widget (void);
+    
