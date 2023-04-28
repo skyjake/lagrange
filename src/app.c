@@ -2940,6 +2940,7 @@ iDocumentWidget *document_Command(const char *cmd) {
 
 iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNew) {
     iWidget *tabs = findWidget_Root("doctabs");
+    size_t currentTabIndex = tabPageIndex_Widget(tabs, document_App());
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
     iWidget *newTabButton = findChild_Widget(tabs, "newtab");
     removeChild_Widget(newTabButton->parent, newTabButton);
@@ -2952,6 +2953,8 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     }
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
+    /* Move the new tab next to the current tab. */
+    moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, currentTabIndex + 1);
     addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
     showOrHideNewTabButton_Root(tabs->root);
@@ -4312,9 +4315,6 @@ iBool handleCommand_App(const char *cmd) {
                 cancelAllRequests_DocumentWidget(closed);
                 destroy_Widget(as_Widget(closed)); /* released later */
             }
-            if (index == tabCount_Widget(tabs)) {
-                index--;
-            }
             if (tabCount_Widget(tabs) == 0) {
                 iAssert(isSplit);
                 postCommand_App("ui.split arg:0");
@@ -4322,7 +4322,8 @@ iBool handleCommand_App(const char *cmd) {
             else {
                 arrange_Widget(tabs);
                 if (wasCurrent) {
-                    postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+                    postCommandf_App("tabs.switch page:%p",
+                                     tabPage_Widget(tabs, index > 0 ? index - 1 : 0));
                 }
             }
         }
