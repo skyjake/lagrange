@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/defs.h>
 #include <SDL_video.h>
 
+iBool   isXSession_X11                  (void);
 void    setDarkWindowTheme_SDLWindow    (SDL_Window *, iBool setDark);
 void    handleCommand_X11               (const char *cmd);
 

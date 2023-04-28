@@ -2243,6 +2243,19 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
     return 0;
 }
 
+iLocalDef iBool isResizeDrawEnabled_(void) {
+#if defined (LAGRANGE_ENABLE_RESIZE_DRAW)
+#   if defined (LAGRANGE_ENABLE_X11_XLIB)
+    if (!isXSession_X11()) {
+        return iFalse; /* not on Wayland */
+    }
+#   endif
+    return iTrue;
+#else
+    return iFalse;
+#endif    
+}
+
 static int run_App_(iApp *d) {
     /* Initial arrangement. */
     iForIndices(i, d->window->roots) {
@@ -2252,9 +2265,9 @@ static int run_App_(iApp *d) {
     }
     d->isRunning = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
-#if defined (LAGRANGE_ENABLE_RESIZE_DRAW)
-    SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
-#endif
+    if (isResizeDrawEnabled_()) {
+        SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
+    }
     while (d->isRunning) {
         processEvents_App(waitForNewEvents_AppEventMode);
         runTickers_App_(d);
