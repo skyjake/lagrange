@@ -11,6 +11,7 @@
 * Improved opening and closing of tabs. New tabs now open to the right of the current tab.
 * Allow scaling up small images up to 2x size.
 * Fixed possible crash when closing tabs.
+* Fixed crashes on Wayland due to use of X11-specific code.
 * Updated UI translations.
 
 ## 1.15.8
