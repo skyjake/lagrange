@@ -8,6 +8,7 @@
 
 ## 1.15 (6)
 * Added new UI translation: Basque (euskara).
+* Improved opening and closing of tabs. New tabs now open to the right of the current tab.
 * Allow scaling up small images up to 2x size.
 * Fixed opening URLs via other apps when Lagrange is not running and has to be launched.
 * Fixed possible crash when closing tabs.
