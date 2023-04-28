@@ -18,15 +18,15 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.15.8
+    VERSION 1.15.9
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2023)
 if (IOS)
     set (PROJECT_VERSION 1.15)
-    set (IOS_BUNDLE_VERSION 5)
-    set (IOS_BUILD_DATE "2023-03-17")
+    set (IOS_BUNDLE_VERSION 6)
+    set (IOS_BUILD_DATE "2023-04-28")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.15)
@@ -94,6 +94,7 @@ set (RESOURCES
     res/lang/eo.bin
     res/lang/es.bin
     res/lang/es_MX.bin
+    res/lang/eu.bin
     res/lang/fi.bin
     res/lang/fr.bin
     res/lang/gl.bin

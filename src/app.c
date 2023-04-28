@@ -1856,12 +1856,15 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 break;
             }
             case SDL_DROPFILE: {
-                if (!d->window) {
+                if (isDesktop_Platform() && !d->window) {
                     /* Need to open an empty window now. */
                     handleNonWindowRelatedCommand_App_(d, "window.new url:");
-                    iAssert(d->window);
+                    iAssert(d->window != NULL);
                 }
-                iBool wasUsed = processEvent_Window(as_Window(d->window), &ev);
+                iBool wasUsed = iFalse;
+                if (d->window) {
+                    wasUsed = processEvent_Window(as_Window(d->window), &ev);
+                }
                 if (!wasUsed) {
                     if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
                         startsWithCase_CStr(ev.drop.file, "gopher:") ||
@@ -1874,6 +1877,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                             "~open newtab:1 url:%s", makeFileUrl_CStr(ev.drop.file));
                     }
                 }
+                SDL_free(ev.drop.file);
                 break;
             }
             default: {
@@ -2239,6 +2243,19 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
     return 0;
 }
 
+iLocalDef iBool isResizeDrawEnabled_(void) {
+#if defined (LAGRANGE_ENABLE_RESIZE_DRAW)
+#   if defined (LAGRANGE_ENABLE_X11_XLIB)
+    if (!isXSession_X11()) {
+        return iFalse; /* not on Wayland */
+    }
+#   endif
+    return iTrue;
+#else
+    return iFalse;
+#endif    
+}
+
 static int run_App_(iApp *d) {
     /* Initial arrangement. */
     iForIndices(i, d->window->roots) {
@@ -2248,9 +2265,9 @@ static int run_App_(iApp *d) {
     }
     d->isRunning = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
-#if defined (LAGRANGE_ENABLE_RESIZE_DRAW)
-    SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
-#endif
+    if (isResizeDrawEnabled_()) {
+        SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
+    }
     while (d->isRunning) {
         processEvents_App(waitForNewEvents_AppEventMode);
         runTickers_App_(d);
@@ -2279,6 +2296,7 @@ void refresh_App(void) {
     init_PtrArray(&windows);
     listWindows_App_(d, &windows);
     /* Destroy pending widgets. */ {
+        clearRecentlyDeleted_Widget();
         iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             setCurrent_Window(win);
@@ -2935,6 +2953,7 @@ iDocumentWidget *document_Command(const char *cmd) {
 
 iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNew) {
     iWidget *tabs = findWidget_Root("doctabs");
+    size_t currentTabIndex = tabPageIndex_Widget(tabs, document_App());
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
     iWidget *newTabButton = findChild_Widget(tabs, "newtab");
     removeChild_Widget(newTabButton->parent, newTabButton);
@@ -2947,6 +2966,8 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     }
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
+    /* Move the new tab next to the current tab. */
+    moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, currentTabIndex + 1);
     addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
     showOrHideNewTabButton_Root(tabs->root);
@@ -4307,9 +4328,6 @@ iBool handleCommand_App(const char *cmd) {
                 cancelAllRequests_DocumentWidget(closed);
                 destroy_Widget(as_Widget(closed)); /* released later */
             }
-            if (index == tabCount_Widget(tabs)) {
-                index--;
-            }
             if (tabCount_Widget(tabs) == 0) {
                 iAssert(isSplit);
                 postCommand_App("ui.split arg:0");
@@ -4317,7 +4335,8 @@ iBool handleCommand_App(const char *cmd) {
             else {
                 arrange_Widget(tabs);
                 if (wasCurrent) {
-                    postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+                    postCommandf_App("tabs.switch page:%p",
+                                     tabPage_Widget(tabs, index > 0 ? index - 1 : 0));
                 }
             }
         }

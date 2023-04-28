@@ -6,6 +6,14 @@
 ```
 # Release notes
 
+## 1.15.9
+* Added new UI translation: Basque (euskara).
+* Improved opening and closing of tabs. New tabs now open to the right of the current tab.
+* Allow scaling up small images up to 2x size.
+* Fixed possible crash when closing tabs.
+* Fixed crashes on Wayland due to use of X11-specific code.
+* Updated UI translations.
+
 ## 1.15.8
 * Fixed activation of a pinned identity in inline media requests.
 * Fixed potential crash when changing split view mode during a UI animation.

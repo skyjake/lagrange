@@ -30,7 +30,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
+iBool isXSession_X11(void) {
+    const char *driver = SDL_GetCurrentVideoDriver();
+    if (driver && !iCmpStr(driver, "wayland")) {
+        return iFalse;
+    }
+    return iTrue; /* assume yes if this source file is being used */
+}
+
 void setDarkWindowTheme_SDLWindow(SDL_Window *d, iBool setDark) {
+    if (!isXSession_X11()) {
+        return;
+    }
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
     if (SDL_GetWindowWMInfo(d, &wmInfo)) {
@@ -45,6 +56,9 @@ void setDarkWindowTheme_SDLWindow(SDL_Window *d, iBool setDark) {
 }
 
 void handleCommand_X11(const char *cmd) {
+    if (!isXSession_X11()) {
+        return;
+    }
     if (equal_Command(cmd, "theme.changed")) {        
         iConstForEach(PtrArray, iter, mainWindows_App()) {
             iMainWindow *mw = iter.ptr;

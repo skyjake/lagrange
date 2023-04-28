@@ -52,6 +52,32 @@ struct Impl_WidgetDrawBuffer {
     iInt2        oldOrigin;
 };
 
+iDeclareType(RecentlyDeleted)
+
+/* Keep track of widgets that were recently deleted, so events related to them can be ignored. */
+struct Impl_RecentlyDeleted {
+    iMutex    mtx; /* async callbacks must not post events related to deleted widgets */
+    iPtrSet * objs;
+};
+static iRecentlyDeleted recentlyDeleted_;
+
+static void maybeInit_RecentlyDeleted_(iRecentlyDeleted *d) {
+    if (!d->objs) {
+        init_Mutex(&d->mtx);
+        d->objs = new_PtrSet();
+    }
+}
+
+static iBool contains_RecentlyDeleted_(iRecentlyDeleted *d, const iAnyObject *obj) {
+    if (d->objs && obj) {
+        lock_Mutex(&d->mtx);
+        const iBool wasDel = contains_PtrSet(d->objs, obj);
+        unlock_Mutex(&d->mtx);
+        return wasDel;
+    }
+    return iFalse;
+}
+
 static void init_WidgetDrawBuffer(iWidgetDrawBuffer *d) {
     d->texture   = NULL;
     d->size      = zero_I2();
@@ -175,6 +201,7 @@ static int treeSize_Widget_(const iWidget *d, int n) {
 }
 
 void deinit_Widget(iWidget *d) {
+    addRecentlyDeleted_Widget(d);
     if (d->flags2 & usedAsPeriodicContext_WidgetFlag2) {
         remove_Periodic(periodic_App(), d); /* periodic context being deleted */
     }
@@ -2401,6 +2428,9 @@ iWidget *mouseGrab_Widget(void) {
 }
 
 void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
+    if (isRecentlyDeleted_Widget(d)) {
+        return; /* invalid context */
+    }
     iString str;
     init_String(&str); {
         va_list args;
@@ -2546,4 +2576,22 @@ void identify_Widget(const iWidget *d) {
     printIndent_(indent);
     printf("Root %d: %p\n", 1 + (d->root == get_Window()->roots[1]), d->root);
     fflush(stdout);
+}
+
+void addRecentlyDeleted_Widget(iAnyObject *obj) {
+    /* We sometimes include pointers to widgets in command events. Before an event is processed,
+       it is possible that the referened widget has been destroyed. Keeping track of recently
+       deleted widgets allows ignoring these events. */
+    maybeInit_RecentlyDeleted_(&recentlyDeleted_);
+    iGuardMutex(&recentlyDeleted_.mtx, insert_PtrSet(recentlyDeleted_.objs, obj));
+}
+
+void clearRecentlyDeleted_Widget(void) {
+    if (recentlyDeleted_.objs) {
+        iGuardMutex(&recentlyDeleted_.mtx, clear_PtrSet(recentlyDeleted_.objs));
+    }
+}
+
+iBool isRecentlyDeleted_Widget(const iAnyObject *obj) {
+    return contains_RecentlyDeleted_(&recentlyDeleted_, obj);
 }

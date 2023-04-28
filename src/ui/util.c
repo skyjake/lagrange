@@ -51,6 +51,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "macos.h"
 #endif
 
+#if defined (LAGRANGE_ENABLE_X11_XLIB)
+#   include "x11.h"
+#endif
+
 #include <the_Foundation/math.h>
 #include <the_Foundation/path.h>
 #include <SDL_timer.h>
@@ -1220,6 +1224,11 @@ void unselectAllNativeMenuItems_Widget(iWidget *menu) {
 
 iLocalDef iBool isUsingMenuPopupWindows_(void) {
 #if defined (LAGRANGE_ENABLE_POPUP_MENUS) && !defined (iPlatformTerminal)
+#   if defined (LAGRANGE_ENABLE_X11_XLIB)
+    if (!isXSession_X11()) {
+        return iFalse; /* popup windows not supported on Wayland */
+    }
+#   endif
     return deviceType_App() == desktop_AppDeviceType;
 #else
     return iFalse;
@@ -1268,64 +1277,64 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
             }
         }
     }
-#if defined (LAGRANGE_ENABLE_POPUP_MENUS) && !defined (iPlatformTerminal)
-    /* Determine total display bounds where the popup may appear. */
-    iRect displayRect = zero_Rect(); 
-    for (int i = 0; i < SDL_GetNumVideoDisplays(); i++) {
-        SDL_Rect dispBounds;
-        SDL_GetDisplayUsableBounds(i, &dispBounds);
-        displayRect = union_Rect(
-            displayRect, init_Rect(dispBounds.x, dispBounds.y, dispBounds.w, dispBounds.h));
-    }
-    iRect winRect;
-    SDL_Window *sdlWin = get_Window()->win;
-    const float pixelRatio = get_Window()->pixelRatio;
-    iInt2 winPos;
-    SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
-    winRect = rootRect;
-    winRect.pos.x /= pixelRatio;
-    winRect.pos.y /= pixelRatio;
-    winRect.size.x /= pixelRatio;
-    winRect.size.y /= pixelRatio;
-    addv_I2(&winRect.pos, winPos);
-    iRect visibleWinRect = intersect_Rect(winRect, displayRect);
-    /* Only use a popup window if the menu can't fit inside the main window. */
-    if (height_Widget(d) / pixelRatio > visibleWinRect.size.y && isUsingMenuPopupWindows_()) {
-        if (postCommands) {
-            postCommand_Widget(d, "menu.opened");
+    if (isUsingMenuPopupWindows_()) {
+        /* Determine total display bounds where the popup may appear. */
+        iRect displayRect = zero_Rect(); 
+        for (int i = 0; i < SDL_GetNumVideoDisplays(); i++) {
+            SDL_Rect dispBounds;
+            SDL_GetDisplayUsableBounds(i, &dispBounds);
+            displayRect = union_Rect(
+                displayRect, init_Rect(dispBounds.x, dispBounds.y, dispBounds.w, dispBounds.h));
         }
-        updateMenuItemFonts_Widget_(d);
-        iRoot *oldRoot = current_Root();
-        setFlags_Widget(d, keepOnTop_WidgetFlag, iFalse);
-        setUserData_Object(d, parent_Widget(d));
-        iAssert(userData_Object(d));
-        removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
+        iRect winRect;
+        SDL_Window *sdlWin = get_Window()->win;
+        const float pixelRatio = get_Window()->pixelRatio;
         iInt2 winPos;
         SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
-        iInt2 menuPos = add_I2(winPos,
-                               divf_I2(sub_I2(windowCoord, divi_I2(gap2_UI, 2)), pixelRatio));
-        /* Check display bounds. */ {
-            iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);
-            if (menuOpenFlags & center_MenuOpenFlags) {
-                iInt2 winSize;
-                SDL_GetWindowSize(sdlWin, &winSize.x, &winSize.y);
-                menuPos = sub_I2(add_I2(winPos, divi_I2(winSize, 2)), divi_I2(menuSize, 2));
+        winRect = rootRect;
+        winRect.pos.x /= pixelRatio;
+        winRect.pos.y /= pixelRatio;
+        winRect.size.x /= pixelRatio;
+        winRect.size.y /= pixelRatio;
+        addv_I2(&winRect.pos, winPos);
+        iRect visibleWinRect = intersect_Rect(winRect, displayRect);
+        /* Only use a popup window if the menu can't fit inside the main window. */
+        if (height_Widget(d) / pixelRatio > visibleWinRect.size.y && isUsingMenuPopupWindows_()) {
+            if (postCommands) {
+                postCommand_Widget(d, "menu.opened");
             }
-            menuPos.x = iMin(menuPos.x, right_Rect(displayRect) - menuSize.x);
-            menuPos.y = iMax(0, iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y));
+            updateMenuItemFonts_Widget_(d);
+            iRoot *oldRoot = current_Root();
+            setFlags_Widget(d, keepOnTop_WidgetFlag, iFalse);
+            setUserData_Object(d, parent_Widget(d));
+            iAssert(userData_Object(d));
+            removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
+            iInt2 winPos;
+            SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
+            iInt2 menuPos = add_I2(winPos,
+                                   divf_I2(sub_I2(windowCoord, divi_I2(gap2_UI, 2)), pixelRatio));
+            /* Check display bounds. */ {
+                iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);
+                if (menuOpenFlags & center_MenuOpenFlags) {
+                    iInt2 winSize;
+                    SDL_GetWindowSize(sdlWin, &winSize.x, &winSize.y);
+                    menuPos = sub_I2(add_I2(winPos, divi_I2(winSize, 2)), divi_I2(menuSize, 2));
+                }
+                menuPos.x = iMin(menuPos.x, right_Rect(displayRect) - menuSize.x);
+                menuPos.y = iMax(0, iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y));
+            }
+            iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
+            setCurrent_Window(win);
+            SDL_SetWindowTitle(win->win, "Menu");
+            arrange_Widget(d);
+            addPopup_App(win);
+            SDL_ShowWindow(win->win);
+            draw_Window(win);
+            setCurrent_Window(mainWindow_App());
+            setCurrent_Root(oldRoot);
+            return;
         }
-        iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
-        setCurrent_Window(win);
-        SDL_SetWindowTitle(win->win, "Menu");
-        arrange_Widget(d);
-        addPopup_App(win);
-        SDL_ShowWindow(win->win);
-        draw_Window(win);
-        setCurrent_Window(mainWindow_App());
-        setCurrent_Root(oldRoot);
-        return;
     }
-#endif
     raise_Widget(d);
     if (deviceType_App() != desktop_AppDeviceType) {
         setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, 
@@ -2884,6 +2893,7 @@ iWidget *makePreferences_Widget(void) {
                                     { u8"English - en", 0, 0, "uilang id:en" },
                                     { u8"Español - es", 0, 0, "uilang id:es" },
                                     { u8"Español (México) - es", 0, 0, "uilang id:es_MX" },
+                                    { u8"Euskara - eu", 0, 0, "uilang id:eu" },
                                     { u8"Esperanto - eo", 0, 0, "uilang id:eo" },
                                     { u8"Suomi - fi", 0, 0, "uilang id:fi" },
                                     { u8"Français - fr", 0, 0, "uilang id:fr" },

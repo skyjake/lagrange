@@ -3288,7 +3288,12 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d, iBool useCach
         return iTrue;
     }
     else if (!isEmpty_String(d->mod.url)) {
-        fetch_DocumentWidget_(d);
+        /* IssueID #573: Crash when launching the app on Android. It appears that the TlsRequest
+           thread crashes when it does something too early during app launch. As a workaround,
+           do not automatically reload the page during app launch if it isn't in the cache. */
+        if (!isAndroid_Platform() || isFinishedLaunching_App()) {
+            fetch_DocumentWidget_(d);
+        }
     }
     if (recent) {
         /* Retain scroll position in refetched content as well. */
@@ -6374,7 +6379,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
     }
 //    drawRect_Paint(&p, docBounds, red_ColorId);
-    if (deviceType_App() == phone_AppDeviceType) {
+    if (deviceType_App() == phone_AppDeviceType && document_App()) {
         /* The phone toolbar uses the palette of the active tab, but there may be other
            documents drawn before the toolbar, causing the colors to be incorrect. */
         makePaletteGlobal_GmDocument(document_App()->view.doc);
@@ -6682,7 +6687,10 @@ void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
-    return d->request != NULL || d->flags & pendingRedirect_DocumentWidgetFlag;
+    if (d) {
+        return d->request != NULL || d->flags & pendingRedirect_DocumentWidgetFlag;
+    }
+    return iFalse;
 }
 
 void takeRequest_DocumentWidget(iDocumentWidget *d, iGmRequest *finishedRequest) {
