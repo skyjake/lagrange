@@ -45,6 +45,22 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.15.9" date="2023-04-28">
+            <description>
+                <p>Changes in v1.15.9:</p>
+                <ul>
+                    <li>Added new UI translation: Basque (euskara).</li>
+                    <li>Improved opening and closing of tabs. New tabs now open to the right of the current tab.</li>
+                    <li>Allow scaling up small images up to 2x size.</li>
+                    <li>Fixed possible crash when closing tabs.</li>
+                    <li>Fixed crashes on Wayland due to use of X11-specific code.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.15.9</url>
+        </release>
         <release version="1.15.8" date="2023-04-07">
             <description>
                 <p>Changes in v1.15.8:</p>
