@@ -114,6 +114,7 @@ enum iOpenTabFlag {
     newBackground_OpenTabFlag = iBit(2),
     newTabMask_OpenTabFlag    = new_OpenTabFlag | newBackground_OpenTabFlag,
     otherRoot_OpenTabFlag     = iBit(3),
+    append_OpenTabFlag        = iBit(4), /* by default inserted right */
 };
 
 iBool       isMod_Sym           (int key);

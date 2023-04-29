@@ -4361,7 +4361,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (newWin) {
             setCurrent_Window(newWin);            
         }
-        newTab_App(d, iTrue); /* makes a duplicate */
+        newTab_App(d, switchTo_NewTabFlag); /* makes a duplicate */
         setCurrent_Root(oldRoot);
         if (newWin) {
             /* Get rid of the default blank tab. */

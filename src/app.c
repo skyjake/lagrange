@@ -821,7 +821,7 @@ static iBool loadState_App_(iApp *d) {
                         doc = document_Root(get_Root());
                     }
                     else {
-                        doc = newTab_App(NULL, iFalse /* no switching */);
+                        doc = newTab_App(NULL, 0 /* no switching or inserting */);
                     }
                     if (flags & current_DocumentStateFlag) {
                         value_Array(currentTabs, numWins - 1, iCurrentTabs).currentTab[rootIndex] = doc;
@@ -2951,7 +2951,7 @@ iDocumentWidget *document_Command(const char *cmd) {
     return document_App();
 }
 
-iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNew) {
+iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, int newTabFlags) {
     iWidget *tabs = findWidget_Root("doctabs");
     size_t currentTabIndex = tabPageIndex_Widget(tabs, document_App());
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
@@ -2966,12 +2966,14 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     }
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
-    /* Move the new tab next to the current tab. */
-    moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, currentTabIndex + 1);
+    if (newTabFlags & insertRight_NewTabFlag) {
+        /* Move the new tab next to the current tab. */
+        moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, currentTabIndex + 1);
+    }
     addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
     showOrHideNewTabButton_Root(tabs->root);
-    if (switchToNew) {
+    if (newTabFlags & switchTo_NewTabFlag) {
         postCommandf_App("tabs.switch page:%p", doc);
     }
     arrange_Widget(tabs);
@@ -4000,7 +4002,10 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         newTab = new_OpenTabFlag;
     }
     if (newTab & newTabMask_OpenTabFlag) {
-        doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0); /* `newtab:2` to open in background */
+        /* `newtab:2` to open in background */
+        doc = newTab_App(NULL,
+                         ((newTab & new_OpenTabFlag) != 0 ? switchTo_NewTabFlag : 0) |
+                          (newTab & append_OpenTabFlag ? 0 : insertRight_NewTabFlag));
     }
     iHistory   *history       = history_DocumentWidget(doc);
     const iBool waitForIdle   = argLabel_Command(cmd, "idle") != 0;
@@ -4149,7 +4154,7 @@ iBool handleCommand_App(const char *cmd) {
             appendFormat_String(src, "${glyphfinder.results.empty}\n");
         }
         appendCStr_String(src, "\n=> about:fonts ${menu.fonts}");
-        iDocumentWidget *page = newTab_App(NULL, iTrue);
+        iDocumentWidget *page = newTab_App(NULL, switchTo_NewTabFlag | insertRight_NewTabFlag);
         translate_Lang(src);
         setUrlAndSource_DocumentWidget(page,
                                        collectNewCStr_String(""),
@@ -4274,7 +4279,8 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
-        newTab_App(isDuplicate ? document_App() : NULL, iTrue);        
+        newTab_App(isDuplicate ? document_App() : NULL,
+                   switchTo_NewTabFlag | insertRight_NewTabFlag);
         if (!isDuplicate) {
             postCommandf_App("navigate.home focus:%d", deviceType_App() == desktop_AppDeviceType);
         }
@@ -4697,7 +4703,7 @@ iBool handleCommand_App(const char *cmd) {
         generate_Export(export);
         openEmpty_Buffer(zip);
         serialize_Archive(archive_Export(export), stream_Buffer(zip));
-        iDocumentWidget *expTab = newTab_App(NULL, iTrue);
+        iDocumentWidget *expTab = newTab_App(NULL, switchTo_NewTabFlag | insertRight_NewTabFlag);
         iDate now;
         initCurrent_Date(&now);
         setUrlAndSource_DocumentWidget(

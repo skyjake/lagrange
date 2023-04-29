@@ -1647,7 +1647,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                     !isFirst,
                                     (isNewWindow && isFirst ? 0
                                      : isFirst              ? new_OpenTabFlag
-                                                            : newBackground_OpenTabFlag),
+                                                            : newBackground_OpenTabFlag) |
+                                        append_OpenTabFlag /* keep the expected sequential order */,
                                     !isEmpty_String(&contained->identity)
                                         ? format_CStr(" setident:%s",
                                                       cstr_String(&contained->identity))

@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.15.10
+* Fixed tab order getting reversed when restoring tabs at launch.
+* Fixed order of opened tabs when using "Open in New Tabs" on a bookmark folder.
+
 ## 1.15.9
 * Added new UI translation: Basque (euskara).
 * Improved opening and closing of tabs. New tabs now open to the right of the current tab.
