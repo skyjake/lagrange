@@ -3610,7 +3610,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     }
                     /* Redirects with the same scheme are automatic, and switching automatically
                        between "gemini" and "titan" is allowed. */
-                    else if (equalRangeCase_Rangecc(dstScheme, srcScheme) ||
+                    else if (prefs_App()->allowSchemeChangingRedirect ||
+                             equalRangeCase_Rangecc(dstScheme, srcScheme) ||
                              (equalCase_Rangecc(srcScheme, "titan") &&
                               equalCase_Rangecc(dstScheme, "gemini")) ||
                              (equalCase_Rangecc(srcScheme, "gemini") &&

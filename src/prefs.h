@@ -73,6 +73,7 @@ enum iPrefsBool {
     
     evenSplit_PrefsBool,
     detachedPrefs_PrefsBool,
+    newTabNextToActive_PrefsBool,
     
     /* Document presentation */
     sideIcon_PrefsBool,
@@ -97,6 +98,7 @@ enum iPrefsBool {
     
     /* Network */
     decodeUserVisibleURLs_PrefsBool,
+    allowSchemeChangingRedirect_PrefsBool,
     
     /* Style */
     monospaceGemini_PrefsBool,
@@ -143,6 +145,7 @@ struct Impl_Prefs {
             
             iBool evenSplit;
             iBool detachedPrefs;
+            iBool newTabNextToActive;
             
             /* Document presentation */
             iBool sideIcon;
@@ -167,6 +170,7 @@ struct Impl_Prefs {
             
             /* Network */
             iBool decodeUserVisibleURLs;
+            iBool allowSchemeChangingRedirect;
             
             /* Style */
             iBool monospaceGemini;

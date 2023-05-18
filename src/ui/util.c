@@ -3297,23 +3297,6 @@ iWidget *makePreferences_Widget(void) {
                 }
             }
         }
-#if 0
-        iWidget *accent = new_Widget(); {
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.teal}", "accent.set arg:0"))), "prefs.accent.0");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.orange}", "accent.set arg:1"))), "prefs.accent.1");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.red}", "accent.set arg:2"))), "prefs.accent.2");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.green}", "accent.set arg:3"))), "prefs.accent.3");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.blue}", "accent.set arg:4"))), "prefs.accent.4");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.gray}", "accent.set arg:5"))), "prefs.accent.5");
-#  if defined (iPlatformApple)
-            /* TODO: Re-enable this! Accent colors should now be applied in a way that suits 
-               the system accents, as long as there are light and dark variants. */
-//            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.system}", "accent.set arg:2"))), "prefs.accent.2");
-#  endif
-        }
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.accent}")));
-        addChildFlags_Widget(values, iClob(accent), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-#endif
         addDialogPadding_(headings, values);
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         addDialogToggle_(headings, values, "${prefs.customframe}", "prefs.customframe");
@@ -3460,7 +3443,32 @@ iWidget *makePreferences_Widget(void) {
         addDialogToggle_(headings, values, "${prefs.collapsepreonload}", "prefs.collapsepreonload");
     }
     /* Content. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}", green_ColorId, '5', &headings, &values), "prefs.page.content");
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}",
+                                                   green_ColorId, '5', &headings, &values),
+                     "prefs.page.content");
+        /* Cache size. */ {
+            iInputWidget *cache = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(cache, iTrue);
+            addPrefsInputWithHeading_(headings, values, "prefs.cachesize", iClob(cache));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(cache),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
+        }
+        /* Memory size. */ {
+            iInputWidget *mem = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(mem, iTrue);
+            addPrefsInputWithHeading_(headings, values, "prefs.memorysize", iClob(mem));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(mem),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
+        }
+        addDialogPadding_(headings, values);
         addDialogToggleGroup_(headings,
                               values,
                               "${prefs.gemtext.ansi}",
@@ -3480,6 +3488,7 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, computer_Icon " ${heading.prefs.interface}", cyan_ColorId, '6', &headings, &values),
                      "prefs.page.ui");
         addDialogToggle_(headings, values, "${prefs.hoverlink}", "prefs.hoverlink");
+        addDialogToggle_(headings, values, "${prefs.newtab.insert}", "prefs.newtab.insert");
         addDialogToggle_(headings, values, "${prefs.bookmarks.addbottom}", "prefs.bookmarks.addbottom");
         /* Return key behaviors. */ {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
@@ -3531,7 +3540,8 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Keybindings. */ {
         iBindingsWidget *bind = new_BindingsWidget();
-        appendFramelessTabPage_Widget(tabs, iClob(bind), keyboard_Icon " ${heading.prefs.keys}", cyan_ColorId, '7', KMOD_PRIMARY);
+        appendFramelessTabPage_Widget(tabs, iClob(bind), keyboard_Icon " ${heading.prefs.keys}",
+                                      cyan_ColorId, '7', KMOD_PRIMARY);
     }
     /* Network. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
@@ -3541,32 +3551,9 @@ iWidget *makePreferences_Widget(void) {
                                                    &headings,
                                                    &values),
                      "prefs.page.network");
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.decodeurls}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
+        addDialogToggle_(headings, values, "${prefs.redirect.allowscheme}", "prefs.redirect.allowscheme");
+        addDialogToggle_(headings, values, "${prefs.decodeurls}", "prefs.decodeurls");
         addPrefsInputWithHeading_(headings, values, "prefs.urlsize", iClob(new_InputWidget(10)));
-        addDialogPadding_(headings, values);
-        /* Cache size. */ {
-            iInputWidget *cache = new_InputWidget(4);
-            setSelectAllOnFocus_InputWidget(cache, iTrue);
-            addPrefsInputWithHeading_(headings, values, "prefs.cachesize", iClob(cache));
-            iWidget *unit =
-                addChildFlags_Widget(as_Widget(cache),
-                                     iClob(new_LabelWidget("${mb}", NULL)),
-                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
-                                     resizeToParentHeight_WidgetFlag);
-            setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
-        }
-        /* Memory size. */ {
-            iInputWidget *mem = new_InputWidget(4);
-            setSelectAllOnFocus_InputWidget(mem, iTrue);
-            addPrefsInputWithHeading_(headings, values, "prefs.memorysize", iClob(mem));
-            iWidget *unit =
-                addChildFlags_Widget(as_Widget(mem),
-                                     iClob(new_LabelWidget("${mb}", NULL)),
-                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
-                                         resizeToParentHeight_WidgetFlag);
-            setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
-        }
         makeTwoColumnHeading_("${heading.prefs.proxies}", headings, values);
         addPrefsInputWithHeading_(headings, values, "prefs.proxy.gemini", iClob(new_InputWidget(0)));
         addPrefsInputWithHeading_(headings, values, "prefs.proxy.gopher", iClob(new_InputWidget(0)));

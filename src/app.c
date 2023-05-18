@@ -322,26 +322,28 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
         { "prefs.biglede", &d->prefs.bigFirstParagraph },
         { "prefs.blink", &d->prefs.blinkingCursor },
-        { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
-        { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
-        { "prefs.evensplit", &d->prefs.evenSplit },
-        { "prefs.menubar", &d->prefs.menuBar },
         { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
         { "prefs.boldlink.light", &d->prefs.boldLinkLight },
         { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
         { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
+        { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
+        { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
         { "prefs.centershort", &d->prefs.centerShortDocs },
         { "prefs.collapsepreonload", &d->prefs.collapsePreOnLoad },
         { "prefs.dataurl.openimages", &d->prefs.openDataUrlImagesOnLoad },
+        { "prefs.evensplit", &d->prefs.evenSplit },
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
         { "prefs.gopher.gemstyle", &d->prefs.geminiStyledGopher },
         { "prefs.hoverlink", &d->prefs.hoverLink },
         { "prefs.justify", &d->prefs.justifyParagraph },
         { "prefs.markdown.viewsource", &d->prefs.markdownAsSource },
+        { "prefs.menubar", &d->prefs.menuBar },
         { "prefs.mono.gemini", &d->prefs.monospaceGemini },
         { "prefs.mono.gopher", &d->prefs.monospaceGopher },
+        { "prefs.newtab.insert", &d->prefs.newTabNextToActive },
         { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
+        { "prefs.redirect.allowscheme", &d->prefs.allowSchemeChangingRedirect },
         { "prefs.retaintabs", &d->prefs.retainTabs },
         { "prefs.sideicon", &d->prefs.sideIcon },
         { "prefs.swipe.edge", &d->prefs.edgeSwipe },
@@ -2966,7 +2968,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, int newTabFlags)
     }
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
-    if (newTabFlags & insertRight_NewTabFlag) {
+    if (prefs_App()->newTabNextToActive && newTabFlags & insertRight_NewTabFlag) {
         /* Move the new tab next to the current tab. */
         moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, currentTabIndex + 1);
     }
@@ -3511,6 +3513,14 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "prefs.time.24h.changed")) {
         d->prefs.time24h = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.redirect.allowscheme.changed")) {
+        d->prefs.allowSchemeChangingRedirect = arg_Command(cmd) != 0;
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.newtab.insert.changed")) {
+        d->prefs.newTabNextToActive = arg_Command(cmd) != 0;
         return iTrue;
     }
     else if (equal_Command(cmd, "smoothscroll")) {
@@ -4299,6 +4309,7 @@ iBool handleCommand_App(const char *cmd) {
                                                       : document_App();
         iBool  wasCurrent = (doc == (iWidget *) document_App());
         size_t index      = tabPageIndex_Widget(tabs, doc);
+        const iBool isRightmost = (index == tabCount_Widget(tabs) - 1);
         iBool  wasClosed  = iFalse;
         postCommand_App("document.openurls.changed");
         if (argLabel_Command(cmd, "toright")) {
@@ -4341,8 +4352,13 @@ iBool handleCommand_App(const char *cmd) {
             else {
                 arrange_Widget(tabs);
                 if (wasCurrent) {
-                    postCommandf_App("tabs.switch page:%p",
-                                     tabPage_Widget(tabs, index > 0 ? index - 1 : 0));
+                    postCommandf_App(
+                        "tabs.switch page:%p",
+                        tabPage_Widget(
+                            tabs,
+                            index > 0
+                                ? index - (isRightmost || prefs_App()->newTabNextToActive ? 1 : 0)
+                                : 0));
                 }
             }
         }
@@ -4405,6 +4421,8 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.edge"), d->prefs.edgeSwipe);
         setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.page"), d->prefs.pageSwipe);
         setToggle_Widget(findChild_Widget(dlg, "prefs.gopher.gemstyle"), d->prefs.geminiStyledGopher);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.newtab.insert"), d->prefs.newTabNextToActive);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.redirect.allowscheme"), d->prefs.allowSchemeChangingRedirect);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
