@@ -3240,6 +3240,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     destroy_Widget(d->footerButtons);
     d->footerButtons = NULL;
     iRelease(d->view.doc);
+    invalidate_DocumentView_(&d->view);
     d->view.doc = new_GmDocument();
     d->state = fetching_RequestState;
     d->flags &= ~pendingRedirect_DocumentWidgetFlag;
