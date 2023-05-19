@@ -744,6 +744,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = text_GmLineType;
     iBool            followsBlank  = iFalse;
+    iString          firstContentLine; /* may be used as a title if one isn't specified */
+    init_String(&firstContentLine);
     if (isGopher && !prefs->geminiStyledGopher) {
         isFirstText = iFalse;
     }
@@ -925,11 +927,16 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         /* Save the document title (first high-level heading). */
-        if ((type == heading1_GmLineType || type == heading2_GmLineType) &&
+        if (type == heading1_GmLineType /*|| type == heading2_GmLineType*/ &&
             isEmpty_String(&d->title)) {
             setRange_String(&d->title, line);
             /* Get rid of ANSI escapes. */
             replaceRegExp_String(&d->title, ansiPattern_, "", NULL, NULL);
+        }
+        else if (type != heading1_GmLineType && isEmpty_String(&firstContentLine) &&
+                 size_Range(&line) >= 3) {
+            setRange_String(&firstContentLine, line);
+            replaceRegExp_String(&firstContentLine, ansiPattern_, "", NULL, NULL);
         }
         /* List bullet. */
         if (type == bullet_GmLineType) {
@@ -1263,6 +1270,19 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
     }
     setAnsiFlags_Text(allowAll_AnsiFlag);
+    /* If a title wasn't found, use the first content line but truncate it if it's long. */
+    if (isEmpty_String(&d->title)) {
+        set_String(&d->title, &firstContentLine);
+        if (length_String(&d->title) > 40) {
+            truncate_String(&d->title, 40);
+            /* Find a word boundary. */
+            while (size_String(&d->title) > 10 && isAlpha_Char(last_String(&d->title))) {
+                removeEnd_String(&d->title, 1);
+            }
+        }
+        trim_String(&d->title);
+    }
+    deinit_String(&firstContentLine);
 //    printf("[GmDocument] layout size: %zu runs (%zu bytes)\n",
 //           size_Array(&d->layout), size_Array(&d->layout) * sizeof(iGmRun));        
 }
