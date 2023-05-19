@@ -3315,6 +3315,9 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
     iAssert(isInstance_Object(ptr, &Class_DocumentWidget));
     iDocumentWidget *d = ptr;
     iDocumentView *view = &d->view;
+    if (flags_Widget(ptr) & destroyPending_WidgetFlag) {
+        return; /* don't waste updating, the widget is being deleted */
+    }
     updateVisible_DocumentView_(view);
     refresh_Widget(d);
     if (view->animWideRunId) {
