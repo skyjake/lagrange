@@ -927,8 +927,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         /* Save the document title (first high-level heading). */
-        if (type == heading1_GmLineType /*|| type == heading2_GmLineType*/ &&
-            isEmpty_String(&d->title)) {
+        if (type == heading1_GmLineType && isEmpty_String(&d->title)) {
             setRange_String(&d->title, line);
             /* Get rid of ANSI escapes. */
             replaceRegExp_String(&d->title, ansiPattern_, "", NULL, NULL);
