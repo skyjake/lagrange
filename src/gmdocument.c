@@ -933,8 +933,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             /* Get rid of ANSI escapes. */
             replaceRegExp_String(&d->title, ansiPattern_, "", NULL, NULL);
         }
-        else if (type != heading1_GmLineType && isEmpty_String(&firstContentLine) &&
-                 size_Range(&line) >= 3) {
+        else if (type != preformatted_GmLineType && type != heading1_GmLineType &&
+                 isEmpty_String(&firstContentLine) && size_Range(&line) >= 3) {
             setRange_String(&firstContentLine, line);
             replaceRegExp_String(&firstContentLine, ansiPattern_, "", NULL, NULL);
         }
