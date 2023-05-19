@@ -2097,6 +2097,13 @@ static void acceptValueInput_(iWidget *dlg) {
     }
 }
 
+static int valueInputSizeIndex_ = 0;
+
+iLocalDef int metricFromIndex_(int index) {
+    const int sizes[3] = { 100, 115, 130 };
+    return sizes[iClamp(index, 0, iElemCount(sizes) - 1)];
+}
+
 static void updateValueInputSizing_(iWidget *dlg) {
     const iRect safeRoot = safeRect_Root(dlg->root);
     const iInt2 rootSize = safeRoot.size;
@@ -2109,9 +2116,10 @@ static void updateValueInputSizing_(iWidget *dlg) {
         dlg->rect.size.x = iMin(rootSize.x, rootSize.y);
     }
     else {
-        dlg->rect.size.x =
-            iMin(rootSize.x, iMaxi(iMaxi(100 * gap_UI, title ? title->rect.size.x : 0),
-                                   prompt->rect.size.x));
+        dlg->rect.size.x = iMin(rootSize.x,
+                                metricFromIndex_(valueInputSizeIndex_) * gap_UI);
+                                            /*title ? title->rect.size.x : 0*//*,
+                                      prompt->rect.size.x);*/
     }
     if (deviceType_App() != desktop_AppDeviceType) {
         dlg->minSize.y = get_MainWindow()->keyboardHeight == 0 ? 60 * gap_UI : 0;
@@ -2234,6 +2242,31 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         destroy_Widget(dlg);
         return iTrue;
     }
+    else if (isDesktop_Platform() &&
+             (equal_Command(cmd, "zoom.set") || equal_Command(cmd, "zoom.delta"))) {       
+        /* DocumentWidget sets an ID that gets used as the posted command when the
+           dialog is accepted. An actual configurable flag might be useful here,
+           if resizing in needed in other contexts. */
+        if (startsWith_String(id_Widget(dlg), "!document.input.submit")) {
+            iInputWidget *input = findChild_Widget(dlg, "input");
+            if (equal_Command(cmd, "zoom.set")) {
+                valueInputSizeIndex_ = 0;
+            }
+            else {
+                valueInputSizeIndex_ += iSign(arg_Command(cmd));
+                valueInputSizeIndex_ = iClamp(valueInputSizeIndex_, 0, 2);
+            }
+            setFont_InputWidget(input,
+                                FONT_ID(default_FontId,
+                                        regular_FontStyle,
+                                        uiMedium_FontSize + valueInputSizeIndex_));
+            updateValueInputSizing_(dlg);
+            arrange_Widget(dlg);
+            arrange_Widget(dlg);
+            refresh_Widget(dlg);
+        }
+        return iTrue;
+    }
     return iFalse;
 }
 
@@ -2349,6 +2382,12 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
         setFont_InputWidget(input, uiLabelBig_FontId);
         setBackgroundColor_Widget(dlg, uiBackgroundSidebar_ColorId);
         setContentPadding_InputWidget(input, gap_UI, gap_UI);
+    }
+    else if (isDesktop_Platform()) {
+        /* The input prompt font is resizable. */
+        setFont_InputWidget(
+            input,
+            FONT_ID(default_FontId, regular_FontStyle, uiMedium_FontSize + valueInputSizeIndex_));
     }
     if (initialValue) {
         setText_InputWidget(input, initialValue);
