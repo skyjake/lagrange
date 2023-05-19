@@ -1671,13 +1671,21 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
     iString str;
     initUnicodeN_String(&str, &icon, 1);
     drawCentered_Text(banner_FontId, iconRect, iTrue, fg, "%s", cstr_String(&str));
-    deinit_String(&str);
     if (isHeadingVisible) {
         iRangecc    text = currentHeading_DocumentView_(d);
         iInt2       pos  = addY_I2(bottomLeft_Rect(iconRect), gap_Text);
         const int   font = sideHeadingFont;
+        /* If the heading starts with the same symbol as we have in the icon, there's no
+           point in repeating. The icon is always a non-alphabetic symbol like Emoji so
+           we aren't cutting any words off here. */
+        if (startsWith_Rangecc(text, cstr_String(&str)) &&
+            size_Range(&text) > size_String(&str)) {
+            text.start += size_String(&str);
+            trimStart_Rangecc(&text);
+        }
         drawWrapRange_Text(font, pos, avail, tmBannerSideTitle_ColorId, text);
     }
+    deinit_String(&str);
     endTarget_Paint(&p);
     SDL_SetTextureBlendMode(dbuf->sideIconBuf, SDL_BLENDMODE_BLEND);
 }
