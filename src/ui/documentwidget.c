@@ -4336,6 +4336,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             showOrHideIndicators_DocumentWidget_(d);
             updateFetchProgress_DocumentWidget_(d);
             updateHover_Window(window_Widget(w));
+            visitUrl_Visited(visited_App(), d->mod.url, 0); /* in case it was opened in background */
         }
         showOrHideInputPrompt_DocumentWidget_(d);
         init_Anim(&d->view.sideOpacity, 0);
