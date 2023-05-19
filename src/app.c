@@ -1831,6 +1831,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->lastEventTime = SDL_GetTicks();
 #endif
                 postRefresh_App();
+                if (d->isTextInputActive) {
+                    SDL_StartTextInput();
+                }
                 break;
             case SDL_APP_WILLENTERBACKGROUND: {
 #if defined (iPlatformAppleMobile)
@@ -1847,6 +1850,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 savePrefs_App_(d);
                 saveState_App_(d);
                 d->isSuspended = iTrue;
+                if (d->isTextInputActive) {
+                    SDL_StopTextInput();
+                }
                 break;
             }
             case SDL_APP_TERMINATING: {
