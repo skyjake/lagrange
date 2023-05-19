@@ -2378,6 +2378,23 @@ static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     setTextColor_LabelWidget(bmPin, isBookmarked ? uiTextAction_ColorId : uiText_ColorId);
 }
 
+static void showOrHideInputPrompt_DocumentWidget_(iDocumentWidget *d) {
+    iWidget *w = as_Widget(d);
+    const iBool show = isVisible_Widget(w);
+    iForEach(ObjectList, i, children_Widget(d)) {
+        if (startsWith_String(id_Widget(i.object), "!document.input.submit")) {
+            setFlags_Widget(i.object, hidden_WidgetFlag, !show);
+            iInputWidget *input = findChild_Widget(i.object, "input");
+            if (show) {
+                setFocus_Widget(as_Widget(input));
+            }
+            else {
+                setSelectAllOnFocus_InputWidget(input, iFalse);
+            }
+        }
+    }    
+}
+
 static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
     setSite_Banner(d->banner, siteText_DocumentWidget_(d), siteIcon_GmDocument(d->view.doc));
 }
@@ -4320,6 +4337,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateFetchProgress_DocumentWidget_(d);
             updateHover_Window(window_Widget(w));
         }
+        showOrHideInputPrompt_DocumentWidget_(d);
         init_Anim(&d->view.sideOpacity, 0);
         init_Anim(&d->view.altTextOpacity, 0);
         updateSideOpacity_DocumentView_(&d->view, iFalse);
