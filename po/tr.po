@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2023-03-17 11:15+0000\n"
+"PO-Revision-Date: 2023-05-20 05:54+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -2595,3 +2595,9 @@ msgstr "Türkçe"
 # A language choice in the Translation dialog.
 msgid "lang.uk"
 msgstr "Ukraynaca"
+
+msgid "prefs.newtab.insert"
+msgstr "Yeni sekme etkinin yanına:"
+
+msgid "prefs.redirect.allowscheme"
+msgstr "Şema değiştiren yeniden yönlendirmeler:"
