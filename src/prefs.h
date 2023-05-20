@@ -200,6 +200,7 @@ struct Impl_Prefs {
     float            uiScale;
     enum iToolbarAction navbarActions[maxNavbarActions_Prefs];
     enum iToolbarAction toolbarActions[2];
+    int              inputZoomLevel;
     /* Document presentation */
     int              zoomPercent;
     /* Behavior */

@@ -288,6 +288,7 @@ static iString *serializePrefs_App_(const iApp *d) {
                         cstr_String(&d->prefs.strings[monospaceFont_PrefsString]),
                         cstr_String(&d->prefs.strings[monospaceDocumentFont_PrefsString]));
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
+    appendFormat_String(str, "inputzoom.set arg:%d\n", d->prefs.inputZoomLevel);
     appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
@@ -4175,6 +4176,11 @@ iBool handleCommand_App(const char *cmd) {
                                        collectNewCStr_String("text/gemini"),
                                        utf8_String(src),
                                        0);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "inputzoom.set")) {
+        d->prefs.inputZoomLevel = arg_Command(cmd);
+        d->prefs.inputZoomLevel = iClamp(d->prefs.inputZoomLevel, 0, 2);
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {

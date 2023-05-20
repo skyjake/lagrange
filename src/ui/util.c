@@ -2097,8 +2097,6 @@ static void acceptValueInput_(iWidget *dlg) {
     }
 }
 
-static int valueInputSizeIndex_ = 0;
-
 iLocalDef int metricFromIndex_(int index) {
     const int sizes[3] = { 100, 115, 130 };
     return sizes[iClamp(index, 0, iElemCount(sizes) - 1)];
@@ -2117,7 +2115,7 @@ static void updateValueInputSizing_(iWidget *dlg) {
     }
     else {
         dlg->rect.size.x = iMin(rootSize.x,
-                                metricFromIndex_(valueInputSizeIndex_) * gap_UI);
+                                metricFromIndex_(prefs_App()->inputZoomLevel) * gap_UI);
                                             /*title ? title->rect.size.x : 0*//*,
                                       prompt->rect.size.x);*/
     }
@@ -2249,17 +2247,19 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
            if resizing in needed in other contexts. */
         if (startsWith_String(id_Widget(dlg), "!document.input.submit")) {
             iInputWidget *input = findChild_Widget(dlg, "input");
+            int sizeIndex = prefs_App()->inputZoomLevel;
             if (equal_Command(cmd, "zoom.set")) {
-                valueInputSizeIndex_ = 0;
+                sizeIndex = 0;
             }
             else {
-                valueInputSizeIndex_ += iSign(arg_Command(cmd));
-                valueInputSizeIndex_ = iClamp(valueInputSizeIndex_, 0, 2);
+                sizeIndex += iSign(arg_Command(cmd));
+                sizeIndex = iClamp(sizeIndex, 0, 2);
             }
+            ((iPrefs *) prefs_App())->inputZoomLevel = sizeIndex; /* const cast... */
             setFont_InputWidget(input,
                                 FONT_ID(default_FontId,
                                         regular_FontStyle,
-                                        uiMedium_FontSize + valueInputSizeIndex_));
+                                        uiMedium_FontSize + sizeIndex));
             updateValueInputSizing_(dlg);
             arrange_Widget(dlg);
             arrange_Widget(dlg);
@@ -2385,9 +2385,10 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
     }
     else if (isDesktop_Platform()) {
         /* The input prompt font is resizable. */
-        setFont_InputWidget(
-            input,
-            FONT_ID(default_FontId, regular_FontStyle, uiMedium_FontSize + valueInputSizeIndex_));
+        setFont_InputWidget(input,
+                            FONT_ID(default_FontId,
+                                    regular_FontStyle,
+                                    uiMedium_FontSize + prefs_App()->inputZoomLevel));
     }
     if (initialValue) {
         setText_InputWidget(input, initialValue);
