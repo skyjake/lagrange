@@ -72,6 +72,7 @@ int     minLines_InputWidget            (const iInputWidget *);
 int     maxLines_InputWidget            (const iInputWidget *);
 iInputWidgetContentPadding  contentPadding_InputWidget  (const iInputWidget *);
 const iString *             text_InputWidget            (const iInputWidget *);
+const iString *             rawText_InputWidget         (const iInputWidget *); /* what was actually typed */
 int     font_InputWidget                (const iInputWidget *);
 
 iLocalDef const char *cstrText_InputWidget(const iInputWidget *d) {

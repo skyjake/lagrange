@@ -1015,15 +1015,16 @@ static const iString *omitDefaultScheme_(iString *url) {
 }
 
 const iString *text_InputWidget(const iInputWidget *d) {
-    if (d) {
-        iString *text = collect_String(text_InputWidget_(d));
-        if (d->inFlags & isUrl_InputWidgetFlag) {
-            /* Add the "gemini" scheme back if one is omitted. */
-            restoreDefaultScheme_(text);
-        }
-        return text;
+    iString *text = collect_String(d ? text_InputWidget_(d) : new_String());
+    if (d && d->inFlags & isUrl_InputWidgetFlag) {
+        /* Add the "gemini" scheme back if one is omitted. */
+        restoreDefaultScheme_(text);
     }
-    return collectNew_String();
+    return text;
+}
+
+const iString *rawText_InputWidget(const iInputWidget *d) {
+    return collect_String(d ? text_InputWidget_(d) : new_String());
 }
 
 int font_InputWidget(const iInputWidget *d) {

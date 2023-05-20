@@ -1047,8 +1047,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "input.edited")) {
         iAnyObject *   url  = findChild_Widget(navBar, "url");
-        const iString *text = text_InputWidget(url);
-        const iBool show = willPerformSearchQuery_(text);
+        const iString *text = rawText_InputWidget(url);
+        const iBool    show = willPerformSearchQuery_(text);
         showSearchQueryIndicator_(show);
         if (pointer_Command(cmd) == url) {
             submit_LookupWidget(findWidget_App("lookup"), text);
