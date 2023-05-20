@@ -2276,6 +2276,14 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
             setWindow = iFalse;
         }
         const iChar siteIcon = siteIcon_GmDocument(d->view.doc);
+        /* Remove a redundant icon. */ {           
+            iStringConstIterator iter;
+            init_StringConstIterator(&iter, text);
+            if (iter.value == siteIcon) {
+                remove_Block(&text->chars, 0, iter.next - cstr_String(text));
+                trim_String(text);
+            }
+        }
         if (siteIcon) {
             if (!isEmpty_String(text)) {
                 prependCStr_String(text, "  " restore_ColorEscape);
