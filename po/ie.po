@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2023-04-07 11:35+0000\n"
+"PO-Revision-Date: 2023-05-20 05:54+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -2546,3 +2546,9 @@ msgstr "Omisser formatat textu:"
 # A language choice in the Translation dialog.
 msgid "lang.uk"
 msgstr "Ucrainan"
+
+msgid "prefs.newtab.insert"
+msgstr "Nov carte apu li activ:"
+
+msgid "prefs.redirect.allowscheme"
+msgstr "Redirectiones quel cambia li schema:"
