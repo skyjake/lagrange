@@ -26,6 +26,7 @@ struct Impl_Root {
     iAudience *arrangementChanged;
     iAudience *visualOffsetsChanged; /* called after running tickers */
     iColor     tmPalette[tmMax_ColorId]; /* theme-specific palette */
+    iString    tabInsertId; /* place new tab next to this one */
 };
 
 iDeclareTypeConstruction(Root)

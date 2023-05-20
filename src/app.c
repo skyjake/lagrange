@@ -341,7 +341,6 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.menubar", &d->prefs.menuBar },
         { "prefs.mono.gemini", &d->prefs.monospaceGemini },
         { "prefs.mono.gopher", &d->prefs.monospaceGopher },
-        { "prefs.newtab.insert", &d->prefs.newTabNextToActive },
         { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
         { "prefs.redirect.allowscheme", &d->prefs.allowSchemeChangingRedirect },
         { "prefs.retaintabs", &d->prefs.retainTabs },
@@ -2974,9 +2973,14 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, int newTabFlags)
     }
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
-    if (prefs_App()->newTabNextToActive && newTabFlags & insertRight_NewTabFlag) {
-        /* Move the new tab next to the current tab. */
-        moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, currentTabIndex + 1);
+    /* Find and move to the insertion point. */ {
+        const size_t insertAt = tabPageIndex_Widget(
+            tabs, findChild_Widget(tabs, cstr_String(&get_Root()->tabInsertId)));
+        if (insertAt != iInvalidPos) {
+            moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, insertAt + 1);
+        }
+        /* The next tab comes here. */
+        set_String(&as_Widget(doc)->root->tabInsertId, id_Widget(as_Widget(doc)));
     }
     addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
@@ -3525,10 +3529,6 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         d->prefs.allowSchemeChangingRedirect = arg_Command(cmd) != 0;
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.newtab.insert.changed")) {
-        d->prefs.newTabNextToActive = arg_Command(cmd) != 0;
-        return iTrue;
-    }
     else if (equal_Command(cmd, "smoothscroll")) {
         d->prefs.smoothScrolling = arg_Command(cmd);
         return iTrue;
@@ -4019,9 +4019,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
     }
     if (newTab & newTabMask_OpenTabFlag) {
         /* `newtab:2` to open in background */
-        doc = newTab_App(NULL,
-                         ((newTab & new_OpenTabFlag) != 0 ? switchTo_NewTabFlag : 0) |
-                          (newTab & append_OpenTabFlag ? 0 : insertRight_NewTabFlag));
+        doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0 ? switchTo_NewTabFlag : 0);
     }
     iHistory   *history       = history_DocumentWidget(doc);
     const iBool waitForIdle   = argLabel_Command(cmd, "idle") != 0;
@@ -4170,7 +4168,7 @@ iBool handleCommand_App(const char *cmd) {
             appendFormat_String(src, "${glyphfinder.results.empty}\n");
         }
         appendCStr_String(src, "\n=> about:fonts ${menu.fonts}");
-        iDocumentWidget *page = newTab_App(NULL, switchTo_NewTabFlag | insertRight_NewTabFlag);
+        iDocumentWidget *page = newTab_App(NULL, switchTo_NewTabFlag);
         translate_Lang(src);
         setUrlAndSource_DocumentWidget(page,
                                        collectNewCStr_String(""),
@@ -4295,8 +4293,7 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
-        newTab_App(isDuplicate ? document_App() : NULL,
-                   switchTo_NewTabFlag | insertRight_NewTabFlag);
+        newTab_App(isDuplicate ? document_App() : NULL, switchTo_NewTabFlag);
         if (!isDuplicate) {
             postCommandf_App("navigate.home focus:%d", deviceType_App() == desktop_AppDeviceType);
         }
@@ -4360,11 +4357,7 @@ iBool handleCommand_App(const char *cmd) {
                 if (wasCurrent) {
                     postCommandf_App(
                         "tabs.switch page:%p",
-                        tabPage_Widget(
-                            tabs,
-                            index > 0
-                                ? index - (isRightmost || prefs_App()->newTabNextToActive ? 1 : 0)
-                                : 0));
+                        tabPage_Widget(tabs, index > 0 ? index - (isRightmost ? 1 : 0) : 0));
                 }
             }
         }
@@ -4427,7 +4420,6 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.edge"), d->prefs.edgeSwipe);
         setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.page"), d->prefs.pageSwipe);
         setToggle_Widget(findChild_Widget(dlg, "prefs.gopher.gemstyle"), d->prefs.geminiStyledGopher);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.newtab.insert"), d->prefs.newTabNextToActive);
         setToggle_Widget(findChild_Widget(dlg, "prefs.redirect.allowscheme"), d->prefs.allowSchemeChangingRedirect);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
@@ -4727,7 +4719,7 @@ iBool handleCommand_App(const char *cmd) {
         generate_Export(export);
         openEmpty_Buffer(zip);
         serialize_Archive(archive_Export(export), stream_Buffer(zip));
-        iDocumentWidget *expTab = newTab_App(NULL, switchTo_NewTabFlag | insertRight_NewTabFlag);
+        iDocumentWidget *expTab = newTab_App(NULL, switchTo_NewTabFlag);
         iDate now;
         initCurrent_Date(&now);
         setUrlAndSource_DocumentWidget(

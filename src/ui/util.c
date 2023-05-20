@@ -3527,7 +3527,6 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, computer_Icon " ${heading.prefs.interface}", cyan_ColorId, '6', &headings, &values),
                      "prefs.page.ui");
         addDialogToggle_(headings, values, "${prefs.hoverlink}", "prefs.hoverlink");
-        addDialogToggle_(headings, values, "${prefs.newtab.insert}", "prefs.newtab.insert");
         addDialogToggle_(headings, values, "${prefs.bookmarks.addbottom}", "prefs.bookmarks.addbottom");
         /* Return key behaviors. */ {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));

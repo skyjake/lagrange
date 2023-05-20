@@ -240,6 +240,7 @@ iDefineAudienceGetter(Root, visualOffsetsChanged)
 
 void init_Root(iRoot *d) {
     iZap(*d);
+    init_String(&d->tabInsertId);
 }
 
 void deinit_Root(iRoot *d) {
@@ -248,6 +249,7 @@ void deinit_Root(iRoot *d) {
     delete_PtrSet(d->pendingDestruction);
     delete_Audience(d->visualOffsetsChanged);
     delete_Audience(d->arrangementChanged);
+    deinit_String(&d->tabInsertId);
     if (d->loadAnimTimer) {
         SDL_RemoveTimer(d->loadAnimTimer);
         d->loadAnimTimer = 0;

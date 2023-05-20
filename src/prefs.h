@@ -73,7 +73,6 @@ enum iPrefsBool {
     
     evenSplit_PrefsBool,
     detachedPrefs_PrefsBool,
-    newTabNextToActive_PrefsBool,
     
     /* Document presentation */
     sideIcon_PrefsBool,
@@ -145,7 +144,6 @@ struct Impl_Prefs {
             
             iBool evenSplit;
             iBool detachedPrefs;
-            iBool newTabNextToActive;
             
             /* Document presentation */
             iBool sideIcon;
