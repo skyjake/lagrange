@@ -2542,8 +2542,5 @@ msgstr "Turkki"
 msgid "lang.uk"
 msgstr "Ukraina"
 
-msgid "prefs.newtab.insert"
-msgstr "Uudet välilehdet vierelle:"
-
 msgid "prefs.redirect.allowscheme"
 msgstr "Protokollan vaihto uudelleenohjattaessa:"

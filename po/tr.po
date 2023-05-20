@@ -2596,8 +2596,5 @@ msgstr "Türkçe"
 msgid "lang.uk"
 msgstr "Ukraynaca"
 
-msgid "prefs.newtab.insert"
-msgstr "Yeni sekme etkinin yanına:"
-
 msgid "prefs.redirect.allowscheme"
 msgstr "Şema değiştiren yeniden yönlendirmeler:"

@@ -2547,8 +2547,5 @@ msgstr "Omisser formatat textu:"
 msgid "lang.uk"
 msgstr "Ucrainan"
 
-msgid "prefs.newtab.insert"
-msgstr "Nov carte apu li activ:"
-
 msgid "prefs.redirect.allowscheme"
 msgstr "Redirectiones quel cambia li schema:"
