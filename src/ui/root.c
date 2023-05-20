@@ -1065,15 +1065,17 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         }
         if (arg_Command(cmd) && argLabel_Command(cmd, "enter") &&
             !isFocused_Widget(findWidget_App("lookup"))) {
-            iString *newUrl = copy_String(text_InputWidget(url));
+            iString *newUrl = copy_String(rawText_InputWidget(url));
             trim_String(newUrl);
             if (willPerformSearchQuery_(newUrl)) {
-                postCommandf_Root(navBar->root, "open url:%s", cstr_String(searchQueryUrl_App(newUrl)));
+                postCommandf_Root(
+                    navBar->root, "open url:%s", cstr_String(searchQueryUrl_App(newUrl)));
             }
             else {
-                postCommandf_Root(navBar->root,
+                postCommandf_Root(
+                    navBar->root,
                     "open notinline:1 url:%s",
-                    cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
+                    cstr_String(absoluteUrl_String(&iStringLiteral(""), text_InputWidget(url))));
             }
             return iFalse;
         }

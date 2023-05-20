@@ -45,6 +45,7 @@ void init_Prefs(iPrefs *d) {
     d->retainWindowSize  = iTrue;
     d->uiAnimations      = iTrue;
     d->uiScale           = 1.0f; /* default set elsewhere */
+    d->inputZoomLevel    = 0;
     d->zoomPercent       = 100;
     d->navbarActions[0]  = back_ToolbarAction;
     d->navbarActions[1]  = forward_ToolbarAction;
