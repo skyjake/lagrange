@@ -999,10 +999,11 @@ void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
 }
 
 static void restoreDefaultScheme_(iString *url) {
-    iUrl parts;
-    init_Url(&parts, url);
-    if (isEmpty_Range(&parts.scheme) && startsWith_String(url, "//")) {
+    if (startsWith_String(url, "//")) {
         prependCStr_String(url, "gemini:");
+    }
+    else if (indexOfCStr_String(url, "://") == iInvalidPos) {
+        prependCStr_String(url, "gemini://");    
     }
 }
 
