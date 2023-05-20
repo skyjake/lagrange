@@ -24,6 +24,7 @@ Fixes:
 * Fixed input focus going to the wrong split when pressing Ctrl+L/⌘L with an Upload dialog open.
 * Fixed text fields becoming nonresponsive when multiple fields are active.
 * Fixed input query dialogs not being hidden when the tab changes.
+* Fixed incorrect parsing of "hostname:port" in URL field (without `//` or `gemini://`).
 * Fixed potential crash when switching between cached pages while navigating in history.
 * Fixed potential crash when closing split view during a scrolling animation.
 
