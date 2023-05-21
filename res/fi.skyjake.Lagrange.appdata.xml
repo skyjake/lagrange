@@ -45,6 +45,30 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.16" date="2023-05-21">
+            <description>
+                <ul>
+                    <li>Input prompt font size can be changed with the Zoom In/Out/Reset keys.</li>
+                    <li>Preferences: Option for silently following scheme-changing redirects (Network tab; default: no).</li>
+                    <li>Tab creation and closing follows common browser conventions: new tabs are opened next to the most recently opened tab, so they retain the correct left-to-right order.</li>
+                    <li>Preferences: Moved cache/memory size settings to Content tab.</li>
+                    <li>Page title in margin omits prefix Emoji if it matches the bookmark icon.</li>
+                    <li>Adjusted word-wrapping to break at a period inside a word (e.g., domain names).</li>
+                    <li>If the page is missing a level 1 heading, use the first content line as the title.</li>
+                    <li>Fixed tab order getting reversed when restoring tabs at launch.</li>
+                    <li>Fixed order of opened tabs when using "Open in New Tabs" on a bookmark folder.</li>
+                    <li>Fixed input focus going to the wrong split when pressing Ctrl+L with an Upload dialog open.</li>
+                    <li>Fixed text fields becoming nonresponsive when multiple fields are active.</li>
+                    <li>Fixed input query dialogs not being hidden when the tab changes.</li>
+                    <li>Fixed incorrect parsing of "hostname:port" in URL field (without `//` or `gemini://`).</li>
+                    <li>Fixed potential crash when switching between cached pages while navigating in history.</li>
+                    <li>Fixed potential crash when closing split view during a scrolling animation.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.16.0</url>
+        </release>
         <release version="1.15.9" date="2023-04-28">
             <description>
                 <p>Changes in v1.15.9:</p>
