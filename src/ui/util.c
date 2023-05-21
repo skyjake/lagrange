@@ -2097,6 +2097,11 @@ static void acceptValueInput_(iWidget *dlg) {
     }
 }
 
+iLocalDef int metricFromIndex_(int index) {
+    const int sizes[3] = { 100, 115, 130 };
+    return sizes[iClamp(index, 0, iElemCount(sizes) - 1)];
+}
+
 static void updateValueInputSizing_(iWidget *dlg) {
     const iRect safeRoot = safeRect_Root(dlg->root);
     const iInt2 rootSize = safeRoot.size;
@@ -2109,9 +2114,10 @@ static void updateValueInputSizing_(iWidget *dlg) {
         dlg->rect.size.x = iMin(rootSize.x, rootSize.y);
     }
     else {
-        dlg->rect.size.x =
-            iMin(rootSize.x, iMaxi(iMaxi(100 * gap_UI, title ? title->rect.size.x : 0),
-                                   prompt->rect.size.x));
+        dlg->rect.size.x = iMin(rootSize.x,
+                                metricFromIndex_(prefs_App()->inputZoomLevel) * gap_UI);
+                                            /*title ? title->rect.size.x : 0*//*,
+                                      prompt->rect.size.x);*/
     }
     if (deviceType_App() != desktop_AppDeviceType) {
         dlg->minSize.y = get_MainWindow()->keyboardHeight == 0 ? 60 * gap_UI : 0;
@@ -2234,6 +2240,33 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         destroy_Widget(dlg);
         return iTrue;
     }
+    else if (isDesktop_Platform() &&
+             (equal_Command(cmd, "zoom.set") || equal_Command(cmd, "zoom.delta"))) {       
+        /* DocumentWidget sets an ID that gets used as the posted command when the
+           dialog is accepted. An actual configurable flag might be useful here,
+           if resizing in needed in other contexts. */
+        if (startsWith_String(id_Widget(dlg), "!document.input.submit")) {
+            iInputWidget *input = findChild_Widget(dlg, "input");
+            int sizeIndex = prefs_App()->inputZoomLevel;
+            if (equal_Command(cmd, "zoom.set")) {
+                sizeIndex = 0;
+            }
+            else {
+                sizeIndex += iSign(arg_Command(cmd));
+                sizeIndex = iClamp(sizeIndex, 0, 2);
+            }
+            ((iPrefs *) prefs_App())->inputZoomLevel = sizeIndex; /* const cast... */
+            setFont_InputWidget(input,
+                                FONT_ID(default_FontId,
+                                        regular_FontStyle,
+                                        uiMedium_FontSize + sizeIndex));
+            updateValueInputSizing_(dlg);
+            arrange_Widget(dlg);
+            arrange_Widget(dlg);
+            refresh_Widget(dlg);
+        }
+        return iTrue;
+    }
     return iFalse;
 }
 
@@ -2349,6 +2382,13 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
         setFont_InputWidget(input, uiLabelBig_FontId);
         setBackgroundColor_Widget(dlg, uiBackgroundSidebar_ColorId);
         setContentPadding_InputWidget(input, gap_UI, gap_UI);
+    }
+    else if (isDesktop_Platform()) {
+        /* The input prompt font is resizable. */
+        setFont_InputWidget(input,
+                            FONT_ID(default_FontId,
+                                    regular_FontStyle,
+                                    uiMedium_FontSize + prefs_App()->inputZoomLevel));
     }
     if (initialValue) {
         setText_InputWidget(input, initialValue);
@@ -3297,23 +3337,6 @@ iWidget *makePreferences_Widget(void) {
                 }
             }
         }
-#if 0
-        iWidget *accent = new_Widget(); {
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.teal}", "accent.set arg:0"))), "prefs.accent.0");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.orange}", "accent.set arg:1"))), "prefs.accent.1");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.red}", "accent.set arg:2"))), "prefs.accent.2");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.green}", "accent.set arg:3"))), "prefs.accent.3");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.blue}", "accent.set arg:4"))), "prefs.accent.4");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.gray}", "accent.set arg:5"))), "prefs.accent.5");
-#  if defined (iPlatformApple)
-            /* TODO: Re-enable this! Accent colors should now be applied in a way that suits 
-               the system accents, as long as there are light and dark variants. */
-//            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.system}", "accent.set arg:2"))), "prefs.accent.2");
-#  endif
-        }
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.accent}")));
-        addChildFlags_Widget(values, iClob(accent), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-#endif
         addDialogPadding_(headings, values);
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         addDialogToggle_(headings, values, "${prefs.customframe}", "prefs.customframe");
@@ -3460,7 +3483,32 @@ iWidget *makePreferences_Widget(void) {
         addDialogToggle_(headings, values, "${prefs.collapsepreonload}", "prefs.collapsepreonload");
     }
     /* Content. */ {
-        setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}", green_ColorId, '5', &headings, &values), "prefs.page.content");
+        setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}",
+                                                   green_ColorId, '5', &headings, &values),
+                     "prefs.page.content");
+        /* Cache size. */ {
+            iInputWidget *cache = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(cache, iTrue);
+            addPrefsInputWithHeading_(headings, values, "prefs.cachesize", iClob(cache));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(cache),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
+        }
+        /* Memory size. */ {
+            iInputWidget *mem = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(mem, iTrue);
+            addPrefsInputWithHeading_(headings, values, "prefs.memorysize", iClob(mem));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(mem),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
+        }
+        addDialogPadding_(headings, values);
         addDialogToggleGroup_(headings,
                               values,
                               "${prefs.gemtext.ansi}",
@@ -3531,7 +3579,8 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Keybindings. */ {
         iBindingsWidget *bind = new_BindingsWidget();
-        appendFramelessTabPage_Widget(tabs, iClob(bind), keyboard_Icon " ${heading.prefs.keys}", cyan_ColorId, '7', KMOD_PRIMARY);
+        appendFramelessTabPage_Widget(tabs, iClob(bind), keyboard_Icon " ${heading.prefs.keys}",
+                                      cyan_ColorId, '7', KMOD_PRIMARY);
     }
     /* Network. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
@@ -3541,32 +3590,9 @@ iWidget *makePreferences_Widget(void) {
                                                    &headings,
                                                    &values),
                      "prefs.page.network");
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.decodeurls}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
+        addDialogToggle_(headings, values, "${prefs.redirect.allowscheme}", "prefs.redirect.allowscheme");
+        addDialogToggle_(headings, values, "${prefs.decodeurls}", "prefs.decodeurls");
         addPrefsInputWithHeading_(headings, values, "prefs.urlsize", iClob(new_InputWidget(10)));
-        addDialogPadding_(headings, values);
-        /* Cache size. */ {
-            iInputWidget *cache = new_InputWidget(4);
-            setSelectAllOnFocus_InputWidget(cache, iTrue);
-            addPrefsInputWithHeading_(headings, values, "prefs.cachesize", iClob(cache));
-            iWidget *unit =
-                addChildFlags_Widget(as_Widget(cache),
-                                     iClob(new_LabelWidget("${mb}", NULL)),
-                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
-                                     resizeToParentHeight_WidgetFlag);
-            setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
-        }
-        /* Memory size. */ {
-            iInputWidget *mem = new_InputWidget(4);
-            setSelectAllOnFocus_InputWidget(mem, iTrue);
-            addPrefsInputWithHeading_(headings, values, "prefs.memorysize", iClob(mem));
-            iWidget *unit =
-                addChildFlags_Widget(as_Widget(mem),
-                                     iClob(new_LabelWidget("${mb}", NULL)),
-                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
-                                         resizeToParentHeight_WidgetFlag);
-            setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
-        }
         makeTwoColumnHeading_("${heading.prefs.proxies}", headings, values);
         addPrefsInputWithHeading_(headings, values, "prefs.proxy.gemini", iClob(new_InputWidget(0)));
         addPrefsInputWithHeading_(headings, values, "prefs.proxy.gopher", iClob(new_InputWidget(0)));

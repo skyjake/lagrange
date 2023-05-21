@@ -74,7 +74,11 @@ enum iUserEventCode {
        take, it could turn into a tap-and-hold for example. */
     widgetTapBegins_UserEventCode,
     widgetTouchEnds_UserEventCode, /* finger lifted, but momentum may continue */
-    releaseObject_UserEventCode, /* object that needs releasing in the main thread */
+    releaseObject_UserEventCode,   /* object that needs releasing in the main thread */
+};
+
+enum iNewTabFlag {
+    switchTo_NewTabFlag = iBit(1),
 };
 
 const iString *execPath_App     (void);
@@ -110,7 +114,7 @@ iDocumentWidget *   document_App        (void);
 iObjectList *       listDocuments_App   (const iRoot *rootOrNull); /* NULL for all roots of current window */
 iStringSet *        listOpenURLs_App    (void); /* all tabs */
 iPtrArray *         listWindows_App     (void);
-iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
+iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, int newTabFlags);
 void                trimCache_App       (void);
 void                trimMemory_App      (void);
 //iBool               findCachedContent_App(const iString *url, iString *mime_out, iBlock *data_out);

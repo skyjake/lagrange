@@ -288,6 +288,7 @@ static iString *serializePrefs_App_(const iApp *d) {
                         cstr_String(&d->prefs.strings[monospaceFont_PrefsString]),
                         cstr_String(&d->prefs.strings[monospaceDocumentFont_PrefsString]));
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
+    appendFormat_String(str, "inputzoom.set arg:%d\n", d->prefs.inputZoomLevel);
     appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
@@ -322,26 +323,27 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.archive.openindex", &d->prefs.openArchiveIndexPages },
         { "prefs.biglede", &d->prefs.bigFirstParagraph },
         { "prefs.blink", &d->prefs.blinkingCursor },
-        { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
-        { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
-        { "prefs.evensplit", &d->prefs.evenSplit },
-        { "prefs.menubar", &d->prefs.menuBar },
         { "prefs.boldlink.dark", &d->prefs.boldLinkDark },
         { "prefs.boldlink.light", &d->prefs.boldLinkLight },
         { "prefs.boldlink.visited", &d->prefs.boldLinkVisited },
         { "prefs.bookmarks.addbottom", &d->prefs.addBookmarksToBottom },
+        { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
+        { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
         { "prefs.centershort", &d->prefs.centerShortDocs },
         { "prefs.collapsepreonload", &d->prefs.collapsePreOnLoad },
         { "prefs.dataurl.openimages", &d->prefs.openDataUrlImagesOnLoad },
+        { "prefs.evensplit", &d->prefs.evenSplit },
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
         { "prefs.gopher.gemstyle", &d->prefs.geminiStyledGopher },
         { "prefs.hoverlink", &d->prefs.hoverLink },
         { "prefs.justify", &d->prefs.justifyParagraph },
         { "prefs.markdown.viewsource", &d->prefs.markdownAsSource },
+        { "prefs.menubar", &d->prefs.menuBar },
         { "prefs.mono.gemini", &d->prefs.monospaceGemini },
         { "prefs.mono.gopher", &d->prefs.monospaceGopher },
         { "prefs.plaintext.wrap", &d->prefs.plainTextWrap },
+        { "prefs.redirect.allowscheme", &d->prefs.allowSchemeChangingRedirect },
         { "prefs.retaintabs", &d->prefs.retainTabs },
         { "prefs.sideicon", &d->prefs.sideIcon },
         { "prefs.swipe.edge", &d->prefs.edgeSwipe },
@@ -821,7 +823,7 @@ static iBool loadState_App_(iApp *d) {
                         doc = document_Root(get_Root());
                     }
                     else {
-                        doc = newTab_App(NULL, iFalse /* no switching */);
+                        doc = newTab_App(NULL, 0 /* no switching or inserting */);
                     }
                     if (flags & current_DocumentStateFlag) {
                         value_Array(currentTabs, numWins - 1, iCurrentTabs).currentTab[rootIndex] = doc;
@@ -1829,6 +1831,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->lastEventTime = SDL_GetTicks();
 #endif
                 postRefresh_App();
+                if (d->isTextInputActive) {
+                    SDL_StartTextInput();
+                }
                 break;
             case SDL_APP_WILLENTERBACKGROUND: {
 #if defined (iPlatformAppleMobile)
@@ -1845,6 +1850,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 savePrefs_App_(d);
                 saveState_App_(d);
                 d->isSuspended = iTrue;
+                if (d->isTextInputActive) {
+                    SDL_StopTextInput();
+                }
                 break;
             }
             case SDL_APP_TERMINATING: {
@@ -2951,7 +2959,7 @@ iDocumentWidget *document_Command(const char *cmd) {
     return document_App();
 }
 
-iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNew) {
+iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, int newTabFlags) {
     iWidget *tabs = findWidget_Root("doctabs");
     size_t currentTabIndex = tabPageIndex_Widget(tabs, document_App());
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
@@ -2966,12 +2974,19 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     }
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
-    /* Move the new tab next to the current tab. */
-    moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, currentTabIndex + 1);
+    /* Find and move to the insertion point. */ {
+        const size_t insertAt = tabPageIndex_Widget(
+            tabs, findChild_Widget(tabs, cstr_String(&get_Root()->tabInsertId)));
+        if (insertAt != iInvalidPos) {
+            moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, insertAt + 1);
+        }
+        /* The next tab comes here. */
+        set_String(&as_Widget(doc)->root->tabInsertId, id_Widget(as_Widget(doc)));
+    }
     addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
     showOrHideNewTabButton_Root(tabs->root);
-    if (switchToNew) {
+    if (newTabFlags & switchTo_NewTabFlag) {
         postCommandf_App("tabs.switch page:%p", doc);
     }
     arrange_Widget(tabs);
@@ -3511,6 +3526,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         d->prefs.time24h = arg_Command(cmd) != 0;
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.redirect.allowscheme.changed")) {
+        d->prefs.allowSchemeChangingRedirect = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "smoothscroll")) {
         d->prefs.smoothScrolling = arg_Command(cmd);
         return iTrue;
@@ -4000,7 +4019,8 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         newTab = new_OpenTabFlag;
     }
     if (newTab & newTabMask_OpenTabFlag) {
-        doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0); /* `newtab:2` to open in background */
+        /* `newtab:2` to open in background */
+        doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0 ? switchTo_NewTabFlag : 0);
     }
     iHistory   *history       = history_DocumentWidget(doc);
     const iBool waitForIdle   = argLabel_Command(cmd, "idle") != 0;
@@ -4149,13 +4169,18 @@ iBool handleCommand_App(const char *cmd) {
             appendFormat_String(src, "${glyphfinder.results.empty}\n");
         }
         appendCStr_String(src, "\n=> about:fonts ${menu.fonts}");
-        iDocumentWidget *page = newTab_App(NULL, iTrue);
+        iDocumentWidget *page = newTab_App(NULL, switchTo_NewTabFlag);
         translate_Lang(src);
         setUrlAndSource_DocumentWidget(page,
                                        collectNewCStr_String(""),
                                        collectNewCStr_String("text/gemini"),
                                        utf8_String(src),
                                        0);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "inputzoom.set")) {
+        d->prefs.inputZoomLevel = arg_Command(cmd);
+        d->prefs.inputZoomLevel = iClamp(d->prefs.inputZoomLevel, 0, 2);
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {
@@ -4274,7 +4299,7 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
-        newTab_App(isDuplicate ? document_App() : NULL, iTrue);        
+        newTab_App(isDuplicate ? document_App() : NULL, switchTo_NewTabFlag);
         if (!isDuplicate) {
             postCommandf_App("navigate.home focus:%d", deviceType_App() == desktop_AppDeviceType);
         }
@@ -4293,6 +4318,7 @@ iBool handleCommand_App(const char *cmd) {
                                                       : document_App();
         iBool  wasCurrent = (doc == (iWidget *) document_App());
         size_t index      = tabPageIndex_Widget(tabs, doc);
+        const iBool isRightmost = (index == tabCount_Widget(tabs) - 1);
         iBool  wasClosed  = iFalse;
         postCommand_App("document.openurls.changed");
         if (argLabel_Command(cmd, "toright")) {
@@ -4335,8 +4361,9 @@ iBool handleCommand_App(const char *cmd) {
             else {
                 arrange_Widget(tabs);
                 if (wasCurrent) {
-                    postCommandf_App("tabs.switch page:%p",
-                                     tabPage_Widget(tabs, index > 0 ? index - 1 : 0));
+                    postCommandf_App(
+                        "tabs.switch page:%p",
+                        tabPage_Widget(tabs, index > 0 ? index - (isRightmost ? 1 : 0) : 0));
                 }
             }
         }
@@ -4399,6 +4426,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.edge"), d->prefs.edgeSwipe);
         setToggle_Widget(findChild_Widget(dlg, "prefs.swipe.page"), d->prefs.pageSwipe);
         setToggle_Widget(findChild_Widget(dlg, "prefs.gopher.gemstyle"), d->prefs.geminiStyledGopher);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.redirect.allowscheme"), d->prefs.allowSchemeChangingRedirect);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
@@ -4697,7 +4725,7 @@ iBool handleCommand_App(const char *cmd) {
         generate_Export(export);
         openEmpty_Buffer(zip);
         serialize_Archive(archive_Export(export), stream_Buffer(zip));
-        iDocumentWidget *expTab = newTab_App(NULL, iTrue);
+        iDocumentWidget *expTab = newTab_App(NULL, switchTo_NewTabFlag);
         iDate now;
         initCurrent_Date(&now);
         setUrlAndSource_DocumentWidget(

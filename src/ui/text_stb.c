@@ -1482,7 +1482,7 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
                 wrapResumePos      = textLen;
                 iGlyphBuffer *buf = at_Array(&fontRun->buffers, runIndex);
                 iAssert(run->font == (iAnyFont *) buf->font);
-                iChar prevCh = 0;
+                iChar prevCh[2] = { 0, 0 };
                 lastAttrib = run->attrib;
 //                printf("checking run %zu...\n", runIndex);
                 for (unsigned int ir = 0; ir < buf->glyphCount; ir++) {
@@ -1504,11 +1504,12 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
                                                               : args->wrap->mode;
                     iAssert(xAdvance >= 0);
                     if (wrapMode == word_WrapTextMode) {
-                        /* When word wrapping, only consider certain places breakable. */
-                        if ((prevCh == '-' || prevCh == '/' || prevCh == '\\' || prevCh == '?' ||
-                             prevCh == '!' || prevCh == '&' || prevCh == '+' || prevCh == '_' ||
-                             prevCh == '@') &&
-                            !isPunct_Char(ch)) {
+                        /* When word-wrapping, only consider certain places breakable. */
+                        if (((prevCh[0] == '-' || prevCh[0] == '/' || prevCh[0] == '\\' || prevCh[0] == '?' ||
+                             prevCh[0] == '!' || prevCh[0] == '&' || prevCh[0] == '+' || prevCh[0] == '_' ||
+                             prevCh[0] == '@') &&
+                             !isPunct_Char(ch)) ||
+                            (isAlpha_Char(prevCh[1]) && prevCh[0] == '.' && isAlpha_Char(ch))) {
                             safeBreakPos = logPos;
                             breakAdvance = wrapAdvance;
                             breakRunIndex = runIndex;
@@ -1522,7 +1523,8 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
 //                            printf("sbp:%d breakAdv_B:%f\n", safeBreakPos, breakAdvance);
     //                        isSoftHyphenBreak = iFalse;
                         }
-                        prevCh = ch;
+                        prevCh[1] = prevCh[0];
+                        prevCh[0] = ch;
                     }
                     else {
                         safeBreakPos  = logPos;

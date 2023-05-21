@@ -823,6 +823,23 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     }
 }
 
+static iPtrSet *activeInputWidgets_(void) {
+    static iPtrSet *set_;
+    if (!set_) {
+        set_ = new_PtrSet();
+    }
+    return set_;
+}
+
+static void deactivateInputMode_InputWidget_(iInputWidget *d) {
+    /* We can only end the text input mode if no active input widgets remain. */
+    remove_PtrSet(activeInputWidgets_(), d);
+    if (isEmpty_PtrSet(activeInputWidgets_())) {
+        setTextInputActive_App(iFalse);
+        enableEditorKeysInMenus_(iTrue);
+    }    
+}
+
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
@@ -853,9 +870,6 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->lastUpdateWidth = 0;
     d->inFlags         = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag |
                          lineBreaksEnabled_InputWidgetFlag | useReturnKeyBehavior_InputWidgetFlag;
-    //    if (deviceType_App() != desktop_AppDeviceType) {
-    //        d->inFlags |= enterKeyInsertsLineFeed_InputWidgetFlag;
-    //    }
     setMaxLen_InputWidget(d, maxLen);
     d->visWrapLines.start = 0;
     d->visWrapLines.end = 1;
@@ -890,15 +904,7 @@ void deinit_InputWidget(iInputWidget *d) {
 #else
     startOrStopCursorTimer_InputWidget_(d, iFalse);
     clearInputLines_(&d->lines);
-    if (isSelected_Widget(d)) {
-        /* If another input widget has focus, we shouldn't end SDL's text input mode now
-           or the other widget will stop receiving input. */
-        if (!focus_Widget() || focus_Widget() == as_Widget(d) ||
-            !isInstance_Object(focus_Widget(), &Class_InputWidget)) {
-            setTextInputActive_App(iFalse);
-            enableEditorKeysInMenus_(iTrue);
-        }
-    }
+    deactivateInputMode_InputWidget_(d);
     clearUndo_InputWidget_(d);
     deinit_Array(&d->undoStack);
     deinit_Array(&d->lines);
@@ -993,10 +999,15 @@ void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
 }
 
 static void restoreDefaultScheme_(iString *url) {
-    iUrl parts;
-    init_Url(&parts, url);
-    if (isEmpty_Range(&parts.scheme) && startsWith_String(url, "//")) {
+    if (isEmpty_String(url) || startsWith_String(url, "about:") ||
+        startsWith_String(url, "mailto:") || startsWith_String(url, "data:")) {
+        return;
+    }
+    if (startsWith_String(url, "//")) {
         prependCStr_String(url, "gemini:");
+    }    
+    else if (indexOfCStr_String(url, "://") == iInvalidPos) {
+        prependCStr_String(url, "gemini://");    
     }
 }
 
@@ -1008,15 +1019,16 @@ static const iString *omitDefaultScheme_(iString *url) {
 }
 
 const iString *text_InputWidget(const iInputWidget *d) {
-    if (d) {
-        iString *text = collect_String(text_InputWidget_(d));
-        if (d->inFlags & isUrl_InputWidgetFlag) {
-            /* Add the "gemini" scheme back if one is omitted. */
-            restoreDefaultScheme_(text);
-        }
-        return text;
+    iString *text = collect_String(d ? text_InputWidget_(d) : new_String());
+    if (d && d->inFlags & isUrl_InputWidgetFlag) {
+        /* Add the "gemini" scheme back if one is omitted. */
+        restoreDefaultScheme_(text);
     }
-    return collectNew_String();
+    return text;
+}
+
+const iString *rawText_InputWidget(const iInputWidget *d) {
+    return collect_String(d ? text_InputWidget_(d) : new_String());
 }
 
 int font_InputWidget(const iInputWidget *d) {
@@ -1306,7 +1318,9 @@ void begin_InputWidget(iInputWidget *d) {
         d->cursor.y = iMin(d->cursor.y, size_Array(&d->lines) - 1);
         d->cursor.x = iMin(d->cursor.x, cursorLine_InputWidget_(d)->range.end);
     }
+    insert_PtrSet(activeInputWidgets_(), d);
     setTextInputActive_App(iTrue);
+    enableEditorKeysInMenus_(iFalse);
     showCursor_InputWidget_(d);
     refresh_Widget(w);
     startOrStopCursorTimer_InputWidget_(d, iTrue);
@@ -1317,7 +1331,6 @@ void begin_InputWidget(iInputWidget *d) {
     else if (~d->inFlags & isMarking_InputWidgetFlag) {
         iZap(d->mark);
     }
-    enableEditorKeysInMenus_(iFalse);
     updateTextInputRect_InputWidget_(d);
     updateVisible_InputWidget_(d);
 #endif
@@ -1346,9 +1359,8 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         /* Overwrite the edited lines. */
         splitToLines_(&d->oldText, &d->lines);
     }
-    setTextInputActive_App(iFalse);
-    enableEditorKeysInMenus_(iTrue);
     d->inFlags &= ~isMarking_InputWidgetFlag;
+    deactivateInputMode_InputWidget_(d);
     startOrStopCursorTimer_InputWidget_(d, iFalse);
 #endif
     d->inFlags |= needUpdateBuffer_InputWidgetFlag;
@@ -2405,6 +2417,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return false_EventResult;
     }
     if (ev->type == SDL_TEXTINPUT && isFocused_Widget(w)) {
+        if (modState_Keys() & KMOD_CTRL) {
+            return iTrue;
+        }
         pushUndo_InputWidget_(d);
         deleteMarked_InputWidget_(d);
         insertRange_InputWidget_(d, range_CStr(ev->text.text));

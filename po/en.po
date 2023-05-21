@@ -2018,6 +2018,9 @@ msgstr "Justify:"
 msgid "prefs.plaintext.wrap"
 msgstr "Wrap long plaintext lines:"
 
+msgid "prefs.redirect.allowscheme"
+msgstr "Scheme-changing redirects:"
+
 msgid "prefs.decodeurls"
 msgstr "Decode URLs:"
 

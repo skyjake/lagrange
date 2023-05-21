@@ -1671,13 +1671,21 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
     iString str;
     initUnicodeN_String(&str, &icon, 1);
     drawCentered_Text(banner_FontId, iconRect, iTrue, fg, "%s", cstr_String(&str));
-    deinit_String(&str);
     if (isHeadingVisible) {
         iRangecc    text = currentHeading_DocumentView_(d);
         iInt2       pos  = addY_I2(bottomLeft_Rect(iconRect), gap_Text);
         const int   font = sideHeadingFont;
+        /* If the heading starts with the same symbol as we have in the icon, there's no
+           point in repeating. The icon is always a non-alphabetic symbol like Emoji so
+           we aren't cutting any words off here. */
+        if (startsWith_Rangecc(text, cstr_String(&str)) &&
+            size_Range(&text) > size_String(&str)) {
+            text.start += size_String(&str);
+            trimStart_Rangecc(&text);
+        }
         drawWrapRange_Text(font, pos, avail, tmBannerSideTitle_ColorId, text);
     }
+    deinit_String(&str);
     endTarget_Paint(&p);
     SDL_SetTextureBlendMode(dbuf->sideIconBuf, SDL_BLENDMODE_BLEND);
 }
@@ -2268,6 +2276,14 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
             setWindow = iFalse;
         }
         const iChar siteIcon = siteIcon_GmDocument(d->view.doc);
+        /* Remove a redundant icon. */ {           
+            iStringConstIterator iter;
+            init_StringConstIterator(&iter, text);
+            if (iter.value == siteIcon) {
+                remove_Block(&text->chars, 0, iter.next - cstr_String(text));
+                trim_String(text);
+            }
+        }
         if (siteIcon) {
             if (!isEmpty_String(text)) {
                 prependCStr_String(text, "  " restore_ColorEscape);
@@ -2368,6 +2384,23 @@ static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     iLabelWidget *bmPin = findChild_Widget(navBar, "document.bookmarked");
     setOutline_LabelWidget(bmPin, !isBookmarked);
     setTextColor_LabelWidget(bmPin, isBookmarked ? uiTextAction_ColorId : uiText_ColorId);
+}
+
+static void showOrHideInputPrompt_DocumentWidget_(iDocumentWidget *d) {
+    iWidget *w = as_Widget(d);
+    const iBool show = isVisible_Widget(w);
+    iForEach(ObjectList, i, children_Widget(d)) {
+        if (startsWith_String(id_Widget(i.object), "!document.input.submit")) {
+            setFlags_Widget(i.object, hidden_WidgetFlag, !show);
+            iInputWidget *input = findChild_Widget(i.object, "input");
+            if (show) {
+                setFocus_Widget(as_Widget(input));
+            }
+            else {
+                setSelectAllOnFocus_InputWidget(input, iFalse);
+            }
+        }
+    }    
 }
 
 static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
@@ -3240,6 +3273,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     destroy_Widget(d->footerButtons);
     d->footerButtons = NULL;
     iRelease(d->view.doc);
+    invalidate_DocumentView_(&d->view);
     d->view.doc = new_GmDocument();
     d->state = fetching_RequestState;
     d->flags &= ~pendingRedirect_DocumentWidgetFlag;
@@ -3306,6 +3340,9 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
     iAssert(isInstance_Object(ptr, &Class_DocumentWidget));
     iDocumentWidget *d = ptr;
     iDocumentView *view = &d->view;
+    if (flags_Widget(ptr) & destroyPending_WidgetFlag) {
+        return; /* don't waste updating, the widget is being deleted */
+    }
     updateVisible_DocumentView_(view);
     refresh_Widget(d);
     if (view->animWideRunId) {
@@ -3609,7 +3646,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     }
                     /* Redirects with the same scheme are automatic, and switching automatically
                        between "gemini" and "titan" is allowed. */
-                    else if (equalRangeCase_Rangecc(dstScheme, srcScheme) ||
+                    else if (prefs_App()->allowSchemeChangingRedirect ||
+                             equalRangeCase_Rangecc(dstScheme, srcScheme) ||
                              (equalCase_Rangecc(srcScheme, "titan") &&
                               equalCase_Rangecc(dstScheme, "gemini")) ||
                              (equalCase_Rangecc(srcScheme, "gemini") &&
@@ -4306,7 +4344,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             showOrHideIndicators_DocumentWidget_(d);
             updateFetchProgress_DocumentWidget_(d);
             updateHover_Window(window_Widget(w));
+            set_String(&w->root->tabInsertId, id_Widget(w)); /* insert next to current tab */
+            visitUrl_Visited(visited_App(), d->mod.url, 0); /* in case it was opened in background */
         }
+        showOrHideInputPrompt_DocumentWidget_(d);
         init_Anim(&d->view.sideOpacity, 0);
         init_Anim(&d->view.altTextOpacity, 0);
         updateSideOpacity_DocumentView_(&d->view, iFalse);
@@ -4361,7 +4402,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (newWin) {
             setCurrent_Window(newWin);            
         }
-        newTab_App(d, iTrue); /* makes a duplicate */
+        newTab_App(d, switchTo_NewTabFlag); /* makes a duplicate */
         setCurrent_Root(oldRoot);
         if (newWin) {
             /* Get rid of the default blank tab. */

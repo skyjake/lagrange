@@ -97,6 +97,7 @@ enum iPrefsBool {
     
     /* Network */
     decodeUserVisibleURLs_PrefsBool,
+    allowSchemeChangingRedirect_PrefsBool,
     
     /* Style */
     monospaceGemini_PrefsBool,
@@ -167,6 +168,7 @@ struct Impl_Prefs {
             
             /* Network */
             iBool decodeUserVisibleURLs;
+            iBool allowSchemeChangingRedirect;
             
             /* Style */
             iBool monospaceGemini;
@@ -198,6 +200,7 @@ struct Impl_Prefs {
     float            uiScale;
     enum iToolbarAction navbarActions[maxNavbarActions_Prefs];
     enum iToolbarAction toolbarActions[2];
+    int              inputZoomLevel;
     /* Document presentation */
     int              zoomPercent;
     /* Behavior */

@@ -240,6 +240,7 @@ iDefineAudienceGetter(Root, visualOffsetsChanged)
 
 void init_Root(iRoot *d) {
     iZap(*d);
+    init_String(&d->tabInsertId);
 }
 
 void deinit_Root(iRoot *d) {
@@ -248,6 +249,7 @@ void deinit_Root(iRoot *d) {
     delete_PtrSet(d->pendingDestruction);
     delete_Audience(d->visualOffsetsChanged);
     delete_Audience(d->arrangementChanged);
+    deinit_String(&d->tabInsertId);
     if (d->loadAnimTimer) {
         SDL_RemoveTimer(d->loadAnimTimer);
         d->loadAnimTimer = 0;
@@ -998,8 +1000,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "navigate.focus")) {
         /* The upload dialog has its own path field. */
-        if (findWidget_App("upload")) {
-            postCommand_App("focus.set id:upload.path");
+        if (findChild_Widget(root_Widget(navBar), "upload")) {
+            postCommand_Root(navBar->root, "focus.set id:upload.path");
             return iTrue;
         }
         iWidget *url = findChild_Widget(navBar, "url");
@@ -1045,8 +1047,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "input.edited")) {
         iAnyObject *   url  = findChild_Widget(navBar, "url");
-        const iString *text = text_InputWidget(url);
-        const iBool show = willPerformSearchQuery_(text);
+        const iString *text = rawText_InputWidget(url);
+        const iBool    show = willPerformSearchQuery_(text);
         showSearchQueryIndicator_(show);
         if (pointer_Command(cmd) == url) {
             submit_LookupWidget(findWidget_App("lookup"), text);
@@ -1063,15 +1065,17 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         }
         if (arg_Command(cmd) && argLabel_Command(cmd, "enter") &&
             !isFocused_Widget(findWidget_App("lookup"))) {
-            iString *newUrl = copy_String(text_InputWidget(url));
+            iString *newUrl = copy_String(rawText_InputWidget(url));
             trim_String(newUrl);
             if (willPerformSearchQuery_(newUrl)) {
-                postCommandf_Root(navBar->root, "open url:%s", cstr_String(searchQueryUrl_App(newUrl)));
+                postCommandf_Root(
+                    navBar->root, "open url:%s", cstr_String(searchQueryUrl_App(newUrl)));
             }
             else {
-                postCommandf_Root(navBar->root,
+                postCommandf_Root(
+                    navBar->root,
                     "open notinline:1 url:%s",
-                    cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
+                    cstr_String(absoluteUrl_String(&iStringLiteral(""), text_InputWidget(url))));
             }
             return iFalse;
         }
