@@ -8,6 +8,7 @@
 
 ## 1.16.1
 * Fixed handling of the AltGr key during text input (again).
+* Updated UI translations.
 
 ## 1.16
 New features:
