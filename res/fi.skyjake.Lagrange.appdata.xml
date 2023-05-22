@@ -45,6 +45,17 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.16.1" date="2023-05-22">
+            <description>
+                <ul>
+                    <li>Fixed handling of the AltGr key during text input (again).</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.16.1</url>
+        </release>
         <release version="1.16" date="2023-05-21">
             <description>
                 <ul>
