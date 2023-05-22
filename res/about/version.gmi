@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.16.1
+* Fixed handling of the AltGr key during text input (again).
+
 ## 1.16
 New features:
 * Input prompt font size can be changed with the Zoom In/Out/Reset keys. 
