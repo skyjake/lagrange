@@ -2417,7 +2417,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return false_EventResult;
     }
     if (ev->type == SDL_TEXTINPUT && isFocused_Widget(w)) {
-        if (modState_Keys() & KMOD_CTRL) {
+        if ((modState_Keys() & (KMOD_CTRL | KMOD_ALT)) == KMOD_CTRL) {
+            /* Note: AltGr on Windows is reported as Ctrl+Alt. */
             return iTrue;
         }
         pushUndo_InputWidget_(d);
