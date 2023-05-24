@@ -6,6 +6,18 @@
 ```
 # Release notes
 
+## 1.16 (1)
+* Preferences: Added option for silently following scheme-changing redirects (Network tab; default: no).
+* Tab creation and closing follows common browser conventions: new tabs are opened next to the most recently opened tab, so they retain the correct left-to-right order.
+* Page title in margin omits prefix Emoji if it matches the bookmark icon.
+* Adjusted word-wrapping to break at a period inside a word (e.g., domain names).
+* If the page is missing a level 1 heading, use the first content line as the title.
+* Fixed incorrect parsing of "hostname:port" in URL field (without `//` or `gemini://`).
+* Fixed input query dialogs not being hidden when the tab changes.
+* Fixed potential crash when switching between cached pages while navigating in history.
+* Fixed potential crash when closing split view during a scrolling animation.
+* Updated UI translations.
+
 ## 1.15 (7)
 * Fixed tab order getting reversed when restoring tabs at launch.
 * Fixed order of opened tabs when using "Open in New Tabs" on a bookmark folder.
