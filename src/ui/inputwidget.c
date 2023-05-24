@@ -1303,6 +1303,9 @@ void begin_InputWidget(iInputWidget *d) {
             (isAllowedToInsertNewline_InputWidget_(d) ? insertNewlines_SystemTextInputFlag : 0) |
             (d->inFlags & selectAllOnFocus_InputWidgetFlag ? selectAll_SystemTextInputFlags : 0));
     setFont_SystemTextInput(d->sysCtrl, d->font);
+    if (d->inFlags & isUrl_InputWidgetFlag) {
+        restoreDefaultScheme_(&d->oldText);
+    }
     setText_SystemTextInput(d->sysCtrl, &d->oldText, iFalse);
     setTextChangedFunc_SystemTextInput(d->sysCtrl, systemInputChanged_InputWidget_, d);
     iConnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
@@ -1347,6 +1350,9 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         iDisconnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
         if (accept) {
             set_String(&d->text, text_SystemTextInput(d->sysCtrl));
+            if (d->inFlags & isUrl_InputWidgetFlag && isNarrow_InputWidget_(d)) {
+                omitDefaultScheme_(&d->text);
+            }
         }
         else {
             set_String(&d->text, &d->oldText);
