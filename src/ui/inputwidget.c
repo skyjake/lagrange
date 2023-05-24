@@ -1003,9 +1003,13 @@ static void restoreDefaultScheme_(iString *url) {
         startsWith_String(url, "mailto:") || startsWith_String(url, "data:")) {
         return;
     }
+    const char *curl = cstr_String(url);
     if (startsWith_String(url, "//")) {
         prependCStr_String(url, "gemini:");
-    }    
+    }
+    else if (size_String(url) >= 2 && curl[0] == '/' && curl[1] != '/') {
+        /* This is likely just a path. Don't prepend anything. */
+    }
     else if (indexOfCStr_String(url, "://") == iInvalidPos) {
         prependCStr_String(url, "gemini://");    
     }
