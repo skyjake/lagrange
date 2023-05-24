@@ -7,6 +7,8 @@
 # Release notes
 
 ## 1.16 (1)
+* The "gemini://" scheme is shown in active URL input fields even when omitted otherwise.
+* Preferences: Changed order of network settings.
 * Preferences: Added option for silently following scheme-changing redirects (Network tab; default: no).
 * Tab creation and closing follows common browser conventions: new tabs are opened next to the most recently opened tab, so they retain the correct left-to-right order.
 * Page title in margin omits prefix Emoji if it matches the bookmark icon.
