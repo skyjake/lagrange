@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.16 (2)
+* Fixed broken Titan uploads due to the contents of the upload path field being mishandled.
+
 ## 1.16 (1)
 * The "gemini://" scheme is shown in active URL input fields even when omitted otherwise.
 * Preferences: Changed order of network settings.
