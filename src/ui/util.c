@@ -3170,18 +3170,20 @@ iWidget *makePreferences_Widget(void) {
         };
         const iMenuItem networkPanelItems[] = {
             { "title id:heading.prefs.network" },
-            { "padding arg:0.667" },
-            { "toggle id:prefs.decodeurls" },
-            { "input id:prefs.urlsize maxlen:7 selectall:1" },
-            { "padding" },
-            { "input id:prefs.cachesize maxlen:4 selectall:1 unit:mb" },
-            { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
             { "heading text:${prefs.proxy.gemini}" },
             { "input id:prefs.proxy.gemini noheading:1" },
             { "heading text:${prefs.proxy.gopher}" },
             { "input id:prefs.proxy.gopher noheading:1" },
             { "heading text:${prefs.proxy.http}" },
             { "input id:prefs.proxy.http noheading:1" },
+            { "padding" },
+            { "input id:prefs.cachesize maxlen:4 selectall:1 unit:mb" },
+            { "input id:prefs.memorysize maxlen:4 selectall:1 unit:mb" },
+            { "padding" },
+            { "toggle id:prefs.decodeurls" },
+            { "input id:prefs.urlsize maxlen:7 selectall:1" },
+            { "padding" },
+            { "toggle id:prefs.redirect.allowscheme" },
             { "padding" },
             { NULL }
         };
