@@ -25,7 +25,7 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2023)
 if (IOS)
     set (PROJECT_VERSION 1.16)
-    set (IOS_BUNDLE_VERSION 1)
+    set (IOS_BUNDLE_VERSION 2)
     set (IOS_BUILD_DATE "2023-05-24")
 endif ()
 if (ANDROID)
