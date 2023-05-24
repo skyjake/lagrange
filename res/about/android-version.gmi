@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.16 (Beta 19)
+* Fixed broken Titan uploads due to the contents of the upload path field being mishandled.
+
 ## 1.16 (Beta 18)
 * Fixed hardware Enter key handling in the navbar.
 * The "gemini://" scheme is shown in active URL input fields even when omitted otherwise.
