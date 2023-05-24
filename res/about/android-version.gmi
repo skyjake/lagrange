@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.16 (Beta 18)
+* Fixed hardware Enter key handling in the navbar.
 * The "gemini://" scheme is shown in active URL input fields even when omitted otherwise.
 * Preferences: Changed order of network settings.
 * Preferences: Added option for silently following scheme-changing redirects (Network tab; default: no).
