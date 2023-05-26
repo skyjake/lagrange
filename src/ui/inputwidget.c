@@ -223,6 +223,7 @@ enum iInputWidgetFlag {
     dragCursor_InputWidgetFlag           = iBit(14),
     dragMarkerStart_InputWidgetFlag      = iBit(15),
     dragMarkerEnd_InputWidgetFlag        = iBit(16),
+    omitDefaultSchemeIfNarrow_InputWidgetFlag = iBit(17),
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -998,26 +999,15 @@ void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
     d->mode = mode;
 }
 
-static void restoreDefaultScheme_(iString *url) {
-    if (isEmpty_String(url) || startsWith_String(url, "about:") ||
-        startsWith_String(url, "mailto:") || startsWith_String(url, "data:")) {
-        return;
-    }
-    const char *curl = cstr_String(url);
-    if (startsWith_String(url, "//")) {
+/*static void restoreDefaultScheme_(iString *url) {
+    if (startsWith_String(url, "//") && size_String(url) > 2) {
         prependCStr_String(url, "gemini:");
     }
-    else if (size_String(url) >= 2 && curl[0] == '/' && curl[1] != '/') {
-        /* This is likely just a path. Don't prepend anything. */
-    }
-    else if (indexOfCStr_String(url, "://") == iInvalidPos) {
-        prependCStr_String(url, "gemini://");    
-    }
-}
+}*/
 
 static const iString *omitDefaultScheme_(iString *url) {
     if (startsWithCase_String(url, "gemini://")) {
-        remove_Block(&url->chars, 0, 7);
+        remove_Block(&url->chars, 0, 7); /* leaving // */
     }
     return url;
 }
@@ -1026,7 +1016,9 @@ const iString *text_InputWidget(const iInputWidget *d) {
     iString *text = collect_String(d ? text_InputWidget_(d) : new_String());
     if (d && d->inFlags & isUrl_InputWidgetFlag) {
         /* Add the "gemini" scheme back if one is omitted. */
-        restoreDefaultScheme_(text);
+        //restoreDefaultScheme_(text);
+        
+        /* TODO: Check for `hostname:port` pattern and fit it so it'll be parsed correctly. */
     }
     return text;
 }
@@ -1079,6 +1071,10 @@ void setEnterKeyEnabled_InputWidget(iInputWidget *d, iBool enterKeyEnabled) {
     iChangeFlags(d->inFlags, enterKeyEnabled_InputWidgetFlag, enterKeyEnabled);
 }
 
+void setOmitDefaultSchemeIfNarrow_InputWidget(iInputWidget *d, iBool omitDefaultSchemeIfNarrow) {
+    iChangeFlags(d->inFlags, omitDefaultSchemeIfNarrow_InputWidgetFlag, omitDefaultSchemeIfNarrow);
+}
+
 void setUseReturnKeyBehavior_InputWidget(iInputWidget *d, iBool useReturnKeyBehavior) {
     iChangeFlags(d->inFlags, useReturnKeyBehavior_InputWidgetFlag, useReturnKeyBehavior);
 }
@@ -1113,6 +1109,10 @@ static iBool isHintVisible_InputWidget_(const iInputWidget *d) {
     return !isEmpty_String(&d->hint) && isEmpty_InputWidget_(d);
 }
 
+static iBool isNarrow_InputWidget_(const iInputWidget *d) {
+    return width_Rect(contentBounds_InputWidget_(d)) < 100 * gap_UI * aspect_UI;
+}
+
 static void updateBuffered_InputWidget_(iInputWidget *d) {
     invalidateBuffered_InputWidget_(d);
     if (isHintVisible_InputWidget_(d)) {
@@ -1130,6 +1130,9 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
         }
 #endif
         if (d->inFlags & isUrl_InputWidgetFlag) {
+            if (d->inFlags & omitDefaultSchemeIfNarrow_InputWidgetFlag && isNarrow_InputWidget_(d)) {
+                omitDefaultScheme_(visText);
+            }
             /* Highlight the host name. */
             iUrl parts;
             init_Url(&parts, visText);
@@ -1159,10 +1162,6 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     setTextUndoable_InputWidget(d, text, iFalse);
 }
 
-static iBool isNarrow_InputWidget_(const iInputWidget *d) {
-    return width_Rect(contentBounds_InputWidget_(d)) < 100 * gap_UI * aspect_UI;
-}
-
 void setTextUndoable_InputWidget(iInputWidget *d, const iString *text, iBool isUndoable) {
     if (!d) return;
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
@@ -1186,9 +1185,9 @@ void setTextUndoable_InputWidget(iInputWidget *d, const iString *text, iBool isU
             text = enc;
         }
         /* Omit the default (Gemini) scheme if there isn't much space. */
-        if (isNarrow_InputWidget_(d)) {
+        /*if (isNarrow_InputWidget_(d)) {
             text = omitDefaultScheme_(collect_String(copy_String(text)));
-        }
+        }*/
     }
     iString *nfcText = collect_String(copy_String(text));
     normalize_String(nfcText);
@@ -1307,9 +1306,11 @@ void begin_InputWidget(iInputWidget *d) {
             (isAllowedToInsertNewline_InputWidget_(d) ? insertNewlines_SystemTextInputFlag : 0) |
             (d->inFlags & selectAllOnFocus_InputWidgetFlag ? selectAll_SystemTextInputFlags : 0));
     setFont_SystemTextInput(d->sysCtrl, d->font);
+    /*
     if (d->inFlags & isUrl_InputWidgetFlag) {
         restoreDefaultScheme_(&d->oldText);
     }
+    */
     setText_SystemTextInput(d->sysCtrl, &d->oldText, iFalse);
     setTextChangedFunc_SystemTextInput(d->sysCtrl, systemInputChanged_InputWidget_, d);
     iConnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
@@ -1354,9 +1355,10 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         iDisconnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
         if (accept) {
             set_String(&d->text, text_SystemTextInput(d->sysCtrl));
+            /*
             if (d->inFlags & isUrl_InputWidgetFlag && isNarrow_InputWidget_(d)) {
                 omitDefaultScheme_(&d->text);
-            }
+            }*/
         }
         else {
             set_String(&d->text, &d->oldText);
@@ -1689,9 +1691,11 @@ static iBool copy_InputWidget_(iInputWidget *d, iBool doCut) {
         const iRanges m   = mark_InputWidget_(d);
         iString *     str = collectNew_String();
         mergeLinesRange_(&d->lines, m, str);
+        /*
         if (d->inFlags & isUrl_InputWidgetFlag) {
             restoreDefaultScheme_(str);
         }
+        */
         SDL_SetClipboardText(
             cstr_String(d->inFlags & isUrl_InputWidgetFlag ? canonicalUrl_String(str) : str));
         if (doCut) {

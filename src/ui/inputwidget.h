@@ -54,6 +54,7 @@ void    setLineLimits_InputWidget       (iInputWidget *, int minLines, int maxLi
 void    setValidator_InputWidget        (iInputWidget *, iInputWidgetValidatorFunc validator, void *context);
 void    setLineBreaksEnabled_InputWidget(iInputWidget *, iBool lineBreaksEnabled);
 void    setEnterKeyEnabled_InputWidget  (iInputWidget *, iBool enterKeyEnabled);
+void    setOmitDefaultSchemeIfNarrow_InputWidget(iInputWidget *, iBool omitDefaultSchemeIfNarrow);
 void    setUseReturnKeyBehavior_InputWidget(iInputWidget *, iBool useReturnKeyBehavior);
 void    setBackupFileName_InputWidget   (iInputWidget *, const char *fileName);
 void    begin_InputWidget               (iInputWidget *);

@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.16.2
+* Fixed issues with input fields related to handling URLs. Now only the navbar URL field omits the "gemini:" part when the field is narrow, and only when the field is inactive.
+
 ## 1.16.1
 * Fixed handling of the AltGr key during text input (again).
 * Updated UI translations.
