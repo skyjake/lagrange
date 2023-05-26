@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/array.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
 #include <SDL_version.h>
@@ -1015,10 +1016,16 @@ static const iString *omitDefaultScheme_(iString *url) {
 const iString *text_InputWidget(const iInputWidget *d) {
     iString *text = collect_String(d ? text_InputWidget_(d) : new_String());
     if (d && d->inFlags & isUrl_InputWidgetFlag) {
-        /* Add the "gemini" scheme back if one is omitted. */
-        //restoreDefaultScheme_(text);
-        
-        /* TODO: Check for `hostname:port` pattern and fit it so it'll be parsed correctly. */
+        /* Check for `hostname:port` pattern and fit it so it'll be parsed correctly. */
+        static iRegExp *simpleHost;
+        if (!simpleHost) {
+            simpleHost = new_RegExp("^[\\w.-]+:\\d{1,5}$", caseInsensitive_RegExpOption);
+        }
+        iRegExpMatch m;
+        init_RegExpMatch(&m);
+        if (matchString_RegExp(simpleHost, text, &m)) {
+            prependCStr_String(text, "gemini://");
+        }
     }
     return text;
 }
