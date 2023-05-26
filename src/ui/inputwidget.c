@@ -1130,8 +1130,11 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
         }
 #endif
         if (d->inFlags & isUrl_InputWidgetFlag) {
-            if (d->inFlags & omitDefaultSchemeIfNarrow_InputWidgetFlag && isNarrow_InputWidget_(d)) {
-                omitDefaultScheme_(visText);
+            if (d->inFlags & omitDefaultSchemeIfNarrow_InputWidgetFlag) {
+                if (measure_Text(d->font, cstr_String(visText)).advance.x >
+                    width_Rect(contentBounds_InputWidget_(d))) {
+                    omitDefaultScheme_(visText);
+                }
             }
             /* Highlight the host name. */
             iUrl parts;
