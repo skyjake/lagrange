@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2023-04-26 17:02+0000\n"
+"PO-Revision-Date: 2023-05-29 09:15+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -2477,3 +2477,167 @@ msgstr "Gehitu lastermarka"
 
 msgid "keys.bookmark.addfolder"
 msgstr "Gehitu lastermarka karpeta"
+
+#, c-format, fuzzy
+msgid "dlg.input.prompt"
+msgstr "Idatzi %s(e)rako sarrera:"
+
+#, fuzzy
+msgid "glyphfinder.results"
+msgstr ""
+"Ondorengo letra-tipo paketeek faltan dauden glifo bat edo gehiago eskaintzen "
+"dituzte:"
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format, fuzzy
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "%% daukaten jario %uera harpidetuta zaude.\n"
+msgstr[1] "%% daukaten %u jariotara harpidetuta zaude.\n"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Ziur %s\"%s\"%s identitatea eta berari lotutako ziurtagiri eta gako pribatua "
+"ezabatu nahi dituzula?"
+
+#, fuzzy
+msgid "sitespec.palette"
+msgstr "Gai-paletaren hazia:"
+
+msgid "keys.contextmenu"
+msgstr "Ireki laster-menua"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Itsatsi PEM bidez kodetutako ziurtagiri bat edota gako pribatu bat,\n"
+"edo ekarri leihora .crt/.key fitxategi bat."
+
+msgid "heading.certimport.dropped"
+msgstr "Leihora ekarritako fitxategia"
+
+#, fuzzy
+msgid "bookmark.export.format.sub"
+msgstr ""
+"Orrialde hau \"Gemini orrietara harpidetzen\" zehaztapenei jarraiki "
+"formateatu da."
+
+#, fuzzy
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"Skyjake.fi letra-tipo liburutegian karaktere horietarako glifoak bilatzen "
+"saia zaitezke edo TrueType tipoak eskuz instalatu ditzazkezu."
+
+#, fuzzy
+msgid "glyphfinder.results.empty"
+msgstr "Ez da bat datorren letra-tipo paketerik aurkitu."
+
+msgid "hint.dlg.bookmark.notes"
+msgstr "Formatu askeko ohar pribatuak"
+
+#, fuzzy
+msgid "prefs.centershort"
+msgstr "Erdiratze bertikala:"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Ireki Data URLetan dauden irudiak:"
+
+#, fuzzy
+msgid "prefs.swipe.page"
+msgstr "Mugimenduak orrialdean:"
+
+msgid "prefs.toolbaraction1"
+msgstr "1. botoia"
+
+msgid "prefs.toolbaraction2"
+msgstr "2. botoia"
+
+msgid "prefs.uiscale"
+msgstr "Interfazearen eskala:"
+
+# Abbrevation: background-to-foreground
+#, fuzzy
+msgid "prefs.imagestyle.bgfg"
+msgstr "Hondotik lehenengo planora"
+
+msgid "prefs.mono"
+msgstr "Tarte bakarreko corpusa:"
+
+# Font to use for headings and body when Monospace body is enabled.
+msgid "prefs.font.monodoc"
+msgstr "Tarte bakarreko letra-tipoa:"
+
+#, fuzzy
+msgid "prefs.gopher.gemstyle"
+msgstr "Detektatu automatikoki Gopher menuaren estiloa:"
+
+#, fuzzy
+msgid "prefs.gemtext.ansi"
+msgstr "Gemtext ANSI ihesak:"
+
+# Color of the text foreground, i.e., the characters.
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Testuaren kolorea"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "Letra-tipoen estiloa"
+
+#, fuzzy
+msgid "prefs.font.smooth"
+msgstr "Letra-tipoen leuntzea:"
+
+#, fuzzy
+msgid "prefs.plaintext.wrap"
+msgstr "Itzulbiratu testu hutseko lerro luzeak:"
+
+msgid "prefs.ca.path"
+msgstr "CA ibilbidea:"
+
+#, fuzzy
+msgid "keys.link.modkey"
+msgstr "Ireki esteka aldatzaile tekla batekin"
+
+#, fuzzy
+msgid "keys.split.item"
+msgstr "Bista zatituaren menua:"
+
+#, fuzzy
+msgid "error.schemeredirect"
+msgstr "Eskema aldaketaren birbideraketa"
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Zerbitzaria URL batera birbideratzen saiatu da; URL horren eskema ez da "
+"jatorrizko URLaren eskema bera. Hemen dago esteka, egokia bada eskuz "
+"irekitzeko."
+
+#, fuzzy
+msgid "error.slowdown.msg"
+msgstr "Zerbitzaria eskaerak mugatzen ari da. Itxaron…"
+
+#, fuzzy
+msgid "keys.link.homerow.newtab"
+msgstr "Ireki esteka fitxa berrian hasierako lerroko teklekin"
+
+#, fuzzy
+msgid "keys.link.homerow.hover"
+msgstr "Fokatu esteka hasierako lerroko teklekin"
+
+msgid "heading.fontpack.delete"
+msgstr "Ezabatu letra-tipo paketea"
+
+#, c-format
+msgid "dlg.fontpack.delete.confirm"
+msgstr "Ziur \"%s\" letra-tipo paketea behin-betiko ezabatu nahi duzula?"
+
+msgid "dlg.fontpack.delete"
+msgstr "Ezabatu letra-tipo paketea"
+
+#, fuzzy
+msgid "prefs.redirect.allowscheme"
+msgstr "Eskema aldatzen duen birbideraketak:"
+
+#, fuzzy
+msgid "keys.link.homerow"
+msgstr "Ireki esteka hasierako lerroko tekla batekin"
