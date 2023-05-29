@@ -468,7 +468,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 iChar icon = 0;
                 int len = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
-                    if (desc.start + len < desc.end &&
+                    if (//desc.start + len < desc.end &&
                         ((scheme != mailto_GmLinkScheme && isAllowedLinkIcon_Char_(icon)) ||
                          (scheme == mailto_GmLinkScheme && icon == 0x1f4e7 /* envelope */))) {
                         if (isRegionalIndicatorLetter_Char_(icon)) {
@@ -479,9 +479,14 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                             }
                         }
                         link->flags |= iconFromLabel_GmLinkFlag;
-                        link->labelIcon = (iRangecc){ desc.start, desc.start + len };
-                        line.start += len;
-                        trimStart_Rangecc(&line);
+                        iRangecc iconRange = (iRangecc){ desc.start, desc.start + len };
+                        iRangecc remain = (iRangecc){ iconRange.end, line.end };
+                        trim_Rangecc(&remain);
+                        if (!isEmpty_Range(&remain)) {
+                            link->labelIcon = iconRange;
+                            line.start = iconRange.end;
+                            trimStart_Rangecc(&line);
+                        }
 //                        printf("custom icon: %x (%s)\n", icon, cstr_Rangecc(link->labelIcon));
 //                        fflush(stdout);
                     }
