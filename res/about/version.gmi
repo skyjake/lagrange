@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.16.2
+* Set input focus to navbar URL field when opening an empty window.
+* The navbar URL field only omits the "gemini:" scheme when the text actually doesn't fit horizontally, and only when the field is inactive.
+* Fixed problems with handling URLs in input fields. For example, copying the URL to the clipboard sometimes had unexpected or incorrect results.
+* Updated UI translations.
+
 ## 1.16.1
 * Fixed handling of the AltGr key during text input (again).
 * Updated UI translations.

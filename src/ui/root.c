@@ -1569,6 +1569,7 @@ void createUserInterface_Root(iRoot *d) {
             setLineBreaksEnabled_InputWidget(url, iFalse);
             setUrlContent_InputWidget(url, iTrue);
             setNotifyEdits_InputWidget(url, iTrue);
+            setOmitDefaultSchemeIfNarrow_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
             addChildFlags_Widget(navBar, iClob(url), 0);
             const int64_t embedFlags =

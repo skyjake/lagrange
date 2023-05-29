@@ -3761,7 +3761,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
             }
         }
         else {
-            postCommand_Root(newWin->base.roots[0], "~navigate.home");
+            postCommand_Root(newWin->base.roots[0], "~navigate.home focus:1");
         }
         postCommand_Root(newWin->base.roots[0], "~window.unfreeze");
 #endif
