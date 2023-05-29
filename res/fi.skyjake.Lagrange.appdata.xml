@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.16.2" date="2023-05-29">
+            <description>
+                <ul>
+                    <li>Set input focus to navbar URL field when opening an empty window.</li>
+                    <li>The navbar URL field only omits the "gemini:" scheme when the text actually doesn't fit horizontally, and only when the field is inactive.</li>
+                    <li>Fixed problems with handling URLs in input fields. For example, copying the URL to the clipboard sometimes had unexpected or incorrect results.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.16.2</url>
+        </release>
         <release version="1.16.1" date="2023-05-22">
             <description>
                 <ul>
