@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.16 (3)
+* Fixed links whose label is a single Emoji sometimes not appearing.
 * The navbar URL field only omits the "gemini:" scheme when the text actually doesn't fit horizontally, and only when the field is inactive.
 * Fixed problems with handling URLs in input fields. For example, copying the URL to the clipboard sometimes had unexpected or incorrect results.
 * Updated UI translations.
