@@ -2989,7 +2989,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, int newTabFlags)
     if (newTabFlags & switchTo_NewTabFlag) {
         postCommandf_App("tabs.switch page:%p", doc);
     }
-    arrange_Widget(tabs);
+    arrange_Widget(get_Root()->widget);
     refresh_Widget(tabs);
     postCommandf_Root(get_Root(), "tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
