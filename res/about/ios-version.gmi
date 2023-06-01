@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.16 (3)
+* The navbar URL field only omits the "gemini:" scheme when the text actually doesn't fit horizontally, and only when the field is inactive.
+* Fixed problems with handling URLs in input fields. For example, copying the URL to the clipboard sometimes had unexpected or incorrect results.
+* Updated UI translations.
+
 ## 1.16 (2)
 * Fixed broken Titan uploads due to the contents of the upload path field being mishandled.
 
