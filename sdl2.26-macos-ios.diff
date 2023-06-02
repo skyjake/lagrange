@@ -13,6 +13,34 @@ index 994b6a6db..b332e1332 100644
          event.wheel.preciseX = x;
          event.wheel.preciseY = y;
          event.wheel.direction = (Uint32)direction;
+diff --git a/src/video/SDL_video.c b/src/video/SDL_video.c
+index 0809706c2..6a39fe81c 100644
+--- a/src/video/SDL_video.c
++++ b/src/video/SDL_video.c
+@@ -3180,6 +3180,23 @@ void
+ SDL_OnWindowFocusGained(SDL_Window * window)
+ {
+     SDL_Mouse *mouse = SDL_GetMouse();
++    
++    /* Move the window to the end of the list of windows so it'll be activated/restored
++       last when restoring app to foreground. */
++    if (window->next) {
++        window->next->prev = window->prev;
++    }
++    if (window->prev) {
++        window->prev->next = window->next;
++    } else {
++        _this->windows = window->next;
++    }
++    window->next = _this->windows;
++    if (_this->windows) {
++        _this->windows->prev = window;
++    }
++    _this->windows = window;
++    window->prev = NULL;
+ 
+     if (window->gamma && _this->SetWindowGammaRamp) {
+         _this->SetWindowGammaRamp(_this, window, window->gamma);
 diff --git a/src/video/android/SDL_androidevents.c b/src/video/android/SDL_androidevents.c
 index 3424a8254..08ae827dc 100644
 --- a/src/video/android/SDL_androidevents.c
@@ -31,21 +59,17 @@ index 3424a8254..08ae827dc 100644
  
  void
 diff --git a/src/video/cocoa/SDL_cocoamouse.m b/src/video/cocoa/SDL_cocoamouse.m
-index da5ffac69..49ab6fe14 100644
+index da5ffac69..a1a63d6ba 100644
 --- a/src/video/cocoa/SDL_cocoamouse.m
 +++ b/src/video/cocoa/SDL_cocoamouse.m
-@@ -519,11 +519,22 @@ + (NSCursor *)invisibleCursor
-         return;
+@@ -520,10 +520,16 @@ + (NSCursor *)invisibleCursor
      }
  
-+    SDL_MouseID mouseID = mouse->mouseID;
-+    CGFloat x = -[event scrollingDeltaX];
-+    CGFloat y = [event scrollingDeltaY];
-+    SDL_MouseWheelDirection direction = SDL_MOUSEWHEEL_NORMAL;
-+
      mouseID = mouse->mouseID;
-     x = -[event deltaX];
-     y = [event deltaY];
+-    x = -[event deltaX];
+-    y = [event deltaY];
++    x = -[event scrollingDeltaX];
++    y = [event scrollingDeltaY];
      direction = SDL_MOUSEWHEEL_NORMAL;
  
 +    /* HACK: Make a distinction between precise and imprecise scrolling.
