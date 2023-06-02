@@ -100,7 +100,17 @@ void emulateMouseClick_Widget(const iWidget *d, int button) {
 }
 
 iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
-    return mouseCoord_Window(get_Window(), ev->which);
+    iWindow *win = get_Window(); /* may not be the focus window */
+    if (isDesktop_Platform()) {
+        /* We need to figure out where the mouse is in relation to the currently active window.
+           It may be outside the actual focus window. */
+        iInt2 mousePos, winPos;
+        SDL_GetGlobalMouseState(&mousePos.x, &mousePos.y);
+        SDL_GetWindowPosition(win->win, &winPos.x, &winPos.y);
+        subv_I2(&mousePos, winPos);               
+        return coord_Window(win, mousePos.x, mousePos.y);
+    }
+    return mouseCoord_Window(win, ev->which);
 }
 
 iInt2 mouseCoord_SDLEvent(const SDL_Event *ev) {

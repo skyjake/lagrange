@@ -1029,6 +1029,15 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
     }
 }
 
+static void setHoverUnderCursor_Window_(iWindow *d) {
+    if (isDesktop_Platform()) {
+        iWidget *hover = hitChild_Window(d, mouseCoord_Window(d, 0));
+        if (hover) {
+            setHover_Widget(hover);
+        }
+    }
+}
+
 static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent *ev) {
     if (ev->windowID != SDL_GetWindowID(d->base.win)) {
         return iFalse;
@@ -1150,6 +1159,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             d->base.isMouseInside = iTrue;
             //SDL_SetWindowInputFocus(d->base.win); /* BUG? */
             postCommand_App("window.mouse.entered");
+            setHoverUnderCursor_Window_(as_Window(d));
             return iTrue;
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             d->base.focusGainedAt = SDL_GetTicks();
@@ -1157,6 +1167,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             postCommand_App("window.focus.gained");
             d->base.isExposed = iTrue;
             setActiveWindow_App(d);
+            setHoverUnderCursor_Window_(as_Window(d));
 #if !defined (iPlatformDesktop)
             /* Returned to foreground, may have lost buffered content. */
             invalidate_MainWindow_(d, iTrue);
