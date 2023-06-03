@@ -2183,9 +2183,8 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         return iFalse;
     }
     if (equal_Command(cmd, "input.resized")) {
-        /* BUG: A single arrange here is not sufficient, leaving a big gap between prompt and input. Why? */
         arrange_Widget(dlg);
-        arrange_Widget(dlg);
+        refresh_Widget(dlg);
         if (deviceType_App() != desktop_AppDeviceType) {
             animateToRootVisibleBottom_(dlg, 100);
         }
