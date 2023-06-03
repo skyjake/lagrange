@@ -594,6 +594,10 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "root.refresh")) {
+        refresh_Widget(get_Root()->widget);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "root.movable")) {
         setupMovableElements_Root_(root->root);
         arrange_Widget(root);
@@ -1149,12 +1153,15 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         iDocumentWidget *doc = document_App();
         iAssert(doc);
         if (doc) {
-            setText_InputWidget(findChild_Widget(navBar, "url"), url_DocumentWidget(doc));
+            iInputWidget *url = findChild_Widget(navBar, "url");
+            setText_InputWidget(url, url_DocumentWidget(doc));
+            if (isFocused_Widget(url)) {
+                selectAll_InputWidget(url);
+            }
             checkLoadAnimation_Root_(get_Root());
             updateToolbarColors_Root(as_Widget(doc)->root);
             updateNavBarIdentity_(navBar);
         }
-        //setFocus_Widget(NULL);
         makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         refresh_Widget(findWidget_Root("doctabs"));
     }
