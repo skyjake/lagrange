@@ -8,8 +8,9 @@
 
 ## 1.16.3
 * Fixed links whose label is a single Emoji sometimes not appearing.
+* Fixed updating of selected text range in navbar URL when changing tabs.
 * Fixed mouse wheel scrolling not working in unfocused windows.
-* Fixed an issue where the input focus is given to the wrong window when the application comes to the foreground.
+* macOS: Fixed an issue where the input focus is given to the wrong window when the application comes to the foreground.
 
 ## 1.16.2
 * Set input focus to navbar URL field when opening an empty window.
