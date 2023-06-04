@@ -49,10 +49,10 @@ struct Impl_Text {
 
 iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar);
 
-iText * new_Text                (SDL_Renderer *render);
+iText * new_Text                (SDL_Renderer *render, float documentFontSizeFactor);
 void    delete_Text             (iText *);
 
-void    init_Text               (iText *, SDL_Renderer *);
+void    init_Text               (iText *, SDL_Renderer *, float documentFontSizeFactor);
 void    deinit_Text             (iText *);
 
 void    setCurrent_Text         (iText *);
