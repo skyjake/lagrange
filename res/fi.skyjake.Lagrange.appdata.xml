@@ -45,6 +45,21 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.16.3" date="2023-06-04">
+            <description>
+                <ul>
+                    <li>Remove whitespace from ends of a URL pasted into an input field.</li>
+                    <li>Fixed links whose label is a single Emoji sometimes not appearing.</li>
+                    <li>Fixed zooming not affecting unfocused windows right away.</li>
+                    <li>Fixed current zoom level not being applied to newly created windows.</li>
+                    <li>Fixed updating of selected text range in navbar URL when changing tabs.</li>
+                    <li>Fixed mouse wheel scrolling not working in unfocused windows.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.16.3</url>
+        </release>
         <release version="1.16.2" date="2023-05-29">
             <description>
                 <ul>
