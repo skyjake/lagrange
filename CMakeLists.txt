@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.16.2
+    VERSION 1.16.3
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2023)
 if (IOS)
     set (PROJECT_VERSION 1.16)
-    set (IOS_BUNDLE_VERSION 2)
-    set (IOS_BUILD_DATE "2023-05-24")
+    set (IOS_BUNDLE_VERSION 4)
+    set (IOS_BUILD_DATE "2023-06-04")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.16)
-    set (ANDROID_BUILD_VERSION b19)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2023-05-24")
+    set (ANDROID_BUILD_VERSION b20)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2023-06-01")
 endif ()
 
 # Load modules from the source tree
@@ -516,6 +516,7 @@ if (APPLE AND NOT ENABLE_TUI)
             XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
             XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
             XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+            XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(inherited)" # fix missing dSYM issue
             MACOSX_BUNDLE_ICON_FILE "AppIcon"
         )
     endif ()

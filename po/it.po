@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2023-03-21 05:51+0000\n"
+"PO-Revision-Date: 2023-06-01 08:03+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -1254,7 +1254,7 @@ msgid "keys.tab.new"
 msgstr "Nuova scheda"
 
 msgid "error.manyredirects"
-msgstr "Troppi Redirect"
+msgstr "Troppi Reindirizzamenti"
 
 # button in the mobile New Identity dialog
 msgid "dlg.certimport.pickfile"
@@ -1983,10 +1983,10 @@ msgid "prefs.gemtext.ansi"
 msgstr "Codici ANSI nel Gemtext:"
 
 msgid "error.badredirect"
-msgstr "Redirect Invalido"
+msgstr "Reindirizzamento non valido"
 
 msgid "error.schemeredirect"
-msgstr "Redirect con cambio di schema"
+msgstr "Reindirizzamento con cambio di schema"
 
 #, c-format
 msgid "dlg.bookmarks.delete"
@@ -2601,3 +2601,6 @@ msgstr "Polacco"
 # A language choice in the Translation dialog.
 msgid "lang.sk"
 msgstr "Slovacco"
+
+msgid "prefs.redirect.allowscheme"
+msgstr "Reindirizzamenti che cambiano lo schema:"

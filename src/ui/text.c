@@ -39,9 +39,9 @@ static iText *current_Text_;
 
 int   gap_Text;                           /* cf. gap_UI in metrics.h */
 
-void init_Text(iText *d, SDL_Renderer *render) {
+void init_Text(iText *d, SDL_Renderer *render, float documentFontSizeFactor) {
     d->render          = render;
-    d->contentFontSize = contentScale_Text;
+    d->contentFontSize = contentScale_Text * documentFontSizeFactor;
     d->ansiEscape      = makeAnsiEscapePattern_Text(iFalse /* no ESC prefix */);
     d->baseFontId      = -1;
     d->baseFgColorId   = -1;

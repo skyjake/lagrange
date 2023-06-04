@@ -1365,10 +1365,10 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         iDisconnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
         if (accept) {
             set_String(&d->text, text_SystemTextInput(d->sysCtrl));
-            /*
-            if (d->inFlags & isUrl_InputWidgetFlag && isNarrow_InputWidget_(d)) {
-                omitDefaultScheme_(&d->text);
-            }*/
+            if (d->inFlags & isUrl_InputWidgetFlag) {
+                /* User probably didn't intend to have spaces in the start/end of a URL. */
+                trim_String(&d->text);
+            }
         }
         else {
             set_String(&d->text, &d->oldText);
@@ -1726,6 +1726,7 @@ static void paste_InputWidget_(iInputWidget *d) {
         iString *paste = collect_String(newCStr_String(text));
         /* Url decoding. */
         if (d->inFlags & isUrl_InputWidgetFlag) {
+            trim_String(paste);
             if (prefs_App()->decodeUserVisibleURLs) {
                 paste = collect_String(urlDecodeExclude_String(paste, URL_RESERVED_CHARS));
                 replace_String(paste, "\n", "%0A");

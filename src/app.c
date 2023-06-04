@@ -2989,7 +2989,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, int newTabFlags)
     if (newTabFlags & switchTo_NewTabFlag) {
         postCommandf_App("tabs.switch page:%p", doc);
     }
-    arrange_Widget(tabs);
+    arrange_Widget(get_Root()->widget);
     refresh_Widget(tabs);
     postCommandf_Root(get_Root(), "tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
@@ -4184,38 +4184,41 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {
-        if (!isFrozen) {
-            setFreezeDraw_MainWindow(get_MainWindow(), iTrue); /* no intermediate draws before docs updated */
-        }
-        iBool didChange = iFalse;
         if (arg_Command(cmd) != d->prefs.zoomPercent) {
             d->prefs.zoomPercent = arg_Command(cmd);
             invalidateCachedDocuments_App_();
-            didChange = iTrue;
-        }
-        setDocumentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
-        if (!isFrozen) {
-            if (didChange) {
-                postCommand_App("font.changed");
+            iConstForEach(PtrArray, wind, mainWindows_App()) {
+                if (!isFrozen) {
+                    setFreezeDraw_MainWindow(wind.ptr, iTrue); /* no intermediate draws before docs updated */
+                }
+                setDocumentFontSize_Text(text_Window(wind.ptr), (float) d->prefs.zoomPercent / 100.0f);
             }
-            postCommand_App("window.unfreeze");
+            if (!isFrozen) {
+                postCommand_App("font.changed");
+                postCommand_App("window.unfreeze");
+            }
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.delta")) {
-        if (!isFrozen) {
-            setFreezeDraw_MainWindow(get_MainWindow(), iTrue); /* no intermediate draws before docs updated */
-        }
         int delta = arg_Command(cmd);
         if (d->prefs.zoomPercent < 100 || (delta < 0 && d->prefs.zoomPercent == 100)) {
             delta /= 2;
         }
+        const int oldZoom = d->prefs.zoomPercent;
         d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
-        invalidateCachedDocuments_App_();
-        setDocumentFontSize_Text(text_Window(d->window), (float) d->prefs.zoomPercent / 100.0f);
-        if (!isFrozen) {
-            postCommand_App("font.changed");
-            postCommand_App("window.unfreeze");
+        if (oldZoom != d->prefs.zoomPercent) {
+            invalidateCachedDocuments_App_();
+            iConstForEach(PtrArray, wind, mainWindows_App()) {
+                if (!isFrozen) {
+                    setFreezeDraw_MainWindow(wind.ptr, iTrue); /* no intermediate draws before docs updated */
+                }
+                setDocumentFontSize_Text(text_Window(wind.ptr), (float) d->prefs.zoomPercent / 100.0f);
+            }
+            if (!isFrozen) {
+                postCommand_App("font.changed");
+                postCommand_App("window.unfreeze");
+            }
         }
         return iTrue;
     }

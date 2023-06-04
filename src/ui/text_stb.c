@@ -272,7 +272,7 @@ iDeclareType(FontRun)
 iDeclareTypeConstructionArgs(FontRun, const iFontRunArgs *args, const iRangecc text, uint32_t crc)
     
 iDeclareType(StbText)
-iDeclareTypeConstructionArgs(StbText, SDL_Renderer *render)
+iDeclareTypeConstructionArgs(StbText, SDL_Renderer *render, float documentFontSizeFactor)
 
 struct Impl_StbText {
     iText          base;
@@ -429,8 +429,8 @@ static void deinitCache_StbText_(iStbText *d) {
     SDL_DestroyTexture(d->cache);
 }
 
-void init_StbText(iStbText *d, SDL_Renderer *render) {
-    init_Text(&d->base, render);
+void init_StbText(iStbText *d, SDL_Renderer *render, float documentFontSizeFactor) {
+    init_Text(&d->base, render, documentFontSizeFactor);
     iText *oldActive = current_Text();
     setCurrent_Text(&d->base);
     init_Array(&d->fonts, sizeof(iFont));
@@ -475,9 +475,9 @@ void deinit_StbText(iStbText *d) {
     deinit_Text(&d->base);
 }
 
-iText *new_Text(SDL_Renderer *render) {
+iText *new_Text(SDL_Renderer *render, float documentFontSizeFactor) {
     iStbText *d = iMalloc(StbText);
-    init_StbText(d, render);
+    init_StbText(d, render, documentFontSizeFactor);
     return (iText *) d;
 }
 

@@ -5488,6 +5488,26 @@ static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId li
     interactingWithLink_DocumentWidget_(d, linkId);
 }
 
+static iBool isScrollableWithWheel_DocumentWidget_(const iDocumentWidget *d) {
+    if (isHover_Widget(d)) {
+        return iTrue;
+    }
+    iWindow *win = window_Widget(d);
+    iWidget *hover = win->hover;
+    if (hasParent_Widget(hover, constAs_Widget(d))) {
+        /* Hovering over the scroll widget, for example. */
+        return iTrue;
+    }
+    if (!hover) {
+        /* We need the actual mouse coordinates, `mouseCoord_Window()` does not return 
+           valid coordinates if the mouse is deemed to be outside. */
+        int x, y;
+        SDL_GetMouseState(&x, &y); 
+        return hitChild_Window(win, coord_Window(win, x, y)) == d;
+    }
+    return iFalse;
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = &d->view;
@@ -5610,7 +5630,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
              handleWheelSwipe_DocumentWidget_(d, &ev->wheel)) {
         return iTrue;
     }
-    else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
+    else if (ev->type == SDL_MOUSEWHEEL && isScrollableWithWheel_DocumentWidget_(d)) {
         const iInt2 mouseCoord = coord_MouseWheelEvent(&ev->wheel);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             /*if (d->wheelSwipeState != none_WheelSwipeState) {

@@ -562,8 +562,9 @@ static iBool processScrollWheelEvent_(NSEvent *event) {
         e.x = -event.scrollingDeltaX;
         e.y = iSign(event.scrollingDeltaY);
     }
-    // printf("#### [%d] dx:%d dy:%d phase:%ld inertia:%d end:%d\n", preventTapGlitch_, e.x, e.y, (long) event.momentumPhase,
-    //        isInertia, isEnded); fflush(stdout);
+//    printf("#### Window %d [%d] dx:%d dy:%d phase:%ld inertia:%d end:%d\n", e.windowID,
+//           preventTapGlitch_, e.x, e.y, (long) event.momentumPhase,
+//           isInertia, isEnded); fflush(stdout);
     SDL_PushEvent((SDL_Event *) &e);
     return iTrue;        
 }

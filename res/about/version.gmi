@@ -6,6 +6,15 @@
 ```
 # Release notes
 
+## 1.16.3
+* Remove whitespace from ends of a URL pasted into an input field.
+* Fixed links whose label is a single Emoji sometimes not appearing.
+* Fixed zooming not affecting unfocused windows right away.
+* Fixed current zoom level not being applied to newly created windows.
+* Fixed updating of selected text range in navbar URL when changing tabs.
+* Fixed mouse wheel scrolling not working in unfocused windows.
+* macOS: Fixed an issue where the input focus is given to the wrong window when the application comes to the foreground.
+
 ## 1.16.2
 * Set input focus to navbar URL field when opening an empty window.
 * The navbar URL field only omits the "gemini:" scheme when the text actually doesn't fit horizontally, and only when the field is inactive.
