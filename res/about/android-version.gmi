@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.16 (Beta 21)
+* Remove whitespace from ends of a URL entered into an input field.
+
 ## 1.16 (Beta 20)
 * Fixed links whose label is a single Emoji sometimes not appearing.
 * The navbar URL field only omits the "gemini:" scheme when the text actually doesn't fit horizontally, and only when the field is inactive.

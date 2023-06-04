@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.16 (5)
+* Remove whitespace from ends of a URL entered into an input field.
+
 ## 1.16 (4)
 * Fixed missing debug symbols.
 
