@@ -1,3 +1,19 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2023-06-07 06:03+0000\n"
+"PO-Revision-Date: 2023-06-07 06:03+0000\n"
+"Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
+"Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
+"ia/>\n"
+"Language: ia\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
 msgid "about.version"
 msgstr "Version"
 
@@ -148,7 +164,7 @@ msgid "dlg.ident.delete"
 msgstr "Deler le identitate e files"
 
 msgid "heading.unsub"
-msgstr "DISABONAR"
+msgstr "Disabonar se"
 
 # Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
 msgid "sidebar.unread"
@@ -203,13 +219,13 @@ msgid "dlg.input.send"
 msgstr "Inviar"
 
 msgid "heading.save.incomplete"
-msgstr "PAGINA INCOMPLETE"
+msgstr "Pagina incomplete"
 
 msgid "dlg.save.size"
 msgstr "Dimension:"
 
 msgid "heading.import.bookmarks"
-msgstr "IMPORTAR MARCAPAGINAS"
+msgstr "Importar marcapaginas"
 
 msgid "link.newtab"
 msgstr "Aperir le ligamine in un nove scheda"
@@ -230,7 +246,7 @@ msgid "link.bookmark"
 msgstr "Adder ligamine al marcapaginas…"
 
 msgid "heading.openlink"
-msgstr "APERIR LE LIGAMINE"
+msgstr "Aperir le ligamine"
 
 #, c-format
 msgid "dlg.openlink.confirm"
@@ -384,7 +400,7 @@ msgid "lang.es"
 msgstr "Espaniol"
 
 msgid "heading.newident"
-msgstr "NOV IDENTITATE"
+msgstr "Nove identitate"
 
 msgid "dlg.newident.until"
 msgstr "Valide usque:"
@@ -414,7 +430,7 @@ msgid "dlg.newident.domain"
 msgstr "Dominio:"
 
 msgid "heading.subscribe"
-msgstr "ABONAR SE LE PAGINA"
+msgstr "Abonar se le pagina"
 
 msgid "dlg.feed.title"
 msgstr "Titulo:"
@@ -441,7 +457,7 @@ msgid "dlg.bookmark.url"
 msgstr "URL:"
 
 msgid "heading.prefs"
-msgstr "PREFERENTIAS"
+msgstr "Preferentias"
 
 # tab button
 msgid "heading.prefs.interface"
@@ -461,17 +477,17 @@ msgid "history.clear"
 msgstr "Vacuar le chronologia…"
 
 msgid "heading.history.clear"
-msgstr "VACUAR LE CHRONOLOGIA"
+msgstr "Vacuar le chronologia"
 
 msgid "heading.prefs.paragraph"
-msgstr "PARAGRAPHO"
+msgstr "Paragrapho"
 
 msgid "heading.prefs.pagecontent"
-msgstr "COLORES DE PAGINA"
+msgstr "Colores del pagina"
 
 # tab button
 msgid "heading.prefs.style"
-msgstr "Stilo"
+msgstr "Stilo del pagina"
 
 # tab button
 msgid "heading.prefs.userinterface"
@@ -487,7 +503,7 @@ msgid "prefs.ostheme"
 msgstr "Usar thema del systema:"
 
 msgid "prefs.theme"
-msgstr "Thema:"
+msgstr "Thema del IdU:"
 
 msgid "prefs.theme.black"
 msgstr "Nigre"
@@ -511,7 +527,7 @@ msgid "prefs.accent.orange"
 msgstr "Orange"
 
 msgid "prefs.sideicon"
-msgstr "Icone del capsula:"
+msgstr "Icone del capsula a sinistra:"
 
 msgid "prefs.doctheme.dark"
 msgstr "Thema obscur:"
@@ -568,13 +584,13 @@ msgid "prefs.uiscale"
 msgstr "Factor de scala del IdU:"
 
 msgid "prefs.retainwindow"
-msgstr "Retener le placiamento:"
+msgstr "Salvar le placiamento del fenestra:"
 
 msgid "dlg.history.clear"
 msgstr "Vacuar le chronologia"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Rumper lineas de texto simple:"
+msgstr "Rearrangiar le lineas longe:"
 
 msgid "prefs.cachesize"
 msgstr "Memoria tampon:"
@@ -615,16 +631,16 @@ msgid "ident.use"
 msgstr "Usar por iste pagina"
 
 msgid "heading.certimport"
-msgstr "IMPORTAR UN IDENTITATE"
+msgstr "Importar un identitate"
 
 msgid "dlg.certimport.notfound"
 msgstr "Le certificato o le clave private non esseva trovate."
 
 msgid "heading.certimport.pasted"
-msgstr "COLLATE"
+msgstr "Collate ex le tabula de transferentia"
 
 msgid "heading.certimport.dropped"
-msgstr "FILE CADITE"
+msgstr "File cadite"
 
 msgid "dlg.certimport.import"
 msgstr "Importar"
@@ -642,16 +658,16 @@ msgid "dlg.certimport.nokey"
 msgstr "Nulle clave private"
 
 msgid "link.hint.audio"
-msgstr "Reproducer le audio"
+msgstr "Audio"
 
 msgid "link.hint.image"
-msgstr "Vider le imagine"
+msgstr "Imagine"
 
 msgid "bookmark.title.blank"
 msgstr "Pagina blanc"
 
 msgid "heading.translate"
-msgstr "TRADUCER LE PAGINE"
+msgstr "Traducer le pagine"
 
 msgid "dlg.translate.unavail"
 msgstr "Servicio non disponibile"
@@ -663,7 +679,7 @@ msgid "dlg.translate"
 msgstr "Traducer"
 
 msgid "heading.ident.use"
-msgstr "USO DEL IDENTITATE"
+msgstr "Uso del identitate"
 
 msgid "keys.forward"
 msgstr "Ir avante"
@@ -747,7 +763,7 @@ msgid "dlg.bookmark.icon"
 msgstr "Icone:"
 
 msgid "heading.prefs.certs"
-msgstr "CERTIFICATOS"
+msgstr "Certificatos"
 
 msgid "prefs.uilang"
 msgstr "Lingua:"
@@ -777,13 +793,13 @@ msgid "heading.prefs.keys"
 msgstr "Claves"
 
 msgid "heading.prefs.proxies"
-msgstr "PROXIES"
+msgstr "Proxies"
 
 msgid "heading.prefs.scrolling"
-msgstr "ROLAMENTO"
+msgstr "Rolamento"
 
 msgid "heading.prefs.sizing"
-msgstr "DIMENSIONAMENTO"
+msgstr "Dimensionamento"
 
 msgid "prefs.mono.gopher"
 msgstr "Gopher"
@@ -865,7 +881,7 @@ msgid "bookmark.delete"
 msgstr "Deler marcapaginas"
 
 msgid "heading.ident.notes"
-msgstr "NOTAS RE LE IDENTITATE"
+msgstr "Notas re le identitate"
 
 # %s refers to name of an identity.
 #, c-format
@@ -873,7 +889,7 @@ msgid "dlg.ident.notes"
 msgstr "Notas re %s:"
 
 msgid "heading.ident.delete"
-msgstr "DELER LE IDENTITATE"
+msgstr "Deler le identitate"
 
 msgid "sidebar.empty.idents"
 msgstr "Nulle identitates"
@@ -888,22 +904,22 @@ msgid "dlg.confirm.unsub"
 msgstr "Disabonar le syndication «%s»?"
 
 msgid "heading.pageinfo"
-msgstr "INFORMATION RE LE PAGINA"
+msgstr "Information re le pagina"
 
 msgid "pageinfo.header.cached"
 msgstr "(contento in cache)"
 
 msgid "heading.save"
-msgstr "FILE ES SALVATE"
+msgstr "File es salvate"
 
 msgid "heading.save.error"
-msgstr "ERROR AL SALVAMENTO DEL FILE"
+msgstr "Error al salvamento del file"
 
 msgid "dlg.import.notnew"
 msgstr "Tote le ligamines sur le pagina es addite al marcapaginas."
 
 msgid "heading.autoreload"
-msgstr "RECARGAR AUTOMATICAMENTE"
+msgstr "Recargar automaticamente"
 
 #, c-format
 msgid "dlg.certwarn.expired"
@@ -1005,10 +1021,10 @@ msgid "menu.aboutpages"
 msgstr "Paginas “A proposito”"
 
 msgid "heading.bookmark.add"
-msgstr "ADDER MARCAPAGINA"
+msgstr "Adder un marcapagina"
 
 msgid "heading.bookmark.edit"
-msgstr "MODIFICAR MARCAPAGINA"
+msgstr "Modificar le marcapagina"
 
 msgid "heading.prefs.widelayout"
 msgstr "Disposition large"
@@ -1064,7 +1080,7 @@ msgid "heading.lookup.other"
 msgstr "ALTERE"
 
 msgid "heading.feedcfg"
-msgstr "PARAMETROS DEL SYNDICATION"
+msgstr "Parametros del syndication"
 
 msgid "reload.never"
 msgstr "Jammais"
@@ -1225,7 +1241,7 @@ msgstr "sur le clar"
 
 # Link download progress message.
 msgid "doc.fetching"
-msgstr "Recuperante"
+msgstr "Cargamento"
 
 # Inline download status message.
 msgid "media.download.warnclose"
@@ -1335,8 +1351,7 @@ msgstr "Le ultime actualisation esseva justo nunc."
 msgid "error.badstatus.msg"
 msgstr ""
 "Le servitor respondeva con un codice de stato que non es in le specification "
-"del protocollo Gemini. Forsan le servitor es del futuro o solmente "
-"malfunctiona?"
+"del protocollo Gemini. Forsan le servitor malfunctiona."
 
 #, c-format
 msgid "dlg.certwarn.mayberenewed"
@@ -1387,7 +1402,7 @@ msgid "doc.archive.view"
 msgstr "Vider le contentos del archivo"
 
 msgid "menu.split.merge"
-msgstr "Funder le schedas"
+msgstr "Unir le schedas"
 
 msgid "menu.split.swap"
 msgstr "Intercambiar le lateres"
@@ -1414,13 +1429,13 @@ msgid "link.side.newtab"
 msgstr "Aperir le ligamine in un nove scheda al latere"
 
 msgid "heading.newident.missing"
-msgstr "INFORMATION ABSENTE"
+msgstr "Information absente"
 
 msgid "dlg.newindent.missing.commonname"
 msgstr "On debe specificar un «Nomine commun»."
 
 msgid "heading.newident.date.bad"
-msgstr "DATA INVALIDE"
+msgstr "Data invalide"
 
 msgid "dlg.newident.date.past"
 msgstr "Data de expiration debe jacer in le futuro."
@@ -1434,7 +1449,7 @@ msgstr ""
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Aperir indices de archivos:"
+msgstr "Aperir index.gmi in archivos ZIP:"
 
 msgid "archive.exit"
 msgstr "Sortir le archivo"
@@ -1488,7 +1503,7 @@ msgid "gempub.cover.viewlocal"
 msgstr "On pote vider iste libro Gempub post que lo es salvate localmente."
 
 msgid "heading.prefs.uitheme"
-msgstr "COLORES DE IDU"
+msgstr "Colores de IdU"
 
 msgid "menu.openfile"
 msgstr "Aperir un file…"
@@ -1506,7 +1521,7 @@ msgid "link.file.delete"
 msgstr "Deler le file"
 
 msgid "heading.file.delete"
-msgstr "DELER LE FILE"
+msgstr "Deler le file"
 
 msgid "dlg.file.delete"
 msgstr "Deler"
@@ -1549,7 +1564,7 @@ msgid "upload.port"
 msgstr "Porta…"
 
 msgid "heading.uploadport"
-msgstr "PORTA DE INCARGAMENTO DE TITAN"
+msgstr "Porta de incargamento de Titan"
 
 msgid "prefs.returnkey.accept"
 msgstr "Acceptar"
@@ -1558,7 +1573,7 @@ msgid "prefs.returnkey"
 msgstr "Comportamento del clave Enter:"
 
 msgid "prefs.time.24h"
-msgstr "Tempore a 24-horas"
+msgstr "Tempore a 24-horas:"
 
 msgid "prefs.imagestyle.original"
 msgstr "Nulle"
@@ -1580,7 +1595,7 @@ msgid "prefs.memorysize"
 msgstr "Dimension de memoria:"
 
 msgid "keys.upload"
-msgstr "Incargar un pagina via Titan"
+msgstr "Incargar via Titan"
 
 msgid "error.server.msg"
 msgstr "Le servitor ha respondite:"
@@ -1679,7 +1694,7 @@ msgid "sidebar.action.show"
 msgstr "Monstrar:"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "DELER MARCAPAGINAS"
+msgstr "Deler marcapaginas"
 
 msgid "menu.website"
 msgstr "Sito web del projecto…"
@@ -1713,10 +1728,10 @@ msgid "bookmark.export.format.linklines"
 msgstr "Cata ligamine representa un marcapagina."
 
 msgid "menu.page.upload"
-msgstr "Incargar un pagina via Titan…"
+msgstr "Incargar via Titan…"
 
 msgid "heading.upload"
-msgstr "INCARGAR VIA TITAN"
+msgstr "Incargar via Titan"
 
 msgid "upload.id"
 msgstr "Identitate:"
@@ -1761,10 +1776,10 @@ msgid "dlg.bookmark.folder"
 msgstr "Dossier:"
 
 msgid "heading.bookmark.tags"
-msgstr "ETIQUETTAS SPECIAL"
+msgstr "Comportamento"
 
 msgid "heading.addfolder"
-msgstr "ADDER UN DOSSIER"
+msgstr "Adder un dossier"
 
 msgid "dlg.addfolder.defaulttitle"
 msgstr "Nove dossier"
@@ -1773,14 +1788,14 @@ msgid "menu.update"
 msgstr "Controlar pro le actualisationes…"
 
 msgid "status.query.tight"
-msgstr "Requesta"
+msgstr "Cercar"
 
 msgid "dlg.addfolder"
 msgstr "Adder un dossier"
 
 # used on mobile
 msgid "heading.settings"
-msgstr "PARAMETROS"
+msgstr "Parametros"
 
 msgid "prefs.font.heading"
 msgstr "Capites:"
@@ -1814,7 +1829,7 @@ msgid "fontpack.meta.notinstalled"
 msgstr "Non installate"
 
 msgid "heading.fontpack.delete"
-msgstr "DELER UN FONTPACK"
+msgstr "Deler le fontpack"
 
 msgid "fontpack.install.ttf"
 msgstr "Installar un typo de litteras TrueType"
@@ -1856,3 +1871,470 @@ msgstr "Texto"
 
 msgid "hint.upload.text"
 msgstr "Insere texto a incargar"
+
+# A language choice in the Translation dialog.
+msgid "lang.auto"
+msgstr "Deteger automaticamente"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "Catalano"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "Checo"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "Nederlandese"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "Finnese"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "Hungaro"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "Polonese"
+
+msgid "menu.title.window"
+msgstr "Fenestra"
+
+msgid "menu.window.min"
+msgstr "Minimisar"
+
+msgid "menu.window.max"
+msgstr "Maximisar"
+
+msgid "menu.window.full"
+msgstr "Schermo plen"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "A proposito de Lagrange"
+
+msgid "menu.viewformat.plain"
+msgstr "Vider como texto simple"
+
+msgid "menu.viewformat.gemini"
+msgstr "Vider como Gemtext"
+
+msgid "sidebar.action.history.clear"
+msgstr "Vacuar"
+
+msgid "menu.openwindow"
+msgstr "Aperir in un nove fenestra"
+
+msgid "sitespec.tlscache"
+msgstr "Reprender le session TLS:"
+
+msgid "sitespec.accept"
+msgstr "Salvar parametros"
+
+msgid "keys.pageinfo"
+msgstr "Monstrar information re le pagina"
+
+msgid "keys.sitespec"
+msgstr "Monstrar le parametros del sito"
+
+msgid "dlg.input.linebreak"
+msgstr "Ruptura de linea"
+
+msgid "keys.input.precedingline"
+msgstr "Ingresso: collar le linea precedente"
+
+msgid "dlg.userdata.missing"
+msgstr "Si es mancante"
+
+msgid "dlg.userdata.all"
+msgstr "Omne (superscriber)"
+
+msgid "dlg.userdata.alldup"
+msgstr "Omne (retener le duplicatos)"
+
+msgid "import.userdata"
+msgstr "Importar le seligite datos"
+
+msgid "import.userdata.dupfolder"
+msgstr "Importate duplicatos"
+
+msgid "dlg.spartan.upload"
+msgstr "Aperir le editor…"
+
+msgid "heading.upload.spartan"
+msgstr "Incargar via Spartan"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "URL"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "Azerbaijano"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "Danese"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "Esperanto"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "Greco"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "Hebreo"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "Indonesiano"
+
+msgid "prefs.accent.green"
+msgstr "Verde"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "Persiano"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "Svedese"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "Turco"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "Ukrainiano"
+
+msgid "heading.bookmark.editfolder"
+msgstr "Modificar le dossier"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "terminos separate per spatios"
+
+msgid "prefs.toolbaraction2"
+msgstr "Button 2"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "Oceanic"
+
+# Color of the text foreground, i.e., the characters.
+msgid "prefs.gemtext.ansi.fg"
+msgstr "Color de texto"
+
+msgid "error.incompleteheader"
+msgstr "Capite incomplete"
+
+msgid "dlg.addfolder.prompt"
+msgstr "Intra le nomine del nove dossier:"
+
+msgid "menu.folder.opentab"
+msgstr "Aperir in nove schedas"
+
+msgid "bookmark.folder.delete"
+msgstr "Deler un dossier de marcapaginas"
+
+# The %s represents the name of an identity.
+#, c-format
+msgid "ident.switch"
+msgstr "Usar %s"
+
+msgid "pageinfo.settings"
+msgstr "Parametros"
+
+msgid "heading.sitespec"
+msgstr "Parametros del sito"
+
+msgid "link.newwindow"
+msgstr "Aperir le ligamine in un nove fenestra"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "Contento"
+
+msgid "heading.glyphfinder"
+msgstr "Glyphos mancante"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "Disactivar le advertimentos"
+
+msgid "dlg.uploadport.set"
+msgstr "Assignar un porta"
+
+msgid "dlg.bookmark.notes"
+msgstr "Notas:"
+
+msgid "prefs.menubar"
+msgstr "Barra del menu"
+
+msgid "prefs.tabwidth"
+msgstr "Largessa de tabulation:"
+
+msgid "heading.prefs.user"
+msgstr "Datos del usator"
+
+msgid "heading.prefs.toolbaractions"
+msgstr "Actiones del barra de instrumentos"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "Irlandese"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "Coreano"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "Slovaco"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "Le characteres sequente non pote esser monstrate:"
+
+msgid "heading.glyphfinder.results"
+msgstr "Resultatos del recerca"
+
+msgid "heading.prefs.support"
+msgstr "Supporto"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "Monstrar in le gestor de files"
+
+msgid "heading.prefs.content"
+msgstr "Contento"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "Aperir imagines in URLs de datos:"
+
+msgid "prefs.uilayout"
+msgstr "Disposition:"
+
+msgid "prefs.toolbaraction1"
+msgstr "Button 1"
+
+msgid "prefs.accent.red"
+msgstr "Rubie"
+
+msgid "prefs.accent.blue"
+msgstr "Blau"
+
+msgid "prefs.retaintabs"
+msgstr "Restaurar le schedas:"
+
+msgid "prefs.tui.simple"
+msgstr "Characteres simple:"
+
+msgid "prefs.justify"
+msgstr "Justificar:"
+
+msgid "heading.dismiss.warning"
+msgstr "Dimitter le advertimento?"
+
+msgid "prefs.blink"
+msgstr "Cursor palpebrante:"
+
+msgid "keys.upload.edit"
+msgstr "Editar le pagina via Titan"
+
+msgid "error.proxyverify"
+msgstr "Proxy non fidabile"
+
+msgid "menu.open.external"
+msgstr "Aperir per un altere app"
+
+msgid "menu.home"
+msgstr "Ir al pagina principal"
+
+msgid "menu.identities"
+msgstr "Gerer identitates"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "Collar le linea precedente"
+
+msgid "menu.share"
+msgstr "Compartir"
+
+msgid "menu.movetab.left"
+msgstr "Mover un scheda a sinistra"
+
+msgid "menu.movetab.right"
+msgstr "Mover un scheda a dextra"
+
+msgid "feeds.entry.markbelowread"
+msgstr "Marcar al infra como legite"
+
+msgid "ident.unset"
+msgstr "Disfixar"
+
+# Shows where a local file is using the Finder.
+msgid "menu.reveal.macos"
+msgstr "Monstrar in Finder"
+
+msgid "dlg.certimport.paste"
+msgstr "Collar ex le tabula de transferentia"
+
+msgid "heading.upload.id"
+msgstr "Autorisation"
+
+msgid "menu.upload.export"
+msgstr "Exportar como texto"
+
+msgid "hint.upload.path"
+msgstr "URL del percurso"
+
+msgid "dlg.newident.scope.dir"
+msgstr "Directorio actual"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "Dossier parente:"
+
+msgid "prefs.markdown.viewsource"
+msgstr "Vider le codice fonte de Markdown:"
+
+msgid "prefs.accent.gray"
+msgstr "Gris"
+
+msgid "prefs.urlsize"
+msgstr "Longor maxime de URLs:"
+
+# Menu heading shown when customizing navbar button actions.
+msgid "menu.toolbar.setaction"
+msgstr "Assignar un action:"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "Nove dossier"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "Editar"
+
+msgid "sidebar.empty.unread"
+msgstr "Nulle entratas non legite"
+
+msgid "prefs.evensplit"
+msgstr "Divider schedas equalmente:"
+
+msgid "keys.menubar.focus"
+msgstr "Activar le barra del menu"
+
+msgid "menu.tab.next"
+msgstr "Scheda sequente"
+
+msgid "menu.tab.prev"
+msgstr "Scheda precedente"
+
+msgid "menu.movetab.split"
+msgstr "Mover le scheda al altere latere"
+
+msgid "menu.movetab.newwindow"
+msgstr "Mover le scheda a un nove fenestra"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "Celar le identitates"
+
+msgid "sitespec.palette"
+msgstr "Semina del paletta del thema:"
+
+msgid "menu.reopentab"
+msgstr "Reaperir le scheda clause"
+
+msgid "heading.import.userdata"
+msgstr "Importar le datos del usator"
+
+msgid "heading.import.userdata.error"
+msgstr "Importation fallite"
+
+msgid "import.userdata.bookmarks"
+msgstr "Signa-libros:"
+
+msgid "import.userdata.trusted"
+msgstr "Certificatos digne de fide:"
+
+msgid "menu.upload.delete"
+msgstr "Deler toto"
+
+msgid "menu.upload.delete.confirm"
+msgstr "Deler omne realmente (sin disfaction)"
+
+msgid "hint.upload.token"
+msgstr "consulta le instructiones del servitor"
+
+msgid "heading.prefs.appearance"
+msgstr "Apparentia"
+
+msgid "heading.prefs.layout"
+msgstr "Disposition de pagina"
+
+msgid "prefs.bottomtabbar"
+msgstr "Schedas al basso"
+
+msgid "menu.newwindow"
+msgstr "Nove fenestra"
+
+msgid "menu.sort.alpha"
+msgstr "Ordinar alphabeticamente"
+
+msgid "keys.identmenu"
+msgstr "Aperir le menu de identitates"
+
+msgid "menu.paste.go"
+msgstr "Collar e ir"
+
+msgid "heading.archive.userdata"
+msgstr "Archivo del datos del usator"
+
+msgid "menu.export"
+msgstr "Exportar le datos del usator"
+
+msgid "menu.import"
+msgstr "Importar le datos del usator…"
+
+msgid "import.userdata.idents"
+msgstr "Identitates:"
+
+msgid "import.userdata.history"
+msgstr "Chronologia:"
+
+msgid "menu.identity.newdomain"
+msgstr "Nove identitate por le dominio…"
+
+msgid "spartan.input"
+msgstr "Insere texto a incargar:"
+
+msgid "menu.page.upload.edit"
+msgstr "Editar le pagina via Titan…"
+
+msgid "menu.email"
+msgstr "Continger per email"
+
+msgid "sidebar.close"
+msgstr "Facite"
+
+msgid "error.proxyexpired"
+msgstr "Le certificate del proxy ha expirate"
+
+msgid "import.userdata.sitespec"
+msgstr "Parametros del sito:"
+
+msgid "dlg.userdata.no"
+msgstr "Nulle"
+
+msgid "bookmark.export.title.time"
+msgstr "Create marcapaginas"
+
+msgid "keys.bookmark.addfolder"
+msgstr "Adder un dossier de marcapaginas"
+
+msgid "prefs.redirect.allowscheme"
+msgstr "Redirectiones que cambia le schema:"
