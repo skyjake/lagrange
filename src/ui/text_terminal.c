@@ -130,8 +130,8 @@ iBaseFont *characterFont_BaseFont(iBaseFont *d, iChar ch) {
     return d;
 }
 
-static void init_TuiText(iTuiText *d, SDL_Renderer *render) {
-    init_Text(&d->base, render);
+static void init_TuiText(iTuiText *d, SDL_Renderer *render, float documentFontSizeFactor) {
+    init_Text(&d->base, render, documentFontSizeFactor);
     iForIndices(s, d->fonts) {
         iForIndices(i, d->fonts[s]) {
             init_Font(d->fonts[s] + i, s == 1 ? 2 : 1);
@@ -149,9 +149,9 @@ static void deinit_TuiText(iTuiText *d) {
     deinit_Text(&d->base);
 }
 
-iText *new_Text(SDL_Renderer *render) {
+iText *new_Text(SDL_Renderer *render, float documentFontSizeFactor) {
     iTuiText *d = iMalloc(TuiText);
-    init_TuiText(d, render);
+    init_TuiText(d, render, documentFontSizeFactor);
     return (iText *) d;
 }
 
