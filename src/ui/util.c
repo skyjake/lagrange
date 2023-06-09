@@ -1251,6 +1251,11 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     const iBool postCommands  = (menuOpenFlags & postCommands_MenuOpenFlags) != 0;
     const iBool isMenuFocused = ((menuOpenFlags & setFocus_MenuOpenFlags) ||
                                  focus_Widget() == parent_Widget(d));
+    if (postCommands) {
+        postCommandf_App("cancel menu:%p", d); /* dismiss any other menus */
+    }
+    /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
+    processEvents_App(postedEventsOnly_AppEventMode);
 #if defined (iPlatformAppleDesktop)
     if (flags_Widget(d) & nativeMenu_WidgetFlag) {
         /* Open a native macOS menu. */
@@ -1265,11 +1270,6 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     const iBool isPhone         = (deviceType_App() == phone_AppDeviceType);
     const iBool isPortraitPhone = (isPhone && isPortrait_App());
     const iBool isSlidePanel    = (flags_Widget(d) & horizontalOffset_WidgetFlag) != 0;
-    if (postCommands) {
-        postCommandf_App("cancel menu:%p", d); /* dismiss any other menus */
-    }
-    /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
-    processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);

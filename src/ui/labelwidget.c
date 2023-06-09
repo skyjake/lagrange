@@ -145,6 +145,14 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
         updateKey_LabelWidget_(d);
         return iFalse;
     }
+    else if (isCommand_UserEvent(ev, "cancel")) {
+        if (flags_Widget(w) & pressed_WidgetFlag) {
+            setFlags_Widget(w, pressed_WidgetFlag, iFalse);
+            endSiblingOrderDrag_LabelWidget_(d);
+            refresh_Widget(w);
+        }
+        return iFalse;
+    }
     else if (isCommand_Widget(w, ev, "focus.gained") ||
              isCommand_Widget(w, ev, "focus.lost")) {
         iWidget *scr = findOverflowScrollable_Widget(w);

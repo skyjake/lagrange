@@ -967,6 +967,20 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
         screenPoint.y += menuSize.height / 2;
     }
     [menu setAutoenablesItems:NO];
+    /* Fake the release of the left mouse button, in case it's also pressed. Otherwise,
+       SDL would miss the release event while the context menu's event loop is running. */
+    if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK) {
+        SDL_MouseButtonEvent mbe = {
+            .type = SDL_MOUSEBUTTONUP,
+            .timestamp = SDL_GetTicks(),
+            .windowID = id_Window(get_Window()),
+            0,
+            SDL_BUTTON_LEFT,
+            SDL_RELEASED,
+            1
+        };
+        SDL_PushEvent((SDL_Event *) &mbe);
+    }
     [menu popUpMenuPositioningItem:selectedItem atLocation:screenPoint inView:nil];
     [menu release];
     [menuCommands release];
