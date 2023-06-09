@@ -1683,7 +1683,13 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
             text.start += size_String(&str);
             trimStart_Rangecc(&text);
         }
-        drawWrapRange_Text(font, pos, avail, tmBannerSideTitle_ColorId, text);
+        iTextMetrics metrics = measureWrapRange_Text(font, avail, text);
+        int xOff = 0;
+        if (width_Rect(metrics.bounds) < width_Rect(iconRect)) {
+            /* Very short captions should be centered under the icon. */
+            xOff = (width_Rect(iconRect) - width_Rect(metrics.bounds)) / 2;
+        }
+        drawWrapRange_Text(font, addX_I2(pos, xOff), avail, tmBannerSideTitle_ColorId, text);
     }
     deinit_String(&str);
     endTarget_Paint(&p);
