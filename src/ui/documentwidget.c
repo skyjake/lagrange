@@ -6787,7 +6787,12 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
     arrange_Widget(d->footerButtons);
 }
 
+static void sizeChanged_DocumentWidget_(iDocumentWidget *d) {
+    updateSize_DocumentWidget(d);    
+}
+
 iBeginDefineSubclass(DocumentWidget, Widget)
     .processEvent = (iAny *) processEvent_DocumentWidget_,
     .draw         = (iAny *) draw_DocumentWidget_,
+    .sizeChanged  = (iAny *) sizeChanged_DocumentWidget_,
 iEndDefineSubclass(DocumentWidget)
