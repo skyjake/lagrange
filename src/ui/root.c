@@ -902,6 +902,9 @@ static void updateNavBarSize_(iWidget *navBar) {
         iForIndices(k, lists) {
             iForEach(ObjectList, i, lists[k]) {
                 iWidget *child = as_Widget(i.object);
+                if (!cmp_String(id_Widget(i.object), "navbar.lock")) {
+                    continue;
+                }
                 if (cmp_String(id_Widget(i.object), "navbar.unsplit")) {
                     setFlags_Widget(child, tight_WidgetFlag, isNarrow);
                     if (isInstance_Object(i.object, &Class_LabelWidget)) {
@@ -1022,11 +1025,18 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         iInputWidget *url = findChild_Widget(navBar, "url");
         if (pointer_Command(cmd) == url) {
             const iBool isFocused = equal_Command(cmd, "focus.gained");
+            if (deviceType_App() == tablet_AppDeviceType && isPortrait_App()) {
+                setFlags_Widget(findChild_Widget(navBar, "navbar.action1"), hidden_WidgetFlag, isFocused);
+                setFlags_Widget(findChild_Widget(navBar, "navbar.action2"), hidden_WidgetFlag, isFocused);
+                setFlags_Widget(findChild_Widget(navBar, "navbar.action4"), hidden_WidgetFlag, isFocused);
+                setFlags_Widget(findChild_Widget(navBar, "navbar.ident"), hidden_WidgetFlag, isFocused);
+            }
             setFlags_Widget(findChild_Widget(navBar, "navbar.lock"), hidden_WidgetFlag, isFocused);
             setFlags_Widget(findChild_Widget(navBar, "navbar.clear"), hidden_WidgetFlag, !isFocused);
             showCollapsed_Widget(findChild_Widget(navBar, "navbar.cancel"), isFocused);
             showCollapsed_Widget(findChild_Widget(navBar, "pagemenubutton"), !isFocused);
             showCollapsed_Widget(findChild_Widget(navBar, "reload"), !isFocused);
+            updateNavBarSize_(navBar);
         }
         return iFalse;
     }
