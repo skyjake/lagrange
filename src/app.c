@@ -3977,6 +3977,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
          (equalCase_Rangecc(parts.scheme, "http") ||
           equalCase_Rangecc(parts.scheme, "https")))) {
         openInDefaultBrowser_App(url, string_Command(cmd, "mime"));
+        disableRefresh_App(iFalse);
         return iTrue;
     }
     iDocumentWidget *doc = document_Command(cmd);

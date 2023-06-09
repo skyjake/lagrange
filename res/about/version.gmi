@@ -7,7 +7,9 @@
 # Release notes
 
 ## 1.16.4
+* Center a short title under the icon in the page margin.
 * Fixed issue with too much empty space in the input prompt layout.
+* macOS: Fixed a few cases of potential window freezing during swipe navigation.
 * TUI: Fixed build error.
 
 ## 1.16.3
