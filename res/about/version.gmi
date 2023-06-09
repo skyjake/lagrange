@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.16.4
+* Fixed issue with too much empty space in the input prompt layout.
+* TUI: Fixed build error.
+
 ## 1.16.3
 * Remove whitespace from ends of a URL pasted into an input field.
 * Fixed links whose label is a single Emoji sometimes not appearing.
