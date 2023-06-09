@@ -8,7 +8,10 @@
 
 ## 1.16.4
 * Center a short title under the icon in the page margin.
-* Fixed issue with too much empty space in the input prompt layout.
+* Fixed too much empty space in the input prompt layout.
+* Fixed incorrect behavior related to context menus while performing a drag.
+* Fixed incorrect mouse button state after resizing the window.
+* macOS: Fixed drag operation getting stuck if a context menu is opened during the drag.
 * macOS: Fixed a few cases of potential window freezing during swipe navigation.
 * TUI: Fixed build error.
 
