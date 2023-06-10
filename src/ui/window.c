@@ -2007,9 +2007,10 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             }
         }        
         d->splitMode = splitMode;
-        postCommand_App("window.resized");
+        windowSizeChanged_MainWindow_(d);
+        postCommand_App("window.resized"); /* not really, but widgets may need to change layout */
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-        /* Update custom frame controls. */{
+        /* Update custom frame controls. */ {
             const iBool hideCtl0 = numRoots_Window(as_Window(d)) != 1;
             iWidget *winBar = findChild_Widget(d->base.roots[0]->widget, "winbar");
             if (winBar) {
