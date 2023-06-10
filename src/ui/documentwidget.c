@@ -2210,7 +2210,7 @@ static void updateMedia_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void animateMedia_DocumentWidget_(iDocumentWidget *d) {
-    if (document_App() != d) {
+    if (!current_Root() || document_App() != d) {
         if (d->mediaTimer) {
             SDL_RemoveTimer(d->mediaTimer);
             d->mediaTimer = 0;
