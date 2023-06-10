@@ -48,6 +48,7 @@ const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
 int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
 const iGmIdentity * identity_DocumentWidget         (const iDocumentWidget *);
+int                 generation_DocumentWidget       (const iDocumentWidget *);
 
 iBool               isRequestOngoing_DocumentWidget (const iDocumentWidget *);
 iBool               isSourceTextView_DocumentWidget (const iDocumentWidget *);

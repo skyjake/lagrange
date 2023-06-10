@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.16.4
+* Improved tab closing order: close all sibling tabs opened from an origin tab before switching back to the origin tab.
 * Center a short title under the icon in the page margin.
 * Fixed too much empty space in the input prompt layout.
 * Fixed incorrect behavior related to context menus while performing a drag.

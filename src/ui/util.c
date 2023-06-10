@@ -2018,6 +2018,7 @@ void showTabPage_Widget(iWidget *tabs, const iAnyObject *page) {
             iWidget *child = as_Widget(i.object);
             setFlags_Widget(child, hidden_WidgetFlag | disabled_WidgetFlag, child != page);
         }
+        postRefresh_App();
     }
     /* Notify. */
     if (!isEmpty_String(id_Widget(page))) {
