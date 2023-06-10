@@ -128,6 +128,7 @@ struct Impl_PersistentDocumentState {
     iString * url;
     iBlock *setIdentity; /* identity (fingerprint) to use for requests, overriding default one */
     enum iReloadInterval reloadInterval;
+    int generation;
 };
 
 void init_PersistentDocumentState(iPersistentDocumentState *d) {
@@ -135,6 +136,7 @@ void init_PersistentDocumentState(iPersistentDocumentState *d) {
     d->url            = new_String();
     d->setIdentity    = NULL;
     d->reloadInterval = 0;
+    d->generation     = 0;
 }
 
 void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
@@ -145,7 +147,7 @@ void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
 
 void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStream *outs) {
     serialize_String(d->url, outs);
-    uint16_t params = d->reloadInterval & 7;
+    uint16_t params = (d->reloadInterval & 7) | (iClamp(d->generation, 0, 15) << 4);    
     writeU16_Stream(outs, params);
     /* Identity override. */ {
         iBlock empty;
@@ -164,6 +166,7 @@ void deserialize_PersistentDocumentState(iPersistentDocumentState *d, iStream *i
     }
     const uint16_t params = readU16_Stream(ins);
     d->reloadInterval = params & 7;
+    d->generation     = params >> 4;
     if (version_Stream(ins) >= documentSetIdentity_FileVersion) {
         iBlock fp;
         init_Block(&fp, 0);
@@ -1683,7 +1686,13 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
             text.start += size_String(&str);
             trimStart_Rangecc(&text);
         }
-        drawWrapRange_Text(font, pos, avail, tmBannerSideTitle_ColorId, text);
+        iTextMetrics metrics = measureWrapRange_Text(font, avail, text);
+        int xOff = 0;
+        if (width_Rect(metrics.bounds) < width_Rect(iconRect)) {
+            /* Very short captions should be centered under the icon. */
+            xOff = (width_Rect(iconRect) - width_Rect(metrics.bounds)) / 2;
+        }
+        drawWrapRange_Text(font, addX_I2(pos, xOff), avail, tmBannerSideTitle_ColorId, text);
     }
     deinit_String(&str);
     endTarget_Paint(&p);
@@ -2204,7 +2213,7 @@ static void updateMedia_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void animateMedia_DocumentWidget_(iDocumentWidget *d) {
-    if (document_App() != d) {
+    if (!current_Root() || document_App() != d) {
         if (d->mediaTimer) {
             SDL_RemoveTimer(d->mediaTimer);
             d->mediaTimer = 0;
@@ -5480,8 +5489,11 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
 static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, int tabMode) {
     const iString *linkUrl = absoluteUrl_String(d->mod.url,
                                                 linkUrl_GmDocument(d->view.doc, linkId));
-    postCommandf_Root(d->widget.root, "open query:%d newtab:%d%s url:%s",
+    postCommandf_Root(d->widget.root,
+                      "open query:%d%s newtab:%d%s url:%s",
                       isSpartanQueryLink_DocumentWidget_(d, linkId),
+                      tabMode ? format_CStr(" origin:%s", cstr_String(id_Widget(as_Widget(d))))
+                              : "",
                       tabMode,
                       setIdentArg_DocumentWidget_(d, linkUrl),
                       cstr_String(linkUrl));
@@ -6605,6 +6617,10 @@ const iGmIdentity *identity_DocumentWidget(const iDocumentWidget *d) {
     return identityForUrl_GmCerts(certs_App(), url_DocumentWidget(d));
 }
 
+int generation_DocumentWidget(const iDocumentWidget *d) {
+    return d->mod.generation;
+}
+
 iBool isIdentityPinned_DocumentWidget(const iDocumentWidget *d) {
     return !isEmpty_Block(d->mod.setIdentity);
 }
@@ -6717,6 +6733,7 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
 void setOrigin_DocumentWidget(iDocumentWidget *d, const iDocumentWidget *other) {
     if (d != other) {
         /* TODO: Could remember the other's ID? */
+        d->mod.generation = other->mod.generation + 1;
         set_String(&d->linePrecedingLink, &other->linePrecedingLink);
     }
 }
@@ -6781,7 +6798,12 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
     arrange_Widget(d->footerButtons);
 }
 
+static void sizeChanged_DocumentWidget_(iDocumentWidget *d) {
+    updateSize_DocumentWidget(d);    
+}
+
 iBeginDefineSubclass(DocumentWidget, Widget)
     .processEvent = (iAny *) processEvent_DocumentWidget_,
     .draw         = (iAny *) draw_DocumentWidget_,
+    .sizeChanged  = (iAny *) sizeChanged_DocumentWidget_,
 iEndDefineSubclass(DocumentWidget)

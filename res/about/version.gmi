@@ -6,6 +6,16 @@
 ```
 # Release notes
 
+## 1.16.4
+* Improved tab closing order: close all sibling tabs opened from an origin tab before switching back to the origin tab.
+* Center a short title under the icon in the page margin.
+* Fixed too much empty space in the input prompt layout.
+* Fixed incorrect behavior related to context menus while performing a drag.
+* Fixed incorrect mouse button state after resizing the window.
+* macOS: Fixed drag operation getting stuck if a context menu is opened during the drag.
+* macOS: Fixed a few cases of potential window freezing during swipe navigation.
+* TUI: Fixed build error.
+
 ## 1.16.3
 * Remove whitespace from ends of a URL pasted into an input field.
 * Fixed links whose label is a single Emoji sometimes not appearing.

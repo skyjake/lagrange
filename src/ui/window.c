@@ -64,6 +64,7 @@ static iMainWindow *theMainWindow_;
 static float initialUiScale_ = 1.0f;
 static iBool isOpenGLRenderer_;
 static iBool isDrawing_;
+static iBool isResizing_;
 
 iDefineTypeConstructionArgs(Window,
                             (enum iWindowType type, iRect rect, uint32_t flags),
@@ -326,13 +327,17 @@ static void setupUserInterface_MainWindow(iMainWindow *d) {
     d->base.keyRoot = d->base.roots[0];
 }
 
-static void updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
+static iBool updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
     iInt2 *size = &d->base.size;
     const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->base.render, &size->x, &size->y);
     size->y -= d->keyboardHeight;
-    if (notifyAlways || !isEqual_I2(oldSize, *size)) {
+    const iBool hasChanged = !isEqual_I2(oldSize, *size);
+    if (hasChanged) {
         windowSizeChanged_MainWindow_(d);
+        postRefresh_App();
+    }
+    if (!isResizing_ && (hasChanged || notifyAlways)) {
         if (!isEqual_I2(*size, d->place.lastNotifiedSize)) {
             const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
             const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
@@ -342,16 +347,19 @@ static void updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
                              isHoriz,
                              isVert);
             postCommand_App("widget.overflow"); /* check bounds with updated sizes */
+            postRefresh_App();
         }
-        postRefresh_App();
         d->place.lastNotifiedSize = *size;
     }
+    return hasChanged;
 }
 
 void drawWhileResizing_MainWindow(iMainWindow *d, int w, int h) {
     if (!isDrawing_) {
+        isResizing_ = iTrue;
         setCurrent_Window(d);
         draw_MainWindow(d);
+        isResizing_ = iFalse;
     }
 }
 
@@ -1569,13 +1577,12 @@ void draw_MainWindow(iMainWindow *d) {
     setCurrent_Text(d->base.text);
     /* Check if root needs resizing. */ {
         const iBool wasPortrait = isPortrait_App();
-        iInt2 renderSize;
-        SDL_GetRendererOutputSize(w->render, &renderSize.x, &renderSize.y);
-        if (!isEqual_I2(renderSize, w->size)) {
-            updateSize_MainWindow_(d, iTrue);
-            processEvents_App(postedEventsOnly_AppEventMode);
+//        iInt2 renderSize;
+//        SDL_GetRendererOutputSize(w->render, &renderSize.x, &renderSize.y);
+        if (updateSize_MainWindow_(d, iTrue)) {
+            //processEvents_App(postedEventsOnly_AppEventMode);
             if (isPortrait_App() != wasPortrait) {
-                d->maxDrawableHeight = renderSize.y;
+                d->maxDrawableHeight = w->size.y; // renderSize.y;
             }
         }
         /* TODO: On macOS, a detached popup window will mess up the main window's rendering
@@ -1583,15 +1590,15 @@ void draw_MainWindow(iMainWindow *d) {
            though, so leaving it in. */
         if (d->enableBackBuf) { 
             /* Possible resize the backing buffer. */
-            if (!d->backBuf || !isEqual_I2(size_SDLTexture(d->backBuf), renderSize)) {
+            if (!d->backBuf || !isEqual_I2(size_SDLTexture(d->backBuf), w->size)) {
                 if (d->backBuf) {
                     SDL_DestroyTexture(d->backBuf);
                 }
                 d->backBuf = SDL_CreateTexture(d->base.render,
                                                SDL_PIXELFORMAT_RGB888,
                                                SDL_TEXTUREACCESS_TARGET,
-                                               renderSize.x,
-                                               renderSize.y);
+                                               w->size.x,
+                                               w->size.y);
 //                printf("NEW BACKING: %dx%d %p\n", renderSize.x, renderSize.y, d->backBuf); fflush(stdout);
             }
         }
@@ -1881,7 +1888,8 @@ void swapRoots_MainWindow(iMainWindow *d) {
     iWindow *w = as_Window(d);
     if (numRoots_Window(w) == 2) {
         iSwap(iRoot *, w->roots[0], w->roots[1]);
-        updateSize_MainWindow_(d, iTrue);
+        windowSizeChanged_MainWindow_(d); /* re-do layout */
+        postRefresh_App();
     }
 }
 
@@ -2000,9 +2008,10 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             }
         }        
         d->splitMode = splitMode;
-        postCommand_App("window.resized");
+        windowSizeChanged_MainWindow_(d);
+        postCommand_App("window.resized"); /* not really, but widgets may need to change layout */
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
-        /* Update custom frame controls. */{
+        /* Update custom frame controls. */ {
             const iBool hideCtl0 = numRoots_Window(as_Window(d)) != 1;
             iWidget *winBar = findChild_Widget(d->base.roots[0]->widget, "winbar");
             if (winBar) {

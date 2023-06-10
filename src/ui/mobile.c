@@ -1093,6 +1093,7 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
 }
 
 void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
+    disableRefresh_App(iFalse);
     if (isPromoted_Widget(sheet)) {
         /* This has been promoted to a window, shouldn't animate it. */
         return;

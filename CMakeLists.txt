@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.16.3
+    VERSION 1.16.4
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -287,7 +287,7 @@ if (ENABLE_TUI)
     add_definitions (-DiPlatformTerminal=1)
     list (APPEND SOURCES
         src/ui/text_terminal.c
-    )    
+    )
 else ()
     set (ENABLE_STB_TRUETYPE YES)
     list (APPEND SOURCES
@@ -575,7 +575,7 @@ elseif (ENABLE_TUI AND (UNIX OR MSYS))
         target_compile_definitions (app PUBLIC
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
     endif ()
-    install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange)    
+    install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange)
 elseif (UNIX AND NOT APPLE)
     include (GNUInstallDirs)
     set_target_properties (app PROPERTIES

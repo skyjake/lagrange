@@ -3977,6 +3977,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
          (equalCase_Rangecc(parts.scheme, "http") ||
           equalCase_Rangecc(parts.scheme, "https")))) {
         openInDefaultBrowser_App(url, string_Command(cmd, "mime"));
+        disableRefresh_App(iFalse);
         return iTrue;
     }
     iDocumentWidget *doc = document_Command(cmd);
@@ -4319,10 +4320,11 @@ iBool handleCommand_App(const char *cmd) {
         const iRangecc tabId = range_Command(cmd, "id");
         iWidget *      doc   = !isEmpty_Range(&tabId) ? findWidget_App(cstr_Rangecc(tabId))
                                                       : document_App();
-        iBool  wasCurrent = (doc == (iWidget *) document_App());
-        size_t index      = tabPageIndex_Widget(tabs, doc);
-        const iBool isRightmost = (index == tabCount_Widget(tabs) - 1);
-        iBool  wasClosed  = iFalse;
+        iBool          wasCurrent       = (doc == (iWidget *) document_App());
+        size_t         index            = tabPageIndex_Widget(tabs, doc);
+        const iBool    isRightmost      = (index == tabCount_Widget(tabs) - 1);
+        iBool          wasClosed        = iFalse;
+        const int      closedGeneration = generation_DocumentWidget((iDocumentWidget *) doc);
         postCommand_App("document.openurls.changed");
         if (argLabel_Command(cmd, "toright")) {
             while (tabCount_Widget(tabs) > index + 1) {
@@ -4364,9 +4366,17 @@ iBool handleCommand_App(const char *cmd) {
             else {
                 arrange_Widget(tabs);
                 if (wasCurrent) {
-                    postCommandf_App(
-                        "tabs.switch page:%p",
-                        tabPage_Widget(tabs, index > 0 ? index - (isRightmost ? 1 : 0) : 0));
+                    size_t newIndex = index;
+                    if (isRightmost) {
+                        newIndex--;
+                    }
+                    else if (newIndex > 0) {
+                        if (generation_DocumentWidget((iDocumentWidget *) tabPage_Widget(
+                                tabs, newIndex)) != closedGeneration) {
+                            newIndex--;
+                        }
+                    }
+                    postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, newIndex));
                 }
             }
         }
