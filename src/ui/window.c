@@ -1888,7 +1888,8 @@ void swapRoots_MainWindow(iMainWindow *d) {
     iWindow *w = as_Window(d);
     if (numRoots_Window(w) == 2) {
         iSwap(iRoot *, w->roots[0], w->roots[1]);
-        updateSize_MainWindow_(d, iTrue);
+        windowSizeChanged_MainWindow_(d); /* re-do layout */
+        postRefresh_App();
     }
 }
 
