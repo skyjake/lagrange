@@ -1015,9 +1015,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         if (focus_Widget() != url) {
             setFocus_Widget(findChild_Widget(navBar, "url"));
         }
-        else {
-            selectAll_InputWidget((iInputWidget *) url);
-        }
+        selectAll_InputWidget((iInputWidget *) url);
         return iTrue;
     }
     else if (deviceType_App() != desktop_AppDeviceType &&
