@@ -1168,8 +1168,21 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
     d->inFlags &= ~needUpdateBuffer_InputWidgetFlag;
 }
 
+static iBool isAllSelected_InputWidget_(const iInputWidget *d) {
+#if LAGRANGE_USE_SYSTEM_TEXT_INPUT
+    return iFalse; /* Query the native widget? */
+#else
+    const iRanges all = { 0, lastLine_InputWidget_(d)->range.end };
+    return d->mark.start == all.start && d->mark.end == all.end;
+#endif
+}
+
 void setText_InputWidget(iInputWidget *d, const iString *text) {
+    const iBool isAllSelected = isAllSelected_InputWidget_(d);
     setTextUndoable_InputWidget(d, text, iFalse);
+    if (isAllSelected) {
+        selectAll_InputWidget(d);
+    }
 }
 
 void setTextUndoable_InputWidget(iInputWidget *d, const iString *text, iBool isUndoable) {

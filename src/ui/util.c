@@ -1312,7 +1312,9 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
         addv_I2(&winRect.pos, winPos);
         iRect visibleWinRect = intersect_Rect(winRect, displayRect);
         /* Only use a popup window if the menu can't fit inside the main window. */
-        if (height_Widget(d) / pixelRatio > visibleWinRect.size.y && isUsingMenuPopupWindows_()) {
+        if (height_Widget(d) / pixelRatio > visibleWinRect.size.y ||
+            (allowOverflow &&
+             (windowCoord.y < 0 || windowCoord.y + height_Widget(d) > get_Window()->size.y))) {
             if (postCommands) {
                 postCommand_Widget(d, "menu.opened");
             }

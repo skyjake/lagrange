@@ -7,13 +7,16 @@
 # Release notes
 
 ## 1.16.4
+* Context/button menus use a popup window if they would otherwise have to scroll (e.g., "Dark theme:" in Preferences and "Folder:" in the bookmark editor).
 * Improved tab closing order: close all sibling tabs opened from an origin tab before switching back to the origin tab.
 * Center a short title under the icon in the page margin.
+* Fixed navbar URL text selection when opening new tabs (keep all selected).
 * Fixed too much empty space in the input prompt layout.
-* Fixed incorrect behavior related to context menus while performing a drag.
-* Fixed incorrect mouse button state after resizing the window.
+* Fixed stuck mouse button when opening a context menu while performing a drag.
+* Fixed incorrect mouse button state and other potential incorrect behavior after resizing the window.
 * macOS: Fixed drag operation getting stuck if a context menu is opened during the drag.
 * macOS: Fixed a few cases of potential window freezing during swipe navigation.
+* Windows: Updated SDL to 2.26.5.
 * TUI: Fixed build error.
 
 ## 1.16.3
