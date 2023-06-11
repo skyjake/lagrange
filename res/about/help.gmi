@@ -93,7 +93,7 @@ Search within cached pages is limited to the (small) set of pages that Lagrange 
 
 Note that the navigation stack is saved to a file when Lagrange is shut down and restored on the next launch. This means the next time you launch Lagrange, you can still search the contents of past pages. However, navigation stacks are tab-specific, so closing a tab will delete its history as well.
 
-You can also make online search queries via the URL input field. When a search URL is configured on the "Network" tab of Preferences, text entered in the URL field is passed to the search URL as a query parameter. A search query will only occur when Enter is pressed while the [Search Query] indicator is visible.
+You can also make online search queries via the URL input field. When a search URL is configured on the "General" tab of Preferences, text entered in the URL field is passed to the search URL as a query parameter. A search query will only occur when Enter is pressed while the [Search Query] indicator is visible.
 
 ### 1.1.2 Links
 
