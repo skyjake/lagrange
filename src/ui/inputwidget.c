@@ -1806,6 +1806,9 @@ static void contentsWereChanged_InputWidget_(iInputWidget *d) {
     if (d->inFlags & notifyEdits_InputWidgetFlag) {
         postCommand_Widget(d, "input.edited id:%s", cstr_String(id_Widget(constAs_Widget(d))));
     }
+    if (!d->sysCtrl) {
+        refresh_Widget(d);
+    }
 }
 
 static iRect bounds_InputWidget_(const iInputWidget *d) {
