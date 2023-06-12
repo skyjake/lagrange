@@ -45,6 +45,24 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.16.4" date="2023-06-12">
+            <description>
+                <ul>
+                    <li>Context/button menus use a popup window if they would otherwise have to scroll (e.g., "Dark theme:" in Preferences and "Folder:" in the bookmark editor).</li>
+                    <li>Improved tab closing order: close all sibling tabs opened from an origin tab before switching back to the origin tab.</li>
+                    <li>Center a short title under the icon in the page margin.</li>
+                    <li>Fixed navbar URL text selection when opening new tabs (keep all selected).</li>
+                    <li>Fixed too much empty space in the input prompt layout.</li>
+                    <li>Fixed input field not being updated after cutting text.</li>
+                    <li>Fixed stuck mouse button when opening a context menu while performing a drag.</li>
+                    <li>Fixed incorrect mouse button state and other potential incorrect behavior after resizing the window.</li>
+                    <li>The x86_64 AppImage now uses SDL 2.26.5 built from source, fixing issues with window and popup behavior.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.16.4</url>
+        </release>
         <release version="1.16.3" date="2023-06-04">
             <description>
                 <ul>
