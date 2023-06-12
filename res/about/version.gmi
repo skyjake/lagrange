@@ -12,11 +12,13 @@
 * Center a short title under the icon in the page margin.
 * Fixed navbar URL text selection when opening new tabs (keep all selected).
 * Fixed too much empty space in the input prompt layout.
+* Fixed input field not being updated after cutting text.
 * Fixed stuck mouse button when opening a context menu while performing a drag.
 * Fixed incorrect mouse button state and other potential incorrect behavior after resizing the window.
 * macOS: Fixed drag operation getting stuck if a context menu is opened during the drag.
 * macOS: Fixed a few cases of potential window freezing during swipe navigation.
 * Windows: Updated SDL to 2.26.5.
+* Linux: The x86_64 AppImage now uses SDL 2.26.5 built from source, fixing issues with window and popup behavior.
 * TUI: Fixed build error.
 
 ## 1.16.3
