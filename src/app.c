@@ -2961,7 +2961,6 @@ iDocumentWidget *document_Command(const char *cmd) {
 
 iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, int newTabFlags) {
     iWidget *tabs = findWidget_Root("doctabs");
-    size_t currentTabIndex = tabPageIndex_Widget(tabs, document_App());
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
     iWidget *newTabButton = findChild_Widget(tabs, "newtab");
     removeChild_Widget(newTabButton->parent, newTabButton);
@@ -2974,15 +2973,16 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, int newTabFlags)
     }
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
-    /* Find and move to the insertion point. */ {
+    /* Find and move to the insertion point. */
+    if (~newTabFlags & append_NewTabFlag) {
         const size_t insertAt = tabPageIndex_Widget(
             tabs, findChild_Widget(tabs, cstr_String(&get_Root()->tabInsertId)));
         if (insertAt != iInvalidPos) {
             moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, insertAt + 1);
         }
-        /* The next tab comes here. */
-        set_String(&as_Widget(doc)->root->tabInsertId, id_Widget(as_Widget(doc)));
     }
+    /* The next tab comes here. */
+    set_String(&as_Widget(doc)->root->tabInsertId, id_Widget(as_Widget(doc)));
     addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
     showOrHideNewTabButton_Root(tabs->root);
@@ -4302,8 +4302,10 @@ iBool handleCommand_App(const char *cmd) {
             }
             return iTrue;
         }
+        const iBool isAppend    = argLabel_Command(cmd, "append") != 0;
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
-        newTab_App(isDuplicate ? document_App() : NULL, switchTo_NewTabFlag);
+        newTab_App(isDuplicate ? document_App() : NULL,
+                   switchTo_NewTabFlag | (isAppend ? append_NewTabFlag : 0));
         if (!isDuplicate) {
             postCommandf_App("navigate.home focus:%d", deviceType_App() == desktop_AppDeviceType);
         }

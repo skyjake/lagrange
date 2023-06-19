@@ -419,7 +419,7 @@ static void appearanceChanged_MacOS_(NSString *name) {
         return [[CommandButton alloc] initWithIdentifier:identifier
                                                    image:[NSImage imageNamed:NSImageNameTouchBarAddTemplate]
                                                   widget:nil
-                                                 command:@"tabs.new"];
+                                                 command:@"tabs.new append:1"];
     }
     return nil;
 }

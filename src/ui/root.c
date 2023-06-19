@@ -55,7 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static const iMenuItem desktopNavMenuItems_[] = {
     { openWindow_Icon " ${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
-    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
+    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new append:1" },
     { close_Icon " ${menu.closetab}", SDLK_w, KMOD_PRIMARY, "tabs.close" },
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---" },
@@ -85,7 +85,7 @@ static const iMenuItem desktopNavMenuItems_[] = {
 };
 
 static const iMenuItem tabletNavMenuItems_[] = {
-    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
+    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new append:1" },
     { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { "---" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
@@ -102,7 +102,7 @@ static const iMenuItem tabletNavMenuItems_[] = {
 };
 
 static const iMenuItem phoneNavMenuItems_[] = {
-    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
+    { add_Icon " ${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new append:1" },
     { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { "---" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
@@ -1792,7 +1792,8 @@ void createUserInterface_Root(iRoot *d) {
             setBackgroundColor_Widget(buttons, uiBackground_ColorId);
         }
         setId_Widget(
-            addChildFlags_Widget(buttons, iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new")),
+            addChildFlags_Widget(buttons,
+                                 iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new append:1")),
                                  moveToParentRightEdge_WidgetFlag | collapse_WidgetFlag),
             "newtab");
     }
