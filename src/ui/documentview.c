@@ -650,7 +650,7 @@ iRangecc sourceLoc_DocumentView(const iDocumentView *d, iInt2 pos) {
 
 iDeclareType(MiddleRunParams)
     
-    struct Impl_MiddleRunParams {
+struct Impl_MiddleRunParams {
     int midY;
     const iGmRun *closest;
     int distance;
