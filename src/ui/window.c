@@ -73,7 +73,7 @@ iDefineTypeConstructionArgs(MainWindow, (iRect rect), rect)
 
 static const iMenuItem fileMenuItems_[] = {
     { "${menu.newwindow}", SDLK_n, KMOD_PRIMARY, "window.new" },
-    { "${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
+    { "${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new append:1" },
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "${menu.reopentab}", SDLK_t, KMOD_SECONDARY, "tabs.new reopen:1" },
     { "---" },

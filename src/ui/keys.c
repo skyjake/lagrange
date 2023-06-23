@@ -226,7 +226,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
 #if !defined (iPlatformApple) /* Ctrl-Cmd-F on macOS */
     { 73, { "${keys.fullscreen}",           SDLK_F11, 0,                    "window.fullscreen"                 }, 0 },
 #endif
-    { 76, { "${keys.tab.new}",              newTab_KeyShortcut,             "tabs.new"                          }, 0 },
+    { 76, { "${keys.tab.new}",              newTab_KeyShortcut,             "tabs.new append:1"                 }, 0 },
     { 77, { "${keys.tab.close}",            closeTab_KeyShortcut,           "tabs.close"                        }, 0 },
     { 78, { "${keys.tab.close.other}",      SDLK_w, KMOD_SECONDARY,         "tabs.close toleft:1 toright:1"     }, 0 },
     { 79, { "${LC:menu.reopentab}",         SDLK_t, KMOD_SECONDARY,         "tabs.new reopen:1"                 }, 0 },        

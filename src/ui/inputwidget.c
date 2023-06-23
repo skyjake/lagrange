@@ -1178,6 +1178,7 @@ static iBool isAllSelected_InputWidget_(const iInputWidget *d) {
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {
+    if (!d) return;
     const iBool isAllSelected = isAllSelected_InputWidget_(d);
     setTextUndoable_InputWidget(d, text, iFalse);
     if (isAllSelected) {

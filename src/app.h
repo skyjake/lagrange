@@ -79,6 +79,7 @@ enum iUserEventCode {
 
 enum iNewTabFlag {
     switchTo_NewTabFlag = iBit(1),
+    append_NewTabFlag   = iBit(2),
 };
 
 const iString *execPath_App     (void);

@@ -43,7 +43,7 @@ const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction] = {
     { home_Icon, "${menu.home}", "navigate.home" },
     { upArrow_Icon, "${menu.parent}", "navigate.parent" },
     { reload_Icon, "${menu.reload}", "navigate.reload" },
-    { add_Icon, "${menu.newtab}", "tabs.new" },
+    { add_Icon, "${menu.newtab}", "tabs.new append:1" },
     { close_Icon, "${menu.closetab}", "tabs.close" },
     { bookmark_Icon, "${menu.page.bookmark}", "bookmark.add" },
     { globe_Icon, "${menu.page.translate}", "document.translate" },
