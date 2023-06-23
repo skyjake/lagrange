@@ -26,26 +26,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "audio/player.h"
 #include "banner.h"
 #include "bookmarks.h"
-#include "command.h"
 #include "defs.h"
-#include "export.h"
+#include "documentwidget.h"
 #include "gempub.h"
-#include "gmcerts.h"
 #include "gmrequest.h"
 #include "gmutil.h"
-#include "gopher.h"
-#include "history.h"
-#include "keys.h"
-#include "linkinfo.h"
 #include "media.h"
 #include "paint.h"
-#include "periodic.h"
 #include "root.h"
 #include "mediaui.h"
-#include "sitespec.h"
 #include "touch.h"
 #include "util.h"
-#include "visited.h"
 
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
@@ -317,7 +308,7 @@ static void addVisible_DocumentView_(void *context, const iGmRun *run) {
     }
 }
 
-static const iGmRun *lastVisibleLink_DocumentView_(const iDocumentView *d) {
+const iGmRun *lastVisibleLink_DocumentView(const iDocumentView *d) {
     iReverseConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
         if (run->flags & decoration_GmRunFlag && run->linkId) {
@@ -344,7 +335,7 @@ float normScrollPos_DocumentView(const iDocumentView *d) {
     return 0;
 }
 
-static void invalidateLink_DocumentView_(iDocumentView *d, iGmLinkId id) {
+void invalidateLink_DocumentView(iDocumentView *d, iGmLinkId id) {
     /* A link has multiple runs associated with it. */
     iConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
@@ -354,7 +345,7 @@ static void invalidateLink_DocumentView_(iDocumentView *d, iGmLinkId id) {
     }
 }
 
-static void invalidateVisibleLinks_DocumentView_(iDocumentView *d) {
+void invalidateVisibleLinks_DocumentView(iDocumentView *d) {
     iConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
         if (run->linkId) {
@@ -363,7 +354,7 @@ static void invalidateVisibleLinks_DocumentView_(iDocumentView *d) {
     }
 }
 
-static void updateHoverLinkInfo_DocumentView_(iDocumentView *d) {
+void updateHoverLinkInfo_DocumentView(iDocumentView *d) {
     updateHoverLinkInfo_DocumentWidget(d->owner, d->hoverLink ? d->hoverLink->linkId : 0);
 }
 
@@ -396,12 +387,12 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
     }
     if (d->hoverLink != oldHoverLink) {
         if (oldHoverLink) {
-            invalidateLink_DocumentView_(d, oldHoverLink->linkId);
+            invalidateLink_DocumentView(d, oldHoverLink->linkId);
         }
         if (d->hoverLink) {
-            invalidateLink_DocumentView_(d, d->hoverLink->linkId);
+            invalidateLink_DocumentView(d, d->hoverLink->linkId);
         }
-        updateHoverLinkInfo_DocumentView_(d);
+        updateHoverLinkInfo_DocumentView(d);
         refresh_Widget(w);
     }
     /* Hovering over preformatted blocks. */
@@ -442,7 +433,7 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
     }
 }
 
-static void updateSideOpacity_DocumentView_(iDocumentView *d, iBool isAnimated) {
+void updateSideOpacity_DocumentView(iDocumentView *d, iBool isAnimated) {
     float opacity = 0.0f;
     if (!isEmpty_Banner(banner_DocumentWidget(d->owner)) &&
         height_Banner(banner_DocumentWidget(d->owner)) < pos_SmoothScroll(&d->scrollY)) {
@@ -470,7 +461,7 @@ static iRangecc currentHeading_DocumentView_(const iDocumentView *d) {
     return heading;
 }
 
-static int updateScrollMax_DocumentView_(iDocumentView *d) {
+int updateScrollMax_DocumentView(iDocumentView *d) {
     arrange_Widget(footerButtons_DocumentWidget(d->owner)); /* scrollMax depends on footer height */
     const int scrollMax = scrollMax_DocumentView_(d);
     setMax_SmoothScroll(&d->scrollY, scrollMax);
@@ -478,7 +469,7 @@ static int updateScrollMax_DocumentView_(iDocumentView *d) {
 }
 
 void updateVisible_DocumentView(iDocumentView *d) {
-    const int scrollMax = updateScrollMax_DocumentView_(d);
+    const int scrollMax = updateScrollMax_DocumentView(d);
     aboutToScrollView_DocumentWidget(d->owner, scrollMax); /* TODO: A widget may have many views. */
     clear_PtrArray(&d->visibleLinks);
     clear_PtrArray(&d->visibleWideRuns);
@@ -495,7 +486,7 @@ void updateVisible_DocumentView(iDocumentView *d) {
         d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     }
     updateHover_DocumentView(d, mouseCoord_Window(get_Window(), 0));
-    updateSideOpacity_DocumentView_(d, iTrue);
+    updateSideOpacity_DocumentView(d, iTrue);
     didScrollView_DocumentWidget(d->owner);
 }
 
@@ -503,7 +494,8 @@ void updateDrawBufs_DocumentView(iDocumentView *d, int drawBufsFlags) {
     d->drawBufs->flags |= drawBufsFlags;
 }
 
-static void swap_DocumentView_(iDocumentView *d, iDocumentView *swapBuffersWith) {
+void swap_DocumentView(iDocumentView *d, iDocumentView *swapBuffersWith) {
+    /* TODO: This must go! Views should not be swapped between widgets! */
     d->scrollY        = swapBuffersWith->scrollY;
     d->scrollY.widget = as_Widget(d->owner);
     iSwap(iVisBuf *,     d->visBuf,     swapBuffersWith->visBuf);
@@ -549,7 +541,7 @@ void documentRunsInvalidated_DocumentView(iDocumentView *d) {
     iZap(d->renderRuns);
 }
 
-static void resetScroll_DocumentView_(iDocumentView *d) {
+void resetScroll_DocumentView(iDocumentView *d) {
     reset_SmoothScroll(&d->scrollY);
     d->userHasScrolled = iFalse;
     init_Anim(&d->sideOpacity, 0);
@@ -557,7 +549,7 @@ static void resetScroll_DocumentView_(iDocumentView *d) {
     resetWideRuns_DocumentView(d);
 }
 
-static iBool updateWidth_DocumentView_(iDocumentView *d) {
+iBool updateWidth_DocumentView(iDocumentView *d) {
     if (updateWidth_GmDocument(d->doc, documentWidth_DocumentView(d), width_Widget(d->owner))) {
         documentRunsInvalidated_DocumentView(d); /* GmRuns reallocated */
         return iTrue;
@@ -569,17 +561,17 @@ void clampScroll_DocumentView(iDocumentView *d) {
     move_SmoothScroll(&d->scrollY, 0);
 }
 
-static void immediateScroll_DocumentView_(iDocumentView *d, int offset) {
+void immediateScroll_DocumentView(iDocumentView *d, int offset) {
     move_SmoothScroll(&d->scrollY, offset);
     d->userHasScrolled = iTrue;
 }
 
-static void smoothScroll_DocumentView_(iDocumentView *d, int offset, int duration) {
+void smoothScroll_DocumentView(iDocumentView *d, int offset, int duration) {
     moveSpan_SmoothScroll(&d->scrollY, offset, duration);
     d->userHasScrolled = iTrue;
 }
 
-static void scrollTo_DocumentView_(iDocumentView *d, int documentY, iBool centered) {
+void scrollTo_DocumentView(iDocumentView *d, int documentY, iBool centered) {
     if (!isEmpty_Banner(banner_DocumentWidget(d->owner))) {
         documentY += height_Banner(banner_DocumentWidget(d->owner)) + documentTopPad_DocumentView(d);
     }
@@ -592,7 +584,7 @@ static void scrollTo_DocumentView_(iDocumentView *d, int documentY, iBool center
     clampScroll_DocumentView(d);
 }
 
-static void scrollToHeading_DocumentView_(iDocumentView *d, const char *heading) {
+void scrollToHeading_DocumentView(iDocumentView *d, const char *heading) {
     iConstForEach(Array, h, headings_GmDocument(d->doc)) {
         const iGmHeading *head = h.value;
         if (startsWithCase_Rangecc(head->text, heading)) {
@@ -602,9 +594,8 @@ static void scrollToHeading_DocumentView_(iDocumentView *d, const char *heading)
     }
 }
 
-static iBool scrollWideBlock_DocumentView_(iDocumentView *d, iInt2 mousePos, int delta,
-                                           int duration) {
-    if (delta == 0 || d->owner->wheelSwipeState == direct_WheelSwipeState) {
+iBool scrollWideBlock_DocumentView(iDocumentView *d, iInt2 mousePos, int delta, int duration) {
+    if (delta == 0 || wheelSwipeState_DocumentWidget(d->owner) == direct_WheelSwipeState) {
         return iFalse;
     }
     const iInt2 docPos = documentPos_DocumentView_(d, mousePos);
@@ -630,8 +621,8 @@ static iBool scrollWideBlock_DocumentView_(iDocumentView *d, iInt2 mousePos, int
                     insert_PtrSet(d->invalidRuns, r);
                 }
                 refresh_Widget(d->owner);
-                d->owner->selectMark = iNullRange;
-                d->owner->foundMark  = iNullRange;
+                *d->selectMark = iNullRange;
+                *d->foundMark  = iNullRange;
                 if (duration) {
                     if (d->animWideRunId != preId_GmRun(run) || isFinished_Anim(&d->animWideRunOffset)) {
                         d->animWideRunId = preId_GmRun(run);
@@ -684,7 +675,7 @@ static const iGmRun *middleRun_DocumentView_(const iDocumentView *d) {
     return params.closest;
 }
 
-static void allocVisBuffer_DocumentView_(const iDocumentView *d) {
+void allocVisBuffer_DocumentView(const iDocumentView *d) {
     const iWidget *w         = constAs_Widget(d->owner);
     const iBool    isVisible = isVisible_Widget(w);
     const iInt2    size      = bounds_Widget(w).size;
@@ -696,7 +687,7 @@ static void allocVisBuffer_DocumentView_(const iDocumentView *d) {
     }
 }
 
-static size_t visibleLinkOrdinal_DocumentView_(const iDocumentView *d, iGmLinkId linkId) {
+size_t visibleLinkOrdinal_DocumentView(const iDocumentView *d, iGmLinkId linkId) {
     size_t ord = 0;
     const iRangei visRange = visibleRange_DocumentView(d);
     iConstForEach(PtrArray, i, &d->visibleLinks) {
@@ -733,14 +724,14 @@ iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, 
     if (runLoc && !keepCenter) {
         run = findRunAtLoc_GmDocument(d->doc, runLoc);
         if (run) {
-            scrollTo_DocumentView_(
+            scrollTo_DocumentView(
                 d, top_Rect(run->visBounds) + lineHeight_Text(paragraph_FontId) + voffset, iFalse);
         }
     }
     else if (runLoc && keepCenter) {
         run = findRunAtLoc_GmDocument(d->doc, runLoc);
         if (run) {
-            scrollTo_DocumentView_(d, mid_Rect(run->bounds).y, iTrue);
+            scrollTo_DocumentView(d, mid_Rect(run->bounds).y, iTrue);
         }
     }
     return iTrue;
@@ -753,7 +744,7 @@ iRect runRect_DocumentView(const iDocumentView *d, const iGmRun *run) {
 
 iDeclareType(DrawContext)
     
-    struct Impl_DrawContext {
+struct Impl_DrawContext {
     const iDocumentView *view;
     iRect widgetBounds;
     iRect docBounds;
@@ -770,10 +761,10 @@ iDeclareType(DrawContext)
 
 static int measureAdvanceToLoc_(const iGmRun *run, const char *end) {
     iWrapText wt = { .text     = run->text,
-                    .mode     = anyCharacter_WrapTextMode,
-                    .maxWidth = isJustified_GmRun(run) ? iAbsi(drawBoundWidth_GmRun(run)) : 0,
-                    .justify  = isJustified_GmRun(run),
-                    .hitChar  = end };
+                     .mode     = anyCharacter_WrapTextMode,
+                     .maxWidth = isJustified_GmRun(run) ? iAbsi(drawBoundWidth_GmRun(run)) : 0,
+                     .justify  = isJustified_GmRun(run),
+                     .hitChar  = end };
     measure_WrapText(&wt, run->font);
     return wt.hitAdvance_out.x;
 }
@@ -837,8 +828,8 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
 static void drawMark_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d = context;
     if (!isMedia_GmRun(run)) {
-        fillRange_DrawContext_(d, run, uiMatching_ColorId, d->view->owner->foundMark, &d->inFoundMark);
-        fillRange_DrawContext_(d, run, uiMarked_ColorId, d->view->owner->selectMark, &d->inSelectMark);
+        fillRange_DrawContext_(d, run, uiMatching_ColorId, *d->view->foundMark, &d->inFoundMark);
+        fillRange_DrawContext_(d, run, uiMarked_ColorId, *d->view->selectMark, &d->inSelectMark);
     }
 }
 
@@ -963,10 +954,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     else {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag &&
             ~run->flags & caption_GmRunFlag) {
-            const size_t ord = visibleLinkOrdinal_DocumentView_(d->view, run->linkId);
-            if (ord >= d->view->owner->ordinalBase) {
+            const size_t ord = visibleLinkOrdinal_DocumentView(d->view, run->linkId);
+            if (ord >= ordinalBase_DocumentWidget(d->view->owner)) {
                 const iChar ordChar =
-                    linkOrdinalChar_DocumentWidget_(d->view->owner, ord - d->view->owner->ordinalBase);
+                    linkOrdinalChar_DocumentWidget(d->view->owner,
+                                                   ord - ordinalBase_DocumentWidget(d->view->owner));
                 if (ordChar) {
                     const char *circle = "\u25ef"; /* Large Circle */
                     const int   circleFont = FONT_ID(default_FontId, regular_FontStyle, contentRegular_FontSize);
@@ -1312,7 +1304,7 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
     }
     d->drawBufs->lastRenderTime = SDL_GetTicks();
     /* Swap buffers around to have room available both before and after the visible region. */
-    allocVisBuffer_DocumentView_(d);
+    allocVisBuffer_DocumentView(d);
     reposition_VisBuf(visBuf, vis);
     /* Redraw the invalid ranges. */
     if (~flags_Widget(constAs_Widget(d->owner)) & destroyPending_WidgetFlag) {
@@ -1545,7 +1537,7 @@ void draw_DocumentView(const iDocumentView *d) {
             draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop), ySpan_Rect(bounds));
         }
         /* Text markers. */
-        if (!isEmpty_Range(&d->owner->foundMark) || !isEmpty_Range(&d->owner->selectMark)) {
+        if (!isEmpty_Range(d->foundMark) || !isEmpty_Range(d->selectMark)) {
             SDL_Renderer *render = renderer_Window(get_Window());
             ctx.firstMarkRect = zero_Rect();
             ctx.lastMarkRect = zero_Rect();
@@ -1555,14 +1547,14 @@ void draw_DocumentView(const iDocumentView *d) {
             ctx.viewPos = topLeft_Rect(docBounds);
             /* Marker starting outside the visible range? */
             if (d->visibleRuns.start) {
-                if (!isEmpty_Range(&d->owner->selectMark) &&
-                    d->owner->selectMark.start < d->visibleRuns.start->text.start &&
-                    d->owner->selectMark.end > d->visibleRuns.start->text.start) {
+                if (!isEmpty_Range(d->selectMark) &&
+                    d->selectMark->start < d->visibleRuns.start->text.start &&
+                    d->selectMark->end > d->visibleRuns.start->text.start) {
                     ctx.inSelectMark = iTrue;
                 }
-                if (isEmpty_Range(&d->owner->foundMark) &&
-                    d->owner->foundMark.start < d->visibleRuns.start->text.start &&
-                    d->owner->foundMark.end > d->visibleRuns.start->text.start) {
+                if (isEmpty_Range(d->foundMark) &&
+                    d->foundMark->start < d->visibleRuns.start->text.start &&
+                    d->foundMark->end > d->visibleRuns.start->text.start) {
                     ctx.inFoundMark = iTrue;
                 }
             }
@@ -1650,10 +1642,10 @@ void draw_DocumentView(const iDocumentView *d) {
 }
 
 void resetScrollPosition_DocumentView(iDocumentView *d, float normScrollY) {
-    resetScroll_DocumentView_(d);
+    resetScroll_DocumentView(d);
     init_Anim(&d->scrollY.pos, normScrollY * pageHeight_DocumentView(d));
     updateVisible_DocumentView(d);
     clampScroll_DocumentView(d);
-    updateSideOpacity_DocumentView_(d, iFalse);
+    updateSideOpacity_DocumentView(d, iFalse);
     updateDrawBufs_DocumentView(d, updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag);    
 }

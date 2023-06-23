@@ -226,11 +226,6 @@ enum iDocumentLinkOrdinalMode {
     homeRow_DocumentLinkOrdinalMode,
 };
 
-enum iWheelSwipeState {
-    none_WheelSwipeState,
-    direct_WheelSwipeState,
-};
-
 struct Impl_DocumentWidget {
     iWidget        widget;
     int            flags; /* internal behavior, see enum iDocumentWidgetFlag */
@@ -428,7 +423,7 @@ static size_t linkOrdinalFromKey_DocumentWidget_(const iDocumentWidget *d, int k
     return ord;
 }
 
-static iChar linkOrdinalChar_DocumentWidget_(const iDocumentWidget *d, size_t ord) {
+iChar linkOrdinalChar_DocumentWidget(const iDocumentWidget *d, size_t ord) {
     if (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode) {
         if (ord < 9) {
             return '1' + ord;
@@ -454,6 +449,14 @@ static iChar linkOrdinalChar_DocumentWidget_(const iDocumentWidget *d, size_t or
         }
     }
     return 0;
+}
+
+size_t ordinalBase_DocumentWidget(const iDocumentWidget *d) {
+    return d->ordinalBase;
+}
+
+enum iWheelSwipeState wheelSwipeState_DocumentWidget(const iDocumentWidget *d) {
+    return d->wheelSwipeState;
 }
 
 void documentRunsInvalidated_DocumentWidget(iDocumentWidget *d) {
@@ -817,7 +820,7 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     if (document_App() != d || category_GmStatusCode(d->sourceStatus) == categoryInput_GmStatusCode) {
         return;
     }
-    d->view.drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
+    updateDrawBufs_DocumentView(&d->view, updateTimestampBuf_DrawBufsFlag);
     updateBanner_DocumentWidget_(d);
 }
 
@@ -953,7 +956,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     d->state = ready_RequestState;
     setSource_DocumentWidget(d, src);
     updateTheme_DocumentWidget_(d);
-    resetScroll_DocumentView_(&d->view);
+    resetScroll_DocumentView(&d->view);
 }
 
 static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
@@ -1192,7 +1195,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
         }
         clear_String(&d->sourceMime);
         d->sourceTime = response->when;
-        d->view.drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
+        updateDrawBufs_DocumentView(&d->view, updateTimestampBuf_DrawBufsFlag);
         initBlock_String(&str, &response->body); /* Note: Body may be megabytes in size. */
         if (isSuccess_GmStatusCode(statusCode)) {
             /* Check the MIME type. */
@@ -1456,7 +1459,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
         }
         if (cachedDoc) {
             replaceDocument_DocumentWidget_(d, cachedDoc);
-            if (updateWidth_DocumentView_(&d->view)) {
+            if (updateWidth_DocumentView(&d->view)) {
                 documentRunsInvalidated_DocumentWidget(d); /* GmRuns reallocated */
             }
         }
@@ -1739,7 +1742,7 @@ void scrollBegan_DocumentWidget(iAnyObject *any, int offset, uint32_t duration) 
     /* Get rid of link numbers when scrolling. */
     if (offset && d->flags & showLinkNumbers_DocumentWidgetFlag) {
         setLinkNumberMode_DocumentWidget_(d, iFalse);
-        invalidateVisibleLinks_DocumentView_(&d->view);
+        invalidateVisibleLinks_DocumentView(&d->view);
     }
     /* Show and hide toolbar on scroll. */
     if (deviceType_App() == phone_AppDeviceType) {
@@ -1991,7 +1994,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             case categorySuccess_GmStatusCode:
                 if (d->flags & urlChanged_DocumentWidgetFlag) {
                     /* Keep scroll position when reloading the same page. */
-                    resetScroll_DocumentView_(&d->view);
+                    resetScroll_DocumentView(&d->view);
                 }
                 d->view.scrollY.pullActionTriggered = 0;
                 pauseAllPlayers_Media(media_GmDocument(d->view.doc), iTrue);
@@ -2139,7 +2142,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
             unlockResponse_GmRequest(req->req);
         }
         /* Update the link's progress. */
-        invalidateLink_DocumentView_(&d->view, req->linkId);
+        invalidateLink_DocumentView(&d->view, req->linkId);
         refresh_Widget(d);
         return iTrue;
     }
@@ -2301,7 +2304,7 @@ static void swap_DocumentWidget_(iDocumentWidget *d, iGmDocument *doc,
         iSwap(iBanner *, d->banner, swapBuffersWith->banner);
         setOwner_Banner(d->banner, d);
         setOwner_Banner(swapBuffersWith->banner, swapBuffersWith);
-        swap_DocumentView_(&d->view, &swapBuffersWith->view);
+        swap_DocumentView(&d->view, &swapBuffersWith->view);
 //        invalidate_DocumentWidget_(swapBuffersWith);
     }
 }
@@ -2637,7 +2640,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     if (equal_Command(cmd, "visited.changed")) {
         updateVisitedLinks_GmDocument(d->view.doc);
-        invalidateVisibleLinks_DocumentView_(&d->view);
+        invalidateVisibleLinks_DocumentView(&d->view);
         return iFalse;
     }
     if (equal_Command(cmd, "document.render")) /* `Periodic` makes direct dispatch to here */ {
@@ -2672,7 +2675,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "window.focus.lost")) {
         if (d->flags & showLinkNumbers_DocumentWidgetFlag) {
             setLinkNumberMode_DocumentWidget_(d, iFalse);
-            invalidateVisibleLinks_DocumentView_(&d->view);
+            invalidateVisibleLinks_DocumentView(&d->view);
             refresh_Widget(w);
         }
         return iFalse;
@@ -2722,9 +2725,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         showOrHideInputPrompt_DocumentWidget_(d);
         init_Anim(&d->view.sideOpacity, 0);
         init_Anim(&d->view.altTextOpacity, 0);
-        updateSideOpacity_DocumentView_(&d->view, iFalse);
+        updateSideOpacity_DocumentView(&d->view, iFalse);
         updateWindowTitle_DocumentWidget_(d);
-        allocVisBuffer_DocumentView_(&d->view);
+        allocVisBuffer_DocumentView(&d->view);
         animateMedia_DocumentWidget_(d);
         remove_Periodic(periodic_App(), d);
         removeTicker_App(prerender_DocumentView, &d->view);
@@ -3070,7 +3073,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                           cstr_String(d->mod.url));
         /* Check for a pending goto. */
         if (!isEmpty_String(&d->pendingGotoHeading)) {
-            scrollToHeading_DocumentView_(&d->view, cstr_String(&d->pendingGotoHeading));
+            scrollToHeading_DocumentView(&d->view, cstr_String(&d->pendingGotoHeading));
             clear_String(&d->pendingGotoHeading);
         }
         cacheDocumentGlyphs_DocumentWidget_(d);
@@ -3220,13 +3223,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             if (d->flags & showLinkNumbers_DocumentWidgetFlag &&
                 d->ordinalMode == homeRow_DocumentLinkOrdinalMode) {
                 const size_t numKeys = iElemCount(homeRowKeys_);
-                const iGmRun *last = lastVisibleLink_DocumentView_(&d->view);
+                const iGmRun *last = lastVisibleLink_DocumentView(&d->view);
                 if (!last) {
                     d->ordinalBase = 0;
                 }
                 else {
                     d->ordinalBase += numKeys;
-                    if (visibleLinkOrdinal_DocumentView_(&d->view, last->linkId) < d->ordinalBase) {
+                    if (visibleLinkOrdinal_DocumentView(&d->view, last->linkId) < d->ordinalBase) {
                         d->ordinalBase = 0;
                     }
                 }
@@ -3246,7 +3249,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             iChangeFlags(d->flags, newTabViaHomeKeys_DocumentWidgetFlag,
                          argLabel_Command(cmd, "newtab") != 0);
         }
-        invalidateVisibleLinks_DocumentView_(&d->view);
+        invalidateVisibleLinks_DocumentView(&d->view);
         refresh_Widget(d);
         return iTrue;
     }
@@ -3343,16 +3346,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             return iTrue;
         }
         const float amount = argLabel_Command(cmd, "full") != 0 ? 1.0f : 0.5f;
-        smoothScroll_DocumentView_(&d->view,
-                                   dir * amount *
-                                       height_Rect(documentBounds_DocumentView(&d->view)),
-                                   smoothDuration_DocumentWidget_(keyboard_ScrollType));
+        smoothScroll_DocumentView(&d->view,
+                                  dir * amount *
+                                      height_Rect(documentBounds_DocumentView(&d->view)),
+                                  smoothDuration_DocumentWidget_(keyboard_ScrollType));
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
         if (argLabel_Command(cmd, "smooth")) {
             stopWidgetMomentum_Touch(w);
-            smoothScroll_DocumentView_(&d->view, -pos_SmoothScroll(&d->view.scrollY), 500);
+            smoothScroll_DocumentView(&d->view, -pos_SmoothScroll(&d->view.scrollY), 500);
             d->view.scrollY.flags |= muchSofter_AnimFlag;
             return iTrue;
         }
@@ -3364,7 +3367,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.bottom") && document_App() == d) {
-        updateScrollMax_DocumentView_(&d->view); /* scrollY.max might not be fully updated */
+        updateScrollMax_DocumentView(&d->view); /* scrollY.max might not be fully updated */
         init_Anim(&d->view.scrollY.pos, d->view.scrollY.max);
         invalidate_VisBuf(d->view.visBuf);
         clampScroll_DocumentView(&d->view);
@@ -3379,9 +3382,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             fetchNextUnfetchedImage_DocumentWidget_(d)) {
             return iTrue;
         }
-        smoothScroll_DocumentView_(&d->view,
-                                   3 * lineHeight_Text(paragraph_FontId) * dir,
-                                   smoothDuration_DocumentWidget_(keyboard_ScrollType));
+        smoothScroll_DocumentView(&d->view,
+                                  3 * lineHeight_Text(paragraph_FontId) * dir,
+                                  smoothDuration_DocumentWidget_(keyboard_ScrollType));
         return iTrue;
     }
     else if (equal_Command(cmd, "document.goto") && document_App() == d) {
@@ -3392,13 +3395,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 setCStr_String(&d->pendingGotoHeading, heading);
                 return iTrue;
             }
-            scrollToHeading_DocumentView_(&d->view, heading);
+            scrollToHeading_DocumentView(&d->view, heading);
             return iTrue;
         }
         const char *loc = pointerLabel_Command(cmd, "loc");
         const iGmRun *run = findRunAtLoc_GmDocument(d->view.doc, loc);
         if (run) {
-            scrollTo_DocumentView_(&d->view, run->visBounds.pos.y, iFalse);
+            scrollTo_DocumentView(&d->view, run->visBounds.pos.y, iFalse);
         }
         return iTrue;
     }
@@ -3422,7 +3425,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             if (d->foundMark.start) {
                 const iGmRun *found;
                 if ((found = findRunAtLoc_GmDocument(d->view.doc, d->foundMark.start)) != NULL) {
-                    scrollTo_DocumentView_(&d->view, mid_Rect(found->bounds).y, iTrue);
+                    scrollTo_DocumentView(&d->view, mid_Rect(found->bounds).y, iTrue);
                 }
             }
         }
@@ -3916,10 +3919,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 if (ord == iInvalidPos) break;
                 const iGmRun *run = i.ptr;
                 if (run->flags & decoration_GmRunFlag &&
-                    visibleLinkOrdinal_DocumentView_(view, run->linkId) == ord) {
+                    visibleLinkOrdinal_DocumentView(view, run->linkId) == ord) {
                     if (d->flags & setHoverViaKeys_DocumentWidgetFlag) {
                         view->hoverLink = run;
-                        updateHoverLinkInfo_DocumentView_(view);
+                        updateHoverLinkInfo_DocumentView(view);
                     }
                     else {
                         /*const iString *linkUrl = linkUrl_GmDocument(view->doc, run->linkId);*/
@@ -3945,7 +3948,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         */
                     }
                     setLinkNumberMode_DocumentWidget_(d, iFalse);
-                    invalidateVisibleLinks_DocumentView_(view);
+                    invalidateVisibleLinks_DocumentView(view);
                     refresh_Widget(d);
                     return iTrue;
                 }
@@ -3955,7 +3958,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case SDLK_ESCAPE:
                 if (d->flags & showLinkNumbers_DocumentWidgetFlag && document_App() == d) {
                     setLinkNumberMode_DocumentWidget_(d, iFalse);
-                    invalidateVisibleLinks_DocumentView_(view);
+                    invalidateVisibleLinks_DocumentView(view);
                     refresh_Widget(d);
                     return iTrue;
                 }
@@ -4012,8 +4015,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }*/
             const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
             stop_Anim(&d->view.scrollY.pos);
-            immediateScroll_DocumentView_(view, -wheel.y);
-            if (!scrollWideBlock_DocumentView_(view, mouseCoord, -wheel.x, 0) &&
+            immediateScroll_DocumentView(view, -wheel.y);
+            if (!scrollWideBlock_DocumentView(view, mouseCoord, -wheel.x, 0) &&
                 wheel.x) {
                 handleWheelSwipe_DocumentWidget_(d, &ev->wheel);
             }
@@ -4025,10 +4028,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 postCommandf_App("zoom.delta arg:%d", amount > 0 ? 10 : -10);
                 return iTrue;
             }
-            smoothScroll_DocumentView_(view,
-                                       -3 * amount * lineHeight_Text(paragraph_FontId),
-                                       smoothDuration_DocumentWidget_(mouse_ScrollType));
-            scrollWideBlock_DocumentView_(
+            smoothScroll_DocumentView(view,
+                                      -3 * amount * lineHeight_Text(paragraph_FontId),
+                                      smoothDuration_DocumentWidget_(mouse_ScrollType));
+            scrollWideBlock_DocumentView(
                 view, mouseCoord, -3 * ev->wheel.x * lineHeight_Text(paragraph_FontId), 167);
         }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
@@ -4907,6 +4910,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->linkInfo = (deviceType_App() == desktop_AppDeviceType ? new_LinkInfo() : NULL);
     init_DocumentView(&d->view);
     setOwner_DocumentView(&d->view, d);
+    d->view.selectMark = &d->selectMark;
+    d->view.foundMark = &d->foundMark;
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumbColor_ScrollWidget(d->scroll, tmQuote_ColorId);
     d->menu         = NULL; /* created when clicking */
@@ -4987,15 +4992,15 @@ const iString *url_DocumentWidget(const iDocumentWidget *d) {
     return d->mod.url;
 }
 
-iBanner *banner_DocumentWidget(iDocumentWidget *d) {
+iBanner *banner_DocumentWidget(const iDocumentWidget *d) {
     return d->banner;
 }
 
-iWidget *footerButtons_DocumentWidget(iDocumentWidget *d) {
+iWidget *footerButtons_DocumentWidget(const iDocumentWidget *d) {
     return d->footerButtons;
 }
 
-iScrollWidget *scrollBar_DocumentWidget(iDocumentWidget *d) {
+iScrollWidget *scrollBar_DocumentWidget(const iDocumentWidget *d) {
     return d->scroll;
 }
 

@@ -43,31 +43,42 @@ void    serializeState_DocumentWidget   (const iDocumentWidget *, iStream *outs)
 void    deserializeState_DocumentWidget (iDocumentWidget *, iStream *ins);
 
 iHistory *          history_DocumentWidget          (iDocumentWidget *);
-iBanner *           banner_DocumentWidget           (iDocumentWidget *);
-iWidget *           footerButtons_DocumentWidget    (iDocumentWidget *);
-iScrollWidget *     scrollBar_DocumentWidget        (iDocumentWidget *);
+iBanner *           banner_DocumentWidget           (const iDocumentWidget *);
+iWidget *           footerButtons_DocumentWidget    (const iDocumentWidget *);
+iScrollWidget *     scrollBar_DocumentWidget        (const iDocumentWidget *);
 const iString *     url_DocumentWidget              (const iDocumentWidget *);
 const iBlock *      sourceContent_DocumentWidget    (const iDocumentWidget *);
 iTime               sourceTime_DocumentWidget       (const iDocumentWidget *);
 const iGmDocument * document_DocumentWidget         (const iDocumentWidget *);
 const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
-int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
-int                 footerHeight_DocumentWidget     (const iDocumentWidget *);
-int                 phoneToolbarHeight_DocumentWidget(const iDocumentWidget *);
+
+int                 documentWidth_DocumentWidget        (const iDocumentWidget *);
+int                 footerHeight_DocumentWidget         (const iDocumentWidget *);
+int                 phoneToolbarHeight_DocumentWidget   (const iDocumentWidget *);
 int                 phoneBottomNavbarHeight_DocumentWidget(const iDocumentWidget *);
 iRangecc            selectionMark_DocumentWidget        (const iDocumentWidget *);
-const iGmIdentity * identity_DocumentWidget         (const iDocumentWidget *);
-int                 generation_DocumentWidget       (const iDocumentWidget *);
-iBool               isRequestOngoing_DocumentWidget (const iDocumentWidget *);
-iBool               isSourceTextView_DocumentWidget (const iDocumentWidget *);
-iBool               isIdentityPinned_DocumentWidget (const iDocumentWidget *);
+const iGmIdentity * identity_DocumentWidget             (const iDocumentWidget *);
+int                 generation_DocumentWidget           (const iDocumentWidget *);
+iBool               isRequestOngoing_DocumentWidget     (const iDocumentWidget *);
+iBool               isSourceTextView_DocumentWidget     (const iDocumentWidget *);
+iBool               isIdentityPinned_DocumentWidget     (const iDocumentWidget *);
 iBool               isSetIdentityRetained_DocumentWidget(const iDocumentWidget *, const iString *dstUrl);
-iBool               isAutoReloading_DocumentWidget  (const iDocumentWidget *);
-iBool               isHoverAllowed_DocumentWidget   (const iDocumentWidget *);
+iBool               isAutoReloading_DocumentWidget      (const iDocumentWidget *);
+iBool               isHoverAllowed_DocumentWidget       (const iDocumentWidget *);
 iBool               noHoverWhileScrolling_DocumentWidget(const iDocumentWidget *);
 iBool               isShowingLinkNumbers_DocumentWidget (const iDocumentWidget *);
 iMediaRequest *     findMediaRequest_DocumentWidget     (const iDocumentWidget *, iGmLinkId linkId);
+
+size_t              ordinalBase_DocumentWidget          (const iDocumentWidget *);
+iChar               linkOrdinalChar_DocumentWidget      (const iDocumentWidget *, size_t ord);
+
+enum iWheelSwipeState {
+    none_WheelSwipeState,
+    direct_WheelSwipeState,
+};
+
+enum iWheelSwipeState   wheelSwipeState_DocumentWidget  (const iDocumentWidget *);
 
 enum iDocumentWidgetSetUrlFlags {
     useCachedContentIfAvailable_DocumentWidgetSetUrlFlag = iBit(1),

@@ -42,7 +42,9 @@ enum iDrawBufsFlag {
 };
 
 struct Impl_DocumentView {
-    iDocumentWidget *owner;        /* TODO: Convert to an abstract provider of metrics? */
+    iDocumentWidget *owner;         /* TODO: Convert to an abstract provider of metrics? */
+    iRangecc *      selectMark;     /* TODO: Should View own these? */
+    iRangecc *      foundMark;
     int             flags;
     iGmDocument *   doc;
     int             pageMargin;
@@ -72,15 +74,29 @@ struct Impl_DocumentView {
 iDeclareTypeConstruction(DocumentView)
     
 void    setOwner_DocumentView           (iDocumentView *, iDocumentWidget *doc);
+void    swap_DocumentView               (iDocumentView *, iDocumentView *swapBuffersWith); /* TODO: Remove this! */
+void    allocVisBuffer_DocumentView     (const iDocumentView *);
 
 void    invalidate_DocumentView         (iDocumentView *);
+void    invalidateLink_DocumentView     (iDocumentView *, iGmLinkId id);
+void    invalidateVisibleLinks_DocumentView(iDocumentView *);
 void    documentRunsInvalidated_DocumentView(iDocumentView *);
 void    updateVisible_DocumentView      (iDocumentView *);
 void    updateHover_DocumentView        (iDocumentView *, iInt2 mouse);
+void    updateHoverLinkInfo_DocumentView(iDocumentView *);
+void    updateSideOpacity_DocumentView  (iDocumentView *, iBool isAnimated);
 void    updateDrawBufs_DocumentView     (iDocumentView *, int drawBufsFlags);
+iBool   updateWidth_DocumentView        (iDocumentView *);
 iBool   updateDocumentWidthRetainingScrollPosition_DocumentView (iDocumentView *, iBool keepCenter);
+int     updateScrollMax_DocumentView    (iDocumentView *);
 void    clampScroll_DocumentView        (iDocumentView *);
+void    immediateScroll_DocumentView    (iDocumentView *, int offset);
+void    smoothScroll_DocumentView       (iDocumentView *, int offset, int duration);
+void    scrollTo_DocumentView           (iDocumentView *, int documentY, iBool centered);
+void    scrollToHeading_DocumentView    (iDocumentView *, const char *heading);
+void    resetScroll_DocumentView        (iDocumentView *);
 void    resetScrollPosition_DocumentView(iDocumentView *, float normScrollY);
+iBool   scrollWideBlock_DocumentView    (iDocumentView *, iInt2 mousePos, int delta, int duration);
 void    resetWideRuns_DocumentView      (iDocumentView *);
 void    invalidateAndResetWideRunsWithNonzeroOffset_DocumentView(iDocumentView *);
 
@@ -93,6 +109,8 @@ iRangei visibleRange_DocumentView       (const iDocumentView *);
 float   normScrollPos_DocumentView      (const iDocumentView *);
 iRangecc sourceLoc_DocumentView         (const iDocumentView *, iInt2 pos);
 iRect   runRect_DocumentView            (const iDocumentView *, const iGmRun *run);
+const iGmRun *lastVisibleLink_DocumentView(const iDocumentView *);
+size_t  visibleLinkOrdinal_DocumentView (const iDocumentView *, iGmLinkId linkId);
 
 uint32_t lastRenderTime_DocumentView    (const iDocumentView *);
 void    prerender_DocumentView          (iAny *); /* ticker */
