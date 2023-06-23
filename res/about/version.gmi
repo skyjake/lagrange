@@ -8,6 +8,7 @@
 
 ## 1.16.5
 * "New Tab" (Ctrl+T/⌘T) and the tab bar [+] button append the tab to the right edge. Previously it was inserted next to the active tab.
+* Flatpak: Fixed crash when opening Preferences.
 
 ## 1.16.4
 * Context/button menus use a popup window if they would otherwise have to scroll (e.g., "Dark theme:" in Preferences and "Folder:" in the bookmark editor).
