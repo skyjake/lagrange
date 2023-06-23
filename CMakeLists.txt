@@ -225,6 +225,8 @@ set (SOURCES
     src/ui/color.h
     src/ui/command.c
     src/ui/command.h
+    src/ui/documentview.c
+    src/ui/documentview.h
     src/ui/documentwidget.c
     src/ui/documentwidget.h
     src/ui/indicatorwidget.c
