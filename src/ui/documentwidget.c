@@ -277,6 +277,7 @@ struct Impl_DocumentWidget {
 
     /* Rendering: */
     iDocumentView *view;
+    iDocumentView *swipeView; /* outgoing old view */
     iLinkInfo *    linkInfo;
 
     /* Widget structure: */
@@ -4716,7 +4717,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         return;
     }
     checkPendingInvalidation_DocumentWidget_(d);
-    draw_DocumentView(d->view);
+    draw_DocumentView(d->view, 0);
     iPaint p;
     init_Paint(&p);
     if (colorTheme_App() == pureWhite_ColorTheme &&

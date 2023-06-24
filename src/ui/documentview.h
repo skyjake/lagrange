@@ -114,4 +114,4 @@ size_t  visibleLinkOrdinal_DocumentView (const iDocumentView *, iGmLinkId linkId
 
 uint32_t lastRenderTime_DocumentView    (const iDocumentView *);
 void    prerender_DocumentView          (iAny *); /* ticker */
-void    draw_DocumentView               (const iDocumentView *);
+void    draw_DocumentView               (const iDocumentView *, int horizOffset);

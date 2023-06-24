@@ -1213,7 +1213,7 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
     SDL_SetTextureBlendMode(dbuf->sideIconBuf, SDL_BLENDMODE_BLEND);
 }
 
-static void drawSideElements_DocumentView_(const iDocumentView *d) {
+static void drawSideElements_DocumentView_(const iDocumentView *d, int horizOffset) {
     if (size_GmDocument(d->doc).y == 0) {
         return;
     }
@@ -1240,7 +1240,7 @@ static void drawSideElements_DocumentView_(const iDocumentView *d) {
             SDL_SetTextureAlphaMod(dbuf->sideIconBuf, 255 * opacity);
             SDL_RenderCopy(renderer_Window(get_Window()),
                            dbuf->sideIconBuf, NULL,
-                           &(SDL_Rect){ pos.x, pos.y, texSize.x, texSize.y });
+                           &(SDL_Rect){ pos.x + horizOffset, pos.y, texSize.x, texSize.y });
         }
     }
     /* Reception timestamp. On mobile, it's below the footer in the overscroll area. */
@@ -1248,7 +1248,7 @@ static void drawSideElements_DocumentView_(const iDocumentView *d) {
         draw_TextBuf(
             dbuf->timestampBuf,
             add_I2(
-                init_I2(mid_Rect(docBounds).x - dbuf->timestampBuf->size.x / 2,
+                init_I2(horizOffset + mid_Rect(docBounds).x - dbuf->timestampBuf->size.x / 2,
                         bottom_Rect(bounds)),
                 init_I2(0,
                         (deviceType_App() != phone_AppDeviceType
@@ -1501,7 +1501,7 @@ void prerender_DocumentView(iAny *context) {
     }
 }
 
-void draw_DocumentView(const iDocumentView *d) {
+void draw_DocumentView(const iDocumentView *d, int horizOffset) {
     const iWidget *w                   = constAs_Widget(d->owner);
     const iRect    bounds              = bounds_Widget(w);
     const iRect    boundsWithoutVisOff = boundsWithoutVisualOffset_Widget(w);
@@ -1509,7 +1509,7 @@ void draw_DocumentView(const iDocumentView *d) {
     /* Each document has its own palette, but the drawing routines rely on a global one.
        As we're now drawing a document, ensure that the right palette is in effect.
        Document theme colors can be used elsewhere, too, but first a document's palette
-       must be made global. */
+       must be made global. */       
     makePaletteGlobal_GmDocument(d->doc);
     if (d->drawBufs->flags & updateTimestampBuf_DrawBufsFlag) {
         updateTimestampBuf_DocumentView_(d);
@@ -1533,11 +1533,13 @@ void draw_DocumentView(const iDocumentView *d) {
     if (!isDocEmpty || !isEmpty_Banner(banner)) {
         const int docBgColor = isDocEmpty ? tmBannerBackground_ColorId : tmBackground_ColorId;
         setClip_Paint(&ctx.paint, clipBounds);
+        iAssert(isEqual_I2(origin_Paint, zero_I2()));
+        origin_Paint = init_I2(horizOffset, 0);
         if (!isDocEmpty) {
             draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop), ySpan_Rect(bounds));
         }
         /* Text markers. */
-        if (!isEmpty_Range(d->foundMark) || !isEmpty_Range(d->selectMark)) {
+        if ((!isEmpty_Range(d->foundMark) || !isEmpty_Range(d->selectMark))) {
             SDL_Renderer *render = renderer_Window(get_Window());
             ctx.firstMarkRect = zero_Rect();
             ctx.lastMarkRect = zero_Rect();
@@ -1595,8 +1597,9 @@ void draw_DocumentView(const iDocumentView *d) {
                            init_Rect(bounds.pos.x, yBottom, bounds.size.x, bottom_Rect(bounds) - yBottom),
                            !isDocEmpty ? docBgColor : tmBannerBackground_ColorId);
         }
+        origin_Paint = zero_I2();
         unsetClip_Paint(&ctx.paint);
-        drawSideElements_DocumentView_(d);
+        drawSideElements_DocumentView_(d, horizOffset);
         /* Alt text. */
         const float altTextOpacity = value_Anim(&d->altTextOpacity) * 6 - 5;
         if (d->hoverAltPre && altTextOpacity > 0) {
@@ -1606,8 +1609,8 @@ void draw_DocumentView(const iDocumentView *d) {
                 const int   margin   = 3 * gap_UI / 2;
                 const int   altFont  = uiLabel_FontId;
                 const int   wrap     = docBounds.size.x - 2 * margin;
-                iInt2 pos            = addY_I2(add_I2(docBounds.pos, meta->pixelRect.pos),
-                                    viewPos_DocumentView(d));
+                iInt2 pos            = add_I2(add_I2(docBounds.pos, meta->pixelRect.pos),
+                                       init_I2(horizOffset, viewPos_DocumentView(d)));
                 const iInt2 textSize = measureWrapRange_Text(altFont, wrap, meta->altText).bounds.size;
                 pos.y -= textSize.y + gap_UI;
                 pos.y               = iMax(pos.y, top_Rect(bounds));
