@@ -205,6 +205,7 @@ struct Impl_Prefs {
     int              zoomPercent;
     /* Behavior */
     int              pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
+    enum iFeedRefreshInterval feedRefreshInterval;
     int              returnKey;
     int              smoothScrollSpeed[max_ScrollType];
     /* Network */

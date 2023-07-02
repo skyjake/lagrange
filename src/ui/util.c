@@ -762,7 +762,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
        be reacted to by menus?! A prefix character could do the trick. */
     return equal_Command(cmd, "media.updated") ||
            equal_Command(cmd, "media.player.update") ||
-           startsWith_CStr(cmd, "feeds.update.") ||
+           startsWith_CStr(cmd, "feeds.refresh.") ||
            equal_Command(cmd, "bookmarks.request.started") ||
            equal_Command(cmd, "bookmarks.request.finished") ||
            equal_Command(cmd, "bookmarks.changed") ||
@@ -2488,7 +2488,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "theme.changed") ||
           equal_Command(cmd, "focus.lost") ||
           equal_Command(cmd, "focus.gained") ||
-          startsWith_CStr(cmd, "feeds.update.") ||
+          startsWith_CStr(cmd, "feeds.refresh.") ||
           startsWith_CStr(cmd, "window."))) {
         setupSheetTransition_Mobile(msg, dialogTransitionDir_Widget(msg));
         destroy_Widget(msg);
@@ -2944,6 +2944,16 @@ static const char *returnKeyBehaviorStr_(int behavior) {
 
 iWidget *makePreferences_Widget(void) {
     /* Common items. */
+    const iMenuItem feedRefreshIntervals[] = {
+        { "${prefs.feedrefreshinterval.30minutes}",  0, 0, format_CStr("feedrefreshinterval.set arg:%d", thirtyMinutes_FeedRefreshInterval) },
+        { "${prefs.feedrefreshinterval.1hour}",      0, 0, format_CStr("feedrefreshinterval.set arg:%d", oneHour_FeedRefreshInterval) },
+        { "${prefs.feedrefreshinterval.2hours}",     0, 0, format_CStr("feedrefreshinterval.set arg:%d", twoHours_FeedRefreshInterval) },
+        { "${prefs.feedrefreshinterval.4hours}",     0, 0, format_CStr("feedrefreshinterval.set arg:%d", fourHours_FeedRefreshInterval) },
+        { "${prefs.feedrefreshinterval.8hours}",     0, 0, format_CStr("feedrefreshinterval.set arg:%d", eightHours_FeedRefreshInterval) },
+        { "${prefs.feedrefreshinterval.24hours}",    0, 0, format_CStr("feedrefreshinterval.set arg:%d", twentyfourHours_FeedRefreshInterval) },
+        { "${prefs.feedrefreshinterval.manual}",     0, 0, format_CStr("feedrefreshinterval.set arg:%d", manual_FeedRefreshInterval) },
+        { NULL }
+    };
     const iMenuItem langItems[] = { { u8"Čeština - cs", 0, 0, "uilang id:cs" },
                                     { u8"Deutsch - de", 0, 0, "uilang id:de" },
                                     { u8"English - en", 0, 0, "uilang id:en" },
@@ -3101,6 +3111,8 @@ iWidget *makePreferences_Widget(void) {
             { "toggle id:prefs.archive.openindex" },
             { "toggle id:prefs.markdown.viewsource" },
             { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
+            { "padding" },
+            { "dropdown id:prefs.feedrefreshinterval", 0, 0, (const void *) feedRefreshIntervals },
             { "padding" },
             { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
             { "toggle id:prefs.time.24h" },
@@ -3302,6 +3314,18 @@ iWidget *makePreferences_Widget(void) {
                 addRadioButton_(pinSplit, "prefs.pinsplit.2", "${prefs.pinsplit.right}", "pinsplit.set arg:2");
             }
             addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        }
+        /* Feed refresh interval. */ {
+        addDialogPadding_(headings, values);
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.feedrefreshinterval}")));
+            iLabelWidget *button = makeMenuButton_LabelWidget(
+                feedRefreshIntervals[findWidestLabel_MenuItem(feedRefreshIntervals, iElemCount(feedRefreshIntervals) - 1)].label,
+                feedRefreshIntervals,
+                iElemCount(feedRefreshIntervals) - 1);
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
+                                      uiBackgroundMenu_ColorId);
+            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
+                         "prefs.feedrefreshinterval");
         }
         addDialogPadding_(headings, values);
         /* UI languages. */ {

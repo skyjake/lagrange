@@ -77,6 +77,7 @@ void init_Prefs(iPrefs *d) {
     d->evenSplit         = iFalse; /* split mode tabs have even width */
     d->detachedPrefs     = iTrue;
     d->pinSplit          = 1;
+    d->feedRefreshInterval = fourHours_FeedRefreshInterval;
     d->time24h           = iTrue;
     d->returnKey         = default_ReturnKeyBehavior;
     d->retainTabs        = iTrue;

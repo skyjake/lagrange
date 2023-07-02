@@ -1829,6 +1829,30 @@ msgstr "Blue"
 msgid "prefs.accent.gray"
 msgstr "Gray"
 
+msgid "prefs.feedrefreshinterval"
+msgstr "Feed refresh interval:"
+
+msgid "prefs.feedrefreshinterval.30minutes"
+msgstr "30 Minutes"
+
+msgid "prefs.feedrefreshinterval.1hour"
+msgstr "1 Hour"
+
+msgid "prefs.feedrefreshinterval.2hours"
+msgstr "2 Hours"
+
+msgid "prefs.feedrefreshinterval.4hours"
+msgstr "4 Hours"
+
+msgid "prefs.feedrefreshinterval.8hours"
+msgstr "8 Hours"
+
+msgid "prefs.feedrefreshinterval.24hours"
+msgstr "24 Hours"
+
+msgid "prefs.feedrefreshinterval.manual"
+msgstr "Manual"
+
 msgid "prefs.uilang"
 msgstr "Language:"
 

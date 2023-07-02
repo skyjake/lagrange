@@ -37,6 +37,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/thread.h>
 #include <SDL_timer.h>
+#include <SDL_cpuinfo.h>
+#include <SDL_log.h>
 #include <ctype.h>
 
 iDeclareType(Feeds)
@@ -122,8 +124,7 @@ iDefineTypeConstructionArgs(FeedJob, (const iBookmark *bm), bm)
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const char *feedsFilename_Feeds_         = "feeds.txt";
-static const int   updateIntervalSeconds_Feeds_ = 4 * 60 * 60;
+static const char *feedsFilename_Feeds_ = "feeds.txt";
 
 struct Impl_Feeds {
     iMutex *  mtx;
@@ -131,6 +132,7 @@ struct Impl_Feeds {
     iIntSet   previouslyCheckedFeeds; /* bookmark IDs */
     iTime     lastRefreshedAt;
     int       refreshTimer;
+    int       refreshIntervalInS;
     iThread * worker;
     iBool     stopWorker;
     iPtrArray jobs; /* pending */
@@ -138,8 +140,6 @@ struct Impl_Feeds {
 };
 
 static iFeeds feeds_;
-
-#define maxConcurrentRequests_Feeds 4
 
 static void submit_FeedJob_(iFeedJob *d) {
     d->request = new_GmRequest(certs_App());
@@ -451,10 +451,10 @@ static iBool updateEntries_Feeds_(iFeeds *d, iBool isHeadings, uint32_t sourceId
 static iThreadResult fetch_Feeds_(iThread *thread) {
     iFeeds *d = &feeds_;
     iUnused(thread);
-    iFeedJob *work[maxConcurrentRequests_Feeds]; /* We'll do a couple of concurrent requests. */
+    iFeedJob *work[SDL_GetCPUCount()]; /* We'll do a couple of concurrent requests. */
     iZap(work);
     iBool gotNew = iFalse;
-    postCommand_App("feeds.update.started");
+    postCommand_App("feeds.refresh.started");
     const size_t totalJobs = size_PtrArray(&d->jobs);
     int numFinishedJobs = 0;
     while (!d->stopWorker) {
@@ -497,7 +497,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
             }
         }
         if (doNotify) {
-            postCommandf_App("feeds.update.progress arg:%d total:%zu", numFinishedJobs, totalJobs);
+            postCommandf_App("feeds.refresh.progress arg:%d total:%zu", numFinishedJobs, totalJobs);
         }
         /* Stop if everything has finished. */
         if (ongoing == 0 && isEmpty_PtrArray(&d->jobs)) {
@@ -524,7 +524,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
         }
         iRelease(knownEntryUrls);
     }
-    postCommandf_App("feeds.update.finished arg:%d unread:%zu", gotNew ? 1 : 0,
+    postCommandf_App("feeds.refresh.finished arg:%d unread:%zu", gotNew ? 1 : 0,
                      numUnread_Feeds());
     return 0;
 }
@@ -554,10 +554,16 @@ static iBool startWorker_Feeds_(iFeeds *d) {
     return iFalse;
 }
 
-static uint32_t refresh_Feeds_(uint32_t interval, void *data) {
-    /* Called in the SDL timer thread, so let's start a worker thread for running the update. */
+static uint32_t refreshCallback_Feeds_(uint32_t interval, void *data) {
+    /* Called in the SDL timer thread, so let's start a worker thread for running the refresh. */
     startWorker_Feeds_(&feeds_);
-    return 1000 * updateIntervalSeconds_Feeds_;
+    return 1000 * (&feeds_)->refreshIntervalInS;
+}
+
+static void removeRefreshTimer_Feeds_(iFeeds *d) {
+    if (d->refreshTimer > 0 && !SDL_RemoveTimer(d->refreshTimer)) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unable to remove feed refresh timer %u", d->refreshTimer);
+    }
 }
 
 static void stopWorker_Feeds_(iFeeds *d) {
@@ -696,9 +702,18 @@ static void load_Feeds_(iFeeds *d) {
     iRelease(f);
 }
 
+static void refresh_Feeds_(iFeeds *d) {
+    /* Refresh feeds if it has been a while. */
+    if (d->refreshIntervalInS > 0 && isValid_Time(&d->lastRefreshedAt)) {
+        const double elapsed = elapsedSeconds_Time(&d->lastRefreshedAt);
+        int intervalSec = iMax(1, d->refreshIntervalInS - elapsed);
+        d->refreshTimer = SDL_AddTimer(1000 * intervalSec, refreshCallback_Feeds_, NULL);
+    }
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
-void init_Feeds(const char *saveDir) {
+void init_Feeds(const char *saveDir, enum iFeedRefreshInterval feedRefreshInterval) {
     iFeeds *d = &feeds_;
     d->mtx = new_Mutex();
     initCStr_String(&d->saveDir, saveDir);
@@ -708,18 +723,13 @@ void init_Feeds(const char *saveDir) {
     init_PtrArray(&d->jobs);
     init_SortedArray(&d->entries, sizeof(iFeedEntry *), cmp_FeedEntryPtr_);
     load_Feeds_(d);
-    /* Update feeds if it has been a while. */
-    int intervalSec = updateIntervalSeconds_Feeds_;
-    if (isValid_Time(&d->lastRefreshedAt)) {
-        const double elapsed = elapsedSeconds_Time(&d->lastRefreshedAt);
-        intervalSec = iMax(1, updateIntervalSeconds_Feeds_ - elapsed);
-    }
-    d->refreshTimer = SDL_AddTimer(1000 * intervalSec, refresh_Feeds_, NULL);
+    d->refreshIntervalInS = (int)feedRefreshInterval;
+    refresh_Feeds_(d);
 }
 
 void deinit_Feeds(void) {
     iFeeds *d = &feeds_;
-    SDL_RemoveTimer(d->refreshTimer);
+    removeRefreshTimer_Feeds_(d);
     stopWorker_Feeds_(d);
     iAssert(isEmpty_PtrArray(&d->jobs));
     deinit_PtrArray(&d->jobs);
@@ -735,6 +745,13 @@ void deinit_Feeds(void) {
 
 void refresh_Feeds(void) {
     startWorker_Feeds_(&feeds_);
+}
+
+void setRefreshInterval_Feeds(enum iFeedRefreshInterval feedRefreshInterval) {
+    iFeeds *d = &feeds_;
+    removeRefreshTimer_Feeds_(d);
+    d->refreshIntervalInS = (int)feedRefreshInterval;
+    refresh_Feeds_(d);
 }
 
 void refreshFinished_Feeds(void) {

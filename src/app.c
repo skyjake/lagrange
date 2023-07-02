@@ -290,6 +290,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "inputzoom.set arg:%d\n", d->prefs.inputZoomLevel);
     appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
+    appendFormat_String(str, "feedrefreshinterval.set arg:%d\n", d->prefs.feedRefreshInterval);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[mouse_ScrollType], mouse_ScrollType);
@@ -1345,7 +1346,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
                       NULL,
                       0x1f306);
     }
-    init_Feeds(dataDir_App_());
+    init_Feeds(dataDir_App_(), d->prefs.feedRefreshInterval);
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
@@ -2752,6 +2753,11 @@ static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
     }
 }
 
+static void updateFeedRefreshIntervalButton_(iLabelWidget *button, int feedRefreshInterval) {
+    if (!button) return;
+    updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", feedRefreshInterval));
+}
+
 static void updatePrefsToolBarActionButton_(iWidget *prefs, int buttonIndex, int action) {
     updateDropdownSelection_LabelWidget(
         findChild_Widget(prefs, format_CStr("prefs.toolbaraction%d", buttonIndex + 1)),
@@ -2869,6 +2875,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
         updatePrefsPinSplitButtons_(d, arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "feedrefreshinterval.set")) {
+        updateFeedRefreshIntervalButton_(findChild_Widget(d, "prefs.feedrefreshinterval"), arg_Command(cmd));
         return iFalse;
     }
     else if (equal_Command(cmd, "scrollspeed")) {
@@ -3555,6 +3565,11 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
         d->prefs.pinSplit = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "feedrefreshinterval.set")) {
+        d->prefs.feedRefreshInterval = arg_Command(cmd);
+        setRefreshInterval_Feeds(d->prefs.feedRefreshInterval);
         return iTrue;
     }
     else if (equal_Command(cmd, "theme.set")) {
@@ -4445,6 +4460,7 @@ iBool handleCommand_App(const char *cmd) {
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
+        updateFeedRefreshIntervalButton_(findChild_Widget(dlg, "prefs.feedrefreshinterval"), d->prefs.feedRefreshInterval);
         updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
         setToggle_Widget(findChild_Widget(dlg, "prefs.time.24h"), d->prefs.time24h);
         updateDropdownSelection_LabelWidget(
@@ -4627,14 +4643,14 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (startsWith_CStr(cmd, "feeds.update.")) {
+    else if (startsWith_CStr(cmd, "feeds.refresh.")) {
         const iWidget *navBar = findChild_Widget(get_Window()->roots[0]->widget, "navbar");
         iAnyObject *prog = findChild_Widget(navBar, "feeds.progress");
         if (!navBar || !prog) {
             return iFalse;
         }
-        if (equal_Command(cmd, "feeds.update.started") ||
-            equal_Command(cmd, "feeds.update.progress")) {
+        if (equal_Command(cmd, "feeds.refresh.started") ||
+            equal_Command(cmd, "feeds.refresh.progress")) {
             const int num   = arg_Command(cmd);
             const int total = argLabel_Command(cmd, "total");
             updateTextAndResizeWidthCStr_LabelWidget(prog,
@@ -4646,7 +4662,7 @@ iBool handleCommand_App(const char *cmd) {
             setFixedSize_Widget(findChild_Widget(prog, "feeds.progressbar"),
                                 init_I2(total ? width_Widget(prog) * num / total : 0, -1));
         }
-        else if (equal_Command(cmd, "feeds.update.finished")) {
+        else if (equal_Command(cmd, "feeds.refresh.finished")) {
             showCollapsed_Widget(prog, iFalse);
             refreshFinished_Feeds();
             refresh_Widget(findWidget_App("url"));

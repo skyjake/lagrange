@@ -1811,7 +1811,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "feeds.update.finished")) {
+        else if (equal_Command(cmd, "feeds.refresh.finished")) {
             d->numUnreadEntries = argLabel_Command(cmd, "unread");
             checkModeButtonLayout_SidebarWidget_(d);
             if (d->mode == feeds_SidebarMode) {
