@@ -1210,13 +1210,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                         run.bounds = zero_Rect();
                         iString caption;
                         init_String(&caption);
+                        const iBool inMegabytes = info.numBytes >= 1000000;
                         format_String(&caption,
                                       "%s \u2014 %d x %d \u2014 %.1f%s",
                                       info.type,
                                       imgSize.x,
                                       imgSize.y,
-                                      info.numBytes / 1.0e6f,
-                                      cstr_Lang("mb"));
+                                      info.numBytes / (inMegabytes ? 1.0e6f : 1.0e3f),
+                                      inMegabytes ? cstr_Lang("mb") : cstr_Lang("kb"));
                         pushBack_StringArray(&d->auxText, &caption);
                         run.text = range_String(&caption);
                         /* Center it. */
