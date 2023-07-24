@@ -277,7 +277,8 @@ struct Impl_DocumentWidget {
 
     /* Rendering: */
     iDocumentView *view;
-    iDocumentView *swipeView; /* outgoing old view */
+    iDocumentView *swipeView;   /* outgoing old view */
+    iAnim          swipeOffset; /* applies to both views */
     iLinkInfo *    linkInfo;
 
     /* Widget structure: */
@@ -4717,7 +4718,9 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         return;
     }
     checkPendingInvalidation_DocumentWidget_(d);
-    draw_DocumentView(d->view, 0);
+    /* Views. */ {
+        draw_DocumentView(d->view, 0);
+    }    
     iPaint p;
     init_Paint(&p);
     if (colorTheme_App() == pureWhite_ColorTheme &&
@@ -4832,6 +4835,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         drawCentered_Text(font, bounds, iFalse, uiBackground_ColorId, "%d %%",
                           d->pinchZoomPosted);
     }
+#if 0    
     /* Dimming during swipe animation. */
     if (w->offsetRef) {
         const int offX = visualOffsetByReference_Widget(w);
@@ -4850,6 +4854,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             mut->flags &= ~refChildrenOffset_WidgetFlag;
         }
     }
+#endif
 //    drawRect_Paint(&p, docBounds, red_ColorId);
     if (deviceType_App() == phone_AppDeviceType && document_App()) {
         /* The phone toolbar uses the palette of the active tab, but there may be other
