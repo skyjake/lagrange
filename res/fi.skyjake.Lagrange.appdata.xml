@@ -45,9 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.16.6" date="2023-07-30">
+            <description>
+                <ul>
+                    <li>Fixed crash on gemini://sdf.org/ where the contents of a link line would fail to be recognized as valid characters.</li>
+                    <li>Fixed splitting a long wrapped line in input fields where part of the text would remain on the preceding line. (Mixup between byte and character index.)</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.16.6</url>
+        </release>
         <release version="1.16.5" date="2023-06-23">
             <description>
-                <p>Changes in v1.16.5:</p>
                 <ul>
                     <li>"New Tab" (Ctrl+T/⌘T) and the tab bar [+] button append the tab to the right edge. Previously it was inserted next to the active tab.</li>
                     <li>Fixed crash when opening Preferences.</li>
