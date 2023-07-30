@@ -121,7 +121,7 @@ When navigating to a new page, the old page is cached in memory. If you navigate
 
 The page cache is saved to a file when Lagrange is shut down so it can be restored on the next launch.
 
-Maximum size of the cache can be configured on the "Network" tab of Preferences. Note that the entire cache is kept in memory at runtime. When the cache fills up, the oldest and largest page content is removed — both factors contribute to the removal. You can set the maximum size to 0 to disable caching altogether, but that will also disable the page content quick search feature.
+Maximum size of the cache can be configured on the "Content" tab of Preferences. Note that the entire cache is kept in memory at runtime. When the cache fills up, the oldest and largest page content is removed — both factors contribute to the removal. You can set the maximum size to 0 to disable caching altogether, but that will also disable the page content quick search feature.
 
 ### 1.1.4 Opening links in a new tab
 

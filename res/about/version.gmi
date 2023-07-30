@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.16.6
+* Fixed crash on gemini://sdf.org/ where the contents of a link line would fail to be recognized as valid characters.
+* Fixed splitting a long wrapped line in input fields where part of the text would remain on the preceding line. (Mixup between byte and character index.)
+
 ## 1.16.5
 * "New Tab" (Ctrl+T/⌘T) and the tab bar [+] button append the tab to the right edge. Previously it was inserted next to the active tab.
 * Flatpak: Fixed crash when opening Preferences.
@@ -46,7 +50,7 @@
 
 ## 1.16
 New features:
-* Input prompt font size can be changed with the Zoom In/Out/Reset keys. 
+* Input prompt font size can be changed with the Zoom In/Out/Reset keys.
 * Preferences: Option for silently following scheme-changing redirects (Network tab; default: no).
 
 Changes and enhancements:
@@ -132,7 +136,7 @@ New features:
 * Move a tab to the other side of a split view (tab context menu).
 * Move a tab to a new window (tab context menu).
 * Added a "Window" menu to the menu bar that has actions for manipulating and switching the active window, and duplicating and switching tabs. (On macOS, this menu has already been available.)
-* macOS: 🌐E opens the native Character Viewer. 
+* macOS: 🌐E opens the native Character Viewer.
 * Gopher: Option to disable Gemini styling on Gopher menu pages. When disabled, whitespace is not normalized and all non-link lines are presented as regular paragraph text.
 * Japanese UI translation (13% complete).
 
@@ -220,7 +224,7 @@ Fixes:
 * Updated UI translations.
 
 ## 1.13.5
-* Parent navigation assumes directory URL is equivalent to index page URL (e.g., "/path/" == "/path/index.gmi"): this now only applies to Gemini URLs, and checks for "index.gemini", too, as per Gemini Best Practices. 
+* Parent navigation assumes directory URL is equivalent to index page URL (e.g., "/path/" == "/path/index.gmi"): this now only applies to Gemini URLs, and checks for "index.gemini", too, as per Gemini Best Practices.
 * Fixed crash when determining the name of a ZIP file from a URL.
 * Fixed misparsing of URL to form the name of a downloaded file (`%23` decoded too early).
 * macOS: Fixed window state being forgotten when all windows are closed. Normally state is saved when quitting, but on macOS the app will keep running without any windows.

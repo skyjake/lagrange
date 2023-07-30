@@ -54,8 +54,8 @@ void init_Url(iUrl *d, const iString *text) {
     static iRegExp *authPattern_;
     if (!urlPattern_) {
         urlPattern_  = new_RegExp("^(([-.+a-z0-9]+):)?(//([^/?#]*))?"
-                                 "([^?#]*)(\\?([^#]*))?(#(.*))?",
-                                 caseInsensitive_RegExpOption);
+                                  "([^?#]*)(\\?([^#]*))?(#(.*))?",
+                                  caseInsensitive_RegExpOption);
         authPattern_ = new_RegExp("(([^@]+)@)?(([^:\\[\\]]+)"
                                   "|(\\[[0-9a-f:]+\\]))(:([0-9]+))?",
                                   caseInsensitive_RegExpOption);
@@ -241,7 +241,7 @@ iRangecc urlDirectory_String(const iString *d) {
             parts.path.end--;
         }
     }
-    return parts.path;    
+    return parts.path;
 }
 
 uint16_t urlPort_String(const iString *d) {
@@ -384,7 +384,7 @@ void urlEncodeQuery_String(iString *d) {
     initRange_String(&query, url.query);
     iString *encQuery = urlEncode_String(&query); /* fully encoded */
     appendCStr_String(&encoded, "?");
-    append_String(&encoded, encQuery);    
+    append_String(&encoded, encQuery);
     delete_String(encQuery);
     deinit_String(&query);
     appendRange_String(&encoded, (iRangecc){ url.query.end, constEnd_String(d) });
@@ -401,7 +401,7 @@ iBool isKnownScheme_Rangecc(iRangecc scheme) {
         if (equalCase_Rangecc(scheme, uriSchemes[i])) {
             return iTrue;
         }
-    }    
+    }
     return iFalse;
 }
 
@@ -660,7 +660,7 @@ static void replaceAllChars_String_(iString *d, char c, const char *replacement)
         remove_Block(&d->chars, pos, 1);
         insertData_Block(&d->chars, pos, replacement, repLen);
         pos += repLen;
-    }    
+    }
 }
 
 void urlEncodeSpaces_String(iString *d) {
@@ -722,7 +722,7 @@ const iString *canonicalUrl_String(const iString *d) {
             canon = copy_String(d);
         }
         urlEncodeSpaces_String(canon);
-    }    
+    }
     return canon ? collect_String(canon) : d;
 }
 

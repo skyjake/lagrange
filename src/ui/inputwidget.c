@@ -839,7 +839,7 @@ static void deactivateInputMode_InputWidget_(iInputWidget *d) {
     if (isEmpty_PtrSet(activeInputWidgets_())) {
         setTextInputActive_App(iFalse);
         enableEditorKeysInMenus_(iTrue);
-    }    
+    }
 }
 
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
@@ -1283,7 +1283,7 @@ void deselect_InputWidget(iInputWidget *d) {
 void validate_InputWidget(iInputWidget *d) {
     if (d->validator) {
         d->validator(d, d->validatorContext); /* this may change the contents */
-    }    
+    }
 }
 
 iLocalDef iBool isEditing_InputWidget_(const iInputWidget *d) {
@@ -1450,7 +1450,7 @@ static void insertRange_InputWidget_(iInputWidget *d, iRangecc range) {
         setRange_String(&split.text, (iRangecc){
             cstr_String(&line->text) + d->cursor.x, constEnd_String(&line->text)
         });
-        truncate_String(&line->text, d->cursor.x);
+        truncate_Block(&line->text.chars, d->cursor.x);
         if (!endsWith_String(&line->text, "\n")) {
             appendCStr_String(&line->text, "\n");
         }
@@ -1528,10 +1528,10 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) 
     iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
     if (isEqual_I2(relCoord, zero_I2())) {
         /* (0, 0) disables the hit test, but this is trivial to figure out. */
-        wt.hitChar_out = wt.text.start;        
+        wt.hitChar_out = wt.text.start;
     }
     else {
-        wt.hitPoint = addY_I2(relCoord, 1 * aspect_UI); 
+        wt.hitPoint = addY_I2(relCoord, 1 * aspect_UI);
         measure_WrapText(&wt, d->font);
     }
     if (wt.hitChar_out) {
@@ -2247,7 +2247,7 @@ static void clampWheelAccum_InputWidget_(iInputWidget *d, int wheel) {
     else if (wheel < 0 && d->visWrapLines.end >= lastLine_InputWidget_(d)->wrapLines.end) {
         d->wheelAccum = 0;
         refresh_Widget(d);
-    }    
+    }
 }
 #endif
 
@@ -2286,7 +2286,7 @@ static iBool isSelectAllEvent_InputWidget_(const SDL_KeyboardEvent *ev) {
     return key == SDLK_a && mods == KMOD_ALT;
 #else
     return key == SDLK_a && mods == KMOD_PRIMARY;
-#endif    
+#endif
 }
 
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
@@ -2364,7 +2364,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         paste_InputWidget_(d);
         if (argLabel_Command(command_UserEvent(ev), "enter")) {
             d->inFlags |= enterPressed_InputWidgetFlag;
-            setFocus_Widget(NULL);            
+            setFocus_Widget(NULL);
         }
         return iTrue;
     }
@@ -2524,7 +2524,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             d->cursor     = curMax;
             showCursor_InputWidget_(d);
             refresh_Widget(w);
-            return iTrue;            
+            return iTrue;
         }
 #endif /* !LAGRANGE_USE_SYSTEM_TEXT_INPUT */
         switch (key) {
@@ -2788,7 +2788,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     iRect          bounds    = adjusted_Rect(bounds_InputWidget_(d), padding_(), neg_I2(padding_()));
     iBool          isHint    = isHintVisible_InputWidget_(d);
-    const iBool    isFocused = isFocused_Widget(w);    
+    const iBool    isFocused = isFocused_Widget(w);
     const iBool    isHover   = deviceType_App() == desktop_AppDeviceType &&
                                isHover_Widget(w) &&
                                contains_InputWidget_(d, mouseCoord_Window(get_Window(), 0));
@@ -2843,7 +2843,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
                         visLineOffsetY),
                 white_ColorId);
         }
-        else {        
+        else {
             draw_TextBuf(d->buffered, addY_I2(drawPos, visLineOffsetY), white_ColorId);
         }
     }
@@ -2926,7 +2926,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         const iRect curRect  = { curPos, curSize };
 #if defined (SDL_SEAL_CURSES)
         /* Tell where to place the terminal cursor. */
-        SDL_SetTextInputRect((const SDL_Rect *) &curRect);  
+        SDL_SetTextInputRect((const SDL_Rect *) &curRect);
 #endif
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
         if (d->mode == overwrite_InputMode) {
