@@ -736,7 +736,9 @@ static void checkLoadAnimation_Root_(iRoot *d) {
         SDL_RemoveTimer(d->loadAnimTimer);
         d->loadAnimTimer = 0;
     }
-    setReloadLabel_Root_(d, doc);
+    if (doc) {
+        setReloadLabel_Root_(d, doc);
+    }
 }
 
 void updatePadding_Root(iRoot *d) {
