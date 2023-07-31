@@ -2252,6 +2252,9 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
 }
 
 iLocalDef iBool isResizeDrawEnabled_(void) {
+    if (isMobile_Platform()) {
+        return iFalse;
+    }
 #if defined (LAGRANGE_ENABLE_RESIZE_DRAW)
 #   if defined (LAGRANGE_ENABLE_X11_XLIB)
     if (!isXSession_X11()) {
