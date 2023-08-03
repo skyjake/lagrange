@@ -193,7 +193,7 @@ struct Impl_App {
 static iApp app_;
 
 static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd);
-    
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(Ticker)
@@ -536,7 +536,7 @@ void updateCACertificates_App(void) {
     else {
         setCACertificates_TlsRequest(&d->prefs.strings[caFile_PrefsString],
                                      &d->prefs.strings[caPath_PrefsString]);
-    }    
+    }
 }
 
 static void loadPrefs_App_(iApp *d) {
@@ -589,12 +589,12 @@ static void loadPrefs_App_(iApp *d) {
             }
             else if (equal_Command(cmd, "font.set") ||
                      equal_Command(cmd, "prefs.retaintabs.changed")) {
-                /* Fonts are set immediately so the first initialization already has 
+                /* Fonts are set immediately so the first initialization already has
                    the right ones. */
                 handleCommand_App(cmd);
             }
             else if (equal_Command(cmd, "prefs.menubar.changed")) {
-                handleCommand_App(cmd);    
+                handleCommand_App(cmd);
             }
 #if defined (iPlatformAndroidMobile)
             else if (equal_Command(cmd, "returnkey.set")) {
@@ -694,7 +694,7 @@ static iRect initialWindowRect_App_(const iApp *d, size_t windowIndex) {
         mulfv_I2(&rect.size, iMax(factor, 1.0f));
     }
 #endif
-    return rect;    
+    return rect;
 }
 
 static iBool loadState_App_(iApp *d) {
@@ -763,7 +763,7 @@ static iBool loadState_App_(iApp *d) {
                 if (!win) {
                     printf("%s: missing window\n", cstr_String(path_File(f)));
                     setCurrent_Root(NULL);
-                    return iFalse;                    
+                    return iFalse;
                 }
                 const uint16_t bits = readU16_File(f);
                 const uint8_t modes = readU8_File(f);
@@ -807,7 +807,7 @@ static iBool loadState_App_(iApp *d) {
                 if (!win) {
                     printf("%s: missing window\n", cstr_String(path_File(f)));
                     setCurrent_Root(NULL);
-                    return iFalse;                    
+                    return iFalse;
                 }
                 const int8_t flags = read8_File(f);
                 int rootIndex = flags & rootIndex1_DocumentStateFlag ? 1 : 0;
@@ -1072,7 +1072,7 @@ static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
     fwrite(constData_Block(body), size_Block(body), 1, stdout);
     if (--dumpCount_ == 0) {
         signal_Condition(dumpFinishedCondition_);
-    }    
+    }
     unlock_Mutex(dumpMutex_);
 }
 
@@ -1100,7 +1100,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->recentlyClosedTabUrls = new_StringList();
     d->overrideDataPath = NULL;
     d->didCheckDataPathOption = iFalse;
-    init_Array(&d->initialWindowRects, sizeof(iRect));    
+    init_Array(&d->initialWindowRects, sizeof(iRect));
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone
        cannot be relied on (behavior differs depending on OS). */ {
@@ -1288,8 +1288,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
             }
         });
         deinit_Foundation();
-        exit(0);               
-    }   
+        exit(0);
+    }
     init_Periodic(&d->periodic);
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
@@ -1310,7 +1310,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         resize_Array(&d->initialWindowRects, 1);
         set_Array(&d->initialWindowRects, 0, &winRect);
     }
-    loadPrefs_App_(d); 
+    loadPrefs_App_(d);
     updateActive_Fonts();
     load_Keys(dataDir_App_());
     iRect *winRect0 = at_Array(&d->initialWindowRects, 0);
@@ -1744,7 +1744,7 @@ static SDL_MouseMotionEvent pendingMotion_;
 
 static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *event) {
 #if !defined (iPlatformApple)
-    /* If there is accumulated mouse motion, don't spend too long processing events. 
+    /* If there is accumulated mouse motion, don't spend too long processing events.
         We want to refresh the UI ASAP, if necessary. */
     if (eventProcessingStartTime_ == 0) {
         eventProcessingStartTime_ = SDL_GetTicks();
@@ -1775,7 +1775,7 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
             return SDL_WaitEvent(event);
         }
     }
-    /* SDL regression circa 2.0.18? SDL_PollEvent() doesn't always return 
+    /* SDL regression circa 2.0.18? SDL_PollEvent() doesn't always return
        events posted immediately beforehand. Waiting with a very short timeout
        seems to work better. */
 #if defined (iPlatformLinux) && SDL_VERSION_ATLEAST(2, 0, 18)
@@ -1795,7 +1795,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
     iBool gotRefresh = iFalse;
     iPtrArray windows;
     init_PtrArray(&windows);
-    /* A bit of global state, alas, but we need to protect against a flood of mouse 
+    /* A bit of global state, alas, but we need to protect against a flood of mouse
        motion events that get us stuck here in the event processing loop for too long. */
     eventProcessingStartTime_ = 0;
     numPendingMotionEvents_ = 0;
@@ -2046,7 +2046,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                                     index++;
                                 }
                                 if (curIndex != index) {
-                                    setFocus_Widget(child_Widget(menubar, index));                                
+                                    setFocus_Widget(child_Widget(menubar, index));
                                     postCommand_Widget(child_Widget(menubar, index), "trigger");
                                 }
                             }
@@ -2084,12 +2084,12 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         iWidget *startFrom = focus_Widget();
                         const iBool isLimitedFocus = focusRoot_Widget(startFrom) != get_Root()->widget;
                         /* Go to a sidebar if one is visible. */
-                        if (!startFrom && !isLimitedFocus && 
+                        if (!startFrom && !isLimitedFocus &&
                             isVisible_Widget(findWidget_App("sidebar"))) {
                             setFocus_Widget(as_Widget(
                                 list_SidebarWidget((iSidebarWidget *) findWidget_App("sidebar"))));
                         }
-                        else if (!startFrom && !isLimitedFocus && 
+                        else if (!startFrom && !isLimitedFocus &&
                             isVisible_Widget(findWidget_App("sidebar2"))) {
                             setFocus_Widget(as_Widget(
                                 list_SidebarWidget((iSidebarWidget *) findWidget_App("sidebar2"))));
@@ -2264,7 +2264,7 @@ iLocalDef iBool isResizeDrawEnabled_(void) {
     return iTrue;
 #else
     return iFalse;
-#endif    
+#endif
 }
 
 static int run_App_(iApp *d) {
@@ -2351,7 +2351,7 @@ void refresh_App(void) {
     else {
 #if defined (iPlatformApple)
         /* Nothing needs redrawing, however we may have to keep blitting the latest contents.
-           The Metal renderer can get stuttery otherwise. */ 
+           The Metal renderer can get stuttery otherwise. */
         iConstForEach(PtrArray, j, &windows) {
             iWindow *win = j.ptr;
             switch (win->type) {
@@ -2586,7 +2586,7 @@ size_t numWindows_App(void) {
 }
 
 size_t windowIndex_App(const iMainWindow *win) {
-    return indexOf_PtrArray(&app_.mainWindows, win); 
+    return indexOf_PtrArray(&app_.mainWindows, win);
 }
 
 iMainWindow *newMainWindow_App(void) {
@@ -2594,7 +2594,7 @@ iMainWindow *newMainWindow_App(void) {
     iMainWindow *newWin = new_MainWindow(initialWindowRect_App_(d, numWindows_App()));
     addWindow_App(newWin); /* App takes ownership */
     SDL_ShowWindow(newWin->base.win);
-    setCurrent_Window(newWin);        
+    setCurrent_Window(newWin);
     if (isAppleDesktop_Platform() && size_PtrArray(mainWindows_App()) == 1) {
         /* Restore the window state as it was before (sidebars, navigation history) when
            opening a window again after all windows have been closed. */
@@ -2705,7 +2705,7 @@ iBool isRunningUnderWindowSystem_App(void) {
 void setTextInputActive_App(iBool active) {
     app_.isTextInputActive = active;
     if (active) {
-        SDL_StartTextInput();        
+        SDL_StartTextInput();
     }
     else {
         SDL_StopTextInput();
@@ -2758,7 +2758,7 @@ static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
 static void updatePrefsToolBarActionButton_(iWidget *prefs, int buttonIndex, int action) {
     updateDropdownSelection_LabelWidget(
         findChild_Widget(prefs, format_CStr("prefs.toolbaraction%d", buttonIndex + 1)),
-        format_CStr(" arg:%d button:%d", action, buttonIndex));    
+        format_CStr(" arg:%d button:%d", action, buttonIndex));
 }
 
 static void updateScrollSpeedButtons_(iWidget *d, enum iScrollType type, const int value) {
@@ -3003,7 +3003,7 @@ void closeWindow_App(iWindow *win) {
     iAssert(win->type == main_WindowType || win->type == extra_WindowType);
     const iBool isMain = (win->type == main_WindowType);
     iWindow *activeWindow = d->window;
-    /* Preferences needs to be dismissed properly. */ 
+    /* Preferences needs to be dismissed properly. */
     /* TODO: This needs a more generic dialog dismissal command system. Also needed for mobile! */
     if (win->type == extra_WindowType) {
         iWidget *prefs = findChild_Widget(win->roots[0]->widget, "prefs");
@@ -3026,7 +3026,7 @@ void closeWindow_App(iWindow *win) {
         /* The one and only window is being closed. On macOS, the app will keep running, which
            means we must save the state of the window now or otherwise it will be lost. A newly
            opened window will use this saved state if it's the only window of the app. */
-        saveState_App_(d);        
+        saveState_App_(d);
     }
     if (activeWindow == win) {
         d->window = NULL;
@@ -3123,6 +3123,12 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 until.minute = n >= 5 ? val[4] : 0;
                 until.second = n == 6 ? val[5] : 0;
                 until.gmtOffsetSeconds = today.gmtOffsetSeconds;
+                if (!cmp_String(
+                        text_InputWidget(findChild_Widget(dlg, "ident.until")),
+                        "9999-12-31 23:59:59")) {
+                    /* This is a special "indefinite" date, intended to be set in GMT. */
+                    until.gmtOffsetSeconds = 0;
+                }
                 /* In the past? */ {
                     iTime now, t;
                     initCurrent_Time(&now);
@@ -3210,7 +3216,7 @@ void availableFontsChanged_App(void) {
     iApp *d = &app_;
     iConstForEach(PtrArray, win, listWindows_App_(d, collectNew_PtrArray())) {
         resetMissing_Text(text_Window(win.ptr));
-    }    
+    }
 }
 
 static void invalidateCachedDocuments_App_(void) {
@@ -3230,7 +3236,7 @@ static const iString *popClosedTabUrl_App_(iApp *d) {
     if (isEmpty_StringList(d->recentlyClosedTabUrls)) {
         return NULL;
     }
-    return collect_String(takeLast_StringList(d->recentlyClosedTabUrls));    
+    return collect_String(takeLast_StringList(d->recentlyClosedTabUrls));
 }
 
 static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
@@ -3269,7 +3275,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         if (!isFrozen) {
             postCommand_App("~toolbar.actions.changed");
         }
-        return iTrue;        
+        return iTrue;
     }
     else if (equal_Command(cmd, "prefs.bottomnavbar.changed")) {
         d->prefs.bottomNavBar = arg_Command(cmd) != 0;
@@ -4016,8 +4022,8 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
     const iBool isHistory = argLabel_Command(cmd, "history") != 0;
     /* If not opening in a new tab, we must not domains/roots accidentally. */
     if (!isHistory &&
-        isIdentityPinned_DocumentWidget(doc) &&        
-        (newTab & newTabMask_OpenTabFlag) == 0 &&        
+        isIdentityPinned_DocumentWidget(doc) &&
+        (newTab & newTabMask_OpenTabFlag) == 0 &&
         !isSetIdentityRetained_DocumentWidget(doc, url)) {
         /* Ensure a new tab is opened where there is no set identity. */
         newTab = new_OpenTabFlag;
@@ -4041,7 +4047,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
     setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
     setRedirectCount_DocumentWidget(doc, redirectCount);
     setOrigin_DocumentWidget(doc, origin);
-    showCollapsed_Widget(findWidget_App("document.progress"), iFalse);    
+    showCollapsed_Widget(findWidget_App("document.progress"), iFalse);
     /* Do the fetch or load page from cache. */
     setUrlFlags_DocumentWidget(
         doc,
@@ -4406,7 +4412,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "preferences")) {        
+    else if (equal_Command(cmd, "preferences")) {
         /* Preferences may already be open. */ {
             iWindow *win = findWindow_App(extra_WindowType, "prefs");
             if (win) {
@@ -4667,7 +4673,8 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "ident.new") && isMainWin) {
         iWidget *dlg = makeIdentityCreation_Widget();
-        setFocus_Widget(findChild_Widget(dlg, "ident.until"));
+        setTextCStr_InputWidget(findChild_Widget(dlg, "ident.until"), "9999-12-31 23:59:59");
+        setFocus_Widget(findChild_Widget(dlg, "ident.common"));
         setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
         iLabelWidget *scope = findChild_Widget(dlg, "ident.scope");
         if (argLabel_Command(cmd, "scope")) {
@@ -4690,7 +4697,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "ident.switch")) {
         /* This is different than "ident.signin" in that the currently used identity's activation
-           URL is used instead of the current one. */        
+           URL is used instead of the current one. */
         const iString     *docUrl = url_DocumentWidget(document_App());
         const iGmIdentity *cur    = identity_DocumentWidget(document_App());
         iGmIdentity       *dst    = findIdentity_GmCerts(
@@ -4779,7 +4786,7 @@ iBool handleCommand_App(const char *cmd) {
             }
             else {
                 makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.import.userdata.error}",
-                                         format_Lang("${import.userdata.error}", cstr_String(path)));                    
+                                         format_Lang("${import.userdata.error}", cstr_String(path)));
             }
             delete_Export(export);
         }
