@@ -204,16 +204,16 @@ int documentWidth_DocumentView(const iDocumentView *d) {
 
 int documentTopPad_DocumentView(const iDocumentView *d) {
     /* Amount of space between banner and top of the document. */
-    return isEmpty_Banner(banner_DocumentWidget(d->owner)) ? 0 : lineHeight_Text(paragraph_FontId);
+    return isEmpty_Banner(d->banner) ? 0 : lineHeight_Text(paragraph_FontId);
 }
 
 static int documentTopMargin_DocumentView_(const iDocumentView *d) {
-    return (isEmpty_Banner(banner_DocumentWidget(d->owner)) ? d->pageMargin * gap_UI : height_Banner(banner_DocumentWidget(d->owner))) +
+    return (isEmpty_Banner(d->banner) ? d->pageMargin * gap_UI : height_Banner(d->banner)) +
            documentTopPad_DocumentView(d);
 }
 
 int pageHeight_DocumentView(const iDocumentView *d) {
-    return height_Banner(banner_DocumentWidget(d->owner)) + documentTopPad_DocumentView(d) + size_GmDocument(d->doc).y;
+    return height_Banner(d->banner) + documentTopPad_DocumentView(d) + size_GmDocument(d->doc).y;
 }
 
 iRect documentBounds_DocumentView(const iDocumentView *d) {
@@ -233,7 +233,7 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
         if (size_GmDocument(d->doc).y == 0) {
             /* Document is empty; maybe just showing an error banner. */
             rect.pos.y = top_Rect(bounds) + height_Rect(bounds) / 2 -
-                         documentTopPad_DocumentView(d) - height_Banner(banner_DocumentWidget(d->owner)) / 2;
+                         documentTopPad_DocumentView(d) - height_Banner(d->banner) / 2;
             rect.size.y = 0;
             wasCentered = iTrue;
         }
@@ -244,7 +244,7 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
                                    phoneToolbarHeight_DocumentWidget(d->owner)) / 2;
             const int visHeight = size_GmDocument(d->doc).y +
                                   height_Widget(footerButtons);
-            const int offset    = -height_Banner(banner_DocumentWidget(d->owner)) -
+            const int offset    = -height_Banner(d->banner) -
                                   documentTopPad_DocumentView(d) +
                                   height_Widget(footerButtons);
             rect.pos.y  = top_Rect(bounds) + iMaxi(0, relMidY - visHeight / 2 + offset);
@@ -254,7 +254,7 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
     }
     if (!wasCentered) {
         /* The banner overtakes the top margin. */
-        if (!isEmpty_Banner(banner_DocumentWidget(d->owner))) {
+        if (!isEmpty_Banner(d->banner)) {
             rect.pos.y -= margin;
         }
         else {
@@ -265,7 +265,7 @@ iRect documentBounds_DocumentView(const iDocumentView *d) {
 }
 
 int viewPos_DocumentView(const iDocumentView *d) {
-    return height_Banner(banner_DocumentWidget(d->owner)) + documentTopPad_DocumentView(d) -
+    return height_Banner(d->banner) + documentTopPad_DocumentView(d) -
            pos_SmoothScroll(&d->scrollY);
 }
 
@@ -275,9 +275,9 @@ static iInt2 documentPos_DocumentView_(const iDocumentView *d, iInt2 pos) {
 }
 
 iRangei visibleRange_DocumentView(const iDocumentView *d) {
-    int top = pos_SmoothScroll(&d->scrollY) - height_Banner(banner_DocumentWidget(d->owner)) -
+    int top = pos_SmoothScroll(&d->scrollY) - height_Banner(d->banner) -
               documentTopPad_DocumentView(d);
-    if (isEmpty_Banner(banner_DocumentWidget(d->owner))) {
+    if (isEmpty_Banner(d->banner)) {
         /* Top padding is not collapsed. */
         top -= d->pageMargin * gap_UI;
     }
@@ -321,7 +321,7 @@ const iGmRun *lastVisibleLink_DocumentView(const iDocumentView *d) {
 static int scrollMax_DocumentView_(const iDocumentView *d) {
     const iWidget *w = constAs_Widget(d->owner);
     int sm = pageHeight_DocumentView(d) +
-             (isEmpty_Banner(banner_DocumentWidget(d->owner)) ? 2 : 1) * d->pageMargin * gap_UI + /* top and bottom margins */
+             (isEmpty_Banner(d->banner) ? 2 : 1) * d->pageMargin * gap_UI + /* top and bottom margins */
              footerHeight_DocumentWidget(d->owner) - height_Rect(bounds_Widget(w));
     return iMax(0, sm);
 }
@@ -435,8 +435,8 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
 
 void updateSideOpacity_DocumentView(iDocumentView *d, iBool isAnimated) {
     float opacity = 0.0f;
-    if (!isEmpty_Banner(banner_DocumentWidget(d->owner)) &&
-        height_Banner(banner_DocumentWidget(d->owner)) < pos_SmoothScroll(&d->scrollY)) {
+    if (!isEmpty_Banner(d->banner) &&
+        height_Banner(d->banner) < pos_SmoothScroll(&d->scrollY)) {
         opacity = 1.0f;
     }
     setValue_Anim(&d->sideOpacity, opacity, isAnimated ? (opacity < 0.5f ? 100 : 200) : 0);
@@ -572,8 +572,8 @@ void smoothScroll_DocumentView(iDocumentView *d, int offset, int duration) {
 }
 
 void scrollTo_DocumentView(iDocumentView *d, int documentY, iBool centered) {
-    if (!isEmpty_Banner(banner_DocumentWidget(d->owner))) {
-        documentY += height_Banner(banner_DocumentWidget(d->owner)) + documentTopPad_DocumentView(d);
+    if (!isEmpty_Banner(d->banner)) {
+        documentY += height_Banner(d->banner) + documentTopPad_DocumentView(d);
     }
     else {
         documentY += documentTopPad_DocumentView(d) + d->pageMargin * gap_UI;
@@ -719,7 +719,7 @@ iBool updateDocumentWidthRetainingScrollPosition_DocumentView(iDocumentView *d, 
     }
     run = NULL;
     setWidth_GmDocument(d->doc, newWidth, width_Widget(d->owner));
-    setWidth_Banner(banner_DocumentWidget(d->owner), newWidth);
+    setWidth_Banner(d->banner, newWidth);
     documentRunsInvalidated_DocumentWidget(d->owner);
     if (runLoc && !keepCenter) {
         run = findRunAtLoc_GmDocument(d->doc, runLoc);
@@ -1150,7 +1150,7 @@ static void updateSideIconBuf_DocumentView_(const iDocumentView *d) {
         dbuf->sideIconBuf = NULL;
     }
     //    const iGmRun *banner = siteBanner_GmDocument(d->doc);
-    if (isEmpty_Banner(banner_DocumentWidget(d->owner))) {
+    if (isEmpty_Banner(d->banner)) {
         return;
     }
     const int   margin           = gap_UI * d->pageMargin;
@@ -1526,7 +1526,7 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
                               };
     init_Paint(&ctx.paint);
     render_DocumentView_(d, &ctx, iFalse /* just the mandatory parts */);
-    iBanner    *banner           = banner_DocumentWidget(d->owner);
+    iBanner    *banner           = d->banner;
     int         yTop             = docBounds.pos.y + viewPos_DocumentView(d);
     const iBool isDocEmpty       = size_GmDocument(d->doc).y == 0;
     const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;

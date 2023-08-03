@@ -35,15 +35,14 @@ iDeclareType(ScrollWidget)
 
 iDeclareWidgetClass(DocumentWidget)
 iDeclareObjectConstruction(DocumentWidget)
-    
-iDocumentWidget *   duplicate_DocumentWidget        (const iDocumentWidget *);    
+
+iDocumentWidget *   duplicate_DocumentWidget        (const iDocumentWidget *);
 void                cancelAllRequests_DocumentWidget(iDocumentWidget *);
 
 void    serializeState_DocumentWidget   (const iDocumentWidget *, iStream *outs);
 void    deserializeState_DocumentWidget (iDocumentWidget *, iStream *ins);
 
 iHistory *          history_DocumentWidget          (iDocumentWidget *);
-iBanner *           banner_DocumentWidget           (const iDocumentWidget *);
 iWidget *           footerButtons_DocumentWidget    (const iDocumentWidget *);
 iScrollWidget *     scrollBar_DocumentWidget        (const iDocumentWidget *);
 const iString *     url_DocumentWidget              (const iDocumentWidget *);

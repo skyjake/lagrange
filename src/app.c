@@ -1078,7 +1078,7 @@ static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
 }
 
 void disableRefresh_App(iBool dis) {
-    app_.disableRefresh = dis;
+//    app_.disableRefresh = dis;
 }
 
 static void init_App_(iApp *d, int argc, char **argv) {

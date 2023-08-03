@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "visbuf.h"
 #include <the_Foundation/ptrset.h>
 
+iDeclareType(Banner)
 iDeclareType(DocumentView)
 iDeclareType(DocumentWidget)
 iDeclareType(DrawBufs)
@@ -43,6 +44,7 @@ enum iDrawBufsFlag {
 
 struct Impl_DocumentView {
     iDocumentWidget *owner;         /* TODO: Convert to an abstract provider of metrics? */
+    iBanner *       banner;
     iRangecc *      selectMark;     /* TODO: Should View own these? */
     iRangecc *      foundMark;
     int             flags;
