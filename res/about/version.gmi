@@ -8,12 +8,14 @@
 
 ## 1.17
 New features:
+* User-selectable feed refresh interval. Previously the interval been hardcoded to four hours. (Based on a patch by Michael Nordmeyer.)
 
 Changes and enhancements:
 * Newly created client certificates have a default expiration date in the year 9999, which means they won't expire. One can still also set a specific date as before.
 * Menu separators are taller and more distinct for a clearer item separation.
 
 Fixes:
+* Potential crash at shutdown when a feed update is ongoing.
 
 ## 1.16.6
 * Fixed crash on gemini://sdf.org/ where the contents of a link line would fail to be recognized as valid characters.
