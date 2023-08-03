@@ -504,6 +504,13 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
             break;
         }
     }
+    if (d->stopWorker) {
+        iForIndices(i, work) {
+            if (work[i]) {
+                cancel_GmRequest(work[i]->request);
+            }
+        }
+    }
     initCurrent_Time(&d->lastRefreshedAt);
     save_Feeds_(d);
     /* Check if there are visited URLs marked as Kept that can be cleared because they are no
