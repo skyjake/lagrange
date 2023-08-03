@@ -841,12 +841,14 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
 
 static iWidget *makeMenuSeparator_(void) {
     iWidget *sep = new_Widget();
-    setBackgroundColor_Widget(sep, uiSeparator_ColorId);
-    sep->rect.size.y = gap_UI / 3;
-    if (deviceType_App() != desktop_AppDeviceType) {
-        sep->rect.size.y = gap_UI / 2;
-    }
-    sep->rect.size.y = iMax(1, sep->rect.size.y);
+    iWidget *sbar = new_Widget();
+    setFlags_Widget(sep, resizeChildren_WidgetFlag, iTrue);
+    sep->flags2 |= centerChildrenVertical_WidgetFlag2;
+    addChildFlags_Widget(sep, iClob(sbar), 0);
+    setBackgroundColor_Widget(sbar, uiSeparator_ColorId);
+    sep->rect.size.y = 2 * gap_UI;
+    setFixedSize_Widget(sbar, init_I2(-1, gap_UI / 3));
+    setPadding_Widget(sep, 2 * gap_UI, 0, 2 * gap_UI, gap_UI / 3);
     setFlags_Widget(sep, hover_WidgetFlag | fixedHeight_WidgetFlag, iTrue);
     return sep;
 }

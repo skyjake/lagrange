@@ -7,6 +7,12 @@
 # Release notes
 
 ## 1.17
+New features:
+
+Changes and enhancements:
+* Menu separators are taller and more distinct for a clearer item separation.
+
+Fixes:
 
 ## 1.16.6
 * Fixed crash on gemini://sdf.org/ where the contents of a link line would fail to be recognized as valid characters.
