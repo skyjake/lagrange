@@ -147,7 +147,7 @@ void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
 
 void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStream *outs) {
     serialize_String(d->url, outs);
-    uint16_t params = (d->reloadInterval & 7) | (iClamp(d->generation, 0, 15) << 4);    
+    uint16_t params = (d->reloadInterval & 7) | (iClamp(d->generation, 0, 15) << 4);
     writeU16_Stream(outs, params);
     /* Identity override. */ {
         iBlock empty;
@@ -293,7 +293,7 @@ struct Impl_DocumentWidget {
 
 iDefineObjectConstruction(DocumentWidget)
 
-/* Sorted by proximity to F and J. */
+/* Sorted by proximity to F and J. TODO: Add a config file for this sequence. */
 static const int homeRowKeys_[] = {
     'f', 'd', 's', 'a',
     'j', 'k', 'l',
@@ -639,8 +639,8 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
             if (equal_String(at_StringArray(title, i), at_StringArray(title, i + 1))) {
                 remove_StringArray(title, i + 1);
             }
-        }   
-    }    
+        }
+    }
     /* Take away parts if it doesn't fit. */
     const int avail     = bounds_Widget(as_Widget(tabButton)).size.x - 7 * gap_UI;
     iBool     setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
@@ -653,7 +653,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
             setWindow = iFalse;
         }
         const iChar siteIcon = siteIcon_GmDocument(d->view->doc);
-        /* Remove a redundant icon. */ {           
+        /* Remove a redundant icon. */ {
             iStringConstIterator iter;
             init_StringConstIterator(&iter, text);
             if (iter.value == siteIcon) {
@@ -777,7 +777,7 @@ static void showOrHideInputPrompt_DocumentWidget_(iDocumentWidget *d) {
                 setSelectAllOnFocus_InputWidget(input, iFalse);
             }
         }
-    }    
+    }
 }
 
 static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
@@ -1011,7 +1011,7 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
                 (linkFlags & imageFileExtension_GmLinkFlag)) {
                 requestMedia_DocumentWidget_(d, linkId, 0);
             }
-        }               
+        }
     }
     /* Gempub page behavior and footer actions. */ {
         /* TODO: move this to gempub.c */
@@ -1503,7 +1503,7 @@ static iBool fetch_DocumentWidget_(iDocumentWidget *d) {
         const iGmIdentity *ident = identity_DocumentWidget(d);
         if (ident) {
             setIdentity_GmRequest(d->request, ident);
-        }        
+        }
     }
     iConnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
     iConnect(GmRequest, d->request, finished, d, requestFinished_DocumentWidget_);
@@ -1662,7 +1662,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     d->flags |= fromCache_DocumentWidgetFlag;
     /* Do the fetch. */ {
         d->initNormScrollY = normScrollY;
-        /* Use the cached response data. */        
+        /* Use the cached response data. */
         updateTrust_DocumentWidget_(d, resp);
         d->sourceTime   = resp->when;
         d->sourceStatus = success_GmStatusCode;
@@ -1678,7 +1678,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     }
     d->state = ready_RequestState;
     postProcessRequestContent_DocumentWidget_(d, iTrue);
-    resetScrollPosition_DocumentView(d->view, d->initNormScrollY);    
+    resetScrollPosition_DocumentView(d->view, d->initNormScrollY);
     cacheDocumentGlyphs_DocumentWidget_(d);
     d->flags &= ~(urlChanged_DocumentWidgetFlag | drawDownloadCounter_DocumentWidgetFlag);
     postCommandf_Root(
@@ -2367,13 +2367,13 @@ static iBool checkTabletSwipeVerticalPosition_DocumentWidget_(const iDocumentWid
 
 static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     /* TODO: Cleanup
-     
+
        If DocumentWidget is refactored to split the document presentation from state
        and request management (a new DocumentView class), plain views could be used for this
        animation without having to mess with the complete state of the DocumentWidget. That
        seems like a less error-prone approach -- the current implementation will likely break
        down (again) if anything is changed in the document internals.
-       
+
        2022-03-16: Yeah, something did break, again. "swipeout" is not found if the tab bar
        is moved to the bottom, when swiping back.
 
@@ -2758,7 +2758,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             postCommandf_App("ui.split arg:3 axis:%d",
                              defaultSplitAxis_MainWindow(get_MainWindow()));
             return iTrue;
-        }        
+        }
         iRoot       *oldRoot   = get_Root();
         iMainWindow *oldWin    = get_MainWindow();
         iRoot       *otherRoot = otherRoot_Window(get_Window(), oldRoot);
@@ -2777,7 +2777,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         /* Switch to the destination root temporarily so we can create a new tab there. */
         setCurrent_Root(otherRoot);
         if (newWin) {
-            setCurrent_Window(newWin);            
+            setCurrent_Window(newWin);
         }
         newTab_App(d, switchTo_NewTabFlag); /* makes a duplicate */
         setCurrent_Root(oldRoot);
@@ -3088,7 +3088,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                         break;
                     }
                 }
-            }            
+            }
         }
         return iFalse;
     }
@@ -3277,7 +3277,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             /* Check for default index pages according to Gemini Best Practices ("Filenames"):
                gemini://gemini.circumlunar.space/docs/best-practices.gmi */
             if (endsWith_Rangecc(parts.path, "/index.gmi")) {
-                parts.path.end -= 9; 
+                parts.path.end -= 9;
             }
             else if (endsWith_Rangecc(parts.path, "/index.gemini")) {
                 parts.path.end -= 12;
@@ -3299,7 +3299,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             /* Hierarchical navigation doesn't make sense with Titan. */
             if (startsWith_String(parentUrl, "titan://")) {
                 /* We have no way of knowing if the corresponding URL is valid for Gemini,
-                   but let's try anyway. */                
+                   but let's try anyway. */
                 set_String(parentUrl, withScheme_String(parentUrl, "gemini"));
                 stripUrlPort_String(parentUrl);
             }
@@ -3320,7 +3320,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         /* Hierarchical navigation doesn't make sense with Titan. */
         if (startsWith_String(rootUrl, "titan://")) {
             /* We have no way of knowing if the corresponding URL is valid for Gemini,
-               but let's try anyway. */                
+               but let's try anyway. */
             set_String(rootUrl, withScheme_String(rootUrl, "gemini"));
             stripUrlPort_String(rootUrl);
         }
@@ -3618,7 +3618,7 @@ static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *r
     else {
         iAssert(iFalse);
     }
-#endif    
+#endif
 }
 
 static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
@@ -3645,7 +3645,7 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
         if (run->mediaType != audio_MediaType) {
             continue;
         }
-#if defined (LAGRANGE_ENABLE_AUDIO)        
+#if defined (LAGRANGE_ENABLE_AUDIO)
         if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) {
             if (ev->button.button != SDL_BUTTON_LEFT) {
                 return iFalse;
@@ -3878,10 +3878,10 @@ static iBool isScrollableWithWheel_DocumentWidget_(const iDocumentWidget *d) {
         return iTrue;
     }
     if (!hover) {
-        /* We need the actual mouse coordinates, `mouseCoord_Window()` does not return 
+        /* We need the actual mouse coordinates, `mouseCoord_Window()` does not return
            valid coordinates if the mouse is deemed to be outside. */
         int x, y;
-        SDL_GetMouseState(&x, &y); 
+        SDL_GetMouseState(&x, &y);
         return hitChild_Window(win, coord_Window(win, x, y)) == d;
     }
     return iFalse;
@@ -4165,7 +4165,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                             { "${link.side.newtab}",
                                               0,
                                               0,
-                                              format_CStr("!open query:%d newtab:5 origin:%s%s url:%s",                                                          
+                                              format_CStr("!open query:%d newtab:5 origin:%s%s url:%s",
                                                           spartanQuery,
                                                           cstr_String(id_Widget(w)),
                                                           setIdentArg_DocumentWidget_(d, linkUrl),
@@ -4299,7 +4299,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { ">>>" forwardArrow_Icon, navigateForward_KeyShortcut, "navigate.forward" },
                             { ">>>" upArrow_Icon, navigateParent_KeyShortcut, "navigate.parent" },
                             { ">>>" upArrowBar_Icon, navigateRoot_KeyShortcut, "navigate.root" },
-                        }, 4);                    
+                        }, 4);
 #endif
                     pushBackN_Array(
                         &items,
@@ -4658,7 +4658,7 @@ void updateHoverLinkInfo_DocumentWidget(iDocumentWidget *d, iGmLinkId linkId) {
                         linkId,
                         width_Widget(constAs_Widget(d)))) {
         animate_DocumentWidget(d);
-    }        
+    }
 }
 
 void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
@@ -4686,12 +4686,12 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
         d->footerButtons->rect.pos.y = height_Rect(bounds) -
                                        footerHeight_DocumentWidget(d) +
                                        (scrollMax > 0 ? scrollMax - scrollPos : 0);
-    }    
+    }
 }
 
 void didScrollView_DocumentWidget(iDocumentWidget *d) {
     animateMedia_DocumentWidget_(d);
-    /* Remember scroll positions of recently visited pages. */    
+    /* Remember scroll positions of recently visited pages. */
     if (~d->flags & animationPlaceholder_DocumentWidgetFlag) {
         iAssert(~d->widget.flags & destroyPending_WidgetFlag);
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
@@ -4706,7 +4706,7 @@ void didScrollView_DocumentWidget(iDocumentWidget *d) {
         if (~as_Widget(d)->flags & destroyPending_WidgetFlag) {
                 add_Periodic(periodic_App(), d, "document.render");
         }
-    }    
+    }
 }
 
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
@@ -4720,7 +4720,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     checkPendingInvalidation_DocumentWidget_(d);
     /* Views. */ {
         draw_DocumentView(d->view, 0);
-    }    
+    }
     iPaint p;
     init_Paint(&p);
     if (colorTheme_App() == pureWhite_ColorTheme &&
@@ -4835,7 +4835,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         drawCentered_Text(font, bounds, iFalse, uiBackground_ColorId, "%d %%",
                           d->pinchZoomPosted);
     }
-#if 0    
+#if 0
     /* Dimming during swipe animation. */
     if (w->offsetRef) {
         const int offX = visualOffsetByReference_Widget(w);
@@ -5119,7 +5119,7 @@ void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setU
         if (setIdent) {
             setIdentity_History(d->mod.history, setIdent);
         }
-    }    
+    }
 }
 
 void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, const iString *mime,
@@ -5221,7 +5221,7 @@ void updateSize_DocumentWidget(iDocumentWidget *d) {
 }
 
 static void sizeChanged_DocumentWidget_(iDocumentWidget *d) {
-    updateSize_DocumentWidget(d);    
+    updateSize_DocumentWidget(d);
 }
 
 iBeginDefineSubclass(DocumentWidget, Widget)
