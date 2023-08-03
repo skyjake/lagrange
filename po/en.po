@@ -1829,6 +1829,12 @@ msgstr "Blue"
 msgid "prefs.accent.gray"
 msgstr "Gray"
 
+msgid "prefs.feedinterval"
+msgstr "Feed refresh interval:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Manual"
+
 msgid "prefs.uilang"
 msgstr "Language:"
 

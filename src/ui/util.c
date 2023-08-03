@@ -2973,6 +2973,16 @@ iWidget *makePreferences_Widget(void) {
                                     { u8"简体中文 - zh", 0, 0, "uilang id:zh_Hans" },
                                     { u8"繁體/正體中文 - zh", 0, 0, "uilang id:zh_Hant" },
                                     { NULL } };
+    const iMenuItem feedIntervals[] = {
+        { "${prefs.feedinterval.manual}", 0, 0, format_CStr("feedinterval.set arg:%d", manual_FeedInterval) },
+        { formatCStrs_Lang("num.minutes.n", 30), 0, 0, format_CStr("feedinterval.set arg:%d", thirtyMinutes_FeedInterval) },
+        { formatCStrs_Lang("num.hours.n", 1), 0, 0, format_CStr("feedinterval.set arg:%d", oneHour_FeedInterval) },
+        { formatCStrs_Lang("num.hours.n", 2), 0, 0, format_CStr("feedinterval.set arg:%d", twoHours_FeedInterval) },
+        { formatCStrs_Lang("num.hours.n", 4), 0, 0, format_CStr("feedinterval.set arg:%d", fourHours_FeedInterval) },
+        { formatCStrs_Lang("num.hours.n", 8), 0, 0, format_CStr("feedinterval.set arg:%d", eightHours_FeedInterval) },
+        { "${reload.onceperday}", 0, 0, format_CStr("feedinterval.set arg:%d", oneDay_FeedInterval) },
+        { NULL }
+    };
     const iMenuItem returnKeyBehaviors[] = {
         { returnKeyBehaviorStr_(default_ReturnKeyBehavior),
           0,
@@ -3103,6 +3113,8 @@ iWidget *makePreferences_Widget(void) {
             { "toggle id:prefs.archive.openindex" },
             { "toggle id:prefs.markdown.viewsource" },
             { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
+            { "padding" },
+            { "dropdown id:prefs.feedinterval", 0, 0, (const void *) feedIntervals },
             { "padding" },
             { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
             { "toggle id:prefs.time.24h" },
@@ -3304,6 +3316,18 @@ iWidget *makePreferences_Widget(void) {
                 addRadioButton_(pinSplit, "prefs.pinsplit.2", "${prefs.pinsplit.right}", "pinsplit.set arg:2");
             }
             addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        }
+        /* Feed refresh interval. */ {
+        addDialogPadding_(headings, values);
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.feedinterval}")));
+            iLabelWidget *button = makeMenuButton_LabelWidget(
+                feedIntervals[findWidestLabel_MenuItem(
+                                  feedIntervals, iElemCount(feedIntervals) - 1)].label,
+                feedIntervals, iElemCount(feedIntervals) - 1);
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
+                                      uiBackgroundMenu_ColorId);
+            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
+                         "prefs.feedinterval");
         }
         addDialogPadding_(headings, values);
         /* UI languages. */ {

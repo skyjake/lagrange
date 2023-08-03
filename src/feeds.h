@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "defs.h"
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
@@ -50,11 +51,11 @@ iBool           isUnread_FeedEntry  (const iFeedEntry *);
 void    init_Feeds              (const char *saveDir);
 void    deinit_Feeds            (void);
 void    refresh_Feeds           (void);
+void    setRefreshInterval_Feeds(enum iFeedInterval feedInterval);
+void    refreshFinished_Feeds   (void); /* called on "feeds.refresh.finished" */
 void    removeEntries_Feeds     (uint32_t feedBookmarkId);
 void    markEntryAsRead_Feeds   (uint32_t feedBookmarkId, const iString *entryUrl, iBool isRead);
 iBool   isUnreadEntry_Feeds     (uint32_t feedBookmarkId, const iString *entryUrl);
-
-void    refreshFinished_Feeds   (void); /* called on "feeds.update.finished" */
 
 const iPtrArray *   listEntries_Feeds   (void);
 const iString *     entryListPage_Feeds (void);

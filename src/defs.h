@@ -117,6 +117,16 @@ enum iImageStyle {
     preformatColorized_ImageStyle = 4,
 };
 
+enum iFeedInterval {
+    manual_FeedInterval          = 0,
+    thirtyMinutes_FeedInterval   = 60 * 30,
+    oneHour_FeedInterval         = 60 * 60,
+    twoHours_FeedInterval        = 60 * 60 * 2,
+    fourHours_FeedInterval       = 60 * 60 * 4,
+    eightHours_FeedInterval      = 60 * 60 * 8,
+    oneDay_FeedInterval          = 60 * 60 * 24,
+};
+
 enum iScrollType {
     keyboard_ScrollType,
     mouse_ScrollType,

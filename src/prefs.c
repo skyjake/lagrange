@@ -67,7 +67,7 @@ void init_Prefs(iPrefs *d) {
     }
     else {
         d->bottomNavBar  = iFalse;
-        d->bottomTabBar  = iFalse;        
+        d->bottomTabBar  = iFalse;
     }
     if (isTerminal_Platform()) {
         d->bottomNavBar  = iTrue;
@@ -77,6 +77,7 @@ void init_Prefs(iPrefs *d) {
     d->evenSplit         = iFalse; /* split mode tabs have even width */
     d->detachedPrefs     = iTrue;
     d->pinSplit          = 1;
+    d->feedInterval      = fourHours_FeedInterval;
     d->time24h           = iTrue;
     d->returnKey         = default_ReturnKeyBehavior;
     d->retainTabs        = iTrue;

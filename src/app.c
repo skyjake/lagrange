@@ -290,6 +290,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "inputzoom.set arg:%d\n", d->prefs.inputZoomLevel);
     appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
+    appendFormat_String(str, "feedinterval.set arg:%d\n", d->prefs.feedInterval);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
     appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[mouse_ScrollType], mouse_ScrollType);
@@ -2755,6 +2756,10 @@ static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
     }
 }
 
+static void updateFeedIntervalButton_(iLabelWidget *button, int feedInterval) {
+    updateDropdownSelection_LabelWidget(button, format_CStr(".set arg:%d", feedInterval));
+}
+
 static void updatePrefsToolBarActionButton_(iWidget *prefs, int buttonIndex, int action) {
     updateDropdownSelection_LabelWidget(
         findChild_Widget(prefs, format_CStr("prefs.toolbaraction%d", buttonIndex + 1)),
@@ -2872,6 +2877,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
         updatePrefsPinSplitButtons_(d, arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "feedinterval.set")) {
+        updateFeedIntervalButton_(findChild_Widget(d, "prefs.feedinterval"), arg_Command(cmd));
         return iFalse;
     }
     else if (equal_Command(cmd, "scrollspeed")) {
@@ -3564,6 +3573,11 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
         d->prefs.pinSplit = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "feedinterval.set")) {
+        d->prefs.feedInterval = arg_Command(cmd);
+        setRefreshInterval_Feeds(d->prefs.feedInterval);
         return iTrue;
     }
     else if (equal_Command(cmd, "theme.set")) {
@@ -4454,6 +4468,7 @@ iBool handleCommand_App(const char *cmd) {
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
+        updateFeedIntervalButton_(findChild_Widget(dlg, "prefs.feedinterval"), d->prefs.feedInterval);
         updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
         setToggle_Widget(findChild_Widget(dlg, "prefs.time.24h"), d->prefs.time24h);
         updateDropdownSelection_LabelWidget(
