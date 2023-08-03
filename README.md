@@ -52,9 +52,9 @@ The required tools are a C11 compiler (e.g., Clang or GCC), CMake, `pkg-config`,
    * on Fedora: `sudo dnf install cmake zip SDL2-devel openssl-devel pcre-devel zlib-devel libunistring-devel fribidi-devel`
 3. Optionally, install the mpg123 decoder library for MPEG audio support. For example, the macOS Homebrew package is `mpg123`, on Ubuntu it is `libmpg123-dev`, and on Fedora it is `mpg123-devel`.
 4. Create a build directory.
-5. In your empty build directory, run CMake: ```cmake {path_of_lagrange_sources} -DCMAKE_BUILD_TYPE=Release```
-6. Build it: ```cmake --build .```
-7. Now you can run *lagrange*, *lagrange.exe*, or *Lagrange.app*.
+5. In your empty build directory, run CMake: `cmake {path_of_lagrange_sources} -DCMAKE_BUILD_TYPE=Release`
+6. Build it: `cmake --build .`
+7. Now you can run `lagrange`, `lagrange.exe`, or `Lagrange.app`.
 
 ### Unicode text rendering
 
