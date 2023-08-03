@@ -31,7 +31,7 @@ iDeclareType(DocumentView)
 iDeclareType(DocumentWidget)
 iDeclareType(DrawBufs)
 iDeclareType(VisBufMeta)
-    
+
 enum iDocumentViewFlags {
     centerVertically_DocumentViewFlag = iBit(1),
 };
@@ -72,7 +72,7 @@ struct Impl_DocumentView {
 };
 
 iDeclareTypeConstruction(DocumentView)
-    
+
 void    setOwner_DocumentView           (iDocumentView *, iDocumentWidget *doc);
 void    swap_DocumentView               (iDocumentView *, iDocumentView *swapBuffersWith); /* TODO: Remove this! */
 void    allocVisBuffer_DocumentView     (const iDocumentView *);

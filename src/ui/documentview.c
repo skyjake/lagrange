@@ -63,7 +63,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <errno.h>
 
 /*----------------------------------------------------------------------------------------------*/
-    
+
 struct Impl_DrawBufs {
     int          flags;
     SDL_Texture *sideIconBuf;
@@ -649,7 +649,7 @@ iRangecc sourceLoc_DocumentView(const iDocumentView *d, iInt2 pos) {
 }
 
 iDeclareType(MiddleRunParams)
-    
+
 struct Impl_MiddleRunParams {
     int midY;
     const iGmRun *closest;
@@ -743,7 +743,7 @@ iRect runRect_DocumentView(const iDocumentView *d, const iGmRun *run) {
 }
 
 iDeclareType(DrawContext)
-    
+
 struct Impl_DrawContext {
     const iDocumentView *view;
     iRect widgetBounds;
@@ -796,7 +796,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         }
         if (w > boundWidth - x) {
             w = boundWidth - x;
-        }        
+        }
         if (~run->flags & decoration_GmRunFlag) {
             const iInt2 visPos =
                 add_I2(run->bounds.pos, addY_I2(d->viewPos, viewPos_DocumentView(d->view)));
@@ -1244,7 +1244,7 @@ static void drawSideElements_DocumentView_(const iDocumentView *d, int horizOffs
         }
     }
     /* Reception timestamp. On mobile, it's below the footer in the overscroll area. */
-    if (dbuf->timestampBuf) { 
+    if (dbuf->timestampBuf) {
         draw_TextBuf(
             dbuf->timestampBuf,
             add_I2(
@@ -1491,7 +1491,7 @@ void prerender_DocumentView(iAny *context) {
         .vis             = visibleRange_DocumentView(d),
         .showLinkNumbers = isShowingLinkNumbers_DocumentWidget(d->owner)
     };
-    //    printf("%u prerendering\n", SDL_GetTicks());    
+    //    printf("%u prerendering\n", SDL_GetTicks());
     if (d->visBuf->buffers[0].texture) {
         makePaletteGlobal_GmDocument(d->doc);
         if (render_DocumentView_(d, &ctx, iTrue /* just fill up progressively */)) {
@@ -1509,7 +1509,7 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
     /* Each document has its own palette, but the drawing routines rely on a global one.
        As we're now drawing a document, ensure that the right palette is in effect.
        Document theme colors can be used elsewhere, too, but first a document's palette
-       must be made global. */       
+       must be made global. */
     makePaletteGlobal_GmDocument(d->doc);
     if (d->drawBufs->flags & updateTimestampBuf_DrawBufsFlag) {
         updateTimestampBuf_DocumentView_(d);
@@ -1650,5 +1650,5 @@ void resetScrollPosition_DocumentView(iDocumentView *d, float normScrollY) {
     updateVisible_DocumentView(d);
     clampScroll_DocumentView(d);
     updateSideOpacity_DocumentView(d, iFalse);
-    updateDrawBufs_DocumentView(d, updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag);    
+    updateDrawBufs_DocumentView(d, updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag);
 }
