@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2020-2023 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -206,6 +206,8 @@ enum iDocumentWidgetFlag {
     urlChanged_DocumentWidgetFlag            = iBit(13),
     drawDownloadCounter_DocumentWidgetFlag   = iBit(14),
     fromCache_DocumentWidgetFlag             = iBit(15), /* don't write anything to cache */
+
+    /* Swipe navigation: */
     swipeNavigable_DocumentWidgetFlag        = iBit(16), /* responds to touch swipes (or Mac trackpad) */
     swipeBegun_DocumentWidgetFlag            = iBit(17), /* a swipe is ongoing; swipe events affect
                                                             view offset */
@@ -221,6 +223,7 @@ enum iDocumentWidgetFlag {
     rightWheelSwipe_DocumentWidgetFlag       = iBit(24),
     eitherWheelSwipe_DocumentWidgetFlag      = leftWheelSwipe_DocumentWidgetFlag |
                                                rightWheelSwipe_DocumentWidgetFlag,
+
     viewSource_DocumentWidgetFlag            = iBit(25),
     preventInlining_DocumentWidgetFlag       = iBit(26),
     proxyRequest_DocumentWidgetFlag          = iBit(27),
@@ -288,8 +291,8 @@ struct Impl_DocumentWidget {
     iDocumentView *view;
     iLinkInfo *    linkInfo;
     iAnim          swipeOffset; /* applies to both views */
-    uint32_t       swipeSampleAt;
-    float          swipeSample;
+//    uint32_t       swipeSampleAt;
+//    float          swipeSample;
     iDocumentView *swipeView;   /* outgoing old view */
     iBanner *      swipeBanner; /* used by swipeView only */
 
@@ -566,11 +569,14 @@ static void maybeFinishSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void sampleSwipeSpeed_DocumentWidget_(iDocumentWidget *d) {
+    iUnused(d);
+#if 0
     const uint32_t now = SDL_GetTicks();
     if (!isFinished_Anim(&d->swipeOffset) && now - d->swipeSampleAt > 100) {
         d->swipeSampleAt = now;
         d->swipeSample = value_Anim(&d->swipeOffset);
     }
+#endif
 }
 
 void animate_DocumentWidget(void *ticker) {
@@ -770,16 +776,7 @@ static void invalidate_DocumentWidget_(iDocumentWidget *d) {
     if (flags_Widget(as_Widget(d)) & destroyPending_WidgetFlag) {
         return;
     }
-//    if (d->flags & invalidationPending_DocumentWidgetFlag) {
-//        return;
-//    }
-//    if (isAffectedByVisualOffset_Widget(as_Widget(d))) {
-//        d->flags |= invalidationPending_DocumentWidgetFlag;
-//        return;
-//    }
-//    d->flags &= ~invalidationPending_DocumentWidgetFlag;
     invalidate_DocumentView(d->view);
-//    printf("[%p] '%s' invalidated\n", d, cstr_String(id_Widget(as_Widget(d))));
 }
 
 static iRangecc siteText_DocumentWidget_(const iDocumentWidget *d) {
@@ -1560,7 +1557,6 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
 }
 
 static iBool fetch_DocumentWidget_(iDocumentWidget *d) {
-//    iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
     /* We may be instructed to wait before fetching to avoid congestion. */
     if (d->flags & waitForIdle_DocumentWidgetFlag) {
         /* Check all documents in the window. */
@@ -2380,55 +2376,6 @@ static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     return iTrue;
 }
 
-static void swap_DocumentWidget_(iDocumentWidget *d, iGmDocument *doc,
-                                 iDocumentWidget *swapBuffersWith) {
-    if (doc) {
-        iAssert(isInstance_Object(doc, &Class_GmDocument));
-        replaceDocument_DocumentWidget_(d, doc);
-        iSwap(iBanner *, d->banner, swapBuffersWith->banner);
-        setOwner_Banner(d->banner, d);
-        setOwner_Banner(swapBuffersWith->banner, swapBuffersWith);
-        swap_DocumentView(d->view, swapBuffersWith->view);
-//        invalidate_DocumentWidget_(swapBuffersWith);
-    }
-}
-
-static iWidget *swipeParent_DocumentWidget_(iDocumentWidget *d) {
-    return findChild_Widget(as_Widget(d)->root->widget, "doctabs");
-}
-
-#if 0
-static void setupSwipeOverlay_DocumentWidget_(iDocumentWidget *d, iWidget *overlay) {
-    iWidget *w = as_Widget(d);
-    iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-    iAssert(overlay);
-    /* The target takes the old document and jumps on top. */
-    overlay->rect.pos = windowToInner_Widget(swipeParent, innerToWindow_Widget(w, zero_I2()));
-    /* Note: `innerToWindow_Widget` does not apply visual offset. */
-    overlay->rect.size = w->rect.size;
-    setFlags_Widget(overlay, fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
-    setFlags_Widget(as_Widget(d), refChildrenOffset_WidgetFlag, iTrue);
-    as_Widget(d)->offsetRef = swipeParent;
-    /* `overlay` animates off the screen to the right. */
-    const int fromPos = value_Anim(&w->visualOffset);
-    const int toPos   = width_Widget(overlay);
-    setVisualOffset_Widget(overlay, fromPos, 0, 0);
-    /* Bigger screen, faster swipes. */
-    if (deviceType_App() == desktop_AppDeviceType) {
-        setVisualOffset_Widget(overlay, toPos, 250, easeOut_AnimFlag | softer_AnimFlag);
-    }
-    else {
-        const float devFactor = (deviceType_App() == phone_AppDeviceType ? 1.0f : 2.0f);
-        float swipe = iClamp(d->swipeSpeed, devFactor * 400, devFactor * 1000) * gap_UI;
-        uint32_t span = ((toPos - fromPos) / swipe) * 1000;
-    //    printf("from:%d to:%d swipe:%f span:%u\n", fromPos, toPos, d->swipeSpeed, span);
-        setVisualOffset_Widget(overlay, toPos, span, deviceType_App() == tablet_AppDeviceType ?
-                               easeOut_AnimFlag : 0);
-    }
-    setVisualOffset_Widget(w, 0, 0, 0);
-}
-#endif
-
 static int sidebarSwipeAreaHeight_DocumentWidget_(const iDocumentWidget *d) {
     const iWindow *win = get_Window();
     return iMin(win->size.x, win->size.y) / 4;
@@ -2449,6 +2396,7 @@ static iBool checkTabletSwipeVerticalPosition_DocumentWidget_(const iDocumentWid
     }
 }
 
+#if 0
 static float currentSwipeSpeed_DocumentWidget_(const iDocumentWidget *d) {
     const uint32_t now = SDL_GetTicks();
     if (d->swipeSampleAt < now) {
@@ -2458,6 +2406,7 @@ static float currentSwipeSpeed_DocumentWidget_(const iDocumentWidget *d) {
     }
     return gap_UI * 2000;
 }
+#endif
 
 static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
@@ -2481,8 +2430,6 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 return iTrue;
             }
         }
-        //printf("[%p] responds to edgeswipe.moved\n", d);
-//        as_Widget(d)->offsetRef = NULL;
         const int side = argLabel_Command(cmd, "side");
         int offset = arg_Command(cmd);
         if (~d->flags & swipeBegun_DocumentWidgetFlag) {
@@ -2494,8 +2441,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             }
             if (side == 2) { /* right edge */
                 if (offset < -get_Window()->pixelRatio * 10) {
-    //                int animSpan = 10;
-                    if (atNewest_History(d->mod.history)/* && ~flags_Widget(w) & dragged_WidgetFlag*/) {
+                    if (atNewest_History(d->mod.history)) {
                         d->flags |= swipeBegun_DocumentWidgetFlag | swipeRubberband_DocumentWidgetFlag;
                         return iTrue;
                     }
@@ -2519,90 +2465,6 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             setValue_Anim(&d->swipeOffset, offset, 10);
             animate_DocumentWidget(d);
         }
-#if 0
-            iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-            if (findChild_Widget(swipeParent, "swipeout")) {
-                return iTrue; /* too fast, previous animation hasn't finished */
-            }
-            /* The temporary "swipein" will display the previous page until the finger is lifted. */
-            iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
-            if (!swipeIn) {
-                swipeIn = new_DocumentWidget();
-                swipeIn->flags |= animationPlaceholder_DocumentWidgetFlag;
-                setId_Widget(as_Widget(swipeIn), "swipein");
-                setFlags_Widget(as_Widget(swipeIn),
-                                disabled_WidgetFlag | refChildrenOffset_WidgetFlag |
-                                fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
-                setFlags_Widget(findChild_Widget(as_Widget(swipeIn), "scroll"), hidden_WidgetFlag, iTrue);
-                swipeIn->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
-                swipeIn->widget.rect.size = d->widget.rect.size;
-                swipeIn->widget.offsetRef = parent_Widget(w);
-                /* Use a cached document for the layer underneath. */ {
-                    lock_History(d->mod.history);
-                    iRecentUrl *recent = precedingLocked_History(d->mod.history);
-                    if (recent && recent->cachedResponse) {
-                        setUrl_DocumentWidget_(swipeIn, &recent->url);
-                        updateFromCachedResponse_DocumentWidget_(swipeIn,
-                                                                 recent->normScrollY,
-                                                                 recent->cachedResponse,
-                                                                 recent->cachedDoc);
-                        parseUser_DocumentWidget_(swipeIn);
-                        updateBanner_DocumentWidget_(swipeIn);
-                    }
-                    else {
-                        setUrlAndSource_DocumentWidget(swipeIn,
-                                                       &recent->url,
-                                                       collectNewCStr_String("text/gemini"),
-                                                       collect_Block(new_Block(0)),
-                                                       recent->normScrollY);
-                    }
-                    unlock_History(d->mod.history);
-                }
-                addChildPos_Widget(swipeParent, iClob(swipeIn), front_WidgetAddPos);
-            }
-        if (side == 2) { /* right edge */
-            if (offset < -get_Window()->pixelRatio * 10) {
-                int animSpan = 10;
-                if (!atNewest_History(d->mod.history)/* && ~flags_Widget(w) & dragged_WidgetFlag*/) {
-                    iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-                    if (findChild_Widget(swipeParent, "swipeout")) {
-                        return iTrue; /* too fast, previous animation hasn't finished */
-                    }
-                    /* Setup the drag. `d` will be moving with the finger. */
-                    animSpan = 0;
-                    postCommand_Widget(d, "navigate.forward");
-                    setFlags_Widget(w, dragged_WidgetFlag, iTrue);
-                    /* Set up the swipe dummy. */
-                    iDocumentWidget *target = new_DocumentWidget();
-                    target->flags |= animationPlaceholder_DocumentWidgetFlag;
-                    setId_Widget(as_Widget(target), "swipeout");
-                    /* "swipeout" takes `d`'s document and goes underneath. */
-                    target->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
-                    target->widget.rect.size = d->widget.rect.size;
-                    setFlags_Widget(as_Widget(target), fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
-                    swap_DocumentWidget_(target, d->view->doc, d);
-                    addChildPos_Widget(swipeParent, iClob(target), front_WidgetAddPos);
-                    setFlags_Widget(as_Widget(target), refChildrenOffset_WidgetFlag, iTrue);
-                    as_Widget(target)->offsetRef = parent_Widget(w);
-                    /* Mark it for deletion after animation finishes. */
-                    destroy_Widget(as_Widget(target));
-                    /* The `d` document will now navigate forward and be replaced with a cached
-                       copy. However, if a cached response isn't available, we'll need to show a
-                       blank page. */
-                    setUrlAndSource_DocumentWidget(d,
-                                                   collectNewCStr_String("about:blank"),
-                                                   collectNewCStr_String("text/gemini"),
-                                                   collect_Block(new_Block(0)),
-                                                   0);
-                }
-                if (flags_Widget(w) & dragged_WidgetFlag) {
-                    setVisualOffset_Widget(w, width_Widget(w) +
-                                           width_Widget(d) * offset / size_Root(w->root).x,
-                                           animSpan, 0);
-                }
-                else {
-                    setVisualOffset_Widget(w, offset / 4, animSpan, 0);
-#endif
     }
 //    const float maxSpeed = gap_UI * 2000;
 //    const float minSpeed = gap_UI * 500;
@@ -2617,12 +2479,10 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         }
         if (argLabel_Command(cmd, "side") == 2) {
             iChangeFlags(d->flags, swipeBegun_DocumentWidgetFlag, iFalse);
-            if (argLabel_Command(cmd, "abort")/* && flags_Widget(w) & dragged_WidgetFlag*/) {
-    //            setFlags_Widget(w, dragged_WidgetFlag, iFalse);
+            if (argLabel_Command(cmd, "abort")) {
                 d->flags |= swipeAborted_DocumentWidgetFlag;
                 setValue_Anim(&d->swipeOffset, width_Widget(w), 100);
                 animate_DocumentWidget(d);
-    //            postCommand_Widget(d, "navigate.back"); /* TODO: Animate! */
                 return iTrue;
             }
             setFlags_Anim(&d->swipeOffset, easeOut_AnimFlag, iTrue);
@@ -2636,9 +2496,6 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         }
         else if (argLabel_Command(cmd, "side") == 1) {
             iChangeFlags(d->flags, swipeBegun_DocumentWidgetFlag, iFalse);
-    //        if (argLabel_Command(cmd, "wheel")) {
-    //            postCommand_Widget(w, "swipe.back");
-    //        }
             if (argLabel_Command(cmd, "abort")) {
                 d->flags |= swipeAborted_DocumentWidgetFlag;
                 setValue_Anim(&d->swipeOffset, 0, 100);
@@ -2656,26 +2513,19 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         }
         return iTrue;
     }
+#if 0
     if (equal_Command(cmd, "swipe.back")) {
-//        iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-//        iDocumentWidget *target = findChild_Widget(swipeParent, "swipeout");
         if (atOldest_History(d->mod.history)) {
-//            setVisualOffset_Widget(w, 0, 100, 0);
-//            if (target) {
-//                destroy_Widget(as_Widget(target)); /* didn't need it after all */
-//            }
-//            disableRefresh_App(iFalse);
             return iTrue;
         }
-#if 0
         if (target) { /* we should usually have it...? */
             setupSwipeOverlay_DocumentWidget_(d, as_Widget(target));
             destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
         }
-#endif
 //        postCommand_Widget(d, "navigate.back");
         return iTrue;
     }
+#endif
     return iFalse;
 }
 
@@ -2730,9 +2580,6 @@ iBool isPrerenderingAllowed_DocumentWidget(const iDocumentWidget *d) {
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "document.openurls.changed")) {
-//        if (d->flags & animationPlaceholder_DocumentWidgetFlag) {
-//            return iFalse;
-//        }
         /* When any tab changes its document URL, update the open link indicators. */
         if (updateOpenURLs_GmDocument(d->view->doc)) {
             invalidate_DocumentWidget_(d);
@@ -3156,7 +3003,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         postProcessRequestContent_DocumentWidget_(d, iFalse);
         /* The response may be cached. */
         if (d->request) {
-//            iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
             iAssert(~d->flags & fromCache_DocumentWidgetFlag);
             if (!equal_Rangecc(urlScheme_String(d->mod.url), "about") &&
                 (startsWithCase_String(meta_GmRequest(d->request), "text/") ||
@@ -3195,11 +3041,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "document.translate") && d == document_App()) {
         if (!d->translation) {
             d->translation = new_Translation(d);
-//            if (isUsingPanelLayout_Mobile()) {
-                //const iRect safe = safeRect_Root(w->root);
-                //d->translation->dlg->rect.pos = windowToLocal_Widget(w, zero_I2());
-                //d->translation->dlg->rect.size = safe.size;
-//            }
         }
         return iTrue;
     }
@@ -3901,7 +3742,6 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
     if (~d->flags & swipeNavigable_DocumentWidgetFlag || !prefs_App()->pageSwipe) {
         return iFalse;
     }
-//    iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
 //    printf("STATE:%d wheel x:%d inert:%d end:%d\n", d->wheelSwipeState,
 //           ev->x, isInertia_MouseWheelEvent(ev),
 //           isScrollFinished_MouseWheelEvent(ev));
@@ -4037,7 +3877,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         updateHoverLinkInfo_DocumentView(view);
                     }
                     else {
-                        /*const iString *linkUrl = linkUrl_GmDocument(view->doc, run->linkId);*/
                         postOpenLinkCommand_DocumentWidget_(
                             d,
                             run->linkId,
@@ -4045,19 +3884,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode
                                      ? openTabMode_Sym(modState_Keys())
                                      : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0)));
-                        /*
-                        postCommandf_Root(
-                            w->root,
-                            "open query:%d newtab:%d%s url:%s",
-                            isSpartanQueryLink_DocumentWidget_(d, run->linkId),
-                            (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) ^
-                                (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode
-                                     ? openTabMode_Sym(modState_Keys())
-                                     : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0)),
-                            setIdentArg_DocumentWidget_(d, linkUrl),
-                            cstr_String(absoluteUrl_String(d->mod.url, linkUrl)));
-                        interactingWithLink_DocumentWidget_(d, run->linkId);
-                        */
                     }
                     setLinkNumberMode_DocumentWidget_(d, iFalse);
                     invalidateVisibleLinks_DocumentView(view);
@@ -4186,19 +4012,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && view->hoverLink) {
-            //interactingWithLink_DocumentWidget_(d, view->hoverLink->linkId);
-            //const iString *linkUrl = linkUrl_GmDocument(view->doc, view->hoverLink->linkId);
             postOpenLinkCommand_DocumentWidget_(
                 d,
                 view->hoverLink->linkId,
                 (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
                     (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag));
-            /*postCommandf_Root(w->root, "open query:%d newtab:%d%s url:%s",
-                              isSpartanQueryLink_DocumentWidget_(d, view->hoverLink->linkId),
-                              (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
-                              (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag :
-               newBackground_OpenTabFlag), setIdentArg_DocumentWidget_(d, linkUrl),
-                              cstr_String(linkUrl));*/
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_RIGHT &&
@@ -4803,8 +4621,7 @@ void aboutToScrollView_DocumentWidget(iDocumentWidget *d, int scrollMax) {
 
 void didScrollView_DocumentWidget(iDocumentWidget *d) {
     animateMedia_DocumentWidget_(d);
-    /* Remember scroll positions of recently visited pages. */
-    /*if (~d->flags & animationPlaceholder_DocumentWidgetFlag)*/ {
+    /* Remember scroll positions of recently visited pages. */ {
         iAssert(~d->widget.flags & destroyPending_WidgetFlag);
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
         if (recent && size_GmDocument(d->view->doc).y > 0 && d->state == ready_RequestState &&
@@ -4908,8 +4725,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
     }
     /* Sidebar swipe indicator. */
-    if (deviceType_App() == tablet_AppDeviceType && prefs_App()->edgeSwipe/* &&
-        !isAffectedByVisualOffset_Widget(w) && ~flags_Widget(w) & dragged_WidgetFlag*/) {
+    if (deviceType_App() == tablet_AppDeviceType && prefs_App()->edgeSwipe) {
         iWindow * win    = get_Window();
         const int gap    = 4 * win->pixelRatio; /* not dependent on UI scaling; cf. Home indicator */
         const int indGap = 6 * gap;
@@ -5003,26 +4819,6 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         drawCentered_Text(font, bounds, iFalse, uiBackground_ColorId, "%d %%",
                           d->pinchZoomPosted);
     }
-#if 0
-    /* Dimming during swipe animation. */
-    if (w->offsetRef) {
-        const int offX = visualOffsetByReference_Widget(w);
-        if (offX) {
-            setClip_Paint(&p, clipBounds);
-            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-            p.alpha = iAbs(offX) / (float) get_Window()->size.x * 300;
-            fillRect_Paint(&p, bounds, backgroundFadeColor_Widget());
-            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
-            unsetClip_Paint(&p);
-        }
-        else {
-            /* TODO: Should have a better place to do this; drawing is supposed to be immutable. */
-            iWidget *mut = iConstCast(iWidget *, w);
-            mut->offsetRef = NULL;
-            mut->flags &= ~refChildrenOffset_WidgetFlag;
-        }
-    }
-#endif
 //    drawRect_Paint(&p, docBounds, red_ColorId);
     if (deviceType_App() == phone_AppDeviceType && document_App()) {
         /* The phone toolbar uses the palette of the active tab, but there may be other
