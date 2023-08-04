@@ -190,6 +190,7 @@ enum iRequestState {
     ready_RequestState,
 };
 
+/* TODO: Consider moving the swipe flags to a different enum. */
 enum iDocumentWidgetFlag {
     selecting_DocumentWidgetFlag             = iBit(1),
     noHoverWhileScrolling_DocumentWidgetFlag = iBit(2),
@@ -205,25 +206,28 @@ enum iDocumentWidgetFlag {
     urlChanged_DocumentWidgetFlag            = iBit(13),
     drawDownloadCounter_DocumentWidgetFlag   = iBit(14),
     fromCache_DocumentWidgetFlag             = iBit(15), /* don't write anything to cache */
-//    animationPlaceholder_DocumentWidgetFlag  = iBit(16), /* avoid slow operations */
-//    invalidationPending_DocumentWidgetFlag   = iBit(17), /* invalidate as soon as convenient */
-    swipeNavigable_DocumentWidgetFlag        = iBit(16), /* responds to swipe/trackpad */
-    swipeNavigationBegun_DocumentWidgetFlag  = iBit(17),
-    swipeNavigationAborted_DocumentWidgetFlag = iBit(18),
-    swipeNavigationDeferredFinish_DocumentWidgetFlag = iBit(29),
-    swipeViewOverlay_DocumentWidgetFlag      = iBit(19),
-    viewWasSwipedAway_DocumentWidgetFlag     = iBit(20),
-    leftWheelSwipe_DocumentWidgetFlag        = iBit(21), /* swipe state flags are used on desktop */
-    rightWheelSwipe_DocumentWidgetFlag       = iBit(22),
+    swipeNavigable_DocumentWidgetFlag        = iBit(16), /* responds to touch swipes (or Mac trackpad) */
+    swipeBegun_DocumentWidgetFlag            = iBit(17), /* a swipe is ongoing; swipe events affect
+                                                            view offset */
+    swipeAborted_DocumentWidgetFlag          = iBit(18), /* swipe was finished by returning
+                                                            back to the beginning */
+    swipeDeferredFinish_DocumentWidgetFlag   = iBit(19), /* keep swipeView even after animation
+                                                            has finished */
+    swipeRubberband_DocumentWidgetFlag       = iBit(20),
+    swipeViewOverlay_DocumentWidgetFlag      = iBit(21), /* swipeView is drawn over the actual view */
+    viewWasSwipedAway_DocumentWidgetFlag     = iBit(22), /* view has been swiped away and should
+                                                            be drawn as empty placeholder */
+    leftWheelSwipe_DocumentWidgetFlag        = iBit(23), /* swipe state flags are used on desktop */
+    rightWheelSwipe_DocumentWidgetFlag       = iBit(24),
     eitherWheelSwipe_DocumentWidgetFlag      = leftWheelSwipe_DocumentWidgetFlag |
                                                rightWheelSwipe_DocumentWidgetFlag,
-    viewSource_DocumentWidgetFlag            = iBit(23),
-    preventInlining_DocumentWidgetFlag       = iBit(24),
-    proxyRequest_DocumentWidgetFlag          = iBit(25),
-    waitForIdle_DocumentWidgetFlag           = iBit(26), /* sequential loading; wait for previous
+    viewSource_DocumentWidgetFlag            = iBit(25),
+    preventInlining_DocumentWidgetFlag       = iBit(26),
+    proxyRequest_DocumentWidgetFlag          = iBit(27),
+    waitForIdle_DocumentWidgetFlag           = iBit(28), /* sequential loading; wait for previous
                                                             tabs to finished their requests */
-    pendingRedirect_DocumentWidgetFlag       = iBit(27), /* a redirect has been issued */
-    goBackOnStop_DocumentWidgetFlag          = iBit(28),
+    pendingRedirect_DocumentWidgetFlag       = iBit(29), /* a redirect has been issued */
+    goBackOnStop_DocumentWidgetFlag          = iBit(30),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -284,6 +288,8 @@ struct Impl_DocumentWidget {
     iDocumentView *view;
     iLinkInfo *    linkInfo;
     iAnim          swipeOffset; /* applies to both views */
+    uint32_t       swipeSampleAt;
+    float          swipeSample;
     iDocumentView *swipeView;   /* outgoing old view */
     iBanner *      swipeBanner; /* used by swipeView only */
 
@@ -531,21 +537,26 @@ static void resetSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
     d->swipeView = NULL;
     setValue_Anim(&d->swipeOffset, 0, 0);
     iChangeFlags(d->flags,
-                 swipeViewOverlay_DocumentWidgetFlag | swipeNavigationAborted_DocumentWidgetFlag |
-                     swipeNavigationDeferredFinish_DocumentWidgetFlag,
+                 swipeViewOverlay_DocumentWidgetFlag | swipeAborted_DocumentWidgetFlag |
+                     swipeDeferredFinish_DocumentWidgetFlag | swipeRubberband_DocumentWidgetFlag,
                  iFalse);
 }
 
+static iBool isSwipingBack_DocumentWidget_(const iDocumentWidget *d) {
+    return (d->flags & swipeViewOverlay_DocumentWidgetFlag) != 0;
+}
+
 static void maybeFinishSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
-    if (~d->flags & swipeNavigationBegun_DocumentWidgetFlag &&
+    if (~d->flags & swipeBegun_DocumentWidgetFlag &&
+        ~d->flags & swipeRubberband_DocumentWidgetFlag &&
         d->swipeView && isFinished_Anim(&d->swipeOffset)) {
-        if (d->flags & swipeNavigationAborted_DocumentWidgetFlag) {
-//            d->flags &= ~swipeNavigationAborted_DocumentWidgetFlag;
-            if (~d->flags & swipeNavigationDeferredFinish_DocumentWidgetFlag) {
-                d->flags |= swipeNavigationDeferredFinish_DocumentWidgetFlag;
-                postCommand_Widget(d,
-                                   d->flags & swipeViewOverlay_DocumentWidgetFlag ? "navigate.forward"
-                                                                                  : "navigate.back");
+        /* When aborting a swipe, we must keep the animation active at the finish until
+           the old page has been reloaded. */
+        if (d->flags & swipeAborted_DocumentWidgetFlag) {
+            if (~d->flags & swipeDeferredFinish_DocumentWidgetFlag) {
+                d->flags |= swipeDeferredFinish_DocumentWidgetFlag;
+                postCommand_Widget(
+                    d, isSwipingBack_DocumentWidget_(d) ? "navigate.forward" : "navigate.back");
             }
         }
         else {
@@ -555,13 +566,21 @@ static void maybeFinishSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+static void sampleSwipeSpeed_DocumentWidget_(iDocumentWidget *d) {
+    const uint32_t now = SDL_GetTicks();
+    if (!isFinished_Anim(&d->swipeOffset) && now - d->swipeSampleAt > 100) {
+        d->swipeSampleAt = now;
+        d->swipeSample = value_Anim(&d->swipeOffset);
+    }
+}
+
 void animate_DocumentWidget(void *ticker) {
     iDocumentWidget *d = ticker;
     iAssert(isInstance_Object(d, &Class_DocumentWidget));
     refresh_Widget(d);
+    sampleSwipeSpeed_DocumentWidget_(d);
     maybeFinishSwipeAnimation_DocumentWidget_(d);
-    if (!isFinished_Anim(&d->view->sideOpacity) ||
-        !isFinished_Anim(&d->view->altTextOpacity) ||
+    if (!isFinished_Anim(&d->view->sideOpacity) || !isFinished_Anim(&d->view->altTextOpacity) ||
         !isFinished_Anim(&d->swipeOffset) ||
         (d->linkInfo && !isFinished_Anim(&d->linkInfo->opacity))) {
         addTicker_App(animate_DocumentWidget, d);
@@ -864,7 +883,7 @@ static void allocView_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
-    if (d->flags & swipeNavigationAborted_DocumentWidgetFlag) {
+    if (d->flags & swipeAborted_DocumentWidgetFlag) {
         resetSwipeAnimation_DocumentWidget_(d);
     }
     if (d->view == d->swipeView) {
@@ -872,6 +891,7 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
            actual document. */
         d->banner = new_Banner();
         setOwner_Banner(d->banner, d);
+        setWidth_Banner(d->banner, documentWidth_DocumentView(d->view));
         allocView_DocumentWidget_(d);
     }
     iRelease(d->view->doc);
@@ -2430,6 +2450,16 @@ static iBool checkTabletSwipeVerticalPosition_DocumentWidget_(const iDocumentWid
     }
 }
 
+static float currentSwipeSpeed_DocumentWidget_(const iDocumentWidget *d) {
+    const uint32_t now = SDL_GetTicks();
+    if (d->swipeSampleAt < now) {
+        const float elapsed = (float) (now - d->swipeSampleAt) / 1000.0f;
+        int offset = value_Anim(&d->swipeOffset) - d->swipeSample;
+        return fabsf((float) offset / elapsed);
+    }
+    return gap_UI * 2000;
+}
+
 static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (!prefs_App()->edgeSwipe &&
@@ -2456,9 +2486,10 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
 //        as_Widget(d)->offsetRef = NULL;
         const int side = argLabel_Command(cmd, "side");
         int offset = arg_Command(cmd);
-        if (~d->flags & swipeNavigationBegun_DocumentWidgetFlag) {
+        if (~d->flags & swipeBegun_DocumentWidgetFlag) {
             if (side == 1) { /* left edge */
                 if (atOldest_History(d->mod.history)) {
+                    d->flags |= swipeBegun_DocumentWidgetFlag | swipeRubberband_DocumentWidgetFlag;
                     return iTrue;
                 }
             }
@@ -2466,6 +2497,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 if (offset < -get_Window()->pixelRatio * 10) {
     //                int animSpan = 10;
                     if (atNewest_History(d->mod.history)/* && ~flags_Widget(w) & dragged_WidgetFlag*/) {
+                        d->flags |= swipeBegun_DocumentWidgetFlag | swipeRubberband_DocumentWidgetFlag;
                         return iTrue;
                     }
                 }
@@ -2473,13 +2505,18 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     return iTrue;
                 }
             }
-            d->flags |= swipeNavigationBegun_DocumentWidgetFlag;
+            d->flags |= swipeBegun_DocumentWidgetFlag;
             postCommand_Widget(d, side == 1 ? "navigate.back swipe:1" : "navigate.forward swipe:1");
         }
+        else if (d->flags & swipeRubberband_DocumentWidgetFlag) {
+            setValue_Anim(&d->swipeOffset, offset / 6, 10);
+            animate_DocumentWidget(d);
+        }
         else if (d->swipeView) {
-            if (~d->flags & swipeViewOverlay_DocumentWidgetFlag) {
+            if (!isSwipingBack_DocumentWidget_(d)) {
                 offset = width_Widget(w) + offset;
             }
+            setFlags_Anim(&d->swipeOffset, easeOut_AnimFlag, iFalse);
             setValue_Anim(&d->swipeOffset, offset, 10);
             animate_DocumentWidget(d);
         }
@@ -2568,86 +2605,57 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     setVisualOffset_Widget(w, offset / 4, animSpan, 0);
 #endif
     }
-    if (equal_Command(cmd, "edgeswipe.ended") && argLabel_Command(cmd, "side") == 2) {
-        iChangeFlags(d->flags, swipeNavigationBegun_DocumentWidgetFlag, iFalse);
-        if (argLabel_Command(cmd, "abort")/* && flags_Widget(w) & dragged_WidgetFlag*/) {
-//            setFlags_Widget(w, dragged_WidgetFlag, iFalse);
-            d->flags |= swipeNavigationAborted_DocumentWidgetFlag;
-            setValue_Anim(&d->swipeOffset, width_Widget(w), 100);
-            animate_DocumentWidget(d);
-//            postCommand_Widget(d, "navigate.back"); /* TODO: Animate! */
-            return iTrue;
-        }
-        setValue_Anim(&d->swipeOffset, 0, 100);
-        animate_DocumentWidget(d);
-        maybeFinishSwipeAnimation_DocumentWidget_(d);
-#if 0
-            /* We must now undo the swap that was done when the drag started. */
-            /* TODO: Currently not animated! What exactly is the appropriate thing to do here? */
-            iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-            iDocumentWidget *swipeOut = findChild_Widget(swipeParent, "swipeout");
-            swap_DocumentWidget_(d, swipeOut->view->doc, swipeOut);
-//            const int visOff = visualOffsetByReference_Widget(w);
-            w->offsetRef = NULL;
-//            setVisualOffset_Widget(w, visOff, 0, 0);
-//            setVisualOffset_Widget(w, 0, 150, 0);
-            setVisualOffset_Widget(w, 0, 0, 0);
-            /* Make it an overlay instead. */
-//            removeChild_Widget(swipeParent, swipeOut);
-//            addChildPos_Widget(swipeParent, iClob(swipeOut), back_WidgetAddPos);
-//            setupSwipeOverlay_DocumentWidget_(d, as_Widget(swipeOut));
-            return iTrue;
-        }
-        iAssert(~d->flags & animationPlaceholder_DocumentWidgetFlag);
-        setFlags_Widget(w, dragged_WidgetFlag, iFalse);
-        setVisualOffset_Widget(w, 0, 250, easeOut_AnimFlag | softer_AnimFlag);
-#endif
-        stopWidgetMomentum_Touch(w);
-        return iTrue;
-    }
-    if (equal_Command(cmd, "edgeswipe.ended") && argLabel_Command(cmd, "side") == 1) {
-        iChangeFlags(d->flags, swipeNavigationBegun_DocumentWidgetFlag, iFalse);
-//        if (argLabel_Command(cmd, "wheel")) {
-//            postCommand_Widget(w, "swipe.back");
-//        }
-        if (argLabel_Command(cmd, "abort")) {
-            d->flags |= swipeNavigationAborted_DocumentWidgetFlag;
+//    const float maxSpeed = gap_UI * 2000;
+//    const float minSpeed = gap_UI * 500;
+    if (equal_Command(cmd, "edgeswipe.ended")) {
+        if (d->flags & swipeRubberband_DocumentWidgetFlag) {
+            iChangeFlags(d->flags,
+                         swipeRubberband_DocumentWidgetFlag | swipeBegun_DocumentWidgetFlag,
+                         iFalse);
             setValue_Anim(&d->swipeOffset, 0, 100);
             animate_DocumentWidget(d);
             return iTrue;
         }
-        setValue_Anim(&d->swipeOffset, width_Widget(w), 100);
-        animate_DocumentWidget(d);
-        maybeFinishSwipeAnimation_DocumentWidget_(d);
-#if 0
-        iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-        iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
-        d->swipeSpeed = argLabel_Command(cmd, "speed") / gap_UI;
-        /* "swipe.back" may soon follow. The `d` document will do the actual back navigation,
-            switching immediately to a cached page. However, if one is not available, we'll need
-            to show a blank page for a while. */
-        if (swipeIn) {
-            if (!argLabel_Command(cmd, "abort")) {
-                iWidget *swipeParent = swipeParent_DocumentWidget_(d);
-                /* What was being shown in the `d` document is now being swapped to
-                   the outgoing page animation. */
-                iDocumentWidget *target = new_DocumentWidget();
-                target->flags |= animationPlaceholder_DocumentWidgetFlag;
-                addChildPos_Widget(swipeParent, iClob(target), back_WidgetAddPos);
-                setId_Widget(as_Widget(target), "swipeout");
-                setFlags_Widget(as_Widget(target), disabled_WidgetFlag, iTrue);
-                swap_DocumentWidget_(target, d->view->doc, d);
-                setUrlAndSource_DocumentWidget(d,
-                                               swipeIn->mod.url,
-                                               collectNewCStr_String("text/gemini"),
-                                               collect_Block(new_Block(0)),
-                                               0);
-                as_Widget(swipeIn)->offsetRef = NULL;
+        if (argLabel_Command(cmd, "side") == 2) {
+            iChangeFlags(d->flags, swipeBegun_DocumentWidgetFlag, iFalse);
+            if (argLabel_Command(cmd, "abort")/* && flags_Widget(w) & dragged_WidgetFlag*/) {
+    //            setFlags_Widget(w, dragged_WidgetFlag, iFalse);
+                d->flags |= swipeAborted_DocumentWidgetFlag;
+                setValue_Anim(&d->swipeOffset, width_Widget(w), 100);
+                animate_DocumentWidget(d);
+    //            postCommand_Widget(d, "navigate.back"); /* TODO: Animate! */
+                return iTrue;
             }
-            destroy_Widget(as_Widget(swipeIn));
+            setFlags_Anim(&d->swipeOffset, easeOut_AnimFlag, iTrue);
+            setValue_Anim(&d->swipeOffset, 0, 150);
+    //        float speed = currentSwipeSpeed_DocumentWidget_(d);
+    //        speed = iClamp(speed, minSpeed, maxSpeed);
+    //        setValueSpeed_Anim(&d->swipeOffset, 0, speed);
+            animate_DocumentWidget(d);
+            maybeFinishSwipeAnimation_DocumentWidget_(d);
+            stopWidgetMomentum_Touch(w);
         }
-#endif
-        stopWidgetMomentum_Touch(w);
+        else if (argLabel_Command(cmd, "side") == 1) {
+            iChangeFlags(d->flags, swipeBegun_DocumentWidgetFlag, iFalse);
+    //        if (argLabel_Command(cmd, "wheel")) {
+    //            postCommand_Widget(w, "swipe.back");
+    //        }
+            if (argLabel_Command(cmd, "abort")) {
+                d->flags |= swipeAborted_DocumentWidgetFlag;
+                setValue_Anim(&d->swipeOffset, 0, 100);
+                animate_DocumentWidget(d);
+                return iTrue;
+            }
+            setFlags_Anim(&d->swipeOffset, easeOut_AnimFlag, iTrue);
+            setValue_Anim(&d->swipeOffset, width_Widget(w), 150);
+    //        float speed = currentSwipeSpeed_DocumentWidget_(d);
+    //        speed = iClamp(speed, minSpeed, maxSpeed);
+    //        setValueSpeed_Anim(&d->swipeOffset, width_Widget(w), speed);
+            animate_DocumentWidget(d);
+            maybeFinishSwipeAnimation_DocumentWidget_(d);
+            stopWidgetMomentum_Touch(w);
+        }
+        return iTrue;
     }
     if (equal_Command(cmd, "swipe.back")) {
 //        iWidget *swipeParent = swipeParent_DocumentWidget_(d);
@@ -2666,7 +2674,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
         }
 #endif
-        postCommand_Widget(d, "navigate.back");
+//        postCommand_Widget(d, "navigate.back");
         return iTrue;
     }
     return iFalse;
@@ -3350,6 +3358,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                          swipeViewOverlay_DocumentWidgetFlag, iTrue);
             iAssert(d->swipeView == NULL);
             d->swipeView = d->view; /* Reuse the current view for the animation. */
+            sampleSwipeSpeed_DocumentWidget_(d);
         }
         goBack_History(d->mod.history);
         return iTrue;
@@ -3362,6 +3371,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             setValue_Anim(&d->swipeOffset, width_Widget(w), 0);
             iAssert(d->swipeView == NULL);
             d->swipeView = d->view; /* Reuse the current view for the animation. */
+            sampleSwipeSpeed_DocumentWidget_(d);
         }
         goForward_History(d->mod.history);
         return iTrue;
@@ -4872,7 +4882,8 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         drawViewOrBlank_DocumentWidget_(d, over, overlayOffset, iFalse);
     }
     else {
-        drawViewOrBlank_DocumentWidget_(d, d->view, 0,
+        drawViewOrBlank_DocumentWidget_(d, d->view,
+                                        value_Anim(&d->swipeOffset),
                                         (d->flags & viewWasSwipedAway_DocumentWidgetFlag) != 0);
     }
     if (colorTheme_App() == pureWhite_ColorTheme &&
