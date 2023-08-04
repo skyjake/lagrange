@@ -51,7 +51,7 @@ typedef void iAnyWindow;
 #define openUrlOrSearch_CommandLineOption   "url-or-search;u"
 #define replaceTab_CommandLineOption        "replace-tab"
 #define windowWidth_CommandLineOption       "width;w"
-#define windowHeight_CommandLineOption      "height;h"   
+#define windowHeight_CommandLineOption      "height;h"
 
 enum iAppDeviceType {
     desktop_AppDeviceType,
@@ -94,7 +94,6 @@ void        refresh_App                 (void);
 iBool       isRefreshPending_App        (void);
 iBool       isFinishedLaunching_App     (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
-void        disableRefresh_App          (iBool); /* TODO: Get rid of this. */
 void        setTextInputActive_App      (iBool);
 
 iBool               isLandscape_App     (void);

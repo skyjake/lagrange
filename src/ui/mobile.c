@@ -51,7 +51,7 @@ const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction] = {
     { edit_Icon, "${menu.page.upload.edit}", "document.upload copy:1" },
     { magnifyingGlass_Icon, "${menu.find}", "focus.set id:find.input" },
     { gear_Icon, "${menu.settings}", "preferences" },
-    { leftHalf_Icon, "${menu.sidebar.left}", "sidebar.toggle" },        
+    { leftHalf_Icon, "${menu.sidebar.left}", "sidebar.toggle" },
 };
 
 iBool isUsingPanelLayout_Mobile(void) {
@@ -237,7 +237,7 @@ static void updateNaviActionVisibility_(iWidget *sheet, iWidget *curPanel) {
                         userData_Object(i.object) && userData_Object(i.object) != curPanel);
     }
     arrange_Widget(navi);
-    refresh_Widget(navi);    
+    refresh_Widget(navi);
 }
 
 static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
@@ -265,7 +265,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             iLabelWidget *naviTitle = findChild_Widget(sheet, "navi.title");
             updateText_LabelWidget(naviTitle, text_LabelWidget((iLabelWidget *) findTitleLabel_(panel)));
             updateNaviActionVisibility_(sheet, panel);
-        }        
+        }
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
         postCommand_Widget(topPanel, "panel.changed arg:%d", panelIndex);
         updateCertListHeight_(findDetailStack_(topPanel));
@@ -593,7 +593,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setRemoveTrailingColon_LabelWidget(heading, iTrue);
         addChild_Widget(panel, iClob(heading));
         setId_Widget(as_Widget(heading), id);
-    }    
+    }
     else if (equal_Command(spec, "toggle")) {
         iLabelWidget *toggle = (iLabelWidget *) makeToggle_Widget(id);
         setFont_LabelWidget(toggle, labelFont_());
@@ -947,7 +947,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
         addChildFlags_Widget(panels, iClob(navi),
                              (isFullHeight ? drawBackgroundToVerticalSafeArea_WidgetFlag : 0) |
                                  arrangeHeight_WidgetFlag | //resizeWidthOfChildren_WidgetFlag |
-                                 resizeToParentWidth_WidgetFlag | arrangeVertical_WidgetFlag);    
+                                 resizeToParentWidth_WidgetFlag | arrangeVertical_WidgetFlag);
     }
     iBool haveDetailPanels = iFalse;
     /* Create panel contents based on provided items. */
@@ -990,7 +990,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             setFlags_Widget(as_Widget(naviBack), alignLeft_WidgetFlag, iFalse);
             setFlags_Widget(as_Widget(naviBack), alignRight_WidgetFlag, iTrue);
             setIcon_LabelWidget(naviBack, 0);
-            setFont_LabelWidget(naviBack, labelBoldFont_());            
+            setFont_LabelWidget(naviBack, labelBoldFont_());
         }
         else if (defaultItem && defaultItem != cancelItem) {
             if (!haveDetailPanels) {
@@ -1049,7 +1049,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
 
 /*
          Landscape Layout                 Portrait Layout
-                                      
+
 ┌─────────┬──────Detail─Stack─────┐    ┌─────────┬ ─ ─ ─ ─ ┐
 │         │┌───────────────────┐  │    │         │Detail
 │         ││┌──────────────────┴┐ │    │         │Stack    │
@@ -1064,13 +1064,13 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
 │         │  └───────────────────┘│    │         │ └──────┘
 └─────────┴───────────────────────┘    └─────────┴ ─ ─ ─ ─ ┘
                                                   underneath
- 
+
 In portrait, top panel and detail stack are all stacked together.
 */
 
 void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     if (!isUsingPanelLayout_Mobile()) {
-        return;    
+        return;
     }
     const iBool isHorizPanel = (flags_Widget(sheet) & horizontalOffset_WidgetFlag) != 0;
     if (isHorizPanel && isLandscape_App()) {
@@ -1093,7 +1093,6 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
 }
 
 void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
-    disableRefresh_App(iFalse);
     if (isPromoted_Widget(sheet)) {
         /* This has been promoted to a window, shouldn't animate it. */
         return;
@@ -1134,7 +1133,7 @@ void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
         }
         setVisualOffset_Widget(sheet, 0, deviceType_App() == tablet_AppDeviceType ? 350 : 275,
                                easeOut_AnimFlag | softer_AnimFlag);
-    }        
+    }
     else {
         switch (dir) {
             case right_TransitionDir: {

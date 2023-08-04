@@ -172,7 +172,6 @@ struct Impl_App {
     unsigned int idleSleepDelayMs;
 #endif
     iAtomicInt   pendingRefresh;
-    iBool        disableRefresh;
     iBool        isLoadingPrefs;
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
@@ -1080,10 +1079,6 @@ static void dumpRequestFinished_App_(void *obj, iGmRequest *req) {
     unlock_Mutex(dumpMutex_);
 }
 
-void disableRefresh_App(iBool dis) {
-//    app_.disableRefresh = dis;
-}
-
 static void init_App_(iApp *d, int argc, char **argv) {
     iBool doDump = iFalse;
 #if defined (iPlatformAndroid)
@@ -1099,7 +1094,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->isTextInputActive = iFalse;
     d->isDarkSystemTheme = iTrue; /* will be updated by system later on, if supported */
     d->isSuspended = iFalse;
-    d->disableRefresh = iFalse;
     d->tempFilesPendingDeletion = new_StringSet();
     d->recentlyClosedTabUrls = new_StringList();
     d->overrideDataPath = NULL;
@@ -2299,9 +2293,6 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
-    if (d->disableRefresh) {
-        return;
-    }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->warmupFrames == 0 && d->isIdling) {
         return;
@@ -4003,7 +3994,6 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
          (equalCase_Rangecc(parts.scheme, "http") ||
           equalCase_Rangecc(parts.scheme, "https")))) {
         openInDefaultBrowser_App(url, string_Command(cmd, "mime"));
-        disableRefresh_App(iFalse);
         return iTrue;
     }
     iDocumentWidget *doc = document_Command(cmd);
