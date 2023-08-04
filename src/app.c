@@ -597,6 +597,9 @@ static void loadPrefs_App_(iApp *d) {
             else if (equal_Command(cmd, "prefs.menubar.changed")) {
                 handleCommand_App(cmd);
             }
+            else if (equal_Command(cmd, "feedinterval.set")) {
+                handleNonWindowRelatedCommand_App_(d, cmd);
+            }
 #if defined (iPlatformAndroidMobile)
             else if (equal_Command(cmd, "returnkey.set")) {
                 /* Hardcoded to avoid accidental presses of the virtual Return key. */

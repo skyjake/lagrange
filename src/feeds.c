@@ -141,6 +141,10 @@ static iFeeds feeds_;
 
 #define maxConcurrentRequests_Feeds 4
 
+static iBool isInitialized_Feeds_(const iFeeds *d) {
+    return d->mtx != NULL;
+}
+
 static void submit_FeedJob_(iFeedJob *d) {
     d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, &d->url);
@@ -748,12 +752,14 @@ void refresh_Feeds(void) {
 
 void setRefreshInterval_Feeds(enum iFeedInterval feedInterval) {
     iFeeds *d = &feeds_;
-    removeRefreshTimer_Feeds_(d);
-    d->refreshInterval = feedInterval * 1000;
-    if (d->refreshInterval && isValid_Time(&d->lastRefreshedAt)) {
-        const int elapsedMs  = (int) (elapsedSeconds_Time(&d->lastRefreshedAt) * 1000);
-        const int intervalMs = iMax(1000, d->refreshInterval - elapsedMs);
-        d->refreshTimer = SDL_AddTimer(intervalMs, refresh_Feeds_, NULL);
+    if (isInitialized_Feeds_(d)) {
+        removeRefreshTimer_Feeds_(d);
+        d->refreshInterval = feedInterval * 1000;
+        if (d->refreshInterval && isValid_Time(&d->lastRefreshedAt)) {
+            const int elapsedMs  = (int) (elapsedSeconds_Time(&d->lastRefreshedAt) * 1000);
+            const int intervalMs = iMax(1000, d->refreshInterval - elapsedMs);
+            d->refreshTimer = SDL_AddTimer(intervalMs, refresh_Feeds_, NULL);
+        }
     }
 }
 
