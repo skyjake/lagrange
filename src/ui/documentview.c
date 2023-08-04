@@ -134,6 +134,7 @@ void init_DocumentView(iDocumentView *d) {
 }
 
 void deinit_DocumentView(iDocumentView *d) {
+    removeTicker_App(prerender_DocumentView, d);
     delete_DrawBufs(d->drawBufs);
     delete_VisBuf(d->visBuf);
     free(d->visBufMeta);
@@ -1492,7 +1493,7 @@ void prerender_DocumentView(iAny *context) {
         .showLinkNumbers = isShowingLinkNumbers_DocumentWidget(d->owner)
     };
     //    printf("%u prerendering\n", SDL_GetTicks());
-    if (d->visBuf->buffers[0].texture) {
+    if (isPrerenderingAllowed_DocumentWidget(d->owner)) {
         makePaletteGlobal_GmDocument(d->doc);
         if (render_DocumentView_(d, &ctx, iTrue /* just fill up progressively */)) {
             /* Something was drawn, should check later if there is still more to do. */

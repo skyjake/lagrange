@@ -560,7 +560,6 @@ static void maybeFinishSwipeAnimation_DocumentWidget_(iDocumentWidget *d) {
             }
         }
         else {
-            printf("reset swipe!\n"); fflush(stdout);
             resetSwipeAnimation_DocumentWidget_(d);
         }
     }
@@ -2722,6 +2721,12 @@ static const char *setIdentArg_DocumentWidget_(const iDocumentWidget *d, const i
     return "";
 }
 
+iBool isPrerenderingAllowed_DocumentWidget(const iDocumentWidget *d) {
+    return d->view != d->swipeView &&
+           d->view->visBuf->buffers[0].texture &&
+           ~d->flags & swipeBegun_DocumentWidgetFlag;
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "document.openurls.changed")) {
@@ -2745,7 +2750,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (SDL_GetTicks() - lastRenderTime_DocumentView(d->view) > 150) {
             remove_Periodic(periodic_App(), d);
             /* Scrolling has stopped, begin filling up the buffer. */
-            if (d->view->visBuf->buffers[0].texture) {
+            if (isPrerenderingAllowed_DocumentWidget(d)) {
                 addTicker_App(prerender_DocumentView, d->view);
             }
         }

@@ -60,6 +60,7 @@ iRangecc            selectionMark_DocumentWidget        (const iDocumentWidget *
 const iGmIdentity * identity_DocumentWidget             (const iDocumentWidget *);
 int                 generation_DocumentWidget           (const iDocumentWidget *);
 iBool               isRequestOngoing_DocumentWidget     (const iDocumentWidget *);
+iBool               isPrerenderingAllowed_DocumentWidget(const iDocumentWidget *);
 iBool               isSourceTextView_DocumentWidget     (const iDocumentWidget *);
 iBool               isIdentityPinned_DocumentWidget     (const iDocumentWidget *);
 iBool               isSetIdentityRetained_DocumentWidget(const iDocumentWidget *, const iString *dstUrl);
