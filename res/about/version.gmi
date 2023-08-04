@@ -15,6 +15,7 @@ Changes and enhancements:
 * Menu separators are taller and more distinct for a clearer item separation.
 
 Fixes:
+* Glitches during swipe navigation (touch screens, macOS trackpad). Behavior is more robust at ends of history and when content is not immediately available in cache.
 * Potential crash at shutdown when a feed update is ongoing.
 
 ## 1.16.6
