@@ -1684,8 +1684,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
 
         static const float normLum[] = { 0.8f, 0.7f, 0.675f, 0.65f, 0.55f,
-                                         0.6f, 0.475f, 0.475f, 0.75f, 0.8f,
-                                         0.85f, 0.85f };
+                                         0.6f, 0.475f, 0.5f, 0.75f, 0.8f,
+                                         0.85f, 0.8f };
 
         if (theme == colorfulDark_GmDocumentTheme) {
             iHSLColor base    = { hues[primIndex],
@@ -1752,7 +1752,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.6f));
             setHsl_Color(
                 tmBannerBackground_ColorId,
-                addSatLum_HSLColor(base, 0, isDarkUI ? -0.04f : 0.06f));
+                addSatLum_HSLColor(base, 0, isDarkUI ? -0.04f : (0.2f * (1 - normLum[primIndex]))));
             setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, isDarkUI ? -0.6f : -0.3f));
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, isDarkUI ? -0.5f : -0.25f));
             set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(teal_ColorId), 0.3f));
