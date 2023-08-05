@@ -1502,11 +1502,17 @@ void prerender_DocumentView(iAny *context) {
     }
 }
 
+iBool isCoveringTopSafeArea_DocumentView(const iDocumentView *d) {
+    return isMobile_Platform() &&
+           prefs_App()->bottomNavBar &&
+           (isPortraitPhone_App() || (deviceType_App() == tablet_AppDeviceType &&
+                                      prefs_App()->bottomTabBar));
+}
+
 void draw_DocumentView(const iDocumentView *d, int horizOffset) {
-    const iWidget *w                   = constAs_Widget(d->owner);
-    const iRect    bounds              = bounds_Widget(w);
-    const iRect    boundsWithoutVisOff = boundsWithoutVisualOffset_Widget(w);
-    const iRect    clipBounds          = intersect_Rect(bounds, boundsWithoutVisOff);
+    const iWidget *w          = constAs_Widget(d->owner);
+    const iRect    bounds     = bounds_Widget(w);
+    const iRect    clipBounds = bounds;
     /* Each document has its own palette, but the drawing routines rely on a global one.
        As we're now drawing a document, ensure that the right palette is in effect.
        Document theme colors can be used elsewhere, too, but first a document's palette
@@ -1641,6 +1647,18 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
                               uiBackground_ColorId,
                               "%zu bytes selected", /* TODO: i18n */
                               size_Range(&mark));
+        }
+    }
+    /* Fill the top safe area above the view, if there is one. */
+    if (isCoveringTopSafeArea_DocumentView(d)) {
+        if (topSafeInset_Mobile() > 0) {
+            const iRect topSafeArea = initCorners_Rect(zero_I2(),
+                                                       topRight_Rect(safeRect_Root(w->root)));
+            fillRect_Paint(&ctx.paint,
+                           moved_Rect(topSafeArea, init_I2(horizOffset, 0)),
+                           !isEmpty_Banner(d->banner) && docBounds.pos.y + viewPos_DocumentView(d) -
+                                documentTopPad_DocumentView(d) > bounds.pos.y ?
+                           tmBannerBackground_ColorId : tmBackground_ColorId);
         }
     }
 }

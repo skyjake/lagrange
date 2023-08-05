@@ -4640,11 +4640,14 @@ void didScrollView_DocumentWidget(iDocumentWidget *d) {
 
 static void drawViewOrBlank_DocumentWidget_(const iDocumentWidget *d, const iDocumentView *view,
                                             int offset, iBool isBlank) {
-    const iRect bounds = bounds_Widget(constAs_Widget(d));
+    iRect bounds = bounds_Widget(constAs_Widget(d));
     if (view && !isBlank) {
         draw_DocumentView(view, offset);
     }
     else {
+        if (isCoveringTopSafeArea_DocumentView(d->view)) {
+            adjustEdges_Rect(&bounds, -top_Rect(bounds), 0, 0, 0);
+        }
         iPaint p;
         init_Paint(&p);
         fillRect_Paint(&p,
@@ -4654,10 +4657,9 @@ static void drawViewOrBlank_DocumentWidget_(const iDocumentWidget *d, const iDoc
 }
 
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
-    const iWidget *w                   = constAs_Widget(d);
-    const iRect    bounds              = bounds_Widget(w);
-//    const iRect    boundsWithoutVisOff = boundsWithoutVisualOffset_Widget(w);
-    const iRect    clipBounds          = bounds; //intersect_Rect(bounds, bounds);
+    const iWidget *w          = constAs_Widget(d);
+    const iRect    bounds     = bounds_Widget(w);
+    const iRect    clipBounds = bounds;
     if (width_Rect(bounds) <= 0) {
         return;
     }
@@ -4665,7 +4667,6 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     init_Paint(&p);
     /* Views. */
     if (d->swipeView) {
-        /* TODO: Dim the occluded view. */
         const int underlayOffset = 0.25f * (value_Anim(&d->swipeOffset) - width_Rect(bounds));
         const int overlayOffset  = value_Anim(&d->swipeOffset);
         const iDocumentView *under, *over;
@@ -4685,44 +4686,44 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
         drawViewOrBlank_DocumentWidget_(d, under, underlayOffset, iFalse);
         if (overlayOffset > 0) {
+            /* Dim the occluded view with a soft shadow. */
+            iRect safeBounds = bounds;
+            if (isCoveringTopSafeArea_DocumentView(d->view)) {
+                adjustEdges_Rect(&safeBounds, -top_Rect(safeBounds), 0, 0, 0);
+            }
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
             iRect dimRect = initCorners_Rect(
-                topLeft_Rect(bounds),
-                addX_I2(bottomLeft_Rect(bounds), overlayOffset)
+                topLeft_Rect(safeBounds),
+                addX_I2(bottomLeft_Rect(safeBounds), overlayOffset)
             );
             setClip_Paint(&p, dimRect);
-            //fillRect_Paint(&p, dimRect, red_ColorId);
             const float relativeOffset =
-                iClamp(value_Anim(&d->swipeOffset) / (float) width_Rect(bounds), 0, 1);
-            drawSoftShadow_Paint(&p, moved_Rect(bounds, init_I2(overlayOffset, 0)),
-                                 gap_UI * 80, //get_Window()->size.x / 8,
+                iClamp(value_Anim(&d->swipeOffset) / (float) width_Rect(safeBounds), 0, 1);
+            const float darkness = isDark_ColorTheme(prefs_App()->theme) ? 0.4f : 0.25f;
+            drawSoftShadow_Paint(&p, moved_Rect(safeBounds, init_I2(overlayOffset, 0)),
+                                 gap_UI * 80,
                                  black_ColorId,
-                                 255 * 0.4f * (1 - relativeOffset));
+                                 255 * darkness * (1.0f - relativeOffset));
             unsetClip_Paint(&p);
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         }
         drawViewOrBlank_DocumentWidget_(d, over, overlayOffset, iFalse);
     }
     else {
-        drawViewOrBlank_DocumentWidget_(d, d->view,
-                                        value_Anim(&d->swipeOffset),
+        int offset = value_Anim(&d->swipeOffset);
+        if (offset && isCoveringTopSafeArea_DocumentView(d->view)) {
+            /* Blank the safe area as well. */
+            fillRect_Paint(&p,
+                           initCorners_Rect(zero_I2(), topRight_Rect(bounds)),
+                           uiBackground_ColorId);
+        }
+        drawViewOrBlank_DocumentWidget_(d, d->view, offset,
                                         (d->flags & viewWasSwipedAway_DocumentWidgetFlag) != 0);
     }
     if (colorTheme_App() == pureWhite_ColorTheme &&
         !(prefs_App()->bottomNavBar && prefs_App()->bottomTabBar)) {
         /* A subtle separator between UI and content. */
         drawHLine_Paint(&p, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
-    }
-    if ((deviceType_App() == tablet_AppDeviceType && prefs_App()->bottomNavBar &&
-         prefs_App()->bottomTabBar) || (isPortraitPhone_App() && prefs_App()->bottomNavBar)) {
-        /* Fill the top safe area. */
-        if (topSafeInset_Mobile() > 0) {
-            const iRect docBounds = documentBounds_DocumentView(d->view);
-            fillRect_Paint(&p, initCorners_Rect(zero_I2(), topRight_Rect(safeRect_Root(w->root))),
-                            !isEmpty_Banner(d->banner) && docBounds.pos.y + viewPos_DocumentView(d->view) -
-                                documentTopPad_DocumentView(d->view) > bounds.pos.y ?
-                                tmBannerBackground_ColorId : tmBackground_ColorId);
-        }
     }
     /* Sidebar swipe indicator. */
     if (deviceType_App() == tablet_AppDeviceType && prefs_App()->edgeSwipe) {

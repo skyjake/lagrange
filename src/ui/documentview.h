@@ -106,6 +106,7 @@ int     documentWidth_DocumentView      (const iDocumentView *);
 iRect   documentBounds_DocumentView     (const iDocumentView *);
 int     documentTopPad_DocumentView     (const iDocumentView *);
 int     pageHeight_DocumentView         (const iDocumentView *);
+iBool   isCoveringTopSafeArea_DocumentView(const iDocumentView *);
 int     viewPos_DocumentView            (const iDocumentView *);
 iRangei visibleRange_DocumentView       (const iDocumentView *);
 float   normScrollPos_DocumentView      (const iDocumentView *);
