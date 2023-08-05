@@ -2079,10 +2079,10 @@ msgstr[0] "This directory contains %u item."
 msgstr[1] "This directory contains %u items."
 
 msgid "keys.top"
-msgstr "Jump to top"
+msgstr "Jump to Top"
 
 msgid "keys.bottom"
-msgstr "Jump to bottom"
+msgstr "Jump to Bottom"
 
 msgid "keys.scroll.up"
 msgstr "Scroll up"

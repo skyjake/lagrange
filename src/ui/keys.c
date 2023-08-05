@@ -194,8 +194,8 @@ enum iBindFlag {
 /* TODO: This indirection could be used for localization, although all UI strings
    would need to be similarly handled. */
 static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = {
-    { 1,  { "${keys.top}",                  SDLK_HOME, 0,                   "scroll.top"                        }, 0 },
-    { 2,  { "${keys.bottom}",               SDLK_END, 0,                    "scroll.bottom"                     }, 0 },
+    { 1,  { "${LC:keys.top}",               SDLK_HOME, 0,                   "scroll.top"                        }, 0 },
+    { 2,  { "${LC:keys.bottom}",            SDLK_END, 0,                    "scroll.bottom"                     }, 0 },
     { 10, { "${keys.scroll.up}",            SDLK_UP, 0,                     "scroll.step arg:-1"                }, argRepeat_BindFlag },
     { 11, { "${keys.scroll.down}",          SDLK_DOWN, 0,                   "scroll.step arg:1"                 }, argRepeat_BindFlag },
     { 22, { "${keys.scroll.halfpage.up}",   SDLK_SPACE, KMOD_SHIFT,         "scroll.page arg:-1"                }, argRepeat_BindFlag },

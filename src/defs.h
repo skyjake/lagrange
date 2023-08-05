@@ -147,7 +147,10 @@ enum iToolbarAction {
     editPage_ToolbarAction    = 10,
     findText_ToolbarAction    = 11,
     settings_ToolbarAction    = 12,
-    sidebar_ToolbarAction     = 13, /* desktop only */
+    leftSidebar_ToolbarAction    = 13, /* desktop/tablet only */
+    rightSidebar_ToolbarAction   = 14, /* desktop/tablet only */
+    scrollToTop_ToolbarAction    = 15,
+    scrollToBottom_ToolbarAction = 16,
     max_ToolbarAction
 };
 

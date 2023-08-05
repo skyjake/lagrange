@@ -3312,7 +3312,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
         if (argLabel_Command(cmd, "smooth")) {
             stopWidgetMomentum_Touch(w);
-            smoothScroll_DocumentView(d->view, -pos_SmoothScroll(&d->view->scrollY), 500);
+            smoothScroll_DocumentView(d->view, -pos_SmoothScroll(&d->view->scrollY), 400);
             d->view->scrollY.flags |= muchSofter_AnimFlag;
             return iTrue;
         }
@@ -3324,6 +3324,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.bottom") && document_App() == d) {
+        if (argLabel_Command(cmd, "smooth")) {
+            stopWidgetMomentum_Touch(w);
+            smoothScroll_DocumentView(d->view, d->view->scrollY.max, 400);
+            d->view->scrollY.flags |= muchSofter_AnimFlag;
+            return iTrue;
+        }
         updateScrollMax_DocumentView(d->view); /* scrollY.max might not be fully updated */
         init_Anim(&d->view->scrollY.pos, d->view->scrollY.max);
         invalidate_VisBuf(d->view->visBuf);

@@ -49,7 +49,7 @@ void init_Prefs(iPrefs *d) {
     d->zoomPercent       = 100;
     d->navbarActions[0]  = back_ToolbarAction;
     d->navbarActions[1]  = forward_ToolbarAction;
-    d->navbarActions[2]  = sidebar_ToolbarAction;
+    d->navbarActions[2]  = leftSidebar_ToolbarAction;
     d->navbarActions[3]  = home_ToolbarAction;
 #if defined (iPlatformAndroidMobile)
     /* Android has a system-wide back button so no need to have a duplicate. */

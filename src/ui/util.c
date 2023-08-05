@@ -3005,13 +3005,19 @@ iWidget *makePreferences_Widget(void) {
 #endif
         { NULL }
     };
-    iMenuItem toolbarActionItems[2][max_ToolbarAction];
+    iMenuItem toolbarActionItems[2][max_ToolbarAction + 1];
     iZap(toolbarActionItems);
     for (int j = 0; j < 2; j++) {
-        for (int i = 0; i < sidebar_ToolbarAction; i++) {
-            toolbarActionItems[j][i].label = toolbarActions_Mobile[i].label;
-            toolbarActionItems[j][i].command =
+        int index = 0;
+        for (int i = 0; i < max_ToolbarAction; i++) {
+            if (deviceType_App() == phone_AppDeviceType &&
+                (i == rightSidebar_ToolbarAction || i == leftSidebar_ToolbarAction)) {
+                continue;
+            }
+            toolbarActionItems[j][index].label = toolbarActions_Mobile[i].label;
+            toolbarActionItems[j][index].command =
                 format_CStr("toolbar.action.set arg:%d button:%d", i, j);
+            index++;
         }
     }
     iMenuItem docThemes[2][max_GmDocumentTheme + 1];

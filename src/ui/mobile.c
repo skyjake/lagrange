@@ -52,6 +52,9 @@ const iToolbarActionSpec toolbarActions_Mobile[max_ToolbarAction] = {
     { magnifyingGlass_Icon, "${menu.find}", "focus.set id:find.input" },
     { gear_Icon, "${menu.settings}", "preferences" },
     { leftHalf_Icon, "${menu.sidebar.left}", "sidebar.toggle" },
+    { rightHalf_Icon, "${menu.sidebar.right}", "sidebar2.toggle" },
+    { upArrowBar_Icon, "${keys.top}", "scroll.top smooth:1" },
+    { downArrowBar_Icon, "${keys.bottom}", "scroll.bottom smooth:1" },
 };
 
 iBool isUsingPanelLayout_Mobile(void) {
