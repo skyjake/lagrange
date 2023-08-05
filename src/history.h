@@ -56,6 +56,8 @@ iDeclareType(History)
 iDeclareTypeConstruction(History)
 iDeclareTypeSerialization(History)
 
+void        serializeWithContent_History(const iHistory *, iStream *outs, iBool withContent);
+
 iHistory *  copy_History                (const iHistory *);
 void        lock_History                (iHistory *);
 void        unlock_History              (iHistory *);

@@ -9,6 +9,7 @@
 ## 1.17
 New features:
 * User-selectable feed refresh interval. Previously the interval been hardcoded to four hours. (Based on a patch by Michael Nordmeyer.)
+* Periodically save UI state (including each tab's navigation history) to prevent data loss in case the app crashes. These runtime saves do not include any cached page content. The full cache is still saved as before when quitting the app.
 
 Changes and enhancements:
 * Newly created client certificates have a default expiration date in the year 9999, which means they won't expire. One can still also set a specific date as before.

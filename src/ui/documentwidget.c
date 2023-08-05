@@ -89,6 +89,9 @@ iDeclareType(PersistentDocumentState)
 iDeclareTypeConstruction(PersistentDocumentState)
 iDeclareTypeSerialization(PersistentDocumentState)
 
+static void serializeWithContent_PersistentDocumentState_(const iPersistentDocumentState *,
+                                                          iStream *outs, iBool withContent);
+
 enum iReloadInterval {
     never_RelodPeriod,
     minute_ReloadInterval,
@@ -146,6 +149,11 @@ void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
 }
 
 void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStream *outs) {
+    serializeWithContent_PersistentDocumentState_(d, outs, iTrue);
+}
+
+void serializeWithContent_PersistentDocumentState_(const iPersistentDocumentState *d, iStream *outs,
+                                                   iBool withContent) {
     serialize_String(d->url, outs);
     uint16_t params = (d->reloadInterval & 7) | (iClamp(d->generation, 0, 15) << 4);
     writeU16_Stream(outs, params);
@@ -155,7 +163,7 @@ void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStrea
         serialize_Block(d->setIdentity ? d->setIdentity : &empty, outs);
         deinit_Block(&empty);
     }
-    serialize_History(d->history, outs);
+    serializeWithContent_History(d->history, outs, withContent);
 }
 
 void deserialize_PersistentDocumentState(iPersistentDocumentState *d, iStream *ins) {
@@ -5038,8 +5046,8 @@ const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
     return collect_String(joinCStr_StringArray(title, " \u2014 "));
 }
 
-void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
-    serialize_PersistentDocumentState(&d->mod, outs);
+void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs, iBool withContent) {
+    serializeWithContent_PersistentDocumentState_(&d->mod, outs, withContent);
 }
 
 void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {

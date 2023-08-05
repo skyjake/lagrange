@@ -91,6 +91,7 @@ int         run_App                     (int argc, char **argv);
 void        processEvents_App           (enum iAppEventMode mode);
 iBool       handleCommand_App           (const char *cmd);
 void        refresh_App                 (void);
+
 iBool       isRefreshPending_App        (void);
 iBool       isFinishedLaunching_App     (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
@@ -117,6 +118,7 @@ iPtrArray *         listWindows_App     (void);
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, int newTabFlags);
 void                trimCache_App       (void);
 void                trimMemory_App      (void);
+void                saveStateQuickly_App(void);
 //iBool               findCachedContent_App(const iString *url, iString *mime_out, iBlock *data_out);
 
 iDocumentWidget *   document_Root       (iRoot *);

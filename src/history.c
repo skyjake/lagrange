@@ -177,6 +177,10 @@ iString *debugInfo_History(const iHistory *d) {
 }
 
 void serialize_History(const iHistory *d, iStream *outs) {
+    serializeWithContent_History(d, outs, iTrue);
+}
+
+void serializeWithContent_History(const iHistory *d, iStream *outs, iBool withContent) {
     lock_Mutex(d->mtx);
     writeU16_Stream(outs, d->recentPos);
     writeU16_Stream(outs, size_Array(&d->recent));
@@ -185,7 +189,7 @@ void serialize_History(const iHistory *d, iStream *outs) {
         serialize_String(&item->url, outs);
         write32_Stream(outs, item->normScrollY * 1.0e6f);
         writeU16_Stream(outs, item->flags);
-        if (item->cachedResponse) {
+        if (withContent && item->cachedResponse) {
             write8_Stream(outs, 1);
             serialize_GmResponse(item->cachedResponse, outs);
         }

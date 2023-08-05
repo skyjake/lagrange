@@ -865,11 +865,13 @@ static iBool loadState_App_(iApp *d) {
     return iFalse;
 }
 
-static void saveState_App_(const iApp *d) {
+static void saveState_App_(const iApp *d, iBool withContent) {
     if (isAppleDesktop_Platform() && isEmpty_PtrArray(&d->mainWindows)) {
         return; /* nothing to save; keep what was saved earlier */
     }
-    trimCache_App();
+    if (withContent) {
+        trimCache_App();
+    }
     /* UI state is saved in binary because it is quite complex (e.g.,
        navigation history, cached content) and depends closely on the widget
        tree. The data is largely not reorderable and should not be modified
@@ -918,7 +920,7 @@ static void saveState_App_(const iApp *d) {
                     flags |= rootIndex1_DocumentStateFlag;
                 }
                 write8_File(f, flags);
-                serializeState_DocumentWidget(i.object, stream_File(f));
+                serializeState_DocumentWidget(i.object, stream_File(f), withContent);
             }
         }
         iRelease(f);
@@ -1422,7 +1424,7 @@ static void deinit_App(iApp *d) {
     SDL_RemoveTimer(d->sleepTimer);
 #endif
     SDL_RemoveTimer(d->autoReloadTimer);
-    saveState_App_(d);
+    saveState_App_(d, iTrue);
     savePrefs_App_(d);
     iReverseForEach(PtrArray, j, &d->mainWindows) {
         delete_MainWindow(j.ptr);
@@ -1689,6 +1691,10 @@ void trimMemory_App(void) {
     iRelease(docs);
 }
 
+void saveStateQuickly_App(void) {
+    saveState_App_(&app_, iFalse /* cached content is not saved */);
+}
+
 static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
     clear_PtrArray(windows);
     /* Popups. */ {
@@ -1846,7 +1852,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     setFreezeDraw_MainWindow(*i.value, iTrue);
                 }
                 savePrefs_App_(d);
-                saveState_App_(d);
+                saveState_App_(d, iTrue);
                 d->isSuspended = iTrue;
                 if (d->isTextInputActive) {
                     SDL_StopTextInput();
@@ -1858,7 +1864,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     setFreezeDraw_MainWindow(*i.value, iTrue);
                 }
                 savePrefs_App_(d);
-                saveState_App_(d);
+                saveState_App_(d, iTrue);
                 break;
             }
             case SDL_DROPFILE: {
@@ -3029,7 +3035,7 @@ void closeWindow_App(iWindow *win) {
         /* The one and only window is being closed. On macOS, the app will keep running, which
            means we must save the state of the window now or otherwise it will be lost. A newly
            opened window will use this saved state if it's the only window of the app. */
-        saveState_App_(d);
+        saveState_App_(d, iTrue);
     }
     if (activeWindow == win) {
         d->window = NULL;
@@ -3248,6 +3254,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     /* Commands related to preferences. */
     if (equal_Command(cmd, "prefs.changed")) {
         savePrefs_App_(d);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "document.openurls.changed")) {
+        saveStateQuickly_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.dialogtab")) {

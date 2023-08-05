@@ -39,7 +39,7 @@ iDeclareObjectConstruction(DocumentWidget)
 iDocumentWidget *   duplicate_DocumentWidget        (const iDocumentWidget *);
 void                cancelAllRequests_DocumentWidget(iDocumentWidget *);
 
-void    serializeState_DocumentWidget   (const iDocumentWidget *, iStream *outs);
+void    serializeState_DocumentWidget   (const iDocumentWidget *, iStream *outs, iBool withContent);
 void    deserializeState_DocumentWidget (iDocumentWidget *, iStream *ins);
 
 iHistory *          history_DocumentWidget          (iDocumentWidget *);
