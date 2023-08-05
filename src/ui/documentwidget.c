@@ -2755,7 +2755,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         else {
             setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
-            d->flags |= movingSelectMarkEnd_DocumentWidgetFlag |
+            d->flags |= selecting_DocumentWidgetFlag |
+                        movingSelectMarkEnd_DocumentWidgetFlag |
                         selectWords_DocumentWidgetFlag; /* finger-based selection is imprecise */
             d->flags &= ~selectLines_DocumentWidgetFlag;
             setFadeEnabled_ScrollWidget(d->scroll, iFalse);
@@ -4371,7 +4372,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                 }
                 else {
-                    d->selectMark.end = loc.end;// (d->selectMark.end > d->selectMark.start ? loc.end : loc.start);
+                    d->selectMark.end = loc.end;
                     if (loc.start < d->initialSelectMark.start) {
                         d->selectMark.end = loc.start;
                     }
