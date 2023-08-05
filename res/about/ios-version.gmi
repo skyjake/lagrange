@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.17 (1)
+* Top safe area is filled correctly during swipe animations.
+* Fixed text selection glitch where the first selected word would become partially selected when dragging.
+
 ## 1.16 (5)
 * Fixed crash when the contents of a link line would fail to be recognized as valid characters.
 * Empty new tabs are appended to the right edge. Previously they were inserted next to the active tab.

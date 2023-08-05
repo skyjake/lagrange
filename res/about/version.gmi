@@ -13,6 +13,7 @@ New features:
 Changes and enhancements:
 * Newly created client certificates have a default expiration date in the year 9999, which means they won't expire. One can still also set a specific date as before.
 * Menu separators are taller and more distinct for a clearer item separation.
+* Tuned theme color palette.
 
 Fixes:
 * Glitches during swipe navigation (touch screens, macOS trackpad). Behavior is more robust at ends of history and when content is not immediately available in cache.
