@@ -120,7 +120,7 @@ enum iColorId {
     uiTextAppTitle_ColorId,
     uiBackgroundSidebar_ColorId,
     uiBackgroundMenu_ColorId,
-    
+
     /* content theme colors */
     tmFirst_ColorId,
     tmBackground_ColorId = tmFirst_ColorId,
@@ -164,7 +164,7 @@ enum iColorId {
     tmGopherLinkTextHover_ColorId,
     tmGopherLinkDomain_ColorId_OBSOLETE,
     tmGopherLinkLastVisitDate_ColorId_OBSOLETE,
-    
+
     tmBannerItemBackground_ColorId,
     tmBannerItemFrame_ColorId,
     tmBannerItemTitle_ColorId,
@@ -223,10 +223,15 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define uiHeading_ColorEscape       "\vS"
 
 iDeclareType(Color)
+iDeclareType(Colorf)
 iDeclareType(HSLColor)
 
 struct Impl_Color {
     uint8_t r, g, b, a;
+};
+
+struct Impl_Colorf {
+    float r, g, b, a;
 };
 
 iLocalDef iBool equal_Color(const iColor a, const iColor b) {
@@ -240,8 +245,14 @@ struct Impl_HSLColor {
 #define minSat_HSLColor 0.013f   /* Conversion to 8-bit RGB may result in saturation dropping to zero. */
 
 iHSLColor       hsl_Color       (iColor);
+iHSLColor       hsl_Colorf      (iColorf color);
+iColor          uint8_Colorf    (iColorf);
+iColorf         float_Color     (iColor);
 iColor          rgb_HSLColor    (iHSLColor);
+iColorf         rgbf_HSLColor   (iHSLColor);
 float           luma_Color      (iColor);
+float           luma_Colorf     (iColorf);
+float           luma_HSLColor   (iHSLColor);
 
 iHSLColor       setSat_HSLColor     (iHSLColor, float sat);
 iHSLColor       setLum_HSLColor     (iHSLColor, float lum);

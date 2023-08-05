@@ -41,7 +41,7 @@ static iColor darkPalette_[] = {
     { 255, 192, 0,   255 },
     { 0,   96,  128, 255 },
     { 0,   192, 255, 255 },
-    
+
     { 140, 32,  32,   255 },
     { 255, 80, 80,  255 },
     { 24,  80, 24,  255 },
@@ -61,7 +61,7 @@ static iColor lightPalette_[] = {
     { 235, 215, 200, 255 },
     { 10,  110, 130, 255 },
     { 170, 215, 220, 255 },
-    
+
     { 150, 60,  55,   255 },
     { 240, 180, 170,  255 },
     { 50,   100, 50,  255 },
@@ -428,9 +428,32 @@ iLocalDef iColor toColor_(iFloat4 d) {
                      (uint8_t) w_F4(i) };
 }
 
+iLocalDef iColorf toColorf_(iFloat4 d) {
+    return (iColorf){ x_F4(d), y_F4(d), z_F4(d), w_F4(d) };
+}
+
+iLocalDef uint8_t quantize8_(float f) {
+    f = iClamp(f, 0.0f, 1.0f);
+    return (uint8_t) (f * 255.0f + 0.5f);
+}
+
+iColor uint8_Colorf(iColorf d) {
+    return toColor_(initv_F4(&d.r));
+}
+
+iColorf float_Color(iColor d) {
+    return (iColorf){ d.r / 255.0f, d.g / 255.0f, d.b / 255.0f, d.a / 255.0f };
+}
+
 iHSLColor hsl_Color(iColor color) {
-    float rgb[4];
-    store_F4(normalize_(color), rgb);
+    return hsl_Colorf(float_Color(color));
+}
+
+iHSLColor hsl_Colorf(iColorf color) {
+    const float rgb[4] = { iClamp(color.r, 0.0f, 1.0f),
+                           iClamp(color.g, 0.0f, 1.0f),
+                           iClamp(color.b, 0.0f, 1.0f),
+                           iClamp(color.a, 0.0f, 1.0f) };
     int compMax, compMin;
     if (rgb[0] >= rgb[1] && rgb[0] >= rgb[2]) {
         compMax = 0;
@@ -480,7 +503,7 @@ static float hueToRgb_(float p, float q, float t) {
     return p;
 }
 
-iColor rgb_HSLColor(iHSLColor hsl) {
+iColorf rgbf_HSLColor(iHSLColor hsl) {
     float r, g, b;
     hsl.hue /= 360.0f;
     hsl.hue = iWrapf(hsl.hue, 0, 1);
@@ -497,11 +520,23 @@ iColor rgb_HSLColor(iHSLColor hsl) {
         g = hueToRgb_(p, q, hsl.hue);
         b = hueToRgb_(p, q, hsl.hue - 1.0f / 3.0f);
     }
-    return toColor_(init_F4(r, g, b, hsl.a));
+    return toColorf_(init_F4(r, g, b, hsl.a));
+}
+
+iColor rgb_HSLColor(iHSLColor hsl) {
+    return uint8_Colorf(rgbf_HSLColor(hsl));
 }
 
 float luma_Color(iColor color) {
     return 0.299f * color.r / 255.0f + 0.587f * color.g / 255.0f + 0.114f * color.b / 255.0f;
+}
+
+float luma_Colorf(iColorf color) {
+    return 0.299f * color.r + 0.587f * color.g + 0.114f * color.b;
+}
+
+float luma_HSLColor(iHSLColor hsl) {
+    return luma_Color(rgb_HSLColor(hsl));
 }
 
 const char *escape_Color(int color) {
@@ -967,7 +1002,7 @@ iBool loadPalette_Color(const char *path) {
                 { "black:", 0 }, { "gray25:", 1 }, { "gray50:", 2 }, { "gray75:", 3 },
                 { "white:", 4 }, { "brown:", 5 },  { "orange:", 6 }, { "teal:", 7 },
                 { "cyan:", 8 },  { "maroon:", 9 }, { "red:", 10 }, { "darkGreen:", 11 },
-                { "green:", 12 }, { "indigo:", 13 }, { "blue:", 14 }, 
+                { "green:", 12 }, { "indigo:", 13 }, { "blue:", 14 },
             };
             iForIndices(i, colors_) {
                 if (startsWithCase_Rangecc(line, colors_[i].label)) {

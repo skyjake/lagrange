@@ -1527,7 +1527,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
                 set_Color(tmHeading1_ColorId, get_Color(cyan_ColorId));
                 set_Color(tmHeading2_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(white_ColorId), 0.66f));
                 set_Color(tmHeading3_ColorId, get_Color(white_ColorId));
-                set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.5f));
+                set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.4f));
                 set_Color(tmBannerTitle_ColorId, get_Color(cyan_ColorId));
                 set_Color(tmBannerIcon_ColorId, get_Color(cyan_ColorId));
             }
@@ -1670,6 +1670,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         }
         size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
 
+//        static int testing = 0;
+//        primIndex = (testing++) % iElemCount(hues);
+
         if (d->themeSeed && primIndex == 11 && d->themeSeed & 0x4000000) {
             /* De-pink some sites. */
             primIndex = (primIndex + d->themeSeed & 0xf) % 12;
@@ -1683,9 +1686,26 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         const iBool isDarkBgSat =
             (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
 
-        static const float normLum[] = { 0.8f, 0.7f, 0.675f, 0.65f, 0.55f,
-                                         0.6f, 0.475f, 0.5f, 0.75f, 0.8f,
-                                         0.85f, 0.8f };
+        static float normLums_[iElemCount(hues)];
+        if (normLums_[0] == 0.0f) {
+            iForIndices(i, normLums_) {
+    //            float L = luma_HSLColor((iHSLColor){ hues[primIndex], 0.75f, 0.5f, 1.0f});
+    //            float nL = 1.0f - luma_HSLColor((iHSLColor){ hues[primIndex], 0.75f, 0.5f, 1.0f}) / 2.0f;
+                normLums_[i] = 1.0f - luma_HSLColor((iHSLColor){ hues[i], 0.75f, 0.5f, 1.0f}) / 2.0f;
+            }
+        }
+        /*float normLum[] = { 0.8f, 0.75f, 0.625f, 0.65f, 0.60f,
+                                         0.65f, 0.625f, 0.65f, 0.75f, 0.8f,
+                                         0.825f, 0.8f };*/
+
+//        float L = luma_HSLColor((iHSLColor){ hues[primIndex], 0.75f, 0.5f, 1.0f});
+//        float nL = 1 - L/2;
+        const float normLum = normLums_[primIndex];
+
+//        printf("prim:%2u normLum:%.3f\n", primIndex, normLum[primIndex]); fflush(stdout);
+        /*float diff = normLum[primIndex] - nL;
+        printf("prim:%2u normLum:%.3f luma:%g (%g)\n", primIndex, normLum[primIndex],
+               L, diff); fflush(stdout);*/
 
         if (theme == colorfulDark_GmDocumentTheme) {
             iHSLColor base    = { hues[primIndex],
@@ -1733,12 +1753,13 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         else if (theme == colorfulLight_GmDocumentTheme) {
 //            static int primIndex = 0;
 //            primIndex = (primIndex + 1) % iElemCount(hues);
-            iHSLColor base = { hues[primIndex], 1.0f, normLum[primIndex], 1.0f };
+            iHSLColor base = { hues[primIndex], 1.0f, normLum, 1.0f };
+
 //            printf("prim:%d norm:%f\n", primIndex, normLum[primIndex]); fflush(stdout);
             static const float normSat[] = {
-                0.85f, 0.9f, 1, 0.65f, 0.65f,
-                0.65f, 0.9f, 0.9f, 1, 0.9f,
-                1, 0.75f
+                0.85f, 0.90f, 1.00f, 0.65f, 0.65f,
+                0.65f, 0.90f, 0.90f, 1.00f, 0.90f,
+                1.00f, 0.75f
             };
             iBool darkHeadings = iTrue;
             base.sat *= normSat[primIndex] * 0.8f;
@@ -1752,7 +1773,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.6f));
             setHsl_Color(
                 tmBannerBackground_ColorId,
-                addSatLum_HSLColor(base, 0, isDarkUI ? -0.04f : (0.2f * (1 - normLum[primIndex]))));
+                addSatLum_HSLColor(base, 0, isDarkUI ? -0.2f * (1 - normLum) : 0.2f * (1 - normLum)));
             setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, isDarkUI ? -0.6f : -0.3f));
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, isDarkUI ? -0.5f : -0.25f));
             set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(teal_ColorId), 0.3f));
@@ -1779,8 +1800,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         else if (theme == black_GmDocumentTheme || (theme == gray_GmDocumentTheme && isDarkUI)) {
             const float     primHue    = hues[primIndex];
             const iHSLColor primBright = { primHue, 1, 0.6f, 1 };
-            const iHSLColor primDim    = { primHue, 1, normLum[primIndex] + (theme == gray_GmDocumentTheme ? 0.0f : -0.15f), 1};
-            const iHSLColor altBright  = { altHue, 1, normLum[altIndex[0]] + (theme == gray_GmDocumentTheme ? 0.1f : 0.0f), 1 };
+            const iHSLColor primDim    = { primHue, 1, normLum + (theme == gray_GmDocumentTheme ? 0.0f : -0.15f), 1};
+            const iHSLColor altBright  = { altHue, 1, normLums_[altIndex[0]] + (theme == gray_GmDocumentTheme ? 0.1f : 0.0f), 1 };
             setHsl_Color(tmQuote_ColorId, altBright);
             setHsl_Color(tmPreformatted_ColorId, altBright);
             setHsl_Color(tmHeading1_ColorId, primBright);
@@ -1791,8 +1812,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         else if (theme == gray_GmDocumentTheme) { /* Light gray. */
             const float primHue        = hues[primIndex];
             const iHSLColor primBright = { primHue, 1, 0.3f, 1 };
-            const iHSLColor primDim    = { primHue, 1, normLum[primIndex] * 0.33f, 1 };
-            const iHSLColor altBright  = { altHue, 1, normLum[altIndex[0]] * 0.27f, 1 };
+            const iHSLColor primDim    = { primHue, 1, normLums_[primIndex] * 0.33f, 1 };
+            const iHSLColor altBright  = { altHue, 1, normLums_[altIndex[0]] * 0.27f, 1 };
             setHsl_Color(tmQuote_ColorId, altBright);
             setHsl_Color(tmPreformatted_ColorId, altBright);
             setHsl_Color(tmHeading1_ColorId, primBright);
@@ -1859,7 +1880,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         /* Tone down the link colors a bit because bold white is quite strong to look at. */
         if ((isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) &&
             theme != oceanic_GmDocumentTheme && theme != sepia_GmDocumentTheme) {
-            iHSLColor base = { hues[primIndex], 1.0f, normLum[primIndex], 1.0f };
+            iHSLColor base = { hues[primIndex], 1.0f, normLums_[primIndex], 1.0f };
             if (theme == gray_GmDocumentTheme) {
                 setHsl_Color(tmLinkText_ColorId,
                              addSatLum_HSLColor(get_HSLColor(tmLinkText_ColorId), 0.0f, -0.15f));
