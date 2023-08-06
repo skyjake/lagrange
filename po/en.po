@@ -984,6 +984,9 @@ msgstr "Open without Proxy"
 msgid "link.copy"
 msgstr "Copy Link"
 
+msgid "link.searchurl"
+msgstr "Use as Search URL"
+
 msgid "link.bookmark"
 msgstr "Bookmark Link…"
 

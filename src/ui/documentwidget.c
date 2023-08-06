@@ -3981,10 +3981,13 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
               0,
               format_CStr(
                   "!bookmark.add title:%s url:%s", cstr_String(linkLabel), cstr_String(linkUrl)) },
+            { "---" },
+            { magnifyingGlass_Icon " ${link.searchurl}",
+              0, 0,
+              format_CStr("!searchurl address:%s", cstr_String(linkUrl)) },
         },
-        3);
-    if (isNative && link->mediaType != download_MediaType &&
-        !equalCase_Rangecc(scheme, "file")) {
+        5);
+    if (isNative && link->mediaType != download_MediaType && !equalCase_Rangecc(scheme, "file")) {
         pushBackN_Array(items,
                         (iMenuItem[]){
                             { "---" },
