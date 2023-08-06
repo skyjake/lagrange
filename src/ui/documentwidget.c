@@ -3934,20 +3934,20 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
                               0,
                               0,
                               format_CStr("!open default:1 url:%s", cstr_String(linkUrl)) });
-#if defined (iPlatformAppleDesktop)
-            pushBack_Array(items,
-                           &(iMenuItem){ "${menu.reveal.macos}",
-                                         0,
-                                         0,
-                                         format_CStr("!reveal url:%s", cstr_String(linkUrl)) });
-#endif
-#if defined (iPlatformLinux)
-            pushBack_Array(items,
-                           &(iMenuItem){ "${menu.reveal.filemgr}",
-                                         0,
-                                         0,
-                                         format_CStr("!reveal url:%s", cstr_String(linkUrl)) });
-#endif
+            if (isAppleDesktop_Platform()) {
+                pushBack_Array(items,
+                               &(iMenuItem){ "${menu.reveal.macos}",
+                                             0,
+                                             0,
+                                             format_CStr("!reveal url:%s", cstr_String(linkUrl)) });
+            }
+            if (isLinux_Platform()) {
+                pushBack_Array(items,
+                               &(iMenuItem){ "${menu.reveal.filemgr}",
+                                             0,
+                                             0,
+                                             format_CStr("!reveal url:%s", cstr_String(linkUrl)) });
+            }
         }
     }
     else if (!willUseProxy_App(scheme)) {
