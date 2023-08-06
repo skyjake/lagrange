@@ -47,7 +47,7 @@ static iColor darkPalette_[] = {
     { 24,  80, 24,  255 },
     { 48,  200, 48,  255 },
     { 0,  70,  128, 255 },
-    { 40,  120,  255, 255 },
+    { 40,  132,  255, 255 },
 };
 
 static iColor lightPalette_[] = {
