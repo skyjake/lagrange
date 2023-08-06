@@ -289,6 +289,12 @@ msgstr "New Folder…"
 msgid "menu.sort.alpha"
 msgstr "Sort Alphabetically"
 
+msgid "menu.foldall"
+msgstr "Fold All"
+
+msgid "menu.unfoldall"
+msgstr "Unfold All"
+
 msgid "menu.bookmarks.list"
 msgstr "List All Bookmarks"
 

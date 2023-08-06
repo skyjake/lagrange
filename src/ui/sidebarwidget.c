@@ -279,6 +279,9 @@ static const iMenuItem bookmarkModeMenuItems_[] = {
     { add_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
     { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
     { "---" },
+    { rightAngle_Icon " ${menu.foldall}", 0, 0, "bookmark.foldall arg:1" },
+    { downAngle_Icon " ${menu.unfoldall}", 0, 0, "bookmark.foldall arg:0" },
+    { "---" },
     { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" }
 };
 
@@ -504,7 +507,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                     if (bm->flags & homepage_BookmarkFlag) {
                         appendChar_String(&item->meta, 0x1f3e0);
                     }
-                    if (bm->flags & remote_BookmarkFlag) { 
+                    if (bm->flags & remote_BookmarkFlag) {
                         item->listItem.isDraggable = iFalse;
                     }
                     if (bm->flags & remoteSource_BookmarkFlag) {
@@ -631,7 +634,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 { "---", 0, 0, NULL },
                 { close_Icon " ${menu.forgeturl}", 0, 0, "history.delete" },
                 { "---", 0, 0, NULL },
-                { delete_Icon " " uiTextCaution_ColorEscape "${history.clear}", 0, 0, "history.clear confirm:1" },                
+                { delete_Icon " " uiTextCaution_ColorEscape "${history.clear}", 0, 0, "history.clear confirm:1" },
             };
             d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             d->modeMenu = makeMenu_Widget(
@@ -659,7 +662,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             break;
     }
     setFlags_Widget(as_Widget(d->list), hidden_WidgetFlag, d->mode == identities_SidebarMode);
-    setFlags_Widget(as_Widget(d->certList), hidden_WidgetFlag, d->mode != identities_SidebarMode);    
+    setFlags_Widget(as_Widget(d->certList), hidden_WidgetFlag, d->mode != identities_SidebarMode);
     scrollOffset_ListWidget(list_SidebarWidget_(d), 0);
     updateVisible_ListWidget(list_SidebarWidget_(d));
     invalidate_ListWidget(list_SidebarWidget_(d));
@@ -1165,7 +1168,7 @@ static uint32_t bookmarkEditorId_(const iWidget *editor) {
     iAssert(startsWith_String(id_Widget(editor), "bmed."));
     uint32_t bmId = strtoul(cstr_String(id_Widget(editor)) + 5, NULL, 10);
     iAssert(bmId != 0);
-    return bmId;    
+    return bmId;
 }
 
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
@@ -1293,7 +1296,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
     else if (equal_Command(cmd, "toggle")) {
         if (arg_Command(cmd) && isVisible_Widget(w)) {
             return iTrue;
-        }        
+        }
         const iBool isAnimated = prefs_App()->uiAnimations &&
                                  argLabel_Command(cmd, "noanim") == 0 &&
                                  (d->side == left_SidebarSide || deviceType_App() != phone_AppDeviceType);
@@ -1444,6 +1447,11 @@ static void gotoNearestSlidingSheetPos_SidebarWidget_(iSidebarWidget *d) {
                                       ? top_SlidingSheetPos
                                       : pos > midRegion.end ? bottom_SlidingSheetPos
                                                             : middle_SlidingSheetPos);
+}
+
+static iBool isFolder_(void *context, const iBookmark *bm) {
+    iUnused(context);
+    return isFolder_Bookmark(bm);
 }
 
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
@@ -1811,6 +1819,17 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+        else if (isCommand_Widget(w, ev, "bookmark.foldall")) {
+            clear_IntSet(d->closedFolders);
+            if (arg_Command(cmd)) {
+                iConstForEach(PtrArray, i,
+                              list_Bookmarks(bookmarks_App(), NULL, isFolder_, NULL)) {
+                    insert_IntSet(d->closedFolders, id_Bookmark(i.ptr));
+                }
+            }
+            updateItems_SidebarWidget_(d);
+            return iTrue;
+        }
         else if (equal_Command(cmd, "feeds.update.finished")) {
             d->numUnreadEntries = argLabel_Command(cmd, "unread");
             checkModeButtonLayout_SidebarWidget_(d);
@@ -1880,7 +1899,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                             }
                         }
                     }
-                    postCommand_App("visited.changed");                    
+                    postCommand_App("visited.changed");
                     return iTrue;
                 }
                 else if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {
@@ -2020,7 +2039,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             postCommand_Widget(w, "sidebar.toggle");
             return iTrue;
         }
-#endif        
+#endif
     }
     if (ev->type == SDL_MOUSEMOTION &&
         (!isVisible_Widget(d->menu) && !isVisible_Widget(d->modeMenu))) {
@@ -2183,7 +2202,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 iAssert(hoverItem);
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), hoverItem->id);
                 if (isFolder_Bookmark(bm)) {
-                    contextMenu = d->folderMenu;                    
+                    contextMenu = d->folderMenu;
                 }
                 else if (!isVisible_Widget(d->menu)) {
                     const iBool        isRemote        = (bm->flags & remote_BookmarkFlag) != 0;
@@ -2435,8 +2454,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                            isHover && isPressing ? fg : uiTextShortcut_ColorId,
                            range);
             mpos.x += metaIconWidth;
-            range.start = range.end;            
-        }        
+            range.start = range.end;
+        }
     }
     else if (sidebar->mode == history_SidebarMode) {
         iBeginCollect();
