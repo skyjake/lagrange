@@ -1651,9 +1651,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
         } altHues[iElemCount(hues)] = {
             { 2, 3 },  /*  0: red */
             { 8, 3 },  /*  1: reddish orange */
-            { 0, 6 },  /*  2: yellowish orange */
+            { 7, 6 },  /*  2: yellowish orange */
             { 5, 7 },  /*  3: yellow */
-            { 6, 2 },  /*  4: greenish yellow */
+            { 8, 2 },  /*  4: greenish yellow */
             { 2, 3 },  /*  5: green */
             { 2, 8 },  /*  6: bluish green */
             { 2, 5 },  /*  7: cyan */
