@@ -3852,6 +3852,172 @@ static iBool isScrollableWithWheel_DocumentWidget_(const iDocumentWidget *d) {
     return iFalse;
 }
 
+static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iGmRun *link) {
+    iWidget *w = as_Widget(d);
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    /* Construct the link context menu, depending on what kind of link was clicked. */
+    const int spartanQuery = isSpartanQueryLink_DocumentWidget_(d, link->linkId);
+    interactingWithLink_DocumentWidget_(d, link->linkId); /* perhaps will be triggered */
+    const iString *linkUrl  = linkUrl_GmDocument(d->view->doc, link->linkId);
+    const iRangecc scheme   = urlScheme_String(linkUrl);
+    const iBool    isGemini = equalCase_Rangecc(scheme, "gemini");
+    iBool          isNative = iFalse;
+    if (deviceType_App() != desktop_AppDeviceType) {
+        /* Show the link as the first, non-interactive item. */
+        iString *infoText = collectNew_String();
+        infoText_LinkInfo(d, link->linkId, infoText);
+        pushBack_Array(items,
+                       &(iMenuItem){ format_CStr("```%s", cstr_String(infoText)), 0, 0, NULL });
+    }
+    if (isGemini || willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "data") ||
+        equalCase_Rangecc(scheme, "file") || equalCase_Rangecc(scheme, "finger") ||
+        equalCase_Rangecc(scheme, "gopher") || equalCase_Rangecc(scheme, "spartan")) {
+        isNative = iTrue;
+        /* Regular links that we can open. */
+        pushBackN_Array(items,
+                        (iMenuItem[]){
+                            { openTab_Icon " ${link.newtab}",
+                              0,
+                              0,
+                              format_CStr("!open query:%d newtab:1 origin:%s%s url:%s",
+                                          spartanQuery,
+                                          cstr_String(id_Widget(w)),
+                                          setIdentArg_DocumentWidget_(d, linkUrl),
+                                          cstr_String(linkUrl)) },
+                            { openTabBg_Icon " ${link.newtab.background}",
+                              0,
+                              0,
+                              format_CStr("!open query:%d newtab:2 origin:%s%s url:%s",
+                                          spartanQuery,
+                                          cstr_String(id_Widget(w)),
+                                          setIdentArg_DocumentWidget_(d, linkUrl),
+                                          cstr_String(linkUrl)) },
+                            { openWindow_Icon " ${link.newwindow}",
+                              0,
+                              0,
+                              format_CStr("!open query:%d newwindow:1 origin:%s%s url:%s",
+                                          spartanQuery,
+                                          cstr_String(id_Widget(w)),
+                                          setIdentArg_DocumentWidget_(d, linkUrl),
+                                          cstr_String(linkUrl)) },
+                            { "${link.side}",
+                              0,
+                              0,
+                              format_CStr("!open query:%d newtab:4 origin:%s%s url:%s",
+                                          spartanQuery,
+                                          cstr_String(id_Widget(w)),
+                                          setIdentArg_DocumentWidget_(d, linkUrl),
+                                          cstr_String(linkUrl)) },
+                            { "${link.side.newtab}",
+                              0,
+                              0,
+                              format_CStr("!open query:%d newtab:5 origin:%s%s url:%s",
+                                          spartanQuery,
+                                          cstr_String(id_Widget(w)),
+                                          setIdentArg_DocumentWidget_(d, linkUrl),
+                                          cstr_String(linkUrl)) },
+                        },
+                        5);
+        if (deviceType_App() == phone_AppDeviceType) {
+            /* Phones don't do windows or splits. */
+            removeN_Array(items, size_Array(items) - 3, iInvalidSize);
+        }
+        else if (deviceType_App() == tablet_AppDeviceType) {
+            /* Tablets only do splits. */
+            removeN_Array(items, size_Array(items) - 3, 1);
+        }
+        if (equalCase_Rangecc(scheme, "file")) {
+            pushBack_Array(items, &(iMenuItem){ "---" });
+            pushBack_Array(
+                items,
+                &(iMenuItem){ export_Icon " ${menu.open.external}",
+                              0,
+                              0,
+                              format_CStr("!open default:1 url:%s", cstr_String(linkUrl)) });
+#if defined (iPlatformAppleDesktop)
+            pushBack_Array(items,
+                           &(iMenuItem){ "${menu.reveal.macos}",
+                                         0,
+                                         0,
+                                         format_CStr("!reveal url:%s", cstr_String(linkUrl)) });
+#endif
+#if defined (iPlatformLinux)
+            pushBack_Array(items,
+                           &(iMenuItem){ "${menu.reveal.filemgr}",
+                                         0,
+                                         0,
+                                         format_CStr("!reveal url:%s", cstr_String(linkUrl)) });
+#endif
+        }
+    }
+    else if (!willUseProxy_App(scheme)) {
+        pushBack_Array(items,
+                       &(iMenuItem){ openExt_Icon " ${link.browser}",
+                                     0,
+                                     0,
+                                     format_CStr("!open default:1 url:%s", cstr_String(linkUrl)) });
+    }
+    if (willUseProxy_App(scheme)) {
+        pushBackN_Array(
+            items,
+            (iMenuItem[]){ { "---" },
+                           { isGemini ? "${link.noproxy}" : openExt_Icon " ${link.browser}",
+                             0,
+                             0,
+                             format_CStr("!open origin:%s noproxy:1 url:%s",
+                                         cstr_String(id_Widget(w)),
+                                         cstr_String(linkUrl)) } },
+            2);
+    }
+    iString *linkLabel = collectNewRange_String(linkLabel_GmDocument(d->view->doc, link->linkId));
+    urlEncodeSpaces_String(linkLabel);
+    pushBackN_Array(
+        items,
+        (iMenuItem[]){
+            { "---" },
+            { "${link.copy}", 0, 0, "document.copylink" },
+            { bookmark_Icon " ${link.bookmark}",
+              0,
+              0,
+              format_CStr(
+                  "!bookmark.add title:%s url:%s", cstr_String(linkLabel), cstr_String(linkUrl)) },
+        },
+        3);
+    if (isNative && link->mediaType != download_MediaType &&
+        !equalCase_Rangecc(scheme, "file")) {
+        pushBackN_Array(items,
+                        (iMenuItem[]){
+                            { "---" },
+                            { download_Icon " ${link.download}", 0, 0, "document.downloadlink" },
+                        },
+                        2);
+    }
+    iMediaRequest *mediaReq;
+    if ((mediaReq = findMediaRequest_DocumentWidget(d, link->linkId)) != NULL &&
+        d->contextLink->mediaType != download_MediaType) {
+        if (isFinished_GmRequest(mediaReq->req)) {
+            pushBack_Array(
+                items,
+                &(iMenuItem){ download_Icon " " saveToDownloads_Label,
+                              0,
+                              0,
+                              format_CStr("document.media.save link:%u", link->linkId) });
+        }
+    }
+    if (equalCase_Rangecc(scheme, "file")) {
+        /* Local files may be deleted. */
+        pushBack_Array(items, &(iMenuItem){ "---" });
+        pushBack_Array(
+            items,
+            &(iMenuItem){ delete_Icon " " uiTextCaution_ColorEscape "${link.file.delete}",
+                          0,
+                          0,
+                          format_CStr("!file.delete confirm:1 path:%s",
+                                      cstrCollect_String(localFilePathFromUrl_String(linkUrl))) });
+    }
+    return makeMenu_Widget(w, data_Array(items), size_Array(items));
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = d->view;
@@ -4047,177 +4213,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
-                    /* Construct the link context menu, depending on what kind of link was clicked. */
-                    const int spartanQuery = isSpartanQueryLink_DocumentWidget_(d, d->contextLink->linkId);
-                    interactingWithLink_DocumentWidget_(d, d->contextLink->linkId); /* perhaps will be triggered */
-                    const iString *linkUrl  = linkUrl_GmDocument(view->doc, d->contextLink->linkId);
-                    const iRangecc scheme   = urlScheme_String(linkUrl);
-                    const iBool    isGemini = equalCase_Rangecc(scheme, "gemini");
-                    iBool          isNative = iFalse;
-                    if (deviceType_App() != desktop_AppDeviceType) {
-                        /* Show the link as the first, non-interactive item. */
-                        iString *infoText = collectNew_String();
-                        infoText_LinkInfo(d, d->contextLink->linkId, infoText);
-                        pushBack_Array(&items, &(iMenuItem){
-                            format_CStr("```%s", cstr_String(infoText)),
-                            0, 0, NULL });
-                    }
-                    if (isGemini ||
-                        willUseProxy_App(scheme) ||
-                        equalCase_Rangecc(scheme, "data") ||
-                        equalCase_Rangecc(scheme, "file") ||
-                        equalCase_Rangecc(scheme, "finger") ||
-                        equalCase_Rangecc(scheme, "gopher") ||
-                        equalCase_Rangecc(scheme, "spartan")) {
-                        isNative = iTrue;
-                        /* Regular links that we can open. */
-                        pushBackN_Array(&items,
-                                        (iMenuItem[]){
-                                            { openTab_Icon " ${link.newtab}",
-                                              0,
-                                              0,
-                                              format_CStr("!open query:%d newtab:1 origin:%s%s url:%s",
-                                                          spartanQuery,
-                                                          cstr_String(id_Widget(w)),
-                                                          setIdentArg_DocumentWidget_(d, linkUrl),
-                                                          cstr_String(linkUrl)) },
-                                            { openTabBg_Icon " ${link.newtab.background}",
-                                              0,
-                                              0,
-                                              format_CStr("!open query:%d newtab:2 origin:%s%s url:%s",
-                                                          spartanQuery,
-                                                          cstr_String(id_Widget(w)),
-                                                          setIdentArg_DocumentWidget_(d, linkUrl),
-                                                          cstr_String(linkUrl)) },
-                                            { openWindow_Icon " ${link.newwindow}",
-                                              0,
-                                              0,
-                                              format_CStr("!open query:%d newwindow:1 origin:%s%s url:%s",
-                                                          spartanQuery,
-                                                          cstr_String(id_Widget(w)),
-                                                          setIdentArg_DocumentWidget_(d, linkUrl),
-                                                          cstr_String(linkUrl)) },
-                                            { "${link.side}",
-                                              0,
-                                              0,
-                                              format_CStr("!open query:%d newtab:4 origin:%s%s url:%s",
-                                                          spartanQuery,
-                                                          cstr_String(id_Widget(w)),
-                                                          setIdentArg_DocumentWidget_(d, linkUrl),
-                                                          cstr_String(linkUrl)) },
-                                            { "${link.side.newtab}",
-                                              0,
-                                              0,
-                                              format_CStr("!open query:%d newtab:5 origin:%s%s url:%s",
-                                                          spartanQuery,
-                                                          cstr_String(id_Widget(w)),
-                                                          setIdentArg_DocumentWidget_(d, linkUrl),
-                                                          cstr_String(linkUrl)) },
-                                        },
-                                        5);
-                        if (deviceType_App() == phone_AppDeviceType) {
-                            /* Phones don't do windows or splits. */
-                            removeN_Array(&items, size_Array(&items) - 3, iInvalidSize);
-                        }
-                        else if (deviceType_App() == tablet_AppDeviceType) {
-                            /* Tablets only do splits. */
-                            removeN_Array(&items, size_Array(&items) - 3, 1);
-                        }
-                        if (equalCase_Rangecc(scheme, "file")) {
-                            pushBack_Array(&items, &(iMenuItem){ "---" });
-                            pushBack_Array(&items,
-                                           &(iMenuItem){ export_Icon " ${menu.open.external}",
-                                                         0,
-                                                         0,
-                                                         format_CStr("!open default:1 url:%s",
-                                                                     cstr_String(linkUrl)) });
-#if defined (iPlatformAppleDesktop)
-                            pushBack_Array(&items,
-                                           &(iMenuItem){ "${menu.reveal.macos}",
-                                                         0,
-                                                         0,
-                                                         format_CStr("!reveal url:%s",
-                                                                     cstr_String(linkUrl)) });
-#endif
-#if defined (iPlatformLinux)
-                            pushBack_Array(&items,
-                                           &(iMenuItem){ "${menu.reveal.filemgr}",
-                                                         0,
-                                                         0,
-                                                         format_CStr("!reveal url:%s",
-                                                                     cstr_String(linkUrl)) });
-#endif
-                        }
-                    }
-                    else if (!willUseProxy_App(scheme)) {
-                        pushBack_Array(
-                            &items,
-                            &(iMenuItem){ openExt_Icon " ${link.browser}",
-                                          0,
-                                          0,
-                                          format_CStr("!open default:1 url:%s", cstr_String(linkUrl)) });
-                    }
-                    if (willUseProxy_App(scheme)) {
-                        pushBackN_Array(
-                            &items,
-                            (iMenuItem[]){
-                                { "---" },
-                                { isGemini ? "${link.noproxy}" : openExt_Icon " ${link.browser}",
-                                  0,
-                                  0,
-                                  format_CStr("!open origin:%s noproxy:1 url:%s",
-                                              cstr_String(id_Widget(w)),
-                                              cstr_String(linkUrl)) } },
-                            2);
-                    }
-                    iString *linkLabel = collectNewRange_String(
-                        linkLabel_GmDocument(view->doc, d->contextLink->linkId));
-                    urlEncodeSpaces_String(linkLabel);
-                    pushBackN_Array(&items,
-                                    (iMenuItem[]){ { "---" },
-                                                   { "${link.copy}", 0, 0, "document.copylink" },
-                                                   { bookmark_Icon " ${link.bookmark}",
-                                                     0,
-                                                     0,
-                                                     format_CStr("!bookmark.add title:%s url:%s",
-                                                                 cstr_String(linkLabel),
-                                                                 cstr_String(linkUrl)) },
-                                                   },
-                                    3);
-                    if (isNative && d->contextLink->mediaType != download_MediaType &&
-                        !equalCase_Rangecc(scheme, "file")) {
-                        pushBackN_Array(&items, (iMenuItem[]){
-                            { "---" },
-                            { download_Icon " ${link.download}", 0, 0, "document.downloadlink" },
-                        }, 2);
-                    }
-                    iMediaRequest *mediaReq;
-                    if ((mediaReq = findMediaRequest_DocumentWidget(d, d->contextLink->linkId)) != NULL &&
-                        d->contextLink->mediaType != download_MediaType) {
-                        if (isFinished_GmRequest(mediaReq->req)) {
-                            pushBack_Array(&items,
-                                           &(iMenuItem){ download_Icon " " saveToDownloads_Label,
-                                                         0,
-                                                         0,
-                                                         format_CStr("document.media.save link:%u",
-                                                                     d->contextLink->linkId) });
-                        }
-                    }
-                    if (equalCase_Rangecc(scheme, "file")) {
-                        /* Local files may be deleted. */
-                        pushBack_Array(&items, &(iMenuItem){ "---" });
-                        pushBack_Array(
-                            &items,
-                            &(iMenuItem){ delete_Icon " " uiTextCaution_ColorEscape
-                                                      "${link.file.delete}",
-                                          0,
-                                          0,
-                                          format_CStr("!file.delete confirm:1 path:%s",
-                                                      cstrCollect_String(
-                                                          localFilePathFromUrl_String(linkUrl))) });
-                    }
+                    d->menu = makeLinkContextMenu_DocumentWidget_(d, d->contextLink);
                 }
-                else if (deviceType_App() == desktop_AppDeviceType) {
+                else {
+                    if (deviceType_App() == desktop_AppDeviceType) {
                     if (!isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(&items,
                                         (iMenuItem[]){ { "${menu.copy}", 0, 0, "copy" },
@@ -4234,72 +4233,73 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" }
                         }, 4);
 #else
-                    /* Compact navigation actions. */
-                    pushBackN_Array(
-                        &items,
-                        (iMenuItem[]){
-                            { ">>>" backArrow_Icon, navigateBack_KeyShortcut, "navigate.back" },
-                            { ">>>" forwardArrow_Icon, navigateForward_KeyShortcut, "navigate.forward" },
-                            { ">>>" upArrow_Icon, navigateParent_KeyShortcut, "navigate.parent" },
-                            { ">>>" upArrowBar_Icon, navigateRoot_KeyShortcut, "navigate.root" },
-                        }, 4);
-#endif
-                    pushBackN_Array(
-                        &items,
-                        (iMenuItem[]){
-                            { "---" },
-                            { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
-                            { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
-                            { "---" },
-                            { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
-                            { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
-                            { "---" },
-                            { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
-                            { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
-                            { "${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
-                            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
-                            { d->flags & viewSource_DocumentWidgetFlag ? "${menu.viewformat.gemini}"
-                                                                       : "${menu.viewformat.plain}",
-                              0, 0, "document.viewformat" },
-                            { "---" },
-                            { "${menu.page.copyurl}", 0, 0, "document.copylink" }, },
-                        14);
-                    if (isEmpty_Range(&d->selectMark)) {
+                        /* Compact navigation actions. */
                         pushBackN_Array(
                             &items,
                             (iMenuItem[]){
-                                { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
-                                { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
-                            2);
-                    }
-                }
-                else {
-                    /* Mobile text selection menu. */
-#if 0
-                    pushBackN_Array(
-                        &items,
-                        (iMenuItem[]){
-                            { "${menu.select}", 0, 0, "document.select arg:1" },
-                            { "${menu.select.word}", 0, 0, "document.select arg:2" },
-                            { "${menu.select.par}", 0, 0, "document.select arg:3" },
-                        },
-                        3);
+                                           { ">>>" backArrow_Icon, navigateBack_KeyShortcut, "navigate.back" },
+                                           { ">>>" forwardArrow_Icon, navigateForward_KeyShortcut, "navigate.forward" },
+                                           { ">>>" upArrow_Icon, navigateParent_KeyShortcut, "navigate.parent" },
+                                           { ">>>" upArrowBar_Icon, navigateRoot_KeyShortcut, "navigate.root" },
+                                           }, 4);
 #endif
-                    postCommand_Root(w->root, "document.select arg:1");
-                    return iTrue;
+                        pushBackN_Array(
+                            &items,
+                            (iMenuItem[]){
+                                { "---" },
+                                { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
+                                { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
+                                { "---" },
+                                { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
+                                { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
+                                { "---" },
+                                { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+                                { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
+                                { "${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
+                                { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+                                { d->flags & viewSource_DocumentWidgetFlag ? "${menu.viewformat.gemini}"
+                                                                           : "${menu.viewformat.plain}",
+                                  0, 0, "document.viewformat" },
+                                { "---" },
+                                { "${menu.page.copyurl}", 0, 0, "document.copylink" }, },
+                            14);
+                        if (isEmpty_Range(&d->selectMark)) {
+                            pushBackN_Array(
+                                &items,
+                                (iMenuItem[]){
+                                               { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
+                                               { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
+                                2);
+                        }
+                    }
+                    else {
+                        /* Mobile text selection menu. */
+#if 0
+                        pushBackN_Array(
+                            &items,
+                            (iMenuItem[]){
+                                { "${menu.select}", 0, 0, "document.select arg:1" },
+                                { "${menu.select.word}", 0, 0, "document.select arg:2" },
+                                { "${menu.select.par}", 0, 0, "document.select arg:3" },
+                            },
+                            3);
+    #endif
+                        postCommand_Root(w->root, "document.select arg:1");
+                        return iTrue;
+                    }
+                    d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
+                    deinit_Array(&items);
+                    setMenuItemDisabled_Widget(
+                        d->menu,
+                        "document.upload",
+                        !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
+                            !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
+                    setMenuItemDisabled_Widget(
+                        d->menu,
+                        "document.upload copy:1",
+                        !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
+                            !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
                 }
-                d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
-                deinit_Array(&items);
-                setMenuItemDisabled_Widget(
-                    d->menu,
-                    "document.upload",
-                    !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
-                        !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
-                setMenuItemDisabled_Widget(
-                    d->menu,
-                    "document.upload copy:1",
-                    !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
-                        !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
             }
             processContextMenuEvent_Widget(d->menu, ev, {});
         }
