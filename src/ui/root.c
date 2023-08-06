@@ -1279,8 +1279,44 @@ static void updateToolBarActions_(iWidget *toolBar) {
 static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
     if (equalWidget_Command(cmd, toolBar, "mouse.clicked") && arg_Command(cmd) &&
         argLabel_Command(cmd, "button") == SDL_BUTTON_RIGHT) {
-        iWidget *menu = findChild_Widget(toolBar, "toolbar.menu");
-        arrange_Widget(menu);
+        /* Long-pressing on the toolbar brings up various menus. */
+        iWidget *hit = hitChild_Widget(toolBar, coord_Command(cmd));
+        iWidget *menu = NULL;
+        if (hit) {
+            const iString *id = id_Widget(hit);
+            if (!cmp_String(id, "toolbar.ident")) {
+                postCommand_App("preferences idents:1");
+                return iTrue;
+            }
+            else if (!cmp_String(id, "toolbar.action1") || !cmp_String(id, "toolbar.action2")) {
+                iArray *items = collectNew_Array(sizeof(iMenuItem));
+                int perRow = 0;
+                for (int i = 0; i < max_ToolbarAction; i++) {
+                    if (deviceType_App() == phone_AppDeviceType &&
+                        (i == leftSidebar_ToolbarAction || i == rightSidebar_ToolbarAction)) {
+                        continue;
+                    }
+                    if (perRow == 4) {
+                        perRow = 0;
+                        pushBack_Array(items, &(iMenuItem){ "---" });
+                    }
+                    pushBack_Array(items, &(iMenuItem){
+                        format_CStr(">>>%s", toolbarActions_Mobile[i].icon), 0, 0,
+                        toolbarActions_Mobile[i].command
+                    });
+                    perRow++;
+                }
+                while (perRow++ < 4) {
+                    /* Balance the last row with some empty labels. */
+                    pushBack_Array(items, &(iMenuItem){ ">>>```" });
+                }
+                menu = makeMenu_Widget(root_Widget(toolBar), data_Array(items), size_Array(items));
+            }
+        }
+        if (!menu) {
+            menu = findChild_Widget(toolBar, "toolbar.menu");
+        }
+        arrange_Widget(menu); /* need to know the height */
         openMenu_Widget(menu, innerToWindow_Widget(menu, init_I2(0, -height_Widget(menu))));
         return iTrue;
     }
