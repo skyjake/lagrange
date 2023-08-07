@@ -2585,6 +2585,14 @@ iBool isPrerenderingAllowed_DocumentWidget(const iDocumentWidget *d) {
            ~d->flags & swipeBegun_DocumentWidgetFlag;
 }
 
+static const iString *selectedText_DocumentWidget_(const iDocumentWidget *d) {
+    iRangecc mark = d->selectMark;
+    if (mark.start > mark.end) {
+        iSwap(const char *, mark.start, mark.end);
+    }
+    return collect_String(newRange_String(mark));
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "document.openurls.changed")) {
@@ -4221,10 +4229,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 else {
                     if (deviceType_App() == desktop_AppDeviceType) {
                     if (!isEmpty_Range(&d->selectMark)) {
-                        pushBackN_Array(&items,
-                                        (iMenuItem[]){ { "${menu.copy}", 0, 0, "copy" },
-                                                       { "---", 0, 0, NULL } },
-                                        2);
+                            pushBackN_Array(
+                                &items,
+                                (iMenuItem[]){
+                                    { "${menu.copy}", 0, 0, "copy" },
+                                    { "${menu.search}",
+                                      0,
+                                      0,
+                                      format_CStr("search newtab:1 query:%s",
+                                                  cstr_String(selectedText_DocumentWidget_(d))) },
+                                    { "---", 0, 0, NULL } },
+                                3);
                     }
 #if defined (iPlatformApple) && defined (LAGRANGE_ENABLE_MAC_MENUS)
                     pushBackN_Array(

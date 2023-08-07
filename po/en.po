@@ -353,6 +353,9 @@ msgstr "Paste"
 msgid "menu.paste.go"
 msgstr "Paste and Go"
 
+msgid "menu.search"
+msgstr "Search"
+
 # keep this short (3x1 horiz layout)
 msgid "menu.selectall"
 msgstr "Select All"
