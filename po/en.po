@@ -1728,11 +1728,23 @@ msgstr "Show URL on hover:"
 msgid "prefs.centershort"
 msgstr "Vertical centering:"
 
-msgid "prefs.collapsepreonload"
+msgid "prefs.collapsepre"
 msgstr "Collapse preformatted:"
 
 msgid "prefs.bookmarks.addbottom"
 msgstr "Add bookmarks to bottom:"
+
+msgid "collapse.never"
+msgstr "Never"
+
+msgid "collapse.notbydefault"
+msgstr "Manually"
+
+msgid "collapse.bydefault"
+msgstr "At Page Load"
+
+msgid "collapse.always"
+msgstr "Always"
 
 # User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
 msgid "prefs.dataurl.openimages"

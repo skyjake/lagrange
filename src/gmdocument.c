@@ -815,7 +815,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     meta.flags = constValue_Array(oldPreMeta, preIndex, iGmPreMeta).flags &
                                  folded_GmPreMetaFlag;
                 }
-                else if (prefs->collapsePreOnLoad && !isGopher) {
+                else if (prefs->collapsePre >= byDefault_Collapse && !isGopher) {
                     meta.flags |= folded_GmPreMetaFlag;
                 }
                 pushBack_Array(&d->preMeta, &meta);

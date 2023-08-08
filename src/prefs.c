@@ -87,7 +87,7 @@ void init_Prefs(iPrefs *d) {
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling = iFalse;
     d->openDataUrlImagesOnLoad = iFalse;
-    d->collapsePreOnLoad       = iFalse;
+    d->collapsePre             = notByDefault_Collapse;
     d->openArchiveIndexPages   = iTrue;
     d->addBookmarksToBottom    = iTrue;
     d->warnAboutMissingGlyphs  = iTrue;

@@ -1852,6 +1852,10 @@ void scrollBegan_DocumentWidget(iAnyObject *any, int offset, uint32_t duration) 
 }
 
 static void togglePreFold_DocumentWidget_(iDocumentWidget *d, uint16_t preId) {
+    const enum iCollapse mode = prefs_App()->collapsePre;
+    if (mode == always_Collapse || mode == never_Collapse) {
+        return;
+    }
     d->view->hoverPre    = NULL;
     d->view->hoverAltPre = NULL;
     d->selectMark       = iNullRange;
@@ -4371,6 +4375,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 #endif /* LAGRANGE_ENABLE_AUDIO */
             /* Fold/unfold a preformatted block. */
             if (~d->flags & selecting_DocumentWidgetFlag && view->hoverPre &&
+                prefs_App()->collapsePre != always_Collapse &&
+                prefs_App()->collapsePre != never_Collapse &&
                 preIsFolded_GmDocument(view->doc, preId_GmRun(view->hoverPre))) {
                 return iTrue;
             }

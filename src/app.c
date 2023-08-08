@@ -302,6 +302,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
     appendFormat_String(str, "tabwidth.set arg:%d\n", d->prefs.tabWidth);
     appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
+    appendFormat_String(str, "collapsepre.set arg:%d\n", d->prefs.collapsePre);
     for (size_t i = 0; i < iElemCount(d->prefs.navbarActions); i++) {
         appendFormat_String(str, "navbar.action.set arg:%d button:%d\n", d->prefs.navbarActions[i], i);
     }
@@ -330,7 +331,6 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.bottomnavbar", &d->prefs.bottomNavBar },
         { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
         { "prefs.centershort", &d->prefs.centerShortDocs },
-        { "prefs.collapsepreonload", &d->prefs.collapsePreOnLoad },
         { "prefs.dataurl.openimages", &d->prefs.openDataUrlImagesOnLoad },
         { "prefs.evensplit", &d->prefs.evenSplit },
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
@@ -2883,6 +2883,11 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         updateFeedIntervalButton_(findChild_Widget(d, "prefs.feedinterval"), arg_Command(cmd));
         return iFalse;
     }
+    else if (equal_Command(cmd, "collapsepre.set")) {
+        updateDropdownSelection_LabelWidget(findChild_Widget(d, "prefs.collapsepre"),
+                                            format_CStr(" arg:%d", arg_Command(cmd)));
+        return iFalse;
+    }
     else if (equal_Command(cmd, "scrollspeed")) {
         updateScrollSpeedButtons_(d, argLabel_Command(cmd, "type"), arg_Command(cmd));
         return iFalse;
@@ -3506,8 +3511,8 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.collapsepreonload.changed")) {
-        d->prefs.collapsePreOnLoad = arg_Command(cmd) != 0;
+    else if (equal_Command(cmd, "collapsepre.set")) {
+        d->prefs.collapsePre = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.hoverlink.changed")) {
@@ -4473,6 +4478,8 @@ iBool handleCommand_App(const char *cmd) {
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
         updateFeedIntervalButton_(findChild_Widget(dlg, "prefs.feedinterval"), d->prefs.feedInterval);
         updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.strings[uiLanguage_PrefsString]));
+        updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "prefs.collapsepre"),
+                                            format_CStr(" arg:%d", d->prefs.collapsePre));
         setToggle_Widget(findChild_Widget(dlg, "prefs.time.24h"), d->prefs.time24h);
         updateDropdownSelection_LabelWidget(
             findChild_Widget(dlg, "prefs.returnkey"),
@@ -4522,7 +4529,6 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.plaintext.wrap"), d->prefs.plainTextWrap);
         setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
         setToggle_Widget(findChild_Widget(dlg, "prefs.centershort"), d->prefs.centerShortDocs);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.collapsepreonload"), d->prefs.collapsePreOnLoad);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.light"), d->prefs.docThemeLight);
         updateImageStyleButton_(findChild_Widget(dlg, "prefs.imagestyle"), d->prefs.imageStyle);

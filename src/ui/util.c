@@ -2973,7 +2973,7 @@ iWidget *makePreferences_Widget(void) {
                                     { u8"简体中文 - zh", 0, 0, "uilang id:zh_Hans" },
                                     { u8"繁體/正體中文 - zh", 0, 0, "uilang id:zh_Hant" },
                                     { NULL } };
-    const iMenuItem feedIntervals[] = {
+    const iMenuItem feedIntervalItems[] = {
         { "${prefs.feedinterval.manual}", 0, 0, format_CStr("feedinterval.set arg:%d", manual_FeedInterval) },
         { formatCStrs_Lang("num.minutes.n", 30), 0, 0, format_CStr("feedinterval.set arg:%d", thirtyMinutes_FeedInterval) },
         { formatCStrs_Lang("num.hours.n", 1), 0, 0, format_CStr("feedinterval.set arg:%d", oneHour_FeedInterval) },
@@ -2983,7 +2983,14 @@ iWidget *makePreferences_Widget(void) {
         { "${reload.onceperday}", 0, 0, format_CStr("feedinterval.set arg:%d", oneDay_FeedInterval) },
         { NULL }
     };
-    const iMenuItem returnKeyBehaviors[] = {
+    const iMenuItem collapseItems[] = {
+        { "${collapse.never}", 0, 0, format_CStr("collapsepre.set arg:%d", never_Collapse) },
+        { "${collapse.notbydefault}", 0, 0, format_CStr("collapsepre.set arg:%d", notByDefault_Collapse) },
+        { "${collapse.bydefault}", 0, 0, format_CStr("collapsepre.set arg:%d", byDefault_Collapse) },
+        { "${collapse.always}", 0, 0, format_CStr("collapsepre.set arg:%d", always_Collapse) },
+        { NULL }
+    };
+    const iMenuItem returnKeyBehaviorItems[] = {
         { returnKeyBehaviorStr_(default_ReturnKeyBehavior),
           0,
           0,
@@ -3045,7 +3052,7 @@ iWidget *makePreferences_Widget(void) {
         { circle_Icon " ${prefs.accent.blue}", 0, 0, "accent.set arg:4" },
         { circle_Icon " ${prefs.accent.gray}", 0, 0, "accent.set arg:5" }
     };
-    const iMenuItem imgStyles[] = {
+    const iMenuItem imgStyleItems[] = {
         { "${prefs.imagestyle.original}",  0, 0, format_CStr("imagestyle.set arg:%d", original_ImageStyle) },
         { "${prefs.imagestyle.grayscale}", 0, 0, format_CStr("imagestyle.set arg:%d", grayscale_ImageStyle) },
         { "${prefs.imagestyle.bgfg}",      0, 0, format_CStr("imagestyle.set arg:%d", bgFg_ImageStyle) },
@@ -3120,7 +3127,7 @@ iWidget *makePreferences_Widget(void) {
             { "toggle id:prefs.markdown.viewsource" },
             { "radio device:1 id:prefs.pinsplit", 0, 0, (const void *) pinSplitItems },
             { "padding" },
-            { "dropdown id:prefs.feedinterval", 0, 0, (const void *) feedIntervals },
+            { "dropdown id:prefs.feedinterval", 0, 0, (const void *) feedIntervalItems },
             { "padding" },
             { "dropdown id:prefs.uilang", 0, 0, (const void *) langItems },
             { "toggle id:prefs.time.24h" },
@@ -3130,7 +3137,7 @@ iWidget *makePreferences_Widget(void) {
         const iMenuItem uiPanelItems[] = {
             { "title id:heading.prefs.interface" },
             { "padding arg:0.667" },
-            { "dropdown device:0 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviors },
+            { "dropdown device:0 id:prefs.returnkey", 0, 0, (const void *) returnKeyBehaviorItems },
             { "toggle device:2 id:prefs.hidetoolbarscroll" },
             { "toggle id:prefs.bottomnavbar text:${LC:prefs.bottomnavbar}" },
             { "toggle id:prefs.bottomtabbar text:${LC:prefs.bottomtabbar}" },
@@ -3158,7 +3165,7 @@ iWidget *makePreferences_Widget(void) {
             { "dropdown id:prefs.doctheme.light", 0, 0, (const void *) docThemes[1] },
             { "radio horizontal:1 id:prefs.saturation", 0, 0, (const void *) satItems },
             { "padding" },
-            { "dropdown id:prefs.imagestyle", 0, 0, (const void *) imgStyles },
+            { "dropdown id:prefs.imagestyle", 0, 0, (const void *) imgStyleItems },
             { "padding" },
             { NULL }
         };
@@ -3200,7 +3207,7 @@ iWidget *makePreferences_Widget(void) {
             { "padding" },
             { "toggle id:prefs.sideicon" },
             { "toggle id:prefs.centershort" },
-            { "toggle id:prefs.collapsepreonload" },
+            { "dropdown id:prefs.collapsepre", 0, 0, (const void *) collapseItems },
             { "padding" },
             { NULL }
         };
@@ -3323,33 +3330,18 @@ iWidget *makePreferences_Widget(void) {
             }
             addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
-        /* Feed refresh interval. */ {
+        /* Feed refresh interval. */
         addDialogPadding_(headings, values);
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.feedinterval}")));
-            iLabelWidget *button = makeMenuButton_LabelWidget(
-                feedIntervals[findWidestLabel_MenuItem(
-                                  feedIntervals, iElemCount(feedIntervals) - 1)].label,
-                feedIntervals, iElemCount(feedIntervals) - 1);
-            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
-                                      uiBackgroundMenu_ColorId);
-            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
-                         "prefs.feedinterval");
-        }
+        addDialogDropMenu_(headings,
+                           values,
+                           "${prefs.feedinterval}",
+                           feedIntervalItems,
+                           iInvalidSize,
+                           "prefs.feedinterval");
         addDialogPadding_(headings, values);
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
             pushBackN_Array(uiLangs, langItems, iElemCount(langItems) - 1);
-            /* TODO: Add an arrange flag for resizing parent to widest child. */
-            /*
-            size_t widestPos = findWidestLabel_MenuItem(data_Array(uiLangs), size_Array(uiLangs));
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.uilang}")));
-            setId_Widget(addChildFlags_Widget(values,
-                                              iClob(makeMenuButton_LabelWidget(
-                                                  value_Array(uiLangs, widestPos, iMenuItem).label,
-                                                  data_Array(uiLangs),
-                                                  size_Array(uiLangs))),
-                                              algnLeft_WidgetFlag),
-                         "prefs.uilang");*/
             addDialogDropMenu_(headings, values, "${prefs.uilang}",
                                constData_Array(uiLangs), size_Array(uiLangs),
                                "prefs.uilang");
@@ -3423,42 +3415,34 @@ iWidget *makePreferences_Widget(void) {
                                                    &headings,
                                                    &values),
                      "prefs.page.style");
-        //        makeTwoColumnHeading_("${heading.prefs.paragraph}", headings, values);
-        //        makeTwoColumnHeading_("${heading.prefs.pagecontent}", headings, values);
         for (int i = 0; i < 2; ++i) {
             const iBool isDark = (i == 0);
             const char *mode = isDark ? "dark" : "light";
-            addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "${prefs.doctheme.dark}" : "${prefs.doctheme.light}")));
-            iLabelWidget *button = makeMenuButton_LabelWidget(
-                docThemes[i][findWidestLabel_MenuItem(docThemes[i], max_GmDocumentTheme)].label,
-                docThemes[i],
-                max_GmDocumentTheme);
-            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
-            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
-                         format_CStr("prefs.doctheme.%s", mode));
+            addDialogDropMenu_(headings,
+                               values,
+                               isDark ? "${prefs.doctheme.dark}" : "${prefs.doctheme.light}",
+                               docThemes[i],
+                               max_GmDocumentTheme,
+                               format_CStr("prefs.doctheme.%s", mode));
         }
         addDialogPadding_(headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.saturation}")));
         iWidget *sats = new_Widget();
         /* Saturation levels. */ {
+            /* TODO: Make an actual slider. */
             addRadioButton_(sats, "prefs.saturation.3", "100 %", "saturation.set arg:100");
             addRadioButton_(sats, "prefs.saturation.2", "66 %", "saturation.set arg:66");
             addRadioButton_(sats, "prefs.saturation.1", "33 %", "saturation.set arg:33");
             addRadioButton_(sats, "prefs.saturation.0", "0 %", "saturation.set arg:0");
         }
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        /* Colorize images. */ {
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imagestyle}")));
-            iLabelWidget *button = makeMenuButton_LabelWidget(
-                imgStyles[findWidestLabel_MenuItem(imgStyles, iElemCount(imgStyles) - 1)].label,
-                imgStyles,
-                iElemCount(imgStyles) - 1);
-            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"),
-                                      uiBackgroundMenu_ColorId);
-            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
-                         "prefs.imagestyle");
-        }
-//        addDialogPadding_(headings, values);
+        /* Colorize images. */
+        addDialogDropMenu_(headings,
+                           values,
+                           "${prefs.imagestyle}",
+                           imgStyleItems,
+                           iInvalidSize,
+                           "prefs.imagestyle");
         /* Text settings. */
         if (!isTerminal_Platform()) {
             makeTwoColumnHeading_("${heading.prefs.fonts}", headings, values);
@@ -3530,7 +3514,8 @@ iWidget *makePreferences_Widget(void) {
         addDialogPadding_(headings, values);
         addDialogToggle_(headings, values, "${prefs.centershort}", "prefs.centershort");
         addDialogToggle_(headings, values, "${prefs.sideicon}", "prefs.sideicon");
-        addDialogToggle_(headings, values, "${prefs.collapsepreonload}", "prefs.collapsepreonload");
+        addDialogDropMenu_(headings, values, "${prefs.collapsepre}", collapseItems, iInvalidSize,
+                           "prefs.collapsepre");
     }
     /* Content. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs, photo_Icon " ${heading.prefs.content}",
@@ -3579,19 +3564,13 @@ iWidget *makePreferences_Widget(void) {
                      "prefs.page.ui");
         addDialogToggle_(headings, values, "${prefs.hoverlink}", "prefs.hoverlink");
         addDialogToggle_(headings, values, "${prefs.bookmarks.addbottom}", "prefs.bookmarks.addbottom");
-        /* Return key behaviors. */ {
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
-            iLabelWidget *returnKey = makeMenuButton_LabelWidget(
-                returnKeyBehaviors[findWidestLabel_MenuItem(returnKeyBehaviors,
-                                                            iElemCount(returnKeyBehaviors) - 1)]
-                    .label,
-                returnKeyBehaviors,
-                iElemCount(returnKeyBehaviors) - 1);
-            setBackgroundColor_Widget(findChild_Widget(as_Widget(returnKey), "menu"),
-                                      uiBackgroundMenu_ColorId);
-            setId_Widget(addChildFlags_Widget(values, iClob(returnKey), alignLeft_WidgetFlag),
-                         "prefs.returnkey");
-        }
+        /* Return key behaviors. */
+        addDialogDropMenu_(headings,
+                           values,
+                           "${prefs.returnkey}",
+                           returnKeyBehaviorItems,
+                           iInvalidSize,
+                           "prefs.returnkey");
         if (!isTerminal_Platform()) {
             addDialogToggle_(headings, values, "${prefs.imageloadscroll}", "prefs.imageloadscroll");
         }
@@ -3623,9 +3602,6 @@ iWidget *makePreferences_Widget(void) {
                     values, iClob(scrollSpeed), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             }
         }
-//        if (deviceType_App() == phone_AppDeviceType) {
-//            addDialogToggle_(headings, values, "${prefs.hidetoolbarscroll}", "prefs.hidetoolbarscroll");
-//        }
     }
     /* Keybindings. */ {
         iBindingsWidget *bind = new_BindingsWidget();
@@ -3660,7 +3636,6 @@ iWidget *makePreferences_Widget(void) {
     iWidget *buttons = addChild_Widget(
         dlg, iClob(makeDialogButtons_Widget(actions + actOffset, iElemCount(actions) - actOffset)));
     setId_Widget(child_Widget(buttons, 0), "prefs.aboutfonts");
-//    setFlags_Widget(findChild_Widget(dlg, "prefs.aboutfonts"), hidden_WidgetFlag, iTrue);
     addChild_Widget(dlg->root->widget, iClob(dlg));
     setupSheetTransition_Mobile(dlg, iTrue);
     return dlg;

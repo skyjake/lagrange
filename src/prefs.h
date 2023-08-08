@@ -85,13 +85,12 @@ enum iPrefsBool {
     loadImageInsteadOfScrolling_PrefsBool,
     openDataUrlImagesOnLoad_PrefsBool,
 
-    collapsePreOnLoad_PrefsBool,
     openArchiveIndexPages_PrefsBool,
     addBookmarksToBottom_PrefsBool,
     warnAboutMissingGlyphs_PrefsBool,
     markdownAsSource_PrefsBool,
-
     skipIndexPageOnParentNavigation_PrefsBool,
+
     edgeSwipe_PrefsBool,
     pageSwipe_PrefsBool,
 
@@ -117,6 +116,13 @@ enum iPrefsBool {
 
     /* Meta */
     max_PrefsBool
+};
+
+enum iCollapse {
+    never_Collapse,
+    notByDefault_Collapse,
+    byDefault_Collapse,
+    always_Collapse,
 };
 
 #define maxNavbarActions_Prefs  4
@@ -156,13 +162,12 @@ struct Impl_Prefs {
             iBool loadImageInsteadOfScrolling;
             iBool openDataUrlImagesOnLoad;
 
-            iBool collapsePreOnLoad;
             iBool openArchiveIndexPages;
             iBool addBookmarksToBottom;
             iBool warnAboutMissingGlyphs;
             iBool markdownAsSource;
-
             iBool skipIndexPageOnParentNavigation;
+
             iBool edgeSwipe; /* mobile: one can swipe from edges to navigate */
             iBool pageSwipe; /* mobile: one can swipe over the page to navigate */
 
@@ -208,6 +213,7 @@ struct Impl_Prefs {
     enum iFeedInterval feedInterval;
     int              returnKey;
     int              smoothScrollSpeed[max_ScrollType];
+    enum iCollapse   collapsePre;
     /* Network */
     int              maxCacheSize; /* MB */
     int              maxMemorySize; /* MB */
