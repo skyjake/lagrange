@@ -114,6 +114,7 @@ set (RESOURCES
     res/lang/uk.bin
     res/lang/zh_Hans.bin
     res/lang/zh_Hant.bin
+    res/logo.png
     res/shadow.png
     res/fontpack.ini
     res/macos-system-fonts.ini

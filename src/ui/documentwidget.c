@@ -4692,6 +4692,7 @@ static void drawViewOrBlank_DocumentWidget_(const iDocumentWidget *d, const iDoc
         fillRect_Paint(&p,
                        intersect_Rect(moved_Rect(bounds, init_I2(offset, 0)), bounds),
                        uiBackground_ColorId);
+        drawLogo_MainWindow(get_MainWindow(), moved_Rect(bounds, init_I2(offset, 0)));
     }
 }
 

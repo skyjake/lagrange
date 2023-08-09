@@ -1649,6 +1649,9 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
                               size_Range(&mark));
         }
     }
+    else {
+        drawLogo_MainWindow(get_MainWindow(), moved_Rect(bounds, init_I2(horizOffset, 0)));
+    }
     /* Fill the top safe area above the view, if there is one. */
     if (isCoveringTopSafeArea_DocumentView(d)) {
         if (topSafeInset_Mobile() > 0) {

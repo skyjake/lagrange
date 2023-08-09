@@ -459,7 +459,7 @@ static SDL_HitTestResult hitTest_MainWindow_(SDL_Window *win, const SDL_Point *p
     const int   rightEdge     = left_Rect(bounds_Widget(findChild_Widget(
                                     rootAt_Window_(as_Window(d), init_I2(pos->x, pos->y))->widget,
                                     "winbar.min")));
-    setCurrent_Window(NULL);                                    
+    setCurrent_Window(NULL);
     d->place.lastHit = SDL_HITTEST_NORMAL;
     if (snap != maximized_WindowSnap) {
         if (isLeft) {
@@ -682,7 +682,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
     flags |= shouldDefaultToMetalRenderer_MacOS() ? SDL_WINDOW_METAL : SDL_WINDOW_OPENGL;
     if (flags & SDL_WINDOW_METAL) {
-        /* There are some really odd refresh glitches that only occur with the Metal 
+        /* There are some really odd refresh glitches that only occur with the Metal
            backend. It's perhaps related to it not expecting refresh to stop intermittently
            to wait for input events. If forcing constant refreshing at full frame rate, the
            problems seem to go away... Rendering everything to a separate render target
@@ -719,6 +719,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
     d->place.snap             = 0;
     d->keyboardHeight         = 0;
     d->backBuf                = NULL;
+    d->logo                   = NULL;
     const iInt2 minSize =
         (isMobile_Platform() ? zero_I2() /* windows aren't independently resizable */
                              : init_I2(425, 325));
@@ -761,6 +762,14 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         free(surf->pixels);
         SDL_FreeSurface(surf);
     }
+    /* Load the emboss graphic. */ {
+        SDL_Surface *surf = loadImage_(&imageLogo_Resources, 0);
+        d->logo = SDL_CreateTextureFromSurface(d->base.render, surf);
+        SDL_SetTextureBlendMode(d->logo, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureScaleMode(d->logo, SDL_ScaleModeBest);
+        free(surf->pixels);
+        SDL_FreeSurface(surf);
+    }
     d->appIcon = NULL;
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Load the app icon for drawing in the title bar. */
@@ -784,6 +793,12 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
 void deinit_MainWindow(iMainWindow *d) {
     setCurrent_Window(as_Window(d));
     removeWindow_App(d);
+    if (d->logo) {
+        SDL_DestroyTexture(d->logo);
+    }
+    if (d->appIcon) {
+        SDL_DestroyTexture(d->appIcon);
+    }
     if (d->backBuf) {
         SDL_DestroyTexture(d->backBuf);
     }
@@ -816,7 +831,7 @@ iBool isFullscreen_MainWindow(const iMainWindow *d) {
 }
 
 iRoot *findRoot_Window(const iWindow *d, const iWidget *widget) {
-    
+
     while (widget->parent) {
         widget = widget->parent;
     }
@@ -983,7 +998,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 /* Returned to foreground, may have lost buffered content. */
                 invalidate_Window(d);
                 postCommand_App("window.unfreeze");
-#endif                
+#endif
             }
             return iFalse;
         case SDL_WINDOWEVENT_TAKE_FOCUS:
@@ -1033,7 +1048,7 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
         iAssert(~SDL_GetWindowFlags(d->base.win) & SDL_WINDOW_MAXIMIZED);
 #endif
         d->place.normalRect.pos =
-            max_I2(zero_I2(), sub_I2(d->place.normalRect.pos, border));        
+            max_I2(zero_I2(), sub_I2(d->place.normalRect.pos, border));
     }
 }
 
@@ -1201,9 +1216,9 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
                 postCommand_App("quit");
             }
             else {
-                closeWindow_App(as_Window(d));   
+                closeWindow_App(as_Window(d));
             }
-#endif            
+#endif
             return iTrue;
         default:
             break;
@@ -1245,7 +1260,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             }
         }
         case SDL_RENDER_TARGETS_RESET:
-        case SDL_RENDER_DEVICE_RESET: {            
+        case SDL_RENDER_DEVICE_RESET: {
             if (mw || extraw) {
                 invalidate_Window_(d, iTrue /* force full reset */);
             }
@@ -1560,6 +1575,24 @@ void drawQuick_MainWindow(iMainWindow *d) {
     }
 }
 
+void drawLogo_MainWindow(iMainWindow *d, iRect bounds) {
+    if (d->logo) {
+        iInt2 embossSize = size_SDLTexture(d->logo);
+        float xScale = (float) (width_Rect(bounds) / 2) / (float) embossSize.x;
+        float yScale = (float) (height_Rect(bounds) / 2) / (float) embossSize.y;
+        mulfv_I2(&embossSize, iMin(xScale, yScale));
+        iRect embossRect = { zero_I2(), embossSize };
+        embossRect.pos = sub_I2(mid_Rect(bounds), divi_I2(embossRect.size, 2));
+        const iColor dim = get_Color(uiBackgroundSidebar_ColorId);
+        SDL_SetTextureColorMod(d->logo, dim.r, dim.g, dim.b);
+        iPaint p;
+        init_Paint(&p);
+        setClip_Paint(&p, bounds);
+        SDL_RenderCopy(d->base.render, d->logo, NULL, (const SDL_Rect *) &embossRect);
+        unsetClip_Paint(&p);
+    }
+}
+
 void draw_MainWindow(iMainWindow *d) {
     if (isDrawing_) {
         /* Already drawing! */
@@ -1601,7 +1634,7 @@ void draw_MainWindow(iMainWindow *d) {
         /* TODO: On macOS, a detached popup window will mess up the main window's rendering
            completely. Looks like a render target mixup. macOS builds normally use native menus,
            though, so leaving it in. */
-        if (d->enableBackBuf) { 
+        if (d->enableBackBuf) {
             /* Possible resize the backing buffer. */
             if (!d->backBuf || !isEqual_I2(size_SDLTexture(d->backBuf), w->size)) {
                 if (d->backBuf) {
@@ -2019,7 +2052,7 @@ void setSplitMode_MainWindow(iMainWindow *d, int splitFlags) {
             if (w->roots[i]) {
                 w->roots[i]->widget->padding[1] = (splitMode ? 1 : 0);
             }
-        }        
+        }
         d->splitMode = splitMode;
         windowSizeChanged_MainWindow_(d);
         postCommand_App("window.resized"); /* not really, but widgets may need to change layout */
@@ -2228,5 +2261,5 @@ iWindow *newExtra_Window(iWidget *rootWidget) {
     setDrawBufferEnabled_Widget(frameRoot, iFalse);
     setDrawBufferEnabled_Widget(rootWidget, iFalse);
     setCurrent_Window(oldWin);
-    return win;     
+    return win;
 }
