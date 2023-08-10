@@ -1803,6 +1803,69 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d, iBool useCach
     return iFalse;
 }
 
+static void continueMarkingSelection_DocumentWidget_(iDocumentWidget *d) {
+    iWidget *w = as_Widget(d);
+    iRangecc loc = sourceLoc_DocumentView(d->view, pos_Click(&d->click));
+    if (d->selectMark.start == NULL) {
+        d->selectMark = loc;
+    }
+    else if (loc.end) {
+        if (flags_Widget(w) & touchDrag_WidgetFlag) {
+            /* Choose which end to move. */
+            if (!(d->flags & (movingSelectMarkStart_DocumentWidgetFlag |
+                              movingSelectMarkEnd_DocumentWidgetFlag))) {
+                const iRangecc mark    = selectionMark_DocumentWidget(d);
+                const char *   midMark = mark.start + size_Range(&mark) / 2;
+                const iRangecc loc     = sourceLoc_DocumentView(d->view, pos_Click(&d->click));
+                const iBool    isCloserToStart = d->selectMark.start > d->selectMark.end ?
+                                                  (loc.start > midMark) : (loc.start < midMark);
+                iChangeFlags(d->flags, movingSelectMarkStart_DocumentWidgetFlag, isCloserToStart);
+                iChangeFlags(d->flags, movingSelectMarkEnd_DocumentWidgetFlag, !isCloserToStart);
+            }
+            /* Move the start or the end depending on which is nearer. */
+            if (d->flags & movingSelectMarkStart_DocumentWidgetFlag) {
+                d->selectMark.start = loc.start;
+            }
+            else {
+                d->selectMark.end = (d->selectMark.end > d->selectMark.start ? loc.end : loc.start);
+            }
+        }
+        else {
+            d->selectMark.end = loc.end;
+            if (loc.start < d->initialSelectMark.start) {
+                d->selectMark.end = loc.start;
+            }
+            if (isEmpty_Range(&d->selectMark)) {
+                d->selectMark = d->initialSelectMark;
+            }
+        }
+    }
+    iAssert((!d->selectMark.start && !d->selectMark.end) ||
+            ( d->selectMark.start &&  d->selectMark.end));
+    /* Extend to full words/paragraphs. */
+    if (d->flags & (selectWords_DocumentWidgetFlag | selectLines_DocumentWidgetFlag)) {
+        extendRange_Rangecc(
+            &d->selectMark,
+            range_String(source_GmDocument(d->view->doc)),
+            (d->flags & movingSelectMarkStart_DocumentWidgetFlag ? moveStart_RangeExtension
+                                                                 : moveEnd_RangeExtension) |
+                (d->flags & selectWords_DocumentWidgetFlag ? word_RangeExtension
+                                                           : line_RangeExtension));
+        if (d->flags & movingSelectMarkStart_DocumentWidgetFlag) {
+            d->initialSelectMark.start =
+                d->initialSelectMark.end = d->selectMark.start;
+        }
+    }
+    if (d->initialSelectMark.start) {
+        if (d->selectMark.end > d->selectMark.start) {
+            d->selectMark.start = d->initialSelectMark.start;
+        }
+        else if (d->selectMark.end < d->selectMark.start) {
+            d->selectMark.start = d->initialSelectMark.end;
+        }
+    }
+}
+
 void refreshWhileScrolling_DocumentWidget(iAny *ptr) {
     iAssert(isInstance_Object(ptr, &Class_DocumentWidget));
     iDocumentWidget *d = ptr;
@@ -1816,6 +1879,9 @@ void refreshWhileScrolling_DocumentWidget(iAny *ptr) {
         for (const iGmRun *r = view->animWideRunRange.start; r != view->animWideRunRange.end; r++) {
             insert_PtrSet(view->invalidRuns, r);
         }
+    }
+    if (d->flags & selecting_DocumentWidgetFlag) {
+        continueMarkingSelection_DocumentWidget_(d);
     }
     if (isFinished_Anim(&view->animWideRunOffset)) {
         view->animWideRunId = 0;
@@ -4384,63 +4450,27 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             if (~d->flags & selecting_DocumentWidgetFlag) {
                 beginMarkingSelection_DocumentWidget_(d, d->click.startPos);
             }
-            iRangecc loc = sourceLoc_DocumentView(view, pos_Click(&d->click));
-            if (d->selectMark.start == NULL) {
-                d->selectMark = loc;
-            }
-            else if (loc.end) {
-                if (flags_Widget(w) & touchDrag_WidgetFlag) {
-                    /* Choose which end to move. */
-                    if (!(d->flags & (movingSelectMarkStart_DocumentWidgetFlag |
-                                      movingSelectMarkEnd_DocumentWidgetFlag))) {
-                        const iRangecc mark    = selectionMark_DocumentWidget(d);
-                        const char *   midMark = mark.start + size_Range(&mark) / 2;
-                        const iRangecc loc     = sourceLoc_DocumentView(view, pos_Click(&d->click));
-                        const iBool    isCloserToStart = d->selectMark.start > d->selectMark.end ?
-                            (loc.start > midMark) : (loc.start < midMark);
-                        iChangeFlags(d->flags, movingSelectMarkStart_DocumentWidgetFlag, isCloserToStart);
-                        iChangeFlags(d->flags, movingSelectMarkEnd_DocumentWidgetFlag, !isCloserToStart);
-                    }
-                    /* Move the start or the end depending on which is nearer. */
-                    if (d->flags & movingSelectMarkStart_DocumentWidgetFlag) {
-                        d->selectMark.start = loc.start;
-                    }
-                    else {
-                        d->selectMark.end = (d->selectMark.end > d->selectMark.start ? loc.end : loc.start);
-                    }
+            continueMarkingSelection_DocumentWidget_(d);
+            /* Set scroll speed depending on position near the top/bottom. */ {
+                const iRect bounds = bounds_Widget(w);
+                const int autoScrollRegion = gap_UI * 15;
+                const int y = pos_Click(&d->click).y;
+                float delta = 0.0f;
+                if (y < top_Rect(bounds) + autoScrollRegion) {
+                    delta = (y - top_Rect(bounds) - autoScrollRegion) / (float) autoScrollRegion;
+                }
+                else if (y > bottom_Rect(bounds) - autoScrollRegion) {
+                    delta = (y - bottom_Rect(bounds) + autoScrollRegion) / (float) autoScrollRegion;
+                }
+                float speed = iClamp(fabsf(delta * delta * delta), 0, 1) * gap_Text * 200;
+                if (speed != 0.0f) {
+                    setValueSpeed_Anim(&d->view->scrollY.pos,
+                                       delta < 0 ? 0.0f : d->view->scrollY.max,
+                                       speed);
+                    refreshWhileScrolling_DocumentWidget(d);
                 }
                 else {
-                    d->selectMark.end = loc.end;
-                    if (loc.start < d->initialSelectMark.start) {
-                        d->selectMark.end = loc.start;
-                    }
-                    if (isEmpty_Range(&d->selectMark)) {
-                        d->selectMark = d->initialSelectMark;
-                    }
-                }
-            }
-            iAssert((!d->selectMark.start && !d->selectMark.end) ||
-                    ( d->selectMark.start &&  d->selectMark.end));
-            /* Extend to full words/paragraphs. */
-            if (d->flags & (selectWords_DocumentWidgetFlag | selectLines_DocumentWidgetFlag)) {
-                extendRange_Rangecc(
-                    &d->selectMark,
-                    range_String(source_GmDocument(view->doc)),
-                    (d->flags & movingSelectMarkStart_DocumentWidgetFlag ? moveStart_RangeExtension
-                                                                         : moveEnd_RangeExtension) |
-                        (d->flags & selectWords_DocumentWidgetFlag ? word_RangeExtension
-                                                                   : line_RangeExtension));
-                if (d->flags & movingSelectMarkStart_DocumentWidgetFlag) {
-                    d->initialSelectMark.start =
-                        d->initialSelectMark.end = d->selectMark.start;
-                }
-            }
-            if (d->initialSelectMark.start) {
-                if (d->selectMark.end > d->selectMark.start) {
-                    d->selectMark.start = d->initialSelectMark.start;
-                }
-                else if (d->selectMark.end < d->selectMark.start) {
-                    d->selectMark.start = d->initialSelectMark.end;
+                    stop_Anim(&d->view->scrollY.pos);
                 }
             }
 //            printf("mark %zu ... %zu {%s}\n", d->selectMark.start - cstr_String(source_GmDocument(d->view->doc)),
@@ -4455,6 +4485,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 setGrabbedPlayer_DocumentWidget_(d, NULL);
                 return iTrue;
             }
+            stop_Anim(&d->view->scrollY.pos);
             if (isVisible_Widget(d->menu)) {
                 closeMenu_Widget(d->menu);
             }
@@ -4602,6 +4633,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 setGrabbedPlayer_DocumentWidget_(d, NULL);
                 return iTrue;
             }
+            stop_Anim(&d->view->scrollY.pos);
             return iTrue;
         default:
             break;
