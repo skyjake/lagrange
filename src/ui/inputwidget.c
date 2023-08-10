@@ -2346,9 +2346,12 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
     else if (isEditing_InputWidget_(d) && (isCommand_UserEvent(ev, "window.focus.lost") ||
                                            isCommand_UserEvent(ev, "window.focus.gained"))) {
-        startOrStopCursorTimer_InputWidget_(d, isCommand_UserEvent(ev, "window.focus.gained"));
-        d->cursorVis = 1;
-        refresh_Widget(d);
+        /* Ignore events happening in other windows. */
+        if (arg_Command(command_UserEvent(ev)) == id_Window(window_Widget(w))) {
+            startOrStopCursorTimer_InputWidget_(d, isCommand_UserEvent(ev, "window.focus.gained"));
+            d->cursorVis = 1;
+            refresh_Widget(d);
+        }
         return iFalse;
     }
     else if ((isCommand_UserEvent(ev, "copy") || isCommand_UserEvent(ev, "input.copy")) &&
