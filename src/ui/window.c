@@ -1583,6 +1583,7 @@ void drawLogo_MainWindow(iMainWindow *d, iRect bounds) {
         mulfv_I2(&embossSize, iMin(xScale, yScale));
         iRect embossRect = { zero_I2(), embossSize };
         embossRect.pos = sub_I2(mid_Rect(bounds), divi_I2(embossRect.size, 2));
+        embossRect.pos.y -= topSafeInset_Mobile();
         const iColor dim = get_Color(uiBackgroundSidebar_ColorId);
         SDL_SetTextureColorMod(d->logo, dim.r, dim.g, dim.b);
         iPaint p;

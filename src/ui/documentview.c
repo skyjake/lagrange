@@ -1537,7 +1537,9 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
     int         yTop             = docBounds.pos.y + viewPos_DocumentView(d);
     const iBool isDocEmpty       = size_GmDocument(d->doc).y == 0;
     const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
+    iBool       didDraw          = iFalse;
     if (!isDocEmpty || !isEmpty_Banner(banner)) {
+        didDraw = iTrue;
         const int docBgColor = isDocEmpty ? tmBannerBackground_ColorId : tmBackground_ColorId;
         setClip_Paint(&ctx.paint, clipBounds);
         iAssert(isEqual_I2(origin_Paint, zero_I2()));
@@ -1650,7 +1652,9 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
         }
     }
     else {
-        drawLogo_MainWindow(get_MainWindow(), moved_Rect(bounds, init_I2(horizOffset, 0)));
+        iRect boundsWithOffset = moved_Rect(bounds, init_I2(horizOffset, 0));
+        fillRect_Paint(&ctx.paint, boundsWithOffset, uiBackground_ColorId);
+        drawLogo_MainWindow(get_MainWindow(), boundsWithOffset);
     }
     /* Fill the top safe area above the view, if there is one. */
     if (isCoveringTopSafeArea_DocumentView(d)) {
@@ -1659,6 +1663,7 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
                                                        topRight_Rect(safeRect_Root(w->root)));
             fillRect_Paint(&ctx.paint,
                            moved_Rect(topSafeArea, init_I2(horizOffset, 0)),
+                           !didDraw ? uiBackground_ColorId :
                            !isEmpty_Banner(d->banner) && docBounds.pos.y + viewPos_DocumentView(d) -
                                 documentTopPad_DocumentView(d) > bounds.pos.y ?
                            tmBannerBackground_ColorId : tmBackground_ColorId);
