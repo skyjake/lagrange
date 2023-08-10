@@ -384,6 +384,10 @@ iBool isShowingLinkNumbers_DocumentWidget(const iDocumentWidget *d) {
     return (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0;
 }
 
+iBool isBlank_DocumentWidget(const iDocumentWidget *d) {
+    return (d->flags & drawDownloadCounter_DocumentWidgetFlag) == 0;
+}
+
 iBool isHoverAllowed_DocumentWidget(const iDocumentWidget *d) {
     if (!isHover_Widget(d)) {
         return iFalse;

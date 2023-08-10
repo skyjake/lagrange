@@ -1654,7 +1654,9 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
     else {
         iRect boundsWithOffset = moved_Rect(bounds, init_I2(horizOffset, 0));
         fillRect_Paint(&ctx.paint, intersect_Rect(boundsWithOffset, clipBounds), uiBackground_ColorId);
-        drawLogo_MainWindow(get_MainWindow(), boundsWithOffset);
+        if (isBlank_DocumentWidget(d->owner)) {
+            drawLogo_MainWindow(get_MainWindow(), boundsWithOffset);
+        }
     }
     /* Fill the top safe area above the view, if there is one. */
     if (isCoveringTopSafeArea_DocumentView(d)) {
