@@ -256,11 +256,13 @@ iRangecc urlUser_String(const iString *d) {
         userPats_[0] = new_RegExp("~([^/?]+)", 0);
         userPats_[1] = new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption);
     }
+    iUrl url;
+    init_Url(&url, d);
     iRegExpMatch m;
     init_RegExpMatch(&m);
     iRangecc found = iNullRange;
     iForIndices(i, userPats_) {
-        if (matchString_RegExp(userPats_[i], d, &m)) {
+        if (matchRange_RegExp(userPats_[i], url.path, &m)) {
             found = capturedRange_RegExpMatch(&m, 1);
         }
     }
