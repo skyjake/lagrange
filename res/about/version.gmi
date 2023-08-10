@@ -22,6 +22,7 @@ Changes and enhancements:
 * Tuned theme color palette.
 
 Fixes:
+* Problems with window refresh when multiple windows are open. For example, the cursor not blinking in input fields.
 * Glitches during swipe navigation (touch screens, macOS trackpad). Behavior is more robust at ends of history and when content is not immediately available in cache.
 * Potential crash at shutdown when a feed update is ongoing.
 * Incorrect name displayed in page banner when URL query string contains a tilde name.

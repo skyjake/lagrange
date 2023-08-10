@@ -3097,7 +3097,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 setText_UploadWidget(upload, &text);
                 deinit_String(&text);
             }
-            postRefresh_App();
+            refresh_Widget(d);
         }
         return iTrue;
     }

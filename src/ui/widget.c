@@ -90,7 +90,7 @@ static void deinit_WidgetDrawBuffer(iWidgetDrawBuffer *d) {
 }
 
 iDefineTypeConstruction(WidgetDrawBuffer)
-    
+
 static void realloc_WidgetDrawBuffer(iWidgetDrawBuffer *d, SDL_Renderer *render, iInt2 size) {
     if (!isEqual_I2(d->size, size)) {
         d->size = size;
@@ -171,7 +171,7 @@ void init_Widget(iWidget *d) {
 
 static void visualOffsetAnimation_Widget_(void *ptr) {
     iWidget *d = ptr;
-    postRefresh_App();
+    refresh_Widget(d);
     d->root->didAnimateVisualOffsets = iTrue;
 #if 0
     printf("'%s' visoffanim: fin:%d val:%f\n", cstr_String(&d->id),
@@ -187,7 +187,7 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
 
 static void animateOverflowScrollOpacity_Widget_(void *ptr) {
     iWidget *d = ptr;
-    postRefresh_App();
+    refresh_Widget(d);
     if (!isFinished_Anim(&d->overflowScrollOpacity)) {
         addTickerRoot_App(animateOverflowScrollOpacity_Widget_, d->root, ptr);
     }
@@ -266,7 +266,7 @@ void destroy_Widget(iWidget *d) {
     if (d) {
         iAssert(!isRoot_Widget_(d));
         if (isVisible_Widget(d)) {
-            postRefresh_App();
+            refresh_Widget(d);
         }
         aboutToBeDestroyed_Widget_(d);
         if (!d->root->pendingDestruction) {
@@ -297,7 +297,7 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
             /* TODO: Tablets should detect if a hardware keyboard is available. */
             flags &= ~drawKey_WidgetFlag;
         }
-        const int64_t oldFlags = d->flags;  
+        const int64_t oldFlags = d->flags;
         iChangeFlags(d->flags, flags, set);
         if (flags & keepOnTop_WidgetFlag && !isRoot_Widget_(d)) {
             iPtrArray *onTop = onTop_Root(d->root);
@@ -807,11 +807,11 @@ static void arrange_Widget_(iWidget *d) {
                 }
             }
         }
-        /* Keep track of the fractional pixels so a large number to children will cover 
+        /* Keep track of the fractional pixels so a large number to children will cover
            the full area. */
         const iInt2 totalAvail = avail;
         avail = divi_I2(max_I2(zero_I2(), avail), expCount);
-        float availFract[2] = { 
+        float availFract[2] = {
             iMax(0, (totalAvail.x - avail.x * expCount) / (float) expCount),
             iMax(0, (totalAvail.y - avail.y * expCount) / (float) expCount)
         };
@@ -1199,7 +1199,7 @@ static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
     if (d->flags & destroyPending_WidgetFlag) {
         /* Only allow cleanup while waiting for destruction. */
         return isCommand_UserEvent(ev, "focus.lost");
-    }   
+    }
     const iBool isKey   = isKeyboardEvent_(ev);
     const iBool isMouse = isMouseEvent_(ev);
     if ((d->flags & disabled_WidgetFlag) || (isHidden_Widget_(d) &&
@@ -1416,7 +1416,7 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     if (!isOverflowScrollPossible_Widget_(d, delta)) {
         return iFalse;
     }
-    iRect       bounds        = boundsWithoutVisualOffset_Widget(d);  
+    iRect       bounds        = boundsWithoutVisualOffset_Widget(d);
     const iRect winRect       = visibleRect_Root(d->root);
     /* TODO: This needs some fixing on mobile, probably. */
 //    const int   yTop          = iMaxi(0, top_Rect(winRect));
@@ -1450,14 +1450,14 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     }
     else {
         /* TODO: This is used on mobile. */
-        
+
 //        printf("clamping validPosRange:%d...%d\n", validPosRange.start, validPosRange.end); fflush(stdout);
 //        bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
     }
     const iInt2 newPos = windowToInner_Widget(d->parent, bounds.pos);
     if (!isEqual_I2(newPos, d->rect.pos)) {
         d->rect.pos = newPos;
-        postRefresh_App();
+        refresh_Widget(d);
     }
     return height_Rect(bounds) > height_Rect(winRect);
 }
@@ -1481,7 +1481,7 @@ static void unfadeOverflowScrollIndicator_Widget_(iWidget *d) {
     remove_Periodic(periodic_App(), d);
     add_Periodic(periodic_App(), d, format_CStr("overflow.fade time:%u ptr:%p", SDL_GetTicks(), d));
     setValue_Anim(&d->overflowScrollOpacity, 1.0f, 70);
-    animateOverflowScrollOpacity_Widget_(d);    
+    animateOverflowScrollOpacity_Widget_(d);
 }
 
 iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
@@ -1540,10 +1540,10 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 const uint32_t nowTime = SDL_GetTicks();
                 uint32_t elapsed = nowTime - lastHoverOverflowMotionTime_;
                 if (elapsed > 100) {
-                    elapsed = 16;    
+                    elapsed = 16;
                 }
                 int step = elapsed * gap_UI / 8 * iClamp(speed, -1.0f, 1.0f);
-                if (step != 0) { 
+                if (step != 0) {
                     lastHoverOverflowMotionTime_ = nowTime;
                     scrollOverflow_Widget(d, step);
                     unfadeOverflowScrollIndicator_Widget_(d);
@@ -1815,7 +1815,7 @@ static void addToPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs, iR
             isFullyContainedByOther_Rect(*fullyMasked, bounds)) {
             *fullyMasked = bounds;
         }
-    }    
+    }
 }
 
 static void findPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs) {
@@ -1869,7 +1869,7 @@ void drawRoot_Widget(const iWidget *d) {
 
 void setDrawBufferEnabled_Widget(iWidget *d, iBool enable) {
     if (enable && !d->drawBuf) {
-        d->drawBuf = new_WidgetDrawBuffer();        
+        d->drawBuf = new_WidgetDrawBuffer();
     }
     else if (!enable && d->drawBuf) {
         delete_WidgetDrawBuffer(d->drawBuf);
@@ -1899,7 +1899,7 @@ static void beginBufferDraw_Widget_(const iWidget *d) {
         origin_Paint = neg_I2(bounds.pos); /* with current visual offset */
 //        printf("beginBufferDraw: origin %d,%d\n", origin_Paint.x, origin_Paint.y);
 //        fflush(stdout);
-    }    
+    }
 }
 
 static void endBufferDraw_Widget_(const iWidget *d) {
@@ -1909,7 +1909,7 @@ static void endBufferDraw_Widget_(const iWidget *d) {
         origin_Paint = d->drawBuf->oldOrigin;
 //        printf("endBufferDraw: origin %d,%d\n", origin_Paint.x, origin_Paint.y);
 //        fflush(stdout);
-    }    
+    }
 }
 
 void draw_Widget(const iWidget *d) {
@@ -1959,7 +1959,7 @@ void draw_Widget(const iWidget *d) {
             fillRect_Paint(&p, bounds, tmQuote_ColorId);
             SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_NONE);
         }
-    }   
+    }
 }
 
 iAny *addChild_Widget(iWidget *d, iAnyObject *child) {
@@ -2052,7 +2052,7 @@ iAny *removeChild_Widget(iWidget *d, iAnyObject *child) {
 //    }
 //    printf("%s:%d [%p] parent = NULL\n", __FILE__, __LINE__, d);
     childWidget->parent = NULL;
-    postRefresh_App();
+    refresh_Widget(d);
     return child;
 }
 
@@ -2481,7 +2481,7 @@ void refresh_Widget(const iAnyObject *d) {
             w->drawBuf->isValid = iFalse;
         }
     }
-    postRefresh_App();
+    postRefresh_Window(window_Widget(d));
 }
 
 void raise_Widget(iWidget *d) {

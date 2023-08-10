@@ -1423,7 +1423,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, int menuOpenFlags) {
     if (leftExcess > 0) {
         d->rect.pos.x += leftExcess;
     }
-    postRefresh_App();
+    refresh_Widget(d);
     if (postCommands) {
         postCommand_Widget(d, "menu.opened");
     }
@@ -1462,7 +1462,7 @@ void closeMenu_Widget(iWidget *d) {
     if (button) {
         setFlags_Widget(as_Widget(button), selected_WidgetFlag, iFalse);
     }
-    postRefresh_App();
+    refresh_Widget(d);
     postCommand_Widget(d, "menu.closed");
     setupMenuTransition_Mobile(d, iFalse);
 }
@@ -2022,7 +2022,7 @@ void showTabPage_Widget(iWidget *tabs, const iAnyObject *page) {
             iWidget *child = as_Widget(i.object);
             setFlags_Widget(child, hidden_WidgetFlag | disabled_WidgetFlag, child != page);
         }
-        postRefresh_App();
+        refresh_Widget(tabs);
     }
     /* Notify. */
     if (!isEmpty_String(id_Widget(page))) {

@@ -166,6 +166,7 @@ iWindow *   get_Window              (void);
 iBool       isOpenGLRenderer_Window (void);
 
 void        setCurrent_Window       (iAnyWindow *);
+void        postRefresh_Window      (iAnyWindow *);
 
 iLocalDef iBool isExposed_Window(const iWindow *d) {
     iAssert(d);

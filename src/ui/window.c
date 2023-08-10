@@ -49,6 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/thread.h>
 #include <SDL_hints.h>
 #include <SDL_timer.h>
 #include <SDL_syswm.h>
@@ -335,7 +336,7 @@ static iBool updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
     const iBool hasChanged = !isEqual_I2(oldSize, *size);
     if (hasChanged) {
         windowSizeChanged_MainWindow_(d);
-        postRefresh_App();
+        postRefresh_Window(d);
     }
     if (!isResizing_ && (hasChanged || notifyAlways)) {
         if (!isEqual_I2(*size, d->place.lastNotifiedSize)) {
@@ -347,7 +348,7 @@ static iBool updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
                              isHoriz,
                              isVert);
             postCommand_App("widget.overflow"); /* check bounds with updated sizes */
-            postRefresh_App();
+            postRefresh_Window(d);
         }
         d->place.lastNotifiedSize = *size;
     }
@@ -976,11 +977,11 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             if (d->type == extra_WindowType) {
                 checkPixelRatioChange_Window_(d);
             }
-            postRefresh_App();
+            postRefresh_Window(d);
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
         case SDL_WINDOWEVENT_SHOWN:
-            postRefresh_App();
+            postRefresh_Window(d);
             return iTrue;
         case SDL_WINDOWEVENT_MOVED:
             if (d->type == extra_WindowType) {
@@ -991,7 +992,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             if (d->type == extra_WindowType) {
                 d->focusGainedAt = SDL_GetTicks();
                 setCapsLockDown_Keys(iFalse);
-                postCommand_App("window.focus.gained");
+                postCommandf_App("window.focus.gained arg:%d", id_Window(d));
                 d->isExposed = iTrue;
                 setActiveWindow_App(d);
 #if !defined (iPlatformDesktop)
@@ -1004,7 +1005,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         case SDL_WINDOWEVENT_TAKE_FOCUS:
             if (d->type == extra_WindowType) {
                 SDL_SetWindowInputFocus(d->win);
-                postRefresh_App();
+                postRefresh_Window(d);
                 return iTrue;
             }
             return iFalse;
@@ -1014,7 +1015,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 closeMenu_Widget(d->roots[0]->widget);
             }
             else {
-                postCommand_App("window.focus.lost");
+                postCommandf_App("window.focus.lost arg:%u", id_Window(d));
                 closePopups_App(iTrue);
             }
             return iTrue;
@@ -1024,7 +1025,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             if (d->type == extra_WindowType) {
                 postCommand_App("window.mouse.exited");
             }
-            postRefresh_App();
+            postRefresh_Window(d);
             return iTrue;
         case SDL_WINDOWEVENT_ENTER:
             d->isMouseInside = iTrue;
@@ -1073,7 +1074,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
                for ensuring that window contents get redrawn after expose events. Under certain
                circumstances (e.g., under openbox), not doing this would mean that the window
                is missing contents until other events trigger a refresh. */
-            postRefresh_App();
+            postRefresh_Window(d);
 #if defined(LAGRANGE_ENABLE_WINDOWPOS_FIX)
             if (d->place.initialPos.x >= 0) {
                 /* Must not move a maximized window. */
@@ -1151,14 +1152,14 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
                 d->place.normalRect.size = init_I2(ev->data1, ev->data2);
             }
             checkPixelRatioChange_Window_(as_Window(d));
-            postRefresh_App();
+            postRefresh_Window(d);
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
         case SDL_WINDOWEVENT_SHOWN:
             updateSize_MainWindow_(d, iTrue);
             invalidate_MainWindow_(d, iTrue);
             d->base.isMinimized = iFalse;
-            postRefresh_App();
+            postRefresh_Window(d);
             return iTrue;
         case SDL_WINDOWEVENT_MAXIMIZED:
             return iTrue;
@@ -1187,7 +1188,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             d->base.focusGainedAt = SDL_GetTicks();
             setCapsLockDown_Keys(iFalse);
-            postCommand_App("window.focus.gained");
+            postCommandf_App("window.focus.gained arg:%u", id_Window(as_Window(d)));
             d->base.isExposed = iTrue;
             setActiveWindow_App(d);
             setHoverUnderCursor_Window_(as_Window(d));
@@ -1198,7 +1199,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
 #endif
             return iFalse;
         case SDL_WINDOWEVENT_FOCUS_LOST:
-            postCommand_App("window.focus.lost");
+            postCommandf_App("window.focus.lost arg:%u", id_Window(as_Window(d)));
 #if !defined (iPlatformDesktop)
             setFreezeDraw_MainWindow(d, iTrue);
 #endif
@@ -1206,7 +1207,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
             return iFalse;
         case SDL_WINDOWEVENT_TAKE_FOCUS:
             SDL_SetWindowInputFocus(d->base.win);
-            postRefresh_App();
+            postRefresh_Window(d);
             return iTrue;
         case SDL_WINDOWEVENT_CLOSE:
 #if defined (iPlatformAppleDesktop)
@@ -1413,7 +1414,7 @@ iBool setKeyRoot_Window(iWindow *d, iRoot *root) {
     if (d->keyRoot != root) {
         d->keyRoot = root;
         postCommand_App("keyroot.changed");
-        postRefresh_App();
+        postRefresh_Window(d);
         return iTrue;
     }
     return iFalse;
@@ -1853,6 +1854,7 @@ uint32_t frameTime_Window(const iWindow *d) {
 
 iWindow *get_Window(void) {
     /* TODO: This should be thread-specific. */
+    /* TODO: Assert that this is only called in the main thread! */
     return theWindow_;
 }
 
@@ -1885,7 +1887,7 @@ void setKeyboardHeight_MainWindow(iMainWindow *d, int height) {
     if (d->keyboardHeight != height) {
         d->keyboardHeight = height;
         postCommandf_App("keyboard.changed arg:%d", height);
-        postRefresh_App();
+        postRefresh_Window(d);
     }
 }
 
@@ -1936,7 +1938,7 @@ void swapRoots_MainWindow(iMainWindow *d) {
     if (numRoots_Window(w) == 2) {
         iSwap(iRoot *, w->roots[0], w->roots[1]);
         windowSizeChanged_MainWindow_(d); /* re-do layout */
-        postRefresh_App();
+        postRefresh_Window(d);
     }
 }
 

@@ -499,7 +499,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         /* No parent handled this, so do a full rearrangement. */
         /* TODO: Defer this and do a single rearrangement later. */
         arrange_Widget(root);
-        postRefresh_App();
+        postRefresh_Window(get_Window());
         return iTrue;
     }
     else if (equal_Command(cmd, "window.activate")) {
@@ -569,7 +569,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         iChangeFlags(as_Widget(sidebar)->flags2, fadeBackground_WidgetFlag2, isPortrait_App());
         if (isLandscape_App()) {
             setVisualOffset_Widget(as_Widget(sidebar), 0, 0, 0);
-            addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);            
+            addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
             setWidth_SidebarWidget(sidebar, 73.0f);
             setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag | fixedPosition_WidgetFlag, iFalse);
         }
@@ -687,7 +687,7 @@ static void updateNavDirButtons_(iWidget *navBar) {
     if (toolBar) {
         /* Reset the state. */
         for (int i = 0; i < 2; i++) {
-            const char *id = (i == 0 ? "toolbar.action1" : "toolbar.action2");            
+            const char *id = (i == 0 ? "toolbar.action1" : "toolbar.action2");
             setFlags_Widget(findChild_Widget(toolBar, id), disabled_WidgetFlag, iFalse);
             setOutline_LabelWidget(findChild_Widget(toolBar, id), iFalse);
         }
@@ -719,7 +719,7 @@ static void setReloadLabel_Root_(iRoot *d, const iDocumentWidget *doc) {
     iLabelWidget *label     = findChild_Widget(d->widget, "reload");
     updateTextCStr_LabelWidget(label, isOngoing ? loadAnimationCStr_() : reloadCStr_);
     setBackgroundColor_Widget(as_Widget(label), isAuto ? uiBackground_ColorId : none_ColorId);
-    setTextColor_LabelWidget(label, isAuto ? uiTextAction_ColorId : uiText_ColorId);    
+    setTextColor_LabelWidget(label, isAuto ? uiTextAction_ColorId : uiText_ColorId);
     setOutline_LabelWidget(label, isAuto);
     if (isTerminal_Platform()) {
         showCollapsed_Widget(as_Widget(label), isOngoing);
@@ -1348,7 +1348,7 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "toolbar.actions.changed")) {
         updateToolBarActions_(toolBar);
-        return iFalse;        
+        return iFalse;
     }
     else if (equal_Command(cmd, "keyboard.changed") && prefs_App()->bottomNavBar) {
         int height = arg_Command(cmd);
@@ -1439,7 +1439,7 @@ void updateMetrics_Root(iRoot *d) {
         setFixedSize_Widget(as_Widget(idName),
                             init_I2(-1, 2 * gap_UI + lineHeight_Text(uiLabelTiny_FontId)));
     }
-    postRefresh_App();
+    postRefresh_Window(get_Window());
 }
 
 static void addUnsplitButton_(iWidget *navBar) {
@@ -1576,14 +1576,14 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(menuBar, "menubar");
 #  if 0
         addChildFlags_Widget(menuBar, iClob(new_Widget()), expand_WidgetFlag);
-        /* It's nice to use this space for something, but it should be more valuable than 
+        /* It's nice to use this space for something, but it should be more valuable than
            just the app version... */
         iLabelWidget *ver = addChildFlags_Widget(menuBar, iClob(new_LabelWidget(LAGRANGE_APP_VERSION, NULL)),
                                                  frameless_WidgetFlag);
         setTextColor_LabelWidget(ver, uiAnnotation_ColorId);
 #  endif
     }
-#endif        
+#endif
     iWidget *navBar;
     /* Navigation bar. */ {
         navBar = new_Widget();
@@ -1758,7 +1758,7 @@ void createUserInterface_Root(iRoot *d) {
                                      iClob(pin),
                                      embedFlags | collapse_WidgetFlag | tight_WidgetFlag |
                                          resizeToParentHeight_WidgetFlag);
-                updateSize_LabelWidget(pin);        
+                updateSize_LabelWidget(pin);
             }
             /* Reload button. */ {
                 iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
@@ -1848,7 +1848,7 @@ void createUserInterface_Root(iRoot *d) {
         else {
             /* Sidebar is a slide-over sheet. */
             addChild_Widget(root, iClob(sidebar1));
-            setFlags_Widget(as_Widget(sidebar1), hidden_WidgetFlag, iTrue);            
+            setFlags_Widget(as_Widget(sidebar1), hidden_WidgetFlag, iTrue);
         }
     }
     /* Lookup results. */ {
@@ -2136,7 +2136,7 @@ static void setupMovableElements_Root_(iRoot *d) {
     }
     setTabBarPosition_Widget(docTabs, prefs->bottomTabBar);
     arrange_Widget(d->widget);
-    postRefresh_App();
+    refresh_Widget(d->widget);
     postCommand_App("window.resized"); /* not really, but some widgets will update their layout */
 }
 
@@ -2288,7 +2288,7 @@ iRect visibleRect_Root(const iRoot *d) {
     /* Apply the usable bounds of the display. */
     SDL_Rect usable;
     /* TODO: Needs some investigation. With multiple monitors, at least on macOS, the bounds
-       returned here seem incorrect sometimes (infrequently). */    
+       returned here seem incorrect sometimes (infrequently). */
     if (iFalse) {
         const float ratio = d->window->pixelRatio;
         SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->window->win), &usable);
@@ -2302,7 +2302,7 @@ iRect visibleRect_Root(const iRoot *d) {
         /* Make it relative to the window. */
         usable.x -= winPos.x;
         usable.y -= winPos.y;
-        visRect = intersect_Rect(visRect, init_Rect(usable.x, usable.y, usable.w, usable.h));        
+        visRect = intersect_Rect(visRect, init_Rect(usable.x, usable.y, usable.w, usable.h));
     }
 #endif
     if (get_MainWindow()) {

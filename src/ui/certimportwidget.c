@@ -153,7 +153,7 @@ void init_CertImportWidget(iCertImportWidget *d) {
         setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(-1, gap_UI * 12));
     }
     else {
-        /* This should behave similar to sheets. */ 
+        /* This should behave similar to sheets. */
         useSheetStyle_Widget(w);
         addDialogTitle_Widget(w, "${heading.certimport}", NULL);
         d->info = addChildFlags_Widget(w, iClob(new_LabelWidget(infoText_, NULL)), frameless_WidgetFlag);
@@ -255,7 +255,7 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
                 makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.pasted}",
                                          "${dlg.certimport.notfound}");
             }
-            postRefresh_App();
+            refresh_Widget(d);
             return iTrue;
         }
     }
@@ -264,7 +264,7 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
             makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.pasted}",
                                      "${dlg.certimport.notfound}");
         }
-        postRefresh_App();        
+        refresh_Widget(d);
         return iTrue;
     }
     if (isCommand_UserEvent(ev, "certimport.paste")) {

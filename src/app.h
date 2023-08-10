@@ -160,7 +160,7 @@ void        removePopup_App     (iWindow *popup);
 void        closePopups_App     (iBool doForce);
 iWindow *   findWindow_App      (int windowType, const char *widgetId);
 
-void        postRefresh_App     (void);
+void        postRefreshAllWindows_App(void);
 void        postCommand_Root    (iRoot *, const char *command);
 void        postCommandf_Root   (iRoot *, const char *command, ...);
 void        postCommandf_App    (const char *command, ...);

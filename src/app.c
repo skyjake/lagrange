@@ -1834,7 +1834,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isIdling = iFalse;
                 d->lastEventTime = SDL_GetTicks();
 #endif
-                postRefresh_App();
+                postRefreshAllWindows_App();
                 if (d->isTextInputActive) {
                     SDL_StartTextInput();
                 }
@@ -2447,13 +2447,13 @@ int run_App(int argc, char **argv) {
     return rc;
 }
 
-void postRefresh_App(void) {
+void postRefresh_Window(iAnyWindow *windowPtr) {
     iApp *d = &app_;
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     d->isIdling = iFalse;
 #endif
-    iAtomicInt *pendingWindow = (get_Window() ? &get_Window()->isRefreshPending
-                                              : NULL);
+    iWindow *window = windowPtr;
+    iAtomicInt *pendingWindow = (window ? &window->isRefreshPending : NULL);
     iBool wasPending = exchange_Atomic(&d->pendingRefresh, iTrue);
     if (pendingWindow) {
         wasPending |= exchange_Atomic(pendingWindow, iTrue);
@@ -2462,6 +2462,19 @@ void postRefresh_App(void) {
         SDL_Event ev = { .type = SDL_USEREVENT };
         ev.user.code = refresh_UserEventCode;
         SDL_PushEvent(&ev);
+    }
+}
+
+void postRefreshAllWindows_App(void) {
+    iApp *d = &app_;
+    iConstForEach(PtrArray, m, &d->mainWindows) {
+        postRefresh_Window(m.ptr);
+    }
+    iConstForEach(PtrArray, x, &d->extraWindows) {
+        postRefresh_Window(x.ptr);
+    }
+    iConstForEach(PtrArray, p, &d->popupWindows) {
+        postRefresh_Window(p.ptr);
     }
 }
 
@@ -2555,13 +2568,13 @@ iAny *findWidget_App(const char *id) {
 void addTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
     insert_SortedArray(&d->tickers, &(iTicker){ context, get_Root(), ticker });
-    postRefresh_App();
+    postRefresh_Window(get_Root()->window);
 }
 
 void addTickerRoot_App(iTickerFunc ticker, iRoot *root, iAny *context) {
     iApp *d = &app_;
     insert_SortedArray(&d->tickers, &(iTicker){ context, root, ticker });
-    postRefresh_App();
+    postRefresh_Window(root->window);
 }
 
 void removeTicker_App(iTickerFunc ticker, iAny *context) {
@@ -3035,7 +3048,7 @@ void closeWindow_App(iWindow *win) {
     }
     collect_Garbage(win, isMain ? (iDeleteFunc) delete_MainWindow
                                 : (iDeleteFunc) delete_Window);
-    postRefresh_App();
+    postRefresh_Window(NULL);
     if (isAppleDesktop_Platform() && isMain && size_PtrArray(&d->mainWindows) == 1) {
         /* The one and only window is being closed. On macOS, the app will keep running, which
            means we must save the state of the window now or otherwise it will be lost. A newly
@@ -3501,7 +3514,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "prefs.sideicon.changed")) {
         d->prefs.sideIcon = arg_Command(cmd) != 0;
-        postRefresh_App();
+        postRefreshAllWindows_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.centershort.changed")) {
@@ -3517,12 +3530,12 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "prefs.hoverlink.changed")) {
         d->prefs.hoverLink = arg_Command(cmd) != 0;
-        postRefresh_App();
+        postRefreshAllWindows_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.hoverlink.toggle")) {
         d->prefs.hoverLink = !d->prefs.hoverLink;
-        postRefresh_App();
+        postRefreshAllWindows_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.dataurl.openimages.changed")) {
@@ -4001,7 +4014,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         setResponseViewer_UploadWidget(upload, document_App());
         addChild_Widget(get_Root()->widget, iClob(upload));
         setupSheetTransition_Mobile(as_Widget(upload), iTrue);
-        postRefresh_App();
+        postRefresh_Window(get_Window());
         return iTrue;
     }
     if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
@@ -4135,7 +4148,7 @@ iBool handleCommand_App(const char *cmd) {
         if (hasLabel_Command(cmd, "origin")) {
             set_String(mw->pendingSplitOrigin, string_Command(cmd, "origin"));
         }
-        postRefresh_App();
+        postRefresh_Window(mw);
         return iTrue;
     }
     else if (equal_Command(cmd, "window.maximize")) {
@@ -4716,7 +4729,7 @@ iBool handleCommand_App(const char *cmd) {
         arrange_Widget(as_Widget(imp));
         setupSheetTransition_Mobile(as_Widget(imp), incoming_TransitionFlag |
                                     dialogTransitionDir_Widget(as_Widget(imp)));
-        postRefresh_App();
+        postRefresh_Window(get_Window());
         return iTrue;
     }
     else if (equal_Command(cmd, "ident.switch")) {
