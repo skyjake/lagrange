@@ -105,9 +105,13 @@ cmake --build . || exit 1
 
 echo "-----"
 echo "clagrange and resources.lgr can be found in 'build-tui'."
-echo "Do you want to install them to ${INSTALL_PREFIX}? (sudo) [yN]"
+echo "Do you want to install them to ${INSTALL_PREFIX}? (s=sudo) [syN]"
 read CONFIRMED
-if [ "${CONFIRMED}" = "y" ]; then
+if [ "${CONFIRMED}" = "s" ]; then
     sudo cmake --install .
+    exit
+fi
+if [ "${CONFIRMED}" = "y" ]; then
+     cmake --install .
     exit
 fi
