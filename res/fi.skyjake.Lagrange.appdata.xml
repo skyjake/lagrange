@@ -45,6 +45,17 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.16.7" date="2023-08-11">
+            <description>
+                <ul>
+                    <li>Workaround for window refresh potentially getting stuck while receiving a streaming response. (Limit update frequency.)</li>
+                    <li>Don't navigate back when stopping a streaming request.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.16.7</url>
+        </release>
         <release version="1.16.6" date="2023-07-30">
             <description>
                 <ul>
