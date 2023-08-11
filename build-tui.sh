@@ -67,6 +67,7 @@ cmake ../../lib/the_Foundation -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
     -DTFDN_STATIC_LIBRARY=YES \
     -DTFDN_ENABLE_WEBREQUEST=NO \
     -DTFDN_ENABLE_TESTS=NO \
+    -DCMAKE_INSTALL_LIBDIR=lib \
     -DCMAKE_INSTALL_PREFIX="${BUILD_DIR}" $*
 cmake --build . || exit 1
 cmake --install .
@@ -79,6 +80,7 @@ cmake ../../lib/sealcurses -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
     -DCMAKE_C_FLAGS_RELEASE=-O1 \
     -DENABLE_SHARED=NO \
     -Dthe_Foundation_DIR="${BUILD_DIR}/lib/cmake/the_Foundation" \
+    -DCMAKE_INSTALL_LIBDIR=lib \
     -DCMAKE_INSTALL_PREFIX="${BUILD_DIR}" $*
 cmake --build . || exit 1
 cmake --install .
