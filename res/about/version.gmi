@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.16.7
+* Workaround for window refresh potentially getting stuck while receiving a streaming response. (Limit update frequency.)
+* Don't navigate back when stopping a streaming request.
+
 ## 1.16.6
 * Fixed crash on gemini://sdf.org/ where the contents of a link line would fail to be recognized as valid characters.
 * Fixed splitting a long wrapped line in input fields where part of the text would remain on the preceding line. (Mixup between byte and character index.)

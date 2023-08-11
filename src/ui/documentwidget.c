@@ -335,7 +335,7 @@ struct Impl_DocumentWidget {
     enum iRequestState state;
     iGmRequest *   request;
     iGmLinkId      requestLinkId; /* ID of the link that initiated the current request */
-    iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
+    uint32_t       lastRequestUpdateAt;
     int            certFlags;
     iBlock *       certFingerprint;
     iDate          certExpiry;
@@ -387,7 +387,6 @@ static int docEnum_ = 0;
 
 static void animate_DocumentWidget_                 (void *ticker);
 static void animateMedia_DocumentWidget_            (iDocumentWidget *d);
-static void updateSideIconBuf_DocumentWidget_       (const iDocumentWidget *d);
 static void prerender_DocumentWidget_               (iAny *);
 static void scrollBegan_DocumentWidget_             (iAnyObject *, int, uint32_t);
 static void refreshWhileScrolling_DocumentWidget_   (iAny *);
@@ -2127,13 +2126,19 @@ static void setLinkNumberMode_DocumentWidget_(iDocumentWidget *d, iBool set) {
 
 static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
-    const int wasUpdated = exchange_Atomic(&d->isRequestUpdated, iTrue);
-    if (!wasUpdated) {
+    uint32_t now = SDL_GetTicks();
+    if (now - d->lastRequestUpdateAt > 100) {
+        d->lastRequestUpdateAt = now;
         postCommand_Widget(obj,
                            "document.request.updated doc:%p reqid:%u request:%p",
                            d,
                            id_GmRequest(d->request),
                            d->request);
+    }
+    else {
+        /* This will tell GmRequest to notify us again when new data comes in. */
+        lockResponse_GmRequest(d->request);
+        unlockResponse_GmRequest(d->request);
     }
 }
 
@@ -3127,7 +3132,7 @@ static iBool fetch_DocumentWidget_(iDocumentWidget *d) {
     d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
     d->flags &= ~pendingRedirect_DocumentWidgetFlag;
     d->state = fetching_RequestState;
-    set_Atomic(&d->isRequestUpdated, iFalse);
+    d->lastRequestUpdateAt = 0;
     d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, d->mod.url);
     /* Overriding identity. */
@@ -3523,7 +3528,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         }
         /* Get ready for the incoming new document. */
         d->state = receivedPartialResponse_RequestState;
-        d->flags &= ~fromCache_DocumentWidgetFlag;
+        d->flags &= ~(fromCache_DocumentWidgetFlag | goBackOnStop_DocumentWidgetFlag);
         clear_ObjectList(d->media);
         updateTrust_DocumentWidget_(d, resp);
         if (isSuccess_GmStatusCode(statusCode)) {
@@ -4658,7 +4663,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateFetchProgress_DocumentWidget_(d);
         }
         checkResponse_DocumentWidget_(d);
-        set_Atomic(&d->isRequestUpdated, iFalse); /* ready to be notified again */
         return iFalse;
     }
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
@@ -6487,7 +6491,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->titleUser        = new_String();
     d->request          = NULL;
     d->requestLinkId    = 0;
-    d->isRequestUpdated = iFalse;
     d->media            = new_ObjectList();
     d->banner           = new_Banner();
     setOwner_Banner(d->banner, d);

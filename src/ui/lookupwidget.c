@@ -280,17 +280,23 @@ static void searchHistory_LookupJob_(iLookupJob *d) {
             const char *match = cstr_String(j.value);
             const size_t matchLen = argLabel_Command(match, "len");
             iRangecc text;
-            text.start = strstr(match, " str:") + 5;
-            text.end = text.start + matchLen;
-            const char *url = strstr(text.end, " url:") + 5;
-            iLookupResult *res = new_LookupResult();
-            res->type = content_LookupResultType;
-            res->relevance = ++index; /* most recent comes last */
-            setCStr_String(&res->label, "\"");
-            appendRange_String(&res->label, text);
-            appendCStr_String(&res->label, "\"");
-            setCStr_String(&res->url, url);
-            pushBack_PtrArray(&d->results, res);
+            const char *strArg = strstr(match, " str:");
+            if (strArg) {
+                text.start = strArg + 5;
+                text.end = text.start + matchLen;
+                const char *urlArg = strstr(text.end, " url:");
+                if (urlArg) {
+                    const char *url = urlArg + 5;
+                    iLookupResult *res = new_LookupResult();
+                    res->type = content_LookupResultType;
+                    res->relevance = ++index; /* most recent comes last */
+                    setCStr_String(&res->label, "\"");
+                    appendRange_String(&res->label, text);
+                    appendCStr_String(&res->label, "\"");
+                    setCStr_String(&res->url, url);
+                    pushBack_PtrArray(&d->results, res);
+                }
+            }
         }
     }
 }

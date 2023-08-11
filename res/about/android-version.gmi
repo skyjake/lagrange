@@ -7,6 +7,9 @@
 # Release notes
 
 ## 1.16 (Beta 21)
+* Fixed crash when the contents of a link line would fail to be recognized as valid characters.
+* Empty new tabs are appended to the right edge. Previously they were inserted next to the active tab.
+* Improved tab closing order: close all sibling tabs opened from an origin tab before switching back to the origin tab.
 * Remove whitespace from ends of a URL entered into an input field.
 
 ## 1.16 (Beta 20)

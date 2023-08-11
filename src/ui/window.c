@@ -1577,14 +1577,27 @@ void draw_MainWindow(iMainWindow *d) {
     setCurrent_Text(d->base.text);
     /* Check if root needs resizing. */ {
         const iBool wasPortrait = isPortrait_App();
-//        iInt2 renderSize;
-//        SDL_GetRendererOutputSize(w->render, &renderSize.x, &renderSize.y);
-        if (updateSize_MainWindow_(d, iTrue)) {
-            //processEvents_App(postedEventsOnly_AppEventMode);
+#if defined (iPlatformMobile)
+        /* On a mobile device, the window doesn't get freely resized. The render size will
+           change when the device orientation changes. */
+        iInt2 renderSize;
+        SDL_GetRendererOutputSize(w->render, &renderSize.x, &renderSize.y);
+        if (!isEqual_I2(renderSize, w->size)) {
+            updateSize_MainWindow_(d, iTrue);
+            processEvents_App(postedEventsOnly_AppEventMode); /* apply changes immediately */
             if (isPortrait_App() != wasPortrait) {
-                d->maxDrawableHeight = w->size.y; // renderSize.y;
+                d->maxDrawableHeight = renderSize.y;
             }
         }
+#else
+        /* On the desktop, we cannot process events now because that would interfere with
+           regular input processing (currently drawing the window). */
+        if (updateSize_MainWindow_(d, iTrue)) {
+            if (isPortrait_App() != wasPortrait) {
+                d->maxDrawableHeight = w->size.y;
+            }
+        }
+#endif
         /* TODO: On macOS, a detached popup window will mess up the main window's rendering
            completely. Looks like a render target mixup. macOS builds normally use native menus,
            though, so leaving it in. */

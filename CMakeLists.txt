@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.16.6
+    VERSION 1.16.7
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2023)
 if (IOS)
     set (PROJECT_VERSION 1.16)
-    set (IOS_BUNDLE_VERSION 4)
-    set (IOS_BUILD_DATE "2023-06-04")
+    set (IOS_BUNDLE_VERSION 5)
+    set (IOS_BUILD_DATE "2023-07-31")
 endif ()
 if (ANDROID)
     set (PROJECT_VERSION 1.16)
-    set (ANDROID_BUILD_VERSION b20)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2023-06-01")
+    set (ANDROID_BUILD_VERSION b21)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2023-07-31")
 endif ()
 
 # Load modules from the source tree
