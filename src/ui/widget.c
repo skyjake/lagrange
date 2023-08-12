@@ -1361,25 +1361,50 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     return iFalse;
 }
 
-void scrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
-    iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
-    iRect       visBounds = bounds_Widget(d);
-    const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
-                                        zero_I2(),
-                                        init_I2(0, -get_MainWindow()->keyboardHeight));
-    info->height      = bounds.size.y;
-    info->avail       = height_Rect(winRect);
-    if (info->avail >= info->height) {
+void contentScrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info, int contentPos, int contentMax) {
+    const iRect bounds  = bounds_Widget(d);
+    info->totalHeight   = contentMax;
+    info->visibleHeight = height_Rect(bounds);
+    if (info->visibleHeight >= info->totalHeight) {
         info->normScroll  = 0.0f;
         info->thumbY      = 0;
         info->thumbHeight = 0;
     }
     else {
-        int scroll        = top_Rect(winRect) - top_Rect(bounds);
-        info->normScroll  = scroll / (float) (info->height - info->avail);
+        info->normScroll  = (float) contentPos / (float) (info->totalHeight - info->visibleHeight);
         info->normScroll  = iClamp(info->normScroll, 0.0f, 1.0f);
-        info->thumbHeight = iMin(info->avail / 2, info->avail * info->avail / info->height);
-        info->thumbY      = top_Rect(winRect) + (info->avail - info->thumbHeight) * info->normScroll;
+        info->thumbHeight = iMin(info->visibleHeight / 2, info->visibleHeight * info->visibleHeight / info->totalHeight);
+        info->thumbY      = localToWindow_Widget(d, zero_I2()).y + (info->visibleHeight - info->thumbHeight) * info->normScroll;
+        /* Clamp it. */
+        const iRangei ySpan = ySpan_Rect(bounds);
+        if (info->thumbY < ySpan.start) {
+            info->thumbHeight += info->thumbY - ySpan.start;
+            info->thumbY = ySpan.start;
+            info->thumbHeight = iMax(7 * gap_UI, info->thumbHeight);
+        }
+        else if (info->thumbY + info->thumbHeight > ySpan.end) {
+            info->thumbHeight = ySpan.end - info->thumbY;
+        }
+    }
+}
+
+void overflowScrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
+    iRect     bounds    = boundsWithoutVisualOffset_Widget(d);
+    iRect     visBounds = bounds_Widget(d);
+    const int winTop    = top_Rect(safeRect_Root(d->root));
+    info->totalHeight   = bounds.size.y;
+    info->visibleHeight = height_Rect(visibleRect_Root(d->root));
+    if (info->visibleHeight >= info->totalHeight) {
+        info->normScroll  = 0.0f;
+        info->thumbY      = 0;
+        info->thumbHeight = 0;
+    }
+    else {
+        int scroll        = winTop - top_Rect(bounds);
+        info->normScroll  = scroll / (float) (info->totalHeight - info->visibleHeight);
+        info->normScroll  = iClamp(info->normScroll, 0.0f, 1.0f);
+        info->thumbHeight = iMin(info->visibleHeight / 2, info->visibleHeight * info->visibleHeight / info->totalHeight);
+        info->thumbY      = winTop + (info->visibleHeight - info->thumbHeight) * info->normScroll;
         /* Clamp it. */
         const iRangei ySpan = ySpan_Rect(visBounds);
         if (info->thumbY < ySpan.start) {
@@ -1941,24 +1966,28 @@ void draw_Widget(const iWidget *d) {
     }
     if (d->flags & overflowScrollable_WidgetFlag) {
         iWidgetScrollInfo info;
-        scrollInfo_Widget(d, &info);
+        overflowScrollInfo_Widget(d, &info);
         const float opacity = value_Anim(&d->overflowScrollOpacity);
-        if (info.thumbHeight > 0 && opacity > 0) {
-            iPaint p;
-            init_Paint(&p);
-            const int scrollWidth = gap_UI / 2;
-            iRect     bounds      = bounds_Widget(d);
-            bounds.pos.x          = right_Rect(bounds) - scrollWidth * 3;
-            bounds.size.x         = scrollWidth;
-            bounds.pos.y          = info.thumbY;
-            bounds.size.y         = info.thumbHeight;
-            /* Draw the scroll bar with some transparency. */
-            SDL_Renderer *rend = renderer_Window(get_Window());
-            SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
-            p.alpha = (int) (0.5f * opacity * 255 + 0.5f);
-            fillRect_Paint(&p, bounds, tmQuote_ColorId);
-            SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_NONE);
-        }
+        drawScrollIndicator_Widget(d, &info, uiBackgroundPressed_ColorId, opacity);
+    }
+}
+
+void drawScrollIndicator_Widget(const iWidget *d, const iWidgetScrollInfo *info, int color, float opacity) {
+    if (info->thumbHeight > 0 && opacity > 0) {
+        iPaint p;
+        init_Paint(&p);
+        const int scrollWidth = gap_UI / 2;
+        iRect     bounds      = bounds_Widget(d);
+        bounds.pos.x          = right_Rect(bounds) - scrollWidth * 3;
+        bounds.size.x         = scrollWidth;
+        bounds.pos.y          = info->thumbY;
+        bounds.size.y         = info->thumbHeight;
+        /* Draw the scroll bar with some transparency. */
+        SDL_Renderer *rend = renderer_Window(get_Window());
+        SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
+        p.alpha = (int) (0.5f * opacity * 255 + 0.5f);
+        fillRect_Paint(&p, bounds, color);
+        SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_NONE);
     }
 }
 

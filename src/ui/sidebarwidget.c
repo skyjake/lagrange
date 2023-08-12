@@ -1827,7 +1827,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     insert_IntSet(d->closedFolders, id_Bookmark(i.ptr));
                 }
             }
-            updateItems_SidebarWidget_(d);
+            if (d->mode == bookmarks_SidebarMode) {
+                updateItems_SidebarWidget_(d);
+            }
             return iTrue;
         }
         else if (equal_Command(cmd, "feeds.update.finished")) {

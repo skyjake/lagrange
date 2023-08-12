@@ -2939,6 +2939,15 @@ static void draw_InputWidget_(const iInputWidget *d) {
                            cursorChar);
         }
     }
+    /* Draw the scroll indicator. */ {
+        const int lineHeight = lineHeight_Text(d->font);
+        iWidgetScrollInfo info;
+        contentScrollInfo_Widget(w,
+                                 &info,
+                                 lineHeight * d->visWrapLines.start,
+                                 lineHeight * numWrapLines_InputWidget_(d));
+        drawScrollIndicator_Widget(w, &info, uiInputCursor_ColorId, 0.666f);
+    }
     unsetClip_Paint(&p);
     if (!isEmpty_Rect(markerRects[0])) {
         for (int i = 0; i < 2; ++i) {

@@ -2380,6 +2380,10 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
         setFocus_Widget(NULL);
     }
     iWidget *dlg = makeSheet_Widget(command);
+    if (isDesktop_Platform()) {
+        /* The dialog will resize itself appropriately. */
+        setFlags_Widget(dlg, overflowScrollable_WidgetFlag, iFalse);
+    }
     setCommandHandler_Widget(dlg, valueInputHandler_);
     if (parent) {
         addChild_Widget(parent, iClob(dlg));

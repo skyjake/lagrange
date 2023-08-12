@@ -332,14 +332,16 @@ iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char 
 iDeclareType(WidgetScrollInfo)
 
 struct Impl_WidgetScrollInfo {
-    int   height; /* widget's height */
-    int   avail;  /* available height */
+    int   totalHeight; /* widget's height */
+    int   visibleHeight;  /* available height */
     float normScroll;
     int   thumbY; /* window coords */
     int   thumbHeight;
 };
 
-void        scrollInfo_Widget           (const iWidget *, iWidgetScrollInfo *info);
+void        contentScrollInfo_Widget    (const iWidget *, iWidgetScrollInfo *info, int contentPos, int contentMax);
+void        overflowScrollInfo_Widget   (const iWidget *, iWidgetScrollInfo *info);
+void        drawScrollIndicator_Widget  (const iWidget *, const iWidgetScrollInfo *info, int color, float opacity);
 
 int         backgroundFadeColor_Widget  (void);
 
@@ -361,4 +363,4 @@ void        identify_Widget         (const iWidget *); /* prints to stdout */
 void        addRecentlyDeleted_Widget   (iAnyObject *obj);
 iBool       isRecentlyDeleted_Widget    (const iAnyObject *obj);
 void        clearRecentlyDeleted_Widget (void);
-    
+
