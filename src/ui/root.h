@@ -8,7 +8,7 @@
 
 iDeclareType(DocumentWidget)
 
-iDeclareType(Root)   
+iDeclareType(Root)
 iDeclareNotifyFunc(Root, ArrangementChanged)
 iDeclareNotifyFunc(Root, VisualOffsetsChanged)
 iDeclareAudienceGetter(Root, arrangementChanged)
@@ -21,6 +21,7 @@ struct Impl_Root {
     iPtrSet *  pendingDestruction;
     int        pendingArrange; /* incremented counter */
     int        loadAnimTimer;
+    int        loadAnimIndex;
     iBool      didAnimateVisualOffsets;
     iBool      didChangeArrangement;
     iAudience *arrangementChanged;

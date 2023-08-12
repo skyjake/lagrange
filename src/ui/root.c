@@ -227,7 +227,6 @@ static const char *stopSeqCStr_[] = {
 };
 
 static const int loadAnimIntervalMs_ = 133;
-static int       loadAnimIndex_      = 0;
 static iRoot *   activeRoot_         = NULL;
 
 static void     setupMovableElements_Root_  (iRoot *);
@@ -703,12 +702,13 @@ static void updateNavDirButtons_(iWidget *navBar) {
     iEndCollect();
 }
 
-static const char *loadAnimationCStr_(void) {
-    return stopSeqCStr_[loadAnimIndex_ % iElemCount(stopSeqCStr_)];
+static const char *loadAnimationCStr_Root_(const iRoot *d) {
+    return stopSeqCStr_[d->loadAnimIndex % iElemCount(stopSeqCStr_)];
 }
 
 static uint32_t updateReloadAnimation_Root_(uint32_t interval, void *root) {
-    loadAnimIndex_++;
+    iRoot *d = root;
+    d->loadAnimIndex++;
     postCommandf_App("window.reload.update root:%p", root);
     return interval;
 }
@@ -717,7 +717,7 @@ static void setReloadLabel_Root_(iRoot *d, const iDocumentWidget *doc) {
     const iBool   isOngoing = isRequestOngoing_DocumentWidget(doc);
     const iBool   isAuto    = isAutoReloading_DocumentWidget(doc) && !isOngoing;
     iLabelWidget *label     = findChild_Widget(d->widget, "reload");
-    updateTextCStr_LabelWidget(label, isOngoing ? loadAnimationCStr_() : reloadCStr_);
+    updateTextCStr_LabelWidget(label, isOngoing ? loadAnimationCStr_Root_(d) : reloadCStr_);
     setBackgroundColor_Widget(as_Widget(label), isAuto ? uiBackground_ColorId : none_ColorId);
     setTextColor_LabelWidget(label, isAuto ? uiTextAction_ColorId : uiText_ColorId);
     setOutline_LabelWidget(label, isAuto);

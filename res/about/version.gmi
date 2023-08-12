@@ -27,6 +27,7 @@ Fixes:
 * Glitches during swipe navigation (touch screens, macOS trackpad). Behavior is more robust at ends of history and when content is not immediately available in cache.
 * Potential crash at shutdown when a feed update is ongoing.
 * Incorrect name displayed in page banner when URL query string contains a tilde name.
+* Fixed navbar spinner animation going too fast when both sides of a split view are being loaded.
 
 ## 1.16.6
 * Fixed crash on gemini://sdf.org/ where the contents of a link line would fail to be recognized as valid characters.
