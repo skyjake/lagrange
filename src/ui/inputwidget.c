@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "prefs.h"
 #include "lang.h"
 #include "touch.h"
+#include "periodic.h"
 #include "app.h"
 
 #include <the_Foundation/array.h>
@@ -266,7 +267,6 @@ struct Impl_InputWidget {
     iInt2           lastTapPos;
     int             tapCount;
     int             cursorVis;
-    uint32_t        timer;
 #endif
 };
 
@@ -727,18 +727,6 @@ static void updateAllLinesAndResizeHeight_InputWidget_(iInputWidget *d) {
     }
 }
 
-static uint32_t cursorTimer_(uint32_t interval, void *w) {
-    iInputWidget *d = w;
-    if (d->cursorVis > 1) {
-        d->cursorVis--;
-    }
-    else {
-        d->cursorVis ^= 1;
-    }
-    refresh_Widget(w);
-    return interval;
-}
-
 iLocalDef iBool isBlinkingCursor_(void) {
     /* Terminal will blink if appropriate. */
     return prefs_App()->blinkingCursor && !isTerminal_Platform();
@@ -748,12 +736,11 @@ static void startOrStopCursorTimer_InputWidget_(iInputWidget *d, int doStart) {
     if (!isBlinkingCursor_() && doStart == 1) {
         doStart = iFalse;
     }
-    if (doStart && !d->timer) {
-        d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);
+    if (doStart) {
+        add_Periodic(periodic_App(), d, "input.blink");
     }
-    else if (!doStart && d->timer) {
-        SDL_RemoveTimer(d->timer);
-        d->timer = 0;
+    else if (!doStart) {
+        remove_Periodic(periodic_App(), d);
     }
 }
 
@@ -858,7 +845,6 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->prevCursor   = zero_I2();
     d->lastTapTime  = 0;
     d->tapCount     = 0;
-    d->timer        = 0;
     d->cursorVis    = 0;
     iZap(d->mark);
     splitToLines_(&iStringLiteral(""), &d->lines);
@@ -2336,6 +2322,18 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     else if (isCommand_Widget(w, ev, "focus.lost")) {
         end_InputWidget(d, iTrue);
         return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "input.blink")) {
+        /* Sent by Periodic. */
+        if (d->cursorVis > 1) {
+            /* After moving the cursor, it stops blinking for a while. */
+            d->cursorVis--;
+        }
+        else {
+            d->cursorVis ^= 1;
+        }
+        refresh_Widget(d);
+        return iTrue;
     }
 #if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
     else if (isCommand_UserEvent(ev, "prefs.blink.changed")) {
