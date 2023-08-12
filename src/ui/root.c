@@ -554,37 +554,55 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         }
         return iTrue;
     }
-    else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "window.resized")) {
+    else if (equal_Command(cmd, "window.resized")) {
         iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
         iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
-        setWidth_SidebarWidget(sidebar, 73.0f);
-        setWidth_SidebarWidget(sidebar2, 73.0f);
-        return iFalse;
-    }
-    else if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "window.resized")) {
-        /* Place the sidebar next to or under doctabs depending on orientation. */
-        iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
-        removeChild_Widget(parent_Widget(sidebar), sidebar);
-        iChangeFlags(as_Widget(sidebar)->flags2, fadeBackground_WidgetFlag2, isPortrait_App());
-        if (isLandscape_App()) {
-            setVisualOffset_Widget(as_Widget(sidebar), 0, 0, 0);
-            addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
+        if (deviceType_App() != phone_AppDeviceType) {
+            /* If the sidebar is too wide, it may need to be hidden. */
+            const int docWidth = iMaxi(1, width_Widget(findChild_Widget(root, "doctabs")));
+            if (isVisible_Widget(sidebar) && 10 * width_Widget(sidebar) / docWidth >= 5) {
+                postCommand_Root(root->root, "sidebar.toggle hide:1");
+            }
+            if (isVisible_Widget(sidebar2) && 10 * width_Widget(sidebar2) / docWidth >= 5) {
+                postCommand_Root(root->root, "sidebar2.toggle hide:1");
+            }
+        }
+        if (deviceType_App() == tablet_AppDeviceType) {
             setWidth_SidebarWidget(sidebar, 73.0f);
-            setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag | fixedPosition_WidgetFlag, iFalse);
+            setWidth_SidebarWidget(sidebar2, 73.0f);
+            return iFalse;
         }
-        else {
-            addChild_Widget(root, iClob(sidebar));
-            setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
-            int midHeight = height_Widget(root) / 2;// + lineHeight_Text(uiLabelLarge_FontId);
+        else if (deviceType_App() == phone_AppDeviceType) {
+            /* Place the sidebar next to or under doctabs depending on orientation. */
+            removeChild_Widget(parent_Widget(sidebar), sidebar);
+            iChangeFlags(as_Widget(sidebar)->flags2, fadeBackground_WidgetFlag2, isPortrait_App());
+            if (isLandscape_App()) {
+                setVisualOffset_Widget(as_Widget(sidebar), 0, 0, 0);
+                addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
+                setWidth_SidebarWidget(sidebar, 73.0f);
+                setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag | fixedPosition_WidgetFlag, iFalse);
+            }
+            else {
+                addChild_Widget(root, iClob(sidebar));
+                setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
+                int midHeight = height_Widget(root) / 2;// + lineHeight_Text(uiLabelLarge_FontId);
 #if defined (iPlatformAndroidMobile)
-            midHeight += 2 * lineHeight_Text(uiLabelLarge_FontId);
+                midHeight += 2 * lineHeight_Text(uiLabelLarge_FontId);
 #endif
-            setMidHeight_SidebarWidget(sidebar, midHeight);
-            setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
-            setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));
+                setMidHeight_SidebarWidget(sidebar, midHeight);
+                setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
+                setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));
+            }
+            postCommandf_Root(root->root, "toolbar.show arg:%d", isPortrait_App() || prefs_App()->bottomNavBar);
+            return iFalse;
         }
-        postCommandf_Root(root->root, "toolbar.show arg:%d", isPortrait_App() || prefs_App()->bottomNavBar);
-        return iFalse;
+    }
+    else if (equal_Command(cmd, "root.hidesidebars")) {
+        postCommand_Root(root->root, "sidebar.toggle hide:1");
+        if (findChild_Widget(root, "sidebar2")) {
+            postCommand_Root(root->root, "sidebar2.toggle hide:1");
+        }
+        return iTrue;
     }
     else if (equal_Command(cmd, "root.arrange")) {
         iWidget *prefs = findWidget_Root("prefs");

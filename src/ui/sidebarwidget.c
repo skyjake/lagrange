@@ -1297,14 +1297,15 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (arg_Command(cmd) && isVisible_Widget(w)) {
             return iTrue;
         }
+        if (argLabel_Command(cmd, "hide") && !isVisible_Widget(w)) {
+            return iTrue;
+        }
         const iBool isAnimated = prefs_App()->uiAnimations &&
                                  argLabel_Command(cmd, "noanim") == 0 &&
                                  (d->side == left_SidebarSide || deviceType_App() != phone_AppDeviceType);
         int visX = 0;
-//        int visY = 0;
         if (isVisible_Widget(w)) {
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
-//            visY = top_Rect(bounds_Widget(w)) - top_Rect(w->root->widget->rect);
         }
         const iBool isHiding = isVisible_Widget(w);
         if (!isHiding && !isMobile_Platform()) {
