@@ -364,7 +364,7 @@ iColor get_Color(int color) {
 }
 
 iColor default_Color(int color) {
-    if (color >= 0 && color < iElemCount(darkPalette_)) {
+    if (color >= 0 && color < (int) iElemCount(darkPalette_)) {
         return (isDark_ColorTheme(prefs_App()->theme) ? darkPalette_ : lightPalette_)[color];
     }
     return (iColor){ 0, 0, 0, 0 };
