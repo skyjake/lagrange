@@ -845,7 +845,7 @@ static iWidget *makeMenuSeparator_(void) {
     setFlags_Widget(sep, resizeChildren_WidgetFlag, iTrue);
     sep->flags2 |= centerChildrenVertical_WidgetFlag2;
     addChildFlags_Widget(sep, iClob(sbar), 0);
-    setBackgroundColor_Widget(sbar, uiSeparator_ColorId);
+    setBackgroundColor_Widget(sbar, uiTextDisabled_ColorId);
     sep->rect.size.y = 2 * gap_UI;
     setFixedSize_Widget(sbar, init_I2(-1, gap_UI / 3));
     setPadding_Widget(sep, 2 * gap_UI, 0, 2 * gap_UI, gap_UI / 3);
