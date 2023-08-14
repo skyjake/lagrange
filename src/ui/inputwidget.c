@@ -2323,6 +2323,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         end_InputWidget(d, iTrue);
         return iFalse;
     }
+#if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
     else if (isCommand_UserEvent(ev, "input.blink")) {
         /* Sent by Periodic. */
         if (d->cursorVis > 1) {
@@ -2335,7 +2336,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         refresh_Widget(d);
         return iTrue;
     }
-#if !LAGRANGE_USE_SYSTEM_TEXT_INPUT
     else if (isCommand_UserEvent(ev, "prefs.blink.changed")) {
         if (isEditing_InputWidget_(d) && arg_Command(command_UserEvent(ev))) {
             startOrStopCursorTimer_InputWidget_(d, 2);

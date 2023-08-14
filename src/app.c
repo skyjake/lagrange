@@ -2574,7 +2574,7 @@ void addTicker_App(iTickerFunc ticker, iAny *context) {
 void addTickerRoot_App(iTickerFunc ticker, iRoot *root, iAny *context) {
     iApp *d = &app_;
     insert_SortedArray(&d->tickers, &(iTicker){ context, root, ticker });
-    postRefresh_Window(root->window);
+    postRefresh_Window(root ? root->window : NULL);
 }
 
 void removeTicker_App(iTickerFunc ticker, iAny *context) {

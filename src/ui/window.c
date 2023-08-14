@@ -1171,7 +1171,7 @@ static iBool handleWindowEvent_MainWindow_(iMainWindow *d, const SDL_WindowEvent
         case SDL_WINDOWEVENT_RESIZED:
             /* On mobile, this occurs when the display is rotated. */
             invalidate_Window(d);
-            postRefresh_App();
+            postRefresh_Window(d);
             return iTrue;
 #endif
         case SDL_WINDOWEVENT_LEAVE:
