@@ -1958,7 +1958,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
     setDerivedThemeColors_(theme);
     /* Special exceptions. */
     if (iconSeed) {
-        if (equal_CStr(cstr_Block(iconSeed), "gemini.circumlunar.space")) {
+        if (equal_CStr(cstr_Block(iconSeed), "geminiprotocol.net")) {
             d->siteIcon = 0x264a; /* gemini symbol */
         }
         else if (equal_CStr(cstr_Block(iconSeed), "spartan.mozz.us")) {
