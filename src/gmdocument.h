@@ -78,6 +78,7 @@ enum iGmLinkScheme {
     about_GmLinkScheme,
     mailto_GmLinkScheme,
     spartan_GmLinkScheme,
+    nex_GmLinkScheme,
 };
 
 enum iGmLinkFlag {
@@ -93,6 +94,7 @@ enum iGmLinkFlag {
     iconFromLabel_GmLinkFlag      = iBit(15), /* use an Emoji/special character from label */
     isOpen_GmLinkFlag             = iBit(16), /* currently open in a tab */
     fontpackFileExtension_GmLinkFlag = iBit(17),
+    inline_GmLinkFlag             = iBit(18),
 };
 
 iLocalDef enum iGmLinkScheme scheme_GmLinkFlag(int flags) {
@@ -175,9 +177,9 @@ iRangecc    findLoc_GmRun           (const iGmRun *, iInt2 pos);
 
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
-    
+
 enum iGmDocumentWarning {
-    ansiEscapes_GmDocumentWarning   = iBit(1),
+    ansiEscapes_GmDocumentWarning = iBit(1),
     missingGlyphs_GmDocumentWarning = iBit(2),
     unsupportedMediaTypeShownAsUtf8_GmDocumentWarning = iBit(3),
 };

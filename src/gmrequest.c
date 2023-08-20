@@ -129,7 +129,7 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
 
 iDeclareType(UploadData)
 iDeclareTypeConstruction(UploadData)
-    
+
 struct Impl_UploadData {
     iBlock  data;
     iString mime;
@@ -173,7 +173,7 @@ struct Impl_GmRequest {
     iUploadData *        upload;
     iTlsRequest *        req;
     iGopher              gopher;
-    iSocket *            spartan;
+    iSocket *            plainSocket; /* Spartan, Nex */
     iGmResponse *        resp;
     iBool                isProxy;
     iBool                isFilterEnabled;
@@ -188,11 +188,11 @@ struct Impl_GmRequest {
 iDefineObjectConstructionArgs(GmRequest, (iGmCerts *certs), certs)
 iDefineAudienceGetter(GmRequest, updated)
 iDefineAudienceGetter(GmRequest, finished)
-    
+
 static uint16_t port_GmRequest_(iGmRequest *d) {
     return urlPort_String(&d->url);
 }
-    
+
 static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     const iTlsCertificate *cert = d->req ? serverCertificate_TlsRequest(d->req) : NULL;
     iGmResponse *resp = d->resp;
@@ -446,22 +446,9 @@ static const iBlock *replaceVariables_(const iBlock *block) {
     return block;
 }
 
-static void gopherRead_GmRequest_(iGmRequest *d, iSocket *socket) {
-    iBool notifyUpdate = iFalse;
-    lock_Mutex(d->mtx);
-    d->resp->statusCode = success_GmStatusCode;
-    iBlock *data = readAll_Socket(socket);
-    if (!isEmpty_Block(data)) {
-        processResponse_Gopher(&d->gopher, data);
-    }
-    delete_Block(data);
-    unlock_Mutex(d->mtx);
-    if (notifyUpdate) {
-        iNotifyAudience(d, updated, GmRequestUpdated);
-    }
-}
+/*----------------------------------------------------------------------------------------------*/
 
-static void gopherDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
+static void plainSocketDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
     iUnused(socket);
     iBool notify = iFalse;
     lock_Mutex(d->mtx);
@@ -475,15 +462,32 @@ static void gopherDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
     }
 }
 
-static void gopherError_GmRequest_(iGmRequest *d, iSocket *socket, int error, const char *msg) {
+static void plainSocketError_GmRequest_(iGmRequest *d, iSocket *socket, int error, const char *msg) {
     iUnused(socket);
     lock_Mutex(d->mtx);
     d->state = failure_GmRequestState;
-    d->resp->statusCode = tlsFailure_GmStatusCode;
+    d->resp->statusCode = tlsFailure_GmStatusCode; /* TODO: add a plain socket error message */
     format_String(&d->resp->meta, "%s (errno %d)", msg, error);
     clear_Block(&d->resp->body);
     unlock_Mutex(d->mtx);
     iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static void gopherRead_GmRequest_(iGmRequest *d, iSocket *socket) {
+    iBool notifyUpdate = iFalse;
+    lock_Mutex(d->mtx);
+    d->resp->statusCode = success_GmStatusCode;
+    iBlock *data = readAll_Socket(socket);
+    if (!isEmpty_Block(data)) {
+        if (processResponse_Gopher(&d->gopher, data)) {
+            notifyUpdate = iTrue;
+        }
+    }
+    delete_Block(data);
+    unlock_Mutex(d->mtx);
+    if (notifyUpdate) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
 }
 
 static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
@@ -494,8 +498,8 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
     d->state         = receivingBody_GmRequestState;
     d->gopher.socket = new_Socket(cstr_String(host), port);
     iConnect(Socket, d->gopher.socket, readyRead,    d, gopherRead_GmRequest_);
-    iConnect(Socket, d->gopher.socket, disconnected, d, gopherDisconnected_GmRequest_);
-    iConnect(Socket, d->gopher.socket, error,        d, gopherError_GmRequest_);
+    iConnect(Socket, d->gopher.socket, disconnected, d, plainSocketDisconnected_GmRequest_);
+    iConnect(Socket, d->gopher.socket, error,        d, plainSocketError_GmRequest_);
     open_Gopher(&d->gopher, &d->url);
     if (d->gopher.needQueryArgs) {
         resp->statusCode = input_GmStatusCode;
@@ -503,6 +507,51 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
     }
+}
+
+static void nexRead_GmRequest_(iGmRequest *d, iSocket *socket) {
+    iBool notifyUpdate = iFalse;
+    lock_Mutex(d->mtx);
+    d->resp->statusCode = success_GmStatusCode;
+    iBlock *data = readAll_Socket(socket);
+    if (!isEmpty_Block(data)) {
+        append_Block(&d->resp->body, data);
+        notifyUpdate = iTrue;
+    }
+    delete_Block(data);
+    unlock_Mutex(d->mtx);
+    if (notifyUpdate) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+}
+
+static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+    d->state = receivingBody_GmRequestState;
+    setCStr_String(&d->resp->meta, "text/plain");
+    d->plainSocket = new_Socket(cstr_String(host), port);
+    iConnect(Socket, d->plainSocket, readyRead,    d, nexRead_GmRequest_);
+    iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
+    iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
+    open_Socket(d->plainSocket);
+    iUrl url;
+    init_Url(&url, &d->url);
+    /* Check the media type. */
+    if (!isEmpty_Range(&url.path)) {
+        iString path;
+        initRange_String(&path, url.path);
+        const char *mime = mediaTypeFromFileExtension_String(&path);
+        if (iCmpStr(mime, "application/octet-stream")) {
+            setCStr_String(&d->resp->meta, mime);
+        }
+        deinit_String(&path);
+    }
+    iBlock message;
+    init_Block(&message, 0);
+    printf_Block(&message,
+                 "%s\n",
+                 !isEmpty_Range(&url.path) ? cstr_Rangecc(url.path) : "/");
+    write_Socket(d->plainSocket, &message);
+    deinit_Block(&message);
 }
 
 static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
@@ -552,9 +601,9 @@ static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
                         default:
                             d->resp->statusCode = invalidHeader_GmStatusCode;
                             d->state            = finished_GmRequestState;
-                            notifyDone          = iTrue;                            
+                            notifyDone          = iTrue;
                             break;
-                    } 
+                    }
                 }
                 else {
                     d->resp->statusCode = invalidHeader_GmStatusCode;
@@ -569,7 +618,7 @@ static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
             notifyUpdate = iTrue;
         }
     }
-    delete_Block(data);    
+    delete_Block(data);
     unlock_Mutex(d->mtx);
     if (notifyUpdate) {
         iNotifyAudience(d, updated, GmRequestUpdated);
@@ -579,38 +628,13 @@ static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
     }
 }
 
-static void spartanDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
-    iUnused(socket);
-    iBool notify = iFalse;
-    lock_Mutex(d->mtx);
-    if (d->state != failure_GmRequestState) {
-        d->state = finished_GmRequestState;
-        notify = iTrue;
-    }
-    unlock_Mutex(d->mtx);
-    if (notify) {
-        iNotifyAudience(d, finished, GmRequestFinished);
-    }
-}
-
-static void spartanError_GmRequest_(iGmRequest *d, iSocket *socket, int error, const char *msg) {
-    iUnused(socket);
-    lock_Mutex(d->mtx);
-    d->state = failure_GmRequestState;
-    d->resp->statusCode = tlsFailure_GmStatusCode;
-    format_String(&d->resp->meta, "%s (errno %d)", msg, error);
-    clear_Block(&d->resp->body);
-    unlock_Mutex(d->mtx);
-    iNotifyAudience(d, finished, GmRequestFinished);
-}
-
 static void beginSpartanConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
     d->state = receivingHeader_GmRequestState;
-    d->spartan = new_Socket(cstr_String(host), port);
-    iConnect(Socket, d->spartan, readyRead,    d, spartanRead_GmRequest_);
-    iConnect(Socket, d->spartan, disconnected, d, spartanDisconnected_GmRequest_);
-    iConnect(Socket, d->spartan, error,        d, spartanError_GmRequest_);
-    open_Socket(d->spartan);
+    d->plainSocket = new_Socket(cstr_String(host), port);
+    iConnect(Socket, d->plainSocket, readyRead,    d, spartanRead_GmRequest_);
+    iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
+    iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
+    open_Socket(d->plainSocket);
     iUrl url;
     init_Url(&url, &d->url);
     iBlock *message = new_Block(0);
@@ -621,15 +645,15 @@ static void beginSpartanConnection_GmRequest_(iGmRequest *d, const iString *host
                       collectNewRange_String((iRangecc){ url.query.start + 1, url.query.end })))));
     }
     if (d->upload) {
-        set_Block(data, &d->upload->data);    
+        set_Block(data, &d->upload->data);
     }
     printf_Block(message,
                  "%s %s %zu\r\n",
                  cstr_Rangecc(url.host),
                  !isEmpty_Range(&url.path) ? cstr_Rangecc(url.path) : "/",
                  size_Block(data));
-    write_Socket(d->spartan, message);
-    write_Socket(d->spartan, data);
+    write_Socket(d->plainSocket, message);
+    write_Socket(d->plainSocket, data);
     delete_Block(data);
     delete_Block(message);
 }
@@ -648,7 +672,7 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
-    d->spartan      = NULL;
+    d->plainSocket  = NULL;
     d->upload       = NULL;
     d->certs        = certs;
     d->req          = NULL;
@@ -676,7 +700,7 @@ void deinit_GmRequest(iGmRequest *d) {
     iReleasePtr(&d->req);
     delete_UploadData(d->upload);
     deinit_Gopher(&d->gopher);
-    iRelease(d->spartan);
+    iRelease(d->plainSocket);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
     delete_GmResponse(d->resp);
@@ -723,7 +747,7 @@ static iBool isTitan_GmRequest_(const iGmRequest *d) {
 void setUploadData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *payload,
                              const iString *token) {
     if (!d->upload) {
-        d->upload = new_UploadData();   
+        d->upload = new_UploadData();
     }
     set_Block(&d->upload->data, payload);
     set_String(&d->upload->mime, mime);
@@ -1035,6 +1059,10 @@ void submit_GmRequest(iGmRequest *d) {
     }
     else if (equalCase_Rangecc(url.scheme, "spartan")) {
         beginSpartanConnection_GmRequest_(d, host, port ? port : 300);
+        return;
+    }
+    else if (equalCase_Rangecc(url.scheme, "nex")) {
+        beginNexConnection_GmRequest_(d, host, port ? port : 1900);
         return;
     }
     else if (!equalCase_Rangecc(url.scheme, "gemini") &&

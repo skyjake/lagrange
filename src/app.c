@@ -1034,7 +1034,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 
 static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
     static const char *schemes[] = {
-        "gemini:", "gopher:", "finger:", "spartan:", "file:", "data:", "about:"
+        "gemini:", "gopher:", "finger:", "spartan:", "nex:", "file:", "data:", "about:"
     };
     iForIndices(i, schemes) {
         if (startsWithCase_Rangecc(uri, schemes[i])) {
@@ -1881,6 +1881,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
                         startsWithCase_CStr(ev.drop.file, "gopher:") ||
                         startsWithCase_CStr(ev.drop.file, "spartan:") ||
+                        startsWithCase_CStr(ev.drop.file, "nex:") ||
                         startsWithCase_CStr(ev.drop.file, "file:")) {
                         postCommandf_Root(NULL, "~open newtab:1 url:%s", ev.drop.file);
                     }

@@ -896,27 +896,32 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
            is open: the image itself is the indication. */
         const iBool isInlineImageCaption = iFalse;
         if (run->linkId && (linkFlags & isOpen_GmLinkFlag || isInlineImageCaption || isMobileHover)) {
+            const int pad = gap_Text;
+            int       bg  = tmBackgroundOpenLink_ColorId;
+            iRect     wideRect;
             /* Open links get a highlighted background. */
-            int       bg       = tmBackgroundOpenLink_ColorId;
             if (isMobileHover && !isPartOfHover) {
                 bg = tmBackground_ColorId; /* hover ended and was invalidated */
             }
-            //            const int frame    = tmFrameOpenLink_ColorId;
-            const int pad      = gap_Text;
-            iRect     wideRect = { init_I2(origin.x - pad, visPos.y),
-                              init_I2(d->docBounds.size.x + 2 * pad,
-                                      height_Rect(run->visBounds)) };
-            adjustEdges_Rect(&wideRect,
-                             run->flags & startOfLine_GmRunFlag ? -pad * 3 / 4 : 0, 0,
-                             run->flags & endOfLine_GmRunFlag ? pad * 3 / 4 : 0, 0);
-            /* The first line is composed of two runs that may be drawn in either order, so
-               only draw half of the background. */
-            if (run->flags & decoration_GmRunFlag) {
-                wideRect.size.x = right_Rect(visRect) - left_Rect(wideRect);
+            if (linkFlags & inline_GmLinkFlag) {
+                wideRect = visRect;
             }
-            else if (run->flags & startOfLine_GmRunFlag) {
-                wideRect.size.x = right_Rect(wideRect) - left_Rect(visRect);
-                wideRect.pos.x  = left_Rect(visRect);
+            else {
+                wideRect =
+                    (iRect){ init_I2(origin.x - pad, visPos.y),
+                             init_I2(d->docBounds.size.x + 2 * pad, height_Rect(run->visBounds)) };
+                adjustEdges_Rect(&wideRect,
+                                 run->flags & startOfLine_GmRunFlag ? -pad * 3 / 4 : 0, 0,
+                                 run->flags & endOfLine_GmRunFlag ? pad * 3 / 4 : 0, 0);
+                /* The first line is composed of two runs that may be drawn in either order, so
+                   only draw half of the background. */
+                if (run->flags & decoration_GmRunFlag) {
+                    wideRect.size.x = right_Rect(visRect) - left_Rect(wideRect);
+                }
+                else if (run->flags & startOfLine_GmRunFlag) {
+                    wideRect.size.x = right_Rect(wideRect) - left_Rect(visRect);
+                    wideRect.pos.x  = left_Rect(visRect);
+                }
             }
             fillRect_Paint(&d->paint, wideRect, bg);
         }
@@ -1078,7 +1083,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 break;
             }
             if (linkMedia.type != download_MediaType && /* can't cancel downloads currently */
-                                                            linkMedia.type != image_MediaType &&
+                linkMedia.type != image_MediaType &&
                 findMediaRequest_DocumentWidget(d->view->owner, run->linkId)) {
                 appendFormat_String(
                     &text, "  %s" close_Icon, isHover ? escape_Color(tmLinkText_ColorId) : "");
@@ -1112,7 +1117,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     /* Debug. */
     if (0) {
         drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
-        drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
+        drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size },
+                       run->linkId ? orange_ColorId : red_ColorId);
     }
 }
 
@@ -1442,10 +1448,11 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                         if (isOverlapping_Rangei(bufRange, ySpan_Rect(run->visBounds))) {
                             beginTarget_Paint(p, buf->texture);
                             fillRect_Paint(p,
+                                           moved_Rect(run->visBounds, init_I2(0, -buf->origin)),/*
                                            init_Rect(0,
                                                      run->visBounds.pos.y - buf->origin,
                                                      visBuf->texSize.x,
-                                                     run->visBounds.size.y),
+                                                     run->visBounds.size.y),*/
                                            tmBackground_ColorId);
                         }
                     }
