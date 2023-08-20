@@ -179,6 +179,7 @@ iDeclareObjectConstruction(GmDocument)
 enum iGmDocumentWarning {
     ansiEscapes_GmDocumentWarning   = iBit(1),
     missingGlyphs_GmDocumentWarning = iBit(2),
+    unsupportedMediaTypeShownAsUtf8_GmDocumentWarning = iBit(3),
 };
 
 enum iGmDocumentUpdate {
@@ -199,6 +200,7 @@ iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int canvasWidth,
                                  enum iGmDocumentUpdate updateType);
+void    setWarning_GmDocument   (iGmDocument *, int warning, iBool set);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 
 void    updateVisitedLinks_GmDocument   (iGmDocument *); /* check all links for visited status */

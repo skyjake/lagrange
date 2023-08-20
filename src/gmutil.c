@@ -857,6 +857,10 @@ static const struct {
       { 0x1f520, /* ABCD */
         "${error.glyphs}",
         "${error.glyphs.msg}" } },
+    { unsupportedMimeTypeShownAsUtf8_GmStatusCode,
+      { 0x1f524, /* abc */
+        "${error.showutf8}",
+        "${error.showutf8.msg}" } },
     { temporaryFailure_GmStatusCode,
       { 0x1f50c, /* electric plug */
         "${error.temporary}",

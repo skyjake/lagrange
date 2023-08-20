@@ -2509,6 +2509,10 @@ size_t memorySize_GmDocument(const iGmDocument *d) {
            memorySize_Media(d->media);
 }
 
+void setWarning_GmDocument(iGmDocument *d, int warning, iBool set) {
+    iChangeFlags(d->warnings, warning, set);
+}
+
 int warnings_GmDocument(const iGmDocument *d) {
     return d->warnings;
 }

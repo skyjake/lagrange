@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 
 iDeclareType(BannerItem)
-    
+
 struct Impl_BannerItem {
     enum iBannerType type;
     enum iGmStatusCode code;
@@ -74,6 +74,7 @@ iDefineTypeConstruction(Banner)
 #   define itemHPad_Banner_    (3 * gap_UI)
 #   define bottomPad_Banner_   (4 * gap_UI)
 #endif
+#define noSiteTopPad_Banner_   bottomPad_Banner_
 
 static void updateHeight_Banner_(iBanner *d) {
     d->rect.size.y = 0;
@@ -83,6 +84,9 @@ static void updateHeight_Banner_(iBanner *d) {
     }
     const size_t numItems = size_Array(&d->items);
     if (numItems) {
+        if (isEmpty_String(&d->site)) {
+            d->rect.size.y += noSiteTopPad_Banner_;
+        }
         iConstForEach(Array, i, &d->items) {
             const iBannerItem *item = i.value;
             d->rect.size.y += item->height;
@@ -231,7 +235,7 @@ void draw_Banner(const iBanner *d) {
         pos.y += (int) ceilf(lineHeight_Text(banner_FontId) * 3.0f / 2.0f);
     }
     else {
-        pos.y = top_Rect(bounds);
+        pos.y = top_Rect(bounds) + noSiteTopPad_Banner_;
     }
 //    const int innerPad = gap_UI;
     pos.x = left_Rect(bounds);
@@ -259,7 +263,9 @@ void draw_Banner(const iBanner *d) {
 }
 
 static size_t itemAtCoord_Banner_(const iBanner *d, iInt2 coord) {
-    iInt2 pos = addY_I2(topLeft_Rect(d->rect), lineHeight_Text(banner_FontId) * 2);
+    iInt2 pos = addY_I2(topLeft_Rect(d->rect),
+                        isEmpty_String(&d->site) ? noSiteTopPad_Banner_
+                                                 : (lineHeight_Text(banner_FontId) * 2));
     iConstForEach(Array, i, &d->items) {
         const iBannerItem *item = i.value;
         if (contains_Rect((iRect){ pos, init_I2(d->rect.size.x, item->height)}, coord)) {

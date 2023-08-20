@@ -2399,6 +2399,12 @@ msgstr "Missing Glyphs"
 msgid "error.glyphs.msg"
 msgstr "This page could not displayed in full because some characters are missing. You can install additional fonts to fix this."
 
+msgid "error.showutf8"
+msgstr "Autodetected UTF-8"
+
+msgid "error.showutf8.msg"
+msgstr "The media type of this page was not recognized but it is valid UTF-8 encoded text."
+
 msgid "gempub.cover.viewlocal"
 msgstr "This Gempub book can be viewed after it has been saved locally."
 

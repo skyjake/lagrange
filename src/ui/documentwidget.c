@@ -1538,15 +1538,25 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
             if (docFormat == undefined_SourceFormat) {
                 if (isRequestFinished) {
                     d->flags &= ~drawDownloadCounter_DocumentWidgetFlag;
+                    if (isUtf8_Rangecc(range_Block(&response->body))) {
+                        docFormat = plainText_SourceFormat;
+                        charset = range_CStr("utf-8");
+                        setWarning_GmDocument(
+                            d->view->doc, unsupportedMediaTypeShownAsUtf8_GmDocumentWarning, iTrue);
+                    }
+                    else {
                     showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode, &response->meta);
                     deinit_String(&str);
                     return;
                 }
+                }
+                else {
                 d->flags |= drawDownloadCounter_DocumentWidgetFlag;
                 clear_PtrSet(d->view->invalidRuns);
                 documentRunsInvalidated_DocumentWidget(d);
                 deinit_String(&str);
                 return;
+            }
             }
             setFormat_GmDocument(d->view->doc, docFormat);
             /* Convert the source to UTF-8 if needed. */
@@ -1730,6 +1740,10 @@ static void addBannerWarnings_DocumentWidget_(iDocumentWidget *d) {
     }
     if (warnings & ansiEscapes_GmDocumentWarning) {
         add_Banner(d->banner, warning_BannerType, ansiEscapes_GmStatusCode, NULL, NULL);
+    }
+    if (warnings & unsupportedMediaTypeShownAsUtf8_GmDocumentWarning) {
+        add_Banner(d->banner, warning_BannerType, unsupportedMimeTypeShownAsUtf8_GmStatusCode,
+                   NULL, NULL);
     }
 }
 
