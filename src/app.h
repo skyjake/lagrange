@@ -52,6 +52,7 @@ typedef void iAnyWindow;
 #define replaceTab_CommandLineOption        "replace-tab"
 #define windowWidth_CommandLineOption       "width;w"
 #define windowHeight_CommandLineOption      "height;h"
+#define uiTheme_CommandLineOption           "theme;t"
 
 enum iAppDeviceType {
     desktop_AppDeviceType,

@@ -34,3 +34,5 @@ Options that control a running instance of Lagrange:
       --new-tab [URL]   Open a new tab. If the URL is omitted, the user's
                         homepage is opened.                              
       --tab-url         Print the URL of the active tab.
+  -t, --theme ARG       Change the current UI color theme to ARG ("black",
+                        "dark", "light", "white").

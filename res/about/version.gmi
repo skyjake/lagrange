@@ -13,6 +13,7 @@ New features:
 * "Search" context menu item on selected text to make a search query with it.
 * "Use as Search URL" in link context menu.
 * Option to never/always collapse preformatted blocks, disabling the ability to toggle the folding.
+* Option `--theme` (`-t`): change UI color theme of open Lagrange windows. Can be used in scripts to switch the theme automatically (for example, see the `darkman` utility; thanks to Jason McBrayer for suggesting this).
 * Periodically save UI state (including each tab's navigation history) to prevent data loss in case the app crashes. These runtime saves do not include any cached page content. The full cache is still saved as before when quitting the app.
 * Display a logo graphic in empty windows/tabs as a placeholder.
 * Support for the Nex protocol (nex://nightfall.city/nex/info/specification.txt).

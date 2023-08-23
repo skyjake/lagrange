@@ -73,6 +73,9 @@ These options are used to control the currently running Lagrange instance via th
 **\--tab-url**
 :   Print the URL of the active tab.
 
+**-t**, **\--theme** [_ARG_]
+:   Change the current UI color theme to ARG ("black", "dark", "light", "white").
+
 # ENVIRONMENT
 
 `LAGRANGE_OVERRIDE_DPI`

@@ -982,7 +982,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
             requestRaise = iTrue;
         }
         else if (equal_CommandLineConstIterator(&i, "new-tab")) {
-            iCommandLineArg *arg = argument_CommandLineConstIterator(&i);
+            iCommandLineArg *arg = iClob(argument_CommandLineConstIterator(&i));
             if (!isEmpty_StringList(&arg->values)) {
                 appendFormat_String(cmds, "open newtab:1 url:%s\n",
                                     cstr_String(constAt_StringList(&arg->values, 0)));
@@ -990,11 +990,24 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
             else {
                 appendCStr_String(cmds, "tabs.new\n");
             }
-            iRelease(arg);
             requestRaise = iTrue;
         }
         else if (equal_CommandLineConstIterator(&i, "close-tab")) {
             appendCStr_String(cmds, "tabs.close\n");
+        }
+        else if (equal_CommandLineConstIterator(&i, uiTheme_CommandLineOption)) {
+            iCommandLineArg *arg = iClob(argument_CommandLineConstIterator(&i));
+            if (arg) {
+                static const char *themeNames[] = {
+                    "black", "dark", "light", "white"
+                };
+                iForIndices(n, themeNames) {
+                    if (!cmp_String(value_CommandLineArg(arg, 0), themeNames[n])) {
+                        appendFormat_String(cmds, "theme.set arg:%u\n", n);
+                        break;
+                    }
+                }
+            }
         }
         else if (equal_CommandLineConstIterator(&i, "tab-url")) {
             appendFormat_String(cmds, "ipc.active.url pid:%d\n", pid);
@@ -1157,6 +1170,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, replaceTab_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, "sw", 0);
         defineValues_CommandLine(&d->args, "tab-url", 0);
+        defineValues_CommandLine(&d->args, uiTheme_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, userDataDir_CommandLineOption, 1);
         defineValues_CommandLine(&d->args, "version;V", 0);
         defineValues_CommandLine(&d->args, windowHeight_CommandLineOption, 1);
