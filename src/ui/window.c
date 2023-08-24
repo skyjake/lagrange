@@ -2173,7 +2173,7 @@ void setSnap_MainWindow(iMainWindow *d, int snapMode) {
         setFlags_Widget(winBar, hidden_WidgetFlag, d->place.snap == fullscreen_WindowSnap);
         if (wasVisible != isVisible_Widget(winBar)) {
             arrange_Widget(root->widget);
-            postRefresh_App();
+            postRefresh_Window(d);
         }
     }
 #endif /* defined (LAGRANGE_ENABLE_CUSTOM_FRAME) */
