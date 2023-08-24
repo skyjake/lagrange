@@ -895,19 +895,28 @@ static void updateNavBarSize_(iWidget *navBar) {
     const iBool isPhone  = deviceType_App() == phone_AppDeviceType;
     const iBool isNarrow = !isPhone && isNarrow_Root(navBar->root);
     /* Adjust navbar padding. */ {
-        int hPad   = isPortraitPhone_App() ? 0 : isPhone || isNarrow ? gap_UI / 2 : (gap_UI * 3 / 2);
-        int vPad   = gap_UI * 3 / 2;
+        int hPad   = isPortraitPhone_App() ? 0 : isPhone || isNarrow ? gap_UI : (gap_UI * 3 / 2);
+        int vPad   = gap_UI / 4 * 2;
         int botPad = vPad / 2;
         int topPad = !findWidget_Root("winbar") ? gap_UI / 2 : 0;
+        if (!isPhone) {
+            if (prefs_App()->bottomNavBar) {
+                //topPad = vPad / 2 - vPad / 3;
+                topPad += vPad;
+                botPad += vPad * 2;
+            }
+            else {
+                topPad += vPad * 2;
+                botPad += vPad;
+            }
+        }
+        /* Mobile safe insets. */
         if (prefs_App()->bottomNavBar &&
             ((isPhone && isLandscape_App()) || deviceType_App() == tablet_AppDeviceType)) {
             botPad += bottomSafeInset_Mobile();
             hPad += leftSafeInset_Mobile();
         }
-        if (!isPhone && prefs_App()->bottomNavBar) {
-            topPad = vPad / 2 - vPad / 3;
-        }
-        setPadding_Widget(navBar, hPad, vPad / 3 + topPad, hPad, botPad);
+        setPadding_Widget(navBar, hPad, topPad, hPad, botPad);
     }
     /* Button sizing. */
     if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
