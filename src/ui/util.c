@@ -3311,7 +3311,7 @@ iWidget *makePreferences_Widget(void) {
     /* General settings. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
                                                    gear_Icon " ${heading.prefs.general}",
-                                                   uiIcon_ColorId,
+                                                   cyan_ColorId,
                                                    '1',
                                                    &headings,
                                                    &values),
