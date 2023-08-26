@@ -901,13 +901,14 @@ static void updateNavBarSize_(iWidget *navBar) {
         int topPad = !findWidget_Root("winbar") ? gap_UI / 2 : 0;
         if (!isPhone) {
             if (prefs_App()->bottomNavBar) {
-                //topPad = vPad / 2 - vPad / 3;
                 topPad += vPad;
                 botPad += vPad * 2;
+                hPad = iMax(hPad, botPad) + gap_UI / 3;
             }
             else {
                 topPad += vPad * 2;
                 botPad += vPad;
+                hPad = iMax(hPad, topPad) + gap_UI / 3;
             }
         }
         /* Mobile safe insets. */
