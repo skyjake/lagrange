@@ -8,6 +8,7 @@
 
 ## 1.17
 New features:
+* Forcing an input prompt to appear before a URL is requested.
 * User-selectable feed refresh interval. Previously the interval been hardcoded to four hours. (Based on a patch by Michael Nordmeyer.)
 * "Fold All" and "Unfold All" in Bookmarks sidebar context menu.
 * "Search" context menu item on selected text to make a search query with it.

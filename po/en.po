@@ -896,6 +896,12 @@ msgstr "Line break"
 msgid "dlg.input.send"
 msgstr "Send"
 
+msgid "menu.input.setprompt"
+msgstr "Prompt Always"
+
+msgid "menu.input.unsetprompt"
+msgstr "Prompt on Request"
+
 # Paste the line preceding the clicked link into the input prompt.
 msgid "menu.input.precedingline"
 msgstr "Paste Preceding Line"

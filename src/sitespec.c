@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "sitespec.h"
+#include "gmutil.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
@@ -30,15 +31,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareClass(SiteParams)
 iDeclareObjectConstruction(SiteParams)
-    
+
 struct Impl_SiteParams {
     iObject  object;
     uint16_t titanPort;
     iString  titanIdentity; /* fingerprint */
     int      dismissWarnings;
+    int      tlsSessionCache;
     iStringArray usedIdentities; /* fingerprints; latest ones at the end */
     iString  paletteSeed;
-    int      tlsSessionCache;
+    iStringSet promptPaths;
     /* TODO: style settings */
 };
 
@@ -46,12 +48,14 @@ void init_SiteParams(iSiteParams *d) {
     d->titanPort = 0; /* undefined */
     init_String(&d->titanIdentity);
     d->dismissWarnings = 0;
+    d->tlsSessionCache = iTrue;
     init_StringArray(&d->usedIdentities);
     init_String(&d->paletteSeed);
-    d->tlsSessionCache = iTrue;
+    init_StringSet(&d->promptPaths);
 }
 
 void deinit_SiteParams(iSiteParams *d) {
+    deinit_StringSet(&d->promptPaths);
     deinit_String(&d->paletteSeed);
     deinit_StringArray(&d->usedIdentities);
     deinit_String(&d->titanIdentity);
@@ -68,9 +72,9 @@ static size_t findUsedIdentity_SiteParams_(const iSiteParams *d, const iString *
 
 iDefineClass(SiteParams)
 iDefineObjectConstruction(SiteParams)
-    
+
 /*----------------------------------------------------------------------------------------------*/
-    
+
 struct Impl_SiteSpec {
     iString     saveDir;
     iStringHash sites;
@@ -110,7 +114,7 @@ static void loadOldFormat_SiteSpec_(iSiteSpec *d) {
                 if (params) {
                     params->titanPort = atoi(cstr_Rangecc(line));
                 }
-                continue;                
+                continue;
             }
         }
         if (params && !isEmpty_String(key)) {
@@ -124,7 +128,7 @@ static void handleIniTable_SiteSpec_(void *context, const iString *table, iBool 
     iSiteSpec *d = context;
     if (isStart) {
         iAssert(d->loadParams == NULL);
-        d->loadParams = new_SiteParams();                
+        d->loadParams = new_SiteParams();
     }
     else {
         iAssert(d->loadParams != NULL);
@@ -152,6 +156,9 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
     else if (!cmp_String(key, "dismissWarnings") && value->type == int64_TomlType) {
         d->loadParams->dismissWarnings = (int) value->value.int64;
     }
+    else if (!cmp_String(key, "tlsSessionCache") && value->type == boolean_TomlType) {
+        d->loadParams->tlsSessionCache = value->value.boolean;
+    }
     else if (!cmp_String(key, "usedIdentities") && value->type == string_TomlType) {
         iRangecc seg = iNullRange;
         while (nextSplit_Rangecc(range_String(value->value.string), " ", &seg)) {
@@ -161,13 +168,16 @@ static void handleIniKeyValue_SiteSpec_(void *context, const iString *table, con
     else if (!cmp_String(key, "paletteSeed") && value->type == string_TomlType) {
         set_String(&d->loadParams->paletteSeed, value->value.string);
     }
-    else if (!cmp_String(key, "tlsSessionCache") && value->type == boolean_TomlType) {
-        d->loadParams->tlsSessionCache = value->value.boolean;
+    else if (!cmp_String(key, "promptPaths") && value->type == string_TomlType) {
+        iRangecc seg = iNullRange;
+        while (nextSplit_Rangecc(range_String(value->value.string), " ", &seg)) {
+            insert_StringSet(&d->loadParams->promptPaths, collectNewRange_String(seg));
+        }
     }
 }
 
 static iBool load_SiteSpec_(iSiteSpec *d) {
-    iBool ok = iFalse;   
+    iBool ok = iFalse;
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, fileName_SiteSpec_)));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         ok = deserialize_SiteSpec(stream_File(f), all_ImportMethod);
@@ -205,19 +215,24 @@ void serialize_SiteSpec(iStream *out) {
         if (params->dismissWarnings) {
             appendFormat_String(buf, "dismissWarnings = 0x%x\n", params->dismissWarnings);
         }
+        if (!params->tlsSessionCache) {
+            appendCStr_String(buf, "tlsSessionCache = false\n");
+        }
         if (!isEmpty_StringArray(&params->usedIdentities)) {
             appendFormat_String(
                 buf,
                 "usedIdentities = \"%s\"\n",
                 cstrCollect_String(joinCStr_StringArray(&params->usedIdentities, " ")));
         }
+        if (!isEmpty_StringSet(&params->promptPaths)) {
+            appendFormat_String(buf,
+                                "promptPaths = \"%s\"\n",
+                                cstrCollect_String(joinCStr_StringSet(&params->promptPaths, " ")));
+        }
         if (!isEmpty_String(&params->paletteSeed)) {
             appendCStr_String(buf, "paletteSeed = \"");
             append_String(buf, collect_String(quote_String(&params->paletteSeed, iFalse)));
             appendCStr_String(buf, "\"\n");
-        }
-        if (!params->tlsSessionCache) {
-            appendCStr_String(buf, "tlsSessionCache = false\n");
         }
         if (!isEmpty_String(buf)) {
             writeData_Stream(out, "[", 1);
@@ -228,7 +243,7 @@ void serialize_SiteSpec(iStream *out) {
         }
         iEndCollect();
     }
-    delete_String(buf);    
+    delete_String(buf);
 }
 
 static void save_SiteSpec_(iSiteSpec *d) {
@@ -308,7 +323,7 @@ void setValueString_SiteSpec(const iString *site, enum iSiteSpecKey key, const i
                 needSave = iTrue;
                 set_String(&params->paletteSeed, value);
             }
-            break;            
+            break;
         default:
             break;
     }
@@ -334,12 +349,25 @@ static void insertOrRemoveString_SiteSpec_(iSiteSpec *d, const iString *site, en
             }
             break;
         }
+        case promptPaths_SiteSpecKey: {
+            if (contains_StringSet(&params->promptPaths, value)) {
+                if (!doInsert) {
+                    remove_StringSet(&params->promptPaths, value);
+                    needSave = iTrue;
+                }
+            }
+            else if (doInsert) {
+                insert_StringSet(&params->promptPaths, value);
+                needSave = iTrue;
+            }
+            break;
+        }
         default:
             break;
     }
     if (needSave) {
         save_SiteSpec_(d);
-    }    
+    }
 }
 
 void insertString_SiteSpec(const iString *site, enum iSiteSpecKey key, const iString *value) {
@@ -352,7 +380,18 @@ void removeString_SiteSpec(const iString *site, enum iSiteSpecKey key, const iSt
 
 const iStringArray *strings_SiteSpec(const iString *site, enum iSiteSpecKey key) {
     const iSiteParams *params = findParams_SiteSpec_(&siteSpec_, site);
-    return &params->usedIdentities;
+    if (key == usedIdentities_SiteSpecKey) {
+        return &params->usedIdentities;
+    }
+    return NULL;
+}
+
+const iStringSet *stringSet_SiteSpec(const iString *site, enum iSiteSpecKey key) {
+    const iSiteParams *params = findParams_SiteSpec_(&siteSpec_, site);
+    if (key == promptPaths_SiteSpecKey) {
+        return &params->promptPaths;
+    }
+    return NULL;
 }
 
 int value_SiteSpec(const iString *site, enum iSiteSpecKey key) {
@@ -363,7 +402,7 @@ int value_SiteSpec(const iString *site, enum iSiteSpecKey key) {
         switch (key) {
             case tlsSessionCache_SiteSpeckey:
                 return 1;
-            default:                
+            default:
                 return 0;
         }
     }
@@ -376,7 +415,7 @@ int value_SiteSpec(const iString *site, enum iSiteSpecKey key) {
             return params->tlsSessionCache;
         default:
             return 0;
-    }    
+    }
 }
 
 const iString *valueString_SiteSpec(const iString *site, enum iSiteSpecKey key) {
@@ -392,5 +431,19 @@ const iString *valueString_SiteSpec(const iString *site, enum iSiteSpecKey key) 
             return &params->paletteSeed;
         default:
             return collectNew_String();
-    }    
+    }
+}
+
+iBool isPromptUrl_SiteSpec(const iString *url) {
+    iUrl parts;
+    iString root;
+    iString path;
+    init_Url(&parts, canonicalUrl_String(url));
+    initRange_String(&root, urlRoot_String(url));
+    initRange_String(&path, parts.path);
+    const iBool isPromptUrl = contains_StringSet(stringSet_SiteSpec(&root, promptPaths_SiteSpecKey),
+                                                 &path);
+    deinit_String(&path);
+    deinit_String(&root);
+    return isPromptUrl;
 }

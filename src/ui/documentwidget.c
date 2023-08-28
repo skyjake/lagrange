@@ -1952,8 +1952,9 @@ static void togglePreFold_DocumentWidget_(iDocumentWidget *d, uint16_t preId) {
 }
 
 static iString *makeQueryUrl_DocumentWidget_(const iDocumentWidget *d,
+                                             const iString *queryUrl,
                                              const iString *userEnteredText) {
-    iString *url = copy_String(d->mod.url);
+    iString *url = copy_String(queryUrl);
     /* Remove the existing query string. */
     const size_t qPos = indexOfCStr_String(url, "?");
     if (qPos != iInvalidPos) {
@@ -1974,7 +1975,7 @@ static iString *makeQueryUrl_DocumentWidget_(const iDocumentWidget *d,
 
 static void inputQueryValidator_(iInputWidget *input, void *context) {
     iDocumentWidget *d = context;
-    iString *url = makeQueryUrl_DocumentWidget_(d, text_InputWidget(input));
+    iString *url = makeQueryUrl_DocumentWidget_(d, d->mod.url, text_InputWidget(input));
     iWidget *dlg = parent_Widget(input);
     iLabelWidget *counter = findChild_Widget(dlg, "valueinput.counter");
     iAssert(counter);
@@ -2021,6 +2022,95 @@ static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
         return iTrue;
     }
     return iFalse;
+}
+
+static void updateInputPromptMenuItems_(iWidget *menu) {
+    setMenuItemLabelByIndex_Widget(menu,
+                                   2,
+                                   !isPromptUrl_SiteSpec(&menu->data)
+                                       ? "${menu.input.setprompt}"
+                                       : "${menu.input.unsetprompt}");
+}
+
+iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isSensitive,
+                                        const char *promptLabel, const char *acceptCommand) {
+    iUrl parts;
+    init_Url(&parts, url);
+    iWidget *dlg = makeValueInput_Widget(
+        as_Widget(d),
+        NULL,
+        format_CStr(uiHeading_ColorEscape "%s", cstr_Rangecc(parts.host)),
+        promptLabel ? promptLabel
+                    : format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path)),
+        uiTextAction_ColorEscape "${dlg.input.send}",
+        acceptCommand);
+    iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
+    iLabelWidget *lineBreak = NULL;
+    if (!isSensitive) {
+        /* The line break and URL length counters are positioned differently on mobile.
+           There is no line breaks in sensitive input. */
+        if (deviceType_App() == desktop_AppDeviceType) {
+            iString *keyStr = collectNew_String();
+            toString_Sym(SDLK_RETURN,
+                         lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey),
+                         keyStr);
+            lineBreak = new_LabelWidget(
+                format_CStr("${dlg.input.linebreak}" uiTextAction_ColorEscape "  %s",
+                            cstr_String(keyStr)),
+                NULL);
+            insertChildAfter_Widget(buttons, iClob(lineBreak), 0);
+        }
+        if (lineBreak) {
+            setFlags_Widget(as_Widget(lineBreak), frameless_WidgetFlag, iTrue);
+            setTextColor_LabelWidget(lineBreak, uiTextDim_ColorId);
+        }
+    }
+    iWidget *counter = (iWidget *) new_LabelWidget("", NULL);
+    setId_Widget(counter, "valueinput.counter");
+    setFlags_Widget(counter, frameless_WidgetFlag | resizeToParentHeight_WidgetFlag, iTrue);
+    if (deviceType_App() == desktop_AppDeviceType) {
+        addChildPos_Widget(buttons, iClob(counter), front_WidgetAddPos);
+    }
+    else {
+        insertChildAfter_Widget(buttons, iClob(counter), 1);
+    }
+    if (lineBreak && deviceType_App() != desktop_AppDeviceType) {
+        addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
+    }
+    /* Menu for additional actions, past entries. */ {
+        const iBinding *bind        = findCommand_Keys("input.precedingline");
+        iMenuItem       items[]     = {
+            { "${menu.input.precedingline}",
+              bind->key,
+              bind->mods,
+              format_CStr("!valueinput.set ptr:%p text:%s",
+                          buttons, cstr_String(&d->linePrecedingLink)) },
+            { "---" },
+            { "", 0, 0, format_CStr("!prompturl.toggle url:%s", cstr_String(url)) }
+        };
+        iLabelWidget *ellipsisButton =
+            makeMenuButton_LabelWidget(midEllipsis_Icon, items, iElemCount(items));
+        /* When opening, update the items to reflect the site-specific settings. */ {
+            iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
+            menu->updateMenuItems = updateInputPromptMenuItems_;
+            set_String(&menu->data, url); /* needed when updating items */
+        }
+        if (deviceType_App() == desktop_AppDeviceType) {
+            addChildPos_Widget(buttons, iClob(ellipsisButton), front_WidgetAddPos);
+        }
+        else {
+            insertChildAfterFlags_Widget(buttons, iClob(ellipsisButton), 0,
+                                         frameless_WidgetFlag | noBackground_WidgetFlag);
+            setFont_LabelWidget(ellipsisButton, font_LabelWidget((iLabelWidget *) lastChild_Widget(buttons)));
+            setTextColor_LabelWidget(ellipsisButton, uiTextAction_ColorId);
+        }
+    }
+    iInputWidget *input = findChild_Widget(dlg, "input");
+    setValidator_InputWidget(input, inputQueryValidator_, d);
+    setBackupFileName_InputWidget(input, "inputbackup");
+    setSelectAllOnFocus_InputWidget(input, iTrue);
+    setSensitiveContent_InputWidget(input, isSensitive);
+    return dlg;
 }
 
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
@@ -2091,74 +2181,12 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 /* Let the navigation history know that we have been to this URL even though
                    it is only displayed as an input dialog. */
                 visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
-                iUrl parts;
-                init_Url(&parts, d->mod.url);
-                iWidget *dlg = makeValueInput_Widget(
-                    as_Widget(d),
-                    NULL,
-                    format_CStr(uiHeading_ColorEscape "%s", cstr_Rangecc(parts.host)),
-                    isEmpty_String(&resp->meta)
-                        ? format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path))
-                        : cstr_String(&resp->meta),
-                    uiTextAction_ColorEscape "${dlg.input.send}",
+                makeInputPrompt_DocumentWidget(
+                    d,
+                    d->mod.url,
+                    statusCode == sensitiveInput_GmStatusCode,
+                    isEmpty_String(&resp->meta) ? NULL : cstr_String(&resp->meta),
                     format_CStr("!document.input.submit doc:%p", d));
-                iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
-                iLabelWidget *lineBreak = NULL;
-                if (statusCode != sensitiveInput_GmStatusCode) {
-                    /* The line break and URL length counters are positioned differently on mobile.
-                       There is no line breaks in sensitive input. */
-                    if (deviceType_App() == desktop_AppDeviceType) {
-                        iString *keyStr = collectNew_String();
-                        toString_Sym(SDLK_RETURN,
-                                     lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey),
-                                     keyStr);
-                        lineBreak = new_LabelWidget(
-                            format_CStr("${dlg.input.linebreak}" uiTextAction_ColorEscape "  %s",
-                                        cstr_String(keyStr)),
-                            NULL);
-                        insertChildAfter_Widget(buttons, iClob(lineBreak), 0);
-                    }
-                    if (lineBreak) {
-                        setFlags_Widget(as_Widget(lineBreak), frameless_WidgetFlag, iTrue);
-                        setTextColor_LabelWidget(lineBreak, uiTextDim_ColorId);
-                    }
-                }
-                iWidget *counter = (iWidget *) new_LabelWidget("", NULL);
-                setId_Widget(counter, "valueinput.counter");
-                setFlags_Widget(counter, frameless_WidgetFlag | resizeToParentHeight_WidgetFlag, iTrue);
-                if (deviceType_App() == desktop_AppDeviceType) {
-                    addChildPos_Widget(buttons, iClob(counter), front_WidgetAddPos);
-                }
-                else {
-                    insertChildAfter_Widget(buttons, iClob(counter), 1);
-                }
-                if (lineBreak && deviceType_App() != desktop_AppDeviceType) {
-                    addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
-                }
-                /* Menu for additional actions, past entries. */ {
-                    const iBinding *bind = findCommand_Keys("input.precedingline");
-                    iMenuItem items[] = { { "${menu.input.precedingline}",
-                                            bind->key,
-                                            bind->mods,
-                                            format_CStr("!valueinput.set ptr:%p text:%s",
-                                                        buttons,
-                                                        cstr_String(&d->linePrecedingLink)) } };
-                    iLabelWidget *menu = makeMenuButton_LabelWidget(midEllipsis_Icon, items, 1);
-                    if (deviceType_App() == desktop_AppDeviceType) {
-                        addChildPos_Widget(buttons, iClob(menu), front_WidgetAddPos);
-                    }
-                    else {
-                        insertChildAfterFlags_Widget(buttons, iClob(menu), 0,
-                                                     frameless_WidgetFlag | noBackground_WidgetFlag);
-                        setFont_LabelWidget(menu, font_LabelWidget((iLabelWidget *) lastChild_Widget(buttons)));
-                        setTextColor_LabelWidget(menu, uiTextAction_ColorId);
-                    }
-                }
-                iInputWidget *input = findChild_Widget(dlg, "input");
-                setValidator_InputWidget(input, inputQueryValidator_, d);
-                setBackupFileName_InputWidget(input, "inputbackup");
-                setSelectAllOnFocus_InputWidget(input, iTrue);
-                setSensitiveContent_InputWidget(input, statusCode == sensitiveInput_GmStatusCode);
                 if (document_App() != d) {
                     postCommandf_App("tabs.switch page:%p", d);
                 }
@@ -3059,16 +3087,21 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.input.submit") && document_Command(cmd) == d) {
+        const iString *url = d->mod.url;
+        if (hasLabel_Command(cmd, "prompturl")) {
+            url = string_Command(cmd, "prompturl");
+        }
         postCommandf_Root(w->root,
                           /* use the `redirect:1` argument to cause the input query URL to be
                              replaced in History; we don't want to navigate onto it */
                           "open redirect:1 url:%s",
                           cstrCollect_String(makeQueryUrl_DocumentWidget_
-                                             (d, collect_String(suffix_Command(cmd, "value")))));
+                                             (d, url, collect_String(suffix_Command(cmd, "value")))));
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
-             equal_Rangecc(range_Command(cmd, "id"), "!document.input.submit") && document_App() == d) {
+             equal_Rangecc(range_Command(cmd, "id"), "!document.input.submit") &&
+             !hasLabel_Command(cmd, "prompturl") && document_App() == d) {
         postCommand_Root(get_Root(), "navigate.back");
         return iTrue;
     }
@@ -3917,6 +3950,24 @@ static iBool handleWheelSwipe_DocumentWidget_(iDocumentWidget *d, const SDL_Mous
 static void postOpenLinkCommand_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, int tabMode) {
     const iString *linkUrl = absoluteUrl_String(d->mod.url,
                                                 linkUrl_GmDocument(d->view->doc, linkId));
+    /* If the user has requested to be prompted for a query string, do so before actually
+       opening the link. */
+    if (isPromptUrl_SiteSpec(linkUrl)) {
+        iUrl url;
+        init_Url(&url, linkUrl);
+        if (isEmpty_Range(&url.query)) {
+            iWidget *dlg = makeInputPrompt_DocumentWidget(
+                d,
+                linkUrl,
+                iFalse,
+                NULL,
+                format_CStr("!document.input.submit prompturl:%s doc:%p",
+                            cstr_String(canonicalUrl_String(linkUrl)),
+                            d));
+            postCommand_Widget(dlg, "focus.set id:input");
+            return;
+        }
+    }
     postCommandf_Root(d->widget.root,
                       "open query:%d%s newtab:%d%s url:%s",
                       isSpartanQueryLink_DocumentWidget_(d, linkId),
@@ -4613,14 +4664,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         if (isPinned_DocumentWidget_(d)) {
                             tabMode ^= otherRoot_OpenTabFlag;
                         }
-                        //interactingWithLink_DocumentWidget_(d, linkId);
-                        /*
-                        postCommandf_Root(w->root,
-                                          "open query:%d newtab:%d url:%s",
-                                          isSpartanQueryLink_DocumentWidget_(d, linkId),
-                                          tabMode,
-                                          cstr_String(absoluteUrl_String(
-                                              d->mod.url, linkUrl_GmDocument(view->doc, linkId))));*/
                         postOpenLinkCommand_DocumentWidget_(d, linkId, tabMode);
                     }
                     else {

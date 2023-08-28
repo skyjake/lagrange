@@ -3293,6 +3293,21 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         saveStateQuickly_App();
         return iTrue;
     }
+    else if (equal_Command(cmd, "prompturl.toggle")) {
+        const iString *url = string_Command(cmd, "url");
+        iUrl parts;
+        init_Url(&parts, url);
+        const iString *path = collectNewRange_String(parts.path);
+        const iString *site = collectNewRange_String(urlRoot_String(url));
+        const enum iSiteSpecKey key = promptPaths_SiteSpecKey;
+        if (!contains_StringSet(stringSet_SiteSpec(site, key), path)) {
+            insertString_SiteSpec(site, key, path);
+        }
+        else {
+            removeString_SiteSpec(site, key, path);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.dialogtab")) {
         d->prefs.dialogTab = arg_Command(cmd);
         return iTrue;

@@ -167,6 +167,7 @@ void init_Widget(iWidget *d) {
     init_Anim(&d->overflowScrollOpacity, 0.0f);
     init_String(&d->data);
     iZap(d->padding);
+    d->updateMenuItems = NULL;
 }
 
 static void visualOffsetAnimation_Widget_(void *ptr) {
