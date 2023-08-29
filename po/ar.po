@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-08-29 10:26+0000\n"
-"PO-Revision-Date: 2023-08-29 10:26+0000\n"
+"PO-Revision-Date: 2023-08-30 16:14+0000\n"
 "Last-Translator: Naf Qan <nafezq@protonmail.ch>\n"
 "Language-Team: Arabic <http://weblate.skyjake.fi/projects/lagrange/ui/ar/>\n"
 "Language: ar\n"
@@ -1891,3 +1891,9 @@ msgstr "إغلاق علامات التبويب الأخرى"
 
 msgid "truetype.help.installed"
 msgstr "هذا الخط منصب في مجلد الخطوط الخاص بالمستخدم."
+
+msgid "keys.feeds.showunread"
+msgstr "الشريط الجانبي: إعرض بنود مصدر التغذية غير المقروءة"
+
+msgid "keys.feeds.showall"
+msgstr "الشريط الجانبي: إعرض كل بنود مصدر التغذية"
