@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/objectlist.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/stringset.h>
+#include <the_Foundation/stringarray.h>
 #include <the_Foundation/time.h>
 
 #include "prefs.h"
@@ -120,7 +121,9 @@ iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, int
 void                trimCache_App       (void);
 void                trimMemory_App      (void);
 void                saveStateQuickly_App(void);
-//iBool               findCachedContent_App(const iString *url, iString *mime_out, iBlock *data_out);
+
+const iStringArray *recentlySubmittedInput_App  (void);
+void                saveSubmittedInput_App      (const iString *queryInput);
 
 iDocumentWidget *   document_Root       (iRoot *);
 

@@ -897,10 +897,13 @@ msgid "dlg.input.send"
 msgstr "Send"
 
 msgid "menu.input.setprompt"
-msgstr "Prompt Always"
+msgstr "Assume This URL Requires Input"
 
 msgid "menu.input.unsetprompt"
-msgstr "Prompt on Request"
+msgstr "Don't Assume This URL Requires Input"
+
+msgid "menu.input.restore"
+msgstr "Restore previous:"
 
 # Paste the line preceding the clicked link into the input prompt.
 msgid "menu.input.precedingline"

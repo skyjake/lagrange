@@ -112,8 +112,9 @@ enum iFileVersion {
     documentSetIdentity_FileVersion     = 7,
     responseIdentity_FileVersion        = 8,
     recentUrlSetIdentity_FileVersion    = 9,
+    recentlySubmittedInput_FileVersion  = 10,
     /* meta */
-    latest_FileVersion = 9, /* used by state.lgr */
+    latest_FileVersion = 10, /* used by state.lgr */
     idents_FileVersion = 1, /* used by GmCerts/idents.lgr */
 };
 

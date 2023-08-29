@@ -2078,18 +2078,48 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
         addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
     }
     /* Menu for additional actions, past entries. */ {
-        const iBinding *bind        = findCommand_Keys("input.precedingline");
-        iMenuItem       items[]     = {
-            { "${menu.input.precedingline}",
-              bind->key,
-              bind->mods,
-              format_CStr("!valueinput.set ptr:%p text:%s",
-                          buttons, cstr_String(&d->linePrecedingLink)) },
-            { "---" },
-            { "", 0, 0, format_CStr("!prompturl.toggle url:%s", cstr_String(url)) }
-        };
+        const iBinding *bind = findCommand_Keys("input.precedingline");
+        iArray *items = collectNew_Array(sizeof(iMenuItem));
+        pushBackN_Array(
+            items,
+            (iMenuItem[]){
+                { "${menu.input.precedingline}",
+                  bind->key,
+                  bind->mods,
+                  format_CStr("!valueinput.set ptr:%p text:%s",
+                              buttons,
+                              cstr_String(&d->linePrecedingLink)) },
+                { "---" },
+                { "", 0, 0, format_CStr("!prompturl.toggle url:%s", cstr_String(url)) } },
+            3);
+        /* Recently submitted input texts can be restored. */ {
+            const iStringArray *recentInput = recentlySubmittedInput_App();
+            if (!isEmpty_StringArray(recentInput)) {
+                pushBack_Array(items, &(iMenuItem){ "---" });
+                pushBack_Array(items, &(iMenuItem){ "```${menu.input.restore}" });
+                iReverseConstForEach(StringArray, i, recentInput) {
+                    iString *label = collect_String(copy_String(i.value));
+                    replace_String(label, "\n\n", " ");
+                    replace_String(label, "\n", " ");
+                    trim_String(label);
+                    const size_t maxLen = 45;
+                    if (length_String(label) > maxLen) {
+                        truncate_String(label, maxLen);
+                        trim_String(label);
+                        appendCStr_String(label, "...");
+                    }
+                    pushBack_Array(items,
+                                   &(iMenuItem){ cstr_String(label),
+                                                 0,
+                                                 0,
+                                                 format_CStr("!valueinput.set ptr:%p text:%s",
+                                                             buttons,
+                                                             cstr_String(i.value)) });
+                }
+            }
+        }
         iLabelWidget *ellipsisButton =
-            makeMenuButton_LabelWidget(midEllipsis_Icon, items, iElemCount(items));
+            makeMenuButton_LabelWidget(midEllipsis_Icon, data_Array(items), size_Array(items));
         /* When opening, update the items to reflect the site-specific settings. */ {
             iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
             menu->updateMenuItems = updateInputPromptMenuItems_;
@@ -3091,12 +3121,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (hasLabel_Command(cmd, "prompturl")) {
             url = string_Command(cmd, "prompturl");
         }
-        postCommandf_Root(w->root,
-                          /* use the `redirect:1` argument to cause the input query URL to be
-                             replaced in History; we don't want to navigate onto it */
-                          "open redirect:1 url:%s",
-                          cstrCollect_String(makeQueryUrl_DocumentWidget_
-                                             (d, url, collect_String(suffix_Command(cmd, "value")))));
+        const iString *userEnteredText = collect_String(suffix_Command(cmd, "value"));
+        saveSubmittedInput_App(userEnteredText);
+        postCommandf_Root(
+            w->root,
+            /* use the `redirect:1` argument to cause the input query URL to be
+               replaced in History; we don't want to navigate onto it */
+            "open redirect:1 url:%s",
+            cstrCollect_String(makeQueryUrl_DocumentWidget_(d, url, userEnteredText)));
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&

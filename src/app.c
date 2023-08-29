@@ -138,7 +138,8 @@ static const char *stateFileName_App_      = STATE_NAME ".lgr";
 static const char *tempStateFileName_App_  = STATE_NAME ".lgr.tmp";
 static const char *defaultDownloadDir_App_ = "~/Downloads";
 
-static const int idleThreshold_App_ = 1000; /* ms */
+static const int    idleThreshold_App_             = 1000; /* ms */
+static const size_t maxRecentlySubmittedInput_App_ = 10;
 
 typedef iWindow iMainOrExtraWindow;
 
@@ -149,6 +150,7 @@ struct Impl_App {
     iString *    execPath;
     iStringSet * tempFilesPendingDeletion;
     iStringList *recentlyClosedTabUrls; /* for reopening, like an undo stack */
+    iStringArray *recentlySubmittedInput;
     iMimeHooks * mimehooks;
     iGmCerts *   certs;
     iVisited *   visited;
@@ -668,6 +670,7 @@ static const char *magicState_App_       = "lgL1";
 static const char *magicWindow_App_      = "wind";
 static const char *magicTabDocument_App_ = "tabd";
 static const char *magicSidebar_App_     = "side";
+static const char *magicInput_App_       = "inpt";
 
 enum iDocumentStateFlag {
     current_DocumentStateFlag    = iBit(1),
@@ -732,7 +735,10 @@ static iBool loadState_App_(iApp *d) {
         currentTabs = collectNew_Array(sizeof(iCurrentTabs));
         while (!atEnd_File(f)) {
             readData_File(f, 4, magic);
-            if (!memcmp(magic, magicWindow_App_, 4)) {
+            if (!memcmp(magic, magicInput_App_, 4)) {
+                deserialize_StringArray(d->recentlySubmittedInput, stream_File(f));
+            }
+            else if (!memcmp(magic, magicWindow_App_, 4)) {
                 numWins++;
                 const int   splitMode = read32_File(f);
                 const int   winState  = read32_File(f);
@@ -880,6 +886,9 @@ static void saveState_App_(const iApp *d, iBool withContent) {
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
         writeU32_File(f, latest_FileVersion); /* version */
+        /* Recently submitted input strings. */
+        writeData_File(f, magicInput_App_, 4);
+        serialize_StringArray(d->recentlySubmittedInput, stream_File(f));
         iConstForEach(PtrArray, winIter, &d->mainWindows) {
             const iMainWindow *win = winIter.ptr;
             setCurrent_Window(winIter.ptr);
@@ -1111,6 +1120,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->isSuspended = iFalse;
     d->tempFilesPendingDeletion = new_StringSet();
     d->recentlyClosedTabUrls = new_StringList();
+    d->recentlySubmittedInput = new_StringArray();
     d->overrideDataPath = NULL;
     d->didCheckDataPathOption = iFalse;
     init_Array(&d->initialWindowRects, sizeof(iRect));
@@ -1474,6 +1484,7 @@ static void deinit_App(iApp *d) {
         remove(cstr_String(tmp.value));
     }
     deinit_Array(&d->initialWindowRects);
+    iRelease(d->recentlySubmittedInput);
     iRelease(d->recentlyClosedTabUrls);
     iRelease(d->tempFilesPendingDeletion);
 }
@@ -1707,6 +1718,27 @@ void trimMemory_App(void) {
 
 void saveStateQuickly_App(void) {
     saveState_App_(&app_, iFalse /* cached content is not saved */);
+}
+
+const iStringArray *recentlySubmittedInput_App(void) {
+    return app_.recentlySubmittedInput;
+}
+
+void saveSubmittedInput_App(const iString *queryInput) {
+    iApp *d = &app_;
+    iStringArray *array = d->recentlySubmittedInput;
+    /* Avoid duplicates in the history since there is limited space. */
+    iForEach(StringArray, i, array) {
+        if (equalCase_String(i.value, queryInput)) {
+            remove_StringArray(array, index_StringArrayIterator(&i));
+            break;
+        }
+    }
+    pushBack_StringArray(array, queryInput);
+    if (size_StringArray(array) > maxRecentlySubmittedInput_App_) {
+        remove_StringArray(array, 0);
+    }
+    saveStateQuickly_App();
 }
 
 static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
