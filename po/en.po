@@ -888,7 +888,7 @@ msgstr "Open context menu"
 
 #, c-format
 msgid "dlg.input.prompt"
-msgstr "Please enter input for %s:"
+msgstr "Enter input for %s:"
 
 msgid "dlg.input.linebreak"
 msgstr "Line break"
