@@ -90,8 +90,13 @@ int mapMods_Keys(int modFlags) {
         KMOD_CAPS,
     };
     int mapped = 0;
-    /* Treat capslock as a modifier key. */
-    modFlags |= (capsLockDown_ ? KMOD_CAPS : 0);
+    if (prefs_App()->capsLockKeyModifier) {
+        /* Treat capslock as a modifier key. */
+        modFlags |= (capsLockDown_ ? KMOD_CAPS : 0);
+    }
+    else {
+        modFlags &= ~KMOD_CAPS;
+    }
     for (int i = 0; i < max_ModMap; ++i) {
         if (modFlags & bits[i]) {
             mapped |= bits[modMap_[i]];
@@ -229,7 +234,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 76, { "${keys.tab.new}",              newTab_KeyShortcut,             "tabs.new append:1"                 }, 0 },
     { 77, { "${keys.tab.close}",            closeTab_KeyShortcut,           "tabs.close"                        }, 0 },
     { 78, { "${keys.tab.close.other}",      SDLK_w, KMOD_SECONDARY,         "tabs.close toleft:1 toright:1"     }, 0 },
-    { 79, { "${LC:menu.reopentab}",         SDLK_t, KMOD_SECONDARY,         "tabs.new reopen:1"                 }, 0 },        
+    { 79, { "${LC:menu.reopentab}",         SDLK_t, KMOD_SECONDARY,         "tabs.new reopen:1"                 }, 0 },
     { 80, { "${keys.tab.prev}",             prevTab_KeyShortcut,            "tabs.prev"                         }, 0 },
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
     { 84, { "${LC:menu.movetab.left}",      moveTabLeft_KeyShortcut,        "tabs.move arg:-1"                  }, 0 },
@@ -252,7 +257,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 125,{ "${keys.pageinfo}",             pageInfo_KeyShortcut,           "document.info"                     }, 0 },
     { 126,{ "${keys.sitespec}",             ',', KMOD_SECONDARY,            "document.sitespec"                 }, 0 },
     { 130,{ "${keys.input.precedingline}",  SDLK_v, KMOD_SECONDARY,         "input.precedingline"               }, 0 },
-    { 140,{ "${keys.identmenu}",            identityMenu_KeyShortcut,       "identmenu.open focus:1"            }, 0 },          
+    { 140,{ "${keys.identmenu}",            identityMenu_KeyShortcut,       "identmenu.open focus:1"            }, 0 },
     { 200,{ "${keys.menubar.focus}",        menuBar_KeyShortcut,            "menubar.focus"                     }, 0 },
     { 205,{ "${keys.contextmenu}",          '/', 0,                         "contextkey"                        }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */

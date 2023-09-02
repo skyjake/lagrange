@@ -1167,6 +1167,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     iStringList *openCmds = new_StringList();
 #if !defined (iPlatformAndroidMobile)
     /* Configure the valid command line options. */ {
+        defineValues_CommandLine(&d->args, "capslock", 0);
         defineValues_CommandLine(&d->args, "close-tab", 0);
         defineValues_CommandLine(&d->args, dump_CommandLineOption, 0);
         defineValues_CommandLine(&d->args, dumpIdentity_CommandLineOption, 1);
@@ -1206,6 +1207,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
                     collectNewFormat_String(
                         "open newtab:1 url:%s",
                         cstr_String(openableCommandLineArgUriValue_(collectNewRange_String(arg)))));
+            }
+            else if (equal_CommandLineConstIterator(&i, "capslock")) {
+                d->prefs.capsLockKeyModifier = iTrue;
             }
             else if (equal_CommandLineConstIterator(&i, replaceTab_CommandLineOption)) {
                 /* Replace the current tab's URL. */
@@ -1980,9 +1984,14 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #endif /* LAGRANGE_ENABLE_IDLE_SLEEP */
                 /* Keyboard modifier mapping. */
                 if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
-                    /* Track Caps Lock state as a modifier. */
-                    if (ev.key.keysym.sym == SDLK_CAPSLOCK) {
-                        setCapsLockDown_Keys(ev.key.state == SDL_PRESSED);
+                    if (d->prefs.capsLockKeyModifier) {
+                        /* Track Caps Lock state as a modifier. */
+                        if (ev.key.keysym.sym == SDLK_CAPSLOCK) {
+                            setCapsLockDown_Keys(ev.key.state == SDL_PRESSED);
+                        }
+                    }
+                    else {
+                        ev.key.keysym.mod &= ~KMOD_CAPS;
                     }
                     if (!isTextInputActive_App()) {
                         ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);

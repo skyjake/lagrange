@@ -7,6 +7,8 @@
 # Release notes
 
 ## 1.17
+⚠️ Caps Lock is no longer treated as a modifier key in keybindings. Use `--capslock` to enable it.
+
 New features:
 * Recently submitted input prompt contents are saved persistently and can be restored via the "three dots" utility menu in the prompt dialog.
 * User can force the input prompt to appear before a certain URL is requested, to enter a query string. This is useful for avoiding an extra request when it is known that a URL will require input (e.g., search engine, game input).
@@ -15,6 +17,7 @@ New features:
 * "Search" context menu item on selected text to make a search query with it.
 * "Use as Search URL" in link context menu.
 * Option to never/always collapse preformatted blocks, disabling the ability to toggle the folding.
+* Option `--capslock`: enable Caps Lock as a modifier in keybindings.
 * Option `--theme` (`-t`): change UI color theme of open Lagrange windows. Can be used in scripts to switch the theme automatically (for example, see the `darkman` utility; thanks to Jason McBrayer for suggesting this).
 * Periodically save UI state (including each tab's navigation history) to prevent data loss in case the app crashes. These runtime saves do not include any cached page content. The full cache is still saved as before when quitting the app.
 * Display a logo graphic in empty windows/tabs as a placeholder.

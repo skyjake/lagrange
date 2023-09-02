@@ -95,6 +95,7 @@ void init_Prefs(iPrefs *d) {
     d->skipIndexPageOnParentNavigation = iTrue;
     d->edgeSwipe = iTrue;
     d->pageSwipe = iTrue;
+    d->capsLockKeyModifier = iFalse;
     d->allowSchemeChangingRedirect = iFalse; /* must be manually followed */
     d->decodeUserVisibleURLs = iTrue;
     d->maxCacheSize      = 10;

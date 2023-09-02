@@ -93,6 +93,7 @@ enum iPrefsBool {
 
     edgeSwipe_PrefsBool,
     pageSwipe_PrefsBool,
+    capsLockKeyModifier_PrefsBool,
 
     /* Network */
     decodeUserVisibleURLs_PrefsBool,
@@ -170,6 +171,7 @@ struct Impl_Prefs {
 
             iBool edgeSwipe; /* mobile: one can swipe from edges to navigate */
             iBool pageSwipe; /* mobile: one can swipe over the page to navigate */
+            iBool capsLockKeyModifier;
 
             /* Network */
             iBool decodeUserVisibleURLs;
