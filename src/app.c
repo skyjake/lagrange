@@ -1741,6 +1741,12 @@ void saveSubmittedInput_App(const iString *queryInput) {
     saveStateQuickly_App();
 }
 
+void clearSubmittedInput_App(void) {
+    iApp *d = &app_;
+    clear_StringArray(d->recentlySubmittedInput);
+    /* Don't save right away, in case this was an accident. */
+}
+
 static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
     clear_PtrArray(windows);
     /* Popups. */ {
@@ -3338,6 +3344,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         else {
             removeString_SiteSpec(site, key, path);
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "recentinput.clear")) {
+        clearSubmittedInput_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.dialogtab")) {

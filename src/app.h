@@ -124,6 +124,7 @@ void                saveStateQuickly_App(void);
 
 const iStringArray *recentlySubmittedInput_App  (void);
 void                saveSubmittedInput_App      (const iString *queryInput);
+void                clearSubmittedInput_App     (void);
 
 iDocumentWidget *   document_Root       (iRoot *);
 

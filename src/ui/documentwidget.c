@@ -2096,6 +2096,8 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
             const iStringArray *recentInput = recentlySubmittedInput_App();
             if (!isEmpty_StringArray(recentInput)) {
                 pushBack_Array(items, &(iMenuItem){ "---" });
+                pushBack_Array(items,
+                               &(iMenuItem){ "${menu.input.clear}", 0, 0, "!recentinput.clear" });
                 pushBack_Array(items, &(iMenuItem){ "```${menu.input.restore}" });
                 iReverseConstForEach(StringArray, i, recentInput) {
                     iString *label = collect_String(copy_String(i.value));

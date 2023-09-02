@@ -902,6 +902,9 @@ msgstr "Assume This URL Requires Input"
 msgid "menu.input.unsetprompt"
 msgstr "Don't Assume This URL Requires Input"
 
+msgid "menu.input.clear"
+msgstr "Clear History"
+
 msgid "menu.input.restore"
 msgstr "Restore previous:"
 
