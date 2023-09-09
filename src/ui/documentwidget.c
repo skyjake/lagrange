@@ -3399,7 +3399,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         init_Url(&parts, d->mod.url);
         if (equalCase_Rangecc(parts.scheme, "gemini")) {
             /* Check for default index pages according to Gemini Best Practices ("Filenames"):
-               gemini://gemini.circumlunar.space/docs/best-practices.gmi */
+               gemini://geminiprotocol.net/docs/best-practices.gmi */
             if (endsWith_Rangecc(parts.path, "/index.gmi")) {
                 parts.path.end -= 9;
             }
