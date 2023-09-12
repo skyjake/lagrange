@@ -1927,11 +1927,13 @@ void scrollBegan_DocumentWidget(iAnyObject *any, int offset, uint32_t duration) 
             showToolbar_Root(as_Widget(d)->root, offset < 0);
         }
     }
-    updateVisible_DocumentView(d->view);
-    refresh_Widget(as_Widget(d));
-    if (duration > 0) {
-        iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
-        addTicker_App(refreshWhileScrolling_DocumentWidget, d);
+    if (offset) {
+        updateVisible_DocumentView(d->view);
+        refresh_Widget(as_Widget(d));
+        if (duration > 0) {
+            iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
+            addTicker_App(refreshWhileScrolling_DocumentWidget, d);
+        }
     }
 }
 
