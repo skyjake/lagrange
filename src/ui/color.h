@@ -40,6 +40,7 @@ enum iColorAccent {
     green_ColorAccent,
     blue_ColorAccent,
     gray_ColorAccent,
+    system_ColorAccent,
     max_ColorAccent
 };
 
