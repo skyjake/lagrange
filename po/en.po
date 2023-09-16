@@ -1847,6 +1847,10 @@ msgstr "White"
 msgid "prefs.accent"
 msgstr "Accent color:"
 
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "System"
+
 msgid "prefs.accent.teal"
 msgstr "Teal"
 

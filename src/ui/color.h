@@ -69,6 +69,8 @@ enum iColorId {
     green_ColorId,
     indigo_ColorId,
     blue_ColorId,
+    systemHigh_ColorId, /* supported on macOS 10.14+ */
+    systemLow_ColorId,  /* supported on macOS 10.14+ */
 
     /* user interface colors for semantic use */
     uiFirst_ColorId,
@@ -217,11 +219,11 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define green_ColorEscape           "\v-"
 #define indigo_ColorEscape          "\v."
 #define blue_ColorEscape            "\v/"
-#define uiText_ColorEscape          "\v5"
-#define uiTextAction_ColorEscape    "\v="
-#define uiTextCaution_ColorEscape   "\v>"
-#define uiTextStrong_ColorEscape    "\v;"
-#define uiHeading_ColorEscape       "\vS"
+#define uiText_ColorEscape          "\v7"
+#define uiTextAction_ColorEscape    "\v?"
+#define uiTextCaution_ColorEscape   "\v@"
+#define uiTextStrong_ColorEscape    "\v="
+#define uiHeading_ColorEscape       "\vU"
 
 iDeclareType(Color)
 iDeclareType(Colorf)

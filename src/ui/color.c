@@ -48,6 +48,8 @@ static iColor darkPalette_[] = {
     { 48,  200, 48,  255 },
     { 0,   70,  128, 255 },
     { 40,  132, 255, 255 },
+    { 0,   0,   0,   0   },
+    { 0,   0,   0,   0   },
 };
 
 static iColor lightPalette_[] = {
@@ -68,6 +70,8 @@ static iColor lightPalette_[] = {
     { 128, 200, 128, 255 },
     { 50,  120, 190, 255 },
     { 150, 211, 255, 255 },
+    { 0,   0,   0,   0   },
+    { 0,   0,   0,   0   },
 };
 
 static iColor uiPalette_[tmFirst_ColorId]; /* not theme-specific */
@@ -90,6 +94,7 @@ int color_ColorAccent(enum iColorAccent accent, iBool isBright) {
         green_ColorId,
         blue_ColorId,
         isMedium ? white_ColorId : gray75_ColorId,
+        systemHigh_ColorId,
     };
     const int darkColors[max_ColorAccent] = {
         teal_ColorId,
@@ -98,6 +103,7 @@ int color_ColorAccent(enum iColorAccent accent, iBool isBright) {
         darkGreen_ColorId,
         indigo_ColorId,
         isMedium ? black_ColorId : gray25_ColorId,
+        systemLow_ColorId,
     };
     return isBright ? brightColors[accent] : darkColors[accent];
 }
@@ -109,8 +115,16 @@ int accent_Color(iBool isBright) {
 void setThemePalette_Color(enum iColorTheme theme) {
     const iPrefs *prefs = prefs_App();
     memcpy(uiPalette_, isDark_ColorTheme(theme) ? darkPalette_ : lightPalette_, sizeof(darkPalette_));
-    const int accentHi = color_ColorAccent(prefs->accent, 1);
-    const int accentLo = color_ColorAccent(prefs->accent, 0);
+    /* Update the system accent color. */ {
+        const iBool isMediumDark = prefs_App()->theme == dark_ColorTheme;
+        iColor system = systemAccent_Color();
+        darkPalette_[systemHigh_ColorId]  = system;
+        darkPalette_[systemLow_ColorId]   = rgb_HSLColor(addSatLum_HSLColor(hsl_Color(system), 0, -0.25f));
+        lightPalette_[systemHigh_ColorId] = rgb_HSLColor(addSatLum_HSLColor(hsl_Color(system), 0, 0.3f));
+        lightPalette_[systemLow_ColorId]  = rgb_HSLColor(addSatLum_HSLColor(hsl_Color(system), 0, -0.1f));
+    }
+    const int accentHi = color_ColorAccent(prefs->accent, iTrue /* bright */);
+    const int accentLo = color_ColorAccent(prefs->accent, iFalse /* dim */);
     switch (theme) {
         case pureBlack_ColorTheme: {
             copy_(uiBackground_ColorId, black_ColorId);
@@ -154,7 +168,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputCursor_ColorId, accentHi);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, accentHi);
-            copy_(uiAnnotation_ColorId, accentLo);
+            copy_(uiAnnotation_ColorId, accentHi);
             copy_(uiIcon_ColorId, accentHi);
             copy_(uiIconHover_ColorId, accentHi);
             copy_(uiSeparator_ColorId, gray25_ColorId);
@@ -208,7 +222,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputCursor_ColorId, accentHi);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, accentHi);
-            copy_(uiAnnotation_ColorId, accentLo);
+            copy_(uiAnnotation_ColorId, accentHi);
             copy_(uiIcon_ColorId, accentHi);
             copy_(uiIconHover_ColorId, accentHi);
             copy_(uiSeparator_ColorId, black_ColorId);
@@ -1046,6 +1060,6 @@ iBool loadPalette_Color(const char *path) {
 
 #if !defined (iPlatformAppleDesktop)
 iColor systemAccent_Color(void) {
-    return (iColor){ 255, 255, 255, 255 };
+    return darkPalette_[cyan_ColorId];
 }
 #endif

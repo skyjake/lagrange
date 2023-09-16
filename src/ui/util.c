@@ -3049,6 +3049,9 @@ iWidget *makePreferences_Widget(void) {
         memcpy(docThemes[i], items, sizeof(items));
     }
     const iMenuItem accentItems[max_ColorAccent] = {
+#if defined (iPlatformAppleDesktop)
+        { circle_Icon " ${prefs.accent.system}", 0, 0, "accent.set arg:6" },
+#endif
         { circle_Icon " ${prefs.accent.teal}", 0, 0, "accent.set arg:0" },
         { circle_Icon " ${prefs.accent.orange}", 0, 0, "accent.set arg:1" },
         { circle_Icon " ${prefs.accent.red}", 0, 0, "accent.set arg:2" },
@@ -3374,12 +3377,13 @@ iWidget *makePreferences_Widget(void) {
                                                           accentItems,
                                                           iElemCount(accentItems),
                                                           "prefs.accent");
-            int accentId = 0;
+            int accentId = -1;
             iForEach(ObjectList,
                      i,
                      children_Widget(findChild_Widget(constAs_Widget(accentMenu), "menu"))) {
                 if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                    setIconColor_LabelWidget(i.object, color_ColorAccent(accentId++, iTrue));
+                    setIconColor_LabelWidget(i.object, color_ColorAccent(accentId < 0 ? system_ColorAccent : accentId, iTrue));
+                    accentId++;
                 }
             }
         }
