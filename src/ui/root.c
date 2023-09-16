@@ -414,6 +414,11 @@ static iWidget *makeIdentityMenu_(iWidget *parent) {
     return menu;
 }
 
+static iBool isBookmarkFolder_(void *context, const iBookmark *bm) {
+    iUnused(context);
+    return isFolder_Bookmark(bm);
+}
+
 iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     iUnused(root);
     if (equal_Command(cmd, "menu.open")) {
@@ -467,17 +472,40 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "contextclick")) {
+        const iRangecc id = range_Command(cmd, "id");
+        if (equal_Rangecc(id, "document.bookmarked")) {
+            /* The bookmark button context menu convenience actions. */
+            iArray  *items = collectNew_Array(sizeof(iMenuItem));
+            uint32_t bmId  = findBookmarkId_DocumentWidget(document_Root(root->root));
+            pushBack_Array(items,
+                           &(iMenuItem){ bmId ? "```${menu.bookmark.movetofolder}"
+                                              : "```${menu.bookmark.addtofolder}" });
+            /* Make a list of bookmark folders with the appropriate add/move action. */
+            iConstForEach(Array, i,
+                          makeBookmarkFolderActions_MenuItem(
+                            bmId ? format_CStr("bookmark.setfolder bmid:%u", bmId) : "bookmark.add",
+                            iFalse,
+                            bmId ? get_Bookmarks(bookmarks_App(), bmId)->parentId : 0)) {
+                pushBack_Array(items, i.value);
+            }
+            /* Show the popup menu. */
+            iWidget *bmButton = findWidget_Root("document.bookmarked");
+            releaseChildren_Widget(bmButton);
+            openMenu_Widget(makeMenu_Widget(bmButton, data_Array(items), size_Array(items)),
+                            coord_Command(cmd));
+            return iTrue;
+        }
         iBool showBarMenu = iFalse;
-        if (equal_Rangecc(range_Command(cmd, "id"), "buttons")) {
-            const iWidget *sidebar = findWidget_App("sidebar");
+        if (equal_Rangecc(id, "buttons")) {
+            const iWidget *sidebar  = findWidget_App("sidebar");
             const iWidget *sidebar2 = findWidget_App("sidebar2");
-            const iWidget *buttons = pointer_Command(cmd);
+            const iWidget *buttons  = pointer_Command(cmd);
             if (hasParent_Widget(buttons, sidebar) ||
                 hasParent_Widget(buttons, sidebar2)) {
                 showBarMenu = iTrue;
             }
         }
-        if (equal_Rangecc(range_Command(cmd, "id"), "navbar")) {
+        if (equal_Rangecc(id, "navbar")) {
             showBarMenu = iTrue;
         }
         if (showBarMenu) {

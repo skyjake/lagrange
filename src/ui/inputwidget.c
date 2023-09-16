@@ -1873,8 +1873,11 @@ static enum iEventResult processPointerEvents_InputWidget_(iInputWidget *d, cons
                              ? SDL_SYSTEM_CURSOR_IBEAM
                              : SDL_SYSTEM_CURSOR_ARROW);
     }
+    const iInt2 buttonPos = init_I2(ev->button.x, ev->button.y);
     if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&
-        contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
+        contains_Widget(w, buttonPos) /* quick test without traversal */ &&
+        hitChild_Widget(w, buttonPos) == w /* don't hit child buttons */) {
+        /* Show the copy/paste context menu. */
         setFocus_Widget(w);
         showClipMenu_InputWidget_(d, mouseCoord_Window(get_Window(), ev->button.which));
         return iTrue;

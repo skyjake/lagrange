@@ -4701,7 +4701,7 @@ iBool handleCommand_App(const char *cmd) {
         const iString *title;
         const iBlock *ident = isIdentityPinned_DocumentWidget(doc) ?
             &identity_DocumentWidget(doc)->fingerprint : NULL;
-        iChar icon = 0;
+        iChar icon = siteIcon_GmDocument(document_DocumentWidget(doc));
         if (suffixPtr_Command(cmd, "url")) {
             url          = collect_String(suffix_Command(cmd, "url"));
             iString *str = newRange_String(range_Command(cmd, "title"));
@@ -4711,6 +4711,14 @@ iBool handleCommand_App(const char *cmd) {
         else {
             url   = url_DocumentWidget(doc);
             title = bookmarkTitle_DocumentWidget(doc);
+        }
+        if (hasLabel_Command(cmd, "arg")) {
+            /* This is triggered via the bookmark button context menu. Just add the bookmark
+               with the default values. */
+            const uint32_t bmId = add_Bookmarks(bookmarks_App(), url, title, NULL, icon);
+            get_Bookmarks(bookmarks_App(), bmId)->parentId = arg_Command(cmd);
+            postCommand_App("bookmarks.changed");
+            return iTrue;
         }
         const uint32_t existing = findUrlIdent_Bookmarks(
             bookmarks_App(), url, ident ? collect_String(hexEncode_Block(ident)) : NULL);
@@ -4723,6 +4731,13 @@ iBool handleCommand_App(const char *cmd) {
         if (deviceType_App() == desktop_AppDeviceType) {
             postCommand_App("focus.set id:bmed.title");
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmark.setfolder")) {
+        const uint32_t bmId = argLabel_Command(cmd, "bmid");
+        const uint32_t destFolder = arg_Command(cmd);
+        get_Bookmarks(bookmarks_App(), bmId)->parentId = destFolder;
+        postCommand_App("bookmarks.changed");
         return iTrue;
     }
     else if (equal_Command(cmd, "feeds.subscribe") && isMainWin) {

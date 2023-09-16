@@ -36,7 +36,7 @@ iDeclareType(Widget)
 iDeclareType(LabelWidget)
 iDeclareType(InputWidget)
 iDeclareType(Window)
-    
+
 iBool           isCommand_SDLEvent  (const SDL_Event *d);
 iBool           isCommand_UserEvent (const SDL_Event *, const char *cmd);
 const char *    command_UserEvent   (const SDL_Event *);
@@ -299,6 +299,7 @@ size_t          findWidestLabel_MenuItem        (const iMenuItem *items, size_t 
 size_t          findCommand_MenuItem            (const iMenuItem *items, size_t num, const char *command);
 void            setSelected_NativeMenuItem      (iMenuItem *item, iBool isSelected);
 void            appendIdentities_MenuItem       (iArray *menuItems, const char *command);
+const iArray *  makeBookmarkFolderActions_MenuItem(const char *command, iBool withNullTerminator, uint32_t omitFolderId);
 
 iChar           removeIconPrefix_String         (iString *);
 enum iColorId   removeColorEscapes_String       (iString *);
@@ -410,9 +411,9 @@ void        destroyDialog_Widget            (iWidget *);
 /*-----------------------------------------------------------------------------------------------*/
 
 iDeclareType(PerfTimer)
-    
+
 struct Impl_PerfTimer {
-    uint64_t ticks;    
+    uint64_t ticks;
 };
 
 void        init_PerfTimer                  (iPerfTimer *);

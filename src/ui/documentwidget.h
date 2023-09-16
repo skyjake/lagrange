@@ -51,6 +51,7 @@ iTime               sourceTime_DocumentWidget       (const iDocumentWidget *);
 const iGmDocument * document_DocumentWidget         (const iDocumentWidget *);
 const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
+uint32_t            findBookmarkId_DocumentWidget   (const iDocumentWidget *);
 
 int                 documentWidth_DocumentWidget        (const iDocumentWidget *);
 int                 footerHeight_DocumentWidget         (const iDocumentWidget *);

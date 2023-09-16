@@ -13,6 +13,7 @@ New features:
 * Recently submitted input prompt contents are saved persistently and can be restored via the "three dots" utility menu in the prompt dialog.
 * User can force the input prompt to appear before a certain URL is requested, to enter a query string. This is useful for avoiding an extra request when it is known that a URL will require input (e.g., search engine, game input).
 * User-selectable feed refresh interval. Previously the interval been hardcoded to four hours. (Based on a patch by Michael Nordmeyer.)
+* Quickly add/move a bookmark into a folder with the navbar bookmark button context menu (right-click on 🏷️).
 * "Fold All" and "Unfold All" in Bookmarks sidebar context menu.
 * "Search" context menu item on selected text to make a search query with it.
 * "Use as Search URL" in link context menu.

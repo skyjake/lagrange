@@ -3654,13 +3654,12 @@ static iBool isBookmarkFolder_(void *context, const iBookmark *bm) {
     return isFolder_Bookmark(bm);
 }
 
-static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator, uint32_t omitFolderId) {
+const iArray *makeBookmarkFolderActions_MenuItem(const char *command, iBool withNullTerminator,
+                                                 uint32_t omitFolderId) {
     iArray *folders = new_Array(sizeof(iMenuItem));
-    pushBack_Array(folders, &(iMenuItem){ "\u2014", 0, 0, "dlg.bookmark.setfolder arg:0" });
-    iConstForEach(
-        PtrArray,
-        i,
-        list_Bookmarks(bookmarks_App(), cmpTree_Bookmark, isBookmarkFolder_, NULL)) {
+    pushBack_Array(folders, &(iMenuItem){ "\u2014", 0, 0, format_CStr("%s arg:0", command) });
+    iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTree_Bookmark,
+                                              isBookmarkFolder_, NULL)) {
         const iBookmark *bm = i.ptr;
         if (id_Bookmark(bm) == omitFolderId || hasParent_Bookmark(bm, omitFolderId)) {
             continue;
@@ -3676,7 +3675,7 @@ static const iArray *makeBookmarkFolderItems_(iBool withNullTerminator, uint32_t
             &(iMenuItem){ cstr_String(title),
                           0,
                           0,
-                          format_CStr("dlg.bookmark.setfolder arg:%u", id_Bookmark(bm)) });
+                          format_CStr("%s arg:%u", command, id_Bookmark(bm)) });
     }
     if (withNullTerminator) {
         pushBack_Array(folders, &(iMenuItem){ NULL });
@@ -3705,7 +3704,8 @@ iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
     }
     iWidget *dlg = NULL;
     if (isUsingPanelLayout_Mobile()) {
-        const iArray *parentFolderItems = makeBookmarkFolderItems_(iTrue, folderId);
+        const iArray *parentFolderItems =
+            makeBookmarkFolderActions_MenuItem("dlg.bookmark.setfolder", iTrue, folderId);
         const iMenuItem folderItems[] = {
             { "title id:bmed.heading text:${heading.bookmark.editfolder}" },
             { "input id:bmed.title text:${dlg.bookmark.title}" },
@@ -3757,7 +3757,8 @@ iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
             addChild_Widget(headings,
                             iClob(makeHeading_Widget(isFolder ? "${dlg.bookmark.parentfolder}"
                                                               : "${dlg.bookmark.folder}")));
-            const iArray *folderItems = makeBookmarkFolderItems_(iFalse, folderId);
+            const iArray *folderItems =
+                makeBookmarkFolderActions_MenuItem("dlg.bookmark.setfolder", iFalse, folderId);
             iLabelWidget *folderButton;
             setId_Widget(addChildFlags_Widget(values,
                                          iClob(folderButton = makeMenuButton_LabelWidget(

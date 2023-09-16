@@ -813,7 +813,7 @@ static iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
            (prefs->pinSplit == 2 && w->root == win->roots[1]);
 }
 
-static uint32_t findBookmarkId_DocumentWidget_(const iDocumentWidget *d) {
+uint32_t findBookmarkId_DocumentWidget(const iDocumentWidget *d) {
     return findUrlIdent_Bookmarks(
         bookmarks_App(),
         d->mod.url,
@@ -828,7 +828,7 @@ static void showOrHideIndicators_DocumentWidget_(iDocumentWidget *d) {
     iWidget *navBar = findChild_Widget(root_Widget(w), "navbar");
     showCollapsed_Widget(findChild_Widget(navBar, "document.pinned"),
                          isPinned_DocumentWidget_(d));
-    const iBool isBookmarked = findBookmarkId_DocumentWidget_(d) != 0;
+    const iBool isBookmarked = findBookmarkId_DocumentWidget(d) != 0;
     iLabelWidget *bmPin = findChild_Widget(navBar, "document.bookmarked");
     setOutline_LabelWidget(bmPin, !isBookmarked);
     setTextColor_LabelWidget(bmPin, isBookmarked ? uiTextAction_ColorId : uiText_ColorId);
@@ -869,7 +869,7 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     refresh_Widget(as_Widget(d));
     /* Check for special bookmark tags. */
     d->flags &= ~otherRootByDefault_DocumentWidgetFlag;
-    const uint16_t bmid = findBookmarkId_DocumentWidget_(d);
+    const uint16_t bmid = findBookmarkId_DocumentWidget(d);
     if (bmid) {
         const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
         if (bm->flags & linkSplit_BookmarkFlag) {
