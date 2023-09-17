@@ -10,6 +10,7 @@
 ⚠️ Caps Lock is no longer treated as a modifier key in keybindings. Use `--capslock` to enable it.
 
 New features:
+* Input prompts, upload dialogs, and bookmark editors can be resized by dragging the left or right edge.
 * Recently submitted input prompt contents are saved persistently and can be restored via the "three dots" utility menu in the prompt dialog.
 * User can force the input prompt to appear before a certain URL is requested, to enter a query string. This is useful for avoiding an extra request when it is known that a URL will require input (e.g., search engine, game input).
 * User-selectable feed refresh interval. Previously the interval been hardcoded to four hours. (Based on a patch by Michael Nordmeyer.)
