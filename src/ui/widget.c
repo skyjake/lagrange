@@ -1578,6 +1578,82 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
         }
     }
+    if (isDesktop_Platform() && d->flags2 & horizontallyResizable_WidgetFlag2) {
+        static iInt2 startPos_; /* assume only one pointer is resizing at a time */
+        static int startWidth_;
+        const iInt2 buttonPos = init_I2(ev->button.x, ev->button.y);
+        /* Begin an edge resizing. */
+        if (!(d->flags2 & (leftEdgeResizing_WidgetFlag2 | rightEdgeResizing_WidgetFlag2))) {
+            iAssert(d->flags & centerHorizontal_WidgetFlag);
+            const iRect bounds = boundsWithoutVisualOffset_Widget(d);
+            if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEMOTION) {
+                iRect edge = bounds;
+                edge.size.x = 2 * gap_UI; /* left edge */
+                if (contains_Rect(edge, buttonPos)) {
+                    setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
+                    if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                        startPos_ = buttonPos;
+                        startWidth_ = width_Rect(bounds);
+                        d->flags2 |= leftEdgeResizing_WidgetFlag2;
+                        setFocus_Widget(NULL);
+                        setMouseGrab_Widget(d);
+                    }
+                    return iTrue;
+                }
+                else {
+                    edge.pos.x = right_Rect(bounds_Widget(d)) - edge.size.x; /* right edge */
+                    if (contains_Rect(edge, buttonPos)) {
+                        setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
+                        if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                            startPos_ = buttonPos;
+                            startWidth_ = width_Rect(bounds);
+                            d->flags2 |= rightEdgeResizing_WidgetFlag2;
+                            setFocus_Widget(NULL);
+                            setMouseGrab_Widget(d);
+                        }
+                        return iTrue;
+                    }
+                }
+            }
+        }
+        else if (d->flags2 & (leftEdgeResizing_WidgetFlag2 | rightEdgeResizing_WidgetFlag2)) {
+            iAssert(d->flags & centerHorizontal_WidgetFlag);
+            if (ev->type == SDL_MOUSEMOTION) {
+                const iInt2 mousePos = init_I2(ev->motion.x, ev->motion.y);
+                if (d->flags2 & rightEdgeResizing_WidgetFlag2) {
+                    d->rect.size.x = startWidth_ + 2 * (mousePos.x - startPos_.x);
+                }
+                else {
+                    d->rect.size.x = startWidth_ + 2 * (startPos_.x - mousePos.x);
+                }
+                d->rect.size.x = iMax(d->minSize.x, d->rect.size.x);
+                d->rect.size.x = iMin(width_Widget(parent_Widget(d)), d->rect.size.x);
+                if (class_Widget(d)->sizeChanged) {
+                    class_Widget(d)->sizeChanged(d);
+                }
+                arrange_Widget(d);
+                refresh_Widget(d);
+                setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
+                /* Also notify the widget directly for additional handling. */
+                const SDL_UserEvent notif = {
+                    .type      = SDL_USEREVENT,
+                    .timestamp = SDL_GetTicks(),
+                    .code      = command_UserEventCode,
+                    .data1     = "widget.resized",
+                    .data2     = d->root,
+                };
+                dispatchEvent_Widget(d, (const SDL_Event *) &notif);
+                return iTrue;
+            }
+            else if (ev->type == SDL_MOUSEBUTTONUP) {
+                setMouseGrab_Widget(NULL);
+                iChangeFlags(d->flags2,
+                             leftEdgeResizing_WidgetFlag2 | rightEdgeResizing_WidgetFlag2,
+                             iFalse);
+                return iTrue;
+            }
+        }
+    }
     switch (ev->type) {
         case SDL_USEREVENT: {
             if (d->flags & overflowScrollable_WidgetFlag &&

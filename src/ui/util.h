@@ -363,6 +363,8 @@ size_t          tabCount_Widget         (const iWidget *tabs);
 
 iWidget *   makeSheet_Widget            (const char *id);
 void        useSheetStyle_Widget        (iWidget *);
+void        enableSheetResizing_Widget  (iWidget *, int minWidth);
+void        updateBookmarkEditorFieldWidths_Widget(iWidget *);
 iWidget *   makeDialogButtons_Widget    (const iMenuItem *actions, size_t numActions);
 iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
 

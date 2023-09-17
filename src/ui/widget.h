@@ -133,6 +133,9 @@ enum iWidgetFlag2 {
     centerChildrenVertical_WidgetFlag2      = iBit(6), /* pad top and bottom to center children in the middle */
     usedAsPeriodicContext_WidgetFlag2       = iBit(7), /* add_Periodic() called on the widget */
     siblingOrderDraggable_WidgetFlag2       = iBit(8),
+    horizontallyResizable_WidgetFlag2       = iBit(9), /* may drag left/right edges to resize */
+    leftEdgeResizing_WidgetFlag2            = iBit(10),
+    rightEdgeResizing_WidgetFlag2           = iBit(11),
 };
 
 enum iWidgetAddPos {

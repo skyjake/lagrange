@@ -2125,17 +2125,19 @@ static void updateValueInputSizing_(iWidget *dlg) {
     const iInt2 rootSize = safeRoot.size;
     iWidget *   title    = findChild_Widget(dlg, "valueinput.title");
     iWidget *   prompt   = findChild_Widget(dlg, "valueinput.prompt");
-    if (deviceType_App() == phone_AppDeviceType) {
-        dlg->rect.size.x = rootSize.x;
-    }
-    else if (deviceType_App() == tablet_AppDeviceType) {
-        dlg->rect.size.x = iMin(rootSize.x, rootSize.y);
-    }
-    else {
-        dlg->rect.size.x = iMin(rootSize.x,
-                                metricFromIndex_(prefs_App()->inputZoomLevel) * gap_UI);
-                                            /*title ? title->rect.size.x : 0*//*,
-                                      prompt->rect.size.x);*/
+    if (~dlg->flags2 & horizontallyResizable_WidgetFlag2) {
+        if (deviceType_App() == phone_AppDeviceType) {
+            dlg->rect.size.x = rootSize.x;
+        }
+        else if (deviceType_App() == tablet_AppDeviceType) {
+            dlg->rect.size.x = iMin(rootSize.x, rootSize.y);
+        }
+        else {
+            dlg->rect.size.x = iMin(rootSize.x,
+                                    metricFromIndex_(prefs_App()->inputZoomLevel) * gap_UI);
+                                                /*title ? title->rect.size.x : 0*//*,
+                                          prompt->rect.size.x);*/
+        }
     }
     if (deviceType_App() != desktop_AppDeviceType) {
         dlg->minSize.y = get_MainWindow()->keyboardHeight == 0 ? 60 * gap_UI : 0;
@@ -2452,6 +2454,7 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
         setFlags_Widget(dlg, drawBackgroundToBottom_WidgetFlag, iTrue);
     }
     updateValueInputSizing_(dlg);
+    enableSheetResizing_Widget(dlg, width_Widget(dlg));
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;
 }
@@ -3683,6 +3686,28 @@ const iArray *makeBookmarkFolderActions_MenuItem(const char *command, iBool with
     return collect_Array(folders);
 }
 
+void enableSheetResizing_Widget(iWidget *d, int minWidth) {
+    if (isDesktop_Platform()) {
+        iChangeFlags(d->flags, arrangeWidth_WidgetFlag, iFalse);
+        d->flags2 |= horizontallyResizable_WidgetFlag2;
+        d->minSize.x = minWidth;
+    }
+}
+
+void updateBookmarkEditorFieldWidths_Widget(iWidget *d) {
+    static const char *ids[] = {
+        "bmed.title", "bmed.url", "bmed.setident", "bmed.tags", "bmed.notes"
+    };
+    iWidget *headings = findChild_Widget(d, "bmed.columns.head");
+    const int newWidth = width_Widget(d) - headings->rect.size.x - 6 * gap_UI;
+    iForIndices(i, ids) {
+        iWidget *widget = findChild_Widget(d, ids[i]);
+        if (widget) {
+            widget->rect.size.x = newWidth;
+        }
+    }
+}
+
 iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
     const iBool isFolder = (folderId != 0);
     if (isFolder) {
@@ -3751,6 +3776,7 @@ iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
                         "bmed.heading");
         iWidget *headings, *values;
         addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        setId_Widget(headings, "bmed.columns.head");
         iInputWidget *inputs[5];
         iZap(inputs);
         /* Folder to add to. */ {
@@ -3807,6 +3833,10 @@ iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
                                                                : iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));
         setupSheetTransition_Mobile(dlg, iTrue);
+        if (isDesktop_Platform()) {
+            arrange_Widget(dlg);
+            enableSheetResizing_Widget(dlg, width_Widget(dlg));
+        }
     }
     /* Use a recently accessed folder as the default. */
     const uint32_t recentFolderId = recentFolder_Bookmarks(bookmarks_App());
@@ -3826,6 +3856,10 @@ void setBookmarkEditorParentFolder_Widget(iWidget *editor, uint32_t folderId) {
 static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
     if (equal_Command(cmd, "dlg.bookmark.setfolder")) {
         setBookmarkEditorParentFolder_Widget(editor, arg_Command(cmd));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "widget.resized")) {
+        updateBookmarkEditorFieldWidths_Widget(editor);
         return iTrue;
     }
     else if (equalWidget_Command(cmd, editor, "bmed.setident")) {

@@ -1176,6 +1176,10 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
         setBookmarkEditorParentFolder_Widget(editor, arg_Command(cmd));
         return iTrue;
     }
+    else if (equal_Command(cmd, "widget.resized")) {
+        updateBookmarkEditorFieldWidths_Widget(editor);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "bmed.dup")) {
         const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
         const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
