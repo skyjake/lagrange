@@ -156,6 +156,7 @@ iDeclareType(WidgetDrawBuffer)
 struct Impl_Widget {
     iObject      object;
     iString      id;
+    iString      resizeId; /* if user-resized width will be remembered; TODO: apply to sidebars? */
     int64_t      flags;
     int          flags2;
     iRect        rect;
@@ -301,6 +302,7 @@ iBool   isAffectedByVisualOffset_Widget         (const iWidget *);
 iBool   isBeingVisuallyOffsetByReference_Widget (const iWidget *);
 int     visualOffsetByReference_Widget          (const iWidget *);
 void    setId_Widget                (iWidget *, const char *id);
+void    setResizeId_Widget          (iWidget *, const char *resizeId); /* no need to be unique */
 void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
 void    setTreeFlags_Widget         (iWidget *, int64_t flags, iBool set);
 void    setPos_Widget               (iWidget *, iInt2 pos);
@@ -326,6 +328,7 @@ size_t  indexOfChild_Widget         (const iWidget *, const iAnyObject *child); 
 void    changeChildIndex_Widget     (iWidget *, iAnyObject *child, size_t newIndex); /* O(n) */
 void    arrange_Widget              (iWidget *);
 iBool   scrollOverflow_Widget       (iWidget *, int delta); /* moves the widget */
+void    applyInteractiveResize_Widget(iWidget *, int width);
 iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);
 iBool   processEvent_Widget         (iWidget *, const SDL_Event *);
 void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);

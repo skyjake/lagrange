@@ -149,6 +149,7 @@ iDefineObjectConstruction(Widget)
 
 void init_Widget(iWidget *d) {
     init_String(&d->id);
+    init_String(&d->resizeId);
     d->root           = get_Root();
     d->flags          = 0;
     d->flags2         = 0;
@@ -218,6 +219,7 @@ void deinit_Widget(iWidget *d) {
     }
 #endif
     deinit_String(&d->data);
+    deinit_String(&d->resizeId);
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_Root(d->root), d);
@@ -282,6 +284,10 @@ void destroy_Widget(iWidget *d) {
 
 void setId_Widget(iWidget *d, const char *id) {
     setCStr_String(&d->id, id);
+}
+
+void setResizeId_Widget(iWidget *d, const char *resizeId) {
+    setCStr_String(&d->resizeId, resizeId);
 }
 
 const iString *id_Widget(const iWidget *d) {
@@ -1510,6 +1516,26 @@ static void unfadeOverflowScrollIndicator_Widget_(iWidget *d) {
     animateOverflowScrollOpacity_Widget_(d);
 }
 
+void applyInteractiveResize_Widget(iWidget *d, int width) {
+    d->rect.size.x = width;
+    d->rect.size.x = iMax(d->minSize.x, d->rect.size.x);
+    d->rect.size.x = iMini(width_Widget(parent_Widget(d)), d->rect.size.x);
+    if (class_Widget(d)->sizeChanged) {
+        class_Widget(d)->sizeChanged(d);
+    }
+    arrange_Widget(d);
+    refresh_Widget(d);
+    /* Also notify the widget directly for additional handling. */
+    const SDL_UserEvent notif = {
+        .type      = SDL_USEREVENT,
+        .timestamp = SDL_GetTicks(),
+        .code      = command_UserEventCode,
+        .data1     = "widget.resized",
+        .data2     = d->root,
+    };
+    dispatchEvent_Widget(d, (const SDL_Event *) &notif);
+}
+
 iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (d->flags & commandOnClick_WidgetFlag &&
              (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
@@ -1595,7 +1621,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                         startPos_ = buttonPos;
                         startWidth_ = width_Rect(bounds);
                         d->flags2 |= leftEdgeResizing_WidgetFlag2;
-                        setFocus_Widget(NULL);
+//                        setFocus_Widget(NULL);
                         setMouseGrab_Widget(d);
                     }
                     return iTrue;
@@ -1608,7 +1634,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                             startPos_ = buttonPos;
                             startWidth_ = width_Rect(bounds);
                             d->flags2 |= rightEdgeResizing_WidgetFlag2;
-                            setFocus_Widget(NULL);
+//                            setFocus_Widget(NULL);
                             setMouseGrab_Widget(d);
                         }
                         return iTrue;
@@ -1620,29 +1646,32 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             iAssert(d->flags & centerHorizontal_WidgetFlag);
             if (ev->type == SDL_MOUSEMOTION) {
                 const iInt2 mousePos = init_I2(ev->motion.x, ev->motion.y);
+                int newWidth;
                 if (d->flags2 & rightEdgeResizing_WidgetFlag2) {
-                    d->rect.size.x = startWidth_ + 2 * (mousePos.x - startPos_.x);
+                    newWidth = startWidth_ + 2 * (mousePos.x - startPos_.x);
                 }
                 else {
-                    d->rect.size.x = startWidth_ + 2 * (startPos_.x - mousePos.x);
+                    newWidth = startWidth_ + 2 * (startPos_.x - mousePos.x);
                 }
-                d->rect.size.x = iMax(d->minSize.x, d->rect.size.x);
-                d->rect.size.x = iMin(width_Widget(parent_Widget(d)), d->rect.size.x);
-                if (class_Widget(d)->sizeChanged) {
-                    class_Widget(d)->sizeChanged(d);
-                }
-                arrange_Widget(d);
-                refresh_Widget(d);
+//                d->rect.size.x = iMax(d->minSize.x, d->rect.size.x);
+//                d->rect.size.x = iMin(width_Widget(parent_Widget(d)), d->rect.size.x);
+//                if (class_Widget(d)->sizeChanged) {
+//                    class_Widget(d)->sizeChanged(d);
+//                }
+//                arrange_Widget(d);
+//                refresh_Widget(d);
+//                setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
+//                /* Also notify the widget directly for additional handling. */
+//                const SDL_UserEvent notif = {
+//                    .type      = SDL_USEREVENT,
+//                    .timestamp = SDL_GetTicks(),
+//                    .code      = command_UserEventCode,
+//                    .data1     = "widget.resized",
+//                    .data2     = d->root,
+//                };
+//                dispatchEvent_Widget(d, (const SDL_Event *) &notif);
+                applyInteractiveResize_Widget(d, newWidth);
                 setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
-                /* Also notify the widget directly for additional handling. */
-                const SDL_UserEvent notif = {
-                    .type      = SDL_USEREVENT,
-                    .timestamp = SDL_GetTicks(),
-                    .code      = command_UserEventCode,
-                    .data1     = "widget.resized",
-                    .data2     = d->root,
-                };
-                dispatchEvent_Widget(d, (const SDL_Event *) &notif);
                 return iTrue;
             }
             else if (ev->type == SDL_MOUSEBUTTONUP) {
@@ -1650,6 +1679,11 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 iChangeFlags(d->flags2,
                              leftEdgeResizing_WidgetFlag2 | rightEdgeResizing_WidgetFlag2,
                              iFalse);
+                if (!isEmpty_String(&d->resizeId)) {
+                    postCommandf_App("width.save arg:%g id:%s",
+                                     width_Widget(d) / (float) gap_UI,
+                                     cstr_String(&d->resizeId));
+                }
                 return iTrue;
             }
         }

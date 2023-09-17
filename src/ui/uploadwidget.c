@@ -405,7 +405,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
     }
     updateInputMaxHeight_UploadWidget_(d);
     if (isDesktop_Platform()) {
-        enableSheetResizing_Widget(as_Widget(d), width_Widget(d));
+        enableResizing_Widget(as_Widget(d), width_Widget(d), NULL);
     }
 }
 

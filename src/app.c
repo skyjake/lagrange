@@ -151,6 +151,7 @@ struct Impl_App {
     iStringSet * tempFilesPendingDeletion;
     iStringList *recentlyClosedTabUrls; /* for reopening, like an undo stack */
     iStringArray *recentlySubmittedInput;
+    iStringHash *savedWidths;
     iMimeHooks * mimehooks;
     iGmCerts *   certs;
     iVisited *   visited;
@@ -213,6 +214,26 @@ static int cmp_Ticker_(const void *a, const void *b) {
     }
     return iCmp((void *) elems[0]->callback, (void *) elems[1]->callback);
 }
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareClass(SavedWidth);
+
+struct Impl_SavedWidth {
+    iObject object;
+    float gaps; /* density independent */
+};
+
+static void init_SavedWidth(iSavedWidth *d, float gaps) {
+    d->gaps = gaps;
+}
+
+static void deinit_SavedWidth(iSavedWidth *d) {
+    iUnused(d);
+}
+
+iDefineObjectConstructionArgs(SavedWidth, (float gaps), gaps);
+iDefineClass(SavedWidth)
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -378,6 +399,11 @@ static iString *serializePrefs_App_(const iApp *d) {
 #endif
     appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.strings[searchUrl_PrefsString]));
     appendFormat_String(str, "translation.languages from:%d to:%d\n", d->prefs.langFrom, d->prefs.langTo);
+    iConstForEach(StringHash, sw, d->savedWidths) {
+        const iString     *resizeId = key_StringHashConstIterator(&sw);
+        const iSavedWidth *saved    = sw.value->object;
+        appendFormat_String(str, "width.save arg:%g id:%s\n", saved->gaps, cstr_String(resizeId));
+    }
     return str;
 }
 
@@ -1121,6 +1147,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->tempFilesPendingDeletion = new_StringSet();
     d->recentlyClosedTabUrls = new_StringList();
     d->recentlySubmittedInput = new_StringArray();
+    d->savedWidths = new_StringHash();
     d->overrideDataPath = NULL;
     d->didCheckDataPathOption = iFalse;
     init_Array(&d->initialWindowRects, sizeof(iRect));
@@ -1488,6 +1515,7 @@ static void deinit_App(iApp *d) {
         remove(cstr_String(tmp.value));
     }
     deinit_Array(&d->initialWindowRects);
+    iRelease(d->savedWidths);
     iRelease(d->recentlySubmittedInput);
     iRelease(d->recentlyClosedTabUrls);
     iRelease(d->tempFilesPendingDeletion);
@@ -1749,6 +1777,18 @@ void clearSubmittedInput_App(void) {
     iApp *d = &app_;
     clear_StringArray(d->recentlySubmittedInput);
     /* Don't save right away, in case this was an accident. */
+}
+
+iBool checkSavedWidth_App(const iString *resizeId, float *gaps_out) {
+    iApp *d = &app_;
+    const iSavedWidth *saved = constValue_StringHash(d->savedWidths, resizeId);
+    if (saved) {
+        if (gaps_out) {
+            *gaps_out = saved->gaps;
+        }
+        return iTrue;
+    }
+    return iFalse;
 }
 
 static iPtrArray *listWindows_App_(const iApp *d, iPtrArray *windows) {
@@ -3336,6 +3376,12 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         savePrefs_App_(d);
         return iTrue;
     }
+    else if (equal_Command(cmd, "width.save")) {
+        insert_StringHash(d->savedWidths,
+                          string_Command(cmd, "id"),
+                          new_SavedWidth(argf_Command(cmd)));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "document.openurls.changed")) {
         saveStateQuickly_App();
         return iTrue;
@@ -4095,6 +4141,9 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
         setResponseViewer_UploadWidget(upload, document_App());
         addChild_Widget(get_Root()->widget, iClob(upload));
         setupSheetTransition_Mobile(as_Widget(upload), iTrue);
+        /* User can resize the upload dialog. */
+        setResizeId_Widget(as_Widget(upload), "upload");
+        restoreWidth_Widget(as_Widget(upload));
         postRefresh_Window(get_Window());
         return iTrue;
     }

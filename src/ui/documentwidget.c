@@ -3250,6 +3250,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 setText_UploadWidget(upload, &text);
                 deinit_String(&text);
             }
+            /* User can resize upload dialogs. */
+            setResizeId_Widget(as_Widget(upload), "upload");
+            restoreWidth_Widget(as_Widget(upload));
             refresh_Widget(d);
         }
         return iTrue;

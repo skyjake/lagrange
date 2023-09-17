@@ -2454,7 +2454,7 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
         setFlags_Widget(dlg, drawBackgroundToBottom_WidgetFlag, iTrue);
     }
     updateValueInputSizing_(dlg);
-    enableSheetResizing_Widget(dlg, width_Widget(dlg));
+    enableResizing_Widget(dlg, width_Widget(dlg), "input");
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;
 }
@@ -3686,11 +3686,26 @@ const iArray *makeBookmarkFolderActions_MenuItem(const char *command, iBool with
     return collect_Array(folders);
 }
 
-void enableSheetResizing_Widget(iWidget *d, int minWidth) {
+void enableResizing_Widget(iWidget *d, int minWidth, const char *resizeId) {
     if (isDesktop_Platform()) {
         iChangeFlags(d->flags, arrangeWidth_WidgetFlag, iFalse);
         d->flags2 |= horizontallyResizable_WidgetFlag2;
         d->minSize.x = minWidth;
+        if (resizeId) {
+            setCStr_String(&d->resizeId, resizeId);
+            restoreWidth_Widget(d);
+        }
+    }
+}
+
+void restoreWidth_Widget(iWidget *d) {
+    if (!isDesktop_Platform() || isEmpty_String(&d->resizeId)) {
+        return;
+    }
+    float saved;
+    if (checkSavedWidth_App(&d->resizeId, &saved)) {
+        iAssert(parent_Widget(d));
+        applyInteractiveResize_Widget(d, iMini(width_Widget(parent_Widget(d)), saved * gap_UI));
     }
 }
 
@@ -3699,7 +3714,7 @@ void updateBookmarkEditorFieldWidths_Widget(iWidget *d) {
         "bmed.title", "bmed.url", "bmed.setident", "bmed.tags", "bmed.notes"
     };
     iWidget *headings = findChild_Widget(d, "bmed.columns.head");
-    const int newWidth = width_Widget(d) - headings->rect.size.x - 6 * gap_UI;
+    const int newWidth = width_Widget(d) - width_Widget(headings) - 6 * gap_UI;
     iForIndices(i, ids) {
         iWidget *widget = findChild_Widget(d, ids[i]);
         if (widget) {
@@ -3835,7 +3850,7 @@ iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
         setupSheetTransition_Mobile(dlg, iTrue);
         if (isDesktop_Platform()) {
             arrange_Widget(dlg);
-            enableSheetResizing_Widget(dlg, width_Widget(dlg));
+            enableResizing_Widget(dlg, width_Widget(dlg), NULL);
         }
     }
     /* Use a recently accessed folder as the default. */
@@ -3920,6 +3935,8 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
                             collect_String(newUnicodeN_String(&icon, 1)));
     }
     setCommandHandler_Widget(dlg, handleBookmarkCreationCommands_SidebarWidget_);
+    setResizeId_Widget(dlg, "bmed");
+    restoreWidth_Widget(dlg);
     return dlg;
 }
 

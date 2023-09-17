@@ -125,6 +125,7 @@ void                saveStateQuickly_App(void);
 const iStringArray *recentlySubmittedInput_App  (void);
 void                saveSubmittedInput_App      (const iString *queryInput);
 void                clearSubmittedInput_App     (void);
+iBool               checkSavedWidth_App         (const iString *resizeId, float *gaps_out);
 
 iDocumentWidget *   document_Root       (iRoot *);
 
