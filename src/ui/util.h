@@ -400,6 +400,7 @@ iWidget *   makeBookmarkCreation_Widget     (const iString *url, const iString *
 iWidget *   makeIdentityCreation_Widget     (void);
 iWidget *   makeFeedSettings_Widget         (uint32_t bookmarkId);
 iWidget *   makeSiteSpecificSettings_Widget (const iString *url);
+iWidget *   makeSnippetCreation_Widget      (void);
 iWidget *   makeTranslation_Widget          (iWidget *parent);
 iWidget *   makeGlyphFinder_Widget          (void);
 iWidget *   makeUserDataImporter_Dialog     (const iString *archivePath);

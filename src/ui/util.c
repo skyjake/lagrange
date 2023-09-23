@@ -37,6 +37,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "root.h"
 #include "sitespec.h"
+#include "snippets.h"
+#include "snippetwidget.h"
 #include "text.h"
 #include "touch.h"
 #include "uploadwidget.h"
@@ -859,7 +861,7 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                                   (isPortraitPhone ? extraPadding_WidgetFlag : 0);
     iBool    haveIcons  = iFalse;
     iWidget *horizGroup = NULL;
-    for (size_t i = 0; i < n; ++i) {
+    for (size_t i = 0; items[i].label && i < n; ++i) {
         const iMenuItem *item = &items[i];
         if (!item->label) {
             break;
@@ -944,7 +946,7 @@ static iArray *deepCopyMenuItems_(iWidget *menu, const iMenuItem *items, size_t 
     iArray *array = new_Array(sizeof(iMenuItem));
     iString cmd;
     init_String(&cmd);
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n && items[i].label; i++) {
         const iMenuItem *item = &items[i];
         const char *itemCommand = item->command;
 #if 0
@@ -3614,16 +3616,25 @@ iWidget *makePreferences_Widget(void) {
             }
         }
     }
+    /* Snippets. */ {
+        iSnippetWidget *sniped = new_SnippetWidget();
+        appendFramelessTabPage_Widget(tabs,
+                                      iClob(sniped),
+                                      scissor_Icon " ${heading.prefs.snip}",
+                                      cyan_ColorId,
+                                      '7',
+                                      KMOD_PRIMARY);
+    }
     /* Keybindings. */ {
         iBindingsWidget *bind = new_BindingsWidget();
         appendFramelessTabPage_Widget(tabs, iClob(bind), keyboard_Icon " ${heading.prefs.keys}",
-                                      cyan_ColorId, '7', KMOD_PRIMARY);
+                                      cyan_ColorId, '8', KMOD_PRIMARY);
     }
     /* Network. */ {
         setId_Widget(appendTwoColumnTabPage_Widget(tabs,
                                                    network_Icon " ${heading.prefs.network}",
                                                    blue_ColorId,
-                                                   '8',
+                                                   '9',
                                                    &headings,
                                                    &values),
                      "prefs.page.network");
@@ -4165,6 +4176,72 @@ iWidget *makeSiteSpecificSettings_Widget(const iString *url) {
     setCommandHandler_Widget(dlg, siteSpecificSettingsHandler_);
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     setFocus_Widget(findChild_Widget(dlg, "sitespec.palette"));
+    return dlg;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static iBool snippetCreationHandler_(iWidget *dlg, const char *cmd) {
+    if (equal_Command(cmd, "widget.resized")) {
+        iWidget  *headings   = findChild_Widget(dlg, "snip.columns.head");
+        iWidget  *name       = findChild_Widget(dlg, "snip.name");
+        iWidget  *content    = findChild_Widget(dlg, "snip.content");
+        const int newWidth   = width_Widget(dlg) - width_Widget(headings) - 6 * gap_UI;
+        name->rect.size.x    = newWidth;
+        content->rect.size.x = newWidth;
+        return iTrue;
+    }
+    if (equalWidget_Command(cmd, dlg, "cancel")) {
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, dlg, "snip.accept")) {
+        iInputWidget *name    = findChild_Widget(dlg, "snip.name");
+        iInputWidget *content = findChild_Widget(dlg, "snip.content");
+        if (!set_Snippets(text_InputWidget(name), text_InputWidget(content))) {
+            return iTrue;
+        }
+        postCommand_App("snippets.changed");
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iWidget *makeSnippetCreation_Widget(void) {
+    const iMenuItem actions[] = {
+        { "${cancel}" },
+        { uiTextAction_ColorEscape "${snip.accept}", SDLK_RETURN, KMOD_ACCEPT, "snip.accept" }
+    };
+    iWidget *dlg = NULL;
+    if (isUsingPanelLayout_Mobile()) {
+        /* TODO */
+
+        setCommandHandler_Widget(dlg, snippetCreationHandler_);
+    }
+    else {
+        iWidget *headings, *values;
+        dlg = makeSheet_Widget("snip");
+        addDialogTitle_(dlg, "${heading.snip}", "heading.snip");
+        addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        setId_Widget(headings, "snip.columns.head");
+        iInputWidget *name    = new_InputWidget(0);
+        iInputWidget *content = new_InputWidget(0);
+        setLineBreaksEnabled_InputWidget(name, iFalse);
+        addPrefsInputWithHeading_(headings, values, "snip.name", iClob(name));
+        addPrefsInputWithHeading_(headings, values, "snip.content", iClob(content));
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+        as_Widget(name)->rect.size.x = 60 * gap_UI;
+        as_Widget(content)->rect.size.x = 60 * gap_UI;
+        arrange_Widget(dlg);
+        setCommandHandler_Widget(dlg, snippetCreationHandler_);
+        enableResizing_Widget(dlg, width_Widget(dlg), "snip");
+    }
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
+    setFocus_Widget(findChild_Widget(dlg, "snip.name"));
     return dlg;
 }
 

@@ -61,7 +61,7 @@ enum iWidgetFlag {
     frameless_WidgetFlag          = iBit(8),
     commandOnClick_WidgetFlag     = iBit(9),
     commandOnMouseMiss_WidgetFlag = iBit(10),
-    drawKey_WidgetFlag            = iBit(11),
+    drawKey_WidgetFlag            = iBit(11), /* TODO: LabelWidget-specific! */
     focusable_WidgetFlag          = iBit(12),
     tight_WidgetFlag              = iBit(13), /* smaller padding */
     keepOnTop_WidgetFlag          = iBit(14), /* gets events first; drawn last */
@@ -296,8 +296,9 @@ iBool   isFocused_Widget            (const iAnyObject *);
 iBool   isHover_Widget              (const iAnyObject *);
 iBool   isSelected_Widget           (const iAnyObject *);
 iBool   isUnderKeyRoot_Widget       (const iAnyObject *);
-iBool   isCommand_Widget            (const iWidget *d, const SDL_Event *ev, const char *cmd);
-iBool   hasParent_Widget            (const iWidget *d, const iWidget *someParent);
+iBool   isCommand_Widget            (const iWidget *, const SDL_Event *ev, const char *cmd);
+iBool   isExtraWindowSizeInfluencer_Widget(const iWidget *);
+iBool   hasParent_Widget            (const iWidget *, const iWidget *someParent);
 iBool   isAffectedByVisualOffset_Widget         (const iWidget *);
 iBool   isBeingVisuallyOffsetByReference_Widget (const iWidget *);
 int     visualOffsetByReference_Widget          (const iWidget *);

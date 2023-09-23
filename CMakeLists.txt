@@ -256,6 +256,8 @@ set (SOURCES
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
     src/ui/sidebarwidget.h
+    src/ui/snippetwidget.c
+    src/ui/snippetwidget.h
     src/ui/text.c
     src/ui/text.h
     src/ui/touch.c
@@ -377,7 +379,9 @@ endif ()
 
 # Target.
 if (NOT ANDROID)
-    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS})
+    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS}
+        src/snippets.h
+        src/snippets.c)
 else ()
     # The whole app becomes one shared library, based on this static one.
     add_library (app SHARED ${SOURCES})

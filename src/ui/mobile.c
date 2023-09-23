@@ -1096,7 +1096,7 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
 }
 
 void setupSheetTransition_Mobile(iWidget *sheet, int flags) {
-    if (isPromoted_Widget(sheet)) {
+    if (isPromoted_Widget(sheet) && isExtraWindowSizeInfluencer_Widget(sheet)) {
         /* This has been promoted to a window, shouldn't animate it. */
         return;
     }

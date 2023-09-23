@@ -1045,6 +1045,12 @@ static void clampCenteredInRoot_Widget_(iWidget *d) {
     }
 }
 
+iBool isExtraWindowSizeInfluencer_Widget(const iWidget *d) {
+    return type_Window(window_Widget(d)) == extra_WindowType &&
+           (d == root_Widget(d) ||
+            (d->parent == root_Widget(d) && indexOfChild_Widget(root_Widget(d), d) == 0));
+}
+
 void arrange_Widget(iWidget *d) {
     if (d) {
 #if !defined (NDEBUG)
@@ -1057,8 +1063,7 @@ void arrange_Widget(iWidget *d) {
         clampCenteredInRoot_Widget_(d);
         notifyArrangement_Widget_(d);
         d->root->didChangeArrangement = iTrue;
-        if (type_Window(window_Widget(d)) == extra_WindowType &&
-            (d == root_Widget(d) || d->parent == root_Widget(d))) {
+        if (isExtraWindowSizeInfluencer_Widget(d)) {
             /* Size of extra windows will change depending on the contents. */
             iWindow *win = window_Widget(d);
             SDL_SetWindowSize(win->win,

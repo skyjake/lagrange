@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "periodic.h"
 #include "resources.h"
 #include "sitespec.h"
+#include "snippets.h"
 #include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
@@ -1302,6 +1303,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_Prefs(&d->prefs);
     d->prefs.detachedPrefs = !contains_CommandLine(&d->args, "prefs-sheet");
     init_SiteSpec(dataDir_App_());
+    init_Snippets(dataDir_App_());
     setCStr_String(&d->prefs.strings[downloadDir_PrefsString], downloadDir_App_());
     set_Atomic(&d->pendingRefresh, iFalse);
     d->isRunning = iFalse;
@@ -1491,6 +1493,8 @@ static void deinit_App(iApp *d) {
     save_Keys(dataDir_App_());
     deinit_Keys();
     deinit_Fonts();
+    save_Snippets(dataDir_App_());
+    deinit_Snippets();
     deinit_SiteSpec();
     deinit_Prefs(&d->prefs);
     save_Bookmarks(d->bookmarks, dataDir_App_());
@@ -3376,10 +3380,14 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         savePrefs_App_(d);
         return iTrue;
     }
+    else if (equal_Command(cmd, "snippets.changed")) {
+        save_Snippets(dataDir_App_());
+        return iTrue;
+    }
     else if (equal_Command(cmd, "width.save")) {
         insert_StringHash(d->savedWidths,
                           string_Command(cmd, "id"),
-                          new_SavedWidth(argf_Command(cmd)));
+                          iClob(new_SavedWidth(argf_Command(cmd))));
         return iTrue;
     }
     else if (equal_Command(cmd, "document.openurls.changed")) {
