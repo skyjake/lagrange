@@ -27,6 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "listwidget.h"
 #include "../snippets.h"
 
+#include <SDL_clipboard.h>
+
 iDeclareType(SnippetItem)
 typedef iListItemClass iSnippetItemClass;
 
@@ -89,7 +91,7 @@ void init_SnippetWidget(iSnippetWidget *d) {
     init_Widget(w);
     setId_Widget(w, "sniped");
     setFlags_Widget(w, resizeChildren_WidgetFlag | arrangeVertical_WidgetFlag, iTrue);
-    iLabelWidget *addButton = newKeyMods_LabelWidget("New Snippet", SDLK_RETURN, 0, "sniped.new");
+    iLabelWidget *addButton = newKeyMods_LabelWidget("${sniped.new}", SDLK_RETURN, 0, "sniped.new");
     addChildFlags_Widget(w, iClob(addButton), drawKey_WidgetFlag | alignLeft_WidgetFlag);
     d->list = new_ListWidget();
     setItemHeight_ListWidget(d->list, lineHeight_Text(uiLabel_FontId) * 2.5f);
@@ -98,10 +100,10 @@ void init_SnippetWidget(iSnippetWidget *d) {
     updateItems_SnippetWidget_(d);
     d->menu = makeMenu_Widget(
         w,
-        (iMenuItem[]){ { "${menu.snip.edit}", 0, 0, "sniped.edit" },
-                       { "${menu.snip.clipboard}", 0, 0, "sniped.clipboard" },
+        (iMenuItem[]){ { edit_Icon " ${menu.snip.edit}", 0, 0, "sniped.edit" },
+                       { copy_Icon " ${menu.snip.clipboard}", 0, 0, "sniped.clipboard" },
                        { "---" },
-                       { uiTextCaution_ColorEscape "${menu.snip.delete}", 0, 0, "sniped.delete" } },
+                       { delete_Icon " " uiTextCaution_ColorEscape "${menu.snip.delete}", 0, 0, "sniped.delete" } },
         4);
     d->contextPos = iInvalidPos;
 }
@@ -134,6 +136,13 @@ static iBool processEvent_SnippetWidget_(iSnippetWidget *d, const SDL_Event *ev)
             iInputWidget *content = findChild_Widget(dlg, "snip.content");
             setText_InputWidget(content, get_Snippets(&item->label));
             setFocus_Widget(as_Widget(content));
+        }
+        return iTrue;
+    }
+    else if (isCommand_Widget(w, ev, "sniped.clipboard")) {
+        const iSnippetItem *item = constItem_ListWidget(d->list, d->contextPos);
+        if (item) {
+            SDL_SetClipboardText(cstr_String(get_Snippets(&item->label)));
         }
         return iTrue;
     }

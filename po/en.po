@@ -353,6 +353,9 @@ msgstr "Paste"
 msgid "menu.paste.go"
 msgstr "Paste and Go"
 
+msgid "menu.paste.snippet"
+msgstr "Paste Snippet"
+
 msgid "menu.search"
 msgstr "Search"
 
@@ -1734,6 +1737,9 @@ msgstr "Page Style"
 msgid "heading.prefs.userinterface"
 msgstr "User Interface"
 
+msgid "heading.prefs.snip"
+msgstr "Snippets"
+
 msgid "prefs.downloads"
 msgstr "Downloads folder:"
 
@@ -2549,3 +2555,32 @@ msgstr "Permanently dismiss warning about terminal emulation on %s?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Dismiss Warning"
+
+msgid "sniped.new"
+msgstr "New Snippet"
+
+msgid "menu.snip.edit"
+msgstr "Edit…"
+
+msgid "menu.snip.clipboard"
+msgstr "Copy to Clipboard"
+
+msgid "menu.snip.delete"
+msgstr "Delete"
+
+msgid "menu.snip.prefs"
+msgstr "Configure…"
+
+msgid "heading.snip"
+msgstr "New Snippet"
+
+msgid "snip.name"
+msgstr "Name:"
+
+msgid "snip.content"
+msgstr "Content:"
+
+msgid "snip.accept"
+msgstr "Save Snippet"
+
+

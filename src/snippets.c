@@ -143,6 +143,10 @@ const iString *get_Snippets(const iString *name) {
     return collectNew_String();
 }
 
+static int cmp_StringPtr_(const iString *a, const iString *b) {
+    return cmpStringCase_String(a, b);
+}
+
 const iStringArray *names_Snippets(void) {
     iAssert(snippets_);
     iSnippets *d = snippets_;
@@ -150,5 +154,6 @@ const iStringArray *names_Snippets(void) {
     iConstForEach(StringHash, i, d->hash) {
         pushBack_StringArray(names, key_StringHashConstIterator(&i));
     }
+    sort_Array(&names->strings, (int (*)(const void *, const void *)) cmp_StringPtr_);
     return collect_StringArray(names);
 }
