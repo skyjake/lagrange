@@ -119,7 +119,19 @@ static iBool processEvent_SnippetWidget_(iSnippetWidget *d, const SDL_Event *ev)
         return iTrue;
     }
     else if (isCommand_UserEvent(ev, "snippets.changed")) {
+        const char *cmd = command_UserEvent(ev);
         updateItems_SnippetWidget_(d);
+        if (hasLabel_Command(cmd, "added")) {
+            /* Scroll to the added new item. */
+            const char *added = suffixPtr_Command(cmd, "added");
+            for (size_t i = 0; i < numItems_ListWidget(d->list); i++) {
+                const iSnippetItem *item = constItem_ListWidget(d->list, i);
+                if (!cmp_String(&item->label, added)) {
+                    scrollToItem_ListWidget(d->list, i, 350);
+                    break;
+                }
+            }
+        }
         return iFalse;
     }
     else if (isCommand_Widget(w, ev, "list.clicked")) {
