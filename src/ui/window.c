@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "sidebarwidget.h"
 #include "paint.h"
+#include "snippets.h"
 #include "root.h"
 #include "touch.h"
 #include "util.h"
@@ -129,7 +130,7 @@ static const iMenuItem viewMenuItems_[] = {
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---" },
-    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
+    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "submenu id:splitmenu" },
     { NULL }
 };
 
@@ -315,9 +316,6 @@ void resizeSplits_MainWindow(iMainWindow *d, iBool updateDocumentSize) {
 }
 
 static void setupUserInterface_MainWindow(iMainWindow *d) {
-#if defined (LAGRANGE_MAC_MENUBAR)
-    insertMacMenus_(); /* TODO: Shouldn't this be in the App? */
-#endif
     /* One root is created by default. */
     d->base.roots[0] = new_Root();
     d->base.roots[0]->window = as_Window(d);
@@ -326,6 +324,9 @@ static void setupUserInterface_MainWindow(iMainWindow *d) {
     setCurrent_Root(NULL);
     /* One of the roots always has keyboard input focus. */
     d->base.keyRoot = d->base.roots[0];
+#if defined (LAGRANGE_MAC_MENUBAR)
+    insertMacMenus_(); /* TODO: Shouldn't this be in the App? */
+#endif
 }
 
 static iBool updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
@@ -1012,7 +1013,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         case SDL_WINDOWEVENT_FOCUS_LOST:
             if (d->type == popup_WindowType) {
                 /* Popup windows are currently only used for menus. */
-                closeMenu_Widget(d->roots[0]->widget);
+//                closeMenu_Widget(d->roots[0]->widget);
             }
             else {
                 postCommandf_App("window.focus.lost arg:%u", id_Window(d));
@@ -1384,6 +1385,14 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (isMetricsChange_UserEvent(&event)) {
                 iForIndices(i, d->roots) {
                     updateMetrics_Root(d->roots[i]);
+                }
+            }
+            if (isCommand_UserEvent(&event, "snippets.changed")) {
+                /* Recreate the snippet menus with the new list of snippets. */
+                iForIndices(i, d->roots) {
+                    if (d->roots[i]) {
+                        recreateSnippetMenu_Root(d->roots[i]);
+                    }
                 }
             }
             if (isCommand_UserEvent(&event, "lang.changed") && (mw || extraw)) {

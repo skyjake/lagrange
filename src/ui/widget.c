@@ -1291,14 +1291,14 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     else if (ev->type == SDL_MOUSEMOTION &&
              ev->motion.windowID == id_Window(window_Widget(d)) &&
              (!window_Widget(d)->hover || hasParent_Widget(d, window_Widget(d)->hover)) &&
-             flags_Widget(d) & hover_WidgetFlag && !isHidden_Widget_(d) &&
+             flags_Widget(d) & hover_WidgetFlag &&
+             !isHidden_Widget_(d) /* hidden flag on self */ &&
              ~flags_Widget(d) & disabled_WidgetFlag) {
         if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
             setHover_Widget(d);
 #if 0
-            printf("set hover to [%p] %s:'%s'\n",
-                   d, class_Widget(d)->name,
-                   cstr_String(id_Widget(d)));
+            printf("<%u> set hover to ", window_Widget(d)->frameTime);
+            identify_Widget(d);
             fflush(stdout);
 #endif
         }
@@ -2607,7 +2607,7 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
         }
         deinit_String(&ptrStr);
     }
-    postCommandString_Root(((const iWidget *) d)->root, &str);
+    postCommandString_Root(isGlobal ? NULL : ((const iWidget *) d)->root, &str);
     deinit_String(&str);
 }
 

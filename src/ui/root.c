@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "lookupwidget.h"
 #include "sidebarwidget.h"
+#include "snippets.h"
 #include "window.h"
 #include "../visited.h"
 #include "../history.h"
@@ -64,7 +65,7 @@ static const iMenuItem desktopNavMenuItems_[] = {
     { "---" },
     { leftHalf_Icon " ${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
     { rightHalf_Icon " ${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
-    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
+    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "submenu id:splitmenu" },
     { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
@@ -423,14 +424,15 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     iUnused(root);
     if (equal_Command(cmd, "menu.open")) {
         iWidget *button = pointer_Command(cmd);
-        iWidget *menu = findChild_Widget(button, "menu");
+        iWidget *menu = argLabel_Command(cmd, "self") ? button : findChild_Widget(button, "menu");
         if (!menu) {
             /* Independent popup window. */
             postCommand_App("cancel");
             return iTrue;
         }
-        const iBool isPlacedUnder = argLabel_Command(cmd, "under");
-        const iBool isMenuBar = argLabel_Command(cmd, "bar");
+        const iBool isPlacedUnder  = argLabel_Command(cmd, "under");
+        const iBool isMenuBar      = argLabel_Command(cmd, "bar");
+        const iBool isSubmenu      = argLabel_Command(cmd, "self");
         iAssert(menu);
         if (!isVisible_Widget(menu)) {
             if (isMenuBar) {
@@ -440,9 +442,12 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
             if (menu->updateMenuItems) {
                 menu->updateMenuItems(menu);
             }
-            openMenu_Widget(menu,
-                            isPlacedUnder ? bottomLeft_Rect(bounds_Widget(button))
-                                          : topLeft_Rect(bounds_Widget(button)));
+            openMenuFlags_Widget(menu,
+                                 hasLabel_Command(cmd, "coord") ? coord_Command(cmd)
+                                 : isPlacedUnder ? bottomLeft_Rect(bounds_Widget(button))
+                                                 : topLeft_Rect(bounds_Widget(button)),
+                                 postCommands_MenuOpenFlags |
+                                     (isSubmenu ? submenu_MenuOpenFlags : 0));
         }
         else {
             /* Already open, do nothing. */
@@ -1565,6 +1570,30 @@ static iBool updateMobilePageMenuItems_(iWidget *menu, const char *cmd) {
     return handleMenuCommand_Widget(menu, cmd);
 }
 
+void recreateSnippetMenu_Root(iRoot *d) {
+    const iStringArray *snipNames = names_Snippets();
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    iConstForEach(StringArray, s, snipNames) {
+        if (startsWith_String(s.value, "!")) {
+            continue;
+        }
+        pushBack_Array(items,
+                       &(iMenuItem){ format_CStr(clipboard_Icon " %s", cstr_String(s.value)),
+                                     0,
+                                     0,
+                                     format_CStr("!input.paste snippet:%s", cstr_String(s.value)) });
+    }
+    if (!isEmpty_Array(items)) {
+        pushBack_Array(items, &(iMenuItem){ "---" });
+    }
+    pushBack_Array(items,
+                   &(iMenuItem){ gear_Icon " ${menu.snip.prefs}", 0, 0, "preferences sniped:1" });
+    iWidget *menu = findChild_Widget(d->widget, "snippetmenu");
+    destroy_Widget(menu);
+    menu = makeMenu_Widget(d->widget, data_Array(items), size_Array(items));
+    setId_Widget(menu, "snippetmenu");
+}
+
 void createUserInterface_Root(iRoot *d) {
     iWidget *root = d->widget = new_Widget();
     root->rect.size = get_Window()->size;
@@ -1632,6 +1661,7 @@ void createUserInterface_Root(iRoot *d) {
             iClob(makeMenuBar_Widget(topLevelMenus_Window, iElemCount(topLevelMenus_Window))),
             collapse_WidgetFlag);
         /* The window menu needs to be dynamically updated with the list of open windows. */
+        /* TODO: Use Widget's `updateMenuItems` callback. */
         setCommandHandler_Widget(child_Widget(menuBar, 5), updateWindowMenu_);
         setId_Widget(menuBar, "menubar");
 #  if 0
@@ -2060,20 +2090,24 @@ void createUserInterface_Root(iRoot *d) {
                 { ">>>" delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
                 { ">>>" select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
                 { ">>>" undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
-            }, 7);
+                { "---" },
+                { "${menu.paste.snippet}", 0, 0, "snippetmenu" },
+            }, 9);
 #else
             (iMenuItem[]){
                 { scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
                 { clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
                 { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
                 { return_Icon " ${menu.paste.go}", 0, 0, "input.paste enter:1" },
+                { "${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" },
                 { "---" },
                 { delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
                 { undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
                 { "---" },
                 { select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
-            }, 9);
+            }, 10);
 #endif
+        recreateSnippetMenu_Root(d);
         if (deviceType_App() == phone_AppDeviceType) {
             /* Small screen; conserve space by removing the Cancel item. */
             iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));

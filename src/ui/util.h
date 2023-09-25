@@ -283,6 +283,8 @@ enum iMenuOpenFlags {
     postCommands_MenuOpenFlags = iBit(1),
     center_MenuOpenFlags       = iBit(2),
     setFocus_MenuOpenFlags     = iBit(3),
+    submenu_MenuOpenFlags      = iBit(4),
+    forcePopup_MenuOpenFlags   = iBit(5),
 };
 
 iWidget *       makeMenu_Widget                 (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
@@ -290,6 +292,7 @@ iWidget *       makeMenuFlags_Widget            (iWidget *parent, const iMenuIte
 void            makeMenuItems_Widget            (iWidget *menu, const iMenuItem *items, size_t n);
 void            openMenu_Widget                 (iWidget *, iInt2 windowCoord);
 void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, int flags);
+void            openMenuAnchorFlags_Widget      (iWidget *, iRect windowAnchorRect, int menuOpenFlags);
 void            closeMenu_Widget                (iWidget *);
 iBool           handleMenuCommand_Widget        (iWidget *menu, const char *cmd); /* used as the command handler */
 void            releaseNativeMenu_Widget        (iWidget *);

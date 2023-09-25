@@ -843,7 +843,21 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             NSAttributedString *title = [[NSAttributedString alloc] initWithString:cleanString_(&itemTitle)];
             item.attributedTitle = title;
             [title release];
-            item.action = (hasCommand ? @selector(postMenuItemCommand:) : nil);
+            if (hasCommand && startsWith_CStr(items[i].command, "submenu id:")) {
+                NSMenu *sub = [[NSMenu alloc] init];
+                sub.autoenablesItems = YES;
+                iWidget *subwidget = findChild_Widget(get_MainWindow()->base.roots[0]->widget,
+                                                      cstr_String(string_Command(items[i].command, "id")));
+                iAssert(subwidget);
+                const iArray *items = userData_Object(subwidget);
+                iAssert(items);
+                makeMenuItems_(sub, commands, 0, constData_Array(items), size_Array(items));
+                [item setSubmenu:sub];
+                [sub release];
+            }
+            else {
+                item.action = (hasCommand ? @selector(postMenuItemCommand:) : nil);
+            }
             [menu insertItem:item atIndex:atIndex++];
             deinit_String(&itemTitle);
             [item setTarget:commands];
@@ -869,6 +883,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
                 }
             }
             setShortcut_NSMenuItem_(item, key, kmods);
+            [item release];
         }
     }
     return selectedItem;

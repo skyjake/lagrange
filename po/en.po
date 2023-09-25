@@ -281,7 +281,7 @@ msgid "menu.zoom.reset"
 msgstr "Reset Zoom"
 
 msgid "menu.view.split"
-msgstr "Split View…"
+msgstr "Split View"
 
 msgid "menu.newfolder"
 msgstr "New Folder…"

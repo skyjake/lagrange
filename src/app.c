@@ -3382,7 +3382,7 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "snippets.changed")) {
         save_Snippets(dataDir_App_());
-        return iTrue;
+        return iFalse;
     }
     else if (equal_Command(cmd, "width.save")) {
         insert_StringHash(d->savedWidths,
@@ -4720,6 +4720,9 @@ iBool handleCommand_App(const char *cmd) {
             !isTerminal_Platform()) {
             /* Detach into a window if it doesn't fit otherwise. */
             promoteDialogToWindow_Widget(dlg);
+        }
+        if (argLabel_Command(cmd, "sniped")) {
+            postCommand_Widget(dlg, "tabs.switch id:sniped");
         }
     }
     else if (equal_Command(cmd, "navigate.home") && isMainWin) {
