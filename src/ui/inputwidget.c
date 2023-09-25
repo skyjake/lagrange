@@ -29,15 +29,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
    too convoluted, with both variants intermingled. */
 
 #include "inputwidget.h"
-#include "command.h"
-#include "paint.h"
-#include "util.h"
-#include "keys.h"
-#include "prefs.h"
-#include "lang.h"
-#include "touch.h"
-#include "periodic.h"
 #include "app.h"
+#include "command.h"
+#include "keys.h"
+#include "lang.h"
+#include "paint.h"
+#include "periodic.h"
+#include "prefs.h"
+#include "snippets.h"
+#include "touch.h"
+#include "util.h"
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/file.h>
@@ -2365,6 +2366,15 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
 //        return iTrue;
 //    }
     else if (isCommand_UserEvent(ev, "input.paste") && isEditing_InputWidget_(d)) {
+        const char *cmd = command_UserEvent(ev);
+        if (hasLabel_Command(cmd, "snippet")) {
+            pushUndo_InputWidget_(d);
+            deleteMarked_InputWidget_(d);
+            insertRange_InputWidget_(
+                d, range_String(get_Snippets(collect_String(suffix_Command(cmd, "snippet")))));
+            contentsWereChanged_InputWidget_(d);
+            return iTrue;
+        }
         paste_InputWidget_(d);
         if (argLabel_Command(command_UserEvent(ev), "enter")) {
             d->inFlags |= enterPressed_InputWidgetFlag;
