@@ -1868,7 +1868,7 @@ static void markWordAtCursor_InputWidget_(iInputWidget *d) {
 }
 
 static void showClipMenu_InputWidget_(const iInputWidget *d, iInt2 coord) {
-    iWidget *clipMenu = findWidget_App("clipmenu");
+    iWidget *clipMenu = findChild_Widget(root_Widget(constAs_Widget(d)), "clipmenu");
     if (isVisible_Widget(clipMenu)) {
         closeMenu_Widget(clipMenu);
     }
@@ -2379,6 +2379,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         copy_InputWidget_(d, argLabel_Command(command_UserEvent(ev), "cut"));
         return iTrue;
     }
+    else if (isCommand_UserEvent(ev, "input.delete") && isEditing_InputWidget_(d)) {
+        pushUndo_InputWidget_(d);
+        if (deleteMarked_InputWidget_(d)) {
+            contentsWereChanged_InputWidget_(d);
+        }
+        return iTrue;
+    }
 //    else if (isFocused_Widget(d) && isCommand_UserEvent(ev, "copy")) {
 //        copy_InputWidget_(d, iFalse);
 //        return iTrue;
@@ -2417,6 +2424,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
 #endif
     else if (isCommand_UserEvent(ev, "input.selectall") && isEditing_InputWidget_(d)) {
         selectAll_InputWidget(d);
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "input.deselect") && isEditing_InputWidget_(d)) {
+        deselect_InputWidget(d);
         return iTrue;
     }
     else if (isCommand_UserEvent(ev, "theme.changed")) {

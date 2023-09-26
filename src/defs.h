@@ -270,6 +270,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define unhappy_Icon        "\U0001f641"
 #define globe_Icon          "\U0001f310"
 #define envelope_Icon       "\U0001f4e7"
+#define hammer_Icon         "\U0001f528"
 #define magnifyingGlass_Icon "\U0001f50d"
 #define midEllipsis_Icon    "\u2022\u2022\u2022"
 #define return_Icon         "\u23ce"

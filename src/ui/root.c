@@ -65,14 +65,12 @@ static const iMenuItem desktopNavMenuItems_[] = {
     { "---" },
     { leftHalf_Icon " ${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
     { rightHalf_Icon " ${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
-    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "submenu id:splitmenu" },
     { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "submenu id:splitmenu" },
     { "---" },
-    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
-    { "${menu.downloads}", 0, 0, "downloads.open" },
-    { export_Icon " ${menu.export}", 0, 0, "export" },
+    { package_Icon " ${menu.userdata}", 0, 0, "submenu id:userdatamenu" },
     { "---" },
     { gear_Icon " ${menu.preferences}", preferences_KeyShortcut, "preferences" },
  #if defined (LAGRANGE_ENABLE_WINSPARKLE)
@@ -82,6 +80,19 @@ static const iMenuItem desktopNavMenuItems_[] = {
     { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
     { "---" },
     { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" },
+    { NULL }
+};
+
+static const iMenuItem userDataMenuItems_[] = {
+    { "${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
+    { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
+    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
+    { "---" },
+    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+    { "---" },
+    { "${menu.downloads}", 0, 0, "downloads.open" },
+    { "---" },
+    { "${menu.export}", 0, 0, "export" },
     { NULL }
 };
 
@@ -1566,6 +1577,43 @@ static iBool updateMobilePageMenuItems_(iWidget *menu, const char *cmd) {
     return handleMenuCommand_Widget(menu, cmd);
 }
 
+void createClipMenu_Root(iRoot *d) {
+    iWidget *clipMenu = makeMenu_Widget(d->widget,
+#if defined (iPlatformMobile)
+        (iMenuItem[]){
+            { ">>>" scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
+            { ">>>" clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
+            { ">>>" clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
+            { "---" },
+            { ">>>" delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
+            { ">>>" select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
+            { ">>>" undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
+            { "---" },
+            { "${menu.paste.snippet}", 0, 0, "snippetmenu" },
+        }, 9);
+#else
+        (iMenuItem[]){
+            { scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
+            { clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
+            { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
+            { return_Icon " ${menu.paste.go}", 0, 0, "input.paste enter:1" },
+            { "${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" },
+            { "---" },
+            { delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
+            { undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
+            { "---" },
+            { select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
+        }, 10);
+#endif
+    setId_Widget(clipMenu, "clipmenu");
+    if (deviceType_App() == phone_AppDeviceType) {
+        /* Small screen; conserve space by removing the Cancel item. */
+        iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
+        iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
+        iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
+    }
+}
+
 void recreateSnippetMenu_Root(iRoot *d) {
     const iStringArray *snipNames = names_Snippets();
     iArray *items = collectNew_Array(sizeof(iMenuItem));
@@ -1868,6 +1916,8 @@ void createUserInterface_Root(iRoot *d) {
                                               home_Icon, 0, 0, "navigate.home")),
                                           collapse_WidgetFlag),
                      "navbar.action4");
+        setId_Widget(makeMenu_Widget(root, userDataMenuItems_, iElemCount(userDataMenuItems_)),
+                     "userdatamenu");
 #if !defined (LAGRANGE_MAC_MENUBAR)
         /* Hamburger menu. */ {
             iLabelWidget *navMenu = makeMenuButton_LabelWidget(
@@ -2076,40 +2126,8 @@ void createUserInterface_Root(iRoot *d) {
                                 { rightHalf_Icon " ${menu.sidebar.right}", 0, 0, "sidebar2.toggle" },
                             },
                             deviceType_App() == phone_AppDeviceType ? 1 : 2);
-        iWidget *clipMenu = makeMenu_Widget(root,
-#if defined (iPlatformMobile)
-            (iMenuItem[]){
-                { ">>>" scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
-                { ">>>" clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
-                { ">>>" clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
-                { "---" },
-                { ">>>" delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
-                { ">>>" select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
-                { ">>>" undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
-                { "---" },
-                { "${menu.paste.snippet}", 0, 0, "snippetmenu" },
-            }, 9);
-#else
-            (iMenuItem[]){
-                { scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
-                { clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
-                { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
-                { return_Icon " ${menu.paste.go}", 0, 0, "input.paste enter:1" },
-                { "${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" },
-                { "---" },
-                { delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
-                { undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
-                { "---" },
-                { select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
-            }, 10);
-#endif
+        createClipMenu_Root(d);
         recreateSnippetMenu_Root(d);
-        if (deviceType_App() == phone_AppDeviceType) {
-            /* Small screen; conserve space by removing the Cancel item. */
-            iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
-            iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
-            iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
-        }
         iWidget *splitMenu = makeMenu_Widget(root, (iMenuItem[]){
             { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
             { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
@@ -2122,11 +2140,18 @@ void createUserInterface_Root(iRoot *d) {
             { "${menu.split.vertical} 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
             { "${menu.split.vertical} 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
         }, 10);
+        iWidget *toolsMenu = makeMenu_Widget(root, (iMenuItem[]) {
+           { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+           { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
+           { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
+           { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+           { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" }
+        }, 5);
         setFlags_Widget(splitMenu, disabledWhenHidden_WidgetFlag, iTrue); /* enabled when open */
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");
-        setId_Widget(clipMenu, "clipmenu");
         setId_Widget(splitMenu, "splitmenu");
+        setId_Widget(toolsMenu, "toolsmenu");
     }
     /* Global keyboard shortcuts. */ {
         addAction_Widget(root, SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home");

@@ -2026,12 +2026,56 @@ static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     return iFalse;
 }
 
-static void updateInputPromptMenuItems_(iWidget *menu) {
-    setMenuItemLabelByIndex_Widget(menu,
-                                   2,
-                                   !isPromptUrl_SiteSpec(&menu->data)
-                                       ? "${menu.input.setprompt}"
-                                       : "${menu.input.unsetprompt}");
+static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
+    const char     *context       = cstr_String(&menu->data);
+    const iWidget  *buttons       = pointerLabel_Command(context, "buttons");
+    const iString  *url           = string_Command(context, "url");
+    const char     *precedingLine = suffixPtr_Command(context, "preceding");
+    const iBinding *bind          = findCommand_Keys("input.precedingline");
+    /* Compose new menu items. */
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    pushBackN_Array(
+        items,
+        (iMenuItem[]){
+            { "${menu.input.precedingline}",
+              bind->key,
+              bind->mods,
+              format_CStr("!valueinput.set ptr:%p text:%s", buttons, precedingLine) },
+            { "---" },
+            { !isPromptUrl_SiteSpec(url) ? "${menu.input.setprompt}" : "${menu.input.unsetprompt}",
+              0,
+              0,
+              format_CStr("!prompturl.toggle url:%s", cstr_String(url)) } },
+        3);
+    /* Recently submitted input texts can be restored. */ {
+        const iStringArray *recentInput = recentlySubmittedInput_App();
+        if (!isEmpty_StringArray(recentInput)) {
+            pushBack_Array(items, &(iMenuItem){ "---" });
+            pushBack_Array(items,
+                           &(iMenuItem){ "${menu.input.clear}", 0, 0, "!recentinput.clear" });
+            pushBack_Array(items, &(iMenuItem){ "```${menu.input.restore}" });
+            iReverseConstForEach(StringArray, i, recentInput) {
+                iString *label = collect_String(copy_String(i.value));
+                replace_String(label, "\n\n", " ");
+                replace_String(label, "\n", " ");
+                trim_String(label);
+                const size_t maxLen = 45;
+                if (length_String(label) > maxLen) {
+                    truncate_String(label, maxLen);
+                    trim_String(label);
+                    appendCStr_String(label, "...");
+                }
+                pushBack_Array(items,
+                               &(iMenuItem){ cstr_String(label),
+                                             0,
+                                             0,
+                                             format_CStr("!valueinput.set ptr:%p text:%s",
+                                                         buttons,
+                                                         cstr_String(i.value)) });
+            }
+        }
+    }
+    return items;
 }
 
 iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isSensitive,
@@ -2080,55 +2124,21 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
         addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
     }
     /* Menu for additional actions, past entries. */ {
-        const iBinding *bind = findCommand_Keys("input.precedingline");
-        iArray *items = collectNew_Array(sizeof(iMenuItem));
-        pushBackN_Array(
-            items,
-            (iMenuItem[]){
-                { "${menu.input.precedingline}",
-                  bind->key,
-                  bind->mods,
-                  format_CStr("!valueinput.set ptr:%p text:%s",
-                              buttons,
-                              cstr_String(&d->linePrecedingLink)) },
-                { "---" },
-                { "", 0, 0, format_CStr("!prompturl.toggle url:%s", cstr_String(url)) } },
-            3);
-        /* Recently submitted input texts can be restored. */ {
-            const iStringArray *recentInput = recentlySubmittedInput_App();
-            if (!isEmpty_StringArray(recentInput)) {
-                pushBack_Array(items, &(iMenuItem){ "---" });
-                pushBack_Array(items,
-                               &(iMenuItem){ "${menu.input.clear}", 0, 0, "!recentinput.clear" });
-                pushBack_Array(items, &(iMenuItem){ "```${menu.input.restore}" });
-                iReverseConstForEach(StringArray, i, recentInput) {
-                    iString *label = collect_String(copy_String(i.value));
-                    replace_String(label, "\n\n", " ");
-                    replace_String(label, "\n", " ");
-                    trim_String(label);
-                    const size_t maxLen = 45;
-                    if (length_String(label) > maxLen) {
-                        truncate_String(label, maxLen);
-                        trim_String(label);
-                        appendCStr_String(label, "...");
-                    }
-                    pushBack_Array(items,
-                                   &(iMenuItem){ cstr_String(label),
-                                                 0,
-                                                 0,
-                                                 format_CStr("!valueinput.set ptr:%p text:%s",
-                                                             buttons,
-                                                             cstr_String(i.value)) });
-                }
-            }
-        }
+
         iLabelWidget *ellipsisButton =
-            makeMenuButton_LabelWidget(midEllipsis_Icon, data_Array(items), size_Array(items));
-        /* When opening, update the items to reflect the site-specific settings. */ {
-            iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
-            menu->updateMenuItems = updateInputPromptMenuItems_;
-            set_String(&menu->data, url); /* needed when updating items */
-        }
+            makeMenuButton_LabelWidget(midEllipsis_Icon, NULL, 0);
+        iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
+        /* When opening, update the items to reflect the site-specific settings. */
+        menu->updateMenuItems = updateInputPromptMenuItems_;
+        set_String(&menu->data,
+                   collectNewFormat_String("context buttons:%p url:%s preceding:%s",
+                                           buttons,
+                                           cstr_String(canonicalUrl_String(url)),
+                                           cstr_String(&d->linePrecedingLink)));
+        // iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
+        // menu->updateMenuItems = updateInputPromptMenuItems_;
+        // set_String(&menu->data, url); /* needed when updating items */
+        //}
         if (deviceType_App() == desktop_AppDeviceType) {
             addChildPos_Widget(buttons, iClob(ellipsisButton), front_WidgetAddPos);
         }
@@ -4162,17 +4172,15 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
         (iMenuItem[]){
             { "---" },
             { "${link.copy}", 0, 0, "document.copylink" },
-            { bookmark_Icon " ${link.bookmark}",
-              0,
-              0,
-              format_CStr(
-                  "!bookmark.add title:%s url:%s", cstr_String(linkLabel), cstr_String(linkUrl)) },
+            { bookmark_Icon " ${link.bookmark}", 0, 0,
+              format_CStr("!bookmark.add title:%s url:%s", cstr_String(linkLabel), cstr_String(linkUrl)) },
+            { clipboard_Icon " ${link.snippet}", 0, 0,
+              format_CStr("!snippet.add content:%s", cstr_String(linkUrl)) },
             { "---" },
-            { magnifyingGlass_Icon " ${link.searchurl}",
-              0, 0,
+            { magnifyingGlass_Icon " ${link.searchurl}", 0, 0,
               format_CStr("!searchurl address:%s", cstr_String(linkUrl)) },
         },
-        5);
+        6);
     if (isNative && link->mediaType != download_MediaType && !equalCase_Rangecc(scheme, "file")) {
         pushBackN_Array(items,
                         (iMenuItem[]){
@@ -4411,13 +4419,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 &items,
                                 (iMenuItem[]){
                                     { "${menu.copy}", 0, 0, "copy" },
-                                    { "${menu.search}",
-                                      0,
-                                      0,
+                                    { "${menu.search}", 0, 0,
                                       format_CStr("search newtab:1 query:%s",
                                                   cstr_String(selectedText_DocumentWidget_(d))) },
+                                    { "${menu.snippet.add}", 0, 0,
+                                      format_CStr("!snippet.add content:%s",
+                                                  cstr_String(selectedText_DocumentWidget_(d))) },
                                     { "---", 0, 0, NULL } },
-                                3);
+                                4);
                     }
 #if defined (iPlatformApple) && defined (LAGRANGE_ENABLE_MAC_MENUS)
                     pushBackN_Array(
@@ -4444,27 +4453,23 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             (iMenuItem[]){
                                 { "---" },
                                 { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
-                                { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
                                 { "---" },
                                 { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
                                 { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
                                 { "---" },
-                                { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
-                                { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
-                                { "${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
-                                { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                                 { d->flags & viewSource_DocumentWidgetFlag ? "${menu.viewformat.gemini}"
                                                                            : "${menu.viewformat.plain}",
                                   0, 0, "document.viewformat" },
+                                { hammer_Icon " ${menu.tools}", 0, 0, "submenu id:toolsmenu" },
                                 { "---" },
                                 { "${menu.page.copyurl}", 0, 0, "document.copylink" }, },
-                            14);
+                            10);
                         if (isEmpty_Range(&d->selectMark)) {
                             pushBackN_Array(
                                 &items,
                                 (iMenuItem[]){
-                                               { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
-                                               { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
+                                    { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
+                                    { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
                                 2);
                         }
                     }
@@ -4479,7 +4484,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 { "${menu.select.par}", 0, 0, "document.select arg:3" },
                             },
                             3);
-    #endif
+#endif
                         postCommand_Root(w->root, "document.select arg:1");
                         return iTrue;
                     }

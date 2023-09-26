@@ -2272,6 +2272,8 @@ iWindow *newExtra_Window(iWidget *rootWidget) {
     rootWidget->rect.pos = zero_I2();
     setDrawBufferEnabled_Widget(frameRoot, iFalse);
     setDrawBufferEnabled_Widget(rootWidget, iFalse);
+    createClipMenu_Root(root); /* needed for input widgets */
+    recreateSnippetMenu_Root(root);
     setCurrent_Window(oldWin);
     return win;
 }

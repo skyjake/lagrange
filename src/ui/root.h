@@ -35,6 +35,7 @@ iDeclareTypeConstruction(Root)
 /*----------------------------------------------------------------------------------------------*/
 
 void        createUserInterface_Root            (iRoot *);
+void        createClipMenu_Root                 (iRoot *);
 void        recreateSnippetMenu_Root            (iRoot *);
 
 void        setCurrent_Root                     (iRoot *);

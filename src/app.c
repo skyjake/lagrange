@@ -4989,6 +4989,14 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "snippet.add")) {
+        iWidget *dlg = makeSnippetCreation_Widget();
+        if (hasLabel_Command(cmd, "content")) {
+            setTextCStr_InputWidget(findChild_Widget(dlg, "snip.content"),
+                                    suffixPtr_Command(cmd, "content"));
+        }
+        return iTrue;
+    }
     else {
         return iFalse;
     }
