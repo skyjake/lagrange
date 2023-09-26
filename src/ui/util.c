@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "keys.h"
 #include "labelwidget.h"
+#include "periodic.h"
 #include "root.h"
 #include "sitespec.h"
 #include "snippets.h"
@@ -804,10 +805,57 @@ static iLabelWidget *parentMenuButton_(const iWidget *menu) {
     return NULL;
 }
 
+static void closeSubmenus_(iWidget *menu, iRoot *root) {
+    iConstForEach(ObjectList, i, children_Widget(menu)) {
+        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+            iLabelWidget *label = (iLabelWidget *) i.object;
+            const iString *subCmd = command_LabelWidget(label);
+            if (startsWith_String(subCmd, "submenu id:")) {
+                iWidget *submenu = findChild_Widget(root->widget,
+                                                    cstr_Command(cstr_String(subCmd), "id"));
+                iAssert(submenu);
+                closeSubmenus_(submenu, root);
+                if (isVisible_Widget(submenu)) {
+                    closeMenu_Widget(submenu);
+                }
+            }
+        }
+    }
+}
+
+static void openSubmenu_(iWidget *d) {
+    if (isRecentlyDeleted_Widget(d)) {
+        return;
+    }
+    iAssert(isInstance_Object(d, &Class_LabelWidget));
+    iWidget    *menu    = parent_Widget(d);
+    const iBool isPopup = type_Window(window_Widget(menu)) == popup_WindowType;
+    iRoot      *root    = isPopup ? constAs_Widget(userData_Object(menu))->root : d->root;
+    closeSubmenus_(menu, root);
+    iWidget *submenu = findChild_Widget(
+        root->widget, cstr_Command(cstr_String(command_LabelWidget((iLabelWidget *) d)), "id"));
+    iAssert(submenu);
+    if (!isVisible_Widget(submenu)) {
+        remove_Periodic(periodic_App(), menu);
+        openMenuAnchorFlags_Widget(submenu,
+                                   bounds_Widget(d),
+                                   submenu_MenuOpenFlags |
+                                       (isPopup ? forcePopup_MenuOpenFlags : 0));
+    }
+}
+
 iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
     if (isVisible_Widget(menu)) {
         if (equalWidget_Command(cmd, menu, "menu.opened")) {
             return iFalse;
+        }
+        if (equal_Command(cmd, "submenu.open")) {
+            /* This is sent directly via Periodic after mouse hover on an item. */
+            iWidget *menuItem = pointer_Command(cmd);
+            if (isHover_Widget(menuItem)) {
+                openSubmenu_(menuItem);
+            }
+            return iTrue;
         }
         if (equal_Command(cmd, "menu.open") && pointer_Command(cmd) == menu->parent) {
             /* Don't reopen self; instead, root will close the menu. */
@@ -815,10 +863,16 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
         }
         if ((equal_Command(cmd, "mouse.clicked") || equal_Command(cmd, "mouse.missed")) &&
             arg_Command(cmd)) {
-            /* Dismiss open menus when clicking outside them. */
-            if (!contains_Widget(menu, coord_Command(cmd))) {
+            const iInt2 coord = coord_Command(cmd);
+            /* Dismiss open menus when clicking outside them. A possible parent menu button
+               is considered part of the menu. */
+            iLabelWidget *menuButton = parentMenuButton_(menu);
+            if (menuButton && contains_Widget(as_Widget(menuButton), coord)) {
+                return iFalse;
+            }
+            if (!contains_Widget(menu, coord)) {
                 closeMenu_Widget(menu);
-                return iFalse; //equal_Command(cmd, "mouse.clicked");
+                return iFalse;
             }
             return iFalse;
         }
@@ -863,43 +917,15 @@ static iWidget *makeMenuSeparator_(void) {
     return sep;
 }
 
-static void closeSubmenus_(iWidget *menu, iRoot *root) {
-    iConstForEach(ObjectList, i, children_Widget(menu)) {
-        if (isInstance_Object(i.object, &Class_LabelWidget)) {
-            iLabelWidget *label = (iLabelWidget *) i.object;
-            const iString *subCmd = command_LabelWidget(label);
-            if (startsWith_String(subCmd, "submenu id:")) {
-                iWidget *submenu = findChild_Widget(root->widget,
-                                                    cstr_Command(cstr_String(subCmd), "id"));
-                iAssert(submenu);
-                if (isVisible_Widget(submenu)) {
-                    closeMenu_Widget(submenu);
-                }
-            }
-        }
-    }
-}
-
 static iBool submenuItemHandler_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "mouse.hovered") && isVisible_Widget(d)) {
         iAssert(isInstance_Object(d, &Class_LabelWidget));
         iLabelWidget *label = (iLabelWidget *) d;
         const iString *subCmd = command_LabelWidget(label);
         if (startsWith_String(subCmd, "submenu id:")) {
-            iWidget    *menu    = parent_Widget(d);
-            const iBool isPopup = type_Window(window_Widget(menu)) == popup_WindowType;
-            iRoot      *root    = isPopup ? constAs_Widget(userData_Object(menu))->root : d->root;
-            closeSubmenus_(menu, root);
-            iWidget *submenu = findChild_Widget(root->widget,
-                                                cstr_Command(cstr_String(subCmd), "id"));
-            iAssert(submenu);
-            if (!isVisible_Widget(submenu)) {
-//                const iInt2 coord = topRight_Rect(bounds_Widget(d));
-                openMenuAnchorFlags_Widget(submenu,
-                                           bounds_Widget(d),
-                                           submenu_MenuOpenFlags |
-                                               (isPopup ? forcePopup_MenuOpenFlags : 0));
-            }
+            iWidget *menu = parent_Widget(d);
+            remove_Periodic(periodic_App(), menu);
+            addDelay_Periodic(periodic_App(), 150, menu, format_CStr("submenu.open ptr:%p", label));
         }
         return iTrue;
     }
@@ -1527,6 +1553,7 @@ void closeMenu_Widget(iWidget *d) {
     if (d == NULL || flags_Widget(d) & hidden_WidgetFlag) {
         return; /* Already closed. */
     }
+    remove_Periodic(periodic_App(), d);
     iWindow *win = window_Widget(d);
     if (type_Window(win) == popup_WindowType) {
         iWidget *originalParent = userData_Object(d);
@@ -1545,6 +1572,9 @@ void closeMenu_Widget(iWidget *d) {
         setFlags_Widget(as_Widget(button), selected_WidgetFlag, iFalse);
     }
     refresh_Widget(d);
+    if (d->menuClosed) {
+        d->menuClosed(d);
+    }
     postCommand_Widget(d, "menu.closed");
     setupMenuTransition_Mobile(d, iFalse);
 }

@@ -170,12 +170,14 @@ struct Impl_Widget {
     int          frameColor;
     iObjectList *children;
     iWidget *    parent;
-    iBool      (*commandHandler)(iWidget *, const char *);
     iRoot *      root;
     iWidgetDrawBuffer *drawBuf;
     iAnim        overflowScrollOpacity; /* scrollbar fading */
     iString      data; /* custom user data */
-    const iArray *(*updateMenuItems)(iWidget *d); /* returns the updated items for the menu */
+    /* Callbacks. */
+    iBool      (*commandHandler)(iWidget *, const char *);
+    const iArray *(*updateMenuItems)(iWidget *); /* returns the updated items for the menu */
+    void       (*menuClosed)(iWidget *);
 };
 
 iDeclareObjectConstruction(Widget)
@@ -363,6 +365,7 @@ void        unhover_Widget          (void);
 void        setMouseGrab_Widget     (iWidget *);
 iWidget *   mouseGrab_Widget        (void);
 void        raise_Widget            (iWidget *);
+//void        setDelayedCallback_Widget(iWidget *, int delay, void (*)(iWidget *));
 iBool       hasVisibleChildOnTop_Widget
                                     (const iWidget *parent);
 void        printTree_Widget        (const iWidget *);

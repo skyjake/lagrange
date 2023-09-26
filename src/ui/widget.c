@@ -169,6 +169,9 @@ void init_Widget(iWidget *d) {
     init_String(&d->data);
     iZap(d->padding);
     d->updateMenuItems = NULL;
+    d->menuClosed = NULL;
+//    d->delayedTimer = 0;
+//    d->delayedCallback = NULL;
 }
 
 static void visualOffsetAnimation_Widget_(void *ptr) {
@@ -2287,8 +2290,11 @@ iAny *findChild_Widget(const iWidget *d, const char *id) {
     return NULL;
 }
 
-static void addMatchingToArray_Widget_(const iWidget *d, const char *id, iPtrArray *found) {
-    if (cmp_String(id_Widget(d), id) == 0) {
+static void addMatchingToArray_Widget_(const iWidget *d, const iRangecc id, iPtrArray *found) {
+    if (cmp_String(id_Widget(d), id.start) == 0) {
+        pushBack_PtrArray(found, d);
+    }
+    else if (id.end[-1] == '*' && startsWith_String(id_Widget(d), id.start)) {
         pushBack_PtrArray(found, d);
     }
     iForEach(ObjectList, i, d->children) {
@@ -2298,7 +2304,9 @@ static void addMatchingToArray_Widget_(const iWidget *d, const char *id, iPtrArr
 
 const iPtrArray *findChildren_Widget(const iWidget *d, const char *id) {
     iPtrArray *found = new_PtrArray();
-    addMatchingToArray_Widget_(d, id, found);
+    if (id && id[0]) {
+        addMatchingToArray_Widget_(d, range_CStr(id), found);
+    }
     return collect_PtrArray(found);
 }
 
@@ -2740,3 +2748,40 @@ void clearRecentlyDeleted_Widget(void) {
 iBool isRecentlyDeleted_Widget(const iAnyObject *obj) {
     return contains_RecentlyDeleted_(&recentlyDeleted_, obj);
 }
+
+#if 0
+static uint32_t callDelayed_Widget_(uint32_t interval, void *ctx) {
+    iWidget *d = ctx;
+    lock_Mutex(d->delayedMutex);
+    d->delayedTimer = 0;
+    if (d->delayedCallback) {
+        d->delayedCallback(d);
+    }
+    unlock_Mutex(d->delayedMutex);
+    return 0; /* single-shot */
+}
+
+void setDelayedCallback_Widget(iWidget *d, int delay, void (*callback)(iWidget *)) {
+    if (!callback) {
+        if (d->delayedMutex) {
+            iGuardMutex(d->delayedMutex, {
+                SDL_RemoveTimer(d->delayedTimer);
+                d->delayedTimer    = 0;
+                d->delayedCallback = NULL;
+            });
+            delete_Mutex(d->delayedMutex);
+            d->delayedMutex = NULL;
+        }
+        return;
+    }
+    if (!d->delayedMutex) {
+        d->delayedMutex = new_Mutex();
+    }
+    lock_Mutex(d->delayedMutex);
+    if (d->delayedTimer) {
+        SDL_RemoveTimer(d->delayedTimer);
+    }
+    d->delayedTimer = SDL_AddTimer(delay, callDelayed_Widget_, d);
+    unlock_Mutex(d->delayedMutex);
+}
+#endif

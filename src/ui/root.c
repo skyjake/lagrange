@@ -457,7 +457,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
                                      (isSubmenu ? submenu_MenuOpenFlags : 0));
         }
         else {
-            /* Already open, do nothing. */
+            closeMenu_Widget(menu);
         }
         return iTrue;
     }
