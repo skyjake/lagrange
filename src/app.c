@@ -4257,6 +4257,13 @@ iBool handleCommand_App(const char *cmd) {
         /* All the subsequent commands assume that a window exists. */
         return iFalse;
     }
+#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
+    /* Update the macOS Bookmarks menu items. */
+    if (equal_Command(cmd, "bookmarks.changed")) {
+        const iArray *items = updateBookmarksMenu_Widget(d->window->roots[0]->widget);
+        updateMenuItems_MacOS(4, constData_Array(items), size_Array(items));
+    }
+#endif
     /* TODO: Maybe break this up a little bit? There's a very long list of ifs here. */
     if (equal_Command(cmd, "config.error")) {
         makeSimpleMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
@@ -4597,6 +4604,7 @@ iBool handleCommand_App(const char *cmd) {
         if (isMobile_Platform()) {
             enableToolbar_Root(get_Root(), iFalse); /* toolbars disabled while Settings is shown */
         }
+        setFocus_Widget(NULL);
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.strings[downloadDir_PrefsString]);

@@ -916,6 +916,14 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, int firstItemInde
     }
 }
 
+void updateMenuItems_MacOS(int atIndex, const iMenuItem *items, size_t count) {
+    NSApplication *app = [NSApplication sharedApplication];
+    MyDelegate *myDel = (MyDelegate *) app.delegate;
+    NSMenu *menu = [[app mainMenu] itemAtIndex:atIndex].submenu;
+    [menu removeAllItems];
+    makeMenuItems_(menu, [myDel menuCommands], 0, items, count);
+}
+
 void handleCommand_MacOS(const char *cmd) {
     if (equal_Command(cmd, "prefs.ostheme.changed")) {
         if (arg_Command(cmd)) {

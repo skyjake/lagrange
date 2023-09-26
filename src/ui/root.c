@@ -84,6 +84,8 @@ static const iMenuItem desktopNavMenuItems_[] = {
 };
 
 static const iMenuItem userDataMenuItems_[] = {
+    { "${menu.export}", 0, 0, "export" },
+    { "---" },
     { "${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
     { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
@@ -91,8 +93,6 @@ static const iMenuItem userDataMenuItems_[] = {
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     { "---" },
     { "${menu.downloads}", 0, 0, "downloads.open" },
-    { "---" },
-    { "${menu.export}", 0, 0, "export" },
     { NULL }
 };
 
@@ -126,34 +126,6 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
 };
-
-#if 0
-#if defined (iPlatformMobile)
-static const iMenuItem identityButtonMenuItems_[] = {
-    { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
-    { "---" },
-    { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
-    { "---" },
-    { person_Icon " ${menu.show.identities}", 0, 0, "toolbar.showident" },
-};
-#else /* desktop */
-static const iMenuItem identityButtonMenuItems_[] = {
-    { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
-    { "---" },
-# if !defined (iPlatformAppleDesktop)
-    { add_Icon " ${menu.identity.newdomain}", newIdentity_KeyShortcut, "ident.new" },
-    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
-    { "---" },
-    { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
-# else
-    { add_Icon " ${menu.identity.newdomain}", 0, 0, "ident.new" },
-    { "---" },
-    { person_Icon " ${menu.show.identities}", 0, 0, "sidebar.mode arg:3 toggle:1" },
-# endif
-};
-#endif
-#endif
 
 static const char *reloadCStr_   = reload_Icon;
 static const char *pageMenuCStr_ = midEllipsis_Icon;
@@ -1537,7 +1509,9 @@ static int sortByWindowPtrSerial_(const void *e1, const void *e2) {
 static iBool updateWindowMenu_(iWidget *menuBarItem, const char *cmd) {
     /* Note: This only works with non-native menus. */
     if (equalWidget_Command(cmd, menuBarItem, "menu.opened")) {
-        /* Get rid of the old window list. See `windowMenuItems_` in window.c for the fixed list. */
+        /* TODO: Use the `updateMenuItems` callback instead of this. */
+        /* Remove the old dynamic window list items first. See `windowMenuItems_` in window.c
+           for the fixed list. */
         iWidget *menu = findChild_Widget(menuBarItem, "menu");
         while (childCount_Widget(menu) > 9) {
             destroy_Widget(removeChild_Widget(menu, child_Widget(menu, 9)));
@@ -1709,6 +1683,11 @@ void createUserInterface_Root(iRoot *d) {
             div,
             iClob(makeMenuBar_Widget(topLevelMenus_Window, iElemCount(topLevelMenus_Window))),
             collapse_WidgetFlag);
+        /* Bookmarks menu is updated with the current folder structure. */ {
+            iWidget *bookmarksMenu = findChild_Widget(child_Widget(menuBar, 3), "menu");
+            bookmarksMenu->updateMenuItems = updateBookmarksMenu_Widget;
+            bookmarksMenu->menuClosed      = cleanupBookmarksMenu_Widget;
+        }
         /* The window menu needs to be dynamically updated with the list of open windows. */
         /* TODO: Use Widget's `updateMenuItems` callback. */
         setCommandHandler_Widget(child_Widget(menuBar, 5), updateWindowMenu_);

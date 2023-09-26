@@ -84,8 +84,9 @@ static const iMenuItem fileMenuItems_[] = {
     { "---" },
     { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---" },
-    { "${menu.downloads}", 0, 0, "downloads.open" },
-    { "${menu.export}", 0, 0, "export" },
+    { "${menu.userdata}", 0, 0, "submenu id:userdatamenu" },
+//    { "${menu.downloads}", 0, 0, "downloads.open" },
+//    { "${menu.export}", 0, 0, "export" },
 #if defined (iPlatformPcDesktop)
     { "---" },
     { "${menu.preferences}", preferences_KeyShortcut, "preferences" },
@@ -137,18 +138,18 @@ static const iMenuItem viewMenuItems_[] = {
 static iMenuItem bookmarksMenuItems_[] = {
     { "${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
     { "${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
+    { "---" },
     { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
-    { "---" },
-    { "${macos.menu.bookmarks.list}", 0, 0, "open url:about:bookmarks" },
-    { "${macos.menu.bookmarks.bytag}", 0, 0, "open url:about:bookmarks?tags" },
-    { "${macos.menu.bookmarks.bytime}", 0, 0, "open url:about:bookmarks?created" },
-    { "---" },
+//    { "${macos.menu.bookmarks.list}", 0, 0, "open url:about:bookmarks" },
+//    { "${macos.menu.bookmarks.bytag}", 0, 0, "open url:about:bookmarks?tags" },
+//    { "${macos.menu.bookmarks.bytime}", 0, 0, "open url:about:bookmarks?created" },
+//    { "---" },
     { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
     { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
-    { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
     { "---" },
+    { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
     { "${menu.feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" },
-    { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
+//    { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
     { NULL }
 };
 
@@ -211,6 +212,7 @@ static void insertMacMenus_(void) {
     insertMenuItems_MacOS("${menu.title.edit}", 2, 0, editMenuItems_, iElemCount(editMenuItems_));
     insertMenuItems_MacOS("${menu.title.view}", 3, 0, viewMenuItems_, iElemCount(viewMenuItems_));
     insertMenuItems_MacOS("${menu.title.bookmarks}", 4, 0, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
+    /* TODO: Dynamic update callback for the bookmarks menu. */
     insertMenuItems_MacOS("${menu.title.identity}", 5, 0, identityMenuItems_, iElemCount(identityMenuItems_));
     insertMenuItems_MacOS("${menu.title.help}", 7, 0, helpMenuItems_, iElemCount(helpMenuItems_));
     macMenusInserted_ = iTrue;
@@ -2276,4 +2278,77 @@ iWindow *newExtra_Window(iWidget *rootWidget) {
     recreateSnippetMenu_Root(root);
     setCurrent_Window(oldWin);
     return win;
+}
+
+iDeclareType(FolderItems);
+
+struct Impl_FolderItems {
+    iHashNode node;
+    iArray *items;
+};
+
+void cleanupBookmarksMenu_Widget(iWidget *menu) {
+    /* Destroy the previously created folder submenus. */
+    iConstForEach(PtrArray, c, findChildren_Widget(root_Widget(menu), "bfmenu.*")) {
+        destroy_Widget(c.ptr);
+    }
+}
+
+const iArray *updateBookmarksMenu_Widget(iWidget *menu) {
+    /* TODO: Updating the items is only needed if 1) there hasn't been an update yet, or 2)
+       bookmarks have changed. */
+    cleanupBookmarksMenu_Widget(menu);
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    pushBackN_Array(items, bookmarksMenuItems_, count_MenuItem(bookmarksMenuItems_));
+    iWidget *rootWidget = menu ? root_Widget(menu) : menu;
+    iBool isFirst = iTrue;
+    iHash *hash = new_Hash();
+    /* Append top-level bookmarks and create new submenus. */
+    iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTree_Bookmark, NULL, NULL)) {
+        const iBookmark *bm = i.ptr;
+        iArray *dest = items;
+        if (bm->parentId) {
+            iFolderItems *f = (iFolderItems *) value_Hash(hash, bm->parentId);
+            if (!f) {
+                f = iZapMalloc(FolderItems);
+                f->node.key = bm->parentId;
+                f->items = new_Array(sizeof(iMenuItem));
+                insert_Hash(hash, &f->node);
+            }
+            dest = f->items;
+        }
+        else if (isFirst) {
+            isFirst = iFalse;
+            pushBack_Array(dest, &(iMenuItem){ "---" });
+        }
+        iString iconStr;
+        if (isFolder_Bookmark(bm)) {
+            initCStr_String(&iconStr, folder_Icon);
+        }
+        else if (bm->icon) {
+            initUnicodeN_String(&iconStr, &bm->icon, 1);
+        }
+        else {
+            initCStr_String(&iconStr, pin_Icon);
+        }
+        pushBack_Array(
+            dest,
+            &(iMenuItem){ format_CStr("%s %s", cstr_String(&iconStr), cstr_String(&bm->title)),
+                          0,
+                          0,
+                          isFolder_Bookmark(bm)
+                              ? format_CStr("submenu id:bfmenu.%d", id_Bookmark(bm))
+                              : format_CStr("!open url:%s", cstr_String(&bm->url)) });
+        deinit_String(&iconStr);
+    }
+    /* Create folder menus. */
+    iForEach(Hash, h, hash) {
+        iFolderItems *f = (iFolderItems *) h.value;
+        iWidget *bfmenu = makeMenu_Widget(rootWidget, data_Array(f->items), size_Array(f->items));
+        setId_Widget(bfmenu, format_CStr("bfmenu.%d", f->node.key));
+        delete_Array(f->items);
+        free(remove_HashIterator(&h));
+    }
+    delete_Hash(hash);
+    return items;
 }

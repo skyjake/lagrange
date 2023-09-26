@@ -245,3 +245,8 @@ iLocalDef const iMainWindow *constAs_MainWindow(const iAnyWindow *d) {
 
 iWindow *   newPopup_Window     (iInt2 screenPos, iWidget *rootWidget);
 iWindow *   newExtra_Window     (iWidget *rootWidget);
+
+/*----------------------------------------------------------------------------------------------*/
+
+const iArray *  updateBookmarksMenu_Widget  (iWidget *menu);
+void            cleanupBookmarksMenu_Widget (iWidget *menu);
