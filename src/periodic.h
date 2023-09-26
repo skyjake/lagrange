@@ -33,7 +33,7 @@ iDeclareType(Thread)
 struct Impl_Periodic {
     iMutex *     mutex;
     iSortedArray commands;
-    uint32_t     lastPostTime;
+//    uint32_t     lastPostTime;
     iPtrSet      pendingRemoval; /* contexts */
     int          wakeupTimer; /* running while there are pending periodic commands */
 };
@@ -46,6 +46,7 @@ iLocalDef iBool isEmpty_Periodic(const iPeriodic *d) {
 }
 
 void    add_Periodic            (iPeriodic *, iAnyObject *context, const char *command);
+void    addDelay_Periodic       (iPeriodic *, uint32_t delay, iAny *context, const char *command);
 void    remove_Periodic         (iPeriodic *, iAnyObject *context);
 iBool   contains_Periodic       (const iPeriodic *, iAnyObject *context);
 

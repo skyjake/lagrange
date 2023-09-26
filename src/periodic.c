@@ -32,14 +32,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(PeriodicCommand)
 
+static const uint32_t defaultDelay_Periodic_ = 500;
+
 struct Impl_PeriodicCommand {
-    iAny *  context;
-    iString command;
+    iAny *   context;
+    iString  command;
+    uint32_t delay;
+    uint32_t dueTime;
 };
 
-static void init_PeriodicCommand(iPeriodicCommand *d, iAny *context, const char *command) {
-    d->context = context;
+static void init_PeriodicCommand(iPeriodicCommand *d, iAny *context, const char *command,
+                                 uint32_t delay) {
     initCStr_String(&d->command, command);
+    d->context = context;
+    d->delay   = (delay ? delay : defaultDelay_Periodic_);
+    d->dueTime = SDL_GetTicks() + delay;
 }
 
 static void deinit_PeriodicCommand(iPeriodicCommand *d) {
@@ -51,11 +58,11 @@ static int cmp_PeriodicCommand_(const void *a, const void *b) {
     return iCmp(elems[0]->context, elems[1]->context);
 }
 
-iDefineTypeConstructionArgs(PeriodicCommand, (iAny *ctx, const char *cmd), ctx, cmd)
+iDefineTypeConstructionArgs(PeriodicCommand,
+                            (iAny *ctx, const char *cmd, uint32_t delay),
+                            ctx, cmd, delay)
 
 /*----------------------------------------------------------------------------------------------*/
-
-static const uint32_t postingInterval_Periodic_ = 500;
 
 static uint32_t postEvent_Periodic_(uint32_t interval, void *context) {
     iUnused(context);
@@ -68,7 +75,7 @@ static uint32_t postEvent_Periodic_(uint32_t interval, void *context) {
 
 static void startOrStopWakeupTimer_Periodic_(iPeriodic *d, iBool start) {
     if (start && !d->wakeupTimer) {
-        d->wakeupTimer = SDL_AddTimer(postingInterval_Periodic_, postEvent_Periodic_, d);
+        d->wakeupTimer = SDL_AddTimer(50, postEvent_Periodic_, d);
     }
     else if (!start && d->wakeupTimer) {
         SDL_RemoveTimer(d->wakeupTimer);
@@ -96,21 +103,22 @@ static iBool isDispatching_;
 
 iBool dispatchCommands_Periodic(iPeriodic *d) {
     const uint32_t now = SDL_GetTicks();
-    if (now - d->lastPostTime < postingInterval_Periodic_) {
-        return iFalse;
-    }
-    d->lastPostTime = now;
+//    if (now - d->lastPostTime < postingInterval_Periodic_) {
+//        return iFalse;
+//    }
+//    d->lastPostTime = now;
     iBool wasPosted = iFalse;
     lock_Mutex(d->mutex);
     isDispatching_ = iTrue;
     iAssert(isEmpty_PtrSet(&d->pendingRemoval));
-    iConstForEach(Array, i, &d->commands.values) {
-        const iPeriodicCommand *pc = i.value;
+    iForEach(Array, i, &d->commands.values) {
+        iPeriodicCommand *pc = i.value;
         iAssert(isInstance_Object(pc->context, &Class_Widget));
 //        iAssert(~flags_Widget(constAs_Widget(pc->context)) & destroyPending_WidgetFlag);
         iAssert(!contains_PtrSet(&d->pendingRemoval, pc->context));
         iRoot *root = constAs_Widget(pc->context)->root;
-        if (root) {
+        if (root && now >= pc->dueTime) {
+            pc->dueTime = iMax(now, pc->dueTime + pc->delay);
             const SDL_UserEvent ev = {
                 .type     = SDL_USEREVENT,
                 .code     = command_UserEventCode,
@@ -134,7 +142,7 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
 void init_Periodic(iPeriodic *d) {
     d->mutex = new_Mutex();
     init_SortedArray(&d->commands, sizeof(iPeriodicCommand), cmp_PeriodicCommand_);
-    d->lastPostTime = 0;
+//    d->lastPostTime = 0;
     init_PtrSet(&d->pendingRemoval);
     d->wakeupTimer = 0;
 }
@@ -150,6 +158,10 @@ void deinit_Periodic(iPeriodic *d) {
 }
 
 void add_Periodic(iPeriodic *d, iAny *context, const char *command) {
+    addDelay_Periodic(d, defaultDelay_Periodic_, context, command);
+}
+
+void addDelay_Periodic(iPeriodic *d, uint32_t delay, iAny *context, const char *command) {
     iWidget *contextWidget = as_Widget(context);
     iAssert(~flags_Widget(contextWidget) & destroyPending_WidgetFlag);
     contextWidget->flags2 |= usedAsPeriodicContext_WidgetFlag2;
@@ -159,10 +171,12 @@ void add_Periodic(iPeriodic *d, iAny *context, const char *command) {
     if (locate_SortedArray(&d->commands, &key, &pos)) {
         iPeriodicCommand *pc = at_SortedArray(&d->commands, pos);
         setCStr_String(&pc->command, command);
+        pc->delay = (delay ? delay : defaultDelay_Periodic_);
+        pc->dueTime = SDL_GetTicks() + delay;
     }
     else {
         iPeriodicCommand pc;
-        init_PeriodicCommand(&pc, context, command);
+        init_PeriodicCommand(&pc, context, command, delay);
         insert_SortedArray(&d->commands, &pc);
     }
     startOrStopWakeupTimer_Periodic_(d, iTrue);
