@@ -175,7 +175,7 @@ struct Impl_Widget {
     iWidgetDrawBuffer *drawBuf;
     iAnim        overflowScrollOpacity; /* scrollbar fading */
     iString      data; /* custom user data */
-    void       (*updateMenuItems)(iWidget *d);
+    const iArray *(*updateMenuItems)(iWidget *d); /* returns the updated items for the menu */
 };
 
 iDeclareObjectConstruction(Widget)

@@ -57,6 +57,7 @@ struct Impl_LabelWidget {
         uint16_t chevron             : 1;
         uint16_t checkMark           : 1;
         uint16_t truncateToFit       : 1;
+        uint16_t menuCanceling       : 1;
     } flags;
 };
 
@@ -104,6 +105,10 @@ static void trigger_LabelWidget_(const iLabelWidget *d) {
         iForEach(ObjectList, i, children_Widget(w->parent)) {
             setFlags_Widget(i.object, selected_WidgetFlag, d == i.object);
         }
+    }
+    /* Triggering a menu item will always close all popup menus. */
+    if (d->flags.menuCanceling) {
+        postCommand_Widget(&d->widget, "menu.cancel");
     }
 }
 
@@ -220,7 +225,9 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
                 endSiblingOrderDrag_LabelWidget_(d);
                 trigger_LabelWidget_(d);
                 refresh_Widget(w);
-                setFocus_Widget(NULL);
+                if (focus_Widget() == w) {
+                    setFocus_Widget(NULL);
+                }
                 return iTrue;
             default:
                 break;
@@ -777,6 +784,12 @@ void setRemoveTrailingColon_LabelWidget(iLabelWidget *d, iBool removeTrailingCol
     if (d) {
         d->flags.removeTrailingColon = removeTrailingColon;
         replaceVariables_LabelWidget_(d);
+    }
+}
+
+void setMenuCanceling_LabelWidget(iLabelWidget *d, iBool menuCanceling) {
+    if (d) {
+        d->flags.menuCanceling = menuCanceling;
     }
 }
 

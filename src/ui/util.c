@@ -785,6 +785,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "window.mouse.entered") ||
            equal_Command(cmd, "input.backup") ||
            equal_Command(cmd, "input.ended") ||
+           equal_Command(cmd, "input.edited") ||
            equal_Command(cmd, "focus.gained") ||
            equal_Command(cmd, "focus.lost") ||
            equal_Command(cmd, "tabs.changed") ||
@@ -815,8 +816,11 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
         if ((equal_Command(cmd, "mouse.clicked") || equal_Command(cmd, "mouse.missed")) &&
             arg_Command(cmd)) {
             /* Dismiss open menus when clicking outside them. */
-            closeMenu_Widget(menu);
-            return equal_Command(cmd, "mouse.clicked");
+            if (!contains_Widget(menu, coord_Command(cmd))) {
+                closeMenu_Widget(menu);
+                return iFalse; //equal_Command(cmd, "mouse.clicked");
+            }
+            return iFalse;
         }
         if (equal_Command(cmd, "cancel") && pointerLabel_Command(cmd, "menu") == menu) {
             return iFalse;
@@ -902,6 +906,10 @@ static iBool submenuItemHandler_(iWidget *d, const char *cmd) {
     return iFalse;
 }
 
+static iBool isValidLabelIcon_(iChar c) {
+    return c >= 0x100 && c != 0x2014;
+}
+
 void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     int64_t     itemFlags       = (deviceType_App() != desktop_AppDeviceType ? 0 : 0) |
@@ -909,7 +917,7 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
     iBool    haveIcons   = iFalse;
     iBool    haveSubmenu = iFalse;
     iWidget *horizGroup  = NULL;
-    for (size_t i = 0; items[i].label && i < n; ++i) {
+    for (size_t i = 0; i < n && items[i].label; ++i) {
         const iMenuItem *item = &items[i];
         if (!item->label) {
             break;
@@ -943,7 +951,8 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
             }
             iString labelStr;
             initCStr_String(&labelStr, labelText);
-            const iBool isIcon = length_String(&labelStr) == 1;
+            const iBool isIcon = length_String(&labelStr) == 1 &&
+                                 isValidLabelIcon_(first_String(&labelStr));
             iLabelWidget *label = addChildFlags_Widget(
                 horizGroup ? horizGroup : menu,
                 iClob(isIcon
@@ -965,6 +974,9 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 setChevron_LabelWidget(label, iTrue);
                 setFlags_Widget(as_Widget(label), drawKey_WidgetFlag, iFalse);
                 haveSubmenu = iTrue;
+            }
+            if (item->command) {
+                setMenuCanceling_LabelWidget(label, iTrue);
             }
             as_Widget(label)->flags2 |= commandOnHover_WidgetFlag2;
             setFlags_Widget(as_Widget(label), disabled_WidgetFlag, isDisabled);
@@ -1002,33 +1014,13 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
     }
 }
 
-static iArray *deepCopyMenuItems_(iWidget *menu, const iMenuItem *items, size_t n) {
+static iArray *deepCopyMenuItems_(const iMenuItem *items, size_t n) {
     iArray *array = new_Array(sizeof(iMenuItem));
     iString cmd;
     init_String(&cmd);
     for (size_t i = 0; i < n && items[i].label; i++) {
         const iMenuItem *item = &items[i];
         const char *itemCommand = item->command;
-#if 0
-        if (itemCommand) {
-            /* Make it appear the command is coming from the right widget. */
-            setCStr_String(&cmd, itemCommand);
-            if (!hasLabel_Command(itemCommand, "ptr")) {
-                size_t firstSpace = indexOf_String(&cmd, ' ');
-                iBlock ptr;
-                init_Block(&ptr, 0);
-                printf_Block(&ptr, " ptr:%p", menu);
-                if (firstSpace != iInvalidPos) {
-                    insertData_Block(&cmd.chars, firstSpace, data_Block(&ptr), size_Block(&ptr));
-                }
-                else {
-                    append_Block(&cmd.chars, &ptr);
-                }
-                deinit_Block(&ptr);
-            }
-            itemCommand = cstr_String(&cmd);
-        }
-#endif
         pushBack_Array(array, &(iMenuItem){
             item->label ? iDupStr(item->label) : NULL,
             item->key,
@@ -1083,7 +1075,7 @@ void setNativeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) 
 #if defined (LAGRANGE_NATIVE_MENU)
     iAssert(flags_Widget(menu) & nativeMenu_WidgetFlag);
     releaseNativeMenu_Widget(menu);
-    setUserData_Object(menu, deepCopyMenuItems_(menu, items, n));
+    setUserData_Object(menu, deepCopyMenuItems_(items, n));
     /* Keyboard shortcuts still need to triggerable via the menu, although the items don't exist. */ {
         releaseChildren_Widget(menu);
         for (size_t i = 0; i < n && items[i].label; i++) {
@@ -1323,6 +1315,19 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
                                  focus_Widget() == parent_Widget(d));
     const iBool isPopupForced = (menuOpenFlags & forcePopup_MenuOpenFlags) != 0;
     const iBool isSubmenu     = (menuOpenFlags & submenu_MenuOpenFlags) != 0;
+    /* Some menus may require updating the items dynamically. */
+    if (d->updateMenuItems) {
+        const iArray *newItems = d->updateMenuItems(d);
+        if (flags_Widget(d) & nativeMenu_WidgetFlag) {
+            deleteMenuItems_(userData_Object(d));
+            setUserData_Object(
+                d, deepCopyMenuItems_(constData_Array(newItems), size_Array(newItems)));
+        }
+        else {
+            releaseChildren_Widget(d);
+            makeMenuItems_Widget(d, constData_Array(newItems), size_Array(newItems));
+        }
+    }
     if (postCommands && !isSubmenu) {
         postCommandf_App("cancel menu:%p", d); /* dismiss any other menus */
     }
@@ -1425,7 +1430,7 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
             return;
         }
     }
-    if (isSubmenu && windowCoord.x + width_Widget(d) > rootSize.x) {
+    if (isSubmenu && windowCoord.x + width_Widget(d) > right_Rect(rootRect)) {
         /* Flip it to the right side. */
         windowCoord = addX_I2(topLeft_Rect(windowAnchorRect), -width_Widget(d));
     }
@@ -2164,12 +2169,26 @@ void useSheetStyle_Widget(iWidget *d) {
                     iTrue);
 }
 
-static iLabelWidget *addDialogTitle_(iWidget *dlg, const char *text, const char *id) {
+static iLabelWidget *addDialogTitle_(iWidget *dlg, const char *text, const char *idOrNull) {
     iLabelWidget *label = new_LabelWidget(text, NULL);
-    addChildFlags_Widget(dlg, iClob(label), alignLeft_WidgetFlag | frameless_WidgetFlag |
-                                                resizeToParentWidth_WidgetFlag);
+    addChildFlags_Widget(dlg,
+                         iClob(label),
+                         alignLeft_WidgetFlag | frameless_WidgetFlag |
+                             resizeToParentWidth_WidgetFlag);
     setAllCaps_LabelWidget(label, iTrue);
     setTextColor_LabelWidget(label, uiHeading_ColorId);
+    if (idOrNull) {
+        setId_Widget(as_Widget(label), idOrNull);
+    }
+    return label;
+}
+
+iLabelWidget *addWrappedLabel_Widget(iWidget *dlg, const char *text, const char *id) {
+    iLabelWidget *label = addChildFlags_Widget(
+        dlg,
+        iClob(label = new_LabelWidget(text, NULL)),
+        frameless_WidgetFlag | resizeToParentWidth_WidgetFlag | fixedHeight_WidgetFlag);
+    setWrap_LabelWidget(label, iTrue);
     if (id) {
         setId_Widget(as_Widget(label), id);
     }
@@ -2470,12 +2489,7 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
     if (deviceType_App() == desktop_AppDeviceType) { /* conserve space on mobile */
         addDialogTitle_(dlg, title, "valueinput.title");
     }
-    iLabelWidget *promptLabel;
-    setId_Widget(addChildFlags_Widget(
-                     dlg, iClob(promptLabel = new_LabelWidget(prompt, NULL)), frameless_WidgetFlag
-                     | resizeToParentWidth_WidgetFlag | fixedHeight_WidgetFlag),
-                 "valueinput.prompt");
-    setWrap_LabelWidget(promptLabel, iTrue);
+    iLabelWidget *promptLabel = addWrappedLabel_Widget(dlg, prompt, "valueinput.prompt");
     iInputWidget *input = addChildFlags_Widget(dlg, iClob(new_InputWidget(0)),
                                                resizeToParentWidth_WidgetFlag);
     setContentPadding_InputWidget(input, 0.5f * gap_UI, 0.5f * gap_UI);
@@ -2574,8 +2588,10 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "theme.changed") ||
           equal_Command(cmd, "focus.lost") ||
           equal_Command(cmd, "focus.gained") ||
+          equal_Command(cmd, "menu.closed") ||
           startsWith_CStr(cmd, "feeds.update.") ||
           startsWith_CStr(cmd, "window."))) {
+        //printf("message dismissed by: %s\n", cmd); fflush(stdout);
         setupSheetTransition_Mobile(msg, dialogTransitionDir_Widget(msg));
         destroy_Widget(msg);
     }
@@ -2628,13 +2644,7 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     iWidget *dlg = makeSheet_Widget("");
     setCommandHandler_Widget(dlg, messageHandler_);
     addDialogTitle_(dlg, title, "question.title");
-    iLabelWidget *msgLabel;
-    setId_Widget(addChildFlags_Widget(dlg,
-                                      iClob(msgLabel = new_LabelWidget(msg, NULL)),
-                                      frameless_WidgetFlag | fixedHeight_WidgetFlag |
-                                          resizeToParentWidth_WidgetFlag),
-                 "question.msg");
-    setWrap_LabelWidget(msgLabel, iTrue);
+    iLabelWidget *msgLabel = addWrappedLabel_Widget(dlg, msg, "question.msg");
     /* Check for value selections. */
     for (size_t i = 0; i < numItems; i++) {
         const iMenuItem *item = &items[i];
@@ -4307,6 +4317,8 @@ iWidget *makeSnippetCreation_Widget(void) {
         setLineBreaksEnabled_InputWidget(name, iFalse);
         addPrefsInputWithHeading_(headings, values, "snip.name", iClob(name));
         addPrefsInputWithHeading_(headings, values, "snip.content", iClob(content));
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        addWrappedLabel_Widget(dlg, "${sniped.help}", NULL);
         addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));

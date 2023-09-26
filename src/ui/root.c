@@ -438,10 +438,6 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
             if (isMenuBar) {
                 setFlags_Widget(button, selected_WidgetFlag, iTrue);
             }
-            /* Some menus may require updating the items dynamically. */
-            if (menu->updateMenuItems) {
-                menu->updateMenuItems(menu);
-            }
             openMenuFlags_Widget(menu,
                                  hasLabel_Command(cmd, "coord") ? coord_Command(cmd)
                                  : isPlacedUnder ? bottomLeft_Rect(bounds_Widget(button))
