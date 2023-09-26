@@ -231,10 +231,10 @@ msgid "menu.downloads"
 msgstr "Show Downloads"
 
 msgid "menu.export"
-msgstr "Export User Data"
+msgstr "Export"
 
 msgid "menu.import"
-msgstr "Import User Data…"
+msgstr "Import…"
 
 msgid "menu.pageinfo"
 msgstr "Show Page Information"
