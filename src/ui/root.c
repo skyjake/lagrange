@@ -1080,16 +1080,21 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "navigate.focus")) {
+        /* FIXME: This should respect the current focus root. */
         /* The upload dialog has its own path field. */
         if (findChild_Widget(root_Widget(navBar), "upload")) {
             postCommand_Root(navBar->root, "focus.set id:upload.path");
             return iTrue;
         }
-        iWidget *url = findChild_Widget(navBar, "url");
-        if (focus_Widget() != url) {
+        iInputWidget *url = findChild_Widget(navBar, "url");
+        if (focus_Widget() != as_Widget(url)) {
             setFocus_Widget(findChild_Widget(navBar, "url"));
         }
-        selectAll_InputWidget((iInputWidget *) url);
+        selectAll_InputWidget(url);
+        if (hasLabel_Command(cmd, "text")) {
+            setText_InputWidget(url, string_Command(cmd, "text"));
+            postCommand_Widget(url, "input.deselect");
+        }
         return iTrue;
     }
     else if (deviceType_App() != desktop_AppDeviceType &&
