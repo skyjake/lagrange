@@ -110,6 +110,7 @@ enum iColorId {
     uiInputCursor_ColorId,
     uiInputCursorText_ColorId,
     uiHeading_ColorId,
+    uiTextDim_ColorId,
     uiAnnotation_ColorId,
     uiIcon_ColorId,
     uiIconHover_ColorId,
@@ -118,7 +119,6 @@ enum iColorId {
     uiMatching_ColorId,
     uiBackgroundUnfocusedSelection_ColorId,
     uiBackgroundFolder_ColorId,
-    uiTextDim_ColorId,
     uiSubheading_ColorId,
     uiTextAppTitle_ColorId,
     uiBackgroundSidebar_ColorId,
@@ -224,6 +224,7 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define uiTextCaution_ColorEscape   "\v@"
 #define uiTextStrong_ColorEscape    "\v="
 #define uiHeading_ColorEscape       "\vU"
+#define uiTextDim_ColorEscape       "\vV"
 
 iDeclareType(Color)
 iDeclareType(Colorf)
