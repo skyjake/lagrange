@@ -1391,6 +1391,24 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     const char *id = cstr_String(id_Widget(as_Widget(d)));
     if (!*id) id = "_";
     refresh_Widget(w);
+    if (d->inFlags & isUrl_InputWidgetFlag) {
+        /* Check for bang snippets. */
+        const iString *text = text_InputWidget(d);
+        if (startsWith_String(text, "!")) {
+            iRangecc snip = iNullRange;
+            if (nextSplit_Rangecc(range_String(text), " ", &snip)) {
+                const iString *content = get_Snippets(collectNewRange_String(snip));
+                if (!isEmpty_String(content)) {
+                    iString *query = collectNewRange_String((iRangecc){ snip.end, constEnd_String(text) });
+                    trim_String(query);
+                    set_String(query, collect_String(urlEncode_String(query)));
+                    prependCStr_String(query, "?");
+                    prepend_String(query, content);
+                    setText_InputWidget(d, query);
+                }
+            }
+        }
+    }
     postCommand_Widget(w,
                        "input.ended id:%s enter:%d arg:%d",
                        id,
