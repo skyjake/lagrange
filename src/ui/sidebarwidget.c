@@ -276,11 +276,11 @@ static const iPtrArray *listFeedEntries_SidebarWidget_(const iSidebarWidget *d) 
 static const iMenuItem bookmarkModeMenuItems_[] = {
     { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
     { "---" },
+    { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
+    { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
+    { "---" },
     { rightAngle_Icon " ${menu.foldall}", 0, 0, "bookmark.foldall arg:1" },
     { downAngle_Icon " ${menu.unfoldall}", 0, 0, "bookmark.foldall arg:0" },
-    { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
-    { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
-    { "---" },
     { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" }
 };
 

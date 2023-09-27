@@ -1388,10 +1388,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_PtrArray(&d->mainWindows);
     init_PtrArray(&d->extraWindows);
     init_PtrArray(&d->popupWindows);
+    load_Bookmarks(d->bookmarks, dataDir_App_());
     d->window = (iWindow *) new_MainWindow(*winRect0); /* first window is always created */
     addWindow_App(as_MainWindow(d->window));
     load_Visited(d->visited, dataDir_App_());
-    load_Bookmarks(d->bookmarks, dataDir_App_());
     load_MimeHooks(d->mimehooks, dataDir_App_());
     if (isFirstRun) {
         /* Create the default bookmarks for a quick start. */
@@ -4278,7 +4278,7 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
     return iTrue;
 }
 
-static iBool shouldCreateWindowForCommand_App(const char *cmd) {
+static iBool shouldCreateWindowForCommand_App_(const char *cmd) {
     /* Determines if a window should be opened before handling a command, if there are
        currently no windows open. */
     if (isTerminal_Platform()) {
@@ -4305,11 +4305,13 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     if (isHeadless) {
-        if (shouldCreateWindowForCommand_App(cmd)) {
+        if (shouldCreateWindowForCommand_App_(cmd)) {
             iMainWindow *newWin = newMainWindow_App();
             setCurrent_Window(newWin);
             setActiveWindow_App(newWin);
             postCommand_Root(newWin->base.roots[0], "window.unfreeze");
+            /* Window creation may have side effects, so repost the original command after
+               those have been handled. */
             postCommand_App(cmd);
             return iTrue;
         }

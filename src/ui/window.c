@@ -214,8 +214,10 @@ static void insertMacMenus_(void) {
     insertMenuItems_MacOS("${menu.title.file}", 1, 0, fileMenuItems_, iElemCount(fileMenuItems_));
     insertMenuItems_MacOS("${menu.title.edit}", 2, 0, editMenuItems_, iElemCount(editMenuItems_));
     insertMenuItems_MacOS("${menu.title.view}", 3, 0, viewMenuItems_, iElemCount(viewMenuItems_));
-    insertMenuItems_MacOS("${menu.title.bookmarks}", 4, 0, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
-    /* TODO: Dynamic update callback for the bookmarks menu. */
+    /* Bookmarks menu contents are dynamic. */ {
+        const iArray *items = updateBookmarksMenu_Widget(NULL);
+        insertMenuItems_MacOS("${menu.title.bookmarks}", 4, 0, constData_Array(items), size_Array(items));
+    }
     insertMenuItems_MacOS("${menu.title.identity}", 5, 0, identityMenuItems_, iElemCount(identityMenuItems_));
     insertMenuItems_MacOS("${menu.title.help}", 7, 0, helpMenuItems_, iElemCount(helpMenuItems_));
     setCurrent_Root(oldRoot);

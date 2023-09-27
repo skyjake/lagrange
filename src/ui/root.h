@@ -36,7 +36,7 @@ iRoot *     newOffscreen_Root                   (void);
 
 void        createUserInterface_Root            (iRoot *);
 void        createClipMenu_Root                 (iRoot *);
-void        createSplitMenu_Root                (iRoot *);
+void        createSplitMenu_Root                (iRoot *, iBool withShortcuts);
 void        recreateSnippetMenu_Root            (iRoot *);
 
 void        setCurrent_Root                     (iRoot *);

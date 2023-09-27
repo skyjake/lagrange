@@ -227,6 +227,7 @@ void init_Root(iRoot *d) {
 }
 
 void deinit_Root(iRoot *d) {
+    iRecycle();
     iReleasePtr(&d->widget);
     delete_PtrArray(d->onTop);
     delete_PtrSet(d->pendingDestruction);
@@ -245,7 +246,7 @@ iRoot *newOffscreen_Root(void) {
     d->widget = new_Widget();
     setId_Widget(makeMenu_Widget(d->widget, userDataMenuItems_, iElemCount(userDataMenuItems_)),
                  "userdatamenu");
-    createSplitMenu_Root(d);
+    createSplitMenu_Root(d, iFalse);
     setCurrent_Root(NULL);
     return d;
 }
@@ -1604,8 +1605,8 @@ void createClipMenu_Root(iRoot *d) {
     }
 }
 
-void createSplitMenu_Root(iRoot *d) {
-    iWidget *splitMenu = makeMenu_Widget(d->widget, (iMenuItem[]){
+void createSplitMenu_Root(iRoot *d, iBool withShortcuts) {
+    iMenuItem items[] = {
         { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
         { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
         { "---" },
@@ -1616,7 +1617,13 @@ void createSplitMenu_Root(iRoot *d) {
         { "${menu.split.vertical}", '2', 0, "ui.split arg:3 axis:1" },
         { "${menu.split.vertical} 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
         { "${menu.split.vertical} 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
-    }, 10);
+    };
+    if (!withShortcuts) {
+        iForIndices(i, items) {
+            items[i].key = -1; /* prevent assiging shortcut from keybindings */
+        }
+    }
+    iWidget *splitMenu = makeMenu_Widget(d->widget, items, iElemCount(items));
     setId_Widget(splitMenu, "splitmenu");
     setFlags_Widget(splitMenu, disabledWhenHidden_WidgetFlag, iTrue); /* enabled when open */
 }
@@ -2140,7 +2147,7 @@ void createUserInterface_Root(iRoot *d) {
                             deviceType_App() == phone_AppDeviceType ? 1 : 2);
         createClipMenu_Root(d);
         recreateSnippetMenu_Root(d);
-        createSplitMenu_Root(d);
+        createSplitMenu_Root(d, iTrue);
         iWidget *toolsMenu = makeMenu_Widget(root, (iMenuItem[]) {
            { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
            { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },

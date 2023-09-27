@@ -209,7 +209,7 @@ static void ignoreImmediateKeyDownEvents_(void) {
 @end
 
 static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIndex,
-                                  const iMenuItem *items, size_t n);
+                                  iBool isBookmarksMenu, const iMenuItem *items, size_t n);
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -603,7 +603,8 @@ void setupApplication_MacOS(void) {
         { "${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
         { "---" },
     };
-    makeMenuItems_(windowMenu, [myDel menuCommands], 4, macWindowMenuItems_, iElemCount(macWindowMenuItems_));
+    makeMenuItems_(windowMenu, [myDel menuCommands], 4, iFalse,
+                   macWindowMenuItems_, iElemCount(macWindowMenuItems_));
 
     [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskScrollWheel
                                           handler:^NSEvent*(NSEvent *event){
@@ -809,6 +810,7 @@ static NSAttributedString *makeAttributedString_(const iString *ansiEscapedText)
 
 /* returns the selected item, if any */
 static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIndex,
+                                  const iBool isBookmarksMenu,
                                   const iMenuItem *items, size_t n) {
     if (atIndex == 0) {
         atIndex = menu.numberOfItems;
@@ -834,7 +836,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             }
             iString itemTitle;
             initCStr_String(&itemTitle, label);
-            removeIconPrefix_String(&itemTitle);
+            iChar itemIcon = removeIconPrefix_String(&itemTitle);
             if (removeColorEscapes_String(&itemTitle) == uiTextCaution_ColorId) {
 //                prependCStr_String(&itemTitle, "\u26a0\ufe0f ");
             }
@@ -854,12 +856,22 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
                 iAssert(subwidget);
                 const iArray *items = userData_Object(subwidget);
                 iAssert(items);
-                makeMenuItems_(sub, commands, 0, constData_Array(items), size_Array(items));
+                makeMenuItems_(sub, commands, 0, isBookmarksMenu, constData_Array(items), size_Array(items));
                 [item setSubmenu:sub];
+                if (isBookmarksMenu) {
+#if defined (__MAC_10_13)
+                    [item setImage:[NSImage imageWithSystemSymbolName:@"folder" accessibilityDescription:nil]];
+#endif
+                }
                 [sub release];
             }
             else {
                 item.action = (hasCommand ? @selector(postMenuItemCommand:) : nil);
+                if (isBookmarksMenu && hasCommand && startsWith_CStr(items[i].command, "!open ")) {
+#if defined (__MAC_10_13)
+                    [item setImage:[NSImage imageWithSystemSymbolName:@"bookmark.fill" accessibilityDescription:nil]];
+#endif
+                }
             }
             [menu insertItem:item atIndex:atIndex++];
             deinit_String(&itemTitle);
@@ -875,7 +887,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             [item setEnabled:!isDisabled];
             int key   = items[i].key;
             int kmods = items[i].kmods;
-            if (hasCommand) {
+            if (hasCommand && key >= 0) {
                 [commands setCommand:[NSString stringWithUTF8String:items[i].command]
                          forMenuItem:item];
                 /* Bindings may have a different key. */
@@ -913,7 +925,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, int firstItemInde
         menu = mainItem.submenu;
     }
     [menu setAutoenablesItems:NO];
-    makeMenuItems_(menu, [myDel menuCommands], firstItemIndex, items, count);
+    makeMenuItems_(menu, [myDel menuCommands], firstItemIndex, atIndex == 4, items, count);
     if (firstItemIndex == 0) {
         [menu release];
     }
@@ -924,7 +936,7 @@ void updateMenuItems_MacOS(int atIndex, const iMenuItem *items, size_t count) {
     MyDelegate *myDel = (MyDelegate *) app.delegate;
     NSMenu *menu = [[app mainMenu] itemAtIndex:atIndex].submenu;
     [menu removeAllItems];
-    makeMenuItems_(menu, [myDel menuCommands], 0, items, count);
+    makeMenuItems_(menu, [myDel menuCommands], 0, atIndex == 4, items, count);
 }
 
 void handleCommand_MacOS(const char *cmd) {
@@ -985,7 +997,7 @@ void showPopupMenu_MacOS(iWidget *source, iInt2 windowCoord, const iMenuItem *it
     windowCoord = divf_I2(windowCoord, window->pixelRatio);
     NSPoint screenPoint = [nsWindow convertRectToScreen:(CGRect){ { windowCoord.x, windowCoord.y },
                                   { 0, 0 } }].origin;
-    NSMenuItem *selectedItem = makeMenuItems_(menu, menuCommands, 0, items, n);
+    NSMenuItem *selectedItem = makeMenuItems_(menu, menuCommands, 0, iFalse, items, n);
     [menuCommands setSource:source];
     if (isCentered) {
         NSSize menuSize = [menu size];
