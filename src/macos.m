@@ -887,17 +887,19 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             [item setEnabled:!isDisabled];
             int key   = items[i].key;
             int kmods = items[i].kmods;
-            if (hasCommand && key >= 0) {
+            if (hasCommand) {
                 [commands setCommand:[NSString stringWithUTF8String:items[i].command]
                          forMenuItem:item];
-                /* Bindings may have a different key. */
+                /* Bindings may have a different key. -1 disables the shortcut. */
                 const iBinding *bind = findCommand_Keys(items[i].command);
                 if (bind && bind->id < builtIn_BindingId) {
                     key   = bind->key;
                     kmods = bind->mods;
                 }
             }
-            setShortcut_NSMenuItem_(item, key, kmods);
+            if (items[i].key >= 0) {
+                setShortcut_NSMenuItem_(item, key, kmods);
+            }
             [item release];
         }
     }
