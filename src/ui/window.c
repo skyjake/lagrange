@@ -208,6 +208,9 @@ static void insertMacMenus_(void) {
     if (macMenusInserted_) {
         return;
     }
+    iRoot *oldRoot = current_Root();
+    setCurrent_Root(submenuRoot_MacOS());
+    /* Create the needed bookmarks submenus. */
     insertMenuItems_MacOS("${menu.title.file}", 1, 0, fileMenuItems_, iElemCount(fileMenuItems_));
     insertMenuItems_MacOS("${menu.title.edit}", 2, 0, editMenuItems_, iElemCount(editMenuItems_));
     insertMenuItems_MacOS("${menu.title.view}", 3, 0, viewMenuItems_, iElemCount(viewMenuItems_));
@@ -215,6 +218,7 @@ static void insertMacMenus_(void) {
     /* TODO: Dynamic update callback for the bookmarks menu. */
     insertMenuItems_MacOS("${menu.title.identity}", 5, 0, identityMenuItems_, iElemCount(identityMenuItems_));
     insertMenuItems_MacOS("${menu.title.help}", 7, 0, helpMenuItems_, iElemCount(helpMenuItems_));
+    setCurrent_Root(oldRoot);
     macMenusInserted_ = iTrue;
 }
 
@@ -2289,7 +2293,9 @@ struct Impl_FolderItems {
 
 void cleanupBookmarksMenu_Widget(iWidget *menu) {
     /* Destroy the previously created folder submenus. */
-    iConstForEach(PtrArray, c, findChildren_Widget(root_Widget(menu), "bfmenu.*")) {
+    iConstForEach(PtrArray, c,
+                  findChildren_Widget(menu ? root_Widget(menu)
+                                           : get_Root()->widget, "bfmenu.*")) {
         destroy_Widget(c.ptr);
     }
 }
@@ -2298,11 +2304,11 @@ const iArray *updateBookmarksMenu_Widget(iWidget *menu) {
     /* TODO: Updating the items is only needed if 1) there hasn't been an update yet, or 2)
        bookmarks have changed. */
     cleanupBookmarksMenu_Widget(menu);
-    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    iWidget *rootWidget = (menu ? root_Widget(menu) : get_Root()->widget);
+    iBool    isFirst    = iTrue;
+    iHash   *hash       = new_Hash();
+    iArray  *items      = collectNew_Array(sizeof(iMenuItem));
     pushBackN_Array(items, bookmarksMenuItems_, count_MenuItem(bookmarksMenuItems_));
-    iWidget *rootWidget = menu ? root_Widget(menu) : menu;
-    iBool isFirst = iTrue;
-    iHash *hash = new_Hash();
     /* Append top-level bookmarks and create new submenus. */
     iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTree_Bookmark, NULL, NULL)) {
         const iBookmark *bm = i.ptr;

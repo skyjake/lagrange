@@ -742,7 +742,7 @@ iWidget *makeHDiv_Widget(void) {
 }
 
 iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *command) {
-    iLabelWidget *action = newKeyMods_LabelWidget("", key, kmods, command);
+    iLabelWidget *action = newKeyMods_LabelWidget(NULL, key, kmods, command);
     setFixedSize_Widget(as_Widget(action), zero_I2());
     addChildFlags_Widget(parent, iClob(action), hidden_WidgetFlag);
     return as_Widget(action);

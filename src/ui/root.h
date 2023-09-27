@@ -32,10 +32,11 @@ struct Impl_Root {
 
 iDeclareTypeConstruction(Root)
 
-/*----------------------------------------------------------------------------------------------*/
+iRoot *     newOffscreen_Root                   (void);
 
 void        createUserInterface_Root            (iRoot *);
 void        createClipMenu_Root                 (iRoot *);
+void        createSplitMenu_Root                (iRoot *);
 void        recreateSnippetMenu_Root            (iRoot *);
 
 void        setCurrent_Root                     (iRoot *);
@@ -43,6 +44,7 @@ iRoot *     current_Root                        (void);
 iRoot *     get_Root                            (void); /* assert != NULL */
 iAnyObject *        findWidget_Root             (const char *id); /* under current Root */
 iDocumentWidget *   findDocument_Root           (const iRoot *, const iString *url);
+iDocumentWidget *   document_Root               (iRoot *);
 
 iPtrArray * onTop_Root                          (iRoot *);
 void        destroyPending_Root                 (iRoot *);

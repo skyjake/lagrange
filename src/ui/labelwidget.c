@@ -58,6 +58,7 @@ struct Impl_LabelWidget {
         uint16_t checkMark           : 1;
         uint16_t truncateToFit       : 1;
         uint16_t menuCanceling       : 1;
+        uint16_t noLabel             : 1;
     } flags;
 };
 
@@ -622,8 +623,14 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
 iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const int64_t flags = flags_Widget(w);
-    iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)).bounds.size,
-                        add_I2(padding_LabelWidget_(d, 0), padding_LabelWidget_(d, 2)));
+    iInt2 size;
+    if (!d->flags.noLabel) {
+        size = add_I2(measure_Text(d->font, cstr_String(&d->label)).bounds.size,
+                      add_I2(padding_LabelWidget_(d, 0), padding_LabelWidget_(d, 2)));
+    }
+    else {
+        size = zero_I2();
+    }
     if ((flags & drawKey_WidgetFlag) && d->key) {
         iString str;
         init_String(&str);
@@ -675,9 +682,16 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->iconColor = none_ColorId;
     d->icon = 0;
     d->labelOffset = zero_I2();
-    initCStr_String(&d->srcLabel, label);
-    initCopy_String(&d->label, &d->srcLabel);
-    replaceVariables_LabelWidget_(d);
+    if (label) {
+        initCStr_String(&d->srcLabel, label);
+        initCopy_String(&d->label, &d->srcLabel);
+        replaceVariables_LabelWidget_(d);
+    }
+    else {
+        d->flags.noLabel = iTrue;
+        init_String(&d->srcLabel);
+        init_String(&d->label);
+    }
     if (cmd) {
         initCStr_String(&d->command, cmd);
     }

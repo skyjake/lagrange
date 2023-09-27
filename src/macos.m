@@ -846,8 +846,11 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             if (hasCommand && startsWith_CStr(items[i].command, "submenu id:")) {
                 NSMenu *sub = [[NSMenu alloc] init];
                 sub.autoenablesItems = YES;
-                iWidget *subwidget = findChild_Widget(get_MainWindow()->base.roots[0]->widget,
-                                                      cstr_String(string_Command(items[i].command, "id")));
+                const char *submenuId = cstr_String(string_Command(items[i].command, "id"));
+                iWidget *subwidget = findChild_Widget(submenuRoot_MacOS()->widget, submenuId);
+                if (!subwidget) {
+                    subwidget = findWidget_Root(submenuId);
+                }
                 iAssert(subwidget);
                 const iArray *items = userData_Object(subwidget);
                 iAssert(items);

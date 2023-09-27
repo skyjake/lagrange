@@ -234,12 +234,13 @@ void deinit_Widget(iWidget *d) {
         removeTicker_App(animateOverflowScrollOpacity_Widget_, d);
     }
     iWindow *win = d->root->window;
-    iAssert(win);
-    if (win->lastHover == d) {
-        win->lastHover = NULL;
-    }
-    if (win->hover == d) {
-        win->hover = NULL;
+    if (win) {
+        if (win->lastHover == d) {
+            win->lastHover = NULL;
+        }
+        if (win->hover == d) {
+            win->hover = NULL;
+        }
     }
     if (d->flags & nativeMenu_WidgetFlag) {
         releaseNativeMenu_Widget(d);

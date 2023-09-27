@@ -239,6 +239,17 @@ void deinit_Root(iRoot *d) {
     }
 }
 
+iRoot *newOffscreen_Root(void) {
+    iRoot *d = new_Root();
+    setCurrent_Root(d);
+    d->widget = new_Widget();
+    setId_Widget(makeMenu_Widget(d->widget, userDataMenuItems_, iElemCount(userDataMenuItems_)),
+                 "userdatamenu");
+    createSplitMenu_Root(d);
+    setCurrent_Root(NULL);
+    return d;
+}
+
 void setCurrent_Root(iRoot *root) {
     activeRoot_ = root;
 }
@@ -1593,6 +1604,23 @@ void createClipMenu_Root(iRoot *d) {
     }
 }
 
+void createSplitMenu_Root(iRoot *d) {
+    iWidget *splitMenu = makeMenu_Widget(d->widget, (iMenuItem[]){
+        { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
+        { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
+        { "---" },
+        { "${menu.split.horizontal}", '3', 0, "ui.split arg:3 axis:0" },
+        { "${menu.split.horizontal} 1:2", SDLK_d, 0, "ui.split arg:1 axis:0" },
+        { "${menu.split.horizontal} 2:1", SDLK_e, 0, "ui.split arg:2 axis:0" },
+        { "---" },
+        { "${menu.split.vertical}", '2', 0, "ui.split arg:3 axis:1" },
+        { "${menu.split.vertical} 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
+        { "${menu.split.vertical} 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
+    }, 10);
+    setId_Widget(splitMenu, "splitmenu");
+    setFlags_Widget(splitMenu, disabledWhenHidden_WidgetFlag, iTrue); /* enabled when open */
+}
+
 void recreateSnippetMenu_Root(iRoot *d) {
     const iStringArray *snipNames = names_Snippets();
     iArray *items = collectNew_Array(sizeof(iMenuItem));
@@ -2112,18 +2140,7 @@ void createUserInterface_Root(iRoot *d) {
                             deviceType_App() == phone_AppDeviceType ? 1 : 2);
         createClipMenu_Root(d);
         recreateSnippetMenu_Root(d);
-        iWidget *splitMenu = makeMenu_Widget(root, (iMenuItem[]){
-            { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
-            { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
-            { "---" },
-            { "${menu.split.horizontal}", '3', 0, "ui.split arg:3 axis:0" },
-            { "${menu.split.horizontal} 1:2", SDLK_d, 0, "ui.split arg:1 axis:0" },
-            { "${menu.split.horizontal} 2:1", SDLK_e, 0, "ui.split arg:2 axis:0" },
-            { "---" },
-            { "${menu.split.vertical}", '2', 0, "ui.split arg:3 axis:1" },
-            { "${menu.split.vertical} 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
-            { "${menu.split.vertical} 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
-        }, 10);
+        createSplitMenu_Root(d);
         iWidget *toolsMenu = makeMenu_Widget(root, (iMenuItem[]) {
            { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
            { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
@@ -2131,10 +2148,8 @@ void createUserInterface_Root(iRoot *d) {
            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
            { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" }
         }, 5);
-        setFlags_Widget(splitMenu, disabledWhenHidden_WidgetFlag, iTrue); /* enabled when open */
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");
-        setId_Widget(splitMenu, "splitmenu");
         setId_Widget(toolsMenu, "toolsmenu");
     }
     /* Global keyboard shortcuts. */ {

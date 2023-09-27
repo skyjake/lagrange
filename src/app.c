@@ -169,12 +169,6 @@ struct Impl_App {
     iBool        isTextInputActive;
     iBool        isDarkSystemTheme;
     iBool        isSuspended;
-#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
-    iBool        isIdling;
-    uint32_t     lastEventTime;
-    int          sleepTimer;
-    unsigned int idleSleepDelayMs;
-#endif
     iAtomicInt   pendingRefresh;
     iBool        isLoadingPrefs;
     iStringList *launchCommands;
@@ -183,8 +177,17 @@ struct Impl_App {
     int          autoReloadTimer;
     iPeriodic    periodic;
     int          warmupFrames; /* forced refresh just after resuming from background; FIXME: shouldn't be needed */
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
+    iBool        isIdling;
+    uint32_t     lastEventTime;
+    int          sleepTimer;
+    unsigned int idleSleepDelayMs;
+#endif
 #if defined (iPlatformAndroidMobile)
     float        displayDensity;
+#endif
+#if defined (iPlatformAppleDesktop)
+    iRoot *      submenuRoot; /* offscreen, since the application menu is not tied to a window */
 #endif
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
@@ -1350,6 +1353,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_Periodic(&d->periodic);
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
+    d->submenuRoot = newOffscreen_Root();
 #endif
 #if defined (iPlatformAppleMobile)
     setupApplication_iOS();
@@ -1467,6 +1471,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 }
 
 static void deinit_App(iApp *d) {
+#if defined (iPlatformAppleDesktop)
+    delete_Root(d->submenuRoot);
+#endif
     iReverseForEach(PtrArray, i, &d->popupWindows) {
         delete_Window(i.ptr);
     }
@@ -2799,6 +2806,14 @@ iPeriodic *periodic_App(void) {
     return &app_.periodic;
 }
 
+iRoot *submenuRoot_MacOS(void) {
+#if defined (iPlatformAppleDesktop)
+    return app_.submenuRoot;
+#else
+    return NULL;
+#endif
+}
+
 iBool isLandscape_App(void) {
     const iInt2 size = size_Window(get_Window());
     return size.x > size.y;
@@ -3097,33 +3112,42 @@ iDocumentWidget *document_Command(const char *cmd) {
 
 iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, int newTabFlags) {
     iWidget *tabs = findWidget_Root("doctabs");
-    setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
-    iWidget *newTabButton = findChild_Widget(tabs, "newtab");
-    removeChild_Widget(newTabButton->parent, newTabButton);
-    iDocumentWidget *doc;
-    if (duplicateOf) {
-        doc = duplicate_DocumentWidget(duplicateOf);
-    }
-    else {
-        doc = new_DocumentWidget();
-    }
-    appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
-    iRelease(doc); /* now owned by the tabs */
-    /* Find and move to the insertion point. */
-    if (~newTabFlags & append_NewTabFlag) {
-        const size_t insertAt = tabPageIndex_Widget(
-            tabs, findChild_Widget(tabs, cstr_String(&get_Root()->tabInsertId)));
-        if (insertAt != iInvalidPos) {
-            moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, insertAt + 1);
+    iDocumentWidget *doc = NULL;
+    if (newTabFlags & reuseBlank_NewTabFlag && !duplicateOf && tabCount_Widget(tabs) == 1) {
+        doc = (iDocumentWidget *) tabPage_Widget(tabs, 0);
+        const iString *url = url_DocumentWidget(doc);
+        if (cmpCase_String(url, "about:lagrange") && cmpCase_String(url, "about:blank")) {
+            doc = NULL; /* don't reuse */
         }
     }
-    /* The next tab comes here. */
-    set_String(&as_Widget(doc)->root->tabInsertId, id_Widget(as_Widget(doc)));
-    addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
-    addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
-    showOrHideNewTabButton_Root(tabs->root);
-    if (newTabFlags & switchTo_NewTabFlag) {
-        postCommandf_App("tabs.switch page:%p", doc);
+    if (!doc) {
+        setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
+        iWidget *newTabButton = findChild_Widget(tabs, "newtab");
+        removeChild_Widget(newTabButton->parent, newTabButton);
+        if (duplicateOf) {
+            doc = duplicate_DocumentWidget(duplicateOf);
+        }
+        else {
+            doc = new_DocumentWidget();
+        }
+        appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
+        iRelease(doc); /* now owned by the tabs */
+        /* Find and move to the insertion point. */
+        if (~newTabFlags & append_NewTabFlag) {
+            const size_t insertAt = tabPageIndex_Widget(
+                tabs, findChild_Widget(tabs, cstr_String(&get_Root()->tabInsertId)));
+            if (insertAt != iInvalidPos) {
+                moveTabPage_Widget(tabs, tabCount_Widget(tabs) - 1, insertAt + 1);
+            }
+        }
+        /* The next tab comes here. */
+        set_String(&as_Widget(doc)->root->tabInsertId, id_Widget(as_Widget(doc)));
+        addTabCloseButton_Widget(tabs, as_Widget(doc), "tabs.close");
+        addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
+        showOrHideNewTabButton_Root(tabs->root);
+        if (newTabFlags & switchTo_NewTabFlag) {
+            postCommandf_App("tabs.switch page:%p", doc);
+        }
     }
     arrange_Widget(get_Root()->widget);
     refresh_Widget(tabs);
@@ -3949,6 +3973,15 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "bookmarks.changed")) {
         save_Bookmarks(d->bookmarks, dataDir_App_());
+#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
+        /* Update the macOS Bookmarks menu items. These application menu submenus need to
+           exist without any windows existing, so we use an offscreen Root to store them. */
+        iRoot *oldRoot = current_Root();
+        setCurrent_Root(d->submenuRoot);
+        const iArray *items = updateBookmarksMenu_Widget(NULL);
+        updateMenuItems_MacOS(4, constData_Array(items), size_Array(items));
+        setCurrent_Root(oldRoot);
+#endif
         return iFalse;
     }
     else if (equal_Command(cmd, "bookmarks.sort")) {
@@ -4245,6 +4278,24 @@ static iBool handleOpenCommand_App_(iApp *d, const char *cmd) {
     return iTrue;
 }
 
+static iBool shouldCreateWindowForCommand_App(const char *cmd) {
+    /* Determines if a window should be opened before handling a command, if there are
+       currently no windows open. */
+    if (isTerminal_Platform()) {
+        return iFalse;
+    }
+    static const char *cmds_[] = {
+        "open", "export", "navigate.focus", "sidebar.mode", "sidebar.toggle", "tabs.new",
+        "ident.new", "ident.import"
+    };
+    iForIndices(i, cmds_) {
+        if (equal_Command(cmd, cmds_[i])) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     const iBool isFrozen   = isDrawFrozen_Window(d->window);
@@ -4254,16 +4305,19 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     if (isHeadless) {
-        /* All the subsequent commands assume that a window exists. */
-        return iFalse;
+        if (shouldCreateWindowForCommand_App(cmd)) {
+            iMainWindow *newWin = newMainWindow_App();
+            setCurrent_Window(newWin);
+            setActiveWindow_App(newWin);
+            postCommand_Root(newWin->base.roots[0], "window.unfreeze");
+            postCommand_App(cmd);
+            return iTrue;
+        }
+        else {
+            /* All the subsequent commands assume that a window exists. */
+            return iFalse;
+        }
     }
-#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
-    /* Update the macOS Bookmarks menu items. */
-    if (equal_Command(cmd, "bookmarks.changed")) {
-        const iArray *items = updateBookmarksMenu_Widget(d->window->roots[0]->widget);
-        updateMenuItems_MacOS(4, constData_Array(items), size_Array(items));
-    }
-#endif
     /* TODO: Maybe break this up a little bit? There's a very long list of ifs here. */
     if (equal_Command(cmd, "config.error")) {
         makeSimpleMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
@@ -4951,7 +5005,7 @@ iBool handleCommand_App(const char *cmd) {
         generate_Export(export);
         openEmpty_Buffer(zip);
         serialize_Archive(archive_Export(export), stream_Buffer(zip));
-        iDocumentWidget *expTab = newTab_App(NULL, switchTo_NewTabFlag);
+        iDocumentWidget *expTab = newTab_App(NULL, switchTo_NewTabFlag | reuseBlank_NewTabFlag);
         iDate now;
         initCurrent_Date(&now);
         setUrlAndSource_DocumentWidget(
