@@ -62,7 +62,7 @@ iColor fgColor_AttributedRun(const iAttributedRun *d) {
                 fg = rgb_HSLColor(fgHsl);
             }
             return fg;
-        }        
+        }
         return d->fgColor_;
     }
     if (d->attrib.fgColorId == none_ColorId) {
@@ -334,7 +334,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             finishRun_AttributedText_(d, &run, pos + 1);
             continue;
         }
-        if (isControl_Char(ch)) {
+        if (isControl_Char(ch) || ch == 0x202f /* NNBSP */) {
             continue;
         }
         iAssert(run.font != NULL);
