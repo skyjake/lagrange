@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "defs.h"
 #include <the_Foundation/stringarray.h>
 
 void    init_Snippets   (const char *saveDir);
@@ -31,9 +32,11 @@ void    save_Snippets   (const char *saveDir);
 void    load_Snippets   (const char *saveDir);
 
 void    serialize_Snippets      (iStream *outs);
-void    deserialize_Snippets    (iStream *ins);
+void    deserialize_Snippets    (iStream *ins, enum iImportMethod);
 
 iBool           set_Snippets    (const iString *name, const iString *content); /* content==NULL to remove */
 const iString * get_Snippets    (const iString *name);
+iBool           contains_Snippets(const iString *name);
 
-const iStringArray *names_Snippets  (void);
+const iStringArray *names_Snippets              (void);
+const iStringArray *namesWithContent_Snippets   (const char *separator);

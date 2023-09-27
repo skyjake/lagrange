@@ -1076,8 +1076,10 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         }
         selectAll_InputWidget(url);
         if (hasLabel_Command(cmd, "text")) {
-            setText_InputWidget(url, string_Command(cmd, "text"));
+            const iString *text = string_Command(cmd, "text");
+            setText_InputWidget(url, text);
             postCommand_Widget(url, "input.deselect");
+            submit_LookupWidget(findWidget_App("lookup"), text);
         }
         return iTrue;
     }

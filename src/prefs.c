@@ -40,7 +40,7 @@ void init_Prefs(iPrefs *d) {
     d->useSystemTheme    = iTrue;
     d->systemPreferredColorTheme[0] = d->systemPreferredColorTheme[1] = -1;
     d->theme             = dark_ColorTheme;
-    d->accent            = cyan_ColorAccent;
+    d->accent            = isAppleDesktop_Platform() ? system_ColorAccent : cyan_ColorAccent;
     d->customFrame       = iFalse; /* needs some more work to be default */
     d->retainWindowSize  = iTrue;
     d->uiAnimations      = iTrue;

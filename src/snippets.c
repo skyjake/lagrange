@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "snippets.h"
 #include <the_Foundation/file.h>
+#include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/stringhash.h>
 #include <the_Foundation/stream.h>
@@ -52,6 +53,7 @@ static const char *fileName_Snippets_ = "snippets.ini";
 iDeclareType(Snippets);
 
 struct Impl_Snippets {
+    iMutex *mtx;
     iStringHash *hash;
 };
 
@@ -60,6 +62,7 @@ static iSnippets *snippets_;
 void init_Snippets(const char *saveDir) {
     iAssert(!snippets_);
     iSnippets *d = snippets_ = iMalloc(Snippets);
+    d->mtx = new_Mutex();
     d->hash = new_StringHash();
     load_Snippets(saveDir);
 }
@@ -67,12 +70,14 @@ void init_Snippets(const char *saveDir) {
 void deinit_Snippets(void) {
     iAssert(snippets_);
     iSnippets *d = snippets_;
-    iRelease(d->hash);
+    iGuardMutex(d->mtx, iRelease(d->hash));
+    delete_Mutex(d->mtx);
 }
 
 void serialize_Snippets(iStream *outs) {
     iAssert(snippets_);
     iSnippets *d = snippets_;
+    lock_Mutex(d->mtx);
     iString *str = new_String();
     iConstForEach(StringHash, i, d->hash) {
         const iString  *key   = key_StringHashConstIterator(&i);
@@ -83,23 +88,30 @@ void serialize_Snippets(iStream *outs) {
         write_Stream(outs, utf8_String(str));
     }
     delete_String(str);
+    unlock_Mutex(d->mtx);
 }
 
 static void handleKeyValue_Snippets_(void *context, const iString *table, const iString *key,
                                      const iTomlValue *value) {
+    const enum iImportMethod *method = context;
     if (!cmp_String(key, "content") && value->type == string_TomlType) {
-        set_Snippets(table, value->value.string);
+        if (*method == all_ImportMethod ||
+            (*method == ifMissing_ImportMethod && !contains_Snippets(table))) {
+            set_Snippets(table, value->value.string);
+        }
     }
 }
 
-void deserialize_Snippets(iStream *ins) {
+void deserialize_Snippets(iStream *ins, enum iImportMethod method) {
     iAssert(snippets_);
     iSnippets *d = snippets_;
+    lock_Mutex(d->mtx);
     clear_StringHash(d->hash);
     iTomlParser *toml = new_TomlParser();
-    setHandlers_TomlParser(toml, NULL, handleKeyValue_Snippets_, NULL);
+    setHandlers_TomlParser(toml, NULL, handleKeyValue_Snippets_, &method);
     parse_TomlParser(toml, collect_String(newBlock_String(collect_Block(readAll_Stream(ins)))));
     delete_TomlParser(toml);
+    unlock_Mutex(d->mtx);
 }
 
 void save_Snippets(const char *saveDir) {
@@ -113,34 +125,48 @@ void save_Snippets(const char *saveDir) {
 void load_Snippets(const char *saveDir) {
     iFile *f = newCStr_File(concatPath_CStr(saveDir, fileName_Snippets_));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
-        deserialize_Snippets(stream_File(f));
+        deserialize_Snippets(stream_File(f), all_ImportMethod);
     }
     iRelease(f);
 }
 
 iBool set_Snippets(const iString *name, const iString *content) {
     iAssert(snippets_);
-    iSnippets *d = snippets_;
     if (isEmpty_String(name) || (content && isEmpty_String(content))) {
         return iFalse;
     }
+    iSnippets *d = snippets_;
+    lock_Mutex(d->mtx);
     if (content) {
         insert_StringHash(d->hash, name, iClob(new_Snippet(content)));
     }
     else {
         remove_StringHash(d->hash, name);
     }
+    unlock_Mutex(d->mtx);
     return iTrue;
 }
 
 const iString *get_Snippets(const iString *name) {
     iAssert(snippets_);
     iSnippets *d = snippets_;
+    lock_Mutex(d->mtx);
     const iSnippet *value = value_StringHash(d->hash, name);
+    iString *content = NULL;
     if (value) {
-        return &value->content;
+        content = collect_String(copy_String(&value->content));
     }
-    return collectNew_String();
+    unlock_Mutex(d->mtx);
+    return content ? content : collectNew_String();
+}
+
+iBool contains_Snippets(const iString *name) {
+    iAssert(snippets_);
+    iSnippets *d = snippets_;
+    lock_Mutex(d->mtx);
+    const iBool gotIt = contains_StringHash(d->hash, name);
+    unlock_Mutex(d->mtx);
+    return gotIt;
 }
 
 static int cmp_StringPtr_(const iString *a, const iString *b) {
@@ -150,10 +176,32 @@ static int cmp_StringPtr_(const iString *a, const iString *b) {
 const iStringArray *names_Snippets(void) {
     iAssert(snippets_);
     iSnippets *d = snippets_;
+    lock_Mutex(d->mtx);
     iStringArray *names = new_StringArray();
     iConstForEach(StringHash, i, d->hash) {
         pushBack_StringArray(names, key_StringHashConstIterator(&i));
     }
     sort_Array(&names->strings, (int (*)(const void *, const void *)) cmp_StringPtr_);
+    unlock_Mutex(d->mtx);
+    return collect_StringArray(names);
+}
+
+const iStringArray *namesWithContent_Snippets(const char *separator) {
+    iAssert(snippets_);
+    iSnippets *d = snippets_;
+    lock_Mutex(d->mtx);
+    iStringArray *names = new_StringArray();
+    iString elem;
+    init_String(&elem);
+    iConstForEach(StringHash, i, d->hash) {
+        const iSnippet *value = value_StringHashNode(i.value);
+        set_String(&elem, key_StringHashConstIterator(&i));
+        appendCStr_String(&elem, separator);
+        append_String(&elem, &value->content);
+        pushBack_StringArray(names, &elem);
+    }
+    deinit_String(&elem);
+    sort_Array(&names->strings, (int (*)(const void *, const void *)) cmp_StringPtr_);
+    unlock_Mutex(d->mtx);
     return collect_StringArray(names);
 }

@@ -138,18 +138,13 @@ static const iMenuItem viewMenuItems_[] = {
 static iMenuItem bookmarksMenuItems_[] = {
     { "${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
     { "${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
+    { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
     { "---" },
     { "${menu.newfolder}", 0, 0, "bookmarks.addfolder" },
-//    { "${macos.menu.bookmarks.list}", 0, 0, "open url:about:bookmarks" },
-//    { "${macos.menu.bookmarks.bytag}", 0, 0, "open url:about:bookmarks?tags" },
-//    { "${macos.menu.bookmarks.bytime}", 0, 0, "open url:about:bookmarks?created" },
-//    { "---" },
     { "${menu.sort.alpha}", 0, 0, "bookmarks.sort" },
-    { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
     { "---" },
     { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
     { "${menu.feeds.refresh}", refreshFeeds_KeyShortcut, "feeds.refresh" },
-//    { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
     { NULL }
 };
 

@@ -26,10 +26,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 
 iDeclareType(LookupResult)
-    
+
 enum iLookupResultType {
     none_LookupResultType,
     bookmark_LookupResultType,
+    snippet_LookupResultType,
     feedEntry_LookupResultType,
     history_LookupResultType, /* visited URLs */
     content_LookupResultType, /* one of the pages in history, including current page */

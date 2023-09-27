@@ -1405,6 +1405,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
                       collectNewCStr_String("Getting Started"),
                       NULL,
                       0x1f306);
+        postCommand_App("~bookmarks.changed");
     }
     init_Feeds(dataDir_App_());
     /* Widget state init. */
@@ -5037,9 +5038,10 @@ iBool handleCommand_App(const char *cmd) {
             const int idents    = argLabel_Command(cmd, "idents");
             const int visited   = argLabel_Command(cmd, "visited");
             const int siteSpec  = argLabel_Command(cmd, "sitespec");
+            const int snippets  = argLabel_Command(cmd, "snippets");
             iExport *export = new_Export();
             if (load_Export(export, zip)) {
-                import_Export(export, bookmarks, idents, trusted, visited, siteSpec);
+                import_Export(export, bookmarks, idents, trusted, visited, siteSpec, snippets);
             }
             else {
                 makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.import.userdata.error}",

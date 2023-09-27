@@ -1218,6 +1218,10 @@ msgstr "BOOKMARKS"
 msgid "heading.lookup.feeds"
 msgstr "FEEDS"
 
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "SNIPPETS"
+
 # Interpret as "Results from history..."
 msgid "heading.lookup.history"
 msgstr "HISTORY"
