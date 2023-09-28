@@ -201,6 +201,38 @@ static void updateFieldWidths_UploadWidget(iUploadWidget *d) {
     }
 }
 
+static int font_UploadWidget_(const iUploadWidget *d, enum iFontStyle style) {
+    iUnused(d);
+    static const int fontSizes_[4] = {
+        uiSmall_FontSize, uiNormal_FontSize, uiMedium_FontSize, uiBig_FontSize
+    };
+    return FONT_ID(monospace_FontId, style, fontSizes_[prefs_App()->editorZoomLevel]);
+}
+
+static iInputWidgetHighlight gemtextHighlighter_UploadWidget_(const iInputWidget *input,
+                                                              iRangecc line, void *context) {
+    const iBool isFocused = isFocused_Widget(input);
+    iUploadWidget *d = context;
+    if (startsWith_Rangecc(line, "#")) {
+        return (iInputWidgetHighlight){ font_UploadWidget_(d, bold_FontStyle),
+                                        uiTextAction_ColorId };
+    }
+    if (startsWith_Rangecc(line, ">")) {
+        return (iInputWidgetHighlight){ font_UploadWidget_(d, italic_FontStyle),
+                                        uiTextStrong_ColorId };
+    }
+    if (startsWith_Rangecc(line, "* ")) {
+        return (iInputWidgetHighlight){ font_UploadWidget_(d, regular_FontStyle),
+                                        uiTextCaution_ColorId };
+    }
+    if (startsWith_Rangecc(line, "=>")) {
+        return (iInputWidgetHighlight){ font_UploadWidget_(d, regular_FontStyle),
+                                        uiTextAction_ColorId };
+    }
+    return (iInputWidgetHighlight){ font_UploadWidget_(d, regular_FontStyle),
+                                    isFocused ? uiInputTextFocused_ColorId : uiInputText_ColorId };
+}
+
 void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -345,6 +377,9 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
             d->input = new_InputWidget(0);
             setId_Widget(as_Widget(d->input), "upload.text");
             setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI * aspectRatio, -1));
+            if (prefs_App()->editorSyntaxHighlighting) {
+                setHighlighter_InputWidget(d->input, gemtextHighlighter_UploadWidget_, d);
+            }
             addChild_Widget(page, iClob(d->input));
             appendFramelessTabPage_Widget(d->tabs, iClob(page), "${heading.upload.text}", none_ColorId, '1', 0);
         }
@@ -392,7 +427,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         updateFieldWidths_UploadWidget(d);
         setFocus_Widget(as_Widget(d->input));
     }
-    setFont_InputWidget(d->input, FONT_ID(monospace_FontId, regular_FontStyle, uiSmall_FontSize));
+    setFont_InputWidget(d->input, font_UploadWidget_(d, regular_FontStyle));
     setUseReturnKeyBehavior_InputWidget(d->input, iFalse); /* traditional text editor */
     setLineLimits_InputWidget(d->input, 7, 20);
     setHint_InputWidget(d->input, "${hint.upload.text}");
@@ -757,6 +792,31 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         else {
             refresh_Widget(as_Widget(d->input));
         }
+    }
+    else if (isDesktop_Platform() &&
+             (equal_Command(cmd, "zoom.set") || equal_Command(cmd, "zoom.delta"))) {
+        int sizeIndex = prefs_App()->editorZoomLevel;
+        if (equal_Command(cmd, "zoom.set")) {
+            sizeIndex = 0;
+        }
+        else {
+            sizeIndex += iSign(arg_Command(cmd));
+            sizeIndex = iClamp(sizeIndex, 0, 3);
+        }
+        setEditorZoomLevel_App(sizeIndex);
+        setFont_InputWidget(d->input, font_UploadWidget_(d, regular_FontStyle));
+        refresh_Widget(d->input);
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "prefs.editor.highlight.changed")) {
+        if (arg_Command(command_UserEvent(ev))) {
+            setHighlighter_InputWidget(d->input, gemtextHighlighter_UploadWidget_, d);
+        }
+        else {
+            setHighlighter_InputWidget(d->input, NULL, NULL);
+        }
+        refresh_Widget(d->input);
+        return iFalse;
     }
     else if (isCommand_Widget(w, ev, "upload.pickfile")) {
 #if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)

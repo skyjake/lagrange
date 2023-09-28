@@ -315,6 +315,7 @@ static iString *serializePrefs_App_(const iApp *d) {
                         cstr_String(&d->prefs.strings[monospaceDocumentFont_PrefsString]));
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "inputzoom.set arg:%d\n", d->prefs.inputZoomLevel);
+    appendFormat_String(str, "uploadzoom.set arg:%d\n", d->prefs.editorZoomLevel);
     appendFormat_String(str, "pinsplit.set arg:%d\n", d->prefs.pinSplit);
     appendFormat_String(str, "feedinterval.set arg:%d\n", d->prefs.feedInterval);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
@@ -359,6 +360,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         { "prefs.bottomtabbar", &d->prefs.bottomTabBar },
         { "prefs.centershort", &d->prefs.centerShortDocs },
         { "prefs.dataurl.openimages", &d->prefs.openDataUrlImagesOnLoad },
+        { "prefs.editor.highlight", &d->prefs.editorSyntaxHighlighting },
         { "prefs.evensplit", &d->prefs.evenSplit },
         { "prefs.font.smooth", &d->prefs.fontSmoothing },
         { "prefs.font.warnmissing", &d->prefs.warnAboutMissingGlyphs },
@@ -2518,6 +2520,14 @@ void setForceSoftwareRender_App(iBool sw) {
     app_.forceSoftwareRender = sw;
 }
 
+void setInputZoomLevel_App(int level) {
+    app_.prefs.inputZoomLevel = level;
+}
+
+void setEditorZoomLevel_App(int level) {
+    app_.prefs.editorZoomLevel = level;
+}
+
 enum iColorTheme colorTheme_App(void) {
     return app_.prefs.theme;
 }
@@ -3588,6 +3598,10 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.editor.highlight.changed")) {
+        d->prefs.editorSyntaxHighlighting = arg_Command(cmd) != 0;
+        return iFalse;
+    }
     else if (equal_Command(cmd, "prefs.gemtext.ansi.fg.changed")) {
         iChangeFlags(d->prefs.gemtextAnsiEscapes, allowFg_AnsiFlag, arg_Command(cmd));
         return iTrue;
@@ -4430,6 +4444,11 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.inputZoomLevel = iClamp(d->prefs.inputZoomLevel, 0, 2);
         return iTrue;
     }
+    else if (equal_Command(cmd, "uploadzoom.set")) {
+        d->prefs.editorZoomLevel = arg_Command(cmd);
+        d->prefs.editorZoomLevel = iClamp(d->prefs.editorZoomLevel, 0, 3);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "zoom.set")) {
         if (arg_Command(cmd) != d->prefs.zoomPercent) {
             d->prefs.zoomPercent = arg_Command(cmd);
@@ -4727,6 +4746,8 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.gemtext.ansi.fontstyle"),
                          d->prefs.gemtextAnsiEscapes & allowFontStyle_AnsiFlag);
         setToggle_Widget(findChild_Widget(dlg, "prefs.font.smooth"), d->prefs.fontSmoothing);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.editor.highlight"),
+                         d->prefs.editorSyntaxHighlighting);
         setToggle_Widget(findChild_Widget(dlg, "prefs.tui.simple"), d->prefs.simpleChars);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),

@@ -257,6 +257,9 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
     if (isHover_Widget(d)) {
         win->hover = NULL;
     }
+    if (win->focus == d) {
+        win->focus = NULL;
+    }
     if (win->lastHover == d) {
         win->lastHover = NULL;
     }

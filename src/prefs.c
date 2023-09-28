@@ -26,7 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/fileinfo.h>
 #include <assert.h>
 
-_Static_assert(offsetof(iPrefs, plainTextWrap) == offsetof(iPrefs, bools[plainTextWrap_PrefsBool]),
+_Static_assert(offsetof(iPrefs, geminiStyledGopher) ==
+               offsetof(iPrefs, bools[geminiStyledGopher_PrefsBool]),
                "memory layout mismatch (needs struct packing?)");
 
 void init_Prefs(iPrefs *d) {
@@ -46,6 +47,8 @@ void init_Prefs(iPrefs *d) {
     d->uiAnimations      = iTrue;
     d->uiScale           = 1.0f; /* default set elsewhere */
     d->inputZoomLevel    = 0;
+    d->editorZoomLevel   = 0;
+    d->editorSyntaxHighlighting = iTrue;
     d->zoomPercent       = 100;
     d->navbarActions[0]  = back_ToolbarAction;
     d->navbarActions[1]  = forward_ToolbarAction;

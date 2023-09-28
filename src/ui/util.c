@@ -2401,7 +2401,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
                 sizeIndex += iSign(arg_Command(cmd));
                 sizeIndex = iClamp(sizeIndex, 0, 2);
             }
-            ((iPrefs *) prefs_App())->inputZoomLevel = sizeIndex; /* const cast... */
+            setInputZoomLevel_App(sizeIndex);
             setFont_InputWidget(input,
                                 FONT_ID(default_FontId,
                                         regular_FontStyle,
@@ -2724,7 +2724,7 @@ static iBool toggleHandler_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "toggle") && pointer_Command(cmd) == d) {
         setToggle_Widget(d, (flags_Widget(d) & selected_WidgetFlag) == 0);
         postCommand_Widget(d,
-                           format_CStr("%s.changed arg:%d",
+                           format_CStr("!%s.changed arg:%d",
                                        cstr_String(id_Widget(d)),
                                        isSelected_Widget(d) ? 1 : 0));
         return iTrue;
@@ -3533,6 +3533,8 @@ iWidget *makePreferences_Widget(void) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font.ui}")));
             addFontButtons_(values, "ui");
             addDialogToggle_(headings, values, "${prefs.font.smooth}", "prefs.font.smooth");
+            addDialogPadding_(headings, values);
+            addDialogToggle_(headings, values, "${prefs.editor.highlight}", "prefs.editor.highlight");
         }
     }
     /* Page style. */ {

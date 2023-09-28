@@ -21,7 +21,7 @@ msgid "heading.archive.userdata"
 msgstr "User Data Archive"
 
 msgid "userdata.help"
-msgstr "User data archives contain exported browsing history, identities, bookmarks, site-specific settings, and fingerprints of trusted server certificates. They can be stored as backups and used for transferring data between devices."
+msgstr "User data archives contain exported browsing history, identities, bookmarks, text snippets, site-specific settings, and fingerprints of trusted server certificates. They can be stored as backups and used for transferring data between devices."
 
 msgid "doc.archive.view"
 msgstr "View archive contents"
@@ -1139,6 +1139,9 @@ msgstr "Import Failed"
 msgid "import.userdata.bookmarks"
 msgstr "Bookmarks:"
 
+msgid "import.userdata.snippets"
+msgstr "Snippets:"
+
 msgid "import.userdata.idents"
 msgstr "Identities:"
 
@@ -2058,6 +2061,9 @@ msgstr "Font glyph warnings:"
 
 msgid "prefs.font.smooth"
 msgstr "Font smoothing:"
+
+msgid "prefs.editor.highlight"
+msgstr "Syntax highlighting:"
 
 msgid "prefs.linewidth"
 msgstr "Line width:"

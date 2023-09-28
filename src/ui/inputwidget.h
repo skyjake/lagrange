@@ -32,14 +32,21 @@ enum iInputMode {
     overwrite_InputMode,
 };
 
-iDeclareType(InputWidgetContentPadding)
+iDeclareType(InputWidgetContentPadding);
+iDeclareType(InputWidgetHighlight);
 
 struct Impl_InputWidgetContentPadding {
     int left;
     int right;
 };
 
+struct Impl_InputWidgetHighlight {
+    int font;
+    int color;
+};
+
 typedef void (*iInputWidgetValidatorFunc)(iInputWidget *, void *context);
+typedef iInputWidgetHighlight (*iInputWidgetHighlighterFunc)(const iInputWidget *, const iRangecc line, void *context);
 
 void    setHint_InputWidget             (iInputWidget *, const char *hintText);
 void    setMode_InputWidget             (iInputWidget *, enum iInputMode mode);
@@ -52,6 +59,7 @@ void    setFont_InputWidget             (iInputWidget *, int fontId);
 void    setContentPadding_InputWidget   (iInputWidget *, int left, int right); /* only affects the text entry */
 void    setLineLimits_InputWidget       (iInputWidget *, int minLines, int maxLines);
 void    setValidator_InputWidget        (iInputWidget *, iInputWidgetValidatorFunc validator, void *context);
+void    setHighlighter_InputWidget      (iInputWidget *, iInputWidgetHighlighterFunc highlighter, void *context);
 void    setLineBreaksEnabled_InputWidget(iInputWidget *, iBool lineBreaksEnabled);
 void    setEnterKeyEnabled_InputWidget  (iInputWidget *, iBool enterKeyEnabled);
 void    setOmitDefaultSchemeIfNarrow_InputWidget(iInputWidget *, iBool omitDefaultSchemeIfNarrow);

@@ -73,6 +73,7 @@ enum iPrefsBool {
 
     evenSplit_PrefsBool,
     detachedPrefs_PrefsBool,
+    editorSyntaxHighlighting_PrefsBool,
 
     /* Document presentation */
     sideIcon_PrefsBool,
@@ -151,6 +152,7 @@ struct Impl_Prefs {
 
             iBool evenSplit;
             iBool detachedPrefs;
+            iBool editorSyntaxHighlighting;
 
             /* Document presentation */
             iBool sideIcon;
@@ -208,6 +210,7 @@ struct Impl_Prefs {
     enum iToolbarAction navbarActions[maxNavbarActions_Prefs];
     enum iToolbarAction toolbarActions[2];
     int              inputZoomLevel;
+    int              editorZoomLevel;
     /* Document presentation */
     int              zoomPercent;
     /* Behavior */

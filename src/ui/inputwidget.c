@@ -248,6 +248,8 @@ struct Impl_InputWidget {
     iTextBuf *      buffered; /* pre-rendered static text */
     iInputWidgetValidatorFunc validator;
     void *          validatorContext;
+    iInputWidgetHighlighterFunc highlighter;
+    void *          highlighterContext;
     iString *       backupPath;
     int             backupTimer;
     iString         oldText; /* for restoring if edits cancelled */
@@ -835,6 +837,8 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Widget(w);
     d->validator = NULL;
     d->validatorContext = NULL;
+    d->highlighter = NULL;
+    d->highlighterContext = NULL;
     setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, iTrue);
     setFlags_Widget(w, extraPadding_WidgetFlag, isMobile_Platform());
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
@@ -1057,6 +1061,13 @@ void setValidator_InputWidget(iInputWidget *d, iInputWidgetValidatorFunc validat
     d->validatorContext = context;
 }
 
+void setHighlighter_InputWidget(iInputWidget *d, iInputWidgetHighlighterFunc highlighter,
+                                void *context) {
+    d->highlighter = highlighter;
+    d->highlighterContext = context;
+    invalidateBuffered_InputWidget_(d);
+}
+
 void setLineBreaksEnabled_InputWidget(iInputWidget *d, iBool lineBreaksEnabled) {
     iChangeFlags(d->inFlags, lineBreaksEnabled_InputWidgetFlag, lineBreaksEnabled);
 }
@@ -1145,6 +1156,7 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
                                  strlen(uiTextStrong_ColorEscape));
             }
         }
+        /* TODO: To apply syntax highlighting here, we'd have to draw line by line. */
         iWrapText wt = wrap_InputWidget_(d, 0);
         wt.maxLines = d->maxWrapLines;
         wt.text = range_String(visText);
@@ -2920,7 +2932,13 @@ static void draw_InputWidget_(const iInputWidget *d) {
             wrapText.text = range_String(&line->text);
             marker.line   = line;
             marker.pos    = drawPos;
-            addv_I2(&drawPos, draw_WrapText(&wrapText, d->font, drawPos, fg).advance); /* lines end with \n */
+            iInputWidgetHighlight highlight = { .font = d->font, .color = fg };
+            if (d->highlighter) {
+                highlight = d->highlighter(d, wrapText.text, d->highlighterContext);
+            }
+            addv_I2(&drawPos,
+                    draw_WrapText(&wrapText, highlight.font, drawPos, highlight.color)
+                        .advance); /* lines end with \n */
         }
         markerRects[0] = marker.firstMarkRect;
         markerRects[1] = marker.lastMarkRect;
