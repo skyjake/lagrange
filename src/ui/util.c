@@ -2948,10 +2948,12 @@ static void addPrefsInputWithHeading_(iWidget *headings, iWidget *values,
     addDialogInputWithHeading_(headings, values, format_CStr("${%s}", id), id, input);
 }
 
-static void addDialogToggle_(iWidget *headings, iWidget *values,
+static iWidget *addDialogToggle_(iWidget *headings, iWidget *values,
                              const char *heading, const char *toggleId) {
+    iWidget *toggle;
     addChild_Widget(headings, iClob(makeHeading_Widget(heading)));
-    addChild_Widget(values, iClob(makeToggle_Widget(toggleId)));
+    addChild_Widget(values, toggle = iClob(makeToggle_Widget(toggleId)));
+    return toggle;
 }
 
 static void addDialogToggleGroup_(iWidget *headings, iWidget *values, const char *title,
@@ -4367,6 +4369,74 @@ iWidget *makeSnippetCreation_Widget(void) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static iBool handleLinkImporterCommands_(iWidget *dlg, const char *cmd) {
+    if (equalWidget_Command(cmd, dlg, "cancel")) {
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, dlg, "dlg.import.intofolder")) {
+        updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "dlg.import.intofolder"),
+                                            format_CStr(" arg:%d", arg_Command(cmd)));
+        return iTrue;
+    }
+    else if (equalWidget_Command(cmd, dlg, "dlg.import.accept")) {
+        const char *intoFolder =
+            selectedDropdownCommand_LabelWidget(findChild_Widget(dlg, "dlg.import.intofolder"));
+        const iBool headings = isSelected_Widget(findChild_Widget(dlg, "dlg.import.headings"));
+        postCommandf_App("bookmark.links folder:%d headings:%d", arg_Command(intoFolder), headings);
+        setupSheetTransition_Mobile(dlg, dialogTransitionDir_Widget(dlg));
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iWidget *makeLinkImporter_Widget(size_t count) {
+    const iMenuItem actions[] = {
+        { "${cancel}" },
+        { format_CStr(
+              cstrCount_Lang("dlg.import.add.n", (int) count), uiTextAction_ColorEscape, count),
+          0,
+          0,
+          "dlg.import.accept" },
+    };
+    iWidget *dlg = NULL;
+    if (isUsingPanelLayout_Mobile()) {
+        /* TODO */
+    }
+    else {
+        iWidget *headings, *values;
+        dlg = makeSheet_Widget("linkbookmarking");
+        addDialogTitle_(dlg, "${heading.import.bookmarks}", "heading.import.bookmarks");
+        addWrappedLabel_Widget(dlg, formatCStrs_Lang("dlg.import.found.n", count), NULL);
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
+        const iArray *folders = makeBookmarkFolderActions_MenuItem("dlg.import.intofolder", iTrue, 0);
+        iLabelWidget *intoFolder = addDialogDropMenu_(headings,
+                           values,
+                           "${dlg.import.intofolder}",
+                           constData_Array(folders),
+                           iInvalidSize,
+                           "dlg.import.intofolder");
+        updateDropdownSelection_LabelWidget(
+            intoFolder, format_CStr(" arg:%zu", recentFolder_Bookmarks(bookmarks_App())));
+        setToggle_Widget(
+            addDialogToggle_(headings, values, "${dlg.import.headings}", "dlg.import.headings"),
+            iTrue);
+        addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+        addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
+        addChild_Widget(get_Root()->widget, iClob(dlg));
+        arrange_Widget(dlg);
+        arrange_Widget(dlg);
+    }
+    setCommandHandler_Widget(dlg, handleLinkImporterCommands_);
+    setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
+    return dlg;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 iWidget *makeIdentityCreation_Widget(void) {
     const iMenuItem actions[] = { { "${dlg.newident.more}", 0, 0, "ident.showmore" },
                                   { "---" },
@@ -4731,7 +4801,7 @@ static iBool handleUserDataImporterCommands_(iWidget *dlg, const char *cmd) {
     return iFalse;
 }
 
-iWidget *makeUserDataImporter_Dialog(const iString *archivePath) {
+iWidget *makeUserDataImporter_Widget(const iString *archivePath) {
     iWidget *dlg;
     const iMenuItem actions[] = {
         { "${menu.selectall}", 0, 0, "importer.selectall" },

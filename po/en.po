@@ -954,6 +954,12 @@ msgstr "Error Saving File"
 msgid "heading.import.bookmarks"
 msgstr "Import Bookmarks"
 
+msgid "dlg.import.intofolder"
+msgstr "Add to Folder:"
+
+msgid "dlg.import.headings"
+msgstr "Subfolders from Headings:"
+
 #, c-format
 msgid "dlg.import.found"
 msgid_plural "dlg.import.found.n"
@@ -968,6 +974,9 @@ msgstr[1] "%sAdd %d Bookmarks"
 
 msgid "dlg.import.notnew"
 msgstr "All links on this page are already bookmarked."
+
+msgid "dlg.import.notfound"
+msgstr "There are no links on this page."
 
 msgid "heading.autoreload"
 msgstr "Auto-Reload"

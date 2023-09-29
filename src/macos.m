@@ -853,15 +853,23 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
                 if (!subwidget) {
                     subwidget = findWidget_Root(submenuId);
                 }
-                iAssert(subwidget);
-                const iArray *items = userData_Object(subwidget);
-                iAssert(items);
-                makeMenuItems_(sub, commands, 0, isBookmarksMenu, constData_Array(items), size_Array(items));
-                [item setSubmenu:sub];
-                if (isBookmarksMenu) {
-#if defined (__MAC_10_13)
-                    [item setImage:[NSImage imageWithSystemSymbolName:@"folder" accessibilityDescription:nil]];
-#endif
+                if (subwidget) {
+                    const iArray *items = userData_Object(subwidget);
+                    iAssert(items);
+                    makeMenuItems_(sub, commands, 0, isBookmarksMenu, constData_Array(items),
+                                   size_Array(items));
+                    [item setSubmenu:sub];
+                    if (isBookmarksMenu) {
+    #if defined (__MAC_10_13)
+                        [item setImage:[NSImage imageWithSystemSymbolName:@"folder"
+                                                 accessibilityDescription:nil]];
+    #endif
+                    }
+                }
+                else {
+                    [sub release];
+                    [item release];
+                    continue;
                 }
                 [sub release];
             }
@@ -869,7 +877,8 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
                 item.action = (hasCommand ? @selector(postMenuItemCommand:) : nil);
                 if (isBookmarksMenu && hasCommand && startsWith_CStr(items[i].command, "!open ")) {
 #if defined (__MAC_10_13)
-                    [item setImage:[NSImage imageWithSystemSymbolName:@"bookmark.fill" accessibilityDescription:nil]];
+                    [item setImage:[NSImage imageWithSystemSymbolName:@"bookmark.fill"
+                                             accessibilityDescription:nil]];
 #endif
                 }
             }

@@ -32,7 +32,7 @@ iDeclareType(GmRequest)
 
 iDeclareType(Bookmark)
 iDeclareTypeConstruction(Bookmark)
-    
+
 /* These values are not serialized as-is in bookmarks.ini. Instead, they are included in `tags`
    with a dot prefix. This helps retain backwards and forwards compatibility. */
 enum iBookmarkFlags {
@@ -88,6 +88,8 @@ void        deserialize_Bookmarks       (iBookmarks *, iStream *ins, enum iImpor
 
 uint32_t    add_Bookmarks               (iBookmarks *, const iString *url, const iString *title,
                                          const iString *tags, iChar icon);
+uint32_t    addToFolder_Bookmarks       (iBookmarks *, const iString *url, const iString *title,
+                                         const iString *tags, iChar icon, uint32_t folderId);
 iBool       remove_Bookmarks            (iBookmarks *, uint32_t id);
 iBookmark * get_Bookmarks               (iBookmarks *, uint32_t id);
 void        reorder_Bookmarks           (iBookmarks *, uint32_t id, int newOrder);

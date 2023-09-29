@@ -71,6 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
+#include <the_Foundation/intset.h>
 #include <the_Foundation/objectlist.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
@@ -2510,13 +2511,6 @@ static const iString *saveToDownloads_(const iString *url, const iString *mime, 
     return savePath;
 }
 
-static void addAllLinks_(void *context, const iGmRun *run) {
-    iPtrArray *links = context;
-    if (~run->flags & decoration_GmRunFlag && run->linkId) {
-        pushBack_PtrArray(links, run);
-    }
-}
-
 static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     if (equal_Command(cmd, "pinch.began")) {
         d->pinchZoomInitial = d->pinchZoomPosted = prefs_App()->zoomPercent;
@@ -3593,51 +3587,113 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmark.links") && document_App() == d) {
-        iPtrArray *links = collectNew_PtrArray();
-        render_GmDocument(d->view->doc, (iRangei){ 0, size_GmDocument(d->view->doc).y }, addAllLinks_, links);
+        iIntSet *linkIds = collectNew_IntSet();
         /* Find links that aren't already bookmarked. */
-        iForEach(PtrArray, i, links) {
-            const iGmRun *run = i.ptr;
-            uint32_t      bmid;
-            if ((bmid = findUrl_Bookmarks(bookmarks_App(),
-                                          linkUrl_GmDocument(d->view->doc, run->linkId))) != 0) {
+        const iGmDocument *doc = d->view->doc;
+        for (size_t linkId = 1; linkId <= numLinks_GmDocument(doc); linkId++) {
+            uint32_t bmid;
+            if ((bmid = findUrl_Bookmarks(bookmarks_App(), linkUrl_GmDocument(doc, linkId))) != 0) {
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
                 /* We can import local copies of remote bookmarks. */
                 if (~bm->flags & remote_BookmarkFlag) {
-                    remove_PtrArrayIterator(&i);
+                    continue; /* This one is bookmarked. */
                 }
             }
+            insert_IntSet(linkIds, linkId);
         }
-        if (!isEmpty_PtrArray(links)) {
+        if (!isEmpty_IntSet(linkIds)) {
             if (argLabel_Command(cmd, "confirm")) {
-                const size_t count = size_PtrArray(links);
-                makeQuestion_Widget(
-                    uiHeading_ColorEscape "${heading.import.bookmarks}",
-                    formatCStrs_Lang("dlg.import.found.n", count),
-                    (iMenuItem[]){ { "${cancel}" },
-                                   { format_CStr(cstrCount_Lang("dlg.import.add.n", (int) count),
-                                                 uiTextAction_ColorEscape,
-                                                 count),
-                                     0,
-                                     0,
-                                     "bookmark.links" } },
-                    2);
+                const size_t count = size_IntSet(linkIds);
+                makeLinkImporter_Widget(count);
             }
             else {
-                iConstForEach(PtrArray, j, links) {
-                    const iGmRun *run = j.ptr;
-                    add_Bookmarks(bookmarks_App(),
-                                  linkUrl_GmDocument(d->view->doc, run->linkId),
-                                  collect_String(newRange_String(run->text)),
-                                  NULL,
-                                  0x1f588 /* pin */);
+                const uint32_t intoFolder   = argLabel_Command(cmd, "folder");
+                const iBool    withHeadings = argLabel_Command(cmd, "headings");
+                /* We need to prepare some auxiliary bookkeeping to keep track of the folders
+                   that are created for each section of the page. */
+                uint32_t parentId = intoFolder;
+                uint32_t hierarchy[] = { intoFolder, 0, 0, 0, 0, 0 };
+                const iPtrArray  *headings = headings_GmDocument(doc);
+                const iGmHeading *head = isEmpty_Array(headings) ? NULL : constData_Array(headings);
+                const iGmHeading *headFirst = head;
+                const iGmHeading *headEnd   = isEmpty_Array(headings) ? NULL : constEnd_Array(headings);
+                uint32_t *headingBookmarkIds = calloc(size_Array(headings), sizeof(uint32_t));
+                /* We will create folders as we go and afterwards delete the ones that
+                   didn't end up containing any links. */
+                iDeclareType(InfoNode);
+                struct Impl_InfoNode {
+                    iHashNode node;
+                    size_t numChildren;
+                };
+                iHash *folderInfo = new_Hash();
+                /* `linkIds` only contains the new links that need to be bookmarked. */
+                iConstForEach(IntSet, j, linkIds) {
+                    const iGmLinkId linkId = *j.value;
+                    iRangecc linkRange = linkUrlRange_GmDocument(doc, linkId);
+                    /* Advance in the headings until we reach the one that this link is under. */
+                    while (withHeadings && head < headEnd && linkRange.start > head->text.start) {
+                        if (!headingBookmarkIds[head - headFirst]) {
+                            const int hlev = head->level + 1;
+                            parentId       = addToFolder_Bookmarks(bookmarks_App(),
+                                                             NULL,
+                                                             collectNewRange_String(head->text),
+                                                             NULL,
+                                                             0,
+                                                             hierarchy[hlev - 1]);
+                            hierarchy[hlev] = parentId;
+                            iInfoNode *info = iMalloc(InfoNode); {
+                                info->node.key = parentId;
+                                info->numChildren = 0;
+                            }
+                            insert_Hash(folderInfo, &info->node);
+                            headingBookmarkIds[head - headFirst] = parentId;
+                            parentId = parentId;
+                            /* Keep track of the hierarchy so we know at any time the parent
+                               of each heading level. */
+                            for (int k = 1; k < hlev; k++) {
+                                if (hierarchy[k] == 0) {
+                                    hierarchy[k] = parentId;
+                                }
+                            }
+                            hierarchy[hlev + 1] = parentId;
+                            hierarchy[hlev + 2] = parentId;
+                        }
+                        head++;
+                    }
+                    addToFolder_Bookmarks(bookmarks_App(),
+                                          linkUrl_GmDocument(doc, linkId),
+                                          collectNewRange_String(linkLabel_GmDocument(doc, linkId)),
+                                          NULL,
+                                          0x1f588 /* pin */,
+                                          withHeadings ? parentId : intoFolder);
+                    /* Count children. */
+                    if (withHeadings) {
+                        for (uint32_t pid = parentId;
+                             pid && pid != intoFolder;
+                             pid = get_Bookmarks(bookmarks_App(), pid)->parentId) {
+                            iInfoNode *n = (iInfoNode *) value_Hash(folderInfo, pid);
+                            iAssert(n);
+                            n->numChildren++;
+                        }
+                    }
                 }
+                iForEach(Hash, iter, folderInfo) {
+                    iInfoNode *n = (iInfoNode *) iter.value;
+                    if (n->numChildren == 0) {
+                        /* This folder was not needed. */
+                        remove_Bookmarks(bookmarks_App(), n->node.key);
+                    }
+                    free(remove_HashIterator(&iter));
+                }
+                delete_Hash(folderInfo);
+                free(headingBookmarkIds);
                 postCommand_App("bookmarks.changed");
             }
         }
         else {
             makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.import.bookmarks}",
-                                     "${dlg.import.notnew}");
+                                     numLinks_GmDocument(doc) == 0 ? "${dlg.import.notfound}"
+                                                                   : "${dlg.import.notnew}");
         }
         return iTrue;
     }

@@ -2687,6 +2687,10 @@ static const iGmLink *link_GmDocument_(const iGmDocument *d, iGmLinkId id) {
     return NULL;
 }
 
+size_t numLinks_GmDocument(const iGmDocument *d) {
+    return size_PtrArray(&d->links);
+}
+
 const iString *linkUrl_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     const iGmLink *link = link_GmDocument_(d, linkId);
     return link ? &link->url : NULL;

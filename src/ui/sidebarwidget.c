@@ -1790,6 +1790,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         postCommand_App("bookmarks.changed");
                     }
                     else {
+                        setFocus_Widget(NULL);
                         const size_t numBookmarks = numBookmarks_(list);
                         makeQuestion_Widget(uiHeading_ColorEscape "${heading.confirm.bookmarks.delete}",
                                             formatCStrs_Lang("dlg.confirm.bookmarks.delete.n", numBookmarks),
@@ -2276,6 +2277,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list) {
     const iSidebarWidget *sidebar = findParentClass_Widget(constAs_Widget(list),
                                                            &Class_SidebarWidget);
+    const iBool isListFocus  = isFocused_Widget(list);
     const iBool isMenuVisible = isVisible_Widget(sidebar->menu);
     const iBool isDragging   = constDragItem_ListWidget(list) == d;
     const iBool isEditing    = sidebar->isEditing; /* only on mobile */
@@ -2529,6 +2531,10 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             }
         }
         iEndCollect();
+    }
+    if (isListFocus && isHover && !isTerminal_Platform()) {
+        /* Visualize the keyboard cursor. */
+        drawRect_Paint(p, shrunk_Rect(itemRect, one_I2()), uiTextAction_ColorId);
     }
 }
 

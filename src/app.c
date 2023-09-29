@@ -5051,7 +5051,7 @@ iBool handleCommand_App(const char *cmd) {
         iArchive *zip = iClob(new_Archive());
         if (openFile_Archive(zip, path)) {
             if (!arg_Command(cmd)) {
-                makeUserDataImporter_Dialog(path);
+                makeUserDataImporter_Widget(path);
                 return iTrue;
             }
             const int bookmarks = argLabel_Command(cmd, "bookmarks");

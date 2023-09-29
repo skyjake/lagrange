@@ -407,7 +407,8 @@ iWidget *   makeSiteSpecificSettings_Widget (const iString *url);
 iWidget *   makeSnippetCreation_Widget      (void);
 iWidget *   makeTranslation_Widget          (iWidget *parent);
 iWidget *   makeGlyphFinder_Widget          (void);
-iWidget *   makeUserDataImporter_Dialog     (const iString *archivePath);
+iWidget *   makeUserDataImporter_Widget     (const iString *archivePath);
+iWidget *   makeLinkImporter_Widget         (size_t count);
 
 const char *    languageId_String   (const iString *menuItemLabel);
 int             languageIndex_CStr  (const char *langId);
