@@ -538,7 +538,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 { "", 0, 0, "bookmark.tag tag:homepage" },
                 { "", 0, 0, "bookmark.tag tag:remotesource" },
                 { "---", 0, 0, NULL },
-                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
+                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", SDLK_BACKSPACE, 0, "bookmark.delete" },
                 { "---", 0, 0, NULL },
                 { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
                 { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
@@ -559,7 +559,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                         { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
                         { "---" },
                         { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.folder.delete}",
-                          0, 0, "bookmark.delete" },
+                          SDLK_BACKSPACE, 0, "bookmark.delete" },
                         { "---" } },
                     7);
                 if (isMobile_Platform()) {
@@ -1610,6 +1610,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                        argU32Label_Command(cmd, "arg"),
                                        argLabel_Command(cmd, "button"));
             return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "list.delete")) {
+            if (d->mode == bookmarks_SidebarMode) {
+                d->contextItem = item_ListWidget(d->list, arg_Command(cmd));
+                postCommand_Widget(w, "bookmark.delete");
+                return iTrue;
+            }
         }
         else if (isCommand_Widget(w, ev, "list.dragged")) {
             iAssert(d->mode == bookmarks_SidebarMode);
