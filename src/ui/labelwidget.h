@@ -40,6 +40,7 @@ void    setTruncateToFit_LabelWidget(iLabelWidget *, iBool truncateToFit);
 void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);
 void    setAllCaps_LabelWidget      (iLabelWidget *, iBool allCaps);
 void    setRemoveTrailingColon_LabelWidget  (iLabelWidget *, iBool removeTrailingColon);
+void    setMenuCanceling_LabelWidget(iLabelWidget *, iBool menuCanceling);
 void    setTextOffset_LabelWidget   (iLabelWidget *, iInt2 offset);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
 void    setTextColor_LabelWidget    (iLabelWidget *, int color);

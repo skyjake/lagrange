@@ -19,6 +19,9 @@ It offers modern conveniences familiar from web browsers, such as smooth scrolli
 
 When multiple URLs and/or local files are specified, they are opened in separate tabs.
 
+**\--capslock**
+:   Enable Caps Lock as a modifier for keybindings.
+
 **-d**, **\--dump**
 :   Print contents of URLs/paths to stdout and quit.
 
@@ -72,6 +75,9 @@ These options are used to control the currently running Lagrange instance via th
 
 **\--tab-url**
 :   Print the URL of the active tab.
+
+**-t**, **\--theme** [_ARG_]
+:   Change the current UI color theme to ARG ("black", "dark", "light", "white").
 
 # ENVIRONMENT
 

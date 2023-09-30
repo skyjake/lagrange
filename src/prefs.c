@@ -26,7 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/fileinfo.h>
 #include <assert.h>
 
-_Static_assert(offsetof(iPrefs, plainTextWrap) == offsetof(iPrefs, bools[plainTextWrap_PrefsBool]),
+_Static_assert(offsetof(iPrefs, geminiStyledGopher) ==
+               offsetof(iPrefs, bools[geminiStyledGopher_PrefsBool]),
                "memory layout mismatch (needs struct packing?)");
 
 void init_Prefs(iPrefs *d) {
@@ -40,16 +41,18 @@ void init_Prefs(iPrefs *d) {
     d->useSystemTheme    = iTrue;
     d->systemPreferredColorTheme[0] = d->systemPreferredColorTheme[1] = -1;
     d->theme             = dark_ColorTheme;
-    d->accent            = cyan_ColorAccent;
+    d->accent            = isAppleDesktop_Platform() ? system_ColorAccent : cyan_ColorAccent;
     d->customFrame       = iFalse; /* needs some more work to be default */
     d->retainWindowSize  = iTrue;
     d->uiAnimations      = iTrue;
     d->uiScale           = 1.0f; /* default set elsewhere */
     d->inputZoomLevel    = 0;
+    d->editorZoomLevel   = 0;
+    d->editorSyntaxHighlighting = iTrue;
     d->zoomPercent       = 100;
     d->navbarActions[0]  = back_ToolbarAction;
     d->navbarActions[1]  = forward_ToolbarAction;
-    d->navbarActions[2]  = sidebar_ToolbarAction;
+    d->navbarActions[2]  = leftSidebar_ToolbarAction;
     d->navbarActions[3]  = home_ToolbarAction;
 #if defined (iPlatformAndroidMobile)
     /* Android has a system-wide back button so no need to have a duplicate. */
@@ -67,7 +70,7 @@ void init_Prefs(iPrefs *d) {
     }
     else {
         d->bottomNavBar  = iFalse;
-        d->bottomTabBar  = iFalse;        
+        d->bottomTabBar  = iFalse;
     }
     if (isTerminal_Platform()) {
         d->bottomNavBar  = iTrue;
@@ -77,6 +80,7 @@ void init_Prefs(iPrefs *d) {
     d->evenSplit         = iFalse; /* split mode tabs have even width */
     d->detachedPrefs     = iTrue;
     d->pinSplit          = 1;
+    d->feedInterval      = fourHours_FeedInterval;
     d->time24h           = iTrue;
     d->returnKey         = default_ReturnKeyBehavior;
     d->retainTabs        = iTrue;
@@ -86,7 +90,7 @@ void init_Prefs(iPrefs *d) {
     d->smoothScrollSpeed[mouse_ScrollType]    = 13;
     d->loadImageInsteadOfScrolling = iFalse;
     d->openDataUrlImagesOnLoad = iFalse;
-    d->collapsePreOnLoad       = iFalse;
+    d->collapsePre             = notByDefault_Collapse;
     d->openArchiveIndexPages   = iTrue;
     d->addBookmarksToBottom    = iTrue;
     d->warnAboutMissingGlyphs  = iTrue;
@@ -94,6 +98,7 @@ void init_Prefs(iPrefs *d) {
     d->skipIndexPageOnParentNavigation = iTrue;
     d->edgeSwipe = iTrue;
     d->pageSwipe = iTrue;
+    d->capsLockKeyModifier = iFalse;
     d->allowSchemeChangingRedirect = iFalse; /* must be manually followed */
     d->decodeUserVisibleURLs = iTrue;
     d->maxCacheSize      = 10;

@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "lookupwidget.h"
 #include "sidebarwidget.h"
+#include "snippets.h"
 #include "window.h"
 #include "../visited.h"
 #include "../history.h"
@@ -64,14 +65,12 @@ static const iMenuItem desktopNavMenuItems_[] = {
     { "---" },
     { leftHalf_Icon " ${menu.sidebar.left}", leftSidebar_KeyShortcut, "sidebar.toggle" },
     { rightHalf_Icon " ${menu.sidebar.right}", rightSidebar_KeyShortcut, "sidebar2.toggle" },
-    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
     { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "submenu id:splitmenu" },
     { "---" },
-    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
-    { "${menu.downloads}", 0, 0, "downloads.open" },
-    { export_Icon " ${menu.export}", 0, 0, "export" },
+    { package_Icon " ${menu.userdata}", 0, 0, "submenu id:userdatamenu" },
     { "---" },
     { gear_Icon " ${menu.preferences}", preferences_KeyShortcut, "preferences" },
  #if defined (LAGRANGE_ENABLE_WINSPARKLE)
@@ -81,6 +80,19 @@ static const iMenuItem desktopNavMenuItems_[] = {
     { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
     { "---" },
     { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" },
+    { NULL }
+};
+
+static const iMenuItem userDataMenuItems_[] = {
+    { "${menu.export}", 0, 0, "export" },
+    { "---" },
+    { "${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
+    { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
+    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
+    { "---" },
+    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+    { "---" },
+    { "${menu.downloads}", 0, 0, "downloads.open" },
     { NULL }
 };
 
@@ -114,34 +126,6 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { gear_Icon " ${menu.settings}", preferences_KeyShortcut, "preferences" },
     { NULL }
 };
-
-#if 0
-#if defined (iPlatformMobile)
-static const iMenuItem identityButtonMenuItems_[] = {
-    { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
-    { "---" },
-    { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
-    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
-    { "---" },
-    { person_Icon " ${menu.show.identities}", 0, 0, "toolbar.showident" },
-};
-#else /* desktop */
-static const iMenuItem identityButtonMenuItems_[] = {
-    { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
-    { "---" },
-# if !defined (iPlatformAppleDesktop)
-    { add_Icon " ${menu.identity.newdomain}", newIdentity_KeyShortcut, "ident.new" },
-    { "${menu.identity.import}", SDLK_m, KMOD_SECONDARY, "ident.import" },
-    { "---" },
-    { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
-# else
-    { add_Icon " ${menu.identity.newdomain}", 0, 0, "ident.new" },
-    { "---" },
-    { person_Icon " ${menu.show.identities}", 0, 0, "sidebar.mode arg:3 toggle:1" },
-# endif
-};
-#endif
-#endif
 
 static const char *reloadCStr_   = reload_Icon;
 static const char *pageMenuCStr_ = midEllipsis_Icon;
@@ -227,7 +211,6 @@ static const char *stopSeqCStr_[] = {
 };
 
 static const int loadAnimIntervalMs_ = 133;
-static int       loadAnimIndex_      = 0;
 static iRoot *   activeRoot_         = NULL;
 
 static void     setupMovableElements_Root_  (iRoot *);
@@ -244,6 +227,7 @@ void init_Root(iRoot *d) {
 }
 
 void deinit_Root(iRoot *d) {
+    iRecycle();
     iReleasePtr(&d->widget);
     delete_PtrArray(d->onTop);
     delete_PtrSet(d->pendingDestruction);
@@ -254,6 +238,17 @@ void deinit_Root(iRoot *d) {
         SDL_RemoveTimer(d->loadAnimTimer);
         d->loadAnimTimer = 0;
     }
+}
+
+iRoot *newOffscreen_Root(void) {
+    iRoot *d = new_Root();
+    setCurrent_Root(d);
+    d->widget = new_Widget();
+    setId_Widget(makeMenu_Widget(d->widget, userDataMenuItems_, iElemCount(userDataMenuItems_)),
+                 "userdatamenu");
+    createSplitMenu_Root(d, iFalse);
+    setCurrent_Root(NULL);
+    return d;
 }
 
 void setCurrent_Root(iRoot *root) {
@@ -415,29 +410,38 @@ static iWidget *makeIdentityMenu_(iWidget *parent) {
     return menu;
 }
 
+static iBool isBookmarkFolder_(void *context, const iBookmark *bm) {
+    iUnused(context);
+    return isFolder_Bookmark(bm);
+}
+
 iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     iUnused(root);
     if (equal_Command(cmd, "menu.open")) {
         iWidget *button = pointer_Command(cmd);
-        iWidget *menu = findChild_Widget(button, "menu");
+        iWidget *menu = argLabel_Command(cmd, "self") ? button : findChild_Widget(button, "menu");
         if (!menu) {
             /* Independent popup window. */
             postCommand_App("cancel");
             return iTrue;
         }
-        const iBool isPlacedUnder = argLabel_Command(cmd, "under");
-        const iBool isMenuBar = argLabel_Command(cmd, "bar");
+        const iBool isPlacedUnder  = argLabel_Command(cmd, "under");
+        const iBool isMenuBar      = argLabel_Command(cmd, "bar");
+        const iBool isSubmenu      = argLabel_Command(cmd, "self");
         iAssert(menu);
         if (!isVisible_Widget(menu)) {
             if (isMenuBar) {
                 setFlags_Widget(button, selected_WidgetFlag, iTrue);
             }
-            openMenu_Widget(menu,
-                            isPlacedUnder ? bottomLeft_Rect(bounds_Widget(button))
-                                          : topLeft_Rect(bounds_Widget(button)));
+            openMenuFlags_Widget(menu,
+                                 hasLabel_Command(cmd, "coord") ? coord_Command(cmd)
+                                 : isPlacedUnder ? bottomLeft_Rect(bounds_Widget(button))
+                                                 : topLeft_Rect(bounds_Widget(button)),
+                                 postCommands_MenuOpenFlags |
+                                     (isSubmenu ? submenu_MenuOpenFlags : 0));
         }
         else {
-            /* Already open, do nothing. */
+            closeMenu_Widget(menu);
         }
         return iTrue;
     }
@@ -464,17 +468,40 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "contextclick")) {
+        const iRangecc id = range_Command(cmd, "id");
+        if (equal_Rangecc(id, "document.bookmarked")) {
+            /* The bookmark button context menu convenience actions. */
+            iArray  *items = collectNew_Array(sizeof(iMenuItem));
+            uint32_t bmId  = findBookmarkId_DocumentWidget(document_Root(root->root));
+            pushBack_Array(items,
+                           &(iMenuItem){ bmId ? "```${menu.bookmark.movetofolder}"
+                                              : "```${menu.bookmark.addtofolder}" });
+            /* Make a list of bookmark folders with the appropriate add/move action. */
+            iConstForEach(Array, i,
+                          makeBookmarkFolderActions_MenuItem(
+                            bmId ? format_CStr("bookmark.setfolder bmid:%u", bmId) : "bookmark.add",
+                            iFalse,
+                            bmId ? get_Bookmarks(bookmarks_App(), bmId)->parentId : 0)) {
+                pushBack_Array(items, i.value);
+            }
+            /* Show the popup menu. */
+            iWidget *bmButton = findWidget_Root("document.bookmarked");
+            releaseChildren_Widget(bmButton);
+            openMenu_Widget(makeMenu_Widget(bmButton, data_Array(items), size_Array(items)),
+                            coord_Command(cmd));
+            return iTrue;
+        }
         iBool showBarMenu = iFalse;
-        if (equal_Rangecc(range_Command(cmd, "id"), "buttons")) {
-            const iWidget *sidebar = findWidget_App("sidebar");
+        if (equal_Rangecc(id, "buttons")) {
+            const iWidget *sidebar  = findWidget_App("sidebar");
             const iWidget *sidebar2 = findWidget_App("sidebar2");
-            const iWidget *buttons = pointer_Command(cmd);
+            const iWidget *buttons  = pointer_Command(cmd);
             if (hasParent_Widget(buttons, sidebar) ||
                 hasParent_Widget(buttons, sidebar2)) {
                 showBarMenu = iTrue;
             }
         }
-        if (equal_Rangecc(range_Command(cmd, "id"), "navbar")) {
+        if (equal_Rangecc(id, "navbar")) {
             showBarMenu = iTrue;
         }
         if (showBarMenu) {
@@ -499,7 +526,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         /* No parent handled this, so do a full rearrangement. */
         /* TODO: Defer this and do a single rearrangement later. */
         arrange_Widget(root);
-        postRefresh_App();
+        postRefresh_Window(get_Window());
         return iTrue;
     }
     else if (equal_Command(cmd, "window.activate")) {
@@ -555,37 +582,55 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         }
         return iTrue;
     }
-    else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "window.resized")) {
+    else if (equal_Command(cmd, "window.resized")) {
         iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
         iSidebarWidget *sidebar2 = findChild_Widget(root, "sidebar2");
-        setWidth_SidebarWidget(sidebar, 73.0f);
-        setWidth_SidebarWidget(sidebar2, 73.0f);
-        return iFalse;
-    }
-    else if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "window.resized")) {
-        /* Place the sidebar next to or under doctabs depending on orientation. */
-        iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
-        removeChild_Widget(parent_Widget(sidebar), sidebar);
-        iChangeFlags(as_Widget(sidebar)->flags2, fadeBackground_WidgetFlag2, isPortrait_App());
-        if (isLandscape_App()) {
-            setVisualOffset_Widget(as_Widget(sidebar), 0, 0, 0);
-            addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);            
+        if (deviceType_App() != phone_AppDeviceType) {
+            /* If the sidebar is too wide, it may need to be hidden. */
+            const int docWidth = iMaxi(1, width_Widget(findChild_Widget(root, "doctabs")));
+            if (isVisible_Widget(sidebar) && 10 * width_Widget(sidebar) / docWidth >= 5) {
+                postCommand_Root(root->root, "sidebar.toggle hide:1");
+            }
+            if (isVisible_Widget(sidebar2) && 10 * width_Widget(sidebar2) / docWidth >= 5) {
+                postCommand_Root(root->root, "sidebar2.toggle hide:1");
+            }
+        }
+        if (deviceType_App() == tablet_AppDeviceType) {
             setWidth_SidebarWidget(sidebar, 73.0f);
-            setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag | fixedPosition_WidgetFlag, iFalse);
+            setWidth_SidebarWidget(sidebar2, 73.0f);
+            return iFalse;
         }
-        else {
-            addChild_Widget(root, iClob(sidebar));
-            setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
-            int midHeight = height_Widget(root) / 2;// + lineHeight_Text(uiLabelLarge_FontId);
+        else if (deviceType_App() == phone_AppDeviceType) {
+            /* Place the sidebar next to or under doctabs depending on orientation. */
+            removeChild_Widget(parent_Widget(sidebar), sidebar);
+            iChangeFlags(as_Widget(sidebar)->flags2, fadeBackground_WidgetFlag2, isPortrait_App());
+            if (isLandscape_App()) {
+                setVisualOffset_Widget(as_Widget(sidebar), 0, 0, 0);
+                addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
+                setWidth_SidebarWidget(sidebar, 73.0f);
+                setFlags_Widget(as_Widget(sidebar), fixedHeight_WidgetFlag | fixedPosition_WidgetFlag, iFalse);
+            }
+            else {
+                addChild_Widget(root, iClob(sidebar));
+                setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
+                int midHeight = height_Widget(root) / 2;// + lineHeight_Text(uiLabelLarge_FontId);
 #if defined (iPlatformAndroidMobile)
-            midHeight += 2 * lineHeight_Text(uiLabelLarge_FontId);
+                midHeight += 2 * lineHeight_Text(uiLabelLarge_FontId);
 #endif
-            setMidHeight_SidebarWidget(sidebar, midHeight);
-            setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
-            setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));
+                setMidHeight_SidebarWidget(sidebar, midHeight);
+                setFixedSize_Widget(as_Widget(sidebar), init_I2(-1, midHeight));
+                setPos_Widget(as_Widget(sidebar), init_I2(0, height_Widget(root) - midHeight));
+            }
+            postCommandf_Root(root->root, "toolbar.show arg:%d", isPortrait_App() || prefs_App()->bottomNavBar);
+            return iFalse;
         }
-        postCommandf_Root(root->root, "toolbar.show arg:%d", isPortrait_App() || prefs_App()->bottomNavBar);
-        return iFalse;
+    }
+    else if (equal_Command(cmd, "root.hidesidebars")) {
+        postCommand_Root(root->root, "sidebar.toggle hide:1");
+        if (findChild_Widget(root, "sidebar2")) {
+            postCommand_Root(root->root, "sidebar2.toggle hide:1");
+        }
+        return iTrue;
     }
     else if (equal_Command(cmd, "root.arrange")) {
         iWidget *prefs = findWidget_Root("prefs");
@@ -687,7 +732,7 @@ static void updateNavDirButtons_(iWidget *navBar) {
     if (toolBar) {
         /* Reset the state. */
         for (int i = 0; i < 2; i++) {
-            const char *id = (i == 0 ? "toolbar.action1" : "toolbar.action2");            
+            const char *id = (i == 0 ? "toolbar.action1" : "toolbar.action2");
             setFlags_Widget(findChild_Widget(toolBar, id), disabled_WidgetFlag, iFalse);
             setOutline_LabelWidget(findChild_Widget(toolBar, id), iFalse);
         }
@@ -703,12 +748,13 @@ static void updateNavDirButtons_(iWidget *navBar) {
     iEndCollect();
 }
 
-static const char *loadAnimationCStr_(void) {
-    return stopSeqCStr_[loadAnimIndex_ % iElemCount(stopSeqCStr_)];
+static const char *loadAnimationCStr_Root_(const iRoot *d) {
+    return stopSeqCStr_[d->loadAnimIndex % iElemCount(stopSeqCStr_)];
 }
 
 static uint32_t updateReloadAnimation_Root_(uint32_t interval, void *root) {
-    loadAnimIndex_++;
+    iRoot *d = root;
+    d->loadAnimIndex++;
     postCommandf_App("window.reload.update root:%p", root);
     return interval;
 }
@@ -717,9 +763,9 @@ static void setReloadLabel_Root_(iRoot *d, const iDocumentWidget *doc) {
     const iBool   isOngoing = isRequestOngoing_DocumentWidget(doc);
     const iBool   isAuto    = isAutoReloading_DocumentWidget(doc) && !isOngoing;
     iLabelWidget *label     = findChild_Widget(d->widget, "reload");
-    updateTextCStr_LabelWidget(label, isOngoing ? loadAnimationCStr_() : reloadCStr_);
+    updateTextCStr_LabelWidget(label, isOngoing ? loadAnimationCStr_Root_(d) : reloadCStr_);
     setBackgroundColor_Widget(as_Widget(label), isAuto ? uiBackground_ColorId : none_ColorId);
-    setTextColor_LabelWidget(label, isAuto ? uiTextAction_ColorId : uiText_ColorId);    
+    setTextColor_LabelWidget(label, isAuto ? uiTextAction_ColorId : uiText_ColorId);
     setOutline_LabelWidget(label, isAuto);
     if (isTerminal_Platform()) {
         showCollapsed_Widget(as_Widget(label), isOngoing);
@@ -877,19 +923,29 @@ static void updateNavBarSize_(iWidget *navBar) {
     const iBool isPhone  = deviceType_App() == phone_AppDeviceType;
     const iBool isNarrow = !isPhone && isNarrow_Root(navBar->root);
     /* Adjust navbar padding. */ {
-        int hPad   = isPortraitPhone_App() ? 0 : isPhone || isNarrow ? gap_UI / 2 : (gap_UI * 3 / 2);
-        int vPad   = gap_UI * 3 / 2;
+        int hPad   = isPortraitPhone_App() ? 0 : isPhone || isNarrow ? gap_UI : (gap_UI * 3 / 2);
+        int vPad   = gap_UI / 4 * 2;
         int botPad = vPad / 2;
         int topPad = !findWidget_Root("winbar") ? gap_UI / 2 : 0;
+        if (!isPhone) {
+            if (prefs_App()->bottomNavBar) {
+                topPad += vPad;
+                botPad += vPad * 2;
+                hPad = iMax(hPad, botPad) + gap_UI / 3;
+            }
+            else {
+                topPad += vPad * 2;
+                botPad += vPad;
+                hPad = iMax(hPad, topPad) + gap_UI / 3;
+            }
+        }
+        /* Mobile safe insets. */
         if (prefs_App()->bottomNavBar &&
             ((isPhone && isLandscape_App()) || deviceType_App() == tablet_AppDeviceType)) {
             botPad += bottomSafeInset_Mobile();
             hPad += leftSafeInset_Mobile();
         }
-        if (!isPhone && prefs_App()->bottomNavBar) {
-            topPad = vPad / 2 - vPad / 3;
-        }
-        setPadding_Widget(navBar, hPad, vPad / 3 + topPad, hPad, botPad);
+        setPadding_Widget(navBar, hPad, topPad, hPad, botPad);
     }
     /* Button sizing. */
     if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
@@ -1008,16 +1064,23 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "navigate.focus")) {
+        /* FIXME: This should respect the current focus root. */
         /* The upload dialog has its own path field. */
         if (findChild_Widget(root_Widget(navBar), "upload")) {
             postCommand_Root(navBar->root, "focus.set id:upload.path");
             return iTrue;
         }
-        iWidget *url = findChild_Widget(navBar, "url");
-        if (focus_Widget() != url) {
+        iInputWidget *url = findChild_Widget(navBar, "url");
+        if (focus_Widget() != as_Widget(url)) {
             setFocus_Widget(findChild_Widget(navBar, "url"));
         }
-        selectAll_InputWidget((iInputWidget *) url);
+        selectAll_InputWidget(url);
+        if (hasLabel_Command(cmd, "text")) {
+            const iString *text = string_Command(cmd, "text");
+            setText_InputWidget(url, text);
+            postCommand_Widget(url, "input.deselect");
+            submit_LookupWidget(findWidget_App("lookup"), text);
+        }
         return iTrue;
     }
     else if (deviceType_App() != desktop_AppDeviceType &&
@@ -1279,8 +1342,44 @@ static void updateToolBarActions_(iWidget *toolBar) {
 static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
     if (equalWidget_Command(cmd, toolBar, "mouse.clicked") && arg_Command(cmd) &&
         argLabel_Command(cmd, "button") == SDL_BUTTON_RIGHT) {
-        iWidget *menu = findChild_Widget(toolBar, "toolbar.menu");
-        arrange_Widget(menu);
+        /* Long-pressing on the toolbar brings up various menus. */
+        iWidget *hit = hitChild_Widget(toolBar, coord_Command(cmd));
+        iWidget *menu = NULL;
+        if (hit) {
+            const iString *id = id_Widget(hit);
+            if (!cmp_String(id, "toolbar.ident")) {
+                postCommand_App("preferences idents:1");
+                return iTrue;
+            }
+            else if (!cmp_String(id, "toolbar.action1") || !cmp_String(id, "toolbar.action2")) {
+                iArray *items = collectNew_Array(sizeof(iMenuItem));
+                int perRow = 0;
+                for (int i = 0; i < max_ToolbarAction; i++) {
+                    if (deviceType_App() == phone_AppDeviceType &&
+                        (i == leftSidebar_ToolbarAction || i == rightSidebar_ToolbarAction)) {
+                        continue;
+                    }
+                    if (perRow == 4) {
+                        perRow = 0;
+                        pushBack_Array(items, &(iMenuItem){ "---" });
+                    }
+                    pushBack_Array(items, &(iMenuItem){
+                        format_CStr(">>>%s", toolbarActions_Mobile[i].icon), 0, 0,
+                        toolbarActions_Mobile[i].command
+                    });
+                    perRow++;
+                }
+                while (perRow++ < 4) {
+                    /* Balance the last row with some empty labels. */
+                    pushBack_Array(items, &(iMenuItem){ ">>>```" });
+                }
+                menu = makeMenu_Widget(root_Widget(toolBar), data_Array(items), size_Array(items));
+            }
+        }
+        if (!menu) {
+            menu = findChild_Widget(toolBar, "toolbar.menu");
+        }
+        arrange_Widget(menu); /* need to know the height */
         openMenu_Widget(menu, innerToWindow_Widget(menu, init_I2(0, -height_Widget(menu))));
         return iTrue;
     }
@@ -1312,7 +1411,7 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "toolbar.actions.changed")) {
         updateToolBarActions_(toolBar);
-        return iFalse;        
+        return iFalse;
     }
     else if (equal_Command(cmd, "keyboard.changed") && prefs_App()->bottomNavBar) {
         int height = arg_Command(cmd);
@@ -1403,7 +1502,7 @@ void updateMetrics_Root(iRoot *d) {
         setFixedSize_Widget(as_Widget(idName),
                             init_I2(-1, 2 * gap_UI + lineHeight_Text(uiLabelTiny_FontId)));
     }
-    postRefresh_App();
+    postRefresh_Window(get_Window());
 }
 
 static void addUnsplitButton_(iWidget *navBar) {
@@ -1424,7 +1523,9 @@ static int sortByWindowPtrSerial_(const void *e1, const void *e2) {
 static iBool updateWindowMenu_(iWidget *menuBarItem, const char *cmd) {
     /* Note: This only works with non-native menus. */
     if (equalWidget_Command(cmd, menuBarItem, "menu.opened")) {
-        /* Get rid of the old window list. See `windowMenuItems_` in window.c for the fixed list. */
+        /* TODO: Use the `updateMenuItems` callback instead of this. */
+        /* Remove the old dynamic window list items first. See `windowMenuItems_` in window.c
+           for the fixed list. */
         iWidget *menu = findChild_Widget(menuBarItem, "menu");
         while (childCount_Widget(menu) > 9) {
             destroy_Widget(removeChild_Widget(menu, child_Widget(menu, 9)));
@@ -1467,6 +1568,90 @@ static iBool updateMobilePageMenuItems_(iWidget *menu, const char *cmd) {
                                 ' ');
     }
     return handleMenuCommand_Widget(menu, cmd);
+}
+
+void createClipMenu_Root(iRoot *d) {
+    iWidget *clipMenu = makeMenu_Widget(d->widget,
+#if defined (iPlatformMobile)
+        (iMenuItem[]){
+            { ">>>" scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
+            { ">>>" clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
+            { ">>>" clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
+            { "---" },
+            { ">>>" delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
+            { ">>>" select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
+            { ">>>" undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
+            { "---" },
+            { "${menu.paste.snippet}", 0, 0, "snippetmenu" },
+        }, 9);
+#else
+        (iMenuItem[]){
+            { scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
+            { clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
+            { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
+            { return_Icon " ${menu.paste.go}", 0, 0, "input.paste enter:1" },
+            { "${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" },
+            { "---" },
+            { delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
+            { undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
+            { "---" },
+            { select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
+        }, 10);
+#endif
+    setId_Widget(clipMenu, "clipmenu");
+    if (deviceType_App() == phone_AppDeviceType) {
+        /* Small screen; conserve space by removing the Cancel item. */
+        iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
+        iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
+        iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
+    }
+}
+
+void createSplitMenu_Root(iRoot *d, iBool withShortcuts) {
+    iMenuItem items[] = {
+        { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
+        { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
+        { "---" },
+        { "${menu.split.horizontal}", '3', 0, "ui.split arg:3 axis:0" },
+        { "${menu.split.horizontal} 1:2", SDLK_d, 0, "ui.split arg:1 axis:0" },
+        { "${menu.split.horizontal} 2:1", SDLK_e, 0, "ui.split arg:2 axis:0" },
+        { "---" },
+        { "${menu.split.vertical}", '2', 0, "ui.split arg:3 axis:1" },
+        { "${menu.split.vertical} 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
+        { "${menu.split.vertical} 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
+    };
+    if (!withShortcuts) {
+        iForIndices(i, items) {
+            items[i].key = -1; /* prevent assiging shortcut from keybindings */
+        }
+    }
+    iWidget *splitMenu = makeMenu_Widget(d->widget, items, iElemCount(items));
+    setId_Widget(splitMenu, "splitmenu");
+    setFlags_Widget(splitMenu, disabledWhenHidden_WidgetFlag, iTrue); /* enabled when open */
+}
+
+void recreateSnippetMenu_Root(iRoot *d) {
+    const iStringArray *snipNames = names_Snippets();
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    iConstForEach(StringArray, s, snipNames) {
+        if (startsWith_String(s.value, "!")) {
+            continue;
+        }
+        pushBack_Array(items,
+                       &(iMenuItem){ format_CStr(clipboard_Icon " %s", cstr_String(s.value)),
+                                     0,
+                                     0,
+                                     format_CStr("!input.paste snippet:%s", cstr_String(s.value)) });
+    }
+    if (!isEmpty_Array(items)) {
+        pushBack_Array(items, &(iMenuItem){ "---" });
+    }
+    pushBack_Array(items,
+                   &(iMenuItem){ gear_Icon " ${menu.snip.prefs}", 0, 0, "preferences sniped:1" });
+    iWidget *menu = findChild_Widget(d->widget, "snippetmenu");
+    destroy_Widget(menu);
+    menu = makeMenu_Widget(d->widget, data_Array(items), size_Array(items));
+    setId_Widget(menu, "snippetmenu");
 }
 
 void createUserInterface_Root(iRoot *d) {
@@ -1535,19 +1720,25 @@ void createUserInterface_Root(iRoot *d) {
             div,
             iClob(makeMenuBar_Widget(topLevelMenus_Window, iElemCount(topLevelMenus_Window))),
             collapse_WidgetFlag);
+        /* Bookmarks menu is updated with the current folder structure. */ {
+            iWidget *bookmarksMenu = findChild_Widget(child_Widget(menuBar, 3), "menu");
+            bookmarksMenu->updateMenuItems = updateBookmarksMenu_Widget;
+            bookmarksMenu->menuClosed      = cleanupBookmarksMenu_Widget;
+        }
         /* The window menu needs to be dynamically updated with the list of open windows. */
+        /* TODO: Use Widget's `updateMenuItems` callback. */
         setCommandHandler_Widget(child_Widget(menuBar, 5), updateWindowMenu_);
         setId_Widget(menuBar, "menubar");
 #  if 0
         addChildFlags_Widget(menuBar, iClob(new_Widget()), expand_WidgetFlag);
-        /* It's nice to use this space for something, but it should be more valuable than 
+        /* It's nice to use this space for something, but it should be more valuable than
            just the app version... */
         iLabelWidget *ver = addChildFlags_Widget(menuBar, iClob(new_LabelWidget(LAGRANGE_APP_VERSION, NULL)),
                                                  frameless_WidgetFlag);
         setTextColor_LabelWidget(ver, uiAnnotation_ColorId);
 #  endif
     }
-#endif        
+#endif
     iWidget *navBar;
     /* Navigation bar. */ {
         navBar = new_Widget();
@@ -1722,7 +1913,7 @@ void createUserInterface_Root(iRoot *d) {
                                      iClob(pin),
                                      embedFlags | collapse_WidgetFlag | tight_WidgetFlag |
                                          resizeToParentHeight_WidgetFlag);
-                updateSize_LabelWidget(pin);        
+                updateSize_LabelWidget(pin);
             }
             /* Reload button. */ {
                 iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
@@ -1746,6 +1937,8 @@ void createUserInterface_Root(iRoot *d) {
                                               home_Icon, 0, 0, "navigate.home")),
                                           collapse_WidgetFlag),
                      "navbar.action4");
+        setId_Widget(makeMenu_Widget(root, userDataMenuItems_, iElemCount(userDataMenuItems_)),
+                     "userdatamenu");
 #if !defined (LAGRANGE_MAC_MENUBAR)
         /* Hamburger menu. */ {
             iLabelWidget *navMenu = makeMenuButton_LabelWidget(
@@ -1812,7 +2005,7 @@ void createUserInterface_Root(iRoot *d) {
         else {
             /* Sidebar is a slide-over sheet. */
             addChild_Widget(root, iClob(sidebar1));
-            setFlags_Widget(as_Widget(sidebar1), hidden_WidgetFlag, iTrue);            
+            setFlags_Widget(as_Widget(sidebar1), hidden_WidgetFlag, iTrue);
         }
     }
     /* Lookup results. */ {
@@ -1954,53 +2147,22 @@ void createUserInterface_Root(iRoot *d) {
                                 { rightHalf_Icon " ${menu.sidebar.right}", 0, 0, "sidebar2.toggle" },
                             },
                             deviceType_App() == phone_AppDeviceType ? 1 : 2);
-        iWidget *clipMenu = makeMenu_Widget(root,
-#if defined (iPlatformMobile)
-            (iMenuItem[]){
-                { ">>>" scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
-                { ">>>" clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
-                { ">>>" clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
-                { "---" },
-                { ">>>" delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
-                { ">>>" select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
-                { ">>>" undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
-            }, 7);
-#else
-            (iMenuItem[]){
-                { scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
-                { clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
-                { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
-                { return_Icon " ${menu.paste.go}", 0, 0, "input.paste enter:1" },
-                { "---" },
-                { delete_Icon " " uiTextCaution_ColorEscape "${menu.delete}", 0, 0, "input.delete" },
-                { undo_Icon " ${menu.undo}", 0, 0, "input.undo" },
-                { "---" },
-                { select_Icon " ${menu.selectall}", 0, 0, "input.selectall" },
-            }, 9);
-#endif
-        if (deviceType_App() == phone_AppDeviceType) {
-            /* Small screen; conserve space by removing the Cancel item. */
-            iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
-            iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
-            iRelease(removeChild_Widget(clipMenu, lastChild_Widget(clipMenu)));
-        }
-        iWidget *splitMenu = makeMenu_Widget(root, (iMenuItem[]){
-            { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
-            { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
-            { "---" },
-            { "${menu.split.horizontal}", '3', 0, "ui.split arg:3 axis:0" },
-            { "${menu.split.horizontal} 1:2", SDLK_d, 0, "ui.split arg:1 axis:0" },
-            { "${menu.split.horizontal} 2:1", SDLK_e, 0, "ui.split arg:2 axis:0" },
-            { "---" },
-            { "${menu.split.vertical}", '2', 0, "ui.split arg:3 axis:1" },
-            { "${menu.split.vertical} 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
-            { "${menu.split.vertical} 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
-        }, 10);
-        setFlags_Widget(splitMenu, disabledWhenHidden_WidgetFlag, iTrue); /* enabled when open */
+        createClipMenu_Root(d);
+        recreateSnippetMenu_Root(d);
+        createSplitMenu_Root(d, iTrue);
+        iWidget *toolsMenu = makeMenu_Widget(root, (iMenuItem[]) {
+           { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+           { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
+           { "---" },
+           { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
+           { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
+           { "---" },
+           { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+           { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
+        }, 8);
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");
-        setId_Widget(clipMenu, "clipmenu");
-        setId_Widget(splitMenu, "splitmenu");
+        setId_Widget(toolsMenu, "toolsmenu");
     }
     /* Global keyboard shortcuts. */ {
         addAction_Widget(root, SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home");
@@ -2100,7 +2262,7 @@ static void setupMovableElements_Root_(iRoot *d) {
     }
     setTabBarPosition_Widget(docTabs, prefs->bottomTabBar);
     arrange_Widget(d->widget);
-    postRefresh_App();
+    refresh_Widget(d->widget);
     postCommand_App("window.resized"); /* not really, but some widgets will update their layout */
 }
 
@@ -2252,7 +2414,7 @@ iRect visibleRect_Root(const iRoot *d) {
     /* Apply the usable bounds of the display. */
     SDL_Rect usable;
     /* TODO: Needs some investigation. With multiple monitors, at least on macOS, the bounds
-       returned here seem incorrect sometimes (infrequently). */    
+       returned here seem incorrect sometimes (infrequently). */
     if (iFalse) {
         const float ratio = d->window->pixelRatio;
         SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->window->win), &usable);
@@ -2266,7 +2428,7 @@ iRect visibleRect_Root(const iRoot *d) {
         /* Make it relative to the window. */
         usable.x -= winPos.x;
         usable.y -= winPos.y;
-        visRect = intersect_Rect(visRect, init_Rect(usable.x, usable.y, usable.w, usable.h));        
+        visRect = intersect_Rect(visRect, init_Rect(usable.x, usable.y, usable.w, usable.h));
     }
 #endif
     if (get_MainWindow()) {

@@ -276,9 +276,11 @@ static const iPtrArray *listFeedEntries_SidebarWidget_(const iSidebarWidget *d) 
 static const iMenuItem bookmarkModeMenuItems_[] = {
     { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
     { "---" },
-    { add_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
+    { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
     { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
     { "---" },
+    { rightAngle_Icon " ${menu.foldall}", 0, 0, "bookmark.foldall arg:1" },
+    { downAngle_Icon " ${menu.unfoldall}", 0, 0, "bookmark.foldall arg:0" },
     { reload_Icon " ${bookmarks.reload}", 0, 0, "bookmarks.reload.remote" }
 };
 
@@ -504,7 +506,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                     if (bm->flags & homepage_BookmarkFlag) {
                         appendChar_String(&item->meta, 0x1f3e0);
                     }
-                    if (bm->flags & remote_BookmarkFlag) { 
+                    if (bm->flags & remote_BookmarkFlag) {
                         item->listItem.isDraggable = iFalse;
                     }
                     if (bm->flags & remoteSource_BookmarkFlag) {
@@ -536,7 +538,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 { "", 0, 0, "bookmark.tag tag:homepage" },
                 { "", 0, 0, "bookmark.tag tag:remotesource" },
                 { "---", 0, 0, NULL },
-                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
+                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", SDLK_BACKSPACE, 0, "bookmark.delete" },
                 { "---", 0, 0, NULL },
                 { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
                 { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
@@ -557,7 +559,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                         { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
                         { "---" },
                         { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.folder.delete}",
-                          0, 0, "bookmark.delete" },
+                          SDLK_BACKSPACE, 0, "bookmark.delete" },
                         { "---" } },
                     7);
                 if (isMobile_Platform()) {
@@ -631,7 +633,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 { "---", 0, 0, NULL },
                 { close_Icon " ${menu.forgeturl}", 0, 0, "history.delete" },
                 { "---", 0, 0, NULL },
-                { delete_Icon " " uiTextCaution_ColorEscape "${history.clear}", 0, 0, "history.clear confirm:1" },                
+                { delete_Icon " " uiTextCaution_ColorEscape "${history.clear}", 0, 0, "history.clear confirm:1" },
             };
             d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             d->modeMenu = makeMenu_Widget(
@@ -659,7 +661,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
             break;
     }
     setFlags_Widget(as_Widget(d->list), hidden_WidgetFlag, d->mode == identities_SidebarMode);
-    setFlags_Widget(as_Widget(d->certList), hidden_WidgetFlag, d->mode != identities_SidebarMode);    
+    setFlags_Widget(as_Widget(d->certList), hidden_WidgetFlag, d->mode != identities_SidebarMode);
     scrollOffset_ListWidget(list_SidebarWidget_(d), 0);
     updateVisible_ListWidget(list_SidebarWidget_(d));
     invalidate_ListWidget(list_SidebarWidget_(d));
@@ -1165,12 +1167,16 @@ static uint32_t bookmarkEditorId_(const iWidget *editor) {
     iAssert(startsWith_String(id_Widget(editor), "bmed."));
     uint32_t bmId = strtoul(cstr_String(id_Widget(editor)) + 5, NULL, 10);
     iAssert(bmId != 0);
-    return bmId;    
+    return bmId;
 }
 
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
     if (equal_Command(cmd, "dlg.bookmark.setfolder")) {
         setBookmarkEditorParentFolder_Widget(editor, arg_Command(cmd));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "widget.resized")) {
+        updateBookmarkEditorFieldWidths_Widget(editor);
         return iTrue;
     }
     else if (equal_Command(cmd, "bmed.dup")) {
@@ -1293,15 +1299,16 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
     else if (equal_Command(cmd, "toggle")) {
         if (arg_Command(cmd) && isVisible_Widget(w)) {
             return iTrue;
-        }        
+        }
+        if (argLabel_Command(cmd, "hide") && !isVisible_Widget(w)) {
+            return iTrue;
+        }
         const iBool isAnimated = prefs_App()->uiAnimations &&
                                  argLabel_Command(cmd, "noanim") == 0 &&
                                  (d->side == left_SidebarSide || deviceType_App() != phone_AppDeviceType);
         int visX = 0;
-//        int visY = 0;
         if (isVisible_Widget(w)) {
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
-//            visY = top_Rect(bounds_Widget(w)) - top_Rect(w->root->widget->rect);
         }
         const iBool isHiding = isVisible_Widget(w);
         if (!isHiding && !isMobile_Platform()) {
@@ -1444,6 +1451,11 @@ static void gotoNearestSlidingSheetPos_SidebarWidget_(iSidebarWidget *d) {
                                       ? top_SlidingSheetPos
                                       : pos > midRegion.end ? bottom_SlidingSheetPos
                                                             : middle_SlidingSheetPos);
+}
+
+static iBool isFolder_(void *context, const iBookmark *bm) {
+    iUnused(context);
+    return isFolder_Bookmark(bm);
 }
 
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
@@ -1599,6 +1611,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                        argLabel_Command(cmd, "button"));
             return iTrue;
         }
+        else if (isCommand_Widget(w, ev, "list.delete")) {
+            if (d->mode == bookmarks_SidebarMode) {
+                d->contextItem = item_ListWidget(d->list, arg_Command(cmd));
+                postCommand_Widget(w, "bookmark.delete");
+                return iTrue;
+            }
+        }
         else if (isCommand_Widget(w, ev, "list.dragged")) {
             iAssert(d->mode == bookmarks_SidebarMode);
             if (hasLabel_Command(cmd, "onto")) {
@@ -1716,6 +1735,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
                 setBookmarkEditorParentFolder_Widget(dlg, bm ? bm->parentId : 0);
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
+                setResizeId_Widget(dlg, "bmed");
+                restoreWidth_Widget(dlg);
                 postCommand_Root(dlg->root, "focus.set id:bmed.title");
             }
             return iTrue;
@@ -1769,6 +1790,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         postCommand_App("bookmarks.changed");
                     }
                     else {
+                        setFocus_Widget(NULL);
                         const size_t numBookmarks = numBookmarks_(list);
                         makeQuestion_Widget(uiHeading_ColorEscape "${heading.confirm.bookmarks.delete}",
                                             formatCStrs_Lang("dlg.confirm.bookmarks.delete.n", numBookmarks),
@@ -1808,6 +1830,19 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                  item->listItem.isDropTarget
                                      ? item->id
                                      : get_Bookmarks(bookmarks_App(), item->id)->parentId);
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "bookmark.foldall")) {
+            clear_IntSet(d->closedFolders);
+            if (arg_Command(cmd)) {
+                iConstForEach(PtrArray, i,
+                              list_Bookmarks(bookmarks_App(), NULL, isFolder_, NULL)) {
+                    insert_IntSet(d->closedFolders, id_Bookmark(i.ptr));
+                }
+            }
+            if (d->mode == bookmarks_SidebarMode) {
+                updateItems_SidebarWidget_(d);
             }
             return iTrue;
         }
@@ -1880,7 +1915,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                             }
                         }
                     }
-                    postCommand_App("visited.changed");                    
+                    postCommand_App("visited.changed");
                     return iTrue;
                 }
                 else if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {
@@ -2020,7 +2055,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             postCommand_Widget(w, "sidebar.toggle");
             return iTrue;
         }
-#endif        
+#endif
     }
     if (ev->type == SDL_MOUSEMOTION &&
         (!isVisible_Widget(d->menu) && !isVisible_Widget(d->modeMenu))) {
@@ -2183,7 +2218,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 iAssert(hoverItem);
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), hoverItem->id);
                 if (isFolder_Bookmark(bm)) {
-                    contextMenu = d->folderMenu;                    
+                    contextMenu = d->folderMenu;
                 }
                 else if (!isVisible_Widget(d->menu)) {
                     const iBool        isRemote        = (bm->flags & remote_BookmarkFlag) != 0;
@@ -2221,7 +2256,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
             makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         }
     }
-*/
+    */
     if (!isPortraitPhone_App()) { /* this would erase page contents during transition on the phone */
         if (flags_Widget(w) & visualOffset_WidgetFlag &&
             flags_Widget(w) & horizontalOffset_WidgetFlag && isVisible_Widget(w)) {
@@ -2242,6 +2277,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list) {
     const iSidebarWidget *sidebar = findParentClass_Widget(constAs_Widget(list),
                                                            &Class_SidebarWidget);
+    const iBool isListFocus  = isFocused_Widget(list);
     const iBool isMenuVisible = isVisible_Widget(sidebar->menu);
     const iBool isDragging   = constDragItem_ListWidget(list) == d;
     const iBool isEditing    = sidebar->isEditing; /* only on mobile */
@@ -2435,8 +2471,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                            isHover && isPressing ? fg : uiTextShortcut_ColorId,
                            range);
             mpos.x += metaIconWidth;
-            range.start = range.end;            
-        }        
+            range.start = range.end;
+        }
     }
     else if (sidebar->mode == history_SidebarMode) {
         iBeginCollect();
@@ -2495,6 +2531,10 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             }
         }
         iEndCollect();
+    }
+    if (isListFocus && isHover && !isTerminal_Platform()) {
+        /* Visualize the keyboard cursor. */
+        drawRect_Paint(p, shrunk_Rect(itemRect, one_I2()), uiTextAction_ColorId);
     }
 }
 

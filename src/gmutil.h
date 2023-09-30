@@ -51,6 +51,7 @@ enum iGmStatusCode {
     proxyCertificateNotVerified_GmStatusCode,
     ansiEscapes_GmStatusCode,
     missingGlyphs_GmStatusCode,
+    unsupportedMimeTypeShownAsUtf8_GmStatusCode,
 
     none_GmStatusCode                      = 0,
     /* general status code categories */

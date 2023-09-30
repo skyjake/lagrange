@@ -54,9 +54,11 @@ struct Impl_LabelWidget {
         uint16_t wrap                : 1;
         uint16_t allCaps             : 1;
         uint16_t removeTrailingColon : 1;
-        uint16_t chevron             : 1;        
+        uint16_t chevron             : 1;
         uint16_t checkMark           : 1;
         uint16_t truncateToFit       : 1;
+        uint16_t menuCanceling       : 1;
+        uint16_t noLabel             : 1;
     } flags;
 };
 
@@ -70,14 +72,19 @@ static iBool isHover_LabelWidget_(const iLabelWidget *d) {
 static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
     const iWidget *w = constAs_Widget(d);
     const int64_t flags = flags_Widget(w);
-    const iInt2 widgetPad = (corner   == 0 ? init_I2(w->padding[0], w->padding[1])
-                             : corner == 1 ? init_I2(w->padding[2], w->padding[1])
-                             : corner == 2 ? init_I2(w->padding[2], w->padding[3])
-                             : init_I2(w->padding[0], w->padding[3]));
+    iInt2          widgetPad = (corner == 0   ? init_I2(w->padding[0], w->padding[1])
+                                : corner == 1 ? init_I2(w->padding[2], w->padding[1])
+                                : corner == 2 ? init_I2(w->padding[2], w->padding[3])
+                                              : init_I2(w->padding[0], w->padding[3]));
     if (isMobile_Platform()) {
         return add_I2(widgetPad,
                       init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
                               (flags & extraPadding_WidgetFlag ? 1.5f : 1.0f) * 3 * gap_UI / 2));
+    }
+    if (d->flags.chevron) {
+        if (corner == 1 || corner == 2) {
+            widgetPad.x += gap_UI * 5;
+        }
     }
     return add_I2(widgetPad,
                   init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI),
@@ -99,6 +106,10 @@ static void trigger_LabelWidget_(const iLabelWidget *d) {
         iForEach(ObjectList, i, children_Widget(w->parent)) {
             setFlags_Widget(i.object, selected_WidgetFlag, d == i.object);
         }
+    }
+    /* Triggering a menu item will always close all popup menus. */
+    if (d->flags.menuCanceling) {
+        postCommand_Widget(&d->widget, "menu.cancel");
     }
 }
 
@@ -215,7 +226,9 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
                 endSiblingOrderDrag_LabelWidget_(d);
                 trigger_LabelWidget_(d);
                 refresh_Widget(w);
-                setFocus_Widget(NULL);
+                if (focus_Widget() == w) {
+                    setFocus_Widget(NULL);
+                }
                 return iTrue;
             default:
                 break;
@@ -329,7 +342,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 *frame1 = *bg;
             }
         }
-    }    
+    }
     if (isFocus) {
         *frame1 = *frame2 = (isSel ? uiText_ColorId : uiInputFrameFocused_ColorId);
     }
@@ -453,7 +466,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     if (isFocused_Widget(w)) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
-        drawRectThickness_Paint(&p, frameRect, gap_UI / 4, uiTextAction_ColorId /*frame*/);        
+        drawRectThickness_Paint(&p, frameRect, gap_UI / 4, uiTextAction_ColorId /*frame*/);
     }
     else if (~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
@@ -468,7 +481,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
 #if SDL_COMPILEDVERSION == SDL_VERSIONNUM(2, 0, 16)
             if (isOpenGLRenderer_Window()) {
                 /* A very curious regression in SDL 2.0.16. */
-                points[3].x--;    
+                points[3].x--;
             }
 #endif
             if (d->flags.noBottomFrame && !isFocused_Widget(w) && !isHover) {
@@ -569,11 +582,17 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         const iRect chRect = rect;
         const int chSize = lineHeight_Text(d->font);
         int offset = 0;
-        if (d->flags.chevron) {
-            offset = -iconPad;
+        if (isMobile_Platform()) {
+            /* These are used in the sub-panel buttons. */
+            if (d->flags.chevron) {
+                offset = -iconPad;
+            }
+            else {
+                offset = -10 * gap_UI;
+            }
         }
         else {
-            offset = -10 * gap_UI;
+            offset = -6 * gap_UI;
         }
         drawCentered_Text(d->font,
                           (iRect){ addX_I2(topRight_Rect(chRect), offset),
@@ -604,8 +623,14 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
 iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const int64_t flags = flags_Widget(w);
-    iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)).bounds.size,
-                        add_I2(padding_LabelWidget_(d, 0), padding_LabelWidget_(d, 2)));
+    iInt2 size;
+    if (!d->flags.noLabel) {
+        size = add_I2(measure_Text(d->font, cstr_String(&d->label)).bounds.size,
+                      add_I2(padding_LabelWidget_(d, 0), padding_LabelWidget_(d, 2)));
+    }
+    else {
+        size = zero_I2();
+    }
     if ((flags & drawKey_WidgetFlag) && d->key) {
         iString str;
         init_String(&str);
@@ -657,9 +682,16 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->iconColor = none_ColorId;
     d->icon = 0;
     d->labelOffset = zero_I2();
-    initCStr_String(&d->srcLabel, label);
-    initCopy_String(&d->label, &d->srcLabel);
-    replaceVariables_LabelWidget_(d);
+    if (label) {
+        initCStr_String(&d->srcLabel, label);
+        initCopy_String(&d->label, &d->srcLabel);
+        replaceVariables_LabelWidget_(d);
+    }
+    else {
+        d->flags.noLabel = iTrue;
+        init_String(&d->srcLabel);
+        init_String(&d->label);
+    }
     if (cmd) {
         initCStr_String(&d->command, cmd);
     }
@@ -766,6 +798,12 @@ void setRemoveTrailingColon_LabelWidget(iLabelWidget *d, iBool removeTrailingCol
     if (d) {
         d->flags.removeTrailingColon = removeTrailingColon;
         replaceVariables_LabelWidget_(d);
+    }
+}
+
+void setMenuCanceling_LabelWidget(iLabelWidget *d, iBool menuCanceling) {
+    if (d) {
+        d->flags.menuCanceling = menuCanceling;
     }
 }
 

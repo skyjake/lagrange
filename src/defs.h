@@ -72,6 +72,14 @@ iLocalDef iBool isAppleMobile_Platform(void) {
 #endif
 }
 
+iLocalDef iBool isLinux_Platform(void) {
+#if defined (iPlatformLinux)
+    return iTrue;
+#else
+    return iFalse;
+#endif
+}
+
 iLocalDef iBool isAndroid_Platform(void) {
 #if defined (iPlatformAndroid)
     return iTrue;
@@ -104,8 +112,9 @@ enum iFileVersion {
     documentSetIdentity_FileVersion     = 7,
     responseIdentity_FileVersion        = 8,
     recentUrlSetIdentity_FileVersion    = 9,
+    recentlySubmittedInput_FileVersion  = 10,
     /* meta */
-    latest_FileVersion = 9, /* used by state.lgr */
+    latest_FileVersion = 10, /* used by state.lgr */
     idents_FileVersion = 1, /* used by GmCerts/idents.lgr */
 };
 
@@ -115,6 +124,16 @@ enum iImageStyle {
     bgFg_ImageStyle               = 2,
     textColorized_ImageStyle      = 3,
     preformatColorized_ImageStyle = 4,
+};
+
+enum iFeedInterval {
+    manual_FeedInterval          = 0,
+    thirtyMinutes_FeedInterval   = 60 * 30,
+    oneHour_FeedInterval         = 60 * 60,
+    twoHours_FeedInterval        = 60 * 60 * 2,
+    fourHours_FeedInterval       = 60 * 60 * 4,
+    eightHours_FeedInterval      = 60 * 60 * 8,
+    oneDay_FeedInterval          = 60 * 60 * 24,
 };
 
 enum iScrollType {
@@ -137,7 +156,10 @@ enum iToolbarAction {
     editPage_ToolbarAction    = 10,
     findText_ToolbarAction    = 11,
     settings_ToolbarAction    = 12,
-    sidebar_ToolbarAction     = 13, /* desktop only */
+    leftSidebar_ToolbarAction    = 13, /* desktop/tablet only */
+    rightSidebar_ToolbarAction   = 14, /* desktop/tablet only */
+    scrollToTop_ToolbarAction    = 15,
+    scrollToBottom_ToolbarAction = 16,
     max_ToolbarAction
 };
 
@@ -248,6 +270,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define unhappy_Icon        "\U0001f641"
 #define globe_Icon          "\U0001f310"
 #define envelope_Icon       "\U0001f4e7"
+#define hammer_Icon         "\U0001f528"
 #define magnifyingGlass_Icon "\U0001f50d"
 #define midEllipsis_Icon    "\u2022\u2022\u2022"
 #define return_Icon         "\u23ce"
@@ -262,6 +285,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define toggleYes_Icon      check_Icon
 #define toggleNo_Icon       bullet_Icon
 #define spartan_Icon        "\U0001f4aa"
+#define nex_Icon            "\U0001f687"
 #define keyboard_Icon       "\u2328"
 #define network_Icon        "\U0001f5a7"
 #define computer_Icon       "\U0001f5b3"

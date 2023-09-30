@@ -46,12 +46,15 @@ You need a POSIX-compatible environment to compile Lagrange.
 The required tools are a C11 compiler (e.g., Clang or GCC), CMake, `pkg-config`, and `zip`. Additional tools are required if HarfBuzz and GNU FriBidi are also compiled as part of the build (see next section for details).
 
 1. Download and extract a source tarball from [Releases][rel]. Please note that the GitHub/Gitea-generated tarballs do not contain HarfBuzz, GNU FriBidi, or [the_Foundation](https://git.skyjake.fi/skyjake/the_Foundation) submodules; check which tarball you are downloading. Alternatively, you may also clone the repository and its submodules: `git clone --recursive --branch release https://git.skyjake.fi/gemini/lagrange`
-2. Check that you have the recommended build tools and dependencies installed: SDL 2, OpenSSL 1.1.1, libpcre, libunistring, GNU FriBidi, and zlib. For example, on macOS this would do the trick (using Homebrew): ```brew install cmake sdl2 openssl@1.1 pcre libunistring fribidi``` Or on Ubuntu: ```sudo apt install cmake zip libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libfribidi-dev```
-3. Optionally, install the mpg123 decoder library for MPEG audio support. For example, the macOS Homebrew package is `mpg123` and on Ubuntu it is `libmpg123-dev`.
+2. Check that you have the recommended build tools and dependencies installed: SDL 2, OpenSSL 1.1.1, libpcre, libunistring, GNU FriBidi, and zlib. For example,
+   * on macOS using Homebrew: `brew install cmake automake sdl2 openssl@1.1 pcre libunistring fribidi`
+   * on Ubuntu: `sudo apt install cmake zip libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libfribidi-dev`
+   * on Fedora: `sudo dnf install cmake zip SDL2-devel openssl-devel pcre-devel zlib-devel libunistring-devel fribidi-devel`
+3. Optionally, install the mpg123 decoder library for MPEG audio support. For example, the macOS Homebrew package is `mpg123`, on Ubuntu it is `libmpg123-dev`, and on Fedora it is `mpg123-devel`.
 4. Create a build directory.
-5. In your empty build directory, run CMake: ```cmake {path_of_lagrange_sources} -DCMAKE_BUILD_TYPE=Release```
-6. Build it: ```cmake --build .```
-7. Now you can run *lagrange*, *lagrange.exe*, or *Lagrange.app*.
+5. In your empty build directory, run CMake to configure: `cmake {path_of_lagrange_sources} -DCMAKE_BUILD_TYPE=Release`
+6. Build it: `cmake --build .`
+7. Now you can run `lagrange`, `lagrange.exe`, or `Lagrange.app`.
 
 ### Unicode text rendering
 
@@ -141,7 +144,7 @@ Once you have compiled a working binary under MSYS2, there is still an additiona
 
 On Raspberry Pi 4/400, you can compile and run Lagrange just like on a regular desktop PC. Accelerated OpenGL graphics should work fine under X11.
 
-On Raspberry Pi 3 or earlier, you should use a version of SDL that is compiled to take advantage of the Broadcom VideoCore OpenGL ES hardware. This provides the best performance when running Lagrange in a console. OpenGL under X11 on Raspberry Pi 2/3 is quite slow/experimental. When running under X11, software rendering is the best choice and the SDL from Raspbian etc. is sufficient.
+On Raspberry Pi 3 or earlier, you should use a version of SDL that is compiled to take advantage of the Broadcom VideoCore OpenGL ES hardware. This provides the best performance when running Lagrange in a console. OpenGL under X11 on Raspberry Pi 2/3 is quite slow/experimental. When running under X11, software rendering is the best choice and the SDL from, say, Raspberry Pi OS is sufficient.
 
 The following build options are recommended on Raspberry Pi 2/3:
 
@@ -162,7 +165,7 @@ After these utilities are available, the scripts in _ios/_ can be used as a basi
 
 1. Meson cross-compilation is controlled with _ios/cross-mac-arm64-ios-arm64.ini_. Modify it to be compatible with your build system and target device.
 2. _ios/deps.sh_ compiles most of the dependencies using Meson, Ninja, and _iconfigure_. Note that the simulator build has not been set up in these scripts, only the `os` build.
-3. Clone [OpenSSL for iPhone](https://github.com/x2on/OpenSSL-for-iPhone.git) and build it with iOS 9.0 as the minimum version. Deploy the static libraries in *$HOME/SDK/ios/$arch/*, or wherever you've set `IOS_DIR` to be.
+3. Clone [OpenSSL for iPhone](https://github.com/x2on/OpenSSL-for-iPhone.git) and build it with iOS 9.0 as the minimum version. Deploy the static libraries in _$HOME/SDK/ios/$arch/_, or wherever you've set `IOS_DIR` to be.
 4. Create an empty build directory for the\_Foundation and run _ios/cmake-ios-tf.sh_ from there. You may need to adjust the source directory path in the script depending on where you place your build directory.
 5. Now you can `make install` to build and deploy the_Foundation to `IOS_DIR`.
 6. Finally, you can run CMake like in _ios/cmake-ios-lagrange.sh_ to generate an Xcode project that builds the app.
@@ -171,9 +174,9 @@ If FriBidi and HarfBuzz are not used (disabling RTL and complex text rendering),
 
 ## User files
 
-On Windows, user files are stored in *%HOMEPATH%/AppData/Roaming/fi.skyjake.Lagrange/*, unless one is using the portable distribution and there is a *userdata/* subdirectory present in the executable directory.
+On Windows, user files are stored in _%HOMEPATH%/AppData/Roaming/fi.skyjake.Lagrange/_, unless one is using the portable distribution and there is a _userdata/_ subdirectory present in the executable directory.
 
-On macOS, user files are stored in *~/Library/Application Support/fi.skyjake.Lagrange/*.
+On macOS, user files are stored in _~/Library/Application Support/fi.skyjake.Lagrange/_.
 
 On Linux/*BSD/other operating systems, user files stored in _~/.config/lagrange/_ unless you have customized the XDG directories, in which case the `XDG_CONFIG_HOME` environment variable is used to determine where user files saved.
 

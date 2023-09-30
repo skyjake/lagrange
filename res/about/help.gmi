@@ -10,8 +10,8 @@
 
 Gemini is a simple protocol for serving content over the internet. It specifies a Markdown inspired format allowing basic plain text document markup. Compared to HTTP and HTML, Gemini is vastly simpler and easier to work with.
 
-=> gemini://gemini.circumlunar.space/docs/faq.gmi Project Gemini FAQ
-=> gemini://gemini.circumlunar.space/docs/specification.gmi Protocol and 'text/gemini' specification
+=> gemini://geminiprotocol.net/docs/faq.gmi Project Gemini FAQ
+=> gemini://geminiprotocol.net/docs/specification.gmi Protocol and 'text/gemini' specification
 
 ## What is Lagrange
 
@@ -141,7 +141,7 @@ Lagrange has two modes for navigating links with the keyboard. The first uses a 
 
 You can give it a try now with the link below. Either hold down ${ALT}, or press and release F.
 
-=> gemini://gemini.circumlunar.space/ Project Gemini
+=> gemini://geminiprotocol.net/ Project Gemini
 
 ## 1.2 Tabs
 
@@ -202,7 +202,7 @@ The generated page can be saved to Downloads or you can copy all or parts of it 
 
 To import all links on a page as bookmarks, use the page context menu to select "Import Links as Bookmarks...". You can also right-click on individual links and select "Bookmark Link...".
 
-Importing links on a page will not cause any folders to be (re)created. To fully export and import your bookmarks, tags, custom icons, and folders, see section 1.12. 
+Importing links on a page will not cause any folders to be (re)created. To fully export and import your bookmarks, tags, custom icons, and folders, see section 1.12.
 
 ### 1.4.3 Remote bookmarks
 
@@ -230,7 +230,7 @@ Bookmarks may use a number of special tags that control their behavior. In pract
 ## 1.5 Subscribing to feeds
 
 You may be familiar with XML-based RSS and Atom feeds from the web. The Gemini equivalent of these is Gemini feeds. A Gemini feed is simply a regular 'text/gemini' page that contains one or more links whose labels are formatted in a particular way. This makes it very easy to write pages that clients can subscribe to.
-=> gemini://gemini.circumlunar.space/docs/companion/subscription.gmi  See "Subscribing to Gemini pages" for more information.
+=> gemini://geminiprotocol.net/docs/companion/subscription.gmi  See "Subscribing to Gemini pages" for more information.
 
 Lagrange supports Gemini and Atom feed subscriptions. Atom feeds are automatically translated to the Gemini feed format so they can be viewed and subscribed to like a normal 'text/gemini' page. RSS feeds are not supported.
 
@@ -452,7 +452,7 @@ Other layout options:
 
 ## 2.4 Fonts
 
-This version of Lagrange supports TrueType fonts. To use a new font, simply view a .ttf file in the app and a page footer action is available for performing the installation. For example, try drag-and-dropping a .ttf file on the window. Alternatively, you can manually copy the font to the "fonts" subdirectory of the user-specific configuration directory (see section 3.5). 
+This version of Lagrange supports TrueType fonts. To use a new font, simply view a .ttf file in the app and a page footer action is available for performing the installation. For example, try drag-and-dropping a .ttf file on the window. Alternatively, you can manually copy the font to the "fonts" subdirectory of the user-specific configuration directory (see section 3.5).
 
 The "Page Style" tab of the Preferences dialog contains options that affect the appearance of text in page content. The user interface font can be changed in the "Appearance" tab, along with other text renderer settings.
 
@@ -501,7 +501,7 @@ On the "Appearance" tab, "Font smoothing" enables or disables glyph antialiasing
 
 Open "about:fonts" to see all the installed fonts, and enable, disable or uninstall individual fontpacks. At the top of the page, there is a link to the skyjake.fi Font Library that contains a curated collection of fontpacks that can be freely distributed. From there you can conveniently install more fonts specifically tuned for Lagrange.
 
-The rest of the page is divided to two sections: enabled and disabled fontpacks. Individual packs can be disabled, so they remain installed but not in use. (Tip: Use the Outline sidebar to see a list of all packs, if there are many.) 
+The rest of the page is divided to two sections: enabled and disabled fontpacks. Individual packs can be disabled, so they remain installed but not in use. (Tip: Use the Outline sidebar to see a list of all packs, if there are many.)
 
 Click on the "View file" links to see what each fontpack contains. The fontpack format is described in section 5: it is simply a ZIP archive with some metadata and a bunch of font files. When you install a TrueType font (i.e., copy it to the user's fonts directory), it is treated as a fontpack containing a single file, although no ZIP archive is created for it. Use the "View fontpack.ini template" link to see the generated metadata that can be used as a basis for creating an actual fontpack.
 
@@ -529,7 +529,7 @@ monospace = true
 
 About compatibility: fonts are complex, and while the TrueType format is not the most advanced one, it still has features that are not supported in Lagrange. The technical reason is that glyphs are rasterized using stb_truetype, a rather simple TrueType font library. (It's nice and small, though.) You may find that some fonts simply fail to load correctly, or look wrong in the app.
 
-* Hinting is not supported. 
+* Hinting is not supported.
 * Bitmap glyphs are not supported.
 * Multi-color glyphs are not supported.
 
@@ -548,7 +548,7 @@ When an HTTP proxy server is configured, HTTP/HTTPS links will no longer open in
 
 The "Network" tab of Preferences has a few options related to handling URLs.
 
-Enabling the "Decode URLs" option causes all percent-encoded URLs to be shown in decoded form in the UI. Enabling this option is useful when encountering URLs that contain characters outside the basic Latin (A-Z) alphabet. This does not affect what gets sent to a server when loading pages: Gemini requests are always required to be sent in encoded form. 
+Enabling the "Decode URLs" option causes all percent-encoded URLs to be shown in decoded form in the UI. Enabling this option is useful when encountering URLs that contain characters outside the basic Latin (A-Z) alphabet. This does not affect what gets sent to a server when loading pages: Gemini requests are always required to be sent in encoded form.
 
 The "Maximum URL size" setting defines what is considered a valid link in Gemtext. Link lines with URLs longer than this are not considered to be links and are displayed like regular text lines. This only affects links that don't use the "gemini" scheme. The maximum size of a Gemini URL is 1024 bytes.
 
@@ -568,7 +568,7 @@ To reset all bindings to their defaults, quit Lagrange and delete the "bindings.
 
 Lagrange converts Gopher menus to Gemtext for presentation. There are a couple of settings that control the conversion.
 
-On the "Content" tab, the "Autodetect Gopher menu styling" option controls whether Gopher menus should use autodetected Gemtext styling. By default, the app's Gopher experience mimics that of Gemini, where preformatted ASCII art is in separate blocks and paragraph text has its own (variable-width) font. However, the autodetection does not always get it right. Menus with meticulously crafted ASCII may sometimes be misinterpreted. Disabling the style autodetection makes all text lines equal in appearance. 
+On the "Content" tab, the "Autodetect Gopher menu styling" option controls whether Gopher menus should use autodetected Gemtext styling. By default, the app's Gopher experience mimics that of Gemini, where preformatted ASCII art is in separate blocks and paragraph text has its own (variable-width) font. However, the autodetection does not always get it right. Menus with meticulously crafted ASCII may sometimes be misinterpreted. Disabling the style autodetection makes all text lines equal in appearance.
 
 Enabling monospace body text for Gopher (in the "Page Style" tab) will faithfully present the Gopher source text, with original whitespaces intact, while also using the chosen monospace font for all text.
 
@@ -643,7 +643,7 @@ k : Caps Lock
 This file stores all bookmarks and bookmark folders. The format is a subset of TOML: the only supported value types are strings and integers.
 ```Example bookmark
 [51]
-url = "gemini://gemini.circumlunar.space/"
+url = "gemini://geminiprotocol.net/"
 title = "Project Gemini"
 tags = ""
 icon = 0x264a
@@ -954,7 +954,7 @@ When the path refers to a TrueType Collection (.ttc), the font index to use must
 ```.ttc example
 regular = "NotoSansCJK-Regular.ttc:2"
 ```
- 
+
 # 6 User data archives
 
 Lagrange user data archives are compressed ZIP archives that contain browsing history, identities, bookmarks, site-specific settings, and/or trusted server certificate fingerprints.

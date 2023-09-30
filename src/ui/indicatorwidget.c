@@ -44,7 +44,7 @@ static void animate_IndicatorWidget_(void *ptr) {
     if (!isFinished_Anim(&d->pos)) {
         addTickerRoot_App(animate_IndicatorWidget_, d->widget.root, ptr);
     }
-    postRefresh_App();
+    refresh_Widget(d);
 }
 
 static void setActive_IndicatorWidget_(iIndicatorWidget *d, iBool set) {

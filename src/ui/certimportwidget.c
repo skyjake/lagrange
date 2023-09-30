@@ -48,6 +48,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDefineObjectConstruction(CertImportWidget)
 
+static const int validColor_   = green_ColorId;
+static const int validTextColor_ = uiText_ColorId;
+static const int invalidColor_ = uiEmbossHover2_ColorId;
+
 struct Impl_CertImportWidget {
     iWidget widget;
     iLabelWidget *info;
@@ -85,28 +89,27 @@ static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *dat
     deinit_String(&pem);
     /* Update the labels. */ {
         if (d->cert && !isEmpty_TlsCertificate(d->cert)) {
-            updateTextCStr_LabelWidget(
-                d->crtLabel,
-                format_CStr("%s%s",
-                            uiTextAction_ColorEscape,
-                            cstrCollect_String(subject_TlsCertificate(d->cert))));
-            setFrameColor_Widget(as_Widget(d->crtLabel), uiTextAction_ColorId);
+            updateText_LabelWidget(d->crtLabel, subject_TlsCertificate(d->cert));
+            setTextColor_LabelWidget(d->crtLabel, validTextColor_);
+            setFrameColor_Widget(as_Widget(d->crtLabel), validColor_);
         }
         else {
-            updateTextCStr_LabelWidget(d->crtLabel, uiTextCaution_ColorEscape "${dlg.certimport.nocert}");
-            setFrameColor_Widget(as_Widget(d->crtLabel), uiTextCaution_ColorId);
+            updateTextCStr_LabelWidget(d->crtLabel, "${dlg.certimport.nocert}");
+            setTextColor_LabelWidget(d->crtLabel, invalidColor_);
+            setFrameColor_Widget(as_Widget(d->crtLabel), invalidColor_);
         }
         if (d->cert && hasPrivateKey_TlsCertificate(d->cert)) {
             iString *fng = collect_String(
                 hexEncode_Block(collect_Block(privateKeyFingerprint_TlsCertificate(d->cert))));
             insertData_Block(&fng->chars, size_String(fng) / 2, "\n", 1);
-            updateTextCStr_LabelWidget(
-                d->keyLabel, format_CStr("%s%s", uiTextAction_ColorEscape, cstr_String(fng)));
-            setFrameColor_Widget(as_Widget(d->keyLabel), uiTextAction_ColorId);
+            updateText_LabelWidget(d->keyLabel, fng);
+            setTextColor_LabelWidget(d->keyLabel, validTextColor_);
+            setFrameColor_Widget(as_Widget(d->keyLabel), validColor_);
         }
         else {
-            updateTextCStr_LabelWidget(d->keyLabel, uiTextCaution_ColorEscape "${dlg.certimport.nokey}");
-            setFrameColor_Widget(as_Widget(d->keyLabel), uiTextCaution_ColorId);
+            updateTextCStr_LabelWidget(d->keyLabel, "${dlg.certimport.nokey}");
+            setTextColor_LabelWidget(d->keyLabel, invalidColor_);
+            setFrameColor_Widget(as_Widget(d->keyLabel), invalidColor_);
         }
     }
     return ok;
@@ -153,10 +156,11 @@ void init_CertImportWidget(iCertImportWidget *d) {
         setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(-1, gap_UI * 12));
     }
     else {
-        /* This should behave similar to sheets. */ 
+        /* This should behave similar to sheets. */
         useSheetStyle_Widget(w);
         addDialogTitle_Widget(w, "${heading.certimport}", NULL);
-        d->info = addChildFlags_Widget(w, iClob(new_LabelWidget(infoText_, NULL)), frameless_WidgetFlag);
+        //d->info = addChildFlags_Widget(w, iClob(new_LabelWidget(infoText_, NULL)), frameless_WidgetFlag);
+        d->info = addWrappedLabel_Widget(w, infoText_, NULL);
         addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
         d->crtLabel = new_LabelWidget("", NULL); {
             setFont_LabelWidget(d->crtLabel, uiContent_FontId);
@@ -192,8 +196,10 @@ void init_CertImportWidget(iCertImportWidget *d) {
         iWidget *buttons = makeDialogButtons_Widget(actions, iElemCount(actions));
         addChild_Widget(w, iClob(buttons));
     }
-    setFrameColor_Widget(as_Widget(d->crtLabel), uiTextCaution_ColorId);
-    setFrameColor_Widget(as_Widget(d->keyLabel), uiTextCaution_ColorId);
+    setTextColor_LabelWidget(d->crtLabel, invalidColor_);
+    setTextColor_LabelWidget(d->keyLabel, invalidColor_);
+    setFrameColor_Widget(as_Widget(d->crtLabel), invalidColor_);
+    setFrameColor_Widget(as_Widget(d->keyLabel), invalidColor_);
     if (deviceType_App() != desktop_AppDeviceType) {
         /* Try auto-pasting. */
         postCommand_App("certimport.paste");
@@ -217,7 +223,7 @@ void setPageContent_CertImportWidget(iCertImportWidget *d, const iBlock *content
     }
     else {
         setTextCStr_LabelWidget(
-            d->info, format_CStr("${dlg.certimport.notfound.page}\n%s", infoText_));
+            d->info, format_CStr("${dlg.certimport.notfound.page} %s", infoText_));
     }
     arrange_Widget(as_Widget(d));
 }
@@ -255,7 +261,7 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
                 makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.pasted}",
                                          "${dlg.certimport.notfound}");
             }
-            postRefresh_App();
+            refresh_Widget(d);
             return iTrue;
         }
     }
@@ -264,7 +270,7 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
             makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.pasted}",
                                      "${dlg.certimport.notfound}");
         }
-        postRefresh_App();        
+        refresh_Widget(d);
         return iTrue;
     }
     if (isCommand_UserEvent(ev, "certimport.paste")) {

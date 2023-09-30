@@ -5,6 +5,7 @@ separate tabs.
 
 General options:
 
+      --capslock        Enable Caps Lock as a modifier for keybindings.
   -d, --dump            Print contents of URLs/paths to stdout and quit.
   -I, --dump-identity ARG
                         Use identity ARG with --dump. ARG can be a complete or
@@ -18,10 +19,10 @@ General options:
                         configured.
   -U, --user DIR        Set directory where user data files are stored.
   -V, --version         Print the application version.
-  
+
 Window options:
 
-  -h, --height N        Set initial window height to N pixels.          
+  -h, --height N        Set initial window height to N pixels.
       --prefs-sheet     Open Preferences as a sheet inside the active window.
       --sw              Disable hardware accelerated rendering.
   -w, --width N         Set initial window width to N pixels.
@@ -32,5 +33,7 @@ Options that control a running instance of Lagrange:
   -L, --list-tab-urls   Print the URLs of open tabs to stdout. If the app isn't
                         running, nothing is printed.
       --new-tab [URL]   Open a new tab. If the URL is omitted, the user's
-                        homepage is opened.                              
+                        homepage is opened.
       --tab-url         Print the URL of the active tab.
+  -t, --theme ARG       Change the current UI color theme to ARG ("black",
+                        "dark", "light", "white").

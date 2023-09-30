@@ -90,7 +90,7 @@ static void deinit_WidgetDrawBuffer(iWidgetDrawBuffer *d) {
 }
 
 iDefineTypeConstruction(WidgetDrawBuffer)
-    
+
 static void realloc_WidgetDrawBuffer(iWidgetDrawBuffer *d, SDL_Renderer *render, iInt2 size) {
     if (!isEqual_I2(d->size, size)) {
         d->size = size;
@@ -149,6 +149,7 @@ iDefineObjectConstruction(Widget)
 
 void init_Widget(iWidget *d) {
     init_String(&d->id);
+    init_String(&d->resizeId);
     d->root           = get_Root();
     d->flags          = 0;
     d->flags2         = 0;
@@ -167,11 +168,15 @@ void init_Widget(iWidget *d) {
     init_Anim(&d->overflowScrollOpacity, 0.0f);
     init_String(&d->data);
     iZap(d->padding);
+    d->updateMenuItems = NULL;
+    d->menuClosed = NULL;
+//    d->delayedTimer = 0;
+//    d->delayedCallback = NULL;
 }
 
 static void visualOffsetAnimation_Widget_(void *ptr) {
     iWidget *d = ptr;
-    postRefresh_App();
+    refresh_Widget(d);
     d->root->didAnimateVisualOffsets = iTrue;
 #if 0
     printf("'%s' visoffanim: fin:%d val:%f\n", cstr_String(&d->id),
@@ -187,7 +192,7 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
 
 static void animateOverflowScrollOpacity_Widget_(void *ptr) {
     iWidget *d = ptr;
-    postRefresh_App();
+    refresh_Widget(d);
     if (!isFinished_Anim(&d->overflowScrollOpacity)) {
         addTickerRoot_App(animateOverflowScrollOpacity_Widget_, d->root, ptr);
     }
@@ -217,6 +222,7 @@ void deinit_Widget(iWidget *d) {
     }
 #endif
     deinit_String(&d->data);
+    deinit_String(&d->resizeId);
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_Root(d->root), d);
@@ -228,12 +234,13 @@ void deinit_Widget(iWidget *d) {
         removeTicker_App(animateOverflowScrollOpacity_Widget_, d);
     }
     iWindow *win = d->root->window;
-    iAssert(win);
-    if (win->lastHover == d) {
-        win->lastHover = NULL;
-    }
-    if (win->hover == d) {
-        win->hover = NULL;
+    if (win) {
+        if (win->lastHover == d) {
+            win->lastHover = NULL;
+        }
+        if (win->hover == d) {
+            win->hover = NULL;
+        }
     }
     if (d->flags & nativeMenu_WidgetFlag) {
         releaseNativeMenu_Widget(d);
@@ -249,6 +256,9 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
     iWindow *win = get_Window();
     if (isHover_Widget(d)) {
         win->hover = NULL;
+    }
+    if (win->focus == d) {
+        win->focus = NULL;
     }
     if (win->lastHover == d) {
         win->lastHover = NULL;
@@ -266,7 +276,7 @@ void destroy_Widget(iWidget *d) {
     if (d) {
         iAssert(!isRoot_Widget_(d));
         if (isVisible_Widget(d)) {
-            postRefresh_App();
+            refresh_Widget(d);
         }
         aboutToBeDestroyed_Widget_(d);
         if (!d->root->pendingDestruction) {
@@ -283,6 +293,10 @@ void setId_Widget(iWidget *d, const char *id) {
     setCStr_String(&d->id, id);
 }
 
+void setResizeId_Widget(iWidget *d, const char *resizeId) {
+    setCStr_String(&d->resizeId, resizeId);
+}
+
 const iString *id_Widget(const iWidget *d) {
     return d ? &d->id : collectNew_String();
 }
@@ -297,7 +311,7 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
             /* TODO: Tablets should detect if a hardware keyboard is available. */
             flags &= ~drawKey_WidgetFlag;
         }
-        const int64_t oldFlags = d->flags;  
+        const int64_t oldFlags = d->flags;
         iChangeFlags(d->flags, flags, set);
         if (flags & keepOnTop_WidgetFlag && !isRoot_Widget_(d)) {
             iPtrArray *onTop = onTop_Root(d->root);
@@ -807,11 +821,11 @@ static void arrange_Widget_(iWidget *d) {
                 }
             }
         }
-        /* Keep track of the fractional pixels so a large number to children will cover 
+        /* Keep track of the fractional pixels so a large number to children will cover
            the full area. */
         const iInt2 totalAvail = avail;
         avail = divi_I2(max_I2(zero_I2(), avail), expCount);
-        float availFract[2] = { 
+        float availFract[2] = {
             iMax(0, (totalAvail.x - avail.x * expCount) / (float) expCount),
             iMax(0, (totalAvail.y - avail.y * expCount) / (float) expCount)
         };
@@ -1038,6 +1052,12 @@ static void clampCenteredInRoot_Widget_(iWidget *d) {
     }
 }
 
+iBool isExtraWindowSizeInfluencer_Widget(const iWidget *d) {
+    return type_Window(window_Widget(d)) == extra_WindowType &&
+           (d == root_Widget(d) ||
+            (d->parent == root_Widget(d) && indexOfChild_Widget(root_Widget(d), d) == 0));
+}
+
 void arrange_Widget(iWidget *d) {
     if (d) {
 #if !defined (NDEBUG)
@@ -1050,8 +1070,7 @@ void arrange_Widget(iWidget *d) {
         clampCenteredInRoot_Widget_(d);
         notifyArrangement_Widget_(d);
         d->root->didChangeArrangement = iTrue;
-        if (type_Window(window_Widget(d)) == extra_WindowType &&
-            (d == root_Widget(d) || d->parent == root_Widget(d))) {
+        if (isExtraWindowSizeInfluencer_Widget(d)) {
             /* Size of extra windows will change depending on the contents. */
             iWindow *win = window_Widget(d);
             SDL_SetWindowSize(win->win,
@@ -1199,7 +1218,7 @@ static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
     if (d->flags & destroyPending_WidgetFlag) {
         /* Only allow cleanup while waiting for destruction. */
         return isCommand_UserEvent(ev, "focus.lost");
-    }   
+    }
     const iBool isKey   = isKeyboardEvent_(ev);
     const iBool isMouse = isMouseEvent_(ev);
     if ((d->flags & disabled_WidgetFlag) || (isHidden_Widget_(d) &&
@@ -1279,14 +1298,14 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     else if (ev->type == SDL_MOUSEMOTION &&
              ev->motion.windowID == id_Window(window_Widget(d)) &&
              (!window_Widget(d)->hover || hasParent_Widget(d, window_Widget(d)->hover)) &&
-             flags_Widget(d) & hover_WidgetFlag && !isHidden_Widget_(d) &&
+             flags_Widget(d) & hover_WidgetFlag &&
+             !isHidden_Widget_(d) /* hidden flag on self */ &&
              ~flags_Widget(d) & disabled_WidgetFlag) {
         if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
             setHover_Widget(d);
 #if 0
-            printf("set hover to [%p] %s:'%s'\n",
-                   d, class_Widget(d)->name,
-                   cstr_String(id_Widget(d)));
+            printf("<%u> set hover to ", window_Widget(d)->frameTime);
+            identify_Widget(d);
             fflush(stdout);
 #endif
         }
@@ -1361,25 +1380,50 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     return iFalse;
 }
 
-void scrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
-    iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
-    iRect       visBounds = bounds_Widget(d);
-    const iRect winRect = adjusted_Rect(safeRect_Root(d->root),
-                                        zero_I2(),
-                                        init_I2(0, -get_MainWindow()->keyboardHeight));
-    info->height      = bounds.size.y;
-    info->avail       = height_Rect(winRect);
-    if (info->avail >= info->height) {
+void contentScrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info, int contentPos, int contentMax) {
+    const iRect bounds  = bounds_Widget(d);
+    info->totalHeight   = contentMax;
+    info->visibleHeight = height_Rect(bounds);
+    if (info->visibleHeight >= info->totalHeight) {
         info->normScroll  = 0.0f;
         info->thumbY      = 0;
         info->thumbHeight = 0;
     }
     else {
-        int scroll        = top_Rect(winRect) - top_Rect(bounds);
-        info->normScroll  = scroll / (float) (info->height - info->avail);
+        info->normScroll  = (float) contentPos / (float) (info->totalHeight - info->visibleHeight);
         info->normScroll  = iClamp(info->normScroll, 0.0f, 1.0f);
-        info->thumbHeight = iMin(info->avail / 2, info->avail * info->avail / info->height);
-        info->thumbY      = top_Rect(winRect) + (info->avail - info->thumbHeight) * info->normScroll;
+        info->thumbHeight = iMin(info->visibleHeight / 2, info->visibleHeight * info->visibleHeight / info->totalHeight);
+        info->thumbY      = localToWindow_Widget(d, zero_I2()).y + (info->visibleHeight - info->thumbHeight) * info->normScroll;
+        /* Clamp it. */
+        const iRangei ySpan = ySpan_Rect(bounds);
+        if (info->thumbY < ySpan.start) {
+            info->thumbHeight += info->thumbY - ySpan.start;
+            info->thumbY = ySpan.start;
+            info->thumbHeight = iMax(7 * gap_UI, info->thumbHeight);
+        }
+        else if (info->thumbY + info->thumbHeight > ySpan.end) {
+            info->thumbHeight = ySpan.end - info->thumbY;
+        }
+    }
+}
+
+void overflowScrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
+    iRect     bounds    = boundsWithoutVisualOffset_Widget(d);
+    iRect     visBounds = bounds_Widget(d);
+    const int winTop    = top_Rect(safeRect_Root(d->root));
+    info->totalHeight   = bounds.size.y;
+    info->visibleHeight = height_Rect(visibleRect_Root(d->root));
+    if (info->visibleHeight >= info->totalHeight) {
+        info->normScroll  = 0.0f;
+        info->thumbY      = 0;
+        info->thumbHeight = 0;
+    }
+    else {
+        int scroll        = winTop - top_Rect(bounds);
+        info->normScroll  = scroll / (float) (info->totalHeight - info->visibleHeight);
+        info->normScroll  = iClamp(info->normScroll, 0.0f, 1.0f);
+        info->thumbHeight = iMin(info->visibleHeight / 2, info->visibleHeight * info->visibleHeight / info->totalHeight);
+        info->thumbY      = winTop + (info->visibleHeight - info->thumbHeight) * info->normScroll;
         /* Clamp it. */
         const iRangei ySpan = ySpan_Rect(visBounds);
         if (info->thumbY < ySpan.start) {
@@ -1416,7 +1460,7 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     if (!isOverflowScrollPossible_Widget_(d, delta)) {
         return iFalse;
     }
-    iRect       bounds        = boundsWithoutVisualOffset_Widget(d);  
+    iRect       bounds        = boundsWithoutVisualOffset_Widget(d);
     const iRect winRect       = visibleRect_Root(d->root);
     /* TODO: This needs some fixing on mobile, probably. */
 //    const int   yTop          = iMaxi(0, top_Rect(winRect));
@@ -1450,14 +1494,14 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     }
     else {
         /* TODO: This is used on mobile. */
-        
+
 //        printf("clamping validPosRange:%d...%d\n", validPosRange.start, validPosRange.end); fflush(stdout);
 //        bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
     }
     const iInt2 newPos = windowToInner_Widget(d->parent, bounds.pos);
     if (!isEqual_I2(newPos, d->rect.pos)) {
         d->rect.pos = newPos;
-        postRefresh_App();
+        refresh_Widget(d);
     }
     return height_Rect(bounds) > height_Rect(winRect);
 }
@@ -1481,7 +1525,27 @@ static void unfadeOverflowScrollIndicator_Widget_(iWidget *d) {
     remove_Periodic(periodic_App(), d);
     add_Periodic(periodic_App(), d, format_CStr("overflow.fade time:%u ptr:%p", SDL_GetTicks(), d));
     setValue_Anim(&d->overflowScrollOpacity, 1.0f, 70);
-    animateOverflowScrollOpacity_Widget_(d);    
+    animateOverflowScrollOpacity_Widget_(d);
+}
+
+void applyInteractiveResize_Widget(iWidget *d, int width) {
+    d->rect.size.x = width;
+    d->rect.size.x = iMax(d->minSize.x, d->rect.size.x);
+    d->rect.size.x = iMini(width_Widget(parent_Widget(d)), d->rect.size.x);
+    if (class_Widget(d)->sizeChanged) {
+        class_Widget(d)->sizeChanged(d);
+    }
+    arrange_Widget(d);
+    refresh_Widget(d);
+    /* Also notify the widget directly for additional handling. */
+    const SDL_UserEvent notif = {
+        .type      = SDL_USEREVENT,
+        .timestamp = SDL_GetTicks(),
+        .code      = command_UserEventCode,
+        .data1     = "widget.resized",
+        .data2     = d->root,
+    };
+    dispatchEvent_Widget(d, (const SDL_Event *) &notif);
 }
 
 iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
@@ -1540,15 +1604,99 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 const uint32_t nowTime = SDL_GetTicks();
                 uint32_t elapsed = nowTime - lastHoverOverflowMotionTime_;
                 if (elapsed > 100) {
-                    elapsed = 16;    
+                    elapsed = 16;
                 }
                 int step = elapsed * gap_UI / 8 * iClamp(speed, -1.0f, 1.0f);
-                if (step != 0) { 
+                if (step != 0) {
                     lastHoverOverflowMotionTime_ = nowTime;
                     scrollOverflow_Widget(d, step);
                     unfadeOverflowScrollIndicator_Widget_(d);
                 }
                 addTicker_App(overflowHoverAnimation_, d);
+            }
+        }
+    }
+    if (isDesktop_Platform() && d->flags2 & horizontallyResizable_WidgetFlag2) {
+        static iInt2 startPos_; /* assume only one pointer is resizing at a time */
+        static int startWidth_;
+        const iInt2 buttonPos = init_I2(ev->button.x, ev->button.y);
+        /* Begin an edge resizing. */
+        if (!(d->flags2 & (leftEdgeResizing_WidgetFlag2 | rightEdgeResizing_WidgetFlag2))) {
+            iAssert(d->flags & centerHorizontal_WidgetFlag);
+            const iRect bounds = boundsWithoutVisualOffset_Widget(d);
+            if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEMOTION) {
+                iRect edge = bounds;
+                edge.size.x = 2 * gap_UI; /* left edge */
+                if (contains_Rect(edge, buttonPos)) {
+                    setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
+                    if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                        startPos_ = buttonPos;
+                        startWidth_ = width_Rect(bounds);
+                        d->flags2 |= leftEdgeResizing_WidgetFlag2;
+//                        setFocus_Widget(NULL);
+                        setMouseGrab_Widget(d);
+                    }
+                    return iTrue;
+                }
+                else {
+                    edge.pos.x = right_Rect(bounds_Widget(d)) - edge.size.x; /* right edge */
+                    if (contains_Rect(edge, buttonPos)) {
+                        setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
+                        if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                            startPos_ = buttonPos;
+                            startWidth_ = width_Rect(bounds);
+                            d->flags2 |= rightEdgeResizing_WidgetFlag2;
+//                            setFocus_Widget(NULL);
+                            setMouseGrab_Widget(d);
+                        }
+                        return iTrue;
+                    }
+                }
+            }
+        }
+        else if (d->flags2 & (leftEdgeResizing_WidgetFlag2 | rightEdgeResizing_WidgetFlag2)) {
+            iAssert(d->flags & centerHorizontal_WidgetFlag);
+            if (ev->type == SDL_MOUSEMOTION) {
+                const iInt2 mousePos = init_I2(ev->motion.x, ev->motion.y);
+                int newWidth;
+                if (d->flags2 & rightEdgeResizing_WidgetFlag2) {
+                    newWidth = startWidth_ + 2 * (mousePos.x - startPos_.x);
+                }
+                else {
+                    newWidth = startWidth_ + 2 * (startPos_.x - mousePos.x);
+                }
+//                d->rect.size.x = iMax(d->minSize.x, d->rect.size.x);
+//                d->rect.size.x = iMin(width_Widget(parent_Widget(d)), d->rect.size.x);
+//                if (class_Widget(d)->sizeChanged) {
+//                    class_Widget(d)->sizeChanged(d);
+//                }
+//                arrange_Widget(d);
+//                refresh_Widget(d);
+//                setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
+//                /* Also notify the widget directly for additional handling. */
+//                const SDL_UserEvent notif = {
+//                    .type      = SDL_USEREVENT,
+//                    .timestamp = SDL_GetTicks(),
+//                    .code      = command_UserEventCode,
+//                    .data1     = "widget.resized",
+//                    .data2     = d->root,
+//                };
+//                dispatchEvent_Widget(d, (const SDL_Event *) &notif);
+                applyInteractiveResize_Widget(d, newWidth);
+                setCursor_Window(window_Widget(d), SDL_SYSTEM_CURSOR_SIZEWE);
+                return iTrue;
+            }
+            else if (ev->type == SDL_MOUSEBUTTONUP) {
+                setMouseGrab_Widget(NULL);
+                iChangeFlags(d->flags2,
+                             leftEdgeResizing_WidgetFlag2 | rightEdgeResizing_WidgetFlag2,
+                             iFalse);
+                if (!isEmpty_String(&d->resizeId)) {
+                    postCommandf_App("width.save arg:%g id:%s",
+                                     width_Widget(d) / (float) gap_UI,
+                                     cstr_String(&d->resizeId));
+                }
+                return iTrue;
             }
         }
     }
@@ -1622,7 +1770,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                            ev->button.button,
                            ev->button.x,
                            ev->button.y);
-        return iTrue;
+        return iFalse;
     }
     if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev) &&
         contains_Rect(rect_Root(d->root), mouseCoord_SDLEvent(ev))) {
@@ -1815,7 +1963,7 @@ static void addToPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs, iR
             isFullyContainedByOther_Rect(*fullyMasked, bounds)) {
             *fullyMasked = bounds;
         }
-    }    
+    }
 }
 
 static void findPotentiallyVisible_Widget_(const iWidget *d, iPtrArray *pvs) {
@@ -1869,7 +2017,7 @@ void drawRoot_Widget(const iWidget *d) {
 
 void setDrawBufferEnabled_Widget(iWidget *d, iBool enable) {
     if (enable && !d->drawBuf) {
-        d->drawBuf = new_WidgetDrawBuffer();        
+        d->drawBuf = new_WidgetDrawBuffer();
     }
     else if (!enable && d->drawBuf) {
         delete_WidgetDrawBuffer(d->drawBuf);
@@ -1899,7 +2047,7 @@ static void beginBufferDraw_Widget_(const iWidget *d) {
         origin_Paint = neg_I2(bounds.pos); /* with current visual offset */
 //        printf("beginBufferDraw: origin %d,%d\n", origin_Paint.x, origin_Paint.y);
 //        fflush(stdout);
-    }    
+    }
 }
 
 static void endBufferDraw_Widget_(const iWidget *d) {
@@ -1909,7 +2057,7 @@ static void endBufferDraw_Widget_(const iWidget *d) {
         origin_Paint = d->drawBuf->oldOrigin;
 //        printf("endBufferDraw: origin %d,%d\n", origin_Paint.x, origin_Paint.y);
 //        fflush(stdout);
-    }    
+    }
 }
 
 void draw_Widget(const iWidget *d) {
@@ -1941,25 +2089,29 @@ void draw_Widget(const iWidget *d) {
     }
     if (d->flags & overflowScrollable_WidgetFlag) {
         iWidgetScrollInfo info;
-        scrollInfo_Widget(d, &info);
+        overflowScrollInfo_Widget(d, &info);
         const float opacity = value_Anim(&d->overflowScrollOpacity);
-        if (info.thumbHeight > 0 && opacity > 0) {
-            iPaint p;
-            init_Paint(&p);
-            const int scrollWidth = gap_UI / 2;
-            iRect     bounds      = bounds_Widget(d);
-            bounds.pos.x          = right_Rect(bounds) - scrollWidth * 3;
-            bounds.size.x         = scrollWidth;
-            bounds.pos.y          = info.thumbY;
-            bounds.size.y         = info.thumbHeight;
-            /* Draw the scroll bar with some transparency. */
-            SDL_Renderer *rend = renderer_Window(get_Window());
-            SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
-            p.alpha = (int) (0.5f * opacity * 255 + 0.5f);
-            fillRect_Paint(&p, bounds, tmQuote_ColorId);
-            SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_NONE);
-        }
-    }   
+        drawScrollIndicator_Widget(d, &info, uiBackgroundPressed_ColorId, opacity);
+    }
+}
+
+void drawScrollIndicator_Widget(const iWidget *d, const iWidgetScrollInfo *info, int color, float opacity) {
+    if (info->thumbHeight > 0 && opacity > 0) {
+        iPaint p;
+        init_Paint(&p);
+        const int scrollWidth = gap_UI / 2;
+        iRect     bounds      = bounds_Widget(d);
+        bounds.pos.x          = right_Rect(bounds) - scrollWidth * 3;
+        bounds.size.x         = scrollWidth;
+        bounds.pos.y          = info->thumbY;
+        bounds.size.y         = info->thumbHeight;
+        /* Draw the scroll bar with some transparency. */
+        SDL_Renderer *rend = renderer_Window(get_Window());
+        SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
+        p.alpha = (int) (0.5f * opacity * 255 + 0.5f);
+        fillRect_Paint(&p, bounds, color);
+        SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_NONE);
+    }
 }
 
 iAny *addChild_Widget(iWidget *d, iAnyObject *child) {
@@ -2052,7 +2204,7 @@ iAny *removeChild_Widget(iWidget *d, iAnyObject *child) {
 //    }
 //    printf("%s:%d [%p] parent = NULL\n", __FILE__, __LINE__, d);
     childWidget->parent = NULL;
-    postRefresh_App();
+    refresh_Widget(d);
     return child;
 }
 
@@ -2142,8 +2294,11 @@ iAny *findChild_Widget(const iWidget *d, const char *id) {
     return NULL;
 }
 
-static void addMatchingToArray_Widget_(const iWidget *d, const char *id, iPtrArray *found) {
-    if (cmp_String(id_Widget(d), id) == 0) {
+static void addMatchingToArray_Widget_(const iWidget *d, const iRangecc id, iPtrArray *found) {
+    if (cmp_String(id_Widget(d), id.start) == 0) {
+        pushBack_PtrArray(found, d);
+    }
+    else if (id.end[-1] == '*' && startsWith_String(id_Widget(d), id.start)) {
         pushBack_PtrArray(found, d);
     }
     iForEach(ObjectList, i, d->children) {
@@ -2153,7 +2308,9 @@ static void addMatchingToArray_Widget_(const iWidget *d, const char *id, iPtrArr
 
 const iPtrArray *findChildren_Widget(const iWidget *d, const char *id) {
     iPtrArray *found = new_PtrArray();
-    addMatchingToArray_Widget_(d, id, found);
+    if (id && id[0]) {
+        addMatchingToArray_Widget_(d, range_CStr(id), found);
+    }
     return collect_PtrArray(found);
 }
 
@@ -2462,7 +2619,7 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
         }
         deinit_String(&ptrStr);
     }
-    postCommandString_Root(((const iWidget *) d)->root, &str);
+    postCommandString_Root(isGlobal ? NULL : ((const iWidget *) d)->root, &str);
     deinit_String(&str);
 }
 
@@ -2481,7 +2638,7 @@ void refresh_Widget(const iAnyObject *d) {
             w->drawBuf->isValid = iFalse;
         }
     }
-    postRefresh_App();
+    postRefresh_Window(window_Widget(d));
 }
 
 void raise_Widget(iWidget *d) {
@@ -2595,3 +2752,40 @@ void clearRecentlyDeleted_Widget(void) {
 iBool isRecentlyDeleted_Widget(const iAnyObject *obj) {
     return contains_RecentlyDeleted_(&recentlyDeleted_, obj);
 }
+
+#if 0
+static uint32_t callDelayed_Widget_(uint32_t interval, void *ctx) {
+    iWidget *d = ctx;
+    lock_Mutex(d->delayedMutex);
+    d->delayedTimer = 0;
+    if (d->delayedCallback) {
+        d->delayedCallback(d);
+    }
+    unlock_Mutex(d->delayedMutex);
+    return 0; /* single-shot */
+}
+
+void setDelayedCallback_Widget(iWidget *d, int delay, void (*callback)(iWidget *)) {
+    if (!callback) {
+        if (d->delayedMutex) {
+            iGuardMutex(d->delayedMutex, {
+                SDL_RemoveTimer(d->delayedTimer);
+                d->delayedTimer    = 0;
+                d->delayedCallback = NULL;
+            });
+            delete_Mutex(d->delayedMutex);
+            d->delayedMutex = NULL;
+        }
+        return;
+    }
+    if (!d->delayedMutex) {
+        d->delayedMutex = new_Mutex();
+    }
+    lock_Mutex(d->delayedMutex);
+    if (d->delayedTimer) {
+        SDL_RemoveTimer(d->delayedTimer);
+    }
+    d->delayedTimer = SDL_AddTimer(delay, callDelayed_Widget_, d);
+    unlock_Mutex(d->delayedMutex);
+}
+#endif

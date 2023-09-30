@@ -21,7 +21,7 @@ msgid "heading.archive.userdata"
 msgstr "User Data Archive"
 
 msgid "userdata.help"
-msgstr "User data archives contain exported browsing history, identities, bookmarks, site-specific settings, and fingerprints of trusted server certificates. They can be stored as backups and used for transferring data between devices."
+msgstr "User data archives contain exported browsing history, identities, bookmarks, text snippets, site-specific settings, and fingerprints of trusted server certificates. They can be stored as backups and used for transferring data between devices."
 
 msgid "doc.archive.view"
 msgstr "View archive contents"
@@ -231,10 +231,10 @@ msgid "menu.downloads"
 msgstr "Show Downloads"
 
 msgid "menu.export"
-msgstr "Export User Data"
+msgstr "Export"
 
 msgid "menu.import"
-msgstr "Import User Data…"
+msgstr "Import…"
 
 msgid "menu.pageinfo"
 msgstr "Show Page Information"
@@ -281,7 +281,7 @@ msgid "menu.zoom.reset"
 msgstr "Reset Zoom"
 
 msgid "menu.view.split"
-msgstr "Split View…"
+msgstr "Split View"
 
 msgid "menu.newfolder"
 msgstr "New Folder…"
@@ -289,11 +289,20 @@ msgstr "New Folder…"
 msgid "menu.sort.alpha"
 msgstr "Sort Alphabetically"
 
+msgid "menu.foldall"
+msgstr "Fold All"
+
+msgid "menu.unfoldall"
+msgstr "Unfold All"
+
 msgid "menu.bookmarks.list"
 msgstr "List All Bookmarks"
 
 msgid "macos.menu.bookmarks.list"
 msgstr "List All"
+
+msgid "menu.userdata"
+msgstr "User Data"
 
 msgid "menu.bookmarks.bytag"
 msgstr "List Bookmarks by Tag"
@@ -346,6 +355,15 @@ msgstr "Paste"
 
 msgid "menu.paste.go"
 msgstr "Paste and Go"
+
+msgid "menu.paste.snippet"
+msgstr "Paste Snippet"
+
+msgid "menu.search"
+msgstr "Search"
+
+msgid "menu.snippet.add"
+msgstr "Snippet from Selection…"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.selectall"
@@ -437,11 +455,17 @@ msgstr "Back"
 msgid "menu.debug"
 msgstr "Debug Information"
 
+msgid "menu.tools"
+msgstr "Tools"
+
 msgid "menu.import.links"
 msgstr "Import All Links on Page…"
 
 msgid "menu.page.import"
 msgstr "Import Links as Bookmarks…"
+
+msgid "menu.page.visitlinks"
+msgstr "Mark All Links as Visited"
 
 msgid "menu.page.translate"
 msgstr "Translate…"
@@ -482,6 +506,12 @@ msgstr "No Active Identity"
 # Menu heading shown when customizing navbar button actions.
 msgid "menu.toolbar.setaction"
 msgstr "Set Action:"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Add Bookmark to Folder:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Move Bookmark to Folder:"
 
 msgid "sidebar.close"
 msgstr "Done"
@@ -879,13 +909,25 @@ msgstr "Open context menu"
 
 #, c-format
 msgid "dlg.input.prompt"
-msgstr "Please enter input for %s:"
+msgstr "Enter input for %s:"
 
 msgid "dlg.input.linebreak"
 msgstr "Line break"
 
 msgid "dlg.input.send"
 msgstr "Send"
+
+msgid "menu.input.setprompt"
+msgstr "Assume This URL Requires Input"
+
+msgid "menu.input.unsetprompt"
+msgstr "Don't Assume This URL Requires Input"
+
+msgid "menu.input.clear"
+msgstr "Clear History"
+
+msgid "menu.input.restore"
+msgstr "Restore previous:"
 
 # Paste the line preceding the clicked link into the input prompt.
 msgid "menu.input.precedingline"
@@ -915,6 +957,12 @@ msgstr "Error Saving File"
 msgid "heading.import.bookmarks"
 msgstr "Import Bookmarks"
 
+msgid "dlg.import.intofolder"
+msgstr "Add to Folder:"
+
+msgid "dlg.import.headings"
+msgstr "Subfolders from Headings:"
+
 #, c-format
 msgid "dlg.import.found"
 msgid_plural "dlg.import.found.n"
@@ -929,6 +977,9 @@ msgstr[1] "%sAdd %d Bookmarks"
 
 msgid "dlg.import.notnew"
 msgstr "All links on this page are already bookmarked."
+
+msgid "dlg.import.notfound"
+msgstr "There are no links on this page."
 
 msgid "heading.autoreload"
 msgstr "Auto-Reload"
@@ -978,8 +1029,14 @@ msgstr "Open without Proxy"
 msgid "link.copy"
 msgstr "Copy Link"
 
+msgid "link.searchurl"
+msgstr "Use as Search URL"
+
 msgid "link.bookmark"
 msgstr "Bookmark Link…"
+
+msgid "link.snippet"
+msgstr "Snippet from Link…"
 
 msgid "link.download"
 msgstr "Download Linked File"
@@ -1043,7 +1100,7 @@ msgid "heading.certimport"
 msgstr "Import Identity"
 
 msgid "dlg.certimport.help"
-msgstr "Paste a PEM-encoded certificate and/or private key,\nor drop a .crt/.key file on the window."
+msgstr "Paste a PEM-encoded certificate and/or private key, or drop a .crt/.key file on the window."
 
 msgid "dlg.certimport.notfound"
 msgstr "No certificate or private key was found."
@@ -1093,6 +1150,9 @@ msgstr "Import Failed"
 
 msgid "import.userdata.bookmarks"
 msgstr "Bookmarks:"
+
+msgid "import.userdata.snippets"
+msgstr "Snippets:"
 
 msgid "import.userdata.idents"
 msgstr "Identities:"
@@ -1172,6 +1232,10 @@ msgstr "BOOKMARKS"
 # Interpret as "Results from feeds..."
 msgid "heading.lookup.feeds"
 msgstr "FEEDS"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "SNIPPETS"
 
 # Interpret as "Results from history..."
 msgid "heading.lookup.history"
@@ -1704,6 +1768,9 @@ msgstr "Page Style"
 msgid "heading.prefs.userinterface"
 msgstr "User Interface"
 
+msgid "heading.prefs.snip"
+msgstr "Snippets"
+
 msgid "prefs.downloads"
 msgstr "Downloads folder:"
 
@@ -1716,11 +1783,23 @@ msgstr "Show URL on hover:"
 msgid "prefs.centershort"
 msgstr "Vertical centering:"
 
-msgid "prefs.collapsepreonload"
+msgid "prefs.collapsepre"
 msgstr "Collapse preformatted:"
 
 msgid "prefs.bookmarks.addbottom"
 msgstr "Add bookmarks to bottom:"
+
+msgid "collapse.never"
+msgstr "Never"
+
+msgid "collapse.notbydefault"
+msgstr "Manually"
+
+msgid "collapse.bydefault"
+msgstr "At Page Load"
+
+msgid "collapse.always"
+msgstr "Always"
 
 # User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
 msgid "prefs.dataurl.openimages"
@@ -1811,6 +1890,10 @@ msgstr "White"
 msgid "prefs.accent"
 msgstr "Accent color:"
 
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "System"
+
 msgid "prefs.accent.teal"
 msgstr "Teal"
 
@@ -1828,6 +1911,12 @@ msgstr "Blue"
 
 msgid "prefs.accent.gray"
 msgstr "Gray"
+
+msgid "prefs.feedinterval"
+msgstr "Feed refresh interval:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Manual"
 
 msgid "prefs.uilang"
 msgstr "Language:"
@@ -1985,6 +2074,9 @@ msgstr "Font glyph warnings:"
 msgid "prefs.font.smooth"
 msgstr "Font smoothing:"
 
+msgid "prefs.editor.highlight"
+msgstr "Syntax highlighting:"
+
 msgid "prefs.linewidth"
 msgstr "Line width:"
 
@@ -2073,10 +2165,10 @@ msgstr[0] "This directory contains %u item."
 msgstr[1] "This directory contains %u items."
 
 msgid "keys.top"
-msgstr "Jump to top"
+msgstr "Jump to Top"
 
 msgid "keys.bottom"
-msgstr "Jump to bottom"
+msgstr "Jump to Bottom"
 
 msgid "keys.scroll.up"
 msgstr "Scroll up"
@@ -2110,6 +2202,10 @@ msgstr "Go to capsule root"
 
 msgid "keys.reload"
 msgstr "Reload page"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Enter a snippet query"
 
 msgid "keys.link.modkey"
 msgstr "Open link via modifier key"
@@ -2369,6 +2465,12 @@ msgstr "Missing Glyphs"
 msgid "error.glyphs.msg"
 msgstr "This page could not displayed in full because some characters are missing. You can install additional fonts to fix this."
 
+msgid "error.showutf8"
+msgstr "Autodetected UTF-8"
+
+msgid "error.showutf8.msg"
+msgstr "The media type of this page was not recognized but it is valid UTF-8 encoded text."
+
 msgid "gempub.cover.viewlocal"
 msgstr "This Gempub book can be viewed after it has been saved locally."
 
@@ -2491,3 +2593,35 @@ msgstr "Permanently dismiss warning about terminal emulation on %s?"
 
 msgid "dlg.dismiss.warning"
 msgstr "Dismiss Warning"
+
+msgid "sniped.new"
+msgstr "New Snippet"
+
+msgid "sniped.help"
+msgstr "Snippets whose name begins with a bang (e.g., \"!w\") can be used in URL fields as a query shortcut."
+
+msgid "menu.snip.edit"
+msgstr "Edit…"
+
+msgid "menu.snip.clipboard"
+msgstr "Copy to Clipboard"
+
+msgid "menu.snip.delete"
+msgstr "Delete"
+
+msgid "menu.snip.prefs"
+msgstr "Configure…"
+
+msgid "heading.snip"
+msgstr "New Snippet"
+
+msgid "snip.name"
+msgstr "Name:"
+
+msgid "snip.content"
+msgstr "Content:"
+
+msgid "snip.accept"
+msgstr "Save Snippet"
+
+

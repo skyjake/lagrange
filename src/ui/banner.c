@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 
 iDeclareType(BannerItem)
-    
+
 struct Impl_BannerItem {
     enum iBannerType type;
     enum iGmStatusCode code;
@@ -74,6 +74,7 @@ iDefineTypeConstruction(Banner)
 #   define itemHPad_Banner_    (3 * gap_UI)
 #   define bottomPad_Banner_   (4 * gap_UI)
 #endif
+#define noSiteTopPad_Banner_   bottomPad_Banner_
 
 static void updateHeight_Banner_(iBanner *d) {
     d->rect.size.y = 0;
@@ -83,6 +84,9 @@ static void updateHeight_Banner_(iBanner *d) {
     }
     const size_t numItems = size_Array(&d->items);
     if (numItems) {
+        if (isEmpty_String(&d->site)) {
+            d->rect.size.y += noSiteTopPad_Banner_;
+        }
         iConstForEach(Array, i, &d->items) {
             const iBannerItem *item = i.value;
             d->rect.size.y += item->height;
@@ -231,7 +235,7 @@ void draw_Banner(const iBanner *d) {
         pos.y += (int) ceilf(lineHeight_Text(banner_FontId) * 3.0f / 2.0f);
     }
     else {
-        pos.y = top_Rect(bounds);
+        pos.y = top_Rect(bounds) + noSiteTopPad_Banner_;
     }
 //    const int innerPad = gap_UI;
     pos.x = left_Rect(bounds);
@@ -259,7 +263,9 @@ void draw_Banner(const iBanner *d) {
 }
 
 static size_t itemAtCoord_Banner_(const iBanner *d, iInt2 coord) {
-    iInt2 pos = addY_I2(topLeft_Rect(d->rect), lineHeight_Text(banner_FontId) * 2);
+    iInt2 pos = addY_I2(topLeft_Rect(d->rect),
+                        isEmpty_String(&d->site) ? noSiteTopPad_Banner_
+                                                 : (lineHeight_Text(banner_FontId) * 2));
     iConstForEach(Array, i, &d->items) {
         const iBannerItem *item = i.value;
         if (contains_Rect((iRect){ pos, init_I2(d->rect.size.x, item->height)}, coord)) {
@@ -375,95 +381,3 @@ iBool processEvent_Banner(iBanner *d, const SDL_Event *ev) {
     }
     return iFalse;
 }
-
-#if 0
-static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2 visPos) {
-    const iGmDocument *doc  = d->widget->doc;
-    const iChar        icon = siteIcon_GmDocument(doc);
-    iString            str;
-    init_String(&str);
-    iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
-    if (icon) {
-        appendChar_String(&str, icon);
-        const iRect iconRect = visualBounds_Text(run->font, range_String(&str));
-        drawRange_Text(
-            run->font,
-            addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
-            tmBannerIcon_ColorId,
-            range_String(&str));
-        bpos.x += right_Rect(iconRect) + 3 * gap_Text;
-    }
-    drawRange_Text(run->font,
-                   bpos,
-                   tmBannerTitle_ColorId,
-                   bannerText_DocumentWidget_(d->widget));
-    if (bannerType_GmDocument(doc) == certificateWarning_GmDocumentBanner) {
-        const int domainHeight = lineHeight_Text(banner_FontId) * 2;
-        iRect rect = { add_I2(visPos, init_I2(0, domainHeight)),
-                       addY_I2(run->visBounds.size, -domainHeight - lineHeight_Text(uiContent_FontId)) };
-        format_String(&str, "${heading.certwarn}");
-        const int certFlags = d->widget->certFlags;
-        if (certFlags & timeVerified_GmCertFlag && certFlags & domainVerified_GmCertFlag) {
-            iUrl parts;
-            init_Url(&parts, d->widget->mod.url);
-            const iTime oldUntil =
-                domainValidUntil_GmCerts(certs_App(), parts.host, port_Url(&parts));
-            iDate exp;
-            init_Date(&exp, &oldUntil);
-            iTime now;
-            initCurrent_Time(&now);
-            const int days = secondsSince_Time(&oldUntil, &now) / 3600 / 24;
-            appendCStr_String(&str, "\n");
-            if (days <= 30) {
-                appendCStr_String(&str,
-                                  format_CStr(cstrCount_Lang("dlg.certwarn.mayberenewed.n", days),
-                                              cstrCollect_String(format_Date(&exp, "%Y-%m-%d")),
-                                              days));
-            }
-            else {
-                appendCStr_String(&str, cstr_Lang("dlg.certwarn.different"));
-            }
-        }
-        else if (certFlags & domainVerified_GmCertFlag) {
-            appendCStr_String(&str, "\n");
-            appendFormat_String(&str, cstr_Lang("dlg.certwarn.expired"),
-                                cstrCollect_String(format_Date(&d->widget->certExpiry, "%Y-%m-%d")));
-        }
-        else if (certFlags & timeVerified_GmCertFlag) {
-            appendCStr_String(&str, "\n");
-            appendFormat_String(&str, cstr_Lang("dlg.certwarn.domain"),
-                                cstr_String(d->widget->certSubject));
-        }
-        else {
-            appendCStr_String(&str, "\n");
-            appendCStr_String(&str, cstr_Lang("dlg.certwarn.domain.expired"));
-        }
-        const iInt2 dims = measureWrapRange_Text(
-            uiContent_FontId, width_Rect(rect) - 16 * gap_UI, range_String(&str)).bounds.size;
-        const int warnHeight = run->visBounds.size.y - domainHeight;
-        const int yOff = (lineHeight_Text(uiLabelLarge_FontId) -
-                          lineHeight_Text(uiContent_FontId)) / 2;
-        const iRect bgRect =
-            init_Rect(0, visPos.y + domainHeight, d->widgetBounds.size.x, warnHeight);
-        fillRect_Paint(&d->paint, bgRect, orange_ColorId);
-        if (!isDark_ColorTheme(colorTheme_App())) {
-            drawHLine_Paint(&d->paint,
-                            topLeft_Rect(bgRect), width_Rect(bgRect), tmBannerTitle_ColorId);
-            drawHLine_Paint(&d->paint,
-                            bottomLeft_Rect(bgRect), width_Rect(bgRect), tmBannerTitle_ColorId);
-        }
-        const int fg = black_ColorId;
-        adjustEdges_Rect(&rect, warnHeight / 2 - dims.y / 2 - yOff, 0, 0, 0);
-        bpos = topLeft_Rect(rect);
-        draw_Text(uiLabelLarge_FontId, bpos, fg, "\u26a0");
-        adjustEdges_Rect(&rect, 0, -8 * gap_UI, 0, 8 * gap_UI);
-        translate_Lang(&str);
-        drawWrapRange_Text(uiContent_FontId,
-                           addY_I2(topLeft_Rect(rect), yOff),
-                           width_Rect(rect),
-                           fg,
-                           range_String(&str));
-    }
-    deinit_String(&str);
-}
-#endif

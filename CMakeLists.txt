@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.16.7
+    VERSION 1.17.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -114,6 +114,7 @@ set (RESOURCES
     res/lang/uk.bin
     res/lang/zh_Hans.bin
     res/lang/zh_Hant.bin
+    res/logo.png
     res/shadow.png
     res/fontpack.ini
     res/macos-system-fonts.ini
@@ -225,6 +226,8 @@ set (SOURCES
     src/ui/color.h
     src/ui/command.c
     src/ui/command.h
+    src/ui/documentview.c
+    src/ui/documentview.h
     src/ui/documentwidget.c
     src/ui/documentwidget.h
     src/ui/indicatorwidget.c
@@ -253,6 +256,8 @@ set (SOURCES
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
     src/ui/sidebarwidget.h
+    src/ui/snippetwidget.c
+    src/ui/snippetwidget.h
     src/ui/text.c
     src/ui/text.h
     src/ui/touch.c
@@ -374,7 +379,9 @@ endif ()
 
 # Target.
 if (NOT ANDROID)
-    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS})
+    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS}
+        src/snippets.h
+        src/snippets.c)
 else ()
     # The whole app becomes one shared library, based on this static one.
     add_library (app SHARED ${SOURCES})

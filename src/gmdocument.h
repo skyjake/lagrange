@@ -78,6 +78,7 @@ enum iGmLinkScheme {
     about_GmLinkScheme,
     mailto_GmLinkScheme,
     spartan_GmLinkScheme,
+    nex_GmLinkScheme,
 };
 
 enum iGmLinkFlag {
@@ -93,6 +94,7 @@ enum iGmLinkFlag {
     iconFromLabel_GmLinkFlag      = iBit(15), /* use an Emoji/special character from label */
     isOpen_GmLinkFlag             = iBit(16), /* currently open in a tab */
     fontpackFileExtension_GmLinkFlag = iBit(17),
+    inline_GmLinkFlag             = iBit(18),
 };
 
 iLocalDef enum iGmLinkScheme scheme_GmLinkFlag(int flags) {
@@ -175,10 +177,11 @@ iRangecc    findLoc_GmRun           (const iGmRun *, iInt2 pos);
 
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
-    
+
 enum iGmDocumentWarning {
-    ansiEscapes_GmDocumentWarning   = iBit(1),
+    ansiEscapes_GmDocumentWarning = iBit(1),
     missingGlyphs_GmDocumentWarning = iBit(2),
+    unsupportedMediaTypeShownAsUtf8_GmDocumentWarning = iBit(3),
 };
 
 enum iGmDocumentUpdate {
@@ -199,6 +202,7 @@ iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int canvasWidth,
                                  enum iGmDocumentUpdate updateType);
+void    setWarning_GmDocument   (iGmDocument *, int warning, iBool set);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 
 void    updateVisitedLinks_GmDocument   (iGmDocument *); /* check all links for visited status */
@@ -244,6 +248,7 @@ enum iGmLinkPart {
 const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);
 iRangecc        findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
 const iGmRun *  findRunAtLoc_GmDocument (const iGmDocument *, const char *loc);
+size_t          numLinks_GmDocument     (const iGmDocument *); /* link IDs: 1...numLinks (inclusive) */
 const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
 iRangecc        linkUrlRange_GmDocument (const iGmDocument *, iGmLinkId linkId);
 iRangecc        linkLabel_GmDocument    (const iGmDocument *, iGmLinkId linkId);
