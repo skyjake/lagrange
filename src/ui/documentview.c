@@ -586,11 +586,16 @@ void scrollTo_DocumentView(iDocumentView *d, int documentY, iBool centered) {
 }
 
 void scrollToHeading_DocumentView(iDocumentView *d, const char *heading) {
-    iConstForEach(Array, h, headings_GmDocument(d->doc)) {
-        const iGmHeading *head = h.value;
-        if (startsWithCase_Rangecc(head->text, heading)) {
-            postCommandf_Root(as_Widget(d->owner)->root, "document.goto loc:%p", head->text.start);
-            break;
+    /* Try an exact match first and then try finding a prefix. */
+    for (int pass = 0; pass < 2; pass++) {
+        iConstForEach(Array, h, headings_GmDocument(d->doc)) {
+            const iGmHeading *head = h.value;
+            if ((pass == 0 && equalCase_Rangecc     (head->text, heading)) ||
+                (pass == 1 && startsWithCase_Rangecc(head->text, heading))) {
+                postCommandf_Root(as_Widget(d->owner)->root, "document.goto loc:%p",
+                                  head->text.start);
+                return;
+            }
         }
     }
 }
