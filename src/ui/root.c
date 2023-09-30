@@ -2155,8 +2155,9 @@ void createUserInterface_Root(iRoot *d) {
            { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
            { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+           { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
            { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" }
-        }, 5);
+        }, 6);
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");
         setId_Widget(toolsMenu, "toolsmenu");

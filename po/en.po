@@ -464,6 +464,9 @@ msgstr "Import All Links on Page…"
 msgid "menu.page.import"
 msgstr "Import Links as Bookmarks…"
 
+msgid "menu.page.visitlinks"
+msgstr "Mark All Links as Visited"
+
 msgid "menu.page.translate"
 msgstr "Translate…"
 

@@ -174,7 +174,8 @@ struct Impl_App {
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
     iTime        lastDropTime; /* for detecting drops of multiple items */
-    int          autoReloadTimer;
+    uint32_t     lastVisitedSaveTime;
+    int          autoReloadTimer; /* TODO: only start this when tabs are autoreloading */
     iPeriodic    periodic;
     int          warmupFrames; /* forced refresh just after resuming from background; FIXME: shouldn't be needed */
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
@@ -1317,6 +1318,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->certs     = new_GmCerts(dataDir_App_());
     d->visited   = new_Visited();
     d->bookmarks = new_Bookmarks();
+    d->lastVisitedSaveTime = 0;
     /* Dumping requested pages. */
     if (doDump) {
         const iGmIdentity *ident = NULL;
@@ -4017,7 +4019,13 @@ static iBool handleNonWindowRelatedCommand_App_(iApp *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "visited.changed")) {
-        save_Visited(d->visited, dataDir_App_());
+        /* The visited file can grow large, so don't keep rewriting it after every navigation. */
+        const uint32_t now = SDL_GetTicks();
+        unsigned seconds = (now - d->lastVisitedSaveTime) / 1000;
+        if (seconds > 60) {
+            d->lastVisitedSaveTime = now;
+            save_Visited(d->visited, dataDir_App_());
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "idents.changed")) {

@@ -2916,6 +2916,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateWindowTitle_DocumentWidget_(d);
         return iFalse;
     }
+    else if (equal_Command(cmd, "document.visitlinks") && d == document_App()) {
+        const iGmDocument *doc = d->view->doc;
+        for (size_t linkId = 1; linkId <= numLinks_GmDocument(doc); linkId++) {
+            const iString *url = linkUrl_GmDocument(doc, linkId);
+            visitUrl_Visited(visited_App(), url, transient_VisitedUrlFlag);
+        }
+        updateVisitedLinks_GmDocument(d->view->doc);
+        invalidate_DocumentWidget_(d);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "document.select") && d == document_App()) {
         /* Touch selection mode. */
         if (!arg_Command(cmd)) {
