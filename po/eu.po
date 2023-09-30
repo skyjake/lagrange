@@ -1874,9 +1874,6 @@ msgstr "Deskargen karpeta:"
 msgid "prefs.searchurl"
 msgstr "Bilaketa URLa:"
 
-msgid "prefs.collapsepreonload"
-msgstr "Ezkutatu aurrez formateatutakoa:"
-
 #, fuzzy
 msgid "prefs.imageloadscroll"
 msgstr "Kargatu hurrengo irudia teklatu bidezko korritzean:"

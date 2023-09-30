@@ -1,3 +1,18 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-09-30 08:06+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: ENCODING\n"
+"X-Generator: Translate Toolkit 3.3.3\n"
+
 # Link download progress message.
 msgid "doc.fetching"
 msgstr "Ophalen"
@@ -1264,9 +1279,6 @@ msgstr "Zoek-URL:"
 
 msgid "prefs.centershort"
 msgstr "Verticaal centreren:"
-
-msgid "prefs.collapsepreonload"
-msgstr "Klap vooringedeelde tekst in:"
 
 msgid "prefs.pinsplit"
 msgstr "Gesplitst tabblad pinnen:"

@@ -1273,9 +1273,6 @@ msgstr[1] "%d tuntia"
 msgid "doc.pre.nocaption"
 msgstr "Esimuotoiltua tekstiä ilman kuvausta"
 
-msgid "prefs.collapsepreonload"
-msgstr "Piilota esimuotoillut:"
-
 # Used in about:feeds.
 msgid "feeds.list.title"
 msgstr "Syötteiden artikkelit"

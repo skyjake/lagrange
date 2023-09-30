@@ -1,3 +1,18 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-09-30 08:06+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: es_MX\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: ENCODING\n"
+"X-Generator: Translate Toolkit 3.3.3\n"
+
 # Alt-text of the preformatted logo.
 msgid "about.logo"
 msgstr "Arte ASCII: la palabra \"Lagrange\" usando una fuente grande"
@@ -1082,9 +1097,6 @@ msgstr "URL de búsqueda:"
 
 msgid "prefs.hoverlink"
 msgstr "Mostrar URL al situar el cursor:"
-
-msgid "prefs.collapsepreonload"
-msgstr "Colapsar pre-formateado:"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"

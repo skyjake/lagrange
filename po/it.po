@@ -1557,9 +1557,6 @@ msgstr "Nome della nuova cartella:"
 msgid "heading.prefs.sizing"
 msgstr "Dimensioni"
 
-msgid "prefs.collapsepreonload"
-msgstr "Collassa preformattatto:"
-
 # User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
 msgid "prefs.dataurl.openimages"
 msgstr "Apri immagini in data URL:"

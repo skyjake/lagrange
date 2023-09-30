@@ -132,9 +132,6 @@ msgstr "Tamaño"
 msgid "heading.prefs.widelayout"
 msgstr "Ancho da disposición"
 
-msgid "prefs.collapsepreonload"
-msgstr "Pregar texto preformatado:"
-
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
 msgstr "Abrir index.gmi en arquivos ZIP:"

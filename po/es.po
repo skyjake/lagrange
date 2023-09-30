@@ -1304,9 +1304,6 @@ msgid_plural "num.hours.n"
 msgstr[0] "%d hora"
 msgstr[1] "%d horas"
 
-msgid "prefs.collapsepreonload"
-msgstr "Colapsar pre-formateado:"
-
 msgid "doc.pre.nocaption"
 msgstr "Texto pre-formateado sin leyenda"
 

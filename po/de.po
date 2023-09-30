@@ -1,3 +1,18 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-09-30 08:06+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: ENCODING\n"
+"X-Generator: Translate Toolkit 3.3.3\n"
+
 msgid "menu.opentab"
 msgstr "In neuem Reiter öffnen"
 
@@ -990,9 +1005,6 @@ msgstr "URL bei Mauszeiger anzeigen:"
 
 msgid "prefs.centershort"
 msgstr "Vertikale Zentrierung:"
-
-msgid "prefs.collapsepreonload"
-msgstr "Vorformatiert einklappen:"
 
 msgid "prefs.smoothscroll"
 msgstr "Sanfter Bildlauf:"

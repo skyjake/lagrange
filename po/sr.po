@@ -1061,9 +1061,6 @@ msgstr "Упит за претрагу"
 msgid "prefs.downloads"
 msgstr "Фасцикла за преузете датотеке:"
 
-msgid "prefs.collapsepreonload"
-msgstr "Скупљање преформатираног текста:"
-
 # strftime() formatted, split on two lines
 #, c-format
 msgid "page.timestamp"

@@ -1829,9 +1829,6 @@ msgstr "Arabirim renkleri"
 msgid "heading.prefs.widelayout"
 msgstr "Geniş dizilim"
 
-msgid "prefs.collapsepreonload"
-msgstr "Önceden biçimlendirilenleri daralt:"
-
 msgid "prefs.bookmarks.addbottom"
 msgstr "Yer imlerini alta ekle:"
 
