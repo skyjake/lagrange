@@ -87,9 +87,9 @@ void emulateMouseClickPos_Widget(const iWidget *d, int button, iInt2 clickPos) {
                                 .which     = 1024,
                                 .button    = button,
                                 .state     = SDL_PRESSED,
-                                1,
-                                clickPos.x,
-                                clickPos.y };
+                                .clicks    = 1,
+                                .x         = clickPos.x,
+                                .y         = clickPos.y };
     SDL_PushEvent((SDL_Event *) &ev);
     ev.type = SDL_MOUSEBUTTONUP;
     ev.state = SDL_RELEASED;
