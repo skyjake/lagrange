@@ -2256,7 +2256,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
             makePaletteGlobal_GmDocument(document_DocumentWidget(doc));
         }
     }
-*/
+    */
     if (!isPortraitPhone_App()) { /* this would erase page contents during transition on the phone */
         if (flags_Widget(w) & visualOffset_WidgetFlag &&
             flags_Widget(w) & horizontalOffset_WidgetFlag && isVisible_Widget(w)) {

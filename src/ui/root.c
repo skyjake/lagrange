@@ -2152,12 +2152,14 @@ void createUserInterface_Root(iRoot *d) {
         createSplitMenu_Root(d, iTrue);
         iWidget *toolsMenu = makeMenu_Widget(root, (iMenuItem[]) {
            { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+           { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
+           { "---" },
            { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
            { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
+           { "---" },
            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
            { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
-           { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" }
-        }, 6);
+        }, 8);
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");
         setId_Widget(toolsMenu, "toolsmenu");
