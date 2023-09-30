@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2023-05-20 05:54+0000\n"
+"PO-Revision-Date: 2023-10-01 15:16+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1022,8 +1022,8 @@ msgstr "Tuo identiteetti"
 
 msgid "dlg.certimport.help"
 msgstr ""
-"Liimaa PEM-koodattu sertifikaatti ja/tai salainen avain,\n"
-"tai pudota .crt/.key-tiedosto ikkunaan."
+"Liimaa PEM-koodattu sertifikaatti ja/tai salainen avain, tai pudota .crt/."
+"key-tiedosto ikkunaan."
 
 msgid "prefs.uilang"
 msgstr "Kieli:"
@@ -1435,7 +1435,7 @@ msgid "menu.split.swap"
 msgstr "Vaihda keskenään"
 
 msgid "menu.view.split"
-msgstr "Jaa kahtia…"
+msgstr "Jaa kahtia"
 
 msgid "link.side"
 msgstr "Avaa linkki viereen"
@@ -2213,9 +2213,9 @@ msgstr "Arkistoidut käyttäjän tiedot"
 msgid "userdata.help"
 msgstr ""
 "Arkistoidut käyttäjät tiedot sisältävät käyttäjän selaushistorian, "
-"identiteetit, kirjanmerkit, palvelinkohtaiset asetukset, ja luotettujen "
-"sertifikaattien sormenjäljet. Tämän avulla voit varmuuskopioida nämä tiedot "
-"tai siirtää ne laitteesta toiseen."
+"identiteetit, kirjanmerkit, tekstikatkelmat, palvelinkohtaiset asetukset, ja "
+"luotettujen sertifikaattien sormenjäljet. Tämän avulla voit varmuuskopioida "
+"nämä tiedot tai siirtää ne laitteesta toiseen."
 
 msgid "sitespec.tlscache"
 msgstr "Tallenna ja jatka TLS-istuntoja:"
@@ -2239,10 +2239,10 @@ msgid "feeds.entry.markbelowread"
 msgstr "Merkitse alla olevat luetuksi"
 
 msgid "menu.export"
-msgstr "Vie käyttäjän tiedot"
+msgstr "Vie"
 
 msgid "menu.import"
-msgstr "Tuo käyttäjän tiedot…"
+msgstr "Tuo…"
 
 msgid "heading.import.userdata"
 msgstr "Tuo käyttäjän tiedot"
@@ -2541,3 +2541,141 @@ msgstr "Ukraina"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Protokollan vaihto uudelleenohjattaessa:"
+
+msgid "prefs.editor.highlight"
+msgstr "Syntaksin korotus:"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Aloita kysely katkelman avulla"
+
+msgid "error.showutf8"
+msgstr "UTF-8 tunnistettu"
+
+msgid "error.showutf8.msg"
+msgstr ""
+"Tämän sivun mediatyyppiä ei tunnistettu, mutta se on UTF-8-koodattua tekstiä."
+
+msgid "sniped.new"
+msgstr "Uusi katkelma"
+
+msgid "sniped.help"
+msgstr ""
+"Katkelmia, joiden nimi alkaa huutomerkillä (esim. \"!w\"), voidaan käyttää "
+"URL-kentissä kyselyoikopulkuina."
+
+msgid "menu.snip.edit"
+msgstr "Muokkaa…"
+
+msgid "menu.snip.clipboard"
+msgstr "Kopioi leikepöydälle"
+
+msgid "menu.snip.delete"
+msgstr "Poista"
+
+msgid "menu.snip.prefs"
+msgstr "Asetukset…"
+
+msgid "heading.snip"
+msgstr "Uusi katkelma"
+
+msgid "snip.name"
+msgstr "Nimi:"
+
+msgid "snip.content"
+msgstr "Sisältö:"
+
+msgid "snip.accept"
+msgstr "Tallenna katkelma"
+
+msgid "menu.input.setprompt"
+msgstr "Oleta, että tämä URL vaatiii syötteen"
+
+msgid "menu.input.restore"
+msgstr "Palauta edellinen:"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "KATKELMAT"
+
+msgid "heading.prefs.snip"
+msgstr "Katkelmat"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Käyttöjärjestelmä"
+
+msgid "menu.unfoldall"
+msgstr "Avaa kaikki kansiot"
+
+msgid "menu.foldall"
+msgstr "Sulje kaikki kansiot"
+
+msgid "menu.userdata"
+msgstr "Käyttäjän tiedot"
+
+msgid "menu.paste.snippet"
+msgstr "Liitä katkelma"
+
+msgid "menu.search"
+msgstr "Etsi"
+
+msgid "menu.snippet.add"
+msgstr "Katkelma valinnasta…"
+
+msgid "menu.tools"
+msgstr "Työkalut"
+
+msgid "menu.page.visitlinks"
+msgstr "Merkitse linkit vierailluiksi"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Lisää kirjanmerkki kansioon:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Siirrä kirjanmerkki kansioon:"
+
+msgid "menu.input.unsetprompt"
+msgstr "Älä oleta tämän URL:n vaativan syötettä"
+
+msgid "menu.input.clear"
+msgstr "Tyhjennä historia"
+
+msgid "dlg.import.intofolder"
+msgstr "Lisää kansioon:"
+
+msgid "dlg.import.headings"
+msgstr "Tee otsakkeista kansioita:"
+
+msgid "dlg.import.notfound"
+msgstr "Tällä sivulla ei ole linkkejä."
+
+msgid "link.searchurl"
+msgstr "Käytä kysely-URL:ina"
+
+msgid "link.snippet"
+msgstr "Katkelma linkistä…"
+
+msgid "import.userdata.snippets"
+msgstr "Katkelmat:"
+
+msgid "prefs.collapsepre"
+msgstr "Piilota esimuotoillut:"
+
+msgid "collapse.never"
+msgstr "Ei koskaan"
+
+msgid "collapse.notbydefault"
+msgstr "Manuaalisesti"
+
+msgid "collapse.bydefault"
+msgstr "Sivun ladattua"
+
+msgid "collapse.always"
+msgstr "Aina"
+
+msgid "prefs.feedinterval"
+msgstr "Syötteiden päivitysväli:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Manuaalinen"
