@@ -77,6 +77,9 @@ void serialize_Visited(const iVisited *d, iStream *out) {
     lock_Mutex(d->mtx);
     iConstForEach(Array, i, &d->visited.values) {
         const iVisitedUrl *item = i.value;
+        if (startsWithCase_String(&item->url, "data:")) {
+            continue;
+        }
         format_String(line,
                       "%llu %04x %s\n",
                       (unsigned long long) integralSeconds_Time(&item->when),
