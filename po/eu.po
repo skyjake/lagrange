@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2023-05-29 09:15+0000\n"
+"PO-Revision-Date: 2023-10-01 15:16+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -2638,3 +2638,166 @@ msgstr "Eskema aldatzen duen birbideraketak:"
 #, fuzzy
 msgid "keys.link.homerow"
 msgstr "Ireki esteka hasierako lerroko tekla batekin"
+
+#, fuzzy
+msgid "sitespec.ansi"
+msgstr "ANSI ihes abisua:"
+
+msgid "error.proxyverify.msg"
+msgstr ""
+"Konexioa bertan behera utzi da proxy zerbitzariko TLS ziurtagiria ez "
+"datorrelako bat guk fidagarritzat emandakoarekin.\n"
+"\n"
+"Proxy zerbitzariaren ziurtagiria Orriaren Informazioa-n marka daiteke "
+"fidagarritzat."
+
+msgid "menu.foldall"
+msgstr "Tolestu guztia"
+
+msgid "menu.paste.snippet"
+msgstr "Itsatsi mozkina"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Mugitu laster-marka karpetara:"
+
+#, fuzzy
+msgid "menu.input.setprompt"
+msgstr "URL honek sarrera behar du"
+
+msgid "menu.input.restore"
+msgstr "Lehengoratu aurrekoa:"
+
+msgid "import.userdata.snippets"
+msgstr "Mozkinak:"
+
+#, fuzzy
+msgid "prefs.collapsepre"
+msgstr "Tolestu aldez aurretik formatetatutakoa:"
+
+#, fuzzy
+msgid "prefs.editor.highlight"
+msgstr "Sintaxiaren azpimarra:"
+
+#, fuzzy
+msgid "keys.split.next"
+msgstr "Aldatu fokua hurrengo zatiketara"
+
+msgid "error.certverify.msg"
+msgstr ""
+"Zerbitzarirako konexioa bertan behera utzi da TLS ziurtagiria ez datorrelako "
+"bat guk fidagarritzat emandakoarekin. Egiaztatu zerbitzariak ziurtagiri-"
+"aldaketa iragarri duen. Hala ez bada, baliteke hirugarren maltzur bat "
+"zerbitzaria izango balitz bezala jokatzen egotea.\n"
+"\n"
+"Ziurtagiria Orriaren Informazioa-n marka daiteke fidagarritzat."
+
+msgid "menu.unfoldall"
+msgstr "Hedatu guztia"
+
+msgid "menu.userdata"
+msgstr "Erabiltzaile-datuak"
+
+msgid "menu.search"
+msgstr "Bilatu"
+
+msgid "menu.snippet.add"
+msgstr "Mozkina hautatutakoarekin…"
+
+msgid "menu.tools"
+msgstr "Tresnak"
+
+msgid "menu.page.visitlinks"
+msgstr "Markatu esteka guztiak ikusitzat"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Gehitu laster-marka karpetara:"
+
+msgid "menu.input.clear"
+msgstr "Garbitu historia"
+
+msgid "dlg.import.intofolder"
+msgstr "Gehitu karpetara:"
+
+#, fuzzy
+msgid "dlg.import.headings"
+msgstr "Azpikarpetak goiburuetatik:"
+
+msgid "dlg.import.notfound"
+msgstr "Orri honetan ez dago estekarik."
+
+msgid "link.searchurl"
+msgstr "Erabili bilatzeko URL gisa"
+
+msgid "link.snippet"
+msgstr "Mozkina estekatik…"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "MOZKINAK"
+
+msgid "heading.prefs.snip"
+msgstr "Mozkinak"
+
+msgid "collapse.never"
+msgstr "Inoiz ez"
+
+msgid "collapse.notbydefault"
+msgstr "Eskuz"
+
+msgid "collapse.bydefault"
+msgstr "Orria kargatzean"
+
+msgid "collapse.always"
+msgstr "Beti"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Sistemak darabilena"
+
+msgid "prefs.feedinterval"
+msgstr "Jarioaren freskatze-tartea:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Eskuz"
+
+msgid "error.showutf8"
+msgstr "UTF-8 antzeman da"
+
+#, fuzzy
+msgid "error.showutf8.msg"
+msgstr ""
+"Orrialde honetako multimedia mota ez da antzeman baina UTF-8rekin kodetutako "
+"testua baliagarria da."
+
+msgid "sniped.new"
+msgstr "Mozkin berria"
+
+#, fuzzy
+msgid "sniped.help"
+msgstr ""
+"Harridura ikur batekin hasten diren mozkinak (\"!w\" adibidez) bilaketak "
+"egiteko URL eremu bezala erabil daitezke."
+
+msgid "menu.snip.edit"
+msgstr "Editatu…"
+
+msgid "menu.snip.clipboard"
+msgstr "Kopiatu arbelera"
+
+msgid "menu.snip.delete"
+msgstr "Ezabatu"
+
+msgid "menu.snip.prefs"
+msgstr "Ezarri…"
+
+msgid "heading.snip"
+msgstr "Mozkin berria"
+
+msgid "snip.name"
+msgstr "Izena:"
+
+msgid "snip.content"
+msgstr "Edukia:"
+
+msgid "snip.accept"
+msgstr "Gorde mozkina"
