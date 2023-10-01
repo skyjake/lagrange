@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2023-10-01 15:16+0000\n"
+"PO-Revision-Date: 2023-10-02 09:00+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -1853,9 +1853,8 @@ msgid "dlg.addfolder"
 msgstr "Gehitu karpeta"
 
 # tab button
-#, fuzzy
 msgid "heading.prefs.interface"
-msgstr "EI"
+msgstr "Erabiltzaile-interfazea"
 
 msgid "heading.prefs.uitheme"
 msgstr "EI koloreak"
@@ -2257,7 +2256,7 @@ msgstr "Eskatutako baliabidea ez da aurkitu une honetan."
 #, fuzzy
 msgid "error.proxyrefusal.msg"
 msgstr ""
-"Eskera zerbitzariak ostatatu gabeko domeinu bateko baliabide baterako zen, "
+"Eskaera zerbitzariak ostatatu gabeko domeinu bateko baliabide baterako zen, "
 "eta zerbitzariak ez du proxy eskaerarik onartzen."
 
 msgid "error.cert.auth.msg"
@@ -2507,8 +2506,8 @@ msgstr "Ireki laster-menua"
 
 msgid "dlg.certimport.help"
 msgstr ""
-"Itsatsi PEM bidez kodetutako ziurtagiri bat edota gako pribatu bat,\n"
-"edo ekarri leihora .crt/.key fitxategi bat."
+"Itsatsi PEM bidez kodetutako ziurtagiri bat edota gako pribatu bat, edo "
+"ekarri leihora .crt/.key fitxategi bat."
 
 msgid "heading.certimport.dropped"
 msgstr "Leihora ekarritako fitxategia"
