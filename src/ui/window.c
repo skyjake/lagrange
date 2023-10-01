@@ -1563,7 +1563,8 @@ void draw_Window(iWindow *d) {
     iRoot *root = d->roots[0];
     setCurrent_Root(root);
     unsetClip_Paint(&p); /* update clip to full window */
-    const iColor back = get_Color(uiBackground_ColorId);
+    const iColor back = get_Color(root->widget->bgColor != none_ColorId ?
+                root->widget->bgColor : uiBackground_ColorId);
     SDL_SetRenderDrawColor(d->render, back.r, back.g, back.b, 255);
     SDL_RenderClear(d->render);
     d->frameTime = SDL_GetTicks();
