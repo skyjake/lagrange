@@ -538,7 +538,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 { "", 0, 0, "bookmark.tag tag:homepage" },
                 { "", 0, 0, "bookmark.tag tag:remotesource" },
                 { "---", 0, 0, NULL },
-                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", SDLK_BACKSPACE, 0, "bookmark.delete" },
+                { uiTextCaution_ColorEscape "${bookmark.delete}", SDLK_BACKSPACE, 0, "bookmark.delete" },
                 { "---", 0, 0, NULL },
                 { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
                 { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
@@ -558,7 +558,7 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                         { "---" },
                         { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
                         { "---" },
-                        { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.folder.delete}",
+                        { uiTextCaution_ColorEscape "${bookmark.folder.delete}",
                           SDLK_BACKSPACE, 0, "bookmark.delete" },
                         { "---" } },
                     7);
@@ -2532,7 +2532,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         }
         iEndCollect();
     }
-    if (isListFocus && isHover && !isTerminal_Platform()) {
+    if (isListFocus && isHover && constCursorItem_ListWidget(list) == d && !isTerminal_Platform()) {
         /* Visualize the keyboard cursor. */
         drawRect_Paint(p, shrunk_Rect(itemRect, one_I2()), uiTextAction_ColorId);
     }
