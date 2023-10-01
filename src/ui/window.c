@@ -1063,11 +1063,22 @@ static void savePlace_MainWindow_(iAny *mainWindow) {
     }
 }
 
+static void notifyHovered_Window_(iWindow *d) {
+    SDL_UserEvent notif = { .type      = SDL_USEREVENT,
+                            .timestamp = SDL_GetTicks(),
+                            .code      = command_UserEventCode,
+                            .data1     = (void *) format_CStr("mouse.hovered ptr:%p arg:1",
+                                                          d->hover) };
+    dispatchEvent_Widget(d->hover, (SDL_Event *) &notif);
+}
+
 static void setHoverUnderCursor_Window_(iWindow *d) {
     if (isDesktop_Platform()) {
         iWidget *hover = hitChild_Window(d, mouseCoord_Window(d, 0));
         if (hover) {
-            setHover_Widget(hover);
+            if (setHover_Widget(hover) && hover->flags2 & commandOnHover_WidgetFlag2) {
+                notifyHovered_Window_(d);
+            }
         }
     }
 }
@@ -1510,14 +1521,9 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
     }
     if (d->hover != oldHover) {
-        refresh_Widget(d->hover); /* Note: oldHover may have been deleted */
+        refresh_Widget(d->hover); /* Note: oldHover may have been deleted */        
         if (d->hover && d->hover->flags2 & commandOnHover_WidgetFlag2) {
-            SDL_UserEvent notif = { .type      = SDL_USEREVENT,
-                                    .timestamp = SDL_GetTicks(),
-                                    .code      = command_UserEventCode,
-                                    .data1     = (void *) format_CStr("mouse.hovered ptr:%p arg:1",
-                                                                  d->hover) };
-            dispatchEvent_Widget(d->hover, (SDL_Event *) &notif);
+            notifyHovered_Window_(d);
         }
     }
     return wasUsed;
