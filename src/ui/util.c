@@ -3499,7 +3499,7 @@ iWidget *makePreferences_Widget(void) {
                                                           accentItems,
                                                           iElemCount(accentItems),
                                                           "prefs.accent");
-            int accentId = -1;
+            int accentId = isAppleDesktop_Platform() ? -1 : 0;
             iForEach(ObjectList,
                      i,
                      children_Widget(findChild_Widget(constAs_Widget(accentMenu), "menu"))) {
