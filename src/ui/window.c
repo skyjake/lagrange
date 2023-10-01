@@ -2234,6 +2234,8 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
     iRect winRect = (iRect){ screenPos,
                              min_I2(divf_I2(rootWidget->rect.size, pixelRatio),
                                     init_I2(usableRect.w, usableRect.h)) };
+    /* Ensure bottom is not outside the usable area; we'll scroll the contents. */
+    winRect.size.y = iMin(winRect.size.y, usableRect.y + usableRect.h - screenPos.y);
     iWindow *win = new_Window(popup_WindowType,
                               winRect,
                               SDL_WINDOW_ALWAYS_ON_TOP |
