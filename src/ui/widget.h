@@ -359,7 +359,7 @@ const iWidget *focusRoot_Widget     (const iWidget *);
 void        setFocus_Widget         (iWidget *); /* widget must be flagged `focusable` */
 void        setKeyboardGrab_Widget  (iWidget *); /* sets focus on any widget */
 iWidget *   focus_Widget            (void);
-void        setHover_Widget         (iWidget *);
+iBool       setHover_Widget         (iWidget *);
 iWidget *   hover_Widget            (void);
 void        unhover_Widget          (void);
 void        setMouseGrab_Widget     (iWidget *);

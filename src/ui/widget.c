@@ -2476,10 +2476,14 @@ iWidget *focus_Widget(void) {
     return win ? win->focus : NULL;
 }
 
-void setHover_Widget(iWidget *d) {
+iBool setHover_Widget(iWidget *d) {
     iWindow *win = get_Window();
     iAssert(win);
-    win->hover = d;
+    if (win->hover != d) {
+        win->hover = d;
+        return iTrue;
+    }
+    return iFalse;
 }
 
 iWidget *hover_Widget(void) {
