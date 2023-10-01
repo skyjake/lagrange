@@ -162,6 +162,7 @@ iWindow *   findWindow_App          (int windowType, const char *widgetId);
 iMainWindow *newMainWindow_App      (void);
 const iPtrArray *mainWindows_App    (void);
 const iPtrArray *regularWindows_App (void);
+const iPtrArray *popupWindows_App   (void);
 iMainWindow *    mainWindow_App     (void); /* currently active main window */
 void        addExtraWindow_App      (iWindow *extra);
 void        removeExtraWindow_App   (iWindow *extra);

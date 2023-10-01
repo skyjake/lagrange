@@ -139,6 +139,10 @@ static void endSiblingOrderDrag_LabelWidget_(iLabelWidget *d) {
     }
 }
 
+static iBool isSubmenuItem_LabelWidget_(const iLabelWidget *d) {
+    return startsWith_String(&d->command, "submenu id:");
+}
+
 static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
     iWidget *w = &d->widget;
     if (isMetricsChange_UserEvent(ev)) {
@@ -202,6 +206,12 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
             }
         }
 #endif
+        if (isSubmenuItem_LabelWidget_(d) && ev->type == SDL_MOUSEBUTTONDOWN &&
+                contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
+            /* Submenus are triggered by hovering over the item. Clicking down nothing. */
+            postCommand_Widget(d, "submenu.open");
+            return iTrue;
+        }
         switch (processEvent_Click(&d->click, ev)) {
             case started_ClickResult:
                 setFlags_Widget(w, pressed_WidgetFlag, iTrue);

@@ -438,6 +438,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
                                  : isPlacedUnder ? bottomLeft_Rect(bounds_Widget(button))
                                                  : topLeft_Rect(bounds_Widget(button)),
                                  postCommands_MenuOpenFlags |
+                                     (isMenuBar ? fromMenuBar_MenuOpenFlags : 0) |
                                      (isSubmenu ? submenu_MenuOpenFlags : 0));
         }
         else {

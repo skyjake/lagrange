@@ -92,7 +92,7 @@ struct Impl_Window {
     iBool         isMouseInside;
     iBool         isInvalidated;
     iAtomicInt    isRefreshPending;
-    iBool         ignoreClick;
+    iBool         ignoreClick; /* used on the Windows platform only */
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
     iInt2         size;

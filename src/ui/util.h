@@ -285,6 +285,7 @@ enum iMenuOpenFlags {
     setFocus_MenuOpenFlags     = iBit(3),
     submenu_MenuOpenFlags      = iBit(4),
     forcePopup_MenuOpenFlags   = iBit(5),
+    fromMenuBar_MenuOpenFlags  = iBit(6), /* must not overlap the menubar */
 };
 
 iWidget *       makeMenu_Widget                 (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */

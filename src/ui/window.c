@@ -1381,9 +1381,6 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 wasUsed = dispatchEvent_Window(d, &event);
             }
             if (!wasUsed) {
-                if (event.type == SDL_MOUSEBUTTONDOWN) {
-                    closePopups_App(iFalse);
-                }
                 /* As a special case, clicking the middle mouse button can be used for pasting
                    from the clipboard. */
                 if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) {

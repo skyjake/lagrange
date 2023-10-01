@@ -156,6 +156,7 @@ void init_Widget(iWidget *d) {
     d->rect           = zero_Rect();
     d->oldSize        = zero_I2();
     d->minSize        = zero_I2();
+    d->overflowTopMargin = 0;
     d->sizeRef        = NULL;
     d->offsetRef      = NULL;
     d->bgColor        = none_ColorId;
@@ -1410,7 +1411,7 @@ void contentScrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info, int con
 void overflowScrollInfo_Widget(const iWidget *d, iWidgetScrollInfo *info) {
     iRect     bounds    = boundsWithoutVisualOffset_Widget(d);
     iRect     visBounds = bounds_Widget(d);
-    const int winTop    = top_Rect(safeRect_Root(d->root));
+    const int winTop    = top_Rect(safeRect_Root(d->root)) + d->overflowTopMargin;
     info->totalHeight   = bounds.size.y;
     info->visibleHeight = height_Rect(visibleRect_Root(d->root));
     if (info->visibleHeight >= info->totalHeight) {
@@ -1443,7 +1444,7 @@ static iBool isOverflowScrollPossible_Widget_(const iWidget *d, int delta) {
     }
     iRect       bounds  = boundsWithoutVisualOffset_Widget(d);
     const iRect winRect = visibleRect_Root(d->root);
-    const int   yTop    = iMaxi(0, top_Rect(winRect));
+    const int   yTop    = iMaxi(0, top_Rect(winRect) + d->overflowTopMargin);
     const int   yBottom = bottom_Rect(winRect);
     if (delta == 0) {
         if (top_Rect(bounds) >= yTop && bottom_Rect(bounds) <= yBottom) {
@@ -1462,25 +1463,9 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
     }
     iRect       bounds        = boundsWithoutVisualOffset_Widget(d);
     const iRect winRect       = visibleRect_Root(d->root);
-    /* TODO: This needs some fixing on mobile, probably. */
-//    const int   yTop          = iMaxi(0, top_Rect(winRect));
-//    const int   yBottom       = bottom_Rect(winRect);
     iRangei     validPosRange = { bottom_Rect(winRect) - height_Rect(bounds),
-                                  iMaxi(0, top_Rect(winRect)) };
-//    if (validPosRange.end < validPosRange.start) {
-//        validPosRange.end = validPosRange.start; /* no room to scroll */
-//    }
-//    if ((!isTopOver && delta < 0) || (!isBottomOver && delta > 0)) {
-//        delta = 0;
-//    }
+                                  iMaxi(0, top_Rect(winRect) + d->overflowTopMargin) };
     if (delta) {
-//        if (delta < 0 && bounds.pos.y < validPosRange.start) {
-//            delta = 0;
-//        }
-//        if (delta > 0 && bounds.pos.y > validPosRange.end) {
-//            delta = 0;
-//        }
-//        printf("delta:%d  validPosRange:%d...%d\n", delta, validPosRange.start, validPosRange.end); fflush(stdout);
         bounds.pos.y += delta;
         if (delta < 0) {
             bounds.pos.y = iMax(bounds.pos.y, validPosRange.start);
@@ -1491,12 +1476,6 @@ iBool scrollOverflow_Widget(iWidget *d, int delta) {
         if (delta) {
             d->root->didChangeArrangement = iTrue; /* ensure that widgets update if needed */
         }
-    }
-    else {
-        /* TODO: This is used on mobile. */
-
-//        printf("clamping validPosRange:%d...%d\n", validPosRange.start, validPosRange.end); fflush(stdout);
-//        bounds.pos.y = iClamp(bounds.pos.y, validPosRange.start, validPosRange.end);
     }
     const iInt2 newPos = windowToInner_Widget(d->parent, bounds.pos);
     if (!isEqual_I2(newPos, d->rect.pos)) {
@@ -2077,7 +2056,6 @@ void draw_Widget(const iWidget *d) {
         endBufferDraw_Widget_(d);
     }
     if (d->drawBuf) {
-        //iAssert(d->drawBuf->isValid);
         const iRect bounds = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
@@ -2606,10 +2584,6 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
     }
     if (!isGlobal) {
         iAssert(isInstance_Object(d, &Class_Widget));
-        if (type_Window(window_Widget(d)) == popup_WindowType) {
-            postCommandf_Root(((const iWidget *) d)->root, "cancel popup:1 ptr:%p", d);
-            d = userData_Object(root_Widget(d));
-        }
         iString ptrStr;
         init_String(&ptrStr);
         /* Insert the widget pointer as the first argument so possible suffixes are unaffected. */

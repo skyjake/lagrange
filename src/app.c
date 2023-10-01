@@ -2188,11 +2188,16 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         setCurrent_Window(window);
                         window->lastHover = window->hover;
                         wasUsed = processEvent_Window(window, &ev);
-                        if (ev.type == SDL_MOUSEMOTION) {
-                            /* Only offered to the frontmost window. */
+                        if (wasUsed) {
+                            if (!isEmpty_Array(&d->popupWindows) && window->type != popup_WindowType) {
+                                /* Clicking outside the open popups is supposed to close all of them. */
+                                if (ev.type == SDL_MOUSEBUTTONDOWN) {
+                                    postCommand_App("menu.cancel");
+                                    break;
+                                }
+                            }
                             break;
                         }
-                        if (wasUsed) break;
                     }
                 }
                 setCurrent_Window(d->window);
@@ -2755,6 +2760,10 @@ const iPtrArray *regularWindows_App(void) {
         pushBack_PtrArray(wins, i.ptr);
     }
     return collect_PtrArray(wins);
+}
+
+const iPtrArray *popupWindows_App(void) {
+    return &app_.popupWindows;
 }
 
 void setActiveWindow_App(iAnyWindow *mainOrExtraWin) {

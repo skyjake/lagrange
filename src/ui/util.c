@@ -811,8 +811,20 @@ static void closeSubmenus_(iWidget *menu, iRoot *root) {
             iLabelWidget *label = (iLabelWidget *) i.object;
             const iString *subCmd = command_LabelWidget(label);
             if (startsWith_String(subCmd, "submenu id:")) {
-                iWidget *submenu = findChild_Widget(root->widget,
-                                                    cstr_Command(cstr_String(subCmd), "id"));
+                const char *subId = cstr_Command(cstr_String(subCmd), "id");
+                iWidget *submenu = findChild_Widget(root->widget, subId);
+                if (!submenu && userData_Object(menu)) {
+                    /* In a popup window, the original parent's root may be more relevant. */
+                    iAssert(type_Window(window_Widget(menu)) == popup_WindowType);
+                    /* When menus are opened in popups, the menu widget is temporarily migrated
+                       to the popup window's root. */
+                    iConstForEach(PtrArray, p, popupWindows_App()) {
+                        const iWindow *pop = p.ptr;
+                        if ((submenu = findChild_Widget(pop->roots[0]->widget, subId)) != NULL) {
+                            break;
+                        }
+                    }
+                }
                 iAssert(submenu);
                 closeSubmenus_(submenu, root);
                 if (isVisible_Widget(submenu)) {
@@ -837,6 +849,10 @@ static void openSubmenu_(iWidget *d) {
     iAssert(submenu);
     if (!isVisible_Widget(submenu)) {
         remove_Periodic(periodic_App(), menu);
+//        printf("isPopup:%d\n d's window type: %d", isPopup, window_Widget(d)->type); fflush(stdout);
+        if (isPopup) {
+            setCurrent_Window(window_Widget(d));
+        }
         openMenuAnchorFlags_Widget(submenu,
                                    bounds_Widget(d),
                                    submenu_MenuOpenFlags |
@@ -1341,6 +1357,7 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
                                  focus_Widget() == parent_Widget(d));
     const iBool isPopupForced = (menuOpenFlags & forcePopup_MenuOpenFlags) != 0;
     const iBool isSubmenu     = (menuOpenFlags & submenu_MenuOpenFlags) != 0;
+    const iBool isFromMenuBar = (menuOpenFlags & fromMenuBar_MenuOpenFlags) != 0;
     /* Some menus may require updating the items dynamically. */
     if (d->updateMenuItems) {
         const iArray *newItems = d->updateMenuItems(d);
@@ -1357,8 +1374,10 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     if (postCommands && !isSubmenu) {
         postCommandf_App("cancel menu:%p", d); /* dismiss any other menus */
     }
+    iWindow *currentWindow = get_Window();
     /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
     processEvents_App(postedEventsOnly_AppEventMode);
+    setCurrent_Window(currentWindow);
 #if defined (iPlatformAppleDesktop)
     if (flags_Widget(d) & nativeMenu_WidgetFlag) {
         /* Open a native macOS menu. */
@@ -1425,13 +1444,14 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
             setFlags_Widget(d, keepOnTop_WidgetFlag, iFalse);
             setUserData_Object(d, parent_Widget(d));
             iAssert(userData_Object(d));
+            parent_Widget(d)->flags2 |= childMenuOpenedAsPopup_WidgetFlag2;
             removeChild_Widget(parent_Widget(d), d); /* we'll borrow the widget for a while */
             iInt2 winPos;
             SDL_GetWindowPosition(sdlWin, &winPos.x, &winPos.y);
             iInt2 menuPos = add_I2(winPos,
                                    divf_I2(sub_I2(windowCoord, divi_I2(gap2_UI, 2)), pixelRatio));
+            iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);
             /* Check display bounds. */ {
-                iInt2 menuSize = divf_I2(d->rect.size, pixelRatio);
                 if (menuOpenFlags & center_MenuOpenFlags) {
                     iInt2 winSize;
                     SDL_GetWindowSize(sdlWin, &winSize.x, &winSize.y);
@@ -1442,9 +1462,15 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
                     menuPos.x -= menuSize.x + width_Rect(windowAnchorRect) / pixelRatio;
                 }
                 menuPos.x = iMin(menuPos.x, right_Rect(displayRect) - menuSize.x);
-                menuPos.y = iMax(0, iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y));
+                if (!isFromMenuBar) {
+                    menuPos.y = iMax(0, iMin(menuPos.y, bottom_Rect(displayRect) - menuSize.y));
+                }
             }
             iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
+            if (isFromMenuBar && menuPos.y + menuSize.y > bottom_Rect(displayRect)) {
+                const int maxMenuHeight = bottom_Rect(displayRect) - menuPos.y;
+                SDL_SetWindowMaximumSize(win->win, displayRect.size.x, maxMenuHeight);
+            }
             setCurrent_Window(win);
             SDL_SetWindowTitle(win->win, "Menu");
             arrange_Widget(d);
@@ -1482,6 +1508,10 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
         /* LAYOUT BUG: Height of wrapped menu items is incorrect with a single arrange! */
         arrange_Widget(d);
     }
+    if (isFromMenuBar && windowCoord.y + height_Widget(d) > bottom_Rect(rootRect)) {
+        /* Don't overlap the menu bar. */
+        d->overflowTopMargin = windowCoord.y - top_Rect(rootRect);
+    }
     if (deviceType_App() == phone_AppDeviceType) {
         if (isSlidePanel) {
             d->rect.pos = zero_I2();
@@ -1502,7 +1532,7 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     const iRect bounds       = bounds_Widget(d);
     int         leftExcess   = left_Rect(rootRect) - left_Rect(bounds);
     int         rightExcess  = right_Rect(bounds) - right_Rect(rootRect);
-    int         topExcess    = top_Rect(rootRect) - top_Rect(bounds);
+    int         topExcess    = top_Rect(rootRect) + d->overflowTopMargin - top_Rect(bounds);
     int         bottomExcess = bottom_Rect(bounds) - bottom_Rect(rootRect);
 #if defined (iPlatformAppleMobile)
     /* Reserve space for the system status bar. */ {
@@ -1518,7 +1548,7 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     bottomExcess += get_MainWindow()->keyboardHeight;
 #endif
     if (!allowOverflow) {
-        if (bottomExcess > 0 && (!isPortraitPhone || !isSlidePanel)) {
+        if (!isFromMenuBar && bottomExcess > 0 && (!isPortraitPhone || !isSlidePanel)) {
             d->rect.pos.y -= bottomExcess;
         }
         if (topExcess > 0) {
@@ -1561,9 +1591,10 @@ void closeMenu_Widget(iWidget *d) {
         win->roots[0]->widget = NULL;
         setRoot_Widget(d, originalParent->root);
         addChild_Widget(originalParent, d);
+        originalParent->flags2 &= ~childMenuOpenedAsPopup_WidgetFlag2;
         setFlags_Widget(d, keepOnTop_WidgetFlag, iTrue);
         SDL_HideWindow(win->win);
-        collect_Garbage(win, (iDeleteFunc) delete_Window); /* get rid of it after event processing */
+        collect_Garbage(win, (iDeleteFunc) delete_Window); /* get rid of it after event processing */        
     }
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
@@ -1788,8 +1819,9 @@ const char *selectedDropdownCommand_LabelWidget(const iLabelWidget *dropButton) 
 
 static iWidget *topLevelOpenMenu_(const iWidget *menuBar) {
     iForEach(ObjectList, i, menuBar->children) {
-        iWidget *menu = findChild_Widget(i.object, "menu");
-        if (isVisible_Widget(menu)) {
+        iWidget *child = i.object;
+        iWidget *menu = findChild_Widget(child, "menu");
+        if (isVisible_Widget(menu) || child->flags2 & childMenuOpenedAsPopup_WidgetFlag2) {
             return i.object;
         }
     }

@@ -136,6 +136,7 @@ enum iWidgetFlag2 {
     horizontallyResizable_WidgetFlag2       = iBit(9), /* may drag left/right edges to resize */
     leftEdgeResizing_WidgetFlag2            = iBit(10),
     rightEdgeResizing_WidgetFlag2           = iBit(11),
+    childMenuOpenedAsPopup_WidgetFlag2      = iBit(12),
 };
 
 enum iWidgetAddPos {
@@ -165,6 +166,7 @@ struct Impl_Widget {
     iWidget *    sizeRef;
     iWidget *    offsetRef;
     int          padding[4]; /* left, top, right, bottom */
+    int          overflowTopMargin; /* keep clear of this much space at the top */
     iAnim        visualOffset;
     int          bgColor;
     int          frameColor;
