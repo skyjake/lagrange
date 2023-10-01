@@ -361,10 +361,16 @@ static iBool updateSize_MainWindow_(iMainWindow *d, iBool notifyAlways) {
 
 void drawWhileResizing_MainWindow(iMainWindow *d, int w, int h) {
     if (!isDrawing_) {
-        isResizing_ = iTrue;
-        setCurrent_Window(d);
-        draw_MainWindow(d);
-        isResizing_ = iFalse;
+        static uint32_t lastTime_ = 0;
+        /* Restrict the draw frequency on Linux because in some environments this would
+           otherwise cause draws to queue up as the resizing events come in too frequently. */
+        if (!isLinux_Platform() || SDL_GetTicks() - lastTime_ >= 32) {
+            lastTime_ = SDL_GetTicks();
+            isResizing_ = iTrue;
+            setCurrent_Window(d);
+            draw_MainWindow(d);
+            isResizing_ = iFalse;
+        }
     }
 }
 
