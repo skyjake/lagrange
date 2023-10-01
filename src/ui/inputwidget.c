@@ -2518,6 +2518,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             /* Note: AltGr on Windows is reported as Ctrl+Alt. */
             return iTrue;
         }
+        if (isLinux_Platform() && keyMods_Sym(modState_Keys()) == KMOD_CTRL) {
+            return iTrue;
+        }
         pushUndo_InputWidget_(d);
         deleteMarked_InputWidget_(d);
         insertRange_InputWidget_(d, range_CStr(ev->text.text));
