@@ -1480,12 +1480,14 @@ static void deinit_App(iApp *d) {
     delete_Root(d->submenuRoot);
 #endif
     iReverseForEach(PtrArray, i, &d->popupWindows) {
+        iAssert(d->window != i.ptr);
         delete_Window(i.ptr);
     }
     iAssert(isEmpty_PtrArray(&d->popupWindows));
     deinit_PtrArray(&d->popupWindows);
     iReverseForEach(PtrArray, k, &d->extraWindows) {
         delete_Window(k.ptr);
+        iAssert(d->window != k.ptr);
     }
     iAssert(isEmpty_PtrArray(&d->extraWindows));
     deinit_PtrArray(&d->extraWindows);
@@ -2800,6 +2802,9 @@ void addExtraWindow_App(iWindow *extra) {
 void removeExtraWindow_App(iWindow *extra) {
     iApp *d = &app_;
     removeOne_PtrArray(&d->extraWindows, extra);
+    if (d->window == extra) {
+        d->window = NULL;
+    }
 }
 
 iWindow *findWindow_App(int type, const char *widgetId) {
