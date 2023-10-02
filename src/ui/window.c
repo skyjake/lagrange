@@ -284,6 +284,7 @@ static void windowSizeChanged_MainWindow_(iMainWindow *d) {
 #endif
     const int totalWeight = weights[0] + weights[1];
     int w = 0;
+    setCurrent_Window(d);
     iForIndices(i, d->base.roots) {
         iRoot *root = d->base.roots[i];
         if (root) {
@@ -1518,7 +1519,7 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
     }
     if (d->hover != oldHover) {
-        refresh_Widget(d->hover); /* Note: oldHover may have been deleted */        
+        refresh_Widget(d->hover); /* Note: oldHover may have been deleted */
         if (d->hover && d->hover->flags2 & commandOnHover_WidgetFlag2) {
             notifyHovered_Window_(d);
         }

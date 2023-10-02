@@ -1588,13 +1588,16 @@ void closeMenu_Widget(iWidget *d) {
     if (type_Window(win) == popup_WindowType) {
         iWidget *originalParent = userData_Object(d);
         setUserData_Object(d, NULL);
-        win->roots[0]->widget = NULL;
-        setRoot_Widget(d, originalParent->root);
-        addChild_Widget(originalParent, d);
-        originalParent->flags2 &= ~childMenuOpenedAsPopup_WidgetFlag2;
-        setFlags_Widget(d, keepOnTop_WidgetFlag, iTrue);
+        /* This may have been a popup window opened from a root being deleted. */
+        if (!isRecentlyDeleted_Widget(originalParent)) {
+            win->roots[0]->widget = NULL;
+            setRoot_Widget(d, originalParent->root);
+            addChild_Widget(originalParent, d);
+            originalParent->flags2 &= ~childMenuOpenedAsPopup_WidgetFlag2;
+            setFlags_Widget(d, keepOnTop_WidgetFlag, iTrue);
+        }
         SDL_HideWindow(win->win);
-        collect_Garbage(win, (iDeleteFunc) delete_Window); /* get rid of it after event processing */        
+        collect_Garbage(win, (iDeleteFunc) delete_Window); /* get rid of it after event processing */
     }
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
