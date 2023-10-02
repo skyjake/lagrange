@@ -204,7 +204,7 @@ static void draw_SnippetItem_(const iSnippetItem *d, iPaint *p, iRect itemRect,
     }
     iInt2 pos = init_I2(left_Rect(itemRect) + 3 * gap_UI,
                         top_Rect(itemRect) + itemHeight / 2 - line);
-    drawRange_Text(font, pos, fg, range_String(&d->label));
+    drawRange_Text(uiLabelBold_FontId, pos, fg, range_String(&d->label));
     pos.y += line;
     drawRange_Text(font, pos, fg2, range_String(&d->content));
 }
