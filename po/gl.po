@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2023-09-17 05:14+0000\n"
+"PO-Revision-Date: 2023-10-02 16:23+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -327,7 +327,7 @@ msgid "menu.zoom.reset"
 msgstr "Restablecer tamaño"
 
 msgid "menu.view.split"
-msgstr "Vista dividida…"
+msgstr "Vista dividida"
 
 msgid "menu.bookmarks.list"
 msgstr "Lista de tódolos marcadores"
@@ -2252,9 +2252,10 @@ msgstr "Arquivo con Datos da usuaria"
 msgid "userdata.help"
 msgstr ""
 "Os arquivos con datos da usuaria conteñen o historial de navegación, "
-"identidades, marcadores, axustes específicos das webs, impresións dixitais "
-"ou certificados de confianza dos servidores. Pódense gardar como copias de "
-"apoio ou usalos para transferir os datos entre dispositivos."
+"identidades, marcadores, anacos de texto, axustes específicos das webs, "
+"impresións dixitais ou certificados de confianza dos servidores. Pódense "
+"gardar como copias de apoio ou usalos para transferir os datos entre "
+"dispositivos."
 
 msgid "sitespec.tlscache"
 msgstr "Retomar sesión TLS:"
@@ -2278,10 +2279,10 @@ msgid "prefs.justify"
 msgstr "Xustificar:"
 
 msgid "menu.export"
-msgstr "Exportar Datos de usuaria"
+msgstr "Exportar"
 
 msgid "menu.import"
-msgstr "Importar Datos de usuaria…"
+msgstr "Importar…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
@@ -2584,3 +2585,33 @@ msgstr "Omitir preformatado:"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Redireccións ao cambiar Scheme:"
+
+msgid "menu.foldall"
+msgstr "Pregar Todo"
+
+msgid "menu.unfoldall"
+msgstr "Despregar Todo"
+
+msgid "menu.userdata"
+msgstr "Datos da Usuaria"
+
+msgid "menu.paste.snippet"
+msgstr "Pegar Texto"
+
+msgid "menu.search"
+msgstr "Buscar"
+
+msgid "menu.snippet.add"
+msgstr "Anaco de texto desde a Selección…"
+
+msgid "menu.tools"
+msgstr "Ferramentas"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Engadir Marcador ao Cartafol:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Mover Marcador ao Cartafol:"
+
+msgid "menu.page.visitlinks"
+msgstr "Marcar todas as ligazóns como Visitadas"
