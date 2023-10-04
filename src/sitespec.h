@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "defs.h"
 #include <the_Foundation/stringarray.h>
+#include <the_Foundation/stringset.h>
 
 iDeclareType(SiteSpec)
 
@@ -34,6 +35,7 @@ enum iSiteSpecKey {
     usedIdentities_SiteSpecKey,  /* StringArray */
     paletteSeed_SiteSpecKey,     /* String */
     tlsSessionCache_SiteSpeckey, /* int */
+    promptPaths_SiteSpecKey,     /* StringSet */
 };
 
 void    init_SiteSpec       (const char *saveDir);
@@ -43,7 +45,7 @@ void    serialize_SiteSpec      (iStream *);
 iBool   deserialize_SiteSpec    (iStream *, enum iImportMethod);
 
 /* changes saved immediately */
-void    setValue_SiteSpec       (const iString *site, enum iSiteSpecKey key, int value); 
+void    setValue_SiteSpec       (const iString *site, enum iSiteSpecKey key, int value);
 void    setValueString_SiteSpec (const iString *site, enum iSiteSpecKey key, const iString *value);
 void    insertString_SiteSpec   (const iString *site, enum iSiteSpecKey key, const iString *value);
 void    removeString_SiteSpec   (const iString *site, enum iSiteSpecKey key, const iString *value);
@@ -51,3 +53,6 @@ void    removeString_SiteSpec   (const iString *site, enum iSiteSpecKey key, con
 int                 value_SiteSpec          (const iString *site, enum iSiteSpecKey key);
 const iString *     valueString_SiteSpec    (const iString *site, enum iSiteSpecKey key);
 const iStringArray *strings_SiteSpec        (const iString *site, enum iSiteSpecKey key);
+const iStringSet *  stringSet_SiteSpec      (const iString *site, enum iSiteSpecKey key);
+
+iBool   isPromptUrl_SiteSpec   (const iString *url);

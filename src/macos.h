@@ -37,6 +37,7 @@ void    registerURLHandler_MacOS    (void);
 void    setupApplication_MacOS      (void);
 void    hideTitleBar_MacOS          (iWindow *window);
 void    insertMenuItems_MacOS       (const char *menuLabel, int atIndex, int firstItemIndex, const iMenuItem *items, size_t count);
+void    updateMenuItems_MacOS       (int atIndex, const iMenuItem *items, size_t count);
 void    removeMenu_MacOS            (int atIndex);
 void    removeMenuItems_MacOS       (int atIndex, int firstItem, int numItems);
 void    enableMenu_MacOS            (const char *menuLabel, iBool enable);

@@ -1259,9 +1259,6 @@ msgstr "葡萄牙語"
 msgid "doc.pre.nocaption"
 msgstr "無說明的預格式文字"
 
-msgid "prefs.collapsepreonload"
-msgstr "收起預格式文字："
-
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"

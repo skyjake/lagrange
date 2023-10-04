@@ -61,7 +61,7 @@ enum iWidgetFlag {
     frameless_WidgetFlag          = iBit(8),
     commandOnClick_WidgetFlag     = iBit(9),
     commandOnMouseMiss_WidgetFlag = iBit(10),
-    drawKey_WidgetFlag            = iBit(11),
+    drawKey_WidgetFlag            = iBit(11), /* TODO: LabelWidget-specific! */
     focusable_WidgetFlag          = iBit(12),
     tight_WidgetFlag              = iBit(13), /* smaller padding */
     keepOnTop_WidgetFlag          = iBit(14), /* gets events first; drawn last */
@@ -133,6 +133,10 @@ enum iWidgetFlag2 {
     centerChildrenVertical_WidgetFlag2      = iBit(6), /* pad top and bottom to center children in the middle */
     usedAsPeriodicContext_WidgetFlag2       = iBit(7), /* add_Periodic() called on the widget */
     siblingOrderDraggable_WidgetFlag2       = iBit(8),
+    horizontallyResizable_WidgetFlag2       = iBit(9), /* may drag left/right edges to resize */
+    leftEdgeResizing_WidgetFlag2            = iBit(10),
+    rightEdgeResizing_WidgetFlag2           = iBit(11),
+    childMenuOpenedAsPopup_WidgetFlag2      = iBit(12),
 };
 
 enum iWidgetAddPos {
@@ -153,6 +157,7 @@ iDeclareType(WidgetDrawBuffer)
 struct Impl_Widget {
     iObject      object;
     iString      id;
+    iString      resizeId; /* if user-resized width will be remembered; TODO: apply to sidebars? */
     int64_t      flags;
     int          flags2;
     iRect        rect;
@@ -161,16 +166,20 @@ struct Impl_Widget {
     iWidget *    sizeRef;
     iWidget *    offsetRef;
     int          padding[4]; /* left, top, right, bottom */
+    int          overflowTopMargin; /* keep clear of this much space at the top */
     iAnim        visualOffset;
     int          bgColor;
     int          frameColor;
     iObjectList *children;
     iWidget *    parent;
-    iBool      (*commandHandler)(iWidget *, const char *);
     iRoot *      root;
     iWidgetDrawBuffer *drawBuf;
     iAnim        overflowScrollOpacity; /* scrollbar fading */
     iString      data; /* custom user data */
+    /* Callbacks. */
+    iBool      (*commandHandler)(iWidget *, const char *);
+    const iArray *(*updateMenuItems)(iWidget *); /* returns the updated items for the menu */
+    void       (*menuClosed)(iWidget *);
 };
 
 iDeclareObjectConstruction(Widget)
@@ -291,12 +300,14 @@ iBool   isFocused_Widget            (const iAnyObject *);
 iBool   isHover_Widget              (const iAnyObject *);
 iBool   isSelected_Widget           (const iAnyObject *);
 iBool   isUnderKeyRoot_Widget       (const iAnyObject *);
-iBool   isCommand_Widget            (const iWidget *d, const SDL_Event *ev, const char *cmd);
-iBool   hasParent_Widget            (const iWidget *d, const iWidget *someParent);
+iBool   isCommand_Widget            (const iWidget *, const SDL_Event *ev, const char *cmd);
+iBool   isExtraWindowSizeInfluencer_Widget(const iWidget *);
+iBool   hasParent_Widget            (const iWidget *, const iWidget *someParent);
 iBool   isAffectedByVisualOffset_Widget         (const iWidget *);
 iBool   isBeingVisuallyOffsetByReference_Widget (const iWidget *);
 int     visualOffsetByReference_Widget          (const iWidget *);
 void    setId_Widget                (iWidget *, const char *id);
+void    setResizeId_Widget          (iWidget *, const char *resizeId); /* no need to be unique */
 void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
 void    setTreeFlags_Widget         (iWidget *, int64_t flags, iBool set);
 void    setPos_Widget               (iWidget *, iInt2 pos);
@@ -322,6 +333,7 @@ size_t  indexOfChild_Widget         (const iWidget *, const iAnyObject *child); 
 void    changeChildIndex_Widget     (iWidget *, iAnyObject *child, size_t newIndex); /* O(n) */
 void    arrange_Widget              (iWidget *);
 iBool   scrollOverflow_Widget       (iWidget *, int delta); /* moves the widget */
+void    applyInteractiveResize_Widget(iWidget *, int width);
 iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);
 iBool   processEvent_Widget         (iWidget *, const SDL_Event *);
 void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);
@@ -332,14 +344,16 @@ iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char 
 iDeclareType(WidgetScrollInfo)
 
 struct Impl_WidgetScrollInfo {
-    int   height; /* widget's height */
-    int   avail;  /* available height */
+    int   totalHeight; /* widget's height */
+    int   visibleHeight;  /* available height */
     float normScroll;
     int   thumbY; /* window coords */
     int   thumbHeight;
 };
 
-void        scrollInfo_Widget           (const iWidget *, iWidgetScrollInfo *info);
+void        contentScrollInfo_Widget    (const iWidget *, iWidgetScrollInfo *info, int contentPos, int contentMax);
+void        overflowScrollInfo_Widget   (const iWidget *, iWidgetScrollInfo *info);
+void        drawScrollIndicator_Widget  (const iWidget *, const iWidgetScrollInfo *info, int color, float opacity);
 
 int         backgroundFadeColor_Widget  (void);
 
@@ -347,12 +361,13 @@ const iWidget *focusRoot_Widget     (const iWidget *);
 void        setFocus_Widget         (iWidget *); /* widget must be flagged `focusable` */
 void        setKeyboardGrab_Widget  (iWidget *); /* sets focus on any widget */
 iWidget *   focus_Widget            (void);
-void        setHover_Widget         (iWidget *);
+iBool       setHover_Widget         (iWidget *);
 iWidget *   hover_Widget            (void);
 void        unhover_Widget          (void);
 void        setMouseGrab_Widget     (iWidget *);
 iWidget *   mouseGrab_Widget        (void);
 void        raise_Widget            (iWidget *);
+//void        setDelayedCallback_Widget(iWidget *, int delay, void (*)(iWidget *));
 iBool       hasVisibleChildOnTop_Widget
                                     (const iWidget *parent);
 void        printTree_Widget        (const iWidget *);
@@ -361,4 +376,4 @@ void        identify_Widget         (const iWidget *); /* prints to stdout */
 void        addRecentlyDeleted_Widget   (iAnyObject *obj);
 iBool       isRecentlyDeleted_Widget    (const iAnyObject *obj);
 void        clearRecentlyDeleted_Widget (void);
-    
+

@@ -1178,9 +1178,6 @@ msgstr ""
 "Vole tu vermente deler le identitate %s«%s»%s con su certificato e clave "
 "private?"
 
-msgid "prefs.collapsepreonload"
-msgstr "Contraher le preformattate:"
-
 msgid "error.cert.invalid.msg"
 msgstr "Le certificato providite es expirate o non valide."
 

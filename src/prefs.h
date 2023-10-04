@@ -31,27 +31,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 /* User preferences */
 
 iDeclareType(Prefs)
-    
+
 enum iPrefsString {
     /* General */
     uiLanguage_PrefsString,
     downloadDir_PrefsString,
     searchUrl_PrefsString,
-        
+
     /* Network */
     caFile_PrefsString,
     caPath_PrefsString,
     geminiProxy_PrefsString,
     gopherProxy_PrefsString,
     httpProxy_PrefsString,
-        
+
     /* Style */
     uiFont_PrefsString,
     headingFont_PrefsString,
     bodyFont_PrefsString,
     monospaceFont_PrefsString,
     monospaceDocumentFont_PrefsString,
-        
+
     /* Meta */
     max_PrefsString
 };
@@ -64,59 +64,67 @@ enum iPrefsBool {
     retainWindowSize_PrefsBool,
     uiAnimations_PrefsBool,
     hideToolbarOnScroll_PrefsBool,
-    
+
     blinkingCursor_PrefsBool,
     bottomNavBar_PrefsBool,
     bottomTabBar_PrefsBool,
     menuBar_PrefsBool,
     simpleChars_PrefsBool,
-    
+
     evenSplit_PrefsBool,
     detachedPrefs_PrefsBool,
-    
+    editorSyntaxHighlighting_PrefsBool,
+
     /* Document presentation */
     sideIcon_PrefsBool,
     time24h_PrefsBool,
-    
+
     /* Behavior */
     retainTabs_PrefsBool,
     hoverLink_PrefsBool,
     smoothScrolling_PrefsBool,
     loadImageInsteadOfScrolling_PrefsBool,
     openDataUrlImagesOnLoad_PrefsBool,
-    
-    collapsePreOnLoad_PrefsBool,
+
     openArchiveIndexPages_PrefsBool,
     addBookmarksToBottom_PrefsBool,
     warnAboutMissingGlyphs_PrefsBool,
     markdownAsSource_PrefsBool,
-    
     skipIndexPageOnParentNavigation_PrefsBool,
+
     edgeSwipe_PrefsBool,
     pageSwipe_PrefsBool,
-    
+    capsLockKeyModifier_PrefsBool,
+
     /* Network */
     decodeUserVisibleURLs_PrefsBool,
     allowSchemeChangingRedirect_PrefsBool,
-    
+
     /* Style */
     monospaceGemini_PrefsBool,
     monospaceGopher_PrefsBool,
     boldLinkVisited_PrefsBool,
-    boldLinkDark_PrefsBool,    
+    boldLinkDark_PrefsBool,
     boldLinkLight_PrefsBool,
-    
+
     fontSmoothing_PrefsBool,
     bigFirstParagraph_PrefsBool,
     justifyParagraph_PrefsBool,
     quoteIcon_PrefsBool,
     centerShortDocs_PrefsBool,
-    
+
     plainTextWrap_PrefsBool,
     geminiStyledGopher_PrefsBool,
-    
+
     /* Meta */
     max_PrefsBool
+};
+
+enum iCollapse {
+    never_Collapse,
+    notByDefault_Collapse,
+    byDefault_Collapse,
+    always_Collapse,
 };
 
 #define maxNavbarActions_Prefs  4
@@ -135,54 +143,55 @@ struct Impl_Prefs {
             iBool retainWindowSize;
             iBool uiAnimations;
             iBool hideToolbarOnScroll;
-            
+
             iBool blinkingCursor;
             iBool bottomNavBar;
             iBool bottomTabBar;
             iBool menuBar;
             iBool simpleChars;
-            
+
             iBool evenSplit;
             iBool detachedPrefs;
-            
+            iBool editorSyntaxHighlighting;
+
             /* Document presentation */
             iBool sideIcon;
             iBool time24h;
-            
+
             /* Behavior */
             iBool retainTabs;
             iBool hoverLink;
             iBool smoothScrolling;
             iBool loadImageInsteadOfScrolling;
             iBool openDataUrlImagesOnLoad;
-            
-            iBool collapsePreOnLoad;
-            iBool openArchiveIndexPages;            
+
+            iBool openArchiveIndexPages;
             iBool addBookmarksToBottom;
             iBool warnAboutMissingGlyphs;
             iBool markdownAsSource;
-            
             iBool skipIndexPageOnParentNavigation;
+
             iBool edgeSwipe; /* mobile: one can swipe from edges to navigate */
             iBool pageSwipe; /* mobile: one can swipe over the page to navigate */
-            
+            iBool capsLockKeyModifier;
+
             /* Network */
             iBool decodeUserVisibleURLs;
             iBool allowSchemeChangingRedirect;
-            
+
             /* Style */
             iBool monospaceGemini;
             iBool monospaceGopher;
             iBool boldLinkVisited;
-            iBool boldLinkDark;            
+            iBool boldLinkDark;
             iBool boldLinkLight;
-            
+
             iBool fontSmoothing;
             iBool bigFirstParagraph;
             iBool justifyParagraph;
             iBool quoteIcon;
             iBool centerShortDocs;
-            
+
             iBool plainTextWrap;
             iBool geminiStyledGopher;
         };
@@ -194,19 +203,22 @@ struct Impl_Prefs {
     iBool            translationIgnorePre;
     /* Colors */
     enum iColorTheme systemPreferredColorTheme[2]; /* dark, light */
-    enum iColorTheme theme;    
+    enum iColorTheme theme;
     enum iColorAccent accent;
     /* Window and User Interface */
     float            uiScale;
     enum iToolbarAction navbarActions[maxNavbarActions_Prefs];
     enum iToolbarAction toolbarActions[2];
     int              inputZoomLevel;
+    int              editorZoomLevel;
     /* Document presentation */
     int              zoomPercent;
     /* Behavior */
     int              pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
+    enum iFeedInterval feedInterval;
     int              returnKey;
     int              smoothScrollSpeed[max_ScrollType];
+    enum iCollapse   collapsePre;
     /* Network */
     int              maxCacheSize; /* MB */
     int              maxMemorySize; /* MB */
@@ -225,7 +237,7 @@ struct Impl_Prefs {
 };
 
 iDeclareTypeConstruction(Prefs)
-    
+
 iLocalDef float scrollSpeedFactor_Prefs(const iPrefs *d, enum iScrollType type) {
     iAssert(type >= 0 && type < max_ScrollType);
     return 10.0f / iMax(1, d->smoothScrollSpeed[type]) * (type == mouse_ScrollType ? 0.5f : 1.0f);

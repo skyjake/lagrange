@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2023-05-20 05:54+0000\n"
+"PO-Revision-Date: 2023-10-01 15:16+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -161,7 +161,7 @@ msgid "menu.zoom.reset"
 msgstr "Yakınlaştırmayı sıfırla"
 
 msgid "menu.view.split"
-msgstr "Görünümü böl…"
+msgstr "Bölünmüş görünüm"
 
 msgid "menu.newfolder"
 msgstr "Yeni klasör…"
@@ -521,7 +521,7 @@ msgstr "Parmak izini kopyala"
 
 #, c-format
 msgid "dlg.input.prompt"
-msgstr "%s için bir girdi girin:"
+msgstr "%s için giriş yap:"
 
 msgid "dlg.input.linebreak"
 msgstr "Satır sonu"
@@ -1709,8 +1709,8 @@ msgstr "Alınan sertifikanın süresi dolmuş VE başka bir alan adı için."
 
 msgid "dlg.certimport.help"
 msgstr ""
-"PEM ile kodlanmış bir sertifika ve/veya gizli anahtar yapıştırın\n"
-"veya pencereye bir .crt/.key dosyası bırakın."
+"PEM ile kodlanmış bir sertifika ve/veya gizli anahtar yapıştırın veya "
+"pencereye bir .crt/.key dosyası bırakın."
 
 # button in the mobile New Identity dialog
 msgid "dlg.certimport.pickfile"
@@ -1828,9 +1828,6 @@ msgstr "Arabirim renkleri"
 
 msgid "heading.prefs.widelayout"
 msgstr "Geniş dizilim"
-
-msgid "prefs.collapsepreonload"
-msgstr "Önceden biçimlendirilenleri daralt:"
 
 msgid "prefs.bookmarks.addbottom"
 msgstr "Yer imlerini alta ekle:"
@@ -2265,15 +2262,15 @@ msgstr "Kullanıcı Veri Arşivi"
 msgid "userdata.help"
 msgstr ""
 "Kullanıcı veri arşivleri, dışa aktarılmış tarama geçmişi, kimlikler, yer "
-"imleri, siteye özel ayarlar ve güvenilen sunucu sertifikalarının parmak "
-"izlerini içerir. Yedek olarak depolanabilirler ve aygıtlar arası veri "
-"aktarımında kullanılabilirler."
+"imleri, metin kırpıntıları, siteye özel ayarlar ve güvenilen sunucu "
+"sertifikalarının parmak izlerini içerir. Yedek olarak depolanabilirler ve "
+"aygıtlar arası veri aktarımında kullanılabilirler."
 
 msgid "menu.export"
-msgstr "Kullanıcı verisini dışa aktar"
+msgstr "Dışa aktar"
 
 msgid "menu.import"
-msgstr "Kullanıcı verisini içe aktar…"
+msgstr "İçe aktar…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
@@ -2598,3 +2595,142 @@ msgstr "Ukraynaca"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Şema değiştiren yeniden yönlendirmeler:"
+
+msgid "menu.foldall"
+msgstr "Tümünü katla"
+
+msgid "menu.unfoldall"
+msgstr "Tümünü aç"
+
+msgid "menu.userdata"
+msgstr "Kullanıcı verisi"
+
+msgid "menu.search"
+msgstr "Ara"
+
+msgid "menu.paste.snippet"
+msgstr "Kırpıntıyı yapıştır"
+
+msgid "menu.tools"
+msgstr "Araçlar"
+
+msgid "menu.page.visitlinks"
+msgstr "Tüm bağlantıları ziyaret edilmiş olarak imle"
+
+msgid "menu.snippet.add"
+msgstr "Seçimden kırpıntı…"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Klasöre yer imi ekle:"
+
+msgid "menu.input.setprompt"
+msgstr "Bu URL'nin girdi gerektirdiğini varsay"
+
+msgid "menu.input.unsetprompt"
+msgstr "Bu URL'nin girdi gerektirdiğini varsayma"
+
+msgid "menu.input.clear"
+msgstr "Geçmişi temizle"
+
+msgid "menu.input.restore"
+msgstr "Öncekini geri yükle:"
+
+msgid "dlg.import.intofolder"
+msgstr "Klasöre ekle:"
+
+msgid "dlg.import.headings"
+msgstr "Başlıklardan alt klasörler:"
+
+msgid "dlg.import.notfound"
+msgstr "Bu sayfada bağlantı yok."
+
+msgid "link.searchurl"
+msgstr "Arama URL'si olarak kullan"
+
+msgid "link.snippet"
+msgstr "Bağlantıdan kırpıntı…"
+
+msgid "import.userdata.snippets"
+msgstr "Kırpıntılar:"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "KIRPINTILAR"
+
+msgid "prefs.collapsepre"
+msgstr "Önden biçimlendirilmiş daralt:"
+
+msgid "collapse.never"
+msgstr "Asla"
+
+msgid "heading.prefs.snip"
+msgstr "Kırpıntılar"
+
+msgid "collapse.notbydefault"
+msgstr "Elle"
+
+msgid "collapse.bydefault"
+msgstr "Sayfa yüklenirken"
+
+msgid "collapse.always"
+msgstr "Her zaman"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Sistem"
+
+msgid "prefs.feedinterval"
+msgstr "Besleme yenileme aralığı:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Elle"
+
+msgid "prefs.editor.highlight"
+msgstr "Sözdizim vurgulaması:"
+
+msgid "error.showutf8"
+msgstr "UTF-8 kendiliğinden algılandı"
+
+msgid "error.showutf8.msg"
+msgstr ""
+"Bu sayfadaki ortam türü tanınamadı; ancak metin geçerli UTF-8 ile kodlanan "
+"metin."
+
+msgid "sniped.new"
+msgstr "Yeni kırpıntı"
+
+msgid "menu.snip.edit"
+msgstr "Düzenle…"
+
+msgid "menu.snip.clipboard"
+msgstr "Panoya kopyala"
+
+msgid "menu.snip.delete"
+msgstr "Sil"
+
+msgid "sniped.help"
+msgstr ""
+"Bir ünlemle başlayan kırpıntılar (örn. \"!w\"), sorgu kısayolu olarak URL "
+"alanlarında kullanılabilirler."
+
+msgid "menu.snip.prefs"
+msgstr "Yapılandır…"
+
+msgid "snip.name"
+msgstr "Ad:"
+
+msgid "snip.content"
+msgstr "İçerik:"
+
+msgid "heading.snip"
+msgstr "Yeni kırpıntı"
+
+msgid "snip.accept"
+msgstr "Kırpıntıyı kaydet"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Klasöre yer imini taşı:"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Bir kırpıntı sorgusu ekle"

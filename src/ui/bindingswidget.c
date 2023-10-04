@@ -101,6 +101,7 @@ static void updateItems_BindingsWidget_(iBindingsWidget *d) {
         translate_Lang(&item->label);
         toString_Sym(bind->key, bind->mods, &item->key);
         addItem_ListWidget(d->list, item);
+        iRelease(item);
     }
     sort_ListWidget(d->list, cmpId_BindingItem_);
     updateVisible_ListWidget(d->list);

@@ -1278,9 +1278,6 @@ msgstr ""
 "Li demanda esset por un ressurse quel ne existe sur li servitor e li "
 "servitor ne accepte demandes de proxy."
 
-msgid "prefs.collapsepreonload"
-msgstr "Contraher formatat textu:"
-
 msgid "keys.link.homerow.next"
 msgstr "Li sequent portion de ligamentes por li claves"
 

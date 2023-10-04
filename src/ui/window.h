@@ -41,10 +41,10 @@ enum iWindowType {
 iDeclareType(MainWindow)
 iDeclareType(Text)
 iDeclareType(Window)
-    
+
 iDeclareTypeConstructionArgs(Window, enum iWindowType type, iRect rect, uint32_t flags)
 iDeclareTypeConstructionArgs(MainWindow, iRect rect)
-    
+
 typedef iAny iAnyWindow;
 
 enum iWindowSnap {
@@ -92,7 +92,7 @@ struct Impl_Window {
     iBool         isMouseInside;
     iBool         isInvalidated;
     iAtomicInt    isRefreshPending;
-    iBool         ignoreClick;
+    iBool         ignoreClick; /* used on the Windows platform only */
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
     iInt2         size;
@@ -123,6 +123,7 @@ struct Impl_MainWindow {
     iString *     pendingSplitOrigin; /* tab from where split was initiated, if any */
     iString *     pendingSplitSetIdent;
     SDL_Texture * appIcon;
+    SDL_Texture * logo;
     int           keyboardHeight; /* mobile software keyboards */
     int           maxDrawableHeight;
     iBool         enableBackBuf; /* only used on macOS with Metal (helps with refresh glitches for some reason??) */
@@ -165,6 +166,7 @@ iWindow *   get_Window              (void);
 iBool       isOpenGLRenderer_Window (void);
 
 void        setCurrent_Window       (iAnyWindow *);
+void        postRefresh_Window      (iAnyWindow *);
 
 iLocalDef iBool isExposed_Window(const iWindow *d) {
     iAssert(d);
@@ -213,6 +215,7 @@ void        resize_MainWindow               (iMainWindow *, int w, int h);
 void        resizeSplits_MainWindow         (iMainWindow *, iBool updateDocumentSize);
 void        draw_MainWindow                 (iMainWindow *);
 void        drawQuick_MainWindow            (iMainWindow *);
+void        drawLogo_MainWindow             (iMainWindow *, iRect bounds);
 void        drawWhileResizing_MainWindow    (iMainWindow *, int w, int h); /* workaround for SDL bug */
 
 int         snap_MainWindow                 (const iMainWindow *);
@@ -242,3 +245,8 @@ iLocalDef const iMainWindow *constAs_MainWindow(const iAnyWindow *d) {
 
 iWindow *   newPopup_Window     (iInt2 screenPos, iWidget *rootWidget);
 iWindow *   newExtra_Window     (iWidget *rootWidget);
+
+/*----------------------------------------------------------------------------------------------*/
+
+const iArray *  updateBookmarksMenu_Widget  (iWidget *menu);
+void            cleanupBookmarksMenu_Widget (iWidget *menu);

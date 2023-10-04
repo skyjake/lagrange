@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-28 02:15+0000\n"
-"PO-Revision-Date: 2023-05-22 09:28+0000\n"
+"PO-Revision-Date: 2023-10-04 05:14+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -585,7 +585,7 @@ msgstr "Copiar Huella Digital"
 
 #, c-format
 msgid "dlg.input.prompt"
-msgstr "Por favor escribir entrada para %s:"
+msgstr "Escribir entrada para %s:"
 
 msgid "dlg.input.send"
 msgstr "Enviar"
@@ -697,8 +697,8 @@ msgstr "Importar Identidad"
 
 msgid "dlg.certimport.help"
 msgstr ""
-"Pegue un certificado en codificación PEM y/o una clave privada,\n"
-"o arrastre un archivo .crt/.key a la ventana."
+"Pegue un certificado en codificación PEM y/o una clave privada, o arrastre "
+"un archivo .crt/.key a la ventana."
 
 msgid "dlg.certimport.notfound"
 msgstr "No se encontró un certificado o clave privada."
@@ -1062,10 +1062,10 @@ msgid "menu.binding.clear"
 msgstr "Remover"
 
 msgid "keys.top"
-msgstr "Ir al inicio"
+msgstr "Ir al Inicio"
 
 msgid "keys.bottom"
-msgstr "Ir al final"
+msgstr "Ir al Final"
 
 msgid "keys.scroll.up"
 msgstr "Desplazar hacia arriba"
@@ -1304,9 +1304,6 @@ msgid_plural "num.hours.n"
 msgstr[0] "%d hora"
 msgstr[1] "%d horas"
 
-msgid "prefs.collapsepreonload"
-msgstr "Colapsar pre-formateado:"
-
 msgid "doc.pre.nocaption"
 msgstr "Texto pre-formateado sin leyenda"
 
@@ -1439,7 +1436,7 @@ msgid "menu.split.vertical"
 msgstr "Vertical"
 
 msgid "menu.view.split"
-msgstr "Dividir Vista…"
+msgstr "Dividir Vista"
 
 msgid "dlg.save.opendownload"
 msgstr "Abrir Archivo Descargado"
@@ -2251,7 +2248,7 @@ msgid "menu.newwindow"
 msgstr "Nueva Ventana"
 
 msgid "menu.export"
-msgstr "Exportar Datos de Usuario"
+msgstr "Exportar"
 
 msgid "heading.archive.userdata"
 msgstr "Archivo de Datos de Usuario"
@@ -2259,13 +2256,13 @@ msgstr "Archivo de Datos de Usuario"
 msgid "userdata.help"
 msgstr ""
 "Los archivos de datos de usuario contienen el historial de navegación, "
-"identidades, marcadores, configuraciones específicas del sitio y huellas "
-"dactilares de los certificados de servidor confiables. Pueden ser "
-"almacenados como respaldo y usados para transferir los datos entre "
-"dispositivos."
+"identidades, marcadores, fragmentos de texto, configuraciones específicas "
+"del sitio y huellas dactilares de los certificados de servidor confiables. "
+"Pueden ser almacenados como respaldo y usados para transferir los datos "
+"entre dispositivos."
 
 msgid "menu.import"
-msgstr "Importar Datos de Usuario…"
+msgstr "Importar…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
@@ -2591,3 +2588,142 @@ msgstr "Persa"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Redirecciones que cambian el esquema:"
+
+msgid "heading.prefs.snip"
+msgstr "Fragmentos"
+
+msgid "collapse.never"
+msgstr "Nunca"
+
+msgid "collapse.notbydefault"
+msgstr "Manualmente"
+
+msgid "menu.input.unsetprompt"
+msgstr "No Asumir que Este URL Requiere Entradas"
+
+msgid "menu.input.clear"
+msgstr "Limpiar Historial"
+
+msgid "menu.input.restore"
+msgstr "Restaurar anterior:"
+
+msgid "dlg.import.intofolder"
+msgstr "Añadir a la Carpeta:"
+
+msgid "dlg.import.headings"
+msgstr "Subcarpetas a Partir de los Encabezados:"
+
+msgid "dlg.import.notfound"
+msgstr "No hay enlaces en esta página."
+
+msgid "link.snippet"
+msgstr "Extraer Texto del Enlace…"
+
+msgid "menu.input.setprompt"
+msgstr "Asumir que Este URL Requiere Entradas"
+
+msgid "link.searchurl"
+msgstr "Usar Como URL de Búsqueda"
+
+msgid "import.userdata.snippets"
+msgstr "Fragmentos de Texto:"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "FRAGMENTOS"
+
+msgid "prefs.collapsepre"
+msgstr "Colapsar pre-formateados:"
+
+msgid "collapse.bydefault"
+msgstr "En la Carga de la Página"
+
+msgid "collapse.always"
+msgstr "Siempre"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Sistema"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Escribir una consulta con atajo"
+
+msgid "error.showutf8"
+msgstr "UTF-8 Auto-detectado"
+
+msgid "error.showutf8.msg"
+msgstr ""
+"El tipo de medios de esta página no fue reconocido pero es un texto "
+"codificado en UTF-8 válido."
+
+msgid "snip.accept"
+msgstr "Guardar Fragmento"
+
+msgid "sniped.help"
+msgstr ""
+"Fragmentos cuyo nombre comience con una exclamación (pe. \"!w\") pueden ser "
+"usados en campos de URL como atajos de consulta."
+
+msgid "menu.foldall"
+msgstr "Plegar Todo"
+
+msgid "menu.unfoldall"
+msgstr "Desplegar Todo"
+
+msgid "menu.userdata"
+msgstr "Datos de Usuario"
+
+msgid "menu.search"
+msgstr "Buscar"
+
+msgid "menu.snippet.add"
+msgstr "Extraer de la Selección…"
+
+msgid "menu.tools"
+msgstr "Herramientas"
+
+msgid "menu.page.visitlinks"
+msgstr "Marcar Todos los Enlaces como Visitados"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Agregar Marcador a la Carpeta:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Mover Marcador a la Carpeta:"
+
+msgid "menu.paste.snippet"
+msgstr "Pegar Fragmento de Texto"
+
+msgid "prefs.feedinterval"
+msgstr "Intervalo de refrescamiento de las suscripciones:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Manual"
+
+msgid "prefs.editor.highlight"
+msgstr "Resaltado de sintaxis:"
+
+msgid "menu.snip.edit"
+msgstr "Editar…"
+
+msgid "menu.snip.clipboard"
+msgstr "Copiar al Portapapeles"
+
+msgid "menu.snip.delete"
+msgstr "Borrar"
+
+msgid "menu.snip.prefs"
+msgstr "Configurar…"
+
+msgid "snip.name"
+msgstr "Nombre:"
+
+msgid "snip.content"
+msgstr "Contenido:"
+
+msgid "sniped.new"
+msgstr "Nuevo Fragmento"
+
+msgid "heading.snip"
+msgstr "Nuevo Fragmento"

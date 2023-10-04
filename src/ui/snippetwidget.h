@@ -1,13 +1,13 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2023 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -22,31 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/string.h>
-#include <the_Foundation/time.h>
+#include "widget.h"
 
-iDeclareType(LookupResult)
-
-enum iLookupResultType {
-    none_LookupResultType,
-    bookmark_LookupResultType,
-    snippet_LookupResultType,
-    feedEntry_LookupResultType,
-    history_LookupResultType, /* visited URLs */
-    content_LookupResultType, /* one of the pages in history, including current page */
-    identity_LookupResultType,
-};
-
-struct Impl_LookupResult {
-    enum iLookupResultType type;
-    float relevance; /* used for sorting results */
-    iChar icon;
-    iString label;
-    iString url;
-    iString meta;
-    iTime when;
-};
-
-iDeclareTypeConstruction(LookupResult)
-
-iLookupResult *     copy_LookupResult   (const iLookupResult *);
+iDeclareWidgetClass(SnippetWidget)
+iDeclareObjectConstruction(SnippetWidget)

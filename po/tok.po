@@ -760,9 +760,6 @@ msgstr "nimi tawa lukin e nimi:"
 msgid "prefs.hoverlink"
 msgstr "tawa la o lukin e nimi tawa:"
 
-msgid "prefs.collapsepreonload"
-msgstr "o len e sitelen namako:"
-
 msgid "prefs.smoothscroll"
 msgstr "tawa suwi:"
 

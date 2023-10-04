@@ -1,3 +1,18 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-09-30 08:06+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: ENCODING\n"
+"X-Generator: Translate Toolkit 3.3.3\n"
+
 msgid "menu.quit"
 msgstr "Quitter Lagrange"
 
@@ -1328,9 +1343,6 @@ msgstr "Aller au répertoire parent"
 
 msgid "keys.root"
 msgstr "Aller à la racine de la capsule"
-
-msgid "prefs.collapsepreonload"
-msgstr "Cacher le préformaté :"
 
 msgid "prefs.accent.teal"
 msgstr "Bleu"

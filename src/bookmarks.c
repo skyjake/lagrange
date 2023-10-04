@@ -163,7 +163,7 @@ struct Impl_Bookmarks {
     int       idEnum;
     iHash     bookmarks; /* bookmark ID is the hash key */
     uint32_t  recentFolderId; /* recently interacted with */
-    iPtrArray remoteRequests;   
+    iPtrArray remoteRequests;
 };
 
 iDefineTypeConstruction(Bookmarks)
@@ -252,7 +252,7 @@ static void loadOldFormat_Bookmarks(iBookmarks *d, const char *dirPath) {
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(BookmarkLoader)
-    
+
 struct Impl_BookmarkLoader {
     iTomlParser       *toml;
     iBookmarks        *bookmarks;
@@ -368,7 +368,7 @@ static void load_BookmarkLoader(iBookmarkLoader *d, iStream *stream) {
 }
 
 iDefineTypeConstructionArgs(BookmarkLoader, (iBookmarks *b), b)
-    
+
 /*----------------------------------------------------------------------------------------------*/
 
 static iBool isMatchingParent_Bookmark_(void *context, const iBookmark *bm) {
@@ -522,6 +522,11 @@ static iRangei orderRange_Bookmarks_(const iBookmarks *d) {
 
 uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, const iString *tags,
                        iChar icon) {
+    return addToFolder_Bookmarks(d, url, title, tags, icon, 0);
+}
+
+uint32_t addToFolder_Bookmarks(iBookmarks *d, const iString *url, const iString *title,
+                               const iString *tags, iChar icon, uint32_t folderId) {
     lock_Mutex(d->mtx);
     iBookmark *bm = new_Bookmark();
     if (url) {
@@ -540,6 +545,7 @@ uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, 
     else {
         bm->order = ord.start - 1; /* First in lists. */
     }
+    bm->parentId = folderId;
     insert_Bookmarks_(d, bm);
     unlock_Mutex(d->mtx);
     return id_Bookmark(bm);
@@ -563,7 +569,7 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
     iBool changed = iFalse;
     lock_Mutex(d->mtx);
     iForEach(Hash, i, &d->bookmarks) {
-        iBookmark *bm = (iBookmark *) i.value;    
+        iBookmark *bm = (iBookmark *) i.value;
         if (~bm->flags & remote_BookmarkFlag && ~bm->flags & userIcon_BookmarkFlag) {
             if (equalCase_String(&bm->url, url) && icon != bm->icon) {
                 bm->icon = icon;
@@ -640,10 +646,10 @@ uint32_t findUrl_Bookmarks(const iBookmarks *d, const iString *url) {
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(MatchUrlArgs)
-    
+
 struct Impl_MatchUrlArgs {
     const iString *url;
-    const iString *identityFp;    
+    const iString *identityFp;
 };
 
 static iBool matchUrlAndIdent_(iMatchUrlArgs *args, const iBookmark *bm) {
@@ -664,7 +670,7 @@ uint32_t findUrlIdent_Bookmarks(const iBookmarks *d, const iString *url, const i
     if (isEmpty_PtrArray(found)) {
         return 0;
     }
-    return id_Bookmark(constFront_PtrArray(found));    
+    return id_Bookmark(constFront_PtrArray(found));
 }
 
 /*----------------------------------------------------------------------------------------------*/

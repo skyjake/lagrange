@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2023-04-20 05:02+0000\n"
+"PO-Revision-Date: 2023-10-04 05:14+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -131,9 +131,6 @@ msgstr "Tamaño"
 
 msgid "heading.prefs.widelayout"
 msgstr "Ancho da disposición"
-
-msgid "prefs.collapsepreonload"
-msgstr "Pregar texto preformatado:"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
@@ -330,7 +327,7 @@ msgid "menu.zoom.reset"
 msgstr "Restablecer tamaño"
 
 msgid "menu.view.split"
-msgstr "Vista dividida…"
+msgstr "Vista dividida"
 
 msgid "menu.bookmarks.list"
 msgstr "Lista de tódolos marcadores"
@@ -818,8 +815,8 @@ msgstr "Importar identidade"
 
 msgid "dlg.certimport.help"
 msgstr ""
-"Pega un certificado e/ou chave privada en formato PEM,\n"
-"ou solta un ficheiro .crt/.key na ventá."
+"Pega un certificado e/ou chave privada en formato PEM, ou solta un ficheiro ."
+"crt/.key na ventá."
 
 msgid "dlg.certimport.notfound"
 msgstr "Non se atopa certificado ou chave privada."
@@ -1266,7 +1263,7 @@ msgid "prefs.font"
 msgstr "Letra do corpo:"
 
 msgid "prefs.mono"
-msgstr "Corpo do monoespazado:"
+msgstr "Mono para os textos:"
 
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
@@ -1501,10 +1498,10 @@ msgstr[0] "O directorio contén %u elemento."
 msgstr[1] "O directorio contén %u elementos."
 
 msgid "keys.top"
-msgstr "Ir arriba"
+msgstr "Ir Arriba"
 
 msgid "keys.bottom"
-msgstr "Ir ao fondo"
+msgstr "Ir Abaixo"
 
 msgid "keys.scroll.up"
 msgstr "Desprazarse cara arriba"
@@ -2255,9 +2252,10 @@ msgstr "Arquivo con Datos da usuaria"
 msgid "userdata.help"
 msgstr ""
 "Os arquivos con datos da usuaria conteñen o historial de navegación, "
-"identidades, marcadores, axustes específicos das webs, impresións dixitais "
-"ou certificados de confianza dos servidores. Pódense gardar como copias de "
-"apoio ou usalos para transferir os datos entre dispositivos."
+"identidades, marcadores, anacos de texto, axustes específicos das webs, "
+"impresións dixitais ou certificados de confianza dos servidores. Pódense "
+"gardar como copias de apoio ou usalos para transferir os datos entre "
+"dispositivos."
 
 msgid "sitespec.tlscache"
 msgstr "Retomar sesión TLS:"
@@ -2281,10 +2279,10 @@ msgid "prefs.justify"
 msgstr "Xustificar:"
 
 msgid "menu.export"
-msgstr "Exportar Datos de usuaria"
+msgstr "Exportar"
 
 msgid "menu.import"
-msgstr "Importar Datos de usuaria…"
+msgstr "Importar…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
@@ -2584,3 +2582,145 @@ msgstr "Ucraíno"
 
 msgid "dlg.translate.pre"
 msgstr "Omitir preformatado:"
+
+msgid "prefs.redirect.allowscheme"
+msgstr "Redireccións ao cambiar Scheme:"
+
+msgid "menu.foldall"
+msgstr "Pregar Todo"
+
+msgid "menu.unfoldall"
+msgstr "Despregar Todo"
+
+msgid "menu.userdata"
+msgstr "Datos da Usuaria"
+
+msgid "menu.paste.snippet"
+msgstr "Pegar Texto"
+
+msgid "menu.search"
+msgstr "Buscar"
+
+msgid "menu.snippet.add"
+msgstr "Anaco de texto desde a Selección…"
+
+msgid "menu.tools"
+msgstr "Ferramentas"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Engadir Marcador ao Cartafol:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Mover Marcador ao Cartafol:"
+
+msgid "menu.page.visitlinks"
+msgstr "Marcar todas as ligazóns como Visitadas"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Escribir consulta para o atallo"
+
+msgid "menu.input.setprompt"
+msgstr "Asumir que este URL Require unha Entrada"
+
+msgid "menu.input.unsetprompt"
+msgstr "Non Asumir que este URL require unha Entrada"
+
+msgid "menu.input.clear"
+msgstr "Limpar Historial"
+
+msgid "menu.input.restore"
+msgstr "Restablecer anterior:"
+
+msgid "dlg.import.intofolder"
+msgstr "Engadir ao Cartafol:"
+
+msgid "dlg.import.headings"
+msgstr "Subcartafoles desde Cabeceiras:"
+
+msgid "dlg.import.notfound"
+msgstr "Non hai ligazóns nesta páxina."
+
+msgid "link.searchurl"
+msgstr "Usar como URL de Busca"
+
+msgid "link.snippet"
+msgstr "Anaco desde Ligazón…"
+
+msgid "import.userdata.snippets"
+msgstr "Anacos:"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "ANACOS"
+
+msgid "heading.prefs.snip"
+msgstr "Anacos"
+
+msgid "prefs.collapsepre"
+msgstr "Pregar o preformatado:"
+
+msgid "collapse.never"
+msgstr "Nunca"
+
+msgid "collapse.notbydefault"
+msgstr "Manualmente"
+
+msgid "collapse.bydefault"
+msgstr "Ao cargar a páxina"
+
+msgid "collapse.always"
+msgstr "Sempre"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Sistema"
+
+msgid "prefs.feedinterval"
+msgstr "Intervalo de actualización da fonte:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Manual"
+
+msgid "prefs.editor.highlight"
+msgstr "Destacar sintaxe:"
+
+msgid "error.showutf8"
+msgstr "UTF-8 autodetectado"
+
+msgid "error.showutf8.msg"
+msgstr ""
+"Non se recoñece o tipo de multimedia desta páxina pero é texto en UTF-8 "
+"válido."
+
+msgid "sniped.new"
+msgstr "Novo Atallo"
+
+msgid "sniped.help"
+msgstr ""
+"Os Anacos cuxo nome comeza cun atallo (ex. \"!w\") poden usarse nos campos "
+"de URL como atallos a unha consulta."
+
+msgid "menu.snip.edit"
+msgstr "Editar…"
+
+msgid "menu.snip.clipboard"
+msgstr "Copiar ao Portapapeis"
+
+msgid "menu.snip.delete"
+msgstr "Eliminar"
+
+msgid "menu.snip.prefs"
+msgstr "Configurar…"
+
+msgid "heading.snip"
+msgstr "Novo Anaco"
+
+msgid "snip.name"
+msgstr "Nome:"
+
+msgid "snip.content"
+msgstr "Contido:"
+
+msgid "snip.accept"
+msgstr "Gardar Anaco"

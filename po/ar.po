@@ -1,0 +1,1899 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2023-08-29 10:26+0000\n"
+"PO-Revision-Date: 2023-08-30 16:14+0000\n"
+"Last-Translator: Naf Qan <nafezq@protonmail.ch>\n"
+"Language-Team: Arabic <http://weblate.skyjake.fi/projects/lagrange/ui/ar/>\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "heading.prefs.user"
+msgstr "بيانات المستخدم"
+
+# A language choice in the Translation dialog.
+msgid "lang.sk"
+msgstr "السلوفاكية"
+
+# A language choice in the Translation dialog.
+msgid "lang.sv"
+msgstr "السويدية"
+
+# A language choice in the Translation dialog.
+msgid "lang.tr"
+msgstr "التركية"
+
+msgid "dlg.glyphfinder.search"
+msgstr "البحث في مكتبة الخطوط"
+
+msgid "hint.newident.optional"
+msgstr "إختياري"
+
+msgid "dlg.newident.scope.none"
+msgstr "غير مستخدم"
+
+msgid "heading.bookmark.editfolder"
+msgstr "تحرير المجلد"
+
+msgid "heading.prefs.support"
+msgstr "الدعم"
+
+msgid "prefs.uilang"
+msgstr "اللغة:"
+
+msgid "prefs.returnkey.accept"
+msgstr "قبول"
+
+msgid "prefs.doctheme.name.white"
+msgstr "أبيض"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "شديد التباين"
+
+msgid "prefs.font.ui"
+msgstr "خط واجهة الاستخدام:"
+
+msgid "prefs.font.body"
+msgstr "المتن:"
+
+msgid "prefs.boldlink.visited"
+msgstr "التي تم زيارتها"
+
+msgid "prefs.gemtext.ansi.fontstyle"
+msgstr "نسق الخط"
+
+msgid "prefs.linewidth"
+msgstr "عرض السطر:"
+
+msgid "dir.empty"
+msgstr "هذا المجلد فارغ."
+
+msgid "macos.menu.find"
+msgstr "ابحث"
+
+msgid "menu.tab.next"
+msgstr "اظهار علامة التبويب التالية"
+
+msgid "menu.movetab.split"
+msgstr "نقل علامة التبويب الى الجهة الأخرى"
+
+msgid "menu.sidebar"
+msgstr "تبديل وضع الشريط الجانبي"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "عرض الكل"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "عرض بحسب الوسم"
+
+msgid "menu.aboutpages"
+msgstr "صفحات التعريف"
+
+msgid "menu.releasenotes"
+msgstr "ملاحظات الاصدار"
+
+msgid "menu.home"
+msgstr "الذهاب للصفحة الرئيسية"
+
+msgid "menu.website"
+msgstr "موقع المشروع…"
+
+msgid "menu.quit"
+msgstr "اغلق لاغرانج"
+
+msgid "menu.cut"
+msgstr "قص"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.selectall"
+msgstr "تحديد الكل"
+
+msgid "toolbar.outline"
+msgstr "هيكل الصفحة"
+
+msgid "menu.openwindow"
+msgstr "فتح في نافذة جديدة"
+
+msgid "userdata.help"
+msgstr ""
+"تحتوي أرشيفات معلومات المستخدم على سجل التصفح والهويات والتفضيلات والإعدادات "
+"الخاصة بالمواقع وبصمات شهادات الخوادم الموثوقة. يمكن تخزين هذه الأرشيفات "
+"كنسخ احتياطية واستخدامها لنقل البيانات بين الأجهزة."
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "سيتم إلغاء التنزيل إذا تم إغلاق علامة التبويب هذه."
+
+msgid "upload.mime"
+msgstr "نوع MIME:"
+
+msgid "dlg.glyphfinder.missing"
+msgstr "الحروف التالية لم يكن بالامكان عرضها:"
+
+msgid "dlg.newident.scope"
+msgstr "يستخدم على:"
+
+msgid "menu.title.bookmarks"
+msgstr "تفضيلات"
+
+msgid "menu.closetab.left"
+msgstr "اغلاق علامات التبويب على جهة اليسار"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "واجهة المستخدم"
+
+msgid "menu.tab.prev"
+msgstr "اظهار علامة التبويب السابقة"
+
+#, fuzzy
+msgid "prefs.swipe.edge"
+msgstr "الجر من الحافة:"
+
+msgid "menu.movetab.left"
+msgstr "نقل علامة التبويب الى اليسار"
+
+#, fuzzy
+msgid "prefs.retaintabs"
+msgstr "إستعادة علامات التبويب عند تشغيل البرنامج:"
+
+msgid "menu.movetab.right"
+msgstr "نقل علامة التبويب الى اليمين"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "احفظ في الملفات"
+
+msgid "prefs.gopher.gemstyle"
+msgstr "الاكتشاف الأوتوماتيكي لتنسيقات قائمة جوفر:"
+
+msgid "menu.bookmarks.list"
+msgstr "عرض كافة التفضيلات"
+
+msgid "menu.help"
+msgstr "المساعدة"
+
+msgid "keys.top"
+msgstr "القفز للأعلى"
+
+# keep this short (3x1 horiz layout)
+msgid "menu.delete"
+msgstr "مسح"
+
+msgid "sidebar.close"
+msgstr "تم"
+
+msgid "keys.back"
+msgstr "الرجوع للخلف"
+
+msgid "keys.forward"
+msgstr "التقدم للأمام"
+
+msgid "heading.dismiss.warning"
+msgstr "تجاهل التحذير؟"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d يوم"
+msgstr[1] "%d يوم"
+msgstr[2] "%d يومين"
+msgstr[3] "%d أيام"
+msgstr[4] "%d أيام"
+msgstr[5] "%d أيام"
+
+# The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "انت مشترك في %u مصدر تغذية يحتوي على %%s.\n"
+msgstr[1] "انت مشترك في %u مصدر تغذية يحتوي على %%s.\n"
+msgstr[2] "انت مشترك في %u مصدر تغذية يحتوي على %%s.\n"
+msgstr[3] "انت مشترك في %u مصدر تغذية يحتوي على %%s.\n"
+msgstr[4] "انت مشترك في %u مصدر تغذية يحتوي على %%s.\n"
+msgstr[5] "انت مشترك في %u مصدر تغذية يحتوي على %%s.\n"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d ساعة"
+msgstr[1] "%d ساعة"
+msgstr[2] "%d ساعتين"
+msgstr[3] "%d ساعات"
+msgstr[4] "%d ساعات"
+msgstr[5] "%d ساعات"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "غير مقروء"
+msgstr[1] "غير مقروء"
+msgstr[2] "غير مقروء"
+msgstr[3] "غير مقروء"
+msgstr[4] "غير مقروء"
+msgstr[5] "غير مقروء"
+
+msgid "prefs.evensplit"
+msgstr "تقسيم علامات التبويب بشكل متساوي:"
+
+msgid "dlg.dismiss.warning"
+msgstr "تجاهل التحذير"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "نسخ رابط الصفحة"
+
+msgid "menu.forgeturl"
+msgstr "نسيان العنوان"
+
+msgid "bookmark.untag.sub"
+msgstr "إلغاء الاشتراك بمصدر التغذية"
+
+msgid "dlg.save.size"
+msgstr "الحجم:"
+
+msgid "pageinfo.cert.status"
+msgstr "وضع الشهادة:"
+
+msgid "link.side.newtab"
+msgstr "فتح الرابط في علامة تبويب جديدة في الجانب"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "غير منتهية الصلاحية"
+
+msgid "dlg.newident.domain"
+msgstr "النطاق:"
+
+#, fuzzy
+msgid "import.userdata.dupfolder"
+msgstr "إستيراد المكررات"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "سرعة لوحة المفاتيح:"
+
+# The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
+# if the build config uses different libraries (e.g., ncurses, LibreSSL).
+msgid "about.powered"
+msgstr ""
+"صُنع بواسطة مكتبة الوسائط المباشرة البسيطة SDL2 وطبقة المقابس الآمنة "
+"المفتوحة OpenSSL و ☕️"
+
+msgid "bookmark.export.format.otherlines"
+msgstr ""
+"تم حجز القوائم النقطية والاقتباسات للمعلومات الاضافية عن التفضيل السابق. أما "
+"الأسطر النصية والنصوص مسبقة التنسيق فتعابر تعليقات يجب تجاهلها."
+
+msgid "menu.title.window"
+msgstr "النافذة"
+
+msgid "menu.movetab.newwindow"
+msgstr "نقل علامة التبويب الى نافذة جديدة"
+
+msgid "menu.window.min"
+msgstr "تصغير"
+
+msgid "menu.window.max"
+msgstr "تكبير"
+
+msgid "menu.downloads"
+msgstr "اعرض التنزيلات"
+
+msgid "menu.pageinfo"
+msgstr "اعرض معلومات الصفحة"
+
+msgid "menu.window.full"
+msgstr "تبديل وضع ملئ الشاشة"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "يجب تحديد اسم معروف."
+
+msgid "menu.save.downloads.open"
+msgstr "احفظ في التنزيلات ومن ثم افتح الملف"
+
+msgid "menu.zoom.reset"
+msgstr "إعادة ضبط التكبير"
+
+msgid "menu.newfolder"
+msgstr "مجلد جديد…"
+
+msgid "menu.sort.alpha"
+msgstr "ترتيب هجائي"
+
+msgid "menu.bookmarks.bytime"
+msgstr "عرض التفضيلات حسب تاريخ الإنشاء"
+
+msgid "menu.open.external"
+msgstr "فتح في تطبيق آخر"
+
+#, fuzzy
+msgid "dlg.newident.date.example"
+msgstr ""
+"الرجاء التأكد من تاريخ إنتهاء الصلاحية. أمثلة:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "menu.preferences"
+msgstr "التفضيلات…"
+
+# used for Preferences on mobile
+msgid "menu.settings"
+msgstr "الإعدادات"
+
+msgid "menu.page.import"
+msgstr "استيراد الروابط على شكل تفضيلات…"
+
+msgid "menu.reload"
+msgstr "إعادة تحميل الصفحة"
+
+msgid "menu.feeds.entrylist"
+msgstr "عرض مصادر التغذية"
+
+msgid "dlg.feed.title"
+msgstr "العنوان:"
+
+msgid "menu.page.copyurl"
+msgstr "نسخ عنوان الصفحة"
+
+msgid "menu.identity.import"
+msgstr "استيراد…"
+
+msgid "dlg.feed.entrytype"
+msgstr "نوع البند:"
+
+msgid "status.query.tight"
+msgstr "بحث"
+
+msgid "mb.per.sec"
+msgstr "ميجابايت/ثانية"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "كيلوبايت"
+
+msgid "feeds.refresh"
+msgstr "تحديث مصادر التغذية"
+
+#, fuzzy
+msgid "prefs.swipe.page"
+msgstr "الجر على الصفحة:"
+
+msgid "feeds.atom.translated"
+msgstr "تم تحويل صفحة Atom XML هذه لمصدر تغذية جميني ليتاح الاشتراك بها."
+
+msgid "menu.opentab"
+msgstr "فتح في علامة تبويب جديدة"
+
+msgid "bookmark.untag.remote"
+msgstr "إزالة مصدر تفضيلات"
+
+msgid "prefs.imagestyle.text"
+msgstr "لون النص"
+
+msgid "ident.stopuse"
+msgstr "إلغاء الاستخدام على هذه الصفحة"
+
+msgid "heading.ident.delete"
+msgstr "مسح الهوية"
+
+msgid "prefs.font.heading"
+msgstr "العناوين:"
+
+msgid "error.server.msg"
+msgstr "الخادم ارسل الإجابة التالية:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "معرفة من قبل سلطة الشهادات CA"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "غير معرفة من قبل سلطة الشهادات CA"
+
+msgid "pageinfo.cert.trusted"
+msgstr "موثوقة"
+
+msgid "prefs.quoteicon.icon"
+msgstr "\" أيقونة"
+
+msgid "pageinfo.domain.match"
+msgstr "عنوان النطاق مطابق"
+
+msgid "heading.save"
+msgstr "تم حفظ الملف"
+
+msgid "prefs.proxy.gemini"
+msgstr "وسيط جميني:"
+
+msgid "dlg.save.incomplete"
+msgstr "لا زالت محتويات الصفحة قيد التحميل."
+
+msgid "dlg.save.opendownload"
+msgstr "فتح الملف الذي تم تنزيله"
+
+msgid "dlg.autoreload"
+msgstr "إختيار مدة إعادة التحميل الأوتوماتيكية لعلامة التبويب هذه."
+
+msgid "reload.onceperday"
+msgstr "مرة باليوم"
+
+msgid "link.newwindow"
+msgstr "فتح الرابط في نافذة جديدة"
+
+msgid "link.noproxy"
+msgstr "فتح من دون وسيط"
+
+msgid "link.file.delete"
+msgstr "مسح الملف"
+
+msgid "dlg.openlink"
+msgstr "فتح الرابط"
+
+msgid "dlg.certwarn.different"
+msgstr "الشهادة المستلمة صالحة ولكنها مختلفة عن الشهادة التي نثق بها."
+
+msgid "heading.certimport"
+msgstr "إستيراد الهوية"
+
+# button in the mobile New Identity dialog
+msgid "dlg.certimport.pickfile"
+msgstr "إستيراد ملف شهادة/مفتاح"
+
+msgid "heading.import.userdata"
+msgstr "إستيراد بيانات المستخدم"
+
+msgid "heading.import.userdata.error"
+msgstr "فشل عملية الاستيراد"
+
+#, fuzzy
+msgid "bookmark.export.title.time"
+msgstr "التفضيلات المنشأة"
+
+msgid "bookmark.export.format.linklines"
+msgstr "كل رابط يمثل تفضيل."
+
+msgid "dlg.translate.pre"
+msgstr "تخطي التنسيق المسبق:"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "أخرى"
+
+msgid "spartan.input"
+msgstr "أدخل النص المراد ارساله:"
+
+msgid "menu.upload.export"
+msgstr "تصدير النص"
+
+# A language choice in the Translation dialog.
+msgid "lang.ru"
+msgstr "الروسية"
+
+msgid "dlg.glyphfinder.disable"
+msgstr "تعطيل التحذيرات"
+
+msgid "heading.newident"
+msgstr "هوية جديدة"
+
+msgid "dlg.newident.until"
+msgstr "صالحة لغاية:"
+
+#, fuzzy
+msgid "hint.newident.date"
+msgstr "س س س س أو س س س س - ش ش - ي ي"
+
+msgid "dlg.newident.scope.domain"
+msgstr "عنوان النطاق الحالي"
+
+msgid "dlg.newident.scope.dir"
+msgstr "المجلد الحالي"
+
+msgid "dlg.newident.scope.page"
+msgstr "الصفحة الحالية"
+
+msgid "dlg.newident.email"
+msgstr "البريد الالكتروني:"
+
+msgid "dlg.newident.userid"
+msgstr "معرف المستخدم:"
+
+msgid "dlg.newident.more"
+msgstr "المزيد…"
+
+#, fuzzy
+msgid "dlg.feed.type.gemini"
+msgstr "س س س س - ش ش - ي ي روابط"
+
+msgid "dlg.feed.save"
+msgstr "حفظ الاعدادات"
+
+msgid "heading.prefs.certs"
+msgstr "الشهادات"
+
+msgid "heading.prefs.appearance"
+msgstr "المظهر"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "المفاتيح"
+
+msgid "heading.prefs.layout"
+msgstr "مخطط الصفحة"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "نمط الصفحة"
+
+msgid "prefs.hoverlink"
+msgstr "إظهار العنوان عند التمرير hovering:"
+
+msgid "prefs.smoothscroll"
+msgstr "التنقل السلس:"
+
+msgid "prefs.imageloadscroll"
+msgstr "تحميل الصورة التالية باستخدام مفتاح التنقل scroll:"
+
+msgid "prefs.bottomnavbar"
+msgstr "شريط التنقل السفلي"
+
+msgid "prefs.bottomtabbar"
+msgstr "علامات تبويب سفلية"
+
+msgid "prefs.menubar"
+msgstr "شريط القائمة"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "إخفاء شريط الأدوات عند التنقل:"
+
+msgid "prefs.accent.red"
+msgstr "أحمر"
+
+msgid "prefs.accent.green"
+msgstr "أخضر"
+
+msgid "prefs.sideicon"
+msgstr "أيقونة الكبسولة على الجهة اليسرى:"
+
+msgid "prefs.imagestyle"
+msgstr "تلوين الصور:"
+
+msgid "prefs.font.warnmissing"
+msgstr "تحذيرات الحروف الرسومية للخط:"
+
+msgid "prefs.quoteicon"
+msgstr "مؤشر الاقتباسات:"
+
+msgid "prefs.quoteicon.line"
+msgstr "سطر"
+
+msgid "prefs.biglede"
+msgstr "تكبير الفقرة الأولى:"
+
+msgid "archive.exit"
+msgstr "الخروج من الأرشيف"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "الانتقال باتجاه الأسفل بمقدار نصف صفحة"
+
+msgid "keys.scroll.page.up"
+msgstr "الانتقال باتجاه الأعلى بمقدار صفحة"
+
+msgid "keys.findtext"
+msgstr "إبحث عن نص بالصفحة"
+
+msgid "keys.tab.prev"
+msgstr "علامة التبويب السابقة"
+
+msgid "keys.tab.next"
+msgstr "علامة التبويب اللاحقة"
+
+msgid "keys.upload"
+msgstr "رفع باستخدام تيتان"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d دقيقة"
+msgstr[1] "%d دقيقة"
+msgstr[2] "%d دقيقتين"
+msgstr[3] "%d دقائق"
+msgstr[4] "%d دقيقة"
+msgstr[5] "%d دقيقة"
+
+# A language choice in the Translation dialog.
+msgid "lang.az"
+msgstr "الأذربيجانية"
+
+# A language choice in the Translation dialog.
+msgid "lang.ca"
+msgstr "الكتلانية"
+
+# A language choice in the Translation dialog.
+msgid "lang.cs"
+msgstr "التشيكية"
+
+msgid "menu.paste.go"
+msgstr "ألصق وأذهب"
+
+# A language choice in the Translation dialog.
+msgid "lang.da"
+msgstr "الدنماركية"
+
+# A language choice in the Translation dialog.
+msgid "lang.nl"
+msgstr "الهولندية"
+
+# A language choice in the Translation dialog.
+msgid "lang.eo"
+msgstr "إسبرانتو"
+
+# A language choice in the Translation dialog.
+msgid "lang.fi"
+msgstr "الفنلندية"
+
+# A language choice in the Translation dialog.
+msgid "lang.el"
+msgstr "اليونانية"
+
+# A language choice in the Translation dialog.
+msgid "lang.he"
+msgstr "العبرية"
+
+# A language choice in the Translation dialog.
+msgid "lang.hu"
+msgstr "الهنجارية"
+
+# A language choice in the Translation dialog.
+msgid "lang.id"
+msgstr "الإندونيسية"
+
+# A language choice in the Translation dialog.
+msgid "lang.ga"
+msgstr "الإيرلندية"
+
+# A language choice in the Translation dialog.
+msgid "lang.ko"
+msgstr "الكورية"
+
+msgid "heading.file.delete"
+msgstr "مسح الملف"
+
+msgid "bookmark.title.blank"
+msgstr "صفحة فارغة"
+
+# A language choice in the Translation dialog.
+msgid "lang.fa"
+msgstr "الفارسية"
+
+# A language choice in the Translation dialog.
+msgid "lang.pl"
+msgstr "البولندية"
+
+msgid "menu.page.upload"
+msgstr "رفع بواسطة تيتان…"
+
+# A language choice in the Translation dialog.
+msgid "lang.uk"
+msgstr "الأوكرانية"
+
+msgid "heading.glyphfinder"
+msgstr "حروف رسومية مفقودة"
+
+msgid "dlg.newident.date.past"
+msgstr "تاريخ إنتهاء الصلاحية يجب أن يكون في المستقبل."
+
+msgid "heading.prefs.content"
+msgstr "المحتوى"
+
+msgid "heading.prefs.paragraph"
+msgstr "الفقرة"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "سرعة الفأرة:"
+
+msgid "prefs.doctheme.name.black"
+msgstr "أسود"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "رمادي"
+
+msgid "prefs.mono.gemini"
+msgstr "جميني"
+
+# Color of text background.
+msgid "prefs.gemtext.ansi.bg"
+msgstr "لون الخلفية"
+
+msgid "prefs.linewidth.normal"
+msgstr "عادي"
+
+msgid "menu.binding.clear"
+msgstr "حذف"
+
+msgid "keys.bottom"
+msgstr "القفز للأسفل"
+
+msgid "keys.reload"
+msgstr "إعادة تحميل الصفحة"
+
+msgid "keys.upload.edit"
+msgstr "تحرير الصفحة بواسطة تيتان"
+
+msgid "heading.archive.userdata"
+msgstr "أرشيف بيانات المستخدم"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "الفنان"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "النوع"
+
+msgid "menu.export"
+msgstr "تصدير بيانات المستخدم"
+
+msgid "menu.import"
+msgstr "استيراد بيانات المستخدم…"
+
+msgid "menu.unexpire"
+msgstr "تجاهل الصلاحية واستمر في التحميل"
+
+msgid "menu.find"
+msgstr "ابحث في الصفحة"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "احفظ في التنزيلات"
+
+msgid "menu.sidebar.right"
+msgstr "تبديل وضع الشريط الجانبي اليميني"
+
+msgid "menu.bookmarks.bytag"
+msgstr "عرض التفضيلات حسب الوسم"
+
+msgid "doc.pre.nocaption"
+msgstr "نص مسبق التنسيق من دون شرح"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "جار التحميل"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s هو عبارة عن أرشيف مضغوط."
+
+msgid "media.untitled.image"
+msgstr "صورة"
+
+msgid "media.untitled.audio"
+msgstr "مادة سمعية"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "تم الإنتهاء من التحميل."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "العنوان"
+
+msgid "doc.archive.view"
+msgstr "عرض محتويات الأرشيف"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "التاريخ"
+
+msgid "numbertype.integer"
+msgstr "عدد صحيح"
+
+msgid "numbertype.float"
+msgstr "عدد عشري"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "هيرتز"
+
+msgid "menu.import.links"
+msgstr "استيراد كل الروابط الموجودة على الصفحة…"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "بنود مصدر التغذية"
+
+msgid "menu.debug"
+msgstr "معلومات التصحيح"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "آخر تحديث حصل قبل ثواني."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "آخر تحديث حصل %s."
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "فن آسكي: كلمة \"لاغرانج\" مكتوبة بخط كبير"
+
+msgid "about.tagline"
+msgstr "متصفح جميني جميل"
+
+msgid "about.version"
+msgstr "نسخة"
+
+msgid "cancel"
+msgstr "إلغاء"
+
+msgid "close"
+msgstr "إغلاق"
+
+msgid "menu.title.file"
+msgstr "ملف"
+
+msgid "menu.title.edit"
+msgstr "تحرير"
+
+msgid "menu.title.view"
+msgstr "عرض"
+
+msgid "menu.title.identity"
+msgstr "الهوية"
+
+msgid "menu.title.help"
+msgstr "مساعدة"
+
+msgid "menu.email"
+msgstr "الاتصال من خلال البريد الالكتروني"
+
+msgid "dlg.message.ok"
+msgstr "استمرار"
+
+msgid "dlg.default"
+msgstr " نعم "
+
+# keep this short (3x1 horiz layout)
+msgid "menu.undo"
+msgstr "إلغاء"
+
+msgid "menu.select.clear"
+msgstr "إزالة التحديد"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "عرض مصادر التغذية"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "عرض السجل"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "عرض الهويات"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "عرض حسب تاريخ الإنشاء"
+
+msgid "menu.back"
+msgstr "الرجوع"
+
+msgid "menu.forward"
+msgstr "الذهاب للأمام"
+
+# Active identity toolbar menu.
+msgid "menu.hide.identities"
+msgstr "إخفاء الهويات"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "عرض هيكل الصفحة"
+
+msgid "menu.parent"
+msgstr "الذهاب للوالد"
+
+msgid "menu.root"
+msgstr "الذهاب للجذر"
+
+msgid "menu.copy"
+msgstr "نسخ"
+
+msgid "menu.paste"
+msgstr "لصق"
+
+msgid "menu.autoreload"
+msgstr "تحديد إعادة التحميل الأوتوماتيكية…"
+
+msgid "menu.page.bookmark"
+msgstr "تفضيل الصفحة…"
+
+msgid "menu.page.subscribe"
+msgstr "الاشتراك بالصفحة…"
+
+msgid "menu.fonts"
+msgstr "ادارة الخطوط…"
+
+msgid "panel.back"
+msgstr "الرجوع للخلف"
+
+msgid "menu.page.translate"
+msgstr "ترجمة…"
+
+# Used on the mobile Settings page.
+msgid "menu.about"
+msgstr "التعريف"
+
+# Used in the desktop Help menu.
+msgid "menu.aboutapp"
+msgstr "حول لاغرانج"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "عرض التفضيلات"
+
+msgid "menu.page.copysource"
+msgstr "نسخ مصدر الصفحة"
+
+msgid "menu.bookmarks.refresh"
+msgstr "تحديث التفضيلات الخارجية"
+
+msgid "menu.identities"
+msgstr "ادارة الهويات"
+
+msgid "menu.identity.notactive"
+msgstr "لا يوجد هوية فعالة"
+
+msgid "feeds.today"
+msgstr "اليوم"
+
+msgid "history.clear"
+msgstr "تنظيف السجل…"
+
+msgid "bookmark.tag.home"
+msgstr "استخدام كصفحة رئيسية"
+
+msgid "bookmark.tag.sub"
+msgstr "اشترك بمصدر التغذية"
+
+msgid "heading.sitespec"
+msgstr "إعدادات متعلقة بموقع محدد"
+
+msgid "sitespec.accept"
+msgstr "حفظ الاعدادات"
+
+msgid "keys.pageinfo"
+msgstr "عرض معلومات الصفحة"
+
+msgid "feeds.entry.markunread"
+msgstr "تحديد كغير مقروء"
+
+msgid "heading.openlink"
+msgstr "فتح الرابط"
+
+msgid "feeds.edit"
+msgstr "تحرير مصدر تغذية…"
+
+msgid "feeds.unsubscribe"
+msgstr "إلغاء الاشتراك…"
+
+msgid "feeds.markallread"
+msgstr "تحديد الكل كمقروء"
+
+msgid "menu.dup"
+msgstr "تكرار…"
+
+msgid "menu.copyurl"
+msgstr "نسخ العنوان"
+
+msgid "dlg.confirm.history.clear"
+msgstr "هل حقا تريد مسح سجل كافة الصفحات التي قمت بزيارتها؟"
+
+msgid "ident.fingerprint"
+msgstr "نسخ البصمة"
+
+msgid "link.hint.audio"
+msgstr "ملف سمعي"
+
+msgid "link.hint.image"
+msgstr "صورة"
+
+msgid "import.userdata.idents"
+msgstr "الهويات:"
+
+msgid "import.userdata.history"
+msgstr "السجل:"
+
+msgid "import.userdata.trusted"
+msgstr "الشهادات الموثوقة:"
+
+msgid "bookmark.export.title.folder"
+msgstr "التفضيلات"
+
+msgid "bookmark.export.title.tag"
+msgstr "وسوم التفضيلات"
+
+msgid "dlg.unsub"
+msgstr "إلغاء الاشتراك"
+
+msgid "bookmark.export.format.sub"
+msgstr "هذه الصفحة منسقة بحسب معيار \"الاشتراك في صفحات جميني\" المرافق."
+
+msgid "menu.upload.delete"
+msgstr "مسح الكل"
+
+msgid "dlg.translate.from"
+msgstr "من:"
+
+# A language choice in the Translation dialog.
+msgid "lang.fr"
+msgstr "الفرنسية"
+
+msgid "dlg.feed.sub"
+msgstr "اشتراك"
+
+msgid "prefs.centershort"
+msgstr "التنصيص العمودي:"
+
+msgid "prefs.bookmarks.addbottom"
+msgstr "إضافة التفضيلات إلى الأسفل:"
+
+# User preference that controls whether image data embedded in Data URLs gets automatically displayed when a page is loaded.
+msgid "prefs.dataurl.openimages"
+msgstr "فتح الصور في عناوين البيانات:"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "غير موثوقة"
+
+# A language choice in the Translation dialog.
+msgid "lang.ja"
+msgstr "اليابانية"
+
+msgid "prefs.accent.gray"
+msgstr "رمادي"
+
+msgid "heading.glyphfinder.results"
+msgstr "نتائج البحث"
+
+msgid "glyphfinder.results"
+msgstr "المجموعات الخطية التالية توفر واحد أو أكثر من الحروف الرسومية المفقودة:"
+
+msgid "glyphfinder.results.empty"
+msgstr "نأسف، لم يتم العثور على مجموعات خطية مطابقة."
+
+#, fuzzy
+msgid "dlg.newident.rsa.selfsign"
+msgstr "إنشاء شهادة ر أ س RSA ذات حجم 2048 بت موقعة من تلقاء نفسها."
+
+#, fuzzy
+msgid "dlg.newident.commonname"
+msgstr "الاسم المعروف:"
+
+msgid "dlg.newident.temp"
+msgstr "مؤقت:"
+
+#, fuzzy
+msgid "dlg.newident.notsaved"
+msgstr "غير محفوظ على القرص"
+
+msgid "prefs.mono.gopher"
+msgstr "جوفر"
+
+msgid "dlg.newident.create"
+msgstr "إنشاء هوية"
+
+msgid "heading.newident.date.bad"
+msgstr "تاريخ خاطئ"
+
+msgid "heading.feedcfg"
+msgstr "إعدادات مصادر التغذية"
+
+msgid "heading.subscribe"
+msgstr "الاشتراك في صفحة"
+
+msgid "dlg.feed.ignoreweb"
+msgstr "تجاهل روابط HTTP(S):"
+
+msgid "heading.bookmark.add"
+msgstr "إضافة تفضيل"
+
+msgid "heading.bookmark.edit"
+msgstr "تحرير التفضيل"
+
+msgid "dlg.bookmark.title"
+msgstr "العنوان:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.folder"
+msgstr "المجلد:"
+
+msgid "dlg.bookmark.parentfolder"
+msgstr "المجلد الأب:"
+
+msgid "prefs.memorysize"
+msgstr "حجم الذاكرة:"
+
+msgid "heading.bookmark.tags"
+msgstr "السلوك"
+
+msgid "heading.addfolder"
+msgstr "إضافة مجلد"
+
+msgid "dlg.addfolder.prompt"
+msgstr "أدخل اسم المجلد الجديد:"
+
+msgid "prefs.searchurl"
+msgstr "عنوان محرك البحث:"
+
+msgid "prefs.pinsplit.left"
+msgstr "علامة التبويب اليسارية"
+
+msgid "prefs.pinsplit.right"
+msgstr "علامة التبويب اليمينية"
+
+msgid "prefs.uilayout"
+msgstr "المخطط:"
+
+msgid "prefs.toolbaraction1"
+msgstr "الزر 1"
+
+msgid "prefs.toolbaraction2"
+msgstr "الزر 2"
+
+msgid "prefs.theme.black"
+msgstr "أسود"
+
+msgid "prefs.theme.dark"
+msgstr "غامق"
+
+msgid "prefs.theme.light"
+msgstr "فاتح"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "التفضيلات"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "مصادر التغذية"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "السجل"
+
+msgid "keys.zoom.out"
+msgstr "تصغير"
+
+msgid "upload.id"
+msgstr "الهوية:"
+
+msgid "heading.upload.id"
+msgstr "التصريح"
+
+#, fuzzy
+msgid "prefs.time.24h"
+msgstr "الزمن بتنسيق 24 ساعة:"
+
+msgid "prefs.doctheme.name.oceanic"
+msgstr "لون المحيط"
+
+msgid "prefs.decodeurls"
+msgstr "فك ترميز العناوين:"
+
+# A language choice in the Translation dialog.
+msgid "lang.zh"
+msgstr "الصينية"
+
+msgid "keys.bookmark.addfolder"
+msgstr "إضافة مجلد تفضيلات"
+
+msgid "keys.fullscreen"
+msgstr "تبديل وضع ملئ الشاشة"
+
+msgid "keys.tab.new"
+msgstr "علامة تبويب جديدة"
+
+msgid "dlg.addfolder.defaulttitle"
+msgstr "مجلد جديد"
+
+msgid "prefs.accent.orange"
+msgstr "برتقالي"
+
+msgid "prefs.linewidth.fill"
+msgstr "ملئ"
+
+msgid "prefs.linespacing"
+msgstr "المسافة بين السطور:"
+
+msgid "menu.newwindow"
+msgstr "نافذة جديدة"
+
+msgid "menu.newtab"
+msgstr "علامة تبويب جديدة"
+
+msgid "menu.closetab"
+msgstr "اغلاق علامة التبويب"
+
+msgid "menu.openlocation"
+msgstr "فتح موقع…"
+
+msgid "menu.view.split"
+msgstr "تقسيم الشاشة…"
+
+msgid "prefs.urlsize"
+msgstr "الحجم الأقصى للعنوان:"
+
+msgid "prefs.proxy.gopher"
+msgstr "وسيط جوفر:"
+
+msgid "keys.scroll.down"
+msgstr "الانتقال باتجاه الأسفل"
+
+msgid "keys.parent"
+msgstr "الذهاب إلى مجلد أب"
+
+msgid "menu.update"
+msgstr "تحقق من وجود تحديثات…"
+
+msgid "keys.root"
+msgstr "الذهاب لجذر الكبسولة"
+
+msgid "sidebar.history"
+msgstr "السجل"
+
+msgid "sidebar.identities"
+msgstr "الهويات"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "الكل"
+
+msgid "menu.reopentab"
+msgstr "إعادة فتح آخر علامة تبويب تم اغلاقها"
+
+msgid "menu.closetab.other"
+msgstr "اغلاق علامات التبويب الأخرى"
+
+msgid "menu.closetab.right"
+msgstr "اغلاق علامات التبويب على جهة اليمين"
+
+msgid "menu.split.horizontal"
+msgstr "أفقي"
+
+msgid "menu.split.vertical"
+msgstr "عمودي"
+
+msgid "menu.duptab"
+msgstr "تكرار علامة التبويب"
+
+msgid "menu.split.merge"
+msgstr "جمع"
+
+msgid "menu.split.swap"
+msgstr "تبديل الجهات"
+
+msgid "menu.zoom.in"
+msgstr "تكبير"
+
+msgid "menu.zoom.out"
+msgstr "تصغير"
+
+msgid "menu.sidebar.left"
+msgstr "تبديل وضع الشريط الجانبي اليساري"
+
+msgid "menu.viewformat.plain"
+msgstr "عرض كنص عادي"
+
+msgid "menu.viewformat.gemini"
+msgstr "عرض كنص جميني"
+
+msgid "menu.identity.new"
+msgstr "هوية جديدة…"
+
+msgid "menu.feeds.refresh"
+msgstr "تحديث مصادر التغذية"
+
+msgid "sidebar.bookmarks"
+msgstr "التفضيلات"
+
+msgid "sidebar.feeds"
+msgstr "مصادر التغذية"
+
+msgid "sidebar.action.bookmarks.newfolder"
+msgstr "مجلد جديد"
+
+msgid "sidebar.action.bookmarks.edit"
+msgstr "تحرير"
+
+# This label should be fairly short so it fits in a button in the sidebar.
+msgid "sidebar.action.feeds.markallread"
+msgstr "قراءة الكل"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "غير المقروء"
+
+msgid "sidebar.action.ident.new"
+msgstr "جديد…"
+
+msgid "sidebar.action.ident.import"
+msgstr "استيراد…"
+
+msgid "feeds.entry.openfeed"
+msgstr "فتح صفحة مصدر تغذية"
+
+msgid "menu.opentab.background"
+msgstr "فتح في علامة تبويب خلفية"
+
+msgid "menu.openfile"
+msgstr "فتح ملف…"
+
+msgid "menu.edit"
+msgstr "تحرير…"
+
+msgid "dlg.history.clear"
+msgstr "تنظيف السجل"
+
+msgid "heading.confirm.bookmarks.delete"
+msgstr "مسح التفضيلات"
+
+msgid "bookmark.untag.home"
+msgstr "إزالة الصفحة الرئيسية"
+
+msgid "bookmarks.reload"
+msgstr "تحديث المصادر الخارجية"
+
+msgid "ident.using"
+msgstr "مستخدمة على هذه الصفحة"
+
+msgid "ident.notused"
+msgstr "غير مستخدمة"
+
+msgid "ident.temporary"
+msgstr "مؤقت"
+
+msgid "menu.edit.notes"
+msgstr "تحرير الملاحظات…"
+
+msgid "heading.ident.notes"
+msgstr "ملاحظات الهوية"
+
+msgid "ident.delete"
+msgstr "مسح الهوية…"
+
+msgid "dlg.ident.delete"
+msgstr "مسح الهوية والملفات المتعلقة بها"
+
+msgid "menu.identity.newdomain"
+msgstr "هوية جديد للنطاق…"
+
+msgid "hint.findtext"
+msgstr "ابحث عن نص في الصفحة"
+
+msgid "status.query"
+msgstr "استعلام البحث"
+
+msgid "status.feeds"
+msgstr "تحديث مصادر التغذية"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "ميجابايت"
+
+msgid "feeds.entry.markbelowread"
+msgstr "تحديد ما هو أسفل كغير مقروء"
+
+msgid "sidebar.entry.bookmark"
+msgstr "إضافة تفضيل…"
+
+msgid "feeds.entry.bookmark"
+msgstr "إضافة تفضيل…"
+
+msgid "bookmark.delete"
+msgstr "مسح تفضيل"
+
+msgid "keys.identmenu"
+msgstr "فتح قائمة الهويات"
+
+msgid "dlg.input.linebreak"
+msgstr "سطر جديد"
+
+msgid "dlg.input.send"
+msgstr "إرسال"
+
+msgid "link.newtab"
+msgstr "فتح الرابط في علامة تبويب جديدة"
+
+msgid "link.newtab.background"
+msgstr "فتح الرابط في علامة تبويب خلفية"
+
+msgid "link.side"
+msgstr "فتح الرابط في الجانب"
+
+#, fuzzy
+msgid "dlg.certimport.nokey"
+msgstr "لا يوجد مفتاح خاص"
+
+msgid "import.userdata.bookmarks"
+msgstr "التفضيلات:"
+
+msgid "link.copy"
+msgstr "نسخ الرابط"
+
+msgid "link.bookmark"
+msgstr "إضافة الرابط للتفضيلات…"
+
+msgid "link.download"
+msgstr "تنزيل الملف المرتبط"
+
+msgid "dlg.file.delete"
+msgstr "مسح"
+
+# A language choice in the Translation dialog.
+msgid "lang.es"
+msgstr "الإسبانية"
+
+msgid "dlg.bookmark.tags"
+msgstr "الوسوم:"
+
+msgid "dlg.bookmark.icon"
+msgstr "الرمز:"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "الشبكة"
+
+msgid "menu.page.upload.edit"
+msgstr "تحرير الصفحة بواسطة تيتان…"
+
+msgid "prefs.theme.white"
+msgstr "أبيض"
+
+msgid "prefs.accent.blue"
+msgstr "أزرق"
+
+msgid "upload.file.drophere"
+msgstr "(سحب وإسقاط ملف في النافذة)"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "%u بنود"
+msgstr[1] "%u بند واحد"
+msgstr[2] "%u بندين"
+msgstr[3] "%u بنود"
+msgstr[4] "%u بنود"
+msgstr[5] "%u بنود"
+
+msgid "menu.folder.opentab"
+msgstr "فتح في علامات تبويب جديدة"
+
+msgid "heading.history.clear"
+msgstr "تنظيف السجل"
+
+msgid "bookmark.tag.remote"
+msgstr "استخدم كمصدر للتفضيلات"
+
+msgid "bookmark.folder.delete"
+msgstr "مسح مجلد تفضيلات"
+
+msgid "ident.use"
+msgstr "استخدم على هذه الصفحة"
+
+msgid "ident.stopuse.all"
+msgstr "إلغاء الاستخدام في كل الصفحات"
+
+msgid "ident.export"
+msgstr "تصدير"
+
+msgid "heading.ident.use"
+msgstr "استخدامات الهوية"
+
+msgid "sidebar.empty.idents"
+msgstr "لا هويات موجودة"
+
+msgid "sidebar.empty.unread"
+msgstr "لا يوجد بنود غير مقروءة"
+
+msgid "heading.unsub"
+msgstr "إلغاء الاشتراك"
+
+msgid "heading.pageinfo"
+msgstr "معلومات الصفحة"
+
+msgid "pageinfo.header.cached"
+msgstr "(محتوى محفوظ)"
+
+msgid "pageinfo.cert.expired"
+msgstr "منتهية الصلاحية"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "عنوان النطاق غير مطابق"
+
+msgid "dlg.cert.fingerprint"
+msgstr "نسخ البصمة"
+
+msgid "pageinfo.settings"
+msgstr "الإعدادات"
+
+msgid "keys.sitespec"
+msgstr "عرض إعدادات موقع محدد"
+
+# Paste the line preceding the clicked link into the input prompt.
+msgid "menu.input.precedingline"
+msgstr "لصق السطر السابق"
+
+msgid "heading.save.error"
+msgstr "خطأ في حفظ الملف"
+
+msgid "heading.import.bookmarks"
+msgstr "استيراد التفضيلات"
+
+msgid "dlg.import.notnew"
+msgstr "كل الروابط في هذه الصفحة قد تم إضافتها للتفضيلات."
+
+msgid "heading.autoreload"
+msgstr "إعادة التحميل بشكل أوتوماتيكي"
+
+msgid "reload.never"
+msgstr "أبداً"
+
+msgid "link.browser"
+msgstr "فتح الرابط في المتصفح الأساسي"
+
+# Shows where a local file is using the File Manager.
+msgid "menu.reveal.filemgr"
+msgstr "عرض في مدير الملفات"
+
+msgid "menu.share"
+msgstr "مشاركة"
+
+msgid "dlg.file.delete.confirm"
+msgstr "هل أنت متأكد من أنك تريد مسح هذا الملف؟"
+
+msgid "dlg.certwarn.title"
+msgstr "مسألة أمن"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "الشهادة المستلمة إنتهت صلاحيتها في %s."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"الشهادة المستلمة تابعة لنطاق خاطئ (%s). قد تكون هذه مشكلة في إعدادات الخادم."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "الشهادة المستلمة منتهية الصلاحية وتابعة لنطاق خاطئ."
+
+#, fuzzy
+msgid "dlg.certimport.help"
+msgstr ""
+"ألصق شهادة مرمزة بشكل PEM و / أو مفتاح خاص،\n"
+"أو قم بوضع ملفات .crt/.key في النافذة."
+
+msgid "dlg.certimport.notfound"
+msgstr "لم يتم العثور على شهادة أو مفتاح خاص."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "لم يتم العثور على شهادة/مفتاح في الصفحة الحالية."
+
+msgid "dlg.certimport.import"
+msgstr "إستيراد"
+
+msgid "dlg.certimport.notes"
+msgstr "ملاحظات:"
+
+msgid "hint.certimport.description"
+msgstr "الشرح"
+
+#, fuzzy
+msgid "dlg.certimport.nocert"
+msgstr "لا يوجد شهادة"
+
+msgid "import.userdata.sitespec"
+msgstr "إعدادات الموقع:"
+
+msgid "import.userdata"
+msgstr "استيراد بيانات محددة"
+
+#, fuzzy
+msgid "bookmark.export.taginfo"
+msgstr ""
+"في هذه القائمة كل عنوان يمثل أحد وسوم التفضيلات. سيتم عرض التفضيلات الموسومة "
+"فقط. التفضيلات التي لها أكثر من وسم سيتم إعادة عرضها تحت كل وسم تتبع له."
+
+#, fuzzy
+msgid "bookmark.export.format.folders"
+msgstr "يتم تعريف بنية المجلد من خلال عنوانين المستوى 2 و3."
+
+msgid "bookmark.export.format.tags"
+msgstr "الوسوم يتم تعريفها من خلال عناوين المستوى 2."
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "محتوى الصفحة"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "الهويات"
+
+msgid "dlg.spartan.upload"
+msgstr "افتح المحرر…"
+
+#, fuzzy
+msgid "heading.upload"
+msgstr "ارفع بواسطة تيتان"
+
+msgid "heading.upload.spartan"
+msgstr "ارفع بواسطة سبارتان"
+
+msgid "dlg.upload.id.default"
+msgstr "الأساسي"
+
+msgid "heading.upload.text"
+msgstr "نص"
+
+#, fuzzy
+msgid "menu.upload.delete.confirm"
+msgstr "هل حقا تريد مسح الكل؟ (لا مجال للإلغاء فيما بعد)"
+
+msgid "hint.upload.text"
+msgstr "أدخل النص المراد رفعه"
+
+msgid "heading.upload.file"
+msgstr "ملف"
+
+msgid "upload.file.name"
+msgstr "اسم الملف:"
+
+msgid "upload.file.size"
+msgstr "حجم الملف:"
+
+# Mobile subheading in the Upload dialog.
+msgid "upload.url"
+msgstr "العنوان"
+
+# Mobile subheading: buttons for entering uploaded data.
+msgid "upload.content"
+msgstr "المحتوى"
+
+msgid "hint.upload.path"
+msgstr "مسار العنوان"
+
+msgid "hint.upload.token"
+msgstr "أنظر تعليمات الخادم"
+
+msgid "hint.upload.token.long"
+msgstr "توكن — أنظر تعليمات الخادم"
+
+msgid "dlg.upload.send"
+msgstr "رفع"
+
+msgid "upload.port"
+msgstr "البوابة…"
+
+msgid "heading.uploadport"
+msgstr "بوابة رفع تيتان"
+
+#, fuzzy
+msgid "dlg.uploadport.msg"
+msgstr ""
+"تحديد بوابة خادم تيتان المستخدمة مع هذا العنوان. البوابة سيتم حفظها في "
+"إعدادات الموقع المحدد."
+
+msgid "dlg.uploadport.set"
+msgstr "تحديد البوابة"
+
+# used on mobile
+msgid "dlg.upload.text"
+msgstr "رفع نص عادي"
+
+# used on mobile
+msgid "dlg.upload.file"
+msgstr "رفع ملف"
+
+# used on mobile
+msgid "dlg.upload.pickfile"
+msgstr "تحديد ملف"
+
+msgid "heading.translate"
+msgstr "ترجمة صفحة"
+
+msgid "dlg.translate.unavail"
+msgstr "الخدمة غير متوفرة"
+
+msgid "dlg.translate.fail"
+msgstr "الطلب فشل"
+
+msgid "dlg.translate"
+msgstr "ترجمة"
+
+msgid "dlg.translate.to"
+msgstr "إلى:"
+
+# A language choice in the Translation dialog.
+msgid "lang.ar"
+msgstr "العربية"
+
+# A language choice in the Translation dialog.
+msgid "lang.de"
+msgstr "الألمانية"
+
+# A language choice in the Translation dialog.
+msgid "lang.en"
+msgstr "الإنجليزية"
+
+# A language choice in the Translation dialog.
+msgid "lang.hi"
+msgstr "الهندية"
+
+# A language choice in the Translation dialog.
+msgid "lang.it"
+msgstr "الإيطالية"
+
+# A language choice in the Translation dialog.
+msgid "lang.pt"
+msgstr "البرتغالية"
+
+msgid "dlg.glyphfinder.help"
+msgstr ""
+"بامكانك البحث في مكتبة skyjake.fi عن خطوط تحتوي على حروف رسومية لهذه الأحرف "
+"أو أن تقوم بتنصيب خطوط النوع الطبيعي TruType يدويا."
+
+msgid "dlg.glyphfinder.help.empty"
+msgstr "الرجاء إعادة تحميل الصفحة للتحقق من وجود حروف رسومية مفقودة."
+
+msgid "dlg.newident.org"
+msgstr "المؤسسة:"
+
+msgid "dlg.newident.country"
+msgstr "الدولة:"
+
+msgid "heading.newident.missing"
+msgstr "معلومات مفقودة"
+
+msgid "dlg.feed.type.headings"
+msgstr "عنواين جديدة"
+
+msgid "dlg.bookmark.save"
+msgstr "حفظ التفضيل"
+
+msgid "hint.dlg.bookmark.tags"
+msgstr "كلمات مفصولة بمسافة"
+
+msgid "dlg.bookmark.notes"
+msgstr "ملاحظات:"
+
+msgid "dlg.bookmark.identity"
+msgstr "الهوية المرتبطة:"
+
+#, fuzzy
+msgid "dlg.addfolder"
+msgstr "أضف المجلد"
+
+msgid "heading.prefs"
+msgstr "الاعدادات المفضلة"
+
+# used on mobile
+msgid "heading.settings"
+msgstr "الاعدادات"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "الألوان"
+
+msgid "heading.prefs.fonts"
+msgstr "الخطوط"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "عام"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "واجهة الاستخدام"
+
+msgid "heading.prefs.uitheme"
+msgstr "ألوان واجهة الاستخدام"
+
+msgid "heading.prefs.pagecontent"
+msgstr "ألوان الصفحة"
+
+msgid "heading.prefs.proxies"
+msgstr "الوسطاء"
+
+msgid "heading.prefs.scrolling"
+msgstr "التنقل"
+
+msgid "heading.prefs.sizing"
+msgstr "الأحجام"
+
+#, fuzzy
+msgid "heading.prefs.widelayout"
+msgstr "مخطط عريض"
+
+msgid "prefs.downloads"
+msgstr "مجلد التنزيلات:"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "فتح صفحة index.gmi الموجودة في أرشيفات ZIP:"
+
+msgid "prefs.returnkey"
+msgstr "سلوك مفتاح الإدخال Return Key:"
+
+#, fuzzy
+msgid "prefs.returnkey.linebreak"
+msgstr "سطر جديد"
+
+msgid "prefs.imagestyle.preformat"
+msgstr "لون المسبق التنسيق"
+
+msgid "prefs.tui.simple"
+msgstr "الأحرف البسيطة:"
+
+msgid "prefs.font.mono"
+msgstr "المسبق التنسيق:"
+
+msgid "prefs.font"
+msgstr "خط المتن:"
+
+msgid "prefs.proxy.http"
+msgstr "وسيط HTTP:"
+
+msgid "keys.scroll.up"
+msgstr "الانتقال باتجاه الأعلى"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "الانتقال باتجاه الأعلى مقدار نصف صفحة"
+
+msgid "keys.scroll.page.down"
+msgstr "الانتقال باتجاه الأسفل بمقدار صفحة"
+
+msgid "keys.bookmark.add"
+msgstr "إضافة إلى التفضيلات"
+
+msgid "keys.subscribe"
+msgstr "الاشتراك بالصفحة"
+
+msgid "keys.zoom.in"
+msgstr "تكبير"
+
+msgid "keys.zoom.reset"
+msgstr "إعادة ظبط التكبير"
+
+msgid "keys.tab.close"
+msgstr "إغلاق علامة التبويب"
+
+msgid "keys.tab.close.other"
+msgstr "إغلاق علامات التبويب الأخرى"
+
+msgid "truetype.help.installed"
+msgstr "هذا الخط منصب في مجلد الخطوط الخاص بالمستخدم."
+
+msgid "keys.feeds.showunread"
+msgstr "الشريط الجانبي: إعرض بنود مصدر التغذية غير المقروءة"
+
+msgid "keys.feeds.showall"
+msgstr "الشريط الجانبي: إعرض كل بنود مصدر التغذية"
