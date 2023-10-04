@@ -367,7 +367,7 @@ Lagrange can be used as a Gempub reader. When a .gpub file has been saved locall
 
 ## 1.12 Input prompt
 
-An input prompt dialog is shown when the server asks for input from the user. Typically, you would enter just a word or two, e.g., the search terms for a search engine. However, input prompts have a few zdvanced features that can help with more sophisticated use cases.z
+An input prompt dialog is shown when the server asks for input from the user. Typically, you would enter just a word or two, e.g., the search terms for a search engine. However, input prompts have a few zdvanced features that can help with more sophisticated use cases.
 
 When entering a longer piece of text, it may help to scale the text a big larger. The font size can be changed with the keys bound to "Zoom In" and "Zoom Out". The width of the dialog can be resized by dragging the left or right edge with a mouse. Both the font size and the dialog width are saved persistently.
 
