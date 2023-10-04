@@ -43,14 +43,15 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Open image and audio links inline on the same page
 * Instant back/forward navigation (on macOS supports swipes on trackpad)
 * Subscribe to Gemini and Atom feeds
+* Identity management — create and use TLS client certificates
 * Smart suggestions when typing an URL — search bookmarks, history, feeds, identities
 * Search engine integration
-* Identity management — create and use TLS client certificates
+* Configurable text snippets that can be pasted in input fields and used as custom search queries
 * Use Gemini pages as a source of bookmarks
 * Audio playback: MP3, Ogg Vorbis, WAV
 * Read Gempub books and view ZIP archive contents
-* Built-in support for Gopher, Finger, and Spartan
 * Built-in support for uploading data using the Titan protocol
+* Built-in support for Gopher, Finger, Spartan, and Nex
 * Use proxy servers for Gemini, HTTP, and Gopher content
 
 ## Why not just use a web browser
@@ -93,7 +94,9 @@ Search within cached pages is limited to the (small) set of pages that Lagrange 
 
 Note that the navigation stack is saved to a file when Lagrange is shut down and restored on the next launch. This means the next time you launch Lagrange, you can still search the contents of past pages. However, navigation stacks are tab-specific, so closing a tab will delete its history as well.
 
-You can also make online search queries via the URL input field. When a search URL is configured on the "General" tab of Preferences, text entered in the URL field is passed to the search URL as a query parameter. A search query will only occur when Enter is pressed while the [Search Query] indicator is visible.
+You can also make online search queries via the URL input field. When a search URL is configured on the "General" tab of Preferences, text entered in the URL field is passed to the search URL as a query parameter. A search query will only occur when Enter is pressed while the [Search Query] indicator is visible. One way to configure the search URL is to right-click on a search engine's "Search" link — say, when you are on the engine's front page — and select "Use as Search URL" from the context menu.
+
+See section 2.5 about further customizing the search behavior.
 
 ### 1.1.2 Links
 
@@ -157,7 +160,7 @@ When you open a tab, and the URL of that tab is found in a link on another page,
 
 A tab can be set to auto-reload at given intervals. The setting is remembered until the tab is closed. This is helpful if you keep a  periodically updated page open for longer periods of time.
 
-The feature can be found in the page context menu: right-click and select "Set Auto-Reload...".
+The feature can be found in the page context menu: right-click and select "Tools > Set Auto-Reload...".
 
 ## 1.3 Sidebars
 
@@ -200,7 +203,7 @@ It has three different modes that can be opened via menus:
 
 The generated page can be saved to Downloads or you can copy all or parts of it to the clipboard. For example, you can then use these listings to share public bookmarks on your capsule.
 
-To import all links on a page as bookmarks, use the page context menu to select "Import Links as Bookmarks...". You can also right-click on individual links and select "Bookmark Link...".
+To import all links on a page as bookmarks, use the page context menu to select "Tools > Import Links as Bookmarks...". You can also right-click on individual links and select "Bookmark Link...".
 
 Importing links on a page will not cause any folders to be (re)created. To fully export and import your bookmarks, tags, custom icons, and folders, see section 1.12.
 
@@ -298,16 +301,17 @@ Titan is a sister protocol to Gemini that enables sending arbitrary amounts of d
 
 => gemini://transjovian.org/titan  Titan Protocol (by Alex Schroeder)
 
-While Titan and Gemini are related, Titan is a separate protocol and regular Gemini servers are not expected to support it. Whether it makes sense to allow clients to upload large amounts of data depends on the service. For example, a server that hosts a gemlog could enable Titan uploads for submitting new posts, or editing existing posts by uploading a revised version.
+While Titan and Gemini are related, Titan is a separate protocol and regular Gemini servers are not expected to support it. Many services have no need to let clients upload large amounts of data, but it is useful for some specific cases. For example, a server that hosts a gemlog could enable Titan uploads for submitting new posts, or editing existing posts by uploading a revised version.
 
-As far as Lagrange is concerned, Titan is just one of the supported URL schemes. Whenever you try to open a "titan://" URL, no matter if it is manually entered into the URL field, or by clicking on a link, opening a bookmark, feed entry, or via a redirect, a dialog will open where you can specify the data to upload.
+As far as Lagrange is concerned, Titan is just one of the supported URL schemes. Whenever you try to open a "titan://" URL, no matter if it is manually entered into the URL field, or by clicking on a link, opening a bookmark, feed entry, or via a redirect, a dialog will open where you can enter the data to upload:
 
-The Titan upload dialog supports two ways to enter the data:
-
-* You can type text in the input field on the "Text" tab. It will be sent to the server using 'text/plain' as the media type.
+* You can type text into the input field on the "Text" tab. It will be sent to the server using 'text/plain' as the media type.
 * You can drag and drop a file on the dialog. The details of the file to be uploaded are visible on the "File" tab. The media type can be specified manually if Lagrange does not correctly detect it.
 
 The upload token is a feature of Titan where servers can require a certain token text/passphrase for uploads. It is up to the server how this is interpreted. It could be used as a simple password, or even a command to further instruct the server about what to do with the uploaded data. Please refer to the server's instructions about what to enter here. The token may also be left empty.
+
+Gemtext syntax highlighting is supported in the upload dialog's text field. You can toggle this feature in "Preferences > Appearance". By default, Lagrange comes with a single monospace font, so unless you install additional monospace weights/styles, the syntax highlighting will only use different colors for the Gemtext line types. You can install this fontpack to include bold and italic fonts for the highlighting:
+=> gemini://skyjake.fi/fonts/mono/iosevka-term-extended.fontpack  Iosevka Term Extended (7.6 MB)
 
 The text entered into the upload dialog's main text field is protected against accidental closing of the dialog or the application, or a crash. The previous text is restored when the dialog is reopened. The text field contents are only cleared when the submitted Titan request has been successfully completed.
 
@@ -361,11 +365,25 @@ Gempub is an e-book/archival format that is essentially a set of Gemtext files s
 
 Lagrange can be used as a Gempub reader. When a .gpub file has been saved locally, you can open it in the application to see the book cover page. On the cover page you will find a link that opens the contents of the book. When clicked, split view mode is automatically enabled and both the book index page and the first chapter are shown (unless split view pinning has been disabled).
 
-## 1.12 Export/import user data
+## 1.12 Input prompt
 
-The export/import feature added in Lagrange v1.12 allows one to manually export and import identities, bookmarks, browsing history, and site-specific information via a ZIP archive.
+An input prompt dialog is shown when the server asks for input from the user. Typically, you would enter just a word or two, e.g., the search terms for a search engine. However, input prompts have a few advanced features that can help with more advanced use cases.
 
-The "Export User Data" menu item can be found in the File menu or the hamburger menu. In practice, this creates a compressed archive that you can then save to the Downloads folder or open in an external application. From there, you can transfer the archive manually onto another device, or just put in a safe place for backup.
+When entering a longer piece of text, it may help to scale the text a big larger. The font size can be changed with the keys bound to "Zoom In" and "Zoom Out". The width of the dialog can be resized by dragging the left or right edge with a mouse. Both the font size and the dialog width are saved persistently.
+
+The behavior of the Return key can be switched between sending the input to the server and inserting a line break. This can be configured in "Preferences > UI".
+
+The dialog has a context menu for additional functionality. Click on the Ellipsis (⋯) button to open it.
+
+* "Paste Preceding Line" inserts the contents of the Gemtext source line that immediately precedes the link that caused the input prompt to open. This is sometimes used for "Edit" actions in Gemini applications.
+* "Assume This URL Requires Input" modifies what happens when the prompt's URL is opened. Normally, it takes two requests to submit input: the first one causes the prompt to open, and the second one sends the user's input to the server. To make this transaction more efficient, you can assume the URL requires input and Lagrange will prompt you for it before sending anything to the server, saving the time to make the first request. (Note that it is possible that some applications may expect the first request to arrive first, however usually there are no problems submitting query strings directly.)
+* Restoring past entries: The rest of the items in the menu are for input that has been submitted previously. Selecting one will cause it be inserted into the input field.
+
+## 1.13 Export/import user data
+
+The export/import feature allows one to manually export and import identities, bookmarks, text snippets, browsing history, and site-specific information via a ZIP archive.
+
+"User Data > Export" can be found in the File menu or the hamburger menu. In practice, this creates a compressed archive that you can then save to the Downloads folder or open in an external application. From there, you can transfer the archive manually onto another device, or just put in a safe place for backup.
 
 Opening the exported archive works similar to fontpacks (see section 2.4): when viewing the ZIP in the app, there is a button in the bottom of the window to import the contained data. Fine-grained controls are provided to choose which data gets imported and how, so you don't have to overwrite all the existing data.
 
@@ -538,13 +556,27 @@ TrueType Collections (.ttc) can be used, with the restriction that each declared
 regular = "NotoSansCJK-Regular.ttc:2"
 ```
 
-## 2.5 Proxies
+## 2.5 Text snippets and custom queries
+
+Gemlogs are often written entirely manually, so you may find yourself typing or copy-pasting the same headers, footers, or other small snippets into each post. You may also need to repeatedly enter specific pieces of text in a game or another interactive capsule. On desktop operating systems, there are multiple existing utilities that facilitate these use cases. While you may be able to use these with Lagrange, the app also has a built-in text snippet manager that works on any platform.
+
+In "Preferences > Snippets", you can define a set of text snippets that can be pasted into any input field via the field's context menu. Snippets can also be created by right-clicking on a link or selected text on a page.
+
+Text snippets whose name begins with an exclamation point ("bang") have a special meaning: they are used for additional search query URLs. For example, if the snippet "!w" is defined as "gemini://gemi.dev/cgi-bin/wp.cgi/search", you can then enter the following in the navbar URL field to make a search on Gemipedia:
+```
+!w Gemini Protocol
+```
+The additional words following the "!w" bang snippet are appended as a query string to the URL expanded from the snippet. This way, you can configure any number of searches or other shortcuts that take input. Bang snippet names can be longer than a single character but they cannot contain spaces.
+
+The keybinding ${SHIFT+}1 ("Enter a snippet query") focuses the URL field and inserts the leading '!' character so you can save a few keystrokes when using query snippets.
+
+## 2.6 Proxies
 
 Gemini allows relaying requests via a proxy server. On the "Network" tab, you can configure proxy servers for Gemini, Gopher, and HTTP/HTTPS requests.
 
 When an HTTP proxy server is configured, HTTP/HTTPS links will no longer open in the system's default web browser but will be loaded via the proxy, expecting it to serve a 'text/gemini' version of the link contents.
 
-## 2.6 URL handling
+## 2.7 URL handling
 
 The "Network" tab of Preferences has a few options related to handling URLs.
 
@@ -556,7 +588,7 @@ Having a length limit is necessary due the special case of Data URLs:
 => https://datatracker.ietf.org/doc/html/rfc2397  RFC 2397: The "data" URL scheme
 With Data URLs, one is able to embed arbitrary data into a Gemtext file using link lines. This makes it possible to circumvent the intentional limitations of Gemini and override the clients' ability to choose which linked resources should be loaded and when. Without a limit, a server could for example send an arbitrarily large image attachment as part of the page, with no regard to the user's or client's preferences or abilities to view images. Also note that like any non-Gemini scheme, "data" is not expected to be supported by Gemini clients.
 
-## 2.7 Keybindings
+## 2.8 Keybindings
 
 The "Keys" tab lets you change which keys are bound to UI commands. Click on an item with the mouse and then press the new key combination that you want bound to it. Right-click on a binding to erase it or reset it to the default.
 
@@ -564,7 +596,7 @@ Erasing a binding can be useful to disable certain features. For example, if you
 
 To reset all bindings to their defaults, quit Lagrange and delete the "bindings.txt" file in Lagrange's runtime directory. This is a platform-dependent location; see below for more information (under "Runtime files").
 
-## 2.8 Gopher
+## 2.9 Gopher
 
 Lagrange converts Gopher menus to Gemtext for presentation. There are a couple of settings that control the conversion.
 
@@ -581,7 +613,7 @@ Here are some of the commonly needed command line options. Check the "lagrange.1
 ### URLs/paths
 URLs and file paths on the command line are opened after Lagrange has launched. If more than one URL is given, multiple tabs will be opened. For example:
 ```
-$ lagrange gemini://geminispace.info/
+$ lagrange gemini://geminiprotocol.net/
 ```
 
 ### --dump
@@ -957,7 +989,7 @@ regular = "NotoSansCJK-Regular.ttc:2"
 
 # 6 User data archives
 
-Lagrange user data archives are compressed ZIP archives that contain browsing history, identities, bookmarks, site-specific settings, and/or trusted server certificate fingerprints.
+Lagrange user data archives are compressed ZIP archives that contain browsing history, identities, bookmarks, text snippets, site-specific settings, and/or trusted server certificate fingerprints.
 
 An export archive largely mirrors the contents of the runtime directory (section 3.5). However, the "lagrange-export.ini" metadata file must also be present:
 
