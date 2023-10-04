@@ -1777,7 +1777,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
-                if (isFolder_Bookmark(bm)) {
+                if (bm && isFolder_Bookmark(bm)) {
                     const iPtrArray *list = list_Bookmarks(bookmarks_App(), NULL,
                                                            filterInsideFolder_Bookmark, bm);
                     /* Folder deletion requires confirmation because folders can contain
