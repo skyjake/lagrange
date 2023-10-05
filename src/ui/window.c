@@ -778,7 +778,9 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_Surface *surf = loadImage_(&imageLogo_Resources, 0);
         d->logo = SDL_CreateTextureFromSurface(d->base.render, surf);
         SDL_SetTextureBlendMode(d->logo, SDL_BLENDMODE_BLEND);
+#if SDL_VERSION_ATLEAST(2, 0, 12)
         SDL_SetTextureScaleMode(d->logo, SDL_ScaleModeBest);
+#endif
         free(surf->pixels);
         SDL_FreeSurface(surf);
     }
