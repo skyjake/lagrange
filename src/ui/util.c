@@ -812,24 +812,24 @@ static void closeSubmenus_(iWidget *menu, iRoot *root) {
             const iString *subCmd = command_LabelWidget(label);
             if (startsWith_String(subCmd, "submenu id:")) {
                 const char *subId = cstr_Command(cstr_String(subCmd), "id");
-                iWidget *submenu = findChild_Widget(root->widget, subId);
-                if (!submenu && userData_Object(menu)) {
-                    /* In a popup window, the original parent's root may be more relevant. */
-                    iAssert(type_Window(window_Widget(menu)) == popup_WindowType);
-                    /* When menus are opened in popups, the menu widget is temporarily migrated
-                       to the popup window's root. */
-                    iConstForEach(PtrArray, p, popupWindows_App()) {
-                        const iWindow *pop = p.ptr;
-                        if ((submenu = findChild_Widget(pop->roots[0]->widget, subId)) != NULL) {
-                            break;
-                        }
+                iWidget *submenu = NULL;
+                /* When menus are opened in popups, the menu widget is temporarily migrated
+                   to the popup window's root. */
+                iConstForEach(PtrArray, p, popupWindows_App()) {
+                    const iWindow *pop = p.ptr;
+//                    printf("[%zu] root %p '%s'\n", index_PtrArrayConstIterator(&p),
+//                           pop->roots[0]->widget, cstr_String(id_Widget(pop->roots[0]->widget)));
+                    if ((submenu = findChild_Widget(pop->roots[0]->widget, subId)) != NULL) {
+                        break;
                     }
                 }
-                iAssert(submenu);
-                closeSubmenus_(submenu, root);
-                if (isVisible_Widget(submenu)) {
-                    closeMenu_Widget(submenu);
+                if (!submenu) {
+                    submenu = findChild_Widget(root->widget, subId);                    
                 }
+                iAssert(submenu);
+                remove_Periodic(periodic_App(), submenu);
+                closeSubmenus_(submenu, root);
+                closeMenu_Widget(submenu);
             }
         }
     }
@@ -849,7 +849,8 @@ static void openSubmenu_(iWidget *d) {
     iAssert(submenu);
     if (!isVisible_Widget(submenu)) {
         remove_Periodic(periodic_App(), menu);
-//        printf("isPopup:%d\n d's window type: %d", isPopup, window_Widget(d)->type); fflush(stdout);
+//        printf("openSubmenu_ %s isPopup:%d\n d's window type: %d",
+//               cstr_String(id_Widget(submenu)), isPopup, window_Widget(d)->type); fflush(stdout);
         if (isPopup) {
             setCurrent_Window(window_Widget(d));
         }
@@ -1577,11 +1578,8 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
 }
 
 void closeMenu_Widget(iWidget *d) {
-    if (flags_Widget(d) & nativeMenu_WidgetFlag) {
+    if (!d || flags_Widget(d) & nativeMenu_WidgetFlag) {
         return; /* Handled natively. */
-    }
-    if (d == NULL || flags_Widget(d) & hidden_WidgetFlag) {
-        return; /* Already closed. */
     }
     remove_Periodic(periodic_App(), d);
     iWindow *win = window_Widget(d);
@@ -1599,18 +1597,20 @@ void closeMenu_Widget(iWidget *d) {
         SDL_HideWindow(win->win);
         collect_Garbage(win, (iDeleteFunc) delete_Window); /* get rid of it after event processing */
     }
-    setFlags_Widget(d, hidden_WidgetFlag, iTrue);
-    setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
-    iLabelWidget *button = parentMenuButton_(d);
-    if (button) {
-        setFlags_Widget(as_Widget(button), selected_WidgetFlag, iFalse);
+    if (~flags_Widget(d) & hidden_WidgetFlag) {
+        setFlags_Widget(d, hidden_WidgetFlag, iTrue);
+        setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
+        iLabelWidget *button = parentMenuButton_(d);
+        if (button) {
+            setFlags_Widget(as_Widget(button), selected_WidgetFlag, iFalse);
+        }
+        refresh_Widget(d);
+        if (d->menuClosed) {
+            d->menuClosed(d);
+        }
+        postCommand_Widget(d, "menu.closed");
+        setupMenuTransition_Mobile(d, iFalse);
     }
-    refresh_Widget(d);
-    if (d->menuClosed) {
-        d->menuClosed(d);
-    }
-    postCommand_Widget(d, "menu.closed");
-    setupMenuTransition_Mobile(d, iFalse);
 }
 
 iWindow *promoteDialogToWindow_Widget(iWidget *dlg) {

@@ -115,7 +115,11 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
         iPeriodicCommand *pc = i.value;
         iAssert(isInstance_Object(pc->context, &Class_Widget));
 //        iAssert(~flags_Widget(constAs_Widget(pc->context)) & destroyPending_WidgetFlag);
-        iAssert(!contains_PtrSet(&d->pendingRemoval, pc->context));
+        if (contains_PtrSet(&d->pendingRemoval, pc->context)) {
+            /* This context is pending removal due to previously dispatched Periodic events
+               during the current loop execution. */
+            continue;
+        }
         iRoot *root = constAs_Widget(pc->context)->root;
         if (root && now >= pc->dueTime) {
             pc->dueTime = iMax(now, pc->dueTime + pc->delay);
