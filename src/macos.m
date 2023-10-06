@@ -860,10 +860,10 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
                                    size_Array(items));
                     [item setSubmenu:sub];
                     if (isBookmarksMenu) {
-    #if defined (__MAC_10_13)
+#if defined (__MAC_11_0) /* TODO: Is there an equivalent symbol for older macOS? */
                         [item setImage:[NSImage imageWithSystemSymbolName:@"folder"
                                                  accessibilityDescription:nil]];
-    #endif
+#endif
                     }
                 }
                 else {
@@ -876,7 +876,7 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             else {
                 item.action = (hasCommand ? @selector(postMenuItemCommand:) : nil);
                 if (isBookmarksMenu && hasCommand && startsWith_CStr(items[i].command, "!open ")) {
-#if defined (__MAC_10_13)
+#if defined (__MAC_11_0) /* TODO: Is there an equivalent symbol for older macOS? */
                     [item setImage:[NSImage imageWithSystemSymbolName:@"bookmark.fill"
                                              accessibilityDescription:nil]];
 #endif
