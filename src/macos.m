@@ -859,12 +859,15 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
                     makeMenuItems_(sub, commands, 0, isBookmarksMenu, constData_Array(items),
                                    size_Array(items));
                     [item setSubmenu:sub];
+#if defined (__MAC_11_0)
                     if (isBookmarksMenu) {
-#if defined (__MAC_11_0) /* TODO: Is there an equivalent symbol for older macOS? */
-                        [item setImage:[NSImage imageWithSystemSymbolName:@"folder"
-                                                 accessibilityDescription:nil]];
-#endif
+                        if (@available(macOS 11.0, *)) {
+                            /* TODO: Is there an equivalent symbol for older macOS? */
+                            [item setImage:[NSImage imageWithSystemSymbolName:@"folder"
+                                                     accessibilityDescription:nil]];
+                        }
                     }
+#endif
                 }
                 else {
                     [sub release];
@@ -875,12 +878,15 @@ static NSMenuItem *makeMenuItems_(NSMenu *menu, MenuCommands *commands, int atIn
             }
             else {
                 item.action = (hasCommand ? @selector(postMenuItemCommand:) : nil);
-                if (isBookmarksMenu && hasCommand && startsWith_CStr(items[i].command, "!open ")) {
-#if defined (__MAC_11_0) /* TODO: Is there an equivalent symbol for older macOS? */
-                    [item setImage:[NSImage imageWithSystemSymbolName:@"bookmark.fill"
-                                             accessibilityDescription:nil]];
-#endif
+#if defined (__MAC_11_0)
+                if (@available(macOS 11.0, *)) {
+                    if (isBookmarksMenu && hasCommand && startsWith_CStr(items[i].command, "!open ")) {
+                        /* TODO: Is there an equivalent symbol for older macOS? */
+                        [item setImage:[NSImage imageWithSystemSymbolName:@"bookmark.fill"
+                                                 accessibilityDescription:nil]];
+                    }
                 }
+#endif
             }
             [menu insertItem:item atIndex:atIndex++];
             deinit_String(&itemTitle);
