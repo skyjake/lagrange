@@ -2033,27 +2033,36 @@ static iBool setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     return iFalse;
 }
 
+static void makePastePrecedingLineMenuItem_(iMenuItem *item_out, const iWidget *buttons,
+                                            const char *precedingLine) {
+    const iBinding *bind = findCommand_Keys("input.precedingline");
+    *item_out = (iMenuItem){
+        "${menu.input.precedingline}",
+         bind->key,
+         bind->mods,
+         format_CStr("!valueinput.set ptr:%p text:%s", buttons, precedingLine)
+    };
+}
+
 static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
     const char     *context       = cstr_String(&menu->data);
     const iWidget  *buttons       = pointerLabel_Command(context, "buttons");
     const iString  *url           = string_Command(context, "url");
     const char     *precedingLine = suffixPtr_Command(context, "preceding");
-    const iBinding *bind          = findCommand_Keys("input.precedingline");
     /* Compose new menu items. */
     iArray *items = collectNew_Array(sizeof(iMenuItem));
+    iMenuItem pasteItem;
+    makePastePrecedingLineMenuItem_(&pasteItem, buttons, precedingLine);
+    pushBack_Array(items, &pasteItem);
     pushBackN_Array(
         items,
         (iMenuItem[]){
-            { "${menu.input.precedingline}",
-              bind->key,
-              bind->mods,
-              format_CStr("!valueinput.set ptr:%p text:%s", buttons, precedingLine) },
             { "---" },
             { !isPromptUrl_SiteSpec(url) ? "${menu.input.setprompt}" : "${menu.input.unsetprompt}",
               0,
               0,
               format_CStr("!prompturl.toggle url:%s", cstr_String(url)) } },
-        3);
+        2);
     /* Recently submitted input texts can be restored. */ {
         const iStringArray *recentInput = recentlySubmittedInput_App();
         if (!isEmpty_StringArray(recentInput)) {
@@ -2130,8 +2139,13 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
     if (lineBreak && deviceType_App() != desktop_AppDeviceType) {
         addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
     }
+    /* Shortcut for the Paste Preceding Line. The menu is dynamic so it won't listen
+       for the keys as usual. */ {
+        iMenuItem pasteItem;
+        makePastePrecedingLineMenuItem_(&pasteItem, buttons, cstr_String(&d->linePrecedingLink));
+        addAction_Widget(dlg, pasteItem.key, pasteItem.kmods, pasteItem.command);
+    }
     /* Menu for additional actions, past entries. */ {
-
         iLabelWidget *ellipsisButton =
             makeMenuButton_LabelWidget(midEllipsis_Icon, NULL, 0);
         iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
@@ -2142,10 +2156,6 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
                                            buttons,
                                            cstr_String(canonicalUrl_String(url)),
                                            cstr_String(&d->linePrecedingLink)));
-        // iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
-        // menu->updateMenuItems = updateInputPromptMenuItems_;
-        // set_String(&menu->data, url); /* needed when updating items */
-        //}
         if (deviceType_App() == desktop_AppDeviceType) {
             addChildPos_Widget(buttons, iClob(ellipsisButton), front_WidgetAddPos);
         }
