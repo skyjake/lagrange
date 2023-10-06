@@ -367,7 +367,7 @@ Lagrange can be used as a Gempub reader. When a .gpub file has been saved locall
 
 ## 1.12 Input prompt
 
-An input prompt dialog is shown when the server asks for input from the user. Typically, you would enter just a word or two, e.g., the search terms for a search engine. However, input prompts have a few zdvanced features that can help with more sophisticated use cases.
+An input prompt dialog is shown when the server asks for input from the user. Typically, you would enter just a word or two, e.g., the search terms for a search engine. However, input prompts have a few advanced features that can help with more sophisticated use cases.
 
 When entering a longer piece of text, it may help to scale the text a big larger. The font size can be changed with the keys bound to "Zoom In" and "Zoom Out". The width of the dialog can be resized by dragging the left or right edge with a mouse. Both the font size and the dialog width are saved persistently.
 
@@ -376,7 +376,7 @@ The behavior of the Return key can be switched between sending the input to the 
 The dialog has a context menu for additional functionality. Click on the Ellipsis (⋯) button to open it.
 
 * "Paste Preceding Line" inserts the contents of the Gemtext source line that immediately precedes the link that caused the input prompt to open. This is sometimes used for "Edit" actions in Gemini applications.
-* "Assume This URL Requires Input" modifies what happens when the prompt's URL is opened. Normally, it takes two requests to submit input: the first one causes the prompt to open, and the second one sends the user's input to the server. To make this transaction more efficient, you can assume the URL requires input and Lagrange will prompt you for it before sending anything to the server, saving the time to make the first request. (Note that it is possible that some applications may expect the first request to arrive first, however usually there are no problems submitting query strings directly.)
+* "Assume This URL Requires Input" modifies what happens when the prompt's URL is opened. Normally, it takes two requests to submit input: the first one causes the prompt to open, and the second one sends the user's input to the server. To make this more efficient, you can assume the URL requires input and Lagrange will prompt you automatically before sending anything to the server. (It is possible that some applications may expect the two requests to arrive in a sequence, however usually there are no problems submitting query strings directly.)
 * Restoring past entries: The rest of the items in the menu are for input that has been submitted previously. Selecting one will cause it be inserted into the input field.
 
 ## 1.13 Export/import user data

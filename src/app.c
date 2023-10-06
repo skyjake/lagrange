@@ -187,7 +187,7 @@ struct Impl_App {
 #if defined (iPlatformAndroidMobile)
     float        displayDensity;
 #endif
-#if defined (iPlatformAppleDesktop)
+#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
     iRoot *      submenuRoot; /* offscreen, since the application menu is not tied to a window */
 #endif
     /* Preferences: */
@@ -1357,7 +1357,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_Periodic(&d->periodic);
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
+# if defined (LAGRANGE_NATIVE_MENU)
     d->submenuRoot = newOffscreen_Root();
+# endif
 #endif
 #if defined (iPlatformAppleMobile)
     setupApplication_iOS();
@@ -1476,7 +1478,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 }
 
 static void deinit_App(iApp *d) {
-#if defined (iPlatformAppleDesktop)
+#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
     delete_Root(d->submenuRoot);
 #endif
     iReverseForEach(PtrArray, i, &d->popupWindows) {
@@ -2834,7 +2836,7 @@ iPeriodic *periodic_App(void) {
 }
 
 iRoot *submenuRoot_MacOS(void) {
-#if defined (iPlatformAppleDesktop)
+#if defined (iPlatformAppleDesktop) && defined (LAGRANGE_NATIVE_MENU)
     return app_.submenuRoot;
 #else
     return NULL;
