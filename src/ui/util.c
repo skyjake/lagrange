@@ -824,7 +824,7 @@ static void closeSubmenus_(iWidget *menu, iRoot *root) {
                     }
                 }
                 if (!submenu) {
-                    submenu = findChild_Widget(root->widget, subId);                    
+                    submenu = findChild_Widget(root->widget, subId);
                 }
                 iAssert(submenu);
                 remove_Periodic(periodic_App(), submenu);
@@ -1006,7 +1006,10 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                     itemFlags);
             deinit_String(&labelStr);
             setWrap_LabelWidget(label, isInfo);
-            if (!isInfo) {
+            if (isInfo) {
+                setMinSize_Widget(as_Widget(label), init_I2(40 * gap_UI, 0));
+            }
+            else {
                 haveIcons |= checkIcon_LabelWidget(label);
             }
             if (isIcon) {
