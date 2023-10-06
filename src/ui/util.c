@@ -2588,7 +2588,7 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
         pushBack_Array(&actions, &(iMenuItem){ "---" });
     }
     pushBack_Array(&actions, &(iMenuItem){ "${cancel}", SDLK_ESCAPE, 0, "valueinput.cancel" });
-    if (deviceType_App() != desktop_AppDeviceType) {
+    if (!isDesktop_Platform()) {
         pushBack_Array(&actions, &(iMenuItem){ "---" });
     }
     pushBack_Array(&actions,
