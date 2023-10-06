@@ -45,6 +45,56 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.17" date="2023-10-06">
+            <description>
+                <ul>
+                    <li>The Bookmarks menu lists all of your bookmarks and folders.</li>
+                    <li>Snippets: A collection of short text segments that can be pasted into any input field via the context menu. For example, useful for your gemlog header/footer and other often-repeated parts.</li>
+                    <li>Snippets can be managed in Preferences > Snippets and created by right-clicking on links or selected text on a page.</li>
+                    <li>Custom search queries: Snippets whose name starts with a bang (e.g., "!w") can be invoked in the URL field to make customized queries. The snippet content should be a Gemini search URL, for example: "gemini://gemi.dev/cgi-bin/wp.cgi/search".</li>
+                    <li>Quick lookup shows matching snippets as a new type of search result.</li>
+                    <li>Keyboard shortcut Shift+1/⇧1 for conveniently making a snippet query.</li>
+                    <li>Input prompts, upload dialogs, and bookmark editors can be resized by dragging the left or right edge.</li>
+                    <li>Text zooming in the upload text editor.</li>
+                    <li>Gemtext syntax highlighting in the upload dialog.</li>
+                    <li>Recently submitted input prompt contents are saved persistently and can be restored via the Ellipsis utility menu in the prompt dialog.</li>
+                    <li>You can force the input prompt to appear before a certain URL is requested so you can enter a query string. This is useful for avoiding an extra request when it is known that a URL will require input (e.g., search engine, game input).</li>
+                    <li>When importing links as bookmarks, you can optionally create subfolders from headings. You can also choose a destination folder for the imported bookmarks.</li>
+                    <li>Quickly add/move a bookmark into a folder with the navbar bookmark button context menu (right-click on 🏷️).</li>
+                    <li>User-selectable feed refresh interval. Previously the interval been hardcoded to four hours. (Based on a patch by Michael Nordmeyer.)</li>
+                    <li>Setting to never/always collapse preformatted blocks, disabling the ability to toggle the folding.</li>
+                    <li>"Fold All" and "Unfold All" in Bookmarks sidebar context menu.</li>
+                    <li>"Search" context menu item on selected text to make a search query with it.</li>
+                    <li>"Use as Search URL" in link context menu.</li>
+                    <li>"Mark All Links as Visited" in the Tools submenu.</li>
+                    <li>Option `--capslock`: enable Caps Lock as a modifier in keybindings.</li>
+                    <li>Option `--theme` (`-t`): change UI color theme of open Lagrange windows. Can be used in scripts to switch the theme automatically (for example, see the `darkman` utility; thanks to Jason McBrayer for suggesting this).</li>
+                    <li>Support for the Nex protocol (nex://nightfall.city/nex/info/specification.txt).</li>
+                    <li>Keyboard shortcut for deleting bookmarks (Backspace). Useful when the Bookmarks list has input focus.</li>
+                    <li>Menus can have submenus. Several of the old menus were reorganized accordingly. For example, the page context menu has a Tools submenu for translation, Titan uploads, etc.</li>
+                    <li>Show unsupported media types as plain text if the content is valid UTF-8 encoded text.</li>
+                    <li>The page scrolls while selecting text near top/bottom.</li>
+                    <li>Display a logo graphic in empty windows/tabs as a placeholder.</li>
+                    <li>Visualize input focus in lists by drawing a focus rectangle around the current item.</li>
+                    <li>Menu separators are taller and more distinct for a clearer item separation.</li>
+                    <li>Adjusted colors of the Import Identity dialog.</li>
+                    <li>Auto-hide sidebars when resizing a window/split if the document area would become narrower than the sidebar.</li>
+                    <li>Tuned theme color palette and improved background colors of "Colorful Light".</li>
+                    <li>Newly created client certificates have a default expiration date in the year 9999, which means they won't expire. One can still also set a specific date as before.</li>
+                    <li>Periodically save UI state (including each tab's navigation history) to prevent data loss in case the app crashes. These runtime saves do not include any cached page content. The full cache is still saved as before when quitting the app.</li>
+                    <li>Potential crash at shutdown when a feed update is ongoing.</li>
+                    <li>Problems with window refresh when multiple windows are open. For example, the cursor not blinking in input fields.</li>
+                    <li>Incorrect name displayed in page banner when URL query string contains a tilde name.</li>
+                    <li>Fixed navbar spinner animation going too fast when both sides of a split view are being loaded.</li>
+                    <li>Glitches during swipe navigation (touch screens, macOS trackpad). Behavior is more robust at ends of history and when content is not immediately available in cache.</li>
+                    <li>Fixed opening of context menus via keyboard (incorrect click position).</li>
+                    <li>Fixed a text rendering issue where glyphs were incorrect when preceded by a Narrow No-Break Space.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.17.0</url>
+        </release>
         <release version="1.16.7" date="2023-08-11">
             <description>
                 <ul>
