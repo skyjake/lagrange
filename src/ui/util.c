@@ -1007,7 +1007,7 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
             deinit_String(&labelStr);
             setWrap_LabelWidget(label, isInfo);
             if (isInfo) {
-                setMinSize_Widget(as_Widget(label), init_I2(40 * gap_UI, 0));
+                setMinSize_Widget(as_Widget(label), init_I2(50 * gap_UI, 0));
             }
             else {
                 haveIcons |= checkIcon_LabelWidget(label);
