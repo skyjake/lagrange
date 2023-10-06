@@ -2236,6 +2236,9 @@ iWindow *newPopup_Window(iInt2 screenPos, iWidget *rootWidget) {
                                     init_I2(usableRect.w, usableRect.h)) };
     /* Ensure bottom is not outside the usable area; we'll scroll the contents. */
     winRect.size.y = iMin(winRect.size.y, usableRect.y + usableRect.h - screenPos.y);
+    setFlags_Widget(rootWidget,
+                    overflowScrollable_WidgetFlag,
+                    winRect.size.y < rootWidget->rect.size.y / pixelRatio - 1);
     iWindow *win = new_Window(popup_WindowType,
                               winRect,
                               SDL_WINDOW_ALWAYS_ON_TOP |
