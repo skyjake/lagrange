@@ -58,7 +58,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image.h"
-#include "stb_image_resize.h"
+#include "stb_image_resize2.h"
 
 static iWindow *    theWindow_;
 static iMainWindow *theMainWindow_;
@@ -573,7 +573,8 @@ static SDL_Surface *loadImage_(const iBlock *data, int resized) {
         constData_Block(data), (int) size_Block(data), &w, &h, &num, STBI_rgb_alpha);
     if (resized) {
         stbi_uc *rsPixels = malloc(num * resized * resized);
-        stbir_resize_uint8(pixels, w, h, 0, rsPixels, resized, resized, 0, num);
+        stbir_resize_uint8_linear(pixels, w, h, 0, rsPixels, resized, resized, 0,
+                                  (stbir_pixel_layout) num);
         free(pixels);
         pixels = rsPixels;
         w = h = resized;

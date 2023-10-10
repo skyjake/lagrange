@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "audio/player.h"
 #include "app.h"
 #include "stb_image.h"
-#include "stb_image_resize.h"
+#include "stb_image_resize2.h"
 
 #if defined (LAGRANGE_ENABLE_WEBP)
 #   include <webp/decode.h>
@@ -100,7 +100,7 @@ static void applyImageStyle_(enum iImageStyle style, iInt2 size, uint8_t *imgDat
         iColor light = get_Color(tmParagraph_ColorId);
         if (hsl_Color(dark).lum > hsl_Color(light).lum) {
             iSwap(iColor, dark, light);
-        }        
+        }
         while (numPixels-- > 0) {
             iHSLColor hsl = hsl_Color((iColor){ pos[0], pos[1], pos[2], 255 });
             const float s = 1.0f - hsl.lum;
@@ -109,7 +109,7 @@ static void applyImageStyle_(enum iImageStyle style, iInt2 size, uint8_t *imgDat
             pos[1] = dark.g * s + light.g * t;
             pos[2] = dark.b * s + light.b * t;
             pos += 4;
-        }        
+        }
         return;
     }
     iColor colorize = (iColor){ 255, 255, 255, 255 };
@@ -140,7 +140,7 @@ void makeTexture_GmImage(iGmImage *d) {
     if (cmp_String(&d->props.mime, "image/webp") == 0) {
 #if defined (LAGRANGE_ENABLE_WEBP)
         imgData = WebPDecodeRGBA(constData_Block(data), size_Block(data), &d->size.x, &d->size.y);
-#endif        
+#endif
     }
     else {
         imgData = stbi_load_from_memory(
@@ -154,7 +154,7 @@ void makeTexture_GmImage(iGmImage *d) {
         d->texture = NULL;
     }
     else {
-        applyImageStyle_(prefs_App()->imageStyle, d->size, imgData);        
+        applyImageStyle_(prefs_App()->imageStyle, d->size, imgData);
         /* TODO: Save some memory by checking if the alpha channel is actually in use. */
         iWindow *window  = get_Window();
         iInt2    texSize = d->size;
@@ -175,8 +175,11 @@ void makeTexture_GmImage(iGmImage *d) {
             }
             if (!isEqual_I2(scaled, d->size)) {
                 uint8_t *scaledImgData = malloc(scaled.x * scaled.y * 4);
-                stbir_resize_uint8(imgData, d->size.x, d->size.y, 4 * d->size.x,
-                                   scaledImgData, scaled.x, scaled.y, scaled.x * 4, 4);
+                stbir_resize_uint8_linear(imgData,
+                                          d->size.x, d->size.y, 4 * d->size.x,
+                                          scaledImgData,
+                                          scaled.x, scaled.y, scaled.x * 4,
+                                          STBIR_RGBA);
                 free(imgData);
                 imgData = scaledImgData;
                 texSize = scaled;
@@ -209,7 +212,7 @@ struct Impl_GmAudio {
 
 void init_GmAudio(iGmAudio *d) {
     init_GmMediaProps_(&d->props);
-#if defined (LAGRANGE_ENABLE_AUDIO)    
+#if defined (LAGRANGE_ENABLE_AUDIO)
     d->player = new_Player();
 #endif
 }
@@ -351,7 +354,7 @@ size_t memorySize_Media(const iMedia *d) {
         const iGmDownload *down = n.ptr;
         memSize += down->numBytes;
     }
-    return memSize; 
+    return memSize;
 }
 
 iBool setUrl_Media(iMedia *d, iGmLinkId linkId, enum iMediaType mediaType, const iString *url) {

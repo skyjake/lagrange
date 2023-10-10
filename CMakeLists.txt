@@ -208,7 +208,7 @@ set (SOURCES
     src/sitespec.c
     src/sitespec.h
     src/stb_image.h
-    src/stb_image_resize.h
+    src/stb_image_resize2.h
     src/stb_truetype.h
     src/updater.h
     src/visited.c
