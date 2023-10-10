@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2023-05-26 05:02+0000\n"
+"PO-Revision-Date: 2023-10-11 12:14+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -915,8 +915,8 @@ msgstr "Обележивачи"
 
 msgid "dlg.certimport.help"
 msgstr ""
-"Налепите PEM-кодирани сертификат и/или приватни кључ\n"
-"или превуците .crt/.key датотеку у овај прозор."
+"Налепите PEM-кодирани сертификат и/или приватни кључ или превуците .crt/.key "
+"датотеку у овај прозор."
 
 msgid "error.proxy.msg"
 msgstr ""
@@ -1438,7 +1438,7 @@ msgid "menu.split.merge"
 msgstr "Спој"
 
 msgid "menu.view.split"
-msgstr "Раздвој поглед…"
+msgstr "Раздвој поглед"
 
 msgid "dlg.save.opendownload"
 msgstr "Отвори преузету датотеку"
@@ -1817,7 +1817,7 @@ msgstr "Подешавања"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.selectall"
-msgstr "Изабери све"
+msgstr "Изаб. све"
 
 # keep this short (3x1 horiz layout)
 msgid "menu.delete"
@@ -2263,15 +2263,15 @@ msgstr "Архива корисничких података"
 msgid "userdata.help"
 msgstr ""
 "Архиве корисничких података садрже извезену историју прегледања, идентитете, "
-"обележиваче, подешавања сајта и отиске серверских сертификата са поверењем. "
-"Оне се могу сачувати као резервне копије и искористити за пренос података са "
-"једног уређаја на други."
+"обележиваче, исечке текста, подешавања сајта и отиске серверских сертификата "
+"са поверењем. Оне се могу сачувати као резервне копије и искористити за "
+"пренос података са једног уређаја на други."
 
 msgid "menu.export"
-msgstr "Извези корисничке податке"
+msgstr "Извези"
 
 msgid "menu.import"
-msgstr "Увези корисничке податке…"
+msgstr "Увези…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
@@ -2593,3 +2593,142 @@ msgstr "Украјински"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Преусмеравања која мењају шему:"
+
+msgid "error.showutf8"
+msgstr "Аутодетектован UTF-8"
+
+msgid "menu.snip.delete"
+msgstr "Обриши"
+
+msgid "menu.snip.prefs"
+msgstr "Подеси…"
+
+msgid "heading.snip"
+msgstr "Нови исечак"
+
+msgid "snip.name"
+msgstr "Назив:"
+
+msgid "snip.content"
+msgstr "Садржај:"
+
+msgid "snip.accept"
+msgstr "Сачувај исечак"
+
+msgid "menu.foldall"
+msgstr "Скупи све"
+
+msgid "menu.unfoldall"
+msgstr "Прошири све"
+
+msgid "menu.input.setprompt"
+msgstr "Овај УРЛ захтева унос података"
+
+msgid "menu.input.restore"
+msgstr "Врати претходно:"
+
+msgid "link.searchurl"
+msgstr "Употребити као УРЛ за претрагу"
+
+msgid "collapse.bydefault"
+msgstr "Приликом учитавања странице"
+
+msgid "error.showutf8.msg"
+msgstr ""
+"Медијски тип ове странице није препознат, али је исправан текст кодиран у "
+"UTF-8."
+
+msgid "sniped.new"
+msgstr "Нови исечак"
+
+msgid "sniped.help"
+msgstr ""
+"Исечци чији назив почиње узвичником (нпр. „!w“) се могу користити у пољима "
+"за УРЛ као пречица за упите."
+
+msgid "menu.snip.edit"
+msgstr "Уреди…"
+
+msgid "menu.snip.clipboard"
+msgstr "Копирај на клипборд"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Системска"
+
+msgid "prefs.feedinterval"
+msgstr "Интервал освежавања фидова:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Ручно"
+
+msgid "prefs.editor.highlight"
+msgstr "Истицање синтаксе:"
+
+msgid "menu.userdata"
+msgstr "Кориснички подаци"
+
+msgid "menu.paste.snippet"
+msgstr "Убаци исечак"
+
+msgid "menu.snippet.add"
+msgstr "Исечак из избора…"
+
+msgid "menu.tools"
+msgstr "Алати"
+
+msgid "menu.page.visitlinks"
+msgstr "Означи све везе као посећене"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Додати обележиваче у фасциклу:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Преместити обележиваче у фасциклу:"
+
+msgid "menu.search"
+msgstr "Тражи"
+
+msgid "menu.input.unsetprompt"
+msgstr "Овај УРЛ не захтева унос података"
+
+msgid "menu.input.clear"
+msgstr "Очисти историју"
+
+msgid "dlg.import.intofolder"
+msgstr "Додати у фасциклу:"
+
+msgid "dlg.import.headings"
+msgstr "Потфасцикле из наслова:"
+
+msgid "dlg.import.notfound"
+msgstr "На страници нема веза."
+
+msgid "link.snippet"
+msgstr "Исечак из везе…"
+
+msgid "import.userdata.snippets"
+msgstr "Исечци:"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "ИСЕЧЦИ"
+
+msgid "heading.prefs.snip"
+msgstr "Исечци"
+
+msgid "collapse.never"
+msgstr "Никад"
+
+msgid "collapse.notbydefault"
+msgstr "Ручно"
+
+msgid "collapse.always"
+msgstr "Увек"
+
+msgid "prefs.collapsepre"
+msgstr "Скупљање преформатираног:"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Унос упита за исечак"
