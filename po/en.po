@@ -2612,8 +2612,11 @@ msgstr "Delete"
 msgid "menu.snip.prefs"
 msgstr "Configure…"
 
-msgid "heading.snip"
+msgid "heading.snip.new"
 msgstr "New Snippet"
+
+msgid "heading.snip.edit"
+msgstr "Edit Snippet"
 
 msgid "snip.name"
 msgstr "Name:"

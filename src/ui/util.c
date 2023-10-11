@@ -3415,6 +3415,12 @@ iWidget *makePreferences_Widget(void) {
                                 escape_Color(uiTextDim_ColorId));
 #endif
         }
+        const iMenuItem snippetPanelItems[] = {
+            { "title id:heading.prefs.snip" },
+            { "snippetlist" },
+            { "navi.action id:sniped.new text:" add_Icon, 0, 0, "sniped.new" },
+            { NULL }
+        };
         const iMenuItem userPanelItems[] = {
             { "title id:heading.prefs.user" },
             { "padding arg:0.667" },
@@ -3430,9 +3436,11 @@ iWidget *makePreferences_Widget(void) {
             { "button text:" download_Icon " ${menu.downloads}", 0, 0, "downloads.open" },
             { NULL }
         };
-        const iMenuItem aboutPanelItems[] = {
+        const iMenuItem supportPanelItems[] = {
+            { "title id:heading.prefs.support" },
             { format_CStr("heading text:%s", cstr_String(aboutText)) },
-            { "button text:" clock_Icon " ${menu.releasenotes}", 0, 0, "!open url:about:version" },
+            { "button text:" star_Icon " ${menu.releasenotes}", 0, 0, "!open url:about:version" },
+            { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
             { "padding" },
             { "button text:" globe_Icon " " uiTextAction_ColorEscape "${menu.website}", 0, 0, "!open url:https://gmi.skyjake.fi/lagrange" },
             { "button text:" person_Icon " " uiTextAction_ColorEscape "@jk@skyjake.fi", 0, 0, "!open default:1 url:https://skyjake.fi/@jk" },
@@ -3456,9 +3464,12 @@ iWidget *makePreferences_Widget(void) {
             { "panel icon:0x1f660 id:heading.prefs.style", 0, 0, (const void *) stylePanelItems },
             { "padding" },
             { "panel icon:0x1f4e6 id:heading.prefs.user", 0, 0, (const void *) userPanelItems },
-            { "heading id:heading.prefs.support" },
-            { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
-            { "panel text:" planet_Icon " ${menu.about}", 0, 0, (const void *) aboutPanelItems },
+            { "panel icon:0x1f4cb id:heading.prefs.snip", 0, 0, (const void *) snippetPanelItems },
+            //{ "heading id:heading.prefs.support" },
+            { "padding" },
+            { "panel text:" info_Icon " ${heading.prefs.support}", 0, 0, (const void *) supportPanelItems },
+//            { "button text:" info_Icon " ${menu.help}", 0, 0, "!open url:about:help" },
+//            { "panel text:" planet_Icon " ${menu.about}", 0, 0, (const void *) aboutPanelItems },
             { NULL }
         }, NULL, 0);
         setupSheetTransition_Mobile(dlg, iTrue);
@@ -3855,7 +3866,7 @@ const iArray *makeBookmarkFolderActions_MenuItem(const char *command, iBool with
 }
 
 void enableResizing_Widget(iWidget *d, int minWidth, const char *resizeId) {
-    if (isDesktop_Platform()) {
+    if (deviceType_App() == desktop_AppDeviceType) {
         iChangeFlags(d->flags, arrangeWidth_WidgetFlag, iFalse);
         d->flags2 |= horizontallyResizable_WidgetFlag2;
         d->minSize.x = minWidth;
@@ -4374,14 +4385,20 @@ iWidget *makeSnippetCreation_Widget(void) {
     };
     iWidget *dlg = NULL;
     if (isUsingPanelLayout_Mobile()) {
-        /* TODO */
-
+        dlg = makePanels_Mobile("snip", (iMenuItem[]){
+            { "title id:heading.snip text:${heading.snip.new}" },
+            { "input id:snip.name nolinebreaks:1" },
+            { "label text:${sniped.help}" },
+            { "heading text:${snip.content}"},
+            { "input id:snip.content noheading:1" },
+            { NULL }
+        }, actions, iElemCount(actions));
         setCommandHandler_Widget(dlg, handleSnippetCreationCommands_);
     }
     else {
         iWidget *headings, *values;
         dlg = makeSheet_Widget("snip");
-        addDialogTitle_(dlg, "${heading.snip}", "heading.snip");
+        addDialogTitle_(dlg, "${heading.snip.new}", "heading.snip");
         addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
         setId_Widget(headings, "snip.columns.head");
         iInputWidget *name    = new_InputWidget(0);
@@ -4399,9 +4416,9 @@ iWidget *makeSnippetCreation_Widget(void) {
         arrange_Widget(dlg);
         setCommandHandler_Widget(dlg, handleSnippetCreationCommands_);
         enableResizing_Widget(dlg, width_Widget(dlg), "snip");
+        setFocus_Widget(findChild_Widget(dlg, "snip.name"));
     }
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
-    setFocus_Widget(findChild_Widget(dlg, "snip.name"));
     return dlg;
 }
 

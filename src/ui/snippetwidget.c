@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "listwidget.h"
 #include "../snippets.h"
+#include "app.h"
 
 #include <SDL_clipboard.h>
 
@@ -65,6 +66,7 @@ struct Impl_SnippetWidget {
     iListWidget *list;
     iWidget *menu;
     size_t contextPos;
+    int itemFonts[2];
 };
 
 iDefineObjectConstruction(SnippetWidget)
@@ -92,9 +94,18 @@ void init_SnippetWidget(iSnippetWidget *d) {
     setId_Widget(w, "sniped");
     setFlags_Widget(w, resizeChildren_WidgetFlag | arrangeVertical_WidgetFlag, iTrue);
     iLabelWidget *addButton = newKeyMods_LabelWidget("${sniped.new}", SDLK_RETURN, 0, "sniped.new");
+    setId_Widget(as_Widget(addButton), "sniped.new");
     addChildFlags_Widget(w, iClob(addButton), drawKey_WidgetFlag | alignLeft_WidgetFlag);
     d->list = new_ListWidget();
-    setItemHeight_ListWidget(d->list, lineHeight_Text(uiLabel_FontId) * 2.5f);
+    if (deviceType_App() == desktop_AppDeviceType) {
+        d->itemFonts[0] = uiLabel_FontId;
+        d->itemFonts[1] = uiLabelBold_FontId;
+    }
+    else {
+        d->itemFonts[0] = uiLabelBig_FontId;
+        d->itemFonts[1] = uiLabelBigBold_FontId;
+    }
+    setItemHeight_ListWidget(d->list, lineHeight_Text(d->itemFonts[0]) * 2.5f);
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
     addChildFlags_Widget(w, iClob(d->list), expand_WidgetFlag);
     updateItems_SnippetWidget_(d);
@@ -110,6 +121,10 @@ void init_SnippetWidget(iSnippetWidget *d) {
 
 void deinit_SnippetWidget(iSnippetWidget *d) {
     iUnused(d);
+}
+
+iListWidget *list_SnippetWidget(iSnippetWidget *d) {
+    return d->list;
 }
 
 static iBool processEvent_SnippetWidget_(iSnippetWidget *d, const SDL_Event *ev) {
@@ -144,6 +159,7 @@ static iBool processEvent_SnippetWidget_(iSnippetWidget *d, const SDL_Event *ev)
         const iSnippetItem *item = constItem_ListWidget(d->list, d->contextPos);
         if (item) {
             iWidget *dlg = makeSnippetCreation_Widget();
+            setTextCStr_LabelWidget(findChild_Widget(dlg, "heading.snip"), "${heading.snip.edit}");
             setText_InputWidget(findChild_Widget(dlg, "snip.name"), &item->label);
             iInputWidget *content = findChild_Widget(dlg, "snip.content");
             setText_InputWidget(content, get_Snippets(&item->label));
@@ -186,7 +202,7 @@ static void draw_SnippetWidget_(const iSnippetWidget *d) {
 static void draw_SnippetItem_(const iSnippetItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list) {
     const iSnippetWidget *parent = (const iSnippetWidget *) parent_Widget(list);
-    const int   font       = uiLabel_FontId;
+    const int   font       = parent->itemFonts[0];
     const int   itemHeight = height_Rect(itemRect);
     const int   line       = lineHeight_Text(font);
     const iBool isMenuOpen = isVisible_Widget(parent->menu);
@@ -202,9 +218,12 @@ static void draw_SnippetItem_(const iSnippetItem *d, iPaint *p, iRect itemRect,
         bg = uiBackgroundFramelessHover_ColorId;
         fillRect_Paint(p, itemRect, bg);
     }
+    if (isMobile_Platform()) {
+        adjustEdges_Rect(&itemRect, 0, -3 * gap_UI, 0, 3 * gap_UI);
+    }
     iInt2 pos = init_I2(left_Rect(itemRect) + 3 * gap_UI,
                         top_Rect(itemRect) + itemHeight / 2 - line);
-    drawRange_Text(uiLabelBold_FontId, pos, fg, range_String(&d->label));
+    drawRange_Text(parent->itemFonts[1], pos, fg, range_String(&d->label));
     pos.y += line;
     drawRange_Text(font, pos, fg2, range_String(&d->content));
 }

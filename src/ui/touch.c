@@ -842,6 +842,11 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     }
                     pushBack_Array(d->moms, &mom);
                     //dispatchMotion_Touch_(touch->startPos, 0);
+                    if (touch->affinity) {
+//                        printf("WIDGET TOUCH ENDS\n");
+//                        identify_Widget(touch->affinity);
+                        dispatchNotification_Touch_(touch, widgetTouchEnds_UserEventCode);
+                    }
                 }
                 else {
                     if (touch->affinity) {
@@ -873,16 +878,16 @@ float stopWidgetMomentum_Touch(const iWidget *widget) {
 
 enum iWidgetTouchMode widgetMode_Touch(const iWidget *widget) {
     iTouchState *d = touchState_();
-    iConstForEach(Array, i, d->touches) {
-        const iTouch *touch = i.value;
-        if (touch->affinity == widget) {
-            return touch_WidgetTouchMode;
-        }
-    }
     iConstForEach(Array, j, d->moms) {
         const iMomentum *mom = j.value;
         if (mom->affinity == widget) {
             return momentum_WidgetTouchMode;
+        }
+    }
+    iConstForEach(Array, i, d->touches) {
+        const iTouch *touch = i.value;
+        if (touch->affinity == widget) {
+            return touch_WidgetTouchMode;
         }
     }
     return none_WidgetTouchMode;

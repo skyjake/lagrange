@@ -439,9 +439,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         setBackupFileName_InputWidget(d->input, "spartanbackup");
     }
     updateInputMaxHeight_UploadWidget_(d);
-    if (isDesktop_Platform()) {
-        enableResizing_Widget(as_Widget(d), width_Widget(d), NULL);
-    }
+    enableResizing_Widget(as_Widget(d), width_Widget(d), NULL);
 }
 
 void deinit_UploadWidget(iUploadWidget *d) {

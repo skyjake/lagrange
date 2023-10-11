@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "labelwidget.h"
 #include "root.h"
+#include "snippetwidget.h"
 #include "text.h"
 #include "widget.h"
 #include "window.h"
@@ -91,7 +92,8 @@ iBool isFullSizePanel_Mobile(const iWidget *panels) {
         return !iCmpStr(id, "prefs") || !iCmpStr(id, "upload");
     }
     return !iCmpStr(id, "prefs") || startsWith_CStr(id, "bmed") || startsWith_CStr(id, "sitespec ")
-        || !iCmpStr(id, "upload") || !iCmpStr(id, "certimport") || !iCmpStr(id, "ident");
+        || !iCmpStr(id, "upload") || !iCmpStr(id, "certimport") || !iCmpStr(id, "ident")
+        || !iCmpStr(id, "snip");
 }
 
 iLocalDef iBool isFullSizePanel_(const iWidget *panels) {
@@ -147,13 +149,20 @@ static iWidget *findTitleLabel_(iWidget *panel) {
     return NULL;
 }
 
-static void updateCertListHeight_(iWidget *detailStack) {
+static void updateListHeights_(iWidget *detailStack) {
     iWidget *certList = findChild_Widget(detailStack, "certlist");
     if (certList) {
         setFixedSize_Widget(certList,
                             init_I2(-1,
                                     -1 * gap_UI + bottom_Rect(safeRect_Root(certList->root)) -
                                         top_Rect(boundsWithoutVisualOffset_Widget(certList))));
+    }
+    iWidget *snippetList = findChild_Widget(detailStack, "sniped");
+    if (snippetList) {
+        setFixedSize_Widget(snippetList,
+                            init_I2(-1,
+                                    -1 * gap_UI + bottom_Rect(safeRect_Root(certList->root)) -
+                                    top_Rect(boundsWithoutVisualOffset_Widget(certList))));
     }
 }
 
@@ -197,7 +206,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
             setPadding_Widget(panel, pad, 0, pad, pad + bottomSafeInset_Mobile());
         }
         arrange_Widget(mainDetailSplit);
-        updateCertListHeight_(detailStack);
+        updateListHeights_(detailStack);
     }
     else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "keyboard.changed")) {
         if (arg_Command(cmd) > 0 && !isFullSizePanel_(sheet)) {
@@ -271,7 +280,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         }
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
         postCommand_Widget(topPanel, "panel.changed arg:%d", panelIndex);
-        updateCertListHeight_(findDetailStack_(topPanel));
+        updateListHeights_(findDetailStack_(topPanel));
         return iTrue;
     }
     if (equal_Command(cmd, "swipe.back")) {
@@ -303,7 +312,8 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
             if (findWidget_App("ident")) {
                 postCommand_App("ident.cancel");
             }
-            else if ((widget = findWidget_App("certimport")) != NULL) {
+            else if ((widget = findWidget_App("certimport")) != NULL ||
+                     (widget = findWidget_App("snip")) != NULL) {
                 postCommand_Widget(widget, "cancel");
             }
             else if (findWidget_App("prefs")) {
@@ -710,6 +720,7 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         }
         setId_Widget(as_Widget(input), id);
         setUrlContent_InputWidget(input, argLabel_Command(spec, "url"));
+        setLineBreaksEnabled_InputWidget(input, !argLabel_Command(spec, "nolinebreaks"));
         setSelectAllOnFocus_InputWidget(input, argLabel_Command(spec, "selectall"));
         setFont_InputWidget(input, labelFont_());
         if (argLabel_Command(spec, "noheading")) {
@@ -742,6 +753,14 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         setFlags_Widget(widget, borderTop_WidgetFlag | borderBottom_WidgetFlag, iTrue);
         updateItems_CertListWidget(certList);
         invalidate_ListWidget(list);
+    }
+    else if (equal_Command(spec, "snippetlist")) {
+        iSnippetWidget *snipList = new_SnippetWidget();
+        setBackgroundColor_Widget(as_Widget(list_SnippetWidget(snipList)),
+                                  uiBackgroundSidebar_ColorId);
+        widget = as_Widget(snipList);
+        iRelease(removeChild_Widget(widget, findChild_Widget(widget, "sniped.new")));
+        setFlags_Widget(widget, borderTop_WidgetFlag | borderBottom_WidgetFlag, iTrue);
     }
     else if (equal_Command(spec, "button")) {
         widget = as_Widget(heading = makePanelButton_(label, item->command));

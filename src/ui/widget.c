@@ -1595,7 +1595,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
         }
     }
-    if (isDesktop_Platform() && d->flags2 & horizontallyResizable_WidgetFlag2) {
+    if (deviceType_App() == desktop_AppDeviceType && d->flags2 & horizontallyResizable_WidgetFlag2) {
         static iInt2 startPos_; /* assume only one pointer is resizing at a time */
         static int startWidth_;
         const iInt2 buttonPos = init_I2(ev->button.x, ev->button.y);

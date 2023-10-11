@@ -2200,7 +2200,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+        if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode &&
+            widgetMode_Touch(w) != momentum_WidgetTouchMode) {
             gotoNearestSlidingSheetPos_SidebarWidget_(d);
             return iTrue;
         }
