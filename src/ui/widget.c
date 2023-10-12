@@ -1362,9 +1362,10 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
 #endif
 #if 0
                 if (ev->type == SDL_MOUSEBUTTONDOWN) {
-                    printf("widget %p ('%s' class:%s) ate the mouse down\n",
+                    printf("widget %p ('%s' class:%s) ate the mouse down (button %d)\n",
                            child, cstr_String(id_Widget(child)),
-                           class_Widget(child)->name);
+                           class_Widget(child)->name,
+                           ev->button.button);
                     fflush(stdout);
                 }
 #endif
@@ -2237,10 +2238,10 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
     if (!d->parent) {
         iReverseForEach(PtrArray, i, onTop_Root(d->root)) {
             iWidget *child = i.ptr;
-//            printf("ontop: %s (%s) hidden:%d hittable:%d\n", cstr_String(id_Widget(child)),
-//                   class_Widget(child)->name,
-//                   child->flags & hidden_WidgetFlag ? 1 : 0,
-//                   child->flags & unhittable_WidgetFlag ? 0 : 1);
+            printf("ontop: %s (%s) hidden:%d hittable:%d\n", cstr_String(id_Widget(child)),
+                   class_Widget(child)->name,
+                   child->flags & hidden_WidgetFlag ? 1 : 0,
+                   child->flags & unhittable_WidgetFlag ? 0 : 1);
             iAny *found = hitChild_Widget(constAs_Widget(child), coord);
             if (found) return found;
         }
@@ -2658,13 +2659,14 @@ static void printInfo_Widget_(const iWidget *d) {
                cstr_String(text_LabelWidget((const iLabelWidget *) d)),
                cstr_String(command_LabelWidget((const iLabelWidget *) d)));
     }
-    printf("pos:%d,%d size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s%s%s\n",
+    printf("pos:%d,%d size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s%s%s%s\n",
            d->rect.pos.x, d->rect.pos.y,
            d->rect.size.x, d->rect.size.y,
            d->minSize.x, d->minSize.y,
            d->padding[0], d->padding[2],
            d->padding[1], d->padding[3],
            (long long unsigned int) d->flags,
+           d->flags & keepOnTop_WidgetFlag ? " onTop" : "",
            d->flags & expand_WidgetFlag ? " exp" : "",
            d->flags & tight_WidgetFlag ? " tight" : "",
            d->flags & fixedWidth_WidgetFlag ? " fixW" : "",

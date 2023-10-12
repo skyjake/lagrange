@@ -542,6 +542,7 @@ static iWidget *addChildPanel_(iWidget *parent, iLabelWidget *panelButton,
                              arrangeHeight_WidgetFlag | overflowScrollable_WidgetFlag |
                              drawBackgroundToBottom_WidgetFlag |
                              horizontalOffset_WidgetFlag | commandOnClick_WidgetFlag);
+    iAssert(~flags_Widget(panel) & unhittable_WidgetFlag);
     return panel;
 }
 
@@ -629,7 +630,12 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
                         alignRight_WidgetFlag | noBackground_WidgetFlag |
                             frameless_WidgetFlag, iTrue);
         setId_Widget(as_Widget(drop), id);
-        widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label), as_Widget(drop));
+        if (argLabel_Command(spec, "noheading")) {
+            widget = makeValuePadding_(as_Widget(drop));
+        }
+        else {
+            widget = makeValuePaddingWithHeading_(heading = makeHeading_Widget(label), as_Widget(drop));
+        }
         setCommandHandler_Widget(widget, dropdownHeadingHandler_);
         widget->padding[2] = gap_UI;
         setUserData_Object(widget, drop);
@@ -882,7 +888,8 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
     setFlags_Widget(panels,
                     resizeToParentWidth_WidgetFlag |
                         (isFullHeight
-                             ? resizeToParentHeight_WidgetFlag | leftEdgeDraggable_WidgetFlag |
+                             ? hittable_WidgetFlag |
+                                   resizeToParentHeight_WidgetFlag | leftEdgeDraggable_WidgetFlag |
                                    horizontalOffset_WidgetFlag
                              : (arrangeHeight_WidgetFlag | moveToParentBottomEdge_WidgetFlag)) |
                         frameless_WidgetFlag | focusRoot_WidgetFlag | commandOnClick_WidgetFlag,
@@ -990,7 +997,7 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             const iString *label = hasLabel_Command(item->label, "text")
                                        ? collect_String(suffix_Command(item->label, "text"))
                                        : collectNewFormat_String("${%s}", id);
-            iLabelWidget * button =
+            iLabelWidget *button =
                 addChildFlags_Widget(topPanel,
                                      iClob(makePanelButton_(cstr_String(label), "panel.open")),
                                      borderTop_WidgetFlag);
@@ -1002,6 +1009,9 @@ void initPanels_Mobile(iWidget *panels, iWidget *parentWidget,
             iWidget *panel = addChildPanel_(detailStack, button, NULL);
             if (argLabel_Command(item->label, "noscroll")) {
                 setFlags_Widget(panel, overflowScrollable_WidgetFlag, iFalse);
+            }
+            if (hasLabel_Command(item->label, "buttonid")) {
+                setId_Widget(as_Widget(button), cstr_Command(item->label, "buttonid"));
             }
             makePanelItems_Mobile(panel, item->data);
         }

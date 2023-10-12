@@ -4298,6 +4298,16 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
     return makeMenu_Widget(w, data_Array(items), size_Array(items));
 }
 
+static iBool contains_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
+    if (!contains_Widget(constAs_Widget(d), pos)) {
+        return iFalse;
+    }
+    if (d->phoneToolbar && contains_Widget(d->phoneToolbar, pos)) {
+        return iFalse;
+    }
+    return iTrue;
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = d->view;
@@ -4481,7 +4491,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_RIGHT &&
-            contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
+            contains_DocumentWidget_(d, init_I2(ev->button.x, ev->button.y))) {
             if (!isVisible_Widget(d->menu)) {
                 d->contextLink = view->hoverLink;
                 d->contextPos = init_I2(ev->button.x, ev->button.y);
@@ -4702,12 +4712,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         }
                         const iMenuItem items[] = {
                             { clipCopy_Icon " ${menu.copy}", 0, 0, "copy" },
+                            { "---" },
+                            { magnifyingGlass_Icon " ${menu.search}", 0, 0,
+                                format_CStr("search newtab:1 query:%s",
+                                            cstr_String(selectedText_DocumentWidget_(d))) },
+                            { add_Icon " ${menu.snippet.add}", 0, 0,
+                                format_CStr("!snippet.add content:%s",
+                                            cstr_String(selectedText_DocumentWidget_(d))) },
 #if defined (iPlatformAppleMobile)
                             { export_Icon " ${menu.share}", 0, 0, "copy share:1" },
 #endif
-                            { add_Icon " ${menu.snippet.add}", 0, 0, 
-                                format_CStr("!snippet.add content:%s",
-                                            cstr_String(selectedText_DocumentWidget_(d))) },
                             { "---" },
                             { close_Icon " ${menu.select.clear}", 0, 0, "document.select arg:0" },
                         };

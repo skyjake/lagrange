@@ -614,15 +614,18 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 SDL_UserEvent user = {
                     .type = SDL_USEREVENT,
                     .code = command_UserEventCode,
-                    .data1 = strdup(cmd),
+                    .data1 = (void *) cmd,
                     .data2 = touch->affinity->root,
                     .windowID = id_Window(window_Widget(touch->affinity))
                 };
+//                printf("SWIPE SENT TO: ");
+//                identify_Widget(touch->affinity);
                 wasHandled = dispatchEvent_Widget(touch->affinity, (SDL_Event *) &user);
+//                printf("...WAS HANDLED: %d\n", wasHandled);
             }
-            //if (!wasHandled) {
-            postCommand_App(cmd);
-            //}
+            if (!wasHandled) {
+                postCommand_App(cmd);
+            }
             touch->didPostEdgeMove = iTrue;
             return iTrue;
         }
