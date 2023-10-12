@@ -2722,9 +2722,6 @@ msgstr "Ad:"
 msgid "snip.content"
 msgstr "İçerik:"
 
-msgid "heading.snip"
-msgstr "Yeni kırpıntı"
-
 msgid "snip.accept"
 msgstr "Kırpıntıyı kaydet"
 

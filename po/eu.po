@@ -2789,9 +2789,6 @@ msgstr "Ezabatu"
 msgid "menu.snip.prefs"
 msgstr "Ezarri…"
 
-msgid "heading.snip"
-msgstr "Mozkin berria"
-
 msgid "snip.name"
 msgstr "Izena:"
 

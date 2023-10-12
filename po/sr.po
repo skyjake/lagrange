@@ -2603,9 +2603,6 @@ msgstr "Обриши"
 msgid "menu.snip.prefs"
 msgstr "Подеси…"
 
-msgid "heading.snip"
-msgstr "Нови исечак"
-
 msgid "snip.name"
 msgstr "Назив:"
 

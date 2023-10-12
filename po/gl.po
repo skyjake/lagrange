@@ -2713,9 +2713,6 @@ msgstr "Eliminar"
 msgid "menu.snip.prefs"
 msgstr "Configurar…"
 
-msgid "heading.snip"
-msgstr "Novo Anaco"
-
 msgid "snip.name"
 msgstr "Nome:"
 

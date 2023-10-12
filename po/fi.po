@@ -2576,9 +2576,6 @@ msgstr "Poista"
 msgid "menu.snip.prefs"
 msgstr "Asetukset…"
 
-msgid "heading.snip"
-msgstr "Uusi katkelma"
-
 msgid "snip.name"
 msgstr "Nimi:"
 
