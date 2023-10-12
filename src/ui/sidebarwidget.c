@@ -538,7 +538,11 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 { "", 0, 0, "bookmark.tag tag:homepage" },
                 { "", 0, 0, "bookmark.tag tag:remotesource" },
                 { "---", 0, 0, NULL },
+#if defined (iPlatformDesktop)
                 { uiTextCaution_ColorEscape "${bookmark.delete}", SDLK_BACKSPACE, 0, "bookmark.delete" },
+#else
+                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
+#endif
                 { "---", 0, 0, NULL },
                 { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
                 { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
@@ -558,8 +562,11 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                         { "---" },
                         { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
                         { "---" },
-                        { uiTextCaution_ColorEscape "${bookmark.folder.delete}",
-                          SDLK_BACKSPACE, 0, "bookmark.delete" },
+#if defined (iPlatformDesktop)
+                        { uiTextCaution_ColorEscape "${bookmark.folder.delete}", SDLK_BACKSPACE, 0, "bookmark.delete" },
+#else
+                        { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
+#endif
                         { "---" } },
                     7);
                 if (isMobile_Platform()) {

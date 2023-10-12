@@ -99,6 +99,7 @@ iDeclareTypeConstructionArgs(SystemTextInput, iRect rect, int flags)
 
 void    setRect_SystemTextInput  (iSystemTextInput *, iRect rect);
 void    setText_SystemTextInput  (iSystemTextInput *, const iString *text, iBool allowUndo);
+void    insert_SystemTextInput   (iSystemTextInput *, const iString *text);
 void    setFont_SystemTextInput  (iSystemTextInput *, int fontId);
 void    setTextChangedFunc_SystemTextInput
         (iSystemTextInput *, void (*textChangedFunc)(iSystemTextInput *, void *), void *);

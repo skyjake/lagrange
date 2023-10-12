@@ -927,7 +927,7 @@ msgid "menu.input.clear"
 msgstr "Clear History"
 
 msgid "menu.input.restore"
-msgstr "Restore previous:"
+msgstr "Restore Previous:"
 
 # Paste the line preceding the clicked link into the input prompt.
 msgid "menu.input.precedingline"

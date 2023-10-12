@@ -2433,6 +2433,14 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         contentsWereChanged_InputWidget_(d);
         return iTrue;
     }
+#else
+    else if (isCommand_UserEvent(ev, "input.paste") && isEditing_InputWidget_(d)) {
+        if (d->sysCtrl) {
+            insert_SystemTextInput(d->sysCtrl,
+                                   get_Snippets(collect_String(suffix_Command(command_UserEvent(ev), "snippet"))));
+        }
+        return iTrue;
+    }
 #endif
     else if (isCommand_UserEvent(ev, "input.selectall") && isEditing_InputWidget_(d)) {
         selectAll_InputWidget(d);

@@ -250,6 +250,12 @@ static void updateNaviActionVisibility_(iWidget *sheet, iWidget *curPanel) {
     }
     arrange_Widget(navi);
     refresh_Widget(navi);
+    iForEach(ObjectList, j, children_Widget(naviActions)) {
+        iWidget *menu = findChild_Widget(j.object, "menu");
+        if (menu && flags_Widget(menu) & nativeMenu_WidgetFlag) {
+            updateAfterBoundsChange_SystemMenu(menu);
+        }
+    }
 }
 
 static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
@@ -766,8 +772,11 @@ void makePanelItem_Mobile(iWidget *panel, const iMenuItem *item) {
         widget = as_Widget(heading = makePanelButton_(label, item->command));
         setFlags_Widget(widget, selected_WidgetFlag, argLabel_Command(spec, "selected") != 0);
     }
-    else if (equal_Command(spec, "navi.action")) {
-        iLabelWidget *action = new_LabelWidget(label, item->command);
+    else if (equal_Command(spec, "navi.action") ||
+             equal_Command(spec, "navi.menubutton")) {
+        iLabelWidget *action = equal_Command(spec, "navi.action")
+            ? new_LabelWidget(label, item->command)
+            : makeMenuButton_LabelWidget(label, item->data, iInvalidSize);
         setId_Widget(as_Widget(action), id);
         setFlags_Widget(as_Widget(action),
                         hidden_WidgetFlag | collapse_WidgetFlag | frameless_WidgetFlag |
@@ -1259,14 +1268,16 @@ void updateAfterBoundsChange_SystemMenu(iWidget *owner) {
         if (!isVisible_Widget(parent) || isDisabled_Widget(parent) ||
             /* other focus root blocks the parent? */
             (menuFocusRoot != activeFocusRoot &&
-             !hasParent_Widget(menuFocusRoot, activeFocusRoot))) {
+             !(hasParent_Widget(menuFocusRoot, activeFocusRoot) ||
+               userData_Object(parent) == activeFocusRoot /* navigation bar buttons */))) {
             setHidden_SystemMenu(owner, iTrue);
         }
         else {
             setRect_SystemMenu(owner, bounds_Widget(parent));
+            setHidden_SystemMenu(owner, iFalse);
         }
     }
     else {
-        printf(" --- non-label parent for sysmenu %p !!\n", owner);
+        /* This is probably a submenu so it's not attached to any onscreen button. */
     }
 }

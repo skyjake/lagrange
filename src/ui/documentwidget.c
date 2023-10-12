@@ -2069,7 +2069,9 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
             pushBack_Array(items, &(iMenuItem){ "---" });
             pushBack_Array(items,
                            &(iMenuItem){ "${menu.input.clear}", 0, 0, "!recentinput.clear" });
-            pushBack_Array(items, &(iMenuItem){ "```${menu.input.restore}" });
+            pushBack_Array(items, &(iMenuItem){
+                isAppleMobile_Platform() ? "---${menu.input.restore}" : "```${menu.input.restore}"
+            });
             iReverseConstForEach(StringArray, i, recentInput) {
                 iString *label = collect_String(copy_String(i.value));
                 replace_String(label, "\n\n", " ");
@@ -2150,7 +2152,7 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
             makeMenuButton_LabelWidget(midEllipsis_Icon, NULL, 0);
         iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
         /* When opening, update the items to reflect the site-specific settings. */
-        menu->updateMenuItems = updateInputPromptMenuItems_;
+        setMenuUpdateItemsFunc_Widget(menu, updateInputPromptMenuItems_);
         set_String(&menu->data,
                    collectNewFormat_String("context buttons:%p url:%s preceding:%s",
                                            buttons,
@@ -4703,6 +4705,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 #if defined (iPlatformAppleMobile)
                             { export_Icon " ${menu.share}", 0, 0, "copy share:1" },
 #endif
+                            { add_Icon " ${menu.snippet.add}", 0, 0, 
+                                format_CStr("!snippet.add content:%s",
+                                            cstr_String(selectedText_DocumentWidget_(d))) },
                             { "---" },
                             { close_Icon " ${menu.select.clear}", 0, 0, "document.select arg:0" },
                         };

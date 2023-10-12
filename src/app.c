@@ -4703,6 +4703,9 @@ iBool handleCommand_App(const char *cmd) {
         }
         if (isMobile_Platform()) {
             enableToolbar_Root(get_Root(), iFalse); /* toolbars disabled while Settings is shown */
+            if (findWidget_App("upload")) {
+                postCommand_App("upload.cancel");
+            }
         }
         setFocus_Widget(NULL);
         iWidget *dlg = makePreferences_Widget();
@@ -4821,18 +4824,27 @@ iBool handleCommand_App(const char *cmd) {
             showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
         }
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
-        if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
-            iWidget *idPanel = panel_Mobile(dlg, 3);
-            iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
-            postCommand_Widget(button, "panel.open");
-        }
         if (prefs_App()->detachedPrefs && deviceType_App() == desktop_AppDeviceType &&
             !isTerminal_Platform()) {
             /* Detach into a window if it doesn't fit otherwise. */
             promoteDialogToWindow_Widget(dlg);
         }
+        if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
+            /* TODO: Don't hardcode the panel index. */
+            iWidget *idPanel = panel_Mobile(dlg, 3);
+            iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
+            postCommand_Widget(button, "panel.open");
+        }
         if (argLabel_Command(cmd, "sniped")) {
-            postCommand_Widget(dlg, "tabs.switch id:sniped");
+            if (deviceType_App() == desktop_AppDeviceType) {
+                postCommand_Widget(dlg, "tabs.switch id:sniped");
+            }
+            else {
+                /* TODO: Don't hardcode the panel index. */
+                iWidget *snippetPanel = panel_Mobile(dlg, 8);
+                iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), snippetPanel);
+                postCommand_Widget(button, "panel.open");
+            }
         }
     }
     else if (equal_Command(cmd, "navigate.home") && isMainWin) {

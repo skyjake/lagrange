@@ -297,6 +297,7 @@ void            openMenuAnchorFlags_Widget      (iWidget *, iRect windowAnchorRe
 void            closeMenu_Widget                (iWidget *);
 iBool           handleMenuCommand_Widget        (iWidget *menu, const char *cmd); /* used as the command handler */
 void            releaseNativeMenu_Widget        (iWidget *);
+void            setMenuUpdateItemsFunc_Widget   (iWidget *menu, const iArray *(*func)(iWidget *));
 
 size_t          count_MenuItem                  (const iMenuItem *itemsNullTerminated);
 size_t          findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);

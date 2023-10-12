@@ -787,6 +787,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "input.backup") ||
            equal_Command(cmd, "input.ended") ||
            equal_Command(cmd, "input.edited") ||
+           equal_Command(cmd, "input.resized") ||
            equal_Command(cmd, "focus.gained") ||
            equal_Command(cmd, "focus.lost") ||
            equal_Command(cmd, "tabs.changed") ||
@@ -1155,6 +1156,15 @@ iWidget *parentMenu_Widget(iWidget *menuItem) {
 
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     return makeMenuFlags_Widget(parent, items, n, iFalse);
+}
+
+void setMenuUpdateItemsFunc_Widget(iWidget *menu, const iArray *(*func)(iWidget *)) {
+    menu->updateMenuItems = func;
+#if defined (LAGRANGE_NATIVE_MENU)
+    if (isAppleMobile_Platform()) {
+        updateItems_SystemMenu(menu, NULL, 0); /* creates a deferred element */
+    }
+#endif
 }
 
 iWidget *makeMenuFlags_Widget(iWidget *parent, const iMenuItem *items, size_t n, iBool allowNative) {
@@ -4416,8 +4426,8 @@ iWidget *makeSnippetCreation_Widget(void) {
         arrange_Widget(dlg);
         setCommandHandler_Widget(dlg, handleSnippetCreationCommands_);
         enableResizing_Widget(dlg, width_Widget(dlg), "snip");
-        setFocus_Widget(findChild_Widget(dlg, "snip.name"));
     }
+    setFocus_Widget(findChild_Widget(dlg, "snip.name"));
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;
 }
@@ -4457,34 +4467,41 @@ iWidget *makeLinkImporter_Widget(size_t count) {
           "dlg.import.accept" },
     };
     iWidget *dlg = NULL;
+    const char *dlgId = "linkbookmarking";
+    const iArray *folders = makeBookmarkFolderActions_MenuItem("dlg.import.intofolder", iTrue, 0);
     if (isUsingPanelLayout_Mobile()) {
-        /* TODO */
+        dlg = makePanels_Mobile(dlgId, (iMenuItem[]){
+            { "title id:heading.import.bookmarks" },
+            { format_CStr("label text:%s", formatCStrs_Lang("dlg.import.found.n", count)) },
+            { "dropdown id:dlg.import.intofolder", 0, 0, (const void *) constData_Array(folders) },
+            { "toggle id:dlg.import.headings" },
+            { "padding" },
+            { NULL }
+        }, actions, iElemCount(actions));
     }
     else {
         iWidget *headings, *values;
-        dlg = makeSheet_Widget("linkbookmarking");
+        dlg = makeSheet_Widget(dlgId);
         addDialogTitle_(dlg, "${heading.import.bookmarks}", "heading.import.bookmarks");
         addWrappedLabel_Widget(dlg, formatCStrs_Lang("dlg.import.found.n", count), NULL);
         addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
         addChild_Widget(dlg, iClob(makeTwoColumns_Widget(&headings, &values)));
-        const iArray *folders = makeBookmarkFolderActions_MenuItem("dlg.import.intofolder", iTrue, 0);
         iLabelWidget *intoFolder = addDialogDropMenu_(headings,
                            values,
                            "${dlg.import.intofolder}",
                            constData_Array(folders),
                            iInvalidSize,
                            "dlg.import.intofolder");
-        updateDropdownSelection_LabelWidget(
-            intoFolder, format_CStr(" arg:%zu", recentFolder_Bookmarks(bookmarks_App())));
-        setToggle_Widget(
-            addDialogToggle_(headings, values, "${dlg.import.headings}", "dlg.import.headings"),
-            iTrue);
+        addDialogToggle_(headings, values, "${dlg.import.headings}", "dlg.import.headings");
         addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
         addChild_Widget(dlg, iClob(makeDialogButtons_Widget(actions, iElemCount(actions))));
         addChild_Widget(get_Root()->widget, iClob(dlg));
         arrange_Widget(dlg);
         arrange_Widget(dlg);
     }
+    updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "dlg.import.intofolder"),
+                                        format_CStr(" arg:%zu", recentFolder_Bookmarks(bookmarks_App())));
+    setToggle_Widget(findChild_Widget(dlg, "dlg.import.headings"), iTrue);
     setCommandHandler_Widget(dlg, handleLinkImporterCommands_);
     setupSheetTransition_Mobile(dlg, incoming_TransitionFlag | dialogTransitionDir_Widget(dlg));
     return dlg;

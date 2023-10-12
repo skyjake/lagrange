@@ -261,8 +261,16 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         /* TODO: Spartan mode. */
         const int infoFont = (deviceType_App() == phone_AppDeviceType ? uiLabelBig_FontId
                                                                       : uiLabelMedium_FontId);
+        const iMenuItem ellipsisItems[] = {
+            { select_Icon " ${menu.selectall}", 0, 0, "upload.text.selectall" },
+            { export_Icon " ${menu.upload.export}", 0, 0, "upload.text.export" },
+            { clipboard_Icon " ${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" },
+            { "---" },
+            { delete_Icon " " uiTextAction_ColorEscape "${menu.upload.delete}", 0, 0, "upload.text.delete" },
+            { NULL }
+        };
         const iMenuItem textItems[] = {
-            { "navi.action text:" midEllipsis_Icon, 0, 0, "upload.editmenu.open" },
+            { "navi.menubutton text:" midEllipsis_Icon, 0, 0, (const void *) ellipsisItems },
             { "navi.action text:${dlg.upload.send}", 0, 0, "upload.accept" },
             { "title id:heading.upload.text" },
             { "input id:upload.text noheading:1" },
@@ -645,18 +653,18 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         updateIdentityDropdown_UploadWidget_(d);
         return iTrue;
     }
-    if (isCommand_Widget(w, ev, "upload.editmenu.open")) {
-        setFocus_Widget(NULL);
-        refresh_Widget(as_Widget(d->input));
-        iWidget *editMenu = makeMenu_Widget(root_Widget(w), (iMenuItem[]){
-            { select_Icon " ${menu.selectall}", 0, 0, "upload.text.selectall" },
-            { export_Icon " ${menu.upload.export}", 0, 0, "upload.text.export" },
-            { "---" },
-            { delete_Icon " " uiTextAction_ColorEscape "${menu.upload.delete}", 0, 0, "upload.text.delete" }
-        }, 4);
-        openMenu_Widget(editMenu, topLeft_Rect(bounds_Widget(as_Widget(d->input))));
-        return iTrue;
-    }
+//    if (isCommand_Widget(w, ev, "upload.editmenu.open")) {
+//        setFocus_Widget(NULL);
+//        refresh_Widget(as_Widget(d->input));
+//        iWidget *editMenu = makeMenuFlags_Widget(root_Widget(w), (iMenuItem[]){
+//            { select_Icon " ${menu.selectall}", 0, 0, "upload.text.selectall" },
+//            { export_Icon " ${menu.upload.export}", 0, 0, "upload.text.export" },
+//            { "---" },
+//            { delete_Icon " " uiTextAction_ColorEscape "${menu.upload.delete}", 0, 0, "upload.text.delete" }
+//        }, 4, iTrue);
+//        openMenu_Widget(editMenu, topLeft_Rect(bounds_Widget(as_Widget(d->input))));
+//        return iTrue;
+//    }
     if (isCommand_UserEvent(ev, "upload.text.export")) {
 #if defined (iPlatformAppleMobile)
         openTextActivityView_iOS(text_InputWidget(d->input));
@@ -669,6 +677,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             setFocus_Widget(as_Widget(d->input));
         }
         else {
+            setFocus_Widget(NULL);
             openMenu_Widget(makeMenu_Widget(root_Widget(w), (iMenuItem[]){
                 { delete_Icon " " uiTextCaution_ColorEscape "${menu.upload.delete.confirm}", 0, 0,
                     "upload.text.delete confirmed:1" }
