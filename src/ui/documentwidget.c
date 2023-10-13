@@ -2561,9 +2561,16 @@ static int sidebarSwipeAreaHeight_DocumentWidget_(const iDocumentWidget *d) {
     return iMin(win->size.x, win->size.y) / 4;
 }
 
-static iBool checkTabletSwipeVerticalPosition_DocumentWidget_(const iDocumentWidget *d, int swipeY) {
+static iBool checkTabletSwipeVerticalPosition_DocumentWidget_(const iDocumentWidget *d, int swipeY,
+                                                              int edge) {
     /* Returns True if the the vertical position is valid for swiping the sidebar. */
     if (deviceType_App() != tablet_AppDeviceType) {
+        return iFalse;
+    }
+    if (edge == 1 && isVisible_Widget(findWidget_App("sidebar"))) {
+        return iFalse;
+    }
+    if (edge == 2 && isVisible_Widget(findWidget_App("sidebar2"))) {
         return iFalse;
     }
     const iWidget *w = constAs_Widget(d);
@@ -2596,16 +2603,19 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     }
     if (equal_Command(cmd, "edgeswipe.moved")) {
         /* Edge swipes can also be used to show the sidebars. */
+        const int edge = argLabel_Command(cmd, "edge");
         if ((deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App()) &&
-            argLabel_Command(cmd, "edge") &&
-            checkTabletSwipeVerticalPosition_DocumentWidget_(d, argLabel_Command(cmd, "y"))) {
+            edge &&
+            checkTabletSwipeVerticalPosition_DocumentWidget_(d,
+                                                             argLabel_Command(cmd, "y"),
+                                                             edge)) {
             /* This is an actual swipe from the edge of the device, we should let the sidebars
                handle it. */
-            if (argLabel_Command(cmd, "edge") == 1) {
+            if (edge == 1) {
                 transferAffinity_Touch(NULL, findWidget_App("sidebar"));
                 return iTrue;
             }
-            else if (argLabel_Command(cmd, "edge") == 2 && deviceType_App() == tablet_AppDeviceType) {
+            else if (edge == 2 && deviceType_App() == tablet_AppDeviceType) {
                 transferAffinity_Touch(NULL, findWidget_App("sidebar2"));
                 return iTrue;
             }

@@ -97,13 +97,19 @@ void init_SnippetWidget(iSnippetWidget *d) {
     setId_Widget(as_Widget(addButton), "sniped.new");
     addChildFlags_Widget(w, iClob(addButton), drawKey_WidgetFlag | alignLeft_WidgetFlag);
     d->list = new_ListWidget();
-    if (deviceType_App() == desktop_AppDeviceType) {
-        d->itemFonts[0] = uiLabel_FontId;
-        d->itemFonts[1] = uiLabelBold_FontId;
-    }
-    else {
-        d->itemFonts[0] = uiLabelBig_FontId;
-        d->itemFonts[1] = uiLabelBigBold_FontId;
+    switch (deviceType_App()) {
+        case phone_AppDeviceType:
+            d->itemFonts[0] = uiLabelBig_FontId;
+            d->itemFonts[1] = uiLabelBigBold_FontId;
+            break;
+        case tablet_AppDeviceType:
+            d->itemFonts[0] = uiLabelMedium_FontId;
+            d->itemFonts[1] = uiLabelMediumBold_FontId;
+            break;
+        default:
+            d->itemFonts[0] = uiLabel_FontId;
+            d->itemFonts[1] = uiLabelBold_FontId;
+            break;
     }
     setItemHeight_ListWidget(d->list, lineHeight_Text(d->itemFonts[0]) * 2.5f);
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
@@ -152,7 +158,8 @@ static iBool processEvent_SnippetWidget_(iSnippetWidget *d, const SDL_Event *ev)
     else if (isCommand_Widget(w, ev, "list.clicked")) {
         const char *cmd = command_UserEvent(ev);
         d->contextPos = arg_Command(cmd);
-        openMenu_Widget(d->menu, mouseCoord_Window(get_Window(), 0));
+        openMenu_Widget(d->menu, mouseCoord_Window(get_Window(),
+                                                   argU32Label_Command(cmd, "device")));
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "sniped.edit")) {

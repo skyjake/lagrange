@@ -667,10 +667,11 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                                             zero_I2(), init_I2(-d->dragHandleWidth, 0)),
                               pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidPos) {
-                postCommand_Widget(w, "list.clicked arg:%zu button:%d item:%p",
+                postCommand_Widget(w, "list.clicked arg:%zu button:%d item:%p device:%u",
                                    d->hoverItem,
                                    d->click.clickButton,
-                                   constHoverItem_ListWidget(d));
+                                   constHoverItem_ListWidget(d),
+                                   ev->button.which);
             }
             return iTrue;
         default:

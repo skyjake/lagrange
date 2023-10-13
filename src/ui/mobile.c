@@ -200,6 +200,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         iForEach(ObjectList, i, children_Widget(detailStack)) {
             iWidget *panel = i.object;
             setFlags_Widget(panel, leftEdgeDraggable_WidgetFlag, !isSideBySide);
+            setFlags_Widget(panel, focusRoot_WidgetFlag, !isSideBySide);
             if (isSideBySide) {
                 setVisualOffset_Widget(panel, 0, 0, 0);
             }
@@ -1272,9 +1273,12 @@ void updateAfterBoundsChange_SystemMenu(iWidget *owner) {
     iAssert(flags_Widget(owner) & nativeMenu_WidgetFlag);
     iWidget *parent = parent_Widget(owner);
     if (isInstance_Object(parent, &Class_LabelWidget)) {
-        /* TODO: is this too much tree-walking to occur after every change to the bounds? */
         const iWidget *menuFocusRoot   = focusRoot_Widget(parent);
         const iWidget *activeFocusRoot = focusRoot_Widget(root_Widget(parent));
+//        printf("--- menuFocusRoot: ");
+//        identify_Widget(menuFocusRoot);
+//        printf("--- activeFocusRoot: ");
+//        identify_Widget(activeFocusRoot);    
         if (!isVisible_Widget(parent) || isDisabled_Widget(parent) ||
             /* other focus root blocks the parent? */
             (menuFocusRoot != activeFocusRoot &&

@@ -1310,6 +1310,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (argLabel_Command(cmd, "hide") && !isVisible_Widget(w)) {
             return iTrue;
         }
+        /* The sidebar will appear/disappear and UI elements will change position. Stop any
+           ongoing touch interactions based on the old arrangement. */
+        clear_Touch();
         const iBool isAnimated = prefs_App()->uiAnimations &&
                                  argLabel_Command(cmd, "noanim") == 0 &&
                                  (d->side == left_SidebarSide || deviceType_App() != phone_AppDeviceType);

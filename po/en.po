@@ -1281,7 +1281,7 @@ msgid "dlg.upload.id.none"
 msgstr "None"
 
 msgid "dlg.upload.id.default"
-msgstr "Default"
+msgstr "Default Identity"
 
 msgid "heading.upload.dest"
 msgstr "Address"

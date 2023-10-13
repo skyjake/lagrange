@@ -2238,10 +2238,10 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
     if (!d->parent) {
         iReverseForEach(PtrArray, i, onTop_Root(d->root)) {
             iWidget *child = i.ptr;
-            printf("ontop: %s (%s) hidden:%d hittable:%d\n", cstr_String(id_Widget(child)),
-                   class_Widget(child)->name,
-                   child->flags & hidden_WidgetFlag ? 1 : 0,
-                   child->flags & unhittable_WidgetFlag ? 0 : 1);
+//            printf("ontop: %s (%s) hidden:%d hittable:%d\n", cstr_String(id_Widget(child)),
+//                   class_Widget(child)->name,
+//                   child->flags & hidden_WidgetFlag ? 1 : 0,
+//                   child->flags & unhittable_WidgetFlag ? 0 : 1);
             iAny *found = hitChild_Widget(constAs_Widget(child), coord);
             if (found) return found;
         }
