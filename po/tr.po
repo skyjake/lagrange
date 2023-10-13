@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-22 20:15+0000\n"
-"PO-Revision-Date: 2023-10-01 15:16+0000\n"
+"PO-Revision-Date: 2023-10-13 14:26+0000\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <http://weblate.skyjake.fi/projects/lagrange/ui/tr/>\n"
 "Language: tr\n"
@@ -703,7 +703,7 @@ msgid "dlg.upload.id.none"
 msgstr "Yok"
 
 msgid "dlg.upload.id.default"
-msgstr "Öntanımlı"
+msgstr "Öntanımlı kimlik"
 
 msgid "heading.upload.text"
 msgstr "Metin"
@@ -2731,3 +2731,12 @@ msgstr "Klasöre yer imini taşı:"
 # A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
 msgid "keys.bang"
 msgstr "Bir kırpıntı sorgusu ekle"
+
+msgid "heading.snip.new"
+msgstr "Yeni kırpıntı"
+
+msgid "heading.snip.edit"
+msgstr "Kırpıntıyı düzenle"
+
+msgid "heading.upload.dest"
+msgstr "Adres"
