@@ -1931,7 +1931,7 @@ void scrollBegan_DocumentWidget(iAnyObject *any, int offset, uint32_t duration) 
     if (deviceType_App() == phone_AppDeviceType) {
         const float normPos = normScrollPos_DocumentView(d->view);
         if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5 && normPos >= 0) {
-            showToolbar_Root(as_Widget(d)->root, offset < 0);
+            showToolbar_Root(as_Widget(d)->root, offset < 0 || d->view->scrollY.pos.to <= 0);
         }
     }
     if (offset) {
