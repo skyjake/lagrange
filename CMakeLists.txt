@@ -26,12 +26,12 @@ set (COPYRIGHT_YEAR 2023)
 if (IOS)
     set (PROJECT_VERSION 1.17)
     set (IOS_BUNDLE_VERSION 1)
-    set (IOS_BUILD_DATE "2023-10-11")
+    set (IOS_BUILD_DATE "2023-10-13")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 1.16)
-    set (ANDROID_BUILD_VERSION b21)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2023-07-31")
+    set (PROJECT_VERSION 1.17)
+    set (ANDROID_BUILD_VERSION b22)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2023-10-13")
 endif ()
 
 # Load modules from the source tree
