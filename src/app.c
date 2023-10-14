@@ -2630,12 +2630,14 @@ void postCommand_Root(iRoot *d, const char *command) {
             return;
         }
     }
-    SDL_Event ev = { .type = SDL_USEREVENT };
-    ev.user.code = command_UserEventCode;
-    ev.user.data1 = strdup(command);
-    ev.user.data2 = d; /* all events are root-specific */
-    ev.user.windowID = d ? id_Window(d->window) : 0; /* root-specific means window-specific */
-    SDL_PushEvent(&ev);
+    if (!startsWith_CStr(command, "DEBUG ")) {
+        SDL_Event ev = { .type = SDL_USEREVENT };
+        ev.user.code = command_UserEventCode;
+        ev.user.data1 = strdup(command);
+        ev.user.data2 = d; /* all events are root-specific */
+        ev.user.windowID = d ? id_Window(d->window) : 0; /* root-specific means window-specific */
+        SDL_PushEvent(&ev);
+    }
     iWindow *win = d ? d->window : NULL;
 #if defined (iPlatformAndroid)
     if (!startsWith_CStr(command, "backup.")) {
