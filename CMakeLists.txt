@@ -207,6 +207,8 @@ set (SOURCES
     src/resources.h
     src/sitespec.c
     src/sitespec.h
+    src/snippets.c
+    src/snippets.h
     src/stb_image.h
     src/stb_image_resize2.h
     src/stb_truetype.h
@@ -379,9 +381,7 @@ endif ()
 
 # Target.
 if (NOT ANDROID)
-    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS}
-        src/snippets.h
-        src/snippets.c)
+    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS})
 else ()
     # The whole app becomes one shared library, based on this static one.
     add_library (app SHARED ${SOURCES})
@@ -534,6 +534,9 @@ if (APPLE AND NOT ENABLE_TUI)
     endif ()
 endif ()
 if (ANDROID)
+    if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+        target_compile_options (app PUBLIC -mfpu=neon-vfpv4) # 32-bit stb_image_resize2
+    endif ()
     target_compile_definitions (app PUBLIC
         LAGRANGE_ANDROID_VERSION="${ANDROID_BUILD_VERSION}"
         LAGRANGE_ANDROID_BUILD_DATE="${ANDROID_BUILD_DATE}"
