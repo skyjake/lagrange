@@ -52,6 +52,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "macos.h"
 #endif
 
+#if defined (iPlatformAndroidMobile)
+#   include "android.h"
+#endif
+
 #if defined (iPlatformAppleMobile) || defined (iPlatformAndroidMobile)
 #   include "mobile.h"
 #   define LAGRANGE_USE_SYSTEM_TEXT_INPUT 1 /* System-provided UI control almost handles everything. */
@@ -258,6 +262,7 @@ struct Impl_InputWidget {
     iSystemTextInput *sysCtrl;
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
     iString         text;
+    iRangei         pendingSelectionRange;
 #else
     iArray          lines;        /* iInputLine[] */
     iInt2           cursor;       /* cursor position: x = byte offset, y = line index */
@@ -809,6 +814,7 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
         w->rect.size.y += extraPaddingHeight_InputWidget_(d);
     }
     invalidateBuffered_InputWidget_(d);
+    d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     if (height_Rect(w->rect) != oldHeight) {
         postCommand_Widget(d, "input.resized arg:%d", w->root->pendingArrange + 1);
         updateTextInputRect_InputWidget_(d);
@@ -843,6 +849,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     setFlags_Widget(w, extraPadding_WidgetFlag, isMobile_Platform());
 #if LAGRANGE_USE_SYSTEM_TEXT_INPUT
     init_String(&d->text);
+    d->pendingSelectionRange = (iRangei){ -1, -1 };
 #else
     init_Array(&d->lines, sizeof(iInputLine));
     init_Array(&d->undoStack, sizeof(iInputUndo));
@@ -1335,6 +1342,12 @@ void begin_InputWidget(iInputWidget *d) {
     }
     */
     setText_SystemTextInput(d->sysCtrl, &d->oldText, iFalse);
+# if defined (iPlatformAndroidMobile)
+    if (d->pendingSelectionRange.start >= 0) {
+        setSelection_SystemTextInput(d->sysCtrl, d->pendingSelectionRange);
+        d->pendingSelectionRange = (iRangei){ -1, -1 };
+    }
+# endif
     setTextChangedFunc_SystemTextInput(d->sysCtrl, systemInputChanged_InputWidget_, d);
     iConnect(Root, w->root, visualOffsetsChanged, d, updateAfterVisualOffsetChange_InputWidget_);
     updateTextInputRect_InputWidget_(d);
@@ -2434,12 +2447,41 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
 #else
-    else if (isCommand_UserEvent(ev, "input.paste") && isEditing_InputWidget_(d)) {
-        if (d->sysCtrl) {
-            insert_SystemTextInput(d->sysCtrl,
-                                   get_Snippets(collect_String(suffix_Command(command_UserEvent(ev), "snippet"))));
+    else if (isCommand_UserEvent(ev, "input.paste")) {
+        const char *cmd = command_UserEvent(ev);
+# if defined (iPlatformAndroidMobile)
+        /* FIXME: Should paste to the most recently active input widget.
+           The only place where snippets can be pasted on mobile is the upload dialog's
+           text editor. In other fields, the system clipboard will have to be manually
+           accessed. */
+        if (!cmp_String(id_Widget(w), "upload.text")) {
+            const iString *content = get_Snippets(collect_String(suffix_Command(
+                    cmd, "snippet")));
+            /* On Android, we don't have system menus so activating a dropdown menu will
+               unfocus the native text input field (otherwise the field over be drawn over
+               the menu). We'll do the insertion here and reactivate focus on the menu. */
+            iRangei selRange = lastInputSelectionRange_Android();
+            iString *modified = copy_String(&d->text);
+            truncate_String(modified, selRange.start);
+            append_String(modified, content);
+            append_String(modified, collect_String(mid_String(&d->text, selRange.end, iInvalidSize)));
+            set_String(&d->text, modified);
+            delete_String(modified);
+            postCommand_Widget(w, "focus.set id:%s", cstr_String(id_Widget(w)));
+            d->pendingSelectionRange = (iRangei){
+                selRange.start,
+                selRange.start + length_String(content)
+            };
+            return iTrue;
         }
-        return iTrue;
+# else
+        if (isEditing_InputWidget_(d) && d->sysCtrl) {
+            insert_SystemTextInput(d->sysCtrl, get_Snippets(collect_String(suffix_Command(
+                    cmd, "snippet"))));
+            return iTrue;
+        }
+# endif
+        return iFalse;
     }
 #endif
     else if (isCommand_UserEvent(ev, "input.selectall") && isEditing_InputWidget_(d)) {

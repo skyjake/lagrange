@@ -776,6 +776,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "document.request.finished") ||
            equal_Command(cmd, "document.changed") ||
            equal_Command(cmd, "android.keyboard.changed") ||
+           equal_Command(cmd, "android.input.selrange") ||
            equal_Command(cmd, "scrollbar.fade") ||
            equal_Command(cmd, "visited.changed") ||
            (deviceType_App() == desktop_AppDeviceType && equal_Command(cmd, "window.resized")) ||
@@ -914,7 +915,7 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
             return iFalse;
         }
         if (!isCommandIgnoredByMenus_(cmd)) {
-//            printf("closemenu being called on %p due to cmd: %s\n", menu, cmd);
+//            postCommandf_App("DEBUG closemenu being called on %p due to cmd: %s\n", menu, cmd);
             closeMenu_Widget(menu);
         }
     }
@@ -958,9 +959,10 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     int64_t     itemFlags       = (deviceType_App() != desktop_AppDeviceType ? 0 : 0) |
                                   (isPortraitPhone ? extraPadding_WidgetFlag : 0);
-    iBool    haveIcons   = iFalse;
-    iBool    haveSubmenu = iFalse;
-    iWidget *horizGroup  = NULL;
+    iBool    haveIcons      = iFalse;
+    iBool    haveSubmenu    = iFalse;
+    iWidget *horizGroup     = NULL;
+    iWidget *currentSubmenu = NULL;
     for (size_t i = 0; i < n && items[i].label; ++i) {
         const iMenuItem *item = &items[i];
         if (!item->label) {

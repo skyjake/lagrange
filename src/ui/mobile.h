@@ -103,7 +103,8 @@ void    insert_SystemTextInput   (iSystemTextInput *, const iString *text);
 void    setFont_SystemTextInput  (iSystemTextInput *, int fontId);
 void    setTextChangedFunc_SystemTextInput
         (iSystemTextInput *, void (*textChangedFunc)(iSystemTextInput *, void *), void *);
-void    selectAll_SystemTextInput(iSystemTextInput *);
+void    setSelection_SystemTextInput(iSystemTextInput *, iRangei selection);
+void    selectAll_SystemTextInput   (iSystemTextInput *);
 
 const iString * text_SystemTextInput    (const iSystemTextInput *);
 int     preferredHeight_SystemTextInput (const iSystemTextInput *);

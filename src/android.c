@@ -119,6 +119,7 @@ void javaCommand_Android(const char *format, ...) {
 
 static int               inputIdGen_; /* unique IDs for SystemTextInputs */
 static iSystemTextInput *currentInput_;
+static iRangei           lastSelectionRange_;
 
 struct Impl_SystemTextInput {
     int id;
@@ -200,6 +201,14 @@ void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool all
     }
 }
 
+void setSelection_SystemTextInput(iSystemTextInput *d, iRangei selection) {
+    javaCommand_Android("input.select id:%d start:%d end:%d", d->id, selection.start, selection.end);
+}
+
+iRangei lastInputSelectionRange_Android(void) {
+    return lastSelectionRange_;
+}
+
 void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
     d->font = fontId;
     const char *ttfPath = "";
@@ -236,7 +245,8 @@ static uint32_t backupUserData_Android_(uint32_t interval, void *data) {
     iUnused(interval, data);
     /* This runs in a background thread. We don't want to block the UI thread for saving. */
     iExport *backup = new_Export();
-    generatePartial_Export(backup, bookmarks_ExportFlag | identitiesAndTrust_ExportFlag);
+    generatePartial_Export(backup, bookmarks_ExportFlag | identitiesAndTrust_ExportFlag |
+                           snippets_ExportFlag);
     iBuffer *buf = new_Buffer();
     openEmpty_Buffer(buf);
     serialize_Archive(archive_Export(backup), stream_Buffer(buf));
@@ -272,6 +282,11 @@ iBool handleCommand_Android(const char *cmd) {
         if (wasChanged && currentInput_->textChangedFunc) {
             currentInput_->textChangedFunc(currentInput_, currentInput_->textChangedContext);
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "android.input.selrange")) {
+        lastSelectionRange_ = (iRangei){ argLabel_Command(cmd, "start"),
+                                         argLabel_Command(cmd, "end") };
         return iTrue;
     }
     else if (equal_Command(cmd, "android.input.enter")) {
@@ -322,7 +337,8 @@ iBool handleCommand_Android(const char *cmd) {
             iExport *backup = new_Export();
             if (load_Export(backup, archive)) {
                 import_Export(backup, ifMissing_ImportMethod, all_ImportMethod,
-                              none_ImportMethod, none_ImportMethod, none_ImportMethod);
+                              none_ImportMethod, none_ImportMethod, none_ImportMethod,
+                              all_ImportMethod);
             }
             delete_Export(backup);
         }

@@ -446,6 +446,12 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "submenu")) {
+        iAssert(isAndroid_Platform());
+        iWidget *menu = findWidget_App(cstr_Command(cmd, "id"));
+        postCommand_Widget(menu, "menu.open self:1");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "splitmenu.open")) {
         setFocus_Widget(NULL);
         iWidget *menu = findWidget_Root("splitmenu");

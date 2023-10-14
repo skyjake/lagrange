@@ -140,6 +140,12 @@ static void endSiblingOrderDrag_LabelWidget_(iLabelWidget *d) {
 }
 
 static iBool isSubmenuItem_LabelWidget_(const iLabelWidget *d) {
+    if (isAndroid_Platform()) {
+        /* On Android, we don't have system menus nor do we want actual submenu popups
+           to appear. The "submenu" command will cause the submenu to open as a normal
+           menu. */
+        return iFalse;
+    }
     return startsWith_String(&d->command, "submenu id:");
 }
 

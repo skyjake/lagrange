@@ -22,12 +22,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include <the_Foundation/range.h>
 #include <the_Foundation/string.h>
 
 void        setupApplication_Android    (void);
 void        pickFile_Android            (const char *cmd);
 void        exportDownloadedFile_Android(const iString *localPath, const iString *mime);
 
-float       displayDensity_Android  (void);
+float       displayDensity_Android          (void);
+iRangei     lastInputSelectionRange_Android (void);
+
 void        javaCommand_Android     (const char *format, ...);
 iBool       handleCommand_Android   (const char *cmd);
