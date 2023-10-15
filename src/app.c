@@ -4706,6 +4706,7 @@ iBool handleCommand_App(const char *cmd) {
             if (findWidget_App("upload")) {
                 postCommand_App("upload.cancel");
             }
+            postCommand_App("valueinput.cancel"); /* in case an input dialog is currently open */
         }
         setFocus_Widget(NULL);
         iWidget *dlg = makePreferences_Widget();

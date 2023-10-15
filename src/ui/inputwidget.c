@@ -2454,7 +2454,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
            The only place where snippets can be pasted on mobile is the upload dialog's
            text editor. In other fields, the system clipboard will have to be manually
            accessed. */
-        if (!cmp_String(id_Widget(w), "upload.text")) {
+        if (!cmp_String(id_Widget(w), "upload.text") || !cmp_String(id_Widget(w), "input")) {
             const iString *content = get_Snippets(collect_String(suffix_Command(
                     cmd, "snippet")));
             /* On Android, we don't have system menus so activating a dropdown menu will

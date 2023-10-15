@@ -2477,6 +2477,11 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         destroy_Widget(dlg);
         return iTrue;
     }
+    else if (isMobile_Platform() && equal_Command(cmd, "mouse.clicked") &&
+             contains_Widget(dlg, coord_Command(cmd))) {
+        setFocus_Widget(findChild_Widget(dlg, "input"));
+        return iTrue;
+    }
     else if (isDesktop_Platform() &&
              (equal_Command(cmd, "zoom.set") || equal_Command(cmd, "zoom.delta"))) {
         /* DocumentWidget sets an ID that gets used as the posted command when the
@@ -2602,6 +2607,9 @@ iWidget *makeValueInputWithAdditionalActions_Widget(iWidget *parent, const iStri
     if (isDesktop_Platform()) {
         /* The dialog will resize itself appropriately. */
         setFlags_Widget(dlg, overflowScrollable_WidgetFlag, iFalse);
+    }
+    else {
+        setFlags_Widget(dlg, commandOnClick_WidgetFlag, iTrue);
     }
     setCommandHandler_Widget(dlg, valueInputHandler_);
     if (parent) {

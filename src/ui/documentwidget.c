@@ -2054,6 +2054,7 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
     iMenuItem pasteItem;
     makePastePrecedingLineMenuItem_(&pasteItem, buttons, precedingLine);
     pushBack_Array(items, &pasteItem);
+    pushBack_Array(items, &(iMenuItem){ "${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" });
     pushBackN_Array(
         items,
         (iMenuItem[]){
