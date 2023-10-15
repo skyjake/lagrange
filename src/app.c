@@ -2630,23 +2630,21 @@ void postCommand_Root(iRoot *d, const char *command) {
             return;
         }
     }
-    if (!startsWith_CStr(command, "DEBUG ")) {
-        SDL_Event ev = { .type = SDL_USEREVENT };
-        ev.user.code = command_UserEventCode;
-        ev.user.data1 = strdup(command);
-        ev.user.data2 = d; /* all events are root-specific */
-        ev.user.windowID = d ? id_Window(d->window) : 0; /* root-specific means window-specific */
-        SDL_PushEvent(&ev);
-    }
+    SDL_Event ev = { .type = SDL_USEREVENT };
+    ev.user.code = command_UserEventCode;
+    ev.user.data1 = strdup(command);
+    ev.user.data2 = d; /* all events are root-specific */
+    ev.user.windowID = d ? id_Window(d->window) : 0; /* root-specific means window-specific */
+    SDL_PushEvent(&ev);
     iWindow *win = d ? d->window : NULL;
-#if defined (iPlatformAndroid)
-    if (!startsWith_CStr(command, "backup.")) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s[command] {%d} %s",
-                    app_.isLoadingPrefs ? "[Prefs] " : "",
-                    (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
-                    command);
-    }
-#else
+//#if defined (iPlatformAndroid)
+//    if (!startsWith_CStr(command, "backup.")) {
+//        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s[command] {%d} %s",
+//                    app_.isLoadingPrefs ? "[Prefs] " : "",
+//                    (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
+//                    command);
+//    }
+//#else
     if (app_.commandEcho) {
         const int windowIndex =
             win && type_Window(win) == main_WindowType ? windowIndex_App(as_MainWindow(win)) + 1 : 0;
@@ -2660,7 +2658,7 @@ void postCommand_Root(iRoot *d, const char *command) {
                command);
         fflush(stdout);
     }
-#endif
+//#endif
 }
 
 void postCommandf_Root(iRoot *d, const char *command, ...) {
