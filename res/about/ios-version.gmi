@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.17 (1)
+* Long-press actions on the toolbar: provide access to all the available toolbar actions. Open Settings > Identities by long-pressing on the Identity button.
 * Snippets: A collection of short text segments that can be pasted into input prompts and the upload editor. For example, useful for your gemlog header/footer and other often-repeated entries.
 * Snippets can be managed in Settings > Snippets and created via the link context menu or by selecting text on a page.
 * Custom search queries: Snippets whose name starts with a bang (e.g., "!w") can be invoked in the URL field to make customized queries. The snippet content should be a Gemini search URL, for example: "gemini://gemi.dev/cgi-bin/wp.cgi/search".
