@@ -3367,6 +3367,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.reload") && document_Command(cmd) == d) {
+        d->view->userHasScrolled = iFalse; /* respect the current scroll position */
         d->initNormScrollY = normScrollPos_DocumentView(d->view);
         if (equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
             /* Reopen so the Upload dialog gets shown. */

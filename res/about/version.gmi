@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.17.1
+* Fixed scroll position being reset when reloading the page.
+
 ## 1.17
 ⚠️ Caps Lock is no longer treated as a modifier key in keybindings. Use `--capslock` to enable it.
 
