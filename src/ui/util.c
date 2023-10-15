@@ -1047,6 +1047,9 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 setTextColor_LabelWidget(label, uiIcon_ColorId);
                 setFont_LabelWidget(label, uiLabelMedium_FontId);
             }
+            if (isInfo && deviceType_App() != desktop_AppDeviceType) {
+                setFont_LabelWidget(label, uiContent_FontId);
+            }
             if (command && startsWith_CStr(command, "submenu id:")) {
                 setChevron_LabelWidget(label, iTrue);
                 setFlags_Widget(as_Widget(label), drawKey_WidgetFlag, iFalse);
@@ -1609,7 +1612,9 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
             }
         }
         else {
-            d->rect.pos.y = windowToLocal_Widget(d, init_I2(0, bottom_Rect(rootRect) - height_Rect(bounds))).y;
+            d->rect.pos.y = windowToLocal_Widget(d, init_I2(0, bottom_Rect(rootRect) -
+                                                            height_Rect(bounds) -
+                                                            bottomSafeInset_Mobile())).y;
         }
     }
     if (rightExcess > 0) {
