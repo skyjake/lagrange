@@ -37,6 +37,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <jni.h>
 #include <SDL.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <android/log.h>
 
 JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_postAppCommand(
         JNIEnv* env, jclass jcls, jstring command)
@@ -61,7 +65,43 @@ static void clearCachedFiles_(void) {
     }
 }
 
+static int pfd_[2];
+static pthread_t thr_;
+static const char *tag_ = "fi.skyjake.lagrange";
+
+static void *loggerThreadFunc_(void *p) {
+    ssize_t rdsz;
+    char buf[512];
+    while((rdsz = read(pfd_[0], buf, sizeof(buf) - 1)) > 0) {
+        if(buf[rdsz - 1] == '\n') {
+            --rdsz;
+        }
+        buf[rdsz] = 0;  /* add null-terminator */
+        __android_log_write(ANDROID_LOG_DEBUG, tag_, buf);
+    }
+    return 0;
+}
+
+static int startLogOutputThread_(void) {
+    /* make stdout line-buffered and stderr unbuffered */
+    setvbuf(stdout, 0, _IOLBF, 0);
+    setvbuf(stderr, 0, _IONBF, 0);
+    /* create the pipe and redirect stdout and stderr */
+    pipe(pfd_);
+    dup2(pfd_[1], 1);
+    dup2(pfd_[1], 2);
+    /* spawn the logging thread */
+    if (pthread_create(&thr_, 0, loggerThreadFunc_, 0) == -1) {
+        return -1;
+    }
+    pthread_detach(thr_);
+    return 0;
+}
+
 void setupApplication_Android(void) {
+#if !defined (NDEBUG)
+    startLogOutputThread_();
+#endif
     /* Cache the monospace font into a file where it can be loaded directly by the Java code. */
     const char *path = monospaceFontPath_();
     const iBlock *iosevka = dataCStr_Archive(archive_Resources(), "fonts/IosevkaTerm-Extended.ttf");
