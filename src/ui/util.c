@@ -793,6 +793,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "focus.lost") ||
            equal_Command(cmd, "tabs.changed") ||
            equal_Command(cmd, "menu.closed") ||
+           equal_Command(cmd, "menu.keepatbottom") ||
            equal_Command(cmd, "layout.changed") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
@@ -868,6 +869,13 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
         if (equalWidget_Command(cmd, menu, "menu.opened")) {
             return iFalse;
         }
+        if (equalWidget_Command(cmd, menu, "menu.keepatbottom")) {
+            iAssert(deviceType_App() != desktop_AppDeviceType);
+            menu->rect.pos.y = windowToLocal_Widget(
+                    menu,
+                    init_I2(0, bottom_Rect(safeRect_Root(menu->root)) - menu->rect.size.y)).y;
+            return iTrue;
+        }
         if (equal_Command(cmd, "submenu.open")) {
             /* This is sent directly via Periodic after mouse hover on an item. */
             iWidget *menuItem = pointer_Command(cmd);
@@ -876,7 +884,11 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
             }
             return iTrue;
         }
-        if (equal_Command(cmd, "menu.open") && pointer_Command(cmd) == menu->parent) {
+        if (equal_Command(cmd, "submenu") && parent_Widget(pointer_Command(cmd)) == menu) {
+            return iFalse;
+        }
+        if (equal_Command(cmd, "menu.open") &&
+            (pointer_Command(cmd) == menu->parent || argLabel_Command(cmd, "self"))) {
             /* Don't reopen self; instead, root will close the menu. */
             return iFalse;
         }
@@ -908,14 +920,14 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
         if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "keyboard.changed") &&
             arg_Command(cmd) == 0) {
             /* May need to reposition the menu. */
-            menu->rect.pos = windowToLocal_Widget(
-                menu,
-                init_I2(left_Rect(bounds_Widget(menu)),
-                        bottom_Rect(safeRect_Root(menu->root)) - menu->rect.size.y));
+            postCommand_Widget(menu, "menu.keepatbottom");
             return iFalse;
         }
         if (!isCommandIgnoredByMenus_(cmd)) {
-//            postCommandf_App("DEBUG closemenu being called on %p due to cmd: %s\n", menu, cmd);
+#if !defined (NDEBUG)
+            printf("closemenu being called on %p (id:%s) due to cmd: %s\n", menu,
+                   cstr_String(id_Widget(menu)), cmd);
+#endif
             closeMenu_Widget(menu);
         }
     }
@@ -959,16 +971,17 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     int64_t     itemFlags       = (deviceType_App() != desktop_AppDeviceType ? 0 : 0) |
                                   (isPortraitPhone ? extraPadding_WidgetFlag : 0);
-    iBool    haveIcons      = iFalse;
-    iBool    haveSubmenu    = iFalse;
-    iWidget *horizGroup     = NULL;
-    iWidget *currentSubmenu = NULL;
-    for (size_t i = 0; i < n && items[i].label; ++i) {
+    iBool    haveIcons     = iFalse;
+    iBool    haveSubmenu   = iFalse;
+    iWidget *horizGroup    = NULL;
+    for (size_t i = 0; i < n && items[i].label; i++) {
         const iMenuItem *item = &items[i];
         if (!item->label) {
             break;
         }
         const char *labelText = item->label;
+        iArray *submenuItems = NULL;
+        iString *submenuId = NULL;
         if (!startsWith_CStr(labelText, ">>>")) {
             horizGroup = NULL;
         }
@@ -978,6 +991,17 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
         else {
             iBool isInfo = iFalse;
             iBool isDisabled = iFalse;
+            if (startsWith_CStr(labelText, "---")) {
+                /* A submenu with items embedded in this one. */
+                labelText += 3;
+                submenuId = newFormat_String("sub.%p.%zu", menu, i);
+                /* Collect the contents of the submenu. */
+                submenuItems = new_Array(sizeof(iMenuItem));
+                for (i++; i < n && items[i].label && !startsWith_CStr(items[i].label, "---"); i++) {
+                    pushBack_Array(submenuItems, &items[i]);
+                }
+                i--;
+            }
             if (startsWith_CStr(labelText, ">>>")) {
                 labelText += 3;
                 if (!horizGroup) {
@@ -999,11 +1023,15 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
             initCStr_String(&labelStr, labelText);
             const iBool isIcon = length_String(&labelStr) == 1 &&
                                  isValidLabelIcon_(first_String(&labelStr));
+            const char *command = item->command;
+            if (submenuId) {
+                command = format_CStr("submenu id:%s", cstr_String(submenuId));
+            }
             iLabelWidget *label = addChildFlags_Widget(
                 horizGroup ? horizGroup : menu,
                 iClob(isIcon
-                    ? newIcon_LabelWidget(labelText, item->key, item->kmods, item->command)
-                    : newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
+                    ? newIcon_LabelWidget(labelText, item->key, item->kmods, command)
+                    : newKeyMods_LabelWidget(labelText, item->key, item->kmods, command)),
                 noBackground_WidgetFlag | frameless_WidgetFlag |
                     (!isIcon ? alignLeft_WidgetFlag | drawKey_WidgetFlag : 0) |
                     itemFlags);
@@ -1019,12 +1047,12 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 setTextColor_LabelWidget(label, uiIcon_ColorId);
                 setFont_LabelWidget(label, uiLabelMedium_FontId);
             }
-            if (item->command && startsWith_CStr(item->command, "submenu id:")) {
+            if (command && startsWith_CStr(command, "submenu id:")) {
                 setChevron_LabelWidget(label, iTrue);
                 setFlags_Widget(as_Widget(label), drawKey_WidgetFlag, iFalse);
                 haveSubmenu = iTrue;
             }
-            if (item->command) {
+            if (command && !submenuItems) {
                 setMenuCanceling_LabelWidget(label, iTrue);
             }
             as_Widget(label)->flags2 |= commandOnHover_WidgetFlag2;
@@ -1035,6 +1063,14 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
                 setTextColor_LabelWidget(label, uiTextAction_ColorId);
             }
             updateSize_LabelWidget(label); /* drawKey was set */
+            /* Create a hidden submenu. */
+            if (submenuItems) {
+                iWidget *sub = makeMenu_Widget(menu,
+                                               data_Array(submenuItems), size_Array(submenuItems));
+                setId_Widget(sub, cstr_String(submenuId));
+                delete_Array(submenuItems);
+                delete_String(submenuId);
+            }
         }
     }
     if (deviceType_App() == phone_AppDeviceType) {
@@ -1564,11 +1600,16 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     bottomExcess += get_MainWindow()->keyboardHeight;
 #endif
     if (!allowOverflow) {
-        if (!isFromMenuBar && bottomExcess > 0 && (!isPortraitPhone || !isSlidePanel)) {
-            d->rect.pos.y -= bottomExcess;
+        if (deviceType_App() == desktop_AppDeviceType) {
+            if (!isFromMenuBar && bottomExcess > 0 && !isSlidePanel) {
+                d->rect.pos.y -= bottomExcess;
+            }
+            if (topExcess > 0) {
+                d->rect.pos.y += topExcess;
+            }
         }
-        if (topExcess > 0) {
-            d->rect.pos.y += topExcess;
+        else {
+            d->rect.pos.y = windowToLocal_Widget(d, init_I2(0, bottom_Rect(rootRect) - height_Rect(bounds))).y;
         }
     }
     if (rightExcess > 0) {

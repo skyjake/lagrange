@@ -2070,7 +2070,7 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
             pushBack_Array(items,
                            &(iMenuItem){ "${menu.input.clear}", 0, 0, "!recentinput.clear" });
             pushBack_Array(items, &(iMenuItem){
-                isAppleMobile_Platform() ? "---${menu.input.restore}" : "```${menu.input.restore}"
+                isMobile_Platform() ? "---${menu.input.restore}" : "```${menu.input.restore}"
             });
             iReverseConstForEach(StringArray, i, recentInput) {
                 iString *label = collect_String(copy_String(i.value));
