@@ -600,7 +600,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         int offset = 0;
         if (isMobile_Platform()) {
             /* These are used in the sub-panel buttons. */
-            if (d->flags.chevron) {
+            if (d->flags.chevron && iconPad) {
                 offset = -iconPad;
             }
             else {

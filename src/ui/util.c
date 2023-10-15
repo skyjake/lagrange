@@ -1030,8 +1030,8 @@ void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
             iLabelWidget *label = addChildFlags_Widget(
                 horizGroup ? horizGroup : menu,
                 iClob(isIcon
-                    ? newIcon_LabelWidget(labelText, item->key, item->kmods, command)
-                    : newKeyMods_LabelWidget(labelText, item->key, item->kmods, command)),
+                    ? newIcon_LabelWidget(cstr_String(&labelStr), item->key, item->kmods, command)
+                    : newKeyMods_LabelWidget(cstr_String(&labelStr), item->key, item->kmods, command)),
                 noBackground_WidgetFlag | frameless_WidgetFlag |
                     (!isIcon ? alignLeft_WidgetFlag | drawKey_WidgetFlag : 0) |
                     itemFlags);

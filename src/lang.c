@@ -186,14 +186,24 @@ const char *code_Lang(void) {
 static iBool find_Lang_(iRangecc msgId, iRangecc *str_out) {
     const iLang *d = &lang_;
     iBool convertLowercase = iFalse;
+    iBool stripColon = iFalse;
     if (size_Range(&msgId) > 3 && startsWith_CStr(msgId.start, "LC:")) {
         msgId.start += 3;
         convertLowercase = iTrue;
     }
-    size_t pos;    
+    if (size_Range(&msgId) > 3 && startsWith_CStr(msgId.start, "ST:")) {
+        msgId.start += 3;
+        stripColon = iTrue;
+    }
+    size_t pos;
     const iMsgStr key = { .id = msgId };
     if (locate_SortedArray(d->messages, &key, &pos)) {
         *str_out = ((const iMsgStr *) at_SortedArray(d->messages, pos))->str;
+        if (stripColon && size_Range(str_out) >= 1) {
+            if (str_out->end[-1] == ':') {
+                str_out->end--;
+            }
+        }
         if (convertLowercase) {
             iString msg;
             initRange_String(&msg, *str_out);
