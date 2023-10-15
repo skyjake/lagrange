@@ -1354,7 +1354,8 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         iWidget *menu = NULL;
         if (hit) {
             const iString *id = id_Widget(hit);
-            if (!cmp_String(id, "toolbar.ident")) {
+            if (!cmp_String(id, "toolbar.ident") ||
+                    !cmp_String(id_Widget(parent_Widget(hit)), "toolbar.ident")) {
                 postCommand_App("preferences idents:1");
                 return iTrue;
             }
