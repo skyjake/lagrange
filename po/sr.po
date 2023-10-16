@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-26 11:35+0000\n"
-"PO-Revision-Date: 2023-10-11 12:14+0000\n"
+"PO-Revision-Date: 2023-10-18 04:14+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -2729,3 +2729,12 @@ msgstr "Скупљање преформатираног:"
 # A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
 msgid "keys.bang"
 msgstr "Унос упита за исечак"
+
+msgid "heading.upload.dest"
+msgstr "Адреса"
+
+msgid "heading.snip.new"
+msgstr "Нови исечак"
+
+msgid "heading.snip.edit"
+msgstr "Уређивање исечка"
