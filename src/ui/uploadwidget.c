@@ -101,7 +101,7 @@ static void updateProgress_UploadWidget_(iGmRequest *request, size_t current, si
 static void updateInputMaxHeight_UploadWidget_(iUploadWidget *d) {
     iWidget *w = as_Widget(d);
     /* Calculate how many lines fits vertically in the view. */
-    const iInt2 inputPos = topLeft_Rect(bounds_Widget(as_Widget(d->input)));
+    const iInt2 inputPos = topLeft_Rect(boundsWithoutVisualOffset_Widget(as_Widget(d->input)));
     int footerHeight = 0;
     if (!isUsingPanelLayout_Mobile()) {
         footerHeight = (height_Widget(d->token) +
@@ -344,7 +344,7 @@ void init_UploadWidget(iUploadWidget *d, enum iUploadProtocol protocol) {
         /* Style the Identity dropdown. */
         setFlags_Widget(findChild_Widget(w, "upload.id"), alignRight_WidgetFlag, iFalse);
         setFlags_Widget(findChild_Widget(w, "upload.id"), alignLeft_WidgetFlag, iTrue);
-        
+
         if (isPortraitPhone_App()) {
             enableUploadButton_UploadWidget_(d, iFalse);
         }
@@ -811,6 +811,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "input.resized")) {
+        updateInputMaxHeight_UploadWidget_(d);
         if (!isUsingPanelLayout_Mobile()/* && !(w->flags2 & (leftEdgeResizing_WidgetFlag2 |
                                                            rightEdgeResizing_WidgetFlag2))*/) {
             resizeToLargestPage_Widget(findChild_Widget(w, "upload.tabs"));
@@ -879,6 +880,7 @@ void sizeChanged_UploadWidget_(iUploadWidget *d) {
         setFixedSize_Widget(d->tabs, init_I2(newWidth, -1));
         setFixedSize_Widget(as_Widget(d->input), init_I2(newWidth, -1));
         updateFieldWidths_UploadWidget(d);
+        updateInputMaxHeight_UploadWidget_(d);
         iWidget *tabs = findChild_Widget(w, "upload.tabs");
         resizeToLargestPage_Widget(tabs);
         arrange_Widget(tabs);
