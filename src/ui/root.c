@@ -1902,7 +1902,7 @@ void createUserInterface_Root(iRoot *d) {
                         { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
                         { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
                         { "${menu.viewformat.plain}", 0, 0, "document.viewformat" } },
-                    14);
+                    16);
                 setCommandHandler_Widget(findChild_Widget(as_Widget(pageMenuButton), "menu"),
                                          updateMobilePageMenuItems_);
                 setId_Widget(as_Widget(pageMenuButton), "pagemenubutton");
