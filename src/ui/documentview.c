@@ -170,8 +170,22 @@ static int runOffset_DocumentView_(const iDocumentView *d, const iGmRun *run) {
     return 0;
 }
 
+static int *wideRunOffset_DocumentView_(iDocumentView *d, uint16_t preId) {
+    if (size_Array(&d->wideRunOffsets) < preId) {
+        resize_Array(&d->wideRunOffsets, preId);
+    }
+    return at_Array(&d->wideRunOffsets, preId - 1);
+}
+
 void resetWideRuns_DocumentView(iDocumentView *d) {
     clear_Array(&d->wideRunOffsets);
+    for (size_t i = 0; i < numPre_GmDocument(d->doc); i++) {
+        const uint16_t    preId = i + 1;
+        const iGmPreMeta *meta  = preMeta_GmDocument(d->doc, preId);
+        if (meta->initialOffset) {
+            *wideRunOffset_DocumentView_(d, preId) = meta->initialOffset;
+        }
+    }
     d->animWideRunId = 0;
     init_Anim(&d->animWideRunOffset, 0);
     iZap(d->animWideRunRange);
@@ -397,10 +411,11 @@ void updateHover_DocumentView(iDocumentView *d, iInt2 mouse) {
         refresh_Widget(w);
     }
     /* Hovering over preformatted blocks. */
-    if (isHoverAllowed_DocumentWidget(d->owner)) {
+    if (isHoverAllowed_DocumentWidget(d->owner) && contains_Widget(w, mouse)) {
         iConstForEach(PtrArray, j, &d->visiblePre) {
             const iGmRun *run = j.ptr;
-            if (contains_Rect(run->bounds, hoverPos)) {
+            if (contains_Rangei(ySpan_Rect(run->bounds), hoverPos.y) &&
+                (run->flags & wide_GmRunFlag || contains_Rangei(xSpan_Rect(docBounds), mouse.x))) {
                 d->hoverPre    = run;
                 d->hoverAltPre = run;
                 break;
@@ -604,21 +619,23 @@ iBool scrollWideBlock_DocumentView(iDocumentView *d, iInt2 mousePos, int delta, 
     if (delta == 0 || wheelSwipeState_DocumentWidget(d->owner) == direct_WheelSwipeState) {
         return iFalse;
     }
+    const iRect pageBounds = shrunk_Rect(bounds_Widget(as_Widget(d->owner)),
+                                         init1_I2(d->pageMargin * gap_UI));
+    const int docWidth = documentWidth_DocumentView(d);
+    const iRect docBounds = documentBounds_DocumentView(d);
     const iInt2 docPos = documentPos_DocumentView_(d, mousePos);
     iConstForEach(PtrArray, i, &d->visibleWideRuns) {
         const iGmRun *run = i.ptr;
-        if (docPos.y >= top_Rect(run->bounds) && docPos.y <= bottom_Rect(run->bounds)) {
+        if (contains_Rangei(ySpan_Rect(run->bounds), docPos.y)) {
             /* We can scroll this run. First find out how much is allowed. */
-            const iGmRunRange range = findPreformattedRange_GmDocument(d->doc, run);
-            int maxWidth = 0;
-            for (const iGmRun *r = range.start; r != range.end; r++) {
-                maxWidth = iMax(maxWidth, width_Rect(r->visBounds));
+            const iGmPreMeta *meta = preMeta_GmDocument(d->doc, preId_GmRun(run));
+            const iGmRunRange range = meta->runRange;
+            int maxWidth = width_Rect(meta->pixelRect);
+            if (left_Rect(docBounds) + run->bounds.pos.x - meta->initialOffset + maxWidth <= right_Rect(pageBounds)) {
+                return iFalse; /* fits in the window just fine */
             }
-            const int maxOffset = maxWidth - documentWidth_DocumentView(d) + d->pageMargin * gap_UI;
-            if (size_Array(&d->wideRunOffsets) <= preId_GmRun(run)) {
-                resize_Array(&d->wideRunOffsets, preId_GmRun(run) + 1);
-            }
-            int *offset = at_Array(&d->wideRunOffsets, preId_GmRun(run) - 1);
+            const int maxOffset = maxWidth + run->bounds.pos.x - docWidth;
+            int *offset = wideRunOffset_DocumentView_(d, preId_GmRun(run));
             const int oldOffset = *offset;
             *offset = iClamp(*offset + delta, 0, maxOffset);
             /* Make sure the whole block gets redraw. */
@@ -642,9 +659,13 @@ iBool scrollWideBlock_DocumentView(iDocumentView *d, iInt2 mousePos, int delta, 
                     d->animWideRunId = 0;
                     init_Anim(&d->animWideRunOffset, 0);
                 }
-                return iTrue;
             }
-            return iFalse;
+            else {
+                /* Offset didn't change. We could consider allowing swipe navigation to occur
+                   by returning iFalse here, but perhaps only if the original starting
+                   offset of the wide block was at the far end already .*/
+            }
+            return iTrue;
         }
     }
     return iFalse;
@@ -753,6 +774,7 @@ iDeclareType(DrawContext)
 struct Impl_DrawContext {
     const iDocumentView *view;
     iRect widgetBounds;
+    int widgetFullWidth; /* including area behind scrollbar */
     iRect docBounds;
     iRangei vis;
     iInt2 viewPos; /* document area origin */
@@ -762,6 +784,7 @@ struct Impl_DrawContext {
     iBool showLinkNumbers;
     iRect firstMarkRect;
     iRect lastMarkRect;
+    int drawDir; /* -1 for progressive reverse direction */
     iGmRunRange runsDrawn;
 };
 
@@ -929,6 +952,20 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 }
             }
             fillRect_Paint(&d->paint, wideRect, bg);
+        }
+        else if (run->flags & wide_GmRunFlag) {
+            /* Wide runs may move any amount horizontally. */
+            iRect wideRect  = visRect;
+            wideRect.pos.x  = 0;
+            wideRect.size.x = d->widgetFullWidth;
+            /* Due to adaptive scaling of monospace fonts to fit a non-fractional pixel grid,
+               there may be a slight overdraw on the edges if glyphs extend to their maximum
+               bounds (e.g., box drawing). Ensure that the edges of the preformatted block
+               remain clean. (GmDocument leaves empty padding around blocks.) */
+            adjustEdges_Rect(&wideRect,
+                             run->flags & startOfLine_GmRunFlag ? -gap_UI / 2 : 0, 0,
+                             run->flags & endOfLine_GmRunFlag ? gap_UI / 2 : 0, 0);
+            fillRect_Paint(&d->paint, wideRect, tmBackground_ColorId);
         }
         else {
             /* Normal background for other runs. There are cases when runs get drawn multiple times,
@@ -1351,9 +1388,10 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                     if (meta->runsDrawn.start && buf->validRange.start > bufRange.start) {
                         beginTarget_Paint(p, buf->texture);
                         iZap(ctx->runsDrawn);
+                        ctx->drawDir = -1;
                         const iGmRun *newStart = renderProgressive_GmDocument(d->doc,
                                                                               meta->runsDrawn.start,
-                                                                              -1,
+                                                                              ctx->drawDir,
                                                                               iInvalidSize,
                                                                               bufVisRange,
                                                                               drawRun_DrawContext_,
@@ -1375,8 +1413,9 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                     if (meta->runsDrawn.end) {
                         beginTarget_Paint(p, buf->texture);
                         iZap(ctx->runsDrawn);
+                        ctx->drawDir = +1;
                         meta->runsDrawn.end = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
-                                                                           +1, iInvalidSize,
+                                                                           ctx->drawDir, iInvalidSize,
                                                                            bufVisRange,
                                                                            drawRun_DrawContext_,
                                                                            ctx);
@@ -1410,8 +1449,9 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                         const iRangei upper = intersect_Rangei(bufRange, (iRangei){ full.start, buf->validRange.start });
                         if (upper.end > upper.start) {
                             beginTarget_Paint(p, buf->texture);
+                            ctx->drawDir = -1;
                             next = renderProgressive_GmDocument(d->doc, meta->runsDrawn.start,
-                                                                -1, 1, upper,
+                                                                ctx->drawDir, 1, upper,
                                                                 drawRun_DrawContext_,
                                                                 ctx);
                             if (next && meta->runsDrawn.start != next) {
@@ -1428,8 +1468,9 @@ static iBool render_DocumentView_(const iDocumentView *d, iDrawContext *ctx, iBo
                         const iRangei lower = intersect_Rangei(bufRange, (iRangei){ buf->validRange.end, full.end });
                         if (lower.end > lower.start) {
                             beginTarget_Paint(p, buf->texture);
+                            ctx->drawDir = +1;
                             next = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
-                                                                +1, 1, lower,
+                                                                ctx->drawDir, 1, lower,
                                                                 drawRun_DrawContext_,
                                                                 ctx);
                             if (next && meta->runsDrawn.end != next) {
@@ -1502,7 +1543,8 @@ void prerender_DocumentView(iAny *context) {
         .view            = d,
         .docBounds       = documentBounds_DocumentView(d),
         .vis             = visibleRange_DocumentView(d),
-        .showLinkNumbers = isShowingLinkNumbers_DocumentWidget(d->owner)
+        .showLinkNumbers = isShowingLinkNumbers_DocumentWidget(d->owner),
+        .drawDir         = +1,
     };
     //    printf("%u prerendering\n", SDL_GetTicks());
     if (isPrerenderingAllowed_DocumentWidget(d->owner)) {
@@ -1538,10 +1580,12 @@ void draw_DocumentView(const iDocumentView *d, int horizOffset) {
     }
     const iRect   docBounds = documentBounds_DocumentView(d);
     const iRangei vis       = visibleRange_DocumentView(d);
-    iDrawContext  ctx       = { .view            = d,
+    iDrawContext  ctx       = { .widgetFullWidth = width_Rect(bounds),
+                                .view            = d,
                                 .docBounds       = docBounds,
                                 .vis             = vis,
                                 .showLinkNumbers = isShowingLinkNumbers_DocumentWidget(d->owner),
+                                .drawDir         = +1,
                               };
     init_Paint(&ctx.paint);
     render_DocumentView_(d, &ctx, iFalse /* just the mandatory parts */);

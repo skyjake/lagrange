@@ -692,6 +692,7 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
 }
 
 static iBool isHRule_(iRangecc line) {
+    /* This is used in Markdown sources. */
     if (!startsWith_Rangecc(line, "---")) {
         return iFalse;
     }
@@ -772,7 +773,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool      isNormalized  = shouldBeNormalized_GmDocument_(d);
     const iBool      isJustified   = prefs->justifyParagraph;
     enum iGmLineType prevType      = text_GmLineType;
-    enum iGmLineType prevNonBlankType = text_GmLineType;
+    enum iGmLineType prevNonBlankType = undefined_GmLineType;
     iBool            followsBlank  = iFalse;
     iString          firstContentLine; /* may be used as a title if one isn't specified */
     init_String(&firstContentLine);
@@ -841,14 +842,18 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 iGmPreMeta meta = { .bounds = line };
                 meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
                     d, line.start, preFont, &meta.contents, &meta.bounds.end);
-                const float oversizeRatio =
-                    meta.pixelRect.size.x /
-                    (float) (d->size.x -
-                             (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text);
-                if (oversizeRatio > 1.0f) {
-                    preFont--; /* one notch smaller in the font size */
-                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents).bounds.size;
+                int overrun = meta.pixelRect.size.x - d->size.x;
+                if (prevNonBlankType == undefined_GmLineType && overrun > 0) {
+                    meta.initialOffset = iMin(overrun / 2, d->outsideMargin - 5 * gap_UI);
                 }
+//                const float oversizeRatio =
+//                    meta.pixelRect.size.x /
+//                    (float) (d->size.x -
+//                             (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text);
+//                if (oversizeRatio > 1.0f) {
+//                    preFont--; /* one notch smaller in the font size */
+//                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents).bounds.size;
+//                }
                 trimLine_Rangecc(&line, type, isNormalized);
                 meta.altText = line; /* without the ``` */
                 /* Reuse previous state. */
@@ -898,7 +903,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Empty lines don't produce text runs. */
         if (isEmpty_Range(&line)) {
-            if (type == quote_GmLineType && !prefs->quoteIcon) {
+            if (type == preformatted_GmLineType) {
+                /* Empty lines in a preformatted blocks should functionally be part of the block. */
+                run.bounds = (iRect){ pos, init_I2(1, lineHeight_Text(run.font)) };
+                run.visBounds = run.bounds;
+                run.text = line;
+                pushBack_Array(&d->layout, &run);
+            }
+            else if (type == quote_GmLineType && !prefs->quoteIcon) {
                 /* For quote indicators we still need to produce a run. */
                 run.visBounds.pos  = addX_I2(pos, indents[type] * gap_Text);
                 run.visBounds.size = init_I2(gap_Text, lineHeight_Text(run.font));
@@ -1120,6 +1132,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (!isMono) {
 #if 0
                 /* Upper-level headings are typeset a bit tighter. */
+                /* FIXME: Oops, text renderer clears glyph backgrounds so it clips the adjacent line. */
                 if (type == heading1_GmLineType) {
                     rts.lineHeightReduction = 0.10f;
                 }
@@ -1327,16 +1340,19 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         d->warnings |= missingGlyphs_GmDocumentWarning;
     }
     /* Go over the preformatted blocks and mark them wide if at least one run is wide. */ {
-        /* TODO: Store the dimensions and ranges for later access. */
         iForEach(Array, i, &d->layout) {
             iGmRun *run = i.value;
             if (preId_GmRun(run) && run->flags & wide_GmRunFlag) {
-                iGmRunRange block = findPreformattedRange_GmDocument(d, run);
-                for (const iGmRun *j = block.start; j != block.end; j++) {
-                    iConstCast(iGmRun *, j)->flags |= wide_GmRunFlag;
+                iGmPreMeta *meta = at_Array(&d->preMeta, preId_GmRun(run) - 1);
+                meta->runRange = findPreformattedRange_GmDocument(d, run);
+                for (const iGmRun *j = meta->runRange.start; j != meta->runRange.end; j++) {
+                    iGmRun *jRun = iConstCast(iGmRun *, j);
+                    jRun->flags |= wide_GmRunFlag;
+                    iChangeFlags(jRun->flags, startOfLine_GmRunFlag, j == meta->runRange.start);
+                    iChangeFlags(jRun->flags, endOfLine_GmRunFlag, j + 1 == meta->runRange.end);
                 }
                 /* Skip to the end of the block. */
-                i.pos = block.end - (const iGmRun *) constData_Array(&d->layout) - 1;
+                i.pos = meta->runRange.end - (const iGmRun *) constData_Array(&d->layout) - 1;
             }
         }
     }
@@ -2476,6 +2492,10 @@ void updateVisitedLinks_GmDocument(iGmDocument *d) {
     }
     markLinkRunsVisited_GmDocument_(d, &linkIds);
     deinit_IntSet(&linkIds);
+}
+
+size_t numPre_GmDocument(const iGmDocument *d) {
+    return size_Array(&d->preMeta);
 }
 
 const iGmPreMeta *preMeta_GmDocument(const iGmDocument *d, uint16_t preId) {

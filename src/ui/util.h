@@ -131,6 +131,9 @@ iLocalDef iBool equal_Rangei(iRangei a, iRangei b) {
 iLocalDef iBool isEmpty_Rangei(iRangei d) {
     return size_Range(&d) == 0;
 }
+iLocalDef iBool contains_Rangei(iRangei a, int b) {
+    return b >= a.start && b < a.end;
+}
 iLocalDef iBool isOverlapping_Rangei(iRangei a, iRangei b) {
     return !isEmpty_Rangei(intersect_Rangei(a, b));
 }

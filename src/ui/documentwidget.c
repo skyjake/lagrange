@@ -2267,7 +2267,6 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 d->sourceGempub = NULL;
                 destroy_Widget(d->footerButtons);
                 d->footerButtons = NULL;
-                resetWideRuns_DocumentView(d->view);
                 if (d->flags & urlChanged_DocumentWidgetFlag) {
                     /* Keep scroll position when reloading the same page. */
                     resetScroll_DocumentView(d->view);
@@ -2275,6 +2274,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 d->view->scrollY.pullActionTriggered = 0;
                 updateTheme_DocumentWidget_(d);
                 updateDocument_DocumentWidget_(d, resp, NULL, iTrue);
+                resetWideRuns_DocumentView(d->view);
                 break;
             case categoryRedirect_GmStatusCode:
                 if (isEmpty_String(&resp->meta)) {
@@ -2813,6 +2813,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         d->phoneToolbar = findWidget_App("bottombar");
         const iBool keepCenter = equal_Command(cmd, "font.changed");
         updateDocumentWidthRetainingScrollPosition_DocumentView(d->view, keepCenter);
+        resetWideRuns_DocumentView(d->view);
         updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
         updateVisible_DocumentView(d->view);
         invalidate_DocumentWidget_(d);
