@@ -2396,6 +2396,16 @@ static void import_GmDocument_(iGmDocument *d) {
     d->format = d->origFormat;
     set_String(&d->source, &d->origSource);
     replace_String(&d->source, "\r\n", "\n");
+    /* Remove any null characters. */ {
+        const char *ch = constBegin_String(&d->source);
+        for (size_t pos = 0; pos < size_String(&d->source); pos++, ch++) {
+            if (*ch == 0) {
+                remove_Block(&d->source.chars, pos, 1);
+                pos--;
+                ch--;
+            }
+        }
+    }
     /* Detect use of ANSI escapes. */ {
         iRegExp *ansiEsc = new_RegExp("\x1b[[()]([0-9;AB]*?)[ABCDEFGHJKSTfimn]", 0);
         iRegExpMatch m;

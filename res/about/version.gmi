@@ -9,6 +9,8 @@
 ## 1.17.1
 * Fixed scroll position being reset when reloading the page.
 * Fixed initial size of the upload dialog when font size has been changed.
+* Fixed "View as Plain Text" context menu item after reloading a page.
+* Strip any null characters from the page source during whitespace normalization.
 
 ## 1.17
 ⚠️ Caps Lock is no longer treated as a modifier key in keybindings. Use `--capslock` to enable it.
