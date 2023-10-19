@@ -863,7 +863,7 @@ static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
-    iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
+    iChangeFlags(d->flags, selecting_DocumentWidgetFlag | viewSource_DocumentWidgetFlag, iFalse);
     setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse);
     d->requestLinkId = 0;
     updateVisitedLinks_GmDocument(d->view->doc);
