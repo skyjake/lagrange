@@ -95,7 +95,6 @@ Note that the `install` target also deploys an XDG .desktop file for launching t
 | `ENABLE_KERNING` | Use kerning information in the fonts to adjust glyph placement. Setting this **ON** improves text appearance in subtle ways but slows down text rendering. It may be a good idea to set this to **OFF** when running on a slow CPU. This option only affects the simple built-in text renderer, and has no effect on HarfBuzz. |
 | `ENABLE_MPG123` | Use the mpg123 library for decoding MPEG audio files. |
 | `ENABLE_RELATIVE_EMBED` | Locate resources only in relation to the executable. Useful when any system/predefined directories are not supposed to be accessed, e.g., in the Windows portable build. |
-| `ENABLE_RESOURCE_EMBED` | Embed all resource files into the Lagrange executable instead of keeping them in a separate file that gets loaded at launch. Setting this **ON** makes it much slower to run CMake and to compile Lagrange. |
 | `ENABLE_TUI` | Build the TUI version (`clagrange`). The SEALCurses library is required: it is used instead of SDL. |
 | `ENABLE_WEBP` | Use libwebp to decode .webp images, if `pkg-config` can find the library. |
 | `ENABLE_WINDOWPOS_FIX` | Set correct window position after the window has already been shown. This may be necessary on some platforms to prevent the window from being restored to the wrong position. |
