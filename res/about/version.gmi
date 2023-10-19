@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.17.1
+* Fixed links being non-clickable after searching text on a page has scrolled the view. 
 * Fixed scroll position being reset when reloading the page.
 * Fixed initial size of the upload dialog when font size has been changed.
 * Fixed "View as Plain Text" context menu item after reloading a page.

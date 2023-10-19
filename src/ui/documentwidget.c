@@ -3608,6 +3608,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 const iGmRun *found;
                 if ((found = findRunAtLoc_GmDocument(d->view->doc, d->foundMark.start)) != NULL) {
                     scrollTo_DocumentView(d->view, mid_Rect(found->bounds).y, iTrue);
+                    updateVisible_DocumentView(d->view);
                 }
             }
         }
