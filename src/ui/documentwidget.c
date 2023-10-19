@@ -1951,10 +1951,11 @@ static void togglePreFold_DocumentWidget_(iDocumentWidget *d, uint16_t preId) {
     }
     d->view->hoverPre    = NULL;
     d->view->hoverAltPre = NULL;
-    d->selectMark       = iNullRange;
+    d->selectMark        = iNullRange;
     foldPre_GmDocument(d->view->doc, preId);
     redoLayout_GmDocument(d->view->doc);
     clampScroll_DocumentView(d->view);
+    updateVisible_DocumentView(d->view);
     updateHover_DocumentView(d->view, mouseCoord_Window(get_Window(), 0));
     invalidate_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
