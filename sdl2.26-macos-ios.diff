@@ -1,3 +1,16 @@
+diff --git a/include/SDL_config_iphoneos.h b/include/SDL_config_iphoneos.h
+index 6db16eb4c..41cb509bf 100644
+--- a/include/SDL_config_iphoneos.h
++++ b/include/SDL_config_iphoneos.h
+@@ -206,7 +206,7 @@
+ #define SDL_POWER_UIKIT 1
+ 
+ /* enable iPhone keyboard support */
+-#define SDL_IPHONE_KEYBOARD 1
++#define SDL_IPHONE_KEYBOARD 0
+ 
+ /* enable iOS extended launch screen */
+ #define SDL_IPHONE_LAUNCHSCREEN 1
 diff --git a/src/events/SDL_mouse.c b/src/events/SDL_mouse.c
 index 994b6a6db..b332e1332 100644
 --- a/src/events/SDL_mouse.c
@@ -248,3 +261,16 @@ index ee7ee83b0..f3cda52c8 100644
  - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures
  {
      if (self.homeIndicatorHidden >= 0) {
+diff --git a/src/video/uikit/SDL_uikitwindow.m b/src/video/uikit/SDL_uikitwindow.m
+index 7b8dfff56..dc3c4810f 100644
+--- a/src/video/uikit/SDL_uikitwindow.m
++++ b/src/video/uikit/SDL_uikitwindow.m
+@@ -295,7 +295,7 @@ - (void)layoutSubviews
+     viewcontroller.view.frame = UIKit_ComputeViewFrame(window, data.uiwindow.screen);
+ #endif /* !TARGET_OS_TV */
+ 
+-#ifdef SDL_IPHONE_KEYBOARD
++#if SDL_IPHONE_KEYBOARD
+     /* Make sure the view is offset correctly when the keyboard is visible. */
+     [viewcontroller updateKeyboard];
+ #endif
