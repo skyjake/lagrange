@@ -615,12 +615,21 @@ void scrollToHeading_DocumentView(iDocumentView *d, const char *heading) {
     }
 }
 
+iBool isWideBlockScrollable_DocumentView(const iDocumentView *d, const iRect docBounds,
+                                         const iGmRun *run) {
+    const iGmPreMeta *meta       = preMeta_GmDocument(d->doc, preId_GmRun(run));
+    const iGmRunRange range      = meta->runRange;
+    int               maxWidth   = width_Rect(meta->pixelRect);
+    const iRect       pageBounds = shrunk_Rect(bounds_Widget(as_Widget(d->owner)),
+                                               init1_I2(d->pageMargin * gap_UI));
+    return left_Rect(docBounds) + run->bounds.pos.x + meta->initialOffset + maxWidth >
+           right_Rect(pageBounds);
+}
+
 iBool scrollWideBlock_DocumentView(iDocumentView *d, iInt2 mousePos, int delta, int duration) {
     if (delta == 0 || wheelSwipeState_DocumentWidget(d->owner) == direct_WheelSwipeState) {
         return iFalse;
     }
-    const iRect pageBounds = shrunk_Rect(bounds_Widget(as_Widget(d->owner)),
-                                         init1_I2(d->pageMargin * gap_UI));
     const int docWidth = documentWidth_DocumentView(d);
     const iRect docBounds = documentBounds_DocumentView(d);
     const iInt2 docPos = documentPos_DocumentView_(d, mousePos);
@@ -631,8 +640,8 @@ iBool scrollWideBlock_DocumentView(iDocumentView *d, iInt2 mousePos, int delta, 
             const iGmPreMeta *meta = preMeta_GmDocument(d->doc, preId_GmRun(run));
             const iGmRunRange range = meta->runRange;
             int maxWidth = width_Rect(meta->pixelRect);
-            if (left_Rect(docBounds) + run->bounds.pos.x - meta->initialOffset + maxWidth <= right_Rect(pageBounds)) {
-                return iFalse; /* fits in the window just fine */
+            if (!isWideBlockScrollable_DocumentView(d, docBounds, run)) {
+                return iFalse;
             }
             const int maxOffset = maxWidth + run->bounds.pos.x - docWidth;
             int *offset = wideRunOffset_DocumentView_(d, preId_GmRun(run));

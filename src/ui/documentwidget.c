@@ -4447,16 +4447,35 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         else {
             /* Traditional mouse wheel. */
-            const int amount = ev->wheel.y;
-            if (keyMods_Sym(modState_Keys()) == KMOD_PRIMARY) {
-                postCommandf_App("zoom.delta arg:%d", amount > 0 ? 10 : -10);
+            iInt2 amount = init_I2(ev->wheel.x, ev->wheel.y);
+            const int kmods = keyMods_Sym(modState_Keys());
+            if (kmods == KMOD_PRIMARY) {
+                postCommandf_App("zoom.delta arg:%d", amount.y > 0 ? 10 : -10);
                 return iTrue;
             }
-            smoothScroll_DocumentView(view,
-                                      -3 * amount * lineHeight_Text(paragraph_FontId),
-                                      smoothDuration_DocumentWidget_(mouse_ScrollType));
-            scrollWideBlock_DocumentView(
-                view, mouseCoord, -3 * ev->wheel.x * lineHeight_Text(paragraph_FontId), 167);
+            if (!isApple_Platform() && kmods == KMOD_SHIFT) {
+                /* Shift switches to horizontal scrolling mode. (macOS does this for us.) */
+                iSwap(int, amount.x, amount.y);
+            }
+            else if (isFinished_SmoothScroll(&d->view->scrollY) &&
+                     d->view->hoverPre &&
+                     d->view->hoverPre->flags & wide_GmRunFlag &&
+                     isWideBlockScrollable_DocumentView(d->view,
+                                                        documentBounds_DocumentView(d->view),
+                                                        d->view->hoverPre)) {
+                /* Do a horizontal scroll over a wide block when not vertically scrolling. */
+                amount.x = amount.x ? amount.x : amount.y;
+                amount.y = 0;
+            }
+            if (amount.y) {
+                smoothScroll_DocumentView(view,
+                                          -3 * amount.y * lineHeight_Text(paragraph_FontId),
+                                          smoothDuration_DocumentWidget_(mouse_ScrollType));
+            }
+            if (amount.x) {
+                scrollWideBlock_DocumentView(
+                    view, mouseCoord, -3 * amount.x * lineHeight_Text(paragraph_FontId), 167);
+            }
         }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         return iTrue;
