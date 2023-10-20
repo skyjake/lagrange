@@ -3264,6 +3264,7 @@ iWidget *makePreferences_Widget(void) {
         const iMenuItem items[max_GmDocumentTheme + 1] = {
             { "${prefs.doctheme.name.colorfuldark}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulDark_GmDocumentTheme) },
             { "${prefs.doctheme.name.colorfullight}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulLight_GmDocumentTheme) },
+            { "${prefs.doctheme.name.vibrantlight}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, vibrantLight_GmDocumentTheme) },
             { "${prefs.doctheme.name.black}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, black_GmDocumentTheme) },
             { "${prefs.doctheme.name.gray}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, gray_GmDocumentTheme) },
             { "${prefs.doctheme.name.white}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, white_GmDocumentTheme) },

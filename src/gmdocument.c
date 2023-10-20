@@ -1565,16 +1565,17 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
             set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
         }
-        else if (theme == colorfulLight_GmDocumentTheme) {
+        else if (theme == colorfulLight_GmDocumentTheme ||
+                 theme == vibrantLight_GmDocumentTheme) {
             const iHSLColor base = addSatLum_HSLColor(get_HSLColor(teal_ColorId), -0.3f, 0.5f);
             setHsl_Color(tmBackground_ColorId, base);
             set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
             set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
             setHsl_Color(tmQuote_ColorId, addSatLum_HSLColor(base, 0, -0.25f));
             setHsl_Color(tmPreformatted_ColorId, addSatLum_HSLColor(base, 0, -0.3f));
-            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
-            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.67f));
-            set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.55f));
+            setHsl_Color(tmHeading1_ColorId, addSatLum_HSLColor(base, 1.0f, -0.37f));
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmHeading1_ColorId), get_Color(black_ColorId), 0.5f));
+            set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.4f));
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.1f));
             setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.4f));
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.4f));
@@ -1745,6 +1746,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             { 8, 9 },  /* 10: violet */
             { 7, 8 },  /* 11: pink */
         };
+#if 1
         if (d->themeSeed & 0xc00000) {
             /* Hue shift for more variability. */
             iForIndices(i, hues) {
@@ -1752,10 +1754,14 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             }
         }
         size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
-
-//        static int testing = 0;
-//        primIndex = (testing++) % iElemCount(hues);
-
+#else
+        /* Sequentially switch between hues for testing. */
+        static int testing_ = 0;
+        iForIndices(i, hues) {
+            hues[i] += 10 * ((testing_ % 3) - 1);
+        }
+        size_t primIndex = (testing_++) / 3 % iElemCount(hues);
+#endif
         if (d->themeSeed && primIndex == 11 && d->themeSeed & 0x4000000) {
             /* De-pink some sites. */
             primIndex = (primIndex + d->themeSeed & 0xf) % 12;
@@ -1833,27 +1839,41 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
         }
-        else if (theme == colorfulLight_GmDocumentTheme) {
+        else if (theme == colorfulLight_GmDocumentTheme ||
+                 theme == vibrantLight_GmDocumentTheme) {
+
+            const iBool isVibrant = (theme == vibrantLight_GmDocumentTheme);
 //            static int primIndex = 0;
 //            primIndex = (primIndex + 1) % iElemCount(hues);
             iHSLColor base = { hues[primIndex], 1.0f, normLum, 1.0f };
-
+            iHSLColor h1   = { hues[primIndex], 1.0f, normLum - 0.37f, 1.0f };
+            if (isVibrant) {
+                base.lum = 0.5f;
+                float offset = luma_HSLColor(base) - 0.8f;
+                base.lum -= offset * 0.5f;
+                h1 = (iHSLColor){ 0, 1.0f, 1.0f, 1.0f };
+            }
 //            printf("prim:%d norm:%f\n", primIndex, normLum[primIndex]); fflush(stdout);
-            static const float normSat[] = {
-                0.85f, 0.90f, 1.00f, 0.65f, 0.65f,
-                0.65f, 0.90f, 0.90f, 1.00f, 0.90f,
-                1.00f, 0.75f
-            };
+            static const float normSat[] = { 0.85f, 0.90f, 1.00f, 0.65f, 0.65f, 0.65f,
+                                             0.90f, 0.90f, 1.00f, 0.90f, 1.00f, 0.75f };
             iBool darkHeadings = iTrue;
-            base.sat *= normSat[primIndex] * 0.8f;
+            base.sat *= normSat[primIndex] * (!isVibrant ? 0.8f : 1.0f);
             setHsl_Color(tmBackground_ColorId, base);
             set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
             set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
             setHsl_Color(tmQuote_ColorId, addSatLum_HSLColor(base, 0, -base.lum * 0.67f));
             setHsl_Color(tmPreformatted_ColorId, addSatLum_HSLColor(base, 0, -base.lum * 0.75f));
-            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
-            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.7f));
-            set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.6f));
+            setHsl_Color(tmHeading1_ColorId, h1);
+            setHsl_Color(tmHeading2_ColorId,
+                         !isVibrant ? addSatLum_HSLColor(h1, 0, -0.1f)
+                                    : hsl_Color(mix_Color(
+                                          get_Color(tmBackground_ColorId),
+                                          get_Color(darkHeadings ? black_ColorId : white_ColorId),
+                                          0.7f)));
+            set_Color(tmHeading3_ColorId,
+                      mix_Color(get_Color(!isVibrant ? tmHeading1_ColorId : tmBackground_ColorId),
+                                get_Color(darkHeadings ? black_ColorId : white_ColorId),
+                                0.6f));
             setHsl_Color(
                 tmBannerBackground_ColorId,
                 addSatLum_HSLColor(base, 0, isDarkUI ? -0.2f * (1 - normLum) : 0.2f * (1 - normLum)));

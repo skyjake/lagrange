@@ -1969,6 +1969,9 @@ msgstr "Colorful Dark"
 msgid "prefs.doctheme.name.colorfullight"
 msgstr "Colorful Light"
 
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "Vibrant Light"
+
 msgid "prefs.doctheme.name.black"
 msgstr "Black"
 

@@ -282,6 +282,7 @@ static iBool areTabButtonsThemeColored_(void) {
     const enum iGmDocumentTheme docTheme = docTheme_Prefs(prefs_App());
     const iBool isDarkUI = isDark_ColorTheme(colorTheme_App());
     return (docTheme == colorfulLight_GmDocumentTheme ||
+            docTheme == vibrantLight_GmDocumentTheme ||
             docTheme == sepia_GmDocumentTheme ||
             (docTheme == oceanic_GmDocumentTheme && !isDarkUI));
 }
