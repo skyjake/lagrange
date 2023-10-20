@@ -4453,19 +4453,20 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 postCommandf_App("zoom.delta arg:%d", amount.y > 0 ? 10 : -10);
                 return iTrue;
             }
-            if (!isApple_Platform() && kmods == KMOD_SHIFT) {
-                /* Shift switches to horizontal scrolling mode. (macOS does this for us.) */
-                iSwap(int, amount.x, amount.y);
-            }
-            else if (isFinished_SmoothScroll(&d->view->scrollY) &&
-                     d->view->hoverPre &&
-                     d->view->hoverPre->flags & wide_GmRunFlag &&
-                     isWideBlockScrollable_DocumentView(d->view,
-                                                        documentBounds_DocumentView(d->view),
-                                                        d->view->hoverPre)) {
-                /* Do a horizontal scroll over a wide block when not vertically scrolling. */
-                amount.x = amount.x ? amount.x : amount.y;
-                amount.y = 0;
+            if (!isApple_Platform()) {
+                if (kmods == KMOD_SHIFT) {
+                    /* Shift switches to horizontal scrolling mode. (macOS does this for us.) */
+                    iSwap(int, amount.x, amount.y);
+                }
+                if (isFinished_SmoothScroll(&d->view->scrollY) &&
+                    d->view->hoverPre &&
+                    d->view->hoverPre->flags & wide_GmRunFlag &&
+                    isWideBlockScrollable_DocumentView(d->view,
+                                                       documentBounds_DocumentView(d->view),
+                                                       d->view->hoverPre)) {
+                    /* Do a horizontal scroll over a wide block when not vertically scrolling. */
+                    iSwap(int, amount.x, amount.y);
+                }
             }
             if (amount.y) {
                 smoothScroll_DocumentView(view,
@@ -4693,7 +4694,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             continueMarkingSelection_DocumentWidget_(d);
             /* Set scroll speed depending on position near the top/bottom. */ {
                 const iRect bounds = bounds_Widget(w);
-                const int autoScrollRegion = gap_UI * 15;
+                const int autoScrollRegion = gap_UI * (isMobile_Platform() ? 15 : d->view->pageMargin);
                 const int y = pos_Click(&d->click).y;
                 float delta = 0.0f;
                 if (y < top_Rect(bounds) + autoScrollRegion) {
