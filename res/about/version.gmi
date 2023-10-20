@@ -7,7 +7,9 @@
 # Release notes
 
 ## 1.17.1
-* Reduced height of autoscrolling region when selecting text, to avoid accidental scrolling.
+* Added "Vibrant Light" color theme.
+* Improved readability of "Colorful Light" headings.
+* Tuned autoscrolling when selecting text to avoid accidental scrolling.
 * Preformatted blocks no longer switch to a smaller font to fit to the page.
 * Mouse wheel scrolls a wide preformatted block when hovering over the block, instead of scrolling vertically. You can hold the Shift key to swap the scroll direction.
 * Fixed horizontal scrolling issues with preformatted blocks: only scroll if needed, allow scrolling anywhere on the block and not just on non-empty text lines, and when scrolling disallow swipe navigation over the area.
