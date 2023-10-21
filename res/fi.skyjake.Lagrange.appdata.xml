@@ -45,6 +45,28 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.17.1" date="2023-10-21">
+            <description>
+                <ul>
+                    <li>Added "Vibrant Light" color theme.</li>
+                    <li>Improved readability of "Colorful Light" headings.</li>
+                    <li>Tuned autoscrolling when selecting text to avoid accidental scrolling.</li>
+                    <li>Preformatted blocks no longer switch to a smaller font to fit to the page.</li>
+                    <li>Mouse wheel scrolls a wide preformatted block when hovering over the block, instead of scrolling vertically. You can hold the Shift key to swap the scroll direction.</li>
+                    <li>Fixed horizontal scrolling issues with preformatted blocks: only scroll if needed, allow scrolling anywhere on the block and not just on non-empty text lines, and when scrolling disallow swipe navigation over the area.</li>
+                    <li>Fixed visual artifacts around and next to preformatted blocks (e.g., streaking).</li>
+                    <li>Fixed potential crash after (un)folding a preformatted block.</li>
+                    <li>Fixed links being non-clickable after searching text on a page has scrolled the view.</li>
+                    <li>Fixed scroll position being reset when reloading the page.</li>
+                    <li>Fixed initial size of the upload dialog when font size has been changed.</li>
+                    <li>Fixed "View as Plain Text" context menu item after reloading a page.</li>
+                    <li>Strip any null characters from the page source during whitespace normalization.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.17.1</url>
+        </release>
         <release version="1.17" date="2023-10-06">
             <description>
                 <ul>
