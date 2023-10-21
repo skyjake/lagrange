@@ -24,5 +24,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "widget.h"
 
+iDeclareType(ListWidget);
+
 iDeclareWidgetClass(SnippetWidget)
 iDeclareObjectConstruction(SnippetWidget)
+
+iListWidget *   list_SnippetWidget  (iSnippetWidget *);

@@ -37,7 +37,8 @@ iDeclareType(GmPreMeta)
 iDeclareType(GmRun)
 
 enum iGmLineType {
-    text_GmLineType,
+    undefined_GmLineType = -1,
+    text_GmLineType = 0,
     bullet_GmLineType,
     preformatted_GmLineType,
     quote_GmLineType,
@@ -60,6 +61,7 @@ enum iGmDocumentTheme {
     sepia_GmDocumentTheme,
     highContrast_GmDocumentTheme,
     oceanic_GmDocumentTheme,
+    vibrantLight_GmDocumentTheme,
     max_GmDocumentTheme
 };
 
@@ -104,20 +106,6 @@ iLocalDef enum iGmLinkScheme scheme_GmLinkFlag(int flags) {
 struct Impl_GmHeading {
     iRangecc text;
     int level; /* 0, 1, 2 */
-};
-
-enum iGmPreMetaFlag {
-    folded_GmPreMetaFlag = 0x1,
-    topLeft_GmPreMetaFlag = 0x2,
-};
-
-struct Impl_GmPreMeta {
-    iRangecc bounds;   /* including ``` markers */
-    iRangecc altText;  /* range in source */
-    iRangecc contents; /* just the content lines */
-    int      flags;
-    /* TODO: refactor old code to incorporate wide scroll handling here */
-    iRect    pixelRect;
 };
 
 enum iGmRunFlags {
@@ -174,6 +162,24 @@ iLocalDef uint32_t preId_GmRun(const iGmRun *d) {
 iBool       isJustified_GmRun       (const iGmRun *);
 int         drawBoundWidth_GmRun    (const iGmRun *);
 iRangecc    findLoc_GmRun           (const iGmRun *, iInt2 pos);
+
+enum iGmPreMetaFlag {
+    folded_GmPreMetaFlag   = iBit(1),
+    topLeft_GmPreMetaFlag  = iBit(2),
+};
+
+struct Impl_GmPreMeta {
+    iRangecc bounds;   /* including ``` markers */
+    iRangecc altText;  /* range in source */
+    iRangecc contents; /* just the content lines */
+    iGmRunRange runRange;
+    int      flags;
+    /* TODO: refactor old code to incorporate wide scroll handling here */
+    int      initialOffset;
+    iRect    pixelRect;
+};
+
+/*----------------------------------------------------------------------------------------------*/
 
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
@@ -260,6 +266,7 @@ const iTime *   linkTime_GmDocument     (const iGmDocument *, iGmLinkId linkId);
 iBool           isMediaLink_GmDocument  (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);
 iChar           siteIcon_GmDocument     (const iGmDocument *);
+size_t          numPre_GmDocument       (const iGmDocument *);
 const iGmPreMeta *preMeta_GmDocument    (const iGmDocument *, uint16_t preId);
 iInt2           preRunMargin_GmDocument (const iGmDocument *, uint16_t preId);
 iBool           preIsFolded_GmDocument  (const iGmDocument *, uint16_t preId);

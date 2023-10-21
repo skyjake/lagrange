@@ -43,6 +43,7 @@ void    openFileActivityView_iOS(const iString *path);
 iBool   isPhone_iOS             (void);
 void    safeAreaInsets_iOS      (float *left, float *top, float *right, float *bottom);
 int     displayRefreshRate_iOS  (void);
+float   displayScale_iOS        (const iWindow *window);
 
 /*----------------------------------------------------------------------------------------------*/
 

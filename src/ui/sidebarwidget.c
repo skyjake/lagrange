@@ -538,7 +538,11 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                 { "", 0, 0, "bookmark.tag tag:homepage" },
                 { "", 0, 0, "bookmark.tag tag:remotesource" },
                 { "---", 0, 0, NULL },
+#if defined (iPlatformDesktop)
                 { uiTextCaution_ColorEscape "${bookmark.delete}", SDLK_BACKSPACE, 0, "bookmark.delete" },
+#else
+                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
+#endif
                 { "---", 0, 0, NULL },
                 { folder_Icon " ${menu.newfolder}", 0, 0, "bookmark.addfolder" },
                 { upDownArrow_Icon " ${menu.sort.alpha}", 0, 0, "bookmark.sortfolder" },
@@ -558,8 +562,11 @@ static void updateItemsWithFlags_SidebarWidget_(iSidebarWidget *d, iBool keepAct
                         { "---" },
                         { edit_Icon " ${menu.edit}", 0, 0, "bookmark.edit" },
                         { "---" },
-                        { uiTextCaution_ColorEscape "${bookmark.folder.delete}",
-                          SDLK_BACKSPACE, 0, "bookmark.delete" },
+#if defined (iPlatformDesktop)
+                        { uiTextCaution_ColorEscape "${bookmark.folder.delete}", SDLK_BACKSPACE, 0, "bookmark.delete" },
+#else
+                        { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
+#endif
                         { "---" } },
                     7);
                 if (isMobile_Platform()) {
@@ -1303,6 +1310,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (argLabel_Command(cmd, "hide") && !isVisible_Widget(w)) {
             return iTrue;
         }
+        /* The sidebar will appear/disappear and UI elements will change position. Stop any
+           ongoing touch interactions based on the old arrangement. */
+        clear_Touch();
         const iBool isAnimated = prefs_App()->uiAnimations &&
                                  argLabel_Command(cmd, "noanim") == 0 &&
                                  (d->side == left_SidebarSide || deviceType_App() != phone_AppDeviceType);
@@ -2200,7 +2210,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+        if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode &&
+            widgetMode_Touch(w) != momentum_WidgetTouchMode) {
             gotoNearestSlidingSheetPos_SidebarWidget_(d);
             return iTrue;
         }

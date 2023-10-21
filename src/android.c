@@ -37,6 +37,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 #include <jni.h>
 #include <SDL.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <android/log.h>
 
 JNIEXPORT void JNICALL Java_fi_skyjake_lagrange_LagrangeActivity_postAppCommand(
         JNIEnv* env, jclass jcls, jstring command)
@@ -61,7 +65,43 @@ static void clearCachedFiles_(void) {
     }
 }
 
+static int pfd_[2];
+static pthread_t thr_;
+static const char *tag_ = "fi.skyjake.lagrange";
+
+static void *loggerThreadFunc_(void *p) {
+    ssize_t rdsz;
+    char buf[512];
+    while((rdsz = read(pfd_[0], buf, sizeof(buf) - 1)) > 0) {
+        if(buf[rdsz - 1] == '\n') {
+            --rdsz;
+        }
+        buf[rdsz] = 0;  /* add null-terminator */
+        __android_log_write(ANDROID_LOG_DEBUG, tag_, buf);
+    }
+    return 0;
+}
+
+static int startLogOutputThread_(void) {
+    /* make stdout line-buffered and stderr unbuffered */
+    setvbuf(stdout, 0, _IOLBF, 0);
+    setvbuf(stderr, 0, _IONBF, 0);
+    /* create the pipe and redirect stdout and stderr */
+    pipe(pfd_);
+    dup2(pfd_[1], 1);
+    dup2(pfd_[1], 2);
+    /* spawn the logging thread */
+    if (pthread_create(&thr_, 0, loggerThreadFunc_, 0) == -1) {
+        return -1;
+    }
+    pthread_detach(thr_);
+    return 0;
+}
+
 void setupApplication_Android(void) {
+#if !defined (NDEBUG)
+    startLogOutputThread_();
+#endif
     /* Cache the monospace font into a file where it can be loaded directly by the Java code. */
     const char *path = monospaceFontPath_();
     const iBlock *iosevka = dataCStr_Archive(archive_Resources(), "fonts/IosevkaTerm-Extended.ttf");
@@ -119,6 +159,7 @@ void javaCommand_Android(const char *format, ...) {
 
 static int               inputIdGen_; /* unique IDs for SystemTextInputs */
 static iSystemTextInput *currentInput_;
+static iRangei           lastSelectionRange_;
 
 struct Impl_SystemTextInput {
     int id;
@@ -200,6 +241,14 @@ void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool all
     }
 }
 
+void setSelection_SystemTextInput(iSystemTextInput *d, iRangei selection) {
+    javaCommand_Android("input.select id:%d start:%d end:%d", d->id, selection.start, selection.end);
+}
+
+iRangei lastInputSelectionRange_Android(void) {
+    return lastSelectionRange_;
+}
+
 void setFont_SystemTextInput(iSystemTextInput *d, int fontId) {
     d->font = fontId;
     const char *ttfPath = "";
@@ -236,7 +285,8 @@ static uint32_t backupUserData_Android_(uint32_t interval, void *data) {
     iUnused(interval, data);
     /* This runs in a background thread. We don't want to block the UI thread for saving. */
     iExport *backup = new_Export();
-    generatePartial_Export(backup, bookmarks_ExportFlag | identitiesAndTrust_ExportFlag);
+    generatePartial_Export(backup, bookmarks_ExportFlag | identitiesAndTrust_ExportFlag |
+                           snippets_ExportFlag);
     iBuffer *buf = new_Buffer();
     openEmpty_Buffer(buf);
     serialize_Archive(archive_Export(backup), stream_Buffer(buf));
@@ -272,6 +322,11 @@ iBool handleCommand_Android(const char *cmd) {
         if (wasChanged && currentInput_->textChangedFunc) {
             currentInput_->textChangedFunc(currentInput_, currentInput_->textChangedContext);
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "android.input.selrange")) {
+        lastSelectionRange_ = (iRangei){ argLabel_Command(cmd, "start"),
+                                         argLabel_Command(cmd, "end") };
         return iTrue;
     }
     else if (equal_Command(cmd, "android.input.enter")) {
@@ -322,7 +377,8 @@ iBool handleCommand_Android(const char *cmd) {
             iExport *backup = new_Export();
             if (load_Export(backup, archive)) {
                 import_Export(backup, ifMissing_ImportMethod, all_ImportMethod,
-                              none_ImportMethod, none_ImportMethod, none_ImportMethod);
+                              none_ImportMethod, none_ImportMethod, none_ImportMethod,
+                              all_ImportMethod);
             }
             delete_Export(backup);
         }

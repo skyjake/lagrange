@@ -497,6 +497,9 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
 }
 
 iBool isLikelyUrl_String(const iString *d) {
+    if (endsWith_String(d, ":")) {
+        return iFalse;
+    }
     /* Guess whether a human intends the string to be an URL. This is supposed to be fuzzy;
        not completely per-spec: a) begins with a scheme; b) has something that looks like a
        hostname */

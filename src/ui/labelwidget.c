@@ -76,15 +76,15 @@ static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
                                 : corner == 1 ? init_I2(w->padding[2], w->padding[1])
                                 : corner == 2 ? init_I2(w->padding[2], w->padding[3])
                                               : init_I2(w->padding[0], w->padding[3]));
-    if (isMobile_Platform()) {
-        return add_I2(widgetPad,
-                      init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
-                              (flags & extraPadding_WidgetFlag ? 1.5f : 1.0f) * 3 * gap_UI / 2));
-    }
     if (d->flags.chevron) {
         if (corner == 1 || corner == 2) {
             widgetPad.x += gap_UI * 5;
         }
+    }
+    if (isMobile_Platform()) {
+        return add_I2(widgetPad,
+                      init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
+                              (flags & extraPadding_WidgetFlag ? 1.5f : 1.0f) * 3 * gap_UI / 2));
     }
     return add_I2(widgetPad,
                   init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI),
@@ -140,6 +140,12 @@ static void endSiblingOrderDrag_LabelWidget_(iLabelWidget *d) {
 }
 
 static iBool isSubmenuItem_LabelWidget_(const iLabelWidget *d) {
+    if (isAndroid_Platform()) {
+        /* On Android, we don't have system menus nor do we want actual submenu popups
+           to appear. The "submenu" command will cause the submenu to open as a normal
+           menu. */
+        return iFalse;
+    }
     return startsWith_String(&d->command, "submenu id:");
 }
 
@@ -276,6 +282,7 @@ static iBool areTabButtonsThemeColored_(void) {
     const enum iGmDocumentTheme docTheme = docTheme_Prefs(prefs_App());
     const iBool isDarkUI = isDark_ColorTheme(colorTheme_App());
     return (docTheme == colorfulLight_GmDocumentTheme ||
+            docTheme == vibrantLight_GmDocumentTheme ||
             docTheme == sepia_GmDocumentTheme ||
             (docTheme == oceanic_GmDocumentTheme && !isDarkUI));
 }
@@ -594,7 +601,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         int offset = 0;
         if (isMobile_Platform()) {
             /* These are used in the sub-panel buttons. */
-            if (d->flags.chevron) {
+            if (d->flags.chevron && iconPad) {
                 offset = -iconPad;
             }
             else {

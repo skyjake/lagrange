@@ -927,7 +927,7 @@ msgid "menu.input.clear"
 msgstr "Clear History"
 
 msgid "menu.input.restore"
-msgstr "Restore previous:"
+msgstr "Restore Previous:"
 
 # Paste the line preceding the clicked link into the input prompt.
 msgid "menu.input.precedingline"
@@ -1281,7 +1281,10 @@ msgid "dlg.upload.id.none"
 msgstr "None"
 
 msgid "dlg.upload.id.default"
-msgstr "Default"
+msgstr "Default Identity"
+
+msgid "heading.upload.dest"
+msgstr "Address"
 
 msgid "heading.upload.text"
 msgstr "Text"
@@ -1966,6 +1969,9 @@ msgstr "Colorful Dark"
 msgid "prefs.doctheme.name.colorfullight"
 msgstr "Colorful Light"
 
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "Vibrant Light"
+
 msgid "prefs.doctheme.name.black"
 msgstr "Black"
 
@@ -2612,8 +2618,11 @@ msgstr "Delete"
 msgid "menu.snip.prefs"
 msgstr "Configure…"
 
-msgid "heading.snip"
+msgid "heading.snip.new"
 msgstr "New Snippet"
+
+msgid "heading.snip.edit"
+msgstr "Edit Snippet"
 
 msgid "snip.name"
 msgstr "Name:"

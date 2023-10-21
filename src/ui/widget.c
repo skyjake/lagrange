@@ -1362,9 +1362,10 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
 #endif
 #if 0
                 if (ev->type == SDL_MOUSEBUTTONDOWN) {
-                    printf("widget %p ('%s' class:%s) ate the mouse down\n",
+                    printf("widget %p ('%s' class:%s) ate the mouse down (button %d)\n",
                            child, cstr_String(id_Widget(child)),
-                           class_Widget(child)->name);
+                           class_Widget(child)->name,
+                           ev->button.button);
                     fflush(stdout);
                 }
 #endif
@@ -1595,7 +1596,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
         }
     }
-    if (isDesktop_Platform() && d->flags2 & horizontallyResizable_WidgetFlag2) {
+    if (deviceType_App() == desktop_AppDeviceType && d->flags2 & horizontallyResizable_WidgetFlag2) {
         static iInt2 startPos_; /* assume only one pointer is resizing at a time */
         static int startWidth_;
         const iInt2 buttonPos = init_I2(ev->button.x, ev->button.y);
@@ -2658,13 +2659,14 @@ static void printInfo_Widget_(const iWidget *d) {
                cstr_String(text_LabelWidget((const iLabelWidget *) d)),
                cstr_String(command_LabelWidget((const iLabelWidget *) d)));
     }
-    printf("pos:%d,%d size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s%s%s\n",
+    printf("pos:%d,%d size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s%s%s%s\n",
            d->rect.pos.x, d->rect.pos.y,
            d->rect.size.x, d->rect.size.y,
            d->minSize.x, d->minSize.y,
            d->padding[0], d->padding[2],
            d->padding[1], d->padding[3],
            (long long unsigned int) d->flags,
+           d->flags & keepOnTop_WidgetFlag ? " onTop" : "",
            d->flags & expand_WidgetFlag ? " exp" : "",
            d->flags & tight_WidgetFlag ? " tight" : "",
            d->flags & fixedWidth_WidgetFlag ? " fixW" : "",

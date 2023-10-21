@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-03-09 05:32+0000\n"
-"PO-Revision-Date: 2023-10-01 15:16+0000\n"
+"PO-Revision-Date: 2023-10-21 04:38+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1770,7 +1770,7 @@ msgid "dlg.upload.id.none"
 msgstr "Ei identiteettiä"
 
 msgid "dlg.upload.id.default"
-msgstr "Oletus"
+msgstr "Oletusidentiteetti"
 
 # used on mobile
 msgid "dlg.upload.file"
@@ -2576,9 +2576,6 @@ msgstr "Poista"
 msgid "menu.snip.prefs"
 msgstr "Asetukset…"
 
-msgid "heading.snip"
-msgstr "Uusi katkelma"
-
 msgid "snip.name"
 msgstr "Nimi:"
 
@@ -2679,3 +2676,15 @@ msgstr "Syötteiden päivitysväli:"
 
 msgid "prefs.feedinterval.manual"
 msgstr "Manuaalinen"
+
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "Eloisa"
+
+msgid "heading.upload.dest"
+msgstr "Osoite"
+
+msgid "heading.snip.new"
+msgstr "Uusi katkelma"
+
+msgid "heading.snip.edit"
+msgstr "Muokkaa katkelmaa"

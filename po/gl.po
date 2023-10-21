@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2023-10-04 05:14+0000\n"
+"PO-Revision-Date: 2023-10-18 04:14+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -1828,7 +1828,7 @@ msgid "dlg.certimport.pickfile"
 msgstr "Importar ficheiro de Certificado/Chave"
 
 msgid "dlg.upload.id.default"
-msgstr "Por defecto"
+msgstr "Identidade por defecto"
 
 # used on mobile
 msgid "dlg.upload.text"
@@ -2630,7 +2630,7 @@ msgid "menu.input.clear"
 msgstr "Limpar Historial"
 
 msgid "menu.input.restore"
-msgstr "Restablecer anterior:"
+msgstr "Restablecer Anterior:"
 
 msgid "dlg.import.intofolder"
 msgstr "Engadir ao Cartafol:"
@@ -2713,9 +2713,6 @@ msgstr "Eliminar"
 msgid "menu.snip.prefs"
 msgstr "Configurar…"
 
-msgid "heading.snip"
-msgstr "Novo Anaco"
-
 msgid "snip.name"
 msgstr "Nome:"
 
@@ -2723,4 +2720,13 @@ msgid "snip.content"
 msgstr "Contido:"
 
 msgid "snip.accept"
-msgstr "Gardar Anaco"
+msgstr "Gardar Atallo"
+
+msgid "heading.upload.dest"
+msgstr "Enderezo"
+
+msgid "heading.snip.new"
+msgstr "Novo Atallo"
+
+msgid "heading.snip.edit"
+msgstr "Editar Atallo"

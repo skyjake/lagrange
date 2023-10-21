@@ -131,6 +131,9 @@ iLocalDef iBool equal_Rangei(iRangei a, iRangei b) {
 iLocalDef iBool isEmpty_Rangei(iRangei d) {
     return size_Range(&d) == 0;
 }
+iLocalDef iBool contains_Rangei(iRangei a, int b) {
+    return b >= a.start && b < a.end;
+}
 iLocalDef iBool isOverlapping_Rangei(iRangei a, iRangei b) {
     return !isEmpty_Rangei(intersect_Rangei(a, b));
 }
@@ -297,6 +300,7 @@ void            openMenuAnchorFlags_Widget      (iWidget *, iRect windowAnchorRe
 void            closeMenu_Widget                (iWidget *);
 iBool           handleMenuCommand_Widget        (iWidget *menu, const char *cmd); /* used as the command handler */
 void            releaseNativeMenu_Widget        (iWidget *);
+void            setMenuUpdateItemsFunc_Widget   (iWidget *menu, const iArray *(*func)(iWidget *));
 
 size_t          count_MenuItem                  (const iMenuItem *itemsNullTerminated);
 size_t          findWidestLabel_MenuItem        (const iMenuItem *items, size_t num);

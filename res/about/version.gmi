@@ -6,6 +6,21 @@
 ```
 # Release notes
 
+## 1.17.1
+* Added "Vibrant Light" color theme.
+* Improved readability of "Colorful Light" headings.
+* Tuned autoscrolling when selecting text to avoid accidental scrolling.
+* Preformatted blocks no longer switch to a smaller font to fit to the page.
+* Mouse wheel scrolls a wide preformatted block when hovering over the block, instead of scrolling vertically. You can hold the Shift key to swap the scroll direction.
+* Fixed horizontal scrolling issues with preformatted blocks: only scroll if needed, allow scrolling anywhere on the block and not just on non-empty text lines, and when scrolling disallow swipe navigation over the area.
+* Fixed visual artifacts around and next to preformatted blocks (e.g., streaking).
+* Fixed potential crash after (un)folding a preformatted block.
+* Fixed links being non-clickable after searching text on a page has scrolled the view. 
+* Fixed scroll position being reset when reloading the page.
+* Fixed initial size of the upload dialog when font size has been changed.
+* Fixed "View as Plain Text" context menu item after reloading a page.
+* Strip any null characters from the page source during whitespace normalization.
+
 ## 1.17
 ⚠️ Caps Lock is no longer treated as a modifier key in keybindings. Use `--capslock` to enable it.
 

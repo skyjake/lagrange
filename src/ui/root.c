@@ -446,6 +446,12 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "submenu")) {
+        iAssert(isAndroid_Platform());
+        iWidget *menu = findWidget_App(cstr_Command(cmd, "id"));
+        postCommand_Widget(menu, "menu.open self:1");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "splitmenu.open")) {
         setFocus_Widget(NULL);
         iWidget *menu = findWidget_Root("splitmenu");
@@ -1348,7 +1354,8 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         iWidget *menu = NULL;
         if (hit) {
             const iString *id = id_Widget(hit);
-            if (!cmp_String(id, "toolbar.ident")) {
+            if (!cmp_String(id, "toolbar.ident") ||
+                    !cmp_String(id_Widget(parent_Widget(hit)), "toolbar.ident")) {
                 postCommand_App("preferences idents:1");
                 return iTrue;
             }
@@ -1651,7 +1658,7 @@ void recreateSnippetMenu_Root(iRoot *d) {
                    &(iMenuItem){ gear_Icon " ${menu.snip.prefs}", 0, 0, "preferences sniped:1" });
     iWidget *menu = findChild_Widget(d->widget, "snippetmenu");
     destroy_Widget(menu);
-    menu = makeMenu_Widget(d->widget, data_Array(items), size_Array(items));
+    menu = makeMenuFlags_Widget(d->widget, data_Array(items), size_Array(items), iTrue);
     setId_Widget(menu, "snippetmenu");
 }
 
@@ -1881,19 +1888,21 @@ void createUserInterface_Root(iRoot *d) {
                     (iMenuItem[]){
                         { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
                         { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
-                        { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
                         { "---" },
                         { bookmark_Icon " ${menu.page.bookmark}", bookmarkPage_KeyShortcut, "bookmark.add" },
                         { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyShortcut, "feeds.subscribe" },
+                        { "---${menu.tools}" },
                         { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                         { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                         { edit_Icon " ${menu.page.upload.edit}", 0, 0, "document.upload copy:1" },
                         { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+                        { "${menu.page.visitlinks}", 0, 0, "document.visitlinks" },
+                        { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
                         { "---" },
                         { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
                         { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
                         { "${menu.viewformat.plain}", 0, 0, "document.viewformat" } },
-                    14);
+                    16);
                 setCommandHandler_Widget(findChild_Widget(as_Widget(pageMenuButton), "menu"),
                                          updateMobilePageMenuItems_);
                 setId_Widget(as_Widget(pageMenuButton), "pagemenubutton");

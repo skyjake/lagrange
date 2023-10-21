@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-02-28 02:15+0000\n"
-"PO-Revision-Date: 2023-10-04 05:14+0000\n"
+"PO-Revision-Date: 2023-10-18 04:14+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1827,7 +1827,7 @@ msgstr[0] "Borrar Marcador"
 msgstr[1] "Borrar %u Marcadores"
 
 msgid "dlg.upload.id.default"
-msgstr "Por Defecto"
+msgstr "Identidad por Defecto"
 
 # used on mobile
 msgid "dlg.upload.text"
@@ -2605,7 +2605,7 @@ msgid "menu.input.clear"
 msgstr "Limpiar Historial"
 
 msgid "menu.input.restore"
-msgstr "Restaurar anterior:"
+msgstr "Restaurar Anterior:"
 
 msgid "dlg.import.intofolder"
 msgstr "Añadir a la Carpeta:"
@@ -2725,5 +2725,11 @@ msgstr "Contenido:"
 msgid "sniped.new"
 msgstr "Nuevo Fragmento"
 
-msgid "heading.snip"
+msgid "heading.upload.dest"
+msgstr "Dirección"
+
+msgid "heading.snip.new"
 msgstr "Nuevo Fragmento"
+
+msgid "heading.snip.edit"
+msgstr "Editar Fragmento"

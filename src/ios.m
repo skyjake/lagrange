@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 static iBool isSystemDarkMode_ = iFalse;
 static iBool isPhone_          = iFalse;
 
-static UIWindow *uiWindow_(iWindow *window) {
+static UIWindow *uiWindow_(const iWindow *window) {
     SDL_SysWMinfo wm;
     SDL_VERSION(&wm.version);
     if (SDL_GetWindowWMInfo(window->win, &wm)) {
@@ -538,6 +538,10 @@ iBool isPhone_iOS(void) {
 
 int displayRefreshRate_iOS(void) {
     return (int) uiWindow_(get_Window()).screen.maximumFramesPerSecond;
+}
+
+float displayScale_iOS(const iWindow *window) {
+    return uiWindow_(window).screen.nativeScale;
 }
 
 void setupWindow_iOS(iWindow *window) {
@@ -1053,6 +1057,21 @@ void setText_SystemTextInput(iSystemTextInput *d, const iString *text, iBool all
     }
 }
 
+void insert_SystemTextInput(iSystemTextInput *d, const iString *text) {
+    NSString *str = [NSString stringWithUTF8String:cstr_String(text)];
+    if (d->view) {
+        UITextView *view = REF_d_view;
+        NSUndoManager *undo = [view undoManager];
+        [undo beginUndoGrouping];
+        [undo setActionName:@"Insertion"];
+        NSRange sel = [view selectedRange];
+        [view replaceRange:[view selectedTextRange] withText:str];
+        sel.length = [str length];
+        view.selectedRange = sel;
+        [undo endUndoGrouping];
+    }
+}
+
 int preferredHeight_SystemTextInput(const iSystemTextInput *d) {
     if (d->view) {
         CGRect usedRect = [[REF_d_view layoutManager] usedRectForTextContainer:[REF_d_view textContainer]];
@@ -1137,7 +1156,7 @@ iBool makePopup_SystemMenu(iWidget *owner) {
     /* Setup a context menu handler. */
     if (@available(iOS 14.0, *)) {
         UIButton *button = [[UIButton alloc] init];
-        //button.backgroundColor = [UIColor redColor]; /* debug */
+//        button.backgroundColor = [UIColor redColor]; /* debug */
         button.showsMenuAsPrimaryAction = YES;
         [viewController_(get_Window()).view addSubview:button];
         [appState_ addPopupMenu:button owningWidget:owner];
@@ -1164,33 +1183,71 @@ void setRect_SystemMenu(iWidget *owner, iRect rect) {
     }
 }
 
-void updateItems_SystemMenu(iWidget *owner, const iMenuItem *items, size_t n) {
+API_AVAILABLE(ios(13.0))
+static void addMenuElementGroup_(NSMutableArray<UIMenuElement *> *elems,
+                                 iString *subTitle,
+                                 NSArray<UIMenuElement *> *subElems) {
+    [elems addObject:[UIMenu menuWithTitle:[NSString stringWithUTF8String:cstr_String(subTitle)]
+                                     image:nil
+                                identifier:nil
+                                   options:isEmpty_String(subTitle)
+                                            ? UIMenuOptionsDisplayInline
+                                            : 0
+                                  children:subElems]];
+    clear_String(subTitle);
+}
+
+API_AVAILABLE(ios(13.0))
+static NSArray<UIMenuElement *> *makeMenuElements_(iWidget *owner, PopupData *superData,
+                                                   const iMenuItem *items, size_t n) {
     if (@available(iOS 14.0, *)) {
         iRegExp *ansi = makeAnsiEscapePattern_Text(iTrue /* with ESC */);
-        iAssert(flags_Widget(owner) & nativeMenu_WidgetFlag);
-        PopupData *data = [appState_ findPopupMenu:owner];
-        [data clearCommands];
+        PopupData *data = superData ? superData : [appState_ findPopupMenu:owner];
+        if (!superData) {
+            [data clearCommands];
+        }
         NSMutableArray<UIMenuElement *> *elems = [[NSMutableArray<UIMenuElement *> alloc] init];
         NSMutableArray<UIMenuElement *> *subElems = [[NSMutableArray<UIMenuElement *> alloc] init];
         iBool haveSep = iFalse;
+        iString sepTitle;
+        init_String(&sepTitle);
         for (size_t i = 0; i < n && items[i].label; i++) {
             const iMenuItem *item = &items[i];
-            if (!iCmpStr(item->label, "---")) { /* separator */
+            if (startsWith_CStr(item->label, "---")) { /* separator or submenu */
                 if ([subElems count] > 0) {
                     haveSep = iTrue;
-                    [elems addObject:[UIMenu menuWithTitle:@""
-                                                     image:nil
-                                                identifier:nil
-                                                   options:UIMenuOptionsDisplayInline
-                                                  children:subElems]];
+                    addMenuElementGroup_(elems, &sepTitle, subElems);
                     [subElems removeAllObjects];
                 }
+                setCStr_String(&sepTitle, item->label + 3);
+                translate_Lang(&sepTitle);
+                if (endsWith_String(&sepTitle, ":")) {
+                    removeEnd_String(&sepTitle, 1);
+                }
+                continue;
+            }
+            if (item->command && startsWith_CStr(item->command, "submenu id:")) {
+                if ([subElems count] > 0) {
+                    haveSep = iTrue;
+                    addMenuElementGroup_(elems, &sepTitle, subElems);
+                    [subElems removeAllObjects];
+                }
+                const char *subId = suffixPtr_Command(item->command, "id");
+                iWidget *submenu = findWidget_App(subId);
+                iAssert(submenu);
+                setCStr_String(&sepTitle, item->label);
+                removeIconPrefix_String(&sepTitle);
+                translate_Lang(&sepTitle);
+                const iArray *submenuItems = userData_Object(submenu);
+                addMenuElementGroup_(elems, &sepTitle,
+                                     makeMenuElements_(submenu, data,
+                                                       constData_Array(submenuItems), size_Array(submenuItems)));
                 continue;
             }
             const char *itemLabel = item->label;
             iBool isDisabled = iFalse;
             iBool isSelected = iFalse;
-            if (startsWith_CStr(itemLabel, "///")) {
+            if (startsWith_CStr(itemLabel, "///") || startsWith_CStr(itemLabel, "```")) {
                 isDisabled = iTrue;
                 itemLabel += 3;
             }
@@ -1249,21 +1306,46 @@ void updateItems_SystemMenu(iWidget *owner, const iMenuItem *items, size_t n) {
             if (isSelected) {
                 [action setState:UIMenuElementStateOn];
             }
-            [data setCommand:[NSString stringWithUTF8String:item->command] forActionIdentifier:action.identifier];
+            if (item->command) {
+                [data setCommand:[NSString stringWithUTF8String:item->command] 
+                    forActionIdentifier:action.identifier];
+            }
             [subElems addObject:action];
             deinit_String(&label);
         }
         if (haveSep && [subElems count] > 0) {
-            [elems addObject:[UIMenu menuWithTitle:@""
-                                             image:nil
-                                        identifier:nil
-                                           options:UIMenuOptionsDisplayInline children:subElems]];
+            addMenuElementGroup_(elems, &sepTitle, subElems);
         }
         else {
             elems = subElems;
         }
-        data.menuButton.menu = [UIMenu menuWithChildren:elems];
+        deinit_String(&sepTitle);
         iRelease(ansi);
+        return elems;
+    }
+    return nil;
+}
+
+void updateItems_SystemMenu(iWidget *owner, const iMenuItem *items, size_t n) {
+    if (@available(iOS 14.0, *)) {
+        iAssert(flags_Widget(owner) & nativeMenu_WidgetFlag);
+        PopupData *data = [appState_ findPopupMenu:owner];
+        if (owner->updateMenuItems) {
+            if (@available(iOS 15.0, *)) {
+                data.menuButton.menu = [UIMenu menuWithChildren:@[
+                    [UIDeferredMenuElement elementWithUncachedProvider:^(void (^completion)(NSArray<UIMenuElement *> *)) {
+                    iArray updatedItems;
+                    initCopy_Array(&updatedItems, owner->updateMenuItems(owner));
+                    completion(makeMenuElements_(owner, NULL,
+                                                 constData_Array(&updatedItems),
+                                                 size_Array(&updatedItems)));
+                    deinit_Array(&updatedItems);
+                }]]];
+            }
+        }
+        else {
+            data.menuButton.menu = [UIMenu menuWithChildren:makeMenuElements_(owner, NULL, items, n)];
+        }
     }
 }
 

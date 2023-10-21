@@ -6,6 +6,47 @@
 ```
 # Release notes
 
+## 1.17 (Beta 23)
+* Added "Vibrant Light" color theme.
+* Improved readability of "Colorful Light" headings.
+* Preformatted blocks no longer switch to a smaller font to fit to the page.
+* Fixed horizontal scrolling issues with preformatted blocks: only scroll if needed, allow scrolling anywhere on the block and not just on non-empty text lines, and when scrolling disallow swipe navigation over the area.
+* Fixed visual artifacts around and next to preformatted blocks (e.g., streaking).
+* Fixed potential crash after (un)folding a preformatted block.
+* Fixed links being non-clickable after searching text on a page has scrolled the view.
+* Fixed scroll position being reset when reloading the page.
+* Fixed missing page context menu items.
+* Fixed "View as Plain Text" context menu item after reloading a page.
+* Strip any null characters from the page source during whitespace normalization.
+
+## 1.17 (Beta 22)
+* Long-press actions on the toolbar: provide access to all the available toolbar actions. Open Settings > Identities by long-pressing on the Identity button.
+* Snippets: A collection of short text segments that can be pasted into input prompts and the upload editor. For example, useful for your gemlog header/footer and other often-repeated entries.
+* Snippets can be managed in Settings > Snippets and created via the link context menu or by selecting text on a page.
+* Custom search queries: Snippets whose name starts with a bang (e.g., "!w") can be invoked in the URL field to make customized queries. The snippet content should be a Gemini search URL, for example: "gemini://gemi.dev/cgi-bin/wp.cgi/search".
+* Quick lookup shows matching snippets as a new type of search result.
+* Recently submitted input prompt contents are saved persistently and can be restored via the Ellipsis utility menu in the prompt dialog.
+* You can force the input prompt to appear before a certain URL is requested so you can enter a query string. This is useful for avoiding an extra request when it is known that a URL will require input (e.g., search engine, game input).
+* When importing links as bookmarks, you can optionally create subfolders from headings. You can also choose a destination folder for the imported bookmarks.
+* Quickly add/move a bookmark into a folder with the navbar bookmark button context menu (long-press on 🏷️).
+* User-selectable feed refresh interval. Previously the interval been hardcoded to four hours. (Based on a patch by Michael Nordmeyer.)
+* Setting to never/always collapse preformatted blocks, disabling the ability to toggle the folding.
+* "Fold All" and "Unfold All" in Bookmarks sidebar context menu.
+* "Search" context menu item on selected text to make a search query with it.
+* "Use as Search URL" in link context menu.
+* Menus can have submenus. Several of the old menus were reorganized accordingly. For example, the page context menu has a Tools submenu for translation, Titan uploads, etc.
+* "Mark All Links as Visited" in the Tools submenu of the page context menu.
+* Support for the Nex protocol (nex://nightfall.city/nex/info/specification.txt).
+* Show unsupported media types as plain text if the content is valid UTF-8 encoded text.
+* The page scrolls while selecting text near top/bottom.
+* Display a logo graphic in empty windows/tabs as a placeholder.
+* Adjusted colors of the Import Identity dialog.
+* Tuned theme color palette and improved background colors of "Colorful Light".
+* Newly created client certificates have a default expiration date in the year 9999, which means they won't expire. One can still also set a specific date as before.
+* Fixed incorrect name displayed in page banner when URL query string contains a tilde name.
+* Fixed glitches during swipe navigation. Behavior is more robust at ends of history and when content is not immediately available in cache.
+* Fixed a text rendering issue where glyphs were incorrect when preceded by a Narrow No-Break Space.
+
 ## 1.16 (Beta 21)
 * Fixed crash when the contents of a link line would fail to be recognized as valid characters.
 * Empty new tabs are appended to the right edge. Previously they were inserted next to the active tab.

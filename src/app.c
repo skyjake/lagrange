@@ -2637,14 +2637,14 @@ void postCommand_Root(iRoot *d, const char *command) {
     ev.user.windowID = d ? id_Window(d->window) : 0; /* root-specific means window-specific */
     SDL_PushEvent(&ev);
     iWindow *win = d ? d->window : NULL;
-#if defined (iPlatformAndroid)
-    if (!startsWith_CStr(command, "backup.")) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s[command] {%d} %s",
-                    app_.isLoadingPrefs ? "[Prefs] " : "",
-                    (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
-                    command);
-    }
-#else
+//#if defined (iPlatformAndroid)
+//    if (!startsWith_CStr(command, "backup.")) {
+//        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s[command] {%d} %s",
+//                    app_.isLoadingPrefs ? "[Prefs] " : "",
+//                    (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
+//                    command);
+//    }
+//#else
     if (app_.commandEcho) {
         const int windowIndex =
             win && type_Window(win) == main_WindowType ? windowIndex_App(as_MainWindow(win)) + 1 : 0;
@@ -2658,7 +2658,7 @@ void postCommand_Root(iRoot *d, const char *command) {
                command);
         fflush(stdout);
     }
-#endif
+//#endif
 }
 
 void postCommandf_Root(iRoot *d, const char *command, ...) {
@@ -4703,6 +4703,10 @@ iBool handleCommand_App(const char *cmd) {
         }
         if (isMobile_Platform()) {
             enableToolbar_Root(get_Root(), iFalse); /* toolbars disabled while Settings is shown */
+            if (findWidget_App("upload")) {
+                postCommand_App("upload.cancel");
+            }
+            postCommand_App("valueinput.cancel"); /* in case an input dialog is currently open */
         }
         setFocus_Widget(NULL);
         iWidget *dlg = makePreferences_Widget();
@@ -4821,18 +4825,27 @@ iBool handleCommand_App(const char *cmd) {
             showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
         }
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
-        if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
-            iWidget *idPanel = panel_Mobile(dlg, 3);
-            iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
-            postCommand_Widget(button, "panel.open");
-        }
         if (prefs_App()->detachedPrefs && deviceType_App() == desktop_AppDeviceType &&
             !isTerminal_Platform()) {
             /* Detach into a window if it doesn't fit otherwise. */
             promoteDialogToWindow_Widget(dlg);
         }
+        if (argLabel_Command(cmd, "idents") && deviceType_App() != desktop_AppDeviceType) {
+            /* TODO: Don't hardcode the panel index. */
+            iWidget *idPanel = panel_Mobile(dlg, 3);
+            iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), idPanel);
+            postCommand_Widget(button, "panel.open");
+        }
         if (argLabel_Command(cmd, "sniped")) {
-            postCommand_Widget(dlg, "tabs.switch id:sniped");
+            if (deviceType_App() == desktop_AppDeviceType) {
+                postCommand_Widget(dlg, "tabs.switch id:sniped");
+            }
+            else {
+                /* TODO: Don't hardcode the panel index. */
+                iWidget *snippetPanel = panel_Mobile(dlg, 8);
+                iWidget *button  = findUserData_Widget(findChild_Widget(dlg, "panel.top"), snippetPanel);
+                postCommand_Widget(button, "panel.open");
+            }
         }
     }
     else if (equal_Command(cmd, "navigate.home") && isMainWin) {

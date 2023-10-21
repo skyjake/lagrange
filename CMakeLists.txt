@@ -18,20 +18,20 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.17.0
+    VERSION 1.17.1
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2023)
 if (IOS)
-    set (PROJECT_VERSION 1.16)
-    set (IOS_BUNDLE_VERSION 5)
-    set (IOS_BUILD_DATE "2023-07-31")
+    set (PROJECT_VERSION 1.17)
+    set (IOS_BUNDLE_VERSION 3)
+    set (IOS_BUILD_DATE "2023-10-21")
 endif ()
 if (ANDROID)
-    set (PROJECT_VERSION 1.16)
-    set (ANDROID_BUILD_VERSION b21)  # remember to update Gradle, AndroidManifest.xml
-    set (ANDROID_BUILD_DATE "2023-07-31")
+    set (PROJECT_VERSION 1.17)
+    set (ANDROID_BUILD_VERSION b23)  # remember to update Gradle, AndroidManifest.xml
+    set (ANDROID_BUILD_DATE "2023-10-21")
 endif ()
 
 # Load modules from the source tree
@@ -207,8 +207,10 @@ set (SOURCES
     src/resources.h
     src/sitespec.c
     src/sitespec.h
+    src/snippets.c
+    src/snippets.h
     src/stb_image.h
-    src/stb_image_resize.h
+    src/stb_image_resize2.h
     src/stb_truetype.h
     src/updater.h
     src/visited.c
@@ -379,9 +381,7 @@ endif ()
 
 # Target.
 if (NOT ANDROID)
-    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS}
-        src/snippets.h
-        src/snippets.c)
+    add_executable (app ${SOURCES} ${RESOURCES} ${EMB_FONTS})
 else ()
     # The whole app becomes one shared library, based on this static one.
     add_library (app SHARED ${SOURCES})
@@ -534,6 +534,9 @@ if (APPLE AND NOT ENABLE_TUI)
     endif ()
 endif ()
 if (ANDROID)
+    if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+        target_compile_options (app PUBLIC -mfpu=neon-vfpv4) # 32-bit stb_image_resize2
+    endif ()
     target_compile_definitions (app PUBLIC
         LAGRANGE_ANDROID_VERSION="${ANDROID_BUILD_VERSION}"
         LAGRANGE_ANDROID_BUILD_DATE="${ANDROID_BUILD_DATE}"
@@ -545,11 +548,11 @@ if (MSYS)
         target_link_libraries (app PUBLIC winsparkle)
     endif ()
 endif ()
-if (UNIX)
-    target_link_libraries (app PUBLIC m)
-endif ()
+#if (UNIX)
+#    target_link_libraries (app PUBLIC m)
+#endif ()
 if (HAIKU)
-    target_link_libraries (app PUBLIC m network bsd)
+    target_link_libraries (app PUBLIC network bsd)
 endif ()
 
 # Deployment.

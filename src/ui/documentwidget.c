@@ -863,7 +863,7 @@ static void updateBanner_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
-    iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
+    iChangeFlags(d->flags, selecting_DocumentWidgetFlag | viewSource_DocumentWidgetFlag, iFalse);
     setFlags_Widget(as_Widget(d), touchDrag_WidgetFlag, iFalse);
     d->requestLinkId = 0;
     updateVisitedLinks_GmDocument(d->view->doc);
@@ -1931,7 +1931,7 @@ void scrollBegan_DocumentWidget(iAnyObject *any, int offset, uint32_t duration) 
     if (deviceType_App() == phone_AppDeviceType) {
         const float normPos = normScrollPos_DocumentView(d->view);
         if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5 && normPos >= 0) {
-            showToolbar_Root(as_Widget(d)->root, offset < 0);
+            showToolbar_Root(as_Widget(d)->root, offset < 0 || d->view->scrollY.pos.to <= 0);
         }
     }
     if (offset) {
@@ -1951,10 +1951,11 @@ static void togglePreFold_DocumentWidget_(iDocumentWidget *d, uint16_t preId) {
     }
     d->view->hoverPre    = NULL;
     d->view->hoverAltPre = NULL;
-    d->selectMark       = iNullRange;
+    d->selectMark        = iNullRange;
     foldPre_GmDocument(d->view->doc, preId);
     redoLayout_GmDocument(d->view->doc);
     clampScroll_DocumentView(d->view);
+    updateVisible_DocumentView(d->view);
     updateHover_DocumentView(d->view, mouseCoord_Window(get_Window(), 0));
     invalidate_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
@@ -2054,6 +2055,7 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
     iMenuItem pasteItem;
     makePastePrecedingLineMenuItem_(&pasteItem, buttons, precedingLine);
     pushBack_Array(items, &pasteItem);
+    pushBack_Array(items, &(iMenuItem){ "${menu.paste.snippet}", 0, 0, "submenu id:snippetmenu" });
     pushBackN_Array(
         items,
         (iMenuItem[]){
@@ -2069,7 +2071,9 @@ static const iArray *updateInputPromptMenuItems_(iWidget *menu) {
             pushBack_Array(items, &(iMenuItem){ "---" });
             pushBack_Array(items,
                            &(iMenuItem){ "${menu.input.clear}", 0, 0, "!recentinput.clear" });
-            pushBack_Array(items, &(iMenuItem){ "```${menu.input.restore}" });
+            pushBack_Array(items, &(iMenuItem){
+                isMobile_Platform() ? "---${ST:menu.input.restore}" : "```${menu.input.restore}"
+            });
             iReverseConstForEach(StringArray, i, recentInput) {
                 iString *label = collect_String(copy_String(i.value));
                 replace_String(label, "\n\n", " ");
@@ -2150,7 +2154,7 @@ iWidget *makeInputPrompt_DocumentWidget(iDocumentWidget *d, const iString *url, 
             makeMenuButton_LabelWidget(midEllipsis_Icon, NULL, 0);
         iWidget *menu = findChild_Widget(as_Widget(ellipsisButton), "menu");
         /* When opening, update the items to reflect the site-specific settings. */
-        menu->updateMenuItems = updateInputPromptMenuItems_;
+        setMenuUpdateItemsFunc_Widget(menu, updateInputPromptMenuItems_);
         set_String(&menu->data,
                    collectNewFormat_String("context buttons:%p url:%s preceding:%s",
                                            buttons,
@@ -2263,7 +2267,6 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 d->sourceGempub = NULL;
                 destroy_Widget(d->footerButtons);
                 d->footerButtons = NULL;
-                resetWideRuns_DocumentView(d->view);
                 if (d->flags & urlChanged_DocumentWidgetFlag) {
                     /* Keep scroll position when reloading the same page. */
                     resetScroll_DocumentView(d->view);
@@ -2271,6 +2274,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 d->view->scrollY.pullActionTriggered = 0;
                 updateTheme_DocumentWidget_(d);
                 updateDocument_DocumentWidget_(d, resp, NULL, iTrue);
+                resetWideRuns_DocumentView(d->view);
                 break;
             case categoryRedirect_GmStatusCode:
                 if (isEmpty_String(&resp->meta)) {
@@ -2559,9 +2563,16 @@ static int sidebarSwipeAreaHeight_DocumentWidget_(const iDocumentWidget *d) {
     return iMin(win->size.x, win->size.y) / 4;
 }
 
-static iBool checkTabletSwipeVerticalPosition_DocumentWidget_(const iDocumentWidget *d, int swipeY) {
+static iBool checkTabletSwipeVerticalPosition_DocumentWidget_(const iDocumentWidget *d, int swipeY,
+                                                              int edge) {
     /* Returns True if the the vertical position is valid for swiping the sidebar. */
     if (deviceType_App() != tablet_AppDeviceType) {
+        return iFalse;
+    }
+    if (edge == 1 && isVisible_Widget(findWidget_App("sidebar"))) {
+        return iFalse;
+    }
+    if (edge == 2 && isVisible_Widget(findWidget_App("sidebar2"))) {
         return iFalse;
     }
     const iWidget *w = constAs_Widget(d);
@@ -2594,16 +2605,19 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     }
     if (equal_Command(cmd, "edgeswipe.moved")) {
         /* Edge swipes can also be used to show the sidebars. */
+        const int edge = argLabel_Command(cmd, "edge");
         if ((deviceType_App() == tablet_AppDeviceType || isLandscapePhone_App()) &&
-            argLabel_Command(cmd, "edge") &&
-            checkTabletSwipeVerticalPosition_DocumentWidget_(d, argLabel_Command(cmd, "y"))) {
+            edge &&
+            checkTabletSwipeVerticalPosition_DocumentWidget_(d,
+                                                             argLabel_Command(cmd, "y"),
+                                                             edge)) {
             /* This is an actual swipe from the edge of the device, we should let the sidebars
                handle it. */
-            if (argLabel_Command(cmd, "edge") == 1) {
+            if (edge == 1) {
                 transferAffinity_Touch(NULL, findWidget_App("sidebar"));
                 return iTrue;
             }
-            else if (argLabel_Command(cmd, "edge") == 2 && deviceType_App() == tablet_AppDeviceType) {
+            else if (edge == 2 && deviceType_App() == tablet_AppDeviceType) {
                 transferAffinity_Touch(NULL, findWidget_App("sidebar2"));
                 return iTrue;
             }
@@ -2799,6 +2813,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         d->phoneToolbar = findWidget_App("bottombar");
         const iBool keepCenter = equal_Command(cmd, "font.changed");
         updateDocumentWidthRetainingScrollPosition_DocumentView(d->view, keepCenter);
+        resetWideRuns_DocumentView(d->view);
         updateDrawBufs_DocumentView(d->view, updateSideBuf_DrawBufsFlag);
         updateVisible_DocumentView(d->view);
         invalidate_DocumentWidget_(d);
@@ -3354,6 +3369,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.reload") && document_Command(cmd) == d) {
+        d->view->userHasScrolled = iFalse; /* respect the current scroll position */
         d->initNormScrollY = normScrollPos_DocumentView(d->view);
         if (equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
             /* Reopen so the Upload dialog gets shown. */
@@ -3594,6 +3610,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 const iGmRun *found;
                 if ((found = findRunAtLoc_GmDocument(d->view->doc, d->foundMark.start)) != NULL) {
                     scrollTo_DocumentView(d->view, mid_Rect(found->bounds).y, iTrue);
+                    updateVisible_DocumentView(d->view);
                 }
             }
         }
@@ -4296,6 +4313,16 @@ static iWidget *makeLinkContextMenu_DocumentWidget_(iDocumentWidget *d, const iG
     return makeMenu_Widget(w, data_Array(items), size_Array(items));
 }
 
+static iBool contains_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
+    if (!contains_Widget(constAs_Widget(d), pos)) {
+        return iFalse;
+    }
+    if (d->phoneToolbar && contains_Widget(d->phoneToolbar, pos)) {
+        return iFalse;
+    }
+    return iTrue;
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget       *w    = as_Widget(d);
     iDocumentView *view = d->view;
@@ -4420,16 +4447,36 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         else {
             /* Traditional mouse wheel. */
-            const int amount = ev->wheel.y;
-            if (keyMods_Sym(modState_Keys()) == KMOD_PRIMARY) {
-                postCommandf_App("zoom.delta arg:%d", amount > 0 ? 10 : -10);
+            iInt2 amount = init_I2(ev->wheel.x, ev->wheel.y);
+            const int kmods = keyMods_Sym(modState_Keys());
+            if (kmods == KMOD_PRIMARY) {
+                postCommandf_App("zoom.delta arg:%d", amount.y > 0 ? 10 : -10);
                 return iTrue;
             }
-            smoothScroll_DocumentView(view,
-                                      -3 * amount * lineHeight_Text(paragraph_FontId),
-                                      smoothDuration_DocumentWidget_(mouse_ScrollType));
-            scrollWideBlock_DocumentView(
-                view, mouseCoord, -3 * ev->wheel.x * lineHeight_Text(paragraph_FontId), 167);
+            if (!isApple_Platform()) {
+                if (kmods == KMOD_SHIFT) {
+                    /* Shift switches to horizontal scrolling mode. (macOS does this for us.) */
+                    iSwap(int, amount.x, amount.y);
+                }
+                if (isFinished_SmoothScroll(&d->view->scrollY) &&
+                    d->view->hoverPre &&
+                    d->view->hoverPre->flags & wide_GmRunFlag &&
+                    isWideBlockScrollable_DocumentView(d->view,
+                                                       documentBounds_DocumentView(d->view),
+                                                       d->view->hoverPre)) {
+                    /* Do a horizontal scroll over a wide block when not vertically scrolling. */
+                    iSwap(int, amount.x, amount.y);
+                }
+            }
+            if (amount.y) {
+                smoothScroll_DocumentView(view,
+                                          -3 * amount.y * lineHeight_Text(paragraph_FontId),
+                                          smoothDuration_DocumentWidget_(mouse_ScrollType));
+            }
+            if (amount.x) {
+                scrollWideBlock_DocumentView(
+                    view, mouseCoord, -3 * amount.x * lineHeight_Text(paragraph_FontId), 167);
+            }
         }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         return iTrue;
@@ -4479,7 +4526,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_RIGHT &&
-            contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
+            contains_DocumentWidget_(d, init_I2(ev->button.x, ev->button.y))) {
             if (!isVisible_Widget(d->menu)) {
                 d->contextLink = view->hoverLink;
                 d->contextPos = init_I2(ev->button.x, ev->button.y);
@@ -4647,7 +4694,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             continueMarkingSelection_DocumentWidget_(d);
             /* Set scroll speed depending on position near the top/bottom. */ {
                 const iRect bounds = bounds_Widget(w);
-                const int autoScrollRegion = gap_UI * 15;
+                const int autoScrollRegion = gap_UI * (isMobile_Platform() ? 15 : d->view->pageMargin);
                 const int y = pos_Click(&d->click).y;
                 float delta = 0.0f;
                 if (y < top_Rect(bounds) + autoScrollRegion) {
@@ -4700,6 +4747,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         }
                         const iMenuItem items[] = {
                             { clipCopy_Icon " ${menu.copy}", 0, 0, "copy" },
+                            { "---" },
+                            { magnifyingGlass_Icon " ${menu.search}", 0, 0,
+                                format_CStr("search newtab:1 query:%s",
+                                            cstr_String(selectedText_DocumentWidget_(d))) },
+                            { add_Icon " ${menu.snippet.add}", 0, 0,
+                                format_CStr("!snippet.add content:%s",
+                                            cstr_String(selectedText_DocumentWidget_(d))) },
 #if defined (iPlatformAppleMobile)
                             { export_Icon " ${menu.share}", 0, 0, "copy share:1" },
 #endif

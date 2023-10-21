@@ -692,6 +692,7 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
 }
 
 static iBool isHRule_(iRangecc line) {
+    /* This is used in Markdown sources. */
     if (!startsWith_Rangecc(line, "---")) {
         return iFalse;
     }
@@ -772,7 +773,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool      isNormalized  = shouldBeNormalized_GmDocument_(d);
     const iBool      isJustified   = prefs->justifyParagraph;
     enum iGmLineType prevType      = text_GmLineType;
-    enum iGmLineType prevNonBlankType = text_GmLineType;
+    enum iGmLineType prevNonBlankType = undefined_GmLineType;
     iBool            followsBlank  = iFalse;
     iString          firstContentLine; /* may be used as a title if one isn't specified */
     init_String(&firstContentLine);
@@ -841,14 +842,18 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 iGmPreMeta meta = { .bounds = line };
                 meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
                     d, line.start, preFont, &meta.contents, &meta.bounds.end);
-                const float oversizeRatio =
-                    meta.pixelRect.size.x /
-                    (float) (d->size.x -
-                             (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text);
-                if (oversizeRatio > 1.0f) {
-                    preFont--; /* one notch smaller in the font size */
-                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents).bounds.size;
+                int overrun = meta.pixelRect.size.x - d->size.x;
+                if (prevNonBlankType == undefined_GmLineType && overrun > 0) {
+                    meta.initialOffset = iMin(overrun / 2, d->outsideMargin - 5 * gap_UI);
                 }
+//                const float oversizeRatio =
+//                    meta.pixelRect.size.x /
+//                    (float) (d->size.x -
+//                             (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text);
+//                if (oversizeRatio > 1.0f) {
+//                    preFont--; /* one notch smaller in the font size */
+//                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents).bounds.size;
+//                }
                 trimLine_Rangecc(&line, type, isNormalized);
                 meta.altText = line; /* without the ``` */
                 /* Reuse previous state. */
@@ -898,7 +903,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Empty lines don't produce text runs. */
         if (isEmpty_Range(&line)) {
-            if (type == quote_GmLineType && !prefs->quoteIcon) {
+            if (type == preformatted_GmLineType) {
+                /* Empty lines in a preformatted blocks should functionally be part of the block. */
+                run.bounds = (iRect){ pos, init_I2(1, lineHeight_Text(run.font)) };
+                run.visBounds = run.bounds;
+                run.text = line;
+                pushBack_Array(&d->layout, &run);
+            }
+            else if (type == quote_GmLineType && !prefs->quoteIcon) {
                 /* For quote indicators we still need to produce a run. */
                 run.visBounds.pos  = addX_I2(pos, indents[type] * gap_Text);
                 run.visBounds.size = init_I2(gap_Text, lineHeight_Text(run.font));
@@ -1120,6 +1132,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (!isMono) {
 #if 0
                 /* Upper-level headings are typeset a bit tighter. */
+                /* FIXME: Oops, text renderer clears glyph backgrounds so it clips the adjacent line. */
                 if (type == heading1_GmLineType) {
                     rts.lineHeightReduction = 0.10f;
                 }
@@ -1327,16 +1340,19 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         d->warnings |= missingGlyphs_GmDocumentWarning;
     }
     /* Go over the preformatted blocks and mark them wide if at least one run is wide. */ {
-        /* TODO: Store the dimensions and ranges for later access. */
         iForEach(Array, i, &d->layout) {
             iGmRun *run = i.value;
             if (preId_GmRun(run) && run->flags & wide_GmRunFlag) {
-                iGmRunRange block = findPreformattedRange_GmDocument(d, run);
-                for (const iGmRun *j = block.start; j != block.end; j++) {
-                    iConstCast(iGmRun *, j)->flags |= wide_GmRunFlag;
+                iGmPreMeta *meta = at_Array(&d->preMeta, preId_GmRun(run) - 1);
+                meta->runRange = findPreformattedRange_GmDocument(d, run);
+                for (const iGmRun *j = meta->runRange.start; j != meta->runRange.end; j++) {
+                    iGmRun *jRun = iConstCast(iGmRun *, j);
+                    jRun->flags |= wide_GmRunFlag;
+                    iChangeFlags(jRun->flags, startOfLine_GmRunFlag, j == meta->runRange.start);
+                    iChangeFlags(jRun->flags, endOfLine_GmRunFlag, j + 1 == meta->runRange.end);
                 }
                 /* Skip to the end of the block. */
-                i.pos = block.end - (const iGmRun *) constData_Array(&d->layout) - 1;
+                i.pos = meta->runRange.end - (const iGmRun *) constData_Array(&d->layout) - 1;
             }
         }
     }
@@ -1549,16 +1565,17 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
             set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
         }
-        else if (theme == colorfulLight_GmDocumentTheme) {
+        else if (theme == colorfulLight_GmDocumentTheme ||
+                 theme == vibrantLight_GmDocumentTheme) {
             const iHSLColor base = addSatLum_HSLColor(get_HSLColor(teal_ColorId), -0.3f, 0.5f);
             setHsl_Color(tmBackground_ColorId, base);
             set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
             set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
             setHsl_Color(tmQuote_ColorId, addSatLum_HSLColor(base, 0, -0.25f));
             setHsl_Color(tmPreformatted_ColorId, addSatLum_HSLColor(base, 0, -0.3f));
-            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
-            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.67f));
-            set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.55f));
+            setHsl_Color(tmHeading1_ColorId, addSatLum_HSLColor(base, 1.0f, -0.37f));
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmHeading1_ColorId), get_Color(black_ColorId), 0.5f));
+            set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.4f));
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.1f));
             setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.4f));
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.4f));
@@ -1729,6 +1746,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             { 8, 9 },  /* 10: violet */
             { 7, 8 },  /* 11: pink */
         };
+#if 1
         if (d->themeSeed & 0xc00000) {
             /* Hue shift for more variability. */
             iForIndices(i, hues) {
@@ -1736,10 +1754,14 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             }
         }
         size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
-
-//        static int testing = 0;
-//        primIndex = (testing++) % iElemCount(hues);
-
+#else
+        /* Sequentially switch between hues for testing. */
+        static int testing_ = 0;
+        iForIndices(i, hues) {
+            hues[i] += 10 * ((testing_ % 3) - 1);
+        }
+        size_t primIndex = (testing_++) / 3 % iElemCount(hues);
+#endif
         if (d->themeSeed && primIndex == 11 && d->themeSeed & 0x4000000) {
             /* De-pink some sites. */
             primIndex = (primIndex + d->themeSeed & 0xf) % 12;
@@ -1817,27 +1839,41 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *paletteSeed, const iB
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
         }
-        else if (theme == colorfulLight_GmDocumentTheme) {
+        else if (theme == colorfulLight_GmDocumentTheme ||
+                 theme == vibrantLight_GmDocumentTheme) {
+
+            const iBool isVibrant = (theme == vibrantLight_GmDocumentTheme);
 //            static int primIndex = 0;
 //            primIndex = (primIndex + 1) % iElemCount(hues);
             iHSLColor base = { hues[primIndex], 1.0f, normLum, 1.0f };
-
+            iHSLColor h1   = { hues[primIndex], 1.0f, normLum - 0.37f, 1.0f };
+            if (isVibrant) {
+                base.lum = 0.5f;
+                float offset = luma_HSLColor(base) - 0.8f;
+                base.lum -= offset * 0.5f;
+                h1 = (iHSLColor){ 0, 1.0f, 1.0f, 1.0f };
+            }
 //            printf("prim:%d norm:%f\n", primIndex, normLum[primIndex]); fflush(stdout);
-            static const float normSat[] = {
-                0.85f, 0.90f, 1.00f, 0.65f, 0.65f,
-                0.65f, 0.90f, 0.90f, 1.00f, 0.90f,
-                1.00f, 0.75f
-            };
+            static const float normSat[] = { 0.85f, 0.90f, 1.00f, 0.65f, 0.65f, 0.65f,
+                                             0.90f, 0.90f, 1.00f, 0.90f, 1.00f, 0.75f };
             iBool darkHeadings = iTrue;
-            base.sat *= normSat[primIndex] * 0.8f;
+            base.sat *= normSat[primIndex] * (!isVibrant ? 0.8f : 1.0f);
             setHsl_Color(tmBackground_ColorId, base);
             set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
             set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
             setHsl_Color(tmQuote_ColorId, addSatLum_HSLColor(base, 0, -base.lum * 0.67f));
             setHsl_Color(tmPreformatted_ColorId, addSatLum_HSLColor(base, 0, -base.lum * 0.75f));
-            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
-            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.7f));
-            set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.6f));
+            setHsl_Color(tmHeading1_ColorId, h1);
+            setHsl_Color(tmHeading2_ColorId,
+                         !isVibrant ? addSatLum_HSLColor(h1, 0, -0.1f)
+                                    : hsl_Color(mix_Color(
+                                          get_Color(tmBackground_ColorId),
+                                          get_Color(darkHeadings ? black_ColorId : white_ColorId),
+                                          0.7f)));
+            set_Color(tmHeading3_ColorId,
+                      mix_Color(get_Color(!isVibrant ? tmHeading1_ColorId : tmBackground_ColorId),
+                                get_Color(darkHeadings ? black_ColorId : white_ColorId),
+                                0.6f));
             setHsl_Color(
                 tmBannerBackground_ColorId,
                 addSatLum_HSLColor(base, 0, isDarkUI ? -0.2f * (1 - normLum) : 0.2f * (1 - normLum)));
@@ -2396,6 +2432,16 @@ static void import_GmDocument_(iGmDocument *d) {
     d->format = d->origFormat;
     set_String(&d->source, &d->origSource);
     replace_String(&d->source, "\r\n", "\n");
+    /* Remove any null characters. */ {
+        const char *ch = constBegin_String(&d->source);
+        for (size_t pos = 0; pos < size_String(&d->source); pos++, ch++) {
+            if (*ch == 0) {
+                remove_Block(&d->source.chars, pos, 1);
+                pos--;
+                ch--;
+            }
+        }
+    }
     /* Detect use of ANSI escapes. */ {
         iRegExp *ansiEsc = new_RegExp("\x1b[[()]([0-9;AB]*?)[ABCDEFGHJKSTfimn]", 0);
         iRegExpMatch m;
@@ -2466,6 +2512,10 @@ void updateVisitedLinks_GmDocument(iGmDocument *d) {
     }
     markLinkRunsVisited_GmDocument_(d, &linkIds);
     deinit_IntSet(&linkIds);
+}
+
+size_t numPre_GmDocument(const iGmDocument *d) {
+    return size_Array(&d->preMeta);
 }
 
 const iGmPreMeta *preMeta_GmDocument(const iGmDocument *d, uint16_t preId) {

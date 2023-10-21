@@ -98,6 +98,7 @@ void    scrollTo_DocumentView           (iDocumentView *, int documentY, iBool c
 void    scrollToHeading_DocumentView    (iDocumentView *, const char *heading);
 void    resetScroll_DocumentView        (iDocumentView *);
 void    resetScrollPosition_DocumentView(iDocumentView *, float normScrollY);
+iBool   isWideBlockScrollable_DocumentView(const iDocumentView *, const iRect docBounds, const iGmRun *run);
 iBool   scrollWideBlock_DocumentView    (iDocumentView *, iInt2 mousePos, int delta, int duration);
 void    resetWideRuns_DocumentView      (iDocumentView *);
 void    invalidateAndResetWideRunsWithNonzeroOffset_DocumentView(iDocumentView *);
