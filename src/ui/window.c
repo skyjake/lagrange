@@ -376,10 +376,14 @@ void drawWhileResizing_MainWindow(iMainWindow *d, int w, int h) {
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
+#if defined (iPlatformAppleMobile)
+    return displayScale_iOS(d);
+#else
     int dx, x;
     SDL_GetRendererOutputSize(d->render, &dx, NULL);
     SDL_GetWindowSize(d->win, &x, NULL);
     return (float) dx / (float) x;
+#endif
 }
 
 #if defined (iPlatformApple)

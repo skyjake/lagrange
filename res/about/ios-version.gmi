@@ -10,6 +10,7 @@
 * Added "Vibrant Light" color theme.
 * Improved readability of "Colorful Light" headings.
 * Preformatted blocks no longer switch to a smaller font to fit to the page.
+* (iPad) Fixed incorrect display scaling when launching the app in Slide Over or Split View mode.
 * Fixed horizontal scrolling issues with preformatted blocks: only scroll if needed, allow scrolling anywhere on the block and not just on non-empty text lines, and when scrolling disallow swipe navigation over the area.
 * Fixed visual artifacts around and next to preformatted blocks (e.g., streaking).
 * Fixed potential crash after (un)folding a preformatted block.

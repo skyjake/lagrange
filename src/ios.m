@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 static iBool isSystemDarkMode_ = iFalse;
 static iBool isPhone_          = iFalse;
 
-static UIWindow *uiWindow_(iWindow *window) {
+static UIWindow *uiWindow_(const iWindow *window) {
     SDL_SysWMinfo wm;
     SDL_VERSION(&wm.version);
     if (SDL_GetWindowWMInfo(window->win, &wm)) {
@@ -538,6 +538,10 @@ iBool isPhone_iOS(void) {
 
 int displayRefreshRate_iOS(void) {
     return (int) uiWindow_(get_Window()).screen.maximumFramesPerSecond;
+}
+
+float displayScale_iOS(const iWindow *window) {
+    return uiWindow_(window).screen.scale;
 }
 
 void setupWindow_iOS(iWindow *window) {
