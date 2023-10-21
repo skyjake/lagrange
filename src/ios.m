@@ -541,7 +541,7 @@ int displayRefreshRate_iOS(void) {
 }
 
 float displayScale_iOS(const iWindow *window) {
-    return uiWindow_(window).screen.scale;
+    return uiWindow_(window).screen.nativeScale;
 }
 
 void setupWindow_iOS(iWindow *window) {
