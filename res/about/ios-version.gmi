@@ -6,6 +6,19 @@
 ```
 # Release notes
 
+## 1.17 (3)
+* Added "Vibrant Light" color theme.
+* Improved readability of "Colorful Light" headings.
+* Preformatted blocks no longer switch to a smaller font to fit to the page.
+* Fixed horizontal scrolling issues with preformatted blocks: only scroll if needed, allow scrolling anywhere on the block and not just on non-empty text lines, and when scrolling disallow swipe navigation over the area.
+* Fixed visual artifacts around and next to preformatted blocks (e.g., streaking).
+* Fixed potential crash after (un)folding a preformatted block.
+* Fixed links being non-clickable after searching text on a page has scrolled the view. 
+* Fixed scroll position being reset when reloading the page.
+* Fixed missing page context menu items.
+* Fixed "View as Plain Text" context menu item after reloading a page.
+* Strip any null characters from the page source during whitespace normalization.
+
 ## 1.17 (2)
 * Long-press actions on the toolbar: provide access to all the available toolbar actions. Open Settings > Identities by long-pressing on the Identity button.
 * Snippets: A collection of short text segments that can be pasted into input prompts and the upload editor. For example, useful for your gemlog header/footer and other often-repeated entries.
