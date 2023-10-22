@@ -8,7 +8,7 @@
 
 ## 1.17.2
 * Mouse wheel direction switches back to vertical when a wide block has been scrolled all the way.
-* Normalize ANSI Cursor Forward control sequence ("CSI n C") to a series of spaces, but only in preformatted blocks.
+* ANSI Cursor Forward control sequence ("CSI n C") is converted to a series of spaces, but only in preformatted text.
 * Fixed parsing of ANSI SGR sequences with many attributes concatenated (e.g., 0;1;40;30).
 * Fixed inline image loading indicator overdrawing itself, becoming unreadable.
 * Fixed drag-to-select with the mouse being too sensitive to mouse movement.
