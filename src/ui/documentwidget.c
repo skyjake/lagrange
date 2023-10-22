@@ -4440,7 +4440,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
             stop_Anim(&d->view->scrollY.pos);
             immediateScroll_DocumentView(view, -wheel.y);
-            if (!scrollWideBlock_DocumentView(view, mouseCoord, -wheel.x, 0) &&
+            if (!scrollWideBlock_DocumentView(view, mouseCoord, -wheel.x, 0, NULL) &&
                 wheel.x) {
                 handleWheelSwipe_DocumentWidget_(d, &ev->wheel);
             }
@@ -4468,14 +4468,20 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     iSwap(int, amount.x, amount.y);
                 }
             }
+            if (amount.x) {
+                iBool isAtEnd;
+                scrollWideBlock_DocumentView(view, mouseCoord,
+                                             -3 * amount.x * lineHeight_Text(paragraph_FontId),
+                                             167, &isAtEnd);
+                if (isAtEnd) {
+                    /* Can't scroll any more, go the other way. */                    
+                    amount.y = amount.x;
+                }                
+            }
             if (amount.y) {
                 smoothScroll_DocumentView(view,
                                           -3 * amount.y * lineHeight_Text(paragraph_FontId),
                                           smoothDuration_DocumentWidget_(mouse_ScrollType));
-            }
-            if (amount.x) {
-                scrollWideBlock_DocumentView(
-                    view, mouseCoord, -3 * amount.x * lineHeight_Text(paragraph_FontId), 167);
             }
         }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
