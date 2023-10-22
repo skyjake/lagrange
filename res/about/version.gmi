@@ -10,6 +10,7 @@
 * Normalize ANSI Cursor Forward control sequence ("CSI n C") to a series of spaces, but only in preformatted blocks.
 * Fixed parsing of ANSI SGR sequences with many attributes concatenated (e.g., 0;1;40;30).
 * Fixed inline image loading indicator overdrawing itself, becoming unreadable.
+* Fixed drag-to-select with the mouse being too sensitive to mouse movement.
 
 ## 1.17.1
 * Added "Vibrant Light" color theme.
