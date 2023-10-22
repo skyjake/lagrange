@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2023-06-01 08:03+0000\n"
+"PO-Revision-Date: 2023-10-24 20:14+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -207,7 +207,7 @@ msgid "menu.zoom.reset"
 msgstr "Resetta ingrandimento"
 
 msgid "menu.view.split"
-msgstr "Vista Divisa…"
+msgstr "Vista Divisa"
 
 msgid "menu.save.downloads.open"
 msgstr "Salva negli Scaricati e apri il file"
@@ -374,7 +374,7 @@ msgstr "Copia Fingerprint"
 
 #, c-format
 msgid "dlg.input.prompt"
-msgstr "Per favore fornisci l'input per %s:"
+msgstr "Fornisci l'input per %s:"
 
 msgid "dlg.input.send"
 msgstr "Invia"
@@ -2268,15 +2268,15 @@ msgstr "Archivio Dati dell'Utente"
 msgid "userdata.help"
 msgstr ""
 "Gli archivi dei dati dell'utente contengono lo storico di navigazione, le "
-"identità, i segnalibri, le impostazioni per-sito e i fingerprint dei "
-"certificati dei server fidati. Possono essere salvati come backup ed essere "
-"usati per trasferire dati tra i dispositivi."
+"identità, i segnalibri, i frammenti di testo, le impostazioni per-sito e i "
+"fingerprint dei certificati dei server fidati. Possono essere salvati come "
+"backup ed essere usati per trasferire dati tra i dispositivi."
 
 msgid "menu.export"
-msgstr "Esporta Dati Utente"
+msgstr "Esporta"
 
 msgid "menu.import"
-msgstr "Importa Dati Utente…"
+msgstr "Importa…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
@@ -2601,3 +2601,18 @@ msgstr "Slovacco"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Reindirizzamenti che cambiano lo schema:"
+
+msgid "menu.userdata"
+msgstr "Dati dell'utente"
+
+msgid "menu.paste.snippet"
+msgstr "Incolla Frammento di Testo"
+
+msgid "menu.search"
+msgstr "Cerca"
+
+msgid "menu.tools"
+msgstr "Strumenti"
+
+msgid "menu.page.visitlinks"
+msgstr "Segna tutti i link come Visitati"
