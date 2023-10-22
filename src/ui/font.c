@@ -246,61 +246,87 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
             init_RegExpMatch(&m);
             if (match_RegExp(current_Text()->ansiEscape, srcPos, d->source.end - srcPos, &m)) {
                 finishRun_AttributedText_(d, &run, pos - 1);
-                const int ansi = current_Text()->ansiFlags;
-                if (ansi && capturedRange_RegExpMatch(&m, 2).start[0] ==
-                                'm' /* Select Graphic Rendition */) {
-                    const iRangecc sequence = capturedRange_RegExpMatch(&m, 1);
-                    /* Note: This styling is hardcoded to match `typesetOneLine_RunTypesetter_()`. */
-                    if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "1")) {
-                        run.attrib.bold = iTrue;
-                        run.attrib.regular = iFalse;
-                        run.attrib.light = iFalse;
-                        if (d->baseFgColorId == tmParagraph_ColorId) {
-                            setFgColor_AttributedRun_(&run, tmFirstParagraph_ColorId);
+                const int ansi = current_Text()->ansiFlags; /* styling enabled */
+                const char mode = capturedRange_RegExpMatch(&m, 2).start[0];
+                const iRangecc sequence = capturedRange_RegExpMatch(&m, 1);
+                if (ansi && mode == 'm' /* Select Graphic Rendition */) {
+                    for (const char *seqPos = sequence.start; seqPos < sequence.end; ) {
+                        /* One sequence may have multiple codes. */
+                        char *argEnd;
+                        const int arg = strtoul(seqPos, &argEnd, 10);
+                        /* Note: This styling is hardcoded to match `typesetOneLine_RunTypesetter_()`. */
+                        if (arg == 1) {
+                            if (ansi & allowFontStyle_AnsiFlag) {
+                                run.attrib.bold = iTrue;
+                                run.attrib.regular = iFalse;
+                                run.attrib.light = iFalse;
+                                if (d->baseFgColorId == tmParagraph_ColorId) {
+                                    setFgColor_AttributedRun_(&run, tmFirstParagraph_ColorId);
+                                }
+                                attribFont = font_Text(fontWithStyle_Text(fontId_Text(d->baseFont),
+                                                                           bold_FontStyle));
+                            }
                         }
-                        attribFont = font_Text(fontWithStyle_Text(fontId_Text(d->baseFont),
-                                                                   bold_FontStyle));
-                    }
-                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "2")) {
-                        run.attrib.light = iTrue;
-                        run.attrib.regular = iFalse;
-                        run.attrib.bold = iFalse;
-                        attribFont = font_Text(fontWithStyle_Text(fontId_Text(d->baseFont),
-                                                                   light_FontStyle));
-                    }
-                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "3")) {
-                        run.attrib.italic = iTrue;
-                        attribFont = font_Text(fontWithStyle_Text(fontId_Text(d->baseFont),
-                                                                   italic_FontStyle));
-                    }
-                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "10")) {
-                        run.attrib.regular = iTrue;
-                        run.attrib.bold = iFalse;
-                        run.attrib.light = iFalse;
-                        run.attrib.italic = iFalse;
-                        attribFont = font_Text(fontWithStyle_Text(fontId_Text(d->baseFont),
-                                                                   regular_FontStyle));
-                    }
-                    else if (ansi & allowFontStyle_AnsiFlag && equal_Rangecc(sequence, "11")) {
-                        run.attrib.monospace = iTrue;
-                        setFgColor_AttributedRun_(&run, tmPreformatted_ColorId);
-                        attribFont = font_Text(fontWithFamily_Text(fontId_Text(d->baseFont),
-                                                                    monospace_FontId));
-                    }
-                    else if (equal_Rangecc(sequence, "0")) {
-                        run.attrib.regular = iFalse;
-                        run.attrib.bold = iFalse;
-                        run.attrib.light = iFalse;
-                        run.attrib.italic = iFalse;
-                        run.attrib.monospace = iFalse;
-                        attribFont = run.font = d->baseFont;
-                        setFgColor_AttributedRun_(&run, d->baseFgColorId);
-                        setBgColor_AttributedRun_(&run, none_ColorId);
-                    }
-                    else {
-                        ansiColors_Color(sequence, d->baseFgColorId, none_ColorId,
-                                         ansi & allowFg_AnsiFlag ? &run.fgColor_ : NULL,
-                                         ansi & allowBg_AnsiFlag ? &run.bgColor_ : NULL);
+                        else if (arg == 2) {
+                            if (ansi & allowFontStyle_AnsiFlag) {
+                                run.attrib.light = iTrue;
+                                run.attrib.regular = iFalse;
+                                run.attrib.bold = iFalse;
+                                attribFont = font_Text(fontWithStyle_Text(fontId_Text(d->baseFont),
+                                                                           light_FontStyle));
+                            }
+                        }
+                        else if (arg == 3) {
+                            if (ansi & allowFontStyle_AnsiFlag) {
+                                run.attrib.italic = iTrue;
+                                attribFont = font_Text(fontWithStyle_Text(fontId_Text(d->baseFont),
+                                                                           italic_FontStyle));
+                            }
+                        }
+                        else if (arg == 10) {
+                            if (ansi & allowFontStyle_AnsiFlag) {
+                                run.attrib.regular = iTrue;
+                                run.attrib.bold = iFalse;
+                                run.attrib.light = iFalse;
+                                run.attrib.italic = iFalse;
+                                attribFont = font_Text(fontWithStyle_Text(fontId_Text(d->baseFont),
+                                                                           regular_FontStyle));
+                            }
+                        }
+                        else if (arg == 11) {
+                            if (ansi & allowFontStyle_AnsiFlag) {
+                                run.attrib.monospace = iTrue;
+                                setFgColor_AttributedRun_(&run, tmPreformatted_ColorId);
+                                attribFont = font_Text(fontWithFamily_Text(fontId_Text(d->baseFont),
+                                                                            monospace_FontId));
+                            }
+                        }
+                        else if (arg == 0) {
+                            run.attrib.regular = iFalse;
+                            run.attrib.bold = iFalse;
+                            run.attrib.light = iFalse;
+                            run.attrib.italic = iFalse;
+                            run.attrib.monospace = iFalse;
+                            attribFont = run.font = d->baseFont;
+                            setFgColor_AttributedRun_(&run, d->baseFgColorId);
+                            setBgColor_AttributedRun_(&run, none_ColorId);
+                        }
+                        else {
+                            const char *end;
+                            ansiColors_Color((iRangecc){ seqPos, sequence.end },
+                                             d->baseFgColorId, none_ColorId,
+                                             ansi & allowFg_AnsiFlag ? &run.fgColor_ : NULL,
+                                             ansi & allowBg_AnsiFlag ? &run.bgColor_ : NULL,
+                                             &end);
+                            argEnd = (char *) end;
+                        }
+                        seqPos = argEnd;
+                        if (seqPos < sequence.end) {
+                            if (*seqPos == ';') {
+                                seqPos++;
+                            }
+                            else break; /* malformed or didn't understand */
+                        }
                     }
                 }
                 pos += length_Rangecc(capturedRange_RegExpMatch(&m, 0));
