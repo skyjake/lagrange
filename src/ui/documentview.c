@@ -1157,6 +1157,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         else if (run->flags & endOfLine_GmRunFlag &&
                  (mr = findMediaRequest_DocumentWidget(d->view->owner, run->linkId)) != NULL) {
             if (!isFinished_GmRequest(mr->req)) {
+                fillRect_Paint(&d->paint,
+                               (iRect){ topRight_Rect(linkRect),
+                                        init_I2(d->widgetFullWidth - right_Rect(linkRect),
+                                                lineHeight_Text(metaFont)) },
+                               tmBackground_ColorId);
                 draw_Text(metaFont,
                           topRight_Rect(linkRect),
                           tmInlineContentMetadata_ColorId,
