@@ -225,7 +225,7 @@ void init_Win32(void) {
     SetProcessDPIAware();
 #endif
     enableDarkMode_Win32();
-    RegisterApplicationRestart(GetCommandLineW(), ~RESTART_NO_PATCH);
+    RegisterApplicationRestart(L"", ~RESTART_NO_PATCH);
 }
 
 float desktopDPI_Win32(void) {
