@@ -12,6 +12,7 @@
 * Fixed parsing of ANSI SGR sequences with many attributes concatenated (e.g., 0;1;40;30).
 * Fixed inline image loading indicator overdrawing itself, becoming unreadable.
 * Fixed drag-to-select with the mouse being too sensitive to mouse movement.
+* Windows: Installer restarts the app after updating, and there is a checkbox for launching the app if it wasn't running. The uninstaller is now signed, too.
 
 ## 1.17.1
 * Added "Vibrant Light" color theme.
