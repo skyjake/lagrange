@@ -2261,6 +2261,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 break;
             }
             case categorySuccess_GmStatusCode:
+                visitUrl_Visited(visited_App(), d->mod.url, 0);
                 replaceDocument_DocumentWidget_(d, new_GmDocument());
                 clear_Banner(d->banner);
                 delete_Gempub(d->sourceGempub);
@@ -2870,7 +2871,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateFetchProgress_DocumentWidget_(d);
             updateHover_Window(window_Widget(w));
             set_String(&w->root->tabInsertId, id_Widget(w)); /* insert next to current tab */
-            visitUrl_Visited(visited_App(), d->mod.url, 0); /* in case it was opened in background */
         }
         showOrHideInputPrompt_DocumentWidget_(d);
         init_Anim(&d->view->sideOpacity, 0);
@@ -4474,9 +4474,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                              -3 * amount.x * lineHeight_Text(paragraph_FontId),
                                              167, &isAtEnd);
                 if (isAtEnd) {
-                    /* Can't scroll any more, go the other way. */                    
+                    /* Can't scroll any more, go the other way. */
                     amount.y = amount.x;
-                }                
+                }
             }
             if (amount.y) {
                 smoothScroll_DocumentView(view,
