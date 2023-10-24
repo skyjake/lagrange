@@ -587,7 +587,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             moved_Rect(
                 adjusted_Rect(bounds,
                               init_I2(iconPad * (flags & tight_WidgetFlag ? 1.0f : 1.5f), 0),
-                          init_I2(-iconPad * (flags & tight_WidgetFlag ? 0.5f : 1.0f), 0)),
+                              init_I2(-iconPad * (flags & tight_WidgetFlag ? 0.5f : 1.0f), 0)),
                 d->labelOffset),
             d->flags.alignVisual,
             d->flags.drawAsOutline ? fg : none_ColorId,

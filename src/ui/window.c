@@ -2326,6 +2326,7 @@ const iArray *updateBookmarksMenu_Widget(iWidget *menu) {
     cleanupBookmarksMenu_Widget(menu);
     iWidget *rootWidget = (menu ? root_Widget(menu) : get_Root()->widget);
     iBool    isFirst    = iTrue;
+    iString *title      = new_String();
     iHash   *hash       = new_Hash();
     iArray  *items      = collectNew_Array(sizeof(iMenuItem));
     pushBackN_Array(items, bookmarksMenuItems_, count_MenuItem(bookmarksMenuItems_));
@@ -2357,9 +2358,21 @@ const iArray *updateBookmarksMenu_Widget(iWidget *menu) {
         else {
             initCStr_String(&iconStr, pin_Icon);
         }
+        /* Truncate titles to a reasonable width. */ {
+            set_String(title, &bm->title);
+#if !defined (LAGRANGE_NATIVE_MENU)
+            const int maxTitleWidth = 60 * gap_UI;
+            const char *end;
+            tryAdvanceNoWrap_Text(uiLabel_FontId, range_String(title), maxTitleWidth, &end);
+            if (end < constEnd_String(title)) {
+                truncate_Block(&title->chars, end - constBegin_String(title));
+                appendCStr_String(title, "\u2026" /* ellipsis */);
+            }
+#endif
+        }
         pushBack_Array(
             dest,
-            &(iMenuItem){ format_CStr("%s %s", cstr_String(&iconStr), cstr_String(&bm->title)),
+            &(iMenuItem){ format_CStr("%s %s", cstr_String(&iconStr), cstr_String(title)),
                           0,
                           0,
                           isFolder_Bookmark(bm)
@@ -2376,5 +2389,6 @@ const iArray *updateBookmarksMenu_Widget(iWidget *menu) {
         free(remove_HashIterator(&h));
     }
     delete_Hash(hash);
+    delete_String(title);
     return items;
 }

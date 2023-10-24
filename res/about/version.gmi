@@ -8,6 +8,7 @@
 
 ## 1.17.2
 * Fixed the numbered links key (default: Alt/Option) while navigating to new pages. It is no longer necessary to release and press the key again on the new page.
+* Fixed long bookmark titles making the Bookmarks menu too wide.
 * Mouse wheel direction switches back to vertical when a wide block has been scrolled all the way.
 * ANSI Cursor Forward control sequence ("CSI n C") is converted to a series of spaces, but only in preformatted text.
 * Tabs opened in background are immediately added to the URL history.
