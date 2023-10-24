@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 - FontRunArgs : set of arguments for constructing a FontRun
 - RunArgs : input arguments for `run_Font_` (the low-level text rendering routine)
 - RunLayer : arguments for processing the glyphs of a GlyphBuffer (layers: background, foreground)
- 
+
 Optimization notes:
 
 - Caching FontRuns is quite effective, but there is still plenty of unnecessary iteration
@@ -158,13 +158,13 @@ iLocalDef void setRasterized_Glyph_(iGlyph *d, int hoff) {
 }
 
 iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
-    
+
 /*-----------------------------------------------------------------------------------------------*/
-    
+
 static iGlyph *glyph_Font_(iFont *d, iChar ch);
 
 iDeclareType(GlyphTable)
-    
+
 struct Impl_GlyphTable {
     iHash          glyphs; /* key is glyph index in the font */
     /* TODO: `glyphs` does not need to be a Hash.
@@ -192,9 +192,9 @@ static void deinit_GlyphTable(iGlyphTable *d) {
 }
 
 iDefineTypeConstruction(GlyphTable)
-    
+
 /*-----------------------------------------------------------------------------------------------*/
-    
+
 struct Impl_Font {
     iBaseFont    font;
     int          baseline;
@@ -270,14 +270,14 @@ static int cmp_PrioMapItem_(const void *a, const void *b) {
 iDeclareType(FontRunArgs)
 iDeclareType(FontRun)
 iDeclareTypeConstructionArgs(FontRun, const iFontRunArgs *args, const iRangecc text, uint32_t crc)
-    
+
 iDeclareType(StbText)
 iDeclareTypeConstructionArgs(StbText, SDL_Renderer *render, float documentFontSizeFactor)
 
 struct Impl_StbText {
     iText          base;
     iArray         fonts; /* fonts currently selected for use (incl. all styles/sizes) */
-    int            overrideFontId; /* always checked for glyphs first, regardless of which font is used */    
+    int            overrideFontId; /* always checked for glyphs first, regardless of which font is used */
     iArray         fontPriorityOrder;
     SDL_Texture *  cache;
     iInt2          cacheSize;
@@ -310,7 +310,7 @@ static void setupFontVariants_StbText_(iStbText *d, const iFontSpec *spec, int b
     iAssert(current_StbText_() == d);
     pushBack_Array(&d->fontPriorityOrder, &(iPrioMapItem){ spec->priority, baseId });
     for (enum iFontStyle style = 0; style < max_FontStyle; style++) {
-        for (enum iFontSize sizeId = 0; sizeId < max_FontSize; sizeId++) {            
+        for (enum iFontSize sizeId = 0; sizeId < max_FontSize; sizeId++) {
             init_Font(font_Text_(FONT_ID(baseId, style, sizeId)),
                       spec,
                       spec->styles[style],
@@ -453,7 +453,7 @@ void init_StbText(iStbText *d, SDL_Renderer *render, float documentFontSizeFacto
             colors[i] = (SDL_Color){ 255, 255, 255, i < 100 ? 0 : 255 };
         }
         d->blackAndWhite = SDL_AllocPalette(256);
-        SDL_SetPaletteColors(d->blackAndWhite, colors, 0, 256);        
+        SDL_SetPaletteColors(d->blackAndWhite, colors, 0, 256);
     }
     initCache_StbText_(d);
     initFonts_StbText_(d);
@@ -647,7 +647,7 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
 static iGlyph *glyphByIndex_Font_(iFont *d, uint32_t glyphIndex) {
     if (!d->table) {
         d->table = new_GlyphTable();
-    }   
+    }
     iGlyph* glyph = NULL;
     void *  node = value_Hash(&d->table->glyphs, glyphIndex);
     if (node) {
@@ -1009,7 +1009,7 @@ static void justify_GlyphBuffer_(iGlyphBuffer *buffers, size_t numBuffers,
     if (isLast || outerSpace <= 0) {
         return;
     }
-    /* TODO: This could use a utility that handles the `wrapPosRange` character span inside 
+    /* TODO: This could use a utility that handles the `wrapPosRange` character span inside
        a span of runs. */
 #define CHECK_LOGPOS() \
     if (logPos < wrapPosRange.start) continue; \
@@ -1220,7 +1220,7 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
         }
         const iGlyphBuffer *buf = constAt_Array(buffers, runIndex);
         iAssert(run->font == (iBaseFont *) buf->font);
-        /* Process all the glyphs. */            
+        /* Process all the glyphs. */
         for (unsigned int i = 0; i < buf->glyphCount; i++) {
             const hb_glyph_info_t *info    = &buf->glyphInfo[i];
             const hb_codepoint_t   glyphId = info->codepoint;
@@ -1273,7 +1273,7 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
             /* Align baselines of different fonts. */
             if (run->font != attrText->baseFont &&
                 ~run->font->spec->flags & auxiliary_FontSpecFlag) {
-                const int bl1 = ((iFont *) attrText->baseFont)->baseline + 
+                const int bl1 = ((iFont *) attrText->baseFont)->baseline +
                                 ((iFont *) attrText->baseFont)->vertOffset;
                 const int bl2 = runFont->baseline + runFont->vertOffset;
                 dst.y += bl1 - bl2;
@@ -1351,7 +1351,7 @@ void process_RunLayer_(iRunLayer *d, int layerIndex) {
             }
             d->xCursorMax = iMax(d->xCursorMax, d->xCursor);
         }
-    }   
+    }
 }
 
 static unsigned fontRunCacheHits_  = 0;
@@ -1458,7 +1458,7 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
         }
         float wrapAdvance = 0.0f;
         /* First we need to figure out how much text fits on the current line. */
-        if (wrap && wrap->maxWidth > 0) {
+        if (wrap) {
             float breakAdvance = -1.0f;
             size_t breakRunIndex = iInvalidPos;
             iAssert(wrapPosRange.end == textLen);
@@ -1700,7 +1700,7 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
             }
             printf("\n");
 #endif
-            
+
         }
         iAssert(size_Array(&runOrder) == size_Range(&wrapRuns));
         /* Alignment. */
@@ -1750,9 +1750,9 @@ static void run_Font_(iFont *d, const iRunArgs *args) {
             process_RunLayer_(&layer, layerIndex);
         }
         bounds     = layer.bounds;
-        xCursor    = layer.xCursor;            
+        xCursor    = layer.xCursor;
         xCursorMax = layer.xCursorMax;
-        yCursor    = layer.yCursor;                      
+        yCursor    = layer.yCursor;
         deinit_Array(&runOrder);
         if (willAbortDueToWrap) {
             break;
