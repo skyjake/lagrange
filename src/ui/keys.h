@@ -145,3 +145,5 @@ const iPtrArray *list_Keys          (void);
 int             mapMods_Keys        (int modFlags);
 int             modState_Keys       (void); /* current modifier key state */
 void            setCapsLockDown_Keys(iBool isDown);
+
+iBool           isDown_Keys         (const iBinding *binding);

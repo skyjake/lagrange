@@ -3254,6 +3254,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 }
             }
         }
+        /* Reactivate numbered links mode. */
+        if (document_App() == d && isDown_Keys(findCommand_Keys("document.linkkeys arg:0"))) {
+            setLinkNumberMode_DocumentWidget_(d, iTrue);
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "document.translate") && d == document_App()) {
