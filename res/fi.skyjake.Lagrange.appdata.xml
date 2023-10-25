@@ -45,6 +45,25 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.17.2" date="2023-10-25">
+            <description>
+                <ul>
+                    <li>Tabs opened in background are immediately added to the URL history.</li>
+                    <li>Mouse wheel direction switches back to vertical when a wide block has been scrolled all the way.</li>
+                    <li>Fixed current text selection extending during scrolling even after mouse button has been released.</li>
+                    <li>Fixed drag-to-select with the mouse being too sensitive to mouse movement.</li>
+                    <li>Fixed the numbered links key (default: Alt) while navigating to new pages. It is no longer necessary to release and press the key again on the new page.</li>
+                    <li>Fixed long bookmark titles making the Bookmarks menu too wide.</li>
+                    <li>ANSI Cursor Forward control sequence ("CSI n C") is converted to a series of spaces, but only in preformatted text.</li>
+                    <li>Fixed parsing of ANSI SGR sequences with many attributes concatenated (e.g., 0;1;40;30).</li>
+                    <li>Fixed inline image loading indicator overdrawing itself, becoming unreadable.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.17.2</url>
+        </release>
         <release version="1.17.1" date="2023-10-21">
             <description>
                 <ul>
