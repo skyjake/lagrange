@@ -4713,7 +4713,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 else if (y > bottom_Rect(bounds) - autoScrollRegion) {
                     delta = (y - bottom_Rect(bounds) + autoScrollRegion) / (float) autoScrollRegion;
                 }
-                float speed = iClamp(fabsf(delta * delta * delta), 0, 1) * gap_Text * 200;
+                float speed = iClamp(fabsf(delta * delta * delta), 0, 1) * gap_Text * 150;
                 if (speed != 0.0f) {
                     setValueSpeed_Anim(&d->view->scrollY.pos,
                                        delta < 0 ? 0.0f : d->view->scrollY.max,
@@ -4741,7 +4741,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 closeMenu_Widget(d->menu);
             }
             d->flags &= ~(movingSelectMarkStart_DocumentWidgetFlag |
-                          movingSelectMarkEnd_DocumentWidgetFlag);
+                          movingSelectMarkEnd_DocumentWidgetFlag |
+                          selecting_DocumentWidgetFlag);
             if (!isMoved_Click(&d->click)) {
                 setFocus_Widget(NULL);
                 /* Tap in tap selection mode. */
@@ -4883,6 +4884,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 setGrabbedPlayer_DocumentWidget_(d, NULL);
                 return iTrue;
             }
+            iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
             stop_Anim(&d->view->scrollY.pos);
             return iTrue;
         default:

@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.17.2
+* Fixed current text selection extending during scrolling even after mouse button has been released.
 * Fixed the numbered links key (default: Alt/Option) while navigating to new pages. It is no longer necessary to release and press the key again on the new page.
 * Fixed long bookmark titles making the Bookmarks menu too wide.
 * Mouse wheel direction switches back to vertical when a wide block has been scrolled all the way.
