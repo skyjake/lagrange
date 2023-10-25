@@ -314,7 +314,9 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iCh
                         else {
                             const char *end;
                             ansiColors_Color((iRangecc){ seqPos, sequence.end },
-                                             d->baseFgColorId, none_ColorId,
+                                             d->baseFgColorId,
+                                             none_ColorId,
+                                             run.attrib.bold != 0,
                                              ansi & allowFg_AnsiFlag ? &run.fgColor_ : NULL,
                                              ansi & allowBg_AnsiFlag ? &run.bgColor_ : NULL,
                                              &end);
