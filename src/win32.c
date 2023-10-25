@@ -57,7 +57,7 @@ but for now this is what we have to do to avoid having a white title bar in dark
 
 Calling random functions from system DLLs is a great way to introduce crashes in the
 future! Be on the lookout for launch problems down the road.
-   
+
 Adapted from https://github.com/ysc3839/win32-darkmode. */
 
 enum WINDOWCOMPOSITIONATTRIB {
@@ -183,7 +183,7 @@ static iBool refreshTitleBarThemeColor_(HWND hwnd) {
 }
 
 static void enableDarkMode_Win32(void) {
-    RtlGetNtVersionNumbersFunc RtlGetNtVersionNumbers_ = 
+    RtlGetNtVersionNumbersFunc RtlGetNtVersionNumbers_ =
         (RtlGetNtVersionNumbersFunc)
         GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetNtVersionNumbers");
     if (!RtlGetNtVersionNumbers_) {
@@ -199,7 +199,7 @@ static void enableDarkMode_Win32(void) {
     }
     HMODULE hUxtheme = LoadLibraryExW(L"uxtheme.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (hUxtheme) {
-		AllowDarkModeForWindow_ = (AllowDarkModeForWindowFunc) 
+		AllowDarkModeForWindow_ = (AllowDarkModeForWindowFunc)
             GetProcAddress(hUxtheme, MAKEINTRESOURCEA(133));
         AllowDarkModeForAppFunc AllowDarkModeForApp_ = NULL;
         SetPreferredAppModeFunc SetPreferredAppMode_ = NULL;
@@ -225,6 +225,7 @@ void init_Win32(void) {
     SetProcessDPIAware();
 #endif
     enableDarkMode_Win32();
+    RegisterApplicationRestart(L"", ~RESTART_NO_PATCH);
 }
 
 float desktopDPI_Win32(void) {
@@ -278,16 +279,16 @@ void enableDarkMode_SDLWindow(SDL_Window *win) {
         HWND hwnd = windowHandle_(win);
         AllowDarkModeForWindow_(hwnd, TRUE);
         refreshTitleBarThemeColor_(hwnd);
-    }    
+    }
 }
 
 void handleCommand_Win32(const char *cmd) {
-    if (equal_Command(cmd, "theme.changed")) {        
+    if (equal_Command(cmd, "theme.changed")) {
         iConstForEach(PtrArray, iter, regularWindows_App()) {
             iWindow *w = iter.ptr;
             SDL_Window *win = w->win;
             if (refreshTitleBarThemeColor_(windowHandle_(win)) &&
-                (type_Window(w) != main_WindowType || 
+                (type_Window(w) != main_WindowType ||
                  !isFullscreen_MainWindow(as_MainWindow(w))) &&
                 !argLabel_Command(cmd, "auto")) {
                 /* Silly hack, but this will ensure that the non-client
@@ -298,7 +299,7 @@ void handleCommand_Win32(const char *cmd) {
         }
     }
     else if (equal_Command(cmd, "window.focus.gained")) {
-        /* Purge old windows from the darkness. */ 
+        /* Purge old windows from the darkness. */
         cleanDark_();
     }
 }
@@ -380,11 +381,11 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
             if (wp == VK_RWIN) {
                 winDown_[1] = iFalse;
             }
-            break;            
+            break;
         }
         case WM_NCLBUTTONDBLCLK: {
             iMainWindow *mw = as_MainWindow(window);
-            POINT point = { GET_X_LPARAM(msg->msg.win.lParam), 
+            POINT point = { GET_X_LPARAM(msg->msg.win.lParam),
                             GET_Y_LPARAM(msg->msg.win.lParam) };
             ScreenToClient(hwnd, &point);
             iInt2 pos = init_I2(point.x, point.y);
@@ -406,7 +407,7 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
         }
 #if 0
         case WM_NCLBUTTONUP: {
-            POINT point = { GET_X_LPARAM(msg->msg.win.lParam), 
+            POINT point = { GET_X_LPARAM(msg->msg.win.lParam),
                             GET_Y_LPARAM(msg->msg.win.lParam) };
             printf("%d,%d\n", point.x, point.y); fflush(stdout);
             ScreenToClient(hwnd, &point);
@@ -422,7 +423,7 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
            However, the only useful function in the menu would be moving-via-keyboard,
            but that doesn't work with a custom frame. We could show a custom system menu? */
         case WM_NCRBUTTONUP: {
-            POINT point = { GET_X_LPARAM(msg->msg.win.lParam), 
+            POINT point = { GET_X_LPARAM(msg->msg.win.lParam),
                             GET_Y_LPARAM(msg->msg.win.lParam) };
             HMENU menu = GetSystemMenu(hwnd, FALSE);
             printf("menu at %d,%d menu:%p\n", point.x, point.y, menu); fflush(stdout);

@@ -6,6 +6,19 @@
 ```
 # Release notes
 
+## 1.17.2
+* Tabs opened in background are immediately added to the URL history.
+* Mouse wheel direction switches back to vertical when a wide block has been scrolled all the way.
+* Fixed current text selection extending during scrolling even after mouse button has been released.
+* Fixed drag-to-select with the mouse being too sensitive to mouse movement.
+* Fixed the numbered links key (default: Alt/Option) while navigating to new pages. It is no longer necessary to release and press the key again on the new page.
+* Fixed long bookmark titles making the Bookmarks menu too wide.
+* ANSI Cursor Forward control sequence ("CSI n C") is converted to a series of spaces, but only in preformatted text.
+* Fixed parsing of ANSI SGR sequences with many attributes concatenated (e.g., 0;1;40;30).
+* Fixed inline image loading indicator overdrawing itself, becoming unreadable.
+* Windows: Installer restarts the app after updating, and there is a checkbox for launching the app if it wasn't running. The uninstaller is now signed, too.
+* Updated UI translations.
+
 ## 1.17.1
 * Added "Vibrant Light" color theme.
 * Improved readability of "Colorful Light" headings.

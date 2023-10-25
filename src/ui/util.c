@@ -498,10 +498,12 @@ void init_Click(iClick *d, iAnyObject *widget, int button) {
 
 void initButtons_Click(iClick *d, iAnyObject *widget, int buttonMask) {
     d->isActive    = iFalse;
+    d->isDragging  = iFalse;
     d->buttons     = buttonMask;
     d->clickButton = 0;
     d->bounds      = as_Widget(widget);
     d->minHeight   = 0;
+    d->minDrag     = gap_UI * 2 / 3; /* require definite movement of the cursor */
     d->startPos    = zero_I2();
     d->pos         = zero_I2();
 }
@@ -517,8 +519,14 @@ iBool contains_Click(const iClick *d, iInt2 coord) {
 
 enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
     if (event->type == SDL_MOUSEMOTION) {
+        if (!d->isActive) {
+            return none_ClickResult;
+        }
         const iInt2 pos = init_I2(event->motion.x, event->motion.y);
-        if (d->isActive) {
+        if (!d->isDragging && manhattan_I2(pos, d->pos) > d->minDrag) {
+            d->isDragging = iTrue;
+        }
+        if (d->isDragging) {
             d->pos = pos;
             return drag_ClickResult;
         }
@@ -538,6 +546,7 @@ enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
         if (mb->state == SDL_PRESSED) {
             if (contains_Click(d, pos)) {
                 d->isActive = iTrue;
+                d->isDragging = iFalse;
                 d->clickButton = mb->button;
                 d->startPos = d->pos = pos;
                 setMouseGrab_Widget(d->bounds);

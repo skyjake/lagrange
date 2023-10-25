@@ -626,13 +626,17 @@ iBool isWideBlockScrollable_DocumentView(const iDocumentView *d, const iRect doc
            right_Rect(pageBounds);
 }
 
-iBool scrollWideBlock_DocumentView(iDocumentView *d, iInt2 mousePos, int delta, int duration) {
+iBool scrollWideBlock_DocumentView(iDocumentView *d, iInt2 mousePos, int delta, int duration,
+                                   iBool *isAtEnd_out) {
     if (delta == 0 || wheelSwipeState_DocumentWidget(d->owner) == direct_WheelSwipeState) {
         return iFalse;
     }
     const int docWidth = documentWidth_DocumentView(d);
     const iRect docBounds = documentBounds_DocumentView(d);
     const iInt2 docPos = documentPos_DocumentView_(d, mousePos);
+    if (isAtEnd_out) {
+        *isAtEnd_out = iFalse;
+    }
     iConstForEach(PtrArray, i, &d->visibleWideRuns) {
         const iGmRun *run = i.ptr;
         if (contains_Rangei(ySpan_Rect(run->bounds), docPos.y)) {
@@ -673,6 +677,9 @@ iBool scrollWideBlock_DocumentView(iDocumentView *d, iInt2 mousePos, int delta, 
                 /* Offset didn't change. We could consider allowing swipe navigation to occur
                    by returning iFalse here, but perhaps only if the original starting
                    offset of the wide block was at the far end already .*/
+                if (isAtEnd_out) {
+                    *isAtEnd_out = iTrue;
+                }
             }
             return iTrue;
         }
@@ -1157,6 +1164,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         else if (run->flags & endOfLine_GmRunFlag &&
                  (mr = findMediaRequest_DocumentWidget(d->view->owner, run->linkId)) != NULL) {
             if (!isFinished_GmRequest(mr->req)) {
+                fillRect_Paint(&d->paint,
+                               (iRect){ topRight_Rect(linkRect),
+                                        init_I2(d->widgetFullWidth - right_Rect(linkRect),
+                                                lineHeight_Text(metaFont)) },
+                               tmBackground_ColorId);
                 draw_Text(metaFont,
                           topRight_Rect(linkRect),
                           tmInlineContentMetadata_ColorId,

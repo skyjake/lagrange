@@ -2261,6 +2261,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 break;
             }
             case categorySuccess_GmStatusCode:
+                visitUrl_Visited(visited_App(), d->mod.url, 0);
                 replaceDocument_DocumentWidget_(d, new_GmDocument());
                 clear_Banner(d->banner);
                 delete_Gempub(d->sourceGempub);
@@ -2870,7 +2871,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateFetchProgress_DocumentWidget_(d);
             updateHover_Window(window_Widget(w));
             set_String(&w->root->tabInsertId, id_Widget(w)); /* insert next to current tab */
-            visitUrl_Visited(visited_App(), d->mod.url, 0); /* in case it was opened in background */
         }
         showOrHideInputPrompt_DocumentWidget_(d);
         init_Anim(&d->view->sideOpacity, 0);
@@ -3253,6 +3253,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     }
                 }
             }
+        }
+        /* Reactivate numbered links mode. */
+        if (document_App() == d && isDown_Keys(findCommand_Keys("document.linkkeys arg:0"))) {
+            setLinkNumberMode_DocumentWidget_(d, iTrue);
         }
         return iFalse;
     }
@@ -4440,7 +4444,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
             stop_Anim(&d->view->scrollY.pos);
             immediateScroll_DocumentView(view, -wheel.y);
-            if (!scrollWideBlock_DocumentView(view, mouseCoord, -wheel.x, 0) &&
+            if (!scrollWideBlock_DocumentView(view, mouseCoord, -wheel.x, 0, NULL) &&
                 wheel.x) {
                 handleWheelSwipe_DocumentWidget_(d, &ev->wheel);
             }
@@ -4458,7 +4462,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     /* Shift switches to horizontal scrolling mode. (macOS does this for us.) */
                     iSwap(int, amount.x, amount.y);
                 }
-                if (isFinished_SmoothScroll(&d->view->scrollY) &&
+                else if (isFinished_SmoothScroll(&d->view->scrollY) &&
                     d->view->hoverPre &&
                     d->view->hoverPre->flags & wide_GmRunFlag &&
                     isWideBlockScrollable_DocumentView(d->view,
@@ -4468,14 +4472,20 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     iSwap(int, amount.x, amount.y);
                 }
             }
+            if (amount.x) {
+                iBool isAtEnd;
+                scrollWideBlock_DocumentView(view, mouseCoord,
+                                             -3 * amount.x * lineHeight_Text(paragraph_FontId),
+                                             167, &isAtEnd);
+                if (isAtEnd && !kmods) {
+                    /* Can't scroll any more, go the other way. */
+                    amount.y = amount.x;
+                }
+            }
             if (amount.y) {
                 smoothScroll_DocumentView(view,
                                           -3 * amount.y * lineHeight_Text(paragraph_FontId),
                                           smoothDuration_DocumentWidget_(mouse_ScrollType));
-            }
-            if (amount.x) {
-                scrollWideBlock_DocumentView(
-                    view, mouseCoord, -3 * amount.x * lineHeight_Text(paragraph_FontId), 167);
             }
         }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
@@ -4703,7 +4713,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 else if (y > bottom_Rect(bounds) - autoScrollRegion) {
                     delta = (y - bottom_Rect(bounds) + autoScrollRegion) / (float) autoScrollRegion;
                 }
-                float speed = iClamp(fabsf(delta * delta * delta), 0, 1) * gap_Text * 200;
+                float speed = iClamp(fabsf(delta * delta * delta), 0, 1) * gap_Text * 150;
                 if (speed != 0.0f) {
                     setValueSpeed_Anim(&d->view->scrollY.pos,
                                        delta < 0 ? 0.0f : d->view->scrollY.max,
@@ -4731,7 +4741,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 closeMenu_Widget(d->menu);
             }
             d->flags &= ~(movingSelectMarkStart_DocumentWidgetFlag |
-                          movingSelectMarkEnd_DocumentWidgetFlag);
+                          movingSelectMarkEnd_DocumentWidgetFlag |
+                          selecting_DocumentWidgetFlag);
             if (!isMoved_Click(&d->click)) {
                 setFocus_Widget(NULL);
                 /* Tap in tap selection mode. */
@@ -4873,6 +4884,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 setGrabbedPlayer_DocumentWidget_(d, NULL);
                 return iTrue;
             }
+            iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
             stop_Anim(&d->view->scrollY.pos);
             return iTrue;
         default:

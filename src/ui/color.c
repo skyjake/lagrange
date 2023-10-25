@@ -879,20 +879,25 @@ static const iColor ansi8BitColors_[256] = {
     { 255, 255, 255, 255 }
 };
 
-void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
-                      iColor *fg_out, iColor *bg_out) {
-    if (!fg_out && !bg_out) {
+void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault, iBool isHighIntensity,
+                      iColor *fg_out, iColor *bg_out, const char **endPos_out) {
+    if (!fg_out && !bg_out && !endPos_out) {
         return;
     }
     iColor fg, bg;
     iZap(fg);
     iZap(bg);
+    if (endPos_out) {
+        *endPos_out = escapeSequence.end;
+    }
     for (const char *ch = escapeSequence.start; ch < escapeSequence.end; ch++) {
         char *endPtr;
         unsigned long arg = strtoul(ch, &endPtr, 10);
         ch = endPtr;
+        iBool isUnknown = iFalse;
         switch (arg) {
             default:
+                isUnknown = iTrue;
                 break;
             case 30:
             case 31:
@@ -902,7 +907,7 @@ void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
             case 35:
             case 36:
             case 37:
-                fg = ansi8BitColors_[arg - 30];
+                fg = ansi8BitColors_[arg - 30 + (isHighIntensity ? 8 : 0)];
                 break;
             case 38:
             case 48: {
@@ -946,7 +951,7 @@ void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
             case 45:
             case 46:
             case 47:
-                bg = ansi8BitColors_[arg - 40];
+                bg = ansi8BitColors_[arg - 40 + (isHighIntensity ? 8 : 0)];
                 break;
             case 49:
                 bg = get_Color(bgDefault);
@@ -974,6 +979,12 @@ void ansiColors_Color(iRangecc escapeSequence, int fgDefault, int bgDefault,
             case 107:
                 bg = ansi8BitColors_[8 + arg - 100];
                 break;
+        }
+        if (isUnknown) {
+            if (endPos_out) {
+                *endPos_out = ch;
+            }
+            break;
         }
     }
     if (fg.a && fg_out) {

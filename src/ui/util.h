@@ -202,9 +202,11 @@ struct Impl_Click {
     int      buttons; /* all recognized buttons */
     int      clickButton; /* currently active click */
     iBool    isActive;
+    iBool    isDragging;
     int      count;
     iWidget *bounds;
     int      minHeight;
+    int      minDrag;
     iInt2    startPos;
     iInt2    pos;
 };

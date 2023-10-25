@@ -2191,9 +2191,26 @@ static void normalize_GmDocument(iGmDocument *d) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
     iBool wasNormalized = iFalse;
+    iRegExp *ansiCursorFwdPattern = new_RegExp("^\x1b\\[([0-9]+)C", 0);
     while (nextSplit_Rangecc(src, "\n", &line)) {
         if (isPreformat) {
             for (const char *ch = line.start; ch != line.end; ch++) {
+                if (*ch == 0x1b) {
+                    /* We can emulate an ANSI cursor forward sequence by adding spaces. */
+                    iRegExpMatch m;
+                    init_RegExpMatch(&m);
+                    if (matchRange_RegExp(ansiCursorFwdPattern, (iRangecc){ ch, line.end }, &m)) {
+                        int num = strtoul(capturedRange_RegExpMatch(&m, 1).start, NULL, 10);
+                        if (num > 0 && num < 200 /* arbitrary sanity limit */) {
+                            for (int i = 0; i < num; i++) {
+                                appendData_Block(&normalized->chars, " ", 1);
+                            }
+                        }
+                        ch = end_RegExpMatch(&m) - 1;
+                        wasNormalized = iTrue;
+                        continue;
+                    }
+                }
                 if (*ch != '\v') {
                     appendCStrN_String(normalized, ch, 1);
                 }
@@ -2248,6 +2265,7 @@ static void normalize_GmDocument(iGmDocument *d) {
         appendCStr_String(normalized, "\n");
     }
     iUnused(wasNormalized);
+    iRelease(ansiCursorFwdPattern);
 //    printf("wasNormalized: %d\n", wasNormalized);
 //    fflush(stdout);
     set_String(&d->source, collect_String(normalized));

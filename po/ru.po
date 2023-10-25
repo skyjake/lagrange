@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 13:09+0000\n"
-"PO-Revision-Date: 2023-05-30 20:03+0000\n"
+"PO-Revision-Date: 2023-10-24 20:14+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -1058,8 +1058,8 @@ msgstr "На текущей странице не найден сертифик�
 
 msgid "dlg.certimport.help"
 msgstr ""
-"Вставьте PEM-закодированный сертификат и/или закрытый ключ,\n"
-"или перетащите в окно файл .crt/.key."
+"Вставьте PEM-закодированный сертификат и/или закрытый ключ, или перетащите в "
+"окно файл .crt/.key."
 
 msgid "error.openfile"
 msgstr "Не удалось открыть файл"
@@ -1432,7 +1432,7 @@ msgid "menu.split.horizontal"
 msgstr "По горизонтали"
 
 msgid "menu.view.split"
-msgstr "Разделить окно…"
+msgstr "Разделить окно"
 
 msgid "menu.split.vertical"
 msgstr "По вертикали"
@@ -1833,7 +1833,7 @@ msgid "dlg.upload.id.none"
 msgstr "Нет"
 
 msgid "dlg.upload.id.default"
-msgstr "По умолчанию"
+msgstr "Клиентский сертификат по умолчанию"
 
 # used on mobile
 msgid "dlg.upload.text"
@@ -2234,10 +2234,10 @@ msgid "heading.archive.userdata"
 msgstr "Архив пользовательских данных"
 
 msgid "menu.export"
-msgstr "Экспорт данных пользователя"
+msgstr "Экспорт"
 
 msgid "menu.import"
-msgstr "Импорт данных пользователя…"
+msgstr "Импорт…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
@@ -2321,9 +2321,9 @@ msgstr "%s не является допустимым архивом польз�
 msgid "userdata.help"
 msgstr ""
 "Архивы пользовательских данных содержат историю, настройки сайтов, закладки, "
-"клиентские сертификаты и отпечатки доверенных серверных сертификатов. Их "
-"можно хранить в качестве резервных копий и использовать для переноса данных "
-"с устройства на устройство."
+"фрагменты текста, клиентские сертификаты и отпечатки доверенных серверных "
+"сертификатов. Их можно хранить в качестве резервных копий и использовать для "
+"переноса данных с устройства на устройство."
 
 msgid "prefs.uilayout"
 msgstr "Раскладка:"
@@ -2567,3 +2567,151 @@ msgstr "Пропустить преформатирование:"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Перенаправления, изменяющие схему:"
+
+msgid "collapse.never"
+msgstr "Никогда"
+
+msgid "collapse.notbydefault"
+msgstr "Вручную"
+
+msgid "collapse.bydefault"
+msgstr "При загрузке страницы"
+
+msgid "collapse.always"
+msgstr "Всегда"
+
+msgid "menu.page.visitlinks"
+msgstr "Отметить все ссылки как посещенные"
+
+msgid "menu.input.setprompt"
+msgstr "Предполагать, что этот URL требует ввода"
+
+msgid "dlg.import.notfound"
+msgstr "На этой странице нет ссылок."
+
+msgid "prefs.collapsepre"
+msgstr "Сворачивать преформатирование:"
+
+msgid "sniped.help"
+msgstr ""
+"Фрагменты, название которых начинается с восклицательного знака (например, \""
+"!w\") можно использовать в качестве ярлыка запроса в полях URL."
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Введите запрос расширения фрагмента"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Системный"
+
+msgid "prefs.feedinterval"
+msgstr "Частота обновления ленты:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Вручную"
+
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "Яркая светлая"
+
+msgid "prefs.editor.highlight"
+msgstr "Подсветка синтаксиса:"
+
+msgid "heading.prefs.snip"
+msgstr "Фрагменты"
+
+msgid "error.showutf8.msg"
+msgstr ""
+"Тип содержимого данной страницы не распознан, но является правильным текстом "
+"в кодировке UTF-8."
+
+msgid "sniped.new"
+msgstr "Новый фрагмент"
+
+msgid "menu.snip.edit"
+msgstr "Редактировать…"
+
+msgid "menu.snip.clipboard"
+msgstr "Скопировать в буфер обмена"
+
+msgid "menu.snip.delete"
+msgstr "Удалить"
+
+msgid "menu.snip.prefs"
+msgstr "Настройка…"
+
+msgid "heading.snip.new"
+msgstr "Новый фрагмент"
+
+msgid "heading.snip.edit"
+msgstr "Редактировать фрагмент"
+
+msgid "snip.name"
+msgstr "Название:"
+
+msgid "snip.content"
+msgstr "Содержимое:"
+
+msgid "snip.accept"
+msgstr "Сохранить фрагмент"
+
+msgid "menu.foldall"
+msgstr "Сложить все"
+
+msgid "menu.unfoldall"
+msgstr "Раскрыть все"
+
+msgid "menu.userdata"
+msgstr "Данные пользователя"
+
+msgid "menu.paste.snippet"
+msgstr "Вставить фрагмент"
+
+msgid "menu.search"
+msgstr "Поиск"
+
+msgid "menu.snippet.add"
+msgstr "Фрагмент из выделения…"
+
+msgid "menu.tools"
+msgstr "Инструменты"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Добавить закладку в папку:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Переместить закладку в папку:"
+
+msgid "menu.input.unsetprompt"
+msgstr "Не предполагать, что этот URL требует ввода"
+
+msgid "menu.input.clear"
+msgstr "Очистить историю"
+
+msgid "dlg.import.intofolder"
+msgstr "Добавить в папку:"
+
+msgid "dlg.import.headings"
+msgstr "Подпапки из заголовков:"
+
+msgid "link.searchurl"
+msgstr "Использовать в качестве поисковой URL"
+
+msgid "link.snippet"
+msgstr "Фрагмент из ссылки…"
+
+msgid "import.userdata.snippets"
+msgstr "Фрагменты:"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "ФРАГМЕНТЫ"
+
+msgid "menu.input.restore"
+msgstr "Восстановить предыдущее:"
+
+msgid "heading.upload.dest"
+msgstr "Адрес"
+
+msgid "error.showutf8"
+msgstr "Автоматически определен UTF-8"
