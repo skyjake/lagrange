@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-22 10:53+0000\n"
-"PO-Revision-Date: 2023-05-30 20:03+0000\n"
+"PO-Revision-Date: 2023-10-24 20:14+0000\n"
 "Last-Translator: Alyssa Liddell <e-liss@tuta.io>\n"
 "Language-Team: Ukrainian <http://weblate.skyjake.fi/projects/lagrange/ui/uk/>"
 "\n"
@@ -166,7 +166,7 @@ msgid "menu.zoom.out"
 msgstr "Зменшити"
 
 msgid "menu.view.split"
-msgstr "Розділити вікно…"
+msgstr "Розділити вікно"
 
 msgid "menu.newfolder"
 msgstr "Створити теку…"
@@ -577,8 +577,8 @@ msgstr ""
 
 msgid "dlg.certimport.help"
 msgstr ""
-"Вставте PEM-закодований сертифікат та/або закритий ключ,\n"
-"або ж перетягніть файл .crt/.key у це вікно."
+"Вставте PEM-закодований сертифікат та/або закритий ключ чи перетягніть .crt/."
+"key файл до цього вікна."
 
 msgid "dlg.certimport.notfound.page"
 msgstr "Поточна сторінка не містить сертифікатів або ключів."
@@ -835,7 +835,7 @@ msgid "dlg.certimport.notfound"
 msgstr "Не вдалося знайти сертифікат або закритий ключ."
 
 msgid "heading.certimport.pasted"
-msgstr "Вставлено з буфера обміну"
+msgstr "Вставлено з буферу обміну"
 
 msgid "heading.certimport.dropped"
 msgstr "Перетягнуто файл"
@@ -996,7 +996,7 @@ msgid "dlg.upload.id.none"
 msgstr "Жодної"
 
 msgid "dlg.upload.id.default"
-msgstr "Усталена"
+msgstr "Усталена ідентичність"
 
 msgid "heading.upload.text"
 msgstr "Текст"
@@ -2304,8 +2304,8 @@ msgstr "Архівування даних користувача"
 msgid "userdata.help"
 msgstr ""
 "Архіви даних користувача містять експортовану історію перегляду, "
-"ідентичності, закладки, налаштування для сайтів та відбитки довірених "
-"сертифікатів сервера. Їх можна зберігати, як резервні копії та "
+"ідентичності, закладки, витяги тексту, налаштування для сайтів та відбитки "
+"довірених сертифікатів сервера. Їх можна зберігати, як резервні копії та "
 "використовувати для перенесення даних між пристроями."
 
 msgid "feeds.entry.markbelowread"
@@ -2345,10 +2345,10 @@ msgid "prefs.justify"
 msgstr "Вирівняти:"
 
 msgid "menu.export"
-msgstr "Експортувати дані користувача"
+msgstr "Експортувати"
 
 msgid "menu.import"
-msgstr "Імпортувати дані користувача…"
+msgstr "Імпортувати…"
 
 msgid "dlg.certimport.paste"
 msgstr "Вставити з буферу"
@@ -2608,3 +2608,151 @@ msgstr "Українська"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Перенаправлення, що змінюють схему:"
+
+msgid "heading.upload.dest"
+msgstr "Адреса"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Введіть запит на витяг"
+
+msgid "sniped.help"
+msgstr ""
+"Витяги з назвою, що починається на знак оклику (як-то \"!w\") можуть бути "
+"ярликом запиту у полях для URL."
+
+msgid "heading.snip.new"
+msgstr "Новий витяг"
+
+msgid "heading.snip.edit"
+msgstr "Редагувати витяг"
+
+msgid "menu.foldall"
+msgstr "Скласти всі"
+
+msgid "menu.unfoldall"
+msgstr "Розгорнути всі"
+
+msgid "menu.userdata"
+msgstr "Дані користувача"
+
+msgid "menu.paste.snippet"
+msgstr "Вставити витяг"
+
+msgid "menu.search"
+msgstr "Пошук"
+
+msgid "menu.snippet.add"
+msgstr "Витяг з добірки…"
+
+msgid "menu.tools"
+msgstr "Інструменти"
+
+msgid "menu.page.visitlinks"
+msgstr "Позначити всі злуччя, як відвідані"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Додати закладку до теки:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Перенести закладку до теки:"
+
+msgid "menu.input.setprompt"
+msgstr "Припускати, що цей URL потребує введення"
+
+msgid "menu.input.unsetprompt"
+msgstr "Не припускати, що цей URL потребує введення"
+
+msgid "menu.input.clear"
+msgstr "Очистити історію"
+
+msgid "menu.input.restore"
+msgstr "Відновити попередні:"
+
+msgid "dlg.import.intofolder"
+msgstr "Додати до теки:"
+
+msgid "dlg.import.headings"
+msgstr "Підтеки з заголовків:"
+
+msgid "dlg.import.notfound"
+msgstr "На сторінці відсутні посилання."
+
+msgid "link.searchurl"
+msgstr "Використовувати, як URL пошуку"
+
+msgid "link.snippet"
+msgstr "Витяг з посилання…"
+
+msgid "import.userdata.snippets"
+msgstr "Витяги:"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "ВИТЯГИ"
+
+msgid "heading.prefs.snip"
+msgstr "Витяги"
+
+msgid "prefs.collapsepre"
+msgstr "Згортати заздалегідь відформатоване:"
+
+msgid "collapse.never"
+msgstr "Ніколи"
+
+msgid "collapse.notbydefault"
+msgstr "Вручну"
+
+msgid "collapse.bydefault"
+msgstr "При завантаженні сторінки"
+
+msgid "collapse.always"
+msgstr "Завжди"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Системний"
+
+msgid "prefs.feedinterval"
+msgstr "Частота оновлення стрічки:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Вручну"
+
+msgid "error.showutf8"
+msgstr "Автоматично визначено UTF-8"
+
+msgid "error.showutf8.msg"
+msgstr ""
+"Тип даних на цій сторінці не розпізнано, але вони є дійсним текстом у "
+"кодуванні UTF-8."
+
+msgid "sniped.new"
+msgstr "Новий витяг"
+
+msgid "menu.snip.edit"
+msgstr "Редагувати…"
+
+msgid "menu.snip.clipboard"
+msgstr "Скопіювати до буферу обміну"
+
+msgid "menu.snip.delete"
+msgstr "Видалити"
+
+msgid "menu.snip.prefs"
+msgstr "Налаштувати…"
+
+msgid "snip.name"
+msgstr "Назва:"
+
+msgid "snip.content"
+msgstr "Вміст:"
+
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "Яра Світла"
+
+msgid "prefs.editor.highlight"
+msgstr "Синтаксичне підсвічування:"
+
+msgid "snip.accept"
+msgstr "Зберегти витяг"
