@@ -63,7 +63,7 @@ iLocalDef iBool isMeasuring_(enum iRunMode mode) {
 }
 
 static void runSimple_Font_(iFont *d, const iRunArgs *args) {
-    /* This function shapes text using a simplified, incomplete algorithm. It works for English 
+    /* This function shapes text using a simplified, incomplete algorithm. It works for English
        and other non-complex LTR scripts. Composed glyphs are not supported (must rely on text
        being in a pre-composed form). This algorithm is used if HarfBuzz is not available. */
     const iInt2 orig        = args->pos;
@@ -146,7 +146,11 @@ static void runSimple_Font_(iFont *d, const iRunArgs *args) {
                     iColor clr = get_Color(args->color);
                     ansiColors_Color(capturedRange_RegExpMatch(&m, 1),
                                      current_Text()->baseFgColorId,
-                                     none_ColorId, &clr, NULL);
+                                     none_ColorId,
+                                     iFalse,
+                                     &clr,
+                                     NULL,
+                                     NULL);
 #if defined (LAGRANGE_ENABLE_STB_TRUETYPE)
                     SDL_SetTextureColorMod(cache, clr.r, clr.g, clr.b);
 #endif

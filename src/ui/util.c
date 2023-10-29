@@ -1531,10 +1531,12 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
                 }
             }
             iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
+#if !defined (iPlatformTerminal)
             if (isFromMenuBar && menuPos.y + menuSize.y > bottom_Rect(displayRect)) {
                 const int maxMenuHeight = bottom_Rect(displayRect) - menuPos.y;
                 SDL_SetWindowMaximumSize(win->win, displayRect.size.x, maxMenuHeight);
             }
+#endif
             setCurrent_Window(win);
             SDL_SetWindowTitle(win->win, "Menu");
             arrange_Widget(d);
