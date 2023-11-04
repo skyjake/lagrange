@@ -6,6 +6,15 @@
 ```
 # Release notes
 
+## 1.17 (Beta 24)
+* Tabs opened in background are immediately added to the URL history.
+* Fixed initial scope of a created identity when using the default selection.
+* Fixed current text selection extending during scrolling even after mouse button has been released.
+* Fixed inline image loading indicator overdrawing itself, becoming unreadable.
+* ANSI Cursor Forward control sequence ("CSI n C") is converted to a series of spaces, but only in preformatted text.
+* Fixed parsing of ANSI SGR sequences with many attributes concatenated (e.g., 0;1;40;30).
+* Updated UI translations.
+
 ## 1.17 (Beta 23)
 * Added "Vibrant Light" color theme.
 * Improved readability of "Colorful Light" headings.
