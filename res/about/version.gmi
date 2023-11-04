@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.17.3
+* Fixed initial scope of a created identity when using the default selection.
 * Fixed issues with dropdown menus when the menu appears as a popup window.
 * Fixed clearing the pinned identity of a bookmark.
 
