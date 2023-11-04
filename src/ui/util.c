@@ -1873,7 +1873,6 @@ void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *s
     iForEach(ObjectList, i, children_Widget(menu)) {
         if (isInstance_Object(i.object, &Class_LabelWidget)) {
             iLabelWidget *item = i.object;
-            printf("update: [%s] sel=%s?\n", cstr_String(command_LabelWidget(item)), selectedCommand); fflush(stdout);
             const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
             setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
             if (isSelected) {
