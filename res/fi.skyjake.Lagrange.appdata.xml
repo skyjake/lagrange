@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.17.3" date="2023-11-04">
+            <description>
+                <ul>
+                    <li>Fixed activating a pinned identity when opening a bookmark via the Bookmarks menu.</li>
+                    <li>Fixed initial scope of a created identity when using the default selection.</li>
+                    <li>Fixed issues with dropdown menus when the menu appears as a popup window.</li>
+                    <li>Fixed clearing the pinned identity of a bookmark.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.17.3</url>
+        </release>
         <release version="1.17.2" date="2023-10-25">
             <description>
                 <ul>
