@@ -1829,7 +1829,7 @@ static const iString *replaceNewlinesWithDash_(const iString *str) {
     return collect_String(mod);
 }
 
-iWidget *dropdownMenu_Widget(iWidget *dropButton) {
+iWidget *dropdownMenu_Widget(const iWidget *dropButton) {
     if (!dropButton) {
         return NULL;
     }
@@ -1891,7 +1891,7 @@ const char *selectedDropdownCommand_LabelWidget(const iLabelWidget *dropButton) 
     if (!dropButton) {
         return "";
     }
-    iWidget *menu = findChild_Widget(constAs_Widget(dropButton), "menu");
+    iWidget *menu = dropdownMenu_Widget(constAs_Widget(dropButton));
     if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
         iConstForEach(Array, i, userData_Object(menu)) {
             const iMenuItem *item = i.value;
