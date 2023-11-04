@@ -322,7 +322,7 @@ void            setMenuItemLabel_Widget         (iWidget *menu, const char *comm
 void            setMenuItemLabelByIndex_Widget  (iWidget *menu, size_t index, const char *newLabel);
 void            setNativeMenuItems_Widget       (iWidget *menu, const iMenuItem *items, size_t n);
 iWidget *       findUserData_Widget             (iWidget *, void *userData);
-iWidget *       parentMenu_Widget               (iWidget *menuItem);
+iWidget *       parentMenu_Widget               (const iWidget *menuItem);
 
 int             checkContextMenu_Widget         (iWidget *, const SDL_Event *ev); /* see macro below */
 void            animateToRootVisibleTop_Widget  (iWidget *, uint32_t span);
