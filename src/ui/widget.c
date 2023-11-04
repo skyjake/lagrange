@@ -2585,6 +2585,15 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
     }
     if (!isGlobal) {
         iAssert(isInstance_Object(d, &Class_Widget));
+        if (type_Window(window_Widget(d)) == popup_WindowType) {
+            /* Use the original parent root for the command, so it will be handled by
+               whoever owns the popup menu. */
+            const iWidget *originalParent =
+                constAs_Widget(userData_Object(parentMenu_Widget(constAs_Widget(d))));
+            if (originalParent) {
+                d = originalParent;
+            }
+        }
         iString ptrStr;
         init_String(&ptrStr);
         /* Insert the widget pointer as the first argument so possible suffixes are unaffected. */

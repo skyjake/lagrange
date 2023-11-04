@@ -3337,7 +3337,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                                                      organization,
                                                      country);
             /* Use in the chosen scope. */ {
-                int         selScope = 2;
+                int         selScope = 0;
                 const char *scopeCmd =
                     selectedDropdownCommand_LabelWidget(findChild_Widget(dlg, "ident.scope"));
                 if (startsWith_CStr(scopeCmd, "ident.scope arg:")) {

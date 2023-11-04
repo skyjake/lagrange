@@ -506,10 +506,14 @@ const iPtrArray *list_Keys(void) {
 }
 
 iBool isDown_Keys(const iBinding *binding) {
+#if defined (iPlatformTerminal)
+    return iFalse;
+#else
     int numKeys = 0;
     const uint8_t *keys = SDL_GetKeyboardState(&numKeys);
     const int scancode = SDL_GetScancodeFromKey(binding->key);
     const int scancode2 = (scancode == SDL_SCANCODE_RALT ? SDL_SCANCODE_LALT :
                            scancode == SDL_SCANCODE_LALT ? SDL_SCANCODE_RALT : scancode);
     return (scancode < numKeys && keys[scancode]) || (scancode2 < numKeys && keys[scancode2]);
+#endif
 }

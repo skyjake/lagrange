@@ -1202,7 +1202,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
         if (bm) {
             set_String(&bm->identity, string_Command(cmd, "fp"));
             updateDropdownSelection_LabelWidget(findChild_Widget(editor, "bmed.setident"),
-                                                cstr_String(&bm->identity));
+                                                format_CStr(" fp:%s", cstr_String(&bm->identity)));
         }
         return iTrue;
     }
@@ -1740,7 +1740,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setToggle_Widget(remoteSourceTag, bm->flags & remoteSource_BookmarkFlag);
                     setToggle_Widget(linkSplitTag, bm->flags & linkSplit_BookmarkFlag);
                     updateDropdownSelection_LabelWidget(findChild_Widget(dlg, "bmed.setident"),
-                                                        format_CStr("bmed.setident fp:%s",
+                                                        format_CStr(" fp:%s",
                                                                     cstr_String(&bm->identity)));
                 }
                 setBookmarkEditorParentFolder_Widget(dlg, bm ? bm->parentId : 0);

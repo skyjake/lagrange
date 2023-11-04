@@ -101,7 +101,7 @@ static iBool checkModifiers_(int have, int req) {
 
 static void trigger_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
-    postCommand_Widget(&d->widget, "%s", cstr_String(&d->command));
+    postCommand_Widget(w, "%s", cstr_String(&d->command));
     if (flags_Widget(w) & radio_WidgetFlag) {
         iForEach(ObjectList, i, children_Widget(w->parent)) {
             setFlags_Widget(i.object, selected_WidgetFlag, d == i.object);
@@ -109,7 +109,7 @@ static void trigger_LabelWidget_(const iLabelWidget *d) {
     }
     /* Triggering a menu item will always close all popup menus. */
     if (d->flags.menuCanceling) {
-        postCommand_Widget(&d->widget, "menu.cancel");
+        postCommand_Root(NULL, "menu.cancel");
     }
 }
 

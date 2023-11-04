@@ -1190,7 +1190,7 @@ void setNativeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) 
 #endif
 }
 
-iWidget *parentMenu_Widget(iWidget *menuItem) {
+iWidget *parentMenu_Widget(const iWidget *menuItem) {
     if (parent_Widget(menuItem)) {
         if (!cmp_String(id_Widget(parent_Widget(menuItem)), "menu")) {
             return parent_Widget(menuItem);
@@ -1531,10 +1531,12 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
                 }
             }
             iWindow *win = newPopup_Window(menuPos, d); /* window takes the widget */
+#if !defined (iPlatformTerminal)
             if (isFromMenuBar && menuPos.y + menuSize.y > bottom_Rect(displayRect)) {
                 const int maxMenuHeight = bottom_Rect(displayRect) - menuPos.y;
                 SDL_SetWindowMaximumSize(win->win, displayRect.size.x, maxMenuHeight);
             }
+#endif
             setCurrent_Window(win);
             SDL_SetWindowTitle(win->win, "Menu");
             arrange_Widget(d);
@@ -1827,11 +1829,34 @@ static const iString *replaceNewlinesWithDash_(const iString *str) {
     return collect_String(mod);
 }
 
+iWidget *dropdownMenu_Widget(const iWidget *dropButton) {
+    if (!dropButton) {
+        return NULL;
+    }
+    iWidget *menu = findChild_Widget(dropButton, "menu");
+    if (!menu) {
+        if (dropButton->flags2 & childMenuOpenedAsPopup_WidgetFlag2) {
+            /* The menu has been migrated temporarily into a popup window. We need to locate
+               the right popup. */
+            iConstForEach(PtrArray, p, popupWindows_App()) {
+                const iWindow *win = p.ptr;
+                iWidget *winRoot = win->roots[0]->widget;
+                if (userData_Object(winRoot) == dropButton) {
+                    iAssert(!cmp_String(id_Widget(winRoot), "menu"));
+                    return winRoot;
+                }
+            }
+        }
+    }
+    iAssert(menu);
+    return menu;
+}
+
 void updateDropdownSelection_LabelWidget(iLabelWidget *dropButton, const char *selectedCommand) {
     if (!dropButton) {
         return;
     }
-    iWidget *menu = findChild_Widget(as_Widget(dropButton), "menu");
+    iWidget *menu = dropdownMenu_Widget(as_Widget(dropButton));
     if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
         unselectAllNativeMenuItems_Widget(menu);
         iMenuItem *item = findNativeMenuItem_Widget(menu, selectedCommand);
@@ -1866,7 +1891,7 @@ const char *selectedDropdownCommand_LabelWidget(const iLabelWidget *dropButton) 
     if (!dropButton) {
         return "";
     }
-    iWidget *menu = findChild_Widget(constAs_Widget(dropButton), "menu");
+    iWidget *menu = dropdownMenu_Widget(constAs_Widget(dropButton));
     if (flags_Widget(menu) & nativeMenu_WidgetFlag) {
         iConstForEach(Array, i, userData_Object(menu)) {
             const iMenuItem *item = i.value;
@@ -4054,7 +4079,7 @@ iWidget *makeBookmarkEditor_Widget(uint32_t folderId, iBool withDup) {
                             iClob(makeHeading_Widget(isFolder ? "${dlg.bookmark.parentfolder}"
                                                               : "${dlg.bookmark.folder}")));
             const iArray *folderItems =
-                makeBookmarkFolderActions_MenuItem("dlg.bookmark.setfolder", iFalse, folderId);
+                makeBookmarkFolderActions_MenuItem("!dlg.bookmark.setfolder", iFalse, folderId);
             iLabelWidget *folderButton;
             setId_Widget(addChildFlags_Widget(values,
                                          iClob(folderButton = makeMenuButton_LabelWidget(
@@ -4136,7 +4161,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
         const iString *fp = string_Command(cmd, "fp");
         iLabelWidget *setident = findChild_Widget(editor, "bmed.setident");
         set_String(&as_Widget(setident)->data, fp);
-        updateDropdownSelection_LabelWidget(setident, cstr_String(fp));
+        updateDropdownSelection_LabelWidget(setident, format_CStr(" fp:%s", cstr_String(fp)));
         return iTrue;
     }
     if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "bmed.cancel")) {

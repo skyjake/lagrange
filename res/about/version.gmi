@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.17.3
+* Fixed activating a pinned identity when opening a bookmark via the Bookmarks menu.
+* Fixed initial scope of a created identity when using the default selection.
+* Fixed issues with dropdown menus when the menu appears as a popup window.
+* Fixed clearing the pinned identity of a bookmark.
+
 ## 1.17.2
 * Tabs opened in background are immediately added to the URL history.
 * Mouse wheel direction switches back to vertical when a wide block has been scrolled all the way.

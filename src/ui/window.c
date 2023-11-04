@@ -783,7 +783,7 @@ void init_MainWindow(iMainWindow *d, iRect rect) {
         SDL_Surface *surf = loadImage_(&imageLogo_Resources, 0);
         d->logo = SDL_CreateTextureFromSurface(d->base.render, surf);
         SDL_SetTextureBlendMode(d->logo, SDL_BLENDMODE_BLEND);
-#if SDL_VERSION_ATLEAST(2, 0, 12)
+#if SDL_VERSION_ATLEAST(2, 0, 12) && !defined (iPlatformTerminal)
         SDL_SetTextureScaleMode(d->logo, SDL_ScaleModeBest);
 #endif
         free(surf->pixels);
@@ -2370,6 +2370,11 @@ const iArray *updateBookmarksMenu_Widget(iWidget *menu) {
             }
 #endif
         }
+        iString *setIdentArg = NULL;
+        if (!isEmpty_String(&bm->identity)) {
+            setIdentArg = copy_String(&bm->identity);
+            prependCStr_String(setIdentArg, " setident:");
+        }
         pushBack_Array(
             dest,
             &(iMenuItem){ format_CStr("%s %s", cstr_String(&iconStr), cstr_String(title)),
@@ -2377,7 +2382,10 @@ const iArray *updateBookmarksMenu_Widget(iWidget *menu) {
                           0,
                           isFolder_Bookmark(bm)
                               ? format_CStr("submenu id:bfmenu.%d", id_Bookmark(bm))
-                              : format_CStr("!open url:%s", cstr_String(&bm->url)) });
+                              : format_CStr("!open%s url:%s",
+                                            setIdentArg ? cstr_String(setIdentArg) : "",
+                                            cstr_String(&bm->url)) });
+        delete_String(setIdentArg);
         deinit_String(&iconStr);
     }
     /* Create folder menus. */
