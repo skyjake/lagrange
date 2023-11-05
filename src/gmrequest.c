@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "gmcerts.h"
 #include "gopher.h"
+#include "guppy.h"
 #include "app.h" /* dataDir_App() */
 #include "mimehooks.h"
 #include "feeds.h"
@@ -32,6 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "resources.h"
 #include "sitespec.h"
 #include "defs.h"
+
+#include <errno.h>
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
@@ -178,6 +181,7 @@ struct Impl_GmRequest {
     iUploadData *        upload;
     iTlsRequest *        req;
     iGopher              gopher;
+    iGuppy               guppy;
     iSocket *            plainSocket; /* Spartan, Nex */
     iGmResponse *        resp;
     iBool                isProxy;
@@ -502,7 +506,7 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
     d->gopher.meta   = &resp->meta;
     d->gopher.output = &resp->body;
     d->state         = receivingBody_GmRequestState;
-    d->gopher.socket = new_Socket(cstr_String(host), port);
+    d->gopher.socket = new_Socket(cstr_String(host), port, tcp_SocketType);
     iConnect(Socket, d->gopher.socket, readyRead,    d, gopherRead_GmRequest_);
     iConnect(Socket, d->gopher.socket, disconnected, d, plainSocketDisconnected_GmRequest_);
     iConnect(Socket, d->gopher.socket, error,        d, plainSocketError_GmRequest_);
@@ -531,10 +535,47 @@ static void nexRead_GmRequest_(iGmRequest *d, iSocket *socket) {
     }
 }
 
+static void guppyRead_GmRequest_(iGmRequest *d, iSocket *socket) {
+    iBool notifyUpdate = iFalse;
+    iBool notifyDone   = iTrue;
+    lock_Mutex(d->mtx);
+    switch (processResponse_Guppy(&d->guppy, &notifyUpdate)) {
+        case invalidResponse_GuppyState:
+            d->state = finished_GmRequestState;
+            d->resp->statusCode = invalidHeader_GmStatusCode;
+            break;
+        case inputRequired_GuppyState:
+            d->state = finished_GmRequestState;
+            d->resp->statusCode = input_GmStatusCode;
+            break;
+        case redirect_GuppyState:
+            d->state = finished_GmRequestState;
+            d->resp->statusCode = redirectTemporary_GmStatusCode;
+            break;
+        case error_GuppyState:
+            d->state = finished_GmRequestState;
+            d->resp->statusCode = permanentFailure_GmStatusCode;
+            break;
+        case finished_GuppyState:
+            d->state = finished_GmRequestState;
+            d->resp->statusCode = success_GmStatusCode;
+            break;
+        default:
+            notifyDone = iFalse;
+    }
+    unlock_Mutex(d->mtx);
+    if (notifyUpdate) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+    if (notifyDone) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
 static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
     d->state = receivingBody_GmRequestState;
     setCStr_String(&d->resp->meta, "text/plain");
-    d->plainSocket = new_Socket(cstr_String(host), port);
+    d->plainSocket = new_Socket(cstr_String(host), port, tcp_SocketType);
     iConnect(Socket, d->plainSocket, readyRead,    d, nexRead_GmRequest_);
     iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
     iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
@@ -558,6 +599,34 @@ static void beginNexConnection_GmRequest_(iGmRequest *d, const iString *host, ui
                  !isEmpty_Range(&url.path) ? cstr_Rangecc(url.path) : "/");
     write_Socket(d->plainSocket, &message);
     deinit_Block(&message);
+}
+
+static void guppyTimeout_(iGmRequest *d) {
+    lock_Mutex(d->mtx);
+    cancel_Guppy(&d->guppy);
+    d->state = failure_GmRequestState;
+    d->resp->statusCode = unknownStatusCode_GmStatusCode;
+    setCStr_String(&d->resp->meta, strerror(ETIMEDOUT));
+    clear_Block(&d->resp->body);
+    unlock_Mutex(d->mtx);
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static void beginGuppyConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+    d->state = receivingHeader_GmRequestState;
+    setCStr_String(&d->resp->meta, "text/gemini");
+    d->plainSocket = new_Socket(cstr_String(host), port, udp_SocketType);
+    d->guppy.mtx    = d->mtx;
+    d->guppy.url    = &d->url;
+    d->guppy.socket = d->plainSocket;
+    d->guppy.meta   = &d->resp->meta;
+    d->guppy.body   = &d->resp->body;
+    iConnect(Socket, d->plainSocket, readyRead,    d, guppyRead_GmRequest_);
+    iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
+    iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
+    iConnect(Guppy,  &d->guppy,      timeout,      d, guppyTimeout_);
+    open_Socket(d->plainSocket);
+    open_Guppy(&d->guppy);
 }
 
 static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
@@ -636,7 +705,7 @@ static void spartanRead_GmRequest_(iGmRequest *d, iSocket *socket) {
 
 static void beginSpartanConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
     d->state = receivingHeader_GmRequestState;
-    d->plainSocket = new_Socket(cstr_String(host), port);
+    d->plainSocket = new_Socket(cstr_String(host), port, tcp_SocketType);
     iConnect(Socket, d->plainSocket, readyRead,    d, spartanRead_GmRequest_);
     iConnect(Socket, d->plainSocket, disconnected, d, plainSocketDisconnected_GmRequest_);
     iConnect(Socket, d->plainSocket, error,        d, plainSocketError_GmRequest_);
@@ -678,6 +747,7 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
+    init_Guppy(&d->guppy);
     d->plainSocket  = NULL;
     d->upload       = NULL;
     d->certs        = certs;
@@ -706,6 +776,8 @@ void deinit_GmRequest(iGmRequest *d) {
     iReleasePtr(&d->req);
     delete_UploadData(d->upload);
     deinit_Gopher(&d->gopher);
+    iDisconnectObject(Guppy, &d->guppy, timeout, d);
+    deinit_Guppy(&d->guppy);
     iRelease(d->plainSocket);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
@@ -1069,6 +1141,10 @@ void submit_GmRequest(iGmRequest *d) {
     }
     else if (equalCase_Rangecc(url.scheme, "nex")) {
         beginNexConnection_GmRequest_(d, host, port ? port : 1900);
+        return;
+    }
+    else if (equalCase_Rangecc(url.scheme, "guppy")) {
+        beginGuppyConnection_GmRequest_(d, host, port ? port : 6775);
         return;
     }
     else if (!equalCase_Rangecc(url.scheme, "gemini") &&

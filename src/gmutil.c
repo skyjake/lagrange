@@ -110,6 +110,9 @@ uint16_t port_Url(const iUrl *d) {
     else if (equalCase_Rangecc(d->scheme, "spartan")) {
         port = 300;
     }
+    else if (equalCase_Rangecc(d->scheme, "guppy")) {
+        port = 6775;
+    }
     else if (equalCase_Rangecc(d->scheme, "https")) {
         port = 443;
     }
