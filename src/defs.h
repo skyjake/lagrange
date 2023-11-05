@@ -294,6 +294,7 @@ iLocalDef int acceptKeyMod_ReturnKeyBehavior(int behavior) {
 #define toggleNo_Icon       bullet_Icon
 #define spartan_Icon        "\U0001f4aa"
 #define nex_Icon            "\U0001f687"
+#define guppy_Icon          "\U0001f41f"
 #define keyboard_Icon       "\u2328"
 #define network_Icon        "\U0001f5a7"
 #define computer_Icon       "\U0001f5b3"

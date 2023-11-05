@@ -417,6 +417,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             else if (equalCase_Rangecc(parts.scheme, "nex")) {
                 setScheme_GmLink_(link, nex_GmLinkScheme);
             }
+            else if (equalCase_Rangecc(parts.scheme, "guppy")) {
+                setScheme_GmLink_(link, guppy_GmLinkScheme);
+            }
             else if (equalCase_Rangecc(parts.scheme, "file")) {
                 setScheme_GmLink_(link, file_GmLinkScheme);
             }
@@ -1063,6 +1066,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : scheme == titan_GmLinkScheme    ? uploadArrow
                                              : scheme == finger_GmLinkScheme   ? pointingFinger
                                              : scheme == nex_GmLinkScheme      ? nex_Icon
+                                             : scheme == guppy_GmLinkScheme    ? guppy_Icon
                                              : (scheme == spartan_GmLinkScheme &&
                                                 !d->flags.isSpartan)           ? spartan_Icon
                                              : (scheme == mailto_GmLinkScheme ||
