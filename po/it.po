@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2023-10-24 20:14+0000\n"
+"PO-Revision-Date: 2023-11-13 20:14+0000\n"
 "Last-Translator: Omar Polo <weblate@omarpolo.com>\n"
 "Language-Team: Italian <http://weblate.skyjake.fi/projects/lagrange/ui/it/>\n"
 "Language: it\n"
@@ -443,7 +443,7 @@ msgid "link.bookmark"
 msgstr "Aggiungi Link ai Segnalibri…"
 
 msgid "link.browser"
-msgstr "Apri link nel Browser di Default"
+msgstr "Apri link nel Browser Predefinito"
 
 msgid "pageinfo.domain.match"
 msgstr "Il nome del dominio concide"
@@ -493,7 +493,7 @@ msgstr "Cancella"
 #, c-format
 msgid "dlg.openlink.confirm"
 msgstr ""
-"Aprire questo link nel browser di default?\n"
+"Aprire questo link nel browser predefinito?\n"
 "%s%s"
 
 msgid "link.download"
@@ -553,8 +553,8 @@ msgstr "Il certificato ricevuto è scaduto il %s."
 
 msgid "dlg.certimport.help"
 msgstr ""
-"Incolla un certificato in fromato PEM e/o una chiave privata,\n"
-"o trascina sulla finestra un file .crt/.key."
+"Incolla un certificato in fromato PEM e/o una chiave privata, o trascina "
+"sulla finestra un file .crt/.key."
 
 msgid "dlg.certimport.nocert"
 msgstr "Senza Certificato"
@@ -636,7 +636,7 @@ msgstr "Dimensione del file:"
 
 # Interpret as "Results from history..."
 msgid "heading.lookup.history"
-msgstr "STORICO"
+msgstr "CRONOLOGIA"
 
 msgid "upload.mime"
 msgstr "Tipo MIME:"
@@ -1336,7 +1336,7 @@ msgid "error.cgi"
 msgstr "Errore CGI"
 
 msgid "keys.bottom"
-msgstr "Salta in fondo"
+msgstr "Salta in Basso"
 
 msgid "gempub.meta.pubdate"
 msgstr "Data di pubblicazione"
@@ -1444,7 +1444,7 @@ msgid "dlg.upload.id.none"
 msgstr "Nessuna"
 
 msgid "dlg.upload.id.default"
-msgstr "Default"
+msgstr "Identità Predefinita"
 
 msgid "menu.upload.export"
 msgstr "Esporta Testo"
@@ -1507,13 +1507,13 @@ msgid "prefs.proxy.gopher"
 msgstr "Proxy Gopher:"
 
 msgid "menu.binding.reset"
-msgstr "Reimposta i Default"
+msgstr "Ripristina le impostazioni predefinite"
 
 msgid "archive.exit"
 msgstr "Esci dall'archivio"
 
 msgid "keys.top"
-msgstr "Torna in cima"
+msgstr "Torna in Cima"
 
 msgid "keys.scroll.halfpage.down"
 msgstr "Scorri in basso di metà pagina"
@@ -2267,7 +2267,7 @@ msgstr "Archivio Dati dell'Utente"
 
 msgid "userdata.help"
 msgstr ""
-"Gli archivi dei dati dell'utente contengono lo storico di navigazione, le "
+"Gli archivi dei dati dell'utente contengono la cronologia di navigazione, le "
 "identità, i segnalibri, i frammenti di testo, le impostazioni per-sito e i "
 "fingerprint dei certificati dei server fidati. Possono essere salvati come "
 "backup ed essere usati per trasferire dati tra i dispositivi."
@@ -2304,7 +2304,7 @@ msgid "import.userdata.idents"
 msgstr "Identità:"
 
 msgid "import.userdata.history"
-msgstr "Storico:"
+msgstr "Cronologia:"
 
 msgid "import.userdata.trusted"
 msgstr "Certificati Fidati:"
@@ -2616,3 +2616,136 @@ msgstr "Strumenti"
 
 msgid "menu.page.visitlinks"
 msgstr "Segna tutti i link come Visitati"
+
+msgid "sniped.new"
+msgstr "Nuovo Frammento"
+
+msgid "menu.snip.edit"
+msgstr "Modifica…"
+
+msgid "heading.snip.new"
+msgstr "Nuovo Frammento"
+
+msgid "menu.snip.prefs"
+msgstr "Configura…"
+
+msgid "menu.snip.delete"
+msgstr "Cancella"
+
+msgid "snip.name"
+msgstr "Nome:"
+
+msgid "import.userdata.snippets"
+msgstr "Frammenti:"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "FRAMMENTI"
+
+msgid "menu.input.unsetprompt"
+msgstr "Non supporre che questo URL richieda input"
+
+msgid "snip.content"
+msgstr "Contenuto:"
+
+msgid "heading.snip.edit"
+msgstr "Modifica Frammento"
+
+msgid "menu.snip.clipboard"
+msgstr "Copia nella Clipboard"
+
+msgid "heading.prefs.snip"
+msgstr "Frammenti"
+
+msgid "prefs.collapsepre"
+msgstr "Collassa i pre-formattati:"
+
+msgid "collapse.bydefault"
+msgstr "Al Caricamento della Pagina"
+
+msgid "collapse.notbydefault"
+msgstr "Manualmente"
+
+msgid "collapse.never"
+msgstr "Mai"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Sistema"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Manuale"
+
+msgid "prefs.feedinterval"
+msgstr "Intervallo di aggiornamento dei Feed:"
+
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "Chiaro Vibrante"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Inserisci il frammento di una ricerca"
+
+msgid "sniped.help"
+msgstr ""
+"Frammenti il cui nome inizia con un punto esclamativo (per esempio \"!w\") "
+"possono essere usati nel campo degli URL come scorciatoia per la ricerca."
+
+msgid "snip.accept"
+msgstr "Salva Frammento"
+
+msgid "menu.foldall"
+msgstr "Ripiega Tutti"
+
+msgid "menu.unfoldall"
+msgstr "Dispiega Tutti"
+
+msgid "menu.snippet.add"
+msgstr "Frammento dalla Selezione…"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Aggiungi Segnalibro alla Cartella:"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Sposta Segnalibro nella Cartella:"
+
+msgid "dlg.import.intofolder"
+msgstr "Agginugi alla Cartella:"
+
+msgid "menu.input.setprompt"
+msgstr "Supponi che questo URL richieda input"
+
+msgid "menu.input.clear"
+msgstr "Pulisci cronologia"
+
+msgid "dlg.import.notfound"
+msgstr "Non ci sono link in questa pagina."
+
+msgid "link.searchurl"
+msgstr "Usa come URL per la Ricerca"
+
+msgid "link.snippet"
+msgstr "Frammento da Link…"
+
+msgid "menu.input.restore"
+msgstr "Reimposta Precedenti:"
+
+msgid "dlg.import.headings"
+msgstr "Sottocartelle dai Titoli:"
+
+msgid "heading.upload.dest"
+msgstr "Indirizzo"
+
+msgid "collapse.always"
+msgstr "Sempre"
+
+msgid "prefs.editor.highlight"
+msgstr "Evidenzia sintassi:"
+
+msgid "error.showutf8"
+msgstr "UTF-8 Rilevato Automaticamente"
+
+msgid "error.showutf8.msg"
+msgstr ""
+"Il formato della pagina non è stato riconosciuto ma è testo correttamente "
+"codificato in UTF-8."
