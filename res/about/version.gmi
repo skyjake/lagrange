@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.17.4
+* Removed automatic horizontal scrolling of wide preformatted blocks. Instead, hold down the Shift key to scroll horizontally with the mouse wheel.
+
 ## 1.17.3
 * Fixed activating a pinned identity when opening a bookmark via the Bookmarks menu.
 * Fixed initial scope of a created identity when using the default selection.
