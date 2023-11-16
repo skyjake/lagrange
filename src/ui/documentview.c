@@ -598,6 +598,7 @@ void scrollTo_DocumentView(iDocumentView *d, int documentY, iBool centered) {
               documentY - (centered ? documentBounds_DocumentView(d).size.y / 2
                                     : lineHeight_Text(paragraph_FontId)));
     clampScroll_DocumentView(d);
+    updateVisible_DocumentView(d);
 }
 
 void scrollToHeading_DocumentView(iDocumentView *d, const char *heading) {
