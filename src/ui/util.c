@@ -1848,7 +1848,7 @@ iWidget *dropdownMenu_Widget(const iWidget *dropButton) {
             }
         }
     }
-    iAssert(menu);
+    //iAssert(menu);
     return menu;
 }
 

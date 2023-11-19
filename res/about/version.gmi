@@ -6,6 +6,14 @@
 ```
 # Release notes
 
+## 1.17.4
+* Removed automatic horizontal scrolling of wide preformatted blocks. Instead, hold down the Shift key to scroll horizontally with the mouse wheel.
+* Fixed an event processing issue where some events were not handled as expected, for instance when opening a link into split view the opened link was not highlighted.
+* Fixed links not reacting to mouse hover after jumping to a heading from the Outline.
+* Fixed input prompt behaving strangely after changing font size. (Lines are now forced to rewrap after changing the font.)
+* Fixed mouse cursor not changing its shape in all open windows.
+* Updated UI translations.
+
 ## 1.17.3
 * Fixed activating a pinned identity when opening a bookmark via the Bookmarks menu.
 * Fixed initial scope of a created identity when using the default selection.

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2023-05-20 05:54+0000\n"
+"PO-Revision-Date: 2023-11-10 22:14+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -576,8 +576,8 @@ msgstr "Li recivet certificat es expirat E por un íncorrect dominia."
 
 msgid "dlg.certimport.help"
 msgstr ""
-"Colla un PEM-codificat certificat e/o un clave privat,\n"
-"o fa cader un file .crt o .key al fenestre."
+"Colla un PEM-codificat certificat e/o un clave privat, o fa cader un file ."
+"crt o .key al fenestre."
 
 msgid "dlg.certimport.notfound"
 msgstr "Null certificat o clave privat esset trovat."
@@ -900,7 +900,7 @@ msgstr "Verificat de CA"
 
 #, c-format
 msgid "dlg.input.prompt"
-msgstr "Ples provider li intrada por %s:"
+msgstr "Provide li intrada por %s:"
 
 msgid "heading.save"
 msgstr "File sta gardat"
@@ -1418,7 +1418,7 @@ msgid "menu.split.merge"
 msgstr "Reunir"
 
 msgid "menu.view.split"
-msgstr "Fender li vise…"
+msgstr "Fender li vise"
 
 msgid "dlg.newident.date.example"
 msgstr ""
@@ -1714,7 +1714,7 @@ msgid "bookmark.export.format.linklines"
 msgstr "Chascun ligament representa un marca-págine."
 
 msgid "dlg.upload.id.default"
-msgstr "Predefinit"
+msgstr "Identité predefinit"
 
 msgid "bookmark.export.title.tag"
 msgstr "Etiquettes de marca-págines"
@@ -2168,10 +2168,10 @@ msgid "prefs.tabwidth"
 msgstr "Largore del tabulator:"
 
 msgid "menu.export"
-msgstr "Exportar li data de usator"
+msgstr "Exportar"
 
 msgid "menu.import"
-msgstr "Importar li data de usator…"
+msgstr "Importar…"
 
 msgid "menu.paste.go"
 msgstr "Collar e ear"
@@ -2314,8 +2314,9 @@ msgstr "Marcar elementes ad-infra quam leet"
 msgid "userdata.help"
 msgstr ""
 "Archives del data de usator contene li diarium de navigation, identitás, "
-"marca-págines, parametres de sites e fingre-printes de fidet certificates. "
-"On posse usar les por preservation e por transferter data inter aparates."
+"marca-págines, fragmentes, parametres de sites e fingre-printes de fidet "
+"certificates. On posse usar les por preservation e por transferter data "
+"inter aparates."
 
 msgid "menu.viewformat.gemini"
 msgstr "Viser quam Gemtext"
@@ -2546,3 +2547,142 @@ msgstr "Ucrainan"
 
 msgid "prefs.redirect.allowscheme"
 msgstr "Redirectiones quel cambia li schema:"
+
+msgid "menu.bookmark.addtofolder"
+msgstr "Adjunter un marca-págine a un fólder:"
+
+msgid "dlg.import.intofolder"
+msgstr "Adjunter a un fólder:"
+
+msgid "heading.upload.dest"
+msgstr "Adresse"
+
+msgid "dlg.import.notfound"
+msgstr "Null ligamentes trovat sur ti págine."
+
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "Vibrant lucid"
+
+msgid "menu.snip.prefs"
+msgstr "Configurar…"
+
+msgid "heading.snip.new"
+msgstr "Nov fragment"
+
+msgid "heading.snip.edit"
+msgstr "Modificar li fragment"
+
+msgid "menu.foldall"
+msgstr "Contraher omni"
+
+msgid "menu.unfoldall"
+msgstr "Expander omni"
+
+msgid "menu.userdata"
+msgstr "Data de usator"
+
+msgid "menu.paste.snippet"
+msgstr "Collar li fragment"
+
+msgid "menu.search"
+msgstr "Serchar"
+
+msgid "menu.snippet.add"
+msgstr "Fragment ex li selection…"
+
+msgid "menu.tools"
+msgstr "Instrumentarium"
+
+msgid "menu.page.visitlinks"
+msgstr "Marcar omni ligamentes quam visitat"
+
+msgid "menu.bookmark.movetofolder"
+msgstr "Mover li marca-págine al fólder:"
+
+msgid "menu.input.clear"
+msgstr "Vacuar li diarium"
+
+msgid "link.searchurl"
+msgstr "Usar quam li adresse de sercha"
+
+msgid "dlg.import.headings"
+msgstr "Subfólderes secun li rubricas:"
+
+msgid "link.snippet"
+msgstr "Fragment ex un ligament…"
+
+msgid "import.userdata.snippets"
+msgstr "Fragmentes:"
+
+# Interpret as "Results from snippets..."
+msgid "heading.lookup.snippets"
+msgstr "FRAGMENTES"
+
+msgid "heading.prefs.snip"
+msgstr "Fragmentes"
+
+msgid "collapse.never"
+msgstr "Nequande"
+
+msgid "collapse.notbydefault"
+msgstr "Manualmen"
+
+msgid "collapse.bydefault"
+msgstr "Pos carga"
+
+msgid "prefs.collapsepre"
+msgstr "Contraher formatat textu:"
+
+# Operating system's UI accent color.
+msgid "prefs.accent.system"
+msgstr "Del sistema"
+
+msgid "prefs.feedinterval"
+msgstr "Actualisar feedes chascun:"
+
+msgid "prefs.feedinterval.manual"
+msgstr "Manualmen"
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Usar un abbreviat adresse"
+
+msgid "error.showutf8"
+msgstr "UTF-8 detectet automaticmen"
+
+msgid "error.showutf8.msg"
+msgstr ""
+"Li tip de medie de ti págine ne esset reconosset ma it es un valid textu in "
+"codification UTF-8."
+
+msgid "sniped.new"
+msgstr "Nov fragment"
+
+msgid "sniped.help"
+msgstr ""
+"Fragmentes, nómines de quel comensa per ! (p.ex «!w»), posse esser usat quam "
+"abbreviat adresses."
+
+msgid "menu.snip.edit"
+msgstr "Modificar…"
+
+msgid "menu.snip.clipboard"
+msgstr "Copiar al paperiere"
+
+msgid "menu.snip.delete"
+msgstr "Remover"
+
+msgid "snip.content"
+msgstr "Contenete:"
+
+msgid "snip.accept"
+msgstr "Gardar li fragment"
+
+msgid "collapse.always"
+msgstr "Sempre"
+
+msgid "prefs.editor.highlight"
+msgstr "Coloration de sintaxe:"
+
+msgid "snip.name"
+msgstr "Nómine:"

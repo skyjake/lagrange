@@ -4457,30 +4457,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 postCommandf_App("zoom.delta arg:%d", amount.y > 0 ? 10 : -10);
                 return iTrue;
             }
-            if (!isApple_Platform()) {
-                if (kmods == KMOD_SHIFT) {
-                    /* Shift switches to horizontal scrolling mode. (macOS does this for us.) */
-                    iSwap(int, amount.x, amount.y);
-                }
-                else if (isFinished_SmoothScroll(&d->view->scrollY) &&
-                    d->view->hoverPre &&
-                    d->view->hoverPre->flags & wide_GmRunFlag &&
-                    isWideBlockScrollable_DocumentView(d->view,
-                                                       documentBounds_DocumentView(d->view),
-                                                       d->view->hoverPre)) {
-                    /* Do a horizontal scroll over a wide block when not vertically scrolling. */
-                    iSwap(int, amount.x, amount.y);
-                }
+            if (!isApple_Platform() && kmods == KMOD_SHIFT) {
+                /* Shift switches to horizontal scrolling mode. (macOS does this for us.) */
+                iSwap(int, amount.x, amount.y);
             }
             if (amount.x) {
-                iBool isAtEnd;
                 scrollWideBlock_DocumentView(view, mouseCoord,
                                              -3 * amount.x * lineHeight_Text(paragraph_FontId),
-                                             167, &isAtEnd);
-                if (isAtEnd && !kmods) {
-                    /* Can't scroll any more, go the other way. */
-                    amount.y = amount.x;
-                }
+                                             167, NULL);
             }
             if (amount.y) {
                 smoothScroll_DocumentView(view,

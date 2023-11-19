@@ -666,9 +666,6 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
         refresh_Widget(findWidget_App("toolbar"));
         return iFalse;
     }
-    else if (handleCommand_App(cmd)) {
-        return iTrue;
-    }
     return iFalse;
 }
 

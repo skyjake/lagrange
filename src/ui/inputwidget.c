@@ -929,6 +929,7 @@ static void updateAfterVisualOffsetChange_InputWidget_(iInputWidget *d, iRoot *r
 
 void setFont_InputWidget(iInputWidget *d, int fontId) {
     d->font = fontId;
+    d->lastUpdateWidth = 0; /* force a rewrapping */
     updateMetrics_InputWidget_(d);
 }
 
