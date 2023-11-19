@@ -45,6 +45,22 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.17.4" date="2023-11-19">
+            <description>
+                <p>Changes in v1.17.4:</p>
+                <ul>
+                    <li>Removed automatic horizontal scrolling of wide preformatted blocks. Instead, hold down the Shift key to scroll horizontally with the mouse wheel.</li>
+                    <li>Fixed an event processing issue where some events were not handled as expected, for instance when opening a link into split view the opened link was not highlighted.</li>
+                    <li>Fixed links not reacting to mouse hover after jumping to a heading from the Outline.</li>
+                    <li>Fixed input prompt behaving strangely after changing font size. (Lines are now forced to rewrap after changing the font.)</li>
+                    <li>Fixed mouse cursor not changing its shape in all open windows.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.17.4</url>
+        </release>
         <release version="1.17.3" date="2023-11-04">
             <description>
                 <ul>
