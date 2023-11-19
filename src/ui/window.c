@@ -1435,7 +1435,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     }
                 }
             }
-            if (event.type == SDL_MOUSEMOTION) {
+            if (event.type == SDL_MOUSEMOTION && event.motion.windowID == id_Window(d)) {
                 applyCursor_Window_(d);
             }
             return wasUsed;
