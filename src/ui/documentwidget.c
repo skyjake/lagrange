@@ -1333,9 +1333,18 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                             endsWithCase_Rangecc(fileName, ".markdown")) {
                             param = range_CStr("text/markdown");
                         }
-                        else if (endsWithCase_Rangecc(fileName, ".gmi") ||
-                                 endsWithCase_Rangecc(fileName, ".gemini")) {
+                        else if ((endsWithCase_Rangecc(fileName, ".gmi") ||
+                                  endsWithCase_Rangecc(fileName, ".gemini")) &&
+                                 isEmpty_Range(&parts.query)) {
+                            /* The server _probably_ sent us the wrong media type, so assume
+                               they meant this is a Gemtext document based on the file extension.
+                               However, if the query string is present, the server likely knows
+                               what it's doing so only "fix" the type when a query component
+                               was not present. */
                             param = range_CStr("text/gemini");
+                            /* TODO: A better way to do this would be to preserve the original
+                               media type and force a Gemtext view mode on the document.
+                               (https://github.com/skyjake/lagrange/issues/359) */
                         }
                     }
                 }
