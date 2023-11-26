@@ -1576,6 +1576,17 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
             }
             setFormat_GmDocument(d->view->doc, docFormat);
             /* Convert the source to UTF-8 if needed. */
+            if (equalCase_Rangecc(charset, "utf-8")) {
+                /* Verify that it actually is valid UTF-8. */
+                if (!isUtf8_Rangecc(range_String(&str))) {
+                    if (strstr(cstr_String(&str), "\x1b[")) {
+                        charset = range_CStr("cp437"); /* An educated guess. */
+                    }
+                    else {
+                        charset = range_CStr("latin1");
+                    }
+                }
+            }
             if (!equalCase_Rangecc(charset, "utf-8")) {
                 set_String(&str,
                            collect_String(decode_Block(&str.chars, cstr_Rangecc(charset))));

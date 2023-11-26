@@ -84,7 +84,7 @@ int ansiFlags_Text(void) {
 }
 
 iRegExp *makeAnsiEscapePattern_Text(iBool includeEscChar) {
-    const char *pattern = "\x1b[[()][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])";
+    const char *pattern = "\x1b[[\\(\\)][?]?([0-9;AB]*?)([ABCDEFGHJKSTfhilmn])";
     if (!includeEscChar) {
         pattern++;
     }
@@ -251,7 +251,7 @@ void drawOutline_Text(int fontId, iInt2 pos, int outlineColor, int fillColor, iR
     }
 #else
     drawRange_Text(fontId, pos, fillColor | fillBackground_ColorId, text);
-#endif    
+#endif
 }
 
 iTextMetrics measureWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
