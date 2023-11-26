@@ -1815,7 +1815,9 @@ void resize_MainWindow(iMainWindow *d, int w, int h) {
 }
 
 void setTitle_Window(iWindow *d, const iString *title) {
-    SDL_SetWindowTitle(d->win, cstr_String(title));
+    iString *clean = collect_String(copy_String(title));
+    replaceRegExp_String(clean, iClob(makeAnsiEscapePattern_Text(iTrue)), "", NULL, NULL);
+    SDL_SetWindowTitle(d->win, cstr_String(clean));
     iLabelWidget *bar = findChild_Widget(get_Root()->widget, "winbar.title");
     if (bar) {
         updateText_LabelWidget(bar, title);
