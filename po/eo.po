@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-19 04:46+0000\n"
-"PO-Revision-Date: 2023-03-30 18:15+0000\n"
+"PO-Revision-Date: 2023-11-28 17:14+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -841,7 +841,7 @@ msgid "heading.upload.id"
 msgstr "Rajtigo"
 
 msgid "dlg.upload.id.default"
-msgstr "Defaŭlto"
+msgstr "Defaŭlta identeco"
 
 # used on mobile
 msgid "dlg.upload.file"
@@ -1316,3 +1316,43 @@ msgstr "Turka"
 # A language choice in the Translation dialog.
 msgid "lang.uk"
 msgstr "Ukraina"
+
+msgid "menu.snip.prefs"
+msgstr "Agordi…"
+
+msgid "menu.snip.delete"
+msgstr "Forigi"
+
+msgid "snip.name"
+msgstr "Nomo:"
+
+msgid "heading.snip.new"
+msgstr "Nova fragmento"
+
+msgid "error.ansi"
+msgstr "Terminalimitilo"
+
+# Action label
+msgid "fontpack.meta.viewfile"
+msgstr "Montri dosieron"
+
+msgid "fontpack.export"
+msgstr "Montri la ŝablonon fontpack.ini"
+
+msgid "sniped.new"
+msgstr "Nova fragmento"
+
+msgid "snip.accept"
+msgstr "Konservi fragmenton"
+
+msgid "snip.content"
+msgstr "Enhavo:"
+
+msgid "heading.snip.edit"
+msgstr "Redakti fragmenton"
+
+msgid "menu.snip.clipboard"
+msgstr "Kopii al tondujo"
+
+msgid "menu.snip.edit"
+msgstr "Redakti…"
