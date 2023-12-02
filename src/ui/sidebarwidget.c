@@ -2224,14 +2224,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             /* Update the menu before opening. */
             /* TODO: This kind of updating is already done above, and in `updateContextMenu_`... */
             if (d->mode == bookmarks_SidebarMode) {
-                /* Remote bookmarks have limitations. */
                 const iSidebarItem *hoverItem = hoverItem_ListWidget(d->list);
-                iAssert(hoverItem);
+                if (!hoverItem) {
+                    return iTrue;
+                }
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), hoverItem->id);
                 if (isFolder_Bookmark(bm)) {
                     contextMenu = d->folderMenu;
                 }
-                else if (!isVisible_Widget(d->menu)) {
+                else if (!isVisible_Widget(d->menu)) {                    
                     const iBool        isRemote        = (bm->flags & remote_BookmarkFlag) != 0;
                     static const char *localOnlyCmds[] = { "bookmark.edit",
                                                            "bookmark.delete",
@@ -2240,7 +2241,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                                            "bookmark.tag tag:remotesource" };
                     iForIndices(i, localOnlyCmds) {
                         setFlags_Widget(as_Widget(findMenuItem_Widget(contextMenu, localOnlyCmds[i])),
-                                        disabled_WidgetFlag,
+                                        disabled_WidgetFlag, /* Remote bookmarks have limitations. */
                                         isRemote);
                     }
                 }
