@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.17.5
+* Fixed two memory leaks.
 * Content that uses `charset=utf-8` is checked for validity. If the encoding is invalid, the content is instead decoded as CP437 (if it has ANSI escapes; possibly it's ASCII art) or just Latin-1.
 * Remove ANSI escapes from window titles.
 * Gopher: Detect audio media type from file extension with the `s` item type (it's not always WAV).

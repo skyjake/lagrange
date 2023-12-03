@@ -904,6 +904,7 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
     if (d->view == d->swipeView) {
         /* The view is being switched away for swiping, so allocate a new one for the
            actual document. */
+        d->swipeBanner = d->banner;
         d->banner = new_Banner();
         setOwner_Banner(d->banner, d);
         setWidth_Banner(d->banner, documentWidth_DocumentView(d->view));
