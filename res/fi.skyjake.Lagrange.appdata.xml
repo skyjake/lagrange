@@ -45,9 +45,23 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.17.5" date="2023-12-04">
+            <description>
+                <ul>
+                    <li>Fixed a few small memory leaks.</li>
+                    <li>Fixed unnecessary copying of data while waiting for an audio buffer to become playable.</li>
+                    <li>Gopher: Detect audio media type from file extension with the `s` item type (it's not always WAV).</li>
+                    <li>Content that uses `charset=utf-8` is checked for validity. If the encoding is invalid, the content is instead decoded as CP437 (if it has ANSI escapes; possibly it's ASCII art) or just Latin-1.</li>
+                    <li>Remove ANSI escapes from window titles.</li>
+                    <li>Modified rule for when 'text/plain' is assumed to actually be 'text/gemini' based on the file extension.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.17.5</url>
+        </release>
         <release version="1.17.4" date="2023-11-19">
             <description>
-                <p>Changes in v1.17.4:</p>
                 <ul>
                     <li>Removed automatic horizontal scrolling of wide preformatted blocks. Instead, hold down the Shift key to scroll horizontally with the mouse wheel.</li>
                     <li>Fixed an event processing issue where some events were not handled as expected, for instance when opening a link into split view the opened link was not highlighted.</li>
