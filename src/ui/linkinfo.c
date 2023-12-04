@@ -150,6 +150,9 @@ iBool update_LinkInfo(iLinkInfo *d, const iDocumentWidget *doc, iGmLinkId linkId
             /* Draw to a buffer, wrapped. */
             const int avail = iMax(minWidth_LinkInfo_, maxWidth) - 2 * hPad_LinkInfo_;
             iWrapText wt = { .text = range_String(&str), .maxWidth = avail, .mode = word_WrapTextMode };
+            if (d->buf) {
+                delete_TextBuf(d->buf);
+            }
             d->buf = new_TextBuf(&wt, uiLabel_FontId, tmQuote_ColorId);
             deinit_String(&str);
         }

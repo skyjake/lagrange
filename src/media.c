@@ -469,8 +469,9 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             }
             pushBack_PtrArray(&d->items[audio_MediaType], audio);
             /* Start playing right away. */
-            start_Player(audio->player);
-            postCommandf_App("media.player.started player:%p", audio->player);
+            if (start_Player(audio->player)) {
+                postCommandf_App("media.player.started player:%p", audio->player);
+            }
             isNew = iTrue;
 #endif /* LAGRANGE_ENABLE_AUDIO */
         }

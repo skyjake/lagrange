@@ -1158,6 +1158,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                     "open notinline:1 url:%s",
                     cstr_String(absoluteUrl_String(&iStringLiteral(""), text_InputWidget(url))));
             }
+            delete_String(newUrl);
             return iFalse;
         }
     }

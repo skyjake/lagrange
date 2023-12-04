@@ -904,6 +904,7 @@ static void releaseViewDocument_DocumentWidget_(iDocumentWidget *d) {
     if (d->view == d->swipeView) {
         /* The view is being switched away for swiping, so allocate a new one for the
            actual document. */
+        d->swipeBanner = d->banner;
         d->banner = new_Banner();
         setOwner_Banner(d->banner, d);
         setWidth_Banner(d->banner, documentWidth_DocumentView(d->view));
@@ -1333,9 +1334,18 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                             endsWithCase_Rangecc(fileName, ".markdown")) {
                             param = range_CStr("text/markdown");
                         }
-                        else if (endsWithCase_Rangecc(fileName, ".gmi") ||
-                                 endsWithCase_Rangecc(fileName, ".gemini")) {
+                        else if ((endsWithCase_Rangecc(fileName, ".gmi") ||
+                                  endsWithCase_Rangecc(fileName, ".gemini")) &&
+                                 isEmpty_Range(&parts.query)) {
+                            /* The server _probably_ sent us the wrong media type, so assume
+                               they meant this is a Gemtext document based on the file extension.
+                               However, if the query string is present, the server likely knows
+                               what it's doing so only "fix" the type when a query component
+                               was not present. */
                             param = range_CStr("text/gemini");
+                            /* TODO: A better way to do this would be to preserve the original
+                               media type and force a Gemtext view mode on the document.
+                               (https://github.com/skyjake/lagrange/issues/359) */
                         }
                     }
                 }
@@ -1567,6 +1577,17 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
             }
             setFormat_GmDocument(d->view->doc, docFormat);
             /* Convert the source to UTF-8 if needed. */
+            if (equalCase_Rangecc(charset, "utf-8")) {
+                /* Verify that it actually is valid UTF-8. */
+                if (!isUtf8_Rangecc(range_String(&str))) {
+                    if (strstr(cstr_String(&str), "\x1b[")) {
+                        charset = range_CStr("cp437"); /* An educated guess. */
+                    }
+                    else {
+                        charset = range_CStr("latin1");
+                    }
+                }
+            }
             if (!equalCase_Rangecc(charset, "utf-8")) {
                 set_String(&str,
                            collect_String(decode_Block(&str.chars, cstr_Rangecc(charset))));

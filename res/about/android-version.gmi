@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.17 (Beta 25)
+* Fixed a few small memory leaks.
+* Gopher: Detect audio media type from file extension with the `s` item type (it's not always WAV).
+* Content that uses `charset=utf-8` is checked for validity. If the encoding is invalid, the content is instead decoded as CP437 (if it has ANSI escapes; possibly it's ASCII art) or just Latin-1.
+* Modified rule for when 'text/plain' is assumed to actually be 'text/gemini' based on the file extension.
+* Updated dependencies to newer versions (OpenSSL, GNU FriBidi, libiconv, libunistring).
+
 ## 1.17 (Beta 24)
 * Tabs opened in background are immediately added to the URL history.
 * Fixed initial scope of a created identity when using the default selection.
