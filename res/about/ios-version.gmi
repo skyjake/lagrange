@@ -6,7 +6,7 @@
 ```
 # Release notes
 
-## 1.17 (5)
+## 1.17 (6)
 * Fixed a few small memory leaks.
 * Fixed unnecessary copying of data while waiting for an audio buffer to become playable. This potentially caused the operating system to terminate the app due to excessive memory use.
 * Gopher: Detect audio media type from file extension with the `s` item type (it's not always WAV).
