@@ -7,10 +7,11 @@
 # Release notes
 
 ## 1.17.5
-* Fixed two memory leaks.
+* Fixed a few small memory leaks.
+* Fixed unnecessary copying of data while waiting for an audio buffer to become playable.
+* Gopher: Detect audio media type from file extension with the `s` item type (it's not always WAV).
 * Content that uses `charset=utf-8` is checked for validity. If the encoding is invalid, the content is instead decoded as CP437 (if it has ANSI escapes; possibly it's ASCII art) or just Latin-1.
 * Remove ANSI escapes from window titles.
-* Gopher: Detect audio media type from file extension with the `s` item type (it's not always WAV).
 * Modified rule for when 'text/plain' is assumed to actually be 'text/gemini' based on the file extension.
 
 ## 1.17.4
