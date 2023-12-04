@@ -475,12 +475,11 @@ static iRangecc mediaType_(const iString *str) {
     return part;
 }
 
-static iContentSpec contentSpec_Player_(const iPlayer *d) {
+static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
     iContentSpec content;
     iZap(content);
     const size_t dataSize = size_InputBuf(d->data);
-    iBuffer *buf = iClob(new_Buffer());
-    open_Buffer(buf, &d->data->data);
+    iBuffer *buf = NULL;
     const iRangecc mediaType = mediaType_(&d->mime);
     if (equal_Rangecc(mediaType, "audio/wave") || equal_Rangecc(mediaType, "audio/wav") ||
         equal_Rangecc(mediaType, "audio/x-wav") || equal_Rangecc(mediaType, "audio/x-pn-wav")) {
@@ -498,6 +497,12 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
     else {
         /* TODO: Could try decoders to see if one works? */
         content.type = none_DecoderType;
+    }
+    if (content.type != none_DecoderType) {
+        buf = iClob(new_Buffer());
+        /* This holds a reference to the data block. The decoder runs in a background
+           thread so it needs its own copy of the data. */
+        open_Buffer(buf, &d->data->data);
     }
     if (content.type == wav_DecoderType && dataSize >= 44) {
         /* Read the RIFF/WAVE header. */
@@ -713,6 +718,8 @@ void updateSourceData_Player(iPlayer *d, const iString *mimeType, const iBlock *
                 break;
             }
             /* The old parts cannot have changed. */
+            /* NOTE: The decoder will hold a reference to the data block, which means
+               appending here will cause a copy-on-write detach to occur. */
             appendData_Block(&input->data, constBegin_Block(data) + oldSize, newSize - oldSize);
             break;
         }
@@ -769,7 +776,7 @@ iBool start_Player(iPlayer *d) {
         return iTrue;
     }
 #endif
-    iContentSpec content = contentSpec_Player_(d);
+    iContentSpec content = detectContentSpec_Player_(d);
     if (!content.output.freq) {
         return iFalse;
     }
