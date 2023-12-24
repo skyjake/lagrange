@@ -546,7 +546,8 @@ static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
 #if defined (LAGRANGE_ENABLE_OPUS)
     // RFC MIME for Opus is audio/ogg; codecs=opus. Will collide with Vorbis.
     // TODO: Find a better way to detect Opus.
-    else if(equal_Rangecc(range_String(&d->mime), "audio/ogg; codecs=opus")) {
+    else if(equal_Rangecc(range_String(&d->mime), "audio/ogg; codecs=opus")
+            || equal_Rangecc(mediaType, "audio/opus")) {
         content.type = opus_DecoderType;
     }
 #endif
