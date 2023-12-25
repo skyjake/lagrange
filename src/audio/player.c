@@ -24,7 +24,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "buf.h"
 #include "lang.h"
+#include "the_Foundation/block.h"
 #include "the_Foundation/string.h"
+#include <assert.h>
+#include <opus_types.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #define STB_VORBIS_HEADER_ONLY
@@ -98,6 +102,7 @@ struct Impl_Decoder {
 #endif
 #if defined (LAGRANGE_ENABLE_OPUS)
     OggOpusFile *     opus;
+    OpusFileCallbacks opusCallbacks;
 #endif
 };
 
@@ -354,6 +359,53 @@ enum iDecoderStatus decodeMpeg_Decoder_(iDecoder *d) {
     return status;
 }
 
+#if defined (LAGRANGE_ENABLE_OPUS)
+static int readOpus_(void *stream, unsigned char *ptr, int nbytes) {
+    iDecoder *d = stream;
+    const iBlock *input = &d->input->data;
+    const size_t avail = size_Block(input) - d->inputPos;
+    const size_t n = iMin(avail, nbytes);
+    memcpy(ptr, constData_Block(input) + d->inputPos, n);
+    d->inputPos += n;
+    return n;
+}
+
+static int seekOpus_(void *stream, ogg_int64_t offset, int whence) {
+    iDecoder *d = stream;
+    const iBlock *input = &d->input->data;
+    switch (whence) {
+        case SEEK_SET:
+            d->inputPos = offset;
+            break;
+        case SEEK_CUR:
+            if(PTRDIFF_MAX - d->inputPos < offset || d->inputPos + offset < 0) {
+                return -1;
+            }
+            d->inputPos += offset;
+            break;
+        case SEEK_END:
+            if(size_Block(input) > -offset || offset > PTRDIFF_MAX - size_Block(input)) {
+                return -1;
+            }
+            d->inputPos = size_Block(input) + offset;
+            break;
+    }
+    return 0;
+}
+
+static opus_int64 tellOpus_(void *stream) {
+    iDecoder *d = stream;
+    return d->inputPos;
+}
+
+static const OpusFileCallbacks opusCallbacks_ = {
+    readOpus_,
+    seekOpus_,
+    tellOpus_,
+    NULL
+};
+#endif
+
 enum iDecoderStatus decodeOpus_Decoder_(iDecoder *d) {
     enum iDecoderStatus status = ok_DecoderStatus;
 #if defined (LAGRANGE_ENABLE_OPUS)
@@ -361,27 +413,26 @@ enum iDecoderStatus decodeOpus_Decoder_(iDecoder *d) {
     if (!d->opus) {
         d->inputPos = 0;
         int error = 0;
-        fprintf(stderr, "opus open %zu bytes\n", size_Block(input));
-        d->opus = op_open_memory(constData_Block(input), size_Block(input), &error);
+        d->opusCallbacks = opusCallbacks_;
+        d->opus = op_open_callbacks(d, &d->opusCallbacks, NULL, 0, &error);
         if (!d->opus) {
             return needMoreInput_DecoderStatus;
         }
     }
-    // TODO: Feed more input. Likely need to use the callback API.
     while (size_Array(&d->pendingOutput) < d->output.count) {
         float buffer[512];
-        const int dec_sample_per_ch = op_read_float(d->opus, buffer, sizeof(buffer) / sizeof(float), NULL);
+        const int samplePerCh = op_read_float(d->opus, buffer, sizeof(buffer) / sizeof(float), NULL);
         const float gain = d->gain;
-        const int totalSamples = dec_sample_per_ch * d->output.numChannels;
+        const int totalSamples = samplePerCh * d->output.numChannels;
         for (size_t i = 0; i < totalSamples; i++) {
             buffer[i] *= gain;
         }
         pushBackN_Array(&d->pendingOutput, buffer, totalSamples);
         if (totalSamples == 0) {
+            status = needMoreInput_DecoderStatus;
             break;
         }
     }
-    /* Check if we know the total length already. This info should be available eventually. */
     const ogg_int64_t off = op_pcm_total(d->opus, -1);
     if (off > 0) {
         d->totalSamples = off;
