@@ -43,9 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <mpg123.h>
 #endif
 #if defined (LAGRANGE_ENABLE_OPUS)
-#   include <opus/opus.h>
 #   include <opus/opusfile.h>
-#   include <ogg/ogg.h>
 #endif
 #if defined (iPlatformAppleMobile)
 #   include "../ios.h"
@@ -597,7 +595,6 @@ static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
     }
 #if defined (LAGRANGE_ENABLE_OPUS)
     // RFC MIME for Opus is audio/ogg; codecs=opus. Will collide with Vorbis.
-    // TODO: Find a better way to detect Opus.
     else if(equal_Rangecc(range_String(&d->mime), "audio/ogg; codecs=opus")
             || equal_Rangecc(mediaType, "audio/opus")) {
         content.type = opus_DecoderType;
@@ -606,6 +603,14 @@ static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
     else if (equal_Rangecc(mediaType, "audio/vorbis") || equal_Rangecc(mediaType, "audio/ogg") ||
              equal_Rangecc(mediaType, "audio/x-vorbis+ogg")) {
         content.type = vorbis_DecoderType;
+#if defined (LAGRANGE_ENABLE_OPUS)
+        // Some servers will reply with audio/ogg for Opus, so we need to check the content.
+        OpusHead head;
+        int result = op_test(&head, constData_Block(&d->data->data), size_Block(&d->data->data));
+        if(result == 0) {
+            content.type = opus_DecoderType;
+        }
+#endif
     }
 #if defined (LAGRANGE_ENABLE_MPG123)
     else if (equal_Rangecc(mediaType, "audio/mpeg") || equal_Rangecc(mediaType, "audio/mp3")) {
