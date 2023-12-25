@@ -24,11 +24,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "buf.h"
 #include "lang.h"
-#include "the_Foundation/string.h"
-#include <assert.h>
-#include <opus_types.h>
-#include <stdint.h>
-#include <stdio.h>
 
 #define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.c"
