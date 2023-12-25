@@ -24,7 +24,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "buf.h"
 #include "lang.h"
-#include "the_Foundation/block.h"
 #include "the_Foundation/string.h"
 #include <assert.h>
 #include <opus_types.h>
@@ -373,18 +372,20 @@ static int readOpus_(void *stream, unsigned char *ptr, int nbytes) {
 static int seekOpus_(void *stream, ogg_int64_t offset, int whence) {
     iDecoder *d = stream;
     const iBlock *input = &d->input->data;
+    const size_t avail = size_Block(input);
+    const size_t pos = d->inputPos;
     switch (whence) {
         case SEEK_SET:
             d->inputPos = offset;
             break;
         case SEEK_CUR:
-            if(PTRDIFF_MAX - d->inputPos < offset || d->inputPos + offset < 0) {
+            if (pos + offset > avail || PTRDIFF_MAX - offset < pos) {
                 return -1;
             }
             d->inputPos += offset;
             break;
         case SEEK_END:
-            if(size_Block(input) > -offset || offset > PTRDIFF_MAX - size_Block(input)) {
+            if (avail <= pos + offset || PTRDIFF_MAX - pos < offset || -offset > pos) {
                 return -1;
             }
             d->inputPos = size_Block(input) + offset;
