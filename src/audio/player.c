@@ -748,7 +748,6 @@ static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
     }
     else if (content.type == opus_DecoderType) {
 #if defined (LAGRANGE_ENABLE_OPUS)
-        // TODO: Read using libopus and libogg
         OpusHead head;
         int result = op_test(&head, constData_Block(&d->data->data), size_Block(&d->data->data));
         if(result != 0) {
