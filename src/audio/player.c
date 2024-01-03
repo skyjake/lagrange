@@ -525,6 +525,7 @@ void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
 #endif
 #if defined (LAGRANGE_ENABLE_OPUS)
     d->opus = NULL;
+    d->opusLastInputSize = 0;
 #endif
     init_Mutex(&d->outputMutex);
     d->thread = new_Thread(run_Decoder_);
