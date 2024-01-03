@@ -95,6 +95,7 @@ struct Impl_Decoder {
 #if defined (LAGRANGE_ENABLE_OPUS)
     OggOpusFile *     opus;
     OpusFileCallbacks opusCallbacks;
+    size_t            opusLastInputSize;
 #endif
 };
 
@@ -404,15 +405,27 @@ enum iDecoderStatus decodeOpus_Decoder_(iDecoder *d) {
     enum iDecoderStatus status = ok_DecoderStatus;
 #if defined (LAGRANGE_ENABLE_OPUS)
     const iBlock *input = &d->input->data;
-    if (!d->opus) {
+    lock_Mutex(&d->input->mtx);
+    if (!d->opus || d->opusLastInputSize != size_Block(input)) {
+        ogg_int64_t lastRead = 0;
+        if(d->opus) {
+            lastRead = op_pcm_tell(d->opus);
+            op_free(d->opus);
+        }
         d->inputPos = 0;
         int error = 0;
         d->opusCallbacks = opusCallbacks_;
         d->opus = op_open_callbacks(d, &d->opusCallbacks, NULL, 0, &error);
         if (!d->opus) {
+            unlock_Mutex(&d->input->mtx);
             return needMoreInput_DecoderStatus;
         }
+        // seek to the last position before we potentially re-opened the stream
+        if(lastRead > 0) {
+            op_pcm_seek(d->opus, lastRead);
+        }
     }
+    d->opusLastInputSize = size_Block(input);
     while (size_Array(&d->pendingOutput) < d->output.count) {
         float buffer[512];
         const int samplePerCh = op_read_float(d->opus, buffer, sizeof(buffer) / sizeof(float), NULL);
@@ -427,9 +440,14 @@ enum iDecoderStatus decodeOpus_Decoder_(iDecoder *d) {
             break;
         }
     }
-    const ogg_int64_t off = op_pcm_total(d->opus, -1);
-    if (off > 0) {
-        d->totalSamples = off;
+    unlock_Mutex(&d->input->mtx);
+
+    // Only check the length if we have the whole input
+    if(d->input->isComplete) {
+        const ogg_int64_t off = op_pcm_total(d->opus, -1);
+        if (off > 0) {
+            d->totalSamples = off;
+        }
     }
     writePending_Decoder_(d);
 #endif
