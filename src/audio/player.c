@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "buf.h"
 #include "lang.h"
+#include "the_Foundation/mutex.h"
 
 #define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.c"
@@ -410,6 +411,10 @@ enum iDecoderStatus decodeOpus_Decoder_(iDecoder *d) {
         ogg_int64_t lastRead = 0;
         if(d->opus) {
             lastRead = op_pcm_tell(d->opus);
+            if(lastRead < 0) {
+                unlock_Mutex(&d->input->mtx);
+                return needMoreInput_DecoderStatus;
+            }
             op_free(d->opus);
         }
         d->inputPos = 0;
@@ -422,7 +427,11 @@ enum iDecoderStatus decodeOpus_Decoder_(iDecoder *d) {
         }
         // seek to the last position before we potentially re-opened the stream
         if(lastRead > 0) {
-            op_pcm_seek(d->opus, lastRead);
+            int res = op_pcm_seek(d->opus, lastRead);
+            if(res < 0) {
+                unlock_Mutex(&d->input->mtx);
+                return needMoreInput_DecoderStatus;
+            }
         }
     }
     d->opusLastInputSize = size_Block(input);
