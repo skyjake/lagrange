@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2023-10-02 09:00+0000\n"
+"PO-Revision-Date: 2024-01-06 19:14+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -115,7 +115,7 @@ msgid "menu.downloads"
 msgstr "Erakutsi Deskargak"
 
 msgid "menu.export"
-msgstr "Esportatu erabiltzaile-datuak"
+msgstr "Esportatu"
 
 msgid "menu.pageinfo"
 msgstr "Erakutsi orriaren informazioa"
@@ -623,7 +623,7 @@ msgid "menu.split.horizontal"
 msgstr "Horizontalki"
 
 msgid "menu.import"
-msgstr "Inportatu erabiltzaile-datuak…"
+msgstr "Inportatu…"
 
 msgid "menu.unexpire"
 msgstr "Muzin egin iraungitzeari eta jarraitu kargatzen"
@@ -1019,8 +1019,9 @@ msgstr "Igo Spartanekin"
 msgid "dlg.upload.id.none"
 msgstr "Bat ere ez"
 
+#, fuzzy
 msgid "dlg.upload.id.default"
-msgstr "Defektuzkoa"
+msgstr "Defektuzko nortasuna"
 
 msgid "menu.upload.delete"
 msgstr "Ezabatu guztia"
@@ -2797,3 +2798,42 @@ msgstr "Edukia:"
 
 msgid "snip.accept"
 msgstr "Gorde mozkina"
+
+#, fuzzy
+msgid "doc.pre.nocaption"
+msgstr "Goibururik gabeko aurreformatutako testua"
+
+#, fuzzy
+msgid "numbertype.float"
+msgstr "mugikorra"
+
+# strftime() formatted. Should be split evenly on two lines with a newline character.
+msgid "page.timestamp"
+msgstr ""
+"%I:%M %p(e)an jasoa\n"
+"%Y(e)ko %bren %d,(e)an"
+
+# strftime() formatted
+msgid "sidebar.date.thisyear"
+msgstr "%b. %d"
+
+# strftime() formatted
+msgid "sidebar.date.otheryear"
+msgstr "%b. %d, %Y"
+
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "Argi distiratsua"
+
+msgid "heading.upload.dest"
+msgstr "Helbidea"
+
+#, c-format
+msgid "dlg.dismiss.ansi"
+msgstr ""
+"Betiko baztertu nahi dituzu terminalaren emulazioari buruzko abisuak %s(e)n?"
+
+msgid "heading.snip.new"
+msgstr "Mozkin berria"
+
+msgid "heading.snip.edit"
+msgstr "Editatu mozkina"
