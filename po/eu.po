@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2024-01-06 19:14+0000\n"
+"PO-Revision-Date: 2024-01-13 15:14+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -16,7 +16,6 @@ msgid "doc.fetching"
 msgstr "Kargatzen"
 
 # Used in inline audio player metadata popup.
-#, fuzzy
 msgid "audio.meta.title"
 msgstr "Izenburua"
 
@@ -66,9 +65,8 @@ msgstr "Fitxategia"
 msgid "menu.title.edit"
 msgstr "Editatu"
 
-#, fuzzy
 msgid "menu.title.view"
-msgstr "Ikusi"
+msgstr "Ikuspegia"
 
 msgid "menu.title.window"
 msgstr "Leihoa"
@@ -85,9 +83,8 @@ msgstr "Itxi fitxa"
 msgid "menu.closetab.left"
 msgstr "Itxi ezkerrean dauden fitxak"
 
-#, fuzzy
 msgid "menu.duptab"
-msgstr "Duplikatu fitxa"
+msgstr "Bikoiztu fitxa"
 
 msgid "menu.tab.next"
 msgstr "Erakutsi hurrengo fitxa"
@@ -104,7 +101,6 @@ msgstr "Mugitu fitxa leiho berrira"
 msgid "menu.split.merge"
 msgstr "Utzi banatzeari"
 
-#, fuzzy
 msgid "menu.split.swap"
 msgstr "Trukatu aldeak"
 
@@ -134,7 +130,7 @@ msgid "menu.save.downloads"
 msgstr "Gorde Deskargetan"
 
 msgid "menu.save.downloads.open"
-msgstr "Gorde Deskargetan eta ireki fitxategia"
+msgstr "Gorde deskargetan eta ireki fitxategia"
 
 msgid "menu.sidebar"
 msgstr "Alboko barra bai/ez"
@@ -143,23 +139,23 @@ msgid "menu.sidebar.right"
 msgstr "Eskumako alboko barra bai/ez"
 
 msgid "menu.zoom.in"
-msgstr "Handitu"
+msgstr "Handiagotu"
 
 msgid "menu.zoom.out"
-msgstr "Txikitu"
+msgstr "Txikiagotu"
 
 msgid "menu.zoom.reset"
 msgstr "Berrezarri ikuspuntua"
 
 #, fuzzy
 msgid "menu.view.split"
-msgstr "Banatu ikuspuntua…"
+msgstr "Banatu ikuspuntua"
 
 msgid "menu.bookmarks.list"
-msgstr "Zerrendatu lastermarka guztiak"
+msgstr "Zerrendatu laster-marka guztiak"
 
 msgid "menu.bookmarks.bytag"
-msgstr "Zerrendatu lastermarkak etiketaren arabera"
+msgstr "Zerrendatu laster-markak etiketaren arabera"
 
 msgid "macos.menu.bookmarks.bytag"
 msgstr "Zerrendatu etiketaren arabera"
@@ -197,7 +193,7 @@ msgid "menu.autoreload"
 msgstr "Ezarri birkargatze automatikoa…"
 
 msgid "menu.page.bookmark"
-msgstr "Jarri lastermarka…"
+msgstr "Jarri laster-marka…"
 
 # Used in the desktop Help menu.
 msgid "menu.aboutapp"
@@ -213,7 +209,7 @@ msgid "menu.debug"
 msgstr "Arazketa informazioa"
 
 msgid "menu.page.import"
-msgstr "Inportatu estekak lastermarka gisa…"
+msgstr "Inportatu estekak laster-marka gisa…"
 
 msgid "menu.page.translate"
 msgstr "Itzuli…"
@@ -221,12 +217,11 @@ msgstr "Itzuli…"
 msgid "menu.page.copyurl"
 msgstr "Kopiatu orriaren URLa"
 
-#, fuzzy
 msgid "menu.viewformat.plain"
 msgstr "Ikusi testu soil gisa"
 
 msgid "menu.bookmarks.refresh"
-msgstr "Freskatu urrutiko lastermarkak"
+msgstr "Freskatu urrutiko laster-markak"
 
 msgid "menu.feeds.refresh"
 msgstr "Freskatu jarioak"
@@ -285,10 +280,10 @@ msgid "feeds.entry.markunread"
 msgstr "Markatu irakurri gabe gisa"
 
 msgid "sidebar.entry.bookmark"
-msgstr "Gehitu lastermarka…"
+msgstr "Gehitu laster-marka…"
 
 msgid "feeds.entry.bookmark"
-msgstr "Gehitu lastermarka…"
+msgstr "Gehitu laster-marka…"
 
 msgid "feeds.edit"
 msgstr "Editatu jarioa…"
@@ -324,7 +319,7 @@ msgid "dlg.history.clear"
 msgstr "Garbitu historia"
 
 msgid "heading.confirm.bookmarks.delete"
-msgstr "Ezabatu lastermarkak"
+msgstr "Ezabatu laster-markak"
 
 msgid "bookmark.tag.home"
 msgstr "Erabili hasiera gisa"
@@ -333,7 +328,7 @@ msgid "bookmark.tag.sub"
 msgstr "Harpidetu jariora"
 
 msgid "bookmark.delete"
-msgstr "Ezabatu lastermarka"
+msgstr "Ezabatu laster-marka"
 
 msgid "ident.using"
 msgstr "Orri honetan erabiltzen"
@@ -435,8 +430,8 @@ msgstr "Errorea fitxategia gordetzean"
 #, c-format
 msgid "dlg.import.add"
 msgid_plural "dlg.import.add.n"
-msgstr[0] "%sJarri lastermarka"
-msgstr[1] "%sJarri %d lastermarka"
+msgstr[0] "%sGehitu laster-marka"
+msgstr[1] "%sGehitu %d laster-marka"
 
 msgid "heading.autoreload"
 msgstr "Birkargatu automatikoki"
@@ -514,7 +509,7 @@ msgid "heading.import.userdata"
 msgstr "Inportatu erabiltzaile-datuak"
 
 msgid "import.userdata.bookmarks"
-msgstr "Lastermarkak:"
+msgstr "Laster-markak:"
 
 msgid "import.userdata.history"
 msgstr "Historia:"
@@ -542,11 +537,11 @@ msgid "bookmark.title.blank"
 msgstr "Orri zuria"
 
 msgid "bookmark.export.title.folder"
-msgstr "Lastermarkak"
+msgstr "Laster-markak"
 
-#, c-format, fuzzy
+#, c-format
 msgid "doc.archive"
-msgstr "%s konprimitutako fitxategia da."
+msgstr "%s konprimatutako artxiboa da."
 
 msgid "media.untitled.image"
 msgstr "Irudia"
@@ -584,15 +579,14 @@ msgstr[1] "duela %d minutu"
 
 # The words "SDL 2" and "OpenSSL" in this string will be changed at runtime
 # if the build config uses different libraries (e.g., ncurses, LibreSSL).
-#, fuzzy
 msgid "about.powered"
-msgstr "SDL 2, OpenSSL, eta ☕️-ri esker egina"
+msgstr "SDL 2, OpenSSL, eta ☕️ari esker egina"
 
 msgid "dlg.default"
 msgstr " Ados "
 
 msgid "menu.title.bookmarks"
-msgstr "Lastermarkak"
+msgstr "Laster-markak"
 
 msgid "menu.title.identity"
 msgstr "Identitatea"
@@ -606,7 +600,6 @@ msgstr "Fitxa berria"
 msgid "menu.closetab.other"
 msgstr "Itxi beste fitxak"
 
-#, fuzzy
 msgid "menu.closetab.right"
 msgstr "Itxi eskuman dauden fitxak"
 
@@ -630,7 +623,7 @@ msgstr "Muzin egin iraungitzeari eta jarraitu kargatzen"
 
 # Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
 msgid "menu.save.files"
-msgstr "Gorde fitxategia"
+msgstr "Gorde Files-en"
 
 msgid "menu.sidebar.left"
 msgstr "Ezkerreko alboko barra bai/ez"
@@ -642,7 +635,7 @@ msgid "macos.menu.bookmarks.list"
 msgstr "Zerrendatu guztia"
 
 msgid "menu.bookmarks.bytime"
-msgstr "Zerrendatu lastermarkak sorrera-dataren arabera"
+msgstr "Zerrendatu laster-markak sorrera-dataren arabera"
 
 msgid "macos.menu.bookmarks.bytime"
 msgstr "Zerrendatu sorrera-dataren arabera"
@@ -658,9 +651,8 @@ msgstr "Bilatu eguneraketak…"
 msgid "menu.settings"
 msgstr "Ezarpenak"
 
-#, fuzzy
 msgid "menu.releasenotes"
-msgstr "Argitalpen oharrak"
+msgstr "Kaleratze-oharrak"
 
 msgid "menu.website"
 msgstr "Proiektuaren webgunea…"
@@ -682,7 +674,7 @@ msgstr "Kopiatu orriaren esteka"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.bookmarks"
-msgstr "Erakutsi lastermarkak"
+msgstr "Erakutsi laster-markak"
 
 # Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.feeds"
@@ -718,7 +710,6 @@ msgstr "Honi buruz"
 msgid "menu.import.links"
 msgstr "Inportatu orrialdeko esteka guztiak…"
 
-#, fuzzy
 msgid "menu.page.copysource"
 msgstr "Kopiatu orriaren iturburua"
 
@@ -739,7 +730,7 @@ msgid "menu.toolbar.setaction"
 msgstr "Ezarri ekintza:"
 
 msgid "sidebar.bookmarks"
-msgstr "Lastermarkak"
+msgstr "Laster-markak"
 
 msgid "sidebar.history"
 msgstr "Historia"
@@ -769,7 +760,7 @@ msgstr "MB"
 
 msgid "num.files"
 msgid_plural "num.files.n"
-msgstr[0] "Fitxategi %u"
+msgstr[0] "fitxategi %u"
 msgstr[1] "%u fitxategi"
 
 msgid "feeds.today"
@@ -805,14 +796,14 @@ msgstr "Ziur bisitatu dituzun orrialde guztien historia garbitu nahi duzula?"
 #, c-format
 msgid "dlg.bookmarks.delete"
 msgid_plural "dlg.bookmarks.delete.n"
-msgstr[0] "Ezabatu lastermarka"
-msgstr[1] "Ezabatu %u lastermarka"
+msgstr[0] "Ezabatu laster-marka"
+msgstr[1] "Ezabatu %u laster-markak"
 
 msgid "bookmark.untag.home"
 msgstr "Kendu hasiera orria"
 
 msgid "bookmark.folder.delete"
-msgstr "Ezabatu lastermarken karpeta"
+msgstr "Ezabatu laster-marken karpeta"
 
 msgid "ident.temporary"
 msgstr "Behin-behinean"
@@ -861,13 +852,13 @@ msgid "keys.pageinfo"
 msgstr "Erakutsi orriaren informazioa"
 
 msgid "keys.identmenu"
-msgstr "Ireki identitate menua"
+msgstr "Ireki identitateen menua"
 
 msgid "dlg.input.send"
 msgstr "Bidali"
 
 msgid "heading.import.bookmarks"
-msgstr "Inportatu lastermarkak"
+msgstr "Inportatu laster-markak"
 
 #, c-format
 msgid "dlg.import.found"
@@ -876,7 +867,7 @@ msgstr[0] "Esteka berri bat aurkitu da orrian."
 msgstr[1] "%d esteka berri aurkitu dira orrian."
 
 msgid "dlg.import.notnew"
-msgstr "Orri honetako esteka guztiek lastermarka jarria dute honezkero."
+msgstr "Orri honetako esteka guztiek laster-marka jarrita dute honezkero."
 
 #, c-format
 msgid "num.minutes"
@@ -924,7 +915,7 @@ msgstr "Ez da ziurtagirik edo gako pribaturik aurkitu."
 
 # button in the mobile New Identity dialog
 msgid "dlg.certimport.pickfile"
-msgstr "Inportatu ziurtagiri/gako -fitxategia"
+msgstr "Inportatu ziurtagiri/gako-fitxategia"
 
 msgid "dlg.certimport.notes"
 msgstr "Oharrak:"
@@ -947,17 +938,16 @@ msgstr "Gunearen ezarpenak:"
 msgid "dlg.userdata.alldup"
 msgstr "Guztia (mantendu bikoiztutakoak)"
 
-#, fuzzy
 msgid "import.userdata.error"
-msgstr "&s ez da Lagrangeren esportazio-fitxategi baliagarria."
+msgstr "%s ez da Lagrange-ren baliozko esportazio-artxiboa."
 
 msgid "bookmark.export.title.time"
-msgstr "Sortutako lastermarkak"
+msgstr "Sortutako laster-markak"
 
 msgid "bookmark.export.count"
 msgid_plural "bookmark.export.count.n"
-msgstr[0] "Lastermarka bat duzu."
-msgstr[1] "%d lastermarka dauzkazu."
+msgstr[0] "Laster-marka bat duzu."
+msgstr[1] "%d laster-marka dituzu."
 
 msgid "bookmark.tag.linksplit"
 msgstr "Estekak alboan irekiko dira"
@@ -965,8 +955,9 @@ msgstr "Estekak alboan irekiko dira"
 msgid "bookmark.untag.sub"
 msgstr "Utzi jarioaren harpidetza"
 
+#, fuzzy
 msgid "bookmark.untag.remote"
-msgstr "Kendu lastermarkaren iturria"
+msgstr "Kendu laster-markaren iturria"
 
 msgid "bookmarks.reload"
 msgstr "Freskatu urrutiko iturriak"
@@ -975,7 +966,6 @@ msgstr "Freskatu urrutiko iturriak"
 msgid "dlg.confirm.unsub"
 msgstr "Ziur \"%s\" jarioaren harpidetza utzi nahi duzula?"
 
-#, fuzzy
 msgid "heading.save.incomplete"
 msgstr "Orria ez da osorik kargatu"
 
@@ -983,7 +973,7 @@ msgid "link.side"
 msgstr "Ireki esteka alboan"
 
 msgid "link.bookmark"
-msgstr "Jarri lastermarka estekari…"
+msgstr "Jarri laster-marka estekari…"
 
 # Interpret as "Results from feeds..."
 msgid "heading.lookup.feeds"
@@ -1019,9 +1009,8 @@ msgstr "Igo Spartanekin"
 msgid "dlg.upload.id.none"
 msgstr "Bat ere ez"
 
-#, fuzzy
 msgid "dlg.upload.id.default"
-msgstr "Defektuzko nortasuna"
+msgstr "Defektuzko identitatea"
 
 msgid "menu.upload.delete"
 msgstr "Ezabatu guztia"
@@ -1128,7 +1117,7 @@ msgid "dlg.feed.sub"
 msgstr "Harpidetu"
 
 msgid "heading.bookmark.add"
-msgstr "Gehitu lastermarka"
+msgstr "Gehitu laster-marka"
 
 msgid "dlg.bookmark.icon"
 msgstr "Ikurra:"
@@ -1169,7 +1158,7 @@ msgid "heading.prefs.scrolling"
 msgstr "Korritzea"
 
 msgid "prefs.bookmarks.addbottom"
-msgstr "Gehitu lastermarkak amaieran:"
+msgstr "Gehitu laster-markak amaieran:"
 
 msgid "prefs.pinsplit.left"
 msgstr "Ezkerreko fitxa"
@@ -1180,9 +1169,8 @@ msgstr "Eskumako fitxa"
 msgid "prefs.smoothscroll"
 msgstr "Korritze leuna:"
 
-#, fuzzy
 msgid "prefs.scrollspeed.mouse"
-msgstr "Xaguaren abiadura:"
+msgstr "Saguaren abiadura:"
 
 msgid "prefs.uilayout"
 msgstr "Egitura:"
@@ -1278,11 +1266,11 @@ msgid "menu.binding.clear"
 msgstr "Kendu"
 
 msgid "bookmark.tag.remote"
-msgstr "Erabili lastermarka iturri gisa"
+msgstr "Erabili laster-marka iturri gisa"
 
 # Interpret as "Results from bookmarks..."
 msgid "heading.lookup.bookmarks"
-msgstr "LASTERMARKAK"
+msgstr "LASTER-MARKAK"
 
 # Interpret as "Results from page content..."
 msgid "heading.lookup.pagecontent"
@@ -1434,10 +1422,10 @@ msgid "dlg.feed.save"
 msgstr "Gorde ezarpenak"
 
 msgid "heading.bookmark.edit"
-msgstr "Editatu lastermarka"
+msgstr "Editatu laster-marka"
 
 msgid "dlg.bookmark.save"
-msgstr "Gorde lastermarka"
+msgstr "Gorde laster-marka"
 
 msgid "dlg.bookmark.title"
 msgstr "Izenburua:"
@@ -1476,9 +1464,8 @@ msgstr "Paragrafoa"
 msgid "heading.prefs.style"
 msgstr "Orriaren estiloa"
 
-#, fuzzy
 msgid "prefs.hoverlink"
-msgstr "Erakutsi URLa xagua gainean jartzean:"
+msgstr "Erakutsi URLa sagua gainean jartzean:"
 
 msgid "prefs.markdown.viewsource"
 msgstr "Ikusi Markdown iturburu gisa:"
@@ -1492,7 +1479,6 @@ msgstr "Teklatuaren abiadura:"
 msgid "prefs.menubar"
 msgstr "Menu barra"
 
-#, fuzzy
 msgid "prefs.hidetoolbarscroll"
 msgstr "Ezkutatu tresna-barra korritzean:"
 
@@ -1541,11 +1527,9 @@ msgstr "URLen gehienezko neurria:"
 msgid "keys.subscribe"
 msgstr "Harpidetu orrira"
 
-#, fuzzy
 msgid "keys.zoom.in"
-msgstr "Gerturatu (zoom in)"
+msgstr "Handiagotu"
 
-#, fuzzy
 msgid "keys.fullscreen"
 msgstr "Pantaila osoa bai/ez"
 
@@ -1555,9 +1539,8 @@ msgstr "Fitxa berria"
 msgid "keys.tab.close.other"
 msgstr "Itxi beste fitxak"
 
-#, fuzzy
 msgid "keys.hoverurl"
-msgstr "Erakutsi URLa xagua gainean jartzean bai/ez"
+msgstr "Erakutsi URLa sagua gainean jartzean bai/ez"
 
 msgid "keys.upload.edit"
 msgstr "Editatu orria Titanekin"
@@ -1608,7 +1591,7 @@ msgstr ""
 "saiatu zara."
 
 msgid "heading.archive.userdata"
-msgstr "Erabiltzailearen datuen artxiboa"
+msgstr "Erabiltzaile-datuen artxiboa"
 
 msgid "error.badredirect"
 msgstr "Birbideratze baliogabea"
@@ -1616,9 +1599,8 @@ msgstr "Birbideratze baliogabea"
 msgid "doc.archive.view"
 msgstr "Ikusi artxiboaren edukia"
 
-#, fuzzy
 msgid "numbertype.integer"
-msgstr "zenbaki osoa"
+msgstr "osoa"
 
 # Used in about:feeds.
 #, fuzzy
@@ -1633,7 +1615,6 @@ msgstr "%s freskatu da azkenekoz."
 msgid "about.logo"
 msgstr "ASCII artea: \"Lagrange\" hitza letra-tipo handi bat erabiliz"
 
-#, fuzzy
 msgid "menu.window.min"
 msgstr "Minimizatu"
 
@@ -1652,7 +1633,6 @@ msgstr "Itsatsi"
 msgid "menu.paste.go"
 msgstr "Itsatsi eta joan"
 
-#, fuzzy
 msgid "menu.parent"
 msgstr "Joan nagusira"
 
@@ -1691,7 +1671,7 @@ msgstr "Fidagarritzat hartutakoa"
 
 #, fuzzy
 msgid "pageinfo.cert.untrusted"
-msgstr "Fidagarritzat hartu gabea"
+msgstr "Ez da fidagarritzat hartu"
 
 msgid "keys.sitespec"
 msgstr "Erakutsi gunearen berezko ezarpenak"
@@ -1704,7 +1684,6 @@ msgstr "Itsatsi aurreko lerroa"
 msgid "keys.input.precedingline"
 msgstr "Sarrera adierazlea: Itsatsi aurreko lerroa"
 
-#, fuzzy
 msgid "link.side.newtab"
 msgstr "Ireki esteka aldameneko fitxa berrian"
 
@@ -1730,12 +1709,11 @@ msgid "dlg.certimport.paste"
 msgstr "Itsatsi arbeletik"
 
 msgid "bookmark.export.title.tag"
-msgstr "Lastermarkaren etiketak"
+msgstr "Laster-markaren etiketak"
 
 msgid "bookmark.export.saving"
 msgstr "Gorde orri hau esportatzeko, edo arbelera kopiatu ditzakezu."
 
-#, fuzzy
 msgid "bookmark.export.format.tags"
 msgstr "Etiketak 2 mailako goiburuek zehazten dituzte."
 
@@ -1745,9 +1723,8 @@ msgstr "Tokena:"
 msgid "heading.uploadport"
 msgstr "Titanekin igotzeko ataka"
 
-#, fuzzy
 msgid "dlg.translate.pre"
-msgstr "Muzin egin aurrez formatutakoari:"
+msgstr "Muzin egin aurreformatutakoari:"
 
 # A language choice in the Translation dialog.
 msgid "lang.cs"
@@ -1806,7 +1783,6 @@ msgstr "Ezgaitu abisuak"
 msgid "dlg.glyphfinder.search"
 msgstr "Bilatu letra-tipoen liburutegian"
 
-#, fuzzy
 msgid "dlg.newident.until"
 msgstr "Epemuga:"
 
@@ -1822,7 +1798,6 @@ msgstr "Uneko direktorioa"
 msgid "heading.subscribe"
 msgstr "Harpidetu orrira"
 
-#, fuzzy
 msgid "dlg.feed.type.gemini"
 msgstr "YYYY/MM/DD estekak"
 
@@ -1863,14 +1838,12 @@ msgstr "EI koloreak"
 msgid "heading.prefs.sizing"
 msgstr "Neurriak"
 
-#, fuzzy
 msgid "heading.prefs.widelayout"
 msgstr "Antolamendu zabala"
 
 msgid "prefs.downloads"
 msgstr "Deskargen karpeta:"
 
-#, fuzzy
 msgid "prefs.searchurl"
 msgstr "Bilaketa URLa:"
 
@@ -1878,7 +1851,6 @@ msgstr "Bilaketa URLa:"
 msgid "prefs.imageloadscroll"
 msgstr "Kargatu hurrengo irudia teklatu bidezko korritzean:"
 
-#, fuzzy
 msgid "prefs.bottomtabbar"
 msgstr "Beheko fitxak"
 
@@ -1903,9 +1875,8 @@ msgstr "Berde-urdinxka"
 msgid "prefs.time.24h"
 msgstr "24h ordua:"
 
-#, fuzzy
 msgid "prefs.retaintabs"
-msgstr "Berriztu fitxak abiaraztean:"
+msgstr "Leheneratu fitxak abiaraztean:"
 
 #, fuzzy
 msgid "prefs.customframe"
@@ -1914,13 +1885,11 @@ msgstr "Norberak ezarritako leihoaren markoa:"
 msgid "prefs.blink"
 msgstr "Kurtsoreak dir-dir:"
 
-#, fuzzy
 msgid "prefs.returnkey.linebreak"
-msgstr "Lerro jauzia"
+msgstr "Lerro-jauzia"
 
-#, fuzzy
 msgid "prefs.sideicon"
-msgstr "Kapsularen ikonoa ezkerreko aldean:"
+msgstr "Kapsularen ikonoa ezkerraldean:"
 
 msgid "prefs.doctheme.name.sepia"
 msgstr "Sepia"
@@ -1928,13 +1897,11 @@ msgstr "Sepia"
 msgid "prefs.doctheme.name.oceanic"
 msgstr "Ozeanikoa"
 
-#, fuzzy
 msgid "prefs.saturation"
 msgstr "Saturazioa:"
 
-#, fuzzy
 msgid "prefs.imagestyle.preformat"
-msgstr "Aurrez formateatutako kolorea"
+msgstr "Aurreformatutako kolorea"
 
 #, fuzzy
 msgid "prefs.tui.simple"
@@ -1944,7 +1911,7 @@ msgid "prefs.font.ui"
 msgstr "EI letra-tipoa:"
 
 msgid "prefs.font.mono"
-msgstr "Aurrez formateatutakoa:"
+msgstr "Aurreformatutakoa:"
 
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
@@ -1958,7 +1925,6 @@ msgstr "Hondoaren kolorea"
 msgid "prefs.font.warnmissing"
 msgstr "Letra-tipoaren glifoen abisuak:"
 
-#, fuzzy
 msgid "prefs.linespacing"
 msgstr "Lerroen arteko tartea:"
 
@@ -1971,16 +1937,14 @@ msgstr "Aipuen adierazlea:"
 msgid "prefs.quoteicon.icon"
 msgstr "\" ikurra"
 
-#, fuzzy
 msgid "prefs.justify"
 msgstr "Justifikatu:"
 
 msgid "prefs.decodeurls"
 msgstr "Deskodetu URLak:"
 
-#, fuzzy
 msgid "prefs.ca.file"
-msgstr "Ziurtagiri-fitxategia:"
+msgstr "Ziurtagiri-fitxategia (CA):"
 
 msgid "prefs.proxy.http"
 msgstr "HTTP proxya:"
@@ -2012,16 +1976,14 @@ msgstr "Joan direktorio nagusira"
 msgid "keys.reload"
 msgstr "Birkargatu orria"
 
-#, fuzzy
 msgid "keys.findtext"
-msgstr "Aurkitu testua orrian"
+msgstr "Bilatu testua orrian"
 
 msgid "keys.zoom.out"
-msgstr "Urrundu (zoom out)"
+msgstr "Txikiagotu"
 
-#, fuzzy
 msgid "keys.zoom.reset"
-msgstr "Berrezarri zooma"
+msgstr "Berrezarri ikuspuntua"
 
 msgid "keys.tab.close"
 msgstr "Itxi fitxa"
@@ -2048,9 +2010,8 @@ msgstr "Protokoloa ez da bateragarria"
 msgid "error.badheader"
 msgstr "Goiburu baliogabea"
 
-#, fuzzy
 msgid "error.incompleteheader"
-msgstr "Goiburua ez da erabat deskargatu"
+msgstr "Goiburua ez da osorik kargatu"
 
 #, fuzzy
 msgid "error.tls"
@@ -2124,7 +2085,6 @@ msgstr "Ziurtagiria ez da baimendu"
 msgid "error.cert.invalid"
 msgstr "Ziurtagiria ez da baliozkoa"
 
-#, fuzzy
 msgid "error.ansi"
 msgstr "Terminalaren emulazioa"
 
@@ -2211,7 +2171,6 @@ msgstr "Baztertu abisua?"
 msgid "dlg.dismiss.warning"
 msgstr "Baztertu abisua"
 
-#, fuzzy
 msgid "error.tls.msg"
 msgstr "Zerbitzariarekin komunikatzeak huts egin du."
 
@@ -2318,10 +2277,11 @@ msgstr ""
 
 msgid "userdata.help"
 msgstr ""
-"Erabiltzailearen datuen fitxategiek esportatutako nabigazio-historiala, "
-"identitateak, lastermarkak, gunearen berezko ezarpenak eta fidagarritzat "
-"hartutako zerbitzariaren ziurtagirien hatz-markak dituzte. Segurtasun-kopia "
-"gisa gorde eta gailuen artean datuak transferitzeko erabil daitezke."
+"Erabiltzaile-datuen artxiboek esportatutako nabigazio-historia, "
+"identitateak, laster-markak, testu-mozkinak, gunearen berezko ezarpenak eta "
+"fidagarritzat hartutako zerbitzariaren ziurtagirien hatz-markak dituzte. "
+"Babeskopia gisa gorde eta gailuen artean datuak transferitzeko erabil "
+"daitezke."
 
 msgid "feeds.list.refreshtime.now"
 msgstr "Oraintxe bertan freskatu da."
@@ -2338,15 +2298,14 @@ msgstr ""
 #, c-format
 msgid "dlg.confirm.bookmarks.delete"
 msgid_plural "dlg.confirm.bookmarks.delete.n"
-msgstr[0] "Ziur karpeta honetako lastermarka ezabatu nahi duzula?"
-msgstr[1] "Ziur karpeta honetako %u lastermarkak ezabatu nahi dituzula?"
+msgstr[0] "Ziur karpeta honetako laster-marka ezabatu nahi duzula?"
+msgstr[1] "Ziur karpeta honetako %u laster-markak ezabatu nahi dituzula?"
 
 msgid "heading.sitespec"
 msgstr "Gunearen berezko ezarpenak"
 
-#, fuzzy
 msgid "dlg.input.linebreak"
-msgstr "Lerro jauzia"
+msgstr "Lerro-jauzia"
 
 #, c-format
 msgid "dlg.certwarn.mayberenewed"
@@ -2360,24 +2319,21 @@ msgstr[1] ""
 "egokirako da eta ez da iraungi. Unean fidagarritzat hartua dagoen "
 "ziurtagiria %s iraungiko da, %d egunetan."
 
-#, fuzzy
 msgid "bookmark.export.taginfo"
 msgstr ""
-"Zerrenda honetan, goiburu bakoitzak lastermarka bat erakusten du. Etiketak "
-"dituzken lastermarkak soilik zerrendatzen dira. Etiketa bat baino gehiago "
-"duten lastermarkak etiketa bakoitzean errepikatzen dira."
+"Zerrenda honetan, goiburu bakoitzak laster-marka etiketa bat ordezkatzen du. "
+"Etiketak dituzten laster-markak soilik zerrendatzen dira. Etiketa bat baino "
+"gehiago duten laster-markak etiketa bakoitzarekin errepikatuko dira."
 
 msgid "bookmark.export.format.linklines"
-msgstr "Esteka bakoitzak lastermarka bat adierazten du."
+msgstr "Esteka bakoitzak laster-marka bat adierazten du."
 
-#, fuzzy
 msgid "bookmark.export.format.otherlines"
 msgstr ""
-"Gidoia duten lerroak eta aipuak aurreko lastermarkei buruzko informazio "
-"osagarrirako gordetzen dira. Testu-lerroak eta aurrez formateatutako testua "
+"Bulet lerroak eta aipuak aurreko laster-markei buruzko informazio "
+"osagarrirako gordetzen dira. Testu-lerroak eta aurreformatutako testua "
 "iruzkintzat hartzen dira, eta ez dira kontuan hartu behar."
 
-#, fuzzy
 msgid "bookmark.export.format.folders"
 msgstr "Karpeten egitura 2/3 mailako goiburuek zehazten dute."
 
@@ -2392,19 +2348,17 @@ msgstr ""
 "Ezarri Titan zerbitzariaren ataka URL honekin erabiltzeko. Ataka gunearen "
 "berezko ezarpenetan gordeko da."
 
-#, fuzzy
 msgid "dlg.glyphfinder.help.empty"
-msgstr "Birkargatu orria falta diren glifoak atzitzen saiatzeko berriro."
+msgstr "Birkargatu orria falta diren glifoak berriro atzitzen saiatzeko."
 
 msgid "dlg.newindent.missing.commonname"
 msgstr "\"Izen arrunt\" bat zehaztu behar da."
 
-#, fuzzy
 msgid "dlg.newident.date.example"
 msgstr ""
 "Egiaztatu \"Epemuga\" data. Adibideak:\n"
 "• 2030\n"
-"• 2025/07/30\n"
+"• 2025/06/30\n"
 "• 2021/12/31 23:59:59"
 
 msgid "dlg.bookmark.parentfolder"
@@ -2418,9 +2372,8 @@ msgstr "Erabiltzaile-interfazea"
 msgid "prefs.archive.openindex"
 msgstr "Ireki index.gmi fitxategia ZIP artxiboetan:"
 
-#, fuzzy
 msgid "prefs.bottomnavbar"
-msgstr "Beheko nabigazio barra"
+msgstr "Beheko nabigazio-barra"
 
 # Interpretation: (Bold links) on light (background).
 msgid "prefs.boldlink.light"
@@ -2439,9 +2392,9 @@ msgstr "Gopher proxya:"
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
 msgstr[0] ""
-"Artxibo honek elementu %u dauka eta konprimitutako neurria %.1f MBkoa da."
+"Artxibo honek elementu %u dauka eta konprimatutako neurria %.1f MBkoa da."
 msgstr[1] ""
-"Artxibo honek %u elementu dauzka eta konprimitutako neurria %.1f MBkoa da."
+"Artxibo honek %u elementu dauzka eta konprimatutako neurria %.1f MBkoa da."
 
 #, c-format
 msgid "dir.summary"
@@ -2449,11 +2402,9 @@ msgid_plural "dir.summary.n"
 msgstr[0] "Direktorio honek elementu %u dauka."
 msgstr[1] "Direktorio honek %u elementu dauzka."
 
-#, fuzzy
 msgid "keys.top"
 msgstr "Joan goraino"
 
-#, fuzzy
 msgid "keys.bottom"
 msgstr "Joan beheraino"
 
@@ -2470,14 +2421,14 @@ msgid "keys.root"
 msgstr "Joan kapsularen errora"
 
 msgid "keys.bookmark.add"
-msgstr "Gehitu lastermarka"
+msgstr "Gehitu laster-marka"
 
 msgid "keys.bookmark.addfolder"
-msgstr "Gehitu lastermarka karpeta"
+msgstr "Gehitu laster-marka karpeta"
 
-#, c-format, fuzzy
+#, c-format
 msgid "dlg.input.prompt"
-msgstr "Idatzi %s(e)rako sarrera:"
+msgstr "Sartu %s(e)rako sarrera:"
 
 #, fuzzy
 msgid "glyphfinder.results"
@@ -2486,11 +2437,11 @@ msgstr ""
 "dituzte:"
 
 # The "%%s" in the end of this string is an escaped string c-format (%s) that will be replaced with the translated output of "feeds.list.entrycount". The translation should have "%%s" at the position where that part can be inserted.
-#, c-format, fuzzy
+#, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "%% daukaten jario %uera harpidetuta zaude.\n"
-msgstr[1] "%% daukaten %u jariotara harpidetuta zaude.\n"
+msgstr[0] "%% ditu(zt)en jario %uera harpidetuta zaude.\n"
+msgstr[1] "%% dituzten %u jariotara harpidetuta zaude.\n"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
@@ -2498,7 +2449,6 @@ msgstr ""
 "Ziur %s\"%s\"%s identitatea eta berari lotutako ziurtagiri eta gako pribatua "
 "ezabatu nahi dituzula?"
 
-#, fuzzy
 msgid "sitespec.palette"
 msgstr "Gai-paletaren hazia:"
 
@@ -2507,8 +2457,8 @@ msgstr "Ireki laster-menua"
 
 msgid "dlg.certimport.help"
 msgstr ""
-"Itsatsi PEM bidez kodetutako ziurtagiri bat edota gako pribatu bat, edo "
-"ekarri leihora .crt/.key fitxategi bat."
+"Itsatsi PEM bidez kodetutako ziurtagiri edota gako pribatu bat, edo ekarri "
+"leihora .crt/.key fitxategi bat."
 
 msgid "heading.certimport.dropped"
 msgstr "Leihora ekarritako fitxategia"
@@ -2554,7 +2504,6 @@ msgid "prefs.uiscale"
 msgstr "Interfazearen eskala:"
 
 # Abbrevation: background-to-foreground
-#, fuzzy
 msgid "prefs.imagestyle.bgfg"
 msgstr "Hondotik lehenengo planora"
 
@@ -2565,7 +2514,6 @@ msgstr "Tarte bakarreko corpusa:"
 msgid "prefs.font.monodoc"
 msgstr "Tarte bakarreko letra-tipoa:"
 
-#, fuzzy
 msgid "prefs.gopher.gemstyle"
 msgstr "Detektatu automatikoki Gopher menuaren estiloa:"
 
@@ -2670,9 +2618,8 @@ msgstr "Lehengoratu aurrekoa:"
 msgid "import.userdata.snippets"
 msgstr "Mozkinak:"
 
-#, fuzzy
 msgid "prefs.collapsepre"
-msgstr "Tolestu aldez aurretik formatetatutakoa:"
+msgstr "Tolestu aurreformatutakoa:"
 
 #, fuzzy
 msgid "prefs.editor.highlight"
@@ -2701,7 +2648,7 @@ msgid "menu.search"
 msgstr "Bilatu"
 
 msgid "menu.snippet.add"
-msgstr "Mozkina hautatutakoarekin…"
+msgstr "Mozkina hautatutakotik…"
 
 msgid "menu.tools"
 msgstr "Tresnak"
@@ -2718,7 +2665,6 @@ msgstr "Garbitu historia"
 msgid "dlg.import.intofolder"
 msgstr "Gehitu karpetara:"
 
-#, fuzzy
 msgid "dlg.import.headings"
 msgstr "Azpikarpetak goiburuetatik:"
 
@@ -2772,11 +2718,10 @@ msgstr ""
 msgid "sniped.new"
 msgstr "Mozkin berria"
 
-#, fuzzy
 msgid "sniped.help"
 msgstr ""
-"Harridura ikur batekin hasten diren mozkinak (\"!w\" adibidez) bilaketak "
-"egiteko URL eremu bezala erabil daitezke."
+"Harridura ikur batekin hasten diren mozkinak (\"!w\" adibidez) URL eremuan "
+"erabil daitezke bilaketak egiteko."
 
 msgid "menu.snip.edit"
 msgstr "Editatu…"
@@ -2799,13 +2744,11 @@ msgstr "Edukia:"
 msgid "snip.accept"
 msgstr "Gorde mozkina"
 
-#, fuzzy
 msgid "doc.pre.nocaption"
 msgstr "Goibururik gabeko aurreformatutako testua"
 
-#, fuzzy
 msgid "numbertype.float"
-msgstr "mugikorra"
+msgstr "erreala"
 
 # strftime() formatted. Should be split evenly on two lines with a newline character.
 msgid "page.timestamp"
@@ -2837,3 +2780,22 @@ msgstr "Mozkin berria"
 
 msgid "heading.snip.edit"
 msgstr "Editatu mozkina"
+
+#, fuzzy
+msgid "fontpack.help"
+msgstr ""
+"Lagrange-ren letra-tipoak ZIP artxiboak dira, iturri eta konfigurazio-"
+"parametro elkartuen fitxategi-multzo bat dutenak. Instalatu ondoren, letra-"
+"tipoak dokumentuen edukirako eta interfazerako erabil daitezke. Aktibo "
+"dauden letra-tipoak hautatzeko, joan Hobespenak > Letra-tipoak atalera."
+
+# A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
+msgid "keys.bang"
+msgstr "Sartu kontsulta-mozkina"
+
+msgid "fontpack.export"
+msgstr "Ikusi fontpack.ini txantiloia"
+
+#, fuzzy
+msgid "menu.input.unsetprompt"
+msgstr "Ez pentsa URL honek sarrerarik behar duenik"
