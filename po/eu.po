@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2024-01-13 15:14+0000\n"
+"PO-Revision-Date: 2024-01-16 08:37+0000\n"
 "Last-Translator: xabi <xabi.rn@gmail.com>\n"
 "Language-Team: Basque <http://weblate.skyjake.fi/projects/lagrange/ui/eu/>\n"
 "Language: eu\n"
@@ -66,7 +66,7 @@ msgid "menu.title.edit"
 msgstr "Editatu"
 
 msgid "menu.title.view"
-msgstr "Ikuspegia"
+msgstr "Ikusi"
 
 msgid "menu.title.window"
 msgstr "Leihoa"
@@ -114,7 +114,7 @@ msgid "menu.export"
 msgstr "Esportatu"
 
 msgid "menu.pageinfo"
-msgstr "Erakutsi orriaren informazioa"
+msgstr "Erakutsi Orriaren informazioa"
 
 msgid "menu.find"
 msgstr "Aurkitu orrialdean"
@@ -147,9 +147,8 @@ msgstr "Txikiagotu"
 msgid "menu.zoom.reset"
 msgstr "Berrezarri ikuspuntua"
 
-#, fuzzy
 msgid "menu.view.split"
-msgstr "Banatu ikuspuntua"
+msgstr "Banatu ikuspegia"
 
 msgid "menu.bookmarks.list"
 msgstr "Zerrendatu laster-marka guztiak"
@@ -389,7 +388,7 @@ msgid "pageinfo.header.cached"
 msgstr "(katxeko edukia)"
 
 msgid "pageinfo.cert.ca.unverified"
-msgstr "CA-k egiaztatu gabea"
+msgstr "Ziurtagiriak (CA) egiaztatu gabea"
 
 msgid "pageinfo.cert.notexpired"
 msgstr "Iraungi gabea"
@@ -515,7 +514,7 @@ msgid "import.userdata.history"
 msgstr "Historia:"
 
 msgid "import.userdata.trusted"
-msgstr "Fidagarritzat dituzun ziurtagiriak:"
+msgstr "Fidagarritzat hartutako ziurtagiriak:"
 
 msgid "dlg.userdata.no"
 msgstr "Bat ere ez"
@@ -568,7 +567,7 @@ msgstr "Hz"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] "%u sarrera guztira"
+msgstr[0] "sarrera %u guztira"
 msgstr[1] "%u sarrera guztira"
 
 #, c-format
@@ -837,7 +836,7 @@ msgid "pageinfo.cert.status"
 msgstr "Ziurtagiriaren egoera:"
 
 msgid "pageinfo.cert.ca.verified"
-msgstr "CA-k egiaztatua"
+msgstr "Ziurtagiriak (CA) egiaztatua"
 
 msgid "pageinfo.cert.expired"
 msgstr "Iraungia"
@@ -1029,7 +1028,7 @@ msgid "upload.url"
 msgstr "URLa"
 
 msgid "hint.upload.path"
-msgstr "URLaren bidea"
+msgstr "URLaren bide-izena"
 
 msgid "hint.upload.token"
 msgstr "ikusi zerbitzariaren oharrak"
@@ -1510,7 +1509,7 @@ msgid "prefs.mono.gemini"
 msgstr "Gemini"
 
 msgid "prefs.boldlink"
-msgstr "Esteka lodiak:"
+msgstr "Nabarmendu estekak:"
 
 msgid "prefs.linewidth"
 msgstr "Lerroen zabalera:"
@@ -1522,7 +1521,7 @@ msgid "prefs.biglede"
 msgstr "Lehenengo paragrafo handia:"
 
 msgid "prefs.urlsize"
-msgstr "URLen gehienezko neurria:"
+msgstr "URLen gehienezko tamaina:"
 
 msgid "keys.subscribe"
 msgstr "Harpidetu orrira"
@@ -1551,11 +1550,10 @@ msgstr "Alboko barra: Erakutsi jarioko sarrera guztiak"
 msgid "error.badstatus"
 msgstr "Egoera-kode ezezaguna"
 
-#, fuzzy
 msgid "error.badstatus.msg"
 msgstr ""
 "Zerbitzariak Gemini protokoloaren zehaztapenean ez dagoen egoera-kode "
-"batekin erantzun du. Agian zerbitzariak ez du ondo funtzionatzen."
+"batekin erantzun du. Agian zerbitzaria gaizki dabil."
 
 msgid "error.openfile"
 msgstr "Fitxategia irekitzeak huts egin du"
@@ -1564,7 +1562,6 @@ msgid "error.openfile.msg"
 msgstr ""
 "Fitxategia ez dago edo ezin da atzitu. Egiaztatu fitxategiaren bide-izena."
 
-#, fuzzy
 msgid "error.badresource"
 msgstr "Baliabidea ez da baliozkoa"
 
@@ -1583,7 +1580,6 @@ msgstr ""
 "zerbitzaria gaizki dabil edo Gemini ez den zerbitzari batekin harremanetan "
 "jartzen saiatu zara."
 
-#, fuzzy
 msgid "error.incompleteheader.msg"
 msgstr ""
 "Zerbitzariaren erantzunaren goiburua ez dago osorik. Agian zerbitzaria "
@@ -1669,9 +1665,8 @@ msgstr ""
 msgid "pageinfo.cert.trusted"
 msgstr "Fidagarritzat hartutakoa"
 
-#, fuzzy
 msgid "pageinfo.cert.untrusted"
-msgstr "Ez da fidagarritzat hartu"
+msgstr "Fidagarritzat hartu gabea"
 
 msgid "keys.sitespec"
 msgstr "Erakutsi gunearen berezko ezarpenak"
@@ -1687,7 +1682,6 @@ msgstr "Sarrera adierazlea: Itsatsi aurreko lerroa"
 msgid "link.side.newtab"
 msgstr "Ireki esteka aldameneko fitxa berrian"
 
-#, fuzzy
 msgid "error.badredirect.msg"
 msgstr ""
 "Zerbitzariak birbideratze batekin erantzun du baina ez du baliozko helburuko "
@@ -1696,10 +1690,9 @@ msgstr ""
 msgid "error.manyredirects"
 msgstr "Birbideratze gehiegi"
 
-#, fuzzy
 msgid "dlg.certwarn.different"
 msgstr ""
-"Jaso den ziurtagiria baliozkoa da baina fidagarritzat hartua dagoenaren "
+"Jaso den ziurtagiria baliozkoa da baina fidagarritzat hartua dugunaren "
 "desberdina."
 
 msgid "heading.certimport.pasted"
@@ -1833,7 +1826,7 @@ msgid "heading.prefs.interface"
 msgstr "Erabiltzaile-interfazea"
 
 msgid "heading.prefs.uitheme"
-msgstr "EI koloreak"
+msgstr "Interfazeko koloreak"
 
 msgid "heading.prefs.sizing"
 msgstr "Neurriak"
@@ -1847,33 +1840,29 @@ msgstr "Deskargen karpeta:"
 msgid "prefs.searchurl"
 msgstr "Bilaketa URLa:"
 
-#, fuzzy
 msgid "prefs.imageloadscroll"
-msgstr "Kargatu hurrengo irudia teklatu bidezko korritzean:"
+msgstr "Kargatu irudiak korritu ahala:"
 
 msgid "prefs.bottomtabbar"
 msgstr "Beheko fitxak"
 
-#, fuzzy
 msgid "prefs.evensplit"
 msgstr "Banatu fitxak berdin:"
 
-#, fuzzy
 msgid "prefs.swipe.edge"
-msgstr "Ertzetik mugimenduak:"
+msgstr "Atzamar-mugimenduak ertzetik:"
 
 msgid "heading.prefs.toolbaractions"
 msgstr "Tresna-barraren ekintzak"
 
 msgid "prefs.theme"
-msgstr "EIren gaia:"
+msgstr "Interfazeko gaia:"
 
 msgid "prefs.accent.teal"
 msgstr "Berde-urdinxka"
 
-#, fuzzy
 msgid "prefs.time.24h"
-msgstr "24h ordua:"
+msgstr "24 ordu:"
 
 msgid "prefs.retaintabs"
 msgstr "Leheneratu fitxak abiaraztean:"
@@ -1903,12 +1892,11 @@ msgstr "Saturazioa:"
 msgid "prefs.imagestyle.preformat"
 msgstr "Aurreformatutako kolorea"
 
-#, fuzzy
 msgid "prefs.tui.simple"
-msgstr "Karaktere soilak"
+msgstr "Karaktere soilak:"
 
 msgid "prefs.font.ui"
-msgstr "EI letra-tipoa:"
+msgstr "Interfazeko letra-tipoa:"
 
 msgid "prefs.font.mono"
 msgstr "Aurreformatutakoa:"
@@ -1921,9 +1909,8 @@ msgstr "Hondo ilunarekin"
 msgid "prefs.gemtext.ansi.bg"
 msgstr "Hondoaren kolorea"
 
-#, fuzzy
 msgid "prefs.font.warnmissing"
-msgstr "Letra-tipoaren glifoen abisuak:"
+msgstr "Abisatu letra-tipoen glifoei buruz:"
 
 msgid "prefs.linespacing"
 msgstr "Lerroen arteko tartea:"
@@ -1932,7 +1919,7 @@ msgid "prefs.tabwidth"
 msgstr "Tabuladorearen zabalera:"
 
 msgid "prefs.quoteicon"
-msgstr "Aipuen adierazlea:"
+msgstr "Aipuak adierazteko:"
 
 msgid "prefs.quoteicon.icon"
 msgstr "\" ikurra"
@@ -2006,16 +1993,14 @@ msgstr "Baliabidea ez dago."
 msgid "error.unsupported.protocol"
 msgstr "Protokoloa ez da bateragarria"
 
-#, fuzzy
 msgid "error.badheader"
-msgstr "Goiburu baliogabea"
+msgstr "Goiburua ez da baliozkoa"
 
 msgid "error.incompleteheader"
 msgstr "Goiburua ez da osorik kargatu"
 
-#, fuzzy
 msgid "error.tls"
-msgstr "Sare/TLS akatsa"
+msgstr "Sarearen / TLSaren hutsegitea"
 
 msgid "error.certexpired"
 msgstr "Iraungitako ziurtagiria"
@@ -2028,25 +2013,22 @@ msgstr ""
 "Konexioa bertan behera utzi da proxyaren zerbitzariko TLS ziurtagiria "
 "iraungita dagoelako."
 
-#, fuzzy
 msgid "error.certverify"
-msgstr "Fidagarritzat hartzen ez den zerbitzaria"
+msgstr "Fidagarritzat hartu gabeko zerbitzaria"
 
 msgid "error.proxyverify"
-msgstr "Fidagarritzat hartzen ez den proxya"
+msgstr "Fidagarritzat hartu gabeko proxya"
 
 msgid "error.cgi"
 msgstr "CGI errorea"
 
-#, fuzzy
 msgid "error.cgi.msg"
 msgstr ""
-"Zerbitzarian edukia modu dinamikoan sortzeak huts egin du. Zerbitzariko "
-"softwareak gaizki funtzionatzen duelako gerta daiteke hori."
+"Hutsegitea zerbitzarian edukia modu dinamikoan sortzean. Zerbitzariko "
+"softwarea gaizki dabilelako gerta daiteke hori."
 
-#, fuzzy
 msgid "error.slowdown"
-msgstr "Moteldu"
+msgstr "Mantsoago"
 
 msgid "error.permanent.msg"
 msgstr "Zure eskaerak huts egin du eta etorkizunean ere huts egingo du."
@@ -2063,7 +2045,6 @@ msgstr "Eskatutako baliabidea dagoeneko ez dago eskuragarri."
 msgid "error.proxyrefusal"
 msgstr "Proxy eskaera ukatu da"
 
-#, fuzzy
 msgid "error.badrequest"
 msgstr "Eskaera okerra"
 
@@ -2073,11 +2054,10 @@ msgstr "Zerbitzariak ez du eskera ulertu."
 msgid "error.cert.needed"
 msgstr "Ziurtagiria beharrezkoa da"
 
-#, fuzzy
 msgid "error.cert.needed.msg"
 msgstr ""
-"Eskatutako baliabidea atzitzeko ezinbestekoa da identifikatzea, bezeroaren "
-"ziurtagiri baten bidez."
+"Eskatutako baliabidea atzitzeko ezinbestekoa da bezeroaren ziurtagiri baten "
+"bidez identifikatzea."
 
 msgid "error.cert.auth"
 msgstr "Ziurtagiria ez da baimendu"
@@ -2088,7 +2068,6 @@ msgstr "Ziurtagiria ez da baliozkoa"
 msgid "error.ansi"
 msgstr "Terminalaren emulazioa"
 
-#, fuzzy
 msgid "gempub.cover.viewlocal"
 msgstr "Gempub liburua lokalean gorde eta gero ikusi ahal izango duzu."
 
@@ -2099,7 +2078,7 @@ msgid "gempub.cover.aboutbook"
 msgstr "Liburu honi buruz"
 
 msgid "gempub.cover.view"
-msgstr "Ikusi Gempuben edukiak"
+msgstr "Ikusi Gempub edukiak"
 
 msgid "gempub.cover.image"
 msgstr "Azaleko irudia"
@@ -2119,13 +2098,11 @@ msgstr "Hizkuntza"
 msgid "gempub.meta.license"
 msgstr "Lizentzia"
 
-#, fuzzy
 msgid "heading.fontpack.meta.enabled"
-msgstr "Gaitutako letra-tipo multzoak"
+msgstr "Gaitutako letra-tipo paketeak"
 
-#, fuzzy
 msgid "heading.fontpack.meta.disabled"
-msgstr "Ezgaitutako letra-tipo multzoak"
+msgstr "Ezgaitutako letra-tipo paketeak"
 
 #, c-format
 msgid "fontpack.meta.version"
@@ -2162,8 +2139,8 @@ msgstr "Erakutsi instalatutako letra-tipoak"
 #, fuzzy
 msgid "error.manyredirects.msg"
 msgstr ""
-"Birbideratze-begizta batean harrapatuta egon zaitezke. Hona hemen berriro "
-"zuzendutako URL hau, eskuz jarraitu nahi baduzu."
+"Litekeena da birbideratze-begizta batean harrapatuta egotea. Hona hemen "
+"berriro zuzendutako URL hau, eskuz jarraitu nahi baduzu."
 
 msgid "heading.dismiss.warning"
 msgstr "Baztertu abisua?"
@@ -2174,7 +2151,6 @@ msgstr "Baztertu abisua"
 msgid "error.tls.msg"
 msgstr "Zerbitzariarekin komunikatzeak huts egin du."
 
-#, fuzzy
 msgid "error.certexpired.msg"
 msgstr ""
 "Zerbitzarirako konexioa bertan behera utzi da TLS ziurtagiria iraungita "
@@ -2199,21 +2175,18 @@ msgstr ""
 msgid "error.proxy"
 msgstr "Proxy errorea"
 
-#, fuzzy
 msgid "error.proxy.msg"
 msgstr ""
 "Proxy eskaera batek huts egin du zerbitzariak ezin izan duelako urruneko "
 "ostalariarekin transakzioa arrakastaz osatu. Baliteke sarearen "
 "konektagarritasunarekin zailtasunak izatea."
 
-#, fuzzy
 msgid "error.permanent"
-msgstr "Behin-betiko akatsa"
+msgstr "Akats konponezina"
 
 msgid "error.notfound.msg"
 msgstr "Eskatutako baliabidea ez da aurkitu une honetan."
 
-#, fuzzy
 msgid "error.proxyrefusal.msg"
 msgstr ""
 "Eskaera zerbitzariak ostatatu gabeko domeinu bateko baliabide baterako zen, "
@@ -2227,11 +2200,10 @@ msgstr ""
 msgid "error.cert.invalid.msg"
 msgstr "Bezeroaren ziurtagiria iraungita dago edo ez da baliozkoa."
 
-#, fuzzy
 msgid "error.ansi.msg"
 msgstr ""
-"Baliteke orri hau behar bezala ez erakustea. ANSI ihes-sekuentziak "
-"erabiltzen ditu estilo-testurako, zati baterako bakarrik bermatuta dagoena. "
+"Litekeena da orri hau behar bezala ez erakustea. ANSI irteera-sekuentziak "
+"erabiltzen ditu estilo-testurako, erdizka baino bateragarria ez dena. "
 "Terminalaren emuladore bat erabil dezakezu ikusteko."
 
 msgid "error.glyphs"
@@ -2265,7 +2237,6 @@ msgstr "Ezgaitu \"%s\""
 msgid "fontpack.install.ttf"
 msgstr "Instalatu TrueType letra-tipoa"
 
-#, fuzzy
 msgid "truetype.help"
 msgstr ""
 "Lagrange erabiltzailearen letra-tipoen direktorioko TrueType fitxategi "
@@ -2370,7 +2341,7 @@ msgstr "Erabiltzaile-interfazea"
 
 # User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
 msgid "prefs.archive.openindex"
-msgstr "Ireki index.gmi fitxategia ZIP artxiboetan:"
+msgstr "Ireki ZIP artxiboetako index.gmi fitxategiak:"
 
 msgid "prefs.bottomnavbar"
 msgstr "Beheko nabigazio-barra"
@@ -2380,7 +2351,7 @@ msgid "prefs.boldlink.light"
 msgstr "Hondo argiarekin"
 
 msgid "prefs.memorysize"
-msgstr "Memoriaren neurria:"
+msgstr "Memoriaren tamaina:"
 
 msgid "prefs.proxy.gemini"
 msgstr "Gemini proxya:"
@@ -2392,9 +2363,9 @@ msgstr "Gopher proxya:"
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
 msgstr[0] ""
-"Artxibo honek elementu %u dauka eta konprimatutako neurria %.1f MBkoa da."
+"Artxibo honek elementu %u dauka eta konprimatutako tamaina %.1f MBkoa da."
 msgstr[1] ""
-"Artxibo honek %u elementu dauzka eta konprimatutako neurria %.1f MBkoa da."
+"Artxibo honek %u elementu dauzka eta konprimatutako tamaina %.1f MBkoa da."
 
 #, c-format
 msgid "dir.summary"
@@ -2430,7 +2401,6 @@ msgstr "Gehitu laster-marka karpeta"
 msgid "dlg.input.prompt"
 msgstr "Sartu %s(e)rako sarrera:"
 
-#, fuzzy
 msgid "glyphfinder.results"
 msgstr ""
 "Ondorengo letra-tipo paketeek faltan dauden glifo bat edo gehiago eskaintzen "
@@ -2463,26 +2433,22 @@ msgstr ""
 msgid "heading.certimport.dropped"
 msgstr "Leihora ekarritako fitxategia"
 
-#, fuzzy
 msgid "bookmark.export.format.sub"
 msgstr ""
 "Orrialde hau \"Gemini orrietara harpidetzen\" zehaztapenei jarraiki "
 "formateatu da."
 
-#, fuzzy
 msgid "dlg.glyphfinder.help"
 msgstr ""
-"Skyjake.fi letra-tipo liburutegian karaktere horietarako glifoak bilatzen "
-"saia zaitezke edo TrueType tipoak eskuz instalatu ditzazkezu."
+"Skyjake.fi letra-tipoen liburutegian karaktere horietarako glifoak bilatzen "
+"saia zaitezke edo TrueType letra-tipo berriak eskuz instala ditzazkezu."
 
-#, fuzzy
 msgid "glyphfinder.results.empty"
 msgstr "Ez da bat datorren letra-tipo paketerik aurkitu."
 
 msgid "hint.dlg.bookmark.notes"
 msgstr "Formatu askeko ohar pribatuak"
 
-#, fuzzy
 msgid "prefs.centershort"
 msgstr "Erdiratze bertikala:"
 
@@ -2490,9 +2456,8 @@ msgstr "Erdiratze bertikala:"
 msgid "prefs.dataurl.openimages"
 msgstr "Ireki Data URLetan dauden irudiak:"
 
-#, fuzzy
 msgid "prefs.swipe.page"
-msgstr "Mugimenduak orrialdean:"
+msgstr "Atzamar-mugimenduak orrialdean:"
 
 msgid "prefs.toolbaraction1"
 msgstr "1. botoia"
@@ -2501,7 +2466,7 @@ msgid "prefs.toolbaraction2"
 msgstr "2. botoia"
 
 msgid "prefs.uiscale"
-msgstr "Interfazearen eskala:"
+msgstr "Interfazeko eskala:"
 
 # Abbrevation: background-to-foreground
 msgid "prefs.imagestyle.bgfg"
@@ -2517,35 +2482,30 @@ msgstr "Tarte bakarreko letra-tipoa:"
 msgid "prefs.gopher.gemstyle"
 msgstr "Detektatu automatikoki Gopher menuaren estiloa:"
 
-#, fuzzy
 msgid "prefs.gemtext.ansi"
-msgstr "Gemtext ANSI ihesak:"
+msgstr "Gemtext ANSI irteerak:"
 
 # Color of the text foreground, i.e., the characters.
 msgid "prefs.gemtext.ansi.fg"
 msgstr "Testuaren kolorea"
 
 msgid "prefs.gemtext.ansi.fontstyle"
-msgstr "Letra-tipoen estiloa"
+msgstr "Letra-tipo estiloa"
 
-#, fuzzy
 msgid "prefs.font.smooth"
-msgstr "Letra-tipoen leuntzea:"
+msgstr "Leundu letra-tipoak:"
 
-#, fuzzy
 msgid "prefs.plaintext.wrap"
-msgstr "Itzulbiratu testu hutseko lerro luzeak:"
+msgstr "Itzulbiratu testu soileko lerro luzeak:"
 
 msgid "prefs.ca.path"
-msgstr "CA ibilbidea:"
+msgstr "Ziurtagiriaren (CA) bide-izena:"
 
-#, fuzzy
 msgid "keys.link.modkey"
-msgstr "Ireki esteka aldatzaile tekla batekin"
+msgstr "Ireki esteka aldatzaile tekla baten bidez"
 
-#, fuzzy
 msgid "keys.split.item"
-msgstr "Bista zatituaren menua:"
+msgstr "Ikuspegia banatzeko menua:"
 
 #, fuzzy
 msgid "error.schemeredirect"
@@ -2557,17 +2517,14 @@ msgstr ""
 "jatorrizko URLaren eskema bera. Hemen dago esteka, egokia bada eskuz "
 "irekitzeko."
 
-#, fuzzy
 msgid "error.slowdown.msg"
 msgstr "Zerbitzaria eskaerak mugatzen ari da. Itxaron…"
 
-#, fuzzy
 msgid "keys.link.homerow.newtab"
-msgstr "Ireki esteka fitxa berrian hasierako lerroko teklekin"
+msgstr "Ireki esteka fitxa berrian erdiko errenkadako teklak erabiliz"
 
-#, fuzzy
 msgid "keys.link.homerow.hover"
-msgstr "Fokatu esteka hasierako lerroko teklekin"
+msgstr "Fokatu esteka erdiko errenkadako teklak erabiliz"
 
 msgid "heading.fontpack.delete"
 msgstr "Ezabatu letra-tipo paketea"
@@ -2583,18 +2540,16 @@ msgstr "Ezabatu letra-tipo paketea"
 msgid "prefs.redirect.allowscheme"
 msgstr "Eskema aldatzen duen birbideraketak:"
 
-#, fuzzy
 msgid "keys.link.homerow"
-msgstr "Ireki esteka hasierako lerroko tekla batekin"
+msgstr "Ireki esteka erdiko errenkadako teklak erabiliz"
 
-#, fuzzy
 msgid "sitespec.ansi"
-msgstr "ANSI ihes abisua:"
+msgstr "ANSI irteera abisuak:"
 
 msgid "error.proxyverify.msg"
 msgstr ""
 "Konexioa bertan behera utzi da proxy zerbitzariko TLS ziurtagiria ez "
-"datorrelako bat guk fidagarritzat emandakoarekin.\n"
+"datorrelako bat fidagarritzat dugunarekin.\n"
 "\n"
 "Proxy zerbitzariaren ziurtagiria Orriaren Informazioa-n marka daiteke "
 "fidagarritzat."
@@ -2608,9 +2563,8 @@ msgstr "Itsatsi mozkina"
 msgid "menu.bookmark.movetofolder"
 msgstr "Mugitu laster-marka karpetara:"
 
-#, fuzzy
 msgid "menu.input.setprompt"
-msgstr "URL honek sarrera behar du"
+msgstr "Suposatu URL honek sarrera behar duela"
 
 msgid "menu.input.restore"
 msgstr "Lehengoratu aurrekoa:"
@@ -2621,20 +2575,18 @@ msgstr "Mozkinak:"
 msgid "prefs.collapsepre"
 msgstr "Tolestu aurreformatutakoa:"
 
-#, fuzzy
 msgid "prefs.editor.highlight"
-msgstr "Sintaxiaren azpimarra:"
+msgstr "Nabarmendu sintaxia:"
 
-#, fuzzy
 msgid "keys.split.next"
-msgstr "Aldatu fokua hurrengo zatiketara"
+msgstr "Aldatu fokua hurrengo banaketara"
 
 msgid "error.certverify.msg"
 msgstr ""
 "Zerbitzarirako konexioa bertan behera utzi da TLS ziurtagiria ez datorrelako "
-"bat guk fidagarritzat emandakoarekin. Egiaztatu zerbitzariak ziurtagiri-"
+"bat guk fidagarritzat dugunarekin. Egiaztatu zerbitzariak ziurtagiri-"
 "aldaketa iragarri duen. Hala ez bada, baliteke hirugarren maltzur bat "
-"zerbitzaria izango balitz bezala jokatzen egotea.\n"
+"zerbitzaria izango balitz jokatzen egotea.\n"
 "\n"
 "Ziurtagiria Orriaren Informazioa-n marka daiteke fidagarritzat."
 
@@ -2709,10 +2661,9 @@ msgstr "Eskuz"
 msgid "error.showutf8"
 msgstr "UTF-8 antzeman da"
 
-#, fuzzy
 msgid "error.showutf8.msg"
 msgstr ""
-"Orrialde honetako multimedia mota ez da antzeman baina UTF-8rekin kodetutako "
+"Ez da orrialde honetako multimedia mota antzeman baina UTF-8rekin kodetutako "
 "testua baliagarria da."
 
 msgid "sniped.new"
@@ -2781,13 +2732,12 @@ msgstr "Mozkin berria"
 msgid "heading.snip.edit"
 msgstr "Editatu mozkina"
 
-#, fuzzy
 msgid "fontpack.help"
 msgstr ""
-"Lagrange-ren letra-tipoak ZIP artxiboak dira, iturri eta konfigurazio-"
-"parametro elkartuen fitxategi-multzo bat dutenak. Instalatu ondoren, letra-"
+"Lagrange-ren letra-tipo paketeak ZIP artxiboak dira; letra-tipoak eta hauei "
+"lotutako konfigurazio-parametroek osatzen dituzte. Instalatu ondoren, letra-"
 "tipoak dokumentuen edukirako eta interfazerako erabil daitezke. Aktibo "
-"dauden letra-tipoak hautatzeko, joan Hobespenak > Letra-tipoak atalera."
+"dauden letra-tipoak Hobespenak > Letra-tipoak atalean hautatu daitezke."
 
 # A "snippet query" is where the user types (for instance) "!w orange" in the navbar URL field to look up the word "orange" with the previously configured snippet "!w" that might expand into a Wikipedia search URL.
 msgid "keys.bang"
@@ -2796,6 +2746,14 @@ msgstr "Sartu kontsulta-mozkina"
 msgid "fontpack.export"
 msgstr "Ikusi fontpack.ini txantiloia"
 
-#, fuzzy
 msgid "menu.input.unsetprompt"
-msgstr "Ez pentsa URL honek sarrerarik behar duenik"
+msgstr "Ez suposatu URL honek sarrerarik behar duenik"
+
+msgid "prefs.pinsplit"
+msgstr "Finkatu banatutako ikuspegian:"
+
+msgid "keys.link.homerow.next"
+msgstr "Erdiko errenkadako teklen esteken hurrengo multzoa"
+
+msgid "keys.split.menu"
+msgstr "Ezarri ikuspegia banatzeko modua"
