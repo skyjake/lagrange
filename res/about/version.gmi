@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.17.6
+* Fixed memory leak: fetched pages were not always released from memory (reference miscount). 
+* Fixed minor memory leak in list widgets.
+
 ## 1.17.5
 * Fixed a few small memory leaks.
 * Fixed unnecessary copying of data while waiting for an audio buffer to become playable.
@@ -50,7 +54,7 @@
 * Fixed horizontal scrolling issues with preformatted blocks: only scroll if needed, allow scrolling anywhere on the block and not just on non-empty text lines, and when scrolling disallow swipe navigation over the area.
 * Fixed visual artifacts around and next to preformatted blocks (e.g., streaking).
 * Fixed potential crash after (un)folding a preformatted block.
-* Fixed links being non-clickable after searching text on a page has scrolled the view. 
+* Fixed links being non-clickable after searching text on a page has scrolled the view.
 * Fixed scroll position being reset when reloading the page.
 * Fixed initial size of the upload dialog when font size has been changed.
 * Fixed "View as Plain Text" context menu item after reloading a page.
