@@ -10,6 +10,7 @@
 * Fixed memory leak: fetched pages were not always released from memory (reference miscount). 
 * Fixed minor memory leak in list widgets.
 * Gopher: Autodetect Gemtext files based on file extension.
+* Updated UI translations.
 
 ## 1.17.5
 * Fixed a few small memory leaks.
