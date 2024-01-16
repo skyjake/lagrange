@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2023-10-18 04:14+0000\n"
+"PO-Revision-Date: 2023-12-10 08:14+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -1263,7 +1263,7 @@ msgid "prefs.font"
 msgstr "Letra do corpo:"
 
 msgid "prefs.mono"
-msgstr "Mono para os textos:"
+msgstr "Letra mono para os textos:"
 
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
@@ -1690,7 +1690,7 @@ msgid "error.notfound"
 msgstr "Non atopado"
 
 msgid "error.notfound.msg"
-msgstr "O recurso solicitado non se puido atopar nesta ocasión."
+msgstr "Desta vez non se puido atopar o recurso solicitado."
 
 msgid "error.gone.msg"
 msgstr "O recurso solicitado xa non está dispoñible."
@@ -1929,7 +1929,7 @@ msgstr "Sen formato:"
 
 # Font to use for headings and body when Monospace body is enabled.
 msgid "prefs.font.monodoc"
-msgstr "Letra monoespazada:"
+msgstr "Letra monoespazo:"
 
 msgid "prefs.boldlink.visited"
 msgstr "Visitado"
@@ -2730,3 +2730,6 @@ msgstr "Novo Atallo"
 
 msgid "heading.snip.edit"
 msgstr "Editar Atallo"
+
+msgid "prefs.doctheme.name.vibrantlight"
+msgstr "Claro Vibrante"

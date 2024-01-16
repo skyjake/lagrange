@@ -23,12 +23,12 @@ function (make_resources dst)
     set (versionTempPath ${CMAKE_CURRENT_SOURCE_DIR}/res/VERSION)
     file (WRITE ${versionTempPath} ${PROJECT_VERSION})
     execute_process (
-        COMMAND ${ZIP_EXECUTABLE} -1 ${dst} VERSION ${files}
+        COMMAND ${ZIP_EXECUTABLE} -1 -X ${dst} VERSION ${files}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/res
         OUTPUT_QUIET
     )
     execute_process (
-        COMMAND ${ZIP_EXECUTABLE} -1 -j ${dst} ${absfiles}
+        COMMAND ${ZIP_EXECUTABLE} -1 -X -j ${dst} ${absfiles}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/res
         OUTPUT_QUIET
     )

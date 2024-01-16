@@ -238,9 +238,16 @@ void open_Gopher(iGopher *d, const iString *url) {
     const iString *reqPath =
         collect_String(urlDecodeExclude_String(collectNewRange_String(parts.path), "\t"));
     switch (d->type) {
-        case '0':
-            setCStr_String(d->meta, "text/plain");
+        case '0': {
+            const char *detected = mediaTypeFromFileExtension_String(reqPath);
+            if (startsWith_CStr(detected, "text/")) {
+                setCStr_String(d->meta, detected);
+            }
+            else {
+                setCStr_String(d->meta, "text/plain");
+            }
             break;
+        }
         case '1':
         case '7':
             setCStr_String(d->meta, "text/gemini");
@@ -319,5 +326,5 @@ void setUrlItemType_Gopher(iString *url, char itemType) {
         if (parts.path.start && size_Range(&parts.path) >= 2) {
             ((char *) parts.path.start)[1] = itemType;
         }
-    }   
+    }
 }

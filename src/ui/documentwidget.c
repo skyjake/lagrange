@@ -2281,9 +2281,11 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 }
                 break;
             }
-            case categorySuccess_GmStatusCode:
+            case categorySuccess_GmStatusCode: {
                 visitUrl_Visited(visited_App(), d->mod.url, 0);
-                replaceDocument_DocumentWidget_(d, new_GmDocument());
+                iGmDocument *newDoc = new_GmDocument();
+                replaceDocument_DocumentWidget_(d, newDoc /* keeps ref */);
+                iRelease(newDoc);
                 clear_Banner(d->banner);
                 delete_Gempub(d->sourceGempub);
                 d->sourceGempub = NULL;
@@ -2298,6 +2300,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 updateDocument_DocumentWidget_(d, resp, NULL, iTrue);
                 resetWideRuns_DocumentView(d->view);
                 break;
+            }
             case categoryRedirect_GmStatusCode:
                 if (isEmpty_String(&resp->meta)) {
                     showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode, NULL);

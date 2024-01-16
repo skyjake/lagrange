@@ -112,6 +112,7 @@ void init_ListWidget(iListWidget *d) {
 void deinit_ListWidget(iListWidget *d) {
     removeTicker_App(refreshWhileScrolling_ListWidget_, d);
     clear_ListWidget(d);
+    deinit_IntSet(&d->invalidItems);
     deinit_PtrArray(&d->items);
     delete_VisBuf(d->visBuf);
 }
@@ -615,7 +616,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             stop_Anim(&d->scrollY.pos);
             moveSpan_SmoothScroll(&d->scrollY, amount, 0);
-            if (isMobile_Platform() && !hasAffinity_Touch(w) && 
+            if (isMobile_Platform() && !hasAffinity_Touch(w) &&
                 ev->wheel.which == SDL_TOUCH_MOUSEID && !isScrollDisabled_ListWidget_(d, ev)) {
                 transferAffinity_Touch(NULL, w);
             }
