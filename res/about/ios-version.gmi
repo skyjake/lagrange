@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 1.17 (7)
+* Fixed memory leak: fetched pages were not always released from memory (reference miscount). 
+* Fixed minor memory leak in list widgets.
+* Gopher: Autodetect Gemtext files based on file extension.
+* Updated UI translations.
+
 ## 1.17 (6)
 * Fixed a few small memory leaks.
 * Fixed unnecessary copying of data while waiting for an audio buffer to become playable. This potentially caused the operating system to terminate the app due to excessive memory use.
