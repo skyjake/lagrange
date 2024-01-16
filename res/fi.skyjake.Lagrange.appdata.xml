@@ -45,6 +45,19 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.17.6" date="2024-01-16">
+            <description>
+                <ul>
+                    <li>Fixed memory leak: fetched pages were not always released from memory (reference miscount).</li>
+                    <li>Fixed minor memory leak in list widgets.</li>
+                    <li>Gopher: Autodetect Gemtext files based on file extension.</li>
+                    <li>Updated UI translations.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.17.6</url>
+        </release>
         <release version="1.17.5" date="2023-12-04">
             <description>
                 <ul>
