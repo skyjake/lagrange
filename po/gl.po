@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-25 09:20+0000\n"
-"PO-Revision-Date: 2023-12-10 08:14+0000\n"
+"PO-Revision-Date: 2024-01-18 05:14+0000\n"
 "Last-Translator: Xosé M. <correoxm@disroot.org>\n"
 "Language-Team: Galician <http://weblate.skyjake.fi/projects/lagrange/ui/gl/>"
 "\n"
@@ -404,7 +404,7 @@ msgid "menu.page.subscribe"
 msgstr "Subscribirse á páxina…"
 
 msgid "menu.aboutpages"
-msgstr "Acerca de Páxinas"
+msgstr "Páxinas About"
 
 msgid "menu.about"
 msgstr "Acerca de"
@@ -1354,7 +1354,7 @@ msgstr[1] "fai %d horas"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "Arte ASCII: a palabra \"Lagrange\" utilizando letras moi grandes"
+msgstr "Arte ASCII: a palabra \"Lagrange\" en letras moi grandes"
 
 msgid "menu.title.identity"
 msgstr "Identidade"
@@ -2331,7 +2331,7 @@ msgid "dlg.bookmark.parentfolder"
 msgstr "Cartafol Nai:"
 
 msgid "heading.prefs.support"
-msgstr "Soporte"
+msgstr "Axuda"
 
 msgid "prefs.uilayout"
 msgstr "Disposición:"
