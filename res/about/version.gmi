@@ -6,8 +6,14 @@
 ```
 # Release notes
 
+## 1.18
+
+New features:
+Changes and enhancements:
+Fixes:
+
 ## 1.17.6
-* Fixed memory leak: fetched pages were not always released from memory (reference miscount). 
+* Fixed memory leak: fetched pages were not always released from memory (reference miscount).
 * Fixed minor memory leak in list widgets.
 * Gopher: Autodetect Gemtext files based on file extension.
 * Updated UI translations.
