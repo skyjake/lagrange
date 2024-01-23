@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "buf.h"
 #include "lang.h"
+#include "the_Foundation/mutex.h"
 
 #define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.c"
@@ -36,6 +37,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #if defined (LAGRANGE_ENABLE_MPG123)
 #   include <mpg123.h>
+#endif
+#if defined (LAGRANGE_ENABLE_OPUS)
+#   include <opus/opusfile.h>
 #endif
 #if defined (iPlatformAppleMobile)
 #   include "../ios.h"
@@ -53,6 +57,7 @@ enum iDecoderType {
     vorbis_DecoderType,
     mpeg_DecoderType,
     midi_DecoderType,
+    opus_DecoderType,
 };
 
 struct Impl_ContentSpec {
@@ -87,6 +92,11 @@ struct Impl_Decoder {
     mpg123_handle *   mpeg;
     mpg123_id3v1 *    id3v1;
     mpg123_id3v2 *    id3v2;
+#endif
+#if defined (LAGRANGE_ENABLE_OPUS)
+    OggOpusFile *     opus;
+    OpusFileCallbacks opusCallbacks;
+    size_t            opusLastInputSize;
 #endif
 };
 
@@ -343,6 +353,116 @@ enum iDecoderStatus decodeMpeg_Decoder_(iDecoder *d) {
     return status;
 }
 
+#if defined (LAGRANGE_ENABLE_OPUS)
+static int readOpus_(void *stream, unsigned char *ptr, int nbytes) {
+    iDecoder *d = stream;
+    const iBlock *input = &d->input->data;
+    const size_t avail = size_Block(input) - d->inputPos;
+    const size_t n = iMin(avail, nbytes);
+    memcpy(ptr, constData_Block(input) + d->inputPos, n);
+    d->inputPos += n;
+    return n;
+}
+
+static int seekOpus_(void *stream, ogg_int64_t offset, int whence) {
+    iDecoder *d = stream;
+    const iBlock *input = &d->input->data;
+    const size_t avail = size_Block(input);
+    const size_t pos = d->inputPos;
+    switch (whence) {
+        case SEEK_SET:
+            d->inputPos = offset;
+            break;
+        case SEEK_CUR:
+            if (pos + offset > avail || PTRDIFF_MAX - offset < pos) {
+                return -1;
+            }
+            d->inputPos += offset;
+            break;
+        case SEEK_END:
+            if (avail <= pos + offset || PTRDIFF_MAX - pos < offset || -offset > pos) {
+                return -1;
+            }
+            d->inputPos = size_Block(input) + offset;
+            break;
+    }
+    return 0;
+}
+
+static opus_int64 tellOpus_(void *stream) {
+    iDecoder *d = stream;
+    return d->inputPos;
+}
+
+static const OpusFileCallbacks opusCallbacks_ = {
+    readOpus_,
+    seekOpus_,
+    tellOpus_,
+    NULL
+};
+#endif
+
+enum iDecoderStatus decodeOpus_Decoder_(iDecoder *d) {
+    enum iDecoderStatus status = ok_DecoderStatus;
+#if defined (LAGRANGE_ENABLE_OPUS)
+    const iBlock *input = &d->input->data;
+    lock_Mutex(&d->input->mtx);
+    if (!d->opus || d->opusLastInputSize != size_Block(input)) {
+        ogg_int64_t lastRead = 0;
+        if(d->opus) {
+            lastRead = op_pcm_tell(d->opus);
+            if(lastRead < 0) {
+                unlock_Mutex(&d->input->mtx);
+                return needMoreInput_DecoderStatus;
+            }
+            op_free(d->opus);
+        }
+        d->inputPos = 0;
+        int error = 0;
+        d->opusCallbacks = opusCallbacks_;
+        d->opus = op_open_callbacks(d, &d->opusCallbacks, NULL, 0, &error);
+        if (!d->opus) {
+            unlock_Mutex(&d->input->mtx);
+            return needMoreInput_DecoderStatus;
+        }
+        // seek to the last position before we potentially re-opened the stream
+        if(lastRead > 0) {
+            int res = op_pcm_seek(d->opus, lastRead);
+            if(res < 0) {
+                unlock_Mutex(&d->input->mtx);
+                return needMoreInput_DecoderStatus;
+            }
+        }
+    }
+    d->opusLastInputSize = size_Block(input);
+    while (size_Array(&d->pendingOutput) < d->output.count) {
+        float buffer[512];
+        const int samplePerCh = op_read_float(d->opus, buffer, sizeof(buffer) / sizeof(float), NULL);
+        const float gain = d->gain;
+        const int totalSamples = samplePerCh * d->output.numChannels;
+        for (size_t i = 0; i < totalSamples; i++) {
+            buffer[i] *= gain;
+        }
+        pushBackN_Array(&d->pendingOutput, buffer, totalSamples);
+        if (totalSamples == 0) {
+            status = needMoreInput_DecoderStatus;
+            break;
+        }
+    }
+    unlock_Mutex(&d->input->mtx);
+
+    // Only check the length if we have the whole input
+    if(d->input->isComplete) {
+        const ogg_int64_t off = op_pcm_total(d->opus, -1);
+        if (off > 0) {
+            d->totalSamples = off;
+        }
+    }
+    writePending_Decoder_(d);
+#endif
+    return status;
+}
+
 static iThreadResult run_Decoder_(iThread *thread) {
     iDecoder *d = userData_Thread(thread);
     while (d->type) {
@@ -365,6 +485,8 @@ static iThreadResult run_Decoder_(iThread *thread) {
             case mpeg_DecoderType:
                 status = decodeMpeg_Decoder_(d);
                 break;
+            case opus_DecoderType:
+                status = decodeOpus_Decoder_(d);
             default:
                 break;
         }
@@ -410,6 +532,10 @@ void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
     d->id3v1 = NULL;
     d->id3v2 = NULL;
 #endif
+#if defined (LAGRANGE_ENABLE_OPUS)
+    d->opus = NULL;
+    d->opusLastInputSize = 0;
+#endif
     init_Mutex(&d->outputMutex);
     d->thread = new_Thread(run_Decoder_);
     setUserData_Thread(d->thread, d);
@@ -436,6 +562,11 @@ void deinit_Decoder(iDecoder *d) {
     if (d->mpeg) {
         mpg123_close(d->mpeg);
         mpg123_delete(d->mpeg);
+    }
+#endif
+#if defined (LAGRANGE_ENABLE_OPUS)
+    if (d->opus) {
+        op_free(d->opus);
     }
 #endif
 }
@@ -485,9 +616,24 @@ static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
         equal_Rangecc(mediaType, "audio/x-wav") || equal_Rangecc(mediaType, "audio/x-pn-wav")) {
         content.type = wav_DecoderType;
     }
+#if defined (LAGRANGE_ENABLE_OPUS)
+    // RFC MIME for Opus is audio/ogg; codecs=opus. Will collide with Vorbis.
+    else if(equal_Rangecc(range_String(&d->mime), "audio/ogg; codecs=opus")
+            || equal_Rangecc(mediaType, "audio/opus")) {
+        content.type = opus_DecoderType;
+    }
+#endif
     else if (equal_Rangecc(mediaType, "audio/vorbis") || equal_Rangecc(mediaType, "audio/ogg") ||
              equal_Rangecc(mediaType, "audio/x-vorbis+ogg")) {
         content.type = vorbis_DecoderType;
+#if defined (LAGRANGE_ENABLE_OPUS)
+        // Some servers will reply with audio/ogg for Opus, so we need to check the content.
+        OpusHead head;
+        int result = op_test(&head, constData_Block(&d->data->data), size_Block(&d->data->data));
+        if(result == 0) {
+            content.type = opus_DecoderType;
+        }
+#endif
     }
 #if defined (LAGRANGE_ENABLE_MPG123)
     else if (equal_Rangecc(mediaType, "audio/mpeg") || equal_Rangecc(mediaType, "audio/mp3")) {
@@ -621,6 +767,19 @@ static iContentSpec detectContentSpec_Player_(const iPlayer *d) {
         }
         mpg123_close(mh);
         mpg123_delete(mh);
+#endif
+    }
+    else if (content.type == opus_DecoderType) {
+#if defined (LAGRANGE_ENABLE_OPUS)
+        OpusHead head;
+        int result = op_test(&head, constData_Block(&d->data->data), size_Block(&d->data->data));
+        if(result != 0) {
+            return content;
+        }
+        content.output.freq     = 48000;
+        content.output.channels = head.channel_count;
+        content.inputFormat     = AUDIO_F32;
+        content.output.format   = AUDIO_F32;
 #endif
     }
     iAssert(content.inputFormat == content.output.format ||
