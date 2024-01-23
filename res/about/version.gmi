@@ -9,7 +9,10 @@
 ## 1.18
 
 New features:
+* Opus audio playback using libopusfile. (Contributed by Martin Chang.)
+
 Changes and enhancements:
+
 Fixes:
 
 ## 1.17.6
