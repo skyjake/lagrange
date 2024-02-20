@@ -599,6 +599,7 @@ elseif (UNIX AND NOT APPLE)
     set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.Lagrange.desktop)
     file (WRITE ${desktop} "[Desktop Entry]
 Name=Lagrange
+GenericName=Gemini Client
 Comment=${PROJECT_DESCRIPTION}
 Categories=Network;
 Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange %U
