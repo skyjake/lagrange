@@ -1089,7 +1089,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 
 static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
     static const char *schemes[] = {
-        "gemini:", "gopher:", "finger:", "spartan:", "nex:", "file:", "data:", "about:"
+        "gemini:", "gopher:", "finger:", "spartan:", "nex:", "guppy:", "file:", "data:", "about:"
     };
     iForIndices(i, schemes) {
         if (startsWithCase_Rangecc(uri, schemes[i])) {
