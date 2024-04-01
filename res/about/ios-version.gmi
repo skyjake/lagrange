@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.17 (8)
+* Updated UI translations.
+
 ## 1.17 (7)
 * Fixed memory leak: fetched pages were not always released from memory (reference miscount). 
 * Fixed minor memory leak in list widgets.
