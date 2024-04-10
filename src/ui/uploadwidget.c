@@ -517,10 +517,12 @@ static const iString *requestUrl_UploadWidget_(const iUploadWidget *d) {
     iString *reqUrl = collectNew_String();
     setRange_String(reqUrl, (iRangecc){ constBegin_String(&d->url), siteRoot.end });
     const iString *path = text_InputWidget(d->path);
-    if (!startsWith_String(path, "/")) {
-        appendCStr_String(reqUrl, "/");
+    if (!isEmpty_String(path)) {
+        if (!startsWith_String(path, "/")) {
+            appendCStr_String(reqUrl, "/");
+        }
+        append_String(reqUrl, path);
     }
-    append_String(reqUrl, path);
     return reqUrl;
 }
 
@@ -548,12 +550,14 @@ static void setUrlPort_UploadWidget_(iUploadWidget *d, const iString *url, uint1
         appendFormat_String(&d->url, ":%u", overridePort ? overridePort : titanPortForUrl_(url));
         appendRange_String(&d->url, (iRangecc){ parts.path.start, constEnd_String(url) });
         const iRangecc siteRoot = urlRoot_String(&d->url);
-        setTextCStr_LabelWidget(d->info, cstr_Rangecc((iRangecc){ urlHost_String(&d->url).start,
-                                                                  siteRoot.end }));
+        iUrl parts;
+        init_Url(&parts, &d->url);
+        setTextCStr_LabelWidget(d->info, cstr_Rangecc((iRangecc){ parts.host.start, siteRoot.end }));
         /* From root onwards, the URL is editable. */
         setTextCStr_InputWidget(d->path,
                                 cstr_Rangecc((iRangecc){ siteRoot.end, constEnd_String(&d->url) }));
-        if (!cmp_String(text_InputWidget(d->path), "/")) {
+        if (!cmp_String(text_InputWidget(d->path), "/") &&
+            siteRoot.end == parts.path.start /* not a user root */) {
             setTextCStr_InputWidget(d->path, ""); /* might as well show the hint */
         }
     }
