@@ -444,7 +444,7 @@ void setValueSpeed_Anim(iAnim *d, float to, float unitsPerSecond) {
         const uint32_t now   = SDL_GetTicks();
         const float    from  = valueAt_Anim_(d, now);
         const float    delta = to - from;
-        const uint32_t span  = (fabsf(delta) / unitsPerSecond) * 1000;
+        const uint32_t span  = iMinf(fabsf(delta) / unitsPerSecond * 1000.0f, 2.0e9f);
         d->from              = from;
         d->to                = to;
         d->when              = now;

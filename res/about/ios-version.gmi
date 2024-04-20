@@ -8,6 +8,7 @@
 
 ## 1.17 (9)
 * Fixed selection markers jumping around when trying to drag them.
+* Fixed scrolling speed when dragging selection markers. Sometimes the view jumped to the top/bottom of the page.
 
 ## 1.17 (8)
 * Updated UI translations.
