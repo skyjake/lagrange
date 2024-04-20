@@ -2986,6 +2986,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (!arg_Command(cmd)) {
             d->selectMark = iNullRange;
             setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
+            d->flags &= ~selecting_DocumentWidgetFlag;
             setFadeEnabled_ScrollWidget(d->scroll, iTrue);
         }
         else {
@@ -4749,8 +4750,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 closeMenu_Widget(d->menu);
             }
             d->flags &= ~(movingSelectMarkStart_DocumentWidgetFlag |
-                          movingSelectMarkEnd_DocumentWidgetFlag |
-                          selecting_DocumentWidgetFlag);
+                          movingSelectMarkEnd_DocumentWidgetFlag);
+            if (!isMobile_Platform()) {
+                d->flags &= ~selecting_DocumentWidgetFlag;
+            }
             if (!isMoved_Click(&d->click)) {
                 setFocus_Widget(NULL);
                 /* Tap in tap selection mode. */
@@ -4892,7 +4895,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 setGrabbedPlayer_DocumentWidget_(d, NULL);
                 return iTrue;
             }
-            iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
+            if (!isMobile_Platform()) {
+                iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
+            }
             stop_Anim(&d->view->scrollY.pos);
             return iTrue;
         default:

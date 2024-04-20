@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.17 (9)
+* Fixed selection markers jumping around when trying to drag them.
+
 ## 1.17 (8)
 * Updated UI translations.
 
