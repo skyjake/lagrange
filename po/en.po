@@ -2469,7 +2469,7 @@ msgid "error.glyphs"
 msgstr "Missing Glyphs"
 
 msgid "error.glyphs.msg"
-msgstr "This page could not displayed in full because some characters are missing. You can install additional fonts to fix this."
+msgstr "This page could not be displayed in full because some characters are missing. You can install additional fonts to fix this."
 
 msgid "error.showutf8"
 msgstr "Autodetected UTF-8"
