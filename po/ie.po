@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2023-01-29 07:54+0000\n"
-"PO-Revision-Date: 2023-11-10 22:14+0000\n"
+"PO-Revision-Date: 2024-05-02 15:55+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -2686,3 +2686,16 @@ msgstr "Coloration de sintaxe:"
 
 msgid "snip.name"
 msgstr "Nómine:"
+
+# Abbrevation: background-to-foreground
+msgid "prefs.imagestyle.bgfg"
+msgstr "Fund-a-textu"
+
+msgid "menu.input.setprompt"
+msgstr "Ti adresse besona intrada"
+
+msgid "menu.input.unsetprompt"
+msgstr "Ti adresse ne besona intrada"
+
+msgid "menu.input.restore"
+msgstr "Restituer un precedent:"
