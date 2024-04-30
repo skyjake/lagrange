@@ -2443,13 +2443,6 @@ void setFocus_Widget(iWidget *d) {
     }
 }
 
-void setKeyboardGrab_Widget(iWidget *d) {
-    iWindow *win = d ? window_Widget(d) : get_Window();
-    iAssert(win);
-    win->focus = d;
-    /* no notifications sent */
-}
-
 iWidget *focus_Widget(void) {
     iWindow *win = get_Window();
     return win ? win->focus : NULL;

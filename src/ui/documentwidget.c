@@ -513,8 +513,6 @@ static void setLinkNumberMode_DocumentWidget_(iDocumentWidget *d, iBool set) {
 #if defined (iPlatformAppleDesktop)
         enableMenuItemsOnHomeRow_MacOS(!set);
 #endif
-        /* Ensure all keyboard events come here first. */
-        setKeyboardGrab_Widget(set ? as_Widget(d) : NULL);
         if (d->menu) {
             setFlags_Widget(d->menu, disabled_WidgetFlag, set);
         }
