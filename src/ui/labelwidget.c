@@ -81,6 +81,9 @@ static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
             widgetPad.x += gap_UI * 5;
         }
     }
+    if (isTerminal_Platform()) {
+        return add_I2(widgetPad, init_I2(1 + (d->icon ? 1 : 0), 0));
+    }
     if (isMobile_Platform()) {
         return add_I2(widgetPad,
                       init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),

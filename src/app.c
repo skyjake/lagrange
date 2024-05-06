@@ -2234,6 +2234,13 @@ void processEvents_App(enum iAppEventMode eventMode) {
                         wasUsed = iTrue;
                     }
                 }
+                if (!wasUsed && ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE &&
+                    current_Root() && focus_Widget() &&
+                    focusRoot_Widget(focus_Widget()) == get_Root()->widget) {
+                    /* Pressing Escape will clear focus. */
+                    setFocus_Widget(NULL);
+                    wasUsed = iTrue;
+                }
                 if (!wasUsed) {
                     /* ^G is an alternative for Escape. */
                     if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == 'g' &&

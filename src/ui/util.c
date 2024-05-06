@@ -1797,6 +1797,9 @@ int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
 
 iLabelWidget *makeMenuButton_LabelWidget(const char *label, const iMenuItem *items, size_t n) {
     iLabelWidget *button = new_LabelWidget(label, "menu.open");
+    if (isTerminal_Platform()) {
+        setFlags_Widget(as_Widget(button), tight_WidgetFlag, iTrue);
+    }
     iWidget *menu = makeMenuFlags_Widget(as_Widget(button), items, n, iTrue /* allow native */);
     setFrameColor_Widget(menu, uiBackgroundSelected_ColorId);
     setId_Widget(menu, "menu");
@@ -2100,6 +2103,9 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         iClob(newKeyMods_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
     checkIcon_LabelWidget((iLabelWidget *) button);
+    if (isTerminal_Platform()) {
+        setIcon_LabelWidget((iLabelWidget *) button, 0); /* no icon in the terminal (lack of room) */
+    }
     setFlags_Widget(button, selected_WidgetFlag, isSel);
     setFlags_Widget(button,
                     commandOnClick_WidgetFlag |

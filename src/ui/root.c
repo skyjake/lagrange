@@ -524,8 +524,13 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     else if (equal_Command(cmd, "menubar.focus")) {
         iWidget *menubar = findWidget_App("menubar");
         if (menubar) {
-            setFocus_Widget(child_Widget(menubar, 0));
-            postCommand_Widget(focus_Widget(), "trigger");
+            if (focus_Widget() && hasParent_Widget(focus_Widget(), menubar)) {
+                setFocus_Widget(NULL);
+            }
+            else {
+                setFocus_Widget(child_Widget(menubar, 0));
+                postCommand_Widget(focus_Widget(), "trigger");
+            }
         }
         return iTrue;
     }
