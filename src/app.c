@@ -2161,6 +2161,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                             wasUsed = iTrue;
                         }
                         else if ((key == SDLK_LEFT || key == SDLK_RIGHT)) {
+                            /* Arrow keys in the menubar will switch between top-level menus. */
                             if ((menubar = findParent_Widget(focus_Widget(), "menubar")) != NULL) {
                                 iWidget *button = parent_Widget(parent_Widget(focus_Widget()));
                                 size_t index = indexOfChild_Widget(menubar, button);

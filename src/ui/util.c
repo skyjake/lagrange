@@ -1682,6 +1682,9 @@ void closeMenu_Widget(iWidget *d) {
         }
         postCommand_Widget(d, "menu.closed");
         setupMenuTransition_Mobile(d, iFalse);
+        if (focus_Widget() && hasParent_Widget(focus_Widget(), d)) {
+            setFocus_Widget(NULL);
+        }
     }
 }
 
