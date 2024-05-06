@@ -52,6 +52,7 @@ void init_GmResponse(iGmResponse *d) {
     init_Block(&d->body, 0);
     d->certFlags = 0;
     init_Block(&d->certFingerprint, 0);
+    init_Block(&d->certFullFingerprint, 0);
     iZap(d->certValidUntil);
     init_String(&d->certSubject);
     iZap(d->when);
@@ -64,6 +65,7 @@ void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
     initCopy_Block(&d->body, &other->body);
     d->certFlags = other->certFlags;
     initCopy_Block(&d->certFingerprint, &other->certFingerprint);
+    initCopy_Block(&d->certFullFingerprint, &other->certFullFingerprint);
     d->certValidUntil = other->certValidUntil;
     initCopy_String(&d->certSubject, &other->certSubject);
     d->when = other->when;
@@ -73,6 +75,7 @@ void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
 void deinit_GmResponse(iGmResponse *d) {
     deinit_String(&d->certSubject);
     deinit_Block(&d->body);
+    deinit_Block(&d->certFullFingerprint);
     deinit_Block(&d->certFingerprint);
     deinit_String(&d->meta);
     deinit_Block(&d->identityFingerprint);
@@ -84,6 +87,7 @@ void clear_GmResponse(iGmResponse *d) {
     clear_Block(&d->body);
     d->certFlags = 0;
     clear_Block(&d->certFingerprint);
+    clear_Block(&d->certFullFingerprint);
     iZap(d->certValidUntil);
     clear_String(&d->certSubject);
     iZap(d->when);
@@ -100,7 +104,7 @@ void serialize_GmResponse(const iGmResponse *d, iStream *outs) {
     write32_Stream(outs, d->statusCode);
     serialize_String(&d->meta, outs);
     serialize_Block(&d->body, outs);
-    /* TODO: Add certificate fingerprint, but need to bump file version first. */
+    /* TODO: Add certificate fingerprints, but need to bump file version first. */
     write32_Stream(outs, d->certFlags & ~haveFingerprint_GmCertFlag);
     serialize_Date(&d->certValidUntil, outs);
     serialize_String(&d->certSubject, outs);
@@ -117,6 +121,7 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
     deserialize_String(&d->certSubject, ins);
     iZap(d->when);
     clear_Block(&d->certFingerprint);
+    clear_Block(&d->certFullFingerprint);
     if (version_Stream(ins) >= addedResponseTimestamps_FileVersion) {
         d->when.ts.tv_sec = readU64_Stream(ins);
     }
@@ -202,6 +207,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         const uint16_t port   = port_Address(address_TlsRequest(d->req));
         resp->certFlags |= available_GmCertFlag;
         set_Block(&resp->certFingerprint, collect_Block(publicKeyFingerprint_TlsCertificate(cert)));
+        set_Block(&resp->certFullFingerprint, collect_Block(fingerprint_TlsCertificate(cert)));
         resp->certFlags |= haveFingerprint_GmCertFlag;
         if (!isExpired_TlsCertificate(cert)) {
             resp->certFlags |= timeVerified_GmCertFlag;

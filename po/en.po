@@ -792,7 +792,7 @@ msgid "dlg.ident.notes"
 msgstr "Notes about %s:"
 
 msgid "ident.fingerprint"
-msgstr "Copy Fingerprint"
+msgstr "Copy SHA-256 Fingerprint"
 
 msgid "ident.delete"
 msgstr "Delete Identity…"
@@ -872,7 +872,13 @@ msgid "dlg.cert.trust"
 msgstr "Trust"
 
 msgid "dlg.cert.fingerprint"
-msgstr "Copy Fingerprint"
+msgstr "Fingerprints"
+
+msgid "dlg.cert.fingerprint.pubkey"
+msgstr "Copy SHA-256 of Public Key"
+
+msgid "dlg.cert.fingerprint.full"
+msgstr "Copy SHA-256 of Certificate"
 
 msgid "pageinfo.settings"
 msgstr "Settings"

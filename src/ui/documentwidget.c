@@ -278,7 +278,8 @@ struct Impl_DocumentWidget {
     iGmLinkId      requestLinkId; /* ID of the link that initiated the current request */
     uint32_t       lastRequestUpdateAt;
     int            certFlags;
-    iBlock *       certFingerprint;
+    iBlock *       certFingerprint;     /* public key SHA-256 */
+    iBlock *       certFullFingerprint; /* full certificate SHA-256 */
     iDate          certExpiry;
     iString *      certSubject;
     int            redirectCount;
@@ -1647,6 +1648,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
         d->certFlags  = response->certFlags;
         d->certExpiry = response->certValidUntil;
         set_Block(d->certFingerprint, &response->certFingerprint);
+        set_Block(d->certFullFingerprint, &response->certFullFingerprint);
         set_String(d->certSubject, &response->certSubject);
     }
     iLabelWidget *lock = findChild_Widget(root_Widget(as_Widget(d)), "navbar.lock");
@@ -3065,6 +3067,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                                   : "${pageinfo.cert.untrusted}");
         }
         setFocus_Widget(NULL);
+
+        const iMenuItem fingerprintItems[] = {
+            { "${dlg.cert.fingerprint.full}", 0, 0, "server.copycert arg:1" },
+            { "${dlg.cert.fingerprint.pubkey}", 0, 0, "server.copycert" },
+        };
+
         iArray *items = new_Array(sizeof(iMenuItem));
         if (canTrust) {
             pushBack_Array(items,
@@ -3073,12 +3081,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                          KMOD_PRIMARY | KMOD_SHIFT,
                                          "server.trustcert" });
         }
-        if (haveFingerprint) {
-            pushBack_Array(items, &(iMenuItem){ "${dlg.cert.fingerprint}", 0, 0, "server.copycert" });
-        }
         const iRangecc root = urlRoot_String(d->mod.url);
         if (!isEmpty_Range(&root)) {
             pushBack_Array(items, &(iMenuItem){ "${pageinfo.settings}", 0, 0, "document.sitespec" });
+        }
+        if (haveFingerprint && deviceType_App() != desktop_AppDeviceType) {
+            /* The sheet-based popup does not have buttons. */
+            pushBackN_Array(items, fingerprintItems, iElemCount(fingerprintItems));
         }
         if (!isEmpty_Array(items)) {
             pushBack_Array(items, &(iMenuItem){ "---", 0, 0, 0 });
@@ -3088,6 +3097,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                            cstr_String(msg),
                                            data_Array(items),
                                            size_Array(items));
+        /* Fingerprint menu. */
+        if (deviceType_App() == desktop_AppDeviceType) {
+            iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
+            if (haveFingerprint) {
+                iLabelWidget *fpMenu = makeMenuButton_LabelWidget(
+                    "${dlg.cert.fingerprint}", fingerprintItems, iElemCount(fingerprintItems));
+                addChildPos_Widget(buttons, iClob(fpMenu), front_WidgetAddPos);
+            }
+        }
         delete_Array(items);
         arrange_Widget(dlg);
         addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
@@ -3133,7 +3151,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "server.copycert") && document_App() == d) {
-        SDL_SetClipboardText(cstrCollect_String(hexEncode_Block(d->certFingerprint)));
+        const iString *fp = collect_String(
+            hexEncode_Block(arg_Command(cmd) ? d->certFullFingerprint : d->certFingerprint));
+        SDL_SetClipboardText(cstr_String(fp));
         return iTrue;
     }
     else if (equal_Command(cmd, "copy") && document_App() == d && !focus_Widget()) {
@@ -5178,15 +5198,16 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->phoneToolbar = findWidget_App("bottombar");
     d->footerButtons = NULL;
     iZap(d->certExpiry);
-    d->certFingerprint  = new_Block(0);
-    d->certFlags        = 0;
-    d->certSubject      = new_String();
-    d->state            = blank_RequestState;
-    d->titleUser        = new_String();
-    d->request          = NULL;
-    d->requestLinkId    = 0;
-    d->media            = new_ObjectList();
-    d->banner           = new_Banner();
+    d->certFingerprint     = new_Block(0);
+    d->certFullFingerprint = new_Block(0);
+    d->certFlags           = 0;
+    d->certSubject         = new_String();
+    d->state               = blank_RequestState;
+    d->titleUser           = new_String();
+    d->request             = NULL;
+    d->requestLinkId       = 0;
+    d->media               = new_ObjectList();
+    d->banner              = new_Banner();
     setOwner_Banner(d->banner, d);
     d->redirectCount    = 0;
     d->ordinalBase      = 0;
@@ -5265,6 +5286,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     if (d->mediaTimer) {
         SDL_RemoveTimer(d->mediaTimer);
     }
+    delete_Block(d->certFullFingerprint);
     delete_Block(d->certFingerprint);
     delete_String(d->certSubject);
     delete_String(d->titleUser);
