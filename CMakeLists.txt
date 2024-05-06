@@ -59,7 +59,7 @@ option (ENABLE_MOBILE_TABLET    "Use the tablet mobile UI design instead of desk
 option (ENABLE_POPUP_MENUS      "Use popup windows for context menus (if OFF, menus are confined inside main window)" ON)
 option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
 option (ENABLE_RESIZE_DRAW      "Force window to redraw during resizing" ${DEFAULT_RESIZE_DRAW})
-option (ENABLE_TUI              "Enable the Curses TUI instead of GUI" OFF)
+option (ENABLE_TUI              "Build clagrange (TUI based on ncurses)" OFF)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 option (ENABLE_X11_SWRENDER     "Use software rendering (X11)" OFF)
 option (ENABLE_X11_XLIB         "Use Xlib directly, if available (X11)" ON)
@@ -290,28 +290,8 @@ set (SOURCES
     res/about/version.gmi
     ${EMB_BIN}
 )
-if (ENABLE_TUI)
-    set (ENABLE_STB_TRUETYPE NO)
-    add_definitions (-DiPlatformTerminal=1)
-    list (APPEND SOURCES
-        src/ui/text_terminal.c
-    )
-else ()
-    set (ENABLE_STB_TRUETYPE YES)
-    list (APPEND SOURCES
-        src/ui/text_stb.c
-    )
-    # Audio playback
-    add_definitions (-DLAGRANGE_ENABLE_AUDIO=1)
-    list (APPEND SOURCES
-        src/audio/buf.c
-        src/audio/buf.h
-        src/audio/player.c
-        src/audio/player.h
-        src/audio/stb_vorbis.c
-    )
-endif ()
-if (IOS OR ENABLE_TUI OR NOT APPLE) # macos.m has Sparkle updater
+
+if (IOS OR NOT APPLE) # macos.m has Sparkle updater
     list (APPEND SOURCES src/updater.c)
 endif ()
 if (ENABLE_IPC)
@@ -320,6 +300,25 @@ if (ENABLE_IPC)
         src/ipc.h
     )
 endif ()
+
+set (TUI_SOURCES
+    ${SOURCES}
+    src/ui/text_terminal.c
+    src/updater.c
+)
+
+set (ENABLE_STB_TRUETYPE YES)
+list (APPEND SOURCES
+    src/ui/text_stb.c
+)
+# Audio playback
+list (APPEND SOURCES
+    src/audio/buf.c
+    src/audio/buf.h
+    src/audio/player.c
+    src/audio/player.h
+    src/audio/stb_vorbis.c
+)
 if (ENABLE_X11_XLIB AND XLIB_FOUND AND NOT APPLE AND NOT MSYS)
     list (APPEND SOURCES
         src/x11.c
@@ -349,8 +348,7 @@ if (IOS)
     PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources
     )
-elseif (APPLE AND NOT ENABLE_TUI)
-    add_definitions (-DiPlatformAppleDesktop=1)
+elseif (APPLE)
     list (APPEND SOURCES src/macos.m src/macos.h)
     list (APPEND RESOURCES "res/Lagrange.icns")
     set_source_files_properties ("res/Lagrange.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
@@ -361,7 +359,7 @@ if (MSYS)
     configure_file (res/lagrange.rc.in ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc NEWLINE_STYLE WIN32)
     list (APPEND SOURCES src/win32.c src/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
 endif ()
-if (MSYS OR ENABLE_TUI OR (UNIX AND NOT MOBILE AND NOT APPLE))
+if (MSYS OR (UNIX AND NOT MOBILE AND NOT APPLE))
     add_definitions (-DiPlatformPcDesktop=1)
 endif ()
 if (MOBILE)
@@ -387,54 +385,86 @@ else ()
     # The whole app becomes one shared library, based on this static one.
     add_library (app SHARED ${SOURCES})
 endif ()
-set_property (TARGET app PROPERTY C_STANDARD 11)
-if (TARGET ext-deps)
-    add_dependencies (app ext-deps)
-endif ()
-if (ENABLE_TUI)
-    set_target_properties (app PROPERTIES OUTPUT_NAME clagrange)
-else ()
-    set_target_properties (app PROPERTIES OUTPUT_NAME lagrange)
-endif ()
-target_include_directories (app PUBLIC
-    src
-    ${CMAKE_CURRENT_BINARY_DIR}
-)
+
+macro (set_common_app_properties target)
+    set_property (TARGET ${target} PROPERTY C_STANDARD 11)
+    if (TARGET ext-deps)
+        add_dependencies (${target} ext-deps)
+    endif ()
+    target_include_directories (${target} PUBLIC
+        src
+        ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    target_compile_options (${target} PUBLIC
+        -Werror=implicit-function-declaration
+        -Wno-deprecated-declarations
+    )
+    target_compile_definitions (${target} PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
+    if (CFLAG_INCOMPATIBLE_POINTER_TYPES)
+        target_compile_options (${target} PUBLIC -Werror=incompatible-pointer-types)
+    endif ()
+
+    if (APPLE AND NOT IOS)
+        if (CMAKE_OSX_DEPLOYMENT_TARGET)
+            target_compile_options (${target} PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
+            target_link_options (${target} PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
+        endif ()
+    endif ()
+
+    # Build options that affect both GUI and TUI targets.
+    if (ENABLE_DOWNLOAD_EDIT)
+        target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_DOWNLOAD_EDIT=1)
+    endif ()
+    if (ENABLE_IDLE_SLEEP)
+        target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_IDLE_SLEEP=1)
+    endif ()
+    if (ENABLE_IPC)
+        target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_IPC=1)
+    endif ()
+    if (ENABLE_MPG123 AND MPG123_FOUND)
+        target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_MPG123=1)
+        target_link_libraries (${target} PUBLIC PkgConfig::MPG123)
+    endif ()
+    if (ENABLE_OPUS AND OPUSFILE_FOUND)
+        target_compile_definitions (${target} PUBLIC LAGRANGE_ENABLE_OPUS=1)
+        target_link_libraries(${target} PUBLIC PkgConfig::OPUSFILE)
+    endif ()
+
+    # Common dependencies.
+    target_link_libraries (${target} PUBLIC the_Foundation::the_Foundation)
+    if (HAIKU)
+        target_link_libraries (${target} PUBLIC network bsd)
+    endif ()
+endmacro ()
+
+set_common_app_properties (app)
+set_target_properties (app PROPERTIES OUTPUT_NAME lagrange)
 target_compile_options (app PUBLIC
-    -Werror=implicit-function-declaration
-    -Wno-deprecated-declarations
+    -DLAGRANGE_ENABLE_AUDIO=1
     -DSTB_VORBIS_NO_STDIO=1
     -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
 )
-if (CFLAG_INCOMPATIBLE_POINTER_TYPES)
-    target_compile_options (app PUBLIC -Werror=incompatible-pointer-types)
+if (APPLE AND NOT MOBILE)
+    target_compile_definitions (app PUBLIC -DiPlatformAppleDesktop=1)
 endif ()
-target_compile_definitions (app PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
+
+if (ENABLE_TUI)
+    # TUI is its own target.
+    add_executable (tuiapp ${TUI_SOURCES} ${RESOURCES})
+    target_compile_definitions (tuiapp PUBLIC -DiPlatformTerminal=1)
+    set_target_properties (tuiapp PROPERTIES OUTPUT_NAME clagrange)
+    target_link_libraries (tuiapp PUBLIC sealcurses-static)
+    set_common_app_properties (tuiapp)
+endif ()
+
 if (ENABLE_CUSTOM_FRAME AND MSYS)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)
-endif ()
-if (ENABLE_DOWNLOAD_EDIT)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_DOWNLOAD_EDIT=1)
-endif ()
-if (ENABLE_IDLE_SLEEP)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_IDLE_SLEEP=1)
-endif ()
-if (ENABLE_IPC)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_IPC=1)
 endif ()
 if (ENABLE_KERNING)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_KERNING=1)
 endif ()
 if (ENABLE_MAC_MENUS)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_MAC_MENUS=1)
-endif ()
-if (ENABLE_MPG123 AND MPG123_FOUND)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_MPG123=1)
-    target_link_libraries (app PUBLIC PkgConfig::MPG123)
-endif ()
-if (ENABLE_OPUS AND OPUSFILE_FOUND)
-    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_OPUS=1)
-    target_link_libraries(app PUBLIC PkgConfig::OPUSFILE)
 endif ()
 if (ENABLE_POPUP_MENUS)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_POPUP_MENUS=1)
@@ -463,11 +493,10 @@ endif ()
 if (ENABLE_X11_SWRENDER)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
 endif ()
-target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_include_directories (app PUBLIC ${SDL2_INCLUDE_DIRS})
 target_compile_options (app PUBLIC ${SDL2_CFLAGS})
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
-if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND AND NOT ENABLE_TUI)
+if (ENABLE_HARFBUZZ AND HARFBUZZ_FOUND)
     if (TARGET harfbuzz-lib)
         target_link_libraries (app PUBLIC harfbuzz-lib)
     else ()
@@ -485,13 +514,7 @@ if (ENABLE_FRIBIDI AND FRIBIDI_FOUND)
     endif ()
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_FRIBIDI=1)
 endif ()
-if (APPLE AND NOT IOS)
-    if (CMAKE_OSX_DEPLOYMENT_TARGET)
-        target_compile_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
-        target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
-    endif ()
-endif ()
-if (APPLE AND NOT ENABLE_TUI)
+if (APPLE)
     if (IOS)
         target_link_libraries (app PUBLIC "-framework UIKit")
     else ()
@@ -556,9 +579,6 @@ endif ()
 #if (UNIX)
 #    target_link_libraries (app PUBLIC m)
 #endif ()
-if (HAIKU)
-    target_link_libraries (app PUBLIC network bsd)
-endif ()
 
 # Deployment.
 if (MSYS)
@@ -582,15 +602,6 @@ elseif (HAIKU)
     install (FILES ${EMB_BIN} DESTINATION .)
 elseif (ANDROID)
     file (COPY ${EMB_BIN} DESTINATION ${CMAKE_SOURCE_DIR}/../src/main/assets)
-elseif (ENABLE_TUI AND (UNIX OR MSYS))
-    include (GNUInstallDirs)
-    install (TARGETS app DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install (FILES res/lagrange.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-    if (NOT ENABLE_RELATIVE_EMBED)
-        target_compile_definitions (app PUBLIC
-                LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
-    endif ()
-    install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange)
 elseif (UNIX AND NOT APPLE)
     include (GNUInstallDirs)
     set_target_properties (app PROPERTIES
@@ -624,4 +635,15 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher;x-scheme-handler/sparta
                 LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
     endif ()
     install (FILES ${EMB_BIN} DESTINATION ${CMAKE_INSTALL_DATADIR}/lagrange)
+endif ()
+
+if (TARGET tuiapp)
+    if (UNIX AND NOT APPLE)
+        include (GNUInstallDirs)
+    endif ()
+    install (TARGETS tuiapp DESTINATION ${CMAKE_INSTALL_BINDIR})
+    if (NOT ENABLE_RELATIVE_EMBED)
+        target_compile_definitions (tuiapp PUBLIC
+                LAGRANGE_EMB_BIN="${CMAKE_INSTALL_FULL_DATADIR}/lagrange/resources.lgr")
+    endif ()
 endif ()

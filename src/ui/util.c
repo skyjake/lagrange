@@ -933,7 +933,7 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
             return iFalse;
         }
         if (!isCommandIgnoredByMenus_(cmd)) {
-#if !defined (NDEBUG)
+#if !defined (NDEBUG) && !defined (iPlatformTerminal)
             printf("closemenu being called on %p (id:%s) due to cmd: %s\n", menu,
                    cstr_String(id_Widget(menu)), cmd);
 #endif
