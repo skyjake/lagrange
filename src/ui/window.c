@@ -601,6 +601,7 @@ void init_Window(iWindow *d, enum iWindowType type, iRect rect, uint32_t flags) 
     d->hover         = NULL;
     d->lastHover     = NULL;
     d->mouseGrab     = NULL;
+    d->keyPriority   = NULL;
     d->focus         = NULL;
     d->pendingCursor = NULL;
     d->isExposed     = (deviceType_App() != desktop_AppDeviceType);
@@ -1372,17 +1373,20 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     }
                 }
             }
-//            const iWidget *oldHover = d->hover;
             iBool wasUsed = iFalse;
             /* Dispatch first to the mouse-grabbed widget. */
-//            iWidget *widget = d->root.widget;
             if (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEWHEEL ||
                 event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN) {
                 if (mouseGrab_Widget()) {
                     iWidget *grabbed = mouseGrab_Widget();
-                    setCurrent_Root(grabbed->root /* findRoot_Window(d, grabbed)*/);
+                    setCurrent_Root(grabbed->root);
                     wasUsed = dispatchEvent_Widget(grabbed, &event);
                 }
+            }
+            /* If there is a priority handler for key events, offer the event to it first.
+               This is similar to mouse grabbing, but the handler can refuse the event. */
+            if (d->keyPriority && (event.type == SDL_KEYDOWN || event.type == SDL_KEYDOWN)) {
+                wasUsed = dispatchEvent_Widget(d->keyPriority, &event);
             }
             /* Dispatch the event to the tree of widgets. */
             if (!wasUsed) {
@@ -1449,6 +1453,7 @@ iBool setKeyRoot_Window(iWindow *d, iRoot *root) {
         d->keyRoot = root;
         postCommand_App("keyroot.changed");
         postRefresh_Window(d);
+        d->keyPriority = NULL;
         return iTrue;
     }
     return iFalse;

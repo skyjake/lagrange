@@ -514,6 +514,7 @@ static void setLinkNumberMode_DocumentWidget_(iDocumentWidget *d, iBool set) {
 #if defined (iPlatformAppleDesktop)
         enableMenuItemsOnHomeRow_MacOS(!set);
 #endif
+        window_Widget(d)->keyPriority = set ? as_Widget(d) : NULL;
         if (d->menu) {
             setFlags_Widget(d->menu, disabled_WidgetFlag, set);
         }

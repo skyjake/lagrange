@@ -242,6 +242,9 @@ void deinit_Widget(iWidget *d) {
         if (win->hover == d) {
             win->hover = NULL;
         }
+        if (win->keyPriority == d) {
+            win->keyPriority = NULL;
+        }
     }
     if (d->flags & nativeMenu_WidgetFlag) {
         releaseNativeMenu_Widget(d);
@@ -260,6 +263,9 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
     }
     if (win->focus == d) {
         win->focus = NULL;
+    }
+    if (win->keyPriority == d) {
+        win->keyPriority = NULL;
     }
     if (win->lastHover == d) {
         win->lastHover = NULL;
@@ -2428,6 +2434,7 @@ void setFocus_Widget(iWidget *d) {
     iWindow *win = d ? window_Widget(d) : get_Window();
     iAssert(win);
     if (win->focus != d) {
+        win->keyPriority = NULL;
         if (win->focus) {
             iAssert(!contains_PtrSet(win->focus->root->pendingDestruction, win->focus));
             postCommand_Widget(win->focus, "focus.lost");
