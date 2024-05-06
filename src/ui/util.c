@@ -950,7 +950,7 @@ static iWidget *makeMenuSeparator_(void) {
     sep->flags2 |= centerChildrenVertical_WidgetFlag2;
     addChildFlags_Widget(sep, iClob(sbar), 0);
     setBackgroundColor_Widget(sbar, uiTextDisabled_ColorId);
-    sep->rect.size.y = 2 * gap_UI;
+    sep->rect.size.y = 2 * gap_UI * aspect_UI;
     setFixedSize_Widget(sbar, init_I2(-1, gap_UI / 3));
     setPadding_Widget(sep, 2 * gap_UI, 0, 2 * gap_UI, gap_UI / 3);
     setFlags_Widget(sep, hover_WidgetFlag | fixedHeight_WidgetFlag, iTrue);
