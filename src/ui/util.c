@@ -869,6 +869,7 @@ static void openSubmenu_(iWidget *d) {
         openMenuAnchorFlags_Widget(submenu,
                                    bounds_Widget(d),
                                    submenu_MenuOpenFlags |
+                                       (isTerminal_Platform() ? setFocus_MenuOpenFlags : 0) |
                                        (isPopup ? forcePopup_MenuOpenFlags : 0));
     }
 }
@@ -888,7 +889,7 @@ iBool handleMenuCommand_Widget(iWidget *menu, const char *cmd) {
         if (equal_Command(cmd, "submenu.open")) {
             /* This is sent directly via Periodic after mouse hover on an item. */
             iWidget *menuItem = pointer_Command(cmd);
-            if (isHover_Widget(menuItem)) {
+            if (isHover_Widget(menuItem) || isTerminal_Platform()) {
                 openSubmenu_(menuItem);
             }
             return iTrue;

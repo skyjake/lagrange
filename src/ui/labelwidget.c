@@ -102,9 +102,25 @@ static iBool checkModifiers_(int have, int req) {
     return keyMods_Sym(req) == keyMods_Sym(have);
 }
 
+static iBool isSubmenuItem_LabelWidget_(const iLabelWidget *d) {
+    if (isAndroid_Platform()) {
+        /* On Android, we don't have system menus nor do we want actual submenu popups
+           to appear. The "submenu" command will cause the submenu to open as a normal
+           menu. */
+        return iFalse;
+    }
+    return startsWith_String(&d->command, "submenu id:");
+}
+
 static void trigger_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
-    postCommand_Widget(w, "%s", cstr_String(&d->command));
+    if (isTerminal_Platform() && isSubmenuItem_LabelWidget_(d)) {
+        postCommand_Widget(w, "submenu.open");
+        return;
+    }
+    else {
+        postCommand_Widget(w, "%s", cstr_String(&d->command));
+    }
     if (flags_Widget(w) & radio_WidgetFlag) {
         iForEach(ObjectList, i, children_Widget(w->parent)) {
             setFlags_Widget(i.object, selected_WidgetFlag, d == i.object);
@@ -140,16 +156,6 @@ static void endSiblingOrderDrag_LabelWidget_(iLabelWidget *d) {
         setVisualOffset_Widget(w, 0, 0, 0);
         setFlags_Widget(w, dragged_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
     }
-}
-
-static iBool isSubmenuItem_LabelWidget_(const iLabelWidget *d) {
-    if (isAndroid_Platform()) {
-        /* On Android, we don't have system menus nor do we want actual submenu popups
-           to appear. The "submenu" command will cause the submenu to open as a normal
-           menu. */
-        return iFalse;
-    }
-    return startsWith_String(&d->command, "submenu id:");
 }
 
 static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
