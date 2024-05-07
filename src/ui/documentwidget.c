@@ -3572,9 +3572,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             return iTrue;
         }
         const float amount = argLabel_Command(cmd, "full") != 0 ? 1.0f : 0.5f;
+        int height = (isTerminal_Platform() ? height_Rect(bounds_Widget(w)) - 1
+                                            : height_Rect(documentBounds_DocumentView(d->view)));
         smoothScroll_DocumentView(d->view,
-                                  dir * amount *
-                                      height_Rect(documentBounds_DocumentView(d->view)),
+                                  dir * amount * height,
                                   smoothDuration_DocumentWidget_(keyboard_ScrollType));
         return iTrue;
     }
@@ -3614,8 +3615,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             fetchNextUnfetchedImage_DocumentWidget_(d)) {
             return iTrue;
         }
+        const int numLines = (isTerminal_Platform() ? 1 : 3);
         smoothScroll_DocumentView(d->view,
-                                  3 * lineHeight_Text(paragraph_FontId) * dir,
+                                  numLines * lineHeight_Text(paragraph_FontId) * dir,
                                   smoothDuration_DocumentWidget_(keyboard_ScrollType));
         return iTrue;
     }
