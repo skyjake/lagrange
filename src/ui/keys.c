@@ -213,7 +213,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 33, { "${keys.root}",                 navigateRoot_KeyShortcut,       "navigate.root"                     }, 0 },
     { 35, { "${keys.reload}",               reload_KeyShortcut,             "document.reload"                   }, 0 },
     { 36, { "${LC:menu.openlocation}",      SDLK_l, KMOD_PRIMARY,           "navigate.focus"                    }, 0 },
-    { 37, { "${keys.bang}",                 SDLK_1, KMOD_SHIFT,             "navigate.focus text:!"             }, 0 },
+    { 37, { "${keys.bang}",                 bang_KeyShortcut,               "navigate.focus text:!"             }, 0 },
     { 41, { "${keys.link.modkey}",          SDLK_LALT, 0,                   "document.linkkeys arg:0"           }, argRelease_BindFlag },
     { 42, { "${keys.link.homerow}",         'f', 0,                         "document.linkkeys arg:1"           }, 0 },
     { 45, { "${keys.link.homerow.newtab}",  'f', KMOD_SHIFT,                "document.linkkeys arg:1 newtab:1"  }, 0 },

@@ -2243,6 +2243,18 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     wasUsed = iTrue;
                 }
                 if (!wasUsed) {
+                    if (!isMobile_Platform() && ev.type == SDL_KEYDOWN &&
+                        ev.key.keysym.sym == SDLK_RETURN &&
+                        focusRoot_Widget(focus_Widget()) == get_Root()->widget &&
+                        !keyMods_Sym(ev.key.keysym.mod)) {
+                        /* The Return key is hardcoded key for focusing the URL field.
+                           Note that you can't bind anything to Return normally, and it is
+                           of course used when entering text. */
+                        postCommand_App("navigate.focus");
+                        wasUsed = iTrue;
+                    }
+                }
+                if (!wasUsed) {
                     /* ^G is an alternative for Escape. */
                     if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == 'g' &&
                         keyMods_Sym(ev.key.keysym.mod) == KMOD_CTRL) {
