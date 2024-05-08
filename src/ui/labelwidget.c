@@ -617,6 +617,9 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                 offset = -10 * gap_UI;
             }
         }
+        else if (isTerminal_Platform()) {
+            offset = -2;
+        }
         else {
             offset = -6 * gap_UI;
         }
@@ -665,6 +668,9 @@ iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
         deinit_String(&str);
     }
     size.x += iconPadding_LabelWidget_(d);
+    if (isTerminal_Platform()) {
+        size.x = iMax(size.x, 3);
+    }
     return size;
 }
 
