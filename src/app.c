@@ -42,6 +42,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/inputwidget.h"
 #include "ui/keys.h"
 #include "ui/labelwidget.h"
+#include "ui/listwidget.h"
+#include "ui/lookupwidget.h"
 #include "ui/root.h"
 #include "ui/sidebarwidget.h"
 #include "ui/text.h"
@@ -2142,45 +2144,24 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
 #endif /* LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION */
                 iBool wasUsed = iFalse;
-                /* Focus navigation events take prioritity. */
+                /* Focus navigation events take priority. */
                 if (!wasUsed) {
                     /* Keyboard focus navigation with arrow keys. */
-                    iWidget *menubar = NULL;
-                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.mod == 0 && focus_Widget() &&
-                        parentMenu_Widget(focus_Widget())) {
-                        setCurrent_Window(window_Widget(focus_Widget()));
-                        const int key = ev.key.keysym.sym;
-                        if (key == SDLK_DOWN || key == SDLK_UP) {
-                            iWidget *nextFocus = findFocusable_Widget(focus_Widget(),
-                                                                      key == SDLK_UP
-                                                                          ? backward_WidgetFocusDir
-                                                                          : forward_WidgetFocusDir);
-                            if (nextFocus && parent_Widget(nextFocus) == parent_Widget(focus_Widget())) {
-                                setFocus_Widget(nextFocus);
-                            }
+                    if (ev.type == SDL_KEYDOWN && keyMods_Sym(ev.key.keysym.mod) == 0 && focus_Widget()) {
+                        if (moveFocusInsideMenu_App(&ev)) {
                             wasUsed = iTrue;
                         }
-                        else if ((key == SDLK_LEFT || key == SDLK_RIGHT)) {
-                            /* Arrow keys in the menubar will switch between top-level menus. */
-                            if ((menubar = findParent_Widget(focus_Widget(), "menubar")) != NULL) {
-                                iWidget *button = parent_Widget(parent_Widget(focus_Widget()));
-                                size_t index = indexOfChild_Widget(menubar, button);
-                                const size_t curIndex = index;
-                                if (key == SDLK_LEFT && index > 0) {
-                                    index--;
-                                }
-                                else if (key == SDLK_RIGHT && index < childCount_Widget(menubar) - 1) {
-                                    index++;
-                                }
-                                if (curIndex != index) {
-                                    setFocus_Widget(child_Widget(menubar, index));
-                                    postCommand_Widget(child_Widget(menubar, index), "trigger");
-                                }
+                        else {
+                            const int key = ev.key.keysym.sym;
+                            if ((key == SDLK_DOWN || key == SDLK_UP || key == SDLK_LEFT ||
+                                 key == SDLK_RIGHT) &&
+                                /* some widgets handle arrow keys themselves: */
+                                !isInstance_Object(focus_Widget(), &Class_DocumentWidget) &&
+                                !isInstance_Object(focus_Widget(), &Class_ListWidget) &&
+                                !isInstance_Object(focus_Widget(), &Class_InputWidget) &&
+                                !isInstance_Object(focus_Widget(), &Class_LookupWidget)) {
+                                wasUsed = moveFocusWithArrows_App(&ev);
                             }
-                            else {
-                                postCommand_Widget(focus_Widget(), "cancel");
-                            }
-                            wasUsed = iTrue;
                         }
                     }
                 }
@@ -2720,6 +2701,116 @@ iAny *findWidget_App(const char *id) {
     return NULL;
 }
 
+iBool moveFocusInsideMenu_App(const void *sdlEvent) {
+    if (!focus_Widget()) {
+        return iFalse;
+    }
+    const SDL_Event *event = sdlEvent;
+    if (event->type != SDL_KEYDOWN) {
+        return iFalse;
+    }
+    const int key = event->key.keysym.sym;
+    /* The menubar has special behavior for focus changing to navigate between sibling menus. */
+    iWidget *menu = parentMenu_Widget(focus_Widget());
+    if (menu) {
+        const size_t focusIndex = indexOfChild_Widget(menu, focus_Widget());
+        if (key >= 'a' && key <= 'z') {
+            /* See if any menu item starts with a matching letter. */
+            iWidget *firstMatch = NULL;
+            size_t index = 0;
+            iForEach(ObjectList, i, children_Widget(menu)) {
+                if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                    iLabelWidget *item = i.object;
+                    char prefix[2] = { key, 0 };
+                    if (startsWithCase_String(text_LabelWidget(item), prefix)) {
+                        if (!firstMatch) {
+                            firstMatch = i.object;
+                        }
+                        if (focus_Widget() != i.object && index > focusIndex) {
+                            setCurrent_Window(window_Widget(focus_Widget()));
+                            setFocus_Widget(i.object);
+                            return iTrue;
+                        }
+                    }
+                }
+                index++;
+            }
+            if (firstMatch) {
+                /* Loop back around. */
+                setCurrent_Window(window_Widget(focus_Widget()));
+                setFocus_Widget(firstMatch);
+                return iTrue;
+            }
+        }
+        else if (key == SDLK_PAGEUP || key == SDLK_PAGEDOWN || key == SDLK_HOME || key == SDLK_END) {
+            /* Move to top/bottom of menu. */
+            enum iDirection dir =
+                (key == SDLK_PAGEUP || key == SDLK_HOME ? up_Direction : down_Direction);
+            iWidget *next = focus_Widget();
+            for (;;) {
+                iWidget *adjacent = findAdjacentFocusable_Widget(next, dir);
+                if (!adjacent || adjacent == next) break;
+                next = adjacent;
+            }
+            setCurrent_Window(window_Widget(focus_Widget()));
+            setFocus_Widget(next);
+            return iTrue;
+        }
+    }
+    if (key == SDLK_LEFT || key == SDLK_RIGHT) {
+        /* Arrow keys in the menubar will switch between top-level menus. */
+        iWidget *menubar = findParent_Widget(focus_Widget(), "menubar");
+        if (menubar) {
+            iWidget *button = parent_Widget(parent_Widget(focus_Widget()));
+            size_t index = indexOfChild_Widget(menubar, button);
+            if (index == iInvalidPos) {
+                return iFalse;
+            }
+            const size_t curIndex = index;
+            if (key == SDLK_LEFT && index > 0) {
+                index--;
+            }
+            else if (key == SDLK_RIGHT && index < childCount_Widget(menubar) - 1) {
+                index++;
+            }
+            if (curIndex != index) {
+                setCurrent_Window(window_Widget(focus_Widget()));
+                setFocus_Widget(child_Widget(menubar, index));
+                postCommand_Widget(child_Widget(menubar, index), "trigger");
+            }
+            return iTrue;
+        }
+        else {
+            setCurrent_Window(window_Widget(focus_Widget()));
+            postCommand_Widget(focus_Widget(), "cancel");
+        }
+    }
+    return iFalse;
+}
+
+iBool moveFocusWithArrows_App(const void *sdlEvent) {
+    if (!focus_Widget()) {
+        return iFalse;
+    }
+    const SDL_Event *event = sdlEvent;
+    if (event->type != SDL_KEYDOWN) {
+        return iFalse;
+    }
+    const int key = event->key.keysym.sym;
+    iWidget *nextFocus = findAdjacentFocusable_Widget(focus_Widget(),
+                                                        key == SDLK_UP    ? up_Direction
+                                                      : key == SDLK_DOWN  ? down_Direction
+                                                      : key == SDLK_LEFT  ? left_Direction
+                                                      : key == SDLK_RIGHT ? right_Direction
+                                                                          : none_Direction);
+    if (nextFocus) {
+        setCurrent_Window(window_Widget(focus_Widget()));
+        setFocus_Widget(nextFocus);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 void addTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
     insert_SortedArray(&d->tickers, &(iTicker){ context, get_Root(), ticker });
@@ -3035,6 +3126,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "tabs.changed")) {
+        if (isTerminal_Platform()) {
+            iWidget *tabs = findChild_Widget(d, "prefs.tabs");
+            setFocus_Widget((iWidget *) tabPageButton_Widget(tabs, currentTabPage_Widget(tabs)));
+        }
         refresh_Widget(d);
         return iFalse;
     }

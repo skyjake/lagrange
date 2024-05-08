@@ -232,6 +232,7 @@ const iPtrArray *findChildren_Widget    (const iWidget *, const char *id);
 iAny *  findParent_Widget               (const iWidget *, const char *id);
 iAny *  findParentClass_Widget          (const iWidget *, const iAnyClass *class);
 iAny *  findFocusable_Widget            (const iWidget *startFrom, enum iWidgetFocusDir focusDir);
+iAny *  findAdjacentFocusable_Widget    (const iWidget *, enum iDirection direction);
 iAny *  findOverflowScrollable_Widget   (iWidget *);
 size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);

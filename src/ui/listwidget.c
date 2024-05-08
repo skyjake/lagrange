@@ -315,7 +315,7 @@ void setHoverItem_ListWidget(iListWidget *d, size_t index) {
     }
 }
 
-static void moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) {
+static iBool moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) {
     const size_t oldCursor = d->cursorItem;
     if (isEmpty_ListWidget(d)) {
         d->cursorItem = iInvalidPos;
@@ -338,6 +338,7 @@ static void moveCursor_ListWidget_(iListWidget *d, int dir, uint32_t animSpan) {
     if (d->cursorItem != iInvalidPos) {
         scrollToItem_ListWidget(d, d->cursorItem, prefs_App()->uiAnimations ? animSpan : 0);
     }
+    return d->cursorItem != oldCursor;
 }
 
 void setCursorItem_ListWidget(iListWidget *d, size_t index) {
@@ -531,11 +532,17 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                 case SDLK_END: {
                     if (d->scrollMode == normal_ScrollMode) {
                         const int step = cursorKeyStep_ListWidget_(d, key);
-                        moveCursor_ListWidget_(d, step, iAbs(step) == 1 ? 0 : 150);
+                        const iBool wasChanged = moveCursor_ListWidget_(d, step, iAbs(step) == 1 ? 0 : 150);
+                        if (!wasChanged && (key == SDLK_UP || key == SDLK_DOWN)) {
+                            moveFocusWithArrows_App(ev);
+                        }
                         return iTrue;
                     }
                     return iFalse;
                 }
+                case SDLK_LEFT:
+                case SDLK_RIGHT:
+                    return moveFocusWithArrows_App(ev);
                 case SDLK_RETURN:
                 case SDLK_KP_ENTER:
                 case SDLK_SPACE:

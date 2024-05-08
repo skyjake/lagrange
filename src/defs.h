@@ -142,6 +142,14 @@ enum iScrollType {
     max_ScrollType
 };
 
+enum iDirection {
+    none_Direction,
+    up_Direction,
+    right_Direction,
+    down_Direction,
+    left_Direction,
+};
+
 enum iToolbarAction {
     back_ToolbarAction        = 0,
     forward_ToolbarAction     = 1,

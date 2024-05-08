@@ -1466,13 +1466,15 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     arrange_Widget(d); /* need to know the height */
     iBool allowOverflow = (get_Window()->type == extra_WindowType);
     /* A vertical offset determined by a possible selected label in the menu. */
+    iWidget *focusedItem = NULL;
     if (deviceType_App() == desktop_AppDeviceType &&
         windowCoord.y < rootSize.y - lineHeight_Text(uiNormal_FontSize) * 3) {
-        iConstForEach(ObjectList, child, children_Widget(d)) {
-            const iWidget *item = constAs_Widget(child.object);
+        iForEach(ObjectList, child, children_Widget(d)) {
+            iWidget *item = as_Widget(child.object);
             if (flags_Widget(item) & selected_WidgetFlag) {
                 windowCoord.y -= item->rect.pos.y;
                 allowOverflow = iTrue;
+                focusedItem = item;
             }
         }
     }
@@ -1641,10 +1643,15 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
     }
     setupMenuTransition_Mobile(d, iTrue);
     if (isMenuFocused) {
-        iForEach(ObjectList, i, children_Widget(d)) {
-            if (flags_Widget(i.object) & focusable_WidgetFlag) {
-                setFocus_Widget(i.object);
-                break;
+        if (focusedItem) {
+            setFocus_Widget(focusedItem);
+        }
+        else {
+            iForEach(ObjectList, i, children_Widget(d)) {
+                if (flags_Widget(i.object) & focusable_WidgetFlag) {
+                    setFocus_Widget(i.object);
+                    break;
+                }
             }
         }
     }
@@ -1684,7 +1691,7 @@ void closeMenu_Widget(iWidget *d) {
         postCommand_Widget(d, "menu.closed");
         setupMenuTransition_Mobile(d, iFalse);
         if (focus_Widget() && hasParent_Widget(focus_Widget(), d)) {
-            setFocus_Widget(NULL);
+            setFocus_Widget(as_Widget(button));
         }
     }
 }

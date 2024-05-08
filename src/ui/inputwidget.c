@@ -2654,7 +2654,14 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     (checkAcceptMods_InputWidget_(d, mods) ||
                      (~d->inFlags & lineBreaksEnabled_InputWidgetFlag))) {
                     d->inFlags |= enterPressed_InputWidgetFlag;
-                    setFocus_Widget(NULL);
+                    if (isTerminal_Platform() && cmp_String(id_Widget(w), "url")) {
+                        /* In dialogs, Return moves to the next focusable field rather than
+                           loosing focus entirely. */
+                        setFocus_Widget(findFocusable_Widget(w, forward_WidgetFocusDir));
+                    }
+                    else {
+                        setFocus_Widget(NULL);
+                    }
                     return iTrue;
                 }
                 return iFalse;
@@ -2810,11 +2817,14 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     refresh_Widget(d);
                     return iTrue;
                 }
-                if (isArrowUpDownConsumed_InputWidget_(d)) {
+                // if (isArrowUpDownConsumed_InputWidget_(d)) {
+                //     return iTrue;
+                // }
+                /* For moving to lookup from url entry. */
+                if (processEvent_Widget(as_Widget(d), ev)) {
                     return iTrue;
                 }
-                /* For moving to lookup from url entry. */
-                return processEvent_Widget(as_Widget(d), ev);
+                return moveFocusWithArrows_App(ev);
             case SDLK_PAGEUP:
             case SDLK_PAGEDOWN:
                 for (int count = 0; count < 5; count++) {

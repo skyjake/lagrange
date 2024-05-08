@@ -1309,32 +1309,6 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 postCommand_App("media.player.update"); /* in case a player needs updating */
                 return iFalse; /* unfreeze all frozen windows */
             }
-#if 0
-            if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.sysframe") && mw) {
-                /* This command is sent on Android to update the keyboard height. */
-                const char *cmd = command_UserEvent(ev);
-                /*
-                    0
-                    |
-                 top
-                 |  |
-                 | bottom (top of keyboard)   :
-                 |  |                         : keyboardHeight
-                 maxDrawableHeight            :
-                    |
-                   fullheight
-                 */
-                const int top    = argLabel_Command(cmd, "top");
-                const int bottom = argLabel_Command(cmd, "bottom");
-                const int full   = argLabel_Command(cmd, "fullheight");
-                //if (!SDL_IsScreenKeyboardShown(mw->base.win)) {
-                if (bottom == full) {
-                    mw->maxDrawableHeight = bottom - top;
-                }
-                setKeyboardHeight_MainWindow(mw, top + mw->maxDrawableHeight - bottom);
-                return iTrue;
-            }
-#endif
             if (processEvent_Touch(&event)) {
                 return iTrue;
             }
