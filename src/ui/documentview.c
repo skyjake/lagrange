@@ -734,9 +734,11 @@ void allocVisBuffer_DocumentView(const iDocumentView *d) {
 size_t visibleLinkOrdinal_DocumentView(const iDocumentView *d, iGmLinkId linkId) {
     size_t ord = 0;
     const iRangei visRange = visibleRange_DocumentView(d);
+    /* Don't give an ordinal to partially visible links. */
+    const int ordinalPad = !isTerminal_Platform() ? -lineHeight_Text(paragraph_FontId) / 10 : 0;
     iConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
-        if (top_Rect(run->visBounds) >= visRange.start + gap_UI * d->pageMargin * 4 / 5) {
+        if (top_Rect(run->visBounds) >= visRange.start + ordinalPad) {
             if (run->flags & decoration_GmRunFlag && run->linkId) {
                 if (run->linkId == linkId) return ord;
                 ord++;
