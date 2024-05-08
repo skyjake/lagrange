@@ -2540,6 +2540,10 @@ void setEditorZoomLevel_App(int level) {
     app_.prefs.editorZoomLevel = level;
 }
 
+void setRecentMenuBarIndex_App(int index) {
+    app_.prefs.recentMenuBarIndex = index;
+}
+
 enum iColorTheme colorTheme_App(void) {
     return app_.prefs.theme;
 }

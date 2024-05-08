@@ -201,6 +201,7 @@ struct Impl_Prefs {
     int              langFrom;
     int              langTo;
     iBool            translationIgnorePre;
+    int              recentMenuBarIndex; /* most recently opened menubar child */
     /* Colors */
     enum iColorTheme systemPreferredColorTheme[2]; /* dark, light */
     enum iColorTheme theme;

@@ -296,6 +296,7 @@ enum iMenuOpenFlags {
 iWidget *       makeMenu_Widget                 (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
 iWidget *       makeMenuFlags_Widget            (iWidget *parent, const iMenuItem *items, size_t n, iBool allowNative);
 void            makeMenuItems_Widget            (iWidget *menu, const iMenuItem *items, size_t n);
+void            addMenuCancelAction_Widget      (iWidget *menu); /* automatically called when menu is created */
 void            openMenu_Widget                 (iWidget *, iInt2 windowCoord);
 void            openMenuFlags_Widget            (iWidget *, iInt2 windowCoord, int flags);
 void            openMenuAnchorFlags_Widget      (iWidget *, iRect windowAnchorRect, int menuOpenFlags);

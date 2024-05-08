@@ -106,6 +106,7 @@ iBool               forceSoftwareRender_App     (void);
 void                setForceSoftwareRender_App  (iBool sw);
 void                setInputZoomLevel_App       (int level);
 void                setEditorZoomLevel_App      (int level);
+void                setRecentMenuBarIndex_App   (int index);
 enum iColorTheme    colorTheme_App              (void);
 const iString *     schemeProxy_App             (iRangecc scheme);
 iBool               schemeProxyHostAndPort_App  (iRangecc scheme, const iString **host, uint16_t *port);

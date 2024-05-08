@@ -38,6 +38,7 @@ void init_Prefs(iPrefs *d) {
     d->langFrom          = 0; /* auto-detect */
     d->langTo            = 8; /* en */
     d->translationIgnorePre = iTrue;
+    d->recentMenuBarIndex = 0;
     d->useSystemTheme    = iTrue;
     d->systemPreferredColorTheme[0] = d->systemPreferredColorTheme[1] = -1;
     d->theme             = dark_ColorTheme;

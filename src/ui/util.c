@@ -978,12 +978,12 @@ static iBool isValidLabelIcon_(iChar c) {
 }
 
 void makeMenuItems_Widget(iWidget *menu, const iMenuItem *items, size_t n) {
+    iBool       haveIcons       = iFalse;
+    iBool       haveSubmenu     = iFalse;
+    iWidget    *horizGroup      = NULL;
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     int64_t     itemFlags       = (deviceType_App() != desktop_AppDeviceType ? 0 : 0) |
                                   (isPortraitPhone ? extraPadding_WidgetFlag : 0);
-    iBool    haveIcons     = iFalse;
-    iBool    haveSubmenu   = iFalse;
-    iWidget *horizGroup    = NULL;
     for (size_t i = 0; i < n && items[i].label; i++) {
         const iMenuItem *item = &items[i];
         if (!item->label) {
@@ -1218,6 +1218,13 @@ void setMenuUpdateItemsFunc_Widget(iWidget *menu, const iArray *(*func)(iWidget 
 #endif
 }
 
+void addMenuCancelAction_Widget(iWidget *menu) {
+    /* A keyboard shortcut for closing the menu. */
+    iWidget *cancel = addAction_Widget(menu, SDLK_ESCAPE, 0, "cancel");
+    setId_Widget(cancel, "menu.cancel");
+    setFlags_Widget(cancel, disabled_WidgetFlag, iTrue);
+}
+
 iWidget *makeMenuFlags_Widget(iWidget *parent, const iMenuItem *items, size_t n, iBool allowNative) {
     iWidget *menu = new_Widget();
 #if defined (LAGRANGE_NATIVE_MENU)
@@ -1255,9 +1262,7 @@ iWidget *makeMenuFlags_Widget(iWidget *parent, const iMenuItem *items, size_t n,
     addChild_Widget(parent, menu);
     iRelease(menu); /* owned by parent now */
     setCommandHandler_Widget(menu, handleMenuCommand_Widget);
-    iWidget *cancel = addAction_Widget(menu, SDLK_ESCAPE, 0, "cancel");
-    setId_Widget(cancel, "menu.cancel");
-    setFlags_Widget(cancel, disabled_WidgetFlag, iTrue);
+    addMenuCancelAction_Widget(menu);
     return menu;
 }
 
@@ -1434,6 +1439,7 @@ void openMenuAnchorFlags_Widget(iWidget *d, iRect windowAnchorRect, int menuOpen
         else {
             releaseChildren_Widget(d);
             makeMenuItems_Widget(d, constData_Array(newItems), size_Array(newItems));
+            addMenuCancelAction_Widget(d); /* must be present as well */
         }
     }
     if (postCommands && !isSubmenu) {
@@ -1684,6 +1690,10 @@ void closeMenu_Widget(iWidget *d) {
         if (button) {
             setFlags_Widget(as_Widget(button), selected_WidgetFlag, iFalse);
         }
+        iWidget *menubar = findParent_Widget(d, "menubar");
+        if (menubar) {
+            setRecentMenuBarIndex_App(indexOfChild_Widget(menubar, parent_Widget(d)));
+        }
         refresh_Widget(d);
         if (d->menuClosed) {
             d->menuClosed(d);
@@ -1691,7 +1701,7 @@ void closeMenu_Widget(iWidget *d) {
         postCommand_Widget(d, "menu.closed");
         setupMenuTransition_Mobile(d, iFalse);
         if (focus_Widget() && hasParent_Widget(focus_Widget(), d)) {
-            setFocus_Widget(as_Widget(button));
+            setFocus_Widget(menubar ? NULL : as_Widget(button));
         }
     }
 }

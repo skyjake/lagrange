@@ -525,7 +525,7 @@ iBool handleRootCommands_Widget(iWidget *root, const char *cmd) {
     else if (equal_Command(cmd, "menubar.focus")) {
         iWidget *menubar = findWidget_App("menubar");
         if (menubar) {
-            setFocus_Widget(child_Widget(menubar, 0));
+            setFocus_Widget(child_Widget(menubar, prefs_App()->recentMenuBarIndex));
             postCommand_Widget(focus_Widget(), "trigger");
         }
         return iTrue;
