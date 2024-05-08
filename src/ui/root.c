@@ -921,7 +921,7 @@ static int navBarAvailableSpace_(iWidget *navBar) {
 
 iBool isNarrow_Root(const iRoot *d) {
     return width_Rect(safeRect_Root(d)) / gap_UI <
-        (isTerminal_Platform() ? 81 : deviceType_App() == tablet_AppDeviceType ? 160 : 140);
+        (isTerminal_Platform() ? 80 : deviceType_App() == tablet_AppDeviceType ? 160 : 140);
 }
 
 static void updateNavBarSize_(iWidget *navBar) {
